@@ -5,9 +5,24 @@
 > evidence, no `Co-Authored-By`, metal-test exclusion).
 
 
-**Last updated:** 2026-07-26 — **Phase 106 (The Kernel) ACTIVE, 4/10
-— the law, both prerequisites, and the spine**. **HS-106-04 shipped the
-spine**: `holdspeak/kernel/` now exposes
+**Last updated:** 2026-07-27 — **Phase 106 (The Kernel) ACTIVE, 5/10
+— terminal input is kernel-backed**. **HS-106-05 shipped the first thin
+slice**: `process.input@1` admits terminal text once, exact-claims its
+existing native command, and closes the kernel receipt from the unchanged
+Phase-94 node receipt. Delivery and coder clients keep their shapes with one
+additive `operation_id`; the node envelope/result protocol and the native
+executors were adapted, not rewritten, and every other typing family remains
+outside the slice. A real spawned hub and tmux pane delivered in 84.76 ms;
+real `claude -p --settings` sessions preserved gate approve and the exact deny
+reason verbatim; the audit found one decision per proposal. Real SIGKILL after
+bytes landed reconciled by command ID to an indeterminate receipt without a
+retry. The executor-plane receipt-without-claim seam was resolved in the
+adapter, and HS-106-06 must confirm or refute the still-single-caller
+`native_id` filter. Final slice/density proof: 79 passed. The exact full suite
+recorded 4,252 passed / 39 skipped / 8 unrelated failures: seven reproduce with
+the same signatures on clean `origin/main`; the eighth is the recorded
+voice-notes wording drift. Earlier: **HS-106-04 shipped the spine**:
+`holdspeak/kernel/` now exposes
 exactly four caller calls (`read`, `submit`, `decide`, `events`) plus the
 separate `claim` / `receipt` / `reconcile` executor plane. The existing
 Phase-104 gate is the one native decision record behind `decide`; there

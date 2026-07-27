@@ -629,6 +629,8 @@ class MeetingWebServer:
         )
         app.state.node_token_store = _delivery_link.token_store
         _delivery_targets = TerminalTargetRegistry()
+        from .kernel.runtime import _service as _kernel_service
+
         _delivery_cmd = HubCommandService(
             repo=_get_delivery_db().delivery_receipts,
             processor=NodeCommandProcessor(
@@ -637,6 +639,7 @@ class MeetingWebServer:
                 ledger=NodeReceiptLedger(None),
             ),
             local_node_id="local",
+            kernel_broker=_kernel_service(),
         )
         _delivery_link.command_source = _delivery_cmd.claim_for_node
         app.include_router(
@@ -663,7 +666,11 @@ class MeetingWebServer:
         app.include_router(build_dictation_router(web_ctx))
         app.include_router(build_activity_router(web_ctx))
         app.include_router(build_pages_router(web_ctx))
-        app.include_router(build_system_router(web_ctx))
+        app.include_router(
+            build_system_router(
+                web_ctx, commands=_delivery_cmd, targets=_delivery_targets
+            )
+        )
         app.include_router(build_projects_router(web_ctx))
         app.include_router(build_primitives_router(web_ctx))
         app.include_router(build_projections_router(web_ctx))

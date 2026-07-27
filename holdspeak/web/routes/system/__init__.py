@@ -21,12 +21,16 @@ from .voice import build_voice_router
 from .ws import build_ws_router
 
 
-def build_system_router(ctx: WebContext) -> APIRouter:
+def build_system_router(
+    ctx: WebContext, *, commands=None, targets=None
+) -> APIRouter:
     router = APIRouter()
     router.include_router(build_health_router(ctx))
     router.include_router(build_agent_capabilities_router())
     router.include_router(build_coders_router(ctx))
-    router.include_router(build_coder_steering_router(ctx))
+    router.include_router(
+        build_coder_steering_router(ctx, commands=commands, targets=targets)
+    )
     router.include_router(build_gate_router(ctx))
     router.include_router(build_kernel_router())
     router.include_router(build_settings_router(ctx))

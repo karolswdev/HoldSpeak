@@ -78,8 +78,11 @@ class TerminalTargetRegistry:
     generation refuses forever.
     """
 
-    def __init__(self, *, runner: Optional[Runner] = None) -> None:
+    def __init__(
+        self, *, runner: Optional[Runner] = None, resolver: Any = resolve_pane_identity
+    ) -> None:
         self._runner = runner
+        self._resolver = resolver
         self._lock = threading.Lock()
         self._by_id: dict[str, dict[str, Any]] = {}
         self._by_ref: dict[str, str] = {}
@@ -94,7 +97,7 @@ class TerminalTargetRegistry:
         pane_ref = normalize_pane_ref(ref)
         if not pane_ref:
             return {"status": "pane_gone", "detail": "a pane ref is required"}
-        identity = resolve_pane_identity(pane_ref, runner=self._runner)
+        identity = self._resolver(pane_ref, runner=self._runner)
         if identity["status"] != "ok":
             return dict(identity)
         pane_id = identity["pane_id"]
@@ -133,7 +136,7 @@ class TerminalTargetRegistry:
             record = self._by_id.get(str(target_id or ""))
         if record is None:
             return {"status": "target_gone", "detail": "unknown target_id"}
-        identity = resolve_pane_identity(record["pane_ref"], runner=self._runner)
+        identity = self._resolver(record["pane_ref"], runner=self._runner)
         if identity["status"] == "pane_gone":
             return {"status": "target_gone", "detail": identity.get("detail")}
         if identity["status"] != "ok":

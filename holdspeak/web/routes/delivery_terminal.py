@@ -29,7 +29,7 @@ import asyncio
 from pathlib import Path
 from typing import Any, Optional
 
-from fastapi import APIRouter, Header
+from fastapi import APIRouter, Header, Request
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
@@ -177,12 +177,27 @@ def build_delivery_terminal_router(
         return JSONResponse(out, status_code=status or 200)
 
     @router.post("/api/delivery/terminal/commands")
-    async def api_terminal_command(payload: Optional[dict[str, Any]] = None) -> Any:
+    async def api_terminal_command(
+        request: Request, payload: Optional[dict[str, Any]] = None
+    ) -> Any:
         from ...delivery.commands import CommandRefused
+        from ...principals import Principal, PrincipalKind
 
         body = payload if isinstance(payload, dict) else {}
+        operation = body.get("operation") or {}
+        principal = getattr(
+            request.state, "principal", Principal(PrincipalKind.OWNER, "owner-session")
+        )
         try:
-            out = await asyncio.to_thread(_service().submit, body)
+            if (
+                operation.get("family") == "coder_steering"
+                and operation.get("verb") == "terminal.text"
+            ):
+                out = await asyncio.to_thread(
+                    _service().submit_process_input, body, principal
+                )
+            else:
+                out = await asyncio.to_thread(_service().submit, body)
         except CommandRefused as exc:
             return _refused(exc)
         except Exception as exc:

@@ -1,6 +1,6 @@
 # Phase 106 - The Kernel
 
-**Status:** ACTIVE (4/10). Chartered 2026-07-26 from
+**Status:** ACTIVE (5/10). Chartered 2026-07-26 from
 [`PLAN_KERNEL_OPERATION_BROKER.md`](../../../docs/internal/PLAN_KERNEL_OPERATION_BROKER.md)
 (the RFC, three council passes) and the owner's direct charge:
 
@@ -11,7 +11,7 @@
 > records decisions and then creates artifacts out of those
 > decisions and meetings."
 
-**Last updated:** 2026-07-26 (HS-106-01 through HS-106-04 shipped; 4/10 — the law, both prerequisites, and the spine).
+**Last updated:** 2026-07-27 (HS-106-01 through HS-106-05 shipped; 5/10 — the law, both prerequisites, the spine, and terminal input).
 
 ## Why this phase exists
 
@@ -111,7 +111,7 @@ receipt for every consequence.
 | HS-106-02 | Principal separation on loopback | done | [story-02-principals](./story-02-principals.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-106-03 | The effect census, pinned as a test | done | [story-03-census-test](./story-03-census-test.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-106-04 | The broker and the journal — four calls | done | [story-04-broker-journal](./story-04-broker-journal.md) | [evidence-story-04](./evidence-story-04.md) |
-| HS-106-05 | Thin slice I — terminal input | ready | [story-05-slice-terminal](./story-05-slice-terminal.md) | — |
+| HS-106-05 | Thin slice I — terminal input | done | [story-05-slice-terminal](./story-05-slice-terminal.md) | [evidence-story-05](./evidence-story-05.md) |
 | HS-106-06 | Thin slice II — actuator egress | ready | [story-06-slice-actuator](./story-06-slice-actuator.md) | — |
 | HS-106-07 | Thin slice III — inference, and the kill criterion | ready | [story-07-slice-inference-kill](./story-07-slice-inference-kill.md) | — |
 | HS-106-08 | Userland — PR follow-through, the tech-lead's loop | ready | [story-08-userland-pr-follow](./story-08-userland-pr-follow.md) | — |
@@ -168,6 +168,24 @@ pretending.
   three thinly.
 
 ## Where we are
+
+**2026-07-27 — HS-106-05 shipped, 5/10.** `process.input@1` is the
+second real driver. The delivery and coder façades now admit terminal text,
+return an additive operation ID, exact-claim the correlated native command,
+and close the generic receipt from the unchanged Phase-94 node receipt. The
+native envelope/result protocol, `HubCommandService`, `NodeCommandProcessor`,
+`coder_steering.deliver`, and `send_text_to_pane` remain authoritative; no
+other typing family moved. Real spawned-hub/tmux proof landed text in 84.76 ms,
+real `claude -p --settings` sessions preserved gate approve and verbatim deny,
+and the audit showed one decision per proposal. Real SIGKILL after bytes landed
+reconciled by command ID to `indeterminate_after_node_reset` and an
+`indeterminate` kernel receipt, with no retry. The executor plane's
+receipt-without-claim resistance was resolved in the adapter; `native_id` has
+one filtered caller and HS-106-06 must confirm or refute that seam. Final slice
+and density proof: 79 passed. The exact full suite completed 4,252 passed / 39
+skipped / 8 unrelated failures: seven reproduced with the same signatures on
+clean `origin/main`, and the eighth is the already-recorded voice-notes wording
+drift. HS-106-06 is next: actuator egress must be genuinely heterogeneous.
 
 **2026-07-26 — HS-106-04 shipped, 4/10.** The kernel spine now has
 exactly four caller calls (`read`, `submit`, `decide`, `events`) and the

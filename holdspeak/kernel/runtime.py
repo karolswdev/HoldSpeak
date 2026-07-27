@@ -9,6 +9,7 @@ from ..principals import UNAUTHENTICATED
 from .broker import Broker
 from .journal import JournalStore
 from .model import OperationSpec
+from .process_input import ProcessInputCodec
 from .tool_call import ToolCallCodec
 
 _principal = ContextVar("kernel_principal", default=UNAUTHENTICATED)
@@ -24,8 +25,12 @@ def _mode() -> str:
 
 def _build(database: Any, *, clock: Any = None) -> Broker:
     store = JournalStore(database._connection, **({"clock": clock} if clock else {}))
-    codec = ToolCallCodec(database.gate, _mode)
-    specs = (OperationSpec(codec.name, codec.version, codec, "agent.submit", "propose"),)
+    tool_calls = ToolCallCodec(database.gate, _mode)
+    process_input = ProcessInputCodec(database.delivery_receipts)
+    specs = (
+        OperationSpec(tool_calls.name, tool_calls.version, tool_calls, "agent.submit", "propose"),
+        OperationSpec(process_input.name, process_input.version, process_input, "agent.submit", "propose"),
+    )
     return Broker(store, specs, **({"clock": clock} if clock else {}))
 
 
