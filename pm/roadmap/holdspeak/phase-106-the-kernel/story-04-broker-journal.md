@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 106
-- **Status:** ready
+- **Status:** done
 - **Depends on:** HS-106-01, HS-106-02, HS-106-03
 - **Unblocks:** HS-106-05, HS-106-06, HS-106-07
 - **Owner:** unassigned
@@ -145,6 +145,19 @@ receipts do not compose.
 - **Restart (evidence):** SIGKILL mid-operation, restart, cursor
   replay, and the operation's honest state on recovery.
 - **Full suite:** `uv run pytest -q --ignore=tests/e2e/test_metal.py`.
+
+### Verification note — 2026-07-26
+
+The exact full-suite command completed with **4,245 passed, 41 skipped,
+1 failed**. The sole failure is pre-existing and outside this story's
+changed surface: `tests/uat/test_voice_notes.py::
+test_transcribe_up_but_unreachable_is_honest` receives the honest
+`Transcribe failed (HTTP 502).` response but its assertion accepts only
+wording containing `reach` or `not up`. It reproduces standalone; no UAT
+proxy or voice-note code changed here. The final kernel/gate/schema proof
+set is **64 passed**, including real HTTP, SIGKILL restart, mutation,
+warrant, receipt, and density proofs. This is the phase exit criterion's
+explicit "pre-existing unrelated failures documented per-story" case.
 
 ## Chef's notes
 

@@ -49,7 +49,7 @@ log = get_logger("db")
 
 # Default database location
 DEFAULT_DB_PATH = Path.home() / ".local" / "share" / "holdspeak" / "holdspeak.db"
-SCHEMA_VERSION = 26  # v26: per-session reported usage for receipts (HS-104-05)
+SCHEMA_VERSION = 27  # v27: operation broker journal and warrants (HS-106-04)
 
 
 class SchemaVersionError(RuntimeError):
@@ -1329,6 +1329,70 @@ CREATE TABLE IF NOT EXISTS delivery_command_receipts (
 );
 CREATE INDEX IF NOT EXISTS idx_delivery_command_receipts_node
 ON delivery_command_receipts(node_id, hub_state);
+
+-- Kernel operation journal (HS-106-04). Domain content remains in native tables.
+CREATE TABLE IF NOT EXISTS kernel_meta (
+    key TEXT PRIMARY KEY,
+    value TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS kernel_operations (
+    operation_id TEXT PRIMARY KEY,
+    request_id TEXT NOT NULL,
+    idempotency_key TEXT NOT NULL,
+    name TEXT NOT NULL,
+    version INTEGER NOT NULL,
+    principal_kind TEXT NOT NULL,
+    principal_identity TEXT NOT NULL,
+    target_ref TEXT NOT NULL,
+    placement TEXT NOT NULL,
+    envelope_sha256 TEXT NOT NULL,
+    policy_version TEXT NOT NULL,
+    authority_basis TEXT NOT NULL,
+    state TEXT NOT NULL CHECK (state IN (
+        'admitting','awaiting_decision','awaiting_execution','claimed',
+        'succeeded','failed','refused','indeterminate'
+    )),
+    revision INTEGER NOT NULL DEFAULT 1,
+    native_id TEXT NOT NULL,
+    decision TEXT,
+    warrant_json TEXT NOT NULL DEFAULT '{}',
+    warrant_revoked INTEGER NOT NULL DEFAULT 0,
+    claimed_by TEXT,
+    created_at REAL NOT NULL,
+    updated_at REAL NOT NULL,
+    UNIQUE(principal_identity, idempotency_key)
+);
+CREATE INDEX IF NOT EXISTS idx_kernel_operations_state
+ON kernel_operations(state, created_at);
+CREATE TABLE IF NOT EXISTS kernel_receipts (
+    receipt_id TEXT PRIMARY KEY,
+    operation_id TEXT NOT NULL UNIQUE REFERENCES kernel_operations(operation_id),
+    state TEXT NOT NULL CHECK (state IN ('succeeded','failed','refused','indeterminate')),
+    outcome TEXT NOT NULL,
+    result_ref TEXT NOT NULL DEFAULT '',
+    created_at REAL NOT NULL
+);
+CREATE TABLE IF NOT EXISTS kernel_journal (
+    hub_sequence INTEGER PRIMARY KEY AUTOINCREMENT,
+    stream TEXT NOT NULL,
+    stream_sequence INTEGER NOT NULL,
+    event_id TEXT NOT NULL UNIQUE,
+    operation_id TEXT NOT NULL,
+    process_id TEXT NOT NULL DEFAULT '',
+    correlation_id TEXT NOT NULL DEFAULT '',
+    causation_id TEXT NOT NULL DEFAULT '',
+    event_type TEXT NOT NULL,
+    event_version INTEGER NOT NULL,
+    refs_json TEXT NOT NULL DEFAULT '[]',
+    privacy_class TEXT NOT NULL,
+    head TEXT NOT NULL DEFAULT '',
+    timestamp REAL NOT NULL,
+    previous_sha256 TEXT NOT NULL,
+    record_sha256 TEXT NOT NULL,
+    UNIQUE(stream, stream_sequence)
+);
+CREATE INDEX IF NOT EXISTS idx_kernel_journal_operation
+ON kernel_journal(operation_id, hub_sequence);
 """
 
 

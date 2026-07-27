@@ -25,38 +25,16 @@ from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 
 from ....agent_capabilities import Capability, require_capability
-from ....db.gate import (
-    APPROVED,
-    DENIED,
-    HELD,
-    GateArgsMismatchError,
-    GateStateError,
-)
+from ....db.gate import APPROVED, DENIED, HELD
+from .... import kernel
+from ....kernel.model import KernelRefused
+from ....kernel.runtime import _as_principal, _service
 from ....logging_config import get_logger
 from ...context import WebContext
 
 log = get_logger("web.routes.gate")
 
 _REASON_MAX_CHARS = 200
-
-
-def _policy(kind: str, *, tool: str, cwd: str) -> tuple[dict[str, Any], dict[str, Any]]:
-    from ....config import Config
-    from ....operation_policy import describe_operation, resolve_policy
-
-    operation = describe_operation(
-        operation_id=f"gate:{tool}:{kind}",
-        family="tool_gate",
-        effect_class="agent/tool_call_hold",
-        actor="agent",
-        destination=cwd or "unknown_cwd",
-        data_classes=("tool_arguments_redacted",),
-        resource_scope=tool,
-        fixed_destination=bool(cwd),
-        consequence="execute_on_approval",
-    )
-    decision = resolve_policy(operation, mode=Config.load().control_mode, source="config")
-    return operation.to_dict(), decision.to_dict()
 
 
 def build_gate_router(ctx: WebContext) -> APIRouter:
@@ -125,24 +103,31 @@ def build_gate_router(ctx: WebContext) -> APIRouter:
             from ....coder_gate import DEFAULT_TTL_SECONDS
 
             ttl = DEFAULT_TTL_SECONDS
-        operation, policy = _policy("propose", tool=tool, cwd=cwd)
         gate = get_database().gate
         gate.expire_due()
-        try:
-            principal = request.state.principal
-            proposal = gate.propose(
-                proposal_id=proposal_id,
-                session_key=principal.identity,
-                agent=principal.name,
-                tool=tool,
-                args_sha256=args_sha256,
-                args_head=str(body.get("args_head") or ""),
-                cwd=cwd,
-                ttl_seconds=ttl,
-                operation=operation,
-                policy_snapshot=policy,
+        principal = request.state.principal
+        with _as_principal(principal):
+            handle = kernel.submit(
+                {
+                    "request_schema": 1,
+                    "request_id": proposal_id,
+                    "idempotency_key": f"gate:{proposal_id}",
+                    "operation": {"name": "tool.call", "version": 1},
+                    "subject_refs": [],
+                    "target": {"ref": f"gate:{proposal_id}"},
+                    "arguments": {
+                        "proposal_id": proposal_id,
+                        "tool": tool,
+                        "args_sha256": args_sha256,
+                        "args_head": str(body.get("args_head") or ""),
+                        "cwd": cwd,
+                        "ttl_seconds": ttl,
+                    },
+                    "placement": "hub:local",
+                }
             )
-        except GateArgsMismatchError:
+        refusal_receipt = handle.get("receipt") or {}
+        if refusal_receipt.get("outcome") == "idempotency_payload_mismatch":
             return JSONResponse(
                 {
                     "error": "args_mismatch",
@@ -151,6 +136,9 @@ def build_gate_router(ctx: WebContext) -> APIRouter:
                 },
                 status_code=409,
             )
+        proposal = gate.get(proposal_id)
+        if proposal is None:
+            return JSONResponse(handle, status_code=409)
         return JSONResponse(_wire(proposal))
 
     @router.get("/api/gate/proposals/{proposal_id}")
@@ -195,25 +183,35 @@ def build_gate_router(ctx: WebContext) -> APIRouter:
             )
         reason = str(body.get("reason") or "").strip()[:_REASON_MAX_CHARS] or None
         gate = get_database().gate
-        try:
-            proposal = gate.decide(
-                proposal_id,
-                decision=decision,
-                decided_by=request.state.principal.identity,
-                reason=reason,
-            )
-        except KeyError:
+        proposal = gate.get(proposal_id)
+        if proposal is None:
             return JSONResponse({"error": "unknown_proposal"}, status_code=404)
-        except GateStateError as exc:
+        operation_id = str(proposal.operation.get("kernel_operation_id") or "")
+        if not operation_id:
+            return JSONResponse({"error": "proposal_not_kernel_admitted"}, status_code=409)
+        principal = request.state.principal
+        try:
+            with _as_principal(principal):
+                projected = kernel.read([f"operation:{operation_id}"], "state", "committed")
+                standing = projected["objects"][0]["operation"]
+                _service().decide(
+                    operation_id,
+                    "approve" if decision == APPROVED else "reject",
+                    int(standing["revision"]),
+                    principal,
+                    reason=reason or "",
+                )
+        except (KernelRefused, IndexError) as exc:
+            current = gate.get(proposal_id)
             return JSONResponse(
                 {
                     "error": "already_decided",
-                    "state": exc.current,
-                    "requested": exc.requested,
+                    "state": current.state if current is not None else "unknown",
+                    "requested": decision,
                 },
                 status_code=409,
             )
-        return JSONResponse(_wire(proposal))
+        return JSONResponse(_wire(gate.get(proposal_id)))
 
     @router.post("/api/gate/usage")
     async def api_gate_usage(request: Request) -> Any:
@@ -271,7 +269,11 @@ def invalidate_held_on_startup() -> int:
         reason="hub restarted while the proposal was held"
     )
     if flipped:
-        log.info(f"gate: invalidated {len(flipped)} held proposal(s) on startup")
+        recovered = _service().recover_invalidated(flipped)
+        log.info(
+            f"gate: invalidated {len(flipped)} held proposal(s) on startup; "
+            f"kernel terminalized {recovered}"
+        )
     return len(flipped)
 
 
