@@ -134,9 +134,15 @@ def build_recipes_router(ctx: WebContext) -> APIRouter:
             if recipe is None:
                 return JSONResponse({"error": f"Unknown Agent: {recipe_id}"}, status_code=404)
 
+            from ....principals import Principal, PrincipalKind
+            principal = getattr(
+                request.state, "principal", Principal(PrincipalKind.OWNER, "owner-session")
+            )
             lifecycle = RunLifecycle.begin(
                 db, definition_ref=f"persona:{recipe_id}", body=body,
                 default_placement=f"profile:{recipe.profile_id}" if recipe.profile_id else "this_machine",
+                principal=principal,
+                definition_revision=recipe.last_modified or recipe.created_at or "unversioned",
             )
 
             user_input = str(body.get("input") or "")
@@ -203,6 +209,15 @@ def build_recipes_router(ctx: WebContext) -> APIRouter:
                     {"error": error, "recipe_id": recipe_id,
                      "invocation": invocation, "invocation_id": lifecycle.invocation_id}, status_code=502
                 )
+            cancelled = lifecycle.cancelled()
+            if cancelled is not None:
+                _run_frame(ctx, "error", kind="recipe", ref=recipe_id,
+                           name=recipe.name or recipe_id, error="cancelled")
+                return JSONResponse(
+                    {"error": "cancelled", "recipe_id": recipe_id,
+                     "invocation": cancelled, "invocation_id": lifecycle.invocation_id,
+                     "operation_id": lifecycle.operation_id}, status_code=409,
+                )
             if not str(output or "").strip():
                 error = "Agent returned no output; your input is retained for Retry."
                 _run_frame(ctx, "error", kind="recipe", ref=recipe_id,
@@ -255,6 +270,7 @@ def build_recipes_router(ctx: WebContext) -> APIRouter:
                 "artifact_id": artifact_id,
                 "result_ref": f"artifact:{artifact_id}",
                 "invocation_id": lifecycle.invocation_id,
+                "operation_id": lifecycle.operation_id,
                 "correlation_id": lifecycle.invocation_id,
                 "invocation": invocation,
             })

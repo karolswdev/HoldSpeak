@@ -49,7 +49,7 @@ log = get_logger("db")
 
 # Default database location
 DEFAULT_DB_PATH = Path.home() / ".local" / "share" / "holdspeak" / "holdspeak.db"
-SCHEMA_VERSION = 27  # v27: operation broker journal and warrants (HS-106-04)
+SCHEMA_VERSION = 28  # v28: inference recovery and child-operation causality (HS-106-07)
 
 
 class SchemaVersionError(RuntimeError):
@@ -947,7 +947,7 @@ CREATE TABLE IF NOT EXISTS capability_invocations (
     requested_placement TEXT NOT NULL DEFAULT 'this_machine',
     input_snapshot_json TEXT NOT NULL DEFAULT '{}',
     state TEXT NOT NULL DEFAULT 'running'
-        CHECK (state IN ('running','succeeded','failed','cancelled','unavailable','empty')),
+        CHECK (state IN ('running','succeeded','failed','cancelled','unavailable','empty','unknown')),
     result_ref TEXT,
     error TEXT,
     created_at TEXT NOT NULL,
@@ -967,7 +967,7 @@ CREATE TABLE IF NOT EXISTS capability_attempts (
     actual_placement_json TEXT NOT NULL DEFAULT '{}',
     provider TEXT,
     state TEXT NOT NULL DEFAULT 'running'
-        CHECK (state IN ('running','succeeded','failed','cancelled','empty')),
+        CHECK (state IN ('running','succeeded','failed','cancelled','empty','unknown')),
     error TEXT,
     result_ref TEXT,
     started_at TEXT NOT NULL,
@@ -1354,6 +1354,8 @@ CREATE TABLE IF NOT EXISTS kernel_operations (
     )),
     revision INTEGER NOT NULL DEFAULT 1,
     native_id TEXT NOT NULL,
+    parent_operation_id TEXT NOT NULL DEFAULT '',
+    correlation_id TEXT NOT NULL DEFAULT '',
     decision TEXT,
     warrant_json TEXT NOT NULL DEFAULT '{}',
     warrant_revoked INTEGER NOT NULL DEFAULT 0,
@@ -1772,6 +1774,63 @@ class Database:
                 conn.execute(
                     f"ALTER TABLE steering_audit ADD COLUMN {column} {sql_type}"
                 )
+        # v28 (HS-106-07): child operations carry durable causality, and an
+        # inference attempt orphaned by hub death has the first-class `unknown`
+        # state rather than being rounded to failed or done.
+        operation_cols = {
+            row[1] for row in conn.execute("PRAGMA table_info(kernel_operations)").fetchall()
+        }
+        for column in ("parent_operation_id", "correlation_id"):
+            if operation_cols and column not in operation_cols:
+                conn.execute(
+                    f"ALTER TABLE kernel_operations ADD COLUMN {column} TEXT NOT NULL DEFAULT ''"
+                )
+        invocation_sql = conn.execute(
+            "SELECT sql FROM sqlite_master WHERE type='table' AND name='capability_invocations'"
+        ).fetchone()
+        if invocation_sql and "'unknown'" not in str(invocation_sql[0]):
+            conn.execute("PRAGMA foreign_keys = OFF")
+            conn.executescript(
+                """
+                DROP INDEX IF EXISTS idx_capability_attempts_invocation;
+                DROP INDEX IF EXISTS idx_capability_invocations_definition;
+                DROP INDEX IF EXISTS idx_capability_invocations_state;
+                CREATE TABLE capability_invocations_v28 (
+                    id TEXT PRIMARY KEY, correlation_id TEXT NOT NULL UNIQUE,
+                    definition_ref TEXT NOT NULL, initiator TEXT NOT NULL DEFAULT 'owner',
+                    grounding_refs_json TEXT NOT NULL DEFAULT '[]',
+                    requested_placement TEXT NOT NULL DEFAULT 'this_machine',
+                    input_snapshot_json TEXT NOT NULL DEFAULT '{}',
+                    state TEXT NOT NULL DEFAULT 'running' CHECK (state IN
+                        ('running','succeeded','failed','cancelled','unavailable','empty','unknown')),
+                    result_ref TEXT, error TEXT, created_at TEXT NOT NULL,
+                    updated_at TEXT NOT NULL, completed_at TEXT
+                );
+                INSERT INTO capability_invocations_v28 SELECT * FROM capability_invocations;
+                CREATE TABLE capability_attempts_v28 (
+                    id TEXT PRIMARY KEY,
+                    invocation_id TEXT NOT NULL REFERENCES capability_invocations_v28(id) ON DELETE CASCADE,
+                    attempt_index INTEGER NOT NULL, destination TEXT NOT NULL,
+                    actual_placement_json TEXT NOT NULL DEFAULT '{}', provider TEXT,
+                    state TEXT NOT NULL DEFAULT 'running' CHECK (state IN
+                        ('running','succeeded','failed','cancelled','empty','unknown')),
+                    error TEXT, result_ref TEXT, started_at TEXT NOT NULL, completed_at TEXT,
+                    UNIQUE(invocation_id, attempt_index)
+                );
+                INSERT INTO capability_attempts_v28 SELECT * FROM capability_attempts;
+                DROP TABLE capability_attempts;
+                DROP TABLE capability_invocations;
+                ALTER TABLE capability_invocations_v28 RENAME TO capability_invocations;
+                ALTER TABLE capability_attempts_v28 RENAME TO capability_attempts;
+                CREATE INDEX idx_capability_invocations_definition
+                    ON capability_invocations(definition_ref, created_at DESC);
+                CREATE INDEX idx_capability_invocations_state
+                    ON capability_invocations(state, created_at DESC);
+                CREATE INDEX idx_capability_attempts_invocation
+                    ON capability_attempts(invocation_id, attempt_index);
+                """
+            )
+            conn.execute("PRAGMA foreign_keys = ON")
         conn.execute(
             """
             INSERT OR IGNORE INTO activity_privacy_settings

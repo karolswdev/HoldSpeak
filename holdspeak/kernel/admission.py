@@ -9,7 +9,10 @@ from ..operation_policy import POLICY_VERSION
 from .model import KernelRefused, OperationRequest
 
 _REQUEST_FIELDS = frozenset(
-    {"request_schema", "request_id", "idempotency_key", "operation", "subject_refs", "target", "arguments", "placement"}
+    {
+        "request_schema", "request_id", "idempotency_key", "operation",
+        "subject_refs", "target", "arguments", "placement", "parent_operation_id",
+    }
 )
 _AUTHORITY_FIELDS = frozenset(
     {"actor", "principal", "authority", "authority_basis", "control_mode", "effect_class", "data_classes", "policy_version"}
@@ -41,7 +44,7 @@ def parse_request(raw: Any) -> OperationRequest:
     return OperationRequest(
         1, request_id, idempotency_key, name, version,
         str(target.get("ref") or ""), str(raw.get("placement") or ""),
-        arguments, tuple(refs),
+        arguments, tuple(refs), str(raw.get("parent_operation_id") or "").strip(),
     )
 
 
@@ -60,5 +63,6 @@ def refusal_values(raw: Any, principal: Any, operation_id: str, reason: str) -> 
         "target_ref": "", "placement": "",
         "envelope_sha256": "sha256:" + hashlib.sha256(digest.encode()).hexdigest(),
         "policy_version": POLICY_VERSION, "authority_basis": "refused_at_admission",
-        "state": "refused", "native_id": "",
+        "state": "refused", "native_id": "", "parent_operation_id": "",
+        "correlation_id": operation_id,
     }

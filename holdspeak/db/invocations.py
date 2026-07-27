@@ -95,7 +95,7 @@ class CapabilityInvocationRepository(BaseRepository):
                    SET state=?,provider=COALESCE(?,provider),error=?,result_ref=?,
                        actual_placement_json=CASE WHEN ? IS NULL THEN actual_placement_json ELSE ? END,
                        completed_at=?
-                   WHERE id=?""",
+                   WHERE id=? AND state='running'""",
                 (
                     state, provider, error, result_ref,
                     None if actual_placement is None else 1,
@@ -122,13 +122,67 @@ class CapabilityInvocationRepository(BaseRepository):
         with self._connection() as conn:
             conn.execute(
                 """UPDATE capability_invocations
-                   SET state=?,result_ref=?,error=?,updated_at=?,completed_at=? WHERE id=?""",
+                   SET state=?,result_ref=?,error=?,updated_at=?,completed_at=?
+                   WHERE id=? AND state='running'""",
                 (state, result_ref, error, now, now, invocation_id),
             )
         row = self.get(invocation_id)
         if row is None:
             raise ValueError(f"unknown invocation: {invocation_id}")
         return row
+
+    def cancel(self, invocation_id: str, *, reason: str = "owner_cancelled") -> CapabilityInvocationRecord:
+        """Persist a cancellation signal without letting a late result overwrite it."""
+        now = _now_iso()
+        with self._connection() as conn:
+            row = conn.execute(
+                "SELECT state FROM capability_invocations WHERE id=?", (invocation_id,)
+            ).fetchone()
+            if row is None:
+                raise ValueError(f"unknown invocation: {invocation_id}")
+            if row["state"] != "running":
+                raise ValueError(f"invocation is not running: {invocation_id}")
+            conn.execute(
+                "UPDATE capability_attempts SET state='cancelled',error=?,completed_at=? "
+                "WHERE invocation_id=? AND state='running'",
+                (reason, now, invocation_id),
+            )
+            conn.execute(
+                "UPDATE capability_invocations SET state='cancelled',error=?,updated_at=?,completed_at=? "
+                "WHERE id=? AND state='running'",
+                (reason, now, now, invocation_id),
+            )
+        return self.get(invocation_id)  # type: ignore[return-value]
+
+    def recover_running_unknown(self, invocation_ids: Optional[list[str]] = None) -> list[str]:
+        """Mark selected attempts a dead hub cannot prove are still running as unknown."""
+        requested = [str(item) for item in (invocation_ids or []) if str(item)]
+        if invocation_ids is not None and not requested:
+            return []
+        now = _now_iso()
+        where = "state='running'"
+        values: list[Any] = []
+        if invocation_ids is not None:
+            where += f" AND id IN ({','.join('?' for _ in requested)})"
+            values.extend(requested)
+        with self._connection() as conn:
+            rows = conn.execute(
+                f"SELECT id FROM capability_invocations WHERE {where}", values
+            ).fetchall()
+            ids = [str(row["id"]) for row in rows]
+            for invocation_id in ids:
+                conn.execute(
+                    "UPDATE capability_attempts SET state='unknown',error='hub_restart_liveness_unknown',"
+                    "completed_at=? WHERE invocation_id=? AND state='running'",
+                    (now, invocation_id),
+                )
+                conn.execute(
+                    "UPDATE capability_invocations SET state='unknown',"
+                    "error='hub_restart_liveness_unknown',updated_at=?,completed_at=? "
+                    "WHERE id=? AND state='running'",
+                    (now, now, invocation_id),
+                )
+        return ids
 
     def get(self, invocation_id: str) -> Optional[CapabilityInvocationRecord]:
         with self._connection() as conn:

@@ -2048,7 +2048,9 @@
         "GET"
       ],
       "module": "web.routes.primitives.invocations",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/invocations/{invocation_id}",
@@ -2059,6 +2061,14 @@
       "consumers": [
         "web"
       ]
+    },
+    {
+      "path": "/api/invocations/{invocation_id}/cancel",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.primitives.invocations",
+      "consumers": []
     },
     {
       "path": "/api/kbs",

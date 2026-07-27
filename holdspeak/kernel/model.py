@@ -33,6 +33,7 @@ class OperationRequest:
     placement: str
     arguments: Mapping[str, Any]
     subject_refs: tuple[str, ...] = ()
+    parent_operation_id: str = ""
 
 
 @dataclass(frozen=True)
