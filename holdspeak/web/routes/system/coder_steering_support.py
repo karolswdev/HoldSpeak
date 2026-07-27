@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import asyncio
 import re
+import uuid
 from typing import Any, Mapping, Optional
 
 from fastapi.responses import JSONResponse
@@ -144,11 +146,122 @@ def compose_from_body(body: dict[str, Any]) -> dict[str, Any] | JSONResponse:
     return compose_steer(text, blocks)
 
 
+class ProcessInputServices:
+    """Lazy shared native services for the coder route's kernel adapter."""
+
+    def __init__(self, *, commands: Any = None, targets: Any = None) -> None:
+        self._commands = commands
+        self._targets = targets
+
+    def targets(self) -> Any:
+        if self._targets is None:
+            from .... import coder_steering
+            from ....delivery.terminal import TerminalTargetRegistry
+
+            self._targets = TerminalTargetRegistry(
+                resolver=lambda target, runner=None: coder_steering.resolve_pane_identity(
+                    target, runner=runner
+                )
+            )
+        return self._targets
+
+    def commands(self) -> Any:
+        if self._commands is None:
+            from ....db import get_database
+            from ....db.delivery_receipts import NodeReceiptLedger
+            from ....delivery.commands import HubCommandService, NodeCommandProcessor
+
+            database = get_database()
+            ledger = database.db_path.with_name(
+                f"{database.db_path.stem}-coder-node-ledger.db"
+            )
+            self._commands = HubCommandService(
+                repo=database.delivery_receipts,
+                processor=NodeCommandProcessor(
+                    node_id="local",
+                    targets=self.targets(),
+                    ledger=NodeReceiptLedger(ledger),
+                ),
+                local_node_id="local",
+            )
+        return self._commands
+
+
+async def deliver_process_input(
+    services: ProcessInputServices,
+    *,
+    key: str,
+    target: str,
+    agent: str,
+    pane_id: Optional[str],
+    submit: bool,
+    composed: Mapping[str, Any],
+    operation: Mapping[str, Any],
+    policy: Mapping[str, Any],
+    request: Any,
+) -> dict[str, Any]:
+    """Adapt one coder steer onto process.input without changing its executor."""
+    from .... import coder_steering
+    from ....principals import Principal, PrincipalKind
+
+    text = str(composed["text"])
+    refs = list(composed["refs"])
+    principal = getattr(
+        request.state, "principal", Principal(PrincipalKind.OWNER, "owner-session")
+    )
+    issued = await asyncio.to_thread(services.targets().issue, target)
+    use_executor = (
+        policy.get("outcome") == "allowed"
+        and issued.get("status") == "issued"
+        and (pane_id is None or issued.get("pane_id") == pane_id)
+    )
+    preflight = None
+    if not use_executor:
+        preflight = await asyncio.to_thread(
+            coder_steering.deliver,
+            key,
+            text,
+            current_target=target,
+            agent=agent,
+            submit=submit,
+            grounding_refs=refs,
+            expected_pane_id=pane_id,
+            operation=operation,
+            policy_snapshot=policy,
+        )
+    command = {
+        "node_id": "local",
+        "target_id": issued.get("target_id") or f"route_{uuid.uuid4().hex[:16]}",
+        "target_generation": issued.get("target_generation") or "unresolved",
+        "operation": {"family": "coder_steering", "verb": "terminal.text"},
+        "payload": {
+            "session_key": key,
+            "text": text,
+            "agent": agent,
+            "submit": submit,
+            "grounding_refs": refs,
+        },
+    }
+    adapted = await asyncio.to_thread(
+        services.commands().submit_process_input,
+        command,
+        principal,
+        authority_snapshot=policy,
+        preflight_result=preflight,
+        include_result=True,
+    )
+    result = dict(adapted.get("result") or {})
+    result["operation_id"] = adapted["operation_id"]
+    return result
+
+
 __all__ = [
     "active_policy_grant",
     "canonical_pane_id",
     "compose_from_body",
+    "deliver_process_input",
     "expected_pane_id",
+    "ProcessInputServices",
     "steering_commitment",
     "steering_policy",
 ]

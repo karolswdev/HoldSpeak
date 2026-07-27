@@ -356,6 +356,9 @@ class NodeCommandProcessor:
         self._clock = clock
         self._sequence_locks: dict[str, threading.Lock] = {}
         self._locks_guard = threading.Lock()
+        self._native_results: dict[str, dict[str, Any]] = {}
+        self._results_lock = threading.Lock()
+        self._capture_native_results = False
         self.executions = 0  # test/metric seam: real chokepoint entries
 
     def _sequence_lock(self, key: str) -> threading.Lock:
@@ -579,6 +582,7 @@ class NodeCommandProcessor:
                 current_target=pane_id,
                 agent=str(payload.get("agent") or ""),
                 submit=bool(payload.get("submit", True)),
+                grounding_refs=list(payload.get("grounding_refs") or []),
                 expected_pane_id=pane_id,
                 operation=operation,
                 policy_snapshot=policy_snapshot,
@@ -634,6 +638,9 @@ class NodeCommandProcessor:
             )
             basis = "authenticated_owner"
 
+        if self._capture_native_results:
+            with self._results_lock:
+                self._native_results[env["command_id"]] = dict(result)
         status = str(result.get("status") or "error")
         if status in _SUCCEEDED:
             state = "succeeded"
@@ -655,6 +662,28 @@ class NodeCommandProcessor:
             revoked=bool(result.get("revoked")),
         )
         return self._persist(env, receipt, seq_key=seq_key, advance=advance)
+
+    def take_result(self, command_id: str) -> Optional[dict[str, Any]]:
+        """Return one local executor result without adding it to the wire."""
+        with self._results_lock:
+            return self._native_results.pop(str(command_id), None)
+
+    def record_preflight_refusal(
+        self, envelope: Mapping[str, Any], result: Mapping[str, Any]
+    ) -> dict[str, Any]:
+        """Persist a hub-proven refusal without entering the typing chokepoint."""
+        env = validate_envelope(envelope)
+        policy = decode_decision(env["authority"])
+        receipt = self._receipt(
+            env,
+            state="refused",
+            outcome=str(result.get("status") or "refused"),
+            authority_basis=str(policy.get("authority_basis") or "none"),
+            node_audit_id=result.get("audit_id"),
+            error=str(result.get("detail")) if result.get("detail") else None,
+            revoked=bool(result.get("revoked")),
+        )
+        return self._persist(env, receipt)
 
     def reconcile(self, command_id: str) -> dict[str, Any]:
         """§8.2: the stored receipt if this node executed the command;
@@ -692,14 +721,17 @@ class HubCommandService:
         grant_lookup: Optional[Callable[[str], Optional[dict[str, Any]]]] = None,
         wall_now: Callable[[], datetime] = _utc_now,
         default_ttl_seconds: int = DEFAULT_COMMAND_TTL_SECONDS,
+        kernel_broker: Any = None,
     ) -> None:
         self.repo = repo
         self.processor = processor
+        self.processor._capture_native_results = True
         self.local_node_id = str(local_node_id)
         self._mode_loader = mode_loader
         self._grant_lookup = grant_lookup
         self._wall_now = wall_now
         self._default_ttl = int(default_ttl_seconds)
+        self._kernel = kernel_broker
         self._queues: dict[str, list[dict[str, Any]]] = {}
         self._queue_lock = threading.Lock()
 
@@ -748,16 +780,7 @@ class HubCommandService:
             decision = resolve_policy(
                 operation, mode=mode, source="config", grant=self._grant(session_key)
             )
-            snapshot = decision.to_dict()
-            return {
-                "actor": "owner",
-                "control_posture": mode,
-                "decision": encode_decision(snapshot),
-                "policy_version": POLICY_VERSION,
-                "grant_id": session_key
-                if snapshot["authority_basis"] == "scoped_grant"
-                else None,
-            }
+            return self._authority_from_policy(decision.to_dict(), session_key)
         if verb == "factory.kill":
             return {
                 "actor": "owner",
@@ -774,9 +797,29 @@ class HubCommandService:
             "grant_id": None,
         }
 
+    @staticmethod
+    def _authority_from_policy(
+        policy: Mapping[str, Any], session_key: str
+    ) -> dict[str, Any]:
+        return {
+            "actor": "owner",
+            "control_posture": str(policy.get("mode") or "neutral"),
+            "decision": encode_decision(policy),
+            "policy_version": str(policy.get("policy_version") or POLICY_VERSION),
+            "grant_id": session_key
+            if str(policy.get("authority_basis") or "") == "scoped_grant"
+            else None,
+        }
+
     # dispatch -----------------------------------------------------------
 
-    def submit(self, request: Any) -> dict[str, Any]:
+    def submit(
+        self,
+        request: Any,
+        *,
+        authority_snapshot: Optional[Mapping[str, Any]] = None,
+        include_result: bool = False,
+    ) -> dict[str, Any]:
         """One client command intent → one dispatched envelope.
 
         The client names WHAT (target, operation, payload, sequence);
@@ -860,11 +903,15 @@ class HubCommandService:
             verb=verb,
             payload=payload,
             expected_sequence=int(expected_sequence),
-            authority=self._authority_for(
-                verb=verb,
-                session_key=session_key,
-                destination=destination,
-                registered=registered,
+            authority=(
+                self._authority_from_policy(authority_snapshot, session_key)
+                if authority_snapshot is not None
+                else self._authority_for(
+                    verb=verb,
+                    session_key=session_key,
+                    destination=destination,
+                    registered=registered,
+                )
             ),
             command_id=command_id,
             ttl_seconds=int(request.get("expires_in_seconds") or self._default_ttl),
@@ -876,27 +923,240 @@ class HubCommandService:
         )
         if local:
             receipt = self.processor.process(envelope)
+            native_result = self.processor.take_result(envelope["command_id"])
             self.repo.attach_receipt(receipt)
-            return {
+            response = {
                 "command_id": envelope["command_id"],
                 "state": "complete",
                 "receipt": receipt,
             }
+            if include_result and native_result is not None:
+                response["result"] = native_result
+            return response
         with self._queue_lock:
             self._queues.setdefault(node_id, []).append(envelope)
         return {"command_id": envelope["command_id"], "state": "sent"}
+
+    # process.input kernel adapter -----------------------------------------
+
+    def _kernel_service(self) -> Any:
+        if self._kernel is None:
+            from ..kernel.broker import Broker
+            from ..kernel.journal import JournalStore
+            from ..kernel.model import OperationSpec
+            from ..kernel.process_input import ProcessInputCodec
+
+            codec = ProcessInputCodec(self.repo)
+            self._kernel = Broker(
+                JournalStore(self.repo._connection),
+                (OperationSpec(codec.name, codec.version, codec, "agent.submit", "propose"),),
+            )
+        return self._kernel
+
+    @staticmethod
+    def _process_input_request(request: Mapping[str, Any]) -> dict[str, Any]:
+        operation = request.get("operation") or {}
+        payload = request.get("payload") or {}
+        if (
+            str(operation.get("family") or "") != "coder_steering"
+            or str(operation.get("verb") or "") != "terminal.text"
+        ):
+            raise CommandRefused(
+                "process_input_operation_required",
+                "the process.input adapter accepts coder_steering/terminal.text only",
+            )
+        command_id = str(request.get("command_id") or uuid.uuid4())
+        node_id = str(request.get("node_id") or "local")
+        target_id = str(request.get("target_id") or "")
+        generation = str(request.get("target_generation") or "")
+        return {
+            "request_schema": 1,
+            "request_id": command_id,
+            "idempotency_key": f"process.input:{command_id}",
+            "operation": {"name": "process.input", "version": 1},
+            "subject_refs": [f"coder_session:{payload.get('session_key')}"]
+            if payload.get("session_key")
+            else [],
+            "target": {"ref": f"process:{target_id}"},
+            "arguments": {
+                "text": payload.get("text"),
+                "submit": payload.get("submit", True),
+                "expected_generation": generation,
+                "command_id": command_id,
+                "session_key": str(payload.get("session_key") or ""),
+                "agent": str(payload.get("agent") or ""),
+                "expected_sequence": request.get("expected_sequence"),
+                "expires_in_seconds": request.get("expires_in_seconds", 30),
+            },
+            "placement": f"node:{node_id}",
+        }
+
+    def _sync_kernel_receipt(self, command_id: str, node_id: str) -> None:
+        from ..principals import Principal, PrincipalKind
+
+        kernel = self._kernel_service()
+        operation = kernel.store.operation_for_native(str(command_id))
+        row = self.repo.get(str(command_id))
+        if operation is None or row is None or kernel.store.receipt(operation["operation_id"]):
+            return
+        receipt = row.get("receipt") or {}
+        domain = str(receipt.get("state") or row.get("hub_state") or "")
+        outcome = {
+            "succeeded": "succeeded",
+            "failed": "failed",
+            "refused": "refused",
+            "not_executed": "refused",
+            "unknown": "indeterminate",
+            "indeterminate_after_node_reset": "indeterminate",
+        }.get(domain)
+        if outcome is None:
+            return
+        node = Principal(PrincipalKind.NODE, str(node_id))
+        if domain == "not_executed" and operation["state"] == "awaiting_execution":
+            claimed = kernel.claim(node, str(command_id))
+            if not claimed.get("operations"):
+                raise CommandRefused("kernel_claim_required_to_refuse")
+        kernel.receipt(
+            operation["operation_id"], outcome, f"command:{command_id}", node
+        )
+
+    def submit_process_input(
+        self,
+        request: Mapping[str, Any],
+        principal: Any,
+        *,
+        authority_snapshot: Optional[Mapping[str, Any]] = None,
+        preflight_result: Optional[Mapping[str, Any]] = None,
+        include_result: bool = False,
+    ) -> dict[str, Any]:
+        """Admit once, approve once, then adapt onto the existing command protocol."""
+        from ..principals import Principal, PrincipalKind
+
+        prepared = dict(request)
+        command_id = str(prepared.get("command_id") or "")
+        known = self.repo.get(command_id) if command_id else None
+        if known is not None and known.get("receipt"):
+            operation = self._kernel_service().store.operation_for_native(command_id)
+            if operation is not None:
+                return {
+                    "command_id": command_id,
+                    "state": "complete",
+                    "duplicate": True,
+                    "receipt": known["receipt"],
+                    "operation_id": operation["operation_id"],
+                }
+        node_id = str(prepared.get("node_id") or self.local_node_id)
+        if prepared.get("expected_sequence") is None and node_id == self.local_node_id:
+            prepared["expected_sequence"] = self.processor.ledger.next_sequence(
+                str(prepared.get("target_id") or "")
+            )
+        raw = self._process_input_request(prepared)
+        prepared["command_id"] = raw["request_id"]
+        kernel = self._kernel_service()
+        handle = kernel.submit(raw, principal)
+        if handle.get("state") == "refused":
+            reason = str((handle.get("receipt") or {}).get("outcome") or "kernel_refused")
+            raise CommandRefused(reason)
+        if handle.get("state") == "awaiting_decision":
+            decision = "reject" if preflight_result is not None else "approve"
+            handle = kernel.decide(
+                handle["operation_id"],
+                decision,
+                int(handle["revision"]),
+                principal,
+                reason=str((preflight_result or {}).get("detail") or ""),
+            )
+        if node_id == self.local_node_id and handle.get("state") == "awaiting_execution":
+            claimed = kernel.claim(Principal(PrincipalKind.NODE, node_id))
+            if not claimed.get("operations"):
+                reason = str((claimed.get("refusal") or {}).get("outcome") or "kernel_claim_refused")
+                raise CommandRefused(reason)
+        if preflight_result is None:
+            response = self.submit(
+                prepared,
+                authority_snapshot=authority_snapshot,
+                include_result=include_result,
+            )
+        else:
+            payload = dict(prepared.get("payload") or {})
+            target_id = str(prepared.get("target_id") or "")
+            target_generation = str(prepared.get("target_generation") or "")
+            seq_key = target_id
+            expected_sequence = prepared.get("expected_sequence")
+            if expected_sequence is None:
+                expected_sequence = self.processor.ledger.next_sequence(seq_key)
+            authority = (
+                self._authority_from_policy(authority_snapshot, str(payload.get("session_key") or ""))
+                if authority_snapshot is not None
+                else self._authority_for(
+                    verb="terminal.text",
+                    session_key=str(payload.get("session_key") or ""),
+                    destination=target_id,
+                    registered=False,
+                )
+            )
+            envelope = build_envelope(
+                node_id=node_id,
+                target_id=target_id,
+                target_generation=target_generation,
+                family="coder_steering",
+                verb="terminal.text",
+                payload=payload,
+                expected_sequence=int(expected_sequence),
+                authority=authority,
+                command_id=prepared["command_id"],
+                ttl_seconds=int(prepared.get("expires_in_seconds") or self._default_ttl),
+                now=self._wall_now(),
+            )
+            self.repo.record_sent(
+                envelope, dispatch_epoch=self.processor.ledger.epoch
+            )
+            receipt = self.processor.record_preflight_refusal(envelope, preflight_result)
+            self.repo.attach_receipt(receipt)
+            response = {
+                "command_id": prepared["command_id"],
+                "state": "complete",
+                "receipt": receipt,
+            }
+            if include_result:
+                response["result"] = dict(preflight_result)
+        response["operation_id"] = handle["operation_id"]
+        if node_id == self.local_node_id and preflight_result is None:
+            self._sync_kernel_receipt(prepared["command_id"], node_id)
+        return response
 
     # the node-link command leg -------------------------------------------
 
     def claim_for_node(self, node_id: str) -> list[dict[str, Any]]:
         """Drain this node's queued envelopes/probes (the ``command_source``
         hook the node link consults). Claiming marks the hub half."""
+        from ..principals import Principal, PrincipalKind
+
         with self._queue_lock:
             claimed = self._queues.pop(str(node_id), [])
-        for item in claimed:
+        kernel = self._kernel
+        process_commands = [] if kernel is None else [
+            str(item.get("command_id") or "")
+            for item in claimed
+            if (item.get("operation") or {}).get("verb") == "terminal.text"
+            and kernel.store.operation_for_native(str(item.get("command_id") or ""))
+            is not None
+        ]
+        accepted: set[str] = set()
+        node = Principal(PrincipalKind.NODE, str(node_id))
+        for command_id in process_commands:
+            handle = kernel.claim(node, command_id)
+            if handle.get("operations"):
+                accepted.add(command_id)
+        dispatched = [
+            item for item in claimed
+            if str(item.get("command_id") or "") not in process_commands
+            or str(item.get("command_id") or "") in accepted
+        ]
+        for item in dispatched:
             if item.get("command_id") and item.get("command_schema"):
                 self.repo.set_state(item["command_id"], "claimed")
-        return claimed
+        return dispatched
 
     def record_results(self, node_id: str, results: Any) -> dict[str, Any]:
         """The node's results leg: receipts and reconcile answers,
@@ -914,6 +1174,8 @@ class HubCommandService:
             if item.get("receipt_schema") == RECEIPT_SCHEMA:
                 self.repo.attach_receipt(dict(item))
                 processed += 1
+                if self._kernel is not None:
+                    self._sync_kernel_receipt(command_id, str(node_id))
                 continue
             if item.get("reconcile") == "unknown_command" and not row.get("receipt"):
                 self.repo.set_state(
@@ -921,6 +1183,8 @@ class HubCommandService:
                     self._absence_state(row, str(item.get("ledger_epoch") or "")),
                 )
                 processed += 1
+                if self._kernel is not None:
+                    self._sync_kernel_receipt(command_id, str(node_id))
         return {"ok": True, "processed": processed}
 
     @staticmethod
@@ -951,6 +1215,8 @@ class HubCommandService:
                     str(command_id),
                     self._absence_state(row, str(answer.get("ledger_epoch") or "")),
                 )
+            if self._kernel is not None:
+                self._sync_kernel_receipt(str(command_id), self.local_node_id)
             return self.repo.get(str(command_id))
         with self._queue_lock:
             queued = any(
@@ -961,6 +1227,8 @@ class HubCommandService:
             # Never claimed and no longer queued (a hub restart dropped the
             # memory queue): it cannot have executed.
             self.repo.set_state(str(command_id), "not_executed")
+            if self._kernel is not None:
+                self._sync_kernel_receipt(str(command_id), str(row.get("node_id")))
             return self.repo.get(str(command_id))
         if not queued and str(row.get("hub_state")) == "claimed":
             # Lost after send: recorded unknown until the node answers the

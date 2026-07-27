@@ -6,7 +6,7 @@ import asyncio
 from datetime import datetime, timezone
 from typing import Any, Optional
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 
 from ....logging_config import get_logger
@@ -17,7 +17,9 @@ from .coder_steering_support import (
     active_policy_grant,
     canonical_pane_id,
     compose_from_body,
+    deliver_process_input,
     expected_pane_id,
+    ProcessInputServices,
     steering_commitment,
     steering_policy,
 )
@@ -25,8 +27,11 @@ from .coder_steering_support import (
 log = get_logger("web.routes.system.steering")
 
 
-def build_coder_steering_router(ctx: WebContext) -> APIRouter:
+def build_coder_steering_router(
+    ctx: WebContext, *, commands: Any = None, targets: Any = None
+) -> APIRouter:
     router = APIRouter()
+    process_input = ProcessInputServices(commands=commands, targets=targets)
 
     def _registry_session(key: str):
         """Resolve a steering key to a session-like target.
@@ -342,7 +347,7 @@ def build_coder_steering_router(ctx: WebContext) -> APIRouter:
 
     @router.post("/api/coders/{key}/steer")
     async def api_coder_steer(
-        key: str, payload: Optional[dict[str, Any]] = None
+        key: str, request: Request, payload: Optional[dict[str, Any]] = None
     ) -> Any:
         """Deliver one steer through THE chokepoint (HS-87-03/04).
 
@@ -406,17 +411,10 @@ def build_coder_steering_router(ctx: WebContext) -> APIRouter:
                     "commitment": steering_commitment(operation, policy),
                 }
             )
-        result = await asyncio.to_thread(
-            coder_steering.deliver,
-            key,
-            composed["text"],
-            current_target=target,
-            agent=session.agent,
-            submit=submit,
-            grounding_refs=composed["refs"],
-            expected_pane_id=pane_id,
-            operation=operation,
-            policy_snapshot=policy,
+        result = await deliver_process_input(
+            process_input, key=key, target=target, agent=session.agent,
+            pane_id=pane_id, submit=submit, composed=composed,
+            operation=operation, policy=policy, request=request,
         )
         if result.get("audit_id") is not None or result.get("revoked"):
             _coder_frame(ctx, key)

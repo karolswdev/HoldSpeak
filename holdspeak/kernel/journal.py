@@ -191,15 +191,19 @@ class JournalStore:
                 raise KernelRefused("operation_revision_conflict", operation_id=operation_id)
         return self.operation(operation_id) or {}
 
-    def claim_candidate(self, executor: str) -> dict[str, Any] | None:
+    def claim_candidate(
+        self, executor: str, native_id: str = ""
+    ) -> dict[str, Any] | None:
         """Atomically acquire one approved operation; first claimant wins."""
+        query = """SELECT operation_id,revision FROM kernel_operations
+                   WHERE state='awaiting_execution' AND placement=?"""
+        values: tuple[Any, ...] = (f"node:{executor}",)
+        if native_id:
+            query += " AND native_id=?"
+            values += (native_id,)
+        query += " ORDER BY created_at LIMIT 1"
         with self._connection() as conn:
-            row = conn.execute(
-                """SELECT operation_id,revision FROM kernel_operations
-                   WHERE state='awaiting_execution' AND placement=?
-                   ORDER BY created_at LIMIT 1""",
-                (f"node:{executor}",),
-            ).fetchone()
+            row = conn.execute(query, values).fetchone()
             if row is None:
                 return None
             result = conn.execute(

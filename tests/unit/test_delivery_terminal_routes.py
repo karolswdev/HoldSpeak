@@ -230,6 +230,7 @@ def test_command_submit_duplicate_and_receipt_join(rig) -> None:
     }
     first = rig.client.post("/api/delivery/terminal/commands", json=body)
     assert first.status_code == 200
+    assert set(first.json()) == {"command_id", "state", "receipt", "operation_id"}
     receipt = first.json()["receipt"]
     assert receipt["state"] == "succeeded"
     assert receipt["outcome"] == "delivered"
@@ -238,6 +239,9 @@ def test_command_submit_duplicate_and_receipt_join(rig) -> None:
     # The lost-response retry: same command_id, same receipt, ONE effect.
     again = rig.client.post("/api/delivery/terminal/commands", json=body)
     assert again.status_code == 200
+    assert set(again.json()) == {
+        "command_id", "state", "duplicate", "receipt", "operation_id"
+    }
     assert again.json()["receipt"]["receipt_id"] == receipt["receipt_id"]
     assert len(rig.transport_calls) == 1
 

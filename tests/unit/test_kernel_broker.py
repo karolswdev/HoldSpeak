@@ -17,6 +17,7 @@ from holdspeak.web.routes.system.kernel_routes import build_kernel_router
 OWNER = Principal(PrincipalKind.OWNER, "owner-session")
 AGENT = Principal(PrincipalKind.AGENT, "agent:proof")
 NODE = Principal(PrincipalKind.NODE, "node_proof")
+OTHER_NODE = Principal(PrincipalKind.NODE, "node_elsewhere")
 
 
 def _request(key: str = "one", **arguments):
@@ -182,6 +183,33 @@ def test_warrant_expiry_and_revocation_refuse_at_claim(rig) -> None:
     with _as_principal(NODE):
         claim = kernel.claim()
     assert claim["refusal"]["outcome"] == "warrant_revoked"
+
+
+def test_executor_can_claim_exact_native_operation(rig) -> None:
+    _, broker, _ = rig
+    first = _decide(_submit(request=_request("first")))
+    second = _decide(_submit(request=_request("second")))
+
+    claimed = broker.claim(NODE, "proposal-second")["operations"][0]
+
+    assert claimed["operation_id"] == second["operation_id"]
+    assert broker.store.operation(first["operation_id"])["state"] == "awaiting_execution"
+    for principal, outcome in (
+        (NODE, "refused"),
+        (NODE, "succeeded"),
+        (OTHER_NODE, "refused"),
+    ):
+        with pytest.raises(KernelRefused) as unclaimed:
+            broker.receipt(
+                first["operation_id"], outcome, "command:not-executed", principal
+            )
+        assert unclaimed.value.reason == "executor_claim_required"
+
+    broker.claim(NODE, "proposal-first")
+    refused = broker.receipt(
+        first["operation_id"], "refused", "command:not-executed", NODE
+    )
+    assert refused["state"] == "refused"
 
 
 def test_claim_receipt_reconcile_and_cursor_projection(rig) -> None:

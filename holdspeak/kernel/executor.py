@@ -11,10 +11,10 @@ class ExecutorPlane:
     store: Any
     _clock: Any
 
-    def claim(self, principal: Any) -> dict[str, Any]:
+    def claim(self, principal: Any, native_id: str = "") -> dict[str, Any]:
         if principal.kind is not PrincipalKind.NODE:
             raise KernelRefused("node_principal_required_to_claim")
-        operation = self.store.claim_candidate(principal.identity)
+        operation = self.store.claim_candidate(principal.identity, native_id)
         if operation is None:
             return {"operations": []}
         warrant = operation["warrant"]
