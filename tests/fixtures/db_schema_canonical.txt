@@ -412,7 +412,7 @@ table capability_attempts: CREATE TABLE capability_attempts (
     actual_placement_json TEXT NOT NULL DEFAULT '{}',
     provider TEXT,
     state TEXT NOT NULL DEFAULT 'running'
-        CHECK (state IN ('running','succeeded','failed','cancelled','empty')),
+        CHECK (state IN ('running','succeeded','failed','cancelled','empty','unknown')),
     error TEXT,
     result_ref TEXT,
     started_at TEXT NOT NULL,
@@ -428,7 +428,7 @@ table capability_invocations: CREATE TABLE capability_invocations (
     requested_placement TEXT NOT NULL DEFAULT 'this_machine',
     input_snapshot_json TEXT NOT NULL DEFAULT '{}',
     state TEXT NOT NULL DEFAULT 'running'
-        CHECK (state IN ('running','succeeded','failed','cancelled','unavailable','empty')),
+        CHECK (state IN ('running','succeeded','failed','cancelled','unavailable','empty','unknown')),
     result_ref TEXT,
     error TEXT,
     created_at TEXT NOT NULL,
@@ -670,6 +670,8 @@ table kernel_operations: CREATE TABLE kernel_operations (
     )),
     revision INTEGER NOT NULL DEFAULT 1,
     native_id TEXT NOT NULL,
+    parent_operation_id TEXT NOT NULL DEFAULT '',
+    correlation_id TEXT NOT NULL DEFAULT '',
     decision TEXT,
     warrant_json TEXT NOT NULL DEFAULT '{}',
     warrant_revoked INTEGER NOT NULL DEFAULT 0,

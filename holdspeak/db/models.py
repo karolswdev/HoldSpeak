@@ -20,10 +20,10 @@ VALID_ACTUATOR_PROPOSAL_STATUSES = frozenset(
     {"proposed", "approved", "executed", "rejected", "failed"}
 )
 VALID_CAPABILITY_INVOCATION_STATES = frozenset(
-    {"running", "succeeded", "failed", "cancelled", "unavailable", "empty"}
+    {"running", "succeeded", "failed", "cancelled", "unavailable", "empty", "unknown"}
 )
 VALID_CAPABILITY_ATTEMPT_STATES = frozenset(
-    {"running", "succeeded", "failed", "cancelled", "empty"}
+    {"running", "succeeded", "failed", "cancelled", "empty", "unknown"}
 )
 
 

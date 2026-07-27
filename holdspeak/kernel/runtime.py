@@ -8,6 +8,7 @@ from typing import Any, Mapping, Sequence
 from ..principals import UNAUTHENTICATED
 from .actuator import ActuatorCodec
 from .broker import Broker
+from .inference import InferenceCancelCodec, InferenceRunCodec
 from .journal import JournalStore
 from .model import OperationSpec
 from .process_input import ProcessInputCodec
@@ -29,10 +30,14 @@ def _build(database: Any, *, clock: Any = None) -> Broker:
     tool_calls = ToolCallCodec(database.gate, _mode)
     process_input = ProcessInputCodec(database.delivery_receipts)
     actuator = ActuatorCodec(database.actuators, _mode)
+    inference = InferenceRunCodec(database, **({"clock": clock} if clock else {}))
+    cancellation = InferenceCancelCodec(database, store)
     specs = (
         OperationSpec(tool_calls.name, tool_calls.version, tool_calls, "agent.submit", "propose"),
         OperationSpec(process_input.name, process_input.version, process_input, "agent.submit", "propose"),
         OperationSpec(actuator.name, actuator.version, actuator, "agent.submit", "propose"),
+        OperationSpec(inference.name, inference.version, inference, "agent.submit", "propose"),
+        OperationSpec(cancellation.name, cancellation.version, cancellation, "agent.submit", "propose"),
     )
     return Broker(store, specs, **({"clock": clock} if clock else {}))
 

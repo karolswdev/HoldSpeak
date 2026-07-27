@@ -5,23 +5,27 @@
 > evidence, no `Co-Authored-By`, metal-test exclusion).
 
 
-**Last updated:** 2026-07-27 — **Phase 106 (The Kernel) ACTIVE, 6/10
-— actuator egress is kernel-backed**. **HS-106-06 shipped the second,
-genuinely heterogeneous thin slice**: `actuator.egress@1` creates and links the
-existing durable proposal, exposes its exact material through `read`, advances
-the existing decision machine through `decide`, and leaves `ActuatorExecutor`
-as the only egress driver. It exact-claims by proposal ID and closes the kernel
-receipt from the existing audit ref; historic audits project without journal
-copies. A real webhook received the exact body once after approval and a real
-hub restart; rejection never egressed, stale revision refused by name, and the
-Desk's journal-fed badge named Custom webhook in the inspected screenshot. The
-broker guard remains green across terminal and actuator drivers, and
-`native_id` now has two filtered callers. Restart did not reproduce slice I's
-queue-loss seam because both native records are durable; the no-executor
-liveness edge is recorded for HS-106-07. Final proof: 86 backend + 296 Desk
-tests passed; the exact full suite recorded 4,257 passed / 41 skipped / exactly
-the five pre-adjudicated failures, and all three repaired live-bus tests passed.
-Earlier: **HS-106-05 shipped terminal input**: `process.input@1` admits terminal
+**Last updated:** 2026-07-27 — **Phase 106 (The Kernel) ACTIVE, 7/10
+— the kill criterion PASSED**. **HS-106-07 shipped bounded inference and the
+phase's real verdict**: `inference.run@1` takes recipes through the literal same
+admission/principal, journal, and receipt functions as terminal input and
+actuator egress. The caller cannot assert placement, model, or egress; admission
+derives and records them. Token streams refuse before native admission. Article
+XI clause 2 is now executable: tool effects and cancellation signals submit as
+causally linked child operations with independent claims and receipts. A real
+LAN recipe against 192.168.1.43 returned the treatment marker and a succeeded
+receipt; a claimed child wrote a real file; cancellation returned its own
+receipt; and a real hub SIGKILL recovered `unknown` as `unknown` on the Desk,
+with an `indeterminate` kernel receipt. **Verdict: PASS** — zero driver-specific
+conditionals, all three drivers traced through `Broker._admit_authority`,
+`JournalStore.create_operation` / `append`, and `ExecutorPlane._terminal`, and
+the unchanged 300-line budget held at a 299-line maximum. The exact full suite
+recorded 4,285 passed / 37 skipped / only the pre-adjudicated voice-notes wording
+failure, with all three live-bus tests green. The honest remaining seam is
+generic liveness: pending forever is not indeterminate. Earlier:
+**HS-106-06 shipped actuator egress**: `actuator.egress@1` creates and links the
+existing durable proposal; `ActuatorExecutor` remains the driver and closes the
+kernel receipt from the native audit ref. Earlier: **HS-106-05 shipped terminal input**: `process.input@1` admits terminal
 text once, exact-claims its existing native command, and closes the kernel
 receipt from the unchanged Phase-94 node receipt. Earlier: **HS-106-04 shipped
 the spine**:

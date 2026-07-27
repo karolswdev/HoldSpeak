@@ -686,6 +686,12 @@ class MeetingWebServer:
                 invalidate_held_on_startup()
             except Exception as e:
                 log.error(f"gate startup invalidation failed: {e}")
+            try:
+                from .web.routes.primitives.invocations import recover_inference_on_startup
+
+                recover_inference_on_startup()
+            except Exception as e:
+                log.error(f"inference startup recovery failed: {e}")
             self._loop = asyncio.get_running_loop()
             self._duration_task = asyncio.create_task(self._duration_loop())
             self._coder_frames_task = asyncio.create_task(self._coder_frames_loop())
