@@ -4,8 +4,10 @@
 > pick up, and the repo conventions that bite (PMO commit gate, write-once
 > evidence, no `Co-Authored-By`, metal-test exclusion).
 
-**Last updated:** 2026-07-26 — **Phase 106 (The Kernel) ACTIVE,
-3/10 — HS-106-04 shipped the spine**. `holdspeak/kernel/` now exposes
+
+**Last updated:** 2026-07-26 — **Phase 106 (The Kernel) ACTIVE, 4/10
+— the law, both prerequisites, and the spine**. **HS-106-04 shipped the
+spine**: `holdspeak/kernel/` now exposes
 exactly four caller calls (`read`, `submit`, `decide`, `events`) plus the
 separate `claim` / `receipt` / `reconcile` executor plane. The existing
 Phase-104 gate is the one native decision record behind `decide`; there
@@ -24,7 +26,41 @@ Final kernel/gate/schema proof: 64 passed. The exact full suite recorded
 4,245 passed / 41 skipped / 1 pre-existing unrelated UAT wording
 failure, documented in the story. Earlier: **HS-106-02 and HS-106-03
 landed both §8 prerequisites** — typed principals on loopback and the
-40-site effect census as executable law. Earlier: **Phase 106 chartered** from the owner's web-OS
+40-site effect census as executable law.
+**HS-106-01: Article XI is
+in the Constitution.** The fourth council pass REFUSED the drafted
+Article and was sustained on three counts, including a
+process-topology definition error the first three passes all missed;
+clauses 1-5 landed as the council rewrote them and the drafted clause
+6 was deleted. Its further recommendation to defer ratification
+entirely was overruled by the owner under Article X.1, who ratified
+early behind a transitional migration provision — recorded as dissent
+in the archive, the RFC council record, and the Constitution's own
+amendment record. Clause 6 is executable, not rhetorical: the register
+is the HS-106-03 effect ledger, no agent principal may reach a path it
+names, and the clause expires with the register. Clause 2 is knowingly
+false at ratification, which is precisely what clause 6 enumerates.
+**HS-106-02 principal separation**. **HS-106-02 principal
+separation**: loopback has lost all request-authority work. HTTP and
+WebSocket derive typed owner, agent, and node principals from distinct
+credentials; agent identity is minted at spawn / SessionStart, expires,
+revokes at SessionEnd or factory kill, and rotates on respawn.
+`decide`, posture, and delegation close at the edge by principal
+right; gate and authority records no longer trust caller actor/session
+labels. The owner's first load stays invisible-auth via a tokenized URL
+captured and scrubbed by the Desk. Proven by a real `claude -p` process
+against a real hub (proposal 200, decision 403 named `agent` +
+`decide`), a 1440/393 screenshot walk, and 4,231 passing tests.
+**HS-106-03** turned Article XI's migration debt register into
+checked-in law and an executable fence — exactly 40 static effect
+statements, 4 covered and 36 not, with additions and removals named by
+file:line and family. Import origins survive from-imports, renamed
+imports, module aliases, and callable aliases across all five families
+(a review pass caught and closed the from-import evasion). The empty
+broker field is already bounded by a 300-line module budget and a zero
+driver-specific conditional census; mutations proved every fence fails
+loudly, and no effect site was rerouted. The broker spine (HS-106-04)
+is unblocked. Earlier: **Phase 106 chartered** from the owner's web-OS
 charge, with Article XI's migration provision and council dissent on
 record. Earlier: **Phase 104 (Borrowed Fire II)
 CLOSED 8/8, all in one day**: the ledger, the fail-closed gate, the
