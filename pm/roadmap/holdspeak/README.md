@@ -4,8 +4,21 @@
 > pick up, and the repo conventions that bite (PMO commit gate, write-once
 > evidence, no `Co-Authored-By`, metal-test exclusion).
 
-**Last updated:** 2026-07-26 — **Phase 106 (The Kernel) ACTIVE,
-2/10 — both §8 prerequisites landed**. **HS-106-02 principal
+**Last updated:** 2026-07-26 — **Phase 106 (The Kernel) ACTIVE, 3/10
+— the law and both prerequisites landed**. **HS-106-01: Article XI is
+in the Constitution.** The fourth council pass REFUSED the drafted
+Article and was sustained on three counts, including a
+process-topology definition error the first three passes all missed;
+clauses 1-5 landed as the council rewrote them and the drafted clause
+6 was deleted. Its further recommendation to defer ratification
+entirely was overruled by the owner under Article X.1, who ratified
+early behind a transitional migration provision — recorded as dissent
+in the archive, the RFC council record, and the Constitution's own
+amendment record. Clause 6 is executable, not rhetorical: the register
+is the HS-106-03 effect ledger, no agent principal may reach a path it
+names, and the clause expires with the register. Clause 2 is knowingly
+false at ratification, which is precisely what clause 6 enumerates.
+**HS-106-02 principal separation**. **HS-106-02 principal
 separation**: loopback has lost all request-authority work. HTTP and
 WebSocket derive typed owner, agent, and node principals from distinct
 credentials; agent identity is minted at spawn / SessionStart, expires,

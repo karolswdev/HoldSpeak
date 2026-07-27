@@ -65,6 +65,8 @@ you do. All of it local, all of it yours, all of it through the Desk.
    refused and what would satisfy it.
 4. Reach never outruns consent: more machines, more panes, more connectors
    always ride the same chokepoints.
+5. Article XI names the one chokepoint and what it must record. It carries
+   this article's spine into the kernel; it never narrows it.
 
 ## Article VI — Honest by construction
 
@@ -113,3 +115,48 @@ you do. All of it local, all of it yours, all of it through the Desk.
    cannot satisfy an article says so before it starts, not after it ships.
 3. When practice and constitution drift, one of them is wrong on purpose.
    The drift is named and resolved; it is never ignored.
+
+## Article XI — The Kernel
+
+1. A consequential operation is one that acts under Article V, exercises or
+   changes authority, controls a process or machine, invokes a model,
+   crosses egress, or may be irreversible. Topology decides nothing:
+   crossing a process boundary does not make an act consequential, and
+   staying inside one does not exempt it. Each effect is judged for itself;
+   nesting inside an admitted operation exempts nothing.
+2. Every consequential operation HoldSpeak performs, brokers, or authorizes
+   is admitted once through the kernel before it acts, and ends in a
+   terminal receipt — including refusal, failure, and the outcome that
+   cannot be determined. A tool effect offered to a model or an agent is
+   admitted as a child of the run that offered it.
+3. The caller supplies neither its principal nor its authority. The kernel
+   authenticates the one and derives the other at admission. Payload,
+   target, and authority basis are then immutable; the right to execute may
+   still expire or be revoked.
+4. Humans and agents share the kernel's schemas, never its rights. Rights
+   come from an authenticated principal and bounded delegation. Only the
+   owner approves, rejects, or delegates. The owner's own gesture is
+   approval; consent is not a second confirmation of what the owner just
+   did.
+5. Reads, presentation, and computation without effect — including the
+   token stream inside a model's run — owe the kernel no admission and no
+   receipt. They still owe it an authenticated principal and read
+   authority. This exempts computation, never effects.
+6. *(Transitional.)* Until the effect register is empty, the paths it names
+   act outside the kernel as declared debt. The register is checked in and
+   enumerated; no path joins it silently; no agent principal may reach a
+   path it names. This clause and the register expire together, on the day
+   the register is empty.
+
+## Amendment record
+
+- **2026-07-26 — Article XI (The Kernel) ratified**, and Article V gained
+  clause 5 pointing to it. Proposed in
+  `PLAN_KERNEL_OPERATION_BROKER.md` §10, amended by the fourth council
+  pass, ratified by the owner in Phase 106 (HS-106-01).
+  Clause 6 is transitional and self-repealing: it expires with the effect
+  register (`holdspeak/kernel/effect_ledger.json`), which is empty when
+  every path it names has been migrated. The council's dissent — that
+  ratification should wait until clause 2 is materially true — is recorded
+  at `pm/roadmap/holdspeak/proposals/kernel-council-sol-article-xi.md`
+  and was overruled under Article X.1.
