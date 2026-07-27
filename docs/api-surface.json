@@ -2139,6 +2139,68 @@
       ]
     },
     {
+      "path": "/api/kernel/events",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.system.kernel_routes",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/kernel/executor/claim",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.system.kernel_routes",
+      "consumers": []
+    },
+    {
+      "path": "/api/kernel/executor/operations/{operation_id}/receipt",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.system.kernel_routes",
+      "consumers": []
+    },
+    {
+      "path": "/api/kernel/executor/operations/{operation_id}/reconcile",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.system.kernel_routes",
+      "consumers": []
+    },
+    {
+      "path": "/api/kernel/operations/{operation_id}/decide",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.system.kernel_routes",
+      "consumers": []
+    },
+    {
+      "path": "/api/kernel/read",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.system.kernel_routes",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/kernel/submit",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.system.kernel_routes",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/meeting",
       "methods": [
         "PATCH"

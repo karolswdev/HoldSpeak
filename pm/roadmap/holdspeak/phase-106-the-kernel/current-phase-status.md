@@ -1,6 +1,6 @@
 # Phase 106 - The Kernel
 
-**Status:** ACTIVE (1/10). Chartered 2026-07-26 from
+**Status:** ACTIVE (3/10). Chartered 2026-07-26 from
 [`PLAN_KERNEL_OPERATION_BROKER.md`](../../../docs/internal/PLAN_KERNEL_OPERATION_BROKER.md)
 (the RFC, three council passes) and the owner's direct charge:
 
@@ -11,7 +11,7 @@
 > records decisions and then creates artifacts out of those
 > decisions and meetings."
 
-**Last updated:** 2026-07-26 (HS-106-02 and HS-106-03 shipped; 2/10).
+**Last updated:** 2026-07-26 (HS-106-04 shipped; 3/10).
 
 ## Why this phase exists
 
@@ -110,7 +110,7 @@ receipt for every consequence.
 | HS-106-01 | Article XI ratified, with the migration provision | ready | [story-01-article-xi](./story-01-article-xi.md) | — |
 | HS-106-02 | Principal separation on loopback | done | [story-02-principals](./story-02-principals.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-106-03 | The effect census, pinned as a test | done | [story-03-census-test](./story-03-census-test.md) | [evidence-story-03](./evidence-story-03.md) |
-| HS-106-04 | The broker and the journal — four calls | ready | [story-04-broker-journal](./story-04-broker-journal.md) | — |
+| HS-106-04 | The broker and the journal — four calls | done | [story-04-broker-journal](./story-04-broker-journal.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-106-05 | Thin slice I — terminal input | ready | [story-05-slice-terminal](./story-05-slice-terminal.md) | — |
 | HS-106-06 | Thin slice II — actuator egress | ready | [story-06-slice-actuator](./story-06-slice-actuator.md) | — |
 | HS-106-07 | Thin slice III — inference, and the kill criterion | ready | [story-07-slice-inference-kill](./story-07-slice-inference-kill.md) | — |
@@ -168,6 +168,26 @@ pretending.
   three thinly.
 
 ## Where we are
+
+**2026-07-26 — HS-106-04 shipped, 3/10.** The kernel spine now has
+exactly four caller calls (`read`, `submit`, `decide`, `events`) and the
+separate `claim` / `receipt` / `reconcile` executor plane. One trusted
+startup codec adapts the existing Phase-104 gate rather than creating a
+second decision state machine. Admission derives authority in four
+ordered layers and approval mints an expiring, revocable, one-use
+warrant bound to the immutable envelope hash, target, and placement.
+The durable lifecycle journal carries only refs, hashes, and bounded
+heads on a per-stream SHA-256 chain; canonical gate state and process
+state remain native-backed projections. Real HTTP against a spawned hub
+proved refusal receipts, agent decision refusal, immutable decisions,
+claim and terminal receipt, then real SIGKILL restart with byte-equal
+cursor replay and an honest indeterminate recovery receipt. Tamper,
+driver-conditional, and line-budget mutations all failed by name and
+returned green after restore. Final kernel/gate/schema proof: 64 passed.
+The exact full suite completed 4,245 passed / 41 skipped / 1 pre-existing
+unrelated UAT wording failure, documented in the story and evidence.
+HS-106-05 is next: the terminal slice must lean on this spine without
+adding a driver conditional.
 
 **2026-07-26 — HS-106-02 shipped, 2/10.** Loopback is no longer an
 authority signal. The HTTP and WebSocket doors derive typed `owner`,

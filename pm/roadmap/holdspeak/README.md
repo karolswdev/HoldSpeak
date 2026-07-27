@@ -5,27 +5,26 @@
 > evidence, no `Co-Authored-By`, metal-test exclusion).
 
 **Last updated:** 2026-07-26 — **Phase 106 (The Kernel) ACTIVE,
-2/10 — both §8 prerequisites landed**. **HS-106-02 principal
-separation**: loopback has lost all request-authority work. HTTP and
-WebSocket derive typed owner, agent, and node principals from distinct
-credentials; agent identity is minted at spawn / SessionStart, expires,
-revokes at SessionEnd or factory kill, and rotates on respawn.
-`decide`, posture, and delegation close at the edge by principal
-right; gate and authority records no longer trust caller actor/session
-labels. The owner's first load stays invisible-auth via a tokenized URL
-captured and scrubbed by the Desk. Proven by a real `claude -p` process
-against a real hub (proposal 200, decision 403 named `agent` +
-`decide`), a 1440/393 screenshot walk, and 4,231 passing tests.
-**HS-106-03** turned Article XI's migration debt register into
-checked-in law and an executable fence — exactly 40 static effect
-statements, 4 covered and 36 not, with additions and removals named by
-file:line and family. Import origins survive from-imports, renamed
-imports, module aliases, and callable aliases across all five families
-(a review pass caught and closed the from-import evasion). The empty
-broker field is already bounded by a 300-line module budget and a zero
-driver-specific conditional census; mutations proved every fence fails
-loudly, and no effect site was rerouted. The broker spine (HS-106-04)
-is unblocked. Earlier: **Phase 106 chartered** from the owner's web-OS
+3/10 — HS-106-04 shipped the spine**. `holdspeak/kernel/` now exposes
+exactly four caller calls (`read`, `submit`, `decide`, `events`) plus the
+separate `claim` / `receipt` / `reconcile` executor plane. The existing
+Phase-104 gate is the one native decision record behind `decide`; there
+is no rival approval surface. Authority resolves once in four ordered
+layers and rides as an expiring, revocable, one-use warrant bound to the
+immutable envelope hash, target, and placement. Lifecycle facts land in
+a durable per-stream SHA-256 chain containing refs, hashes, and bounded
+heads, while canonical domain records remain authoritative. A real
+spawned hub proved refusal receipt → owner decision → node claim →
+terminal receipt, agent decision refusal, immutable payload/target/
+placement, and real SIGKILL restart with byte-equal cursor replay plus
+an honest indeterminate recovery receipt. Density and tamper mutations
+failed by name, then restored green; every broker module remains under
+the unchanged 300-line cap with zero driver-specific conditionals.
+Final kernel/gate/schema proof: 64 passed. The exact full suite recorded
+4,245 passed / 41 skipped / 1 pre-existing unrelated UAT wording
+failure, documented in the story. Earlier: **HS-106-02 and HS-106-03
+landed both §8 prerequisites** — typed principals on loopback and the
+40-site effect census as executable law. Earlier: **Phase 106 chartered** from the owner's web-OS
 charge, with Article XI's migration provision and council dissent on
 record. Earlier: **Phase 104 (Borrowed Fire II)
 CLOSED 8/8, all in one day**: the ledger, the fail-closed gate, the
@@ -196,7 +195,7 @@ the ⌘K shelf's z-defect fixed; the owner's 101 sitting remains open in
 parallel. Phase 101 itself stands at 3/4 (canon ratified and built,
 PR #359; sweep 4122/0).
 
-**Current phase:** [**Phase 106 — The Kernel**](./phase-106-the-kernel/current-phase-status.md) — **ACTIVE (0/10, chartered 2026-07-26)**: the RFC's strangler ladder as a phase — Article XI with the owner's migration provision, principal separation on loopback (the confused deputy), the 40-site effect census pinned as a test, the broker and hash-chained journal behind four calls (`read`/`submit`/`decide`/`events`), three HETEROGENEOUS driver slices (terminal input → actuator egress → inference runs) with the kill criterion applied for real at the third, and then the first §9 userland program: **PR follow-through** — see the PR that needs you, decide once, send a scoped agent at it, propose the comment, and get a receipt for every consequence. The fourth council pass (Sol) returned **do not ratify yet** with file-level evidence; its rewritten clauses 1-5 were adopted, the drafted clause 6 deleted, and the owner ruled to ratify early behind a temporary migration provision that names the unmigrated paths as declared debt and forbids agent access to them. Previous: [**Phase 104 — Borrowed Fire II**](./phase-104-borrowed-fire-ii/current-phase-status.md), **CLOSED (8/8, 2026-07-26)** — built, walked, ridden (HS-104-08, the icon reforge the sitting chartered), and accepted the same day ("Yup. Better. Let's close out the phase."). Previous: [Phase 105 — Workbench](./phase-105-workbench/current-phase-status.md), **CLOSED (7/7, 2026-07-26)** — the owner's acceptance carried the standing rider that 104 and the kernel are the "actual OS" program. Previous: [Phase 103 — Foundations & Borrowed Fire](./phase-103-foundations-and-borrowed-fire/current-phase-status.md) — **CLOSED (7/7, 2026-07-25)**.
+**Current phase:** [**Phase 106 — The Kernel**](./phase-106-the-kernel/current-phase-status.md) — **ACTIVE (3/10, chartered 2026-07-26)**: the RFC's strangler ladder as a phase — Article XI with the owner's migration provision, principal separation on loopback (the confused deputy), the 40-site effect census pinned as a test, the broker and hash-chained journal behind four calls (`read`/`submit`/`decide`/`events`), three HETEROGENEOUS driver slices (terminal input → actuator egress → inference runs) with the kill criterion applied for real at the third, and then the first §9 userland program: **PR follow-through** — see the PR that needs you, decide once, send a scoped agent at it, propose the comment, and get a receipt for every consequence. The fourth council pass (Sol) returned **do not ratify yet** with file-level evidence; its rewritten clauses 1-5 were adopted, the drafted clause 6 deleted, and the owner ruled to ratify early behind a temporary migration provision that names the unmigrated paths as declared debt and forbids agent access to them. Previous: [**Phase 104 — Borrowed Fire II**](./phase-104-borrowed-fire-ii/current-phase-status.md), **CLOSED (8/8, 2026-07-26)** — built, walked, ridden (HS-104-08, the icon reforge the sitting chartered), and accepted the same day ("Yup. Better. Let's close out the phase."). Previous: [Phase 105 — Workbench](./phase-105-workbench/current-phase-status.md), **CLOSED (7/7, 2026-07-26)** — the owner's acceptance carried the standing rider that 104 and the kernel are the "actual OS" program. Previous: [Phase 103 — Foundations & Borrowed Fire](./phase-103-foundations-and-borrowed-fire/current-phase-status.md) — **CLOSED (7/7, 2026-07-25)**.
 — **IN PROGRESS (0/6)**. Chartered 2026-07-22 from a four-agent
 research pass (3 independent Opus 4.8 analysts on
 `ViuGiaLai/researchmind`, 1 independent Opus 4.8 skeptical audit of
