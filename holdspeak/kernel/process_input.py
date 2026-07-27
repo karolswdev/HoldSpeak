@@ -110,6 +110,9 @@ class ProcessInputCodec:
     def read_native(self, native_id: str) -> dict[str, Any] | None:
         return self._commands.get(native_id)
 
+    def project_receipts(self, native_id: str) -> list[dict[str, Any]]:
+        return []
+
     def project_process(self, native_id: str, operation: Mapping[str, Any]) -> dict[str, Any]:
         native = self._commands.get(native_id)
         domain_state = str((native or {}).get("hub_state") or "unknown")

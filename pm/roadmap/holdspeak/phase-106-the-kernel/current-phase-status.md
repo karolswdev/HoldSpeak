@@ -1,6 +1,6 @@
 # Phase 106 - The Kernel
 
-**Status:** ACTIVE (5/10). Chartered 2026-07-26 from
+**Status:** ACTIVE (6/10). Chartered 2026-07-26 from
 [`PLAN_KERNEL_OPERATION_BROKER.md`](../../../docs/internal/PLAN_KERNEL_OPERATION_BROKER.md)
 (the RFC, three council passes) and the owner's direct charge:
 
@@ -11,7 +11,7 @@
 > records decisions and then creates artifacts out of those
 > decisions and meetings."
 
-**Last updated:** 2026-07-27 (HS-106-01 through HS-106-05 shipped; 5/10 — the law, both prerequisites, the spine, and terminal input).
+**Last updated:** 2026-07-27 (HS-106-01 through HS-106-06 shipped; 6/10 — the law, both prerequisites, the spine, terminal input, and actuator egress).
 
 ## Why this phase exists
 
@@ -112,7 +112,7 @@ receipt for every consequence.
 | HS-106-03 | The effect census, pinned as a test | done | [story-03-census-test](./story-03-census-test.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-106-04 | The broker and the journal — four calls | done | [story-04-broker-journal](./story-04-broker-journal.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-106-05 | Thin slice I — terminal input | done | [story-05-slice-terminal](./story-05-slice-terminal.md) | [evidence-story-05](./evidence-story-05.md) |
-| HS-106-06 | Thin slice II — actuator egress | ready | [story-06-slice-actuator](./story-06-slice-actuator.md) | — |
+| HS-106-06 | Thin slice II — actuator egress | done | [story-06-slice-actuator](./story-06-slice-actuator.md) | [evidence-story-06](./evidence-story-06.md) |
 | HS-106-07 | Thin slice III — inference, and the kill criterion | ready | [story-07-slice-inference-kill](./story-07-slice-inference-kill.md) | — |
 | HS-106-08 | Userland — PR follow-through, the tech-lead's loop | ready | [story-08-userland-pr-follow](./story-08-userland-pr-follow.md) | — |
 | HS-106-09 | Docs — the kernel at the entry points | ready | [story-09-docs](./story-09-docs.md) | — |
@@ -168,6 +168,23 @@ pretending.
   three thinly.
 
 ## Where we are
+
+**2026-07-27 — HS-106-06 shipped, 6/10.** `actuator.egress@1` is the
+first outward, durable-decision driver. `submit` creates and links the existing
+proposal; the owner reads its native material and `decide` advances the existing
+state machine; `ActuatorExecutor` exact-claims by proposal ID and closes the
+kernel receipt from the native audit ref. Historic audit rows project through
+`read` without journal copies. A real webhook body crossed once after approval
+and a real hub restart; rejection never egressed, stale revision refused as
+`operation_revision_conflict`, and the Desk's journal-fed badge named Custom
+webhook in the captured 1440px walk. The broker remains driver-blind: the final
+guard reports 2 passed and every module below 300 lines. `native_id` is now
+validated by terminal and actuator callers. The durable rows avoided slice I's
+restart queue-loss boundary; the no-executor liveness edge remains recorded for
+HS-106-07's kill criterion. Final slice proof: 86 backend tests and 296 Desk
+tests passed; the exact full suite recorded 4,257 passed / 41 skipped / exactly
+the five pre-adjudicated failures, while all three repaired live-bus tests are
+green. HS-106-07 is next: bounded inference and the kill criterion.
 
 **2026-07-27 — HS-106-05 shipped, 5/10.** `process.input@1` is the
 second real driver. The delivery and coder façades now admit terminal text,

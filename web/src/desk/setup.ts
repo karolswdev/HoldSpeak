@@ -31,6 +31,7 @@ export interface SetupStatus {
     transcript_egress?: string;
     configured_endpoints?: string[];
     destinations?: TrustDestination[];
+    last_egress?: { id: string; name: string; receipt: string } | null;
   };
   [key: string]: unknown;
 }
@@ -55,6 +56,13 @@ export function egressBadge(setup: SetupStatus | null): EgressBadge {
   const bind = t.web_bind;
   const offLoopback =
     bind && bind !== "127.0.0.1" && bind !== "localhost" && bind !== "::1";
+  if (t.last_egress?.name) {
+    return {
+      scope: "mixed",
+      text: `→ ${t.last_egress.name}`,
+      title: `Last receipted egress: ${t.last_egress.receipt}`,
+    };
+  }
   if (t.actuators_enabled || (offLoopback && !t.auth_token_set)) {
     return {
       scope: "mixed",

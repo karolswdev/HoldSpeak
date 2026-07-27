@@ -132,6 +132,11 @@ def _trust_block(
 
     destinations = destination_inventory(config, database=database)
     enabled_destinations = [row for row in destinations if row["enabled"]]
+    receipted_destinations = [row for row in destinations if row.get("last_receipt")]
+    last_egress = (
+        max(receipted_destinations, key=lambda row: str(row["last_receipt"]))
+        if receipted_destinations else None
+    )
 
     return {
         "web_bind": web_bind,
@@ -143,6 +148,14 @@ def _trust_block(
         "actuators_enabled": bool(getattr(meeting, "allow_actuators", False)),
         "webhook_allowed_hosts": list(getattr(meeting, "webhook_allowed_hosts", []) or []),
         "destinations": destinations,
+        "last_egress": (
+            {
+                "id": last_egress["id"],
+                "name": last_egress["name"],
+                "receipt": last_egress["last_receipt"],
+            }
+            if last_egress else None
+        ),
         "summary": (
             f"{len(enabled_destinations)} external destination"
             f"{'s' if len(enabled_destinations) != 1 else ''} enabled."

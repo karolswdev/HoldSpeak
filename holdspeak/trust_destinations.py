@@ -89,10 +89,16 @@ def destination_inventory(config: Any, *, database: Any = None) -> list[dict[str
     receipts: dict[str, Any] = {}
     actuators = getattr(database, "actuators", None)
     if actuators is not None:
+        from .kernel.journal import JournalStore
+
+        journal = JournalStore(database._connection)
         for registry_id, target in {
             "slack": "slack", "companion_webhook": "webhook", "github": "github"
         }.items():
-            receipts[registry_id] = actuators.last_execution_receipt(target)
+            receipts[registry_id] = (
+                journal.last_receipt_for_ref(f"egress:{target}")
+                or actuators.last_execution_receipt(target)
+            )
     return [
         {
             **row, "enabled": enabled[row["id"]], "destination": names[row["id"]],
