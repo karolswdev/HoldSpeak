@@ -32,7 +32,6 @@ class JournalStore:
     def __init__(self, connection: Any, *, clock: Any = time.time) -> None:
         self._connection = connection
         self._clock = clock
-
     def _secret(self) -> str:
         with self._connection() as conn:
             row = conn.execute("SELECT value FROM kernel_meta WHERE key='warrant_secret'").fetchone()
@@ -51,6 +50,14 @@ class JournalStore:
         if forbidden_content(metadata):
             raise KernelRefused("journal_content_forbidden")
         with self._connection() as conn:
+            if not correlation_id or not causation_id:
+                operation = conn.execute(
+                    "SELECT correlation_id,parent_operation_id FROM kernel_operations WHERE operation_id=?",
+                    (operation_id,),
+                ).fetchone()
+                if operation is not None:
+                    correlation_id = correlation_id or str(operation["correlation_id"] or "")
+                    causation_id = causation_id or str(operation["parent_operation_id"] or "")
             previous = conn.execute(
                 "SELECT stream_sequence, record_sha256 FROM kernel_journal WHERE stream=? ORDER BY stream_sequence DESC LIMIT 1",
                 (stream,),
@@ -123,7 +130,6 @@ class JournalStore:
         batch = [self._event(row) for row in rows]
         cursor = batch[-1]["cursor"] if batch else max(0, int(after_cursor))
         return {"after_cursor": after_cursor, "cursor": cursor, "events": batch}
-
     def last_receipt_for_ref(self, ref: str) -> str | None:
         """Return the latest journal receipt time for an admitted effect ref."""
         with self._connection() as conn:
@@ -161,39 +167,44 @@ class JournalStore:
                 """INSERT INTO kernel_operations(
                     operation_id,request_id,idempotency_key,name,version,principal_kind,
                     principal_identity,target_ref,placement,envelope_sha256,policy_version,
-                    authority_basis,state,revision,native_id,created_at,updated_at
-                ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                    authority_basis,state,revision,native_id,parent_operation_id,
+                    correlation_id,created_at,updated_at
+                ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
                 (
                     values["operation_id"], values["request_id"], values["idempotency_key"],
                     values["name"], values["version"], values["principal_kind"],
                     values["principal_identity"], values["target_ref"], values["placement"],
                     values["envelope_sha256"], values["policy_version"],
                     values["authority_basis"], values["state"], 1, values["native_id"],
+                    values.get("parent_operation_id", ""), values.get("correlation_id", ""),
                     self._clock(), self._clock(),
                 ),
             )
         return self.operation(str(values["operation_id"]))
-
     def operation(self, operation_id: str) -> dict[str, Any] | None:
         with self._connection() as conn:
             row = conn.execute(
                 "SELECT * FROM kernel_operations WHERE operation_id=?", (operation_id,)
             ).fetchone()
         return self._operation(row) if row is not None else None
-
     def operation_for_ref(self, ref: str) -> dict[str, Any] | None:
         with self._connection() as conn:
             row = conn.execute(
                 "SELECT * FROM kernel_operations WHERE target_ref=? ORDER BY created_at DESC LIMIT 1", (ref,)
             ).fetchone()
         return self._operation(row) if row is not None else None
-
     def operation_for_native(self, native_id: str) -> dict[str, Any] | None:
         with self._connection() as conn:
             row = conn.execute(
                 "SELECT * FROM kernel_operations WHERE native_id=? ORDER BY created_at DESC LIMIT 1", (native_id,)
             ).fetchone()
         return self._operation(row) if row is not None else None
+    def operations_in_state(self, state: str) -> list[dict[str, Any]]:
+        with self._connection() as conn:
+            rows = conn.execute(
+                "SELECT * FROM kernel_operations WHERE state=? ORDER BY created_at", (state,)
+            ).fetchall()
+        return [self._operation(row) for row in rows]
 
     def transition(self, operation_id: str, expected_revision: int, state: str, **changes: Any) -> dict[str, Any]:
         assignments = ["state=?", "revision=revision+1", "updated_at=?"]
@@ -213,7 +224,6 @@ class JournalStore:
             if result.rowcount != 1:
                 raise KernelRefused("operation_revision_conflict", operation_id=operation_id)
         return self.operation(operation_id) or {}
-
     def claim_candidate(
         self, executor: str, native_id: str = ""
     ) -> dict[str, Any] | None:
@@ -237,7 +247,6 @@ class JournalStore:
             if result.rowcount != 1:
                 return None
         return self.operation(str(row["operation_id"]))
-
     def revoke_warrant(self, operation_id: str) -> dict[str, Any]:
         with self._connection() as conn:
             conn.execute(
@@ -259,21 +268,18 @@ class JournalStore:
                 (receipt_id, operation_id, state, outcome, result_ref, self._clock()),
             )
         return self.receipt(operation_id) or {}
-
     def receipt(self, operation_id: str) -> dict[str, Any] | None:
         with self._connection() as conn:
             row = conn.execute(
                 "SELECT * FROM kernel_receipts WHERE operation_id=?", (operation_id,)
             ).fetchone()
         return dict(row) if row is not None else None
-
     def sign_warrant(self, payload: Mapping[str, Any]) -> dict[str, Any]:
         warrant = dict(payload)
         warrant["signature"] = hmac.new(
             self._secret().encode(), _json(warrant).encode(), hashlib.sha256
         ).hexdigest()
         return warrant
-
     def valid_warrant(self, warrant: Mapping[str, Any]) -> bool:
         unsigned = {key: value for key, value in warrant.items() if key != "signature"}
         expected = hmac.new(self._secret().encode(), _json(unsigned).encode(), hashlib.sha256).hexdigest()

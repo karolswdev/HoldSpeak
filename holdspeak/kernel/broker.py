@@ -73,6 +73,7 @@ class Broker(ExecutorPlane):
             if spec is None:
                 raise KernelRefused("operation_type_unregistered")
             admission, layers = self._admit_authority(request, spec, principal, operation_id)
+            parent_id, correlation_id = self._causality(request, principal, operation_id)
             self.last_authority_layers = tuple(layers)
         except KernelRefused as exc:
             return self._refuse_attempt(raw, principal, operation_id, exc.reason)
@@ -96,6 +97,8 @@ class Broker(ExecutorPlane):
             "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
             "state": "admitting",
             "native_id": admission.native_id,
+            "parent_operation_id": parent_id,
+            "correlation_id": correlation_id,
         }
         try:
             operation = self.store.create_operation(values)
@@ -113,7 +116,7 @@ class Broker(ExecutorPlane):
             return self._handle(operation)
         self.store.append(
             "operation.admitted", operation["operation_id"], refs=admission.refs,
-            head=admission.head, causation_id=request.request_id,
+            head=admission.head, causation_id=parent_id or request.request_id,
         )
         try:
             spec.codec.admit(request, admission, principal, operation["operation_id"])
@@ -215,6 +218,24 @@ class Broker(ExecutorPlane):
         admission = spec.codec.authorize(request, admission, principal, operation_id)
         layers.append("interruption_policy")
         return admission, layers
+
+    def _causality(
+        self, request: OperationRequest, principal: Any, operation_id: str,
+    ) -> tuple[str, str]:
+        parent_id = request.parent_operation_id
+        if not parent_id:
+            return "", operation_id
+        parent = self.store.operation(parent_id)
+        if parent is None:
+            raise KernelRefused("parent_operation_unknown")
+        if parent["state"] != "claimed":
+            raise KernelRefused("parent_operation_not_running")
+        if (
+            parent["principal_kind"] != "owner"
+            and parent["principal_identity"] != principal.identity
+        ):
+            raise KernelRefused("parent_operation_scope_required")
+        return parent_id, str(parent["correlation_id"] or parent_id)
 
     def _refuse_attempt(
         self, raw: Any, principal: Any, operation_id: str, reason: str, *, unique: bool = False,

@@ -146,6 +146,22 @@ export function Pullout({
   // Cards never close from a stray click elsewhere — windows coexist.
 
   useEffect(() => {
+    if (o.kind === "recipe") {
+      apiRequest("/api/invocations?limit=25")
+        .then((r) => r.json())
+        .then((data) => {
+          const invocation = (data.invocations || []).find(
+            (item: any) => item.definition_ref === `persona:${o.id}`,
+          );
+          if (!invocation) return;
+          setRunInvocationId(String(invocation.id));
+          setRunState(String(invocation.state));
+          setActualPlacement(
+            invocation.attempts?.at(-1)?.actual_placement || null,
+          );
+        })
+        .catch(() => undefined);
+    }
     if (o.kind !== "meeting") return;
     // The detail payload nests intel_status (the repo's documented gotcha).
     apiRequest(`/api/meetings/${encodeURIComponent(o.id)}`)
@@ -803,6 +819,7 @@ export function Pullout({
                 {actualPlacement?.fallback_reason
                   ? ` · fallback: ${String(actualPlacement.fallback_reason)}`
                   : ""}
+                {runState ? ` · ${runState}` : ""}
                 {` · ${runInvocationId}`}
               </p>
             )}

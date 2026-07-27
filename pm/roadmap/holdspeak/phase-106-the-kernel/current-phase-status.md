@@ -1,6 +1,6 @@
 # Phase 106 - The Kernel
 
-**Status:** ACTIVE (6/10). Chartered 2026-07-26 from
+**Status:** ACTIVE (7/10). Chartered 2026-07-26 from
 [`PLAN_KERNEL_OPERATION_BROKER.md`](../../../docs/internal/PLAN_KERNEL_OPERATION_BROKER.md)
 (the RFC, three council passes) and the owner's direct charge:
 
@@ -11,7 +11,7 @@
 > records decisions and then creates artifacts out of those
 > decisions and meetings."
 
-**Last updated:** 2026-07-27 (HS-106-01 through HS-106-06 shipped; 6/10 — the law, both prerequisites, the spine, terminal input, and actuator egress).
+**Last updated:** 2026-07-27 (HS-106-01 through HS-106-07 shipped; 7/10 — the law, both prerequisites, the spine, three heterogeneous slices, and a PASS verdict).
 
 ## Why this phase exists
 
@@ -87,10 +87,10 @@ receipt for every consequence.
 ## Exit criteria (evidence required)
 
 - [ ] HS-106-01 through HS-106-08 shipped with evidence.
-- [ ] The kill criterion (RFC §12) applied at HS-106-07 and its
+- [x] The kill criterion (RFC §12) applied at HS-106-07 and its
       verdict recorded honestly — including the outcome where it
       fails and the name is dropped.
-- [ ] The broker density guards green before any slice merges: a
+- [x] The broker density guards green before any slice merges: a
       line-budget guard in the Phase-79 style, and a census test
       asserting zero driver-specific conditionals in broker modules.
 - [ ] `uv run pytest -q --ignore=tests/e2e/test_metal.py` green
@@ -113,7 +113,7 @@ receipt for every consequence.
 | HS-106-04 | The broker and the journal — four calls | done | [story-04-broker-journal](./story-04-broker-journal.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-106-05 | Thin slice I — terminal input | done | [story-05-slice-terminal](./story-05-slice-terminal.md) | [evidence-story-05](./evidence-story-05.md) |
 | HS-106-06 | Thin slice II — actuator egress | done | [story-06-slice-actuator](./story-06-slice-actuator.md) | [evidence-story-06](./evidence-story-06.md) |
-| HS-106-07 | Thin slice III — inference, and the kill criterion | ready | [story-07-slice-inference-kill](./story-07-slice-inference-kill.md) | — |
+| HS-106-07 | Thin slice III — inference, and the kill criterion | done | [story-07-slice-inference-kill](./story-07-slice-inference-kill.md) | [evidence-story-07](./evidence-story-07.md) |
 | HS-106-08 | Userland — PR follow-through, the tech-lead's loop | ready | [story-08-userland-pr-follow](./story-08-userland-pr-follow.md) | — |
 | HS-106-09 | Docs — the kernel at the entry points | ready | [story-09-docs](./story-09-docs.md) | — |
 | HS-106-10 | Closeout — the sitting and the kernel ledger | ready | [story-10-closeout](./story-10-closeout.md) | — |
@@ -168,6 +168,27 @@ pretending.
   three thinly.
 
 ## Where we are
+
+**2026-07-27 — HS-106-07 shipped, 7/10: KILL-CRITERION PASS.**
+`inference.run@1` routes recipe runs through the same admission, principal,
+journal, and receipt functions as terminal input and actuator egress. Placement,
+model, and egress derive at admission; token-stream material refuses before a
+native invocation exists. Clause 2 is now mechanism: a tool effect inside a run
+is a causally linked child with its own claim, journal events, and receipt.
+Cancellation is the same submitted child-operation path. A real LAN recipe on
+192.168.1.43 returned the treatment marker and a succeeded receipt; a real file
+write appeared as a receipted child; a blocked run cancelled by submitted signal;
+and a hub SIGKILL recovered the native run and Desk receipt as the exact word
+`unknown`, with an `indeterminate` kernel receipt. The final census is literal:
+zero driver-specific conditionals, all three drivers traced through
+`Broker._admit_authority`, `JournalStore.create_operation` / `append`, and
+`ExecutorPlane._terminal`, with the unchanged 300-line budget holding at a
+299-line maximum. Child causality cost two durable linkage fields and adapter
+work, not a broker branch. The generic no-executor liveness seam remains:
+pending forever is still not indeterminate. The final full suite recorded 4,285
+passed / 37 skipped / only the pre-adjudicated voice-notes wording failure; all
+three live-bus tests are green. HS-106-08 is next against the validated kernel
+spine.
 
 **2026-07-27 — HS-106-06 shipped, 6/10.** `actuator.egress@1` is the
 first outward, durable-decision driver. `submit` creates and links the existing
