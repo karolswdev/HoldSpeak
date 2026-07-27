@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 106
-- **Status:** ready
+- **Status:** done
 - **Depends on:** none
 - **Unblocks:** HS-106-04, HS-106-05, HS-106-06, HS-106-07
 
@@ -105,3 +105,8 @@ finding is that this has already happened 36 times.
   (`send_text_to_pane`) for the typing families — that is the
   chokepoint the terminal slice will adapt, so make sure the ledger
   makes it obvious.
+- The shipped walker resolves import provenance before classification:
+  plain and renamed from-imports, module aliases, and simple callable
+  aliases must classify exactly like their canonical API in all five
+  families. Permanent fixtures pin this because a syntactic spelling
+  must never become an Article XI escape hatch.

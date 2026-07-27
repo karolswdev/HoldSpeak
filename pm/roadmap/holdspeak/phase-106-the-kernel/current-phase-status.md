@@ -11,7 +11,7 @@
 > records decisions and then creates artifacts out of those
 > decisions and meetings."
 
-**Last updated:** 2026-07-26 (HS-106-02 shipped; 1/10).
+**Last updated:** 2026-07-26 (HS-106-02 and HS-106-03 shipped; 2/10).
 
 ## Why this phase exists
 
@@ -109,7 +109,7 @@ receipt for every consequence.
 |---|---|---|---|---|
 | HS-106-01 | Article XI ratified, with the migration provision | ready | [story-01-article-xi](./story-01-article-xi.md) | — |
 | HS-106-02 | Principal separation on loopback | done | [story-02-principals](./story-02-principals.md) | [evidence-story-02](./evidence-story-02.md) |
-| HS-106-03 | The effect census, pinned as a test | ready | [story-03-census-test](./story-03-census-test.md) | — |
+| HS-106-03 | The effect census, pinned as a test | done | [story-03-census-test](./story-03-census-test.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-106-04 | The broker and the journal — four calls | ready | [story-04-broker-journal](./story-04-broker-journal.md) | — |
 | HS-106-05 | Thin slice I — terminal input | ready | [story-05-slice-terminal](./story-05-slice-terminal.md) | — |
 | HS-106-06 | Thin slice II — actuator egress | ready | [story-06-slice-actuator](./story-06-slice-actuator.md) | — |
@@ -169,7 +169,7 @@ pretending.
 
 ## Where we are
 
-**2026-07-26 — HS-106-02 shipped, 1/10.** Loopback is no longer an
+**2026-07-26 — HS-106-02 shipped, 2/10.** Loopback is no longer an
 authority signal. The HTTP and WebSocket doors derive typed `owner`,
 `agent`, and `node` principals from distinct credentials; the right
 table closes `decide`, posture, and delegation to agents before route
@@ -181,5 +181,20 @@ kill, and rotate on respawn. The owner's tokenized first-load URL is
 captured and scrubbed by the Desk with no login ceremony. A real
 `claude -p` process proved proposal HTTP 200 and decision HTTP 403 by
 name against a real staged hub; the 1440/393 first-load walk and the
-full 4,231-test suite are green. HS-106-03 is the other hardening
-prerequisite now ready to land.
+full 4,231-test suite are green. Both §8 prerequisites are now landed; the broker spine
+(HS-106-04) is unblocked.
+
+**2026-07-26 — HS-106-03 shipped, 1/10.** The Article XI migration
+debt register is now checked-in data: 40 static statements, 4 covered
+and 36 not, with the ratified 4/8/5/13/10 family split and the ban on
+agent principals reaching its named paths stated in the artifact. A
+filesystem AST walk fences additions and removals by stable selector
+while reporting the live file:line and family. Imported origins survive
+plain from-imports, renamed imports, module aliases, and simple callable
+aliases across all five families; the follow-up mutation named seven
+such sites in one pass. The broker field is still empty,
+but its 300-line module budget and zero driver-specific conditional
+census already stand around it, including match, ternary, registry,
+and table dispatch. No effect site was rerouted. HS-106-01 and
+HS-106-02 remain the other pure-hardening prerequisites before the
+broker spine.

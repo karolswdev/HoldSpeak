@@ -5,20 +5,29 @@
 > evidence, no `Co-Authored-By`, metal-test exclusion).
 
 **Last updated:** 2026-07-26 — **Phase 106 (The Kernel) ACTIVE,
-1/10 — HS-106-02 principal separation shipped**: loopback has lost
-all request-authority work. HTTP and WebSocket derive typed owner,
-agent, and node principals from distinct credentials; agent identity
-is minted at spawn / SessionStart, expires, revokes at SessionEnd or
-factory kill, and rotates on respawn. `decide`, posture, and
-delegation close at the edge by principal right; gate and authority
-records no longer trust caller actor/session labels. The owner's
-first load stays invisible-auth via a tokenized URL captured and
-scrubbed by the Desk. Proven by a real `claude -p` process against a
-real hub (proposal 200, decision 403 named `agent` + `decide`),
-1440/393 screenshot walk, and 4,231 passing tests. HS-106-03 is next.
-Earlier: **Phase 106 chartered** from the owner's web-OS charge, with
-Article XI's migration provision and council dissent on record.
-Earlier: **Phase 104 (Borrowed Fire II)
+2/10 — both §8 prerequisites landed**. **HS-106-02 principal
+separation**: loopback has lost all request-authority work. HTTP and
+WebSocket derive typed owner, agent, and node principals from distinct
+credentials; agent identity is minted at spawn / SessionStart, expires,
+revokes at SessionEnd or factory kill, and rotates on respawn.
+`decide`, posture, and delegation close at the edge by principal
+right; gate and authority records no longer trust caller actor/session
+labels. The owner's first load stays invisible-auth via a tokenized URL
+captured and scrubbed by the Desk. Proven by a real `claude -p` process
+against a real hub (proposal 200, decision 403 named `agent` +
+`decide`), a 1440/393 screenshot walk, and 4,231 passing tests.
+**HS-106-03** turned Article XI's migration debt register into
+checked-in law and an executable fence — exactly 40 static effect
+statements, 4 covered and 36 not, with additions and removals named by
+file:line and family. Import origins survive from-imports, renamed
+imports, module aliases, and callable aliases across all five families
+(a review pass caught and closed the from-import evasion). The empty
+broker field is already bounded by a 300-line module budget and a zero
+driver-specific conditional census; mutations proved every fence fails
+loudly, and no effect site was rerouted. The broker spine (HS-106-04)
+is unblocked. Earlier: **Phase 106 chartered** from the owner's web-OS
+charge, with Article XI's migration provision and council dissent on
+record. Earlier: **Phase 104 (Borrowed Fire II)
 CLOSED 8/8, all in one day**: the ledger, the fail-closed gate, the
 gate under attack, PR receipts, session receipts, docs, the
 seven-beat walk, and the sitting's own rider — **HS-104-08 the icon
