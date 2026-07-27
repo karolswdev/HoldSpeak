@@ -1,10 +1,15 @@
 # The HoldSpeak Kernel — an operation broker, not a world model
 
-**Status:** DRAFT RFC (2026-07-25). Not yet ratified; contains a
-proposed constitutional amendment (§10) that only the owner may
-adopt. Until ratification, this document binds nothing; after
-ratification, it joins the source canon beside the plugin-system
-RFC and the Constitution wins wherever they disagree.
+**Status:** RATIFIED (2026-07-26, Phase 106 / HS-106-01). **Article XI
+now lives in `CONSTITUTION.md` and that text is the authority** — §10
+below records what was ratified and why, but the Constitution wins
+wherever the two differ. This document is rationale, not law. It
+joins the source canon beside the plugin-system RFC.
+
+The ratified Article differs from the text originally drafted here:
+the fourth council pass (§11) refused the draft, its rewrite of
+clauses 1-5 was adopted, the drafted clause 6 was deleted, and the
+owner added a transitional migration provision as the new clause 6.
 
 **Provenance:** the owner's kernel directive (2026-07-25): the Desk
 OS pivot is not only the Workbench-2.0 world layer — "what is our
@@ -356,38 +361,64 @@ retention, and a receipt for every attempted consequence. What it
 never guarantees: that a rubric is wise, an LLM is right, or a
 priority is good — those are userland judgments.
 
-## 10. Proposed constitutional amendment (owner ratification only)
+## 10. The constitutional amendment (RATIFIED — see the Constitution)
 
-> **Article XI — The Kernel**
->
-> 1. A consequential operation is one that crosses a principal,
->    process, machine, model/egress, or irreversible-effect
->    boundary. An operation's consequence is judged for itself:
->    nesting inside an admitted operation never exempts it.
-> 2. Every consequential operation enters the system through the
->    kernel's one admission path and produces a receipt, including
->    on refusal. A consequential effect performed by a tool inside
->    a model's run is submitted as a causally linked child
->    operation of that run.
-> 3. The caller never asserts its own authority; authority is
->    derived at admission and bound immutably to the admitted
->    operation.
-> 4. Humans and agents share the kernel's schemas and never its
->    rights; only the owner decides.
-> 5. Reads, presentation, and side-effect-free computation —
->    including the token stream inside a model's run — are not
->    consequential operations and owe the kernel nothing. This
->    clause exempts computation, never effects.
-> 6. Nothing in this Article narrows Article V: whatever types,
->    sends, files, spawns, or kills passes propose/approve/execute
->    regardless of how local or reversible it appears.
+**Article XI now lives in `docs/internal/CONSTITUTION.md` and that
+text is the authority.** What follows is the record of how it got
+there; where this section and the Constitution differ, the
+Constitution wins.
 
-(Clauses 1, 2, 5, and 6 close the nested-effects loophole sol
-demonstrated: without them, one admitted `inference.run` exposing
-in-process file/terminal tools could classify every tool effect as
-"the run's interior" — receipted at the outer layer, invisible where
-the actual engineering happens, technically compliant while
-defeating the Article and colliding with Article V.)
+The text drafted here was REFUSED by the fourth council pass
+(archived at
+`pm/roadmap/holdspeak/proposals/kernel-council-sol-article-xi.md`,
+verdict: *do not ratify yet*). Three defects were sustained:
+
+1. **Present-tense fiction.** Clauses 2 and 6 asserted properties
+   the codebase did not have and would still not have at the end of
+   Phase 106, because §7 deliberately postpones broad migration to
+   rung 5. A law the repo openly violates corrodes the articles that
+   do mean something.
+2. **A definition error the first three passes missed.** Clause 1
+   used a *process boundary* as proof of consequence. On the web
+   Desk almost every server mutation crosses browser-to-server,
+   including the reversible shell bookkeeping §12 says must never
+   enter the kernel — while a same-process authority mutation
+   escaped the clause entirely. Consequence cannot depend on
+   deployment topology.
+3. **Clause 6 was redundant and self-contradicting.** Its first half
+   restated constitutional supremacy; its second half ("regardless
+   of how local or reversible") collided head-on with §12, and read
+   literally would have put a second confirmation on the owner's
+   direct dictation gesture.
+
+Dispositions: clauses 1-5 replaced with the council's rewrite;
+drafted clause 6 deleted (the nested-effects loophole stays closed
+by clauses 1, 2 and 5); a transitional migration provision added by
+the owner as the new clause 6.
+
+**The owner's ruling, and the dissent.** The council's stated
+preference was to defer ratification until clause 2 is materially
+true — after broad migration and §5b confinement — on the ground
+that a migration exception in the Constitution preserves schedule at
+the cost of putting scaffolding into permanent law. The owner
+overruled it under Article X.1 and ratified early behind the
+migration provision. The dissent stands on the record.
+
+Two properties make the early ratification defensible rather than
+decorative, and both are load-bearing:
+
+- **The register is real and executable.** Clause 6's register is
+  `holdspeak/kernel/effect_ledger.json` — 40 enumerated sites, 4
+  covered and 36 not — fenced by `tests/unit/test_kernel_effect_fence.py`,
+  which fails by name when a site joins or leaves it silently
+  (HS-106-03). The law and its test are the same artifact and cannot
+  drift apart.
+- **The debt is not delegable.** No agent principal may reach a path
+  the register names. The unmigrated surface is the owner's to carry
+  by hand, never something an agent is handed.
+
+Clause 6 is self-repealing: it expires with the register, on the day
+the register is empty.
 
 ## 11. Council record: disagreements and dispositions
 
@@ -419,6 +450,25 @@ defeating the Article and colliding with Article V.)
   boundary with a named threshold (§5b). Sol also restored two
   sanded-off caveats: `PermissionGate` is not a sandbox, and broker
   density guards must be testable (§12).
+- **Fourth pass (gpt-5.6-sol again), reviewing the Article itself
+  before ratification** — grounded by the owner in "we do not invent
+  and over-complicate, but we certainly build for the future of an
+  agent-connected workflow into nearly anything, including just
+  being an awesome power user." Verdict: **do not ratify yet**
+  (archived at
+  `pm/roadmap/holdspeak/proposals/kernel-council-sol-article-xi.md`).
+  Sustained: the process-boundary definition error in clause 1 that
+  the first three passes all missed; the present-tense fiction in
+  clauses 2 and 6; clause 6's redundancy and its collision with §12.
+  It also caught that "only the owner decides" plus clause 6, read
+  literally, would impose a second confirmation on the owner's own
+  direct dictation gesture — a ceremony that buys no consent and
+  taxes the product's primary input path. **Clauses 1-5 rewritten as
+  the council proposed; clause 6 deleted.** Its further
+  recommendation — defer ratification entirely until clause 2 is
+  materially true — was **overruled by the owner** under Article
+  X.1, who ratified early behind a transitional migration provision.
+  The dissent stands recorded rather than absorbed.
 
 ## 12. Non-goals and the kill criterion
 

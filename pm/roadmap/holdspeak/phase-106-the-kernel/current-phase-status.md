@@ -11,7 +11,7 @@
 > records decisions and then creates artifacts out of those
 > decisions and meetings."
 
-**Last updated:** 2026-07-26 (HS-106-02 and HS-106-03 shipped; 2/10).
+**Last updated:** 2026-07-26 (HS-106-01, HS-106-02 and HS-106-03 shipped; 3/10 — the ladder's law and both prerequisites).
 
 ## Why this phase exists
 
@@ -107,7 +107,7 @@ receipt for every consequence.
 
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
-| HS-106-01 | Article XI ratified, with the migration provision | ready | [story-01-article-xi](./story-01-article-xi.md) | — |
+| HS-106-01 | Article XI ratified, with the migration provision | done | [story-01-article-xi](./story-01-article-xi.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-106-02 | Principal separation on loopback | done | [story-02-principals](./story-02-principals.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-106-03 | The effect census, pinned as a test | done | [story-03-census-test](./story-03-census-test.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-106-04 | The broker and the journal — four calls | ready | [story-04-broker-journal](./story-04-broker-journal.md) | — |
@@ -168,6 +168,34 @@ pretending.
   three thinly.
 
 ## Where we are
+
+**2026-07-26 — HS-106-01 shipped, 3/10: Article XI is law.** The
+fourth council pass refused the drafted Article and was sustained on
+three counts — the process-topology definition error in clause 1 that
+the first three passes all missed, the present-tense fiction in clauses
+2 and 6, and clause 6's redundancy plus its collision with RFC §12.
+Clauses 1-5 landed as the council rewrote them; the drafted clause 6
+was deleted. The council's further recommendation — defer ratification
+entirely until clause 2 is materially true — was OVERRULED by the owner
+under Article X.1, who ratified early behind a transitional migration
+provision. The dissent is recorded verbatim in the archive, named in
+the RFC §11 council record, and named again in the Constitution's own
+amendment record. It was overruled, not absorbed.
+
+Clause 6 is the price and the proof: the register is
+`holdspeak/kernel/effect_ledger.json` (40 sites, 4 covered, 36 not),
+fenced by the HS-106-03 test — so the law and its test are one
+artifact and cannot drift apart — and no agent principal may reach a
+path it names. The unmigrated surface is the owner's to carry by hand.
+The clause is self-repealing: it expires with the register.
+
+Honest standing at ratification, re-audited against the shipped tree
+(the council wrote its audit before 02 and 03 landed, and three of its
+rows improved): clauses 1, 3, 4, 5 are law the code can obey today —
+02's principal work made 3 and 4 newly true — clause 6 is transitional
+and executable, and **clause 2 is knowingly false**, which is exactly
+what clause 6 enumerates. Also flipped: the RFC is RATIFIED, and §10 is
+now the ratification record rather than a proposal.
 
 **2026-07-26 — HS-106-02 shipped, 2/10.** Loopback is no longer an
 authority signal. The HTTP and WebSocket doors derive typed `owner`,
