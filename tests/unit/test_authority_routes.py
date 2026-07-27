@@ -19,7 +19,15 @@ def rig(tmp_path, monkeypatch):
     db = Database(tmp_path / "authority-routes.db")
     monkeypatch.setattr(hsdb, "get_database", lambda *args, **kwargs: db)
     monkeypatch.setattr(config_module, "CONFIG_FILE", tmp_path / "config.json")
+    from holdspeak.principals import Principal, PrincipalKind
+
     app = FastAPI()
+
+    @app.middleware("http")
+    async def owner_principal(request, call_next):
+        request.state.principal = Principal(PrincipalKind.OWNER, "owner-session")
+        return await call_next(request)
+
     app.include_router(build_authority_router(WebContext(get_state=lambda: {})))
     yield db, TestClient(app)
     coder_steering.clear_grants()

@@ -41,6 +41,8 @@ class RealHub:
         self.port = _free_port()
         self.base = f"http://127.0.0.1:{self.port}"
         self.proc: subprocess.Popen | None = None
+        self.owner_token = ""
+        self.agent_token = ""
 
     def start(self, timeout: float = 60.0) -> None:
         env = dict(os.environ)
@@ -56,8 +58,19 @@ class RealHub:
         deadline = time.monotonic() + timeout
         while time.monotonic() < deadline:
             try:
-                with urllib.request.urlopen(f"{self.base}/api/gate/config", timeout=1):
-                    return
+                with urllib.request.urlopen(f"{self.base}/health", timeout=1):
+                    config = json.loads(
+                        (self.home / ".config" / "holdspeak" / "config.json").read_text()
+                    )
+                    self.owner_token = config["meeting"]["web_auth_token"]
+                    status, issued = self._post_with_token(
+                        "/api/principals/agents",
+                        {"identity": "claude:threat-session"},
+                        self.owner_token,
+                    )
+                    if status == 201:
+                        self.agent_token = issued["credential"]
+                        return
             except Exception:
                 time.sleep(0.3)
         raise RuntimeError("hub did not come up")
@@ -79,20 +92,33 @@ class RealHub:
             self.proc = None
 
     def get(self, path: str) -> dict:
-        with urllib.request.urlopen(f"{self.base}{path}", timeout=5) as resp:
+        req = urllib.request.Request(
+            f"{self.base}{path}",
+            headers={"Authorization": f"Bearer {self.owner_token}"},
+        )
+        with urllib.request.urlopen(req, timeout=5) as resp:
             return json.loads(resp.read().decode())
 
-    def post(self, path: str, body: dict) -> tuple[int, dict]:
+    def _post_with_token(
+        self, path: str, body: dict, token: str
+    ) -> tuple[int, dict]:
         req = urllib.request.Request(
             f"{self.base}{path}",
             data=json.dumps(body).encode(),
-            headers={"Content-Type": "application/json"},
+            headers={
+                "Content-Type": "application/json",
+                "Authorization": f"Bearer {token}",
+            },
         )
         try:
             with urllib.request.urlopen(req, timeout=5) as resp:
                 return resp.status, json.loads(resp.read().decode())
         except urllib.error.HTTPError as exc:
             return exc.code, json.loads(exc.read().decode() or "{}")
+
+    def post(self, path: str, body: dict) -> tuple[int, dict]:
+        token = self.agent_token if path == "/api/gate/proposals" else self.owner_token
+        return self._post_with_token(path, body, token)
 
 
 def _payload(cwd: str, key: str = "threat-1") -> dict:
@@ -126,6 +152,7 @@ def test_item1_and_6_restart_mid_hold_and_fail_closed_two_process(tmp_path) -> N
                 config=_armed(str(tmp_path)),
                 hub_url=hub.base,
                 ttl_seconds=60.0,
+                agent_credential=hub.agent_token,
             )
 
         thread = threading.Thread(target=agent_side)
@@ -146,7 +173,10 @@ def test_item1_and_6_restart_mid_hold_and_fail_closed_two_process(tmp_path) -> N
         decision: HookDecision = result["decision"]
         # Item 6: no code path allows on error.
         assert decision.deny is not None
-        assert "stopped answering" in decision.deny or "unreachable" in decision.deny
+        assert any(
+            marker in decision.deny
+            for marker in ("stopped answering", "unreachable", "decision read failed")
+        )
 
         hub.start()  # the restart
         # Item 1: invalidated, audited, not decidable, not rendered held.

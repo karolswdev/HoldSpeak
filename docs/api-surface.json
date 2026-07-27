@@ -2650,6 +2650,34 @@
       "consumers": []
     },
     {
+      "path": "/api/principals/agents",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.system.gate_routes",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/principals/agents/{identity}",
+      "methods": [
+        "DELETE"
+      ],
+      "module": "web.routes.system.gate_routes",
+      "consumers": []
+    },
+    {
+      "path": "/api/principals/self",
+      "methods": [
+        "DELETE"
+      ],
+      "module": "web.routes.system.gate_routes",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/profiles",
       "methods": [
         "GET"

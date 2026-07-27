@@ -19,7 +19,7 @@ from .audio import AudioRecorder
 from .config import Config
 from .audio import AudioSource
 from .device_audio import DeviceRegistry, ensure_device_psk
-from .web_auth import ensure_web_token
+from .web_auth import authenticated_browser_url, ensure_web_token
 from .device_recording_tick import RecordingTicker
 from .device_meeting_stats import pick_next_view
 from .device_status import (
@@ -558,16 +558,24 @@ class WebRuntime(
         except Exception as exc:
             log.warning(f"Wake word unavailable: {exc}")
 
+        owner_url = authenticated_browser_url(
+            self.runtime_url, ensure_web_token(self.config)
+        )
         log.info(f"HoldSpeak web runtime active at {self.runtime_url}")
-        print(f"HoldSpeak web runtime is running at: {self.runtime_url}")
+        print(f"HoldSpeak web runtime is running at: {owner_url}")
         self._print_setup_nudge()
-        print(f"Settings: {self.runtime_url}/settings · History: {self.runtime_url}/history")
+        print(
+            "Settings: "
+            f"{authenticated_browser_url(f'{self.runtime_url}/settings', ensure_web_token(self.config))}"
+            " · History: "
+            f"{authenticated_browser_url(f'{self.runtime_url}/history', ensure_web_token(self.config))}"
+        )
         if self.hotkey_listener is not None:
             print(f"Voice typing hotkey is active: hold {self.config.hotkey.display}, speak, release.")
         else:
             print("Voice typing hotkey unavailable; grant Accessibility/Input Monitoring permission and restart.")
         if not self.no_open and self.config.meeting.web_auto_open:
-            webbrowser.open(self.runtime_url)
+            webbrowser.open(owner_url)
             print("Opened web dashboard in your default browser.")
         elif self.no_open:
             print("Headless mode active (`--no-open`): browser auto-open disabled.")

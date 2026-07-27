@@ -286,7 +286,14 @@ class MeetingWebServer:
         self.on_device_health = callbacks.on_device_health
         self.on_device_query = callbacks.on_device_query
         self.host = host
-        self.auth_token = auth_token
+        from . import web_auth
+
+        # Every runtime has an owner credential, including loopback and bare
+        # in-process servers.  The full runtime persists its configured token;
+        # a directly-constructed server gets an ephemeral one.
+        self.auth_token = auth_token or (
+            web_auth.generate_web_token() if web_auth.is_loopback_host(host) else ""
+        )
         self._configured_port = port
 
         self.port: Optional[int] = None
@@ -332,6 +339,9 @@ class MeetingWebServer:
             )
 
         self.port = self._configured_port or _find_free_port(self.host)
+        from .principals import agent_credentials
+
+        agent_credentials.set_hub_url(f"http://{self.host}:{self.port}")
         config = uvicorn.Config(
             self.app,
             host=self.host,
@@ -458,34 +468,46 @@ class MeetingWebServer:
         app = FastAPI()
         app.state.device_registry = self.device_registry
 
-        # HS-25-02: token gate, enforced ONLY when bound off-loopback. Loopback
-        # binds stay fully open (the long-standing "localhost is trusted" model).
-        # The device-audio WebSocket keeps its own PSK handshake and is exempt;
-        # /health stays open for liveness probes.
-        # HSM-15-10: `/api/mesh/info` is the unauthenticated identify endpoint a
-        # freshly-discovered (not-yet-paired) companion hits to learn the
-        # server's name/version + whether pairing needs a token. It leaks nothing
-        # sensitive, so it stays open even off-loopback.
-        _auth_exempt_paths = {"/health", "/api/devices/audio", "/api/mesh/info"}
+        # HS-106-02: network location is never request authority.  Every API
+        # request gets a typed principal at the edge; the centralized route-right
+        # table refuses missing rights before route code runs.  Static shell files
+        # and the existing health/pairing entrances remain public.
+        from .principals import (
+            Principal,
+            PrincipalKind,
+            UNAUTHENTICATED,
+            agent_credentials,
+            derive_owner,
+            refusal,
+            required_right,
+        )
+
+        app.state.agent_credentials = agent_credentials
+        app.state.owner_token = self.auth_token
 
         @app.middleware("http")
         async def _web_auth_gate(request: Request, call_next: Any) -> Any:
-            if not web_auth.is_loopback_host(self.host):
-                path = request.url.path
-                # Static assets carry no secrets and the browser must load them
-                # to even render a token prompt, so they stay open off-loopback.
-                is_static = path.startswith("/_built")
-                if path not in _auth_exempt_paths and not is_static:
-                    token = web_auth.extract_request_token(
-                        authorization=request.headers.get("authorization"),
-                        header_token=request.headers.get("x-holdspeak-token"),
-                        query_token=request.query_params.get("token"),
-                    )
-                    if not web_auth.verify_web_token(token, self.auth_token):
-                        return JSONResponse(
-                            {"success": False, "error": "Unauthorized"},
-                            status_code=401,
-                        )
+            token = web_auth.extract_request_token(
+                authorization=request.headers.get("authorization"),
+                header_token=request.headers.get("x-holdspeak-token"),
+                query_token=request.query_params.get("token"),
+            )
+            principal = derive_owner(token, self.auth_token)
+            if principal is None:
+                principal = agent_credentials.derive(token)
+            if principal is None:
+                node_token = request.headers.get("x-holdspeak-node-token")
+                node_store = getattr(request.app.state, "node_token_store", None)
+                node_id = node_store.principal_identity(node_token) if node_store else None
+                if node_id:
+                    principal = Principal(PrincipalKind.NODE, node_id)
+            principal = principal or UNAUTHENTICATED
+            request.state.principal = principal
+
+            right = required_right(request.method, request.url.path)
+            if right is not None and not principal.permits(right):
+                status = 401 if principal.kind is PrincipalKind.NONE else 403
+                return JSONResponse(refusal(principal, right), status_code=status)
             return await call_next(request)
 
         from .device_audio_ws import register_device_audio_routes
@@ -605,6 +627,7 @@ class MeetingWebServer:
         _delivery_link = NodeLinkState(
             NodeTokenStore(None), web_token=self.auth_token
         )
+        app.state.node_token_store = _delivery_link.token_store
         _delivery_targets = TerminalTargetRegistry()
         _delivery_cmd = HubCommandService(
             repo=_get_delivery_db().delivery_receipts,

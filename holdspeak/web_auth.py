@@ -1,18 +1,8 @@
-"""Web-runtime authentication (HS-25-02).
+"""Web-runtime credential primitives.
 
-HoldSpeak's web runtime has always relied on binding ``127.0.0.1`` as its only
-safeguard. That is fine while the runtime stays on the local machine, but Phase
-15 (cross-network reach) deliberately removes that assumption. This module adds
-the token primitive that gates the runtime the moment it binds a non-loopback
-host.
-
-Policy (per HS-25-02 decision): **enforced only off-loopback**.
-- Loopback binds stay fully open — zero local friction, exactly as today.
-- A non-loopback bind requires a token, both to bind at all (``nonloopback_bind_blocked``)
-  and on every request (``verify_web_token`` in the runtime's auth middleware).
-
-Mirrors the device-PSK pattern in :mod:`holdspeak.device_audio`
-(``hmac.compare_digest``, lazy ``ensure_*`` generation).
+``is_loopback_host`` is intentionally only a bind-safety classifier.  Request
+authority is derived from credentials by :mod:`holdspeak.principals`, including
+on loopback (HS-106-02).
 """
 
 from __future__ import annotations
@@ -23,6 +13,7 @@ import secrets
 import base64
 from pathlib import Path
 from typing import TYPE_CHECKING, Optional
+from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 if TYPE_CHECKING:
     from .config import Config
@@ -121,6 +112,18 @@ def extract_request_token(
     if query_token and query_token.strip():
         return query_token.strip()
     return None
+
+
+def authenticated_browser_url(url: str, token: str) -> str:
+    """Attach the owner bootstrap credential to a browser launch URL.
+
+    The React bootstrap captures it into tab-scoped storage and immediately
+    scrubs it from the address bar, so first load remains ceremony-free.
+    """
+    parts = urlsplit(str(url))
+    query = dict(parse_qsl(parts.query, keep_blank_values=True))
+    query["token"] = str(token)
+    return urlunsplit((parts.scheme, parts.netloc, parts.path, urlencode(query), parts.fragment))
 
 
 def websocket_auth_protocol(token: str) -> str:

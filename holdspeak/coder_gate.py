@@ -144,6 +144,109 @@ def redact_args(tool_input: Mapping[str, Any] | None) -> tuple[str, str]:
     return digest, canonical[:ARGS_HEAD_CHARS]
 
 
+# -- supervised principal lifecycle ----------------------------------------
+
+
+def _credential_path(hub_url: str, session_id: str) -> Path:
+    hub_key = hashlib.sha256(hub_url.rstrip("/").encode()).hexdigest()[:16]
+    session_key = hashlib.sha256(session_id.encode()).hexdigest()
+    return Path.home() / ".holdspeak" / "agent_credentials" / hub_key / session_key
+
+
+def _owner_token() -> str:
+    from .config import Config
+
+    return str(Config.load().meeting.web_auth_token or "").strip()
+
+
+def issue_agent_credential(
+    session_id: str, hub_url: str, *, force: bool = False
+) -> str:
+    """Mint or recover the hub-issued credential for one Claude session."""
+    inherited = str(os.environ.get("HOLDSPEAK_AGENT_CREDENTIAL") or "").strip()
+    if inherited:
+        return inherited
+    identity = f"claude:{str(session_id).strip()}"
+    path = _credential_path(hub_url, identity)
+    try:
+        cached = path.read_text(encoding="utf-8").strip()
+    except OSError:
+        cached = ""
+    if cached and not force:
+        return cached
+    owner = _owner_token()
+    if not owner:
+        raise RuntimeError("owner credential unavailable")
+    data = json.dumps({"identity": identity}).encode("utf-8")
+    request = urlrequest.Request(
+        f"{hub_url.rstrip('/')}/api/principals/agents",
+        data=data,
+        headers={
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {owner}",
+        },
+        method="POST",
+    )
+    status, payload = _send(request, 5.0)
+    credential = str(payload.get("credential") or "").strip()
+    if status != 201 or not credential:
+        raise RuntimeError(f"agent credential issuance refused (HTTP {status})")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(credential, encoding="utf-8")
+    try:
+        os.chmod(path, 0o600)
+    except OSError:
+        pass
+    return credential
+
+
+def revoke_agent_credential(session_id: str, hub_url: str) -> bool:
+    """Revoke one session credential and remove its process-local cache."""
+    identity = f"claude:{str(session_id).strip()}"
+    path = _credential_path(hub_url, identity)
+    token = str(os.environ.get("HOLDSPEAK_AGENT_CREDENTIAL") or "").strip()
+    if not token:
+        try:
+            token = path.read_text(encoding="utf-8").strip()
+        except OSError:
+            token = ""
+    if not token:
+        return False
+    request = urlrequest.Request(
+        f"{hub_url.rstrip('/')}/api/principals/self",
+        headers={"Authorization": f"Bearer {token}"},
+        method="DELETE",
+    )
+    try:
+        status, payload = _send(request, 5.0)
+    except Exception:
+        return False
+    try:
+        path.unlink()
+    except OSError:
+        pass
+    return status == 200 and bool(payload.get("revoked"))
+
+
+def run_session_start(payload: Mapping[str, Any], *, hub_url: str | None = None) -> bool:
+    session_id = str(payload.get("session_id") or "").strip()
+    if not session_id:
+        return False
+    base = (hub_url or os.environ.get("HOLDSPEAK_HUB_URL") or DEFAULT_HUB_URL).rstrip("/")
+    try:
+        return bool(issue_agent_credential(session_id, base, force=True))
+    except Exception:
+        return False
+
+
+def run_session_end(payload: Mapping[str, Any], *, hub_url: str | None = None) -> bool:
+    session_id = str(payload.get("session_id") or "").strip()
+    if not session_id:
+        return False
+    base = (hub_url or os.environ.get("HOLDSPEAK_HUB_URL") or DEFAULT_HUB_URL).rstrip("/")
+    return revoke_agent_credential(session_id, base)
+
+
 # -- the hook runner -------------------------------------------------------
 
 
@@ -177,6 +280,7 @@ def run_hook(
     sleep: Callable[[float], None] = time.sleep,
     now: Callable[[], float] = time.monotonic,
     ttl_seconds: float = DEFAULT_TTL_SECONDS,
+    agent_credential: str | None = None,
 ) -> HookDecision:
     """One PreToolUse arrival, start to verdict.
 
@@ -204,13 +308,26 @@ def run_hook(
     args_sha256, args_head = redact_args(payload.get("tool_input"))
 
     base = (hub_url or os.environ.get("HOLDSPEAK_HUB_URL") or DEFAULT_HUB_URL).rstrip("/")
-    post = http_post or _default_post
-    get = http_get or _default_get
+    if http_post is None or http_get is None:
+        try:
+            credential = str(agent_credential or issue_agent_credential(session_id, base))
+        except Exception:
+            return HookDecision(
+                deny="gate armed but the agent principal could not authenticate; the call was not run"
+            )
+    else:
+        credential = str(agent_credential or "")
+    post = http_post or (
+        lambda url, body, timeout: _default_post(
+            url, body, timeout, credential=credential
+        )
+    )
+    get = http_get or (
+        lambda url, timeout: _default_get(url, timeout, credential=credential)
+    )
 
     body = {
         "id": proposal_id,
-        "session_key": f"claude:{session_id}",
-        "agent": "claude",
         "tool": tool,
         "args_sha256": args_sha256,
         "args_head": args_head,
@@ -269,14 +386,26 @@ def _deny_reason(response: Mapping[str, Any]) -> str:
     return base_text
 
 
-def _default_post(url: str, body: dict[str, Any], timeout: float) -> tuple[int, dict[str, Any]]:
+def _default_post(
+    url: str,
+    body: dict[str, Any],
+    timeout: float,
+    *,
+    credential: str = "",
+) -> tuple[int, dict[str, Any]]:
     data = json.dumps(body).encode("utf-8")
-    req = urlrequest.Request(url, data=data, headers={"Content-Type": "application/json"})
+    headers = {"Content-Type": "application/json"}
+    if credential:
+        headers["Authorization"] = f"Bearer {credential}"
+    req = urlrequest.Request(url, data=data, headers=headers)
     return _send(req, timeout)
 
 
-def _default_get(url: str, timeout: float) -> tuple[int, dict[str, Any]]:
-    return _send(urlrequest.Request(url), timeout)
+def _default_get(
+    url: str, timeout: float, *, credential: str = ""
+) -> tuple[int, dict[str, Any]]:
+    headers = {"Authorization": f"Bearer {credential}"} if credential else {}
+    return _send(urlrequest.Request(url, headers=headers), timeout)
 
 
 def _send(req: "urlrequest.Request", timeout: float) -> tuple[int, dict[str, Any]]:
@@ -367,11 +496,20 @@ def run_stop_hook(
     if usage is None:
         return False
     base = (hub_url or os.environ.get("HOLDSPEAK_HUB_URL") or DEFAULT_HUB_URL).rstrip("/")
-    post = http_post or _default_post
+    if http_post is None:
+        try:
+            credential = issue_agent_credential(session_id, base)
+        except Exception:
+            return False
+        post = lambda url, body, timeout: _default_post(
+            url, body, timeout, credential=credential
+        )
+    else:
+        post = http_post
     try:
         status, _ = post(
             f"{base}/api/gate/usage",
-            {"session_key": f"claude:{session_id}", **usage},
+            usage,
             5.0,
         )
     except Exception:
@@ -388,6 +526,17 @@ def install_block(executable: str = "holdspeak") -> str:
     config."""
     block = {
         "hooks": {
+            "SessionStart": [
+                {
+                    "hooks": [
+                        {
+                            "type": "command",
+                            "command": f"{executable} gate hook",
+                            "timeout": 15,
+                        }
+                    ]
+                }
+            ],
             "PreToolUse": [
                 {
                     "matcher": "Bash",
@@ -403,6 +552,17 @@ def install_block(executable: str = "holdspeak") -> str:
             # HS-104-05: the session-receipt usage report. Same
             # command; the hook dispatches on hook_event_name.
             "Stop": [
+                {
+                    "hooks": [
+                        {
+                            "type": "command",
+                            "command": f"{executable} gate hook",
+                            "timeout": 15,
+                        }
+                    ]
+                }
+            ],
+            "SessionEnd": [
                 {
                     "hooks": [
                         {
