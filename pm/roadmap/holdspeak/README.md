@@ -5,23 +5,26 @@
 > evidence, no `Co-Authored-By`, metal-test exclusion).
 
 
-**Last updated:** 2026-07-27 — **Phase 106 (The Kernel) ACTIVE, 5/10
-— terminal input is kernel-backed**. **HS-106-05 shipped the first thin
-slice**: `process.input@1` admits terminal text once, exact-claims its
-existing native command, and closes the kernel receipt from the unchanged
-Phase-94 node receipt. Delivery and coder clients keep their shapes with one
-additive `operation_id`; the node envelope/result protocol and the native
-executors were adapted, not rewritten, and every other typing family remains
-outside the slice. A real spawned hub and tmux pane delivered in 84.76 ms;
-real `claude -p --settings` sessions preserved gate approve and the exact deny
-reason verbatim; the audit found one decision per proposal. Real SIGKILL after
-bytes landed reconciled by command ID to an indeterminate receipt without a
-retry. The executor-plane receipt-without-claim seam was resolved in the
-adapter, and HS-106-06 must confirm or refute the still-single-caller
-`native_id` filter. Final slice/density proof: 79 passed. The exact full suite
-recorded 4,252 passed / 39 skipped / 8 unrelated failures: seven reproduce with
-the same signatures on clean `origin/main`; the eighth is the recorded
-voice-notes wording drift. Earlier: **HS-106-04 shipped the spine**:
+**Last updated:** 2026-07-27 — **Phase 106 (The Kernel) ACTIVE, 6/10
+— actuator egress is kernel-backed**. **HS-106-06 shipped the second,
+genuinely heterogeneous thin slice**: `actuator.egress@1` creates and links the
+existing durable proposal, exposes its exact material through `read`, advances
+the existing decision machine through `decide`, and leaves `ActuatorExecutor`
+as the only egress driver. It exact-claims by proposal ID and closes the kernel
+receipt from the existing audit ref; historic audits project without journal
+copies. A real webhook received the exact body once after approval and a real
+hub restart; rejection never egressed, stale revision refused by name, and the
+Desk's journal-fed badge named Custom webhook in the inspected screenshot. The
+broker guard remains green across terminal and actuator drivers, and
+`native_id` now has two filtered callers. Restart did not reproduce slice I's
+queue-loss seam because both native records are durable; the no-executor
+liveness edge is recorded for HS-106-07. Final proof: 86 backend + 296 Desk
+tests passed; the exact full suite recorded 4,257 passed / 41 skipped / exactly
+the five pre-adjudicated failures, and all three repaired live-bus tests passed.
+Earlier: **HS-106-05 shipped terminal input**: `process.input@1` admits terminal
+text once, exact-claims its existing native command, and closes the kernel
+receipt from the unchanged Phase-94 node receipt. Earlier: **HS-106-04 shipped
+the spine**:
 `holdspeak/kernel/` now exposes
 exactly four caller calls (`read`, `submit`, `decide`, `events`) plus the
 separate `claim` / `receipt` / `reconcile` executor plane. The existing
