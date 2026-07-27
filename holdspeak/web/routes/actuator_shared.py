@@ -20,6 +20,18 @@ from ..context import WebContext
 _GITHUB_RUNNER = None
 
 
+def _kernel_executor_binding(proposal: Any) -> tuple[Any, Any]:
+    """Return the exact-claim adapter for a kernel-linked proposal."""
+    from ...kernel.runtime import _service
+    from ...principals import Principal, PrincipalKind
+
+    broker = _service()
+    linked = broker.store.operation_for_native(str(proposal.id))
+    if linked is None:
+        return None, None
+    return broker, Principal(PrincipalKind.NODE, "actuator-local")
+
+
 def proposal_to_dict(proposal: Any) -> dict[str, Any]:
     from ...operation_policy import commitment_labels, operation_for_proposal
 
@@ -174,6 +186,13 @@ def decide_proposal(
     existing = db.actuators.get_proposal(proposal_id)
     if existing is None or not belongs(existing):
         return None, "Proposal not found", 404
+    if clean == "approved" and existing.status == "approved":
+        broker, _node = _kernel_executor_binding(existing)
+        linked = broker.store.operation_for_native(proposal_id) if broker is not None else None
+        if linked is not None and linked["state"] == "awaiting_execution":
+            execute = executors.get(existing.target)
+            if execute is not None:
+                return execute(ctx, db, existing, actor=actor), None, 200
     try:
         policy_snapshot = None
         if clean == "approved":
@@ -258,12 +277,15 @@ def execute_slack_proposal(ctx: WebContext, db: Any, proposal: Any, *, actor: st
         ctx.broadcast("actuator_result", actuator_result_event(updated))
         return updated
 
+    broker, node = _kernel_executor_binding(proposal)
     executor = ActuatorExecutor(
         db,
         connector=build_slack_connector(url),
         allow_actuators=True,
         actor=actor,
         on_result=lambda event: ctx.broadcast("actuator_result", event),
+        operation_broker=broker,
+        executor_principal=node,
     )
     return executor.execute(proposal.id)
 
@@ -289,9 +311,11 @@ def execute_webhook_proposal(ctx: WebContext, db: Any, proposal: Any, *, actor: 
         )
         ctx.broadcast("actuator_result", actuator_result_event(updated))
         return updated
+    broker, node = _kernel_executor_binding(proposal)
     executor = ActuatorExecutor(
         db, connector=build_url_webhook_connector(url), allow_actuators=True,
         actor=actor, on_result=lambda event: ctx.broadcast("actuator_result", event),
+        operation_broker=broker, executor_principal=node,
     )
     return executor.execute(proposal.id)
 
@@ -306,8 +330,10 @@ def execute_github_proposal(ctx: WebContext, db: Any, proposal: Any, *, actor: s
     from ...plugins.actuator_executor import ActuatorExecutor
     from ...plugins.builtin.github_issue_actuator import build_github_issue_connector
 
+    broker, node = _kernel_executor_binding(proposal)
     executor = ActuatorExecutor(
         db, connector=build_github_issue_connector(runner=_GITHUB_RUNNER), allow_actuators=True,
         actor=actor, on_result=lambda event: ctx.broadcast("actuator_result", event),
+        operation_broker=broker, executor_principal=node,
     )
     return executor.execute(proposal.id)

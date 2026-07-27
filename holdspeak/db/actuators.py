@@ -65,6 +65,7 @@ class ActuatorRepository(BaseRepository):
         control_mode: str = "neutral",
         policy_source: str = "config",
         fixed_destination: Optional[bool] = None,
+        proposal_id: Optional[str] = None,
     ) -> ActuatorProposalRecord:
         """Persist a `proposed` proposal (idempotent on `idempotency_key`).
 
@@ -100,7 +101,11 @@ class ActuatorRepository(BaseRepository):
         if not clean_preview:
             raise ValueError("preview is required")
 
-        proposal_id = uuid.uuid4().hex
+        proposal_id = str(proposal_id or uuid.uuid4().hex).strip()
+        try:
+            uuid.UUID(proposal_id)
+        except (TypeError, ValueError) as exc:
+            raise ValueError("proposal_id must be a UUID") from exc
         now = datetime.now().isoformat()
         payload_json = self._json_dumps(payload or {}, fallback="{}")
         caps_json = self._json_dumps(

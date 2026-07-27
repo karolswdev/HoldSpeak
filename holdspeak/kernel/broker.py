@@ -58,6 +58,10 @@ class Broker(ExecutorPlane):
                 item["process"] = spec.codec.project_process(operation["native_id"], operation)
             if view in {"receipt", "full"}:
                 item["receipt"] = self.store.receipt(operation["operation_id"])
+                if spec is not None:
+                    item["native_receipts"] = spec.codec.project_receipts(
+                        operation["native_id"]
+                    )
             objects.append(item)
         return {"view": view, "consistency": consistency, "objects": objects}
 

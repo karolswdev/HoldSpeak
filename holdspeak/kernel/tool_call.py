@@ -126,6 +126,9 @@ class ToolCallCodec:
         value = self._gate.get(native_id)
         return value.to_dict() if value is not None else None
 
+    def project_receipts(self, native_id: str) -> list[dict[str, Any]]:
+        return []
+
     def project_process(self, native_id: str, operation: Mapping[str, Any]) -> dict[str, Any]:
         value = self._gate.get(native_id)
         domain_state = value.state if value is not None else "unknown"

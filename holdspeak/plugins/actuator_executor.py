@@ -65,6 +65,8 @@ class ActuatorExecutor:
         allowed_actuator_ids: Optional[Iterable[str]] = None,
         actor: str = "executor",
         on_result: Optional[Callable[[dict], None]] = None,
+        operation_broker: Any = None,
+        executor_principal: Any = None,
     ) -> None:
         self._db = db
         self._connector = connector
@@ -83,6 +85,8 @@ class ActuatorExecutor:
             else None
         )
         self._actor = str(actor).strip() or "executor"
+        self._operation_broker = operation_broker
+        self._executor_principal = executor_principal
 
     def execute(self, proposal_id: str) -> Any:
         """Execute an approved proposal; returns the updated proposal record.
@@ -110,6 +114,8 @@ class ActuatorExecutor:
             raise ActuatorPolicyError(
                 f"actuator '{proposal.plugin_id}' is not on the project allow-list"
             )
+
+        operation_id = self._claim_operation(proposal_id)
 
         # 3. Mandatory material-authority parity (TOCTOU). The caller cannot
         # supply or bypass authority: approval persistence is the source of
@@ -147,6 +153,7 @@ class ActuatorExecutor:
                 detail=f"authority mismatch: {', '.join(mismatches)}",
                 error="approval authority check failed — execution aborted, no side effect performed",
             )
+            self._receipt_operation(operation_id, updated)
             self._notify_result(updated)
             return updated
 
@@ -168,6 +175,7 @@ class ActuatorExecutor:
                     detail="scoped grant mismatch or revoked",
                     error="grant authority check failed — no side effect performed",
                 )
+                self._receipt_operation(operation_id, updated)
                 self._notify_result(updated)
                 return updated
             try:
@@ -180,6 +188,7 @@ class ActuatorExecutor:
                     detail="scoped grant changed before consumption",
                     error=f"grant authority check failed — {exc}; no side effect performed",
                 )
+                self._receipt_operation(operation_id, updated)
                 self._notify_result(updated)
                 return updated
 
@@ -206,6 +215,7 @@ class ActuatorExecutor:
                 detail=f"connector error; payload {current_hash[:12]}",
                 error=f"{type(exc).__name__}: {exc}",
             )
+            self._receipt_operation(operation_id, updated)
             self._notify_result(updated)
             return updated
 
@@ -217,8 +227,34 @@ class ActuatorExecutor:
             detail=f"executed via connector; payload {current_hash[:12]}",
             result=result if isinstance(result, dict) else {"result": result},
         )
+        self._receipt_operation(operation_id, updated)
         self._notify_result(updated)
         return updated
+
+    def _claim_operation(self, proposal_id: str) -> str:
+        if self._operation_broker is None or self._executor_principal is None:
+            return ""
+        claimed = self._operation_broker.claim(
+            self._executor_principal, native_id=proposal_id
+        )
+        operations = claimed.get("operations") or []
+        if not operations:
+            receipt = claimed.get("refusal") or {}
+            reason = str(receipt.get("outcome") or "kernel_operation_not_claimable")
+            raise ActuatorExecutionError(
+                f"proposal {proposal_id} was refused by the kernel: {reason}"
+            )
+        return str(operations[0]["operation_id"])
+
+    def _receipt_operation(self, operation_id: str, proposal: Any) -> None:
+        if not operation_id:
+            return
+        audits = self._db.actuators.list_audit(proposal.id)
+        result_ref = f"actuator-audit:{audits[-1].id}" if audits else ""
+        outcome = "succeeded" if proposal.status == "executed" else "failed"
+        self._operation_broker.receipt(
+            operation_id, outcome, result_ref, self._executor_principal
+        )
 
     def _notify_result(self, proposal: Any) -> None:
         if self._on_result is None or proposal is None:

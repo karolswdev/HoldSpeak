@@ -6,6 +6,7 @@ from contextvars import ContextVar
 from typing import Any, Mapping, Sequence
 
 from ..principals import UNAUTHENTICATED
+from .actuator import ActuatorCodec
 from .broker import Broker
 from .journal import JournalStore
 from .model import OperationSpec
@@ -27,9 +28,11 @@ def _build(database: Any, *, clock: Any = None) -> Broker:
     store = JournalStore(database._connection, **({"clock": clock} if clock else {}))
     tool_calls = ToolCallCodec(database.gate, _mode)
     process_input = ProcessInputCodec(database.delivery_receipts)
+    actuator = ActuatorCodec(database.actuators, _mode)
     specs = (
         OperationSpec(tool_calls.name, tool_calls.version, tool_calls, "agent.submit", "propose"),
         OperationSpec(process_input.name, process_input.version, process_input, "agent.submit", "propose"),
+        OperationSpec(actuator.name, actuator.version, actuator, "agent.submit", "propose"),
     )
     return Broker(store, specs, **({"clock": clock} if clock else {}))
 

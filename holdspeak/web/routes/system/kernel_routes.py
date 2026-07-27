@@ -64,10 +64,10 @@ def build_kernel_router() -> APIRouter:
                 return JSONResponse(
                     kernel.decide(operation_id, str(body.get("decision") or ""), revision)
                 )
-        except (TypeError, ValueError):
-            return JSONResponse({"error": "expected_revision_required"}, status_code=400)
         except KernelRefused as exc:
             return _refused(exc)
+        except (TypeError, ValueError):
+            return JSONResponse({"error": "expected_revision_required"}, status_code=400)
 
     @router.get("/api/kernel/events")
     async def api_kernel_events(
