@@ -1,0 +1,393 @@
+{
+  "schema_version": 1,
+  "title": "Article XI cooperating-path effect debt register",
+  "authority": "Constitution Article XI temporary migration provision; HS-106-03",
+  "snapshot": "ecc8308021a48c3fa66baafe79b16196c11bffbb",
+  "scope": "Static effect-capable statements under holdspeak/ in the five ratified census families. Ignored source paths are included; bytecode, source maps, and vendored/generated static assets are excluded.",
+  "counting_rule": "Count statements, not logical user actions. Every ambient boundary crossed by one action remains a separate site.",
+  "legal_effect": "Each non-covered entry is declared migration debt, not authority. No agent principal may reach a path named by this register. Covered entries record existing audited chokepoints and do not grant authority beyond those chokepoints.",
+  "status_definitions": {
+    "covered": "Every in-tree route reaches the statement through an audited chokepoint named by the census.",
+    "bypass": "A reachable route avoids all named audited chokepoints.",
+    "mixed": "Covered and bypass routes share this statement; treated as not covered.",
+    "dormant": "No current production caller, but the ambient capability can execute without a named chokepoint; treated as not covered."
+  },
+  "expected": {
+    "total": 40,
+    "covered": 4,
+    "not_covered": 36,
+    "families": {
+      "tmux_transport": 4,
+      "text_typer": 8,
+      "subprocess": 5,
+      "egress": 13,
+      "raw_desktop": 10
+    }
+  },
+  "sites": [
+    {
+      "id": "T01",
+      "family": "tmux_transport",
+      "status": "covered",
+      "path": "holdspeak/coder_steering.py",
+      "census_line": 651,
+      "selector": {"scope": "deliver", "target": "send", "ordinal": 1},
+      "reason": "Production transport invocation inside the audited coder_steering.deliver chokepoint; delivery-command traffic also carries its command receipt."
+    },
+    {
+      "id": "T02",
+      "family": "tmux_transport",
+      "status": "covered",
+      "path": "holdspeak/coder_steering.py",
+      "census_line": 792,
+      "selector": {"scope": "deliver_keys", "target": "send", "ordinal": 1},
+      "reason": "Production key transport invocation inside the audited coder_steering.deliver_keys chokepoint; delivery-command traffic adds its command receipt."
+    },
+    {
+      "id": "T03",
+      "family": "tmux_transport",
+      "status": "bypass",
+      "path": "holdspeak/runtime/dictation_capture.py",
+      "census_line": 429,
+      "selector": {"scope": "DictationCaptureMixin._try_tmux_agent_reply", "target": "send_text_to_pane", "ordinal": 1},
+      "reason": "Dictation-to-agent sends text and Enter through tmux_transport directly; retained only as declared migration debt until the terminal slice adapts it."
+    },
+    {
+      "id": "T04",
+      "family": "tmux_transport",
+      "status": "bypass",
+      "path": "holdspeak/web/routes/cadence.py",
+      "census_line": 256,
+      "selector": {"scope": "build_cadence_router.reply_to_agent", "target": "send_text_to_pane", "ordinal": 1},
+      "reason": "Cadence reply route sends to the loop pane directly after route-local lookup; retained only as declared migration debt."
+    },
+
+    {
+      "id": "D01",
+      "family": "text_typer",
+      "status": "bypass",
+      "path": "holdspeak/runtime/dictation_capture.py",
+      "census_line": 188,
+      "selector": {"scope": "DictationCaptureMixin._transcribe_and_type", "target": "type_text", "ordinal": 1},
+      "reason": "Local dictation fallback types into the focused app or agent target without an audited admission seam; retained pending typed admission split."
+    },
+    {
+      "id": "D02",
+      "family": "text_typer",
+      "status": "bypass",
+      "path": "holdspeak/runtime/dictation_capture.py",
+      "census_line": 284,
+      "selector": {"scope": "DictationCaptureMixin.type_dictation_preview", "target": "type_text", "ordinal": 1},
+      "reason": "The explicit preview Type action invokes TextTyper directly; retained as declared desktop.type_text migration debt."
+    },
+    {
+      "id": "D03",
+      "family": "text_typer",
+      "status": "bypass",
+      "path": "holdspeak/runtime/dictation_capture.py",
+      "census_line": 369,
+      "selector": {"scope": "DictationCaptureMixin._maybe_dispatch_voice_command._type", "target": "type_text", "ordinal": 1},
+      "reason": "The injected writer for type_text voice macros types into the ambient focused app without actuator admission; retained as migration debt."
+    },
+    {
+      "id": "D04",
+      "family": "text_typer",
+      "status": "bypass",
+      "path": "holdspeak/runtime/dictation_capture.py",
+      "census_line": 485,
+      "selector": {"scope": "DictationCaptureMixin._deliver_remote_dictation", "target": "type_text", "ordinal": 1},
+      "reason": "Remote dictation fallback may type to a recent agent session or ambient focus without audited admission; retained pending target-aware split."
+    },
+    {
+      "id": "D05",
+      "family": "text_typer",
+      "status": "bypass",
+      "path": "holdspeak/runtime/dictation_capture.py",
+      "census_line": 509,
+      "selector": {"scope": "DictationCaptureMixin._deliver_remote_dictation_focused", "target": "type_text", "ordinal": 1},
+      "reason": "Companion focused delivery deliberately types without Enter but still invokes ambient TextTyper directly; retained as migration debt."
+    },
+    {
+      "id": "D06",
+      "family": "text_typer",
+      "status": "bypass",
+      "path": "holdspeak/runtime/wake_glue.py",
+      "census_line": 291,
+      "selector": {"scope": "WakeWordGlueMixin._transcribe_wake", "target": "type_text", "ordinal": 1},
+      "reason": "Wake action type inserts processed dictation into the active app directly; retained as desktop.type_text migration debt."
+    },
+    {
+      "id": "D07",
+      "family": "text_typer",
+      "status": "bypass",
+      "path": "holdspeak/runtime/wake_glue.py",
+      "census_line": 346,
+      "selector": {"scope": "WakeWordGlueMixin._type_wake_preview", "target": "type_text", "ordinal": 1},
+      "reason": "The explicit wake-preview Type action invokes TextTyper directly; retained as desktop.type_text migration debt."
+    },
+    {
+      "id": "D08",
+      "family": "text_typer",
+      "status": "dormant",
+      "path": "holdspeak/plugins/voice_macro_connector.py",
+      "census_line": 118,
+      "selector": {"scope": "_default_type_writer", "target": "type_text", "ordinal": 1},
+      "reason": "Dormant default voice-macro writer can lazily create TextTyper without an audited seam; retained only until the fallback is removed or brokered."
+    },
+
+    {
+      "id": "C01",
+      "family": "subprocess",
+      "status": "mixed",
+      "path": "holdspeak/connector_runtime.py",
+      "census_line": 125,
+      "selector": {"scope": "PermissionGate.run_subprocess", "target": "actual", "ordinal": 1},
+      "reason": "Shared raw process boundary serves actuator-covered writes and unbrokered enrichment or voice routes; PermissionGate is enforcement but not an audited chokepoint."
+    },
+    {
+      "id": "C02",
+      "family": "subprocess",
+      "status": "bypass",
+      "path": "holdspeak/activity_github.py",
+      "census_line": 132,
+      "selector": {"scope": "run_github_cli_enrichment", "target": "run_subprocess", "ordinal": 1},
+      "reason": "GitHub activity enrichment invokes PermissionGate directly for metadata reads; retained as external.github.read migration debt."
+    },
+    {
+      "id": "C03",
+      "family": "subprocess",
+      "status": "bypass",
+      "path": "holdspeak/activity_jira.py",
+      "census_line": 124,
+      "selector": {"scope": "run_jira_cli_enrichment", "target": "run_subprocess", "ordinal": 1},
+      "reason": "Jira activity enrichment invokes PermissionGate directly for issue reads; retained as external.jira.read_issue migration debt."
+    },
+    {
+      "id": "C04",
+      "family": "subprocess",
+      "status": "mixed",
+      "path": "holdspeak/plugins/gated_connector.py",
+      "census_line": 224,
+      "selector": {"scope": "_route", "target": "run_subprocess", "ordinal": 1},
+      "reason": "Shared connector dispatch serves actuator-covered writes and direct voice-macro calls; retained until all callers share audited admission."
+    },
+    {
+      "id": "C05",
+      "family": "subprocess",
+      "status": "bypass",
+      "path": "holdspeak/missioncontrol_bridge.py",
+      "census_line": 38,
+      "selector": {"scope": "_default_runner", "target": "run", "ordinal": 1},
+      "reason": "Mission Control bridge runs Delivery Workbench and GitHub read commands directly; retained as read-path migration debt."
+    },
+
+    {
+      "id": "N01",
+      "family": "egress",
+      "status": "mixed",
+      "path": "holdspeak/connector_runtime.py",
+      "census_line": 144,
+      "selector": {"scope": "PermissionGate.open_outbound_socket", "target": "actual", "ordinal": 1},
+      "reason": "Shared raw network boundary has actuator-covered webhook traffic and an unowned default-socket branch; PermissionGate alone is not an audited chokepoint."
+    },
+    {
+      "id": "N02",
+      "family": "egress",
+      "status": "dormant",
+      "path": "holdspeak/plugins/gated_connector.py",
+      "census_line": 229,
+      "selector": {"scope": "_route", "target": "open_outbound_socket", "ordinal": 1},
+      "reason": "Dormant generic outbound branch can open a real socket through PermissionGate without destination-specific broker authority."
+    },
+    {
+      "id": "N03",
+      "family": "egress",
+      "status": "covered",
+      "path": "holdspeak/plugins/gated_connector.py",
+      "census_line": 233,
+      "selector": {"scope": "_route", "target": "open_outbound_socket", "ordinal": 2},
+      "reason": "Custom-opener outbound dispatch is reached in production only by Slack and generic webhook actuators through ActuatorExecutor."
+    },
+    {
+      "id": "N04",
+      "family": "egress",
+      "status": "covered",
+      "path": "holdspeak/plugins/builtin/webhook_post_actuator.py",
+      "census_line": 129,
+      "selector": {"scope": "_default_post", "target": "urlopen", "ordinal": 1},
+      "reason": "Production webhook HTTP send is constructed and executed only through the audited actuator route."
+    },
+    {
+      "id": "N05",
+      "family": "egress",
+      "status": "bypass",
+      "path": "holdspeak/intel_queue.py",
+      "census_line": 485,
+      "selector": {"scope": "IntelQueueWorker._post_failure_alert_webhook", "target": "urlopen", "ordinal": 1},
+      "reason": "Intel queue failure alert posts its webhook directly from the scheduler; retained as external.webhook.post_intel_queue_alert debt."
+    },
+    {
+      "id": "N06",
+      "family": "egress",
+      "status": "bypass",
+      "path": "holdspeak/intel/engine.py",
+      "census_line": 221,
+      "selector": {"scope": "MeetingIntel._chat_completion_text", "target": "create", "ordinal": 1},
+      "reason": "Initial non-streaming meeting-intel model request invokes the provider client directly; retained as inference.run migration debt."
+    },
+    {
+      "id": "N07",
+      "family": "egress",
+      "status": "bypass",
+      "path": "holdspeak/intel/engine.py",
+      "census_line": 229,
+      "selector": {"scope": "MeetingIntel._chat_completion_text", "target": "create", "ordinal": 2},
+      "reason": "Compatibility retry is a separate static provider invocation and remains direct inference.run migration debt."
+    },
+    {
+      "id": "N08",
+      "family": "egress",
+      "status": "bypass",
+      "path": "holdspeak/intel/engine.py",
+      "census_line": 300,
+      "selector": {"scope": "MeetingIntel._chat_completion_stream", "target": "create", "ordinal": 1},
+      "reason": "Initial streaming meeting-intel model request invokes the provider client directly; retained as inference.run migration debt."
+    },
+    {
+      "id": "N09",
+      "family": "egress",
+      "status": "bypass",
+      "path": "holdspeak/intel/engine.py",
+      "census_line": 307,
+      "selector": {"scope": "MeetingIntel._chat_completion_stream", "target": "create", "ordinal": 2},
+      "reason": "Streaming compatibility retry is a separate static provider invocation and remains direct inference.run migration debt."
+    },
+    {
+      "id": "N10",
+      "family": "egress",
+      "status": "bypass",
+      "path": "holdspeak/plugins/dictation/runtime_openai_compatible.py",
+      "census_line": 126,
+      "selector": {"scope": "OpenAICompatibleRuntime.classify", "target": "create", "ordinal": 1},
+      "reason": "Initial dictation intent-classification provider request bypasses broker admission; retained as inference.run migration debt."
+    },
+    {
+      "id": "N11",
+      "family": "egress",
+      "status": "bypass",
+      "path": "holdspeak/plugins/dictation/runtime_openai_compatible.py",
+      "census_line": 141,
+      "selector": {"scope": "OpenAICompatibleRuntime.classify", "target": "create", "ordinal": 2},
+      "reason": "Classification compatibility retry is a separate static provider invocation and remains direct inference.run migration debt."
+    },
+    {
+      "id": "N12",
+      "family": "egress",
+      "status": "bypass",
+      "path": "holdspeak/plugins/dictation/runtime_openai_compatible.py",
+      "census_line": 190,
+      "selector": {"scope": "OpenAICompatibleRuntime.rewrite", "target": "create", "ordinal": 1},
+      "reason": "Project-aware dictation rewrite invokes the provider directly; retained as inference.run migration debt."
+    },
+    {
+      "id": "N13",
+      "family": "egress",
+      "status": "bypass",
+      "path": "holdspeak/cadence_telegram.py",
+      "census_line": 38,
+      "selector": {"scope": "call_telegram", "target": "urlopen", "ordinal": 1},
+      "reason": "Cadence Telegram adapter directly posts Bot API methods; retained pending method-specific external.telegram admission."
+    },
+
+    {
+      "id": "A01",
+      "family": "raw_desktop",
+      "status": "bypass",
+      "path": "holdspeak/typer.py",
+      "census_line": 84,
+      "selector": {"scope": "TextTyper._paste_text", "target": "copy", "ordinal": 1},
+      "reason": "TextTyper replaces the system clipboard as a desktop.type_text substep; retained until the whole typing operation executes under one warrant."
+    },
+    {
+      "id": "A02",
+      "family": "raw_desktop",
+      "status": "bypass",
+      "path": "holdspeak/typer.py",
+      "census_line": 93,
+      "selector": {"scope": "TextTyper._paste_text", "target": "press", "ordinal": 1},
+      "reason": "TextTyper presses paste modifiers as a raw keyboard substep; retained until the whole typing operation executes under one warrant."
+    },
+    {
+      "id": "A03",
+      "family": "raw_desktop",
+      "status": "bypass",
+      "path": "holdspeak/typer.py",
+      "census_line": 94,
+      "selector": {"scope": "TextTyper._paste_text", "target": "press", "ordinal": 2},
+      "reason": "TextTyper presses the paste key as a raw keyboard substep; retained until the whole typing operation executes under one warrant."
+    },
+    {
+      "id": "A04",
+      "family": "raw_desktop",
+      "status": "bypass",
+      "path": "holdspeak/typer.py",
+      "census_line": 95,
+      "selector": {"scope": "TextTyper._paste_text", "target": "release", "ordinal": 1},
+      "reason": "TextTyper releases the paste key as a raw keyboard substep; retained until the whole typing operation executes under one warrant."
+    },
+    {
+      "id": "A05",
+      "family": "raw_desktop",
+      "status": "bypass",
+      "path": "holdspeak/typer.py",
+      "census_line": 97,
+      "selector": {"scope": "TextTyper._paste_text", "target": "release", "ordinal": 2},
+      "reason": "TextTyper releases paste modifiers as a raw keyboard substep; retained until the whole typing operation executes under one warrant."
+    },
+    {
+      "id": "A06",
+      "family": "raw_desktop",
+      "status": "bypass",
+      "path": "holdspeak/typer.py",
+      "census_line": 103,
+      "selector": {"scope": "TextTyper._paste_text", "target": "copy", "ordinal": 2},
+      "reason": "TextTyper restores the prior clipboard as a desktop.type_text substep; retained until the whole typing operation executes under one warrant."
+    },
+    {
+      "id": "A07",
+      "family": "raw_desktop",
+      "status": "bypass",
+      "path": "holdspeak/typer.py",
+      "census_line": 110,
+      "selector": {"scope": "TextTyper._type_text_slowly", "target": "type", "ordinal": 1},
+      "reason": "TextTyper emits synthetic characters directly in its slow path; retained until desktop.type_text executes under one warrant."
+    },
+    {
+      "id": "A08",
+      "family": "raw_desktop",
+      "status": "bypass",
+      "path": "holdspeak/typer.py",
+      "census_line": 114,
+      "selector": {"scope": "TextTyper._press_enter", "target": "press", "ordinal": 1},
+      "reason": "TextTyper presses Enter directly when submission is requested; retained pending target-aware desktop.type_text or process.input admission."
+    },
+    {
+      "id": "A09",
+      "family": "raw_desktop",
+      "status": "bypass",
+      "path": "holdspeak/typer.py",
+      "census_line": 115,
+      "selector": {"scope": "TextTyper._press_enter", "target": "release", "ordinal": 1},
+      "reason": "TextTyper releases Enter directly as part of submission; retained pending target-aware desktop.type_text or process.input admission."
+    },
+    {
+      "id": "A10",
+      "family": "raw_desktop",
+      "status": "dormant",
+      "path": "holdspeak/typer.py",
+      "census_line": 140,
+      "selector": {"scope": "type_with_applescript", "target": "run", "ordinal": 1},
+      "reason": "Dormant AppleScript helper can invoke osascript/System Events directly; retained only until the ambient helper is removed or brokered."
+    }
+  ]
+}
