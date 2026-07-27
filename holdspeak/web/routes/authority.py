@@ -132,7 +132,7 @@ def build_authority_router(ctx: WebContext) -> APIRouter:
                 operation_id=str(raw.get("operation_id") or "preview"),
                 family=str(raw.get("family") or ""),
                 effect_class=str(raw.get("effect_class") or ""),
-                actor=str(raw.get("actor") or "owner"),
+                actor=request.state.principal.identity,
                 destination=str(raw.get("destination") or ""),
                 data_classes=raw.get("data_classes")
                 if isinstance(raw.get("data_classes"), list)
@@ -183,7 +183,7 @@ def build_authority_router(ctx: WebContext) -> APIRouter:
         if body is None:
             return JSONResponse({"error": "expected a JSON object"}, status_code=400)
         proposal_id = str(body.get("proposal_id") or "").strip()
-        actor = str(body.get("actor") or "owner").strip() or "owner"
+        actor = request.state.principal.identity
         try:
             from ...config import Config
             from ...db import get_database

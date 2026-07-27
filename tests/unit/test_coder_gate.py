@@ -344,7 +344,16 @@ def route_rig(tmp_path, monkeypatch):
     clock = Clock()
     db.gate._now = clock
     monkeypatch.setattr(hsdb, "get_database", lambda *args, **kwargs: db)
+    from holdspeak.principals import Principal, PrincipalKind, agent_credentials
+
     app = FastAPI()
+    app.state.agent_credentials = agent_credentials
+
+    @app.middleware("http")
+    async def owner_principal(request, call_next):
+        request.state.principal = Principal(PrincipalKind.OWNER, "owner-session")
+        return await call_next(request)
+
     app.include_router(build_gate_router(WebContext(get_state=lambda: {})))
     yield db, clock, TestClient(app)
     reset_database()

@@ -131,7 +131,18 @@ def _cmd_hook(*, stdin: TextIO, out: TextIO) -> int:
         return _EXIT_OK
     if not isinstance(payload, dict):
         return _EXIT_OK
-    if str(payload.get("hook_event_name") or "") == "Stop":
+    event = str(payload.get("hook_event_name") or "")
+    if event == "SessionStart":
+        from ..coder_gate import run_session_start
+
+        run_session_start(payload)
+        return _EXIT_OK
+    if event == "SessionEnd":
+        from ..coder_gate import run_session_end
+
+        run_session_end(payload)
+        return _EXIT_OK
+    if event == "Stop":
         from ..coder_gate import run_stop_hook
 
         run_stop_hook(payload)  # telemetry: silent, never blocks the stop

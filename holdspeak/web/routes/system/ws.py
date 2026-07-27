@@ -20,21 +20,40 @@ def build_ws_router(ctx: WebContext) -> APIRouter:
     @router.websocket("/ws")
     async def websocket_endpoint(websocket: WebSocket) -> None:
         from .... import web_auth
+        from ....principals import (
+            Principal,
+            PrincipalKind,
+            PrincipalRight,
+            UNAUTHENTICATED,
+            agent_credentials,
+            derive_owner,
+        )
 
-        if not web_auth.is_loopback_host(ctx.web_host):
-            # Native clients can send the same bearer/header auth as HTTP;
-            # browsers use the encoded subprotocol because WebSocket() cannot
-            # set request headers. Neither path places a credential in the URL.
-            provided = web_auth.extract_request_token(
-                authorization=websocket.headers.get("authorization"),
-                header_token=websocket.headers.get("x-holdspeak-token"),
-            ) or web_auth.extract_websocket_token(
-                websocket.headers.get("sec-websocket-protocol")
-            )
-            if not web_auth.verify_web_token(provided, ctx.web_auth_token):
-                log.warning("Rejected unauthorized WebSocket connection")
-                await websocket.close(code=1008, reason="Unauthorized")
-                return
+        # Native clients can send the same bearer/header auth as HTTP;
+        # browsers use the encoded subprotocol because WebSocket() cannot
+        # set request headers. Neither path places a credential in the URL.
+        provided = web_auth.extract_request_token(
+            authorization=websocket.headers.get("authorization"),
+            header_token=websocket.headers.get("x-holdspeak-token"),
+        ) or web_auth.extract_websocket_token(
+            websocket.headers.get("sec-websocket-protocol")
+        )
+        principal = derive_owner(provided, ctx.web_auth_token)
+        if principal is None:
+            principal = agent_credentials.derive(provided)
+        if principal is None:
+            node_token = websocket.headers.get("x-holdspeak-node-token")
+            node_store = getattr(websocket.app.state, "node_token_store", None)
+            node_id = node_store.principal_identity(node_token) if node_store else None
+            if node_id:
+                principal = Principal(PrincipalKind.NODE, node_id)
+        principal = principal or UNAUTHENTICATED
+        websocket.state.principal = principal
+        if not principal.permits(PrincipalRight.OWNER):
+            reason = f"principal={principal.name} missing_right={PrincipalRight.OWNER.value}"
+            log.warning(f"Rejected WebSocket: {reason}")
+            await websocket.close(code=1008, reason=reason)
+            return
 
         offered = {
             item.strip()

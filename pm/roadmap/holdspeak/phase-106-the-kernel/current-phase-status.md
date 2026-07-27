@@ -1,6 +1,6 @@
 # Phase 106 - The Kernel
 
-**Status:** ACTIVE (0/10). Chartered 2026-07-26 from
+**Status:** ACTIVE (1/10). Chartered 2026-07-26 from
 [`PLAN_KERNEL_OPERATION_BROKER.md`](../../../docs/internal/PLAN_KERNEL_OPERATION_BROKER.md)
 (the RFC, three council passes) and the owner's direct charge:
 
@@ -11,7 +11,7 @@
 > records decisions and then creates artifacts out of those
 > decisions and meetings."
 
-**Last updated:** 2026-07-26 (chartered; no story shipped yet).
+**Last updated:** 2026-07-26 (HS-106-02 shipped; 1/10).
 
 ## Why this phase exists
 
@@ -108,7 +108,7 @@ receipt for every consequence.
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
 | HS-106-01 | Article XI ratified, with the migration provision | ready | [story-01-article-xi](./story-01-article-xi.md) | — |
-| HS-106-02 | Principal separation on loopback | ready | [story-02-principals](./story-02-principals.md) | — |
+| HS-106-02 | Principal separation on loopback | done | [story-02-principals](./story-02-principals.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-106-03 | The effect census, pinned as a test | ready | [story-03-census-test](./story-03-census-test.md) | — |
 | HS-106-04 | The broker and the journal — four calls | ready | [story-04-broker-journal](./story-04-broker-journal.md) | — |
 | HS-106-05 | Thin slice I — terminal input | ready | [story-05-slice-terminal](./story-05-slice-terminal.md) | — |
@@ -169,12 +169,17 @@ pretending.
 
 ## Where we are
 
-**2026-07-26 — chartered, 0/10.** The RFC ladder is now a phase.
-Nothing is built yet. The fourth council pass has already run and
-returned **do not ratify yet**; the owner overruled it in favour of
-ratifying with a migration provision, and both the verdict and the
-dissent are on the record. HS-106-02 and HS-106-03 are activated
-first — both are pure hardening, unblocked by the constitutional
-question, and Sol's findings made 02 more urgent than the RFC
-assumed: the gate's decision route currently takes `actor` from the
-request body and defaults it to `owner`.
+**2026-07-26 — HS-106-02 shipped, 1/10.** Loopback is no longer an
+authority signal. The HTTP and WebSocket doors derive typed `owner`,
+`agent`, and `node` principals from distinct credentials; the right
+table closes `decide`, posture, and delegation to agents before route
+code runs. Gate proposal identity, usage identity, decision actor, and
+authority-grant actor now come from the derived principal rather than
+the request body. Agent credentials are minted at supervised spawn /
+SessionStart, expire, self-revoke at SessionEnd, revoke on factory
+kill, and rotate on respawn. The owner's tokenized first-load URL is
+captured and scrubbed by the Desk with no login ceremony. A real
+`claude -p` process proved proposal HTTP 200 and decision HTTP 403 by
+name against a real staged hub; the 1440/393 first-load walk and the
+full 4,231-test suite are green. HS-106-03 is the other hardening
+prerequisite now ready to land.

@@ -1,8 +1,7 @@
-"""Integration tests for the web-runtime auth gate + bind guard (HS-25-02).
+"""Integration tests for principal derivation and bind safety (HS-106-02).
 
-Policy: enforced ONLY off-loopback. Loopback binds stay open; a non-loopback
-bind requires a token both to bind and on every request (except /health and the
-device-audio WS, which has its own PSK).
+Request authority is credential-derived on every bind. Network location remains
+relevant only to the non-loopback bind guard.
 """
 
 from __future__ import annotations
@@ -24,19 +23,26 @@ def _callbacks():
     }
 
 
-def test_loopback_runtime_is_open_no_token_required():
+def test_loopback_runtime_derives_owner_instead_of_trusting_host():
     cb = _callbacks()
     server = MeetingWebServer(WebRuntimeCallbacks(**cb), host="127.0.0.1", auth_token="")
     client = TestClient(server.app)
-    # Loopback: open exactly as before, even with no token configured.
+    client.headers.pop("x-holdspeak-token", None)
     assert client.get("/health").status_code == 200
-    assert client.get("/api/state").status_code == 200
+    refused = client.get("/api/state")
+    assert refused.status_code == 401
+    assert refused.json()["principal"] == "none"
+    assert refused.json()["missing_right"] == "owner"
+    assert client.get(
+        "/api/state", headers={"X-HoldSpeak-Token": server.auth_token}
+    ).status_code == 200
 
 
 def test_nonloopback_runtime_requires_token():
     cb = _callbacks()
     server = MeetingWebServer(WebRuntimeCallbacks(**cb), host="0.0.0.0", auth_token="s3cret")
     client = TestClient(server.app)
+    client.headers.pop("x-holdspeak-token", None)
 
     # No token → 401 on data routes.
     assert client.get("/api/state").status_code == 401
@@ -59,24 +65,24 @@ def test_nonloopback_runtime_requires_token():
     assert client.get("/_built/does-not-exist.js").status_code != 401
 
 
-def test_general_websocket_matches_the_off_loopback_http_policy():
+def test_general_websocket_derives_the_same_principal_on_every_bind():
     cb = _callbacks()
 
     loopback = MeetingWebServer(
         WebRuntimeCallbacks(**cb), host="127.0.0.1", auth_token=""
     )
-    with TestClient(loopback.app).websocket_connect(
-        "/ws", subprotocols=["holdspeak.v1"]
-    ) as socket:
-        assert socket.accepted_subprotocol == "holdspeak.v1"
-        assert socket.receive_json()["type"] == "duration"
-        socket.send_text("ping")
-        assert socket.receive_text() == "pong"
+    loopback_client = TestClient(loopback.app)
+    loopback_client.headers.pop("x-holdspeak-token", None)
+    with pytest.raises(WebSocketDisconnect) as refused:
+        with loopback_client.websocket_connect("/ws", subprotocols=["holdspeak.v1"]):
+            pass
+    assert refused.value.reason == "principal=none missing_right=owner"
 
     remote = MeetingWebServer(
         WebRuntimeCallbacks(**cb), host="0.0.0.0", auth_token="s3cret"
     )
     client = TestClient(remote.app)
+    client.headers.pop("x-holdspeak-token", None)
     for protocols in (
         ["holdspeak.v1"],
         ["holdspeak.v1", "holdspeak.auth.wrong"],

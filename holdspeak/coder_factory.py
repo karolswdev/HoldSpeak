@@ -70,16 +70,33 @@ def spawn(
         return _audited({"status": "bad_name", "detail": f"invalid session name: {name!r}"})
     if runner is None and shutil.which("tmux") is None:
         return _audited({"status": "tmux_absent"})
-    # `command` is tmux's own trailing arg (its own argv slot) — tmux runs it;
-    # we never build a shell string around it.
-    argv = ["tmux", "new-session", "-d", "-s", name]
+    from .principals import agent_credentials
+
+    identity = f"agent:tmux:{name}"
+    credential = agent_credentials.issue(identity)
+    # tmux installs these in the new session's environment before its first
+    # process starts.  The supervised agent receives only its scoped token,
+    # never the owner's browser credential.
+    argv = [
+        "tmux",
+        "new-session",
+        "-d",
+        "-e",
+        f"HOLDSPEAK_AGENT_CREDENTIAL={credential.token}",
+        "-e",
+        f"HOLDSPEAK_HUB_URL={agent_credentials.hub_url}",
+        "-s",
+        name,
+    ]
     if command:
         argv.append(command)
     try:
         completed = _run(runner, argv)
     except (OSError, subprocess.TimeoutExpired) as exc:
+        agent_credentials.revoke(identity)
         return _audited({"status": "error", "detail": str(exc)})
     if completed.returncode != 0:
+        agent_credentials.revoke(identity)
         detail = (completed.stderr or "").strip()
         status = "exists" if "duplicate" in detail.lower() else "error"
         return _audited({"status": status, "detail": detail or "tmux refused"})
@@ -88,6 +105,7 @@ def spawn(
         pane_id = (panes.stdout or "").strip().splitlines()[0] if panes.stdout else None
     except (OSError, subprocess.TimeoutExpired, IndexError):
         pane_id = None
+    agent_credentials.bind_target(identity, name, pane_id)
     return _audited({"status": "spawned", "session": name, "pane_id": pane_id}, pane_id)
 
 
@@ -172,8 +190,12 @@ def kill(
             {"status": "error", "detail": (completed.stderr or "").strip() or "tmux refused"},
             pane_id,
         )
-    # The pane is gone: the grant can never re-verify it, so drop it.
+    # The pane is gone: the grant and its process credential can never be
+    # reused.  Respawning the name mints a distinct token.
     coder_steering.disarm(key)
+    from .principals import agent_credentials
+
+    agent_credentials.revoke_targets((pane_id, current_target, key))
     return _audited({"status": "killed", "pane_id": pane_id, "scope": scope}, pane_id)
 
 

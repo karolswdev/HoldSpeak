@@ -9,6 +9,28 @@ from unittest.mock import MagicMock, patch
 from datetime import datetime
 from typing import TYPE_CHECKING
 
+try:
+    from starlette.testclient import TestClient as _StarletteTestClient
+except ImportError:  # web is an optional dependency in the base test environment
+    _StarletteTestClient = None
+
+
+# MeetingWebServer now authenticates loopback exactly like every other bind.
+# Existing route tests represent the owner browser, so make that construction
+# explicit once at the harness edge instead of adding a production test bypass
+# or touching hundreds of unrelated call sites.
+if _StarletteTestClient is not None:
+    _original_test_client_init = _StarletteTestClient.__init__
+
+    def _owner_test_client_init(self, app, *args, **kwargs):
+        _original_test_client_init(self, app, *args, **kwargs)
+        token = str(getattr(getattr(app, "state", None), "owner_token", "") or "")
+        if token:
+            self.headers.setdefault("X-HoldSpeak-Token", token)
+
+    _StarletteTestClient.__init__ = _owner_test_client_init
+
+
 if TYPE_CHECKING:
     from holdspeak.config import Config
 

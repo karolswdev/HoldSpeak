@@ -220,11 +220,10 @@ def test_stop_hook_reports_only_for_a_held_repo(tmp_path) -> None:
     assert run_stop_hook(payload, config=armed, http_post=post) is True
     assert posted[0]["url"].endswith("/api/gate/usage")
     body = posted[0]["body"]
-    assert body["session_key"] == "claude:s1"
     assert set(body) == {
-        "session_key", "model", "input_tokens", "output_tokens",
+        "model", "input_tokens", "output_tokens",
         "cache_read_tokens", "cache_creation_tokens",
-    }  # numbers and the model only; no text field exists on the wire
+    }  # identity comes from the credential; only numbers + model ride the body
 
 
 def test_stop_hook_failure_is_silent(tmp_path) -> None:
@@ -257,7 +256,16 @@ def route_rig(tmp_path, monkeypatch):
     reset_database()
     db = Database(tmp_path / "receipt-routes.db")
     monkeypatch.setattr(hsdb, "get_database", lambda *args, **kwargs: db)
+    from holdspeak.principals import Principal, PrincipalKind, agent_credentials
+
     app = FastAPI()
+    app.state.agent_credentials = agent_credentials
+
+    @app.middleware("http")
+    async def agent_principal(request, call_next):
+        request.state.principal = Principal(PrincipalKind.AGENT, "claude:s1")
+        return await call_next(request)
+
     app.include_router(build_gate_router(WebContext(get_state=lambda: {})))
     yield db, TestClient(app)
     reset_database()

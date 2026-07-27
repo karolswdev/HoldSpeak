@@ -4,15 +4,21 @@
 > pick up, and the repo conventions that bite (PMO commit gate, write-once
 > evidence, no `Co-Authored-By`, metal-test exclusion).
 
-**Last updated:** 2026-07-26 — **Phase 106 (The Kernel) CHARTERED,
-0/10**: the RFC's ladder becomes a phase, from the owner's charge
-that HoldSpeak come a lot closer to a web Operating System for the
-Tech-Lead/Architect who works with AI daily. Article XI goes to the
-Constitution behind a migration provision (the fourth council pass
-refused the drafted clauses on evidence; its rewrite was adopted,
-its dissent recorded, the owner ruled to ratify early with declared
-debt). HS-106-02 and HS-106-03 activate first — pure hardening,
-unblocked by the constitutional question. Earlier: **Phase 104 (Borrowed Fire II)
+**Last updated:** 2026-07-26 — **Phase 106 (The Kernel) ACTIVE,
+1/10 — HS-106-02 principal separation shipped**: loopback has lost
+all request-authority work. HTTP and WebSocket derive typed owner,
+agent, and node principals from distinct credentials; agent identity
+is minted at spawn / SessionStart, expires, revokes at SessionEnd or
+factory kill, and rotates on respawn. `decide`, posture, and
+delegation close at the edge by principal right; gate and authority
+records no longer trust caller actor/session labels. The owner's
+first load stays invisible-auth via a tokenized URL captured and
+scrubbed by the Desk. Proven by a real `claude -p` process against a
+real hub (proposal 200, decision 403 named `agent` + `decide`),
+1440/393 screenshot walk, and 4,231 passing tests. HS-106-03 is next.
+Earlier: **Phase 106 chartered** from the owner's web-OS charge, with
+Article XI's migration provision and council dissent on record.
+Earlier: **Phase 104 (Borrowed Fire II)
 CLOSED 8/8, all in one day**: the ledger, the fail-closed gate, the
 gate under attack, PR receipts, session receipts, docs, the
 seven-beat walk, and the sitting's own rider — **HS-104-08 the icon

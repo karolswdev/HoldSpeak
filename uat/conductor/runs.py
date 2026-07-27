@@ -215,24 +215,19 @@ class RunManager:
         home_dir = paths.run_home(run.id)
         home_mod.assemble_home(home_dir, link_caches=link_caches)
 
-        # A LAN bind is refused by the product without an auth token, so a
-        # LAN run gets its own token written into the overlay before boot.
+        # Every run gets one owner credential, including loopback. Keep it for
+        # the whole sitting: recipes restart the same run onto different decks,
+        # and rotating here would silently unauthenticate the Desk and conductor.
         overlay = dict(overlay)
-        if lan:
-            # Keep one token for the whole sitting. Recipes restart the same run
-            # onto different decks; rotating here would silently unpair every
-            # iPhone/iPad halfway through a pack.
-            token = (
-                overlay.get("meeting", {}).get("web_auth_token")
-                or run.token
-                or secrets.token_urlsafe(24)
-            )
-            meeting = dict(overlay.get("meeting") or {})
-            meeting["web_auth_token"] = token
-            overlay["meeting"] = meeting
-            run.token = token
-        else:
-            run.token = (overlay.get("meeting") or {}).get("web_auth_token")
+        token = (
+            overlay.get("meeting", {}).get("web_auth_token")
+            or run.token
+            or secrets.token_urlsafe(24)
+        )
+        meeting = dict(overlay.get("meeting") or {})
+        meeting["web_auth_token"] = token
+        overlay["meeting"] = meeting
+        run.token = token
         run.config = overlay
         home_mod.write_config(home_dir, overlay)
 

@@ -333,7 +333,7 @@ def test_launch_creates_one_attempt_one_target_one_receipt(rig) -> None:
 
     # The composed command is the profile argv + Story ref, nothing else.
     spawn_argv = next(c for c in rig.tmux.calls if c[1] == "new-session")
-    command = spawn_argv[5]
+    command = spawn_argv[spawn_argv.index("-s") + 2]
     assert command.startswith(f"cd {shlex.quote(str(rig.repo))} && ")
     assert "HOLDSPEAK_STORY_REF=demo/DM-1-01" in command
     assert command.endswith("exec claude")

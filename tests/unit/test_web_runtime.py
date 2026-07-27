@@ -120,7 +120,7 @@ def test_run_web_runtime_starts_and_stops_services(monkeypatch: pytest.MonkeyPat
     assert server_instances[0].started is True
     assert server_instances[0].stopped is True
     assert listener_events == ["start", "stop"]
-    assert browser_urls == ["http://127.0.0.1:9999"]
+    assert browser_urls == ["http://127.0.0.1:9999?token=test-web-token"]
     status = server_instances[0].on_get_status()
     assert status["text_injection_enabled"] is True
     assert status["text_injection_error"] == ""

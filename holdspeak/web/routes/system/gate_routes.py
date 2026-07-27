@@ -64,6 +64,44 @@ def build_gate_router(ctx: WebContext) -> APIRouter:
 
     router = APIRouter()
 
+    @router.post("/api/principals/agents")
+    async def api_issue_agent_principal(request: Request) -> Any:
+        """Owner-only mint used by trusted spawn and lifecycle hooks."""
+        body = await request.json()
+        if not isinstance(body, dict):
+            return JSONResponse({"error": "body must be an object"}, status_code=400)
+        identity = str(body.get("identity") or "").strip()
+        if not identity:
+            return JSONResponse({"error": "identity is required"}, status_code=400)
+        credential = request.app.state.agent_credentials.issue(identity)
+        return JSONResponse(
+            {
+                "principal": credential.principal.name,
+                "identity": credential.principal.identity,
+                "credential": credential.token,
+            },
+            status_code=201,
+        )
+
+    @router.delete("/api/principals/agents/{identity}")
+    async def api_revoke_agent_principal(identity: str, request: Request) -> Any:
+        revoked = request.app.state.agent_credentials.revoke(identity)
+        return JSONResponse(
+            {"principal": "agent", "identity": identity, "revoked": revoked}
+        )
+
+    @router.delete("/api/principals/self")
+    async def api_revoke_self(request: Request) -> Any:
+        principal = request.state.principal
+        revoked = request.app.state.agent_credentials.revoke(principal.identity)
+        return JSONResponse(
+            {
+                "principal": principal.name,
+                "identity": principal.identity,
+                "revoked": revoked,
+            }
+        )
+
     @router.post("/api/gate/proposals")
     async def api_gate_propose(request: Request) -> Any:
         # web.routes.system.gate_routes.receive — the ledger consumer.
@@ -91,10 +129,11 @@ def build_gate_router(ctx: WebContext) -> APIRouter:
         gate = get_database().gate
         gate.expire_due()
         try:
+            principal = request.state.principal
             proposal = gate.propose(
                 proposal_id=proposal_id,
-                session_key=str(body.get("session_key") or "unknown-session"),
-                agent=str(body.get("agent") or ""),
+                session_key=principal.identity,
+                agent=principal.name,
                 tool=tool,
                 args_sha256=args_sha256,
                 args_head=str(body.get("args_head") or ""),
@@ -115,12 +154,23 @@ def build_gate_router(ctx: WebContext) -> APIRouter:
         return JSONResponse(_wire(proposal))
 
     @router.get("/api/gate/proposals/{proposal_id}")
-    async def api_gate_read(proposal_id: str) -> Any:
+    async def api_gate_read(proposal_id: str, request: Request) -> Any:
         gate = get_database().gate
         gate.expire_due()
         proposal = gate.get(proposal_id)
         if proposal is None:
             return JSONResponse({"error": "unknown_proposal"}, status_code=404)
+        principal = request.state.principal
+        if principal.name == "agent" and proposal.session_key != principal.identity:
+            return JSONResponse(
+                {
+                    "error": "principal_scope_required",
+                    "principal": principal.name,
+                    "principal_identity": principal.identity,
+                    "missing_right": "agent.read:other_session",
+                },
+                status_code=403,
+            )
         return JSONResponse(_wire(proposal))
 
     @router.get("/api/gate/proposals")
@@ -149,7 +199,7 @@ def build_gate_router(ctx: WebContext) -> APIRouter:
             proposal = gate.decide(
                 proposal_id,
                 decision=decision,
-                decided_by=str(body.get("actor") or "owner"),
+                decided_by=request.state.principal.identity,
                 reason=reason,
             )
         except KeyError:
@@ -174,9 +224,7 @@ def build_gate_router(ctx: WebContext) -> APIRouter:
         body = await request.json()
         if not isinstance(body, dict):
             return JSONResponse({"error": "body must be an object"}, status_code=400)
-        session_key = str(body.get("session_key") or "").strip()
-        if not session_key:
-            return JSONResponse({"error": "session_key is required"}, status_code=400)
+        session_key = request.state.principal.identity
         try:
             get_database().gate.report_usage(
                 session_key=session_key,

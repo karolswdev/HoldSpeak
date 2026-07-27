@@ -56,6 +56,12 @@ def test_extract_request_token_priority_and_bearer():
     assert web_auth.extract_request_token(authorization="Basic xyz") is None
 
 
+def test_owner_browser_url_bootstraps_without_a_login_route():
+    assert web_auth.authenticated_browser_url(
+        "http://127.0.0.1:8788/?desk=1", "owner secret"
+    ) == "http://127.0.0.1:8788/?desk=1&token=owner+secret"
+
+
 def test_websocket_token_uses_a_header_protocol_not_a_url():
     encoded = web_auth.websocket_auth_protocol("secret-token")
     assert encoded.startswith("holdspeak.auth.v1.")

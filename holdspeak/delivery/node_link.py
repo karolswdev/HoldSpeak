@@ -240,6 +240,19 @@ class NodeTokenStore:
             raise NodeLinkError("token_rejected", f"token rejected for '{name}'")
         return str(entry["node_id"])
 
+    def principal_identity(self, token: Optional[str]) -> Optional[str]:
+        """Derive a node identity from a credential without caller labels."""
+        provided = str(token or "")
+        if not provided:
+            return None
+        for entry in self._nodes.values():
+            if entry.get("revoked"):
+                continue
+            expected = str(entry.get("token") or "")
+            if expected and hmac.compare_digest(provided.encode(), expected.encode()):
+                return str(entry.get("node_id") or "") or None
+        return None
+
     def status_rows(self) -> list[dict[str, Any]]:
         """Pairing inventory for the CLI: names and states, NEVER
         token material."""
