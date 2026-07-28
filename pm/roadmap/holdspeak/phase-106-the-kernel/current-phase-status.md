@@ -1,6 +1,6 @@
 # Phase 106 - The Kernel
 
-**Status:** ACTIVE (7/10). Chartered 2026-07-26 from
+**Status:** ACTIVE (9/10). Chartered 2026-07-26 from
 [`PLAN_KERNEL_OPERATION_BROKER.md`](../../../docs/internal/PLAN_KERNEL_OPERATION_BROKER.md)
 (the RFC, three council passes) and the owner's direct charge:
 
@@ -11,7 +11,7 @@
 > records decisions and then creates artifacts out of those
 > decisions and meetings."
 
-**Last updated:** 2026-07-27 (HS-106-01 through HS-106-08 shipped; 8/10 — the law, both prerequisites, the spine, three heterogeneous slices, the PASS verdict, and the real PR follow-through loop).
+**Last updated:** 2026-07-27 (HS-106-01 through HS-106-09 shipped; 9/10 — the law, both prerequisites, the spine, three heterogeneous slices, the PASS verdict, the real PR follow-through loop, and its truth-audited entry-point docs).
 
 ## Why this phase exists
 
@@ -100,7 +100,7 @@ receipt for every consequence.
       build && npm run tokens:gate` green.
 - [x] The userland program (HS-106-08) proven on the owner's REAL
       pull requests on real metal, not seeded fixtures.
-- [ ] HS-106-09 docs shipped touching the entry points.
+- [x] HS-106-09 docs shipped touching the entry points.
 - [ ] HS-106-10 closeout: the sitting loop run to the owner's
       verdict per Article IX.4.
 
@@ -116,7 +116,7 @@ receipt for every consequence.
 | HS-106-06 | Thin slice II — actuator egress | done | [story-06-slice-actuator](./story-06-slice-actuator.md) | [evidence-story-06](./evidence-story-06.md) |
 | HS-106-07 | Thin slice III — inference, and the kill criterion | done | [story-07-slice-inference-kill](./story-07-slice-inference-kill.md) | [evidence-story-07](./evidence-story-07.md) |
 | HS-106-08 | Userland — PR follow-through, the tech-lead's loop | done | [story-08-userland-pr-follow](./story-08-userland-pr-follow.md) | [evidence-story-08](./evidence-story-08.md) |
-| HS-106-09 | Docs — the kernel at the entry points | ready | [story-09-docs](./story-09-docs.md) | — |
+| HS-106-09 | Docs — the kernel at the entry points | done | [story-09-docs](./story-09-docs.md) | [evidence-story-09](./evidence-story-09.md) |
 | HS-106-10 | Closeout — the sitting and the kernel ledger | ready | [story-10-closeout](./story-10-closeout.md) | — |
 
 ## Sequencing
@@ -170,6 +170,19 @@ pretending.
   three thinly.
 
 ## Where we are
+
+**2026-07-27 — HS-106-09 shipped, 9/10: the kernel is at the entry points.**
+Backend architecture now names the four-call caller plane, the three-call
+executor plane, the journal/bus truth rule, all six registered operation types,
+and a rendered submit-to-receipt diagram. Security leads with the boundary's
+honest scope: cooperating code only, not a sandbox; 36 of 40 ledgered effect
+sites remain outside the kernel, and the stronger claim waits for RFC section
+5b process confinement. The User Guide puts the PR loop beside steering in the
+owner's words, and the README leads with the benefit. The claim-by-claim evidence
+names the shipped file and line behind every sentence. Final proof: docs and
+effect guards 25 passed; Mermaid rendered; the full suite recorded 4,279 passed,
+41 skipped, and only the pre-adjudicated voice-notes wording failure. HS-106-10
+is next: the owner sitting and closeout.
 
 **2026-07-28 — HS-106-08 shipped, 8/10: the kernel is visible.** The
 first §9 userland program rides on all four slices. Four verbs and no

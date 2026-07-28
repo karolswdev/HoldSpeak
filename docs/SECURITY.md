@@ -1,12 +1,42 @@
 # HoldSpeak Security & Privacy Posture
 
 **Status:** living document.
-**Last updated:** 2026-07-11.
+**Last updated:** 2026-07-27.
 
 This document is the threat model for HoldSpeak: what data it holds, where that
 data lives, what can leave the machine, and the decisions behind its at-rest
 posture. If code and this document disagree, that is a bug in one of them;
 file it.
+
+## Kernel boundary: cooperating code, not a sandbox
+
+**The kernel is an audit and consent boundary for cooperating code. It is not a
+sandbox or a security boundary against arbitrary in-process Python.**
+`connector_runtime.PermissionGate` makes the same limitation explicit: honest
+connector code is checked, but malicious in-process code can call raw process,
+network, tmux, typing, and desktop functions directly. Those transports remain
+public Python functions today.
+
+This narrowing comes before any kernel prevention claim. The stronger boundary
+requires [RFC section 5b confinement](internal/PLAN_KERNEL_OPERATION_BROKER.md#5b-effect-capability-confinement-the-enforcement-boundary):
+raw effect primitives move into a privileged executor process, while untrusted
+code holds payload-bound execution warrants instead of imports to ambient
+effects. That process and OS confinement is required before untrusted plugins
+or agent-authored code executes.
+
+The checked-in [effect debt register](../holdspeak/kernel/effect_ledger.json)
+records the current gap under
+[Constitution Article XI clause 6](internal/CONSTITUTION.md#article-xi--the-kernel):
+40 effect sites are enumerated, 4 are covered, and 36 remain outside the kernel.
+A fence test refuses an unlisted addition or silent removal. The 36 are declared
+migration debt, not protection supplied by the broker. Clause 6 and the register
+sunset together when the register is empty, after every named path has migrated.
+
+At the HTTP and WebSocket edge, credentials derive one of three authenticated
+principal kinds: owner, agent, or node. Routing is deny by default. The owner
+may approve or reject; an agent may propose allowed work and read only its
+scope; a node may claim executor work. Agent rights never include `decide`,
+posture changes, delegation, or ownership.
 
 HoldSpeak is **local-first**. The design goal is that nothing leaves your
 machine unless you explicitly choose a feature that sends it. The sections below

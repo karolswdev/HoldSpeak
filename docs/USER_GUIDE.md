@@ -578,6 +578,27 @@ local checkout it says so and offers a fetch as an explicit act, because a
 fetch is network. **Open on GitHub** leaves the desk, and says so by being a
 link.
 
+### Follow A Pull Request Through
+
+A direct click from you does not ask you to confirm the same act twice. **Diff**
+reads the local checkout. **Send agent** starts a Coder session in the exact
+matched worktree with your bounded instruction and the pull request diff.
+**Draft review** runs the configured model and keeps its answer as an Artifact.
+Each result appears directly below the pull request row as a Receipt; the
+spawned Coder session also carries its own session Receipt.
+
+Work proposed by the Coder session can still stop and ask. With the gate armed,
+a matched risky tool call rises in **Needs you** and waits for **Approve** or
+**Deny**. The call does not run while it is held, and your denial reason returns
+to the session. Read-only terminal watching and local pull request diff reads
+continue without a consent card.
+
+GitHub writes always get their own visible proposal. Choose **Post comment**,
+edit or speak the complete text, then choose **Propose**. The row shows the full
+text with its GitHub badge and waits for **Approve** or **Deny**. Approval posts
+exactly that comment and leaves an inline Receipt; denial leaves GitHub
+untouched. **Merge**, **Close**, and **Force push** are deliberately not offered.
+
 ## Steer A Session From The Desk
 
 Watching is free; every steer resolves authority and is audited. Local steering
