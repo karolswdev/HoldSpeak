@@ -28,9 +28,11 @@ import shutil
 import subprocess
 import threading
 import time
+from pathlib import Path
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Any, Callable, Optional
+from urllib.parse import urlparse
 
 GH_TIMEOUT_SECONDS = 30
 GIT_TIMEOUT_SECONDS = 30
@@ -136,6 +138,17 @@ def order_key(row: dict[str, Any]) -> tuple[int, int]:
     else:
         band = 4
     return (band, -int(row.get("number") or 0))
+
+
+def _github_repo(url: str) -> str:
+    path = urlparse(str(url or "")).path.strip("/").split("/")
+    if len(path) >= 2 and urlparse(str(url or "")).hostname == "github.com":
+        return f"{path[0]}/{path[1]}"
+    return ""
+
+
+def _verb(available: bool, reason: str = "") -> dict[str, Any]:
+    return {"available": bool(available), "reason": "" if available else reason}
 
 
 @dataclass
@@ -247,7 +260,15 @@ class PrReceiptsService:
             self._degrade(source.source_id, "gh failed to start")
             return
         if proc.returncode != 0:
-            self._degrade(source.source_id, f"gh exited {proc.returncode}")
+            error = str(proc.stderr or "").lower()
+            detail = (
+                "gh credentials unavailable"
+                if any(token in error for token in ("auth", "login", "token", "credential"))
+                else f"gh exited {proc.returncode}"
+            )
+            self._degrade(source.source_id, detail)
+            if detail == "gh credentials unavailable":
+                self._refuse_github_verbs(source.source_id, detail)
             return
         try:
             raw = json.loads(proc.stdout)
@@ -259,7 +280,11 @@ class PrReceiptsService:
             return
 
         worktree_branches = [wt.branch for wt in source.worktrees if wt.branch]
-        worktree_heads = self._worktree_heads(source)
+        worktree_head_by_id = {
+            wt.worktree_id: (self._git(["rev-parse", "HEAD"], wt.path) or "").strip()
+            for wt in source.worktrees
+        }
+        worktree_heads = list(worktree_head_by_id.values())
         observed = _utc_now()
         rows = []
         for pr in raw:
@@ -267,12 +292,24 @@ class PrReceiptsService:
                 continue
             head_ref = str(pr.get("headRefName") or "")
             head_sha = str(pr.get("headRefOid") or "")
+            matched_worktree = next(
+                (
+                    wt for wt in source.worktrees
+                    if wt.branch == head_ref or worktree_head_by_id.get(wt.worktree_id) == head_sha
+                ),
+                None,
+            )
+            url = str(pr.get("url") or "")
+            repo = _github_repo(url)
+            worktree_reason = "no matching worktree"
+            github_reason = "local-only branch" if not repo else ""
             rows.append(
                 {
                     "source_id": source.source_id,
                     "number": int(pr.get("number") or 0),
                     "title": str(pr.get("title") or ""),
-                    "url": str(pr.get("url") or ""),
+                    "url": url,
+                    "repo": repo,
                     "head_ref": head_ref,
                     "base_ref": str(pr.get("baseRefName") or ""),
                     "head_sha": head_sha,
@@ -281,6 +318,15 @@ class PrReceiptsService:
                     "ci": rollup_conclusion(pr.get("statusCheckRollup")),
                     "author": str((pr.get("author") or {}).get("login") or ""),
                     "observed_at": observed,
+                    "needs_you": str(pr.get("state") or "").lower() == "open"
+                    and rollup_conclusion(pr.get("statusCheckRollup")) in {"failing", "pending"},
+                    "worktree_id": matched_worktree.worktree_id if matched_worktree else "",
+                    "verbs": {
+                        "send_agent": _verb(matched_worktree is not None, worktree_reason),
+                        "draft_review": _verb(matched_worktree is not None, worktree_reason),
+                        "post_comment": _verb(bool(repo), github_reason),
+                        "post_status": _verb(bool(repo and head_sha), github_reason or "no head SHA"),
+                    },
                     **attribute(
                         head_ref,
                         head_sha,
@@ -304,10 +350,18 @@ class PrReceiptsService:
             state.status = "stale" if state.rows is not None else "unavailable"
             state.detail = detail
 
+    def _refuse_github_verbs(self, source_id: str, reason: str) -> None:
+        with self._lock:
+            state = self._states.get(source_id)
+            for row in (state.rows if state else None) or []:
+                verbs = row.setdefault("verbs", {})
+                verbs["post_comment"] = _verb(False, reason)
+                verbs["post_status"] = _verb(False, reason)
+
     def _worktree_heads(self, source: Any) -> list[str]:
         heads = []
         for wt in source.worktrees:
-            sha = self._git(["rev-parse", "HEAD"], wt.path)
+            sha = (self._git(["rev-parse", "HEAD"], wt.path) or "").strip()
             if sha:
                 heads.append(sha)
         return heads
@@ -342,6 +396,57 @@ class PrReceiptsService:
         if diff_text is None:
             return {"status": "absent", "detail": "git diff failed"}
         return {"status": "ok", "spec": spec, "diff": diff_text}
+
+    def action_context(self, source_id: str, number: int) -> dict[str, Any]:
+        """Server-side launch/review context for one observed row."""
+        source, row = self._find(source_id, number)
+        if source is None or row is None:
+            return {"status": "unknown_pr"}
+        return {
+            "status": "ok",
+            "row": dict(row),
+            "source": source,
+            "worktree_id": str(row.get("worktree_id") or ""),
+        }
+
+    def review_material(self, source_id: str, number: int) -> dict[str, Any]:
+        context = self.action_context(source_id, number)
+        if context.get("status") != "ok":
+            return context
+        row = context["row"]
+        diff = self.diff(source_id, number)
+        if diff.get("status") != "ok":
+            return diff
+        branch = str(row.get("head_ref") or "")
+        match = _STORY_ID.search(branch.lower())
+        story_id = match.group(0).upper() if match else ""
+        linked: list[dict[str, str]] = []
+        root = Path(str(context["source"].primary_path or ""))
+        if story_id and root:
+            phase_match = re.match(r"[A-Z]+-(\d+)-(\d+)", story_id)
+            if phase_match:
+                phase, story = phase_match.groups()
+                phase_dirs = list((root / "pm" / "roadmap" / "holdspeak").glob(f"phase-{phase}-*"))
+                for phase_dir in phase_dirs[:1]:
+                    for path in (
+                        *phase_dir.glob(f"story-{int(story):02d}-*.md"),
+                        phase_dir / f"evidence-story-{int(story):02d}.md",
+                    ):
+                        if path.exists():
+                            try:
+                                linked.append(
+                                    {"ref": f"file:{path.relative_to(root)}", "text": path.read_text(encoding="utf-8")[:65536]}
+                                )
+                            except OSError:
+                                pass
+        return {
+            "status": "ok",
+            "diff": str(diff.get("diff") or ""),
+            "spec": str(diff.get("spec") or ""),
+            "story_id": story_id,
+            "linked": linked,
+            "revision": str(row.get("head_sha") or row.get("observed_at") or "unversioned"),
+        }
 
     def fetch(self, source_id: str, number: int) -> dict[str, Any]:
         """The explicit egress act the absence offers."""

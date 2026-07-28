@@ -230,6 +230,46 @@ def test_failing_gh_degrades_to_stale_and_recovers() -> None:
     assert recovered["sources"][0]["status"] == "live"
 
 
+def test_action_verbs_name_availability_and_refusal() -> None:
+    source = FakeSource(
+        worktrees=[FakeWorktree(path="/tmp/repo", branch="agent/hs-104-02-tool-call-gate")]
+    )
+    service, _, _ = make_service(source=source, runner=make_runner(git_head="a" * 40))
+    row = service.refresh()["sources"][0]["prs"][0]
+    assert row["needs_you"] is True
+    assert row["worktree_id"] == "wt_1"
+    assert all(item["available"] for item in row["verbs"].values())
+
+    calls = make_runner(git_head="a" * 40)
+
+    def yanked(argv, cwd=None):
+        if argv[0] == "gh":
+            return subprocess.CompletedProcess(argv, 1, "", "authentication token missing; run gh auth login")
+        return calls(argv, cwd)
+
+    service._runner = yanked
+    stale = service.refresh()["sources"][0]
+    assert stale["status"] == "stale"
+    assert stale["detail"] == "gh credentials unavailable"
+    retained = stale["prs"][0]
+    assert retained["verbs"]["send_agent"]["available"] is True
+    assert retained["verbs"]["post_comment"] == {
+        "available": False,
+        "reason": "gh credentials unavailable",
+    }
+
+
+def test_unmatched_row_keeps_all_verbs_and_names_worktree_refusal() -> None:
+    service, _, _ = make_service()
+    row = service.refresh()["sources"][0]["prs"][0]
+    assert row["verbs"]["send_agent"] == {
+        "available": False,
+        "reason": "no matching worktree",
+    }
+    assert row["verbs"]["draft_review"]["reason"] == "no matching worktree"
+    assert row["verbs"]["post_comment"]["available"] is True
+
+
 def test_never_observed_is_none_not_empty() -> None:
     service, _, _ = make_service()
     src = service.rows_view()["sources"][0]

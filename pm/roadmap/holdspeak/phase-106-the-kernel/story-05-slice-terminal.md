@@ -66,9 +66,12 @@ whose authority, and what came back" from one place.
 ## Out of scope
 
 - Any other typing family. Dictation, Cadence replies, macros, keys,
-  kill, spawn, launch are rung 5 and wait for the kill criterion and
-  for dictation's commit-boundary semantics to be settled — dictation
-  is migrated once, never twice.
+  and kill are rung 5 and wait for dictation's commit-boundary
+  semantics to be settled — dictation is migrated once, never twice.
+- Spawn and launch were re-scoped into HS-106-08 by owner decision on
+  2026-07-27, after the three-driver kill criterion passed. Their
+  original deferral had served its purpose: actuator and inference had
+  both voted before the fourth driver registered.
 - Rewriting the node protocol.
 - Removing the old routes. The strangler keeps them.
 - xterm.js UI work. The pane surface is unchanged by this story;

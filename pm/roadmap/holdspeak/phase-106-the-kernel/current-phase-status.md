@@ -11,7 +11,7 @@
 > records decisions and then creates artifacts out of those
 > decisions and meetings."
 
-**Last updated:** 2026-07-27 (HS-106-01 through HS-106-07 shipped; 7/10 — the law, both prerequisites, the spine, three heterogeneous slices, and a PASS verdict).
+**Last updated:** 2026-07-27 (HS-106-01 through HS-106-08 shipped; 8/10 — the law, both prerequisites, the spine, three heterogeneous slices, the PASS verdict, and the real PR follow-through loop).
 
 ## Why this phase exists
 
@@ -86,18 +86,19 @@ receipt for every consequence.
 
 ## Exit criteria (evidence required)
 
-- [ ] HS-106-01 through HS-106-08 shipped with evidence.
+- [x] HS-106-01 through HS-106-08 shipped with evidence.
 - [x] The kill criterion (RFC §12) applied at HS-106-07 and its
       verdict recorded honestly — including the outcome where it
       fails and the name is dropped.
 - [x] The broker density guards green before any slice merges: a
       line-budget guard in the Phase-79 style, and a census test
       asserting zero driver-specific conditionals in broker modules.
-- [ ] `uv run pytest -q --ignore=tests/e2e/test_metal.py` green
-      (pre-existing unrelated failures documented per-story).
-- [ ] `cd web && npx tsc --noEmit -p . && npx vitest run && npm run
+- [x] `uv run pytest -q --ignore=tests/e2e/test_metal.py` green
+      (4297 passed / 37 skipped at HS-106-08; the single failure is the
+      pre-adjudicated voice-notes wording drift, documented per-story).
+- [x] `cd web && npx tsc --noEmit -p . && npx vitest run && npm run
       build && npm run tokens:gate` green.
-- [ ] The userland program (HS-106-08) proven on the owner's REAL
+- [x] The userland program (HS-106-08) proven on the owner's REAL
       pull requests on real metal, not seeded fixtures.
 - [ ] HS-106-09 docs shipped touching the entry points.
 - [ ] HS-106-10 closeout: the sitting loop run to the owner's
@@ -114,7 +115,7 @@ receipt for every consequence.
 | HS-106-05 | Thin slice I — terminal input | done | [story-05-slice-terminal](./story-05-slice-terminal.md) | [evidence-story-05](./evidence-story-05.md) |
 | HS-106-06 | Thin slice II — actuator egress | done | [story-06-slice-actuator](./story-06-slice-actuator.md) | [evidence-story-06](./evidence-story-06.md) |
 | HS-106-07 | Thin slice III — inference, and the kill criterion | done | [story-07-slice-inference-kill](./story-07-slice-inference-kill.md) | [evidence-story-07](./evidence-story-07.md) |
-| HS-106-08 | Userland — PR follow-through, the tech-lead's loop | ready | [story-08-userland-pr-follow](./story-08-userland-pr-follow.md) | — |
+| HS-106-08 | Userland — PR follow-through, the tech-lead's loop | done | [story-08-userland-pr-follow](./story-08-userland-pr-follow.md) | [evidence-story-08](./evidence-story-08.md) |
 | HS-106-09 | Docs — the kernel at the entry points | ready | [story-09-docs](./story-09-docs.md) | — |
 | HS-106-10 | Closeout — the sitting and the kernel ledger | ready | [story-10-closeout](./story-10-closeout.md) | — |
 
@@ -143,6 +144,7 @@ pretending.
 
 ## Decisions made (this phase)
 
+- 2026-07-27 - Register `process.spawn@1` in HS-106-08 as a typed peer over the existing `worktree.create` / `factory.spawn` records; the four caller calls and driver-blind spine stay unchanged - the HS-106-05 deferral and HS-106-08 requirement contradicted each other, the implementing agent stopped rather than reach around the kernel, and the owner resolved the contradiction after the three-driver kill criterion passed. The deferral's reason is spent; dictation's commit boundary remains deferred.
 - 2026-07-26 - Phase scaffolded with `dw phase create` - keeps roadmap structure consistent - CLI.
 - 2026-07-26 - Charter is "kernel spine PLUS one visible userland program" (owner's call) - the spine alone is invisible and unfalsifiable to the owner; one real program makes it watchable in a day - owner direction.
 - 2026-07-26 - The userland program is PR follow-through - it is the only §9 program that exercises all three heterogeneous slices at once (dispatch an agent, propose an outward comment, summarize with a model), and the owner named PR follow-through first - orchestrator.
@@ -168,6 +170,62 @@ pretending.
   three thinly.
 
 ## Where we are
+
+**2026-07-28 — HS-106-08 shipped, 8/10: the kernel is visible.** The
+first §9 userland program rides on all four slices. Four verbs and no
+more — send an agent at it (`process.spawn` + `process.input`), draft
+the review (`inference.run`), propose the comment or status (an
+actuator proposal). Merge, close, force-push and approve-review stay
+OUT of v1 deliberately.
+
+**The spine did not move.** `git diff --exit-code` over
+`broker/admission/journal/model/executor` exits 0 with a FOURTH driver
+registered — the broker's own code did not change by a single character
+to accept `process.spawn`. Six operation types now; the spine still
+names none of them. That is a stronger result than HS-106-07's kill
+criterion asked for: three heterogeneous drivers proved the spine
+shared, and a real product feature then plugged into it needing nothing
+but a new codec.
+
+Proven on the owner's REAL pull request #387: spawn, input, a
+tool-effect CHILD operation with its own receipt, and inference all
+succeeded. The approved comment landed exactly once and was confirmed
+**on GitHub itself**, not merely in the receipt; the denied probe —
+whose own text read "this probe will be denied and must not land" — is
+absent from the real PR. A credential yank retained the row as stale,
+kept local verbs available, and refused the GitHub verbs by name.
+
+The walk was read, not merely captured: verbs ghost WITH their reason
+(`no matching worktree`) rather than hiding, the proposal card carries
+the GitHub egress badge with the full drafted text above Deny/Approve,
+and there is no modal.
+
+**A charter contradiction was found and fixed rather than worked
+around.** The implementing agent stopped with nothing built on
+discovering that story-08 required `process.spawn` while story-05 had
+deferred spawn to rung 5 — both written in the same scaffolding
+session. It refused to reach around the kernel into
+`delivery/factory_launch.py`. The owner authorized registering
+`process.spawn` as a sixth operation type (RFC §3's sanctioned
+mechanism: registered types under `submit`, never new syscalls), the
+deferral's stated reason being spent once the kill criterion passed.
+story-05's out-of-scope list was amended so the contradiction does not
+sit in the roadmap for someone else to trip over.
+
+**2026-07-27 — HS-106-08 shipped, 8/10: the kernel has visible userland.**
+Real PR #387 stayed on the Desk while the owner sent a bounded Claude agent into
+its exact registered worktree through `process.spawn@1` and child
+`process.input@1`. The agent's real Bash diff read was admitted as a causally
+linked `tool.call` child, approved once, claimed by the local node, and closed
+with its own receipt. A real `.43` `inference.run@1` produced a durable review
+artifact. The complete GitHub comment text was shown before approval; approval
+landed it exactly once on PR #387 through `actuator.egress@1`, while two denied
+probes did not land. A live credential yank retained the stale PR row, kept the
+local agent/draft verbs available, and refused only the GitHub verbs by name.
+The 1440 and 393 screenshots show the exact row and complete proposal in place,
+with no modal and no mobile body overflow. The public caller plane remains
+`read` / `submit` / `decide` / `events`; the protected broker, admission,
+journal, model, and executor files are byte-unchanged. HS-106-09 is next.
 
 **2026-07-27 — HS-106-07 shipped, 7/10: KILL-CRITERION PASS.**
 `inference.run@1` routes recipe runs through the same admission, principal,

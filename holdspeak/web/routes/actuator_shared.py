@@ -329,10 +329,19 @@ def execute_github_proposal(ctx: WebContext, db: Any, proposal: Any, *, actor: s
     """
     from ...plugins.actuator_executor import ActuatorExecutor
     from ...plugins.builtin.github_issue_actuator import build_github_issue_connector
+    from ...plugins.builtin.github_pr_actuator import build_github_pr_connector
 
+    connector = (
+        build_github_pr_connector(
+            "comment" if proposal.action == "comment_pr" else "status",
+            runner=_GITHUB_RUNNER,
+        )
+        if proposal.action in {"comment_pr", "set_commit_status"}
+        else build_github_issue_connector(runner=_GITHUB_RUNNER)
+    )
     broker, node = _kernel_executor_binding(proposal)
     executor = ActuatorExecutor(
-        db, connector=build_github_issue_connector(runner=_GITHUB_RUNNER), allow_actuators=True,
+        db, connector=connector, allow_actuators=True,
         actor=actor, on_result=lambda event: ctx.broadcast("actuator_result", event),
         operation_broker=broker, executor_principal=node,
     )

@@ -30,6 +30,7 @@ from .... import kernel
 from ....kernel.model import KernelRefused
 from ....kernel.runtime import _as_principal, _service
 from ....logging_config import get_logger
+from ....principals import Principal, PrincipalKind
 from ...context import WebContext
 
 log = get_logger("web.routes.gate")
@@ -115,6 +116,7 @@ def build_gate_router(ctx: WebContext) -> APIRouter:
                     "operation": {"name": "tool.call", "version": 1},
                     "subject_refs": [],
                     "target": {"ref": f"gate:{proposal_id}"},
+                    "parent_operation_id": str(body.get("parent_operation_id") or ""),
                     "arguments": {
                         "proposal_id": proposal_id,
                         "tool": tool,
@@ -123,7 +125,7 @@ def build_gate_router(ctx: WebContext) -> APIRouter:
                         "cwd": cwd,
                         "ttl_seconds": ttl,
                     },
-                    "placement": "hub:local",
+                    "placement": "node:local",
                 }
             )
         refusal_receipt = handle.get("receipt") or {}
@@ -159,6 +161,15 @@ def build_gate_router(ctx: WebContext) -> APIRouter:
                 },
                 status_code=403,
             )
+        if proposal.state == APPROVED and principal.name == "agent":
+            operation_id = str(proposal.operation.get("kernel_operation_id") or "")
+            if operation_id:
+                node = Principal(PrincipalKind.NODE, "local")
+                try:
+                    _service().claim(node, proposal_id)
+                except KernelRefused as exc:
+                    if exc.reason != "no_claimable_operation":
+                        return _refused(exc)
         return JSONResponse(_wire(proposal))
 
     @router.get("/api/gate/proposals")
@@ -201,6 +212,8 @@ def build_gate_router(ctx: WebContext) -> APIRouter:
                     principal,
                     reason=reason or "",
                 )
+                if decision == APPROVED:
+                    _service().claim(Principal(PrincipalKind.NODE, "local"), proposal_id)
         except (KernelRefused, IndexError) as exc:
             current = gate.get(proposal_id)
             return JSONResponse(
@@ -212,6 +225,28 @@ def build_gate_router(ctx: WebContext) -> APIRouter:
                 status_code=409,
             )
         return JSONResponse(_wire(gate.get(proposal_id)))
+
+    @router.post("/api/gate/proposals/{proposal_id}/receipt")
+    async def api_gate_receipt(proposal_id: str, request: Request) -> Any:
+        """Close the child operation after Claude reports tool completion."""
+        body = await request.json()
+        gate = get_database().gate
+        proposal = gate.get(proposal_id)
+        if proposal is None:
+            return JSONResponse({"error": "unknown_proposal"}, status_code=404)
+        principal = request.state.principal
+        if principal.name != "agent" or proposal.session_key != principal.identity:
+            return JSONResponse({"error": "principal_scope_required"}, status_code=403)
+        operation_id = str(proposal.operation.get("kernel_operation_id") or "")
+        if not operation_id:
+            return JSONResponse({"error": "proposal_not_kernel_admitted"}, status_code=409)
+        node = Principal(PrincipalKind.NODE, "local")
+        outcome = "succeeded" if str(body.get("outcome") or "") == "succeeded" else "failed"
+        try:
+            result = _service().receipt(operation_id, outcome, f"gate:{proposal_id}", node)
+        except KernelRefused as exc:
+            return _refused(exc)
+        return JSONResponse(result, status_code=202)
 
     @router.post("/api/gate/usage")
     async def api_gate_usage(request: Request) -> Any:

@@ -12,6 +12,7 @@ from .inference import InferenceCancelCodec, InferenceRunCodec
 from .journal import JournalStore
 from .model import OperationSpec
 from .process_input import ProcessInputCodec
+from .process_spawn import ProcessSpawnCodec
 from .tool_call import ToolCallCodec
 
 _principal = ContextVar("kernel_principal", default=UNAUTHENTICATED)
@@ -27,19 +28,26 @@ def _mode() -> str:
 
 def _build(database: Any, *, clock: Any = None) -> Broker:
     store = JournalStore(database._connection, **({"clock": clock} if clock else {}))
+    from ..delivery.factory_launch import default_launch_service
+
     tool_calls = ToolCallCodec(database.gate, _mode)
     process_input = ProcessInputCodec(database.delivery_receipts)
+    launch_service = default_launch_service(database)
+    process_spawn = ProcessSpawnCodec(launch_service, database.delivery_receipts)
     actuator = ActuatorCodec(database.actuators, _mode)
     inference = InferenceRunCodec(database, **({"clock": clock} if clock else {}))
     cancellation = InferenceCancelCodec(database, store)
     specs = (
         OperationSpec(tool_calls.name, tool_calls.version, tool_calls, "agent.submit", "propose"),
         OperationSpec(process_input.name, process_input.version, process_input, "agent.submit", "propose"),
+        OperationSpec(process_spawn.name, process_spawn.version, process_spawn, "agent.submit", "propose"),
         OperationSpec(actuator.name, actuator.version, actuator, "agent.submit", "propose"),
         OperationSpec(inference.name, inference.version, inference, "agent.submit", "propose"),
         OperationSpec(cancellation.name, cancellation.version, cancellation, "agent.submit", "propose"),
     )
-    return Broker(store, specs, **({"clock": clock} if clock else {}))
+    broker = Broker(store, specs, **({"clock": clock} if clock else {}))
+    launch_service.bind_kernel(broker)
+    return broker
 
 
 def _service() -> Broker:

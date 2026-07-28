@@ -195,6 +195,8 @@ def required_right(method: str, path: str) -> Optional[PrincipalRight]:
         return PrincipalRight.AGENT_SUBMIT
     if path.startswith("/api/gate/proposals/") and path.endswith("/decide"):
         return PrincipalRight.DECIDE
+    if path.startswith("/api/gate/proposals/") and path.endswith("/receipt"):
+        return PrincipalRight.AGENT_USAGE
     if path.startswith("/api/gate/proposals/") and verb == "GET":
         return PrincipalRight.AGENT_READ
     if path == "/api/gate/usage" and verb == "POST":
