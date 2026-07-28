@@ -5,24 +5,22 @@
 > evidence, no `Co-Authored-By`, metal-test exclusion).
 
 
-**Last updated:** 2026-07-27 — **Phase 106 (The Kernel) ACTIVE, 7/10
-— the kill criterion PASSED**. **HS-106-07 shipped bounded inference and the
-phase's real verdict**: `inference.run@1` takes recipes through the literal same
-admission/principal, journal, and receipt functions as terminal input and
-actuator egress. The caller cannot assert placement, model, or egress; admission
-derives and records them. Token streams refuse before native admission. Article
-XI clause 2 is now executable: tool effects and cancellation signals submit as
-causally linked child operations with independent claims and receipts. A real
-LAN recipe against 192.168.1.43 returned the treatment marker and a succeeded
-receipt; a claimed child wrote a real file; cancellation returned its own
-receipt; and a real hub SIGKILL recovered `unknown` as `unknown` on the Desk,
-with an `indeterminate` kernel receipt. **Verdict: PASS** — zero driver-specific
-conditionals, all three drivers traced through `Broker._admit_authority`,
-`JournalStore.create_operation` / `append`, and `ExecutorPlane._terminal`, and
-the unchanged 300-line budget held at a 299-line maximum. The exact full suite
-recorded 4,285 passed / 37 skipped / only the pre-adjudicated voice-notes wording
-failure, with all three live-bus tests green. The honest remaining seam is
-generic liveness: pending forever is not indeterminate. Earlier:
+**Last updated:** 2026-07-27 — **Phase 106 (The Kernel) ACTIVE, 8/10
+— the first userland loop is real**. **HS-106-08 shipped PR follow-through on
+real PR #387**: an exact registered worktree took a bounded agent through
+`process.spawn@1` and child `process.input@1`; the agent's real Bash read became
+a causally linked `tool.call` child with its own approval, claim, and receipt; a
+real `.43` `inference.run@1` produced a durable review artifact; and the full
+GitHub proposal remained readable before one approved `actuator.egress@1`
+comment landed exactly once. Two denied proposals did not land. A live
+credential yank retained the stale row, preserved local agent/draft verbs, and
+refused only GitHub verbs by name. The 1440 and 393 walks show the exact row and
+full proposal in place without a modal or mobile body overflow. The caller
+surface remains exactly `read` / `submit` / `decide` / `events`, no second
+consent path exists, and the protected kernel spine files are byte-unchanged.
+Earlier: **HS-106-07 shipped bounded inference and the phase's PASS verdict**:
+all three heterogeneous drivers share admission, principal, journal, and
+receipt machinery with zero driver-specific broker conditionals. Earlier:
 **HS-106-06 shipped actuator egress**: `actuator.egress@1` creates and links the
 existing durable proposal; `ActuatorExecutor` remains the driver and closes the
 kernel receipt from the native audit ref. Earlier: **HS-106-05 shipped terminal input**: `process.input@1` admits terminal

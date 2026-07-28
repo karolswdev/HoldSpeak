@@ -19,6 +19,7 @@ from holdspeak.coder_gate import (
     load_gate_config,
     redact_args,
     run_hook,
+    run_post_tool_hook,
     save_gate_config,
 )
 from holdspeak.db import Database, reset_database
@@ -206,6 +207,30 @@ def test_install_block_prints_and_never_writes(tmp_path, monkeypatch) -> None:
     hook = block["hooks"]["PreToolUse"][0]
     assert hook["matcher"] == "Bash"
     assert "gate hook" in hook["hooks"][0]["command"]
+    assert block["hooks"]["PostToolUse"][0]["matcher"] == "Bash"
+
+
+def test_post_tool_hook_reports_the_completed_effect(monkeypatch) -> None:
+    calls = []
+    monkeypatch.setattr(
+        "holdspeak.coder_gate.issue_agent_credential", lambda *_a, **_kw: "agent-token"
+    )
+    monkeypatch.setattr(
+        "holdspeak.coder_gate._default_post",
+        lambda url, body, timeout, *, credential: (
+            calls.append((url, body, credential)) or (202, {"state": "succeeded"})
+        ),
+    )
+    assert run_post_tool_hook(
+        {**_payload(), "hook_event_name": "PostToolUse"}, config=_armed()
+    )
+    assert calls == [
+        (
+            "http://127.0.0.1:8765/api/gate/proposals/toolu_1/receipt",
+            {"outcome": "succeeded"},
+            "agent-token",
+        )
+    ]
 
 
 # -- the hook runner -------------------------------------------------------

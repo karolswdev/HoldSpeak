@@ -1129,6 +1129,24 @@
       ]
     },
     {
+      "path": "/api/delivery/prs/launches/{launch_id}/input",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.delivery_prs",
+      "consumers": []
+    },
+    {
+      "path": "/api/delivery/prs/proposals/{proposal_id}/decide",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.delivery_prs",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/delivery/prs/refresh",
       "methods": [
         "POST"
@@ -1149,7 +1167,37 @@
       ]
     },
     {
+      "path": "/api/delivery/prs/{source_id}/{number}/draft-review",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.delivery_prs",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/delivery/prs/{source_id}/{number}/fetch",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.delivery_prs",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/delivery/prs/{source_id}/{number}/propose",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.delivery_prs",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/delivery/prs/{source_id}/{number}/send-agent",
       "methods": [
         "POST"
       ],
@@ -1893,6 +1941,14 @@
       "consumers": [
         "web"
       ]
+    },
+    {
+      "path": "/api/gate/proposals/{proposal_id}/receipt",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.system.gate_routes",
+      "consumers": []
     },
     {
       "path": "/api/gate/usage",

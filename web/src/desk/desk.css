@@ -3427,6 +3427,153 @@
   line-height: 1.45;
   white-space: pre;
 }
+/* HS-106-08 — one quiet object row, with its work unfolding directly
+   beneath it. The proposal is paper: complete, readable, never clipped. */
+.desk-next .desk-pr-source .desk-list-scroll {
+  max-height: 520px;
+  overflow: auto;
+  overscroll-behavior: contain;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+.desk-next .desk-pr-object-table { min-width: 760px; }
+.desk-next .desk-pr-object-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: var(--desk-z-window-base);
+  background: var(--panel, var(--wash-1));
+}
+.desk-next .desk-pr-object-table th:first-child { min-width: 240px; }
+.desk-next .desk-pr-number {
+  display: inline-block;
+  color: var(--text-muted);
+  font-family: var(--font-mono, ui-monospace, monospace);
+  margin-right: 4px;
+}
+.desk-next .desk-pr-verbs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.desk-next .desk-pr-verbs button[disabled] {
+  opacity: .42;
+  text-decoration: line-through;
+  cursor: not-allowed;
+}
+.desk-next .desk-pr-refusal {
+  flex-basis: 100%;
+  color: var(--danger, #e5484d);
+  font-size: 10px;
+}
+.desk-next .desk-pr-detail td,
+.desk-next .desk-pr-action td,
+.desk-next .desk-pr-proposal td,
+.desk-next .desk-pr-result td {
+  padding: var(--space-2);
+  background: color-mix(in srgb, var(--wash-1) 78%, transparent);
+}
+.desk-next .desk-pr-detail dl {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-2);
+  margin: 0;
+}
+.desk-next .desk-pr-detail dt {
+  color: var(--text-muted);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+}
+.desk-next .desk-pr-detail dd { margin: 3px 0 0; overflow-wrap: anywhere; }
+.desk-next .desk-pr-compose { display: grid; gap: 8px; }
+.desk-next .desk-pr-compose > label {
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+}
+.desk-next .desk-pr-compose textarea {
+  width: 100%;
+  min-height: 74px;
+  resize: vertical;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--field-bg, var(--wash-1));
+  color: var(--text);
+  padding: 10px;
+  font: 12px/1.45 var(--font-mono, ui-monospace, monospace);
+}
+.desk-next .desk-pr-compose-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+}
+.desk-next .desk-pr-proposal {
+  box-shadow: inset 3px 0 0 var(--accent, #7c5cff);
+}
+.desk-next .desk-pr-proposal-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  letter-spacing: .08em;
+}
+.desk-next .desk-pr-proposal pre,
+.desk-next .desk-pr-result pre {
+  max-height: none;
+  overflow: visible;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--paper, var(--wash-1));
+  padding: 12px;
+  font: 12px/1.5 var(--font-mono, ui-monospace, monospace);
+}
+.desk-next .desk-pr-result strong { margin-right: 8px; }
+.desk-next .desk-pr-result.is-error strong { color: var(--danger, #e5484d); }
+@media (max-width: 520px) {
+  .desk-next .desk-pr-object-table { min-width: 0; width: 100%; }
+  .desk-next .desk-pr-object-table thead { display: none; }
+  .desk-next .desk-pr-object-table tbody { display: block; }
+  .desk-next .desk-pr-object-table tr[data-desk-object="pr"] {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 4px 8px;
+    padding: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+  .desk-next .desk-pr-object-table tr[data-desk-object="pr"] > * {
+    display: block;
+    width: auto;
+    padding: 0;
+    border: 0;
+  }
+  .desk-next .desk-pr-object-table tr[data-desk-object="pr"] > th {
+    grid-column: 1 / -1;
+    font-size: 12px;
+  }
+  .desk-next .desk-pr-object-table tr[data-desk-object="pr"] > td:nth-child(3) {
+    justify-self: end;
+  }
+  .desk-next .desk-pr-object-table tr[data-desk-object="pr"] > td:last-child {
+    grid-column: 1 / -1;
+    margin-top: 4px;
+  }
+  .desk-next .desk-pr-detail,
+  .desk-next .desk-pr-action,
+  .desk-next .desk-pr-proposal,
+  .desk-next .desk-pr-result,
+  .desk-next .desk-pr-diffrow { display: block; }
+  .desk-next .desk-pr-detail > td,
+  .desk-next .desk-pr-action > td,
+  .desk-next .desk-pr-proposal > td,
+  .desk-next .desk-pr-result > td,
+  .desk-next .desk-pr-diffrow > td { display: block; width: auto; }
+  .desk-next .desk-pr-detail dl { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .desk-next .desk-pr-proposal pre { font-size: 11px; }
+}
 
 /* ── HS-95-01: the GL world (the z ladder's ground rule: the canvas is the
    bottom of the desk — world pixels on the GPU; DOM overlays (rename row,

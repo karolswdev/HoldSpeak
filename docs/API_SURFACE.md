@@ -9,7 +9,7 @@ and the clients that call it (extracted from the real call sites in
 `web/src` and `apple/`). "server only" means no in-repo client calls
 it today.
 
-Routes: 357 (plus static mounts). iOS-consumed: 88. Web-consumed: 266.
+Routes: 363 (plus static mounts). iOS-consumed: 88. Web-consumed: 270.
 
 ## device_audio_ws
 
@@ -182,9 +182,14 @@ Routes: 357 (plus static mounts). iOS-consumed: 88. Web-consumed: 266.
 | Method | Path | Consumers |
 |---|---|---|
 | GET | `/api/delivery/prs` | web |
+| POST | `/api/delivery/prs/launches/{launch_id}/input` | server only |
+| POST | `/api/delivery/prs/proposals/{proposal_id}/decide` | web |
 | POST | `/api/delivery/prs/refresh` | web |
 | GET | `/api/delivery/prs/{source_id}/{number}/diff` | web |
+| POST | `/api/delivery/prs/{source_id}/{number}/draft-review` | web |
 | POST | `/api/delivery/prs/{source_id}/{number}/fetch` | web |
+| POST | `/api/delivery/prs/{source_id}/{number}/propose` | web |
+| POST | `/api/delivery/prs/{source_id}/{number}/send-agent` | web |
 
 ## web.routes.delivery_terminal
 
@@ -607,6 +612,7 @@ Routes: 357 (plus static mounts). iOS-consumed: 88. Web-consumed: 266.
 | POST | `/api/gate/proposals` | web |
 | GET | `/api/gate/proposals/{proposal_id}` | server only |
 | POST | `/api/gate/proposals/{proposal_id}/decide` | web |
+| POST | `/api/gate/proposals/{proposal_id}/receipt` | server only |
 | POST | `/api/gate/usage` | web |
 | POST | `/api/principals/agents` | web |
 | DELETE | `/api/principals/agents/{identity}` | server only |

@@ -39,6 +39,8 @@ import re
 import shlex
 import shutil
 import subprocess
+import threading
+import time
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
@@ -409,11 +411,18 @@ class LaunchLedger:
         )
 
     def record(self, launch: dict[str, Any]) -> None:
+        # The kernel codec and the launch executor may hold separate ledger
+        # instances over the same durable file. Reload before each mutation and
+        # upsert by launch id so admission becomes execution without a twin row.
+        self._load()
+        launch_id = str(launch.get("launch_id") or "")
+        self._records = [row for row in self._records if row.get("launch_id") != launch_id]
         self._records.append(dict(launch))
         self._records = self._records[-LAUNCH_LEDGER_MAX_ROWS:]
         self._save()
 
     def update(self, launch_id: str, **fields: Any) -> Optional[dict[str, Any]]:
+        self._load()
         for row in self._records:
             if row.get("launch_id") == launch_id:
                 row.update(fields)
@@ -422,6 +431,7 @@ class LaunchLedger:
         return None
 
     def get(self, launch_id: str) -> Optional[dict[str, Any]]:
+        self._load()
         for row in self._records:
             if row.get("launch_id") == launch_id:
                 return dict(row)
@@ -440,6 +450,7 @@ class LaunchLedger:
         return None
 
     def list(self) -> list[dict[str, Any]]:
+        self._load()
         return [dict(row) for row in self._records]
 
 
@@ -476,6 +487,52 @@ class LaunchService:
         self._git = git_runner or _default_git_runner
         self._local_node_id = str(local_node_id)
         self._wall_now = wall_now
+        self._kernel: Any = None
+
+    def bind_kernel(self, broker: Any) -> None:
+        """Bind the existing launch driver to the kernel executor plane."""
+        self._kernel = broker
+        self._commands._kernel = broker
+
+    def launch_record(self, launch_id: str) -> Optional[dict[str, Any]]:
+        return self._ledger.get(launch_id)
+
+    def record_admitted(
+        self, launch_id: str, request: Mapping[str, Any], *, operation_id: str,
+    ) -> None:
+        self._ledger.record(
+            {
+                "launch_schema": LAUNCHES_SCHEMA,
+                "launch_id": launch_id,
+                "state": "admitted",
+                "operation_id": operation_id,
+                "request": dict(request),
+                "commands": {"worktree_create": None, "spawn": None, "instruction": None},
+            }
+        )
+
+    def record_decision(self, launch_id: str, decision: str, *, reason: str = "") -> None:
+        self._ledger.update(
+            launch_id,
+            state="approved" if decision == "approve" else "rejected",
+            decision=decision,
+            decision_reason=str(reason or ""),
+        )
+
+    def validate_request(self, request: Any) -> None:
+        """Run every launch hard prerequisite without performing an effect."""
+        if not isinstance(request, Mapping):
+            raise LaunchRefused("request_malformed", "a launch request must be an object")
+        self._refuse_client_execution_fields(request)
+        profile_id = str(request.get("agent_profile_id") or request.get("profile_id") or "")
+        self._profiles.resolve_argv(profile_id, request.get("options"))
+        _, story_id = self._story_ref(request)
+        source_id = str(request.get("source_id") or "")
+        source = self._registry.get(source_id)
+        if source is None:
+            raise LaunchRefused("source_unknown", f"unknown source {source_id!r}")
+        self._resolve_worktree(request, source)
+        self._session_name(request, story_id)
 
     # request validation ---------------------------------------------------
 
@@ -578,19 +635,29 @@ class LaunchService:
     # command composition ---------------------------------------------------
 
     @staticmethod
-    def compose_command(argv: list[str], worktree_path: str, story_env: str) -> str:
+    def compose_command(
+        argv: list[str], worktree_path: str, story_env: str,
+        *, parent_operation_id: str = "",
+    ) -> str:
         """The ONE shell string tmux receives. Every substitution is a
         pre-validated safe token or a server-side path, individually
         quoted — a client never contributes a byte of it directly."""
         quoted = " ".join(shlex.quote(token) for token in argv)
+        parent = (
+            f"HOLDSPEAK_PARENT_OPERATION_ID={shlex.quote(parent_operation_id)} "
+            if parent_operation_id
+            else ""
+        )
         return (
             f"cd {shlex.quote(str(worktree_path))} && "
-            f"HOLDSPEAK_STORY_REF={shlex.quote(story_env)} exec {quoted}"
+            f"HOLDSPEAK_STORY_REF={shlex.quote(story_env)} {parent}exec {quoted}"
         )
 
     # the launch -------------------------------------------------------------
 
-    def launch(self, request: Any) -> dict[str, Any]:
+    def launch(
+        self, request: Any, *, launch_id: str = "", parent_operation_id: str = "",
+    ) -> dict[str, Any]:
         """§9 agent.launch. All refusals are typed and pre-execution;
         the execution order (and what each failure leaves behind) is:
 
@@ -622,7 +689,7 @@ class LaunchService:
         )
         session_name = self._session_name(request, story_id)
 
-        launch_id = "launch_" + uuid.uuid4().hex[:16]
+        launch_id = launch_id or "launch_" + uuid.uuid4().hex[:16]
         record: dict[str, Any] = {
             "launch_schema": LAUNCHES_SCHEMA,
             "launch_id": launch_id,
@@ -635,7 +702,8 @@ class LaunchService:
             "session": session_name,
             "target": None,
             "attempt_id": None,
-            "commands": {"worktree_create": None, "spawn": None},
+            "commands": {"worktree_create": None, "spawn": None, "instruction": None},
+            "operation_id": parent_operation_id or None,
             "rollback": None,
             "launched_at": _iso_now(self._wall_now()),
         }
@@ -664,7 +732,10 @@ class LaunchService:
             worktree_id = record["worktree_id"] = registered.worktree_id
 
         # 2. spawn through the envelope: the node launch receipt.
-        command = self.compose_command(argv, worktree_path, f"{project}/{story_id}")
+        command = self.compose_command(
+            argv, worktree_path, f"{project}/{story_id}",
+            parent_operation_id=parent_operation_id,
+        )
         spawned = self._commands.submit(
             {
                 "node_id": self._local_node_id,
@@ -748,6 +819,127 @@ class LaunchService:
         record["state"] = "launched"
         self._ledger.record(record)
         return record
+
+    def submit_process_spawn(
+        self, request: Mapping[str, Any], instruction: str, principal: Any,
+    ) -> dict[str, Any]:
+        """Admit, approve and execute one ``process.spawn`` owner gesture.
+
+        The existing launch service remains the driver. The bounded first
+        instruction is a child ``process.input`` operation while the spawn/run
+        operation is claimed. Agent hook tool calls inherit the same parent id
+        from the launched process environment.
+        """
+        if self._kernel is None:
+            raise LaunchRefused("kernel_unavailable")
+        text = str(instruction or "").strip()
+        if not text or len(text.encode("utf-8")) > 32768:
+            raise LaunchRefused("instruction_invalid")
+        from ..kernel.process_spawn import new_launch_id
+        from ..principals import Principal, PrincipalKind
+
+        launch_id = new_launch_id()
+        raw = {
+            "request_schema": 1,
+            "request_id": str(uuid.uuid4()),
+            "idempotency_key": f"process.spawn:{launch_id}",
+            "operation": {"name": "process.spawn", "version": 1},
+            "subject_refs": [
+                f"delivery-source:{request.get('source_id')}",
+                f"story:{(request.get('story_ref') or {}).get('story_id')}",
+            ],
+            "target": {"ref": f"launch:{launch_id}"},
+            "arguments": {"launch_id": launch_id, **dict(request)},
+            "placement": f"node:{self._local_node_id}",
+        }
+        handle = self._kernel.submit(raw, principal)
+        if handle.get("state") == "refused":
+            raise LaunchRefused(str((handle.get("receipt") or {}).get("outcome") or "kernel_refused"))
+        handle = self._kernel.decide(
+            handle["operation_id"], "approve", int(handle["revision"]), principal
+        )
+        node = Principal(PrincipalKind.NODE, self._local_node_id)
+        claimed = self._kernel.claim(node, launch_id)
+        if not claimed.get("operations"):
+            reason = str((claimed.get("refusal") or {}).get("outcome") or "kernel_claim_refused")
+            raise LaunchRefused(reason)
+        operation_id = str(handle["operation_id"])
+        try:
+            record = self.launch(
+                request, launch_id=launch_id, parent_operation_id=operation_id
+            )
+            if record.get("state") != "launched":
+                self._kernel.receipt(operation_id, "failed", f"launch:{launch_id}", node)
+                return {"operation_id": operation_id, "launch": record}
+            target = record.get("target") or {}
+            from .. import coder_steering
+
+            armed = coder_steering.arm(
+                str(record.get("session") or ""),
+                str(target.get("pane_id") or ""),
+            )
+            if armed.get("status") != "armed":
+                raise LaunchRefused(
+                    str(armed.get("status") or "arm_refused"),
+                    str(armed.get("detail") or "spawned pane could not be armed"),
+                )
+            sent = self._commands.submit_process_input(
+                {
+                    "node_id": self._local_node_id,
+                    "target_id": target.get("target_id"),
+                    "target_generation": target.get("target_generation"),
+                    "operation": {"family": "coder_steering", "verb": "terminal.text"},
+                    "payload": {
+                        "text": text,
+                        "submit": True,
+                        "session_key": record.get("session"),
+                        "agent": str(request.get("agent_profile_id") or request.get("profile_id") or "agent"),
+                    },
+                    "parent_operation_id": operation_id,
+                },
+                principal,
+            )
+            commands = dict(record.get("commands") or {})
+            commands["instruction"] = sent.get("command_id")
+            record = self._ledger.update(launch_id, commands=commands) or record
+            self._monitor_completion(operation_id, launch_id, str(record.get("session") or ""), node)
+            return {
+                "operation_id": operation_id,
+                "correlation_id": operation_id,
+                "launch": record,
+                "instruction_operation_id": sent.get("operation_id"),
+                "instruction_receipt": sent.get("receipt"),
+            }
+        except Exception:
+            if self._kernel.store.receipt(operation_id) is None:
+                self._kernel.receipt(operation_id, "failed", f"launch:{launch_id}", node)
+            raise
+
+    def _monitor_completion(
+        self, operation_id: str, launch_id: str, session_name: str, node: Any,
+    ) -> None:
+        if not session_name:
+            return
+
+        def watch() -> None:
+            while self._session_alive(session_name):
+                time.sleep(1.0)
+            self._ledger.update(launch_id, state="complete", completed_at=_iso_now())
+            try:
+                if self._kernel.store.receipt(operation_id) is None:
+                    self._kernel.receipt(operation_id, "succeeded", f"launch:{launch_id}", node)
+            except Exception:
+                pass
+
+        threading.Thread(target=watch, name=f"launch-{launch_id}", daemon=True).start()
+
+    def _session_alive(self, session_name: str) -> bool:
+        run = self._runner or coder_steering._default_runner
+        try:
+            completed = run(["tmux", "has-session", "-t", session_name])
+        except (OSError, subprocess.TimeoutExpired):
+            return False
+        return completed.returncode == 0
 
     def _first_pane(self, session_name: str) -> Optional[str]:
         run = self._runner or coder_steering._default_runner
@@ -1005,6 +1197,42 @@ class LaunchService:
         }
 
 
+_DEFAULT_SERVICES: dict[int, LaunchService] = {}
+
+
+def default_launch_service(database: Any) -> LaunchService:
+    """One production launch driver shared by the codec and web façade."""
+    key = id(database)
+    service = _DEFAULT_SERVICES.get(key)
+    if service is not None:
+        return service
+    from ..db.delivery_receipts import NodeReceiptLedger
+    from . import DeliveryRegistry
+    from .commands import HubCommandService, NodeCommandProcessor
+    from .terminal import TerminalTargetRegistry
+
+    targets = TerminalTargetRegistry()
+    processor = NodeCommandProcessor(
+        node_id="local", targets=targets, ledger=NodeReceiptLedger()
+    )
+    commands = HubCommandService(
+        repo=database.delivery_receipts,
+        processor=processor,
+        local_node_id="local",
+    )
+    service = LaunchService(
+        profiles=AgentProfileStore(),
+        registry=DeliveryRegistry(),
+        targets=targets,
+        commands=commands,
+        attempts=database.work_attempts,
+        ledger=LaunchLedger(),
+        local_node_id="local",
+    )
+    _DEFAULT_SERVICES[key] = service
+    return service
+
+
 __all__ = [
     "AGENT_PROFILES_SCHEMA",
     "AgentProfileStore",
@@ -1015,6 +1243,7 @@ __all__ = [
     "LaunchLedger",
     "LaunchRefused",
     "LaunchService",
+    "default_launch_service",
     "derive_worktree_path",
     "execute_worktree_create",
     "valid_branch",

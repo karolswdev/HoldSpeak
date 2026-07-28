@@ -334,6 +334,11 @@ def run_hook(
         "cwd": cwd,
         "ttl_seconds": ttl_seconds,
     }
+    parent_operation_id = str(
+        os.environ.get("HOLDSPEAK_PARENT_OPERATION_ID") or ""
+    ).strip()
+    if parent_operation_id:
+        body["parent_operation_id"] = parent_operation_id
 
     # Fail-closed from here down: the gate is armed and matched, so
     # every error path is a deny with its name — never an allow.
@@ -517,6 +522,34 @@ def run_stop_hook(
     return status == 200
 
 
+def run_post_tool_hook(
+    payload: Mapping[str, Any],
+    *,
+    config: GateConfig | None = None,
+    hub_url: str | None = None,
+) -> bool:
+    """Report that an approved, claimed tool call actually completed."""
+    cfg = config if config is not None else load_gate_config()
+    tool = str(payload.get("tool_name") or "").strip()
+    cwd = str(payload.get("cwd") or "").strip()
+    proposal_id = str(payload.get("tool_use_id") or "").strip()
+    session_id = str(payload.get("session_id") or "").strip()
+    if not proposal_id or not session_id or not gate_matches(cfg, cwd=cwd, tool=tool):
+        return False
+    base = (hub_url or os.environ.get("HOLDSPEAK_HUB_URL") or DEFAULT_HUB_URL).rstrip("/")
+    try:
+        credential = issue_agent_credential(session_id, base)
+        status, _ = _default_post(
+            f"{base}/api/gate/proposals/{proposal_id}/receipt",
+            {"outcome": "succeeded"},
+            5.0,
+            credential=credential,
+        )
+    except Exception:
+        return False
+    return status in (200, 202)
+
+
 # -- install ---------------------------------------------------------------
 
 
@@ -545,6 +578,18 @@ def install_block(executable: str = "holdspeak") -> str:
                             "type": "command",
                             "command": f"{executable} gate hook",
                             "timeout": HOOK_TIMEOUT_SECONDS,
+                        }
+                    ],
+                }
+            ],
+            "PostToolUse": [
+                {
+                    "matcher": "Bash",
+                    "hooks": [
+                        {
+                            "type": "command",
+                            "command": f"{executable} gate hook",
+                            "timeout": 15,
                         }
                     ],
                 }

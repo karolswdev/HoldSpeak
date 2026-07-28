@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 106
-- **Status:** ready
+- **Status:** done
 - **Depends on:** HS-106-07
 - **Unblocks:** HS-106-09
 - **Owner:** unassigned
@@ -105,6 +105,20 @@ about it. Nothing in the system turns "this PR needs a change" into
   routes through the four calls only.
 - Walked at 1440 and 393 with screenshots read, per the standing
   screenshot-walk rule.
+
+## Delivered
+
+- Real PR #387 was read, matched exactly to its registered worktree, sent to a
+  bounded Claude agent, and reviewed through journal-linked `process.spawn`,
+  `process.input`, and `tool.call` operations with terminal receipts.
+- A real private-LAN `inference.run` produced a durable review artifact. One
+  full-text GitHub comment proposal was approved and landed exactly once; two
+  denied proposals did not land.
+- The credential-yank walk retained the row and its observation while naming
+  `gh credentials unavailable` on only the outward verbs.
+- Evidence: [evidence-story-08](./evidence-story-08.md),
+  [1440](./assets/hs-106-08-pr-loop-1440.png), and
+  [393](./assets/hs-106-08-pr-loop-393.png).
 
 ## Test plan
 

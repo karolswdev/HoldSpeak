@@ -147,6 +147,11 @@ def _cmd_hook(*, stdin: TextIO, out: TextIO) -> int:
 
         run_stop_hook(payload)  # telemetry: silent, never blocks the stop
         return _EXIT_OK
+    if event == "PostToolUse":
+        from ..coder_gate import run_post_tool_hook
+
+        run_post_tool_hook(payload)
+        return _EXIT_OK
     decision = run_hook(payload)
     output = decision.to_hook_output()
     if output is not None:

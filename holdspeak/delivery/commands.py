@@ -969,7 +969,7 @@ class HubCommandService:
         node_id = str(request.get("node_id") or "local")
         target_id = str(request.get("target_id") or "")
         generation = str(request.get("target_generation") or "")
-        return {
+        raw = {
             "request_schema": 1,
             "request_id": command_id,
             "idempotency_key": f"process.input:{command_id}",
@@ -990,6 +990,10 @@ class HubCommandService:
             },
             "placement": f"node:{node_id}",
         }
+        parent_operation_id = str(request.get("parent_operation_id") or "").strip()
+        if parent_operation_id:
+            raw["parent_operation_id"] = parent_operation_id
+        return raw
 
     def _sync_kernel_receipt(self, command_id: str, node_id: str) -> None:
         from ..principals import Principal, PrincipalKind

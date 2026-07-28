@@ -8,11 +8,17 @@ import { apiFetch } from "../lib/api";
 
 export type PrAttribution = "exact" | "heuristic" | "none";
 
+export interface PrVerbAvailability {
+  available: boolean;
+  reason: string;
+}
+
 export interface PrRow {
   source_id: string;
   number: number;
   title: string;
   url: string;
+  repo?: string;
   head_ref: string;
   base_ref: string;
   head_sha: string;
@@ -23,6 +29,14 @@ export interface PrRow {
   observed_at: string;
   attribution: PrAttribution;
   basis: string;
+  needs_you?: boolean;
+  worktree_id?: string;
+  verbs?: {
+    send_agent: PrVerbAvailability;
+    draft_review: PrVerbAvailability;
+    post_comment: PrVerbAvailability;
+    post_status: PrVerbAvailability;
+  };
 }
 
 export interface PrSource {
@@ -43,6 +57,19 @@ export interface PrDiff {
   offer_fetch?: boolean;
 }
 
+export interface PrActionResult {
+  operation_id?: string;
+  instruction_operation_id?: string;
+  artifact_id?: string;
+  output?: string;
+  proposal_id?: string;
+  preview?: string;
+  state?: string;
+  error?: string;
+  reason?: string;
+  proposal?: { status?: string; result?: unknown; error?: string };
+}
+
 interface PrReceiptsStore {
   sources: PrSource[];
   loaded: boolean;
@@ -51,6 +78,10 @@ interface PrReceiptsStore {
   refresh: (sourceId?: string) => Promise<void>;
   diff: (sourceId: string, number: number) => Promise<PrDiff>;
   fetchShas: (sourceId: string, number: number) => Promise<void>;
+  sendAgent: (row: PrRow, instruction: string) => Promise<PrActionResult>;
+  draftReview: (row: PrRow) => Promise<PrActionResult>;
+  propose: (row: PrRow, body: string, kind?: "comment" | "status") => Promise<PrActionResult>;
+  decide: (proposalId: string, decision: "approve" | "reject") => Promise<PrActionResult>;
 }
 
 export const usePrReceipts = create<PrReceiptsStore>((set, get) => ({
@@ -102,6 +133,35 @@ export const usePrReceipts = create<PrReceiptsStore>((set, get) => ({
       // The follow-up diff renders the honest state either way.
     }
   },
+
+  sendAgent: async (row, instruction) =>
+    apiFetch<PrActionResult>(
+      `/api/delivery/prs/${encodeURIComponent(row.source_id)}/${row.number}/send-agent`,
+      { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ instruction }) },
+    ),
+
+  draftReview: async (row) =>
+    apiFetch<PrActionResult>(
+      `/api/delivery/prs/${encodeURIComponent(row.source_id)}/${row.number}/draft-review`,
+      { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" },
+    ),
+
+  propose: async (row, body, kind = "comment") =>
+    apiFetch<PrActionResult>(
+      `/api/delivery/prs/${encodeURIComponent(row.source_id)}/${row.number}/propose`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(kind === "comment" ? { kind, body } : { kind, description: body, state: "pending" }),
+      },
+    ),
+
+  decide: async (proposalId, decision) =>
+    apiFetch<PrActionResult>(`/api/delivery/prs/proposals/${proposalId}/decide`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ decision }),
+    }),
 }));
 
 export function attributionLabel(row: PrRow): string {
