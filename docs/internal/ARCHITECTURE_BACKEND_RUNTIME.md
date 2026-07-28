@@ -1,9 +1,9 @@
-# The backend runtime decomposition (Phases 63 and 79)
+# The backend runtime decomposition
 
 The backend twin of [ARCHITECTURE_WEB_FRONTEND.md](./ARCHITECTURE_WEB_FRONTEND.md).
-Two god-objects paid down their debt the same way the dictation cockpit
-did: verbatim moves into single-concern modules, a thin assembly core, and
-a density guard so the shape cannot silently regrow.
+The runtime is split into single-concern modules, thin assembly cores, and a
+small operation kernel for consent, audit, and execution receipts. Density
+guards keep those boundaries from silently regrowing.
 
 ## Why this exists
 
@@ -13,6 +13,58 @@ had regrown to 2,635 (the wake word, devices, and routing glue all landed
 in the god-object because it was the path of least resistance).
 `meeting_session.py` had the same disease un-flagged: models, recording,
 transcription, intel, persistence, and mutations in one 1,674-line file.
+
+## The operation kernel
+
+`holdspeak/kernel/` is the named boundary for cooperating runtime code that
+performs consequential work. Its caller plane has exactly four calls:
+
+- `read(refs, view, consistency)` returns operation, canonical, process, and
+  receipt projections within the caller's read scope.
+- `submit(request)` admits one typed operation and returns its handle.
+- `decide(operation_id, approve|reject, expected_revision)` records the owner's
+  decision against the admitted revision.
+- `events(after_cursor, filter)` replays journal facts after a durable cursor.
+
+Operations are registered, versioned types under `submit`, never new syscalls.
+Trusted startup currently registers six: `tool.call@1`, `process.input@1`,
+`process.spawn@1`, `actuator.egress@1`, `inference.run@1`, and
+`inference.cancel@1`. Each type owns validation and native projections in its
+codec. The broker remains blind to driver-specific behavior.
+
+Execution is a separate plane for authenticated nodes. `claim` atomically takes
+approved work and validates its one-use authority; `receipt` writes an immutable
+terminal outcome; `reconcile` reports the durable operation and receipt when an
+effect's result is uncertain. A caller proposing work is not the same actor as
+the node taking responsibility for it, so these three calls do not expand the
+caller plane.
+
+The operation journal is the lifecycle truth. It records admitted operations,
+state transitions, refs, hashes, bounded heads, and terminal receipts in a
+per-stream SHA-256 chain. Native domain records remain authoritative for their
+own content and project through `read`; the journal correlates them instead of
+copying them. The bus is a projection of journal facts: consumers resume from a
+cursor through `events`, and WebSocket or long-poll delivery does not become a
+second truth or a command path.
+
+```mermaid
+flowchart LR
+    A[Caller: submit typed operation] --> B[Broker authenticates and admits]
+    B --> C[Journal: admitted and awaiting decision]
+    C --> D{Owner decision}
+    D -->|Reject| H[Terminal refusal receipt]
+    D -->|Approve| E[Executor: claim approved work]
+    E --> F[Typed driver performs native work]
+    F --> G[Executor: receipt]
+    G --> I[Journal: terminal fact]
+    H --> I
+    I --> J[events projects cursor-addressed facts]
+```
+
+This is an audit and consent boundary for cooperating code, not process
+confinement. Its security limits and migration debt are documented in
+[Security & Privacy Posture](../SECURITY.md#kernel-boundary-cooperating-code-not-a-sandbox).
+The constitutional contract is [Article XI](./CONSTITUTION.md#article-xi--the-kernel).
 
 ## The shape
 

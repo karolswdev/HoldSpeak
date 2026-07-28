@@ -5,9 +5,17 @@
 > evidence, no `Co-Authored-By`, metal-test exclusion).
 
 
-**Last updated:** 2026-07-27 — **Phase 106 (The Kernel) ACTIVE, 8/10
-— the first userland loop is real**. **HS-106-08 shipped PR follow-through on
-real PR #387**: an exact registered worktree took a bounded agent through
+**Last updated:** 2026-07-27 — **Phase 106 (The Kernel) ACTIVE, 9/10
+— the kernel is at the entry points**. **HS-106-09 shipped truth-audited docs**:
+backend architecture names the four caller calls, executor plane, journal/bus
+rule, all six registered operation types, and a rendered lifecycle diagram;
+Security leads with the cooperating-code-only boundary before any prevention
+claim, names 36 of 40 ledgered sites outside the kernel, and points to RFC §5b
+confinement as the stronger threshold; the User Guide and README carry the real
+PR follow-through loop in owner vocabulary. Every claim is mapped to shipped
+file and line. Mermaid rendered, focused guards passed 25/25, and the full suite
+recorded 4,279 passed / 41 skipped / only the accepted voice-notes wording
+failure. Earlier: **HS-106-08 shipped PR follow-through on real PR #387**: an exact registered worktree took a bounded agent through
 `process.spawn@1` and child `process.input@1`; the agent's real Bash read became
 a causally linked `tool.call` child with its own approval, claim, and receipt; a
 real `.43` `inference.run@1` produced a durable review artifact; and the full

@@ -91,6 +91,12 @@ up beside them as receipts too: registered repositories' pull requests as
 honest rows (state, CI conclusion, when observed, and how the match was made),
 and a one-line session receipt whose every number states its provenance.
 
+**Follow a pull request without leaving the Desk.** Send a Coder session into
+the matched worktree, keep a model-written review as an Artifact, or prepare a
+GitHub comment whose complete text waits for your approval. The pull request
+row shows the result as a Receipt, while merge, close, and force push stay out
+of reach by design.
+
 ## Data boundaries
 
 - **Every run names its destination.** Transcription and model-backed work can
