@@ -1,12 +1,12 @@
 # Phase 107 - Close the Side Doors
 
-**Status:** IN PROGRESS (2/7). Activated 2026-07-29 — Phase 106
+**Status:** IN PROGRESS (3/7). Activated 2026-07-29 — Phase 106
 closed on the owner's sitting (8/8). Chartered from the number
 Phase 106 could not move.
 
-**Last updated:** 2026-07-29 (HS-107-02 done: the ten typing sites
-resolved; dictation got FASTER, not slower — release-to-landed median
-926.3 → 853.3 ms).
+**Last updated:** 2026-07-29 (HS-107-03 done: subprocess family
+triaged and migrated; register now 29 total / 5 covered / 3 reads /
+21 debt).
 
 ## Why this phase exists
 
@@ -146,7 +146,7 @@ closes.
 |---|---|---|---|---|
 | HS-107-01 | Dictation's commit boundary — semantics before rerouting | done | [story-01-dictation-semantics](./story-01-dictation-semantics.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-107-02 | The typing families — 10 sites through the kernel | done | [story-02-typing-families](./story-02-typing-families.md) | [evidence-story-02](./evidence-story-02.md) |
-| HS-107-03 | The subprocess family — 5 sites | planned | [story-03-subprocess-family](./story-03-subprocess-family.md) | — |
+| HS-107-03 | The subprocess family — 5 sites | done | [story-03-subprocess-family](./story-03-subprocess-family.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-107-04 | The egress family — triage before migration | planned | [story-04-egress-family](./story-04-egress-family.md) | — |
 | HS-107-05 | The register, honestly — what remains and why | planned | [story-05-register-honestly](./story-05-register-honestly.md) | — |
 | HS-107-06 | Docs — the new number at the entry points | planned | [story-06-docs](./story-06-docs.md) | — |
@@ -180,6 +180,8 @@ lands. Then docs, then closeout.
 - 2026-07-29 - D08 (voice macro connector) was DORMANT, not migrated: the ambient `_default_type_writer` fallback was unreachable by census (all production callers inject their writer). The dead fallback was deleted and a writer-less construction now refuses by name (`voice_macro_direct_gesture_required`) — eliminated dormant debt, not a claimed closed door - HS-107-02.
 - 2026-07-29 - **Wake canon tension flagged, not resolved:** D06 preserves configured `wake.action=type` behaviour (`gesture=wake_utterance`), but Article IV.2 says wake surfaces arm rather than fire, and the HS-107-01 path matrix has no wake row. The tension predates the migration; it goes to the owner at the sitting rather than being silently absorbed - HS-107-02.
 - 2026-07-29 - The latency script now timestamps actual driver landing (its old timer counted receipt persistence after text had landed). The type component honestly includes admission + warrant + focus recheck (+22 ms), and the end-to-end owner path still got faster (926.3 → 853.3 ms median) - HS-107-02.
+- 2026-07-29 - Subprocess triage: C01/C04 are consequential (migrated to `subprocess.exec@1`, the seventh operation type; ONE policy decision each — `PermissionGate` no longer decides subprocess acts); C02/C03/C05 are READS — receipt-free by clause 5, but now requiring an authenticated principal with named read authority (the HS-106-02 confused-deputy closure applied to subprocess reads; `agent:untrusted` running `gh` is refused by name) - HS-107-03.
+- 2026-07-29 - The register gained a `read` status that is NOT debt and NOT covered: effect-free information retrieval with its clause-5 obligations named. Debt counts exclude covered AND read; the fence derives totals from per-family values so parallel family migrations compose - HS-107-03.
 
 ## Decisions deferred
 
@@ -196,7 +198,20 @@ lands. Then docs, then closeout.
 
 ## Where we are
 
-**2026-07-29 — ACTIVE, 2/7.** HS-107-02 done: all ten typing sites
+**2026-07-29 — ACTIVE, 3/7.** HS-107-03 done: the five subprocess
+sites triaged in writing and resolved. C01/C04 (the two `mixed`
+connector sites — the worst state: reads as protected and isn't)
+migrated through `subprocess.exec@1`, the seventh operation type,
+with binary/argv/cwd bound immutably at admission (payload-swap
+proven dead), receipts distinguishing operation success from child
+exit status, an indeterminate outcome not blindly retried, and
+exactly ONE policy decision per act — `PermissionGate` no longer
+decides subprocess. C02/C03/C05 argued as reads: no ceremony on the
+conveyor, but an authenticated principal with named read authority is
+mandatory — `agent:untrusted` running `gh` refuses by name. Register
+after merge-time reconciliation with 02 (pinned exact by the fence):
+**29 total / 5 covered / 3 reads / 21 debt**. Merged tree green (3397
+unit, 749 integration). Earlier: HS-107-02 done: all ten typing sites
 resolved. T03/T04 ride the proven `process.input@1` (immutable process
 ref, expected generation, `submit=true`, `direct_gesture` now carried
 by the delivery encoder); D01-D07 ride the new `desktop.type_text@1`

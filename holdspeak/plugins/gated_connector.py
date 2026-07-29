@@ -12,28 +12,16 @@ module is the missing seam: a **write-connector permission manifest** plus a
 `build_gated_connector(...)` helper that turns a side-effect *plan* into a gated
 `connector(proposal) -> dict`.
 
-The manifest is the *narrowest* gate — it layers **under** the executor's existing
-approval + policy + payload-parity gates, never replacing them. It declares two
-things and nothing more:
+The manifest declares the connector's concrete scope: argv prefixes for a CLI
+connector or hosts for an outbound connector. Since HS-107-03, subprocess plans
+carry that trusted scope into ``subprocess.exec`` admission; the kernel is the
+only subprocess policy decision and binds argv/cwd before approval. The legacy
+manifest allow-check and ``PermissionGate`` remain for outbound operations until
+HS-107-04 migrates the egress family.
 
-  - the single `PermissionGate` permission the connector needs — `shell:exec` (CLI)
-    or `network:outbound` (HTTP) — the egress chokepoint every write routes through;
-  - the *concrete* operations it may perform — permitted argv prefixes for a CLI
-    connector, an allow-listed set of hosts for an outbound connector.
-
-`build_gated_connector` enforces both, in order, on every proposal:
-
-  1. **plan** — derive the one concrete `GatedOperation` this proposal would
-     perform (mutation-free; reads the stored payload).
-  2. **manifest allow-check** — refuse anything the manifest did not declare,
-     raising `ConnectorOperationRefused` **before** any egress. The
-     `PermissionGate` is never even touched. The executor catches the raise,
-     records the proposal `failed` + an audit row, and performs no side effect.
-  3. **gate** — an admitted op routes through the existing `PermissionGate`
-     (`run_subprocess` for CLI, `open_outbound_socket` for HTTP). We reuse the
-     Phase-13 gate rather than introduce a second egress primitive.
-  4. **interpret** — map the gate's raw result (a `CompletedProcess`, an HTTP
-     response, …) into the result dict the executor records on `executed`.
+`build_gated_connector` therefore runs plan → kernel subprocess admission →
+interpret for CLI operations, and plan → manifest allow-check → gate → interpret
+for outbound operations. Either refusal occurs before egress.
 
 A connector with an empty allow-list admits nothing and so *does nothing* — the
 manifest can only ever narrow, never widen, what reaches the wire. The concrete
@@ -46,6 +34,7 @@ from dataclasses import dataclass, field
 from typing import Any, Callable, Mapping, Optional
 
 from ..connector_runtime import PermissionGate, SubprocessRunner
+from ..kernel.subprocess_exec import SubprocessOperationRefused
 from ..connector_sdk import NETWORK_PERMISSIONS, ConnectorManifest
 from ..logging_config import get_logger
 from .actuator_executor import Connector
@@ -216,12 +205,18 @@ def _route(
     gate: PermissionGate,
     op: GatedOperation,
     *,
+    manifest: WriteConnectorManifest,
     runner: Optional[SubprocessRunner],
     opener: Optional[Callable[[GatedOperation], Any]],
 ) -> Any:
-    """Dispatch an *already-admitted* op through the matching gate operation."""
+    """Dispatch an op; subprocess authority is resolved only by the kernel."""
     if op.kind == "subprocess":
-        return gate.run_subprocess(op.argv, runner=runner, **dict(op.subprocess_kwargs))
+        return gate.execute_subprocess(
+            op.argv,
+            runner=runner,
+            allowed_argv_prefixes=manifest.allowed_argv_prefixes,
+            **dict(op.subprocess_kwargs),
+        )
     if op.kind == "outbound":
         if op.address is None:
             raise ValueError("outbound GatedOperation requires an address")
@@ -243,7 +238,7 @@ def build_gated_connector(
     runner: Optional[SubprocessRunner] = None,
     opener: Optional[Callable[[GatedOperation], Any]] = None,
 ) -> Connector:
-    """Wrap a side-effect plan in the manifest allow-check + the `PermissionGate`.
+    """Wrap a side-effect plan in its typed subprocess or outbound authority path.
 
     Returns the `connector(proposal) -> dict` the `ActuatorExecutor` expects.
     The author supplies:
@@ -259,9 +254,8 @@ def build_gated_connector(
     `gate` defaults to one synthesized from the manifest (admitting exactly the
     declared permission); tests inject a fake/spy gate.
 
-    Order of enforcement per proposal: **plan → allow-check → gate → interpret**.
-    An op the manifest does not admit raises `ConnectorOperationRefused` *before*
-    the gate is touched — no egress, no partial work.
+    Subprocess order is **plan → kernel → interpret**. Outbound order remains
+    **plan → allow-check → gate → interpret** pending the egress-family story.
     """
     the_gate = gate if gate is not None else manifest.build_gate()
 
@@ -271,9 +265,10 @@ def build_gated_connector(
             raise TypeError(
                 f"plan() must return a GatedOperation, got {type(op).__name__}"
             )
-        # Narrowest gate first: refuse anything the manifest didn't declare,
-        # BEFORE the PermissionGate / any egress is reached.
-        if not manifest.allows(op):
+        # Subprocess constraints are kernel hard prerequisites so this site has
+        # one policy decision. Outbound remains on the legacy manifest path for
+        # HS-107-04's egress migration.
+        if op.kind != "subprocess" and not manifest.allows(op):
             log.warning(
                 "gated connector %r refused operation [%s] (not on manifest)",
                 manifest.connector_id,
@@ -284,7 +279,16 @@ def build_gated_connector(
                 operation=op.summary(),
                 reason="operation is not on the connector's permission manifest",
             )
-        raw = _route(the_gate, op, runner=runner, opener=opener)
+        try:
+            raw = _route(
+                the_gate, op, manifest=manifest, runner=runner, opener=opener
+            )
+        except SubprocessOperationRefused as exc:
+            raise ConnectorOperationRefused(
+                connector_id=manifest.connector_id,
+                operation=op.summary(),
+                reason=exc.reason,
+            ) from exc
         return interpret(raw, op)
 
     return _connector

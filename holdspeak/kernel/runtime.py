@@ -14,6 +14,7 @@ from .journal import JournalStore
 from .model import OperationSpec
 from .process_input import ProcessInputCodec
 from .process_spawn import ProcessSpawnCodec
+from .subprocess_exec import SubprocessExecCodec
 from .tool_call import ToolCallCodec
 
 _principal = ContextVar("kernel_principal", default=UNAUTHENTICATED)
@@ -36,6 +37,7 @@ def _build(database: Any, *, clock: Any = None) -> Broker:
     desktop_type_text = DesktopTypeTextCodec(database.desktop_type_receipts)
     launch_service = default_launch_service(database)
     process_spawn = ProcessSpawnCodec(launch_service, database.delivery_receipts)
+    subprocess_exec = SubprocessExecCodec()
     actuator = ActuatorCodec(database.actuators, _mode)
     inference = InferenceRunCodec(database, **({"clock": clock} if clock else {}))
     cancellation = InferenceCancelCodec(database, store)
@@ -50,6 +52,7 @@ def _build(database: Any, *, clock: Any = None) -> Broker:
             "propose",
         ),
         OperationSpec(process_spawn.name, process_spawn.version, process_spawn, "agent.submit", "propose"),
+        OperationSpec(subprocess_exec.name, subprocess_exec.version, subprocess_exec, "agent.submit", "propose"),
         OperationSpec(actuator.name, actuator.version, actuator, "agent.submit", "propose"),
         OperationSpec(inference.name, inference.version, inference, "agent.submit", "propose"),
         OperationSpec(cancellation.name, cancellation.version, cancellation, "agent.submit", "propose"),

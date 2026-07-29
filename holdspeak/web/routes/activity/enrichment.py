@@ -10,9 +10,10 @@ from __future__ import annotations
 
 from typing import Any, Optional
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 
+from ....kernel.subprocess_exec import LOCAL_OWNER
 from ....logging_config import get_logger
 from ....web_requests import (
     _ActivityCliEnrichmentRunRequest,
@@ -446,6 +447,7 @@ def build_enrichment_router(ctx: WebContext) -> APIRouter:
 
     @router.post("/api/activity/enrichment/github/run")
     async def api_run_github_activity_enrichment(
+        request: Request,
         payload: Optional[_ActivityCliEnrichmentRunRequest] = None,
     ) -> Any:
         try:
@@ -503,6 +505,7 @@ def build_enrichment_router(ctx: WebContext) -> APIRouter:
                 limit=max(1, min(int(limit), 100)),
                 timeout_seconds=max(0.1, float(timeout_seconds)),
                 max_bytes=max(1024, min(int(max_bytes), 1048576)),
+                principal=getattr(request.state, "principal", LOCAL_OWNER),
             )
             connector = db.activity.get_activity_enrichment_connector(CONNECTOR_ID) or connector
             return JSONResponse(
@@ -542,6 +545,7 @@ def build_enrichment_router(ctx: WebContext) -> APIRouter:
 
     @router.post("/api/activity/enrichment/jira/run")
     async def api_run_jira_activity_enrichment(
+        request: Request,
         payload: Optional[_ActivityCliEnrichmentRunRequest] = None,
     ) -> Any:
         try:
@@ -595,6 +599,7 @@ def build_enrichment_router(ctx: WebContext) -> APIRouter:
                 limit=max(1, min(int(limit), 100)),
                 timeout_seconds=max(0.1, float(timeout_seconds)),
                 max_bytes=max(1024, min(int(max_bytes), 1048576)),
+                principal=getattr(request.state, "principal", LOCAL_OWNER),
             )
             connector = db.activity.get_activity_enrichment_connector(CONNECTOR_ID) or connector
             return JSONResponse(

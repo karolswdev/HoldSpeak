@@ -11,6 +11,8 @@ from datetime import datetime
 from typing import Any, Callable, Iterable, Optional
 
 from .db import ActivityAnnotation, ActivityRecord, Database
+from .kernel.subprocess_exec import LOCAL_OWNER
+from .principals import Principal
 
 CONNECTOR_ID = "jira"
 SUPPORTED_ENTITY_TYPES = frozenset({"jira_ticket"})
@@ -103,6 +105,7 @@ def run_jira_cli_enrichment(
     timeout_seconds: float = 5.0,
     max_bytes: int = 65536,
     run_command: Optional[RunCommand] = None,
+    principal: Principal = LOCAL_OWNER,
 ) -> list[JiraCliRunResult]:
     """Run planned read-only `jira` commands and persist local annotations."""
     status = jira_cli_status(jira_path=jira_path)
@@ -113,7 +116,7 @@ def run_jira_cli_enrichment(
     plans = _jira_cli_plans(records, jira_path=str(command_path), limit=limit)
 
     from .connector_packs import jira_cli as jira_cli_pack
-    from .connector_runtime import PermissionDenied, PermissionGate
+    from .connector_runtime import PermissionDenied, PermissionGate, ReadSubprocessDenied
 
     gate = PermissionGate(jira_cli_pack.MANIFEST)
     started_at = datetime.now()
@@ -121,15 +124,16 @@ def run_jira_cli_enrichment(
     results: list[JiraCliRunResult] = []
     for plan in plans:
         try:
-            completed = gate.run_subprocess(
+            completed = gate.run_read_subprocess(
                 plan.command,
+                principal=principal,
                 runner=run_command,
                 capture_output=True,
                 text=True,
                 timeout=max(0.1, float(timeout_seconds)),
                 check=False,
             )
-        except PermissionDenied as exc:
+        except (PermissionDenied, ReadSubprocessDenied) as exc:
             now = datetime.now()
             db.activity.record_activity_enrichment_run(
                 connector_id=CONNECTOR_ID,

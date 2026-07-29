@@ -23,6 +23,10 @@ import subprocess
 from pathlib import Path
 from typing import Any, Callable, Optional
 
+from .connector_runtime import require_subprocess_read_authority
+from .kernel.subprocess_exec import LOCAL_OWNER
+from .principals import Principal
+
 # The schema versions this client is proven against (declared per
 # the counterpart's §5; drift is a compatibility note, not a break).
 FEED_SCHEMA_PROVEN = 1
@@ -44,6 +48,14 @@ def _default_runner(argv: list[str], cwd: Optional[str] = None):
         errors="replace",
         timeout=DW_TIMEOUT_SECONDS,
     )
+
+
+def _run_read(
+    run: Runner, argv: list[str], cwd: str, principal: Principal
+) -> "subprocess.CompletedProcess[str]":
+    command_name = Path(argv[0]).name if argv else "<empty>"
+    require_subprocess_read_authority(principal, command_name)
+    return run(argv, cwd)
 
 
 def load_project_map(path: Optional[Path] = None) -> dict[str, Any]:
@@ -85,7 +97,10 @@ def dw_argv_base(repo: Path) -> Optional[list[str]]:
 
 
 def _fetch_document(
-    repo: Path, argv_tail: list[str], runner: Optional[Runner]
+    repo: Path,
+    argv_tail: list[str],
+    runner: Optional[Runner],
+    principal: Principal = LOCAL_OWNER,
 ) -> tuple[Optional[Any], str, str]:
     """(document, status, detail): status is live | unavailable."""
     run = runner or _default_runner
@@ -93,7 +108,7 @@ def _fetch_document(
     if base is None:
         return None, "unavailable", f"no dw CLI for {repo}"
     try:
-        proc = run([*base, *argv_tail], str(repo))
+        proc = _run_read(run, [*base, *argv_tail], str(repo), principal)
     except (OSError, subprocess.TimeoutExpired) as exc:
         return None, "unavailable", f"dw failed to run: {exc}"
     if proc.returncode != 0:
@@ -107,11 +122,14 @@ def _fetch_document(
 
 
 def state_entry(
-    name: str, repo_path: str, runner: Optional[Runner] = None
+    name: str,
+    repo_path: str,
+    runner: Optional[Runner] = None,
+    principal: Principal = LOCAL_OWNER,
 ) -> dict[str, Any]:
     """One repo's feed, schema-checked at the door, relayed untouched."""
     doc, status, detail = _fetch_document(
-        Path(repo_path), ["state", "--json"], runner
+        Path(repo_path), ["state", "--json"], runner, principal
     )
     entry: dict[str, Any] = {"name": name, "path": repo_path}
     if doc is None:
@@ -130,18 +148,22 @@ def state_entry(
 
 
 def state_payload(
-    project_map: dict[str, Any], runner: Optional[Runner] = None
+    project_map: dict[str, Any],
+    runner: Optional[Runner] = None,
+    principal: Principal = LOCAL_OWNER,
 ) -> dict[str, Any]:
     return {
         "repos": [
-            state_entry(name, repo, runner)
+            state_entry(name, repo, runner, principal)
             for name, repo in sorted(project_map["projects"].items())
         ]
     }
 
 
 def sessions_payload(
-    project_map: dict[str, Any], runner: Optional[Runner] = None
+    project_map: dict[str, Any],
+    runner: Optional[Runner] = None,
+    principal: Principal = LOCAL_OWNER,
 ) -> dict[str, Any]:
     """The correlation document is desk-global; one relay via the
     default repo's CLI."""
@@ -149,7 +171,7 @@ def sessions_payload(
     if not default:
         return {"status": "unavailable", "detail": "no rails repo configured"}
     doc, status, detail = _fetch_document(
-        Path(default), ["sessions", "--json"], runner
+        Path(default), ["sessions", "--json"], runner, principal
     )
     if doc is None:
         return {"status": status, "detail": detail}
@@ -169,7 +191,10 @@ def sessions_payload(
 
 
 def receipts_entry(
-    name: str, repo_path: str, runner: Optional[Runner] = None
+    name: str,
+    repo_path: str,
+    runner: Optional[Runner] = None,
+    principal: Principal = LOCAL_OWNER,
 ) -> dict[str, Any]:
     """One repo's GitHub receipts (HS-86-03): open PRs with their
     check rollups, via the gh CLI with cwd inside the repo — the
@@ -189,7 +214,7 @@ def receipts_entry(
         "number,title,url,headRefName,statusCheckRollup",
     ]
     try:
-        proc = run(argv, str(repo_path))
+        proc = _run_read(run, argv, str(repo_path), principal)
     except (OSError, subprocess.TimeoutExpired) as exc:
         return {**entry, "status": "unavailable", "detail": f"gh failed to run: {exc}"}
     if proc.returncode != 0:
@@ -206,11 +231,13 @@ def receipts_entry(
 
 
 def receipts_payload(
-    project_map: dict[str, Any], runner: Optional[Runner] = None
+    project_map: dict[str, Any],
+    runner: Optional[Runner] = None,
+    principal: Principal = LOCAL_OWNER,
 ) -> dict[str, Any]:
     return {
         "repos": [
-            receipts_entry(name, repo, runner)
+            receipts_entry(name, repo, runner, principal)
             for name, repo in sorted(project_map["projects"].items())
         ]
     }
@@ -222,6 +249,7 @@ def story_evidence_payload(
     project_slug: str,
     story_id: str,
     runner: Optional[Runner] = None,
+    principal: Principal = LOCAL_OWNER,
 ) -> dict[str, Any]:
     """Evidence content for one story (HS-86-04) — the desk opens the
     filed object in place. The path comes from the repo's own CLI
@@ -235,7 +263,7 @@ def story_evidence_payload(
     if not repo_path:
         return {"status": "refused", "detail": f"repo {repo_name!r} is not in the project map"}
     doc, status, detail = _fetch_document(
-        Path(repo_path), ["context", project_slug, "--compact"], runner
+        Path(repo_path), ["context", project_slug, "--compact"], runner, principal
     )
     if doc is None:
         return {"status": status, "detail": detail}
@@ -371,12 +399,13 @@ def events_payload(
     project_map: dict[str, Any],
     tail: int = 20,
     runner: Optional[Runner] = None,
+    principal: Principal = LOCAL_OWNER,
 ) -> dict[str, Any]:
     tail = max(1, min(int(tail), 100))
     repos = []
     for name, repo in sorted(project_map["projects"].items()):
         doc, status, detail = _fetch_document(
-            Path(repo), ["events", "--json", "--tail", str(tail)], runner
+            Path(repo), ["events", "--json", "--tail", str(tail)], runner, principal
         )
         entry: dict[str, Any] = {"name": name, "path": repo}
         if doc is None or not isinstance(doc, list):

@@ -187,19 +187,17 @@ def test_permitted_outbound_routes_through_gate_with_request() -> None:
 # ──────────────────────── build_gated_connector: refuse ───────────────
 
 
-def test_refused_op_raises_before_gate_is_touched() -> None:
-    spy = _SpyGate()
+def test_refused_subprocess_is_kernel_refused_before_egress() -> None:
     runner = _FakeRunner()
 
     def plan(proposal):
-        # A verb the manifest does not declare.
         return GatedOperation.subprocess(["gh", "issue", "close", "1"])
 
     connector = build_gated_connector(
         _CLI_MANIFEST,
         plan=plan,
         interpret=lambda raw, op: {"unreached": True},
-        gate=spy,
+        gate=_CLI_MANIFEST.build_gate(),
         runner=runner,
     )
 
@@ -207,9 +205,7 @@ def test_refused_op_raises_before_gate_is_touched() -> None:
         connector(_proposal())
 
     assert exc.value.connector_id == "gh_writer"
-    assert "gh issue close" in str(exc.value)
-    # The gate was never reached → no egress, no runner call.
-    assert spy.subprocess_calls == []
+    assert exc.value.reason == "subprocess_argv_not_allowed:gh"
     assert runner.calls == []
 
 
@@ -317,7 +313,6 @@ def test_executor_executes_permitted_gated_connector(tmp_path) -> None:
 def test_executor_marks_failed_on_refused_op_no_egress(tmp_path) -> None:
     db = _db(tmp_path)
     proposal = _approved(db, payload={"title": "Follow up"})
-    spy = _SpyGate()
     runner = _FakeRunner()
 
     connector = build_gated_connector(
@@ -325,7 +320,7 @@ def test_executor_marks_failed_on_refused_op_no_egress(tmp_path) -> None:
         # Plan an op the manifest does not admit.
         plan=lambda p: GatedOperation.subprocess(["gh", "issue", "delete", "1"]),
         interpret=lambda raw, op: {"unreached": True},
-        gate=spy,
+        gate=_CLI_MANIFEST.build_gate(),
         runner=runner,
     )
     executor = ActuatorExecutor(db, connector=connector, allow_actuators=True)
@@ -334,8 +329,7 @@ def test_executor_marks_failed_on_refused_op_no_egress(tmp_path) -> None:
 
     assert result.status == "failed"  # refusal surfaced as a connector failure
     assert "ConnectorOperationRefused" in (result.error or "")
-    assert spy.subprocess_calls == []  # no egress
-    assert runner.calls == []
+    assert runner.calls == []  # no egress
     audit = db.actuators.list_audit(proposal.id)
     assert audit[-1].to_status == "failed"
     # Retryable: failed -> approved is still a legal transition.
