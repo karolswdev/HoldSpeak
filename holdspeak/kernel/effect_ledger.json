@@ -13,12 +13,12 @@
     "dormant": "No current production caller, but the ambient capability can execute without a named chokepoint; treated as not covered."
   },
   "expected": {
-    "total": 40,
-    "covered": 4,
-    "not_covered": 36,
+    "total": 31,
+    "covered": 5,
+    "not_covered": 26,
     "families": {
-      "tmux_transport": 4,
-      "text_typer": 8,
+      "tmux_transport": 2,
+      "text_typer": 1,
       "subprocess": 5,
       "egress": 13,
       "raw_desktop": 10
@@ -44,97 +44,14 @@
       "reason": "Production key transport invocation inside the audited coder_steering.deliver_keys chokepoint; delivery-command traffic adds its command receipt."
     },
     {
-      "id": "T03",
-      "family": "tmux_transport",
-      "status": "bypass",
-      "path": "holdspeak/runtime/dictation_capture.py",
-      "census_line": 429,
-      "selector": {"scope": "DictationCaptureMixin._try_tmux_agent_reply", "target": "send_text_to_pane", "ordinal": 1},
-      "reason": "Dictation-to-agent sends text and Enter through tmux_transport directly; retained only as declared migration debt until the terminal slice adapts it."
-    },
-    {
-      "id": "T04",
-      "family": "tmux_transport",
-      "status": "bypass",
-      "path": "holdspeak/web/routes/cadence.py",
-      "census_line": 256,
-      "selector": {"scope": "build_cadence_router.reply_to_agent", "target": "send_text_to_pane", "ordinal": 1},
-      "reason": "Cadence reply route sends to the loop pane directly after route-local lookup; retained only as declared migration debt."
-    },
-
-    {
-      "id": "D01",
+      "id": "D09",
       "family": "text_typer",
-      "status": "bypass",
-      "path": "holdspeak/runtime/dictation_capture.py",
-      "census_line": 188,
-      "selector": {"scope": "DictationCaptureMixin._transcribe_and_type", "target": "type_text", "ordinal": 1},
-      "reason": "Local dictation fallback types into the focused app or agent target without an audited admission seam; retained pending typed admission split."
+      "status": "covered",
+      "path": "holdspeak/desktop_typing.py",
+      "census_line": 176,
+      "selector": {"scope": "type_text_from_owner_gesture", "target": "type_text", "ordinal": 1},
+      "reason": "The sole remaining TextTyper caller executes only after desktop.type_text admission, an owner-direct-gesture warrant, immutable focus-generation verification, and before a paired native and kernel terminal receipt."
     },
-    {
-      "id": "D02",
-      "family": "text_typer",
-      "status": "bypass",
-      "path": "holdspeak/runtime/dictation_capture.py",
-      "census_line": 284,
-      "selector": {"scope": "DictationCaptureMixin.type_dictation_preview", "target": "type_text", "ordinal": 1},
-      "reason": "The explicit preview Type action invokes TextTyper directly; retained as declared desktop.type_text migration debt."
-    },
-    {
-      "id": "D03",
-      "family": "text_typer",
-      "status": "bypass",
-      "path": "holdspeak/runtime/dictation_capture.py",
-      "census_line": 369,
-      "selector": {"scope": "DictationCaptureMixin._maybe_dispatch_voice_command._type", "target": "type_text", "ordinal": 1},
-      "reason": "The injected writer for type_text voice macros types into the ambient focused app without actuator admission; retained as migration debt."
-    },
-    {
-      "id": "D04",
-      "family": "text_typer",
-      "status": "bypass",
-      "path": "holdspeak/runtime/dictation_capture.py",
-      "census_line": 485,
-      "selector": {"scope": "DictationCaptureMixin._deliver_remote_dictation", "target": "type_text", "ordinal": 1},
-      "reason": "Remote dictation fallback may type to a recent agent session or ambient focus without audited admission; retained pending target-aware split."
-    },
-    {
-      "id": "D05",
-      "family": "text_typer",
-      "status": "bypass",
-      "path": "holdspeak/runtime/dictation_capture.py",
-      "census_line": 509,
-      "selector": {"scope": "DictationCaptureMixin._deliver_remote_dictation_focused", "target": "type_text", "ordinal": 1},
-      "reason": "Companion focused delivery deliberately types without Enter but still invokes ambient TextTyper directly; retained as migration debt."
-    },
-    {
-      "id": "D06",
-      "family": "text_typer",
-      "status": "bypass",
-      "path": "holdspeak/runtime/wake_glue.py",
-      "census_line": 291,
-      "selector": {"scope": "WakeWordGlueMixin._transcribe_wake", "target": "type_text", "ordinal": 1},
-      "reason": "Wake action type inserts processed dictation into the active app directly; retained as desktop.type_text migration debt."
-    },
-    {
-      "id": "D07",
-      "family": "text_typer",
-      "status": "bypass",
-      "path": "holdspeak/runtime/wake_glue.py",
-      "census_line": 346,
-      "selector": {"scope": "WakeWordGlueMixin._type_wake_preview", "target": "type_text", "ordinal": 1},
-      "reason": "The explicit wake-preview Type action invokes TextTyper directly; retained as desktop.type_text migration debt."
-    },
-    {
-      "id": "D08",
-      "family": "text_typer",
-      "status": "dormant",
-      "path": "holdspeak/plugins/voice_macro_connector.py",
-      "census_line": 118,
-      "selector": {"scope": "_default_type_writer", "target": "type_text", "ordinal": 1},
-      "reason": "Dormant default voice-macro writer can lazily create TextTyper without an audited seam; retained only until the fallback is removed or brokered."
-    },
-
     {
       "id": "C01",
       "family": "subprocess",
@@ -180,7 +97,6 @@
       "selector": {"scope": "_default_runner", "target": "run", "ordinal": 1},
       "reason": "Mission Control bridge runs Delivery Workbench and GitHub read commands directly; retained as read-path migration debt."
     },
-
     {
       "id": "N01",
       "family": "egress",
@@ -298,7 +214,6 @@
       "selector": {"scope": "call_telegram", "target": "urlopen", "ordinal": 1},
       "reason": "Cadence Telegram adapter directly posts Bot API methods; retained pending method-specific external.telegram admission."
     },
-
     {
       "id": "A01",
       "family": "raw_desktop",

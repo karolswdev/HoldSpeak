@@ -16,6 +16,7 @@ from typing import Any
 import numpy as np
 
 from holdspeak.config import Config
+from holdspeak.desktop_typing import type_text_from_owner_gesture
 from holdspeak.dictation_runner import run_dictation_pipeline
 from holdspeak.intel.providers import effective_dictation_llm
 from holdspeak.text_processor import TextProcessor
@@ -69,7 +70,7 @@ class _SeamSink:
 
 
 class _DriverSink:
-    name = "texttyper_driver_without_focused_app"
+    name = "desktop_type_text_kernel_to_texttyper_driver"
 
     class _Keyboard:
         def __init__(self) -> None:
@@ -81,14 +82,32 @@ class _DriverSink:
         def release(self, key: Any) -> None:
             self.events.append(("release", str(key)))
 
+    class _LandingTyper:
+        def __init__(self, sink: Any) -> None:
+            self.sink = sink
+
+        def type_text(self, text: str, **kwargs: Any) -> None:
+            self.sink.driver.type_text(text, **kwargs)
+            self.sink.landed_at = time.perf_counter()
+
     def __init__(self) -> None:
-        self.typer = TextTyper()
+        self.driver = TextTyper()
         self.keyboard = self._Keyboard()
-        self.typer._keyboard = self.keyboard
+        self.driver._keyboard = self.keyboard
+        self.typer = self._LandingTyper(self)
+        self.landed_at: float | None = None
 
     def type(self, text: str) -> None:
         self.keyboard.events.clear()
-        self.typer.type_text(text, submit=False)
+        self.landed_at = None
+        type_text_from_owner_gesture(
+            text,
+            typer=self.typer,
+            gesture="hold_release",
+            submit=False,
+            requested_target="focused",
+            delivery_method="latency_probe",
+        )
 
     def verify(self, text: str) -> None:
         if not text.strip() or len(self.keyboard.events) != 4:
@@ -250,8 +269,13 @@ def main() -> int:
 
             started = time.perf_counter()
             sink.type(final_text)
-            type_ms = _ms(started)
-            release_to_landed_ms = _ms(release_started)
+            landed_at = getattr(sink, "landed_at", None)
+            if landed_at is None:
+                type_ms = _ms(started)
+                release_to_landed_ms = _ms(release_started)
+            else:
+                type_ms = round((landed_at - started) * 1000.0, 3)
+                release_to_landed_ms = round((landed_at - release_started) * 1000.0, 3)
             sink.verify(final_text)
 
             row = {
@@ -306,7 +330,7 @@ def main() -> int:
             "physical key hold plus microphone acquisition; when typing_sink is the "
             "driver probe, focused-app landing is also unmeasured. The fixed WAV enters "
             "the same VoiceTypingSession end -> transcribe -> process -> pipeline -> "
-            "TextTyper driver path"
+            "desktop.type_text -> TextTyper driver path"
         ),
     }
     print("HS107_BASELINE " + json.dumps(result, sort_keys=True))

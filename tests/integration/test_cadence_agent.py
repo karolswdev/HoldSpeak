@@ -9,7 +9,6 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 import holdspeak.agent_context as agent_context
-import holdspeak.tmux_transport as tmux_transport
 from holdspeak.cadence.collector import LoopCollector
 from holdspeak.cadence.models import EvidenceRef, OpenLoop
 from holdspeak.db import get_database, reset_database
@@ -83,8 +82,13 @@ def test_reply_delivers_into_pane_and_closes(client, monkeypatch):
     c, db = client
     sent = {}
     monkeypatch.setattr(agent_context, "list_recent_awaiting_agent_sessions", lambda **k: [_Sess()])
-    monkeypatch.setattr(tmux_transport, "send_text_to_pane",
-                        lambda **kw: (sent.update(kw) or tmux_transport.TmuxDelivery(pane=kw["pane"], submitted=True)))
+    monkeypatch.setattr(
+        "holdspeak.delivery.direct_gesture_input.submit_process_input_from_owner_gesture",
+        lambda **kw: (
+            sent.update(kw)
+            or {"operation_id": "op_cadence", "command_id": "cmd_cadence"}
+        ),
+    )
     loop_id = db.cadence.get_loop_by_source("agent_question", "sess-1").id
     r = c.post(f"/api/cadence/loops/{loop_id}/reply", json={"text": "Use SQLite; add a migration."})
     assert r.status_code == 200 and r.json()["delivered"] is True

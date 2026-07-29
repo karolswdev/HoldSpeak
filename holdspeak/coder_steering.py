@@ -498,7 +498,7 @@ def _require_delivery_authority(
             ),
         }
     basis = str(policy.get("authority_basis") or "")
-    if basis == "control_posture":
+    if basis in {"control_posture", "direct_gesture"}:
         return require_posture_authority(
             current_target, expected_pane_id, runner=runner
         )

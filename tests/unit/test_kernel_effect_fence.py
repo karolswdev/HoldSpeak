@@ -544,7 +544,7 @@ def test_effect_ledger_is_complete_and_current() -> None:
     assert not failures, "effect census drift:\n  " + "\n  ".join(failures)
 
 
-def test_effect_ledger_asserts_the_ratified_40_4_36_counts() -> None:
+def test_effect_ledger_asserts_the_migrated_31_5_26_counts() -> None:
     ledger = _load_ledger()
     entries = ledger["sites"]
     expected = ledger["expected"]
@@ -556,24 +556,24 @@ def test_effect_ledger_asserts_the_ratified_40_4_36_counts() -> None:
 
     assert set(families) == _FAMILIES
     assert set(statuses) <= _STATUSES
-    assert len(entries) == expected["total"] == 40, (
-        f"effect census must state 40 total sites, found {len(entries)}"
+    assert len(entries) == expected["total"] == 31, (
+        f"effect census must state 31 total sites, found {len(entries)}"
     )
-    assert covered == expected["covered"] == 4, (
-        f"effect census must state 4 covered sites, found {covered}"
+    assert covered == expected["covered"] == 5, (
+        f"effect census must state 5 covered sites, found {covered}"
     )
-    assert not_covered == expected["not_covered"] == 36, (
-        f"effect census must state 36 not-covered sites, found {not_covered}"
+    assert not_covered == expected["not_covered"] == 26, (
+        f"effect census must state 26 not-covered sites, found {not_covered}"
     )
     assert dict(families) == expected["families"] == {
-        FAMILY_TMUX: 4,
-        FAMILY_TYPER: 8,
+        FAMILY_TMUX: 2,
+        FAMILY_TYPER: 1,
         FAMILY_SUBPROCESS: 5,
         FAMILY_EGRESS: 13,
         FAMILY_RAW_DESKTOP: 10,
     }, f"effect family breakdown changed: {dict(families)}"
     assert all(entry["reason"].strip() for entry in entries)
-    assert len({entry["id"] for entry in entries}) == 40
+    assert len({entry["id"] for entry in entries}) == 31
     assert "No agent principal may reach" in ledger["legal_effect"]
 
 

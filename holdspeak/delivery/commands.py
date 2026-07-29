@@ -84,6 +84,7 @@ _AUTHORITY_FIELDS = ("actor", "control_posture", "decision", "policy_version")
 _DECISION_BY_OUTCOME = {
     ("allowed", "scoped_grant"): "allowed_by_active_grant",
     ("allowed", "control_posture"): "allowed_by_control_posture",
+    ("allowed", "direct_gesture"): "allowed_by_direct_gesture",
     ("grant_required", "none"): "grant_required",
 }
 _SNAPSHOT_BY_DECISION = {
@@ -96,6 +97,11 @@ _SNAPSHOT_BY_DECISION = {
         "outcome": "allowed",
         "authority_basis": "control_posture",
         "reason_code": "registered_steering_posture_allowed",
+    },
+    "allowed_by_direct_gesture": {
+        "outcome": "allowed",
+        "authority_basis": "direct_gesture",
+        "reason_code": "dictation_commit_allowed",
     },
     "grant_required": {
         "outcome": "grant_required",
@@ -152,9 +158,18 @@ def payload_digest(payload: Mapping[str, Any]) -> str:
     return "sha256:" + hashlib.sha256(canonical.encode("utf-8")).hexdigest()
 
 
-def payload_head(verb: str, payload: Mapping[str, Any]) -> str:
+def payload_head(
+    verb: str,
+    payload: Mapping[str, Any],
+    authority: Mapping[str, Any] | None = None,
+) -> str:
     """The bounded, privacy-ceiling receipt head (§8.1)."""
-    if verb == "terminal.text":
+    if verb == "terminal.text" and str((authority or {}).get("decision") or "") == (
+        "allowed_by_direct_gesture"
+    ):
+        text_bytes = len(str(payload.get("text") or "").encode("utf-8"))
+        head = f"terminal text {text_bytes} bytes submit={bool(payload.get('submit', True))}"
+    elif verb == "terminal.text":
         head = str(payload.get("text") or "")
     elif verb == "terminal.keys":
         head = json.dumps(payload.get("keys") or [], separators=(",", ":"))
@@ -278,7 +293,7 @@ def validate_envelope(raw: Any) -> dict[str, Any]:
         },
         "payload": dict(payload),
         "payload_sha256": str(raw["payload_sha256"]),
-        "payload_head": payload_head(verb, payload),
+        "payload_head": payload_head(verb, payload, authority),
         "expected_sequence": sequence,
     }
 

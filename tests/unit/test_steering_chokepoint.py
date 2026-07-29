@@ -2,11 +2,9 @@
 
 `send_text_to_pane` is raw input injection into a terminal running
 with the owner's rights. Steering must pass through ONE chokepoint
-(`coder_steering.deliver`, grant-checked and audited); the only other
-callers are the pre-arming voice paths whose consent story is the
-agent's own question (the phase decision: the voice-answer flow types
-only when a coder asked). Any new caller fails this census until it
-is deliberately admitted here.
+(`coder_steering.deliver`, authority-checked and audited). Voice and
+Cadence replies now reach it only through `process.input@1`. Any new
+caller fails this census until it is deliberately admitted here.
 """
 
 from __future__ import annotations
@@ -20,11 +18,6 @@ REPO = Path(__file__).resolve().parents[2]
 ALLOWED = {
     "holdspeak/tmux_transport.py",  # the definition + its craft
     "holdspeak/coder_steering.py",  # THE steering chokepoint (deliver)
-    # The legacy voice-answer flow (Phase 78 / HSM-13): types only when
-    # a coder ASKED — its consent story is the agent's own question.
-    "holdspeak/runtime/dictation_capture.py",
-    # The cadence Telegram answer leg (CAD-2): the same asked-first rule.
-    "holdspeak/web/routes/cadence.py",
     # The cadence collector names the transport in prose (a comment
     # pointing AT the route seam), never calls it.
     "holdspeak/cadence/collector.py",
