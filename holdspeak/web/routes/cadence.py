@@ -12,7 +12,7 @@ import asyncio
 from datetime import datetime, timedelta
 from typing import Any
 
-from fastapi import APIRouter, Body, HTTPException
+from fastapi import APIRouter, Body, HTTPException, Request
 
 from ...intel.providers import endpoint_egress
 from ..context import WebContext
@@ -227,13 +227,14 @@ def build_cadence_router(ctx: WebContext) -> APIRouter:
         return _loop_dict(db.cadence.get_loop(loop_id))
 
     @router.post("/loops/{loop_id}/reply")
-    async def reply_to_agent(loop_id: str, body: dict = Body(default={})) -> dict[str, Any]:
+    async def reply_to_agent(
+        loop_id: str, request: Request, body: dict = Body(default={})
+    ) -> dict[str, Any]:
         """Deliver a USER-TYPED reply into a waiting agent's terminal (CAD-3-03).
 
         Never autonomous: requires an explicit non-empty `text`. Only valid for an
-        `agent_question` loop whose session still has a tmux pane. The delivery uses
-        the existing `send_text_to_pane` transport — the side effect lives HERE, not in
-        the cadence package (which the no-side-effects guard keeps clean).
+        `agent_question` loop whose session still has a tmux pane. Delivery adapts
+        onto the existing `process.input@1` operation before terminal input.
         """
         db, loop = _require(loop_id)
         if loop.source_type != "agent_question":
@@ -243,7 +244,11 @@ def build_cadence_router(ctx: WebContext) -> APIRouter:
             raise HTTPException(status_code=400, detail="reply text is required")
 
         from ...agent_context import list_recent_awaiting_agent_sessions
-        from ...tmux_transport import TmuxTransportError, send_text_to_pane
+        from ...delivery.direct_gesture_input import (
+            ProcessInputRefused,
+            submit_process_input_from_owner_gesture,
+        )
+        from ...principals import UNAUTHENTICATED
 
         session = next(
             (s for s in list_recent_awaiting_agent_sessions() if s.session_id == loop.source_id),
@@ -253,15 +258,28 @@ def build_cadence_router(ctx: WebContext) -> APIRouter:
         if not pane:
             raise HTTPException(status_code=409, detail="no terminal pane for this agent session")
         try:
-            delivery = send_text_to_pane(pane=pane, text=text, submit=True)
-        except TmuxTransportError as exc:
-            raise HTTPException(status_code=502, detail=f"delivery failed: {exc}") from exc
+            delivery = await asyncio.to_thread(
+                submit_process_input_from_owner_gesture,
+                pane=str(pane),
+                text=text,
+                session_key=str(session.session_id),
+                agent=str(getattr(session, "agent", "") or ""),
+                principal=getattr(request.state, "principal", UNAUTHENTICATED),
+            )
+        except ProcessInputRefused as exc:
+            raise HTTPException(status_code=409, detail=exc.reason) from exc
 
         # The reply answers the agent — close the loop (its question is handled).
         db.cadence.set_status(loop_id, "closed")
         db.cadence.bump_nudge(loop_id)
-        return {"delivered": True, "pane": delivery.pane, "submitted": delivery.submitted,
-                "egress": _LOCAL_EGRESS}
+        return {
+            "delivered": True,
+            "pane": pane,
+            "submitted": True,
+            "operation_id": delivery["operation_id"],
+            "command_id": delivery["command_id"],
+            "egress": _LOCAL_EGRESS,
+        }
 
     @router.post("/run-now")
     async def run_now() -> dict[str, Any]:

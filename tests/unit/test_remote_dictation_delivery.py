@@ -16,6 +16,7 @@ from holdspeak.runtime.dictation_capture import DictationCaptureMixin
 class _Session:
     def __init__(self, pane: str | None):
         self.tmux_pane = pane
+        self.session_id = "session-test"
 
 
 class _Runtime(DictationCaptureMixin):
@@ -51,18 +52,28 @@ def _patch_session(monkeypatch):
 
 def test_delivers_to_the_waiting_agent_tmux_pane(monkeypatch, _patch_session):
     sent: list[dict] = []
+
+    def _submit(**kwargs):
+        sent.append(kwargs)
+        return {"operation_id": "op_agent", "command_id": "cmd_agent"}
+
     monkeypatch.setattr(
-        "holdspeak.tmux_transport.send_text_to_pane",
-        lambda *, pane, text, submit=True: sent.append({"pane": pane, "text": text, "submit": submit}),
+        "holdspeak.delivery.direct_gesture_input.submit_process_input_from_owner_gesture",
+        _submit,
     )
     _patch_session(_Session(pane="cli:0.1"))
     rt = _Runtime()
 
     result = rt._deliver_remote_dictation("[corrected] ship it friday")
 
-    assert sent == [{"pane": "cli:0.1", "text": "[corrected] ship it friday", "submit": True}]
+    assert sent == [{
+        "pane": "cli:0.1",
+        "text": "[corrected] ship it friday",
+        "session_key": "session-test",
+        "agent": "",
+    }]
     assert result["delivered"] is True
-    assert result["method"] == "tmux"
+    assert result["method"] == "process.input"
     assert result["target"] == "cli:0.1"
     assert rt.first_dictation_marks == 1
 
@@ -75,9 +86,9 @@ def test_falls_back_to_typing_when_no_tmux_pane(_patch_session):
     result = rt._deliver_remote_dictation("the answer")
 
     assert result["delivered"] is True
-    assert result["method"] == "type"
+    assert result["method"] == "desktop.type_text"
     assert typer.calls[0][0] == "the answer"
-    assert typer.calls[0][2] is True        # submit, because there IS a target session
+    assert typer.calls[0][2] is False       # desktop fallback never sends Enter
 
 
 def test_types_into_focused_when_no_waiting_session(_patch_session):
@@ -123,7 +134,7 @@ def test_focused_target_types_without_any_awaiting_session(monkeypatch):
     result = rt._deliver_remote_dictation("freeform into the focused app", target="focused")
 
     assert result["delivered"] is True
-    assert result["method"] == "type"
+    assert result["method"] == "desktop.type_text"
     assert typer.calls[0][0] == "freeform into the focused app"
     assert typer.calls[0][2] is False        # focused → never auto-submit
     assert rt.first_dictation_marks == 1
@@ -159,11 +170,17 @@ def test_focused_target_honours_configured_profile_override():
 
 
 def test_default_target_is_byte_identical_to_agent_path(monkeypatch, _patch_session):
-    """An unset target == "agent": the existing tmux-then-typer behaviour, unchanged."""
-    sent: list[dict] = []
+    """An unset target and target=agent take the same process-input route."""
+    calls: list[dict] = []
+
+    def _submit(**kwargs):
+        calls.append(kwargs)
+        index = len(calls)
+        return {"operation_id": f"op_{index}", "command_id": f"cmd_{index}"}
+
     monkeypatch.setattr(
-        "holdspeak.tmux_transport.send_text_to_pane",
-        lambda *, pane, text, submit=True: sent.append({"pane": pane, "text": text}),
+        "holdspeak.delivery.direct_gesture_input.submit_process_input_from_owner_gesture",
+        _submit,
     )
     _patch_session(_Session(pane="cli:0.1"))
     rt = _Runtime()
@@ -171,4 +188,9 @@ def test_default_target_is_byte_identical_to_agent_path(monkeypatch, _patch_sess
     default_result = rt._deliver_remote_dictation("answer the coder")
     agent_result = rt._deliver_remote_dictation("answer the coder", target="agent")
 
-    assert default_result == agent_result == {"delivered": True, "method": "tmux", "target": "cli:0.1"}
+    assert default_result == agent_result == {
+        "delivered": True,
+        "method": "process.input",
+        "target": "cli:0.1",
+    }
+    assert len(calls) == 2

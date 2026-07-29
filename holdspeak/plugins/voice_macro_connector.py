@@ -112,12 +112,6 @@ def _interpret(completed: Any, op: GatedOperation) -> dict[str, Any]:
     }
 
 
-def _default_type_writer(text: str) -> None:
-    from ..typer import TextTyper
-
-    TextTyper().type_text(text)
-
-
 def build_voice_macro_connector(
     action: VoiceMacroAction,
     *,
@@ -129,11 +123,13 @@ def build_voice_macro_connector(
 
     Egress kinds route through the gated framework with a per-macro manifest; ``runner``
     is the injected subprocess primitive (tests pass a fake; production defaults through
-    the ``PermissionGate`` to ``subprocess.run``). ``type_text`` types via ``type_writer``
-    (the dispatcher injects the runtime typer; default lazily builds a ``TextTyper``).
+    the ``PermissionGate`` to ``subprocess.run``). ``type_text`` requires the dispatcher
+    to inject the authenticated owner's gesture-bound writer.
     """
     if action.kind == "type_text":
-        write = type_writer or _default_type_writer
+        if type_writer is None:
+            raise RuntimeError("voice_macro_direct_gesture_required")
+        write = type_writer
 
         def _type_connector(proposal: Any) -> dict[str, Any]:
             payload = getattr(proposal, "payload", None) or {}

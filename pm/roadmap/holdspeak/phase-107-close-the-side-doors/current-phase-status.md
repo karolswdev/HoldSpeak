@@ -1,11 +1,12 @@
 # Phase 107 - Close the Side Doors
 
-**Status:** IN PROGRESS (1/7). Activated 2026-07-29 — Phase 106
+**Status:** IN PROGRESS (2/7). Activated 2026-07-29 — Phase 106
 closed on the owner's sitting (8/8). Chartered from the number
 Phase 106 could not move.
 
-**Last updated:** 2026-07-29 (HS-107-01 done: the commit-boundary
-contract, pinned; baseline latency on real metal).
+**Last updated:** 2026-07-29 (HS-107-02 done: the ten typing sites
+resolved; dictation got FASTER, not slower — release-to-landed median
+926.3 → 853.3 ms).
 
 ## Why this phase exists
 
@@ -144,7 +145,7 @@ closes.
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
 | HS-107-01 | Dictation's commit boundary — semantics before rerouting | done | [story-01-dictation-semantics](./story-01-dictation-semantics.md) | [evidence-story-01](./evidence-story-01.md) |
-| HS-107-02 | The typing families — 10 sites through the kernel | planned | [story-02-typing-families](./story-02-typing-families.md) | — |
+| HS-107-02 | The typing families — 10 sites through the kernel | done | [story-02-typing-families](./story-02-typing-families.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-107-03 | The subprocess family — 5 sites | planned | [story-03-subprocess-family](./story-03-subprocess-family.md) | — |
 | HS-107-04 | The egress family — triage before migration | planned | [story-04-egress-family](./story-04-egress-family.md) | — |
 | HS-107-05 | The register, honestly — what remains and why | planned | [story-05-register-honestly](./story-05-register-honestly.md) | — |
@@ -176,6 +177,9 @@ lands. Then docs, then closeout.
 - 2026-07-28 - Dictation semantics settled in their own story before any rerouting (RFC §7 rung 5), because `dictation_capture.py` sits in BOTH the tmux and TextTyper families and is the owner's most-used path - orchestrator.
 - 2026-07-29 - T03 (dictation → agent pane) is `process.input@1`, not a desktop typing operation: its destination is a controlled tmux-backed process and the Enter is terminal input - HS-107-01 contract, `docs/internal/DICTATION_COMMIT_BOUNDARY.md`.
 - 2026-07-29 - No new authority-basis name for any dictation path: every covered effect derives `direct_gesture` (`operation_policy.py:238`). Two findings for HS-107-02: a voice macro reached WITHOUT an active owner hold/release has no honest basis today, and the process-input decision encoder (`delivery/commands.py:84-88`) cannot yet carry `direct_gesture` — driver adaptation, not a spine change - HS-107-01.
+- 2026-07-29 - D08 (voice macro connector) was DORMANT, not migrated: the ambient `_default_type_writer` fallback was unreachable by census (all production callers inject their writer). The dead fallback was deleted and a writer-less construction now refuses by name (`voice_macro_direct_gesture_required`) — eliminated dormant debt, not a claimed closed door - HS-107-02.
+- 2026-07-29 - **Wake canon tension flagged, not resolved:** D06 preserves configured `wake.action=type` behaviour (`gesture=wake_utterance`), but Article IV.2 says wake surfaces arm rather than fire, and the HS-107-01 path matrix has no wake row. The tension predates the migration; it goes to the owner at the sitting rather than being silently absorbed - HS-107-02.
+- 2026-07-29 - The latency script now timestamps actual driver landing (its old timer counted receipt persistence after text had landed). The type component honestly includes admission + warrant + focus recheck (+22 ms), and the end-to-end owner path still got faster (926.3 → 853.3 ms median) - HS-107-02.
 
 ## Decisions deferred
 
@@ -192,19 +196,23 @@ lands. Then docs, then closeout.
 
 ## Where we are
 
-**2026-07-29 — ACTIVE, 1/7.** HS-107-01 done: dictation's commit
-boundary is a written, pinned contract
-(`docs/internal/DICTATION_COMMIT_BOUNDARY.md` — five paths + T03, each
-with effect, commit point, authority basis cited to
-`operation_policy.py` by line, receipt shape, and exemptions), with 8
-boundary tests passing against UNMODIFIED dictation and the register
-byte-identical (36 debt entries; spine diff exit 0). Baseline hold-key
-latency measured on real metal and captured in evidence:
-**median release-to-landed 926.3 ms** (transcribe 191.5, pipeline
-576.6, type 155.8) via
-`uv run python scripts/measure_dictation_latency.py --runs 3
---warmups 1 --typing-mode driver --pipeline active --backend mlx` —
-HS-107-02 re-runs that exact command and must not regress it. Zero
-sites rerouted, as chartered. Next: HS-107-02 (typing families),
-then 03/04 in parallel. The number this phase exists to move:
-**4 covered of 40**.
+**2026-07-29 — ACTIVE, 2/7.** HS-107-02 done: all ten typing sites
+resolved. T03/T04 ride the proven `process.input@1` (immutable process
+ref, expected generation, `submit=true`, `direct_gesture` now carried
+by the delivery encoder); D01-D07 ride the new `desktop.type_text@1`
+peer codec — the fifth driver, spine byte-unchanged — each at its own
+contract commit point (preview commits only when the one-shot Type
+token is consumed); D08 was dormant and is eliminated with a named
+refusal, not claimed. Register: **40 total 4 covered 36 debt → 31
+total 5 covered 26 debt** (T03/T04/D01-D08 out, D09 — the sole
+covered `TextTyper` executor statement — in), fence expectations
+exact, never loosened. **The people-first bar held: release-to-landed
+median 926.3 → 853.3 ms — dictation got faster.** Live proofs on real
+metal in evidence (dictation → pane, Cadence reply, wake typing into
+TextEdit, a named refusal, receipts read back). One canon tension
+(wake fires vs Article IV.2 arms) flagged for the owner's sitting.
+Earlier: HS-107-01 pinned the commit-boundary contract
+(`docs/internal/DICTATION_COMMIT_BOUNDARY.md`) with baseline latency
+926.3 ms. Next: HS-107-03 (subprocess, implemented and awaiting
+landing), then HS-107-04 (egress). The number this phase exists to
+move: **4 covered of 40**, now **5 of 31 with 26 debt**.

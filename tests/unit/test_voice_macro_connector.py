@@ -108,6 +108,12 @@ def test_type_text_connector_types_via_injected_writer() -> None:
     assert result == {"action": "type_text", "typed": "## Standup"}
 
 
+def test_type_text_connector_refuses_without_authenticated_gesture_writer() -> None:
+    action = VoiceMacroAction("type_text", "## Standup")
+    with pytest.raises(RuntimeError, match="voice_macro_direct_gesture_required"):
+        build_voice_macro_connector(action)
+
+
 def test_capability_off_blocks_execution_before_the_connector() -> None:
     """With `allow_actuators` off, the executor refuses before the connector runs."""
     captured: dict = {}

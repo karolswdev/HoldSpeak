@@ -7,55 +7,14 @@ voice-command dispatch — verbatim moves out of WebRuntime.
 from __future__ import annotations
 
 import hashlib
-import os
-import signal
-import sys
 import threading
-import time
-import webbrowser
 from datetime import datetime
-from pathlib import Path
 from typing import Any, Callable, Optional
 
 import numpy as np
 
-from ..audio import AudioRecorder
-from ..config import Config
-from ..audio import AudioSource
-from ..device_audio import DeviceRegistry, ensure_device_psk
-from ..web_auth import ensure_web_token
-from ..device_recording_tick import RecordingTicker
-from ..device_meeting_stats import pick_next_view
-from ..device_status import (
-    DeviceStatusEmitter,
-    push_intel_to_devices,
-    push_segment_to_devices,
-)
-from ..desktop_presence import DesktopPresenceHost, build_desktop_presence_host
 from ..dictation_runner import dispatch_voice_command, run_dictation_pipeline
-from ..hotkey import HotkeyListener
-from ..voice_typing import VoiceTypingSession
 from ..logging_config import get_logger
-from ..meeting_session import MeetingSession
-from ..plugins.router import (
-    DEFAULT_INTENT_THRESHOLD,
-    SUPPORTED_INTENTS,
-    available_profiles,
-    normalize_override_intents,
-    normalize_profile,
-    preview_route,
-)
-from ..plugins.builtin import register_builtin_plugins
-from ..plugins.host import PluginHost, build_idempotency_key
-from ..plugins.project_detector import ProjectDetectorPlugin
-from ..plugins.queue import drain_plugin_run_queue, process_next_plugin_run_job
-from ..plugins.signals import extract_intent_signals
-from ..activity_tracker import RuntimeActivityTracker
-from ..text_processor import TextProcessor
-from ..transcribe import Transcriber
-from ..typer import TextTyper
-from ..web.runtime_support import _UnknownDeviceError
-from ..web_server import MeetingWebServer, WebRuntimeCallbacks
 
 log = get_logger("web_runtime")
 
@@ -64,10 +23,6 @@ log = get_logger("web_runtime")
 # meeting capture; while a meeting holds this, hotkey/device ``begin()``
 # is rejected, and a meeting can't start while either holds the floor.
 _MEETING_AUDIO_OWNER = "meeting"
-
-
-
-log = get_logger("web_runtime")
 
 
 class DictationCaptureMixin:
@@ -175,7 +130,7 @@ class DictationCaptureMixin:
                         last_error="",
                     )
                     self._mark_first_dictation()
-                if not delivered and self.typer is not None:
+                if not delivered:
                     try:
                         paste_target_profile = self._paste_target_profile(agent_reply_session)
                         self._set_runtime_activity(
@@ -185,10 +140,18 @@ class DictationCaptureMixin:
                             last_event="dictation_typing",
                             last_error="",
                         )
-                        self.typer.type_text(
+                        from ..desktop_typing import type_text_from_owner_gesture
+
+                        type_text_from_owner_gesture(
                             text,
+                            typer=self.typer,
+                            gesture="hold_release",
                             target_profile=paste_target_profile,
-                            submit=agent_reply_session is not None,
+                            submit=False,
+                            requested_target=(
+                                "agent_fallback" if agent_reply_session is not None else "focused"
+                            ),
+                            delivery_method="desktop_fallback",
                         )
                         self._set_runtime_activity(
                             "complete",
@@ -281,7 +244,15 @@ class DictationCaptureMixin:
                 last_event="dictation_typing",
                 last_error="",
             )
-            self.typer.type_text(text)
+            from ..desktop_typing import type_text_from_owner_gesture
+
+            type_text_from_owner_gesture(
+                text,
+                typer=self.typer,
+                gesture="preview_type",
+                preview_ref=f"dictation-preview:{token}",
+                submit=False,
+            )
         self._set_runtime_activity(
             "complete",
             source="dictation",
@@ -365,10 +336,19 @@ class DictationCaptureMixin:
         # activity. Returns a VoiceCommandResult if a command fired (caller types
         # nothing), else None.
         def _type(t: str) -> None:
-            if self.typer is not None:
-                self.typer.type_text(
-                    t, target_profile=self._paste_target_profile(agent_reply_session)
-                )
+            from ..desktop_typing import type_text_from_owner_gesture
+
+            macro_id = hashlib.sha256(text.encode("utf-8")).hexdigest()[:24]
+            type_text_from_owner_gesture(
+                t,
+                typer=self.typer,
+                gesture="hold_release",
+                target_profile=self._paste_target_profile(agent_reply_session),
+                submit=False,
+                macro_ref=f"voice-macro:{macro_id}",
+                requested_target="focused",
+                delivery_method="voice_macro",
+            )
 
         def _activity(label: str) -> None:
             self._set_runtime_activity(
@@ -419,19 +399,36 @@ class DictationCaptureMixin:
         except Exception:
             return None
 
-    def _try_tmux_agent_reply(self, text: str, agent_reply_session: Any | None) -> bool:
+    def _try_tmux_agent_reply(
+        self, text: str, agent_reply_session: Any | None
+    ) -> bool:
         pane = self._agent_tmux_pane(agent_reply_session)
         if not pane:
             return False
         try:
-            from holdspeak.tmux_transport import send_text_to_pane
+            from ..delivery.direct_gesture_input import (
+                submit_process_input_from_owner_gesture,
+            )
 
-            send_text_to_pane(pane=pane, text=text, submit=True)
+            result = submit_process_input_from_owner_gesture(
+                pane=pane,
+                text=text,
+                session_key=str(
+                    getattr(agent_reply_session, "session_id", None)
+                    or getattr(agent_reply_session, "id", None)
+                    or f"pane:{pane}"
+                ),
+                agent=str(getattr(agent_reply_session, "agent", "") or ""),
+            )
+            with self.state_lock:
+                self.runtime_status["last_kernel_operation_id"] = result["operation_id"]
             return True
         except Exception as exc:
             with self.state_lock:
-                self.runtime_status["last_error"] = f"tmux reply failed; fell back to typing: {exc}"
-            log.warning(f"tmux reply failed; falling back to text injection: {exc}")
+                self.runtime_status["last_error"] = (
+                    f"process input refused; fell back to current focus: {exc}"
+                )
+            log.warning(f"process input refused; falling back to current focus: {exc}")
             return False
 
     def _agent_tmux_pane(self, agent_reply_session: Any | None) -> str | None:
@@ -448,27 +445,7 @@ class DictationCaptureMixin:
         return self.typer is not None
 
     def _deliver_remote_dictation(self, text: str, *, target: str = "agent") -> dict[str, Any]:
-        """HSM-13-04 — deliver a companion-dictated answer into the desktop.
-
-        The text was ALREADY run through the rich dictation pipeline by the
-        ``/api/dictation/remote`` route, so this is **deliver-only** — it does not
-        re-transcribe or re-run the pipeline. Deliver-on-command (the client user
-        pressed send); never autonomous. **Raises** when it cannot be delivered, so
-        the client sees an honest failure rather than a false ack.
-
-        ``target`` selects the delivery mode (HSM-15-01a):
-
-        - ``"agent"`` (default): answer the coder. Reuses the exact path the local
-          dictation loop uses (``_try_tmux_agent_reply`` → fall back to
-          ``typer.type_text``), keyed on a recent **awaiting** agent session, so an
-          answer spoken on the iPad lands the same way one spoken at the desk does.
-          Raises if there is no delivery target. Byte-identical to the pre-15
-          behaviour.
-        - ``"focused"``: free-type into whatever Mac app is focused, with **no**
-          awaiting-agent requirement. Delivers via ``typer.type_text`` and does NOT
-          auto-submit (no Enter), so it lands like ordinary dictation into any text
-          field. Raises if text injection is unavailable.
-        """
+        """Deliver processed companion text to a process or bound desktop focus."""
         text = (text or "").strip()
         if not text:
             raise ValueError("remote dictation text is empty")
@@ -480,18 +457,26 @@ class DictationCaptureMixin:
         session = get_recent_awaiting_agent_session(max_age_seconds=120)
         if self._try_tmux_agent_reply(text, session):
             self._mark_first_dictation()
-            return {"delivered": True, "method": "tmux", "target": self._agent_tmux_pane(session)}
-        if self.typer is not None:
-            self.typer.type_text(
-                text,
-                target_profile=self._paste_target_profile(session),
-                submit=session is not None,
-            )
-            self._mark_first_dictation()
-            return {"delivered": True, "method": "type", "target": self._paste_target_profile(session)}
-        raise RuntimeError(
-            "no delivery target: no waiting agent tmux pane and text injection is unavailable"
+            return {"delivered": True, "method": "process.input", "target": self._agent_tmux_pane(session)}
+        from ..desktop_typing import type_text_from_owner_gesture
+
+        profile = self._paste_target_profile(session)
+        typed = type_text_from_owner_gesture(
+            text,
+            typer=self.typer,
+            gesture="companion_send",
+            target_profile=profile,
+            submit=False,
+            requested_target="agent_fallback",
+            delivery_method="desktop_fallback",
         )
+        self._mark_first_dictation()
+        return {
+            "delivered": True,
+            "method": "desktop.type_text",
+            "target": typed["target_ref"],
+            "operation_id": typed["operation_id"],
+        }
 
     def _deliver_remote_dictation_focused(self, text: str) -> dict[str, Any]:
         """Free-type the (already-processed) text into the focused Mac app.
@@ -501,14 +486,25 @@ class DictationCaptureMixin:
         override (``auto`` lets the typer classify the focused app) and never
         auto-submits. Raises honestly when text injection is unavailable.
         """
-        if self.typer is None:
-            raise RuntimeError(
-                "no delivery target: text injection is unavailable for focused dictation"
-            )
         target_profile = self._focused_target_profile()
-        self.typer.type_text(text, target_profile=target_profile, submit=False)
+        from ..desktop_typing import type_text_from_owner_gesture
+
+        typed = type_text_from_owner_gesture(
+            text,
+            typer=self.typer,
+            gesture="companion_send",
+            target_profile=target_profile,
+            submit=False,
+            requested_target="focused",
+            delivery_method="remote_focused",
+        )
         self._mark_first_dictation()
-        return {"delivered": True, "method": "type", "target": target_profile}
+        return {
+            "delivered": True,
+            "method": "desktop.type_text",
+            "target": typed["target_ref"],
+            "operation_id": typed["operation_id"],
+        }
 
     def _focused_target_profile(self) -> str | None:
         """The target profile to free-type into the focused app with.

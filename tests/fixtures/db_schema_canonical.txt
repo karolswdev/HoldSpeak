@@ -484,6 +484,21 @@ table desk_projection_state: CREATE TABLE desk_projection_state (
     dismissed_at TEXT,
     updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 )
+table desktop_type_receipts: CREATE TABLE desktop_type_receipts (
+    native_id TEXT PRIMARY KEY,
+    operation_id TEXT NOT NULL UNIQUE,
+    target_ref TEXT NOT NULL,
+    payload_sha256 TEXT NOT NULL,
+    text_bytes INTEGER NOT NULL,
+    submit INTEGER NOT NULL CHECK (submit IN (0, 1)),
+    head TEXT NOT NULL DEFAULT '',
+    authority_basis TEXT NOT NULL,
+    gesture TEXT NOT NULL,
+    outcome TEXT NOT NULL,
+    result_ref TEXT NOT NULL DEFAULT '',
+    metadata_json TEXT NOT NULL DEFAULT '{}',
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+)
 table dictation_corrections: CREATE TABLE dictation_corrections (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     kind TEXT NOT NULL,

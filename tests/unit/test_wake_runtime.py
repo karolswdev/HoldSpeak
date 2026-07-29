@@ -74,7 +74,7 @@ class _TyperSpy:
     def __init__(self):
         self.typed: list[str] = []
 
-    def type_text(self, text):
+    def type_text(self, text, *, target_profile=None, submit=False):
         self.typed.append(text)
 
 

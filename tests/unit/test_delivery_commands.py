@@ -36,6 +36,47 @@ T0 = datetime(2026, 7, 15, 12, 0, 0, tzinfo=timezone.utc)
 KEY = "claude:hs94"
 
 
+def test_direct_gesture_authority_round_trips_without_policy_re_resolution() -> None:
+    decision = {
+        "outcome": "allowed",
+        "authority_basis": "direct_gesture",
+        "reason_code": "dictation_commit_allowed",
+        "policy_version": POLICY_VERSION,
+        "mode": "direct",
+    }
+
+    encoded = commands_mod.encode_decision(decision)
+    decoded = commands_mod.decode_decision(
+        {
+            "decision": encoded,
+            "policy_version": POLICY_VERSION,
+            "control_posture": "direct",
+        }
+    )
+
+    assert encoded == "allowed_by_direct_gesture"
+    assert decoded["authority_basis"] == "direct_gesture"
+    assert decoded["reason_code"] == "dictation_commit_allowed"
+    envelope = build_envelope(
+        node_id="local",
+        target_id="target_1",
+        target_generation="gen_1",
+        family="coder_steering",
+        verb="terminal.text",
+        payload={"text": "private dictation", "submit": True, "session_key": "s1"},
+        expected_sequence=1,
+        authority={
+            "actor": "owner",
+            "control_posture": "direct",
+            "decision": encoded,
+            "policy_version": POLICY_VERSION,
+        },
+        now=T0,
+    )
+    assert envelope["payload_head"] == "terminal text 17 bytes submit=True"
+    assert "private dictation" not in envelope["payload_head"]
+
+
 class FakeTmux:
     def __init__(self) -> None:
         self.panes: dict[str, str] = {"%5": "ready"}

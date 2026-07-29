@@ -488,8 +488,9 @@ def build_pipeline_router(
             # a `type_text` macro free-types into the focused Mac app via the proven
             # focused-delivery relay; if nothing can deliver, the macro still fires its
             # action, it just cannot type.
-            if ctx.on_remote_dictation is not None:
-                ctx.on_remote_dictation(t, target="focused")
+            if ctx.on_remote_dictation is None:
+                raise RuntimeError("voice_macro_direct_gesture_required")
+            ctx.on_remote_dictation(t, target="focused")
 
         try:
             fired = dispatch_voice_command(

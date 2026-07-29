@@ -753,7 +753,7 @@ def test_device_voice_reply_uses_waiting_agent_target_profile(
         register_signal_handlers=False,
     )
 
-    assert typed == [("Run the focused tests first.", "codex_cli", True)]
+    assert typed == [("Run the focused tests first.", "codex_cli", False)]
     assert len(pipeline_calls) == 1
     utt = pipeline_calls[0]
     assert utt.raw_text == "yes run focused tests first"
@@ -846,9 +846,10 @@ def test_device_voice_reply_prefers_tmux_pane_over_gui_typing(
             typed.append(text)
             completed.set()
 
-    def fake_send_text_to_pane(*, pane: str, text: str, submit: bool = True):
-        tmux_calls.append((pane, text, submit))
+    def fake_process_input(*, pane: str, text: str, **_kwargs):
+        tmux_calls.append((pane, text, True))
         completed.set()
+        return {"operation_id": "op_device", "command_id": "cmd_device"}
 
     monkeypatch.setattr(web_runtime, "MeetingWebServer", FakeServer)
     monkeypatch.setattr(web_runtime, "AudioRecorder", FakeAudioRecorder)
@@ -857,14 +858,16 @@ def test_device_voice_reply_prefers_tmux_pane_over_gui_typing(
     monkeypatch.setattr(web_runtime, "TextTyper", FakeTextTyper)
 
     import holdspeak.agent_context as agent_context
-    import holdspeak.tmux_transport as tmux_transport
 
     monkeypatch.setattr(
         agent_context,
         "get_recent_awaiting_agent_session",
         lambda **_kwargs: agent_session,
     )
-    monkeypatch.setattr(tmux_transport, "send_text_to_pane", fake_send_text_to_pane)
+    monkeypatch.setattr(
+        "holdspeak.delivery.direct_gesture_input.submit_process_input_from_owner_gesture",
+        fake_process_input,
+    )
 
     stop_event = threading.Event()
     stop_event.set()

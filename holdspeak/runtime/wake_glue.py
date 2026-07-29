@@ -6,55 +6,12 @@ the one-shot token store — verbatim moves out of WebRuntime.
 
 from __future__ import annotations
 
-import hashlib
-import os
-import signal
-import sys
-import threading
-import time
-import webbrowser
 from datetime import datetime
-from pathlib import Path
-from typing import Any, Callable, Optional
+from typing import Any, Optional
 
 import numpy as np
 
-from ..audio import AudioRecorder
-from ..config import Config
-from ..audio import AudioSource
-from ..device_audio import DeviceRegistry, ensure_device_psk
-from ..web_auth import ensure_web_token
-from ..device_recording_tick import RecordingTicker
-from ..device_meeting_stats import pick_next_view
-from ..device_status import (
-    DeviceStatusEmitter,
-    push_intel_to_devices,
-    push_segment_to_devices,
-)
-from ..desktop_presence import DesktopPresenceHost, build_desktop_presence_host
-from ..hotkey import HotkeyListener
-from ..voice_typing import VoiceTypingSession
 from ..logging_config import get_logger
-from ..meeting_session import MeetingSession
-from ..plugins.router import (
-    DEFAULT_INTENT_THRESHOLD,
-    SUPPORTED_INTENTS,
-    available_profiles,
-    normalize_override_intents,
-    normalize_profile,
-    preview_route,
-)
-from ..plugins.builtin import register_builtin_plugins
-from ..plugins.host import PluginHost, build_idempotency_key
-from ..plugins.project_detector import ProjectDetectorPlugin
-from ..plugins.queue import drain_plugin_run_queue, process_next_plugin_run_job
-from ..plugins.signals import extract_intent_signals
-from ..activity_tracker import RuntimeActivityTracker
-from ..text_processor import TextProcessor
-from ..transcribe import Transcriber
-from ..typer import TextTyper
-from ..web.runtime_support import _UnknownDeviceError
-from ..web_server import MeetingWebServer, WebRuntimeCallbacks
 
 log = get_logger("web_runtime")
 
@@ -193,7 +150,7 @@ class WakeWordGlueMixin:
         Runs on the listener thread; the frame queue keeps filling from the
         stream callback, so the capture reads the same source.
         """
-        from ..wake_word import ArmedCapture, FRAME_SAMPLES
+        from ..wake_word import ArmedCapture
 
         cfg = self.config.wake_word
         if not self.voice_session.acquire("wake"):
@@ -288,7 +245,16 @@ class WakeWordGlueMixin:
                         last_event="wake_typing",
                         last_error="",
                     )
-                    self.typer.type_text(final)
+                    from ..desktop_typing import type_text_from_owner_gesture
+
+                    type_text_from_owner_gesture(
+                        final,
+                        typer=self.typer,
+                        gesture="wake_utterance",
+                        submit=False,
+                        requested_target="focused",
+                        delivery_method="wake_type",
+                    )
                     self._set_runtime_activity(
                         "complete",
                         source="wake",
@@ -343,7 +309,17 @@ class WakeWordGlueMixin:
         if text is None:
             return None
         try:
-            self.typer.type_text(text)
+            from ..desktop_typing import type_text_from_owner_gesture
+
+            type_text_from_owner_gesture(
+                text,
+                typer=self.typer,
+                gesture="wake_preview_type",
+                preview_ref=f"wake-preview:{token}",
+                submit=False,
+                requested_target="focused",
+                delivery_method="wake_preview",
+            )
         except Exception as exc:
             self._set_runtime_activity(
                 "error",

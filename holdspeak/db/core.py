@@ -41,6 +41,7 @@ from .relationships import KnowledgeMembershipRepository, ProjectRelationshipRep
 from .invocations import CapabilityInvocationRepository
 from .delivery_attempts import WorkAttemptRepository
 from .delivery_receipts import DeliveryCommandReceiptRepository
+from .desktop_typing import DesktopTypeReceiptRepository
 
 log = get_logger("db")
 
@@ -49,7 +50,7 @@ log = get_logger("db")
 
 # Default database location
 DEFAULT_DB_PATH = Path.home() / ".local" / "share" / "holdspeak" / "holdspeak.db"
-SCHEMA_VERSION = 28  # v28: inference recovery and child-operation causality (HS-106-07)
+SCHEMA_VERSION = 29  # v29: content-free desktop typing receipts (HS-107-02)
 
 
 class SchemaVersionError(RuntimeError):
@@ -1330,6 +1331,23 @@ CREATE TABLE IF NOT EXISTS delivery_command_receipts (
 CREATE INDEX IF NOT EXISTS idx_delivery_command_receipts_node
 ON delivery_command_receipts(node_id, hub_state);
 
+-- Desktop typing native receipts (HS-107-02). The effect is durable; its text is not.
+CREATE TABLE IF NOT EXISTS desktop_type_receipts (
+    native_id TEXT PRIMARY KEY,
+    operation_id TEXT NOT NULL UNIQUE,
+    target_ref TEXT NOT NULL,
+    payload_sha256 TEXT NOT NULL,
+    text_bytes INTEGER NOT NULL,
+    submit INTEGER NOT NULL CHECK (submit IN (0, 1)),
+    head TEXT NOT NULL DEFAULT '',
+    authority_basis TEXT NOT NULL,
+    gesture TEXT NOT NULL,
+    outcome TEXT NOT NULL,
+    result_ref TEXT NOT NULL DEFAULT '',
+    metadata_json TEXT NOT NULL DEFAULT '{}',
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
 -- Kernel operation journal (HS-106-04). Domain content remains in native tables.
 CREATE TABLE IF NOT EXISTS kernel_meta (
     key TEXT PRIMARY KEY,
@@ -1436,6 +1454,7 @@ class Database:
         self.projections = ProjectionRepository(self._connection, self)
         self.work_attempts = WorkAttemptRepository(self._connection, self)  # HS-94-04
         self.delivery_receipts = DeliveryCommandReceiptRepository(self._connection, self)  # HS-94-06
+        self.desktop_type_receipts = DesktopTypeReceiptRepository(self._connection, self)
 
     @contextmanager
     def _connection(self) -> Iterator[sqlite3.Connection]:

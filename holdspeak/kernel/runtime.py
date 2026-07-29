@@ -8,6 +8,7 @@ from typing import Any, Mapping, Sequence
 from ..principals import UNAUTHENTICATED
 from .actuator import ActuatorCodec
 from .broker import Broker
+from .desktop_type_text import DesktopTypeTextCodec
 from .inference import InferenceCancelCodec, InferenceRunCodec
 from .journal import JournalStore
 from .model import OperationSpec
@@ -32,6 +33,7 @@ def _build(database: Any, *, clock: Any = None) -> Broker:
 
     tool_calls = ToolCallCodec(database.gate, _mode)
     process_input = ProcessInputCodec(database.delivery_receipts)
+    desktop_type_text = DesktopTypeTextCodec(database.desktop_type_receipts)
     launch_service = default_launch_service(database)
     process_spawn = ProcessSpawnCodec(launch_service, database.delivery_receipts)
     actuator = ActuatorCodec(database.actuators, _mode)
@@ -40,6 +42,13 @@ def _build(database: Any, *, clock: Any = None) -> Broker:
     specs = (
         OperationSpec(tool_calls.name, tool_calls.version, tool_calls, "agent.submit", "propose"),
         OperationSpec(process_input.name, process_input.version, process_input, "agent.submit", "propose"),
+        OperationSpec(
+            desktop_type_text.name,
+            desktop_type_text.version,
+            desktop_type_text,
+            "agent.submit",
+            "propose",
+        ),
         OperationSpec(process_spawn.name, process_spawn.version, process_spawn, "agent.submit", "propose"),
         OperationSpec(actuator.name, actuator.version, actuator, "agent.submit", "propose"),
         OperationSpec(inference.name, inference.version, inference, "agent.submit", "propose"),

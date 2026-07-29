@@ -1,7 +1,6 @@
-"""HS-107-01: pin dictation effects without rerouting any call site."""
+"""HS-107-01 boundary contract, preserved through the HS-107-02 reroute."""
 from __future__ import annotations
 
-import hashlib
 import json
 import threading
 import uuid
@@ -19,7 +18,6 @@ from holdspeak.runtime.dictation_capture import DictationCaptureMixin
 
 _REPO = Path(__file__).resolve().parents[2]
 _LEDGER = _REPO / "holdspeak" / "kernel" / "effect_ledger.json"
-_LEDGER_SHA256 = "a8f99dc9f1e27ea88668385e6087aee7b8a272ddb0129e8a47379b98d3cf1f06"
 _AUDIO = np.zeros(16000, dtype=np.float32)
 
 
@@ -158,7 +156,10 @@ def test_remote_focused_send_commits_without_submit() -> None:
 
     result = DictationCaptureMixin._deliver_remote_dictation_focused(rig, "remote words")
 
-    assert result == {"delivered": True, "method": "type", "target": "editor"}
+    assert result["delivered"] is True
+    assert result["method"] == "desktop.type_text"
+    assert result["target"].startswith("desktop-input:")
+    assert result["operation_id"].startswith("op_")
     assert typer.calls == [
         {"text": "remote words", "target_profile": "editor", "submit": False}
     ]
@@ -166,16 +167,19 @@ def test_remote_focused_send_commits_without_submit() -> None:
 
 def test_remote_agent_send_resolves_to_targeted_submit(monkeypatch) -> None:
     sent: list[dict[str, Any]] = []
-    session = SimpleNamespace(tmux_pane="remote:3.1")
+    session = SimpleNamespace(tmux_pane="remote:3.1", session_id="s3")
     monkeypatch.setattr(
         "holdspeak.agent_context.get_recent_awaiting_agent_session",
         lambda **_kwargs: session,
     )
+
+    def _submit(**kwargs: Any) -> dict[str, Any]:
+        sent.append(kwargs)
+        return {"operation_id": "op_remote", "command_id": "cmd_remote"}
+
     monkeypatch.setattr(
-        "holdspeak.tmux_transport.send_text_to_pane",
-        lambda *, pane, text, submit: sent.append(
-            {"pane": pane, "text": text, "submit": submit}
-        ),
+        "holdspeak.delivery.direct_gesture_input.submit_process_input_from_owner_gesture",
+        _submit,
     )
     rig = SimpleNamespace(
         typer=None,
@@ -192,21 +196,29 @@ def test_remote_agent_send_resolves_to_targeted_submit(monkeypatch) -> None:
 
     assert result == {
         "delivered": True,
-        "method": "tmux",
+        "method": "process.input",
         "target": "remote:3.1",
     }
     assert sent == [
-        {"pane": "remote:3.1", "text": "remote answer", "submit": True}
+        {
+            "pane": "remote:3.1",
+            "text": "remote answer",
+            "session_key": "s3",
+            "agent": "",
+        }
     ]
 
 
 def test_dictation_to_agent_is_process_input_with_submit(monkeypatch) -> None:
     sent: list[dict[str, Any]] = []
+
+    def _submit(**kwargs: Any) -> dict[str, Any]:
+        sent.append(kwargs)
+        return {"operation_id": "op_19", "command_id": "cmd_19"}
+
     monkeypatch.setattr(
-        "holdspeak.tmux_transport.send_text_to_pane",
-        lambda *, pane, text, submit: sent.append(
-            {"pane": pane, "text": text, "submit": submit}
-        ),
+        "holdspeak.delivery.direct_gesture_input.submit_process_input_from_owner_gesture",
+        _submit,
     )
     rig = SimpleNamespace(
         state_lock=threading.Lock(),
@@ -215,11 +227,14 @@ def test_dictation_to_agent_is_process_input_with_submit(monkeypatch) -> None:
     )
 
     delivered = DictationCaptureMixin._try_tmux_agent_reply(
-        rig, "answer now", SimpleNamespace(tmux_pane="%19")
+        rig, "answer now", SimpleNamespace(tmux_pane="%19", session_id="s19")
     )
 
     assert delivered is True
-    assert sent == [{"pane": "%19", "text": "answer now", "submit": True}]
+    assert sent == [
+        {"pane": "%19", "text": "answer now", "session_key": "s19", "agent": ""}
+    ]
+    assert rig.runtime_status["last_kernel_operation_id"] == "op_19"
 
 
 def _process_request(**arguments: Any) -> OperationRequest:
@@ -264,10 +279,13 @@ def test_process_input_receipt_material_is_hashed_and_content_free() -> None:
         raise AssertionError("audio frames reached process.input admission")
 
 
-def test_effect_ledger_is_the_unchanged_36_debt_census() -> None:
-    raw = _LEDGER.read_bytes()
-    ledger = json.loads(raw)
+def test_effect_ledger_records_the_typing_family_migration() -> None:
+    ledger = json.loads(_LEDGER.read_text())
+    ids = {site["id"] for site in ledger["sites"]}
     not_covered = [site for site in ledger["sites"] if site["status"] != "covered"]
 
-    assert len(not_covered) == ledger["expected"]["not_covered"] == 36
-    assert hashlib.sha256(raw).hexdigest() == _LEDGER_SHA256
+    assert len(not_covered) == ledger["expected"]["not_covered"] == 26
+    assert not {"T03", "T04", "D01", "D02", "D03", "D04", "D05", "D06", "D07", "D08"} & ids
+    desktop = next(site for site in ledger["sites"] if site["id"] == "D09")
+    assert desktop["status"] == "covered"
+    assert desktop["selector"]["scope"] == "type_text_from_owner_gesture"
