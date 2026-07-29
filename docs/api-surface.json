@@ -994,6 +994,48 @@
       ]
     },
     {
+      "path": "/api/decisions",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.decisions",
+      "consumers": []
+    },
+    {
+      "path": "/api/decisions/{decision_id}",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.decisions",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/decisions/{decision_id}/accept",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.decisions",
+      "consumers": []
+    },
+    {
+      "path": "/api/decisions/{decision_id}/reject",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.decisions",
+      "consumers": []
+    },
+    {
+      "path": "/api/decisions/{decision_id}/supersede",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.decisions",
+      "consumers": []
+    },
+    {
       "path": "/api/delivery/attempts",
       "methods": [
         "GET"

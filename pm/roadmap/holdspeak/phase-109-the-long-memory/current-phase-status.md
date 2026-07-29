@@ -1,13 +1,14 @@
 # Phase 109 - The Long Memory
 
-**Status:** IN PROGRESS (1/8). Chartered 2026-07-29 by owner direction:
+**Status:** IN PROGRESS (2/8). Chartered 2026-07-29 by owner direction:
 Phase 109 (the second userland program) delivered next; Phase 108
 (The Locked Room, RFC §5b confinement) stays reserved with its
 machine-asserted work list in BACKLOG candidate Y.
 
-**Last updated:** 2026-07-29 (HS-109-06 shipped — the process window,
-live-walked 10/10 on a staged steering world; HS-109-01 in flight in
-parallel).
+**Last updated:** 2026-07-29 (HS-109-01 shipped — the decision record
+is real, proven live on `.43` against the owner's own archive; the
+reconciliation hook moved to the record_artifact chokepoint after a
+live staging caught the deferred chain bypassing it).
 
 ## Why this phase exists
 
@@ -175,7 +176,7 @@ plugins already produce, never a rival store the plugins must learn.
 
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
-| HS-109-01 | The decision record — first-class, with lifecycle | backlog | [story-01-decision-record](./story-01-decision-record.md) | — |
+| HS-109-01 | The decision record — first-class, with lifecycle | done | [story-01-decision-record](./story-01-decision-record.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-109-02 | Provenance — the transcript moment | backlog | [story-02-provenance](./story-02-provenance.md) | — |
 | HS-109-03 | Decisions become artifacts — promotion | backlog | [story-03-promotion](./story-03-promotion.md) | — |
 | HS-109-04 | Long-horizon retrieval — the memory index | backlog | [story-04-retrieval](./story-04-retrieval.md) | — |
@@ -240,7 +241,23 @@ Then docs, then closeout.
 
 ## Where we are
 
-**2026-07-29 — HS-109-06 shipped (the rider first).** The process
+**2026-07-29 — HS-109-01 shipped (the identity layer).** Decisions
+are first-class records: additive v30 `decisions` table (stable
+derived IDs, lifecycle recorded|accepted|superseded|rejected,
+`superseded_by` both ways, project keys, `date_basis` honesty,
+severed-source survival of meeting deletion), a one-way projection
+DERIVED from the artifacts the plugins already produce, and owner-only
+lifecycle routes refusing other principals by name. **The live catch:**
+the first hook sat in `synthesize_and_persist`; a golden-43 staging
+showed the DEFERRED chain minting real decisions artifacts on `.43`
+with an empty decisions table. The hook moved to the ONE chokepoint —
+`db.plugins.record_artifact` projects in the same transaction — and
+the live proof re-ran on the real archive: 3 real decisions extracted
+by the real model from a real meeting, all 3 projected with no manual
+call, second persistence byte-identical. Backfill on the real archive:
+honest zeros, idempotent. Full suite 4,333 passed / 37 skipped / only
+the two known pre-existing failures. Earlier:
+**HS-109-06 shipped (the rider first).** The process
 window is real: a `ProcessCore` in the one grammar fed by a pure
 event-fold reducer over `read` + `events` ONLY (endpoint surface
 asserted by test), cursor replay proven byte-equal across a restart,
