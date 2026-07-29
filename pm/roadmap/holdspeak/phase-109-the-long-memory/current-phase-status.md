@@ -1,12 +1,13 @@
 # Phase 109 - The Long Memory
 
-**Status:** PLANNED (0/8). Chartered 2026-07-29 by owner direction:
+**Status:** IN PROGRESS (1/8). Chartered 2026-07-29 by owner direction:
 Phase 109 (the second userland program) delivered next; Phase 108
 (The Locked Room, RFC §5b confinement) stays reserved with its
 machine-asserted work list in BACKLOG candidate Y.
 
-**Last updated:** 2026-07-29 (scaffolded — eight stories, sequencing
-below).
+**Last updated:** 2026-07-29 (HS-109-06 shipped — the process window,
+live-walked 10/10 on a staged steering world; HS-109-01 in flight in
+parallel).
 
 ## Why this phase exists
 
@@ -179,7 +180,7 @@ plugins already produce, never a rival store the plugins must learn.
 | HS-109-03 | Decisions become artifacts — promotion | backlog | [story-03-promotion](./story-03-promotion.md) | — |
 | HS-109-04 | Long-horizon retrieval — the memory index | backlog | [story-04-retrieval](./story-04-retrieval.md) | — |
 | HS-109-05 | The Project Memory window | backlog | [story-05-memory-window](./story-05-memory-window.md) | — |
-| HS-109-06 | The process window — what is running | backlog | [story-06-process-window](./story-06-process-window.md) | — |
+| HS-109-06 | The process window — what is running | done | [story-06-process-window](./story-06-process-window.md) | [evidence-story-06](./evidence-story-06.md) |
 | HS-109-07 | Docs — memory at the entry points | backlog | [story-07-docs](./story-07-docs.md) | — |
 | HS-109-08 | Closeout — the sitting on real memory | backlog | [story-08-closeout](./story-08-closeout.md) | — |
 
@@ -239,5 +240,18 @@ Then docs, then closeout.
 
 ## Where we are
 
-**2026-07-29 — scaffolded.** Eight stories chartered; HS-109-01 is
-next. Nothing has shipped; the story table above is the truth.
+**2026-07-29 — HS-109-06 shipped (the rider first).** The process
+window is real: a `ProcessCore` in the one grammar fed by a pure
+event-fold reducer over `read` + `events` ONLY (endpoint surface
+asserted by test), cursor replay proven byte-equal across a restart,
+zero invented states (a synthetic pending-forever stays Waiting), and
+Recently ended bounded. Proven live on a staged steering world: a
+REAL `process.input@1` steer delivered to a real tmux pane and a REAL
+named kernel refusal (`request_field_not_allowed`), both visible in
+the window at 1440 and 393 (screenshots in assets/, read before the
+flip). Two findings recorded, not absorbed: the events route ignores
+a `limit` (backend default 100 rules the batch), and no web UI calls
+kernel `decide` today — the deep-link lands on the attention shade.
+Web chain 365/365 + build + guards green. Earlier:
+**scaffolded.** Eight stories chartered; HS-109-01 next — it is in
+flight in parallel and flips in its own commit.
