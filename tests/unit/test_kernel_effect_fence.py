@@ -36,7 +36,7 @@ _FAMILIES = {
     FAMILY_EGRESS,
     FAMILY_RAW_DESKTOP,
 }
-_STATUSES = {"covered", "bypass", "mixed", "dormant", "read"}
+_STATUSES = {"covered", "bypass", "mixed", "dormant", "read", "exempt_computation"}
 
 # The broker is intended to stay smaller than one Phase-79 concern module.
 # Raising this number is an architecture decision; the ordinary response to a
@@ -457,6 +457,21 @@ def test_effect_family_classifier_fixtures() -> None:
         )
 
 
+def test_new_model_or_transcription_network_call_still_requires_triage() -> None:
+    source = (
+        "def classify(runtime):\n"
+        "    return runtime.chat.completions.create(model='new', messages=[])\n"
+    )
+    found = _classify_source(
+        "holdspeak/plugins/dictation/runtime_openai_compatible_new.py", source
+    )
+    assert len(found) == 1
+    message = _unledgered_message(found[0])
+    assert "UNLEDGERED effect site" in message
+    assert "runtime_openai_compatible_new.py" in message
+    assert "target=create" in message
+
+
 def test_import_and_callable_aliases_cannot_evade_any_effect_family() -> None:
     fixtures = (
         # Subprocess: plain from-import, aliased from-import, module alias, and
@@ -544,7 +559,7 @@ def test_effect_ledger_is_complete_and_current() -> None:
     assert not failures, "effect census drift:\n  " + "\n  ".join(failures)
 
 
-def test_effect_ledger_asserts_the_migrated_29_5_3_21_counts() -> None:
+def test_effect_ledger_asserts_the_composed_family_counts() -> None:
     ledger = _load_ledger()
     entries = ledger["sites"]
     expected = ledger["expected"]
@@ -553,12 +568,13 @@ def test_effect_ledger_asserts_the_migrated_29_5_3_21_counts() -> None:
     statuses = Counter(entry["status"] for entry in entries)
     covered = statuses["covered"]
     reads = statuses["read"]
-    not_covered = len(entries) - covered - reads
+    exempt = statuses["exempt_computation"]
+    not_covered = len(entries) - covered - reads - exempt
 
     assert set(families) == _FAMILIES
     assert set(statuses) <= _STATUSES
-    assert len(entries) == expected["total"] == sum(expected["families"].values()) == 29, (
-        f"effect census must state 29 total sites, found {len(entries)}"
+    assert len(entries) == expected["total"] == sum(expected["families"].values()) == 21, (
+        f"effect census must state 21 total sites, found {len(entries)}"
     )
     assert covered == expected["covered"] == 5, (
         f"effect census must state 5 covered sites, found {covered}"
@@ -566,18 +582,24 @@ def test_effect_ledger_asserts_the_migrated_29_5_3_21_counts() -> None:
     assert reads == expected.get("reads", 0) == 3, (
         f"effect census must state 3 classified reads, found {reads}"
     )
-    assert not_covered == expected["not_covered"] == 21, (
-        f"effect census must state 21 not-covered sites, found {not_covered}"
+    assert exempt == expected.get("exempt_computation", 0) == 3, (
+        f"effect census must state 3 exempt computations, found {exempt}"
+    )
+    assert not_covered == expected["not_covered"] == 10, (
+        f"effect census must state 10 not-covered sites, found {not_covered}"
     )
     assert dict(families) == expected["families"] == {
         FAMILY_TMUX: 2,
         FAMILY_TYPER: 1,
         FAMILY_SUBPROCESS: 3,
-        FAMILY_EGRESS: 13,
+        FAMILY_EGRESS: 5,
         FAMILY_RAW_DESKTOP: 10,
     }, f"effect family breakdown changed: {dict(families)}"
+    egress = [entry for entry in entries if entry["family"] == FAMILY_EGRESS]
+    assert all(entry.get("classification") in {"egress", "model_invocation"} for entry in egress)
+    assert all(entry.get("egress_boundary") for entry in egress)
     assert all(entry["reason"].strip() for entry in entries)
-    assert len({entry["id"] for entry in entries}) == len(entries) == 29
+    assert len({entry["id"] for entry in entries}) == len(entries) == 21
     assert "No agent principal may reach" in ledger["legal_effect"]
 
 

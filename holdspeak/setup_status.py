@@ -16,6 +16,7 @@ large model (the runtime checks inspect paths/imports only).
 """
 from __future__ import annotations
 
+import json
 import re
 from typing import Any, Optional
 
@@ -81,6 +82,35 @@ def _primary_action(
     return None
 
 
+def _last_kernel_egress(database: Any) -> dict[str, str] | None:
+    """Project the latest terminal external-egress receipt from the journal."""
+    if database is None:
+        return None
+    with database._connection() as conn:
+        row = conn.execute(
+            "SELECT j.refs_json,r.receipt_id FROM kernel_journal j "
+            "JOIN kernel_operations o ON o.operation_id=j.operation_id "
+            "JOIN kernel_receipts r ON r.operation_id=j.operation_id "
+            "WHERE j.event_type='operation.admitted' AND o.name='external.egress' "
+            "ORDER BY j.hub_sequence DESC LIMIT 1"
+        ).fetchone()
+    if row is None:
+        return None
+    destination = next(
+        (
+            str(ref).removeprefix("egress:")
+            for ref in json.loads(row["refs_json"])
+            if str(ref).startswith("egress:")
+        ),
+        "external",
+    )
+    return {
+        "id": "kernel_external_egress",
+        "name": destination,
+        "last_receipt": str(row["receipt_id"]),
+    }
+
+
 def _trust_block(
     config: Any, *, web_bind: str = "127.0.0.1", database: Any = None
 ) -> dict[str, Any]:
@@ -133,7 +163,9 @@ def _trust_block(
     destinations = destination_inventory(config, database=database)
     enabled_destinations = [row for row in destinations if row["enabled"]]
     receipted_destinations = [row for row in destinations if row.get("last_receipt")]
-    last_egress = (
+    # Migrated network operations feed the one chrome badge from the journal.
+    # Actuator inventory remains the fallback for its older native receipts.
+    last_egress = _last_kernel_egress(database) or (
         max(receipted_destinations, key=lambda row: str(row["last_receipt"]))
         if receipted_destinations else None
     )

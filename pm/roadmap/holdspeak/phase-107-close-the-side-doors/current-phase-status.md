@@ -1,12 +1,12 @@
 # Phase 107 - Close the Side Doors
 
-**Status:** IN PROGRESS (3/7). Activated 2026-07-29 — Phase 106
+**Status:** IN PROGRESS (4/7). Activated 2026-07-29 — Phase 106
 closed on the owner's sitting (8/8). Chartered from the number
 Phase 106 could not move.
 
-**Last updated:** 2026-07-29 (HS-107-03 done: subprocess family
-triaged and migrated; register now 29 total / 5 covered / 3 reads /
-21 debt).
+**Last updated:** 2026-07-29 (HS-107-04 done: egress triaged — the
+charter's "11 migratable" was 7; register now 21 total / 5 covered /
+3 reads / 3 exempt / **10 debt, all raw-desktop**).
 
 ## Why this phase exists
 
@@ -40,7 +40,7 @@ The 36 debt sites split by what can actually close them:
 | tmux transport | 2 | **yes** — route through `process.input` |
 | TextTyper callers | 8 | **yes** — route through a typing operation |
 | subprocess | 5 | **yes** — route through an operation per call site |
-| egress | 11 | **partly — see below** |
+| egress | 11 | **partly — triaged by HS-107-04: 7 migratable (7 migrated, incl. one dormant eliminated as N02), 3 exempt computation (N10-N12 transcription), and N05's "model call" label was stale (it is the intel-queue failure webhook — migrated)** |
 | raw desktop | 10 | **no** — see below |
 
 **The egress count is already known to be wrong**, before the phase
@@ -147,7 +147,7 @@ closes.
 | HS-107-01 | Dictation's commit boundary — semantics before rerouting | done | [story-01-dictation-semantics](./story-01-dictation-semantics.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-107-02 | The typing families — 10 sites through the kernel | done | [story-02-typing-families](./story-02-typing-families.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-107-03 | The subprocess family — 5 sites | done | [story-03-subprocess-family](./story-03-subprocess-family.md) | [evidence-story-03](./evidence-story-03.md) |
-| HS-107-04 | The egress family — triage before migration | planned | [story-04-egress-family](./story-04-egress-family.md) | — |
+| HS-107-04 | The egress family — triage before migration | done | [story-04-egress-family](./story-04-egress-family.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-107-05 | The register, honestly — what remains and why | planned | [story-05-register-honestly](./story-05-register-honestly.md) | — |
 | HS-107-06 | Docs — the new number at the entry points | planned | [story-06-docs](./story-06-docs.md) | — |
 | HS-107-07 | Closeout — the sitting and the census delta | planned | [story-07-closeout](./story-07-closeout.md) | — |
@@ -182,6 +182,8 @@ lands. Then docs, then closeout.
 - 2026-07-29 - The latency script now timestamps actual driver landing (its old timer counted receipt persistence after text had landed). The type component honestly includes admission + warrant + focus recheck (+22 ms), and the end-to-end owner path still got faster (926.3 → 853.3 ms median) - HS-107-02.
 - 2026-07-29 - Subprocess triage: C01/C04 are consequential (migrated to `subprocess.exec@1`, the seventh operation type; ONE policy decision each — `PermissionGate` no longer decides subprocess acts); C02/C03/C05 are READS — receipt-free by clause 5, but now requiring an authenticated principal with named read authority (the HS-106-02 confused-deputy closure applied to subprocess reads; `agent:untrusted` running `gh` is refused by name) - HS-107-03.
 - 2026-07-29 - The register gained a `read` status that is NOT debt and NOT covered: effect-free information retrieval with its clause-5 obligations named. Debt counts exclude covered AND read; the fence derives totals from per-family values so parallel family migrations compose - HS-107-03.
+- 2026-07-29 - Egress triage corrected the charter: **7 migratable, not 11**. N10-N12 are transcription (`exempt_computation` — a new non-debt status with per-site reasons, never inferred from shape: the fence still catches a new transcription-shaped call and demands triage). N05's "model call" label was stale — it is the intel-queue failure webhook, migrated as consequential egress. N06-N09 remote model requests each admit and receipt individually; their local llama siblings cross no egress boundary - HS-107-04.
+- 2026-07-29 - The desk's egress badge now reads migrated destinations from the kernel journal instead of a per-surface guess. Transcription latency A/B'd contemporaneously against the same endpoint: unchanged (−0.08%) - HS-107-04.
 
 ## Decisions deferred
 
@@ -198,7 +200,21 @@ lands. Then docs, then closeout.
 
 ## Where we are
 
-**2026-07-29 — ACTIVE, 3/7.** HS-107-03 done: the five subprocess
+**2026-07-29 — ACTIVE, 4/7. Migration is COMPLETE — every door that
+could close this phase is closed.** HS-107-04 resolved all eleven
+egress rows: seven migrated through `external_egress@1` (the eighth
+operation type — destination and data classes derived at admission,
+the receipt naming the destination, the desk badge fed from the
+journal), one dormant raw-socket branch eliminated with a named
+refusal, and N10-N12 transcription re-classified `exempt_computation`
+with per-site reasons — the fence still catches a NEW
+transcription-shaped call by name. The charter's "11 migratable" is
+corrected to **7**. Transcription latency unchanged (−0.08%,
+contemporaneous A/B). Register: **21 total / 5 covered / 3 reads /
+3 exempt / 10 debt — and all ten debt rows are the raw-desktop
+primitives in `typer.py`**, the §5b confinement remainder, exactly
+as chartered. Next: HS-107-05 hands the register to a fresh-eyes
+auditor who did none of the migrations. Earlier: HS-107-03 done: the five subprocess
 sites triaged in writing and resolved. C01/C04 (the two `mixed`
 connector sites — the worst state: reads as protected and isn't)
 migrated through `subprocess.exec@1`, the seventh operation type,

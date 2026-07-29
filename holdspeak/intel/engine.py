@@ -9,10 +9,12 @@ from __future__ import annotations
 import time
 from collections.abc import Iterator
 from pathlib import Path
-from typing import Any, Optional, Union
+from typing import Any, Callable, Optional, Union
+from urllib.parse import urlsplit
 
 import holdspeak.intel as _intel_pkg
 
+from ..kernel.external_egress import run_external_egress
 from ..logging_config import get_logger
 from .endpoint_health import default_health as _endpoint_health
 from .models import (
@@ -172,6 +174,22 @@ class MeetingIntel:
         default OpenAI endpoint is one shared identity)."""
         return f"cloud:{self.cloud_base_url or self.cloud_model}"
 
+    def _remote_completion(self, sender: Callable[..., Any], values: dict[str, object]) -> Any:
+        """Dispatch one remote model invocation under its egress warrant."""
+        endpoint = urlsplit(self.cloud_base_url or "https://api.openai.com")
+        destination = (endpoint.hostname or "invalid-model-endpoint").lower()
+        if endpoint.port:
+            destination += f":{endpoint.port}"
+        return run_external_egress(
+            connector_id="meeting-intel-openai-compatible",
+            destination=destination,
+            data_classes=("model_input",),
+            payload_material=values,
+            sender=sender,
+            kwargs=values,
+            allowed_destinations=(destination,),
+        )
+
     def _chat_completion_text(
         self,
         messages: list[dict[str, str]],
@@ -218,7 +236,7 @@ class MeetingIntel:
         started = time.monotonic()
         try:
             try:
-                response = self._openai_client.chat.completions.create(**base_kwargs)
+                response = self._remote_completion(self._openai_client.chat.completions.create, base_kwargs)
             except TypeError as exc:
                 # Compatibility fallback for clients/endpoints that use max_completion_tokens.
                 if "max_tokens" not in str(exc):
@@ -226,7 +244,7 @@ class MeetingIntel:
                 fallback_kwargs = dict(base_kwargs)
                 fallback_kwargs.pop("max_tokens", None)
                 fallback_kwargs["max_completion_tokens"] = max_tokens
-                response = self._openai_client.chat.completions.create(**fallback_kwargs)
+                response = self._remote_completion(self._openai_client.chat.completions.create, fallback_kwargs)
         except Exception as exc:
             _endpoint_health.record_failure(endpoint_key)
             raise MeetingIntelError(
@@ -297,14 +315,14 @@ class MeetingIntel:
 
         try:
             try:
-                stream_iter = self._openai_client.chat.completions.create(**base_kwargs)
+                stream_iter = self._remote_completion(self._openai_client.chat.completions.create, base_kwargs)
             except TypeError as exc:
                 if "max_tokens" not in str(exc):
                     raise
                 fallback_kwargs = dict(base_kwargs)
                 fallback_kwargs.pop("max_tokens", None)
                 fallback_kwargs["max_completion_tokens"] = max_tokens
-                stream_iter = self._openai_client.chat.completions.create(**fallback_kwargs)
+                stream_iter = self._remote_completion(self._openai_client.chat.completions.create, fallback_kwargs)
         except Exception as exc:
             raise MeetingIntelError(
                 _describe_cloud_exception(

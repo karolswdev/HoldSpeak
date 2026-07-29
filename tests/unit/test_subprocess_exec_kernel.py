@@ -201,4 +201,4 @@ def test_mixed_sites_have_one_kernel_decision_and_no_legacy_policy_call(broker) 
     assert "_require(" not in permission_source
     assert permission_source.count("run_subprocess_operation(") == 1
     assert route_source.count("execute_subprocess(") == 1
-    assert 'op.kind != "subprocess" and not manifest.allows(op)' in connector_source
+    assert "manifest.allows(op)" not in connector_source

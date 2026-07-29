@@ -21,6 +21,7 @@ import urllib.error
 import urllib.request
 from typing import Any, Callable, Optional
 
+from .kernel.external_egress import run_external_egress
 from .logging_config import get_logger
 
 log = get_logger("cadence.telegram")
@@ -34,8 +35,25 @@ def call_telegram(token: str, method: str, params: dict, *, timeout: float = 10.
     data = json.dumps(params).encode("utf-8")
     req = urllib.request.Request(url, data=data, method="POST",
                                  headers={"Content-Type": "application/json"})
+    chat = str(params.get("chat_id") or params.get("callback_query_id") or "bot")
+    destination = f"telegram:{method.lower()}:{chat.lower()}"
+    data_class = {
+        "sendMessage": "cadence_message",
+        "answerCallbackQuery": "cadence_decision_ack",
+        "getUpdates": "cadence_update_cursor",
+    }.get(method, "telegram_parameters")
     try:
-        with urllib.request.urlopen(req, timeout=timeout) as resp:  # noqa: S310 — fixed api.telegram.org host
+        resp = run_external_egress(
+            connector_id="cadence-telegram",
+            destination=destination,
+            data_classes=(data_class,),
+            payload_material=params,
+            sender=urllib.request.urlopen,
+            args=(req,),
+            kwargs={"timeout": timeout},
+            allowed_destinations=(destination,),
+        )
+        with resp:
             return json.loads(resp.read().decode("utf-8", "replace") or "{}")
     except urllib.error.HTTPError as exc:
         return {"ok": False, "error_code": int(exc.code), "description": str(exc.reason or "")}

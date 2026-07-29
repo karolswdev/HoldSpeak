@@ -9,6 +9,7 @@ from ..principals import UNAUTHENTICATED
 from .actuator import ActuatorCodec
 from .broker import Broker
 from .desktop_type_text import DesktopTypeTextCodec
+from .external_egress import ExternalEgressCodec
 from .inference import InferenceCancelCodec, InferenceRunCodec
 from .journal import JournalStore
 from .model import OperationSpec
@@ -38,6 +39,7 @@ def _build(database: Any, *, clock: Any = None) -> Broker:
     launch_service = default_launch_service(database)
     process_spawn = ProcessSpawnCodec(launch_service, database.delivery_receipts)
     subprocess_exec = SubprocessExecCodec()
+    external_egress = ExternalEgressCodec()
     actuator = ActuatorCodec(database.actuators, _mode)
     inference = InferenceRunCodec(database, **({"clock": clock} if clock else {}))
     cancellation = InferenceCancelCodec(database, store)
@@ -53,6 +55,7 @@ def _build(database: Any, *, clock: Any = None) -> Broker:
         ),
         OperationSpec(process_spawn.name, process_spawn.version, process_spawn, "agent.submit", "propose"),
         OperationSpec(subprocess_exec.name, subprocess_exec.version, subprocess_exec, "agent.submit", "propose"),
+        OperationSpec(external_egress.name, external_egress.version, external_egress, "agent.submit", "propose"),
         OperationSpec(actuator.name, actuator.version, actuator, "agent.submit", "propose"),
         OperationSpec(inference.name, inference.version, inference, "agent.submit", "propose"),
         OperationSpec(cancellation.name, cancellation.version, cancellation, "agent.submit", "propose"),
