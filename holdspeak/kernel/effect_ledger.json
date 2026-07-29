@@ -16,10 +16,10 @@
   },
   "expected": {
     "total": 21,
-    "covered": 5,
-    "reads": 3,
-    "exempt_computation": 3,
-    "not_covered": 10,
+    "covered": 3,
+    "reads": 0,
+    "exempt_computation": 0,
+    "not_covered": 18,
     "families": {
       "tmux_transport": 2,
       "text_typer": 1,
@@ -32,56 +32,61 @@
     {
       "id": "T01",
       "family": "tmux_transport",
-      "status": "covered",
+      "status": "mixed",
       "path": "holdspeak/coder_steering.py",
       "census_line": 651,
       "selector": {"scope": "deliver", "target": "send", "ordinal": 1},
-      "reason": "Production transport invocation inside the audited coder_steering.deliver chokepoint; delivery-command traffic also carries its command receipt."
+      "reason": "Some delivery-command traffic reaches this transport statement after process.input admission, but coder-steering fallback and web routes can execute it directly after only the legacy steering grant; the statement is not universally kernel-routed.",
+      "closing_condition": "Route every coder_steering.deliver transport act through process.input@1 before tmux dispatch and delete the preflight/direct-delivery fallback."
     },
     {
       "id": "T02",
       "family": "tmux_transport",
-      "status": "covered",
+      "status": "mixed",
       "path": "holdspeak/coder_steering.py",
       "census_line": 792,
       "selector": {"scope": "deliver_keys", "target": "send", "ordinal": 1},
-      "reason": "Production key transport invocation inside the audited coder_steering.deliver_keys chokepoint; delivery-command traffic adds its command receipt."
+      "reason": "Delivery-command traffic can reach this statement after process.input admission, but the coder-steering keys web route calls deliver_keys directly and dispatches tmux input without kernel admission or a kernel terminal receipt.",
+      "closing_condition": "Route every coder_steering.deliver_keys transport act through process.input@1 before tmux dispatch and delete the direct web-route path."
     },
     {
       "id": "D09",
       "family": "text_typer",
       "status": "covered",
       "path": "holdspeak/desktop_typing.py",
-      "census_line": 176,
+      "census_line": 195,
       "selector": {"scope": "type_text_from_owner_gesture", "target": "type_text", "ordinal": 1},
       "reason": "The sole remaining TextTyper caller executes only after desktop.type_text admission, an owner-direct-gesture warrant, immutable focus-generation verification, and before a paired native and kernel terminal receipt."
     },
     {
       "id": "C02",
       "family": "subprocess",
-      "status": "read",
+      "status": "mixed",
       "path": "holdspeak/activity_github.py",
-      "census_line": 136,
+      "census_line": 135,
       "selector": {"scope": "run_github_cli_enrichment", "target": "run_read_subprocess", "ordinal": 1},
-      "reason": "The fixed gh pr/issue view argv obtains metadata only; owner principal plus named gh read authority is required before the CLI runs."
+      "reason": "The fixed gh view argv is read-only and explicit principals are checked, but run_github_cli_enrichment defaults principal to the ambient LOCAL_OWNER and the connector-pack caller omits it, so authenticated read authority is not mandatory on every route.",
+      "closing_condition": "Require a non-optional principal derived from an authenticated request or bounded delegation at every gh enrichment entry point; remove the LOCAL_OWNER default."
     },
     {
       "id": "C03",
       "family": "subprocess",
-      "status": "read",
+      "status": "mixed",
       "path": "holdspeak/activity_jira.py",
-      "census_line": 128,
+      "census_line": 127,
       "selector": {"scope": "run_jira_cli_enrichment", "target": "run_read_subprocess", "ordinal": 1},
-      "reason": "The fixed jira issue view argv obtains ticket metadata only; owner principal plus named jira read authority is required before the CLI runs."
+      "reason": "The fixed jira view argv is read-only and explicit principals are checked, but run_jira_cli_enrichment defaults principal to the ambient LOCAL_OWNER and the connector-pack caller omits it, so authenticated read authority is not mandatory on every route.",
+      "closing_condition": "Require a non-optional principal derived from an authenticated request or bounded delegation at every jira enrichment entry point; remove the LOCAL_OWNER default."
     },
     {
       "id": "C05",
       "family": "subprocess",
-      "status": "read",
+      "status": "mixed",
       "path": "holdspeak/missioncontrol_bridge.py",
       "census_line": 42,
       "selector": {"scope": "_default_runner", "target": "run", "ordinal": 1},
-      "reason": "The bridge invokes only dw document views and gh PR receipt views; owner principal plus named dw/gh read authority keeps the conveyor cheap."
+      "reason": "The dw and gh commands are read-only and _run_read checks an explicit principal, but the bridge entry points default principal to ambient LOCAL_OWNER, so callers can reach this subprocess statement without supplying authenticated read authority.",
+      "closing_condition": "Require a non-optional principal derived from an authenticated request or bounded delegation at every mission-control bridge entry point; remove all LOCAL_OWNER defaults."
     },
     {
       "id": "N03",
@@ -90,7 +95,7 @@
       "path": "holdspeak/plugins/gated_connector.py",
       "census_line": 228,
       "selector": {"scope": "_route", "target": "open_outbound_socket", "ordinal": 1},
-      "reason": "Custom-opener outbound dispatch is reached only through ActuatorExecutor and now carries manifest permission, destination scope, and data classes into external.egress admission.",
+      "reason": "Every in-tree route to this statement invokes PermissionGate.open_outbound_socket, which executes the supplied sender only after external.egress admission and warrant claim; calling a built connector without ActuatorExecutor still cannot bypass the kernel.",
       "classification": "egress",
       "egress_boundary": "remote"
     },
@@ -101,42 +106,45 @@
       "path": "holdspeak/plugins/builtin/webhook_post_actuator.py",
       "census_line": 129,
       "selector": {"scope": "_default_post", "target": "urlopen", "ordinal": 1},
-      "reason": "Production webhook HTTP send is constructed and executed only through the audited actuator route.",
+      "reason": "The only production reference to _default_post is the opener closure supplied to build_gated_connector; external.egress admission and warrant claim occur before that closure can execute this urlopen statement.",
       "classification": "egress",
       "egress_boundary": "remote"
     },
     {
       "id": "N10",
       "family": "egress",
-      "status": "exempt_computation",
+      "status": "bypass",
       "path": "holdspeak/plugins/dictation/runtime_openai_compatible.py",
       "census_line": 126,
       "selector": {"scope": "OpenAICompatibleRuntime.classify", "target": "create", "ordinal": 1},
-      "reason": "Dictation intent classification is latency-sensitive model computation whose output returns to the hold-key caller; explicitly exempt under Article XI.5 and RFC section 12 even when its configured compute endpoint is remote.",
+      "reason": "This direct client call invokes a model and can cross configured remote egress, both consequential under Article XI.1; caller-returning latency-sensitive computation does not exempt the invocation itself under clause 5.",
       "classification": "model_invocation",
-      "egress_boundary": "configured_remote"
+      "egress_boundary": "configured_remote",
+      "closing_condition": "Admit and receipt this model invocation through a typed kernel operation before the client call while leaving response parsing on the low-latency computation path."
     },
     {
       "id": "N11",
       "family": "egress",
-      "status": "exempt_computation",
+      "status": "bypass",
       "path": "holdspeak/plugins/dictation/runtime_openai_compatible.py",
       "census_line": 141,
       "selector": {"scope": "OpenAICompatibleRuntime.classify", "target": "create", "ordinal": 2},
-      "reason": "The dictation classification compatibility retry has the same caller-returning, latency-sensitive computation contract as N10; explicitly exempt, never silently pattern-exempted.",
+      "reason": "The compatibility retry is a second direct model invocation and possible remote-egress act; Article XI.1 applies independently to the retry, while clause 5 exempts only the effect-free computation around it.",
       "classification": "model_invocation",
-      "egress_boundary": "configured_remote"
+      "egress_boundary": "configured_remote",
+      "closing_condition": "Admit and receipt the retry as its own typed kernel operation before the client call while leaving response parsing on the low-latency computation path."
     },
     {
       "id": "N12",
       "family": "egress",
-      "status": "exempt_computation",
+      "status": "bypass",
       "path": "holdspeak/plugins/dictation/runtime_openai_compatible.py",
       "census_line": 190,
       "selector": {"scope": "OpenAICompatibleRuntime.rewrite", "target": "create", "ordinal": 1},
-      "reason": "Project-aware dictation rewrite returns text to the hold-key caller on the permanently low-latency path; explicitly exempt computation even when the configured model endpoint is remote.",
+      "reason": "This direct rewrite call invokes a model and can cross configured remote egress, both consequential under Article XI.1; returning text to the hold-key caller does not turn the invocation into effect-free computation.",
       "classification": "model_invocation",
-      "egress_boundary": "configured_remote"
+      "egress_boundary": "configured_remote",
+      "closing_condition": "Admit and receipt this model invocation through a typed kernel operation before the client call while leaving response parsing on the low-latency computation path."
     },
     {
       "id": "A01",
@@ -145,7 +153,8 @@
       "path": "holdspeak/typer.py",
       "census_line": 84,
       "selector": {"scope": "TextTyper._paste_text", "target": "copy", "ordinal": 1},
-      "reason": "TextTyper replaces the system clipboard as a desktop.type_text substep; retained until the whole typing operation executes under one warrant."
+      "reason": "TextTyper replaces the system clipboard as a desktop.type_text substep; retained until the whole typing operation executes under one warrant.",
+      "closing_condition": "RFC \u00a75b confinement: move the clipboard replacement primitive into a privileged executor that accepts only kernel warrants, or remove it; eliminate the ambient in-process capability."
     },
     {
       "id": "A02",
@@ -154,7 +163,8 @@
       "path": "holdspeak/typer.py",
       "census_line": 93,
       "selector": {"scope": "TextTyper._paste_text", "target": "press", "ordinal": 1},
-      "reason": "TextTyper presses paste modifiers as a raw keyboard substep; retained until the whole typing operation executes under one warrant."
+      "reason": "TextTyper presses paste modifiers as a raw keyboard substep; retained until the whole typing operation executes under one warrant.",
+      "closing_condition": "RFC \u00a75b confinement: move the paste-modifier press primitive into a privileged executor that accepts only kernel warrants, or remove it; eliminate the ambient in-process capability."
     },
     {
       "id": "A03",
@@ -163,7 +173,8 @@
       "path": "holdspeak/typer.py",
       "census_line": 94,
       "selector": {"scope": "TextTyper._paste_text", "target": "press", "ordinal": 2},
-      "reason": "TextTyper presses the paste key as a raw keyboard substep; retained until the whole typing operation executes under one warrant."
+      "reason": "TextTyper presses the paste key as a raw keyboard substep; retained until the whole typing operation executes under one warrant.",
+      "closing_condition": "RFC \u00a75b confinement: move the paste-key press primitive into a privileged executor that accepts only kernel warrants, or remove it; eliminate the ambient in-process capability."
     },
     {
       "id": "A04",
@@ -172,7 +183,8 @@
       "path": "holdspeak/typer.py",
       "census_line": 95,
       "selector": {"scope": "TextTyper._paste_text", "target": "release", "ordinal": 1},
-      "reason": "TextTyper releases the paste key as a raw keyboard substep; retained until the whole typing operation executes under one warrant."
+      "reason": "TextTyper releases the paste key as a raw keyboard substep; retained until the whole typing operation executes under one warrant.",
+      "closing_condition": "RFC \u00a75b confinement: move the paste-key release primitive into a privileged executor that accepts only kernel warrants, or remove it; eliminate the ambient in-process capability."
     },
     {
       "id": "A05",
@@ -181,7 +193,8 @@
       "path": "holdspeak/typer.py",
       "census_line": 97,
       "selector": {"scope": "TextTyper._paste_text", "target": "release", "ordinal": 2},
-      "reason": "TextTyper releases paste modifiers as a raw keyboard substep; retained until the whole typing operation executes under one warrant."
+      "reason": "TextTyper releases paste modifiers as a raw keyboard substep; retained until the whole typing operation executes under one warrant.",
+      "closing_condition": "RFC \u00a75b confinement: move the paste-modifier release primitive into a privileged executor that accepts only kernel warrants, or remove it; eliminate the ambient in-process capability."
     },
     {
       "id": "A06",
@@ -190,7 +203,8 @@
       "path": "holdspeak/typer.py",
       "census_line": 103,
       "selector": {"scope": "TextTyper._paste_text", "target": "copy", "ordinal": 2},
-      "reason": "TextTyper restores the prior clipboard as a desktop.type_text substep; retained until the whole typing operation executes under one warrant."
+      "reason": "TextTyper restores the prior clipboard as a desktop.type_text substep; retained until the whole typing operation executes under one warrant.",
+      "closing_condition": "RFC \u00a75b confinement: move the clipboard restoration primitive into a privileged executor that accepts only kernel warrants, or remove it; eliminate the ambient in-process capability."
     },
     {
       "id": "A07",
@@ -199,7 +213,8 @@
       "path": "holdspeak/typer.py",
       "census_line": 110,
       "selector": {"scope": "TextTyper._type_text_slowly", "target": "type", "ordinal": 1},
-      "reason": "TextTyper emits synthetic characters directly in its slow path; retained until desktop.type_text executes under one warrant."
+      "reason": "TextTyper emits synthetic characters directly in its slow path; retained until desktop.type_text executes under one warrant.",
+      "closing_condition": "RFC \u00a75b confinement: move the synthetic character typing primitive into a privileged executor that accepts only kernel warrants, or remove it; eliminate the ambient in-process capability."
     },
     {
       "id": "A08",
@@ -208,7 +223,8 @@
       "path": "holdspeak/typer.py",
       "census_line": 114,
       "selector": {"scope": "TextTyper._press_enter", "target": "press", "ordinal": 1},
-      "reason": "TextTyper presses Enter directly when submission is requested; retained pending target-aware desktop.type_text or process.input admission."
+      "reason": "TextTyper presses Enter directly when submission is requested; retained pending target-aware desktop.type_text or process.input admission.",
+      "closing_condition": "RFC \u00a75b confinement: move the Enter press primitive into a privileged executor that accepts only kernel warrants, or remove it; eliminate the ambient in-process capability."
     },
     {
       "id": "A09",
@@ -217,7 +233,8 @@
       "path": "holdspeak/typer.py",
       "census_line": 115,
       "selector": {"scope": "TextTyper._press_enter", "target": "release", "ordinal": 1},
-      "reason": "TextTyper releases Enter directly as part of submission; retained pending target-aware desktop.type_text or process.input admission."
+      "reason": "TextTyper releases Enter directly as part of submission; retained pending target-aware desktop.type_text or process.input admission.",
+      "closing_condition": "RFC \u00a75b confinement: move the Enter release primitive into a privileged executor that accepts only kernel warrants, or remove it; eliminate the ambient in-process capability."
     },
     {
       "id": "A10",
@@ -226,7 +243,8 @@
       "path": "holdspeak/typer.py",
       "census_line": 140,
       "selector": {"scope": "type_with_applescript", "target": "run", "ordinal": 1},
-      "reason": "Dormant AppleScript helper can invoke osascript/System Events directly; retained only until the ambient helper is removed or brokered."
+      "reason": "Dormant AppleScript helper can invoke osascript/System Events directly; retained only until the ambient helper is removed or brokered.",
+      "closing_condition": "RFC \u00a75b confinement: move the osascript/System Events dispatch primitive into a privileged executor that accepts only kernel warrants, or remove it; eliminate the ambient in-process capability."
     }
   ]
 }
