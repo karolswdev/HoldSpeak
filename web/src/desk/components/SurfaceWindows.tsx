@@ -177,6 +177,19 @@ const SURFACES: SurfaceRow[] = [
     ),
   },
   {
+    key: "inspect-processes",
+    id: "surface-processes",
+    title: "Processes",
+    glyph: "∷",
+    eyebrow: "Kernel",
+    minW: 520,
+    Core: lazy(() =>
+      import("../../pages/cores/ProcessCore").then((m) => ({
+        default: m.ProcessCore,
+      })),
+    ),
+  },
+  {
     key: "configure-commands",
     id: "surface-commands",
     title: "Commands",

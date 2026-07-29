@@ -94,6 +94,14 @@ export const DESK_TOOLS = [
     action: "inspect-activity",
     subjectRef: undefined,
   },
+  {
+    href: "/#processes",
+    label: "Processes",
+    description: "See what the kernel is running.",
+    glyph: "∷",
+    action: "inspect-processes",
+    subjectRef: undefined,
+  },
 ] as const;
 
 export const KIND_LABEL: Record<string, string> = {

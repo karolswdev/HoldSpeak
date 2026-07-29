@@ -150,6 +150,28 @@
   font-size: var(--desk-surface-detail-size);
   font-variant-numeric: tabular-nums;
 }
+/* HS-109-06 — projected state and age share the quiet row edge. Nested
+   SurfaceRows inherit the row inset above, so child runs read as children
+   without a second card or a fixed-width process table. */
+.process-row-state {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+}
+.process-row-state time {
+  white-space: nowrap;
+}
+@container surface (max-width: 559px) {
+  .process-row-state {
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 2px;
+  }
+  .surface-row:has(.process-row-state):has(> .surface-rows) > .surface-rows {
+    margin-left: calc(var(--desk-surface-row-pad-x) + 10px);
+  }
+}
 
 /* Rule 5 — row verbs reveal on hover/focus; always present for coarse
    pointers. Opacity only (the verbs stay in the tree for focus). */
