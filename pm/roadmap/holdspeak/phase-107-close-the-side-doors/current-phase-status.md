@@ -1,12 +1,15 @@
 # Phase 107 - Close the Side Doors
 
-**Status:** IN PROGRESS (6/7). Activated 2026-07-29 — Phase 106
-closed on the owner's sitting (8/8). Chartered from the number
+**Status:** IN PROGRESS (6/7) — **HS-107-07 staged, AWAITING THE
+OWNER'S SITTING.** Activated 2026-07-29; chartered from the number
 Phase 106 could not move.
 
-**Last updated:** 2026-07-29 (HS-107-06 done: 21/3/18 at both doc
-entry points with a drift guard; the narrowing unchanged in strength
-— coverage changed, containment did not. Next: closeout.)
+**Last updated:** 2026-07-29 (machine staging complete: all six
+functional beats pass every session with receipts read back; the two
+latency beats are noise-bound with the honest analysis in evidence.
+The census delta, plain: **38 debt → 18 debt**. The sitting sheet —
+[OWNER-SITTING](./OWNER-SITTING.md) — carries three questions:
+N10-N12, wake, and the ~25 ms admission price.)
 
 ## Why this phase exists
 
@@ -156,7 +159,7 @@ closes.
 | HS-107-04 | The egress family — triage before migration | done | [story-04-egress-family](./story-04-egress-family.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-107-05 | The register, honestly — what remains and why | done | [story-05-register-honestly](./story-05-register-honestly.md) | [evidence-story-05](./evidence-story-05.md) |
 | HS-107-06 | Docs — the new number at the entry points | done | [story-06-docs](./story-06-docs.md) | [evidence-story-06](./evidence-story-06.md) |
-| HS-107-07 | Closeout — the sitting and the census delta | planned | [story-07-closeout](./story-07-closeout.md) | — |
+| HS-107-07 | Closeout — the sitting and the census delta | in-progress | [story-07-closeout](./story-07-closeout.md) | — |
 
 ## Sequencing
 
@@ -209,7 +212,23 @@ lands. Then docs, then closeout.
 
 ## Where we are
 
-**2026-07-29 — ACTIVE, 6/7.** HS-107-06 carried the audited number
+**2026-07-29 — ACTIVE, 6/7, closeout STAGED, awaiting the owner.**
+The eight-beat machine sitting is built as one rerunnable command
+(`scripts/phase107_closeout_beats.py`) and staged repeatedly: all six
+functional beats pass in every session — typed acts, pane deliveries,
+Cadence, the subprocess trio, destination-named egress with a
+refusal, and the fence catching a planted site by name. The two
+latency beats fail only against a zero-tolerance cross-session
+criterion whose noise exceeds the margin; three controlled
+experiments (in evidence) show no story after HS-107-02 changed the
+typing cost, and the kernel admission itself costs ~25 ms per act —
+the disclosed price of a receipt, ~2.7% of the owner-perceived path,
+held as question 3 on the sitting sheet. **The census delta, plain:
+38 debt → 18 debt.** BACKLOG candidate Y files the remainder (§5b +
+the audited work list). The phase now waits on exactly one thing:
+the owner drives the beats and rules on three questions
+([OWNER-SITTING](./OWNER-SITTING.md)). Earlier:
+HS-107-06 carried the audited number
 to the entry points: `docs/SECURITY.md` and the kernel RFC both read
 **21 total / 3 covered / 18 debt** with the corrected baseline and
 the earned delta (38 → 18 debt); a drift guard

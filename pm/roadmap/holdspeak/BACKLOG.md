@@ -8,7 +8,7 @@ flips to "scaffolded" then "shipped".
 Sourced from the Phase-48 strategic review (`.guru_meditation.md`, an untracked
 scratch file, captured here so it survives) and the Phase-48 deferred decisions.
 
-**Last updated:** 2026-07-07 late (candidate **U** SCAFFOLDED — B1 opens as
+**Last updated:** 2026-07-29 (candidate **Y** FILED at Phase 107 close — §5b confinement + the audited 18-site remainder, closing conditions machine-asserted in the register). Earlier: 2026-07-07 late (candidate **U** SCAFFOLDED — B1 opens as
 [phase-86 — The Delivery Belt (read-only)](./phase-86-delivery-belt/): the
 AI-Headquarters floor, registry-shaped from day one. The B0 substrate turned
 out to already exist upstream (delivery-workbench v1.12: `dw state`/`sessions`/
@@ -55,6 +55,7 @@ sequence. This file is the "all of them" container; the phases are how they land
 | O | Wake word ("local + private" positioning) | strategic | post-P53 strategic review | **shipped → [phase-60](./phase-60-wake-word/) (CLOSED 6/6)** (arms-not-types with the preview default; 0 false accepts in 57 ordinary utterances measured; two latent production crashes fixed: GGML lldb auto-attach + the process-fatal cross-thread MLX call) |
 | P | Transcript import (`.vtt`/`.srt`/`.txt` → real meetings) | feature | user direction, post-P56 conversation | **shipped → [phase-57](./phase-57-transcript-import/) (CLOSED 5/5)** (real speakers + timestamps from the file; proven on `.43` intel; recording path untouched) |
 | Q | The Front Door (positioning + user-facing docs revision) | release/community | user direction, post-P57 conversation | **shipped → [phase-58](./phase-58-front-door/) (CLOSED 6/6)** (positioning canon + README pitch + named comparisons + the voice guard) |
+| Y | §5b Confinement + the audited remainder (the register to empty) | security/architecture | Phase 107 closeout; the HS-107-05 audit | **filed 2026-07-29** — the 18-site work list with closing conditions in `effect_ledger.json` |
 
 ### A. Meeting aftercare ("close the loop") — shipped as Phase 49 (CLOSED 6/6)
 The meeting side has plugins + artifacts; the next value is follow-through, not
@@ -194,6 +195,37 @@ A commitment, not a phase rider — park until deliberately chosen.
 Table-stakes in the category, and on-brand only if local + private. High
 false-positive risk; needs an always-listening pipeline done carefully. Park until
 the product wants hands-free as a thesis.
+
+### Y. §5b Confinement + the audited remainder — filed at Phase 107 close
+
+Phase 107 closed 20 of 38 audited debt sites; the register
+(`holdspeak/kernel/effect_ledger.json`) now carries **18 debt rows,
+each with a machine-asserted closing condition** — the next phase
+inherits a work list, not a mystery:
+
+- **A01-A10** — the raw-desktop primitives in `typer.py`: RFC §5b
+  confinement (a privileged executor process holding kernel warrants
+  instead of imports; A10's AppleScript helper may instead be
+  deleted). This is what finally lets Article XI clause 6 self-repeal
+  and upgrades `docs/SECURITY.md` beyond "cooperating code".
+- **T01/T02** — make every `coder_steering.deliver`/`deliver_keys`
+  transport act kernel-routed; delete the preflight and direct
+  web-route paths the HS-107-05 audit found.
+- **C02/C03/C05** — make an authenticated principal mandatory at
+  every read entry point; remove the `LOCAL_OWNER` defaults.
+- **N10-N12** — pending the owner's constitutional ruling
+  (clause 1 vs clause 5); if consequential, admit + receipt the
+  invocation off the parse path.
+- **Latency rider** — the kernel admission path costs ~25 ms on the
+  hold-key type segment (163 → 190 ms, interleaved A/B); the owner
+  either accepts + re-baselines, or an optimization story moves
+  durable-record work off the pre-landing path.
+
+Also carried from Phase 106/107: the second userland program (project
+memory / decisions-to-artifacts), the process window (`read` +
+`events` projection), the generic liveness seam, and the CI blind
+spot (`tests/e2e/test_live_bus.py` skips without Playwright + a built
+bundle — it sat red on main across three merges without CI noticing).
 
 ## Sequencing note
 
