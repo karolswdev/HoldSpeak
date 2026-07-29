@@ -42,6 +42,7 @@ from .invocations import CapabilityInvocationRepository
 from .delivery_attempts import WorkAttemptRepository
 from .delivery_receipts import DeliveryCommandReceiptRepository
 from .desktop_typing import DesktopTypeReceiptRepository
+from .decisions import DecisionRepository, backfill_decisions
 
 log = get_logger("db")
 
@@ -50,7 +51,7 @@ log = get_logger("db")
 
 # Default database location
 DEFAULT_DB_PATH = Path.home() / ".local" / "share" / "holdspeak" / "holdspeak.db"
-SCHEMA_VERSION = 29  # v29: content-free desktop typing receipts (HS-107-02)
+SCHEMA_VERSION = 30  # v30: durable decision records (HS-109-01)
 
 
 class SchemaVersionError(RuntimeError):
@@ -445,6 +446,46 @@ CREATE TABLE IF NOT EXISTS artifact_sources (
 CREATE INDEX IF NOT EXISTS idx_artifacts_meeting ON artifacts(meeting_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_artifacts_type ON artifacts(artifact_type, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_artifact_sources_ref ON artifact_sources(source_type, source_ref);
+
+-- HS-109-01: durable memory projected one-way from decisions artifacts. Source
+-- keys deliberately are not foreign keys: deleting a meeting severs provenance
+-- without deleting the memory. Sync-shaped clocks/tombstones are reserved for a
+-- later wire contract with explicit lifecycle conflict semantics.
+CREATE TABLE IF NOT EXISTS decisions (
+    id TEXT PRIMARY KEY,
+    text TEXT NOT NULL,
+    rationale TEXT,
+    decided_at TEXT NOT NULL,
+    date_basis TEXT NOT NULL DEFAULT 'meeting_date',
+    source_artifact_id TEXT NOT NULL,
+    source_meeting_id TEXT NOT NULL,
+    source_state TEXT NOT NULL DEFAULT 'linked'
+        CHECK (source_state IN ('linked','source_deleted')),
+    project_key TEXT,
+    lifecycle TEXT NOT NULL DEFAULT 'recorded'
+        CHECK (lifecycle IN ('recorded','accepted','superseded','rejected')),
+    superseded_by TEXT REFERENCES decisions(id),
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+    last_modified TEXT NOT NULL DEFAULT (datetime('now')),
+    deleted INTEGER NOT NULL DEFAULT 0
+);
+CREATE INDEX IF NOT EXISTS idx_decisions_project
+ON decisions(project_key, lifecycle, decided_at DESC);
+CREATE INDEX IF NOT EXISTS idx_decisions_meeting
+ON decisions(source_meeting_id, decided_at DESC);
+CREATE INDEX IF NOT EXISTS idx_decisions_lifecycle
+ON decisions(lifecycle, decided_at DESC);
+CREATE INDEX IF NOT EXISTS idx_decisions_superseded_by
+ON decisions(superseded_by);
+CREATE TRIGGER IF NOT EXISTS decisions_sever_meeting_source
+AFTER DELETE ON meetings BEGIN
+    UPDATE decisions
+       SET source_state = 'source_deleted',
+           updated_at = datetime('now'),
+           last_modified = datetime('now')
+     WHERE source_meeting_id = OLD.id AND deleted = 0;
+END;
 
 -- Phase 37 (HS-37-02): actuator proposals — a proposed external side effect
 -- awaiting human approval. Lifecycle: proposed -> approved -> executed |
@@ -1455,6 +1496,7 @@ class Database:
         self.work_attempts = WorkAttemptRepository(self._connection, self)  # HS-94-04
         self.delivery_receipts = DeliveryCommandReceiptRepository(self._connection, self)  # HS-94-06
         self.desktop_type_receipts = DesktopTypeReceiptRepository(self._connection, self)
+        self.decisions = DecisionRepository(self._connection, self)
 
     @contextmanager
     def _connection(self) -> Iterator[sqlite3.Connection]:
@@ -1856,6 +1898,11 @@ class Database:
                 (id, enabled, retention_days, updated_at)
             VALUES (1, 1, 30, datetime('now'))
             """
+        )
+        decision_backfill = backfill_decisions(conn)
+        log.info(
+            "Decision backfill: "
+            + ", ".join(f"{key}={value}" for key, value in decision_backfill.items())
         )
         conn.execute(
             "INSERT OR REPLACE INTO schema_version (version) VALUES (?)",

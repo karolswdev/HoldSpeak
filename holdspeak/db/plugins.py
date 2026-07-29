@@ -756,6 +756,18 @@ class PluginArtifactRepository(BaseRepository):
                     """,
                     (clean_artifact_id, source_type, source_ref, now_iso),
                 )
+            if clean_type == "decisions":
+                # The one reconciliation call site (HS-109-01): every persisted
+                # decisions artifact — synthesis, the deferred meeting chain,
+                # sync, ask — projects into decision records in the same
+                # transaction.
+                from .decisions import _project_artifact_row
+
+                artifact_row = conn.execute(
+                    "SELECT * FROM artifacts WHERE id = ?", (clean_artifact_id,)
+                ).fetchone()
+                if artifact_row is not None:
+                    _project_artifact_row(conn, artifact_row)
 
     def get_artifact(self, artifact_id: str) -> Optional[ArtifactSummary]:
         """Load one synthesized artifact by id (including lineage refs).

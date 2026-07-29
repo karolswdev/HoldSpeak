@@ -183,6 +183,8 @@ def required_right(method: str, path: str) -> Optional[PrincipalRight]:
         return None
     if path.startswith("/_built") or not path.startswith("/api/"):
         return None
+    if (path == "/api/decisions" or path.startswith("/api/decisions/")) and verb == "GET":
+        return PrincipalRight.READ
     if path.startswith("/api/delivery/node/") or path.startswith("/api/kernel/executor/"):
         return PrincipalRight.NODE_LINK
     if path == "/api/kernel/submit" and verb == "POST":

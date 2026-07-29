@@ -17,6 +17,14 @@ from .cadence import CadenceRepository  # noqa: F401
 from .mesh_relay import MeshRelayRepository  # noqa: F401
 from .invocations import CapabilityInvocationRepository  # noqa: F401
 from .projections import DeskProjection, ProjectionRepository  # noqa: F401
+from .decisions import (  # noqa: F401
+    DecisionLifecycleReceipt,
+    DecisionRecord,
+    DecisionRepository,
+    DecisionTransitionRefused,
+    backfill_decisions,
+    derive_decision_id,
+)
 from .primitives import (  # noqa: F401
     NoteRepository,
     KBRepository,
