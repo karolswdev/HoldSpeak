@@ -36,7 +36,7 @@ _FAMILIES = {
     FAMILY_EGRESS,
     FAMILY_RAW_DESKTOP,
 }
-_STATUSES = {"covered", "bypass", "mixed", "dormant"}
+_STATUSES = {"covered", "bypass", "mixed", "dormant", "read"}
 
 # The broker is intended to stay smaller than one Phase-79 concern module.
 # Raising this number is an architecture decision; the ordinary response to a
@@ -131,7 +131,7 @@ _CALL_RULES = (
         scopes=("deliver", "deliver_keys"),
     ),
     CallRule(FAMILY_TYPER, ("type_text",)),
-    CallRule(FAMILY_SUBPROCESS, ("run_subprocess",)),
+    CallRule(FAMILY_SUBPROCESS, ("run_subprocess", "run_read_subprocess")),
     CallRule(
         FAMILY_SUBPROCESS,
         ("actual",),
@@ -544,7 +544,7 @@ def test_effect_ledger_is_complete_and_current() -> None:
     assert not failures, "effect census drift:\n  " + "\n  ".join(failures)
 
 
-def test_effect_ledger_asserts_the_migrated_31_5_26_counts() -> None:
+def test_effect_ledger_asserts_the_migrated_29_5_3_21_counts() -> None:
     ledger = _load_ledger()
     entries = ledger["sites"]
     expected = ledger["expected"]
@@ -552,28 +552,32 @@ def test_effect_ledger_asserts_the_migrated_31_5_26_counts() -> None:
     families = Counter(entry["family"] for entry in entries)
     statuses = Counter(entry["status"] for entry in entries)
     covered = statuses["covered"]
-    not_covered = len(entries) - covered
+    reads = statuses["read"]
+    not_covered = len(entries) - covered - reads
 
     assert set(families) == _FAMILIES
     assert set(statuses) <= _STATUSES
-    assert len(entries) == expected["total"] == 31, (
-        f"effect census must state 31 total sites, found {len(entries)}"
+    assert len(entries) == expected["total"] == sum(expected["families"].values()) == 29, (
+        f"effect census must state 29 total sites, found {len(entries)}"
     )
     assert covered == expected["covered"] == 5, (
         f"effect census must state 5 covered sites, found {covered}"
     )
-    assert not_covered == expected["not_covered"] == 26, (
-        f"effect census must state 26 not-covered sites, found {not_covered}"
+    assert reads == expected.get("reads", 0) == 3, (
+        f"effect census must state 3 classified reads, found {reads}"
+    )
+    assert not_covered == expected["not_covered"] == 21, (
+        f"effect census must state 21 not-covered sites, found {not_covered}"
     )
     assert dict(families) == expected["families"] == {
         FAMILY_TMUX: 2,
         FAMILY_TYPER: 1,
-        FAMILY_SUBPROCESS: 5,
+        FAMILY_SUBPROCESS: 3,
         FAMILY_EGRESS: 13,
         FAMILY_RAW_DESKTOP: 10,
     }, f"effect family breakdown changed: {dict(families)}"
     assert all(entry["reason"].strip() for entry in entries)
-    assert len({entry["id"] for entry in entries}) == 31
+    assert len({entry["id"] for entry in entries}) == len(entries) == 29
     assert "No agent principal may reach" in ledger["legal_effect"]
 
 

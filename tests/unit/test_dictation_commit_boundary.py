@@ -282,10 +282,27 @@ def test_process_input_receipt_material_is_hashed_and_content_free() -> None:
 def test_effect_ledger_records_the_typing_family_migration() -> None:
     ledger = json.loads(_LEDGER.read_text())
     ids = {site["id"] for site in ledger["sites"]}
-    not_covered = [site for site in ledger["sites"] if site["status"] != "covered"]
+    debt = [
+        site
+        for site in ledger["sites"]
+        if site["status"] not in {"covered", "read"}
+    ]
 
-    assert len(not_covered) == ledger["expected"]["not_covered"] == 26
+    assert len(debt) == ledger["expected"]["not_covered"] == 21
     assert not {"T03", "T04", "D01", "D02", "D03", "D04", "D05", "D06", "D07", "D08"} & ids
     desktop = next(site for site in ledger["sites"] if site["id"] == "D09")
     assert desktop["status"] == "covered"
     assert desktop["selector"]["scope"] == "type_text_from_owner_gesture"
+
+
+def test_effect_ledger_debt_excludes_covered_and_classified_reads() -> None:
+    ledger = json.loads(_LEDGER.read_bytes())
+    debt = [
+        site
+        for site in ledger["sites"]
+        if site["status"] not in {"covered", "read"}
+    ]
+    reads = [site for site in ledger["sites"] if site["status"] == "read"]
+
+    assert len(debt) == ledger["expected"]["not_covered"]
+    assert len(reads) == ledger["expected"].get("reads", 0)

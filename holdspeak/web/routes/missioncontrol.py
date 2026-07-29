@@ -23,7 +23,7 @@ import json
 from pathlib import Path
 from typing import Any, Optional
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
@@ -154,14 +154,21 @@ def build_missioncontrol_router(
 
         return load_project_map(map_path)
 
+    def _principal(request: Request):
+        from ...kernel.subprocess_exec import LOCAL_OWNER
+
+        return getattr(request.state, "principal", LOCAL_OWNER)
+
     @router.get("/api/missioncontrol/state")
-    async def api_missioncontrol_state() -> Any:
+    async def api_missioncontrol_state(request: Request) -> Any:
         try:
             from ...missioncontrol_bridge import state_payload
 
             # to_thread: the bridge shells a CLI per repo (the
             # Phase-85 event-loop rule, applied here by HS-86-03).
-            payload = await asyncio.to_thread(state_payload, _map(), runner)
+            payload = await asyncio.to_thread(
+                state_payload, _map(), runner, _principal(request)
+            )
             _emit_belt_frames(ctx, payload)
             return payload
         except Exception as exc:
@@ -169,46 +176,60 @@ def build_missioncontrol_router(
             return {"repos": [], "error": "mission control state failed"}
 
     @router.get("/api/missioncontrol/sessions")
-    async def api_missioncontrol_sessions() -> Any:
+    async def api_missioncontrol_sessions(request: Request) -> Any:
         try:
             from ...missioncontrol_bridge import sessions_payload
 
-            return await asyncio.to_thread(sessions_payload, _map(), runner)
+            return await asyncio.to_thread(
+                sessions_payload, _map(), runner, _principal(request)
+            )
         except Exception as exc:
             log.warning(f"mission control sessions failed ({exc})")
             return {"status": "unavailable", "detail": "sessions read failed"}
 
     @router.get("/api/missioncontrol/events")
-    async def api_missioncontrol_events(tail: int = 20) -> Any:
+    async def api_missioncontrol_events(request: Request, tail: int = 20) -> Any:
         try:
             from ...missioncontrol_bridge import events_payload
 
-            return await asyncio.to_thread(events_payload, _map(), tail, runner)
+            return await asyncio.to_thread(
+                events_payload, _map(), tail, runner, _principal(request)
+            )
         except Exception as exc:
             log.warning(f"mission control events failed ({exc})")
             return {"repos": [], "error": "mission control events failed"}
 
     @router.get("/api/missioncontrol/receipts")
-    async def api_missioncontrol_receipts() -> Any:
+    async def api_missioncontrol_receipts(request: Request) -> Any:
         """GitHub receipts per map repo (HS-86-03) — the PR and CI
         station lights. Read-only; absence is typed, never a 500."""
         try:
             from ...missioncontrol_bridge import receipts_payload
 
-            return await asyncio.to_thread(receipts_payload, _map(), runner)
+            return await asyncio.to_thread(
+                receipts_payload, _map(), runner, _principal(request)
+            )
         except Exception as exc:
             log.warning(f"mission control receipts failed ({exc})")
             return {"repos": [], "error": "mission control receipts failed"}
 
     @router.get("/api/missioncontrol/evidence")
-    async def api_missioncontrol_evidence(repo: str, project: str, story: str) -> Any:
+    async def api_missioncontrol_evidence(
+        request: Request, repo: str, project: str, story: str
+    ) -> Any:
         """One story's evidence content (HS-86-04), CLI-resolved and
         path-contained — the desk opens it in place. Read-only."""
         try:
             from ...missioncontrol_bridge import story_evidence_payload
 
             return await asyncio.to_thread(
-                story_evidence_payload, _map(), repo, project, story, runner
+                story_evidence_payload,
+                _map(),
+                repo,
+                project,
+                story,
+                runner,
+                _principal(request),
             )
         except Exception as exc:
             log.warning(f"mission control evidence failed ({exc})")
@@ -288,7 +309,9 @@ def build_missioncontrol_router(
             return {"sizes": [], "unknown": [], "error": "rails size failed"}
 
     @router.post("/api/missioncontrol/story/propose")
-    async def api_missioncontrol_story_propose(body: _StoryProposeRequest) -> Any:
+    async def api_missioncontrol_story_propose(
+        request: Request, body: _StoryProposeRequest
+    ) -> Any:
         """Record a story-verb proposal (§4): fields validated against
         the LIVE feed, never trusted from the UI; the preview names
         the act and the gate's standing right of refusal."""
@@ -308,7 +331,9 @@ def build_missioncontrol_router(
                     {"success": False, "error": f"repo {body.repo!r} is not in the project map"},
                     status_code=400,
                 )
-            entry = state_entry(body.repo, repo_path, runner)
+            entry = state_entry(
+                body.repo, repo_path, runner, _principal(request)
+            )
             if entry.get("status") != "live":
                 return JSONResponse(
                     {"success": False, "error": f"rails unreadable: {entry.get('detail')}"},

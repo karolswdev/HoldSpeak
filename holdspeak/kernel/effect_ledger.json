@@ -10,16 +10,18 @@
     "covered": "Every in-tree route reaches the statement through an audited chokepoint named by the census.",
     "bypass": "A reachable route avoids all named audited chokepoints.",
     "mixed": "Covered and bypass routes share this statement; treated as not covered.",
-    "dormant": "No current production caller, but the ambient capability can execute without a named chokepoint; treated as not covered."
+    "dormant": "No current production caller, but the ambient capability can execute without a named chokepoint; treated as not covered.",
+    "read": "Effect-free information retrieval exempt from admission and receipts; authenticated principal and named read authority remain mandatory."
   },
   "expected": {
-    "total": 31,
+    "total": 29,
     "covered": 5,
-    "not_covered": 26,
+    "reads": 3,
+    "not_covered": 21,
     "families": {
       "tmux_transport": 2,
       "text_typer": 1,
-      "subprocess": 5,
+      "subprocess": 3,
       "egress": 13,
       "raw_desktop": 10
     }
@@ -53,49 +55,31 @@
       "reason": "The sole remaining TextTyper caller executes only after desktop.type_text admission, an owner-direct-gesture warrant, immutable focus-generation verification, and before a paired native and kernel terminal receipt."
     },
     {
-      "id": "C01",
-      "family": "subprocess",
-      "status": "mixed",
-      "path": "holdspeak/connector_runtime.py",
-      "census_line": 125,
-      "selector": {"scope": "PermissionGate.run_subprocess", "target": "actual", "ordinal": 1},
-      "reason": "Shared raw process boundary serves actuator-covered writes and unbrokered enrichment or voice routes; PermissionGate is enforcement but not an audited chokepoint."
-    },
-    {
       "id": "C02",
       "family": "subprocess",
-      "status": "bypass",
+      "status": "read",
       "path": "holdspeak/activity_github.py",
-      "census_line": 132,
-      "selector": {"scope": "run_github_cli_enrichment", "target": "run_subprocess", "ordinal": 1},
-      "reason": "GitHub activity enrichment invokes PermissionGate directly for metadata reads; retained as external.github.read migration debt."
+      "census_line": 136,
+      "selector": {"scope": "run_github_cli_enrichment", "target": "run_read_subprocess", "ordinal": 1},
+      "reason": "The fixed gh pr/issue view argv obtains metadata only; owner principal plus named gh read authority is required before the CLI runs."
     },
     {
       "id": "C03",
       "family": "subprocess",
-      "status": "bypass",
+      "status": "read",
       "path": "holdspeak/activity_jira.py",
-      "census_line": 124,
-      "selector": {"scope": "run_jira_cli_enrichment", "target": "run_subprocess", "ordinal": 1},
-      "reason": "Jira activity enrichment invokes PermissionGate directly for issue reads; retained as external.jira.read_issue migration debt."
-    },
-    {
-      "id": "C04",
-      "family": "subprocess",
-      "status": "mixed",
-      "path": "holdspeak/plugins/gated_connector.py",
-      "census_line": 224,
-      "selector": {"scope": "_route", "target": "run_subprocess", "ordinal": 1},
-      "reason": "Shared connector dispatch serves actuator-covered writes and direct voice-macro calls; retained until all callers share audited admission."
+      "census_line": 128,
+      "selector": {"scope": "run_jira_cli_enrichment", "target": "run_read_subprocess", "ordinal": 1},
+      "reason": "The fixed jira issue view argv obtains ticket metadata only; owner principal plus named jira read authority is required before the CLI runs."
     },
     {
       "id": "C05",
       "family": "subprocess",
-      "status": "bypass",
+      "status": "read",
       "path": "holdspeak/missioncontrol_bridge.py",
-      "census_line": 38,
+      "census_line": 42,
       "selector": {"scope": "_default_runner", "target": "run", "ordinal": 1},
-      "reason": "Mission Control bridge runs Delivery Workbench and GitHub read commands directly; retained as read-path migration debt."
+      "reason": "The bridge invokes only dw document views and gh PR receipt views; owner principal plus named dw/gh read authority keeps the conveyor cheap."
     },
     {
       "id": "N01",

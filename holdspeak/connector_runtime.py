@@ -6,12 +6,11 @@ HS-13-02. Phase 11 manifests declare what a connector pack is
 were documentation; this module turns them into runtime checks.
 
 `PermissionGate` wraps the privileged operations a pack might
-invoke. Each operation consults the gate's underlying manifest
-before delegating to the real implementation; a missing
-permission raises `PermissionDenied` with the connector id, the
-operation, the missing permission, and the manifest's declared
-permission set so the operator can see exactly what the pack
-asked for and what the gate refused.
+invoke. Subprocess execution now carries the manifest permission into
+kernel admission, while CLI reads check principal plus named read
+authority here. The outbound/file branches retain the legacy manifest
+check pending their family migrations. A missing permission raises
+`PermissionDenied` with the connector and operation named.
 
 This is *honest enforcement*, not a security boundary. A
 malicious pack can still call `subprocess.run` directly. The
@@ -31,6 +30,12 @@ from pathlib import Path
 from typing import Any, Callable, Iterable, Optional
 
 from .connector_sdk import ConnectorManifest
+from .kernel.subprocess_exec import (
+    LOCAL_OWNER,
+    SubprocessOperationRefused,
+    run_subprocess_operation,
+)
+from .principals import Principal, PrincipalKind, PrincipalRight
 
 # Operation → permission mapping. A pack must declare the listed
 # permission to invoke the gate's matching method. The mapping
@@ -42,6 +47,31 @@ _OPERATION_PERMISSIONS: dict[str, str] = {
     "accept_loopback_event": "loopback:http",
     "read_file": "fs:read",
 }
+
+
+class ReadSubprocessDenied(PermissionError):
+    """A named CLI read lacks an authenticated owner read authority."""
+
+    def __init__(self, *, command_name: str, principal: Principal) -> None:
+        self.command_name = command_name
+        self.principal = principal
+        super().__init__(
+            f"subprocess read {command_name!r} refused: principal "
+            f"{principal.identity!r} lacks read authority for {command_name!r}"
+        )
+
+
+def require_subprocess_read_authority(
+    principal: Principal, command_name: str
+) -> None:
+    """Require authenticated owner read authority for one named ambient CLI."""
+    if (
+        principal.kind is not PrincipalKind.OWNER
+        or not principal.permits(PrincipalRight.READ)
+    ):
+        raise ReadSubprocessDenied(
+            command_name=command_name, principal=principal
+        )
 
 
 class PermissionDenied(Exception):
@@ -107,22 +137,58 @@ class PermissionGate:
 
     # ─────────────────── gated operations ─────────────────
 
-    def run_subprocess(
+    def execute_subprocess(
         self,
         command: Iterable[str],
         *,
         runner: Optional[SubprocessRunner] = None,
+        principal: Principal = LOCAL_OWNER,
+        allowed_argv_prefixes: Iterable[Iterable[str]] = (),
         **kwargs: Any,
     ) -> subprocess.CompletedProcess[str]:
-        """Invoke a local subprocess on behalf of the pack.
+        """Execute a consequential connector command through the kernel.
 
-        Requires `shell:exec`. Tests pass `runner=fake` to inject a
-        fake; production calls fall through to `subprocess.run`.
-        Both run only if the gate admits the operation.
+        The manifest permission and any argv prefixes are hard prerequisites of
+        the typed admission, not a second decision in this legacy gate.
         """
+        try:
+            return run_subprocess_operation(
+                tuple(command),
+                connector_id=self.manifest.id,
+                declared_permissions=self.manifest.permissions,
+                allowed_argv_prefixes=tuple(tuple(prefix) for prefix in allowed_argv_prefixes),
+                principal=principal,
+                runner=runner or subprocess.run,
+                **kwargs,
+            )
+        except SubprocessOperationRefused as exc:
+            if exc.reason.startswith("subprocess_permission_required:"):
+                raise PermissionDenied(
+                    connector_id=self.manifest.id,
+                    operation="run_subprocess",
+                    required_permission="shell:exec",
+                    declared_permissions=tuple(self.manifest.permissions),
+                ) from exc
+            raise
+
+    def run_read_subprocess(
+        self,
+        command: Iterable[str],
+        *,
+        principal: Principal = LOCAL_OWNER,
+        runner: Optional[SubprocessRunner] = None,
+        **kwargs: Any,
+    ) -> subprocess.CompletedProcess[str]:
+        """Run a classified CLI read after principal and named read authority."""
+        argv = tuple(str(part) for part in command)
+        command_name = Path(argv[0]).name if argv else "<empty>"
+        require_subprocess_read_authority(principal, command_name)
         self._require("run_subprocess")
         actual = runner or subprocess.run
-        return actual(list(command), **kwargs)
+        return actual(list(argv), **kwargs)
+
+    # Compatibility name; consequential dispatch itself is ``execute_subprocess``.
+    run_subprocess = execute_subprocess
 
     def open_outbound_socket(
         self,
@@ -175,6 +241,8 @@ class PermissionGate:
 __all__ = [
     "PermissionDenied",
     "PermissionGate",
+    "ReadSubprocessDenied",
+    "require_subprocess_read_authority",
     "PipelineRunner",
     "PipelineRunResult",
     "PipelineStepResult",
