@@ -553,18 +553,16 @@ def run_post_tool_hook(
 # -- install ---------------------------------------------------------------
 
 
-def install_block(executable: str = "holdspeak") -> str:
-    """The hook block the USER adds to ``~/.claude/settings.json``.
-    Printed, never written: this module does not edit another app's
-    config."""
-    block = {
+def _hook_settings(command: str) -> dict[str, Any]:
+    """The complete gate lifecycle for one Claude Code settings source."""
+    return {
         "hooks": {
             "SessionStart": [
                 {
                     "hooks": [
                         {
                             "type": "command",
-                            "command": f"{executable} gate hook",
+                            "command": command,
                             "timeout": 15,
                         }
                     ]
@@ -576,7 +574,7 @@ def install_block(executable: str = "holdspeak") -> str:
                     "hooks": [
                         {
                             "type": "command",
-                            "command": f"{executable} gate hook",
+                            "command": command,
                             "timeout": HOOK_TIMEOUT_SECONDS,
                         }
                     ],
@@ -588,7 +586,7 @@ def install_block(executable: str = "holdspeak") -> str:
                     "hooks": [
                         {
                             "type": "command",
-                            "command": f"{executable} gate hook",
+                            "command": command,
                             "timeout": 15,
                         }
                     ],
@@ -601,7 +599,7 @@ def install_block(executable: str = "holdspeak") -> str:
                     "hooks": [
                         {
                             "type": "command",
-                            "command": f"{executable} gate hook",
+                            "command": command,
                             "timeout": 15,
                         }
                     ]
@@ -612,7 +610,7 @@ def install_block(executable: str = "holdspeak") -> str:
                     "hooks": [
                         {
                             "type": "command",
-                            "command": f"{executable} gate hook",
+                            "command": command,
                             "timeout": 15,
                         }
                     ]
@@ -620,4 +618,34 @@ def install_block(executable: str = "holdspeak") -> str:
             ],
         }
     }
-    return json.dumps(block, indent=2)
+
+
+def write_spawn_settings(
+    path: Path | None = None, *, project_root: Path | None = None
+) -> Path:
+    """Write HoldSpeak-owned settings for a supervised ``process.spawn``.
+
+    Unlike :func:`install_block`, this never edits Claude Code's user config.
+    The launched process receives this file explicitly with ``--settings``.
+    ``uv --project`` pins every lifecycle hook to the same HoldSpeak checkout
+    that launched the agent, rather than whichever ``holdspeak`` is on PATH.
+    """
+    import shlex
+
+    root = (project_root or Path(__file__).resolve().parents[1]).resolve()
+    root_key = hashlib.sha256(str(root).encode("utf-8")).hexdigest()[:16]
+    target = path or Path.home() / ".holdspeak" / "gate-spawn-settings" / f"{root_key}.json"
+    command = f"uv run --project {shlex.quote(str(root))} holdspeak gate hook"
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(
+        json.dumps(_hook_settings(command), indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    return target
+
+
+def install_block(executable: str = "holdspeak") -> str:
+    """The hook block the USER adds to ``~/.claude/settings.json``.
+    Printed, never written: this module does not edit another app's
+    config."""
+    return json.dumps(_hook_settings(f"{executable} gate hook"), indent=2)

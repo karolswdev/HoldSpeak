@@ -55,7 +55,10 @@ class ProcessSpawnCodec:
             raise KernelRefused("process_spawn_placement_invalid")
         launch_request = {key: value for key, value in args.items() if key != "launch_id"}
         try:
-            self._service.validate_request(launch_request)
+            validate = getattr(
+                self._service, "validate_process_spawn", self._service.validate_request
+            )
+            validate(launch_request)
         except Exception as exc:
             raise KernelRefused(getattr(exc, "reason", "process_spawn_prerequisite_failed")) from exc
         material = {

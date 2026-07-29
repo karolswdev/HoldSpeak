@@ -31,6 +31,7 @@ export interface PrRow {
   basis: string;
   needs_you?: boolean;
   worktree_id?: string;
+  agent_gate?: "gated" | "ungated";
   verbs?: {
     send_agent: PrVerbAvailability;
     draft_review: PrVerbAvailability;

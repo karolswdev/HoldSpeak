@@ -36,6 +36,7 @@ from types import SimpleNamespace
 import pytest
 
 from holdspeak.agent_context.sessions import ingest_agent_hook_event
+from holdspeak.coder_gate import GateConfig
 from holdspeak.db import Database
 from holdspeak.db.delivery_receipts import NodeReceiptLedger
 from holdspeak.delivery import DeliveryRegistry
@@ -341,6 +342,45 @@ def test_launch_creates_one_attempt_one_target_one_receipt(rig) -> None:
 
     # The wire record is path-free (§13).
     assert str(rig.tmp) not in json.dumps(record)
+
+
+def test_process_spawn_installs_gate_settings_and_allows_bash(rig, monkeypatch) -> None:
+    settings = rig.tmp / "spawn-settings.json"
+    settings.write_text("{}\n", encoding="utf-8")
+    monkeypatch.setattr(
+        "holdspeak.coder_gate.load_gate_config",
+        lambda: GateConfig(armed=True, repos={str(rig.repo): ["Bash"]}),
+    )
+    monkeypatch.setattr(
+        "holdspeak.coder_gate.write_spawn_settings", lambda: settings
+    )
+
+    record = rig.service.launch(
+        _request(rig),
+        launch_id="launch_gated12345678",
+        parent_operation_id="op_parent123",
+    )
+    assert record["state"] == "launched"
+    assert record["gate"] == "gated"
+    spawn_argv = next(c for c in rig.tmux.calls if c[1] == "new-session")
+    command = spawn_argv[spawn_argv.index("-s") + 2]
+    assert "HOLDSPEAK_PARENT_OPERATION_ID=op_parent123" in command
+    assert f"--settings {settings}" in command
+    assert command.endswith("--allowedTools Bash")
+    assert any(arg.startswith("HOLDSPEAK_AGENT_CREDENTIAL=") for arg in spawn_argv)
+    assert any(arg.startswith("HOLDSPEAK_HUB_URL=") for arg in spawn_argv)
+
+
+def test_process_spawn_refuses_ungated_before_launch(rig, monkeypatch) -> None:
+    monkeypatch.setattr(
+        "holdspeak.coder_gate.load_gate_config", lambda: GateConfig()
+    )
+    with pytest.raises(LaunchRefused) as exc:
+        rig.service.validate_process_spawn(_request(rig))
+    assert exc.value.reason == "process_spawn_not_gated"
+    assert str(exc.value) == "not gated"
+    assert rig.tmux.calls == []
+    assert rig.attempts.find_active() == []
 
 
 def test_client_supplied_execution_fields_refuse_by_name(rig) -> None:

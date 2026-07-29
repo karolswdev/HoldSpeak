@@ -22,6 +22,7 @@ export interface DiscoveredTarget {
   sourceId: string | null;
   worktreeId: string | null;
   profileId: string | null;
+  gate: "gated" | "not gated";
   launchId: string | null;
   storyRef: { project: string; storyId: string } | null;
   attemptId: string | null;
@@ -46,6 +47,7 @@ const fromWireTarget = (t: any): DiscoveredTarget => {
     sourceId: t?.source_id ? String(t.source_id) : null,
     worktreeId: t?.worktree_id ? String(t.worktree_id) : null,
     profileId: t?.profile_id ? String(t.profile_id) : null,
+    gate: t?.gate === "gated" ? "gated" : "not gated",
     launchId: t?.launch_id ? String(t.launch_id) : null,
     storyRef: ref
       ? { project: String(ref.project || ""), storyId: String(ref.story_id || "") }

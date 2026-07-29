@@ -21,6 +21,7 @@ from holdspeak.coder_gate import (
     run_hook,
     run_post_tool_hook,
     save_gate_config,
+    write_spawn_settings,
 )
 from holdspeak.db import Database, reset_database
 from holdspeak.db.gate import (
@@ -207,6 +208,30 @@ def test_install_block_prints_and_never_writes(tmp_path, monkeypatch) -> None:
     hook = block["hooks"]["PreToolUse"][0]
     assert hook["matcher"] == "Bash"
     assert "gate hook" in hook["hooks"][0]["command"]
+    assert block["hooks"]["PostToolUse"][0]["matcher"] == "Bash"
+
+
+def test_spawn_settings_pin_full_gate_lifecycle_to_project(tmp_path) -> None:
+    project = tmp_path / "holdspeak source"
+    project.mkdir()
+    target = write_spawn_settings(tmp_path / "spawn-settings.json", project_root=project)
+    block = json.loads(target.read_text(encoding="utf-8"))
+    assert set(block["hooks"]) == {
+        "SessionStart",
+        "PreToolUse",
+        "PostToolUse",
+        "Stop",
+        "SessionEnd",
+    }
+    commands = {
+        event["hooks"][0]["command"]
+        for rows in block["hooks"].values()
+        for event in rows
+    }
+    assert commands == {
+        f"uv run --project '{project}' holdspeak gate hook"
+    }
+    assert block["hooks"]["PreToolUse"][0]["matcher"] == "Bash"
     assert block["hooks"]["PostToolUse"][0]["matcher"] == "Bash"
 
 

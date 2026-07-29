@@ -534,6 +534,35 @@ class LaunchService:
         self._resolve_worktree(request, source)
         self._session_name(request, story_id)
 
+    def validate_process_spawn(self, request: Any) -> None:
+        """A kernel-spawned agent must be brokered before it can launch.
+
+        Manual ``agent.launch`` and ``coder_factory.spawn`` remain unchanged;
+        this extra prerequisite belongs only to ``process.spawn``.  Today the
+        supervised tool contract is Claude Code's Bash hook, so any other
+        profile or an unarmed destination refuses before a worktree, process,
+        or launch record exists.
+        """
+        self.validate_request(request)
+        assert isinstance(request, Mapping)
+        profile_id = str(request.get("agent_profile_id") or request.get("profile_id") or "")
+        profile = self._profiles.get(profile_id) or {}
+        source = self._registry.get(str(request.get("source_id") or ""))
+        assert source is not None
+        _, worktree_path, _ = self._resolve_worktree(request, source)
+        self._require_process_gate(profile, worktree_path)
+
+    @staticmethod
+    def _require_process_gate(profile: Mapping[str, Any], worktree_path: str) -> None:
+        from .. import coder_gate
+
+        if str(profile.get("executable") or "") != "claude":
+            raise LaunchRefused("process_spawn_not_gated", "not gated")
+        if not coder_gate.gate_matches(
+            coder_gate.load_gate_config(), cwd=worktree_path, tool="Bash"
+        ):
+            raise LaunchRefused("process_spawn_not_gated", "not gated")
+
     # request validation ---------------------------------------------------
 
     def _refuse_client_execution_fields(self, request: Mapping[str, Any]) -> None:
@@ -688,6 +717,21 @@ class LaunchService:
             request, source
         )
         session_name = self._session_name(request, story_id)
+        gate_state = "not gated"
+        if parent_operation_id:
+            profile = self._profiles.get(profile_id) or {}
+            self._require_process_gate(profile, worktree_path)
+            from .. import coder_gate
+
+            settings_path = coder_gate.write_spawn_settings()
+            argv = [
+                *argv,
+                "--settings",
+                str(settings_path),
+                "--allowedTools",
+                "Bash",
+            ]
+            gate_state = "gated"
 
         launch_id = launch_id or "launch_" + uuid.uuid4().hex[:16]
         record: dict[str, Any] = {
@@ -696,6 +740,7 @@ class LaunchService:
             "state": "starting",
             "node_id": self._local_node_id,
             "profile_id": profile_id,
+            "gate": gate_state,
             "source_id": source_id,
             "worktree_id": worktree_id,
             "story_ref": {"project": project, "story_id": story_id},
@@ -835,6 +880,7 @@ class LaunchService:
         text = str(instruction or "").strip()
         if not text or len(text.encode("utf-8")) > 32768:
             raise LaunchRefused("instruction_invalid")
+        self.validate_process_spawn(request)
         from ..kernel.process_spawn import new_launch_id
         from ..principals import Principal, PrincipalKind
 
@@ -1182,6 +1228,7 @@ class LaunchService:
                     "source_id": identity.get("source_id"),
                     "worktree_id": identity.get("worktree_id"),
                     "profile_id": launch.get("profile_id") if launch else None,
+                    "gate": launch.get("gate") if launch else "not gated",
                     "launch_id": launch.get("launch_id") if launch else None,
                     "story_ref": launch.get("story_ref") if launch else None,
                     "attempt_id": launch.get("attempt_id") if launch else None,

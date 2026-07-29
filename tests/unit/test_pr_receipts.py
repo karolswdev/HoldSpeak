@@ -133,6 +133,7 @@ def make_service(source=None, runner=None, clock=None):
         runner=runner or make_runner(),
         clock=(clock or (lambda: ticker["now"])),
         gh_available=lambda: True,
+        gate_matcher=lambda _path: True,
     )
     return service, source, ticker
 
@@ -257,6 +258,25 @@ def test_action_verbs_name_availability_and_refusal() -> None:
         "available": False,
         "reason": "gh credentials unavailable",
     }
+
+
+def test_matched_ungated_row_refuses_agent_and_names_truth() -> None:
+    source = FakeSource(
+        worktrees=[FakeWorktree(path="/tmp/repo", branch="agent/hs-104-02-tool-call-gate")]
+    )
+    service = PrReceiptsService(
+        FakeRegistry(source),
+        runner=make_runner(git_head="a" * 40),
+        gh_available=lambda: True,
+        gate_matcher=lambda _path: False,
+    )
+    row = service.refresh()["sources"][0]["prs"][0]
+    assert row["agent_gate"] == "ungated"
+    assert row["verbs"]["send_agent"] == {
+        "available": False,
+        "reason": "not gated",
+    }
+    assert row["verbs"]["draft_review"]["available"] is True
 
 
 def test_unmatched_row_keeps_all_verbs_and_names_worktree_refusal() -> None:

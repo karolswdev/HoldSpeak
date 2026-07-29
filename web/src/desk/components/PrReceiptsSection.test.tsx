@@ -10,7 +10,7 @@ const row: PrRow = {
   repo: "o/r", head_ref: "agent/hs-106-07", base_ref: "main", head_sha: "a".repeat(40),
   base_sha: "b".repeat(40), state: "open", ci: "failing", author: "owner",
   observed_at: "2026-07-27T10:00:00Z", attribution: "exact", basis: "branch matches",
-  needs_you: true, worktree_id: "wt_1",
+  needs_you: true, worktree_id: "wt_1", agent_gate: "gated",
   verbs: {
     send_agent: { available: true, reason: "" }, draft_review: { available: true, reason: "" },
     post_comment: { available: true, reason: "" }, post_status: { available: false, reason: "gh credentials unavailable" },
@@ -27,6 +27,23 @@ describe("PR follow-through desk object", () => {
     expect(status).toBeDisabled();
     expect(status).toHaveAttribute("title", "gh credentials unavailable");
     expect(screen.getByRole("button", { name: "Send agent" })).toBeEnabled();
+  });
+
+  it("marks an ungated agent on the row and in Info", () => {
+    const ungated = {
+      ...row,
+      agent_gate: "ungated" as const,
+      verbs: {
+        ...row.verbs!,
+        send_agent: { available: false, reason: "not gated" },
+      },
+    };
+    usePrReceipts.setState({ sources: [{ source_id: "src_1", label: "HoldSpeak", status: "live", detail: "", observed_at: row.observed_at, prs: [ungated] }], loaded: true });
+    render(<PrReceiptsSection />);
+    expect(screen.getByText("UNGATED")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Info" }));
+    expect(screen.getByText("Agent").nextSibling).toHaveTextContent("UNGATED");
+    expect(screen.getByRole("button", { name: "Send agent" })).toBeDisabled();
   });
 
   it("shows the complete proposed comment before approval and offers deny", async () => {

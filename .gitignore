@@ -74,3 +74,6 @@ aipi-lite/debug_mic.wav
 
 # Route screenshot harness output (web/scripts/shoot.mjs → `npm run shots`).
 web/.shots/
+
+# Root-level npm install (web/ has its own ignore); keeps `git add -A` from sweeping build caches
+node_modules/

@@ -3415,6 +3415,20 @@
 .desk-next .desk-pr-receipts tr.is-needs-you th[scope="row"] {
   color: var(--danger, #e5484d);
 }
+.desk-next .desk-pr-gate {
+  display: inline-block;
+  margin-left: 4px;
+  padding: 1px 5px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  font: 600 10px/1.25 var(--font-mono, ui-monospace, monospace);
+  letter-spacing: .04em;
+}
+.desk-next .desk-pr-gate.is-ungated {
+  border-color: var(--danger, #e5484d);
+  color: var(--danger, #e5484d);
+}
 .desk-next .desk-pr-diff {
   max-height: 320px;
   overflow: auto;
