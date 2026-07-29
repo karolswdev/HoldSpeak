@@ -1,10 +1,11 @@
 # Phase 107 - Close the Side Doors
 
-**Status:** PLANNED (0/7). Scaffolded 2026-07-28, **not activated** —
-Phase 106 closes on the owner's sitting first. Chartered from the
-number Phase 106 could not move.
+**Status:** IN PROGRESS (1/7). Activated 2026-07-29 — Phase 106
+closed on the owner's sitting (8/8). Chartered from the number
+Phase 106 could not move.
 
-**Last updated:** 2026-07-28 (scaffolded; nothing built).
+**Last updated:** 2026-07-29 (HS-107-01 done: the commit-boundary
+contract, pinned; baseline latency on real metal).
 
 ## Why this phase exists
 
@@ -142,7 +143,7 @@ closes.
 
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
-| HS-107-01 | Dictation's commit boundary — semantics before rerouting | planned | [story-01-dictation-semantics](./story-01-dictation-semantics.md) | — |
+| HS-107-01 | Dictation's commit boundary — semantics before rerouting | done | [story-01-dictation-semantics](./story-01-dictation-semantics.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-107-02 | The typing families — 10 sites through the kernel | planned | [story-02-typing-families](./story-02-typing-families.md) | — |
 | HS-107-03 | The subprocess family — 5 sites | planned | [story-03-subprocess-family](./story-03-subprocess-family.md) | — |
 | HS-107-04 | The egress family — triage before migration | planned | [story-04-egress-family](./story-04-egress-family.md) | — |
@@ -173,6 +174,8 @@ lands. Then docs, then closeout.
 - 2026-07-28 - Honest ceiling set at 4 → 30 of 40, NOT an empty register - all 10 raw-desktop sites are the primitives in `typer.py` and close only under RFC §5b confinement; clause 6 therefore survives this phase - orchestrator, from the register's own family split.
 - 2026-07-28 - The charter's own "11 migratable egress sites" was WRONG and is corrected before the phase starts - three of them are dictation transcription (exempt computation, RFC §12) and five are model invocations, which Article XI clause 1 names separately from egress; HS-107-04 triages before migrating and HS-107-05 re-derives the real count from the file - orchestrator, caught while authoring the story against the actual site list.
 - 2026-07-28 - Dictation semantics settled in their own story before any rerouting (RFC §7 rung 5), because `dictation_capture.py` sits in BOTH the tmux and TextTyper families and is the owner's most-used path - orchestrator.
+- 2026-07-29 - T03 (dictation → agent pane) is `process.input@1`, not a desktop typing operation: its destination is a controlled tmux-backed process and the Enter is terminal input - HS-107-01 contract, `docs/internal/DICTATION_COMMIT_BOUNDARY.md`.
+- 2026-07-29 - No new authority-basis name for any dictation path: every covered effect derives `direct_gesture` (`operation_policy.py:238`). Two findings for HS-107-02: a voice macro reached WITHOUT an active owner hold/release has no honest basis today, and the process-input decision encoder (`delivery/commands.py:84-88`) cannot yet carry `direct_gesture` — driver adaptation, not a spine change - HS-107-01.
 
 ## Decisions deferred
 
@@ -189,6 +192,19 @@ lands. Then docs, then closeout.
 
 ## Where we are
 
-**2026-07-28 — scaffolded, 0/7, NOT ACTIVE.** Phase 106 closes on the
-owner's sitting first. Nothing here is built. The number this phase
-exists to move: **4 covered of 40**.
+**2026-07-29 — ACTIVE, 1/7.** HS-107-01 done: dictation's commit
+boundary is a written, pinned contract
+(`docs/internal/DICTATION_COMMIT_BOUNDARY.md` — five paths + T03, each
+with effect, commit point, authority basis cited to
+`operation_policy.py` by line, receipt shape, and exemptions), with 8
+boundary tests passing against UNMODIFIED dictation and the register
+byte-identical (36 debt entries; spine diff exit 0). Baseline hold-key
+latency measured on real metal and captured in evidence:
+**median release-to-landed 926.3 ms** (transcribe 191.5, pipeline
+576.6, type 155.8) via
+`uv run python scripts/measure_dictation_latency.py --runs 3
+--warmups 1 --typing-mode driver --pipeline active --backend mlx` —
+HS-107-02 re-runs that exact command and must not regress it. Zero
+sites rerouted, as chartered. Next: HS-107-02 (typing families),
+then 03/04 in parallel. The number this phase exists to move:
+**4 covered of 40**.
