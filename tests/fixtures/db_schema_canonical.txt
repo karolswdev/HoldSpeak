@@ -477,6 +477,9 @@ table decisions: CREATE TABLE decisions (
     rationale TEXT,
     decided_at TEXT NOT NULL,
     date_basis TEXT NOT NULL DEFAULT 'meeting_date',
+    source_timestamp REAL,
+    provenance_label TEXT
+        CHECK (provenance_label IN ('reported','anchored')),
     source_artifact_id TEXT NOT NULL,
     source_meeting_id TEXT NOT NULL,
     source_state TEXT NOT NULL DEFAULT 'linked'

@@ -9,7 +9,7 @@ and the clients that call it (extracted from the real call sites in
 `web/src` and `apple/`). "server only" means no in-repo client calls
 it today.
 
-Routes: 369 (plus static mounts). iOS-consumed: 88. Web-consumed: 272.
+Routes: 370 (plus static mounts). iOS-consumed: 88. Web-consumed: 272.
 
 ## device_audio_ws
 
@@ -142,6 +142,7 @@ Routes: 369 (plus static mounts). iOS-consumed: 88. Web-consumed: 272.
 | GET | `/api/decisions` | server only |
 | GET | `/api/decisions/{decision_id}` | web |
 | POST | `/api/decisions/{decision_id}/accept` | server only |
+| GET | `/api/decisions/{decision_id}/moment` | server only |
 | POST | `/api/decisions/{decision_id}/reject` | server only |
 | POST | `/api/decisions/{decision_id}/supersede` | server only |
 

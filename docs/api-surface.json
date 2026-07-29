@@ -1020,6 +1020,14 @@
       "consumers": []
     },
     {
+      "path": "/api/decisions/{decision_id}/moment",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.decisions",
+      "consumers": []
+    },
+    {
       "path": "/api/decisions/{decision_id}/reject",
       "methods": [
         "POST"

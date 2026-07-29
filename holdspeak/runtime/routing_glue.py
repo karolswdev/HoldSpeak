@@ -381,8 +381,28 @@ class RoutingGlueMixin:
             if isinstance(window_context, dict) and window_context.get("window_id")
             else f"{execution_meeting_id}:preview"
         )
+        transcript_segments: list[dict[str, object]] = []
+        active_session = self._active_meeting_session()
+        active_state = active_session.state if active_session is not None else None
+        if active_state is not None and isinstance(window_context, dict):
+            window_start = float(window_context.get("start_seconds") or 0.0)
+            window_end = float(window_context.get("end_seconds") or 0.0)
+            for segment in (getattr(active_state, "segments", []) or []):
+                segment_start = float(segment.start_time)
+                segment_end = float(segment.end_time)
+                if segment_end < window_start or segment_start > window_end:
+                    continue
+                transcript_segments.append(
+                    {
+                        "text": str(segment.text or ""),
+                        "speaker": str(segment.speaker or ""),
+                        "start_time": segment_start,
+                        "end_time": segment_end,
+                    }
+                )
         execution_context = {
             "transcript": str(transcript or ""),
+            "transcript_segments": transcript_segments,
             "tags": [str(tag).strip().lower() for tag in (tags or []) if str(tag).strip()],
             "active_intents": list(route_payload.get("active_intents") or []),
             "intent_scores": dict(route_payload.get("intent_scores") or {}),

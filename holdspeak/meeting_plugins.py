@@ -245,8 +245,18 @@ def run_meeting_plugin_chain(
 
     if host is None:
         host = _build_host()
+    transcript_segments = [
+        {
+            "text": str(getattr(segment, "text", "") or ""),
+            "speaker": str(getattr(segment, "speaker", "") or ""),
+            "start_time": float(getattr(segment, "start_time", 0.0)),
+            "end_time": float(getattr(segment, "end_time", 0.0)),
+        }
+        for segment in (getattr(meeting, "segments", []) or [])
+    ]
     context = {
         "transcript": transcript,
+        "transcript_segments": transcript_segments,
         "tags": tags,
         "active_intents": list(route_payload.get("active_intents") or []),
         "intent_scores": dict(route_payload.get("intent_scores") or {}),

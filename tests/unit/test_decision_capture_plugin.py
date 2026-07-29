@@ -6,6 +6,7 @@ from holdspeak.plugins.builtin import register_builtin_plugins
 from holdspeak.plugins.builtin.decision_capture import (
     DecisionCapturePlugin,
     _extract_decisions,
+    _verified_timestamp,
 )
 from holdspeak.plugins.host import PluginHost
 
@@ -48,6 +49,38 @@ def test_run_decisions_only_is_success() -> None:
     assert out["confidence_hint"] == 1.0
     assert out["decisions"] == [{"decision": "Ship on Friday", "rationale": None}]
     assert out["open_questions"] == []
+
+
+def test_source_timestamp_window_accepts_end_boundary_and_records_named_drop() -> None:
+    segments = [{"text": "Ship Friday", "speaker": "Me", "start_time": 4.0, "end_time": 12.5}]
+    response = """```json
+{"decisions": [
+  {"decision": "Ship Friday", "rationale": null, "source_timestamp": 12.5},
+  {"decision": "Invented moment", "rationale": null, "source_timestamp": 12.501}
+], "open_questions": []}
+```"""
+
+    out = _plugin(response).run({"transcript": "Ship Friday", "transcript_segments": segments})
+
+    assert out["decisions"][0]["source_timestamp"] == 12.5
+    assert "source_timestamp" not in out["decisions"][1]
+    assert out["provenance_drops"] == [
+        {
+            "decision": "Invented moment",
+            "field": "source_timestamp",
+            "rejected_value": 12.501,
+            "reason": "source_timestamp_out_of_range",
+        }
+    ]
+    assert _verified_timestamp(4.0, (4.0, 12.5)) == 4.0
+    assert _verified_timestamp(12.5, (4.0, 12.5)) == 12.5
+    assert _verified_timestamp(3.999, (4.0, 12.5)) is None
+
+
+def test_timestamp_field_remains_optional_for_golden_output() -> None:
+    out = _plugin(_GOOD_JSON).run({"transcript": "We made some calls."})
+    assert all("source_timestamp" not in decision for decision in out["decisions"])
+    assert "provenance_drops" not in out
 
 
 def test_run_empty_is_failure() -> None:
