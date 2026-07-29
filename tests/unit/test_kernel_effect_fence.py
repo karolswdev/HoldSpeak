@@ -576,17 +576,17 @@ def test_effect_ledger_asserts_the_composed_family_counts() -> None:
     assert len(entries) == expected["total"] == sum(expected["families"].values()) == 21, (
         f"effect census must state 21 total sites, found {len(entries)}"
     )
-    assert covered == expected["covered"] == 5, (
-        f"effect census must state 5 covered sites, found {covered}"
+    assert covered == expected["covered"] == 3, (
+        f"effect census must state 3 covered sites, found {covered}"
     )
-    assert reads == expected.get("reads", 0) == 3, (
-        f"effect census must state 3 classified reads, found {reads}"
+    assert reads == expected.get("reads", 0) == 0, (
+        f"effect census must state 0 classified reads, found {reads}"
     )
-    assert exempt == expected.get("exempt_computation", 0) == 3, (
-        f"effect census must state 3 exempt computations, found {exempt}"
+    assert exempt == expected.get("exempt_computation", 0) == 0, (
+        f"effect census must state 0 exempt computations, found {exempt}"
     )
-    assert not_covered == expected["not_covered"] == 10, (
-        f"effect census must state 10 not-covered sites, found {not_covered}"
+    assert not_covered == expected["not_covered"] == 18, (
+        f"effect census must state 18 not-covered sites, found {not_covered}"
     )
     assert dict(families) == expected["families"] == {
         FAMILY_TMUX: 2,
@@ -599,8 +599,27 @@ def test_effect_ledger_asserts_the_composed_family_counts() -> None:
     assert all(entry.get("classification") in {"egress", "model_invocation"} for entry in egress)
     assert all(entry.get("egress_boundary") for entry in egress)
     assert all(entry["reason"].strip() for entry in entries)
+    debt = [
+        entry
+        for entry in entries
+        if entry["status"] not in {"covered", "read", "exempt_computation"}
+    ]
+    assert all(entry.get("closing_condition", "").strip() for entry in debt), (
+        "every debt site must name its closing condition: "
+        + ", ".join(entry["id"] for entry in debt if not entry.get("closing_condition", "").strip())
+    )
     assert len({entry["id"] for entry in entries}) == len(entries) == 21
     assert "No agent principal may reach" in ledger["legal_effect"]
+
+
+def test_independent_audit_demotions_are_not_counted_as_covered() -> None:
+    entries = {entry["id"]: entry for entry in _load_ledger()["sites"]}
+    covered = {site_id for site_id, entry in entries.items() if entry["status"] == "covered"}
+
+    assert covered == {"D09", "N03", "N04"}
+    for site_id in {"T01", "T02", "C02", "C03", "C05", "N10", "N11", "N12"}:
+        assert site_id not in covered, f"independent audit demoted {site_id} by name"
+        assert entries[site_id]["closing_condition"].strip()
 
 
 def _broker_modules() -> list[Path]:

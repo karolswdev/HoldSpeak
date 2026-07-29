@@ -288,7 +288,7 @@ def test_effect_ledger_records_the_typing_family_migration() -> None:
         if site["status"] not in {"covered", "read", "exempt_computation"}
     ]
 
-    assert len(debt) == ledger["expected"]["not_covered"] == 10
+    assert len(debt) == ledger["expected"]["not_covered"] == 18
     assert not {"T03", "T04", "D01", "D02", "D03", "D04", "D05", "D06", "D07", "D08"} & ids
     desktop = next(site for site in ledger["sites"] if site["id"] == "D09")
     assert desktop["status"] == "covered"
