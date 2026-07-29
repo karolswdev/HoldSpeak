@@ -29,7 +29,7 @@ import subprocess
 import threading
 import time
 from pathlib import Path
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Any, Callable, Optional
 from urllib.parse import urlparse
@@ -172,11 +172,20 @@ class PrReceiptsService:
         runner: Optional[Runner] = None,
         clock: Callable[[], float] = time.monotonic,
         gh_available: Optional[Callable[[], bool]] = None,
+        gate_matcher: Optional[Callable[[str], bool]] = None,
     ) -> None:
         self._registry = registry
         self._runner = runner or _default_runner
         self._clock = clock
         self._gh_available = gh_available or (lambda: shutil.which("gh") is not None)
+        if gate_matcher is None:
+            from .. import coder_gate
+
+            def gate_matcher(path: str) -> bool:
+                return coder_gate.gate_matches(
+                    coder_gate.load_gate_config(), cwd=path, tool="Bash"
+                )
+        self._gate_matcher = gate_matcher
         self._lock = threading.Lock()
         self._states: dict[str, _SourcestatePr] = {}
 
@@ -302,6 +311,10 @@ class PrReceiptsService:
             url = str(pr.get("url") or "")
             repo = _github_repo(url)
             worktree_reason = "no matching worktree"
+            agent_gated = bool(
+                matched_worktree and self._gate_matcher(str(matched_worktree.path))
+            )
+            agent_reason = worktree_reason if matched_worktree is None else "not gated"
             github_reason = "local-only branch" if not repo else ""
             rows.append(
                 {
@@ -321,8 +334,9 @@ class PrReceiptsService:
                     "needs_you": str(pr.get("state") or "").lower() == "open"
                     and rollup_conclusion(pr.get("statusCheckRollup")) in {"failing", "pending"},
                     "worktree_id": matched_worktree.worktree_id if matched_worktree else "",
+                    "agent_gate": "gated" if agent_gated else "ungated",
                     "verbs": {
-                        "send_agent": _verb(matched_worktree is not None, worktree_reason),
+                        "send_agent": _verb(agent_gated, agent_reason),
                         "draft_review": _verb(matched_worktree is not None, worktree_reason),
                         "post_comment": _verb(bool(repo), github_reason),
                         "post_status": _verb(bool(repo and head_sha), github_reason or "no head SHA"),

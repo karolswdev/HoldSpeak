@@ -277,7 +277,7 @@ describe("the immutable terminal target is never reinterpreted", () => {
     // Two discovered panes on different nodes map to different handles.
     const d1: DiscoveredTarget = {
       nodeId: "node_a", session: "s", paneId: "%1", targetId: "t1", targetGeneration: "g1",
-      sourceId: null, worktreeId: null, profileId: null, launchId: null, storyRef: null,
+      sourceId: null, worktreeId: null, profileId: null, gate: "not gated", launchId: null, storyRef: null,
       attemptId: null, attemptState: null, sessionBound: false,
     };
     const d2: DiscoveredTarget = { ...d1, nodeId: "node_b", targetId: "t2", targetGeneration: "g2" };

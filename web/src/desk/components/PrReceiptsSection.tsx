@@ -88,7 +88,7 @@ export function PrReceiptsSection() {
                       <Fragment key={key}>
                         <tr className={row.needs_you ? "is-needs-you" : undefined} data-desk-object="pr">
                           <th scope="row"><span className="desk-pr-number">#{row.number}</span> {row.title}</th>
-                          <td>{prStateLabel(row)}</td>
+                          <td>{prStateLabel(row)} <span className={`desk-pr-gate is-${row.agent_gate || "ungated"}`}>{(row.agent_gate || "ungated").toUpperCase()}</span></td>
                           <td><span className={`desk-pr-attmeans is-${row.attribution}`} title={row.basis}>{attributionLabel(row)}</span></td>
                           <td>
                             <span className="desk-shade-do desk-pr-verbs">
@@ -107,7 +107,7 @@ export function PrReceiptsSection() {
                           </td>
                         </tr>
                         {w.info ? (
-                          <tr className="desk-pr-detail"><td colSpan={4}><dl><div><dt>Author</dt><dd>{row.author}</dd></div><div><dt>Branch</dt><dd>{row.head_ref}</dd></div><div><dt>Observed</dt><dd>{row.observed_at}</dd></div><div><dt>CI</dt><dd>{row.ci}</dd></div></dl></td></tr>
+                          <tr className="desk-pr-detail"><td colSpan={4}><dl><div><dt>Author</dt><dd>{row.author}</dd></div><div><dt>Branch</dt><dd>{row.head_ref}</dd></div><div><dt>Observed</dt><dd>{row.observed_at}</dd></div><div><dt>CI</dt><dd>{row.ci}</dd></div><div><dt>Agent</dt><dd>{(row.agent_gate || "ungated").toUpperCase()}</dd></div></dl></td></tr>
                         ) : null}
                         {w.action ? (
                           <tr className="desk-pr-action"><td colSpan={4}>

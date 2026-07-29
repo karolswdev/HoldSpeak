@@ -86,6 +86,7 @@ function AttemptRow({
         {branch ? ` · ${branch}` : ""}
         {attempt.worktreeId ? ` · wt ${attempt.worktreeId.slice(0, 8)}` : ""}
         {!attempt.exact ? " · inexact" : ""}
+        {target ? ` · ${target.gate === "gated" ? "GATED" : "UNGATED"}` : ""}
       </span>
       {attempt.sessionId ? (
         <ReceiptLine sessionKey={`claude:${attempt.sessionId}`} />
@@ -392,6 +393,7 @@ export function DeliveryBoard() {
               <small>
                 {t.paneId} · {t.nodeId}
                 {t.attemptState ? ` · ${t.attemptState}` : ""}
+                {` · ${t.gate === "gated" ? "GATED" : "UNGATED"}`}
               </small>
             </button>
           ))}
