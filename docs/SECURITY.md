@@ -1,7 +1,7 @@
 # HoldSpeak Security & Privacy Posture
 
 **Status:** living document.
-**Last updated:** 2026-07-27.
+**Last updated:** 2026-07-29.
 
 This document is the threat model for HoldSpeak: what data it holds, where that
 data lives, what can leave the machine, and the decisions behind its at-rest
@@ -17,6 +17,10 @@ connector code is checked, but malicious in-process code can call raw process,
 network, tmux, typing, and desktop functions directly. Those transports remain
 public Python functions today.
 
+What changed is coverage, not containment: migrated routes in these families now
+admit and receipt, but raw primitives remain reachable in-process and RFC §5b
+confinement is still the threshold.
+
 This narrowing comes before any kernel prevention claim. The stronger boundary
 requires [RFC section 5b confinement](internal/PLAN_KERNEL_OPERATION_BROKER.md#5b-effect-capability-confinement-the-enforcement-boundary):
 raw effect primitives move into a privileged executor process, while untrusted
@@ -27,10 +31,16 @@ or agent-authored code executes.
 The checked-in [effect debt register](../holdspeak/kernel/effect_ledger.json)
 records the current gap under
 [Constitution Article XI clause 6](internal/CONSTITUTION.md#article-xi--the-kernel):
-40 effect sites are enumerated, 4 are covered, and 36 remain outside the kernel.
-A fence test refuses an unlisted addition or silent removal. The 36 are declared
-migration debt, not protection supplied by the broker. Clause 6 and the register
-sunset together when the register is empty, after every named path has migrated.
+**21 total / 3 covered / 18 debt**. Against the corrected baseline of 2
+covered among 40 sites, the audited migration delta is **38 debt → 18 debt**.
+The remainder is five mixed sites (T01/T02 and C02/C03/C05), twelve bypass
+sites, and one dormant site. N10-N12 are conservatively counted as bypass debt
+pending the owner's constitutional
+ruling on whether those dictation model invocations are exempt computation.
+A fence test refuses an unlisted addition or silent removal. Debt is declared
+migration debt, not protection supplied by the broker. Clause 6 remains in
+force, and its sunset condition remains unmet: it expires only when the register
+is empty.
 
 At the HTTP and WebSocket edge, credentials derive one of three authenticated
 principal kinds: owner, agent, or node. Routing is deny by default. The owner
