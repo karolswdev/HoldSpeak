@@ -126,6 +126,12 @@ def test_facets_compose_with_each_other_and_with_search(client, archive):
     assert isinstance(search["meetings"][0]["intel_status"], str)
 
 
+def test_legacy_q_parameter_never_silently_returns_unfiltered_archive(client, archive):
+    response = client.get("/api/meetings", params={"q": "zebra"})
+    assert response.status_code == 422
+    assert "use 'search'" in response.json()["error"]
+
+
 def test_facets_see_the_whole_archive_not_a_page(client, archive):
     # m-early is the oldest (outside a limit=1 first page) — the facet
     # still finds it because filtering happens in SQL.

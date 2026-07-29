@@ -1,12 +1,11 @@
 """Shared grounding hydration (HS-87-04).
 
-One hydration truth for ask and steer: `hydrate_refs` loads meeting
-and artifact references from the canonical store into raw
-`(kind, title, subtitle, text)` blocks; each consumer formats them
-its own way (ask's `[MEETING: …]` headers, the steer's `--- from … ---`
-fences). Factored verbatim from the Phase-83 ask route — its behavior
-is byte-identical, its tests pass unmodified (the Phase-63 move
-discipline).
+One hydration truth for ask and steer: `hydrate_refs` loads canonical
+references into raw `(kind, title, subtitle, text)` blocks; each consumer
+formats them its own way (ask's `[MEETING: …]` headers, the steer's
+`--- from … ---` fences). Project references select their bounded member
+set by memory relevance when a query is present, or by labeled recency when
+it is not, and expand as individually citable source blocks.
 """
 
 from __future__ import annotations
@@ -36,11 +35,26 @@ STEER_CONTEXT_CAP_BYTES = 8_000
 class GroundingBlock:
     """One hydrated reference, before any consumer's formatting."""
 
-    kind: str  # "meeting" | "artifact"
+    kind: str  # meeting | artifact | decision | note | container kind
     ref: str
     title: str
     subtitle: str  # meeting day, or an artifact's parent-meeting title ("" if none)
     text: str
+
+
+@dataclass(frozen=True)
+class GroundingHydrationResult:
+    """Additive selection receipt for bounded grounding hydration."""
+
+    blocks: list[GroundingBlock]
+    unknown: list[str]
+    selection: str
+    matched_count: int
+    overflow_count: int
+
+    @property
+    def source_refs(self) -> list[str]:
+        return [f"{block.kind}:{block.ref}" for block in self.blocks]
 
 
 def meeting_digest(state: Any) -> str:
@@ -59,22 +73,23 @@ def meeting_digest(state: Any) -> str:
     return "\n\n".join(p for p in parts if p)
 
 
-def hydrate_refs(
+def hydrate_refs_detailed(
     db: Any,
     meeting_ids: list[str],
     artifact_ids: list[str],
     expand: str,
     qualified_refs: Optional[list[str]] = None,
-) -> tuple[list[GroundingBlock], list[str]]:
-    """Load the referenced meetings/artifacts into raw blocks.
-
-    Returns `(blocks, unknown_ids)`. An id the hub does not hold is
-    returned as unknown (the caller refuses loudly; grounding is never
-    a best-effort claim). This is the ONE hydration path — ask and
-    steer both read here.
-    """
+    *,
+    query: Optional[str] = None,
+) -> GroundingHydrationResult:
+    """Load refs with an honest receipt for selection and bounded overflow."""
     blocks: list[GroundingBlock] = []
     unknown: list[str] = []
+    stats: dict[str, Any] = {
+        "selection": "explicit",
+        "matched_count": 0,
+        "overflow_count": 0,
+    }
     for mid in meeting_ids:
         try:
             state = db.meetings.get_meeting(mid)
@@ -131,14 +146,58 @@ def hydrate_refs(
         except ValueError:
             unknown.append(str(raw_ref))
             continue
-        more, missing = _hydrate_qualified(db, ref, expand, visited)
+        more, missing = _hydrate_qualified(
+            db, ref, expand, visited, query=query, stats=stats
+        )
         blocks.extend(more)
         unknown.extend(missing)
-    return blocks, unknown
+    # Expanded containers still obey the original global 16-ref context cap.
+    # Count every project-search/container miss plus any cross-container excess;
+    # only then cut, so the receipt always says exactly how many matched sources
+    # the bounded prompt had to leave out.
+    overflow = int(stats["overflow_count"])
+    matched = len(blocks) + overflow
+    if len(blocks) > GROUNDING_MAX_REFS:
+        overflow += len(blocks) - GROUNDING_MAX_REFS
+        blocks = blocks[:GROUNDING_MAX_REFS]
+    return GroundingHydrationResult(
+        blocks=blocks,
+        unknown=unknown,
+        selection=str(stats["selection"]),
+        matched_count=matched,
+        overflow_count=overflow,
+    )
+
+
+def hydrate_refs(
+    db: Any,
+    meeting_ids: list[str],
+    artifact_ids: list[str],
+    expand: str,
+    qualified_refs: Optional[list[str]] = None,
+    *,
+    query: Optional[str] = None,
+) -> tuple[list[GroundingBlock], list[str]]:
+    """Compatibility tuple over :func:`hydrate_refs_detailed`."""
+    result = hydrate_refs_detailed(
+        db,
+        meeting_ids,
+        artifact_ids,
+        expand,
+        qualified_refs=qualified_refs,
+        query=query,
+    )
+    return result.blocks, result.unknown
 
 
 def _hydrate_qualified(
-    db: Any, ref: str, expand: str, visited: set[str]
+    db: Any,
+    ref: str,
+    expand: str,
+    visited: set[str],
+    *,
+    query: Optional[str] = None,
+    stats: Optional[dict[str, Any]] = None,
 ) -> tuple[list[GroundingBlock], list[str]]:
     if ref in visited:
         return [], []
@@ -177,6 +236,15 @@ def _hydrate_qualified(
         if note is None:
             return [], [ref]
         return [GroundingBlock(kind, resource_id, note.title or resource_id, "", note.body_markdown)], []
+    if kind == "decision":
+        decision = db.decisions.get(resource_id)
+        if decision is None:
+            return [], [ref]
+        rationale = f"\n\nRationale: {decision.rationale}" if decision.rationale else ""
+        return [GroundingBlock(
+            kind, resource_id, decision.text, decision.decided_at,
+            decision.text + rationale,
+        )], []
     if kind == "knowledge":
         kb = db.kbs.get(resource_id)
         if kb is None:
@@ -184,25 +252,64 @@ def _hydrate_qualified(
         members = [row.resource_ref for row in db.knowledge_memberships.list_for_knowledge(resource_id)]
         if not members:
             members = [value for value in kb.member_ids if ":" in value]
-        return _hydrate_container(db, kind, resource_id, kb.name, members, expand, visited)
+        return _hydrate_container(
+            db, kind, resource_id, kb.name, members, expand, visited,
+            query=query, stats=stats,
+        )
     if kind == "zone":
         zone = db.directories.get(resource_id)
         if zone is None:
             return [], [ref]
         members = [row.primitive_id for row in db.directory_memberships.list_for_directory(resource_id)]
-        return _hydrate_container(db, kind, resource_id, zone.name, members, expand, visited)
+        return _hydrate_container(
+            db, kind, resource_id, zone.name, members, expand, visited,
+            query=query, stats=stats,
+        )
     if kind == "project":
         project = db.projects.get_project(resource_id)
         if project is None:
             return [], [ref]
-        members = [row.resource_ref for row in db.project_relationships.list_for_project(resource_id)]
-        return _hydrate_container(db, kind, resource_id, project.name, members, expand, visited)
+        if query and str(query).strip():
+            search = db.memory.search(
+                str(query),
+                project_id=resource_id,
+                limit=GROUNDING_MAX_REFS,
+            )
+            members = [hit.source_ref for hit in search.hits]
+            if stats is not None:
+                stats["selection"] = "relevance"
+                stats["matched_count"] = int(stats["matched_count"]) + search.total
+                stats["overflow_count"] = int(stats["overflow_count"]) + max(
+                    0, search.total - len(members)
+                )
+        else:
+            all_members = [
+                row.resource_ref
+                for row in db.project_relationships.list_for_project(resource_id)
+            ]
+            members = all_members[:GROUNDING_MAX_REFS]
+            if stats is not None:
+                stats["selection"] = "recency_fallback"
+                stats["matched_count"] = int(stats["matched_count"]) + len(all_members)
+                stats["overflow_count"] = int(stats["overflow_count"]) + max(
+                    0, len(all_members) - len(members)
+                )
+        # A project expands to its selected source blocks. It is not flattened into
+        # one anonymous container, so every model-visible block keeps a citable ref.
+        return _hydrate_members(
+            db, members, expand, visited, query=query, stats=stats
+        )
     return [], [ref]
 
 
-def _hydrate_container(
-    db: Any, kind: str, resource_id: str, title: str, members: list[str],
-    expand: str, visited: set[str],
+def _hydrate_members(
+    db: Any,
+    members: list[str],
+    expand: str,
+    visited: set[str],
+    *,
+    query: Optional[str] = None,
+    stats: Optional[dict[str, Any]] = None,
 ) -> tuple[list[GroundingBlock], list[str]]:
     children: list[GroundingBlock] = []
     unknown: list[str] = []
@@ -212,9 +319,29 @@ def _hydrate_container(
         except ValueError:
             unknown.append(member)
             continue
-        blocks, missing = _hydrate_qualified(db, canonical, expand, visited)
+        blocks, missing = _hydrate_qualified(
+            db, canonical, expand, visited, query=query, stats=stats
+        )
         children.extend(blocks)
         unknown.extend(missing)
+    return children, unknown
+
+
+def _hydrate_container(
+    db: Any,
+    kind: str,
+    resource_id: str,
+    title: str,
+    members: list[str],
+    expand: str,
+    visited: set[str],
+    *,
+    query: Optional[str] = None,
+    stats: Optional[dict[str, Any]] = None,
+) -> tuple[list[GroundingBlock], list[str]]:
+    children, unknown = _hydrate_members(
+        db, members, expand, visited, query=query, stats=stats
+    )
     text = "\n\n".join(
         f"[{block.kind.upper()}: {block.title}]\n{block.text}" for block in children
     )
@@ -223,30 +350,64 @@ def _hydrate_container(
     return [container], unknown
 
 
-def hydrate_grounding_blocks(
-    db: Any, meeting_ids: list[str], artifact_ids: list[str], expand: str,
+def hydrate_grounding_blocks_detailed(
+    db: Any,
+    meeting_ids: list[str],
+    artifact_ids: list[str],
+    expand: str,
     qualified_refs: Optional[list[str]] = None,
-) -> tuple[list[str], list[str], list[str], list[str]]:
-    """Ask's formatting: `(blocks, ids, titles, unknown_ids)` with the
-    `[MEETING: …]` / `[ARTIFACT: …]` headers baked in. A thin format
-    over `hydrate_refs` — byte-identical to the pre-factoring helper."""
-    hydrated, unknown = hydrate_refs(
-        db, meeting_ids, artifact_ids, expand, qualified_refs=qualified_refs
+    *,
+    query: Optional[str] = None,
+) -> tuple[list[str], list[str], list[str], GroundingHydrationResult]:
+    """Ask formatting plus the additive selection/overflow receipt."""
+    result = hydrate_refs_detailed(
+        db,
+        meeting_ids,
+        artifact_ids,
+        expand,
+        qualified_refs=qualified_refs,
+        query=query,
     )
     out_blocks: list[str] = []
     ids: list[str] = []
     titles: list[str] = []
-    for b in hydrated:
-        label = b.kind.upper()
+    for block in result.blocks:
+        label = block.kind.upper()
         header = (
-            f"[{label}: {b.title} — {b.subtitle}]"
-            if b.subtitle
-            else f"[{label}: {b.title}]"
+            f"[{label}: {block.title} — {block.subtitle}]"
+            if block.subtitle
+            else f"[{label}: {block.title}]"
         )
-        out_blocks.append(f"{header}\n{b.text}" if b.text else header)
-        ids.append(b.ref)
-        titles.append(b.title)
-    return out_blocks, ids, titles, unknown
+        ref_line = f"[REF: {block.kind}:{block.ref}]"
+        out_blocks.append(
+            f"{header}\n{ref_line}\n{block.text}"
+            if block.text
+            else f"{header}\n{ref_line}"
+        )
+        ids.append(block.ref)
+        titles.append(block.title)
+    return out_blocks, ids, titles, result
+
+
+def hydrate_grounding_blocks(
+    db: Any,
+    meeting_ids: list[str],
+    artifact_ids: list[str],
+    expand: str,
+    qualified_refs: Optional[list[str]] = None,
+    *,
+    query: Optional[str] = None,
+) -> tuple[list[str], list[str], list[str], list[str]]:
+    """Compatibility tuple preserving the pre-HS-109-04 result shape."""
+    blocks, ids, titles, result = hydrate_grounding_blocks_detailed(
+        db,
+        meeting_ids,
+        artifact_ids,
+        expand,
+        qualified_refs=qualified_refs,
+        query=query,
+    )
+    return blocks, ids, titles, result.unknown
 
 
 def compose_steer(
@@ -276,7 +437,9 @@ def compose_steer(
     for b in blocks:
         subtitle = f" ({b.subtitle})" if b.subtitle else ""
         header = f'--- from {b.kind}: "{b.title}"{subtitle} ---'
-        fences.append(f"{header}\n{b.text}\n--- end {b.kind} ---")
+        fences.append(
+            f"{header}\n[ref: {b.kind}:{b.ref}]\n{b.text}\n--- end {b.kind} ---"
+        )
     context = "\n\n".join(fences)
     context_bytes = len(context.encode("utf-8"))
     if context_bytes > cap_bytes:
@@ -399,12 +562,15 @@ __all__ = [
     "ENTAILMENT_ENTAILED_THRESHOLD",
     "ENTAILMENT_PARTIAL_THRESHOLD",
     "GroundingBlock",
+    "GroundingHydrationResult",
     "classify_support",
     "compose_steer",
     "decompose_claims",
     "entailment_score",
     "hydrate_grounding_blocks",
+    "hydrate_grounding_blocks_detailed",
     "hydrate_refs",
+    "hydrate_refs_detailed",
     "meeting_digest",
     "score_claims",
 ]

@@ -325,6 +325,17 @@ Logs are written to: {LOG_FILE}
         help="Generate a fresh device PSK and persist it",
     )
 
+    # Long-horizon memory index maintenance (HS-109-04).
+    memory_parser = subparsers.add_parser(
+        "memory",
+        help="Long-horizon memory index maintenance",
+    )
+    memory_subparsers = memory_parser.add_subparsers(dest="memory_action")
+    memory_subparsers.add_parser(
+        "rebuild-index",
+        help="Rebuild decision, artifact, and note search indexes",
+    )
+
     # Doctor subcommand
     doctor_parser = subparsers.add_parser(
         "doctor",
@@ -466,6 +477,18 @@ Logs are written to: {LOG_FILE}
     # Handle device-psk subcommand (HS-14-03)
     if args.command == "device-psk":
         raise SystemExit(run_device_psk_command(args))
+
+    if args.command == "memory":
+        if getattr(args, "memory_action", None) != "rebuild-index":
+            print("usage: holdspeak memory rebuild-index")
+            raise SystemExit(2)
+        from .db import get_database
+
+        counts = get_database().memory.rebuild()
+        print("Memory index rebuilt: " + ", ".join(
+            f"{key}={value}" for key, value in counts.items()
+        ))
+        return
 
     # Handle doctor subcommand
     if args.command == "doctor":

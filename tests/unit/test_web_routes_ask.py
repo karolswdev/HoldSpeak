@@ -248,6 +248,8 @@ def test_ask_grounding_hydrates_references_from_the_hub_store(env, monkeypatch) 
     assert up.startswith("What did we decide?")
     # Provenance-headed blocks — the ONE envelope shape (story 15-12).
     assert "[MEETING: Q3 kickoff — 2026-07-01]" in up
+    assert "[REF: meeting:m_env1]" in up
+    assert "[REF: artifact:artifact_env1]" in up
     assert "Kickoff decided the manifest ships." in up      # summary expand = intel digest
     assert "- Ship the manifest" in up
     assert "[ARTIFACT: Decisions — Q3 kickoff]" in up
@@ -259,6 +261,8 @@ def test_ask_grounding_hydrates_references_from_the_hub_store(env, monkeypatch) 
     assert body["grounding"] == {
         "meeting_ids": ["m_env1"], "artifact_ids": ["artifact_env1"],
         "expand": "summary", "titles": ["Q3 kickoff", "Decisions"],
+        "source_refs": ["meeting:m_env1", "artifact:artifact_env1"],
+        "selection": "explicit", "matched_count": 2, "overflow_count": 0,
     }
 
 

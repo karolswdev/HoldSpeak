@@ -43,6 +43,7 @@ from .delivery_attempts import WorkAttemptRepository
 from .delivery_receipts import DeliveryCommandReceiptRepository
 from .desktop_typing import DesktopTypeReceiptRepository
 from .decisions import DecisionRepository, backfill_decisions
+from .memory import MemoryRepository, rebuild_memory_index
 
 log = get_logger("db")
 
@@ -51,7 +52,7 @@ log = get_logger("db")
 
 # Default database location
 DEFAULT_DB_PATH = Path.home() / ".local" / "share" / "holdspeak" / "holdspeak.db"
-SCHEMA_VERSION = 30  # v30: durable decision records (HS-109-01)
+SCHEMA_VERSION = 31  # v31: decisions/artifacts/notes memory FTS (HS-109-04)
 
 
 class SchemaVersionError(RuntimeError):
@@ -924,6 +925,61 @@ CREATE TABLE IF NOT EXISTS notes (
     deleted INTEGER NOT NULL DEFAULT 0
 );
 
+-- HS-109-04: one retrieval contract, three separately ranked FTS corpora.
+-- Internal-content tables retain stable text source ids directly; this avoids
+-- pretending the stores' TEXT primary keys are FTS integer content_rowids.
+CREATE VIRTUAL TABLE IF NOT EXISTS decisions_memory_fts USING fts5(
+    source_id UNINDEXED, text, rationale
+);
+CREATE VIRTUAL TABLE IF NOT EXISTS artifacts_memory_fts USING fts5(
+    source_id UNINDEXED, title, body_markdown
+);
+CREATE VIRTUAL TABLE IF NOT EXISTS notes_memory_fts USING fts5(
+    source_id UNINDEXED, title, body_markdown
+);
+
+CREATE TRIGGER IF NOT EXISTS decisions_memory_ai AFTER INSERT ON decisions
+WHEN NEW.deleted = 0 AND NEW.source_state = 'linked' BEGIN
+    INSERT INTO decisions_memory_fts(source_id,text,rationale)
+    VALUES(NEW.id,NEW.text,COALESCE(NEW.rationale,''));
+END;
+CREATE TRIGGER IF NOT EXISTS decisions_memory_ad AFTER DELETE ON decisions BEGIN
+    DELETE FROM decisions_memory_fts WHERE source_id=OLD.id;
+END;
+CREATE TRIGGER IF NOT EXISTS decisions_memory_au AFTER UPDATE ON decisions BEGIN
+    DELETE FROM decisions_memory_fts WHERE source_id=OLD.id;
+    INSERT INTO decisions_memory_fts(source_id,text,rationale)
+    SELECT NEW.id,NEW.text,COALESCE(NEW.rationale,'')
+    WHERE NEW.deleted=0 AND NEW.source_state='linked';
+END;
+
+CREATE TRIGGER IF NOT EXISTS artifacts_memory_ai AFTER INSERT ON artifacts BEGIN
+    INSERT INTO artifacts_memory_fts(source_id,title,body_markdown)
+    VALUES(NEW.id,NEW.title,NEW.body_markdown);
+END;
+CREATE TRIGGER IF NOT EXISTS artifacts_memory_ad AFTER DELETE ON artifacts BEGIN
+    DELETE FROM artifacts_memory_fts WHERE source_id=OLD.id;
+END;
+CREATE TRIGGER IF NOT EXISTS artifacts_memory_au AFTER UPDATE ON artifacts BEGIN
+    DELETE FROM artifacts_memory_fts WHERE source_id=OLD.id;
+    INSERT INTO artifacts_memory_fts(source_id,title,body_markdown)
+    VALUES(NEW.id,NEW.title,NEW.body_markdown);
+END;
+
+CREATE TRIGGER IF NOT EXISTS notes_memory_ai AFTER INSERT ON notes
+WHEN NEW.deleted = 0 BEGIN
+    INSERT INTO notes_memory_fts(source_id,title,body_markdown)
+    VALUES(NEW.id,NEW.title,NEW.body_markdown);
+END;
+CREATE TRIGGER IF NOT EXISTS notes_memory_ad AFTER DELETE ON notes BEGIN
+    DELETE FROM notes_memory_fts WHERE source_id=OLD.id;
+END;
+CREATE TRIGGER IF NOT EXISTS notes_memory_au AFTER UPDATE ON notes BEGIN
+    DELETE FROM notes_memory_fts WHERE source_id=OLD.id;
+    INSERT INTO notes_memory_fts(source_id,title,body_markdown)
+    SELECT NEW.id,NEW.title,NEW.body_markdown WHERE NEW.deleted=0;
+END;
+
 -- KB (organization/synced): the desk's knowledge container — a named bag of
 -- member primitive ids. DISTINCT from project.yaml kb-map / .hs context files.
 CREATE TABLE IF NOT EXISTS kbs (
@@ -1497,6 +1553,7 @@ class Database:
         self.delivery_receipts = DeliveryCommandReceiptRepository(self._connection, self)  # HS-94-06
         self.desktop_type_receipts = DesktopTypeReceiptRepository(self._connection, self)
         self.decisions = DecisionRepository(self._connection, self)
+        self.memory = MemoryRepository(self._connection, self)
 
     @contextmanager
     def _connection(self) -> Iterator[sqlite3.Connection]:
@@ -1903,6 +1960,11 @@ class Database:
         log.info(
             "Decision backfill: "
             + ", ".join(f"{key}={value}" for key, value in decision_backfill.items())
+        )
+        memory_counts = rebuild_memory_index(conn)
+        log.info(
+            "Memory index rebuild: "
+            + ", ".join(f"{key}={value}" for key, value in memory_counts.items())
         )
         conn.execute(
             "INSERT OR REPLACE INTO schema_version (version) VALUES (?)",

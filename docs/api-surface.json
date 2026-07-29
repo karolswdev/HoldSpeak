@@ -2563,6 +2563,16 @@
       ]
     },
     {
+      "path": "/api/memory/search",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.memory",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/mesh/inbox",
       "methods": [
         "GET"
