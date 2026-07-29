@@ -1,15 +1,15 @@
 # Phase 109 - The Long Memory
 
-**Status:** IN PROGRESS (3/8). Chartered 2026-07-29 by owner direction:
+**Status:** IN PROGRESS (4/8). Chartered 2026-07-29 by owner direction:
 Phase 109 (the second userland program) delivered next; Phase 108
 (The Locked Room, RFC §5b confinement) stays reserved with its
 machine-asserted work list in BACKLOG candidate Y.
 
-**Last updated:** 2026-07-29 (HS-109-04 shipped — the memory index:
-three FTS indexes, ranked cited retrieval in 1.3 ms over the real
-archive, grounding with per-source refs + honest overflow counts, the
-q/search wire defect fixed; control-vs-treatment on `.43`: ungrounded
-hallucinates, grounded cites the real decision record).
+**Last updated:** 2026-07-29 (HS-109-02 shipped — decisions carry
+their transcript moments, proven live on `.43`: verified `reported`
+moments, named `provenance_drops`, the resolver jump landing on the
+exact segment; two live-caught defects fixed — the stale-CHECK table
+rebuild in v32 and text-anchored decision identity).
 
 ## Why this phase exists
 
@@ -178,7 +178,7 @@ plugins already produce, never a rival store the plugins must learn.
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
 | HS-109-01 | The decision record — first-class, with lifecycle | done | [story-01-decision-record](./story-01-decision-record.md) | [evidence-story-01](./evidence-story-01.md) |
-| HS-109-02 | Provenance — the transcript moment | backlog | [story-02-provenance](./story-02-provenance.md) | — |
+| HS-109-02 | Provenance — the transcript moment | done | [story-02-provenance](./story-02-provenance.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-109-03 | Decisions become artifacts — promotion | backlog | [story-03-promotion](./story-03-promotion.md) | — |
 | HS-109-04 | Long-horizon retrieval — the memory index | done | [story-04-retrieval](./story-04-retrieval.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-109-05 | The Project Memory window | backlog | [story-05-memory-window](./story-05-memory-window.md) | — |
@@ -242,7 +242,26 @@ Then docs, then closeout.
 
 ## Where we are
 
-**2026-07-29 — HS-109-04 shipped (the memory can be asked).** Three
+**2026-07-29 — HS-109-02 shipped (the memory has moments).** The
+v0.2.0 capture plugin emits optional per-decision timestamps, verified
+against the meeting's REAL segment range — an unverifiable claim is
+DROPPED with a named reason in `provenance_drops`, never stored.
+Verified moments upgrade records to `date_basis=transcript_moment`
+with `reported` provenance; the backfill anchors only
+exact-normalized-substring hits as `anchored`; the resolver maps a
+moment to its segment (`GET /api/decisions/{id}/moment`). Live on
+`.43`: three real decisions with verified moments, the jump landing on
+the exact segment. Two defects the live walk caught and fixed: (1) the
+owner's real archive carried a baked
+`CHECK (date_basis IN ('meeting_date'))` from an intermediate v30
+build — the v32 migration now rebuilds such tables via the rename
+pattern, recreating sever + FTS triggers (pinned by test); (2)
+decision identity hashed the whole payload, so a rerun gaining a
+timestamp DUPLICATED records — identity now anchors on meeting +
+artifact + normalized text and provenance sharpens in place (pinned by
+test; the archive's projection rebuilt clean). Suite 4,352/37/2-known.
+Earlier:
+**HS-109-04 shipped (the memory can be asked).** Three
 FTS5 indexes (decisions/artifacts/notes) with trigger-maintained
 freshness — severed and tombstoned rows leave via triggers, never
 query filters — per-kind bm25 normalized and tier-interleaved so long

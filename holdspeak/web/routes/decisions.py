@@ -80,6 +80,31 @@ def build_decisions_router(ctx: WebContext) -> APIRouter:
             return JSONResponse({"error": "decision_not_found"}, status_code=404)
         return JSONResponse(result)
 
+    @router.get("/{decision_id}/moment")
+    async def get_decision_moment(decision_id: str, request: Request) -> Any:
+        denied = _authority_refusal(request, PrincipalRight.READ)
+        if denied is not None:
+            return denied
+        from ...db import get_database
+
+        repository = get_database().decisions
+        decision = repository.get(decision_id)
+        if decision is None:
+            return JSONResponse({"error": "decision_not_found"}, status_code=404)
+        moment = repository.resolve_decision_moment(decision_id)
+        if moment is None:
+            return JSONResponse(
+                {"error": "decision_moment_unavailable", "decision_id": decision_id},
+                status_code=404,
+            )
+        return JSONResponse(
+            {
+                "decision_id": decision.id,
+                "provenance_label": decision.provenance_label,
+                "moment": moment.to_dict(),
+            }
+        )
+
     def _owner(request: Request) -> Optional[JSONResponse]:
         principal = getattr(request.state, "principal", UNAUTHENTICATED)
         if principal.kind is PrincipalKind.OWNER and principal.permits(PrincipalRight.OWNER):

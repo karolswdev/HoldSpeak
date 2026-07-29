@@ -52,7 +52,7 @@ log = get_logger("db")
 
 # Default database location
 DEFAULT_DB_PATH = Path.home() / ".local" / "share" / "holdspeak" / "holdspeak.db"
-SCHEMA_VERSION = 31  # v31: decisions/artifacts/notes memory FTS (HS-109-04)
+SCHEMA_VERSION = 32  # v31: memory FTS (HS-109-04); v32: decision transcript moments (HS-109-02)
 
 
 class SchemaVersionError(RuntimeError):
@@ -458,6 +458,9 @@ CREATE TABLE IF NOT EXISTS decisions (
     rationale TEXT,
     decided_at TEXT NOT NULL,
     date_basis TEXT NOT NULL DEFAULT 'meeting_date',
+    source_timestamp REAL,
+    provenance_label TEXT
+        CHECK (provenance_label IN ('reported','anchored')),
     source_artifact_id TEXT NOT NULL,
     source_meeting_id TEXT NOT NULL,
     source_state TEXT NOT NULL DEFAULT 'linked'
@@ -1956,6 +1959,111 @@ class Database:
             VALUES (1, 1, 30, datetime('now'))
             """
         )
+        # v32 (HS-109-02): verified transcript moments on durable decisions.
+        # CREATE TABLE IF NOT EXISTS cannot grow an existing v30 table, so both
+        # columns follow the guarded additive-column house pattern.
+        # A v30 build briefly baked `CHECK (date_basis IN ('meeting_date'))`
+        # into live tables; transcript moments cannot land through it. SQLite
+        # cannot alter a CHECK, so such tables are rebuilt via the rename
+        # pattern before the additive columns below.
+        stale_ddl = conn.execute(
+            "SELECT sql FROM sqlite_master WHERE type='table' AND name='decisions'"
+        ).fetchone()
+        if stale_ddl and "date_basis IN ('meeting_date')" in stale_ddl[0]:
+            old_cols = [
+                row[1]
+                for row in conn.execute("PRAGMA table_info(decisions)").fetchall()
+            ]
+            conn.execute("ALTER TABLE decisions RENAME TO decisions_stale_v30")
+            conn.executescript(
+                """
+                DROP TRIGGER IF EXISTS decisions_sever_meeting_source;
+                DROP TRIGGER IF EXISTS decisions_memory_ai;
+                DROP TRIGGER IF EXISTS decisions_memory_ad;
+                DROP TRIGGER IF EXISTS decisions_memory_au;
+                CREATE TABLE decisions (
+                    id TEXT PRIMARY KEY,
+                    text TEXT NOT NULL,
+                    rationale TEXT,
+                    decided_at TEXT NOT NULL,
+                    date_basis TEXT NOT NULL DEFAULT 'meeting_date',
+                    source_timestamp REAL,
+                    provenance_label TEXT
+                        CHECK (provenance_label IN ('reported','anchored')),
+                    source_artifact_id TEXT NOT NULL,
+                    source_meeting_id TEXT NOT NULL,
+                    source_state TEXT NOT NULL DEFAULT 'linked'
+                        CHECK (source_state IN ('linked','source_deleted')),
+                    project_key TEXT,
+                    lifecycle TEXT NOT NULL DEFAULT 'recorded'
+                        CHECK (lifecycle IN ('recorded','accepted','superseded','rejected')),
+                    superseded_by TEXT REFERENCES decisions(id),
+                    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+                    updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+                    last_modified TEXT NOT NULL DEFAULT (datetime('now')),
+                    deleted INTEGER NOT NULL DEFAULT 0
+                );
+                CREATE INDEX IF NOT EXISTS idx_decisions_project
+                ON decisions(project_key, lifecycle, decided_at DESC);
+                CREATE INDEX IF NOT EXISTS idx_decisions_meeting
+                ON decisions(source_meeting_id, decided_at DESC);
+                CREATE INDEX IF NOT EXISTS idx_decisions_lifecycle
+                ON decisions(lifecycle, decided_at DESC);
+                CREATE INDEX IF NOT EXISTS idx_decisions_superseded_by
+                ON decisions(superseded_by);
+                CREATE TRIGGER IF NOT EXISTS decisions_sever_meeting_source
+                AFTER DELETE ON meetings BEGIN
+                    UPDATE decisions
+                       SET source_state = 'source_deleted',
+                           updated_at = datetime('now'),
+                           last_modified = datetime('now')
+                     WHERE source_meeting_id = OLD.id AND deleted = 0;
+                END;
+                """
+            )
+            # The rename dragged the v31 memory-FTS triggers to the stale
+            # table and the drop takes them with it — recreate them so the
+            # index stays trigger-fresh (rebuild_memory_index below restores
+            # content either way).
+            conn.executescript(
+                """
+                CREATE TRIGGER IF NOT EXISTS decisions_memory_ai
+                AFTER INSERT ON decisions
+                WHEN NEW.deleted = 0 AND NEW.source_state = 'linked' BEGIN
+                    INSERT INTO decisions_memory_fts(source_id,text,rationale)
+                    VALUES(NEW.id,NEW.text,COALESCE(NEW.rationale,''));
+                END;
+                CREATE TRIGGER IF NOT EXISTS decisions_memory_ad
+                AFTER DELETE ON decisions BEGIN
+                    DELETE FROM decisions_memory_fts WHERE source_id=OLD.id;
+                END;
+                CREATE TRIGGER IF NOT EXISTS decisions_memory_au
+                AFTER UPDATE ON decisions BEGIN
+                    DELETE FROM decisions_memory_fts WHERE source_id=OLD.id;
+                    INSERT INTO decisions_memory_fts(source_id,text,rationale)
+                    SELECT NEW.id,NEW.text,COALESCE(NEW.rationale,'')
+                    WHERE NEW.deleted=0 AND NEW.source_state='linked';
+                END;
+                """
+            )
+            carried = ",".join(c for c in old_cols if c not in
+                               ("source_timestamp", "provenance_label"))
+            conn.execute("DELETE FROM decisions_memory_fts")
+            conn.execute(
+                f"INSERT INTO decisions ({carried}) "
+                f"SELECT {carried} FROM decisions_stale_v30"
+            )
+            conn.execute("DROP TABLE decisions_stale_v30")
+        decision_cols = {
+            row[1] for row in conn.execute("PRAGMA table_info(decisions)").fetchall()
+        }
+        if "source_timestamp" not in decision_cols:
+            conn.execute("ALTER TABLE decisions ADD COLUMN source_timestamp REAL")
+        if "provenance_label" not in decision_cols:
+            conn.execute(
+                "ALTER TABLE decisions ADD COLUMN provenance_label TEXT "
+                "CHECK (provenance_label IN ('reported','anchored'))"
+            )
         decision_backfill = backfill_decisions(conn)
         log.info(
             "Decision backfill: "

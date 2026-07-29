@@ -1,6 +1,6 @@
 """Durable decision records derived from synthesis artifacts (HS-109-01).
 
-Decision rows carry sync clocks and tombstones in the house shape, but v30 does
+Decision rows carry sync clocks and tombstones in the house shape, but v31 does
 not put them on the sync wire. The desktop archive remains their sole authority
 until a later phase defines cross-device lifecycle conflict semantics.
 """
@@ -10,7 +10,7 @@ import hashlib
 import json
 import sqlite3
 from dataclasses import asdict, dataclass
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Any, Optional
 
 from .base import BaseRepository
@@ -39,6 +39,8 @@ class DecisionRecord:
     rationale: Optional[str]
     decided_at: str
     date_basis: str
+    source_timestamp: Optional[float]
+    provenance_label: Optional[str]
     source_artifact_id: str
     source_meeting_id: str
     source_state: str
@@ -49,6 +51,21 @@ class DecisionRecord:
     updated_at: str
     last_modified: str
     deleted: bool
+
+    def to_dict(self) -> dict[str, Any]:
+        return asdict(self)
+
+
+@dataclass(frozen=True)
+class DecisionMoment:
+    meeting_id: str
+    source_timestamp: float
+    segment_id: int
+    segment_index: int
+    segment_start: float
+    segment_end: float
+    speaker: str
+    text: str
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -73,16 +90,16 @@ class DecisionLifecycleReceipt:
 def derive_decision_id(
     meeting_id: str, artifact_id: str, payload: dict[str, Any]
 ) -> str:
-    """Derive stable identity from source keys and canonical decision payload."""
-    canonical = json.dumps(
-        payload,
-        ensure_ascii=False,
-        sort_keys=True,
-        separators=(",", ":"),
-        default=str,
-    )
-    payload_hash = hashlib.sha256(canonical.encode("utf-8")).hexdigest()
-    key = f"{str(meeting_id).strip()}|{str(artifact_id).strip()}|{payload_hash}"
+    """Derive stable identity from source keys and the decision's TEXT.
+
+    Identity anchors on what was decided — rationale, timestamps, and other
+    provenance are metadata that may sharpen across plugin reruns without
+    minting a second record for the same decision (HS-109-02: a rerun that
+    gains a verified moment must update in place, never duplicate).
+    """
+    text = " ".join(str(payload.get("decision") or "").split()).lower()
+    text_hash = hashlib.sha256(text.encode("utf-8")).hexdigest()
+    key = f"{str(meeting_id).strip()}|{str(artifact_id).strip()}|{text_hash}"
     return "dec-" + hashlib.sha256(key.encode("utf-8")).hexdigest()[:20]
 
 
@@ -118,6 +135,66 @@ def _project_key(
     return str(rows[0][0]) if len(rows) == 1 else None
 
 
+def _segment_value(segment: Any, name: str) -> Any:
+    if isinstance(segment, dict):
+        return segment.get(name)
+    try:
+        return segment[name]
+    except (KeyError, IndexError, TypeError):
+        return getattr(segment, name, None)
+
+
+def _coerce_reported_timestamp(value: Any) -> Optional[float]:
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        return None
+    return float(value)
+
+
+def validate_source_timestamp(segments: list[Any], value: Any) -> Optional[float]:
+    """Return a numeric offset only inside the meeting's real segment window."""
+    timestamp = _coerce_reported_timestamp(value)
+    if timestamp is None or not segments:
+        return None
+    bounds: list[tuple[float, float]] = []
+    for segment in segments:
+        try:
+            start = float(_segment_value(segment, "start_time"))
+            end = float(_segment_value(segment, "end_time"))
+        except (TypeError, ValueError):
+            continue
+        if end >= start:
+            bounds.append((start, end))
+    if not bounds:
+        return None
+    range_start = min(start for start, _ in bounds)
+    range_end = max(end for _, end in bounds)
+    return timestamp if range_start <= timestamp <= range_end else None
+
+
+def _normalize_anchor_text(value: Any) -> str:
+    return " ".join(str(value or "").strip().casefold().split())
+
+
+def anchor_decision_timestamp(segments: list[Any], decision_text: str) -> Optional[float]:
+    """Anchor only when normalized decision text is a literal segment substring."""
+    needle = _normalize_anchor_text(decision_text)
+    if not needle:
+        return None
+    for segment in segments:
+        haystack = _normalize_anchor_text(_segment_value(segment, "text"))
+        if needle not in haystack:
+            continue
+        try:
+            return float(_segment_value(segment, "start_time"))
+        except (TypeError, ValueError):
+            continue
+    return None
+
+
+def _moment_iso(started_at: str, source_timestamp: float) -> str:
+    return (datetime.fromisoformat(started_at) + timedelta(seconds=source_timestamp)).isoformat()
+
+
 def _project_artifact_row(
     conn: sqlite3.Connection, artifact: sqlite3.Row
 ) -> dict[str, int]:
@@ -138,7 +215,11 @@ def _project_artifact_row(
     if not isinstance(entries, list):
         return counts
 
-    decided_at = str(meeting["started_at"])
+    segments = conn.execute(
+        "SELECT * FROM segments WHERE meeting_id = ? ORDER BY start_time,id",
+        (meeting_id,),
+    ).fetchall()
+    meeting_started_at = str(meeting["started_at"])
     now_iso = datetime.now().isoformat()
     for raw in entries:
         if not isinstance(raw, dict):
@@ -150,6 +231,20 @@ def _project_artifact_row(
             continue
         counts["decisions"] += 1
         rationale = str(raw.get("rationale") or "").strip() or None
+        source_timestamp = validate_source_timestamp(segments, raw.get("source_timestamp"))
+        provenance_label: Optional[str] = None
+        if source_timestamp is not None:
+            provenance_label = "reported"
+        else:
+            source_timestamp = anchor_decision_timestamp(segments, text)
+            if source_timestamp is not None:
+                provenance_label = "anchored"
+        if source_timestamp is None:
+            decided_at = meeting_started_at
+            date_basis = "meeting_date"
+        else:
+            decided_at = _moment_iso(meeting_started_at, source_timestamp)
+            date_basis = "transcript_moment"
         project_key = _project_key(conn, meeting_id, structured, raw)
         decision_id = derive_decision_id(meeting_id, artifact_id, raw)
         existing = conn.execute(
@@ -159,7 +254,9 @@ def _project_artifact_row(
             text,
             rationale,
             decided_at,
-            "meeting_date",
+            date_basis,
+            source_timestamp,
+            provenance_label,
             artifact_id,
             meeting_id,
             "linked",
@@ -168,10 +265,11 @@ def _project_artifact_row(
         if existing is None:
             conn.execute(
                 """INSERT INTO decisions (
-                       id,text,rationale,decided_at,date_basis,source_artifact_id,
-                       source_meeting_id,source_state,project_key,lifecycle,
-                       superseded_by,created_at,updated_at,last_modified,deleted)
-                   VALUES (?,?,?,?,?,?,?,?,?,'recorded',NULL,?,?,?,0)""",
+                       id,text,rationale,decided_at,date_basis,source_timestamp,
+                       provenance_label,source_artifact_id,source_meeting_id,
+                       source_state,project_key,lifecycle,superseded_by,created_at,
+                       updated_at,last_modified,deleted)
+                   VALUES (?,?,?,?,?,?,?,?,?,?,?,'recorded',NULL,?,?,?,0)""",
                 (decision_id, *projected, now_iso, now_iso, now_iso),
             )
             counts["inserted"] += 1
@@ -183,6 +281,8 @@ def _project_artifact_row(
                 "rationale",
                 "decided_at",
                 "date_basis",
+                "source_timestamp",
+                "provenance_label",
                 "source_artifact_id",
                 "source_meeting_id",
                 "source_state",
@@ -194,8 +294,9 @@ def _project_artifact_row(
             continue
         conn.execute(
             """UPDATE decisions SET text=?,rationale=?,decided_at=?,date_basis=?,
-                       source_artifact_id=?,source_meeting_id=?,source_state=?,project_key=?,
-                       updated_at=?,last_modified=?,deleted=0
+                       source_timestamp=?,provenance_label=?,source_artifact_id=?,
+                       source_meeting_id=?,source_state=?,project_key=?,updated_at=?,
+                       last_modified=?,deleted=0
                    WHERE id=?""",
             (*projected, now_iso, now_iso, decision_id),
         )
@@ -235,6 +336,46 @@ class DecisionRepository(BaseRepository):
     def backfill(self) -> dict[str, int]:
         with self._connection() as conn:
             return backfill_decisions(conn)
+
+    def resolve_segment(
+        self, meeting_id: str, source_timestamp: Any
+    ) -> Optional[DecisionMoment]:
+        """Resolve a verified meeting offset to the same segment aftercare chooses."""
+        clean_meeting_id = str(meeting_id or "").strip()
+        if not clean_meeting_id:
+            return None
+        with self._connection() as conn:
+            rows = conn.execute(
+                "SELECT * FROM segments WHERE meeting_id = ? ORDER BY start_time,id",
+                (clean_meeting_id,),
+            ).fetchall()
+        timestamp = validate_source_timestamp(rows, source_timestamp)
+        if timestamp is None:
+            return None
+        chosen_index = 0
+        chosen = rows[0]
+        for index, segment in enumerate(rows):
+            if float(segment["start_time"]) <= timestamp:
+                chosen_index = index
+                chosen = segment
+            else:
+                break
+        return DecisionMoment(
+            meeting_id=clean_meeting_id,
+            source_timestamp=timestamp,
+            segment_id=int(chosen["id"]),
+            segment_index=chosen_index,
+            segment_start=float(chosen["start_time"]),
+            segment_end=float(chosen["end_time"]),
+            speaker=str(chosen["speaker"] or ""),
+            text=str(chosen["text"] or ""),
+        )
+
+    def resolve_decision_moment(self, decision_id: str) -> Optional[DecisionMoment]:
+        decision = self.get(decision_id)
+        if decision is None or decision.source_timestamp is None:
+            return None
+        return self.resolve_segment(decision.source_meeting_id, decision.source_timestamp)
 
     def get(self, decision_id: str) -> Optional[DecisionRecord]:
         with self._connection() as conn:
@@ -384,6 +525,16 @@ class DecisionRepository(BaseRepository):
             rationale=str(row["rationale"]) if row["rationale"] is not None else None,
             decided_at=str(row["decided_at"]),
             date_basis=str(row["date_basis"]),
+            source_timestamp=(
+                float(row["source_timestamp"])
+                if row["source_timestamp"] is not None
+                else None
+            ),
+            provenance_label=(
+                str(row["provenance_label"])
+                if row["provenance_label"] is not None
+                else None
+            ),
             source_artifact_id=str(row["source_artifact_id"]),
             source_meeting_id=str(row["source_meeting_id"]),
             source_state=str(row["source_state"]),
