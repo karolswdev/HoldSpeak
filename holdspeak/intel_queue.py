@@ -7,8 +7,10 @@ import threading
 from datetime import datetime, timedelta
 from typing import Optional
 from urllib import request as urlrequest
+from urllib.parse import urlsplit
 
 from .db import get_database
+from .kernel.external_egress import run_external_egress
 from .intel import MeetingIntel, get_intel_runtime_status
 from .logging_config import get_logger
 from .meeting_session import IntelSnapshot
@@ -482,7 +484,21 @@ class IntelQueueWorker:
             headers=headers,
             method="POST",
         )
-        with urlrequest.urlopen(req, timeout=RETRY_FAILURE_WEBHOOK_TIMEOUT_SECONDS) as response:
+        endpoint = urlsplit(self.failure_alert_webhook_url)
+        destination = (endpoint.hostname or "invalid-webhook").lower()
+        if endpoint.port:
+            destination += f":{endpoint.port}"
+        response = run_external_egress(
+            connector_id="intel-queue-failure-alert",
+            destination=destination,
+            data_classes=("queue_failure_metrics",),
+            payload_material=payload,
+            sender=urlrequest.urlopen,
+            args=(req,),
+            kwargs={"timeout": RETRY_FAILURE_WEBHOOK_TIMEOUT_SECONDS},
+            allowed_destinations=(destination,),
+        )
+        with response:
             _ = response.read()
 
     def _update_failure_alert_state(self, summary, *, now: datetime) -> None:

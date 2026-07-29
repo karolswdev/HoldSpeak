@@ -5,24 +5,26 @@
   "snapshot": "ecc8308021a48c3fa66baafe79b16196c11bffbb",
   "scope": "Static effect-capable statements under holdspeak/ in the five ratified census families. Ignored source paths are included; bytecode, source maps, and vendored/generated static assets are excluded.",
   "counting_rule": "Count statements, not logical user actions. Every ambient boundary crossed by one action remains a separate site.",
-  "legal_effect": "Each non-covered entry is declared migration debt, not authority. No agent principal may reach a path named by this register. Covered entries record existing audited chokepoints and do not grant authority beyond those chokepoints.",
+  "legal_effect": "Bypass, mixed, and dormant entries are declared migration debt, not authority. Read and exempt_computation entries are explicitly triaged non-debt and grant no effect authority. No agent principal may reach a debt path named by this register. Covered entries record existing audited chokepoints and do not grant authority beyond those chokepoints.",
   "status_definitions": {
     "covered": "Every in-tree route reaches the statement through an audited chokepoint named by the census.",
     "bypass": "A reachable route avoids all named audited chokepoints.",
     "mixed": "Covered and bypass routes share this statement; treated as not covered.",
     "dormant": "No current production caller, but the ambient capability can execute without a named chokepoint; treated as not covered.",
-    "read": "Effect-free information retrieval exempt from admission and receipts; authenticated principal and named read authority remain mandatory."
+    "read": "Effect-free information retrieval exempt from admission and receipts; authenticated principal and named read authority remain mandatory.",
+    "exempt_computation": "Latency-sensitive model computation whose output returns to its caller; triaged explicitly, not migration debt."
   },
   "expected": {
-    "total": 29,
+    "total": 21,
     "covered": 5,
     "reads": 3,
-    "not_covered": 21,
+    "exempt_computation": 3,
+    "not_covered": 10,
     "families": {
       "tmux_transport": 2,
       "text_typer": 1,
       "subprocess": 3,
-      "egress": 13,
+      "egress": 5,
       "raw_desktop": 10
     }
   },
@@ -82,31 +84,15 @@
       "reason": "The bridge invokes only dw document views and gh PR receipt views; owner principal plus named dw/gh read authority keeps the conveyor cheap."
     },
     {
-      "id": "N01",
-      "family": "egress",
-      "status": "mixed",
-      "path": "holdspeak/connector_runtime.py",
-      "census_line": 144,
-      "selector": {"scope": "PermissionGate.open_outbound_socket", "target": "actual", "ordinal": 1},
-      "reason": "Shared raw network boundary has actuator-covered webhook traffic and an unowned default-socket branch; PermissionGate alone is not an audited chokepoint."
-    },
-    {
-      "id": "N02",
-      "family": "egress",
-      "status": "dormant",
-      "path": "holdspeak/plugins/gated_connector.py",
-      "census_line": 229,
-      "selector": {"scope": "_route", "target": "open_outbound_socket", "ordinal": 1},
-      "reason": "Dormant generic outbound branch can open a real socket through PermissionGate without destination-specific broker authority."
-    },
-    {
       "id": "N03",
       "family": "egress",
       "status": "covered",
       "path": "holdspeak/plugins/gated_connector.py",
-      "census_line": 233,
-      "selector": {"scope": "_route", "target": "open_outbound_socket", "ordinal": 2},
-      "reason": "Custom-opener outbound dispatch is reached in production only by Slack and generic webhook actuators through ActuatorExecutor."
+      "census_line": 228,
+      "selector": {"scope": "_route", "target": "open_outbound_socket", "ordinal": 1},
+      "reason": "Custom-opener outbound dispatch is reached only through ActuatorExecutor and now carries manifest permission, destination scope, and data classes into external.egress admission.",
+      "classification": "egress",
+      "egress_boundary": "remote"
     },
     {
       "id": "N04",
@@ -115,88 +101,42 @@
       "path": "holdspeak/plugins/builtin/webhook_post_actuator.py",
       "census_line": 129,
       "selector": {"scope": "_default_post", "target": "urlopen", "ordinal": 1},
-      "reason": "Production webhook HTTP send is constructed and executed only through the audited actuator route."
-    },
-    {
-      "id": "N05",
-      "family": "egress",
-      "status": "bypass",
-      "path": "holdspeak/intel_queue.py",
-      "census_line": 485,
-      "selector": {"scope": "IntelQueueWorker._post_failure_alert_webhook", "target": "urlopen", "ordinal": 1},
-      "reason": "Intel queue failure alert posts its webhook directly from the scheduler; retained as external.webhook.post_intel_queue_alert debt."
-    },
-    {
-      "id": "N06",
-      "family": "egress",
-      "status": "bypass",
-      "path": "holdspeak/intel/engine.py",
-      "census_line": 221,
-      "selector": {"scope": "MeetingIntel._chat_completion_text", "target": "create", "ordinal": 1},
-      "reason": "Initial non-streaming meeting-intel model request invokes the provider client directly; retained as inference.run migration debt."
-    },
-    {
-      "id": "N07",
-      "family": "egress",
-      "status": "bypass",
-      "path": "holdspeak/intel/engine.py",
-      "census_line": 229,
-      "selector": {"scope": "MeetingIntel._chat_completion_text", "target": "create", "ordinal": 2},
-      "reason": "Compatibility retry is a separate static provider invocation and remains direct inference.run migration debt."
-    },
-    {
-      "id": "N08",
-      "family": "egress",
-      "status": "bypass",
-      "path": "holdspeak/intel/engine.py",
-      "census_line": 300,
-      "selector": {"scope": "MeetingIntel._chat_completion_stream", "target": "create", "ordinal": 1},
-      "reason": "Initial streaming meeting-intel model request invokes the provider client directly; retained as inference.run migration debt."
-    },
-    {
-      "id": "N09",
-      "family": "egress",
-      "status": "bypass",
-      "path": "holdspeak/intel/engine.py",
-      "census_line": 307,
-      "selector": {"scope": "MeetingIntel._chat_completion_stream", "target": "create", "ordinal": 2},
-      "reason": "Streaming compatibility retry is a separate static provider invocation and remains direct inference.run migration debt."
+      "reason": "Production webhook HTTP send is constructed and executed only through the audited actuator route.",
+      "classification": "egress",
+      "egress_boundary": "remote"
     },
     {
       "id": "N10",
       "family": "egress",
-      "status": "bypass",
+      "status": "exempt_computation",
       "path": "holdspeak/plugins/dictation/runtime_openai_compatible.py",
       "census_line": 126,
       "selector": {"scope": "OpenAICompatibleRuntime.classify", "target": "create", "ordinal": 1},
-      "reason": "Initial dictation intent-classification provider request bypasses broker admission; retained as inference.run migration debt."
+      "reason": "Dictation intent classification is latency-sensitive model computation whose output returns to the hold-key caller; explicitly exempt under Article XI.5 and RFC section 12 even when its configured compute endpoint is remote.",
+      "classification": "model_invocation",
+      "egress_boundary": "configured_remote"
     },
     {
       "id": "N11",
       "family": "egress",
-      "status": "bypass",
+      "status": "exempt_computation",
       "path": "holdspeak/plugins/dictation/runtime_openai_compatible.py",
       "census_line": 141,
       "selector": {"scope": "OpenAICompatibleRuntime.classify", "target": "create", "ordinal": 2},
-      "reason": "Classification compatibility retry is a separate static provider invocation and remains direct inference.run migration debt."
+      "reason": "The dictation classification compatibility retry has the same caller-returning, latency-sensitive computation contract as N10; explicitly exempt, never silently pattern-exempted.",
+      "classification": "model_invocation",
+      "egress_boundary": "configured_remote"
     },
     {
       "id": "N12",
       "family": "egress",
-      "status": "bypass",
+      "status": "exempt_computation",
       "path": "holdspeak/plugins/dictation/runtime_openai_compatible.py",
       "census_line": 190,
       "selector": {"scope": "OpenAICompatibleRuntime.rewrite", "target": "create", "ordinal": 1},
-      "reason": "Project-aware dictation rewrite invokes the provider directly; retained as inference.run migration debt."
-    },
-    {
-      "id": "N13",
-      "family": "egress",
-      "status": "bypass",
-      "path": "holdspeak/cadence_telegram.py",
-      "census_line": 38,
-      "selector": {"scope": "call_telegram", "target": "urlopen", "ordinal": 1},
-      "reason": "Cadence Telegram adapter directly posts Bot API methods; retained pending method-specific external.telegram admission."
+      "reason": "Project-aware dictation rewrite returns text to the hold-key caller on the permanently low-latency path; explicitly exempt computation even when the configured model endpoint is remote.",
+      "classification": "model_invocation",
+      "egress_boundary": "configured_remote"
     },
     {
       "id": "A01",

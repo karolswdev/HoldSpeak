@@ -14,14 +14,13 @@ module is the missing seam: a **write-connector permission manifest** plus a
 
 The manifest declares the connector's concrete scope: argv prefixes for a CLI
 connector or hosts for an outbound connector. Since HS-107-03, subprocess plans
-carry that trusted scope into ``subprocess.exec`` admission; the kernel is the
-only subprocess policy decision and binds argv/cwd before approval. The legacy
-manifest allow-check and ``PermissionGate`` remain for outbound operations until
-HS-107-04 migrates the egress family.
+carry that trusted scope into ``subprocess.exec`` admission; since HS-107-04,
+outbound plans carry permission and host scope into ``external.egress`` too.
+The kernel is the only policy decision and binds argv/cwd or destination/data
+classes before approval.
 
-`build_gated_connector` therefore runs plan → kernel subprocess admission →
-interpret for CLI operations, and plan → manifest allow-check → gate → interpret
-for outbound operations. Either refusal occurs before egress.
+`build_gated_connector` therefore runs plan → kernel → interpret for both
+operation families. Either refusal occurs before the effect.
 
 A connector with an empty allow-list admits nothing and so *does nothing* — the
 manifest can only ever narrow, never widen, what reaches the wire. The concrete
@@ -34,12 +33,10 @@ from dataclasses import dataclass, field
 from typing import Any, Callable, Mapping, Optional
 
 from ..connector_runtime import PermissionGate, SubprocessRunner
+from ..kernel.external_egress import EgressOperationRefused
 from ..kernel.subprocess_exec import SubprocessOperationRefused
 from ..connector_sdk import NETWORK_PERMISSIONS, ConnectorManifest
-from ..logging_config import get_logger
 from .actuator_executor import Connector
-
-log = get_logger("plugins.gated_connector")
 
 # The two egress permissions a *write* connector may hold, each mapped to the
 # `PermissionGate` operation it unlocks. A write connector declares exactly one.
@@ -221,11 +218,18 @@ def _route(
         if op.address is None:
             raise ValueError("outbound GatedOperation requires an address")
         if opener is None:
-            return gate.open_outbound_socket(op.address)
-        # The gate's opener only receives the address; close over the full op so
-        # the connector's opener can send `op.request`. The gate still enforces
-        # `network:outbound` before this runs.
-        return gate.open_outbound_socket(op.address, opener=lambda _addr: opener(op))
+            raise ConnectorOperationRefused(
+                connector_id=manifest.connector_id,
+                operation=op.summary(),
+                reason="outbound connector has no HTTP opener",
+            )
+        # The kernel-bound sender receives only the address; close over the full
+        # immutable plan so the connector opener can send ``op.request``.
+        return gate.open_outbound_socket(
+            op.address,
+            opener=lambda _addr: opener(op),
+            allowed_hosts=manifest.allowed_hosts,
+        )
     raise ValueError(f"unknown GatedOperation.kind: {op.kind!r}")
 
 
@@ -247,15 +251,16 @@ def build_gated_connector(
         would perform, derived from its stored payload (mutation-free).
       - `interpret(raw, op) -> dict` — maps the gate's raw result into the
         executor's result dict; may raise to mark the proposal `failed`.
-      - `runner` (CLI) / `opener` (outbound) — injected egress primitives so
-        tests drive the full loop with **no** real subprocess or socket; in
-        production both default through the gate to the real implementations.
+      - `runner` (CLI) / `opener` (outbound) — injected effect primitives so
+        tests drive the full loop with **no** real subprocess or network call.
+        Subprocess has a real default; outbound without its HTTP opener refuses
+        by name because the removed raw-socket branch was never a connector.
 
-    `gate` defaults to one synthesized from the manifest (admitting exactly the
-    declared permission); tests inject a fake/spy gate.
+    `gate` defaults to one synthesized from the manifest; it passes declared
+    permission and destination scope into kernel admission. Tests may inject a
+    spy with that same shape.
 
-    Subprocess order is **plan → kernel → interpret**. Outbound order remains
-    **plan → allow-check → gate → interpret** pending the egress-family story.
+    Both operation families run **plan → kernel → interpret**.
     """
     the_gate = gate if gate is not None else manifest.build_gate()
 
@@ -265,25 +270,13 @@ def build_gated_connector(
             raise TypeError(
                 f"plan() must return a GatedOperation, got {type(op).__name__}"
             )
-        # Subprocess constraints are kernel hard prerequisites so this site has
-        # one policy decision. Outbound remains on the legacy manifest path for
-        # HS-107-04's egress migration.
-        if op.kind != "subprocess" and not manifest.allows(op):
-            log.warning(
-                "gated connector %r refused operation [%s] (not on manifest)",
-                manifest.connector_id,
-                op.summary(),
-            )
-            raise ConnectorOperationRefused(
-                connector_id=manifest.connector_id,
-                operation=op.summary(),
-                reason="operation is not on the connector's permission manifest",
-            )
+        # The codec receives every concrete constraint. There is no manifest
+        # decision here in addition to kernel admission.
         try:
             raw = _route(
                 the_gate, op, manifest=manifest, runner=runner, opener=opener
             )
-        except SubprocessOperationRefused as exc:
+        except (SubprocessOperationRefused, EgressOperationRefused) as exc:
             raise ConnectorOperationRefused(
                 connector_id=manifest.connector_id,
                 operation=op.summary(),

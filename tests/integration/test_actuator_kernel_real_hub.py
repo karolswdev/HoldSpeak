@@ -195,7 +195,10 @@ def test_real_hub_durable_actuator_egress_and_refusals(tmp_path: Path) -> None:
         assert stale_refusal["error"] == "operation_revision_conflict"
 
         _, setup = call("GET", "/api/setup/status")
-        assert setup["trust"]["last_egress"]["id"] == "companion_webhook"
+        assert setup["trust"]["last_egress"]["id"] == "kernel_external_egress"
+        assert setup["trust"]["last_egress"]["name"] == (
+            f"127.0.0.1:{destination.server_address[1]}"
+        )
         print(
             json.dumps(
                 {

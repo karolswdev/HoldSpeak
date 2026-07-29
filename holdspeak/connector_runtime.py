@@ -6,10 +6,10 @@ HS-13-02. Phase 11 manifests declare what a connector pack is
 were documentation; this module turns them into runtime checks.
 
 `PermissionGate` wraps the privileged operations a pack might
-invoke. Subprocess execution now carries the manifest permission into
-kernel admission, while CLI reads check principal plus named read
-authority here. The outbound/file branches retain the legacy manifest
-check pending their family migrations. A missing permission raises
+invoke. Subprocess execution and outbound egress now carry manifest
+permissions and concrete constraints into kernel admission, while CLI
+reads check principal plus named read authority here. The file branch
+retains the legacy manifest check. A missing permission raises
 `PermissionDenied` with the connector and operation named.
 
 This is *honest enforcement*, not a security boundary. A
@@ -30,6 +30,7 @@ from pathlib import Path
 from typing import Any, Callable, Iterable, Optional
 
 from .connector_sdk import ConnectorManifest
+from .kernel.external_egress import EgressOperationRefused, run_external_egress
 from .kernel.subprocess_exec import (
     LOCAL_OWNER,
     SubprocessOperationRefused,
@@ -195,19 +196,41 @@ class PermissionGate:
         address: tuple[str, int],
         *,
         opener: Optional[Callable[[tuple[str, int]], Any]] = None,
+        allowed_hosts: Optional[Iterable[str]] = None,
     ) -> Any:
-        """Open a non-loopback socket on behalf of the pack.
+        """Open one manifest-bound destination through kernel admission.
 
-        Requires `network:outbound`. The default opener is
-        `socket.create_connection`, which is the lowest-level
-        call we care to gate; HTTP libraries that ultimately
-        bottom out on this socket are covered by the same gate
-        when packs route through it. Tests inject `opener` to
-        avoid real network use.
+        The permission and optional host allow-list are codec prerequisites, not
+        decisions made by this compatibility surface. Tests inject ``opener``;
+        the real default socket callable executes only after a warrant is claimed.
         """
-        self._require("open_outbound_socket")
+        host, port = str(address[0]).strip().lower(), int(address[1])
+        destination = f"{host}:{port}"
+        allowed = (
+            tuple(f"{str(item).strip().lower()}:{port}" for item in allowed_hosts)
+            if allowed_hosts is not None else None
+        )
         actual = opener or socket.create_connection
-        return actual(address)
+        try:
+            return run_external_egress(
+                connector_id=self.manifest.id,
+                destination=destination,
+                data_classes=("connector_request",),
+                payload_material={"destination": destination},
+                declared_permissions=self.manifest.permissions,
+                allowed_destinations=allowed,
+                sender=actual,
+                args=(address,),
+            )
+        except EgressOperationRefused as exc:
+            if exc.reason.startswith("external_egress_permission_required:"):
+                raise PermissionDenied(
+                    connector_id=self.manifest.id,
+                    operation="open_outbound_socket",
+                    required_permission="network:outbound",
+                    declared_permissions=tuple(self.manifest.permissions),
+                ) from exc
+            raise
 
     def accept_loopback_event(self) -> None:
         """Defense-in-depth check for extension-events ingestion.

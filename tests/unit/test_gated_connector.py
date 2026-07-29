@@ -18,6 +18,7 @@ import pytest
 from holdspeak.connector_runtime import PermissionDenied, PermissionGate
 from holdspeak.connector_sdk import ConnectorManifest
 from holdspeak.db import Database
+from holdspeak.kernel.external_egress import EgressOperationRefused
 from holdspeak.meeting_session import MeetingState
 from holdspeak.plugins.actuator_executor import ActuatorExecutor
 from holdspeak.plugins.actuators import ActuatorProposal
@@ -46,7 +47,12 @@ class _SpyGate:
         self.subprocess_calls.append(tuple(command))
         return runner(list(command), **kwargs) if runner else None
 
-    def open_outbound_socket(self, address, *, opener=None):
+    def open_outbound_socket(self, address, *, opener=None, allowed_hosts=()):
+        if allowed_hosts and address[0].lower() not in {host.lower() for host in allowed_hosts}:
+            raise EgressOperationRefused(
+                f"{address[0]}:{address[1]}",
+                f"external_egress_destination_not_allowed:{address[0]}:{address[1]}",
+            )
         self.socket_calls.append(address)
         return opener(address) if opener else None
 
@@ -207,6 +213,21 @@ def test_refused_subprocess_is_kernel_refused_before_egress() -> None:
     assert exc.value.connector_id == "gh_writer"
     assert exc.value.reason == "subprocess_argv_not_allowed:gh"
     assert runner.calls == []
+
+
+def test_dormant_outbound_without_http_opener_refuses_by_name() -> None:
+    spy = _SpyGate()
+    connector = build_gated_connector(
+        _WEBHOOK_MANIFEST,
+        plan=lambda _proposal: GatedOperation.outbound("hooks.example.test", 443),
+        interpret=lambda raw, op: {"unreached": True},
+        gate=spy,
+    )
+
+    with pytest.raises(ConnectorOperationRefused) as caught:
+        connector(_proposal())
+    assert caught.value.reason == "outbound connector has no HTTP opener"
+    assert spy.socket_calls == []
 
 
 def test_refused_outbound_host_raises_before_socket() -> None:
