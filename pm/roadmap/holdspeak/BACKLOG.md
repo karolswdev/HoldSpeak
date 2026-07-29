@@ -711,3 +711,54 @@ passes the incoming clock through to the write (repositories accept
 an explicit `updated_at`), keeping cross-device clocks comparable;
 the flaky test then pins the boundary with a frozen clock instead of
 racing the wall.
+
+### AD. Phase 106 remainders — the kernel's unfinished business
+
+Filed at the Phase 106 close (2026-07-29, CLOSED 10/10, owner's
+sitting passed 8/8). The kernel is real and the census delta was
+**zero** — see [final-summary.md](./phase-106-the-kernel/final-summary.md).
+
+**Already chartered:** [Phase 107 — Close the Side Doors](./phase-107-close-the-side-doors/current-phase-status.md)
+(PLANNED, 0/7) takes the migratable families. Everything below is what
+107 explicitly does **not** cover.
+
+1. **RFC §5b confinement — the ten raw-desktop primitives.** All ten
+   remaining `raw_desktop` sites live in `holdspeak/typer.py`: the
+   actual keyboard, Accessibility, clipboard and AppleScript calls.
+   Routing their callers through the kernel does not cover them —
+   any in-process Python still reaches them directly. They close only
+   when raw effect primitives move into a privileged executor process
+   holding broker-minted warrants instead of imports. **This is what
+   finally lets Article XI clause 6 self-repeal**, and what would let
+   `docs/SECURITY.md` say something stronger than "an audit and consent
+   boundary for cooperating code."
+
+2. **The second userland program** — project memory, and meetings and
+   decisions becoming artifacts you can query years later. Named in the
+   owner's original charge alongside PR follow-through; parked so
+   Phase 106 shipped one visible program well rather than three thinly.
+
+3. **The process window** — "what is running" as a pure `read` +
+   `events` projection over the journal. Deferred out of Phase 105,
+   then out of 106; it is now honestly a kernel consumer and cheap.
+
+4. **The generic liveness seam** (found at HS-106-06, weighed at
+   HS-106-07). An executor that never returns leaves an operation
+   pending or running forever. **Pending forever is not indeterminate**
+   — `unknown` means a previously running attempt lost the observer
+   that could establish its state, which is a different fact. Needs a
+   deadline or reaper with an honest terminal outcome.
+
+5. **The CI blind spot.** `tests/e2e/test_live_bus.py` skips without
+   Playwright and a built web bundle, and the bundle is gitignored — so
+   three of its tests sat red on `main` across three merges before #390
+   caught them, and CI never noticed. Either build the bundle in CI, or
+   make the skip loud.
+
+6. **Send-latency discrepancy, unresolved.** The HS-106-10 machine
+   sitting measured **772.55 ms** for a gated send against the
+   Phase-104 unarmed budget of 250 ms; HS-106-05 measured **84.76 ms**
+   for the same path on an unloaded machine. The closeout ran with
+   eight hubs live, so load is the likely explanation — but it is
+   unproven. The owner did not report it as slow on his walk. Worth one
+   clean measurement.

@@ -1,6 +1,6 @@
 # Phase 106 - The Kernel
 
-**Status:** ACTIVE (9/10). Chartered 2026-07-26 from
+**Status:** CLOSED (10/10, 2026-07-29). Chartered 2026-07-26 from
 [`PLAN_KERNEL_OPERATION_BROKER.md`](../../../docs/internal/PLAN_KERNEL_OPERATION_BROKER.md)
 (the RFC, three council passes) and the owner's direct charge:
 
@@ -11,7 +11,7 @@
 > records decisions and then creates artifacts out of those
 > decisions and meetings."
 
-**Last updated:** 2026-07-27 (HS-106-01 through HS-106-09 shipped; 9/10 — the law, both prerequisites, the spine, three heterogeneous slices, the PASS verdict, the real PR follow-through loop, and its truth-audited entry-point docs).
+**Last updated:** 2026-07-29 (CLOSED 10/10 — the owner's sitting passed all eight beats; census delta ZERO, printed in final-summary.md).
 
 ## Why this phase exists
 
@@ -101,7 +101,7 @@ receipt for every consequence.
 - [x] The userland program (HS-106-08) proven on the owner's REAL
       pull requests on real metal, not seeded fixtures.
 - [x] HS-106-09 docs shipped touching the entry points.
-- [ ] HS-106-10 closeout: the sitting loop run to the owner's
+- [x] HS-106-10 closeout: the sitting loop run to the owner's
       verdict per Article IX.4.
 
 ## Story status
@@ -117,7 +117,7 @@ receipt for every consequence.
 | HS-106-07 | Thin slice III — inference, and the kill criterion | done | [story-07-slice-inference-kill](./story-07-slice-inference-kill.md) | [evidence-story-07](./evidence-story-07.md) |
 | HS-106-08 | Userland — PR follow-through, the tech-lead's loop | done | [story-08-userland-pr-follow](./story-08-userland-pr-follow.md) | [evidence-story-08](./evidence-story-08.md) |
 | HS-106-09 | Docs — the kernel at the entry points | done | [story-09-docs](./story-09-docs.md) | [evidence-story-09](./evidence-story-09.md) |
-| HS-106-10 | Closeout — the sitting and the kernel ledger | ready | [story-10-closeout](./story-10-closeout.md) | — |
+| HS-106-10 | Closeout — the sitting and the kernel ledger | done | [story-10-closeout](./story-10-closeout.md) | [evidence-story-10](./evidence-story-10.md) |
 
 ## Sequencing
 
@@ -170,6 +170,25 @@ pretending.
   three thinly.
 
 ## Where we are
+
+**2026-07-29 — CLOSED 10/10. The owner's sitting passed all eight
+beats.** His verdict, verbatim: *"all passed, make progress."* No
+riders raised. He was shown every known rough edge before he walked —
+the beat-7 failure and its rider fix, the two stray receipt comments on
+#387, the unresolved 772ms-vs-85ms latency discrepancy, and the census
+delta — rather than discovering any of them mid-walk.
+
+**The number, printed rather than framed: 4 covered of 40 at start,
+4 of 40 at close. Delta ZERO.** This phase built the kernel and proved
+it real; it closed no side doors. Phase 107 is chartered to move it,
+with an honest ceiling of 4 → 30 stated at ITS charter time because the
+ten raw-desktop primitives close only under §5b confinement.
+
+The kill criterion passed and was then exceeded: HS-106-08 registered a
+FOURTH driver and built a real product feature on the spine with
+`git diff --exit-code` returning zero across all five spine modules.
+Full ledger, the Article XI clause-by-clause re-audit, and the findings
+worth carrying forward are in [final-summary.md](./final-summary.md).
 
 **2026-07-27 — HS-106-09 shipped, 9/10: the kernel is at the entry points.**
 Backend architecture now names the four-call caller plane, the three-call
