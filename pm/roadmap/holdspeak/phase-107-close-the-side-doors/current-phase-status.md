@@ -1,14 +1,12 @@
 # Phase 107 - Close the Side Doors
 
-**Status:** IN PROGRESS (5/7). Activated 2026-07-29 — Phase 106
+**Status:** IN PROGRESS (6/7). Activated 2026-07-29 — Phase 106
 closed on the owner's sitting (8/8). Chartered from the number
 Phase 106 could not move.
 
-**Last updated:** 2026-07-29 (HS-107-05 done: the independent audit
-demoted EIGHT rows the migration stories claimed. The honest
-register: **21 total / 3 covered / 18 debt**, every remaining row
-carrying a closing condition. The N10-N12 exemption is a
-constitutional dispute held for the owner.)
+**Last updated:** 2026-07-29 (HS-107-06 done: 21/3/18 at both doc
+entry points with a drift guard; the narrowing unchanged in strength
+— coverage changed, containment did not. Next: closeout.)
 
 ## Why this phase exists
 
@@ -157,7 +155,7 @@ closes.
 | HS-107-03 | The subprocess family — 5 sites | done | [story-03-subprocess-family](./story-03-subprocess-family.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-107-04 | The egress family — triage before migration | done | [story-04-egress-family](./story-04-egress-family.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-107-05 | The register, honestly — what remains and why | done | [story-05-register-honestly](./story-05-register-honestly.md) | [evidence-story-05](./evidence-story-05.md) |
-| HS-107-06 | Docs — the new number at the entry points | planned | [story-06-docs](./story-06-docs.md) | — |
+| HS-107-06 | Docs — the new number at the entry points | done | [story-06-docs](./story-06-docs.md) | [evidence-story-06](./evidence-story-06.md) |
 | HS-107-07 | Closeout — the sitting and the census delta | planned | [story-07-closeout](./story-07-closeout.md) | — |
 
 ## Sequencing
@@ -211,7 +209,21 @@ lands. Then docs, then closeout.
 
 ## Where we are
 
-**2026-07-29 — ACTIVE, 5/7. The audit spoke, and the number got
+**2026-07-29 — ACTIVE, 6/7.** HS-107-06 carried the audited number
+to the entry points: `docs/SECURITY.md` and the kernel RFC both read
+**21 total / 3 covered / 18 debt** with the corrected baseline and
+the earned delta (38 → 18 debt); a drift guard
+(`test_doc_drift_guard.py`) pins docs ↔ ledger agreement so the
+numbers cannot silently diverge again. The cooperating-code narrowing
+is UNCHANGED in strength and still precedes every prevention claim —
+the one added sentence says exactly what was earned: coverage
+changed, containment did not, §5b is still the threshold. User pages
+byte-unchanged (nothing visible changed; no kernel vocabulary).
+Seventeen-claim truth audit in evidence, four claims corrected.
+Next: HS-107-07 — the eight machine beats staged, then the owner's
+sitting, carrying two questions held for him: wake fires-vs-arms
+(Article IV.2) and the N10-N12 clause-1-vs-clause-5 ruling. Earlier:
+**The audit spoke, and the number got
 SMALLER — which is the story working.** HS-107-05's independent
 auditor (fresh eyes, none of the migrations theirs) re-derived every
 count from the file and hunted routes around every covered claim.

@@ -12,6 +12,7 @@ the PMO roadmap corpus is the historical record and is kept verbatim by design.
 
 from __future__ import annotations
 
+import json
 import re
 from pathlib import Path
 
@@ -79,6 +80,47 @@ def test_no_live_doc_has_a_dangling_relative_link() -> None:
         "A live doc links a path that does not exist (dangling relative link). "
         "Fix the path or the move:\n  " + "\n  ".join(offenders)
     )
+
+
+# HS-107-06: the current effect census is stated at both security/architecture
+# entry points. Parse those claims and pin them to the ledger's expected block so
+# docs cannot retain an obsolete snapshot after the ledger changes.
+_EFFECT_CENSUS_DOCS = (
+    Path("docs/SECURITY.md"),
+    Path("docs/internal/PLAN_KERNEL_OPERATION_BROKER.md"),
+)
+_EFFECT_CENSUS_CLAIM = re.compile(
+    r"(?P<total>\d+)\s+total\s*/\s*"
+    r"(?P<covered>\d+)\s+covered\s*/\s*"
+    r"(?P<debt>\d+)\s+debt",
+    re.IGNORECASE,
+)
+
+
+def test_effect_census_doc_counts_match_ledger_expected_block() -> None:
+    ledger = json.loads(
+        (_REPO / "holdspeak/kernel/effect_ledger.json").read_text(encoding="utf-8")
+    )
+    expected_block = ledger["expected"]
+    expected = (
+        expected_block["total"],
+        expected_block["covered"],
+        expected_block["not_covered"],
+    )
+
+    for relative_path in _EFFECT_CENSUS_DOCS:
+        path = _REPO / relative_path
+        claims = [
+            tuple(int(match.group(name)) for name in ("total", "covered", "debt"))
+            for match in _EFFECT_CENSUS_CLAIM.finditer(
+                path.read_text(encoding="utf-8")
+            )
+        ]
+        assert claims, f"{relative_path} must state 'N total / N covered / N debt'"
+        assert set(claims) == {expected}, (
+            f"{relative_path} effect census {claims} does not match ledger expected "
+            f"block {expected}"
+        )
 
 
 # HS-46-01: the README headlines a built-in-plugin count ("ships **14 built-in
