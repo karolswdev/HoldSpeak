@@ -1,15 +1,14 @@
 # Phase 107 - Close the Side Doors
 
-**Status:** IN PROGRESS (6/7) — **HS-107-07 staged, AWAITING THE
-OWNER'S SITTING.** Activated 2026-07-29; chartered from the number
-Phase 106 could not move.
+**Status:** CLOSED (7/7). Activated and closed 2026-07-29 — one day.
+**The owner's sitting passed 8/8**; verdict verbatim: "I complete the
+sitting - all of it works!" **Census delta: 38 debt → 15 debt.**
 
-**Last updated:** 2026-07-29 (machine staging complete: all six
-functional beats pass every session with receipts read back; the two
-latency beats are noise-bound with the honest analysis in evidence.
-The census delta, plain: **38 debt → 18 debt**. The sitting sheet —
-[OWNER-SITTING](./OWNER-SITTING.md) — carries three questions:
-N10-N12, wake, and the ~25 ms admission price.)
+**Last updated:** 2026-07-29 (closed. The owner ruled all three held
+questions: N10-N12 exempt computation re-ratified (debt 18 → 15);
+configured wake actions armed by their configuration (Article IV.2
+clarified); the ~25 ms admission price accepted with the baseline
+re-pinned. [Final summary](./final-summary.md).)
 
 ## Why this phase exists
 
@@ -159,7 +158,7 @@ closes.
 | HS-107-04 | The egress family — triage before migration | done | [story-04-egress-family](./story-04-egress-family.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-107-05 | The register, honestly — what remains and why | done | [story-05-register-honestly](./story-05-register-honestly.md) | [evidence-story-05](./evidence-story-05.md) |
 | HS-107-06 | Docs — the new number at the entry points | done | [story-06-docs](./story-06-docs.md) | [evidence-story-06](./evidence-story-06.md) |
-| HS-107-07 | Closeout — the sitting and the census delta | in-progress | [story-07-closeout](./story-07-closeout.md) | — |
+| HS-107-07 | Closeout — the sitting and the census delta | done | [story-07-closeout](./story-07-closeout.md) | [evidence-story-07](./evidence-story-07.md) |
 
 ## Sequencing
 
@@ -212,7 +211,17 @@ lands. Then docs, then closeout.
 
 ## Where we are
 
-**2026-07-29 — ACTIVE, 6/7, closeout STAGED, awaiting the owner.**
+**2026-07-29 — CLOSED 7/7.** The owner drove the eight beats and
+passed them all; his verdict is recorded verbatim in
+[evidence-story-07](./evidence-story-07.md) and the three held
+questions are ruled (N10-N12 exempt; configured wake actions armed by
+their configuration; the ~25 ms admission price accepted,
+baseline re-pinned with stated noise bands). **The number this phase
+existed to move, moved: 38 debt → 15 debt**, every remaining row
+carrying a machine-asserted closing condition into BACKLOG candidate
+Y. The kernel spine ends the phase byte-identical to how it began.
+Earlier:
+**closeout STAGED, awaiting the owner.**
 The eight-beat machine sitting is built as one rerunnable command
 (`scripts/phase107_closeout_beats.py`) and staged repeatedly: all six
 functional beats pass in every session — typed acts, pane deliveries,

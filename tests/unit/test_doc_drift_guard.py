@@ -92,6 +92,7 @@ _EFFECT_CENSUS_DOCS = (
 _EFFECT_CENSUS_CLAIM = re.compile(
     r"(?P<total>\d+)\s+total\s*/\s*"
     r"(?P<covered>\d+)\s+covered\s*/\s*"
+    r"(?:(?P<exempt>\d+)\s+exempt[a-z\s]*?/\s*)?"
     r"(?P<debt>\d+)\s+debt",
     re.IGNORECASE,
 )
@@ -105,13 +106,19 @@ def test_effect_census_doc_counts_match_ledger_expected_block() -> None:
     expected = (
         expected_block["total"],
         expected_block["covered"],
+        expected_block.get("exempt_computation", 0),
         expected_block["not_covered"],
     )
 
     for relative_path in _EFFECT_CENSUS_DOCS:
         path = _REPO / relative_path
         claims = [
-            tuple(int(match.group(name)) for name in ("total", "covered", "debt"))
+            (
+                int(match.group("total")),
+                int(match.group("covered")),
+                int(match.group("exempt") or 0),
+                int(match.group("debt")),
+            )
             for match in _EFFECT_CENSUS_CLAIM.finditer(
                 path.read_text(encoding="utf-8")
             )

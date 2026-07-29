@@ -51,7 +51,11 @@ you do. All of it local, all of it yours, all of it through the Desk.
 1. Every text input can be spoken into. The mic is an affordance of the OS,
    not of any one feature.
 2. Voice arms; it does not fire. Wake and command surfaces prepare actions
-   for a human to confirm, in line with Article V.
+   for a human to confirm, in line with Article V. *Owner clarification
+   (Phase 107 sitting, 2026-07-29): a wake action the owner explicitly
+   configured — such as `wake.action=type` — is armed by that
+   configuration; the deliberate setting is the confirming human act, and
+   the utterance completes it. Defaults still arm rather than fire.*
 3. One mic authority at a time: surfaces never compete for capture, and the
    owner of the mic is always visible.
 

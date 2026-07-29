@@ -582,11 +582,12 @@ def test_effect_ledger_asserts_the_composed_family_counts() -> None:
     assert reads == expected.get("reads", 0) == 0, (
         f"effect census must state 0 classified reads, found {reads}"
     )
-    assert exempt == expected.get("exempt_computation", 0) == 0, (
-        f"effect census must state 0 exempt computations, found {exempt}"
+    assert exempt == expected.get("exempt_computation", 0) == 3, (
+        f"effect census must state 3 exempt computations (N10-N12, owner ruling "
+        f"2026-07-29), found {exempt}"
     )
-    assert not_covered == expected["not_covered"] == 18, (
-        f"effect census must state 18 not-covered sites, found {not_covered}"
+    assert not_covered == expected["not_covered"] == 15, (
+        f"effect census must state 15 not-covered sites, found {not_covered}"
     )
     assert dict(families) == expected["families"] == {
         FAMILY_TMUX: 2,
