@@ -25,6 +25,7 @@ from ....grounding import (
     GROUNDING_EXPANDS as _GROUNDING_EXPANDS,
     GROUNDING_MAX_REFS as _GROUNDING_MAX_REFS,
     hydrate_grounding_blocks as _hydrate_grounding,
+    hydrate_grounding_blocks_detailed as _hydrate_grounding_detailed,
     meeting_digest as _meeting_digest,
     score_claims as _score_claims,
 )
@@ -284,9 +285,15 @@ def build_ask_router(ctx: WebContext) -> APIRouter:
                         {"error": f"grounding is capped at {_GROUNDING_MAX_REFS} refs"},
                         status_code=400,
                     )
-                blocks, g_ids, g_titles, unknown = _hydrate_grounding(
-                    db, meeting_ids, artifact_ids, expand, qualified_refs=qualified_refs
+                blocks, g_ids, g_titles, hydration = _hydrate_grounding_detailed(
+                    db,
+                    meeting_ids,
+                    artifact_ids,
+                    expand,
+                    qualified_refs=qualified_refs,
+                    query=prompt,
                 )
+                unknown = hydration.unknown
                 # HS-88-01: rails objects (phase/story/evidence/roadmap) ground
                 # through the SAME block type, CLI-mediated per repo — a receipt,
                 # never a markdown scrape. They fold in after the desk objects.
@@ -314,6 +321,10 @@ def build_ask_router(ctx: WebContext) -> APIRouter:
                     "artifact_ids": artifact_ids,
                     "expand": expand,
                     "titles": g_titles,
+                    "source_refs": hydration.source_refs,
+                    "selection": hydration.selection,
+                    "matched_count": hydration.matched_count,
+                    "overflow_count": hydration.overflow_count,
                 }
                 if qualified_refs:
                     grounding_echo["refs"] = qualified_refs

@@ -25,6 +25,12 @@ from .decisions import (  # noqa: F401
     backfill_decisions,
     derive_decision_id,
 )
+from .memory import (  # noqa: F401
+    MemoryHit,
+    MemoryRepository,
+    MemorySearchResult,
+    rebuild_memory_index,
+)
 from .primitives import (  # noqa: F401
     NoteRepository,
     KBRepository,

@@ -26,6 +26,7 @@ def build_crud_router(ctx: WebContext) -> APIRouter:
         limit: int = 50,
         offset: int = 0,
         search: Optional[str] = None,
+        q: Optional[str] = None,
         date_from: Optional[str] = None,
         date_to: Optional[str] = None,
         speaker: Optional[str] = None,
@@ -40,6 +41,11 @@ def build_crud_router(ctx: WebContext) -> APIRouter:
         previously returning full ``to_dict`` payloads whose nested
         ``intel_status`` broke the status pill).
         """
+        if q is not None:
+            return JSONResponse(
+                {"error": "unsupported query parameter 'q'; use 'search'"},
+                status_code=422,
+            )
         try:
             from ....db import get_database
             db = get_database()

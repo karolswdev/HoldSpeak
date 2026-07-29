@@ -27,6 +27,12 @@ def test_history_has_composable_server_facets() -> None:
     assert '"/api/meetings/facets"' in page
 
 
+def test_history_search_uses_backend_search_contract() -> None:
+    page = _page()
+    assert 'meetingParams.set("search", query)' in page
+    assert 'meetingParams.set("q", query)' not in page
+
+
 def test_failed_import_and_queue_states_stay_visible() -> None:
     page = _page()
     assert "import_failed" in page

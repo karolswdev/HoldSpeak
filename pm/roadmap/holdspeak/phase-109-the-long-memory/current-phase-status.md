@@ -1,14 +1,15 @@
 # Phase 109 - The Long Memory
 
-**Status:** IN PROGRESS (2/8). Chartered 2026-07-29 by owner direction:
+**Status:** IN PROGRESS (3/8). Chartered 2026-07-29 by owner direction:
 Phase 109 (the second userland program) delivered next; Phase 108
 (The Locked Room, RFC §5b confinement) stays reserved with its
 machine-asserted work list in BACKLOG candidate Y.
 
-**Last updated:** 2026-07-29 (HS-109-01 shipped — the decision record
-is real, proven live on `.43` against the owner's own archive; the
-reconciliation hook moved to the record_artifact chokepoint after a
-live staging caught the deferred chain bypassing it).
+**Last updated:** 2026-07-29 (HS-109-04 shipped — the memory index:
+three FTS indexes, ranked cited retrieval in 1.3 ms over the real
+archive, grounding with per-source refs + honest overflow counts, the
+q/search wire defect fixed; control-vs-treatment on `.43`: ungrounded
+hallucinates, grounded cites the real decision record).
 
 ## Why this phase exists
 
@@ -179,7 +180,7 @@ plugins already produce, never a rival store the plugins must learn.
 | HS-109-01 | The decision record — first-class, with lifecycle | done | [story-01-decision-record](./story-01-decision-record.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-109-02 | Provenance — the transcript moment | backlog | [story-02-provenance](./story-02-provenance.md) | — |
 | HS-109-03 | Decisions become artifacts — promotion | backlog | [story-03-promotion](./story-03-promotion.md) | — |
-| HS-109-04 | Long-horizon retrieval — the memory index | backlog | [story-04-retrieval](./story-04-retrieval.md) | — |
+| HS-109-04 | Long-horizon retrieval — the memory index | done | [story-04-retrieval](./story-04-retrieval.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-109-05 | The Project Memory window | backlog | [story-05-memory-window](./story-05-memory-window.md) | — |
 | HS-109-06 | The process window — what is running | done | [story-06-process-window](./story-06-process-window.md) | [evidence-story-06](./evidence-story-06.md) |
 | HS-109-07 | Docs — memory at the entry points | backlog | [story-07-docs](./story-07-docs.md) | — |
@@ -241,7 +242,22 @@ Then docs, then closeout.
 
 ## Where we are
 
-**2026-07-29 — HS-109-01 shipped (the identity layer).** Decisions
+**2026-07-29 — HS-109-04 shipped (the memory can be asked).** Three
+FTS5 indexes (decisions/artifacts/notes) with trigger-maintained
+freshness — severed and tombstoned rows leave via triggers, never
+query filters — per-kind bm25 normalized and tier-interleaved so long
+artifacts cannot drown short decisions, `/api/memory/search` behind
+read authority, `holdspeak memory rebuild-index` idempotent. Project
+grounding selects by RELEVANCE when the ask carries a query (recency
+only as a LABELED fallback), hydrates per-source blocks with refs,
+and reports `matched/overflow` honestly. The Meetings-window search
+wire defect is fixed with a 422 regression (it sent `q`; the route
+read `search`; archive search was dead on the wire). Live on real
+metal: the real archive indexed (3/8/4), the HS-109-01 decision found
+in 1.3 ms, and the control-vs-treatment ask on `.43` — ungrounded
+invents "Project 100", grounded answers BLUE LANTERN citing
+`decision:dec-6a716e…`. Earlier:
+**HS-109-01 shipped (the identity layer).** Decisions
 are first-class records: additive v30 `decisions` table (stable
 derived IDs, lifecycle recorded|accepted|superseded|rejected,
 `superseded_by` both ways, project keys, `date_basis` honesty,

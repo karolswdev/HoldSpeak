@@ -686,7 +686,7 @@ export function HistoryCore({ hero, scope }: CoreProps) {
     [view, doorOpen],
   );
   const meetingParams = new URLSearchParams({ limit: "100" });
-  if (query) meetingParams.set("q", query);
+  if (query) meetingParams.set("search", query);
   if (dateFrom) meetingParams.set("date_from", dateFrom);
   if (dateTo) meetingParams.set("date_to", dateTo);
   if (speaker) meetingParams.set("speaker", speaker);
