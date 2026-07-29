@@ -55,13 +55,26 @@ _REPO = Path(__file__).resolve().parents[1]
 _AUDIO = _REPO / "tests" / "fixtures" / "core_path_smoke_16k.wav"
 _FENCE_PROBE = _REPO / "holdspeak" / "phase107_unlisted_effect_probe.py"
 _OWNER = Principal(PrincipalKind.OWNER, "owner-session")
+# Re-pinned to the kernel-path medians by the owner's Phase 107 sitting
+# ruling (2026-07-29): the ~25 ms admission price of a receipted typed act
+# is accepted; the pre-migration raw-TextTyper numbers (release 926.297,
+# type 155.796) no longer describe the shipped path. Comparisons remain
+# noise-bound cross-session (±10 ms local, ±40 ms LAN pipeline).
 _BASELINE = {
-    "capture_stop_ms": 0.079,
-    "transcribe_ms": 191.457,
-    "punctuation_ms": 0.170,
-    "pipeline_ms": 576.630,
-    "type_ms": 155.796,
-    "release_to_landed_ms": 926.297,
+    "capture_stop_ms": 0.056,
+    "transcribe_ms": 178.176,
+    "punctuation_ms": 0.119,
+    "pipeline_ms": 538.813,
+    "type_ms": 208.573,
+    "release_to_landed_ms": 930.980,
+}
+# Cross-session noise bands measured 2026-07-29 (evidence-story-07):
+# local segments ±10 ms, the LAN pipeline segment ±40 ms. A delta inside the
+# band is machine/endpoint drift, not a source regression; deltas beyond it
+# still fail the beat by name.
+_NOISE_MS = {
+    "release_to_landed_ms": 40.0,
+    "transcribe_ms": 10.0,
 }
 _LATENCY_COMMAND = (
     "uv run python scripts/measure_dictation_latency.py --runs 3 --warmups 1 "
@@ -182,11 +195,16 @@ def _beat1(state: dict[str, Any]) -> None:
             "owner_sitting_supplies_physical_hold": True,
         },
     )
-    if summary["release_to_landed_ms"] > _BASELINE["release_to_landed_ms"]:
+    if (
+        summary["release_to_landed_ms"]
+        > _BASELINE["release_to_landed_ms"] + _NOISE_MS["release_to_landed_ms"]
+    ):
         raise RuntimeError(
             "release_to_landed regression: "
             f"{_BASELINE['release_to_landed_ms']:.3f} -> "
-            f"{summary['release_to_landed_ms']:.3f} ms"
+            f"{summary['release_to_landed_ms']:.3f} ms "
+            f"(beyond the measured ±{_NOISE_MS['release_to_landed_ms']:.0f} ms "
+            "session-noise band)"
         )
 
 
@@ -578,14 +596,17 @@ def _beat7(state: dict[str, Any]) -> None:
             "source": "beat 1 exact contemporaneous command",
             "table": table,
             "transcription_verdict": "no regression"
-            if now["transcribe_ms"] <= _BASELINE["transcribe_ms"]
+            if now["transcribe_ms"]
+            <= _BASELINE["transcribe_ms"] + _NOISE_MS["transcribe_ms"]
             else "REGRESSION",
         },
     )
-    if now["transcribe_ms"] > _BASELINE["transcribe_ms"]:
+    if now["transcribe_ms"] > _BASELINE["transcribe_ms"] + _NOISE_MS["transcribe_ms"]:
         raise RuntimeError(
             f"transcription regression: {_BASELINE['transcribe_ms']:.3f} -> "
-            f"{now['transcribe_ms']:.3f} ms"
+            f"{now['transcribe_ms']:.3f} ms "
+            f"(beyond the measured ±{_NOISE_MS['transcribe_ms']:.0f} ms "
+            "session-noise band)"
         )
 
 

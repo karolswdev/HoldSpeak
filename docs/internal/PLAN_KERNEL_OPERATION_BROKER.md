@@ -408,13 +408,15 @@ Two properties make the early ratification defensible rather than
 decorative, and both are load-bearing:
 
 - **The register is real and executable.** Clause 6's register is
-  `holdspeak/kernel/effect_ledger.json`: **21 total / 3 covered / 18 debt**.
-  Against the corrected Phase 106 baseline of 2 covered among 40 sites, the
-  migration delta is **38 debt → 18 debt**. The remainder is five mixed sites
-  (T01/T02 and C02/C03/C05), twelve bypass sites, and one dormant site. N10-N12
-  carry the conservative
-  bypass status pending the owner's constitutional ruling on whether those
-  dictation model invocations are exempt computation. The register is fenced
+  `holdspeak/kernel/effect_ledger.json`: **21 total / 3 covered / 3 exempt /
+  15 debt**. Against the corrected Phase 106 baseline of 2
+  covered among 40 sites, the migration delta is **38 debt → 15 debt**. The
+  remainder is five mixed sites (T01/T02 and C02/C03/C05), nine bypass sites,
+  and one dormant site. N10-N12 (dictation's transcription and rewrite model
+  invocations) were ruled clause-5-exempt computation by the owner at the
+  Phase 107 sitting (2026-07-29), resolving the HS-107-05 clause-1 challenge;
+  a new transcription-shaped call is still caught by the census and owes its
+  own triage. The register is fenced
   by `tests/unit/test_kernel_effect_fence.py`, which fails by name when a site
   joins or leaves it silently (HS-106-03). The checked-in register and fence
   derive their counts from the same ledger.

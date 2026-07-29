@@ -31,8 +31,13 @@ or agent-authored code executes.
 The checked-in [effect debt register](../holdspeak/kernel/effect_ledger.json)
 records the current gap under
 [Constitution Article XI clause 6](internal/CONSTITUTION.md#article-xi--the-kernel):
-**21 total / 3 covered / 18 debt**. Against the corrected baseline of 2
-covered among 40 sites, the audited migration delta is **38 debt → 18 debt**.
+**21 total / 3 covered / 3 exempt / 15 debt**. Against the corrected
+baseline of 2 covered among 40 sites, the audited migration delta is
+**38 debt → 15 debt**. The three exempt rows are dictation's
+transcription and rewrite model calls, ruled exempt computation by the
+owner (2026-07-29): their output returns to the caller on the
+permanently low-latency dictation path. A new transcription-shaped
+call is still caught by the census and owes its own triage.
 The remainder is five mixed sites (T01/T02 and C02/C03/C05), twelve bypass
 sites, and one dormant site. N10-N12 are conservatively counted as bypass debt
 pending the owner's constitutional
