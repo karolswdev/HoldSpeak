@@ -21,6 +21,28 @@ from .models import (
 
 log = get_logger("db.plugins")
 
+# Stored lineage vocabulary. Keep this additive: artifact_sources is the shared
+# causal thread for meeting synthesis, primitive runs, sync imports, and promoted
+# decisions. HS-109-03 adds decision + meeting as first-class reference kinds.
+VALID_ARTIFACT_SOURCE_TYPES = frozenset(
+    {
+        "ask",
+        "attempt",
+        "card",
+        "chain",
+        "decision",
+        "input",
+        "intent_window",
+        "invocation",
+        "meeting",
+        "plugin_run",
+        "recipe",
+        "segment",
+        "window",
+        "workflow",
+    }
+)
+
 
 class PluginArtifactRepository(BaseRepository):
     """Plugin runs, intent windows, and artifacts."""
@@ -702,7 +724,13 @@ class PluginArtifactRepository(BaseRepository):
             elif isinstance(source, (tuple, list)) and len(source) == 2:
                 source_type = str(source[0] or "").strip().lower()
                 source_ref = str(source[1] or "").strip()
-            if source_type and source_ref and (source_type, source_ref) not in normalized_sources:
+            if not source_type and not source_ref:
+                continue
+            if source_type not in VALID_ARTIFACT_SOURCE_TYPES:
+                raise ValueError(f"Invalid artifact source type: {source_type!r}")
+            if not source_ref:
+                raise ValueError(f"source_ref is required for artifact source type {source_type!r}")
+            if (source_type, source_ref) not in normalized_sources:
                 normalized_sources.append((source_type, source_ref))
 
         now_iso = datetime.now().isoformat()
@@ -768,6 +796,31 @@ class PluginArtifactRepository(BaseRepository):
                 ).fetchone()
                 if artifact_row is not None:
                     _project_artifact_row(conn, artifact_row)
+
+    def list_artifacts_by_source(
+        self, source_type: str, source_ref: str, *, limit: int = 200
+    ) -> list[ArtifactSummary]:
+        """List artifacts causally derived from one typed source reference."""
+        clean_type = str(source_type or "").strip().lower()
+        clean_ref = str(source_ref or "").strip()
+        if clean_type not in VALID_ARTIFACT_SOURCE_TYPES:
+            raise ValueError(f"Invalid artifact source type: {clean_type!r}")
+        if not clean_ref:
+            raise ValueError("source_ref is required")
+        bounded_limit = max(1, min(int(limit), 2000))
+        with self._connection() as conn:
+            rows = conn.execute(
+                """SELECT a.* FROM artifacts a
+                   JOIN artifact_sources s ON s.artifact_id = a.id
+                   WHERE s.source_type = ? AND s.source_ref = ?
+                   ORDER BY a.created_at DESC,a.id DESC LIMIT ?""",
+                (clean_type, clean_ref, bounded_limit),
+            ).fetchall()
+            sources = self._sources_for(conn, [str(row["id"]) for row in rows])
+        return [
+            self._artifact_summary(row, sources.get(str(row["id"]), []))
+            for row in rows
+        ]
 
     def get_artifact(self, artifact_id: str) -> Optional[ArtifactSummary]:
         """Load one synthesized artifact by id (including lineage refs).

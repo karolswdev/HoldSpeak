@@ -281,6 +281,44 @@ def _decision_announcement_body(announcements: list[dict[str, Any]] | None) -> s
     return "\n\n".join(parts)
 
 
+def render_promoted_decision(
+    artifact_type: str,
+    *,
+    text: str,
+    rationale: Optional[str],
+    decided_at: str,
+    meeting_id: str,
+) -> tuple[str, str, dict[str, Any]]:
+    """Render one accepted decision with the existing synthesis house styles."""
+    clean_type = str(artifact_type or "").strip().lower()
+    clean_text = _clean_text(text)
+    why = _clean_text(rationale)
+    source = f"Meeting {meeting_id} · {str(decided_at or '').strip()}".rstrip(" ·")
+    if clean_type == "adr":
+        item = {
+            "title": clean_text,
+            "status": "accepted",
+            "context": why,
+            "decision": clean_text,
+            "consequences": "",
+        }
+        return clean_text, f"{_adr_body([item])}\n\n_Source: {source}_", {"adrs": [item]}
+    if clean_type == "decision_announcement":
+        item = {
+            "title": clean_text,
+            "audience": "",
+            "message": clean_text + (f"\n\nWhy: {why}" if why else ""),
+        }
+        return clean_text, f"{_decision_announcement_body([item])}\n\n_Source: {source}_", {"announcements": [item]}
+    if clean_type == "note":
+        body = f"# {clean_text}"
+        if why:
+            body += f"\n\n## Rationale\n\n{why}"
+        body += f"\n\n_Source: {source}_"
+        return clean_text, body, {"note": {"decision": clean_text, "rationale": why or None}}
+    raise ValueError(f"unsupported decision promotion type: {clean_type}")
+
+
 # --- Per-artifact-type body renderers (HS-28-01) ---------------------------
 #
 # Each renderer takes the canonical plugin output and returns either
