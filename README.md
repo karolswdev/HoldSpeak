@@ -19,6 +19,15 @@ local runtime on macOS and Linux does both, for the two places a developer's
 voice does work: the keyboard and the meeting. Whisper runs locally; the LLM is
 one you run or point at. No cloud, no account, no telemetry.
 
+A meeting should change what happens next, not disappear into an archive.
+HoldSpeak keeps decisions as durable records with transcript moments, lets you
+accept or supersede them, and promotes the ones that stand into ADRs, notes, or
+decision announcements. Project Memory finds the text years later across the
+local material you kept, while Ask this project answers from cited sources and
+states how many matches fit its prompt. The read-only Process window shows what
+the kernel journal says is running, waiting, unknown, or finished without
+controlling the work.
+
 > **Status: 0.x, early but real.** HoldSpeak is on PyPI (`pip install holdspeak`).
 > The features are mature; APIs, config, and defaults can still change while it is
 > pre-1.0. Upgrades are safe by default (your data is backed up first). Feedback

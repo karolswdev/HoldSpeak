@@ -447,6 +447,63 @@ Example cloud/homelab config (the fallback shape when no Runs on destination is 
 }
 ```
 
+## Project Memory
+
+A meeting earns its keep when the decision is still easy to find after the
+transcript has left your working set. Open a project on the Desk to see its
+**Project Memory** window. Its Timeline, Decisions, Search, and Ask faces keep
+the whole loop in one place:
+
+1. Record or import a meeting and add it to the project. Meeting intelligence
+   turns each captured decision into a durable record.
+2. Open **Decisions**. Each record names when it was decided and links to the
+   transcript moment when HoldSpeak can verify one. **Reported** means the
+   meeting plugin supplied an in-range timestamp. **Anchored** means the exact
+   decision text was found in a transcript segment. No verified moment means no
+   moment link.
+3. Accept a decision that stands. If a later decision replaces it, supersede
+   the old one in the row and name its successor. A superseded decision points
+   to the record that replaced it.
+4. Promote an accepted decision to an ADR, note, or decision announcement. You
+   can use the record as written or ask your configured model to draft the
+   artifact. A superseded decision refuses promotion and points you to its
+   successor.
+5. Use **Search** to find words across decisions, artifacts, and notes. Run
+   `holdspeak memory rebuild-index` if you need to rebuild those local search
+   indexes from the records you still have.
+6. Use **Ask this project** for a cited answer over the matching project
+   sources. Every source remains a separate reference you can follow. The
+   egress badge names where the model runs, and **Grounded on N of M** tells you
+   how many matching sources reached the bounded prompt and how many were left
+   out.
+
+**Timeline** includes the project-qualified change since the previous meeting,
+labeled **Since <previous meeting title>**. It does not compare against an
+unrelated meeting from another project.
+
+### Retention and deletion
+
+A decision record survives deletion of its source meeting. HoldSpeak marks its
+source as deleted instead of deleting the decision text, rationale, date, or
+lifecycle. The transcript and its moment are gone, so the surviving record no
+longer offers that source jump. It remains available in **Decisions**.
+
+"Years later" means text search over the decisions with linked sources,
+artifacts, and notes still in your local database. A severed decision remains a
+decision record but leaves that cross-kind index. The index is not a backup,
+does not restore deleted source material, and makes no promise that data you
+remove will survive. Back up the database separately if you need recovery.
+
+### The process window
+
+Open **Process** when you want to see what the kernel journal says is running,
+waiting, needs you, unknown, or recently ended. Rows show the reported work,
+its state, and available principal, placement, target, and lineage details.
+The window reads kernel objects and events; it has no controls that start,
+stop, retry, approve, or otherwise change a run. **Unknown** is literal: the
+journal did not report a lifecycle state the window can classify. It does not
+mean failed, stuck, or safe to stop.
+
 ## Companions
 
 HoldSpeak runs as a desktop hub. A companion on another device drives it over

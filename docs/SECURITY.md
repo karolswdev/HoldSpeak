@@ -38,10 +38,8 @@ transcription and rewrite model calls, ruled exempt computation by the
 owner (2026-07-29): their output returns to the caller on the
 permanently low-latency dictation path. A new transcription-shaped
 call is still caught by the census and owes its own triage.
-The remainder is five mixed sites (T01/T02 and C02/C03/C05), twelve bypass
-sites, and one dormant site. N10-N12 are conservatively counted as bypass debt
-pending the owner's constitutional
-ruling on whether those dictation model invocations are exempt computation.
+The remainder is five mixed sites (T01/T02 and C02/C03/C05), nine bypass
+sites, and one dormant site.
 A fence test refuses an unlisted addition or silent removal. Debt is declared
 migration debt, not protection supplied by the broker. Clause 6 remains in
 force, and its sunset condition remains unmet: it expires only when the register

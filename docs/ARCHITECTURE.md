@@ -274,6 +274,44 @@ flowchart TD
   APV -. "approved only" .-> EXT(["GitHub, Slack"])
 ```
 
+## Project memory and the process read model
+
+Meeting plugins still produce ordinary typed artifacts. When the shared
+`PluginRepository.record_artifact` path stores an artifact of type `decisions`,
+it also projects each entry into the `decisions` table in the same transaction.
+The projection is one-way and derived: plugin contracts do not gain a second
+write path. Decision identity is anchored to normalized decision text plus its
+source keys, so a later plugin pass can add a verified transcript moment without
+minting a duplicate. Lifecycle and supersession belong to the projected record,
+not to the plugin output.
+
+A meeting deletion severs that projection instead of cascading through it. The
+decision row remains, with `source_state=source_deleted`; the meeting and its
+transcript moment do not. Promoted ADRs, notes, and decision announcements carry
+both decision and meeting source references. Superseding a decision also marks
+artifacts derived from it rejected, so the old face cannot keep presenting
+itself as current.
+
+Long-horizon retrieval uses three FTS5 indexes, one each for decisions,
+artifacts, and notes. Writes keep them fresh through database triggers, and
+`holdspeak memory rebuild-index` reconstructs them from canonical rows. Search
+normalizes BM25 within each kind before interleaving the kinds, because raw
+scores from different corpora are not comparable.
+
+The shared grounding hydrator expands a project reference into citable source
+blocks. With a query, it selects project sources by memory-search relevance;
+without one, it labels the bounded recency fallback. Each selected source stays
+in its own block with a qualified `[REF: kind:id]` line. The hydration receipt
+carries `matched_count` and `overflow_count`, so an Ask surface can disclose
+exactly how much of the match set reached the prompt.
+
+The **Process** window is the corresponding read model for live work. It polls
+authenticated `/api/kernel/events` and `/api/kernel/read?view=process`, folds the
+journal into fixed sections, and never invents a lifecycle state. It is a pure
+read and presentation consumer under Constitution Article XI clause 5: it owes
+authenticated read authority, but no operation admission or receipt. It does
+not expose execution controls.
+
 ## The agent sync loop
 
 A live Claude Code or Codex session becomes an object on the iPad desk, and

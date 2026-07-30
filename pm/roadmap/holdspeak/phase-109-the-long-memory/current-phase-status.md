@@ -1,15 +1,15 @@
 # Phase 109 - The Long Memory
 
-**Status:** IN PROGRESS (6/8). Chartered 2026-07-29 by owner direction:
+**Status:** IN PROGRESS (7/8). Chartered 2026-07-29 by owner direction:
 Phase 109 (the second userland program) delivered next; Phase 108
 (The Locked Room, RFC §5b confinement) stays reserved with its
 machine-asserted work list in BACKLOG candidate Y.
 
-**Last updated:** 2026-07-30 (HS-109-05 shipped — the Project Memory
-window: the `project` desk primitive, Timeline/Decisions/Search/Ask
-faces, in-row accept/supersede/promote, ask-this-project answering
-from the real archive on `.43` with citation chips and "Grounded on
-N of M", walked 9/9 at 1440+393 on a copy of the real archive).
+**Last updated:** 2026-07-30 (HS-109-07 shipped — the memory at the
+entry points in owner vocabulary, every claim truth-audited to
+file:line; the Phase-107 drift reconciled in SECURITY and BACKLOG.
+Only the closeout remains: the beats are staged, the sitting sheet is
+written — [OWNER-SITTING](./OWNER-SITTING.md)).
 
 ## Why this phase exists
 
@@ -183,7 +183,7 @@ plugins already produce, never a rival store the plugins must learn.
 | HS-109-04 | Long-horizon retrieval — the memory index | done | [story-04-retrieval](./story-04-retrieval.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-109-05 | The Project Memory window | done | [story-05-memory-window](./story-05-memory-window.md) | [evidence-story-05](./evidence-story-05.md) |
 | HS-109-06 | The process window — what is running | done | [story-06-process-window](./story-06-process-window.md) | [evidence-story-06](./evidence-story-06.md) |
-| HS-109-07 | Docs — memory at the entry points | backlog | [story-07-docs](./story-07-docs.md) | — |
+| HS-109-07 | Docs — memory at the entry points | done | [story-07-docs](./story-07-docs.md) | [evidence-story-07](./evidence-story-07.md) |
 | HS-109-08 | Closeout — the sitting on real memory | backlog | [story-08-closeout](./story-08-closeout.md) | — |
 
 ## Sequencing
@@ -242,7 +242,18 @@ Then docs, then closeout.
 
 ## Where we are
 
-**2026-07-30 — HS-109-05 shipped (the memory is touchable).** The
+**2026-07-30 — HS-109-07 shipped (the memory is documented).** The
+USER_GUIDE carries the whole loop in owner vocabulary with retention
+stated plainly and the Process window's honest `Unknown`; ARCHITECTURE
+maps the derived projection, indexes, cited grounding, and the
+clause-5 read consumer; README gains one why-led paragraph; the
+Phase-107 drift is reconciled — SECURITY's stale pending-ruling
+sentence removed (remainder reads 5 mixed + 9 bypass + 1 dormant,
+= the ledger's 15 debt; narrowing unchanged in strength) and BACKLOG
+candidate Y's header now matches the ledger with the three owner
+rulings recorded. Twenty-six-claim truth audit to shipped file:line;
+guard family 55 green. Earlier:
+**HS-109-05 shipped (the memory is touchable).** The
 Project is a desk primitive (contract entry, derived Info, verbs on
 the registry, the tome sprite family per the icon finding) and
 opening it opens its memory: a window in the one grammar with
