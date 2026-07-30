@@ -399,6 +399,20 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
         except Exception as e:
             return error_500(e, log, "Failed to get meeting projects")
 
+    @router.get("/api/projects/{project_id}/since-last-meeting")
+    async def api_project_since_last_meeting(project_id: str) -> Any:
+        """Compare only the latest two meetings filed to this Project."""
+        try:
+            from ...db import get_database
+            from ...meeting_aftercare import compute_project_since_last_meeting
+
+            result = compute_project_since_last_meeting(get_database(), project_id)
+            if result is None:
+                return JSONResponse({"error": "Project not found"}, status_code=404)
+            return JSONResponse(result)
+        except Exception as e:
+            return error_500(e, log, "Failed to compare Project meetings")
+
     @router.get("/api/projects/{project_id}/summary")
     async def api_project_summary(project_id: str) -> Any:
         try:

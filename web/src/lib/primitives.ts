@@ -24,13 +24,14 @@ export type SyncClass =
   | "presence" // a live stream (coder)
   | "local"; // never leaves the device (game, layout)
 
-/** The eight shared primitive kinds, plus the two local-only kinds. */
+/** The shared desk primitive kinds, plus the two local-only kinds. */
 export type PrimitiveKind =
   | "meeting"
   | "artifact"
   | "note"
   | "directory"
   | "kb"
+  | "project"
   | "recipe"
   | "chain"
   | "workflow"
@@ -124,6 +125,19 @@ export interface KB {
   name: string;
   memberIds: string[];
   createdAt: string;
+}
+
+/** A durable body of work whose relationships form its long memory. */
+export interface Project {
+  kind: "project";
+  id: string;
+  name: string;
+  description: string;
+  keywords: string[];
+  teamMembers: string[];
+  meetingCount: number;
+  createdAt: string;
+  updatedAt: string;
 }
 
 // ── capability ─────────────────────────────────────────────────────────
@@ -232,6 +246,7 @@ export type Primitive =
   | Note
   | Directory
   | KB
+  | Project
   | Persona
   | Chain
   | Workflow
@@ -290,6 +305,15 @@ export const PRIMITIVES: Record<PrimitiveKind, PrimitiveDescriptor> = {
     blurb: "A named collection of material used to ground answers.",
     icon: "M2 7l10-4 10 4-10 4zM2 7v10l10 4 10-4V7M2 12l10 4 10-4",
     authorable: true,
+  },
+  project: {
+    kind: "project",
+    label: "Project",
+    plural: "Projects",
+    syncClass: "organization",
+    blurb: "A body of work with meetings, decisions, and cited memory.",
+    icon: "M4 4h16v16H4zM8 2v4M16 2v4M8 10h8M8 14h5",
+    authorable: false,
   },
   recipe: {
     kind: "recipe",
@@ -355,6 +379,6 @@ export type Agent = Persona;
 export const DESK_GROUPS: { label: string; kinds: PrimitiveKind[] }[] = [
   { label: "Content", kinds: ["meeting", "artifact", "note"] },
   { label: "Capabilities", kinds: ["recipe", "chain", "workflow"] },
-  { label: "Organization", kinds: ["directory", "kb"] },
+  { label: "Organization", kinds: ["directory", "kb", "project"] },
   { label: "Live", kinds: ["coder"] },
 ];

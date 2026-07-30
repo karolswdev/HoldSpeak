@@ -12,7 +12,8 @@
 .surface-verbs {
   position: sticky;
   top: calc(-1 * var(--desk-window-pad-y));
-  margin: calc(-1 * var(--desk-window-pad-y)) calc(-1 * var(--desk-window-pad-x)) 0;
+  margin: calc(-1 * var(--desk-window-pad-y))
+    calc(-1 * var(--desk-window-pad-x)) 0;
   padding: 8px var(--desk-window-pad-x);
   display: flex;
   align-items: center;
@@ -233,8 +234,8 @@
   opacity: 0.75;
 }
 .surface-state[data-kind="loading"] .surface-state-glyph {
-  animation: surface-state-pulse calc(var(--duration-long) * 4)
-    ease-in-out infinite;
+  animation: surface-state-pulse calc(var(--duration-long) * 4) ease-in-out
+    infinite;
 }
 @keyframes surface-state-pulse {
   50% {
@@ -820,7 +821,9 @@ button.surface-edit-in-place:hover {
   max-width: none;
   justify-content: stretch;
 }
-.surface-setting-row.is-wide .surface-setting-control :where(.hs-control, textarea, input) {
+.surface-setting-row.is-wide
+  .surface-setting-control
+  :where(.hs-control, textarea, input) {
   width: 100%;
   max-width: none;
   text-align: left;
@@ -1519,7 +1522,8 @@ button.surface-edit-in-place:hover {
   box-shadow:
     inset 0 0 0 1.5px var(--accent-soft),
     0 0 0 3px var(--accent-tint);
-  animation: surface-state-pulse calc(var(--duration-long) * 3) ease-in-out infinite;
+  animation: surface-state-pulse calc(var(--duration-long) * 3) ease-in-out
+    infinite;
 }
 
 /* HS-101 round 6 — the opened record's head: the name is the
@@ -1560,6 +1564,11 @@ button.surface-edit-in-place:hover {
 .desk-surface-body .transcript-list p {
   margin: 0;
   line-height: 1.55;
+}
+.desk-surface-body .transcript-list li[data-moment="true"] {
+  background: var(--accent-tint);
+  outline: 1px solid var(--accent-soft);
+  outline-offset: 3px;
 }
 
 /* HS-102-04 — the Record wing's two verbs lead at display step,
@@ -1610,4 +1619,84 @@ button.surface-edit-in-place:hover {
 .surface-dropwell-glyph {
   font-size: var(--font-size-xl);
   line-height: 1;
+}
+
+/* HS-109-05 — Project Memory stays in the Surface grammar. The phone
+   posture is list-first: one vertical flow, no secondary rail or body spill. */
+.project-memory-core {
+  min-width: 0;
+  overflow-x: hidden;
+}
+.project-memory-since {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin: 0 0 var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border-inline-start: 2px solid var(--accent-soft);
+  color: var(--text-muted);
+}
+.project-memory-since strong {
+  color: var(--text);
+}
+.project-memory-since span {
+  flex: none;
+  font-variant-numeric: tabular-nums;
+}
+.project-memory-search,
+.project-memory-ask {
+  margin-bottom: var(--space-3);
+}
+.project-memory-search input,
+.project-memory-ask textarea {
+  min-width: 0;
+  width: 100%;
+}
+.project-memory-answer {
+  margin-top: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--border);
+}
+.project-memory-answer .material {
+  max-width: 72ch;
+}
+.project-memory-grounded {
+  margin: var(--space-2) 0;
+  font-variant-numeric: tabular-nums;
+}
+.project-memory-citations {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+.project-memory-supersede {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.project-memory-supersede select {
+  max-width: 14rem;
+}
+
+@container (max-width: 540px) {
+  .project-memory-since {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: var(--space-1);
+  }
+  .project-memory-core .surface-row-line {
+    align-items: flex-start;
+  }
+  .project-memory-core .surface-row-verbs,
+  .project-memory-supersede {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+  .project-memory-supersede label,
+  .project-memory-supersede select {
+    min-width: 0;
+    width: 100%;
+    max-width: none;
+  }
 }

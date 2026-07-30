@@ -58,6 +58,13 @@ export const INFO: Record<string, KindInfo> = {
     },
     properties: [],
   },
+  project: {
+    footprint: (o) => {
+      const n = Number((o.ref as any).meetingCount || 0);
+      return `${n} ${n === 1 ? "meeting" : "meetings"}`;
+    },
+    properties: [],
+  },
   recipe: {
     footprint: () => null,
     properties: [
@@ -68,12 +75,10 @@ export const INFO: Record<string, KindInfo> = {
         type: "choice",
         choices: (_o, _items) => [
           { id: "", label: "This device" },
-          ...useDesk
-            .getState()
-            .profiles.map((p) => ({
-              id: String(p.id),
-              label: String(p.name || p.id),
-            })),
+          ...useDesk.getState().profiles.map((p) => ({
+            id: String(p.id),
+            label: String(p.name || p.id),
+          })),
         ],
         value: (o) => String((o.ref as any).profileId || ""),
         set: async (o, value) => {

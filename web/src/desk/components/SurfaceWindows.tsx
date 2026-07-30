@@ -177,6 +177,19 @@ const SURFACES: SurfaceRow[] = [
     ),
   },
   {
+    key: "open-project-memory",
+    id: "surface-project-memory",
+    title: "Project memory",
+    glyph: "▤",
+    eyebrow: "Long memory",
+    minW: 640,
+    Core: lazy(() =>
+      import("../../pages/cores/ProjectMemoryCore").then((m) => ({
+        default: m.ProjectMemoryCore,
+      })),
+    ),
+  },
+  {
     key: "inspect-processes",
     id: "surface-processes",
     title: "Processes",

@@ -95,12 +95,29 @@ export const VERBS: Verb[] = [
   },
   {
     id: "object.info",
-    label: "Info",
+    label: "Get Info",
     menu: "object",
     ghost: needSelection,
     run: (ctx) => {
       const o = selected(ctx);
       if (o) useDesk.getState().openInfoWindow(ctx.selectedRef as string);
+    },
+  },
+  {
+    id: "object.ask-project",
+    label: "Ask this project",
+    menu: "object",
+    ghost: (ctx) => {
+      const o = selected(ctx);
+      if (!o) return "Select a Project";
+      return o.kind === "project" ? null : "Select a Project";
+    },
+    run: (ctx) => {
+      const o = selected(ctx);
+      if (o?.kind !== "project") return;
+      const desk = useDesk.getState();
+      desk.setSelected([`project:${o.id}`]);
+      desk.openAsk();
     },
   },
   {
@@ -118,15 +135,13 @@ export const VERBS: Verb[] = [
     },
   },
   // ── Go (the four applications + tools — DESK_TOOLS is the truth) ────
-  ...DESK_TOOLS.map(
-    (tool): Verb => ({
-      id: `go.${tool.action}`,
-      label: tool.label,
-      menu: "go",
-      ghost: () => null,
-      run: () => openSurfaceOr(tool.action, tool.href, tool.subjectRef),
-    }),
-  ),
+  ...DESK_TOOLS.map((tool): Verb => ({
+    id: `go.${tool.action}`,
+    label: tool.label,
+    menu: "go",
+    ghost: () => null,
+    run: () => openSurfaceOr(tool.action, tool.href, tool.subjectRef),
+  })),
 ];
 
 export function menuVerbs(menu: MenuId): Verb[] {
