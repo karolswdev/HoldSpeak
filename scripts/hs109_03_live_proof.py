@@ -19,6 +19,7 @@ Usage:
 from __future__ import annotations
 
 import sys
+import time
 from unittest.mock import MagicMock
 
 from fastapi.testclient import TestClient
@@ -45,10 +46,33 @@ def main() -> int:
     )
     client.headers["Authorization"] = "Bearer owner-secret"
 
+    # Rerunnable forever: supersession is permanent (by design), so the walk
+    # mints its own two decisions through the REAL chokepoint each session —
+    # clearly named, cleaned up at the end — instead of consuming the
+    # archive's records.
+    nonce = time.strftime("%Y%m%dT%H%M%S")
+    fixture_artifact = f"art-beats-walk-{nonce}"
+    db.plugins.record_artifact(
+        artifact_id=fixture_artifact,
+        meeting_id="a9e12058",
+        artifact_type="decisions",
+        title=f"Decisions (HS-109 beats walk {nonce})",
+        structured_json={"decisions": [
+            {"decision": f"Beats walk {nonce}: adopt the long memory",
+             "rationale": "walk fixture"},
+            {"decision": f"Beats walk {nonce}: supersede the trial adoption",
+             "rationale": "walk fixture"},
+        ]},
+        confidence=1.0,
+        status="draft",
+        plugin_id="decision_capture",
+        plugin_version="0.2.0",
+        sources=[("plugin_run", f"hs109-beats-{nonce}")],
+    )
     records = [r for r in db.decisions.list(meeting_id="a9e12058")
-               if r.lifecycle in ("recorded", "accepted")]
+               if r.source_artifact_id == fixture_artifact]
     if len(records) < 2:
-        print("FAIL  need two live (non-superseded) records to walk")
+        print("FAIL  the fixture artifact did not project two records")
         return 1
     blue, successor = records[0], records[1]
     print(f"decision: {blue.id} '{blue.text[:60]}' lifecycle={blue.lifecycle}")
@@ -123,6 +147,18 @@ def main() -> int:
     ok &= sup.status_code == 200 and marked == "rejected"
     ok &= rp.status_code >= 400 and names
 
+    # Leave the archive tidy: the fixture and everything derived from it.
+    for artifact in db.plugins.list_artifacts_by_source("decision", blue.id):
+        db.plugins.delete_artifact(artifact.id)
+    if mj.get("artifact", {}).get("id"):
+        db.plugins.delete_artifact(mj["artifact"]["id"])
+    db.plugins.delete_artifact(fixture_artifact)
+    with db._connection() as conn:
+        conn.execute(
+            "UPDATE decisions SET deleted = 1 WHERE source_artifact_id = ?",
+            (fixture_artifact,),
+        )
+    print("walk fixtures cleaned up")
     print(f"\n{'ALL PASS' if ok else 'FAILURES ABOVE'}")
     return 0 if ok else 1
 
