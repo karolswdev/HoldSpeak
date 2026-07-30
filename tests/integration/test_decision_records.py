@@ -360,3 +360,141 @@ def test_v32_migration_rebuilds_a_stale_check_table(tmp_path: Path) -> None:
     assert [row[0] for row in rows] == ["dec-stale-1"]
     assert {"decisions_memory_ai", "decisions_memory_ad",
             "decisions_memory_au", "decisions_sever_meeting_source"} <= triggers
+def _promotion_client(db: Database, monkeypatch) -> TestClient:
+    monkeypatch.setattr(hsdb, "get_database", lambda *args, **kwargs: db)
+    callbacks = WebRuntimeCallbacks(
+        on_bookmark=MagicMock(),
+        on_stop=MagicMock(),
+        get_state=MagicMock(return_value={"id": "decision-promotion"}),
+    )
+    return TestClient(
+        MeetingWebServer(
+            callbacks, host="127.0.0.1", auth_token="owner-secret"
+        ).app
+    )
+
+
+def test_promote_route_is_idempotent_and_queryable_both_ways(
+    tmp_path: Path, monkeypatch
+) -> None:
+    db = Database(tmp_path / "promote-route.db")
+    _meeting(db, "meeting-1", "2026-07-01T10:00:00")
+    _artifact(db, "artifact-1", "meeting-1", "Keep causal memory")
+    decision = db.decisions.list()[0]
+    db.decisions.accept(decision.id, actor="owner-session")
+    owner = _promotion_client(db, monkeypatch)
+
+    first = owner.post(f"/api/decisions/{decision.id}/promote/adr")
+    second = owner.post(f"/api/decisions/{decision.id}/promote/adr")
+    assert first.status_code == second.status_code == 200
+    assert first.json()["artifact"]["id"] == second.json()["artifact"]["id"]
+    assert first.json()["artifact"]["status"] == "accepted"
+    assert {(s["source_type"], s["source_ref"]) for s in first.json()["artifact"]["sources"]} == {
+        ("decision", decision.id),
+        ("meeting", "meeting-1"),
+    }
+    assert len(db.plugins.list_artifacts_by_source("decision", decision.id)) == 1
+    read_back = owner.get(f"/api/decisions/{decision.id}").json()
+    assert [a["id"] for a in read_back["lineage"]["derived_artifacts"]] == [
+        first.json()["artifact"]["id"]
+    ]
+
+
+def test_model_promotion_admits_before_generation_and_leaves_receipt(
+    tmp_path: Path, monkeypatch
+) -> None:
+    import holdspeak.web.routes.decisions as route_module
+    from holdspeak.kernel.runtime import _configure
+
+    db = Database(tmp_path / "model-promotion.db")
+    _meeting(db, "meeting-1", "2026-07-01T10:00:00")
+    _artifact(db, "artifact-1", "meeting-1", "Use the bounded inference spine")
+    decision = db.decisions.list()[0]
+    db.decisions.accept(decision.id, actor="owner-session")
+    broker = _configure(db)
+    events: list[str] = []
+    original_submit = broker.submit
+    original_decide = broker.decide
+
+    def tracked_submit(*args, **kwargs):
+        events.append("submit")
+        return original_submit(*args, **kwargs)
+
+    def tracked_decide(*args, **kwargs):
+        events.append("decide")
+        return original_decide(*args, **kwargs)
+
+    class FakeIntel:
+        active_provider = "fake"
+
+    async def fake_generate(_db, _target, _prompt):
+        # Generation can only be entered after the operation was admitted and approved.
+        assert events == ["submit", "decide"]
+        events.append("generate")
+        return "# Draft ADR\n\nGenerated for owner review.", FakeIntel()
+
+    monkeypatch.setattr(broker, "submit", tracked_submit)
+    monkeypatch.setattr(broker, "decide", tracked_decide)
+    monkeypatch.setattr(route_module, "_kernel_service", lambda: broker)
+    monkeypatch.setattr(route_module, "_generate_with_model", fake_generate)
+    owner = _promotion_client(db, monkeypatch)
+
+    response = owner.post(
+        f"/api/decisions/{decision.id}/promote/adr/draft-with-model",
+        json={"inference_target_id": "this_machine"},
+    )
+    assert response.status_code == 200, response.text
+    payload = response.json()
+    assert events == ["submit", "decide", "generate"]
+    assert payload["artifact"]["status"] == "draft"
+    assert payload["artifact"]["body_markdown"].startswith("# Draft ADR")
+    assert payload["inference_target"]["id"] == "this_machine"
+    operation = broker.store.operation(payload["operation_id"])
+    receipt = broker.store.receipt(payload["operation_id"])
+    assert operation["name"] == "inference.run"
+    assert receipt["outcome"] == "succeeded"
+    assert receipt["result_ref"] == f"artifact:{payload['artifact']['id']}"
+
+
+def test_superseded_promotion_route_names_successor_without_model_call(
+    tmp_path: Path, monkeypatch
+) -> None:
+    import holdspeak.web.routes.decisions as route_module
+
+    db = Database(tmp_path / "refused-model-promotion.db")
+    _meeting(db, "meeting-1", "2026-07-01T10:00:00")
+    db.plugins.record_artifact(
+        artifact_id="artifact-1",
+        meeting_id="meeting-1",
+        artifact_type="decisions",
+        title="Decisions",
+        structured_json={
+            "decisions": [
+                {"decision": "Old direction"},
+                {"decision": "Successor direction"},
+            ]
+        },
+        plugin_id="decision_capture",
+    )
+    rows = {row.text: row for row in db.decisions.list()}
+    old, successor = rows["Old direction"], rows["Successor direction"]
+    db.decisions.accept(old.id, actor="owner-session")
+    db.decisions.supersede(old.id, successor.id, actor="owner-session")
+    calls = 0
+
+    async def forbidden_generation(*args, **kwargs):
+        nonlocal calls
+        calls += 1
+        raise AssertionError("model called without admission")
+
+    monkeypatch.setattr(route_module, "_generate_with_model", forbidden_generation)
+    owner = _promotion_client(db, monkeypatch)
+    response = owner.post(
+        f"/api/decisions/{old.id}/promote/adr/draft-with-model",
+        json={"inference_target_id": "this_machine"},
+    )
+    assert response.status_code == 409
+    assert response.json()["detail"] == (
+        f"superseded by {successor.id} — promote that one"
+    )
+    assert calls == 0

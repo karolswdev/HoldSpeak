@@ -215,6 +215,24 @@ class ArtifactSummary:
     # meeting_id stores NULL and reads back "" here.
     origin: str = "meeting"
 
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "id": self.id,
+            "meeting_id": self.meeting_id,
+            "origin": self.origin,
+            "artifact_type": self.artifact_type,
+            "title": self.title,
+            "body_markdown": self.body_markdown,
+            "structured_json": dict(self.structured_json),
+            "confidence": self.confidence,
+            "status": self.status,
+            "plugin_id": self.plugin_id,
+            "plugin_version": self.plugin_version,
+            "sources": list(self.sources),
+            "created_at": self.created_at.isoformat(),
+            "updated_at": self.updated_at.isoformat(),
+        }
+
 
 @dataclass
 class ActivityRecord:

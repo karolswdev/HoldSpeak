@@ -16,6 +16,18 @@ from typing import Any, Optional
 from .base import BaseRepository
 
 _LIFECYCLES = frozenset({"recorded", "accepted", "superseded", "rejected"})
+_PROMOTION_TYPES = frozenset({"adr", "note", "decision_announcement"})
+
+
+class DecisionPromotionRefused(ValueError):
+    """Named product refusal for a decision that cannot be promoted."""
+
+    code = "decision_promotion_refused"
+
+    def __init__(self, decision_id: str, detail: str) -> None:
+        super().__init__(f"{self.code}: {detail}")
+        self.decision_id = decision_id
+        self.detail = detail
 
 
 class DecisionTransitionRefused(ValueError):
@@ -72,6 +84,22 @@ class DecisionMoment:
 
 
 @dataclass(frozen=True)
+class DecisionPromotionReceipt:
+    receipt_id: str
+    actor: str
+    operation: str
+    subject: str
+    outcome: str
+    artifact_id: str
+    artifact_type: str
+    review_status: str
+    recorded_at: str
+
+    def to_dict(self) -> dict[str, Any]:
+        return asdict(self)
+
+
+@dataclass(frozen=True)
 class DecisionLifecycleReceipt:
     receipt_id: str
     actor: str
@@ -85,6 +113,18 @@ class DecisionLifecycleReceipt:
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
+
+
+def derive_promoted_artifact_id(decision_id: str, artifact_type: str) -> str:
+    """Stable identity for one decision/type promotion, independent of retries."""
+    clean_id = str(decision_id or "").strip()
+    clean_type = str(artifact_type or "").strip().lower()
+    if not clean_id:
+        raise ValueError("decision_id is required")
+    if clean_type not in _PROMOTION_TYPES:
+        raise ValueError(f"unsupported decision promotion type: {clean_type}")
+    key = f"decision:{clean_id}|artifact:{clean_type}"
+    return "promoted-" + hashlib.sha256(key.encode("utf-8")).hexdigest()[:20]
 
 
 def derive_decision_id(
@@ -397,11 +437,17 @@ class DecisionRepository(BaseRepository):
                    ORDER BY decided_at,id""",
                 (decision.id,),
             ).fetchall()
+        derived = (
+            self._db.plugins.list_artifacts_by_source("decision", decision.id)
+            if self._db is not None
+            else []
+        )
         return {
             "decision": decision.to_dict(),
             "lineage": {
                 "superseded_by": superseded_by.to_dict() if superseded_by else None,
                 "supersedes": [self._row(row).to_dict() for row in rows],
+                "derived_artifacts": [artifact.to_dict() for artifact in derived],
             },
         }
 
@@ -436,6 +482,97 @@ class DecisionRepository(BaseRepository):
                 params,
             ).fetchall()
         return [self._row(row) for row in rows]
+
+    def assert_promotable(self, decision_id: str) -> DecisionRecord:
+        clean_id = str(decision_id or "").strip()
+        decision = self.get(clean_id)
+        if decision is None:
+            raise KeyError(clean_id)
+        if decision.lifecycle == "superseded":
+            successor = decision.superseded_by or "unknown"
+            raise DecisionPromotionRefused(
+                clean_id, f"superseded by {successor} — promote that one"
+            )
+        if decision.lifecycle != "accepted":
+            raise DecisionPromotionRefused(
+                clean_id, f"decision is {decision.lifecycle} — accept it before promotion"
+            )
+        return decision
+
+    def promote(
+        self,
+        decision_id: str,
+        artifact_type: str,
+        *,
+        actor: str,
+        body_markdown: Optional[str] = None,
+        review_status: str = "accepted",
+        model_assisted: bool = False,
+    ) -> DecisionPromotionReceipt:
+        """Promote an accepted record into one idempotent, causally-linked artifact."""
+        if self._db is None:
+            raise RuntimeError("decision promotion requires the database container")
+        clean_actor = str(actor or "").strip()
+        if not clean_actor:
+            raise ValueError("actor is required")
+        clean_type = str(artifact_type or "").strip().lower()
+        if clean_type not in _PROMOTION_TYPES:
+            raise ValueError(f"unsupported decision promotion type: {clean_type}")
+        if review_status not in {"draft", "accepted"}:
+            raise ValueError(f"invalid promotion review status: {review_status}")
+        decision = self.assert_promotable(decision_id)
+        from ..plugins.synthesis import render_promoted_decision
+
+        title, deterministic_body, structured = render_promoted_decision(
+            clean_type,
+            text=decision.text,
+            rationale=decision.rationale,
+            decided_at=decision.decided_at,
+            meeting_id=decision.source_meeting_id,
+        )
+        artifact_id = derive_promoted_artifact_id(decision.id, clean_type)
+        structured.update(
+            {
+                "promotion": {
+                    "decision_id": decision.id,
+                    "meeting_id": decision.source_meeting_id,
+                    "model_assisted": bool(model_assisted),
+                }
+            }
+        )
+        self._db.plugins.record_artifact(
+            artifact_id=artifact_id,
+            meeting_id=decision.source_meeting_id,
+            artifact_type=clean_type,
+            title=title,
+            body_markdown=(
+                str(body_markdown).strip()
+                if isinstance(body_markdown, str) and body_markdown.strip()
+                else deterministic_body
+            ),
+            structured_json=structured,
+            confidence=1.0,
+            status=review_status,
+            plugin_id="decision_promotion",
+            plugin_version="1",
+            sources=[
+                {"source_type": "decision", "source_ref": decision.id},
+                {"source_type": "meeting", "source_ref": decision.source_meeting_id},
+            ],
+        )
+        now_iso = datetime.now().isoformat()
+        receipt_key = f"{decision.id}|{clean_type}|{clean_actor}|{now_iso}"
+        return DecisionPromotionReceipt(
+            receipt_id="dec-prom-rec-" + hashlib.sha256(receipt_key.encode()).hexdigest()[:20],
+            actor=clean_actor,
+            operation="decision.promote",
+            subject=f"decision:{decision.id}",
+            outcome="applied",
+            artifact_id=artifact_id,
+            artifact_type=clean_type,
+            review_status=review_status,
+            recorded_at=now_iso,
+        )
 
     def accept(self, decision_id: str, *, actor: str) -> DecisionLifecycleReceipt:
         return self._transition(decision_id, action="accept", actor=actor)
@@ -504,6 +641,17 @@ class DecisionRepository(BaseRepository):
                    WHERE id=?""",
                 (target, target_id, now_iso, now_iso, clean_id),
             )
+            if action == "supersede":
+                # The existing artifact review status is the queryable face marker:
+                # a superseded decision makes every artifact derived from it rejected.
+                conn.execute(
+                    """UPDATE artifacts SET status='rejected',updated_at=?
+                       WHERE id IN (
+                           SELECT artifact_id FROM artifact_sources
+                           WHERE source_type='decision' AND source_ref=?
+                       )""",
+                    (now_iso, clean_id),
+                )
         receipt_key = f"{clean_id}|{action}|{clean_actor}|{now_iso}"
         return DecisionLifecycleReceipt(
             receipt_id="dec-rec-" + hashlib.sha256(receipt_key.encode()).hexdigest()[:20],

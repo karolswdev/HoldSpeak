@@ -1028,6 +1028,22 @@
       "consumers": []
     },
     {
+      "path": "/api/decisions/{decision_id}/promote/{artifact_type}",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.decisions",
+      "consumers": []
+    },
+    {
+      "path": "/api/decisions/{decision_id}/promote/{artifact_type}/draft-with-model",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.decisions",
+      "consumers": []
+    },
+    {
       "path": "/api/decisions/{decision_id}/reject",
       "methods": [
         "POST"

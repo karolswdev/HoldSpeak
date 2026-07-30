@@ -5,10 +5,12 @@ import pytest
 
 from holdspeak.db import Database
 from holdspeak.db.decisions import (
+    DecisionPromotionRefused,
     DecisionTransitionRefused,
     anchor_decision_timestamp,
     derive_decision_id,
     validate_source_timestamp,
+    derive_promoted_artifact_id,
 )
 
 
@@ -233,3 +235,71 @@ def test_identity_survives_provenance_reruns() -> None:
     assert derive_decision_id("m", "a", bare) != derive_decision_id(
         "m", "a", {"decision": "Do not ship the desk"}
     )
+def test_promotion_id_and_decision_lineage_kind_round_trip(tmp_path) -> None:
+    db = Database(tmp_path / "promotion.db")
+    _meeting(db, "meeting-1")
+    _artifact(db, "artifact-1", "meeting-1", [{"decision": "Keep the kernel honest"}])
+    decision = db.decisions.list()[0]
+    db.decisions.accept(decision.id, actor="owner-session")
+
+    assert derive_promoted_artifact_id(decision.id, "adr") == derive_promoted_artifact_id(
+        decision.id, "adr"
+    )
+    receipt = db.decisions.promote(decision.id, "adr", actor="owner-session")
+    artifact = db.plugins.get_artifact(receipt.artifact_id)
+    assert artifact is not None
+    assert {tuple(source.values()) for source in artifact.sources} == {
+        ("decision", decision.id),
+        ("meeting", "meeting-1"),
+    }
+    reverse = db.plugins.list_artifacts_by_source("decision", decision.id)
+    assert [row.id for row in reverse] == [artifact.id]
+    forward = db.decisions.get_with_lineage(decision.id)
+    assert [row["id"] for row in forward["lineage"]["derived_artifacts"]] == [artifact.id]
+
+
+def test_supersession_marks_promoted_artifact_and_names_successor(tmp_path) -> None:
+    db = Database(tmp_path / "superseded-promotion.db")
+    _meeting(db, "meeting-1")
+    _artifact(
+        db,
+        "artifact-1",
+        "meeting-1",
+        [{"decision": "Old direction"}, {"decision": "New direction"}],
+    )
+    rows = {row.text: row for row in db.decisions.list()}
+    old, successor = rows["Old direction"], rows["New direction"]
+    db.decisions.accept(old.id, actor="owner-session")
+    promoted = db.decisions.promote(old.id, "note", actor="owner-session")
+    assert db.plugins.get_artifact(promoted.artifact_id).status == "accepted"
+
+    db.decisions.supersede(old.id, successor.id, actor="owner-session")
+    assert db.plugins.get_artifact(promoted.artifact_id).status == "rejected"
+    with pytest.raises(
+        DecisionPromotionRefused,
+        match=f"superseded by {successor.id} — promote that one",
+    ):
+        db.decisions.promote(old.id, "note", actor="owner-session")
+
+
+def test_promoted_artifact_does_not_reproject_as_a_decision(tmp_path) -> None:
+    db = Database(tmp_path / "no-reprojection.db")
+    _meeting(db, "meeting-1")
+    _artifact(db, "artifact-1", "meeting-1", [{"decision": "One durable record"}])
+    decision = db.decisions.list()[0]
+    db.decisions.accept(decision.id, actor="owner-session")
+    db.decisions.promote(decision.id, "decision_announcement", actor="owner-session")
+    assert [row.id for row in db.decisions.list()] == [decision.id]
+
+
+def test_invalid_artifact_source_kind_is_refused(tmp_path) -> None:
+    db = Database(tmp_path / "source-kind.db")
+    _meeting(db, "meeting-1")
+    with pytest.raises(ValueError, match="Invalid artifact source type"):
+        db.plugins.record_artifact(
+            artifact_id="bad-source",
+            meeting_id="meeting-1",
+            artifact_type="note",
+            title="Bad source",
+            sources=[{"source_type": "decison", "source_ref": "d1"}],
+        )

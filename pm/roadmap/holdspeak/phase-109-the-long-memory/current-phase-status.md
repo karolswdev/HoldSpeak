@@ -1,15 +1,15 @@
 # Phase 109 - The Long Memory
 
-**Status:** IN PROGRESS (4/8). Chartered 2026-07-29 by owner direction:
+**Status:** IN PROGRESS (5/8). Chartered 2026-07-29 by owner direction:
 Phase 109 (the second userland program) delivered next; Phase 108
 (The Locked Room, RFC §5b confinement) stays reserved with its
 machine-asserted work list in BACKLOG candidate Y.
 
-**Last updated:** 2026-07-29 (HS-109-02 shipped — decisions carry
-their transcript moments, proven live on `.43`: verified `reported`
-moments, named `provenance_drops`, the resolver jump landing on the
-exact segment; two live-caught defects fixed — the stale-CHECK table
-rebuild in v32 and text-anchored decision identity).
+**Last updated:** 2026-07-29 (HS-109-03 shipped — decisions become
+artifacts: idempotent deterministic promotion with `decision:<id>`
+lineage both ways, model-assisted drafts through the registered
+`inference.run@1` on the real `.43` profile with the receipt read
+back, supersession propagating and re-promotion refusing by name).
 
 ## Why this phase exists
 
@@ -179,7 +179,7 @@ plugins already produce, never a rival store the plugins must learn.
 |---|---|---|---|---|
 | HS-109-01 | The decision record — first-class, with lifecycle | done | [story-01-decision-record](./story-01-decision-record.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-109-02 | Provenance — the transcript moment | done | [story-02-provenance](./story-02-provenance.md) | [evidence-story-02](./evidence-story-02.md) |
-| HS-109-03 | Decisions become artifacts — promotion | backlog | [story-03-promotion](./story-03-promotion.md) | — |
+| HS-109-03 | Decisions become artifacts — promotion | done | [story-03-promotion](./story-03-promotion.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-109-04 | Long-horizon retrieval — the memory index | done | [story-04-retrieval](./story-04-retrieval.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-109-05 | The Project Memory window | backlog | [story-05-memory-window](./story-05-memory-window.md) | — |
 | HS-109-06 | The process window — what is running | done | [story-06-process-window](./story-06-process-window.md) | [evidence-story-06](./evidence-story-06.md) |
@@ -242,7 +242,24 @@ Then docs, then closeout.
 
 ## Where we are
 
-**2026-07-29 — HS-109-02 shipped (the memory has moments).** The
+**2026-07-29 — HS-109-03 shipped (decisions become artifacts).** The
+owner's charge's exact verb: an ACCEPTED decision promotes — 
+deterministically (instant, no model, no kernel ceremony; the promote
+gesture is the approval, the write receipts) into an ADR / note /
+announcement whose `artifact_sources` cite `decision:<id>` AND the
+meeting, idempotent on a stable derived ID — or model-assisted
+through the REGISTERED `inference.run@1` (admitted and approved
+BEFORE generation, event-order pinned by test), landing a `draft`
+for review with the kernel receipt naming
+`result_ref=artifact:<id>`. Superseding a promoted decision marks its
+derived artifacts `rejected` atomically, and re-promotion refuses
+409 naming the successor ("superseded by <id> — promote that one").
+Lineage queryable both directions. Live on real metal: the whole
+walk on the REAL archive through the REAL assembled app, generation
+on the REAL `.43` profile. No schema bump; promoted artifacts do not
+re-enter the decisions projection (pinned). Suite
+4,341/41/2-known. Earlier:
+**HS-109-02 shipped (the memory has moments).** The
 v0.2.0 capture plugin emits optional per-decision timestamps, verified
 against the meeting's REAL segment range — an unverifiable claim is
 DROPPED with a named reason in `provenance_drops`, never stored.
