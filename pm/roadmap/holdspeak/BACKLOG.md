@@ -198,8 +198,8 @@ the product wants hands-free as a thesis.
 
 ### Y. §5b Confinement + the audited remainder — filed at Phase 107 close
 
-Phase 107 closed 20 of 38 audited debt sites; the register
-(`holdspeak/kernel/effect_ledger.json`) now carries **18 debt rows,
+Phase 107 closed 23 of 38 audited debt sites; the register
+(`holdspeak/kernel/effect_ledger.json`) now carries **15 debt rows,
 each with a machine-asserted closing condition** — the next phase
 inherits a work list, not a mystery:
 
@@ -213,13 +213,11 @@ inherits a work list, not a mystery:
   web-route paths the HS-107-05 audit found.
 - **C02/C03/C05** — make an authenticated principal mandatory at
   every read entry point; remove the `LOCAL_OWNER` defaults.
-- **N10-N12** — pending the owner's constitutional ruling
-  (clause 1 vs clause 5); if consequential, admit + receipt the
-  invocation off the parse path.
-- **Latency rider** — the kernel admission path costs ~25 ms on the
-  hold-key type segment (163 → 190 ms, interleaved A/B); the owner
-  either accepts + re-baselines, or an optimization story moves
-  durable-record work off the pre-landing path.
+
+The owner's 2026-07-29 sitting resolved the held rulings: N10-N12 are
+clause-5-exempt computation, an explicitly configured wake action is
+armed by that configuration, and the ~25 ms kernel admission price is
+accepted with the baseline re-pinned.
 
 Also carried from Phase 106/107: the second userland program (project
 memory / decisions-to-artifacts), the process window (`read` +
