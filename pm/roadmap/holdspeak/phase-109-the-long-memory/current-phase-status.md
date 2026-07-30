@@ -1,17 +1,14 @@
 # Phase 109 - The Long Memory
 
-**Status:** IN PROGRESS (7/8). Chartered 2026-07-29 by owner direction:
-Phase 109 (the second userland program) delivered next; Phase 108
-(The Locked Room, RFC §5b confinement) stays reserved with its
-machine-asserted work list in BACKLOG candidate Y.
+**Status:** CLOSED (8/8). Chartered, built, and closed 2026-07-29/30
+— one day, by owner direction, in the Fable→Sol model. The owner's
+verdict verbatim: "Closeout approved." Phase 108 (The Locked Room,
+RFC §5b confinement) stays reserved with its machine-asserted work
+list in BACKLOG candidate Y.
 
-**Last updated:** 2026-07-30 (closeout STAGED, awaiting the owner:
-the eight-beat session passed **8/8 twice consecutively** against the
-real archive and the real `.43` — one rerunnable command,
-`scripts/phase109_closeout_beats.py`. The sitting sheet is
-[OWNER-SITTING](./OWNER-SITTING.md); no constitutional questions are
-held. The phase flips CLOSED when the owner drives the beats and the
-felt walk and the verdict lands, Article IX.4.)
+**Last updated:** 2026-07-30 (CLOSED — the owner approved the
+closeout after two consecutive 8/8 staged beat sessions on the real
+archive and real `.43`. [Final summary](./final-summary.md).
 
 ## Why this phase exists
 
@@ -186,7 +183,7 @@ plugins already produce, never a rival store the plugins must learn.
 | HS-109-05 | The Project Memory window | done | [story-05-memory-window](./story-05-memory-window.md) | [evidence-story-05](./evidence-story-05.md) |
 | HS-109-06 | The process window — what is running | done | [story-06-process-window](./story-06-process-window.md) | [evidence-story-06](./evidence-story-06.md) |
 | HS-109-07 | Docs — memory at the entry points | done | [story-07-docs](./story-07-docs.md) | [evidence-story-07](./evidence-story-07.md) |
-| HS-109-08 | Closeout — the sitting on real memory | backlog | [story-08-closeout](./story-08-closeout.md) | — |
+| HS-109-08 | Closeout — the sitting on real memory | done | [story-08-closeout](./story-08-closeout.md) | [evidence-story-08](./evidence-story-08.md) |
 
 ## Sequencing
 
@@ -244,7 +241,13 @@ Then docs, then closeout.
 
 ## Where we are
 
-**2026-07-30 — the closeout is STAGED.** Two consecutive 8/8
+**2026-07-30 — CLOSED 8/8.** The owner's verdict is recorded
+verbatim in [evidence-story-08](./evidence-story-08.md): "Closeout
+approved." The beats are rerunnable forever (PR #416 taught the
+promotion walk to mint and clean up its own fixture decisions after a
+third session honestly starved — supersession is permanent by
+design). [Final summary](./final-summary.md). Earlier:
+**the closeout is STAGED.** Two consecutive 8/8
 machine sessions on real metal: backfill idempotent on the real
 archive; a verified moment with the resolver jump; the promotion walk
 (deterministic, supersession, refusal naming the successor); a real
