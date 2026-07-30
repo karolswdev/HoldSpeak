@@ -5,11 +5,13 @@ Phase 109 (the second userland program) delivered next; Phase 108
 (The Locked Room, RFC §5b confinement) stays reserved with its
 machine-asserted work list in BACKLOG candidate Y.
 
-**Last updated:** 2026-07-30 (HS-109-07 shipped — the memory at the
-entry points in owner vocabulary, every claim truth-audited to
-file:line; the Phase-107 drift reconciled in SECURITY and BACKLOG.
-Only the closeout remains: the beats are staged, the sitting sheet is
-written — [OWNER-SITTING](./OWNER-SITTING.md)).
+**Last updated:** 2026-07-30 (closeout STAGED, awaiting the owner:
+the eight-beat session passed **8/8 twice consecutively** against the
+real archive and the real `.43` — one rerunnable command,
+`scripts/phase109_closeout_beats.py`. The sitting sheet is
+[OWNER-SITTING](./OWNER-SITTING.md); no constitutional questions are
+held. The phase flips CLOSED when the owner drives the beats and the
+felt walk and the verdict lands, Article IX.4.)
 
 ## Why this phase exists
 
@@ -242,7 +244,19 @@ Then docs, then closeout.
 
 ## Where we are
 
-**2026-07-30 — HS-109-07 shipped (the memory is documented).** The
+**2026-07-30 — the closeout is STAGED.** Two consecutive 8/8
+machine sessions on real metal: backfill idempotent on the real
+archive; a verified moment with the resolver jump; the promotion walk
+(deterministic, supersession, refusal naming the successor); a real
+`inference.run@1` receipt from `.43`; memory search + the wire
+regression; the cited-ask honesty (ungrounded `.43` invents "Project
+100", grounded answers BLUE LANTERN with four refs); the process
+window's pinned truths; and the sweep — full suite 4,360 passed with
+only the two known pre-existing failures, web chain green, the kernel
+spine byte-identical to origin/main, the effect register untouched at
+21/3/3/15. What remains is exactly one thing: the owner drives
+[OWNER-SITTING](./OWNER-SITTING.md). Earlier:
+**HS-109-07 shipped (the memory is documented).** The
 USER_GUIDE carries the whole loop in owner vocabulary with retention
 stated plainly and the Process window's honest `Unknown`; ARCHITECTURE
 maps the derived projection, indexes, cited grounding, and the
