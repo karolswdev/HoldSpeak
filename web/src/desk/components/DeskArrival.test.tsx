@@ -2,6 +2,7 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { EMPTY_ITEMS } from "../api";
+import { registerSurface } from "../shell";
 import { useDesk } from "../store";
 import { DeskToolShelf, DESK_TOOLS } from "./DeskToolShelf";
 import { EmptyDesk } from "./EmptyDesk";
@@ -101,6 +102,11 @@ describe("Phase 93 Desk arrival", () => {
 
   it("discovers Project, Integration, and Runs on resources without Studio", () => {
     const openToolInspector = vi.fn();
+    const openProject = vi.fn();
+    const unregisterProject = registerSurface(
+      "open-project-memory",
+      openProject,
+    );
     useDesk.setState({
       projects: [
         {
@@ -177,7 +183,9 @@ describe("Phase 93 Desk arrival", () => {
       screen.getByRole("button", { name: /Qwen local/ }),
     ).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /Project Orion/ }));
-    expect(openToolInspector).toHaveBeenCalledWith("project", "orion");
+    expect(openProject).toHaveBeenCalledWith("project:orion");
+    expect(openToolInspector).not.toHaveBeenCalledWith("project", "orion");
+    unregisterProject();
   });
 
   it("reveals only ready actions that accept selected material", () => {

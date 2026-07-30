@@ -1,15 +1,15 @@
 # Phase 109 - The Long Memory
 
-**Status:** IN PROGRESS (5/8). Chartered 2026-07-29 by owner direction:
+**Status:** IN PROGRESS (6/8). Chartered 2026-07-29 by owner direction:
 Phase 109 (the second userland program) delivered next; Phase 108
 (The Locked Room, RFC §5b confinement) stays reserved with its
 machine-asserted work list in BACKLOG candidate Y.
 
-**Last updated:** 2026-07-29 (HS-109-03 shipped — decisions become
-artifacts: idempotent deterministic promotion with `decision:<id>`
-lineage both ways, model-assisted drafts through the registered
-`inference.run@1` on the real `.43` profile with the receipt read
-back, supersession propagating and re-promotion refusing by name).
+**Last updated:** 2026-07-30 (HS-109-05 shipped — the Project Memory
+window: the `project` desk primitive, Timeline/Decisions/Search/Ask
+faces, in-row accept/supersede/promote, ask-this-project answering
+from the real archive on `.43` with citation chips and "Grounded on
+N of M", walked 9/9 at 1440+393 on a copy of the real archive).
 
 ## Why this phase exists
 
@@ -181,7 +181,7 @@ plugins already produce, never a rival store the plugins must learn.
 | HS-109-02 | Provenance — the transcript moment | done | [story-02-provenance](./story-02-provenance.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-109-03 | Decisions become artifacts — promotion | done | [story-03-promotion](./story-03-promotion.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-109-04 | Long-horizon retrieval — the memory index | done | [story-04-retrieval](./story-04-retrieval.md) | [evidence-story-04](./evidence-story-04.md) |
-| HS-109-05 | The Project Memory window | backlog | [story-05-memory-window](./story-05-memory-window.md) | — |
+| HS-109-05 | The Project Memory window | done | [story-05-memory-window](./story-05-memory-window.md) | [evidence-story-05](./evidence-story-05.md) |
 | HS-109-06 | The process window — what is running | done | [story-06-process-window](./story-06-process-window.md) | [evidence-story-06](./evidence-story-06.md) |
 | HS-109-07 | Docs — memory at the entry points | backlog | [story-07-docs](./story-07-docs.md) | — |
 | HS-109-08 | Closeout — the sitting on real memory | backlog | [story-08-closeout](./story-08-closeout.md) | — |
@@ -242,7 +242,28 @@ Then docs, then closeout.
 
 ## Where we are
 
-**2026-07-29 — HS-109-03 shipped (decisions become artifacts).** The
+**2026-07-30 — HS-109-05 shipped (the memory is touchable).** The
+Project is a desk primitive (contract entry, derived Info, verbs on
+the registry, the tome sprite family per the icon finding) and
+opening it opens its memory: a window in the one grammar with
+Timeline (meetings + decisions + promoted artifacts interleaved,
+every row openable in-world), Decisions (lifecycle chips, in-row
+accept and supersede-with-successor-picker — no modals — and the
+HS-109-03 promote verbs wired into the slot seam during the shipping
+pass), Search (04's index scoped to the project, honest zero state,
+mic on the input), and Ask (grounding pre-pinned, the egress badge at
+the point of decision, Material-rendered answers with OPENABLE
+citation chips and the server-reported "Grounded on N of M").
+Project-qualified "Since <previous meeting title>" names its
+comparison basis (`GET /api/projects/{id}/since-last-meeting`,
+additive; global aftercare untouched). Walked 9/9 live at 1440+393
+against a hub serving a COPY of the real archive: the real project
+opened from Desk search, a real accept gesture, a real deterministic
+promotion, the real BLUE LANTERN search hit, and a real `.43` ask
+citing two openable artifacts. Web 373/373; suite 4,341/41 with only
+the two known failures (an API-surface drift from the new route was
+caught by the suite and regenerated before the flip). Earlier:
+**HS-109-03 shipped (decisions become artifacts).** The
 owner's charge's exact verb: an ACCEPTED decision promotes — 
 deterministically (instant, no model, no kernel ceremony; the promote
 gesture is the approval, the write receipts) into an ADR / note /

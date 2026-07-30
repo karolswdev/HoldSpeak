@@ -17,6 +17,7 @@ from holdspeak.db import get_database, reset_database
 from holdspeak.meeting_aftercare import (
     build_followup_draft,
     compute_meeting_aftercare,
+    compute_project_since_last_meeting,
     resolve_provenance_segment,
 )
 from holdspeak.meeting_session import IntelSnapshot, MeetingState, TranscriptSegment
@@ -169,6 +170,46 @@ def test_since_last_meeting_real_diff(db):
     assert [d["decision"] for d in since["new_decisions"]] == ["Adopt feature flags"]
     assert [a["task"] for a in since["new_actions"]] == ["Wire the API"]
     assert [a["task"] for a in since["closed_actions"]] == ["Set up CI"]
+
+
+def test_project_since_last_meeting_ignores_newer_unrelated_meeting(db):
+    db.projects.create_project(project_id="p-memory", name="Long memory")
+    _seed_meeting(
+        db,
+        "project-prior",
+        started_at=datetime(2026, 6, 1, 9, 0, 0),
+        title="Project kickoff",
+        action_items=[_action("p1", "Draft plan")],
+    )
+    _seed_meeting(
+        db,
+        "unrelated",
+        started_at=datetime(2026, 6, 3, 9, 0, 0),
+        title="Unrelated standup",
+        action_items=[_action("u1", "Unrelated task")],
+    )
+    _seed_meeting(
+        db,
+        "project-current",
+        started_at=datetime(2026, 6, 4, 9, 0, 0),
+        title="Project review",
+        action_items=[_action("c1", "Ship memory")],
+    )
+    db.projects.associate_meeting_project(
+        meeting_id="project-prior", project_id="p-memory", source="manual"
+    )
+    db.projects.associate_meeting_project(
+        meeting_id="project-current", project_id="p-memory", source="manual"
+    )
+
+    receipt = compute_project_since_last_meeting(db, "p-memory")
+
+    assert receipt is not None
+    assert receipt["current_meeting"]["title"] == "Project review"
+    since = receipt["since_last_meeting"]
+    assert since["previous_meeting"]["id"] == "project-prior"
+    assert since["previous_meeting"]["title"] == "Project kickoff"
+    assert [item["task"] for item in since["new_actions"]] == ["Ship memory"]
 
 
 # --- HS-49-02: transcript provenance (the "show me the moment" seek target) ---

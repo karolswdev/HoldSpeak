@@ -223,12 +223,15 @@ function ImportSection({
 function MeetingDetail({
   meeting,
   view,
+  momentSegmentIndex,
   onClose,
   onDeleted,
 }: {
   meeting: JsonRecord | null;
   /** "outcomes" (the face) or "artifacts" (the wing). */
   view: "outcomes" | "artifacts";
+  /** HS-109-02/05: a resolved decision moment seeks this transcript row. */
+  momentSegmentIndex?: number | null;
   onClose(): void;
   onDeleted(): void;
 }) {
@@ -330,6 +333,15 @@ function MeetingDetail({
     }
   };
   const segments = asRows(detail, ["segments", "transcript"]);
+  useEffect(() => {
+    if (momentSegmentIndex == null || !segments.length) return;
+    const frame = window.requestAnimationFrame(() => {
+      document
+        .getElementById(`transcript-${id}-${momentSegmentIndex}`)
+        ?.scrollIntoView({ block: "center", behavior: "smooth" });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [id, momentSegmentIndex, segments.length]);
   const artifactRows = asRows(artifacts, ["artifacts", "items"]);
   const actionRows = asRows(aftercare, ["action_items", "actions", "items"]);
   const timelineRows = asRows(timeline, ["timeline", "items"]);
@@ -592,12 +604,16 @@ function MeetingDetail({
               vocabulary): behind disclosures, never a wall. */}
           <Disclosure
             title={`Transcript: the receipt (${segments.length} segments)`}
-            open={!hasOutcomes && segments.length > 0}
+            open={momentSegmentIndex != null || (!hasOutcomes && segments.length > 0)}
           >
             {segments.length ? (
               <ol className="transcript-list">
                 {segments.map((row, index) => (
-                  <li key={rowId(row, index)}>
+                  <li
+                    key={rowId(row, index)}
+                    id={`transcript-${id}-${index}`}
+                    data-moment={index === momentSegmentIndex || undefined}
+                  >
                     <time>
                       {(() => {
                         const s = Number(row.start_time ?? row.start ?? NaN);
@@ -653,10 +669,15 @@ function MeetingDetail({
 export function HistoryCore({ hero, scope }: CoreProps) {
   // Scope arrives as a prop (a qualified ref, e.g. "meeting:<id>") — the
   // flat wrapper decodes the URL; the desk passes it straight.
-  const requestedMeetingId =
+  const requestedMeetingScope =
     scope && scope.startsWith("meeting:")
       ? scope.slice("meeting:".length)
       : null;
+  const [requestedMeetingId, requestedMeetingQuery = ""] =
+    requestedMeetingScope?.split("?", 2) ?? [null, ""];
+  const requestedMomentSegment = requestedMeetingQuery
+    ? Number(new URLSearchParams(requestedMeetingQuery).get("segment"))
+    : null;
   const [view, setView] = useState("outcomes");
   const [doorOpen, setDoorOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -1003,6 +1024,16 @@ export function HistoryCore({ hero, scope }: CoreProps) {
                     undefined
                   }
                   meta={rowState(row)}
+                  onOpen={
+                    section === "projects"
+                      ? () =>
+                          openSurfaceOr(
+                            "open-project-memory",
+                            "/history",
+                            `project:${String(row.id)}`,
+                          )
+                      : undefined
+                  }
                   verbs={
                     section === "queues" && row.status === "failed" ? (
                       <Button
@@ -1047,6 +1078,7 @@ export function HistoryCore({ hero, scope }: CoreProps) {
       <MeetingDetail
         meeting={selected}
         view="artifacts"
+        momentSegmentIndex={requestedMomentSegment}
         onClose={() => setSelected(null)}
         onDeleted={() => void meetings.reload()}
       />
@@ -1066,6 +1098,7 @@ export function HistoryCore({ hero, scope }: CoreProps) {
           <MeetingDetail
             meeting={selected}
             view="outcomes"
+            momentSegmentIndex={requestedMomentSegment}
             onClose={() => setSelected(null)}
             onDeleted={() => void meetings.reload()}
           />

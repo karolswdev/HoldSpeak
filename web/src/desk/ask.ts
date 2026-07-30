@@ -88,6 +88,13 @@ export interface AskRunResult {
    * additive metadata only, never present when there was no source to check
    * against (a context-free ask). */
   groundingClaims: GroundingClaim[];
+  /** The server's cited retrieval receipt (HS-109-04), never inferred. */
+  groundingReceipt: {
+    sourceRefs: string[];
+    selection: string;
+    matchedCount: number;
+    overflowCount: number;
+  } | null;
 }
 
 /** One decomposed claim from the answer, scored against the cited material. */
@@ -128,6 +135,7 @@ export async function runAsk(opts: {
     contextIds: [],
     contextTitles: [],
     groundingClaims: [],
+    groundingReceipt: null,
   });
   try {
     const res = await apiRequest("/api/ask", {
@@ -143,7 +151,9 @@ export async function runAsk(opts: {
           ref: c.ref || qualifiedRef(c.kind, c.id),
         })),
         ...(opts.profileId ? { profile_id: opts.profileId } : {}),
-        ...(opts.inferenceTargetId ? { inference_target_id: opts.inferenceTargetId } : {}),
+        ...(opts.inferenceTargetId
+          ? { inference_target_id: opts.inferenceTargetId }
+          : {}),
         ...(opts.grounding ? { grounding: opts.grounding } : {}),
         ...(opts.model ? { model: opts.model } : {}),
       }),
@@ -162,10 +172,14 @@ export async function runAsk(opts: {
       egress: data.egress && data.egress.scope ? data.egress : null,
       model: String(data.model || ""),
       profileId: data.profile_id ? String(data.profile_id) : null,
-      inferenceTarget: data.inference_target && typeof data.inference_target === "object"
-        ? data.inference_target : null,
-      actualPlacement: data.actual_placement && typeof data.actual_placement === "object"
-        ? data.actual_placement : null,
+      inferenceTarget:
+        data.inference_target && typeof data.inference_target === "object"
+          ? data.inference_target
+          : null,
+      actualPlacement:
+        data.actual_placement && typeof data.actual_placement === "object"
+          ? data.actual_placement
+          : null,
       contextIds: Array.isArray(data.context_ids)
         ? data.context_ids.map(String)
         : [],
@@ -176,10 +190,24 @@ export async function runAsk(opts: {
         ? data.grounding_claims.map((c: Record<string, unknown>) => ({
             text: String(c.text || ""),
             score: Number(c.score) || 0,
-            label: c.label === "entailed" || c.label === "partial" ? c.label : "unsupported",
+            label:
+              c.label === "entailed" || c.label === "partial"
+                ? c.label
+                : "unsupported",
             flagged: Boolean(c.flagged),
           }))
         : [],
+      groundingReceipt:
+        data.grounding && typeof data.grounding === "object"
+          ? {
+              sourceRefs: Array.isArray(data.grounding.source_refs)
+                ? data.grounding.source_refs.map(String)
+                : [],
+              selection: String(data.grounding.selection || ""),
+              matchedCount: Number(data.grounding.matched_count) || 0,
+              overflowCount: Number(data.grounding.overflow_count) || 0,
+            }
+          : null,
     };
   } catch (e) {
     return fail(String(e));

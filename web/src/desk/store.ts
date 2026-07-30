@@ -88,10 +88,7 @@ function savePanelLayout(
   try {
     const out: Record<string, PanelRect> = {};
     for (const id of keep) if (rects[id]) out[id] = rects[id];
-    localStorage.setItem(
-      PANEL_KEY,
-      JSON.stringify({ rects: out, order, max }),
-    );
+    localStorage.setItem(PANEL_KEY, JSON.stringify({ rects: out, order, max }));
   } catch {
     /* storage may be unavailable; arranging just won't persist */
   }
@@ -148,7 +145,9 @@ function loadZoneWindows(): { id: string; origin: null }[] {
     const raw = localStorage.getItem(ZONE_WINDOWS_KEY);
     const ids = raw ? (JSON.parse(raw) as string[]) : [];
     return Array.isArray(ids)
-      ? ids.filter((v) => typeof v === "string").map((id) => ({ id, origin: null }))
+      ? ids
+          .filter((v) => typeof v === "string")
+          .map((id) => ({ id, origin: null }))
       : [];
   } catch {
     return [];
@@ -549,6 +548,7 @@ export const useDesk = create<DeskState>((set, get) => ({
       recipe: `/api/recipes/${encodeURIComponent(id)}`,
       directory: `/api/directories/${encodeURIComponent(id)}`,
       workflow: `/api/workflows/${encodeURIComponent(id)}`,
+      project: `/api/projects/${encodeURIComponent(id)}`,
     };
     const url = urls[kind];
     if (!url) return;
@@ -584,9 +584,18 @@ export const useDesk = create<DeskState>((set, get) => ({
         },
       });
     }
+    if (kind === "project" && "name" in patch) {
+      set({
+        projects: get().projects.map((project) =>
+          project.id === id
+            ? { ...project, name: String(patch.name) }
+            : project,
+        ),
+      });
+    }
     try {
       await apiRequest(url, {
-        method: "PUT",
+        method: kind === "project" ? "PATCH" : "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(patch),
       });
@@ -614,6 +623,18 @@ export const useDesk = create<DeskState>((set, get) => ({
   },
 
   openPullout(id, origin) {
+    const projectId = id.startsWith("project:")
+      ? id.slice("project:".length)
+      : (get().items.project || []).some((project) => project.id === id)
+        ? id
+        : "";
+    if (projectId) {
+      void import("./shell").then(({ openSurfaceWhenReady }) =>
+        openSurfaceWhenReady("open-project-memory", `project:${projectId}`),
+      );
+      set({ editingId: null });
+      return;
+    }
     const open = get().pullouts;
     if (!open.some((p) => p.id === id))
       set({ pullouts: [...open, { id, origin: origin ?? null }] });

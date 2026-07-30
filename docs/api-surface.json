@@ -999,7 +999,9 @@
         "GET"
       ],
       "module": "web.routes.decisions",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/decisions/{decision_id}",
@@ -1017,7 +1019,9 @@
         "POST"
       ],
       "module": "web.routes.decisions",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/decisions/{decision_id}/moment",
@@ -1025,7 +1029,9 @@
         "GET"
       ],
       "module": "web.routes.decisions",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/decisions/{decision_id}/promote/{artifact_type}",
@@ -1033,7 +1039,9 @@
         "POST"
       ],
       "module": "web.routes.decisions",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/decisions/{decision_id}/promote/{artifact_type}/draft-with-model",
@@ -1041,7 +1049,9 @@
         "POST"
       ],
       "module": "web.routes.decisions",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/decisions/{decision_id}/reject",
@@ -1049,7 +1059,9 @@
         "POST"
       ],
       "module": "web.routes.decisions",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/decisions/{decision_id}/supersede",
@@ -1057,7 +1069,9 @@
         "POST"
       ],
       "module": "web.routes.decisions",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/delivery/attempts",
@@ -2995,7 +3009,9 @@
         "GET"
       ],
       "module": "web.routes.projects",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/projects/{project_id}/briefings",
@@ -3011,7 +3027,9 @@
         "GET"
       ],
       "module": "web.routes.projects",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/projects/{project_id}/meetings/{meeting_id}",
@@ -3054,6 +3072,16 @@
       ],
       "module": "web.routes.projects",
       "consumers": []
+    },
+    {
+      "path": "/api/projects/{project_id}/since-last-meeting",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.projects",
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/projects/{project_id}/summary",

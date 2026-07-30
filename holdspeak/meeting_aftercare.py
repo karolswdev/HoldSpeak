@@ -235,6 +235,77 @@ def _since_last_meeting(
     }
 
 
+def compute_project_since_last_meeting(
+    db: "Database", project_id: str
+) -> Optional[dict[str, Any]]:
+    """Compare the latest two meetings associated with one Project.
+
+    This is the Project Memory read path. It deliberately leaves
+    ``compute_meeting_aftercare`` and its global chronological comparison
+    unchanged: the candidate set here comes only from Project membership.
+    The returned receipt names both meetings so the surface never implies
+    which archive entries were compared.
+    """
+    project = db.projects.get_project(project_id)
+    if project is None:
+        return None
+    project_meetings = sorted(
+        db.projects.get_project_meetings(project_id, limit=10000),
+        key=lambda row: (str(row.get("started_at") or ""), str(row.get("id") or "")),
+        reverse=True,
+    )
+    if not project_meetings:
+        return {
+            "project_id": project_id,
+            "current_meeting": None,
+            "since_last_meeting": None,
+        }
+
+    current_summary = project_meetings[0]
+    current = db.meetings.get_meeting(str(current_summary["id"]))
+    if current is None:
+        return {
+            "project_id": project_id,
+            "current_meeting": None,
+            "since_last_meeting": None,
+        }
+    current_receipt = {
+        "id": current.id,
+        "title": current.title,
+        "date": current.started_at.isoformat(),
+    }
+    if len(project_meetings) < 2:
+        return {
+            "project_id": project_id,
+            "current_meeting": current_receipt,
+            "since_last_meeting": None,
+        }
+
+    previous = db.meetings.get_meeting(str(project_meetings[1]["id"]))
+    if previous is None:
+        return {
+            "project_id": project_id,
+            "current_meeting": current_receipt,
+            "since_last_meeting": None,
+        }
+    segments = current.segments or []
+    open_items = db.meetings.list_action_items(
+        include_completed=False, meeting_id=current.id
+    )
+    decisions = _decisions_for_meeting(db, current.id, segments)
+    return {
+        "project_id": project_id,
+        "current_meeting": current_receipt,
+        "since_last_meeting": _since_last_meeting(
+            db,
+            previous=previous,
+            current_decisions=decisions,
+            current_open_items=open_items,
+            current_segments=segments,
+        ),
+    }
+
+
 def compute_meeting_aftercare(
     db: "Database", meeting_id: str
 ) -> Optional[dict[str, Any]]:

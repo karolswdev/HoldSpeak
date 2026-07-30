@@ -18,6 +18,7 @@ const ORDER: Kind[] = [
   "meeting",
   "note",
   "kb",
+  "project",
   "recipe",
   "artifact",
   "chain",
@@ -131,7 +132,10 @@ export function objUnit(
   const yMin = compact ? 0.32 : 0.2;
   const xMin = compact ? 0.12 : 0.06;
   return {
-    x: Math.min(1 - xMin, Math.max(xMin, xMin + (1 - 2 * xMin) * ((col + 0.5) / cols))),
+    x: Math.min(
+      1 - xMin,
+      Math.max(xMin, xMin + (1 - 2 * xMin) * ((col + 0.5) / cols)),
+    ),
     y: Math.min(
       0.9,
       Math.max(yMin, yMin + (1 - yMin - 0.1) * ((row + 0.5) / rows)),

@@ -11,6 +11,7 @@ export type Kind =
   | "recipe"
   | "kb"
   | "directory"
+  | "project"
   | "chain"
   | "workflow"
   | "coder";
@@ -23,10 +24,11 @@ export interface DeskItem {
   [key: string]: unknown;
 }
 
-export type Items = Record<Kind, DeskItem[]>;
-export type Status = Partial<
-  Record<Kind | "profile" | "project", "live" | "unreachable">
->;
+export type Items = Record<Exclude<Kind, "project">, DeskItem[]> & {
+  /** Additive for older test fixtures and hubs; loadAll always initializes it. */
+  project?: DeskItem[];
+};
+export type Status = Partial<Record<Kind | "profile", "live" | "unreachable">>;
 
 export interface ProjectSummary {
   id: string;
@@ -36,7 +38,9 @@ export interface ProjectSummary {
   team_members: string[];
   is_archived: boolean;
   meeting_count: number;
+  created_at?: string;
   updated_at: string;
+  context?: Record<string, unknown>;
 }
 
 /** One runnable model (HS-83-03): what a `model` override on /api/ask accepts. */
@@ -103,6 +107,7 @@ export const EMPTY_ITEMS: Items = {
   recipe: [],
   kb: [],
   directory: [],
+  project: [],
   chain: [],
   workflow: [],
   coder: [],
@@ -163,6 +168,19 @@ export const fromWireDirectory = (d: any): DeskItem => ({
   parentId: d.parent_id || null,
   memberIds: d.member_ids || (d.members ? Object.keys(d.members) : []),
   createdAt: d.created_at,
+});
+
+export const fromWireProject = (project: ProjectSummary): DeskItem => ({
+  kind: "project",
+  id: project.id,
+  name: project.name,
+  description: project.description || "",
+  keywords: project.keywords || [],
+  teamMembers: project.team_members || [],
+  meetingCount: project.meeting_count || 0,
+  createdAt: project.created_at,
+  updatedAt: project.updated_at,
+  lastModified: project.updated_at,
 });
 
 export const fromWireChain = (c: any): DeskItem => ({
@@ -337,6 +355,7 @@ export async function loadAll(): Promise<LoadResult> {
         projects = (d.projects || []).filter(
           (project: ProjectSummary) => !project.is_archived,
         );
+        items.project = projects.map(fromWireProject);
         status.project = "live";
       })
       .catch((e) => {

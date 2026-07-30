@@ -111,6 +111,7 @@ export const KIND_LABEL: Record<string, string> = {
   kb: "Knowledge",
   meeting: "Meeting",
   note: "Note",
+  project: "Project",
   recipe: "Agent",
   workflow: "Workflow",
 };
@@ -471,7 +472,7 @@ export function DeskToolShelf() {
                       type="button"
                       onClick={() => {
                         close();
-                        openToolInspector("project", project.id);
+                        openSurface("open-project-memory", `project:${project.id}`);
                       }}
                     >
                       <span aria-hidden="true">▤</span>

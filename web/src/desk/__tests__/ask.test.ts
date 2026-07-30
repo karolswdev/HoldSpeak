@@ -92,6 +92,7 @@ describe("the run/keep wire", () => {
       // HS-103-03: empty when the response carries no per-claim signal
       // (an ungrounded ask, or an older response shape).
       groundingClaims: [],
+      groundingReceipt: null,
     });
   });
 
@@ -136,7 +137,9 @@ describe("the run/keep wire", () => {
       lens: "Distill",
       prompt: "Go",
       output: "PRINTED",
-      context: [{ id: "m1", kind: "meeting", ref: "meeting:m1", title: "Q3 kickoff" }],
+      context: [
+        { id: "m1", kind: "meeting", ref: "meeting:m1", title: "Q3 kickoff" },
+      ],
     });
     expect(id).toBe("artifact_x");
   });

@@ -10,6 +10,7 @@ const RESOLVE_ORDER: Kind[] = [
   "note",
   "directory",
   "kb",
+  "project",
   "recipe",
   "chain",
   "workflow",

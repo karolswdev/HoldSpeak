@@ -9,7 +9,7 @@ and the clients that call it (extracted from the real call sites in
 `web/src` and `apple/`). "server only" means no in-repo client calls
 it today.
 
-Routes: 372 (plus static mounts). iOS-consumed: 88. Web-consumed: 272.
+Routes: 373 (plus static mounts). iOS-consumed: 88. Web-consumed: 282.
 
 ## device_audio_ws
 
@@ -139,14 +139,14 @@ Routes: 372 (plus static mounts). iOS-consumed: 88. Web-consumed: 272.
 
 | Method | Path | Consumers |
 |---|---|---|
-| GET | `/api/decisions` | server only |
+| GET | `/api/decisions` | web |
 | GET | `/api/decisions/{decision_id}` | web |
-| POST | `/api/decisions/{decision_id}/accept` | server only |
-| GET | `/api/decisions/{decision_id}/moment` | server only |
-| POST | `/api/decisions/{decision_id}/promote/{artifact_type}` | server only |
-| POST | `/api/decisions/{decision_id}/promote/{artifact_type}/draft-with-model` | server only |
-| POST | `/api/decisions/{decision_id}/reject` | server only |
-| POST | `/api/decisions/{decision_id}/supersede` | server only |
+| POST | `/api/decisions/{decision_id}/accept` | web |
+| GET | `/api/decisions/{decision_id}/moment` | web |
+| POST | `/api/decisions/{decision_id}/promote/{artifact_type}` | web |
+| POST | `/api/decisions/{decision_id}/promote/{artifact_type}/draft-with-model` | web |
+| POST | `/api/decisions/{decision_id}/reject` | web |
+| POST | `/api/decisions/{decision_id}/supersede` | web |
 
 ## web.routes.delivery
 
@@ -551,14 +551,15 @@ Routes: 372 (plus static mounts). iOS-consumed: 88. Web-consumed: 272.
 | GET | `/api/projects/{project_id}` | web |
 | PATCH | `/api/projects/{project_id}` | web |
 | GET | `/api/projects/{project_id}/action-items` | server only |
-| GET | `/api/projects/{project_id}/artifacts` | server only |
+| GET | `/api/projects/{project_id}/artifacts` | web |
 | GET | `/api/projects/{project_id}/briefings` | server only |
-| GET | `/api/projects/{project_id}/meetings` | server only |
+| GET | `/api/projects/{project_id}/meetings` | web |
 | DELETE | `/api/projects/{project_id}/meetings/{meeting_id}` | server only |
 | POST | `/api/projects/{project_id}/meetings/{meeting_id}` | server only |
 | GET | `/api/projects/{project_id}/resources` | web |
 | DELETE | `/api/projects/{project_id}/resources/{resource_ref:path}` | server only |
 | PUT | `/api/projects/{project_id}/resources/{resource_ref:path}` | server only |
+| GET | `/api/projects/{project_id}/since-last-meeting` | web |
 | GET | `/api/projects/{project_id}/summary` | server only |
 
 ## web.routes.setup
