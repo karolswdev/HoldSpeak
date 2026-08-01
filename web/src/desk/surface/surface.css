@@ -1767,6 +1767,8 @@ button.surface-edit-in-place:hover {
 .prefs-egress-line {
   display: flex;
   justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
   padding: 2px 6px;
 }
 /* The footer status bar: « PREFS | receipt | DEFAULTS. Rides the
