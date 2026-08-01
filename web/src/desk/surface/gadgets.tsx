@@ -474,6 +474,9 @@ export function TransportKey({
   active,
   disabled,
   onClick,
+  tone,
+  compact,
+  title,
 }: {
   label: string;
   glyph: ReactNode;
@@ -481,6 +484,13 @@ export function TransportKey({
   active?: boolean;
   disabled?: boolean;
   onClick?: () => void;
+  /** HS-111-04 — the loud key (^C, KILL): danger tone; active =
+   * inverted danger video. */
+  tone?: "danger";
+  /** HS-111-04 — the in-row key (a composer's SEND/ENTER): same
+   * species at input height, glyph beside the word. */
+  compact?: boolean;
+  title?: string;
 }) {
   return (
     <button
@@ -489,7 +499,10 @@ export function TransportKey({
       aria-label={label}
       aria-pressed={active || undefined}
       data-active={active || undefined}
+      data-tone={tone}
+      data-compact={compact || undefined}
       disabled={disabled}
+      title={title}
       onClick={onClick}
     >
       <span className="gadget-transport-glyph" aria-hidden="true">
@@ -506,12 +519,17 @@ export function TransportRow({ children }: { children: ReactNode }) {
 
 /* ── the ONE egress badge chip: a token, never prose ── */
 
-export function EgressChip({ label = "⌂ This device" }: { label?: string }) {
+export function EgressChip({
+  label = "⌂ This device",
+  title = "Transcript processing stays on this device.",
+}: {
+  label?: string;
+  /** HS-111-04 — an off-device reply names its honest boundary; the
+   * default stays the on-device promise. */
+  title?: string;
+}) {
   return (
-    <span
-      className="gadget-chip gadget-chip-egress"
-      title="Transcript processing stays on this device."
-    >
+    <span className="gadget-chip gadget-chip-egress" title={title}>
       {label}
     </span>
   );

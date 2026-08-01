@@ -1843,7 +1843,9 @@ class TestCompanionUiSmoke:
     agents + the companion link (React over /api/agents +
     /api/coders/status), not the old static docs portal. This smoke check
     asserts the desk's stable structure + the preserved connection/credential
-    facts in the "How it connects" footer.
+    facts. HS-111-04: the surface is the crew board — blocked-first ledger
+    rows, and the "How it connects" facts moved behind the gear door as
+    tokens (probe / token / relay / autonomous send), never prose.
     """
 
     def test_companion_page_is_the_agent_desk(self, test_client):
@@ -1853,7 +1855,14 @@ class TestCompanionUiSmoke:
 
         assert '<div id="root"></div>' in response.text
         source = (Path(__file__).resolve().parents[2] / "web/src/pages/cores/CompanionCore.tsx").read_text()
-        for marker in ("openPersona", "needs your answer", "Agents", "How it connects", "no autonomous send"):
+        for marker in (
+            "openPersona",
+            "openCoderSession",
+            "BLOCKED",
+            "How it connects",
+            "autonomous_send",
+            "in memory, never in a payload",
+        ):
             assert marker in source
 
 

@@ -1,18 +1,20 @@
 # Phase 111 - The Refinement
 
-**Status:** IN PROGRESS (3/10). Chartered 2026-07-31 as the mandatory
+**Status:** IN PROGRESS (4/10). Chartered 2026-07-31 as the mandatory
 fast-follow to Phase 110. The owner's condition: every program on the
 desk gets its interior rethought — not token-tweaked, RETHOUGHT — to
 feel native to Signal Workbench. "The Settings screen needs to be
 completely rethought, and many, many others."
 
-**Last updated:** 2026-08-01 (HS-111-03 Meetings SHIPPED — the
-archive browser: SurfaceLedger catalog, the transcript in a
-SurfaceWell (new kit species), stamped artifact receipts, recovery
-prose dead into slabs/slips, exports on the one footer receipt bar
-(the 1440 overlap bug retired); suites green 4207+389. Earlier the
-same day: HS-111-02 Speak (the dictation deck) and HS-111-01
-Settings (the Prefs rethink + the gadget kit).)
+**Last updated:** 2026-08-01 (HS-111-04 Agents SHIPPED — the crew
+console: one SurfaceLedger crew board, persona detail a personnel
+record over a SurfaceTraffic transmission log (new kit species),
+steering re-rendered in gadget grammar with the Phase-87 consent
+spine BYTE-UNTOUCHED (steering.ts zero diff, steering tests passed
+unedited); glow rings and the smuggled accent rail dead; suites
+green 4207+389. Earlier the same day: 03 Meetings (the archive
+browser), 02 Speak (the dictation deck), 01 Settings (the Prefs
+rethink + the gadget kit).)
 
 ## Why this phase exists
 
@@ -45,7 +47,7 @@ Each story:
 | 01 | [Settings](./story-01-settings.md) | The Settings program — every pane (Appearance, Hotkey, Transcription, Voice Typing, Wake Word, Presence, Meetings, Cadence, Devices, Delivery, Models, Integrations) | done |
 | 02 | [Speak](./story-02-speak.md) | The Speak/Dictation program — the dictation cockpit, journal, correction memory, pipeline config | done |
 | 03 | [Meetings](./story-03-meetings.md) | The Meetings program — history list, meeting detail, transcript view, artifact cards, aftercare panel | done |
-| 04 | [Agents](./story-04-agents.md) | The Agents/Companion program — agent list, persona detail, session inspector, coder steering pullout | backlog |
+| 04 | [Agents](./story-04-agents.md) | The Agents/Companion program — agent list, persona detail, session inspector, coder steering pullout | done |
 | 05 | [Ask and conversation](./story-05-ask-conversation.md) | The Ask composer, grounding picker, conversation thread, kept-card receipts | backlog |
 | 06 | [Delivery and process](./story-06-delivery-process.md) | The delivery belt, the process window, the project memory window — the kernel-facing programs | backlog |
 | 07 | [System chrome](./story-07-system-chrome.md) | Dropdown menus (Desk/Object/Go), context menus, the search palette (Cmd+K), the shortcut sheet, popovers | backlog |
@@ -60,7 +62,7 @@ Each story:
 | HS-111-01 | Settings | done | [story-01-settings](./story-01-settings.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-111-02 | Speak | done | [story-02-speak](./story-02-speak.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-111-03 | Meetings | done | [story-03-meetings](./story-03-meetings.md) | [evidence-story-03](./evidence-story-03.md) |
-| HS-111-04 | Agents | backlog | [story-04-agents](./story-04-agents.md) | — |
+| HS-111-04 | Agents | done | [story-04-agents](./story-04-agents.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-111-05 | Ask and conversation | backlog | [story-05-ask-conversation](./story-05-ask-conversation.md) | — |
 | HS-111-06 | Delivery and process | backlog | [story-06-delivery-process](./story-06-delivery-process.md) | — |
 | HS-111-07 | System chrome | backlog | [story-07-system-chrome](./story-07-system-chrome.md) | — |
@@ -113,5 +115,22 @@ and twin CURRENT/INCOMING slips, exports on the one footer receipt
 bar (the overlap retired by construction). LiveCore scope-limited:
 SurfaceStream and the one-verb posture byte-untouched. Zero wire
 changes; three python locks re-pointed honestly. Proven live at
-1440+393; suites green (4207 python + 389 web). Next: HS-111-04
-(Agents) — ledger, well, lamps, and transport all on the shelf.
+1440+393; suites green (4207 python + 389 web).
+
+4/10. HS-111-04 (Agents) shipped the same day: the audit ruled the
+program three eras stapled together (SaaS empty-state Sessions page,
+profile-card directory, messenger-bubble persona chat, glow-ringed
+steering chips — including a 2px accent rail smuggled past the
+border-left guard as an inset box-shadow); the rethink made it the
+crew console — Sessions + Chat collapsed into ONE SurfaceLedger
+board (CREW n · SESSIONS n · BLOCKED n, blocked-first, LampGadget
+cells, open-in-place ANSWER), persona detail a personnel record over
+a SurfaceTraffic transmission log (new kit species: prefixed mono
+YOU> / <NAME>> turns, per-reply egress chips), and steering
+re-rendered in gadget grammar (ARM a TransportKey with inverted-
+video armed state, the TTL countdown a draining LedMeter GRANT,
+policy prose as axis-named tokens) with the Phase-87 CONSENT SPINE
+BYTE-UNTOUCHED — steering.ts zero diff, steering.test.ts and all
+python steering wire tests passed with zero edits. Proven live at
+1440+393 (nothing armed or steered during the walk); suites green
+(4207 python + 389 web). Next: HS-111-05 (Ask and conversation).

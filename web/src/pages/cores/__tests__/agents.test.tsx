@@ -1,5 +1,8 @@
 // HS-100-09 — Agents opens on who needs you: blocked sessions render
 // FIRST with an Answer verb; running follow; the canon word is agents.
+// HS-111-04 — the surface is the crew board (one SurfaceLedger); the
+// locked semantics survive the rerender: blocked-before-running, the
+// Answer verb, and "Personas" never returns.
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { CompanionCore } from "../CompanionCore";
@@ -45,23 +48,32 @@ vi.mock("../../../desk/shell", () => ({
   openPersona: vi.fn(),
 }));
 
-describe("Agents (HS-100-09)", () => {
+describe("Agents (HS-100-09 / HS-111-04)", () => {
   it("renders blocked sessions before running, with the Answer verb", async () => {
     render(<CompanionCore />);
-    const blockedHead = await screen.findByText("Blocked: needs your answer");
-    await screen.findByText("holdspeak");
-    const runningHead = screen.getByRole("heading", { name: "Running" });
+    const blockedRow = await screen.findByText("holdspeak");
+    const runningRow = screen.getByText("holdspeak-mobile");
+    // Blocked-first is the pinned ordering contract.
     expect(
-      blockedHead.compareDocumentPosition(runningHead) &
+      blockedRow.compareDocumentPosition(runningRow) &
         Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
+    // The blocked row opens in place with its question and the Answer verb.
+    expect(
+      screen.getByText("Regenerate the schema snapshot?", {
+        selector: "pre",
+      }),
+    ).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Answer" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Watch" })).toBeInTheDocument();
+    // The board head counts the crew honestly.
+    expect(
+      screen.getByText("CREW 1 · SESSIONS 2 · BLOCKED 1"),
+    ).toBeInTheDocument();
   });
 
   it("never says Personas", async () => {
     const { container } = render(<CompanionCore />);
-    await screen.findByText("Blocked: needs your answer");
+    await screen.findByText("holdspeak");
     expect(container.textContent).not.toMatch(/personas?/i);
   });
 });

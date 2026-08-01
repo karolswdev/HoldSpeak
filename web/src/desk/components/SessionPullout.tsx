@@ -1,8 +1,12 @@
 // The session pull-out (HS-87-01/02) — attach + arm, in the desk
 // grammar. Watching is free. Secure/Normal use an exact pane grant; a Hub
 // policy decision can make a registered pane directly steerable in YOLO.
+//
+// HS-111-04 — the channel strip (audit §3.4): the consent mechanics are
+// byte-for-byte unchanged (every arm/disarm/steer/sendKeys/killOpen call,
+// the typed-refusal rendering, the grant re-sync); only the RENDER moved
+// to the gadget grammar — transport keys, lamps, LedMeters, facts tokens.
 import { useEffect, useRef, useState } from "react";
-import { motion, useReducedMotion } from "motion/react";
 import { MicButton } from "./MicButton";
 import { GroundingSection } from "./GroundingSection";
 import { ReceiptLine } from "./ReceiptLine";
@@ -12,6 +16,8 @@ import {
   buildGrounding,
   emptyGrounding,
   groundingIsEmpty,
+  groundingTokens,
+  railsTokens,
   type GroundingSelection,
   type RailsPick,
 } from "../grounding";
@@ -19,6 +25,15 @@ import { flipTargetForStory, useMissionControl } from "../missioncontrol";
 import { mmss, useSteering } from "../steering";
 import { useDurableDraft } from "../../lib/durableDraft";
 import { controlModeLabel } from "../../lib/productLanguage";
+import { SurfaceFacts } from "../surface/Surface";
+import {
+  CycleGadget,
+  LampGadget,
+  LedMeter,
+  StringGadget,
+  TransportKey,
+  TransportRow,
+} from "../surface/gadgets";
 import {
   DeskWindowFrame,
   announceLauncher,
@@ -39,7 +54,10 @@ const PANE_STATE_LABEL: Record<string, string> = {
   idle: "…",
 };
 
-function ArmChip() {
+/** The arming strip (HS-87-02 mechanics, HS-111-04 render): ARM is one
+ * transport key — armed is INVERTED VIDEO, never a glow ring — and the
+ * grant's remainder drains a `GRANT` LedMeter beside the mono clock. */
+function ArmStrip() {
   const armed = useSteering((s) => s.armed);
   const armedUntil = useSteering((s) => s.armedUntil);
   const armError = useSteering((s) => s.armError);
@@ -49,82 +67,101 @@ function ArmChip() {
   const policy = useSteering((s) => s.policy);
   const paneId = useSteering((s) => s.paneId);
   const [remaining, setRemaining] = useState(0);
+  // The grant's full span, observed client-side: the largest remainder
+  // seen while armed anchors the draining meter.
+  const totalRef = useRef(0);
 
   useEffect(() => {
-    if (!armed || armedUntil === null) return;
+    if (!armed || armedUntil === null) {
+      totalRef.current = 0;
+      return;
+    }
     const tick = () => setRemaining((armedUntil - Date.now()) / 1000);
     tick();
     const t = setInterval(tick, 500);
     return () => clearInterval(t);
   }, [armed, armedUntil]);
+  if (armed && remaining > totalRef.current) totalRef.current = remaining;
+
+  const grantMeter = armed ? (
+    <>
+      <LedMeter
+        label="GRANT"
+        value={totalRef.current > 0 ? remaining / totalRef.current : 0}
+      />
+      <span className="surface-token">{mmss(remaining)}</span>
+    </>
+  ) : null;
 
   if (postureAuthorized) {
     return (
-      <span className="desk-arm-wrap">
-        <span
-          className="desk-chip desk-arm-chip is-armed"
+      <TransportRow>
+        <TransportKey
+          compact
+          active
+          label={`${controlModeLabel(policy?.mode || "yolo")} · DIRECT`}
+          glyph="⏻"
           title={`Registered ${paneId || "pane"}; steering runs directly and leaves a Receipt`}
-        >
-          {controlModeLabel(policy?.mode || "yolo")} · direct
-        </span>
+        />
         {armed ? (
-          <button
-            type="button"
-            className="desk-chip quiet"
+          <TransportKey
+            compact
+            active
+            label="CTRL"
+            glyph="⌸"
             title="Disarm the separate session-control grant"
             onClick={() => void useSteering.getState().disarm()}
-          >
-            Session controls {mmss(remaining)}
-          </button>
+          />
         ) : null}
-      </span>
+        {grantMeter}
+      </TransportRow>
     );
   }
 
-  if (armed) {
-    return (
-      <button
-        type="button"
-        className="desk-chip desk-arm-chip is-armed"
-        title="armed: tap to disarm"
-        onClick={() => void useSteering.getState().disarm()}
-      >
-        ⏻ {mmss(remaining)}
-      </button>
-    );
-  }
   return (
-    <span className="desk-arm-wrap">
-      <button
-        type="button"
-        className="desk-chip desk-arm-chip"
-        title={stale ? "Stale session; arming will refuse" : armCommitment}
-        onClick={() => void useSteering.getState().arm()}
-      >
-        {armCommitment}
-      </button>
+    <TransportRow>
+      <TransportKey
+        label="ARM"
+        glyph="⏻"
+        active={armed}
+        title={
+          armed
+            ? "Armed: press to disarm"
+            : stale
+              ? "Stale session; arming will refuse"
+              : armCommitment
+        }
+        onClick={() =>
+          void (armed
+            ? useSteering.getState().disarm()
+            : useSteering.getState().arm())
+        }
+      />
+      {grantMeter}
       {armError && <span className="desk-arm-refusal">✕ {armError}</span>}
-    </span>
+    </TransportRow>
   );
 }
 
-// The key palette (HS-90-02) — full key control on glass. Each button is
-// ONE real key through `/keys`, shown under resolved grant/posture authority.
-// `^C` is the loud one (interrupt a runaway); the rest drive a TUI.
+// The key palette (HS-90-02) — full key control on glass. Each key is
+// ONE real key through `/keys`, shown under resolved grant/posture
+// authority. `^C` is the loud one (interrupt a runaway); the rest drive
+// a TUI. HS-111-04: rendered as transport keys (glyph over mono word).
 const KEY_BUTTONS: Array<{
-  label: string;
+  word: string;
+  glyph: string;
   key: string;
   title: string;
   loud?: boolean;
 }> = [
-  { label: "^C", key: "C-c", title: "interrupt: Ctrl-C", loud: true },
-  { label: "Esc", key: "Escape", title: "Escape" },
-  { label: "Tab", key: "Tab", title: "Tab" },
-  { label: "⏎", key: "Enter", title: "Enter" },
-  { label: "↑", key: "Up", title: "Up" },
-  { label: "↓", key: "Down", title: "Down" },
-  { label: "←", key: "Left", title: "Left" },
-  { label: "→", key: "Right", title: "Right" },
+  { word: "INT", glyph: "^C", key: "C-c", title: "interrupt: Ctrl-C", loud: true },
+  { word: "ESC", glyph: "⎋", key: "Escape", title: "Escape" },
+  { word: "TAB", glyph: "⇥", key: "Tab", title: "Tab" },
+  { word: "ENTER", glyph: "⏎", key: "Enter", title: "Enter" },
+  { word: "UP", glyph: "↑", key: "Up", title: "Up" },
+  { word: "DOWN", glyph: "↓", key: "Down", title: "Down" },
+  { word: "LEFT", glyph: "←", key: "Left", title: "Left" },
+  { word: "RIGHT", glyph: "→", key: "Right", title: "Right" },
 ];
 
 function KeyPalette() {
@@ -134,69 +171,60 @@ function KeyPalette() {
   return (
     <div className="desk-keypad">
       <span className="desk-keypad-label">Keys</span>
-      <div className="desk-keypad-row">
+      <TransportRow>
         {KEY_BUTTONS.map((k) => (
-          <button
+          <TransportKey
             key={k.key}
-            type="button"
-            className={"desk-key" + (k.loud ? " is-interrupt" : "")}
+            label={k.word}
+            glyph={k.glyph}
+            tone={k.loud ? "danger" : undefined}
             title={k.title}
             onClick={() =>
-              void useSteering.getState().sendKeys([k.key], k.label)
+              void useSteering.getState().sendKeys([k.key], k.word)
             }
-          >
-            {k.label}
-          </button>
+          />
         ))}
-        {keyState === "sent" && (
-          <span className="desk-key-fate desk-steer-sent">
-            ✓ {keyDetail || lastKey}
-          </span>
-        )}
-        {keyState === "refused" && (
-          <span className="desk-key-fate desk-arm-refusal">✕ {keyDetail}</span>
-        )}
-      </div>
+      </TransportRow>
+      {keyState === "sent" && (
+        <span className="desk-key-fate desk-steer-sent">
+          ✓ {keyDetail || lastKey}
+        </span>
+      )}
+      {keyState === "refused" && (
+        <span className="desk-key-fate desk-arm-refusal">✕ {keyDetail}</span>
+      )}
     </div>
   );
 }
 
-// The node chip (HS-90-02) — which machine the steering targets. Tap to
-// cycle this Mac → each configured node; a node routes watch/authority/delivery
-// through the relay. Absent config reads the honest "this Mac".
-function NodeChip() {
+// The node gadget (HS-90-02) — which machine the steering targets; a
+// cycling pick IS the CycleGadget species. Absent config reads the
+// honest "this Mac".
+function NodeCycle() {
   const nodes = useSteering((s) => s.nodes);
   const targetNode = useSteering((s) => s.targetNode);
   useEffect(() => {
     void useSteering.getState().listNodes();
   }, []);
-  if (nodes.length === 0) {
-    return (
-      <span
-        className="desk-chip quiet desk-node-chip"
-        title="steering targets this Mac"
-      >
-        ⧉ this Mac
-      </span>
-    );
-  }
-  const options: (string | null)[] = [null, ...nodes];
-  const next = options[(options.indexOf(targetNode) + 1) % options.length];
   return (
-    <button
-      type="button"
-      className={"desk-chip desk-node-chip" + (targetNode ? " is-remote" : "")}
-      title="tap to change the target machine"
-      onClick={() => useSteering.getState().setTargetNode(next)}
-    >
-      ⧉ {targetNode || "this Mac"}
-    </button>
+    <CycleGadget
+      label="Node"
+      value={targetNode || ""}
+      disabled={nodes.length === 0}
+      options={[
+        { value: "", label: "NODE: this Mac" },
+        ...nodes.map((n) => ({ value: n, label: `NODE: ${n}` })),
+      ]}
+      onChange={(v) => useSteering.getState().setTargetNode(v || null)}
+    />
   );
 }
 
 /** The pane picker (HS-90-02) — attach to ANY tmux pane on the machine,
  * not only a tracked session. Watching is free; policy resolves steering
- * authority. A launcher mounted on the desk beside the session surface. */
+ * authority. A launcher mounted on the desk beside the session surface.
+ * HS-111-04: the transient is mini-ledger rows; active = the ledger's
+ * open well fill, never a smuggled left accent rail. */
 export function PanePicker() {
   const panes = useSteering((s) => s.panes);
   const panesState = useSteering((s) => s.panesState);
@@ -237,23 +265,21 @@ export function PanePicker() {
         <div className="desk-panepicker-list">
           {/* HS-90-03: spawn a new session from the desk */}
           <div className="desk-panepicker-spawn">
-            <input
-              className="desk-classify-input"
+            <StringGadget
+              label="New session name"
               value={spawnName}
-              placeholder="new session name"
-              onChange={(e) => setSpawnName(e.target.value)}
+              onChange={setSpawnName}
               onKeyDown={(e) => {
                 if (e.key === "Enter") void doSpawn();
               }}
             />
-            <button
-              type="button"
-              className="desk-chip"
+            <TransportKey
+              compact
+              label="SPAWN"
+              glyph="＋"
               disabled={!spawnName.trim() || factoryState === "working"}
               onClick={() => void doSpawn()}
-            >
-              + Spawn
-            </button>
+            />
           </div>
           {factoryState === "failed" && (
             <span className="desk-panepicker-empty desk-arm-refusal">
@@ -298,7 +324,8 @@ export function PanePicker() {
 
 // The factory controls (HS-90-03) — rename + kill the open session, on glass.
 // Rendered only with the separate session-control grant: factory authority is
-// deliberately not inherited from direct YOLO steering. Kill is two-step.
+// deliberately not inherited from direct YOLO steering. Kill is two-step; the
+// confirm state is inverted danger video (HS-111-04).
 function FactoryControls() {
   const attachedSession = useSteering((s) => s.attachedSession);
   const factoryState = useSteering((s) => s.factoryState);
@@ -312,16 +339,17 @@ function FactoryControls() {
       <div className="desk-factory-row">
         {renaming ? (
           <>
-            <input
-              className="desk-classify-input"
+            <StringGadget
+              label="New session name"
               value={newName}
-              placeholder={attachedSession || "new name"}
+              placeholder={attachedSession || undefined}
               autoFocus
-              onChange={(e) => setNewName(e.target.value)}
+              onChange={setNewName}
             />
-            <button
-              type="button"
-              className="desk-chip quiet"
+            <TransportKey
+              compact
+              label="RENAME"
+              glyph="✎"
               disabled={!newName.trim() || factoryState === "working"}
               onClick={async () => {
                 const ok = await useSteering
@@ -332,21 +360,19 @@ function FactoryControls() {
                   setNewName("");
                 }
               }}
-            >
-              Rename
-            </button>
-            <button
-              type="button"
-              className="desk-chip quiet"
+            />
+            <TransportKey
+              compact
+              label="BACK"
+              glyph="✕"
               onClick={() => setRenaming(false)}
-            >
-              ✕
-            </button>
+            />
           </>
         ) : (
-          <button
-            type="button"
-            className="desk-chip quiet"
+          <TransportKey
+            compact
+            label="RENAME"
+            glyph="✎"
             disabled={!attachedSession}
             title={
               attachedSession
@@ -354,36 +380,34 @@ function FactoryControls() {
                 : "no session to rename"
             }
             onClick={() => setRenaming(true)}
-          >
-            Rename
-          </button>
+          />
         )}
         {confirmKill ? (
           <>
-            <button
-              type="button"
-              className="desk-chip desk-kill-confirm"
+            <TransportKey
+              compact
+              active
+              tone="danger"
+              label="KILL · SURE?"
+              glyph="⌫"
               onClick={() => void useSteering.getState().killOpen("session")}
-            >
-              ⌫ Kill session — sure?
-            </button>
-            <button
-              type="button"
-              className="desk-chip quiet"
+            />
+            <TransportKey
+              compact
+              label="BACK"
+              glyph="✕"
               onClick={() => setConfirmKill(false)}
-            >
-              ✕
-            </button>
+            />
           </>
         ) : (
-          <button
-            type="button"
-            className="desk-chip desk-kill"
+          <TransportKey
+            compact
+            tone="danger"
+            label="KILL"
+            glyph="⌫"
             title="end this session (armed + confirm)"
             onClick={() => setConfirmKill(true)}
-          >
-            ⌫ Kill
-          </button>
+          />
         )}
       </div>
     </div>
@@ -417,6 +441,8 @@ function SteerComposer() {
     }
   };
 
+  const budgetTokens = groundingTokens(grounding) + railsTokens(rails);
+
   return (
     <div className="desk-steer">
       <div className="desk-steer-row">
@@ -432,22 +458,21 @@ function SteerComposer() {
           placeholder="Steer"
           onChange={(e) => setText(e.target.value)}
         />
-        <button
-          type="button"
-          className={"desk-chip desk-steer-enter" + (submitOn ? " is-on" : "")}
+        <TransportKey
+          compact
+          label="ENTER"
+          glyph="⏎"
+          active={submitOn}
           title={submitOn ? "Enter after send" : "no Enter: text only"}
           onClick={() => setSubmitOn((v) => !v)}
-        >
-          ⏎
-        </button>
-        <button
-          type="button"
-          className="desk-chip"
+        />
+        <TransportKey
+          compact
+          label="SEND"
+          glyph="▸"
           disabled={steerState === "sending" || !text.trim()}
           onClick={() => void send()}
-        >
-          {steerState === "sending" ? "…" : "Send"}
-        </button>
+        />
       </div>
       {textRecovered ? (
         <span className="quiet">Recovered local steer draft.</span>
@@ -469,7 +494,11 @@ function SteerComposer() {
       />
       {(!groundingIsEmpty(grounding) || rails.length > 0) && (
         <span className="desk-steer-grounded">
-          objects ride in with a provenance header, capped at 8 KB
+          <LedMeter
+            label="CTX"
+            value={budgetTokens / STEER_LIMIT_TOKENS}
+          />
+          <span className="surface-token">CAP 8 KB</span>
         </span>
       )}
       {steerState === "refused" && (
@@ -482,20 +511,24 @@ function SteerComposer() {
   );
 }
 
-function SteeringPolicySummary() {
+/** The policy line as axis-named tokens (HS-111-04): PANE · AUTHORITY
+ * · RECEIPT — never a sentence. */
+function SteeringPolicyFacts() {
   const operation = useSteering((s) => s.operation);
   const policy = useSteering((s) => s.policy);
   if (!operation || !policy) return null;
   const authority =
     policy.authority_basis === "control_posture"
-      ? `${controlModeLabel(policy.mode || "yolo")} control posture`
+      ? `${controlModeLabel(policy.mode || "yolo")} posture`
       : "armed pane grant";
   return (
-    <p className="quiet desk-steering-policy">
-      Send text or allowed keys to pane {operation.destination || "unresolved"}
-      {" · "}
-      {authority} · Receipt after every attempt
-    </p>
+    <SurfaceFacts
+      value={{
+        pane: operation.destination || "unresolved",
+        authority,
+        receipt: "after every attempt",
+      }}
+    />
   );
 }
 
@@ -594,7 +627,6 @@ function ClassifySection({ sessionKey }: { sessionKey: string }) {
 }
 
 export function SessionPullout() {
-  const reducedMotion = useReducedMotion();
   const openKey = useSteering((s) => s.openKey);
   const session = useSteering((s) => s.session);
   const paneStatus = useSteering((s) => s.paneStatus);
@@ -603,6 +635,7 @@ export function SessionPullout() {
   const armed = useSteering((s) => s.armed);
   const postureAuthorized = useSteering((s) => s.postureAuthorized);
   const paneId = useSteering((s) => s.paneId);
+  const targetNode = useSteering((s) => s.targetNode);
   const { closeSession } = useSteering.getState();
   const preRef = useRef<HTMLPreElement | null>(null);
 
@@ -649,16 +682,8 @@ export function SessionPullout() {
       }
       actions={
         <>
-          {session?.stale && (
-            <span className="desk-chip quiet is-stale">stale</span>
-          )}
-          {live && (
-            <span className="desk-session-live" title="watching">
-              ●
-            </span>
-          )}
-          <NodeChip />
-          <ArmChip />
+          {live && <LampGadget label="LIVE" on tone="ok" />}
+          <NodeCycle />
         </>
       }
       open={Boolean(openKey)}
@@ -666,6 +691,13 @@ export function SessionPullout() {
     >
 
       <div className="desk-pullout-body">
+        <SurfaceFacts
+          value={{
+            pane: paneId || "",
+            node: targetNode || "this Mac",
+            state: session?.stale ? "stale" : "",
+          }}
+        />
         {session?.awaitingResponse && session.question ? (
           <pre className="desk-pullout-md desk-session-question">
             {session.question}
@@ -683,24 +715,27 @@ export function SessionPullout() {
         )}
       </div>
 
-      {(armed || postureAuthorized) && (
-        <footer className="desk-pullout-foot">
-          <SteeringPolicySummary />
-          <KeyPalette />
-          <SteerComposer />
-          {armed ? (
-            <FactoryControls />
-          ) : (
-            <button
-              type="button"
-              className="desk-chip quiet"
-              onClick={() => void useSteering.getState().arm()}
-            >
-              Arm pane {paneId || "unresolved"} for rename and kill
-            </button>
-          )}
-        </footer>
-      )}
+      <footer className="desk-pullout-foot">
+        <ArmStrip />
+        {(armed || postureAuthorized) && (
+          <>
+            <SteeringPolicyFacts />
+            <KeyPalette />
+            <SteerComposer />
+            {armed ? (
+              <FactoryControls />
+            ) : (
+              <button
+                type="button"
+                className="desk-chip quiet"
+                onClick={() => void useSteering.getState().arm()}
+              >
+                Arm pane {paneId || "unresolved"} for rename and kill
+              </button>
+            )}
+          </>
+        )}
+      </footer>
       <footer className="desk-pullout-foot">
         <ReceiptLine sessionKey={openKey} />
         <ClassifySection sessionKey={openKey} />

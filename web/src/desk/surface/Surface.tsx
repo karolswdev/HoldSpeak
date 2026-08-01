@@ -324,6 +324,71 @@ export function SurfaceWell({
   );
 }
 
+/** HS-111-04 — the transmission log (audit §3, optional species): a
+ * SurfaceWell whose body is prefixed mono turn blocks (`YOU>` /
+ * `<NAME>>`), a verbs slot per turn, no bubbles, no animation.
+ * Reusable by Ask answers and the delivery terminal later. */
+export function SurfaceTraffic({
+  head,
+  empty = "NO TRAFFIC",
+  showEmpty,
+  children,
+}: {
+  /** Mono token line etched on the well's lip. */
+  head?: ReactNode;
+  empty?: string;
+  /** The caller knows whether traffic exists (children may include a
+   * busy meter while a reply is inbound). */
+  showEmpty?: boolean;
+  children?: ReactNode;
+}) {
+  return (
+    <div className="surface-traffic">
+      <SurfaceWell head={head}>
+        {showEmpty ? (
+          <div className="surface-traffic-empty">{empty}</div>
+        ) : (
+          children
+        )}
+      </SurfaceWell>
+    </div>
+  );
+}
+
+export function SurfaceTrafficTurn({
+  prefix,
+  error,
+  meta,
+  verbs,
+  children,
+}: {
+  /** The mono handle prefix (`YOU>`, `SCOUT>`). */
+  prefix: ReactNode;
+  /** An error turn keeps the ✕ token beside its prefix. */
+  error?: boolean;
+  /** Fact tokens riding the turn (egress chip, model). */
+  meta?: ReactNode;
+  /** Verbs riding the line (KEEP). */
+  verbs?: ReactNode;
+  children: ReactNode;
+}) {
+  return (
+    <div className="surface-traffic-turn" data-error={error || undefined}>
+      <span className="surface-traffic-prefix">
+        {error ? <span className="surface-traffic-x">✕ </span> : null}
+        {prefix}
+      </span>
+      <div className="surface-traffic-text">{children}</div>
+      {meta || verbs ? (
+        <div className="surface-traffic-meta">
+          {meta}
+          {verbs ? <span className="surface-row-verbs">{verbs}</span> : null}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 /** A grouped inset list on the rail tone — the OS settings idiom:
  * rows divided by hairlines inside one rounded container, never a
  * form stack. */

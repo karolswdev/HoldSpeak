@@ -1,37 +1,48 @@
 // HS-95-08 — the ONE roster of agents and coder sessions (reconciled
-// surfaces — no duplicate chat/list). HS-98-07 — surface kit native.
-// HS-100-09 — Agents (thesis §1.3): the application opens on WHO NEEDS
-// YOU — blocked sessions first with their question and an Answer verb
-// one step from the pane; then running. Delivery and Chat are the
-// wings. The persona noun leaves the glass; the canon word is agents.
+// surfaces — no duplicate chat/list). HS-100-09 — Agents (thesis §1.3):
+// the application opens on WHO NEEDS YOU — blocked sessions first with
+// their question and an Answer verb one step from the pane.
+// HS-111-04 — the crew board (audit §3.1): ONE SurfaceLedger, two
+// bands — SESSIONS (blocked-first, lamp + state token, the question as
+// an open-in-place aerogel receipt) and CREW (lamp, mono handle, role
+// token). Wings collapse to Roster | Delivery; the connection facts
+// are tokens behind the gear door, never a prose accordion.
 import { useMemo, useState } from "react";
 import { openCoderSession, openPersona } from "../../desk/shell";
 import type { CoreProps } from "./ActivityCore";
-import { Button, Disclosure, StatusPill } from "../../components/signal/Signal";
+import { Button } from "../../components/signal/Signal";
 import { asRows, rowId, useResource } from "../pageSupport";
 import { type JsonRecord } from "../../lib/api";
 import {
-  SurfaceRow,
-  SurfaceRows,
-  SurfaceSection,
-  SurfaceState,
+  SurfaceFacts,
+  SurfaceLedger,
+  SurfaceLedgerRow,
 } from "../../desk/surface/Surface";
+import { LampGadget } from "../../desk/surface/gadgets";
 import { presentValue } from "../../desk/surface/format";
 import { SurfaceWings, useWindowWings } from "../../desk/surface/wings";
 import { DeliveryListSection } from "../../desk/components/DeliveryListSection";
 import { PrReceiptsSection } from "../../desk/components/PrReceiptsSection";
 
 const WINGS = [
-  { id: "sessions", label: "Sessions" },
+  { id: "roster", label: "Roster" },
   { id: "delivery", label: "Delivery" },
-  { id: "chat", label: "Chat" },
 ];
 
 export function CompanionCore({ hero }: CoreProps) {
-  const [view, setView] = useState("sessions");
+  const [view, setView] = useState("roster");
+  const [doorOpen, setDoorOpen] = useState(false);
+  const [toggled, setToggled] = useState<Record<string, boolean>>({});
   useWindowWings(
-    <SurfaceWings wings={WINGS} active={view} onChange={setView} />,
-    [view],
+    <SurfaceWings
+      wings={WINGS}
+      active={view}
+      onChange={setView}
+      door="How it connects"
+      doorOpen={doorOpen}
+      onDoor={() => setDoorOpen((v) => !v)}
+    />,
+    [view, doorOpen],
   );
   const recipes = useResource<JsonRecord>("/api/recipes", {});
   const coders = useResource<JsonRecord>("/api/coders/status", {});
@@ -62,108 +73,122 @@ export function CompanionCore({ hero }: CoreProps) {
     );
   const sessionRow = (row: JsonRecord, index: number, tone: "blocked" | "run") => {
     const session = (row.session as JsonRecord | undefined) ?? row;
+    const key = sessionKey(row, session);
+    // A blocked row opens in place by default: its question IS the board.
+    const open = toggled[key] ?? tone === "blocked";
     return (
-      <SurfaceRow
+      <SurfaceLedgerRow
         key={rowId(session, index)}
-        title={String(
-          session.project ?? session.cwd ?? session.session_id ?? "Coder session",
+        primary={String(
+          session.project ?? session.cwd ?? session.session_id ?? "session",
         )}
-        detail={
-          presentValue(session.summary ?? session.question) ||
-          (tone === "blocked" ? "Awaiting your response" : undefined)
+        open={open}
+        onToggle={() => setToggled((t) => ({ ...t, [key]: !open }))}
+        cells={
+          <>
+            <span className="surface-ledger-cell">
+              {presentValue(session.summary ?? session.question)}
+            </span>
+            <span className="surface-ledger-cell">
+              <LampGadget
+                label={tone === "blocked" ? "BLOCKED" : "RUN"}
+                on
+                tone={tone === "blocked" ? "warn" : "ok"}
+              />
+            </span>
+          </>
         }
-        meta={
-          tone === "blocked" ? (
-            <StatusPill tone="warning">Awaiting response</StatusPill>
-          ) : (
-            <StatusPill tone="success">Running</StatusPill>
-          )
-        }
-        onOpen={() => openCoderSession(sessionKey(row, session))}
-        verbs={
+      >
+        {tone === "blocked" && session.question ? (
+          <pre className="desk-pullout-md desk-session-question">
+            {String(session.question)}
+          </pre>
+        ) : null}
+        <div className="surface-row-verbs">
           <Button
             dense
             variant={tone === "blocked" ? "primary" : "ghost"}
-            onClick={() => openCoderSession(sessionKey(row, session))}
+            onClick={() => openCoderSession(key)}
           >
             {tone === "blocked" ? "Answer" : "Watch"}
           </Button>
-        }
-      />
+        </div>
+      </SurfaceLedgerRow>
     );
   };
-  const sessionsFace = (
+  const rosterFace = (
     <>
-      <SurfaceSection label="Blocked: needs your answer">
-        {blocked.length ? (
-          <SurfaceRows>
-            {blocked.map((row, index) => sessionRow(row, index, "blocked"))}
-          </SurfaceRows>
-        ) : (
-          <SurfaceState empty emptyLabel="No one is waiting on you" emptyGlyph="✓" />
-        )}
-      </SurfaceSection>
-      {running.length ? (
-        <SurfaceSection label="Running">
-          <SurfaceRows>
-            {running.map((row, index) => sessionRow(row, index, "run"))}
-          </SurfaceRows>
-        </SurfaceSection>
+      {doorOpen ? (
+        <SurfaceFacts
+          value={{
+            probe: "health before controls",
+            token: "in memory, never in a payload",
+            relay: "no hosted relay",
+            autonomous_send: "never",
+          }}
+        />
       ) : null}
-      <Disclosure title="How it connects">
-        <ol>
-          <li>Point the companion at your hub over your own network.</li>
-          <li>
-            It probes health and runtime readiness before offering controls.
-          </li>
-          <li>
-            The session token is held in memory and joined to requests, never
-            returned in a payload.
-          </li>
-          <li>There is no hosted relay and no autonomous send.</li>
-        </ol>
-      </Disclosure>
+      <SurfaceLedger
+        cols="crew"
+        count={`CREW ${recipeRows.length} · SESSIONS ${allSessions.length} · BLOCKED ${blocked.length}`}
+      >
+        <h4 className="surface-ledger-band">Sessions</h4>
+        {allSessions.length ? (
+          <ul className="surface-ledger-rows">
+            {blocked.map((row, index) => sessionRow(row, index, "blocked"))}
+            {running.map((row, index) => sessionRow(row, index, "run"))}
+          </ul>
+        ) : (
+          <div className="surface-ledger-empty">
+            NO SESSIONS · NO ONE WAITING
+          </div>
+        )}
+        <h4 className="surface-ledger-band">Crew</h4>
+        {recipes.error ? (
+          <div className="surface-ledger-empty">
+            {recipes.error}{" "}
+            <Button dense variant="ghost" onClick={() => void recipes.reload()}>
+              Try again
+            </Button>
+          </div>
+        ) : recipeRows.length ? (
+          <ul className="surface-ledger-rows">
+            {recipeRows.map((recipe, index) => (
+              <SurfaceLedgerRow
+                key={rowId(recipe, index)}
+                primary={String(recipe.name ?? "Agent")}
+                onToggle={() => openPersona(String(recipe.id))}
+                cells={
+                  <>
+                    <span className="surface-ledger-cell">
+                      {presentValue(recipe.role)}
+                    </span>
+                    <span className="surface-ledger-cell">
+                      <LampGadget label="OK" on tone="ok" />
+                    </span>
+                  </>
+                }
+              />
+            ))}
+          </ul>
+        ) : (
+          <div className="surface-ledger-empty">
+            {recipes.loading ? "READING" : "NO AGENTS"}
+          </div>
+        )}
+      </SurfaceLedger>
     </>
   );
-  const chatFace = (
-    <SurfaceSection label="Agents">
-      <SurfaceState
-        loading={recipes.loading}
-        error={recipes.error}
-        empty={!recipeRows.length}
-        emptyLabel="No agents yet"
-        emptyGlyph="🤖"
-        onRetry={() => void recipes.reload()}
-      >
-        <SurfaceRows>
-          {recipeRows.map((recipe, index) => (
-            <SurfaceRow
-              key={rowId(recipe, index)}
-              glyph={String(recipe.avatar ?? "🤖")}
-              title={String(recipe.name ?? "Agent")}
-              detail={presentValue(recipe.role) || undefined}
-              meta="→"
-              onOpen={() => openPersona(String(recipe.id))}
-            />
-          ))}
-        </SurfaceRows>
-      </SurfaceState>
-    </SurfaceSection>
-  );
   const deliveryFace = (
-    <SurfaceSection label="Delivery work">
+    <>
       <DeliveryListSection />
       <PrReceiptsSection />
-      <p className="quiet">
-        Stories, attempts, and sessions ride the delivery board; open one to
-        steer it.
-      </p>
-    </SurfaceSection>
+    </>
   );
   return (
     <>
       {hero ? hero(null) : null}
-      {view === "delivery" ? deliveryFace : view === "chat" ? chatFace : sessionsFace}
+      {view === "delivery" ? deliveryFace : rosterFace}
     </>
   );
 }

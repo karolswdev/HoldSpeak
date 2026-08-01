@@ -659,6 +659,8 @@
    inverted video, bevel flips to sunken. Zero glow, zero pulse. ── */
 .gadget-transport-row {
   display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
   gap: 6px;
 }
 .gadget-transport-key,
@@ -716,6 +718,29 @@
 .desk-next .desk-mic.gadget-transport-key.is-unsupported {
   opacity: 0.55;
   cursor: not-allowed;
+}
+/* HS-111-04 — the loud key: danger tone; held = inverted danger. */
+.gadget-transport-key[data-tone="danger"] {
+  color: var(--danger-signal);
+  border-color: color-mix(in srgb, var(--danger-signal) 45%, var(--border));
+}
+.gadget-transport-key[data-tone="danger"][data-active],
+.gadget-transport-key[data-tone="danger"]:active:not(:disabled) {
+  background: var(--danger-signal);
+  color: var(--white);
+  border-color: var(--danger-signal);
+}
+/* HS-111-04 — the in-row key: same species at input height. */
+.gadget-transport-key[data-compact] {
+  width: auto;
+  min-width: 44px;
+  height: 28px;
+  flex-direction: row;
+  gap: 5px;
+  padding: 0 8px;
+}
+.gadget-transport-key[data-compact] .gadget-transport-glyph {
+  font-size: 12px;
 }
 
 /* ── Etched chips: secret state + the ONE egress badge ── */
