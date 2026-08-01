@@ -8,9 +8,13 @@ import {
   CheckGadget,
   CycleGadget,
   GadgetRow,
+  GadgetTable,
+  LampGadget,
+  LedMeter,
   MxRadio,
   SecretRow,
   StepperGadget,
+  TransportKey,
 } from "./gadgets";
 
 describe("gadget kit", () => {
@@ -135,5 +139,70 @@ describe("gadget kit", () => {
     );
     expect(screen.getByText("Latency budget")).toBeInTheDocument();
     expect(screen.getByText("ms")).toBeInTheDocument();
+  });
+
+  // HS-111-02 — the dictation-deck species.
+
+  it("LedMeter is a labeled meter: lit segments follow the value, hot above 0.8", () => {
+    const { container } = render(
+      <LedMeter label="Level" value={0.5} segments={12} />,
+    );
+    const meter = screen.getByRole("meter", { name: "Level" });
+    expect(meter).toHaveAttribute("aria-valuenow", "0.5");
+    expect(container.querySelectorAll(".gadget-ledmeter-seg")).toHaveLength(12);
+    expect(container.querySelectorAll("[data-lit]")).toHaveLength(6);
+    expect(container.querySelectorAll("[data-hot]")).toHaveLength(0);
+  });
+
+  it("LedMeter scanning posture reads as scanning, not a level", () => {
+    const { container } = render(<LedMeter label="Level" value={1} scanning />);
+    const meter = screen.getByRole("meter", { name: "Level" });
+    expect(meter).toHaveAttribute("aria-valuetext", "scanning");
+    // no level lit while the tape winds — the walk is CSS-driven
+    expect(container.querySelectorAll("[data-lit]")).toHaveLength(0);
+  });
+
+  it("LampGadget is never color-only: the axis label rides with the lamp", () => {
+    render(<LampGadget label="Live" on tone="ok" />);
+    const lamp = screen.getByText("Live");
+    expect(lamp).toHaveAttribute("data-on", "true");
+    expect(lamp).toHaveAttribute("data-tone", "ok");
+  });
+
+  it("TransportKey: held = pressed (inverted video is the CSS contract)", () => {
+    const onClick = vi.fn();
+    const { rerender } = render(
+      <TransportKey label="Talk" glyph="🎙" onClick={onClick} />,
+    );
+    const key = screen.getByRole("button", { name: "Talk" });
+    expect(key).not.toHaveAttribute("aria-pressed");
+    fireEvent.click(key);
+    expect(onClick).toHaveBeenCalled();
+    rerender(<TransportKey label="Talk" glyph="🎙" active onClick={onClick} />);
+    expect(screen.getByRole("button", { name: "Talk" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+  });
+
+  it("GadgetTable verbs slot renders per-row verbs in place of the bare ×", async () => {
+    const onForget = vi.fn();
+    const user = userEvent.setup();
+    render(
+      <GadgetTable
+        head={["Kind", "Gist"]}
+        rows={[["intent", "send the launch checklist"]]}
+        verbs={(index) => (
+          <button type="button" onClick={() => onForget(index)}>
+            Forget?
+          </button>
+        )}
+      />,
+    );
+    expect(
+      screen.queryByRole("button", { name: "Delete row 1" }),
+    ).toBeNull();
+    await user.click(screen.getByRole("button", { name: "Forget?" }));
+    expect(onForget).toHaveBeenCalledWith(0);
   });
 });

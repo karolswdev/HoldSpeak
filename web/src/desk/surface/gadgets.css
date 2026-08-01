@@ -77,6 +77,7 @@
 .gadget-row-gadget {
   display: flex;
   align-items: center;
+  gap: 6px;
   min-width: 0;
 }
 /* One breakpoint: under 420px container the sheet stacks. */
@@ -547,6 +548,174 @@
 .gadget-table-add:hover {
   color: var(--text);
   background: var(--desk-window-well);
+}
+
+/* HS-111-02 — a row-verbs slot in the trailing cell (arming ×). */
+.gadget-table[data-verbs] .gadget-table-head,
+.gadget-table[data-verbs] .gadget-table-row {
+  grid-template-columns: repeat(var(--gadget-cols, 3), minmax(0, 1fr)) max-content;
+}
+.gadget-table-verbs {
+  display: inline-flex;
+  justify-content: flex-end;
+}
+.gadget-table-cell {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text);
+}
+
+/* ── HS-111-02: LedMeter — segmented level meter in a sunken track.
+   Flat fills, dark at rest, one walking segment while scanning. ── */
+.gadget-ledmeter {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+.gadget-ledmeter-label {
+  font: 600 9px / 1 var(--font-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+.gadget-ledmeter-track {
+  display: inline-flex;
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid var(--border);
+  background: var(--desk-window-well);
+  box-shadow: var(--desk-window-etch);
+}
+.gadget-ledmeter-seg {
+  width: 5px;
+  height: 12px;
+  background: var(--wash-2);
+}
+.gadget-ledmeter-seg[data-lit] {
+  background: var(--ok);
+}
+.gadget-ledmeter-seg[data-lit][data-hot] {
+  background: var(--warn);
+}
+.gadget-ledmeter[data-scanning] .gadget-ledmeter-seg {
+  /* 12 segments × one short beat each = the full walk */
+  animation: gadget-led-scan calc(var(--duration-short) * 12) steps(1) infinite;
+  animation-delay: calc(var(--seg-i, 0) * var(--duration-short));
+}
+@keyframes gadget-led-scan {
+  0%,
+  8.3% {
+    background: var(--accent);
+  }
+  8.4%,
+  100% {
+    background: var(--wash-2);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .gadget-ledmeter[data-scanning] .gadget-ledmeter-seg {
+    animation: none;
+  }
+  .gadget-ledmeter[data-scanning] .gadget-ledmeter-seg:first-child {
+    background: var(--accent);
+  }
+}
+
+/* ── HS-111-02: LampGadget — square lamp + mono axis label, one species ── */
+.gadget-lamp {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font: 600 10px / 1 var(--font-mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text);
+  white-space: nowrap;
+}
+.gadget-lamp-dot {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 0;
+  background: var(--wash-2);
+  box-shadow: 0 0 0 1px var(--shade-1);
+}
+.gadget-lamp[data-on="true"][data-tone="ok"] .gadget-lamp-dot {
+  background: var(--ok);
+}
+.gadget-lamp[data-on="true"][data-tone="warn"] .gadget-lamp-dot {
+  background: var(--warn);
+}
+.gadget-lamp[data-on="false"] {
+  color: var(--text-muted);
+}
+
+/* ── HS-111-02: TransportKey — the square momentary gadget. Held =
+   inverted video, bevel flips to sunken. Zero glow, zero pulse. ── */
+.gadget-transport-row {
+  display: inline-flex;
+  gap: 6px;
+}
+.gadget-transport-key,
+.desk-next .desk-mic.gadget-transport-key {
+  flex: none;
+  width: 48px;
+  height: 48px;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 0;
+  background: var(--surface-2);
+  box-shadow: inset 1px 1px 0 var(--bevel-light), inset -1px -1px 0 var(--bevel-dark);
+  color: var(--text);
+  font: 650 9px / 1 var(--font-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  animation: none;
+}
+.gadget-transport-glyph {
+  font-size: 16px;
+  line-height: 1;
+}
+.gadget-transport-key:hover:not(:disabled) {
+  background: var(--surface-3);
+}
+.gadget-transport-key:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+}
+/* The key IS down: inverted video, sunken bevel. */
+.gadget-transport-key[data-active],
+.gadget-transport-key:active:not(:disabled),
+.desk-next .desk-mic.gadget-transport-key.is-listening {
+  background: var(--accent);
+  color: var(--text-on-accent);
+  border-color: var(--accent);
+  box-shadow: inset 1px 1px 0 var(--bevel-dark), inset -1px -1px 0 var(--bevel-light);
+  /* the key IS down — no pulse, no glow ring, ever */
+  animation: none;
+}
+.desk-next .desk-mic.gadget-transport-key.is-busy {
+  color: var(--text-muted);
+}
+.desk-next .desk-mic.gadget-transport-key.is-failed {
+  border-color: var(--warn);
+  color: var(--warn);
+}
+.gadget-transport-key:disabled,
+.desk-next .desk-mic.gadget-transport-key.is-unsupported {
+  opacity: 0.55;
+  cursor: not-allowed;
 }
 
 /* ── Etched chips: secret state + the ONE egress badge ── */

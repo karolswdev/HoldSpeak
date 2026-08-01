@@ -1021,6 +1021,126 @@ button.surface-edit-in-place:hover {
   }
 }
 
+/* ── HS-111-02: the machine ledger (SurfaceLedger) — the tracker's
+   view. One-line mono rows, columnar, full-width hover band; the open
+   row wears the sunken well fill (the cursor line). ── */
+.surface-ledger {
+  display: flex;
+  flex-direction: column;
+}
+.surface-ledger-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 2px 4px 8px;
+}
+.surface-ledger-count {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text);
+  white-space: nowrap;
+}
+.surface-ledger-controls {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.surface-ledger-controls .gadget-string {
+  width: 200px;
+  min-width: 0;
+}
+.surface-ledger-row {
+  display: flex;
+  flex-direction: column;
+}
+.surface-ledger-line {
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr) max-content 6ch max-content;
+  align-items: center;
+  gap: 0 10px;
+  width: 100%;
+  min-height: 26px;
+  padding: 2px 6px;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  text-align: left;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text);
+  cursor: pointer;
+}
+.surface-ledger-line:hover,
+.surface-ledger-line:focus-visible {
+  background: var(--wash-1);
+  outline: none;
+}
+.surface-ledger-row[data-open] > .surface-ledger-line {
+  background: var(--desk-window-well);
+  box-shadow: var(--desk-window-etch);
+}
+.surface-ledger-time {
+  color: var(--text-faint);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.surface-ledger-primary {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.surface-ledger-cell {
+  color: var(--text-muted);
+  font-size: 11px;
+  white-space: nowrap;
+}
+.surface-ledger-dest {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 16ch;
+}
+.surface-ledger-ms {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+/* An absent trailing fact still holds its column (the grid is fixed). */
+.surface-ledger-open {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px 10px 10px 68px;
+  background: var(--desk-window-well);
+  box-shadow: var(--desk-window-etch);
+}
+.surface-ledger-open .surface-row-verbs {
+  opacity: 1;
+  transform: none;
+  justify-content: flex-start;
+}
+/* ≤560px container: the time folds into the row's leading token and
+   the ledger STAYS a ledger (one line, ellipsis). */
+@container surface (max-width: 559.9px) {
+  .surface-ledger-line {
+    grid-template-columns: max-content minmax(0, 1fr) max-content;
+  }
+  .surface-ledger-line > .surface-ledger-dest,
+  .surface-ledger-line > .surface-ledger-ms {
+    display: none;
+  }
+  .surface-ledger-open {
+    padding-left: 10px;
+  }
+  .surface-ledger-controls .gadget-string {
+    width: 130px;
+  }
+}
+
 /* HS-48/HS-101 — the honest learned chip: only when the router would
    actually apply a taught correction (the API sends null otherwise). */
 /* HS-111-01: learned chip — rectangular */

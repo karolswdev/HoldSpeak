@@ -4,8 +4,12 @@
 // the web): press and hold, speak, release; the transcript lands in the
 // field through onText with NO confirm step. Capture + transcription live
 // in the shared helper (the hub's own local Whisper; nothing egresses).
+//
+// HS-111-02: the cockpit's TALK key is THIS button wearing the transport
+// face (variant="transport") — same capture path, same 4-state machine;
+// the instrument strip reads the machine through onState and the capture
+// level through onLevel (the analyser tap lives in lib/speakToFill).
 import { useEffect, useRef, useState } from "react";
-// @ts-ignore — plain ESM shared helper (the one browser-mic call site).
 import {
   cancelCapture,
   speakToFillSupported,
@@ -13,6 +17,7 @@ import {
   startCapture,
   stopAndTranscribe,
   retryPendingTranscription,
+  subscribeCaptureLevel,
 } from "../../lib/speakToFill";
 import { loadPendingVoice } from "../../lib/pendingVoice";
 import {
@@ -21,23 +26,50 @@ import {
   type DictationFailure,
 } from "../../lib/dictationRecovery";
 
+export type MicState = "idle" | "listening" | "busy" | "failed";
+
 export function MicButton({
   onText,
   label = "Hold to talk",
   onFailure,
   draftScope,
+  variant,
+  onState,
+  onLevel,
 }: {
   onText: (text: string) => void;
   label?: string;
   onFailure?: (failure: DictationFailure) => void;
   draftScope?: string;
+  /** "transport" — the 48×48 momentary TALK key (glyph over mono word,
+   * held = inverted video). Default: the compact in-well mic. */
+  variant?: "transport";
+  /** The 4-state machine, reported outward (the cockpit's STATE register). */
+  onState?: (state: MicState) => void;
+  /** Capture level 0..1 while listening (feeds a LedMeter). */
+  onLevel?: (level: number) => void;
 }) {
-  const [state, setState] = useState<"idle" | "listening" | "busy" | "failed">(
-    "idle",
-  );
+  const [state, setState] = useState<MicState>("idle");
   const [failure, setFailure] = useState<DictationFailure | null>(null);
   const [audioRetained, setAudioRetained] = useState(false);
   const holding = useRef(false);
+  const onStateRef = useRef(onState);
+  onStateRef.current = onState;
+  const onLevelRef = useRef(onLevel);
+  onLevelRef.current = onLevel;
+
+  const go = (next: MicState) => {
+    setState(next);
+    onStateRef.current?.(next);
+  };
+
+  useEffect(
+    () =>
+      subscribeCaptureLevel((level) => {
+        onLevelRef.current?.(level);
+      }),
+    [],
+  );
 
   useEffect(() => {
     if (!draftScope) return;
@@ -46,12 +78,26 @@ export function MicButton({
       if (!mounted || !audio) return;
       setAudioRetained(true);
       setFailure("transcription_failed");
-      setState("failed");
+      go("failed");
     });
     return () => {
       mounted = false;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [draftScope]);
+
+  const transport = variant === "transport";
+  const face = (
+    <>
+      <span
+        className={transport ? "gadget-transport-glyph" : undefined}
+        aria-hidden="true"
+      >
+        {state === "busy" ? "…" : "🎙"}
+      </span>
+      {transport ? <span className="gadget-transport-word">Talk</span> : null}
+    </>
+  );
 
   // HS-100-06: a mic that cannot capture is visible, disabled, and says
   // why — it never vanishes silently (Article VI; the LAN-origin trap).
@@ -63,13 +109,17 @@ export function MicButton({
     return (
       <button
         type="button"
-        className="desk-mic is-unsupported"
+        className={
+          transport
+            ? "desk-mic gadget-transport-key is-unsupported"
+            : "desk-mic is-unsupported"
+        }
         disabled
         title={reason}
         aria-label={`${label} (unavailable: ${reason})`}
         onClick={(e) => e.stopPropagation()}
       >
-        <span aria-hidden="true">🎙</span>
+        {face}
       </button>
     );
   }
@@ -84,11 +134,11 @@ export function MicButton({
           setAudioRetained(false);
           if (recovered) {
             onText(recovered);
-            setState("idle");
+            go("idle");
           } else {
             setFailure("no_speech");
             onFailure?.("no_speech");
-            setState("failed");
+            go("failed");
           }
           return;
         }
@@ -98,38 +148,38 @@ export function MicButton({
         await cancelCapture();
         return;
       }
-      setState("listening");
+      go("listening");
     } catch (error) {
       const category = dictationFailure(error);
       setFailure(category);
       onFailure?.(category);
-      setState("failed");
+      go("failed");
     }
   };
 
   const stop = async () => {
     holding.current = false;
     if (state !== "listening") return;
-    setState("busy");
+    go("busy");
     try {
       const text = await stopAndTranscribe(draftScope);
       if (text) {
         onText(text);
         setAudioRetained(false);
         setFailure(null);
-        setState("idle");
+        go("idle");
       } else {
         setAudioRetained(false);
         setFailure("no_speech");
         onFailure?.("no_speech");
-        setState("failed");
+        go("failed");
       }
     } catch (error) {
       const category = dictationFailure(error);
       if (draftScope) setAudioRetained(true);
       setFailure(category);
       onFailure?.(category);
-      setState("failed");
+      go("failed");
     }
   };
 
@@ -137,7 +187,11 @@ export function MicButton({
     <>
       <button
         type="button"
-        className={`desk-mic is-${state}`}
+        className={
+          transport
+            ? `desk-mic gadget-transport-key is-${state}`
+            : `desk-mic is-${state}`
+        }
         title={failure ? DICTATION_FAILURES[failure].message : label}
         aria-label={
           audioRetained
@@ -146,6 +200,7 @@ export function MicButton({
               ? `${label} again`
               : label
         }
+        aria-pressed={transport ? state === "listening" : undefined}
         onPointerDown={(e) => {
           e.preventDefault();
           e.stopPropagation();
@@ -160,9 +215,9 @@ export function MicButton({
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        <span aria-hidden="true">{state === "busy" ? "…" : "🎙"}</span>
+        {face}
       </button>
-      {failure ? (
+      {failure && !transport ? (
         <span className="desk-mic-failure" role="status">
           {audioRetained ? "Captured audio is retained locally. " : ""}
           {DICTATION_FAILURES[failure].message}

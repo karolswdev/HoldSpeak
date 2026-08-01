@@ -5,22 +5,26 @@
 // Journal and Blocks are the wings; Memory/Knowledge/Runtime/Hooks/
 // Nudges and full readiness fold behind the one gear door
 // (APPLICATION_LAYER_THESIS.md §1.1). Wire calls and verbs unchanged.
-import { useEffect, useMemo, useRef, useState } from "react";
+// HS-111-02 — the OS's dictation deck (audit §3): the cockpit is an
+// instrument strip (TALK transport key, LED level meter, STATE
+// register, etched readout cells); the Journal is a machine ledger
+// (SurfaceLedger); the gear door is ONE gadget sheet; and every toast
+// banner died into the footer receipt bar (the Prefs pattern).
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { openSurfaceOr } from "../../desk/shell";
 import type { CoreProps } from "./ActivityCore";
 import { RuntimeDestination } from "./settingsBespoke";
-import {
-  Button,
-  Disclosure,
-  Field,
-  InlineMessage,
-  Select,
-  StatusPill,
-  TextArea,
-  TextInput,
-} from "../../components/signal/Signal";
+import { Button, Disclosure, TextArea } from "../../components/signal/Signal";
 import { RunsOnPicker } from "../../desk/components/RunsOnPicker";
-import { MicButton } from "../../desk/components/MicButton";
+import { MicButton, type MicState } from "../../desk/components/MicButton";
 import type { InferenceTarget } from "../../desk/api";
 import { apiFetch, readableError, type JsonRecord } from "../../lib/api";
 import {
@@ -35,24 +39,27 @@ import {
   ConfirmVerb,
   EditInPlace,
   SurfaceCode,
-  SurfaceColumns,
   SurfaceFacts,
-  SurfaceGroup,
-  SurfaceRow,
-  SurfaceRows,
-  SurfaceSection,
-  SurfaceSettingRow,
+  SurfaceLedger,
+  SurfaceLedgerRow,
   SurfaceLibrary,
   SurfaceLibraryGhost,
   SurfaceLibraryTile,
+  SurfaceSection,
   SurfaceState,
-  SurfaceStream,
   SurfaceStreamDay,
-  SurfaceStreamEntry,
-  SurfaceToggle,
 } from "../../desk/surface/Surface";
 import {
-  humanTime,
+  CheckGadget,
+  CycleGadget,
+  GadgetGroup,
+  GadgetRow,
+  GadgetTable,
+  LampGadget,
+  LedMeter,
+  StringGadget,
+} from "../../desk/surface/gadgets";
+import {
   isSameStreamDay,
   presentValue,
   streamDate,
@@ -78,10 +85,29 @@ function readableValue(value: unknown): string {
   return String(value ?? "");
 }
 
-/* HS-102-06 — the two raw dumps compose into honest sentences: what
-   runs, where, at what budget, and why (with the remedy AT the point
-   of the state, not a disconnected banner). Wire fields stay
-   reachable behind a Disclosure for anyone who needs them. */
+/* HS-111-02 — the ONE receipt channel: every outcome (save whisper,
+   refusal, verdict, recovery note) lands as a token in the footer bar
+   (the Prefs receipt/refusal pattern). The toast-banner species is
+   dead in this program. */
+type ReceiptTone = "ok" | "warn";
+type Receipt = { text: string; tone: ReceiptTone };
+
+const ReceiptContext = createContext<(text: string, tone?: ReceiptTone) => void>(
+  () => undefined,
+);
+
+function useAnnounce() {
+  return useContext(ReceiptContext);
+}
+
+function clockNow(): string {
+  return new Date().toLocaleTimeString([], { hour12: false });
+}
+
+/* HS-111-02 — the gear door's Pipeline/Delivery sheet: axis-named
+   check, fact tokens, the KB verb at the point of the fact. The
+   readiness wire (config/target/depth/warnings) renders as equipment,
+   never sentences. */
 function Readiness() {
   const root = localStorage.getItem("holdspeak.projectRootOverride") ?? "";
   const query = root ? `?project_root=${encodeURIComponent(root)}` : "";
@@ -125,11 +151,6 @@ function Readiness() {
     typeof target.confidence === "number"
       ? Math.round((target.confidence as number) * 100)
       : null;
-  const deliveryLine = target.label
-    ? `Last typed into ${presentValue(target.label)}${
-        target.source === "hints" ? " via the browser bridge" : ""
-      }${confidencePct !== null ? ` · ${confidencePct}% confidence` : ""}`
-    : "No delivery detected yet";
   const runs = Number(depth.runs ?? 0);
   const hasKbWarning = warnings.some((w) => w.code === "missing_project_kb");
   const otherWarnings = warnings.filter(
@@ -141,47 +162,56 @@ function Readiness() {
       error={resource.error}
       onRetry={() => void resource.reload()}
     >
-      <SurfaceGroup label="Pipeline">
-        <SurfaceSettingRow
-          label={
-            enabled
-              ? "Types automatically as you speak"
-              : "Off. Speaking here stays a draft."
-          }
-          description={`${presentValue(config.backend) || "automatic"} · budget ${presentValue(config.max_total_latency_ms) || "—"} ms`}
-          control={
-            <SurfaceToggle
-              label="Dictation pipeline"
-              checked={enabled}
-              disabled={pending}
-              onChange={(next) => void togglePipeline(next)}
-            />
-          }
-        />
-        {hasKbWarning ? (
-          <SurfaceSettingRow
-            label="Project KB file is missing"
-            description="A starter file lets dictation ground on this project's facts"
-            control={
-              <Button dense loading={kbBusy} onClick={() => void createStarterKb()}>
-                Create it
-              </Button>
-            }
+      <GadgetGroup label="Pipeline">
+        <GadgetRow
+          label="Dictation pipeline"
+          fact={`${presentValue(config.backend) || "automatic"} · ${
+            presentValue(config.max_total_latency_ms) || "—"
+          } MS`}
+        >
+          <CheckGadget
+            label="Dictation pipeline"
+            checked={enabled}
+            disabled={pending}
+            onChange={(next) => void togglePipeline(next)}
           />
+        </GadgetRow>
+        {hasKbWarning ? (
+          <GadgetRow label="Project KB" fact="MISSING">
+            <Button dense loading={kbBusy} onClick={() => void createStarterKb()}>
+              Create
+            </Button>
+          </GadgetRow>
         ) : null}
         {otherWarnings.map((warning, index) => (
-          <p className="surface-fact-line" key={String(warning.code ?? index)}>
-            {presentValue(warning.message) || readableValue(warning)}
+          <p
+            className="speak-token-line"
+            data-tone="warn"
+            key={String(warning.code ?? index)}
+          >
+            ⚠ {presentValue(warning.message) || readableValue(warning)}
           </p>
         ))}
-      </SurfaceGroup>
-      <SurfaceGroup label="Delivery">
-        <SurfaceSettingRow
-          label={deliveryLine}
-          description={runs > 0 ? `${runs} runs so far` : "No runs yet"}
-          control={null}
-        />
-      </SurfaceGroup>
+      </GadgetGroup>
+      <GadgetGroup label="Delivery">
+        <GadgetRow label="Delivery target">
+          <span className="speak-token-line">
+            {target.label
+              ? `${presentValue(target.label)}${
+                  target.source === "hints" ? " · BROWSER BRIDGE" : ""
+                }`
+              : "—"}
+          </span>
+        </GadgetRow>
+        {confidencePct !== null ? (
+          <GadgetRow label="Confidence">
+            <span className="speak-token-line">{confidencePct}%</span>
+          </GadgetRow>
+        ) : null}
+        <GadgetRow label="Runs">
+          <span className="speak-token-line">{runs}</span>
+        </GadgetRow>
+      </GadgetGroup>
       <Disclosure title="Wire details">
         <SurfaceFacts value={config} />
         <SurfaceFacts value={target} />
@@ -191,16 +221,35 @@ function Readiness() {
   );
 }
 
-/* HS-100-07 — one readiness status LINE under the loop: quiet when the
-   pipeline is live, a warning that opens the door when it is not. The
-   diagnostics wall lives behind the gear. */
-function ReadinessLine({ onOpenDoor }: { onOpenDoor: () => void }) {
+/* HS-100-07/HS-111-02 — the footer bar: readiness tokens on the left
+   (quiet when live, a warning that opens the door when not), the
+   program's last receipt/refusal on the right. The one status line. */
+function ReadinessLine({
+  onOpenDoor,
+  receipt,
+}: {
+  onOpenDoor: () => void;
+  receipt: Receipt | null;
+}) {
   const root = localStorage.getItem("holdspeak.projectRootOverride") ?? "";
   const resource = useResource<JsonRecord>(
     `/api/dictation/readiness${root ? `?project_root=${encodeURIComponent(root)}` : ""}`,
     {},
   );
-  if (resource.loading || resource.error) return null;
+  const receiptSlot = receipt ? (
+    <span
+      className="speak-receipt"
+      data-tone={receipt.tone === "warn" ? "warn" : undefined}
+      role={receipt.tone === "warn" ? "alert" : "status"}
+    >
+      {receipt.text}
+    </span>
+  ) : null;
+  if (resource.loading || resource.error) {
+    return receiptSlot ? (
+      <p className="speak-status">{receiptSlot}</p>
+    ) : null;
+  }
   const config = (resource.data.config ?? {}) as JsonRecord;
   const target = (resource.data.target ?? {}) as JsonRecord;
   const warnings = Array.isArray(resource.data.warnings)
@@ -214,6 +263,7 @@ function ReadinessLine({ onOpenDoor }: { onOpenDoor: () => void }) {
         <span><span className="speak-status-dot is-live" aria-hidden="true" /> Pipeline live</span>
         {target.label ? <span>{"-> "}{presentValue(target.label)}</span> : null}
         {budget ? <span>{presentValue(budget)} ms</span> : null}
+        {receiptSlot}
       </p>
     );
   }
@@ -227,11 +277,19 @@ function ReadinessLine({ onOpenDoor }: { onOpenDoor: () => void }) {
           Review
         </button>
       </span>
+      {receiptSlot}
     </p>
   );
 }
 
+const STATE_TOKENS: { id: string; label: string }[] = [
+  { id: "idle", label: "Idle" },
+  { id: "listening", label: "Listening" },
+  { id: "transcribing", label: "Transcribing" },
+];
+
 function SpeakFace() {
+  const announce = useAnnounce();
   const {
     value: utterance,
     setDraft: setUtterance,
@@ -244,21 +302,31 @@ function SpeakFace() {
   const [result, setResult] = useState<JsonRecord | null>(null);
   const [error, setError] = useState("");
   const [failure, setFailure] = useState<DictationFailure | null>(null);
-  const [recoveryMessage, setRecoveryMessage] = useState("");
   const [busy, setBusy] = useState(false);
   const [correctionKind, setCorrectionKind] = useState("target");
   const [correctionValue, setCorrectionValue] = useState("");
-  const [taught, setTaught] = useState("");
   const [verdict, setVerdict] = useState<"" | "right" | "wrong">("");
   const [targets, setTargets] = useState<InferenceTarget[]>([]);
   const [targetId, setTargetId] = useState("this_machine");
+  const [micState, setMicState] = useState<MicState>("idle");
+  const [level, setLevel] = useState(0);
+  // The strip's readout cells read the same wire the footer reads.
+  const stripRoot = localStorage.getItem("holdspeak.projectRootOverride") ?? "";
+  const readiness = useResource<JsonRecord>(
+    `/api/dictation/readiness${stripRoot ? `?project_root=${encodeURIComponent(stripRoot)}` : ""}`,
+    {},
+  );
+  const readinessConfig = (readiness.data.config ?? {}) as JsonRecord;
+  const readinessTarget = (readiness.data.target ?? {}) as JsonRecord;
+  const pipelineOn = readinessConfig.pipeline_enabled === true;
+  useEffect(() => {
+    if (utteranceRecovered) announce("Draft restored");
+  }, [utteranceRecovered, announce]);
   const run = async () => {
     setBusy(true);
     setError("");
     setFailure(null);
-    setRecoveryMessage("");
     setVerdict("");
-    setTaught("");
     try {
       setResult(
         await apiFetch<JsonRecord>("/api/dictation/dry-run", {
@@ -269,11 +337,14 @@ function SpeakFace() {
           },
         }),
       );
+      announce("");
       localStorage.setItem("holdspeak.projectRootOverride", projectRoot);
     } catch (reason) {
       const category = dictationFailure(reason);
       setFailure(category);
-      setError(DICTATION_FAILURES[category].message);
+      const message = DICTATION_FAILURES[category].message;
+      setError(message);
+      announce(`⚠ ${message}`, "warn");
     } finally {
       setBusy(false);
     }
@@ -296,7 +367,6 @@ function SpeakFace() {
   }, [actions, targets.length]);
   const runElsewhere = async (id: string) => {
     setTargetId(id);
-    setRecoveryMessage("");
     try {
       await apiFetch("/api/settings", {
         method: "PUT",
@@ -308,7 +378,7 @@ function SpeakFace() {
       });
       await run();
     } catch (reason) {
-      setRecoveryMessage(readableError(reason));
+      announce(`⚠ ${readableError(reason)}`, "warn");
     }
   };
   const keepDraft = async () => {
@@ -323,16 +393,16 @@ function SpeakFace() {
         },
       });
       clearPersisted();
-      setRecoveryMessage("Kept as a Note on your Desk.");
+      announce("Kept as a Note on your Desk.");
     } catch (reason) {
-      setRecoveryMessage(
-        `The Note was not kept. Your draft remains editable. ${readableError(reason)}`,
+      announce(
+        `⚠ The Note was not kept. Your draft remains editable. ${readableError(reason)}`,
+        "warn",
       );
     }
   };
   const teach = async () => {
     setBusy(true);
-    setTaught("");
     try {
       const journalId = result?.journal_id;
       await apiFetch(
@@ -351,30 +421,80 @@ function SpeakFace() {
                 },
         },
       );
-      setTaught("Correction learned for similar future dictations.");
+      announce("Taught · reaches similar dictations");
       setCorrectionValue("");
     } catch (reason) {
-      setTaught(readableError(reason));
+      announce(`⚠ Refused · ${readableError(reason)}`, "warn");
     } finally {
       setBusy(false);
     }
   };
+  const activeState =
+    micState === "busy"
+      ? "transcribing"
+      : micState === "listening"
+        ? "listening"
+        : "idle";
   return (
     <div className="speak-face">
-      <div className="speak-hero">
+      <div className="speak-strip" role="group" aria-label="Dictation deck">
         <MicButton
+          variant="transport"
           draftScope="dictation-dry-run-voice"
           label="Hold to talk"
           onText={(text) => setUtterance(text)}
+          onState={setMicState}
+          onLevel={setLevel}
+          onFailure={(category) =>
+            announce(`⚠ ${DICTATION_FAILURES[category].message}`, "warn")
+          }
         />
-        <p className="speak-hint">Hold to talk or type below -- dry run only</p>
+        <LedMeter label="Level" value={level} scanning={micState === "busy"} />
+        <span className="speak-register" aria-label="Dictation state">
+          <span className="speak-register-axis">State</span>
+          {STATE_TOKENS.map((token) => (
+            <span
+              key={token.id}
+              className="speak-register-token"
+              data-active={activeState === token.id || undefined}
+            >
+              {token.label}
+            </span>
+          ))}
+        </span>
+        <span className="speak-cells">
+          <span className="speak-cell">
+            <span className="speak-cell-label">Pipeline</span>
+            <span className="speak-cell-value">
+              <LampGadget
+                label={pipelineOn ? "Live" : "Off"}
+                on={pipelineOn}
+                tone={pipelineOn ? "ok" : "warn"}
+              />
+            </span>
+          </span>
+          <span className="speak-cell">
+            <span className="speak-cell-label">{"-> Target"}</span>
+            <span className="speak-cell-value">
+              {presentValue(readinessTarget.label) || "—"}
+            </span>
+          </span>
+          <span className="speak-cell">
+            <span className="speak-cell-label">Budget</span>
+            <span className="speak-cell-value">
+              {presentValue(readinessConfig.max_total_latency_ms)
+                ? `${presentValue(readinessConfig.max_total_latency_ms)} MS`
+                : "—"}
+            </span>
+          </span>
+        </span>
       </div>
-      <div className="desk-mic-row">
+      <div className="speak-well">
         <TextArea
           aria-label="Utterance"
           value={utterance}
           onChange={(event) => setUtterance(event.target.value)}
-          placeholder="Explain the change I made…"
+          placeholder="UTTERANCE"
         />
       </div>
       <div className="surface-actions speak-run-row">
@@ -386,21 +506,16 @@ function SpeakFace() {
         >
           {error && actions.includes("retry") ? "Retry dry test" : "Run dry test"}
         </Button>
-        <Disclosure title="Grounding scope">
-          <TextInput
-            aria-label="Project root: optional grounding scope, saved only on this device"
-            placeholder="Project root (optional)"
+        <span className="speak-grounding">
+          <span className="speak-grounding-label">Grounding</span>
+          <StringGadget
+            label="Project root: optional grounding scope, saved only on this device"
+            placeholder="project root"
             value={projectRoot}
-            onChange={(event) => setProjectRoot(event.target.value)}
+            onChange={setProjectRoot}
           />
-        </Disclosure>
+        </span>
       </div>
-      {error ? <InlineMessage tone="error">{error}</InlineMessage> : null}
-      {utteranceRecovered && !error ? (
-        <InlineMessage tone="info">
-          Recovered your local dictation draft after relaunch.
-        </InlineMessage>
-      ) : null}
       {error ? (
         <div className="surface-actions">
           {actions.includes("copy") ? (
@@ -435,72 +550,71 @@ function SpeakFace() {
           disabled={busy}
         />
       ) : null}
-      {recoveryMessage ? (
-        <InlineMessage
-          tone={recoveryMessage.startsWith("Kept") ? "success" : "error"}
-        >
-          {recoveryMessage}
-        </InlineMessage>
-      ) : null}
       {result ? (
         <section className="speak-result" aria-label="Pipeline result">
-          <SurfaceCode>{[
-            `FINAL_TEXT: ${String(result.final_text ?? result.text ?? result.output ?? "")}`,
-            result.intent ? `INTENT: ${String(result.intent)}` : null,
-            result.total_ms ? `LATENCY_MS: ${String(result.total_ms)}` : null,
-            result.target_profile ? `TARGET: ${String(result.target_profile)}` : null,
-          ].filter(Boolean).join("\n")}</SurfaceCode>
-          <div className="surface-actions" aria-label="Rate this result">
-            <Button dense onClick={() => setVerdict("right")}>
+          <SurfaceCode>{`FINAL_TEXT: ${String(result.final_text ?? result.text ?? result.output ?? "")}`}</SurfaceCode>
+          <div className="speak-result-facts">
+            {result.intent ? <span>INTENT {String(result.intent)}</span> : null}
+            {result.total_ms ? (
+              <span>LATENCY {String(result.total_ms)} MS</span>
+            ) : null}
+            {result.target_profile ? (
+              <span>TARGET {String(result.target_profile)}</span>
+            ) : null}
+          </div>
+          <div
+            className="surface-actions speak-result-verdict"
+            aria-label="Rate this result"
+          >
+            <Button
+              dense
+              onClick={() => {
+                setVerdict("right");
+                announce("Marked OK · no correction written");
+              }}
+            >
               OK
             </Button>
             <Button dense variant="ghost" onClick={() => setVerdict("wrong")}>
               Wrong
             </Button>
           </div>
-          {verdict === "right" ? (
-            <InlineMessage tone="success">
-              Marked OK -- no correction written
-            </InlineMessage>
-          ) : null}
           {verdict === "wrong" ? (
-            <Disclosure title="Correct this result" open>
-              <Field label="What should change?">
-                {({ id }) => (
-                  <Select
-                    id={id}
-                    value={correctionKind}
-                    onChange={(event) => setCorrectionKind(event.target.value)}
-                  >
-                    <option value="target">Delivery target</option>
-                    <option value="intent">Intent</option>
-                  </Select>
-                )}
-              </Field>
-              <Field label="Correct value">
-                {({ id }) => (
-                  <TextInput
-                    id={id}
-                    value={correctionValue}
-                    onChange={(event) => setCorrectionValue(event.target.value)}
-                  />
-                )}
-              </Field>
-              <Button
-                loading={busy}
-                disabled={!correctionValue.trim()}
-                onClick={teach}
-              >
-                Teach correction
-              </Button>
-              {taught ? (
-                <InlineMessage
-                  tone={taught.startsWith("Correction") ? "success" : "error"}
+            <div
+              className="speak-correct"
+              role="group"
+              aria-label="Correct this result"
+            >
+              <GadgetRow label="Field">
+                <CycleGadget
+                  label="Correction field"
+                  value={correctionKind}
+                  options={[
+                    { value: "target", label: "Delivery target" },
+                    { value: "intent", label: "Intent" },
+                  ]}
+                  onChange={setCorrectionKind}
+                />
+              </GadgetRow>
+              <GadgetRow label="Value">
+                <StringGadget
+                  label="Correct value"
+                  value={correctionValue}
+                  onChange={setCorrectionValue}
+                />
+              </GadgetRow>
+              <div className="surface-actions">
+                <Button
+                  dense
+                  loading={busy}
+                  disabled={!correctionValue.trim()}
+                  aria-label="Teach correction"
+                  onClick={teach}
                 >
-                  {taught}
-                </InlineMessage>
-              ) : null}
-            </Disclosure>
+                  Teach
+                </Button>
+              </div>
+            </div>
           ) : null}
           <Disclosure title="Raw trace">
             <SurfaceCode>{JSON.stringify(result, null, 2)}</SurfaceCode>
@@ -513,7 +627,9 @@ function SpeakFace() {
 
 /** HS-101 B4 — Blocks reads like a library: the injection text IS
  * the tile's face, the name and spoken matches ride the spine,
- * create is a ghost tile in the shelf. Edits land on the material. */
+ * create is a ghost tile in the shelf. Edits land on the material.
+ * HS-111-02 — cosmetic refit: mono tile names, CycleGadget scope,
+ * mics on every draft input, refusals in the footer bar. */
 function blockSlug(name: string): string {
   return name
     .toLowerCase()
@@ -523,6 +639,7 @@ function blockSlug(name: string): string {
 }
 
 function Blocks() {
+  const announce = useAnnounce();
   const [scope, setScope] = useState("global");
   const resource = useResource<JsonRecord>(
     `/api/dictation/blocks?scope=${scope}`,
@@ -532,11 +649,9 @@ function Blocks() {
     (resource.data.document as JsonRecord | undefined)?.blocks,
     [],
   );
-  const [message, setMessage] = useState("");
   const [drafting, setDrafting] = useState(false);
   const [draft, setDraft] = useState({ name: "", examples: "", injection: "" });
   const save = async (row: Record<string, unknown>, patch: JsonRecord) => {
-    setMessage("");
     try {
       await apiFetch(
         `/api/dictation/blocks/${encodeURIComponent(String(row.id))}?scope=${scope}`,
@@ -544,11 +659,10 @@ function Blocks() {
       );
       await resource.reload();
     } catch (error) {
-      setMessage(readableError(error));
+      announce(`⚠ ${readableError(error)}`, "warn");
     }
   };
   const remove = async (row: Record<string, unknown>) => {
-    setMessage("");
     try {
       await apiFetch(
         `/api/dictation/blocks/${encodeURIComponent(String(row.id))}?scope=${scope}`,
@@ -556,13 +670,12 @@ function Blocks() {
       );
       await resource.reload();
     } catch (error) {
-      setMessage(readableError(error));
+      announce(`⚠ ${readableError(error)}`, "warn");
     }
   };
   const create = async () => {
     const name = draft.name.trim();
     if (!name) return;
-    setMessage("");
     try {
       await apiFetch(`/api/dictation/blocks?scope=${scope}`, {
         method: "POST",
@@ -584,23 +697,24 @@ function Blocks() {
       setDrafting(false);
       await resource.reload();
     } catch (error) {
-      setMessage(readableError(error));
+      announce(`⚠ ${readableError(error)}`, "warn");
     }
   };
   return (
-    <SurfaceSection>
+    <SurfaceSection className="speak-blocks">
       <SurfaceLibrary
         count={rows.length}
         countLabel={rows.length === 1 ? "block" : "blocks"}
         controls={
-          <Select
-            aria-label="Block scope"
+          <CycleGadget
+            label="Block scope"
             value={scope}
-            onChange={(event) => setScope(event.target.value)}
-          >
-            <option value="global">Global</option>
-            <option value="project">Project</option>
-          </Select>
+            options={[
+              { value: "global", label: "Global" },
+              { value: "project", label: "Project" },
+            ]}
+            onChange={setScope}
+          />
         }
       >
         <SurfaceState
@@ -664,32 +778,34 @@ function Blocks() {
           {drafting ? (
             <li className="surface-tile surface-tile-drafting">
               <div className="surface-tile-face">
-                <TextArea
-                  aria-label="Injection text"
-                  placeholder="What this block injects"
-                  rows={4}
-                  value={draft.injection}
-                  onChange={(event) =>
-                    setDraft({ ...draft, injection: event.target.value })
-                  }
-                />
+                <div className="desk-mic-row">
+                  <TextArea
+                    aria-label="Injection text"
+                    placeholder="What this block injects"
+                    rows={4}
+                    value={draft.injection}
+                    onChange={(event) =>
+                      setDraft({ ...draft, injection: event.target.value })
+                    }
+                  />
+                  <MicButton
+                    label="Speak injection text"
+                    onText={(text) => setDraft({ ...draft, injection: text })}
+                  />
+                </div>
               </div>
               <div className="surface-tile-spine">
-                <TextInput
-                  aria-label="Block name"
+                <StringGadget
+                  label="Block name"
                   placeholder="Name"
                   value={draft.name}
-                  onChange={(event) =>
-                    setDraft({ ...draft, name: event.target.value })
-                  }
+                  onChange={(name) => setDraft({ ...draft, name })}
                 />
-                <TextInput
-                  aria-label="Spoken matches, comma separated"
+                <StringGadget
+                  label="Spoken matches, comma separated"
                   placeholder="Say: standup notes, stand up"
                   value={draft.examples}
-                  onChange={(event) =>
-                    setDraft({ ...draft, examples: event.target.value })
-                  }
+                  onChange={(examples) => setDraft({ ...draft, examples })}
                 />
                 <div className="surface-actions">
                   <Button
@@ -716,12 +832,14 @@ function Blocks() {
             />
           )}
         </SurfaceState>
-        {message ? <InlineMessage tone="error">{message}</InlineMessage> : null}
       </SurfaceLibrary>
     </SurfaceSection>
   );
 }
 
+/* HS-111-02 — correction memory is a machine table: KIND | GIST |
+   VALUE | REACH, the arming × per row. REACH is the wire's `similar`
+   count — what makes the memory legible as equipment. */
 function Memory() {
   const resource = useResource<JsonRecord>("/api/dictation/corrections", {});
   const digest = useResource<JsonRecord>("/api/dictation/learning-digest", {});
@@ -734,58 +852,49 @@ function Memory() {
     await resource.reload();
   };
   return (
-    <SurfaceColumns
-      main={
-        <SurfaceSection label="Correction memory">
-          <SurfaceState
-            loading={resource.loading}
-            error={resource.error}
-            empty={!rows.length}
-            emptyLabel="Nothing learned yet"
-            emptyGlyph="◈"
-            onRetry={() => void resource.reload()}
-          >
-            <SurfaceRows>
-              {rows.map((row, index) => (
-                <SurfaceRow
-                  key={rowId(row, index)}
-                  title={String(row.gist ?? row.kind ?? "Correction")}
-                  detail={
-                    presentValue(row.value ?? row.replacement) || undefined
-                  }
-                  verbs={
-                    <ConfirmVerb
-                      label="Forget"
-                      confirmLabel="Forget?"
-                      onConfirm={() => void remove(row)}
-                    />
-                  }
-                />
-              ))}
-            </SurfaceRows>
-          </SurfaceState>
-        </SurfaceSection>
-      }
-      side={
-        <SurfaceSection label="Learning digest">
-          <SurfaceState
-            loading={digest.loading}
-            error={digest.error}
-            onRetry={() => void digest.reload()}
-          >
-            <LearningDigestFacts digest={digest.data} />
-          </SurfaceState>
-        </SurfaceSection>
-      }
-    />
+    <>
+      <GadgetGroup label="Correction memory">
+        <SurfaceState
+          loading={resource.loading}
+          error={resource.error}
+          empty={!rows.length}
+          emptyLabel="Nothing learned yet"
+          emptyGlyph="◈"
+          onRetry={() => void resource.reload()}
+        >
+          <GadgetTable
+            head={["Kind", "Gist", "Value", "Reach"]}
+            rows={rows.map((row) => [
+              String(row.kind ?? "—"),
+              String(row.gist ?? "—"),
+              presentValue(row.value ?? row.replacement) || "—",
+              presentValue(row.similar) || "—",
+            ])}
+            verbs={(index) => (
+              <ConfirmVerb
+                label="×"
+                confirmLabel="Forget?"
+                onConfirm={() => void remove(rows[index])}
+              />
+            )}
+          />
+        </SurfaceState>
+      </GadgetGroup>
+      <GadgetGroup label="Learning digest">
+        <SurfaceState
+          loading={digest.loading}
+          error={digest.error}
+          onRetry={() => void digest.reload()}
+        >
+          <LearningDigestFacts digest={digest.data} />
+        </SurfaceState>
+      </GadgetGroup>
+    </>
   );
 }
 
-/* HS-102-06 — the digest's window/enabled/generated-at wrapper is
-   metadata, not the fact; SurfaceFacts on the raw object was
-   accidentally surfacing exactly that (the only top-level scalars)
-   while the real counts sat hidden inside `totals`. Compose the
-   totals into one honest sentence instead. */
+/* HS-111-02 — the digest is a fact token row, never a sentence:
+   WEEK · TAUGHT n · CORRECTED n · REACHED n (empty: WEEK · —). */
 function LearningDigestFacts({ digest }: { digest: JsonRecord }) {
   const totals = (digest.totals ?? {}) as JsonRecord;
   const made = Number(totals.corrections_made ?? 0);
@@ -793,14 +902,20 @@ function LearningDigestFacts({ digest }: { digest: JsonRecord }) {
   const nudged = Number(totals.similar_nudged ?? 0);
   const topBlocks = asRows(digest, ["by_block"]).slice(0, 3);
   if (!made && !corrected) {
-    return <p className="surface-fact-line">Nothing learned this week yet</p>;
+    // The empty week is an honest zero token, never a sentence.
+    return <p className="speak-token-line">WEEK · TAUGHT 0</p>;
   }
   return (
     <>
-      <p className="surface-fact-line">
-        {made} correction{made === 1 ? "" : "s"} taught this week
-        {corrected ? ` · ${corrected} dictation${corrected === 1 ? "" : "s"} corrected` : ""}
-        {nudged ? ` · reached ${nudged} similar` : ""}
+      <p className="speak-token-line">
+        {[
+          "WEEK",
+          `TAUGHT ${made}`,
+          corrected ? `CORRECTED ${corrected}` : "",
+          nudged ? `REACHED ${nudged}` : "",
+        ]
+          .filter(Boolean)
+          .join(" · ")}
       </p>
       {topBlocks.length ? (
         <SurfaceFacts
@@ -818,25 +933,20 @@ function LearningDigestFacts({ digest }: { digest: JsonRecord }) {
 
 /* HS-102-06 — Knowledge is `{kb: {<KEY>: <string|null>, ...}}`
    (`/api/dictation/project-kb`, validated `[A-Za-z_][A-Za-z0-9_]*`
-   keys) — a facts glossary, not free text; the old single textarea +
-   orange save button was never wired to this shape (it PUT
-   `{content}}`, which the route has always refused — a pre-existing
-   defect this recompose fixes along with the surface). Each fact is
-   its own row, edited in place; a small composer adds a new one.
-   Instructions binds to the primary `.hs/instructions.md` file
-   (`/api/dictation/project-hs`'s `{files: {<name>: <content>}}`
-   shape) — the other named `.hs` files stay out of this face's
-   scope. */
+   keys) — a facts glossary, not free text. HS-111-02: the glossary is
+   a GadgetTable (KEY | VALUE, EditInPlace values, ghost +ADD row of
+   StringGadgets — mics included by the kit); the key refusal and the
+   save whisper land in the footer bar. Instructions binds to the
+   primary `.hs/instructions.md` file. */
 function Knowledge() {
+  const announce = useAnnounce();
   const [root, setRoot] = useState(
     () => localStorage.getItem("holdspeak.projectRootOverride") ?? "",
   );
   const query = root ? `?project_root=${encodeURIComponent(root)}` : "";
   const kb = useResource<JsonRecord>(`/api/dictation/project-kb${query}`, {});
   const hs = useResource<JsonRecord>(`/api/dictation/project-hs${query}`, {});
-  const [saving, setSaving] = useState(false);
-  const [savedTick, setSavedTick] = useState(false);
-  const [message, setMessage] = useState("");
+  const [drafting, setDrafting] = useState(false);
   const [draftKey, setDraftKey] = useState("");
   const [draftValue, setDraftValue] = useState("");
   const kbFacts = (kb.data.kb ?? {}) as Record<string, unknown>;
@@ -845,19 +955,16 @@ function Knowledge() {
     ((hs.data.files ?? {}) as JsonRecord)["instructions.md"] ?? {}
   ) as JsonRecord;
   const putKb = async (next: Record<string, unknown>) => {
-    setSaving(true);
-    setMessage("");
+    announce("Saving…");
     try {
       await apiFetch(`/api/dictation/project-kb${query}`, {
         method: "PUT",
         json: { kb: next },
       });
-      setSavedTick(true);
+      announce(`Written ${clockNow()}`);
       await kb.reload();
     } catch (error) {
-      setMessage(readableError(error));
-    } finally {
-      setSaving(false);
+      announce(`⚠ ${readableError(error)}`, "warn");
     }
   };
   const setFact = (key: string, value: string) =>
@@ -870,140 +977,124 @@ function Knowledge() {
   const addFact = () => {
     const key = draftKey.trim();
     if (!key || !/^[A-Za-z_][A-Za-z0-9_]*$/.test(key)) {
-      setMessage(
-        "Fact names must look like BLUEBIRD or api_key: letters, numbers, underscore, starting with a letter or underscore.",
-      );
+      announce("⚠ Refused · key format A-Z _ 0-9, letter first", "warn");
       return;
     }
     void putKb({ ...kbFacts, [key]: draftValue.trim() });
     setDraftKey("");
     setDraftValue("");
+    setDrafting(false);
   };
   const saveInstructions = async (content: string) => {
-    setSaving(true);
-    setMessage("");
+    announce("Saving…");
     try {
       await apiFetch(`/api/dictation/project-hs${query}`, {
         method: "PUT",
         json: { files: { "instructions.md": content } },
       });
-      setSavedTick(true);
+      announce(`Written ${clockNow()}`);
       await hs.reload();
     } catch (error) {
-      setMessage(readableError(error));
-    } finally {
-      setSaving(false);
+      announce(`⚠ ${readableError(error)}`, "warn");
     }
   };
-  const whisper = (
-    <span
-      className={"settings-save-whisper" + (saving ? " is-saving" : "")}
-      role="status"
-    >
-      {saving ? "Saving…" : savedTick ? "Saved" : ""}
-    </span>
-  );
   return (
     <>
-      <SurfaceGroup label="Project scope">
-        <SurfaceSettingRow
-          label={
+      <GadgetGroup label="Project scope">
+        <GadgetRow label="Project root">
+          <StringGadget
+            label="Project root"
+            placeholder="this device's working directory"
+            value={root}
+            onChange={setRoot}
+          />
+          <Button
+            dense
+            onClick={() => {
+              localStorage.setItem("holdspeak.projectRootOverride", root);
+              void kb.reload();
+              void hs.reload();
+            }}
+          >
+            Use
+          </Button>
+        </GadgetRow>
+      </GadgetGroup>
+      <GadgetGroup label="Knowledge">
+        <GadgetTable
+          head={["Key", "Value"]}
+          rows={kbEntries.map(([key, value]) => [
+            key,
             <EditInPlace
-              value={root || "This device's working directory"}
-              label="Project root"
-              onCommit={(next) =>
-                setRoot(
-                  next === "This device's working directory" ? "" : next,
-                )
-              }
+              key={key}
+              value={String(value ?? "") || "(empty) click to add"}
+              label={`${key} value`}
+              onCommit={(next) => setFact(key, next)}
+            />,
+          ])}
+          verbs={(index) => (
+            <ConfirmVerb
+              label="×"
+              confirmLabel="Forget?"
+              onConfirm={() => forgetFact(kbEntries[index][0])}
             />
-          }
-          description="Where dictation looks for Knowledge and Instructions"
-          control={
+          )}
+          onAdd={drafting ? undefined : () => setDrafting(true)}
+        />
+        {drafting ? (
+          <div className="surface-actions">
+            <StringGadget
+              label="Fact name"
+              placeholder="BLUEBIRD"
+              value={draftKey}
+              onChange={setDraftKey}
+            />
+            <StringGadget
+              label="Fact value"
+              placeholder="the codename for…"
+              value={draftValue}
+              onChange={setDraftValue}
+            />
             <Button
               dense
+              variant="primary"
+              disabled={!draftKey.trim()}
+              onClick={addFact}
+            >
+              Add
+            </Button>
+            <Button
+              dense
+              variant="ghost"
               onClick={() => {
-                localStorage.setItem("holdspeak.projectRootOverride", root);
-                void kb.reload();
-                void hs.reload();
+                setDrafting(false);
+                setDraftKey("");
+                setDraftValue("");
               }}
             >
-              Use project
+              Cancel
             </Button>
+          </div>
+        ) : null}
+      </GadgetGroup>
+      <GadgetGroup label="Instructions">
+        <EditInPlace
+          value={
+            String(instructionsFile.content ?? "") ||
+            "No instructions yet. Click to add."
           }
+          label="Project instructions"
+          multiline
+          onCommit={(next) => void saveInstructions(next)}
         />
-      </SurfaceGroup>
-      {whisper}
-      <SurfaceColumns
-        main={
-          <SurfaceSection label="Knowledge">
-            {kbEntries.length ? (
-              <SurfaceRows>
-                {kbEntries.map(([key, value]) => (
-                  <SurfaceRow
-                    key={key}
-                    title={key}
-                    detail={
-                      <EditInPlace
-                        value={String(value ?? "") || "(empty) click to add"}
-                        label={`${key} value`}
-                        onCommit={(next) => setFact(key, next)}
-                      />
-                    }
-                    verbs={
-                      <ConfirmVerb
-                        label="Forget"
-                        confirmLabel="Forget?"
-                        onConfirm={() => forgetFact(key)}
-                      />
-                    }
-                  />
-                ))}
-              </SurfaceRows>
-            ) : (
-              <p className="surface-fact-line">
-                No facts yet — add one below.
-              </p>
-            )}
-            <div className="surface-actions">
-              <TextInput
-                aria-label="Fact name"
-                placeholder="BLUEBIRD"
-                value={draftKey}
-                onChange={(event) => setDraftKey(event.target.value)}
-              />
-              <TextInput
-                aria-label="Fact value"
-                placeholder="the codename for…"
-                value={draftValue}
-                onChange={(event) => setDraftValue(event.target.value)}
-              />
-              <Button dense disabled={!draftKey.trim()} onClick={addFact}>
-                Add fact
-              </Button>
-            </div>
-          </SurfaceSection>
-        }
-        side={
-          <SurfaceSection label="Instructions">
-            <EditInPlace
-              value={
-                String(instructionsFile.content ?? "") ||
-                "No instructions yet. Click to add."
-              }
-              label="Project instructions"
-              multiline
-              onCommit={(next) => void saveInstructions(next)}
-            />
-          </SurfaceSection>
-        }
-      />
-      {message ? <InlineMessage tone="error">{message}</InlineMessage> : null}
+      </GadgetGroup>
     </>
   );
 }
 
-/** HS-101 B3 — the Journal reads like a journal: a dated stream. */
+/** HS-111-02 — the Journal is a machine ledger (audit §3.2): one mono
+ * line per dictation, columns time/transcript/dest/ms/taught, click a
+ * row to open it in place (the cursor line). Day bands stay. */
 function Journal() {
   const resource = useResource<JsonRecord>(
     "/api/dictation/journal?limit=200",
@@ -1011,6 +1102,7 @@ function Journal() {
   );
   const rows = asRows(resource.data, ["items"]);
   const [query, setQuery] = useState("");
+  const [openId, setOpenId] = useState("");
   const [replays, setReplays] = useState<Record<string, JsonRecord>>({});
   const filtered = rows.filter(
     (row) =>
@@ -1064,24 +1156,18 @@ function Journal() {
   };
   return (
     <SurfaceSection>
-      <SurfaceStream
-        count={todayCount}
-        countLabel={
-          taughtCount
-            ? `today · ${taughtCount} taught`
-            : "today"
-        }
+      <SurfaceLedger
+        count={`Today ${todayCount} · Taught ${taughtCount}`}
         controls={
           <>
-            <TextInput
-              type="search"
-              aria-label="Search the journal"
-              placeholder="Search"
+            <StringGadget
+              label="Search the journal"
+              placeholder="search"
               value={query}
-              onChange={(event) => setQuery(event.target.value)}
+              onChange={setQuery}
             />
             <ConfirmVerb
-              label="Clear…"
+              label="Clear"
               confirmLabel="Clear all?"
               disabled={!rows.length}
               onConfirm={() => void remove("all")}
@@ -1100,7 +1186,8 @@ function Journal() {
           {days.map((day) => (
             <SurfaceStreamDay key={day.label} label={day.label}>
               {day.rows.map((row, index) => {
-                const replayResult = replays[String(row.id)];
+                const id = String(row.id ?? rowId(row, index));
+                const replayResult = replays[id];
                 const replayAfter =
                   replayResult?.after && typeof replayResult.after === "object"
                     ? (replayResult.after as JsonRecord)
@@ -1115,72 +1202,33 @@ function Journal() {
                   presentValue(row.target_profile) || presentValue(row.intent);
                 const took = Number(row.total_ms ?? 0);
                 return (
-                  <SurfaceStreamEntry
+                  <SurfaceLedgerRow
                     key={rowId(row, index)}
-                    when={streamTime(
+                    time={streamTime(
                       streamDate(row.created_at ?? row.timestamp),
                     )}
-                    meta={
+                    primary={String(row.transcript ?? "")}
+                    open={openId === id}
+                    onToggle={() => setOpenId(openId === id ? "" : id)}
+                    cells={
                       <>
-                        {destination ? <span>→ {destination}</span> : null}
-                        {took > 0 ? <span>{Math.round(took)} ms</span> : null}
-                        {row.corrected ? (
-                          <span className="surface-learned">
-                            ✓ taught
-                            {learning?.matched && similar > 0
-                              ? ` · from ${similar} similar`
-                              : ""}
-                          </span>
-                        ) : null}
+                        <span className="surface-ledger-cell surface-ledger-dest">
+                          {destination ? `→ ${destination}` : ""}
+                        </span>
+                        <span className="surface-ledger-cell surface-ledger-ms">
+                          {took > 0 ? `${Math.round(took)} ms` : ""}
+                        </span>
+                        <span className="surface-ledger-cell">
+                          {row.corrected ? (
+                            <span className="surface-learned">
+                              ✓ taught
+                              {learning?.matched && similar > 0
+                                ? ` · from ${similar} similar`
+                                : ""}
+                            </span>
+                          ) : null}
+                        </span>
                       </>
-                    }
-                    verbs={
-                      <>
-                        <Button dense onClick={() => void replay(row)}>
-                          Replay
-                        </Button>
-                        <Button
-                          dense
-                          variant="ghost"
-                          onClick={() =>
-                            void navigator.clipboard.writeText(
-                              String(row.transcript ?? ""),
-                            )
-                          }
-                        >
-                          Copy
-                        </Button>
-                        <ConfirmVerb
-                          label="Delete"
-                          confirmLabel="Delete?"
-                          onConfirm={() => void remove(row)}
-                        />
-                      </>
-                    }
-                    aside={
-                      replayResult ? (
-                        <div className="surface-preview" role="status">
-                          <span className="surface-preview-label">
-                            Replay — preview only
-                          </span>
-                          <p>
-                            {replayText ||
-                              "The replay completed without text."}
-                          </p>
-                          <div className="surface-actions">
-                            <Button
-                              dense
-                              variant="ghost"
-                              disabled={!replayText}
-                              onClick={() =>
-                                void navigator.clipboard.writeText(replayText)
-                              }
-                            >
-                              Copy result
-                            </Button>
-                          </div>
-                        </div>
-                      ) : null
                     }
                   >
                     <EditInPlace
@@ -1189,13 +1237,57 @@ function Journal() {
                       multiline
                       onCommit={(next) => void editTranscript(row, next)}
                     />
-                  </SurfaceStreamEntry>
+                    <div className="surface-row-verbs">
+                      <Button dense onClick={() => void replay(row)}>
+                        Replay
+                      </Button>
+                      <Button
+                        dense
+                        variant="ghost"
+                        onClick={() =>
+                          void navigator.clipboard.writeText(
+                            String(row.transcript ?? ""),
+                          )
+                        }
+                      >
+                        Copy
+                      </Button>
+                      <ConfirmVerb
+                        label="Delete"
+                        confirmLabel="Delete?"
+                        onConfirm={() => void remove(row)}
+                      />
+                    </div>
+                    {replayResult ? (
+                      <div className="surface-preview" role="status">
+                        <span className="surface-preview-label">
+                          Replay — preview only
+                        </span>
+                        <p>
+                          {replayText ||
+                            "The replay completed without text."}
+                        </p>
+                        <div className="surface-actions">
+                          <Button
+                            dense
+                            variant="ghost"
+                            disabled={!replayText}
+                            onClick={() =>
+                              void navigator.clipboard.writeText(replayText)
+                            }
+                          >
+                            Copy result
+                          </Button>
+                        </div>
+                      </div>
+                    ) : null}
+                  </SurfaceLedgerRow>
                 );
               })}
             </SurfaceStreamDay>
           ))}
         </SurfaceState>
-      </SurfaceStream>
+      </SurfaceLedger>
     </SurfaceSection>
   );
 }
@@ -1205,22 +1297,21 @@ function Journal() {
    Settings uses for this exact same `dictation.runtime` value. This
    face embeds it rather than re-stating Backend/Runs on/Latency
    budget as a third label-over-Select stack. Saves on change,
-   debounced, like every other configuring surface (HS-101 round 3). */
+   debounced; the receipt lands in the footer bar (HS-111-02). */
 function Runtime() {
+  const announce = useAnnounce();
   const settings = useResource<JsonRecord>("/api/settings", {});
-  const [saving, setSaving] = useState(false);
-  const [savedTick, setSavedTick] = useState(false);
   const saveTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
   useEffect(() => () => clearTimeout(saveTimer.current), []);
   const runtime = ((settings.data.dictation as JsonRecord | undefined)
     ?.runtime ?? {}) as JsonRecord;
   const save = async (dictation: JsonRecord) => {
-    setSaving(true);
+    announce("Saving…");
     try {
       await apiFetch("/api/settings", { method: "PUT", json: { dictation } });
-      setSavedTick(true);
-    } finally {
-      setSaving(false);
+      announce(`Written ${clockNow()}`);
+    } catch (error) {
+      announce(`⚠ ${readableError(error)}`, "warn");
     }
   };
   const patch = (next: JsonRecord) => {
@@ -1233,40 +1324,62 @@ function Runtime() {
     saveTimer.current = setTimeout(() => void save(dictation), 700);
   };
   return (
-    <SurfaceSection
-      label="Dictation runtime"
-      actions={
-        <span
-          className={"settings-save-whisper" + (saving ? " is-saving" : "")}
-          role="status"
-        >
-          {saving ? "Saving…" : savedTick ? "Saved" : ""}
-        </span>
-      }
-    >
+    <GadgetGroup label="Dictation runtime">
       <RuntimeDestination value={runtime} onCommit={patch} />
-    </SurfaceSection>
+    </GadgetGroup>
   );
 }
 
+/* HS-111-02 — Hooks is a designed face, not a JSON dump: the capture
+   check, one fact row per agent destination with a SET/— chip (a
+   recent captured session = SET), the raw wire behind Raw trace. */
 function Hooks() {
+  const [capture, setCapture] = useState(false);
   const resource = useResource<JsonRecord>(
-    "/api/dictation/agent-hooks?capture_messages=false",
+    `/api/dictation/agent-hooks?capture_messages=${capture}`,
     {},
   );
+  const destinations = (resource.data.destinations ?? {}) as JsonRecord;
+  const agents = (resource.data.agents ?? {}) as JsonRecord;
+  const chip = (agent: string) => {
+    const info = agents[agent] as JsonRecord | undefined;
+    const set = Boolean(info && info.latest_session);
+    return (
+      <span className="gadget-chip" data-set={set || undefined}>
+        {set ? "SET" : "—"}
+      </span>
+    );
+  };
   return (
-    <SurfaceSection label="Automation hooks">
+    <GadgetGroup label="Automation hooks">
       <SurfaceState
         loading={resource.loading}
         error={resource.error}
         onRetry={() => void resource.reload()}
       >
-        <SurfaceCode>{JSON.stringify(resource.data, null, 2)}</SurfaceCode>
+        <GadgetRow label="Capture messages" fact="hook template option">
+          <CheckGadget
+            label="Capture messages"
+            checked={capture}
+            onChange={setCapture}
+          />
+        </GadgetRow>
+        <GadgetRow label="Claude" fact={presentValue(destinations.claude)}>
+          {chip("claude")}
+        </GadgetRow>
+        <GadgetRow label="Codex" fact={presentValue(destinations.codex)}>
+          {chip("codex")}
+        </GadgetRow>
+        <Disclosure title="Raw trace">
+          <SurfaceCode>{JSON.stringify(resource.data, null, 2)}</SurfaceCode>
+        </Disclosure>
       </SurfaceState>
-    </SurfaceSection>
+    </GadgetGroup>
   );
 }
 
+/* HS-111-02 — nudges are ledger rows: HH:MM · domain · KIND with the
+   USE / DISMISS verbs. The surveillance sentence died. */
 function Nudges() {
   const resource = useResource<JsonRecord>("/api/activity/nudges?limit=8", {});
   const rows = asRows(resource.data, ["nudges", "items"]);
@@ -1285,8 +1398,24 @@ function Nudges() {
     );
     await resource.reload();
   };
+  const token = (row: Record<string, unknown>): string => {
+    const citation = (
+      Array.isArray(row.citations) ? row.citations[0] : null
+    ) as JsonRecord | null;
+    const time = streamTime(
+      streamDate(citation?.last_seen_at ?? row.window_since),
+    );
+    const where =
+      presentValue(citation?.domain) ||
+      presentValue(row.title ?? row.text) ||
+      "recent work";
+    const kind = String(
+      citation?.entity_type ?? row.kind ?? "activity",
+    ).toUpperCase();
+    return [time, where, kind].filter(Boolean).join(" · ");
+  };
   return (
-    <SurfaceSection label="Activity nudges">
+    <GadgetGroup label="Activity nudges">
       <SurfaceState
         loading={resource.loading}
         error={resource.error}
@@ -1295,40 +1424,35 @@ function Nudges() {
         emptyGlyph="⌁"
         onRetry={() => void resource.reload()}
       >
-        <SurfaceRows>
-          {rows.map((row, index) => (
-            <SurfaceRow
-              key={rowId(row, index)}
-              title={String(row.title ?? row.text ?? "Recent work")}
-              detail={
-                presentValue(row.citation ?? row.source ?? row.url) ||
-                "Local activity"
-              }
-              verbs={
-                <>
-                  <Button dense onClick={() => void act(row, "select")}>
-                    Use as context
-                  </Button>
-                  <Button
-                    dense
-                    variant="ghost"
-                    onClick={() => void act(row, "dismiss")}
-                  >
-                    Dismiss
-                  </Button>
-                </>
-              }
-            />
-          ))}
-        </SurfaceRows>
+        {rows.map((row, index) => (
+          <div className="speak-nudge-row" key={rowId(row, index)}>
+            <span className="speak-nudge-token">{token(row)}</span>
+            <span className="surface-row-verbs">
+              <Button dense onClick={() => void act(row, "select")}>
+                Use
+              </Button>
+              <Button
+                dense
+                variant="ghost"
+                onClick={() => void act(row, "dismiss")}
+              >
+                Dismiss
+              </Button>
+            </span>
+          </div>
+        ))}
       </SurfaceState>
-    </SurfaceSection>
+    </GadgetGroup>
   );
 }
 
 export function DictationCore({ hero, scope, scopeLabel }: CoreProps) {
   const [view, setView] = useState("speak");
   const [doorOpen, setDoorOpen] = useState(false);
+  const [receipt, setReceipt] = useState<Receipt | null>(null);
+  const announce = useCallback((text: string, tone: ReceiptTone = "ok") => {
+    setReceipt(text ? { text, tone } : null);
+  }, []);
   useWindowWings(
     <SurfaceWings
       wings={WINGS}
@@ -1362,15 +1486,18 @@ export function DictationCore({ hero, scope, scopeLabel }: CoreProps) {
           <span aria-hidden="true">⌁</span> About {scopeLabel || scope}
         </p>
       ) : null}
-      {current}
-      <ReadinessLine onOpenDoor={() => setDoorOpen(true)} />
+      <ReceiptContext.Provider value={announce}>
+        {current}
+      </ReceiptContext.Provider>
+      <ReadinessLine onOpenDoor={() => setDoorOpen(true)} receipt={receipt} />
     </>
   );
 }
 
 /* HS-100-07 — the one door: everything that is configuration
    (readiness diagnostics, memory, knowledge, runtime, hooks, nudges)
-   stacked behind the gear. No tab wall. */
+   stacked behind the gear. HS-111-02: the stack is ONE gadget sheet
+   on the window material — full width, 26px rows, no settings mile. */
 function Configure() {
   return (
     <div className="surface-door">
