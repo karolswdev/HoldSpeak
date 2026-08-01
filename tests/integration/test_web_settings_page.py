@@ -64,11 +64,19 @@ def test_desk_menu_opens_settings_in_world() -> None:
 
 
 def test_settings_is_sectioned_searchable_and_progressive() -> None:
-    """The React editor stays sectioned and searchable while reflecting every
-    safe field returned by the hub."""
+    """HS-111-01: 'sectioned + searchable' became 'modular + filtered' —
+    the same guarantee. An authored module registry owns every top-level
+    settings key (unmapped keys fall through to System, so every key stays
+    reachable) and the drawer filter finds deep settings by label."""
+    prefs = (_REPO / "web" / "src" / "pages" / "cores" / "settingsPrefs.tsx").read_text()
+    assert "export const PREF_MODULES" in prefs
+    for key in ("ui", "hotkey", "model", "dictation", "presence", "meeting"):
+        assert f'"{key}"' in prefs, key
+    assert 'return "system"' in prefs  # every unmapped key stays reachable
+    # The filter replaces "Find a setting": module hits + deep-setting hits.
+    assert 'label="Filter settings"' in prefs
+    assert "hit.label.toLowerCase().includes(query)" in prefs
     page = (_REPO / "web" / "src" / "pages" / "cores" / "SettingsCore.tsx").read_text()
-    assert "SECTION_ORDER" in page and "Find a setting" in page
-    assert "SettingsFields" in page and "<Tabs" in page
-    for section in ("ui", "hotkey", "model", "dictation", "presence", "meeting"):
-        assert f'"{section}"' in page
+    assert "deepIndex" in page and "moduleForKey" in page
+    assert "highlight" in page  # the filter lands on the exact row
     assert '>("/api/settings"' in page

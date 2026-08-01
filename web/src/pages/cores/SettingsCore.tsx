@@ -323,8 +323,14 @@ function SettingsFace({ hero, scope }: CoreProps) {
     path: string[],
     label: string,
     options: CycleOption[],
+    fact?: string,
   ) => (
-    <GadgetRow key={path.join(".")} label={label} highlight={hl(path)}>
+    <GadgetRow
+      key={path.join(".")}
+      label={label}
+      fact={fact}
+      highlight={hl(path)}
+    >
       <CycleGadget
         label={label}
         value={val(path) == null ? "" : String(val(path))}
@@ -485,7 +491,7 @@ function SettingsFace({ hero, scope }: CoreProps) {
               {check(["dictation", "preview_before_type"], "Preview before type")}
               {check(
                 ["dictation", "macros", "enabled"],
-                "Voice macros",
+                "Voice commands",
                 `${macroItems.length} configured`,
               )}
             </GadgetGroup>
@@ -547,7 +553,10 @@ function SettingsFace({ hero, scope }: CoreProps) {
       case "wake-word":
         return (
           <GadgetGroup>
-            {check(["wake_word", "enabled"], "Enabled")}
+            {/* The honest truths ride as fact tokens (no-prose canon):
+                enabling fetches detection models once; the `type` action
+                lands unpreviewed in whatever app holds focus. */}
+            {check(["wake_word", "enabled"], "Enabled", "models download once")}
             {str(["wake_word", "model"], "Model", {
               placeholder: "hey_jarvis",
             })}
@@ -561,7 +570,12 @@ function SettingsFace({ hero, scope }: CoreProps) {
               min: 1,
               step: 1,
             })}
-            {cyc(["wake_word", "action"], "Action", WAKE_ACTION_OPTIONS)}
+            {cyc(
+              ["wake_word", "action"],
+              "Action",
+              WAKE_ACTION_OPTIONS,
+              "type lands in the focused app",
+            )}
           </GadgetGroup>
         );
       case "presence":
@@ -762,6 +776,8 @@ function SettingsFace({ hero, scope }: CoreProps) {
           <GadgetGroup label="Credentials">
             <div className="prefs-egress-line">
               <EgressChip />
+              {/* the credential truth, as a fact token */}
+              <span className="gadget-fact">values stay on this hub</span>
             </div>
             {Object.entries(secrets).map(([secretId, state]) => (
               <SecretRow

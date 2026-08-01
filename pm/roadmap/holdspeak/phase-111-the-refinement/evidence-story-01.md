@@ -261,3 +261,39 @@ Full 21-shot set at both viewports reviewed during the walk
   (DictationPage tests aligned to the already-modified `FINAL_TEXT:`
   receipt rendering; token allowlist reconciled 6 added / 14 stale
   removed) — the gate was red before this story started.
+
+### Captured run — 2026-08-01T18:34:46Z
+
+- **Command:** `uv run pytest -q tests/integration/test_history_slack_surfaces.py tests/integration/test_presence_mascot_gate.py tests/integration/test_settings_language_ui.py tests/integration/test_settings_spoken_symbols.py tests/integration/test_wake_ux.py tests/integration/test_web_dictation_correction_ritual.py tests/integration/test_web_dictation_settings_api.py tests/integration/test_web_presence_onboarding.py tests/integration/test_web_settings_page.py tests/integration/test_web_settings_presence.py tests/integration/test_web_settings_secrets.py tests/unit/test_doc_drift_guard.py tests/unit/test_interior_canon_guard.py tests/unit/test_product_copy.py tests/unit/test_product_language.py`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 697dab17f09c08e3d0a249d64ddfdde0f4cf2df3
+
+```text
+........................................................................ [ 58%]
+...................................................                      [100%]
+123 passed in 18.21s
+```
+
+## The CI round (honest record)
+
+PR #418's first CI run failed 4 unit canon guards + 12 integration
+tests — all legitimate. The unit guards caught: "Voice macros" (the
+POSITIONING canon name is "Voice commands"), a `border-left` seam on
+the stepper arrows (HS-101 rule 6 bans left-border rails; now an
+inset box-shadow), and the bare "LOCAL" egress chip (state copy must
+name its axis; now the ONE canonical badge line "⌂ This device" from
+`setup.ts`). The 12 integration tests asserted on the old page's
+shape; each was re-pointed at the new program with its INTENT intact
+(language list still locked to `holdspeak/languages.py` — now by
+dict-equality against the vendored option array; secrets still move
+only through dedicated routes; presence still a real toggle; every
+settings key still reachable — the System-module fallback is the
+asserted mechanism). Three honesty facts the no-prose pass had
+dropped were restored as mono fact tokens, not prose: wake "models
+download once", wake action "type lands in the focused app",
+credentials "values stay on this hub". Full suites after repair:
+tests/unit 3443 passed; tests/integration 764 passed / 3 pre-existing
+skips; web check 65 files / 380 tests green. The captured run above
+(2026-08-01T18:34:46Z) is the previously-failing set re-run: 123
+passed, exit 0.

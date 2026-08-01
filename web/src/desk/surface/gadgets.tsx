@@ -394,8 +394,15 @@ export function GadgetTable({
 
 /* ── the ONE egress badge chip: a token, never prose ── */
 
-export function EgressChip({ label = "LOCAL" }: { label?: string }) {
-  return <span className="gadget-chip gadget-chip-egress">{label}</span>;
+export function EgressChip({ label = "⌂ This device" }: { label?: string }) {
+  return (
+    <span
+      className="gadget-chip gadget-chip-egress"
+      title="Transcript processing stays on this device."
+    >
+      {label}
+    </span>
+  );
 }
 
 /* ── SecretRow: SET/— chip, hover verbs, in-row armed replace ── */
