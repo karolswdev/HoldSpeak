@@ -110,9 +110,13 @@
   --info: #56c7f5;
   --info-strong: #38bdf8;
   --info-soft: rgba(86, 199, 245, 0.12);
-  --border-subtle: rgba(255, 255, 255, 0.08);
-  --border: rgba(255, 255, 255, 0.12);
-  --border-strong: rgba(255, 255, 255, 0.2);
+  --border-subtle: rgba(255, 255, 255, 0.06);
+  --border: #2a2e3e; /* HS-110-01: solid 1px border, not alpha wash */
+  --border-strong: #363b50; /* HS-110-01: focused / front-window border */
+  --bevel-light: rgba(255, 255, 255, 0.14); /* HS-110-01: top-left highlight on raised surfaces (Workbench depth grammar) */
+  --bevel-dark: rgba(0, 0, 0, 0.40); /* HS-110-01: bottom-right shadow on raised surfaces */
+  --etch-light: rgba(255, 255, 255, 0.07); /* HS-110-01: bottom-right highlight on sunken surfaces */
+  --etch-dark: rgba(0, 0, 0, 0.30); /* HS-110-01: top-left shadow on sunken surfaces */
   --font-display: "Space Grotesk", "Inter", system-ui, -apple-system, BlinkMacSystemFont,
     "Segoe UI", sans-serif;
   --font-ui: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
@@ -171,11 +175,11 @@
   --space-6: 2rem;
   --space-7: 3rem;
   --space-8: 4rem;
-  --radius-xs: 4px;
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 14px;
-  --radius-pill: 999px;
+  --radius-xs: 2px; /* HS-110-01: Workbench corners — sharp, not Apple-round */
+  --radius-sm: 2px;
+  --radius-md: 2px;
+  --radius-lg: 2px;
+  --radius-pill: 2px; /* HS-110-01: pills become rectangles */
   --radius-1: var(--radius-xs);
   --radius-2: var(--radius-sm);
   --radius-3: var(--radius-md);
@@ -245,16 +249,18 @@
   --desk-z-stage: -1; /* the fixed atmosphere behind the document */
   --desk-z-dock-under: 40; /* the dock on compact viewports — sheets own the phone's bottom */
   --desk-z-popover: 82; /* popovers/toasts above even the transient band */
-  --desk-glass: rgba(8, 7, 12, 0.7); /* the frosted chrome-cluster glass */
-  --desk-window-fill: rgba(21, 17, 29, 0.58); /* the window material TINT — real vibrancy over the world (materials spike; was 0.985 paint) */
-  --desk-panel-fill: rgba(14, 12, 20, 0.94); /* secondary panel fill */
-  --desk-window-radius: 18px; /* the ONE window corner (the pull-out's value, adopted family-wide in HS-96-04) */
-  --desk-window-shadow: 0 8px 10px rgba(0, 0, 0, 0.28), 0 68px 80px rgba(0, 0, 0, 0.56); /* FRONT window: contact + ambient two-layer (macos-web recipe) */
-  --desk-window-shadow-rest: 0 8px 10px rgba(0, 0, 0, 0.14), 0 34px 60px rgba(0, 0, 0, 0.28); /* rest windows: the same two-layer at half strength */
-  --desk-window-keyline: color-mix(in srgb, var(--accent) 38%, var(--border)); /* the front window's 1px keyline ring (HS-97-04) */
-  --desk-window-blur: blur(26px) saturate(160%); /* the window glass — heavy blur + saturation so the world glows through */
-  --desk-transient-radius: 12px; /* menus/popovers corner */
-  --desk-transient-shadow: 0 18px 40px rgba(0, 0, 0, 0.5); /* menus/popovers elevation */
+  --desk-glass: var(--surface-2); /* HS-110-01: opaque surface, no frosted glass */
+  --desk-window-fill: var(--surface-1); /* HS-110-01: opaque window body — no transparency, no vibrancy */
+  --desk-panel-fill: var(--bg); /* HS-110-01: secondary panel fill, opaque */
+  --desk-window-radius: 2px; /* HS-110-01: sharp Workbench corners */
+  --desk-window-shadow: none; /* HS-110-01: depth from bevels, not Gaussian shadows */
+  --desk-window-shadow-rest: none; /* HS-110-01: no shadow distinction — border color IS the distinction */
+  --desk-window-keyline: var(--border-strong); /* HS-110-01: front window wears the strong border, not an accent-mixed ring */
+  --desk-window-blur: none; /* HS-110-01: no backdrop-filter — opaque surfaces */
+  --desk-window-bevel: inset 1px 1px 0 var(--bevel-light), inset -1px -1px 0 var(--bevel-dark); /* HS-110-01: the raised bevel (Workbench depth grammar) */
+  --desk-window-etch: inset 1px 1px 0 var(--etch-dark), inset -1px -1px 0 var(--etch-light); /* HS-110-01: the sunken etch (wells, inputs) */
+  --desk-transient-radius: 2px; /* HS-110-01: menus/popovers — sharp corners */
+  --desk-transient-shadow: none; /* HS-110-01: no shadow on menus — border only */
   --desk-window-pad-x: 14px; /* window body horizontal padding */
   --desk-window-pad-y: 12px; /* window body vertical padding */
   --desk-surface-row-h: 40px; /* HS-98: dense surface row min height (OS density, not page density) */
@@ -264,23 +270,20 @@
   --desk-surface-label-size: 0.6875rem; /* HS-98: quiet section label size (11px) */
   --desk-surface-body-size: 0.8125rem; /* HS-98: surface body copy size (13px; matches --font-size-sm) */
   --desk-surface-detail-size: 0.75rem; /* HS-98: surface row detail size (12px; matches --font-size-xs) */
-  --desk-window-head-fill: rgba(255, 255, 255, 0.035); /* the title bar wash on the material (seamless vibrancy, hairline below) */
-  --desk-window-rail: rgba(255, 255, 255, 0.05); /* rails/groups: a translucent white tile on the material */
-  --desk-window-well: rgba(0, 0, 0, 0.28); /* wells/inputs: a translucent dark inset on the material */
+  --desk-window-head-fill: var(--surface-2); /* HS-110-01: opaque title bar fill — raised via bevel, not via wash */
+  --desk-window-head-front: var(--surface-3); /* HS-110-01: front window title bar — one step brighter */
+  --desk-window-rail: var(--surface-2); /* HS-110-01: rails/groups — solid, not translucent */
+  --desk-window-well: rgba(0, 0, 0, 0.28); /* wells/inputs: dark inset (unchanged — this already reads as a CRT well) */
   --desk-scrollbar-thumb: rgba(255, 255, 255, 0.14); /* HS-99: the pill scrollbar thumb, everywhere */
   --desk-scrollbar-thumb-hover: rgba(255, 255, 255, 0.26); /* HS-99: the thumb under the pointer */
   --desk-control-h: 36px; /* HS-99: control height on the well tone (selects, dense inputs) */
   --ease-quart: cubic-bezier(0.76, 0, 0.24, 1); /* HS-99: the default chrome easing (in-out-quart) */
   --ease-expo: cubic-bezier(0.87, 0, 0.13, 1); /* HS-99: the emphatic easing for large moves */
   --ease-back: cubic-bezier(0.68, -0.4, 0.32, 1.4); /* HS-99: the playful overshoot (small elements only) */
-  --desk-glass-edge: inset 0 0 0 0.9px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.14); /* the frosted-glass rim: inner dark hairline + outer light hairline (every floating surface wears it) */
-  --light-close: #ff5f56; /* traffic light: close */
-  --light-close-ring: #e0443e; /* traffic light: close ring */
-  --light-min: #ffbd2e; /* traffic light: minimize */
-  --light-min-ring: #dea123; /* traffic light: minimize ring */
-  --light-max: #27c93f; /* traffic light: maximize */
-  --light-max-ring: #1aab29; /* traffic light: maximize ring */
-  --light-idle: rgba(255, 255, 255, 0.22); /* traffic lights on an unfocused window */
+  --desk-glass-edge: inset 0 0 0 1px var(--border); /* HS-110-01: solid border replaces the frosted-glass rim */
+  --gadget-close-fill: #3a1c1c; /* HS-110-01: close gadget hover on front window — dim red, not traffic light */
+  --gadget-fill: var(--surface-2); /* HS-110-01: gadget rest fill */
+  --gadget-fill-hover: var(--surface-3); /* HS-110-01: gadget hover fill */
   --shade-1: rgba(0, 0, 0, 0.3); /* the inner dark hairline / shade wash (glass-edge family) */
   --shade-2: rgba(0, 0, 0, 0.62); /* strong dark ink on light elements (traffic-light glyphs) */
   --gleam-1: rgba(255, 255, 255, 0.07); /* inner top highlight on fabricated control faces */
@@ -292,10 +295,10 @@
   --desk-type-primary-size: 0.9375rem; /* HS-101: the primary line — what the material IS (15px; a deliberate step above --desk-surface-body-size) */
   --desk-type-primary-weight: 600; /* HS-101: primary line weight */
   --desk-type-primary-lh: 1.4; /* HS-101: primary line height (spoken text breathes) */
-  --desk-aerogel-fill: rgba(255, 255, 255, 0.045); /* HS-101 (owner's gate amendment): the suspended receipt inset — faint fill, no accent rail (the left accent bar is banned) */
-  --desk-aerogel-edge: rgba(255, 255, 255, 0.09); /* HS-101: aerogel's soft all-around 1px edge */
-  --desk-aerogel-blur: blur(18px) saturate(140%); /* HS-101: aerogel backdrop — lighter than the window glass, enough to read as suspended */
-  --desk-aerogel-shadow: 0 10px 30px rgba(0, 0, 0, 0.35); /* HS-101: the lift under a suspended receipt */
+  --desk-aerogel-fill: var(--surface-2); /* HS-110-01: the receipt inset — solid fill, bordered, no blur */
+  --desk-aerogel-edge: var(--border); /* HS-110-01: aerogel border — solid 1px, not a soft wash */
+  --desk-aerogel-blur: none; /* HS-110-01: no backdrop-filter — opaque receipt */
+  --desk-aerogel-shadow: none; /* HS-110-01: no float shadow — bevel-depth only */
 }
 
 @media (prefers-reduced-motion: reduce) {

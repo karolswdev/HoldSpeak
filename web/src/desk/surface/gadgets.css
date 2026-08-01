@@ -1,0 +1,612 @@
+/* ── HS-111-01: the gadget kit (Prefs rethink, audit §3.3) ──
+   Workbench-wide surface primitives. All gadgets are SQUARE (0px
+   radius), 1px border, two-tone bevels: raised = bevel pair, sunken =
+   etch pair. Mono chrome throughout. No glow rings, no gradients, no
+   backdrop-filter. Stories 02-08 consume these. */
+
+/* ── The two-column gadget sheet (audit §3.5) ── */
+.gadget-sheet {
+  display: flex;
+  flex-direction: column;
+}
+.gadget-group {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 12px;
+}
+.gadget-group:last-child {
+  margin-bottom: 0;
+}
+.gadget-group-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 4px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+/* The engraved rule: 1px dark over 1px light, running to the edge. */
+.gadget-group-label::after {
+  content: "";
+  flex: 1;
+  height: 2px;
+  background: linear-gradient(var(--etch-dark) 50%, var(--etch-light) 50%);
+}
+.gadget-row {
+  display: grid;
+  grid-template-columns: minmax(96px, 200px) minmax(0, 1fr);
+  align-items: center;
+  gap: 2px 10px;
+  min-height: 26px;
+  padding: 2px 6px;
+}
+/* The hover band spans the full pane width. */
+.gadget-row:hover,
+.gadget-row:focus-within {
+  background: var(--desk-window-well);
+}
+.gadget-row[data-highlight] {
+  background: var(--accent-tint);
+}
+.gadget-row[data-wide] {
+  grid-template-columns: minmax(0, 1fr);
+}
+.gadget-row-label {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+  min-width: 0;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+.gadget-fact {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 400;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+.gadget-row-gadget {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+/* One breakpoint: under 420px container the sheet stacks. */
+@container surface (max-width: 419px) {
+  .gadget-row {
+    grid-template-columns: minmax(0, 1fr);
+    padding-top: 4px;
+    padding-bottom: 4px;
+  }
+}
+/* Indented dependent gadgets (mx radio reveals its own gadgets). */
+.gadget-indent .gadget-row {
+  padding-left: 22px;
+}
+
+/* Module/pane title: 12px 700 uppercase, tracking 0.08em. */
+.gadget-pane-title {
+  margin: 2px 0 8px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text);
+}
+
+/* ── CheckGadget: boolean = a checkbox, never a slider ── */
+.gadget-check {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+}
+.gadget-check input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  margin: 0;
+  cursor: pointer;
+}
+.gadget-check input:disabled {
+  cursor: not-allowed;
+}
+.gadget-check-well {
+  width: 16px;
+  height: 16px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--border);
+  background: var(--desk-window-well);
+  box-shadow: var(--desk-window-etch);
+}
+.gadget-check-well svg {
+  width: 12px;
+  height: 12px;
+  stroke: var(--accent);
+  stroke-width: 2;
+  fill: none;
+  stroke-linecap: square;
+  opacity: 0;
+}
+.gadget-check input:checked + .gadget-check-well svg {
+  opacity: 1;
+}
+.gadget-check input:focus-visible + .gadget-check-well {
+  border-color: var(--accent);
+}
+.gadget-check input:disabled + .gadget-check-well {
+  opacity: 0.55;
+}
+
+/* ── CycleGadget: a real <select> wearing the cycle-gadget face ── */
+.gadget-cycle {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+}
+.gadget-cycle-glyph {
+  position: absolute;
+  left: 7px;
+  pointer-events: none;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-muted);
+  line-height: 1;
+}
+/* The .desk-next select skin (chevron + 2.65rem pad) loses here: the
+   cycle glyph IS the affordance. */
+.gadget-cycle select,
+.desk-next .gadget-cycle select {
+  appearance: none;
+  width: auto;
+  min-width: 0;
+  max-width: 100%;
+  min-height: 22px;
+  padding: 2px 10px 2px 22px;
+  border: 1px solid var(--border);
+  border-radius: 0;
+  background: var(--surface-2);
+  background-image: none;
+  box-shadow: inset 1px 1px 0 var(--bevel-light), inset -1px -1px 0 var(--bevel-dark);
+  color: var(--text);
+  font: 400 12px / 1.35 var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+}
+.gadget-cycle select:hover:not(:disabled) {
+  background-color: var(--surface-3);
+}
+.gadget-cycle select:active:not(:disabled) {
+  box-shadow: inset 1px 1px 0 var(--bevel-dark), inset -1px -1px 0 var(--bevel-light);
+  transform: translateY(1px);
+}
+.gadget-cycle select:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+}
+.gadget-cycle select:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* ── MxRadio: all options visible, dependents indent under the pick ── */
+.gadget-mx {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+.gadget-mx-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 26px;
+  padding: 2px 6px;
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text);
+}
+.gadget-mx-row:hover {
+  background: var(--desk-window-well);
+}
+.gadget-mx-option[data-selected] > .gadget-mx-row {
+  background: var(--desk-window-well);
+}
+.gadget-mx-row input {
+  position: absolute;
+  opacity: 0;
+  margin: 0;
+  pointer-events: none;
+}
+.gadget-mx-box {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--border);
+  background: var(--desk-window-well);
+  box-shadow: var(--desk-window-etch);
+}
+.gadget-mx-box::after {
+  content: "";
+  width: 7px;
+  height: 7px;
+  background: transparent;
+}
+.gadget-mx-row input:checked ~ .gadget-mx-box::after {
+  background: var(--accent);
+}
+.gadget-mx-row input:focus-visible ~ .gadget-mx-box {
+  border-color: var(--accent);
+}
+.gadget-mx-caption {
+  font-size: 10px;
+  color: var(--text-muted);
+}
+.gadget-mx-deps {
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── StringGadget: sunken well, LEFT-aligned, fills its column; mic
+   docked flush-right INSIDE the well ── */
+.gadget-string {
+  display: flex;
+  align-items: stretch;
+  width: 100%;
+  min-height: 22px;
+  border: 1px solid var(--border);
+  background: var(--surface-1);
+  box-shadow: var(--desk-window-etch);
+}
+.gadget-string:focus-within {
+  border-color: var(--accent);
+}
+.gadget-string input {
+  flex: 1;
+  min-width: 0;
+  width: auto;
+  min-height: 20px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  padding: 1px 6px;
+  font: 400 12px / 1.35 var(--font-mono);
+  color: var(--text);
+  text-align: left;
+}
+.gadget-string input:focus {
+  outline: none;
+  border-color: transparent;
+}
+/* Hide the platform number spinners: the arrows are ours. */
+.gadget-string input[type="number"] {
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+.gadget-string input[type="number"]::-webkit-outer-spin-button,
+.gadget-string input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+/* The docked in-well mic: square, beveled, 20×20. */
+.gadget-string .desk-mic,
+.desk-next .gadget-string .desk-mic {
+  flex: none;
+  align-self: center;
+  width: 20px;
+  height: 20px;
+  margin-right: 1px;
+  border-radius: 0;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  box-shadow: inset 1px 1px 0 var(--bevel-light), inset -1px -1px 0 var(--bevel-dark);
+  font-size: 10px;
+}
+.gadget-string .desk-mic-failure,
+.desk-next .gadget-string .desk-mic-failure {
+  display: none;
+}
+.gadget-unit {
+  flex: none;
+  align-self: center;
+  padding: 0 5px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+/* Stepper arrows: two 14px beveled arrow gadgets fused to the right edge. */
+.gadget-arrows {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  width: 14px;
+  /* seam between the well and the arrows — inset, not a rail (HS-101 rule 6) */
+  box-shadow: inset 1px 0 0 var(--border);
+}
+.gadget-arrows button {
+  flex: 1;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: var(--surface-2);
+  box-shadow: inset 1px 1px 0 var(--bevel-light), inset -1px -1px 0 var(--bevel-dark);
+  color: var(--text-muted);
+  font-size: 6px;
+  line-height: 1;
+  cursor: pointer;
+}
+.gadget-arrows button + button {
+  border-top: 1px solid var(--border);
+}
+.gadget-arrows button:hover {
+  color: var(--text);
+  background: var(--surface-3);
+}
+.gadget-arrows button:active {
+  box-shadow: inset 1px 1px 0 var(--bevel-dark), inset -1px -1px 0 var(--bevel-light);
+}
+.gadget-arrows button:focus-visible {
+  outline: 1px solid var(--accent);
+  outline-offset: -1px;
+}
+.gadget-stepper input {
+  text-align: left;
+}
+
+/* ── PropGadget: sunken track, rectangular knob, quartile ticks ── */
+.gadget-prop {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  max-width: 260px;
+}
+.gadget-prop input[type="range"] {
+  flex: 1;
+  min-width: 60px;
+  appearance: none;
+  height: 16px;
+  margin: 0;
+  background: transparent;
+  cursor: pointer;
+}
+.gadget-prop input[type="range"]::-webkit-slider-runnable-track {
+  height: 6px;
+  border: 1px solid var(--border);
+  background:
+    linear-gradient(var(--text-faint), var(--text-faint)) no-repeat 25% 50% / 1px 4px,
+    linear-gradient(var(--text-faint), var(--text-faint)) no-repeat 50% 50% / 1px 4px,
+    linear-gradient(var(--text-faint), var(--text-faint)) no-repeat 75% 50% / 1px 4px,
+    var(--desk-window-well);
+  box-shadow: var(--desk-window-etch);
+}
+.gadget-prop input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 12px;
+  height: 16px;
+  margin-top: -6px;
+  border: 1px solid var(--border);
+  border-radius: 0;
+  background: var(--surface-3);
+  box-shadow: inset 1px 1px 0 var(--bevel-light), inset -1px -1px 0 var(--bevel-dark);
+}
+.gadget-prop input[type="range"]::-moz-range-track {
+  height: 6px;
+  border: 1px solid var(--border);
+  background:
+    linear-gradient(var(--text-faint), var(--text-faint)) no-repeat 25% 50% / 1px 4px,
+    linear-gradient(var(--text-faint), var(--text-faint)) no-repeat 50% 50% / 1px 4px,
+    linear-gradient(var(--text-faint), var(--text-faint)) no-repeat 75% 50% / 1px 4px,
+    var(--desk-window-well);
+  box-shadow: var(--desk-window-etch);
+}
+.gadget-prop input[type="range"]::-moz-range-thumb {
+  width: 12px;
+  height: 16px;
+  border: 1px solid var(--border);
+  border-radius: 0;
+  background: var(--surface-3);
+  box-shadow: inset 1px 1px 0 var(--bevel-light), inset -1px -1px 0 var(--bevel-dark);
+}
+.gadget-prop input[type="range"]:focus-visible {
+  outline: 1px solid var(--accent);
+  outline-offset: 1px;
+}
+.gadget-prop-read {
+  flex: none;
+  width: 5ch;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  color: var(--text);
+}
+
+/* ── Key capture: a sunken well; listening = inverted video, blinking
+   block cursor. No glow, no pulse. ── */
+.gadget-keycap {
+  min-width: 64px;
+  height: 24px;
+  padding: 0 10px;
+  border: 1px solid var(--border);
+  border-radius: 0;
+  background: var(--desk-window-well);
+  box-shadow: var(--desk-window-etch);
+  color: var(--text);
+  font: 650 12px / 1 var(--font-mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+.gadget-keycap:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+}
+.gadget-keycap.is-listening {
+  background: var(--accent);
+  color: var(--text-on-accent);
+  box-shadow: none;
+  border-color: var(--accent);
+}
+.gadget-keycap.is-listening::after {
+  content: "▮";
+  margin-left: 4px;
+  animation: gadget-caret-blink calc(var(--duration-long) * 2) steps(1) infinite;
+}
+@keyframes gadget-caret-blink {
+  50% {
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .gadget-keycap.is-listening::after {
+    animation: none;
+  }
+}
+
+/* ── GadgetTable: 24px rows, square × delete, dashed +ADD ghost ── */
+.gadget-table {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+.gadget-table-head,
+.gadget-table-row {
+  display: grid;
+  grid-template-columns: repeat(var(--gadget-cols, 3), minmax(0, 1fr)) 24px;
+  gap: 4px;
+  align-items: center;
+}
+.gadget-table-head {
+  min-height: 18px;
+  padding: 0 2px;
+  border-bottom: 1px solid var(--border);
+  box-shadow: 0 1px 0 var(--etch-light);
+}
+.gadget-table-head span {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.gadget-table-row {
+  min-height: 24px;
+  padding: 1px 2px;
+}
+.gadget-table-row:hover {
+  background: var(--desk-window-well);
+}
+.gadget-x {
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 0;
+  background: var(--surface-2);
+  box-shadow: inset 1px 1px 0 var(--bevel-light), inset -1px -1px 0 var(--bevel-dark);
+  color: var(--text-muted);
+  font: 600 11px / 1 var(--font-mono);
+  cursor: pointer;
+}
+.gadget-x:hover {
+  color: var(--danger);
+  border-color: var(--danger);
+}
+.gadget-table-add {
+  min-height: 24px;
+  margin-top: 3px;
+  border: 1px dashed var(--border);
+  border-radius: 0;
+  background: transparent;
+  color: var(--text-muted);
+  font: 600 11px / 1 var(--font-mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+.gadget-table-add:hover {
+  color: var(--text);
+  background: var(--desk-window-well);
+}
+
+/* ── Etched chips: secret state + the ONE egress badge ── */
+.gadget-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 18px;
+  padding: 0 8px;
+  border: 1px solid var(--border);
+  border-radius: 0;
+  background: var(--desk-window-well);
+  box-shadow: var(--desk-window-etch);
+  color: var(--text-faint);
+  font: 600 10px / 1 var(--font-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.gadget-chip[data-set] {
+  color: var(--accent);
+}
+.gadget-chip-egress {
+  color: var(--ok);
+}
+
+/* ── SecretRow: chip + hover-revealed ghost verbs + in-row armed edit ── */
+.gadget-secret {
+  display: grid;
+  grid-template-columns: minmax(96px, 200px) minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 2px 10px;
+  min-height: 26px;
+  padding: 2px 6px;
+}
+.gadget-secret:hover,
+.gadget-secret:focus-within {
+  background: var(--desk-window-well);
+}
+.gadget-secret-label {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  min-width: 0;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+.gadget-secret-label small {
+  font-size: 10px;
+  color: var(--text-muted);
+}
+.gadget-secret-verbs {
+  justify-content: flex-end;
+}
+@container surface (max-width: 419px) {
+  .gadget-secret {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+  .gadget-secret-label {
+    grid-column: 1 / -1;
+  }
+}

@@ -1827,7 +1827,10 @@ class TestHistoryUiSmoke:
         assert response.status_code == 200
         assert '<div id="root"></div>' in response.text
         source = (Path(__file__).resolve().parents[2] / "web/src/pages/cores/SettingsCore.tsx").read_text()
-        assert "Hub configuration" in source and '"/api/settings"' in source
+        # HS-111-01: the global settings program is the Prefs drawer over
+        # the authored module registry, wired to /api/settings.
+        assert "PREF_MODULES" in source and "PrefsFace" in source
+        assert '"/api/settings"' in source
 
 
 @pytest.mark.integration

@@ -159,6 +159,15 @@ def test_history_app_wires_the_export_route():
 
 
 def test_settings_field_ships_the_honest_copy():
+    # HS-111-01: the prose died with the SaaS page. The honest truth
+    # survives structurally — the Slack webhook is a dedicated secret on
+    # the Prefs surface: the UI shows configured-ness (SET/—) and the
+    # write-only path, never the URL, and the token states the residency.
     page = (_REPO / "web/src/pages/cores/SettingsCore.tsx").read_text()
-    assert "SettingsFields" in page and "meeting" in page
+    assert 'slack_webhook_url: "Slack webhook"' in page
+    assert "<SecretRow" in page and "configured={Boolean(state.configured)}" in page
+    assert "values stay on this hub" in page
     assert 'apiFetch<{ settings?: JsonRecord }>' in page and '"/api/settings"' in page
+    gadgets = (_REPO / "web/src/desk/surface/gadgets.tsx").read_text()
+    # The chip renders the configured fact, never the credential value.
+    assert '{configured ? "SET" : "—"}' in gadgets

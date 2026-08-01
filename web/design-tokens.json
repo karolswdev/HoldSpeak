@@ -324,15 +324,37 @@
       },
       {
         "name": "--border-subtle",
-        "value": "rgba(255, 255, 255, 0.08)"
+        "value": "rgba(255, 255, 255, 0.06)"
       },
       {
         "name": "--border",
-        "value": "rgba(255, 255, 255, 0.12)"
+        "value": "#2a2e3e",
+        "doc": "HS-110-01: solid 1px border, not alpha wash"
       },
       {
         "name": "--border-strong",
-        "value": "rgba(255, 255, 255, 0.2)"
+        "value": "#363b50",
+        "doc": "HS-110-01: focused / front-window border"
+      },
+      {
+        "name": "--bevel-light",
+        "value": "rgba(255, 255, 255, 0.14)",
+        "doc": "HS-110-01: top-left highlight on raised surfaces (Workbench depth grammar)"
+      },
+      {
+        "name": "--bevel-dark",
+        "value": "rgba(0, 0, 0, 0.40)",
+        "doc": "HS-110-01: bottom-right shadow on raised surfaces"
+      },
+      {
+        "name": "--etch-light",
+        "value": "rgba(255, 255, 255, 0.07)",
+        "doc": "HS-110-01: bottom-right highlight on sunken surfaces"
+      },
+      {
+        "name": "--etch-dark",
+        "value": "rgba(0, 0, 0, 0.30)",
+        "doc": "HS-110-01: top-left shadow on sunken surfaces"
       },
       {
         "name": "--font-display",
@@ -556,23 +578,25 @@
       },
       {
         "name": "--radius-xs",
-        "value": "4px"
+        "value": "2px",
+        "doc": "HS-110-01: Workbench corners — sharp, not Apple-round"
       },
       {
         "name": "--radius-sm",
-        "value": "6px"
+        "value": "2px"
       },
       {
         "name": "--radius-md",
-        "value": "10px"
+        "value": "2px"
       },
       {
         "name": "--radius-lg",
-        "value": "14px"
+        "value": "2px"
       },
       {
         "name": "--radius-pill",
-        "value": "999px"
+        "value": "2px",
+        "doc": "HS-110-01: pills become rectangles"
       },
       {
         "name": "--radius-1",
@@ -857,53 +881,63 @@
       },
       {
         "name": "--desk-glass",
-        "value": "rgba(8, 7, 12, 0.7)",
-        "doc": "the frosted chrome-cluster glass"
+        "value": "var(--surface-2)",
+        "doc": "HS-110-01: opaque surface, no frosted glass"
       },
       {
         "name": "--desk-window-fill",
-        "value": "rgba(21, 17, 29, 0.58)",
-        "doc": "the window material TINT — real vibrancy over the world (materials spike; was 0.985 paint)"
+        "value": "var(--surface-1)",
+        "doc": "HS-110-01: opaque window body — no transparency, no vibrancy"
       },
       {
         "name": "--desk-panel-fill",
-        "value": "rgba(14, 12, 20, 0.94)",
-        "doc": "secondary panel fill"
+        "value": "var(--bg)",
+        "doc": "HS-110-01: secondary panel fill, opaque"
       },
       {
         "name": "--desk-window-radius",
-        "value": "18px",
-        "doc": "the ONE window corner (the pull-out's value, adopted family-wide in HS-96-04)"
+        "value": "2px",
+        "doc": "HS-110-01: sharp Workbench corners"
       },
       {
         "name": "--desk-window-shadow",
-        "value": "0 8px 10px rgba(0, 0, 0, 0.28), 0 68px 80px rgba(0, 0, 0, 0.56)",
-        "doc": "FRONT window: contact + ambient two-layer (macos-web recipe)"
+        "value": "none",
+        "doc": "HS-110-01: depth from bevels, not Gaussian shadows"
       },
       {
         "name": "--desk-window-shadow-rest",
-        "value": "0 8px 10px rgba(0, 0, 0, 0.14), 0 34px 60px rgba(0, 0, 0, 0.28)",
-        "doc": "rest windows: the same two-layer at half strength"
+        "value": "none",
+        "doc": "HS-110-01: no shadow distinction — border color IS the distinction"
       },
       {
         "name": "--desk-window-keyline",
-        "value": "color-mix(in srgb, var(--accent) 38%, var(--border))",
-        "doc": "the front window's 1px keyline ring (HS-97-04)"
+        "value": "var(--border-strong)",
+        "doc": "HS-110-01: front window wears the strong border, not an accent-mixed ring"
       },
       {
         "name": "--desk-window-blur",
-        "value": "blur(26px) saturate(160%)",
-        "doc": "the window glass — heavy blur + saturation so the world glows through"
+        "value": "none",
+        "doc": "HS-110-01: no backdrop-filter — opaque surfaces"
+      },
+      {
+        "name": "--desk-window-bevel",
+        "value": "inset 1px 1px 0 var(--bevel-light), inset -1px -1px 0 var(--bevel-dark)",
+        "doc": "HS-110-01: the raised bevel (Workbench depth grammar)"
+      },
+      {
+        "name": "--desk-window-etch",
+        "value": "inset 1px 1px 0 var(--etch-dark), inset -1px -1px 0 var(--etch-light)",
+        "doc": "HS-110-01: the sunken etch (wells, inputs)"
       },
       {
         "name": "--desk-transient-radius",
-        "value": "12px",
-        "doc": "menus/popovers corner"
+        "value": "2px",
+        "doc": "HS-110-01: menus/popovers — sharp corners"
       },
       {
         "name": "--desk-transient-shadow",
-        "value": "0 18px 40px {primitive.color.shadow.50}",
-        "doc": "menus/popovers elevation"
+        "value": "none",
+        "doc": "HS-110-01: no shadow on menus — border only"
       },
       {
         "name": "--desk-window-pad-x",
@@ -952,18 +986,23 @@
       },
       {
         "name": "--desk-window-head-fill",
-        "value": "rgba(255, 255, 255, 0.035)",
-        "doc": "the title bar wash on the material (seamless vibrancy, hairline below)"
+        "value": "var(--surface-2)",
+        "doc": "HS-110-01: opaque title bar fill — raised via bevel, not via wash"
+      },
+      {
+        "name": "--desk-window-head-front",
+        "value": "var(--surface-3)",
+        "doc": "HS-110-01: front window title bar — one step brighter"
       },
       {
         "name": "--desk-window-rail",
-        "value": "rgba(255, 255, 255, 0.05)",
-        "doc": "rails/groups: a translucent white tile on the material"
+        "value": "var(--surface-2)",
+        "doc": "HS-110-01: rails/groups — solid, not translucent"
       },
       {
         "name": "--desk-window-well",
         "value": "rgba(0, 0, 0, 0.28)",
-        "doc": "wells/inputs: a translucent dark inset on the material"
+        "doc": "wells/inputs: dark inset (unchanged — this already reads as a CRT well)"
       },
       {
         "name": "--desk-scrollbar-thumb",
@@ -997,43 +1036,23 @@
       },
       {
         "name": "--desk-glass-edge",
-        "value": "inset 0 0 0 0.9px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.14)",
-        "doc": "the frosted-glass rim: inner dark hairline + outer light hairline (every floating surface wears it)"
+        "value": "inset 0 0 0 1px var(--border)",
+        "doc": "HS-110-01: solid border replaces the frosted-glass rim"
       },
       {
-        "name": "--light-close",
-        "value": "#ff5f56",
-        "doc": "traffic light: close"
+        "name": "--gadget-close-fill",
+        "value": "#3a1c1c",
+        "doc": "HS-110-01: close gadget hover on front window — dim red, not traffic light"
       },
       {
-        "name": "--light-close-ring",
-        "value": "#e0443e",
-        "doc": "traffic light: close ring"
+        "name": "--gadget-fill",
+        "value": "var(--surface-2)",
+        "doc": "HS-110-01: gadget rest fill"
       },
       {
-        "name": "--light-min",
-        "value": "#ffbd2e",
-        "doc": "traffic light: minimize"
-      },
-      {
-        "name": "--light-min-ring",
-        "value": "#dea123",
-        "doc": "traffic light: minimize ring"
-      },
-      {
-        "name": "--light-max",
-        "value": "#27c93f",
-        "doc": "traffic light: maximize"
-      },
-      {
-        "name": "--light-max-ring",
-        "value": "#1aab29",
-        "doc": "traffic light: maximize ring"
-      },
-      {
-        "name": "--light-idle",
-        "value": "rgba(255, 255, 255, 0.22)",
-        "doc": "traffic lights on an unfocused window"
+        "name": "--gadget-fill-hover",
+        "value": "var(--surface-3)",
+        "doc": "HS-110-01: gadget hover fill"
       },
       {
         "name": "--shade-1",
@@ -1092,23 +1111,23 @@
       },
       {
         "name": "--desk-aerogel-fill",
-        "value": "rgba(255, 255, 255, 0.045)",
-        "doc": "HS-101 (owner's gate amendment): the suspended receipt inset — faint fill, no accent rail (the left accent bar is banned)"
+        "value": "var(--surface-2)",
+        "doc": "HS-110-01: the receipt inset — solid fill, bordered, no blur"
       },
       {
         "name": "--desk-aerogel-edge",
-        "value": "rgba(255, 255, 255, 0.09)",
-        "doc": "HS-101: aerogel's soft all-around 1px edge"
+        "value": "var(--border)",
+        "doc": "HS-110-01: aerogel border — solid 1px, not a soft wash"
       },
       {
         "name": "--desk-aerogel-blur",
-        "value": "blur(18px) saturate(140%)",
-        "doc": "HS-101: aerogel backdrop — lighter than the window glass, enough to read as suspended"
+        "value": "none",
+        "doc": "HS-110-01: no backdrop-filter — opaque receipt"
       },
       {
         "name": "--desk-aerogel-shadow",
-        "value": "0 10px 30px rgba(0, 0, 0, 0.35)",
-        "doc": "HS-101: the lift under a suspended receipt"
+        "value": "none",
+        "doc": "HS-110-01: no float shadow — bevel-depth only"
       }
     ]
   }

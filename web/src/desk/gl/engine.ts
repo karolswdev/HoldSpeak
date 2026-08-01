@@ -37,6 +37,7 @@ import {
   clientToUnit,
   unitToLocal,
   worldRectOf,
+  snapToGrid,
   OBJECT_CLAMP,
   ZONE_CLAMP,
   type WorldRect,
@@ -1045,6 +1046,7 @@ export class WorldEngine {
     if ("pointerId" in d && d.pointerId !== e.pointerId) return;
     this.drag = { type: "idle" };
     const state = useDesk.getState();
+    const rect = this.worldRect();
     if (d.type === "scroll") return;
     if (d.type === "lasso") {
       this.callbacks.onLasso(null);
@@ -1188,6 +1190,9 @@ export class WorldEngine {
       if (over && obj) {
         void state.fileIntoDir(d.id, over, obj.kind);
       } else {
+        // HS-110-01: snap to the grid on drop.
+        const pos = state.positions[d.id];
+        if (pos) state.setPosition(d.id, snapToGrid(pos, rect));
         state.persistPositions();
       }
       // Cleared next tick — the click discrimination the DOM relied on
@@ -1197,6 +1202,10 @@ export class WorldEngine {
       return;
     }
     if (d.type === "zone") {
+      // HS-110-01: snap zones to the same grid.
+      const zKey = `zone:${d.id}`;
+      const zPos = state.positions[zKey];
+      if (zPos) state.setPosition(zKey, snapToGrid(zPos, rect, ZONE_CLAMP));
       state.persistPositions();
       setTimeout(() => useDesk.getState().setDragging(null), 0);
       return;

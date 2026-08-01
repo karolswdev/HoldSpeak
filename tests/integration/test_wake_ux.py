@@ -106,8 +106,14 @@ def test_wake_preview_card_ships_with_the_safety_copy():
 
 
 def test_settings_section_states_the_honest_truths():
+    # HS-111-01: the prose died with the SaaS page; the truths survive as
+    # fact tokens on the Wake Word module's rows.
     page = (_REPO / "web/src/pages/cores/SettingsCore.tsx").read_text()
-    assert "SettingsFields" in page and "Wake Word" in page
-    assert "typeof item === \"boolean\"" in page
+    assert 'case "wake-word"' in page
+    assert "models download once" in page  # egress: a one-time model fetch
+    assert "type lands in the focused app" in page  # the false-detection risk
+    prefs = (_REPO / "web/src/pages/cores/settingsPrefs.tsx").read_text()
+    assert '{ id: "wake-word", label: "Wake Word"' in prefs
+    assert 'WAKE_ACTION_OPTIONS = ["preview", "type"]' in prefs
     preview = (_REPO / "web/src/components/AmbientLayer.tsx").read_text()
-    assert "Preview before type" in preview
+    assert "Preview before type" in preview  # previewed, never typed

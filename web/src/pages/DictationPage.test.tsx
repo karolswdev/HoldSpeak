@@ -125,7 +125,9 @@ describe("DictationPage Try it failure actions", () => {
     const picker = await screen.findByRole("combobox", { name: "Runs on" });
     fireEvent.change(picker, { target: { value: "p1" } });
 
-    await screen.findByText("Ran on the alternate target.");
+    // HS-111: the pipeline result renders as a mono receipt
+    // (FINAL_TEXT: …), so match within the receipt line.
+    await screen.findByText(/FINAL_TEXT: Ran on the alternate target\./);
     expect(mocks.apiFetch).toHaveBeenCalledWith("/api/settings", {
       method: "PUT",
       json: { dictation: { runtime: { profile_id: "p1" } } },
@@ -151,7 +153,7 @@ describe("DictationPage Try it failure actions", () => {
     const picker = await screen.findByRole("combobox", { name: "Runs on" });
     fireEvent.change(picker, { target: { value: "this_machine" } });
 
-    await screen.findByText("Done.");
+    await screen.findByText(/FINAL_TEXT: Done\./);
     expect(mocks.apiFetch).toHaveBeenCalledWith("/api/settings", {
       method: "PUT",
       json: { dictation: { runtime: { profile_id: null } } },

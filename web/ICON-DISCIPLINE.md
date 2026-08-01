@@ -52,3 +52,38 @@ Workbench 2.0 icon style, no background" — then pad to the 64px
 canvas, pick from the candidate pack against THIS document (reject
 mushy silhouettes and missing outlines), bank under
 `public/desk/sprites/`, rerun the state script.
+
+## System chrome sprites (HS-110-02)
+
+Every system chrome element that is NOT text follows the icon
+family's art language. They live under `public/desk/sprites/system/`
+and are registered in `src/desk/systemSprites.ts`.
+
+### Sizes
+
+| Element | Size | Notes |
+|---------|------|-------|
+| Dock launchers | 32×32 | Speak, Meetings, Agents, Settings |
+| Window gadgets | 16×16 | Close, Minimize, Maximize |
+| Menu glyphs | 16×16 | HoldSpeak mark, bell, search lens |
+| RecordOrb | 48×48 | The one "hot" element on the shelf |
+| Backdrop tile | 64×64 | Seamless, muted crosshatch pattern |
+
+### Prompt discipline (system chrome)
+
+Same palette (Signal orange `#ff6b35` + slate greys `#0e0f13` to
+`#242833` + paper whites `#767e8d` to `#f2f3f5`), same top-left
+light source, same clean dark outlines. The style reference for
+generation is always an existing icon family sprite (e.g. cassette).
+
+### States
+
+- Gadget rest: muted (55% opacity)
+- Gadget hover: full opacity (the cluster-hover reveal)
+- Gadget active: brightness 1.3
+- Dock sprite hover: brightened (matching the icon `_sel` treatment)
+
+### The rule
+
+System GRAPHICS are pixel art; system TEXT is the type scale. No
+text-as-graphics (Unicode dingbats) and no graphics-as-text.

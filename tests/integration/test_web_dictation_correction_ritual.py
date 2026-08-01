@@ -58,7 +58,9 @@ def _client(database: Database) -> TestClient:
 
 def test_ritual_component_is_shipped() -> None:
     js = _dictation_script()
-    for marker in ("Right", "Wrong", "Correct this result", "Teach correction"):
+    # HS-111-01 renamed the affirm verb Right → OK; the one-tap ritual,
+    # the disclose path, and the teach POST are unchanged.
+    for marker in ("Marked OK", "Wrong", "Correct this result", "Teach correction"):
         assert marker in js, marker
     assert "/api/dictation/journal/" in js and "/correct" in js
 

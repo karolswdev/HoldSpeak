@@ -18,6 +18,7 @@ import {
 import { createPortal } from "react-dom";
 import { motion, useReducedMotion } from "motion/react";
 import { useDrag } from "@use-gesture/react";
+import { DOCK_SPRITES, SYSTEM } from "../systemSprites";
 import { useDesk, type PanelRect } from "../store";
 import { DeskMenuItem, DeskMenuList } from "./DeskMenu";
 // The physics constants mirror the CSS component tokens — one generated
@@ -843,6 +844,14 @@ export function retractLauncher(id: string) {
   launcherRegistry.delete(id);
   publishLaunchers();
 }
+/** HS-111-01 — programs may hand over to a docked program (the Prefs
+ * Delivery module opens the Delivery board). False = not announced. */
+export function activateLauncher(id: string): boolean {
+  const launcher = launcherRegistry.get(id);
+  if (!launcher) return false;
+  launcher.activate();
+  return true;
+}
 export function useLaunchers() {
   return useSyncExternalStore(
     (cb) => {
@@ -1274,10 +1283,6 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
           setHeadMenu({ x: e.clientX, y: e.clientY });
         }}
       >
-        {/* Materials spike — traffic lights on the LEFT (the strongest
-            native cue there is): red close, yellow minimize, green
-            maximize; grey when the window is not front; glyphs reveal
-            on cluster hover. */}
         <span className="desk-traffic">
           <button
             type="button"
@@ -1494,32 +1499,7 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
       className="desk-dock"
       role="toolbar"
       aria-label="Dock"
-      onMouseMove={(e) => {
-        // Materials round 2 — magnification: a distance falloff swells
-        // chips near the pointer (macos-web curve, simplified; the CSS
-        // transition supplies the spring feel). Skipped under reduced
-        // motion.
-        if (window.matchMedia("(prefers-reduced-motion: reduce)").matches)
-          return;
-        const buttons = e.currentTarget.querySelectorAll<HTMLElement>(
-          ".desk-dock-main, .desk-dock-launch, .desk-dock-reset",
-        );
-        for (const el of buttons) {
-          const r = el.getBoundingClientRect();
-          const d = Math.abs(e.clientX - (r.x + r.width / 2));
-          const t = Math.max(0, 1 - d / 170);
-          const curve = t * t;
-          el.style.transform = curve > 0.01
-            ? `translateY(${(-5 * curve).toFixed(1)}px) scale(${(1 + 0.18 * curve).toFixed(3)})`
-            : "";
-        }
-      }}
-      onMouseLeave={(e) => {
-        for (const el of e.currentTarget.querySelectorAll<HTMLElement>(
-          ".desk-dock-main, .desk-dock-launch, .desk-dock-reset",
-        ))
-          el.style.transform = "";
-      }}
+      /* HS-110-04: magnification swell removed — the shelf is flat. */
     >
       {DOCK_APPS.map((a) => {
         const win = windows.find((w) => w.id === a.id);
@@ -1556,7 +1536,11 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
               });
             }}
           >
-            <span aria-hidden="true">{a.glyph}</span>
+            {DOCK_SPRITES[a.id] ? (
+              <img src={DOCK_SPRITES[a.id]} alt="" width={24} height={24} className="desk-dock-sprite" draggable={false} />
+            ) : (
+              <span aria-hidden="true">{a.glyph}</span>
+            )}
             <span className="desk-dock-label">{a.label}</span>
           </button>
         );

@@ -36,7 +36,9 @@ def test_presence_tier_and_install_rules() -> None:
     # HS-92-03 removed the six-step Welcome wizard. Presence remains a
     # reversible, config-backed option in the canonical Settings surface.
     src = (_REPO / "web" / "src" / "pages" / "cores" / "SettingsCore.tsx").read_text()
-    assert '"presence"' in src
-    # HS-100 materials: Settings toggles are SurfaceToggle (one skin).
-    assert "<SurfaceToggle" in src
+    assert 'check(["presence", "enabled"], "Presence")' in src
     assert '"/api/settings"' in src
+    # HS-111-01 gadgets: the toggle is a CheckGadget over a real checkbox.
+    assert "CheckGadget" in src
+    gadgets = (_REPO / "web" / "src" / "desk" / "surface" / "gadgets.tsx").read_text()
+    assert 'type="checkbox"' in gadgets

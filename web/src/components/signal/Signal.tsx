@@ -116,6 +116,9 @@ export function Checkbox({
   );
 }
 
+/** HS-111-01 — the boolean species is the CHECKBOX GADGET (audit §3.3):
+ * a sunken square well, an accent check. The sliding toggle is dead
+ * everywhere; the label rides beside the well as before. */
 export function Switch(
   props: InputHTMLAttributes<HTMLInputElement> & {
     label: string;
@@ -125,10 +128,8 @@ export function Switch(
   const { label, description, ...input } = props;
   return (
     <label className="signal-switch">
-      <input type="checkbox" role="switch" {...input} />
-      <span className="signal-switch-track" aria-hidden="true">
-        <span />
-      </span>
+      <input type="checkbox" {...input} />
+      <span className="signal-switch-well" aria-hidden="true" />
       <span>
         <strong>{label}</strong>
         {description ? <small>{description}</small> : null}

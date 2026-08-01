@@ -142,10 +142,12 @@ def test_partial_update_preserves_every_unrelated_top_level_section(
 
 
 def test_web_settings_uses_only_dedicated_secret_operations() -> None:
-    source = (
-        Path(__file__).resolve().parents[2] / "web/src/pages/cores/SettingsCore.tsx"
-    ).read_text()
-    assert "Values stay on this hub" in source
+    repo = Path(__file__).resolve().parents[2]
+    source = (repo / "web/src/pages/cores/SettingsCore.tsx").read_text()
+    # HS-111-01: the residency truth is a fact token on the Credentials
+    # group; writes go only through the dedicated secret routes.
+    assert "values stay on this hub" in source
     assert "/api/settings/secrets/${secretId}" in source
     assert "/api/settings/secrets/${secretId}/rotate" in source
-    assert 'type="password"' in source
+    gadgets = (repo / "web/src/desk/surface/gadgets.tsx").read_text()
+    assert 'type="password"' in gadgets  # the SecretRow arms a password well

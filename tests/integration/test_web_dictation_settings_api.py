@@ -454,10 +454,18 @@ def test_dictation_page_includes_copilot_depth_controls() -> None:
     client = TestClient(server.app)
     assert '<div id="root"></div>' in client.get("/dictation").text
     settings = (Path(__file__).resolve().parents[2] / "web/src/pages/cores/SettingsCore.tsx").read_text()
-    # The recursive typed settings editor exposes every safe knob returned by
-    # the hub, including new depth knobs, without a duplicate hardcoded form.
-    assert "SettingsFields" in settings and "typeof item" in settings
-    assert "dictation" in settings
+    # HS-111-01: the Voice Typing module authors a control for every
+    # Phase-39 depth knob (the generic walker survives only in System).
+    for knob in (
+        '["dictation", "pipeline", "max_total_latency_ms"]',
+        '["dictation", "pipeline", "rewrite_passes"]',
+        '["dictation", "pipeline", "corrections_enabled"]',
+        '["dictation", "pipeline", "target_detect_llm_enabled"]',
+        '["dictation", "pipeline", "target_detect_llm_below"]',
+        '["dictation", "pipeline", "journal_enabled"]',
+        '["dictation", "pipeline", "journal_retention"]',
+    ):
+        assert knob in settings, knob
 
 
 class TestVoiceMacrosSettingsApi:

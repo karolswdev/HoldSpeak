@@ -10,6 +10,7 @@ import { egressBadge } from "../setup";
 import { DeskToolShelf } from "./DeskToolShelf";
 import { DeskMenuBar } from "./DeskMenuBar";
 import { useLaunchers } from "./DeskWindow";
+import { SYSTEM } from "../systemSprites";
 
 const ROOMS = [
   { label: "Desk", action: "return-to-desk" },
@@ -37,7 +38,7 @@ function AttentionBell() {
       title="Desk memory"
       onClick={() => attention.activate()}
     >
-      <span aria-hidden="true">◎</span>
+      <img src={SYSTEM.menuBell} alt="" width={14} height={14} className="desk-chrome-sprite" draggable={false} />
       {attention.badge ? <strong>{attention.badge}</strong> : null}
     </button>
   );
@@ -108,9 +109,7 @@ export function DeskChrome({
             onClick={() => setMenuOpen((v) => !v)}
             title="HoldSpeak"
           >
-            <span className="desk-mark-glyph" aria-hidden="true">
-              ◍
-            </span>
+            <img src={SYSTEM.menuMark} alt="" width={14} height={14} className="desk-mark-glyph desk-chrome-sprite" draggable={false} />
             HoldSpeak
           </button>
           {menuOpen && (

@@ -19,11 +19,7 @@
   align-items: center;
   gap: 8px;
   background: var(--desk-window-fill);
-  /* HS-101 round 4 — frost what scrolls beneath: content must never
-     ghost through the bar. */
-  backdrop-filter: var(--desk-aerogel-blur);
-  -webkit-backdrop-filter: var(--desk-aerogel-blur);
-  border-bottom: 1px solid var(--wash-1);
+  border-bottom: 1px solid var(--border);
   z-index: var(--z-sticky);
 }
 .surface-verbs-status {
@@ -60,11 +56,13 @@
   border-top: 0;
   padding-top: 0;
 }
+/* HS-111-01: section labels in mono — the system-label style */
 .surface-section-head h3 {
   margin: 0;
-  font-size: var(--desk-surface-label-size);
+  font-family: var(--font-mono);
+  font-size: 10px;
   font-weight: 600;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--text-muted);
 }
@@ -160,8 +158,11 @@
   justify-content: flex-end;
   gap: 6px;
 }
+/* HS-111-01: process timestamps in mono */
 .process-row-state time {
   white-space: nowrap;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
 }
 @container surface (max-width: 559px) {
   .process-row-state {
@@ -360,19 +361,18 @@
    inset with a soft edge all the way around. The left accent rail is
    BANNED (the owner's ban, 2026-07-19; test_interior_canon_guard.py
    enforces it). */
+/* HS-111-01: aerogel receipts — solid fill, 1px border, no blur.
+   backdrop-filter removed; the receipt is an opaque beveled inset. */
 .surface-aerogel,
 .surface-preview {
   display: flex;
   flex-direction: column;
   gap: 4px;
   padding: 9px 12px;
-  border-radius: 10px;
-  background: var(--desk-aerogel-fill);
-  box-shadow:
-    inset 0 0 0 1px var(--desk-aerogel-edge),
-    var(--desk-aerogel-shadow);
-  backdrop-filter: var(--desk-aerogel-blur);
-  -webkit-backdrop-filter: var(--desk-aerogel-blur);
+  border-radius: 2px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  box-shadow: var(--desk-window-etch);
   font-size: var(--desk-surface-detail-size);
   transform-origin: top center;
   animation: surface-aerogel-in var(--duration-short) var(--ease-back);
@@ -460,7 +460,7 @@
   font-size: 0.92em;
   background: var(--wash-1);
   padding: 1px 5px;
-  border-radius: 6px;
+  border-radius: 2px;
 }
 .surface-material a {
   color: var(--accent);
@@ -481,7 +481,7 @@
   border: 0;
   padding: 1px 4px;
   margin: -1px -4px;
-  border-radius: 6px;
+  border-radius: 2px;
   max-width: 100%;
 }
 button.surface-edit-in-place {
@@ -503,6 +503,7 @@ button.surface-edit-in-place:hover {
 }
 .surface-preview > .surface-preview-label {
   font-size: var(--desk-surface-label-size);
+  font-family: var(--font-mono);
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -532,9 +533,11 @@ button.surface-edit-in-place:hover {
 .desk-surface-body .transcript-list li:hover {
   background: var(--wash-1);
 }
+/* HS-111-01: transcript timestamps in monospace */
 .desk-surface-body .transcript-list time {
   flex-shrink: 0;
   color: var(--text-muted);
+  font-family: var(--font-mono);
   font-size: var(--desk-surface-detail-size);
   font-variant-numeric: tabular-nums;
 }
@@ -600,12 +603,13 @@ button.surface-edit-in-place:hover {
 /* Rule 1 — inside a window the tab strip sits on the material: no
    boxed card, a hairline underline, a visible thin scrollbar when the
    window is narrower than the strip. */
+/* HS-111: in-window tabs — flat, mono, Workbench treatment */
 .desk-surface-body .signal-tabs {
   border: 0;
   border-radius: 0;
   background: transparent;
-  padding: 0 0 3px;
-  border-bottom: 1px solid var(--wash-1);
+  padding: 0;
+  border-bottom: 1px solid var(--border);
   scrollbar-width: thin;
 }
 
@@ -651,49 +655,9 @@ button.surface-edit-in-place:hover {
   border-bottom: 0;
 }
 
-/* The settings archetype: at a wide window the tab strip becomes a
-   LEFT RAIL (active row one tonal step up); narrow returns the strip. */
-.surface-railed {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-@container surface (min-width: 560px) {
-  .surface-railed {
-    display: grid;
-    grid-template-columns: 172px minmax(0, 1fr);
-    gap: 16px;
-    align-items: start;
-  }
-  /* HS-101 round 4 — the rail rides along: scrolling a long group
-     must never leave half the window dead. */
-  .surface-railed > [role="tablist"] {
-    position: sticky;
-    top: 8px;
-  }
-  .surface-railed > .signal-tabs {
-    flex-direction: column;
-    align-items: stretch;
-    border-bottom: 0;
-    padding: 0 6px 0 0;
-    border-right: 1px solid var(--wash-1);
-  }
-  .surface-railed > .signal-tabs button {
-    justify-content: flex-start;
-    text-align: left;
-    min-height: 36px;
-  }
-  .surface-railed > .signal-tabs button[aria-selected="true"] {
-    background: var(--desk-window-head-fill);
-    box-shadow: none;
-  }
-}
-.surface-railed-panel {
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
+/* HS-111-01: the settings rail archetype died — Settings is the Prefs
+   drawer face now (a module swaps the whole window body; the footer
+   status bar walks back). See the prefs block at the end of this file. */
 
 /* The explorer archetype: a status bar on the well tone at the
    window's foot — the honest counts live here. */
@@ -733,47 +697,53 @@ button.surface-edit-in-place:hover {
   flex-direction: column;
   gap: 6px;
 }
+/* HS-111-01: group labels in mono */
 .surface-group-label {
   margin: 0;
   padding: 0 4px;
-  font-size: var(--desk-surface-label-size);
+  font-family: var(--font-mono);
+  font-size: 10px;
   font-weight: 600;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--text-muted);
 }
+/* HS-111-01: groups are flat rows with hairlines, not iOS inset cards */
 .surface-group {
-  background: var(--desk-window-rail);
-  border: 1px solid var(--wash-1);
-  border-radius: var(--radius-md);
+  background: none;
+  border: none;
+  border-top: 1px solid var(--border-subtle);
+  border-radius: 0;
   overflow: hidden;
 }
+/* HS-111-01: tighter setting rows, mono labels */
 .surface-setting-row {
   display: flex;
   align-items: center;
-  gap: 12px;
-  min-height: 46px;
-  padding: 8px 12px;
+  gap: 10px;
+  min-height: 36px;
+  padding: 5px 12px;
 }
 .surface-setting-row + .surface-setting-row {
-  border-top: 1px solid var(--wash-1);
+  border-top: 1px solid var(--border-subtle);
 }
 .surface-setting-row:hover {
-  background: var(--wash-1);
+  background: var(--desk-window-well);
 }
+/* HS-111-01: bare glyphs, no background squares */
 .surface-setting-icon {
   flex: none;
-  width: 26px;
-  height: 26px;
+  width: 16px;
+  height: 16px;
   display: grid;
   place-items: center;
-  border-radius: var(--radius-sm);
-  background: var(--desk-window-well);
+  border-radius: 0;
+  background: none;
   color: var(--text-muted);
 }
 .surface-setting-icon svg {
-  width: 15px;
-  height: 15px;
+  width: 12px;
+  height: 12px;
 }
 .surface-setting-text {
   flex: 1;
@@ -831,25 +801,17 @@ button.surface-edit-in-place:hover {
 .surface-toggle {
   gap: 0;
 }
-.surface-symbol-editor {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  width: 100%;
-}
-.surface-search {
-  max-width: 320px;
-}
 .surface-setting-control .surface-actions :where(.hs-control, input) {
   min-width: 140px;
 }
 
-/* Materials round 2 — the panel title: interiors get a real heading. */
+/* HS-111-01: panel title in mono — system-label style */
 .surface-panel-title {
   margin: 2px 0 6px;
-  font-size: var(--desk-surface-label-size);
-  font-weight: 650;
-  letter-spacing: 0.08em;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--text-muted);
 }
@@ -900,10 +862,12 @@ button.surface-edit-in-place:hover {
   flex-direction: column;
   gap: 8px;
 }
+/* HS-111-01: outcome eyebrows in mono — system-label style */
 .surface-eyebrow {
-  font-size: var(--font-size-xs);
-  font-weight: 650;
-  letter-spacing: 0.09em;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--text-faint);
 }
@@ -946,15 +910,17 @@ button.surface-edit-in-place:hover {
   display: flex;
   flex-direction: column;
 }
+/* HS-111-01: stream day labels in mono */
 .surface-stream-day-label {
   display: flex;
   align-items: center;
   gap: 10px;
   margin: 0;
   padding: 14px 4px 6px;
-  font-size: var(--desk-surface-label-size);
-  font-weight: 650;
-  letter-spacing: 0.08em;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--text-faint);
 }
@@ -983,11 +949,13 @@ button.surface-edit-in-place:hover {
 .surface-stream-entry:focus-within {
   background: var(--wash-1);
 }
+/* HS-111-01: stream timestamps in monospace */
 .surface-stream-when {
   grid-column: 1;
   padding-top: 3px;
   text-align: right;
   color: var(--text-faint);
+  font-family: var(--font-mono);
   font-size: var(--desk-surface-detail-size);
   font-variant-numeric: tabular-nums;
 }
@@ -1055,14 +1023,18 @@ button.surface-edit-in-place:hover {
 
 /* HS-48/HS-101 — the honest learned chip: only when the router would
    actually apply a taught correction (the API sends null otherwise). */
+/* HS-111-01: learned chip — rectangular */
 .surface-learned {
   display: inline-flex;
   align-items: center;
   gap: 4px;
   padding: 1px 8px;
-  border-radius: var(--radius-pill);
+  border-radius: 0;
+  font-family: var(--font-mono);
   font-size: var(--desk-surface-label-size);
   font-weight: 650;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
   color: var(--ok);
   background: var(--ok-soft);
   box-shadow: inset 0 0 0 1px var(--ok-soft);
@@ -1086,7 +1058,7 @@ button.surface-edit-in-place:hover {
   position: relative;
   display: flex;
   flex-direction: column;
-  border-radius: 12px;
+  border-radius: 2px;
   overflow: hidden;
   background: var(--wash-1);
   box-shadow: inset 0 0 0 1px var(--border-subtle);
@@ -1117,8 +1089,9 @@ button.surface-edit-in-place:hover {
   left: 0;
   right: 0;
   bottom: 0;
-  height: 28px;
-  background: linear-gradient(transparent, var(--shadow-ink-2));
+  height: 1px;
+  background: var(--border);
+  box-shadow: 0 1px 0 var(--etch-light);
   pointer-events: none;
 }
 .surface-tile-face .surface-edit-in-place {
@@ -1154,15 +1127,16 @@ button.surface-edit-in-place:hover {
   text-transform: uppercase;
   color: var(--text-faint);
 }
+/* HS-111: status indicators — square, no glow */
 .lamp {
   flex: none;
   width: 8px;
   height: 8px;
-  border-radius: var(--radius-pill);
+  border-radius: 0;
 }
 .lamp[data-on="true"] {
   background: var(--ok);
-  box-shadow: 0 0 8px var(--ok-soft);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.4);
 }
 .lamp[data-on="false"] {
   background: var(--wash-2);
@@ -1174,18 +1148,19 @@ button.surface-edit-in-place:hover {
 }
 .surface-say {
   font-size: var(--desk-surface-label-size);
+  font-family: var(--font-mono);
   color: var(--text-muted);
-  padding: 1px 8px;
-  border-radius: var(--radius-pill);
-  background: var(--wash-1);
-  box-shadow: inset 0 0 0 1px var(--border-subtle);
+  padding: 1px 4px;
+  border-radius: var(--radius-sm);
+  background: none;
+  box-shadow: none;
 }
 .surface-say::before {
-  content: "“";
+  content: '"';
   color: var(--text-faint);
 }
 .surface-say::after {
-  content: "”";
+  content: '"';
   color: var(--text-faint);
 }
 .surface-tile > .surface-row-verbs {
@@ -1222,7 +1197,7 @@ button.surface-edit-in-place:hover {
   font: inherit;
   font-size: var(--desk-surface-body-size);
   cursor: pointer;
-  border-radius: 12px;
+  border-radius: 2px;
 }
 .surface-tile-ghost-btn small {
   color: var(--text-faint);
@@ -1269,7 +1244,7 @@ button.surface-edit-in-place:hover {
   align-items: stretch;
   gap: 12px;
   padding: 13px 15px;
-  border-radius: 12px;
+  border-radius: 2px;
   background: var(--wash-1);
   box-shadow: inset 0 0 0 1px var(--border-subtle);
   animation: surface-rise-in var(--duration-medium) var(--ease-quart) both;
@@ -1346,7 +1321,7 @@ button.surface-edit-in-place:hover {
   color: var(--accent);
   background: var(--accent-tint);
   padding: 2px 8px;
-  border-radius: var(--radius-pill);
+  border-radius: 0;
   box-shadow: inset 0 0 0 1px var(--accent-soft);
 }
 .surface-bay .surface-row-verbs {
@@ -1442,89 +1417,9 @@ button.surface-edit-in-place:hover {
   color: var(--text-faint);
 }
 
-/* HS-101 round 5 — bespoke configuration: choice bays + the keycap. */
-.settings-destination {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-.settings-bays {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
-  gap: 8px;
-}
-.settings-bay {
-  display: flex;
-  align-items: flex-start;
-  gap: 9px;
-  padding: 10px 12px;
-  border: 0;
-  border-radius: var(--radius-md);
-  background: var(--wash-1);
-  box-shadow: inset 0 0 0 1px var(--border-subtle);
-  color: var(--text);
-  font: inherit;
-  text-align: left;
-  cursor: pointer;
-  transition:
-    background var(--duration-short) var(--ease-quart),
-    box-shadow var(--duration-short) var(--ease-quart);
-}
-.settings-bay:hover {
-  background: var(--wash-2);
-}
-.settings-bay.is-selected {
-  background: var(--accent-tint);
-  box-shadow: inset 0 0 0 1.5px var(--accent-soft);
-}
-.settings-bay-dot {
-  flex: none;
-  width: 8px;
-  height: 8px;
-  margin-top: 5px;
-  border-radius: var(--radius-pill);
-  box-shadow: inset 0 0 0 1px var(--border);
-}
-.settings-bay.is-selected .settings-bay-dot {
-  background: var(--accent);
-  box-shadow: 0 0 8px var(--accent-glow);
-}
-.settings-bay-text {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-  min-width: 0;
-}
-.settings-bay-text strong {
-  font-size: var(--desk-surface-body-size);
-  font-weight: 600;
-}
-.settings-bay-text small {
-  color: var(--text-muted);
-  font-size: var(--desk-surface-label-size);
-}
-.settings-keycap {
-  min-width: 56px;
-  height: 30px;
-  padding: 0 12px;
-  border: 0;
-  border-radius: var(--radius-sm);
-  background: var(--desk-window-well);
-  box-shadow:
-    inset 0 0 0 1px var(--border-subtle),
-    inset 0 -2px 0 var(--shade-1);
-  color: var(--text);
-  font-size: var(--desk-surface-body-size);
-  font-weight: 650;
-  cursor: pointer;
-}
-.settings-keycap.is-listening {
-  box-shadow:
-    inset 0 0 0 1.5px var(--accent-soft),
-    0 0 0 3px var(--accent-tint);
-  animation: surface-state-pulse calc(var(--duration-long) * 3) ease-in-out
-    infinite;
-}
+/* HS-111-01: the pricing-card bays and the glow keycap died — the
+   runtime destination is an mx radio gadget, the hotkey a sunken
+   keycap well (desk/surface/gadgets.css). */
 
 /* HS-101 round 6 — the opened record's head: the name is the
    material, the facts are secondary, the foot separates export from
@@ -1552,11 +1447,13 @@ button.surface-edit-in-place:hover {
 .surface-detail-foot-gap {
   flex: 1;
 }
+/* HS-111-01: detail transcript timestamps — monospace */
 .desk-surface-body .transcript-list time {
   flex: none;
   width: 52px;
   text-align: right;
   color: var(--text-faint);
+  font-family: var(--font-mono);
   font-size: var(--desk-surface-detail-size);
   font-variant-numeric: tabular-nums;
   padding-top: 1px;
@@ -1627,6 +1524,7 @@ button.surface-edit-in-place:hover {
   min-width: 0;
   overflow-x: hidden;
 }
+/* HS-111: since-last-meeting — solid fill, etched border */
 .project-memory-since {
   display: flex;
   align-items: baseline;
@@ -1634,7 +1532,9 @@ button.surface-edit-in-place:hover {
   gap: var(--space-3);
   margin: 0 0 var(--space-3);
   padding: var(--space-2) var(--space-3);
-  border-inline-start: 2px solid var(--accent-soft);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 2px;
   color: var(--text-muted);
 }
 .project-memory-since strong {
@@ -1653,16 +1553,22 @@ button.surface-edit-in-place:hover {
   min-width: 0;
   width: 100%;
 }
+/* HS-111: answer container — solid fill, 1px border */
 .project-memory-answer {
   margin-top: var(--space-3);
-  padding-top: var(--space-3);
-  border-top: 1px solid var(--border);
+  padding: var(--space-3);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 2px;
 }
 .project-memory-answer .material {
   max-width: 72ch;
 }
+/* HS-111: grounding receipt — mono, tabular-nums */
 .project-memory-grounded {
   margin: var(--space-2) 0;
+  font-family: var(--font-mono);
+  font-size: var(--desk-surface-detail-size);
   font-variant-numeric: tabular-nums;
 }
 .project-memory-citations {
@@ -1699,4 +1605,232 @@ button.surface-edit-in-place:hover {
     width: 100%;
     max-width: none;
   }
+}
+
+/* ── HS-111-01: the Prefs program (audit §3.1/§3.4/§3.6) ──
+   The drawer face: a filter string gadget, an icon grid of module
+   tiles, an etched rule, the POSTURE line. A module swaps the whole
+   window body; the footer status bar carries « PREFS, the receipt,
+   and DEFAULTS. One model at every width — the grid reflows. */
+.prefs-face {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.prefs-filter {
+  max-width: none;
+}
+.prefs-hits {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+.prefs-hits button {
+  display: block;
+  width: 100%;
+  min-height: 24px;
+  padding: 2px 6px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--text);
+  font: 400 12px / 1.4 var(--font-mono);
+  text-align: left;
+  cursor: pointer;
+}
+.prefs-hits button:hover,
+.prefs-hits button:focus-visible {
+  background: var(--desk-window-well);
+  outline: none;
+}
+.prefs-hits li:first-child button {
+  background: var(--desk-window-well);
+}
+.prefs-hit-module {
+  color: var(--text-muted);
+  text-transform: uppercase;
+  font-size: 10px;
+  letter-spacing: 0.06em;
+}
+.prefs-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
+  gap: 6px;
+}
+@container surface (max-width: 419px) {
+  .prefs-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+.prefs-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-width: 64px;
+  height: 72px;
+  padding: 6px 4px;
+  border: 1px solid transparent;
+  border-radius: 0;
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+}
+.prefs-tile:hover {
+  background: var(--desk-window-well);
+}
+.prefs-tile:focus-visible,
+.prefs-tile:active {
+  outline: none;
+  border-color: var(--border);
+  background: var(--surface-2);
+  box-shadow: inset 1px 1px 0 var(--bevel-light), inset -1px -1px 0 var(--bevel-dark);
+}
+.prefs-tile-glyph {
+  width: 24px;
+  height: 24px;
+  color: var(--text-muted);
+}
+.prefs-tile:hover .prefs-tile-glyph,
+.prefs-tile:focus-visible .prefs-tile-glyph {
+  color: var(--text);
+}
+.prefs-tile-glyph svg {
+  width: 24px;
+  height: 24px;
+}
+.prefs-tile-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  text-align: center;
+  line-height: 1.2;
+  color: var(--text-muted);
+}
+.prefs-tile:hover .prefs-tile-label,
+.prefs-tile:focus-visible .prefs-tile-label {
+  color: var(--text);
+}
+/* The etched rule between the grid and the posture line. */
+.prefs-rule {
+  height: 2px;
+  background: linear-gradient(var(--etch-dark) 50%, var(--etch-light) 50%);
+}
+.prefs-posture {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 26px;
+  padding: 0 6px;
+}
+.prefs-posture-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+}
+.prefs-precedence {
+  padding: 0 6px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  color: var(--text-faint);
+  overflow-wrap: anywhere;
+}
+/* A module owns the whole body. */
+.prefs-module {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+/* "Config lives elsewhere" fact bodies (Delivery, empty System). */
+.prefs-elsewhere {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 14px 6px;
+}
+.prefs-elsewhere-fact {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+}
+.prefs-egress-line {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+  padding: 2px 6px;
+}
+/* The footer status bar: « PREFS | receipt | DEFAULTS. Rides the
+   explorer status-bar grammar (.surface-status) and stays mono. */
+.prefs-status {
+  font-family: var(--font-mono);
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: auto;
+  /* Opaque: rows scroll away UNDER the bar, never through it. */
+  background: var(--desk-window-head-fill);
+  border-top: 1px solid var(--border);
+  z-index: var(--z-sticky);
+}
+.prefs-status > span + span::before {
+  content: none;
+  margin: 0;
+}
+.prefs-receipt {
+  flex: 1;
+  min-width: 0;
+  text-align: center;
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.prefs-receipt[data-tone="danger"] {
+  color: var(--danger);
+  white-space: normal;
+}
+.prefs-back,
+.prefs-defaults {
+  flex: none;
+  min-height: 20px;
+  padding: 1px 8px;
+  border: 1px solid var(--border);
+  border-radius: 0;
+  background: var(--surface-2);
+  box-shadow: inset 1px 1px 0 var(--bevel-light), inset -1px -1px 0 var(--bevel-dark);
+  color: var(--text);
+  font: 600 10px / 1 var(--font-mono);
+  letter-spacing: 0.06em;
+  cursor: pointer;
+}
+.prefs-back:hover {
+  background: var(--surface-3);
+}
+.prefs-back:active {
+  box-shadow: inset 1px 1px 0 var(--bevel-dark), inset -1px -1px 0 var(--bevel-light);
+  transform: translateY(1px);
+}
+.prefs-back:focus-visible,
+.prefs-defaults:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+}
+.prefs-defaults:disabled {
+  color: var(--text-faint);
+  box-shadow: none;
+  cursor: not-allowed;
 }
