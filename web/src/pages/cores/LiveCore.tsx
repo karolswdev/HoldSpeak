@@ -11,18 +11,16 @@
 // deferred plugin jobs, and device diagnostics fold behind the gear
 // (a configuring posture is exactly where canon rule 1 allows a
 // label+input stack). Wire calls unchanged.
+// HS-111-03 — the refinement pass (audit §3.6, scope-limited): the
+// stream, the one-verb posture, and the bookmark-in-controls pattern
+// stay UNTOUCHED. The details form and the configure door move to the
+// gadget grammar, every text input gains its mic, the loose egress
+// prose becomes the ONE EgressChip, and the readiness foot is the
+// footer receipt bar. Wire calls unchanged.
 import { useEffect, useMemo, useState } from "react";
 import { openPrimitive } from "../../desk/shell";
 import type { CoreProps } from "./ActivityCore";
-import {
-  Button,
-  Field,
-  InlineMessage,
-  Select,
-  StatusPill,
-  TextArea,
-  TextInput,
-} from "../../components/signal/Signal";
+import { Button, Disclosure, InlineMessage } from "../../components/signal/Signal";
 import { apiFetch, readableError, type JsonRecord } from "../../lib/api";
 import { useRuntimeBus } from "../../runtime/RuntimeBus";
 import { asRows, rowId, useResource } from "../pageSupport";
@@ -36,7 +34,17 @@ import {
   SurfaceStream,
   SurfaceStreamEntry,
   SurfaceVerbs,
+  SurfaceWell,
 } from "../../desk/surface/Surface";
+import {
+  CycleGadget,
+  EgressChip,
+  GadgetGroup,
+  GadgetRow,
+  LampGadget,
+  StringGadget,
+} from "../../desk/surface/gadgets";
+import { MicButton } from "../../desk/components/MicButton";
 import { SurfaceWings, useWindowWings } from "../../desk/surface/wings";
 import { presentValue } from "../../desk/surface/format";
 
@@ -228,41 +236,57 @@ export function LiveCore({ hero }: CoreProps) {
     ? `Recording · ${duration}${segments.length ? ` · ${segments.length} segment${segments.length === 1 ? "" : "s"}` : ""}`
     : `${connection || "This device"} · ready`;
 
+  const routeFacts = previewResult
+    ? (["route", "intent", "confidence"] as const)
+        .map((key) => [key, presentValue(previewResult[key])] as const)
+        .filter(([, value]) => value !== "")
+    : [];
+  const egressLabel = presentValue(
+    (runtimeStatus.data.intel_egress as JsonRecord | undefined)?.label ??
+      (typeof runtimeStatus.data.intel_egress === "string"
+        ? runtimeStatus.data.intel_egress
+        : ""),
+  );
   const configureFace = (
     <>
       <SurfaceSection label="Intent routing">
-        <Field label="Intent routing preset">
-          {({ id }) => (
-            <Select
-              id={id}
+        <GadgetGroup>
+          <GadgetRow label="ROUTING">
+            <CycleGadget
+              label="Intent routing preset"
               value={String(intentControl.data.profile ?? "auto")}
-              onChange={(event) =>
+              onChange={(next) =>
                 void apiFetch("/api/intents/profile", {
                   method: "PUT",
-                  json: { profile: event.target.value },
+                  json: { profile: next },
                 }).then(() => intentControl.reload())
               }
-            >
-              <option value="auto">Automatic</option>
-              <option value="off">Off</option>
-              <option value="balanced">Balanced</option>
-              <option value="aggressive">Aggressive</option>
-            </Select>
-          )}
-        </Field>
-        <Field
-          label="Preview route"
-          description="Tests routing without changing the live meeting."
-        >
-          {({ id, describedBy }) => (
-            <TextArea
-              id={id}
-              aria-describedby={describedBy}
-              value={previewText}
-              onChange={(event) => setPreviewText(event.target.value)}
+              options={[
+                { value: "auto", label: "Auto" },
+                { value: "off", label: "Off" },
+                { value: "balanced", label: "Balanced" },
+                { value: "aggressive", label: "Aggressive" },
+              ]}
             />
-          )}
-        </Field>
+          </GadgetRow>
+          <GadgetRow
+            label="PREVIEW"
+            fact="TESTS ROUTING · NEVER TOUCHES THE LIVE MEETING"
+            wide
+          >
+            <span className="gadget-string">
+              <textarea
+                aria-label="Preview route"
+                value={previewText}
+                onChange={(event) => setPreviewText(event.target.value)}
+              />
+              <MicButton
+                label="Speak preview text"
+                onText={(text) => setPreviewText(text)}
+              />
+            </span>
+          </GadgetRow>
+        </GadgetGroup>
         <div className="surface-actions">
           <Button
             dense
@@ -274,23 +298,35 @@ export function LiveCore({ hero }: CoreProps) {
           </Button>
         </div>
         {previewResult ? (
-          <SurfaceCode>{JSON.stringify(previewResult, null, 2)}</SurfaceCode>
+          <>
+            {routeFacts.length ? (
+              <GadgetGroup>
+                {routeFacts.map(([key, value]) => (
+                  <GadgetRow key={key} label={key.toUpperCase()}>
+                    <span className="gadget-fact">{value.toUpperCase()}</span>
+                  </GadgetRow>
+                ))}
+              </GadgetGroup>
+            ) : null}
+            <Disclosure title="Route receipt">
+              <SurfaceWell head="ROUTE · JSON">
+                <SurfaceCode>
+                  {JSON.stringify(previewResult, null, 2)}
+                </SurfaceCode>
+              </SurfaceWell>
+            </Disclosure>
+          </>
         ) : null}
       </SurfaceSection>
       <SurfaceSection label="Intelligence">
         <div className="surface-actions">
-          <StatusPill tone={intelState === "error" ? "error" : "neutral"}>
+          <span
+            className="surface-token"
+            data-tone={intelState === "error" ? "danger" : undefined}
+          >
             {intelState}
-          </StatusPill>
-          <small>
-            {presentValue(
-              (runtimeStatus.data.intel_egress as JsonRecord | undefined)
-                ?.label ??
-                (typeof runtimeStatus.data.intel_egress === "string"
-                  ? runtimeStatus.data.intel_egress
-                  : ""),
-            ) || "This device"}
-          </small>
+          </span>
+          <EgressChip label={egressLabel ? `⌂ ${egressLabel}` : undefined} />
         </div>
       </SurfaceSection>
       <SurfaceSection label="Deferred plugin jobs">
@@ -321,7 +357,7 @@ export function LiveCore({ hero }: CoreProps) {
           error={devices.error}
           empty={!asRows(devices.data, ["devices", "items"]).length}
           emptyLabel="No attached audio devices"
-          emptyGlyph="🎙"
+          emptyGlyph="◌"
           onRetry={() => void devices.reload()}
         >
           <SurfaceRows>
@@ -341,9 +377,11 @@ export function LiveCore({ hero }: CoreProps) {
                     title={String(device.name ?? device.id ?? "Device")}
                     detail={facts || undefined}
                     meta={
-                      <StatusPill tone={device.stale ? "warning" : "success"}>
-                        {device.stale ? "stale" : "live"}
-                      </StatusPill>
+                      <LampGadget
+                        label={device.stale ? "STALE" : "LIVE"}
+                        on
+                        tone={device.stale ? "warn" : "ok"}
+                      />
                     }
                   />
                 );
@@ -398,27 +436,17 @@ export function LiveCore({ hero }: CoreProps) {
             }
           >
             {metaOpen ? (
-              <div className="surface-preview">
-                <span className="surface-preview-label">Meeting details</span>
-                <Field label="Title">
-                  {({ id }) => (
-                    <TextInput
-                      id={id}
-                      value={title}
-                      onChange={(event) => setTitle(event.target.value)}
-                    />
-                  )}
-                </Field>
-                <Field label="Tags" description="Comma-separated.">
-                  {({ id, describedBy }) => (
-                    <TextInput
-                      id={id}
-                      aria-describedby={describedBy}
-                      value={tags}
-                      onChange={(event) => setTags(event.target.value)}
-                    />
-                  )}
-                </Field>
+              <GadgetGroup label="Meeting details">
+                <GadgetRow label="TITLE">
+                  <StringGadget
+                    label="Title"
+                    value={title}
+                    onChange={setTitle}
+                  />
+                </GadgetRow>
+                <GadgetRow label="TAGS" fact="COMMA SEPARATED">
+                  <StringGadget label="Tags" value={tags} onChange={setTags} />
+                </GadgetRow>
                 <div className="surface-actions">
                   <Button
                     variant="primary"
@@ -426,7 +454,7 @@ export function LiveCore({ hero }: CoreProps) {
                     loading={busy}
                     onClick={saveMetadata}
                   >
-                    Save details
+                    Save
                   </Button>
                   <Button
                     dense
@@ -436,7 +464,7 @@ export function LiveCore({ hero }: CoreProps) {
                     Close
                   </Button>
                 </div>
-              </div>
+              </GadgetGroup>
             ) : null}
             {transcript.length ? (
               <SurfaceStream
@@ -445,13 +473,22 @@ export function LiveCore({ hero }: CoreProps) {
                 controls={
                   active ? (
                     bookmarking ? (
-                      <span className="live-bookmark-composer">
-                        <TextInput
+                      <span
+                        className="live-bookmark-composer"
+                        onBlur={(event) => {
+                          if (
+                            !event.currentTarget.contains(
+                              event.relatedTarget as Node | null,
+                            )
+                          )
+                            void commitBookmark();
+                        }}
+                      >
+                        <StringGadget
                           autoFocus
-                          aria-label="Name this moment"
-                          placeholder="Name this moment…"
+                          label="Name this moment"
                           value={bookmark}
-                          onChange={(event) => setBookmark(event.target.value)}
+                          onChange={setBookmark}
                           onKeyDown={(event) => {
                             if (event.key === "Enter") void commitBookmark();
                             if (event.key === "Escape") {
@@ -459,7 +496,6 @@ export function LiveCore({ hero }: CoreProps) {
                               setBookmarking(false);
                             }
                           }}
-                          onBlur={() => void commitBookmark()}
                         />
                       </span>
                     ) : (
@@ -493,6 +529,15 @@ export function LiveCore({ hero }: CoreProps) {
           </SurfaceSection>
         </>
       )}
+      {/* HS-111-03 — the readiness foot: the ONE footer receipt bar
+          (ReadinessLine pattern). Residency chip + the honest state. */}
+      <div className="surface-status surface-receiptbar">
+        <EgressChip />
+        <span className="surface-receiptbar-receipt" role="status">
+          {active ? `REC ${duration}` : "READY"}
+          {segments.length ? ` · ${segments.length} SEG` : ""}
+        </span>
+      </div>
     </>
   );
 }

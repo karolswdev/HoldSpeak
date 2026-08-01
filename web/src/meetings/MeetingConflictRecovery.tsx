@@ -1,5 +1,11 @@
+// HS-111-03 — sync conflicts are twin receipt slips (audit §3.5):
+// CURRENT / INCOMING side by side, each a mono fact stack on an opaque
+// two-tone inset, the choosing verbs on the slips. The group label
+// carries the whole truth: SYNC CONFLICT · BOTH RETAINED. Wire calls
+// unchanged.
 import { useCallback, useEffect, useState } from "react";
 import { Button, InlineMessage } from "../components/signal/Signal";
+import { GadgetGroup } from "../desk/surface/gadgets";
 import { apiFetch, readableError, type JsonRecord } from "../lib/api";
 
 type MeetingConflict = {
@@ -25,17 +31,33 @@ function rows(value: unknown): JsonRecord[] {
     : [];
 }
 
-function versionSummary(
-  label: string,
-  value: JsonRecord,
-  fallbackTitle: string,
-) {
+function VersionSlip({
+  label,
+  value,
+  fallbackTitle,
+  verb,
+}: {
+  label: string;
+  value: JsonRecord;
+  fallbackTitle: string;
+  verb: React.ReactNode;
+}) {
   if (value.deleted) {
     return (
-      <article className="meeting-conflict-version is-deletion">
-        <h4>{label}</h4>
-        <strong>Meeting deleted</strong>
-        <p>This version removes the Meeting and its retained projections.</p>
+      <article className="meeting-conflict-slip">
+        <div className="meeting-conflict-slip-head">
+          <span className="surface-token">{label}</span>
+          <span className="surface-token" data-tone="danger">
+            TOMBSTONE
+          </span>
+        </div>
+        <dl className="meeting-conflict-slip-facts">
+          <div>
+            <dt>Meeting</dt>
+            <dd>Deleted, with its retained projections</dd>
+          </div>
+        </dl>
+        <div className="surface-actions">{verb}</div>
       </article>
     );
   }
@@ -45,9 +67,11 @@ function versionSummary(
     ? value.tags.map(String).filter(Boolean)
     : [];
   return (
-    <article className="meeting-conflict-version">
-      <h4>{label}</h4>
-      <dl className="signal-facts">
+    <article className="meeting-conflict-slip">
+      <div className="meeting-conflict-slip-head">
+        <span className="surface-token">{label}</span>
+      </div>
+      <dl className="meeting-conflict-slip-facts">
         <div>
           <dt>Title</dt>
           <dd>{String(value.title || fallbackTitle)}</dd>
@@ -63,15 +87,18 @@ function versionSummary(
             {latest ? ` · ${latest.slice(0, 140)}` : ""}
           </dd>
         </div>
-        <div>
-          <dt>Tags</dt>
-          <dd>{tags.length ? tags.join(", ") : "None"}</dd>
-        </div>
+        {tags.length ? (
+          <div>
+            <dt>Tags</dt>
+            <dd>{tags.join(", ")}</dd>
+          </div>
+        ) : null}
         <div>
           <dt>Source</dt>
           <dd>{String(value.provenance || "unknown device")}</dd>
         </div>
       </dl>
+      <div className="surface-actions">{verb}</div>
     </article>
   );
 }
@@ -144,48 +171,41 @@ export function MeetingConflictRecovery({
       {conflicts.map((conflict) => {
         const incomingDeletes = Boolean(conflict.incoming.deleted);
         return (
-          <div className="recovery-card" key={conflict.id}>
-            <div>
-              <h3>Choose the Meeting version</h3>
-              <p>
-                Two synced edits share a timestamp. Both versions are retained.
-                Choose which version to keep for this Meeting.
-              </p>
+          <GadgetGroup key={conflict.id} label="Sync conflict · both retained">
+            <div className="meeting-conflict-slips">
+              <VersionSlip
+                label="CURRENT"
+                value={conflict.local}
+                fallbackTitle="Untitled Meeting"
+                verb={
+                  <Button
+                    dense
+                    loading={busyId === `${conflict.id}:keep_current`}
+                    disabled={Boolean(busyId)}
+                    onClick={() => void resolve(conflict, "keep_current")}
+                  >
+                    Keep current
+                  </Button>
+                }
+              />
+              <VersionSlip
+                label="INCOMING"
+                value={conflict.incoming}
+                fallbackTitle="Untitled Meeting"
+                verb={
+                  <Button
+                    dense
+                    variant={incomingDeletes ? "danger" : "secondary"}
+                    loading={busyId === `${conflict.id}:use_incoming`}
+                    disabled={Boolean(busyId)}
+                    onClick={() => void resolve(conflict, "use_incoming")}
+                  >
+                    Use incoming
+                  </Button>
+                }
+              />
             </div>
-            <div className="meeting-conflict-versions">
-              {versionSummary(
-                "Current on this desktop",
-                conflict.local,
-                "Untitled Meeting",
-              )}
-              {versionSummary(
-                "Incoming from synced device",
-                conflict.incoming,
-                "Untitled Meeting",
-              )}
-            </div>
-            <div className="button-row">
-              <Button
-                dense
-                loading={busyId === `${conflict.id}:keep_current`}
-                disabled={Boolean(busyId)}
-                onClick={() => void resolve(conflict, "keep_current")}
-              >
-                Keep current Meeting
-              </Button>
-              <Button
-                dense
-                variant={incomingDeletes ? "danger" : "secondary"}
-                loading={busyId === `${conflict.id}:use_incoming`}
-                disabled={Boolean(busyId)}
-                onClick={() => void resolve(conflict, "use_incoming")}
-              >
-                {incomingDeletes
-                  ? "Delete this Meeting from this device"
-                  : "Use synced Meeting"}
-              </Button>
-            </div>
-          </div>
+          </GadgetGroup>
         );
       })}
     </section>

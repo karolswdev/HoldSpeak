@@ -1,3 +1,7 @@
+// HS-111-03 — re-pointed to the twin receipt slips (audit §3.5):
+// CURRENT / INCOMING fact stacks, KEEP CURRENT / USE INCOMING verbs,
+// the group label carrying SYNC CONFLICT · BOTH RETAINED. The wire
+// contract under test is unchanged.
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { apiFetch } from "../lib/api";
@@ -50,17 +54,16 @@ describe("HS-93-06 Meeting conflict recovery", () => {
       <MeetingConflictRecovery meetingId="meeting-1" onResolved={onResolved} />,
     );
 
+    // The group label carries the whole truth (rendered uppercase).
     expect(
-      await screen.findByRole("heading", {
-        name: "Choose the Meeting version",
-      }),
+      await screen.findByText("Sync conflict · both retained"),
     ).toBeInTheDocument();
-    expect(screen.getByText("Current on this desktop")).toBeInTheDocument();
-    expect(screen.getByText("Incoming from synced device")).toBeInTheDocument();
+    expect(screen.getByText("CURRENT")).toBeInTheDocument();
+    expect(screen.getByText("INCOMING")).toBeInTheDocument();
     expect(screen.getByText(/Desktop transcript/)).toBeInTheDocument();
     expect(screen.getByText(/Device decision/)).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("button", { name: "Use synced Meeting" }));
+    fireEvent.click(screen.getByRole("button", { name: "Use incoming" }));
     await waitFor(() =>
       expect(mockedApiFetch).toHaveBeenLastCalledWith(
         "/api/meetings/meeting-1/sync-conflicts/conflict-1/resolve",
@@ -71,7 +74,7 @@ describe("HS-93-06 Meeting conflict recovery", () => {
       expect.objectContaining({ resolution: "use_incoming", deleted: false }),
     );
     expect(
-      screen.queryByRole("heading", { name: "Choose the Meeting version" }),
+      screen.queryByText("Sync conflict · both retained"),
     ).not.toBeInTheDocument();
   });
 
@@ -87,11 +90,12 @@ describe("HS-93-06 Meeting conflict recovery", () => {
 
     render(<MeetingConflictRecovery meetingId="meeting-1" />);
 
-    expect(await screen.findByText("Meeting deleted")).toBeInTheDocument();
+    expect(await screen.findByText("TOMBSTONE")).toBeInTheDocument();
     expect(
-      screen.getByRole("button", {
-        name: "Delete this Meeting from this device",
-      }),
+      screen.getByText("Deleted, with its retained projections"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Use incoming" }),
     ).toBeInTheDocument();
   });
 

@@ -303,6 +303,27 @@ export function SurfaceCode({ children }: { children: ReactNode }) {
   return <pre className="surface-code">{children}</pre>;
 }
 
+/** HS-111-03 — the sunken well (audit §3.2): a scrolling inset on the
+ * window-well tone with an inset etch (never a border rail). The
+ * record's body reads INSIDE the machine: transcripts, routing
+ * receipts, run logs, kernel ledgers. The head slot is a mono token
+ * line ("TRANSCRIPT · 4 SEG"), never a sentence. */
+export function SurfaceWell({
+  head,
+  children,
+}: {
+  /** Mono token line etched on the well's lip. */
+  head?: ReactNode;
+  children: ReactNode;
+}) {
+  return (
+    <div className="surface-well">
+      {head ? <div className="surface-well-head">{head}</div> : null}
+      <div className="surface-well-body">{children}</div>
+    </div>
+  );
+}
+
 /** A grouped inset list on the rail tone — the OS settings idiom:
  * rows divided by hairlines inside one rounded container, never a
  * form stack. */
@@ -464,15 +485,19 @@ export function SurfaceStreamEntry({
 export function SurfaceLedger({
   count,
   controls,
+  cols,
   children,
 }: {
   /** The head's mono token line (e.g. "TODAY 2 · TAUGHT 1"). */
   count: ReactNode;
   controls?: ReactNode;
+  /** HS-111-03 — a named column template (CSS `data-cols` hook), never
+   * a second ledger component. */
+  cols?: string;
   children: ReactNode;
 }) {
   return (
-    <div className="surface-ledger">
+    <div className="surface-ledger" data-cols={cols}>
       <div className="surface-ledger-head">
         <span className="surface-ledger-count">{count}</span>
         {controls ? (
@@ -531,21 +556,31 @@ export function SurfaceLedgerRow({
 export function SurfaceLibrary({
   count,
   countLabel,
+  token,
   controls,
   children,
 }: {
   count: ReactNode;
   countLabel?: ReactNode;
+  /** HS-111-03 — a mono count token head ("15 ARTIFACTS") in place of
+   * the display numeral (the receipt shelf's grammar). */
+  token?: ReactNode;
   controls?: ReactNode;
   children: ReactNode;
 }) {
   return (
     <div className="surface-library-wrap">
-      <div className="surface-stream-head">
-        <span className="surface-display">{count}</span>
-        {countLabel ? (
-          <small className="surface-stream-count-label">{countLabel}</small>
-        ) : null}
+      <div className={token ? "surface-ledger-head" : "surface-stream-head"}>
+        {token ? (
+          <span className="surface-ledger-count">{token}</span>
+        ) : (
+          <>
+            <span className="surface-display">{count}</span>
+            {countLabel ? (
+              <small className="surface-stream-count-label">{countLabel}</small>
+            ) : null}
+          </>
+        )}
         {controls ? (
           <span className="surface-stream-controls">{controls}</span>
         ) : null}
@@ -560,6 +595,8 @@ export function SurfaceLibraryTile({
   name,
   lamp,
   says,
+  stamp,
+  variant,
   verbs,
 }: {
   /** The payload rendered AS the tile's face (rule 2). */
@@ -568,12 +605,18 @@ export function SurfaceLibraryTile({
   /** Never color-only — pair with the name it describes. */
   lamp?: ReactNode;
   says?: ReactNode;
+  /** HS-111-03 — the receipt's mono index line ("ART 03 · DECISION ·
+   * 21:31") stamped on the spine. */
+  stamp?: ReactNode;
+  /** "receipt" scopes the receipt dress so Blocks is unaffected. */
+  variant?: "receipt";
   verbs?: ReactNode;
 }) {
   return (
-    <li className="surface-tile">
+    <li className="surface-tile" data-variant={variant}>
       <div className="surface-tile-face">{face}</div>
       <div className="surface-tile-spine">
+        {stamp ? <div className="surface-tile-stamp">{stamp}</div> : null}
         <div className="surface-tile-name surface-primary">
           {name}
           {lamp}

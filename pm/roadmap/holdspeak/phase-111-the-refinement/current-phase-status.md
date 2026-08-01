@@ -1,18 +1,18 @@
 # Phase 111 - The Refinement
 
-**Status:** IN PROGRESS (2/10). Chartered 2026-07-31 as the mandatory
+**Status:** IN PROGRESS (3/10). Chartered 2026-07-31 as the mandatory
 fast-follow to Phase 110. The owner's condition: every program on the
 desk gets its interior rethought — not token-tweaked, RETHOUGHT — to
 feel native to Signal Workbench. "The Settings screen needs to be
 completely rethought, and many, many others."
 
-**Last updated:** 2026-08-01 (HS-111-02 Speak SHIPPED — the dictation
-deck: instrument strip with TALK/LedMeter/STATE register, the journal
-as a machine ledger (SurfaceLedger), the correction ritual as an
-in-place gadget sheet, the door on the gadget sheet, every toast dead
-into the footer receipt bar; four new kit species for 03-08; full
-suites green 4207+387. Earlier the same day: HS-111-01 Settings
-SHIPPED — the Prefs rethink + the reusable gadget kit.)
+**Last updated:** 2026-08-01 (HS-111-03 Meetings SHIPPED — the
+archive browser: SurfaceLedger catalog, the transcript in a
+SurfaceWell (new kit species), stamped artifact receipts, recovery
+prose dead into slabs/slips, exports on the one footer receipt bar
+(the 1440 overlap bug retired); suites green 4207+389. Earlier the
+same day: HS-111-02 Speak (the dictation deck) and HS-111-01
+Settings (the Prefs rethink + the gadget kit).)
 
 ## Why this phase exists
 
@@ -44,7 +44,7 @@ Each story:
 |---|-------|-------------------|--------|
 | 01 | [Settings](./story-01-settings.md) | The Settings program — every pane (Appearance, Hotkey, Transcription, Voice Typing, Wake Word, Presence, Meetings, Cadence, Devices, Delivery, Models, Integrations) | done |
 | 02 | [Speak](./story-02-speak.md) | The Speak/Dictation program — the dictation cockpit, journal, correction memory, pipeline config | done |
-| 03 | [Meetings](./story-03-meetings.md) | The Meetings program — history list, meeting detail, transcript view, artifact cards, aftercare panel | backlog |
+| 03 | [Meetings](./story-03-meetings.md) | The Meetings program — history list, meeting detail, transcript view, artifact cards, aftercare panel | done |
 | 04 | [Agents](./story-04-agents.md) | The Agents/Companion program — agent list, persona detail, session inspector, coder steering pullout | backlog |
 | 05 | [Ask and conversation](./story-05-ask-conversation.md) | The Ask composer, grounding picker, conversation thread, kept-card receipts | backlog |
 | 06 | [Delivery and process](./story-06-delivery-process.md) | The delivery belt, the process window, the project memory window — the kernel-facing programs | backlog |
@@ -59,7 +59,7 @@ Each story:
 |---|---|---|---|---|
 | HS-111-01 | Settings | done | [story-01-settings](./story-01-settings.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-111-02 | Speak | done | [story-02-speak](./story-02-speak.md) | [evidence-story-02](./evidence-story-02.md) |
-| HS-111-03 | Meetings | backlog | [story-03-meetings](./story-03-meetings.md) | — |
+| HS-111-03 | Meetings | done | [story-03-meetings](./story-03-meetings.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-111-04 | Agents | backlog | [story-04-agents](./story-04-agents.md) | — |
 | HS-111-05 | Ask and conversation | backlog | [story-05-ask-conversation](./story-05-ask-conversation.md) | — |
 | HS-111-06 | Delivery and process | backlog | [story-06-delivery-process](./story-06-delivery-process.md) | — |
@@ -99,5 +99,19 @@ LampGadget, TransportKey/TransportRow, GadgetTable verbs slot, plus
 SurfaceLedger in the surface kit. Five python guards re-pointed
 honestly (trust-signals now asserts the banner species stays dead).
 Proven live at 1440+393; full suites green (4207 python + 387 web).
-Next: HS-111-03 (Meetings) — transport keys and ledgers are on the
-shelf.
+
+3/10. HS-111-03 (Meetings) shipped the same day: the audit ruled the
+archive a card feed with the record's body buried (the transcript
+folded behind a Disclosure while a rounded warn-tinted prose card
+owned the pane; plus a real footer/tile overlap bug at 1440); the
+rethink made it the tape catalog — History consumes SurfaceLedger
+(chronology restored, attention as token tone, states axis-named),
+the transcript always visible in the new SurfaceWell species, needs-
+you a GadgetTable with APPROVE/REJECT, artifacts stamped as receipts
+(ART 03 · DECISION · 21:31), recovery cards dead into a one-row slab
+and twin CURRENT/INCOMING slips, exports on the one footer receipt
+bar (the overlap retired by construction). LiveCore scope-limited:
+SurfaceStream and the one-verb posture byte-untouched. Zero wire
+changes; three python locks re-pointed honestly. Proven live at
+1440+393; suites green (4207 python + 389 web). Next: HS-111-04
+(Agents) — ledger, well, lamps, and transport all on the shelf.
