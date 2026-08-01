@@ -1,10 +1,13 @@
-// HS-83-02 — the persona's home on the web desk: a LIVING CONVERSATION
-// (the iPad's DioRecipeChat posture). Docked pullout, desk alive behind;
-// turns accumulate and persist device-local; each reply wears the turn's
-// honest egress and can be harvested to the desk; the HSM-15-12 grounding
-// picker rides the composer, per conversation.
+// HS-83-02 — the agent's home on the web desk: a LIVING CONVERSATION.
+// Docked pullout, desk alive behind; turns accumulate and persist
+// device-local; each reply wears the turn's honest egress and can be
+// harvested to the desk; the HSM-15-12 grounding picker rides the
+// composer, per conversation.
+// HS-111-04 — the personnel record (audit §3.2): a record head (glyph
+// tile, name, role token, facts line, the ONE EgressChip species) over
+// a transmission log — prefixed mono `YOU>` / `<NAME>>` turns in the
+// sunken well, no bubbles, no hello card, no slide-in.
 import { useEffect, useMemo, useRef, useState } from "react";
-import { motion, useReducedMotion } from "motion/react";
 import { useDesk } from "../store";
 import {
   clearThread,
@@ -30,19 +33,25 @@ import { MicButton } from "./MicButton";
 import { RunsOnPicker } from "./RunsOnPicker";
 import { DeskWindowFrame } from "./DeskWindow";
 import { useDurableDraft } from "../../lib/durableDraft";
+import {
+  SurfaceFacts,
+  SurfaceTraffic,
+  SurfaceTrafficTurn,
+} from "../surface/Surface";
+import { EgressChip, LedMeter, TransportKey } from "../surface/gadgets";
+import { Button } from "../../components/signal/Signal";
 
 const turnId = () =>
   `t_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`;
 
 export function PersonaChat(props: { personaId: string }) {
-  const reducedMotion = useReducedMotion();
   const { personaId } = props;
   const items = useDesk((s) => s.items);
   const profiles = useDesk((s) => s.profiles);
   const inferenceTargets = useDesk((s) => s.inferenceTargets);
   const { closeChat, refresh, markNew } = useDesk.getState();
 
-  // HS-83-03: a model chat is one of THESE threads — a synthetic persona
+  // HS-83-03: a model chat is one of THESE threads — a synthetic agent
   // pinned to one of the hub's runnable models (no recipe record behind it).
   const persona = useMemo(() => {
     if (isModelChat(personaId)) {
@@ -79,7 +88,7 @@ export function PersonaChat(props: { personaId: string }) {
   }, [personaId, persona?.profileId]);
 
   useEffect(() => {
-    endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+    endRef.current?.scrollIntoView({ block: "end" });
   }, [turns.length, thinking]);
 
   useEffect(() => {
@@ -165,43 +174,52 @@ export function PersonaChat(props: { personaId: string }) {
     setTurns([]);
   };
 
-  const badge = (t: ChatTurn) =>
-    t.egress
-      ? t.egress.scope === "local"
-        ? {
-            scope: "local",
-            text: t.model ? `⌂ This device · ${t.model}` : "⌂ This device",
-          }
-        : t.egress.scope === "mesh"
-          ? {
-              scope: "mesh",
-              text: `⇄ ${["Paired", t.egress.host, t.model].filter(Boolean).join(" · ")}`,
-            }
-          : {
-              scope: "cloud",
-              text: `→ ${["Leaves device", t.egress.host, t.model].filter(Boolean).join(" · ")}`,
-            }
-      : null;
+  // The ONE egress species (EgressChip): the turn's honest boundary as
+  // a token, never a second hand-rolled badge.
+  const egressChip = (t: ChatTurn) => {
+    if (!t.egress) return null;
+    if (t.egress.scope === "local") {
+      return (
+        <EgressChip
+          label={t.model ? `⌂ This device · ${t.model}` : "⌂ This device"}
+        />
+      );
+    }
+    if (t.egress.scope === "mesh") {
+      return (
+        <EgressChip
+          label={`⇄ ${["Paired", t.egress.host, t.model].filter(Boolean).join(" · ")}`}
+          title="This reply ran on a paired device on your network."
+        />
+      );
+    }
+    return (
+      <EgressChip
+        label={`→ ${["Leaves device", t.egress.host, t.model].filter(Boolean).join(" · ")}`}
+        title="This reply left the device for the named service."
+      />
+    );
+  };
+
+  const name = String(persona.name || personaId);
+  const handle = name.toUpperCase();
+  const target = inferenceTargets.find((t: any) => t.id === inferenceTargetId);
+  const lastEgress = [...turns]
+    .reverse()
+    .find((t) => t.role === "agent" && !t.error && t.egress);
 
   return (
     <DeskWindowFrame
       id="chat"
       glyph="💬"
-      label={String(persona.name || personaId)}
+      label={name}
       className="desk-pullout desk-chat"
       icon={
         <span className="desk-chat-avatar" aria-hidden="true">
           {String(persona.avatar || "🤖")}
         </span>
       }
-      title={
-        <>
-          {String(persona.name || personaId)}
-          {persona.role ? (
-            <span className="desk-chat-role"> · {String(persona.role)}</span>
-          ) : null}
-        </>
-      }
+      title={name}
       actions={
         turns.length > 0 ? (
           <button
@@ -221,52 +239,59 @@ export function PersonaChat(props: { personaId: string }) {
     >
 
       <div className="desk-pullout-body desk-chat-scroll">
-        {turns.length === 0 && !thinking && (
-          <div className="desk-chat-hello">
-            <span className="desk-chat-hello-avatar" aria-hidden="true">
-              {String(persona.avatar || "🤖")}
-            </span>
-            <strong className="surface-primary">
-              {String(persona.name || "This agent")}
-            </strong>
+        <header className="surface-record-head">
+          <span className="surface-record-glyph" aria-hidden="true">
+            {String(persona.avatar || "🤖")}
+          </span>
+          <span className="surface-record-id">
+            <strong className="surface-primary">{name}</strong>
             {persona.role ? (
-              <small>{String(persona.role)}</small>
+              <span className="gadget-chip">{String(persona.role)}</span>
             ) : null}
-            <span className="desk-chat-hello-hint">Say something to start.</span>
-          </div>
-        )}
-        {turns.map((t) => (
-          <div
-            key={t.id}
-            className={
-              "desk-chat-turn is-" + t.role + (t.error ? " is-error" : "")
-            }
-          >
-            <div className="desk-chat-bubble">{t.text}</div>
-            {t.role === "agent" && !t.error && (
-              <div className="desk-chat-meta">
-                {badge(t) && (
-                  <span className={`egress-badge is-${badge(t)!.scope}`}>
-                    {badge(t)!.text}
-                  </span>
-                )}
-                <button
-                  type="button"
-                  className="desk-chip quiet"
-                  onClick={() => void harvest(t)}
-                >
-                  {savedId === t.id ? "Saved to Desk" : "Keep as Artifact"}
-                </button>
-              </div>
-            )}
-          </div>
-        ))}
-        {thinking && (
-          <div className="desk-chat-turn is-agent">
-            <div className="desk-chat-bubble desk-chat-thinking">· · ·</div>
-          </div>
-        )}
-        <div ref={endRef} />
+          </span>
+          {lastEgress ? egressChip(lastEgress) : <EgressChip />}
+        </header>
+        <SurfaceFacts
+          value={{
+            runs_on: String(target?.name || "This device"),
+            ctx: `${Math.round(limitTokens / 1000)}K`,
+            turns: turns.length || "",
+          }}
+        />
+        <SurfaceTraffic
+          head={`TRAFFIC · ${turns.length} TURNS`}
+          showEmpty={turns.length === 0 && !thinking}
+        >
+          {turns.map((t) => (
+            <SurfaceTrafficTurn
+              key={t.id}
+              prefix={t.role === "you" ? "YOU>" : `${handle}>`}
+              error={t.error}
+              meta={
+                t.role === "agent" && !t.error ? egressChip(t) : undefined
+              }
+              verbs={
+                t.role === "agent" && !t.error ? (
+                  <Button
+                    dense
+                    variant="ghost"
+                    onClick={() => void harvest(t)}
+                  >
+                    {savedId === t.id ? "Kept" : "Keep"}
+                  </Button>
+                ) : undefined
+              }
+            >
+              {t.text}
+            </SurfaceTrafficTurn>
+          ))}
+          {thinking ? (
+            <SurfaceTrafficTurn prefix={`${handle}>`}>
+              <LedMeter label="RX" value={0} scanning />
+            </SurfaceTrafficTurn>
+          ) : null}
+          <div ref={endRef} />
+        </SurfaceTraffic>
       </div>
 
       <footer className="desk-chat-foot">
@@ -288,16 +313,17 @@ export function PersonaChat(props: { personaId: string }) {
             />
             <input
               autoFocus
+              aria-label={"Message " + name}
               value={input}
-              placeholder={"Message " + String(persona.name || "")}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === "Enter") void send();
               }}
             />
-            <button
-              type="button"
-              className="desk-chip"
+            <TransportKey
+              compact
+              label="SEND"
+              glyph="▸"
               disabled={!input.trim() || thinking || overBudget}
               title={
                 overBudget
@@ -305,9 +331,7 @@ export function PersonaChat(props: { personaId: string }) {
                   : undefined
               }
               onClick={() => void send()}
-            >
-              {thinking ? "…" : "Send"}
-            </button>
+            />
           </div>
           <div className="desk-chat-well-foot">
             <RunsOnPicker

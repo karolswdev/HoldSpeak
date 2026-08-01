@@ -2008,8 +2008,10 @@
   filter: grayscale(0.8);
 }
 
-/* HS-83-02 — the persona's conversation (the DioRecipeChat posture): docked
-   pullout, bubbles, per-turn honest badge, harvest per reply. */
+/* HS-83-02 / HS-111-04 — the agent's window: a personnel record over
+   a transmission log (SurfaceTraffic). The bubbles, the slide-in beat,
+   and the hand-rolled per-turn badge are gone — the log renders in the
+   surface kit; only the frame plumbing lives here. */
 .desk-next .desk-chat {
   display: flex;
   flex-direction: column;
@@ -2017,85 +2019,12 @@
 .desk-next .desk-chat-avatar {
   font-size: 20px;
 }
-/* HS-111: section labels — mono, 10px, 600 */
-.desk-next .desk-chat-role {
-  color: var(--text-muted);
-  font-family: var(--font-mono);
-  font-weight: 600;
-  font-size: 10px;
-}
+/* The record body: head + facts + the log well, which owns the scroll. */
 .desk-next .desk-chat-scroll {
-  overflow-y: auto;
   display: flex;
   flex-direction: column;
+  min-height: 0;
   gap: 10px;
-}
-.desk-next .desk-chat-empty {
-  color: var(--text-muted);
-  font-size: var(--font-size-sm);
-  text-align: center;
-  margin: 28px 0;
-}
-.desk-next .desk-chat-turn {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-.desk-next .desk-chat-turn.is-you {
-  align-items: flex-end;
-}
-.desk-next .desk-chat-turn.is-agent {
-  align-items: flex-start;
-}
-.desk-next .desk-chat-bubble {
-  max-width: 86%;
-  padding: 9px 12px;
-  border-radius: 2px;
-  font-size: var(--font-size-sm);
-  line-height: 1.45;
-  white-space: pre-wrap;
-  border: 1px solid var(--border);
-  color: var(--text);
-}
-.desk-next .desk-chat-turn.is-you .desk-chat-bubble {
-  background: color-mix(in srgb, var(--accent, #ff6b35) 24%, transparent);
-  border-color: color-mix(in srgb, var(--accent, #ff6b35) 45%, transparent);
-}
-/* HS-111: agent messages in monospace — terminal readout, not chat */
-.desk-next .desk-chat-turn.is-agent .desk-chat-bubble {
-  background: var(--wash-2);
-  font-family: var(--font-mono);
-  font-size: 12px;
-}
-.desk-next .desk-chat-turn.is-error .desk-chat-bubble {
-  color: #ffb4a0;
-  font-family: var(--font-mono);
-}
-.desk-next .desk-chat-thinking {
-  letter-spacing: 3px;
-  animation: desk-ask-routing 1.1s ease-in-out infinite;
-}
-.desk-next .desk-chat-meta {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px;
-  padding-left: 4px;
-}
-/* HS-103-07 — each turn prints in, like the Ask card's own birth beat;
-   :last-child only fires on the newly-inserted node, not every re-render. */
-.desk-next .desk-chat-turn:last-child {
-  animation: desk-chat-turn-in 0.32s cubic-bezier(0.2, 1, 0.4, 1);
-}
-@keyframes desk-chat-turn-in {
-  0% {
-    opacity: 0;
-    transform: translateY(8px) scale(0.98);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
 }
 .desk-next .desk-chat-foot {
   display: grid;
@@ -2412,11 +2341,8 @@
 .desk-next .desk-session-glyph {
   font-size: 16px;
 }
-.desk-next .desk-session-live {
-  color: var(--accent);
-  font-size: 10px;
-  animation: desk-mc-pulse 1.6s ease-in-out infinite;
-}
+/* HS-111-04 — liveness is a steady LampGadget in the head; the pulsing
+   dot species is gone. */
 .desk-next .desk-chip.is-stale {
   opacity: 0.6;
 }
@@ -2459,35 +2385,9 @@
   font-family: var(--font-mono);
 }
 
-/* ── HS-87-02: the arming grant (hold to arm; armed = the countdown) ── */
-.desk-next .desk-arm-wrap {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-}
-.desk-next .desk-arm-chip {
-  font-family: var(--font-mono);
-  letter-spacing: 0.08em;
-  border-color: var(--surface-3);
-  transition: border-color var(--duration-short) var(--ease-standard);
-}
-.desk-next .desk-arm-chip.is-holding {
-  border-color: var(--accent);
-  animation: desk-arm-hold 0.6s linear forwards;
-}
-@keyframes desk-arm-hold {
-  from {
-    box-shadow: inset 0 0 0 0 var(--accent-tint);
-  }
-  to {
-    box-shadow: inset 4.5em 0 0 0 var(--accent-tint);
-  }
-}
-.desk-next .desk-arm-chip.is-armed {
-  border-color: var(--accent);
-  color: var(--accent);
-  box-shadow: 0 0 0 1px var(--accent-glow);
-}
+/* ── HS-87-02: the arming grant. HS-111-04 — ARM is a TransportKey:
+   armed = inverted video (the kit's data-active), the countdown a
+   draining GRANT LedMeter. The accent-glow rings are dead. ── */
 .desk-next .desk-arm-refusal {
   color: var(--danger-signal);
   font-size: 11px;
@@ -2497,8 +2397,10 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+/* HS-111-04 — an armed pin reads as the pressed key, not a glow ring. */
 .desk-next .desk-mc-pin.armed {
-  box-shadow: 0 0 0 1.5px var(--accent-glow);
+  background: var(--accent-tint);
+  color: var(--accent);
   border-radius: 2px;
 }
 
@@ -2533,22 +2435,17 @@
   outline: none;
   border-color: var(--accent);
 }
-.desk-next .desk-steer-enter {
-  opacity: 0.45;
-}
-.desk-next .desk-steer-enter.is-on {
-  opacity: 1;
-  border-color: var(--accent);
-  color: var(--accent);
-}
 .desk-next .desk-steer-sent {
   color: var(--ok);
   font-size: 11px;
   font-family: var(--font-mono);
 }
+/* HS-111-04 — the budget is a CTX meter + a CAP token, never a caption
+   sentence. */
 .desk-next .desk-steer-grounded {
-  color: var(--text-faint);
-  font-size: 10px;
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 8px;
 }
 
 /* ── HS-90-02: the key palette (full key control on glass) ── */
@@ -2566,59 +2463,12 @@
   text-transform: uppercase;
   color: var(--text-muted);
 }
-.desk-next .desk-keypad-row {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  flex-wrap: wrap;
-}
-.desk-next .desk-key {
-  min-width: 30px;
-  height: 28px;
-  padding: 0 7px;
-  border: 1px solid var(--surface-3);
-  border-bottom-width: 2px;
-  border-radius: 2px;
-  background: var(--surface-1);
-  color: var(--text);
-  font-family: var(--font-mono);
-  font-size: 12px;
-  cursor: pointer;
-  transition:
-    border-color var(--duration-short) var(--ease-standard),
-    background var(--duration-short) var(--ease-standard),
-    transform var(--duration-short) var(--ease-standard);
-}
-.desk-next .desk-key:hover {
-  border-color: var(--accent);
-  background: var(--surface-2);
-}
-.desk-next .desk-key:active {
-  transform: translateY(1px);
-  border-bottom-width: 1px;
-}
-.desk-next .desk-key.is-interrupt {
-  color: var(--danger-signal);
-  border-color: color-mix(in srgb, var(--danger-signal) 45%, var(--surface-3));
-}
-.desk-next .desk-key.is-interrupt:hover {
-  border-color: var(--danger-signal);
-  background: color-mix(in srgb, var(--danger-signal) 12%, transparent);
-}
+/* HS-111-04 — the keys are TransportKey species (glyph over mono word);
+   the bespoke desk-key caps and the node chip's remote glow ring died
+   with the gadget rerender (NodeChip is a CycleGadget now). */
 .desk-next .desk-key-fate {
   font-size: 11px;
   margin-left: 2px;
-}
-
-/* ── HS-90-02: the node chip (which machine steering targets) ── */
-.desk-next .desk-node-chip {
-  font-family: var(--font-mono);
-  letter-spacing: 0.04em;
-}
-.desk-next .desk-node-chip.is-remote {
-  border-color: var(--accent);
-  color: var(--accent);
-  box-shadow: 0 0 0 1px var(--accent-glow);
 }
 
 /* ── HS-90-02: the pane picker (attach to any tmux pane) ── */
@@ -2652,7 +2502,7 @@
   border: 1px solid var(--surface-3);
   border-radius: 2px;
   background: var(--surface-2);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+  box-shadow: var(--desk-transient-shadow);
 }
 .desk-next .desk-panepicker-item {
   display: flex;
@@ -2670,8 +2520,11 @@
 .desk-next .desk-panepicker-item:hover {
   background: var(--surface-1);
 }
+/* HS-111-04 — the attached pane is the ledger's open row (sunken well
+   fill), never a smuggled left accent rail. */
 .desk-next .desk-panepicker-item.is-active {
-  box-shadow: inset 2px 0 0 0 var(--accent);
+  background: var(--desk-window-well);
+  box-shadow: var(--desk-window-etch);
 }
 .desk-next .desk-panepicker-id {
   font-family: var(--font-mono);
@@ -2696,7 +2549,7 @@
   gap: 6px;
   padding: 4px 4px 6px;
 }
-.desk-next .desk-panepicker-spawn .desk-classify-input {
+.desk-next .desk-panepicker-spawn .gadget-string {
   flex: 1;
 }
 .desk-next .desk-panepicker-divider {
@@ -2728,20 +2581,13 @@
   flex-wrap: wrap;
   flex: 1;
 }
-.desk-next .desk-chip.desk-kill {
-  color: var(--danger-signal);
-  border-color: color-mix(in srgb, var(--danger-signal) 40%, var(--surface-3));
+.desk-next .desk-factory-row .gadget-string {
+  flex: 1;
+  width: auto;
+  min-width: 140px;
 }
-.desk-next .desk-chip.desk-kill:hover {
-  border-color: var(--danger-signal);
-  background: color-mix(in srgb, var(--danger-signal) 12%, transparent);
-}
-.desk-next .desk-chip.desk-kill-confirm {
-  color: var(--white);
-  background: var(--danger-signal);
-  border-color: var(--danger-signal);
-  font-family: var(--font-mono);
-}
+/* HS-111-04 — Kill is a danger-tone TransportKey; the confirm state is
+   inverted danger video (the kit's data-active), not a chip repaint. */
 
 /* ── HS-87-05: classify (keep as note, pin to story, flip from here) ── */
 .desk-next .desk-classify {
@@ -3065,10 +2911,8 @@
 @media (prefers-reduced-motion: reduce) {
   .desk-next .desk-start-action.is-recording .desk-start-record,
   .desk-next .desk-mc-pin.awaiting,
-  .desk-next .desk-chat-thinking,
   .desk-next .desk-ask-routing,
   .desk-next .desk-ask-card,
-  .desk-next .desk-chat-turn:last-child,
   .desk-next .desk-chat-hello-avatar {
     animation: none !important;
   }
@@ -5043,13 +4887,12 @@
   color: var(--text-muted);
 }
 
-/* HS-101 sitting round 2 — the chat is a CONVERSATION, not a form
-   pile: a composed hello, one composer well, the route folded into
-   the well's foot. */
+/* HS-101 sitting round 2 / HS-111-04 — one composer well, the route
+   folded into the well's foot; the body is the record head over the
+   transmission log (the log well owns the scroll). */
 .desk-next .desk-chat .desk-pullout-body {
   display: flex;
   flex-direction: column;
-  justify-content: flex-end;
 }
 .desk-next .desk-chat-hello {
   flex: 1;
@@ -5079,12 +4922,6 @@
   color: var(--text-faint);
   font-family: var(--font-mono);
   font-size: 10px;
-}
-.desk-next .desk-chat-hello-hint {
-  color: var(--text-faint);
-  font-family: var(--font-mono);
-  font-size: 10px;
-  margin-top: 4px;
 }
 .desk-next .desk-chat-foot {
   display: flex;
