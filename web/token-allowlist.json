@@ -3,62 +3,12 @@
   "entries": [
     {
       "file": "src/desk/desk.css",
-      "match": "#0b0d12",
-      "reason": "DioPal atmosphere art (HS-71) — the room's gradient/spotlight stops live here by design"
-    },
-    {
-      "file": "src/desk/desk.css",
-      "match": "#16111f",
-      "reason": "DioPal atmosphere art (HS-71) — the room's gradient/spotlight stops live here by design"
-    },
-    {
-      "file": "src/desk/desk.css",
-      "match": "#090a0e",
-      "reason": "DioPal atmosphere art (HS-71) — the room's gradient/spotlight stops live here by design"
-    },
-    {
-      "file": "src/desk/desk.css",
-      "match": "rgba(255, 122, 64, 0.22)",
-      "reason": "DioPal atmosphere art (HS-71) — the room's gradient/spotlight stops live here by design"
-    },
-    {
-      "file": "src/desk/desk.css",
-      "match": "rgba(255, 107, 53, 0.06)",
-      "reason": "DioPal atmosphere art (HS-71) — the room's gradient/spotlight stops live here by design"
-    },
-    {
-      "file": "src/desk/desk.css",
-      "match": "rgba(140, 104, 255, 0.13)",
-      "reason": "DioPal atmosphere art (HS-71) — the room's gradient/spotlight stops live here by design"
-    },
-    {
-      "file": "src/desk/desk.css",
-      "match": "rgba(120, 60, 40, 0.14)",
-      "reason": "DioPal atmosphere art (HS-71) — the room's gradient/spotlight stops live here by design"
-    },
-    {
-      "file": "src/desk/desk.css",
-      "match": "rgba(12, 10, 18, 0.62)",
-      "reason": "hand-tuned one-off (glass/glow/ink shade) — consolidation is HS-96-04's material fold"
-    },
-    {
-      "file": "src/desk/desk.css",
-      "match": "rgba(52, 211, 153, 0.6)",
-      "reason": "hand-tuned one-off (glass/glow/ink shade) — consolidation is HS-96-04's material fold"
-    },
-    {
-      "file": "src/desk/desk.css",
       "match": "rgba(255, 107, 53, 0.1)",
       "reason": "hand-tuned one-off (glass/glow/ink shade) — consolidation is HS-96-04's material fold"
     },
     {
       "file": "src/desk/desk.css",
       "match": "rgba(255, 107, 53, 0.14)",
-      "reason": "hand-tuned one-off (glass/glow/ink shade) — consolidation is HS-96-04's material fold"
-    },
-    {
-      "file": "src/desk/desk.css",
-      "match": "rgba(13, 11, 18, 0.96)",
       "reason": "hand-tuned one-off (glass/glow/ink shade) — consolidation is HS-96-04's material fold"
     },
     {
@@ -178,11 +128,6 @@
     },
     {
       "file": "src/desk/desk.css",
-      "match": "rgba(14, 12, 20, 0.92)",
-      "reason": "hand-tuned one-off (glass/glow/ink shade) — consolidation is HS-96-04's material fold"
-    },
-    {
-      "file": "src/desk/desk.css",
       "match": "#ffb4a0",
       "reason": "hand-tuned one-off (glass/glow/ink shade) — consolidation is HS-96-04's material fold"
     },
@@ -215,21 +160,6 @@
       "file": "src/desk/desk.css",
       "match": "z-index: 46",
       "reason": "local stacking inside one component's own context (not the OS ladder)"
-    },
-    {
-      "file": "src/styles/global.css",
-      "match": "rgba(255, 255, 255, 0.045)",
-      "reason": "hand-tuned one-off (glass/glow/ink shade) — consolidation is HS-96-04's material fold"
-    },
-    {
-      "file": "src/styles/global.css",
-      "match": "rgba(0, 0, 0, 0.24)",
-      "reason": "hand-tuned one-off (glass/glow/ink shade) — consolidation is HS-96-04's material fold"
-    },
-    {
-      "file": "src/styles/global.css",
-      "match": "rgba(0, 0, 0, 0.22)",
-      "reason": "hand-tuned one-off (glass/glow/ink shade) — consolidation is HS-96-04's material fold"
     },
     {
       "file": "src/styles/global.css",
@@ -305,6 +235,36 @@
       "file": "src/styles/react-app.css",
       "match": "01ms",
       "reason": "hand-tuned one-off (glass/glow/ink shade) — consolidation is HS-96-04's material fold"
+    },
+    {
+      "file": "src/desk/desk.css",
+      "match": "rgba(255,255,255,0.02)",
+      "reason": "HS-111 Signal Workbench floor weave — the 45° scanline lattice is atmosphere art; a 2% white has no semantic token"
+    },
+    {
+      "file": "src/desk/desk.css",
+      "match": "rgba(0,0,0,0.4)",
+      "reason": "HS-111 square lamp ink ring — the 1px dark seat under status lamps (pairs with the surface.css lamp)"
+    },
+    {
+      "file": "src/desk/desk.css",
+      "match": "rgba(0, 0, 0, 0.4)",
+      "reason": "HS-111 square lamp ink ring — the 1px dark seat under status lamps (spaced variant)"
+    },
+    {
+      "file": "src/desk/surface/surface.css",
+      "match": "rgba(0, 0, 0, 0.4)",
+      "reason": "HS-111 square lamp ink ring — the 1px dark seat under status lamps"
+    },
+    {
+      "file": "src/styles/global.css",
+      "match": "rgba(255,255,255,0.22)",
+      "reason": "HS-111 primary-button bevel highlight — the dark-fill bevel tokens don't read on the saturated accent fill"
+    },
+    {
+      "file": "src/styles/global.css",
+      "match": "rgba(0,0,0,0.3)",
+      "reason": "HS-111 primary-button bevel shadow — the dark-fill bevel tokens don't read on the saturated accent fill"
     }
   ]
 }

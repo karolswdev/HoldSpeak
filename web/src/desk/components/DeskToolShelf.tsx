@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { openSurface } from "../shell";
+import { SYSTEM } from "../systemSprites";
 import { qualifiedRef } from "../api";
 import { modelChatId } from "../chat";
 import {
@@ -294,7 +295,7 @@ export function DeskToolShelf() {
         aria-keyshortcuts="Control+K Meta+K"
         onClick={() => setOpen((value) => !value)}
       >
-        <span aria-hidden="true">⌕</span> Search <kbd>⌘K</kbd>
+        <img src={SYSTEM.menuSearch} alt="" width={14} height={14} className="desk-chrome-sprite" draggable={false} /> Search <kbd>⌘K</kbd>
       </button>
       {/* Round 9 — the shelf PORTALS to the desk root: rendered inside
           the chrome bar it inherited the bar's z-30 stacking context and

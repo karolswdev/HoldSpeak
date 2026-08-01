@@ -163,6 +163,7 @@
   background: var(--info-soft);
 }
 
+/* HS-111-01: status pills — rectangular, mono text, opaque fill */
 .signal-status {
   min-height: 28px;
   display: inline-flex;
@@ -171,16 +172,17 @@
   width: fit-content;
   padding: 4px 10px;
   border: 1px solid var(--border);
-  border-radius: var(--radius-pill);
+  border-radius: 0;
   color: var(--text-muted);
   background: var(--surface-2);
-  font: 600 var(--font-size-xs) var(--font-ui);
+  font: 600 var(--font-size-xs) var(--font-mono);
   white-space: nowrap;
 }
+/* HS-111: square indicators, no glow */
 .signal-status > span {
   width: 7px;
   height: 7px;
-  border-radius: 50%;
+  border-radius: 0;
   background: currentColor;
 }
 .signal-status.is-success,
@@ -193,8 +195,9 @@
 .signal-status.is-error {
   color: var(--danger);
 }
+/* HS-111: no glow on live indicators */
 .signal-status.is-live > span {
-  box-shadow: 0 0 10px currentColor;
+  box-shadow: none;
 }
 
 .signal-empty {
@@ -225,46 +228,54 @@
   max-width: 52ch;
 }
 
+/* HS-111-08: Workbench tabs — rectangular, beveled active, no accent underline */
 .signal-tabs {
   display: flex;
-  gap: var(--space-1);
+  gap: 0;
   overflow-x: auto;
-  padding: 3px;
+  padding: 0;
   border: 1px solid var(--border);
-  border-radius: var(--radius-md);
+  border-radius: 0;
   background: var(--surface-1);
 }
 .signal-tabs button {
-  min-height: 38px;
+  min-height: 28px;
   flex: 0 0 auto;
   padding: 0 var(--space-3);
   border: 0;
-  border-radius: var(--radius-sm);
+  border-right: 1px solid var(--border);
+  border-radius: 0;
   background: transparent;
   color: var(--text-muted);
-  font-weight: 600;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 500;
   cursor: pointer;
+}
+.signal-tabs button:last-child {
+  border-right: 0;
 }
 .signal-tabs button[aria-selected="true"] {
   color: var(--text);
   background: var(--surface-3);
-  box-shadow:
-    var(--elev-1),
-    inset 0 -2px var(--accent);
+  box-shadow: inset 1px 1px 0 var(--bevel-light), inset -1px -1px 0 var(--bevel-dark);
 }
 
+/* HS-111-08: Workbench disclosure — flat expander, no card */
 .signal-disclosure {
   border: 1px solid var(--border);
-  border-radius: var(--radius-md);
+  border-radius: 0;
   background: var(--surface-1);
 }
 .signal-disclosure summary {
-  min-height: 44px;
+  min-height: 32px;
   display: flex;
   align-items: center;
-  padding: 0 var(--space-4);
+  padding: 0 var(--space-3);
   cursor: pointer;
-  font-weight: 600;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 500;
 }
 .signal-disclosure > div {
   padding: 0 var(--space-4) var(--space-4);
@@ -288,34 +299,31 @@
   opacity: 0;
   pointer-events: none;
 }
-.signal-switch-track {
-  width: 42px;
-  height: 24px;
-  display: flex;
-  align-items: center;
-  padding: 3px;
-  border: 1px solid var(--border-strong);
-  border-radius: var(--radius-pill);
-  background: var(--surface-3);
-  transition: background var(--duration-short);
-}
-.signal-switch-track > span {
+/* HS-111-01: the boolean species is the checkbox gadget — a 16×16
+   sunken well, an accent check. No sliding tracks anywhere. */
+.signal-switch-well {
   width: 16px;
   height: 16px;
-  border-radius: 50%;
-  background: var(--text-muted);
-  transition: transform var(--duration-short);
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--border);
+  background: var(--desk-window-well, var(--surface-1));
+  box-shadow: inset 1px 1px 0 var(--etch-dark), inset -1px -1px 0 var(--etch-light);
 }
-.signal-switch input:checked + .signal-switch-track {
-  background: var(--accent);
+.signal-switch-well::after {
+  content: "✓";
+  color: var(--accent);
+  font: 700 12px / 1 var(--font-mono);
+  opacity: 0;
+}
+.signal-switch input:checked + .signal-switch-well::after {
+  opacity: 1;
+}
+.signal-switch input:focus-visible + .signal-switch-well {
   border-color: var(--accent);
 }
-.signal-switch input:checked + .signal-switch-track > span {
-  transform: translateX(18px);
-  background: var(--text-on-accent);
-}
-.signal-switch input:focus-visible + .signal-switch-track {
-  box-shadow: var(--focus-ring);
+.signal-switch input:disabled + .signal-switch-well {
+  opacity: 0.55;
 }
 .signal-switch small,
 .signal-choice small,
@@ -347,7 +355,7 @@
 }
 .signal-dialog::backdrop {
   background: rgba(0, 0, 0, 0.68);
-  backdrop-filter: blur(5px);
+  backdrop-filter: none;
 }
 .signal-dialog > header {
   display: flex;
@@ -434,39 +442,13 @@
   gap: var(--space-2);
 }
 .dialog-form,
-.welcome-stack,
-.settings-fields {
+.welcome-stack {
   display: grid;
   gap: var(--space-4);
 }
-.settings-fields fieldset {
-  display: grid;
-  gap: var(--space-4);
-  margin: 0;
-  padding: var(--space-4);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
-}
-.settings-fields legend {
-  padding-inline: var(--space-2);
-  color: var(--text-muted);
-  font: 600 var(--font-size-sm) var(--font-display);
-}
-.settings-section {
-  display: grid;
-  gap: var(--space-4);
-  padding-top: var(--space-4);
-  border-top: 1px solid var(--border-subtle);
-}
-.settings-section h2 {
-  margin: 0;
-}
-.symbol-row {
-  display: grid;
-  grid-template-columns: 1.2fr 0.7fr 1fr auto;
-  align-items: end;
-  gap: var(--space-2);
-}
+/* HS-111-01: the legacy .settings-fields / .settings-section /
+   .symbol-row form-stack styles died with the walker's search mode —
+   the Prefs program renders gadget sheets (desk/surface/gadgets.css). */
 
 .welcome-shell {
   min-height: 100vh;
@@ -494,7 +476,7 @@
   gap: var(--space-5);
   padding: clamp(24px, 5vw, 52px);
   border: 1px solid var(--border);
-  border-radius: 24px;
+  border-radius: 2px;
   background:
     linear-gradient(155deg, var(--surface-hover), transparent 45%),
     rgba(21, 23, 29, 0.94);
@@ -561,7 +543,7 @@
   height: max(600px, calc(100vh - 250px));
   overflow: auto;
   border: 1px solid var(--border);
-  border-radius: 20px;
+  border-radius: 2px;
   background-color: #0b0c10;
   background-image: radial-gradient(
     circle,
@@ -737,7 +719,7 @@
   border-radius: var(--radius-lg);
   background: rgba(21, 23, 29, 0.96);
   box-shadow: var(--elev-3);
-  backdrop-filter: blur(18px);
+  backdrop-filter: none;
 }
 .ambient-preview {
   left: 50%;
@@ -795,7 +777,7 @@
   height: 44px;
   display: grid;
   place-items: center;
-  border-radius: 15px;
+  border-radius: 2px;
   background: var(--accent-gradient);
   color: white;
   font-size: 1.35rem;
@@ -818,7 +800,7 @@
 }
 .ambient-waveform span {
   width: 3px;
-  border-radius: 3px;
+  border-radius: 2px;
   background: var(--accent);
   transition: height 60ms linear;
 }

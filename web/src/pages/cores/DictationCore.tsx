@@ -211,27 +211,27 @@ function ReadinessLine({ onOpenDoor }: { onOpenDoor: () => void }) {
     const budget = config.max_total_latency_ms;
     return (
       <p className="speak-status" role="status">
-        <span className="speak-status-dot is-live" aria-hidden="true" />
-        Pipeline live
-        {target.label ? ` · types into ${presentValue(target.label)}` : ""}
-        {budget ? ` · ${presentValue(budget)} ms budget` : ""}
+        <span><span className="speak-status-dot is-live" aria-hidden="true" /> Pipeline live</span>
+        {target.label ? <span>{"-> "}{presentValue(target.label)}</span> : null}
+        {budget ? <span>{presentValue(budget)} ms</span> : null}
       </p>
     );
   }
   return (
     <p className="speak-status is-warn" role="status">
-      <span className="speak-status-dot" aria-hidden="true" />
-      {config.pipeline_enabled === true
-        ? `${warnings.length} readiness ${warnings.length === 1 ? "warning" : "warnings"}`
-        : "Pipeline off. Speaking here stays a draft."}
-      <button type="button" className="speak-status-fix" onClick={onOpenDoor}>
-        Review
-      </button>
+      <span><span className="speak-status-dot" aria-hidden="true" /> {config.pipeline_enabled === true
+        ? `${warnings.length} ${warnings.length === 1 ? "warning" : "warnings"}`
+        : "Pipeline off"}</span>
+      <span>
+        <button type="button" className="speak-status-fix" onClick={onOpenDoor}>
+          Review
+        </button>
+      </span>
     </p>
   );
 }
 
-function SpeakFace({ onOpenDoor }: { onOpenDoor: () => void }) {
+function SpeakFace() {
   const {
     value: utterance,
     setDraft: setUtterance,
@@ -367,7 +367,7 @@ function SpeakFace({ onOpenDoor }: { onOpenDoor: () => void }) {
           label="Hold to talk"
           onText={(text) => setUtterance(text)}
         />
-        <p className="speak-hint">Hold to talk, or type below. This stays a draft.</p>
+        <p className="speak-hint">Hold to talk or type below -- dry run only</p>
       </div>
       <div className="desk-mic-row">
         <TextArea
@@ -444,17 +444,15 @@ function SpeakFace({ onOpenDoor }: { onOpenDoor: () => void }) {
       ) : null}
       {result ? (
         <section className="speak-result" aria-label="Pipeline result">
-          <InlineMessage tone="success">
-            {String(
-              result.final_text ??
-                result.text ??
-                result.output ??
-                "Pipeline completed.",
-            )}
-          </InlineMessage>
+          <SurfaceCode>{[
+            `FINAL_TEXT: ${String(result.final_text ?? result.text ?? result.output ?? "")}`,
+            result.intent ? `INTENT: ${String(result.intent)}` : null,
+            result.total_ms ? `LATENCY_MS: ${String(result.total_ms)}` : null,
+            result.target_profile ? `TARGET: ${String(result.target_profile)}` : null,
+          ].filter(Boolean).join("\n")}</SurfaceCode>
           <div className="surface-actions" aria-label="Rate this result">
             <Button dense onClick={() => setVerdict("right")}>
-              Right
+              OK
             </Button>
             <Button dense variant="ghost" onClick={() => setVerdict("wrong")}>
               Wrong
@@ -462,7 +460,7 @@ function SpeakFace({ onOpenDoor }: { onOpenDoor: () => void }) {
           </div>
           {verdict === "right" ? (
             <InlineMessage tone="success">
-              Marked right. Nothing was written to correction memory.
+              Marked OK -- no correction written
             </InlineMessage>
           ) : null}
           {verdict === "wrong" ? (
@@ -509,7 +507,6 @@ function SpeakFace({ onOpenDoor }: { onOpenDoor: () => void }) {
           </Disclosure>
         </section>
       ) : null}
-      <ReadinessLine onOpenDoor={onOpenDoor} />
     </div>
   );
 }
@@ -1350,7 +1347,7 @@ export function DictationCore({ hero, scope, scopeLabel }: CoreProps) {
   const current = useMemo(
     () =>
       ({
-        speak: <SpeakFace onOpenDoor={() => setDoorOpen(true)} />,
+        speak: <SpeakFace />,
         journal: <Journal />,
         blocks: <Blocks />,
         configure: <Configure />,
@@ -1366,6 +1363,7 @@ export function DictationCore({ hero, scope, scopeLabel }: CoreProps) {
         </p>
       ) : null}
       {current}
+      <ReadinessLine onOpenDoor={() => setDoorOpen(true)} />
     </>
   );
 }

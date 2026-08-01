@@ -63,7 +63,9 @@ describe("Signal React controls", () => {
     expect(onTab).toHaveBeenCalledWith("b");
     expect(screen.getByRole("tab", { name: "Beta" })).toHaveFocus();
     expect(screen.getByRole("tab", { name: "Blocked" })).toBeDisabled();
-    await user.click(screen.getByRole("switch", { name: "Enabled" }));
+    // HS-111-01: the boolean species is the checkbox gadget — a real
+    // checkbox input, never a role="switch" slider.
+    await user.click(screen.getByRole("checkbox", { name: "Enabled" }));
     expect(onSwitch).toHaveBeenCalled();
   });
 

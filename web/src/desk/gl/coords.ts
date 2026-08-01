@@ -52,3 +52,26 @@ export function worldRectOf(el: Element): WorldRect {
   const r = el.getBoundingClientRect();
   return { left: r.left, top: r.top, width: r.width, height: r.height };
 }
+
+/** HS-110-01 — grid pitch in pixels: icon cell + gutter. */
+export const GRID_CELL_W = 120;
+export const GRID_CELL_H = 128;
+
+/** Snap a unit-space position to the nearest grid cell center. */
+export function snapToGrid(
+  u: UnitPos,
+  rect: WorldRect,
+  clamp: { xMin: number; xMax: number; yMin: number; yMax: number } = OBJECT_CLAMP,
+): UnitPos {
+  if (rect.width <= 0 || rect.height <= 0) return u;
+  const px = u.x * rect.width;
+  const py = u.y * rect.height;
+  const halfW = GRID_CELL_W / 2;
+  const halfH = GRID_CELL_H / 2;
+  const snappedX = Math.round((px - halfW) / GRID_CELL_W) * GRID_CELL_W + halfW;
+  const snappedY = Math.round((py - halfH) / GRID_CELL_H) * GRID_CELL_H + halfH;
+  return {
+    x: Math.min(clamp.xMax, Math.max(clamp.xMin, snappedX / rect.width)),
+    y: Math.min(clamp.yMax, Math.max(clamp.yMin, snappedY / rect.height)),
+  };
+}

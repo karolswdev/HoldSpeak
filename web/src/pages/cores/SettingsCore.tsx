@@ -1,56 +1,49 @@
-// HS-95-07 — the Settings core: the whole cockpit, hosted anywhere.
-import { useEffect, useMemo, useRef, useState } from "react";
+// HS-95-07 / HS-111-01 — the Settings core, rethought as the OS's own
+// Prefs program (the verified audit at .tmp/hs-111-01-audit.md §3):
+// a drawer face of authored pref modules; a module swaps the WHOLE
+// window body; the footer status bar carries the receipt and the
+// refusals; every control is a gadget from the surface kit. The pane
+// roster is a code constant — the wire never mints a pane again.
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import type { CoreProps } from "./ActivityCore";
-import {
-  Button,
-  Disclosure,
-  Field,
-  InlineMessage,
-  Select,
-  Switch,
-  Tabs,
-  TextInput,
-} from "../../components/signal/Signal";
+import { Button } from "../../components/signal/Signal";
 import { apiFetch, readableError, type JsonRecord } from "../../lib/api";
-import { CONTROL_MODES, controlModeLabel } from "../../lib/productLanguage";
-import { PostureNote, useResource } from "../pageSupport";
+import { useResource } from "../pageSupport";
+import { SurfaceState } from "../../desk/surface/Surface";
 import {
-  ConfirmVerb,
-  SurfaceGroup,
-  SurfaceSection,
-  SurfaceSettingRow,
-  SurfaceState,
-  SurfaceToggle,
-  SurfaceVerbs,
-} from "../../desk/surface/Surface";
+  CheckGadget,
+  CycleGadget,
+  EgressChip,
+  GadgetGroup,
+  GadgetRow,
+  GadgetTable,
+  PropGadget,
+  SecretRow,
+  StepperGadget,
+  StringGadget,
+  type CycleOption,
+} from "../../desk/surface/gadgets";
 import { HotkeyCapture, RuntimeDestination } from "./settingsBespoke";
 import { SurfaceWings, useWindowWings } from "../../desk/surface/wings";
 import { RuntimeDocsCore } from "./RuntimeDocsCore";
+import { activateLauncher } from "../../desk/components/DeskWindow";
+import {
+  CADENCE_PRESSURE_OPTIONS,
+  EXPORT_FORMAT_OPTIONS,
+  INTEL_PROVIDER_OPTIONS,
+  LANGUAGE_OPTIONS,
+  MIR_PROFILE_OPTIONS,
+  PREF_MODULES,
+  PrefsFace,
+  PrefStatusBar,
+  THEME_OPTIONS,
+  TRANSCRIBE_BACKEND_OPTIONS,
+  WAKE_ACTION_OPTIONS,
+  WHISPER_MODEL_OPTIONS,
+  moduleForKey,
+  type DeepHit,
+} from "./settingsPrefs";
 
-const SECTION_ORDER = [
-  "ui",
-  "hotkey",
-  "model",
-  "dictation",
-  "wake_word",
-  "presence",
-  "meeting",
-  "activity",
-  "cadence",
-  "commands",
-];
-const FRIENDLY: Record<string, string> = {
-  ui: "Appearance",
-  hotkey: "Hotkey",
-  model: "Transcription",
-  dictation: "Voice typing",
-  wake_word: "Wake Word",
-  presence: "Presence",
-  meeting: "Meetings & intelligence",
-  activity: "Activity",
-  cadence: "Cadence",
-  commands: "Commands",
-};
 const SECRET_LABELS: Record<string, string> = {
   web_token: "Web pairing token",
   device_psk: "Device audio key",
@@ -73,8 +66,7 @@ function clone<T>(value: T): T {
 }
 /* HS-101 round 4 — the glass never wears wire keys: curated names
  * for the fields people actually meet, an acronym dictionary for the
- * rest ("Mlx Model" and "Openai Compatible Api Key Env" are config
- * dump, not settings). */
+ * rest. */
 const FRIENDLY_FIELDS: Record<string, string> = {
   mlx_model: "MLX model",
   llama_cpp_model_path: "llama.cpp model file",
@@ -82,7 +74,7 @@ const FRIENDLY_FIELDS: Record<string, string> = {
   openai_compatible_base_url: "Endpoint URL",
   openai_compatible_api_key_env: "API key env var",
   profile_id: "Runs on profile",
-  max_total_latency_ms: "Latency budget (ms)",
+  max_total_latency_ms: "Latency budget",
   journal_retention: "Journal retention",
   n_ctx: "Context window",
 };
@@ -100,6 +92,7 @@ const ACRONYMS: Record<string, string> = {
   Ip: "IP",
   Db: "DB",
   Vad: "VAD",
+  Mir: "MIR",
 };
 
 function title(key: string) {
@@ -111,276 +104,6 @@ function title(key: string) {
     .split(" ")
     .map((word) => ACRONYMS[word] ?? word)
     .join(" ");
-}
-
-/** HS-100 spike — the OS settings idiom: leaves render as rows
- * (text left, compact control right) inside grouped inset lists;
- * nested objects become their own labeled groups. Never a form
- * stack. */
-function SettingsFields({
-  value,
-  path,
-  query,
-  onChange,
-}: {
-  value: JsonRecord;
-  path: string[];
-  query: string;
-  onChange(path: string[], value: unknown): void;
-}) {
-  type Leaf = { key: string; item: unknown; path: string[] };
-  type Group = { label: string; leaves: Leaf[] };
-  // HS-101 round 5 — bespoke components own their complex ideas.
-  if (path.length === 1 && path[0] === "hotkey") {
-    return (
-      <HotkeyCapture
-        value={value}
-        onCommit={(next) => onChange(path, { ...value, ...next })}
-      />
-    );
-  }
-  const groups: Group[] = [];
-  const walk = (node: JsonRecord, nodePath: string[], label: string) => {
-    const leaves: Leaf[] = [];
-    for (const [key, item] of Object.entries(node)) {
-      const nextPath = [...nodePath, key];
-      if (item !== null && typeof item === "object" && !Array.isArray(item)) {
-        if (nextPath.join(".") === "dictation.runtime") {
-          groups.push({
-            label: "Runtime",
-            leaves: [{ key: "__runtime__", item, path: nextPath }],
-          });
-        } else {
-          walk(
-            item as JsonRecord,
-            nextPath,
-            `${label ? label + " · " : ""}${title(key)}`,
-          );
-        }
-      } else if (
-        !query ||
-        `${nextPath.join(" ")}`.toLowerCase().includes(query.toLowerCase())
-      ) {
-        leaves.push({ key, item, path: nextPath });
-      }
-    }
-    if (leaves.length) groups.push({ label, leaves });
-  };
-  walk(value, path, "");
-  return (
-    <>
-      {groups.map((group) => {
-        const runtime = group.leaves.find((leaf) => leaf.key === "__runtime__");
-        if (runtime) {
-          return (
-            <div key="runtime">
-              <h4 className="surface-panel-title">Runtime</h4>
-              <RuntimeDestination
-                value={runtime.item as JsonRecord}
-                onCommit={(next) => onChange(runtime.path, next)}
-              />
-            </div>
-          );
-        }
-        return (
-        <SurfaceGroup
-          key={group.label || "general"}
-          label={group.label || undefined}
-        >
-          {group.leaves.map(({ key, item, path: leafPath }) => {
-            if (Array.isArray(item) && key === "spoken_symbols") {
-              const symbols = item as Array<{
-                spoken?: string;
-                symbol?: string;
-                attach?: string;
-              }>;
-              const updateSymbol = (
-                index: number,
-                patch: Record<string, string>,
-              ) =>
-                onChange(
-                  leafPath,
-                  symbols.map((entry, row) =>
-                    row === index ? { ...entry, ...patch } : entry,
-                  ),
-                );
-              return (
-                <SurfaceSettingRow
-                  key={key}
-                  wide
-                  label="Spoken-symbol dictionary"
-                  description="Say the phrase, type the symbol."
-                  control={
-                    <div className="surface-symbol-editor">
-                      {symbols.map((entry, index) => (
-                        <div className="symbol-row" key={index}>
-                          <TextInput
-                            aria-label={`Spoken phrase ${index + 1}`}
-                            value={entry.spoken ?? ""}
-                            onChange={(event) =>
-                              updateSymbol(index, {
-                                spoken: event.target.value,
-                              })
-                            }
-                            placeholder="arrow"
-                          />
-                          <TextInput
-                            aria-label={`Symbol ${index + 1}`}
-                            value={entry.symbol ?? ""}
-                            onChange={(event) =>
-                              updateSymbol(index, {
-                                symbol: event.target.value,
-                              })
-                            }
-                            placeholder="→"
-                          />
-                          <Select
-                            aria-label={`Attachment ${index + 1}`}
-                            value={entry.attach ?? "none"}
-                            onChange={(event) =>
-                              updateSymbol(index, {
-                                attach: event.target.value,
-                              })
-                            }
-                          >
-                            <option value="none">No attachment</option>
-                            <option value="left">Attach left</option>
-                            <option value="right">Attach right</option>
-                            <option value="both">Attach both</option>
-                          </Select>
-                          <Button
-                            dense
-                            variant="ghost"
-                            onClick={() =>
-                              onChange(
-                                leafPath,
-                                symbols.filter((_, row) => row !== index),
-                              )
-                            }
-                          >
-                            Remove
-                          </Button>
-                        </div>
-                      ))}
-                      <Button
-                        dense
-                        onClick={() =>
-                          onChange(leafPath, [
-                            ...symbols,
-                            { spoken: "", symbol: "", attach: "none" },
-                          ])
-                        }
-                      >
-                        Add spoken symbol
-                      </Button>
-                    </div>
-                  }
-                />
-              );
-            }
-            if (Array.isArray(item))
-              return (
-                <SurfaceSettingRow
-                  key={key}
-                  wide
-                  label={title(key)}
-                  description="Comma-separated list."
-                  control={
-                    <TextInput
-                      aria-label={title(key)}
-                      value={item.join(", ")}
-                      onChange={(event) =>
-                        onChange(
-                          leafPath,
-                          event.target.value
-                            .split(",")
-                            .map((part) => part.trim())
-                            .filter(Boolean),
-                        )
-                      }
-                    />
-                  }
-                />
-              );
-            if (typeof item === "boolean")
-              return (
-                <SurfaceSettingRow
-                  key={key}
-                  label={title(key)}
-                  control={
-                    <SurfaceToggle
-                      label={title(key)}
-                      checked={item}
-                      onChange={(next) => onChange(leafPath, next)}
-                    />
-                  }
-                />
-              );
-            return (
-              <SurfaceSettingRow
-                key={key}
-                label={title(key)}
-                control={
-                  <TextInput
-                    aria-label={title(key)}
-                    type={typeof item === "number" ? "number" : "text"}
-                    value={item === null ? "" : String(item)}
-                    onChange={(event) =>
-                      onChange(
-                        leafPath,
-                        typeof item === "number"
-                          ? Number(event.target.value)
-                          : event.target.value,
-                      )
-                    }
-                  />
-                }
-              />
-            );
-          })}
-        </SurfaceGroup>
-        );
-      })}
-    </>
-  );
-}
-
-/** HS-100 spike — a tiny drawn icon set for settings rows. */
-function SettingGlyph({ name }: { name: string }) {
-  const paths: Record<string, string> = {
-    posture: "M8 1.8 13 3.8v3.4c0 3.2-2.1 5.6-5 6.9-2.9-1.3-5-3.7-5-6.9V3.8Z",
-    secret: "M3.5 7.5h9v5.5h-9Z M5.5 7.5V5.4a2.5 2.5 0 0 1 5 0v2.1",
-    ui: "M3 5h10M3 5v6h10V5M6 8h4",
-    hotkey: "M2.5 4.5h11v7h-11Z M4.5 6.5h1M7.5 6.5h1M10.5 6.5h1M5 9.5h6",
-    model: "M4 12V7m4 5V4m4 8V9",
-    dictation: "M8 2.5a2 2 0 0 1 2 2v3a2 2 0 1 1-4 0v-3a2 2 0 0 1 2-2Z M4.5 7.5a3.5 3.5 0 0 0 7 0M8 11v2.5",
-    wake_word: "M8 2l1.2 3.3L12.5 6.5 9.2 7.7 8 11 6.8 7.7 3.5 6.5 6.8 5.3Z",
-    presence: "M2.5 8s2-3.5 5.5-3.5S13.5 8 13.5 8s-2 3.5-5.5 3.5S2.5 8 2.5 8Z M8 8m-1.5 0a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0-3 0",
-    meeting: "M5.5 6.5a2 2 0 1 0 0-.01M10.5 6.5a2 2 0 1 0 0-.01M2.5 12c0-1.7 1.3-3 3-3s3 1.3 3 3M8.5 12c0-1.7 1.3-3 3-3s3 1.3 3 3",
-    activity: "M2.5 8h2.5l1.5-3.5 2 7L10 8h3.5",
-    cadence: "M8 8V4.5M8 8l2.5 1.5M8 2.5A5.5 5.5 0 1 0 8 13.5 5.5 5.5 0 1 0 8 2.5Z",
-    commands: "M3 4.5l3 3.5-3 3.5M8 11.5h5",
-    device: "M4.5 2.5h7v11h-7Z M7 11.5h2",
-    mesh: "M4 4.5a1.5 1.5 0 1 0 0-.01M12 4.5a1.5 1.5 0 1 0 0-.01M8 11.5a1.5 1.5 0 1 0 0-.01M5 5.5l2 4.5M11 5.5l-2 4.5M5.5 4.5h5",
-  };
-  return (
-    <svg
-      viewBox="0 0 16 16"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path
-        d={
-          paths[name] ??
-          "M8 8m-2.6 0a2.6 2.6 0 1 0 5.2 0a2.6 2.6 0 1 0-5.2 0"
-        }
-      />
-    </svg>
-  );
 }
 
 const SETTINGS_WINGS = [
@@ -407,55 +130,36 @@ function SettingsFace({ hero, scope }: CoreProps) {
       : null;
   const resource = useResource<JsonRecord>("/api/settings", {});
   const authority = useResource<JsonRecord>("/api/authority/policy", {});
-  const [active, setActive] = useState("");
-  const [query, setQuery] = useState("");
+  // null = the drawer face; a module id = that module owns the body.
+  const [moduleId, setModuleId] = useState<string | null>(
+    integrationSubject ? "integrations" : null,
+  );
+  const [highlight, setHighlight] = useState("");
   const [saving, setSaving] = useState(false);
-  const [secretDrafts, setSecretDrafts] = useState<Record<string, string>>({});
+  const [writtenAt, setWrittenAt] = useState("");
+  const [refusal, setRefusal] = useState("");
   const [secretBusy, setSecretBusy] = useState("");
   const [authorityBusy, setAuthorityBusy] = useState(false);
-  const [message, setMessage] = useState<{
-    error?: boolean;
-    text: string;
-  } | null>(null);
-  const sections = useMemo(
-    () =>
-      Object.keys(resource.data)
-        .filter(
-          (key) =>
-            !key.startsWith("_") &&
-            resource.data[key] &&
-            typeof resource.data[key] === "object" &&
-            !Array.isArray(resource.data[key]),
-        )
-        .sort(
-          (a, b) =>
-            (SECTION_ORDER.indexOf(a) < 0 ? 99 : SECTION_ORDER.indexOf(a)) -
-            (SECTION_ORDER.indexOf(b) < 0 ? 99 : SECTION_ORDER.indexOf(b)),
-        ),
-    [resource.data],
-  );
-  const selected =
-    active && sections.includes(active) ? active : (sections[0] ?? "");
   const secrets = (resource.data._secrets ?? {}) as Record<string, SecretState>;
 
   /* HS-101 round 3 — the configuring archetype saves ON CHANGE
-     (Article VII: no ceremony): every edit lands debounced; the verb
-     bar whispers Saving…/Saved instead of wearing buttons. */
-  const [savedTick, setSavedTick] = useState(false);
+     (Article VII: no ceremony): every edit lands debounced. HS-111-01:
+     the receipt is the footer status bar (USING · WRITTEN hh:mm:ss);
+     a refusal replaces it in the danger tone until the next edit. */
   const saveTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
   useEffect(() => () => clearTimeout(saveTimer.current), []);
   const save = async (payload?: JsonRecord) => {
     setSaving(true);
-    setMessage(null);
+    setRefusal("");
     try {
       const result = await apiFetch<{ settings?: JsonRecord }>(
         "/api/settings",
         { method: "PUT", json: payload ?? resource.data },
       );
       resource.setData(result.settings ?? payload ?? resource.data);
-      setSavedTick(true);
+      setWrittenAt(new Date().toTimeString().slice(0, 8));
     } catch (error) {
-      setMessage({ error: true, text: readableError(error) });
+      setRefusal(readableError(error));
     } finally {
       setSaving(false);
     }
@@ -468,7 +172,7 @@ function SettingsFace({ hero, scope }: CoreProps) {
       else cursor = cursor[part] as JsonRecord;
     });
     resource.setData(draft);
-    setMessage(null);
+    setRefusal("");
     clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(() => void save(draft), 700);
   };
@@ -476,13 +180,12 @@ function SettingsFace({ hero, scope }: CoreProps) {
   const changeSecret = async (
     secretId: string,
     action: "replace" | "rotate" | "delete",
+    value?: string,
   ) => {
     setSecretBusy(secretId);
-    setMessage(null);
+    setRefusal("");
     try {
       if (action === "replace") {
-        const value = secretDrafts[secretId]?.trim() ?? "";
-        if (!value) throw new Error("Enter a replacement value first.");
         await apiFetch(`/api/settings/secrets/${secretId}`, {
           method: "PUT",
           json: { value },
@@ -496,19 +199,10 @@ function SettingsFace({ hero, scope }: CoreProps) {
           method: "DELETE",
         });
       }
-      setSecretDrafts((drafts) => ({ ...drafts, [secretId]: "" }));
       await resource.reload();
-      setMessage({
-        text: `${SECRET_LABELS[secretId] ?? title(secretId)} ${
-          action === "delete"
-            ? "deleted"
-            : action === "rotate"
-              ? "rotated"
-              : "replaced"
-        }. The value was not returned by the hub.`,
-      });
+      setWrittenAt(new Date().toTimeString().slice(0, 8));
     } catch (error) {
-      setMessage({ error: true, text: readableError(error) });
+      setRefusal(readableError(error));
     } finally {
       setSecretBusy("");
     }
@@ -516,222 +210,648 @@ function SettingsFace({ hero, scope }: CoreProps) {
 
   const setControlMode = async (controlMode: string) => {
     setAuthorityBusy(true);
-    setMessage(null);
+    setRefusal("");
     try {
       const result = await apiFetch<JsonRecord>("/api/authority/control-mode", {
         method: "PUT",
         json: { control_mode: controlMode },
       });
       authority.setData({ ...authority.data, ...result });
-      const revoked = Number(result.revoked_grants ?? 0);
-      setMessage({
-        text: `Control posture is now ${controlModeLabel(controlMode)} for future operations.${revoked ? ` ${revoked} active ${revoked === 1 ? "grant was" : "grants were"} revoked.` : ""}`,
-      });
+      setWrittenAt(new Date().toTimeString().slice(0, 8));
     } catch (error) {
-      setMessage({ error: true, text: readableError(error) });
+      setRefusal(readableError(error));
     } finally {
       setAuthorityBusy(false);
     }
   };
 
-  // HS-98-05: the Integrations alias lands on its section — the
-  // credentials (destination) block scrolls into view when scoped.
-  const credentialsRef = useRef<HTMLDivElement>(null);
+  // HS-98-05 / HS-111-01: the `integration:` scope alias opens the
+  // Integrations module directly.
   useEffect(() => {
-    if (!integrationSubject || resource.loading) return;
-    credentialsRef.current?.scrollIntoView({ block: "start" });
-  }, [integrationSubject, resource.loading]);
+    if (integrationSubject) setModuleId("integrations");
+  }, [integrationSubject]);
 
-  const verbs = (
-    <span
-      className={"settings-save-whisper" + (saving ? " is-saving" : "")}
-      role="status"
-    >
-      {saving ? "Saving…" : savedTick ? "Saved" : ""}
-    </span>
+  /* ── the deep setting index for the drawer filter ── */
+  const deepIndex = useMemo<DeepHit[]>(() => {
+    const hits: DeepHit[] = [];
+    const walk = (node: JsonRecord, path: string[]) => {
+      for (const [key, item] of Object.entries(node)) {
+        const nextPath = [...path, key];
+        const owner =
+          nextPath[0] === "dictation" && nextPath[1] === "runtime"
+            ? "models"
+            : moduleForKey(nextPath[0]);
+        if (item !== null && typeof item === "object" && !Array.isArray(item)) {
+          walk(item as JsonRecord, nextPath);
+        } else {
+          hits.push({ module: owner, label: title(key), path: nextPath });
+        }
+      }
+    };
+    for (const key of Object.keys(resource.data)) {
+      if (key.startsWith("_") || key === "config_version" || key === "control_mode")
+        continue;
+      const value = resource.data[key];
+      if (value && typeof value === "object" && !Array.isArray(value))
+        walk(value as JsonRecord, [key]);
+    }
+    return hits;
+  }, [resource.data]);
+
+  const openModule = (id: string, highlightPath?: string) => {
+    setModuleId(id);
+    setHighlight(highlightPath ?? "");
+  };
+
+  /* ── gadget bindings (plain function helpers — never components
+        defined in render, which would remount and drop focus) ── */
+  const val = (path: string[]): unknown =>
+    path.reduce<unknown>(
+      (acc, part) =>
+        acc && typeof acc === "object"
+          ? (acc as JsonRecord)[part]
+          : undefined,
+      resource.data,
+    );
+  const hl = (path: string[]) => highlight === path.join(".");
+  const check = (path: string[], label: string, fact?: string) => (
+    <GadgetRow key={path.join(".")} label={label} fact={fact} highlight={hl(path)}>
+      <CheckGadget
+        label={label}
+        checked={Boolean(val(path))}
+        onChange={(next) => update(path, next)}
+      />
+    </GadgetRow>
   );
+  const str = (
+    path: string[],
+    label: string,
+    opts?: { placeholder?: string; fact?: string },
+  ) => (
+    <GadgetRow
+      key={path.join(".")}
+      label={label}
+      fact={opts?.fact}
+      highlight={hl(path)}
+    >
+      <StringGadget
+        label={label}
+        value={val(path) == null ? "" : String(val(path))}
+        placeholder={opts?.placeholder}
+        onChange={(next) => update(path, next || null)}
+      />
+    </GadgetRow>
+  );
+  const num = (
+    path: string[],
+    label: string,
+    opts?: { unit?: string; step?: number; min?: number; max?: number },
+  ) => (
+    <GadgetRow key={path.join(".")} label={label} highlight={hl(path)}>
+      <StepperGadget
+        label={label}
+        value={Number(val(path) ?? 0)}
+        unit={opts?.unit}
+        step={opts?.step}
+        min={opts?.min}
+        max={opts?.max}
+        onChange={(next) => update(path, next)}
+      />
+    </GadgetRow>
+  );
+  const cyc = (
+    path: string[],
+    label: string,
+    options: CycleOption[],
+  ) => (
+    <GadgetRow key={path.join(".")} label={label} highlight={hl(path)}>
+      <CycleGadget
+        label={label}
+        value={val(path) == null ? "" : String(val(path))}
+        options={options}
+        onChange={(next) => update(path, next)}
+      />
+    </GadgetRow>
+  );
+  const prop = (
+    path: string[],
+    label: string,
+    opts?: { min?: number; max?: number; step?: number; fact?: string },
+  ) => (
+    <GadgetRow
+      key={path.join(".")}
+      label={label}
+      fact={opts?.fact}
+      highlight={hl(path)}
+    >
+      <PropGadget
+        label={label}
+        value={Number(val(path) ?? opts?.min ?? 0)}
+        min={opts?.min}
+        max={opts?.max}
+        step={opts?.step}
+        onChange={(next) => update(path, next)}
+      />
+    </GadgetRow>
+  );
+  const csv = (path: string[], label: string, fact = "comma-separated") => (
+    <GadgetRow key={path.join(".")} label={label} fact={fact} highlight={hl(path)}>
+      <StringGadget
+        label={label}
+        value={Array.isArray(val(path)) ? (val(path) as unknown[]).join(", ") : ""}
+        onChange={(next) =>
+          update(
+            path,
+            next
+              .split(",")
+              .map((part) => part.trim())
+              .filter(Boolean),
+          )
+        }
+      />
+    </GadgetRow>
+  );
+
+  /* ── the generic walker: survives ONLY inside System (§3.2) ── */
+  const walkerRows = (node: JsonRecord, path: string[]): ReactNode[] =>
+    Object.entries(node).map(([key, item]) => {
+      const nextPath = [...path, key];
+      if (item !== null && typeof item === "object" && !Array.isArray(item))
+        return (
+          <GadgetGroup key={nextPath.join(".")} label={title(key)}>
+            {walkerRows(item as JsonRecord, nextPath)}
+          </GadgetGroup>
+        );
+      if (typeof item === "boolean") return check(nextPath, title(key));
+      if (typeof item === "number") return num(nextPath, title(key));
+      if (Array.isArray(item)) return csv(nextPath, title(key));
+      return str(nextPath, title(key));
+    });
+
+  /* ── the authored modules (audit §3.2): the wire never decides ── */
+  const renderModule = (id: string): ReactNode => {
+    const data = resource.data;
+    switch (id) {
+      case "appearance":
+        return (
+          <GadgetGroup>
+            {check(["ui", "show_audio_meter"], "Show audio meter")}
+            {num(["ui", "history_lines"], "History lines", {
+              unit: "lines",
+              min: 1,
+            })}
+            {cyc(["ui", "theme"], "Theme", THEME_OPTIONS)}
+          </GadgetGroup>
+        );
+      case "hotkey":
+        return (
+          <HotkeyCapture
+            value={(data.hotkey ?? {}) as JsonRecord}
+            onCommit={(next) =>
+              update(["hotkey"], { ...(data.hotkey as JsonRecord), ...next })
+            }
+            onRefuse={setRefusal}
+          />
+        );
+      case "transcription":
+        return (
+          <GadgetGroup>
+            {cyc(["model", "name"], "Model size", WHISPER_MODEL_OPTIONS)}
+            {cyc(["model", "backend"], "Backend", TRANSCRIBE_BACKEND_OPTIONS)}
+            {cyc(["model", "language"], "Language", LANGUAGE_OPTIONS)}
+            {check(["model", "warm_on_start"], "Warm on start")}
+            {num(["model", "transcribe_timeout_seconds"], "Transcribe timeout", {
+              unit: "s",
+              min: 5,
+              step: 5,
+            })}
+          </GadgetGroup>
+        );
+      case "voice-typing": {
+        const symbols = (val(["dictation", "spoken_symbols"]) ?? []) as Array<{
+          spoken?: string;
+          symbol?: string;
+          attach?: string;
+        }>;
+        const symbolsPath = ["dictation", "spoken_symbols"];
+        const patchSymbol = (index: number, patch: Record<string, string>) =>
+          update(
+            symbolsPath,
+            symbols.map((entry, row) =>
+              row === index ? { ...entry, ...patch } : entry,
+            ),
+          );
+        const macroItems = (val(["dictation", "macros", "items"]) ??
+          []) as unknown[];
+        return (
+          <>
+            <GadgetGroup label="Pipeline">
+              {check(["dictation", "pipeline", "enabled"], "Enabled")}
+              {csv(["dictation", "pipeline", "stages"], "Stages")}
+              {num(
+                ["dictation", "pipeline", "max_total_latency_ms"],
+                "Latency budget",
+                { unit: "ms", min: 0, step: 250 },
+              )}
+              {str(
+                ["dictation", "pipeline", "target_profile_override"],
+                "Target profile override",
+              )}
+              {num(["dictation", "pipeline", "rewrite_passes"], "Rewrite passes", {
+                min: 0,
+                max: 5,
+              })}
+              {check(
+                ["dictation", "pipeline", "corrections_enabled"],
+                "Corrections",
+              )}
+              {check(
+                ["dictation", "pipeline", "target_detect_llm_enabled"],
+                "LLM target detect",
+              )}
+              {prop(
+                ["dictation", "pipeline", "target_detect_llm_below"],
+                "Detect below",
+                { min: 0, max: 1, step: 0.05 },
+              )}
+              {check(["dictation", "pipeline", "journal_enabled"], "Journal")}
+              {num(
+                ["dictation", "pipeline", "journal_retention"],
+                "Journal retention",
+                { unit: "entries", min: 0, step: 50 },
+              )}
+            </GadgetGroup>
+            <GadgetGroup label="Typing">
+              {check(["dictation", "preview_before_type"], "Preview before type")}
+              {check(
+                ["dictation", "macros", "enabled"],
+                "Voice macros",
+                `${macroItems.length} configured`,
+              )}
+            </GadgetGroup>
+            <GadgetGroup label="Spoken symbols">
+              <GadgetRow
+                wide
+                label="Dictionary"
+                highlight={hl(symbolsPath)}
+              >
+                <GadgetTable
+                  head={["SPOKEN", "SYMBOL", "ATTACH"]}
+                  onDelete={(index) =>
+                    update(
+                      symbolsPath,
+                      symbols.filter((_, row) => row !== index),
+                    )
+                  }
+                  onAdd={() =>
+                    update(symbolsPath, [
+                      ...symbols,
+                      { spoken: "", symbol: "", attach: "none" },
+                    ])
+                  }
+                  rows={symbols.map((entry, index) => [
+                    <StringGadget
+                      key="spoken"
+                      label={`Spoken phrase ${index + 1}`}
+                      value={entry.spoken ?? ""}
+                      placeholder="arrow"
+                      onChange={(next) => patchSymbol(index, { spoken: next })}
+                    />,
+                    <StringGadget
+                      key="symbol"
+                      label={`Symbol ${index + 1}`}
+                      value={entry.symbol ?? ""}
+                      placeholder="→"
+                      mic={false}
+                      onChange={(next) => patchSymbol(index, { symbol: next })}
+                    />,
+                    <CycleGadget
+                      key="attach"
+                      label={`Attachment ${index + 1}`}
+                      value={entry.attach ?? "none"}
+                      options={[
+                        { value: "none" },
+                        { value: "left" },
+                        { value: "right" },
+                        { value: "both" },
+                      ]}
+                      onChange={(next) => patchSymbol(index, { attach: next })}
+                    />,
+                  ])}
+                />
+              </GadgetRow>
+            </GadgetGroup>
+          </>
+        );
+      }
+      case "wake-word":
+        return (
+          <GadgetGroup>
+            {check(["wake_word", "enabled"], "Enabled")}
+            {str(["wake_word", "model"], "Model", {
+              placeholder: "hey_jarvis",
+            })}
+            {prop(["wake_word", "threshold"], "Threshold", {
+              min: 0,
+              max: 1,
+              step: 0.05,
+            })}
+            {num(["wake_word", "armed_window_seconds"], "Armed window", {
+              unit: "s",
+              min: 1,
+              step: 1,
+            })}
+            {cyc(["wake_word", "action"], "Action", WAKE_ACTION_OPTIONS)}
+          </GadgetGroup>
+        );
+      case "presence":
+        return (
+          <GadgetGroup>
+            {check(["presence", "enabled"], "Presence")}
+            {check(["presence", "mascot"], "Mascot")}
+          </GadgetGroup>
+        );
+      case "meetings":
+        return (
+          <>
+            <GadgetGroup label="Capture">
+              {str(["meeting", "mic_device"], "Mic device", {
+                fact: "device name",
+              })}
+              {str(["meeting", "system_audio_device"], "System audio device", {
+                fact: "device name",
+              })}
+              {str(["meeting", "mic_label"], "Mic label")}
+              {str(["meeting", "remote_label"], "Remote label")}
+              {check(["meeting", "diarization_enabled"], "Diarization")}
+              {check(["meeting", "diarize_mic"], "Diarize mic")}
+              {check(
+                ["meeting", "cross_meeting_recognition"],
+                "Cross-meeting recognition",
+              )}
+              {prop(["meeting", "similarity_threshold"], "Similarity", {
+                min: 0,
+                max: 1,
+                step: 0.05,
+              })}
+            </GadgetGroup>
+            <GadgetGroup label="Export">
+              {check(["meeting", "auto_export"], "Auto export")}
+              {cyc(["meeting", "export_format"], "Format", EXPORT_FORMAT_OPTIONS)}
+              {check(["meeting", "web_auto_open"], "Open on web")}
+            </GadgetGroup>
+            <GadgetGroup label="Intelligence">
+              {check(["meeting", "intel_enabled"], "Enabled")}
+              {cyc(["meeting", "intel_provider"], "Provider", INTEL_PROVIDER_OPTIONS)}
+              {str(["meeting", "intel_realtime_model"], "Realtime model")}
+              {str(["meeting", "intel_summary_model"], "Summary model")}
+              {str(["meeting", "intel_cloud_model"], "Cloud model")}
+              {str(["meeting", "intel_cloud_base_url"], "Cloud endpoint")}
+              {str(["meeting", "intel_cloud_api_key_env"], "API key env var")}
+              {check(["meeting", "intel_cloud_store"], "Cloud store")}
+              {str(["meeting", "intel_profile_id"], "Runs on profile")}
+            </GadgetGroup>
+            <GadgetGroup label="Deferred queue">
+              {check(["meeting", "intel_deferred_enabled"], "Enabled")}
+              {num(["meeting", "intel_queue_poll_seconds"], "Poll", {
+                unit: "s",
+                min: 10,
+                step: 10,
+              })}
+              {num(["meeting", "intel_retry_base_seconds"], "Retry base", {
+                unit: "s",
+                min: 1,
+                step: 5,
+              })}
+              {num(["meeting", "intel_retry_max_seconds"], "Retry max", {
+                unit: "s",
+                min: 1,
+                step: 60,
+              })}
+              {num(["meeting", "intel_retry_max_attempts"], "Retry attempts", {
+                min: 0,
+              })}
+              {num(
+                ["meeting", "intel_retry_failure_alert_percent"],
+                "Failure alert",
+                { unit: "%", min: 0, max: 100, step: 5 },
+              )}
+              {num(
+                ["meeting", "intel_retry_failure_hysteresis_minutes"],
+                "Alert hysteresis",
+                { unit: "min", min: 0 },
+              )}
+              {str(
+                ["meeting", "intel_retry_failure_webhook_header_name"],
+                "Webhook header",
+              )}
+            </GadgetGroup>
+            <GadgetGroup label="Routing">
+              {check(["meeting", "mir_enabled"], "Multi-intent routing")}
+              {cyc(["meeting", "mir_profile"], "MIR profile", MIR_PROFILE_OPTIONS)}
+              {cyc(
+                ["meeting", "plugin_profile"],
+                "Plugin profile",
+                MIR_PROFILE_OPTIONS,
+              )}
+              {check(["meeting", "intent_router_enabled"], "Intent router")}
+              {num(["meeting", "intent_window_seconds"], "Intent window", {
+                unit: "s",
+                min: 10,
+                step: 10,
+              })}
+              {num(["meeting", "intent_step_seconds"], "Intent step", {
+                unit: "s",
+                min: 5,
+                step: 5,
+              })}
+              {prop(["meeting", "intent_score_threshold"], "Score threshold", {
+                min: 0,
+                max: 1,
+                step: 0.05,
+              })}
+              {num(
+                ["meeting", "intent_hysteresis_windows"],
+                "Hysteresis windows",
+                { min: 0, max: 10 },
+              )}
+              {check(
+                ["meeting", "intent_segment_probe_enabled"],
+                "Segment probe",
+              )}
+              {csv(["meeting", "disabled_plugins"], "Disabled plugins")}
+            </GadgetGroup>
+            <GadgetGroup label="Actuators">
+              {check(["meeting", "allow_actuators"], "Allow actuators")}
+              {csv(["meeting", "allowed_actuators"], "Allowed actuators")}
+              {csv(["meeting", "webhook_allowed_hosts"], "Webhook hosts")}
+              {str(["meeting", "companion_github_repo"], "GitHub repo", {
+                placeholder: "owner/repo",
+              })}
+            </GadgetGroup>
+          </>
+        );
+      case "cadence":
+        return (
+          <>
+            <GadgetGroup label="Cadence">
+              {check(["cadence", "enabled"], "Enabled")}
+              {cyc(["cadence", "pressure"], "Pressure", CADENCE_PRESSURE_OPTIONS)}
+              {check(["cadence", "use_llm"], "Use LLM")}
+              {num(["cadence", "tick_interval_seconds"], "Tick interval", {
+                unit: "s",
+                min: 30,
+                step: 30,
+              })}
+              {num(["cadence", "quiet_hours_start"], "Quiet from", {
+                unit: "h",
+                min: 0,
+                max: 23,
+              })}
+              {num(["cadence", "quiet_hours_end"], "Quiet until", {
+                unit: "h",
+                min: 0,
+                max: 23,
+              })}
+              {num(["cadence", "max_nudges_per_day"], "Max nudges", {
+                unit: "/day",
+                min: 0,
+              })}
+            </GadgetGroup>
+            <GadgetGroup label="Telegram">
+              {check(["cadence_telegram", "enabled"], "Enabled")}
+              {csv(["cadence_telegram", "allowed_chat_ids"], "Allowed chats")}
+            </GadgetGroup>
+          </>
+        );
+      case "devices": {
+        const device = (data.device ?? {}) as JsonRecord;
+        return (
+          <>
+            <GadgetGroup label="Mesh">
+              {str(["mesh", "device_name"], "Device name")}
+            </GadgetGroup>
+            {Object.keys(device).length ? (
+              <GadgetGroup label="Device">
+                {walkerRows(device, ["device"])}
+              </GadgetGroup>
+            ) : null}
+          </>
+        );
+      }
+      case "delivery":
+        // No delivery keys live under /api/settings today: the module
+        // states the fact and hands over to the Delivery program.
+        return (
+          <div className="prefs-elsewhere">
+            <span className="prefs-elsewhere-fact">CONFIG LIVES IN DELIVERY</span>
+            <Button dense onClick={() => activateLauncher("delivery-board")}>
+              Open Delivery
+            </Button>
+          </div>
+        );
+      case "models":
+        return (
+          <RuntimeDestination
+            value={(val(["dictation", "runtime"]) ?? {}) as JsonRecord}
+            onCommit={(next) => update(["dictation", "runtime"], next)}
+          />
+        );
+      case "integrations":
+        return (
+          <GadgetGroup label="Credentials">
+            <div className="prefs-egress-line">
+              <EgressChip />
+            </div>
+            {Object.entries(secrets).map(([secretId, state]) => (
+              <SecretRow
+                key={secretId}
+                label={SECRET_LABELS[secretId] ?? title(secretId)}
+                configured={Boolean(state.configured)}
+                destination={state.destination}
+                busy={secretBusy === secretId}
+                rotatable={ROTATABLE_SECRETS.has(secretId)}
+                onReplace={(value) =>
+                  void changeSecret(secretId, "replace", value)
+                }
+                onRotate={() => void changeSecret(secretId, "rotate")}
+                onDelete={() => void changeSecret(secretId, "delete")}
+              />
+            ))}
+          </GadgetGroup>
+        );
+      case "system": {
+        const claimed = new Set(PREF_MODULES.flatMap((module) => module.keys));
+        const systemKeys = Object.keys(data).filter(
+          (key) =>
+            !key.startsWith("_") &&
+            key !== "config_version" &&
+            key !== "control_mode" &&
+            !claimed.has(key) &&
+            data[key] &&
+            typeof data[key] === "object" &&
+            !Array.isArray(data[key]),
+        );
+        if (!systemKeys.length)
+          return (
+            <div className="prefs-elsewhere">
+              <span className="prefs-elsewhere-fact">NO UNMAPPED KEYS</span>
+            </div>
+          );
+        return systemKeys.map((key) => (
+          <GadgetGroup key={key} label={title(key)}>
+            {walkerRows(data[key] as JsonRecord, [key])}
+          </GadgetGroup>
+        ));
+      }
+      default:
+        return null;
+    }
+  };
+
+  const module = moduleId
+    ? PREF_MODULES.find((entry) => entry.id === moduleId)
+    : null;
+  const receipt = { saving, writtenAt, refusal };
   return (
     <>
-      {hero ? hero(verbs) : <SurfaceVerbs>{verbs}</SurfaceVerbs>}
-      {integrationSubject ? (
-        <p className="desk-scope-chip">
-          <span aria-hidden="true">⇄</span> Integration destinations
-        </p>
-      ) : null}
+      {hero ? hero(null) : null}
       <SurfaceState
         loading={resource.loading}
         error={resource.error}
         onRetry={() => void resource.reload()}
       >
-        <SurfaceSection label="Control posture">
-          <SurfaceGroup>
-            <SurfaceSettingRow
-              icon={<SettingGlyph name="posture" />}
-              label="Preset"
-              description={
-                <PostureNote
-                  mode={String(authority.data.control_mode ?? "neutral")}
-                  describe
-                />
-              }
-              control={
-                <Select
-                  aria-label="Control posture preset"
-                  value={String(authority.data.control_mode ?? "neutral")}
-                  disabled={authorityBusy || authority.loading}
-                  onChange={(event) => void setControlMode(event.target.value)}
-                >
-                  {CONTROL_MODES.map((mode) => (
-                    <option key={mode} value={mode}>
-                      {controlModeLabel(mode)}
-                    </option>
-                  ))}
-                </Select>
-              }
-            />
-          </SurfaceGroup>
-          <Disclosure title="Policy details">
-            <p className="surface-boundary-note">
-              Hard invariants never change: authentication, secret custody,
-              destination and payload binding, pane identity, receipts.
-            </p>
-            <p className="surface-boundary-note">
-              {String(authority.data.source ?? "config")} ·{" "}
-              {String(authority.data.policy_version ?? "operation policy")} ·{" "}
-              {Array.isArray(authority.data.precedence)
-                ? authority.data.precedence.join(" → ")
-                : "hard invariants → grants → mode → feature default"}
-            </p>
-          </Disclosure>
-        </SurfaceSection>
-        <SurfaceSection
-          label="Hub configuration"
-          actions={
-            <TextInput
-              aria-label="Find a setting"
-              type="search"
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder="Find a setting"
-            />
-          }
-        >
-          {message ? (
-            <InlineMessage tone={message.error ? "error" : "success"}>
-              {message.text}
-            </InlineMessage>
-          ) : null}
-          {query ? (
-            sections.map((section) => (
-              <section key={section} className="settings-section">
-                <h2>{FRIENDLY[section] ?? title(section)}</h2>
-                <SettingsFields
-                  value={resource.data[section] as JsonRecord}
-                  path={[section]}
-                  query={query}
-                  onChange={update}
-                />
-              </section>
-            ))
-          ) : selected ? (
-            /* HS-99-06 — the settings archetype: rail + panel at a wide
-               window; the strip returns when narrow. */
-            <div className="surface-railed">
-              <Tabs
-                label="Settings sections"
-                active={selected}
-                onChange={setActive}
-                tabs={sections.map((id) => ({
-                  id,
-                  label: (
-                    <>
-                      <SettingGlyph name={id} />
-                      {FRIENDLY[id] ?? title(id)}
-                    </>
-                  ),
-                }))}
-              />
-              <div className="surface-railed-panel">
-                <h2 className="surface-panel-title">
-                  {FRIENDLY[selected] ?? title(selected)}
-                </h2>
-                <SettingsFields
-                  value={resource.data[selected] as JsonRecord}
-                  path={[selected]}
-                  query=""
-                  onChange={update}
-                />
-              </div>
-            </div>
-          ) : (
-            <InlineMessage tone="warning">
-              No settings were returned by the hub.
-            </InlineMessage>
-          )}
-        </SurfaceSection>
-        <div ref={credentialsRef}>
-          <SurfaceSection label="Credentials">
-            <p className="surface-boundary-note">
-              Values stay on this hub. Reads show configured or not, never
-              the value.
-            </p>
-            <SurfaceGroup>
-              {Object.entries(secrets).map(([secretId, state]) => (
-                <SurfaceSettingRow
-                  key={secretId}
-                  icon={<SettingGlyph name="secret" />}
-                  label={SECRET_LABELS[secretId] ?? title(secretId)}
-                  description={
-                    (state.configured ? "Configured" : "Not configured") +
-                    (state.destination ? ` · ${state.destination}` : "")
-                  }
-                  control={
-                    <span className="surface-actions">
-                      <TextInput
-                        aria-label={`Replacement ${SECRET_LABELS[secretId] ?? title(secretId)}`}
-                        type="password"
-                        autoComplete="new-password"
-                        placeholder="Replace…"
-                        value={secretDrafts[secretId] ?? ""}
-                        onChange={(event) =>
-                          setSecretDrafts((drafts) => ({
-                            ...drafts,
-                            [secretId]: event.target.value,
-                          }))
-                        }
-                      />
-                      <Button
-                        dense
-                        loading={secretBusy === secretId}
-                        disabled={!secretDrafts[secretId]?.trim()}
-                        onClick={() => void changeSecret(secretId, "replace")}
-                      >
-                        Replace
-                      </Button>
-                      {ROTATABLE_SECRETS.has(secretId) ? (
-                        <ConfirmVerb
-                          label="Rotate"
-                          confirmLabel="Rotate?"
-                          busy={secretBusy === secretId}
-                          onConfirm={() => void changeSecret(secretId, "rotate")}
-                        />
-                      ) : null}
-                      {state.configured ? (
-                        <ConfirmVerb
-                          label="Delete"
-                          confirmLabel="Delete?"
-                          busy={secretBusy === secretId}
-                          onConfirm={() => void changeSecret(secretId, "delete")}
-                        />
-                      ) : null}
-                    </span>
-                  }
-                />
-              ))}
-            </SurfaceGroup>
-          </SurfaceSection>
-        </div>
+        {module ? (
+          <div className="prefs-module">
+            <h2 className="gadget-pane-title">{module.label}</h2>
+            {renderModule(module.id)}
+          </div>
+        ) : (
+          <PrefsFace
+            hits={deepIndex}
+            onOpen={openModule}
+            posture={String(authority.data.control_mode ?? "neutral")}
+            postureBusy={authorityBusy || authority.loading}
+            onPosture={(mode) => void setControlMode(mode)}
+            precedence={
+              Array.isArray(authority.data.precedence)
+                ? (authority.data.precedence as string[])
+                : []
+            }
+          />
+        )}
       </SurfaceState>
+      <PrefStatusBar
+        onBack={
+          module
+            ? () => {
+                setModuleId(null);
+                setHighlight("");
+              }
+            : undefined
+        }
+        receipt={receipt}
+      />
     </>
   );
 }

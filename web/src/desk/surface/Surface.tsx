@@ -12,6 +12,7 @@ import {
   type ReactNode,
 } from "react";
 import { Button } from "../../components/signal/Signal";
+import { CheckGadget } from "./gadgets";
 import { humanTime, presentValue } from "./format";
 import "./surface.css";
 
@@ -348,7 +349,9 @@ export function SurfaceSettingRow({
   );
 }
 
-/** A bare switch for row-right placement (the row carries the label). */
+/** A bare boolean for row-right placement (the row carries the label).
+ * HS-111-01: the sliding toggle species is dead — this IS the checkbox
+ * gadget, everywhere (audit §3.3/§4 blast radius). */
 export function SurfaceToggle({
   label,
   checked,
@@ -361,19 +364,12 @@ export function SurfaceToggle({
   disabled?: boolean;
 }) {
   return (
-    <label className="signal-switch surface-toggle">
-      <input
-        type="checkbox"
-        role="switch"
-        aria-label={label}
-        checked={checked}
-        disabled={disabled}
-        onChange={(event) => onChange(event.target.checked)}
-      />
-      <span className="signal-switch-track" aria-hidden="true">
-        <span />
-      </span>
-    </label>
+    <CheckGadget
+      label={label}
+      checked={checked}
+      onChange={onChange}
+      disabled={disabled}
+    />
   );
 }
 
