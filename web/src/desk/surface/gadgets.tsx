@@ -346,16 +346,20 @@ export function GadgetTable({
   onDelete,
   onAdd,
   addLabel = "+ ADD",
+  verbs,
 }: {
   head: string[];
   rows: ReactNode[][];
   onDelete?(index: number): void;
   onAdd?(): void;
   addLabel?: string;
+  /** HS-111-02 — the row-verbs slot: renders in the trailing cell in
+   * place of the bare × (an arming FORGET?, a Replace…). */
+  verbs?(index: number): ReactNode;
 }) {
   const cols = { "--gadget-cols": head.length } as CSSProperties;
   return (
-    <div className="gadget-table" style={cols}>
+    <div className="gadget-table" style={cols} data-verbs={verbs ? "" : undefined}>
       <div className="gadget-table-head">
         {head.map((column) => (
           <span key={column}>{column}</span>
@@ -369,7 +373,9 @@ export function GadgetTable({
               {cell}
             </span>
           ))}
-          {onDelete ? (
+          {verbs ? (
+            <span className="gadget-table-verbs">{verbs(index)}</span>
+          ) : onDelete ? (
             <button
               type="button"
               className="gadget-x"
@@ -390,6 +396,112 @@ export function GadgetTable({
       ) : null}
     </div>
   );
+}
+
+/* ── LedMeter: the sampler's segmented level meter (audit §3.5) ──
+   Flat segment fills in a sunken track, dark at rest; `scanning`
+   plays one walking segment (the tape is winding). Never color-only:
+   the mono axis label sits with it. No gradients, no glow. */
+
+export function LedMeter({
+  label,
+  value,
+  segments = 12,
+  scanning,
+}: {
+  label: string;
+  /** 0..1 — how many segments light. */
+  value: number;
+  segments?: number;
+  /** Busy posture: one walking segment instead of a level. */
+  scanning?: boolean;
+}) {
+  const clamped = Math.max(0, Math.min(1, Number.isFinite(value) ? value : 0));
+  const lit = scanning ? 0 : Math.round(clamped * segments);
+  return (
+    <span
+      className="gadget-ledmeter"
+      role="meter"
+      aria-label={label}
+      aria-valuemin={0}
+      aria-valuemax={1}
+      aria-valuenow={scanning ? undefined : clamped}
+      aria-valuetext={scanning ? "scanning" : undefined}
+      data-scanning={scanning || undefined}
+    >
+      <span className="gadget-ledmeter-label">{label}</span>
+      <span className="gadget-ledmeter-track" aria-hidden="true">
+        {Array.from({ length: segments }, (_, index) => (
+          <span
+            key={index}
+            className="gadget-ledmeter-seg"
+            data-lit={index < lit || undefined}
+            data-hot={index < lit && (index + 1) / segments > 0.8 ? "" : undefined}
+            style={{ "--seg-i": index } as CSSProperties}
+          />
+        ))}
+      </span>
+    </span>
+  );
+}
+
+/* ── LampGadget: the square lamp + its mono axis label as ONE species
+   (never color-only by construction) ── */
+
+export function LampGadget({
+  label,
+  on,
+  tone = "ok",
+}: {
+  label: string;
+  on: boolean;
+  tone?: "ok" | "warn";
+}) {
+  return (
+    <span className="gadget-lamp" data-on={on} data-tone={tone}>
+      <span className="gadget-lamp-dot" aria-hidden="true" />
+      {label}
+    </span>
+  );
+}
+
+/* ── TransportKey: the square momentary gadget (glyph over mono word;
+   held/active = inverted video, bevel flips to sunken) ── */
+
+export function TransportKey({
+  label,
+  glyph,
+  active,
+  disabled,
+  onClick,
+}: {
+  label: string;
+  glyph: ReactNode;
+  /** Held/armed — inverted video. */
+  active?: boolean;
+  disabled?: boolean;
+  onClick?: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      className="gadget-transport-key"
+      aria-label={label}
+      aria-pressed={active || undefined}
+      data-active={active || undefined}
+      disabled={disabled}
+      onClick={onClick}
+    >
+      <span className="gadget-transport-glyph" aria-hidden="true">
+        {glyph}
+      </span>
+      <span className="gadget-transport-word">{label}</span>
+    </button>
+  );
+}
+
+export function TransportRow({ children }: { children: ReactNode }) {
+  return <span className="gadget-transport-row">{children}</span>;
 }
 
 /* ── the ONE egress badge chip: a token, never prose ── */

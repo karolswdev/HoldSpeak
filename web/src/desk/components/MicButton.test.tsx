@@ -23,6 +23,8 @@ vi.mock("../../lib/speakToFill", () => ({
   startCapture: vi.fn(),
   stopAndTranscribe: vi.fn(),
   retryPendingTranscription: mocks.retryPendingTranscription,
+  // HS-111-02: the level tap (returns an unsubscribe).
+  subscribeCaptureLevel: () => () => undefined,
 }));
 
 describe("MicButton honest states (HS-100-06)", () => {

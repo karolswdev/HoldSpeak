@@ -144,10 +144,13 @@ def test_dictation_core_speech_settings_never_regresses() -> None:
         "never re-derive Backend/Runs on/Latency budget as a third "
         "Field/Select stack."
     )
-    assert "SurfaceGroup" in source and "SurfaceToggle" in source, (
-        "HS-102-06 regression: Pipeline readiness must compose through "
-        "SurfaceGroup/SurfaceSettingRow/SurfaceToggle, not a bare "
-        "SurfaceFacts key-value dump of the raw readiness wire."
+    # HS-111-02: the gear door migrated from the macOS SurfaceGroup/
+    # SurfaceToggle grammar to the HS-111-01 gadget sheet — the guard
+    # follows the composition it protects.
+    assert "GadgetGroup" in source and "CheckGadget" in source, (
+        "HS-111-02 regression: Pipeline readiness must compose through "
+        "GadgetGroup/GadgetRow/CheckGadget (the gadget sheet), not a "
+        "bare SurfaceFacts key-value dump of the raw readiness wire."
     )
 
 

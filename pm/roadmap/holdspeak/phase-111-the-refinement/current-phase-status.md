@@ -1,15 +1,18 @@
 # Phase 111 - The Refinement
 
-**Status:** IN PROGRESS (1/10). Chartered 2026-07-31 as the mandatory
+**Status:** IN PROGRESS (2/10). Chartered 2026-07-31 as the mandatory
 fast-follow to Phase 110. The owner's condition: every program on the
 desk gets its interior rethought — not token-tweaked, RETHOUGHT — to
 feel native to Signal Workbench. "The Settings screen needs to be
 completely rethought, and many, many others."
 
-**Last updated:** 2026-08-01 (HS-111-01 Settings SHIPPED — the Prefs
-rethink: drawer face, authored 12+System module roster, the reusable
-gadget kit, the global switch-species kill; web check green 65/380,
-live-walked at 1440+393).
+**Last updated:** 2026-08-01 (HS-111-02 Speak SHIPPED — the dictation
+deck: instrument strip with TALK/LedMeter/STATE register, the journal
+as a machine ledger (SurfaceLedger), the correction ritual as an
+in-place gadget sheet, the door on the gadget sheet, every toast dead
+into the footer receipt bar; four new kit species for 03-08; full
+suites green 4207+387. Earlier the same day: HS-111-01 Settings
+SHIPPED — the Prefs rethink + the reusable gadget kit.)
 
 ## Why this phase exists
 
@@ -40,7 +43,7 @@ Each story:
 | # | Story | Program / surface | Status |
 |---|-------|-------------------|--------|
 | 01 | [Settings](./story-01-settings.md) | The Settings program — every pane (Appearance, Hotkey, Transcription, Voice Typing, Wake Word, Presence, Meetings, Cadence, Devices, Delivery, Models, Integrations) | done |
-| 02 | [Speak](./story-02-speak.md) | The Speak/Dictation program — the dictation cockpit, journal, correction memory, pipeline config | backlog |
+| 02 | [Speak](./story-02-speak.md) | The Speak/Dictation program — the dictation cockpit, journal, correction memory, pipeline config | done |
 | 03 | [Meetings](./story-03-meetings.md) | The Meetings program — history list, meeting detail, transcript view, artifact cards, aftercare panel | backlog |
 | 04 | [Agents](./story-04-agents.md) | The Agents/Companion program — agent list, persona detail, session inspector, coder steering pullout | backlog |
 | 05 | [Ask and conversation](./story-05-ask-conversation.md) | The Ask composer, grounding picker, conversation thread, kept-card receipts | backlog |
@@ -55,7 +58,7 @@ Each story:
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
 | HS-111-01 | Settings | done | [story-01-settings](./story-01-settings.md) | [evidence-story-01](./evidence-story-01.md) |
-| HS-111-02 | Speak | backlog | [story-02-speak](./story-02-speak.md) | — |
+| HS-111-02 | Speak | done | [story-02-speak](./story-02-speak.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-111-03 | Meetings | backlog | [story-03-meetings](./story-03-meetings.md) | — |
 | HS-111-04 | Agents | backlog | [story-04-agents](./story-04-agents.md) | — |
 | HS-111-05 | Ask and conversation | backlog | [story-05-ask-conversation](./story-05-ask-conversation.md) | — |
@@ -79,5 +82,22 @@ consume it, and the sliding-switch species is dead desk-wide. Proven
 live at 1440+393 on the real hub; web check 65 files / 380 tests
 green. Held for follow-ups: audio-device-list endpoint (Meetings
 pickers), per-section defaults source (DEFAULTS verb ships disabled),
-delivery keys under `/api/settings`. Next: HS-111-02 (Speak) — the
-flagship instrument, now with the gadget kit ready.
+delivery keys under `/api/settings`.
+
+2/10. HS-111-02 (Speak) shipped the same day: the audit ruled the
+flagship a web form in a void (textarea + button + 70% empty face,
+state narrated by a glowing mic and toast banners); the rethink made
+it the OS's dictation deck — a sunken instrument strip (TALK
+momentary key with inverted-video held state, a real-RMS LedMeter, a
+named STATE register, etched pipeline/target/budget readouts), the
+journal as a columnar machine ledger with open-in-place rows, the
+correction ritual as a gadget sheet extending the receipt, the gear
+door recomposed onto the gadget sheet (the Hooks JSON dump is now a
+designed face), and every InlineMessage dead into the footer
+receipt/refusal bar. Kit grew four species for 03-08: LedMeter,
+LampGadget, TransportKey/TransportRow, GadgetTable verbs slot, plus
+SurfaceLedger in the surface kit. Five python guards re-pointed
+honestly (trust-signals now asserts the banner species stays dead).
+Proven live at 1440+393; full suites green (4207 python + 387 web).
+Next: HS-111-03 (Meetings) — transport keys and ledgers are on the
+shelf.

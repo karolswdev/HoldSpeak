@@ -121,5 +121,7 @@ def test_dictation_page_includes_learning_digest(bare_client: TestClient) -> Non
 def test_learning_digest_styles_are_global(bare_client: TestClient) -> None:
     """The digest is React-owned and composes the shared status primitives."""
     source = (Path(__file__).resolve().parents[2] / "web/src/pages/cores/DictationCore.tsx").read_text()
-    assert "Learning digest" in source and "StatusPill" in source
+    # HS-111-02: the digest is a fact token row (WEEK · TAUGHT n · …),
+    # never a StatusPill sentence.
+    assert "Learning digest" in source and "WEEK" in source
     assert "dangerouslySetInnerHTML" not in source

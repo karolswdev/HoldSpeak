@@ -195,7 +195,10 @@ def test_correct_response_secret_filtered_teaches_nothing(
 # ── page content / global CSS guard ──────────────────────────────────────────
 
 def test_trust_chip_css_is_global(persistent_db: Database, settings_path: Path) -> None:
-    """Trust feedback is React-owned and uses the shared Signal grammar."""
+    """Trust feedback is React-owned and lands in the ONE footer receipt
+    bar (HS-111-02): the toast-banner species (InlineMessage/StatusPill)
+    must never come back to this program."""
     source = (Path(__file__).resolve().parents[2] / "web/src/pages/cores/DictationCore.tsx").read_text()
-    assert "InlineMessage" in source and "StatusPill" in source
+    assert "speak-receipt" in source and "ReceiptContext" in source
+    assert "InlineMessage" not in source and "StatusPill" not in source
     assert "dangerouslySetInnerHTML" not in source

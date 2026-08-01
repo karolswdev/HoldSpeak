@@ -455,6 +455,75 @@ export function SurfaceStreamEntry({
   );
 }
 
+/** HS-111-02 — the machine ledger (audit §3.2): columnar mono rows for
+ * events over time. One line per event, full-width hover band, click
+ * opens the row IN PLACE (the tracker's cursor line — sunken fill);
+ * exactly one row open is the CALLER's contract. SurfaceStream stays
+ * the said-text composition (LiveCore); this is the machine-rows one.
+ * Reused by: dictation Journal, History, Activity, run histories. */
+export function SurfaceLedger({
+  count,
+  controls,
+  children,
+}: {
+  /** The head's mono token line (e.g. "TODAY 2 · TAUGHT 1"). */
+  count: ReactNode;
+  controls?: ReactNode;
+  children: ReactNode;
+}) {
+  return (
+    <div className="surface-ledger">
+      <div className="surface-ledger-head">
+        <span className="surface-ledger-count">{count}</span>
+        {controls ? (
+          <span className="surface-ledger-controls">{controls}</span>
+        ) : null}
+      </div>
+      {children}
+    </div>
+  );
+}
+
+export function SurfaceLedgerRow({
+  time,
+  primary,
+  cells,
+  open,
+  onToggle,
+  children,
+}: {
+  /** The fixed leading time token (HH:MM). */
+  time?: ReactNode;
+  /** The one-line mono material (ellipsized, never wrapped). */
+  primary: ReactNode;
+  /** Trailing fact cells (destination, ms, taught chip). */
+  cells?: ReactNode;
+  open?: boolean;
+  onToggle?: () => void;
+  /** The in-place expansion rendered while open. */
+  children?: ReactNode;
+}) {
+  return (
+    <li className="surface-ledger-row" data-open={open || undefined}>
+      <button
+        type="button"
+        className="surface-ledger-line"
+        aria-expanded={open || false}
+        onClick={onToggle}
+      >
+        {time != null ? (
+          <span className="surface-ledger-time">{time}</span>
+        ) : null}
+        <span className="surface-ledger-primary">{primary}</span>
+        {cells}
+      </button>
+      {open && children ? (
+        <div className="surface-ledger-open">{children}</div>
+      ) : null}
+    </li>
+  );
+}
+
 /** HS-101 rule 2 — the library: the composition for a shelf of kept
  * material (Blocks). Tiles wear their PAYLOAD as the face; the name
  * and provenance ride the spine; create is a ghost tile in the
