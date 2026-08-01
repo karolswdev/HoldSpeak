@@ -492,52 +492,9 @@
   color: var(--text-muted);
   font-size: var(--font-size-lg);
 }
-.meeting-conflict-recovery,
-.meeting-intel-recovery,
-.recovery-card {
-  display: grid;
-  gap: var(--space-3);
-}
-.recovery-card {
-  padding: var(--space-4);
-  border: 1px solid color-mix(in srgb, var(--warn) 35%, var(--border));
-  border-radius: var(--radius-lg);
-  background: var(--warn-soft);
-}
-.recovery-card h3,
-.recovery-card h4,
-.recovery-card p,
-.recovery-card dl,
-.recovery-card dd {
-  margin: 0;
-}
-.recovery-card > div:first-child p,
-.meeting-conflict-version p,
-.meeting-intel-remaining p {
-  color: var(--text-muted);
-}
-.recovery-card .signal-facts dd {
-  min-width: 0;
-  overflow-wrap: anywhere;
-}
-.meeting-conflict-versions {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--space-3);
-}
-.meeting-conflict-version,
-.meeting-intel-remaining {
-  min-width: 0;
-  display: grid;
-  gap: var(--space-2);
-  padding: var(--space-3);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
-  background: var(--surface-1);
-}
-.meeting-conflict-version.is-deletion {
-  border-color: color-mix(in srgb, var(--danger) 45%, var(--border));
-}
+/* HS-111-03 — the rounded warn-tinted recovery-card family died: intel
+   recovery is a one-row gadget slab, sync conflicts are twin receipt
+   slips (desk/surface/surface.css). */
 .workbench-canvas {
   position: relative;
   height: max(600px, calc(100vh - 250px));

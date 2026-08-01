@@ -349,6 +349,63 @@
   overflow-wrap: anywhere;
 }
 
+/* ── HS-111-03: the sunken well (SurfaceWell) — a scrolling inset on
+   the well tone. Inset etch only (the left rail is banned); 2px
+   radius; its own thin scrollbar. The record's body reads INSIDE the
+   machine. ── */
+.surface-well {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  border-radius: 2px;
+  background: var(--desk-window-well);
+  box-shadow: var(--desk-window-etch);
+}
+.surface-well-head {
+  flex: none;
+  padding: 6px 10px 4px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border-subtle);
+}
+.surface-well-body {
+  min-height: 0;
+  max-height: 40cqh;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  padding: 6px 4px;
+}
+.surface-well-body .surface-code {
+  background: none;
+  max-height: none;
+  padding: 2px 6px;
+}
+
+/* HS-111-03 — the honest state token: mono, axis-named, tone as color
+   (never color alone: the token IS the words). */
+.surface-token {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+.surface-token[data-tone="warn"] {
+  color: var(--warn);
+}
+.surface-token[data-tone="danger"] {
+  color: var(--danger);
+}
+.surface-token[data-tone="ok"] {
+  color: var(--ok);
+}
+
 /* A quiet in-flow verb cluster (result ratings, recovery actions). */
 .surface-actions {
   display: flex;
@@ -994,6 +1051,13 @@ button.surface-edit-in-place:hover {
   width: 180px;
   min-width: 0;
 }
+/* HS-111-03: the composer rides the string gadget (mic in the well). */
+.live-bookmark-composer .gadget-string {
+  width: 200px;
+}
+.live-bookmark-composer .gadget-string input {
+  width: auto;
+}
 .surface-stream-entry > .surface-aerogel,
 .surface-stream-entry > .surface-preview {
   grid-column: 2;
@@ -1053,6 +1117,15 @@ button.surface-edit-in-place:hover {
 .surface-ledger-controls .gadget-string {
   width: 200px;
   min-width: 0;
+}
+/* HS-111-03 — a bare rows wrapper for ledgers whose rows carry no day
+   bands (the meetings catalog). */
+.surface-ledger-rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
 }
 .surface-ledger-row {
   display: flex;
@@ -1123,14 +1196,50 @@ button.surface-edit-in-place:hover {
   transform: none;
   justify-content: flex-start;
 }
+/* HS-111-03 — the meetings catalog columns: MMM DD | title | n SEG |
+   n MIN | STATE (a data-cols hook on the ONE ledger, not a second
+   component). */
+.surface-ledger[data-cols="meetings"] .surface-ledger-line {
+  grid-template-columns: 52px minmax(0, 1fr) max-content max-content max-content;
+}
+/* Inside the railed split's master rail the catalog folds the same
+   way it does in a narrow window: date + title + state, the head
+   wraps, the search well narrows. Fixed max-content columns must
+   never paint under the detail pane. */
+.surface-split-open .surface-split-main .surface-ledger[data-cols="meetings"] .surface-ledger-line {
+  grid-template-columns: max-content minmax(0, 1fr) max-content;
+}
+.surface-split-open .surface-split-main .surface-ledger[data-cols="meetings"] .surface-ledger-cell:not(:last-child) {
+  display: none;
+}
+.surface-split-open .surface-split-main .surface-ledger-head {
+  flex-wrap: wrap;
+}
+.surface-split-open .surface-split-main .surface-ledger-controls .gadget-string {
+  width: 120px;
+}
+/* The rail is scarce: the token's axis word folds away there (the
+   full axis-named token stays on the catalog and the detail). */
+.surface-split-open .surface-split-main .surface-token-axis {
+  display: none;
+}
+/* …and gadget rows (the filters fold) stack label over gadget, the
+   same fold the ≤419 container wears. */
+.surface-split-open .surface-split-main .gadget-row {
+  grid-template-columns: minmax(0, 1fr);
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
 /* ≤560px container: the time folds into the row's leading token and
    the ledger STAYS a ledger (one line, ellipsis). */
 @container surface (max-width: 559.9px) {
-  .surface-ledger-line {
+  .surface-ledger-line,
+  .surface-ledger[data-cols="meetings"] .surface-ledger-line {
     grid-template-columns: max-content minmax(0, 1fr) max-content;
   }
   .surface-ledger-line > .surface-ledger-dest,
-  .surface-ledger-line > .surface-ledger-ms {
+  .surface-ledger-line > .surface-ledger-ms,
+  .surface-ledger[data-cols="meetings"] .surface-ledger-line > .surface-ledger-cell:not(:last-child) {
     display: none;
   }
   .surface-ledger-open {
@@ -1265,6 +1374,26 @@ button.surface-edit-in-place:hover {
   display: flex;
   flex-wrap: wrap;
   gap: 4px;
+}
+/* HS-111-03 — the receipt dress (data-variant="receipt", scoped so
+   Blocks keeps its payload-tile look): a mono stamp line leads the
+   spine — the output slip's index. */
+.surface-tile-stamp {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.surface-tile[data-variant="receipt"] .surface-tile-spine {
+  gap: 3px;
+}
+.surface-tile[data-variant="receipt"] .surface-tile-face {
+  box-shadow: var(--desk-window-etch);
 }
 .surface-say {
   font-size: var(--desk-surface-label-size);
@@ -1561,11 +1690,37 @@ button.surface-edit-in-place:hover {
   font-size: var(--desk-surface-detail-size);
   font-variant-numeric: tabular-nums;
 }
-.surface-detail-foot {
-  align-items: center;
+/* HS-111-03 — the record index line: ONE mono facts line under the
+   title (the archive card's stamp). */
+.surface-detail-facts {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
 }
-.surface-detail-foot-gap {
-  flex: 1;
+/* HS-111-03 — settled actions read as quiet ledger lines. */
+.surface-settled {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+.surface-settled li {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  min-height: 22px;
+  padding: 1px 6px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.surface-settled li > span:first-child {
+  flex: none;
+  color: var(--ok);
 }
 /* HS-111-01: detail transcript timestamps — monospace */
 .desk-surface-body .transcript-list time {
@@ -1599,6 +1754,8 @@ button.surface-edit-in-place:hover {
 
 /* HS-101 round 7 — the import is a drop well, not a form: the same
    verb the desk already answers, with browse folded in. */
+/* HS-111-03 — the loading bay: dashed stays (the 2004 "insert media"
+   idiom), but 2px radius and SOLID hover fills — no accent tint. */
 .surface-dropwell {
   display: flex;
   flex-direction: column;
@@ -1608,7 +1765,7 @@ button.surface-edit-in-place:hover {
   min-height: 110px;
   padding: 16px;
   border: 1.5px dashed var(--border);
-  border-radius: var(--radius-md);
+  border-radius: 2px;
   color: var(--text-muted);
   cursor: pointer;
   text-align: center;
@@ -1617,21 +1774,26 @@ button.surface-edit-in-place:hover {
     background var(--duration-short) var(--ease-quart);
 }
 .surface-dropwell:hover {
-  border-color: var(--accent-soft);
-  background: var(--accent-tint);
+  border-color: var(--border);
+  background: var(--wash-1);
 }
 .surface-dropwell.has-file {
   border-style: solid;
-  border-color: var(--accent-soft);
-  background: var(--accent-tint);
+  border-color: var(--border);
+  background: var(--wash-1);
   color: var(--text);
 }
 .surface-dropwell input[type="file"] {
   display: none;
 }
+/* Caption tokens: mono, rendered uppercase (the source keeps the
+   literal lowercase suffixes — they are the wire truth). */
 .surface-dropwell small {
   color: var(--text-faint);
+  font-family: var(--font-mono);
   font-size: var(--desk-surface-label-size);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 .surface-dropwell-glyph {
   font-size: var(--font-size-xl);
@@ -1953,4 +2115,130 @@ button.surface-edit-in-place:hover {
   color: var(--text-faint);
   box-shadow: none;
   cursor: not-allowed;
+}
+
+/* ── HS-111-03: the Meetings receipt bar — the ONE footer status line
+   (the PrefStatusBar/ReadinessLine pattern on .surface-status). Opaque
+   and sticky: content scrolls away UNDER it, never through it — this
+   is what retires the artifact-tile/footer overlap by construction. ── */
+.surface-receiptbar {
+  font-family: var(--font-mono);
+  gap: 10px;
+  margin-top: auto;
+  background: var(--desk-window-head-fill);
+  border-top: 1px solid var(--border);
+  z-index: var(--z-sticky);
+}
+.surface-receiptbar > span + span::before {
+  content: none;
+  margin: 0;
+}
+.surface-receiptbar-receipt {
+  flex: 1;
+  min-width: 0;
+  text-align: center;
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.surface-receiptbar-receipt[data-tone="danger"] {
+  color: var(--danger);
+}
+.surface-receiptbar-verbs {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* ── HS-111-03: recovery attention slabs (the rounded warn-tinted
+   recovery-card died). The conflict face is twin receipt slips:
+   opaque two-tone insets, mono fact stacks, verbs on the slip. ── */
+.meeting-conflict-slips {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+@container surface (max-width: 559.9px) {
+  .meeting-conflict-slips {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+.meeting-conflict-slip {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  background: var(--surface-2);
+  box-shadow: var(--desk-window-etch);
+}
+.meeting-conflict-slip-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.meeting-conflict-slip-facts {
+  margin: 0;
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 2px 10px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+.meeting-conflict-slip-facts > div {
+  display: contents;
+}
+.meeting-conflict-slip-facts dt {
+  color: var(--text-faint);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.meeting-conflict-slip-facts dd {
+  margin: 0;
+  min-width: 0;
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+.meeting-conflict-slip .surface-actions {
+  margin-top: auto;
+}
+
+/* The intel slab's remaining token yields to the RETRY verb: it
+   ellipsizes instead of pushing the row off the pane. */
+.meeting-intel-recovery .gadget-row-gadget > .gadget-fact {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* A textarea riding the string-gadget well (the route preview): same
+   sunken geometry, docked mic. */
+.gadget-string textarea {
+  flex: 1;
+  min-width: 0;
+  min-height: 54px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  padding: 3px 6px;
+  font: 400 12px / 1.45 var(--font-mono);
+  color: var(--text);
+  resize: vertical;
+}
+.gadget-string textarea:focus {
+  outline: none;
+}
+.gadget-string:has(textarea) .desk-mic {
+  align-self: flex-start;
+  margin-top: 2px;
 }

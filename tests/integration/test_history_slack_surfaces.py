@@ -124,15 +124,15 @@ def test_history_buttons_are_gated_on_the_flag():
     page = " ".join(
         (_REPO / "web/src/pages/cores/HistoryCore.tsx").read_text().split()
     )
-    assert "Send digest to Slack" in page and "Send follow-up to Slack" in page
+    # HS-111-03: the two prose Slack buttons became AFTERCARE gadget
+    # rows (DIGEST → SLACK / FOLLOW-UP → SLACK, verb SEND); the wiring
+    # and the capability gate are unchanged.
+    assert "DIGEST → SLACK" in page and "FOLLOW-UP → SLACK" in page
     assert "aftercare.slack_configured" in page
     assert 'proposeSlack("digest")' in page and 'proposeSlack("followup")' in page
     assert 'apiFetch<JsonRecord>("/api/authority/policy")' in page
-    # The posture chrome is the shared PostureNote (label + description).
-    assert (
-        '<PostureNote mode={String(authority.control_mode ?? "neutral")} describe />'
-        in page
-    )
+    # The BASIS row tokens the central control mode (posture, not prose).
+    assert 'controlModeLabel(String(authority.control_mode ?? "neutral"))' in page
 
 
 def test_proposal_rows_render_the_central_policy_and_refusal_truth():
@@ -145,8 +145,8 @@ def test_proposal_rows_render_the_central_policy_and_refusal_truth():
     assert "operation.effect_class" in page
     assert "operation.destination" in page
     assert "policy.authority_basis" in page
-    # HS-100-08: an empty needs-you face says so honestly.
-    assert "Nothing waiting on you" in page
+    # HS-111-03: an empty needs-you face says so honestly, as a token.
+    assert "QUEUE 0" in page
 
 
 def test_history_app_wires_the_export_route():

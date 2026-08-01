@@ -3,17 +3,20 @@
 // HS-98-03 — re-crafted native: the detail leaves its modal and lives
 // as the split's second pane; import is an in-surface section; rows
 // are honest; confirms are inline two-steps. Wire calls unchanged.
-import { useEffect, useMemo, useState } from "react";
+// HS-111-03 — the archive browser (audit §3): the list is a
+// SurfaceLedger catalog (reverse-chron, state tokens naming their
+// axis), the record's spine is the always-visible transcript well
+// (SurfaceWell), artifacts are etched receipts, exports and DELETE
+// live on the ONE footer receipt bar, and the recovery cards became
+// gadget-grammar attention slabs. Wire calls unchanged.
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { openPrimitive, openSurfaceOr } from "../../desk/shell";
 import type { CoreProps } from "./ActivityCore";
 import {
   Button,
   Disclosure,
-  Field,
   InlineMessage,
-  Select,
   StatusPill,
-  TextInput,
 } from "../../components/signal/Signal";
 import {
   apiBlob,
@@ -23,16 +26,19 @@ import {
 } from "../../lib/api";
 import {
   authorityBasisLabel,
+  controlModeLabel,
   effectClassLabel,
   humanizeWireValue,
   proposalStatusLabel,
 } from "../../lib/productLanguage";
 import { MeetingConflictRecovery } from "../../meetings/MeetingConflictRecovery";
 import { MeetingIntelRecovery } from "../../meetings/MeetingIntelRecovery";
-import { PostureNote, asRows, rowId, useResource } from "../pageSupport";
+import { asRows, rowId, useResource } from "../pageSupport";
 import {
   ConfirmVerb,
   SurfaceCode,
+  SurfaceLedger,
+  SurfaceLedgerRow,
   SurfaceLibrary,
   SurfaceLibraryTile,
   SurfaceRow,
@@ -41,7 +47,17 @@ import {
   SurfaceSplit,
   SurfaceState,
   SurfaceVerbs,
+  SurfaceWell,
 } from "../../desk/surface/Surface";
+import {
+  CheckGadget,
+  CycleGadget,
+  EgressChip,
+  GadgetGroup,
+  GadgetRow,
+  GadgetTable,
+  StringGadget,
+} from "../../desk/surface/gadgets";
 import { Material } from "../../desk/surface/Material";
 import { humanTime, presentValue } from "../../desk/surface/format";
 import { SurfaceWings, useWindowWings } from "../../desk/surface/wings";
@@ -86,6 +102,79 @@ function displayState(value: unknown): string {
   );
 }
 
+/* HS-111-03 — the catalog's state token: axis-named, tone as color on
+   the words (never a shuffle, never a pill). "Intelligence", never
+   the banned abbreviation (HS-100-05 vocabulary guard). The axis word
+   rides its own span so the narrow rail can fold it away without
+   losing the state. */
+type StateToken = { axis?: string; label: string; tone?: "warn" | "danger" };
+
+function stateToken(row: JsonRecord): StateToken {
+  const capture = String(row.capture_status ?? "");
+  if (capture === "recording") return { label: "REC", tone: "danger" };
+  if (capture === "capture_failed")
+    return { label: "CAPTURE FAILED", tone: "danger" };
+  if (capture === "recoverable") return { label: "RECOVERABLE", tone: "warn" };
+  const intelValue = row.intel_status;
+  const state =
+    typeof intelValue === "object" && intelValue !== null
+      ? String((intelValue as JsonRecord).state ?? "")
+      : String(intelValue ?? "");
+  const axis = "INTELLIGENCE";
+  const known: Record<string, StateToken> = {
+    disabled: { axis, label: "OFF" },
+    skipped: { axis, label: "SKIPPED", tone: "warn" },
+    queued: { axis, label: "QUEUED", tone: "warn" },
+    pending: { axis, label: "QUEUED", tone: "warn" },
+    running: { axis, label: "RUNNING", tone: "warn" },
+    partial: { axis, label: "PARTIAL", tone: "warn" },
+    error: { axis, label: "FAILED", tone: "danger" },
+    failed: { axis, label: "FAILED", tone: "danger" },
+    import_failed: { label: "IMPORT FAILED", tone: "danger" },
+  };
+  if (row.status === "failed") return { label: "FAILED", tone: "danger" };
+  return known[state] ?? { label: "SAVED" };
+}
+
+function StateTokenSpan({ token }: { token: StateToken }) {
+  return (
+    <span className="surface-token" data-tone={token.tone}>
+      {token.axis ? (
+        <span className="surface-token-axis">{`${token.axis} `}</span>
+      ) : null}
+      {token.label}
+    </span>
+  );
+}
+
+const MONTHS = [
+  "JAN", "FEB", "MAR", "APR", "MAY", "JUN",
+  "JUL", "AUG", "SEP", "OCT", "NOV", "DEC",
+];
+
+/** MMM DD — the catalog's date column. */
+function ledgerDate(value: unknown): string {
+  const date = new Date(String(value ?? ""));
+  if (Number.isNaN(date.getTime())) return "";
+  return `${MONTHS[date.getMonth()]} ${String(date.getDate()).padStart(2, "0")}`;
+}
+
+/** n MIN, folding to n HR past ten hours — a catalog cell, not a
+ * six-digit minute wall. Empty when the wire has no duration. */
+function durationToken(seconds: unknown): string {
+  const minutes = Math.round(Number(seconds ?? 0) / 60);
+  if (!Number.isFinite(minutes) || minutes <= 0) return "";
+  if (minutes >= 600) return `${Math.round(minutes / 60)} HR`;
+  return `${minutes} MIN`;
+}
+
+/** hh:mm — the receipt stamp's clock. */
+function clockTime(value: unknown): string {
+  const date = new Date(String(value ?? ""));
+  if (Number.isNaN(date.getTime())) return "";
+  return `${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
+}
+
 function download(blob: Blob, name: string) {
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
@@ -94,6 +183,9 @@ function download(blob: Blob, name: string) {
   link.click();
   window.setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
+
+/** The one receipt channel: what the machine just did, on the footer. */
+type Receipt = { text: string; tone?: "danger" };
 
 function ImportSection({
   onDone,
@@ -171,7 +263,7 @@ function ImportSection({
             <span className="surface-dropwell-name surface-primary">
               {file.name}
             </span>
-            <small>Drop another file to replace it</small>
+            <small>drop another file to replace it</small>
           </>
         ) : (
           <>
@@ -179,31 +271,29 @@ function ImportSection({
               ⇣
             </span>
             <span className="surface-primary">Drop it here, or browse</span>
-            <small>.wav direct · .mp3 .m4a .ogg .flac need ffmpeg · .vtt .srt .txt</small>
+            {/* Rendered as mono tokens (CSS uppercases); the literal
+                lowercase suffixes and ffmpeg stay in source — they are
+                the wire truth. */}
+            <small>.wav direct · .mp3 .m4a .ogg .flac via ffmpeg · .vtt .srt .txt</small>
           </>
         )}
       </label>
       {file ? (
-        <div className="surface-actions">
-          <TextInput
-            aria-label="Title"
-            placeholder="Title"
-            value={title}
-            onChange={(event) => setTitle(event.target.value)}
-          />
-          <TextInput
-            aria-label="Speaker"
-            placeholder="Speaker"
-            value={speaker}
-            onChange={(event) => setSpeaker(event.target.value)}
-          />
-          <TextInput
-            aria-label="Tags, comma separated"
-            placeholder="Tags"
-            value={tags}
-            onChange={(event) => setTags(event.target.value)}
-          />
-        </div>
+        <GadgetGroup>
+          <GadgetRow label="TITLE">
+            <StringGadget label="Title" value={title} onChange={setTitle} />
+          </GadgetRow>
+          <GadgetRow label="SPEAKER">
+            <StringGadget
+              label="Speaker"
+              value={speaker}
+              onChange={setSpeaker}
+            />
+          </GadgetRow>
+          <GadgetRow label="TAGS" fact="COMMA SEPARATED">
+            <StringGadget label="Tags" value={tags} onChange={setTags} />
+          </GadgetRow>
+        </GadgetGroup>
       ) : null}
       {error ? <InlineMessage tone="error">{error}</InlineMessage> : null}
       <div className="surface-actions">
@@ -213,7 +303,7 @@ function ImportSection({
           disabled={!file}
           onClick={submit}
         >
-          Import to this device
+          Import
         </Button>
       </div>
     </SurfaceSection>
@@ -226,6 +316,7 @@ function MeetingDetail({
   momentSegmentIndex,
   onClose,
   onDeleted,
+  onReceipt,
 }: {
   meeting: JsonRecord | null;
   /** "outcomes" (the face) or "artifacts" (the wing). */
@@ -234,6 +325,8 @@ function MeetingDetail({
   momentSegmentIndex?: number | null;
   onClose(): void;
   onDeleted(): void;
+  /** HS-111-03 — outcomes land on the footer receipt bar. */
+  onReceipt(receipt: Receipt): void;
 }) {
   const id = String(meeting?.id ?? "");
   const [detail, setDetail] = useState<JsonRecord | null>(meeting);
@@ -284,8 +377,11 @@ function MeetingDetail({
       setProposals(
         await apiFetch(`/api/meetings/${encodeURIComponent(id)}/proposals`),
       );
+      onReceipt({
+        text: decision === "approved" ? "APPROVED" : "REJECTED",
+      });
     } catch (reason) {
-      setError(readableError(reason));
+      onReceipt({ text: `⚠ REFUSED · ${readableError(reason)}`, tone: "danger" });
     } finally {
       setBusy(false);
     }
@@ -300,34 +396,11 @@ function MeetingDetail({
       setProposals(
         await apiFetch(`/api/meetings/${encodeURIComponent(id)}/proposals`),
       );
-    } catch (reason) {
-      setError(readableError(reason));
-    } finally {
-      setBusy(false);
-    }
-  };
-  const exportMeeting = async (format: string) => {
-    try {
-      download(
-        await apiBlob(
-          `/api/meetings/${encodeURIComponent(id)}/export?format=${format}`,
-        ),
-        `holdspeak-meeting-${id}.${format === "markdown" ? "md" : format}`,
-      );
-    } catch (reason) {
-      setError(readableError(reason));
-    }
-  };
-  const remove = async () => {
-    setBusy(true);
-    try {
-      await apiFetch(`/api/meetings/${encodeURIComponent(id)}`, {
-        method: "DELETE",
+      onReceipt({
+        text: what === "digest" ? "PROPOSED DIGEST" : "PROPOSED FOLLOW-UP",
       });
-      onDeleted();
-      onClose();
     } catch (reason) {
-      setError(readableError(reason));
+      onReceipt({ text: `⚠ REFUSED · ${readableError(reason)}`, tone: "danger" });
     } finally {
       setBusy(false);
     }
@@ -350,91 +423,6 @@ function MeetingDetail({
   const settledActions = actionRows.filter((row) => row.status === "done");
   if (!meeting) return null;
 
-  const proposalsBlock = proposalRows.length ? (
-    <SurfaceRows>
-      {proposalRows.map((row, index) => {
-        const policy = (row.policy_snapshot ?? {}) as JsonRecord;
-        const operation = (row.operation ?? {}) as JsonRecord;
-        const refused = policy.outcome === "refused";
-        const effect = String(operation.effect_class ?? row.action ?? "");
-        const destination = String(operation.destination ?? row.target ?? "");
-        const facts = [
-          effect ? effectClassLabel(effect) : null,
-          destination ? humanizeWireValue(destination) : null,
-          authorityBasisLabel(
-            String(policy.authority_basis ?? "per_action_required"),
-          ),
-        ].filter((fact): fact is string => Boolean(fact));
-        return (
-          <SurfaceRow
-            key={rowId(row, index)}
-            title={
-              refused
-                ? "Operation refused"
-                : String(row.title ?? row.kind ?? "Proposed action")
-            }
-            detail={
-              <>
-                {presentValue(row.preview ?? row.body ?? row.status)}
-                {" · "}
-                <PostureNote mode={String(policy.mode ?? "neutral")} />
-                {facts.length ? ` · ${facts.join(" · ")}` : ""}
-              </>
-            }
-            meta={
-              row.status === "proposed" && !refused ? undefined : (
-                <StatusPill tone={refused ? "error" : "neutral"}>
-                  {refused
-                    ? "Refused"
-                    : proposalStatusLabel(String(row.status ?? ""))}
-                </StatusPill>
-              )
-            }
-            verbs={
-              row.status === "proposed" && !refused ? (
-                <>
-                  <Button
-                    dense
-                    loading={busy}
-                    onClick={() => void decide(row, "approved")}
-                  >
-                    {String(
-                      (row.commitment as JsonRecord | undefined)?.approve ??
-                        `Approve for ${String(row.target ?? "executor")}`,
-                    )}
-                  </Button>
-                  <Button
-                    dense
-                    variant="ghost"
-                    onClick={() => void decide(row, "rejected")}
-                  >
-                    {String(
-                      (row.commitment as JsonRecord | undefined)?.reject ??
-                        "Reject proposed action",
-                    )}
-                  </Button>
-                </>
-              ) : undefined
-            }
-          />
-        );
-      })}
-    </SurfaceRows>
-  ) : null;
-
-  const actionRow = (row: JsonRecord, index: number) => (
-    <SurfaceRow
-      key={rowId(row, index)}
-      title={String(row.text ?? row.title ?? "Action item")}
-      detail={presentValue(row.owner ?? row.status) || undefined}
-      meta={
-        <StatusPill tone={row.status === "done" ? "success" : "warning"}>
-          {row.status === "done" ? "Action item complete" : "Open action item"}
-        </StatusPill>
-      }
-    />
-  );
-
   const startedAt = detail?.started_at ?? meeting.started_at;
   const durationS = Number(detail?.duration_seconds ?? meeting.duration_seconds ?? 0);
   const intelStatus = detail?.intel_status;
@@ -444,36 +432,141 @@ function MeetingDetail({
       : String(intelStatus ?? "")) === "disabled";
   const hasOutcomes =
     proposalRows.length > 0 || openActions.length > 0 || settledActions.length > 0;
+  const captureBad =
+    Boolean(detail?.capture_status) && detail?.capture_status !== "finalized";
+
+  /* The needs-you table: undecided proposals lead, open action items
+     follow — pending receipts, one dense table (audit §3.2.3). */
+  const undecided = proposalRows.filter(
+    (row) =>
+      row.status === "proposed" &&
+      (row.policy_snapshot as JsonRecord | undefined)?.outcome !== "refused",
+  ).length;
+  const needsCount = undecided + openActions.length;
+  const needsRows: Array<{ cells: ReactNode[]; verbs: ReactNode }> =
+    [
+      ...proposalRows.map((row) => {
+        const policy = (row.policy_snapshot ?? {}) as JsonRecord;
+        const operation = (row.operation ?? {}) as JsonRecord;
+        const refused = policy.outcome === "refused";
+        const effect = String(operation.effect_class ?? row.action ?? "");
+        const destination = String(operation.destination ?? row.target ?? "");
+        const facts = [
+          effect ? `EFFECT: ${effectClassLabel(effect)}` : null,
+          destination ? `DEST: ${humanizeWireValue(destination)}` : null,
+          `BASIS: ${authorityBasisLabel(
+            String(policy.authority_basis ?? "per_action_required"),
+          )}`,
+        ]
+          .filter((fact): fact is string => Boolean(fact))
+          .join(" · ")
+          .toUpperCase();
+        const commitment = row.commitment as JsonRecord | undefined;
+        return {
+          cells: [
+            <span key="what" title={presentValue(row.preview ?? row.body ?? "")}>
+              {String(row.title ?? row.kind ?? "Proposed action")}
+            </span>,
+            <span key="facts" title={facts}>
+              {facts}
+            </span>,
+          ],
+          verbs:
+            row.status === "proposed" && !refused ? (
+              <>
+                <Button
+                  dense
+                  loading={busy}
+                  title={String(commitment?.approve ?? "")}
+                  onClick={() => void decide(row, "approved")}
+                >
+                  Approve
+                </Button>
+                <Button
+                  dense
+                  variant="ghost"
+                  title={String(commitment?.reject ?? "")}
+                  onClick={() => void decide(row, "rejected")}
+                >
+                  Reject
+                </Button>
+              </>
+            ) : (
+              <span
+                className="surface-token"
+                data-tone={refused ? "danger" : undefined}
+              >
+                {refused
+                  ? "REFUSED"
+                  : proposalStatusLabel(String(row.status ?? "")).toUpperCase()}
+              </span>
+            ),
+        };
+      }),
+      ...openActions.map((row) => ({
+        cells: [
+          <span key="what">{String(row.text ?? row.title ?? "Action item")}</span>,
+          <span key="facts">
+            {presentValue(row.owner) ? `OWNER: ${presentValue(row.owner)}`.toUpperCase() : ""}
+          </span>,
+        ],
+        verbs: <span className="surface-token" data-tone="warn">OPEN</span>,
+      })),
+    ];
+
   return (
     <SurfaceSection>
+      {/* 0 — the record index line: title over ONE mono facts line. */}
       <div className="surface-detail-head">
         <div className="surface-detail-title">
           <strong className="surface-primary">
             {String(detail?.title ?? meeting.title ?? "Meeting")}
           </strong>
-          <small>
+          <span className="surface-detail-facts">
             {[
-              humanTime(startedAt),
+              ledgerDate(startedAt),
               durationS > 0
-                ? `${Math.max(1, Math.round(durationS / 60))} min`
+                ? durationToken(durationS) || "1 MIN"
                 : "",
-              segments.length
-                ? `${segments.length} segment${segments.length === 1 ? "" : "s"}`
-                : "",
+              segments.length ? `${segments.length} SEG` : "",
+              artifactRows.length ? `${artifactRows.length} ART` : "",
             ]
               .filter(Boolean)
               .join(" · ")}
-          </small>
+            {captureBad || intelOff ? " · " : ""}
+            {captureBad || intelOff ? (
+              <StateTokenSpan token={stateToken(detail ?? meeting)} />
+            ) : null}
+          </span>
         </div>
         <Button dense variant="ghost" onClick={onClose}>
           Close
         </Button>
       </div>
       {error ? <InlineMessage tone="error">{error}</InlineMessage> : null}
-      {detail?.capture_status && detail.capture_status !== "finalized" ? (
-        <InlineMessage tone="warning">
-          {`Meeting saved · ${displayState(detail.capture_status)}${detail.capture_failure ? ` · ${String(detail.capture_failure)}` : ""}. The transcript below is the last durable checkpoint.`}
-        </InlineMessage>
+      {/* 1 — attention slabs, only when real. */}
+      {captureBad ? (
+        <GadgetGroup label="Capture">
+          <GadgetRow
+            label={
+              <span
+                className="surface-token"
+                data-tone={stateToken(detail ?? meeting).tone ?? "warn"}
+              >
+                {String(detail?.capture_status ?? "").replace(/_/g, " ").toUpperCase()}
+              </span>
+            }
+            fact={
+              detail?.capture_failure
+                ? String(detail.capture_failure)
+                : undefined
+            }
+          >
+            <span className="gadget-fact">
+              TRANSCRIPT RETAINED · LAST DURABLE CHECKPOINT
+            </span>
+          </GadgetRow>
+        </GadgetGroup>
       ) : null}
       <MeetingConflictRecovery
         meetingId={id}
@@ -497,7 +590,7 @@ function MeetingDetail({
         artifactRows.length ? (
           <SurfaceLibrary
             count={artifactRows.length}
-            countLabel={artifactRows.length === 1 ? "artifact" : "artifacts"}
+            token={`${artifactRows.length} ${artifactRows.length === 1 ? "ARTIFACT" : "ARTIFACTS"}`}
           >
             {artifactRows.map((row, index) => {
               const title = String(row.title ?? row.artifact_type ?? "Artifact");
@@ -510,9 +603,21 @@ function MeetingDetail({
                 "i",
               );
               body = body.replace(headingEcho, "");
+              const kind = String(row.artifact_type ?? "")
+                .replace(/[_-]+/g, " ")
+                .toUpperCase();
+              const stamped = clockTime(row.created_at);
               return (
                 <SurfaceLibraryTile
                   key={rowId(row, index)}
+                  variant="receipt"
+                  stamp={[
+                    `ART ${String(index + 1).padStart(2, "0")}`,
+                    kind,
+                    stamped,
+                  ]
+                    .filter(Boolean)
+                    .join(" · ")}
                   face={
                     body ? (
                       <Material>{body}</Material>
@@ -547,65 +652,30 @@ function MeetingDetail({
         )
       ) : (
         <>
-          {/* 1 — what needs you: undecided proposals, then open actions.
-              Intelligence OFF says so honestly instead of celebrating
-              an empty queue it never filled. */}
+          {/* 2 — what needs you: pending receipts in ONE dense table.
+              Intelligence OFF says so as a token, never a sentence. */}
           <div className="surface-outcome-sec">
             {intelOff && !hasOutcomes ? (
-              <p className="surface-boundary-note">
-                Intelligence is off — no outcomes were made for this
-                meeting.
-              </p>
+              <span className="surface-token">
+                INTELLIGENCE OFF · NO OUTCOMES
+              </span>
+            ) : needsRows.length ? (
+              <>
+                <span className="surface-eyebrow">
+                  {`Needs you: ${needsCount}`}
+                </span>
+                <GadgetTable
+                  head={["ITEM", "FACTS"]}
+                  rows={needsRows.map((row) => row.cells)}
+                  verbs={(index) => needsRows[index].verbs}
+                />
+              </>
             ) : (
-              <span className="surface-eyebrow">
-                {`Needs you: ${proposalRows.filter((row) => row.status === "proposed").length + openActions.length}`}
-              </span>
+              <span className="surface-token">QUEUE 0</span>
             )}
-            {proposalsBlock}
-            {openActions.length ? (
-              <SurfaceRows>{openActions.map(actionRow)}</SurfaceRows>
-            ) : null}
-            {!intelOff && !proposalRows.length && !openActions.length ? (
-              <p className="surface-boundary-note">✓ Nothing waiting on you</p>
-            ) : null}
-            {aftercare.slack_configured ? (
-              <div className="surface-actions">
-                <Button
-                  loading={busy}
-                  onClick={() => void proposeSlack("digest")}
-                >
-                  Send digest to Slack
-                </Button>
-                <Button
-                  loading={busy}
-                  onClick={() => void proposeSlack("followup")}
-                >
-                  Send follow-up to Slack
-                </Button>
-                <small>
-                  <PostureNote
-                    mode={String(authority.control_mode ?? "neutral")}
-                    describe
-                  />
-                </small>
-              </div>
-            ) : null}
           </div>
-          {/* 2 — settled. */}
-          {settledActions.length ? (
-            <div className="surface-outcome-sec">
-              <span className="surface-eyebrow">
-                {`Settled: ${settledActions.length}`}
-              </span>
-              <SurfaceRows>{settledActions.map(actionRow)}</SurfaceRows>
-            </div>
-          ) : null}
-          {/* 3 — the receipts ("transcript" and "routing" stay quoted
-              vocabulary): behind disclosures, never a wall. */}
-          <Disclosure
-            title={`Transcript: the receipt (${segments.length} segments)`}
-            open={momentSegmentIndex != null || (!hasOutcomes && segments.length > 0)}
-          >
+          {/* 3 — THE TRANSCRIPT WELL: always visible, never folded. */}
+          <SurfaceWell head={`TRANSCRIPT · ${segments.length} SEG`}>
             {segments.length ? (
               <ol className="transcript-list">
                 {segments.map((row, index) => (
@@ -632,34 +702,66 @@ function MeetingDetail({
             ) : (
               <SurfaceState empty emptyLabel="No transcript" emptyGlyph="¶" />
             )}
-          </Disclosure>
+          </SurfaceWell>
+          {/* 4 — settled: quiet ledger lines. */}
+          {settledActions.length ? (
+            <div className="surface-outcome-sec">
+              <span className="surface-eyebrow">
+                {`Settled: ${settledActions.length}`}
+              </span>
+              <ul className="surface-settled">
+                {settledActions.map((row, index) => (
+                  <li key={rowId(row, index)}>
+                    <span aria-hidden="true">✓</span>
+                    <span>
+                      {String(row.text ?? row.title ?? "Action item")}
+                      {presentValue(row.owner)
+                        ? ` · ${presentValue(row.owner)}`
+                        : ""}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+          {/* 5 — the routing receipt stays folded, in its own well. */}
           {timelineRows.length ? (
             <Disclosure title="Routing receipt">
-              <SurfaceCode>{JSON.stringify(timelineRows, null, 2)}</SurfaceCode>
+              <SurfaceWell head={`ROUTING · ${timelineRows.length}`}>
+                <SurfaceCode>
+                  {JSON.stringify(timelineRows, null, 2)}
+                </SurfaceCode>
+              </SurfaceWell>
             </Disclosure>
           ) : null}
-          <div className="surface-actions surface-detail-foot">
-            <span className="surface-eyebrow">Export</span>
-            <Button dense variant="ghost" onClick={() => void exportMeeting("markdown")}>
-              Markdown
-            </Button>
-            <Button dense variant="ghost" onClick={() => void exportMeeting("txt")}>
-              Text
-            </Button>
-            <Button dense variant="ghost" onClick={() => void exportMeeting("json")}>
-              JSON
-            </Button>
-            <Button dense variant="ghost" onClick={() => void exportMeeting("srt")}>
-              SRT
-            </Button>
-            <span className="surface-detail-foot-gap" />
-            <ConfirmVerb
-              label="Delete meeting"
-              confirmLabel="Delete meeting?"
-              busy={busy}
-              onConfirm={() => void remove()}
-            />
-          </div>
+          {/* 6 — aftercare rides the gadget grammar, only when wired. */}
+          {aftercare.slack_configured ? (
+            <GadgetGroup label="Aftercare">
+              <GadgetRow label="DIGEST → SLACK">
+                <Button
+                  dense
+                  loading={busy}
+                  onClick={() => void proposeSlack("digest")}
+                >
+                  Send
+                </Button>
+              </GadgetRow>
+              <GadgetRow label="FOLLOW-UP → SLACK">
+                <Button
+                  dense
+                  loading={busy}
+                  onClick={() => void proposeSlack("followup")}
+                >
+                  Send
+                </Button>
+              </GadgetRow>
+              <GadgetRow label="BASIS">
+                <span className="surface-token">
+                  {controlModeLabel(String(authority.control_mode ?? "neutral"))}
+                </span>
+              </GadgetRow>
+            </GadgetGroup>
+          ) : null}
         </>
       )}
     </SurfaceSection>
@@ -681,12 +783,15 @@ export function HistoryCore({ hero, scope }: CoreProps) {
   const [view, setView] = useState("outcomes");
   const [doorOpen, setDoorOpen] = useState(false);
   const [query, setQuery] = useState("");
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [speaker, setSpeaker] = useState("");
   const [tag, setTag] = useState("");
   const [openActions, setOpenActions] = useState(false);
   const [selected, setSelected] = useState<JsonRecord | null>(null);
+  const [receipt, setReceipt] = useState<Receipt | null>(null);
+  const [removing, setRemoving] = useState(false);
   const [openedRequestedMeetingId, setOpenedRequestedMeetingId] = useState<
     string | null
   >(null);
@@ -785,189 +890,213 @@ export function HistoryCore({ hero, scope }: CoreProps) {
       </Button>
     </>
   );
-  const rowTone = (row: JsonRecord) =>
-    row.status === "failed" ||
-    ["error", "failed", "import_failed"].includes(
-      String(row.intel_status ?? ""),
-    ) ||
-    ["capture_failed", "recoverable", "recording"].includes(
-      String(row.capture_status ?? ""),
-    )
-      ? "error"
-      : ["partial", "skipped", "queued"].includes(
-            String(row.intel_status ?? ""),
-          )
-        ? "warning"
-        : row.status === "complete"
-          ? "success"
-          : "neutral";
-  // HS-102-04 — the reviewing posture: a row needing a look (error or
-  // warning tone) leads; a fully settled row reads quieter, never
-  // uniform (composition rule 2).
-  const needsYou = (row: JsonRecord) =>
-    rowTone(row) === "error" || rowTone(row) === "warning";
-  const rowState = (row: JsonRecord) => (
-    <StatusPill tone={rowTone(row)}>
-      {displayState(
-        (row.capture_status !== "finalized"
-          ? row.capture_status
-          : row.intel_status) ??
-          row.status ??
-          row.kind ??
-          "meeting",
-      )}
-    </StatusPill>
+  const filtered = Boolean(
+    query || speaker || tag || dateFrom || dateTo || openActions,
   );
+  /* HS-111-03 — the footer's export/delete verbs act on the OPEN
+     record; receipts land in the same bar's center channel. */
+  const exportMeeting = async (format: string) => {
+    if (!selected) return;
+    const id = String(selected.id);
+    try {
+      download(
+        await apiBlob(
+          `/api/meetings/${encodeURIComponent(id)}/export?format=${format}`,
+        ),
+        `holdspeak-meeting-${id}.${format === "markdown" ? "md" : format}`,
+      );
+      setReceipt({
+        text: `EXPORTED ${format === "markdown" ? "MD" : format.toUpperCase()} ${clockTime(new Date().toISOString())}`,
+      });
+    } catch (reason) {
+      setReceipt({
+        text: `⚠ REFUSED · ${readableError(reason)}`,
+        tone: "danger",
+      });
+    }
+  };
+  const removeSelected = async () => {
+    if (!selected) return;
+    setRemoving(true);
+    try {
+      await apiFetch(`/api/meetings/${encodeURIComponent(String(selected.id))}`, {
+        method: "DELETE",
+      });
+      setSelected(null);
+      setReceipt({ text: `DELETED ${clockTime(new Date().toISOString())}` });
+      void meetings.reload();
+    } catch (reason) {
+      setReceipt({
+        text: `⚠ REFUSED · ${readableError(reason)}`,
+        tone: "danger",
+      });
+    } finally {
+      setRemoving(false);
+    }
+  };
+  const needing = meetingRows.filter((row) => stateToken(row).tone).length;
 
-  /* The rail: this week's meetings, search-first; the filter wall
-     stays folded. */
+  /* The rail: the catalog ledger — reverse-chron, never re-sorted;
+     attention is the state token's tone, not a shuffle. */
   const rail = (
-    <SurfaceSection
-      label="Meetings"
-      actions={
-        <TextInput
-          type="search"
-          aria-label="Search meetings"
-          placeholder="Search"
-          value={query}
-          onChange={(event) => setQuery(event.target.value)}
-        />
-      }
-    >
-      <Disclosure title="Filters">
-        <div className="surface-actions">
-          <Field label="From">
-            {({ id }) => (
-              <TextInput
-                id={id}
-                type="date"
-                value={dateFrom}
-                onChange={(event) => setDateFrom(event.target.value)}
-              />
-            )}
-          </Field>
-          <Field label="To">
-            {({ id }) => (
-              <TextInput
-                id={id}
-                type="date"
-                value={dateTo}
-                onChange={(event) => setDateTo(event.target.value)}
-              />
-            )}
-          </Field>
-          <Field label="Speaker">
-            {({ id }) => (
-              <Select
-                id={id}
-                value={speaker}
-                onChange={(event) => setSpeaker(event.target.value)}
-              >
-                <option value="">Any speaker</option>
-                {asRows(facets.data, ["speakers"]).map((row, index) => (
-                  <option
-                    key={rowId(row, index)}
-                    value={String(row.id ?? row.name ?? row.value)}
-                  >
-                    {String(row.name ?? row.label ?? row.value)}
-                  </option>
-                ))}
-              </Select>
-            )}
-          </Field>
-          <Field label="Tag">
-            {({ id }) => (
-              <Select
-                id={id}
-                value={tag}
-                onChange={(event) => setTag(event.target.value)}
-              >
-                <option value="">Any tag</option>
-                {(Array.isArray(facets.data.tags)
-                  ? facets.data.tags
-                  : []
-                ).map((value) => (
-                  <option key={String(value)}>{String(value)}</option>
-                ))}
-              </Select>
-            )}
-          </Field>
-          <label className="hs-check">
-            <input
-              type="checkbox"
-              checked={openActions}
-              onChange={(event) => setOpenActions(event.target.checked)}
+    <SurfaceSection label="Meetings">
+      <SurfaceLedger
+        cols="meetings"
+        count={`${meetingRows.length} RECORDS${needing ? ` · ${needing} NEEDS YOU` : ""}`}
+        controls={
+          <>
+            <StringGadget
+              label="Search meetings"
+              value={query}
+              onChange={setQuery}
             />
-            <span>
-              <strong>Open actions</strong>
-            </span>
-          </label>
-          <Button dense onClick={() => void meetings.reload()}>
-            Apply filters
-          </Button>
-          <Button
-            dense
-            variant="ghost"
-            onClick={() => {
-              setQuery("");
-              setDateFrom("");
-              setDateTo("");
-              setSpeaker("");
-              setTag("");
-              setOpenActions(false);
-            }}
-          >
-            Clear
-          </Button>
-        </div>
-      </Disclosure>
-      <SurfaceState
-        loading={meetings.loading}
-        error={meetings.error}
-        empty={!meetingRows.length}
-        emptyLabel="Nothing here yet"
-        emptyImage={spriteUrl("meeting", "archive-empty")}
-        onRetry={() => void meetings.reload()}
+            <Button
+              dense
+              variant="ghost"
+              aria-expanded={filtersOpen}
+              onClick={() => setFiltersOpen((open) => !open)}
+            >
+              Filters
+            </Button>
+          </>
+        }
       >
-        <SurfaceRows>
-          {[...meetingRows]
-            .sort(
-              (a, b) => Number(needsYou(b)) - Number(needsYou(a)),
-            )
-            .map((row, index) => (
-            <SurfaceRow
-              key={rowId(row, index)}
-              title={String(row.title ?? "Meeting")}
-              detail={humanTime(row.started_at ?? row.created_at) || undefined}
-              meta={rowState(row)}
-              quiet={!needsYou(row)}
-              selected={Boolean(
+        {filtersOpen ? (
+          /* Filters apply on change (the resource re-fetches on param
+             change); one RESET verb, no submit wall. */
+          <GadgetGroup label="Filters">
+            <GadgetRow label="SPEAKER">
+              <CycleGadget
+                label="Speaker"
+                value={speaker}
+                onChange={setSpeaker}
+                options={[
+                  { value: "", label: "ANY" },
+                  ...asRows(facets.data, ["speakers"]).map((row) => ({
+                    value: String(row.id ?? row.name ?? row.value),
+                    label: String(row.name ?? row.label ?? row.value),
+                  })),
+                ]}
+              />
+            </GadgetRow>
+            <GadgetRow label="TAG">
+              <CycleGadget
+                label="Tag"
+                value={tag}
+                onChange={setTag}
+                options={[
+                  { value: "", label: "ANY" },
+                  ...(Array.isArray(facets.data.tags)
+                    ? facets.data.tags
+                    : []
+                  ).map((value) => ({ value: String(value) })),
+                ]}
+              />
+            </GadgetRow>
+            <GadgetRow label="FROM">
+              <StringGadget
+                label="From date"
+                type="date"
+                mic={false}
+                value={dateFrom}
+                onChange={setDateFrom}
+              />
+            </GadgetRow>
+            <GadgetRow label="TO">
+              <StringGadget
+                label="To date"
+                type="date"
+                mic={false}
+                value={dateTo}
+                onChange={setDateTo}
+              />
+            </GadgetRow>
+            <GadgetRow label="OPEN ACTIONS">
+              <CheckGadget
+                label="Only meetings with open actions"
+                checked={openActions}
+                onChange={setOpenActions}
+              />
+            </GadgetRow>
+            <div className="surface-actions">
+              <Button
+                dense
+                variant="ghost"
+                onClick={() => {
+                  setQuery("");
+                  setDateFrom("");
+                  setDateTo("");
+                  setSpeaker("");
+                  setTag("");
+                  setOpenActions(false);
+                }}
+              >
+                Reset
+              </Button>
+            </div>
+          </GadgetGroup>
+        ) : null}
+        <SurfaceState
+          loading={meetings.loading}
+          error={meetings.error}
+          empty={!meetingRows.length}
+          emptyLabel="Nothing here yet"
+          emptyImage={spriteUrl("meeting", "archive-empty")}
+          onRetry={() => void meetings.reload()}
+        >
+          <ul className="surface-ledger-rows">
+            {meetingRows.map((row, index) => {
+              const token = stateToken(row);
+              const isOpen = Boolean(
                 selected && String(selected.id) === String(row.id),
-              )}
-              onOpen={() => setSelected(row)}
-              verbs={
-                <>
-                  {["capture_failed", "recoverable", "recording"].includes(
-                    String(row.capture_status ?? ""),
-                  ) ? (
-                    <Button
-                      dense
-                      onClick={() =>
-                        void apiFetch(
-                          `/api/meetings/${encodeURIComponent(String(row.id))}/capture/recover`,
-                          { method: "POST" },
-                        ).then(() => meetings.reload())
-                      }
-                    >
-                      Recover saved work
-                    </Button>
+              );
+              const recoverable = [
+                "capture_failed",
+                "recoverable",
+                "recording",
+              ].includes(String(row.capture_status ?? ""));
+              return (
+                <SurfaceLedgerRow
+                  key={rowId(row, index)}
+                  time={ledgerDate(row.started_at ?? row.created_at)}
+                  primary={String(row.title ?? "Meeting")}
+                  open={isOpen}
+                  onToggle={() => setSelected(isOpen ? null : row)}
+                  cells={
+                    <>
+                      <span className="surface-ledger-cell">
+                        {`${Number(row.segment_count ?? 0)} SEG`}
+                      </span>
+                      <span className="surface-ledger-cell">
+                        {durationToken(row.duration_seconds)}
+                      </span>
+                      <span className="surface-ledger-cell">
+                        <StateTokenSpan token={token} />
+                      </span>
+                    </>
+                  }
+                >
+                  {recoverable ? (
+                    <div className="surface-row-verbs">
+                      <Button
+                        dense
+                        onClick={() =>
+                          void apiFetch(
+                            `/api/meetings/${encodeURIComponent(String(row.id))}/capture/recover`,
+                            { method: "POST" },
+                          ).then(() => meetings.reload())
+                        }
+                      >
+                        Recover saved work
+                      </Button>
+                    </div>
                   ) : null}
-                </>
-              }
-            />
-          ))}
-        </SurfaceRows>
-      </SurfaceState>
+                </SurfaceLedgerRow>
+              );
+            })}
+          </ul>
+        </SurfaceState>
+      </SurfaceLedger>
     </SurfaceSection>
   );
 
@@ -989,26 +1118,27 @@ export function HistoryCore({ hero, scope }: CoreProps) {
           label={section[0].toUpperCase() + section.slice(1)}
         >
           {section === "queues" ? (
-            <Field label="Queue status">
-              {({ id }) => (
-                <Select
-                  id={id}
+            <GadgetGroup>
+              <GadgetRow label="STATUS">
+                <CycleGadget
+                  label="Queue status"
                   value={queueStatus}
-                  onChange={(event) => {
-                    setQueueStatus(event.target.value);
+                  onChange={(next) => {
+                    setQueueStatus(next);
                     window.setTimeout(() => {
                       void intel.reload();
                       void plugin.reload();
                     });
                   }}
-                >
-                  <option value="pending">Queued</option>
-                  <option value="running">Running</option>
-                  <option value="failed">Failed</option>
-                  <option value="complete">Succeeded</option>
-                </Select>
-              )}
-            </Field>
+                  options={[
+                    { value: "pending", label: "Queued" },
+                    { value: "running", label: "Running" },
+                    { value: "failed", label: "Failed" },
+                    { value: "complete", label: "Succeeded" },
+                  ]}
+                />
+              </GadgetRow>
+            </GadgetGroup>
           ) : null}
           {doorRows(section).length ? (
             <SurfaceRows>
@@ -1023,7 +1153,11 @@ export function HistoryCore({ hero, scope }: CoreProps) {
                     presentValue(row.owner ?? row.status ?? row.summary) ||
                     undefined
                   }
-                  meta={rowState(row)}
+                  meta={
+                    <StatusPill tone={row.status === "failed" ? "error" : "neutral"}>
+                      {displayState(row.status ?? row.kind ?? section)}
+                    </StatusPill>
+                  }
                   onOpen={
                     section === "projects"
                       ? () =>
@@ -1065,6 +1199,17 @@ export function HistoryCore({ hero, scope }: CoreProps) {
     </div>
   );
 
+  const detailPane = (paneView: "outcomes" | "artifacts") => (
+    <MeetingDetail
+      meeting={selected}
+      view={paneView}
+      momentSegmentIndex={requestedMomentSegment}
+      onClose={() => setSelected(null)}
+      onDeleted={() => void meetings.reload()}
+      onReceipt={setReceipt}
+    />
+  );
+
   const face = doorOpen ? (
     door
   ) : view === "record" ? (
@@ -1075,47 +1220,25 @@ export function HistoryCore({ hero, scope }: CoreProps) {
     />
   ) : view === "artifacts" ? (
     selected ? (
-      <MeetingDetail
-        meeting={selected}
-        view="artifacts"
-        momentSegmentIndex={requestedMomentSegment}
-        onClose={() => setSelected(null)}
-        onDeleted={() => void meetings.reload()}
-      />
+      detailPane("artifacts")
     ) : (
-      <SurfaceState
-        empty
-        emptyLabel="Open a meeting to read its artifacts"
-        emptyGlyph="◇"
-      />
+      /* The wing works from cold: no record open → the catalog, so
+         the hand can pick one. Never a dead-end empty state. */
+      rail
     )
   ) : (
     <div className="surface-split-railed">
       <SurfaceSplit
         main={rail}
         detailOpen={Boolean(selected)}
-        detail={
-          <MeetingDetail
-            meeting={selected}
-            view="outcomes"
-            momentSegmentIndex={requestedMomentSegment}
-            onClose={() => setSelected(null)}
-            onDeleted={() => void meetings.reload()}
-          />
-        }
+        detail={detailPane("outcomes")}
       />
     </div>
   );
 
   return (
     <>
-      {hero ? (
-        hero(verbs)
-      ) : (
-        <SurfaceVerbs status={`${meetingRows.length} visible`}>
-          {verbs}
-        </SurfaceVerbs>
-      )}
+      {hero ? hero(verbs) : <SurfaceVerbs>{verbs}</SurfaceVerbs>}
       {requestedMeetingError ? (
         <InlineMessage tone="error">
           {requestedMeetingError}{" "}
@@ -1132,12 +1255,57 @@ export function HistoryCore({ hero, scope }: CoreProps) {
         </InlineMessage>
       ) : null}
       {face}
-      <div className="surface-status">
-        <span>{`${meetingRows.length} ${meetingRows.length === 1 ? "meeting" : "meetings"}`}</span>
-        {query || speaker || tag || dateFrom || dateTo || openActions ? (
-          <span>filtered</span>
+      {/* HS-111-03 — the ONE footer receipt bar: residency chip, the
+          receipt center channel, the open record's export + delete. */}
+      <div className="surface-status surface-receiptbar">
+        <EgressChip />
+        <span
+          className="surface-receiptbar-receipt"
+          data-tone={receipt?.tone}
+          role="status"
+        >
+          {receipt
+            ? receipt.text
+            : `${meetingRows.length} RECORDS${filtered ? " · FILTERED" : ""}`}
+        </span>
+        {selected && !doorOpen && view !== "record" ? (
+          <span className="surface-receiptbar-verbs">
+            <Button
+              dense
+              variant="ghost"
+              onClick={() => void exportMeeting("markdown")}
+            >
+              MD
+            </Button>
+            <Button
+              dense
+              variant="ghost"
+              onClick={() => void exportMeeting("txt")}
+            >
+              TXT
+            </Button>
+            <Button
+              dense
+              variant="ghost"
+              onClick={() => void exportMeeting("json")}
+            >
+              JSON
+            </Button>
+            <Button
+              dense
+              variant="ghost"
+              onClick={() => void exportMeeting("srt")}
+            >
+              SRT
+            </Button>
+            <ConfirmVerb
+              label="Delete"
+              confirmLabel="Delete?"
+              busy={removing}
+              onConfirm={() => void removeSelected()}
+            />
+          </span>
         ) : null}
-        {selected ? <span>1 open</span> : null}
       </div>
     </>
   );

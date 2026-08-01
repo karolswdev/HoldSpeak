@@ -1,3 +1,6 @@
+// HS-111-03 — re-pointed to the one-row attention slab (audit §3.5):
+// state token, RETAINED fact, REMAINING token, RETRY/SKIP verbs on
+// the row. The wire contract under test is unchanged.
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { apiFetch } from "../lib/api";
@@ -43,28 +46,22 @@ describe("HS-93-06 Meeting intelligence recovery", () => {
     mockedApiFetch.mockReset();
   });
 
-  it("names completed and remaining work without claiming Ready", async () => {
+  it("tokens the state, the retained work, and the remaining work", async () => {
     mockedApiFetch.mockResolvedValueOnce(failedRecovery);
 
     render(<MeetingIntelRecovery meetingId="meeting-1" />);
 
-    expect(
-      await screen.findByRole("heading", {
-        name: "Meeting saved · intelligence incomplete",
-      }),
-    ).toBeInTheDocument();
-    expect(screen.getByText("3 saved segments")).toBeInTheDocument();
-    expect(screen.getByText("2 saved artifacts")).toBeInTheDocument();
-    expect(screen.getByText("Routed meeting intelligence")).toBeInTheDocument();
-    expect(
-      screen.getByText("Decision extraction timed out."),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: "Retry remaining" }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: "Skip remaining" }),
-    ).toBeInTheDocument();
+    expect(await screen.findByText("PARTIAL")).toBeInTheDocument();
+    // Retained counts token from the completed facts (3 SEG / 2 ART).
+    expect(screen.getByText("RETAINED 3 SEG / 2 ART")).toBeInTheDocument();
+    const remaining = screen.getByText(
+      "REMAINING: ROUTED MEETING INTELLIGENCE",
+    );
+    expect(remaining).toBeInTheDocument();
+    // The failure reason stays on the token, not as body prose.
+    expect(remaining).toHaveAttribute("title", "Decision extraction timed out.");
+    expect(screen.getByRole("button", { name: "Retry" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Skip" })).toBeInTheDocument();
     expect(screen.queryByText("Ready")).not.toBeInTheDocument();
   });
 
@@ -89,9 +86,7 @@ describe("HS-93-06 Meeting intelligence recovery", () => {
     render(
       <MeetingIntelRecovery meetingId="meeting-1" onChanged={onChanged} />,
     );
-    fireEvent.click(
-      await screen.findByRole("button", { name: "Skip remaining" }),
-    );
+    fireEvent.click(await screen.findByRole("button", { name: "Skip" }));
 
     await waitFor(() =>
       expect(mockedApiFetch).toHaveBeenLastCalledWith(
@@ -99,17 +94,11 @@ describe("HS-93-06 Meeting intelligence recovery", () => {
         { method: "POST" },
       ),
     );
+    expect(await screen.findByText("SKIPPED")).toBeInTheDocument();
     expect(
-      await screen.findByRole("heading", {
-        name: "Meeting saved · intelligence skipped",
-      }),
-    ).toBeInTheDocument();
-    expect(
-      screen.queryByRole("button", { name: "Skip remaining" }),
+      screen.queryByRole("button", { name: "Skip" }),
     ).not.toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: "Retry remaining" }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Retry" })).toBeInTheDocument();
     expect(onChanged).toHaveBeenCalled();
   });
 
@@ -124,9 +113,7 @@ describe("HS-93-06 Meeting intelligence recovery", () => {
 
     render(<MeetingIntelRecovery meetingId="meeting-1" />);
 
-    expect(
-      await screen.findByText("Wait for the running attempt to finish."),
-    ).toBeInTheDocument();
+    expect(await screen.findByText("RUNNING")).toBeInTheDocument();
     expect(screen.queryByRole("button")).not.toBeInTheDocument();
   });
 });

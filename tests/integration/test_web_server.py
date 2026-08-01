@@ -342,7 +342,9 @@ class TestDashboardEndpoint:
         source = self._bundled_runtime_js(test_client)
         assert "Ready to record" in source
         assert "Start a meeting to begin" in source
-        assert "Tests routing without changing the live meeting" in source
+        # HS-111-03: the preview description became the gadget row's
+        # fact token — same read-only-while-idle promise, token-cased.
+        assert "TESTS ROUTING · NEVER TOUCHES THE LIVE MEETING" in source
 
     def test_dashboard_bootstrap_prefers_runtime_status_payload(self, test_client):
         """The runtime-status payload is still preferred at bootstrap.
@@ -1818,9 +1820,9 @@ class TestHistoryUiSmoke:
         assert "/api/meetings/" in js
         assert "/artifacts" in js
         assert "/export?format=" in js
-        # HS-100-08: aftercare rows render on the outcomes face; the empty
-        # state is the needs-you section's honest line.
-        assert "Nothing waiting on you" in js
+        # HS-111-03: the empty needs-you face is the honest queue token,
+        # never a celebratory sentence.
+        assert "QUEUE 0" in js
 
     def test_settings_route_serves_the_global_settings_page(self, test_client):
         response = test_client.get("/settings")

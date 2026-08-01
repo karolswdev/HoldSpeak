@@ -36,5 +36,7 @@ def test_history_search_uses_backend_search_contract() -> None:
 def test_failed_import_and_queue_states_stay_visible() -> None:
     page = _page()
     assert "import_failed" in page
+    # HS-111-03: the queue-status Select became the CycleGadget; the
+    # wire states now ride its options roster.
     for state in ("pending", "running", "failed", "complete"):
-        assert f'value="{state}"' in page
+        assert f'value: "{state}"' in page
