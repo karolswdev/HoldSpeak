@@ -2,7 +2,7 @@
 // drawer rule): the desk stays visible, several zone windows coexist,
 // and THE WINDOW REMEMBERS — rect (the panel system), view, and sort
 // (`hs.desk.zone-views`). Icons view speaks the world's cell contract;
-// List view is the density altitude (Name / Kind / Modified, sortable).
+// List view is the shared DeskSortableTable density altitude.
 import { useMemo, useState } from "react";
 // @ts-ignore — shared ESM module (see ../sprites.d.ts)
 import { spriteUrl } from "../sprites";
@@ -10,7 +10,11 @@ import { useDesk, type ZoneViewPref } from "../store";
 import { objectByRef, type WorldObject } from "../world";
 import { productLabel } from "../../lib/productLanguage";
 import { humanTime } from "../surface/format";
+import { SurfaceState } from "../surface/Surface";
+import { SurfaceWings } from "../surface/wings";
+import { DeskWindowFooter } from "./DeskWindowFooter";
 import { DeskWindowFrame } from "./DeskWindow";
+import { DeskSortableTable, type Column } from "./DeskSortableTable";
 
 type SortKey = ZoneViewPref["sort"];
 
@@ -36,9 +40,9 @@ export function ZoneWindow({
   const pref: ZoneViewPref = savedPref ?? DEFAULT_PREF;
   const { closeZoneWindow, setZoneViewPref, openPullout, removeFromDir } =
     useDesk.getState();
+  const [selectedMemberKey, setSelectedMemberKey] = useState<string | null>(null);
   const zone = (items.directory || []).find((d) => d.id === zoneId);
   const memberIds: string[] = ((zone as any)?.memberIds as string[]) || [];
-  const [selected, setSelected] = useState<string | null>(null);
 
   const members = useMemo(() => {
     const resolved = memberIds
@@ -47,8 +51,7 @@ export function ZoneWindow({
     const dirMul = pref.dir === "desc" ? -1 : 1;
     const by: Record<SortKey, (a: WorldObject, b: WorldObject) => number> = {
       name: (a, b) => a.title.localeCompare(b.title),
-      kind: (a, b) =>
-        a.kind.localeCompare(b.kind) || a.title.localeCompare(b.title),
+      kind: (a, b) => a.kind.localeCompare(b.kind) || a.title.localeCompare(b.title),
       // Newest first is the natural ascending read for time.
       modified: (a, b) => memberTime(b).localeCompare(memberTime(a)),
     };
@@ -58,29 +61,38 @@ export function ZoneWindow({
   if (!zone) return null;
   const title = String(zone.name || zone.title || "Zone");
   const unresolved = memberIds.length - members.length;
-
-  const sortHeader = (key: SortKey, label: string) => (
-    <button
-      type="button"
-      className={`zone-sort${pref.sort === key ? " on" : ""}`}
-      aria-sort={
-        pref.sort === key
-          ? pref.dir === "asc"
-            ? "ascending"
-            : "descending"
-          : undefined
-      }
-      onClick={() =>
-        setZoneViewPref(zoneId, {
-          sort: key,
-          dir: pref.sort === key && pref.dir === "asc" ? "desc" : "asc",
-        })
-      }
-    >
-      {label}
-      {pref.sort === key ? (pref.dir === "asc" ? " ↑" : " ↓") : ""}
-    </button>
-  );
+  const columns: Column<WorldObject>[] = [
+    {
+      key: "icon",
+      label: "",
+      width: "36px",
+      render: (member) => (
+        <img
+          className="desk-sortable-table-sprite"
+          src={spriteUrl(member.kind, member.id)}
+          alt=""
+          width={28}
+          height={28}
+        />
+      ),
+    },
+    { key: "name", label: "Name", sortable: true, render: (member) => member.title },
+    {
+      key: "kind",
+      label: "Kind",
+      sortable: true,
+      render: (member) => <span className="quiet">{productLabel(member.kind)}</span>,
+    },
+    {
+      key: "modified",
+      label: "Modified",
+      sortable: true,
+      render: (member) => {
+        const time = memberTime(member);
+        return <span className="quiet">{time ? humanTime(time) : "—"}</span>;
+      },
+    },
+  ];
 
   return (
     <DeskWindowFrame
@@ -90,130 +102,79 @@ export function ZoneWindow({
       className="desk-pullout is-card desk-zone-window"
       fitContent
       origin={origin}
-      icon={
-        <img src={spriteUrl("directory", zoneId)} alt="" width={30} height={30} />
-      }
+      icon={<img src={spriteUrl("directory", zoneId)} alt="" width={30} height={30} />}
       title={title}
       open
       onClose={() => closeZoneWindow(zoneId)}
-      actions={
-        <span className="zone-wings" role="tablist" aria-label="Zone view">
-          <button
-            type="button"
-            role="tab"
-            aria-selected={pref.view === "icons"}
-            className={`desk-chip quiet${pref.view === "icons" ? " in-zone" : ""}`}
-            onClick={() => setZoneViewPref(zoneId, { view: "icons" })}
-          >
-            Icons
-          </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={pref.view === "list"}
-            className={`desk-chip quiet${pref.view === "list" ? " in-zone" : ""}`}
-            onClick={() => setZoneViewPref(zoneId, { view: "list" })}
-          >
-            List
-          </button>
-        </span>
+      wings={
+        <SurfaceWings
+          wings={[
+            { id: "icons", label: "Icons" },
+            { id: "list", label: "List" },
+          ]}
+          active={pref.view}
+          onChange={(view) => setZoneViewPref(zoneId, { view: view as ZoneViewPref["view"] })}
+        />
       }
     >
       <div className="desk-pullout-body desk-surface-body">
         {members.length === 0 ? (
-          <p className="quiet">Empty</p>
+          <SurfaceState empty emptyLabel="Empty" />
         ) : pref.view === "icons" ? (
           <div className="zone-grid" role="list">
-            {members.map((m) => (
+            {members.map((member) => (
               <button
-                key={`${m.kind}:${m.id}`}
+                key={`${member.kind}:${member.id}`}
                 type="button"
                 role="listitem"
-                className={`zone-cell${selected === `${m.kind}:${m.id}` ? " is-selected" : ""}`}
-                aria-selected={selected === `${m.kind}:${m.id}`}
-                onClick={() => setSelected(`${m.kind}:${m.id}`)}
-                onDoubleClick={(e) =>
-                  openPullout(m.id, { x: e.clientX, y: e.clientY })
+                className={`zone-cell${selectedMemberKey === `${member.kind}:${member.id}` ? " is-selected" : ""}`}
+                aria-selected={selectedMemberKey === `${member.kind}:${member.id}`}
+                onClick={() => setSelectedMemberKey(`${member.kind}:${member.id}`)}
+                onDoubleClick={(event) =>
+                  openPullout(member.id, { x: event.clientX, y: event.clientY })
                 }
               >
-                <img
-                  src={spriteUrl(m.kind, m.id)}
-                  alt=""
-                  width={48}
-                  height={48}
-                />
-                <span className="zone-cell-label">{m.title}</span>
+                <img src={spriteUrl(member.kind, member.id)} alt="" width={48} height={48} />
+                <span className="zone-cell-label">{member.title}</span>
               </button>
             ))}
           </div>
         ) : (
-          <table className="zone-list">
-            <thead>
-              <tr>
-                <th aria-hidden="true" />
-                <th>{sortHeader("name", "Name")}</th>
-                <th>{sortHeader("kind", "Kind")}</th>
-                <th>{sortHeader("modified", "Modified")}</th>
-                <th aria-hidden="true" />
-              </tr>
-            </thead>
-            <tbody>
-              {members.map((m) => {
-                const t = memberTime(m);
-                return (
-                  <tr
-                    key={`${m.kind}:${m.id}`}
-                    className={selected === `${m.kind}:${m.id}` ? "is-selected" : ""}
-                    onClick={() => setSelected(`${m.kind}:${m.id}`)}
-                  >
-                    <td className="zone-list-ic">
-                      <img
-                        src={spriteUrl(m.kind, m.id)}
-                        alt=""
-                        width={20}
-                        height={20}
-                      />
-                    </td>
-                    <td>
-                      <button
-                        type="button"
-                        className="zone-list-open"
-                        aria-selected={selected === `${m.kind}:${m.id}`}
-                        onClick={() => setSelected(`${m.kind}:${m.id}`)}
-                        onDoubleClick={(e) =>
-                          openPullout(m.id, { x: e.clientX, y: e.clientY })
-                        }
-                      >
-                        {m.title}
-                      </button>
-                    </td>
-                    <td className="quiet">{productLabel(m.kind)}</td>
-                    <td className="quiet">{t ? humanTime(t) : "—"}</td>
-                    <td>
-                      <button
-                        type="button"
-                        className="desk-chip quiet zone-unfile"
-                        aria-label={`Take ${m.title} out of ${title}`}
-                        onClick={() =>
-                          void removeFromDir(m.id, zoneId, m.kind)
-                        }
-                      >
-                        Take out
-                      </button>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+          <DeskSortableTable
+            className="desk-zone-list"
+            data={members}
+            columns={columns}
+            sort={{ key: pref.sort, dir: pref.dir }}
+            onSort={(key, dir) => setZoneViewPref(zoneId, { sort: key as SortKey, dir })}
+            rowKey={(member) => `${member.kind}:${member.id}`}
+            selectedKey={selectedMemberKey}
+            rowLabel={(member) => member.title}
+            onRowClick={(member) => setSelectedMemberKey(`${member.kind}:${member.id}`)}
+            onRowDoubleClick={(member) => openPullout(member.id)}
+            rowActions={(member) => (
+              <button
+                type="button"
+                className="desk-chip quiet zone-unfile"
+                aria-label={`Take ${member.title} out of ${title}`}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  void removeFromDir(member.id, zoneId, member.kind);
+                }}
+              >
+                Take out
+              </button>
+            )}
+          />
         )}
       </div>
-      <footer className="desk-pullout-foot">
-        <span className="quiet">
-          {members.length} {members.length === 1 ? "item" : "items"}
-          {unresolved > 0 ? ` · ${unresolved} unavailable` : ""}
-        </span>
-      </footer>
+      <DeskWindowFooter
+        status={
+          <span className="quiet">
+            {members.length} {members.length === 1 ? "item" : "items"}
+            {unresolved > 0 ? ` · ${unresolved} unavailable` : ""}
+          </span>
+        }
+      />
     </DeskWindowFrame>
   );
 }

@@ -1,0 +1,200 @@
+import { useEffect, useState } from "react";
+import { apiRequest } from "../../lib/api";
+import { qualifiedRef } from "../api";
+import { useDesk } from "../store";
+import { FoldGadget } from "../surface/gadgets";
+
+interface DeskFilingStripProps {
+  objectRef: string;
+  objectKind: string;
+  objectId: string;
+}
+
+/** The one filing disclosure: Zone, Knowledge, and Project membership. */
+export function DeskFilingStrip({
+  objectRef,
+  objectKind,
+  objectId,
+}: DeskFilingStripProps) {
+  const items = useDesk((state) => state.items);
+  const [relationships, setRelationships] = useState<any>(null);
+  const [knowledgeChoices, setKnowledgeChoices] = useState<any[]>([]);
+  const [projectChoices, setProjectChoices] = useState<any[]>([]);
+  const [relationshipError, setRelationshipError] = useState("");
+  const zones = items.directory || [];
+
+  const refreshRelationships = async () => {
+    try {
+      const [axesRes, knowledgeRes, projectRes] = await Promise.all([
+        apiRequest(`/api/desk/relationships/${encodeURIComponent(objectRef)}`),
+        apiRequest("/api/kbs"),
+        apiRequest("/api/projects"),
+      ]);
+      const [axes, knowledge, projects] = await Promise.all([
+        axesRes.json(),
+        knowledgeRes.json(),
+        projectRes.json(),
+      ]);
+      setRelationships(axes);
+      setKnowledgeChoices((knowledge.kbs || []).filter((entry: any) => !entry.deleted));
+      setProjectChoices(
+        (projects.projects || []).filter((entry: any) => !entry.is_archived),
+      );
+      setRelationshipError("");
+    } catch (error) {
+      setRelationshipError(String(error));
+    }
+  };
+
+  useEffect(() => {
+    setRelationships(null);
+    void refreshRelationships();
+  }, [objectRef]);
+
+  const toggleRelationship = async (
+    axis: "knowledge" | "projects",
+    ownerId: string,
+    active: boolean,
+  ) => {
+    const base = axis === "knowledge" ? "kbs" : "projects";
+    try {
+      await apiRequest(
+        `/api/${base}/${encodeURIComponent(ownerId)}/${axis === "knowledge" ? "members" : "resources"}/${encodeURIComponent(objectRef)}`,
+        {
+          method: active ? "DELETE" : "PUT",
+          ...(axis === "projects" && !active
+            ? {
+                headers: { "content-type": "application/json" },
+                body: JSON.stringify({ relationship: "member" }),
+              }
+            : {}),
+        },
+      );
+      await refreshRelationships();
+      await useDesk.getState().refresh();
+    } catch (error) {
+      setRelationshipError(String(error));
+    }
+  };
+
+  if (!relationships) return relationshipError ? <p className="desk-run-warning" role="alert">{relationshipError}</p> : null;
+
+  const homeZone = zones.find((zone) => {
+    const members = ((zone as any).memberIds as string[]) || [];
+    return members.includes(objectId) || members.includes(objectRef);
+  });
+  const knowledgeHomes = knowledgeChoices.filter(
+    (knowledge) => objectRef !== qualifiedRef("kb", knowledge.id),
+  );
+  const knowledgeCount = (relationships.knowledge || []).length;
+  const projectCount = (relationships.projects || []).length;
+  const filedSummary = [
+    homeZone ? String(homeZone.name || homeZone.id) : "Desk root",
+    knowledgeCount ? `${knowledgeCount} Knowledge` : "",
+    projectCount ? `${projectCount} Project${projectCount === 1 ? "" : "s"}` : "",
+  ]
+    .filter(Boolean)
+    .join(" · ");
+
+  return (
+    <>
+      <FoldGadget title={`Filed · ${filedSummary}`}>
+        <div className="desk-pullout-filed">
+          {zones.length > 0 && (
+            <div className="desk-pullout-filed-axis">
+              <span className="surface-eyebrow">Zone</span>
+              <div className="desk-pullout-lineage">
+                {zones.map((zone) => {
+                  const members = ((zone as any).memberIds as string[]) || [];
+                  const inZone = members.includes(objectId) || members.includes(objectRef);
+                  return (
+                    <button
+                      key={String(zone.id)}
+                      type="button"
+                      className={`desk-chip quiet${inZone ? " in-zone" : ""}`}
+                      aria-pressed={inZone}
+                      onClick={() =>
+                        void (inZone
+                          ? useDesk.getState().removeFromDir(objectId, String(zone.id), objectKind)
+                          : useDesk.getState().fileIntoDir(objectId, String(zone.id), objectKind))
+                      }
+                    >
+                      {inZone ? "✓ " : "+ "}
+                      {String(zone.name || zone.id)}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+          {knowledgeHomes.length > 0 && (
+            <div className="desk-pullout-filed-axis">
+              <span className="surface-eyebrow">Knowledge</span>
+              <div className="desk-pullout-lineage">
+                {knowledgeHomes.map((knowledge) => {
+                  const active = (relationships.knowledge || []).some(
+                    (row: any) => row.knowledge_id === knowledge.id,
+                  );
+                  return (
+                    <button
+                      key={knowledge.id}
+                      type="button"
+                      className={`desk-chip quiet${active ? " in-zone" : ""}`}
+                      aria-pressed={active}
+                      onClick={() => void toggleRelationship("knowledge", knowledge.id, active)}
+                    >
+                      {active ? "✓ " : "+ "}
+                      {knowledge.name}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+          {projectChoices.length > 0 && (
+            <div className="desk-pullout-filed-axis">
+              <span className="surface-eyebrow">Projects</span>
+              <div className="desk-pullout-lineage">
+                {projectChoices.map((project) => {
+                  const active = (relationships.projects || []).some(
+                    (row: any) => row.project_id === project.id,
+                  );
+                  return (
+                    <span className="desk-project-choice" key={project.id}>
+                      <button
+                        type="button"
+                        className={`desk-chip quiet${active ? " in-zone" : ""}`}
+                        aria-label={`${active ? "Remove from" : "Assign to"} ${project.name} Project`}
+                        aria-pressed={active}
+                        onClick={() => void toggleRelationship("projects", project.id, active)}
+                      >
+                        {active ? "✓ " : "+ "}
+                        {project.name}
+                      </button>
+                      <button
+                        type="button"
+                        className="desk-chip quiet"
+                        aria-label={`Inspect ${project.name} Project`}
+                        onClick={() => useDesk.getState().openToolInspector("project", String(project.id))}
+                      >
+                        Inspect
+                      </button>
+                    </span>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+          {!zones.length && !knowledgeChoices.length && !projectChoices.length && (
+            <span className="quiet">
+              Nothing to file into yet — Zones, Knowledge, and Projects appear here once they exist.
+            </span>
+          )}
+        </div>
+      </FoldGadget>
+      {relationshipError ? (
+        <p className="desk-run-warning" role="alert">{relationshipError}</p>
+      ) : null}
+    </>
+  );
+}
