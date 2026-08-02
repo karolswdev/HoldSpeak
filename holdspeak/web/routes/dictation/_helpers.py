@@ -458,6 +458,7 @@ def _run_dictation_dry_run_text(
     telemetry: Any = None,
     journal: Any = None,
     activity_context: Optional[dict[str, Any]] = None,
+    journal_source: str = "dry_run",
 ) -> dict[str, Any]:
     """Execute the browser dry-run path for already-validated text.
 
@@ -466,6 +467,11 @@ def _run_dictation_dry_run_text(
     the rewrite can ground in a selected record — the remote relay passes it when
     a "Dictate with this" pin is pending. ``None`` keeps the historical
     target-only activity dict byte-identical.
+
+    ``journal_source`` (HS-112-02): which lane the run belongs to. The rich
+    pipeline is shared by the REHEARSE preview (``dry_run``) and by a real
+    delivery (``dictation``) — one helper, one journal schema, an honest row.
+    Only an explicit rehearsal writes a ``dry_run`` entry.
     """
     from ....config import Config
     from ....dictation_telemetry import summarize_dry_run
@@ -505,7 +511,7 @@ def _run_dictation_dry_run_text(
 
             recorded = journal.record(
                 passthrough_run(text),
-                source="dry_run",
+                source=journal_source,
                 transcript=text,
                 enabled=bool(getattr(cfg.pipeline, "journal_enabled", True)),
                 retention=int(getattr(cfg.pipeline, "journal_retention", 500)),
@@ -591,7 +597,7 @@ def _run_dictation_dry_run_text(
     if journal is not None:
         recorded = journal.record(
             run,
-            source="dry_run",
+            source=journal_source,
             transcript=text,
             target_profile=target_profile,
             project_root=project_root,

@@ -70,7 +70,7 @@ it does not absorb it — it names it in the final summary.
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
 | HS-112-01 | One dial | ready | [story-01-one-dial](./story-01-one-dial.md) | — |
-| HS-112-02 | Speak speaks | backlog | [story-02-speak-speaks](./story-02-speak-speaks.md) | — |
+| HS-112-02 | Speak speaks | in-progress | [story-02-speak-speaks](./story-02-speak-speaks.md) | — (captured; ships with the flip) |
 | HS-112-03 | The architect's desk | backlog | [story-03-architects-desk](./story-03-architects-desk.md) | — |
 | HS-112-04 | The plain story | backlog | [story-04-plain-story](./story-04-plain-story.md) | — |
 | HS-112-05 | The sitting walk | backlog | [story-05-walk](./story-05-walk.md) | — |
@@ -78,7 +78,26 @@ it does not absorb it — it names it in the final summary.
 
 ## Where we are
 
-0/6. Chartered 2026-08-02 from the owner's post-111 verdict; the
+0/6 flipped; 02 BUILT (in-progress pending the live-metal proof).
+HS-112-02 implemented 2026-08-02: the Speak room's TALK key delivers
+for real through the one existing contract (/api/dictation/remote —
+no forked idempotency), with an AIM row (FOCUSED APP / AGENT / THIS
+FIELD), REHEARSE as an explicit mode never the default, opt-in
+require_agent strictness (companion fallback byte-identical), a
+pre-effect refusal classifier turning deterministic kernel refusals
+into named terminal 422s (retry replays the cached refusal;
+mid-type driver failures still honestly park pending), release-to-
+landed latency on the receipt, and journal_source=dictation — which
+also fixed a latent bug: companion deliveries had been journaling
+as dry_run rehearsals. Contract tests byte-identical (42 tests);
+new: 13 python + 12 web; suites 3464 unit + 456 web green (one
+environmental node-link flake passes in isolation). Named debt in
+the story report: two audio stacks, deprecated ScriptProcessorNode,
+twin preview stores, companion tap-toggle, macro-dispatch bypass,
+2-valued journal_source, no delivery_id on the transcribe leg. The
+flip to done awaits the live proof: TALK held in a real browser,
+text landing in a real focused app and a real agent pane, refusal
+shot legs, 1440+393. Chartered 2026-08-02. Chartered 2026-08-02 from the owner's post-111 verdict; the
 same day the owner chartered the open-mic rider live (HS-112-06 —
 the voice-first Desk: one mic grant, continuous stream, VAD; PTT
 byte-identical). The pre-charter survey (three parallel audits: the
