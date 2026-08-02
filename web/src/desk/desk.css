@@ -1340,42 +1340,26 @@
   align-items: center;
   gap: 6px;
 }
+/* HS-111-09 — the Record key: the 40px system sprite IS the face
+   (integer-true, 80 device px at DPR 2). The macOS gloss gradient,
+   glow halo, and hover swell are retired — Signal Workbench states are
+   flat brightness steps, matching the icon family's _sel treatment. */
 .desk-next .desk-orb {
-  width: 62px;
-  height: 62px;
-  border-radius: 50%;
-  border: 2px solid color-mix(in srgb, var(--accent, #ff6b35) 55%, transparent);
-  background: radial-gradient(
-    circle at 50% 42%,
-    rgba(255, 122, 64, 0.5),
-    rgba(120, 40, 20, 0.5) 70%
-  );
-  box-shadow:
-    0 10px 30px var(--shadow-ink-3),
-    0 0 24px rgba(255, 107, 53, 0.35);
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
   cursor: pointer;
   display: grid;
   place-items: center;
-  transition:
-    transform var(--duration-short) var(--ease-standard),
-    box-shadow var(--duration-short) var(--ease-standard);
 }
-.desk-next .desk-orb:hover {
-  transform: scale(1.06);
+.desk-next .desk-orb:hover .desk-orb-face {
+  filter: brightness(1.15);
 }
-.desk-next .desk-orb-core {
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: var(--accent, #ff6b35);
-  box-shadow: 0 0 14px rgba(255, 107, 53, 0.8);
-  transition: border-radius var(--duration-short) var(--ease-standard);
-}
-.desk-next .desk-orb.is-recording {
-  animation: desk-next-orb-pulse 1.6s ease-in-out infinite;
-}
-.desk-next .desk-orb.is-recording .desk-orb-core {
-  border-radius: 2px;
+.desk-next .desk-orb.is-recording .desk-orb-face {
+  animation: desk-next-orb-pulse 1.2s steps(2, jump-none) infinite;
 }
 .desk-next .desk-orb.is-busy {
   opacity: 0.6;
@@ -1384,14 +1368,10 @@
 @keyframes desk-next-orb-pulse {
   0%,
   100% {
-    box-shadow:
-      0 10px 30px var(--shadow-ink-3),
-      0 0 22px rgba(255, 107, 53, 0.4);
+    filter: brightness(1);
   }
   50% {
-    box-shadow:
-      0 10px 30px var(--shadow-ink-3),
-      0 0 42px rgba(255, 107, 53, 0.85);
+    filter: brightness(1.4);
   }
 }
 .desk-next .desk-orb-elapsed {
@@ -1406,11 +1386,9 @@
   letter-spacing: 0.04em;
 }
 @media (prefers-reduced-motion: reduce) {
-  .desk-next .desk-orb.is-recording {
+  .desk-next .desk-orb.is-recording .desk-orb-face {
     animation: none;
-    box-shadow:
-      0 10px 30px var(--shadow-ink-3),
-      0 0 0 3px rgba(255, 107, 53, 0.6);
+    filter: brightness(1.4);
   }
 }
 
@@ -3678,6 +3656,18 @@
 .desk-next .desk-dock-reset:hover {
   color: var(--text);
 }
+/* HS-111-09 — the dock verbs are VerbGlyph SVGs (⊞/⟲/✕ retired). */
+.desk-next .desk-dock-reset svg {
+  width: 14px;
+  height: 14px;
+  display: block;
+}
+.desk-next .desk-dock-x svg {
+  width: 11px;
+  height: 11px;
+  display: block;
+  margin: 0 auto;
+}
 
 /* HS-97-07 — launcher chips + the shelf's orb seat. */
 .desk-next .desk-dock-launch {
@@ -3696,6 +3686,11 @@
 .desk-next .desk-dock-launch:hover {
   background: var(--accent-tint);
   color: var(--text);
+}
+/* HS-111-09 — dock hover brightens the sprite itself (the icon-family
+   _sel treatment; chrome states are CSS per ICON-DISCIPLINE). */
+.desk-next .desk-dock-launch:hover .desk-dock-sprite {
+  filter: brightness(1.15);
 }
 .desk-next .desk-dock-launch.is-run {
   color: var(--text);

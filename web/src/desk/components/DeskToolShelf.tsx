@@ -412,7 +412,7 @@ export function DeskToolShelf() {
         aria-keyshortcuts="Control+K Meta+K"
         onClick={() => usePalette.getState().toggle()}
       >
-        <img src={SYSTEM.menuSearch} alt="" width={14} height={14} className="desk-chrome-sprite" draggable={false} /> Search <kbd>⌘K</kbd>
+        <img src={SYSTEM.menuSearch} alt="" width={16} height={16} className="desk-chrome-sprite" draggable={false} /> Search <kbd>⌘K</kbd>
       </button>
       {/* Round 9 - the deck PORTALS to the desk root: rendered inside
           the chrome bar it inherited the bar's z-30 stacking context and

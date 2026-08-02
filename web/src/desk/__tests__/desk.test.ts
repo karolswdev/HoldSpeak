@@ -52,9 +52,11 @@ describe("wire normalizers", () => {
     });
   });
   it("recipe defaults", () => {
+    // HS-111-09 — no 🤖 default: empty avatar means "wear the automaton
+    // sprite" (AgentAvatar renders the family art).
     expect(fromWireRecipe({ id: "a1", name: "A" })).toMatchObject({
       kind: "recipe",
-      avatar: "🤖",
+      avatar: "",
       tools: [],
       kbId: null,
       profileId: "",

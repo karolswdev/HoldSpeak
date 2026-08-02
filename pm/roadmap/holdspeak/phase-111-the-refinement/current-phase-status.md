@@ -1,22 +1,21 @@
 # Phase 111 - The Refinement
 
-**Status:** IN PROGRESS (8/11). Chartered 2026-07-31 as the mandatory
+**Status:** IN PROGRESS (9/11). Chartered 2026-07-31 as the mandatory
 fast-follow to Phase 110. The owner's condition: every program on the
 desk gets its interior rethought — not token-tweaked, RETHOUGHT — to
 feel native to Signal Workbench. "The Settings screen needs to be
 completely rethought, and many, many others."
 
-**Last updated:** 2026-08-02 (HS-111-08 Interactive elements SHIPPED
-— the two-dialect era ends: roving focus is kit law (every ledger
-inherited arrows-walk in one change), the unarmed × is extinct,
-FoldGadget/PadGadget minted, the Wings pill reforged, six small
-cores joined the kit via the pageSupport chokepoint, eleven legacy
-species deleted including the OS's only modals (no-modals now
-structurally true), ComponentsCore is the kit's living style guide;
-suites green 4213+432 with a three-species verification trail on
-the record (a disproven attribution, a real config-hermeticity bug,
-a load flake). Earlier: 07 chrome, 06 delivery/process, 05 Ask, 04
-Agents, 03 Meetings, 02 Speak, 01 Settings.)
+**Last updated:** 2026-08-02 (HS-111-09 Sprites SHIPPED — the craft
+story: integer rendering ended the fractional-scale smear (the
+biggest win, zero credits), the record orb sprite finally replaced
+the CSS gloss orb (the last macOS survivor is dead), four orphan
+sprites retired honestly, the emoji era ended on the desk, the brand
+mark and search glyph regenerated on the real desk (8 subscription
+gens, ~zero credits), JUDGMENT.md before/after sheet filed for the
+owner incl. one held decision; suites green 3450+438. Earlier: 08
+elements, 07 chrome, 06 delivery/process, 05 Ask, 04 Agents, 03
+Meetings, 02 Speak, 01 Settings.)
 
 ## Why this phase exists
 
@@ -54,7 +53,7 @@ Each story:
 | 06 | [Delivery and process](./story-06-delivery-process.md) | The delivery belt, the process window, the project memory window — the kernel-facing programs | done |
 | 07 | [System chrome](./story-07-system-chrome.md) | Dropdown menus (Desk/Object/Go), context menus, the search palette (Cmd+K), the shortcut sheet, popovers | done |
 | 08 | [Interactive elements](./story-08-interactive-elements.md) | Every control type across all programs: toggles, selects, inputs, tabs, pills, buttons, badges — one kit, one language | done |
-| 09 | [Sprite and icon quality](./story-09-sprites.md) | Regenerate bad dock sprites on the real desk, window type icons, overview/reset glyphs | backlog |
+| 09 | [Sprite and icon quality](./story-09-sprites.md) | Regenerate bad dock sprites on the real desk, window type icons, overview/reset glyphs | done |
 | 10 | [The refinement walk](./story-10-walk.md) | Open every program, screenshot at both viewports, prove every room speaks one language | backlog |
 | 11 | [The terminal pane](./story-11-terminal-pane.md) | Owner rider on 04: the pane well becomes a real terminal (xterm.js over a raw peek mode, read-only, consent spine untouched) + utility density | backlog |
 
@@ -70,7 +69,7 @@ Each story:
 | HS-111-06 | Delivery and process | done | [story-06-delivery-process](./story-06-delivery-process.md) | [evidence-story-06](./evidence-story-06.md) |
 | HS-111-07 | System chrome | done | [story-07-system-chrome](./story-07-system-chrome.md) | [evidence-story-07](./evidence-story-07.md) |
 | HS-111-08 | Interactive elements | done | [story-08-interactive-elements](./story-08-interactive-elements.md) | [evidence-story-08](./evidence-story-08.md) |
-| HS-111-09 | Sprite and icon quality | backlog | [story-09-sprites](./story-09-sprites.md) | — |
+| HS-111-09 | Sprite and icon quality | done | [story-09-sprites](./story-09-sprites.md) | [evidence-story-09](./evidence-story-09.md) |
 | HS-111-10 | The refinement walk | backlog | [story-10-walk](./story-10-walk.md) | — |
 | HS-111-11 | The terminal pane | backlog | [story-11-terminal-pane](./story-11-terminal-pane.md) | — |
 | HSEGHS001HS104-111-11 | The terminal pane | backlog | [story-11-terminal-pane](./story-11-terminal-pane.md) | - |
@@ -218,4 +217,24 @@ unhermetic aftercare test — rides to 10's debt), and a load flake
 on a live test. Named debt to 10: the desk-component message long
 tail, the chrome-input mic sweep, InlineEditor's native cluster,
 composer→PadGadget, the hermeticity gap. Proven live at 1440+393;
-suites green (4213 python + 432 web). Next: HS-111-09 (sprites).
+suites green (4213 python + 432 web).
+
+9/11. HS-111-09 (Sprites) shipped 2026-08-02: the audit measured
+every sprite at its RENDERED size and found the real disease was
+fractional scaling (dock 32→24, menu 16→14 — pixel art smeared
+regardless of source quality) plus five HS-110-02 orphans never
+wired. Shipped: integer rendering everywhere (the dock-speak "noise"
+resolved into its real grille — one planned regen cancelled), the
+record orb sprite wired at last (the CSS gloss orb — the last macOS
+survivor — is dead, pulse now flat brightness steps), four orphans
+RETIRED honestly (the SVG glyphs had already won), the emoji era
+ended (mic sprite, automaton avatars, VerbGlyph dingbats), the brand
+mark regenerated from a shapeless splat into a crisp signal-orange
+speech bubble and the search dandelion into a real magnifier — every
+piece judged on the real desk at 4x, never in a generator preview.
+JUDGMENT.md (before/after per asset + a banked alternate + one held
+grammar decision) rides in evidence assets for the owner's sitting.
+~Zero credits spent (8 subscription gens; the bell recolored locally
+with PIL). Proven live at 1440+393 DPR 2; suites green (3450 python
+unit + 438 web; no python surface). Next: HS-111-11 (the terminal
+pane — the owner's xterm.js ruling) then HS-111-10 (the walk).

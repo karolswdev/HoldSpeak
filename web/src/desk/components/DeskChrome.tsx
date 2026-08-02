@@ -45,7 +45,8 @@ function AttentionBell() {
       title="Desk memory"
       onClick={() => attention.activate()}
     >
-      <img src={SYSTEM.menuBell} alt="" width={14} height={14} className="desk-chrome-sprite" draggable={false} />
+      {/* HS-111-09 — 16px source renders at 16 CSS px (integer-true). */}
+      <img src={SYSTEM.menuBell} alt="" width={16} height={16} className="desk-chrome-sprite" draggable={false} />
       {attention.badge ? <strong>{attention.badge}</strong> : null}
     </button>
   );
@@ -137,7 +138,7 @@ export function DeskChrome({
             }}
             title="HoldSpeak"
           >
-            <img src={SYSTEM.menuMark} alt="" width={14} height={14} className="desk-mark-glyph desk-chrome-sprite" draggable={false} />
+            <img src={SYSTEM.menuMark} alt="" width={16} height={16} className="desk-mark-glyph desk-chrome-sprite" draggable={false} />
             HoldSpeak
           </button>
           {menuOpen &&

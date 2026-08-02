@@ -59,15 +59,20 @@ Every system chrome element that is NOT text follows the icon
 family's art language. They live under `public/desk/sprites/system/`
 and are registered in `src/desk/systemSprites.ts`.
 
-### Sizes
+### Sizes (amended HS-111-09: integer-true or absent)
 
-| Element | Size | Notes |
-|---------|------|-------|
-| Dock launchers | 32×32 | Speak, Meetings, Agents, Settings |
-| Window gadgets | 16×16 | Close, Minimize, Maximize |
-| Menu glyphs | 16×16 | HoldSpeak mark, bell, search lens |
-| RecordOrb | 48×48 | The one "hot" element on the shelf |
-| Backdrop tile | 64×64 | Seamless, muted crosshatch pattern |
+Every system sprite renders at EXACTLY its source size in CSS px
+(2x device pixels at DPR 2). Fractional scales (the 32→24 dock, the
+16→14 menu bar) are what made the chrome muddy — never again.
+
+| Element | Source px | Rendered CSS px | Notes |
+|---------|-----------|-----------------|-------|
+| Dock launchers | 32×32 | 32 | Speak, Meetings, Agents, Settings |
+| Window gadgets | — | — | RULING (HS-111-09): the SVG VerbGlyphs won — crisp strokes in the beveled `.desk-light` squares are the correct Workbench material; the 16px gadget sprites are retired |
+| Menu glyphs | 16×16 | 16 | HoldSpeak mark, bell, search lens |
+| Mic glyph | 16×16 | 16 | Every speak-to-fill mic (`MicButton`) |
+| Record key | 40×40 | 40 | The one "hot" element; replaced the CSS gloss orb |
+| Backdrop tile | — | — | Retired (HS-111-09): the CSS crosshatch won |
 
 ### Prompt discipline (system chrome)
 
@@ -81,7 +86,9 @@ generation is always an existing icon family sprite (e.g. cassette).
 - Gadget rest: muted (55% opacity)
 - Gadget hover: full opacity (the cluster-hover reveal)
 - Gadget active: brightness 1.3
-- Dock sprite hover: brightened (matching the icon `_sel` treatment)
+- Dock sprite hover: `brightness(1.15)` (the icon `_sel` treatment;
+  wired HS-111-09)
+- Record key recording: flat brightness pulse — never a glow halo
 
 ### The rule
 
