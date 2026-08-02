@@ -1,6 +1,6 @@
 # Phase 112 - Enough
 
-**Status:** CHARTERED (2026-08-02). The owner's verdict after Phase
+**Status:** 6/6 SHIPPED AND WALKED (chartered, built, and proven on a fresh HOME in ONE DAY, 2026-08-02); THE CLOSED CLAIM AWAITS THE OWNER SITTING. The owner's verdict after Phase
 111 shipped, verbatim: *"Enough with the over-complication, enough
 with me not really even understanding what HoldSpeak does and what
 HoldSpeak is."* Three concrete asks, and this phase is exactly those
@@ -69,14 +69,32 @@ it does not absorb it — it names it in the final summary.
 
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
-| HS-112-01 | One dial | in-progress | [story-01-one-dial](./story-01-one-dial.md) | — |
-| HS-112-02 | Speak speaks | in-progress | [story-02-speak-speaks](./story-02-speak-speaks.md) | — (captured; ships with the flip) |
-| HS-112-03 | The architect's desk | in-progress | [story-03-architects-desk](./story-03-architects-desk.md) | — |
-| HS-112-04 | The plain story | in-progress | [story-04-plain-story](./story-04-plain-story.md) | — |
-| HS-112-05 | The sitting walk | backlog | [story-05-walk](./story-05-walk.md) | — |
-| HS-112-06 | The open mic | in-progress | [story-06-open-mic](./story-06-open-mic.md) | — |
+| HS-112-01 | One dial | done | [story-01-one-dial](./story-01-one-dial.md) | [evidence-story-01](./evidence-story-01.md) |
+| HS-112-02 | Speak speaks | done | [story-02-speak-speaks](./story-02-speak-speaks.md) | [evidence-story-02](./evidence-story-02.md) |
+| HS-112-03 | The architect's desk | done | [story-03-architects-desk](./story-03-architects-desk.md) | [evidence-story-03](./evidence-story-03.md) |
+| HS-112-04 | The plain story | done | [story-04-plain-story](./story-04-plain-story.md) | [evidence-story-04](./evidence-story-04.md) |
+| HS-112-05 | The sitting walk | done | [story-05-walk](./story-05-walk.md) | [evidence-story-05](./evidence-story-05.md) |
+| HS-112-06 | The open mic | done | [story-06-open-mic](./story-06-open-mic.md) | [evidence-story-06](./evidence-story-06.md) |
 
 ## Where we are
+
+6/6. Chartered morning, built by afternoon, walked by evening —
+2026-08-02, one day. The exit proof ran on a genuinely fresh HOME
+(first_run true, zero directories): the seed chip minted the
+architect's desk (six drawers, the ADR template, the Working
+rules), the Models dial was set once to the real LAN .43 and PROBEd,
+TALK was held in a real browser with real speech and LANDED with a
+1335 MS receipt, the OPEN MIC latch landed an ambient utterance
+with no key touched (chrome lamp MIC OPEN -> CLOSED), aim AGENT
+with none awaiting refused by name and replayed idempotently, and
+RESET TO SEED's armed ritual tombstoned the clutter and brought the
+seed back — 21 shots at 1440+393 in assets/hs-112-05/, the wire
+proofs in evidence-story-05.md, the sitting brief in
+[final-summary.md](./final-summary.md). Held for the owner: the
+sitting, the FOCUSED APP default-aim ruling, and the Phase-111
+printed-Ask-turn room shot (.43 is back; the wire leg is proven).
+
+## The build record (per story, as shipped)
 
 04 BUILT (in-progress pending the fresh-HOME quickstart
 execution, which is 05's walk). HS-112-04 implemented 2026-08-02:
@@ -95,9 +113,6 @@ to file:line; dead-field grep census 0 in README+GETTING_STARTED;
 doc-drift guards 19 passed; full unit 3522. Named drift for a next
 pass: WEB_DESK.md omits the new mic lamp; welcome.png depicts a
 dead surface.
-
-0/6 flipped; 01, 02, 03, and 06 BUILT (in-progress pending
-live proofs).
 
 HS-112-01 implemented 2026-08-02: the InferenceTarget is the only
 truth. The legacy intel_cloud_*/openai_compatible_* fields are dead
@@ -165,13 +180,3 @@ full-suite failures triaged pre-existing/environmental in the
 report. The flip awaits the live walk: first boot, drawer open,
 ADR template read, reset confirm + after, 1440+393. Chartered
 2026-08-02. Chartered 2026-08-02 from the owner's post-111 verdict; the
-
-Chartered 2026-08-02 from the owner's post-111 verdict; the
-same day the owner chartered the open-mic rider live (HS-112-06 —
-the voice-first Desk: one mic grant, continuous stream, VAD; PTT
-byte-identical). The pre-charter survey (three parallel audits: the
-config map, the hold-to-speak map, the desk-seed map) is folded into
-the story theses; each story names its file:line ground. 01/02/03
-are independent; 06 rides on 02; 04 needs the surfaces settled; 05
-closes. Phase 111's sitting remains pending in parallel — this phase
-does not touch its exhibit.
