@@ -9,7 +9,8 @@
 // mark), and the record's markdown bodies fold behind the RAW well species
 // (Disclosure → SurfaceWell) — 07's law, consumed early.
 import { useEffect } from "react";
-import { Button, Disclosure } from "../../components/signal/Signal";
+import { Button } from "../../components/signal/Signal";
+import { FoldGadget } from "../surface/gadgets";
 import {
   assetHref,
   useDeliveryDossier,
@@ -186,16 +187,16 @@ export function DeliveryDossierWindow() {
             </section>
 
             {dossier.storyMarkdown ? (
-              <Disclosure title="RAW · STORY">
+              <FoldGadget title="RAW · STORY">
                 <SurfaceWell
                   head={<span className="surface-token">{`STORY ${dossier.storyId}`}</span>}
                 >
                   <pre className="desk-pullout-md">{dossier.storyMarkdown}</pre>
                 </SurfaceWell>
-              </Disclosure>
+              </FoldGadget>
             ) : null}
             {dossier.evidenceMarkdown ? (
-              <Disclosure title="RAW · EVIDENCE LOG">
+              <FoldGadget title="RAW · EVIDENCE LOG">
                 <SurfaceWell
                   head={<span className="surface-token">{`EVIDENCE ${dossier.storyId}`}</span>}
                 >
@@ -203,7 +204,7 @@ export function DeliveryDossierWindow() {
                     {dossier.evidenceMarkdown}
                   </pre>
                 </SurfaceWell>
-              </Disclosure>
+              </FoldGadget>
             ) : null}
           </>
         ) : null}

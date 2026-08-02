@@ -3,7 +3,8 @@
 // remaining) with the RETRY/SKIP verbs on the row. The warn reads as
 // the token's color only; the transcript well stays the spine.
 import { useCallback, useEffect, useState } from "react";
-import { Button, InlineMessage } from "../components/signal/Signal";
+import { Button } from "../components/signal/Signal";
+import { SurfaceState } from "../desk/surface/Surface";
 import { GadgetGroup, GadgetRow } from "../desk/surface/gadgets";
 import { apiFetch, readableError } from "../lib/api";
 
@@ -113,7 +114,7 @@ export function MeetingIntelRecovery({
       className="meeting-intel-recovery"
       aria-label="Meeting intelligence recovery"
     >
-      {error ? <InlineMessage tone="error">{error}</InlineMessage> : null}
+      {error ? <SurfaceState error={error} /> : null}
       {/* "Intelligence", never "intel" — the HS-100-05 vocabulary
           guard bans the abbreviation in rendered copy. */}
       {recovery?.visible ? (

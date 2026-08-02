@@ -4,7 +4,7 @@
 // gadget grammar, the grounding receipt speaking Ask's token, and the one
 // footer receipt bar.
 import { useEffect, useMemo, useState } from "react";
-import { Button, InlineMessage } from "../../components/signal/Signal";
+import { Button } from "../../components/signal/Signal";
 import { MicButton } from "../../desk/components/MicButton";
 import { RunsOnPicker } from "../../desk/components/RunsOnPicker";
 import { runAsk, type AskRunResult } from "../../desk/ask";
@@ -292,7 +292,7 @@ function ProjectAsk({
           <span className="desk-chip quiet">{projectName}</span>
         </div>
       </div>
-      {error ? <InlineMessage tone="error">{error}</InlineMessage> : null}
+      {error ? <SurfaceState error={error} /> : null}
       {result ? (
         <div className="project-memory-answer">
           <Material>{result.output}</Material>

@@ -12,12 +12,7 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { openPrimitive, openSurfaceOr } from "../../desk/shell";
 import type { CoreProps } from "./ActivityCore";
-import {
-  Button,
-  Disclosure,
-  InlineMessage,
-  StatusPill,
-} from "../../components/signal/Signal";
+import { Button } from "../../components/signal/Signal";
 import {
   apiBlob,
   apiFetch,
@@ -53,9 +48,11 @@ import {
   CheckGadget,
   CycleGadget,
   EgressChip,
+  FoldGadget,
   GadgetGroup,
   GadgetRow,
   GadgetTable,
+  LampGadget,
   StringGadget,
 } from "../../desk/surface/gadgets";
 import { Material } from "../../desk/surface/Material";
@@ -295,7 +292,7 @@ function ImportSection({
           </GadgetRow>
         </GadgetGroup>
       ) : null}
-      {error ? <InlineMessage tone="error">{error}</InlineMessage> : null}
+      {error ? <SurfaceState error={error} /> : null}
       <div className="surface-actions">
         <Button
           variant="primary"
@@ -543,7 +540,7 @@ function MeetingDetail({
           Close
         </Button>
       </div>
-      {error ? <InlineMessage tone="error">{error}</InlineMessage> : null}
+      {error ? <SurfaceState error={error} /> : null}
       {/* 1 — attention slabs, only when real. */}
       {captureBad ? (
         <GadgetGroup label="Capture">
@@ -624,13 +621,13 @@ function MeetingDetail({
                     ) : (
                       // HS-111-07 — a body-less artifact face folds its
                       // wire behind the RAW pattern, never bare JSON.
-                      <Disclosure title="RAW · ARTIFACT">
+                      <FoldGadget title="RAW · ARTIFACT">
                         <SurfaceWell head={`RAW · ${kind || "ARTIFACT"}`}>
                           <SurfaceCode>
                             {JSON.stringify(row, null, 2)}
                           </SurfaceCode>
                         </SurfaceWell>
-                      </Disclosure>
+                      </FoldGadget>
                     )
                   }
                   name={title}
@@ -734,13 +731,13 @@ function MeetingDetail({
           ) : null}
           {/* 5 — the routing receipt stays folded, in its own well. */}
           {timelineRows.length ? (
-            <Disclosure title="Routing receipt">
+            <FoldGadget title="Routing receipt">
               <SurfaceWell head={`ROUTING · ${timelineRows.length}`}>
                 <SurfaceCode>
                   {JSON.stringify(timelineRows, null, 2)}
                 </SurfaceCode>
               </SurfaceWell>
-            </Disclosure>
+            </FoldGadget>
           ) : null}
           {/* 6 — aftercare rides the gadget grammar, only when wired. */}
           {aftercare.slack_configured ? (
@@ -1162,9 +1159,17 @@ export function HistoryCore({ hero, scope }: CoreProps) {
                     undefined
                   }
                   meta={
-                    <StatusPill tone={row.status === "failed" ? "error" : "neutral"}>
-                      {displayState(row.status ?? row.kind ?? section)}
-                    </StatusPill>
+                    row.status === "failed" ? (
+                      <LampGadget
+                        on
+                        tone="fail"
+                        label={displayState(row.status ?? row.kind ?? section)}
+                      />
+                    ) : (
+                      <span className="gadget-chip">
+                        {displayState(row.status ?? row.kind ?? section)}
+                      </span>
+                    )
                   }
                   onOpen={
                     section === "projects"
@@ -1248,19 +1253,13 @@ export function HistoryCore({ hero, scope }: CoreProps) {
     <>
       {hero ? hero(verbs) : <SurfaceVerbs>{verbs}</SurfaceVerbs>}
       {requestedMeetingError ? (
-        <InlineMessage tone="error">
-          {requestedMeetingError}{" "}
-          <Button
-            dense
-            variant="ghost"
-            onClick={() => {
-              setRequestedMeetingError("");
-              setOpenedRequestedMeetingId(null);
-            }}
-          >
-            Try again
-          </Button>
-        </InlineMessage>
+        <SurfaceState
+          error={requestedMeetingError}
+          onRetry={() => {
+            setRequestedMeetingError("");
+            setOpenedRequestedMeetingId(null);
+          }}
+        />
       ) : null}
       {face}
       {/* HS-111-03 — the ONE footer receipt bar: residency chip, the

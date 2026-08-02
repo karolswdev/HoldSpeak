@@ -4,7 +4,8 @@
 // carries the whole truth: SYNC CONFLICT · BOTH RETAINED. Wire calls
 // unchanged.
 import { useCallback, useEffect, useState } from "react";
-import { Button, InlineMessage } from "../components/signal/Signal";
+import { Button } from "../components/signal/Signal";
+import { SurfaceState } from "../desk/surface/Surface";
 import { GadgetGroup } from "../desk/surface/gadgets";
 import { apiFetch, readableError, type JsonRecord } from "../lib/api";
 
@@ -167,7 +168,7 @@ export function MeetingConflictRecovery({
       className="meeting-conflict-recovery"
       aria-label="Meeting conflicts"
     >
-      {error ? <InlineMessage tone="error">{error}</InlineMessage> : null}
+      {error ? <SurfaceState error={error} /> : null}
       {conflicts.map((conflict) => {
         const incomingDeletes = Boolean(conflict.incoming.deleted);
         return (

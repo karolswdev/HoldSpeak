@@ -3,11 +3,8 @@
 import { useState } from "react";
 import { openSurfaceOr } from "../../desk/shell";
 import type { CoreProps } from "./ActivityCore";
-import {
-  Button,
-  InlineMessage,
-  StatusPill,
-} from "../../components/signal/Signal";
+import { Button } from "../../components/signal/Signal";
+import { LampGadget } from "../../desk/surface/gadgets";
 import { apiFetch, readableError } from "../../lib/api";
 import { asRows, useResource } from "../pageSupport";
 import {
@@ -72,17 +69,19 @@ export function SetupCore({ hero }: CoreProps) {
       ) : (
         <SurfaceVerbs
           status={
-            <StatusPill
+            <LampGadget
+              on
               tone={
                 resource.data.overall === "ready"
-                  ? "success"
+                  ? "ok"
                   : resource.data.overall === "blocked"
-                    ? "error"
-                    : "warning"
+                    ? "fail"
+                    : "warn"
               }
-            >
-              {deSnake(String(resource.data.overall ?? "")) || "checking"}
-            </StatusPill>
+              label={
+                deSnake(String(resource.data.overall ?? "")) || "checking"
+              }
+            />
           }
         >
           {verbs}
@@ -116,31 +115,37 @@ export function SetupCore({ hero }: CoreProps) {
                         undefined
                       }
                       meta={
-                        <StatusPill
+                        <LampGadget
+                          on
                           tone={
                             status === "pass"
-                              ? "success"
+                              ? "ok"
                               : status === "fail"
-                                ? "error"
-                                : "warning"
+                                ? "fail"
+                                : "warn"
                           }
-                        >
-                          {status}
-                        </StatusPill>
+                          label={status}
+                        />
                       }
                     />
                   );
                 })}
               </SurfaceRows>
               {!sections.length ? (
-                <InlineMessage tone="warning">
-                  The hub did not report individual readiness checks.
-                </InlineMessage>
+                <SurfaceState empty emptyLabel="No readiness checks reported" />
               ) : null}
               {testResult ? (
-                <InlineMessage tone={testResult.ok ? "success" : "error"}>
-                  {testResult.detail}
-                </InlineMessage>
+                testResult.ok ? (
+                  <p
+                    className="surface-receipt-line"
+                    data-tone="ok"
+                    role="status"
+                  >
+                    ✓ {testResult.detail}
+                  </p>
+                ) : (
+                  <SurfaceState error={testResult.detail} />
+                )
               ) : null}
             </SurfaceSection>
           }

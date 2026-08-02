@@ -3,7 +3,9 @@ import { apiFetch, readableError, type JsonRecord } from "../lib/api";
 import { useRuntimeBus, useRuntimeFrame } from "../runtime/RuntimeBus";
 import { useProjections } from "../desk/projections";
 import { humanizeWireValue } from "../lib/productLanguage";
-import { Button, InlineMessage, StatusPill } from "./signal/Signal";
+import { Button } from "./signal/Signal";
+import { LampGadget } from "../desk/surface/gadgets";
+import { SurfaceState } from "../desk/surface/Surface";
 
 type Preview = { token?: string; text?: string; kind?: "wake" | "preview" };
 
@@ -48,7 +50,7 @@ function PreviewCard() {
     <aside className="ambient-preview" aria-label="Dictation preview">
       <span className="signal-eyebrow">Preview before type</span>
       <p>{preview.text ?? "Your dictation is ready."}</p>
-      {error ? <InlineMessage tone="error">{error}</InlineMessage> : null}
+      {error ? <SurfaceState error={error} /> : null}
       <div className="button-row">
         <Button
           dense
@@ -84,13 +86,17 @@ function QueueHud() {
         aria-expanded={open}
         onClick={() => setOpen((value) => !value)}
       >
-        <StatusPill tone={failed ? "error" : running ? "live" : "warning"}>
-          {running
-            ? `${running} running`
-            : failed
-              ? `${failed} failed`
-              : `${pending} queued`}
-        </StatusPill>
+        <LampGadget
+          on
+          tone={failed ? "fail" : running ? "ok" : "warn"}
+          label={
+            running
+              ? `${running} running`
+              : failed
+                ? `${failed} failed`
+                : `${pending} queued`
+          }
+        />
       </Button>
       {open ? (
         <div>

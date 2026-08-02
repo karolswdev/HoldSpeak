@@ -248,18 +248,9 @@ body {
   line-height: var(--line-height-relaxed);
 }
 
-/* Canonical checkbox: one size, one alignment contract, no platform-blue
- * browser chrome. `.check` is included while older settings forms migrate. */
-.hs-check {
-  display: inline-grid;
-  grid-template-columns: 20px minmax(0, 1fr);
-  align-items: center;
-  gap: var(--space-3);
-  min-height: 44px;
-  margin: 0;
-  cursor: pointer;
-  line-height: 1.4;
-}
+/* HS-111-08: the .hs-check Checkbox species retired with the gadget-kit
+ * conformance sweep (CheckGadget is the ONE boolean); the shared
+ * :where() input dress below still serves the live legacy classes. */
 
 :where(.toggle-field, .facet-toggle, .set-adv-toggle) {
   cursor: pointer;
@@ -369,60 +360,9 @@ pre {
   animation: hs-pulse 1.6s var(--ease-standard) infinite;
 }
 
-/* ============================================================
- * HS-69-02 — the shared Signal card primitive.
- *
- * One reusable utility that composes the iPad `.signalCard()` modifier
- * (apple/App/MeetingCaptureApp.swift:433-449) on the web: a layered
- * surface fill + the `--elev-*` soft shadow + a GRADIENT TOP-LIT
- * HAIRLINE (a 1px border, brighter at the top edge, so cards catch
- * light like glass). The hairline is the directional `white .12 → .035`
- * gradient (iPad `Sig.topHairline`, :425-427), NOT the dimmer flat
- * `inset white .04` the old `--elev-1` carried.
- *
- * Authored globally so every route and runtime-rendered card shares the
- * same material contract. Component styles still own interactions.
- * Surface + elevation only — never sets a status colour (web-wins).
- * ============================================================ */
-.signal-card {
-  position: relative;
-  /* Composable surface: defaults to surface-1 (the original behaviour for
-   * cards sitting directly on the canvas — dashboard, settings, history).
-   * Cards nested inside an already-raised surface (e.g. the desk's
-   * surface-1 zone columns) set `--signal-card-surface: var(--surface-2)`
-   * so they keep their contrast against the parent while still gaining the
-   * top-lit hairline + elevation. HS-69-02 broadening (Wave B). */
-  background: var(--signal-card-surface, var(--surface-1));
-  border: 1px solid transparent; /* the visible edge is the ::before hairline */
-  border-radius: var(--radius-5);
-  box-shadow: var(--elev-2);
-}
-
-/* The gradient top-lit hairline. A 1px ring drawn as a masked gradient
- * border so it stays crisp around the rounded corners (border-image is
- * a known papercut on radii). `padding-box` mask cuts out the interior,
- * leaving only the 1px frame. Brighter at the top, fading down. */
-.signal-card::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  padding: 1px;
-  background: linear-gradient(
-    180deg,
-    var(--border) 0%,
-    var(--wash-1) 100%
-  );
-  -webkit-mask:
-    linear-gradient(var(--black) 0 0) content-box,
-    linear-gradient(var(--black) 0 0);
-  -webkit-mask-composite: xor;
-  mask:
-    linear-gradient(var(--black) 0 0) content-box,
-    linear-gradient(var(--black) 0 0);
-  mask-composite: exclude;
-  pointer-events: none;
-}
+/* HS-111-08 — the .signal-card species (the 18px-radius pre-Workbench
+ * relic) is deleted: zero consumers, and the Signal Workbench material
+ * model (opaque, beveled, 2px) owns every surface now. */
 
 /* The glyph chip — a gradient-filled rounded icon container (iPad
  * `GlyphChip`, :452-463). Default 46px; radius ≈ size × 0.28 ≈ 13px.

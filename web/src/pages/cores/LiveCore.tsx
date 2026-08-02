@@ -20,7 +20,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { openPrimitive } from "../../desk/shell";
 import type { CoreProps } from "./ActivityCore";
-import { Button, Disclosure, InlineMessage } from "../../components/signal/Signal";
+import { Button } from "../../components/signal/Signal";
 import { apiFetch, readableError, type JsonRecord } from "../../lib/api";
 import { useRuntimeBus } from "../../runtime/RuntimeBus";
 import { asRows, rowId, useResource } from "../pageSupport";
@@ -39,6 +39,7 @@ import {
 import {
   CycleGadget,
   EgressChip,
+  FoldGadget,
   GadgetGroup,
   GadgetRow,
   LampGadget,
@@ -308,13 +309,13 @@ export function LiveCore({ hero }: CoreProps) {
                 ))}
               </GadgetGroup>
             ) : null}
-            <Disclosure title="Route receipt">
+            <FoldGadget title="Route receipt">
               <SurfaceWell head="ROUTE · JSON">
                 <SurfaceCode>
                   {JSON.stringify(previewResult, null, 2)}
                 </SurfaceCode>
               </SurfaceWell>
-            </Disclosure>
+            </FoldGadget>
           </>
         ) : null}
       </SurfaceSection>
@@ -407,10 +408,10 @@ export function LiveCore({ hero }: CoreProps) {
           {verbs}
         </SurfaceVerbs>
       )}
-      {message ? <InlineMessage tone="error">{message}</InlineMessage> : null}
+      {message ? <SurfaceState error={message} /> : null}
       {retainedMeetingId ? (
-        <InlineMessage tone="success">
-          Meeting saved.{" "}
+        <p className="surface-receipt-line" data-tone="ok" role="status">
+          ✓ Meeting saved{" "}
           <button
             type="button"
             className="btn-link"
@@ -418,7 +419,7 @@ export function LiveCore({ hero }: CoreProps) {
           >
             Return to saved Meeting
           </button>
-        </InlineMessage>
+        </p>
       ) : null}
       {doorOpen ? (
         configureFace

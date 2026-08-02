@@ -1,9 +1,7 @@
 import { useEffect, useRef, useState } from "react";
-import {
-  Button,
-  InlineMessage,
-  TextArea,
-} from "../../components/signal/Signal";
+import { Button } from "../../components/signal/Signal";
+import { PadGadget } from "../surface/gadgets";
+import { SurfaceState } from "../surface/Surface";
 import { apiFetch, readableError } from "../../lib/api";
 import { openSurfaceOr } from "../shell";
 import {
@@ -222,22 +220,21 @@ export function FirstWords({
                 ? "Open Setup to continue"
                 : "Hold to speak"}
       </button>
-      {!supported ? (
-        <InlineMessage tone="error">{micUnsupportedMessage}</InlineMessage>
-      ) : null}
+      {!supported ? <SurfaceState error={micUnsupportedMessage} /> : null}
       {failureContract ? (
-        <InlineMessage tone="error">{failureContract.message}</InlineMessage>
+        <SurfaceState error={failureContract.message} />
       ) : recovered ? (
-        <InlineMessage tone="info">
+        <p className="surface-receipt-line" role="status">
           Recovered your local draft after relaunch. It remains editable below.
-        </InlineMessage>
+        </p>
       ) : null}
-      <TextArea
-        aria-label="Your dictated text"
+      <PadGadget
+        label="Your dictated text"
         rows={4}
         value={text}
-        onChange={(event) => {
-          setText(event.target.value);
+        mic={false}
+        onChange={(next) => {
+          setText(next);
           if (!draftEdited.current) {
             draftEdited.current = true;
             void tracker.current?.event("draft_edited");
@@ -245,7 +242,11 @@ export function FirstWords({
         }}
         placeholder="Transcribed text appears here. You can also type."
       />
-      {message ? <InlineMessage tone="info">{message}</InlineMessage> : null}
+      {message ? (
+        <p className="surface-receipt-line" role="status">
+          {message}
+        </p>
+      ) : null}
       <div className="button-row">
         <Button
           disabled={!text.trim()}

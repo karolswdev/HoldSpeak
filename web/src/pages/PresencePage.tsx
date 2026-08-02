@@ -1,5 +1,5 @@
 import { useRuntimeBus, useRuntimeFrame } from "../runtime/RuntimeBus";
-import { StatusPill } from "../components/signal/Signal";
+import { LampGadget } from "../desk/surface/gadgets";
 
 type Activity = {
   state?: string;
@@ -40,9 +40,11 @@ export default function PresencePage() {
             {activity?.window ? ` · ${activity.window}` : ""}
           </small>
         </div>
-        <StatusPill tone={state === "connected" ? "success" : "warning"}>
-          {state}
-        </StatusPill>
+        <LampGadget
+          on
+          tone={state === "connected" ? "ok" : "warn"}
+          label={state}
+        />
       </section>
     </div>
   );

@@ -1,5 +1,6 @@
 import { Component, type ErrorInfo, type ReactNode } from "react";
-import { Button, InlineMessage, Panel } from "./signal/Signal";
+import { Button, Panel } from "./signal/Signal";
+import { SurfaceState } from "../desk/surface/Surface";
 
 export class ErrorBoundary extends Component<
   { children: ReactNode },
@@ -20,10 +21,12 @@ export class ErrorBoundary extends Component<
     return (
       <div className="page-wrap">
         <Panel title="This surface needs a reset" eyebrow="Route error">
-          <InlineMessage tone="error">
-            {this.state.error.message ||
-              "The route could not render. Saved work is unchanged. Reload HoldSpeak to retry."}
-          </InlineMessage>
+          <SurfaceState
+            error={
+              this.state.error.message ||
+              "The route could not render. Saved work is unchanged. Reload HoldSpeak to retry."
+            }
+          />
           <Button
             onClick={() => {
               this.setState({ error: null });

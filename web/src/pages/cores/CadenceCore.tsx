@@ -4,12 +4,8 @@
 // surface idiom"), no page grammar.
 import { useState } from "react";
 import type { CoreProps } from "./ActivityCore";
-import {
-  Button,
-  InlineMessage,
-  StatusPill,
-  TextArea,
-} from "../../components/signal/Signal";
+import { Button } from "../../components/signal/Signal";
+import { LampGadget, PadGadget } from "../../desk/surface/gadgets";
 import { apiFetch, readableError, type JsonRecord } from "../../lib/api";
 import { asRows, rowId, useResource } from "../pageSupport";
 import {
@@ -88,7 +84,7 @@ export function CadenceCore({ hero }: CoreProps) {
           {verbs}
         </SurfaceVerbs>
       )}
-      {message ? <InlineMessage tone="error">{message}</InlineMessage> : null}
+      {message ? <SurfaceState error={message} /> : null}
       <SurfaceColumns
         main={
           <SurfaceSection label="Now">
@@ -113,7 +109,7 @@ export function CadenceCore({ hero }: CoreProps) {
                       detail={
                         <>
                           {loop.needs_review ? (
-                            <StatusPill tone="warning">review</StatusPill>
+                            <LampGadget on tone="warn" label="review" />
                           ) : null}{" "}
                           {deSnake(loop.source_type)}
                         </>
@@ -159,11 +155,11 @@ export function CadenceCore({ hero }: CoreProps) {
                         </div>
                       ) : null}
                       {isQuestion ? (
-                        <TextArea
-                          aria-label={`Reply to ${String(loop.title)}`}
+                        <PadGadget
+                          label={`Reply to ${String(loop.title)}`}
                           value={replies[id] ?? ""}
-                          onChange={(event) =>
-                            setReplies({ ...replies, [id]: event.target.value })
+                          onChange={(next) =>
+                            setReplies({ ...replies, [id]: next })
                           }
                         />
                       ) : null}

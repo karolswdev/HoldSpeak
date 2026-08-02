@@ -6,13 +6,7 @@ import {
   useState,
 } from "react";
 import { apiFetch, readableError } from "../lib/api";
-import {
-  Button,
-  Dialog,
-  EmptyState,
-  InlineMessage,
-  Skeleton,
-} from "../components/signal/Signal";
+import { SurfaceState } from "../desk/surface/Surface";
 import {
   controlModeDescription,
   controlModeLabel,
@@ -66,6 +60,9 @@ export function useResource<T>(url: string, initial: T) {
   return { data, setData, loading, error, setError, reload };
 }
 
+/** HS-111-08 — the ONE chokepoint (audit §3.5): every useResource
+ * consumer's loading/empty/error faces render as the kit's
+ * SurfaceState axes — never Skeleton/EmptyState/InlineMessage. */
 export function ResourceState({
   loading,
   error,
@@ -79,52 +76,16 @@ export function ResourceState({
   onRetry(): void;
   children: ReactNode;
 }) {
-  if (loading) return <Skeleton rows={4} />;
-  if (error)
-    return (
-      <InlineMessage tone="error">
-        {error}{" "}
-        <Button dense variant="ghost" onClick={onRetry}>
-          Try again
-        </Button>
-      </InlineMessage>
-    );
-  if (empty)
-    return (
-      <EmptyState title="Nothing here yet">
-        This surface will fill as HoldSpeak records real work.
-      </EmptyState>
-    );
-  return children;
-}
-
-export function ConfirmAction({
-  open,
-  title,
-  detail,
-  busy,
-  onConfirm,
-  onClose,
-}: {
-  open: boolean;
-  title: string;
-  detail: string;
-  busy?: boolean;
-  onConfirm(): void;
-  onClose(): void;
-}) {
   return (
-    <Dialog open={open} title={title} onClose={onClose}>
-      <p>{detail}</p>
-      <div className="button-row">
-        <Button variant="danger" loading={busy} onClick={onConfirm}>
-          Confirm
-        </Button>
-        <Button variant="ghost" onClick={onClose}>
-          Cancel
-        </Button>
-      </div>
-    </Dialog>
+    <SurfaceState
+      loading={loading}
+      error={error}
+      empty={empty}
+      emptyLabel="Nothing yet"
+      onRetry={onRetry}
+    >
+      {children}
+    </SurfaceState>
   );
 }
 

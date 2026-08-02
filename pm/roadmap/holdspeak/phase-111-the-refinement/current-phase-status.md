@@ -1,21 +1,22 @@
 # Phase 111 - The Refinement
 
-**Status:** IN PROGRESS (7/11). Chartered 2026-07-31 as the mandatory
+**Status:** IN PROGRESS (8/11). Chartered 2026-07-31 as the mandatory
 fast-follow to Phase 110. The owner's condition: every program on the
 desk gets its interior rethought — not token-tweaked, RETHOUGHT — to
 feel native to Signal Workbench. "The Settings screen needs to be
 completely rethought, and many, many others."
 
-**Last updated:** 2026-08-02 (HS-111-07 System chrome SHIPPED — the
-biggest room: WorkMenu v2 species (the z bug dead — dropdowns draw
-OVER windows), the five parallel verb lists collapsed into ONE
-registry + keymap (doctrine P2/P11 now law in code), THE FLOOR
-RIGHT-CLICK exists (NEW>/LAUNCH>, long-press at 393, nothing
-minted), the palette is a command deck (Enter runs the top hit,
-ranked), the list view is a SurfaceLedger face, the sheet derives
-from the registry, ONE egress species, all four naked-debug sites
-behind RAW; suites green 4214+424. Earlier: 06 Delivery/process, 05
-Ask, 04 Agents, 03 Meetings, 02 Speak, 01 Settings.)
+**Last updated:** 2026-08-02 (HS-111-08 Interactive elements SHIPPED
+— the two-dialect era ends: roving focus is kit law (every ledger
+inherited arrows-walk in one change), the unarmed × is extinct,
+FoldGadget/PadGadget minted, the Wings pill reforged, six small
+cores joined the kit via the pageSupport chokepoint, eleven legacy
+species deleted including the OS's only modals (no-modals now
+structurally true), ComponentsCore is the kit's living style guide;
+suites green 4213+432 with a three-species verification trail on
+the record (a disproven attribution, a real config-hermeticity bug,
+a load flake). Earlier: 07 chrome, 06 delivery/process, 05 Ask, 04
+Agents, 03 Meetings, 02 Speak, 01 Settings.)
 
 ## Why this phase exists
 
@@ -52,7 +53,7 @@ Each story:
 | 05 | [Ask and conversation](./story-05-ask-conversation.md) | The Ask composer, grounding picker, conversation thread, kept-card receipts | done |
 | 06 | [Delivery and process](./story-06-delivery-process.md) | The delivery belt, the process window, the project memory window — the kernel-facing programs | done |
 | 07 | [System chrome](./story-07-system-chrome.md) | Dropdown menus (Desk/Object/Go), context menus, the search palette (Cmd+K), the shortcut sheet, popovers | done |
-| 08 | [Interactive elements](./story-08-interactive-elements.md) | Every control type across all programs: toggles, selects, inputs, tabs, pills, buttons, badges — one kit, one language | backlog |
+| 08 | [Interactive elements](./story-08-interactive-elements.md) | Every control type across all programs: toggles, selects, inputs, tabs, pills, buttons, badges — one kit, one language | done |
 | 09 | [Sprite and icon quality](./story-09-sprites.md) | Regenerate bad dock sprites on the real desk, window type icons, overview/reset glyphs | backlog |
 | 10 | [The refinement walk](./story-10-walk.md) | Open every program, screenshot at both viewports, prove every room speaks one language | backlog |
 | 11 | [The terminal pane](./story-11-terminal-pane.md) | Owner rider on 04: the pane well becomes a real terminal (xterm.js over a raw peek mode, read-only, consent spine untouched) + utility density | backlog |
@@ -68,7 +69,7 @@ Each story:
 | HS-111-05 | Ask and conversation | done | [story-05-ask-conversation](./story-05-ask-conversation.md) | [evidence-story-05](./evidence-story-05.md) |
 | HS-111-06 | Delivery and process | done | [story-06-delivery-process](./story-06-delivery-process.md) | [evidence-story-06](./evidence-story-06.md) |
 | HS-111-07 | System chrome | done | [story-07-system-chrome](./story-07-system-chrome.md) | [evidence-story-07](./evidence-story-07.md) |
-| HS-111-08 | Interactive elements | backlog | [story-08-interactive-elements](./story-08-interactive-elements.md) | — |
+| HS-111-08 | Interactive elements | done | [story-08-interactive-elements](./story-08-interactive-elements.md) | [evidence-story-08](./evidence-story-08.md) |
 | HS-111-09 | Sprite and icon quality | backlog | [story-09-sprites](./story-09-sprites.md) | — |
 | HS-111-10 | The refinement walk | backlog | [story-10-walk](./story-10-walk.md) | — |
 | HS-111-11 | The terminal pane | backlog | [story-11-terminal-pane](./story-11-terminal-pane.md) | — |
@@ -195,4 +196,26 @@ naked-debug sites behind RAW wells. Deferred by the honest cut:
 palette deep-settings + meeting content search (plug-in points
 documented); 08 owns the new faces' roving/arming conformance.
 Proven live at 1440+393; suites green (4214 python + 424 web).
-Next: HS-111-08 (interactive elements).
+
+8/11. HS-111-08 (Interactive elements) shipped 2026-08-02: the
+census found two live dialects — the kit ruling the seven refit
+rooms, the legacy Signal dialect ruling the six small cores — with
+one chokepoint (pageSupport.useResource) keeping every small core
+off-kit. Kit law shipped: useRovingRows inside SurfaceLedger +
+GadgetTable (every ledger in the OS inherited arrows-walk/Tab-exits
+in one change; focus is a visible accent band), arming deletes as
+the table default (the unarmed × is extinct), FoldGadget as the ONE
+disclosure (20 sites migrated), PadGadget (multiline with mic by
+construction), the Wings pill reforged to sunken beveled tabs.
+The six small cores joined the kit; ComponentsCore rewrote itself
+as the living style guide; ELEVEN legacy species deleted as dead
+code including Dialog/ConfirmAction — the OS's only modals had zero
+consumers, so the no-modals law is now structurally true. The
+verification trail caught three failure species, none the story's:
+a builder misattribution (disproven by stash test), a REAL
+config-hermeticity bug (the live hub's YOLO posture leaking into an
+unhermetic aftercare test — rides to 10's debt), and a load flake
+on a live test. Named debt to 10: the desk-component message long
+tail, the chrome-input mic sweep, InlineEditor's native cluster,
+composer→PadGadget, the hermeticity gap. Proven live at 1440+393;
+suites green (4213 python + 432 web). Next: HS-111-09 (sprites).

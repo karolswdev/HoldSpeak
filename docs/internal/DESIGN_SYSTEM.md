@@ -109,7 +109,7 @@ Values are token names; "—" inherits the default row.
 | dragging | no transitions; head cursor grabbing |
 | maximized | fixed band inside `--desk-snap-top`/`--desk-snap-bottom` margins |
 | minimized | parked (display none), dock chip dims |
-| sheet (≤720px) | bottom sheet, `--radius-5` top corners |
+| sheet (≤720px) | bottom sheet, `--radius-lg` top corners |
 
 **Inputs (Signal `TextInput`/`TextArea`/`Select`)**
 
@@ -118,19 +118,34 @@ Values are token names; "—" inherits the default row.
 | default | `--field-bg` | `--field-border` |
 | focus | — | `--field-focus-border` + global outline |
 | disabled | `--disabled-bg` | `--disabled-border` |
-| invalid | — | `--danger-signal` + message via `InlineMessage` |
+| invalid | — | `--danger-signal` + an in-flow error leg (`SurfaceState`), never a floating message |
 
-**Switch / Tabs / StatusPill / InlineMessage**
+**CheckGadget / CycleGadget / LampGadget / SurfaceState (the kit species roster, HS-111-08)**
 
-- Switch: track `--surface-3` → checked `--accent`; thumb `--text`;
-  focus-visible outline on the control; never color-only (label text
-  states the position).
-- Tabs: active tab `--accent` underline + `--text`; inactive
-  `--text-muted`; focus-visible outline; roving arrow keys (HS-96-05).
-- StatusPill: `--ok/--warn-signal/--danger-signal/--info` soft fills;
-  always paired with text, never color alone.
-- InlineMessage: status soft fill + `--radius-md`; `role="status"` or
-  `role="alert"` per tone.
+The legacy Switch / Tabs / StatusPill / InlineMessage dialect retired
+with HS-111-08; the gadget kit carries their duties:
+
+- CheckGadget: the ONE boolean — sunken square well `--surface-1` +
+  etch, `--accent` check; a real checkbox input; never color-only (the
+  row label or checkline word states the position).
+- CycleGadget: the ONE pick — a real `<select>` under the ↻ face;
+  `--border` well, mono value.
+- SurfaceWings: the ONE tab strip (window head) — square `--radius-xs`
+  gadgets, mono uppercase, active = SUNKEN (`--desk-window-well` +
+  `--desk-window-etch`); ArrowLeft/Right/Home/End roving; the gear
+  door is a pressed gadget outside the tablist.
+- LampGadget: the ONE status token — square lamp `--ok`/`--warn`/
+  `--danger` (`fail`) + its mono word; never color alone.
+- SurfaceState: the ONE loading/empty/error face — `role="status"` on
+  the busy axis, `role="alert"` on the error axis, always in-flow.
+- FoldGadget: the ONE disclosure — `<details>` semantics, quiet-row
+  summary, `--wash-1` hover, trailing token slot (mono, `--text-dim`).
+- GadgetTable delete: ARMED by default (× → `deleteLabel` → gone;
+  3s self-disarm); arming rides row identity via `rowKey`.
+- Roving focus (`useRovingRows`): SurfaceLedger and GadgetTable are ONE
+  Tab stop; focus is the full-width inset accent band
+  (`inset 0 0 0 1px var(--accent)`), never an outside outline, never a
+  border-left rail.
 
 **GL world states (desk objects and zones, from `tokens.gen.ts`)**
 

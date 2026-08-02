@@ -22,7 +22,9 @@ COMPONENTS = (
     "The orb",
     "Window frame",
     "Inputs",
-    "Switch / Tabs / StatusPill / InlineMessage",
+    # HS-111-08: the legacy dialect retired; the matrix pins the kit
+    # species roster instead.
+    "CheckGadget / CycleGadget / LampGadget / SurfaceState",
     "GL world states",
 )
 

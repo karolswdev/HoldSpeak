@@ -13,7 +13,7 @@
 // pretending the rails are idle.
 // Design: docs/internal/MISSION_CONTROL_DESK.md §2–§3.
 import { useEffect, useState } from "react";
-import { Button, Disclosure } from "../../components/signal/Signal";
+import { Button } from "../../components/signal/Signal";
 import {
   McEvent,
   McProject,
@@ -35,7 +35,7 @@ import {
   SurfaceLedgerRow,
   SurfaceWell,
 } from "../surface/Surface";
-import { GadgetRow, MxRadio } from "../surface/gadgets";
+import { FoldGadget, GadgetRow, MxRadio } from "../surface/gadgets";
 
 const FLIP_STATUSES = ["backlog", "ready", "in-progress", "blocked", "done"];
 
@@ -470,7 +470,7 @@ function OffBeltPanel({ sessions }: { sessions: McSession[] }) {
         </button>
       ))}
       {census.map((row) => (
-        <Disclosure
+        <FoldGadget
           key={row.agent}
           title={`${row.agent.toUpperCase()} ${row.total} · ${row.buckets
             .map((b) => `${b.token} ${b.count}`)
@@ -496,7 +496,7 @@ function OffBeltPanel({ sessions }: { sessions: McSession[] }) {
               ))}
             </ul>
           </SurfaceLedger>
-        </Disclosure>
+        </FoldGadget>
       ))}
     </div>
   );

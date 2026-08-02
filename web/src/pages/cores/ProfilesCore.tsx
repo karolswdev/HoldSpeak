@@ -10,12 +10,12 @@
 // instead of re-derived. No modal, no form section below the list.
 import { useState } from "react";
 import type { CoreProps } from "./ActivityCore";
+import { Button } from "../../components/signal/Signal";
 import {
-  Button,
-  InlineMessage,
-  StatusPill,
-  TextInput,
-} from "../../components/signal/Signal";
+  LampGadget,
+  StepperGadget,
+  StringGadget,
+} from "../../desk/surface/gadgets";
 import { apiFetch, readableError } from "../../lib/api";
 import {
   destinationClassLabel,
@@ -220,10 +220,10 @@ export function ProfilesCore(_props: CoreProps) {
           <SurfaceSettingRow
             label="Name"
             control={
-              <TextInput
-                aria-label="Name"
+              <StringGadget
+                label="Name"
                 value={String(target.name ?? "")}
-                onChange={(event) => field("name", event.target.value)}
+                onChange={(next) => field("name", next)}
               />
             }
           />
@@ -233,21 +233,21 @@ export function ProfilesCore(_props: CoreProps) {
                 label="Base URL"
                 description={urlInvalid ? "Not a valid http(s) address" : undefined}
                 control={
-                  <TextInput
-                    aria-label="Base URL"
+                  <StringGadget
+                    label="Base URL"
                     type="url"
                     value={String(target.base_url ?? "")}
-                    onChange={(event) => field("base_url", event.target.value)}
+                    onChange={(next) => field("base_url", next)}
                   />
                 }
               />
               <SurfaceSettingRow
                 label="Model"
                 control={
-                  <TextInput
-                    aria-label="Model"
+                  <StringGadget
+                    label="Model"
                     value={String(target.model ?? "")}
-                    onChange={(event) => field("model", event.target.value)}
+                    onChange={(next) => field("model", next)}
                   />
                 }
               />
@@ -267,12 +267,10 @@ export function ProfilesCore(_props: CoreProps) {
             <SurfaceSettingRow
               label="Model file"
               control={
-                <TextInput
-                  aria-label="Model file"
+                <StringGadget
+                  label="Model file"
                   value={String(target.model_file ?? "")}
-                  onChange={(event) =>
-                    field("model_file", event.target.value)
-                  }
+                  onChange={(next) => field("model_file", next)}
                 />
               }
             />
@@ -281,10 +279,10 @@ export function ProfilesCore(_props: CoreProps) {
             <SurfaceSettingRow
               label="Node name"
               control={
-                <TextInput
-                  aria-label="Node name"
+                <StringGadget
+                  label="Node name"
                   value={String(target.node ?? "")}
-                  onChange={(event) => field("node", event.target.value)}
+                  onChange={(next) => field("node", next)}
                 />
               }
             />
@@ -292,14 +290,13 @@ export function ProfilesCore(_props: CoreProps) {
           <SurfaceSettingRow
             label="Context window"
             control={
-              <TextInput
-                aria-label="Context window"
-                type="number"
+              <StepperGadget
+                label="Context window"
                 min={1024}
+                step={1024}
+                unit="tok"
                 value={Number(target.context_limit ?? 16384)}
-                onChange={(event) =>
-                  field("context_limit", Number(event.target.value))
-                }
+                onChange={(next) => field("context_limit", next)}
               />
             }
           />
@@ -318,7 +315,7 @@ export function ProfilesCore(_props: CoreProps) {
 
   return (
     <>
-      {message ? <InlineMessage tone="error">{message}</InlineMessage> : null}
+      {message ? <SurfaceState error={message} /> : null}
       <SurfaceState
         loading={resource.loading}
         error={resource.error}
@@ -397,20 +394,19 @@ export function ProfilesCore(_props: CoreProps) {
                         </>
                       }
                       badge={
-                        <StatusPill
+                        <LampGadget
+                          on
                           tone={
-                            isMesh && !live
-                              ? "warning"
-                              : profileDestinationClass(profile) ===
-                                  "external_service"
-                                ? "warning"
-                                : "success"
+                            (isMesh && !live) ||
+                            profileDestinationClass(profile) ===
+                              "external_service"
+                              ? "warn"
+                              : "ok"
                           }
-                        >
-                          {destinationClassLabel(
+                          label={destinationClassLabel(
                             profileDestinationClass(profile),
                           )}
-                        </StatusPill>
+                        />
                       }
                       tag={isDefault ? "Default" : undefined}
                       verbs={

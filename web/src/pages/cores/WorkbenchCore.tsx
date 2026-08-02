@@ -8,12 +8,8 @@ import {
   useMemo,
   useState,
 } from "react";
-import {
-  Button,
-  Field,
-  InlineMessage,
-  TextArea,
-} from "../../components/signal/Signal";
+import { Button } from "../../components/signal/Signal";
+import { GadgetRow, PadGadget } from "../../desk/surface/gadgets";
 import { apiFetch, readableError } from "../../lib/api";
 import {
   buildLinearGraph,
@@ -23,6 +19,7 @@ import {
 import {
   SurfaceCode,
   SurfaceSection,
+  SurfaceState,
   SurfaceVerbs,
 } from "../../desk/surface/Surface";
 import {
@@ -315,13 +312,14 @@ export function WorkbenchCore({ hero, scope }: CoreProps) {
           <span aria-hidden="true">⧉</span> Editing {workflow.name}
         </p>
       ) : null}
-      {status && (
-        <InlineMessage
-          tone={support === "unsupported_graph" ? "error" : "info"}
-        >
-          {status}
-        </InlineMessage>
-      )}
+      {status &&
+        (support === "unsupported_graph" ? (
+          <SurfaceState error={status} />
+        ) : (
+          <p className="surface-receipt-line" role="status">
+            {status}
+          </p>
+        ))}
       <div
         className="workbench-canvas"
         tabIndex={0}
@@ -383,41 +381,31 @@ export function WorkbenchCore({ hero, scope }: CoreProps) {
                 Close
               </Button>
             </header>
-            <Field
+            <GadgetRow
               label="Prompt"
-              description={
-                selected.role === "step"
-                  ? "What this step should do."
-                  : "Source and output nodes are structural."
+              fact={
+                selected.role === "step" ? undefined : "structural"
               }
+              wide
             >
-              {({ id, describedBy }) => (
-                <TextArea
-                  id={id}
-                  aria-describedby={describedBy}
-                  value={selected.subtitle}
-                  disabled={selected.role !== "step"}
-                  onChange={(event) => prompt(event.target.value)}
-                />
-              )}
-            </Field>
+              <PadGadget
+                label="Prompt"
+                value={selected.subtitle}
+                disabled={selected.role !== "step"}
+                onChange={(next) => prompt(next)}
+              />
+            </GadgetRow>
           </div>
         ) : null}
       </div>
       <SurfaceSection label="Run and return">
-        <Field
-          label="Material"
-          description="The input stays here if the run fails, ready to retry."
-        >
-          {({ id, describedBy }) => (
-            <TextArea
-              id={id}
-              aria-describedby={describedBy}
-              value={runInput}
-              onChange={(event) => setRunInput(event.target.value)}
-            />
-          )}
-        </Field>
+        <GadgetRow label="Material" fact="kept on failure" wide>
+          <PadGadget
+            label="Material"
+            value={runInput}
+            onChange={setRunInput}
+          />
+        </GadgetRow>
         <div className="surface-actions">
           <Button
             dense

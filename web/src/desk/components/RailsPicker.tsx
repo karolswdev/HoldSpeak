@@ -9,7 +9,7 @@
 import { useMemo, useState } from "react";
 import { useMissionControl } from "../missioncontrol";
 import { fetchRailsSizes, railsTokens, type RailsPick } from "../grounding";
-import { CheckGadget, LedMeter } from "../surface/gadgets";
+import { CheckGadget, FoldGadget, LedMeter } from "../surface/gadgets";
 
 const fmt = (n: number): string =>
   n >= 1000 ? `${(n / 1000).toFixed(1)}k` : String(n);
@@ -104,34 +104,29 @@ export function RailsPicker(props: {
 
   return (
     <div className={"desk-ground desk-rails" + (open ? " is-open" : "")}>
-      <button
-        type="button"
-        className="desk-ground-head"
-        aria-expanded={open}
-        onClick={() => setOpen((v) => !v)}
-      >
-        <span
-          className={"desk-ground-glyph" + (picks.length ? " is-on" : "")}
-          aria-hidden="true"
-        >
-          ▤
-        </span>
-        <span className="desk-ground-title">
-          {picks.length === 0
-            ? "Ground on the rails"
-            : `Rails · ${picks.length}`}
-        </span>
-        {picks.length > 0 && (
-          <span className="surface-token" data-tone={tone}>
-            {fmt(used)} / {fmt(limitTokens)} tok
+      <FoldGadget
+        className="desk-ground-fold"
+        glyph={
+          <span className={"desk-ground-glyph" + (picks.length ? " is-on" : "")}>
+            ▤
           </span>
-        )}
-        <span className="desk-ground-chev" aria-hidden="true">
-          {open ? "▴" : "▾"}
-        </span>
-      </button>
-
-      {open && (
+        }
+        title={
+          picks.length === 0
+            ? "Ground on the rails"
+            : `Rails · ${picks.length}`
+        }
+        token={
+          picks.length > 0 ? (
+            <span className="surface-token" data-tone={tone}>
+              {fmt(used)} / {fmt(limitTokens)} tok
+            </span>
+          ) : undefined
+        }
+        open={open}
+        onToggle={setOpen}
+      >
+        {open && (
         <div className="desk-ground-body">
           {meter && picks.length > 0 && <LedMeter label="CTX" value={frac} />}
           {over && (
@@ -179,7 +174,8 @@ export function RailsPicker(props: {
             })}
           </ul>
         </div>
-      )}
+        )}
+      </FoldGadget>
     </div>
   );
 }

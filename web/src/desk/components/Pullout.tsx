@@ -18,7 +18,7 @@ import { objectByRef, objGlow, type WorldObject } from "../world";
 import { qualifiedRef } from "../api";
 import { RunsOnPicker } from "./RunsOnPicker";
 import { humanizeWireValue, productLabel } from "../../lib/productLanguage";
-import { Disclosure } from "../../components/signal/Signal";
+import { FoldGadget } from "../surface/gadgets";
 import { Material } from "../surface/Material";
 import {
   SurfaceCode,
@@ -560,9 +560,9 @@ export function Pullout({
               Chat with {o.title}
             </button>
             {ir.systemPrompt ? (
-              <Disclosure title="Instructions">
+              <FoldGadget title="Instructions">
                 <Material>{String(ir.systemPrompt)}</Material>
-              </Disclosure>
+              </FoldGadget>
             ) : null}
           </section>
         )}
@@ -606,7 +606,7 @@ export function Pullout({
                       </strong>
                       {/* HS-111-07 — the selected text folds behind the
                           RAW pattern (it is wire until sent). */}
-                      <Disclosure title="RAW · SELECTED TEXT">
+                      <FoldGadget title="RAW · SELECTED TEXT">
                         <SurfaceWell
                           head={`RAW · ${contextualCoderAction.source.title.toUpperCase()}`}
                         >
@@ -614,7 +614,7 @@ export function Pullout({
                             {contextualCoderAction.source.text}
                           </SurfaceCode>
                         </SurfaceWell>
-                      </Disclosure>
+                      </FoldGadget>
                       <button
                         type="button"
                         className="desk-chip"
@@ -867,7 +867,7 @@ export function Pullout({
               .filter(Boolean)
               .join(" · ");
             return (
-              <Disclosure title={`Filed · ${filedSummary}`}>
+              <FoldGadget title={`Filed · ${filedSummary}`}>
                 <div className="desk-pullout-filed">
                   {zones.length > 0 && (
                     <div className="desk-pullout-filed-axis">
@@ -986,7 +986,7 @@ export function Pullout({
                       </span>
                     )}
                 </div>
-              </Disclosure>
+              </FoldGadget>
             );
           })()}
         {relationshipError && (
