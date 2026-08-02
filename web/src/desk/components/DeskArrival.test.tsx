@@ -71,9 +71,14 @@ describe("Phase 93 Desk arrival", () => {
     // button that opens its surface in-world (or falls back to the legacy
     // route until its story lands). Every tool remains reachable.
     for (const tool of DESK_TOOLS) {
-      expect(
-        screen.getByRole("button", { name: new RegExp(tool.label) }),
-      ).toBeTruthy();
+      // HS-111-10: the query well's speak-to-fill mic is also a button
+      // ("Speak …") — the dispatcher row is the non-mic hit.
+      const hits = screen.getAllByRole("button", {
+        name: new RegExp(tool.label),
+      });
+      expect(hits.some((el) => !el.className.includes("desk-mic"))).toBe(
+        true,
+      );
     }
   });
 
@@ -93,7 +98,7 @@ describe("Phase 93 Desk arrival", () => {
     );
     fireEvent.click(screen.getByRole("button", { name: /Search/ }));
     fireEvent.change(
-      screen.getByRole("searchbox", { name: "Search tools and Desk items" }),
+      screen.getByRole("textbox", { name: "Search tools and Desk items" }),
       { target: { value: "release" } },
     );
     fireEvent.click(screen.getByRole("button", { name: /Release checklist/ }));

@@ -1,12 +1,23 @@
 # Phase 111 - The Refinement
 
-**Status:** IN PROGRESS (10/11). Chartered 2026-07-31 as the mandatory
+**Status:** IN PROGRESS (11/11 SHIPPED — the walk staged; the CLOSED claim awaits the owner sitting). Chartered 2026-07-31 as the mandatory
 fast-follow to Phase 110. The owner's condition: every program on the
 desk gets its interior rethought — not token-tweaked, RETHOUGHT — to
 feel native to Signal Workbench. "The Settings screen needs to be
 completely rethought, and many, many others."
 
-**Last updated:** 2026-08-02 (HS-111-11 The terminal pane SHIPPED —
+**Last updated:** 2026-08-02 (HS-111-10 THE WALK STAGED — the phase's
+exit proof walked live: every program and system surface at 1440+393
+on the real hub (79+ shots; the exhibit set in assets/hs-111-10/),
+three violations fixed on the spot (the translucent Speak receipt
+bar, the meetings-detail fact clip, the ← ALL stamp at 393), the
+HS-111-08 mic-sweep debt burned (five chrome inputs now kit species
+with mics), the census green (0 live blurs / 0 border-left / 0 emoji
+icons / 0 retired species / 0 InlineMessage), the remainder chartered
+by name in final-summary.md; suites 4228 python + 444 web; the
+sitting brief is [final-summary.md](./final-summary.md). The flip to
+done and the CLOSED claim await verification + the owner. Earlier:
+HS-111-11 The terminal pane SHIPPED —
 the owner's xterm.js ruling real: raw ANSI peek mode (opt-in,
 stripped default, hash gate intact), xterm as the ONE PaneWell
 interior (364 KB lazy chunk, strictly a viewer — no onData, the
@@ -56,7 +67,7 @@ Each story:
 | 07 | [System chrome](./story-07-system-chrome.md) | Dropdown menus (Desk/Object/Go), context menus, the search palette (Cmd+K), the shortcut sheet, popovers | done |
 | 08 | [Interactive elements](./story-08-interactive-elements.md) | Every control type across all programs: toggles, selects, inputs, tabs, pills, buttons, badges — one kit, one language | done |
 | 09 | [Sprite and icon quality](./story-09-sprites.md) | Regenerate bad dock sprites on the real desk, window type icons, overview/reset glyphs | done |
-| 10 | [The refinement walk](./story-10-walk.md) | Open every program, screenshot at both viewports, prove every room speaks one language | backlog |
+| 10 | [The refinement walk](./story-10-walk.md) | Open every program, screenshot at both viewports, prove every room speaks one language | in-progress |
 | 11 | [The terminal pane](./story-11-terminal-pane.md) | Owner rider on 04: the pane well becomes a real terminal (xterm.js over a raw peek mode, read-only, consent spine untouched) + utility density | done |
 
 ## Story status
@@ -72,9 +83,8 @@ Each story:
 | HS-111-07 | System chrome | done | [story-07-system-chrome](./story-07-system-chrome.md) | [evidence-story-07](./evidence-story-07.md) |
 | HS-111-08 | Interactive elements | done | [story-08-interactive-elements](./story-08-interactive-elements.md) | [evidence-story-08](./evidence-story-08.md) |
 | HS-111-09 | Sprite and icon quality | done | [story-09-sprites](./story-09-sprites.md) | [evidence-story-09](./evidence-story-09.md) |
-| HS-111-10 | The refinement walk | backlog | [story-10-walk](./story-10-walk.md) | — |
+| HS-111-10 | The refinement walk | done | [story-10-walk](./story-10-walk.md) | [evidence-story-10](./evidence-story-10.md) |
 | HS-111-11 | The terminal pane | done | [story-11-terminal-pane](./story-11-terminal-pane.md) | [evidence-story-11](./evidence-story-11.md) |
-| HSEGHS001HS104-111-11 | The terminal pane | backlog | [story-11-terminal-pane](./story-11-terminal-pane.md) | - |
 
 ## Where we are
 
@@ -261,3 +271,30 @@ focused terminal leaves the pane byte-identical. Consent spine
 untouched: zero steering-test edits; the steering.ts diff is pure
 read-path. Suites green (4228 python + 444 web). Next: HS-111-10 —
 the walk, the phase's exit proof and the owner's sitting exhibit.
+
+11/11 (staged). HS-111-10 (The walk) STAGED 2026-08-02: every
+program and system surface opened on the LIVE hub and shot at
+1440x900 + 393x852 (79+ shots; the ~18-shot exhibit set in
+assets/hs-111-10/), read-only with one reversible create-and-bin via
+the floor NEW> menu. Judged against the one-language bar and fixed
+in-story: the translucent Speak footer receipt bar (content bled
+through the sticky bar — the well tint now rides an opaque surface),
+the meetings-detail fact hard-clip (facts wrap, never clip
+mid-token), the `← ALL` fixed-position stamp over the list census at
+393, and the HS-111-08 mic-sweep debt burned in full — the
+AttentionDrawer search + kind cycle, InfoWindow rename, SystemShade
+deny reason, and the ⌘K palette query are all kit species with the
+speak-to-fill mic (StringGadget grew an `inputRef` passthrough; the
+rename/zone-rename commit moved to focus-leaving-the-well so a mic
+press never commits-and-unmounts). Census: 0 live blurs, 0
+border-left violations, 0 emoji icons, 0 retired-species usages, 0
+InlineMessage. Honest gaps on the record: no printed Ask turn (.43
+down — the refusal leg is the captured proof; the shot is still
+owed) and no live coder session (the xterm well proven on the
+delivery terminal, the same PaneWell seam). New debt chartered by
+name (DeliveryListSection refit, mobile spatial label collisions,
+SystemShade row grammar, the PM timeline NOT FOUND wire nit) in
+[final-summary.md](./final-summary.md) — the sitting brief. Suites
+green: 3465 unit + 763 integration (one documented deselect) + 444
+web. The flip to done and any CLOSED claim await verification and
+the owner's sitting.

@@ -22,6 +22,7 @@ import {
 } from "../contextual";
 import { useDesk } from "../store";
 import { usePalette } from "../chromeState";
+import { StringGadget } from "../surface/gadgets";
 import { allObjects } from "../world";
 import { DESK_TOOLS, KIND_LABEL } from "../tools";
 import { VERBS, verbLabel, type VerbContext } from "../verbRegistry";
@@ -430,13 +431,12 @@ export function DeskToolShelf() {
         >
           <label className="desk-tool-search">
             <span className="sr-only">Search tools and Desk items</span>
-            <input
-              ref={searchRef}
-              type="search"
+            <StringGadget
+              inputRef={searchRef}
+              label="Search tools and Desk items"
               value={query}
               placeholder="Search tools and Desk items"
-              aria-label="Search tools and Desk items"
-              onChange={(event) => setQuery(event.target.value)}
+              onChange={setQuery}
             />
           </label>
           {rows.length ? (

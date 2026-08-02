@@ -352,13 +352,18 @@ function ZoneRenameOverlay({
         width,
       }}
       onPointerDown={(e) => e.stopPropagation()}
+      onBlur={(e) => {
+        // HS-111-10: commit only when focus LEAVES the row — pressing
+        // the speak-to-fill mic must not commit-and-unmount mid-press.
+        if (!e.currentTarget.contains(e.relatedTarget as Node | null))
+          commit();
+      }}
     >
       <input
         className="desk-zone-rename"
         value={name}
         autoFocus
         onChange={(e) => setName(e.target.value)}
-        onBlur={commit}
         onKeyDown={(e) => {
           if (e.key === "Enter") commit();
           if (e.key === "Escape") cancel();

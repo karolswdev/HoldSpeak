@@ -11,6 +11,7 @@ import { objectByRef, type WorldObject } from "../world";
 import { filedZones, kindInfo, kindLabel } from "../infoContract";
 import { lineage } from "../lineage";
 import { humanTime } from "../surface/format";
+import { StringGadget } from "../surface/gadgets";
 import { DeskWindowFrame } from "./DeskWindow";
 
 function IdentityName({ o }: { o: WorldObject }) {
@@ -40,22 +41,31 @@ function IdentityName({ o }: { o: WorldObject }) {
         {o.title}
       </button>
     );
+  // HS-111-10 mic sweep: the rename well is the kit's StringGadget.
+  // Commit on focus LEAVING the well (relatedTarget check) so pressing
+  // the speak-to-fill mic never commits-and-unmounts mid-utterance.
   return (
-    <input
-      className="info-name-input"
-      aria-label="Name"
-      value={draft}
-      autoFocus
-      onChange={(e) => setDraft(e.target.value)}
-      onBlur={commit}
-      onKeyDown={(e) => {
-        if (e.key === "Enter") commit();
-        if (e.key === "Escape") {
-          e.stopPropagation();
-          setEditing(false);
-        }
+    <span
+      className="info-name-edit"
+      onBlur={(e) => {
+        if (!e.currentTarget.contains(e.relatedTarget as Node | null))
+          commit();
       }}
-    />
+    >
+      <StringGadget
+        label="Name"
+        value={draft}
+        autoFocus
+        onChange={setDraft}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") commit();
+          if (e.key === "Escape") {
+            e.stopPropagation();
+            setEditing(false);
+          }
+        }}
+      />
+    </span>
   );
 }
 

@@ -72,7 +72,10 @@
   font-size: 10px;
   font-weight: 400;
   color: var(--text-muted);
-  white-space: nowrap;
+  /* HS-111-10 walk: a fact that outgrows its column WRAPS — it never
+     hard-clips mid-token at the pane edge (1440 meetings detail). */
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 .gadget-row-gadget {
   display: flex;
