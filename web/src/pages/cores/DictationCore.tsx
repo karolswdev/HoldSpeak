@@ -59,7 +59,16 @@ import {
   LedMeter,
   PadGadget,
   StringGadget,
+  TransportKey,
 } from "../../desk/surface/gadgets";
+import {
+  micCaptureReason,
+  micCaptureSupported,
+  subscribeMicPhase,
+  type MicPhase,
+} from "../../lib/micSession";
+import { FloorHeldError } from "../../lib/audioFloor";
+import { openMicDrop, openMicListen } from "../../lib/openMic";
 import {
   isSameStreamDay,
   presentValue,
@@ -310,6 +319,18 @@ const AIM_FACT: Record<string, string> = {
   field: "THIS FIELD",
 };
 
+/* HS-112-06 — the mic session's own truth, one word each. CLOSED means
+   the tracks are stopped; SUSPENDED means the grant is kept and nothing
+   is captured; HELD means a push-to-talk hold owns the floor. */
+const MIC_PHASE_FACT: Record<MicPhase, string> = {
+  closed: "CLOSED",
+  suspended: "SUSPENDED",
+  open: "OPEN",
+  segmenting: "SEGMENTING",
+  held: "HELD",
+};
+const MIC_PHASE_LIVE: MicPhase[] = ["open", "segmenting", "held"];
+
 /* The kernel's own refusal vocabulary, rendered as WHAT in the fewest
    words. An unknown code rides through verbatim — never swallowed. */
 const REFUSAL_LABELS: Record<string, string> = {
@@ -384,6 +405,13 @@ function SpeakFace() {
   const [refusal, setRefusal] = useState("");
   // release-to-landed is measured from the moment the key came up.
   const releasedAt = useRef<number | null>(null);
+  /* HS-112-06 — the open mic: one grant, held open, VAD-segmented.
+     Opt-in per session; the phase below is the session's own truth
+     (CLOSED means the tracks are stopped, never merely muted). */
+  const [openMic, setOpenMic] = useState(false);
+  const [micPhase, setMicPhase] = useState<MicPhase>("closed");
+  const captureSupported = micCaptureSupported();
+  const captureReason = captureSupported ? null : micCaptureReason();
   // The strip's readout cells read the same wire the footer reads.
   const stripRoot = localStorage.getItem("holdspeak.projectRootOverride") ?? "";
   const readiness = useResource<JsonRecord>(
@@ -499,6 +527,60 @@ function SpeakFace() {
     if (aim === "field" || !text.trim()) return;
     if (rehearse) void run(text);
     else void deliver(text);
+  };
+
+  /* An ambient utterance travels the SAME road as a released TALK — the
+     aim, the rehearsal rule, the delivery id, the receipts. The ref
+     keeps the open mic's long-lived handler on the current aim. */
+  const releaseRef = useRef(onReleased);
+  releaseRef.current = onReleased;
+
+  useEffect(() => subscribeMicPhase(setMicPhase), []);
+  // Leaving the room drops the stream: no grant outlives the deck.
+  useEffect(() => () => openMicDrop(), []);
+
+  const toggleOpenMic = async () => {
+    if (openMic) {
+      openMicDrop();
+      setOpenMic(false);
+      announce("OPEN MIC CLOSED");
+      return;
+    }
+    try {
+      await openMicListen({
+        onText: (text) => releaseRef.current(text),
+        onRefusal: (reason) => {
+          const category = dictationFailure(reason);
+          setFailure(category);
+          setError(DICTATION_FAILURES[category].message);
+          setPhase("refused");
+          setRefusal(category);
+          announce(`⚠ ${DICTATION_FAILURES[category].message}`, "warn");
+        },
+        // the floor was taken (a meeting started): the mic is already
+        // down — the room says who took it, in flow.
+        onFloorLost: (reason) => {
+          setOpenMic(false);
+          refuse(reason.refusal);
+        },
+      });
+      setOpenMic(true);
+      announce("OPEN MIC LISTENING");
+    } catch (reason) {
+      setOpenMic(false);
+      // A floor refusal names its owner ("FLOOR HELD MEETING"); anything
+      // else falls back to the shared dictation failure vocabulary.
+      if (reason instanceof FloorHeldError) {
+        refuse(reason.refusal);
+        return;
+      }
+      const category = dictationFailure(reason);
+      setFailure(category);
+      setError(DICTATION_FAILURES[category].message);
+      setPhase("refused");
+      setRefusal(category);
+      announce(`⚠ ${DICTATION_FAILURES[category].message}`, "warn");
+    }
   };
   const actions = failure
     ? applicableActions(failure, { draftPresent: Boolean(utterance.trim()) })
@@ -621,6 +703,19 @@ function SpeakFace() {
             announce(`⚠ ${DICTATION_FAILURES[category].message}`, "warn");
           }}
         />
+        {/* HS-112-06 — the open mic latch: one grant, held open, VAD
+            segmenting; pressing it again drops the stream for real. */}
+        <TransportKey
+          label="Open mic"
+          word="Open"
+          glyph="◉"
+          active={openMic}
+          // a mic this browser cannot open is visible, disabled, and says
+          // why — it never vanishes and never refuses on click.
+          disabled={!captureSupported}
+          title={captureReason ?? undefined}
+          onClick={() => void toggleOpenMic()}
+        />
         <LedMeter label="Level" value={level} scanning={micState === "busy"} />
         <span className="speak-register" aria-label="Dictation state">
           <span className="speak-register-axis">State</span>
@@ -649,6 +744,16 @@ function SpeakFace() {
             <span className="speak-cell-label">{"-> Target"}</span>
             <span className="speak-cell-value">
               {presentValue(readinessTarget.label) || "—"}
+            </span>
+          </span>
+          <span className="speak-cell">
+            <span className="speak-cell-label">Mic</span>
+            <span className="speak-cell-value" aria-label="Mic session">
+              <LampGadget
+                label={MIC_PHASE_FACT[micPhase]}
+                on={MIC_PHASE_LIVE.includes(micPhase)}
+                tone={MIC_PHASE_LIVE.includes(micPhase) ? "ok" : "warn"}
+              />
             </span>
           </span>
           <span className="speak-cell">

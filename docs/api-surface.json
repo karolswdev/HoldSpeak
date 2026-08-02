@@ -1675,6 +1675,36 @@
       ]
     },
     {
+      "path": "/api/dictation/floor",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.dictation.floor",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/dictation/floor/claim",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.dictation.floor",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/dictation/floor/release",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.dictation.floor",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/dictation/journal",
       "methods": [
         "DELETE"

@@ -74,7 +74,7 @@ it does not absorb it — it names it in the final summary.
 | HS-112-03 | The architect's desk | in-progress | [story-03-architects-desk](./story-03-architects-desk.md) | — |
 | HS-112-04 | The plain story | backlog | [story-04-plain-story](./story-04-plain-story.md) | — |
 | HS-112-05 | The sitting walk | backlog | [story-05-walk](./story-05-walk.md) | — |
-| HS-112-06 | The open mic | backlog | [story-06-open-mic](./story-06-open-mic.md) | — |
+| HS-112-06 | The open mic | in-progress | [story-06-open-mic](./story-06-open-mic.md) | — |
 
 ## Where we are
 

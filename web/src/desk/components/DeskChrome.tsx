@@ -11,7 +11,8 @@ import { WorkMenu, type WorkMenuEntry } from "./DeskMenu";
 import { verbById, verbLabel, type VerbContext } from "../verbRegistry";
 import { useKeymap } from "../keymap";
 import { egressBadge } from "../setup";
-import { EgressChip } from "../surface/gadgets";
+import { EgressChip, LampGadget } from "../surface/gadgets";
+import { subscribeMicPhase, type MicPhase } from "../../lib/micSession";
 import { DeskToolShelf } from "./DeskToolShelf";
 import { DeskMenuBar } from "./DeskMenuBar";
 import { useLaunchers } from "./DeskWindow";
@@ -49,6 +50,32 @@ function AttentionBell() {
       <img src={SYSTEM.menuBell} alt="" width={16} height={16} className="desk-chrome-sprite" draggable={false} />
       {attention.badge ? <strong>{attention.badge}</strong> : null}
     </button>
+  );
+}
+
+/* HS-112-06 — the mic lamp: while the Desk holds a microphone grant the
+   chrome says so, in the session's own words, from every room. It is
+   absent only when the device is released (tracks stopped) — so its
+   presence, not a colour, is the honest signal that audio is live. */
+const MIC_LAMP_FACT: Record<Exclude<MicPhase, "closed">, string> = {
+  suspended: "Mic idle",
+  open: "Mic open",
+  segmenting: "Mic speech",
+  held: "Mic held",
+};
+
+function MicLamp() {
+  const [phase, setPhase] = useState<MicPhase>("closed");
+  useEffect(() => subscribeMicPhase(setPhase), []);
+  if (phase === "closed") return null;
+  return (
+    <span className="desk-mic-lamp" role="status">
+      <LampGadget
+        label={MIC_LAMP_FACT[phase]}
+        on={phase !== "suspended"}
+        tone={phase === "suspended" ? "warn" : "ok"}
+      />
+    </span>
   );
 }
 
@@ -196,6 +223,7 @@ export function DeskChrome({
       </div>
 
       <div className="desk-chrome desk-chrome-tr">
+        <MicLamp />
         <AttentionBell />
         <DeskToolShelf />
         <DeskClock />

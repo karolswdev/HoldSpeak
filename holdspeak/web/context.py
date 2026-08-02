@@ -100,6 +100,13 @@ class WebContext:
     # the live runtime shares the instance via `server.dictation_journal`.
     journal: Optional[Any] = None
 
+    # HS-112-06: the one audio-floor arbiter (a `VoiceTypingSession`), shared
+    # with the runtime that owns the hotkey / meeting / wake capture paths. The
+    # floor routes read and claim through it so the browser's open mic is an
+    # owner on the SAME model instead of a second, invisible one. `None` in a
+    # partial context — the routes then answer `arbitrated: false`.
+    voice_session: Optional[Any] = None
+
     # HSM-15-10: whether this server requires a token to talk to it (i.e. it is
     # bound off-loopback). Surfaced UNauthenticated via `GET /api/mesh/info` so a
     # freshly-discovered companion knows whether pairing needs a token. A bool,

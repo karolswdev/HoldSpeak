@@ -16,7 +16,8 @@ ownership lock.
 from __future__ import annotations
 
 import threading
-from typing import Optional
+import time
+from typing import Callable, Optional
 
 import numpy as np
 
@@ -40,22 +41,60 @@ class VoiceTypingSession:
     acquire wins until it releases.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, *, clock: Optional[Callable[[], float]] = None) -> None:
         self._lock = threading.Lock()
         self._owner: Optional[str] = None
         self._source: Optional[AudioSource] = None
+        # HS-112-06: an owner that cannot be trusted to release (the browser's
+        # open mic — a tab can vanish) claims on a LEASE. When the lease is not
+        # renewed the floor frees itself, so a closed tab can never wedge the
+        # hotkey. Owners in the process (hotkey, meeting, wake, devices) claim
+        # with no lease and behave exactly as before.
+        self._lease_expires: Optional[float] = None
+        self._clock = clock or time.monotonic
+
+    def _expire_locked(self) -> None:
+        """Drop a leased claim whose lease has run out. Call under the lock."""
+        if self._lease_expires is None or self._owner is None:
+            return
+        if self._clock() < self._lease_expires:
+            return
+        expired = self._owner
+        self._owner = None
+        self._source = None
+        self._lease_expires = None
+        log.info("audio_floor_lease_expired", extra={"owner": expired})
 
     @property
     def is_active(self) -> bool:
         with self._lock:
+            self._expire_locked()
             return self._owner is not None
 
     @property
     def active_owner(self) -> Optional[str]:
         with self._lock:
+            self._expire_locked()
             return self._owner
 
-    def acquire(self, owner: str) -> bool:
+    def renew(self, owner: str, lease_seconds: float) -> bool:
+        """Extend a leased claim. ``False`` when ``owner`` no longer holds it.
+
+        The leased owner's heartbeat: a browser holding the floor for its
+        open mic calls this on an interval. A ``False`` answer is the honest
+        signal that the floor was lost (the lease lapsed, or the claim was
+        never made) — the caller must stop capturing.
+        """
+        if lease_seconds <= 0:
+            raise ValueError("lease_seconds must be positive")
+        with self._lock:
+            self._expire_locked()
+            if self._owner != owner or self._lease_expires is None:
+                return False
+            self._lease_expires = self._clock() + lease_seconds
+            return True
+
+    def acquire(self, owner: str, *, lease_seconds: Optional[float] = None) -> bool:
         """Claim the audio floor *without* binding an :class:`AudioSource`.
 
         For owners that drive their own capture (e.g. a meeting's
@@ -69,12 +108,24 @@ class VoiceTypingSession:
 
         Returns ``True`` if the caller now owns the floor; ``False`` if
         another owner already holds it (silent, like :meth:`begin`).
+
+        ``lease_seconds`` claims on a lease (HS-112-06): the claim frees
+        itself if it is not renewed in time. Re-claiming as the SAME leased
+        owner renews rather than refusing, so a client that missed a
+        heartbeat recovers without dropping the floor to a third party.
         """
         if not owner:
             raise ValueError("owner must be non-empty")
+        if lease_seconds is not None and lease_seconds <= 0:
+            raise ValueError("lease_seconds must be positive")
 
         with self._lock:
+            self._expire_locked()
             if self._owner is not None:
+                if self._owner == owner and self._lease_expires is not None:
+                    if lease_seconds is not None:
+                        self._lease_expires = self._clock() + lease_seconds
+                    return True
                 log.info(
                     "audio_floor_acquire_rejected",
                     extra={"owner": owner, "active_owner": self._owner},
@@ -82,8 +133,14 @@ class VoiceTypingSession:
                 return False
             self._owner = owner
             self._source = None
+            self._lease_expires = (
+                self._clock() + lease_seconds if lease_seconds is not None else None
+            )
 
-        log.info("audio_floor_acquire", extra={"owner": owner})
+        log.info(
+            "audio_floor_acquire",
+            extra={"owner": owner, "lease_seconds": lease_seconds},
+        )
         return True
 
     def release(self, owner: str) -> None:
@@ -94,10 +151,12 @@ class VoiceTypingSession:
         source — :meth:`acquire` never bound one.
         """
         with self._lock:
+            self._expire_locked()
             if self._owner != owner:
                 return
             self._owner = None
             self._source = None
+            self._lease_expires = None
 
         log.info("audio_floor_release", extra={"owner": owner})
 
@@ -113,6 +172,7 @@ class VoiceTypingSession:
             raise ValueError("owner must be non-empty")
 
         with self._lock:
+            self._expire_locked()
             if self._owner is not None:
                 log.info(
                     "voice_typing_begin_rejected",
@@ -121,6 +181,7 @@ class VoiceTypingSession:
                 return False
             self._owner = owner
             self._source = source
+            self._lease_expires = None
 
         try:
             source.start_recording()
@@ -128,6 +189,7 @@ class VoiceTypingSession:
             with self._lock:
                 self._owner = None
                 self._source = None
+                self._lease_expires = None
             raise
 
         log.info("voice_typing_begin", extra={"owner": owner})
@@ -147,6 +209,7 @@ class VoiceTypingSession:
         ran to completion) and should not blow up the caller.
         """
         with self._lock:
+            self._expire_locked()
             if self._owner is None:
                 return None
             if self._owner != owner:
@@ -158,6 +221,7 @@ class VoiceTypingSession:
             source = self._source
             self._owner = None
             self._source = None
+            self._lease_expires = None
 
         if source is None:
             return None
@@ -174,11 +238,13 @@ class VoiceTypingSession:
         not match.
         """
         with self._lock:
+            self._expire_locked()
             if self._owner != owner:
                 return
             source = self._source
             self._owner = None
             self._source = None
+            self._lease_expires = None
 
         if source is not None:
             try:

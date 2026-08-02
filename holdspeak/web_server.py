@@ -160,6 +160,10 @@ class WebRuntimeCallbacks:
     # uses. Deliver-on-command only; raises if undeliverable so the client sees an
     # honest failure rather than a false ack.
     on_remote_dictation: Optional[Callable[..., Any]] = None
+    # HS-112-06: the runtime's one audio-floor arbiter (a `VoiceTypingSession`),
+    # shared so the browser's open mic claims the SAME floor the hotkey, the
+    # meeting recorder and the wake listener claim — one owner model, not two.
+    voice_session: Optional[Any] = None
     project_detector: Optional[Any] = None
     device_registry: Optional["DeviceRegistry"] = None
     device_psk_provider: Optional[Callable[[], str]] = None
@@ -249,6 +253,8 @@ class MeetingWebServer:
         self.on_transcribe = callbacks.on_transcribe
         self.on_dictation_config_changed = callbacks.on_dictation_config_changed
         self.on_remote_dictation = callbacks.on_remote_dictation
+        # HS-112-06: the shared audio-floor arbiter (None on a bare server).
+        self.voice_session = callbacks.voice_session
         self._project_detector = callbacks.project_detector
         device_registry = callbacks.device_registry
         if device_registry is None:
@@ -600,6 +606,7 @@ class MeetingWebServer:
             corrections=self.dictation_corrections,
             telemetry=self.dictation_telemetry,
             journal=self.dictation_journal,
+            voice_session=self.voice_session,
             # HSM-15-10: a server bound off-loopback requires the auth token; the
             # mesh identify endpoint surfaces that to an unpaired companion.
             mesh_requires_token=not web_auth.is_loopback_host(self.host),

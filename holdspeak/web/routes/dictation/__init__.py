@@ -29,6 +29,7 @@ from fastapi import APIRouter
 from ...context import WebContext
 from .agent import build_agent_router
 from .blocks import build_blocks_router
+from .floor import build_floor_router
 from .intents import build_intents_router
 from .kb import build_kb_router
 from .pipeline import build_pipeline_router
@@ -54,6 +55,8 @@ def build_dictation_router(ctx: WebContext) -> APIRouter:
     )
     router.include_router(build_blocks_router(ctx, project_doc_suggestions))
     router.include_router(build_kb_router(ctx))
+    # HS-112-06: the audio floor, read + claimable by the browser's open mic.
+    router.include_router(build_floor_router(ctx))
     router.include_router(
         build_pipeline_router(ctx, project_doc_suggestions, dismissed_suggestion_signatures)
     )
