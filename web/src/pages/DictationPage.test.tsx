@@ -85,6 +85,9 @@ async function openTryIt() {
     </MemoryRouter>,
   );
   // HS-100-07: the loop IS the front face — no tab to reach it.
+  // HS-112-02: the deck's default action is a REAL delivery now; the
+  // dry run these recovery legs exercise is the explicit REHEARSE mode.
+  fireEvent.click(screen.getByRole("checkbox", { name: "Rehearse" }));
   const editor = await screen.findByLabelText("Utterance");
   fireEvent.change(editor, {
     target: { value: "A draft that must not disappear." },
@@ -109,12 +112,12 @@ describe("DictationPage Try it failure actions", () => {
       },
     });
     const editor = await openTryIt();
-    fireEvent.click(screen.getByRole("button", { name: "Run dry test" }));
+    fireEvent.click(screen.getByRole("button", { name: "Rehearse" }));
 
     await screen.findByText(/Delivery did not complete/);
     expect(editor).toHaveValue("A draft that must not disappear.");
     expect(
-      screen.getByRole("button", { name: "Retry dry test" }),
+      screen.getByRole("button", { name: "Retry rehearsal" }),
     ).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Copy" })).toBeInTheDocument();
     expect(
@@ -147,7 +150,7 @@ describe("DictationPage Try it failure actions", () => {
       },
     });
     await openTryIt();
-    fireEvent.click(screen.getByRole("button", { name: "Run dry test" }));
+    fireEvent.click(screen.getByRole("button", { name: "Rehearse" }));
     await screen.findByText(/Transcription timed out/);
 
     const picker = await screen.findByRole("combobox", { name: "Runs on" });
@@ -165,7 +168,7 @@ describe("DictationPage Try it failure actions", () => {
       dryRun: () => Promise.reject(new ApiError(401, "bad token", {})),
     });
     const editor = await openTryIt();
-    fireEvent.click(screen.getByRole("button", { name: "Run dry test" }));
+    fireEvent.click(screen.getByRole("button", { name: "Rehearse" }));
 
     await screen.findByText(/rejected the connection/);
     expect(editor).toHaveValue("A draft that must not disappear.");
@@ -173,7 +176,7 @@ describe("DictationPage Try it failure actions", () => {
     expect(screen.getByRole("button", { name: "Setup" })).toBeInTheDocument();
     expect(screen.queryByRole("combobox", { name: "Runs on" })).toBeNull();
     expect(
-      screen.getByRole("button", { name: "Run dry test" }),
+      screen.getByRole("button", { name: "Rehearse" }),
     ).toBeInTheDocument();
   });
 
@@ -182,7 +185,7 @@ describe("DictationPage Try it failure actions", () => {
       dryRun: () => Promise.reject(new ApiError(504, "timeout", {})),
     });
     await openTryIt();
-    fireEvent.click(screen.getByRole("button", { name: "Run dry test" }));
+    fireEvent.click(screen.getByRole("button", { name: "Rehearse" }));
     await screen.findByText(/Transcription timed out/);
 
     fireEvent.click(screen.getByRole("button", { name: "Keep as Note" }));

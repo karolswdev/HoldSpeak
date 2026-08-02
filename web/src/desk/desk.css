@@ -4270,6 +4270,14 @@
   text-overflow: ellipsis;
   max-width: 18ch;
 }
+/* HS-112-02 — the aim row: one gadget sheet under the strip naming
+   where a released TALK sends the words. Never flex-compressed. */
+.desk-next .speak-aim {
+  flex: none;
+}
+.desk-next .speak-aim .gadget-group {
+  margin: 0;
+}
 /* The utterance well fills; the face never shows a void. */
 .desk-next .speak-well {
   display: flex;
