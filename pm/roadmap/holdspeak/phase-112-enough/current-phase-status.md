@@ -93,3 +93,90 @@ proofs in evidence-story-05.md, the sitting brief in
 [final-summary.md](./final-summary.md). Held for the owner: the
 sitting, the FOCUSED APP default-aim ruling, and the Phase-111
 printed-Ask-turn room shot (.43 is back; the wire leg is proven).
+
+## The build record (per story, as shipped)
+
+04 BUILT (in-progress pending the fresh-HOME quickstart
+execution, which is 05's walk). HS-112-04 implemented 2026-08-02:
+the README's first screen says what HoldSpeak IS in one paragraph
+(local-first voice desk OS; hold a key or open the mic, words land
+where aimed; one destination list; the badge names what leaves);
+quickstart restructured as the three moves (seed the desk, set the
+dial, hold the key — including the open mic); ~20 stale claims
+corrected across seven docs (the dead intel_cloud_*/
+openai_compatible_* fields pruned from every entry point, the
+retired welcome wizard and Profiles room excised, two false
+"still works" meeting-guide claims fixed); SECURITY gained the
+browser-mic egress row, the audio-floor trust boundary (3.4), and
+the one-WAV-per-utterance clarification. Every claim truth-audited
+to file:line; dead-field grep census 0 in README+GETTING_STARTED;
+doc-drift guards 19 passed; full unit 3522. Named drift for a next
+pass: WEB_DESK.md omits the new mic lamp; welcome.png depicts a
+dead surface.
+
+HS-112-01 implemented 2026-08-02: the InferenceTarget is the only
+truth. The legacy intel_cloud_*/openai_compatible_* fields are dead
+everywhere except the ONE silent migration at default-path
+Config.load() (legacy-intel / legacy-dictation synthetic targets,
+idempotent, explicit-path loads never migrate); the three feature
+pointers share one sentinel (None = hub default, rails' "" fixed);
+the default host has one chokepoint; intel_queue resolves through
+effective_intel_cloud instead of threading the triple through six
+signatures; /api/profiles writes 405 naming /api/inference-targets;
+settings PUT strips the dead fields from the wire. One face: the
+Prefs Models module (DESTINATIONS table with key/readiness lamps +
+armed FORGET, PROBE row, RUNS ON pickers for DICTATION/MEETINGS/
+RAILS, HUB DEFAULT ENGINE, RAILS OBSERVER); RuntimeDestination and
+ProfilesCore DELETED with every call site aliased into the one
+dial; the grep census pinned as tests both sides. 22-test story
+suite + 879 targeted + full 3454 unit + 449 web green. Named debt:
+legacy key env deliberately does not carry over (per-destination
+key rule); per-target probe endpoint named not absorbed. The flip
+awaits the live proof: one dial set once, dictation + meeting
+intel + ask all landing on the real endpoint (control-vs-treatment
+on .43), error legs shot at 1440+393. Chartered 2026-08-02. Chartered 2026-08-02 from the owner's post-111 verdict; the
+
+HS-112-03 implemented 2026-08-02: the packaged fresh-desk
+
+HS-112-02 implemented 2026-08-02: the Speak room's TALK key delivers
+for real through the one existing contract (/api/dictation/remote —
+no forked idempotency), with an AIM row (FOCUSED APP / AGENT / THIS
+FIELD), REHEARSE as an explicit mode never the default, opt-in
+require_agent strictness (companion fallback byte-identical), a
+pre-effect refusal classifier turning deterministic kernel refusals
+into named terminal 422s (retry replays the cached refusal;
+mid-type driver failures still honestly park pending), release-to-
+landed latency on the receipt, and journal_source=dictation — which
+also fixed a latent bug: companion deliveries had been journaling
+as dry_run rehearsals. Contract tests byte-identical (42 tests);
+new: 13 python + 12 web; suites 3464 unit + 456 web green (one
+environmental node-link flake passes in isolation). Named debt in
+the story report: two audio stacks, deprecated ScriptProcessorNode,
+twin preview stores, companion tap-toggle, macro-dispatch bypass,
+2-valued journal_source, no delivery_id on the transcribe leg. The
+flip to done awaits the live proof: TALK held in a real browser,
+text landing in a real focused app and a real agent pane, refusal
+shot legs, 1440+393.
+
+walk). HS-112-03 implemented 2026-08-02: the packaged fresh-desk
+seed ships in the wheel (holdspeak/seeds/fresh-desk.yaml — six
+hs-desk-* drawers: ADRs, Meetings, Rules, Decisions, Reference,
+Inbox; two authored starter notes: the ADR template and the
+Working rules), applied by a repository-level idempotent seeder
+(holdspeak/db/seed.py), reachable as `holdspeak seed`, POST
+/api/desk/seed, an EmptyDesk "Seed the desk" chip, and the Prefs
+Desk module. Reset-to-seed is the desk's first destructive act,
+done honestly: tombstone-only sweep (sync include_deleted ships the
+deletions — a paired device can never resurrect the clutter; pinned
+by test), re-seed, then the six ghost layout keys swept only after
+the wire says ok; the ConfirmVerb arming (RESET TO SEED → danger
+RESET DESK?, 3s auto-disarm) with fact labels naming what RESETS
+and what KEEPS (meetings, journal, settings, runs-on targets), and
+a TOMBSTONED N · SEEDED M receipt. The desk.reset-to-seed verb
+never destroys from a menu tap — it opens the Prefs face. UAT
+quarantine + fresh-desk empty assertions hold (no auto-seed at
+boot). 112 targeted python + 10-test story suite + 453 web green;
+full-suite failures triaged pre-existing/environmental in the
+report. The flip awaits the live walk: first boot, drawer open,
+ADR template read, reset confirm + after, 1440+393. Chartered
+2026-08-02. Chartered 2026-08-02 from the owner's post-111 verdict; the

@@ -58,11 +58,11 @@ holdspeak
   larger models give better intel at the cost of speed.
 - Optional endpoint mode: `intel_provider: "cloud"` (or `auto` fallback) points
   at **any OpenAI-compatible endpoint**: a self-hosted LAN server, Ollama, vLLM,
-  llama.cpp-server, or a hosted API. Author the endpoint once as a Runs on
-  destination (the Web compatibility route is `/profiles`) and pick it under
-  Settings → **Runs on**; the API key is optional for keyless self-hosted
-  endpoints. The `intel_cloud_base_url` config field still works when no
-  destination is selected.
+  llama.cpp-server, or a hosted API. Author the endpoint once as a destination
+  under **Settings, Models** and pick it as the meetings **Runs on**; the API
+  key is optional for keyless self-hosted endpoints. The `intel_cloud_*`
+  config fields are dead (HS-112-01): an upgrade converts a configured legacy
+  endpoint into a `legacy-intel` destination, once.
 
 ### For Web Interfaces
 - **FastAPI + Uvicorn** - Web server dependencies
@@ -177,10 +177,11 @@ Use this during or after meetings for cross-session management:
 - Run MIR CLI dry-run and manual reroute flows for saved meetings
 - Edit app settings from browser, including cloud options:
   - `intel_provider` (`local`, `cloud`, `auto`)
-  - `intel_cloud_model`
-  - `intel_cloud_api_key_env`
-  - `intel_cloud_base_url` (OpenAI-compatible endpoint override)
-  - `intel_cloud_store`: when `true`, HoldSpeak sends OpenAI's `store` flag with
+  - the endpoint itself is not a settings field: it is the destination picked
+    as the meetings **Runs on** under Settings, Models. The settings write path
+    strips `intel_cloud_model`, `intel_cloud_api_key_env`, and
+    `intel_cloud_base_url` from the wire (HS-112-01).
+  - `intel_cloud_store` (**dead, HS-112-01**): when `true`, HoldSpeak sends OpenAI's `store` flag with
     each request. **Advisory:** this only takes effect if your endpoint honors
     the `store` parameter (OpenAI does; many OpenAI-compatible servers ignore
     unknown fields). HoldSpeak forwards the flag but cannot guarantee the remote
@@ -289,10 +290,9 @@ Notes:
 For local-first capture plus remote intel on your LAN:
 
 1. Run an OpenAI-compatible endpoint on homelab (for example vLLM/Ollama-compatible API).
-2. Author it as a Runs on destination (the Web compatibility route is
-   `/profiles`, with the endpoint's `http://host:port/v1` URL) and pick it
-   under Settings → **Runs on**. Setting `intel_cloud_base_url` by hand still
-   works when no destination is selected.
+2. Author it as a destination under **Settings, Models** (with the endpoint's
+   `http://host:port/v1` URL) and pick it as the meetings **Runs on**. There
+   is no hand-edited alternative; `intel_cloud_base_url` is dead.
 3. Keep `intel_deferred_enabled: true` so meetings continue when the homelab is temporarily unavailable.
 4. Export your API key environment variable and run `holdspeak doctor` to preflight reachability and model availability; its Runs on line names the destination each pipeline resolves to.
 
@@ -552,6 +552,10 @@ Configuration file: `~/.config/holdspeak/config.json`
 
 ### Meeting Settings
 
+Every key the `meeting` config block still holds, with its default. The
+`intel_cloud_*` keys are listed because they persist on disk; they are dead
+(HS-112-01) and the reference table below says so per row.
+
 ```json
 {
   "meeting": {
@@ -609,11 +613,11 @@ Configuration file: `~/.config/holdspeak/config.json`
 | `intel_retry_failure_webhook_url` | string | null | Optional HTTP(S) webhook for sustained failure alerts |
 | `intel_retry_failure_webhook_header_name` | string | null | Optional custom header name added to failure-alert webhooks |
 | `intel_retry_failure_webhook_header_value` | string | null | Optional custom header value (set together with header name) |
-| `intel_cloud_model` | string | "gpt-5-mini" | Cloud model used when provider is `cloud` or `auto` falls back to cloud |
-| `intel_cloud_api_key_env` | string | "OPENAI_API_KEY" | Environment variable name containing your cloud API key |
-| `intel_cloud_base_url` | string | null | Optional OpenAI-compatible base URL (for proxies/compatible providers) |
-| `intel_cloud_reasoning_effort` | string | null | Optional cloud reasoning setting (provider dependent) |
-| `intel_cloud_store` | bool | false | Allow provider-side storage for cloud requests |
+| `intel_cloud_model` | string | "gpt-5-mini" | **Dead (HS-112-01).** Read once by the legacy migration, then ignored. The model comes from the meetings Runs on destination. |
+| `intel_cloud_api_key_env` | string | "OPENAI_API_KEY" | **Dead (HS-112-01).** The destination's key is `HOLDSPEAK_PROFILE_<ID>_KEY`; this default only names the hub's fallback env when no destination is assigned. |
+| `intel_cloud_base_url` | string | null | **Dead (HS-112-01).** Read once by the legacy migration, then ignored. The URL comes from the meetings Runs on destination. |
+| `intel_cloud_reasoning_effort` | string | null | **Dead (HS-112-01).** Read only by the one-time legacy migration. |
+| `intel_cloud_store` | bool | false | **Dead (HS-112-01).** Read only by the one-time legacy migration. |
 | `intel_summary_model` | string | null | Path to larger model for end-of-meeting summary. Falls back to realtime model if null. |
 | `intel_deferred_enabled` | bool | true | Queue meeting intel for later if no compatible local model is currently available |
 | `web_auto_open` | bool | false | Auto-open browser when meeting starts |
@@ -765,9 +769,9 @@ Send `"ping"` text message, receive `"pong"` response.
 
 1. Run `holdspeak doctor` and check the `Cloud intel preflight` line.
 2. If it reports DNS/connection failures, verify the homelab hostname/IP, LAN routing, and firewall.
-3. If it reports auth failures (HTTP 401/403), verify your `intel_cloud_api_key_env` value and token.
-4. If it reports model mismatch, set `intel_cloud_model` to one of the model IDs exposed by `/models`.
-5. Verify `intel_cloud_base_url` starts with `http://` or `https://` and includes the right API prefix (commonly `/v1`).
+3. If it reports auth failures (HTTP 401/403), check that `HOLDSPEAK_PROFILE_<ID>_KEY` is exported for the destination the meetings Runs on picker names.
+4. If it reports model mismatch, set that destination's model to one of the model IDs exposed by `/models`.
+5. Verify that destination's base URL starts with `http://` or `https://` and includes the right API prefix (commonly `/v1`). PROBE in Settings, Models tests reachability.
 
 ### Transcription quality is poor
 

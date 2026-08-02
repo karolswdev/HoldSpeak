@@ -259,27 +259,20 @@ Use `openai_compatible` when the model is served somewhere else:
 - LiteLLM
 - OpenAI or another hosted compatible API
 
-The picker path: author the endpoint once as a Runs on destination (the Web
-compatibility route is `/profiles`), then pick it under Dictation → Runtime →
-**Runs on**. The configuration shape below still works when no destination is
-selected:
+The one path: author the endpoint once as a destination under **Settings,
+Models**, then pick it as the dictation **Runs on**. Assigning a destination is
+itself the "run it there" instruction, so the dictation backend follows. The
+key lives in the environment as `HOLDSPEAK_PROFILE_<ID>_KEY`, never in the
+destination.
 
-```json
-{
-  "dictation": {
-    "pipeline": { "enabled": true },
-    "runtime": {
-      "backend": "openai_compatible",
-      "openai_compatible_base_url": "http://127.0.0.1:8000/v1",
-      "openai_compatible_model": "qwen2.5-7b-instruct",
-      "openai_compatible_api_key_env": "OPENAI_API_KEY",
-      "openai_compatible_timeout_seconds": 8
-    }
-  }
-}
-```
+The old `dictation.runtime.openai_compatible_*` fields no longer configure
+anything (HS-112-01). An upgrade reads a configured legacy endpoint once,
+converts it into a destination named `legacy-dictation`, and points dictation
+at it; the legacy key env deliberately does not carry over.
+`dictation.runtime.openai_compatible_timeout_seconds` is not part of the
+destination and still applies.
 
-Known-good endpoint families include llama.cpp server, LM Studio, Ollama's OpenAI bridge, vLLM, LiteLLM, and hosted OpenAI-compatible APIs. HoldSpeak reads the API key from the named environment variable. It does not store the key in the project context files. If the endpoint is unavailable, times out, or returns malformed output, HoldSpeak preserves the original transcript and surfaces the failure in dry-run/readiness output.
+Known-good endpoint families include llama.cpp server, LM Studio, Ollama's OpenAI bridge, vLLM, LiteLLM, and hosted OpenAI-compatible APIs. HoldSpeak reads the destination's API key from `HOLDSPEAK_PROFILE_<ID>_KEY`. It does not store the key in the destination, in the config, or in the project context files. If the endpoint is unavailable, times out, or returns malformed output, HoldSpeak preserves the original transcript and surfaces the failure in dry-run/readiness output.
 
 ## Project Context
 
@@ -429,19 +422,16 @@ Local-first behavior:
 
 Cloud or homelab behavior:
 
-- If you set `meeting.intel_provider` to `cloud` or configure `intel_cloud_base_url`, meeting text may be sent to that endpoint for analysis.
-- The picker path: author the endpoint once as a Runs on destination (the Web compatibility route is `/profiles`), then pick it under Settings → **Runs on**.
+- If you set `meeting.intel_provider` to `cloud` (or `auto`, which can fall back to it), meeting text may be sent to the destination you picked for analysis.
+- The one path: author the endpoint once as a destination under **Settings, Models**, then pick it as the meetings **Runs on**. The `intel_cloud_*` fields are dead (HS-112-01).
 - Use `holdspeak doctor` from the same shell environment to verify endpoint, model, TLS, DNS, and authentication; its Runs on line names the destination each pipeline resolves to.
 
-Example cloud/homelab config (the fallback shape when no Runs on destination is picked):
+The provider switch itself still lives in config:
 
 ```json
 {
   "meeting": {
     "intel_provider": "cloud",
-    "intel_cloud_model": "qwen2.5-32b-instruct",
-    "intel_cloud_api_key_env": "HOMELAB_INTEL_API_KEY",
-    "intel_cloud_base_url": "http://homelab.local:8000/v1",
     "intel_deferred_enabled": true
   }
 }
