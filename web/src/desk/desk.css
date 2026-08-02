@@ -754,7 +754,7 @@
 .desk-next .desk-editor input:focus,
 .desk-next .desk-editor textarea:focus,
 .desk-next .desk-editor select:focus {
-  outline: none;
+  outline-color: var(--accent, #ff6b35);
   border-color: var(--accent, #ff6b35);
 }
 .desk-next .desk-editor-head {
@@ -842,7 +842,6 @@
   width: 100%;
   padding: 0;
   border: 0;
-  outline: 0;
   background: transparent;
   color: var(--text);
   font-family: inherit;
@@ -908,6 +907,25 @@
 .desk-next .desk-light:hover svg {
   opacity: 1;
   color: var(--text);
+}
+/* The traffic cluster is the depth signal: colored on the front plane,
+   neutral in the background. */
+.desk-next .desk-window-shell:not(.is-front) .desk-light {
+  background: var(--surface-2);
+  border-color: var(--border);
+}
+.desk-next .desk-window-shell.is-front .desk-light-close {
+  background: var(--danger-signal, #f87171);
+}
+.desk-next .desk-window-shell.is-front .desk-light-min {
+  background: var(--warn, #f2a33c);
+}
+.desk-next .desk-window-shell.is-front .desk-light-max {
+  background: var(--success, #34d399);
+}
+.desk-next .desk-window-shell.is-front .desk-light svg {
+  color: color-mix(in srgb, var(--bg) 78%, transparent);
+  opacity: 0.82;
 }
 .desk-next .is-front .desk-light-close:hover {
   background: var(--gadget-close-fill);
@@ -1242,7 +1260,7 @@
   padding: 8px 0;
 }
 .desk-next .desk-chat-composer textarea:focus {
-  outline: none;
+  outline-color: var(--accent);
 }
 
 .desk-next .runs-on-picker {
@@ -1468,7 +1486,7 @@
   font-size: var(--font-size-sm);
 }
 .desk-next .desk-rail-ask input:focus {
-  outline: none;
+  outline-color: var(--accent, #ff6b35);
   border-color: var(--accent, #ff6b35);
 }
 @media (prefers-reduced-motion: reduce) {
@@ -1917,7 +1935,6 @@
   resize: vertical;
   border: 0;
   background: none;
-  outline: none;
   color: var(--text);
   font-size: var(--font-size-sm);
   font-family: var(--font-mono);
@@ -1997,7 +2014,7 @@
   font-family: var(--font-mono);
 }
 .desk-next .desk-chat-composer input:focus {
-  outline: none;
+  outline-color: var(--accent, #ff6b35);
   border-color: var(--accent, #ff6b35);
 }
 
@@ -2410,7 +2427,7 @@
   line-height: 1.4;
 }
 .desk-next .desk-steer-input:focus {
-  outline: none;
+  outline-color: var(--accent);
   border-color: var(--accent);
 }
 .desk-next .desk-steer-sent {
@@ -4889,7 +4906,6 @@
   min-width: 0;
   background: none;
   border: 0;
-  outline: none;
   color: var(--text);
   font-size: var(--desk-surface-body-size);
 }
@@ -4960,8 +4976,13 @@ body:has(.desk-next .desk-pullout:not(.is-card)) .ambient-qlippy {
   color: var(--text);
 }
 .desk-zone-window .zone-cell:hover,
-.desk-zone-window .zone-cell:focus-visible {
-  background: var(--canvas-raised);
+.desk-zone-window .zone-cell:focus-visible,
+.desk-zone-window .zone-cell.is-selected {
+  background: var(--accent-tint);
+  outline-color: var(--accent);
+}
+.desk-zone-window .zone-list tr.is-selected {
+  background: var(--accent-tint);
 }
 .desk-zone-window .zone-cell img {
   image-rendering: pixelated;

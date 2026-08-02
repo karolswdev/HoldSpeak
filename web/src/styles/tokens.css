@@ -232,6 +232,8 @@
   --desk-window-cascade: 26px; /* default-corner cascade step */
   --desk-snap-top: 54px; /* snap tiles clear the chrome band */
   --desk-snap-bottom: 52px; /* snap tiles clear the dock band */
+  --desk-work-top: var(--desk-snap-top); /* the working band begins below the system bar */
+  --desk-work-bottom: var(--desk-snap-bottom); /* the working band ends above the dock */
   --glow-meeting: #56C7F5;
   --glow-note: #34D399;
   --glow-kb: #FBBF24;

@@ -809,6 +809,16 @@
         "doc": "snap tiles clear the dock band"
       },
       {
+        "name": "--desk-work-top",
+        "value": "var(--desk-snap-top)",
+        "doc": "the working band begins below the system bar"
+      },
+      {
+        "name": "--desk-work-bottom",
+        "value": "var(--desk-snap-bottom)",
+        "doc": "the working band ends above the dock"
+      },
+      {
         "name": "--glow-meeting",
         "value": "{primitive.color.glowpool.meeting}"
       },

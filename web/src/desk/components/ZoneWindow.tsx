@@ -3,7 +3,7 @@
 // and THE WINDOW REMEMBERS — rect (the panel system), view, and sort
 // (`hs.desk.zone-views`). Icons view speaks the world's cell contract;
 // List view is the density altitude (Name / Kind / Modified, sortable).
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 // @ts-ignore — shared ESM module (see ../sprites.d.ts)
 import { spriteUrl } from "../sprites";
 import { useDesk, type ZoneViewPref } from "../store";
@@ -38,6 +38,7 @@ export function ZoneWindow({
     useDesk.getState();
   const zone = (items.directory || []).find((d) => d.id === zoneId);
   const memberIds: string[] = ((zone as any)?.memberIds as string[]) || [];
+  const [selected, setSelected] = useState<string | null>(null);
 
   const members = useMemo(() => {
     const resolved = memberIds
@@ -128,8 +129,10 @@ export function ZoneWindow({
                 key={`${m.kind}:${m.id}`}
                 type="button"
                 role="listitem"
-                className="zone-cell"
-                onClick={(e) =>
+                className={`zone-cell${selected === `${m.kind}:${m.id}` ? " is-selected" : ""}`}
+                aria-selected={selected === `${m.kind}:${m.id}`}
+                onClick={() => setSelected(`${m.kind}:${m.id}`)}
+                onDoubleClick={(e) =>
                   openPullout(m.id, { x: e.clientX, y: e.clientY })
                 }
               >
@@ -158,7 +161,11 @@ export function ZoneWindow({
               {members.map((m) => {
                 const t = memberTime(m);
                 return (
-                  <tr key={`${m.kind}:${m.id}`}>
+                  <tr
+                    key={`${m.kind}:${m.id}`}
+                    className={selected === `${m.kind}:${m.id}` ? "is-selected" : ""}
+                    onClick={() => setSelected(`${m.kind}:${m.id}`)}
+                  >
                     <td className="zone-list-ic">
                       <img
                         src={spriteUrl(m.kind, m.id)}
@@ -171,7 +178,9 @@ export function ZoneWindow({
                       <button
                         type="button"
                         className="zone-list-open"
-                        onClick={(e) =>
+                        aria-selected={selected === `${m.kind}:${m.id}`}
+                        onClick={() => setSelected(`${m.kind}:${m.id}`)}
+                        onDoubleClick={(e) =>
                           openPullout(m.id, { x: e.clientX, y: e.clientY })
                         }
                       >
