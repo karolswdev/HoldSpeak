@@ -150,11 +150,19 @@ class WorkAttemptService:
     ) -> dict[str, int]:
         """Resolve emitted rider claims into durable exact attempts.
 
-        Idempotent per (session, story, worktree): a heartbeat updates
+        Idempotent per (session, story, source): a heartbeat updates
         the live attempt's state; a claim for a NEW Story ends the old
         attempt and creates a fresh one (fresh ``attempt_id`` — never
         reused across sequential Stories). A claim whose repo root the
         source registry cannot place is skipped, not guessed.
+
+        HS-111-06: worktree resolution is deliberately NOT part of the
+        idempotence key. A rider whose cwd resolves to a different
+        worktree than its launch (the PR-387 sibling defect) still
+        heartbeats its existing attempt; and a claim with no session
+        attempt ADOPTS the session-unbound ``kind='launch'`` attempt
+        for the same (source, project, story) instead of minting a
+        ``rider_claim`` sibling row.
         """
         if claims is None:
             from ..agent_context.sessions import list_agent_story_claims
@@ -189,12 +197,10 @@ class WorkAttemptService:
                 current.project,
                 current.story_id,
                 current.source_id,
-                current.worktree_id,
             ) == (
                 project,
                 story_id,
                 identity["source_id"],
-                identity["worktree_id"],
             )
             if same_binding:
                 assert current is not None
@@ -221,6 +227,20 @@ class WorkAttemptService:
                 # recording a born-dead exact attempt helps nobody.
                 summary["skipped"] += 1
                 continue
+            if self._adopt_launch_attempt(
+                session_key=session_key,
+                source_id=identity["source_id"],
+                project=project,
+                story_id=story_id,
+                state=state,
+                claimed_by=str(
+                    claim.get("claimed_by") or f"rider:{row.get('agent')}"
+                ),
+                claimed_at=claim.get("claimed_at"),
+                now=now,
+            ):
+                summary["updated"] += 1
+                continue
             self._repo.create(
                 source_id=identity["source_id"],
                 worktree_id=identity["worktree_id"],
@@ -238,6 +258,81 @@ class WorkAttemptService:
             )
             summary["created"] += 1
         return summary
+
+    def _adopt_launch_attempt(
+        self,
+        *,
+        session_key: str,
+        source_id: str,
+        project: str,
+        story_id: str,
+        state: str,
+        claimed_by: str,
+        claimed_at: Any,
+        now: Optional[datetime],
+    ) -> bool:
+        """Bind a rider claim onto its existing launch attempt.
+
+        HS-111-06 (the PR-387 sibling defect): a live, session-unbound
+        ``kind='launch'`` attempt for the same (source, project, story)
+        IS this claim's attempt — the worktree the rider's cwd resolves
+        to may legitimately differ from the launch's worktree, and that
+        mismatch must not mint a duplicate row. The bind mirrors
+        HS-94-07's register_rider seam: one guarded UPDATE through the
+        repository's own connection, refused (never forced) when the
+        session is already pinned elsewhere (the DB's partial unique
+        index stays the final guard)."""
+        import sqlite3
+
+        candidates = [
+            attempt
+            for attempt in self._repo.find_active(
+                source_id=source_id, project=project, story_id=story_id
+            )
+            if attempt.kind == "launch" and not attempt.session_id
+        ]
+        if not candidates:
+            return False
+        attempt = candidates[-1]  # rows are newest-first: oldest launch first
+        timestamp = _format_ts(now)
+        try:
+            with self._repo._connection() as conn:
+                updated = conn.execute(
+                    "UPDATE work_attempts SET session_id = ?, claimed_by = ?, "
+                    "claimed_at = COALESCE(?, claimed_at), updated_at = ? "
+                    "WHERE attempt_id = ? AND session_id IS NULL",
+                    (
+                        session_key,
+                        claimed_by,
+                        str(claimed_at) if claimed_at else None,
+                        timestamp,
+                        attempt.attempt_id,
+                    ),
+                ).rowcount
+                if not updated:
+                    return False
+                conn.execute(
+                    "INSERT INTO work_attempt_events "
+                    "(attempt_id, from_state, to_state, reason, occurred_at) "
+                    "VALUES (?, ?, ?, ?, ?)",
+                    (
+                        attempt.attempt_id,
+                        attempt.state,
+                        attempt.state,
+                        "rider_registered",
+                        timestamp,
+                    ),
+                )
+        except sqlite3.IntegrityError:
+            return False
+        if state != attempt.state:
+            try:
+                self._repo.transition(
+                    attempt.attempt_id, state, reason="rider_registered", now=now
+                )
+            except Exception:
+                pass  # the binding held; the next heartbeat advances state
+        return True
 
     # ── the legacy heuristic (labeled, never exact) ──────────────
 
@@ -401,6 +496,13 @@ class WorkAttemptService:
         if include_history:
             record["history"] = self._repo.events(attempt.attempt_id)
         return record
+
+
+def _format_ts(value: Optional[datetime] = None) -> str:
+    moment = value or datetime.now(timezone.utc)
+    if moment.tzinfo is None:
+        moment = moment.replace(tzinfo=timezone.utc)
+    return moment.astimezone(timezone.utc).isoformat().replace("+00:00", "Z")
 
 
 def _parse_ts(text: str) -> Optional[datetime]:

@@ -5,15 +5,19 @@
 // Watching is free; a command names the open target and carries no
 // client authority. Voice fills the steer text; the exact destination and
 // consequence show at the send boundary.
-import { useEffect, useRef, useState } from "react";
-import { motion, useReducedMotion } from "motion/react";
+//
+// HS-111-06 (audit §3.4): the pane mounts through the shared PaneWell
+// seam (HS-111-11 swaps its interior for xterm once, both terminals
+// inherit); the keypad is the TransportKey species (the dead desk-key
+// class died in the tree, not just in the CSS); the send preview is
+// axis-named tokens. The consent spine — deliveryTerminal.ts send/keys
+// wires — is byte-untouched.
+import { useEffect, useState } from "react";
 import { MicButton } from "./MicButton";
 import { useDurableDraft } from "../../lib/durableDraft";
-import {
-  sendPreview,
-  useDeliveryTerminal,
-  type TerminalStatus,
-} from "../deliveryTerminal";
+import { useDeliveryTerminal, type TerminalStatus } from "../deliveryTerminal";
+import { PaneWell } from "../surface/Surface";
+import { TransportKey, TransportRow } from "../surface/gadgets";
 import { DeskWindowFrame } from "./DeskWindow";
 
 const ABSENCE_LABEL: Record<string, string> = {
@@ -25,13 +29,21 @@ const ABSENCE_LABEL: Record<string, string> = {
   resyncing: "resyncing",
 };
 
-const KEY_BUTTONS: Array<{ label: string; key: string; loud?: boolean }> = [
-  { label: "^C", key: "C-c", loud: true },
-  { label: "Esc", key: "Escape" },
-  { label: "Tab", key: "Tab" },
-  { label: "Enter", key: "Enter" },
-  { label: "Up", key: "Up" },
-  { label: "Down", key: "Down" },
+// The key palette — full key control on the open target. Same species
+// as the session pullout (HS-111-04): glyph over mono word, ^C loud.
+const KEY_BUTTONS: Array<{
+  word: string;
+  glyph: string;
+  key: string;
+  title: string;
+  loud?: boolean;
+}> = [
+  { word: "INT", glyph: "^C", key: "C-c", title: "interrupt: Ctrl-C", loud: true },
+  { word: "ESC", glyph: "⎋", key: "Escape", title: "Escape" },
+  { word: "TAB", glyph: "⇥", key: "Tab", title: "Tab" },
+  { word: "ENTER", glyph: "⏎", key: "Enter", title: "Enter" },
+  { word: "UP", glyph: "↑", key: "Up", title: "Up" },
+  { word: "DOWN", glyph: "↓", key: "Down", title: "Down" },
 ];
 
 function KeyPalette() {
@@ -40,27 +52,26 @@ function KeyPalette() {
   return (
     <div className="desk-keypad">
       <span className="desk-keypad-label">Keys</span>
-      <div className="desk-keypad-row">
+      <TransportRow>
         {KEY_BUTTONS.map((k) => (
-          <button
+          <TransportKey
             key={k.key}
-            type="button"
-            className={"desk-key" + (k.loud ? " is-interrupt" : "")}
-            title={`send ${k.label} to the pane`}
+            label={k.word}
+            glyph={k.glyph}
+            tone={k.loud ? "danger" : undefined}
+            title={k.title}
             onClick={() =>
-              void useDeliveryTerminal.getState().sendKeys([k.key], k.label)
+              void useDeliveryTerminal.getState().sendKeys([k.key], k.word)
             }
-          >
-            {k.label}
-          </button>
+          />
         ))}
-        {sendState === "sent" && (
-          <span className="desk-key-fate desk-steer-sent">✓ {sendDetail}</span>
-        )}
-        {sendState === "refused" && (
-          <span className="desk-key-fate desk-arm-refusal">✕ {sendDetail}</span>
-        )}
-      </div>
+      </TransportRow>
+      {sendState === "sent" && (
+        <span className="desk-key-fate desk-steer-sent">✓ {sendDetail}</span>
+      )}
+      {sendState === "refused" && (
+        <span className="desk-key-fate desk-arm-refusal">✕ {sendDetail}</span>
+      )}
     </div>
   );
 }
@@ -76,8 +87,6 @@ function SteerComposer() {
     recovered,
   } = useDurableDraft(scope);
   const [submitOn, setSubmitOn] = useState(true);
-
-  const preview = sendPreview(target, "terminal.text", submitOn);
 
   const send = async () => {
     const ok = await useDeliveryTerminal.getState().sendText(text, submitOn);
@@ -99,27 +108,30 @@ function SteerComposer() {
           placeholder="Steer"
           onChange={(e) => setText(e.target.value)}
         />
-        <button
-          type="button"
-          className={"desk-chip desk-steer-enter" + (submitOn ? " is-on" : "")}
-          title={submitOn ? "Enter after send" : "no Enter · text only"}
+        <TransportKey
+          compact
+          label="ENTER"
+          glyph="⏎"
+          active={submitOn}
+          title={submitOn ? "Enter after send" : "no Enter: text only"}
           onClick={() => setSubmitOn((v) => !v)}
-        >
-          ⏎
-        </button>
-        <button
-          type="button"
-          className="desk-chip"
+        />
+        <TransportKey
+          compact
+          label="SEND"
+          glyph="▸"
           disabled={sendState === "sending" || !text.trim()}
           onClick={() => void send()}
-        >
-          {sendState === "sending" ? "…" : "Send text"}
-        </button>
+        />
       </div>
-      {preview ? (
-        <p className="quiet desk-dlv-consequence">
-          → {preview.destination} · {preview.consequence} · Receipt after every
-          send
+      {target ? (
+        <p className="desk-dlv-consequence">
+          <span className="surface-token">{`→ ${target.label}`}</span>
+          <span className="surface-token">{`NODE ${target.nodeId}`}</span>
+          <span className="surface-token">
+            {submitOn ? "TEXT+ENTER" : "TEXT ONLY"}
+          </span>
+          <span className="surface-token">RECEIPT PER SEND</span>
         </p>
       ) : null}
       {recovered ? (
@@ -136,13 +148,11 @@ function SteerComposer() {
 }
 
 export function DeliveryTerminalWindow() {
-  const reducedMotion = useReducedMotion();
   const target = useDeliveryTerminal((s) => s.openTarget);
   const status = useDeliveryTerminal((s) => s.status);
   const detail = useDeliveryTerminal((s) => s.detail);
   const lines = useDeliveryTerminal((s) => s.lines);
   const { close } = useDeliveryTerminal.getState();
-  const preRef = useRef<HTMLPreElement | null>(null);
 
   useEffect(() => {
     if (!target) return;
@@ -152,11 +162,6 @@ export function DeliveryTerminalWindow() {
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
   }, [target]);
-
-  useEffect(() => {
-    const pre = preRef.current;
-    if (pre) pre.scrollTop = pre.scrollHeight;
-  }, [lines]);
 
   if (!target) return null;
   const live = status === "live";
@@ -196,21 +201,23 @@ export function DeliveryTerminalWindow() {
     >
 
       <div className="desk-pullout-body">
-        <p className="quiet desk-dlv-target-line">
-          Target {target.targetId.slice(0, 12)} · gen{" "}
-          {target.targetGeneration.slice(0, 8)}
-          {target.worktreeId ? ` · worktree ${target.worktreeId.slice(0, 8)}` : ""}
+        <p className="desk-dlv-target-line">
+          <span className="surface-token">{`TARGET ${target.targetId.slice(0, 12)}`}</span>
+          <span className="surface-token">{`GEN ${target.targetGeneration.slice(0, 8)}`}</span>
+          {target.worktreeId ? (
+            <span className="surface-token">{`WT ${target.worktreeId.slice(0, 8)}`}</span>
+          ) : null}
         </p>
-        {live || status === "resyncing" ? (
-          <pre ref={preRef} className="desk-session-pane">
-            {lines.join("\n")}
-          </pre>
-        ) : (
-          <p className="desk-session-state">
-            ✕ {ABSENCE_LABEL[status] || status}
-            {detail ? ` · ${detail}` : ""}
-          </p>
-        )}
+        <PaneWell
+          live={live || status === "resyncing"}
+          lines={lines}
+          absence={
+            <>
+              ✕ {ABSENCE_LABEL[status] || status}
+              {detail ? ` · ${detail}` : ""}
+            </>
+          }
+        />
       </div>
 
       {!absent ? (

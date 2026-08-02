@@ -43,7 +43,7 @@ afterEach(() => {
 });
 
 describe("ProcessCore", () => {
-  it("renders the projected facts and links needs-you rows to the system shade", () => {
+  it("renders the ledger facts as wire tokens and links needs-you rows to the system shade", () => {
     const activate = vi.fn();
     announceLauncher({
       id: "attention",
@@ -60,14 +60,42 @@ describe("ProcessCore", () => {
       started: true,
     });
 
+    const { container } = render(<ProcessCore />);
+
+    // HS-111-06: section heads are count tokens; kinds are the wire
+    // tokens themselves; state is a surface-token, never a pill.
+    expect(screen.getByText("NEEDS YOU 1")).toBeTruthy();
+    expect(screen.getByText(/PROCESS\.SPAWN · agent:build/)).toBeTruthy();
+    expect(
+      screen.getByText(/owner · node:studio · build the surface · launch:launch_1/),
+    ).toBeTruthy();
+    expect(container.querySelector(".signal-status")).toBeNull();
+    const answer = screen.getByRole("link", { name: "ANSWER" });
+    expect(answer).toHaveAttribute("href", "/#attention");
+    fireEvent.click(answer);
+    expect(activate).toHaveBeenCalledOnce();
+  });
+
+  it("renders every section head at zero — an instrument, never a void", () => {
+    useProcessWindow.setState({
+      sections: sections.map((section) => ({ ...section, rows: [] })),
+      loading: false,
+      inflight: false,
+      error: "",
+      started: true,
+    });
+
     render(<ProcessCore />);
 
-    expect(screen.getByText("Needs you · 1")).toBeTruthy();
-    expect(screen.getByText(/Process spawn · agent:build/)).toBeTruthy();
-    expect(screen.getByText(/owner · node:studio · build the surface · launch:launch_1/)).toBeTruthy();
-    const review = screen.getByRole("link", { name: "Review" });
-    expect(review).toHaveAttribute("href", "/#attention");
-    fireEvent.click(review);
-    expect(activate).toHaveBeenCalledOnce();
+    for (const head of [
+      "NEEDS YOU 0",
+      "RUNNING 0",
+      "WAITING 0",
+      "UNKNOWN 0",
+      "RECENTLY ENDED 0",
+    ]) {
+      expect(screen.getByText(head)).toBeTruthy();
+    }
+    expect(screen.getByText(/KERNEL · CURSOR/)).toBeTruthy();
   });
 });

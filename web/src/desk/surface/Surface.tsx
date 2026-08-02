@@ -324,6 +324,36 @@ export function SurfaceWell({
   );
 }
 
+/** HS-111-06 — the shared pane mount (audit §3.4): ONE seam over the
+ * sunken pane well — the mono tail-following pre while the peek is
+ * live, the honest in-flow absence face otherwise. Consumed by BOTH
+ * the session pullout and the delivery terminal so HS-111-11 swaps
+ * this interior for xterm (TerminalWell) ONCE and both inherit. */
+export function PaneWell({
+  live,
+  lines,
+  absence,
+}: {
+  /** The pane renders while the peek is live/resyncing. */
+  live: boolean;
+  lines: string[];
+  /** The absence face content (✕ token + typed detail). */
+  absence?: ReactNode;
+}) {
+  const preRef = useRef<HTMLPreElement | null>(null);
+  // The newest output is the point of a peek: follow the tail.
+  useEffect(() => {
+    const pre = preRef.current;
+    if (pre) pre.scrollTop = pre.scrollHeight;
+  }, [lines]);
+  if (!live) return <p className="desk-session-state">{absence}</p>;
+  return (
+    <pre ref={preRef} className="desk-session-pane">
+      {lines.join("\n")}
+    </pre>
+  );
+}
+
 /** HS-111-04 — the transmission log (audit §3, optional species): a
  * SurfaceWell whose body is prefixed mono turn blocks (`YOU>` /
  * `<NAME>>`), a verbs slot per turn, no bubbles, no animation.

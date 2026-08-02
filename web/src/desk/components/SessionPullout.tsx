@@ -25,7 +25,7 @@ import { flipTargetForStory, useMissionControl } from "../missioncontrol";
 import { mmss, useSteering } from "../steering";
 import { useDurableDraft } from "../../lib/durableDraft";
 import { controlModeLabel } from "../../lib/productLanguage";
-import { SurfaceFacts } from "../surface/Surface";
+import { PaneWell, SurfaceFacts } from "../surface/Surface";
 import {
   CycleGadget,
   LampGadget,
@@ -639,7 +639,6 @@ export function SessionPullout() {
   const paneId = useSteering((s) => s.paneId);
   const targetNode = useSteering((s) => s.targetNode);
   const { closeSession } = useSteering.getState();
-  const preRef = useRef<HTMLPreElement | null>(null);
 
   useEffect(() => {
     if (!openKey) return;
@@ -653,12 +652,6 @@ export function SessionPullout() {
       document.removeEventListener("keydown", onKey);
     };
   }, [openKey]);
-
-  // The newest output is the point of a peek: follow the tail.
-  useEffect(() => {
-    const pre = preRef.current;
-    if (pre) pre.scrollTop = pre.scrollHeight;
-  }, [paneLines]);
 
   if (!openKey) return null;
 
@@ -705,16 +698,18 @@ export function SessionPullout() {
             {session.question}
           </pre>
         ) : null}
-        {live ? (
-          <pre ref={preRef} className="desk-session-pane">
-            {paneLines.join("\n")}
-          </pre>
-        ) : (
-          <p className="desk-session-state">
-            ✕ {PANE_STATE_LABEL[paneStatus] || paneStatus}
-            {paneDetail ? `: ${paneDetail}` : ""}
-          </p>
-        )}
+        {/* HS-111-06 — the shared PaneWell seam (HS-111-11 swaps its
+            interior for xterm once, both terminals inherit). */}
+        <PaneWell
+          live={live}
+          lines={paneLines}
+          absence={
+            <>
+              ✕ {PANE_STATE_LABEL[paneStatus] || paneStatus}
+              {paneDetail ? `: ${paneDetail}` : ""}
+            </>
+          }
+        />
       </div>
 
       <footer className="desk-pullout-foot">

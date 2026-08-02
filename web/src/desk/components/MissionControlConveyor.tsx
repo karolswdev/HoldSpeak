@@ -1,22 +1,25 @@
-// Mission control on the Desk (HS-82-03/04) — the conveyor.
+// Mission control on the Desk (HS-82-03/04) — the rails panel.
 //
 // A fixture at the foot of the desk: one belt per rails project,
 // phases as segments, the current phase's stories as the items
 // riding it, the next actionable story wearing the desk's one
-// accent. Live agent sessions pin to the stories they are on
-// (awaiting-response is the loudest signal on the desk); events
-// tick underneath with gate refusals first-class. Repos that are
-// unreachable or schema-drifted render their honest state — never
-// an empty belt pretending the rails are idle.
+// accent. HS-111-06 (audit §3.1): the attention ladder is the law
+// here — needs-you sessions are the ONLY individually rendered
+// off-belt layer (steady inverted video, nothing blinks); the rest
+// of the registry folds into per-agent census token lines with the
+// full roster behind a folded well; events tick in a bounded ledger
+// with gate refusals first-class. Repos that are unreachable or
+// schema-drifted render their honest state — never an empty belt
+// pretending the rails are idle.
 // Design: docs/internal/MISSION_CONTROL_DESK.md §2–§3.
 import { useEffect, useState } from "react";
+import { Button, Disclosure } from "../../components/signal/Signal";
 import {
   McEvent,
   McProject,
   McRepo,
   McSession,
   POLL_MS,
-  formatEvent,
   gateLightFor,
   isBeltFrame,
   offBeltSessions,
@@ -25,16 +28,24 @@ import {
 } from "../missioncontrol";
 import { isCoderFrame, useSteering } from "../steering";
 import { useProjections } from "../projections";
+import {
+  ConfirmVerb,
+  SurfaceLedger,
+  SurfaceLedgerRow,
+  SurfaceWell,
+} from "../surface/Surface";
+import { GadgetRow, MxRadio } from "../surface/gadgets";
 
 const FLIP_STATUSES = ["backlog", "ready", "in-progress", "blocked", "done"];
 
-function repositoryState(value: string): string {
-  const labels: Record<string, string> = {
-    unreachable: "Repository unavailable",
-    schema_drift: "Repository schema mismatch",
-    unauthorized: "Repository authorization failed",
+/** Honest repo states as axis-named tokens, never a sentence. */
+function repoStateToken(value: string): string {
+  const tokens: Record<string, string> = {
+    unreachable: "REPO UNREACHABLE",
+    schema_drift: "REPO SCHEMA MISMATCH",
+    unauthorized: "REPO UNAUTHORIZED",
   };
-  return labels[value] || `Repository ${value.replace(/_/g, " ")}`;
+  return tokens[value] || `REPO ${value.replace(/_/g, " ").toUpperCase()}`;
 }
 
 interface PickTarget {
@@ -43,6 +54,9 @@ interface PickTarget {
   story: string;
 }
 
+/** The on-belt pin: a mono token riding its story cell — the agent's
+ * name, NEEDS YOU tone when awaiting, inverted video when armed.
+ * The emoji species died here (audit B2). */
 function SessionPin({
   session,
   manual,
@@ -65,9 +79,6 @@ function SessionPin({
       title={
         `${session.key}: watch live` +
         (manual ? "; manually pinned (not the correlator's verdict)" : "") +
-        (session.awaitingResponse
-          ? `; awaiting a response: ${session.lastAssistantText.slice(0, 200)}`
-          : "") +
         (session.stale ? " (stale)" : "")
       }
       onClick={(e) => {
@@ -75,8 +86,8 @@ function SessionPin({
         useSteering.getState().openSession(session.key);
       }}
     >
-      {session.awaitingResponse ? "🙋" : "🤖"}
-      {session.agent}
+      ⌁{session.agent}
+      {session.awaitingResponse ? " NEEDS YOU" : ""}
     </button>
   );
 }
@@ -246,10 +257,12 @@ function RepoBlock({
     return (
       <div className="desk-mc-honest">
         <span className="desk-mc-slug">{repo.name}</span>
-        <span className={"desk-mc-state " + repo.status}>
-          ✕ {repositoryState(repo.status)}
+        <span className="surface-token" data-tone="danger">
+          ✕ {repoStateToken(repo.status)}
         </span>
-        {repo.detail && <span className="desk-mc-detail">{repo.detail}</span>}
+        {repo.detail && (
+          <span className="surface-token">{repo.detail}</span>
+        )}
       </div>
     );
   }
@@ -274,8 +287,8 @@ function RepoBlock({
   );
 }
 
-/** The filed object, opened in place (HS-86-04) — a pull-out inside
- * the conveyor, never a modal, never a route away. */
+/** The filed object, opened in place (HS-86-04) — the SurfaceWell
+ * species inside the panel, never a modal, never a route away. */
 function EvidencePanel() {
   const evidence = useMissionControl((s) => s.evidence);
   const evidenceDetail = useMissionControl((s) => s.evidenceDetail);
@@ -283,27 +296,35 @@ function EvidencePanel() {
   if (evidenceDetail) {
     return (
       <div className="desk-mc-evidence">
-        <span className="desk-mc-refusal">✕ {evidenceDetail}</span>
-        <button className="desk-mc-btn" onClick={closeEvidence}>
-          close
-        </button>
+        <span className="desk-arm-refusal">✕ {evidenceDetail}</span>
+        <Button dense variant="ghost" onClick={closeEvidence}>
+          Close
+        </Button>
       </div>
     );
   }
   if (!evidence) return null;
   return (
     <div className="desk-mc-evidence">
-      <div className="desk-mc-evidence-head">
-        <span className="desk-mc-evidence-path">{evidence.path}</span>
-        <button className="desk-mc-btn" onClick={closeEvidence}>
-          close
-        </button>
-      </div>
-      <pre className="desk-mc-evidence-body">{evidence.text}</pre>
+      <SurfaceWell
+        head={
+          <>
+            <span className="surface-token">{`EVIDENCE ${evidence.storyId}`}</span>
+            <span className="desk-mc-evidence-path">{evidence.path}</span>
+            <Button dense variant="ghost" onClick={closeEvidence}>
+              Close
+            </Button>
+          </>
+        }
+      >
+        <pre className="desk-mc-evidence-body">{evidence.text}</pre>
+      </SurfaceWell>
     </div>
   );
 }
 
+/** The receipt slab: the proposal's fate in the two-step flip leg.
+ * Wire untouched — proposeFlip/decide byte-identical. */
 function ProposalCard() {
   const proposal = useMissionControl((s) => s.proposal);
   const proposalError = useMissionControl((s) => s.proposalError);
@@ -311,10 +332,10 @@ function ProposalCard() {
   if (proposalError) {
     return (
       <div className="desk-mc-proposal failed">
-        <span className="desk-mc-refusal">✕ {proposalError}</span>
-        <button className="desk-mc-btn" onClick={dismissProposal}>
+        <span className="desk-arm-refusal">✕ {proposalError}</span>
+        <Button dense variant="ghost" onClick={dismissProposal}>
           Dismiss
-        </button>
+        </Button>
       </div>
     );
   }
@@ -322,41 +343,41 @@ function ProposalCard() {
   if (proposal.status === "proposed") {
     return (
       <div className="desk-mc-proposal">
+        <span className="surface-token" data-tone="warn">
+          PROPOSED
+        </span>
         <span className="desk-mc-preview">{proposal.preview}</span>
-        <button
-          className="desk-mc-btn approve"
-          onClick={() => void decide("approved")}
-        >
-          Approve status change
-        </button>
-        <button className="desk-mc-btn" onClick={() => void decide("rejected")}>
-          Reject status change
-        </button>
+        <Button dense onClick={() => void decide("approved")}>
+          Approve
+        </Button>
+        <Button dense variant="ghost" onClick={() => void decide("rejected")}>
+          Reject
+        </Button>
       </div>
     );
   }
   if (proposal.status === "failed") {
     return (
       <div className="desk-mc-proposal failed">
-        <span className="desk-mc-refusal">
-          Status change failed. {proposal.error}
+        <span className="desk-arm-refusal">
+          ✕ Status change failed. {proposal.error}
         </span>
-        <button className="desk-mc-btn" onClick={dismissProposal}>
-          dismiss
-        </button>
+        <Button dense variant="ghost" onClick={dismissProposal}>
+          Dismiss
+        </Button>
       </div>
     );
   }
   return (
     <div className="desk-mc-proposal">
-      <span className="desk-mc-executed">
+      <span className="surface-token" data-tone="ok">
         {proposal.status === "executed"
-          ? "Status change executed"
-          : `Status change ${proposal.status}`}
+          ? "EXECUTED"
+          : proposal.status.toUpperCase()}
       </span>
-      <button className="desk-mc-btn" onClick={dismissProposal}>
+      <Button dense variant="ghost" onClick={dismissProposal}>
         Dismiss
-      </button>
+      </Button>
     </div>
   );
 }
@@ -380,6 +401,149 @@ export function manualPinsByStory(
   return map;
 }
 
+export interface AgentCensus {
+  agent: string;
+  total: number;
+  /** Bucket token -> count (IDLE folds stale; the correlator's own
+   * bucket words otherwise, uppercased). */
+  buckets: Array<{ token: string; count: number }>;
+  sessions: McSession[];
+}
+
+/** HS-111-06 — the census fold (audit §3.1): off-belt, non-awaiting
+ * sessions collapse into one token line per agent. Pure and additive:
+ * the bucket rules (`offBeltSessions`, correlation verdicts) are
+ * untouched — this only counts them. */
+export function censusByAgent(sessions: McSession[]): AgentCensus[] {
+  const byAgent = new Map<string, McSession[]>();
+  for (const s of offBeltSessions(sessions)) {
+    if (s.awaitingResponse) continue; // the needs-you layer renders these
+    const agent = s.agent || "unknown";
+    const list = byAgent.get(agent) || [];
+    list.push(s);
+    byAgent.set(agent, list);
+  }
+  return [...byAgent.entries()]
+    .sort((a, b) => b[1].length - a[1].length)
+    .map(([agent, list]) => {
+      const counts = new Map<string, number>();
+      for (const s of list) {
+        const token = s.stale
+          ? "IDLE"
+          : s.correlation.replace(/_/g, " ").toUpperCase() || "UNKNOWN";
+        counts.set(token, (counts.get(token) || 0) + 1);
+      }
+      return {
+        agent,
+        total: list.length,
+        buckets: [...counts.entries()]
+          .sort((a, b) => b[1] - a[1])
+          .map(([token, count]) => ({ token, count })),
+        sessions: list,
+      };
+    });
+}
+
+/** The needs-you cells + the census lines (audit §3.1): the only loud
+ * layer is steady inverted video; the flood is a count. */
+function OffBeltPanel({ sessions }: { sessions: McSession[] }) {
+  const offBelt = offBeltSessions(sessions);
+  const needsYou = offBelt.filter((s) => s.awaitingResponse);
+  const census = censusByAgent(sessions);
+  if (!offBelt.length) return null;
+  return (
+    <div className="desk-mc-sessions">
+      {needsYou.map((s) => (
+        <button
+          key={s.key}
+          type="button"
+          className="desk-mc-needs"
+          title={`${s.key}: ${s.lastAssistantText.slice(0, 200)}`}
+          onClick={() => useSteering.getState().openSession(s.key)}
+        >
+          NEEDS YOU · {s.agent} ·{" "}
+          {s.storyIds[0] || s.key.split(":", 2)[1]?.slice(0, 8) || s.key}
+        </button>
+      ))}
+      {census.map((row) => (
+        <Disclosure
+          key={row.agent}
+          title={`${row.agent.toUpperCase()} ${row.total} · ${row.buckets
+            .map((b) => `${b.token} ${b.count}`)
+            .join(" · ")}`}
+        >
+          <SurfaceLedger cols="facts" count={`ROSTER ${row.total}`}>
+            <ul className="surface-ledger-rows">
+              {row.sessions.map((s) => (
+                <SurfaceLedgerRow
+                  key={s.key}
+                  primary={s.key}
+                  cells={
+                    <span className="surface-ledger-cell">
+                      <span className="surface-token">
+                        {s.stale
+                          ? "IDLE"
+                          : s.correlation.replace(/_/g, " ").toUpperCase()}
+                      </span>
+                    </span>
+                  }
+                  onToggle={() => useSteering.getState().openSession(s.key)}
+                />
+              ))}
+            </ul>
+          </SurfaceLedger>
+        </Disclosure>
+      ))}
+    </div>
+  );
+}
+
+/** The bounded event ledger (audit §3.1): the ticker grew a head count
+ * and honest refusal tones — same species as the process monitor. */
+function EventLedger({ events }: { events: McEvent[] }) {
+  if (!events.length) return null;
+  const refusals = events.filter((e) => e.event === "gate_refusal").length;
+  return (
+    <SurfaceLedger
+      cols="events"
+      count={`EVENTS ${events.length}${refusals ? ` · REFUSALS ${refusals}` : ""}`}
+    >
+      <ul className="surface-ledger-rows">
+        {events.slice(0, 6).map((e, i) => {
+          const time = e.ts.includes("T")
+            ? e.ts.split("T")[1].replace("Z", "")
+            : e.ts;
+          const material = Object.entries(e.detail || {})
+            .filter(([, v]) => v !== null && v !== undefined)
+            .map(([k, v]) => `${k}=${v}`)
+            .join(" ");
+          const refusal = e.event === "gate_refusal";
+          return (
+            <SurfaceLedgerRow
+              key={e.ts + e.event + i}
+              time={time}
+              primary={
+                <span
+                  className="surface-token"
+                  data-tone={refusal ? "danger" : undefined}
+                >
+                  {refusal ? "✕ " : ""}
+                  {e.event.replace(/_/g, " ").toUpperCase()}
+                </span>
+              }
+              cells={
+                <span className="surface-ledger-cell">
+                  {[e.story, material].filter(Boolean).join(" · ")}
+                </span>
+              }
+            />
+          );
+        })}
+      </ul>
+    </SurfaceLedger>
+  );
+}
+
 export function MissionControlConveyor() {
   const repos = useMissionControl((s) => s.repos);
   const sessions = useMissionControl((s) => s.sessions);
@@ -390,6 +554,7 @@ export function MissionControlConveyor() {
   const attentionCount = useProjections((s) => s.ambientTotal);
   const { refresh, toggle } = useMissionControl.getState();
   const [picked, setPicked] = useState<PickTarget | null>(null);
+  const [flipStatus, setFlipStatus] = useState("");
 
   useEffect(() => {
     const tick = () => {
@@ -423,33 +588,48 @@ export function MissionControlConveyor() {
 
   if (!open) {
     return (
-      <button className="desk-mc-tab" onClick={toggle} title="Background runs">
-        ▦ Background runs{awaitingCount > 0 ? ` 🙋${awaitingCount}` : ""}
-        {attentionCount > 0 ? ` ◎${attentionCount}` : ""}
+      <button className="desk-mc-tab" onClick={toggle} title="Rails panel">
+        <span className="surface-token">RAILS</span>
+        {awaitingCount > 0 ? (
+          <span className="surface-token" data-tone="warn">
+            {`NEEDS YOU ${awaitingCount}`}
+          </span>
+        ) : null}
+        <span className="surface-token">{`RUNS ${sessions.length}`}</span>
+        {attentionCount > 0 ? (
+          <span className="surface-token">{`ATTN ${attentionCount}`}</span>
+        ) : null}
       </button>
     );
   }
 
   const pins = sessionsByStory(sessions);
   const manualPins = manualPinsByStory(sessions, pinMap, pins);
-  const offBelt = offBeltSessions(sessions);
 
   return (
     <div className="desk-mc">
       <div className="desk-mc-head">
-        <span className="desk-mc-title">▦ Background runs</span>
+        <span className="desk-mc-title">
+          <span className="surface-token">RAILS</span>
+          {awaitingCount > 0 ? (
+            <span className="surface-token" data-tone="warn">
+              {`NEEDS YOU ${awaitingCount}`}
+            </span>
+          ) : null}
+          <span className="surface-token">{`RUNS ${sessions.length}`}</span>
+        </span>
         {attentionCount > 0 ? (
-          <button
-            type="button"
-            className="desk-mc-btn"
+          <Button
+            dense
+            variant="ghost"
             onClick={() => useProjections.getState().setOpen(true)}
           >
-            ◎ {attentionCount} shared attention
-          </button>
+            ◎ {attentionCount}
+          </Button>
         ) : null}
-        <button className="desk-mc-close" onClick={toggle} title="collapse">
+        <Button dense variant="ghost" aria-label="Collapse" onClick={toggle}>
           ▾
-        </button>
+        </Button>
       </div>
       {repos.map((r) => (
         <RepoBlock
@@ -465,51 +645,40 @@ export function MissionControlConveyor() {
       <EvidencePanel />
       {picked && (
         <div className="desk-mc-flip">
-          <span className="desk-mc-flip-label">flip {picked.story} to</span>
-          {FLIP_STATUSES.map((st) => (
-            <button
-              key={st}
-              className="desk-mc-btn"
-              onClick={() => {
+          <GadgetRow label={`FLIP ${picked.story}`} wide>
+            <MxRadio
+              label={`Flip ${picked.story} to`}
+              value={flipStatus}
+              options={FLIP_STATUSES.map((st) => ({
+                value: st,
+                label: st.toUpperCase(),
+              }))}
+              onChange={setFlipStatus}
+            />
+            <ConfirmVerb
+              label="PROPOSE"
+              confirmLabel="PROPOSE?"
+              disabled={!flipStatus}
+              onConfirm={() => {
+                if (!flipStatus) return;
                 void useMissionControl
                   .getState()
-                  .proposeFlip(picked.repo, picked.project, picked.story, st);
+                  .proposeFlip(
+                    picked.repo,
+                    picked.project,
+                    picked.story,
+                    flipStatus,
+                  );
                 setPicked(null);
+                setFlipStatus("");
               }}
-            >
-              {st}
-            </button>
-          ))}
+            />
+          </GadgetRow>
         </div>
       )}
       <ProposalCard />
-      {offBelt.length > 0 && (
-        <div className="desk-mc-sessions">
-          {offBelt.map((s) => (
-            <span key={s.key} className="desk-mc-offbelt" title={s.key}>
-              <SessionPin session={s} />
-              <span className="desk-mc-bucket">
-                {s.correlation.replace(/_/g, " ")}
-              </span>
-            </span>
-          ))}
-        </div>
-      )}
-      {events.length > 0 && (
-        <div className="desk-mc-ticker">
-          {events.slice(0, 6).map((e, i) => (
-            <span
-              key={e.ts + e.event + i}
-              className={
-                "desk-mc-event" + (e.event === "gate_refusal" ? " refusal" : "")
-              }
-            >
-              {e.event === "gate_refusal" ? "✕ " : ""}
-              {formatEvent(e)}
-            </span>
-          ))}
-        </div>
-      )}
+      <OffBeltPanel sessions={sessions} />
+      <EventLedger events={events} />
     </div>
   );
 }
