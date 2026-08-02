@@ -24,8 +24,11 @@ blocks:
 - **Meetings** turn captured or imported audio into a transcript, typed
   artifacts, and an aftercare digest, with approval-gated actions out.
 
-Transcription is local (`Transcriber`, MLX or faster-whisper). The LLM is
-whichever backend you configure. State lives in one SQLite database behind
+Transcription is local (`Transcriber`, MLX or faster-whisper). The LLM runs
+wherever you pointed it: since HS-112-01 the `profiles` table is the single
+source of truth for endpoint and model identity (an `InferenceTarget`), each
+feature holds one pointer into it, and `resolve_inference_target` is the one
+resolver. State lives in one SQLite database behind
 a set of repositories. Nothing takes an outbound action without an explicit
 approval, and the network crossings are enumerated in the
 [trust boundary](#the-trust-boundary) below and in

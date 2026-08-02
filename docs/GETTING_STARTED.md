@@ -5,9 +5,18 @@
 </p>
 
 Five minutes from install to speaking a sentence into another app: that is
-this guide's whole job. Voice typing is the foundation everything else
-(the dictation pipeline, meetings) builds on, so get this working first;
-the deeper guides pick up where it ends.
+this guide's whole job. After you install and run `holdspeak doctor`, setup
+is three moves, in this order:
+
+1. **Seed the desk.** A fresh install is an empty floor. One press, or
+   `holdspeak seed`, puts six drawers and two starter notes on it.
+2. **Set the dial.** Settings, Models is the one place endpoint and model
+   identity is edited: a destination list, and a Runs on picker per feature.
+3. **Hold the key.** Hold the hotkey anywhere, speak, release, and the words
+   land in the app you were in. The Speak window is the same act with a face.
+
+Voice typing is the foundation everything else (the dictation pipeline,
+meetings) builds on, so get move 3 working before you turn anything else on.
 
 ## 1. Install
 
@@ -58,33 +67,67 @@ holdspeak
 ```
 
 This starts the local web runtime on loopback (`127.0.0.1`). On a fresh install
-the terminal points you straight at the welcome wizard:
+the terminal points you at the Desk and your first words:
 
 ```text
 HoldSpeak web runtime is running at: http://127.0.0.1:PORT
-  → Welcome! Get set up in a minute: open http://127.0.0.1:PORT/welcome
+  → Welcome! Say your first words on the Desk: open http://127.0.0.1:PORT/
 ```
 
-## 4. The welcome wizard
+## 4. Move 1: seed the desk
 
-A fresh launch opens **`/welcome`**, a full-screen, step-by-step wizard that
-takes you from install to your first words, **no file editing**:
+A fresh install is an empty floor. Nothing is seeded at boot: you ask for it.
 
-1. **Welcome**: what HoldSpeak does (voice typing *and* meeting notes).
-2. **Permissions**: a live check of microphone, text insertion, and the hotkey
-   (they turn green as you grant them).
-3. **Model**: pick your intelligence level (Basic / Apple MLX / GGUF /
-   OpenAI-compatible), each with a one-click **Test**. Basic needs nothing.
-4. **First dictation**: hold your hotkey, speak, release; it celebrates
-   **"✓ It worked"** live and shows your transcript.
-5. **Desktop presence**: flip a switch (no env var) for the ambient HUD.
-6. **You're set**: jump into dictation, a meeting, or the copilot.
+Press **Seed the desk** on the empty floor, or run:
 
-![The HoldSpeak welcome wizard: a full-screen first-run screen headlined "Hold a key. Speak. Watch it type." with a step rail (Welcome · Permissions · Model · First dictation · Presence · You're set) and a "Get started" button; the footer reads "Local · 127.0.0.1".](assets/screenshots/welcome.png)
+```bash
+holdspeak seed
+```
 
-*The `/welcome` wizard on a fresh install. It takes you from a fresh clone to a verified first dictation, with no file editing.*
+Either way you get six drawers (ADRs, Meetings, Rules, Decisions, Reference,
+Inbox) and two starter notes filed into them: an **ADR template** and
+**Working rules**. The seed upserts by deterministic id, so running it twice
+leaves one desk, and it only ever touches its own objects.
 
-A returning user lands on **the Desk** instead (the wizard never nags): your
+To go back to that state later, open **Settings, Desk** and arm **Reset to
+seed**. It states what it clears (notes, knowledge, agents, workflows,
+drawers, layout) and what it keeps (meetings, journal, settings, Runs on
+targets) before you confirm, then reports `TOMBSTONED N · SEEDED M`. The
+deletions are tombstones, so a paired device cannot resurrect the clutter.
+
+## 5. Move 2: set the dial
+
+Open **Settings, Models**. This is the only face that edits endpoint and model
+identity.
+
+1. Under **Destinations**, add a target: a name, a kind (`ENDPOINT`,
+   `THIS DEVICE`, `PAIRED`, `MESH`), its base URL, its model, and its context
+   window. A lamp reports readiness, and the key column reads `SET` or
+   `UNSET`.
+2. If the destination needs a key, put it in the environment as
+   `HOLDSPEAK_PROFILE_<ID>_KEY`. The key is never stored in the destination
+   and never syncs; the hub joins it to the request at run time. A destination
+   never borrows another one's key.
+3. Press **PROBE** to test the dictation leg against the selected
+   destination.
+4. Under **Runs on**, point each feature at a destination: dictation,
+   meetings, and rails. Leaving one on `HUB DEFAULT` runs it on the hub's own
+   engine, which you configure in the same module (backend `AUTO` / `MLX` /
+   `LLAMA.CPP`, model, context window, warm on start, idle eviction).
+
+The old config fields (`meeting.intel_cloud_*`, `dictation.runtime.openai_compatible_*`)
+no longer configure anything. An upgrade reads a configured legacy endpoint
+once, turns it into a destination named `legacy-intel` or `legacy-dictation`,
+and points the matching feature at it. After that the destination is the truth.
+The legacy key environment variable deliberately does not carry over: give the
+new destination its own `HOLDSPEAK_PROFILE_<ID>_KEY`.
+
+See [Models (bring your own)](MODELS.md) for what to run, and
+[Inference destinations](INFERENCE_TARGETS.md) for the API contract.
+
+## 6. The Desk, in passing
+
+A returning user lands on **the Desk** (there is no wizard): your
 meetings, notes, knowledge bases, and agents as objects in a spatial world.
 Tap an object to open it in place, drag it onto a zone to file it, press the
 orb to record, and ask an agent from the rail: its answer lands on the desk
@@ -106,15 +149,17 @@ the matching window open:
 
 | Deep link | Opens the window |
 | --- | --- |
-| `/welcome` | The first-run wizard: the single arrival on a fresh install |
+| `/welcome` | A compatibility route to the same first-words atom the Desk shows |
 | `/` | The Desk itself: your primitives as a spatial world (record, create, open, file, run) |
-| `/dictation` | Dictation: voice typing, the journal, learning, pre-briefing. An optional preview mode (Settings, Voice) shows each dictation on a card first: Type it commits, Discard drops it. |
+| `/dictation` | Speak: the TALK key and its Aim row, the journal, learning, pre-briefing. An optional preview mode (Settings, Voice) shows each dictation on a card first: Type it commits, Discard drops it. |
 | `/history` | Meetings: capture or import, the archive, aftercare |
 | `/studio` | Studio: the advanced tier (Workbench, Cadence, Commands, and more) |
 | `/settings` | Settings (sectioned and searchable) |
 | `/setup` | Setup and health: readiness plus the single next step |
 
-## 5. Try Basic Voice Typing
+## 7. Move 3: hold the key
+
+The flagship act, on the global hotkey:
 
 1. Start HoldSpeak with `holdspeak`.
 2. Click into a text field in another app.
@@ -130,6 +175,61 @@ Default hotkey:
 If global hotkeys or synthetic typing are blocked, keep the HoldSpeak window
 focused and use the focused hold-to-talk fallback.
 
+The same act has a face on the Desk. Open **Speak** (deep link `/dictation`)
+and it delivers for real through the same route, pipeline, journal, and
+kernel warrant as the hotkey:
+
+- **Aim** says where a released **TALK** sends the words: `FOCUSED APP`
+  types into the app you were in, `AGENT` delivers into a coder session that
+  is waiting, and `THIS FIELD` just fills the well below. The pick is
+  remembered.
+- Aimed at `AGENT` it refuses when no session is awaiting (`NO AGENT
+  AWAITING`) rather than free-typing into whatever happens to be focused.
+  Other refusals read the same way: `NO FOCUSED APP`, `NO TYPING DRIVER`,
+  `KERNEL REFUSED`.
+- The receipt reports release-to-landed latency in milliseconds.
+- **REHEARSE** is the explicit dry run. It previews the pipeline and delivers
+  nothing, and it is never what a plain release does.
+
+### The open mic
+
+**OPEN MIC** is the latch next to TALK, for when you do not want to hold
+anything:
+
+- **One grant.** The browser is asked for the microphone once and the grant is
+  kept. Between utterances the session suspends (the audio context suspends
+  and the tracks are disabled, so nothing is captured) rather than asking
+  again. A pause longer than 15 seconds releases the device on its own.
+- **Utterances land the same way.** A voice-activity detector on this machine
+  decides where each utterance starts and ends (energy with hysteresis and a
+  700 ms hangover, 300 ms of pre-roll so the first phoneme survives). Each one
+  goes through the same transcription route, the same Aim, and the same
+  delivery contract as a held release, so an ambient utterance and a held one
+  are indistinguishable downstream. Speech shorter than 350 ms is a cough, not
+  words: it is dropped. An empty transcript is dropped silently, without
+  spending a delivery, a journal row, or a receipt.
+- **Holding wins.** TALK, the global hotkey, and any mic on the Desk preempt
+  the open mic: while a hold is live the ambient path is gated off and its
+  in-flight utterance is discarded. One floor, one owner, the same as the
+  physical key.
+- **The lamp does not lie.** The Desk chrome carries a mic lamp that reads
+  `Mic idle`, `Mic open`, `Mic speech`, or `Mic held` from every room. It is
+  absent only when the device is genuinely released, so its presence is the
+  honest signal that audio is live. Pressing OPEN MIC again stops the tracks
+  for real; it does not mute them.
+- **The floor is shared with the rest of the machine.** The browser claims the
+  same one-at-a-time audio floor the hotkey, the meeting recorder, and the
+  wake listener use, on a lease it heartbeats. If a meeting holds it, the claim
+  is refused with the owner named (`FLOOR HELD MEETING`) and the device never
+  opens. If a meeting takes it mid-session, the mic goes down first and the
+  room tells you who took it. The lease means a closed tab cannot wedge your
+  hotkey.
+
+A browser that cannot capture audio shows OPEN MIC disabled with the reason on
+it, rather than hiding it. Serving the hub over plain HTTP to another machine
+is the usual cause: browsers withhold the microphone outside a secure origin,
+so reach it over localhost or HTTPS.
+
 > **Tip: see what the copilot is doing without the dashboard.** Turn on **desktop
 > presence** in **Settings** (or set `presence.enabled` in your config) to get an
 > ambient, native surface (a floating HUD on macOS and X11, a tray glyph plus
@@ -138,7 +238,7 @@ focused and use the focused hold-to-talk fallback.
 > headless launch you can force it on with `HOLDSPEAK_DESKTOP_PRESENCE=1 holdspeak`.
 > See [Desktop Presence](DICTATION_PIPELINE_GUIDE.md#11-desktop-presence-ambient-on-desktop-status).
 
-## 6. Use Punctuation Commands
+## 8. Use Punctuation Commands
 
 Say punctuation naturally:
 
@@ -167,7 +267,7 @@ becomes:
 Hello, can you review this?
 ```
 
-## 7. Use Clipboard Insertion
+## 9. Use Clipboard Insertion
 
 Say `clipboard` inside a dictated phrase when you want HoldSpeak to splice in
 the current clipboard text. The word `clipboard` is removed from the output and
@@ -182,7 +282,7 @@ Taking a look at this clipboard could you refactor it?
 If the clipboard contains a code block, that code is inserted into the same
 dictated request before HoldSpeak types or pastes it.
 
-## 8. Set Up A Project Root
+## 10. Set Up A Project Root
 
 Open:
 
@@ -202,7 +302,7 @@ Good project markers include:
 - `.holdspeak/`
 - `.hs/`
 
-## 9. Enable The Dictation Pipeline Later
+## 11. Enable The Dictation Pipeline Later
 
 Do not enable the dictation LLM pipeline until basic typing is working.
 When ready, continue with:
@@ -210,7 +310,7 @@ When ready, continue with:
 - [Dictation Pipeline Setup](DICTATION_PIPELINE_GUIDE.md)
 - [User Guide](USER_GUIDE.md)
 
-## 10. Where To Go Next
+## 12. Where To Go Next
 
 Once hold-to-talk feels natural, the rest is one setting away each:
 
@@ -244,4 +344,6 @@ Once hold-to-talk feels natural, the rest is one setting away each:
   works, turn on the project-aware copilot.
 - [Meeting Mode Guide](MEETING_MODE_GUIDE.md): meeting-specific setup and capture.
 - [Models (bring your own)](MODELS.md): pick and point at an LLM.
+- [Inference destinations](INFERENCE_TARGETS.md): the destination contract behind
+  Settings, Models.
 - [Security & Privacy](SECURITY.md): what's stored and what can leave your machine.

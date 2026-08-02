@@ -11,13 +11,15 @@
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/downloads/)
 [![Platform: macOS | Linux](https://img.shields.io/badge/platform-macOS%20%7C%20Linux-lightgrey.svg)](#platform-support)
 
-Hold a key and speak, and your words land in whatever app you are in,
-optionally rewritten by your own model with your project's context. Record or
-import a meeting, and it comes back as reviewable decisions, action items, and
-typed artifacts, with a follow-up panel that shows what is still open. One
-local runtime on macOS and Linux does both, for the two places a developer's
-voice does work: the keyboard and the meeting. Whisper runs locally; the LLM is
-one you run or point at. No cloud, no account, no telemetry.
+HoldSpeak is a local-first voice desk OS. Hold a key in any app, or press the
+mic on the Desk, speak, and release: the words land where you aimed them, in
+the app you were working in, in a coder session waiting on an answer, or in the
+field in front of you. Whisper transcribes on this machine. Every model call
+runs on a destination you name once under Settings, Models, and every
+model-backed feature (dictation, meeting intelligence, agents, the rails
+observer) picks from that one list. What you produce stays on the Desk as
+objects you file and reopen: meetings, notes, decisions, artifacts. The badge in
+the corner names what leaves this machine and where it goes.
 
 A meeting should change what happens next, not disappear into an archive.
 HoldSpeak keeps decisions as durable records with transcript moments, lets you
@@ -111,9 +113,10 @@ of reach by design.
 - **Every run names its destination.** Transcription and model-backed work can
   run on this device, a paired device, a private endpoint, or an external
   OpenAI-compatible service.
-  Name those as reusable **Runs on destinations** and assign one per Agent;
-  the destination definition syncs across your surfaces while the API key stays
-  on each one. A destination can name another of your machines: run
+  Author them once under **Settings, Models** as reusable destinations, then
+  assign one per feature with the Runs on pickers, and one per Agent where you
+  author it. The destination definition syncs across your surfaces while
+  the API key stays on each one. A destination can name another of your machines: run
   `holdspeak mesh serve` there and every run against that destination executes on
   that node, with its own model and keys.
   See [Security & privacy](https://github.com/karolswdev/HoldSpeak/blob/main/docs/SECURITY.md) and [Models](https://github.com/karolswdev/HoldSpeak/blob/main/docs/MODELS.md).
@@ -246,6 +249,46 @@ pip install 'holdspeak[dictation-openai]' # the dictation pipeline via an OpenAI
 The dictation and meeting LLM is yours to choose. See
 [`docs/MODELS.md`](https://github.com/karolswdev/HoldSpeak/blob/main/docs/MODELS.md) for the contract and current suggestions.
 
+### The three moves
+
+Installed and running, setup is three moves, in this order.
+
+**1. Seed the desk.** A fresh install is an empty floor. Press **Seed the
+desk** on it, or run `holdspeak seed`, and six drawers appear (ADRs,
+Meetings, Rules, Decisions, Reference, Inbox) holding two starter notes: an
+ADR template and the working rules. The seed upserts by id, so running it
+twice leaves one desk. To go back to that state later, open **Settings,
+Desk** and arm **Reset to seed**; it names what it clears and what it keeps
+before you confirm.
+
+**2. Set the dial.** Open **Settings, Models**. Add a destination (an
+endpoint, this device, a paired device, or a mesh node) with its name, URL,
+and model, then use the **Runs on** pickers to say where dictation, meeting
+intelligence, and the rails observer run. A destination's key never lives in
+the destination: the hub reads it from `HOLDSPEAK_PROFILE_<ID>_KEY` at run
+time. **Probe** tests the dictation leg against the destination you picked.
+This is the only place endpoint and model identity is edited.
+
+**3. Hold the key.** Hold the global hotkey in any app (Right Option on
+macOS, Right Alt on Linux), speak, release, and the text lands in that app.
+The same act has a face on the Desk: open **Speak**, set the **Aim** row to
+Focused app, Agent, or This field, and hold **TALK**. Aimed at Agent it
+delivers into a coder session that is waiting and refuses if none is, rather
+than typing into whatever happens to be in front. The receipt shows how many
+milliseconds passed between release and landing. **Rehearse** is the
+explicit dry run, never what a plain release does.
+
+Or stop holding anything. **Open mic** asks for the microphone once and keeps
+the grant: an on-device VAD finds where each utterance starts and stops, and
+every one it hears lands through the same Aim, the same pipeline, and the same
+delivery contract as a held release. Push-to-talk still wins the floor, so a
+hold silences the open mic mid-word and drops whatever it had in flight. The
+mic lamp in the Desk chrome reports the session in its own words (idle, open,
+speech, held) and disappears only when the device is actually released, which
+is what pressing Open mic again does. HoldSpeak arbitrates one microphone
+across the whole machine, so if a meeting already holds it the mic refuses by
+name (`FLOOR HELD MEETING`) instead of quietly recording next to it.
+
 ### Upgrading and your data
 
 Your whole HoldSpeak database is a single SQLite file. Before a version jump you
@@ -365,7 +408,9 @@ are in the [AIPI-Lite Developer Workflow](https://github.com/karolswdev/HoldSpea
 | Browse all the docs | [Documentation index](https://github.com/karolswdev/HoldSpeak/blob/main/docs/README.md) |
 | Understand how it works, with diagrams | [Architecture](https://github.com/karolswdev/HoldSpeak/blob/main/docs/ARCHITECTURE.md) |
 | Get it running and verify my setup | [Getting Started](https://github.com/karolswdev/HoldSpeak/blob/main/docs/GETTING_STARTED.md) |
+| Seed the desk, set the dial, hold the key | [Getting Started, the three moves](https://github.com/karolswdev/HoldSpeak/blob/main/docs/GETTING_STARTED.md#4-move-1-seed-the-desk) |
 | Choose / configure a model | [Models (bring your own)](https://github.com/karolswdev/HoldSpeak/blob/main/docs/MODELS.md) |
+| Point every feature at one endpoint | [Inference destinations](https://github.com/karolswdev/HoldSpeak/blob/main/docs/INFERENCE_TARGETS.md) |
 | Live on the Desk (the web front door) | [The Desk](https://github.com/karolswdev/HoldSpeak/blob/main/docs/WEB_DESK.md) |
 | See speech become a project-grounded task | [The Dictation Copilot](https://github.com/karolswdev/HoldSpeak/blob/main/docs/DICTATION_COPILOT.md) |
 | Set up the dictation pipeline for Codex / Claude | [Dictation Pipeline Setup](https://github.com/karolswdev/HoldSpeak/blob/main/docs/DICTATION_PIPELINE_GUIDE.md) |
@@ -383,8 +428,14 @@ are in the [AIPI-Lite Developer Workflow](https://github.com/karolswdev/HoldSpea
 ## Configuration
 
 Config lives at `~/.config/holdspeak/config.json`, but you rarely edit it by hand.
-The Settings window on the Desk exposes the hotkey, model, meeting intel,
-dictation pipeline, and presence options. The full reference is in
+The Settings window on the Desk exposes the hotkey, meeting intel, dictation
+pipeline, and presence options. Endpoint and model identity has exactly one
+editor, **Settings, Models**: the destination list plus the Runs on pickers.
+The old `intel_cloud_*` and `openai_compatible_*` fields no longer configure
+anything. An upgrade reads them once, turns them into destinations named
+`legacy-intel` and `legacy-dictation`, and points the matching feature at
+them; after that the destination is the truth and the fields are ignored.
+The full reference is in
 [Getting Started](https://github.com/karolswdev/HoldSpeak/blob/main/docs/GETTING_STARTED.md) and the guides above.
 
 ## Contributing

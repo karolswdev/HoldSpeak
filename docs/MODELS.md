@@ -72,24 +72,27 @@ bridge, vLLM, llama.cpp-server, LM Studio, LiteLLM, or an actual cloud API. The
 endpoint owns model loading; HoldSpeak needs no local weights.
 
 - **Install:** `uv pip install -e '.[dictation-openai]'` (dictation side)
-- **Configure:** author the endpoint once as a **Runs on destination**. The
-  compatibility route remains `/profiles`; give it a name, base URL, and
-  model, then choose it where work runs:
-  - **Meeting intelligence:** Settings → **Runs on**.
-  - **Dictation:** Dictation → Runtime → **Runs on**.
-  - **Agents:** use the Agent editor's **Runs on** picker.
-- **Configure by hand:** the compatibility shape lives in `config.json` and
-  still works when no destination is selected:
-  `dictation.runtime.openai_compatible_base_url` + `_model` + `_api_key_env`
-  for dictation; `meeting.intel_provider: "cloud"` (or `"auto"` for
-  local-first with endpoint fallback) + `meeting.intel_cloud_base_url` +
-  `intel_cloud_model` for meeting intel.
+- **Configure:** author the endpoint once as a destination under **Settings,
+  Models** (the API resource is `/api/inference-targets`; `/api/profiles` is a
+  read-only alias). Give it a name, base URL, model, and context window, then
+  choose where it runs:
+  - **Dictation, meetings, rails:** the **Runs on** pickers in the same module.
+  - **Agents:** the **Runs on** picker where you author the Agent.
+- **Keys:** a destination never stores its key. Export it as
+  `HOLDSPEAK_PROFILE_<ID>_KEY` and the hub joins it at run time. A keyless
+  self-hosted endpoint needs no key at all.
 
-> **On the name `cloud`.** The intel provider called `cloud` just means
-> "the endpoint provider"; it is **not** necessarily a hosted/paid API. Point
-> `intel_cloud_base_url` at a self-hosted LAN server and it stays entirely local.
-> The API key (`intel_cloud_api_key_env`) is **optional** for keyless
-> self-hosted endpoints.
+There is no hand-edited alternative. `dictation.runtime.openai_compatible_*`
+and `meeting.intel_cloud_*` are dead fields: an upgrade reads a configured
+legacy endpoint once, converts it into a `legacy-dictation` or `legacy-intel`
+destination, and points the feature at it. After that the destination is the
+only truth.
+
+> **On the name `cloud`.** `meeting.intel_provider` still chooses whether the
+> meeting-intel leg runs `local` (in-process GGUF), `cloud`, or `auto`.
+> `cloud` means "the endpoint leg", not necessarily a hosted or paid API:
+> point its destination at a self-hosted LAN server and it stays entirely
+> local.
 
 ---
 
@@ -116,10 +119,9 @@ a browser) shows it as unavailable rather than pretending. The key stays with
 each surface and is joined only at request time. See
 [Security & privacy](SECURITY.md#5-secrets-handling).
 
-Runs on destinations also drive the desktop hub's pipelines: meeting intelligence and
-the dictation rewrite each carry a "Runs on" picker (Settings → Cloud &
-advanced, and Dictation → Runtime), so one destination can serve
-Agents, Meetings, and dictation. `holdspeak doctor` reports
+Destinations also drive the desktop hub's pipelines. **Settings, Models** holds
+a **Runs on** picker for dictation, meetings, and rails, so one destination can
+serve Agents, Meetings, and dictation. `holdspeak doctor` reports
 which destination each pipeline resolves to, warns when an assigned destination is
 missing, and names the exact `HOLDSPEAK_PROFILE_<ID>_KEY` variable to export
 when a destination needs a key on this machine.
@@ -163,7 +165,7 @@ model can follow an instruction and return JSON when asked.
 | Dictation | `llama_cpp` (GGUF) | a current small instruct GGUF (e.g. `Qwen3.5-4B-Instruct-Q4_K_M`) | `dictation.runtime.llama_cpp_model_path` |
 | Dictation | `mlx` (Apple) | a current Qwen3.5 MLX build (e.g. `Qwen3.5-8B-MLX-4bit`) | `dictation.runtime.mlx_model` |
 | Meeting intel | `local` (GGUF) | a current small/mid instruct GGUF (e.g. `Qwen3.5-9B-Instruct-Q6_K`) | `meeting.intel_realtime_model` |
-| Meeting intel | `cloud` (endpoint) | whatever your endpoint serves | `meeting.intel_cloud_model` + `meeting.intel_cloud_base_url` |
+| Meeting intel | `cloud` (endpoint) | whatever your endpoint serves | a destination under Settings, Models, chosen as the meetings **Runs on** |
 
 **Sizing intuition:** a small instruct model (~4-9B, Q4-Q6) is fast and good
 enough for routing/enrichment and most meeting intel; a mid model (~14-32B) gives
