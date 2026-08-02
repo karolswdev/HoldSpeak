@@ -62,7 +62,13 @@ import {
   StringGadget,
   TransportKey,
 } from "../../desk/surface/gadgets";
-import { subscribeMicPhase, type MicPhase } from "../../lib/micSession";
+import {
+  micCaptureReason,
+  micCaptureSupported,
+  subscribeMicPhase,
+  type MicPhase,
+} from "../../lib/micSession";
+import { FloorHeldError } from "../../lib/audioFloor";
 import { openMicDrop, openMicListen } from "../../lib/openMic";
 import {
   isSameStreamDay,
@@ -405,6 +411,8 @@ function SpeakFace() {
      (CLOSED means the tracks are stopped, never merely muted). */
   const [openMic, setOpenMic] = useState(false);
   const [micPhase, setMicPhase] = useState<MicPhase>("closed");
+  const captureSupported = micCaptureSupported();
+  const captureReason = captureSupported ? null : micCaptureReason();
   // The strip's readout cells read the same wire the footer reads.
   const stripRoot = localStorage.getItem("holdspeak.projectRootOverride") ?? "";
   const readiness = useResource<JsonRecord>(
@@ -550,12 +558,24 @@ function SpeakFace() {
           setRefusal(category);
           announce(`⚠ ${DICTATION_FAILURES[category].message}`, "warn");
         },
+        // the floor was taken (a meeting started): the mic is already
+        // down — the room says who took it, in flow.
+        onFloorLost: (reason) => {
+          setOpenMic(false);
+          refuse(reason.refusal);
+        },
       });
       setOpenMic(true);
       announce("OPEN MIC LISTENING");
     } catch (reason) {
-      const category = dictationFailure(reason);
       setOpenMic(false);
+      // A floor refusal names its owner ("FLOOR HELD MEETING"); anything
+      // else falls back to the shared dictation failure vocabulary.
+      if (reason instanceof FloorHeldError) {
+        refuse(reason.refusal);
+        return;
+      }
+      const category = dictationFailure(reason);
       setFailure(category);
       setError(DICTATION_FAILURES[category].message);
       setPhase("refused");
@@ -691,6 +711,10 @@ function SpeakFace() {
           word="Open"
           glyph="◉"
           active={openMic}
+          // a mic this browser cannot open is visible, disabled, and says
+          // why — it never vanishes and never refuses on click.
+          disabled={!captureSupported}
+          title={captureReason ?? undefined}
           onClick={() => void toggleOpenMic()}
         />
         <LedMeter label="Level" value={level} scanning={micState === "busy"} />

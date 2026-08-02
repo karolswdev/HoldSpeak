@@ -134,8 +134,27 @@ export function micCaptureSupported(): boolean {
   return (
     typeof navigator.mediaDevices?.getUserMedia === "function" &&
     ("AudioContext" in window ||
-      typeof audioWindow.webkitAudioContext === "function")
+      typeof audioWindow.webkitAudioContext === "function") &&
+    // HS-112-06: the capture path is an AudioWorklet, full stop — there is
+    // no deprecated ScriptProcessor fallback to hide behind, so a browser
+    // without one is honestly unsupported rather than quietly degraded.
+    typeof AudioWorkletNode === "function"
   );
+}
+
+/** Why capture is unavailable, or null when it is available.
+ *
+ * The mic must never vanish silently (Article VI): on a plain-HTTP LAN
+ * origin the browser withholds `navigator.mediaDevices` entirely, and the
+ * honest state is a disabled mic that says so. */
+export function micCaptureReason(): string | null {
+  if (micCaptureSupported()) return null;
+  if (!navigator.mediaDevices && window.isSecureContext === false)
+    return (
+      "Mic capture needs a secure origin. Open this hub via localhost " +
+      "or HTTPS to speak."
+    );
+  return "This browser cannot capture microphone audio.";
 }
 
 /* ── the session itself ── */
@@ -202,26 +221,20 @@ async function buildSession(): Promise<Session> {
   const worklet = (
     context as AudioContext & { audioWorklet?: AudioWorklet }
   ).audioWorklet;
-  if (worklet && typeof AudioWorkletNode === "function") {
-    workletUrl = URL.createObjectURL(
-      new Blob([WORKLET_SOURCE], { type: "text/javascript" }),
-    );
-    await worklet.addModule(workletUrl);
-    const workletNode = new AudioWorkletNode(context, "holdspeak-capture");
-    workletNode.port.onmessage = (event: MessageEvent) => {
-      onFrame(new Float32Array(event.data as ArrayLike<number>));
-    };
-    node = workletNode;
-  } else {
-    /* Fallback for a browser without AudioWorklet (and for the jsdom
-       suite's minimal AudioContext). The deprecated node lives ONLY
-       here — nothing else in the stack constructs one. */
-    const script = context.createScriptProcessor(4096, 1, 1);
-    script.onaudioprocess = (event: AudioProcessingEvent) => {
-      onFrame(new Float32Array(event.inputBuffer.getChannelData(0)));
-    };
-    node = script;
+  if (!worklet || typeof AudioWorkletNode !== "function") {
+    void settle(context.close?.());
+    stream.getTracks().forEach((track) => track.stop());
+    throw new Error("This browser cannot capture microphone audio.");
   }
+  workletUrl = URL.createObjectURL(
+    new Blob([WORKLET_SOURCE], { type: "text/javascript" }),
+  );
+  await worklet.addModule(workletUrl);
+  const workletNode = new AudioWorkletNode(context, "holdspeak-capture");
+  workletNode.port.onmessage = (event: MessageEvent) => {
+    onFrame(new Float32Array(event.data as ArrayLike<number>));
+  };
+  node = workletNode;
   source.connect(node);
   node.connect(context.destination);
   return { stream, context, source, node, rate: context.sampleRate, workletUrl };

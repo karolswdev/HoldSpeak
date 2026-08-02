@@ -10,6 +10,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { DictationCore } from "../DictationCore";
+import { ApiError } from "../../../lib/api";
 import type { MicPhase } from "../../../lib/micSession";
 
 const mocks = vi.hoisted(() => ({
@@ -61,6 +62,8 @@ vi.mock("../../../lib/speakToFill", () => ({
 }));
 
 vi.mock("../../../lib/micSession", () => ({
+  micCaptureSupported: () => true,
+  micCaptureReason: () => null,
   startOpenMic: mocks.startOpenMic,
   stopOpenMic: mocks.stopOpenMic,
   subscribeMicPhase: (listener: (phase: MicPhase) => void) => {
@@ -248,6 +251,46 @@ describe("the open mic on the Speak deck (HS-112-06)", () => {
       register.querySelectorAll(".speak-register-token"),
     ).find((token) => token.textContent === "Refused");
     expect(refused).toHaveAttribute("data-active");
+  });
+
+  it("takes the audio floor before the device opens", async () => {
+    await latchOpen();
+    const claim = mocks.apiFetch.mock.calls.findIndex(
+      (call: unknown[]) => call[0] === "/api/dictation/floor/claim",
+    );
+    expect(claim).toBeGreaterThanOrEqual(0);
+    expect(mocks.startOpenMic).toHaveBeenCalledTimes(1);
+  });
+
+  it("refuses BY NAME when a meeting holds the floor, and never opens", async () => {
+    mockRoutes({
+      "/api/dictation/floor/claim": () =>
+        Promise.reject(new ApiError(409, "conflict", { owner: "meeting" })),
+    });
+    const latch = await openDeck();
+
+    fireEvent.click(latch);
+
+    await waitFor(() =>
+      expect(screen.getByLabelText("Landed latency").textContent).toBe(
+        "FLOOR HELD MEETING",
+      ),
+    );
+    expect(latch).not.toHaveAttribute("aria-pressed");
+    // the device was never opened under a held floor.
+    expect(mocks.startOpenMic).not.toHaveBeenCalled();
+  });
+
+  it("releases the floor when the latch drops the stream", async () => {
+    const latch = await latchOpen();
+    fireEvent.click(latch);
+    await waitFor(() =>
+      expect(
+        mocks.apiFetch.mock.calls.some(
+          (call: unknown[]) => call[0] === "/api/dictation/floor/release",
+        ),
+      ).toBe(true),
+    );
   });
 
   it("drops the stream when the room closes", async () => {

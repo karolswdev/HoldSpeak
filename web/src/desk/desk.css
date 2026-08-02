@@ -91,6 +91,17 @@
   flex-wrap: wrap;
   justify-content: flex-end;
 }
+/* HS-112-06 — the chrome mic lamp: the same chip material the rest of the
+   cluster wears, carrying one LampGadget. Present only while a grant is
+   held; absent means the device is released. */
+.desk-next .desk-mic-lamp {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  box-shadow: var(--desk-window-etch);
+}
 .desk-next .desk-mark {
   display: inline-flex;
   align-items: center;

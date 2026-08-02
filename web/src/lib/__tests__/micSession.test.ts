@@ -13,6 +13,8 @@ import {
   beginHold,
   closeMicSession,
   endHold,
+  micCaptureReason,
+  micCaptureSupported,
   micPhase,
   micSessionLive,
   startOpenMic,
@@ -169,12 +171,17 @@ describe("one grant, one stream (HS-112-06)", () => {
     expect(workletNodes).toHaveLength(1);
   });
 
-  it("falls back to a script processor only where AudioWorklet is absent", async () => {
+  it("refuses where AudioWorklet is absent — no deprecated fallback", async () => {
     closeMicSession();
     vi.stubGlobal("AudioWorkletNode", undefined);
     vi.stubGlobal("AudioContext", WorkletlessContext);
-    await beginHold();
-    expect(contexts[contexts.length - 1].createScriptProcessor).toHaveBeenCalled();
+    // the browser is honestly unsupported, and it says so before opening.
+    expect(micCaptureSupported()).toBe(false);
+    expect(micCaptureReason()).toBe(
+      "This browser cannot capture microphone audio.",
+    );
+    await expect(beginHold()).rejects.toThrow(/cannot capture/);
+    expect(micSessionLive()).toBe(false);
   });
 
   it("closing stops the tracks for real — CLOSED is not muted", async () => {
