@@ -12,8 +12,10 @@ import {
   type ReactNode,
 } from "react";
 import { Button } from "../../components/signal/Signal";
+import { MicButton } from "../components/MicButton";
 import { CheckGadget } from "./gadgets";
 import { humanTime, presentValue } from "./format";
+import { useRovingRows } from "./roving";
 import "./surface.css";
 
 /** The one verb bar, sticky at the surface top. Primary verbs live
@@ -591,8 +593,12 @@ export function SurfaceLedger({
   cols?: string;
   children: ReactNode;
 }) {
+  // HS-111-08 — roving focus is kit law: ONE Tab stop for the whole
+  // ledger, arrows walk rows; every consumer inherits (audit §3.1).
+  const rootRef = useRef<HTMLDivElement>(null);
+  useRovingRows(rootRef, { selector: ".surface-ledger-line" });
   return (
-    <div className="surface-ledger" data-cols={cols}>
+    <div ref={rootRef} className="surface-ledger" data-cols={cols}>
       <div className="surface-ledger-head">
         <span className="surface-ledger-count">{count}</span>
         {controls ? (
@@ -866,6 +872,7 @@ export function EditInPlace({
   disabledReason,
   multiline,
   className,
+  mic = true,
 }: {
   value: string;
   onCommit: (next: string) => void | Promise<void>;
@@ -873,9 +880,15 @@ export function EditInPlace({
   disabledReason?: string;
   multiline?: boolean;
   className?: string;
+  /** HS-111-08 — every text editor carries the speak-to-fill mic
+   * (mic law); false only where a host renders its own. */
+  mic?: boolean;
 }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(value);
+  const editorRef = useRef<HTMLInputElement | HTMLTextAreaElement | null>(
+    null,
+  );
   const commit = () => {
     setEditing(false);
     const next = draft.trim();
@@ -923,7 +936,13 @@ export function EditInPlace({
     // so typing REPLACES the placeholder instead of appending after it.
     onFocus: (event: { target: HTMLInputElement | HTMLTextAreaElement }) =>
       event.target.select(),
-    onBlur: commit,
+    // Pressing the in-place mic must not commit-and-close under the
+    // speaker's finger — the mic is part of the editor.
+    onBlur: (event: { relatedTarget: EventTarget | null }) => {
+      const next = event.relatedTarget as HTMLElement | null;
+      if (next?.closest?.(".surface-edit-mic")) return;
+      commit();
+    },
     onKeyDown: (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         event.preventDefault();
@@ -934,14 +953,38 @@ export function EditInPlace({
       }
     },
   };
-  return multiline ? (
+  const editor = multiline ? (
     <textarea
       {...shared}
+      ref={(node) => {
+        editorRef.current = node;
+      }}
       rows={Math.max(2, draft.split("\n").length)}
       onChange={(event) => setDraft(event.target.value)}
     />
   ) : (
-    <input {...shared} onChange={(event) => setDraft(event.target.value)} />
+    <input
+      {...shared}
+      ref={(node) => {
+        editorRef.current = node;
+      }}
+      onChange={(event) => setDraft(event.target.value)}
+    />
+  );
+  if (!mic) return editor;
+  return (
+    <span className="surface-edit-wrap">
+      {editor}
+      <span className="surface-edit-mic">
+        <MicButton
+          label={`Speak ${label}`}
+          onText={(text) => {
+            setDraft(text);
+            editorRef.current?.focus();
+          }}
+        />
+      </span>
+    </span>
   );
 }
 
@@ -950,12 +993,15 @@ export function EditInPlace({
 export function ConfirmVerb({
   label,
   confirmLabel = "Sure?",
+  ariaLabel,
   busy,
   disabled,
   onConfirm,
 }: {
   label: ReactNode;
   confirmLabel?: ReactNode;
+  /** A stable accessible name when the visible label is a glyph (×). */
+  ariaLabel?: string;
   busy?: boolean;
   disabled?: boolean;
   onConfirm: () => void;
@@ -967,6 +1013,7 @@ export function ConfirmVerb({
     <Button
       dense
       variant={armed ? "danger" : "ghost"}
+      aria-label={ariaLabel}
       loading={busy}
       disabled={disabled}
       onClick={() => {

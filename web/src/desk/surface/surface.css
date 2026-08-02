@@ -715,73 +715,6 @@ button.surface-edit-in-place:hover {
   min-width: 0;
 }
 
-/* Rule 1 — inside a window a disclosure is a quiet row, not a card. */
-.desk-surface-body .signal-disclosure {
-  border: 0;
-  border-radius: var(--radius-sm);
-  background: transparent;
-}
-/* HS-101 sitting round 2 — a disclosure must READ as one: the desk
-   stripped the card (rule 1) but left bare bold text. The summary is
-   a quiet chip with a turning caret; the wash lives on the summary,
-   never the whole block. */
-.desk-surface-body .signal-disclosure > summary,
-.desk-surface-body .signal-disclosure > .signal-disclosure-summary {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  width: fit-content;
-  min-height: 26px;
-  margin: 2px 0;
-  padding: 2px 9px 2px 7px;
-  border-radius: var(--radius-sm);
-  list-style: none;
-  font-size: var(--desk-surface-detail-size);
-  font-weight: 600;
-  color: var(--text-muted);
-  cursor: pointer;
-}
-.desk-surface-body .signal-disclosure > summary::-webkit-details-marker {
-  display: none;
-}
-.desk-surface-body .signal-disclosure > summary::before {
-  content: "▸";
-  /* Round 9 — the caret must READ as a caret (it rendered as a faint
-     dot at 9px): detail size, muted not faint. */
-  font-size: 0.6875rem;
-  color: var(--text-muted);
-  transition: transform var(--duration-short) var(--ease-quart);
-}
-.desk-surface-body .signal-disclosure[open] > summary::before {
-  transform: rotate(90deg);
-}
-.desk-surface-body .signal-disclosure > summary:hover {
-  background: var(--wash-1);
-  color: var(--text);
-}
-.desk-surface-body .signal-disclosure:hover {
-  background: transparent;
-}
-.desk-surface-body .signal-disclosure > div {
-  padding: 4px 8px 8px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-/* Rule 1 — inside a window the tab strip sits on the material: no
-   boxed card, a hairline underline, a visible thin scrollbar when the
-   window is narrower than the strip. */
-/* HS-111: in-window tabs — flat, mono, Workbench treatment */
-.desk-surface-body .signal-tabs {
-  border: 0;
-  border-radius: 0;
-  background: transparent;
-  padding: 0;
-  border-bottom: 1px solid var(--border);
-  scrollbar-width: thin;
-}
-
 /* A float over a canvas (the workbench inspector): the one window
    material, transient elevation — never a Signal card. */
 .surface-float {
@@ -993,19 +926,6 @@ button.surface-edit-in-place:hover {
   object-fit: contain;
   image-rendering: pixelated;
   opacity: 0.9;
-}
-
-/* The rail tabs carry icons now. */
-.surface-railed > .signal-tabs button svg,
-.signal-tabs button svg {
-  width: 14px;
-  height: 14px;
-  flex: none;
-}
-.signal-tabs button {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
 }
 
 /* A row's read-only value: right-aligned, wraps, never edge-slammed. */
@@ -1260,10 +1180,17 @@ button.surface-edit-in-place:hover {
   color: var(--text);
   cursor: pointer;
 }
-.surface-ledger-line:hover,
+.surface-ledger-line:hover {
+  background: var(--wash-1);
+}
+/* HS-111-08 — keyboard focus must read differently from a resting
+   mouse: the full-width accent band edge (inset ring — never an
+   outside outline that clips in the scrolling well, never a smuggled
+   left rail). */
 .surface-ledger-line:focus-visible {
   background: var(--wash-1);
   outline: none;
+  box-shadow: inset 0 0 0 1px var(--accent);
 }
 .surface-ledger-row[data-open] > .surface-ledger-line {
   background: var(--desk-window-well);
@@ -1829,10 +1756,6 @@ button.surface-edit-in-place:hover {
    whisper replaces the button; boundary notes are captions. */
 .desk-surface-body .surface-setting-row {
   min-height: var(--desk-surface-row-h);
-}
-.desk-surface-body .surface-setting-row .signal-switch,
-.desk-surface-body .surface-setting-row .signal-choice {
-  min-height: 32px;
 }
 .settings-save-whisper {
   font-size: var(--desk-surface-detail-size);
@@ -2425,4 +2348,57 @@ button.surface-edit-in-place:hover {
 .gadget-string:has(textarea) .desk-mic {
   align-self: flex-start;
   margin-top: 2px;
+}
+
+/* ── HS-111-08: the in-flow receipt/fault line — the quiet one-line
+   answer to the retired InlineMessage species. A mono token line in
+   the flow (doctrine 12: errors in-flow; success is a receipt, never
+   a toast). Tone rides a data attribute; the glyph carries the tone
+   beside the words (never color-only). ── */
+.surface-receipt-line {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin: 2px 0;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  color: var(--text-muted);
+}
+.surface-receipt-line[data-tone="ok"] {
+  color: var(--ok);
+}
+.surface-receipt-line[data-tone="warn"] {
+  color: var(--warn);
+}
+.surface-receipt-line[data-tone="danger"] {
+  color: var(--danger);
+}
+
+/* ── HS-111-08: EditInPlace grows the speak-to-fill mic (mic law) —
+   the editor and its mic read as ONE well. ── */
+.surface-edit-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  flex: 1;
+}
+.surface-edit-wrap > .surface-edit-in-place.is-editing {
+  flex: 1;
+  min-width: 0;
+}
+.surface-edit-mic .desk-mic,
+.desk-next .surface-edit-mic .desk-mic {
+  width: 20px;
+  height: 20px;
+  border-radius: 0;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  box-shadow: inset 1px 1px 0 var(--bevel-light), inset -1px -1px 0 var(--bevel-dark);
+  font-size: 10px;
+}
+.surface-edit-mic .desk-mic-failure,
+.desk-next .surface-edit-mic .desk-mic-failure {
+  display: none;
 }

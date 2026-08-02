@@ -5,7 +5,7 @@ import { Suspense, useEffect } from "react";
 import { Navigate, Route, Routes, useNavigate } from "react-router-dom";
 import { AppShell } from "./components/AppShell";
 import { ErrorBoundary } from "./components/ErrorBoundary";
-import { Skeleton } from "./components/signal/Signal";
+import { SurfaceState } from "./desk/surface/Surface";
 import { DEMOTED_ROUTES, PRODUCT_ROUTES, type DemotedRoute } from "./routes";
 import { openSurfaceWhenReady, setShellNavigator } from "./desk/shell";
 import {
@@ -42,7 +42,7 @@ export function App() {
   return (
     <AppShell>
       <ErrorBoundary>
-        <Suspense fallback={<Skeleton rows={5} />}>
+        <Suspense fallback={<SurfaceState loading />}>
           <Routes>
             {PRODUCT_ROUTES.map(({ path, component: Component }) => (
               <Route key={path} path={path} element={<Component />} />

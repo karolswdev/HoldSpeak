@@ -816,3 +816,155 @@ button.gadget-chip-egress {
     grid-column: 1 / -1;
   }
 }
+
+/* ── HS-111-08: PadGadget — the multiline species. StringGadget's
+   sunken well at N rows; the speak-to-fill mic docked in the corner. ── */
+.gadget-pad {
+  position: relative;
+  display: flex;
+  width: 100%;
+  border: 1px solid var(--border);
+  background: var(--surface-1);
+  box-shadow: var(--desk-window-etch);
+}
+.gadget-pad:focus-within {
+  border-color: var(--accent);
+}
+.gadget-pad textarea {
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  padding: 4px 26px 4px 6px;
+  font: 400 12px / 1.45 var(--font-mono);
+  color: var(--text);
+  resize: vertical;
+}
+.gadget-pad[data-grow] textarea {
+  resize: none;
+  overflow: hidden;
+}
+.gadget-pad textarea:focus {
+  outline: none;
+}
+.gadget-pad .desk-mic,
+.desk-next .gadget-pad .desk-mic {
+  position: absolute;
+  right: 2px;
+  bottom: 2px;
+  width: 20px;
+  height: 20px;
+  border-radius: 0;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  box-shadow: inset 1px 1px 0 var(--bevel-light), inset -1px -1px 0 var(--bevel-dark);
+  font-size: 10px;
+}
+.gadget-pad .desk-mic-failure,
+.desk-next .gadget-pad .desk-mic-failure {
+  display: none;
+}
+
+/* ── HS-111-08: FoldGadget — the ONE disclosure species. The house
+   quiet-row face (promoted from the .desk-surface-body Disclosure
+   overrides): a quiet chip summary, a turning caret, the wash on the
+   summary only; the trailing token right-aligned (mono, dim). ── */
+.gadget-fold {
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+}
+.gadget-fold > summary {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: fit-content;
+  min-height: 26px;
+  margin: 2px 0;
+  padding: 2px 9px 2px 7px;
+  border-radius: var(--radius-sm);
+  list-style: none;
+  font-size: var(--desk-surface-detail-size, 12px);
+  font-weight: 600;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+/* A budget/count token stretches the summary to the full row. */
+.gadget-fold[data-token] > summary {
+  width: 100%;
+}
+.gadget-fold > summary::-webkit-details-marker {
+  display: none;
+}
+.gadget-fold > summary::before {
+  content: "▸";
+  font-size: 0.6875rem;
+  color: var(--text-muted);
+  transition: transform var(--duration-short) var(--ease-quart);
+}
+.gadget-fold[open] > summary::before {
+  transform: rotate(90deg);
+}
+.gadget-fold > summary:hover {
+  background: var(--wash-1);
+  color: var(--text);
+}
+.gadget-fold-title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.gadget-fold-token {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+.gadget-fold-glyph {
+  flex: none;
+  color: var(--text-muted);
+}
+.gadget-fold-body,
+.gadget-fold > div {
+  padding: 4px 8px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* ── HS-111-08: the lamp's fail tone (the readiness column's honest
+   red — never color-only, the mono word rides beside the dot). ── */
+.gadget-lamp[data-on="true"][data-tone="fail"] .gadget-lamp-dot {
+  background: var(--danger);
+}
+
+/* ── HS-111-08: roving focus inside the table — the row's controls
+   wear the same inset accent band the ledger rows do (never an
+   outside outline that clips in the scrolling well). ── */
+.gadget-table-row button:focus-visible,
+.gadget-table-row input:focus-visible,
+.gadget-table-row select:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+
+/* ── HS-111-08: the check + its mono word as one inline pair (a verb
+   bar's boolean — the label is visible, never aria-only). ── */
+.gadget-checkline {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.gadget-checkline-word {
+  font: 600 10px / 1 var(--font-mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  white-space: nowrap;
+}

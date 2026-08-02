@@ -1,17 +1,19 @@
 // HS-111-01 — the gadget kit: every gadget wraps a REAL input and the
 // interaction contracts hold (checkbox species, cycle select, stepper
 // arrows, mx radio reveal, secret armed replace).
-import { fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import {
   CheckGadget,
   CycleGadget,
+  FoldGadget,
   GadgetRow,
   GadgetTable,
   LampGadget,
   LedMeter,
   MxRadio,
+  PadGadget,
   SecretRow,
   StepperGadget,
   TransportKey,
@@ -204,5 +206,78 @@ describe("gadget kit", () => {
     ).toBeNull();
     await user.click(screen.getByRole("button", { name: "Forget?" }));
     expect(onForget).toHaveBeenCalledWith(0);
+  });
+
+  // HS-111-08 — arming is the KIT DEFAULT (doctrine P0 F4): the bare
+  // × never fires on the first press.
+  it("GadgetTable default delete ARMS: × → DELETE? → gone", () => {
+    vi.useFakeTimers();
+    try {
+      const onDelete = vi.fn();
+      render(
+        <GadgetTable
+          head={["Kind"]}
+          rows={[["intent"]]}
+          onDelete={onDelete}
+        />,
+      );
+      const x = screen.getByRole("button", { name: "Delete row 1" });
+      fireEvent.click(x);
+      expect(onDelete).not.toHaveBeenCalled();
+      expect(x).toHaveTextContent("DELETE?");
+      fireEvent.click(x);
+      expect(onDelete).toHaveBeenCalledWith(0);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("the armed face self-disarms after 3s (a late press only re-arms)", () => {
+    vi.useFakeTimers();
+    try {
+      const onDelete = vi.fn();
+      render(
+        <GadgetTable
+          head={["Kind"]}
+          rows={[["intent"]]}
+          deleteLabel="FORGET?"
+          onDelete={onDelete}
+        />,
+      );
+      const x = screen.getByRole("button", { name: "Delete row 1" });
+      fireEvent.click(x);
+      expect(x).toHaveTextContent("FORGET?");
+      act(() => {
+        vi.advanceTimersByTime(3100);
+      });
+      expect(x).toHaveTextContent("×");
+      fireEvent.click(x);
+      expect(onDelete).not.toHaveBeenCalled();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("PadGadget is a real textarea", () => {
+    const onChange = vi.fn();
+    render(<PadGadget label="Notes" value="" onChange={onChange} mic={false} />);
+    const pad = screen.getByRole("textbox", { name: "Notes" });
+    fireEvent.change(pad, { target: { value: "spoken words" } });
+    expect(onChange).toHaveBeenCalledWith("spoken words");
+  });
+
+  it("FoldGadget keeps details semantics and carries the token slot", () => {
+    const onToggle = vi.fn();
+    const { container } = render(
+      <FoldGadget title="RAW · DIFF" token="1.2k tok" onToggle={onToggle}>
+        <p>body</p>
+      </FoldGadget>,
+    );
+    expect(screen.getByText("RAW · DIFF")).toBeInTheDocument();
+    expect(screen.getByText("1.2k tok")).toBeInTheDocument();
+    const details = container.querySelector("details.gadget-fold");
+    expect(details).not.toBeNull();
+    fireEvent(details!, new Event("toggle"));
+    expect(onToggle).toHaveBeenCalled();
   });
 });

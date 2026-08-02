@@ -1,47 +1,47 @@
 // HS-95-08 — the runtime setup guide, hosted anywhere.
 import { openSurfaceOr } from "../../desk/shell";
 import type { CoreProps } from "./ActivityCore";
-import { Disclosure, InlineMessage } from "../../components/signal/Signal";
+import { FoldGadget } from "../../desk/surface/gadgets";
 import { SurfaceCode, SurfaceSection } from "../../desk/surface/Surface";
 
 export function RuntimeDocsCore({ hero }: CoreProps) {
   return (
     <>
       {hero ? hero(null) : null}
-      <InlineMessage tone="info">
+      <p className="surface-receipt-line">
         API keys are environment variables on the hub. They never belong in a
         browser field or profile response.
-      </InlineMessage>
+      </p>
       <SurfaceSection label="Choose a runtime">
-        <Disclosure title="Basic voice typing" open>
+        <FoldGadget title="Basic voice typing" open>
           <p>
             Install HoldSpeak and a Whisper backend. Leave the dictation LLM
             pipeline disabled to transcribe and type locally.
           </p>
           <SurfaceCode>uv pip install -e '.[whisper]'</SurfaceCode>
-        </Disclosure>
-        <Disclosure title="Apple Silicon with MLX">
+        </FoldGadget>
+        <FoldGadget title="Apple Silicon with MLX">
           <p>
             Put an MLX model under <code>~/Models/mlx/</code>, then choose it
             during arrival or in Dictation → Runtime.
           </p>
           <SurfaceCode>uv pip install -e '.[dictation-mlx]'</SurfaceCode>
-        </Disclosure>
-        <Disclosure title="Local GGUF with llama.cpp">
+        </FoldGadget>
+        <FoldGadget title="Local GGUF with llama.cpp">
           <p>
             Put a GGUF file under <code>~/Models/gguf/</code> and select its
             full path.
           </p>
           <SurfaceCode>uv pip install -e '.[dictation-llama]'</SurfaceCode>
-        </Disclosure>
-        <Disclosure title="OpenAI-compatible endpoint">
+        </FoldGadget>
+        <FoldGadget title="OpenAI-compatible endpoint">
           <p>
             Create a Runs on destination with the server URL and model. If it
             needs a key, set <code>HOLDSPEAK_PROFILE_&lt;ID&gt;_KEY</code> on the
             hub.
           </p>
           <SurfaceCode>uv pip install -e '.[dictation-openai]'</SurfaceCode>
-        </Disclosure>
+        </FoldGadget>
       </SurfaceSection>
       <SurfaceSection label="Verify">
         <ol>

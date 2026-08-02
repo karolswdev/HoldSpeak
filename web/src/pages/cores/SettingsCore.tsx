@@ -503,6 +503,7 @@ function SettingsFace({ hero, scope }: CoreProps) {
               >
                 <GadgetTable
                   head={["SPOKEN", "SYMBOL", "ATTACH"]}
+                  deleteLabel="FORGET?"
                   onDelete={(index) =>
                     update(
                       symbolsPath,

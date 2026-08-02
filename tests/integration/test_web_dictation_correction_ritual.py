@@ -77,8 +77,10 @@ def test_ritual_is_focus_safe() -> None:
 
 
 def test_ritual_uses_shared_react_controls() -> None:
+    # HS-111-08: the Disclosure species retired; FoldGadget is the ONE
+    # disclosure the shared kit provides.
     source = _dictation_script()
-    assert "<Button" in source and "<Disclosure" in source
+    assert "<Button" in source and "<FoldGadget" in source
     assert "dangerouslySetInnerHTML" not in source
 
 

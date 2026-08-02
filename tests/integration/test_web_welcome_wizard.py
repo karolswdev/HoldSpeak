@@ -62,7 +62,9 @@ def test_first_dictation_retains_editable_text_and_all_recovery_doors() -> None:
         "delivery_conflict",
     ):
         assert failure in recovery
-    assert "<TextArea" in page and "onChange" in page
+    # HS-111-08: the TextArea species retired; PadGadget is the ONE
+    # multiline well (FirstWords keeps its own capture path, mic off).
+    assert "<PadGadget" in page and "onChange" in page
     assert "FirstValueTracker" in page
     assert "/api/setup/first-value/start" in tracker
     assert "/api/setup/onboarding" in page

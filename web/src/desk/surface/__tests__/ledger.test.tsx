@@ -55,4 +55,62 @@ describe("the machine ledger", () => {
     expect(screen.getByRole("button", { expanded: true })).toBeInTheDocument();
     expect(screen.getByText("expansion")).toBeInTheDocument();
   });
+
+  // HS-111-08 — roving focus is kit law (audit §3.1): ONE Tab stop,
+  // arrows walk, Home/End jump, letters seek, editors are untouched.
+  const ledgerFixture = (children?: import("react").ReactNode) => (
+    <SurfaceLedger count="3 ROWS">
+      <ul>
+        <SurfaceLedgerRow primary="alpha entry" expands={false} />
+        <SurfaceLedgerRow primary="beta entry" expands={false} />
+        <SurfaceLedgerRow primary="gamma entry" expands={false}>
+          {children}
+        </SurfaceLedgerRow>
+      </ul>
+    </SurfaceLedger>
+  );
+
+  it("roving tabindex: one Tab stop, ArrowDown/Up walk, no wrap", () => {
+    render(ledgerFixture());
+    const rows = screen.getAllByRole("button");
+    expect(rows.map((row) => row.tabIndex)).toEqual([0, -1, -1]);
+    rows[0].focus();
+    fireEvent.keyDown(rows[0], { key: "ArrowDown" });
+    expect(rows[1]).toHaveFocus();
+    expect(rows.map((row) => row.tabIndex)).toEqual([-1, 0, -1]);
+    fireEvent.keyDown(rows[1], { key: "ArrowUp" });
+    expect(rows[0]).toHaveFocus();
+    // No wrap: ArrowUp at the first row stays put (Home/End exist).
+    fireEvent.keyDown(rows[0], { key: "ArrowUp" });
+    expect(rows[0]).toHaveFocus();
+  });
+
+  it("Home/End jump and first-letter type-ahead seeks the row", () => {
+    render(ledgerFixture());
+    const rows = screen.getAllByRole("button");
+    rows[0].focus();
+    fireEvent.keyDown(rows[0], { key: "End" });
+    expect(rows[2]).toHaveFocus();
+    fireEvent.keyDown(rows[2], { key: "Home" });
+    expect(rows[0]).toHaveFocus();
+    fireEvent.keyDown(rows[0], { key: "b" });
+    expect(rows[1]).toHaveFocus();
+  });
+
+  it("typing in an open row's editor never moves the rover", () => {
+    render(
+      <SurfaceLedger count="OPEN ROW">
+        <ul>
+          <SurfaceLedgerRow primary="alpha entry" expands={false} />
+          <SurfaceLedgerRow primary="beta entry" open>
+            <input aria-label="Editor" />
+          </SurfaceLedgerRow>
+        </ul>
+      </SurfaceLedger>,
+    );
+    const editor = screen.getByRole("textbox", { name: "Editor" });
+    editor.focus();
+    fireEvent.keyDown(editor, { key: "ArrowDown" });
+    expect(editor).toHaveFocus();
+  });
 });

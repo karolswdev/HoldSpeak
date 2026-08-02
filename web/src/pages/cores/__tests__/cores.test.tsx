@@ -36,7 +36,7 @@ describe("cores render chrome-free inside a desk window", () => {
     expect(container.querySelector(".page-hero")).toBeNull();
     expect(container.querySelector(".workroom-bar")).toBeNull();
     expect(container.querySelector(".surface-verbs")).toBeTruthy();
-    expect(screen.getByText("Activity intelligence")).toBeInTheDocument();
+    expect(screen.getByText("Records")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Refresh now" })).toBeTruthy();
   });
 

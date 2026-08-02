@@ -7,7 +7,7 @@
 import { useEffect, useState } from "react";
 import { create } from "zustand";
 import { apiFetch } from "../../lib/api";
-import { StatusPill } from "../../components/signal/Signal";
+import { LampGadget } from "../surface/gadgets";
 import { DeskWindowFrame } from "./DeskWindow";
 import { openSurfaceOr } from "../shell";
 import {
@@ -104,9 +104,11 @@ export function TrustWindow() {
             key={destination.id}
             label={destination.name}
             actions={
-              <StatusPill tone={destination.enabled ? "warning" : "success"}>
-                {destination.enabled ? "Enabled" : "Off"}
-              </StatusPill>
+              <LampGadget
+                on
+                tone={destination.enabled ? "warn" : "ok"}
+                label={destination.enabled ? "Enabled" : "Off"}
+              />
             }
           >
             <SurfaceGroup>

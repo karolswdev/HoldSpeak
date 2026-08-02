@@ -12,6 +12,7 @@ import {
   createContext,
   useContext,
   useEffect,
+  useRef,
   type ReactNode,
 } from "react";
 
@@ -53,20 +54,59 @@ export function SurfaceWings({
   doorOpen?: boolean;
   onDoor?: () => void;
 }) {
+  // HS-111-08 — the tablist walks with arrows (roving tabindex, the
+  // same grammar the in-body Tabs species carried before it retired).
+  const refs = useRef<Array<HTMLButtonElement | null>>([]);
+  const move = (to: number) => {
+    const index = (to + wings.length) % wings.length;
+    onChange(wings[index].id);
+    refs.current[index]?.focus();
+  };
+  // When no wing is active (the door face rules), the first wing keeps
+  // the Tab stop so the strip stays reachable.
+  const hasActive = wings.some((w) => w.id === active);
   return (
-    <span className="desk-wings" role="tablist" aria-label="Window faces">
-      {wings.map((w) => (
+    <span className="desk-wings">
+      {/* The tablist wraps ONLY the tabs — the gear door is a pressed
+          gadget, not a tab (aria-required-children). display:contents
+          keeps the strip one flex row. */}
+      <span
+        className="desk-wings-tabs"
+        role="tablist"
+        aria-label="Window faces"
+      >
+      {wings.map((w, index) => (
         <button
           key={w.id}
+          ref={(element) => {
+            refs.current[index] = element;
+          }}
           type="button"
           role="tab"
           aria-selected={active === w.id}
+          tabIndex={active === w.id || (!hasActive && index === 0) ? 0 : -1}
           className={`desk-wing${active === w.id ? " is-on" : ""}`}
           onClick={() => onChange(w.id)}
+          onKeyDown={(event) => {
+            if (event.key === "ArrowRight") {
+              event.preventDefault();
+              move(index + 1);
+            } else if (event.key === "ArrowLeft") {
+              event.preventDefault();
+              move(index - 1);
+            } else if (event.key === "Home") {
+              event.preventDefault();
+              move(0);
+            } else if (event.key === "End") {
+              event.preventDefault();
+              move(wings.length - 1);
+            }
+          }}
         >
           {w.label}
         </button>
       ))}
+      </span>
       {door ? (
         <button
           type="button"

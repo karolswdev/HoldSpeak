@@ -22,7 +22,7 @@ import {
 import { openSurfaceOr } from "../../desk/shell";
 import type { CoreProps } from "./ActivityCore";
 import { RuntimeDestination } from "./settingsBespoke";
-import { Button, Disclosure, TextArea } from "../../components/signal/Signal";
+import { Button } from "../../components/signal/Signal";
 import { RunsOnPicker } from "../../desk/components/RunsOnPicker";
 import { MicButton, type MicState } from "../../desk/components/MicButton";
 import type { InferenceTarget } from "../../desk/api";
@@ -52,11 +52,13 @@ import {
 import {
   CheckGadget,
   CycleGadget,
+  FoldGadget,
   GadgetGroup,
   GadgetRow,
   GadgetTable,
   LampGadget,
   LedMeter,
+  PadGadget,
   StringGadget,
 } from "../../desk/surface/gadgets";
 import {
@@ -212,11 +214,11 @@ function Readiness() {
           <span className="speak-token-line">{runs}</span>
         </GadgetRow>
       </GadgetGroup>
-      <Disclosure title="Wire details">
+      <FoldGadget title="Wire details">
         <SurfaceFacts value={config} />
         <SurfaceFacts value={target} />
         <SurfaceFacts value={depth} />
-      </Disclosure>
+      </FoldGadget>
     </SurfaceState>
   );
 }
@@ -490,10 +492,11 @@ function SpeakFace() {
         </span>
       </div>
       <div className="speak-well">
-        <TextArea
-          aria-label="Utterance"
+        <PadGadget
+          label="Utterance"
           value={utterance}
-          onChange={(event) => setUtterance(event.target.value)}
+          onChange={setUtterance}
+          mic={false}
           placeholder="UTTERANCE"
         />
       </div>
@@ -616,9 +619,9 @@ function SpeakFace() {
               </div>
             </div>
           ) : null}
-          <Disclosure title="Raw trace">
+          <FoldGadget title="Raw trace">
             <SurfaceCode>{JSON.stringify(result, null, 2)}</SurfaceCode>
-          </Disclosure>
+          </FoldGadget>
         </section>
       ) : null}
     </div>
@@ -779,18 +782,14 @@ function Blocks() {
             <li className="surface-tile surface-tile-drafting">
               <div className="surface-tile-face">
                 <div className="desk-mic-row">
-                  <TextArea
-                    aria-label="Injection text"
+                  <PadGadget
+                    label="Injection text"
                     placeholder="What this block injects"
                     rows={4}
                     value={draft.injection}
-                    onChange={(event) =>
-                      setDraft({ ...draft, injection: event.target.value })
+                    onChange={(next) =>
+                      setDraft({ ...draft, injection: next })
                     }
-                  />
-                  <MicButton
-                    label="Speak injection text"
-                    onText={(text) => setDraft({ ...draft, injection: text })}
                   />
                 </div>
               </div>
@@ -1370,9 +1369,9 @@ function Hooks() {
         <GadgetRow label="Codex" fact={presentValue(destinations.codex)}>
           {chip("codex")}
         </GadgetRow>
-        <Disclosure title="Raw trace">
+        <FoldGadget title="Raw trace">
           <SurfaceCode>{JSON.stringify(resource.data, null, 2)}</SurfaceCode>
-        </Disclosure>
+        </FoldGadget>
       </SurfaceState>
     </GadgetGroup>
   );

@@ -16,6 +16,7 @@ import {
 import { Button } from "../../components/signal/Signal";
 import { MicButton } from "../components/MicButton";
 import { ConfirmVerb } from "./Surface";
+import { useRovingRows } from "./roving";
 import "./gadgets.css";
 
 /* ── the sheet: two aligned columns, 26px rows, engraved groups ── */
@@ -253,6 +254,123 @@ export function StringGadget({
   );
 }
 
+/* ── PadGadget: the multiline species (HS-111-08, audit §3.5) —
+   StringGadget's grammar at N rows: sunken well, mono, the speak-to-
+   fill mic in the corner. The kit's ONLY textarea face. ── */
+
+export function PadGadget({
+  label,
+  value,
+  onChange,
+  placeholder,
+  rows = 3,
+  mic = true,
+  autoGrow,
+  disabled,
+  autoFocus,
+  onKeyDown,
+}: {
+  label: string;
+  value: string;
+  onChange(next: string): void;
+  placeholder?: string;
+  rows?: number;
+  /** Every text well carries the speak-to-fill mic unless the host
+   * renders its own capture path. */
+  mic?: boolean;
+  /** Grow with the content instead of scrolling. */
+  autoGrow?: boolean;
+  disabled?: boolean;
+  autoFocus?: boolean;
+  onKeyDown?: (event: KeyboardEvent<HTMLTextAreaElement>) => void;
+}) {
+  const padRef = useRef<HTMLTextAreaElement>(null);
+  useEffect(() => {
+    if (!autoGrow) return;
+    const pad = padRef.current;
+    if (!pad) return;
+    pad.style.height = "auto";
+    pad.style.height = `${pad.scrollHeight + 2}px`;
+  }, [value, autoGrow]);
+  return (
+    <span className="gadget-pad" data-grow={autoGrow || undefined}>
+      <textarea
+        ref={padRef}
+        aria-label={label}
+        value={value}
+        placeholder={placeholder}
+        rows={rows}
+        disabled={disabled}
+        autoFocus={autoFocus}
+        onChange={(event) => onChange(event.target.value)}
+        onKeyDown={onKeyDown}
+      />
+      {mic ? (
+        <MicButton
+          label={`Speak ${label}`}
+          onText={(text) =>
+            onChange(
+              value && !/\s$/.test(value) ? `${value} ${text}` : value + text,
+            )
+          }
+        />
+      ) : null}
+    </span>
+  );
+}
+
+/* ── FoldGadget: the ONE disclosure species (HS-111-08, audit §3.3) —
+   <details> semantics (free keyboard + a11y), the house quiet-row
+   face, a trailing token slot (the 05 budget gap). ── */
+
+export function FoldGadget({
+  title,
+  token,
+  glyph,
+  open,
+  onToggle,
+  className,
+  children,
+}: {
+  /** The summary line — reads as a token, never a sentence. */
+  title: ReactNode;
+  /** Trailing budget/count token, right-aligned (mono, dim). */
+  token?: ReactNode;
+  /** Optional leading glyph beside the caret. */
+  glyph?: ReactNode;
+  open?: boolean;
+  /** Optional controlled hook — fires with the <details> open state. */
+  onToggle?: (open: boolean) => void;
+  className?: string;
+  children: ReactNode;
+}) {
+  return (
+    <details
+      className={className ? `gadget-fold ${className}` : "gadget-fold"}
+      data-token={token != null ? "" : undefined}
+      open={open}
+      onToggle={
+        onToggle
+          ? (event) => onToggle((event.target as HTMLDetailsElement).open)
+          : undefined
+      }
+    >
+      <summary>
+        {glyph ? (
+          <span className="gadget-fold-glyph" aria-hidden="true">
+            {glyph}
+          </span>
+        ) : null}
+        <span className="gadget-fold-title">{title}</span>
+        {token != null ? (
+          <span className="gadget-fold-token">{token}</span>
+        ) : null}
+      </summary>
+      <div className="gadget-fold-body">{children}</div>
+    </details>
+  );
+}
+
 /* ── StepperGadget: string gadget + ▲▼ arrows + a unit fact ── */
 
 export function StepperGadget({
@@ -353,6 +471,8 @@ export function GadgetTable({
   head,
   rows,
   onDelete,
+  deleteLabel = "DELETE?",
+  rowKey,
   onAdd,
   addLabel = "+ ADD",
   verbs,
@@ -360,15 +480,34 @@ export function GadgetTable({
   head: string[];
   rows: ReactNode[][];
   onDelete?(index: number): void;
+  /** HS-111-08 — the armed face of the kit-default delete (doctrine
+   * P0 F4): callers name the loss ("FORGET?"), never opt out. */
+  deleteLabel?: string;
+  /** Stable row identity so arming never migrates rows when the list
+   * reorders or a neighbor is deleted; defaults to the index. */
+  rowKey?(index: number): string;
   onAdd?(): void;
   addLabel?: string;
   /** HS-111-02 — the row-verbs slot: renders in the trailing cell in
-   * place of the bare × (an arming FORGET?, a Replace…). */
+   * place of the default armed × (an arming FORGET?, a Replace…). */
   verbs?(index: number): ReactNode;
 }) {
   const cols = { "--gadget-cols": head.length } as CSSProperties;
+  // HS-111-08 — roving focus is kit law (audit §3.1): the table is ONE
+  // Tab stop; Up/Down walk rows, Left/Right walk a row's controls.
+  const rootRef = useRef<HTMLDivElement>(null);
+  useRovingRows(rootRef, {
+    selector:
+      ".gadget-table-row button, .gadget-table-row input, .gadget-table-row select",
+    rowSelector: ".gadget-table-row",
+  });
   return (
-    <div className="gadget-table" style={cols} data-verbs={verbs ? "" : undefined}>
+    <div
+      ref={rootRef}
+      className="gadget-table"
+      style={cols}
+      data-verbs={verbs || onDelete ? "" : undefined}
+    >
       <div className="gadget-table-head">
         {head.map((column) => (
           <span key={column}>{column}</span>
@@ -376,7 +515,7 @@ export function GadgetTable({
         <span aria-hidden="true" />
       </div>
       {rows.map((cells, index) => (
-        <div className="gadget-table-row" key={index}>
+        <div className="gadget-table-row" key={rowKey ? rowKey(index) : index}>
           {cells.map((cell, cellIndex) => (
             <span key={cellIndex} className="gadget-table-cell">
               {cell}
@@ -385,14 +524,17 @@ export function GadgetTable({
           {verbs ? (
             <span className="gadget-table-verbs">{verbs(index)}</span>
           ) : onDelete ? (
-            <button
-              type="button"
-              className="gadget-x"
-              aria-label={`Delete row ${index + 1}`}
-              onClick={() => onDelete(index)}
-            >
-              ×
-            </button>
+            // The kit default is ARMED (× → DELETE? → gone); a bare
+            // immediate delete is not a thing the kit renders.
+            <span className="gadget-table-verbs">
+              <ConfirmVerb
+                key={rowKey ? rowKey(index) : index}
+                label="×"
+                confirmLabel={deleteLabel}
+                ariaLabel={`Delete row ${index + 1}`}
+                onConfirm={() => onDelete(index)}
+              />
+            </span>
           ) : (
             <span aria-hidden="true" />
           )}
@@ -464,7 +606,9 @@ export function LampGadget({
 }: {
   label: string;
   on: boolean;
-  tone?: "ok" | "warn";
+  /** HS-111-08 — `fail` joined the roster (the readiness column's
+   * honest red); the lamp is never color-only by construction. */
+  tone?: "ok" | "warn" | "fail";
 }) {
   return (
     <span className="gadget-lamp" data-on={on} data-tone={tone}>

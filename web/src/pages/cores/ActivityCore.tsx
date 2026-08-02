@@ -5,15 +5,17 @@
 // `hero` slot lets a host wrap the core's own verbs in its chrome; the
 // desk window passes nothing and gets the surface verb bar.
 // HS-98-04 — re-crafted native on the surface kit; wire calls unchanged.
+// HS-111-08 — conformance: gadget-kit controls (CheckGadget, StringGadget,
+// LampGadget/chip tokens), errors in-flow, and the wings posture fix —
+// Candidates/Connectors fold behind the gear door (they are
+// configuration, not daily reads).
 import { useState, type ReactNode } from "react";
+import { Button } from "../../components/signal/Signal";
 import {
-  Button,
-  Field,
-  InlineMessage,
-  StatusPill,
-  Switch,
-  TextInput,
-} from "../../components/signal/Signal";
+  CheckGadget,
+  LampGadget,
+  StringGadget,
+} from "../../desk/surface/gadgets";
 import { apiFetch, readableError, type JsonRecord } from "../../lib/api";
 import { asRows, rowId, useResource } from "../pageSupport";
 import {
@@ -27,10 +29,10 @@ import {
 import { humanTime, presentValue } from "../../desk/surface/format";
 import { SurfaceWings, useWindowWings } from "../../desk/surface/wings";
 
-const WINGS = ["records", "rules", "candidates", "connectors"].map((id) => ({
-  id,
-  label: id[0].toUpperCase() + id.slice(1),
-}));
+const WINGS = [
+  { id: "records", label: "Records" },
+  { id: "rules", label: "Rules" },
+];
 
 export interface CoreProps {
   /** Optional chrome the host renders around the core's own verbs. */
@@ -43,9 +45,20 @@ export interface CoreProps {
 
 export function ActivityCore({ hero }: CoreProps) {
   const [active, setActive] = useState("records");
+  const [doorOpen, setDoorOpen] = useState(false);
   useWindowWings(
-    <SurfaceWings wings={WINGS} active={active} onChange={setActive} />,
-    [active],
+    <SurfaceWings
+      wings={WINGS}
+      active={doorOpen ? "" : active}
+      onChange={(id) => {
+        setDoorOpen(false);
+        setActive(id);
+      }}
+      door="Candidates and connectors"
+      doorOpen={doorOpen}
+      onDoor={() => setDoorOpen((open) => !open)}
+    />,
+    [active, doorOpen],
   );
   const [query, setQuery] = useState("");
   const [message, setMessage] = useState("");
@@ -64,28 +77,13 @@ export function ActivityCore({ hero }: CoreProps) {
     "/api/activity/enrichment/connectors",
     {},
   );
-  const source =
-    active === "records"
-      ? records
-      : active === "rules"
-        ? rules
-        : active === "candidates"
-          ? candidates
-          : connectors;
-  const rows = asRows(
-    source.data,
-    active === "records"
-      ? ["records", "items"]
-      : active === "rules"
-        ? ["rules"]
-        : active === "candidates"
-          ? ["candidates"]
-          : ["connectors"],
-  );
-  const filtered = rows.filter(
-    (row) =>
-      !query || JSON.stringify(row).toLowerCase().includes(query.toLowerCase()),
-  );
+  const sources = {
+    records: { resource: records, keys: ["records", "items"] },
+    rules: { resource: rules, keys: ["rules"] },
+    candidates: { resource: candidates, keys: ["candidates"] },
+    connectors: { resource: connectors, keys: ["connectors"] },
+  } as const;
+  type Kind = keyof typeof sources;
   const invoke = async (
     url: string,
     init: Parameters<typeof apiFetch>[1] = { method: "POST", json: {} },
@@ -94,7 +92,11 @@ export function ActivityCore({ hero }: CoreProps) {
     setMessage("");
     try {
       await apiFetch(url, init);
-      await source.reload();
+      await Promise.all(
+        (doorOpen ? ["candidates", "connectors"] : [active]).map((kind) =>
+          sources[kind as Kind].resource.reload(),
+        ),
+      );
       await status.reload();
     } catch (error) {
       setMessage(readableError(error));
@@ -114,138 +116,166 @@ export function ActivityCore({ hero }: CoreProps) {
       >
         Refresh now
       </Button>
-      <Switch
-        label={enabled ? "Watching" : "Paused"}
-        checked={enabled}
-        onChange={(event) =>
-          void invoke("/api/activity/settings", {
-            method: "PUT",
-            json: { enabled: event.target.checked },
-          })
-        }
-      />
+      <span className="gadget-checkline">
+        <CheckGadget
+          label="Watching"
+          checked={enabled}
+          onChange={(next) =>
+            void invoke("/api/activity/settings", {
+              method: "PUT",
+              json: { enabled: next },
+            })
+          }
+        />
+        <span className="gadget-checkline-word">
+          {enabled ? "Watching" : "Paused"}
+        </span>
+      </span>
     </>
   );
+
+  const list = (kind: Kind) => {
+    const { resource, keys } = sources[kind];
+    const rows = asRows(resource.data, [...keys]).filter(
+      (row) =>
+        !query ||
+        JSON.stringify(row).toLowerCase().includes(query.toLowerCase()),
+    );
+    return (
+      <SurfaceState
+        loading={resource.loading}
+        error={resource.error}
+        empty={!rows.length}
+        emptyLabel="No activity yet"
+        emptyGlyph="◍"
+        onRetry={() => void resource.reload()}
+      >
+        <SurfaceRows>
+          {rows.map((row, index) => {
+            const id = rowId(row, index);
+            const off = row.enabled === false || row.status === "dismissed";
+            const token = String(
+              row.kind ??
+                row.status ??
+                (row.enabled === false ? "off" : "local"),
+            );
+            return (
+              <SurfaceRow
+                key={id}
+                title={String(
+                  row.title ??
+                    row.name ??
+                    row.domain ??
+                    row.project ??
+                    row.source ??
+                    "Activity item",
+                )}
+                detail={
+                  humanTime(row.occurred_at) ||
+                  presentValue(
+                    row.url ?? row.detail ?? row.pattern ?? row.status,
+                  ) ||
+                  undefined
+                }
+                meta={
+                  off ? (
+                    <LampGadget on tone="warn" label={token} />
+                  ) : (
+                    <span className="gadget-chip">{token}</span>
+                  )
+                }
+                verbs={
+                  <>
+                    {kind === "connectors" ? (
+                      <Button
+                        dense
+                        onClick={() =>
+                          void invoke(
+                            `/api/activity/enrichment/connectors/${encodeURIComponent(id)}/dry-run?limit=25`,
+                            { method: "GET" },
+                          )
+                        }
+                      >
+                        Dry run
+                      </Button>
+                    ) : null}
+                    {kind === "candidates" && row.status !== "started" ? (
+                      <Button
+                        dense
+                        onClick={() =>
+                          void invoke(
+                            `/api/activity/meeting-candidates/${encodeURIComponent(id)}/start`,
+                          )
+                        }
+                      >
+                        Start meeting
+                      </Button>
+                    ) : null}
+                    {kind === "rules" ? (
+                      <ConfirmVerb
+                        label="Delete"
+                        confirmLabel="Delete?"
+                        onConfirm={() =>
+                          void invoke(
+                            `/api/activity/project-rules/${encodeURIComponent(id)}`,
+                            { method: "DELETE" },
+                          )
+                        }
+                      />
+                    ) : null}
+                  </>
+                }
+              />
+            );
+          })}
+        </SurfaceRows>
+      </SurfaceState>
+    );
+  };
+
+  const filter = (
+    <StringGadget
+      label="Filter this view"
+      placeholder="FILTER"
+      value={query}
+      onChange={setQuery}
+    />
+  );
+
   return (
     <>
       {hero ? hero(verbs) : <SurfaceVerbs>{verbs}</SurfaceVerbs>}
-      {message ? <InlineMessage tone="error">{message}</InlineMessage> : null}
-      <SurfaceSection
-        label="Activity intelligence"
-        actions={
-          active === "records" ? (
-            <ConfirmVerb
-              label="Clear records"
-              confirmLabel="Clear all?"
-              busy={busy}
-              onConfirm={() =>
-                void invoke("/api/activity/records", { method: "DELETE" })
-              }
-            />
-          ) : undefined
-        }
-      >
-        <Field label="Filter this view">
-          {({ id }) => (
-            <TextInput
-              id={id}
-              type="search"
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-            />
-          )}
-        </Field>
-        <SurfaceState
-          loading={source.loading}
-          error={source.error}
-          empty={!filtered.length}
-          emptyLabel="No activity yet"
-          emptyGlyph="◍"
-          onRetry={() => void source.reload()}
+      {message ? <SurfaceState error={message} /> : null}
+      {doorOpen ? (
+        <>
+          <SurfaceSection label="Meeting candidates">
+            {filter}
+            {list("candidates")}
+          </SurfaceSection>
+          <SurfaceSection label="Connectors">
+            {list("connectors")}
+          </SurfaceSection>
+        </>
+      ) : (
+        <SurfaceSection
+          label={active === "records" ? "Records" : "Project rules"}
+          actions={
+            active === "records" ? (
+              <ConfirmVerb
+                label="Clear records"
+                confirmLabel="Clear all?"
+                busy={busy}
+                onConfirm={() =>
+                  void invoke("/api/activity/records", { method: "DELETE" })
+                }
+              />
+            ) : undefined
+          }
         >
-          <SurfaceRows>
-            {filtered.map((row, index) => {
-              const id = rowId(row, index);
-              return (
-                <SurfaceRow
-                  key={id}
-                  title={String(
-                    row.title ??
-                      row.name ??
-                      row.domain ??
-                      row.project ??
-                      row.source ??
-                      "Activity item",
-                  )}
-                  detail={
-                    humanTime(row.occurred_at) ||
-                    presentValue(
-                      row.url ?? row.detail ?? row.pattern ?? row.status,
-                    ) ||
-                    undefined
-                  }
-                  meta={
-                    <StatusPill
-                      tone={
-                        row.enabled === false || row.status === "dismissed"
-                          ? "warning"
-                          : "neutral"
-                      }
-                    >
-                      {String(
-                        row.kind ??
-                          row.status ??
-                          (row.enabled === false ? "off" : "local"),
-                      )}
-                    </StatusPill>
-                  }
-                  verbs={
-                    <>
-                      {active === "connectors" ? (
-                        <Button
-                          dense
-                          onClick={() =>
-                            void invoke(
-                              `/api/activity/enrichment/connectors/${encodeURIComponent(id)}/dry-run?limit=25`,
-                              { method: "GET" },
-                            )
-                          }
-                        >
-                          Dry run
-                        </Button>
-                      ) : null}
-                      {active === "candidates" && row.status !== "started" ? (
-                        <Button
-                          dense
-                          onClick={() =>
-                            void invoke(
-                              `/api/activity/meeting-candidates/${encodeURIComponent(id)}/start`,
-                            )
-                          }
-                        >
-                          Start meeting
-                        </Button>
-                      ) : null}
-                      {active === "rules" ? (
-                        <ConfirmVerb
-                          label="Delete"
-                          confirmLabel="Delete?"
-                          onConfirm={() =>
-                            void invoke(
-                              `/api/activity/project-rules/${encodeURIComponent(id)}`,
-                              { method: "DELETE" },
-                            )
-                          }
-                        />
-                      ) : null}
-                    </>
-                  }
-                />
-              );
-            })}
-          </SurfaceRows>
-        </SurfaceState>
-      </SurfaceSection>
+          {filter}
+          {list(active as Kind)}
+        </SurfaceSection>
+      )}
     </>
   );
 }

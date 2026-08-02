@@ -1,14 +1,10 @@
+// HS-111-08 — the legacy dialect's specs retired with the species
+// (Switch/Tabs/InlineMessage died; wings and FoldGadget carry the
+// keyboard grammar now — see desk/surface tests). What survives here
+// is the surviving roster: Field association and Button semantics.
 import { render, screen } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
-import { describe, expect, it, vi } from "vitest";
-import {
-  Button,
-  Field,
-  InlineMessage,
-  Switch,
-  Tabs,
-  TextInput,
-} from "./Signal";
+import { describe, expect, it } from "vitest";
+import { Button, Field, TextInput } from "./Signal";
 
 describe("Signal React controls", () => {
   it("associates field label, description and error", () => {
@@ -36,47 +32,5 @@ describe("Signal React controls", () => {
       "aria-busy",
       "true",
     );
-  });
-
-  it("changes tabs and switch state from the keyboard", async () => {
-    const onTab = vi.fn();
-    const onSwitch = vi.fn();
-    const user = userEvent.setup();
-    render(
-      <>
-        <Tabs
-          label="Demo"
-          tabs={[
-            { id: "a", label: "Alpha" },
-            { id: "blocked", label: "Blocked", disabled: true },
-            { id: "b", label: "Beta" },
-          ]}
-          active="a"
-          onChange={onTab}
-        />
-        <Switch label="Enabled" onChange={onSwitch} />
-      </>,
-    );
-    await user.click(screen.getByRole("tab", { name: "Beta" }));
-    await user.click(screen.getByRole("tab", { name: "Alpha" }));
-    await user.keyboard("{ArrowRight}");
-    expect(onTab).toHaveBeenCalledWith("b");
-    expect(screen.getByRole("tab", { name: "Beta" })).toHaveFocus();
-    expect(screen.getByRole("tab", { name: "Blocked" })).toBeDisabled();
-    // HS-111-01: the boolean species is the checkbox gadget — a real
-    // checkbox input, never a role="switch" slider.
-    await user.click(screen.getByRole("checkbox", { name: "Enabled" }));
-    expect(onSwitch).toHaveBeenCalled();
-  });
-
-  it("uses a live region for success and an alert for errors", () => {
-    render(
-      <>
-        <InlineMessage tone="success">Saved</InlineMessage>
-        <InlineMessage tone="error">Failed</InlineMessage>
-      </>,
-    );
-    expect(screen.getByRole("status")).toHaveTextContent("Saved");
-    expect(screen.getByRole("alert")).toHaveTextContent("Failed");
   });
 });

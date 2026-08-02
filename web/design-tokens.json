@@ -615,10 +615,6 @@
         "value": "var(--radius-lg)"
       },
       {
-        "name": "--radius-5",
-        "value": "18px"
-      },
-      {
         "name": "--elev-0",
         "value": "none"
       },

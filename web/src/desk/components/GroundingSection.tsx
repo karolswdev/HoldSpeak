@@ -19,7 +19,7 @@ import {
   type GroundingMeeting,
   type GroundingSelection,
 } from "../grounding";
-import { CheckGadget, LedMeter } from "../surface/gadgets";
+import { CheckGadget, FoldGadget, LedMeter } from "../surface/gadgets";
 
 const fmt = (n: number): string =>
   n >= 1000 ? `${(n / 1000).toFixed(1)}k` : String(n);
@@ -154,36 +154,34 @@ export function GroundingSection(props: {
         (draggingObject ? " is-drop-ready" : "")
       }
     >
-      <button
-        type="button"
-        className="desk-ground-head"
-        aria-expanded={open}
-        onClick={() => setOpen((v) => !v)}
-      >
-        <span
-          className={
-            "desk-ground-glyph" + (groundingIsEmpty(selection) ? "" : " is-on")
-          }
-          aria-hidden="true"
-        >
-          ▤
-        </span>
-        <span className="desk-ground-title">
-          {groundingIsEmpty(selection)
-            ? "Ground this ask"
-            : `Grounded on ${groundingLabel(selection)}`}
-        </span>
-        {!groundingIsEmpty(selection) && (
-          <span className="surface-token" data-tone={tone}>
-            {fmt(used)} / {fmt(limitTokens)} tok
+      <FoldGadget
+        className="desk-ground-fold"
+        glyph={
+          <span
+            className={
+              "desk-ground-glyph" +
+              (groundingIsEmpty(selection) ? "" : " is-on")
+            }
+          >
+            ▤
           </span>
-        )}
-        <span className="desk-ground-chev" aria-hidden="true">
-          {open ? "▴" : "▾"}
-        </span>
-      </button>
-
-      {open && (
+        }
+        title={
+          groundingIsEmpty(selection)
+            ? "Ground this ask"
+            : `Grounded on ${groundingLabel(selection)}`
+        }
+        token={
+          groundingIsEmpty(selection) ? undefined : (
+            <span className="surface-token" data-tone={tone}>
+              {fmt(used)} / {fmt(limitTokens)} tok
+            </span>
+          )
+        }
+        open={open}
+        onToggle={setOpen}
+      >
+        {open && (
         <div className="desk-ground-body">
           {meter && !groundingIsEmpty(selection) && (
             <LedMeter label="CTX" value={frac} />
@@ -372,7 +370,8 @@ export function GroundingSection(props: {
             </>
           )}
         </div>
-      )}
+        )}
+      </FoldGadget>
     </div>
   );
 }

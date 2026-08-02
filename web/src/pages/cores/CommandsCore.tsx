@@ -4,14 +4,14 @@
 // in-surface section; delete is an inline two-step. Wire calls
 // unchanged.
 import { useState } from "react";
+import { Button } from "../../components/signal/Signal";
 import {
-  Button,
-  Field,
-  InlineMessage,
-  Select,
-  Switch,
-  TextInput,
-} from "../../components/signal/Signal";
+  CheckGadget,
+  CycleGadget,
+  GadgetGroup,
+  GadgetRow,
+  StringGadget,
+} from "../../desk/surface/gadgets";
 import { apiFetch, readableError, type JsonRecord } from "../../lib/api";
 import { useResource } from "../pageSupport";
 import type { CoreProps } from "./ActivityCore";
@@ -106,11 +106,16 @@ export function CommandsCore({ hero }: CoreProps) {
       >
         Add command
       </Button>
-      <Switch
-        label={enabled ? "Commands on" : "Commands off"}
-        checked={enabled}
-        onChange={(event) => void persist(items, event.target.checked)}
-      />
+      <span className="gadget-checkline">
+        <CheckGadget
+          label="Commands enabled"
+          checked={enabled}
+          onChange={(next) => void persist(items, next)}
+        />
+        <span className="gadget-checkline-word">
+          {enabled ? "Commands on" : "Commands off"}
+        </span>
+      </span>
     </>
   );
   return (
@@ -121,9 +126,13 @@ export function CommandsCore({ hero }: CoreProps) {
         <SurfaceVerbs status={`${items.length} ${items.length === 1 ? "command" : "commands"}`}>{verbs}</SurfaceVerbs>
       )}
       {message ? (
-        <InlineMessage tone={message.error ? "error" : "success"}>
-          {message.text}
-        </InlineMessage>
+        message.error ? (
+          <SurfaceState error={message.text} />
+        ) : (
+          <p className="surface-receipt-line" data-tone="ok" role="status">
+            ✓ {message.text}
+          </p>
+        )
       ) : null}
       <SurfaceState
         loading={resource.loading}
@@ -138,15 +147,13 @@ export function CommandsCore({ hero }: CoreProps) {
                 emptyLabel="No voice commands"
                 emptyGlyph="❝"
               />
-              <div className="surface-actions is-centered">
-                <Button
-                  variant="primary"
-                  dense
-                  onClick={() => setEditing({ index: -1, macro: blank() })}
-                >
-                  Add your first command
-                </Button>
-              </div>
+              <button
+                type="button"
+                className="gadget-table-add"
+                onClick={() => setEditing({ index: -1, macro: blank() })}
+              >
+                + ADD COMMAND
+              </button>
             </>
           ) : (
             <SurfaceRows>
@@ -200,87 +207,75 @@ export function CommandsCore({ hero }: CoreProps) {
               </Button>
             }
           >
-            <Field
-              label="Spoken keyword"
-              description={`Matches: ${
-                editing.macro.keyword
-                  .trim()
-                  .toLowerCase()
-                  .replace(/[.!?,]+$/, "") || "—"
-              }`}
-            >
-              {({ id, describedBy }) => (
-                <TextInput
-                  id={id}
-                  aria-describedby={describedBy}
+            <GadgetGroup>
+              <GadgetRow
+                label="Spoken keyword"
+                fact={
+                  editing.macro.keyword
+                    .trim()
+                    .toLowerCase()
+                    .replace(/[.!?,]+$/, "") || "—"
+                }
+              >
+                <StringGadget
+                  label="Spoken keyword"
                   value={editing.macro.keyword}
-                  onChange={(event) =>
+                  onChange={(next) =>
                     setEditing({
                       ...editing,
-                      macro: { ...editing.macro, keyword: event.target.value },
+                      macro: { ...editing.macro, keyword: next },
                     })
                   }
                 />
-              )}
-            </Field>
-            <Field label="Command behavior">
-              {({ id }) => (
-                <Select
-                  id={id}
+              </GadgetRow>
+              <GadgetRow label="Command behavior">
+                <CycleGadget
+                  label="Command behavior"
                   value={editing.macro.action.kind}
-                  onChange={(event) =>
+                  options={[
+                    { value: "open_url", label: "Open URL" },
+                    { value: "launch_app", label: "Launch app" },
+                    { value: "shell", label: "Shell command" },
+                    { value: "type_text", label: "Type text" },
+                  ]}
+                  onChange={(kind) =>
                     setEditing({
                       ...editing,
                       macro: {
                         ...editing.macro,
-                        action: {
-                          ...editing.macro.action,
-                          kind: event.target.value,
-                        },
-                      },
-                    })
-                  }
-                >
-                  <option value="open_url">Open URL</option>
-                  <option value="launch_app">Launch app</option>
-                  <option value="shell">Shell command</option>
-                  <option value="type_text">Type text</option>
-                </Select>
-              )}
-            </Field>
-            <Field
-              label="Payload"
-              description={
-                editing.macro.action.payload
-                  ? preview(editing.macro)
-                  : "Enter exactly what this command should use."
-              }
-            >
-              {({ id, describedBy }) => (
-                <TextInput
-                  id={id}
-                  aria-describedby={describedBy}
-                  value={editing.macro.action.payload}
-                  onChange={(event) =>
-                    setEditing({
-                      ...editing,
-                      macro: {
-                        ...editing.macro,
-                        action: {
-                          ...editing.macro.action,
-                          payload: event.target.value,
-                        },
+                        action: { ...editing.macro.action, kind },
                       },
                     })
                   }
                 />
-              )}
-            </Field>
+              </GadgetRow>
+              <GadgetRow
+                label="Payload"
+                fact={
+                  editing.macro.action.payload
+                    ? preview(editing.macro)
+                    : undefined
+                }
+              >
+                <StringGadget
+                  label="Payload"
+                  value={editing.macro.action.payload}
+                  onChange={(payload) =>
+                    setEditing({
+                      ...editing,
+                      macro: {
+                        ...editing.macro,
+                        action: { ...editing.macro.action, payload },
+                      },
+                    })
+                  }
+                />
+              </GadgetRow>
+            </GadgetGroup>
             {editing.macro.action.kind === "shell" ? (
-              <InlineMessage tone="warning">
-                This command runs code on your machine after the spoken keyword
-                matches.
-              </InlineMessage>
+              <p className="surface-receipt-line" data-tone="warn">
+                ⚠ RUNS CODE ON THIS MACHINE WHEN THE KEYWORD MATCHES
+              </p>
             ) : null}
             <div className="surface-actions">
               <Button
