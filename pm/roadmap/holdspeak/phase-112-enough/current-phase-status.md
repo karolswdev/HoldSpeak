@@ -73,7 +73,7 @@ it does not absorb it — it names it in the final summary.
 | HS-112-02 | Speak speaks | done | [story-02-speak-speaks](./story-02-speak-speaks.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-112-03 | The architect's desk | done | [story-03-architects-desk](./story-03-architects-desk.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-112-04 | The plain story | done | [story-04-plain-story](./story-04-plain-story.md) | [evidence-story-04](./evidence-story-04.md) |
-| HS-112-05 | The sitting walk | backlog | [story-05-walk](./story-05-walk.md) | — |
+| HS-112-05 | The sitting walk | done | [story-05-walk](./story-05-walk.md) | [evidence-story-05](./evidence-story-05.md) |
 | HS-112-06 | The open mic | done | [story-06-open-mic](./story-06-open-mic.md) | [evidence-story-06](./evidence-story-06.md) |
 
 ## Where we are
