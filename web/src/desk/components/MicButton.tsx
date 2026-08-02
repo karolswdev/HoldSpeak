@@ -20,6 +20,7 @@ import {
   subscribeCaptureLevel,
 } from "../../lib/speakToFill";
 import { loadPendingVoice } from "../../lib/pendingVoice";
+import { SYSTEM } from "../systemSprites";
 import {
   DICTATION_FAILURES,
   dictationFailure,
@@ -93,7 +94,20 @@ export function MicButton({
         className={transport ? "gadget-transport-glyph" : undefined}
         aria-hidden="true"
       >
-        {state === "busy" ? "…" : "🎙"}
+        {/* HS-111-09 — the mic is a 16px system sprite (integer-true),
+            not the 🎙 emoji: the highest-traffic icon on the desk. */}
+        {state === "busy" ? (
+          "…"
+        ) : (
+          <img
+            src={SYSTEM.micGlyph}
+            alt=""
+            width={16}
+            height={16}
+            className="desk-chrome-sprite"
+            draggable={false}
+          />
+        )}
       </span>
       {transport ? <span className="gadget-transport-word">Talk</span> : null}
     </>

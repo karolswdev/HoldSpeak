@@ -1038,6 +1038,11 @@ function VerbGlyph({ kind }: { kind: string }) {
     "light-min": "M3 7h8",
     "light-max": "M7 3v8M3 7h8",
     "light-restore": "M4 7h6M7 4l-3 3 3 3M7 4l3 3-3 3",
+    // HS-111-09 — the dock verbs join the one SVG glyph language (the
+    // ⊞/⟲/✕ dingbats were kit-law leaks): overview = the 2×2 window
+    // grid, reset = the return loop.
+    overview: "M3 3.5h3.2v3.2H3Z M7.8 3.5H11v3.2H7.8Z M3 8.3h3.2v3.2H3Z M7.8 8.3H11v3.2H7.8Z",
+    reset: "M11 7a4 4 0 1 1-1.55-3.16 M9.2 2.2l.55 1.9-1.9.55",
   };
   return (
     <svg
@@ -1522,8 +1527,11 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
               });
             }}
           >
+            {/* HS-111-09 — integer-true: the 32px source renders at 32
+                CSS px (64 device px at DPR 2 = exact 2x); 24 was a 1.5x
+                smear. */}
             {DOCK_SPRITES[a.id] ? (
-              <img src={DOCK_SPRITES[a.id]} alt="" width={24} height={24} className="desk-dock-sprite" draggable={false} />
+              <img src={DOCK_SPRITES[a.id]} alt="" width={32} height={32} className="desk-dock-sprite" draggable={false} />
             ) : (
               <span aria-hidden="true">{a.glyph}</span>
             )}
@@ -1580,7 +1588,7 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
               aria-label={`Close ${c.label}`}
               onClick={c.close}
             >
-              ✕
+              <VerbGlyph kind="close" />
             </button>
           </span>
         );
@@ -1594,7 +1602,7 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
             title="Overview"
             onClick={() => toggleExpose(true)}
           >
-            ⊞
+            <VerbGlyph kind="overview" />
           </button>
           <button
             type="button"
@@ -1603,7 +1611,7 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
             title="Reset layout"
             onClick={() => useDesk.getState().resetLayout()}
           >
-            ⟲
+            <VerbGlyph kind="reset" />
           </button>
         </>
       ) : null}

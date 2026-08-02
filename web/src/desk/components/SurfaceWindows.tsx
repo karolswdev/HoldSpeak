@@ -141,7 +141,9 @@ const SURFACES: SurfaceRow[] = [
     key: "inspect-personas-and-coders",
     id: "surface-companion",
     title: "Agents",
-    glyph: "🤝",
+    // HS-111-09 — no emoji as icons: the Agents face is the same
+    // type-scale character the dock fallback speaks.
+    glyph: "◉",
     eyebrow: "Companion",
     minW: 560,
     Core: lazy(() =>

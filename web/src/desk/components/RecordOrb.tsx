@@ -10,6 +10,7 @@ import { apiFetch } from "../../lib/api";
 import { useRuntimeBus } from "../../runtime/RuntimeBus";
 import { useDesk } from "../store";
 import { openSurfaceOr } from "../shell";
+import { SYSTEM } from "../systemSprites";
 
 export function RecordOrb() {
   const state = useDesk((s) => s.recording);
@@ -70,7 +71,17 @@ export function RecordOrb() {
         title={recording ? "Stop recording" : "Record a meeting"}
         disabled={state === "busy"}
       >
-        <span className="desk-orb-core" aria-hidden="true" />
+        {/* HS-111-09 — the record key is the 40px system sprite
+            (80 device px at DPR 2, exact 2x): Signal Workbench material,
+            not the macOS gloss gradient it replaces. */}
+        <img
+          src={SYSTEM.recordOrb}
+          alt=""
+          width={40}
+          height={40}
+          className="desk-orb-face desk-chrome-sprite"
+          draggable={false}
+        />
       </button>
     </div>
   );

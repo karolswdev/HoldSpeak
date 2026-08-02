@@ -141,7 +141,9 @@ export const fromWireRecipe = (a: any): DeskItem => ({
   kind: "recipe",
   id: a.id,
   name: a.name,
-  avatar: a.avatar || "🤖",
+  // HS-111-09 — no 🤖 default: an empty avatar renders as the automaton
+  // sprite (AgentAvatar), the family that already owns the metaphor.
+  avatar: a.avatar || "",
   role: a.role || "",
   systemPrompt: a.system_prompt || "",
   userTemplate: a.user_template || "",

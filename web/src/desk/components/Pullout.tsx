@@ -12,6 +12,7 @@ import { useDesk } from "../store";
 import { openSurfaceOr } from "../shell";
 import { parseLinearGraph, stepLabel } from "../graph";
 import { MicButton } from "./MicButton";
+import { AgentAvatar } from "./AgentAvatar";
 import { lineage } from "../lineage";
 import { useSteering } from "../steering";
 import { objectByRef, objGlow, type WorldObject } from "../world";
@@ -547,7 +548,7 @@ export function Pullout({
           <section className="desk-pullout-agent">
             <div className="desk-chat-hello">
               <span className="desk-chat-hello-avatar" aria-hidden="true">
-                {String(ir.avatar || "🤖")}
+                <AgentAvatar avatar={String(ir.avatar || "")} id={o.id} size={32} />
               </span>
               <strong className="surface-primary">{o.title}</strong>
               {ir.role ? <small>{String(ir.role)}</small> : null}

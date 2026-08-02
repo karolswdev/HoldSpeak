@@ -23,6 +23,7 @@ import {
   type ChatTurn,
 } from "../chat";
 import { keepAsk } from "../ask";
+import { AgentAvatar } from "./AgentAvatar";
 import {
   groundingIsEmpty,
   groundingTokens,
@@ -59,7 +60,9 @@ export function PersonaChat(props: { personaId: string }) {
       return {
         id: personaId,
         name,
-        avatar: "🖥️",
+        // HS-111-09 — no emoji: empty avatar wears the cartridge sprite
+        // (the model family) via AgentAvatar.
+        avatar: "",
         role: "hub model",
         profileId: "",
       } as any;
@@ -211,12 +214,17 @@ export function PersonaChat(props: { personaId: string }) {
   return (
     <DeskWindowFrame
       id="chat"
-      glyph="💬"
+      glyph="❝"
       label={name}
       className="desk-pullout desk-chat"
       icon={
         <span className="desk-chat-avatar" aria-hidden="true">
-          {String(persona.avatar || "🤖")}
+          <AgentAvatar
+            avatar={persona.avatar}
+            id={personaId}
+            kind={isModelChat(personaId) ? "model" : "agent"}
+            size={16}
+          />
         </span>
       }
       title={name}
@@ -241,7 +249,12 @@ export function PersonaChat(props: { personaId: string }) {
       <div className="desk-pullout-body desk-chat-scroll">
         <header className="surface-record-head">
           <span className="surface-record-glyph" aria-hidden="true">
-            {String(persona.avatar || "🤖")}
+            <AgentAvatar
+              avatar={persona.avatar}
+              id={personaId}
+              kind={isModelChat(personaId) ? "model" : "agent"}
+              size={32}
+            />
           </span>
           <span className="surface-record-id">
             <strong className="surface-primary">{name}</strong>
