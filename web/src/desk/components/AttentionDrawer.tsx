@@ -6,6 +6,7 @@ import {
   humanizeWireValue,
 } from "../../lib/productLanguage";
 import { useProjections } from "../projections";
+import { CycleGadget, StringGadget } from "../surface/gadgets";
 import {
   DeskWindowFrame,
   announceLauncher,
@@ -90,25 +91,26 @@ export function AttentionDrawer() {
           >
             <label>
               <span>Search</span>
-              <input
+              <StringGadget
+                label="Search receipts"
                 value={store.query}
-                onChange={(event) => store.setQuery(event.target.value)}
+                onChange={(next) => store.setQuery(next)}
               />
             </label>
             <label>
               <span>Show</span>
-              <select
+              <CycleGadget
+                label="Show"
                 value={store.kind}
-                onChange={(event) =>
-                  store.setKind(
-                    event.target.value as "" | "attention" | "receipt",
-                  )
+                options={[
+                  { value: "", label: "Everything" },
+                  { value: "attention", label: "Needs / running" },
+                  { value: "receipt", label: "Receipts" },
+                ]}
+                onChange={(next) =>
+                  store.setKind(next as "" | "attention" | "receipt")
                 }
-              >
-                <option value="">Everything</option>
-                <option value="attention">Needs / running</option>
-                <option value="receipt">Receipts</option>
-              </select>
+              />
             </label>
             <button type="submit">Filter</button>
           </form>

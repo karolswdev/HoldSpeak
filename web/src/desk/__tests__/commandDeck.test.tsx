@@ -41,7 +41,7 @@ function open() {
     </MemoryRouter>,
   );
   fireEvent.click(screen.getByRole("button", { name: /Search/ }));
-  return screen.getByRole("searchbox", {
+  return screen.getByRole("textbox", {
     name: "Search tools and Desk items",
   });
 }
@@ -94,7 +94,7 @@ describe("the deck", () => {
     fireEvent.change(deck, { target: { value: "meet" } });
     fireEvent.keyDown(document, { key: "Escape" });
     expect(
-      screen.getByRole("searchbox", { name: "Search tools and Desk items" }),
+      screen.getByRole("textbox", { name: "Search tools and Desk items" }),
     ).toHaveValue("");
     fireEvent.keyDown(document, { key: "Escape" });
     expect(usePalette.getState().open).toBe(false);

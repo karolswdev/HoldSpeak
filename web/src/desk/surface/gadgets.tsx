@@ -12,6 +12,7 @@ import {
   type CSSProperties,
   type KeyboardEvent,
   type ReactNode,
+  type Ref,
 } from "react";
 import { Button } from "../../components/signal/Signal";
 import { MicButton } from "../components/MicButton";
@@ -222,6 +223,7 @@ export function StringGadget({
   disabled,
   autoFocus,
   onKeyDown,
+  inputRef,
 }: {
   label: string;
   value: string;
@@ -233,10 +235,13 @@ export function StringGadget({
   disabled?: boolean;
   autoFocus?: boolean;
   onKeyDown?: (event: KeyboardEvent<HTMLInputElement>) => void;
+  /** Chrome consumers (the palette) focus the well imperatively. */
+  inputRef?: Ref<HTMLInputElement>;
 }) {
   return (
     <span className="gadget-string">
       <input
+        ref={inputRef}
         aria-label={label}
         type={type}
         value={value}

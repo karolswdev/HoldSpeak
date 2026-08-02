@@ -401,17 +401,10 @@
   display: block;
   margin-top: 8px;
 }
-.desk-next .desk-tool-search input {
-  width: 100%;
+/* HS-111-10 mic sweep: the deck's query well is StringGadget; only
+   the height is coerced to the deck rhythm. */
+.desk-next .desk-tool-search .gadget-string {
   min-height: 28px;
-  padding: 0 8px;
-  border: 1px solid var(--border);
-  border-radius: 0;
-  background: var(--surface-1);
-  box-shadow: var(--desk-window-etch);
-  color: var(--text);
-  font-family: var(--font-mono);
-  font-size: 12px;
 }
 /* HS-111-07: the command deck — 26px mono ledger rows in section
    bands (VERBS / PROGRAMS / OBJECTS / SETTINGS / MEETINGS); the
@@ -2710,8 +2703,6 @@
   display: block;
   margin-bottom: 4px;
 }
-.desk-next .desk-attention-filters input,
-.desk-next .desk-attention-filters select,
 .desk-next .desk-attention-filters button,
 .desk-next .desk-attention-more {
   width: 100%;
@@ -2720,6 +2711,12 @@
   border-radius: 2px;
   background: var(--surface-1);
   color: var(--text);
+}
+/* HS-111-10: the search well is the kit's StringGadget (mic sweep);
+   only its height is coerced to the filter-row rhythm. */
+.desk-next .desk-attention-filters .gadget-string,
+.desk-next .desk-attention-filters .gadget-cycle {
+  min-height: 40px;
 }
 .desk-next .desk-attention-filters button {
   align-self: end;
@@ -2977,6 +2974,10 @@
   letter-spacing: 0.05em;
 }
 .desk-next .desk-list-face .desk-surface {
+  /* HS-111-10 walk: in the ledger head the back verb FLOWS in the
+     census line — the fixed chrome position (spatial dive) was
+     stamping "← ALL" over ITEMS at 393. */
+  position: static;
   margin-right: 10px;
   color: var(--accent);
   font: inherit;
@@ -4398,7 +4399,12 @@
   align-items: center;
   gap: 10px;
   min-height: 26px;
-  background: var(--desk-window-well);
+  /* HS-111-10 walk: the receipt bar is sticky over scrolled faces —
+     the well tint must ride an OPAQUE surface (110 law: no see-through
+     chrome; the door face was bleeding into the bar). */
+  background:
+    linear-gradient(var(--desk-window-well), var(--desk-window-well)),
+    var(--desk-window-bg, var(--surface-1));
   font-family: var(--font-mono);
   font-size: var(--desk-surface-label-size);
   letter-spacing: 0.04em;
@@ -4679,16 +4685,10 @@
   font-size: var(--desk-surface-detail-size);
   color: var(--text-muted);
 }
-.desk-next .desk-gate-reason {
+/* HS-111-10 mic sweep: the deny-reason well is StringGadget. */
+.desk-next .desk-shade-do .gadget-string {
   flex: 1;
   min-width: 0;
-  height: 24px;
-  padding: 0 8px;
-  border: 1px solid var(--line, var(--wash-2));
-  border-radius: var(--radius-sm);
-  background: var(--surface, transparent);
-  color: var(--text);
-  font-size: var(--desk-surface-detail-size);
 }
 
 /* HS-104-05 — the session receipt line: one line, minimal ink. */
@@ -5088,13 +5088,11 @@ body:has(.desk-next .desk-pullout:not(.is-card)) .ambient-qlippy {
   text-align: left;
   width: max-content;
 }
-.desk-info-window .info-name-input {
-  background: var(--field-bg);
-  border: 1px solid var(--field-border);
-  border-radius: var(--radius-sm);
-  color: var(--text);
-  font-size: var(--font-size-sm);
-  padding: 0 var(--space-1);
+/* HS-111-10 mic sweep: the rename well is StringGadget; the wrapper
+   only bounds its width inside the identity row. */
+.desk-info-window .info-name-edit {
+  display: block;
+  max-width: 260px;
 }
 .desk-info-window .info-props {
   display: grid;

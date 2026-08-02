@@ -8,6 +8,7 @@ import { apiFetch, type JsonRecord } from "../../lib/api";
 import { gateAge, useGate } from "../gate";
 import { useProjections } from "../projections";
 import { humanTime } from "../surface/format";
+import { StringGadget } from "../surface/gadgets";
 
 type Correction = Record<string, unknown>;
 
@@ -117,13 +118,12 @@ export function SystemShade({
               <small>waiting {gateAge(proposal)}</small>
               {denyingId === proposal.id ? (
                 <span className="desk-shade-do">
-                  <input
-                    type="text"
-                    className="desk-gate-reason"
+                  <StringGadget
+                    label="Deny reason"
                     placeholder="Reason for the agent, one line"
                     value={denyReason}
                     autoFocus
-                    onChange={(event) => setDenyReason(event.target.value)}
+                    onChange={setDenyReason}
                     onKeyDown={(event) => {
                       if (event.key === "Enter") {
                         void gate.decide(proposal.id, "denied", denyReason);
