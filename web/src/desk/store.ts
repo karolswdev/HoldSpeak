@@ -396,6 +396,14 @@ interface DeskState {
   toggleMaximizePanel(id: string): void;
   /** Forget every arranged rect and lifecycle mark (the reset verb). */
   resetLayout(): void;
+  /** HS-112-03 — apply the packaged architect's-desk seed (idempotent;
+   * additive by id, never destructive). */
+  seedDesk(): Promise<boolean>;
+  /** HS-112-03 — the desk's first destructive verb: tombstone every desk
+   * primitive on the hub, re-seed, then sweep the ghost layout keys the
+   * dead desk left behind. Confirmed in-world (Prefs) BEFORE this runs.
+   * Returns the hub's counts, or null on refusal/unreachable. */
+  resetDesk(): Promise<{ tombstoned: number; seeded: number } | null>;
   /** Forget a window's arranged rect (back to its CSS default corner). */
   resetPanelRect(id: string): void;
   /** Bring a desk window to the front of the focus order. */
@@ -1040,4 +1048,70 @@ export const useDesk = create<DeskState>((set, get) => ({
     });
     savePanelLayout({}, [], [], []);
   },
+
+  async seedDesk() {
+    try {
+      const res = await apiRequest("/api/desk/seed", { method: "POST" });
+      if (!res.ok) return false;
+    } catch {
+      return false;
+    }
+    await get().refresh();
+    return true;
+  },
+
+  async resetDesk() {
+    let counts: { tombstoned: number; seeded: number };
+    try {
+      const res = await apiRequest("/api/desk/reset", { method: "POST" });
+      if (!res.ok) return null;
+      const data = await res.json().catch(() => ({}));
+      counts = {
+        tombstoned: Number(data?.tombstoned_total ?? 0),
+        seeded: Number(data?.seeded_total ?? 0),
+      };
+    } catch {
+      return null;
+    }
+    // The dead desk's ghost layout: positions, rects, widths, and open
+    // sets keyed by ids that no longer live. Sweep the persisted keys
+    // (resetLayout covers only the panel layout) and the in-memory
+    // mirrors, then settle to the seeded truth.
+    for (const key of GHOST_LAYOUT_KEYS) {
+      try {
+        localStorage.removeItem(key);
+      } catch {
+        /* storage may be unavailable; the ghost just lingers until it is */
+      }
+    }
+    set({
+      positions: {},
+      zoneWidths: {},
+      panelRects: {},
+      panelSaved: [],
+      panelOrder: [],
+      panelMin: [],
+      panelMax: [],
+      pullouts: [],
+      zoneWindows: [],
+      zoneViewPrefs: {},
+      infoWindows: [],
+      divedZone: null,
+      editingId: null,
+      selectedIds: [],
+    });
+    await get().refresh();
+    return counts;
+  },
 }));
+
+/** HS-112-03 — every localStorage key that layouts the desk by object
+ * id; a reset sweeps them all (the pre-charter survey's ghost list). */
+export const GHOST_LAYOUT_KEYS = [
+  "hs.diorama.pos",
+  "hs.desk.panels",
+  "hs.desk.zonew",
+  "hs.desk.zone-views",
+  "hs.desk.zone-windows",
+  "hs.desk.open-windows",
+] as const;

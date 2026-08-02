@@ -12,6 +12,7 @@ import {
   verbsFor,
 } from "../verbRegistry";
 import { DESK_TOOLS } from "../tools";
+import { registerSurface } from "../shell";
 
 const CTX = { selectedRef: null };
 
@@ -58,9 +59,24 @@ describe("the verb registry (HS-105-05 / HS-111-07 v2)", () => {
       "desk.arrange",
       "desk.overview",
       "desk.reset-layout",
+      "desk.reset-to-seed",
       "desk.refresh",
     ])
       expect(floor).toContain(id);
+  });
+
+  it("reset-to-seed opens the Prefs Desk module — never destroys directly (HS-112-03)", () => {
+    const verb = VERBS.find((v) => v.id === "desk.reset-to-seed")!;
+    expect(verb.scope).toBe("floor");
+    expect(verb.ghost(CTX)).toBeNull();
+    const opened: Array<string | undefined> = [];
+    const off = registerSurface("configure-settings", (scope) =>
+      opened.push(scope),
+    );
+    verb.run(CTX);
+    off();
+    // The verb's whole act is opening the armed confirm face.
+    expect(opened).toEqual(["desk"]);
   });
 
   it("the Go menu derives from DESK_TOOLS — the deck's same truth", () => {

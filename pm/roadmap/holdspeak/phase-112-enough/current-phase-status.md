@@ -71,14 +71,36 @@ it does not absorb it — it names it in the final summary.
 |---|---|---|---|---|
 | HS-112-01 | One dial | ready | [story-01-one-dial](./story-01-one-dial.md) | — |
 | HS-112-02 | Speak speaks | backlog | [story-02-speak-speaks](./story-02-speak-speaks.md) | — |
-| HS-112-03 | The architect's desk | backlog | [story-03-architects-desk](./story-03-architects-desk.md) | — |
+| HS-112-03 | The architect's desk | in-progress | [story-03-architects-desk](./story-03-architects-desk.md) | — |
 | HS-112-04 | The plain story | backlog | [story-04-plain-story](./story-04-plain-story.md) | — |
 | HS-112-05 | The sitting walk | backlog | [story-05-walk](./story-05-walk.md) | — |
 | HS-112-06 | The open mic | backlog | [story-06-open-mic](./story-06-open-mic.md) | — |
 
 ## Where we are
 
-0/6. Chartered 2026-08-02 from the owner's post-111 verdict; the
+0/6 flipped; 03 BUILT (in-progress pending the live screenshot
+walk). HS-112-03 implemented 2026-08-02: the packaged fresh-desk
+seed ships in the wheel (holdspeak/seeds/fresh-desk.yaml — six
+hs-desk-* drawers: ADRs, Meetings, Rules, Decisions, Reference,
+Inbox; two authored starter notes: the ADR template and the
+Working rules), applied by a repository-level idempotent seeder
+(holdspeak/db/seed.py), reachable as `holdspeak seed`, POST
+/api/desk/seed, an EmptyDesk "Seed the desk" chip, and the Prefs
+Desk module. Reset-to-seed is the desk's first destructive act,
+done honestly: tombstone-only sweep (sync include_deleted ships the
+deletions — a paired device can never resurrect the clutter; pinned
+by test), re-seed, then the six ghost layout keys swept only after
+the wire says ok; the ConfirmVerb arming (RESET TO SEED → danger
+RESET DESK?, 3s auto-disarm) with fact labels naming what RESETS
+and what KEEPS (meetings, journal, settings, runs-on targets), and
+a TOMBSTONED N · SEEDED M receipt. The desk.reset-to-seed verb
+never destroys from a menu tap — it opens the Prefs face. UAT
+quarantine + fresh-desk empty assertions hold (no auto-seed at
+boot). 112 targeted python + 10-test story suite + 453 web green;
+full-suite failures triaged pre-existing/environmental in the
+report. The flip awaits the live walk: first boot, drawer open,
+ADR template read, reset confirm + after, 1440+393. Chartered
+2026-08-02. Chartered 2026-08-02 from the owner's post-111 verdict; the
 same day the owner chartered the open-mic rider live (HS-112-06 —
 the voice-first Desk: one mic grant, continuous stream, VAD; PTT
 byte-identical). The pre-charter survey (three parallel audits: the

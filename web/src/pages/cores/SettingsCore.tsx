@@ -32,6 +32,7 @@ import {
   EXPORT_FORMAT_OPTIONS,
   INTEL_PROVIDER_OPTIONS,
   LANGUAGE_OPTIONS,
+  DeskModule,
   MIR_PROFILE_OPTIONS,
   PREF_MODULES,
   PrefsFace,
@@ -132,7 +133,7 @@ function SettingsFace({ hero, scope }: CoreProps) {
   const authority = useResource<JsonRecord>("/api/authority/policy", {});
   // null = the drawer face; a module id = that module owns the body.
   const [moduleId, setModuleId] = useState<string | null>(
-    integrationSubject ? "integrations" : null,
+    integrationSubject ? "integrations" : scope === "desk" ? "desk" : null,
   );
   const [highlight, setHighlight] = useState("");
   const [saving, setSaving] = useState(false);
@@ -230,6 +231,11 @@ function SettingsFace({ hero, scope }: CoreProps) {
   useEffect(() => {
     if (integrationSubject) setModuleId("integrations");
   }, [integrationSubject]);
+
+  // HS-112-03 — the reset-to-seed verb lands on the Desk module directly.
+  useEffect(() => {
+    if (scope === "desk") setModuleId("desk");
+  }, [scope]);
 
   /* ── the deep setting index for the drawer filter ── */
   const deepIndex = useMemo<DeepHit[]>(() => {
@@ -772,6 +778,8 @@ function SettingsFace({ hero, scope }: CoreProps) {
             onCommit={(next) => update(["dictation", "runtime"], next)}
           />
         );
+      case "desk":
+        return <DeskModule />;
       case "integrations":
         return (
           <GadgetGroup label="Credentials">
