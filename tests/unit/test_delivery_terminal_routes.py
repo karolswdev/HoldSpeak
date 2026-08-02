@@ -15,7 +15,7 @@ from datetime import datetime, timezone
 from types import SimpleNamespace
 
 import pytest
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.testclient import TestClient
 
 from holdspeak.coder_steering import arm, clear_grants
@@ -28,12 +28,14 @@ from holdspeak.delivery.node_link import (
     NodeTokenStore,
 )
 from holdspeak.delivery.terminal import TerminalStreamService, TerminalTargetRegistry
+from holdspeak.principals import Principal, PrincipalKind
 from holdspeak.web.context import WebContext
 from holdspeak.web.routes.delivery_terminal import build_delivery_terminal_router
 
 WEB_TOKEN = "the-browser-token"
 KEY = "claude:hs94"
 T0 = datetime(2026, 7, 15, 12, 0, 0, tzinfo=timezone.utc)
+OWNER = Principal(PrincipalKind.OWNER, "owner-session")
 
 
 class FakeTmux:
@@ -111,6 +113,12 @@ def rig(tmp_path):
         command_source=service.claim_for_node,
     )
     app = FastAPI()
+
+    @app.middleware("http")
+    async def owner_principal(request: Request, call_next):
+        request.state.principal = OWNER
+        return await call_next(request)
+
     app.include_router(
         build_delivery_terminal_router(
             WebContext(get_state=lambda: {}),

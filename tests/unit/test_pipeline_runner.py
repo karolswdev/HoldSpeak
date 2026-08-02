@@ -4,8 +4,6 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta
 from types import SimpleNamespace
-from typing import Any
-
 import pytest
 
 from holdspeak.connector_pack_loader import (
@@ -25,6 +23,10 @@ from holdspeak.connector_sdk import (
     validate_manifest,
 )
 from holdspeak.db import Database, reset_database
+from holdspeak.principals import Principal, PrincipalKind
+
+
+OWNER = Principal(PrincipalKind.OWNER, "owner-session")
 
 
 # ──────────────────────── Manifest validation ────────────────────────
@@ -274,21 +276,23 @@ def test_plan_returns_topological_order_with_target_last(db):
         run_callable=make_runner("pipeline_target"),
     )
 
-    runner = PipelineRunner(db, registry=(upstream, upstream_b, pipeline))
+    runner = PipelineRunner(
+        db, principal=OWNER, registry=(upstream, upstream_b, pipeline)
+    )
     order = runner.plan("pipeline_target")
     assert order[-1] == "pipeline_target"
     assert set(order) == {"up_a", "up_b", "pipeline_target"}
 
 
 def test_plan_unknown_id_raises(db):
-    runner = PipelineRunner(db, registry=())
+    runner = PipelineRunner(db, principal=OWNER, registry=())
     with pytest.raises(UnknownPipelineError):
         runner.plan("nope")
 
 
 def test_plan_non_pipeline_raises(db):
     pack = _producer_pack(pack_id="prod", run_callable=lambda _db: None)
-    runner = PipelineRunner(db, registry=(pack,))
+    runner = PipelineRunner(db, principal=OWNER, registry=(pack,))
     with pytest.raises(NotAPipelineError):
         runner.plan("prod")
 
@@ -320,7 +324,9 @@ def test_run_executes_each_step_and_records_runs(db):
         run_callable=make_runner("pipe"),
     )
 
-    runner = PipelineRunner(db, registry=(upstream, pipeline))
+    runner = PipelineRunner(
+        db, principal=OWNER, registry=(upstream, pipeline)
+    )
     result = runner.run("pipe")
 
     assert result.succeeded is True
@@ -362,7 +368,7 @@ def test_run_skips_fresh_upstream(db):
     )
 
     runner = PipelineRunner(
-        db, registry=(upstream, pipeline), now=lambda: now
+        db, principal=OWNER, registry=(upstream, pipeline), now=lambda: now
     )
     result = runner.run("pipe_fresh")
 
@@ -401,7 +407,9 @@ def test_run_does_not_skip_target_on_freshness(db):
         succeeded=True,
     )
 
-    runner = PipelineRunner(db, registry=(upstream, pipeline), now=lambda: now)
+    runner = PipelineRunner(
+        db, principal=OWNER, registry=(upstream, pipeline), now=lambda: now
+    )
     result = runner.run("pipe2")
     assert "pipe2" in fired
     assert result.succeeded is True
@@ -420,7 +428,9 @@ def test_run_aborts_on_failed_step(db):
         run_callable=lambda _db, **_kwargs: None,
     )
 
-    runner = PipelineRunner(db, registry=(upstream, pipeline))
+    runner = PipelineRunner(
+        db, principal=OWNER, registry=(upstream, pipeline)
+    )
     result = runner.run("pipe_bad")
     assert result.succeeded is False
     assert [s.pack_id for s in result.steps] == ["up_bad"]
@@ -442,7 +452,9 @@ def test_run_reports_missing_runner_when_pack_has_no_run_callable(db):
         run_callable=lambda _db, **_kwargs: None,
     )
 
-    runner = PipelineRunner(db, registry=(upstream, pipeline))
+    runner = PipelineRunner(
+        db, principal=OWNER, registry=(upstream, pipeline)
+    )
     result = runner.run("pipe_stuck")
     assert result.succeeded is False
     assert result.steps[0].status == "missing_runner"

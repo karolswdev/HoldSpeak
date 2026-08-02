@@ -25,13 +25,16 @@ from ..activity_candidates import (
     preview_calendar_meeting_candidates,
 )
 from ..connector_sdk import ConnectorManifest, validate_manifest
+from ..principals import Principal
 
 DEFAULT_LIMIT: int = 50
 
 RECOGNIZED_DOMAINS: frozenset[str] = CALENDAR_DOMAINS
 
 
-def run(db: Any, *, limit: Optional[int] = None) -> dict[str, Any]:
+def run(
+    db: Any, *, principal: Principal, limit: Optional[int] = None
+) -> dict[str, Any]:
     """Pipeline-runner entry point. HS-13-06.
 
     Walks the local activity ledger for calendar / video-call
@@ -39,6 +42,7 @@ def run(db: Any, *, limit: Optional[int] = None) -> dict[str, Any]:
     `activity_meeting_candidates` row. Pure read-and-derive
     over local rows — no network, no CLI.
     """
+    del principal
     capped = max(1, min(int(limit if limit is not None else DEFAULT_LIMIT), 200))
     started_at = datetime.now()
     records = db.activity.list_activity_records(limit=max(capped * 4, 50))

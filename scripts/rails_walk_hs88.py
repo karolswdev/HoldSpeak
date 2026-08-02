@@ -25,10 +25,12 @@ from holdspeak import coder_steering, rails_observer
 from holdspeak.grounding import compose_steer
 from holdspeak.grounding_rails import hydrate_rails_refs
 from holdspeak.missioncontrol_bridge import events_payload, load_project_map
+from holdspeak.principals import Principal, PrincipalKind
 
 LLM = os.environ.get("HOLDSPEAK_PROOF_LLM", "http://192.168.1.43:8080")
 OUT = Path("pm/roadmap/holdspeak/phase-88-rails-aware-desk/screenshots")
 STORY = {"repo": "holdspeak", "project": "holdspeak", "kind": "story", "id": "HS-88-05"}
+OWNER = Principal(PrincipalKind.OWNER, "phase88-walk-owner")
 
 
 def beat(n: int, title: str) -> None:
@@ -49,7 +51,9 @@ def ask(prompt: str, *, system: str = "") -> str:
     ]
     body = json.dumps({"messages": msgs, "temperature": 0.0, "max_tokens": 80}).encode()
     req = urllib.request.Request(
-        f"{LLM}/v1/chat/completions", data=body, headers={"Content-Type": "application/json"}
+        f"{LLM}/v1/chat/completions",
+        data=body,
+        headers={"Content-Type": "application/json"},
     )
     with urllib.request.urlopen(req, timeout=60) as r:
         return json.loads(r.read())["choices"][0]["message"]["content"].strip()
@@ -62,18 +66,28 @@ def main() -> int:
 
     # BEAT 1 — Ground into an ask: a rail object is a receipt.
     beat(1, "Ground an open story into a run (receipt, not scrape)")
-    blocks, unknown = hydrate_rails_refs([STORY])
+    blocks, unknown = hydrate_rails_refs([STORY], principal=OWNER)
     assert not unknown and blocks, ("hydrate failed", unknown)
     b = blocks[0]
     story_file = Path(load_project_map()["projects"]["holdspeak"]) / (
         "pm/roadmap/holdspeak/phase-88-rails-aware-desk/story-05-walk-docs.md"
     )
-    assert b.text.strip() == story_file.read_text().strip(), "block is not the dw-named file"
+    assert b.text.strip() == story_file.read_text().strip(), (
+        "block is not the dw-named file"
+    )
     print(f"grounded {b.kind} {b.title!r} — {len(b.text)} chars, IS the dw-named file")
 
     # BEAT 3 (proven here alongside 1) — a bad ref refuses by name.
     _bad, bad_unknown = hydrate_rails_refs(
-        [{"repo": "holdspeak", "project": "holdspeak", "kind": "story", "id": "HS-404-04"}]
+        [
+            {
+                "repo": "holdspeak",
+                "project": "holdspeak",
+                "kind": "story",
+                "id": "HS-404-04",
+            }
+        ],
+        principal=OWNER,
     )
     assert bad_unknown == ["story:HS-404-04"]
     print("a bad ref refused by name:", bad_unknown)
@@ -98,19 +112,30 @@ def main() -> int:
     # BEAT 2b — Ground the same story into a STEER into a real pane.
     beat(3, "Ground a steer — the rail block lands in a real pane")
     session = f"hs88-walk-{uuid.uuid4().hex[:8]}"
-    subprocess.run(["tmux", "new-session", "-d", "-s", session, "sleep 120"], check=True, timeout=10)
+    subprocess.run(
+        ["tmux", "new-session", "-d", "-s", session, "sleep 120"],
+        check=True,
+        timeout=10,
+    )
     try:
         pane = subprocess.run(
             ["tmux", "list-panes", "-t", session, "-F", "#{pane_id}"],
-            check=True, capture_output=True, text=True, timeout=10,
+            check=True,
+            capture_output=True,
+            text=True,
+            timeout=10,
         ).stdout.strip()
         time.sleep(0.3)
         coder_steering.clear_grants()
         coder_steering.arm("claude:rails", f"{session}:0.0")
         composed = compose_steer("summarize this story", blocks)
         r = coder_steering.deliver(
-            "claude:rails", composed["text"], current_target=f"{session}:0.0",
-            agent="claude", submit=False, grounding_refs=composed["refs"],
+            "claude:rails",
+            composed["text"],
+            current_target=f"{session}:0.0",
+            agent="claude",
+            submit=False,
+            grounding_refs=composed["refs"],
             audit=lambda **kw: 1,
         )
         assert r["status"] == "delivered"
@@ -125,7 +150,9 @@ def main() -> int:
     # BEAT 4 — Observer: journal REAL rail events.
     beat(4, "Observer — journal real rail motion")
     events = []
-    for repo in events_payload(load_project_map(), tail=8).get("repos", []):
+    for repo in events_payload(load_project_map(), tail=8, principal=OWNER).get(
+        "repos", []
+    ):
         if repo.get("status") == "live":
             for e in repo.get("events", []) or []:
                 events.append({**e, "repo": repo.get("name", "")})
@@ -142,7 +169,11 @@ def main() -> int:
     # BEAT 5 — Observer restraint: read-only (the census, in-script).
     beat(5, "Observer restraint — read-only, no rails write path")
     src = Path("holdspeak/rails_observer.py").read_text()
-    for forbidden in ("build_dw_story_connector", "decide_proposal", "send_text_to_pane"):
+    for forbidden in (
+        "build_dw_story_connector",
+        "decide_proposal",
+        "send_text_to_pane",
+    ):
         assert forbidden not in src
     print("the observer holds no rails-write path — journaling only")
 
@@ -150,19 +181,33 @@ def main() -> int:
     beat(6, "Reach — a remote node's events, named and honestly live")
     clk = [1000.0]
     rails_observer.push_remote_envelope(
-        {"node": "walk-remote", "ts": "t1",
-         "events": [{"ts": "t1", "event": "story_status", "story": "HS-1", "detail": {"to": "done"}}]},
+        {
+            "node": "walk-remote",
+            "ts": "t1",
+            "events": [
+                {
+                    "ts": "t1",
+                    "event": "story_status",
+                    "story": "HS-1",
+                    "detail": {"to": "done"},
+                }
+            ],
+        },
         clock=lambda: clk[0],
     )
     drained = rails_observer.drain_remote_events(clock=lambda: clk[0])
     assert drained and drained[0]["origin_node"] == "walk-remote"
     body = rails_observer.journal_body(
-        rails_observer.summarize_batch(drained, summarize_fn=lambda s, u: "A remote flip.")
+        rails_observer.summarize_batch(
+            drained, summarize_fn=lambda s, u: "A remote flip."
+        )
     )
     assert "@walk-remote" in body
     clk[0] += rails_observer.REMOTE_LIVENESS_SECONDS + 1
     # The quiet node reads stale, and its stream drops on the next drain.
-    assert rails_observer.remote_node_liveness(clock=lambda: clk[0]) == {"walk-remote": False}
+    assert rails_observer.remote_node_liveness(clock=lambda: clk[0]) == {
+        "walk-remote": False
+    }
     assert rails_observer.drain_remote_events(clock=lambda: clk[0]) == []
     assert rails_observer.remote_node_liveness(clock=lambda: clk[0]) == {}
     print("remote events named @walk-remote; a quiet node reads stale, then drops")
@@ -173,7 +218,9 @@ def main() -> int:
     print("journal entries are notes tagged rails-journal — openable, groundable")
 
     (OUT / "walk-summary.json").write_text(json.dumps(results, indent=2))
-    print(f"\n{'=' * 70}\nRAILS WALK: PASS — the rails are desk-native material\n{'=' * 70}")
+    print(
+        f"\n{'=' * 70}\nRAILS WALK: PASS — the rails are desk-native material\n{'=' * 70}"
+    )
     return 0
 
 

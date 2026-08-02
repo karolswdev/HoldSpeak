@@ -15,6 +15,7 @@ from typing import Any, Iterable, Optional
 
 from ..activity_jira import CONNECTOR_ID
 from ..connector_sdk import ConnectorManifest, validate_manifest
+from ..principals import Principal
 
 # Allowed `jira` subcommand prefixes — read-only verbs only.
 # `jira issue view KEY --plain` is the canonical enrichment
@@ -31,7 +32,9 @@ DEFAULT_MAX_BYTES: int = 65536
 DEFAULT_LIMIT: int = 25
 
 
-def run(db: Any, *, limit: Optional[int] = None) -> dict[str, Any]:
+def run(
+    db: Any, *, principal: Principal, limit: Optional[int] = None
+) -> dict[str, Any]:
     """Pipeline-runner entry point. HS-13-06.
 
     Executes one batch of `jira issue view` enrichment over the
@@ -46,7 +49,9 @@ def run(db: Any, *, limit: Optional[int] = None) -> dict[str, Any]:
     records = []
     for entity_type in SUPPORTED_ENTITY_TYPES:
         records.extend(db.activity.list_activity_records(entity_type=entity_type, limit=capped))
-    results = run_jira_cli_enrichment(db, records, limit=capped)
+    results = run_jira_cli_enrichment(
+        db, records, limit=capped, principal=principal
+    )
     return {"connector_id": CONNECTOR_ID, "result_count": len(results)}
 
 

@@ -54,6 +54,8 @@ class OperationSpec:
     codec: Any
     required_capability: str
     interruption: str
+    claim_ttl_seconds: float = 30.0
+    execution_ttl_seconds: float = 3600.0
 
 
 def valid_ref(value: str) -> bool:

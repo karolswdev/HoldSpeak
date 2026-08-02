@@ -50,19 +50,22 @@ subsystem), and not a workflow engine. If the kernel becomes a
 universal `execute(dict)` service, this pivot has failed.
 
 The strategic payoff, stated at its HONEST strength (amendment 1,
-sol): **every consequential act by a cooperating, migrated HoldSpeak
-surface is a capability-checked, journaled, replayable operation.**
-The broker is an audit/consent boundary for cooperating code, not a
-security boundary against malicious Python — HoldSpeak is one
-process full of ambient effect authority, and a census test only
-catches bypasses someone listed. The stronger claim ("every action
-by ANY agent") becomes true only at the §5b confinement threshold:
-raw effect primitives moved into a privileged executor process,
-untrusted code holding warrants instead of imports. Until then,
-documentation and UI must not say "security boundary." Humans and
-agents share the same call schemas with different rights; the GUI,
-voice, ⌘K, the wire, and an agent's tool harness are all shells
-composing the same operations.
+sol): **every known consequential act by a cooperating HoldSpeak
+surface in the ratified census is capability-checked, journaled, and
+replayable.** Phase 108 emptied the transitional debt register. It
+also moved desktop keyboard and clipboard primitives behind a
+warrant-validating child process, so that production effect path is
+no longer protected by caller cooperation alone.
+
+The broker is not a general sandbox against arbitrary same-user
+Python: other ambient OS capabilities still exist, and installed
+Python source can be imported by code already trusted to execute.
+The stronger claim ("every action by ANY agent") therefore still
+requires the complete §5b process/OS isolation threshold before
+untrusted plugins or agent-authored code execute. Humans and agents
+share the same call schemas with different rights; the GUI, voice,
+⌘K, the wire, and an agent's tool harness are all shells composing
+the same operations.
 
 ## 2. The de facto kernel today (the honest inventory)
 
@@ -243,6 +246,25 @@ the tmux transport directly. The enforcement path, phased:
   threshold, every kernel security claim in docs and UI is scoped
   to cooperating code (§1).
 
+**Phase 108 implementation (desktop effect slice).** The raw
+keyboard and clipboard statements moved from `holdspeak/typer.py`
+to `holdspeak/privileged_effects/desktop_driver.py`.
+`TextTyper` now owns no ambient primitive and raises
+`desktop_effect_warrant_required` without the claimed operation,
+signed warrant, exact request, and executor endpoint. An anonymous
+`multiprocessing` pipe reaches a spawned child that validates the
+HMAC, policy version, exact IPC/request shape, payload and target
+bindings, placement, both deadlines, one-use ID, and current focus
+generation before it imports the raw driver. Replays, forgeries,
+payload swaps, stale focus, expiry, and malformed shapes are pinned
+negative tests. A timeout is indeterminate and the parent never
+restarts or retries the act.
+
+This satisfies confinement for HoldSpeak's production desktop
+typing path and closes A01-A10. It does not grant permission to run
+untrusted Python in the ordinary web process; full process/OS
+isolation remains the named prerequisite for doing that.
+
 ## 6. Processes, the journal, and the bus
 
 **Process model = a projection, not a rewrite.** One index
@@ -273,6 +295,19 @@ replay, carries FACTS never commands. Commands travel through
 future native streams transport the same event batches without
 becoming independent truths (today's `/ws` broadcast is ephemeral
 with no cursor — it becomes a transport, not a source).
+
+### 6a. Generic executor liveness
+
+Every operation spec carries a claim TTL and an execution TTL. Both
+deadlines are signed into the execution warrant at approval. A
+generic reaper, independent of operation type, terminalizes approved
+work that was never claimed as the named refusal
+`execution_claim_expired`. Once claimed, silence is ambiguous: after
+the execution deadline the same reaper records
+`execution_liveness_expired` as `indeterminate`, revokes the warrant,
+and never makes the work retryable. Revision-guarded transitions and
+immutable receipts make a racing or late executor harmless. The web
+runtime runs this recovery once at startup and then once per second.
 
 ## 7. Migration: the strangler ladder (no big bang)
 
@@ -407,25 +442,25 @@ migration provision. The dissent stands on the record.
 Two properties make the early ratification defensible rather than
 decorative, and both are load-bearing:
 
-- **The register is real and executable.** Clause 6's register is
-  `holdspeak/kernel/effect_ledger.json`: **21 total / 3 covered / 3 exempt /
-  15 debt**. Against the corrected Phase 106 baseline of 2
-  covered among 40 sites, the migration delta is **38 debt → 15 debt**. The
-  remainder is five mixed sites (T01/T02 and C02/C03/C05), nine bypass sites,
-  and one dormant site. N10-N12 (dictation's transcription and rewrite model
-  invocations) were ruled clause-5-exempt computation by the owner at the
-  Phase 107 sitting (2026-07-29), resolving the HS-107-05 clause-1 challenge;
-  a new transcription-shaped call is still caught by the census and owes its
-  own triage. The register is fenced
-  by `tests/unit/test_kernel_effect_fence.py`, which fails by name when a site
-  joins or leaves it silently (HS-106-03). The checked-in register and fence
-  derive their counts from the same ledger.
+- **The register was real and executable, and its sunset fired.**
+  Clause 6's transitional register is
+  `holdspeak/kernel/effect_ledger.json`: **0 total / 0 covered / 0 exempt /
+  0 debt**. Against the corrected Phase 106 baseline of 2 covered
+  among 40 sites, the migration delta is **38 debt → 0 debt**.
+  Phase 108 closed T01/T02 by universal `process.input@1` routing,
+  C02/C03/C05 by mandatory authenticated read principals, and
+  A01-A10 by deletion or the confined desktop executor. The fence in
+  `tests/unit/test_kernel_effect_fence.py` pins all 21 formerly
+  active enforcement/exemption statements separately and fails by
+  name if one changes or a new effect statement appears.
 - **The debt is not delegable.** No agent principal may reach a path
-  the register names. The unmigrated surface is the owner's to carry
-  by hand, never something an agent is handed.
+  while it is registered. This rule had no exceptions while the
+  register was active.
 
-Clause 6 remains in force. Its sunset condition is unmet: it expires only when
-the register is empty.
+Clause 6 and the register expired together on 2026-07-29 under the
+clause's owner-ratified sunset. The checked-in zero-row register
+remains as a machine-readable tombstone and regression tripwire, not
+constitutional debt.
 
 ## 11. Council record: disagreements and dispositions
 

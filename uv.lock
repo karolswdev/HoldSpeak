@@ -818,6 +818,7 @@ presence = [
 test = [
     { name = "httpx" },
     { name = "jsonschema" },
+    { name = "playwright" },
     { name = "pytest" },
     { name = "pytest-asyncio" },
     { name = "pytest-cov" },
@@ -846,6 +847,7 @@ requires-dist = [
     { name = "openwakeword", marker = "extra == 'wakeword'", specifier = ">=0.6.0" },
     { name = "outlines", marker = "platform_machine == 'arm64' and sys_platform == 'darwin' and extra == 'dictation-mlx'", specifier = ">=0.1.0" },
     { name = "playwright", marker = "extra == 'dev'", specifier = ">=1.40.0" },
+    { name = "playwright", marker = "extra == 'test'", specifier = ">=1.40.0" },
     { name = "pygobject", marker = "sys_platform == 'linux' and extra == 'presence'", specifier = ">=3.44" },
     { name = "pynput", specifier = ">=1.7.6" },
     { name = "pyobjc-framework-cocoa", marker = "sys_platform == 'darwin' and extra == 'presence'", specifier = ">=10.0" },

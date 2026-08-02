@@ -309,6 +309,7 @@ class MeetingWebServer:
         self._duration_task: Optional[asyncio.Task[None]] = None
         self._coder_frames_task: Optional[asyncio.Task[None]] = None
         self._rails_observer_task: Optional[asyncio.Task[None]] = None
+        self._kernel_liveness_task: Optional[asyncio.Task[None]] = None
 
         self.app = self._create_app()
 
@@ -547,6 +548,7 @@ class MeetingWebServer:
             build_delivery_factory_router,
             build_dictation_router,
             build_desk_actuators_router,
+            build_desk_seed_router,
             build_meeting_import_router,
             build_meetings_router,
             build_memory_router,
@@ -611,6 +613,7 @@ class MeetingWebServer:
         app.include_router(build_memory_router(web_ctx))
         app.include_router(build_meetings_router(web_ctx))
         app.include_router(build_desk_actuators_router(web_ctx))
+        app.include_router(build_desk_seed_router(web_ctx))
         app.include_router(build_meeting_import_router(web_ctx))
         app.include_router(build_mesh_router(web_ctx))
         app.include_router(build_missioncontrol_router(web_ctx))
@@ -700,6 +703,10 @@ class MeetingWebServer:
             self._duration_task = asyncio.create_task(self._duration_loop())
             self._coder_frames_task = asyncio.create_task(self._coder_frames_loop())
             self._rails_observer_task = asyncio.create_task(self._rails_observer_loop())
+            await asyncio.to_thread(_kernel_service().reap_expired)
+            self._kernel_liveness_task = asyncio.create_task(
+                self._kernel_liveness_loop()
+            )
             self._started.set()
             log.debug("Meeting web server startup complete")
 
@@ -709,6 +716,7 @@ class MeetingWebServer:
                 self._duration_task,
                 self._coder_frames_task,
                 self._rails_observer_task,
+                self._kernel_liveness_task,
             ):
                 if task is None:
                     continue
@@ -768,6 +776,19 @@ class MeetingWebServer:
                 await self._ws.broadcast(BroadcastMessage(type="duration", data=duration))
                 last = duration
 
+    async def _kernel_liveness_loop(self) -> None:
+        """Terminalize work whose claimed executor stopped reporting."""
+        from .kernel.runtime import _service as _kernel_service
+
+        while True:
+            await asyncio.sleep(1.0)
+            try:
+                await asyncio.to_thread(_kernel_service().reap_expired)
+            except asyncio.CancelledError:
+                raise
+            except Exception as exc:
+                log.debug(f"kernel liveness loop error: {exc}")
+
     async def _coder_frames_loop(self) -> None:
         """THE registry watcher (HS-87-01): a `scope:"coder"` frame per
         awaiting-response transition, so closed surfaces stay current
@@ -820,6 +841,7 @@ class MeetingWebServer:
         from . import rails_observer
         from .config import Config
         from .missioncontrol_bridge import events_payload, load_project_map
+        from .principals import derive_owner
 
         seen: set[str] = set()
         primed = False
@@ -829,8 +851,14 @@ class MeetingWebServer:
                 cfg = Config.load().rails_observer
                 if not cfg.enabled:
                     continue
+                principal = derive_owner(self.auth_token, self.auth_token)
+                if principal is None:
+                    raise RuntimeError("rails observer owner principal unavailable")
                 payload = await asyncio.to_thread(
-                    events_payload, load_project_map(), cfg.tail
+                    events_payload,
+                    load_project_map(),
+                    cfg.tail,
+                    principal=principal,
                 )
                 events: list[dict] = []
                 for repo in payload.get("repos", []):

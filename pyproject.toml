@@ -64,6 +64,8 @@ test = [
     "pytest-mock>=3.12",
     "pytest-timeout>=2.2",
     "httpx>=0.26",
+    # Phase 108: the live runtime-bus browser gate runs in hosted CI.
+    "playwright>=1.40.0",
     # HS-72-01: the primitive-contract drift guard validates real wire payloads
     # against the JSON Schemas in pm/roadmap/holdspeak-mobile/contracts/schemas.
     "jsonschema>=4.21",

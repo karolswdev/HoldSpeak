@@ -84,7 +84,9 @@ def _now() -> str:
     return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
-def _wait_until(fn: Callable[[], bool], *, timeout: float = 5.0, interval: float = 0.1) -> bool:
+def _wait_until(
+    fn: Callable[[], bool], *, timeout: float = 5.0, interval: float = 0.1
+) -> bool:
     deadline = time.monotonic() + timeout
     while time.monotonic() < deadline:
         try:
@@ -128,9 +130,7 @@ def _tmux(*args: str, check: bool = True) -> subprocess.CompletedProcess:
 def _new_pane() -> tuple[str, str]:
     session = f"hs94-{uuid.uuid4().hex[:8]}"
     _tmux("new-session", "-d", "-s", session, "bash --norc --noprofile")
-    pane = _tmux(
-        "list-panes", "-t", session, "-F", "#{pane_id}"
-    ).stdout.strip()
+    pane = _tmux("list-panes", "-t", session, "-F", "#{pane_id}").stdout.strip()
     time.sleep(0.3)
     return session, pane
 
@@ -241,28 +241,41 @@ class Hub:
         self.app = self._app()
 
     def _app(self) -> Any:
-        from fastapi import FastAPI
+        from fastapi import FastAPI, Request
 
+        from holdspeak.principals import Principal, PrincipalKind
         from holdspeak.web.routes.delivery import build_delivery_router
-        from holdspeak.web.routes.delivery_attempts import build_delivery_attempts_router
-        from holdspeak.web.routes.delivery_dossiers import build_delivery_dossiers_router
+        from holdspeak.web.routes.delivery_attempts import (
+            build_delivery_attempts_router,
+        )
+        from holdspeak.web.routes.delivery_dossiers import (
+            build_delivery_dossiers_router,
+        )
         from holdspeak.web.routes.delivery_factory import build_delivery_factory_router
         from holdspeak.web.routes.delivery_node import build_delivery_node_router
-        from holdspeak.web.routes.delivery_terminal import build_delivery_terminal_router
+        from holdspeak.web.routes.delivery_terminal import (
+            build_delivery_terminal_router,
+        )
 
         ctx = None  # the delivery routers only do `_ = ctx`
         app = FastAPI()
+
+        @app.middleware("http")
+        async def authenticated_owner(request: Request, call_next: Callable[..., Any]):
+            request.state.principal = Principal(
+                PrincipalKind.OWNER, "phase94-campaign-owner"
+            )
+            return await call_next(request)
+
         app.include_router(build_delivery_router(ctx, collector=self.collector))
         app.include_router(
-            build_delivery_attempts_router(ctx, service=self.attempts, sync_on_read=False)
-        )
-        app.include_router(
-            build_delivery_dossiers_router(ctx, service=self.dossiers)
-        )
-        app.include_router(
-            build_delivery_node_router(
-                ctx, link=self.link, web_token=self.web_token
+            build_delivery_attempts_router(
+                ctx, service=self.attempts, sync_on_read=False
             )
+        )
+        app.include_router(build_delivery_dossiers_router(ctx, service=self.dossiers))
+        app.include_router(
+            build_delivery_node_router(ctx, link=self.link, web_token=self.web_token)
         )
         app.include_router(
             build_delivery_terminal_router(
@@ -289,7 +302,12 @@ class Hub:
 
         def _up() -> bool:
             try:
-                return httpx.get(f"{self.base_url}/api/delivery/nodes", timeout=2).status_code == 200
+                return (
+                    httpx.get(
+                        f"{self.base_url}/api/delivery/nodes", timeout=2
+                    ).status_code
+                    == 200
+                )
             except Exception:
                 return False
 
@@ -339,7 +357,9 @@ class Campaign:
         resp = self.client.post(path, **kw)
         return resp.status_code, self._record_wire("POST", path, resp)
 
-    def _track(self, command_id: str, verb: str, final_state: str, outcome: str) -> None:
+    def _track(
+        self, command_id: str, verb: str, final_state: str, outcome: str
+    ) -> None:
         self.commands.append(
             {
                 "command_id": command_id,
@@ -374,7 +394,9 @@ class Campaign:
         out["register_status"] = status
         out["source"] = (body or {}).get("source")
         source_id = (out["source"] or {}).get("source_id")
-        worktree_id = ((out["source"] or {}).get("worktrees") or [{}])[0].get("worktree_id")
+        worktree_id = ((out["source"] or {}).get("worktrees") or [{}])[0].get(
+            "worktree_id"
+        )
         self.source_id = source_id
         self.worktree_id = worktree_id
         # the coherent snapshot shows the live source with a revision + cursor.
@@ -452,18 +474,20 @@ class Campaign:
         """(b) browse historical evidence: open a real story dossier and
         fetch one asset through the manifest-bound proxy."""
         out: dict[str, Any] = {"name": "browse_evidence"}
-        status, dossier = self.get(
-            "/api/delivery/stories/holdspeak/HS-94-06/dossier"
-        )
+        status, dossier = self.get("/api/delivery/stories/holdspeak/HS-94-06/dossier")
         out["dossier_status"] = status
         out["bundle_id"] = dossier.get("bundle_id")
         members = dossier.get("members") or []
         out["member_count"] = len(members)
         out["has_captured_runs"] = bool(dossier.get("captured_runs"))
         # fetch one member's bytes through the asset proxy.
-        member = next((m for m in members if m.get("role") == "evidence_markdown"), None)
+        member = next(
+            (m for m in members if m.get("role") == "evidence_markdown"), None
+        )
         if member and out["bundle_id"]:
-            asset_path = f"/api/delivery/evidence/{out['bundle_id']}/{member['asset_id']}"
+            asset_path = (
+                f"/api/delivery/evidence/{out['bundle_id']}/{member['asset_id']}"
+            )
             resp = self.client.get(asset_path)
             self.wire.append(
                 {
@@ -513,17 +537,23 @@ class Campaign:
         out["outcome"] = receipt.get("outcome")
         out["authority_basis"] = receipt.get("authority_basis")
         out["receipt_id"] = receipt.get("receipt_id")
-        self._track(command_id, "terminal.text", receipt.get("state"), receipt.get("outcome"))
+        self._track(
+            command_id, "terminal.text", receipt.get("state"), receipt.get("outcome")
+        )
         # the lost-response retry: same command_id → the SAME receipt.
         status, dup = self.post("/api/delivery/terminal/commands", json=request)
         out["duplicate"] = dup.get("duplicate")
-        out["same_receipt"] = dup.get("receipt", {}).get("receipt_id") == out["receipt_id"]
+        out["same_receipt"] = (
+            dup.get("receipt", {}).get("receipt_id") == out["receipt_id"]
+        )
         time.sleep(0.4)
         seen = _pane_text(pane)
         out["landed_count"] = seen.count(marker)
         # reconcile the aggregate receipt (never a blind retry).
         status, joined = self.get(f"/api/delivery/terminal/commands/{command_id}")
-        out["hub_state"] = joined.get("hub_state") or joined.get("receipt", {}).get("state")
+        out["hub_state"] = joined.get("hub_state") or joined.get("receipt", {}).get(
+            "state"
+        )
         self._steer_marker = (pane, marker)
         out["pass"] = (
             out["outcome"] == "delivered"
@@ -582,13 +612,17 @@ class Campaign:
         repo.mkdir(parents=True, exist_ok=True)
         env = dict(os.environ)
         env.update(
-            GIT_AUTHOR_NAME="c", GIT_AUTHOR_EMAIL="c@x", GIT_COMMITTER_NAME="c",
+            GIT_AUTHOR_NAME="c",
+            GIT_AUTHOR_EMAIL="c@x",
+            GIT_COMMITTER_NAME="c",
             GIT_COMMITTER_EMAIL="c@x",
         )
         subprocess.run(["git", "init", "-q"], cwd=repo, check=True, env=env)
         (repo / "README.md").write_text("scratch\n")
         subprocess.run(["git", "add", "."], cwd=repo, check=True, env=env)
-        subprocess.run(["git", "commit", "-q", "-m", "init"], cwd=repo, check=True, env=env)
+        subprocess.run(
+            ["git", "commit", "-q", "-m", "init"], cwd=repo, check=True, env=env
+        )
         return repo
 
     # ── fault matrix (§13) ──────────────────────────────────────────
@@ -606,8 +640,10 @@ class Campaign:
     def _fault_remote_absence(self) -> dict[str, Any]:
         """node kill before/after apply → not_executed / unknown /
         indeterminate_after_node_reset, reconciled by command_id (§8.2)."""
-        out: dict[str, Any] = {"fault": "node_kill_reconcile", "expected": [
-            "not_executed", "unknown", "indeterminate_after_node_reset"]}
+        out: dict[str, Any] = {
+            "fault": "node_kill_reconcile",
+            "expected": ["not_executed", "unknown", "indeterminate_after_node_reset"],
+        }
         results: dict[str, str] = {}
         # never claimed → dropped queue → not_executed.
         cid1 = self._remote_command(seq=1)
@@ -623,8 +659,13 @@ class Campaign:
         results["lost_after_claim"] = str((row or {}).get("hub_state"))
         self.hub.cmd.record_results(
             self.hub_node_target[0],
-            [{"command_id": cid2, "reconcile": "unknown_command",
-              "ledger_epoch": "epoch_lost_" + uuid.uuid4().hex[:8]}],
+            [
+                {
+                    "command_id": cid2,
+                    "reconcile": "unknown_command",
+                    "ledger_epoch": "epoch_lost_" + uuid.uuid4().hex[:8],
+                }
+            ],
         )
         row = self.hub.cmd.receipt(cid2)
         results["after_node_reset"] = str((row or {}).get("hub_state"))
@@ -673,7 +714,11 @@ class Campaign:
                 "target_id": issued["target_id"],
                 "target_generation": issued["target_generation"],
                 "operation": {"family": "coder_steering", "verb": "terminal.text"},
-                "payload": {"text": f"local-{cid[:6]}", "session_key": key, "submit": False},
+                "payload": {
+                    "text": f"local-{cid[:6]}",
+                    "session_key": key,
+                    "submit": False,
+                },
             },
         )
         self._track(cid, "terminal.text", "delivered", "delivered")
@@ -685,7 +730,10 @@ class Campaign:
         invalidated (§13). Nothing types into the successor pane."""
         from holdspeak import coder_steering
 
-        out: dict[str, Any] = {"fault": "generation_mismatch", "expected": "refused+revoked"}
+        out: dict[str, Any] = {
+            "fault": "generation_mismatch",
+            "expected": "refused+revoked",
+        }
         session, pane = self._pane()
         key = f"claude:{session}"
         addr = f"{session}:0.0"
@@ -704,7 +752,11 @@ class Campaign:
                 "target_id": issued["target_id"],
                 "target_generation": issued["target_generation"],
                 "operation": {"family": "coder_steering", "verb": "terminal.text"},
-                "payload": {"text": "must-never-land", "session_key": key, "submit": False},
+                "payload": {
+                    "text": "must-never-land",
+                    "session_key": key,
+                    "submit": False,
+                },
             },
         )
         receipt = body.get("receipt", {})
@@ -753,7 +805,12 @@ class Campaign:
         )
         receipt = self.hub.processor.process(env)
         out["outcome"] = receipt.get("outcome")
-        self._track(env["command_id"], "terminal.text", receipt.get("state"), receipt.get("outcome"))
+        self._track(
+            env["command_id"],
+            "terminal.text",
+            receipt.get("state"),
+            receipt.get("outcome"),
+        )
         out["pass"] = out["outcome"] == "command_expired"
         return out
 
@@ -793,7 +850,10 @@ class Campaign:
         explicit degraded status (§13 'source CLI missing')."""
         from holdspeak.delivery import DeliveryCollector, DeliveryRegistry
 
-        out: dict[str, Any] = {"fault": "source_failure_lkg", "expected": "stale+retained"}
+        out: dict[str, Any] = {
+            "fault": "source_failure_lkg",
+            "expected": "stale+retained",
+        }
         registry = DeliveryRegistry(
             self.workspace / "lkg_sources.json", map_path=self.hub.map_path
         )
@@ -808,10 +868,10 @@ class Campaign:
 
         collector = DeliveryCollector(registry, runner=runner, max_age_seconds=0.0)
         first = collector.snapshot()
-        healthy = (first["sources"][0] or {})
+        healthy = first["sources"][0] or {}
         state["fail"] = True
         second = collector.snapshot()
-        degraded = (second["sources"][0] or {})
+        degraded = second["sources"][0] or {}
         out["healthy_status"] = healthy.get("status")
         out["degraded_status"] = degraded.get("status")
         out["retained_projects"] = degraded.get("projects") is not None
@@ -826,7 +886,10 @@ class Campaign:
     def _fault_cursor_resume(self) -> dict[str, Any]:
         """Link loss + resume: two real node processes across a kill
         resume the SAME cursor — no duplicate event, no gap (§6.3)."""
-        out: dict[str, Any] = {"fault": "link_loss_cursor_resume", "expected": "no dup/gap"}
+        out: dict[str, Any] = {
+            "fault": "link_loss_cursor_resume",
+            "expected": "no dup/gap",
+        }
         # first process already ran in journey_observe; run a second.
         r2 = self._link_node_once()
         out["second_run_rc"] = r2["returncode"]
@@ -898,7 +961,9 @@ class Campaign:
             coder_steering.clear_grants()
             if grant:
                 coder_steering.arm(key, addr, control_mode=mode)
-            status, issued = self.post("/api/delivery/terminal/targets", json={"ref": addr})
+            status, issued = self.post(
+                "/api/delivery/terminal/targets", json={"ref": addr}
+            )
             self.hub.mode = mode
             cid = str(uuid.uuid4())
             _, body = self.post(
@@ -948,14 +1013,18 @@ class Campaign:
         out["yolo_promptless"] = legs["yolo_no_grant"]["outcome"] == "delivered" and (
             legs["yolo_no_grant"]["authority_basis"] == "control_posture"
         )
-        out["normal_via_grant"] = legs["normal_grant"]["authority_basis"] == "scoped_grant"
+        out["normal_via_grant"] = (
+            legs["normal_grant"]["authority_basis"] == "scoped_grant"
+        )
         # invariants across delivered postures: payload binding is honoured
         # (each sha binds its own payload), the steer text head, policy
         # version, schema, target binding and the node audit are identical.
         # Only the authority BASIS (the human interruption) changed.
         out["payload_binding_honoured"] = all(v["sha_binds_payload"] for v in delivered)
         out["payload_head_invariant"] = len({v["payload_head"] for v in delivered}) == 1
-        out["policy_version_invariant"] = len({v["policy_version"] for v in delivered}) == 1
+        out["policy_version_invariant"] = (
+            len({v["policy_version"] for v in delivered}) == 1
+        )
         out["schema_invariant"] = len({v["receipt_schema"] for v in delivered}) == 1
         out["audit_invariant"] = all(v["audit_present"] for v in delivered)
         out["target_bound"] = all(
@@ -1065,7 +1134,8 @@ class Campaign:
             "/api/delivery/attempts?project=holdspeak&story_id=HS-94-10"
         )
         rows = [
-            a for a in attempts.get("attempts", [])
+            a
+            for a in attempts.get("attempts", [])
             if a.get("story_ref", {}).get("story_id") == "HS-94-10"
             and a.get("story_ref", {}).get("source_id") == self.source_id
         ]
@@ -1095,7 +1165,12 @@ class Campaign:
                 continue
             for path in root.rglob("*"):
                 if not path.is_file() or path.suffix not in (
-                    ".ts", ".tsx", ".js", ".jsx", ".swift", ".vue"
+                    ".ts",
+                    ".tsx",
+                    ".js",
+                    ".jsx",
+                    ".swift",
+                    ".vue",
                 ):
                     continue
                 try:
@@ -1159,7 +1234,9 @@ class Campaign:
             "node_link": {},
         }
 
-        def _step(fn: Callable[[], Any], key: str, *, into: Optional[dict] = None) -> None:
+        def _step(
+            fn: Callable[[], Any], key: str, *, into: Optional[dict] = None
+        ) -> None:
             try:
                 result = fn()
             except Exception as exc:  # a step failure is recorded, not fatal
@@ -1181,7 +1258,8 @@ class Campaign:
             _step(self.journey_launch, "launch", into=report["journeys"])
         else:
             report["journeys"]["launch"] = {
-                "skipped": "bounded" if HAS_TMUX else "no tmux", "pass": None
+                "skipped": "bounded" if HAS_TMUX else "no tmux",
+                "pass": None,
             }
 
         # 6. posture invariance (before the fault matrix perturbs grants)
@@ -1191,10 +1269,15 @@ class Campaign:
             report["posture"] = {"skipped": "no tmux", "pass": None}
 
         # 2. fault matrix
-        report["faults"] = self.fault_matrix() if HAS_TMUX else [
-            self._fault_remote_absence(), self._fault_source_lkg(),
-            self._fault_cursor_resume(),
-        ]
+        report["faults"] = (
+            self.fault_matrix()
+            if HAS_TMUX
+            else [
+                self._fault_remote_absence(),
+                self._fault_source_lkg(),
+                self._fault_cursor_resume(),
+            ]
+        )
 
         # 4. poll economy
         report["poll_economy"] = _step(self.poll_economy, "poll")
@@ -1259,16 +1342,21 @@ class Campaign:
         }
 
 
-def run_campaign(*, bounded: bool = False, workspace: Optional[Path] = None) -> dict[str, Any]:
+def run_campaign(
+    *, bounded: bool = False, workspace: Optional[Path] = None
+) -> dict[str, Any]:
     """Assemble and run the whole campaign; returns the report dict.
 
     Sets an isolated ``HOME`` and PATH (a stub ``claude``/``codex`` so the
     launch journey's ONLY stub is the launcher executable) before building
     the hub, so nothing touches the operator's real ``~/.holdspeak`` or DB.
     """
-    ws = Path(workspace) if workspace else Path(
-        os.environ.get("TMPDIR", "/tmp")
-    ) / f"hs94-campaign-{uuid.uuid4().hex[:8]}"
+    ws = (
+        Path(workspace)
+        if workspace
+        else Path(os.environ.get("TMPDIR", "/tmp"))
+        / f"hs94-campaign-{uuid.uuid4().hex[:8]}"
+    )
     ws.mkdir(parents=True, exist_ok=True)
 
     # stub launcher execs on PATH (the tmux server inherits this env).
@@ -1344,7 +1432,9 @@ def main(argv: Optional[list[str]] = None) -> int:
     for prefix, note in report["compat"].get("deprecation_note", {}).items():
         log_lines.append(f"  {prefix}: {note}")
     log_text = "\n".join(log_lines)
-    (EVIDENCE_DIR / "campaign-log-latest.txt").write_text(log_text + "\n", encoding="utf-8")
+    (EVIDENCE_DIR / "campaign-log-latest.txt").write_text(
+        log_text + "\n", encoding="utf-8"
+    )
     print(log_text)
 
     ok = (

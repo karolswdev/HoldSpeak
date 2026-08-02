@@ -33,6 +33,7 @@ import {
   EXPORT_FORMAT_OPTIONS,
   INTEL_PROVIDER_OPTIONS,
   LANGUAGE_OPTIONS,
+  DeskModule,
   MIR_PROFILE_OPTIONS,
   PREF_MODULES,
   PrefsFace,
@@ -131,7 +132,13 @@ function SettingsFace({ hero, scope }: CoreProps) {
   // null = the drawer face; a module id = that module owns the body.
   // HS-112-01: the retired Runs-on room's deep links land on Models.
   const [moduleId, setModuleId] = useState<string | null>(
-    integrationSubject ? "integrations" : scope === "models" ? "models" : null,
+    integrationSubject
+      ? "integrations"
+      : scope === "models"
+        ? "models"
+        : scope === "desk"
+          ? "desk"
+          : null,
   );
   const [highlight, setHighlight] = useState("");
   const [saving, setSaving] = useState(false);
@@ -230,6 +237,11 @@ function SettingsFace({ hero, scope }: CoreProps) {
     if (integrationSubject) setModuleId("integrations");
     else if (scope === "models") setModuleId("models");
   }, [integrationSubject, scope]);
+
+  // HS-112-03 — the reset-to-seed verb lands on the Desk module directly.
+  useEffect(() => {
+    if (scope === "desk") setModuleId("desk");
+  }, [scope]);
 
   /* ── the deep setting index for the drawer filter ── */
   const deepIndex = useMemo<DeepHit[]>(() => {
@@ -776,6 +788,8 @@ function SettingsFace({ hero, scope }: CoreProps) {
             onRefuse={setRefusal}
           />
         );
+      case "desk":
+        return <DeskModule />;
       case "integrations":
         return (
           <GadgetGroup label="Credentials">

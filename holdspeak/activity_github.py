@@ -11,7 +11,6 @@ from datetime import datetime
 from typing import Any, Callable, Iterable, Optional
 
 from .db import ActivityAnnotation, ActivityRecord, Database
-from .kernel.subprocess_exec import LOCAL_OWNER
 from .principals import Principal
 
 CONNECTOR_ID = "gh"
@@ -113,7 +112,7 @@ def run_github_cli_enrichment(
     timeout_seconds: float = 5.0,
     max_bytes: int = 65536,
     run_command: Optional[RunCommand] = None,
-    principal: Principal = LOCAL_OWNER,
+    principal: Principal,
 ) -> list[GithubCliRunResult]:
     """Run planned read-only `gh` commands and persist local annotations."""
     status = github_cli_status(gh_path=gh_path)

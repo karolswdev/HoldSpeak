@@ -20,10 +20,13 @@ import holdspeak.tmux_transport as tmux_transport
 from holdspeak import coder_steering
 from holdspeak.config import Config
 from holdspeak.db import core as dbcore
+from holdspeak.principals import Principal, PrincipalKind
 from holdspeak.web.context import WebContext
 from holdspeak.web.routes.system.coder_steering_routes import (
     build_coder_steering_router,
 )
+
+OWNER = Principal(PrincipalKind.OWNER, "owner-session")
 
 
 def _iso_now() -> str:
@@ -60,6 +63,12 @@ def env(tmp_path, monkeypatch):
     monkeypatch.setattr("holdspeak.db.get_database", lambda *a, **k: db)
     frames: list = []
     app = FastAPI()
+
+    @app.middleware("http")
+    async def owner_principal(request, call_next):
+        request.state.principal = OWNER
+        return await call_next(request)
+
     app.include_router(
         build_coder_steering_router(
             WebContext(
@@ -345,7 +354,7 @@ def test_rails_object_grounds_into_a_steer(env) -> None:
     env.monkeypatch.setattr(
         gr,
         "hydrate_rails_refs",
-        lambda refs, project_map=None, runner=None: (
+        lambda refs, *, principal, project_map=None, runner=None: (
             [GroundingBlock("rails:story", "HS-88-01", "HS-88-01 Rails", "hs/hs", "the story body")],
             [],
         ),
@@ -374,7 +383,10 @@ def test_unknown_rails_ref_refuses_naming_the_id(env) -> None:
     env.monkeypatch.setattr(
         gr,
         "hydrate_rails_refs",
-        lambda refs, project_map=None, runner=None: ([], ["story:HS-99-99"]),
+        lambda refs, *, principal, project_map=None, runner=None: (
+            [],
+            ["story:HS-99-99"],
+        ),
     )
     env.client.post("/api/coders/claude:abc/arm", json={})
     res = env.client.post(

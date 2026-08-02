@@ -15,6 +15,9 @@ import pytest
 
 from holdspeak import missioncontrol_bridge as mc
 from holdspeak.grounding_rails import hydrate_rails_refs
+from holdspeak.principals import Principal, PrincipalKind
+
+OWNER = Principal(PrincipalKind.OWNER, "owner-session")
 
 pytestmark = pytest.mark.skipif(
     shutil.which("dw") is None
@@ -34,7 +37,8 @@ def test_live_story_and_roadmap_ground_as_receipts() -> None:
         [
             {"repo": "holdspeak", "project": "holdspeak", "kind": "story", "id": "HS-88-01"},
             {"repo": "holdspeak", "project": "holdspeak", "kind": "roadmap", "id": "holdspeak"},
-        ]
+        ],
+        principal=OWNER,
     )
     assert unknown == [], unknown
     kinds = {b.kind for b in blocks}
@@ -49,7 +53,8 @@ def test_live_unknown_story_refuses_by_name() -> None:
     if _holdspeak_repo() is None:
         pytest.skip("holdspeak not in the project map on this machine")
     _blocks, unknown = hydrate_rails_refs(
-        [{"repo": "holdspeak", "project": "holdspeak", "kind": "story", "id": "HS-404-04"}]
+        [{"repo": "holdspeak", "project": "holdspeak", "kind": "story", "id": "HS-404-04"}],
+        principal=OWNER,
     )
     assert unknown == ["story:HS-404-04"]
 
@@ -73,7 +78,8 @@ def test_live_control_vs_treatment_grounding_an_open_story() -> None:
     from holdspeak.grounding import compose_steer
 
     blocks, unknown = hydrate_rails_refs(
-        [{"repo": "holdspeak", "project": "holdspeak", "kind": "story", "id": "HS-88-02"}]
+        [{"repo": "holdspeak", "project": "holdspeak", "kind": "story", "id": "HS-88-02"}],
+        principal=OWNER,
     )
     assert not unknown and blocks
 

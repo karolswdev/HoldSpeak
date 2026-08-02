@@ -14,6 +14,10 @@ from holdspeak.db import (
     Database,
     reset_database,
 )
+from holdspeak.principals import Principal, PrincipalKind
+
+
+OWNER = Principal(PrincipalKind.OWNER, "owner-session")
 
 
 @pytest.fixture
@@ -204,7 +208,7 @@ def test_run_writes_one_briefing_per_active_project(db):
     _seed_project(db, "holdspeak", "HoldSpeak")
     _seed_records_and_upstreams(db, "holdspeak")
 
-    meeting_context.run(db)
+    meeting_context.run(db, principal=OWNER)
 
     annotations = db.activity.list_activity_annotations(
         source_connector_id="meeting_context"
@@ -225,7 +229,7 @@ def test_run_writes_one_briefing_per_active_project(db):
 def test_run_with_empty_upstream_still_writes_briefing(db):
     _seed_project(db, "holdspeak", "HoldSpeak")
     # Project exists but no records / annotations / candidates.
-    meeting_context.run(db)
+    meeting_context.run(db, principal=OWNER)
 
     annotations = db.activity.list_activity_annotations(
         source_connector_id="meeting_context"
@@ -243,8 +247,8 @@ def test_re_running_with_no_upstream_changes_does_not_duplicate(db):
     _seed_project(db, "holdspeak", "HoldSpeak")
     _seed_records_and_upstreams(db, "holdspeak")
 
-    meeting_context.run(db)
-    meeting_context.run(db)
+    meeting_context.run(db, principal=OWNER)
+    meeting_context.run(db, principal=OWNER)
     rows = db.activity.list_activity_annotations(source_connector_id="meeting_context")
     assert len(rows) == 1
     assert rows[0].value["project_id"] == "holdspeak"
@@ -257,7 +261,7 @@ def test_re_running_with_changed_upstream_appends_new_snapshot(db):
     _seed_project(db, "holdspeak", "HoldSpeak")
     record_id = _seed_records_and_upstreams(db, "holdspeak")
 
-    meeting_context.run(db)
+    meeting_context.run(db, principal=OWNER)
 
     # Upstream changes: a new gh annotation lands on the same
     # record, which the synthesizer will pick up next run.
@@ -269,7 +273,7 @@ def test_re_running_with_changed_upstream_appends_new_snapshot(db):
         value={"entity_id": "anthropic/holdspeak#8", "gh": {"state": "OPEN"}},
     )
 
-    meeting_context.run(db)
+    meeting_context.run(db, principal=OWNER)
 
     rows = db.activity.list_activity_annotations(source_connector_id="meeting_context")
     assert len(rows) == 2
@@ -279,7 +283,7 @@ def test_re_running_with_changed_upstream_appends_new_snapshot(db):
 
 def test_run_records_a_connector_run_row(db):
     _seed_project(db, "holdspeak", "HoldSpeak")
-    meeting_context.run(db)
+    meeting_context.run(db, principal=OWNER)
     runs = db.activity.list_connector_runs(connector_id="meeting_context")
     assert len(runs) == 1
     assert runs[0].succeeded is True
@@ -305,7 +309,7 @@ def test_pipeline_runner_dispatches_meeting_context_with_fresh_upstreams(db):
             succeeded=True,
         )
 
-    runner = PipelineRunner(db, now=lambda: now)
+    runner = PipelineRunner(db, principal=OWNER, now=lambda: now)
     result = runner.run("meeting_context")
 
     assert result.succeeded is True
@@ -338,7 +342,7 @@ def test_pipeline_run_history_carries_pipeline_row(db):
             succeeded=True,
         )
 
-    runner = PipelineRunner(db, now=lambda: now)
+    runner = PipelineRunner(db, principal=OWNER, now=lambda: now)
     runner.run("meeting_context")
 
     pipe_runs = db.activity.list_connector_runs(connector_id="meeting_context")

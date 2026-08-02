@@ -181,17 +181,17 @@ def build_delivery_terminal_router(
         request: Request, payload: Optional[dict[str, Any]] = None
     ) -> Any:
         from ...delivery.commands import CommandRefused
-        from ...principals import Principal, PrincipalKind
+        from ...principals import UNAUTHENTICATED
 
         body = payload if isinstance(payload, dict) else {}
         operation = body.get("operation") or {}
         principal = getattr(
-            request.state, "principal", Principal(PrincipalKind.OWNER, "owner-session")
+            request.state, "principal", UNAUTHENTICATED
         )
         try:
             if (
                 operation.get("family") == "coder_steering"
-                and operation.get("verb") == "terminal.text"
+                and operation.get("verb") in {"terminal.text", "terminal.keys"}
             ):
                 out = await asyncio.to_thread(
                     _service().submit_process_input, body, principal

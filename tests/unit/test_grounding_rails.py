@@ -11,9 +11,12 @@ from __future__ import annotations
 import json
 from types import SimpleNamespace
 
-from holdspeak import grounding_rails
 from holdspeak.grounding import GROUNDING_TRANSCRIPT_CAP
 from holdspeak.grounding_rails import hydrate_rails_refs
+from holdspeak.principals import Principal, PrincipalKind
+
+
+OWNER = Principal(PrincipalKind.OWNER, "owner-session")
 
 
 def _context_doc() -> dict:
@@ -75,6 +78,7 @@ def test_story_ref_hydrates_the_cli_named_file(tmp_path) -> None:
     )
     blocks, unknown = hydrate_rails_refs(
         [{"repo": "holdspeak", "project": "holdspeak", "kind": "story", "id": "HS-88-01"}],
+        principal=OWNER,
         project_map=pm,
         runner=runner,
     )
@@ -101,7 +105,9 @@ def test_phase_evidence_roadmap_each_resolve_their_trace(tmp_path) -> None:
         {"repo": "holdspeak", "project": "holdspeak", "kind": "evidence", "id": "HS-88-01"},
         {"repo": "holdspeak", "project": "holdspeak", "kind": "roadmap", "id": "holdspeak"},
     ]
-    blocks, unknown = hydrate_rails_refs(refs, project_map=pm, runner=runner)
+    blocks, unknown = hydrate_rails_refs(
+        refs, principal=OWNER, project_map=pm, runner=runner
+    )
     assert unknown == []
     assert [b.text for b in blocks] == ["PHASE", "EVIDENCE", "ROADMAP"]
     assert [b.kind for b in blocks] == ["rails:phase", "rails:evidence", "rails:roadmap"]
@@ -111,6 +117,7 @@ def test_unknown_id_refuses_by_name(tmp_path) -> None:
     pm, runner = _repo(tmp_path, {"pm/roadmap/holdspeak/phase-88/story-01.md": "x"})
     blocks, unknown = hydrate_rails_refs(
         [{"repo": "holdspeak", "project": "holdspeak", "kind": "story", "id": "HS-99-99"}],
+        principal=OWNER,
         project_map=pm,
         runner=runner,
     )
@@ -122,6 +129,7 @@ def test_repo_not_in_the_map_refuses(tmp_path) -> None:
     pm, runner = _repo(tmp_path, {})
     _blocks, unknown = hydrate_rails_refs(
         [{"repo": "ghost", "project": "holdspeak", "kind": "story", "id": "HS-88-01"}],
+        principal=OWNER,
         project_map=pm,
         runner=runner,
     )
@@ -132,6 +140,7 @@ def test_bad_kind_refuses(tmp_path) -> None:
     pm, runner = _repo(tmp_path, {})
     _blocks, unknown = hydrate_rails_refs(
         [{"repo": "holdspeak", "project": "holdspeak", "kind": "secret", "id": "x"}],
+        principal=OWNER,
         project_map=pm,
         runner=runner,
     )
@@ -151,6 +160,7 @@ def test_dw_unavailable_refuses(tmp_path) -> None:
 
     _blocks, unknown = hydrate_rails_refs(
         [{"repo": "holdspeak", "project": "holdspeak", "kind": "story", "id": "HS-88-01"}],
+        principal=OWNER,
         project_map=pm,
         runner=runner,
     )
@@ -163,6 +173,7 @@ def test_a_named_path_the_repo_does_not_hold_refuses(tmp_path) -> None:
     pm, runner = _repo(tmp_path, {})  # no files written
     _blocks, unknown = hydrate_rails_refs(
         [{"repo": "holdspeak", "project": "holdspeak", "kind": "story", "id": "HS-88-01"}],
+        principal=OWNER,
         project_map=pm,
         runner=runner,
     )
@@ -174,6 +185,7 @@ def test_over_cap_rail_content_is_cut_and_marked(tmp_path) -> None:
     pm, runner = _repo(tmp_path, {"pm/roadmap/holdspeak/phase-88/story-01.md": big})
     blocks, _unknown = hydrate_rails_refs(
         [{"repo": "holdspeak", "project": "holdspeak", "kind": "story", "id": "HS-88-01"}],
+        principal=OWNER,
         project_map=pm,
         runner=runner,
     )
@@ -202,6 +214,7 @@ def test_one_context_fetch_per_repo(tmp_path) -> None:
             {"repo": "holdspeak", "project": "holdspeak", "kind": "story", "id": "HS-88-01"},
             {"repo": "holdspeak", "project": "holdspeak", "kind": "phase", "id": "88"},
         ],
+        principal=OWNER,
         project_map=pm,
         runner=counting_runner,
     )

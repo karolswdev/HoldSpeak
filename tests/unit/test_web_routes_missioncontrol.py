@@ -13,6 +13,7 @@ import subprocess
 from pathlib import Path
 from types import SimpleNamespace
 
+import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
@@ -21,8 +22,18 @@ from holdspeak.missioncontrol_bridge import (
     load_project_map,
     state_payload,
 )
+from holdspeak.principals import Principal, PrincipalKind, UNAUTHENTICATED
 from holdspeak.web.context import WebContext
 from holdspeak.web.routes import build_missioncontrol_router
+
+OWNER = Principal(PrincipalKind.OWNER, "owner-session")
+
+
+def _authenticate_owner(app: FastAPI) -> None:
+    @app.middleware("http")
+    async def owner_principal(request, call_next):
+        request.state.principal = OWNER
+        return await call_next(request)
 
 FEED_DOC = {
     "feed_schema": 1,
@@ -101,6 +112,7 @@ def _make_map(tmp_path: Path) -> Path:
 
 def _client(map_path: Path, runner) -> TestClient:
     app = FastAPI()
+    _authenticate_owner(app)
     app.include_router(
         build_missioncontrol_router(
             WebContext(get_state=lambda: {}), runner=runner, map_path=map_path
@@ -160,9 +172,26 @@ class TestStateRoute:
             raise subprocess.TimeoutExpired(cmd=argv, timeout=30)
 
         entry = state_payload(
-            load_project_map(_make_map(tmp_path)), hangs
+            load_project_map(_make_map(tmp_path)), hangs, principal=OWNER
         )["repos"][0]
         assert entry["status"] == "unavailable"
+
+    def test_unauthenticated_read_refuses_before_dw(self, tmp_path):
+        from holdspeak.connector_runtime import ReadSubprocessDenied
+
+        called = False
+
+        def forbidden_runner(*_args, **_kwargs):
+            nonlocal called
+            called = True
+
+        with pytest.raises(ReadSubprocessDenied):
+            state_payload(
+                load_project_map(_make_map(tmp_path)),
+                forbidden_runner,
+                principal=UNAUTHENTICATED,
+            )
+        assert called is False
 
 
 class TestSessionsRoute:
@@ -231,6 +260,7 @@ def _propose_client(tmp_path, monkeypatch, dw_runner):
     monkeypatch.setattr(mc_routes, "_DW_RUNNER", dw_runner)
     broadcasts = []
     app = FastAPI()
+    _authenticate_owner(app)
     app.include_router(
         build_missioncontrol_router(
             WebContext(
@@ -442,6 +472,7 @@ class TestReceipts:
         from holdspeak.web.routes import missioncontrol as mc_module
 
         app = FastAPI()
+        _authenticate_owner(app)
         app.include_router(
             build_missioncontrol_router(
                 WebContext(get_state=lambda: {}),
@@ -473,6 +504,7 @@ class TestBeltFrames:
             return SimpleNamespace(returncode=1, stdout="", stderr="unknown verb")
 
         app = FastAPI()
+        _authenticate_owner(app)
         app.include_router(
             build_missioncontrol_router(
                 WebContext(
@@ -569,6 +601,7 @@ class TestEvidenceInPlace:
 
     def test_route_is_get_only(self, tmp_path):
         app = FastAPI()
+        _authenticate_owner(app)
         app.include_router(
             build_missioncontrol_router(
                 WebContext(get_state=lambda: {}),
@@ -605,7 +638,14 @@ class TestEvidenceSelfHostedLayout:
             (repo / "pmo-roadmap" / "secrets.md").write_text("SECRET\n")
         project_map = {"projects": {"demo": str(repo)}, "default": str(repo)}
         runner = _runner_for({"context": _context_doc(evidence_rel)})
-        return story_evidence_payload(project_map, "demo", "demo", "DM-1-01", runner)
+        return story_evidence_payload(
+            project_map,
+            "demo",
+            "demo",
+            "DM-1-01",
+            runner,
+            principal=OWNER,
+        )
 
     def test_self_hosted_tree_is_contained_and_live(self, tmp_path):
         body = self._payload(tmp_path, self.REL)
@@ -726,6 +766,7 @@ class TestRailsJournal:
 
     def test_journal_is_get_only(self, tmp_path):
         app = FastAPI()
+        _authenticate_owner(app)
         app.include_router(
             build_missioncontrol_router(
                 WebContext(get_state=lambda: {}),

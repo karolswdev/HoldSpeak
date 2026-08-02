@@ -9,6 +9,10 @@ import pytest
 
 from holdspeak.activity_jira import preview_jira_cli_enrichment, run_jira_cli_enrichment
 from holdspeak.db import Database, reset_database
+from holdspeak.principals import Principal, PrincipalKind, UNAUTHENTICATED
+
+
+OWNER = Principal(PrincipalKind.OWNER, "owner-session")
 
 
 @pytest.fixture
@@ -83,6 +87,7 @@ def test_run_jira_cli_enrichment_writes_json_annotations(test_db):
     results = run_jira_cli_enrichment(
         test_db,
         [record],
+        principal=OWNER,
         jira_path="/usr/local/bin/jira",
         timeout_seconds=2.0,
         max_bytes=4096,
@@ -119,6 +124,7 @@ def test_run_jira_cli_enrichment_accepts_capped_raw_output(test_db):
     results = run_jira_cli_enrichment(
         test_db,
         [record],
+        principal=OWNER,
         jira_path="/usr/local/bin/jira",
         max_bytes=4096,
         run_command=fake_run,
@@ -146,6 +152,7 @@ def test_run_jira_cli_enrichment_caps_output(test_db):
     results = run_jira_cli_enrichment(
         test_db,
         [record],
+        principal=OWNER,
         jira_path="/usr/local/bin/jira",
         max_bytes=64,
         run_command=fake_run,
@@ -153,3 +160,33 @@ def test_run_jira_cli_enrichment_caps_output(test_db):
 
     assert results[0].error == "jira output exceeded max_bytes"
     assert test_db.activity.list_activity_annotations(source_connector_id="jira") == []
+
+
+def test_jira_read_refuses_unauthenticated_principal_before_subprocess(
+    test_db,
+):
+    from holdspeak.connector_runtime import ReadSubprocessDenied
+
+    record = test_db.activity.upsert_activity_record(
+        source_browser="safari",
+        url="https://example.atlassian.net/browse/HS-108",
+        title="HS-108",
+        domain="example.atlassian.net",
+        entity_type="jira_ticket",
+        entity_id="HS-108",
+    )
+    called = False
+
+    def forbidden_runner(*_args, **_kwargs):
+        nonlocal called
+        called = True
+
+    with pytest.raises(ReadSubprocessDenied):
+        run_jira_cli_enrichment(
+            test_db,
+            [record],
+            principal=UNAUTHENTICATED,
+            jira_path="/usr/local/bin/jira",
+            run_command=forbidden_runner,
+        )
+    assert called is False

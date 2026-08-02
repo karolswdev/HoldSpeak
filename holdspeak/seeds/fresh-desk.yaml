@@ -1,0 +1,66 @@
+# The architect's desk (HS-112-03) — the packaged fresh-desk seed.
+#
+# Six drawers a Senior Software Architect wants on a fresh desk, one
+# honest starter object where a starter earns its place, nothing else.
+# Deterministic `hs-desk-*` ids are the idempotency contract: re-applying
+# upserts in place — never a duplicate desk. Applied by
+# `holdspeak.db.seed` (repository-level), reachable via `holdspeak seed`
+# and POST /api/desk/seed. Never auto-applied at boot: a fresh install
+# stays an empty floor until the owner asks.
+directories:
+  - id: hs-desk-adrs
+    name: ADRs
+    member_ids: [hs-desk-note-adr-template]
+  - id: hs-desk-meetings
+    name: Meetings
+  - id: hs-desk-rules
+    name: Rules
+    member_ids: [hs-desk-note-working-rules]
+  - id: hs-desk-decisions
+    name: Decisions
+  - id: hs-desk-reference
+    name: Reference
+  - id: hs-desk-inbox
+    name: Inbox
+notes:
+  - id: hs-desk-note-adr-template
+    title: ADR template
+    tags: [adr, template]
+    body_markdown: |
+      # ADR-NNN: <decision title>
+
+      - Status: Proposed | Accepted | Superseded by ADR-NNN
+      - Date: YYYY-MM-DD
+      - Deciders: <who was in the room>
+
+      ## Context
+
+      The problem and the forces at play. Name the constraint that makes
+      a decision necessary now. Two or three sentences, no history essay.
+
+      ## Decision
+
+      We will <the decision, one active sentence>.
+
+      Alternatives set aside, one line each on why they lost:
+
+      - <alternative> — <why not>
+
+      ## Consequences
+
+      - <what becomes easier>
+      - <what becomes harder, and who carries it>
+      - <what we agree to revisit, and the trigger that reopens it>
+  - id: hs-desk-note-working-rules
+    title: Working rules
+    tags: [rules]
+    body_markdown: |
+      # Working rules
+
+      - File objects into drawers. A clean floor is the default.
+      - The Inbox is the landing zone. Unfiled things go there first.
+      - One decision per ADR. Consequences are part of the decision.
+      - Decisions file into Decisions. KBs and reading into Reference.
+      - Meeting records file into Meetings.
+      - Reset to seed lives in Prefs. Desk objects reset; meetings,
+        journal, and settings survive.

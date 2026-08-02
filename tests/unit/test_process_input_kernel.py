@@ -1,12 +1,19 @@
 """HS-106-05: process.input codec and the terminal-command adapter."""
+
 from __future__ import annotations
 
 from datetime import datetime, timezone
 from types import SimpleNamespace
 
+import pytest
+
 from holdspeak.db import Database
 from holdspeak.db.delivery_receipts import NodeReceiptLedger
-from holdspeak.delivery.commands import HubCommandService, NodeCommandProcessor
+from holdspeak.delivery.commands import (
+    CommandRefused,
+    HubCommandService,
+    NodeCommandProcessor,
+)
 from holdspeak.kernel.broker import Broker
 from holdspeak.kernel.journal import JournalStore
 from holdspeak.kernel.model import OperationSpec
@@ -69,6 +76,23 @@ def command(command_id="aaaaaaaa-bbbb-cccc-dddd-eeeeffff0001", node="local"):
             "session_key": "claude:test",
             "submit": False,
             "agent": "claude",
+        },
+    }
+
+
+def keys_command(command_id="aaaaaaaa-bbbb-cccc-dddd-eeeeffff0002"):
+    return {
+        "command_id": command_id,
+        "node_id": "local",
+        "target_id": "term_1",
+        "target_generation": "gen_1",
+        "expected_sequence": 1,
+        "operation": {"family": "coder_steering", "verb": "terminal.keys"},
+        "payload": {
+            "keys": [{"named": "C-c"}, {"literal": "x"}],
+            "session_key": "claude:test",
+            "agent": "claude",
+            "expected_pane_id": "%1",
         },
     }
 
@@ -163,7 +187,43 @@ def test_local_failure_gets_failed_kernel_receipt(tmp_path):
     assert receipt["state"] == "failed"
 
 
-def test_preflight_deny_gets_refused_kernel_receipt(tmp_path):
+def test_terminal_keys_use_process_input_and_close_one_kernel_receipt(tmp_path):
+    db = Database(tmp_path / "hub.db")
+    sent = []
+    service = HubCommandService(
+        repo=db.delivery_receipts,
+        processor=NodeCommandProcessor(
+            node_id="local",
+            targets=Targets(),
+            ledger=NodeReceiptLedger(tmp_path / "node.db"),
+            runner=Tmux(),
+            keys_transport=lambda **kwargs: sent.append(kwargs),
+            audit=lambda **kwargs: 9,
+            wall_now=lambda: T0,
+        ),
+        local_node_id="local",
+        mode_loader=lambda: "yolo",
+        wall_now=lambda: T0,
+    )
+
+    response = service.submit_process_input(keys_command(), OWNER, include_result=True)
+    operation = service._kernel_service().store.operation(response["operation_id"])
+    receipt = service._kernel_service().store.receipt(response["operation_id"])
+
+    assert response["result"]["status"] == "delivered"
+    assert sent == [
+        {
+            "pane": "%1",
+            "keys": [("named", "C-c"), ("literal", "x")],
+        }
+    ]
+    assert operation["name"] == "process.input"
+    assert operation["native_id"] == response["command_id"]
+    assert receipt["state"] == "succeeded"
+    assert receipt["result_ref"] == f"command:{response['command_id']}"
+
+
+def test_policy_deny_is_refused_only_after_kernel_admission(tmp_path):
     db = Database(tmp_path / "hub.db")
     service = HubCommandService(
         repo=db.delivery_receipts,
@@ -182,13 +242,13 @@ def test_preflight_deny_gets_refused_kernel_receipt(tmp_path):
         command(),
         OWNER,
         authority_snapshot={
-            "outcome": "propose",
+            "outcome": "grant_required",
             "authority_basis": "none",
             "reason_code": "steering_grant_required",
             "policy_version": "operation-policy/v2",
             "mode": "neutral",
         },
-        preflight_result={"status": "blocked", "detail": "desk says no"},
+        include_result=True,
     )
     kernel = service._kernel_service()
     receipt = kernel.store.receipt(response["operation_id"])
@@ -196,8 +256,9 @@ def test_preflight_deny_gets_refused_kernel_receipt(tmp_path):
 
     assert response["receipt"]["state"] == "refused"
     assert receipt["state"] == "refused"
-    assert receipt["outcome"] == "owner_rejected"
-    assert operation["decision"] == "reject"
+    assert receipt["outcome"] == "refused"
+    assert response["result"]["status"] == "unarmed"
+    assert operation["decision"] == "approve"
 
 
 def test_remote_send_dropped_before_claim_gets_refused_kernel_receipt(tmp_path):
@@ -263,3 +324,50 @@ def test_remote_node_reset_becomes_indeterminate_and_reconciles_by_command_id(tm
     assert aggregate["hub_state"] == "indeterminate_after_node_reset"
     assert kernel_receipt["state"] == "indeterminate"
     assert kernel_receipt["result_ref"] == f"command:{response['command_id']}"
+
+
+def test_claimed_or_indeterminate_retry_never_redispatches(tmp_path):
+    db = Database(tmp_path / "hub.db")
+    processor = NodeCommandProcessor(
+        node_id="local",
+        targets=Targets(),
+        ledger=NodeReceiptLedger(tmp_path / "hub-node.db"),
+        wall_now=lambda: T0,
+    )
+    service = HubCommandService(
+        repo=db.delivery_receipts,
+        processor=processor,
+        local_node_id="local",
+        mode_loader=lambda: "neutral",
+        wall_now=lambda: T0,
+    )
+    request_body = command(node="edge")
+    first = service.submit_process_input(request_body, OWNER)
+    claimed = service.claim_for_node("edge")
+    assert [item["command_id"] for item in claimed] == [first["command_id"]]
+
+    retry = service.submit_process_input(request_body, OWNER)
+    assert retry["duplicate"] is True
+    assert retry["state"] == "claimed"
+    assert retry["kernel_state"] == "claimed"
+    assert service.claim_for_node("edge") == []
+
+    swapped = command(node="edge")
+    swapped["payload"]["text"] = "different payload"
+    with pytest.raises(CommandRefused) as exc:
+        service.submit_process_input(swapped, OWNER)
+    assert exc.value.reason == "idempotency_payload_mismatch"
+    assert service.claim_for_node("edge") == []
+
+    kernel = service._kernel_service()
+    kernel.receipt(
+        first["operation_id"],
+        "indeterminate",
+        f"command:{first['command_id']}",
+        Principal(PrincipalKind.NODE, "edge"),
+    )
+    terminal_retry = service.submit_process_input(request_body, OWNER)
+    assert terminal_retry["duplicate"] is True
+    assert terminal_retry["kernel_state"] == "indeterminate"
+    assert service.claim_for_node("edge") == []
+    assert processor.executions == 0
