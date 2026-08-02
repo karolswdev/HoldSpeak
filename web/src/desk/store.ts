@@ -51,6 +51,30 @@ export interface PanelRect {
 }
 
 const PANEL_KEY = "hs.desk.panels";
+const PANEL_ORDER_LIMIT = 100;
+
+// A panel id is local storage data, not an executable identifier. Retain
+// legacy panel names while rejecting empty and malformed keys; live panels
+// subsequently present themselves through the compositor registry.
+const isPanelId = (value: unknown): value is string =>
+  typeof value === "string" && /^[A-Za-z0-9:_-]+$/.test(value);
+
+const isPanelRect = (value: unknown): value is PanelRect => {
+  if (!value || typeof value !== "object") return false;
+  const rect = value as PanelRect;
+  return [rect.x, rect.y, rect.w, rect.h].every(Number.isFinite) &&
+    rect.w > 0 && rect.h > 0;
+};
+
+/** Keep z positions inside the window band. `panelOrder` is the store's
+ * z-index source, so retaining its newest 100 ids is equivalent to
+ * renumbering the ladder from its base while preserving relative order. */
+function compactPanelOrder(order: string[]): string[] {
+  const unique = Array.from(new Set(order));
+  return unique.length > PANEL_ORDER_LIMIT
+    ? unique.slice(-PANEL_ORDER_LIMIT)
+    : unique;
+}
 
 /** The persisted window layout (HS-95-02; order since HS-97-03):
  * arranged rects, the stacking order, and maximize. Minimize is
@@ -65,15 +89,27 @@ interface PanelLayout {
 
 export function loadPanelLayout(): PanelLayout {
   try {
-    const raw = JSON.parse(localStorage.getItem(PANEL_KEY) || "{}") || {};
-    if (raw && typeof raw === "object" && raw.rects) {
-      return {
-        rects: raw.rects || {},
-        order: Array.isArray(raw.order) ? raw.order : [],
-        max: Array.isArray(raw.max) ? raw.max : [],
-      };
-    }
-    return { rects: raw, order: [], max: [] };
+    const raw: unknown = JSON.parse(localStorage.getItem(PANEL_KEY) || "{}") || {};
+    const layout = raw as { rects?: unknown; order?: unknown; max?: unknown };
+    const source = raw && typeof raw === "object" && layout.rects ? layout.rects : raw;
+    const rects = Object.fromEntries(
+      Object.entries(source && typeof source === "object" ? source : {}).filter(
+        ([id, rect]) => isPanelId(id) && isPanelRect(rect),
+      ),
+    ) as Record<string, PanelRect>;
+    const order = compactPanelOrder(
+      (Array.isArray(layout.order) ? layout.order : []).filter(
+        (value): value is string => isPanelId(value),
+      ),
+    );
+    const max = Array.from(
+      new Set(
+        (Array.isArray(layout.max) ? layout.max : []).filter(
+          (value): value is string => isPanelId(value),
+        ),
+      ),
+    );
+    return { rects, order, max };
   } catch {
     return { rects: {}, order: [], max: [] };
   }
@@ -1001,8 +1037,10 @@ export const useDesk = create<DeskState>((set, get) => ({
     savePanelLayout(rest, panelSaved, get().panelOrder, get().panelMax);
   },
   focusPanel(id) {
-    const order = get().panelOrder.filter((x) => x !== id);
-    order.push(id);
+    const order = compactPanelOrder([
+      ...get().panelOrder.filter((x) => x !== id),
+      id,
+    ]);
     set({ panelOrder: order });
     savePanelLayout(get().panelRects, get().panelSaved, order, get().panelMax);
   },
@@ -1023,8 +1061,10 @@ export const useDesk = create<DeskState>((set, get) => ({
   },
   restorePanel(id) {
     const panelMin = get().panelMin.filter((x) => x !== id);
-    const order = get().panelOrder.filter((x) => x !== id);
-    order.push(id);
+    const order = compactPanelOrder([
+      ...get().panelOrder.filter((x) => x !== id),
+      id,
+    ]);
     set({ panelMin, panelOrder: order });
     savePanelLayout(get().panelRects, get().panelSaved, order, get().panelMax);
   },
@@ -1033,8 +1073,10 @@ export const useDesk = create<DeskState>((set, get) => ({
     const panelMax = has
       ? get().panelMax.filter((x) => x !== id)
       : [...get().panelMax, id];
-    const order = get().panelOrder.filter((x) => x !== id);
-    order.push(id);
+    const order = compactPanelOrder([
+      ...get().panelOrder.filter((x) => x !== id),
+      id,
+    ]);
     set({ panelMax, panelOrder: order });
     savePanelLayout(get().panelRects, get().panelSaved, order, panelMax);
   },

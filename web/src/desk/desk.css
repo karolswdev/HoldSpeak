@@ -342,8 +342,6 @@
 }
 .desk-next .desk-start-action.is-recording .desk-start-record {
   background: var(--danger-signal);
-  box-shadow: 0 0 8px color-mix(in srgb, var(--danger-signal) 60%, transparent);
-  animation: desk-next-mic-pulse 1.6s ease-in-out infinite;
 }
 .desk-next .desk-create {
   position: relative;
@@ -756,7 +754,7 @@
 .desk-next .desk-editor input:focus,
 .desk-next .desk-editor textarea:focus,
 .desk-next .desk-editor select:focus {
-  outline: none;
+  outline-color: var(--accent, #ff6b35);
   border-color: var(--accent, #ff6b35);
 }
 .desk-next .desk-editor-head {
@@ -844,7 +842,6 @@
   width: 100%;
   padding: 0;
   border: 0;
-  outline: 0;
   background: transparent;
   color: var(--text);
   font-family: inherit;
@@ -910,6 +907,25 @@
 .desk-next .desk-light:hover svg {
   opacity: 1;
   color: var(--text);
+}
+/* The traffic cluster is the depth signal: colored on the front plane,
+   neutral in the background. */
+.desk-next .desk-window-shell:not(.is-front) .desk-light {
+  background: var(--surface-2);
+  border-color: var(--border);
+}
+.desk-next .desk-window-shell.is-front .desk-light-close {
+  background: var(--danger-signal, #f87171);
+}
+.desk-next .desk-window-shell.is-front .desk-light-min {
+  background: var(--warn, #f2a33c);
+}
+.desk-next .desk-window-shell.is-front .desk-light-max {
+  background: var(--success, #34d399);
+}
+.desk-next .desk-window-shell.is-front .desk-light svg {
+  color: color-mix(in srgb, var(--bg) 78%, transparent);
+  opacity: 0.82;
 }
 .desk-next .is-front .desk-light-close:hover {
   background: var(--gadget-close-fill);
@@ -1244,7 +1260,7 @@
   padding: 8px 0;
 }
 .desk-next .desk-chat-composer textarea:focus {
-  outline: none;
+  outline-color: var(--accent);
 }
 
 .desk-next .runs-on-picker {
@@ -1299,24 +1315,16 @@
 .desk-next .desk-chip.is-primary:hover {
   background: var(--accent-hover);
 }
-/* the dive camera: the world scales in as the zone's members take the stage */
+/* Dive changes the world contents without scaling pixel art. */
 .desk-next .desk-world {
-  transition:
-    opacity 0.28s var(--ease-standard),
-    transform 0.28s var(--ease-standard);
+  transition: opacity 0.28s var(--ease-standard);
 }
 .desk-next .desk-world.dived {
   animation: desk-next-dive 0.34s var(--ease-standard);
 }
 @keyframes desk-next-dive {
-  0% {
-    opacity: 0;
-    transform: scale(1.06);
-  }
-  100% {
-    opacity: 1;
-    transform: scale(1);
-  }
+  0% { opacity: 0; }
+  100% { opacity: 1; }
 }
 .desk-next .desk-surface {
   position: fixed;
@@ -1424,28 +1432,13 @@
   place-items: center;
   cursor: pointer;
   backdrop-filter: none;
-  transition:
-    transform var(--duration-short) var(--ease-standard),
-    border-color var(--duration-short) var(--ease-standard);
+  transition: border-color var(--duration-short) var(--ease-standard);
 }
 .desk-next .desk-rail-avatar:hover {
-  transform: scale(1.08);
   border-color: var(--accent, #ff6b35);
 }
 .desk-next .desk-rail-avatar.open {
   border-color: var(--accent, #ff6b35);
-}
-.desk-next .desk-rail-avatar.working {
-  animation: desk-next-rail-work 1.1s ease-in-out infinite;
-}
-@keyframes desk-next-rail-work {
-  0%,
-  100% {
-    box-shadow: 0 0 0 0 var(--accent-glow-strong);
-  }
-  50% {
-    box-shadow: 0 0 0 7px rgba(255, 107, 53, 0);
-  }
 }
 /* HS-111: status indicators — square, no glow */
 .desk-next .desk-rail-egress {
@@ -1493,7 +1486,7 @@
   font-size: var(--font-size-sm);
 }
 .desk-next .desk-rail-ask input:focus {
-  outline: none;
+  outline-color: var(--accent, #ff6b35);
   border-color: var(--accent, #ff6b35);
 }
 @media (prefers-reduced-motion: reduce) {
@@ -1525,7 +1518,6 @@
 }
 .desk-next .desk-mic.is-listening {
   border-color: var(--accent, #ff6b35);
-  animation: desk-next-mic-pulse 1.1s ease-in-out infinite;
 }
 .desk-next .desk-mic.is-busy {
   opacity: 0.7;
@@ -1545,15 +1537,6 @@
   color: color-mix(in srgb, var(--danger, #f87171) 65%, var(--text));
   font-size: var(--font-size-xs);
   line-height: 1.35;
-}
-@keyframes desk-next-mic-pulse {
-  0%,
-  100% {
-    box-shadow: 0 0 0 0 rgba(255, 107, 53, 0.55);
-  }
-  50% {
-    box-shadow: 0 0 0 8px rgba(255, 107, 53, 0);
-  }
 }
 .desk-next .desk-editor-spacer {
   flex: 1;
@@ -1952,7 +1935,6 @@
   resize: vertical;
   border: 0;
   background: none;
-  outline: none;
   color: var(--text);
   font-size: var(--font-size-sm);
   font-family: var(--font-mono);
@@ -2032,7 +2014,7 @@
   font-family: var(--font-mono);
 }
 .desk-next .desk-chat-composer input:focus {
-  outline: none;
+  outline-color: var(--accent, #ff6b35);
   border-color: var(--accent, #ff6b35);
 }
 
@@ -2445,7 +2427,7 @@
   line-height: 1.4;
 }
 .desk-next .desk-steer-input:focus {
-  outline: none;
+  outline-color: var(--accent);
   border-color: var(--accent);
 }
 .desk-next .desk-steer-sent {
@@ -3593,20 +3575,6 @@
 .desk-next .desk-dock-chip.is-front {
   background: var(--accent-tint);
   border-color: var(--border-strong);
-}
-/* HS-99-05 — the glyph swells under the pointer (compositor-only). */
-.desk-next .desk-dock-main > span[aria-hidden="true"] {
-  display: inline-block;
-  transition: transform var(--duration-short) var(--ease-quart);
-}
-/* Materials round 2 — dock magnification: chips and launchers swell
-   under the pointer with a distance falloff (JS drives --dock-mag
-   transforms; this transition makes it springy). */
-.desk-next .desk-dock-main,
-.desk-next .desk-dock-launch,
-.desk-next .desk-dock-reset {
-  transform-origin: bottom center;
-  transition: transform var(--duration-short) var(--ease-quart);
 }
 /* HS-110-03: no glyph swell — flat shelf */
 .desk-next .desk-dock-launch {
@@ -4938,7 +4906,6 @@
   min-width: 0;
   background: none;
   border: 0;
-  outline: none;
   color: var(--text);
   font-size: var(--desk-surface-body-size);
 }
@@ -5009,8 +4976,13 @@ body:has(.desk-next .desk-pullout:not(.is-card)) .ambient-qlippy {
   color: var(--text);
 }
 .desk-zone-window .zone-cell:hover,
-.desk-zone-window .zone-cell:focus-visible {
-  background: var(--canvas-raised);
+.desk-zone-window .zone-cell:focus-visible,
+.desk-zone-window .zone-cell.is-selected {
+  background: var(--accent-tint);
+  outline-color: var(--accent);
+}
+.desk-zone-window .zone-list tr.is-selected {
+  background: var(--accent-tint);
 }
 .desk-zone-window .zone-cell img {
   image-rendering: pixelated;

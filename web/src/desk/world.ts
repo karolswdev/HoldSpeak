@@ -143,13 +143,10 @@ export function objUnit(
   };
 }
 
-/** Per-object float phase. HS-105-01: the random tilt and 0.92–1.08 scale
- * jitter died with the mascot scale — pixel art renders integer-true and
- * axis-aligned (the Workbench discipline); the positional bob keeps the
- * desk alive without blurring a single pixel. */
-export function objMotion(o: WorldObject) {
+/** Pixel art is rendered integer-true and axis-aligned at its rest state. */
+export function objMotion(_o: WorldObject) {
   return {
-    phase: -(oh(o.id) * 4.5),
+    phase: 0,
     tilt: 0,
     scale: 1,
   };

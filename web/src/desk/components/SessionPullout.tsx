@@ -345,6 +345,13 @@ function FactoryControls() {
               placeholder={attachedSession || undefined}
               autoFocus
               onChange={setNewName}
+              onKeyDown={(event) => {
+                if (event.key !== "Escape") return;
+                event.preventDefault();
+                event.stopPropagation();
+                setNewName("");
+                setRenaming(false);
+              }}
             />
             <TransportKey
               compact
@@ -457,6 +464,12 @@ function SteerComposer() {
           rows={2}
           placeholder="Steer"
           onChange={(e) => setText(e.target.value)}
+          onKeyDown={(event) => {
+            if (event.key !== "Escape") return;
+            event.preventDefault();
+            event.stopPropagation();
+            setText("");
+          }}
         />
         <TransportKey
           compact
@@ -648,7 +661,15 @@ export function SessionPullout() {
     // A desk window closes deliberately (✕ or Escape) — never from a stray
     // click elsewhere on the desk; a live peek must survive arranging.
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") closeSession();
+      if (e.key !== "Escape" || e.defaultPrevented) return;
+      // Inline rename/compose owns Escape first; their handlers cancel and
+      // stop propagation rather than letting the window consume the key.
+      if (
+        e.target instanceof Element &&
+        e.target.matches(".desk-steer-input, .gadget-string input")
+      )
+        return;
+      closeSession();
     };
     document.addEventListener("keydown", onKey);
     return () => {

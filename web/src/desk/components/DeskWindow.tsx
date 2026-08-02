@@ -30,8 +30,6 @@ import { DESK_WINDOW, DESK_Z } from "../../lib/tokens.gen";
 
 /** Viewport margin windows are clamped inside. */
 const MARGIN = DESK_WINDOW.margin;
-/** Minimum visible head strip so a window can always be grabbed back. */
-const GRAB = DESK_WINDOW.grab;
 /** The desk-window z band (see the ladder note in desk.css). */
 const Z_BASE = DESK_Z.windowBase;
 /** Cascade step when several default-corner windows are open at once. */
@@ -39,6 +37,24 @@ const CASCADE = DESK_WINDOW.cascade;
 
 /** The window head strip considered for title-bar occlusion (px). */
 const HEAD = 44;
+
+/** The usable desktop is one contract: below the system bar, above the dock.
+ * CSS owns the dimensions so shell changes cannot make window physics drift. */
+function workBand() {
+  const fallback = {
+    top: DESK_WINDOW.snapTop,
+    bottom: DESK_WINDOW.snapBottom,
+  };
+  if (typeof window === "undefined" || typeof document === "undefined")
+    return fallback;
+  const style = getComputedStyle(document.documentElement);
+  const top = parseFloat(style.getPropertyValue("--desk-work-top"));
+  const bottom = parseFloat(style.getPropertyValue("--desk-work-bottom"));
+  return {
+    top: Number.isFinite(top) ? top : fallback.top,
+    bottom: Number.isFinite(bottom) ? bottom : fallback.bottom,
+  };
+}
 
 /** HS-97-02 — the open-placement engine. A window opening without a
  * persisted rect lands FULLY inside the working band (below the chrome,
@@ -53,8 +69,7 @@ export function placeWindow(
   minW = 320,
   minH = 220,
 ): PanelRect {
-  const top = DESK_WINDOW.snapTop;
-  const bottom = DESK_WINDOW.snapBottom;
+  const { top, bottom } = workBand();
   const w = Math.max(minW, Math.min(seed.w, vw - MARGIN * 2));
   const h = Math.max(minH, Math.min(seed.h, Math.max(minH, vh - top - bottom)));
   const maxX = Math.max(MARGIN, vw - MARGIN - w);
@@ -114,8 +129,7 @@ export function clampIntoBand(
   minW = 320,
   minH = 220,
 ): PanelRect {
-  const top = DESK_WINDOW.snapTop;
-  const bottom = DESK_WINDOW.snapBottom;
+  const { top, bottom } = workBand();
   const w = Math.max(minW, Math.min(r.w, vw - MARGIN * 2));
   const h = Math.max(minH, Math.min(r.h, Math.max(minH, vh - top - bottom)));
   const x = Math.min(Math.max(r.x, MARGIN), Math.max(MARGIN, vw - MARGIN - w));
@@ -134,8 +148,7 @@ export function snapForPointer(
 ): PanelRect | null {
   const EDGE = 26;
   const CORNER = 150;
-  const top = DESK_WINDOW.snapTop; // below the chrome band
-  const bottom = DESK_WINDOW.snapBottom; // clear of the dock band
+  const { top, bottom } = workBand(); // below chrome, clear of dock
   const halfW = Math.floor((vw - MARGIN * 3) / 2);
   const halfH = Math.floor((vh - top - bottom - MARGIN) / 2);
   const left = px <= CORNER;
@@ -230,8 +243,9 @@ export function exposeLayout(
   vw: number,
   vh: number,
 ): PanelRect[] {
-  const top = DESK_WINDOW.snapTop + 8;
-  const bottom = DESK_WINDOW.snapBottom + 8;
+  const band = workBand();
+  const top = band.top + 8;
+  const bottom = band.bottom + 8;
   const GAP = 18;
   const cols = Math.max(1, Math.ceil(Math.sqrt(count)));
   const rows = Math.max(1, Math.ceil(count / cols));
@@ -258,15 +272,11 @@ export function exposeLayout(
 function clampRect(r: PanelRect, minW: number, minH: number): PanelRect {
   const vw = window.innerWidth || 1280;
   const vh = window.innerHeight || 800;
-  let w = Math.min(Math.max(r.w, minW), vw - MARGIN * 2);
-  let h = Math.min(Math.max(r.h, minH), vh - MARGIN * 2);
-  const x = Math.min(Math.max(r.x, MARGIN - w + GRAB), vw - GRAB);
-  const y = Math.min(Math.max(r.y, MARGIN), vh - 48);
-  // Keep the resize grip reachable: a window dragged toward an edge
-  // shrinks to fit the viewport (floored at its minimum) rather than
-  // sliding its bottom-right corner off-screen.
-  w = Math.max(minW, Math.min(w, vw - MARGIN - x));
-  h = Math.max(minH, Math.min(h, vh - MARGIN - y));
+  const { top, bottom } = workBand();
+  const w = Math.max(minW, Math.min(r.w, vw - MARGIN * 2));
+  const h = Math.max(minH, Math.min(r.h, Math.max(minH, vh - top - bottom)));
+  const x = Math.min(Math.max(r.x, MARGIN), Math.max(MARGIN, vw - MARGIN - w));
+  const y = Math.min(Math.max(r.y, top), Math.max(top, vh - bottom - h));
   return { x, y, w, h };
 }
 
@@ -283,6 +293,41 @@ export interface DeskWindowOptions {
    * desk object). The window seats itself beside it and the open/close
    * motion flies out of and back into it — spatial, not a side dock. */
   origin?: { x: number; y: number } | null;
+}
+
+let resizeClampUsers = 0;
+let resizeClampTimer: ReturnType<typeof setTimeout> | undefined;
+
+function reClampOpenWindows() {
+  const state = useDesk.getState();
+  for (const { id } of registrySnapshot) {
+    const rect = state.panelRects[id];
+    if (!rect || state.panelMax.includes(id)) continue;
+    const clamped = clampRect(rect, 320, 220);
+    if (
+      clamped.x !== rect.x ||
+      clamped.y !== rect.y ||
+      clamped.w !== rect.w ||
+      clamped.h !== rect.h
+    )
+      state.setPanelRect(id, clamped, state.panelSaved.includes(id));
+  }
+}
+
+function onWindowResize() {
+  clearTimeout(resizeClampTimer);
+  resizeClampTimer = setTimeout(reClampOpenWindows, 150);
+}
+
+function subscribeResizeClamp() {
+  if (resizeClampUsers++ === 0)
+    window.addEventListener("resize", onWindowResize);
+  return () => {
+    if (--resizeClampUsers === 0) {
+      window.removeEventListener("resize", onWindowResize);
+      clearTimeout(resizeClampTimer);
+    }
+  };
 }
 
 /** The desk-window physics (Phase 93). Module-private since HS-95-02:
@@ -371,7 +416,7 @@ function useDeskWindow(id: string, opts: DeskWindowOptions = {}) {
         const cap = Math.max(
           minH,
           Math.round(
-            ((vh - DESK_WINDOW.snapTop - DESK_WINDOW.snapBottom) * 78) / 100,
+            ((vh - workBand().top - workBand().bottom) * 78) / 100,
           ),
         );
         if (Number.isFinite(mh) && mh > seed.h)
@@ -426,6 +471,13 @@ function useDeskWindow(id: string, opts: DeskWindowOptions = {}) {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, open]);
+
+  // One compositor listener re-seats open windows after a viewport change.
+  // The 150ms debounce keeps browser resize storms out of the layout path.
+  useEffect(() => {
+    if (!open || typeof window === "undefined") return;
+    return subscribeResizeClamp();
+  }, [open]);
 
   // Round 9 — growth settles with motion: a content-sized card whose
   // material arrives async (a meeting detail, a relationships fetch)
@@ -1257,10 +1309,10 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
       ? { zIndex: (win.style.zIndex as number) ?? 42 }
       : maxed
         ? {
-            top: 54,
-            left: 10,
-            right: 10,
-            bottom: 10,
+            top: "var(--desk-work-top)",
+            left: MARGIN,
+            right: MARGIN,
+            bottom: "var(--desk-work-bottom)",
             width: "auto",
             height: "auto",
             maxHeight: "none",
