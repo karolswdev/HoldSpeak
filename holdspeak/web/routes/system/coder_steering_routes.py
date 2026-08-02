@@ -100,16 +100,16 @@ def build_coder_steering_router(
 
     @router.get("/api/coders/{key}/peek")
     async def api_coder_peek(
-        key: str, lines: int = 200, last_hash: Optional[str] = None
+        key: str, lines: int = 200, last_hash: Optional[str] = None, raw: int = 0
     ) -> Any:
         """Read-only window into a session's tmux pane (HS-87-01).
 
-        Watching is free — no grant, no keystroke, ever. The pane is
-        resolved from the registry record; absences come back as typed
-        peek statuses (`no_pane`, `pane_gone`, `tmux_absent`), and a
-        registry entry past the recent window is marked `stale`, never
-        dropped. The envelope carries the grant state (HS-87-02) so an
-        open pull-out renders the countdown without a second poll.
+        Watching is free — no grant, no keystroke, ever. Absences come
+        back as typed peek statuses (`no_pane`, `pane_gone`,
+        `tmux_absent`); a registry record past the recent window is
+        marked `stale`, never dropped. The envelope carries the grant
+        state (HS-87-02) so the pull-out renders the countdown without
+        a second poll. `raw=1` opts into ANSI passthrough (HS-111-11).
         """
         from .... import coder_steering
 
@@ -181,8 +181,8 @@ def build_coder_steering_router(
         preset_ttl = steering_ttl_for_mode(Config.load().control_mode)
         envelope["arm_commitment"] = f"Arm pane {pane_id or target} for {preset_ttl // 60} minutes"
         envelope["peek"] = await asyncio.to_thread(
-            coder_steering.peek_pane, target, lines=lines, last_hash=last_hash
-        )
+            coder_steering.peek_pane, target, lines=lines,
+            last_hash=last_hash, **({"raw": True} if raw else {}))
         return JSONResponse(envelope)
 
     @router.post("/api/coders/{key}/arm")
@@ -299,10 +299,10 @@ def build_coder_steering_router(
 
     @router.get("/api/coders/relay/{node}/peek")
     async def api_relay_peek(
-        node: str, key: str, lines: int = 200, last_hash: Optional[str] = None
+        node: str, key: str, lines: int = 200, last_hash: Optional[str] = None, raw: int = 0
     ) -> Any:
         verb = f"peek?lines={lines}" + (f"&last_hash={last_hash}" if last_hash else "")
-        return await _relay(node, verb, key, method="GET")
+        return await _relay(node, verb + ("&raw=1" if raw else ""), key, method="GET")
 
     @router.post("/api/coders/relay/{node}/arm")
     async def api_relay_arm(node: str, payload: Optional[dict[str, Any]] = None) -> Any:

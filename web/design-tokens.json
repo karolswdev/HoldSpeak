@@ -1001,6 +1001,11 @@
         "doc": "wells/inputs: dark inset (unchanged — this already reads as a CRT well)"
       },
       {
+        "name": "--desk-terminal-screen",
+        "value": "#0f1115",
+        "doc": "HS-111-11: the terminal screen — the well tone composited OPAQUE over the window fill (xterm paints an opaque canvas; a translucent well would flash white on mount)"
+      },
+      {
         "name": "--desk-scrollbar-thumb",
         "value": "rgba(255, 255, 255, 0.14)",
         "doc": "HS-99: the pill scrollbar thumb, everywhere"

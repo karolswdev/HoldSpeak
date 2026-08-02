@@ -634,6 +634,9 @@ export function SessionPullout() {
   const paneStatus = useSteering((s) => s.paneStatus);
   const paneDetail = useSteering((s) => s.paneDetail);
   const paneLines = useSteering((s) => s.paneLines);
+  const paneRaw = useSteering((s) => s.paneRaw);
+  const paneGeom = useSteering((s) => s.paneGeom);
+  const paneChangedAt = useSteering((s) => s.paneChangedAt);
   const armed = useSteering((s) => s.armed);
   const postureAuthorized = useSteering((s) => s.postureAuthorized);
   const paneId = useSteering((s) => s.paneId);
@@ -698,11 +701,15 @@ export function SessionPullout() {
             {session.question}
           </pre>
         ) : null}
-        {/* HS-111-06 — the shared PaneWell seam (HS-111-11 swaps its
-            interior for xterm once, both terminals inherit). */}
+        {/* HS-111-06/11 — the shared PaneWell seam: the raw stream
+            renders through xterm; a stripped-only hub falls back to
+            the pre face, named honestly. Read-only either way. */}
         <PaneWell
           live={live}
           lines={paneLines}
+          raw={paneRaw}
+          pane={paneGeom}
+          changedAt={paneChangedAt}
           absence={
             <>
               ✕ {PANE_STATE_LABEL[paneStatus] || paneStatus}

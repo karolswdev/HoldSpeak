@@ -98,6 +98,12 @@ interface TerminalState {
   status: TerminalStatus;
   detail: string;
   lines: string[];
+  /** HS-111-11: the raw ANSI stream (§7 preserves it on the wire) —
+   * the PaneWell's xterm interior renders it; `lines` stays as the
+   * stripped fallback shape. */
+  raw: string | null;
+  /** Epoch ms the stream last moved — the Δ fact in the well head. */
+  changedAt: number | null;
   sequence: number;
   hash: string | null;
   inflight: boolean;
@@ -119,6 +125,8 @@ const CLEARED = {
   status: "idle" as TerminalStatus,
   detail: "",
   lines: [] as string[],
+  raw: null as string | null,
+  changedAt: null as number | null,
   sequence: 0,
   hash: null as string | null,
   sendState: "idle" as const,
@@ -135,6 +143,14 @@ const ANSI = /\u001b\[[0-9;?]*[ -/]*[@-~]|\u001b\][\s\S]*?(?:\u0007|\u001b\\)|\u
 
 function toLines(content: string): string[] {
   return content.replace(ANSI, "").replace(/\r/g, "").split("\n");
+}
+
+// The raw stream the xterm well replays is bounded client-side the way
+// the peek is bounded hub-side — the tail is the point of a terminal.
+const RAW_MAX_CHARS = 256_000;
+
+function capRaw(raw: string): string {
+  return raw.length > RAW_MAX_CHARS ? raw.slice(-RAW_MAX_CHARS) : raw;
 }
 
 function commandId(): string {
@@ -253,13 +269,18 @@ export const useDeliveryTerminal = create<TerminalState>((set, get) => ({
           status: status as TerminalStatus,
           detail: String(body.detail || body.current_generation || ""),
           lines: [],
+          raw: null,
+          changedAt: null,
         });
         return;
       }
       if (status === "snapshot" || status === "resync_required") {
+        const content = String(body.content || "");
         set({
           status: status === "resync_required" ? "resyncing" : "live",
-          lines: toLines(String(body.content || "")),
+          lines: toLines(content),
+          raw: capRaw(content),
+          changedAt: Date.now(),
           sequence: Number(body.sequence || 0),
           hash: body.hash ? String(body.hash) : null,
           detail: "",
@@ -273,6 +294,8 @@ export const useDeliveryTerminal = create<TerminalState>((set, get) => ({
         set({
           status: "live",
           lines: [...get().lines, ...toLines(chunks)],
+          raw: capRaw((get().raw || "") + chunks),
+          changedAt: Date.now(),
           sequence: Number(body.sequence || get().sequence),
         });
         return;

@@ -152,6 +152,8 @@ export function DeliveryTerminalWindow() {
   const status = useDeliveryTerminal((s) => s.status);
   const detail = useDeliveryTerminal((s) => s.detail);
   const lines = useDeliveryTerminal((s) => s.lines);
+  const raw = useDeliveryTerminal((s) => s.raw);
+  const changedAt = useDeliveryTerminal((s) => s.changedAt);
   const { close } = useDeliveryTerminal.getState();
 
   useEffect(() => {
@@ -211,6 +213,8 @@ export function DeliveryTerminalWindow() {
         <PaneWell
           live={live || status === "resyncing"}
           lines={lines}
+          raw={raw}
+          changedAt={changedAt}
           absence={
             <>
               ✕ {ABSENCE_LABEL[status] || status}
