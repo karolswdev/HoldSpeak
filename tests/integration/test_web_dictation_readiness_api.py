@@ -336,9 +336,11 @@ def test_dictation_page_includes_readiness_panel() -> None:
     assert '<div id="root"></div>' in response.text
     js = (Path(__file__).resolve().parents[2] / "web/src/pages/cores/DictationCore.tsx").read_text()
     assert "/api/dictation/readiness" in js
-    # HS-100-07/HS-102-06: readiness is the composed ReadinessLine under
-    # the loop (panel copy retired); Runs on lives inside RuntimeDestination.
-    assert "ReadinessLine" in js and "RuntimeDestination" in js
+    # HS-100-07: readiness is the composed ReadinessLine under the loop
+    # (panel copy retired). HS-112-01: Runs on lives ONLY in the Prefs
+    # models module — the Speak face hands over, never embeds an editor.
+    assert "ReadinessLine" in js and "RUNS ON LIVES IN MODELS" in js
+    assert "RuntimeDestination" not in js
     assert "warnings" in js
 
 
