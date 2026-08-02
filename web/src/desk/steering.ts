@@ -76,6 +76,28 @@ export function mmss(totalSeconds: number): string {
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 }
 
+/** Pane geometry + cursor riding a raw peek (HS-111-11) — camelCase
+ * view of the wire's `peek.pane`. */
+export interface PaneGeom {
+  width: number;
+  height: number;
+  cursorX: number;
+  cursorY: number;
+}
+
+export const fromWirePaneGeom = (pane: any): PaneGeom | null => {
+  if (!pane || typeof pane !== "object") return null;
+  const width = Number(pane.width);
+  const height = Number(pane.height);
+  if (!Number.isFinite(width) || !Number.isFinite(height)) return null;
+  return {
+    width,
+    height,
+    cursorX: Number(pane.cursor_x) || 0,
+    cursorY: Number(pane.cursor_y) || 0,
+  };
+};
+
 /** A tmux pane from `GET /api/coders/steering/panes` (HS-90-02). */
 export interface PaneInfo {
   paneId: string;
@@ -116,6 +138,13 @@ interface SteeringState {
   paneStatus: PaneStatus;
   paneDetail: string;
   paneLines: string[];
+  /** The raw ANSI snapshot (HS-111-11) — null when the hub answered
+   * stripped-only (older hub); the well then falls back honestly. */
+  paneRaw: string | null;
+  /** Pane geometry + cursor when the raw wire names them. */
+  paneGeom: PaneGeom | null;
+  /** Epoch ms the pane content last changed (hash moved). */
+  paneChangedAt: number | null;
   paneHash: string | null;
   paneId: string | null;
   operation: SteeringOperation | null;
@@ -246,6 +275,9 @@ export const useSteering = create<SteeringState>((set, get) => ({
   paneStatus: "idle",
   paneDetail: "",
   paneLines: [],
+  paneRaw: null,
+  paneGeom: null,
+  paneChangedAt: null,
   paneHash: null,
   paneId: null,
   operation: null,
@@ -280,6 +312,9 @@ export const useSteering = create<SteeringState>((set, get) => ({
       paneStatus: "idle",
       paneDetail: "",
       paneLines: [],
+      paneRaw: null,
+      paneGeom: null,
+      paneChangedAt: null,
       paneHash: null,
       paneId: null,
       operation: null,
@@ -308,6 +343,9 @@ export const useSteering = create<SteeringState>((set, get) => ({
       paneStatus: "idle",
       paneDetail: "",
       paneLines: [],
+      paneRaw: null,
+      paneGeom: null,
+      paneChangedAt: null,
       paneHash: null,
       paneId: null,
       operation: null,
@@ -677,9 +715,12 @@ export const useSteering = create<SteeringState>((set, get) => ({
     try {
       const hash = get().paneHash;
       const node = get().targetNode;
+      // HS-111-11: always ask for the raw stream — an older hub simply
+      // ignores the flag and answers stripped; the well then falls
+      // back to the pre face with the honest STRIPPED token.
       const base = node
-        ? `/api/coders/relay/${encodeURIComponent(node)}/peek?key=${encodeURIComponent(key)}&lines=${PEEK_LINES}`
-        : `/api/coders/${encodeURIComponent(key)}/peek?lines=${PEEK_LINES}`;
+        ? `/api/coders/relay/${encodeURIComponent(node)}/peek?key=${encodeURIComponent(key)}&lines=${PEEK_LINES}&raw=1`
+        : `/api/coders/${encodeURIComponent(key)}/peek?lines=${PEEK_LINES}&raw=1`;
       const url = base + (hash ? `&last_hash=${encodeURIComponent(hash)}` : "");
       const res = await apiRequest(url);
       const body = await res.json().catch(() => ({}));
@@ -708,6 +749,9 @@ export const useSteering = create<SteeringState>((set, get) => ({
           session,
           paneStatus: "live",
           paneLines: peek.lines || [],
+          paneRaw: typeof peek.raw === "string" ? peek.raw : null,
+          paneGeom: fromWirePaneGeom(peek.pane),
+          paneChangedAt: Date.now(),
           paneHash: peek.hash || null,
           paneDetail: "",
           armCommitment: body.arm_commitment || "Arm this pane",
@@ -721,6 +765,9 @@ export const useSteering = create<SteeringState>((set, get) => ({
         paneStatus: (peek.status as PaneStatus) || "error",
         paneDetail: peek.detail || "",
         paneLines: [],
+        paneRaw: null,
+        paneGeom: null,
+        paneChangedAt: null,
         paneHash: null,
         armCommitment: body.arm_commitment || "Arm this pane",
         ...grant,

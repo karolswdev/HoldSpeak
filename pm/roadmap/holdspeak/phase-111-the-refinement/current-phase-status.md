@@ -1,21 +1,23 @@
 # Phase 111 - The Refinement
 
-**Status:** IN PROGRESS (9/11). Chartered 2026-07-31 as the mandatory
+**Status:** IN PROGRESS (10/11). Chartered 2026-07-31 as the mandatory
 fast-follow to Phase 110. The owner's condition: every program on the
 desk gets its interior rethought — not token-tweaked, RETHOUGHT — to
 feel native to Signal Workbench. "The Settings screen needs to be
 completely rethought, and many, many others."
 
-**Last updated:** 2026-08-02 (HS-111-09 Sprites SHIPPED — the craft
-story: integer rendering ended the fractional-scale smear (the
-biggest win, zero credits), the record orb sprite finally replaced
-the CSS gloss orb (the last macOS survivor is dead), four orphan
-sprites retired honestly, the emoji era ended on the desk, the brand
-mark and search glyph regenerated on the real desk (8 subscription
-gens, ~zero credits), JUDGMENT.md before/after sheet filed for the
-owner incl. one held decision; suites green 3450+438. Earlier: 08
-elements, 07 chrome, 06 delivery/process, 05 Ask, 04 Agents, 03
-Meetings, 02 Speak, 01 Settings.)
+**Last updated:** 2026-08-02 (HS-111-11 The terminal pane SHIPPED —
+the owner's xterm.js ruling real: raw ANSI peek mode (opt-in,
+stripped default, hash gate intact), xterm as the ONE PaneWell
+interior (364 KB lazy chunk, strictly a viewer — no onData, the
+armed composer keeps the typing monopoly), true colors proven on a
+real tmux pane with the read-only proof photographed (typing into
+the terminal leaves the pane byte-identical), FIND with mic +
+copy-on-select + honest STRIPPED fallback; consent spine untouched
+(zero steering-test edits); suites green 4228+444. ONE STORY
+REMAINS: HS-111-10, the walk. Earlier: 09 sprites, 08 elements, 07
+chrome, 06 delivery/process, 05 Ask, 04 Agents, 03 Meetings, 02
+Speak, 01 Settings.)
 
 ## Why this phase exists
 
@@ -55,7 +57,7 @@ Each story:
 | 08 | [Interactive elements](./story-08-interactive-elements.md) | Every control type across all programs: toggles, selects, inputs, tabs, pills, buttons, badges — one kit, one language | done |
 | 09 | [Sprite and icon quality](./story-09-sprites.md) | Regenerate bad dock sprites on the real desk, window type icons, overview/reset glyphs | done |
 | 10 | [The refinement walk](./story-10-walk.md) | Open every program, screenshot at both viewports, prove every room speaks one language | backlog |
-| 11 | [The terminal pane](./story-11-terminal-pane.md) | Owner rider on 04: the pane well becomes a real terminal (xterm.js over a raw peek mode, read-only, consent spine untouched) + utility density | backlog |
+| 11 | [The terminal pane](./story-11-terminal-pane.md) | Owner rider on 04: the pane well becomes a real terminal (xterm.js over a raw peek mode, read-only, consent spine untouched) + utility density | done |
 
 ## Story status
 
@@ -71,7 +73,7 @@ Each story:
 | HS-111-08 | Interactive elements | done | [story-08-interactive-elements](./story-08-interactive-elements.md) | [evidence-story-08](./evidence-story-08.md) |
 | HS-111-09 | Sprite and icon quality | done | [story-09-sprites](./story-09-sprites.md) | [evidence-story-09](./evidence-story-09.md) |
 | HS-111-10 | The refinement walk | backlog | [story-10-walk](./story-10-walk.md) | — |
-| HS-111-11 | The terminal pane | backlog | [story-11-terminal-pane](./story-11-terminal-pane.md) | — |
+| HS-111-11 | The terminal pane | done | [story-11-terminal-pane](./story-11-terminal-pane.md) | [evidence-story-11](./evidence-story-11.md) |
 | HSEGHS001HS104-111-11 | The terminal pane | backlog | [story-11-terminal-pane](./story-11-terminal-pane.md) | - |
 
 ## Where we are
@@ -236,5 +238,26 @@ JUDGMENT.md (before/after per asset + a banked alternate + one held
 grammar decision) rides in evidence assets for the owner's sitting.
 ~Zero credits spent (8 subscription gens; the bell recolored locally
 with PIL). Proven live at 1440+393 DPR 2; suites green (3450 python
-unit + 438 web; no python surface). Next: HS-111-11 (the terminal
-pane — the owner's xterm.js ruling) then HS-111-10 (the walk).
+unit + 438 web; no python surface).
+
+10/11. HS-111-11 (The terminal pane) shipped 2026-08-02: the
+owner's ruling ("those panes need to be runnin' on xterm.js... and
+be a lot more utility-oriented") made real. The peek wire gained an
+opt-in raw ANSI mode (stripped stays the byte-identical default;
+same hash gate; 256 KB raw cap argued for SGR inflation; pane
+geometry as garnish) — landed surgically at net-zero lines in the
+density-budgeted route file. xterm.js became the ONE PaneWell
+interior (both terminal surfaces inherited via the 06 seam exactly
+as designed): a 364 KB lazy chunk that loads only with the
+pullout/terminal, strictly a VIEWER (disableStdin, no onData — the
+armed steer composer keeps the typing monopoly), themed from tokens
+with no white flash, full-repaint per changed hash with the cursor
+parked at tmux's position. Utility: FIND (mic by kit construction)
+with visible search highlights, copy-on-select, live Δ age, and the
+honest STRIPPED · RAW UNAVAILABLE fallback — never blank. Proven on
+a REAL tmux pane: true colors/inverse/underline/powerline rendered
+faithfully, and the read-only proof photographed — typing into the
+focused terminal leaves the pane byte-identical. Consent spine
+untouched: zero steering-test edits; the steering.ts diff is pure
+read-path. Suites green (4228 python + 444 web). Next: HS-111-10 —
+the walk, the phase's exit proof and the owner's sitting exhibit.

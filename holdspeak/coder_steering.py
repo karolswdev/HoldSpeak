@@ -34,6 +34,12 @@ TMUX_TIMEOUT_SECONDS = 5
 PEEK_DEFAULT_LINES = 200
 PEEK_MAX_LINES = 200
 PEEK_MAX_BYTES = 64_000
+# HS-111-11: the raw (ANSI passthrough) peek keeps the same line cap but
+# a raised byte cap — SGR color runs inflate a colored screen 2-4x over
+# its stripped text, and a capped-off tail would drop the very lines the
+# terminal needs to repaint faithfully. 256 KB is still one bounded read
+# on a 1.5 s poll behind the same hash gate.
+PEEK_RAW_MAX_BYTES = 256_000
 
 # CSI sequences, OSC strings (BEL- or ST-terminated), charset picks,
 # and keypad-mode toggles — everything a `capture-pane -e` snapshot
@@ -88,18 +94,65 @@ def resolve_pane_target(session: Any) -> Optional[str]:
     return None
 
 
+def _pane_geometry(
+    target: str, run: Runner
+) -> Optional[dict[str, int]]:
+    """The pane's live geometry + cursor, one tmux read (HS-111-11).
+
+    Raw peeks carry it so the terminal on glass can size itself to the
+    pane and park its block cursor where the pane's cursor sits. None on
+    any failure — geometry is a garnish, never a reason to refuse a peek.
+    """
+    try:
+        completed = run(
+            [
+                "tmux",
+                "display-message",
+                "-p",
+                "-t",
+                str(target),
+                "#{pane_width} #{pane_height} #{cursor_x} #{cursor_y}",
+            ]
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return None
+    if completed.returncode != 0:
+        return None
+    parts = (completed.stdout or "").split()
+    if len(parts) != 4:
+        return None
+    try:
+        width, height, cursor_x, cursor_y = (int(p) for p in parts)
+    except ValueError:
+        return None
+    return {
+        "width": width,
+        "height": height,
+        "cursor_x": cursor_x,
+        "cursor_y": cursor_y,
+    }
+
+
 def peek_pane(
     target: str,
     *,
     lines: int = PEEK_DEFAULT_LINES,
     last_hash: Optional[str] = None,
     runner: Optional[Runner] = None,
+    raw: bool = False,
 ) -> dict[str, Any]:
     """Read-only snapshot of a pane's last N lines.
 
     Statuses: ``live`` (hash + lines), ``not_modified`` (hash only —
     the gate that keeps polling cheap), ``pane_gone``, ``tmux_absent``,
     ``error``. Never raises for tmux-shaped failures.
+
+    ``raw=True`` (HS-111-11, opt-in) keeps the ANSI stream intact for a
+    real terminal on glass: same capture, same hash gate, the raised
+    ``PEEK_RAW_MAX_BYTES`` cap, and the payload rides as one ``raw``
+    string plus the pane's geometry/cursor when tmux will name them.
+    Stripped stays the default — every existing consumer is untouched.
+    Both modes are READ-ONLY; nothing here can write to a pane.
     """
     if runner is None and shutil.which("tmux") is None:
         return {"status": "tmux_absent"}
@@ -126,17 +179,28 @@ def peek_pane(
     if completed.returncode != 0:
         detail = (completed.stderr or "").strip() or "tmux refused"
         return {"status": "pane_gone", "detail": detail}
-    text = strip_ansi(completed.stdout or "").rstrip("\n")
+    if raw:
+        text = (completed.stdout or "").rstrip("\n")
+        byte_cap = PEEK_RAW_MAX_BYTES
+    else:
+        text = strip_ansi(completed.stdout or "").rstrip("\n")
+        byte_cap = PEEK_MAX_BYTES
     encoded = text.encode("utf-8", "replace")
-    if len(encoded) > PEEK_MAX_BYTES:
+    if len(encoded) > byte_cap:
         # Keep the tail — the newest output is the point of a peek.
-        text = encoded[-PEEK_MAX_BYTES:].decode("utf-8", "replace")
+        text = encoded[-byte_cap:].decode("utf-8", "replace")
         head_cut = text.find("\n")
         if head_cut != -1:
             text = text[head_cut + 1 :]
     digest = content_hash(text)
     if last_hash and digest == last_hash:
         return {"status": "not_modified", "hash": digest}
+    if raw:
+        result: dict[str, Any] = {"status": "live", "hash": digest, "raw": text}
+        geometry = _pane_geometry(target, run)
+        if geometry is not None:
+            result["pane"] = geometry
+        return result
     return {"status": "live", "hash": digest, "lines": text.split("\n")}
 
 

@@ -5,6 +5,8 @@
 // controls (Button, inputs, Switch…) stay — this kit owns surfaces,
 // not controls.
 import {
+  lazy,
+  Suspense,
   useEffect,
   useRef,
   useState,
@@ -13,7 +15,8 @@ import {
 } from "react";
 import { Button } from "../../components/signal/Signal";
 import { MicButton } from "../components/MicButton";
-import { CheckGadget } from "./gadgets";
+import { CheckGadget, StringGadget } from "./gadgets";
+import type { PaneGeometry } from "./XtermPane";
 import { humanTime, presentValue } from "./format";
 import { useRovingRows } from "./roving";
 import "./surface.css";
@@ -326,33 +329,101 @@ export function SurfaceWell({
   );
 }
 
-/** HS-111-06 — the shared pane mount (audit §3.4): ONE seam over the
- * sunken pane well — the mono tail-following pre while the peek is
- * live, the honest in-flow absence face otherwise. Consumed by BOTH
- * the session pullout and the delivery terminal so HS-111-11 swaps
- * this interior for xterm (TerminalWell) ONCE and both inherit. */
+/** HS-111-06/11 — the shared pane mount (audit §3.4): ONE seam over
+ * the sunken pane well, consumed by BOTH the session pullout and the
+ * delivery terminal, so both inherit every interior by construction.
+ * HS-111-11 made the interior a real terminal: raw ANSI renders
+ * through xterm.js (lazy chunk — the desk's first paint never pays
+ * for an emulator) with scrollback search and copy-on-select; when
+ * the wire cannot give raw (older hub, stripped-only consumer) the
+ * mono pre face stays, named honestly in the head. The terminal is a
+ * VIEWER — no keystroke here ever reaches a pane; typing goes through
+ * the armed steer composer only (Article XI / Phase 87 law). */
+
+const XtermPane = lazy(() => import("./XtermPane"));
+
+/** The last-change age as a mono token — the operator's staleness
+ * glance. Ticks locally; the poll only moves the anchor. */
+function AgeToken({ changedAt }: { changedAt: number }) {
+  const [, setTick] = useState(0);
+  useEffect(() => {
+    const t = setInterval(() => setTick((n) => n + 1), 1_000);
+    return () => clearInterval(t);
+  }, []);
+  const seconds = Math.max(0, Math.floor((Date.now() - changedAt) / 1000));
+  const face =
+    seconds < 60
+      ? `${seconds}S`
+      : `${Math.floor(seconds / 60)}M ${String(seconds % 60).padStart(2, "0")}S`;
+  return <span className="surface-token">Δ {face}</span>;
+}
+
 export function PaneWell({
   live,
   lines,
   absence,
+  raw,
+  pane,
+  changedAt,
 }: {
   /** The pane renders while the peek is live/resyncing. */
   live: boolean;
   lines: string[];
   /** The absence face content (✕ token + typed detail). */
   absence?: ReactNode;
+  /** The raw ANSI snapshot (HS-111-11). null/undefined = the wire is
+   * stripped-only; the pre face renders with the honest head token. */
+  raw?: string | null;
+  /** tmux pane geometry + cursor when the raw wire names it. */
+  pane?: PaneGeometry | null;
+  /** Epoch ms of the last content change — the Δ fact in the head. */
+  changedAt?: number | null;
 }) {
   const preRef = useRef<HTMLPreElement | null>(null);
+  const [query, setQuery] = useState("");
+  const [seq, setSeq] = useState(0);
   // The newest output is the point of a peek: follow the tail.
   useEffect(() => {
     const pre = preRef.current;
     if (pre) pre.scrollTop = pre.scrollHeight;
   }, [lines]);
   if (!live) return <p className="desk-session-state">{absence}</p>;
+  const hasRaw = raw !== null && raw !== undefined;
+  const lineCount = hasRaw ? raw.split("\n").length : lines.length;
   return (
-    <pre ref={preRef} className="desk-session-pane">
-      {lines.join("\n")}
-    </pre>
+    <div className="terminal-well">
+      <div className="terminal-well-head">
+        <span className="surface-token">
+          {hasRaw ? "RAW" : "STRIPPED · RAW UNAVAILABLE"}
+        </span>
+        <span className="surface-token">LINES {lineCount}</span>
+        {changedAt ? <AgeToken changedAt={changedAt} /> : null}
+        {hasRaw ? (
+          <span className="terminal-well-find">
+            <StringGadget
+              label="Find in scrollback"
+              value={query}
+              placeholder="FIND"
+              onChange={setQuery}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && query) setSeq((n) => n + 1);
+              }}
+            />
+          </span>
+        ) : null}
+      </div>
+      {hasRaw ? (
+        // The screen tone is set on the frame BEFORE xterm opens — the
+        // suspense gap and the mount both paint the same opaque well.
+        <Suspense fallback={<div className="terminal-well-screen" />}>
+          <XtermPane raw={raw} pane={pane} search={{ query, seq }} />
+        </Suspense>
+      ) : (
+        <pre ref={preRef} className="desk-session-pane">
+          {lines.join("\n")}
+        </pre>
+      )}
+    </div>
   );
 }
 

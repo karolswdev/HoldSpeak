@@ -385,6 +385,66 @@
   padding: 2px 6px;
 }
 
+/* ── HS-111-11: the terminal well — the PaneWell frame around the
+   xterm screen (or the stripped pre fallback). The screen tone is the
+   OPAQUE terminal token, set on the frame so the emulator never
+   flashes on mount; the head is the same etched mono lip as every
+   well, carrying the operator facts and the scrollback finder. ── */
+.terminal-well {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  flex: 1;
+  border-radius: 2px;
+  background: var(--desk-terminal-screen);
+  box-shadow: var(--desk-window-etch);
+  overflow: hidden;
+}
+.terminal-well-head {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+.terminal-well-find {
+  margin-left: auto;
+  width: 200px;
+  max-width: 45%;
+}
+.terminal-well-screen {
+  flex: 1;
+  min-height: 220px;
+  max-height: calc(100vh - 320px);
+  padding: 6px 8px;
+  background: var(--desk-terminal-screen);
+  overflow: auto;
+  scrollbar-width: thin;
+}
+/* No stock xterm chrome: the emulator sits flush on the screen tone,
+   its viewport keeps the house thin scrollbar, and focus draws no
+   ring — the cursor is a steady block, never a glow. */
+.terminal-well-screen .xterm {
+  padding: 0;
+}
+.terminal-well-screen .xterm .xterm-viewport {
+  scrollbar-width: thin;
+}
+.terminal-well-screen .xterm:focus,
+.terminal-well-screen .xterm.focus {
+  outline: none;
+}
+/* The stripped fallback keeps the old pane face but sheds its own
+   inset — the .terminal-well frame already carves the well. */
+.terminal-well > .desk-session-pane,
+.desk-next .terminal-well > .desk-session-pane {
+  box-shadow: none;
+  border-radius: 0;
+  background: transparent;
+}
+
 /* ── HS-111-04: the personnel record head — glyph tile + name + role
    token + the ONE egress chip, over a facts line. Never a card. ── */
 .surface-record-head {

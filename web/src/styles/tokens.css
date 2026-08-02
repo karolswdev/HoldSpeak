@@ -273,6 +273,7 @@
   --desk-window-head-front: var(--surface-3); /* HS-110-01: front window title bar — one step brighter */
   --desk-window-rail: var(--surface-2); /* HS-110-01: rails/groups — solid, not translucent */
   --desk-window-well: rgba(0, 0, 0, 0.28); /* wells/inputs: dark inset (unchanged — this already reads as a CRT well) */
+  --desk-terminal-screen: #0f1115; /* HS-111-11: the terminal screen — the well tone composited OPAQUE over the window fill (xterm paints an opaque canvas; a translucent well would flash white on mount) */
   --desk-scrollbar-thumb: rgba(255, 255, 255, 0.14); /* HS-99: the pill scrollbar thumb, everywhere */
   --desk-scrollbar-thumb-hover: rgba(255, 255, 255, 0.26); /* HS-99: the thumb under the pointer */
   --desk-control-h: 36px; /* HS-99: control height on the well tone (selects, dense inputs) */
