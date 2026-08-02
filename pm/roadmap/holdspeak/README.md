@@ -7,15 +7,18 @@
 **Newest update (2026-08-02): Phase 112 — Enough — CHARTERED.** The
 owner's post-111 verdict, verbatim: "Enough with the
 over-complication, enough with me not really even understanding what
-HoldSpeak does and what HoldSpeak is." Five stories, nothing else:
+HoldSpeak does and what HoldSpeak is." Six stories, nothing else:
 one dial for endpoint+model (the InferenceTarget becomes the only
 truth; the Prefs models module the only face), Speak performs the
 flagship act (hold TALK in the room → text lands through the real
 pipeline; today the flagship room only dry-runs into a void), the
 architect's desk seed + reset-to-seed (ADRs / Meetings / Rules /
 Decisions / Reference / Inbox; today a desk is append-only and the
-clutter is dev residue), the plain-story docs, and the fresh-HOME
-sitting walk. Phase 111's own sitting remains pending in parallel.
+clutter is dev residue), the plain-story docs, the fresh-HOME
+sitting walk, and the owner's live rider — the open mic (one
+browser mic grant on the Desk, continuous stream, VAD-segmented
+utterances; push-to-talk byte-identical): the voice-first
+environment. Phase 111's own sitting remains pending in parallel.
 
 **Previous update (2026-07-31): Phase 110 CLOSED, Phase 111 SCAFFOLDED.**
 Phase 110 replaced the macOS material model with Signal Workbench:
@@ -295,15 +298,18 @@ PR #359; sweep 4122/0).
 
 **Current phase (newest):**
 [**Phase 112 — Enough**](./phase-112-enough/current-phase-status.md)
-— **CHARTERED (0/5, 2026-08-02)**. The owner's verdict made a phase:
+— **CHARTERED (0/6, 2026-08-02)**. The owner's verdict made a phase:
 one dial (endpoint+model collapses onto the InferenceTarget with the
 Prefs models module as the only face), Speak speaks (the flagship
 room performs the flagship act through the real delivery contract),
 the architect's desk (a curated fresh seed — ADRs / Meetings / Rules
 / Decisions / Reference / Inbox — plus reset-to-seed with honest
 tombstone semantics), the plain story (docs that say what HoldSpeak
-IS in one paragraph), and the fresh-HOME sitting walk. Every story
-deletes more configuration surface than it adds. Previous:
+IS in one paragraph), the fresh-HOME sitting walk, and the open mic
+(the owner's live rider: one mic grant on the Desk, continuous
+stream, VAD — the voice-first environment; PTT byte-identical).
+Every story deletes more configuration surface than it adds.
+Previous:
 [**Phase 111 — The Refinement**](./phase-111-the-refinement/current-phase-status.md)
 — **11/11 SHIPPED (chartered 2026-07-31, all eleven stories shipped by 2026-08-02); the walk exhibit is staged and THE CLOSED CLAIM AWAITS THE OWNER SITTING**. The
 mandatory fast-follow to Phase 110: agents audit every program interior —

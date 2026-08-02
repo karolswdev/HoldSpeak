@@ -4,9 +4,13 @@
 111 shipped, verbatim: *"Enough with the over-complication, enough
 with me not really even understanding what HoldSpeak does and what
 HoldSpeak is."* Three concrete asks, and this phase is exactly those
-three plus the docs and the walk that prove them. Nothing else.
+three plus the docs and the walk that prove them — plus one owner
+rider chartered live the same day: the open mic ("we open a
+microphone request once, keep sending voice, use VAD and so on — so
+that we're finally in a voice-first environment"). Nothing else.
 
-**Last updated:** 2026-08-02 (chartered; HS-112-01 ready).
+**Last updated:** 2026-08-02 (chartered; HS-112-06 The open mic
+added as the owner's live rider; HS-112-01 ready).
 
 ## Why this phase exists
 
@@ -59,6 +63,7 @@ it does not absorb it — it names it in the final summary.
 | 03 | [The architect's desk](./story-03-architects-desk.md) | "An environment seed that starts fresh and beautiful" | backlog |
 | 04 | [The plain story](./story-04-plain-story.md) | "Me not really even understanding what HoldSpeak does" — the docs | backlog |
 | 05 | [The sitting walk](./story-05-walk.md) | The exit proof: fresh desk → one dial → hold → land → reset | backlog |
+| 06 | [The open mic](./story-06-open-mic.md) | "Open a microphone request once, keep sending voice, use VAD" — the voice-first Desk | backlog |
 
 ## Story status
 
@@ -69,13 +74,16 @@ it does not absorb it — it names it in the final summary.
 | HS-112-03 | The architect's desk | backlog | [story-03-architects-desk](./story-03-architects-desk.md) | — |
 | HS-112-04 | The plain story | backlog | [story-04-plain-story](./story-04-plain-story.md) | — |
 | HS-112-05 | The sitting walk | backlog | [story-05-walk](./story-05-walk.md) | — |
+| HS-112-06 | The open mic | backlog | [story-06-open-mic](./story-06-open-mic.md) | — |
 
 ## Where we are
 
-0/5. Chartered 2026-08-02 from the owner's post-111 verdict. The
-pre-charter survey (three parallel audits: the config map, the
-hold-to-speak map, the desk-seed map) is folded into the story
-theses; each story names its file:line ground. 01/02/03 are
-independent; 04 needs their surfaces settled; 05 closes. Phase 111's
-sitting remains pending in parallel — this phase does not touch its
-exhibit.
+0/6. Chartered 2026-08-02 from the owner's post-111 verdict; the
+same day the owner chartered the open-mic rider live (HS-112-06 —
+the voice-first Desk: one mic grant, continuous stream, VAD; PTT
+byte-identical). The pre-charter survey (three parallel audits: the
+config map, the hold-to-speak map, the desk-seed map) is folded into
+the story theses; each story names its file:line ground. 01/02/03
+are independent; 06 rides on 02; 04 needs the surfaces settled; 05
+closes. Phase 111's sitting remains pending in parallel — this phase
+does not touch its exhibit.
