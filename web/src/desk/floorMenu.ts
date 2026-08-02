@@ -1,0 +1,87 @@
+/** HS-111-07 - the desktop right-click content (owner P0), derived
+ * from the ONE verb registry; this module mints NOTHING. The floor
+ * menu is: NEW > (desk.new-*, the exact createPrimitive path),
+ * LAUNCH > (go.*, the exact openSurfaceOr path), then the floor
+ * verbs. The object menu re-derives from object.* (its inline
+ * duplicates were parallel list #4). Zone verbs keep their existing
+ * store wiring, re-rendered on the v2 species, until a registry verb
+ * exists for them. */
+import { useDesk } from "./store";
+import {
+  menuVerbs,
+  verbLabel,
+  verbsFor,
+  type Verb,
+  type VerbContext,
+} from "./verbRegistry";
+import type { WorkMenuEntry } from "./components/DeskMenu";
+import type { WorldMenuTarget } from "./gl/engine";
+
+const FLOOR_CTX: VerbContext = { selectedRef: null };
+
+function item(v: Verb, ctx: VerbContext): WorkMenuEntry {
+  return {
+    type: "item",
+    id: v.id,
+    label: verbLabel(v, ctx),
+    keycap: v.key,
+    ghost: v.ghost(ctx),
+    onSelect: () => v.run(ctx),
+  };
+}
+
+export function floorMenuEntries(): WorkMenuEntry[] {
+  const floor = verbsFor("floor");
+  const creates = floor.filter((v) => v.group === "new");
+  const verbs = floor.filter(
+    (v) => v.group === "floor" || v.group === "view",
+  );
+  return [
+    {
+      type: "sub",
+      id: "floor.new",
+      label: "New",
+      entries: creates.map((v) => item(v, FLOOR_CTX)),
+    },
+    {
+      type: "sub",
+      id: "floor.launch",
+      label: "Launch",
+      entries: verbsFor("go").map((v) => item(v, FLOOR_CTX)),
+    },
+    { type: "sep", id: "floor.sep" },
+    ...verbs.map((v) => item(v, FLOOR_CTX)),
+  ];
+}
+
+export function objectMenuEntries(
+  target: Extract<WorldMenuTarget, { type: "object" }>,
+): WorkMenuEntry[] {
+  const ctx: VerbContext = { selectedRef: target.ref };
+  return menuVerbs("object").map((v) => item(v, ctx));
+}
+
+export function zoneMenuEntries(
+  target: Extract<WorldMenuTarget, { type: "zone" }>,
+  at: { x: number; y: number },
+): WorkMenuEntry[] {
+  const zone = (verb: string, run: () => void): WorkMenuEntry => ({
+    type: "item",
+    id: `zone.${verb.toLocaleLowerCase()}`,
+    label: verb,
+    onSelect: run,
+  });
+  return [
+    zone("Open", () =>
+      useDesk.getState().openZoneWindow(target.id, { x: at.x, y: at.y }),
+    ),
+    zone("Info", () =>
+      useDesk.getState().openInfoWindow(`zone:${target.id}`, {
+        x: at.x,
+        y: at.y,
+      }),
+    ),
+    zone("Focus", () => useDesk.getState().diveInto(target.id)),
+    zone("Rename", () => useDesk.getState().setRenamingZone(target.id)),
+  ];
+}

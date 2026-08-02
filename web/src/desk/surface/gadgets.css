@@ -764,6 +764,18 @@
 .gadget-chip-egress {
   color: var(--ok);
 }
+/* HS-111-07 — scope color variants for the ONE badge species (the
+   chrome badge is this chip with a click; color is the only change). */
+.gadget-chip-egress[data-scope="local"] {
+  color: var(--ok);
+}
+.gadget-chip-egress[data-scope="mixed"],
+.gadget-chip-egress[data-scope="cloud"] {
+  color: var(--accent);
+}
+button.gadget-chip-egress {
+  cursor: pointer;
+}
 
 /* ── SecretRow: chip + hover-revealed ghost verbs + in-row armed edit ── */
 .gadget-secret {

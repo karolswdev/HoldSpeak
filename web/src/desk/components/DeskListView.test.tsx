@@ -1,14 +1,16 @@
 // HS-93-08 — the semantic list mode is the SAME Desk: identical records,
 // identical actions (open, select, dive) through the one store, paged
-// honestly, and legible to a screen reader (roles, names, labels asserted
-// by hand; vitest-axe is not a dependency here).
+// honestly, and legible to a screen reader.
+// HS-111-07 — re-locked to the SurfaceLedger face: 26px mono rows under
+// kind bands, Space = Ask-context, ContextMenu = the object WorkMenu.
 import { fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { EMPTY_ITEMS, qualifiedRef, type Items } from "../api";
 import { useDesk } from "../store";
+import { usePalette } from "../chromeState";
 import { useProjections } from "../projections";
-import { allObjects, objectByRef, worldObjects } from "../world";
+import { allObjects, objectByRef } from "../world";
 import { DeskListView, LIST_PAGE } from "./DeskListView";
 import { DeskChrome } from "./DeskChrome";
 import { DeskToolShelf } from "./DeskToolShelf";
@@ -33,6 +35,7 @@ const items: Items = {
 
 function resetStore(seed: Items) {
   localStorage.clear();
+  usePalette.setState({ open: false });
   useDesk.setState({
     items: seed,
     selectedIds: [],
@@ -65,8 +68,8 @@ function renderList() {
   );
 }
 
-describe("HS-93-08 semantic list mode: same records", () => {
-  it("renders one row per world object with kind, attention, and zone", () => {
+describe("HS-111-07 the ledger face: same records", () => {
+  it("renders one ledger row per world object with kind band, fact, STATE", () => {
     useProjections.setState({
       subject_counts: { "note:n1": { needs_attention: 2, receipts: 0 } },
     });
@@ -74,31 +77,31 @@ describe("HS-93-08 semantic list mode: same records", () => {
 
     // Every record the world knows appears — including the filed note the
     // spatial root stage hides behind its zone (no stranded object).
-    const expected = allObjects(items);
-    const rows = screen.getAllByRole("row").slice(1); // minus the header row
-    expect(rows).toHaveLength(expected.length);
-    for (const o of expected) {
+    for (const o of allObjects(items)) {
       expect(
         screen.getByRole("button", { name: o.title }),
       ).toBeInTheDocument();
     }
 
-    // Kind labels use the shared product nouns.
-    const kickoff = screen.getByRole("button", { name: "Q3 kickoff" });
-    expect(kickoff.closest("tr")).toHaveTextContent("Meeting");
-    expect(
-      screen.getByRole("button", { name: "Scout" }).closest("tr"),
-    ).toHaveTextContent("Agent");
+    // Kind bands replace the zone chip strip.
+    expect(screen.getByText("MEETINGS")).toBeInTheDocument();
+    expect(screen.getByText("NOTES")).toBeInTheDocument();
+    expect(screen.getByText("AGENTS")).toBeInTheDocument();
 
-    // The attention count rides the same projection subject the floater uses.
+    // The head is a mono fact line, not prose.
     expect(
-      screen.getByRole("button", { name: "Release checklist" }).closest("tr"),
-    ).toHaveTextContent("2 need attention");
+      screen.getByText("ITEMS 4 · ZONES 1 · ATTN 2"),
+    ).toBeInTheDocument();
 
-    // Zone membership is a column, resolved from the same directory records.
+    // The attention count rides the row as a STATE token.
     expect(
-      screen.getByRole("button", { name: "Rollout risks" }).closest("tr"),
-    ).toHaveTextContent("Launch");
+      screen.getByRole("button", { name: "Release checklist" }),
+    ).toHaveTextContent("ATTN 2");
+
+    // Zone membership is the row's fact token.
+    expect(
+      screen.getByRole("button", { name: "Rollout risks" }),
+    ).toHaveTextContent("LAUNCH");
   });
 
   it("opens the SAME pull-out record a floater click opens", () => {
@@ -106,64 +109,69 @@ describe("HS-93-08 semantic list mode: same records", () => {
     fireEvent.click(screen.getByRole("button", { name: "Release checklist" }));
     const pulloutId = useDesk.getState().pullouts.at(-1)?.id;
     expect(pulloutId).toBe(qualifiedRef("note", "n1"));
-    // The spatial DeskObject opens with the bare id; both refs resolve to
-    // the identical record through the one lookup.
     const viaList = objectByRef(items, pulloutId!);
-    const viaFloater = objectByRef(items, "n1");
     expect(viaList).toMatchObject({ kind: "note", id: "n1" });
-    expect(viaFloater).toMatchObject({ kind: "note", id: "n1" });
-    // The pull-out window itself renders in list mode.
     expect(container.querySelector(".desk-pullout")).not.toBeNull();
   });
 
-  it("selects the SAME ref shift-click ropes into the Ask context", () => {
+  it("Space ropes the SAME ref into the Ask context ([x] token, no checkbox)", () => {
     renderList();
-    const box = screen.getByRole("checkbox", {
-      name: "Select Release checklist for Ask context",
-    });
-    fireEvent.click(box);
+    const row = screen.getByRole("button", { name: "Release checklist" });
+    fireEvent.keyDown(row, { key: " " });
     expect(useDesk.getState().selectedIds).toEqual([
       qualifiedRef("note", "n1"),
     ]);
-    // The same Ask bar appears over the list.
     expect(screen.getByText("1 selected")).toBeInTheDocument();
-    fireEvent.click(box);
+    expect(
+      screen.getByRole("button", { name: "Release checklist, in Ask context" }),
+    ).toHaveTextContent("[x]");
+    fireEvent.keyDown(
+      screen.getByRole("button", { name: "Release checklist, in Ask context" }),
+      { key: " " },
+    );
     expect(useDesk.getState().selectedIds).toEqual([]);
   });
 
-  it("dives into a zone and lists exactly the zone's members", () => {
+  it("the ContextMenu key opens the object WorkMenu on the row", () => {
     renderList();
-    fireEvent.click(screen.getByRole("button", { name: /Launch/ }));
+    const row = screen.getByRole("button", { name: "Release checklist" });
+    fireEvent.keyDown(row, { key: "ContextMenu" });
+    const menu = screen.getByRole("menu", {
+      name: "Release checklist menu",
+    });
+    expect(menu).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("menuitem", { name: "Open" }));
+    expect(useDesk.getState().pullouts.at(-1)?.id).toBe("n1");
+  });
+
+  it("right-click opens the same object menu", () => {
+    renderList();
+    fireEvent.contextMenu(
+      screen.getByRole("button", { name: "Q3 kickoff" }),
+    );
+    expect(
+      screen.getByRole("menu", { name: "Q3 kickoff menu" }),
+    ).toBeInTheDocument();
+  });
+
+  it("dives into a zone from the ZONES band and surfaces back", () => {
+    renderList();
+    fireEvent.click(
+      screen.getByRole("button", { name: "Launch zone, 1 item" }),
+    );
     expect(useDesk.getState().divedZone).toBe("z1");
-    const expected = worldObjects(items, "z1");
-    expect(expected.map((o) => o.id)).toEqual(["filed1"]);
-    const rows = screen.getAllByRole("row").slice(1);
-    expect(rows).toHaveLength(1);
     expect(
       screen.getByRole("button", { name: "Rollout risks" }),
     ).toBeInTheDocument();
-    // Surface back to everything.
-    fireEvent.click(screen.getByRole("button", { name: "← All" }));
+    // The dived band head is the zone (the fact token repeats it).
+    expect(screen.getAllByText("LAUNCH").length).toBeGreaterThan(0);
+    fireEvent.click(screen.getByRole("button", { name: "← ALL" }));
     expect(useDesk.getState().divedZone).toBeNull();
   });
 
-  it("carries the accessible grammar: named table, headers, status", () => {
+  it("keeps the honest count status", () => {
     renderList();
-    expect(
-      screen.getByRole("table", { name: "Desk items" }),
-    ).toBeInTheDocument();
-    const headers = screen
-      .getAllByRole("columnheader")
-      .map((th) => th.textContent);
-    expect(headers).toEqual([
-      "Select for Ask context",
-      "Item",
-      "Kind",
-      "Attention",
-      "Zone",
-    ]);
     expect(screen.getByRole("status")).toHaveTextContent("Showing 4 of 4");
-    expect(screen.getByRole("navigation", { name: "Zones" })).toBeVisible();
   });
 });
 
@@ -182,18 +190,15 @@ describe("HS-93-08 pagination at 1,000 items", () => {
 
   it("pages by 100 with an honest count and no focus loss", () => {
     renderList();
-    expect(screen.getAllByRole("row").slice(1)).toHaveLength(LIST_PAGE);
     expect(screen.getByRole("status")).toHaveTextContent(
       "Showing 100 of 1000",
     );
     const more = screen.getByRole("button", { name: "Show 100 more" });
     more.focus();
     fireEvent.click(more);
-    expect(screen.getAllByRole("row").slice(1)).toHaveLength(2 * LIST_PAGE);
     expect(screen.getByRole("status")).toHaveTextContent(
       "Showing 200 of 1000",
     );
-    // The button survives the click and keeps focus (no keyboard stranding).
     expect(document.activeElement).toBe(
       screen.getByRole("button", { name: "Show 100 more" }),
     );
@@ -212,14 +217,13 @@ describe("HS-93-08 pagination at 1,000 items", () => {
     const more = screen.getByRole("button", { name: "Show 50 more" });
     more.focus();
     fireEvent.click(more);
-    expect(screen.getAllByRole("row").slice(1)).toHaveLength(150);
     expect(
       screen.queryByRole("button", { name: /Show .* more/ }),
     ).toBeNull();
     expect(document.activeElement).toBe(screen.getByRole("status"));
   });
 
-  it("Tools search reaches items no page has rendered yet", () => {
+  it("deck search reaches items no page has rendered yet", () => {
     render(
       <MemoryRouter>
         <DeskToolShelf />

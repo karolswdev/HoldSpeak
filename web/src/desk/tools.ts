@@ -1,0 +1,108 @@
+/** HS-111-07 - the program table (data only, a leaf module). The verbs
+ * that launch these live in verbRegistry (`go.*`); the palette and the
+ * Go menu both derive from that one registry. Moved out of
+ * DeskToolShelf so the registry never imports a component. */
+
+export const DESK_TOOLS = [
+  // HS-100-11 - the search palette reaches the four applications too.
+  {
+    href: "/dictation",
+    label: "Speak",
+    description: "Voice typing: speak, see it land, teach it.",
+    glyph: "⌁",
+    action: "dictate",
+    subjectRef: undefined,
+  },
+  {
+    href: "/history",
+    label: "Meetings",
+    description: "Outcomes, recordings, and the typed record.",
+    glyph: "▣",
+    action: "review-meetings",
+    subjectRef: undefined,
+  },
+  {
+    href: "/settings",
+    label: "Settings",
+    description: "Every boundary, stated once.",
+    glyph: "⚙",
+    action: "configure-settings",
+    subjectRef: undefined,
+  },
+  {
+    href: "/workbench",
+    label: "Workflow editor",
+    description: "Build and edit Workflows.",
+    glyph: "◇",
+    action: "build-workflow",
+    subjectRef: undefined,
+  },
+  {
+    href: "/companion",
+    label: "Agents and coder sessions",
+    description: "Use saved behavior and inspect live sessions.",
+    glyph: "◉",
+    action: "inspect-personas-and-coders",
+    subjectRef: undefined,
+  },
+  {
+    href: "/profiles",
+    label: "Runs on",
+    description: "Configure model and runtime destinations.",
+    glyph: "▣",
+    action: "configure-runs-on",
+    subjectRef: undefined,
+  },
+  {
+    href: "/settings",
+    label: "Integrations",
+    description: "Configure connected destinations and credentials.",
+    glyph: "↗",
+    action: "configure-integrations",
+    subjectRef: "integration:destinations",
+  },
+  {
+    href: "/commands",
+    label: "Commands",
+    description: "Map spoken phrases to registered actions.",
+    glyph: "⌘",
+    action: "configure-commands",
+    subjectRef: undefined,
+  },
+  {
+    href: "/cadence",
+    label: "Cadence",
+    description: "Configure scheduled background work.",
+    glyph: "◷",
+    action: "configure-cadence",
+    subjectRef: undefined,
+  },
+  {
+    href: "/activity",
+    label: "Activity",
+    description: "Inspect work context and source records.",
+    glyph: "≋",
+    action: "inspect-activity",
+    subjectRef: undefined,
+  },
+  {
+    href: "/#processes",
+    label: "Processes",
+    description: "See what the kernel is running.",
+    glyph: "∷",
+    action: "inspect-processes",
+    subjectRef: undefined,
+  },
+] as const;
+
+export const KIND_LABEL: Record<string, string> = {
+  artifact: "Artifact",
+  chain: "Workflow",
+  coder: "Coder session",
+  kb: "Knowledge",
+  meeting: "Meeting",
+  note: "Note",
+  project: "Project",
+  recipe: "Agent",
+  workflow: "Workflow",
+};

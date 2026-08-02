@@ -622,7 +622,15 @@ function MeetingDetail({
                     body ? (
                       <Material>{body}</Material>
                     ) : (
-                      <SurfaceCode>{JSON.stringify(row, null, 2)}</SurfaceCode>
+                      // HS-111-07 — a body-less artifact face folds its
+                      // wire behind the RAW pattern, never bare JSON.
+                      <Disclosure title="RAW · ARTIFACT">
+                        <SurfaceWell head={`RAW · ${kind || "ARTIFACT"}`}>
+                          <SurfaceCode>
+                            {JSON.stringify(row, null, 2)}
+                          </SurfaceCode>
+                        </SurfaceWell>
+                      </Disclosure>
                     )
                   }
                   name={title}

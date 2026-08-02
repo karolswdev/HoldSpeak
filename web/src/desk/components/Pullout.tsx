@@ -20,7 +20,12 @@ import { RunsOnPicker } from "./RunsOnPicker";
 import { humanizeWireValue, productLabel } from "../../lib/productLanguage";
 import { Disclosure } from "../../components/signal/Signal";
 import { Material } from "../surface/Material";
-import { SurfaceRow, SurfaceRows } from "../surface/Surface";
+import {
+  SurfaceCode,
+  SurfaceRow,
+  SurfaceRows,
+  SurfaceWell,
+} from "../surface/Surface";
 import { humanTime } from "../surface/format";
 import { DeskWindowFrame } from "./DeskWindow";
 import { MeetingConflictRecovery } from "../../meetings/MeetingConflictRecovery";
@@ -599,7 +604,17 @@ export function Pullout({
                       <strong>
                         Selected source · {contextualCoderAction.source.title}
                       </strong>
-                      <pre>{contextualCoderAction.source.text}</pre>
+                      {/* HS-111-07 — the selected text folds behind the
+                          RAW pattern (it is wire until sent). */}
+                      <Disclosure title="RAW · SELECTED TEXT">
+                        <SurfaceWell
+                          head={`RAW · ${contextualCoderAction.source.title.toUpperCase()}`}
+                        >
+                          <SurfaceCode>
+                            {contextualCoderAction.source.text}
+                          </SurfaceCode>
+                        </SurfaceWell>
+                      </Disclosure>
                       <button
                         type="button"
                         className="desk-chip"

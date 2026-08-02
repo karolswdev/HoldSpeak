@@ -11,6 +11,8 @@ import {
   type PrRow,
 } from "../prReceipts";
 import { MicButton } from "./MicButton";
+import { Disclosure } from "../../components/signal/Signal";
+import { SurfaceCode, SurfaceWell } from "../surface/Surface";
 
 type Action = "send" | "comment" | "status" | null;
 type VerbName = "send_agent" | "draft_review" | "post_comment" | "post_status";
@@ -127,7 +129,13 @@ export function PrReceiptsSection() {
                         {proposal ? (
                           <tr className="desk-pr-proposal"><td colSpan={4}>
                             <div className="desk-pr-proposal-head"><strong>PROPOSED</strong><span className="egress-badge is-cloud">GitHub</span></div>
-                            <pre>{proposal.preview}</pre>
+                            {/* HS-111-07 — RAW pattern, default-open:
+                                the complete text IS the consent surface. */}
+                            <Disclosure title="RAW · PROPOSAL" open>
+                              <SurfaceWell head="RAW · PROPOSAL">
+                                <SurfaceCode>{proposal.preview}</SurfaceCode>
+                              </SurfaceWell>
+                            </Disclosure>
                             <span className="desk-pr-compose-actions">
                               <button type="button" onClick={() => void run(key, "Denying", () => store.decide(proposal.proposal_id!, "reject"))}>Deny</button>
                               <button type="button" onClick={() => void run(key, "Posting", () => store.decide(proposal.proposal_id!, "approve"))}>Approve</button>
@@ -139,12 +147,32 @@ export function PrReceiptsSection() {
                           <tr className={`desk-pr-result ${w.result.error ? "is-error" : "is-ok"}`}><td colSpan={4}>
                             <strong>{w.result.error ? "REFUSED" : w.result.proposal?.status?.toUpperCase() || "RECEIPT"}</strong>
                             {w.result.reason || w.result.error || w.result.operation_id || w.result.artifact_id}
-                            {w.result.output ? <pre>{w.result.output}</pre> : null}
+                            {w.result.output ? (
+                              <Disclosure title="RAW · OUTPUT">
+                                <SurfaceWell head="RAW · OUTPUT">
+                                  <SurfaceCode>{w.result.output}</SurfaceCode>
+                                </SurfaceWell>
+                              </Disclosure>
+                            ) : null}
                           </td></tr>
                         ) : null}
                         {openDiff?.key === key ? (
                           <tr className="desk-pr-diffrow"><td colSpan={4}>
-                            {openDiff.diff === null ? <p className="desk-shade-quiet">Reading</p> : openDiff.diff.status === "ok" ? <pre className="desk-pr-diff">{openDiff.diff.diff}</pre> : openDiff.diff.offer_fetch ? <button type="button" className="desk-list-open" onClick={() => void fetchAndRetry(row)}>Fetch</button> : <p className="desk-shade-quiet">{openDiff.diff.detail || "Unavailable"}</p>}
+                            {openDiff.diff === null ? (
+                              <p className="desk-shade-quiet">Reading</p>
+                            ) : openDiff.diff.status === "ok" ? (
+                              /* HS-111-07 — the diff wears the RAW well,
+                                 default-open (the owner asked for it). */
+                              <Disclosure title="RAW · DIFF" open>
+                                <SurfaceWell head={`RAW · DIFF #${row.number}`}>
+                                  <SurfaceCode>{openDiff.diff.diff}</SurfaceCode>
+                                </SurfaceWell>
+                              </Disclosure>
+                            ) : openDiff.diff.offer_fetch ? (
+                              <button type="button" className="desk-list-open" onClick={() => void fetchAndRetry(row)}>Fetch</button>
+                            ) : (
+                              <p className="desk-shade-quiet">{openDiff.diff.detail || "Unavailable"}</p>
+                            )}
                           </td></tr>
                         ) : null}
                       </Fragment>
