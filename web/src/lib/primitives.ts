@@ -37,7 +37,9 @@ export type PrimitiveKind =
   | "workflow"
   | "coder"
   | "game"
-  | "layout";
+  | "layout"
+  | "roadmap"
+  | "story";
 
 /** Static metadata for each kind — drives the type-legible Desk language. */
 export interface PrimitiveDescriptor {
@@ -361,6 +363,24 @@ export const PRIMITIVES: Record<PrimitiveKind, PrimitiveDescriptor> = {
     icon: "M6 12h4M8 10v4M15 13h.01M18 11h.01M17.32 5H6.68a4 4 0 0 0-3.98 3.59L2 14a3 3 0 0 0 5.4 1.8L8 15h8l.6.8A3 3 0 0 0 22 14l-.7-5.41A4 4 0 0 0 17.32 5z",
     authorable: false,
   },
+  roadmap: {
+    kind: "roadmap",
+    label: "Roadmap",
+    plural: "Roadmaps",
+    syncClass: "organization",
+    blurb: "Delivery Workbench project",
+    icon: "M4 4h16v16H4zM7 8h10M7 12h7M7 16h10",
+    authorable: false,
+  },
+  story: {
+    kind: "story",
+    label: "Story",
+    plural: "Stories",
+    syncClass: "local",
+    blurb: "Delivery story card",
+    icon: "M6 3h12v18H6zM9 8h6M9 12h6M9 16h4",
+    authorable: false,
+  },
   layout: {
     kind: "layout",
     label: "Layout",
@@ -381,4 +401,5 @@ export const DESK_GROUPS: { label: string; kinds: PrimitiveKind[] }[] = [
   { label: "Capabilities", kinds: ["recipe", "chain", "workflow"] },
   { label: "Organization", kinds: ["directory", "kb", "project"] },
   { label: "Live", kinds: ["coder"] },
+  { label: "Delivery", kinds: ["roadmap", "story"] },
 ];

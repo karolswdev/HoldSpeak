@@ -27,6 +27,8 @@ export const VARIANTS: Record<string, string[]> = {
   // HS-109-05: Project reuses the closest existing dual-state memory
   // silhouette (bound tome); no unreviewed sprite art is introduced here.
   project: numbered("tome", 13),
+  roadmap: numbered("tome", 13),
+  story: numbered("note", 12),
   model: ["cartridge"],
   agent: automatons,
   recipe: automatons,

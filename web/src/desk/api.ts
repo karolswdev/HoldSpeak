@@ -3,6 +3,7 @@
  * same normalized shapes, same tolerance. The wire is snake_case; the in-app
  * shapes are the camelCase view shapes the world renders. */
 import { apiFetch } from "../lib/api";
+import { fetchRoadmaps, type RoadmapProject } from "./roadmap";
 
 export type Kind =
   | "meeting"
@@ -14,7 +15,9 @@ export type Kind =
   | "project"
   | "chain"
   | "workflow"
-  | "coder";
+  | "coder"
+  | "roadmap"
+  | "story";
 
 export interface DeskItem {
   kind: Kind;
@@ -24,9 +27,11 @@ export interface DeskItem {
   [key: string]: unknown;
 }
 
-export type Items = Record<Exclude<Kind, "project">, DeskItem[]> & {
-  /** Additive for older test fixtures and hubs; loadAll always initializes it. */
+export type Items = Record<Exclude<Kind, "project" | "roadmap" | "story">, DeskItem[]> & {
+  /** Additive for older test fixtures and hubs; loadAll always initializes them. */
   project?: DeskItem[];
+  roadmap?: DeskItem[];
+  story?: DeskItem[];
 };
 export type Status = Partial<Record<Kind | "profile", "live" | "unreachable">>;
 
@@ -111,6 +116,8 @@ export const EMPTY_ITEMS: Items = {
   chain: [],
   workflow: [],
   coder: [],
+  roadmap: [],
+  story: [],
 };
 
 async function fetchJson(url: string, opts?: RequestInit): Promise<any> {
@@ -183,6 +190,13 @@ export const fromWireProject = (project: ProjectSummary): DeskItem => ({
   createdAt: project.created_at,
   updatedAt: project.updated_at,
   lastModified: project.updated_at,
+});
+
+export const fromWireRoadmap = (roadmap: RoadmapProject): DeskItem => ({
+  kind: "roadmap",
+  id: `roadmap:${roadmap.slug}`,
+  title: roadmap.name,
+  ...roadmap,
 });
 
 export const fromWireChain = (c: any): DeskItem => ({
@@ -400,6 +414,12 @@ export async function loadAll(): Promise<LoadResult> {
       .catch(() => {
         models = []; /* older hub = honest empty door */
       }),
+    fetchRoadmaps()
+      .then((roadmaps) => {
+        items.roadmap = roadmaps.map(fromWireRoadmap);
+        status.roadmap = "live";
+      })
+      .catch((e) => fail("roadmap", "Roadmaps", e)),
     fetchJson("/api/coders/status")
       .then((d) => {
         items.coder = fromCoderStatus(d);

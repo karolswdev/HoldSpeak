@@ -293,6 +293,8 @@ interface DeskState {
    * coexist but do not persist across reload). Ref is `kind:id`, bare
    * id, or `zone:<id>`. */
   infoWindows: { ref: string; origin: { x: number; y: number } | null }[];
+  /** Delivery Workbench projects open as their own Desk application window. */
+  roadmapWindows: { slug: string; origin: { x: number; y: number } | null }[];
   /** The zone a live drag is hovering (the drop affordance, HS-73-05). */
   hoverZoneId: string | null;
   /** The freshly-created zone whose rename is focused. */
@@ -363,6 +365,8 @@ interface DeskState {
   /** HS-105-04 — Info on everything (right-click → Info). */
   openInfoWindow(ref: string, origin?: { x: number; y: number }): void;
   closeInfoWindow(ref: string): void;
+  openRoadmapWindow(slug: string, origin?: { x: number; y: number }): void;
+  closeRoadmapWindow(slug: string): void;
   setHoverZone(id: string | null): void;
   setRenamingZone(id: string | null): void;
   diveInto(zoneId: string): void;
@@ -480,6 +484,7 @@ export const useDesk = create<DeskState>((set, get) => ({
   zoneWindows: loadZoneWindows(),
   zoneViewPrefs: loadZoneViewPrefs(),
   infoWindows: [],
+  roadmapWindows: [],
   hoverZoneId: null,
   renamingZoneId: null,
   selectedIds: [],
@@ -669,6 +674,10 @@ export const useDesk = create<DeskState>((set, get) => ({
   },
 
   openPullout(id, origin) {
+    if (id.startsWith("roadmap:")) {
+      get().openRoadmapWindow(id.slice("roadmap:".length), origin);
+      return;
+    }
     const projectId = id.startsWith("project:")
       ? id.slice("project:".length)
       : (get().items.project || []).some((project) => project.id === id)
@@ -726,6 +735,15 @@ export const useDesk = create<DeskState>((set, get) => ({
   },
   closeInfoWindow(ref) {
     set({ infoWindows: get().infoWindows.filter((w) => w.ref !== ref) });
+  },
+  openRoadmapWindow(slug, origin) {
+    const open = get().roadmapWindows;
+    if (!open.some((window) => window.slug === slug))
+      set({ roadmapWindows: [...open, { slug, origin: origin ?? null }] });
+    get().focusPanel(`roadmap:${slug}`);
+  },
+  closeRoadmapWindow(slug) {
+    set({ roadmapWindows: get().roadmapWindows.filter((window) => window.slug !== slug) });
   },
   setZoneViewPref(id, pref) {
     const current = get().zoneViewPrefs[id] || {
@@ -1138,6 +1156,7 @@ export const useDesk = create<DeskState>((set, get) => ({
       zoneWindows: [],
       zoneViewPrefs: {},
       infoWindows: [],
+      roadmapWindows: [],
       divedZone: null,
       editingId: null,
       selectedIds: [],

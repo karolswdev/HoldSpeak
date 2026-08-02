@@ -24,6 +24,8 @@ const ORDER: Kind[] = [
   "chain",
   "workflow",
   "coder",
+  "roadmap",
+  "story",
 ];
 
 /** Every primitive as a world object, unfiltered — the lookup surface for
