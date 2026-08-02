@@ -28,6 +28,20 @@ from ._helpers import (
 
 log = get_logger("web.routes.dictation")
 
+# HS-112-02 — the kernel refusals that are known to have happened BEFORE any
+# keystroke left the machine. They are deterministic and safe to make terminal:
+# the room can name them ("no focus resolved") and the owner can simply speak
+# again. Anything else (a driver that raised mid-type) stays ambiguous and is
+# parked `pending` — an effect we cannot prove never replays itself.
+PRE_EFFECT_REFUSALS = frozenset(
+    {
+        "desktop_focus_unresolved",
+        "desktop_type_driver_unavailable",
+        "desktop_type_claim_refused",
+        "desktop_type_refused",
+    }
+)
+
 
 def build_pipeline_router(
     ctx: WebContext,
@@ -312,6 +326,18 @@ def build_pipeline_router(
         exactly like every other route when bound off-loopback — the companion client
         mirrors the server's ``web_auth_token`` on every request. Delivery is
         deliver-on-command (the client user pressed send); there is no autonomous path.
+
+        HS-112-02 — this is ALSO the Speak room's wire. The room named Speak holds
+        TALK, releases, and posts the transcript here: one delivery contract, one
+        pipeline, one journal, one idempotency claim, whoever is holding the key.
+        Two things the room needs and the companion never asked for:
+
+        * ``require_agent`` — an aimed AGENT delivery refuses honestly when nothing
+          is awaiting rather than silently free-typing into whatever happens to be
+          focused. Absent/false keeps the companion's fallback byte-identical.
+        * a deterministic kernel refusal (``desktop_focus_unresolved`` and friends)
+          comes back as a NAMED terminal refusal the deck renders in-flow, instead
+          of an ambiguous "pending" the owner cannot act on.
         """
         text = payload.get("text") if isinstance(payload, dict) else None
         if not isinstance(text, str) or not text.strip():
@@ -334,6 +360,10 @@ def build_pipeline_router(
                 {"error": 'target_mode must be one of "agent" or "focused"'},
                 status_code=400,
             )
+        # HS-112-02: an AIMED agent delivery. The Speak room's AGENT aim means
+        # "the awaiting agent, or nothing" — the desktop fallback is a companion
+        # convenience, not an aim.
+        require_agent = bool(payload.get("require_agent")) if isinstance(payload, dict) else False
 
         # HS-93-05: new companion clients choose a stable id before sending.
         # Claim it before pipeline/macro/delivery work so reconnect retries can
@@ -353,6 +383,7 @@ def build_pipeline_router(
                 "target": target_hints,
                 "target_mode": target_mode,
                 "raw": bool(payload.get("raw")),
+                "require_agent": require_agent,
             }
             request_hash = hashlib.sha256(
                 json.dumps(
@@ -451,28 +482,97 @@ def build_pipeline_router(
             # this id reads that state and never invokes the hook again.
             return JSONResponse(pending, status_code=425)
 
+        def refusal_response(reason: str, *, final_text: str = "") -> JSONResponse:
+            """A named, terminal refusal — nothing was typed, say so plainly."""
+            return terminal_response(
+                {
+                    "error": reason,
+                    "refusal": reason,
+                    "failure_category": "delivery_refused",
+                    "delivered": False,
+                    "final_text": final_text,
+                },
+                status_code=422,
+            )
+
+        def deliver(body_text: str) -> tuple[bool, dict[str, Any] | None, JSONResponse | None]:
+            """Run the ONE delivery hook. Returns (delivered, receipt, refusal).
+
+            HS-112-02: the two call sites (raw + processed) share this so the
+            room and the companion cannot drift apart on how a refusal reads.
+            """
+            from ....desktop_typing import DesktopTypeRefused
+
+            if ctx.on_remote_dictation is None:
+                return False, None, None
+            try:
+                if target_mode == "agent":
+                    # Byte-identical to the pre-15 call (a plain str hook): the
+                    # default path never threads the new keyword.
+                    outcome = ctx.on_remote_dictation(body_text)
+                else:
+                    outcome = ctx.on_remote_dictation(body_text, target=target_mode)
+            except DesktopTypeRefused as exc:
+                if str(exc.reason) in PRE_EFFECT_REFUSALS:
+                    return False, None, refusal_response(str(exc.reason), final_text=body_text)
+                log.error(f"Remote dictation delivery refused mid-effect: {exc}")
+                return (
+                    False,
+                    None,
+                    uncertain_delivery(
+                        {
+                            "error": f"delivery failed: {exc}",
+                            "final_text": body_text,
+                            "delivered": False,
+                        },
+                    ),
+                )
+            except Exception as exc:
+                log.error(f"Remote dictation delivery failed: {exc}")
+                return (
+                    False,
+                    None,
+                    uncertain_delivery(
+                        {
+                            "error": f"delivery failed: {exc}",
+                            "final_text": body_text,
+                            "delivered": False,
+                        },
+                    ),
+                )
+            receipt = dict(outcome) if isinstance(outcome, dict) else None
+            return True, receipt, None
+
+        # HS-112-02 — the aimed-agent refusal, decided BEFORE any pipeline or
+        # effect work: no awaiting agent means no delivery, named in one word.
+        if require_agent and target_mode == "agent":
+            from ....agent_context import get_recent_awaiting_agent_session
+
+            try:
+                awaiting = get_recent_awaiting_agent_session(max_age_seconds=120)
+            except Exception as exc:  # pragma: no cover - defensive probe
+                log.warning(f"Awaiting-agent probe failed: {exc}")
+                awaiting = None
+            if awaiting is None:
+                return refusal_response("no_awaiting_agent")
+
         # HSM-18-01 — verbatim delivery for a client holding a dry-run receipt.
         # A previewed `final_text` has already been through the pipeline; running
         # it again would make the receipt a lie (the rewrite is not idempotent).
         # `raw: true` types EXACTLY the given text: no pipeline, no macro
         # dispatch. Absent/false -> the paths below run byte-identical.
         if bool(payload.get("raw")):
-            delivered = False
-            if ctx.on_remote_dictation is not None:
-                try:
-                    if target_mode == "agent":
-                        ctx.on_remote_dictation(text)
-                    else:
-                        ctx.on_remote_dictation(text, target=target_mode)
-                    delivered = True
-                except Exception as exc:
-                    log.error(f"Remote dictation delivery failed: {exc}")
-                    return uncertain_delivery(
-                        {"error": f"delivery failed: {exc}", "final_text": text, "delivered": False},
-                    )
-            return terminal_response(
-                {"success": True, "final_text": text, "delivered": delivered}
-            )
+            delivered, receipt, refused = deliver(text)
+            if refused is not None:
+                return refused
+            body: dict[str, Any] = {
+                "success": True,
+                "final_text": text,
+                "delivered": delivered,
+            }
+            if receipt is not None:
+                body["delivery"] = receipt
+            return terminal_response(body)
 
         # HSM-18-02 — voice command macros must fire on the remote relay too, exactly
         # as they do on the local dictation path (dictation_capture._maybe_dispatch_
@@ -550,6 +650,11 @@ def build_pipeline_router(
                 telemetry=ctx.telemetry,
                 journal=ctx.journal,
                 activity_context=activity_context,
+                # HS-112-02: a delivery is a dictation, not a rehearsal. The
+                # journal now shows the room's and the companion's utterances
+                # beside the hotkey's, same schema; `dry_run` is reserved for
+                # the explicit REHEARSE preview.
+                journal_source="dictation",
             )
         except Exception as exc:
             log.error(f"Remote dictation pipeline failed: {exc}")
@@ -558,24 +663,13 @@ def build_pipeline_router(
         final_text = (
             processed.get("final_text", text) if isinstance(processed, dict) else text
         )
-        delivered = False
-        if ctx.on_remote_dictation is not None:
-            try:
-                if target_mode == "agent":
-                    # Byte-identical to the pre-15 call (a plain str hook): the
-                    # default path never threads the new keyword.
-                    ctx.on_remote_dictation(final_text)
-                else:
-                    ctx.on_remote_dictation(final_text, target=target_mode)
-                delivered = True
-            except Exception as exc:
-                log.error(f"Remote dictation delivery failed: {exc}")
-                return uncertain_delivery(
-                    {"error": f"delivery failed: {exc}", "final_text": final_text, "delivered": False},
-                )
-        return terminal_response(
-            {"success": True, "final_text": final_text, "delivered": delivered}
-        )
+        delivered, receipt, refused = deliver(final_text)
+        if refused is not None:
+            return refused
+        body = {"success": True, "final_text": final_text, "delivered": delivered}
+        if receipt is not None:
+            body["delivery"] = receipt
+        return terminal_response(body)
 
     @router.get("/api/dictation/corrections")
     async def api_dictation_corrections_list() -> Any:

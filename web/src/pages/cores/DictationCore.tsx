@@ -26,7 +26,7 @@ import { Button } from "../../components/signal/Signal";
 import { RunsOnPicker } from "../../desk/components/RunsOnPicker";
 import { MicButton, type MicState } from "../../desk/components/MicButton";
 import type { InferenceTarget } from "../../desk/api";
-import { apiFetch, readableError, type JsonRecord } from "../../lib/api";
+import { ApiError, apiFetch, readableError, type JsonRecord } from "../../lib/api";
 import {
   DICTATION_FAILURES,
   applicableActions,
@@ -284,11 +284,72 @@ function ReadinessLine({
   );
 }
 
+/* HS-112-02 — the deck's full lifecycle, not just the capture half:
+   IDLE -> LISTENING (held) -> BUSY (transcribe + deliver) -> LANDED /
+   REFUSED. The register is the one place the room says where it is. */
 const STATE_TOKENS: { id: string; label: string }[] = [
   { id: "idle", label: "Idle" },
   { id: "listening", label: "Listening" },
-  { id: "transcribing", label: "Transcribing" },
+  { id: "busy", label: "Busy" },
+  { id: "landed", label: "Landed" },
+  { id: "refused", label: "Refused" },
 ];
+
+/* HS-112-02 — the AIM: where a released TALK sends the words. FOCUSED
+   APP and AGENT go through the real delivery contract; THIS FIELD is
+   the old speak-to-fill (the transcript lands in the well, nothing is
+   delivered). The pick is the owner's, and it is remembered. */
+const AIM_KEY = "holdspeak.speakAim";
+const AIM_OPTIONS = [
+  { value: "focused", label: "Focused app" },
+  { value: "agent", label: "Agent" },
+  { value: "field", label: "This field" },
+];
+const AIM_FACT: Record<string, string> = {
+  focused: "FOCUSED APP",
+  agent: "AGENT",
+  field: "THIS FIELD",
+};
+
+/* The kernel's own refusal vocabulary, rendered as WHAT in the fewest
+   words. An unknown code rides through verbatim — never swallowed. */
+const REFUSAL_LABELS: Record<string, string> = {
+  no_awaiting_agent: "NO AGENT AWAITING",
+  desktop_focus_unresolved: "NO FOCUSED APP",
+  desktop_type_driver_unavailable: "NO TYPING DRIVER",
+  desktop_type_claim_refused: "KERNEL CLAIM REFUSED",
+  desktop_type_refused: "KERNEL REFUSED",
+  delivery_pending: "OUTCOME UNKNOWN",
+  delivery_conflict: "DELIVERY CONFLICT",
+  no_delivery_target: "NO DELIVERY TARGET",
+};
+
+function refusalLabel(code: string): string {
+  return REFUSAL_LABELS[code] ?? code.replace(/_/g, " ").toUpperCase();
+}
+
+/** The named refusal behind a failed delivery, or "" when it is not one. */
+function refusalCode(reason: unknown): string {
+  if (!(reason instanceof ApiError)) return "";
+  const payload =
+    reason.payload && typeof reason.payload === "object"
+      ? (reason.payload as JsonRecord)
+      : {};
+  for (const key of ["refusal", "error_code", "failure_category"]) {
+    const value = payload[key];
+    if (typeof value === "string" && value) return value;
+  }
+  return "";
+}
+
+/** One stable id per utterance — the delivery claim's whole point. */
+function newDeliveryId(): string {
+  const entropy =
+    typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
+      ? crypto.randomUUID()
+      : Math.random().toString(36).slice(2);
+  return `speak:${Date.now()}-${entropy}`;
+}
 
 function SpeakFace() {
   const announce = useAnnounce();
@@ -312,6 +373,18 @@ function SpeakFace() {
   const [targetId, setTargetId] = useState("this_machine");
   const [micState, setMicState] = useState<MicState>("idle");
   const [level, setLevel] = useState(0);
+  // HS-112-02 — the delivery half of the deck.
+  const [aim, setAim] = useState(
+    () => localStorage.getItem(AIM_KEY) ?? "focused",
+  );
+  const [rehearse, setRehearse] = useState(false);
+  const [phase, setPhase] = useState<"idle" | "busy" | "landed" | "refused">(
+    "idle",
+  );
+  const [landedMs, setLandedMs] = useState<number | null>(null);
+  const [refusal, setRefusal] = useState("");
+  // release-to-landed is measured from the moment the key came up.
+  const releasedAt = useRef<number | null>(null);
   // The strip's readout cells read the same wire the footer reads.
   const stripRoot = localStorage.getItem("holdspeak.projectRootOverride") ?? "";
   const readiness = useResource<JsonRecord>(
@@ -324,7 +397,9 @@ function SpeakFace() {
   useEffect(() => {
     if (utteranceRecovered) announce("Draft restored");
   }, [utteranceRecovered, announce]);
-  const run = async () => {
+  /* REHEARSE — the explicit dry run. It previews the pipeline and
+     delivers NOTHING; it is never what a plain TALK release does. */
+  const run = async (text: string = utterance) => {
     setBusy(true);
     setError("");
     setFailure(null);
@@ -334,12 +409,13 @@ function SpeakFace() {
         await apiFetch<JsonRecord>("/api/dictation/dry-run", {
           method: "POST",
           json: {
-            utterance,
+            utterance: text,
             ...(projectRoot ? { project_root: projectRoot } : {}),
           },
         }),
       );
-      announce("");
+      setPhase("idle");
+      announce("REHEARSED · NOT DELIVERED");
       localStorage.setItem("holdspeak.projectRootOverride", projectRoot);
     } catch (reason) {
       const category = dictationFailure(reason);
@@ -350,6 +426,80 @@ function SpeakFace() {
     } finally {
       setBusy(false);
     }
+  };
+
+  const pickAim = (next: string) => {
+    setAim(next);
+    localStorage.setItem(AIM_KEY, next);
+  };
+
+  const refuse = (code: string) => {
+    setLandedMs(null);
+    setPhase("refused");
+    setRefusal(code);
+    announce(`⚠ REFUSED · ${refusalLabel(code)}`, "warn");
+  };
+
+  /* THE FLAGSHIP ACT — release TALK and the words land where you aimed
+     them, through the same route, pipeline, journal, kernel warrant and
+     idempotency claim as the global hotkey. One id per utterance. */
+  const deliver = async (text: string) => {
+    const spoken = text.trim();
+    if (!spoken) return;
+    const since = releasedAt.current ?? performance.now();
+    setBusy(true);
+    setPhase("busy");
+    setError("");
+    setFailure(null);
+    setRefusal("");
+    setVerdict("");
+    try {
+      const landed = await apiFetch<JsonRecord>("/api/dictation/remote", {
+        method: "POST",
+        json: {
+          text: spoken,
+          target_mode: aim === "agent" ? "agent" : "focused",
+          delivery_id: newDeliveryId(),
+          // an aimed AGENT send refuses rather than free-typing into
+          // whatever happens to be focused.
+          ...(aim === "agent" ? { require_agent: true } : {}),
+        },
+      });
+      setResult(landed);
+      if (landed.delivered === false) {
+        refuse("no_delivery_target");
+        return;
+      }
+      const took = Math.round(performance.now() - since);
+      setLandedMs(took);
+      setPhase("landed");
+      announce(`LANDED ${took} MS -> ${AIM_FACT[aim]}`);
+    } catch (reason) {
+      const code = refusalCode(reason);
+      if (code) {
+        refuse(code);
+        return;
+      }
+      const category = dictationFailure(reason);
+      setFailure(category);
+      const message = DICTATION_FAILURES[category].message;
+      setError(message);
+      setLandedMs(null);
+      setPhase("refused");
+      setRefusal(category);
+      announce(`⚠ ${message}`, "warn");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  /* The one gesture contract: hold, talk, release. What happens on
+     release is the AIM's business, never a hidden default. */
+  const onReleased = (text: string) => {
+    setUtterance(text);
+    if (aim === "field" || !text.trim()) return;
+    if (rehearse) void run(text);
+    else void deliver(text);
   };
   const actions = failure
     ? applicableActions(failure, { draftPresent: Boolean(utterance.trim()) })
@@ -431,12 +581,19 @@ function SpeakFace() {
       setBusy(false);
     }
   };
+  /* The well's own verb: a rehearsal, or an aim that delivers nowhere,
+     previews; anything else delivers for real. */
+  const previewOnly = rehearse || aim === "field";
   const activeState =
-    micState === "busy"
-      ? "transcribing"
-      : micState === "listening"
-        ? "listening"
-        : "idle";
+    micState === "listening"
+      ? "listening"
+      : micState === "busy" || phase === "busy"
+        ? "busy"
+        : phase === "landed"
+          ? "landed"
+          : phase === "refused"
+            ? "refused"
+            : "idle";
   return (
     <div className="speak-face">
       <div className="speak-strip" role="group" aria-label="Dictation deck">
@@ -444,12 +601,26 @@ function SpeakFace() {
           variant="transport"
           draftScope="dictation-dry-run-voice"
           label="Hold to talk"
-          onText={(text) => setUtterance(text)}
-          onState={setMicState}
+          onText={onReleased}
+          onState={(next) => {
+            // the key came up: start the release-to-landed clock and
+            // clear the previous verdict off the register.
+            if (next === "busy") releasedAt.current = performance.now();
+            if (next === "listening") {
+              releasedAt.current = null;
+              setPhase("idle");
+              setLandedMs(null);
+              setRefusal("");
+            }
+            setMicState(next);
+          }}
           onLevel={setLevel}
-          onFailure={(category) =>
-            announce(`⚠ ${DICTATION_FAILURES[category].message}`, "warn")
-          }
+          onFailure={(category) => {
+            setPhase("refused");
+            setRefusal(category);
+            setLandedMs(null);
+            announce(`⚠ ${DICTATION_FAILURES[category].message}`, "warn");
+          }}
         />
         <LedMeter label="Level" value={level} scanning={micState === "busy"} />
         <span className="speak-register" aria-label="Dictation state">
@@ -482,6 +653,16 @@ function SpeakFace() {
             </span>
           </span>
           <span className="speak-cell">
+            <span className="speak-cell-label">Landed</span>
+            <span className="speak-cell-value" aria-label="Landed latency">
+              {phase === "refused" && refusal
+                ? refusalLabel(refusal)
+                : landedMs !== null
+                  ? `${landedMs} MS`
+                  : "—"}
+            </span>
+          </span>
+          <span className="speak-cell">
             <span className="speak-cell-label">Budget</span>
             <span className="speak-cell-value">
               {presentValue(readinessConfig.max_total_latency_ms)
@@ -490,6 +671,27 @@ function SpeakFace() {
             </span>
           </span>
         </span>
+      </div>
+      {/* HS-112-02 — the aim row: where a released TALK sends the
+          words, and whether this one is only a rehearsal. */}
+      <div className="speak-aim">
+        <GadgetGroup>
+          <GadgetRow label="Aim" fact={AIM_FACT[aim] ?? aim}>
+            <CycleGadget
+              label="Aim"
+              value={aim}
+              options={AIM_OPTIONS}
+              onChange={pickAim}
+            />
+          </GadgetRow>
+          <GadgetRow label="Rehearse" fact="DRY RUN">
+            <CheckGadget
+              label="Rehearse"
+              checked={rehearse}
+              onChange={setRehearse}
+            />
+          </GadgetRow>
+        </GadgetGroup>
       </div>
       <div className="speak-well">
         <PadGadget
@@ -505,9 +707,15 @@ function SpeakFace() {
           variant="primary"
           loading={busy}
           disabled={!utterance.trim()}
-          onClick={run}
+          onClick={() => (previewOnly ? void run() : void deliver(utterance))}
         >
-          {error && actions.includes("retry") ? "Retry dry test" : "Run dry test"}
+          {previewOnly
+            ? error && actions.includes("retry")
+              ? "Retry rehearsal"
+              : "Rehearse"
+            : error && actions.includes("retry")
+              ? "Retry delivery"
+              : "Deliver"}
         </Button>
         <span className="speak-grounding">
           <span className="speak-grounding-label">Grounding</span>
