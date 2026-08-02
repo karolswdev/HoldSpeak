@@ -136,10 +136,10 @@ def build_runtime(
     backend: str = "auto",
     mlx_model: str = "~/Models/mlx/Qwen3.5-8B-MLX-4bit",
     llama_cpp_model_path: str = "~/Models/gguf/Qwen3.5-4B-Instruct-Q4_K_M.gguf",
-    openai_compatible_model: str = "qwen3.5-8b-instruct",
-    openai_compatible_base_url: str = "http://127.0.0.1:8000/v1",
-    openai_compatible_api_key_env: str = "OPENAI_API_KEY",
-    openai_compatible_timeout_seconds: float = 8.0,
+    endpoint_model: str = "qwen3.5-8b-instruct",
+    endpoint_base_url: str = "http://127.0.0.1:8000/v1",
+    endpoint_api_key_env: str = "OPENAI_API_KEY",
+    endpoint_timeout_seconds: float = 8.0,
     n_ctx: int = 2048,
     n_threads: int | None = None,
     n_gpu_layers: int = -1,
@@ -186,10 +186,10 @@ def build_runtime(
         )
     else:
         inner = factories["openai_compatible"](
-            model=openai_compatible_model,
-            base_url=openai_compatible_base_url,
-            api_key_env=openai_compatible_api_key_env,
-            timeout_seconds=openai_compatible_timeout_seconds,
+            model=endpoint_model,
+            base_url=endpoint_base_url,
+            api_key_env=endpoint_api_key_env,
+            timeout_seconds=endpoint_timeout_seconds,
             warm_on_start=warm_on_start,
         )
 

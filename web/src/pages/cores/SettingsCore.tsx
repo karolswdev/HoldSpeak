@@ -23,7 +23,8 @@ import {
   StringGadget,
   type CycleOption,
 } from "../../desk/surface/gadgets";
-import { HotkeyCapture, RuntimeDestination } from "./settingsBespoke";
+import { HotkeyCapture } from "./settingsBespoke";
+import { ModelsModule } from "./settingsModels";
 import { SurfaceWings, useWindowWings } from "../../desk/surface/wings";
 import { RuntimeDocsCore } from "./RuntimeDocsCore";
 import { activateLauncher } from "../../desk/components/DeskWindow";
@@ -71,10 +72,7 @@ function clone<T>(value: T): T {
 const FRIENDLY_FIELDS: Record<string, string> = {
   mlx_model: "MLX model",
   llama_cpp_model_path: "llama.cpp model file",
-  openai_compatible_model: "Model (OpenAI-compatible)",
-  openai_compatible_base_url: "Endpoint URL",
-  openai_compatible_api_key_env: "API key env var",
-  profile_id: "Runs on profile",
+  profile_id: "Runs on",
   max_total_latency_ms: "Latency budget",
   journal_retention: "Journal retention",
   n_ctx: "Context window",
@@ -132,8 +130,15 @@ function SettingsFace({ hero, scope }: CoreProps) {
   const resource = useResource<JsonRecord>("/api/settings", {});
   const authority = useResource<JsonRecord>("/api/authority/policy", {});
   // null = the drawer face; a module id = that module owns the body.
+  // HS-112-01: the retired Runs-on room's deep links land on Models.
   const [moduleId, setModuleId] = useState<string | null>(
-    integrationSubject ? "integrations" : scope === "desk" ? "desk" : null,
+    integrationSubject
+      ? "integrations"
+      : scope === "models"
+        ? "models"
+        : scope === "desk"
+          ? "desk"
+          : null,
   );
   const [highlight, setHighlight] = useState("");
   const [saving, setSaving] = useState(false);
@@ -230,7 +235,8 @@ function SettingsFace({ hero, scope }: CoreProps) {
   // Integrations module directly.
   useEffect(() => {
     if (integrationSubject) setModuleId("integrations");
-  }, [integrationSubject]);
+    else if (scope === "models") setModuleId("models");
+  }, [integrationSubject, scope]);
 
   // HS-112-03 — the reset-to-seed verb lands on the Desk module directly.
   useEffect(() => {
@@ -626,11 +632,14 @@ function SettingsFace({ hero, scope }: CoreProps) {
               {cyc(["meeting", "intel_provider"], "Provider", INTEL_PROVIDER_OPTIONS)}
               {str(["meeting", "intel_realtime_model"], "Realtime model")}
               {str(["meeting", "intel_summary_model"], "Summary model")}
-              {str(["meeting", "intel_cloud_model"], "Cloud model")}
-              {str(["meeting", "intel_cloud_base_url"], "Cloud endpoint")}
-              {str(["meeting", "intel_cloud_api_key_env"], "API key env var")}
               {check(["meeting", "intel_cloud_store"], "Cloud store")}
-              {str(["meeting", "intel_profile_id"], "Runs on profile")}
+              {/* HS-112-01: the endpoint dial lives in Models. */}
+              <div className="prefs-elsewhere">
+                <span className="prefs-elsewhere-fact">RUNS ON LIVES IN MODELS</span>
+                <Button dense onClick={() => openModule("models")}>
+                  Open Models
+                </Button>
+              </div>
             </GadgetGroup>
             <GadgetGroup label="Deferred queue">
               {check(["meeting", "intel_deferred_enabled"], "Enabled")}
@@ -773,9 +782,10 @@ function SettingsFace({ hero, scope }: CoreProps) {
         );
       case "models":
         return (
-          <RuntimeDestination
-            value={(val(["dictation", "runtime"]) ?? {}) as JsonRecord}
-            onCommit={(next) => update(["dictation", "runtime"], next)}
+          <ModelsModule
+            settings={data}
+            update={update}
+            onRefuse={setRefusal}
           />
         );
       case "desk":

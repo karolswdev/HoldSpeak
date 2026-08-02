@@ -18,6 +18,7 @@ from ..kernel.external_egress import run_external_egress
 from ..logging_config import get_logger
 from .endpoint_health import default_health as _endpoint_health
 from .models import (
+    DEFAULT_CLOUD_BASE_URL,
     DEFAULT_INTEL_CLOUD_API_KEY_ENV,
     DEFAULT_INTEL_CLOUD_MODEL,
     DEFAULT_INTEL_CLOUD_TIMEOUT_SECONDS,
@@ -176,7 +177,7 @@ class MeetingIntel:
 
     def _remote_completion(self, sender: Callable[..., Any], values: dict[str, object]) -> Any:
         """Dispatch one remote model invocation under its egress warrant."""
-        endpoint = urlsplit(self.cloud_base_url or "https://api.openai.com")
+        endpoint = urlsplit(self.cloud_base_url or DEFAULT_CLOUD_BASE_URL)
         destination = (endpoint.hostname or "invalid-model-endpoint").lower()
         if endpoint.port:
             destination += f":{endpoint.port}"

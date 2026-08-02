@@ -87,7 +87,10 @@ def test_inference_target_api_round_trips_through_profile_alias(rig) -> None:
     assert legacy["base_url"] == "http://10.0.0.8:8000/v1"
     assert legacy["context_limit"] == 32768
 
-    updated = client.put("/api/profiles/lan", json={"model": "Qwen-2"})
+    # HS-112-01: the alias is READ-ONLY — the write path is the target API.
+    refused = client.put("/api/profiles/lan", json={"model": "Qwen-2"})
+    assert refused.status_code == 405
+    updated = client.put("/api/inference-targets/lan", json={"model": "Qwen-2"})
     assert updated.status_code == 200
     assert client.get("/api/inference-targets/lan").json()["inference_target"]["model"] == "Qwen-2"
     alias = client.get("/api/inference-targets").json()["profile_alias"]

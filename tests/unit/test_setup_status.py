@@ -147,10 +147,20 @@ def test_trust_default_is_local_only(isolated_config, monkeypatch) -> None:
 
 def test_trust_reflects_cloud_endpoint_and_actuators(isolated_config, monkeypatch) -> None:
     _stub_checks(monkeypatch, _checks(("Mic", "PASS")))
+    # HS-112-01: the endpoint reads through the assigned target.
+    from holdspeak.db.models import ProfileRecord
+
+    monkeypatch.setattr(
+        "holdspeak.intel.providers._lookup_profile_record",
+        lambda pid: ProfileRecord(
+            id=pid, name="Homelab", kind="openAICompatible",
+            base_url="http://homelab.local:8000/v1", model="q",
+        ),
+    )
     cfg = Config()
     cfg.meeting.intel_enabled = True
     cfg.meeting.intel_provider = "cloud"
-    cfg.meeting.intel_cloud_base_url = "http://homelab.local:8000/v1"
+    cfg.meeting.intel_profile_id = "p-homelab"
     cfg.meeting.allow_actuators = True
     trust = setup_status.build_setup_status(config=cfg)["trust"]
     assert trust["transcript_egress"] == "configured"

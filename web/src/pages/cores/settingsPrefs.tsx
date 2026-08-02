@@ -34,7 +34,7 @@ export const PREF_MODULES: PrefModule[] = [
   { id: "cadence", label: "Cadence", glyph: "cadence", keys: ["cadence", "cadence_telegram"] },
   { id: "devices", label: "Devices", glyph: "device", keys: ["device", "mesh"] },
   { id: "delivery", label: "Delivery", glyph: "delivery", keys: [] },
-  { id: "models", label: "Models", glyph: "models", keys: [] },
+  { id: "models", label: "Models", glyph: "models", keys: ["rails_observer"] },
   { id: "desk", label: "Desk", glyph: "desk", keys: [] },
   { id: "integrations", label: "Integrations", glyph: "secret", keys: [] },
   { id: "system", label: "System", glyph: "system", keys: [] },

@@ -17,8 +17,7 @@ def _cfg(*, enabled=True, backend="llama_cpp", **runtime_kw) -> SimpleNamespace:
         backend=backend,
         mlx_model=runtime_kw.get("mlx_model", ""),
         llama_cpp_model_path=runtime_kw.get("llama_cpp_model_path", ""),
-        openai_compatible_base_url=runtime_kw.get("openai_compatible_base_url", ""),
-        openai_compatible_api_key_env=runtime_kw.get("openai_compatible_api_key_env", "OPENAI_API_KEY"),
+        profile_id=runtime_kw.get("profile_id"),
     )
     return SimpleNamespace(pipeline=SimpleNamespace(enabled=enabled), runtime=runtime)
 
@@ -59,8 +58,22 @@ def test_local_backend_unavailable(monkeypatch) -> None:
     assert res["ok"] is False and res["status"] == "unavailable"
 
 
+def _wire_lan_target(monkeypatch) -> None:
+    """HS-112-01: the probe resolves the endpoint through the assigned target."""
+    from holdspeak.db.models import ProfileRecord
+
+    monkeypatch.setattr(
+        "holdspeak.intel.providers._lookup_profile_record",
+        lambda pid: ProfileRecord(
+            id=pid, name="LAN", kind="openAICompatible",
+            base_url="http://lan:8000/v1", model="q",
+        ),
+    )
+
+
 def test_openai_endpoint_reachable(monkeypatch) -> None:
     _resolve(monkeypatch, "openai_compatible")
+    _wire_lan_target(monkeypatch)
     calls = {}
 
     def _get(url, *, headers, timeout):
@@ -68,7 +81,7 @@ def test_openai_endpoint_reachable(monkeypatch) -> None:
         return 200
 
     res = probe_runtime(
-        _cfg(backend="openai_compatible", openai_compatible_base_url="http://lan:8000/v1"),
+        _cfg(backend="openai_compatible", profile_id="p-lan"),
         http_get=_get,
     )
     assert res["ok"] is True and res["status"] == "ok"
@@ -77,20 +90,22 @@ def test_openai_endpoint_reachable(monkeypatch) -> None:
 
 def test_openai_endpoint_unreachable(monkeypatch) -> None:
     _resolve(monkeypatch, "openai_compatible")
+    _wire_lan_target(monkeypatch)
 
     def _boom(url, *, headers, timeout):
         raise OSError("connection refused")
 
     res = probe_runtime(
-        _cfg(backend="openai_compatible", openai_compatible_base_url="http://lan:8000/v1"),
+        _cfg(backend="openai_compatible", profile_id="p-lan"),
         http_get=_boom,
     )
     assert res["ok"] is False and res["status"] == "unreachable"
 
 
 def test_openai_endpoint_unconfigured(monkeypatch) -> None:
+    # HS-112-01: an endpoint backend with no assigned target has no endpoint.
     _resolve(monkeypatch, "openai_compatible")
-    res = probe_runtime(_cfg(backend="openai_compatible", openai_compatible_base_url=""))
+    res = probe_runtime(_cfg(backend="openai_compatible"))
     assert res["ok"] is False and res["status"] == "unconfigured"
 
 

@@ -234,10 +234,10 @@ def clear_remote_buffer() -> None:
         _REMOTE.clear()
 
 
-def build_profile_summarizer(profile_id: str = "") -> SummarizeFn:
-    """Production summarizer: run the prompt on the named RuntimeProfile
-    (else the hub default), through the SAME intel seam ask uses. Kept
-    out of the pure core so tests inject a fake instead."""
+def build_profile_summarizer(profile_id: Optional[str] = None) -> SummarizeFn:
+    """Production summarizer: run the prompt on the named InferenceTarget
+    (None = hub default, the one pointer sentinel), through the SAME intel
+    seam ask uses. Kept out of the pure core so tests inject a fake instead."""
 
     def summarize(system_prompt: str, user_prompt: str) -> str:
         from .db import get_database

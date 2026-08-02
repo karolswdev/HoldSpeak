@@ -45,8 +45,21 @@ def _secret_destination(secret_id: str, value: str) -> Optional[str]:
 
 
 def redacted_settings(config: Any) -> dict[str, Any]:
-    """Return the editable settings shape without any credential values."""
+    """Return the editable settings shape without any credential values.
+
+    The dead legacy endpoint fields (HS-112-01) never ride the wire either:
+    endpoint/model identity is read and written only as InferenceTargets.
+    """
+    from ....config import LEGACY_ENDPOINT_FIELDS
+
     payload = deepcopy(config.to_dict())
+    for section_path, legacy_fields in LEGACY_ENDPOINT_FIELDS.items():
+        node: Any = payload
+        for part in section_path.split("."):
+            node = node.get(part) if isinstance(node, dict) else None
+        if isinstance(node, dict):
+            for legacy_field in legacy_fields:
+                node.pop(legacy_field, None)
     states: dict[str, dict[str, Any]] = {}
     for secret_id, (section, field) in SECRET_PATHS.items():
         section_data = payload.get(section)

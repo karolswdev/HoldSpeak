@@ -682,15 +682,17 @@ def _runtime_readiness(cfg: Any) -> dict[str, Any]:
         return payload
 
     if resolved_backend == "openai_compatible":
+        from ....intel.providers import effective_dictation_llm
         from ....plugins.dictation.guidance import runtime_guidance
 
+        effective = effective_dictation_llm(cfg.runtime)
         payload = {
             "status": "available",
             "requested_backend": cfg.runtime.backend,
             "resolved_backend": resolved_backend,
             "detail": (
-                f"endpoint={cfg.runtime.openai_compatible_base_url}; "
-                f"model={cfg.runtime.openai_compatible_model}"
+                f"endpoint={effective.base_url or 'unset'}; "
+                f"model={effective.model or 'unset'}"
             ),
             "model_path": None,
             "model_exists": True,

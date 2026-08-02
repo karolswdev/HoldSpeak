@@ -58,20 +58,38 @@ def test_run_doctor_command_strict_treats_warnings_as_failure(monkeypatch: pytes
     assert rc_strict == 1
 
 
-def _cloud_config(*, provider: str = "cloud", model: str = "qwen2.5-32b-instruct") -> SimpleNamespace:
+def _cloud_config(*, provider: str = "cloud") -> SimpleNamespace:
     return SimpleNamespace(
         meeting=SimpleNamespace(
             intel_enabled=True,
             intel_provider=provider,
-            intel_cloud_model=model,
-            intel_cloud_api_key_env="HOMELAB_INTEL_API_KEY",
-            intel_cloud_base_url="http://homelab.local:8000/v1",
+            intel_profile_id="p-homelab",
         )
     )
 
 
+HOMELAB_KEY_ENV = "HOLDSPEAK_PROFILE_P_HOMELAB_KEY"
+
+
+def _wire_homelab_target(monkeypatch, *, model: str = "qwen2.5-32b-instruct") -> None:
+    """HS-112-01: the preflight resolves through the assigned target."""
+    from holdspeak.db.models import ProfileRecord
+
+    monkeypatch.setattr(
+        "holdspeak.intel.providers._lookup_profile_record",
+        lambda pid: ProfileRecord(
+            id=pid,
+            name="Homelab",
+            kind="openAICompatible",
+            base_url="http://homelab.local:8000/v1",
+            model=model,
+        ),
+    )
+
+
 def test_cloud_preflight_warns_when_api_key_missing(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.delenv("HOMELAB_INTEL_API_KEY", raising=False)
+    _wire_homelab_target(monkeypatch)
+    monkeypatch.delenv(HOMELAB_KEY_ENV, raising=False)
 
     result = doctor._check_meeting_intel_cloud_preflight(_cloud_config())
 
@@ -80,7 +98,8 @@ def test_cloud_preflight_warns_when_api_key_missing(monkeypatch: pytest.MonkeyPa
 
 
 def test_cloud_preflight_warns_on_dns_failure(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("HOMELAB_INTEL_API_KEY", "test-key")
+    _wire_homelab_target(monkeypatch)
+    monkeypatch.setenv(HOMELAB_KEY_ENV, "test-key")
 
     def _fail_urlopen(_request, timeout):
         _ = timeout
@@ -95,7 +114,8 @@ def test_cloud_preflight_warns_on_dns_failure(monkeypatch: pytest.MonkeyPatch) -
 
 
 def test_cloud_preflight_warns_when_model_missing(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("HOMELAB_INTEL_API_KEY", "test-key")
+    _wire_homelab_target(monkeypatch)
+    monkeypatch.setenv(HOMELAB_KEY_ENV, "test-key")
 
     class _FakeResponse:
         def __enter__(self):
@@ -110,14 +130,15 @@ def test_cloud_preflight_warns_when_model_missing(monkeypatch: pytest.MonkeyPatc
 
     monkeypatch.setattr(doctor.urlrequest, "urlopen", lambda _request, timeout: _FakeResponse())
 
-    result = doctor._check_meeting_intel_cloud_preflight(_cloud_config(model="qwen2.5-32b-instruct"))
+    result = doctor._check_meeting_intel_cloud_preflight(_cloud_config())
 
     assert result.status == "WARN"
     assert "unavailable" in result.detail
 
 
 def test_cloud_preflight_passes_when_model_available(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("HOMELAB_INTEL_API_KEY", "test-key")
+    _wire_homelab_target(monkeypatch)
+    monkeypatch.setenv(HOMELAB_KEY_ENV, "test-key")
 
     class _FakeResponse:
         def __enter__(self):
@@ -220,8 +241,6 @@ def test_dictation_runtime_check_pass_for_openai_compatible(monkeypatch) -> None
     cfg = Config()
     cfg.dictation.pipeline.enabled = True
     cfg.dictation.runtime.backend = "openai_compatible"
-    cfg.dictation.runtime.openai_compatible_base_url = "http://127.0.0.1:8000/v1"
-    cfg.dictation.runtime.openai_compatible_model = "qwen-local"
     monkeypatch.setattr(
         "holdspeak.plugins.dictation.runtime.resolve_backend",
         lambda requested, **_kw: ("openai_compatible", "stubbed"),
@@ -231,7 +250,8 @@ def test_dictation_runtime_check_pass_for_openai_compatible(monkeypatch) -> None
 
     assert result.status == "PASS"
     assert "openai_compatible" in result.detail
-    assert "qwen-local" in result.detail
+    # HS-112-01: no assigned destination = the honest unset detail
+    assert "pick a destination" in result.detail
 
 
 def test_project_context_check_pass_when_pipeline_disabled() -> None:

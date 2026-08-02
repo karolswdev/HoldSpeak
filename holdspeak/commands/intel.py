@@ -81,16 +81,14 @@ def run_intel_command(args) -> int:
     meeting_cfg = config.meeting
     model_path = meeting_cfg.intel_realtime_model
     provider = meeting_cfg.intel_provider
-    # HS-84-01: the cloud leg runs where the assigned RuntimeProfile says
-    # (dangling/none ⇒ the legacy intel_cloud_* shape, byte-identical).
+    # HS-112-01: the cloud leg resolves through the one resolver (the
+    # assigned InferenceTarget, else the hub default).
     effective_cloud = effective_intel_cloud(meeting_cfg)
     if effective_cloud.reason:
         print(f"Note: {effective_cloud.reason}")
     cloud_model = effective_cloud.model
     cloud_api_key_env = effective_cloud.api_key_env
     cloud_base_url = effective_cloud.base_url
-    cloud_reasoning_effort = meeting_cfg.intel_cloud_reasoning_effort
-    cloud_store = meeting_cfg.intel_cloud_store
     retry_base_seconds = meeting_cfg.intel_retry_base_seconds
     retry_max_seconds = meeting_cfg.intel_retry_max_seconds
     retry_max_attempts = meeting_cfg.intel_retry_max_attempts
@@ -112,11 +110,6 @@ def run_intel_command(args) -> int:
         processed = drain_intel_queue(
             model_path,
             provider=provider,
-            cloud_model=cloud_model,
-            cloud_api_key_env=cloud_api_key_env,
-            cloud_base_url=cloud_base_url,
-            cloud_reasoning_effort=cloud_reasoning_effort,
-            cloud_store=cloud_store,
             retry_base_seconds=retry_base_seconds,
             retry_max_seconds=retry_max_seconds,
             retry_max_attempts=retry_max_attempts,

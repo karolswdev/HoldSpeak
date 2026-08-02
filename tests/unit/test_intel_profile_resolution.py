@@ -1,11 +1,11 @@
-"""HS-84-01 — meeting intelligence runs on a profile.
+"""HS-84-01 / HS-112-01 — meeting intelligence runs on a target.
 
 `effective_intel_cloud` is the ONE resolution seam: a valid assigned
-``openAICompatible`` RuntimeProfile shapes the cloud leg; anything else
+``openAICompatible`` InferenceTarget shapes the cloud leg; anything else
 (unset, dangling, deleted, non-endpoint kind, lookup unavailable) falls back
-to the legacy ``intel_cloud_*`` config shape — with a named reason, never a
-crash. Unset is byte-identical, locked here, not claimed. ``intel_provider``
-local/auto/cloud semantics are untouched.
+to the HUB DEFAULT shape (the default cloud endpoint + key env) — with a
+named reason, never a crash. The legacy ``intel_cloud_*`` config fields are
+dead and never read here. ``intel_provider`` semantics are untouched.
 """
 
 from __future__ import annotations
@@ -56,12 +56,12 @@ def _profile(**overrides) -> ProfileRecord:
 # ── the resolution matrix ────────────────────────────────────────────────
 
 
-def test_unset_profile_is_the_legacy_shape_verbatim() -> None:
+def test_unset_profile_is_the_hub_default_shape() -> None:
     eff = effective_intel_cloud(_meeting_cfg(), get_profile=lambda pid: pytest.fail("no lookup"))
     assert eff == EffectiveEndpoint(
-        model="legacy-model",
-        api_key_env="LEGACY_KEY_ENV",
-        base_url="http://legacy.example:8000/v1",
+        model="gpt-5-mini",
+        api_key_env="OPENAI_API_KEY",
+        base_url=None,
     )
     assert eff.profile_id is None and eff.reason is None
 
@@ -87,11 +87,11 @@ def test_profile_key_env_wins_when_set(monkeypatch) -> None:
     assert eff.api_key_env == profile_key_env("p-43")
 
 
-def test_profile_without_model_keeps_the_legacy_model() -> None:
+def test_profile_without_model_keeps_the_default_model() -> None:
     eff = effective_intel_cloud(
         _meeting_cfg(intel_profile_id="p-43"), get_profile=lambda pid: _profile(model="")
     )
-    assert eff.model == "legacy-model"
+    assert eff.model == "gpt-5-mini"
     assert eff.base_url == "http://192.168.1.43:8080/v1"
 
 
@@ -99,7 +99,7 @@ def test_dangling_profile_falls_back_with_a_named_reason() -> None:
     eff = effective_intel_cloud(
         _meeting_cfg(intel_profile_id="gone"), get_profile=lambda pid: None
     )
-    assert eff.base_url == "http://legacy.example:8000/v1"
+    assert eff.base_url is None
     assert eff.profile_id is None
     assert "assigned profile missing: gone" in (eff.reason or "")
 
@@ -109,7 +109,7 @@ def test_deleted_profile_counts_as_missing() -> None:
         _meeting_cfg(intel_profile_id="p-43"),
         get_profile=lambda pid: _profile(deleted=True),
     )
-    assert eff.base_url == "http://legacy.example:8000/v1"
+    assert eff.base_url is None
     assert "assigned profile missing" in (eff.reason or "")
 
 
@@ -118,7 +118,7 @@ def test_ondevice_profile_runs_on_the_hub_engine() -> None:
         _meeting_cfg(intel_profile_id="p-dev"),
         get_profile=lambda pid: _profile(id="p-dev", kind="onDevice", base_url=""),
     )
-    assert eff.base_url == "http://legacy.example:8000/v1"
+    assert eff.base_url is None
     assert "onDevice-kind" in (eff.reason or "")
 
 
@@ -127,29 +127,29 @@ def test_lookup_failure_degrades_never_raises() -> None:
         raise RuntimeError("no db on this path")
 
     eff = effective_intel_cloud(_meeting_cfg(intel_profile_id="p-43"), get_profile=_boom)
-    assert eff.base_url == "http://legacy.example:8000/v1"
+    assert eff.base_url is None
     assert "profile lookup unavailable" in (eff.reason or "")
 
 
-def test_cfg_without_the_field_at_all_is_legacy() -> None:
+def test_cfg_without_the_field_at_all_is_hub_default() -> None:
     cfg = _meeting_cfg()
     delattr(cfg, "intel_profile_id")
     eff = effective_intel_cloud(cfg, get_profile=lambda pid: pytest.fail("no lookup"))
-    assert eff.base_url == "http://legacy.example:8000/v1" and eff.reason is None
+    assert eff.base_url is None and eff.reason is None
 
 
 # ── the constructors honor the seam ──────────────────────────────────────
 
 
-def test_build_configured_unset_is_byte_identical(monkeypatch) -> None:
+def test_build_configured_unset_runs_on_the_hub_default(monkeypatch) -> None:
     cfg = SimpleNamespace(meeting=_meeting_cfg())
     monkeypatch.setattr("holdspeak.config.Config.load", classmethod(lambda cls, path=None: cfg))
 
     intel = build_configured_meeting_intel()
     assert intel.provider == "cloud"
-    assert intel.cloud_model == "legacy-model"
-    assert intel.cloud_api_key_env == "LEGACY_KEY_ENV"
-    assert intel.cloud_base_url == "http://legacy.example:8000/v1"
+    assert intel.cloud_model == "gpt-5-mini"
+    assert intel.cloud_api_key_env == "OPENAI_API_KEY"
+    assert intel.cloud_base_url is None
 
 
 def test_build_configured_adopts_the_assigned_profile(monkeypatch) -> None:

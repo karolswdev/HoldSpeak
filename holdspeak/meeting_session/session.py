@@ -103,11 +103,11 @@ class MeetingSession(
         intel_enabled: bool = False,
         intel_model_path: Optional[str] = None,
         intel_provider: str = "local",
-        intel_cloud_model: str = "gpt-5-mini",
-        intel_cloud_api_key_env: str = "OPENAI_API_KEY",
-        intel_cloud_base_url: Optional[str] = None,
-        intel_cloud_reasoning_effort: Optional[str] = None,
-        intel_cloud_store: bool = False,
+        cloud_model: str = "gpt-5-mini",
+        cloud_api_key_env: str = "OPENAI_API_KEY",
+        cloud_base_url: Optional[str] = None,
+        cloud_reasoning_effort: Optional[str] = None,
+        cloud_store: bool = False,
         intel_deferred_enabled: bool = True,
         diarization_enabled: bool = False,
         diarize_mic: bool = False,
@@ -145,11 +145,11 @@ class MeetingSession(
             intel_enabled: Enable LLM-powered meeting intelligence.
             intel_model_path: Path to GGUF model for intel (None for default).
             intel_provider: Meeting intel provider mode (local/cloud/auto).
-            intel_cloud_model: Cloud model name when provider uses cloud.
-            intel_cloud_api_key_env: Env var containing cloud API key.
-            intel_cloud_base_url: Optional OpenAI-compatible base URL.
-            intel_cloud_reasoning_effort: Reserved for future cloud tuning.
-            intel_cloud_store: Whether cloud requests may be stored server-side.
+            cloud_model: Cloud model name when provider uses cloud.
+            cloud_api_key_env: Env var containing cloud API key.
+            cloud_base_url: Optional OpenAI-compatible base URL.
+            cloud_reasoning_effort: Reserved for future cloud tuning.
+            cloud_store: Whether cloud requests may be stored server-side.
             diarization_enabled: Enable speaker diarization for system audio.
             diarize_mic: Also diarize mic input (for on-site meetings).
             cross_meeting_recognition: Recognize speakers across meetings.
@@ -168,11 +168,11 @@ class MeetingSession(
         self.intel_enabled = intel_enabled and MeetingIntel is not None
         self.intel_model_path = intel_model_path
         self.intel_provider = intel_provider
-        self.intel_cloud_model = intel_cloud_model
-        self.intel_cloud_api_key_env = intel_cloud_api_key_env
-        self.intel_cloud_base_url = intel_cloud_base_url
-        self.intel_cloud_reasoning_effort = intel_cloud_reasoning_effort
-        self.intel_cloud_store = intel_cloud_store
+        self.cloud_model = cloud_model
+        self.cloud_api_key_env = cloud_api_key_env
+        self.cloud_base_url = cloud_base_url
+        self.cloud_reasoning_effort = cloud_reasoning_effort
+        self.cloud_store = cloud_store
         self.intel_deferred_enabled = intel_deferred_enabled
         self.diarization_enabled = diarization_enabled and SpeakerDiarizer is not None
         self.diarize_mic = diarize_mic and SpeakerDiarizer is not None
@@ -466,9 +466,9 @@ class MeetingSession(
                 if get_intel_runtime_status is not None:
                     runtime_kwargs = {
                         "provider": self.intel_provider,
-                        "cloud_model": self.intel_cloud_model,
-                        "cloud_api_key_env": self.intel_cloud_api_key_env,
-                        "cloud_base_url": self.intel_cloud_base_url,
+                        "cloud_model": self.cloud_model,
+                        "cloud_api_key_env": self.cloud_api_key_env,
+                        "cloud_base_url": self.cloud_base_url,
                     }
                     if self.intel_model_path:
                         runtime_ok, runtime_error = get_intel_runtime_status(self.intel_model_path, **runtime_kwargs)
@@ -479,16 +479,16 @@ class MeetingSession(
                             runtime_provider, _ = resolve_intel_provider(
                                 self.intel_provider,
                                 model_path=self.intel_model_path,
-                                cloud_model=self.intel_cloud_model,
-                                cloud_api_key_env=self.intel_cloud_api_key_env,
-                                cloud_base_url=self.intel_cloud_base_url,
+                                cloud_model=self.cloud_model,
+                                cloud_api_key_env=self.cloud_api_key_env,
+                                cloud_base_url=self.cloud_base_url,
                             )
                         else:
                             runtime_provider, _ = resolve_intel_provider(
                                 self.intel_provider,
-                                cloud_model=self.intel_cloud_model,
-                                cloud_api_key_env=self.intel_cloud_api_key_env,
-                                cloud_base_url=self.intel_cloud_base_url,
+                                cloud_model=self.cloud_model,
+                                cloud_api_key_env=self.cloud_api_key_env,
+                                cloud_base_url=self.cloud_base_url,
                             )
 
                 if runtime_ok:
@@ -497,11 +497,11 @@ class MeetingSession(
                         if self.intel_model_path:
                             kwargs["model_path"] = self.intel_model_path
                         kwargs["provider"] = self.intel_provider
-                        kwargs["cloud_model"] = self.intel_cloud_model
-                        kwargs["cloud_api_key_env"] = self.intel_cloud_api_key_env
-                        kwargs["cloud_base_url"] = self.intel_cloud_base_url
-                        kwargs["cloud_reasoning_effort"] = self.intel_cloud_reasoning_effort
-                        kwargs["cloud_store"] = self.intel_cloud_store
+                        kwargs["cloud_model"] = self.cloud_model
+                        kwargs["cloud_api_key_env"] = self.cloud_api_key_env
+                        kwargs["cloud_base_url"] = self.cloud_base_url
+                        kwargs["cloud_reasoning_effort"] = self.cloud_reasoning_effort
+                        kwargs["cloud_store"] = self.cloud_store
                         self._intel = MeetingIntel(**kwargs)
                         self._segments_since_intel = 0
                         self._state.intel_status = "live"

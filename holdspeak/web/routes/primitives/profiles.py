@@ -76,27 +76,20 @@ def build_profiles_router(ctx: WebContext) -> APIRouter:
         except Exception as exc:
             return error_500(exc, log, "Failed to list profiles")
 
+    # HS-112-01: `/api/profiles` is a READ-ONLY alias over the same rows.
+    # `/api/inference-targets` is the one write path.
+    def _profiles_read_only() -> JSONResponse:
+        return JSONResponse(
+            {
+                "error": "/api/profiles is read-only; write via /api/inference-targets",
+                "write_path": "/api/inference-targets",
+            },
+            status_code=405,
+        )
+
     @router.post("/api/profiles")
     async def api_create_profile(request: Request) -> Any:
-        body = await _json_body(request)
-        if body is None:
-            return JSONResponse({"error": "expected a JSON object"}, status_code=400)
-        # Legacy Profile clients historically sent key-shaped extras. Keep the
-        # alias tolerant and drop them through _profile_fields; the canonical
-        # InferenceTarget endpoint below refuses secret material explicitly.
-        if not str(body.get("name") or "").strip():
-            return JSONResponse({"error": "profile name is required"}, status_code=400)
-        try:
-            from ....db import get_database
-            profile = get_database().profiles.upsert(
-                profile_id=str(body.get("id") or _new_id("profile")),
-                **_profile_fields(body),
-            )
-            return JSONResponse({"profile": profile.to_dict()}, status_code=201)
-        except ValueError as exc:
-            return JSONResponse({"error": str(exc)}, status_code=400)
-        except Exception as exc:
-            return error_500(exc, log, "Failed to create profile")
+        return _profiles_read_only()
 
     @router.get("/api/profiles/{profile_id}")
     async def api_get_profile(profile_id: str) -> Any:
@@ -111,29 +104,11 @@ def build_profiles_router(ctx: WebContext) -> APIRouter:
 
     @router.put("/api/profiles/{profile_id}")
     async def api_update_profile(profile_id: str, request: Request) -> Any:
-        body = await _json_body(request)
-        if body is None:
-            return JSONResponse({"error": "expected a JSON object"}, status_code=400)
-        try:
-            from ....db import get_database
-            db = get_database()
-            existing = db.profiles.get(profile_id)
-            if existing is None:
-                return JSONResponse({"error": f"Unknown profile: {profile_id}"}, status_code=404)
-            profile = db.profiles.upsert(profile_id=profile_id, **_profile_fields(body, existing))
-            return JSONResponse({"profile": profile.to_dict()})
-        except Exception as exc:
-            return error_500(exc, log, "Failed to update profile")
+        return _profiles_read_only()
 
     @router.delete("/api/profiles/{profile_id}")
     async def api_delete_profile(profile_id: str) -> Any:
-        try:
-            from ....db import get_database
-            if not get_database().profiles.delete(profile_id):
-                return JSONResponse({"error": f"Unknown profile: {profile_id}"}, status_code=404)
-            return JSONResponse({"success": True})
-        except Exception as exc:
-            return error_500(exc, log, "Failed to delete profile")
+        return _profiles_read_only()
 
     # HS-92-07: InferenceTarget is an additive API/view over the version-1
     # ProfileRecord.  The old endpoints and sync primitive stay byte-compatible;
