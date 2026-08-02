@@ -69,12 +69,12 @@ it does not absorb it — it names it in the final summary.
 
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
-| HS-112-01 | One dial | in-progress | [story-01-one-dial](./story-01-one-dial.md) | — |
-| HS-112-02 | Speak speaks | in-progress | [story-02-speak-speaks](./story-02-speak-speaks.md) | — (captured; ships with the flip) |
-| HS-112-03 | The architect's desk | in-progress | [story-03-architects-desk](./story-03-architects-desk.md) | — |
-| HS-112-04 | The plain story | backlog | [story-04-plain-story](./story-04-plain-story.md) | — |
+| HS-112-01 | One dial | done | [story-01-one-dial](./story-01-one-dial.md) | [evidence-story-01](./evidence-story-01.md) |
+| HS-112-02 | Speak speaks | done | [story-02-speak-speaks](./story-02-speak-speaks.md) | [evidence-story-02](./evidence-story-02.md) |
+| HS-112-03 | The architect's desk | done | [story-03-architects-desk](./story-03-architects-desk.md) | [evidence-story-03](./evidence-story-03.md) |
+| HS-112-04 | The plain story | done | [story-04-plain-story](./story-04-plain-story.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-112-05 | The sitting walk | backlog | [story-05-walk](./story-05-walk.md) | — |
-| HS-112-06 | The open mic | in-progress | [story-06-open-mic](./story-06-open-mic.md) | — |
+| HS-112-06 | The open mic | done | [story-06-open-mic](./story-06-open-mic.md) | [evidence-story-06](./evidence-story-06.md) |
 
 ## Where we are
 
