@@ -547,6 +547,7 @@ class MeetingWebServer:
             build_delivery_factory_router,
             build_dictation_router,
             build_desk_actuators_router,
+            build_desk_seed_router,
             build_meeting_import_router,
             build_meetings_router,
             build_memory_router,
@@ -611,6 +612,7 @@ class MeetingWebServer:
         app.include_router(build_memory_router(web_ctx))
         app.include_router(build_meetings_router(web_ctx))
         app.include_router(build_desk_actuators_router(web_ctx))
+        app.include_router(build_desk_seed_router(web_ctx))
         app.include_router(build_meeting_import_router(web_ctx))
         app.include_router(build_mesh_router(web_ctx))
         app.include_router(build_missioncontrol_router(web_ctx))
