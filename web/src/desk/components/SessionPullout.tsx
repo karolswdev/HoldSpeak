@@ -486,11 +486,13 @@ function SteerComposer() {
         selection={grounding}
         onChange={setGrounding}
         limitTokens={STEER_LIMIT_TOKENS}
+        meter={false}
       />
       <RailsPicker
         picks={rails}
         onChange={setRails}
         limitTokens={STEER_LIMIT_TOKENS}
+        meter={false}
       />
       {(!groundingIsEmpty(grounding) || rails.length > 0) && (
         <span className="desk-steer-grounded">

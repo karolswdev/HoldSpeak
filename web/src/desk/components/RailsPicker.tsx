@@ -3,12 +3,19 @@
 // into a run as a receipt (the hub reads the dw-named file). A sibling
 // of GroundingSection, mounted beside it in the ask panel and the
 // Phase-87 steer composer — one hydration, both surfaces.
+// HS-111-05 — the rack grammar (audit §3.4): CheckGadget rows on
+// full-width hover bands, titles ellipsized in minmax(0,1fr), the
+// budget as tokens through the kit tones (no raw hexes).
 import { useMemo, useState } from "react";
 import { useMissionControl } from "../missioncontrol";
 import { fetchRailsSizes, railsTokens, type RailsPick } from "../grounding";
+import { CheckGadget, LedMeter } from "../surface/gadgets";
 
 const fmt = (n: number): string =>
   n >= 1000 ? `${(n / 1000).toFixed(1)}k` : String(n);
+
+const tok = (chars: number): number =>
+  chars <= 0 ? 0 : Math.max(1, Math.floor(chars / 4));
 
 interface RailsRow {
   repo: string;
@@ -66,15 +73,18 @@ export function RailsPicker(props: {
   picks: RailsPick[];
   onChange: (picks: RailsPick[]) => void;
   limitTokens: number;
+  /** HS-111-05 — a host with a shared budget meter passes false. */
+  meter?: boolean;
 }) {
-  const { picks, onChange, limitTokens } = props;
+  const { picks, onChange, limitTokens, meter = true } = props;
   const rows = useRailsRows();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState<string | null>(null);
 
   const used = railsTokens(picks);
   const over = used > limitTokens;
-  const tone = over ? "bad" : used / (limitTokens || 1) >= 0.6 ? "warn" : "ok";
+  const frac = limitTokens > 0 ? Math.min(1, used / limitTokens) : 0;
+  const tone = over || frac >= 0.85 ? "danger" : frac >= 0.6 ? "warn" : undefined;
   const isPicked = (r: RailsRow) => picks.some((p) => key(p) === key(r));
 
   const toggle = async (r: RailsRow) => {
@@ -97,6 +107,7 @@ export function RailsPicker(props: {
       <button
         type="button"
         className="desk-ground-head"
+        aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
       >
         <span
@@ -111,7 +122,7 @@ export function RailsPicker(props: {
             : `Rails · ${picks.length}`}
         </span>
         {picks.length > 0 && (
-          <span className={"desk-ground-tokens is-" + tone}>
+          <span className="surface-token" data-tone={tone}>
             {fmt(used)} / {fmt(limitTokens)} tok
           </span>
         )}
@@ -122,33 +133,47 @@ export function RailsPicker(props: {
 
       {open && (
         <div className="desk-ground-body">
+          {meter && picks.length > 0 && <LedMeter label="CTX" value={frac} />}
           {over && (
-            <p className="desk-run-warning">
-              ⚠ Past the window — pick fewer rail objects
+            <p className="desk-ground-refusal">
+              ✕ PAST THE WINDOW · PICK FEWER RAIL OBJECTS
             </p>
           )}
           <ul className="desk-ground-list">
             {rows.map((r) => {
               const sel = isPicked(r);
+              const priced = picks.find((p) => key(p) === key(r));
               return (
                 <li
                   key={key(r)}
                   className={"desk-ground-row" + (sel ? " is-picked" : "")}
                 >
-                  <button
-                    type="button"
-                    className="desk-ground-pick"
-                    onClick={() => void toggle(r)}
+                  <div
+                    className="desk-ground-line is-press"
+                    onClick={(event) => {
+                      if (
+                        (event.target as HTMLElement).closest(".gadget-check")
+                      )
+                        return;
+                      void toggle(r);
+                    }}
                   >
-                    <span className="desk-ground-check" aria-hidden="true">
-                      {sel ? "●" : "○"}
-                    </span>
+                    <CheckGadget
+                      label={r.title}
+                      checked={sel}
+                      onChange={() => void toggle(r)}
+                    />
                     <span className="desk-rails-kind">{r.kind}</span>
                     <span className="desk-ground-name">{r.title}</span>
                     {loading === key(r) && (
                       <span className="desk-ground-loading">…</span>
                     )}
-                  </button>
+                    {priced && priced.chars > 0 && (
+                      <span className="desk-ground-fig">
+                        {fmt(tok(priced.chars))} tok
+                      </span>
+                    )}
+                  </div>
                 </li>
               );
             })}

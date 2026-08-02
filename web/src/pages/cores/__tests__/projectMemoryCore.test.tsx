@@ -14,10 +14,12 @@ import { useDesk } from "../../../desk/store";
 import { WingSlotContext } from "../../../desk/surface/wings";
 import {
   CitationChips,
+  groundedMatchCount,
+} from "../../../desk/surface/citations";
+import {
   LifecycleChip,
   ProjectMemoryCore,
   composeProjectTimeline,
-  groundedMatchCount,
 } from "../ProjectMemoryCore";
 
 const apiFetch = vi.fn();

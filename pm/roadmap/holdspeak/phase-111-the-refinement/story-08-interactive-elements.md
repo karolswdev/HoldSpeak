@@ -17,6 +17,20 @@ once in the shared styles/components, used everywhere: beveled
 buttons, sunken inputs, rectangular check/toggle gadgets, etched
 tabs and badges. No stray rounded control survives.**
 
+## Owner-commissioned doctrine riders (2026-08-01)
+
+- **Roving focus is kit law** (doctrine P0 F3, principle 3): every
+  SurfaceLedger/GadgetTable/menu/grid is ONE Tab stop with arrow
+  keys walking rows inside (a 100-row archive must never be 100 Tab
+  presses); Home/End jump; focus visibly rides the full-width band.
+  One kit fix inherits into Meetings, Journal, Agents, needs-you.
+- **Destructive verbs arm** (doctrine P0 F4, principle 6): the
+  GadgetTable row `×` currently deletes with NO confirm
+  (gadgets.tsx:387-395) — every destructive kit verb gets the arming
+  two-step (× → FORGET?/DELETE?) as the kit default, matching
+  SecretRow; full undo is a separate chartered story (doctrine §3),
+  not this one.
+
 ## Method (phase canon)
 
 1. **Audit.** An agent inventories every control instance across all

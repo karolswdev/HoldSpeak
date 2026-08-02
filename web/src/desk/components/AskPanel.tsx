@@ -1,12 +1,17 @@
 // The Ask AI atom (HSM-16-04, the web parity of HSM-16-09): the composer is a
 // docked in-world panel — the desk stays visible and alive behind it (the
-// 17-08 atelier posture, never a modal) — and the result prints as a card you
+// 17-08 atelier posture, never a modal) — and the result prints as a turn you
 // judge: keep (a real synced Artifact carrying every card read + the exact
 // instruction) or bin (nothing stored). The egress chip is per-RUN honest:
 // pre-run it names the picked profile's target; printed, it names where the
 // run actually went.
+// HS-111-05 — the query console (audit §3): the exchange is SurfaceTraffic
+// (the OS's one conversation grammar, HS-111-04), the input deck keeps the
+// one-well grammar, the pickers ride one etched GROUNDING rack with the
+// shared LedMeter budget, the footer is the surface-receiptbar, and the
+// server's grounding receipt (GROUNDED ON N OF M + openable citations)
+// finally reaches this glass.
 import { useEffect, useMemo, useRef, useState } from "react";
-import { motion, useReducedMotion } from "motion/react";
 import { useDesk } from "../store";
 import {
   ASK_LENSES,
@@ -19,7 +24,6 @@ import {
 import {
   buildGrounding,
   emptyGrounding,
-  groundingIsEmpty,
   groundingReceiptRows,
   groundingTokens,
   railsTokens,
@@ -35,9 +39,21 @@ import { qualifiedRef } from "../api";
 import { RunsOnPicker } from "./RunsOnPicker";
 import { DeskWindowFrame } from "./DeskWindow";
 import { Material } from "../surface/Material";
+import { SurfaceTraffic, SurfaceTrafficTurn } from "../surface/Surface";
+import {
+  EgressChip,
+  GadgetGroup,
+  LedMeter,
+  MxRadio,
+  TransportKey,
+} from "../surface/gadgets";
+import { CitationChips, groundedMatchCount } from "../surface/citations";
+import { Button } from "../../components/signal/Signal";
+
+/** The budget figure the audit names: 0.3K / 16.4K. */
+const fmtK = (n: number): string => `${(n / 1000).toFixed(1)}K`;
 
 export function AskPanel() {
-  const reducedMotion = useReducedMotion();
   const items = useDesk((s) => s.items);
   const inferenceTargets = useDesk((s) => s.inferenceTargets);
   const selectedIds = useDesk((s) => s.selectedIds);
@@ -53,6 +69,13 @@ export function AskPanel() {
   const [phase, setPhase] = useState<"compose" | "routing" | "printed">(
     "compose",
   );
+  // The transmission on the log: the YOU> turn as it was sent (the draft
+  // keeps editing underneath without rewriting the transcript).
+  const [sent, setSent] = useState<{
+    prompt: string;
+    lens: string;
+    ctx: number;
+  } | null>(null);
   const [result, setResult] = useState<AskRunResult | null>(null);
   const [error, setError] = useState("");
   const [kept, setKept] = useState(false);
@@ -62,6 +85,14 @@ export function AskPanel() {
   const [projects, setProjects] = useState<Array<{ id: string; name: string }>>(
     [],
   );
+  const endRef = useRef<HTMLDivElement | null>(null);
+
+  // The transcript keeps its newest transmission in view (the
+  // PersonaChat grammar): the refusal turn and the printed turn are
+  // never hidden below the well's fold.
+  useEffect(() => {
+    endRef.current?.scrollIntoView({ block: "end" });
+  }, [phase, error]);
 
   const context = useMemo(
     () => askContexts(items, selectedIds),
@@ -134,7 +165,7 @@ export function AskPanel() {
   const composeEgress = useMemo(() => {
     const target = inferenceTargets.find((item) => item.id === profileId);
     return {
-      scope: target?.boundary === "same_device" ? "local" : "cloud",
+      local: target?.boundary === "same_device",
       text: `${target?.boundary === "same_device" ? "⌂" : "→"} ${target?.name || "This device"}`,
     };
   }, [profileId, inferenceTargets]);
@@ -143,6 +174,8 @@ export function AskPanel() {
     if (!prompt.trim() || phase === "routing" || overBudget) return;
     setPhase("routing");
     setError("");
+    setResult(null);
+    setSent({ prompt: prompt.trim(), lens, ctx: context.length });
     // Receipts: the grounding rows ride the pinned context so keep names them.
     printedContext.current = [
       ...context,
@@ -198,21 +231,70 @@ export function AskPanel() {
   const printedEgress = result?.egress
     ? result.egress.scope === "local"
       ? {
-          scope: "local",
           text: result.model
             ? `⌂ This device · ${result.model}`
             : "⌂ This device",
+          title: "This run stayed on this device.",
         }
       : result.egress.scope === "mesh"
         ? {
-            scope: "mesh",
             text: `⇄ ${["Paired", result.egress.host, result.model].filter(Boolean).join(" · ")}`,
+            title: "This run went to a paired device on your network.",
           }
         : {
-            scope: "cloud",
             text: `→ ${["Leaves device", result.egress.host, result.model].filter(Boolean).join(" · ")}`,
+            title: "This run left the device for the named service.",
           }
     : null;
+
+  const receipt = result?.groundingReceipt || null;
+  const flaggedClaims = (result?.groundingClaims || []).filter(
+    (c) => c.flagged,
+  );
+  const placement = result?.actualPlacement || null;
+  const placementTokens = placement
+    ? [
+        placement.engine ? String(placement.engine) : "",
+        placement.model ? String(placement.model) : "",
+        placement.fallback_reason
+          ? `fallback: ${String(placement.fallback_reason)}`
+          : "",
+      ].filter(Boolean)
+    : [];
+
+  const turnCount = (sent ? 1 : 0) + (result || (error && sent) ? 1 : 0);
+
+  // The footer receipt bar's one status line (audit §3.5): fault > routing
+  // > run receipt > the compose budget tokens.
+  const statusTone =
+    error || overBudget ? ("danger" as const) : undefined;
+  const statusLine = error
+    ? error
+    : phase === "routing"
+      ? "ROUTING"
+      : phase === "printed" && result
+        ? [
+            `RAN ON ${String(
+              placement?.target_name ||
+                placement?.target_id ||
+                result.model ||
+                "this device",
+            )}`,
+            placement?.model ? String(placement.model) : "",
+          ]
+            .filter(Boolean)
+            .join(" · ")
+        : [
+            promptRecovered ? "DRAFT · RECOVERED" : "",
+            `CTX ${fmtK(groundTokens)}/${fmtK(limitTokens)}`,
+            overBudget
+              ? "PAST THE WINDOW"
+              : composeEgress.local
+                ? "LOCAL"
+                : composeEgress.text,
+          ]
+            .filter(Boolean)
+            .join(" · ");
 
   return (
     <DeskWindowFrame
@@ -232,13 +314,16 @@ export function AskPanel() {
       }
       actions={
         phase === "printed" && printedEgress ? (
-          <span className={`egress-badge is-${printedEgress.scope}`}>
-            {printedEgress.text}
-          </span>
+          <EgressChip label={printedEgress.text} title={printedEgress.title} />
         ) : (
-          <span className={`egress-badge is-${composeEgress.scope}`}>
-            {composeEgress.text}
-          </span>
+          <EgressChip
+            label={composeEgress.text}
+            title={
+              composeEgress.local
+                ? "This run stays on this device."
+                : "This run leaves for the named destination."
+            }
+          />
         )
       }
       open
@@ -246,37 +331,133 @@ export function AskPanel() {
         if (phase !== "routing") bin();
       }}
     >
+      <div className="desk-pullout-body desk-ask-body">
+        <SurfaceTraffic
+          head={`SESSION · ${turnCount} ${turnCount === 1 ? "TURN" : "TURNS"}`}
+          showEmpty={!sent && phase !== "routing"}
+        >
+          {sent ? (
+            <SurfaceTrafficTurn
+              prefix="YOU>"
+              meta={
+                <>
+                  <span className="surface-token">{sent.lens}</span>
+                  {sent.ctx > 0 ? (
+                    <span className="surface-token">CTX {sent.ctx}</span>
+                  ) : null}
+                </>
+              }
+            >
+              {sent.prompt}
+            </SurfaceTrafficTurn>
+          ) : null}
+          {phase === "routing" ? (
+            <SurfaceTrafficTurn prefix="HUB>">
+              <LedMeter label="RX" value={0} scanning />
+            </SurfaceTrafficTurn>
+          ) : null}
+          {sent && error && !result ? (
+            <SurfaceTrafficTurn prefix="HUB>" error>
+              {error}
+            </SurfaceTrafficTurn>
+          ) : null}
+          {phase === "printed" && result ? (
+            <SurfaceTrafficTurn
+              prefix="HUB>"
+              meta={
+                <>
+                  {printedEgress ? (
+                    <EgressChip
+                      label={printedEgress.text}
+                      title={printedEgress.title}
+                    />
+                  ) : null}
+                  {placementTokens.map((token) => (
+                    <span key={token} className="surface-token">
+                      {token}
+                    </span>
+                  ))}
+                </>
+              }
+              verbs={
+                <>
+                  <Button
+                    dense
+                    variant="ghost"
+                    disabled={kept}
+                    onClick={() => void keep()}
+                  >
+                    {kept ? "Kept" : "Keep"}
+                  </Button>
+                  <Button dense variant="ghost" onClick={bin}>
+                    Bin
+                  </Button>
+                </>
+              }
+            >
+              <div
+                className="desk-ask-answer"
+                /* HS-101 B7 — the result drags OUT through the glass:
+                   release it over the desk and it is kept (the same keep
+                   verb; the desk files the minted artifact). */
+                draggable={!kept}
+                title={kept ? undefined : "Drag onto the desk to keep"}
+                onDragStart={(e) => {
+                  e.dataTransfer.setData(
+                    "application/x-holdspeak-chip",
+                    "ask",
+                  );
+                  e.dataTransfer.effectAllowed = "copy";
+                }}
+                onDragEnd={(e) => {
+                  const under = document.elementFromPoint(
+                    e.clientX,
+                    e.clientY,
+                  );
+                  if (
+                    under &&
+                    (under.closest(".desk-world") ||
+                      under.classList.contains("desk-world-canvas")) &&
+                    !kept
+                  ) {
+                    void keep();
+                  }
+                }}
+              >
+                <Material>{result.output}</Material>
+                {/* HS-111-05 — the honesty law reaches this surface: the
+                    server's cited retrieval receipt, never inferred, and
+                    omitted entirely on a context-free ask. */}
+                {receipt || flaggedClaims.length > 0 ? (
+                  <div className="desk-ask-receipt">
+                    {receipt ? (
+                      <>
+                        <p className="desk-ask-grounded">
+                          GROUNDED ON {groundedMatchCount(receipt)} OF{" "}
+                          {receipt.matchedCount}
+                        </p>
+                        <CitationChips refs={receipt.sourceRefs} />
+                      </>
+                    ) : null}
+                    {flaggedClaims.map((c, i) => (
+                      <p
+                        key={i}
+                        className="desk-ask-claim"
+                        title="Possibly unsupported by the cited material"
+                      >
+                        {c.label === "partial" ? "◐" : "◇"} {c.text}
+                      </p>
+                    ))}
+                  </div>
+                ) : null}
+              </div>
+            </SurfaceTrafficTurn>
+          ) : null}
+          <div ref={endRef} />
+        </SurfaceTraffic>
 
-      <div className="desk-pullout-body">
         {phase !== "printed" && (
           <>
-            {context.length > 0 && (
-              <div className="desk-ask-context">
-                {context.map((c) => (
-                  <span key={c.id} className="desk-chip quiet">
-                    {c.title}
-                  </span>
-                ))}
-              </div>
-            )}
-            <div className="desk-ask-lenses">
-              {ASK_LENSES.map((l) => (
-                <button
-                  key={l.name}
-                  type="button"
-                  className={
-                    "desk-chip" +
-                    (lens === l.name ? " desk-ask-lens-on" : " quiet")
-                  }
-                  onClick={() => {
-                    setLens(l.name);
-                    setPrompt(l.instruction);
-                  }}
-                >
-                  {l.name}
-                </button>
-              ))}
-            </div>
             <div className="desk-chat-well">
               <div className="desk-chat-composer">
                 <MicButton
@@ -296,20 +477,36 @@ export function AskPanel() {
                     }
                   }}
                 />
-                <button
-                  type="button"
-                  className="desk-chip is-primary"
-                  disabled={!prompt.trim() || overBudget}
+                <TransportKey
+                  compact
+                  label="ASK"
+                  glyph="▸"
+                  disabled={
+                    !prompt.trim() || phase === "routing" || overBudget
+                  }
                   title={
                     overBudget
                       ? "Grounding is past the window: pick less"
-                      : undefined
+                      : phase === "routing"
+                        ? "Routing"
+                        : undefined
                   }
                   onClick={() => void ask()}
-                >
-                  Ask
-                </button>
+                />
               </div>
+              <MxRadio
+                label="Lens"
+                value={lens}
+                options={ASK_LENSES.map((l) => ({
+                  value: l.name,
+                  label: l.name.toUpperCase(),
+                }))}
+                onChange={(next) => {
+                  setLens(next);
+                  const picked = ASK_LENSES.find((l) => l.name === next);
+                  if (picked) setPrompt(picked.instruction);
+                }}
+              />
               <div className="desk-chat-well-foot">
                 <RunsOnPicker
                   targets={inferenceTargets}
@@ -317,120 +514,89 @@ export function AskPanel() {
                   onChange={setProfileId}
                   disabled={phase === "routing"}
                 />
-                <GroundingSection
-                  meetings={(items.meeting || []).map((m) => ({
-                    id: m.id,
-                    title: String(m.title || "Untitled meeting"),
-                    startedAt: (m as any).startedAt,
-                  }))}
-                  resources={groundableResources}
-                  selection={grounding}
-                  onChange={setGrounding}
-                  limitTokens={limitTokens}
-                />
-                <RailsPicker
-                  picks={rails}
-                  onChange={setRails}
-                  limitTokens={limitTokens}
-                />
+                {context.length > 0 && (
+                  <span className="surface-token">
+                    CTX · {context.length}{" "}
+                    {context.length === 1 ? "CARD" : "CARDS"}
+                  </span>
+                )}
               </div>
             </div>
-            {promptRecovered ? (
-              <span className="quiet">Recovered local Ask draft.</span>
-            ) : null}
-            {error && <p className="desk-run-warning">⚠ {error}</p>}
-          </>
-        )}
 
-        {phase === "printed" && result && (
-          <div
-            className="desk-ask-card"
-            /* HS-101 B7 — the result drags OUT through the glass: release
-               it over the desk and it is kept (the same keep verb; the
-               desk files the minted artifact). */
-            draggable={!kept}
-            title={kept ? undefined : "Drag onto the desk to keep"}
-            onDragStart={(e) => {
-              e.dataTransfer.setData("application/x-holdspeak-chip", "ask");
-              e.dataTransfer.effectAllowed = "copy";
-            }}
-            onDragEnd={(e) => {
-              const under = document.elementFromPoint(e.clientX, e.clientY);
-              if (
-                under &&
-                (under.closest(".desk-world") ||
-                  under.classList.contains("desk-world-canvas")) &&
-                !kept
-              ) {
-                void keep();
-              }
-            }}
-          >
-            <Material className="desk-ask-answer">{result.output}</Material>
-            {result.groundingClaims.some((c) => c.flagged) && (
-              <ul className="desk-ask-grounding-flags">
-                {result.groundingClaims
-                  .filter((c) => c.flagged)
-                  .map((c, i) => (
-                    <li
-                      key={i}
-                      className="desk-chip quiet is-flagged"
-                      title="Possibly unsupported by the cited material"
-                    >
-                      {c.label === "partial" ? "◐" : "◇"} {c.text}
-                    </li>
-                  ))}
-              </ul>
-            )}
-            {result.actualPlacement && (
-              <p className="quiet desk-run-receipt">
-                Ran on{" "}
-                {String(
-                  result.actualPlacement.target_name ||
-                    result.actualPlacement.target_id,
-                )}
-                {result.actualPlacement.engine
-                  ? ` · ${String(result.actualPlacement.engine)}`
-                  : ""}
-                {result.actualPlacement.model
-                  ? ` · ${String(result.actualPlacement.model)}`
-                  : ""}
-                {result.actualPlacement.boundary
-                  ? ` · ${String(result.actualPlacement.boundary)}`
-                  : ""}
-                {result.actualPlacement.fallback_reason
-                  ? ` · fallback: ${String(result.actualPlacement.fallback_reason)}`
-                  : ""}
-              </p>
-            )}
-          </div>
+            {/* HS-111-05 — the grounding rack: one etched rack, both
+                pickers, the shared budget on the rack lip. */}
+            <GadgetGroup label="GROUNDING">
+              {context.length > 0 && (
+                <div className="desk-ask-ctx">
+                  <p className="desk-ground-sect">
+                    CONTEXT · {context.length}
+                  </p>
+                  <ul className="desk-ground-list">
+                    {context.map((c) => (
+                      <li key={c.id} className="desk-ground-row">
+                        <div className="desk-ground-line is-fact">
+                          <span className="desk-rails-kind">{c.kind}</span>
+                          <span className="desk-ground-name">{c.title}</span>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              <GroundingSection
+                meetings={(items.meeting || []).map((m) => ({
+                  id: m.id,
+                  title: String(m.title || "Untitled meeting"),
+                  startedAt: (m as any).startedAt,
+                }))}
+                resources={groundableResources}
+                selection={grounding}
+                onChange={setGrounding}
+                limitTokens={limitTokens}
+                meter={false}
+              />
+              <RailsPicker
+                picks={rails}
+                onChange={setRails}
+                limitTokens={limitTokens}
+                meter={false}
+              />
+              <div className="desk-ask-rack-lip">
+                <LedMeter
+                  label={`CTX ${fmtK(groundTokens)}/${fmtK(limitTokens)}`}
+                  value={limitTokens > 0 ? groundTokens / limitTokens : 0}
+                />
+              </div>
+            </GadgetGroup>
+          </>
         )}
       </div>
 
-      <footer className="desk-pullout-foot">
-        {phase === "compose" && (
-          <button type="button" className="desk-chip quiet" onClick={bin}>
-            Cancel
-          </button>
-        )}
-        {phase === "routing" && (
-          <span className="desk-ask-routing">routing…</span>
-        )}
-        {phase === "printed" && (
-          <>
-            <button type="button" className="desk-chip quiet" onClick={bin}>
-              Bin
-            </button>
-            <button
-              type="button"
-              className="desk-chip"
-              disabled={kept}
-              onClick={() => void keep()}
-            >
-              {kept ? "…" : "Keep"}
-            </button>
-          </>
-        )}
+      <footer className="surface-status surface-receiptbar desk-ask-foot">
+        <span className="surface-receiptbar-verbs">
+          <Button
+            dense
+            variant="ghost"
+            disabled={phase === "routing"}
+            onClick={bin}
+          >
+            {phase === "printed" ? "Bin" : "Cancel"}
+          </Button>
+        </span>
+        <span
+          className="surface-receiptbar-receipt"
+          data-tone={statusTone}
+          role="status"
+        >
+          {statusLine}
+        </span>
+        <span className="surface-receiptbar-verbs">
+          {phase === "printed" && result ? (
+            <Button dense disabled={kept} onClick={() => void keep()}>
+              {kept ? "Kept" : "Keep"}
+            </Button>
+          ) : null}
+        </span>
       </footer>
     </DeskWindowFrame>
   );

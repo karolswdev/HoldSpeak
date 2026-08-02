@@ -1,5 +1,6 @@
 import type { InferenceTarget } from "../api";
 import { humanizeWireValue } from "../../lib/productLanguage";
+import { CycleGadget } from "../surface/gadgets";
 
 const KIND_LABEL: Record<string, string> = {
   this_device: "This device",
@@ -10,7 +11,9 @@ const KIND_LABEL: Record<string, string> = {
   unsupported: "Unsupported destination",
 };
 
-/** The one Runs-on control/view model used by Ask, Persona, Sequence, and Workflow. */
+/** The one Runs-on control/view model used by Ask, Persona, Sequence, and
+ * Workflow. HS-111-05: the naked select died — the destination is a
+ * CycleGadget and the caption is mono tokens, never a sentence. */
 export function RunsOnPicker(props: {
   targets: InferenceTarget[];
   selectedId: string;
@@ -22,33 +25,37 @@ export function RunsOnPicker(props: {
   const sent = selected?.data_scope?.sent || [];
   return (
     <div className="runs-on-picker">
-      <label>
-        <span>Runs on</span>
-        <select
-          aria-label="Runs on"
-          value={selected?.id || "this_machine"}
-          onChange={(event) => props.onChange(event.target.value)}
-          disabled={props.disabled}
-        >
-          {props.targets.map((target) => (
-            <option key={target.id} value={target.id} disabled={!target.readiness.available}>
-              {target.name}
-              {(KIND_LABEL[target.kind] || target.kind) !== target.name
-                ? ` · ${KIND_LABEL[target.kind] || target.kind}`
-                : ""}
-              {!target.readiness.available ? ` · unavailable: ${target.readiness.reason}` : ""}
-            </option>
-          ))}
-        </select>
-      </label>
+      <CycleGadget
+        label="Runs on"
+        value={selected?.id || "this_machine"}
+        disabled={props.disabled}
+        onChange={props.onChange}
+        options={props.targets.map((target) => ({
+          value: target.id,
+          disabled: !target.readiness.available,
+          label:
+            target.name +
+            ((KIND_LABEL[target.kind] || target.kind) !== target.name
+              ? ` · ${KIND_LABEL[target.kind] || target.kind}`
+              : "") +
+            (!target.readiness.available
+              ? ` · unavailable: ${target.readiness.reason}`
+              : ""),
+        }))}
+      />
       {selected && (
-        <p className={selected.readiness.available ? "quiet" : "desk-run-warning"}>
+        <p
+          className={
+            (selected.readiness.available ? "quiet" : "desk-run-warning") +
+            " runs-on-facts"
+          }
+        >
           {KIND_LABEL[selected.kind] || selected.kind} ·{" "}
           {humanizeWireValue(selected.boundary)}
           {sent.length
-            ? ` · sends ${sent
+            ? ` · SENDS: ${sent
                 .map((value) => humanizeWireValue(value))
-                .join(", ")}`
+                .join("+")}`
             : ""}
           {!selected.readiness.available ? ` · ${selected.readiness.reason}` : ""}
         </p>
