@@ -7,6 +7,7 @@ import {
 } from "../../lib/productLanguage";
 import { useProjections } from "../projections";
 import { CycleGadget, StringGadget } from "../surface/gadgets";
+import { SurfaceState } from "../surface/Surface";
 import {
   DeskWindowFrame,
   announceLauncher,
@@ -230,9 +231,10 @@ export function AttentionDrawer() {
                 ))}
               </ol>
               {!store.loading && store.projections.length === 0 ? (
-                <p className="desk-attention-empty">
-                  Nothing matches. Receipts remain in their source journals.
-                </p>
+                <SurfaceState
+                  empty
+                  emptyLabel="Nothing matches. Receipts remain in their source journals."
+                />
               ) : null}
               {store.page.has_more ? (
                 <button

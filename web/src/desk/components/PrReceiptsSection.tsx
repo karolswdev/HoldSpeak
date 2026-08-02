@@ -10,9 +10,9 @@ import {
   type PrDiff,
   type PrRow,
 } from "../prReceipts";
-import { MicButton } from "./MicButton";
+import { DeskComposer } from "./DeskComposer";
 import { FoldGadget } from "../surface/gadgets";
-import { SurfaceCode, SurfaceWell } from "../surface/Surface";
+import { SurfaceCode, SurfaceState, SurfaceWell } from "../surface/Surface";
 
 type Action = "send" | "comment" | "status" | null;
 type VerbName = "send_agent" | "draft_review" | "post_comment" | "post_status";
@@ -76,7 +76,7 @@ export function PrReceiptsSection() {
       {sources.map((source) => (
         <div key={source.source_id} className="desk-pr-source">
           <h3>{source.label}<small>{source.status === "live" ? `observed ${source.observed_at}` : source.status === "stale" ? `stale · ${source.observed_at} · ${source.detail}` : source.detail}</small></h3>
-          {source.prs && source.prs.length === 0 ? <p className="desk-shade-quiet">Empty</p> : null}
+          {source.prs && source.prs.length === 0 ? <SurfaceState empty emptyLabel="Empty" /> : null}
           {source.prs ? (
             <div className="desk-list-scroll">
               <table className="desk-list-table desk-pr-object-table">
@@ -115,13 +115,34 @@ export function PrReceiptsSection() {
                           <tr className="desk-pr-action"><td colSpan={4}>
                             <div className="desk-pr-compose">
                               <label htmlFor={`pr-action-${key}`}>{w.action === "send" ? "Instruction" : w.action === "comment" ? "Comment" : "Status"}</label>
-                              <div className="desk-mic-row">
-                                <textarea id={`pr-action-${key}`} value={w.text} onChange={(event) => patch(key, { text: event.target.value })} rows={w.action === "comment" ? 7 : 3} />
-                                <MicButton draftScope={`pr-${key}-${w.action}`} onText={(text) => patch(key, { text })} />
-                              </div>
+                              <DeskComposer
+                                className="desk-mic-row"
+                                value={w.text}
+                                onChange={(text) => patch(key, { text })}
+                                placeholder={w.action === "send" ? "Instruction" : w.action === "comment" ? "Comment" : "Status"}
+                                multiline
+                                rows={w.action === "comment" ? 7 : 3}
+                                micDraftScope={`pr-${key}-${w.action}`}
+                                actionLabel={w.action === "send" ? "Send agent" : "Propose"}
+                                actionDisabled={!w.text.trim()}
+                                actionBusy={Boolean(w.busy)}
+                                onAction={() =>
+                                  void run(
+                                    key,
+                                    w.action === "send" ? "Sending" : "Proposing",
+                                    () =>
+                                      w.action === "send"
+                                        ? store.sendAgent(row, w.text)
+                                        : store.propose(
+                                            row,
+                                            w.text,
+                                            w.action === "status" ? "status" : "comment",
+                                          ),
+                                  )
+                                }
+                              />
                               <span className="desk-pr-compose-actions">
                                 <button type="button" onClick={() => patch(key, { action: null })}>Cancel</button>
-                                <button type="button" disabled={!w.text.trim() || Boolean(w.busy)} onClick={() => void run(key, w.action === "send" ? "Sending" : "Proposing", () => w.action === "send" ? store.sendAgent(row, w.text) : store.propose(row, w.text, w.action === "status" ? "status" : "comment"))}>{w.action === "send" ? "Send agent" : "Propose"}</button>
                               </span>
                             </div>
                           </td></tr>

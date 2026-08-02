@@ -10,6 +10,9 @@ import { useDesk, type ZoneViewPref } from "../store";
 import { objectByRef, type WorldObject } from "../world";
 import { productLabel } from "../../lib/productLanguage";
 import { humanTime } from "../surface/format";
+import { SurfaceState } from "../surface/Surface";
+import { SurfaceWings } from "../surface/wings";
+import { DeskWindowFooter } from "./DeskWindowFooter";
 import { DeskWindowFrame } from "./DeskWindow";
 
 type SortKey = ZoneViewPref["sort"];
@@ -96,32 +99,20 @@ export function ZoneWindow({
       title={title}
       open
       onClose={() => closeZoneWindow(zoneId)}
-      actions={
-        <span className="zone-wings" role="tablist" aria-label="Zone view">
-          <button
-            type="button"
-            role="tab"
-            aria-selected={pref.view === "icons"}
-            className={`desk-chip quiet${pref.view === "icons" ? " in-zone" : ""}`}
-            onClick={() => setZoneViewPref(zoneId, { view: "icons" })}
-          >
-            Icons
-          </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={pref.view === "list"}
-            className={`desk-chip quiet${pref.view === "list" ? " in-zone" : ""}`}
-            onClick={() => setZoneViewPref(zoneId, { view: "list" })}
-          >
-            List
-          </button>
-        </span>
+      wings={
+        <SurfaceWings
+          wings={[
+            { id: "icons", label: "Icons" },
+            { id: "list", label: "List" },
+          ]}
+          active={pref.view}
+          onChange={(view) => setZoneViewPref(zoneId, { view: view as ZoneViewPref["view"] })}
+        />
       }
     >
       <div className="desk-pullout-body desk-surface-body">
         {members.length === 0 ? (
-          <p className="quiet">Empty</p>
+          <SurfaceState empty emptyLabel="Empty" />
         ) : pref.view === "icons" ? (
           <div className="zone-grid" role="list">
             {members.map((m) => (
@@ -208,12 +199,14 @@ export function ZoneWindow({
           </table>
         )}
       </div>
-      <footer className="desk-pullout-foot">
-        <span className="quiet">
-          {members.length} {members.length === 1 ? "item" : "items"}
-          {unresolved > 0 ? ` · ${unresolved} unavailable` : ""}
-        </span>
-      </footer>
+      <DeskWindowFooter
+        status={
+          <span className="quiet">
+            {members.length} {members.length === 1 ? "item" : "items"}
+            {unresolved > 0 ? ` · ${unresolved} unavailable` : ""}
+          </span>
+        }
+      />
     </DeskWindowFrame>
   );
 }
