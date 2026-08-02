@@ -29,6 +29,7 @@ export type PrimitiveKind =
   | "meeting"
   | "artifact"
   | "note"
+  | "decision"
   | "directory"
   | "kb"
   | "project"
@@ -37,7 +38,9 @@ export type PrimitiveKind =
   | "workflow"
   | "coder"
   | "game"
-  | "layout";
+  | "layout"
+  | "roadmap"
+  | "story";
 
 /** Static metadata for each kind — drives the type-legible Desk language. */
 export interface PrimitiveDescriptor {
@@ -99,6 +102,22 @@ export interface Note {
   bodyMarkdown: string;
   tags: string[];
   createdAt: string; // ISO-8601 UTC
+}
+
+export interface Decision {
+  kind: "decision";
+  id: string;
+  title: string;
+  status: "proposed" | "accepted" | "superseded" | "deprecated";
+  deciders: string[];
+  decidedAt?: string;
+  contextMarkdown: string;
+  decisionMarkdown: string;
+  alternatives: Array<{ name: string; reason: string }>;
+  consequencesMarkdown: string;
+  supersededBy?: string;
+  tags: string[];
+  createdAt: string;
 }
 
 // ── organization ───────────────────────────────────────────────────────
@@ -244,6 +263,7 @@ export type Primitive =
   | Meeting
   | Artifact
   | Note
+  | Decision
   | Directory
   | KB
   | Project
@@ -285,6 +305,15 @@ export const PRIMITIVES: Record<PrimitiveKind, PrimitiveDescriptor> = {
     syncClass: "content",
     blurb: "A free-standing markdown note you write anywhere.",
     icon: "M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4z",
+    authorable: true,
+  },
+  decision: {
+    kind: "decision",
+    label: "Decision",
+    plural: "Decisions",
+    syncClass: "content",
+    blurb: "Architecture decision record",
+    icon: "M5 3h14v18H5zM8 8h8M8 12h8M8 16h5",
     authorable: true,
   },
   directory: {
@@ -361,6 +390,24 @@ export const PRIMITIVES: Record<PrimitiveKind, PrimitiveDescriptor> = {
     icon: "M6 12h4M8 10v4M15 13h.01M18 11h.01M17.32 5H6.68a4 4 0 0 0-3.98 3.59L2 14a3 3 0 0 0 5.4 1.8L8 15h8l.6.8A3 3 0 0 0 22 14l-.7-5.41A4 4 0 0 0 17.32 5z",
     authorable: false,
   },
+  roadmap: {
+    kind: "roadmap",
+    label: "Roadmap",
+    plural: "Roadmaps",
+    syncClass: "organization",
+    blurb: "Delivery Workbench project",
+    icon: "M4 4h16v16H4zM7 8h10M7 12h7M7 16h10",
+    authorable: false,
+  },
+  story: {
+    kind: "story",
+    label: "Story",
+    plural: "Stories",
+    syncClass: "local",
+    blurb: "Delivery story card",
+    icon: "M6 3h12v18H6zM9 8h6M9 12h6M9 16h4",
+    authorable: false,
+  },
   layout: {
     kind: "layout",
     label: "Layout",
@@ -377,8 +424,9 @@ export type Agent = Persona;
 
 /** Order of the Desk's primitive sections, grouped by sync class. */
 export const DESK_GROUPS: { label: string; kinds: PrimitiveKind[] }[] = [
-  { label: "Content", kinds: ["meeting", "artifact", "note"] },
+  { label: "Content", kinds: ["meeting", "artifact", "note", "decision"] },
   { label: "Capabilities", kinds: ["recipe", "chain", "workflow"] },
   { label: "Organization", kinds: ["directory", "kb", "project"] },
   { label: "Live", kinds: ["coder"] },
+  { label: "Delivery", kinds: ["roadmap", "story"] },
 ];

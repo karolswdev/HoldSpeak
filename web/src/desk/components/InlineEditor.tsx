@@ -4,11 +4,13 @@
 // dialog takeover); saves are on-change (debounced PUT), so nothing is lost;
 // Escape or a click outside settles the object back.
 import { useEffect, useMemo, useRef, useState } from "react";
+import type { EditorView } from "@codemirror/view";
 import { useDesk } from "../store";
 import type { WorldObject } from "../world";
 import type { UnitPos } from "../store";
-import { DeskEditor, type DeskEditorHandle } from "./DeskEditor";
 import { MicButton } from "./MicButton";
+import { DeskEditor } from "./DeskEditor";
+import { EditorAIBar } from "./EditorAIBar";
 import {
   buildLinearGraph,
   parseLinearGraph,
@@ -37,9 +39,10 @@ export function InlineEditor({ o, u }: { o: WorldObject; u: UnitPos }) {
   const items = useDesk((s) => s.items);
   const profiles = useDesk((s) => s.profiles);
   const ref = useRef<HTMLDivElement | null>(null);
-  const bodyEditorRef = useRef<DeskEditorHandle | null>(null);
   const save = useDebouncedSave(o.kind === "kb" ? "kb" : o.kind, o.id);
   const [more, setMore] = useState(false);
+  const [editorView, setEditorView] = useState<EditorView | null>(null);
+  const [aiBarForced, setAIBarForced] = useState(false);
 
   // Fresh field state seeded from the live item (the store's copy).
   const live = useMemo(
@@ -97,6 +100,8 @@ export function InlineEditor({ o, u }: { o: WorldObject; u: UnitPos }) {
       if (e.key === "Escape") closeEditor();
     };
     document.addEventListener("keydown", onKey);
+    // Focus the first field on open.
+    ref.current?.querySelector<HTMLInputElement>("input, textarea")?.focus();
     return () => document.removeEventListener("keydown", onKey);
   }, []);
 
@@ -154,12 +159,18 @@ export function InlineEditor({ o, u }: { o: WorldObject; u: UnitPos }) {
               onChange={(e) => set("title", "title", e.target.value)}
             />
             <DeskEditor
-              ref={bodyEditorRef}
               value={f.body}
               placeholder="Write"
               autoFocus
               onEscape={closeEditor}
               onChange={(value) => set("body", "body_markdown", value)}
+              onViewChange={setEditorView}
+              onAIBarToggle={() => setAIBarForced((shown) => !shown)}
+            />
+            <EditorAIBar
+              editorView={editorView}
+              forceVisible={aiBarForced}
+              onDismiss={() => setAIBarForced(false)}
             />
             <input
               value={f.tags}
@@ -176,12 +187,18 @@ export function InlineEditor({ o, u }: { o: WorldObject; u: UnitPos }) {
               onChange={(e) => set("name", "name", e.target.value)}
             />
             <DeskEditor
-              ref={bodyEditorRef}
               value={f.body}
               placeholder="Write"
               autoFocus
               onEscape={closeEditor}
               onChange={(value) => set("body", "body_markdown", value)}
+              onViewChange={setEditorView}
+              onAIBarToggle={() => setAIBarForced((shown) => !shown)}
+            />
+            <EditorAIBar
+              editorView={editorView}
+              forceVisible={aiBarForced}
+              onDismiss={() => setAIBarForced(false)}
             />
           </>
         )}
@@ -365,9 +382,12 @@ export function InlineEditor({ o, u }: { o: WorldObject; u: UnitPos }) {
           <MicButton
             draftScope={`inline:${o.kind}:${o.id}`}
             onText={(t) => {
-              // Notes and Knowledge bodies receive dictation at the editor cursor.
-              if (o.kind === "note" || o.kind === "kb") {
-                bodyEditorRef.current?.insertAtCursor(t);
+              // Fill the primary text field for the kind: a note's body,
+              // otherwise the name/title.
+              if (o.kind === "note") {
+                set("body", "body_markdown", (f.body ? f.body + " " : "") + t);
+              } else if (o.kind === "kb") {
+                set("name", "name", (f.name ? f.name + " " : "") + t);
               } else {
                 set(
                   "systemPrompt",

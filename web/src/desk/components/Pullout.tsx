@@ -3,7 +3,8 @@
 // world stays alive behind it; "Open full" is the ONE navigation on the
 // desk; Escape or ✕ closes (it is a desk window — it survives clicks
 // elsewhere and can be moved, resized, and raised).
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
+import type { EditorView } from "@codemirror/view";
 // @ts-ignore — shared ESM module (see ../sprites.d.ts)
 import { spriteUrl } from "../sprites";
 import { apiRequest } from "../../lib/api";
@@ -11,8 +12,9 @@ import { useDurableDraft } from "../../lib/durableDraft";
 import { useDesk } from "../store";
 import { openSurfaceOr } from "../shell";
 import { parseLinearGraph, stepLabel } from "../graph";
-import { DeskEditor, type DeskEditorHandle } from "./DeskEditor";
 import { MicButton } from "./MicButton";
+import { DeskEditor } from "./DeskEditor";
+import { EditorAIBar } from "./EditorAIBar";
 import { AgentAvatar } from "./AgentAvatar";
 import { lineage } from "../lineage";
 import { useSteering } from "../steering";
@@ -20,9 +22,7 @@ import { objectByRef, objGlow, type WorldObject } from "../world";
 import { qualifiedRef } from "../api";
 import { RunsOnPicker } from "./RunsOnPicker";
 import { humanizeWireValue, productLabel } from "../../lib/productLanguage";
-import { EgressChip, FoldGadget } from "../surface/gadgets";
-import { DeskFilingStrip } from "./DeskFilingStrip";
-import { DeskWindowFooter } from "./DeskWindowFooter";
+import { FoldGadget } from "../surface/gadgets";
 import { Material } from "../surface/Material";
 import {
   SurfaceCode,
@@ -43,12 +43,13 @@ const FILABLE = new Set([
   "meeting",
   "artifact",
   "note",
+  "decision",
   "recipe",
   "chain",
   "workflow",
   "kb",
 ]);
-const EDITABLE = new Set(["note", "kb", "recipe", "workflow"]);
+const EDITABLE = new Set(["note", "decision", "kb", "recipe", "workflow"]);
 
 interface MeetingDetail {
   intel?: { summary?: string; action_items?: any[]; topics?: string[] } | null;
@@ -87,9 +88,12 @@ export function Pullout({
     openPullout,
     openEditor,
     updatePrimitive,
+    fileIntoDir,
+    removeFromDir,
     answerCoder,
     speakToCoder,
     openChat,
+    openToolInspector,
   } = useDesk.getState();
   const [detail, setDetail] = useState<MeetingDetail | null>(null);
   const [artifacts, setArtifacts] = useState<any[]>([]);
@@ -106,6 +110,10 @@ export function Pullout({
     string,
     unknown
   > | null>(null);
+  const [relationships, setRelationships] = useState<any>(null);
+  const [knowledgeChoices, setKnowledgeChoices] = useState<any[]>([]);
+  const [projectChoices, setProjectChoices] = useState<any[]>([]);
+  const [relationshipError, setRelationshipError] = useState("");
   const [answered, setAnswered] = useState<
     "selected" | "sent" | "failed" | null
   >(null);
@@ -113,7 +121,8 @@ export function Pullout({
   // card. Escape reverts; Done (or ⌘Enter) commits through the real PUT.
   const [editingBody, setEditingBody] = useState(false);
   const [bodyDraft, setBodyDraft] = useState("");
-  const bodyEditorRef = useRef<DeskEditorHandle | null>(null);
+  const [editorView, setEditorView] = useState<EditorView | null>(null);
+  const [aiBarForced, setAIBarForced] = useState(false);
   const startBodyEdit = () => {
     setBodyDraft(String((o.ref as any).bodyMarkdown || ""));
     setEditingBody(true);
@@ -121,6 +130,34 @@ export function Pullout({
   const commitBodyEdit = () => {
     void updatePrimitive("note", o.id, { body_markdown: bodyDraft });
     setEditingBody(false);
+  };
+  const [editingDecision, setEditingDecision] = useState(false);
+  const [decisionDraft, setDecisionDraft] = useState({
+    context_markdown: "",
+    decision_markdown: "",
+    consequences_markdown: "",
+  });
+  const startDecisionEdit = () => {
+    setDecisionDraft({
+      context_markdown: String((o.ref as any).contextMarkdown || ""),
+      decision_markdown: String((o.ref as any).decisionMarkdown || ""),
+      consequences_markdown: String((o.ref as any).consequencesMarkdown || ""),
+    });
+    setEditingDecision(true);
+  };
+  const commitDecisionEdit = () => {
+    void updatePrimitive("decision", o.id, decisionDraft);
+    setEditingDecision(false);
+  };
+  const cycleDecisionStatus = () => {
+    const cycle = ["proposed", "accepted", "superseded", "deprecated"];
+    const current = String((o.ref as any).status || "proposed");
+    const status = cycle[(cycle.indexOf(current) + 1) % cycle.length];
+    void apiRequest(`/api/decisions/${encodeURIComponent(o.id)}/status`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status }),
+    }).then(() => useDesk.getState().refresh());
   };
   const contextualAction = contextualCapabilityActions(items, selectedIds).find(
     (action) => action.id === o.id && action.kind === o.kind,
@@ -178,10 +215,64 @@ export function Pullout({
   }, [o.kind, o.id]);
 
   const resourceRef = qualifiedRef(o.kind, o.id);
+  const refreshRelationships = async () => {
+    if (!FILABLE.has(o.kind)) return;
+    try {
+      const [axesRes, knowledgeRes, projectRes] = await Promise.all([
+        apiRequest(
+          `/api/desk/relationships/${encodeURIComponent(resourceRef)}`,
+        ),
+        apiRequest("/api/kbs"),
+        apiRequest("/api/projects"),
+      ]);
+      const [axes, knowledge, projects] = await Promise.all([
+        axesRes.json(),
+        knowledgeRes.json(),
+        projectRes.json(),
+      ]);
+      setRelationships(axes);
+      setKnowledgeChoices((knowledge.kbs || []).filter((k: any) => !k.deleted));
+      setProjectChoices(
+        (projects.projects || []).filter((p: any) => !p.is_archived),
+      );
+      setRelationshipError("");
+    } catch (error) {
+      setRelationshipError(String(error));
+    }
+  };
+
   useEffect(() => {
+    setRelationships(null);
     setRunTargetId(String((o.ref as any).profileId || "this_machine"));
     setActualPlacement(null);
+    void refreshRelationships();
   }, [o.kind, o.id]);
+
+  const toggleRelationship = async (
+    axis: "knowledge" | "projects",
+    ownerId: string,
+    active: boolean,
+  ) => {
+    const base = axis === "knowledge" ? "kbs" : "projects";
+    try {
+      await apiRequest(
+        `/api/${base}/${encodeURIComponent(ownerId)}/${axis === "knowledge" ? "members" : "resources"}/${encodeURIComponent(resourceRef)}`,
+        {
+          method: active ? "DELETE" : "PUT",
+          ...(axis === "projects" && !active
+            ? {
+                headers: { "content-type": "application/json" },
+                body: JSON.stringify({ relationship: "member" }),
+              }
+            : {}),
+        },
+      );
+      await refreshRelationships();
+      await useDesk.getState().refresh();
+    } catch (error) {
+      setRelationshipError(String(error));
+    }
+  };
 
   const run = async () => {
     setRunBusy(true);
@@ -229,9 +320,10 @@ export function Pullout({
   const coderWaiting =
     o.kind === "coder" &&
     (String(ir.state || "") === "waiting" || Boolean(ir.question));
+  const zones = items.directory || [];
   const lin = lineage(items, ir.sources);
   const profile = profiles.find((p) => p.id === ir.profileId);
-  const egress: { scope: "local" | "cloud"; text: string } | null = profile
+  const egress = profile
     ? (profile.kind || "onDevice") === "onDevice"
       ? { scope: "local", text: "⌂ This device" }
       : {
@@ -286,7 +378,11 @@ export function Pullout({
       onClose={() => closePullout(o.id)}
       actions={
         <>
-          {egress ? <EgressChip label={egress.text} scope={egress.scope} /> : null}
+          {egress && (
+          <span className={`egress-badge is-${egress.scope}`}>
+            {egress.text}
+          </span>
+        )}
         {o.kind === "meeting" && (
           <button
             type="button"
@@ -415,6 +511,58 @@ export function Pullout({
           </>
         )}
 
+        {o.kind === "decision" && (
+          <section className="desk-decision-card">
+            <div className="desk-pullout-facts">
+              <button type="button" className="desk-chip quiet" onClick={cycleDecisionStatus}>
+                {String(ir.status || "proposed")}
+              </button>
+              {Array.isArray(ir.deciders) && ir.deciders.length ? (
+                <span>{ir.deciders.join(" · ")}</span>
+              ) : null}
+              {ir.decidedAt ? <span>{humanTime(String(ir.decidedAt))}</span> : null}
+            </div>
+            {editingDecision ? (
+              <div className="desk-decision-editor">
+                {(["context_markdown", "decision_markdown", "consequences_markdown"] as const).map((field) => (
+                  <label key={field} className="surface-eyebrow">
+                    {field.replace("_markdown", "").replace("_", " ")}
+                    <textarea
+                      className="desk-pullout-editbox"
+                      value={decisionDraft[field]}
+                      rows={5}
+                      onChange={(event) => setDecisionDraft({ ...decisionDraft, [field]: event.target.value })}
+                    />
+                  </label>
+                ))}
+              </div>
+            ) : (
+              <>
+                <section><h3>Context</h3><Material>{String(ir.contextMarkdown || "")}</Material></section>
+                <section><h3>Decision</h3><Material>{String(ir.decisionMarkdown || "")}</Material></section>
+                <section><h3>Consequences</h3><Material>{String(ir.consequencesMarkdown || "")}</Material></section>
+              </>
+            )}
+            {Array.isArray(ir.alternatives) && ir.alternatives.length ? (
+              <FoldGadget title="Alternatives considered">
+                <SurfaceRows>{ir.alternatives.map((alternative: any, index: number) => (
+                  <SurfaceRow key={`${alternative.name}-${index}`} title={String(alternative.name || "Alternative")} detail={String(alternative.reason || "")} />
+                ))}</SurfaceRows>
+              </FoldGadget>
+            ) : null}
+            {((items.decision || []) as any[]).filter((candidate) => candidate.supersededBy === o.id).map((candidate) => (
+              <button key={candidate.id} type="button" className="desk-chip quiet" onClick={() => openPullout(String(candidate.id))}>
+                Supersedes {String(candidate.title || candidate.id)}
+              </button>
+            ))}
+            {ir.supersededBy ? (
+              <button type="button" className="desk-chip quiet" onClick={() => openPullout(String(ir.supersededBy))}>
+                Superseded by {String(ir.supersededBy)}
+              </button>
+            ) : null}
+          </section>
+        )}
+
         {(o.kind === "note" || o.kind === "kb") &&
           (() => {
             const body = String(ir.bodyMarkdown || "");
@@ -425,7 +573,6 @@ export function Pullout({
               return (
                 <section>
                   <DeskEditor
-                    ref={bodyEditorRef}
                     className="desk-pullout-markdown-editor"
                     ariaLabel={`${o.title} content`}
                     value={bodyDraft}
@@ -435,6 +582,13 @@ export function Pullout({
                     onChange={setBodyDraft}
                     onEscape={() => setEditingBody(false)}
                     onModEnter={commitBodyEdit}
+                    onViewChange={setEditorView}
+                    onAIBarToggle={() => setAIBarForced((shown) => !shown)}
+                  />
+                  <EditorAIBar
+                    editorView={editorView}
+                    forceVisible={aiBarForced}
+                    onDismiss={() => setAIBarForced(false)}
                   />
                 </section>
               );
@@ -774,21 +928,169 @@ export function Pullout({
           </section>
         )}
 
-        {FILABLE.has(o.kind) ? (
-          <DeskFilingStrip
-            objectRef={resourceRef}
-            objectKind={o.kind}
-            objectId={o.id}
-          />
-        ) : null}
+        {FILABLE.has(o.kind) &&
+          relationships &&
+          (() => {
+            // The belonging strip (round 8): ONE disclosure whose summary
+            // states the truth; the label walls and the foot's separate
+            // "Move to…" both fold into it.
+            const homeZone = zones.find((z) => {
+              const members = ((z as any).memberIds as string[]) || [];
+              return members.includes(o.id) || members.includes(resourceRef);
+            });
+            const kCount = (relationships.knowledge || []).length;
+            const pCount = (relationships.projects || []).length;
+            // A Knowledge collection never offers itself as a home.
+            const knowledgeHomes = knowledgeChoices.filter(
+              (knowledge) => resourceRef !== qualifiedRef("kb", knowledge.id),
+            );
+            const filedSummary = [
+              homeZone ? String(homeZone.name || homeZone.id) : "Desk root",
+              kCount ? `${kCount} Knowledge` : "",
+              pCount
+                ? `${pCount} Project${pCount === 1 ? "" : "s"}`
+                : "",
+            ]
+              .filter(Boolean)
+              .join(" · ");
+            return (
+              <FoldGadget title={`Filed · ${filedSummary}`}>
+                <div className="desk-pullout-filed">
+                  {zones.length > 0 && (
+                    <div className="desk-pullout-filed-axis">
+                      <span className="surface-eyebrow">Zone</span>
+                      <div className="desk-pullout-lineage">
+                        {zones.map((z) => {
+                          const members =
+                            ((z as any).memberIds as string[]) || [];
+                          const inZone =
+                            members.includes(o.id) ||
+                            members.includes(resourceRef);
+                          return (
+                            <button
+                              key={String(z.id)}
+                              type="button"
+                              className={`desk-chip quiet${inZone ? " in-zone" : ""}`}
+                              aria-pressed={inZone}
+                              onClick={() =>
+                                void (inZone
+                                  ? removeFromDir(o.id, String(z.id), o.kind)
+                                  : fileIntoDir(o.id, String(z.id), o.kind))
+                              }
+                            >
+                              {inZone ? "✓ " : "+ "}
+                              {String(z.name || z.id)}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                  {knowledgeHomes.length > 0 && (
+                    <div className="desk-pullout-filed-axis">
+                      <span className="surface-eyebrow">Knowledge</span>
+                      <div className="desk-pullout-lineage">
+                        {knowledgeHomes.map((knowledge) => {
+                            const active = (relationships.knowledge || []).some(
+                              (row: any) => row.knowledge_id === knowledge.id,
+                            );
+                            return (
+                              <button
+                                key={knowledge.id}
+                                type="button"
+                                className={`desk-chip quiet${active ? " in-zone" : ""}`}
+                                aria-pressed={active}
+                                onClick={() =>
+                                  void toggleRelationship(
+                                    "knowledge",
+                                    knowledge.id,
+                                    active,
+                                  )
+                                }
+                              >
+                                {active ? "✓ " : "+ "}
+                                {knowledge.name}
+                              </button>
+                            );
+                          })}
+                      </div>
+                    </div>
+                  )}
+                  {projectChoices.length > 0 && (
+                    <div className="desk-pullout-filed-axis">
+                      <span className="surface-eyebrow">Projects</span>
+                      <div className="desk-pullout-lineage">
+                        {projectChoices.map((project) => {
+                          const active = (relationships.projects || []).some(
+                            (row: any) => row.project_id === project.id,
+                          );
+                          return (
+                            <span
+                              className="desk-project-choice"
+                              key={project.id}
+                            >
+                              <button
+                                type="button"
+                                className={`desk-chip quiet${active ? " in-zone" : ""}`}
+                                aria-label={`${active ? "Remove from" : "Assign to"} ${project.name} Project`}
+                                aria-pressed={active}
+                                onClick={() =>
+                                  void toggleRelationship(
+                                    "projects",
+                                    project.id,
+                                    active,
+                                  )
+                                }
+                              >
+                                {active ? "✓ " : "+ "}
+                                {project.name}
+                              </button>
+                              <button
+                                type="button"
+                                className="desk-chip quiet"
+                                aria-label={`Inspect ${project.name} Project`}
+                                onClick={() =>
+                                  openToolInspector(
+                                    "project",
+                                    String(project.id),
+                                  )
+                                }
+                              >
+                                Inspect
+                              </button>
+                            </span>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                  {!zones.length &&
+                    !knowledgeChoices.length &&
+                    !projectChoices.length && (
+                      <span className="quiet">
+                        Nothing to file into yet — Zones, Knowledge, and
+                        Projects appear here once they exist.
+                      </span>
+                    )}
+                </div>
+              </FoldGadget>
+            );
+          })()}
+        {relationshipError && (
+          <p className="desk-run-warning" role="alert">
+            {relationshipError}
+          </p>
+        )}
       </div>
 
-      <DeskWindowFooter>
+      <footer className="desk-pullout-foot">
         {FILABLE.has(o.kind) && !editingBody && (
           <button
             type="button"
             className="desk-chip quiet"
-            onClick={() => openSurfaceOr("dictate", "/dictation", resourceRef)}
+            onClick={() =>
+              openSurfaceOr("dictate", "/dictation", resourceRef)
+            }
           >
             Dictate about this
           </button>
@@ -802,13 +1104,24 @@ export function Pullout({
             Record follow-up
           </button>
         )}
-        {o.kind === "note" ? (
+        {o.kind === "decision" ? (
+          editingDecision ? (
+            <>
+              <button type="button" className="desk-chip quiet" onClick={() => setEditingDecision(false)}>Cancel</button>
+              <button type="button" className="desk-chip is-primary" onClick={commitDecisionEdit}>Done</button>
+            </>
+          ) : (
+            <button type="button" className="desk-chip is-primary" onClick={startDecisionEdit}>Edit</button>
+          )
+        ) : o.kind === "note" ? (
           editingBody ? (
             <>
               <MicButton
                 label="Hold to fill"
                 draftScope={`card-edit:${o.id}`}
-                onText={(text) => bodyEditorRef.current?.insertAtCursor(text)}
+                onText={(t) =>
+                  setBodyDraft((current) => (current ? `${current} ${t}` : t))
+                }
               />
               <button
                 type="button"
@@ -845,7 +1158,7 @@ export function Pullout({
             </button>
           )
         )}
-      </DeskWindowFooter>
+      </footer>
     </DeskWindowFrame>
   );
 }

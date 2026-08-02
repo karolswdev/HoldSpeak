@@ -107,6 +107,16 @@ export const VERBS: Verb[] = [
     run: () => void useDesk.getState().createPrimitive("note"),
   },
   {
+    id: "desk.new-decision",
+    label: "New Decision",
+    menu: "desk",
+    scope: "floor",
+    group: "new",
+    keywords: ["create", "adr", "architecture"],
+    ghost: never,
+    run: () => void useDesk.getState().createPrimitive("decision"),
+  },
+  {
     id: "desk.new-knowledge",
     label: "New Knowledge",
     menu: "desk",

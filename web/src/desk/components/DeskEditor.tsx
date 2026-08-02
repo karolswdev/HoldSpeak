@@ -24,6 +24,8 @@ interface DeskEditorProps {
   minHeight?: string;
   ariaLabel?: string;
   onModEnter?: () => void;
+  onViewChange?: (view: EditorView) => void;
+  onAIBarToggle?: () => void;
 }
 
 export const DeskEditor = forwardRef<DeskEditorHandle, DeskEditorProps>(
@@ -38,6 +40,8 @@ export const DeskEditor = forwardRef<DeskEditorHandle, DeskEditorProps>(
       minHeight = "120px",
       ariaLabel,
       onModEnter,
+      onViewChange,
+      onAIBarToggle,
     },
     forwardedRef,
   ) {
@@ -46,10 +50,12 @@ export const DeskEditor = forwardRef<DeskEditorHandle, DeskEditorProps>(
     const onChangeRef = useRef(onChange);
     const onEscapeRef = useRef(onEscape);
     const onModEnterRef = useRef(onModEnter);
+    const onAIBarToggleRef = useRef(onAIBarToggle);
 
     onChangeRef.current = onChange;
     onEscapeRef.current = onEscape;
     onModEnterRef.current = onModEnter;
+    onAIBarToggleRef.current = onAIBarToggle;
 
     useImperativeHandle(forwardedRef, () => ({
       insertAtCursor(text) {
@@ -92,6 +98,13 @@ export const DeskEditor = forwardRef<DeskEditorHandle, DeskEditorProps>(
                   return true;
                 },
               },
+              {
+                key: "Mod-j",
+                run() {
+                  onAIBarToggleRef.current?.();
+                  return true;
+                },
+              },
               indentWithTab,
               ...defaultKeymap,
               ...historyKeymap,
@@ -115,6 +128,7 @@ export const DeskEditor = forwardRef<DeskEditorHandle, DeskEditorProps>(
         parent: host.current,
       });
       viewRef.current = view;
+      onViewChange?.(view);
       if (autoFocus) view.focus();
 
       return () => {

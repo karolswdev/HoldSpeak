@@ -62,9 +62,13 @@ def build_decisions_router(ctx: WebContext) -> APIRouter:
         limit: int = 200,
         offset: int = 0,
     ) -> Any:
-        denied = _authority_refusal(request, PrincipalRight.READ)
-        if denied is not None:
-            return denied
+        # Authored Desk ADRs use the Desk primitive policy; the legacy
+        # meeting-memory projection keeps its established read authority.
+        is_desk_read = not any((project_id, project_key, meeting_id, lifecycle))
+        if not is_desk_read:
+            denied = _authority_refusal(request, PrincipalRight.READ)
+            if denied is not None:
+                return denied
         if project_id and project_key and project_id != project_key:
             return JSONResponse(
                 {"error": "project_id and project_key must name the same project"},
@@ -73,7 +77,14 @@ def build_decisions_router(ctx: WebContext) -> APIRouter:
         try:
             from ...db import get_database
 
-            rows = get_database().decisions.list(
+            db = get_database()
+            # HS-113-08: unqualified Desk reads address authored ADRs. The
+            # established Project Memory API always supplies a query/filter and
+            # remains a read-only view of meeting-derived decision memory.
+            if not any((project_key, project_id, meeting_id, lifecycle)):
+                rows = db.desk_decisions.list(limit=limit)
+                return JSONResponse({"decisions": [row.to_dict() for row in rows]})
+            rows = db.decisions.list(
                 project_key=project_key or project_id,
                 meeting_id=meeting_id,
                 lifecycle=lifecycle,
@@ -95,12 +106,16 @@ def build_decisions_router(ctx: WebContext) -> APIRouter:
 
     @router.get("/{decision_id}")
     async def get_decision(decision_id: str, request: Request) -> Any:
+        from ...db import get_database
+
+        db = get_database()
+        desk_decision = db.desk_decisions.get(decision_id)
+        if desk_decision is not None:
+            return JSONResponse({"decision": desk_decision.to_dict()})
         denied = _authority_refusal(request, PrincipalRight.READ)
         if denied is not None:
             return denied
-        from ...db import get_database
-
-        result = get_database().decisions.get_with_lineage(decision_id)
+        result = db.decisions.get_with_lineage(decision_id)
         if result is None:
             return JSONResponse({"error": "decision_not_found"}, status_code=404)
         return JSONResponse(result)
@@ -196,6 +211,14 @@ def build_decisions_router(ctx: WebContext) -> APIRouter:
         request: Request,
         payload: dict[str, Any] = Body(default={}),
     ) -> Any:
+        from ...db import get_database
+
+        desk_decision = get_database().desk_decisions.get(decision_id)
+        if desk_decision is not None:
+            successor = get_database().desk_decisions.supersede(
+                decision_id, "decision_" + uuid.uuid4().hex[:12]
+            )
+            return JSONResponse({"decision": successor.to_dict()}, status_code=201)
         return _transition_response(
             decision_id,
             request,

@@ -28,6 +28,7 @@ from .relationships import qualified_ref
 from .models import (
     RecipeRecord,
     ChainRecord,
+    DecisionRecord,
     DirectoryMembershipRecord,
     DirectoryRecord,
     KBRecord,
@@ -151,6 +152,139 @@ class NoteRepository(BaseRepository):
             created_at=row["created_at"],
             updated_at=row["updated_at"],
             last_modified=row["last_modified"],
+            deleted=bool(row["deleted"]),
+        )
+
+
+class DeskDecisionRepository(BaseRepository):
+    """CRUD access for Desk-authored Architecture Decision Records."""
+
+    VALID_STATUSES = frozenset({"proposed", "accepted", "superseded", "deprecated"})
+
+    def upsert(
+        self,
+        *,
+        decision_id: str,
+        title: str = "",
+        status: str = "proposed",
+        deciders: Optional[list[str]] = None,
+        decided_at: Optional[str] = None,
+        context_markdown: str = "",
+        decision_markdown: str = "",
+        alternatives: Optional[list[dict[str, str]]] = None,
+        consequences_markdown: str = "",
+        superseded_by: Optional[str] = None,
+        tags: Optional[list[str]] = None,
+        created_at: Optional[str] = None,
+    ) -> DecisionRecord:
+        clean_id = str(decision_id or "").strip()
+        clean_status = str(status or "proposed").strip().lower()
+        if not clean_id:
+            raise ValueError("decision id is required")
+        if clean_status not in self.VALID_STATUSES:
+            raise ValueError(f"invalid decision status: {clean_status}")
+        now = _now_iso()
+        normalized_alternatives = [
+            {"name": str(item.get("name") or ""), "reason": str(item.get("reason") or "")}
+            for item in (alternatives or [])
+            if isinstance(item, dict)
+        ]
+        with self._connection() as conn:
+            existing = conn.execute(
+                "SELECT created_at FROM desk_decisions WHERE id = ?", (clean_id,)
+            ).fetchone()
+            created = created_at or (existing["created_at"] if existing else now)
+            conn.execute(
+                """
+                INSERT INTO desk_decisions (
+                    id, title, status, deciders_json, decided_at, context_markdown,
+                    decision_markdown, alternatives_json, consequences_markdown,
+                    superseded_by, tags_json, created_at, updated_at, deleted
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)
+                ON CONFLICT(id) DO UPDATE SET
+                    title=excluded.title, status=excluded.status,
+                    deciders_json=excluded.deciders_json, decided_at=excluded.decided_at,
+                    context_markdown=excluded.context_markdown,
+                    decision_markdown=excluded.decision_markdown,
+                    alternatives_json=excluded.alternatives_json,
+                    consequences_markdown=excluded.consequences_markdown,
+                    superseded_by=excluded.superseded_by, tags_json=excluded.tags_json,
+                    updated_at=excluded.updated_at, deleted=0
+                """,
+                (
+                    clean_id, str(title or ""), clean_status,
+                    self._json_dumps(deciders or [], fallback="[]"), decided_at,
+                    str(context_markdown or ""), str(decision_markdown or ""),
+                    self._json_dumps(normalized_alternatives, fallback="[]"),
+                    str(consequences_markdown or ""),
+                    str(superseded_by).strip() if superseded_by else None,
+                    self._json_dumps(tags or [], fallback="[]"), created, now,
+                ),
+            )
+        return self.get(clean_id, include_deleted=True)  # type: ignore[return-value]
+
+    def get(self, decision_id: str, *, include_deleted: bool = False) -> Optional[DecisionRecord]:
+        with self._connection() as conn:
+            row = conn.execute(
+                "SELECT * FROM desk_decisions WHERE id = ?", (str(decision_id or "").strip(),)
+            ).fetchone()
+        if not row or (row["deleted"] and not include_deleted):
+            return None
+        return self._row(row)
+
+    def list(self, *, include_deleted: bool = False, limit: int = 500) -> list[DecisionRecord]:
+        with self._connection() as conn:
+            sql = "SELECT * FROM desk_decisions" + ("" if include_deleted else " WHERE deleted = 0")
+            rows = conn.execute(sql + " ORDER BY updated_at DESC LIMIT ?", (max(1, min(int(limit), 2000)),)).fetchall()
+        return [self._row(row) for row in rows]
+
+    def update(self, decision_id: str, **patch: Any) -> Optional[DecisionRecord]:
+        current = self.get(decision_id)
+        if current is None:
+            return None
+        values = current.to_dict()
+        values.update({key: value for key, value in patch.items() if value is not None})
+        return self.upsert(
+            decision_id=current.id, title=values["title"], status=values["status"],
+            deciders=values["deciders"], decided_at=values["decided_at"],
+            context_markdown=values["context_markdown"], decision_markdown=values["decision_markdown"],
+            alternatives=values["alternatives"], consequences_markdown=values["consequences_markdown"],
+            superseded_by=values["superseded_by"], tags=values["tags"], created_at=current.created_at,
+        )
+
+    def delete(self, decision_id: str) -> bool:
+        now = _now_iso()
+        with self._connection() as conn:
+            result = conn.execute(
+                "UPDATE desk_decisions SET deleted=1, updated_at=? WHERE id=? AND deleted=0",
+                (now, str(decision_id or "").strip()),
+            )
+            return bool(result.rowcount)
+
+    def supersede(self, decision_id: str, replacement_id: str) -> Optional[DecisionRecord]:
+        current = self.get(decision_id)
+        if current is None:
+            return None
+        successor = self.upsert(
+            decision_id=replacement_id, title=f"Superseding {current.title}",
+            status="proposed", deciders=current.deciders, context_markdown=current.context_markdown,
+            decision_markdown=current.decision_markdown,
+            alternatives=current.to_dict()["alternatives"],
+            consequences_markdown=current.consequences_markdown, tags=current.tags,
+        )
+        self.update(current.id, status="superseded", superseded_by=successor.id)
+        return successor
+
+    def _row(self, row: Any) -> DecisionRecord:
+        return DecisionRecord(
+            id=str(row["id"]), title=str(row["title"]), status=str(row["status"]),
+            deciders=self._json_loads_list(row["deciders_json"]), decided_at=row["decided_at"],
+            context_markdown=str(row["context_markdown"]),
+            decision_markdown=str(row["decision_markdown"]),
+            alternatives_json=str(row["alternatives_json"]),
+            consequences_markdown=str(row["consequences_markdown"]),
+            superseded_by=row["superseded_by"], tags=self._json_loads_list(row["tags_json"]),
+            created_at=str(row["created_at"]), updated_at=str(row["updated_at"]),
             deleted=bool(row["deleted"]),
         )
 
