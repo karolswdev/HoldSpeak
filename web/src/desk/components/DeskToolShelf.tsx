@@ -1,3 +1,14 @@
+// HS-111-07 - the ⌘K command deck (owner P0). The old shelf could not
+// run ANYTHING on Enter and fed from its own parallel lists; the deck
+// keeps a SELECTION INDEX (not DOM focus), Enter always runs the
+// selected hit (the top hit by default), ranking is prefix(3) >
+// recents(2) > substring(1), and rows are 26px mono ledger lines in
+// sections VERBS / PROGRAMS / OBJECTS / SETTINGS / MEETINGS - fed from
+// the ONE verb registry plus the same stores every face reads.
+// Deferred riders (named, not built): Settings deep-pane search plugs
+// in as more SETTINGS rows once settingsPrefs exports its module
+// index; meeting CONTENT search plugs in as more MEETINGS rows via the
+// History program's existing query. Both ride this same ranking.
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { openSurface } from "../shell";
@@ -10,116 +21,81 @@ import {
   contextualIntegrationActions,
 } from "../contextual";
 import { useDesk } from "../store";
+import { usePalette } from "../chromeState";
 import { allObjects } from "../world";
+import { DESK_TOOLS, KIND_LABEL } from "../tools";
+import { VERBS, verbLabel, type VerbContext } from "../verbRegistry";
 import { useLaunchers } from "./DeskWindow";
 
-export const DESK_TOOLS = [
-  // HS-100-11 — the search palette reaches the four applications too.
-  {
-    href: "/dictation",
-    label: "Speak",
-    description: "Voice typing: speak, see it land, teach it.",
-    glyph: "⌁",
-    action: "dictate",
-    subjectRef: undefined,
-  },
-  {
-    href: "/history",
-    label: "Meetings",
-    description: "Outcomes, recordings, and the typed record.",
-    glyph: "▣",
-    action: "review-meetings",
-    subjectRef: undefined,
-  },
-  {
-    href: "/settings",
-    label: "Settings",
-    description: "Every boundary, stated once.",
-    glyph: "⚙",
-    action: "configure-settings",
-    subjectRef: undefined,
-  },
-  {
-    href: "/workbench",
-    label: "Workflow editor",
-    description: "Build and edit Workflows.",
-    glyph: "◇",
-    action: "build-workflow",
-    subjectRef: undefined,
-  },
-  {
-    href: "/companion",
-    label: "Agents and coder sessions",
-    description: "Use saved behavior and inspect live sessions.",
-    glyph: "◉",
-    action: "inspect-personas-and-coders",
-    subjectRef: undefined,
-  },
-  {
-    href: "/profiles",
-    label: "Runs on",
-    description: "Configure model and runtime destinations.",
-    glyph: "▣",
-    action: "configure-runs-on",
-    subjectRef: undefined,
-  },
-  {
-    href: "/settings",
-    label: "Integrations",
-    description: "Configure connected destinations and credentials.",
-    glyph: "↗",
-    action: "configure-integrations",
-    subjectRef: "integration:destinations",
-  },
-  {
-    href: "/commands",
-    label: "Commands",
-    description: "Map spoken phrases to registered actions.",
-    glyph: "⌘",
-    action: "configure-commands",
-    subjectRef: undefined,
-  },
-  {
-    href: "/cadence",
-    label: "Cadence",
-    description: "Configure scheduled background work.",
-    glyph: "◷",
-    action: "configure-cadence",
-    subjectRef: undefined,
-  },
-  {
-    href: "/activity",
-    label: "Activity",
-    description: "Inspect work context and source records.",
-    glyph: "≋",
-    action: "inspect-activity",
-    subjectRef: undefined,
-  },
-  {
-    href: "/#processes",
-    label: "Processes",
-    description: "See what the kernel is running.",
-    glyph: "∷",
-    action: "inspect-processes",
-    subjectRef: undefined,
-  },
-] as const;
+// Re-exported so existing imports keep one source (the data moved to
+// desk/tools.ts so the registry never imports a component).
+export { DESK_TOOLS, KIND_LABEL };
 
-export const KIND_LABEL: Record<string, string> = {
-  artifact: "Artifact",
-  chain: "Workflow",
-  coder: "Coder session",
-  kb: "Knowledge",
-  meeting: "Meeting",
-  note: "Note",
-  project: "Project",
-  recipe: "Agent",
-  workflow: "Workflow",
-};
+const SECTIONS = [
+  "VERBS",
+  "PROGRAMS",
+  "OBJECTS",
+  "SETTINGS",
+  "MEETINGS",
+] as const;
+type Section = (typeof SECTIONS)[number];
+
+interface DeckRow {
+  id: string;
+  section: Section;
+  glyph: string;
+  label: string;
+  /** The mono kind token on the right of the label. */
+  kind: string;
+  keycap?: string;
+  /** A ghosted verb stays visible with its reason and cannot run. */
+  ghost?: string | null;
+  /** Extra match terms beyond the label. */
+  terms?: string;
+  run(): void;
+}
+
+/* ── recents (localStorage, last 20 run ids) ── */
+const RECENTS_KEY = "hs.desk.palette-recents";
+
+function readRecents(): string[] {
+  try {
+    const raw = JSON.parse(localStorage.getItem(RECENTS_KEY) || "[]");
+    return Array.isArray(raw) ? raw.filter((x) => typeof x === "string") : [];
+  } catch {
+    return [];
+  }
+}
+
+function recordRecent(id: string): void {
+  const next = [id, ...readRecents().filter((x) => x !== id)].slice(0, 20);
+  try {
+    localStorage.setItem(RECENTS_KEY, JSON.stringify(next));
+  } catch {
+    /* storage full or denied: recents just stay cold */
+  }
+}
+
+/** prefix(3) > recent(2) > substring(1); 0 = no match. */
+export function rankRow(
+  row: { label: string; terms?: string },
+  query: string,
+  recent: boolean,
+  recentBoostsEmpty = false,
+): number {
+  if (!query) return recent && recentBoostsEmpty ? 2 : 1;
+  const label = row.label.toLocaleLowerCase();
+  if (label.startsWith(query)) return 3 + (recent ? 2 : 0);
+  if (recent && (label.includes(query) || row.terms?.includes(query)))
+    return 2;
+  if (label.includes(query) || row.terms?.includes(query)) return 1;
+  return 0;
+}
 
 export function DeskToolShelf() {
-  const [open, setOpen] = useState(false);
+  const open = usePalette((s) => s.open);
   const [query, setQuery] = useState("");
+  const [sel, setSel] = useState(0);
   const rootRef = useRef<HTMLElement | null>(null);
   const launchRef = useRef<HTMLButtonElement | null>(null);
   const searchRef = useRef<HTMLInputElement | null>(null);
@@ -134,16 +110,18 @@ export function DeskToolShelf() {
   const openToolInspector = useDesk((state) => state.openToolInspector);
   const diveInto = useDesk((state) => state.diveInto);
   const integrations = setup?.trust?.destinations ?? [];
+  const launchers = useLaunchers();
 
   useEffect(() => {
+    // ⌘K itself lives in desk/keymap.ts (the one binder); the deck
+    // keeps only its own Escape ladder: query first, then the panel.
+    if (!open) return;
     const onKeyDown = (event: KeyboardEvent) => {
-      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
-        event.preventDefault();
-        setOpen((value) => !value);
-        return;
-      }
-      if (event.key === "Escape" && open) {
-        setOpen(false);
+      if (event.key !== "Escape") return;
+      event.preventDefault();
+      if (searchRef.current?.value) setQuery("");
+      else {
+        usePalette.getState().setOpen(false);
         launchRef.current?.focus();
       }
     };
@@ -153,7 +131,15 @@ export function DeskToolShelf() {
 
   useEffect(() => {
     if (open) searchRef.current?.focus();
+    setQuery("");
+    setSel(0);
   }, [open]);
+
+  // The deck's open state is shared chrome state (the keymap toggles
+  // it); an unmounting shelf never leaves it stranded open.
+  useEffect(() => () => usePalette.getState().setOpen(false), []);
+
+  useEffect(() => setSel(0), [query]);
 
   useEffect(() => {
     if (!open) return;
@@ -163,7 +149,7 @@ export function DeskToolShelf() {
         !rootRef.current?.contains(target) &&
         !launchRef.current?.contains(target)
       ) {
-        setOpen(false);
+        usePalette.getState().setOpen(false);
       }
     };
     document.addEventListener("pointerdown", onPointerDown);
@@ -171,118 +157,249 @@ export function DeskToolShelf() {
   }, [open]);
 
   const normalized = query.trim().toLocaleLowerCase();
-  const launchers = useLaunchers();
-  const matchingDrawers = launchers.filter(
-    (l) =>
-      l.id !== "attention" &&
-      l.label.toLowerCase().includes(query.trim().toLowerCase()),
-  );
-  const matchingTools = DESK_TOOLS.filter((tool) =>
-    `${tool.label} ${tool.description}`
-      .toLocaleLowerCase()
-      .includes(normalized),
-  );
-  const objectMatches = useMemo(() => {
-    if (!normalized) return [];
-    return allObjects(items)
-      .filter((item) =>
-        `${item.title} ${KIND_LABEL[item.kind] ?? item.kind}`
-          .toLocaleLowerCase()
-          .includes(normalized),
-      )
-      .slice(0, 8);
-  }, [items, normalized]);
-  const zoneMatches = useMemo(() => {
-    if (!normalized) return [];
-    return items.directory
-      .filter((zone) =>
-        `${String(zone.name ?? zone.title ?? "Zone")} Zone`
-          .toLocaleLowerCase()
-          .includes(normalized),
-      )
-      .slice(0, 8);
-  }, [items.directory, normalized]);
-  const projectMatches = useMemo(
-    () =>
-      projects
-        .filter((project) =>
-          `${project.name} ${project.description} Project`
-            .toLocaleLowerCase()
-            .includes(normalized),
-        )
-        .slice(0, normalized ? 8 : 4),
-    [normalized, projects],
-  );
-  const integrationMatches = useMemo(
-    () =>
-      integrations
-        .filter(
-          (integration) =>
-            (normalized ? true : integration.enabled) &&
-            `${integration.name} ${integration.destination} ${integration.operation}`
-              .toLocaleLowerCase()
-              .includes(normalized),
-        )
-        .slice(0, normalized ? 8 : 4),
-    [integrations, normalized],
-  );
-  const targetMatches = useMemo(
-    () =>
-      targets
-        .filter((target) =>
-          `${target.name} ${target.kind} ${target.boundary} ${target.model}`
-            .toLocaleLowerCase()
-            .includes(normalized),
-        )
-        .slice(0, normalized ? 8 : 4),
-    [normalized, targets],
-  );
-  const modelMatches = useMemo(
-    () =>
-      models
-        .filter((model) =>
-          `${model.name} Model`.toLocaleLowerCase().includes(normalized),
-        )
-        .slice(0, normalized ? 8 : 4),
-    [models, normalized],
-  );
-  const capabilityActions = contextualCapabilityActions(items, selectedIds);
-  const integrationActions = contextualIntegrationActions(
-    integrations,
-    items,
-    selectedIds,
-  );
-  const coderActions = contextualCoderSessions(items, selectedIds);
-  const contextualCount =
-    capabilityActions.length + integrationActions.length + coderActions.length;
+  const recents = useMemo(() => readRecents(), [open]);
 
   const close = () => {
-    setOpen(false);
+    usePalette.getState().setOpen(false);
     setQuery("");
   };
 
-  // Keyboard-only navigation (HS-93-01): ArrowDown/ArrowUp move focus from
-  // the search field through every result (tool links and Desk-item
-  // buttons), the standard search-shelf pattern. Without this the shelf was
-  // Tab-only, which buried distant results behind many keystrokes.
-  const moveFocus = (event: React.KeyboardEvent<HTMLElement>) => {
-    if (event.key !== "ArrowDown" && event.key !== "ArrowUp") return;
-    const root = rootRef.current;
-    if (!root) return;
-    const focusables = Array.from(
-      root.querySelectorAll<HTMLElement>(
-        "input[type='search'], .desk-tool-list a, .desk-tool-list button",
-      ),
-    );
-    if (!focusables.length) return;
-    event.preventDefault();
-    const current = focusables.indexOf(document.activeElement as HTMLElement);
-    const next =
-      event.key === "ArrowDown"
-        ? Math.min(current + 1, focusables.length - 1)
-        : Math.max(current - 1, 0);
-    focusables[next]?.focus();
+  const ctx: VerbContext = {
+    selectedRef: selectedIds.length === 1 ? selectedIds[0] : null,
   };
+
+  const rows: DeckRow[] = useMemo(() => {
+    const out: DeckRow[] = [];
+    const push = (row: DeckRow) => out.push(row);
+
+    // ── VERBS: the registry + the contextual actions for a selection ──
+    for (const action of contextualCapabilityActions(items, selectedIds))
+      push({
+        id: `ctx.cap:${action.id}`,
+        section: "VERBS",
+        glyph: "◇",
+        label: action.label,
+        kind: "AGENT",
+        run: () => openPullout(qualifiedRef(action.kind, action.id)),
+      });
+    for (const action of contextualIntegrationActions(
+      integrations,
+      items,
+      selectedIds,
+    ))
+      push({
+        id: `ctx.int:${action.id}`,
+        section: "VERBS",
+        glyph: "↗",
+        label: action.label,
+        kind: "SEND",
+        run: () => openToolInspector("integration", action.id),
+      });
+    for (const action of contextualCoderSessions(items, selectedIds))
+      push({
+        id: `ctx.coder:${action.id}`,
+        section: "VERBS",
+        glyph: "◉",
+        label: action.label,
+        kind: "CODER",
+        run: () => openPullout(qualifiedRef("coder", action.id)),
+      });
+    for (const v of VERBS) {
+      if (v.palette === false || v.scope === "go") continue;
+      const label = verbLabel(v, ctx);
+      const ghost = v.ghost(ctx);
+      // A cold empty deck lists runnable verbs the user has actually
+      // used; a query reaches every verb (ghosted ones say why).
+      if (!normalized && !recents.includes(v.id)) continue;
+      push({
+        id: v.id,
+        section: "VERBS",
+        glyph: "▸",
+        label,
+        kind: "VERB",
+        keycap: v.key,
+        ghost,
+        terms: (v.keywords ?? []).join(" "),
+        run: () => v.run(ctx),
+      });
+    }
+
+    // ── PROGRAMS: the go.* registry face + open drawers ──
+    for (const v of VERBS) {
+      if (v.scope !== "go") continue;
+      const tool = DESK_TOOLS.find((t) => `go.${t.action}` === v.id);
+      push({
+        id: v.id,
+        section: "PROGRAMS",
+        glyph: tool?.glyph ?? "▸",
+        label: verbLabel(v, ctx),
+        kind: "PROGRAM",
+        keycap: v.key,
+        terms: tool?.description.toLocaleLowerCase(),
+        run: () => v.run(ctx),
+      });
+    }
+    for (const l of launchers) {
+      if (l.id === "attention") continue;
+      push({
+        id: `drawer:${l.id}`,
+        section: "PROGRAMS",
+        glyph: l.glyph,
+        label: l.badge ? `${l.label} · ${l.badge} waiting` : l.label,
+        kind: "DRAWER",
+        run: () => l.activate(),
+      });
+    }
+
+    // ── OBJECTS: zones + desk items (query) + projects ──
+    if (normalized) {
+      for (const zone of items.directory ?? [])
+        push({
+          id: `zone:${zone.id}`,
+          section: "OBJECTS",
+          glyph: "□",
+          label: String(zone.name ?? zone.title ?? "Zone"),
+          kind: "ZONE",
+          run: () => diveInto(String(zone.id)),
+        });
+      for (const item of allObjects(items)) {
+        const kind = (KIND_LABEL[item.kind] ?? item.kind).toUpperCase();
+        push({
+          id: `${item.kind}:${item.id}`,
+          section: item.kind === "meeting" ? "MEETINGS" : "OBJECTS",
+          glyph: item.kind === "meeting" ? "▣" : "○",
+          label: item.title,
+          kind,
+          terms: kind.toLocaleLowerCase(),
+          run: () => openPullout(qualifiedRef(item.kind, item.id)),
+        });
+      }
+    }
+    for (const project of projects)
+      push({
+        id: `project:${project.id}`,
+        section: "OBJECTS",
+        glyph: "▤",
+        label: project.name,
+        kind: "PROJECT",
+        terms: `project ${project.description}`.toLocaleLowerCase(),
+        run: () => openSurface("open-project-memory", `project:${project.id}`),
+      });
+
+    // ── SETTINGS: integrations, runtime targets, models ──
+    for (const integration of integrations) {
+      if (!normalized && !integration.enabled) continue;
+      push({
+        id: `integration:${integration.id}`,
+        section: "SETTINGS",
+        glyph: "↗",
+        label: integration.name,
+        kind: integration.enabled ? "INTEGRATION" : "NOT CONFIGURED",
+        terms:
+          `integration ${integration.destination} ${integration.operation}`.toLocaleLowerCase(),
+        run: () => openToolInspector("integration", integration.id),
+      });
+    }
+    for (const target of targets)
+      push({
+        id: `target:${target.id}`,
+        section: "SETTINGS",
+        glyph: "▣",
+        label: target.name,
+        kind: target.readiness.available ? "RUNS ON" : "UNAVAILABLE",
+        terms:
+          `${target.kind} ${target.boundary} ${target.model}`.toLocaleLowerCase(),
+        run: () => openToolInspector("target", target.id),
+      });
+    for (const model of models)
+      push({
+        id: `model:${model.name}`,
+        section: "SETTINGS",
+        glyph: "◈",
+        label: model.name,
+        kind: "MODEL",
+        terms: "model",
+        run: () => openChat(modelChatId(model.name)),
+      });
+
+    // ── rank, cut, and settle into section bands ──
+    const ranked = out
+      .map((row, i) => ({
+        row,
+        i,
+        score: rankRow(row, normalized, recents.includes(row.id), true),
+      }))
+      .filter((r) => r.score > 0);
+    const sectionRank = (s: Section) => SECTIONS.indexOf(s);
+    ranked.sort((a, b) => {
+      const sec = sectionRank(a.row.section) - sectionRank(b.row.section);
+      if (sec !== 0) return sec;
+      if (b.score !== a.score) return b.score - a.score;
+      return a.i - b.i; // stable inside the section
+    });
+    // Per-section cut: a query keeps the deck dense; the cold deck
+    // shows every PROGRAM (they are the launcher truth) and a short
+    // head of everything else.
+    const cap = (s: Section) =>
+      normalized ? 10 : s === "PROGRAMS" ? Number.POSITIVE_INFINITY : 6;
+    const byCount = new Map<Section, number>();
+    return ranked
+      .filter(({ row }) => {
+        const n = byCount.get(row.section) ?? 0;
+        if (n >= cap(row.section)) return false;
+        byCount.set(row.section, n + 1);
+        return true;
+      })
+      .map(({ row }) => row);
+  }, [
+    ctx.selectedRef,
+    diveInto,
+    integrations,
+    items,
+    launchers,
+    models,
+    normalized,
+    openChat,
+    openPullout,
+    openToolInspector,
+    projects,
+    recents,
+    selectedIds,
+    targets,
+  ]);
+
+  // The runnable list the selection index walks (ghosts stay visible
+  // but are never selected, never run).
+  const runnable = rows.filter((r) => !r.ghost);
+  const selected = runnable.length
+    ? runnable[Math.min(sel, runnable.length - 1)]
+    : null;
+
+  const runRow = (row: DeckRow) => {
+    if (row.ghost) return;
+    recordRecent(row.id);
+    close();
+    row.run();
+  };
+
+  const onDeckKeyDown = (event: React.KeyboardEvent<HTMLElement>) => {
+    if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+      event.preventDefault();
+      if (!runnable.length) return;
+      setSel((now) => {
+        const at = Math.min(now, runnable.length - 1);
+        return event.key === "ArrowDown"
+          ? Math.min(at + 1, runnable.length - 1)
+          : Math.max(at - 1, 0);
+      });
+    } else if (event.key === "Enter") {
+      // Enter ALWAYS runs the selected hit - the top hit by default.
+      event.preventDefault();
+      if (selected) runRow(selected);
+    }
+  };
+
+  let lastSection: Section | null = null;
 
   return (
     <>
@@ -293,13 +410,13 @@ export function DeskToolShelf() {
         aria-expanded={open}
         aria-controls="desk-tool-shelf"
         aria-keyshortcuts="Control+K Meta+K"
-        onClick={() => setOpen((value) => !value)}
+        onClick={() => usePalette.getState().toggle()}
       >
         <img src={SYSTEM.menuSearch} alt="" width={14} height={14} className="desk-chrome-sprite" draggable={false} /> Search <kbd>⌘K</kbd>
       </button>
-      {/* Round 9 — the shelf PORTALS to the desk root: rendered inside
+      {/* Round 9 - the deck PORTALS to the desk root: rendered inside
           the chrome bar it inherited the bar's z-30 stacking context and
-          every desk window (z 42+) covered the ⌘K results — a palette
+          every desk window (z 42+) covered the ⌘K results - a palette
           must sit above the window band, always. */}
       {open ? (
         createPortal(
@@ -309,24 +426,8 @@ export function DeskToolShelf() {
           className="desk-tool-shelf"
           role="region"
           aria-label="Tools and Desk search"
-          onKeyDown={moveFocus}
+          onKeyDown={onDeckKeyDown}
         >
-          <header className="desk-panel-head">
-            <div>
-              <h2 className="desk-panel-title" id="desk-tool-shelf-title">
-                Tools and Desk search
-              </h2>
-
-            </div>
-            <button
-              type="button"
-              className="desk-pullout-close"
-              onClick={close}
-              aria-label="Close Tools"
-            >
-              ✕
-            </button>
-          </header>
           <label className="desk-tool-search">
             <span className="sr-only">Search tools and Desk items</span>
             <input
@@ -334,271 +435,65 @@ export function DeskToolShelf() {
               type="search"
               value={query}
               placeholder="Search tools and Desk items"
+              aria-label="Search tools and Desk items"
               onChange={(event) => setQuery(event.target.value)}
             />
           </label>
-          {selectedIds.length ? (
-            <section aria-labelledby="desk-context-actions-heading">
-              <h3 id="desk-context-actions-heading">
-                For{" "}
-                {selectedIds.length === 1
-                  ? "selection"
-                  : `${selectedIds.length} selected`}
-              </h3>
-              {contextualCount ? (
-                <ul className="desk-tool-list">
-                  {capabilityActions.map((action) => (
-                    <li key={`${action.kind}:${action.id}`}>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          close();
-                          openPullout(qualifiedRef(action.kind, action.id));
-                        }}
-                      >
-                        <span aria-hidden="true">◇</span>
-                        <span>
-                          <strong>{action.label}</strong>
-                          <small>
-                            Result returns as an Artifact and Receipt
-                          </small>
-                        </span>
-                      </button>
-                    </li>
-                  ))}
-                  {integrationActions.map((action) => (
-                    <li key={`integration:${action.id}`}>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          close();
-                          openToolInspector("integration", action.id);
-                        }}
-                      >
-                        <span aria-hidden="true">↗</span>
-                        <span>
-                          <strong>{action.label}</strong>
-                          <small>Review exact effect and destination</small>
-                        </span>
-                      </button>
-                    </li>
-                  ))}
-                  {coderActions.map((action) => (
-                    <li key={`coder:${action.id}`}>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          close();
-                          openPullout(qualifiedRef("coder", action.id));
-                        }}
-                      >
-                        <span aria-hidden="true">◉</span>
-                        <span>
-                          <strong>{action.label}</strong>
-                          <small>Review selected text before sending</small>
-                        </span>
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="desk-tool-empty">
-                  No ready tool accepts this selection.
-                </p>
-              )}
-            </section>
-          ) : null}
-          {matchingDrawers.length ? (
-            <section aria-labelledby="desk-drawers-heading">
-              <h3 id="desk-drawers-heading">Drawers</h3>
-              <ul className="desk-tool-list">
-                {matchingDrawers.map((l) => (
-                  <li key={l.id}>
+          {rows.length ? (
+            <ul className="desk-deck-list">
+              {rows.map((row) => {
+                const band =
+                  row.section !== lastSection ? row.section : null;
+                lastSection = row.section;
+                const isSel = selected?.id === row.id;
+                return (
+                  <li key={row.id}>
+                    {band ? (
+                      <span className="desk-deck-band">{band}</span>
+                    ) : null}
                     <button
                       type="button"
-                      className="desk-tool-link"
-                      onClick={() => {
-                        close();
-                        l.activate();
+                      className={
+                        "desk-deck-row" +
+                        (isSel ? " is-selected" : "") +
+                        (row.ghost ? " is-ghost" : "")
+                      }
+                      aria-disabled={row.ghost ? true : undefined}
+                      aria-current={isSel || undefined}
+                      onClick={() => runRow(row)}
+                      onPointerEnter={() => {
+                        if (row.ghost) return;
+                        const at = runnable.findIndex(
+                          (r) => r.id === row.id,
+                        );
+                        if (at >= 0) setSel(at);
                       }}
                     >
-                      <span className="desk-tool-glyph" aria-hidden="true">
-                        {l.glyph}
+                      <span className="desk-deck-glyph" aria-hidden="true">
+                        {row.glyph}
                       </span>
-                      <span>
-                        <strong>{l.label}</strong>
-                        {l.badge ? ` · ${l.badge} waiting` : ""}
+                      <span className="desk-deck-label">
+                        {row.label}
+                        {row.ghost ? (
+                          <small className="quiet"> · {row.ghost}</small>
+                        ) : null}
                       </span>
+                      <span className="desk-deck-kind">{row.kind}</span>
+                      {row.keycap ? <kbd>{row.keycap}</kbd> : null}
                     </button>
                   </li>
-                ))}
-              </ul>
-            </section>
-          ) : null}
-          <section aria-labelledby="desk-tools-heading">
-            <h3 id="desk-tools-heading">Tools</h3>
-            <ul className="desk-tool-list">
-              {matchingTools.map((tool) => (
-                <li key={tool.href}>
-                  <button
-                    type="button"
-                    className="desk-tool-link"
-                    onClick={() => {
-                      close();
-                      // The shelf is a pure dispatcher (HS-95-08): every
-                      // tool is a desk surface; nothing navigates.
-                      openSurface(tool.action, tool.subjectRef);
-                    }}
-                  >
-                    <span aria-hidden="true">{tool.glyph}</span>
-                    <span>
-                      <strong>{tool.label}</strong>
-                      <small>{tool.description}</small>
-                    </span>
-                  </button>
-                </li>
-              ))}
+                );
+              })}
             </ul>
-          </section>
-          {projectMatches.length ||
-          integrationMatches.length ||
-          targetMatches.length ||
-          modelMatches.length ? (
-            <section aria-labelledby="desk-resources-heading">
-              <h3 id="desk-resources-heading">Desk resources</h3>
-              <ul className="desk-tool-list">
-                {projectMatches.map((project) => (
-                  <li key={`project:${project.id}`}>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        close();
-                        openSurface("open-project-memory", `project:${project.id}`);
-                      }}
-                    >
-                      <span aria-hidden="true">▤</span>
-                      <span>
-                        <strong>{project.name}</strong>
-                        <small>
-                          Project · {project.meeting_count} Meetings
-                        </small>
-                      </span>
-                    </button>
-                  </li>
-                ))}
-                {integrationMatches.map((integration) => (
-                  <li key={`integration:${integration.id}`}>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        close();
-                        openToolInspector("integration", integration.id);
-                      }}
-                    >
-                      <span aria-hidden="true">↗</span>
-                      <span>
-                        <strong>{integration.name}</strong>
-                        <small>
-                          Integration ·{" "}
-                          {integration.enabled
-                            ? integration.destination
-                            : "Not configured"}
-                        </small>
-                      </span>
-                    </button>
-                  </li>
-                ))}
-                {targetMatches.map((target) => (
-                  <li key={`target:${target.id}`}>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        close();
-                        openToolInspector("target", target.id);
-                      }}
-                    >
-                      <span aria-hidden="true">▣</span>
-                      <span>
-                        <strong>{target.name}</strong>
-                        <small>
-                          Runs on ·{" "}
-                          {target.readiness.available ? "Ready" : "Unavailable"}
-                        </small>
-                      </span>
-                    </button>
-                  </li>
-                ))}
-                {modelMatches.map((model) => (
-                  <li key={`model:${model.name}`}>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        close();
-                        openChat(modelChatId(model.name));
-                      }}
-                    >
-                      <span aria-hidden="true">◈</span>
-                      <span>
-                        <strong>{model.name}</strong>
-                        <small>Model · Ready</small>
-                      </span>
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </section>
-          ) : null}
-          {normalized ? (
-            <section aria-labelledby="desk-items-heading">
-              <h3 id="desk-items-heading">Desk items</h3>
-              {objectMatches.length || zoneMatches.length ? (
-                <ul className="desk-tool-list">
-                  {zoneMatches.map((zone) => (
-                    <li key={`zone:${zone.id}`}>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          close();
-                          diveInto(String(zone.id));
-                        }}
-                      >
-                        <span aria-hidden="true">□</span>
-                        <span>
-                          <strong>
-                            {String(zone.name ?? zone.title ?? "Zone")}
-                          </strong>
-                          <small>Zone</small>
-                        </span>
-                      </button>
-                    </li>
-                  ))}
-                  {objectMatches.map((item) => (
-                    <li key={`${item.kind}:${item.id}`}>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          close();
-                          openPullout(qualifiedRef(item.kind, item.id));
-                        }}
-                      >
-                        <span aria-hidden="true">○</span>
-                        <span>
-                          <strong>{item.title}</strong>
-                          <small>{KIND_LABEL[item.kind] ?? item.kind}</small>
-                        </span>
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="desk-tool-empty">
-                  No matching tools or Desk items.
-                </p>
-              )}
-            </section>
-          ) : null}
+          ) : (
+            <p className="desk-tool-empty">
+              No matching tools or Desk items.
+            </p>
+          )}
         </aside>,
-        launchRef.current?.closest(".desk-next") ?? document.body,
+        launchRef.current?.closest(".desk-next") ??
+          document.getElementById("desk-next") ??
+          document.body,
         )
       ) : null}
     </>

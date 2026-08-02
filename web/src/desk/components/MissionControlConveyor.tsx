@@ -30,6 +30,7 @@ import { isCoderFrame, useSteering } from "../steering";
 import { useProjections } from "../projections";
 import {
   ConfirmVerb,
+  SurfaceCode,
   SurfaceLedger,
   SurfaceLedgerRow,
   SurfaceWell,
@@ -317,7 +318,10 @@ function EvidencePanel() {
           </>
         }
       >
-        <pre className="desk-mc-evidence-body">{evidence.text}</pre>
+        {/* HS-111-07 — evidence wire wears the well's own code grammar. */}
+        <div className="desk-mc-evidence-body">
+          <SurfaceCode>{evidence.text}</SurfaceCode>
+        </div>
       </SurfaceWell>
     </div>
   );

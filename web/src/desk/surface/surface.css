@@ -1316,6 +1316,20 @@ button.surface-edit-in-place:hover {
   text-align: right;
 }
 
+/* HS-111-07 — the desk template (the floor's list-view face):
+   [selection mark] [title 1fr] [kind] [fact 1fr] [state]. */
+.surface-ledger-lead {
+  flex: none;
+}
+.surface-ledger[data-cols="desk"] .surface-ledger-line {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.surface-ledger[data-cols="desk"] .surface-ledger-primary {
+  flex: 1 1 auto;
+}
+
 /* An absent trailing fact still holds its column (the grid is fixed). */
 .surface-ledger-open {
   display: flex;

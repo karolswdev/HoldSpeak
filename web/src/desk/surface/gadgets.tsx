@@ -531,14 +531,42 @@ export function TransportRow({ children }: { children: ReactNode }) {
 export function EgressChip({
   label = "⌂ This device",
   title = "Transcript processing stays on this device.",
+  scope,
+  className,
+  ariaLabel,
+  onClick,
 }: {
   label?: string;
   /** HS-111-04 — an off-device reply names its honest boundary; the
    * default stays the on-device promise. */
   title?: string;
+  /** HS-111-07 — scope color variant (local = ok, mixed/cloud = accent);
+   * unset keeps the on-device tone. */
+  scope?: "local" | "mixed" | "cloud";
+  className?: string;
+  ariaLabel?: string;
+  /** HS-111-07 — the chrome badge is this SAME species with a click
+   * (the one tap into Privacy and Trust); a plain fact chip stays a span. */
+  onClick?: () => void;
 }) {
+  const cls =
+    "gadget-chip gadget-chip-egress" + (className ? ` ${className}` : "");
+  if (onClick) {
+    return (
+      <button
+        type="button"
+        className={cls}
+        data-scope={scope}
+        title={title}
+        aria-label={ariaLabel}
+        onClick={onClick}
+      >
+        {label}
+      </button>
+    );
+  }
   return (
-    <span className="gadget-chip gadget-chip-egress" title={title}>
+    <span className={cls} data-scope={scope} title={title}>
       {label}
     </span>
   );

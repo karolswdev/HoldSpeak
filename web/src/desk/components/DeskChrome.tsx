@@ -1,23 +1,30 @@
 // The Desk's floating system chrome. The room menu stays compact; the opposite
 // cluster exposes the three daily starts, one searchable tool shelf, layout,
 // and refresh. A fresh Desk renders the same starts centrally instead.
+// HS-111-07 — the mark menu DERIVES from the one verb registry (its
+// hardcoded verb list was parallel list #2) and rides the WorkMenu
+// portal, so it draws over windows like every chrome transient.
 import { useEffect, useState, useRef } from "react";
-import { openSurface } from "../shell";
 import { useTrustWindow } from "./TrustWindow";
-import { defaultViewFor, useDesk } from "../store";
-import { DeskMenuList } from "./DeskMenu";
+import { useDesk } from "../store";
+import { WorkMenu, type WorkMenuEntry } from "./DeskMenu";
+import { verbById, verbLabel, type VerbContext } from "../verbRegistry";
+import { useKeymap } from "../keymap";
 import { egressBadge } from "../setup";
+import { EgressChip } from "../surface/gadgets";
 import { DeskToolShelf } from "./DeskToolShelf";
 import { DeskMenuBar } from "./DeskMenuBar";
 import { useLaunchers } from "./DeskWindow";
 import { SYSTEM } from "../systemSprites";
 
-const ROOMS = [
-  { label: "Desk", action: "return-to-desk" },
-  { label: "Speak", action: "dictate" },
-  { label: "Meetings", action: "review-meetings" },
-  { label: "Agents", action: "inspect-personas-and-coders" },
-  { label: "Settings", action: "configure-settings" },
+/** The mark menu's registry rows: the floor verbs, then the four
+ * applications (the same go.* truth the Go menu and the dock speak). */
+const MARK_VERBS = ["desk.toggle-view", "desk.arrange", "desk.refresh"];
+const MARK_APPS = [
+  "go.dictate",
+  "go.review-meetings",
+  "go.inspect-personas-and-coders",
+  "go.configure-settings",
 ];
 
 /** HS-100-11 — the attention bell: the approve-queue's badge lives in
@@ -73,6 +80,8 @@ export function DeskChrome({
 }: {
   showDailyStarts?: boolean;
 }) {
+  // HS-111-07 — the ONE key binder rides the chrome (registry-driven).
+  useKeymap();
   // HS-100-11 — the daily starts live on the arrival and the dock; the
   // bar keeps system truth only.
   void showDailyStarts;
@@ -80,10 +89,14 @@ export function DeskChrome({
   const error = useDesk((s) => s.error);
   const setup = useDesk((s) => s.setup);
   const loading = useDesk((s) => s.loading);
-  const positions = useDesk((s) => s.positions);
-  const viewMode = useDesk((s) => s.viewMode);
-  const { refresh, tidyDesk, setViewMode } = useDesk.getState();
+  // Subscribed so the mark menu's derived labels/ghosts re-render live.
+  useDesk((s) => s.positions);
+  useDesk((s) => s.viewMode);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [menuAt, setMenuAt] = useState<{ x: number; y: number }>({
+    x: 0,
+    y: 0,
+  });
   const markRef = useRef<HTMLButtonElement | null>(null);
 
   const anyLive = Object.values(status).some((v) => v === "live");
@@ -106,84 +119,61 @@ export function DeskChrome({
             className="desk-mark"
             aria-expanded={menuOpen}
             aria-haspopup="menu"
-            onClick={() => setMenuOpen((v) => !v)}
+            onPointerDown={(e) => {
+              if (e.button !== 0) return;
+              if (menuOpen) setMenuOpen(false);
+              else {
+                const r = e.currentTarget.getBoundingClientRect();
+                setMenuAt({ x: r.left, y: r.bottom });
+                setMenuOpen(true);
+              }
+            }}
+            onClick={(e) => {
+              if (e.detail === 0 && !menuOpen) {
+                const r = e.currentTarget.getBoundingClientRect();
+                setMenuAt({ x: r.left, y: r.bottom });
+                setMenuOpen(true);
+              }
+            }}
             title="HoldSpeak"
           >
             <img src={SYSTEM.menuMark} alt="" width={14} height={14} className="desk-mark-glyph desk-chrome-sprite" draggable={false} />
             HoldSpeak
           </button>
-          {menuOpen && (
-            <DeskMenuList
-              className="desk-menu"
-              label="HoldSpeak"
-              anchor="below"
-              onMouseLeave={() => setMenuOpen(false)}
-              onClose={() => setMenuOpen(false)}
-              returnFocus={() => markRef.current?.focus()}
-            >
-              {[
-                {
-                  // Resolve an unset (density-defaulted) choice so the verb
-                  // always names the OTHER view (HS-105-01).
-                  label:
-                    defaultViewFor(
-                      viewMode,
-                      Object.values(useDesk.getState().items).reduce(
-                        (n, l) => n + l.length,
-                        0,
-                      ),
-                      window.innerWidth <= 720,
-                    ) === "list"
-                      ? "Spatial view"
-                      : "List view",
-                  run: () =>
-                    setViewMode(
-                      defaultViewFor(
-                        viewMode,
-                        Object.values(useDesk.getState().items).reduce(
-                          (n, l) => n + l.length,
-                          0,
-                        ),
-                        window.innerWidth <= 720,
-                      ) === "list"
-                        ? "spatial"
-                        : "list",
-                    ),
-                },
-                ...(Object.keys(positions).length > 0
-                  ? [{ label: "Arrange desk", run: tidyDesk }]
-                  : []),
-                { label: "Refresh from hub", run: () => void refresh() },
-              ].map((v) => (
-                <button
-                  key={v.label}
-                  type="button"
-                  role="menuitem"
-                  onClick={() => {
-                    setMenuOpen(false);
-                    v.run();
-                  }}
-                >
-                  {v.label}
-                </button>
-              ))}
-              {ROOMS.map((r) => (
-                <button
-                  key={r.action}
-                  type="button"
-                  role="menuitem"
-                  onClick={() => {
-                    setMenuOpen(false);
-                    // Every room is a desk surface now (HS-95-08): the
-                    // menu only dispatches; nothing navigates.
-                    if (r.action !== "return-to-desk") openSurface(r.action);
-                  }}
-                >
-                  {r.label}
-                </button>
-              ))}
-            </DeskMenuList>
-          )}
+          {menuOpen &&
+            (() => {
+              const ctx: VerbContext = { selectedRef: null };
+              const row = (id: string): WorkMenuEntry | null => {
+                const v = verbById(id);
+                return v
+                  ? {
+                      type: "item",
+                      id: v.id,
+                      label: verbLabel(v, ctx),
+                      keycap: v.key,
+                      ghost: v.ghost(ctx),
+                      onSelect: () => v.run(ctx),
+                    }
+                  : null;
+              };
+              const entries: WorkMenuEntry[] = [
+                ...MARK_VERBS.map(row),
+                { type: "sep" as const, id: "mark-sep" },
+                ...MARK_APPS.map(row),
+              ].filter((e): e is WorkMenuEntry => e !== null);
+              return (
+                <WorkMenu
+                  className="desk-menu"
+                  label="HoldSpeak"
+                  anchor="below"
+                  x={menuAt.x}
+                  y={menuAt.y}
+                  entries={entries}
+                  onClose={() => setMenuOpen(false)}
+                  returnFocus={() => markRef.current?.focus()}
+                />
+              );
+            })()}
         </div>
         <DeskMenuBar />
         <span
@@ -191,15 +181,17 @@ export function DeskChrome({
           title={hubTitle}
           aria-label={hubTitle}
         />
-        <button
-          type="button"
-          className={`egress-badge is-${badge.scope} egress-badge-button`}
+        {/* HS-111-07 — ONE badge species: the chrome badge is the same
+            EgressChip the gadget rows wear, with the trust click-through
+            (egressBadge() stays the data source). */}
+        <EgressChip
+          label={badge.text}
           title={badge.title}
-          aria-label={`Privacy and trust: ${badge.text}`}
+          scope={badge.scope}
+          className={`egress-badge is-${badge.scope} egress-badge-button`}
+          ariaLabel={`Privacy and trust: ${badge.text}`}
           onClick={() => useTrustWindow.getState().setOpen(true)}
-        >
-          {badge.text}
-        </button>
+        />
       </div>
 
       <div className="desk-chrome desk-chrome-tr">

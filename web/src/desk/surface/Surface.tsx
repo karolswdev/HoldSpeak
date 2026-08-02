@@ -606,20 +606,35 @@ export function SurfaceLedger({
 
 export function SurfaceLedgerRow({
   time,
+  lead,
   primary,
   cells,
   open,
   onToggle,
+  onLineKeyDown,
+  onLineContextMenu,
+  lineLabel,
+  expands = true,
   children,
 }: {
   /** The fixed leading time token (HH:MM). */
   time?: ReactNode;
+  /** HS-111-07 — an alternate leading token (the desk face's [x]
+   * selection mark); rides the time slot's geometry. */
+  lead?: ReactNode;
   /** The one-line mono material (ellipsized, never wrapped). */
   primary: ReactNode;
   /** Trailing fact cells (destination, ms, taught chip). */
   cells?: ReactNode;
   open?: boolean;
   onToggle?: () => void;
+  /** HS-111-07 — row keyboard verbs (Space = Ask-context on the desk
+   * face); the caller owns the grammar. */
+  onLineKeyDown?: (e: React.KeyboardEvent<HTMLButtonElement>) => void;
+  onLineContextMenu?: (e: React.MouseEvent<HTMLButtonElement>) => void;
+  lineLabel?: string;
+  /** false = the row is a plain verb line (no aria-expanded claim). */
+  expands?: boolean;
   /** The in-place expansion rendered while open. */
   children?: ReactNode;
 }) {
@@ -628,11 +643,17 @@ export function SurfaceLedgerRow({
       <button
         type="button"
         className="surface-ledger-line"
-        aria-expanded={open || false}
+        aria-expanded={expands ? open || false : undefined}
+        aria-label={lineLabel}
         onClick={onToggle}
+        onKeyDown={onLineKeyDown}
+        onContextMenu={onLineContextMenu}
       >
         {time != null ? (
           <span className="surface-ledger-time">{time}</span>
+        ) : null}
+        {lead != null ? (
+          <span className="surface-ledger-lead">{lead}</span>
         ) : null}
         <span className="surface-ledger-primary">{primary}</span>
         {cells}

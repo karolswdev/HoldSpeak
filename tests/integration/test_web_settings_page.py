@@ -56,9 +56,13 @@ def test_no_interim_settings_drawer_in_live_source() -> None:
 
 def test_desk_menu_opens_settings_in_world() -> None:
     """HS-95-08: the flat top-nav is gone; the desk menu dispatches the
-    Settings window and the deep link demotes to the same surface."""
+    Settings window and the deep link demotes to the same surface.
+    HS-111-07: the mark menu derives the verb from the ONE registry
+    (go.configure-settings) instead of a hardcoded room list."""
     chrome = (_REPO / "web" / "src" / "desk" / "components" / "DeskChrome.tsx").read_text()
-    assert '{ label: "Settings", action: "configure-settings" }' in chrome
+    assert '"go.configure-settings"' in chrome
+    registry = (_REPO / "web" / "src" / "desk" / "verbRegistry.ts").read_text()
+    assert '"configure-settings"' in registry
     routes = (_REPO / "web" / "src" / "routes.tsx").read_text()
     assert '"configure-settings"' in routes
 

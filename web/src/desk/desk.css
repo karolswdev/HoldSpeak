@@ -169,6 +169,71 @@
   flex: none;
   color: var(--text-muted);
 }
+/* HS-111-07: species v2 — portal panel, separator, key column, submenu */
+.desk-next .desk-work-menu {
+  z-index: var(--desk-z-popover);
+}
+.desk-next .desk-menu-sep {
+  display: block;
+  height: 1px;
+  margin: 5px 0;
+  background: var(--border);
+}
+.desk-next .desk-menu-glyph {
+  width: 16px;
+  flex: none;
+  text-align: center;
+  color: var(--text-muted);
+}
+.desk-next .desk-menu-label {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.desk-next .desk-menu-list .desk-menu-key,
+.desk-next .desk-menu-list kbd {
+  margin-left: auto;
+  padding-left: 14px;
+  border: 0;
+  background: none;
+  color: var(--text-muted);
+  font: 600 11px var(--font-mono);
+  letter-spacing: 0.04em;
+}
+.desk-next .desk-menu-list button:hover kbd,
+.desk-next .desk-menu-list button:focus-visible kbd,
+.desk-next .desk-menu-list button:hover .desk-menu-glyph,
+.desk-next .desk-menu-list button:focus-visible .desk-menu-glyph {
+  color: var(--text-on-accent);
+}
+.desk-next .desk-menu-submark {
+  width: 12px;
+  flex: none;
+  margin-left: auto;
+  text-align: right;
+  color: var(--text-muted);
+}
+.desk-next .desk-menu-list button.is-subopen {
+  background: var(--accent);
+  color: var(--text-on-accent);
+}
+.desk-next .desk-menu-list button.is-subopen .desk-menu-submark {
+  color: var(--text-on-accent);
+}
+.desk-next .desk-menu-list .is-ghost {
+  color: var(--text-faint);
+  cursor: default;
+}
+.desk-next .desk-menu-list .is-ghost:hover,
+.desk-next .desk-menu-list .is-ghost:focus-visible {
+  background: var(--surface-2);
+  color: var(--text-faint);
+}
+.desk-next .desk-work-submenu {
+  min-width: 168px;
+}
 /* HS-111-07: menu flush to bar, no gap */
 .desk-next .desk-menu {
   position: absolute;
@@ -272,43 +337,12 @@
 .desk-next .desk-create {
   position: relative;
 }
+/* HS-111-07: the Create menu is the ONE menu species now (28px mono
+   rows from the registry's desk.new-* verbs; the 56px description
+   card rows and the soft glow shadow are gone). */
 .desk-next .desk-create-menu {
-  position: absolute;
-  top: calc(100% + 8px);
-  right: 0;
   z-index: var(--desk-z-popover);
-  display: grid;
-  width: min(300px, calc(100vw - 28px));
-  padding: var(--space-2);
-  border: 1px solid var(--surface-3);
-  border-radius: 2px;
-  background: var(--surface-3);
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.52);
-  backdrop-filter: none;
-}
-.desk-next .desk-create-menu button {
-  display: grid;
-  gap: 2px;
-  min-height: 56px;
-  padding: var(--space-2) var(--space-3);
-  border: 0;
-  border-radius: 2px;
-  background: transparent;
-  color: var(--text);
-  text-align: left;
-  cursor: pointer;
-}
-.desk-next .desk-create-menu button:hover,
-.desk-next .desk-create-menu button:focus-visible {
-  background: var(--accent-tint);
-  outline: 0;
-}
-.desk-next .desk-create-menu strong {
-  font-size: var(--font-size-sm);
-}
-.desk-next .desk-create-menu span {
-  color: var(--text-muted);
-  font-size: var(--font-size-xs);
+  min-width: 188px;
 }
 .desk-next .desk-tools-launch {
   min-height: 36px;
@@ -379,54 +413,84 @@
   font-family: var(--font-mono);
   font-size: 12px;
 }
-.desk-next .desk-tool-list {
-  display: grid;
-  gap: 4px;
-  margin: 0;
+/* HS-111-07: the command deck — 26px mono ledger rows in section
+   bands (VERBS / PROGRAMS / OBJECTS / SETTINGS / MEETINGS); the
+   selection is an index painted as the full-width accent band. */
+.desk-next .desk-deck-list {
+  display: block;
+  margin: 8px 0 0;
   padding: 0;
   list-style: none;
 }
-.desk-next .desk-tool-list a,
-.desk-next .desk-tool-list .desk-tool-link,
-.desk-next .desk-tool-list button {
-  display: grid;
-  width: 100%;
-  min-height: 54px;
-  grid-template-columns: 28px minmax(0, 1fr);
+.desk-next .desk-deck-band {
+  display: block;
+  margin: 8px 0 2px;
+  color: var(--text-muted);
+  font: 600 10px var(--font-mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.desk-next .desk-deck-row {
+  display: flex;
   align-items: center;
-  gap: 9px;
-  padding: 7px 9px;
+  gap: 8px;
+  width: 100%;
+  height: 26px;
+  padding: 0 8px;
   border: 0;
-  border-radius: 2px;
+  border-radius: 0;
   background: transparent;
   color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 12px;
   text-align: left;
-  text-decoration: none;
   cursor: pointer;
 }
-.desk-next .desk-tool-list a:hover,
-.desk-next .desk-tool-list .desk-tool-link:hover,
-.desk-next .desk-tool-list button:hover,
-.desk-next .desk-tool-list a:focus-visible,
-.desk-next .desk-tool-list .desk-tool-link:focus-visible,
-.desk-next .desk-tool-list button:focus-visible {
-  background: var(--accent-tint);
+.desk-next .desk-deck-glyph {
+  width: 16px;
+  flex: none;
+  text-align: center;
+  color: var(--text-muted);
+}
+.desk-next .desk-deck-label {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.desk-next .desk-deck-kind {
+  flex: none;
+  color: var(--text-faint);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+}
+.desk-next .desk-deck-row kbd {
+  flex: none;
+  border: 0;
+  padding: 0;
+  background: none;
+  color: var(--text-muted);
+  font: 600 11px var(--font-mono);
+}
+.desk-next .desk-deck-row.is-selected,
+.desk-next .desk-deck-row:hover:not(.is-ghost),
+.desk-next .desk-deck-row:focus-visible:not(.is-ghost) {
+  background: var(--accent);
+  color: var(--text-on-accent);
   outline: 0;
 }
-.desk-next .desk-tool-list a > span:first-child,
-.desk-next .desk-tool-list .desk-tool-link > span:first-child,
-.desk-next .desk-tool-list button > span:first-child {
-  color: var(--accent);
-  font-size: 18px;
-  text-align: center;
+.desk-next .desk-deck-row.is-selected .desk-deck-glyph,
+.desk-next .desk-deck-row.is-selected .desk-deck-kind,
+.desk-next .desk-deck-row.is-selected kbd,
+.desk-next .desk-deck-row:hover:not(.is-ghost) .desk-deck-glyph,
+.desk-next .desk-deck-row:hover:not(.is-ghost) .desk-deck-kind,
+.desk-next .desk-deck-row:hover:not(.is-ghost) kbd {
+  color: var(--text-on-accent);
 }
-.desk-next .desk-tool-list strong,
-.desk-next .desk-tool-list small {
-  display: block;
-}
-.desk-next .desk-tool-list small {
-  margin-top: 2px;
-  color: var(--text-muted);
+.desk-next .desk-deck-row.is-ghost {
+  color: var(--text-faint);
+  cursor: default;
 }
 .desk-next .desk-tool-empty {
   padding: 12px;
@@ -2887,50 +2951,79 @@
   }
 }
 
-/* ── HS-93-08: the semantic list mode (the same Desk, keyboard-first) ── */
+/* ── HS-93-08 / HS-111-07: the list view is the SurfaceLedger FACE of
+   the floor — an opaque ground in the stage band (never page flow over
+   the wallpaper), 26px mono rows under kind bands. Windows float above
+   it on their own material seam; chrome and dock stay above both. ── */
 .desk-next .desk-listmode {
   position: relative;
-  min-height: calc(100vh - 40px);
-  max-width: 1020px;
+  min-height: 100vh;
+  padding: 62px 0 120px;
+  background: var(--surface-1);
+}
+.desk-next .desk-list-face {
+  max-width: 1120px;
   margin: 0 auto;
-  padding: 76px 18px 120px;
+  padding: 0 18px;
 }
-.desk-next .desk-list-head {
-  display: flex;
-  align-items: baseline;
-  gap: var(--space-3);
-  flex-wrap: wrap;
+.desk-next .desk-list-face > .surface-ledger {
+  border: 1px solid var(--border);
+  background: var(--surface-2);
 }
-.desk-next .desk-list-head h2 {
-  margin: 0;
-  font: 700 var(--font-size-lg) var(--font-display);
+.desk-next .desk-list-band {
+  display: block;
+  margin: 12px 8px 2px;
+  color: var(--text-muted);
+  font: 600 10px var(--font-mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.desk-next .desk-list-mark {
+  display: inline-block;
+  min-width: 26px;
+  color: var(--text-faint);
+  font: 600 11px var(--font-mono);
+}
+.desk-next .desk-list-mark[data-selected] {
+  color: var(--accent);
+}
+.desk-next .desk-list-state {
+  color: var(--accent);
+}
+.desk-next .desk-list-face .surface-ledger-line {
+  height: 26px;
+}
+.desk-next .desk-list-face .surface-ledger-cell {
+  flex: none;
+  min-width: 96px;
+  color: var(--text-muted);
+  font-size: 10px;
+  letter-spacing: 0.05em;
+}
+.desk-next .desk-list-face .desk-surface {
+  margin-right: 10px;
+  color: var(--accent);
+  font: inherit;
 }
 .desk-next .desk-list-status {
   margin: 0;
   color: var(--text-muted);
-  font-size: var(--font-size-sm);
+  font: 600 10px var(--font-mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
 }
 .desk-next .desk-list-status:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 3px;
   border-radius: 2px;
 }
-.desk-next .desk-list-zones ul {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
-  margin: var(--space-3) 0 0;
-  padding: 0;
-  list-style: none;
-}
-.desk-next .desk-list-zones .desk-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-}
-.desk-next .desk-list-zones .desk-chip small {
-  color: var(--text-muted);
-  font-size: var(--font-size-xs);
+@media (max-width: 720px) {
+  .desk-next .desk-list-face .surface-ledger-cell {
+    min-width: 0;
+  }
+  .desk-next .desk-list-face .surface-ledger-cell:nth-of-type(2) {
+    display: none;
+  }
 }
 .desk-next .desk-list-scroll {
   margin-top: var(--space-3);
@@ -2956,11 +3049,6 @@
 }
 .desk-next .desk-list-table tbody th {
   font-weight: 600;
-}
-.desk-next .desk-list-select input {
-  width: 16px;
-  height: 16px;
-  accent-color: var(--accent);
 }
 .desk-next .desk-list-open {
   padding: 0;
@@ -4603,7 +4691,9 @@
   overflow-wrap: anywhere;
 }
 
-/* HS-101 B8 — the shortcut sheet: drawn, on the transient material. */
+/* HS-101 B8 / HS-111-07 — the shortcut sheet: an opaque Workbench
+   panel (the Phase-101 glass — blur, transient radius, ease-back pop —
+   is gone), rows DERIVED from the registry's key fields. */
 .desk-shortcut-sheet {
   position: fixed;
   inset: 0;
@@ -4620,38 +4710,36 @@
   width: min(620px, calc(100vw - 32px));
   padding: 18px 22px 20px;
   border: 1px solid var(--border);
-  border-radius: var(--desk-transient-radius);
-  background: var(--desk-panel-fill);
-  box-shadow: var(--desk-transient-shadow);
-  backdrop-filter: var(--desk-window-blur);
-  -webkit-backdrop-filter: var(--desk-window-blur);
-  transform-origin: center;
-  animation: desk-transient-in var(--duration-short) var(--ease-back);
+  border-radius: 2px;
+  background: var(--surface-3);
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  animation: none;
 }
 .desk-shortcut-panel h4 {
   margin: 0 0 4px;
-  font-size: var(--desk-surface-label-size);
-  font-weight: 650;
+  font: 600 10px var(--font-mono);
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--text-faint);
+  color: var(--text-muted);
 }
 .desk-shortcut-row {
   display: flex;
   align-items: center;
   gap: 10px;
   padding: 3px 0;
-  font-size: var(--desk-surface-body-size);
+  font-family: var(--font-mono);
+  font-size: 12px;
   color: var(--text-muted);
 }
 .desk-shortcut-row kbd {
   min-width: 34px;
   text-align: center;
-  font-family: var(--font-ui);
-  font-size: var(--desk-surface-detail-size);
+  font: 600 11px var(--font-mono);
   color: var(--text);
-  padding: 1px 7px;
-  border-radius: var(--radius-sm);
+  padding: 2px 7px;
+  border-radius: 2px;
   background: var(--desk-window-well);
   box-shadow: inset 0 0 0 1px var(--border-subtle), inset 0 -1.5px 0 var(--shade-1);
 }
@@ -5054,10 +5142,9 @@ body:has(.desk-next .desk-pullout:not(.is-card)) .ambient-qlippy {
   background: var(--canvas-raised);
   color: var(--text);
 }
+/* HS-111-07: the dropdown PORTALS (WorkMenu species) — position is
+   inline (fixed at the title's rect); only width and layer live here. */
 .desk-verbbar-menu {
-  position: absolute;
-  left: 0;
-  top: 100%;
   min-width: 176px;
   z-index: var(--desk-z-popover);
 }

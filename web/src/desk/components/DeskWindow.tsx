@@ -20,6 +20,9 @@ import { motion, useReducedMotion } from "motion/react";
 import { useDrag } from "@use-gesture/react";
 import { DOCK_SPRITES, SYSTEM } from "../systemSprites";
 import { useDesk, type PanelRect } from "../store";
+import { useShortcutSheet } from "../chromeState";
+import { useKeymap } from "../keymap";
+import { VERBS, verbLabel } from "../verbRegistry";
 import { DeskMenuItem, DeskMenuList } from "./DeskMenu";
 // The physics constants mirror the CSS component tokens — one generated
 // source (design-tokens.json), no drift possible (HS-96-02).
@@ -699,11 +702,10 @@ export function Expose() {
   >([]);
 
   useEffect(() => {
+    // ⌃↑ itself now arrives through desk/keymap.ts (the one binder,
+    // registry verb desk.overview); the exposé keeps only its Escape.
     const onKey = (e: KeyboardEvent) => {
-      if (e.ctrlKey && e.key === "ArrowUp") {
-        e.preventDefault();
-        toggleExpose();
-      } else if (e.key === "Escape" && exposeActive) {
+      if (e.key === "Escape" && exposeActive) {
         e.preventDefault();
         toggleExpose(false);
       }
@@ -919,6 +921,51 @@ export function frontWindowId(): string | null {
   }
   const open = registrySnapshot.filter((w) => !s.panelMin.includes(w.id));
   return open.length ? open[open.length - 1].id : null;
+}
+
+/* ── HS-111-07: the window verbs the registry runs (one truth; the
+   keymap and every menu face reach them through verbRegistry). ── */
+
+/** How many windows are open right now (ghost-reason source). */
+export function openWindowCount(): number {
+  return registrySnapshot.length;
+}
+
+/** ⌘W — close the front window. */
+export function closeFrontWindow(): void {
+  const id = frontWindowId();
+  if (id) registrySnapshot.find((w) => w.id === id)?.close();
+}
+
+/** ⌘M — minimize the front window. */
+export function minimizeFrontWindow(): void {
+  const id = frontWindowId();
+  if (id) useDesk.getState().minimizePanel(id);
+}
+
+/** ⌃` — MRU cycle: the least-recent open window comes forward, and
+ * the switcher strip names the landing (HS-97-06). */
+export function cycleWindows(): void {
+  const ids = mruOrder(
+    registrySnapshot.map((w) => w.id),
+    useDesk.getState().panelOrder,
+  );
+  if (ids.length < 1) return;
+  const next = ids[0];
+  const s = useDesk.getState();
+  if (s.panelMin.includes(next)) s.restorePanel(next);
+  else s.focusPanel(next);
+  flashSwitcher(next);
+}
+
+/** ⌘1-⌘4 — an application whose window is already open focuses (or
+ * restores) instead of re-opening. False = not open; launch instead. */
+export function focusOrRestoreApp(windowId: string): boolean {
+  if (!registrySnapshot.some((w) => w.id === windowId)) return false;
+  const s = useDesk.getState();
+  if (s.panelMin.includes(windowId)) s.restorePanel(windowId);
+  s.focusPanel(windowId);
+  return true;
 }
 
 function useCompactViewport(): boolean {
@@ -1396,53 +1443,13 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
   const panelOrder = useDesk((s) => s.panelOrder);
   const windows = useOpenWindows();
   const launchers = useLaunchers();
-  // HS-101 B8 — the global keyboard grammar (canon §6.2): ⌘1–⌘4 the
-  // four applications, ⌘W close, ⌘M minimize, ⌘/ the drawn sheet.
-  // (In a browser tab the UA may reserve ⌘W/⌘M; the desk still
-  // answers wherever the event reaches it.)
-  const [sheetOpen, setSheetOpen] = useState(false);
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (!e.metaKey || e.ctrlKey || e.altKey) return;
-      const target = e.target as HTMLElement | null;
-      const typing = Boolean(
-        target &&
-          (target.tagName === "INPUT" ||
-            target.tagName === "TEXTAREA" ||
-            target.isContentEditable),
-      );
-      if (!e.shiftKey && e.key >= "1" && e.key <= "4") {
-        e.preventDefault();
-        const app = DOCK_APPS[Number(e.key) - 1];
-        const s = useDesk.getState();
-        if (registrySnapshot.some((w) => w.id === app.id)) {
-          if (s.panelMin.includes(app.id)) s.restorePanel(app.id);
-          s.focusPanel(app.id);
-        } else {
-          void import("../shell").then((m) =>
-            m.openSurfaceOr(app.key, app.fallback),
-          );
-        }
-      } else if (e.key === "w" && !typing) {
-        const id = frontWindowId();
-        if (id) {
-          e.preventDefault();
-          registrySnapshot.find((w) => w.id === id)?.close();
-        }
-      } else if (e.key === "m" && !typing) {
-        const id = frontWindowId();
-        if (id) {
-          e.preventDefault();
-          useDesk.getState().minimizePanel(id);
-        }
-      } else if (e.key === "/") {
-        e.preventDefault();
-        setSheetOpen((open) => !open);
-      }
-    };
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
-  }, []);
+  // HS-111-07 — the HS-101 B8 keyboard grammar (⌘1–⌘4, ⌘W, ⌘M, ⌃`,
+  // ⌘/) moved into desk/keymap.ts, driven by the registry's key
+  // fields: ONE binder (refcounted — the chrome mounts it too). The
+  // sheet's open state is shared chrome state so the system.sheet
+  // verb can draw it.
+  useKeymap();
+  const sheetOpen = useShortcutSheet((s) => s.open);
   // HS-99-04 — the dock chip menu (one menu vocabulary).
   const [chipMenu, setChipMenu] = useState<{
     id: string;
@@ -1458,27 +1465,6 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
     window.addEventListener("pointerdown", close);
     return () => window.removeEventListener("pointerdown", close);
   }, [chipMenu]);
-
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key !== "`" || !e.ctrlKey) return;
-      const ids = mruOrder(
-        registrySnapshot.map((w) => w.id),
-        useDesk.getState().panelOrder,
-      );
-      if (ids.length < 1) return;
-      e.preventDefault();
-      // The front window is last; cycling brings the least-recent forward.
-      const next = ids[0];
-      const s = useDesk.getState();
-      if (s.panelMin.includes(next)) s.restorePanel(next);
-      else s.focusPanel(next);
-      // The cycle is visible (HS-97-06): the strip names the landing.
-      flashSwitcher(next);
-    };
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
-  }, []);
 
   void launchers; // consumed by the bell + search shelf (HS-100-11)
   // The front chip mirrors the shell's is-front rule: the last id in
@@ -1652,12 +1638,26 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
           </DeskMenuItem>
         </DeskMenuList>
       ) : null}
-      {sheetOpen ? <ShortcutSheet onClose={() => setSheetOpen(false)} /> : null}
+      {sheetOpen ? (
+        <ShortcutSheet
+          onClose={() => useShortcutSheet.getState().setOpen(false)}
+        />
+      ) : null}
     </div>
   );
 }
 
-/** HS-101 B8 — the shortcut sheet, drawn (never a doc link). */
+/** HS-101 B8 — the shortcut sheet, drawn (never a doc link).
+ * HS-111-07 — rows DERIVE from the registry's key fields (doctrine
+ * P11): the hand-maintained list is gone; a verb that gains a key
+ * appears here for free. Esc is grammar, not a verb; it stays a
+ * fixed convention line. */
+const SHEET_GROUPS: { title: string; scopes: string[] }[] = [
+  { title: "Applications", scopes: ["go"] },
+  { title: "Windows", scopes: ["window", "floor"] },
+  { title: "Desk", scopes: ["system"] },
+];
+
 function ShortcutSheet({ onClose }: { onClose: () => void }) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -1666,34 +1666,18 @@ function ShortcutSheet({ onClose }: { onClose: () => void }) {
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
   }, [onClose]);
-  const rows: [string, [string, string][]][] = [
-    [
-      "Applications",
-      [
-        ["⌘1", "Speak"],
-        ["⌘2", "Meetings"],
-        ["⌘3", "Agents"],
-        ["⌘4", "Settings"],
-      ],
-    ],
-    [
-      "Windows",
-      [
-        ["⌘W", "Close the front window"],
-        ["⌘M", "Minimize the front window"],
-        ["⌃`", "Cycle windows"],
-        ["⌃↑", "Overview"],
-        ["Esc", "Close / cancel"],
-      ],
-    ],
-    [
-      "Desk",
-      [
-        ["⌘K", "Search"],
-        ["⌘/", "This sheet"],
-      ],
-    ],
-  ];
+  const ctx = { selectedRef: null };
+  const rows: [string, [string, string][]][] = SHEET_GROUPS.map((group) => {
+    const keys = VERBS.filter(
+      (v) => v.key && group.scopes.includes(v.scope),
+    ).map((v): [string, string] => [v.key as string, verbLabel(v, ctx)]);
+    // The applications read in ⌘1..⌘4 order, whatever the registry's
+    // program-table order is.
+    if (group.scopes.includes("go"))
+      keys.sort((a, b) => a[0].localeCompare(b[0]));
+    return [group.title, keys];
+  });
+  rows[1][1].push(["Esc", "Close / cancel"]);
   return createPortal(
     <div
       className="desk-shortcut-sheet"

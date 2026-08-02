@@ -14,12 +14,14 @@ import { ZoneWindow } from "../components/ZoneWindow";
 import { InfoWindow } from "../components/InfoWindow";
 import { AskBar, AskPanel } from "../components/AskPanel";
 import { MicButton } from "../components/MicButton";
-import { DeskMenuItem, DeskMenuList } from "../components/DeskMenu";
+import { WorkMenu } from "../components/DeskMenu";
+import {
+  floorMenuEntries,
+  objectMenuEntries,
+  zoneMenuEntries,
+} from "../floorMenu";
 import { WorldEngine, type WorldMenuTarget } from "./engine";
 import { buildScene, type WorldScene } from "./sceneModel";
-
-/** Kinds whose material can be edited (mirrors the Pullout's set). */
-const WORLD_EDITABLE = new Set(["note", "kb", "recipe", "workflow"]);
 
 export { MAX_FLOATERS } from "./sceneModel";
 
@@ -237,114 +239,30 @@ export function WorldStage() {
         </span>
       )}
       {worldMenu && (
-        <DeskMenuList
+        <WorkMenu
           className="desk-world-menu"
           label={
             worldMenu.target.type === "object"
               ? `${worldMenu.target.title} menu`
-              : `${worldMenu.target.title} zone menu`
+              : worldMenu.target.type === "zone"
+                ? `${worldMenu.target.title} zone menu`
+                : "Desk menu"
           }
           anchor="below"
-          style={{
-            position: "fixed",
-            left: Math.min(worldMenu.x, window.innerWidth - 184),
-            top: Math.min(worldMenu.y, window.innerHeight - 132),
-          }}
+          x={worldMenu.x}
+          y={worldMenu.y}
+          entries={
+            worldMenu.target.type === "object"
+              ? objectMenuEntries(worldMenu.target)
+              : worldMenu.target.type === "zone"
+                ? zoneMenuEntries(worldMenu.target, {
+                    x: worldMenu.x,
+                    y: worldMenu.y,
+                  })
+                : floorMenuEntries()
+          }
           onClose={() => setWorldMenu(null)}
-        >
-          {worldMenu.target.type === "object" ? (
-            <>
-              <DeskMenuItem
-                onSelect={() => {
-                  const t = worldMenu.target as Extract<
-                    WorldMenuTarget,
-                    { type: "object" }
-                  >;
-                  setWorldMenu(null);
-                  const ds = useDesk.getState();
-                  ds.openPullout(t.id, { x: worldMenu.x, y: worldMenu.y });
-                  if (!ds.askOpen) ds.setSelected([]);
-                }}
-              >
-                Open
-              </DeskMenuItem>
-              <DeskMenuItem
-                onSelect={() => {
-                  const t = worldMenu.target as Extract<
-                    WorldMenuTarget,
-                    { type: "object" }
-                  >;
-                  setWorldMenu(null);
-                  useDesk
-                    .getState()
-                    .openInfoWindow(t.ref, { x: worldMenu.x, y: worldMenu.y });
-                }}
-              >
-                Info
-              </DeskMenuItem>
-              {WORLD_EDITABLE.has(worldMenu.target.kind) && (
-                <DeskMenuItem
-                  onSelect={() => {
-                    const t = worldMenu.target as Extract<
-                      WorldMenuTarget,
-                      { type: "object" }
-                    >;
-                    setWorldMenu(null);
-                    useDesk.getState().openEditor(t.id);
-                  }}
-                >
-                  Edit
-                </DeskMenuItem>
-              )}
-            </>
-          ) : (
-            <>
-              <DeskMenuItem
-                onSelect={() => {
-                  const t = worldMenu.target;
-                  setWorldMenu(null);
-                  useDesk
-                    .getState()
-                    .openZoneWindow(t.id, { x: worldMenu.x, y: worldMenu.y });
-                }}
-              >
-                Open
-              </DeskMenuItem>
-              <DeskMenuItem
-                onSelect={() => {
-                  const t = worldMenu.target;
-                  setWorldMenu(null);
-                  useDesk
-                    .getState()
-                    .openInfoWindow(`zone:${t.id}`, {
-                      x: worldMenu.x,
-                      y: worldMenu.y,
-                    });
-                }}
-              >
-                Info
-              </DeskMenuItem>
-              <DeskMenuItem
-                onSelect={() => {
-                  const t = worldMenu.target;
-                  setWorldMenu(null);
-                  useDesk.getState().diveInto(t.id);
-                }}
-              >
-                Focus
-              </DeskMenuItem>
-              <DeskMenuItem
-                onSelect={() => {
-                  const t = worldMenu.target;
-                  setWorldMenu(null);
-                  useDesk.getState().setRenamingZone(t.id);
-                }}
-              >
-                Rename
-              </DeskMenuItem>
-            </>
-          )}
-        </DeskMenuList>
+        />
       )}
       {lasso && (
         <div

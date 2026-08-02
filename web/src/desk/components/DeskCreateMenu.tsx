@@ -1,40 +1,20 @@
+// HS-111-07 — the Create menu derives from the registry's desk.new-*
+// verbs (its private DESK_CREATE_CHOICES list was parallel list #3 and
+// had already drifted: it knew Workflow, the registry did not). Rows
+// are the ONE menu species: 28px mono labels, no description prose.
 import { useEffect, useId, useRef, useState } from "react";
-import { useDesk } from "../store";
+import { verbsFor, type VerbContext } from "../verbRegistry";
+import { DeskMenuItem, DeskMenuList } from "./DeskMenu";
 
-export type DeskCreateKind = "note" | "zone" | "kb" | "recipe" | "workflow";
-
-export const DESK_CREATE_CHOICES: ReadonlyArray<{
-  kind: DeskCreateKind;
-  label: string;
-  description: string;
-}> = [
-  { kind: "note", label: "Note", description: "Write or dictate text." },
-  { kind: "zone", label: "Zone", description: "Place related Desk items." },
-  {
-    kind: "kb",
-    label: "Knowledge",
-    description: "Gather reusable context.",
-  },
-  {
-    kind: "recipe",
-    label: "Agent",
-    description: "Save reusable behavior.",
-  },
-  {
-    kind: "workflow",
-    label: "Workflow",
-    description: "Build repeatable steps.",
-  },
-];
+const CTX: VerbContext = { selectedRef: null };
 
 export function DeskCreateMenu({ className = "" }: { className?: string }) {
   const [open, setOpen] = useState(false);
   const id = useId();
   const rootRef = useRef<HTMLDivElement | null>(null);
   const buttonRef = useRef<HTMLButtonElement | null>(null);
-  const menuRef = useRef<HTMLDivElement | null>(null);
-  const createPrimitive = useDesk((state) => state.createPrimitive);
 
+  // The desk dismissal rule: outside pointer-down or Escape closes.
   useEffect(() => {
     if (!open) return;
     const onPointerDown = (event: PointerEvent) => {
@@ -53,29 +33,7 @@ export function DeskCreateMenu({ className = "" }: { className?: string }) {
     };
   }, [open]);
 
-  useEffect(() => {
-    if (open)
-      menuRef.current?.querySelector<HTMLButtonElement>("button")?.focus();
-  }, [open]);
-
-  const moveFocus = (event: React.KeyboardEvent<HTMLDivElement>) => {
-    if (!["ArrowDown", "ArrowUp", "Home", "End"].includes(event.key)) return;
-    const items = Array.from(
-      event.currentTarget.querySelectorAll<HTMLButtonElement>("button"),
-    );
-    if (!items.length) return;
-    event.preventDefault();
-    const current = items.indexOf(document.activeElement as HTMLButtonElement);
-    const next =
-      event.key === "Home"
-        ? 0
-        : event.key === "End"
-          ? items.length - 1
-          : event.key === "ArrowDown"
-            ? (current + 1 + items.length) % items.length
-            : (current - 1 + items.length) % items.length;
-    items[next]?.focus();
-  };
+  const creates = verbsFor("floor").filter((v) => v.group === "new");
 
   return (
     <div ref={rootRef} className={`desk-create ${className}`.trim()}>
@@ -91,30 +49,35 @@ export function DeskCreateMenu({ className = "" }: { className?: string }) {
         <span aria-hidden="true">＋</span> Create
       </button>
       {open ? (
-        <div
-          ref={menuRef}
-          id={id}
+        <DeskMenuList
           className="desk-create-menu"
-          role="menu"
-          aria-label="Create a Desk item"
-          onKeyDown={moveFocus}
+          label="Create a Desk item"
+          anchor="below"
+          style={{ position: "absolute", top: "100%", right: 0 }}
+          onClose={() => setOpen(false)}
+          returnFocus={() => buttonRef.current?.focus()}
+          onMouseLeave={() => setOpen(false)}
         >
-          {DESK_CREATE_CHOICES.map((choice) => (
-            <button
-              key={choice.kind}
-              type="button"
-              role="menuitem"
-              aria-label={`Create ${choice.label}`}
-              onClick={() => {
-                setOpen(false);
-                void createPrimitive(choice.kind);
-              }}
-            >
-              <strong>{choice.label}</strong>
-              <span>{choice.description}</span>
-            </button>
-          ))}
-        </div>
+          {creates.map((v) => {
+            // "New Note" → the bare kind word for the Create face.
+            const word =
+              typeof v.label === "string"
+                ? v.label.replace(/^New /, "")
+                : v.label(CTX);
+            return (
+              <DeskMenuItem
+                key={v.id}
+                ariaLabel={`Create ${word}`}
+                onSelect={() => {
+                  setOpen(false);
+                  v.run(CTX);
+                }}
+              >
+                {word}
+              </DeskMenuItem>
+            );
+          })}
+        </DeskMenuList>
       ) : null}
     </div>
   );

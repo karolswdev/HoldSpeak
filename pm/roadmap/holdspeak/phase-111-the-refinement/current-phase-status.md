@@ -1,20 +1,21 @@
 # Phase 111 - The Refinement
 
-**Status:** IN PROGRESS (6/11). Chartered 2026-07-31 as the mandatory
+**Status:** IN PROGRESS (7/11). Chartered 2026-07-31 as the mandatory
 fast-follow to Phase 110. The owner's condition: every program on the
 desk gets its interior rethought — not token-tweaked, RETHOUGHT — to
 feel native to Signal Workbench. "The Settings screen needs to be
 completely rethought, and many, many others."
 
-**Last updated:** 2026-08-02 (HS-111-06 Delivery/process SHIPPED —
-instrumentation: the ~450-pin emoji flood dead into census tokens +
-inverted NEEDS YOU cells, the process window a zeroed instrument
-(kernel wire git-diff EMPTY), the dead keypad a TransportRow,
-PaneWell extracted with xterm deferred to 11 by argued decision, AND
-the owner's PR-387 duplicate rows root-caused as two wire bugs
-(liveness-by-gaze sweep + sibling-minting idempotence defeat) and
-FIXED with 7 new tests; suites green 4214+398. Earlier: 05 Ask, 04
-Agents, 03 Meetings, 02 Speak, 01 Settings.)
+**Last updated:** 2026-08-02 (HS-111-07 System chrome SHIPPED — the
+biggest room: WorkMenu v2 species (the z bug dead — dropdowns draw
+OVER windows), the five parallel verb lists collapsed into ONE
+registry + keymap (doctrine P2/P11 now law in code), THE FLOOR
+RIGHT-CLICK exists (NEW>/LAUNCH>, long-press at 393, nothing
+minted), the palette is a command deck (Enter runs the top hit,
+ranked), the list view is a SurfaceLedger face, the sheet derives
+from the registry, ONE egress species, all four naked-debug sites
+behind RAW; suites green 4214+424. Earlier: 06 Delivery/process, 05
+Ask, 04 Agents, 03 Meetings, 02 Speak, 01 Settings.)
 
 ## Why this phase exists
 
@@ -50,7 +51,7 @@ Each story:
 | 04 | [Agents](./story-04-agents.md) | The Agents/Companion program — agent list, persona detail, session inspector, coder steering pullout | done |
 | 05 | [Ask and conversation](./story-05-ask-conversation.md) | The Ask composer, grounding picker, conversation thread, kept-card receipts | done |
 | 06 | [Delivery and process](./story-06-delivery-process.md) | The delivery belt, the process window, the project memory window — the kernel-facing programs | done |
-| 07 | [System chrome](./story-07-system-chrome.md) | Dropdown menus (Desk/Object/Go), context menus, the search palette (Cmd+K), the shortcut sheet, popovers | backlog |
+| 07 | [System chrome](./story-07-system-chrome.md) | Dropdown menus (Desk/Object/Go), context menus, the search palette (Cmd+K), the shortcut sheet, popovers | done |
 | 08 | [Interactive elements](./story-08-interactive-elements.md) | Every control type across all programs: toggles, selects, inputs, tabs, pills, buttons, badges — one kit, one language | backlog |
 | 09 | [Sprite and icon quality](./story-09-sprites.md) | Regenerate bad dock sprites on the real desk, window type icons, overview/reset glyphs | backlog |
 | 10 | [The refinement walk](./story-10-walk.md) | Open every program, screenshot at both viewports, prove every room speaks one language | backlog |
@@ -66,7 +67,7 @@ Each story:
 | HS-111-04 | Agents | done | [story-04-agents](./story-04-agents.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-111-05 | Ask and conversation | done | [story-05-ask-conversation](./story-05-ask-conversation.md) | [evidence-story-05](./evidence-story-05.md) |
 | HS-111-06 | Delivery and process | done | [story-06-delivery-process](./story-06-delivery-process.md) | [evidence-story-06](./evidence-story-06.md) |
-| HS-111-07 | System chrome | backlog | [story-07-system-chrome](./story-07-system-chrome.md) | — |
+| HS-111-07 | System chrome | done | [story-07-system-chrome](./story-07-system-chrome.md) | [evidence-story-07](./evidence-story-07.md) |
 | HS-111-08 | Interactive elements | backlog | [story-08-interactive-elements](./story-08-interactive-elements.md) | — |
 | HS-111-09 | Sprite and icon quality | backlog | [story-09-sprites](./story-09-sprites.md) | — |
 | HS-111-10 | The refinement walk | backlog | [story-10-walk](./story-10-walk.md) | — |
@@ -172,6 +173,26 @@ dossier + project memory onto ledgers/tokens/RAW folds, and ONE
 PaneWell seam extracted for both terminal surfaces — xterm deferred
 to HS-111-11 so story 11 swaps a single interior. Proven live at
 1440+393 including the error leg; suites green (4214 python + 398
-web). Next: HS-111-07 (system chrome) — the biggest room left,
-carrying the owner riders (right-click, debug-RAW, list-view
-ledger) and the doctrine's command-deck palette.
+web).
+
+7/11. HS-111-07 (System chrome) shipped 2026-08-02: the audit found
+the chrome half-right in material but fragmented in organs — FIVE
+parallel verb lists (why ⌘K couldn't run what the menus could and
+Enter dead-ended), no engine miss branch (why the floor had no
+right-click), the menubar trapped in a z-30 stacking context under
+z-42 windows, the list view naked HTML, two Phase-101 glass relics
+(the sheet, the egress pill). Shipped on the audit's ratified cut
+line with NOTHING dropped: WorkMenu v2 (one portaled species for
+dropdowns + all context menus), registry v2 + desk/keymap.ts as the
+only key binder (the five lists grep to zero), the floor
+right-click with NEW>/LAUNCH> and honest ghost reasons (the walk
+minted a workflow from the floor — the first ever — and binned it),
+the command-deck palette (Enter runs the top hit, prefix > recents
+> substring, banded ledger rows, in-flow miss leg), the list view a
+SurfaceLedger face with window discipline, the sheet opaque AND
+derived from registry keys, the egress badge ONE species, the four
+naked-debug sites behind RAW wells. Deferred by the honest cut:
+palette deep-settings + meeting content search (plug-in points
+documented); 08 owns the new faces' roving/arming conformance.
+Proven live at 1440+393; suites green (4214 python + 424 web).
+Next: HS-111-08 (interactive elements).

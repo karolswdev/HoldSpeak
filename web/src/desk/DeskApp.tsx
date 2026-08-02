@@ -46,7 +46,7 @@ export default function DeskApp() {
   const empty = updatedAt !== null && total === 0;
 
   return (
-    <div className="desk-next">
+    <div className="desk-next" id="desk-next">
       <Atmosphere />
       <GlassDropLayer />
       <DeskChrome showDailyStarts={!empty} />

@@ -136,10 +136,13 @@ type DragState =
     }
   | { type: "scroll"; pointerId: number; lastY: number };
 
-/** §6.3 — what a right-click on the world hit. */
+/** §6.3 — what a right-click on the world hit. HS-111-07: a MISS is an
+ * answer too — the floor owns its own menu (NEW >, LAUNCH >, the floor
+ * verbs); the browser menu never speaks for the desk again. */
 export type WorldMenuTarget =
   | { type: "object"; id: string; ref: string; kind: string; title: string }
-  | { type: "zone"; id: string; title: string };
+  | { type: "zone"; id: string; title: string }
+  | { type: "floor" };
 
 export interface EngineCallbacks {
   /** DOM overlays follow the GL lasso (kept as the proven .desk-lasso div). */
@@ -282,6 +285,7 @@ export class WorldEngine {
 
   destroy(): void {
     this.destroyed = true;
+    this.clearLongPress();
     for (const u of this.unsubscribers) u();
     this.unsubscribers = [];
     this.app?.destroy(undefined, { children: true });
@@ -909,6 +913,68 @@ export class WorldEngine {
         e.clientX,
         e.clientY,
       );
+    } else {
+      // HS-111-07 — the miss branch: the floor answers.
+      e.preventDefault();
+      this.drag = { type: "idle" };
+      this.callbacks.onContextMenu({ type: "floor" }, e.clientX, e.clientY);
+    }
+  }
+
+  // ── HS-111-07: touch long-press = right-click (iOS never fires
+  // contextmenu on a canvas). 500ms still (under 8px of travel) on a
+  // touch pointer opens the same menu for whatever the press hit. ──
+  private longPress: {
+    timer: ReturnType<typeof setTimeout>;
+    x: number;
+    y: number;
+  } | null = null;
+
+  private armLongPress(e: PointerEvent): void {
+    this.clearLongPress();
+    const { x, y } = { x: e.clientX, y: e.clientY };
+    this.longPress = {
+      x,
+      y,
+      timer: setTimeout(() => {
+        this.longPress = null;
+        if (!this.scene || !this.callbacks.onContextMenu) return;
+        const rect = this.worldRect();
+        const hit = hitTest(this.scene, rect, x - rect.left, y - rect.top);
+        this.drag = { type: "idle" };
+        if (hit.type === "object") {
+          this.callbacks.onContextMenu(
+            {
+              type: "object",
+              id: hit.object.id,
+              ref: hit.object.selectionRef,
+              kind: hit.object.kind,
+              title: hit.object.title,
+            },
+            x,
+            y,
+          );
+        } else if (
+          hit.type === "zone" ||
+          hit.type === "zone-title" ||
+          hit.type === "zone-grip"
+        ) {
+          this.callbacks.onContextMenu(
+            { type: "zone", id: hit.zone.id, title: hit.zone.title },
+            x,
+            y,
+          );
+        } else {
+          this.callbacks.onContextMenu({ type: "floor" }, x, y);
+        }
+      }, 500),
+    };
+  }
+
+  private clearLongPress(): void {
+    if (this.longPress) {
+      clearTimeout(this.longPress.timer);
+      this.longPress = null;
     }
   }
 
@@ -921,6 +987,7 @@ export class WorldEngine {
   private onDown(e: PointerEvent): void {
     if (!this.scene) return;
     if (e.button !== 0 && e.pointerType === "mouse") return;
+    if (e.pointerType === "touch") this.armLongPress(e);
     const { x, y, rect } = this.local(e);
     const hit = hitTest(this.scene, rect, x, y);
     if (hit.type === "background") {
@@ -951,6 +1018,14 @@ export class WorldEngine {
   }
 
   private onMove(e: PointerEvent): void {
+    // Travel beyond 8px disarms the long-press (it became a drag/scroll).
+    if (
+      this.longPress &&
+      Math.abs(e.clientX - this.longPress.x) +
+        Math.abs(e.clientY - this.longPress.y) >
+        8
+    )
+      this.clearLongPress();
     const d = this.drag;
     if (d.type === "idle" || !this.scene) return;
     if ("pointerId" in d && d.pointerId !== e.pointerId) return;
@@ -1041,6 +1116,7 @@ export class WorldEngine {
   }
 
   private onUp(e: PointerEvent): void {
+    this.clearLongPress();
     const d = this.drag;
     if (d.type === "idle") return;
     if ("pointerId" in d && d.pointerId !== e.pointerId) return;
