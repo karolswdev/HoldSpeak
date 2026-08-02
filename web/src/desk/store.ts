@@ -337,7 +337,7 @@ interface DeskState {
   /** Create in-world (HS-73-03): instant POST, spawn at center, NEW beat,
    * editor open. The object IS the editor — no modal, ever. */
   createPrimitive(
-    kind: "note" | "kb" | "recipe" | "zone" | "workflow",
+    kind: "note" | "decision" | "kb" | "recipe" | "zone" | "workflow",
   ): Promise<void>;
   markNew(id: string): void;
   openEditor(id: string): void;
@@ -521,6 +521,18 @@ export const useDesk = create<DeskState>((set, get) => ({
   async createPrimitive(kind) {
     const posts: Record<string, [string, string, Record<string, unknown>]> = {
       note: ["/api/notes", "note", { title: "New note", body_markdown: "" }],
+      decision: [
+        "/api/decisions",
+        "decision",
+        {
+          title: "New decision",
+          status: "proposed",
+          context_markdown: "",
+          decision_markdown: "",
+          consequences_markdown: "",
+          alternatives: [],
+        },
+      ],
       kb: ["/api/kbs", "kb", { name: "New Knowledge" }],
       // HS-111-09 — born without an emoji: the empty avatar means "wear
       // the automaton sprite" (the server's own default is "" too).
@@ -595,6 +607,7 @@ export const useDesk = create<DeskState>((set, get) => ({
   async updatePrimitive(kind, id, patch) {
     const urls: Record<string, string> = {
       note: `/api/notes/${encodeURIComponent(id)}`,
+      decision: `/api/decisions/${encodeURIComponent(id)}`,
       kb: `/api/kbs/${encodeURIComponent(id)}`,
       recipe: `/api/recipes/${encodeURIComponent(id)}`,
       directory: `/api/directories/${encodeURIComponent(id)}`,
@@ -608,6 +621,14 @@ export const useDesk = create<DeskState>((set, get) => ({
       title: "title",
       name: "name",
       body_markdown: "bodyMarkdown",
+      context_markdown: "contextMarkdown",
+      decision_markdown: "decisionMarkdown",
+      consequences_markdown: "consequencesMarkdown",
+      decided_at: "decidedAt",
+      superseded_by: "supersededBy",
+      alternatives: "alternatives",
+      status: "status",
+      deciders: "deciders",
       tags: "tags",
       role: "role",
       system_prompt: "systemPrompt",

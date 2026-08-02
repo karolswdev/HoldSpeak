@@ -9,6 +9,7 @@ export type Kind =
   | "meeting"
   | "artifact"
   | "note"
+  | "decision"
   | "recipe"
   | "kb"
   | "directory"
@@ -27,11 +28,12 @@ export interface DeskItem {
   [key: string]: unknown;
 }
 
-export type Items = Record<Exclude<Kind, "project" | "roadmap" | "story">, DeskItem[]> & {
+export type Items = Record<Exclude<Kind, "project" | "roadmap" | "story" | "decision">, DeskItem[]> & {
   /** Additive for older test fixtures and hubs; loadAll always initializes them. */
   project?: DeskItem[];
   roadmap?: DeskItem[];
   story?: DeskItem[];
+  decision?: DeskItem[];
 };
 export type Status = Partial<Record<Kind | "profile", "live" | "unreachable">>;
 
@@ -109,6 +111,7 @@ export const EMPTY_ITEMS: Items = {
   meeting: [],
   artifact: [],
   note: [],
+  decision: [],
   recipe: [],
   kb: [],
   directory: [],
@@ -143,6 +146,66 @@ export const fromWireNote = (n: any): DeskItem => ({
   // the adapter used to discard it — the badge-source map's finding 4.
   lastModified: n.last_modified || n.updated_at || null,
 });
+
+export const fromWireDecision = (d: any): DeskItem => ({
+  kind: "decision",
+  id: d.id,
+  title: d.title || "Untitled decision",
+  status: d.status || "proposed",
+  deciders: d.deciders || [],
+  decidedAt: d.decided_at || undefined,
+  contextMarkdown: d.context_markdown || "",
+  decisionMarkdown: d.decision_markdown || "",
+  alternatives: Array.isArray(d.alternatives) ? d.alternatives : [],
+  consequencesMarkdown: d.consequences_markdown || "",
+  supersededBy: d.superseded_by || undefined,
+  tags: d.tags || [],
+  createdAt: d.created_at || "",
+  lastModified: d.updated_at || null,
+});
+
+export interface DecisionInput {
+  title?: string;
+  status?: "proposed" | "accepted" | "superseded" | "deprecated";
+  deciders?: string[];
+  decided_at?: string | null;
+  context_markdown?: string;
+  decision_markdown?: string;
+  alternatives?: Array<{ name: string; reason: string }>;
+  consequences_markdown?: string;
+  tags?: string[];
+}
+
+export async function fetchDecisions(): Promise<DeskItem[]> {
+  const data = await fetchJson("/api/decisions");
+  return (data.decisions || []).filter((d: any) => !d.deleted).map(fromWireDecision);
+}
+
+export async function createDecision(data: DecisionInput): Promise<DeskItem> {
+  const response = await fetchJson("/api/decisions", {
+    method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data),
+  });
+  return fromWireDecision(response.decision);
+}
+
+export async function updateDecision(id: string, data: DecisionInput): Promise<DeskItem> {
+  const response = await fetchJson(`/api/decisions/${encodeURIComponent(id)}`, {
+    method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data),
+  });
+  return fromWireDecision(response.decision);
+}
+
+export async function updateDecisionStatus(id: string, status: DecisionInput["status"]): Promise<DeskItem> {
+  const response = await fetchJson(`/api/decisions/${encodeURIComponent(id)}/status`, {
+    method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status }),
+  });
+  return fromWireDecision(response.decision);
+}
+
+export async function supersedeDecision(id: string): Promise<DeskItem> {
+  const response = await fetchJson(`/api/decisions/${encodeURIComponent(id)}/supersede`, { method: "POST" });
+  return fromWireDecision(response.decision);
+}
 
 export const fromWireRecipe = (a: any): DeskItem => ({
   kind: "recipe",
@@ -318,6 +381,12 @@ export async function loadAll(): Promise<LoadResult> {
         status.note = "live";
       })
       .catch((e) => fail("note", "Notes", e)),
+    fetchDecisions()
+      .then((decisions) => {
+        items.decision = decisions;
+        status.decision = "live";
+      })
+      .catch((e) => fail("decision", "Decisions", e)),
     fetchJson("/api/recipes")
       .then((d) => {
         items.recipe = (d.recipes || [])

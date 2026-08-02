@@ -29,6 +29,7 @@ from .cadence import CadenceRepository
 from .primitives import (
     RecipeRepository,
     ChainRepository,
+    DeskDecisionRepository,
     DirectoryMembershipRepository,
     DirectoryRepository,
     KBRepository,
@@ -52,7 +53,7 @@ log = get_logger("db")
 
 # Default database location
 DEFAULT_DB_PATH = Path.home() / ".local" / "share" / "holdspeak" / "holdspeak.db"
-SCHEMA_VERSION = 32  # v31: memory FTS (HS-109-04); v32: decision transcript moments (HS-109-02)
+SCHEMA_VERSION = 33  # v33: Desk architecture decision records (HS-113-08)
 
 
 class SchemaVersionError(RuntimeError):
@@ -928,6 +929,30 @@ CREATE TABLE IF NOT EXISTS notes (
     deleted INTEGER NOT NULL DEFAULT 0
 );
 
+-- HS-113-08: authored Architecture Decision Records. Deliberately separate
+-- from the HS-109 meeting-derived `decisions` memory projection.
+CREATE TABLE IF NOT EXISTS desk_decisions (
+    id TEXT PRIMARY KEY,
+    title TEXT NOT NULL DEFAULT '',
+    status TEXT NOT NULL DEFAULT 'proposed'
+        CHECK (status IN ('proposed','accepted','superseded','deprecated')),
+    deciders_json TEXT NOT NULL DEFAULT '[]',
+    decided_at TEXT,
+    context_markdown TEXT NOT NULL DEFAULT '',
+    decision_markdown TEXT NOT NULL DEFAULT '',
+    alternatives_json TEXT NOT NULL DEFAULT '[]',
+    consequences_markdown TEXT NOT NULL DEFAULT '',
+    superseded_by TEXT REFERENCES desk_decisions(id),
+    tags_json TEXT NOT NULL DEFAULT '[]',
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+    deleted INTEGER NOT NULL DEFAULT 0
+);
+CREATE INDEX IF NOT EXISTS idx_desk_decisions_status
+ON desk_decisions(status, updated_at DESC);
+CREATE INDEX IF NOT EXISTS idx_desk_decisions_superseded_by
+ON desk_decisions(superseded_by);
+
 -- HS-109-04: one retrieval contract, three separately ranked FTS corpora.
 -- Internal-content tables retain stable text source ids directly; this avoids
 -- pretending the stores' TEXT primary keys are FTS integer content_rowids.
@@ -1537,6 +1562,7 @@ class Database:
         self.cadence = CadenceRepository(self._connection, self)  # CAD-1-01
         # Primitive Framework: the desk's synced first-class primitives.
         self.notes = NoteRepository(self._connection, self)
+        self.desk_decisions = DeskDecisionRepository(self._connection, self)
         self.kbs = KBRepository(self._connection, self)
         self.recipes = RecipeRepository(self._connection, self)
         self.profiles = ProfileRepository(self._connection, self)

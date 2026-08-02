@@ -7,6 +7,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import datetime
+import json
 from typing import Optional, Any
 
 # Validation constants shared across the persistence layer.
@@ -532,6 +533,50 @@ class NoteRecord:
             "created_at": self.created_at,
             "updated_at": self.updated_at,
             "last_modified": self.last_modified,
+            "deleted": self.deleted,
+        }
+
+
+@dataclass
+class DecisionRecord:
+    """A first-class Desk architecture decision record (ADR)."""
+
+    id: str
+    title: str
+    status: str
+    deciders: list[str]
+    decided_at: str | None
+    context_markdown: str
+    decision_markdown: str
+    alternatives_json: str
+    consequences_markdown: str
+    superseded_by: str | None
+    tags: list[str]
+    created_at: str
+    updated_at: str
+    deleted: bool = False
+
+    def to_dict(self) -> dict[str, Any]:
+        try:
+            alternatives = json.loads(self.alternatives_json)
+        except (TypeError, ValueError):
+            alternatives = []
+        if not isinstance(alternatives, list):
+            alternatives = []
+        return {
+            "id": self.id,
+            "title": self.title,
+            "status": self.status,
+            "deciders": list(self.deciders),
+            "decided_at": self.decided_at,
+            "context_markdown": self.context_markdown,
+            "decision_markdown": self.decision_markdown,
+            "alternatives": alternatives,
+            "consequences_markdown": self.consequences_markdown,
+            "superseded_by": self.superseded_by,
+            "tags": list(self.tags),
+            "created_at": self.created_at,
+            "updated_at": self.updated_at,
             "deleted": self.deleted,
         }
 

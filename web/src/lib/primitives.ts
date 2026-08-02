@@ -29,6 +29,7 @@ export type PrimitiveKind =
   | "meeting"
   | "artifact"
   | "note"
+  | "decision"
   | "directory"
   | "kb"
   | "project"
@@ -101,6 +102,22 @@ export interface Note {
   bodyMarkdown: string;
   tags: string[];
   createdAt: string; // ISO-8601 UTC
+}
+
+export interface Decision {
+  kind: "decision";
+  id: string;
+  title: string;
+  status: "proposed" | "accepted" | "superseded" | "deprecated";
+  deciders: string[];
+  decidedAt?: string;
+  contextMarkdown: string;
+  decisionMarkdown: string;
+  alternatives: Array<{ name: string; reason: string }>;
+  consequencesMarkdown: string;
+  supersededBy?: string;
+  tags: string[];
+  createdAt: string;
 }
 
 // ── organization ───────────────────────────────────────────────────────
@@ -246,6 +263,7 @@ export type Primitive =
   | Meeting
   | Artifact
   | Note
+  | Decision
   | Directory
   | KB
   | Project
@@ -287,6 +305,15 @@ export const PRIMITIVES: Record<PrimitiveKind, PrimitiveDescriptor> = {
     syncClass: "content",
     blurb: "A free-standing markdown note you write anywhere.",
     icon: "M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4z",
+    authorable: true,
+  },
+  decision: {
+    kind: "decision",
+    label: "Decision",
+    plural: "Decisions",
+    syncClass: "content",
+    blurb: "Architecture decision record",
+    icon: "M5 3h14v18H5zM8 8h8M8 12h8M8 16h5",
     authorable: true,
   },
   directory: {
@@ -397,7 +424,7 @@ export type Agent = Persona;
 
 /** Order of the Desk's primitive sections, grouped by sync class. */
 export const DESK_GROUPS: { label: string; kinds: PrimitiveKind[] }[] = [
-  { label: "Content", kinds: ["meeting", "artifact", "note"] },
+  { label: "Content", kinds: ["meeting", "artifact", "note", "decision"] },
   { label: "Capabilities", kinds: ["recipe", "chain", "workflow"] },
   { label: "Organization", kinds: ["directory", "kb", "project"] },
   { label: "Live", kinds: ["coder"] },

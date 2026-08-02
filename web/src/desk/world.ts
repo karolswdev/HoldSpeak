@@ -17,6 +17,7 @@ export interface WorldObject {
 const ORDER: Kind[] = [
   "meeting",
   "note",
+  "decision",
   "kb",
   "project",
   "recipe",
