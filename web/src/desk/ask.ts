@@ -123,6 +123,8 @@ export async function runAsk(opts: {
   /** HS-83-03: pin one of the hub's runnable models (the /api/models set);
    * an unknown name refuses 400 naming the allowed set. */
   model?: string;
+  /** An in-world surface can abandon a still-pending transmission. */
+  signal?: AbortSignal;
 }): Promise<AskRunResult> {
   const fail = (output: string): AskRunResult => ({
     ok: false,
@@ -141,6 +143,7 @@ export async function runAsk(opts: {
     const res = await apiRequest("/api/ask", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
+      signal: opts.signal,
       body: JSON.stringify({
         prompt: opts.prompt,
         lens: opts.lens,
