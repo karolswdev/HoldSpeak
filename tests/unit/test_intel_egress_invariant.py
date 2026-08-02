@@ -102,7 +102,6 @@ def test_deferred_queue_local_provider_never_reaches_cloud(monkeypatch):
     processed = intel_queue_module.process_next_intel_job(
         model_path="/does/not/exist/model.gguf",
         provider="local",
-        cloud_api_key_env="OPENAI_API_KEY",
     )
 
     assert processed is False

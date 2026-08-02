@@ -377,12 +377,15 @@ def _check_meeting_intel_runtime(config: Config) -> DoctorCheck:
             detail="Disabled in config",
         )
 
+    from ..intel.providers import effective_intel_cloud
+
+    effective = effective_intel_cloud(meeting)
     ok, reason = get_intel_runtime_status(
         meeting.intel_realtime_model,
         provider=meeting.intel_provider,
-        cloud_model=meeting.intel_cloud_model,
-        cloud_api_key_env=meeting.intel_cloud_api_key_env,
-        cloud_base_url=meeting.intel_cloud_base_url,
+        cloud_model=effective.model,
+        cloud_api_key_env=effective.api_key_env,
+        cloud_base_url=effective.base_url,
     )
     if ok:
         return DoctorCheck(
@@ -393,11 +396,11 @@ def _check_meeting_intel_runtime(config: Config) -> DoctorCheck:
 
     fix = None
     if meeting.intel_provider == "cloud":
-        fix = f"Set {meeting.intel_cloud_api_key_env} and verify cloud model '{meeting.intel_cloud_model}'."
+        fix = f"Set {effective.api_key_env} and verify cloud model '{effective.model}'."
     elif meeting.intel_provider == "auto":
         fix = (
             f"Provide a local model at '{meeting.intel_realtime_model}' "
-            f"or set {meeting.intel_cloud_api_key_env} for cloud fallback."
+            f"or set {effective.api_key_env} for cloud fallback."
         )
     else:
         fix = f"Set a valid local model path (currently '{meeting.intel_realtime_model}')."
@@ -411,10 +414,12 @@ def _check_meeting_intel_runtime(config: Config) -> DoctorCheck:
 
 
 def _normalize_cloud_base_url(base_url: str | None) -> str:
+    from ..intel.models import DEFAULT_CLOUD_BASE_URL
+
     value = (base_url or "").strip()
     if value:
         return value.rstrip("/")
-    return "https://api.openai.com/v1"
+    return DEFAULT_CLOUD_BASE_URL
 
 
 def _describe_preflight_network_error(host: str, reason: object) -> tuple[str, str]:
@@ -556,7 +561,10 @@ def _check_meeting_intel_cloud_preflight(
             fix="Run `holdspeak doctor` for a live cloud-endpoint preflight.",
         )
 
-    api_key_env = (meeting.intel_cloud_api_key_env or "OPENAI_API_KEY").strip() or "OPENAI_API_KEY"
+    from ..intel.providers import effective_intel_cloud
+
+    effective = effective_intel_cloud(meeting)
+    api_key_env = (effective.api_key_env or "OPENAI_API_KEY").strip() or "OPENAI_API_KEY"
     api_key = (os.environ.get(api_key_env) or "").strip()
     if not api_key:
         return DoctorCheck(
@@ -566,14 +574,14 @@ def _check_meeting_intel_cloud_preflight(
             fix=f"Set {api_key_env} in your shell or service environment before running cloud intel.",
         )
 
-    base_url = _normalize_cloud_base_url(meeting.intel_cloud_base_url)
+    base_url = _normalize_cloud_base_url(effective.base_url)
     parsed = urlparse(base_url)
     if parsed.scheme not in {"http", "https"} or not parsed.netloc:
         return DoctorCheck(
             name="Cloud intel preflight",
             status="WARN",
             detail=f"Invalid cloud base URL: {base_url}",
-            fix="Set `intel_cloud_base_url` to a valid http(s) URL, e.g. http://homelab.local:8000/v1.",
+            fix="Set the destination's endpoint URL to a valid http(s) URL, e.g. http://homelab.local:8000/v1.",
         )
 
     models_url = f"{base_url}/models"
@@ -603,7 +611,7 @@ def _check_meeting_intel_cloud_preflight(
                 name="Cloud intel preflight",
                 status="WARN",
                 detail=f"`{models_url}` returned HTTP 404.",
-                fix="Verify `intel_cloud_base_url` includes the correct API prefix (commonly `/v1`).",
+                fix="Verify the destination's endpoint URL includes the correct API prefix (commonly `/v1`).",
             )
         return DoctorCheck(
             name="Cloud intel preflight",
@@ -641,7 +649,7 @@ def _check_meeting_intel_cloud_preflight(
     except Exception:
         payload = None
 
-    configured_model = (meeting.intel_cloud_model or "").strip()
+    configured_model = (effective.model or "").strip()
     model_ids: list[str] = []
     if isinstance(payload, dict):
         data = payload.get("data")
@@ -658,7 +666,7 @@ def _check_meeting_intel_cloud_preflight(
             name="Cloud intel preflight",
             status="WARN",
             detail=f"Endpoint reachable, but model `{configured_model}` is unavailable.",
-            fix=f"Set `intel_cloud_model` to a served model id (examples: {sample}).",
+            fix=f"Set the destination's model to a served model id (examples: {sample}).",
         )
 
     if not model_ids:
@@ -942,8 +950,8 @@ def _check_dictation_runtime(config: Config) -> DoctorCheck:
             status="WARN" if effective.reason else "PASS",
             detail=(
                 f"resolved={resolved} ({reason}); endpoint="
-                f"{cfg.runtime.openai_compatible_base_url}; "
-                f"model={cfg.runtime.openai_compatible_model}{profile_note}"
+                f"{effective.base_url or 'unset — pick a destination in Settings → Models'}; "
+                f"model={effective.model or 'unset'}{profile_note}"
             ),
             fix=profile_fix or None,
         )

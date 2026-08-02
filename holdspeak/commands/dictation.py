@@ -219,12 +219,14 @@ def _cmd_blocks_validate(args, out: TextIO) -> int:
 def _cmd_runtime_status(args, out: TextIO) -> int:
     from ..plugins.dictation.runtime import RuntimeUnavailableError, resolve_backend
 
+    from ..intel.providers import effective_dictation_llm
+
     cfg = Config.load().dictation
+    effective = effective_dictation_llm(cfg.runtime)
     print(f"requested backend: {cfg.runtime.backend}", file=out)
     print(f"mlx_model: {cfg.runtime.mlx_model}", file=out)
     print(f"llama_cpp_model_path: {cfg.runtime.llama_cpp_model_path}", file=out)
-    print(f"openai_compatible_model: {cfg.runtime.openai_compatible_model}", file=out)
-    print(f"openai_compatible_base_url: {cfg.runtime.openai_compatible_base_url}", file=out)
+    print(f"destination: {effective.profile_name or 'hub default'}", file=out)
     try:
         resolved, reason = resolve_backend(cfg.runtime.backend)
     except RuntimeUnavailableError as exc:
@@ -234,8 +236,8 @@ def _cmd_runtime_status(args, out: TextIO) -> int:
 
     if resolved == "openai_compatible":
         print(
-            "endpoint: configured "
-            f"({cfg.runtime.openai_compatible_base_url}, model={cfg.runtime.openai_compatible_model})",
+            "endpoint: "
+            f"({effective.base_url or 'unset'}, model={effective.model or 'unset'})",
             file=out,
         )
         return _EXIT_OK

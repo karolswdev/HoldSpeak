@@ -14,6 +14,27 @@ logger = logging.getLogger(__name__)
 CONFIG_DIR = Path.home() / ".config" / "holdspeak"
 CONFIG_FILE = CONFIG_DIR / "config.json"
 
+# HS-112-01 — the one dial. Endpoint/model identity lives ONLY in the
+# profiles table (`InferenceTarget`); these config fields are dead legacy
+# fallbacks kept solely as the source for the one silent migration below.
+# Feature code never reads them; the settings API never writes or returns
+# them.
+LEGACY_ENDPOINT_FIELDS: dict[str, tuple[str, ...]] = {
+    "meeting": (
+        "intel_cloud_model",
+        "intel_cloud_api_key_env",
+        "intel_cloud_base_url",
+    ),
+    "dictation.runtime": (
+        "openai_compatible_model",
+        "openai_compatible_api_key_env",
+        "openai_compatible_base_url",
+    ),
+}
+
+LEGACY_INTEL_PROFILE_ID = "legacy-intel"
+LEGACY_DICTATION_PROFILE_ID = "legacy-dictation"
+
 # The config format version. Bumped when the on-disk shape changes in a way that
 # needs forward coercion. A config without this field is treated as pre-versioning
 # and coerced forward; a config newer than this build is loaded but flagged rather
@@ -138,14 +159,16 @@ class MeetingConfig:
     intel_retry_failure_webhook_url: Optional[str] = None  # Optional POST endpoint for sustained failure alerts
     intel_retry_failure_webhook_header_name: Optional[str] = None  # Optional custom header name for alert webhooks
     intel_retry_failure_webhook_header_value: Optional[str] = None  # Optional custom header value for alert webhooks
+    # DEAD legacy fallbacks (HS-112-01): read only by the one-time migration
+    # in `migrate_legacy_endpoints`, never by feature code.
     intel_cloud_model: str = "gpt-5-mini"
     intel_cloud_api_key_env: str = "OPENAI_API_KEY"
     intel_cloud_base_url: Optional[str] = None
     intel_cloud_reasoning_effort: Optional[str] = None
     intel_cloud_store: bool = False
-    # HS-84-01: run the cloud leg on a RuntimeProfile (authored at /profiles).
-    # Empty/None = the intel_cloud_* fields above stay the shape, byte-identical.
-    # A dangling id falls back to those fields too — honestly, never a crash.
+    # The ONE pointer for the meeting-intel cloud leg: an InferenceTarget id
+    # in the profiles table. None = hub default. A dangling id degrades
+    # honestly at resolution time, never a crash.
     intel_profile_id: Optional[str] = None
 
     # Web dashboard
@@ -222,6 +245,10 @@ class MeetingConfig:
     similarity_threshold: float = 0.75  # Cosine similarity for speaker matching
 
     def __post_init__(self) -> None:
+        # HS-112-01: one pointer sentinel — None means hub default.
+        self.intel_profile_id = (
+            str(self.intel_profile_id or "").strip() or None
+        )
         # MIR-01 spec §9.9 — conservative validation. Reject on construction
         # so typos / drifted user-config values surface immediately rather
         # than at first meeting stop.
@@ -337,13 +364,15 @@ class LLMRuntimeConfig:
     # at current small instruct models; swap for whatever you run locally.
     mlx_model: str = "~/Models/mlx/Qwen3.5-8B-MLX-4bit"
     llama_cpp_model_path: str = "~/Models/gguf/Qwen3.5-4B-Instruct-Q4_K_M.gguf"
+    # DEAD legacy fallbacks (HS-112-01): read only by the one-time migration
+    # in `migrate_legacy_endpoints`, never by feature code.
     openai_compatible_model: str = "qwen3.5-8b-instruct"
     openai_compatible_base_url: str = "http://127.0.0.1:8000/v1"
     openai_compatible_api_key_env: str = "OPENAI_API_KEY"
-    # HS-84-02: run the LLM leg on a RuntimeProfile (authored at /profiles).
-    # Empty/None = the openai_compatible_* fields above stay the shape,
-    # byte-identical. An adopted profile also selects the openai_compatible
-    # backend; a dangling id falls back to this config — honestly, never a crash.
+    # The ONE pointer for the dictation LLM leg: an InferenceTarget id in the
+    # profiles table. None = hub default (the configured local backend). An
+    # adopted target also selects the openai_compatible backend; a dangling
+    # id degrades honestly at resolution time, never a crash.
     profile_id: Optional[str] = None
     openai_compatible_timeout_seconds: float = 8.0
     n_ctx: int = 2048
@@ -351,6 +380,10 @@ class LLMRuntimeConfig:
     n_gpu_layers: int = -1
     warm_on_start: bool = False
     eviction_idle_seconds: int = 0
+
+    def __post_init__(self) -> None:
+        # HS-112-01: one pointer sentinel — None means hub default.
+        self.profile_id = str(self.profile_id or "").strip() or None
 
 
 _KNOWN_DICTATION_STAGES = ("intent-router", "project-rewriter", "kb-enricher")
@@ -765,9 +798,70 @@ class RailsObserverConfig:
     """
 
     enabled: bool = False
-    profile_id: str = ""  # the summarizer's RuntimeProfile; "" = hub default
+    # The ONE pointer for the observer's summarizer: an InferenceTarget id
+    # in the profiles table. None = hub default (HS-112-01 sentinel rule).
+    profile_id: Optional[str] = None
     poll_seconds: int = 30
     tail: int = 20  # how many recent rail events to consider per tick
+
+    def __post_init__(self) -> None:
+        self.profile_id = str(self.profile_id or "").strip() or None
+
+
+def migrate_legacy_endpoints(config: "Config", path: Optional[Path] = None, *, db=None) -> bool:
+    """The ONE silent legacy-endpoint migration (HS-112-01).
+
+    A configured legacy endpoint (``intel_cloud_*`` with no pointer, or a
+    dictation endpoint backend with no pointer) is minted ONCE as a synthetic
+    row in the profiles table and the feature pointer is set to it; the config
+    is saved so the migration never recurs. Idempotent: a set pointer skips
+    its leg; a fresh config mints nothing. A missing/unopenable DB is a
+    silent no-op (retried on the next load). Returns whether anything minted.
+    """
+    meeting = config.meeting
+    runtime = config.dictation.runtime
+
+    intel_base = str(meeting.intel_cloud_base_url or "").strip()
+    intel_needed = not meeting.intel_profile_id and (
+        bool(intel_base) or meeting.intel_provider == "cloud"
+    )
+    dictation_needed = not runtime.profile_id and runtime.backend == "openai_compatible"
+    if not (intel_needed or dictation_needed):
+        return False
+
+    try:
+        if db is None:
+            from .db import get_database
+
+            db = get_database()
+        from .intel.models import DEFAULT_CLOUD_BASE_URL
+
+        if intel_needed:
+            db.profiles.upsert(
+                profile_id=LEGACY_INTEL_PROFILE_ID,
+                name="Migrated intel endpoint",
+                kind="openAICompatible",
+                base_url=intel_base or DEFAULT_CLOUD_BASE_URL,
+                model=str(meeting.intel_cloud_model or "").strip(),
+                requires_key=not bool(intel_base),
+            )
+            meeting.intel_profile_id = LEGACY_INTEL_PROFILE_ID
+        if dictation_needed:
+            db.profiles.upsert(
+                profile_id=LEGACY_DICTATION_PROFILE_ID,
+                name="Migrated dictation endpoint",
+                kind="openAICompatible",
+                base_url=str(runtime.openai_compatible_base_url or "").strip()
+                or "http://127.0.0.1:8000/v1",
+                model=str(runtime.openai_compatible_model or "").strip(),
+                requires_key=False,
+            )
+            runtime.profile_id = LEGACY_DICTATION_PROFILE_ID
+        config.save(path)
+    except Exception as exc:
+        logger.warning("config: legacy endpoint migration skipped (%s)", exc)
+        return False
+    return True
 
 
 @dataclass
@@ -824,7 +918,7 @@ class Config:
                 ),
             )
 
-            return cls(
+            config = cls(
                 config_version=config_version,
                 control_mode=(
                     str(data.get("control_mode", "neutral")).strip().lower()
@@ -849,6 +943,12 @@ class Config:
                     RailsObserverConfig, data.get("rails_observer", {}) or {}, section="rails_observer"
                 ),
             )
+            # HS-112-01: the one-time legacy-endpoint migration runs only on
+            # the real install's config (an explicit path is a test/tool
+            # load and stays inert).
+            if path is None:
+                migrate_legacy_endpoints(config, config_path)
+            return config
         except Exception as exc:
             # Last-resort fallback for a genuinely broken config (bad JSON, wrong
             # top-level type, or a value a sub-config's __post_init__ rejects).

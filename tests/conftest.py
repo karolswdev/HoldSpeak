@@ -363,6 +363,20 @@ def _isolate_agent_session_registry(tmp_path_factory, monkeypatch):
 
 
 @pytest.fixture(autouse=True)
+def _isolate_config_file(tmp_path_factory, monkeypatch):
+    """HS-112-01: `Config.load()` with no explicit path is the REAL install's
+    load — it runs the one-time legacy-endpoint migration, which writes to
+    the profiles DB and re-saves the config. Tests must never read the
+    developer's live `~/.config/holdspeak/config.json` or mint rows in the
+    real DB, so the default config path is a per-test temp file. Tests that
+    need a specific config still monkeypatch their own path on top."""
+    import holdspeak.config as config_mod
+
+    cfg = tmp_path_factory.mktemp("config") / "config.json"
+    monkeypatch.setattr(config_mod, "CONFIG_FILE", cfg)
+
+
+@pytest.fixture(autouse=True)
 def _reset_endpoint_health():
     """HS-103-04: `default_health` is one process-wide breaker so real call
     sites share state — but that makes it global mutable state across the

@@ -36,23 +36,33 @@ def test_get_cloud_runtime_status_requires_api_key(monkeypatch) -> None:
     assert "OPENAI_API_KEY" in reason
 
 
-def test_build_configured_meeting_intel_reads_config(monkeypatch) -> None:
-    # Plugins must honour the user's configured endpoint, not MeetingIntel()
-    # bare module defaults (the gap the spoken e2e surfaced, HS-27-02).
+def test_build_configured_meeting_intel_reads_the_assigned_target(monkeypatch) -> None:
+    # Plugins must honour the user's assigned InferenceTarget, not
+    # MeetingIntel() bare module defaults (HS-27-02, retargeted HS-112-01:
+    # the endpoint lives ONLY in the profiles table).
+    from holdspeak.db.models import ProfileRecord
     from holdspeak.intel import build_configured_meeting_intel
 
     cfg = SimpleNamespace(
         meeting=SimpleNamespace(
             intel_provider="cloud",
-            intel_cloud_model="Qwen3.5-9B-UD-Q6_K_XL.gguf",
-            intel_cloud_api_key_env="OPENAI_API_KEY",
-            intel_cloud_base_url="http://192.168.1.43:8080/v1",
             intel_cloud_reasoning_effort=None,
             intel_cloud_store=False,
             intel_realtime_model=None,
+            intel_profile_id="p-43",
         )
     )
     monkeypatch.setattr("holdspeak.config.Config.load", classmethod(lambda cls, path=None: cfg))
+    monkeypatch.setattr(
+        "holdspeak.intel.providers._lookup_profile_record",
+        lambda pid: ProfileRecord(
+            id=pid,
+            name="LAN llama",
+            kind="openAICompatible",
+            base_url="http://192.168.1.43:8080/v1",
+            model="Qwen3.5-9B-UD-Q6_K_XL.gguf",
+        ),
+    )
 
     intel = build_configured_meeting_intel()
     assert intel.provider == "cloud"

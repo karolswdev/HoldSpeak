@@ -104,8 +104,8 @@ def runtime_guidance(
             ),
             "model_path": None,
             "next_step": (
-                "Set dictation.runtime.openai_compatible_base_url and "
-                "dictation.runtime.openai_compatible_model, then refresh readiness."
+                "Pick a destination in Settings → Models (or add one there), "
+                "then refresh readiness."
             ),
             "commands": [
                 {

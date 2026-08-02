@@ -135,22 +135,26 @@ def process_next_intel_job(
     *,
     provider: str = "local",
     on_meeting_ready=None,
-    cloud_model: str = "gpt-5-mini",
-    cloud_api_key_env: str = "OPENAI_API_KEY",
-    cloud_base_url: Optional[str] = None,
-    cloud_reasoning_effort: Optional[str] = None,
-    cloud_store: bool = False,
     retry_base_seconds: int = RETRY_BASE_SECONDS,
     retry_max_seconds: int = RETRY_MAX_SECONDS,
     retry_max_attempts: int = RETRY_MAX_ATTEMPTS,
     include_scheduled: bool = False,
 ) -> bool:
-    """Process a single queued intelligence job, if available."""
+    """Process a single queued intelligence job, if available.
+
+    The cloud leg is not threaded in as bare params (HS-112-01): it resolves
+    here, through the one resolver, from the assigned InferenceTarget.
+    """
+    from .config import Config
+    from .intel.providers import effective_intel_cloud
+
+    meeting_cfg = Config.load().meeting
+    effective = effective_intel_cloud(meeting_cfg)
     runtime_kwargs = {
         "provider": provider,
-        "cloud_model": cloud_model,
-        "cloud_api_key_env": cloud_api_key_env,
-        "cloud_base_url": cloud_base_url,
+        "cloud_model": effective.model,
+        "cloud_api_key_env": effective.api_key_env,
+        "cloud_base_url": effective.base_url,
     }
     if model_path:
         runtime_ok, runtime_reason = get_intel_runtime_status(model_path, **runtime_kwargs)
@@ -198,17 +202,28 @@ def process_next_intel_job(
             from .faults import trip as _fault_trip
 
             _fault_trip("intel.model_unavailable")
-            kwargs = {
-                "provider": provider,
-                "cloud_model": cloud_model,
-                "cloud_api_key_env": cloud_api_key_env,
-                "cloud_base_url": cloud_base_url,
-                "cloud_reasoning_effort": cloud_reasoning_effort,
-                "cloud_store": cloud_store,
-            }
-            if model_path:
-                kwargs["model_path"] = model_path
-            intel = MeetingIntel(**kwargs)
+            if effective.node:
+                from .intel.mesh_relay import MeshRelayIntel
+
+                intel = MeshRelayIntel(
+                    node=effective.node, model_hint=effective.model
+                )
+            else:
+                kwargs = {
+                    "provider": provider,
+                    "cloud_model": effective.model,
+                    "cloud_api_key_env": effective.api_key_env,
+                    "cloud_base_url": effective.base_url,
+                    "cloud_reasoning_effort": getattr(
+                        meeting_cfg, "intel_cloud_reasoning_effort", None
+                    ),
+                    "cloud_store": bool(
+                        getattr(meeting_cfg, "intel_cloud_store", False)
+                    ),
+                }
+                if model_path:
+                    kwargs["model_path"] = model_path
+                intel = MeetingIntel(**kwargs)
             transcript = "\n".join(str(segment) for segment in meeting.segments)
             result = intel.analyze(transcript, stream=False)
             if result.error:
@@ -247,9 +262,6 @@ def process_next_intel_job(
         # Phase-67 F-05 fix). Gated on the same knob that gates live routing.
         # Any unresolved plugin keeps the base analysis/artifacts and leaves an
         # owner-recoverable partial job; only the complete chain becomes Ready.
-        from .config import Config
-
-        meeting_cfg = Config.load().meeting
         artifact_count = 0
         if bool(getattr(meeting_cfg, "intent_router_enabled", False)):
             try:
@@ -353,11 +365,6 @@ def drain_intel_queue(
     *,
     provider: str = "local",
     on_meeting_ready=None,
-    cloud_model: str = "gpt-5-mini",
-    cloud_api_key_env: str = "OPENAI_API_KEY",
-    cloud_base_url: Optional[str] = None,
-    cloud_reasoning_effort: Optional[str] = None,
-    cloud_store: bool = False,
     retry_base_seconds: int = RETRY_BASE_SECONDS,
     retry_max_seconds: int = RETRY_MAX_SECONDS,
     retry_max_attempts: int = RETRY_MAX_ATTEMPTS,
@@ -371,11 +378,6 @@ def drain_intel_queue(
             model_path,
             provider=provider,
             on_meeting_ready=on_meeting_ready,
-            cloud_model=cloud_model,
-            cloud_api_key_env=cloud_api_key_env,
-            cloud_base_url=cloud_base_url,
-            cloud_reasoning_effort=cloud_reasoning_effort,
-            cloud_store=cloud_store,
             retry_base_seconds=retry_base_seconds,
             retry_max_seconds=retry_max_seconds,
             retry_max_attempts=retry_max_attempts,
@@ -395,11 +397,6 @@ class IntelQueueWorker:
         poll_seconds: float,
         *,
         provider: str = "local",
-        cloud_model: str = "gpt-5-mini",
-        cloud_api_key_env: str = "OPENAI_API_KEY",
-        cloud_base_url: Optional[str] = None,
-        cloud_reasoning_effort: Optional[str] = None,
-        cloud_store: bool = False,
         retry_base_seconds: int = RETRY_BASE_SECONDS,
         retry_max_seconds: int = RETRY_MAX_SECONDS,
         retry_max_attempts: int = RETRY_MAX_ATTEMPTS,
@@ -411,11 +408,6 @@ class IntelQueueWorker:
     ) -> None:
         self.model_path = model_path
         self.provider = provider
-        self.cloud_model = cloud_model
-        self.cloud_api_key_env = cloud_api_key_env
-        self.cloud_base_url = cloud_base_url
-        self.cloud_reasoning_effort = cloud_reasoning_effort
-        self.cloud_store = cloud_store
         self.retry_base_seconds = max(1, int(retry_base_seconds))
         self.retry_max_seconds = max(self.retry_base_seconds, int(retry_max_seconds))
         self.retry_max_attempts = max(1, int(retry_max_attempts))
@@ -574,11 +566,6 @@ class IntelQueueWorker:
                 processed = drain_intel_queue(
                     self.model_path,
                     provider=self.provider,
-                    cloud_model=self.cloud_model,
-                    cloud_api_key_env=self.cloud_api_key_env,
-                    cloud_base_url=self.cloud_base_url,
-                    cloud_reasoning_effort=self.cloud_reasoning_effort,
-                    cloud_store=self.cloud_store,
                     retry_base_seconds=self.retry_base_seconds,
                     retry_max_seconds=self.retry_max_seconds,
                     retry_max_attempts=self.retry_max_attempts,
@@ -602,11 +589,6 @@ def start_intel_queue_worker(
     model_path: Optional[str] = None,
     *,
     provider: str = "local",
-    cloud_model: str = "gpt-5-mini",
-    cloud_api_key_env: str = "OPENAI_API_KEY",
-    cloud_base_url: Optional[str] = None,
-    cloud_reasoning_effort: Optional[str] = None,
-    cloud_store: bool = False,
     retry_base_seconds: int = RETRY_BASE_SECONDS,
     retry_max_seconds: int = RETRY_MAX_SECONDS,
     retry_max_attempts: int = RETRY_MAX_ATTEMPTS,
@@ -622,11 +604,6 @@ def start_intel_queue_worker(
         model_path=model_path,
         poll_seconds=poll_seconds,
         provider=provider,
-        cloud_model=cloud_model,
-        cloud_api_key_env=cloud_api_key_env,
-        cloud_base_url=cloud_base_url,
-        cloud_reasoning_effort=cloud_reasoning_effort,
-        cloud_store=cloud_store,
         retry_base_seconds=retry_base_seconds,
         retry_max_seconds=retry_max_seconds,
         retry_max_attempts=retry_max_attempts,

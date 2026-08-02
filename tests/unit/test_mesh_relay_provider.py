@@ -187,7 +187,7 @@ def test_mesh_profile_without_node_falls_back_with_reason() -> None:
         get_profile=lambda pid: _mesh_profile(node=""),
     )
     assert eff.node is None
-    assert eff.base_url == "http://legacy.example:8000/v1"
+    assert eff.base_url is None
     assert "names no node" in (eff.reason or "")
 
 

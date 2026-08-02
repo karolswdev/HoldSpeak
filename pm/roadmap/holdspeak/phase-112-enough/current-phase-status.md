@@ -69,7 +69,7 @@ it does not absorb it — it names it in the final summary.
 
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
-| HS-112-01 | One dial | ready | [story-01-one-dial](./story-01-one-dial.md) | — |
+| HS-112-01 | One dial | in-progress | [story-01-one-dial](./story-01-one-dial.md) | — |
 | HS-112-02 | Speak speaks | backlog | [story-02-speak-speaks](./story-02-speak-speaks.md) | — |
 | HS-112-03 | The architect's desk | backlog | [story-03-architects-desk](./story-03-architects-desk.md) | — |
 | HS-112-04 | The plain story | backlog | [story-04-plain-story](./story-04-plain-story.md) | — |
@@ -78,7 +78,28 @@ it does not absorb it — it names it in the final summary.
 
 ## Where we are
 
-0/6. Chartered 2026-08-02 from the owner's post-111 verdict; the
+0/6 flipped; 01 BUILT (in-progress pending the live proof).
+HS-112-01 implemented 2026-08-02: the InferenceTarget is the only
+truth. The legacy intel_cloud_*/openai_compatible_* fields are dead
+everywhere except the ONE silent migration at default-path
+Config.load() (legacy-intel / legacy-dictation synthetic targets,
+idempotent, explicit-path loads never migrate); the three feature
+pointers share one sentinel (None = hub default, rails' "" fixed);
+the default host has one chokepoint; intel_queue resolves through
+effective_intel_cloud instead of threading the triple through six
+signatures; /api/profiles writes 405 naming /api/inference-targets;
+settings PUT strips the dead fields from the wire. One face: the
+Prefs Models module (DESTINATIONS table with key/readiness lamps +
+armed FORGET, PROBE row, RUNS ON pickers for DICTATION/MEETINGS/
+RAILS, HUB DEFAULT ENGINE, RAILS OBSERVER); RuntimeDestination and
+ProfilesCore DELETED with every call site aliased into the one
+dial; the grep census pinned as tests both sides. 22-test story
+suite + 879 targeted + full 3454 unit + 449 web green. Named debt:
+legacy key env deliberately does not carry over (per-destination
+key rule); per-target probe endpoint named not absorbed. The flip
+awaits the live proof: one dial set once, dictation + meeting
+intel + ask all landing on the real endpoint (control-vs-treatment
+on .43), error legs shot at 1440+393. Chartered 2026-08-02. Chartered 2026-08-02 from the owner's post-111 verdict; the
 same day the owner chartered the open-mic rider live (HS-112-06 —
 the voice-first Desk: one mic grant, continuous stream, VAD; PTT
 byte-identical). The pre-charter survey (three parallel audits: the

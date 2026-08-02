@@ -4,9 +4,10 @@
 intel (HS-84-01): a valid assigned ``openAICompatible`` RuntimeProfile shapes
 the LLM leg AND selects the openai_compatible backend (assignment is the
 user's explicit "run it there"); dangling/deleted/non-endpoint/lookup-failure
-fall back to the configured backend + ``openai_compatible_*`` shape with a
-named reason. Unset is byte-identical, locked here, not claimed. The setup
-probe and setup status report the EFFECTIVE endpoint, not raw config fields.
+fall back to the configured local backend with a named reason (HS-112-01:
+the legacy endpoint config fields are dead and never read). Unset leaves the
+local backend byte-identical. The setup probe and setup status report the
+EFFECTIVE endpoint, not raw config fields.
 """
 
 from __future__ import annotations
@@ -36,11 +37,11 @@ def _profile(**overrides) -> ProfileRecord:
 # ── the resolver ─────────────────────────────────────────────────────────
 
 
-def test_unset_profile_is_the_legacy_shape_verbatim() -> None:
+def test_unset_profile_is_the_hub_default_shape() -> None:
     runtime = LLMRuntimeConfig()
     eff = effective_dictation_llm(runtime, get_profile=lambda pid: pytest.fail("no lookup"))
-    assert eff.model == "qwen3.5-8b-instruct"
-    assert eff.base_url == "http://127.0.0.1:8000/v1"
+    assert eff.model == ""
+    assert eff.base_url is None
     assert eff.api_key_env == "OPENAI_API_KEY"
     assert eff.profile_id is None and eff.reason is None
 
@@ -58,7 +59,7 @@ def test_valid_endpoint_profile_shapes_the_llm_leg(monkeypatch) -> None:
 def test_dangling_profile_falls_back_with_a_named_reason() -> None:
     runtime = LLMRuntimeConfig(profile_id="gone")
     eff = effective_dictation_llm(runtime, get_profile=lambda pid: None)
-    assert eff.base_url == "http://127.0.0.1:8000/v1"
+    assert eff.base_url is None
     assert eff.profile_id is None
     assert "assigned profile missing: gone" in (eff.reason or "")
 
@@ -68,7 +69,7 @@ def test_ondevice_profile_runs_on_the_configured_backend() -> None:
     eff = effective_dictation_llm(
         runtime, get_profile=lambda pid: _profile(id="p-dev", kind="onDevice", base_url="")
     )
-    assert eff.base_url == "http://127.0.0.1:8000/v1"
+    assert eff.base_url is None
     assert "onDevice-kind" in (eff.reason or "")
 
 
@@ -90,9 +91,9 @@ def test_assembly_unset_is_byte_identical() -> None:
     runtime, status, _ = _try_build_runtime(cfg, _capture_factory(captured))
     assert status == "loaded" and runtime is not None
     assert captured["backend"] == "mlx"
-    assert captured["openai_compatible_model"] == "qwen3.5-8b-instruct"
-    assert captured["openai_compatible_base_url"] == "http://127.0.0.1:8000/v1"
-    assert captured["openai_compatible_api_key_env"] == "OPENAI_API_KEY"
+    assert captured["endpoint_model"] == ""
+    assert captured["endpoint_base_url"] is None
+    assert captured["endpoint_api_key_env"] == "OPENAI_API_KEY"
 
 
 def test_assembly_adopted_profile_selects_the_endpoint_backend(monkeypatch) -> None:
@@ -105,8 +106,8 @@ def test_assembly_adopted_profile_selects_the_endpoint_backend(monkeypatch) -> N
     captured: dict = {}
     _try_build_runtime(cfg, _capture_factory(captured))
     assert captured["backend"] == "openai_compatible"
-    assert captured["openai_compatible_base_url"] == "http://192.168.1.43:8080/v1"
-    assert captured["openai_compatible_model"] == "Qwen3.5-9B-Q6_K"
+    assert captured["endpoint_base_url"] == "http://192.168.1.43:8080/v1"
+    assert captured["endpoint_model"] == "Qwen3.5-9B-Q6_K"
 
 
 def test_assembly_dangling_destination_refuses_without_retargeting(monkeypatch) -> None:

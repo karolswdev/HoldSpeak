@@ -106,22 +106,25 @@ def test_history_core_artifacts_wing_is_the_library() -> None:
     )
 
 
-def test_profiles_core_never_regresses_to_a_field_stack() -> None:
-    """HS-102-01 — creating/editing a Runs on destination is choice
-    bays + SurfaceGroup rows, never the old label-over-input `Field`/
-    `Select` stack the story convicted. Named by story so the next
-    "quick fix" can't quietly bring the old form back."""
-    source = (WEB_SRC / "pages" / "cores" / "ProfilesCore.tsx").read_text(
+def test_runs_on_room_stays_folded_into_the_models_module() -> None:
+    """HS-112-01 — the standalone Runs-on room died; target CRUD lives
+    ONLY in the Prefs `models` module (`settingsModels.tsx`), composed
+    from the gadget kit — never a label-over-input `Field`/`Select`
+    stack."""
+    assert not (WEB_SRC / "pages" / "cores" / "ProfilesCore.tsx").exists(), (
+        "HS-112-01 regression: the standalone Runs-on room must stay "
+        "retired — target CRUD lives in the Prefs models module."
+    )
+    source = (WEB_SRC / "pages" / "cores" / "settingsModels.tsx").read_text(
         encoding="utf-8"
     )
-    assert "<Field" not in source, (
-        "HS-102-01 regression: ProfilesCore.tsx must not render a "
-        "label-over-input <Field> stack in its create/edit path — use "
-        "SurfaceGroup/SurfaceSettingRow choice bays instead."
+    assert "<Field" not in source and "<Select" not in source, (
+        "HS-112-01 regression: the models module composes from the "
+        "gadget kit, never a label-over-input Field/Select stack."
     )
-    assert "<Select" not in source, (
-        "HS-102-01 regression: destination Kind is chosen by bay, "
-        "never a bare <Select> the person has to simulate in their head."
+    assert "/api/inference-targets" in source, (
+        "HS-112-01 regression: the models module writes ONLY through "
+        "/api/inference-targets (the one write path)."
     )
 
 
@@ -138,11 +141,16 @@ def test_dictation_core_speech_settings_never_regresses() -> None:
         "HS-102-06 regression: Knowledge/Instructions must save on commit "
         "through EditInPlace, never an orange Save button."
     )
-    assert "RuntimeDestination" in source, (
-        "HS-102-06 regression: the dictation runtime knobs must embed the "
-        "ONE shared RuntimeDestination component (settingsBespoke.tsx), "
-        "never re-derive Backend/Runs on/Latency budget as a third "
-        "Field/Select stack."
+    # HS-112-01: the runtime destination is edited ONLY in the Prefs
+    # models module — the Speak face states the fact and hands over,
+    # never re-deriving a second endpoint editor.
+    assert "RUNS ON LIVES IN MODELS" in source, (
+        "HS-112-01 regression: the Speak runtime face must hand over to "
+        "the Prefs models module (the one dial), never embed or "
+        "re-derive an endpoint editor."
+    )
+    assert "openai_compatible_base_url" not in source, (
+        "HS-112-01 regression: no raw endpoint fields in the Speak face."
     )
     # HS-111-02: the gear door migrated from the macOS SurfaceGroup/
     # SurfaceToggle grammar to the HS-111-01 gadget sheet — the guard
