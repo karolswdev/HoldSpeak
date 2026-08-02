@@ -628,6 +628,7 @@ export function LampGadget({
 
 export function TransportKey({
   label,
+  word,
   glyph,
   active,
   disabled,
@@ -637,6 +638,10 @@ export function TransportKey({
   title,
 }: {
   label: string;
+  /** HS-112-06 — the engraved word when the label is longer than the
+   * key is wide (48px of 9px mono ≈ 7 characters). The label stays the
+   * accessible name; only the engraving shortens. */
+  word?: string;
   glyph: ReactNode;
   /** Held/armed — inverted video. */
   active?: boolean;
@@ -666,7 +671,7 @@ export function TransportKey({
       <span className="gadget-transport-glyph" aria-hidden="true">
         {glyph}
       </span>
-      <span className="gadget-transport-word">{label}</span>
+      <span className="gadget-transport-word">{word ?? label}</span>
     </button>
   );
 }

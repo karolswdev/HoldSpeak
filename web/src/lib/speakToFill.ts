@@ -1,49 +1,31 @@
 import { apiFetch } from "./api";
 import {
+  abortHold,
+  beginHold,
+  endHold,
+  micCaptureSupported,
+  subscribeCaptureLevel,
+} from "./micSession";
+import {
   clearPendingVoice,
   loadPendingVoice,
   savePendingVoice,
 } from "./pendingVoice";
 
-type Capture = {
-  stream: MediaStream;
-  context: AudioContext;
-  source: MediaStreamAudioSourceNode;
-  node: ScriptProcessorNode;
-  chunks: Float32Array[];
-  rate: number;
-};
-
-let active: Capture | null = null;
+/* HS-112-06 — the hold path is now a TENANT of the one Desk mic session
+   (lib/micSession): the same grant, the same AudioWorklet, the same
+   level tap the open mic uses. This module keeps the speak-to-fill
+   contract every text field calls (start / stop-and-transcribe) and the
+   WAV encoding; it no longer owns a stream. */
 
 /* HS-111-02 — the level tap: the capture stream reports its own RMS
-   level (0..1) to any listening meter (the cockpit's LedMeter). The
-   tap lives HERE because this module owns the stream; subscribers get
-   a normalized level per processed buffer and a final 0 on teardown. */
-type LevelListener = (level: number) => void;
-const levelListeners = new Set<LevelListener>();
-
-export function subscribeCaptureLevel(listener: LevelListener): () => void {
-  levelListeners.add(listener);
-  return () => {
-    levelListeners.delete(listener);
-  };
-}
-
-function emitLevel(level: number): void {
-  levelListeners.forEach((listener) => listener(level));
-}
-
-type AudioWindow = Window &
-  typeof globalThis & { webkitAudioContext?: typeof AudioContext };
+   level (0..1) to any listening meter (the cockpit's LedMeter). The tap
+   now lives with the session that owns the frames; re-exported here so
+   every existing meter subscribes exactly as before. */
+export { subscribeCaptureLevel };
 
 export function speakToFillSupported(): boolean {
-  const audioWindow = window as AudioWindow;
-  return (
-    typeof navigator.mediaDevices?.getUserMedia === "function" &&
-    ("AudioContext" in window ||
-      typeof audioWindow.webkitAudioContext === "function")
-  );
+  return micCaptureSupported();
 }
 
 /** Why capture is unavailable, or null when it is available.
@@ -62,48 +44,11 @@ export function speakToFillUnsupportedReason(): string | null {
 }
 
 export async function startCapture(): Promise<void> {
-  if (active) await cancelCapture();
-  const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-  const audioWindow = window as AudioWindow;
-  const Context = window.AudioContext || audioWindow.webkitAudioContext;
-  if (!Context)
-    throw new Error("Audio capture is not supported by this browser.");
-  const context = new Context();
-  const source = context.createMediaStreamSource(stream);
-  const node = context.createScriptProcessor(4096, 1, 1);
-  const chunks: Float32Array[] = [];
-  node.onaudioprocess = (event) => {
-    const samples = new Float32Array(event.inputBuffer.getChannelData(0));
-    chunks.push(samples);
-    let sum = 0;
-    for (let index = 0; index < samples.length; index += 1)
-      sum += samples[index] * samples[index];
-    // Speech RMS sits around 0.05–0.3; ×4 spreads it over the meter.
-    emitLevel(Math.min(1, Math.sqrt(sum / samples.length) * 4));
-  };
-  source.connect(node);
-  node.connect(context.destination);
-  active = { stream, context, source, node, chunks, rate: context.sampleRate };
-}
-
-function teardown(): Pick<Capture, "chunks" | "rate"> | null {
-  if (!active) return null;
-  const { stream, context, source, node, chunks, rate } = active;
-  try {
-    source.disconnect();
-    node.disconnect();
-  } catch {
-    /* already torn down */
-  }
-  stream.getTracks().forEach((track) => track.stop());
-  void context.close().catch(() => undefined);
-  active = null;
-  emitLevel(0);
-  return { chunks, rate };
+  await beginHold();
 }
 
 export async function cancelCapture(): Promise<void> {
-  teardown();
+  abortHold();
 }
 
 export function toWav16kMono(
@@ -175,7 +120,7 @@ export async function retryPendingTranscription(
 }
 
 export async function stopAndTranscribe(scope?: string): Promise<string> {
-  const captured = teardown();
+  const captured = endHold();
   if (!captured?.chunks.length) return "";
   const audio = toWav16kMono(captured.chunks, captured.rate);
   if (scope) await savePendingVoice(scope, audio);
