@@ -1,11 +1,11 @@
 /** HS-95-01 — the GL world engine. One pixi Application draws the whole
- * world layer (zones, objects, selection, drag, ambient motes) from the
- * pure scene model; the desk store stays the only truth and every store
- * write goes through the exact same actions the DOM world called. Per-frame
- * work is transform-only on the GPU scene graph — no DOM layout, no paint.
+ * world layer (zones, objects, selection, drag) from the pure scene model;
+ * the desk store stays the only truth and every store write goes through the
+ * exact same actions the DOM world called. Per-frame work is transform-only
+ * on the GPU scene graph — no DOM layout, no paint.
  *
  * Stacking parity with the DOM world: zones (z 2) draw above resting
- * objects; whatever is dragging rides at z 20; motes drift beneath all. */
+ * objects; whatever is dragging rides at z 20. */
 import {
   Application,
   Container,
@@ -46,7 +46,6 @@ import {
   glowTexture,
   gripTexture,
   loadSprite,
-  moteTexture,
   shadowTexture,
   zonePanelTexture,
   zoneShadowTexture,
@@ -59,7 +58,6 @@ import { spriteUrl as spriteStateUrl } from "../sprites";
 const ACCENT = "#ff6b35";
 const TEXT_COLOR = 0xf2f3f5;
 const TEXT_MUTED = 0x9ba2b0;
-const BOB_SECONDS = 4.6;
 
 interface ObjectNode {
   root: Container;
@@ -69,7 +67,6 @@ interface ObjectNode {
   glowTint: string;
   ring: Graphics;
   sprite: Sprite;
-  highlight: Sprite;
   paper: Sprite | null;
   label: Text;
   labelBg: Graphics;
@@ -82,9 +79,6 @@ interface ObjectNode {
   spriteUrl: string;
   labelText: string;
   ringState: string;
-  bornAt: number;
-  ringBornAt: number;
-  wasNew: boolean;
   data: SceneObject;
 }
 
@@ -101,10 +95,6 @@ interface ZoneNode {
   labelText: string;
   countBadge: Container | null;
   countText: string;
-  lift: number;
-  liftTarget: number;
-  scale: number;
-  scaleTarget: number;
   data: SceneZone;
 }
 
@@ -164,16 +154,8 @@ export class WorldEngine {
   private callbacks: EngineCallbacks;
   private zoneLayer = new Container();
   private objectLayer = new Container();
-  private moteLayer = new Container();
   private objects = new Map<string, ObjectNode>();
   private zones = new Map<string, ZoneNode>();
-  private motes: {
-    sprite: Sprite;
-    x: number;
-    y: number;
-    s: number;
-    drift: number;
-  }[] = [];
   private scene: WorldScene | null = null;
   private drag: DragState = { type: "idle" };
   private hoverKey: string | null = null;
@@ -185,7 +167,6 @@ export class WorldEngine {
   private lastTap: { key: string; t: number; x: number; y: number } | null =
     null;
   private unsubscribers: (() => void)[] = [];
-  private reduceMotion = false;
   private destroyed = false;
   private rectCache: WorldRect | null = null;
   failed = false;
@@ -201,9 +182,6 @@ export class WorldEngine {
   }
 
   async init(): Promise<void> {
-    this.reduceMotion =
-      typeof window.matchMedia === "function" &&
-      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const app = new Application();
     try {
       await app.init({
@@ -226,9 +204,8 @@ export class WorldEngine {
       return;
     }
     this.app = app;
-    // DOM parity: motes beneath, objects, then zones (z 2) above.
-    app.stage.addChild(this.moteLayer, this.objectLayer, this.zoneLayer);
-    this.seedMotes();
+    // Zones (z 2) draw above resting objects.
+    app.stage.addChild(this.objectLayer, this.zoneLayer);
     this.refreshRect();
     this.rebuild();
     const rebuild = () => this.rebuild();
@@ -252,7 +229,6 @@ export class WorldEngine {
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", onScroll);
     });
-    app.ticker.add(() => this.tick());
     this.bindPointer();
     // A read-only probe for the production walks (HS-95-01/10): where does
     // each object render, in client px? Lets Playwright drive the canvas
@@ -359,10 +335,6 @@ export class WorldEngine {
     const ring = new Graphics();
     const sprite = new Sprite();
     sprite.anchor.set(0.5);
-    const highlight = new Sprite();
-    highlight.anchor.set(0.5);
-    highlight.blendMode = "add";
-    highlight.alpha = 0;
     const label = new Text({
       text: "",
       style: {
@@ -384,7 +356,7 @@ export class WorldEngine {
     label.anchor.set(0.5, 0);
     const labelBg = new Graphics();
     labelBg.visible = false;
-    lift.addChild(glow, ring, sprite, highlight);
+    lift.addChild(glow, ring, sprite);
     root.addChild(shadow, lift, labelBg, label);
     return {
       root,
@@ -394,7 +366,6 @@ export class WorldEngine {
       glowTint: o.glow,
       ring,
       sprite,
-      highlight,
       paper: null,
       label,
       labelBg,
@@ -407,9 +378,6 @@ export class WorldEngine {
       spriteUrl: "",
       labelText: "",
       ringState: " ",
-      bornAt: performance.now(),
-      ringBornAt: o.isNew ? performance.now() : 0,
-      wasNew: o.isNew,
       data: o,
     };
   }
@@ -428,23 +396,19 @@ export class WorldEngine {
     // small-note differential and the paper ruling overlay died with the
     // mascot scale (the sprite IS the paper at pixel-true size).
     const size = SPRITE;
-    if (node.spriteUrl !== o.sprite) {
-      node.spriteUrl = o.sprite;
-      const tex = loadSprite(o.sprite, (t) => {
-        if (node.spriteUrl === o.sprite) {
-          node.sprite.texture = t;
-          node.highlight.texture = t;
-        }
+    const sprite =
+      this.hoverKey === `obj:${o.key}`
+        ? spriteStateUrl(o.kind, o.id, "sel")
+        : o.sprite;
+    if (node.spriteUrl !== sprite) {
+      node.spriteUrl = sprite;
+      const tex = loadSprite(sprite, (t) => {
+        if (node.spriteUrl === sprite) node.sprite.texture = t;
       });
-      if (tex) {
-        node.sprite.texture = tex;
-        node.highlight.texture = tex;
-      }
+      if (tex) node.sprite.texture = tex;
     }
     node.sprite.width = size;
     node.sprite.height = size;
-    node.highlight.width = size;
-    node.highlight.height = size;
     if (node.paper) {
       node.paper.destroy();
       node.paper = null;
@@ -459,11 +423,11 @@ export class WorldEngine {
     node.glow.height = LIFT + 40;
     // Shadow sits just under the art (art bottom = SPRITE/2).
     node.shadow.position.set(0, SPRITE / 2 + 8);
-    node.shadow.width = 54;
+    node.shadow.width = 70;
     node.shadow.height = 12;
-    // Ring: selected = steady dashed; new = pulsing solid (per-frame).
-    // Redrawn only when its state actually flips — never on drags.
-    const ringState = `${o.selected ? "s" : ""}${o.isNew ? "n" : ""}`;
+    node.shadow.alpha = 0.5;
+    // Selection is the cell: redraw only when its state flips.
+    const ringState = o.selected ? "s" : "";
     if (ringState !== node.ringState) {
       node.ringState = ringState;
       this.drawRing(node, o);
@@ -533,17 +497,13 @@ export class WorldEngine {
     if (o.isNew && !node.newBadge) {
       node.newBadge = makeBadge("NEW", parseColorNum(ACCENT), 0x06121f, 9);
       node.lift.addChild(node.newBadge);
-      if (!node.wasNew) {
-        node.ringBornAt = performance.now();
-        node.wasNew = true;
-      }
     }
     if (node.newBadge) node.newBadge.position.set(half - 10, -half + 2);
     if (!o.isNew && node.newBadge) {
       node.newBadge.destroy({ children: true });
       node.newBadge = null;
-      node.wasNew = false;
     }
+    node.root.alpha = 1;
     node.root.scale.set(o.scale);
   }
 
@@ -586,40 +546,29 @@ export class WorldEngine {
   private setObjectSprite(node: ObjectNode, url: string): void {
     node.spriteUrl = url;
     const tex = loadSprite(url, (t) => {
-      if (node.spriteUrl === url) {
-        node.sprite.texture = t;
-        node.highlight.texture = t;
-      }
+      if (node.spriteUrl === url) node.sprite.texture = t;
     });
-    if (tex) {
-      node.sprite.texture = tex;
-      node.highlight.texture = tex;
-    }
+    if (tex) node.sprite.texture = tex;
   }
 
   private drawRing(node: ObjectNode, o: SceneObject): void {
     // HS-105-01 — selection is the CELL: a rounded-rect box at the lift
-    // bounds (tinted fill + outline), the gate's approved treatment; the
-    // orbiting dashed circle died with the mascot. NEW keeps a pulsing
-    // outline of the same box (alpha animated per-frame in tick()).
+    // bounds (tinted fill + outline), the gate's approved treatment.
     const g = node.ring;
     g.clear();
-    if (!o.selected && !o.isNew) {
+    if (!o.selected) {
       g.visible = false;
       return;
     }
     g.visible = true;
     const half = LIFT / 2;
     const accent = parseColorNum(ACCENT);
-    if (o.selected) {
-      g.roundRect(-half, -half, LIFT, LIFT, 10);
-      g.fill({ color: accent, alpha: 0.1 });
-      g.roundRect(-half, -half, LIFT, LIFT, 10);
-      g.stroke({ width: 1.5, color: accent, alpha: 0.55 });
-    } else {
-      g.roundRect(-half, -half, LIFT, LIFT, 10);
-      g.stroke({ width: 2, color: accent, alpha: 0.85 });
-    }
+    g.roundRect(-half, -half, LIFT, LIFT, 10);
+    g.fill({ color: accent, alpha: 0.1 });
+    g.roundRect(-half, -half, LIFT, LIFT, 10);
+    g.stroke({ width: 1.5, color: accent, alpha: 0.55 });
+    g.alpha = 0.9;
+    g.scale.set(1);
   }
 
   private syncZones(scene: WorldScene, rect: WorldRect): void {
@@ -682,10 +631,6 @@ export class WorldEngine {
       labelText: "",
       countBadge: null,
       countText: "",
-      lift: 0,
-      liftTarget: 0,
-      scale: 1,
-      scaleTarget: 1,
       data: {} as SceneZone,
     };
   }
@@ -702,10 +647,13 @@ export class WorldEngine {
     // y math is unchanged).
     const cx = z.width / 2;
     const cy = LIFT / 2;
-    if (node.spriteUrl !== z.sprite) {
-      node.spriteUrl = z.sprite;
-      const tex = loadSprite(z.sprite, (t) => {
-        if (node.spriteUrl === z.sprite) node.sprite.texture = t;
+    const sprite = emphasized
+      ? spriteStateUrl("directory", z.id, "sel")
+      : z.sprite;
+    if (node.spriteUrl !== sprite) {
+      node.spriteUrl = sprite;
+      const tex = loadSprite(sprite, (t) => {
+        if (node.spriteUrl === sprite) node.sprite.texture = t;
       });
       if (tex) node.sprite.texture = tex;
     }
@@ -718,7 +666,7 @@ export class WorldEngine {
     node.glow.width = LIFT + 40;
     node.glow.height = LIFT + 40;
     node.glow.position.set(cx, cy);
-    node.glow.alpha = emphasized ? 0.85 : 0.5;
+    node.glow.alpha = 0.5;
     node.shadow.position.set(cx, cy + SPRITE / 2 + 8);
     node.shadow.width = 54;
     node.shadow.height = 12;
@@ -743,112 +691,8 @@ export class WorldEngine {
       if (node.countBadge) node.root.addChild(node.countBadge);
     }
     node.countBadge?.position.set(cx + SPRITE / 2 - 4, cy + SPRITE / 2 - 4);
-    node.liftTarget = z.dropReady ? -4 : emphasized ? -2 : 0;
-    node.scaleTarget = z.dropReady ? 1.04 : 1;
     // Rename hides the GL label (the DOM input overlays it).
     node.label.visible = !z.renaming;
-  }
-
-  // ── per-frame (transform-only) ──────────────────────────────────────────
-
-  private seedMotes(): void {
-    const N = 18;
-    for (let i = 0; i < N; i++) {
-      const sprite = new Sprite(moteTexture());
-      sprite.anchor.set(0.5);
-      const r = 0.6 + Math.random() * 1.6;
-      sprite.width = r * 4;
-      sprite.height = r * 4;
-      sprite.alpha = 0.06 + Math.random() * 0.12;
-      this.moteLayer.addChild(sprite);
-      this.motes.push({
-        sprite,
-        x: Math.random(),
-        y: Math.random(),
-        s: 0.006 + Math.random() * 0.014,
-        drift: (Math.random() - 0.5) * 0.01,
-      });
-    }
-  }
-
-  private tick(): void {
-    if (!this.app) return;
-    const now = performance.now();
-    const dt = Math.min(this.app.ticker.deltaMS / 1000, 0.05);
-    const w = this.app.renderer.width / this.app.renderer.resolution;
-    const h = this.app.renderer.height / this.app.renderer.resolution;
-    if (!this.reduceMotion) {
-      for (const m of this.motes) {
-        m.y -= m.s * dt;
-        m.x += m.drift * dt;
-        if (m.y < -0.02) {
-          m.y = 1.02;
-          m.x = Math.random();
-        }
-        m.sprite.position.set(m.x * w, m.y * h);
-      }
-    } else {
-      for (const m of this.motes) m.sprite.position.set(m.x * w, m.y * h);
-    }
-    for (const node of this.objects.values()) {
-      const o = node.data;
-      const settled = o.dragging || o.editing || this.reduceMotion;
-      // The bob: rotate(tilt→-tilt) + translateY(0→-9), 4.6s, phase delay.
-      const frac = settled
-        ? 0
-        : (((now / 1000 - o.phase) % BOB_SECONDS) + BOB_SECONDS) %
-          BOB_SECONDS /
-          BOB_SECONDS;
-      const k = settled ? 0 : (1 - Math.cos(frac * Math.PI * 2)) / 2;
-      node.lift.position.y = -9 * k;
-      node.lift.rotation = ((o.tilt * (1 - 2 * k)) * Math.PI) / 180;
-      node.shadow.scale.x = (1 - 0.2 * k) * (70 / node.shadow.texture.width);
-      node.shadow.alpha = 0.5 - 0.2 * k;
-      // Hover/selection glow levels (DOM: .5 rest, .82 hover, .95 new, .9 editing).
-      const hovered = this.hoverKey === `obj:${o.key}`;
-      node.glow.alpha = o.isNew
-        ? 0.95
-        : o.editing
-          ? 0.9
-          : hovered
-            ? 0.82
-            : o.selected
-              ? 0.55
-              : 0.5;
-      node.highlight.alpha = hovered ? 0.12 : 0;
-      // Materialize: 0.5s overshoot scale-in on spawn.
-      const age = (now - node.bornAt) / 500;
-      if (age < 1 && !this.reduceMotion) {
-        const t = overshoot(Math.min(1, age));
-        node.root.alpha = Math.min(1, age * 2);
-        node.root.scale.set(o.scale * (0.35 + 0.65 * t));
-      } else {
-        node.root.alpha = 1;
-        node.root.scale.set(o.scale);
-      }
-      // The NEW ring pulse: 1.1s ease-out, three beats.
-      if (o.isNew && node.ringBornAt && !o.selected) {
-        const beat = (now - node.ringBornAt) / 1100;
-        if (beat < 3) {
-          const bt = beat % 1;
-          node.ring.visible = true;
-          node.ring.alpha = 0.85 * (1 - bt);
-          node.ring.scale.set(0.7 + 0.85 * bt);
-        } else {
-          node.ring.visible = false;
-        }
-      } else if (o.selected) {
-        node.ring.alpha = 0.9;
-        node.ring.scale.set(1);
-      }
-    }
-    const rect = this.worldRect();
-    for (const node of this.zones.values()) {
-      node.lift += (node.liftTarget - node.lift) * Math.min(1, dt * 14);
-      node.scale += (node.scaleTarget - node.scale) * Math.min(1, dt * 14);
-      node.root.position.y = node.data.u.y * rect.height + node.lift;
-      node.root.scale.set(node.scale);
-    }
   }
 
   // ── input (the DOM world's exact semantics, HS-71-04/05/06) ─────────────
@@ -1321,13 +1165,6 @@ export class WorldEngine {
             ? "text"
             : "default";
   }
-}
-
-function overshoot(t: number): number {
-  // cubic-bezier(0.2, 1.4, 0.4, 1) flavor: fast rise, slight overshoot.
-  const s = 1.70158 * 0.7;
-  const u = t - 1;
-  return u * u * ((s + 1) * u + s) + 1;
 }
 
 function bodyFont(): string {

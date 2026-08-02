@@ -24,8 +24,9 @@ describe("the cell contract (HS-105-01)", () => {
     expect(LIFT).toBe(80); // the selection box
   });
 
-  it("never tilts or fractionally scales an object", () => {
+  it("keeps every object at a neutral rest state", () => {
     const m = objMotion({ kind: "note", id: "x", title: "x", ref: {} as any });
+    expect(m.phase).toBe(0);
     expect(m.tilt).toBe(0);
     expect(m.scale).toBe(1);
   });
