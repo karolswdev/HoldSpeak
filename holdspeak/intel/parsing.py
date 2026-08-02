@@ -8,7 +8,7 @@ import socket
 from typing import Optional
 
 from ..logging_config import get_logger
-from .models import ActionItem
+from .models import ActionItem, DEFAULT_CLOUD_BASE_URL
 
 log = get_logger("intel")
 
@@ -159,7 +159,7 @@ def _extract_status_code(exc: BaseException) -> Optional[int]:
 
 
 def _describe_cloud_exception(exc: BaseException, *, model: str, base_url: Optional[str]) -> str:
-    endpoint = (base_url or "https://api.openai.com/v1").strip() or "https://api.openai.com/v1"
+    endpoint = (base_url or DEFAULT_CLOUD_BASE_URL).strip() or DEFAULT_CLOUD_BASE_URL
     message = str(exc).strip() or exc.__class__.__name__
     message_lower = message.lower()
     exc_name = exc.__class__.__name__.lower()

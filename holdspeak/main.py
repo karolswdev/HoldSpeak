@@ -50,6 +50,7 @@ Examples:
   holdspeak import call.wav  # Import an existing recording as a meeting
   holdspeak backup       # Back up the database before upgrading
   holdspeak restore      # List backups, or restore one (holdspeak restore <file>)
+  holdspeak seed         # Apply the packaged architect's-desk seed (idempotent)
   holdspeak agent-hook templates --agent claude
                         # Print Claude/Codex hook templates for context capture
   holdspeak intel        # Inspect or process deferred meeting intelligence
@@ -423,6 +424,11 @@ Logs are written to: {LOG_FILE}
         help="Skip the overwrite confirmation prompt",
     )
 
+    subparsers.add_parser(
+        "seed",
+        help="Apply the packaged architect's-desk seed (idempotent; never deletes)",
+    )
+
     args = parser.parse_args()
 
     # Setup logging (always to file, optionally to stderr)
@@ -526,6 +532,12 @@ Logs are written to: {LOG_FILE}
         from .commands.backup import run_restore_command
 
         raise SystemExit(run_restore_command(args))
+
+    # Handle seed subcommand (HS-112-03)
+    if args.command == "seed":
+        from .commands.seed import run_seed_command
+
+        raise SystemExit(run_seed_command(args))
 
     # Default mode: web-first runtime.
     log.info("HoldSpeak default mode routing to web")

@@ -103,10 +103,10 @@ def test_ask_grounds_in_the_canonical_store_and_persists_nothing(env, monkeypatc
 
 def test_ask_runs_on_profile_and_names_honest_egress(env, monkeypatch) -> None:
     _, client = env
-    pid = client.post("/api/profiles", json={
+    pid = client.post("/api/inference-targets", json={
         "name": "LAN box", "kind": "openAICompatible",
         "base_url": "http://192.168.1.43:8080/v1", "model": "Qwen3.5-9B-Q6_K",
-    }).json()["profile"]["id"]
+    }).json()["inference_target"]["id"]
 
     captured = {}
 
@@ -134,10 +134,10 @@ def test_ask_model_override_picks_the_matching_profile(env, monkeypatch) -> None
     """HSM-15-11: `model` alone selects the hub profile that runs that model —
     the phone can say "think with Qwen3.5-9B" without knowing profile ids."""
     _, client = env
-    pid = client.post("/api/profiles", json={
+    pid = client.post("/api/inference-targets", json={
         "name": "LAN box", "kind": "openAICompatible",
         "base_url": "http://192.168.1.43:8080/v1", "model": "Qwen3.5-9B-Q6_K",
-    }).json()["profile"]["id"]
+    }).json()["inference_target"]["id"]
 
     captured = {}
 
@@ -184,7 +184,7 @@ def test_ask_model_override_refuses_a_model_the_hub_cannot_run(env, monkeypatch)
     """The manifest is the allow-list: a model some other node pushed (or a
     typo) refuses loudly with the runnable set — never a silent fallback."""
     _, client = env
-    client.post("/api/profiles", json={
+    client.post("/api/inference-targets", json={
         "name": "LAN box", "kind": "openAICompatible",
         "base_url": "http://192.168.1.43:8080/v1", "model": "Qwen3.5-9B-Q6_K",
     })
@@ -334,11 +334,11 @@ def test_models_route_names_exactly_the_ask_allow_list(env, monkeypatch) -> None
     derivation (hub row first, deduped by name), so no client discovers
     capability by provoking the 400."""
     _, client = env
-    pid = client.post("/api/profiles", json={
+    pid = client.post("/api/inference-targets", json={
         "name": "LAN box", "kind": "openAICompatible",
         "base_url": "http://192.168.1.43:8080/v1", "model": "Qwen3.5-9B-Q6_K",
-    }).json()["profile"]["id"]
-    client.post("/api/profiles", json={
+    }).json()["inference_target"]["id"]
+    client.post("/api/inference-targets", json={
         "name": "Twin", "kind": "openAICompatible",
         "base_url": "http://192.168.1.44:8080/v1", "model": "Qwen3.5-9B-Q6_K",
     })  # a second profile serving the SAME model dedupes away

@@ -120,10 +120,10 @@ def _try_build_runtime(
     # DIR-R-003: cold-start hard-cap is `max_total_latency_ms × 5`.
     cold_start_cap_ms = cfg.pipeline.max_total_latency_ms * 5
 
-    # HS-84-02: the LLM leg runs where the assigned RuntimeProfile says. An
-    # adopted profile also selects the openai_compatible backend (assignment is
-    # the user's explicit "run it there"); dangling/none ⇒ the configured
-    # backend + openai_compatible_* shape, byte-identical.
+    # HS-112-01: the LLM leg runs where the assigned InferenceTarget says. An
+    # adopted target also selects the openai_compatible backend (assignment is
+    # the user's explicit "run it there"); no pointer ⇒ the configured local
+    # backend, byte-identical.
     from ...intel.providers import effective_dictation_llm
 
     effective = effective_dictation_llm(cfg.runtime)
@@ -151,10 +151,10 @@ def _try_build_runtime(
             backend=backend,
             mlx_model=cfg.runtime.mlx_model,
             llama_cpp_model_path=cfg.runtime.llama_cpp_model_path,
-            openai_compatible_model=effective.model,
-            openai_compatible_base_url=effective.base_url,
-            openai_compatible_api_key_env=effective.api_key_env,
-            openai_compatible_timeout_seconds=cfg.runtime.openai_compatible_timeout_seconds,
+            endpoint_model=effective.model,
+            endpoint_base_url=effective.base_url,
+            endpoint_api_key_env=effective.api_key_env,
+            endpoint_timeout_seconds=cfg.runtime.openai_compatible_timeout_seconds,
             n_ctx=cfg.runtime.n_ctx,
             n_threads=cfg.runtime.n_threads,
             n_gpu_layers=cfg.runtime.n_gpu_layers,

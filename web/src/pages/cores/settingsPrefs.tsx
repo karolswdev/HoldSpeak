@@ -7,8 +7,11 @@ import { CONTROL_MODES, controlModeLabel } from "../../lib/productLanguage";
 import {
   CycleGadget,
   EgressChip,
+  GadgetGroup,
   StringGadget,
 } from "../../desk/surface/gadgets";
+import { ConfirmVerb } from "../../desk/surface/Surface";
+import { useDesk } from "../../desk/store";
 
 /* ── the roster (audit §3.2) ── */
 
@@ -31,7 +34,8 @@ export const PREF_MODULES: PrefModule[] = [
   { id: "cadence", label: "Cadence", glyph: "cadence", keys: ["cadence", "cadence_telegram"] },
   { id: "devices", label: "Devices", glyph: "device", keys: ["device", "mesh"] },
   { id: "delivery", label: "Delivery", glyph: "delivery", keys: [] },
-  { id: "models", label: "Models", glyph: "models", keys: [] },
+  { id: "models", label: "Models", glyph: "models", keys: ["rails_observer"] },
+  { id: "desk", label: "Desk", glyph: "desk", keys: [] },
   { id: "integrations", label: "Integrations", glyph: "secret", keys: [] },
   { id: "system", label: "System", glyph: "system", keys: [] },
 ];
@@ -141,6 +145,7 @@ export function SettingGlyph({ name }: { name: string }) {
     device: "M4.5 2.5h7v11h-7Z M7 11.5h2",
     delivery: "M2.5 5.5h11v8h-11Z M2.5 5.5 8 2.5l5.5 3M8 8.5v5",
     models: "M4.5 4.5h7v7h-7Z M8 1.5v3M8 11.5v3M1.5 8h3M11.5 8h3",
+    desk: "M2.5 3.5h11v9h-11Z M2.5 8h11 M6.5 5.75h3 M6.5 10.25h3",
     system: "M3 4.5h10M3 8h10M3 11.5h10M6 3v3M10 6.5v3M5 10v3",
   };
   return (
@@ -160,6 +165,61 @@ export function SettingGlyph({ name }: { name: string }) {
         }
       />
     </svg>
+  );
+}
+
+/* ── the Desk module (HS-112-03): reset-to-seed, the desk's FIRST
+   destructive verb. Armed in-world in the kit's own grammar (the
+   GadgetTable delete pattern — press, RESET DESK?, press again), never
+   a modal, never a browser confirm. The face states in labels what
+   resets and what survives; the receipt names the hub's counts. ── */
+
+export function DeskModule() {
+  const [busy, setBusy] = useState(false);
+  const [receipt, setReceipt] = useState("");
+  const [refused, setRefused] = useState(false);
+  const fire = async () => {
+    setBusy(true);
+    setRefused(false);
+    setReceipt("");
+    const counts = await useDesk.getState().resetDesk();
+    setBusy(false);
+    if (!counts) {
+      setRefused(true);
+      return;
+    }
+    setReceipt(`TOMBSTONED ${counts.tombstoned} · SEEDED ${counts.seeded}`);
+  };
+  return (
+    <GadgetGroup label="Reset to seed">
+      <div className="prefs-egress-line">
+        <span className="gadget-fact">
+          RESETS · NOTES · KNOWLEDGE · AGENTS · WORKFLOWS · DRAWERS · LAYOUT
+        </span>
+      </div>
+      <div className="prefs-egress-line">
+        <span className="gadget-fact">
+          KEEPS · MEETINGS · JOURNAL · SETTINGS · RUNS-ON TARGETS
+        </span>
+      </div>
+      <div className="prefs-egress-line">
+        <ConfirmVerb
+          label="RESET TO SEED"
+          confirmLabel="RESET DESK?"
+          busy={busy}
+          onConfirm={() => void fire()}
+        />
+        {refused ? (
+          <span className="gadget-fact" data-tone="danger" role="alert">
+            ⚠ RESET REFUSED
+          </span>
+        ) : receipt ? (
+          <span className="gadget-fact" role="status">
+            {receipt}
+          </span>
+        ) : null}
+      </div>
+    </GadgetGroup>
   );
 }
 

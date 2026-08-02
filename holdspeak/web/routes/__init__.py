@@ -15,6 +15,7 @@ from .authority import build_authority_router
 from .cadence import build_cadence_router
 from .decisions import build_decisions_router
 from .desk_actuators import build_desk_actuators_router
+from .desk_seed import build_desk_seed_router
 from .core import build_core_router
 from .delivery import build_delivery_router
 from .delivery_attempts import build_delivery_attempts_router
@@ -43,6 +44,7 @@ __all__ = [
     "build_cadence_router",
     "build_decisions_router",
     "build_desk_actuators_router",
+    "build_desk_seed_router",
     "build_core_router",
     "build_delivery_router",
     "build_delivery_attempts_router",

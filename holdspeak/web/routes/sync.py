@@ -454,7 +454,9 @@ def _hub_model_name(ctx: WebContext) -> str:
         if not meeting.intel_enabled:
             return ""
         if meeting.intel_provider == "cloud":
-            return str(meeting.intel_cloud_model or "")
+            from ...intel.providers import effective_intel_cloud
+
+            return str(effective_intel_cloud(meeting).model or "")
         from pathlib import Path as _P
 
         stem = _P(str(meeting.intel_realtime_model or "")).name

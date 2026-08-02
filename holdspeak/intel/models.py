@@ -23,6 +23,14 @@ DEFAULT_INTEL_CLOUD_API_KEY_ENV = "OPENAI_API_KEY"
 DEFAULT_INTEL_CLOUD_TIMEOUT_SECONDS = 180.0
 
 
+# The ONE default-endpoint chokepoint (HS-112-01): every surface that needs
+# "where does a bare cloud call go" derives it from here.
+DEFAULT_CLOUD_BASE_URL = "https://api.openai.com/v1"
+
+
+DEFAULT_CLOUD_HOST = "api.openai.com"
+
+
 VALID_INTEL_PROVIDERS = frozenset({"local", "cloud", "auto"})
 
 

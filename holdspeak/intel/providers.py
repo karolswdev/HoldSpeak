@@ -20,6 +20,7 @@ from ..logging_config import get_logger
 if TYPE_CHECKING:
     from .engine import MeetingIntel
 from .models import (
+    DEFAULT_CLOUD_HOST,
     DEFAULT_INTEL_CLOUD_API_KEY_ENV,
     DEFAULT_INTEL_CLOUD_MODEL,
     DEFAULT_INTEL_MODEL_PATH,
@@ -260,7 +261,7 @@ def endpoint_egress(
     else:
         badge = {"scope": "cloud" if cloud else "local"}
         if cloud:
-            badge["host"] = endpoint_host(base_url) or "api.openai.com"
+            badge["host"] = endpoint_host(base_url) or DEFAULT_CLOUD_HOST
     if label:
         badge["label"] = label
     return badge
@@ -360,21 +361,20 @@ def effective_intel_cloud(
     *,
     get_profile: Optional[Callable[[str], Any]] = None,
 ) -> EffectiveEndpoint:
-    """Resolve where the meeting-intel cloud leg runs (HS-84-01).
+    """Resolve where the meeting-intel cloud leg runs (HS-112-01).
 
-    Resolution order: a valid assigned ``openAICompatible`` RuntimeProfile →
-    the legacy ``intel_cloud_*`` config shape. ``intel_provider`` semantics
-    (local / auto / cloud) are untouched — this shapes only the cloud leg.
+    The ONLY source is the ``intel_profile_id`` pointer into the profiles
+    table. No pointer = the hub default shape (the default cloud endpoint,
+    the default key env). ``intel_provider`` semantics (local / auto / cloud)
+    are untouched — this shapes only the cloud leg.
     """
-    legacy = EffectiveEndpoint(
-        model=str(getattr(meeting_cfg, "intel_cloud_model", "") or "").strip()
-        or DEFAULT_INTEL_CLOUD_MODEL,
-        api_key_env=str(getattr(meeting_cfg, "intel_cloud_api_key_env", "") or "").strip()
-        or DEFAULT_INTEL_CLOUD_API_KEY_ENV,
-        base_url=getattr(meeting_cfg, "intel_cloud_base_url", None),
+    default = EffectiveEndpoint(
+        model=DEFAULT_INTEL_CLOUD_MODEL,
+        api_key_env=DEFAULT_INTEL_CLOUD_API_KEY_ENV,
+        base_url=None,
     )
     profile_id = str(getattr(meeting_cfg, "intel_profile_id", "") or "").strip()
-    return _apply_runtime_profile(legacy, profile_id, get_profile)
+    return _apply_runtime_profile(default, profile_id, get_profile)
 
 
 def effective_dictation_llm(
@@ -382,26 +382,24 @@ def effective_dictation_llm(
     *,
     get_profile: Optional[Callable[[str], Any]] = None,
 ) -> EffectiveEndpoint:
-    """Resolve where the DIR-01 dictation LLM leg runs (HS-84-02).
+    """Resolve where the DIR-01 dictation LLM leg runs (HS-112-01).
 
-    Resolution order: a valid assigned ``openAICompatible`` RuntimeProfile →
-    the legacy ``openai_compatible_*`` config shape. An ADOPTED profile also
-    means the dictation backend runs ``openai_compatible`` (the assignment is
-    the user's explicit "run it there"); every fallback leaves the configured
-    backend untouched.
+    The ONLY source is the ``profile_id`` pointer into the profiles table.
+    An ADOPTED profile also means the dictation backend runs
+    ``openai_compatible`` (the assignment is the user's explicit "run it
+    there"); no pointer leaves the configured local backend untouched.
     """
-    legacy = EffectiveEndpoint(
-        model=str(getattr(runtime_cfg, "openai_compatible_model", "") or "").strip(),
-        api_key_env=str(getattr(runtime_cfg, "openai_compatible_api_key_env", "") or "").strip()
-        or DEFAULT_INTEL_CLOUD_API_KEY_ENV,
-        base_url=getattr(runtime_cfg, "openai_compatible_base_url", None),
+    default = EffectiveEndpoint(
+        model="",
+        api_key_env=DEFAULT_INTEL_CLOUD_API_KEY_ENV,
+        base_url=None,
     )
     profile_id = str(getattr(runtime_cfg, "profile_id", "") or "").strip()
     # meshNode adopts here too (owner call, 2026-07-07): DIR's endpoint leg is
     # already advisory-constrained (ask for JSON, validate, retry), so the
     # relay rides the same posture — a far edge degrades under the pipeline's
     # existing latency budget, exactly like a slow endpoint.
-    return _apply_runtime_profile(legacy, profile_id, get_profile)
+    return _apply_runtime_profile(default, profile_id, get_profile)
 
 
 def build_meeting_intel_for_profile(

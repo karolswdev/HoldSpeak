@@ -1929,9 +1929,7 @@ class TestSettingsApiEndpoints:
             },
             "meeting": {
                 "intel_provider": "cloud",
-                "intel_cloud_model": "gpt-5-mini",
-                "intel_cloud_api_key_env": "OPENAI_API_KEY",
-                "intel_cloud_base_url": "https://api.openai.com/v1",
+                "intel_profile_id": "p-lan",
                 "intel_queue_poll_seconds": 30,
                 "similarity_threshold": 0.82,
             }
@@ -1943,7 +1941,10 @@ class TestSettingsApiEndpoints:
         assert data["settings"]["model"]["name"] == "small"
         assert data["settings"]["model"]["warm_on_start"] is False
         assert data["settings"]["meeting"]["intel_provider"] == "cloud"
-        assert data["settings"]["meeting"]["intel_cloud_base_url"] == "https://api.openai.com/v1"
+        # HS-112-01: endpoint identity is the pointer; the dead legacy
+        # fields never ride the settings wire.
+        assert data["settings"]["meeting"]["intel_profile_id"] == "p-lan"
+        assert "intel_cloud_base_url" not in data["settings"]["meeting"]
         assert data["settings"]["meeting"]["intel_queue_poll_seconds"] == 30
         assert "intel_retry_failure_webhook_header_value" not in data["settings"]["meeting"]
         assert data["settings"]["_secrets"]["failure_webhook_url"]["configured"] is True
@@ -1955,23 +1956,29 @@ class TestSettingsApiEndpoints:
         assert persisted.model.name == "small"
         assert persisted.model.warm_on_start is False
         assert persisted.meeting.intel_provider == "cloud"
-        assert persisted.meeting.intel_cloud_base_url == "https://api.openai.com/v1"
+        assert persisted.meeting.intel_profile_id == "p-lan"
         assert persisted.meeting.intel_queue_poll_seconds == 30
         assert persisted.meeting.intel_retry_failure_webhook_header_name == "Authorization"
         assert persisted.meeting.intel_retry_failure_webhook_header_value == "Bearer test-token"
 
-    def test_settings_put_rejects_invalid_cloud_base_url(self, tmp_path, monkeypatch, test_client):
+    def test_settings_put_strips_legacy_cloud_base_url(self, tmp_path, monkeypatch, test_client):
+        # HS-112-01: the dead legacy endpoint fields are never API-writable —
+        # a PUT carrying one succeeds with the field silently stripped, and
+        # the stored value stays untouched (endpoint identity lives only in
+        # the profiles table).
         import holdspeak.config as config_module
+        from holdspeak.config import Config
 
         monkeypatch.setattr(config_module, "CONFIG_FILE", tmp_path / "config.json")
         response = test_client.put(
             "/api/settings",
             json={"meeting": {"intel_cloud_base_url": "ftp://example.com/v1"}},
         )
-        assert response.status_code == 400
+        assert response.status_code == 200
         payload = response.json()
-        assert payload["success"] is False
-        assert "base_url" in payload["error"]
+        assert payload["success"] is True
+        assert "intel_cloud_base_url" not in payload["settings"]["meeting"]
+        assert Config.load(tmp_path / "config.json").meeting.intel_cloud_base_url is None
 
     def test_settings_put_rejects_invalid_retry_webhook_url(self, tmp_path, monkeypatch, test_client):
         import holdspeak.config as config_module

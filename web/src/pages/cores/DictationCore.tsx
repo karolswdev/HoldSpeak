@@ -21,7 +21,6 @@ import {
 } from "react";
 import { openSurfaceOr } from "../../desk/shell";
 import type { CoreProps } from "./ActivityCore";
-import { RuntimeDestination } from "./settingsBespoke";
 import { Button } from "../../components/signal/Signal";
 import { RunsOnPicker } from "../../desk/components/RunsOnPicker";
 import { MicButton, type MicState } from "../../desk/components/MicButton";
@@ -1604,40 +1603,20 @@ function Journal() {
   );
 }
 
-/* HS-102-06 — the runtime knobs live in exactly ONE composed place:
-   `RuntimeDestination` (settingsBespoke.tsx), the same component
-   Settings uses for this exact same `dictation.runtime` value. This
-   face embeds it rather than re-stating Backend/Runs on/Latency
-   budget as a third label-over-Select stack. Saves on change,
-   debounced; the receipt lands in the footer bar (HS-111-02). */
+/* HS-112-01 — one dial: the runtime destination is edited ONLY in the
+   Prefs `models` module. This face states the fact and hands over. */
 function Runtime() {
-  const announce = useAnnounce();
-  const settings = useResource<JsonRecord>("/api/settings", {});
-  const saveTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
-  useEffect(() => () => clearTimeout(saveTimer.current), []);
-  const runtime = ((settings.data.dictation as JsonRecord | undefined)
-    ?.runtime ?? {}) as JsonRecord;
-  const save = async (dictation: JsonRecord) => {
-    announce("Saving…");
-    try {
-      await apiFetch("/api/settings", { method: "PUT", json: { dictation } });
-      announce(`Written ${clockNow()}`);
-    } catch (error) {
-      announce(`⚠ ${readableError(error)}`, "warn");
-    }
-  };
-  const patch = (next: JsonRecord) => {
-    const dictation = {
-      ...(settings.data.dictation as JsonRecord),
-      runtime: { ...runtime, ...next },
-    };
-    settings.setData({ ...settings.data, dictation });
-    clearTimeout(saveTimer.current);
-    saveTimer.current = setTimeout(() => void save(dictation), 700);
-  };
   return (
     <GadgetGroup label="Dictation runtime">
-      <RuntimeDestination value={runtime} onCommit={patch} />
+      <div className="prefs-elsewhere">
+        <span className="prefs-elsewhere-fact">RUNS ON LIVES IN MODELS</span>
+        <Button
+          dense
+          onClick={() => openSurfaceOr("configure-runs-on", "/settings")}
+        >
+          Open Models
+        </Button>
+      </div>
     </GadgetGroup>
   );
 }

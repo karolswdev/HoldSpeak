@@ -1482,6 +1482,26 @@
       ]
     },
     {
+      "path": "/api/desk/reset",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.desk_seed",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/desk/seed",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.desk_seed",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/devices/audio",
       "methods": [
         "WS"

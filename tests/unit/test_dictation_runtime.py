@@ -227,10 +227,10 @@ def test_build_runtime_passes_llama_kwargs():
 def test_build_runtime_passes_openai_compatible_kwargs():
     rt = build_runtime(
         backend="openai_compatible",
-        openai_compatible_model="qwen-local",
-        openai_compatible_base_url="http://127.0.0.1:1234/v1",
-        openai_compatible_api_key_env="LOCAL_LLM_KEY",
-        openai_compatible_timeout_seconds=3.5,
+        endpoint_model="qwen-local",
+        endpoint_base_url="http://127.0.0.1:1234/v1",
+        endpoint_api_key_env="LOCAL_LLM_KEY",
+        endpoint_timeout_seconds=3.5,
         openai_importable=lambda: True,
         factories=_factories(),
     )

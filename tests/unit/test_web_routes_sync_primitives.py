@@ -471,8 +471,18 @@ def test_hub_model_name_reads_the_real_config(monkeypatch) -> None:
     )))
     assert _hub_model_name(None) == "Foo-9B-Q6_K"
 
+    # HS-112-01: the cloud model resolves through the assigned target.
+    from holdspeak.db.models import ProfileRecord
+
+    monkeypatch.setattr(
+        "holdspeak.intel.providers._lookup_profile_record",
+        lambda pid: ProfileRecord(
+            id=pid, name="Bar", kind="openAICompatible",
+            base_url="http://bar:1/v1", model="Bar-Cloud",
+        ),
+    )
     monkeypatch.setattr(Config, "load", classmethod(lambda cls, path=None: cfg(
-        intel_enabled=True, intel_provider="cloud", intel_cloud_model="Bar-Cloud",
+        intel_enabled=True, intel_provider="cloud", intel_profile_id="p-bar",
     )))
     assert _hub_model_name(None) == "Bar-Cloud"
 

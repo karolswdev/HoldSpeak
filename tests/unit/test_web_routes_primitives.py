@@ -743,35 +743,40 @@ def test_directory_reads_include_member_ids(client: TestClient) -> None:
 
 
 def test_profile_crud_roundtrip(client: TestClient) -> None:
-    """Phase 24 — profiles CRUD over the API (shape only; no key field)."""
-    created = client.post("/api/profiles", json={
+    """Phase 24 / HS-112-01 — targets CRUD over the one write path; the
+    profiles alias stays a read-only view (shape only; no key field)."""
+    created = client.post("/api/inference-targets", json={
         "name": "Claude", "kind": "openAICompatible",
         "base_url": "https://api.anthropic.com/v1", "model": "claude-3.5-sonnet",
         "context_limit": 200000, "requires_key": True,
     })
     assert created.status_code == 201, created.text
-    pid = created.json()["profile"]["id"]
-    assert "api_key" not in created.json()["profile"] and "apiKey" not in created.json()["profile"]
+    target = created.json()["inference_target"]
+    pid = target["id"]
+    assert "api_key" not in target and "apiKey" not in target
 
     assert client.get("/api/profiles").json()["profiles"][0]["id"] == pid
     got = client.get(f"/api/profiles/{pid}").json()["profile"]
     assert got["kind"] == "openAICompatible" and got["context_limit"] == 200000
 
-    upd = client.put(f"/api/profiles/{pid}", json={"name": "Claude 3.7", "context_limit": 128000})
-    assert upd.status_code == 200 and upd.json()["profile"]["name"] == "Claude 3.7"
-    assert upd.json()["profile"]["context_limit"] == 128000
+    assert client.put(f"/api/profiles/{pid}", json={"name": "X"}).status_code == 405
+    upd = client.put(f"/api/inference-targets/{pid}", json={"name": "Claude 3.7", "context_limit": 128000})
+    assert upd.status_code == 200
+    assert upd.json()["inference_target"]["name"] == "Claude 3.7"
+    assert upd.json()["inference_target"]["context_limit"] == 128000
 
-    assert client.delete(f"/api/profiles/{pid}").status_code == 200
+    assert client.delete(f"/api/profiles/{pid}").status_code == 405
+    assert client.delete(f"/api/inference-targets/{pid}").status_code == 200
     assert client.get(f"/api/profiles/{pid}").status_code == 404
 
 
 def test_run_agent_resolves_assigned_profile(client: TestClient, monkeypatch) -> None:
     """An agent assigned a profile runs on THAT profile (the per-profile builder is used),
     and the run reports the resolved profile_id."""
-    pid = client.post("/api/profiles", json={
+    pid = client.post("/api/inference-targets", json={
         "name": "OpenRouter", "kind": "openAICompatible",
         "base_url": "https://openrouter.ai/api/v1", "model": "x", "requires_key": True,
-    }).json()["profile"]["id"]
+    }).json()["inference_target"]["id"]
     from holdspeak.intel.providers import profile_key_env
     monkeypatch.setenv(profile_key_env(pid), "test-key")
     aid = client.post("/api/recipes", json={

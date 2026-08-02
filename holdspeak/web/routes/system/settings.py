@@ -7,7 +7,7 @@ from __future__ import annotations
 import re
 from copy import deepcopy
 from dataclasses import replace
-from typing import Any, Optional
+from typing import Any
 from urllib.parse import urlparse
 
 from fastapi import APIRouter
@@ -30,16 +30,18 @@ _HTTP_HEADER_NAME_RE = re.compile(r"^[A-Za-z0-9-]+$")
 # HSM-14: a GitHub `owner/name` slug for the companion GitHub connector.
 _GITHUB_REPO_RE = re.compile(r"^[A-Za-z0-9._-]+/[A-Za-z0-9._-]+$")
 
-def _validate_cloud_base_url(value: Optional[str]) -> Optional[str]:
-    if value is None:
-        return None
-    raw = str(value).strip()
-    if not raw:
-        return None
-    parsed = urlparse(raw)
-    if parsed.scheme not in {"http", "https"} or not parsed.netloc:
-        raise ValueError("intel_cloud_base_url must start with http:// or https://")
-    return raw
+def _strip_legacy_endpoint_fields(payload: dict[str, Any]) -> dict[str, Any]:
+    """HS-112-01: the dead legacy endpoint fields are never API-writable."""
+    from ....config import LEGACY_ENDPOINT_FIELDS
+
+    for section_path, fields in LEGACY_ENDPOINT_FIELDS.items():
+        node: Any = payload
+        for part in section_path.split("."):
+            node = node.get(part) if isinstance(node, dict) else None
+        if isinstance(node, dict):
+            for field in fields:
+                node.pop(field, None)
+    return payload
 
 
 def _merge_dict(dst: dict[str, Any], src: dict[str, Any]) -> dict[str, Any]:
@@ -90,6 +92,7 @@ def build_settings_router(ctx: WebContext) -> APIRouter:
                 MeetingConfig,
                 ModelConfig,
                 PresenceConfig,
+                RailsObserverConfig,
                 UIConfig,
                 VoiceMacroError,
                 WakeWordConfig,
@@ -97,7 +100,10 @@ def build_settings_router(ctx: WebContext) -> APIRouter:
 
             current = Config.load()
             merged = deepcopy(current.to_dict())
-            _merge_dict(merged, strip_secret_mutations(payload or {}))
+            _merge_dict(
+                merged,
+                _strip_legacy_endpoint_fields(strip_secret_mutations(payload or {})),
+            )
 
             hotkey_data = merged.get("hotkey", {})
             model_data = merged.get("model", {})
@@ -453,23 +459,9 @@ def build_settings_router(ctx: WebContext) -> APIRouter:
                 )
             meeting_data["similarity_threshold"] = similarity
 
-            try:
-                meeting_data["intel_cloud_base_url"] = _validate_cloud_base_url(
-                    meeting_data.get("intel_cloud_base_url")
-                )
-            except ValueError as e:
-                return JSONResponse({"success": False, "error": str(e)}, status_code=400)
-
-            meeting_data["intel_cloud_api_key_env"] = str(
-                meeting_data.get("intel_cloud_api_key_env", current.meeting.intel_cloud_api_key_env)
-            ).strip() or "OPENAI_API_KEY"
-            meeting_data["intel_cloud_model"] = str(
-                meeting_data.get("intel_cloud_model", current.meeting.intel_cloud_model)
-            ).strip() or "gpt-5-mini"
-
-            # HS-84-01: the assigned RuntimeProfile (empty ⇒ the legacy
-            # intel_cloud_* shape). Stored as-is; a dangling id degrades
-            # honestly at resolution time, so saving never blocks on it.
+            # HS-112-01: the assigned InferenceTarget (empty ⇒ hub default).
+            # Stored as-is; a dangling id degrades honestly at resolution
+            # time, so saving never blocks on it.
             meeting_data["intel_profile_id"] = (
                 str(
                     meeting_data.get(
@@ -595,29 +587,9 @@ def build_settings_router(ctx: WebContext) -> APIRouter:
             runtime_data["llama_cpp_model_path"] = str(runtime_data.get(
                 "llama_cpp_model_path", current.dictation.runtime.llama_cpp_model_path
             )).strip() or current.dictation.runtime.llama_cpp_model_path
-            runtime_data["openai_compatible_model"] = str(runtime_data.get(
-                "openai_compatible_model", current.dictation.runtime.openai_compatible_model
-            )).strip() or current.dictation.runtime.openai_compatible_model
-            runtime_data["openai_compatible_base_url"] = str(runtime_data.get(
-                "openai_compatible_base_url", current.dictation.runtime.openai_compatible_base_url
-            )).strip() or current.dictation.runtime.openai_compatible_base_url
-            try:
-                _validate_cloud_base_url(runtime_data["openai_compatible_base_url"])
-            except ValueError:
-                return JSONResponse(
-                    {
-                        "success": False,
-                        "error": "dictation.runtime.openai_compatible_base_url must start with http:// or https://",
-                    },
-                    status_code=400,
-                )
-            runtime_data["openai_compatible_api_key_env"] = str(runtime_data.get(
-                "openai_compatible_api_key_env",
-                current.dictation.runtime.openai_compatible_api_key_env,
-            )).strip()
-            # HS-84-02: the assigned RuntimeProfile (empty ⇒ the legacy
-            # openai_compatible_* shape). Stored as-is; a dangling id degrades
-            # honestly at resolution time, so saving never blocks on it.
+            # HS-112-01: the assigned InferenceTarget (empty ⇒ hub default).
+            # Stored as-is; a dangling id degrades honestly at resolution
+            # time, so saving never blocks on it.
             runtime_data["profile_id"] = (
                 str(
                     runtime_data.get(
@@ -701,6 +673,45 @@ def build_settings_router(ctx: WebContext) -> APIRouter:
                     status_code=400,
                 )
 
+            # HS-112-01: the rails observer's pointer is settable from the
+            # models module's RAILS row; same boundary discipline.
+            rails_data = merged.get("rails_observer", {}) or {}
+            rails_data["enabled"] = bool(
+                rails_data.get("enabled", current.rails_observer.enabled)
+            )
+            rails_data["profile_id"] = (
+                str(
+                    rails_data.get(
+                        "profile_id", current.rails_observer.profile_id or ""
+                    )
+                    or ""
+                ).strip()
+                or None
+            )
+            try:
+                rails_data["poll_seconds"] = int(
+                    rails_data.get("poll_seconds", current.rails_observer.poll_seconds)
+                )
+                rails_data["tail"] = int(
+                    rails_data.get("tail", current.rails_observer.tail)
+                )
+            except (TypeError, ValueError):
+                return JSONResponse(
+                    {
+                        "success": False,
+                        "error": "rails_observer.poll_seconds and rails_observer.tail must be integers",
+                    },
+                    status_code=400,
+                )
+            if rails_data["poll_seconds"] < 5 or rails_data["tail"] < 1:
+                return JSONResponse(
+                    {
+                        "success": False,
+                        "error": "rails_observer.poll_seconds must be >= 5 and rails_observer.tail >= 1",
+                    },
+                    status_code=400,
+                )
+
             updated = replace(
                 current,
                 hotkey=HotkeyConfig(**hotkey_data),
@@ -711,6 +722,7 @@ def build_settings_router(ctx: WebContext) -> APIRouter:
                 device=DeviceConfig(**device_data),
                 presence=PresenceConfig(**presence_data),
                 wake_word=WakeWordConfig(**wake_data),
+                rails_observer=RailsObserverConfig(**rails_data),
             )
             updated.save()
 

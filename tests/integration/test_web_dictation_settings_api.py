@@ -108,11 +108,14 @@ class TestSettingsPutPersistsDictation:
                     "backend": "mlx",
                     "mlx_model": "~/Models/mlx/Qwen3.5-8B-MLX-4bit",
                     "llama_cpp_model_path": "~/Models/gguf/Qwen3.5-4B-Instruct-Q4_K_M.gguf",
-                    "openai_compatible_model": "qwen-local",
-                    "openai_compatible_base_url": "http://127.0.0.1:8000/v1",
-                    "openai_compatible_api_key_env": "LOCAL_LLM_KEY",
+                    # HS-112-01: endpoint identity is the pointer, not fields.
+                    "profile_id": "p-lan",
                     "openai_compatible_timeout_seconds": 4.5,
                     "warm_on_start": True,
+                    # Dead legacy fields ride the payload to prove the strip.
+                    "openai_compatible_model": "qwen-local",
+                    "openai_compatible_base_url": "http://evil.example:9/v1",
+                    "openai_compatible_api_key_env": "LOCAL_LLM_KEY",
                 },
             }
         }
@@ -126,11 +129,13 @@ class TestSettingsPutPersistsDictation:
         assert out["pipeline"]["max_total_latency_ms"] == 800
         assert out["pipeline"]["target_profile_override"] == "codex_cli"
         assert out["runtime"]["backend"] == "mlx"
-        assert out["runtime"]["openai_compatible_model"] == "qwen-local"
-        assert out["runtime"]["openai_compatible_base_url"] == "http://127.0.0.1:8000/v1"
-        assert out["runtime"]["openai_compatible_api_key_env"] == "LOCAL_LLM_KEY"
+        assert out["runtime"]["profile_id"] == "p-lan"
         assert out["runtime"]["openai_compatible_timeout_seconds"] == 4.5
         assert out["runtime"]["warm_on_start"] is True
+        # The dead endpoint fields never ride the wire back (HS-112-01).
+        assert "openai_compatible_model" not in out["runtime"]
+        assert "openai_compatible_base_url" not in out["runtime"]
+        assert "openai_compatible_api_key_env" not in out["runtime"]
         on_settings_applied.assert_called_once()
 
         persisted = Config.load(path=settings_path)
@@ -139,11 +144,13 @@ class TestSettingsPutPersistsDictation:
         assert persisted.dictation.pipeline.max_total_latency_ms == 800
         assert persisted.dictation.pipeline.target_profile_override == "codex_cli"
         assert persisted.dictation.runtime.backend == "mlx"
-        assert persisted.dictation.runtime.openai_compatible_model == "qwen-local"
-        assert persisted.dictation.runtime.openai_compatible_base_url == "http://127.0.0.1:8000/v1"
-        assert persisted.dictation.runtime.openai_compatible_api_key_env == "LOCAL_LLM_KEY"
+        assert persisted.dictation.runtime.profile_id == "p-lan"
         assert persisted.dictation.runtime.openai_compatible_timeout_seconds == 4.5
         assert persisted.dictation.runtime.warm_on_start is True
+        # The PUT silently stripped the legacy fields — defaults untouched.
+        assert persisted.dictation.runtime.openai_compatible_base_url == "http://127.0.0.1:8000/v1"
+        assert persisted.dictation.runtime.openai_compatible_model == "qwen3.5-8b-instruct"
+        assert persisted.dictation.runtime.openai_compatible_api_key_env == "OPENAI_API_KEY"
 
     def test_put_omitting_dictation_preserves_existing(
         self, test_client: TestClient, settings_path: Path
@@ -437,9 +444,11 @@ def test_dictation_page_includes_runtime_section() -> None:
     source = (Path(__file__).resolve().parents[2] / "web/src/pages/cores/DictationCore.tsx").read_text()
     # HS-100-07: runtime configuration lives behind the Speak door.
     assert "<Runtime />" in source
-    # HS-102-06: the runtime face embeds the shared RuntimeDestination
-    # instead of restating a Backend/Runs-on stack.
-    assert 'label="Dictation runtime"' in source and "RuntimeDestination" in source
+    # HS-112-01: the runtime face is a handover to the Prefs models module
+    # (the one dial) — it never embeds or re-derives an endpoint editor.
+    assert 'label="Dictation runtime"' in source
+    assert "RUNS ON LIVES IN MODELS" in source
+    assert "RuntimeDestination" not in source
 
 
 def test_dictation_page_includes_copilot_depth_controls() -> None:
