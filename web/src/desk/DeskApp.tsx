@@ -17,6 +17,7 @@ import { SessionPullout, PanePicker } from "./components/SessionPullout";
 import { DeliveryBoard } from "./components/DeliveryBoard";
 import { DeliveryDossierWindow } from "./components/DeliveryDossierWindow";
 import { DeliveryTerminalWindow } from "./components/DeliveryTerminalWindow";
+import { RoadmapWindow } from "./components/RoadmapWindow";
 import { AttentionDrawer } from "./components/AttentionDrawer";
 import { GlassDropLayer } from "./components/GlassDropLayer";
 import { DeskToolInspector } from "./components/DeskToolInspector";
@@ -30,6 +31,7 @@ export default function DeskApp() {
   const items = useDesk((s) => s.items);
   const updatedAt = useDesk((s) => s.updatedAt);
   const chatPersonaId = useDesk((s) => s.chatPersonaId);
+  const roadmapWindows = useDesk((s) => s.roadmapWindows);
   const setup = useDesk((s) => s.setup);
   const viewMode = useDesk((s) => s.viewMode);
   const { refresh } = useDesk.getState();
@@ -64,6 +66,9 @@ export default function DeskApp() {
       <DeliveryBoard />
       <DeliveryDossierWindow />
       <DeliveryTerminalWindow />
+      {roadmapWindows.map((roadmap) => (
+        <RoadmapWindow key={roadmap.slug} slug={roadmap.slug} origin={roadmap.origin} />
+      ))}
       <PanePicker />
       <SessionPullout />
       <AttentionDrawer />

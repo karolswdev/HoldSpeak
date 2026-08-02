@@ -19,6 +19,7 @@ from .ask import build_ask_router
 from .recipes import build_recipes_router
 from .chains import build_chains_router
 from .directories import build_directories_router
+from .decisions import build_desk_decisions_router
 from .kbs import build_kbs_router
 from .notes import build_notes_router
 from .profiles import build_profiles_router
@@ -29,6 +30,7 @@ from .invocations import build_invocations_router
 def build_primitives_router(ctx: WebContext) -> APIRouter:
     router = APIRouter()
     router.include_router(build_notes_router(ctx))
+    router.include_router(build_desk_decisions_router(ctx))
     router.include_router(build_ask_router(ctx))
     router.include_router(build_recipes_router(ctx))
     router.include_router(build_profiles_router(ctx))

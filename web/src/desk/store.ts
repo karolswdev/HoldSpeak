@@ -293,6 +293,8 @@ interface DeskState {
    * coexist but do not persist across reload). Ref is `kind:id`, bare
    * id, or `zone:<id>`. */
   infoWindows: { ref: string; origin: { x: number; y: number } | null }[];
+  /** Delivery Workbench projects open as their own Desk application window. */
+  roadmapWindows: { slug: string; origin: { x: number; y: number } | null }[];
   /** The zone a live drag is hovering (the drop affordance, HS-73-05). */
   hoverZoneId: string | null;
   /** The freshly-created zone whose rename is focused. */
@@ -335,7 +337,7 @@ interface DeskState {
   /** Create in-world (HS-73-03): instant POST, spawn at center, NEW beat,
    * editor open. The object IS the editor — no modal, ever. */
   createPrimitive(
-    kind: "note" | "kb" | "recipe" | "zone" | "workflow",
+    kind: "note" | "decision" | "kb" | "recipe" | "zone" | "workflow",
   ): Promise<void>;
   markNew(id: string): void;
   openEditor(id: string): void;
@@ -363,6 +365,8 @@ interface DeskState {
   /** HS-105-04 — Info on everything (right-click → Info). */
   openInfoWindow(ref: string, origin?: { x: number; y: number }): void;
   closeInfoWindow(ref: string): void;
+  openRoadmapWindow(slug: string, origin?: { x: number; y: number }): void;
+  closeRoadmapWindow(slug: string): void;
   setHoverZone(id: string | null): void;
   setRenamingZone(id: string | null): void;
   diveInto(zoneId: string): void;
@@ -480,6 +484,7 @@ export const useDesk = create<DeskState>((set, get) => ({
   zoneWindows: loadZoneWindows(),
   zoneViewPrefs: loadZoneViewPrefs(),
   infoWindows: [],
+  roadmapWindows: [],
   hoverZoneId: null,
   renamingZoneId: null,
   selectedIds: [],
@@ -516,6 +521,18 @@ export const useDesk = create<DeskState>((set, get) => ({
   async createPrimitive(kind) {
     const posts: Record<string, [string, string, Record<string, unknown>]> = {
       note: ["/api/notes", "note", { title: "New note", body_markdown: "" }],
+      decision: [
+        "/api/decisions",
+        "decision",
+        {
+          title: "New decision",
+          status: "proposed",
+          context_markdown: "",
+          decision_markdown: "",
+          consequences_markdown: "",
+          alternatives: [],
+        },
+      ],
       kb: ["/api/kbs", "kb", { name: "New Knowledge" }],
       // HS-111-09 — born without an emoji: the empty avatar means "wear
       // the automaton sprite" (the server's own default is "" too).
@@ -590,6 +607,7 @@ export const useDesk = create<DeskState>((set, get) => ({
   async updatePrimitive(kind, id, patch) {
     const urls: Record<string, string> = {
       note: `/api/notes/${encodeURIComponent(id)}`,
+      decision: `/api/decisions/${encodeURIComponent(id)}`,
       kb: `/api/kbs/${encodeURIComponent(id)}`,
       recipe: `/api/recipes/${encodeURIComponent(id)}`,
       directory: `/api/directories/${encodeURIComponent(id)}`,
@@ -603,6 +621,14 @@ export const useDesk = create<DeskState>((set, get) => ({
       title: "title",
       name: "name",
       body_markdown: "bodyMarkdown",
+      context_markdown: "contextMarkdown",
+      decision_markdown: "decisionMarkdown",
+      consequences_markdown: "consequencesMarkdown",
+      decided_at: "decidedAt",
+      superseded_by: "supersededBy",
+      alternatives: "alternatives",
+      status: "status",
+      deciders: "deciders",
       tags: "tags",
       role: "role",
       system_prompt: "systemPrompt",
@@ -669,6 +695,10 @@ export const useDesk = create<DeskState>((set, get) => ({
   },
 
   openPullout(id, origin) {
+    if (id.startsWith("roadmap:")) {
+      get().openRoadmapWindow(id.slice("roadmap:".length), origin);
+      return;
+    }
     const projectId = id.startsWith("project:")
       ? id.slice("project:".length)
       : (get().items.project || []).some((project) => project.id === id)
@@ -726,6 +756,15 @@ export const useDesk = create<DeskState>((set, get) => ({
   },
   closeInfoWindow(ref) {
     set({ infoWindows: get().infoWindows.filter((w) => w.ref !== ref) });
+  },
+  openRoadmapWindow(slug, origin) {
+    const open = get().roadmapWindows;
+    if (!open.some((window) => window.slug === slug))
+      set({ roadmapWindows: [...open, { slug, origin: origin ?? null }] });
+    get().focusPanel(`roadmap:${slug}`);
+  },
+  closeRoadmapWindow(slug) {
+    set({ roadmapWindows: get().roadmapWindows.filter((window) => window.slug !== slug) });
   },
   setZoneViewPref(id, pref) {
     const current = get().zoneViewPrefs[id] || {
@@ -1138,6 +1177,7 @@ export const useDesk = create<DeskState>((set, get) => ({
       zoneWindows: [],
       zoneViewPrefs: {},
       infoWindows: [],
+      roadmapWindows: [],
       divedZone: null,
       editingId: null,
       selectedIds: [],

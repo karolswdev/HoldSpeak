@@ -3,7 +3,8 @@
 // world stays alive behind it; "Open full" is the ONE navigation on the
 // desk; Escape or ✕ closes (it is a desk window — it survives clicks
 // elsewhere and can be moved, resized, and raised).
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
+import type { EditorView } from "@codemirror/view";
 // @ts-ignore — shared ESM module (see ../sprites.d.ts)
 import { spriteUrl } from "../sprites";
 import { apiRequest } from "../../lib/api";
@@ -11,8 +12,9 @@ import { useDurableDraft } from "../../lib/durableDraft";
 import { useDesk } from "../store";
 import { openSurfaceOr } from "../shell";
 import { parseLinearGraph, stepLabel } from "../graph";
-import { DeskEditor, type DeskEditorHandle } from "./DeskEditor";
 import { MicButton } from "./MicButton";
+import { DeskEditor } from "./DeskEditor";
+import { EditorAIBar } from "./EditorAIBar";
 import { AgentAvatar } from "./AgentAvatar";
 import { lineage } from "../lineage";
 import { useSteering } from "../steering";
@@ -41,12 +43,13 @@ const FILABLE = new Set([
   "meeting",
   "artifact",
   "note",
+  "decision",
   "recipe",
   "chain",
   "workflow",
   "kb",
 ]);
-const EDITABLE = new Set(["note", "kb", "recipe", "workflow"]);
+const EDITABLE = new Set(["note", "decision", "kb", "recipe", "workflow"]);
 
 interface MeetingDetail {
   intel?: { summary?: string; action_items?: any[]; topics?: string[] } | null;
@@ -118,7 +121,8 @@ export function Pullout({
   // card. Escape reverts; Done (or ⌘Enter) commits through the real PUT.
   const [editingBody, setEditingBody] = useState(false);
   const [bodyDraft, setBodyDraft] = useState("");
-  const bodyEditorRef = useRef<DeskEditorHandle | null>(null);
+  const [editorView, setEditorView] = useState<EditorView | null>(null);
+  const [aiBarForced, setAIBarForced] = useState(false);
   const startBodyEdit = () => {
     setBodyDraft(String((o.ref as any).bodyMarkdown || ""));
     setEditingBody(true);
@@ -126,6 +130,34 @@ export function Pullout({
   const commitBodyEdit = () => {
     void updatePrimitive("note", o.id, { body_markdown: bodyDraft });
     setEditingBody(false);
+  };
+  const [editingDecision, setEditingDecision] = useState(false);
+  const [decisionDraft, setDecisionDraft] = useState({
+    context_markdown: "",
+    decision_markdown: "",
+    consequences_markdown: "",
+  });
+  const startDecisionEdit = () => {
+    setDecisionDraft({
+      context_markdown: String((o.ref as any).contextMarkdown || ""),
+      decision_markdown: String((o.ref as any).decisionMarkdown || ""),
+      consequences_markdown: String((o.ref as any).consequencesMarkdown || ""),
+    });
+    setEditingDecision(true);
+  };
+  const commitDecisionEdit = () => {
+    void updatePrimitive("decision", o.id, decisionDraft);
+    setEditingDecision(false);
+  };
+  const cycleDecisionStatus = () => {
+    const cycle = ["proposed", "accepted", "superseded", "deprecated"];
+    const current = String((o.ref as any).status || "proposed");
+    const status = cycle[(cycle.indexOf(current) + 1) % cycle.length];
+    void apiRequest(`/api/decisions/${encodeURIComponent(o.id)}/status`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status }),
+    }).then(() => useDesk.getState().refresh());
   };
   const contextualAction = contextualCapabilityActions(items, selectedIds).find(
     (action) => action.id === o.id && action.kind === o.kind,
@@ -479,6 +511,58 @@ export function Pullout({
           </>
         )}
 
+        {o.kind === "decision" && (
+          <section className="desk-decision-card">
+            <div className="desk-pullout-facts">
+              <button type="button" className="desk-chip quiet" onClick={cycleDecisionStatus}>
+                {String(ir.status || "proposed")}
+              </button>
+              {Array.isArray(ir.deciders) && ir.deciders.length ? (
+                <span>{ir.deciders.join(" · ")}</span>
+              ) : null}
+              {ir.decidedAt ? <span>{humanTime(String(ir.decidedAt))}</span> : null}
+            </div>
+            {editingDecision ? (
+              <div className="desk-decision-editor">
+                {(["context_markdown", "decision_markdown", "consequences_markdown"] as const).map((field) => (
+                  <label key={field} className="surface-eyebrow">
+                    {field.replace("_markdown", "").replace("_", " ")}
+                    <textarea
+                      className="desk-pullout-editbox"
+                      value={decisionDraft[field]}
+                      rows={5}
+                      onChange={(event) => setDecisionDraft({ ...decisionDraft, [field]: event.target.value })}
+                    />
+                  </label>
+                ))}
+              </div>
+            ) : (
+              <>
+                <section><h3>Context</h3><Material>{String(ir.contextMarkdown || "")}</Material></section>
+                <section><h3>Decision</h3><Material>{String(ir.decisionMarkdown || "")}</Material></section>
+                <section><h3>Consequences</h3><Material>{String(ir.consequencesMarkdown || "")}</Material></section>
+              </>
+            )}
+            {Array.isArray(ir.alternatives) && ir.alternatives.length ? (
+              <FoldGadget title="Alternatives considered">
+                <SurfaceRows>{ir.alternatives.map((alternative: any, index: number) => (
+                  <SurfaceRow key={`${alternative.name}-${index}`} title={String(alternative.name || "Alternative")} detail={String(alternative.reason || "")} />
+                ))}</SurfaceRows>
+              </FoldGadget>
+            ) : null}
+            {((items.decision || []) as any[]).filter((candidate) => candidate.supersededBy === o.id).map((candidate) => (
+              <button key={candidate.id} type="button" className="desk-chip quiet" onClick={() => openPullout(String(candidate.id))}>
+                Supersedes {String(candidate.title || candidate.id)}
+              </button>
+            ))}
+            {ir.supersededBy ? (
+              <button type="button" className="desk-chip quiet" onClick={() => openPullout(String(ir.supersededBy))}>
+                Superseded by {String(ir.supersededBy)}
+              </button>
+            ) : null}
+          </section>
+        )}
+
         {(o.kind === "note" || o.kind === "kb") &&
           (() => {
             const body = String(ir.bodyMarkdown || "");
@@ -489,7 +573,6 @@ export function Pullout({
               return (
                 <section>
                   <DeskEditor
-                    ref={bodyEditorRef}
                     className="desk-pullout-markdown-editor"
                     ariaLabel={`${o.title} content`}
                     value={bodyDraft}
@@ -499,6 +582,13 @@ export function Pullout({
                     onChange={setBodyDraft}
                     onEscape={() => setEditingBody(false)}
                     onModEnter={commitBodyEdit}
+                    onViewChange={setEditorView}
+                    onAIBarToggle={() => setAIBarForced((shown) => !shown)}
+                  />
+                  <EditorAIBar
+                    editorView={editorView}
+                    forceVisible={aiBarForced}
+                    onDismiss={() => setAIBarForced(false)}
                   />
                 </section>
               );
@@ -1014,13 +1104,24 @@ export function Pullout({
             Record follow-up
           </button>
         )}
-        {o.kind === "note" ? (
+        {o.kind === "decision" ? (
+          editingDecision ? (
+            <>
+              <button type="button" className="desk-chip quiet" onClick={() => setEditingDecision(false)}>Cancel</button>
+              <button type="button" className="desk-chip is-primary" onClick={commitDecisionEdit}>Done</button>
+            </>
+          ) : (
+            <button type="button" className="desk-chip is-primary" onClick={startDecisionEdit}>Edit</button>
+          )
+        ) : o.kind === "note" ? (
           editingBody ? (
             <>
               <MicButton
                 label="Hold to fill"
                 draftScope={`card-edit:${o.id}`}
-                onText={(text) => bodyEditorRef.current?.insertAtCursor(text)}
+                onText={(t) =>
+                  setBodyDraft((current) => (current ? `${current} ${t}` : t))
+                }
               />
               <button
                 type="button"

@@ -23,10 +23,14 @@ const automatons = numbered("automaton", 14);
 export const VARIANTS: Record<string, string[]> = {
   meeting: numbered("cassette", 16),
   note: numbered("note", 12),
+  // ADRs are material records; reuse the note family until a dedicated plate lands.
+  decision: numbered("note", 12),
   kb: numbered("tome", 13),
   // HS-109-05: Project reuses the closest existing dual-state memory
   // silhouette (bound tome); no unreviewed sprite art is introduced here.
   project: numbered("tome", 13),
+  roadmap: numbered("tome", 13),
+  story: numbered("note", 12),
   model: ["cartridge"],
   agent: automatons,
   recipe: automatons,
