@@ -155,9 +155,9 @@ def build_missioncontrol_router(
         return load_project_map(map_path)
 
     def _principal(request: Request):
-        from ...kernel.subprocess_exec import LOCAL_OWNER
+        from ...principals import UNAUTHENTICATED
 
-        return getattr(request.state, "principal", LOCAL_OWNER)
+        return getattr(request.state, "principal", UNAUTHENTICATED)
 
     @router.get("/api/missioncontrol/state")
     async def api_missioncontrol_state(request: Request) -> Any:
@@ -167,7 +167,10 @@ def build_missioncontrol_router(
             # to_thread: the bridge shells a CLI per repo (the
             # Phase-85 event-loop rule, applied here by HS-86-03).
             payload = await asyncio.to_thread(
-                state_payload, _map(), runner, _principal(request)
+                state_payload,
+                _map(),
+                runner,
+                principal=_principal(request),
             )
             _emit_belt_frames(ctx, payload)
             return payload
@@ -181,7 +184,10 @@ def build_missioncontrol_router(
             from ...missioncontrol_bridge import sessions_payload
 
             return await asyncio.to_thread(
-                sessions_payload, _map(), runner, _principal(request)
+                sessions_payload,
+                _map(),
+                runner,
+                principal=_principal(request),
             )
         except Exception as exc:
             log.warning(f"mission control sessions failed ({exc})")
@@ -193,7 +199,11 @@ def build_missioncontrol_router(
             from ...missioncontrol_bridge import events_payload
 
             return await asyncio.to_thread(
-                events_payload, _map(), tail, runner, _principal(request)
+                events_payload,
+                _map(),
+                tail,
+                runner,
+                principal=_principal(request),
             )
         except Exception as exc:
             log.warning(f"mission control events failed ({exc})")
@@ -207,7 +217,10 @@ def build_missioncontrol_router(
             from ...missioncontrol_bridge import receipts_payload
 
             return await asyncio.to_thread(
-                receipts_payload, _map(), runner, _principal(request)
+                receipts_payload,
+                _map(),
+                runner,
+                principal=_principal(request),
             )
         except Exception as exc:
             log.warning(f"mission control receipts failed ({exc})")
@@ -229,7 +242,7 @@ def build_missioncontrol_router(
                 project,
                 story,
                 runner,
-                _principal(request),
+                principal=_principal(request),
             )
         except Exception as exc:
             log.warning(f"mission control evidence failed ({exc})")
@@ -281,7 +294,9 @@ def build_missioncontrol_router(
             return {"entries": [], "error": "rails journal read failed"}
 
     @router.post("/api/missioncontrol/rails/size")
-    async def api_missioncontrol_rails_size(body: dict[str, Any]) -> Any:
+    async def api_missioncontrol_rails_size(
+        request: Request, body: dict[str, Any]
+    ) -> Any:
         """Hydrated sizes for picked rail refs (HS-88-02) — the grounding
         gauge's honest number. Reads the dw-named files (a receipt) and
         returns SIZES only, never the content; unknown refs come back so
@@ -292,7 +307,11 @@ def build_missioncontrol_router(
             refs = body.get("rails") if isinstance(body, dict) else None
             refs = [r for r in refs if isinstance(r, dict)] if isinstance(refs, list) else []
             blocks, unknown = await asyncio.to_thread(
-                hydrate_rails_refs, refs, project_map=_map(), runner=runner
+                hydrate_rails_refs,
+                refs,
+                principal=_principal(request),
+                project_map=_map(),
+                runner=runner,
             )
             sizes = [
                 {
@@ -332,7 +351,10 @@ def build_missioncontrol_router(
                     status_code=400,
                 )
             entry = state_entry(
-                body.repo, repo_path, runner, _principal(request)
+                body.repo,
+                repo_path,
+                runner,
+                principal=_principal(request),
             )
             if entry.get("status") != "live":
                 return JSONResponse(

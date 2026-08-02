@@ -13,8 +13,8 @@ from typing import Any, Optional
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 
-from ....kernel.subprocess_exec import LOCAL_OWNER
 from ....logging_config import get_logger
+from ....principals import UNAUTHENTICATED
 from ....web_requests import (
     _ActivityCliEnrichmentRunRequest,
     _ActivityEnrichmentConnectorRequest,
@@ -347,7 +347,7 @@ def build_enrichment_router(ctx: WebContext) -> APIRouter:
             return error_500(e, log, "Failed to fetch activity briefing")
 
     @router.post("/api/activity/enrichment/pipelines/{pipeline_id}/run")
-    async def api_run_pipeline(pipeline_id: str) -> Any:
+    async def api_run_pipeline(pipeline_id: str, request: Request) -> Any:
         """HS-13-08: kick off a pipeline pack on demand.
 
         Wraps `PipelineRunner` so the dashboard's "Refresh
@@ -382,7 +382,12 @@ def build_enrichment_router(ctx: WebContext) -> APIRouter:
             )
         try:
             db = get_database()
-            runner = PipelineRunner(db)
+            runner = PipelineRunner(
+                db,
+                principal=getattr(
+                    request.state, "principal", UNAUTHENTICATED
+                ),
+            )
             try:
                 result = runner.run(pipeline_id)
             except (UnknownPipelineError, NotAPipelineError) as exc:
@@ -505,7 +510,9 @@ def build_enrichment_router(ctx: WebContext) -> APIRouter:
                 limit=max(1, min(int(limit), 100)),
                 timeout_seconds=max(0.1, float(timeout_seconds)),
                 max_bytes=max(1024, min(int(max_bytes), 1048576)),
-                principal=getattr(request.state, "principal", LOCAL_OWNER),
+                principal=getattr(
+                    request.state, "principal", UNAUTHENTICATED
+                ),
             )
             connector = db.activity.get_activity_enrichment_connector(CONNECTOR_ID) or connector
             return JSONResponse(
@@ -599,7 +606,9 @@ def build_enrichment_router(ctx: WebContext) -> APIRouter:
                 limit=max(1, min(int(limit), 100)),
                 timeout_seconds=max(0.1, float(timeout_seconds)),
                 max_bytes=max(1024, min(int(max_bytes), 1048576)),
-                principal=getattr(request.state, "principal", LOCAL_OWNER),
+                principal=getattr(
+                    request.state, "principal", UNAUTHENTICATED
+                ),
             )
             connector = db.activity.get_activity_enrichment_connector(CONNECTOR_ID) or connector
             return JSONResponse(

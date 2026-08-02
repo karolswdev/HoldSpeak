@@ -36,7 +36,7 @@ class _RecordingTyper:
     def __init__(self):
         self.calls: list[tuple] = []
 
-    def type_text(self, text, *, target_profile=None, submit=False):
+    def type_text(self, text, *, target_profile=None, submit=False, **_kwargs):
         self.calls.append((text, target_profile, submit))
 
 

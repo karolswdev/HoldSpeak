@@ -40,8 +40,12 @@ class DesktopTypeTextCodec:
     name = "desktop.type_text"
     version = 1
 
-    def __init__(self, receipts: Any) -> None:
+    def __init__(self, receipts: Any, executor: Any) -> None:
         self._receipts = receipts
+        self.executor = executor
+
+    def close(self) -> None:
+        self.executor.close()
 
     def validate(self, request: OperationRequest) -> Admission:
         args = request.arguments

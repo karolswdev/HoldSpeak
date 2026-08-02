@@ -23,8 +23,10 @@ import subprocess
 from pathlib import Path
 from typing import Any, Callable, Optional
 
-from .connector_runtime import require_subprocess_read_authority
-from .kernel.subprocess_exec import LOCAL_OWNER
+from .connector_runtime import (
+    ReadSubprocessDenied,
+    require_subprocess_read_authority,
+)
 from .principals import Principal
 
 # The schema versions this client is proven against (declared per
@@ -100,7 +102,8 @@ def _fetch_document(
     repo: Path,
     argv_tail: list[str],
     runner: Optional[Runner],
-    principal: Principal = LOCAL_OWNER,
+    *,
+    principal: Principal,
 ) -> tuple[Optional[Any], str, str]:
     """(document, status, detail): status is live | unavailable."""
     run = runner or _default_runner
@@ -109,6 +112,8 @@ def _fetch_document(
         return None, "unavailable", f"no dw CLI for {repo}"
     try:
         proc = _run_read(run, [*base, *argv_tail], str(repo), principal)
+    except ReadSubprocessDenied:
+        raise
     except (OSError, subprocess.TimeoutExpired) as exc:
         return None, "unavailable", f"dw failed to run: {exc}"
     if proc.returncode != 0:
@@ -125,11 +130,12 @@ def state_entry(
     name: str,
     repo_path: str,
     runner: Optional[Runner] = None,
-    principal: Principal = LOCAL_OWNER,
+    *,
+    principal: Principal,
 ) -> dict[str, Any]:
     """One repo's feed, schema-checked at the door, relayed untouched."""
     doc, status, detail = _fetch_document(
-        Path(repo_path), ["state", "--json"], runner, principal
+        Path(repo_path), ["state", "--json"], runner, principal=principal
     )
     entry: dict[str, Any] = {"name": name, "path": repo_path}
     if doc is None:
@@ -150,11 +156,12 @@ def state_entry(
 def state_payload(
     project_map: dict[str, Any],
     runner: Optional[Runner] = None,
-    principal: Principal = LOCAL_OWNER,
+    *,
+    principal: Principal,
 ) -> dict[str, Any]:
     return {
         "repos": [
-            state_entry(name, repo, runner, principal)
+            state_entry(name, repo, runner, principal=principal)
             for name, repo in sorted(project_map["projects"].items())
         ]
     }
@@ -163,7 +170,8 @@ def state_payload(
 def sessions_payload(
     project_map: dict[str, Any],
     runner: Optional[Runner] = None,
-    principal: Principal = LOCAL_OWNER,
+    *,
+    principal: Principal,
 ) -> dict[str, Any]:
     """The correlation document is desk-global; one relay via the
     default repo's CLI."""
@@ -171,7 +179,7 @@ def sessions_payload(
     if not default:
         return {"status": "unavailable", "detail": "no rails repo configured"}
     doc, status, detail = _fetch_document(
-        Path(default), ["sessions", "--json"], runner, principal
+        Path(default), ["sessions", "--json"], runner, principal=principal
     )
     if doc is None:
         return {"status": status, "detail": detail}
@@ -194,7 +202,8 @@ def receipts_entry(
     name: str,
     repo_path: str,
     runner: Optional[Runner] = None,
-    principal: Principal = LOCAL_OWNER,
+    *,
+    principal: Principal,
 ) -> dict[str, Any]:
     """One repo's GitHub receipts (HS-86-03): open PRs with their
     check rollups, via the gh CLI with cwd inside the repo — the
@@ -215,6 +224,8 @@ def receipts_entry(
     ]
     try:
         proc = _run_read(run, argv, str(repo_path), principal)
+    except ReadSubprocessDenied:
+        raise
     except (OSError, subprocess.TimeoutExpired) as exc:
         return {**entry, "status": "unavailable", "detail": f"gh failed to run: {exc}"}
     if proc.returncode != 0:
@@ -233,11 +244,12 @@ def receipts_entry(
 def receipts_payload(
     project_map: dict[str, Any],
     runner: Optional[Runner] = None,
-    principal: Principal = LOCAL_OWNER,
+    *,
+    principal: Principal,
 ) -> dict[str, Any]:
     return {
         "repos": [
-            receipts_entry(name, repo, runner, principal)
+            receipts_entry(name, repo, runner, principal=principal)
             for name, repo in sorted(project_map["projects"].items())
         ]
     }
@@ -249,7 +261,8 @@ def story_evidence_payload(
     project_slug: str,
     story_id: str,
     runner: Optional[Runner] = None,
-    principal: Principal = LOCAL_OWNER,
+    *,
+    principal: Principal,
 ) -> dict[str, Any]:
     """Evidence content for one story (HS-86-04) — the desk opens the
     filed object in place. The path comes from the repo's own CLI
@@ -263,7 +276,10 @@ def story_evidence_payload(
     if not repo_path:
         return {"status": "refused", "detail": f"repo {repo_name!r} is not in the project map"}
     doc, status, detail = _fetch_document(
-        Path(repo_path), ["context", project_slug, "--compact"], runner, principal
+        Path(repo_path),
+        ["context", project_slug, "--compact"],
+        runner,
+        principal=principal,
     )
     if doc is None:
         return {"status": status, "detail": detail}
@@ -399,13 +415,17 @@ def events_payload(
     project_map: dict[str, Any],
     tail: int = 20,
     runner: Optional[Runner] = None,
-    principal: Principal = LOCAL_OWNER,
+    *,
+    principal: Principal,
 ) -> dict[str, Any]:
     tail = max(1, min(int(tail), 100))
     repos = []
     for name, repo in sorted(project_map["projects"].items()):
         doc, status, detail = _fetch_document(
-            Path(repo), ["events", "--json", "--tail", str(tail)], runner, principal
+            Path(repo),
+            ["events", "--json", "--tail", str(tail)],
+            runner,
+            principal=principal,
         )
         entry: dict[str, Any] = {"name": name, "path": repo}
         if doc is None or not isinstance(doc, list):

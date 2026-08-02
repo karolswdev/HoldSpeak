@@ -11,17 +11,42 @@ Drives the REAL app in a browser (the route pre-flight's harness posture):
 3. **Reconnect recovery** — the server is stopped and restarted on the same
    port; the page opens a fresh socket by itself (the bus's backoff).
 
-Skips cleanly when Playwright/browsers are absent (CI has neither); the
-green evidence run is local, like the pre-flight.
+Local runs skip cleanly when Playwright or the production bundle is absent.
+Hosted CI sets ``HOLDSPEAK_REQUIRE_LIVE_BUS=1`` and installs both, turning
+either absence into a collection failure.
 """
 from __future__ import annotations
 
+import importlib.util
+import os
 import threading
 import time
+from pathlib import Path
 
 import pytest
 
-pytest.importorskip("playwright.sync_api", reason="needs Playwright + a browser")
+REQUIRE_LIVE_BUS = os.environ.get("HOLDSPEAK_REQUIRE_LIVE_BUS") == "1"
+if importlib.util.find_spec("playwright") is None:
+    if REQUIRE_LIVE_BUS:
+        raise RuntimeError("CI live-bus gate requires the Playwright package")
+    pytest.skip(
+        "needs Playwright + a browser",
+        allow_module_level=True,
+    )
+BUILT_INDEX = (
+    Path(__file__).resolve().parents[2]
+    / "holdspeak"
+    / "static"
+    / "_built"
+    / "index.html"
+)
+if not BUILT_INDEX.is_file():
+    if REQUIRE_LIVE_BUS:
+        raise RuntimeError("CI live-bus gate requires a built production bundle")
+    pytest.skip(
+        "needs a built production web bundle",
+        allow_module_level=True,
+    )
 pytest.importorskip("fastapi.testclient", reason="requires meeting/web dependencies")
 
 pytestmark = [pytest.mark.e2e, pytest.mark.requires_meeting]

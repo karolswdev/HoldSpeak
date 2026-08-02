@@ -27,7 +27,12 @@ class _Typer:
         self.events = events
 
     def type_text(
-        self, text: str, *, target_profile: str | None = None, submit: bool = False
+        self,
+        text: str,
+        *,
+        target_profile: str | None = None,
+        submit: bool = False,
+        **_kwargs: Any,
     ) -> None:
         call = {"text": text, "target_profile": target_profile, "submit": submit}
         self.calls.append(call)
@@ -279,20 +284,12 @@ def test_process_input_receipt_material_is_hashed_and_content_free() -> None:
         raise AssertionError("audio frames reached process.input admission")
 
 
-def test_effect_ledger_records_the_typing_family_migration() -> None:
+def test_effect_debt_register_is_empty_after_typing_confinement() -> None:
     ledger = json.loads(_LEDGER.read_text())
-    ids = {site["id"] for site in ledger["sites"]}
-    debt = [
-        site
-        for site in ledger["sites"]
-        if site["status"] not in {"covered", "read", "exempt_computation"}
-    ]
-
-    assert len(debt) == ledger["expected"]["not_covered"] == 15
-    assert not {"T03", "T04", "D01", "D02", "D03", "D04", "D05", "D06", "D07", "D08"} & ids
-    desktop = next(site for site in ledger["sites"] if site["id"] == "D09")
-    assert desktop["status"] == "covered"
-    assert desktop["selector"]["scope"] == "type_text_from_owner_gesture"
+    assert ledger["sites"] == []
+    assert ledger["expected"]["total"] == 0
+    assert ledger["expected"]["not_covered"] == 0
+    assert "register is empty" in ledger["legal_effect"]
 
 
 def test_effect_ledger_debt_excludes_all_triaged_non_debt() -> None:

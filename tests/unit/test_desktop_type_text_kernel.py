@@ -13,13 +13,23 @@ from holdspeak.principals import Principal, PrincipalKind
 
 
 class _Typer:
-    def __init__(self, on_type: Any = None) -> None:
+    def __init__(
+        self, on_type: Any = None, result: dict[str, Any] | None = None
+    ) -> Any:
         self.calls: list[dict[str, Any]] = []
         self.on_type = on_type
+        self.result = result
 
     def type_text(
-        self, text: str, *, target_profile: str | None = None, submit: bool = False
+        self,
+        text: str,
+        *,
+        target_profile: str | None = None,
+        submit: bool = False,
+        **_kwargs: Any,
     ) -> None:
+        if self.result is not None:
+            return self.result
         if self.on_type is not None:
             self.on_type()
         self.calls.append(
@@ -86,9 +96,13 @@ def test_direct_gesture_executes_without_external_decision_and_journals_no_text(
 
 
 def test_focus_generation_change_refuses_before_driver_and_receipts(monkeypatch) -> None:
-    signatures = iter(("mac:42:editor", "mac:43:terminal"))
-    monkeypatch.setattr(desktop_typing, "_focused_signature", lambda: next(signatures))
-    typer = _Typer()
+    monkeypatch.setattr(desktop_typing, "_focused_signature", lambda: "mac:42:editor")
+    typer = _Typer(
+        result={
+            "state": "refused",
+            "outcome": "desktop_focus_generation_changed",
+        }
+    )
 
     with pytest.raises(DesktopTypeRefused) as caught:
         type_text_from_owner_gesture(

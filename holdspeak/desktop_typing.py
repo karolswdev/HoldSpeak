@@ -2,13 +2,13 @@
 from __future__ import annotations
 
 import hashlib
-import platform
 import threading
 import uuid
 from dataclasses import dataclass
 from typing import Any, Mapping
 
 from .kernel.admission import parse_request
+from .desktop_focus import focused_signature as _focused_signature
 from .principals import Principal, PrincipalKind
 
 
@@ -53,58 +53,6 @@ class _FocusTracker:
 _FOCUS = _FocusTracker()
 _OWNER = Principal(PrincipalKind.OWNER, "owner-session")
 _NODE = Principal(PrincipalKind.NODE, "local-desktop")
-
-
-def _focused_signature() -> str:
-    system = platform.system()
-    if system == "Darwin":
-        try:
-            import AppKit
-
-            app = AppKit.NSWorkspace.sharedWorkspace().frontmostApplication()
-            if app is None:
-                return ""
-            pid = int(app.processIdentifier())
-            window_id = ""
-            try:
-                import Quartz
-
-                options = (
-                    Quartz.kCGWindowListOptionOnScreenOnly
-                    | Quartz.kCGWindowListExcludeDesktopElements
-                )
-                windows = Quartz.CGWindowListCopyWindowInfo(options, Quartz.kCGNullWindowID)
-                window_id = next(
-                    (
-                        str(item.get(Quartz.kCGWindowNumber) or "")
-                        for item in windows
-                        if int(item.get(Quartz.kCGWindowOwnerPID) or -1) == pid
-                        and int(item.get(Quartz.kCGWindowLayer) or -1) == 0
-                    ),
-                    "",
-                )
-            except Exception:
-                pass
-            return ":".join(
-                ("mac", str(pid), str(app.bundleIdentifier() or ""), window_id)
-            )
-        except Exception:
-            return ""
-    if system == "Linux":
-        try:
-            from .target_profile import collect_active_target_hints
-
-            hints = collect_active_target_hints()
-            return ":".join(
-                (
-                    "linux",
-                    str(hints.get("pid") or ""),
-                    str(hints.get("window_title") or ""),
-                )
-            ).rstrip(":")
-        except Exception:
-            return ""
-    return ""
 
 
 def _reason_from_handle(handle: Mapping[str, Any]) -> str:
@@ -178,21 +126,28 @@ def type_text_from_owner_gesture(
             receipt=refusal,
         )
 
-    current = _FOCUS.bind()
     reason = ""
     outcome = "succeeded"
-    if binding.generation == "unresolved" or not current.signature:
+    if binding.generation == "unresolved":
         reason = "desktop_focus_unresolved"
-        outcome = "refused"
-    elif current.generation != binding.generation:
-        reason = "desktop_focus_generation_changed"
         outcome = "refused"
     elif typer is None:
         reason = "desktop_type_driver_unavailable"
         outcome = "refused"
     else:
         try:
-            typer.type_text(text, target_profile=target_profile, submit=bool(submit))
+            execution = typer.type_text(
+                text,
+                target_profile=target_profile,
+                submit=bool(submit),
+                operation_id=handle["operation_id"],
+                warrant=claimed["operations"][0]["warrant"],
+                request=raw,
+                executor=codec.executor,
+            )
+            if isinstance(execution, Mapping):
+                outcome = str(execution.get("state") or "failed")
+                reason = str(execution.get("outcome") or outcome)
         except Exception:
             reason = "desktop_type_driver_failed"
             outcome = "failed"

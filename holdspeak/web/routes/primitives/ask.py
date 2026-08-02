@@ -300,7 +300,9 @@ def build_ask_router(ctx: WebContext) -> APIRouter:
                 if rails_refs:
                     from ....grounding_rails import hydrate_rails_refs
 
-                    r_blocks, r_unknown = hydrate_rails_refs(rails_refs)
+                    r_blocks, r_unknown = hydrate_rails_refs(
+                        rails_refs, principal=request.state.principal
+                    )
                     unknown = list(unknown) + r_unknown
                     for b in r_blocks:
                         label = b.kind.replace("rails:", "RAILS ").upper()

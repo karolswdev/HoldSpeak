@@ -77,12 +77,7 @@ def submit_process_input_from_owner_gesture(
     if owner.kind is not PrincipalKind.OWNER:
         raise ProcessInputRefused("process_input_owner_direct_gesture_required")
     issued = _SERVICES.targets().issue(pane)
-    preflight = None
-    if issued.get("status") != "issued":
-        preflight = {
-            "status": f"process_target_{issued.get('status') or 'unresolved'}",
-            "detail": str(issued.get("detail") or "process target could not be resolved"),
-        }
+    unresolved_reason = f"process_target_{issued.get('status') or 'unresolved'}"
     command_id = str(uuid.uuid4())
     command = {
         "node_id": "local",
@@ -96,6 +91,7 @@ def submit_process_input_from_owner_gesture(
             "agent": agent,
             "submit": True,
             "grounding_refs": [],
+            "expected_pane_id": issued.get("pane_id") or "",
         },
     }
     authority = {
@@ -109,7 +105,6 @@ def submit_process_input_from_owner_gesture(
         command,
         owner,
         authority_snapshot=authority,
-        preflight_result=preflight,
         include_result=True,
     )
     result = dict(response.get("result") or {})
@@ -123,8 +118,12 @@ def submit_process_input_from_owner_gesture(
         }
     )
     receipt = response.get("receipt") or {}
-    if preflight is not None or str(receipt.get("state") or "") != "succeeded":
-        fallback_reason = preflight["status"] if preflight is not None else "process_input_refused"
+    if str(receipt.get("state") or "") != "succeeded":
+        fallback_reason = (
+            unresolved_reason
+            if issued.get("status") != "issued"
+            else "process_input_refused"
+        )
         raise ProcessInputRefused(
             str(receipt.get("outcome") or fallback_reason),
             result=result,

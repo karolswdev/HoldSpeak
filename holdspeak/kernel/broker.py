@@ -166,6 +166,8 @@ class Broker(ExecutorPlane):
             receipt = self._terminal(operation, "refused", "owner_rejected")
             return self._handle(operation, receipt)
         now = self._clock()
+        claim_ttl = max(0.1, float(spec.claim_ttl_seconds))
+        execution_ttl = max(claim_ttl, float(spec.execution_ttl_seconds))
         warrant = self.store.sign_warrant(
             {
                 "warrant_id": "war_" + uuid.uuid4().hex,
@@ -175,7 +177,8 @@ class Broker(ExecutorPlane):
                 "placement": operation["placement"],
                 "policy_version": operation["policy_version"],
                 "issued_at": now,
-                "expires_at": now + 30.0,
+                "expires_at": now + claim_ttl,
+                "execution_expires_at": now + execution_ttl,
                 "uses": 1,
             }
         )
@@ -185,6 +188,17 @@ class Broker(ExecutorPlane):
         )
         self.store.append("operation.approved", operation_id, refs=(operation["target_ref"],))
         return self._handle(operation)
+
+    def reap_expired(self) -> dict[str, Any]:
+        """Terminalize approved or claimed work whose executor went silent.
+
+        An unclaimed warrant is known not to have run and becomes refused.
+        Claimed work may already have acted, so it becomes indeterminate and
+        is never made retryable.
+        """
+        from .liveness import reap_expired
+
+        return reap_expired(self)
 
     def events(self, after_cursor: int, filters: Mapping[str, Any], principal: Any) -> dict[str, Any]:
         if principal.kind is PrincipalKind.NONE:

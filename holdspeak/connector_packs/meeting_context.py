@@ -19,6 +19,7 @@ from datetime import datetime, timedelta
 from typing import Any, Iterable, Optional
 
 from ..connector_sdk import ConnectorManifest, validate_manifest
+from ..principals import Principal
 
 CONNECTOR_ID = "meeting_context"
 ANNOTATION_TYPE = "meeting_context_briefing"
@@ -173,7 +174,9 @@ def _annotation_value(annotation: Any) -> dict[str, Any]:
 # ──────────────────────────── Run ─────────────────────────────
 
 
-def run(db: Any, *, limit: Optional[int] = None) -> dict[str, Any]:
+def run(
+    db: Any, *, principal: Principal, limit: Optional[int] = None
+) -> dict[str, Any]:
     """Pipeline-runner entry point. HS-13-07.
 
     For each active project: gather recent activity records,
@@ -183,6 +186,7 @@ def run(db: Any, *, limit: Optional[int] = None) -> dict[str, Any]:
     briefings for the same connector are deleted up front so
     re-running is mutation-safe.
     """
+    del principal
     started_at = datetime.now()
 
     capped = max(1, min(int(limit if limit is not None else DEFAULT_LIMIT), 1000))

@@ -12,9 +12,12 @@ from .model import Admission, KernelRefused, OperationRequest, forbidden_content
 _GENERATION = re.compile(r"^[A-Za-z0-9_.:-]{1,160}$")
 _ALLOWED = frozenset(
     {
+        "input_kind",
         "text",
         "submit",
+        "keys",
         "expected_generation",
+        "expected_pane_id",
         "command_id",
         "session_key",
         "agent",
@@ -44,24 +47,74 @@ class ProcessInputCodec:
         unknown = set(args) - _ALLOWED
         if unknown:
             raise KernelRefused("operation_field_not_allowed", sorted(unknown)[0])
-        text = args.get("text")
-        submit = args.get("submit")
+        input_kind = str(args.get("input_kind") or "text").strip()
         generation = str(args.get("expected_generation") or "").strip()
+        expected_pane_id = str(args.get("expected_pane_id") or "").strip()
         command_id = str(args.get("command_id") or "").strip()
         expected_sequence = args.get("expected_sequence")
         target = request.target_ref
         if (
-            not isinstance(text, str)
-            or not text.strip()
-            or not isinstance(submit, bool)
-            or not isinstance(expected_sequence, int)
+            not isinstance(expected_sequence, int)
             or isinstance(expected_sequence, bool)
             or expected_sequence < 1
             or not target.startswith("process:")
             or not valid_ref(target)
             or not _GENERATION.fullmatch(generation)
+            or (
+                expected_pane_id
+                and not re.fullmatch(r"%[0-9]+", expected_pane_id)
+            )
         ):
             raise KernelRefused("process_input_prerequisite_failed")
+        if input_kind == "text":
+            text = args.get("text")
+            submit = args.get("submit")
+            if (
+                not isinstance(text, str)
+                or not text.strip()
+                or not isinstance(submit, bool)
+                or "keys" in args
+            ):
+                raise KernelRefused("process_input_prerequisite_failed")
+            head = (
+                f"terminal text {len(text.encode('utf-8'))} bytes "
+                f"submit={submit}"
+            )
+        elif input_kind == "keys":
+            raw_keys = args.get("keys")
+            if (
+                not isinstance(raw_keys, list)
+                or "text" in args
+                or "submit" in args
+            ):
+                raise KernelRefused("process_input_prerequisite_failed")
+            literal_bytes = 0
+            for item in raw_keys:
+                if isinstance(item, str):
+                    continue
+                if not isinstance(item, Mapping):
+                    raise KernelRefused("process_input_prerequisite_failed")
+                unknown_key_fields = set(item) - {
+                    "key",
+                    "named",
+                    "literal",
+                    "text",
+                }
+                named = "key" in item or "named" in item
+                literal = "literal" in item or "text" in item
+                if unknown_key_fields or named == literal:
+                    raise KernelRefused("process_input_prerequisite_failed")
+                if literal:
+                    value = item.get("literal", item.get("text", ""))
+                    if not isinstance(value, str):
+                        raise KernelRefused("process_input_prerequisite_failed")
+                    literal_bytes += len(value.encode("utf-8"))
+            head = (
+                f"terminal keys {len(raw_keys)} events "
+                f"literal={literal_bytes} bytes"
+            )
+        else:
+            raise KernelRefused("process_input_kind_unknown", input_kind)
         try:
             uuid.UUID(command_id)
         except (TypeError, ValueError) as exc:
@@ -87,7 +140,7 @@ class ProcessInputCodec:
             placement=request.placement,
             payload_hash=payload_hash,
             refs=refs,
-            head=f"terminal text {len(text.encode('utf-8'))} bytes submit={submit}",
+            head=head,
             ttl_seconds=ttl,
             native_id=command_id,
         )
