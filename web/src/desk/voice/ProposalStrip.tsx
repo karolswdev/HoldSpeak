@@ -1,0 +1,86 @@
+import { useEffect } from "react";
+import { EgressChip } from "../surface/gadgets";
+import type { VoiceProposal } from "./grammar";
+
+interface ProposalStripProps {
+  proposal: VoiceProposal | null;
+  onConfirm: () => void;
+  onCancel: () => void;
+  pending: boolean;
+  receipt?: { text: string; scope: string } | null;
+}
+
+const INTENT_LABELS: Record<string, string> = {
+  bold: "Bold selection",
+  italic: "Italicize selection",
+  heading: "Make heading",
+  list: "Make bullet list",
+  rewrite: "Rewrite selection",
+  expand: "Expand selection",
+  continue: "Continue writing",
+  readback: "Read selection",
+  open: "Open item",
+  "create-note": "Create note",
+  attention: "Show attention",
+};
+
+function egressScope(scope: string): "local" | "mixed" | "cloud" {
+  return scope === "cloud" || scope === "mixed" ? scope : "local";
+}
+
+/** An in-world arm/fire receipt. Enter is explicit consent; Escape disarms. */
+export function VoiceProposalStrip({
+  proposal,
+  onConfirm,
+  onCancel,
+  pending,
+  receipt,
+}: ProposalStripProps) {
+  useEffect(() => {
+    if (!proposal || pending) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        onConfirm();
+      }
+      if (event.key === "Escape") {
+        event.preventDefault();
+        onCancel();
+      }
+    };
+    document.addEventListener("keydown", onKeyDown, true);
+    return () => document.removeEventListener("keydown", onKeyDown, true);
+  }, [proposal, pending, onConfirm, onCancel]);
+
+  useEffect(() => {
+    if (!receipt) return;
+    const timer = window.setTimeout(onCancel, 3000);
+    return () => window.clearTimeout(timer);
+  }, [receipt, onCancel]);
+
+  if (!proposal) return null;
+  const label = pending
+    ? "CLASSIFYING"
+    : INTENT_LABELS[proposal.intentId] ?? proposal.intentId;
+
+  return (
+    <div className="desk-voice-proposal" role="status" aria-live="polite">
+      <style>{`@keyframes desk-voice-scan { from { transform: translateX(-105%); } to { transform: translateX(210%); } } .desk-voice-proposal { display:flex; align-items:center; gap:6px; flex-wrap:wrap; padding:5px 6px; border:1px solid var(--border); border-radius:var(--radius-sm); background:var(--surface-2); box-shadow:var(--desk-window-etch), 0 5px 12px rgb(0 0 0 / .22); font:10px/1.25 var(--font-mono); } .desk-voice-proposal-heard { max-width:220px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--muted); } .desk-voice-proposal-action { color:var(--text); text-transform:uppercase; } .desk-voice-scan { position:relative; width:44px; height:4px; overflow:hidden; background:var(--surface-1); border:1px solid var(--border); } .desk-voice-scan::after { content:""; position:absolute; inset:0; width:45%; background:var(--accent); animation:desk-voice-scan .8s linear infinite; }`}</style>
+      {pending ? <span className="desk-voice-scan" aria-hidden="true" /> : null}
+      <span className="desk-voice-proposal-heard">“{proposal.transcript}”</span>
+      <strong className="desk-voice-proposal-action">{label}</strong>
+      {proposal.requiresLLM ? (
+        <EgressChip label="AI" scope="cloud" title="Intent classification used Ask AI." />
+      ) : null}
+      {receipt ? (
+        <span className="desk-voice-proposal-action">{receipt.text}</span>
+      ) : pending ? null : (
+        <>
+          <button type="button" className="desk-chip quiet" onClick={onConfirm}>Confirm</button>
+          <button type="button" className="desk-chip quiet" onClick={onCancel}>Cancel</button>
+        </>
+      )}
+      {receipt ? <EgressChip label={receipt.scope} scope={egressScope(receipt.scope)} /> : null}
+    </div>
+  );
+}

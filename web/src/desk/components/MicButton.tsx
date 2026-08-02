@@ -26,6 +26,9 @@ import {
   dictationFailure,
   type DictationFailure,
 } from "../../lib/dictationRecovery";
+import { VoiceProposalStrip } from "../voice/ProposalStrip";
+import type { VoiceGrammar, VoiceProposal } from "../voice/grammar";
+import { routeVoiceIntent } from "../voice/intentRouter";
 
 export type MicState = "idle" | "listening" | "busy" | "failed";
 
@@ -37,11 +40,22 @@ export function MicButton({
   variant,
   onState,
   onLevel,
+  grammar,
+  surfaceKind,
+  hasSelection = false,
+  onProposalConfirm,
 }: {
   onText: (text: string) => void;
   label?: string;
   onFailure?: (failure: DictationFailure) => void;
   draftScope?: string;
+  /** When supplied, transcript is classified before it can change the surface. */
+  grammar?: VoiceGrammar;
+  /** The focused surface's identity; defaults to the supplied grammar's kind. */
+  surfaceKind?: string;
+  hasSelection?: boolean;
+  /** Executes only after the user confirms the armed proposal. */
+  onProposalConfirm?: (proposal: VoiceProposal) => void | Promise<void>;
   /** "transport" — the 48×48 momentary TALK key (glyph over mono word,
    * held = inverted video). Default: the compact in-well mic. */
   variant?: "transport";
@@ -53,6 +67,9 @@ export function MicButton({
   const [state, setState] = useState<MicState>("idle");
   const [failure, setFailure] = useState<DictationFailure | null>(null);
   const [audioRetained, setAudioRetained] = useState(false);
+  const [proposal, setProposal] = useState<VoiceProposal | null>(null);
+  const [classifying, setClassifying] = useState(false);
+  const [receipt, setReceipt] = useState<{ text: string; scope: string } | null>(null);
   const holding = useRef(false);
   const onStateRef = useRef(onState);
   onStateRef.current = onState;
@@ -138,6 +155,56 @@ export function MicButton({
     );
   }
 
+  const routeTranscript = async (text: string) => {
+    if (!grammar) {
+      onText(text);
+      return;
+    }
+    // The strip appears while the (only when needed) classifier is working;
+    // the transcript itself is still never an instruction until Confirm.
+    const loadingProposal: VoiceProposal = {
+      transcript: text,
+      intentId: "classifying",
+      verbId: null,
+      params: {},
+      confidence: 0,
+      requiresLLM: false,
+    };
+    setProposal(loadingProposal);
+    setClassifying(true);
+    const next = await routeVoiceIntent({
+      transcript: text,
+      surfaceKind: surfaceKind ?? grammar.surfaceKind,
+      selectionState: { hasSelection },
+      grammar,
+    });
+    setClassifying(false);
+    if (next.confidence >= 0.5) {
+      setProposal(next);
+      return;
+    }
+    setProposal(null);
+    if (grammar.dictationFallback) onText(text);
+  };
+
+  const confirmProposal = async () => {
+    if (!proposal || classifying) return;
+    const armed = proposal;
+    try {
+      if (onProposalConfirm) await onProposalConfirm(armed);
+      else onText(armed.transcript);
+      setReceipt({ text: "DONE", scope: armed.requiresLLM ? "cloud" : "local" });
+    } catch {
+      setReceipt({ text: "ACTION FAILED", scope: "local" });
+    }
+  };
+
+  const clearProposal = () => {
+    setProposal(null);
+    setClassifying(false);
+    setReceipt(null);
+  };
+
   const start = async () => {
     holding.current = true;
     setFailure(null);
@@ -147,7 +214,7 @@ export function MicButton({
         if (recovered !== null) {
           setAudioRetained(false);
           if (recovered) {
-            onText(recovered);
+            await routeTranscript(recovered);
             go("idle");
           } else {
             setFailure("no_speech");
@@ -178,7 +245,7 @@ export function MicButton({
     try {
       const text = await stopAndTranscribe(draftScope);
       if (text) {
-        onText(text);
+        await routeTranscript(text);
         setAudioRetained(false);
         setFailure(null);
         go("idle");
@@ -237,6 +304,13 @@ export function MicButton({
           {DICTATION_FAILURES[failure].message}
         </span>
       ) : null}
+      <VoiceProposalStrip
+        proposal={proposal}
+        pending={classifying}
+        receipt={receipt}
+        onConfirm={() => void confirmProposal()}
+        onCancel={clearProposal}
+      />
     </>
   );
 }
