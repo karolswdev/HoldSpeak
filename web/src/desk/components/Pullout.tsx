@@ -3,7 +3,7 @@
 // world stays alive behind it; "Open full" is the ONE navigation on the
 // desk; Escape or ✕ closes (it is a desk window — it survives clicks
 // elsewhere and can be moved, resized, and raised).
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 // @ts-ignore — shared ESM module (see ../sprites.d.ts)
 import { spriteUrl } from "../sprites";
 import { apiRequest } from "../../lib/api";
@@ -11,6 +11,7 @@ import { useDurableDraft } from "../../lib/durableDraft";
 import { useDesk } from "../store";
 import { openSurfaceOr } from "../shell";
 import { parseLinearGraph, stepLabel } from "../graph";
+import { DeskEditor, type DeskEditorHandle } from "./DeskEditor";
 import { MicButton } from "./MicButton";
 import { AgentAvatar } from "./AgentAvatar";
 import { lineage } from "../lineage";
@@ -117,6 +118,7 @@ export function Pullout({
   // card. Escape reverts; Done (or ⌘Enter) commits through the real PUT.
   const [editingBody, setEditingBody] = useState(false);
   const [bodyDraft, setBodyDraft] = useState("");
+  const bodyEditorRef = useRef<DeskEditorHandle | null>(null);
   const startBodyEdit = () => {
     setBodyDraft(String((o.ref as any).bodyMarkdown || ""));
     setEditingBody(true);
@@ -486,23 +488,17 @@ export function Pullout({
             if (o.kind === "note" && editingBody)
               return (
                 <section>
-                  <textarea
-                    className="desk-pullout-editbox"
-                    aria-label={`${o.title} content`}
+                  <DeskEditor
+                    ref={bodyEditorRef}
+                    className="desk-pullout-markdown-editor"
+                    ariaLabel={`${o.title} content`}
                     value={bodyDraft}
                     autoFocus
-                    rows={Math.max(6, bodyDraft.split("\n").length + 1)}
+                    minHeight={`${Math.max(6, bodyDraft.split("\n").length + 1) * 1.55}em`}
                     placeholder="Write"
-                    onChange={(e) => setBodyDraft(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Escape") {
-                        e.stopPropagation();
-                        setEditingBody(false);
-                      } else if (e.key === "Enter" && e.metaKey) {
-                        e.preventDefault();
-                        commitBodyEdit();
-                      }
-                    }}
+                    onChange={setBodyDraft}
+                    onEscape={() => setEditingBody(false)}
+                    onModEnter={commitBodyEdit}
                   />
                 </section>
               );
@@ -1024,9 +1020,7 @@ export function Pullout({
               <MicButton
                 label="Hold to fill"
                 draftScope={`card-edit:${o.id}`}
-                onText={(t) =>
-                  setBodyDraft((current) => (current ? `${current} ${t}` : t))
-                }
+                onText={(text) => bodyEditorRef.current?.insertAtCursor(text)}
               />
               <button
                 type="button"

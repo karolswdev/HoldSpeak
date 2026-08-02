@@ -7,6 +7,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useDesk } from "../store";
 import type { WorldObject } from "../world";
 import type { UnitPos } from "../store";
+import { DeskEditor, type DeskEditorHandle } from "./DeskEditor";
 import { MicButton } from "./MicButton";
 import {
   buildLinearGraph,
@@ -36,6 +37,7 @@ export function InlineEditor({ o, u }: { o: WorldObject; u: UnitPos }) {
   const items = useDesk((s) => s.items);
   const profiles = useDesk((s) => s.profiles);
   const ref = useRef<HTMLDivElement | null>(null);
+  const bodyEditorRef = useRef<DeskEditorHandle | null>(null);
   const save = useDebouncedSave(o.kind === "kb" ? "kb" : o.kind, o.id);
   const [more, setMore] = useState(false);
 
@@ -95,8 +97,6 @@ export function InlineEditor({ o, u }: { o: WorldObject; u: UnitPos }) {
       if (e.key === "Escape") closeEditor();
     };
     document.addEventListener("keydown", onKey);
-    // Focus the first field on open.
-    ref.current?.querySelector<HTMLInputElement>("input, textarea")?.focus();
     return () => document.removeEventListener("keydown", onKey);
   }, []);
 
@@ -153,11 +153,13 @@ export function InlineEditor({ o, u }: { o: WorldObject; u: UnitPos }) {
               placeholder="Title"
               onChange={(e) => set("title", "title", e.target.value)}
             />
-            <textarea
-              rows={7}
+            <DeskEditor
+              ref={bodyEditorRef}
               value={f.body}
               placeholder="Write"
-              onChange={(e) => set("body", "body_markdown", e.target.value)}
+              autoFocus
+              onEscape={closeEditor}
+              onChange={(value) => set("body", "body_markdown", value)}
             />
             <input
               value={f.tags}
@@ -167,11 +169,21 @@ export function InlineEditor({ o, u }: { o: WorldObject; u: UnitPos }) {
           </>
         )}
         {o.kind === "kb" && (
-          <input
-            value={f.name}
-            placeholder="Name"
-            onChange={(e) => set("name", "name", e.target.value)}
-          />
+          <>
+            <input
+              value={f.name}
+              placeholder="Name"
+              onChange={(e) => set("name", "name", e.target.value)}
+            />
+            <DeskEditor
+              ref={bodyEditorRef}
+              value={f.body}
+              placeholder="Write"
+              autoFocus
+              onEscape={closeEditor}
+              onChange={(value) => set("body", "body_markdown", value)}
+            />
+          </>
         )}
         {o.kind === "workflow" && (
           <>
@@ -353,12 +365,9 @@ export function InlineEditor({ o, u }: { o: WorldObject; u: UnitPos }) {
           <MicButton
             draftScope={`inline:${o.kind}:${o.id}`}
             onText={(t) => {
-              // Fill the primary text field for the kind: a note's body,
-              // otherwise the name/title.
-              if (o.kind === "note") {
-                set("body", "body_markdown", (f.body ? f.body + " " : "") + t);
-              } else if (o.kind === "kb") {
-                set("name", "name", (f.name ? f.name + " " : "") + t);
+              // Notes and Knowledge bodies receive dictation at the editor cursor.
+              if (o.kind === "note" || o.kind === "kb") {
+                bodyEditorRef.current?.insertAtCursor(t);
               } else {
                 set(
                   "systemPrompt",
