@@ -193,6 +193,18 @@ export const VERBS: Verb[] = [
     run: () => useDesk.getState().resetLayout(),
   },
   {
+    // HS-112-03 — the desk's first destructive verb NEVER fires from a
+    // menu tap: it opens the Prefs Desk module, where the armed confirm
+    // (RESET DESK?) states what resets and what survives.
+    id: "desk.reset-to-seed",
+    label: "Reset to seed…",
+    scope: "floor",
+    group: "floor",
+    keywords: ["fresh", "seed", "wipe", "architect"],
+    ghost: never,
+    run: () => openSurfaceOr("configure-settings", "/settings", "desk"),
+  },
+  {
     id: "desk.refresh",
     label: "Refresh from hub",
     scope: "floor",
