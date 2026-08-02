@@ -11,7 +11,6 @@ from datetime import datetime
 from typing import Any, Callable, Iterable, Optional
 
 from .db import ActivityAnnotation, ActivityRecord, Database
-from .kernel.subprocess_exec import LOCAL_OWNER
 from .principals import Principal
 
 CONNECTOR_ID = "jira"
@@ -105,7 +104,7 @@ def run_jira_cli_enrichment(
     timeout_seconds: float = 5.0,
     max_bytes: int = 65536,
     run_command: Optional[RunCommand] = None,
-    principal: Principal = LOCAL_OWNER,
+    principal: Principal,
 ) -> list[JiraCliRunResult]:
     """Run planned read-only `jira` commands and persist local annotations."""
     status = jira_cli_status(jira_path=jira_path)

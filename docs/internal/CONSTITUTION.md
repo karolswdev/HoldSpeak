@@ -146,11 +146,10 @@ you do. All of it local, all of it yours, all of it through the Desk.
    token stream inside a model's run — owe the kernel no admission and no
    receipt. They still owe it an authenticated principal and read
    authority. This exempts computation, never effects.
-6. *(Transitional.)* Until the effect register is empty, the paths it names
-   act outside the kernel as declared debt. The register is checked in and
-   enumerated; no path joins it silently; no agent principal may reach a
-   path it names. This clause and the register expire together, on the day
-   the register is empty.
+
+The transitional clause 6 ratified with this article expired by its own
+condition on 2026-07-29, when the checked-in effect debt register reached
+zero. Its former text and sunset are preserved in the amendment record.
 
 ## Amendment record
 
@@ -164,3 +163,12 @@ you do. All of it local, all of it yours, all of it through the Desk.
   ratification should wait until clause 2 is materially true — is recorded
   at `pm/roadmap/holdspeak/proposals/kernel-council-sol-article-xi.md`
   and was overruled under Article X.1.
+- **2026-07-29 — Article XI transitional clause 6 expired by operation of
+  its owner-ratified sunset.** Phase 108 emptied
+  `holdspeak/kernel/effect_ledger.json`; the clause and register therefore
+  expired together, exactly as ratified. This records the sunset rather
+  than amending the Constitution. The expired text was: “Until the effect
+  register is empty, the paths it names act outside the kernel as declared
+  debt. The register is checked in and enumerated; no path joins it
+  silently; no agent principal may reach a path it names. This clause and
+  the register expire together, on the day the register is empty.”

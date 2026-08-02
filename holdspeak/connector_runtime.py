@@ -176,7 +176,7 @@ class PermissionGate:
         self,
         command: Iterable[str],
         *,
-        principal: Principal = LOCAL_OWNER,
+        principal: Principal,
         runner: Optional[SubprocessRunner] = None,
         **kwargs: Any,
     ) -> subprocess.CompletedProcess[str]:
@@ -375,6 +375,7 @@ class PipelineRunner:
         self,
         db: "Database",
         *,
+        principal: Principal,
         registry: Optional[Iterable["RegisteredPack"]] = None,
         now: Optional[Callable[[], datetime]] = None,
     ) -> None:
@@ -384,6 +385,7 @@ class PipelineRunner:
         self._registry = packs
         self._by_id = {p.manifest.id: p for p in packs}
         self._db = db
+        self._principal = principal
         self._now = now or datetime.now
 
     # ────────────────────────── Plan ────────────────────────────
@@ -471,7 +473,7 @@ class PipelineRunner:
 
         started = self._now()
         try:
-            run_callable(self._db)
+            run_callable(self._db, principal=self._principal)
         except Exception as exc:  # noqa: BLE001 — surface to caller
             finished = self._now()
             self._db.activity.record_connector_run(

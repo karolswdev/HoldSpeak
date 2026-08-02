@@ -368,7 +368,9 @@ def build_coder_steering_router(
         if isinstance(session, JSONResponse):
             return session
         body = payload if isinstance(payload, dict) else {}
-        composed = compose_from_body(body)
+        composed = compose_from_body(
+            body, principal=request.state.principal
+        )
         if isinstance(composed, JSONResponse):
             return composed
         if composed["status"] == "over_cap":
@@ -413,8 +415,13 @@ def build_coder_steering_router(
             )
         result = await deliver_process_input(
             process_input, key=key, target=target, agent=session.agent,
-            pane_id=pane_id, submit=submit, composed=composed,
-            operation=operation, policy=policy, request=request,
+            pane_id=pane_id, verb="terminal.text",
+            payload={
+                "text": str(composed["text"]),
+                "submit": submit,
+                "grounding_refs": list(composed["refs"]),
+            },
+            policy=policy, principal=request.state.principal,
         )
         if result.get("audit_id") is not None or result.get("revoked"):
             _coder_frame(ctx, key)
@@ -423,17 +430,12 @@ def build_coder_steering_router(
         return JSONResponse(result, status_code=409)
 
     @router.post("/api/coders/{key}/keys")
-    async def api_coder_keys(key: str, payload: Optional[dict[str, Any]] = None) -> Any:
-        """Send a KEY sequence through THE chokepoint (HS-89-01).
-
-        Full key control: `C-c` to interrupt a runaway, arrows/`Escape`/
-        `Tab` to drive a TUI — not just literal text. The body is
-        `{"keys": [...]}` where each item is a named key (a string like
-        `"C-c"`, or `{"key": "C-c"}`) or a literal run (`{"literal": "…"}`).
-        Named keys are held to an allow-list — an unknown key is refused by
-        name (409 `unknown_key`), never sent. Missing authority is a typed 409;
-        a revoking refusal broadcasts its frame. Delivered or refused, every
-        key sequence is audited.
+    async def api_coder_keys(
+        key: str, request: Request, payload: Optional[dict[str, Any]] = None
+    ) -> Any:
+        """Send allow-listed keys through ``process.input@1``.
+        Unknown keys and missing authority refuse by name; every attempt is
+        audited, and revoking refusals broadcast their frame.
         """
         from .... import coder_steering
 
@@ -456,15 +458,16 @@ def build_coder_steering_router(
             registered=not stale,
             grant=grant,
         )
-        result = await asyncio.to_thread(
-            coder_steering.deliver_keys,
-            key,
-            body.get("keys"),
-            current_target=target,
+        result = await deliver_process_input(
+            process_input,
+            key=key,
+            target=target,
             agent=session.agent,
-            expected_pane_id=pane_id,
-            operation=operation,
-            policy_snapshot=policy,
+            pane_id=pane_id,
+            verb="terminal.keys",
+            payload={"keys": body.get("keys") or []},
+            policy=policy,
+            principal=request.state.principal,
         )
         if result.get("audit_id") is not None or result.get("revoked"):
             _coder_frame(ctx, key)

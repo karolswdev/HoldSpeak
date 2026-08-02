@@ -15,12 +15,14 @@ import pytest
 
 from holdspeak import rails_observer
 from holdspeak.missioncontrol_bridge import events_payload, load_project_map
+from holdspeak.principals import Principal, PrincipalKind
 
 LLM = os.environ.get("HOLDSPEAK_PROOF_LLM", "http://192.168.1.43:8080")
+OWNER = Principal(PrincipalKind.OWNER, "owner-session")
 
 
 def _real_events() -> list[dict]:
-    payload = events_payload(load_project_map(), tail=8)
+    payload = events_payload(load_project_map(), principal=OWNER, tail=8)
     events: list[dict] = []
     for repo in payload.get("repos", []):
         if repo.get("status") == "live":

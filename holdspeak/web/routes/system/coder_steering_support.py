@@ -84,7 +84,9 @@ def steering_commitment(
     }
 
 
-def compose_from_body(body: dict[str, Any]) -> dict[str, Any] | JSONResponse:
+def compose_from_body(
+    body: dict[str, Any], *, principal: Any
+) -> dict[str, Any] | JSONResponse:
     """Hydrate bounded Desk/rails grounding into the exact steer payload."""
     from ....db import get_database
     from ....grounding import (
@@ -135,7 +137,9 @@ def compose_from_body(body: dict[str, Any]) -> dict[str, Any] | JSONResponse:
     if rails_refs:
         from ....grounding_rails import hydrate_rails_refs
 
-        rail_blocks, rail_unknown = hydrate_rails_refs(rails_refs)
+        rail_blocks, rail_unknown = hydrate_rails_refs(
+            rails_refs, principal=principal
+        )
         blocks = list(blocks) + rail_blocks
         unknown = list(unknown) + rail_unknown
     if unknown:
@@ -194,60 +198,33 @@ async def deliver_process_input(
     target: str,
     agent: str,
     pane_id: Optional[str],
-    submit: bool,
-    composed: Mapping[str, Any],
-    operation: Mapping[str, Any],
+    verb: str,
+    payload: Mapping[str, Any],
     policy: Mapping[str, Any],
-    request: Any,
+    principal: Any,
 ) -> dict[str, Any]:
-    """Adapt one coder steer onto process.input without changing its executor."""
-    from .... import coder_steering
-    from ....principals import Principal, PrincipalKind
-
-    text = str(composed["text"])
-    refs = list(composed["refs"])
-    principal = getattr(
-        request.state, "principal", Principal(PrincipalKind.OWNER, "owner-session")
-    )
+    """Adapt one terminal-input act onto ``process.input@1``."""
     issued = await asyncio.to_thread(services.targets().issue, target)
-    use_executor = (
-        policy.get("outcome") == "allowed"
-        and issued.get("status") == "issued"
-        and (pane_id is None or issued.get("pane_id") == pane_id)
+    command_payload = dict(payload)
+    command_payload.update(
+        {
+            "session_key": key,
+            "agent": agent,
+            "expected_pane_id": pane_id or "",
+        }
     )
-    preflight = None
-    if not use_executor:
-        preflight = await asyncio.to_thread(
-            coder_steering.deliver,
-            key,
-            text,
-            current_target=target,
-            agent=agent,
-            submit=submit,
-            grounding_refs=refs,
-            expected_pane_id=pane_id,
-            operation=operation,
-            policy_snapshot=policy,
-        )
     command = {
         "node_id": "local",
         "target_id": issued.get("target_id") or f"route_{uuid.uuid4().hex[:16]}",
         "target_generation": issued.get("target_generation") or "unresolved",
-        "operation": {"family": "coder_steering", "verb": "terminal.text"},
-        "payload": {
-            "session_key": key,
-            "text": text,
-            "agent": agent,
-            "submit": submit,
-            "grounding_refs": refs,
-        },
+        "operation": {"family": "coder_steering", "verb": verb},
+        "payload": command_payload,
     }
     adapted = await asyncio.to_thread(
         services.commands().submit_process_input,
         command,
         principal,
         authority_snapshot=policy,
-        preflight_result=preflight,
         include_result=True,
     )
     result = dict(adapted.get("result") or {})

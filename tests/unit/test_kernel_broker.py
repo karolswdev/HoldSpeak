@@ -185,6 +185,59 @@ def test_warrant_expiry_and_revocation_refuse_at_claim(rig) -> None:
     assert claim["refusal"]["outcome"] == "warrant_revoked"
 
 
+def test_liveness_reaper_refuses_approved_work_that_was_never_claimed(rig) -> None:
+    _, broker, now = rig
+    approved = _decide(_submit(request=_request("never-claimed")))
+
+    now[0] += 31
+    result = broker.reap_expired()
+
+    assert result == {
+        "count": 1,
+        "reaped": [
+            {
+                "operation_id": approved["operation_id"],
+                "state": "refused",
+                "outcome": "execution_claim_expired",
+            }
+        ],
+    }
+    receipt = broker.store.receipt(approved["operation_id"])
+    assert receipt["state"] == "refused"
+    assert receipt["outcome"] == "execution_claim_expired"
+    assert broker.reap_expired() == {"reaped": [], "count": 0}
+    assert broker.claim(NODE)["operations"] == []
+
+
+def test_liveness_reaper_marks_silent_claimed_work_indeterminate(rig) -> None:
+    _, broker, now = rig
+    approved = _decide(_submit(request=_request("silent-executor")))
+    claimed = broker.claim(NODE)["operations"][0]
+    assert claimed["operation_id"] == approved["operation_id"]
+
+    now[0] += 3601
+    result = broker.reap_expired()
+
+    assert result["reaped"] == [
+        {
+            "operation_id": approved["operation_id"],
+            "state": "indeterminate",
+            "outcome": "execution_liveness_expired",
+        }
+    ]
+    receipt = broker.store.receipt(approved["operation_id"])
+    assert receipt["state"] == "indeterminate"
+    assert receipt["outcome"] == "execution_liveness_expired"
+    with pytest.raises(KernelRefused) as late:
+        broker.receipt(
+            approved["operation_id"],
+            "succeeded",
+            "command:late-result",
+            NODE,
+        )
+    assert late.value.reason == "receipt_immutable"
+
+
 def test_executor_can_claim_exact_native_operation(rig) -> None:
     _, broker, _ = rig
     first = _decide(_submit(request=_request("first")))

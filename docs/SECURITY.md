@@ -1,7 +1,8 @@
 # HoldSpeak Security & Privacy Posture
 
 **Status:** living document.
-**Last updated:** 2026-07-29.
+**Last updated:** 2026-07-29 (empty effect debt register, desktop executor
+confinement, generic operation liveness).
 
 This document is the threat model for HoldSpeak: what data it holds, where that
 data lives, what can leave the machine, and the decisions behind its at-rest
@@ -10,40 +11,49 @@ file it.
 
 ## Kernel boundary: cooperating code, not a sandbox
 
-**The kernel is an audit and consent boundary for cooperating code. It is not a
-sandbox or a security boundary against arbitrary in-process Python.**
-`connector_runtime.PermissionGate` makes the same limitation explicit: honest
-connector code is checked, but malicious in-process code can call raw process,
-network, tmux, typing, and desktop functions directly. Those transports remain
-public Python functions today.
+Every known HoldSpeak route in the five ratified effect-census families now
+has an enforcement or exemption proof. Terminal text and keys enter through
+`process.input@1`; consequential connector subprocesses and egress enter
+through their registered operations; classified CLI reads require an
+authenticated owner principal; and the raw desktop driver is no longer
+imported by the ordinary typing runtime.
 
-What changed is coverage, not containment: migrated routes in these families now
-admit and receipt, but raw primitives remain reachable in-process and RFC §5b
-confinement is still the threshold.
+Desktop typing now has a real process boundary, not only a routing
+convention. The ordinary `TextTyper` is a warrant-only proxy over an
+anonymous pipe. A small spawned child independently validates the broker
+signature, current policy version, exact request shape, operation and target,
+payload hash, placement, claim and execution expiry, one-use warrant ID, and
+focused-window generation. Only after those checks does it import the
+keyboard/clipboard driver. A focus refusal spends the warrant; a lost or
+timed-out child is indeterminate and is never blindly retried.
 
-This narrowing comes before any kernel prevention claim. The stronger boundary
-requires [RFC section 5b confinement](internal/PLAN_KERNEL_OPERATION_BROKER.md#5b-effect-capability-confinement-the-enforcement-boundary):
-raw effect primitives move into a privileged executor process, while untrusted
-code holds payload-bound execution warrants instead of imports to ambient
-effects. That process and OS confinement is required before untrusted plugins
-or agent-authored code executes.
+**This is still not a general-purpose sandbox against arbitrary same-user
+Python.** The OS account can launch processes and open sockets, and the Python
+source containing native drivers is installed on disk. Untrusted plugins or
+agent-authored Python therefore still require the process/OS isolation
+threshold in
+[RFC §5b](internal/PLAN_KERNEL_OPERATION_BROKER.md#5b-effect-capability-confinement-the-enforcement-boundary)
+before they may execute. The stronger, precise claim today is that the
+production desktop effect path crosses an independently validating process
+boundary, while the kernel and census enforce HoldSpeak's own cooperating
+routes.
 
 The checked-in [effect debt register](../holdspeak/kernel/effect_ledger.json)
-records the current gap under
-[Constitution Article XI clause 6](internal/CONSTITUTION.md#article-xi--the-kernel):
-**21 total / 3 covered / 3 exempt / 15 debt**. Against the corrected
-baseline of 2 covered among 40 sites, the audited migration delta is
-**38 debt → 15 debt**. The three exempt rows are dictation's
-transcription and rewrite model calls, ruled exempt computation by the
-owner (2026-07-29): their output returns to the caller on the
-permanently low-latency dictation path. A new transcription-shaped
-call is still caught by the census and owes its own triage.
-The remainder is five mixed sites (T01/T02 and C02/C03/C05), nine bypass
-sites, and one dormant site.
-A fence test refuses an unlisted addition or silent removal. Debt is declared
-migration debt, not protection supplied by the broker. Clause 6 remains in
-force, and its sunset condition remains unmet: it expires only when the register
-is empty.
+contains only transitional debt and is now **0 total / 0 covered / 0 exempt /
+0 debt**. The fence separately pins all 21 formerly active migrated,
+read-classified, exempt-computation, proxy, and confined statements, and a new
+unclassified effect statement fails by name. From the corrected initial
+baseline, the audited migration delta is **38 debt → 0 debt**. Article XI's
+transitional clause 6 and the register expired together under their
+owner-ratified sunset; the zero-row file remains as a machine-readable tombstone
+and regression tripwire.
+
+Approved work also has a generic liveness bound. Work not claimed before its
+signed claim deadline terminalizes as `execution_claim_expired`; claimed work
+whose executor never receipts before the signed execution deadline terminalizes
+as `execution_liveness_expired` and `indeterminate`. The web runtime reaps on
+startup and once per second. Terminal receipts are immutable, so a late executor
+cannot rewrite uncertainty into success.
 
 At the HTTP and WebSocket edge, credentials derive one of three authenticated
 principal kinds: owner, agent, or node. Routing is deny by default. The owner

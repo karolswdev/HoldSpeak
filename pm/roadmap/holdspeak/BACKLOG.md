@@ -8,7 +8,12 @@ flips to "scaffolded" then "shipped".
 Sourced from the Phase-48 strategic review (`.guru_meditation.md`, an untracked
 scratch file, captured here so it survives) and the Phase-48 deferred decisions.
 
-**Last updated:** 2026-07-29 (candidate **Y** FILED at Phase 107 close — §5b confinement + the audited 18-site remainder, closing conditions machine-asserted in the register). Earlier: 2026-07-07 late (candidate **U** SCAFFOLDED — B1 opens as
+**Last updated:** 2026-07-30 (candidate **Y** GRADUATED and CLOSED as
+[Phase 108 — The Locked Room](./phase-108-the-locked-room/current-phase-status.md),
+CLOSED 7/7: the post-ruling 15-row register is empty, the corrected machine
+closeout passes 8/8, and the owner's verdict was "'s all's good, moyt.").
+Earlier: candidate Y was filed at Phase 107 close with §5b confinement
+and the audited remainder. Earlier: 2026-07-07 late (candidate **U** SCAFFOLDED — B1 opens as
 [phase-86 — The Delivery Belt (read-only)](./phase-86-delivery-belt/): the
 AI-Headquarters floor, registry-shaped from day one. The B0 substrate turned
 out to already exist upstream (delivery-workbench v1.12: `dw state`/`sessions`/
@@ -55,7 +60,7 @@ sequence. This file is the "all of them" container; the phases are how they land
 | O | Wake word ("local + private" positioning) | strategic | post-P53 strategic review | **shipped → [phase-60](./phase-60-wake-word/) (CLOSED 6/6)** (arms-not-types with the preview default; 0 false accepts in 57 ordinary utterances measured; two latent production crashes fixed: GGML lldb auto-attach + the process-fatal cross-thread MLX call) |
 | P | Transcript import (`.vtt`/`.srt`/`.txt` → real meetings) | feature | user direction, post-P56 conversation | **shipped → [phase-57](./phase-57-transcript-import/) (CLOSED 5/5)** (real speakers + timestamps from the file; proven on `.43` intel; recording path untouched) |
 | Q | The Front Door (positioning + user-facing docs revision) | release/community | user direction, post-P57 conversation | **shipped → [phase-58](./phase-58-front-door/) (CLOSED 6/6)** (positioning canon + README pitch + named comparisons + the voice guard) |
-| Y | §5b Confinement + the audited remainder (the register to empty) | security/architecture | Phase 107 closeout; the HS-107-05 audit | **filed 2026-07-29** — the 18-site work list with closing conditions in `effect_ledger.json` |
+| Y | §5b Confinement + the audited remainder (the register to empty) | security/architecture | Phase 107 closeout; the HS-107-05 audit | **graduated → [Phase 108](./phase-108-the-locked-room/), CLOSED 7/7** — 15 debt → 0; corrected machine closeout 8/8; owner verdict "'s all's good, moyt." |
 
 ### A. Meeting aftercare ("close the loop") — shipped as Phase 49 (CLOSED 6/6)
 The meeting side has plugins + artifacts; the next value is follow-through, not
@@ -196,7 +201,16 @@ Table-stakes in the category, and on-brand only if local + private. High
 false-positive risk; needs an always-listening pipeline done carefully. Park until
 the product wants hands-free as a thesis.
 
-### Y. §5b Confinement + the audited remainder — filed at Phase 107 close
+### Y. §5b Confinement + the audited remainder — graduated as Phase 108
+
+**Current disposition (2026-07-30):** [Phase 108 — The Locked
+Room](./phase-108-the-locked-room/current-phase-status.md) implemented
+the full post-ruling work list. T01/T02 now route universally through
+`process.input@1`; C02/C03/C05 require authenticated principals; A01-A09
+sit behind the spawned warrant executor and A10 was deleted. The debt
+register is zero. Generic executor liveness and the mandatory live-bus CI
+gate also landed. The machine closeout passes 8/8 in one session; the
+phase closed 7/7 after the owner's verdict: "'s all's good, moyt."
 
 Phase 107 closed 23 of 38 audited debt sites; the register
 (`holdspeak/kernel/effect_ledger.json`) now carries **15 debt rows,
@@ -219,11 +233,10 @@ clause-5-exempt computation, an explicitly configured wake action is
 armed by that configuration, and the ~25 ms kernel admission price is
 accepted with the baseline re-pinned.
 
-Also carried from Phase 106/107: the second userland program (project
-memory / decisions-to-artifacts), the process window (`read` +
-`events` projection), the generic liveness seam, and the CI blind
-spot (`tests/e2e/test_live_bus.py` skips without Playwright + a built
-bundle — it sat red on main across three merges without CI noticing).
+The other carryovers have also landed: Phase 109 shipped the second
+userland program and process window; HS-108-05 shipped the generic
+liveness seam and made `tests/e2e/test_live_bus.py` a built-bundle,
+Chromium-backed, no-skip CI gate.
 
 ## Sequencing note
 
@@ -748,9 +761,14 @@ Filed at the Phase 106 close (2026-07-29, CLOSED 10/10, owner's
 sitting passed 8/8). The kernel is real and the census delta was
 **zero** — see [final-summary.md](./phase-106-the-kernel/final-summary.md).
 
-**Already chartered:** [Phase 107 — Close the Side Doors](./phase-107-close-the-side-doors/current-phase-status.md)
-(PLANNED, 0/7) takes the migratable families. Everything below is what
-107 explicitly does **not** cover.
+**Historical disposition:** [Phase 107 — Close the Side
+Doors](./phase-107-close-the-side-doors/current-phase-status.md) closed
+7/7 and moved the corrected census from 38 debt to 15. Its remainder
+graduated as [Phase 108 — The Locked
+Room](./phase-108-the-locked-room/current-phase-status.md), now closed
+7/7 with the register empty, corrected machine closeout 8/8, and the
+owner's verdict recorded. The list below records the original handoff
+rather than current open work.
 
 1. **RFC §5b confinement — the ten raw-desktop primitives.** All ten
    remaining `raw_desktop` sites live in `holdspeak/typer.py`: the

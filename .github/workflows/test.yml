@@ -132,11 +132,33 @@ jobs:
           # Install PortAudio for sounddevice
           brew install portaudio
 
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: web/package-lock.json
+
+      - name: Build production web bundle
+        working-directory: web
+        run: |
+          npm ci --no-audit --no-fund
+          npm run build
+
+      - name: Install Playwright Chromium
+        run: uv run --extra test playwright install chromium
+
+      - name: Gate the live runtime bus
+        env:
+          HOLDSPEAK_REQUIRE_LIVE_BUS: "1"
+        run: |
+          uv run --extra test python -m pytest tests/e2e/test_live_bus.py -v
+
       - name: Run E2E tests with coverage
         run: |
-          # Mock-based e2e (excluding metal hardware tests). `uv run --extra test`
-          # runs in the venv it just synced the test extra into.
-          uv run --extra test python -m pytest tests/e2e/ -v -m "e2e and not metal" --cov=holdspeak --cov-report=xml --cov-report=term-missing
+          # Mock-based e2e (excluding metal hardware tests). The live-bus file
+          # ran above as a mandatory no-skip browser gate.
+          uv run --extra test python -m pytest tests/e2e/ -v -m "e2e and not metal" --ignore=tests/e2e/test_live_bus.py --cov=holdspeak --cov-report=xml --cov-report=term-missing
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4

@@ -9,6 +9,10 @@ import pytest
 
 from holdspeak.activity_github import preview_github_cli_enrichment, run_github_cli_enrichment
 from holdspeak.db import Database, reset_database
+from holdspeak.principals import Principal, PrincipalKind, UNAUTHENTICATED
+
+
+OWNER = Principal(PrincipalKind.OWNER, "owner-session")
 
 
 @pytest.fixture
@@ -86,6 +90,7 @@ def test_run_github_cli_enrichment_writes_annotations(test_db):
     results = run_github_cli_enrichment(
         test_db,
         [record],
+        principal=OWNER,
         gh_path="/usr/local/bin/gh",
         timeout_seconds=2.0,
         max_bytes=4096,
@@ -122,6 +127,7 @@ def test_run_github_cli_enrichment_caps_output(test_db):
     results = run_github_cli_enrichment(
         test_db,
         [record],
+        principal=OWNER,
         gh_path="/usr/local/bin/gh",
         max_bytes=64,
         run_command=fake_run,
@@ -129,6 +135,36 @@ def test_run_github_cli_enrichment_caps_output(test_db):
 
     assert results[0].error == "gh output exceeded max_bytes"
     assert test_db.activity.list_activity_annotations(source_connector_id="gh") == []
+
+
+def test_github_read_refuses_unauthenticated_principal_before_subprocess(
+    test_db,
+):
+    from holdspeak.connector_runtime import ReadSubprocessDenied
+
+    record = test_db.activity.upsert_activity_record(
+        source_browser="safari",
+        url="https://github.com/openai/codex/issues/108",
+        title="Issue 108",
+        domain="github.com",
+        entity_type="github_issue",
+        entity_id="openai/codex#108",
+    )
+    called = False
+
+    def forbidden_runner(*_args, **_kwargs):
+        nonlocal called
+        called = True
+
+    with pytest.raises(ReadSubprocessDenied):
+        run_github_cli_enrichment(
+            test_db,
+            [record],
+            principal=UNAUTHENTICATED,
+            gh_path="/usr/local/bin/gh",
+            run_command=forbidden_runner,
+        )
+    assert called is False
 
 
 def test_run_github_cli_enrichment_persists_permission_denied(test_db, monkeypatch):
@@ -175,6 +211,7 @@ def test_run_github_cli_enrichment_persists_permission_denied(test_db, monkeypat
         run_github_cli_enrichment(
             test_db,
             [record],
+            principal=OWNER,
             gh_path="/usr/local/bin/gh",
             run_command=fake_run,
         )

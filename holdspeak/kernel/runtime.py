@@ -1,10 +1,12 @@
 """Trusted startup wiring and request-principal context for the broker."""
 from __future__ import annotations
 
+import atexit
 from contextlib import contextmanager
 from contextvars import ContextVar
 from typing import Any, Mapping, Sequence
 
+from ..privileged_effects.desktop_executor import DesktopEffectExecutor
 from ..principals import UNAUTHENTICATED
 from .actuator import ActuatorCodec
 from .broker import Broker
@@ -23,6 +25,16 @@ _broker: Broker | None = None
 _database_id: int | None = None
 
 
+def _dispose(broker: Broker | None) -> None:
+    """Close typed-codec resources without adding type dispatch to the broker."""
+    if broker is None:
+        return
+    for spec in broker._specs.values():
+        close = getattr(spec.codec, "close", None)
+        if callable(close):
+            close()
+
+
 def _mode() -> str:
     from ..config import Config
 
@@ -35,7 +47,10 @@ def _build(database: Any, *, clock: Any = None) -> Broker:
 
     tool_calls = ToolCallCodec(database.gate, _mode)
     process_input = ProcessInputCodec(database.delivery_receipts)
-    desktop_type_text = DesktopTypeTextCodec(database.desktop_type_receipts)
+    desktop_type_text = DesktopTypeTextCodec(
+        database.desktop_type_receipts,
+        DesktopEffectExecutor(store._secret()),
+    )
     launch_service = default_launch_service(database)
     process_spawn = ProcessSpawnCodec(launch_service, database.delivery_receipts)
     subprocess_exec = SubprocessExecCodec()
@@ -71,6 +86,7 @@ def _service() -> Broker:
 
     database = get_database()
     if _broker is None or _database_id != id(database):
+        _dispose(_broker)
         _broker = _build(database)
         _database_id = id(database)
     return _broker
@@ -79,9 +95,17 @@ def _service() -> Broker:
 def _configure(database: Any, *, clock: Any = None) -> Broker:
     """Test/startup seam; deliberately private, never an operation registration API."""
     global _broker, _database_id
+    _dispose(_broker)
     _broker = _build(database, clock=clock)
     _database_id = id(database)
     return _broker
+
+
+def _shutdown() -> None:
+    _dispose(_broker)
+
+
+atexit.register(_shutdown)
 
 
 @contextmanager

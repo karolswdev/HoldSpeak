@@ -61,8 +61,12 @@ flowchart LR
     I --> J[events projects cursor-addressed facts]
 ```
 
-This is an audit and consent boundary for cooperating code, not process
-confinement. Its security limits and migration debt are documented in
+This is the audit and consent boundary for every known HoldSpeak route in the
+ratified census. Desktop typing additionally crosses a spawned,
+warrant-validating executor process before the raw keyboard/clipboard driver
+is imported; generic signed claim/execution deadlines terminalize silent work.
+It is not a general sandbox for arbitrary same-user Python. The exact boundary
+and the now-empty transitional register are documented in
 [Security & Privacy Posture](../SECURITY.md#kernel-boundary-cooperating-code-not-a-sandbox).
 The constitutional contract is [Article XI](./CONSTITUTION.md#article-xi--the-kernel).
 

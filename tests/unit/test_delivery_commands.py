@@ -188,8 +188,7 @@ def _envelope(rig, target, *, verb="terminal.text", payload=None, seq=1, **kw):
         target_generation=target["target_generation"],
         family="coder_factory" if verb.startswith("factory.") else "coder_steering",
         verb=verb,
-        payload=payload
-        or {"text": "steer it", "session_key": KEY, "submit": False},
+        payload=payload or {"text": "steer it", "session_key": KEY, "submit": False},
         expected_sequence=seq,
         authority=kw.pop("authority", _authority()),
         now=kw.pop("now", T0),
@@ -280,9 +279,7 @@ def test_out_of_order_expected_sequence_refuses_without_typing(rig, tmux) -> Non
     assert rig.ledger.next_sequence(target["target_id"]) == 2
 
 
-def test_recycled_pane_generation_refuses_revokes_and_types_nothing(
-    rig, tmux
-) -> None:
+def test_recycled_pane_generation_refuses_revokes_and_types_nothing(rig, tmux) -> None:
     _arm(tmux)
     target = _issued(rig)
     env = _envelope(rig, target)
@@ -435,7 +432,31 @@ def test_yolo_registered_target_is_promptless(rig, tmux) -> None:
     assert out["receipt"]["state"] == "succeeded"
     assert out["receipt"]["outcome"] == "delivered"
     assert out["receipt"]["authority_basis"] == "control_posture"
+    assert out["operation_id"].startswith("op_")
+    assert (
+        rig.service._kernel_service().store.receipt(out["operation_id"])["outcome"]
+        == "succeeded"
+    )
     assert rig.transport.sent[0]["pane"] == "%5"
+
+
+def test_native_command_adapter_cannot_bypass_process_input(rig) -> None:
+    target = _issued(rig)
+    with pytest.raises(CommandRefused) as exc:
+        rig.service._submit_native(
+            {
+                "target_id": target["target_id"],
+                "target_generation": target["target_generation"],
+                "operation": {
+                    "family": "coder_steering",
+                    "verb": "terminal.text",
+                },
+                "payload": {"text": "bypass", "session_key": KEY},
+            }
+        )
+    assert exc.value.reason == "process_input_required"
+    assert rig.processor.executions == 0
+    assert rig.transport.sent == []
 
 
 def test_client_supplied_authority_refuses_by_name(rig) -> None:

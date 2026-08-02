@@ -69,7 +69,10 @@ class CallRule:
         resolved_target = full.rsplit(".", 1)[-1] if full else target
         return (target in self.targets or resolved_target in self.targets) and (
             not self.full_suffixes
-            or any(full == suffix or full.endswith(f".{suffix}") for suffix in self.full_suffixes)
+            or any(
+                full == suffix or full.endswith(f".{suffix}")
+                for suffix in self.full_suffixes
+            )
         )
 
 
@@ -89,11 +92,11 @@ _CALL_RULES = (
     CallRule(
         FAMILY_RAW_DESKTOP,
         ("press", "release", "type"),
-        path_globs=("holdspeak/typer.py",),
+        path_globs=("holdspeak/privileged_effects/desktop_driver.py",),
         scopes=(
-            "TextTyper._paste_text",
-            "TextTyper._type_text_slowly",
-            "TextTyper._press_enter",
+            "RawDesktopDriver._paste_text",
+            "RawDesktopDriver._type_text_slowly",
+            "RawDesktopDriver._press_enter",
         ),
     ),
     CallRule(
@@ -173,27 +176,268 @@ _CALL_RULES = (
 # lands outside today's plugin/connector denominator.  Selectors are line-
 # independent so harmless edits above a call do not create false drift.
 _EXCLUDED_CALLS: dict[tuple[str, str, str, int], str] = {
-    ("holdspeak/tmux_transport.py", "_run_tmux", "run", 1): "raw tmux implementation traced from T01-T04",
-    ("holdspeak/coder_steering.py", "_default_runner", "run", 1): "process site outside plugin/connector scope",
-    ("holdspeak/target_profile.py", "_collect_macos_hints", "run", 1): "read-only frontmost-app probe",
-    ("holdspeak/target_profile.py", "_run_text", "run", 1): "read-only Linux target-profile probe",
-    ("holdspeak/meeting_recorder.py", "MeetingRecorder._start_system_ffmpeg", "Popen", 1): "process site outside plugin/connector scope",
-    ("holdspeak/audio_devices.py", "_pactl_stdout", "run", 1): "process site outside plugin/connector scope",
-    ("holdspeak/meeting_import.py", "_decode_with_ffmpeg", "run", 1): "process site outside plugin/connector scope",
-    ("holdspeak/agent_summarizer.py", "summarize_agent_session", "run", 1): "process site outside plugin/connector scope",
-    ("holdspeak/delivery/dossiers.py", "_default_runner", "run", 1): "process site outside plugin/connector scope",
-    ("holdspeak/delivery/factory_launch.py", "_default_git_runner", "run", 1): "process site outside plugin/connector scope",
-    ("holdspeak/delivery/pr_receipts.py", "_default_runner", "run", 1): "process site outside plugin/connector scope, added after census snapshot",
-    ("holdspeak/delivery/registry.py", "_default_git_runner", "run", 1): "process site outside plugin/connector scope",
-    ("holdspeak/delivery/collector.py", "_default_runner", "run", 1): "process site outside plugin/connector scope",
-    ("holdspeak/agent_context/hooks.py", "_read_tmux_display", "run", 1): "process site outside plugin/connector scope",
-    ("holdspeak/coder_steering_relay.py", "_default_opener", "urlopen", 1): "placement transport, not a second terminal-input effect",
-    ("holdspeak/commands/node_serve.py", "_default_http_post", "urlopen", 1): "delivery-node operation-state transport",
-    ("holdspeak/commands/mesh_serve.py", "_default_http_post", "urlopen", 1): "inference-mesh operation-state transport",
-    ("holdspeak/commands/doctor.py", "_check_meeting_intel_cloud_preflight", "urlopen", 1): "setup/diagnostic network probe",
-    ("holdspeak/setup_runtime.py", "_default_http_get", "urlopen", 1): "setup/diagnostic network probe",
-    ("holdspeak/setup_runtime.py", "_default_http_json", "urlopen", 1): "setup/diagnostic network probe",
-    ("holdspeak/coder_gate.py", "_send", "urlopen", 1): "loopback gate protocol transport outside census egress scope",
+    (
+        "holdspeak/tmux_transport.py",
+        "_run_tmux",
+        "run",
+        1,
+    ): "raw tmux implementation traced from T01-T04",
+    (
+        "holdspeak/coder_steering.py",
+        "_default_runner",
+        "run",
+        1,
+    ): "process site outside plugin/connector scope",
+    (
+        "holdspeak/target_profile.py",
+        "_collect_macos_hints",
+        "run",
+        1,
+    ): "read-only frontmost-app probe",
+    (
+        "holdspeak/target_profile.py",
+        "_run_text",
+        "run",
+        1,
+    ): "read-only Linux target-profile probe",
+    (
+        "holdspeak/meeting_recorder.py",
+        "MeetingRecorder._start_system_ffmpeg",
+        "Popen",
+        1,
+    ): "process site outside plugin/connector scope",
+    (
+        "holdspeak/audio_devices.py",
+        "_pactl_stdout",
+        "run",
+        1,
+    ): "process site outside plugin/connector scope",
+    (
+        "holdspeak/meeting_import.py",
+        "_decode_with_ffmpeg",
+        "run",
+        1,
+    ): "process site outside plugin/connector scope",
+    (
+        "holdspeak/agent_summarizer.py",
+        "summarize_agent_session",
+        "run",
+        1,
+    ): "process site outside plugin/connector scope",
+    (
+        "holdspeak/delivery/dossiers.py",
+        "_default_runner",
+        "run",
+        1,
+    ): "process site outside plugin/connector scope",
+    (
+        "holdspeak/delivery/factory_launch.py",
+        "_default_git_runner",
+        "run",
+        1,
+    ): "process site outside plugin/connector scope",
+    (
+        "holdspeak/delivery/pr_receipts.py",
+        "_default_runner",
+        "run",
+        1,
+    ): "process site outside plugin/connector scope, added after census snapshot",
+    (
+        "holdspeak/delivery/registry.py",
+        "_default_git_runner",
+        "run",
+        1,
+    ): "process site outside plugin/connector scope",
+    (
+        "holdspeak/delivery/collector.py",
+        "_default_runner",
+        "run",
+        1,
+    ): "process site outside plugin/connector scope",
+    (
+        "holdspeak/agent_context/hooks.py",
+        "_read_tmux_display",
+        "run",
+        1,
+    ): "process site outside plugin/connector scope",
+    (
+        "holdspeak/coder_steering_relay.py",
+        "_default_opener",
+        "urlopen",
+        1,
+    ): "placement transport, not a second terminal-input effect",
+    (
+        "holdspeak/commands/node_serve.py",
+        "_default_http_post",
+        "urlopen",
+        1,
+    ): "delivery-node operation-state transport",
+    (
+        "holdspeak/commands/mesh_serve.py",
+        "_default_http_post",
+        "urlopen",
+        1,
+    ): "inference-mesh operation-state transport",
+    (
+        "holdspeak/commands/doctor.py",
+        "_check_meeting_intel_cloud_preflight",
+        "urlopen",
+        1,
+    ): "setup/diagnostic network probe",
+    (
+        "holdspeak/setup_runtime.py",
+        "_default_http_get",
+        "urlopen",
+        1,
+    ): "setup/diagnostic network probe",
+    (
+        "holdspeak/setup_runtime.py",
+        "_default_http_json",
+        "urlopen",
+        1,
+    ): "setup/diagnostic network probe",
+    (
+        "holdspeak/coder_gate.py",
+        "_send",
+        "urlopen",
+        1,
+    ): "loopback gate protocol transport outside census egress scope",
+}
+
+# Phase 108 emptied the transitional debt register. These exact statements are
+# no longer debt because their enforcement proofs are pinned below: T01/T02
+# have one caller inside the claimed process.input executor; C02/C03/C05 are
+# authenticated reads; N03/N04 are brokered egress; N10-N12 are the owner's
+# clause-5 computation ruling; and the desktop statements exist only behind the
+# warrant-validating anonymous-IPC child. A new statement matches no key here
+# and therefore fails as unledgered debt.
+_MIGRATED_CALLS: dict[tuple[str, str, str, int], str] = {
+    (
+        "holdspeak/coder_steering.py",
+        "deliver",
+        "send",
+        1,
+    ): "process.input executor only",
+    (
+        "holdspeak/coder_steering.py",
+        "deliver_keys",
+        "send",
+        1,
+    ): "process.input executor only",
+    (
+        "holdspeak/activity_github.py",
+        "run_github_cli_enrichment",
+        "run_read_subprocess",
+        1,
+    ): "mandatory authenticated owner read",
+    (
+        "holdspeak/activity_jira.py",
+        "run_jira_cli_enrichment",
+        "run_read_subprocess",
+        1,
+    ): "mandatory authenticated owner read",
+    (
+        "holdspeak/missioncontrol_bridge.py",
+        "_default_runner",
+        "run",
+        1,
+    ): "mandatory authenticated owner read",
+    (
+        "holdspeak/plugins/gated_connector.py",
+        "_route",
+        "open_outbound_socket",
+        1,
+    ): "external.egress executor",
+    (
+        "holdspeak/plugins/builtin/webhook_post_actuator.py",
+        "_default_post",
+        "urlopen",
+        1,
+    ): "external.egress executor",
+    (
+        "holdspeak/plugins/dictation/runtime_openai_compatible.py",
+        "OpenAICompatibleRuntime.classify",
+        "create",
+        1,
+    ): "owner-ratified clause-5 computation",
+    (
+        "holdspeak/plugins/dictation/runtime_openai_compatible.py",
+        "OpenAICompatibleRuntime.classify",
+        "create",
+        2,
+    ): "owner-ratified clause-5 computation",
+    (
+        "holdspeak/plugins/dictation/runtime_openai_compatible.py",
+        "OpenAICompatibleRuntime.rewrite",
+        "create",
+        1,
+    ): "owner-ratified clause-5 computation",
+    (
+        "holdspeak/desktop_typing.py",
+        "type_text_from_owner_gesture",
+        "type_text",
+        1,
+    ): "warrant-only desktop proxy",
+    (
+        "holdspeak/privileged_effects/desktop_executor.py",
+        "execute_authorized",
+        "type_text",
+        1,
+    ): "payload-bound warrant IPC executor",
+    (
+        "holdspeak/privileged_effects/desktop_driver.py",
+        "RawDesktopDriver._paste_text",
+        "copy",
+        1,
+    ): "confined raw desktop driver",
+    (
+        "holdspeak/privileged_effects/desktop_driver.py",
+        "RawDesktopDriver._paste_text",
+        "press",
+        1,
+    ): "confined raw desktop driver",
+    (
+        "holdspeak/privileged_effects/desktop_driver.py",
+        "RawDesktopDriver._paste_text",
+        "press",
+        2,
+    ): "confined raw desktop driver",
+    (
+        "holdspeak/privileged_effects/desktop_driver.py",
+        "RawDesktopDriver._paste_text",
+        "release",
+        1,
+    ): "confined raw desktop driver",
+    (
+        "holdspeak/privileged_effects/desktop_driver.py",
+        "RawDesktopDriver._paste_text",
+        "release",
+        2,
+    ): "confined raw desktop driver",
+    (
+        "holdspeak/privileged_effects/desktop_driver.py",
+        "RawDesktopDriver._paste_text",
+        "copy",
+        2,
+    ): "confined raw desktop driver",
+    (
+        "holdspeak/privileged_effects/desktop_driver.py",
+        "RawDesktopDriver._type_text_slowly",
+        "type",
+        1,
+    ): "confined raw desktop driver",
+    (
+        "holdspeak/privileged_effects/desktop_driver.py",
+        "RawDesktopDriver._press_enter",
+        "press",
+        1,
+    ): "confined raw desktop driver",
+    (
+        "holdspeak/privileged_effects/desktop_driver.py",
+        "RawDesktopDriver._press_enter",
+        "release",
+        1,
+    ): "confined raw desktop driver",
 }
 
 _SKIP_DIRS = {
@@ -227,8 +471,9 @@ class EffectSite:
 
 
 class _EffectVisitor(ast.NodeVisitor):
-    def __init__(self, relative_path: str) -> None:
+    def __init__(self, relative_path: str, *, include_migrated: bool = False) -> None:
         self.relative_path = relative_path
+        self.include_migrated = include_migrated
         self.scope_stack: list[str] = []
         self.bindings: list[dict[str, str]] = [{}]
         self.ordinals: defaultdict[tuple[str, str], int] = defaultdict(int)
@@ -252,7 +497,11 @@ class _EffectVisitor(ast.NodeVisitor):
         while current not in seen:
             seen.add(current)
             bound = next(
-                (scope[current] for scope in reversed(self.bindings) if current in scope),
+                (
+                    scope[current]
+                    for scope in reversed(self.bindings)
+                    if current in scope
+                ),
                 None,
             )
             if bound is None or bound == current:
@@ -345,7 +594,9 @@ class _EffectVisitor(ast.NodeVisitor):
                 target=target,
                 ordinal=ordinal,
             )
-            if site.key not in _EXCLUDED_CALLS:
+            if site.key not in _EXCLUDED_CALLS and (
+                self.include_migrated or site.key not in _MIGRATED_CALLS
+            ):
                 self.sites.append(site)
         self.generic_visit(node)
 
@@ -397,9 +648,11 @@ def _classify_call(
     return None
 
 
-def _classify_source(relative_path: str, source: str) -> list[EffectSite]:
+def _classify_source(
+    relative_path: str, source: str, *, include_migrated: bool = False
+) -> list[EffectSite]:
     tree = ast.parse(source, filename=relative_path)
-    visitor = _EffectVisitor(relative_path)
+    visitor = _EffectVisitor(relative_path, include_migrated=include_migrated)
     visitor.visit(tree)
     return visitor.sites
 
@@ -417,6 +670,19 @@ def _walk_effect_sites() -> list[EffectSite]:
     for path in _source_paths():
         relative = path.relative_to(_REPO).as_posix()
         sites.extend(_classify_source(relative, path.read_text(encoding="utf-8")))
+    return sorted(sites, key=lambda site: (site.path, site.line, site.family))
+
+
+def _walk_migrated_effect_sites() -> list[EffectSite]:
+    sites: list[EffectSite] = []
+    for path in _source_paths():
+        relative = path.relative_to(_REPO).as_posix()
+        classified = _classify_source(
+            relative,
+            path.read_text(encoding="utf-8"),
+            include_migrated=True,
+        )
+        sites.extend(site for site in classified if site.key in _MIGRATED_CALLS)
     return sorted(sites, key=lambda site: (site.path, site.line, site.family))
 
 
@@ -445,15 +711,26 @@ def test_effect_family_classifier_fixtures() -> None:
     fixtures = (
         ("holdspeak/scratch.py", "send_text_to_pane(pane='p', text='x')", FAMILY_TMUX),
         ("holdspeak/scratch.py", "typer.type_text('x')", FAMILY_TYPER),
-        ("holdspeak/scratch.py", "import subprocess\nsubprocess.run(['true'])", FAMILY_SUBPROCESS),
-        ("holdspeak/scratch.py", "import urllib.request\nurllib.request.urlopen('https://example.test')", FAMILY_EGRESS),
-        ("holdspeak/scratch.py", "import pyperclip\npyperclip.copy('x')", FAMILY_RAW_DESKTOP),
+        (
+            "holdspeak/scratch.py",
+            "import subprocess\nsubprocess.run(['true'])",
+            FAMILY_SUBPROCESS,
+        ),
+        (
+            "holdspeak/scratch.py",
+            "import urllib.request\nurllib.request.urlopen('https://example.test')",
+            FAMILY_EGRESS,
+        ),
+        (
+            "holdspeak/scratch.py",
+            "import pyperclip\npyperclip.copy('x')",
+            FAMILY_RAW_DESKTOP,
+        ),
     )
     for path, source, expected in fixtures:
         found = _classify_source(path, source)
         assert [site.family for site in found] == [expected], (
-            f"fixture for {expected} classified as "
-            f"{[site.family for site in found]}"
+            f"fixture for {expected} classified as {[site.family for site in found]}"
         )
 
 
@@ -476,33 +753,121 @@ def test_import_and_callable_aliases_cannot_evade_any_effect_family() -> None:
     fixtures = (
         # Subprocess: plain from-import, aliased from-import, module alias, and
         # every process API named by the census scope.
-        ("subprocess run from-import", "from subprocess import run\nrun(['true'])", FAMILY_SUBPROCESS),
-        ("subprocess run alias", "from subprocess import run as sneaky\nsneaky(['true'])", FAMILY_SUBPROCESS),
-        ("subprocess module alias", "import subprocess as sp\nsp.run(['true'])", FAMILY_SUBPROCESS),
-        ("subprocess Popen alias", "from subprocess import Popen as launch\nlaunch(['true'])", FAMILY_SUBPROCESS),
-        ("subprocess call alias", "from subprocess import call as invoke\ninvoke(['true'])", FAMILY_SUBPROCESS),
-        ("subprocess check_output alias", "from subprocess import check_output as output\noutput(['true'])", FAMILY_SUBPROCESS),
-        ("subprocess check_call alias", "from subprocess import check_call as checked\nchecked(['true'])", FAMILY_SUBPROCESS),
+        (
+            "subprocess run from-import",
+            "from subprocess import run\nrun(['true'])",
+            FAMILY_SUBPROCESS,
+        ),
+        (
+            "subprocess run alias",
+            "from subprocess import run as sneaky\nsneaky(['true'])",
+            FAMILY_SUBPROCESS,
+        ),
+        (
+            "subprocess module alias",
+            "import subprocess as sp\nsp.run(['true'])",
+            FAMILY_SUBPROCESS,
+        ),
+        (
+            "subprocess Popen alias",
+            "from subprocess import Popen as launch\nlaunch(['true'])",
+            FAMILY_SUBPROCESS,
+        ),
+        (
+            "subprocess call alias",
+            "from subprocess import call as invoke\ninvoke(['true'])",
+            FAMILY_SUBPROCESS,
+        ),
+        (
+            "subprocess check_output alias",
+            "from subprocess import check_output as output\noutput(['true'])",
+            FAMILY_SUBPROCESS,
+        ),
+        (
+            "subprocess check_call alias",
+            "from subprocess import check_call as checked\nchecked(['true'])",
+            FAMILY_SUBPROCESS,
+        ),
         # Tmux transport: both imported boundary names survive renaming.
-        ("tmux text alias", "from holdspeak.tmux_transport import send_text_to_pane as push\npush(pane='p', text='x')", FAMILY_TMUX),
-        ("tmux keys module alias", "import holdspeak.tmux_transport as tmux\ntmux.send_keys_to_pane(pane='p', keys=[])", FAMILY_TMUX),
+        (
+            "tmux text alias",
+            "from holdspeak.tmux_transport import send_text_to_pane as push\npush(pane='p', text='x')",
+            FAMILY_TMUX,
+        ),
+        (
+            "tmux keys module alias",
+            "import holdspeak.tmux_transport as tmux\ntmux.send_keys_to_pane(pane='p', keys=[])",
+            FAMILY_TMUX,
+        ),
         # TextTyper: class aliases and aliases of the bound method itself.
-        ("TextTyper class alias", "from holdspeak.typer import TextTyper as Typer\nTyper().type_text('x')", FAMILY_TYPER),
-        ("TextTyper bound method alias", "from holdspeak.typer import TextTyper as Typer\nwriter = Typer().type_text\nwriter('x')", FAMILY_TYPER),
+        (
+            "TextTyper class alias",
+            "from holdspeak.typer import TextTyper as Typer\nTyper().type_text('x')",
+            FAMILY_TYPER,
+        ),
+        (
+            "TextTyper bound method alias",
+            "from holdspeak.typer import TextTyper as Typer\nwriter = Typer().type_text\nwriter('x')",
+            FAMILY_TYPER,
+        ),
         # Egress: HTTP, socket, and model-call aliases all retain provenance.
-        ("urlopen alias", "from urllib.request import urlopen as fetch\nfetch('https://example.test')", FAMILY_EGRESS),
-        ("urllib module alias", "import urllib.request as net\nnet.urlopen('https://example.test')", FAMILY_EGRESS),
-        ("socket alias", "from socket import create_connection as connect\nconnect(('example.test', 443))", FAMILY_EGRESS),
-        ("model method alias", "request = client.chat.completions.create\nrequest()", FAMILY_EGRESS),
+        (
+            "urlopen alias",
+            "from urllib.request import urlopen as fetch\nfetch('https://example.test')",
+            FAMILY_EGRESS,
+        ),
+        (
+            "urllib module alias",
+            "import urllib.request as net\nnet.urlopen('https://example.test')",
+            FAMILY_EGRESS,
+        ),
+        (
+            "socket alias",
+            "from socket import create_connection as connect\nconnect(('example.test', 443))",
+            FAMILY_EGRESS,
+        ),
+        (
+            "model method alias",
+            "request = client.chat.completions.create\nrequest()",
+            FAMILY_EGRESS,
+        ),
         # Raw desktop: clipboard, pyautogui, AX/Quartz, and AppleScript process
         # aliases remain raw primitives rather than generic subprocess sites.
-        ("clipboard alias", "from pyperclip import copy as stash\nstash('x')", FAMILY_RAW_DESKTOP),
-        ("clipboard module alias", "import pyperclip as clipboard\nclipboard.copy('x')", FAMILY_RAW_DESKTOP),
-        ("pyautogui alias", "from pyautogui import hotkey as chord\nchord('ctrl', 'v')", FAMILY_RAW_DESKTOP),
-        ("pynput controller alias", "from pynput.keyboard import Controller as Keys\nkeyboard = Keys()\nkeyboard.press('x')", FAMILY_RAW_DESKTOP),
-        ("Quartz alias", "from Quartz import CGEventPost as post\npost(0, event)", FAMILY_RAW_DESKTOP),
-        ("AX alias", "from ApplicationServices import AXUIElementSetAttributeValue as set_ax\nset_ax(element, attr, value)", FAMILY_RAW_DESKTOP),
-        ("AppleScript process alias", "from subprocess import run as execute\nexecute(['osascript', '-e', script])", FAMILY_RAW_DESKTOP),
+        (
+            "clipboard alias",
+            "from pyperclip import copy as stash\nstash('x')",
+            FAMILY_RAW_DESKTOP,
+        ),
+        (
+            "clipboard module alias",
+            "import pyperclip as clipboard\nclipboard.copy('x')",
+            FAMILY_RAW_DESKTOP,
+        ),
+        (
+            "pyautogui alias",
+            "from pyautogui import hotkey as chord\nchord('ctrl', 'v')",
+            FAMILY_RAW_DESKTOP,
+        ),
+        (
+            "pynput controller alias",
+            "from pynput.keyboard import Controller as Keys\nkeyboard = Keys()\nkeyboard.press('x')",
+            FAMILY_RAW_DESKTOP,
+        ),
+        (
+            "Quartz alias",
+            "from Quartz import CGEventPost as post\npost(0, event)",
+            FAMILY_RAW_DESKTOP,
+        ),
+        (
+            "AX alias",
+            "from ApplicationServices import AXUIElementSetAttributeValue as set_ax\nset_ax(element, attr, value)",
+            FAMILY_RAW_DESKTOP,
+        ),
+        (
+            "AppleScript process alias",
+            "from subprocess import run as execute\nexecute(['osascript', '-e', script])",
+            FAMILY_RAW_DESKTOP,
+        ),
     )
 
     for name, source, expected_family in fixtures:
@@ -517,7 +882,9 @@ def test_import_and_callable_aliases_cannot_evade_any_effect_family() -> None:
         assert f"[{expected_family}]" in message
         assert f"target={site.target}" in message
 
-    shadowed = "from subprocess import run\ndef harmless(run):\n    run(['not-the-import'])\n"
+    shadowed = (
+        "from subprocess import run\ndef harmless(run):\n    run(['not-the-import'])\n"
+    )
     assert not _classify_source("holdspeak/shadowed.py", shadowed), (
         "a function argument must shadow an imported effect name"
     )
@@ -530,11 +897,19 @@ def test_effect_ledger_is_complete_and_current() -> None:
 
     ledger_by_key = {_ledger_key(entry): entry for entry in entries}
     actual_by_key = {site.key: site for site in actual}
-    assert len(ledger_by_key) == len(entries), "effect ledger contains duplicate selectors"
-    assert len(actual_by_key) == len(actual), "source walker produced duplicate selectors"
+    assert len(ledger_by_key) == len(entries), (
+        "effect ledger contains duplicate selectors"
+    )
+    assert len(actual_by_key) == len(actual), (
+        "source walker produced duplicate selectors"
+    )
 
-    unledgered = [actual_by_key[key] for key in actual_by_key.keys() - ledger_by_key.keys()]
-    missing = [ledger_by_key[key] for key in ledger_by_key.keys() - actual_by_key.keys()]
+    unledgered = [
+        actual_by_key[key] for key in actual_by_key.keys() - ledger_by_key.keys()
+    ]
+    missing = [
+        ledger_by_key[key] for key in ledger_by_key.keys() - actual_by_key.keys()
+    ]
     family_mismatches = [
         (ledger_by_key[key], actual_by_key[key])
         for key in ledger_by_key.keys() & actual_by_key.keys()
@@ -565,62 +940,168 @@ def test_effect_ledger_asserts_the_composed_family_counts() -> None:
     expected = ledger["expected"]
 
     families = Counter(entry["family"] for entry in entries)
-    statuses = Counter(entry["status"] for entry in entries)
-    covered = statuses["covered"]
-    reads = statuses["read"]
-    exempt = statuses["exempt_computation"]
-    not_covered = len(entries) - covered - reads - exempt
+    assert entries == []
+    assert dict(families) == expected["families"] == {}
+    assert expected["total"] == 0
+    assert expected["not_covered"] == 0
+    assert "register is empty" in ledger["legal_effect"]
 
-    assert set(families) == _FAMILIES
-    assert set(statuses) <= _STATUSES
-    assert len(entries) == expected["total"] == sum(expected["families"].values()) == 21, (
-        f"effect census must state 21 total sites, found {len(entries)}"
+
+def test_phase108_migrated_effect_sites_are_exact_and_still_present() -> None:
+    actual = {site.key: site for site in _walk_migrated_effect_sites()}
+    missing = set(_MIGRATED_CALLS) - set(actual)
+    assert not missing, (
+        "a migrated/exempt/confined effect proof went stale:\n  "
+        + "\n  ".join(map(str, sorted(missing)))
     )
-    assert covered == expected["covered"] == 3, (
-        f"effect census must state 3 covered sites, found {covered}"
-    )
-    assert reads == expected.get("reads", 0) == 0, (
-        f"effect census must state 0 classified reads, found {reads}"
-    )
-    assert exempt == expected.get("exempt_computation", 0) == 3, (
-        f"effect census must state 3 exempt computations (N10-N12, owner ruling "
-        f"2026-07-29), found {exempt}"
-    )
-    assert not_covered == expected["not_covered"] == 15, (
-        f"effect census must state 15 not-covered sites, found {not_covered}"
-    )
-    assert dict(families) == expected["families"] == {
-        FAMILY_TMUX: 2,
-        FAMILY_TYPER: 1,
-        FAMILY_SUBPROCESS: 3,
-        FAMILY_EGRESS: 5,
-        FAMILY_RAW_DESKTOP: 10,
-    }, f"effect family breakdown changed: {dict(families)}"
-    egress = [entry for entry in entries if entry["family"] == FAMILY_EGRESS]
-    assert all(entry.get("classification") in {"egress", "model_invocation"} for entry in egress)
-    assert all(entry.get("egress_boundary") for entry in egress)
-    assert all(entry["reason"].strip() for entry in entries)
-    debt = [
-        entry
-        for entry in entries
-        if entry["status"] not in {"covered", "read", "exempt_computation"}
+    assert set(actual) == set(_MIGRATED_CALLS)
+
+    raw = [
+        site
+        for site in actual.values()
+        if site.path == "holdspeak/privileged_effects/desktop_driver.py"
     ]
-    assert all(entry.get("closing_condition", "").strip() for entry in debt), (
-        "every debt site must name its closing condition: "
-        + ", ".join(entry["id"] for entry in debt if not entry.get("closing_condition", "").strip())
+    assert len(raw) == 9
+    assert all(site.family == FAMILY_RAW_DESKTOP for site in raw)
+
+
+def test_terminal_transport_has_only_the_process_input_executor_as_caller() -> None:
+    direct_calls: set[tuple[str, str]] = set()
+    for path in _source_paths():
+        relative = path.relative_to(_REPO).as_posix()
+        tree = ast.parse(path.read_text(encoding="utf-8"), filename=relative)
+        module_aliases = {"coder_steering"}
+        function_aliases: dict[str, str] = {}
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Import):
+                for alias in node.names:
+                    if alias.name.endswith("coder_steering"):
+                        module_aliases.add(alias.asname or alias.name)
+            elif isinstance(node, ast.ImportFrom):
+                if str(node.module or "").endswith("coder_steering"):
+                    for alias in node.names:
+                        if alias.name in {"deliver", "deliver_keys"}:
+                            function_aliases[alias.asname or alias.name] = alias.name
+                for alias in node.names:
+                    if alias.name == "coder_steering":
+                        module_aliases.add(alias.asname or alias.name)
+        for node in ast.walk(tree):
+            if not isinstance(node, ast.Call):
+                continue
+            if isinstance(node.func, ast.Name) and node.func.id in function_aliases:
+                direct_calls.add((relative, function_aliases[node.func.id]))
+                continue
+            if not isinstance(node.func, ast.Attribute):
+                continue
+            base = _dotted_expr(node.func.value)
+            if node.func.attr in {"deliver", "deliver_keys"} and (
+                base in module_aliases or base.endswith(".coder_steering")
+            ):
+                direct_calls.add((relative, node.func.attr))
+    assert direct_calls == {
+        ("holdspeak/delivery/commands.py", "deliver"),
+        ("holdspeak/delivery/commands.py", "deliver_keys"),
+    }
+    assert "preflight_result" not in (
+        _REPO / "holdspeak" / "delivery" / "commands.py"
+    ).read_text(encoding="utf-8")
+
+
+def test_delivery_command_adapter_cannot_bypass_process_input() -> None:
+    commands_path = _REPO / "holdspeak" / "delivery" / "commands.py"
+    tree = ast.parse(
+        commands_path.read_text(encoding="utf-8"),
+        filename="holdspeak/delivery/commands.py",
     )
-    assert len({entry["id"] for entry in entries}) == len(entries) == 21
-    assert "No agent principal may reach" in ledger["legal_effect"]
+    service = next(
+        node
+        for node in tree.body
+        if isinstance(node, ast.ClassDef) and node.name == "HubCommandService"
+    )
+    methods = {
+        node.name: node
+        for node in service.body
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+    }
+
+    native_calls = {
+        name: [
+            node
+            for node in ast.walk(method)
+            if isinstance(node, ast.Call)
+            and isinstance(node.func, ast.Attribute)
+            and node.func.attr == "_submit_native"
+        ]
+        for name, method in methods.items()
+    }
+    assert {name: len(calls) for name, calls in native_calls.items() if calls} == {
+        "submit": 1,
+        "submit_process_input": 1,
+    }
+
+    external_native_calls: list[str] = []
+    for path in _source_paths():
+        if path == commands_path:
+            continue
+        relative = path.relative_to(_REPO).as_posix()
+        source_tree = ast.parse(path.read_text(encoding="utf-8"), filename=relative)
+        for node in ast.walk(source_tree):
+            if (
+                isinstance(node, ast.Call)
+                and isinstance(node.func, ast.Attribute)
+                and node.func.attr == "_submit_native"
+            ):
+                external_native_calls.append(f"{relative}:{node.lineno}")
+    assert external_native_calls == []
+
+    submit_routes = [
+        node
+        for node in ast.walk(methods["submit"])
+        if isinstance(node, ast.If)
+        and "coder_steering" in ast.unparse(node.test)
+        and "STEERING_VERBS" in ast.unparse(node.test)
+    ]
+    assert len(submit_routes) == 1
+    assert any(
+        isinstance(node, ast.Return)
+        and isinstance(node.value, ast.Call)
+        and isinstance(node.value.func, ast.Attribute)
+        and node.value.func.attr == "submit_process_input"
+        for node in submit_routes[0].body
+    )
+
+    adapter_call = native_calls["submit_process_input"][0]
+    capability = next(
+        (
+            keyword.value
+            for keyword in adapter_call.keywords
+            if keyword.arg == "process_input_capability"
+        ),
+        None,
+    )
+    assert isinstance(capability, ast.Attribute)
+    assert capability.attr == "_process_input_capability"
+    assert not any(
+        keyword.arg == "process_input_capability"
+        for keyword in native_calls["submit"][0].keywords
+    )
 
 
-def test_independent_audit_demotions_are_not_counted_as_covered() -> None:
-    entries = {entry["id"]: entry for entry in _load_ledger()["sites"]}
-    covered = {site_id for site_id, entry in entries.items() if entry["status"] == "covered"}
+def test_raw_desktop_module_is_reachable_only_from_warrant_server() -> None:
+    importers = set()
+    for path in _source_paths():
+        relative = path.relative_to(_REPO).as_posix()
+        source = path.read_text(encoding="utf-8")
+        if "privileged_effects.desktop_driver" in source or (
+            relative == "holdspeak/privileged_effects/desktop_executor.py"
+            and "from .desktop_driver import" in source
+        ):
+            importers.add(relative)
+    assert importers == {"holdspeak/privileged_effects/desktop_executor.py"}
 
-    assert covered == {"D09", "N03", "N04"}
-    for site_id in {"T01", "T02", "C02", "C03", "C05", "N10", "N11", "N12"}:
-        assert site_id not in covered, f"independent audit demoted {site_id} by name"
-        assert entries[site_id]["closing_condition"].strip()
+    proxy = (_REPO / "holdspeak" / "typer.py").read_text(encoding="utf-8")
+    for ambient_name in ("pyperclip", "pynput", "Controller", "osascript"):
+        assert ambient_name not in proxy
 
 
 def _broker_modules() -> list[Path]:
@@ -634,7 +1115,9 @@ def _line_count(path: Path) -> int:
 def test_kernel_broker_modules_stay_within_line_budget() -> None:
     offenders: list[str] = []
     for path in _broker_modules():
-        budget = _BROKER_INIT_BUDGET if path.name == "__init__.py" else _BROKER_MODULE_BUDGET
+        budget = (
+            _BROKER_INIT_BUDGET if path.name == "__init__.py" else _BROKER_MODULE_BUDGET
+        )
         lines = _line_count(path)
         if lines > budget:
             offenders.append(
@@ -714,7 +1197,11 @@ def _driver_conditional_findings(path: Path) -> list[str]:
             ):
                 kind, subject = "driver-keyed dispatch table", node
 
-        if kind is not None and subject is not None and _source_mentions_driver_dispatch(subject):
+        if (
+            kind is not None
+            and subject is not None
+            and _source_mentions_driver_dispatch(subject)
+        ):
             findings.add((node.lineno, kind))
 
     return [

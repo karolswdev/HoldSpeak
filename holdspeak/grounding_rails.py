@@ -21,17 +21,21 @@ from typing import Any, Optional
 
 from . import missioncontrol_bridge as mc
 from .grounding import GROUNDING_TRANSCRIPT_CAP, GroundingBlock
+from .principals import Principal
 
 RAILS_KINDS = ("phase", "story", "evidence", "roadmap")
 
 
 def _context_doc(
-    repo_path: str, runner: Optional[mc.Runner]
+    repo_path: str, runner: Optional[mc.Runner], principal: Principal
 ) -> tuple[Optional[dict[str, Any]], str]:
     """The repo's `dw context` document (all its projects), or a typed
     unavailable. One fetch per repo — the caller caches."""
     doc, status, detail = mc._fetch_document(
-        Path(repo_path), ["context", "--compact"], runner
+        Path(repo_path),
+        ["context", "--compact"],
+        runner,
+        principal=principal,
     )
     if doc is None or not isinstance(doc, dict):
         return None, detail or status
@@ -96,6 +100,7 @@ def _read_capped(full: Path) -> Optional[str]:
 def hydrate_rails_refs(
     refs: list[dict[str, Any]],
     *,
+    principal: Principal,
     project_map: Optional[dict[str, Any]] = None,
     runner: Optional[mc.Runner] = None,
 ) -> tuple[list[GroundingBlock], list[str]]:
@@ -129,7 +134,9 @@ def hydrate_rails_refs(
             unknown.append(token)
             continue
         if repo_path not in doc_cache:
-            doc_cache[repo_path], _ = _context_doc(repo_path, runner)
+            doc_cache[repo_path], _ = _context_doc(
+                repo_path, runner, principal
+            )
         doc = doc_cache[repo_path]
         if doc is None:
             unknown.append(token)
