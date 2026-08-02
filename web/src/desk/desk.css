@@ -5046,6 +5046,124 @@ body:has(.desk-next .desk-pullout:not(.is-card)) .ambient-qlippy {
   opacity: 1;
 }
 
+/* HS-113-03 — one compact table language for floor, drawers, and future
+   Desk consumers. It is deliberately material-first: hairline rows and a
+   single selection wash, not the old mono ledger or a dashboard grid. */
+.desk-sortable-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--border-subtle);
+  background: var(--surface-2);
+}
+.desk-sortable-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--font-size-sm);
+}
+.desk-sortable-table th,
+.desk-sortable-table td {
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--border-subtle);
+  text-align: left;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+.desk-sortable-table thead th {
+  color: var(--text-muted);
+  font: 600 10px var(--font-mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.desk-sortable-table-sort {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  cursor: pointer;
+}
+.desk-sortable-table-sort:hover,
+.desk-sortable-table-sort:focus-visible,
+.desk-sortable-table-sort.is-current {
+  color: var(--text);
+}
+.desk-sortable-table-direction { color: var(--accent); }
+.desk-sortable-table-group th {
+  padding: 12px 10px 3px;
+  border-bottom: 0;
+  color: var(--text-muted);
+  background: var(--surface-2);
+  font: 600 10px var(--font-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.desk-sortable-table-row {
+  cursor: pointer;
+  outline: none;
+}
+.desk-sortable-table-row:hover,
+.desk-sortable-table-row:focus-visible {
+  background: var(--canvas-raised);
+}
+.desk-sortable-table-row[data-selected] { background: color-mix(in srgb, var(--accent) 13%, var(--surface-2)); }
+.desk-sortable-table-row:focus-visible { box-shadow: inset 2px 0 var(--accent); }
+.desk-sortable-table-row:last-child td { border-bottom: 0; }
+.desk-sortable-table-sprite {
+  display: block;
+  image-rendering: pixelated;
+}
+.desk-sortable-table-open {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--text);
+  font: inherit;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+.desk-sortable-table-open:hover,
+.desk-sortable-table-open:focus-visible { color: var(--accent); }
+.desk-sortable-table-actions { width: 1%; text-align: right; }
+.desk-sortable-table-actions .desk-chip { opacity: 0; }
+.desk-sortable-table-row:hover .desk-sortable-table-actions .desk-chip,
+.desk-sortable-table-row:focus-within .desk-sortable-table-actions .desk-chip,
+.desk-sortable-table-actions .desk-chip:focus-visible { opacity: 1; }
+.desk-sortable-table-empty td {
+  padding: var(--space-3) var(--space-2);
+  color: var(--text-muted);
+  text-align: center;
+}
+.desk-list-census {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: 9px 10px;
+  border: 1px solid var(--border);
+  border-bottom: 0;
+  background: var(--surface-2);
+  color: var(--text-muted);
+  font: 600 10px var(--font-mono);
+  letter-spacing: 0.06em;
+}
+.desk-next .desk-list-sortable.desk-sortable-table-wrap { border-color: var(--border); }
+.desk-next .desk-list-sortable .desk-sortable-table td:nth-child(3),
+.desk-next .desk-list-sortable .desk-sortable-table td:nth-child(4),
+.desk-next .desk-list-sortable .desk-sortable-table td:nth-child(5) {
+  color: var(--text-muted);
+  font: 600 10px var(--font-mono);
+  letter-spacing: 0.05em;
+}
+.desk-list-name-cell { display: inline-flex; align-items: center; gap: 5px; }
+@media (max-width: 720px) {
+  .desk-list-census { align-items: flex-start; flex-direction: column; gap: 3px; }
+  .desk-list-face .desk-list-sortable .desk-sortable-table th:nth-child(4),
+  .desk-list-face .desk-list-sortable .desk-sortable-table td:nth-child(4) { display: none; }
+}
+
 /* HS-105-04 — the Info card: one contract-derived surface. */
 .desk-info-window .desk-info-body section h3 {
   font-size: var(--font-size-xs);
