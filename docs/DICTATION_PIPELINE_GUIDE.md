@@ -119,23 +119,19 @@ Config file shape:
     },
     "runtime": {
       "backend": "openai_compatible",
-      "openai_compatible_base_url": "http://127.0.0.1:8000/v1",
-      "openai_compatible_model": "qwen2.5-7b-instruct",
-      "openai_compatible_api_key_env": "OPENAI_API_KEY",
       "openai_compatible_timeout_seconds": 8
     }
   }
 }
 ```
 
-Endpoints are also available as Runs on destinations: author the endpoint once
-(the Web compatibility route is `/profiles`), then pick it under Dictation →
-Runtime → **Runs on**. A selected destination supplies the endpoint and model;
-the fields above remain the fallback when nothing is selected. See
+The endpoint and model are not config fields (HS-112-01). Author the endpoint
+once as a destination under **Settings, Models** and pick it as the dictation
+**Runs on**; assigning it also selects the `openai_compatible` backend. See
 [MODELS.md](./MODELS.md).
 
-HoldSpeak reads the API key from the named environment variable. Do not put API
-keys in `.hs/` files.
+HoldSpeak reads the API key from `HOLDSPEAK_PROFILE_<ID>_KEY` for that
+destination. Do not put API keys in `.hs/` files.
 
 > **Extended thinking disabled by default.** HoldSpeak sets `thinking: false` on
 > every call to an OpenAI-compatible endpoint. This prevents extended-thinking
@@ -156,9 +152,6 @@ A known-good local profile:
     },
     "runtime": {
       "backend": "openai_compatible",
-      "openai_compatible_base_url": "http://127.0.0.1:8080/v1",
-      "openai_compatible_model": "Qwen3.5-9B-UD-Q6_K_XL.gguf",
-      "openai_compatible_api_key_env": "OPENAI_API_KEY",
       "openai_compatible_timeout_seconds": 20
     }
   }
@@ -862,9 +855,6 @@ For daily coding-agent dictation, use:
     },
     "runtime": {
       "backend": "openai_compatible",
-      "openai_compatible_base_url": "http://127.0.0.1:8000/v1",
-      "openai_compatible_model": "qwen2.5-7b-instruct",
-      "openai_compatible_api_key_env": "OPENAI_API_KEY",
       "openai_compatible_timeout_seconds": 8,
       "warm_on_start": false
     }

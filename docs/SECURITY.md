@@ -1,8 +1,10 @@
 # HoldSpeak Security & Privacy Posture
 
 **Status:** living document.
-**Last updated:** 2026-07-29 (empty effect debt register, desktop executor
-confinement, generic operation liveness).
+**Last updated:** 2026-08-02 (HS-112-04: the one dial's per-destination key
+rule, the browser mic's local-only transcription route held and continuous,
+the Speak room as a delivering caller of `/api/dictation/remote`, and the
+browser's leased seat at the audio floor).
 
 This document is the threat model for HoldSpeak: what data it holds, where that
 data lives, what can leave the machine, and the decisions behind its at-rest
@@ -78,7 +80,7 @@ make that promise auditable rather than aspirational.
 | **Raw meeting audio** | Apple Documents, `meeting-audio/<meeting-id>.wav`, plus a PCM journal while capture is recoverable | High | The flagship app checkpoints the take on device and finalizes it to a replayable WAV. Recovery manifests and partial PCM are removed after successful finalization; the WAV remains until its app data is removed. |
 | **Config** | `~/.config/holdspeak/config.json` | Medium | Includes the **device PSK** and **web auth token** (secrets); the cloud API key is referenced by *env-var name*, not stored. |
 | **Web recovery drafts** | Browser `localStorage`, under versioned `hs.draft.v1.*` keys | High | Editable First Words, Dictation, Ask, Agent, capability, Coder session reply, and steering drafts. Written synchronously in this browser's storage; cleared after a confirmed retaining action where the surface has one. |
-| **Web pending voice capture** | Browser IndexedDB, `holdspeak-voice-recovery` | High | One bounded WAV per voice-to-fill scope, retained only when transcription has not confirmed text. A retry reuses this local audio; successful transcription deletes it. No capture enters first-value measurement. |
+| **Web pending voice capture** | Browser IndexedDB, `holdspeak-voice-recovery` | High | One bounded WAV per voice-to-fill scope, retained only when transcription has not confirmed text. A retry reuses this local audio; successful transcription deletes it. No capture enters first-value measurement. Open-mic segments do not use this store: they are held in memory, posted, and dropped. |
 | **Native paired-dictation recovery draft** | Apple `UserDefaults`, `hs.dictate.recovery.v1` | High | The editable words, named destination, raw/processed flag, and opaque delivery id. Cleared only after the desktop confirms delivery. |
 | **Native pending voice capture** | Apple Application Support, `HoldSpeak/dictation-recovery.pcm16` | High | Bounded 16 kHz mono PCM retained when on-device transcription fails or the app relaunches before text exists; deleted after transcription succeeds. |
 | **First-value mechanics** | same DB (`first_value_attempts`, `first_value_events`) | Low | Bounded event names, ids, destination class, timing, counts, and failure category. The schema has no phrase, transcript, content, or audio column. |
@@ -136,12 +138,20 @@ SQLCipher) becomes warranted and should be its own story.
 3. **The device link** (`/api/devices/audio`): AIPI-Lite and compatible clients
    authenticate with a pre-shared key (PSK) compared in constant time
    (`device_audio.verify_psk`). Same-LAN scope today; cross-network reach is planned.
-4. **Connector packs**: user-supplied code under `~/.holdspeak/connector_packs/`
+4. **The audio floor** (`/api/dictation/floor{,/claim,/release}` →
+   `VoiceTypingSession`): the browser's open mic captures on the same physical
+   machine as the hotkey, the meeting recorder, and the wake listener, so it
+   claims the same one-at-a-time arbiter rather than listening behind it. The
+   claim is **leased** (20 s, heartbeated at half): a tab that dies stops
+   renewing and the floor frees itself, so a closed browser can never wedge the
+   owner's hotkey. A refused claim answers 409 with the active owner named. The
+   routes are local-only and carry no audio.
+5. **Connector packs**: user-supplied code under `~/.holdspeak/connector_packs/`
    runs **in-process with the user's permissions**. The manifest permission gate
    (`connector_runtime.py`) is an *honesty* mechanism, **not a security sandbox**:
    a malicious pack can call `subprocess.run` directly. Only install packs you
    trust.
-5. **Session steering** (`coder_steering.py` → a this-device tmux pane): typing into
+6. **Session steering** (`coder_steering.py` → a this-device tmux pane): typing into
    a live Coder session is a this-device consequential act (nothing leaves the
    machine), gated by a consent model rather than an egress row. Watching is
    free: the pull-out's peek is read-only, hash-gated, never a keystroke.
@@ -242,7 +252,7 @@ adds implementation detail but is not a second product inventory.
 
 | Egress | Trigger | What leaves | Gate |
 |---|---|---|---|
-| **Cloud meeting intel** (`intel/providers.py` → OpenAI-compatible client) | `intel_provider` = `cloud`, or `auto` falling back | Transcript text (no audio, no embeddings, no activity) | Explicit provider choice. `provider="local"` (default) **never** egresses, locked by `tests/unit/test_intel_egress_invariant.py`; surfaced by `doctor` + `intel_egress` in the runtime status. |
+| **Cloud meeting intel** (`intel/providers.py` → OpenAI-compatible client) | `intel_provider` = `cloud`, or `auto` falling back, to the destination assigned as the meetings **Runs on** (`effective_intel_cloud`) | Transcript text (no audio, no embeddings, no activity) | Explicit provider choice. `provider="local"` (default) **never** egresses, locked by `tests/unit/test_intel_egress_invariant.py`; surfaced by `doctor` + `intel_egress` in the runtime status. |
 | **Deferred-intel failure webhook** (`intel_queue.py`, the `urlopen` send) | User configures `intel_retry_failure_webhook_url` | Queue statistics only (counts, rates), **no transcript** | Opt-in (URL must be set). |
 | **Wake-model download** (`wake_word.py`, first enable) | `wake_word.enabled` flipped on with models absent | Nothing leaves: an inbound fetch of the detection models (~7 MB) from the openWakeWord GitHub releases, once, cached locally | Opt-in (the feature is off by default); stated in the settings copy. Detection itself runs locally and no audio ever egresses. |
 | **Send to Slack** (`slack_export.py` → the gated webhook connector) | User configures `meeting.slack_webhook_url` AND approves one specific send | The meeting digest or follow-up draft, exactly as previewed on the proposal (plain text; no transcript, no audio) | Double opt-in: the URL must be set (consent for exactly its host; the connector refuses any other host before egress) and every send is a separate per-action approval. The webhook URL is treated as a credential: never in proposals, broadcasts, or API responses. |
@@ -255,7 +265,8 @@ adds implementation detail but is not a second product inventory.
 | **Mesh relay** (`intel/mesh_relay.py` → the hub relay queue) | A run against a Runs on destination whose compatibility kind is `meshNode` | The prompt and the result, between the hub and the machine you named (both yours; the worker authenticates with the hub token) | You author the destination, and the node serves only while `holdspeak mesh serve` runs on it (stopping it reads offline within seconds). No key ever transits: the node resolves the run through its own config and env. |
 | **Web runtime responses** | A client requests data | Whatever the API returns (transcripts, action items, etc.) | Loopback by default; token-gated off-loopback. |
 | **Device audio link** | A paired device streams audio | Audio in; status/LCD text out | PSK; same-LAN today. |
-| **Paired dictation delivery** (`POST /api/dictation/remote`) | The owner releases the native dictation control or explicitly sends a preview/recovery draft | Finalized text plus an opaque delivery id to the named desktop; raw audio never crosses | Direct LAN/Tailscale peer, bearer-token gated off-loopback. The hub claims the id before delivery and caches the terminal Receipt; reconnecting with the same request returns that Receipt without typing twice. A different payload under the same id is refused. |
+| **Browser mic capture** (`lib/speakToFill` → `POST /api/dictation/transcribe`) | The owner holds a mic or the Speak room's TALK key in the browser, **or** an open-mic session segments an utterance (`lib/openMic` posts through the same encoder and route) | Nothing leaves the machine: the WAV is posted to the hub on the same origin the page was served from, the hub's own local Whisper transcribes it, and the audio is never persisted (16 MB cap) | No egress point, held or continuous. Off-loopback the origin is the hub itself, token-gated like every other route; the audio never reaches a third party. Segmentation is decided in the browser (`lib/vad`, energy plus hangover, no model and no network), so continuous listening posts one WAV per detected utterance rather than a stream. |
+| **Paired dictation delivery** (`POST /api/dictation/remote`) | The owner releases the native dictation control, releases TALK in the Speak room, or explicitly sends a preview/recovery draft | Finalized text plus an opaque delivery id to the named desktop; raw audio never crosses | Direct LAN/Tailscale peer, bearer-token gated off-loopback. The hub claims the id before delivery and caches the terminal Receipt; reconnecting with the same request returns that Receipt without typing twice. A different payload under the same id is refused. |
 
 Browser history reads (`activity_*`) make **no network calls**; they are
 read-only against local SQLite snapshots. The activity ledger never leaves the
@@ -265,8 +276,11 @@ machine except via the connector CLIs above (entity IDs only).
 
 ## 5. Secrets handling
 
-- **Cloud API key**: read from an environment variable (default `OPENAI_API_KEY`,
-  or a configured name); **never written to config or the DB**.
+- **Cloud API key**: read from an environment variable; **never written to
+  config or the DB**. Since HS-112-01 the variable is per destination
+  (`HOLDSPEAK_PROFILE_<ID>_KEY`); `OPENAI_API_KEY` remains only the hub's
+  fallback when a feature has no destination assigned. A destination never
+  borrows another one's key.
 - **Device PSK**: generated lazily, stored in `config.json`
   (`device_audio.ensure_device_psk`); constant-time comparison; empty PSK fails
   closed.

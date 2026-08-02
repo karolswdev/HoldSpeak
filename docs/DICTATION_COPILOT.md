@@ -177,17 +177,16 @@ at any local or LAN [OpenAI-compatible / GGUF / MLX endpoint](./MODELS.md)):
       "target_detect_llm_below": 0.8
     },
     "runtime": {
-      "backend": "openai_compatible",
-      "openai_compatible_base_url": "http://127.0.0.1:8080/v1",
-      "openai_compatible_model": "your-model-id"
+      "backend": "openai_compatible"
     }
   }
 }
 ```
 
-Prefer the picker: author the endpoint once as a Runs on destination (the Web
-compatibility route is `/profiles`), then pick it under Dictation → Runtime →
-**Runs on**. The fields above remain the fallback when nothing is selected.
+The endpoint and model are not config fields any more (HS-112-01). Author the
+endpoint once as a destination under **Settings, Models** and pick it as the
+dictation **Runs on**; assigning it also selects the `openai_compatible`
+backend. Its key lives in the environment as `HOLDSPEAK_PROFILE_<ID>_KEY`.
 
 </details>
 

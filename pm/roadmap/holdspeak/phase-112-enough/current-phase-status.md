@@ -72,11 +72,29 @@ it does not absorb it — it names it in the final summary.
 | HS-112-01 | One dial | in-progress | [story-01-one-dial](./story-01-one-dial.md) | — |
 | HS-112-02 | Speak speaks | in-progress | [story-02-speak-speaks](./story-02-speak-speaks.md) | — (captured; ships with the flip) |
 | HS-112-03 | The architect's desk | in-progress | [story-03-architects-desk](./story-03-architects-desk.md) | — |
-| HS-112-04 | The plain story | backlog | [story-04-plain-story](./story-04-plain-story.md) | — |
+| HS-112-04 | The plain story | in-progress | [story-04-plain-story](./story-04-plain-story.md) | — |
 | HS-112-05 | The sitting walk | backlog | [story-05-walk](./story-05-walk.md) | — |
 | HS-112-06 | The open mic | in-progress | [story-06-open-mic](./story-06-open-mic.md) | — |
 
 ## Where we are
+
+04 BUILT (in-progress pending the fresh-HOME quickstart
+execution, which is 05's walk). HS-112-04 implemented 2026-08-02:
+the README's first screen says what HoldSpeak IS in one paragraph
+(local-first voice desk OS; hold a key or open the mic, words land
+where aimed; one destination list; the badge names what leaves);
+quickstart restructured as the three moves (seed the desk, set the
+dial, hold the key — including the open mic); ~20 stale claims
+corrected across seven docs (the dead intel_cloud_*/
+openai_compatible_* fields pruned from every entry point, the
+retired welcome wizard and Profiles room excised, two false
+"still works" meeting-guide claims fixed); SECURITY gained the
+browser-mic egress row, the audio-floor trust boundary (3.4), and
+the one-WAV-per-utterance clarification. Every claim truth-audited
+to file:line; dead-field grep census 0 in README+GETTING_STARTED;
+doc-drift guards 19 passed; full unit 3522. Named drift for a next
+pass: WEB_DESK.md omits the new mic lamp; welcome.png depicts a
+dead surface.
 
 0/6 flipped; 01, 02, 03, and 06 BUILT (in-progress pending
 live proofs).
