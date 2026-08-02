@@ -1626,6 +1626,9 @@
   left: 112px;
   bottom: var(--space-3);
   z-index: var(--desk-z-chrome);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   padding: 2px 10px;
   /* HS-111: opaque fill */
   background: var(--surface-1);
@@ -1643,21 +1646,15 @@
 }
 /* HS-111: section labels — system-label style */
 .desk-next .desk-mc-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   color: var(--text);
   font-family: var(--font-mono);
   font-size: 10px;
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-}
-.desk-next .desk-mc-close {
-  width: 36px;
-  height: 36px;
-  padding: 0;
-  background: none;
-  border: none;
-  color: var(--text-faint);
-  cursor: pointer;
 }
 .desk-next .desk-mc-project {
   margin-top: var(--space-1);
@@ -1739,17 +1736,12 @@
   align-items: baseline;
   margin-top: var(--space-1);
 }
-.desk-next .desk-mc-state {
-  color: var(--danger);
-}
-.desk-next .desk-mc-state.compatibility {
-  color: var(--warn);
-}
-.desk-next .desk-mc-detail {
-  color: var(--text-faint);
-}
 
 /* ── Sessions and events on the belt (HS-82-04) ────────────────── */
+/* HS-111-06 — the on-belt pin: a mono token riding its story cell.
+   The emoji chip and the opacity-blink species died (audit B2/B8);
+   awaiting is STEADY inverted video — the operator call, not a
+   blinker. */
 .desk-next .desk-mc-pin {
   min-height: 32px;
   appearance: none;
@@ -1763,67 +1755,59 @@
   border-radius: 0;
   background: var(--surface-2);
   color: var(--text-muted);
-  font-size: 11px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  white-space: nowrap;
 }
 .desk-next .desk-mc-pin.awaiting {
-  color: var(--warn);
-  animation: desk-mc-pulse 1.6s ease-in-out infinite;
+  background: var(--warn);
+  color: var(--surface-0);
 }
 .desk-next .desk-mc-pin.stale {
   opacity: 0.5;
 }
-/* HS-111: pulse uses opacity, no glow */
-@keyframes desk-mc-pulse {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.55;
-  }
-}
 .desk-next .desk-mc-sessions {
   display: flex;
-  gap: var(--space-2);
+  gap: var(--space-1);
   flex-wrap: wrap;
+  align-items: flex-start;
   margin-top: var(--space-1);
   padding-top: var(--space-1);
   border-top: 1px dashed var(--surface-3);
 }
-.desk-next .desk-mc-offbelt {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
+/* The needs-you cell: the ONLY loud off-belt layer — steady inverted
+   video (audit §3.1, attention ladder). */
+.desk-next .desk-mc-needs {
+  appearance: none;
+  border: 0;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 0;
+  background: var(--warn);
+  color: var(--surface-0);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  white-space: nowrap;
 }
-/* HS-111: bucket label — mono, system-label style */
-.desk-next .desk-mc-bucket {
-  color: var(--text-faint);
+/* The census fold: one Disclosure per agent, roster in a well. */
+.desk-next .desk-mc-sessions .signal-disclosure {
+  flex: 1 1 100%;
+  min-width: 0;
+}
+.desk-next .desk-mc-sessions .signal-disclosure > summary {
   font-family: var(--font-mono);
   font-size: 10px;
   font-weight: 600;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
-}
-.desk-next .desk-mc-ticker {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-  margin-top: var(--space-1);
-  padding-top: var(--space-1);
-  border-top: 1px dashed var(--surface-3);
-  max-height: 84px;
-  overflow: hidden;
-}
-/* HS-111: belt events — monospace, tabular-nums */
-.desk-next .desk-mc-event {
-  color: var(--text-faint);
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
-}
-.desk-next .desk-mc-event.refusal {
-  color: var(--danger);
+  color: var(--text-muted);
+  cursor: pointer;
 }
 
 /* ── The approval leg (HS-82-05) ────────────────────────────────── */
@@ -1840,22 +1824,6 @@
   flex-wrap: wrap;
   margin-top: var(--space-1);
 }
-.desk-next .desk-mc-flip-label {
-  color: var(--text-faint);
-}
-.desk-next .desk-mc-btn {
-  padding: 1px 10px;
-  border-radius: 0;
-  background: var(--surface-2);
-  border: 1px solid var(--surface-3);
-  color: var(--text-muted);
-  font-size: 11px;
-  cursor: pointer;
-}
-.desk-next .desk-mc-btn.approve {
-  color: var(--accent);
-  border-color: var(--accent);
-}
 .desk-next .desk-mc-proposal {
   display: flex;
   align-items: center;
@@ -1870,12 +1838,6 @@
 }
 .desk-next .desk-mc-preview {
   color: var(--text);
-}
-.desk-next .desk-mc-refusal {
-  color: var(--danger);
-}
-.desk-next .desk-mc-executed {
-  color: var(--ok);
 }
 
 /* ── HSM-16-04: the Ask AI atom (lasso → ask → print → keep/bin) ── */
@@ -2324,13 +2286,6 @@
   border-radius: 2px;
   background: var(--surface-1);
   padding: var(--space-2);
-}
-.desk-next .desk-mc-evidence-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-2);
-  margin-bottom: var(--space-1);
 }
 .desk-next .desk-mc-evidence-path {
   color: var(--text-faint);
@@ -2924,7 +2879,6 @@
    state of a user-initiated press, not decoration. ── */
 @media (prefers-reduced-motion: reduce) {
   .desk-next .desk-start-action.is-recording .desk-start-record,
-  .desk-next .desk-mc-pin.awaiting,
   .desk-next .desk-chat-hello-avatar {
     animation: none !important;
   }
@@ -3124,48 +3078,6 @@
   font-size: 11px;
 }
 /* HS-111: section labels — system-label style */
-.desk-next .desk-dlv-h3 {
-  margin: var(--space-2) 0 2px;
-  font-family: var(--font-mono);
-  font-size: 10px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--text-faint);
-}
-.desk-next .desk-dlv-attempt {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-wrap: wrap;
-  padding: 3px 0;
-}
-.desk-next .desk-dlv-attempt-story {
-  color: var(--text);
-  font-weight: 600;
-}
-/* HS-111: state badge — mono, rectangular */
-.desk-next .desk-dlv-state {
-  padding: 0 6px;
-  border-radius: 0;
-  border: 1px solid var(--surface-3);
-  font-family: var(--font-mono);
-  font-size: 10px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-}
-.desk-next .desk-dlv-state.is-waiting {
-  color: var(--warn, #fbbf24);
-  border-color: color-mix(in srgb, var(--warn, #fbbf24) 45%, transparent);
-}
-/* HS-111: attempt metadata — monospace, tabular-nums */
-.desk-next .desk-dlv-attempt-meta {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-variant-numeric: tabular-nums;
-}
-.desk-next .desk-dlv-session-open,
 .desk-next .desk-dlv-story-open {
   display: inline-flex;
   align-items: baseline;
@@ -3177,7 +3089,6 @@
   padding: 3px 0;
   text-align: left;
 }
-.desk-next .desk-dlv-session-open small,
 .desk-next .desk-dlv-story-unavail small {
   color: var(--text-faint);
 }
@@ -3189,25 +3100,16 @@
   padding-top: var(--space-1);
   border-top: 1px solid var(--surface-2);
 }
-/* HS-111: section labels — system-label style */
-.desk-next .desk-dlv-launch-label {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--text-faint);
-}
-.desk-next .desk-dlv-launch-row {
+/* HS-111-06: the consequence and facts lines are token rows —
+   axis-named surface-tokens, never a sentence. */
+.desk-next .desk-dlv-consequence,
+.desk-next .desk-dlv-facts-line,
+.desk-next .desk-dlv-target-line {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 8px;
   flex-wrap: wrap;
-  margin-top: 2px;
-}
-.desk-next .desk-dlv-consequence {
   margin: 4px 0 0;
-  font-size: 11px;
 }
 .desk-next .desk-dlv-evidence {
   color: var(--ok, #34d399);
@@ -3221,8 +3123,6 @@
   max-height: 60vh;
   overflow: auto;
 }
-.desk-next .desk-dlv-runs,
-.desk-next .desk-dlv-members,
 .desk-next .desk-dlv-phase-stories {
   list-style: none;
   margin: 2px 0;
@@ -3231,28 +3131,12 @@
   flex-direction: column;
   gap: 3px;
 }
-.desk-next .desk-dlv-runs li {
-  display: flex;
-  align-items: baseline;
-  gap: 6px;
-}
-.desk-next .desk-dlv-runs li.is-pass .desk-dlv-run-mark {
-  color: var(--ok, #34d399);
-}
-.desk-next .desk-dlv-runs li.is-fail .desk-dlv-run-mark {
-  color: var(--bad, #f87171);
-}
-.desk-next .desk-dlv-runs code {
-  font-size: 11px;
-  color: var(--text-muted);
-}
 .desk-next .desk-dlv-refusal {
   display: flex;
   align-items: center;
   gap: 8px;
   margin: 4px 0;
 }
-.desk-next .desk-dlv-target-line,
 .desk-next .desk-dlv-node {
   font-size: 11px;
 }
@@ -4140,33 +4024,6 @@
   border: 0;
   color: var(--text-muted);
   font-size: var(--desk-surface-body-size);
-}
-
-/* Delivery: coder sessions are ROWS, not crammed inline chips. */
-.desk-next .desk-dlv-session-open {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-  min-height: 34px;
-  padding: 4px 10px;
-  margin: 0;
-  border: 0;
-  border-radius: var(--radius-sm);
-  background: transparent;
-  color: var(--text);
-  font: inherit;
-  font-size: var(--desk-surface-body-size);
-  text-align: left;
-  cursor: pointer;
-}
-.desk-next .desk-dlv-session-open:hover {
-  background: var(--wash-1);
-}
-.desk-next .desk-dlv-session-open small {
-  margin-left: auto;
-  color: var(--text-muted);
-  font-size: var(--desk-surface-detail-size);
 }
 
 /* The tool shelf joins the one material (the accent cage retires). */

@@ -38,7 +38,21 @@ a Spotlight clone.**
    Also: the menu-bar dropdowns draw UNDER windows (z-30 chrome band
    vs z-42 windows) — portal them exactly like the palette already
    does (~10 lines, doctrine F5).
-3. **Debug information hides beautifully.** Any window's debug/wire
+3. **The desk list view is a ledger, not naked HTML** (owner, with
+   screenshot, 2026-08-01: "looks like absolute ass... pure HTML
+   overlaid on stuff"). `DeskListView.tsx` currently renders
+   proportional two-line HTML rows with no ledger grammar and no
+   window discipline (open windows float over it mid-content). The
+   refit: the list view is a `SurfaceLedger` face of the floor —
+   26px mono rows (`ID/title | kind | fact | STATE`), roving focus
+   (08 kit law), full-width bands, day/kind bands as appropriate —
+   and it layers correctly with windows (the floor face never bleeds
+   through chrome). Duplicate-object data hygiene (the dozen
+   identical `PR-387 · Coder session · starting` rows in the owner's
+   shot) is traced in HS-111-06's audit — whichever wire mints one
+   desk object per session run gets deduped/expired there; this
+   story only renders honestly what the wire provides.
+4. **Debug information hides beautifully.** Any window's debug/wire
    material (drawers, opened files, IDs, raw JSON, routing guts)
    never sits on the face — it lives behind ONE deliberate access
    affordance (the folded `RAW` well: Disclosure → SurfaceWell, mono)

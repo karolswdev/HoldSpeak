@@ -1,10 +1,10 @@
 // HS-109-05 — one Project, opened as its long memory in the Desk grammar.
+// HS-111-06 (audit §3.5): the filed archive — a ledger timeline, lifecycle
+// as surface-tokens (the StatusPill species died), decision verbs in the
+// gadget grammar, the grounding receipt speaking Ask's token, and the one
+// footer receipt bar.
 import { useEffect, useMemo, useState } from "react";
-import {
-  Button,
-  InlineMessage,
-  StatusPill,
-} from "../../components/signal/Signal";
+import { Button, InlineMessage } from "../../components/signal/Signal";
 import { MicButton } from "../../desk/components/MicButton";
 import { RunsOnPicker } from "../../desk/components/RunsOnPicker";
 import { runAsk, type AskRunResult } from "../../desk/ask";
@@ -18,12 +18,16 @@ import {
 } from "../../desk/surface/citations";
 import { Material } from "../../desk/surface/Material";
 import {
+  ConfirmVerb,
+  SurfaceLedger,
+  SurfaceLedgerRow,
   SurfaceRow,
   SurfaceRows,
   SurfaceSection,
   SurfaceState,
   SurfaceVerbs,
 } from "../../desk/surface/Surface";
+import { CycleGadget } from "../../desk/surface/gadgets";
 import { humanTime } from "../../desk/surface/format";
 import { SurfaceWings, useWindowWings } from "../../desk/surface/wings";
 import { apiFetch, readableError, type JsonRecord } from "../../lib/api";
@@ -88,23 +92,27 @@ export function lifecycleLabel(row: JsonRecord): string {
   return lifecycle[0].toUpperCase() + lifecycle.slice(1);
 }
 
+/** HS-111-06 — the lifecycle as the etched token it is (audit M2):
+ * `lifecycleLabel()`'s text is test-locked; only the shell changed. */
 export function LifecycleChip({ row }: { row: JsonRecord }) {
   const lifecycle = String(row.lifecycle || "recorded");
   const tone =
     lifecycle === "accepted"
-      ? "success"
+      ? "ok"
       : lifecycle === "rejected"
-        ? "error"
-        : lifecycle === "superseded"
-          ? "neutral"
-          : "warning";
-  return <StatusPill tone={tone}>{lifecycleLabel(row)}</StatusPill>;
+        ? "danger"
+        : undefined;
+  return (
+    <span className="surface-token" data-tone={tone}>
+      {lifecycleLabel(row)}
+    </span>
+  );
 }
 
 const PROMOTION_TYPES = [
   ["adr", "ADR"],
-  ["note", "Note"],
-  ["decision_announcement", "Announcement"],
+  ["note", "NOTE"],
+  ["decision_announcement", "ANNC"],
 ] as const;
 
 /** The HS-109-03 promote verbs: deterministic (the gesture is the approval)
@@ -143,36 +151,32 @@ export function DecisionPromotionSlot({
   };
   return (
     <span className="decision-promotion-slot">
-      <label className="visually-hidden" htmlFor={`promo-kind-${id}`}>
-        Artifact kind
-      </label>
-      <select
-        id={`promo-kind-${id}`}
-        className="desk-select dense"
+      <CycleGadget
+        label="Artifact kind"
         value={kind}
-        onChange={(event) => setKind(event.target.value)}
-      >
-        {PROMOTION_TYPES.map(([value, label]) => (
-          <option key={value} value={value}>
-            {label}
-          </option>
-        ))}
-      </select>
+        options={PROMOTION_TYPES.map(([value, label]) => ({
+          value,
+          label,
+        }))}
+        onChange={setKind}
+      />
       <Button dense variant="ghost" loading={busy === "direct"}
               onClick={() => void promote(false)}>
-        Promote
+        PROMOTE
       </Button>
       <Button dense variant="ghost" loading={busy === "model"}
               onClick={() => void promote(true)}>
-        Draft with model
+        DRAFT WITH MODEL
       </Button>
       {artifactId ? (
-        <button type="button" className="desk-chip quiet"
-                onClick={() => onOpenArtifact?.(artifactId)}>
-          {`artifact:${artifactId.slice(0, 18)}`}
-        </button>
+        /* The minted artifact is openable material — the one citation
+           chip species carries it (HS-111-05). */
+        <CitationChips
+          refs={[`artifact:${artifactId}`]}
+          onOpen={(ref) => onOpenArtifact?.(ref.slice("artifact:".length))}
+        />
       ) : null}
-      {detail ? <span className="desk-caption">{detail}</span> : null}
+      {detail ? <span className="desk-arm-refusal">✕ {detail}</span> : null}
     </span>
   );
 }
@@ -293,8 +297,9 @@ function ProjectAsk({
         <div className="project-memory-answer">
           <Material>{result.output}</Material>
           {receipt ? (
-            <p className="quiet project-memory-grounded">
-              Grounded on {groundedCount} of {receipt.matchedCount} matches
+            /* HS-111-06 — the same fact speaks Ask's token (audit M5). */
+            <p className="desk-ask-grounded">
+              GROUNDED ON {groundedCount} OF {receipt.matchedCount}
             </p>
           ) : null}
           <CitationChips refs={receipt?.sourceRefs || []} onOpen={onOpenRef} />
@@ -304,23 +309,38 @@ function ProjectAsk({
   );
 }
 
+/** HS-111-06 — the delta as a token slab, never a sentence (audit M6). */
 function SinceLastMeeting({ receipt }: { receipt: JsonRecord }) {
   const since = receipt.since_last_meeting as JsonRecord | null | undefined;
   if (!receipt.current_meeting)
-    return <p className="project-memory-since quiet">No project meetings</p>;
+    return (
+      <p className="project-memory-since">
+        <span className="surface-token">MEETINGS 0</span>
+      </p>
+    );
   if (!since)
-    return <p className="project-memory-since quiet">First project meeting</p>;
+    return (
+      <p className="project-memory-since">
+        <span className="surface-token">FIRST MEETING</span>
+      </p>
+    );
   const previous = (since.previous_meeting || {}) as JsonRecord;
-  const changed =
-    ((since.new_decisions as unknown[]) || []).length +
-    ((since.new_actions as unknown[]) || []).length +
-    ((since.closed_actions as unknown[]) || []).length;
+  const decisions = ((since.new_decisions as unknown[]) || []).length;
+  const actions = ((since.new_actions as unknown[]) || []).length;
+  const closed = ((since.closed_actions as unknown[]) || []).length;
+  const delta = [
+    decisions ? `+${decisions} DEC` : "",
+    actions ? `+${actions} ACT` : "",
+    closed ? `${closed} CLOSED` : "",
+  ]
+    .filter(Boolean)
+    .join(" · ");
   return (
     <p className="project-memory-since">
-      <strong>
+      <span className="surface-token">
         Since {String(previous.title || previous.id || "previous meeting")}
-      </strong>
-      <span>{changed ? `${changed} changes` : "No changes"}</span>
+      </span>
+      <span className="surface-token">{delta || "DELTA 0"}</span>
     </p>
   );
 }
@@ -343,6 +363,7 @@ export function ProjectMemoryCore({ hero, scope, scopeLabel }: CoreProps) {
   const [searching, setSearching] = useState(false);
   const [decisionBusy, setDecisionBusy] = useState("");
   const [successors, setSuccessors] = useState<Record<string, string>>({});
+  const [readAt, setReadAt] = useState<number | null>(null);
 
   useWindowWings(
     <SurfaceWings wings={WINGS} active={view} onChange={setView} />,
@@ -370,6 +391,7 @@ export function ProjectMemoryCore({ hero, scope, scopeLabel }: CoreProps) {
       setDecisions((decisionBody.decisions as JsonRecord[]) || []);
       setArtifacts((artifactBody.artifacts as JsonRecord[]) || []);
       setSince(sinceBody);
+      setReadAt(Date.now());
     } catch (reason) {
       setError(readableError(reason));
     } finally {
@@ -464,11 +486,22 @@ export function ProjectMemoryCore({ hero, scope, scopeLabel }: CoreProps) {
     }
   };
 
+  // HS-111-06 — the timeline is a filed-archive ledger (audit M3):
+  // fixed time column, mono kind tokens, open-in-place as before.
+  // The composition (`composeProjectTimeline`) is untouched.
+  const kindToken: Record<ProjectTimelineEntry["kind"], string> = {
+    meeting: "MTG",
+    decision: "DEC",
+    artifact: "ART",
+  };
+  const ledgerTime = (iso: string): string => {
+    const date = new Date(iso);
+    if (Number.isNaN(date.getTime())) return "";
+    const pad = (n: number) => String(n).padStart(2, "0");
+    return `${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
+  };
   const timelineFace = (
-    <SurfaceSection
-      label="Timeline"
-      actions={<span className="quiet">{timeline.length}</span>}
-    >
+    <SurfaceSection label="Timeline">
       <SinceLastMeeting receipt={since} />
       <SurfaceState
         loading={loading}
@@ -478,38 +511,42 @@ export function ProjectMemoryCore({ hero, scope, scopeLabel }: CoreProps) {
         emptyGlyph="▤"
         onRetry={() => void load()}
       >
-        <SurfaceRows>
-          {timeline.map((entry) => (
-            <SurfaceRow
-              key={`${entry.kind}:${entry.id}`}
-              glyph={
-                entry.kind === "meeting"
-                  ? "▣"
-                  : entry.kind === "decision"
-                    ? "✓"
-                    : "◇"
-              }
-              title={entry.title}
-              detail={`${entry.kind[0].toUpperCase()}${entry.kind.slice(1)} · ${humanTime(entry.occurredAt)}`}
-              meta={
-                entry.kind === "decision" ? (
-                  <LifecycleChip row={entry.row} />
-                ) : undefined
-              }
-              onOpen={() => {
-                if (entry.kind === "meeting")
-                  openSurfaceOr(
-                    "review-meetings",
-                    "/history",
-                    `meeting:${entry.id}`,
-                  );
-                else if (entry.kind === "artifact")
-                  openPrimitive(`artifact:${entry.id}`);
-                else setView("decisions");
-              }}
-            />
-          ))}
-        </SurfaceRows>
+        <SurfaceLedger count={`TIMELINE ${timeline.length}`}>
+          <ul className="surface-ledger-rows">
+            {timeline.map((entry) => (
+              <SurfaceLedgerRow
+                key={`${entry.kind}:${entry.id}`}
+                time={ledgerTime(entry.occurredAt)}
+                primary={
+                  <>
+                    <span className="surface-token">
+                      {kindToken[entry.kind]}
+                    </span>{" "}
+                    {entry.title}
+                  </>
+                }
+                cells={
+                  entry.kind === "decision" ? (
+                    <span className="surface-ledger-cell">
+                      <LifecycleChip row={entry.row} />
+                    </span>
+                  ) : undefined
+                }
+                onToggle={() => {
+                  if (entry.kind === "meeting")
+                    openSurfaceOr(
+                      "review-meetings",
+                      "/history",
+                      `meeting:${entry.id}`,
+                    );
+                  else if (entry.kind === "artifact")
+                    openPrimitive(`artifact:${entry.id}`);
+                  else setView("decisions");
+                }}
+              />
+            ))}
+          </ul>
+        </SurfaceLedger>
       </SurfaceState>
     </SurfaceSection>
   );
@@ -553,43 +590,38 @@ export function ProjectMemoryCore({ hero, scope, scopeLabel }: CoreProps) {
                         loading={decisionBusy === decision.id}
                         onClick={() => void transition(decision, "accept")}
                       >
-                        Accept
+                        ACCEPT
                       </Button>
                     ) : null}
                     {lifecycle === "recorded" || lifecycle === "accepted" ? (
+                      /* HS-111-06 — gadget grammar (audit M4): the
+                         successor is a CycleGadget, the flip an arming
+                         ConfirmVerb; the naked selects died. */
                       <span className="project-memory-supersede">
-                        <label>
-                          <span className="sr-only">Successor</span>
-                          <select
-                            aria-label={`Successor for ${String(decision.text || decision.id)}`}
-                            value={successors[String(decision.id)] || ""}
-                            onChange={(event) =>
-                              setSuccessors((value) => ({
-                                ...value,
-                                [String(decision.id)]: event.target.value,
-                              }))
-                            }
-                          >
-                            <option value="">Successor</option>
-                            {candidates.map((candidate) => (
-                              <option
-                                key={String(candidate.id)}
-                                value={String(candidate.id)}
-                              >
-                                {String(candidate.text || candidate.id)}
-                              </option>
-                            ))}
-                          </select>
-                        </label>
-                        <Button
-                          dense
-                          variant="ghost"
+                        <CycleGadget
+                          label={`Successor for ${String(decision.text || decision.id)}`}
+                          value={successors[String(decision.id)] || ""}
+                          options={[
+                            { value: "", label: "SUCCESSOR" },
+                            ...candidates.map((candidate) => ({
+                              value: String(candidate.id),
+                              label: String(candidate.text || candidate.id),
+                            })),
+                          ]}
+                          onChange={(next) =>
+                            setSuccessors((value) => ({
+                              ...value,
+                              [String(decision.id)]: next,
+                            }))
+                          }
+                        />
+                        <ConfirmVerb
+                          label="SUPERSEDE"
+                          confirmLabel="SUPERSEDE?"
                           disabled={!successors[String(decision.id)]}
-                          loading={decisionBusy === decision.id}
-                          onClick={() => void transition(decision, "supersede")}
-                        >
-                          Supersede
-                        </Button>
+                          busy={decisionBusy === decision.id}
+                          onConfirm={() => void transition(decision, "supersede")}
+                        />
                       </span>
                     ) : null}
                     <DecisionPromotionSlot decision={decision} onOpenArtifact={(id) => openProjectRef(`artifact:${id}`)} />
@@ -669,12 +701,19 @@ export function ProjectMemoryCore({ hero, scope, scopeLabel }: CoreProps) {
   if (!projectId)
     return <SurfaceState empty emptyLabel="Open a Project" emptyGlyph="▤" />;
 
+  const readToken = (() => {
+    if (!readAt) return "";
+    const date = new Date(readAt);
+    const pad = (n: number) => String(n).padStart(2, "0");
+    return ` · READ ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+  })();
+
   return (
     <>
       {hero ? (
         hero(verbs)
       ) : (
-        <SurfaceVerbs status={projectName}>{verbs}</SurfaceVerbs>
+        <SurfaceVerbs status={projectName} />
       )}
       <div className="project-memory-core" data-view={view}>
         {view === "timeline" ? (
@@ -689,6 +728,16 @@ export function ProjectMemoryCore({ hero, scope, scopeLabel }: CoreProps) {
             projectName={projectName}
             onOpenRef={openProjectRef}
           />
+        )}
+      </div>
+      {/* HS-111-06 — the one footer receipt bar (audit M7): the read
+          fact the window already held, plus the Refresh verb. */}
+      <div className="surface-status surface-receiptbar">
+        <span className="surface-receiptbar-receipt" role="status">
+          {`PROJECT ${projectName}${readToken}`}
+        </span>
+        {hero ? null : (
+          <span className="surface-receiptbar-verbs">{verbs}</span>
         )}
       </div>
     </>

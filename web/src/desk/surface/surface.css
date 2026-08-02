@@ -1294,6 +1294,28 @@ button.surface-edit-in-place:hover {
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
+/* HS-111-06 — the facts template (data-cols hook, never a second
+   ledger component): no time column; the primary leads, trailing
+   cells hug their content. Belt roster, delivery work/sessions,
+   dossier runs/assets. */
+.surface-ledger[data-cols="facts"] .surface-ledger-line {
+  display: flex;
+  align-items: center;
+}
+.surface-ledger[data-cols="facts"] .surface-ledger-primary {
+  flex: 1 1 auto;
+}
+/* HS-111-06 — the events template: time | event token | material,
+   the material ellipsizing instead of running off the panel. */
+.surface-ledger[data-cols="events"] .surface-ledger-line {
+  grid-template-columns: 52px max-content minmax(0, 1fr);
+}
+.surface-ledger[data-cols="events"] .surface-ledger-cell {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: right;
+}
+
 /* An absent trailing fact still holds its column (the grid is fixed). */
 .surface-ledger-open {
   display: flex;

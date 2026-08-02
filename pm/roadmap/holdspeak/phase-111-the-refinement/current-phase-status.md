@@ -1,24 +1,20 @@
 # Phase 111 - The Refinement
 
-**Status:** IN PROGRESS (5/11). Chartered 2026-07-31 as the mandatory
+**Status:** IN PROGRESS (6/11). Chartered 2026-07-31 as the mandatory
 fast-follow to Phase 110. The owner's condition: every program on the
 desk gets its interior rethought — not token-tweaked, RETHOUGHT — to
 feel native to Signal Workbench. "The Settings screen needs to be
 completely rethought, and many, many others."
 
-**Last updated:** 2026-08-02 (HS-111-05 Ask SHIPPED — the query
-console: the thread is SurfaceTraffic (one conversation language
-with persona chat), the HS-109-04 grounding receipt finally reaches
-the glass (GROUNDED ON N OF M + openable citations, CitationChips
-promoted to the kit), the owner's error-overlap report structurally
-dead (all faults in-flow: receiptbar or error turn, machine-verified
-operable at both viewports), zero naked HTML, the rack overflow
-defect dead by construction; suites green 4207+392. Plus the day's
-owner riders chartered: HS-111-11 terminal pane (xterm.js), 07
-right-click + debug-RAW + command-deck palette, 08 roving focus +
-arming deletes; the usability doctrine PROPOSAL filed awaiting the
-sitting. Earlier: 04 Agents, 03 Meetings, 02 Speak, 01 Settings —
-five rooms in ~one day.)
+**Last updated:** 2026-08-02 (HS-111-06 Delivery/process SHIPPED —
+instrumentation: the ~450-pin emoji flood dead into census tokens +
+inverted NEEDS YOU cells, the process window a zeroed instrument
+(kernel wire git-diff EMPTY), the dead keypad a TransportRow,
+PaneWell extracted with xterm deferred to 11 by argued decision, AND
+the owner's PR-387 duplicate rows root-caused as two wire bugs
+(liveness-by-gaze sweep + sibling-minting idempotence defeat) and
+FIXED with 7 new tests; suites green 4214+398. Earlier: 05 Ask, 04
+Agents, 03 Meetings, 02 Speak, 01 Settings.)
 
 ## Why this phase exists
 
@@ -53,7 +49,7 @@ Each story:
 | 03 | [Meetings](./story-03-meetings.md) | The Meetings program — history list, meeting detail, transcript view, artifact cards, aftercare panel | done |
 | 04 | [Agents](./story-04-agents.md) | The Agents/Companion program — agent list, persona detail, session inspector, coder steering pullout | done |
 | 05 | [Ask and conversation](./story-05-ask-conversation.md) | The Ask composer, grounding picker, conversation thread, kept-card receipts | done |
-| 06 | [Delivery and process](./story-06-delivery-process.md) | The delivery belt, the process window, the project memory window — the kernel-facing programs | backlog |
+| 06 | [Delivery and process](./story-06-delivery-process.md) | The delivery belt, the process window, the project memory window — the kernel-facing programs | done |
 | 07 | [System chrome](./story-07-system-chrome.md) | Dropdown menus (Desk/Object/Go), context menus, the search palette (Cmd+K), the shortcut sheet, popovers | backlog |
 | 08 | [Interactive elements](./story-08-interactive-elements.md) | Every control type across all programs: toggles, selects, inputs, tabs, pills, buttons, badges — one kit, one language | backlog |
 | 09 | [Sprite and icon quality](./story-09-sprites.md) | Regenerate bad dock sprites on the real desk, window type icons, overview/reset glyphs | backlog |
@@ -69,7 +65,7 @@ Each story:
 | HS-111-03 | Meetings | done | [story-03-meetings](./story-03-meetings.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-111-04 | Agents | done | [story-04-agents](./story-04-agents.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-111-05 | Ask and conversation | done | [story-05-ask-conversation](./story-05-ask-conversation.md) | [evidence-story-05](./evidence-story-05.md) |
-| HS-111-06 | Delivery and process | backlog | [story-06-delivery-process](./story-06-delivery-process.md) | — |
+| HS-111-06 | Delivery and process | done | [story-06-delivery-process](./story-06-delivery-process.md) | [evidence-story-06](./evidence-story-06.md) |
 | HS-111-07 | System chrome | backlog | [story-07-system-chrome](./story-07-system-chrome.md) | — |
 | HS-111-08 | Interactive elements | backlog | [story-08-interactive-elements](./story-08-interactive-elements.md) | — |
 | HS-111-09 | Sprite and icon quality | backlog | [story-09-sprites](./story-09-sprites.md) | — |
@@ -157,5 +153,25 @@ naked HTML controls survive, and the rack is one GadgetGroup with
 the CTX LedMeter (overflow dead by construction, proven with the
 57-char offender). No printed turn was faked — no model was
 reachable; the refusal path is the captured proof, and the next
-story's walk owes a printed turn once .43 returns. Next: HS-111-06
-(Delivery and process).
+story's walk owes a printed turn once .43 returns.
+
+6/11. HS-111-06 (Delivery and process) shipped 2026-08-02: the audit
+found the phase's largest violation (an unbounded ~450 emoji-pin
+flood burying the desk at both viewports) and root-caused the
+owner's PR-387 duplicate rows LIVE as two wire bugs — the state
+sweep ran only as a side effect of one read (liveness-by-gaze:
+"starting" persisted for days until someone opened the board) and a
+worktree-resolution change defeated the idempotence key, minting a
+rider_claim sibling per run. Both fixed on the wire (sweep on the
+attempts read path; claims bind/adopt by session) with 7 new tests;
+no pre-existing-dirty python touched. The rendering: belt → rails
+panel (census tokens, inverted NEEDS YOU as the only individual
+layer, zero emoji), process window → zeroed instrument (kernel
+consumer files git-diff EMPTY), delivery keypad → TransportRow,
+dossier + project memory onto ledgers/tokens/RAW folds, and ONE
+PaneWell seam extracted for both terminal surfaces — xterm deferred
+to HS-111-11 so story 11 swaps a single interior. Proven live at
+1440+393 including the error leg; suites green (4214 python + 398
+web). Next: HS-111-07 (system chrome) — the biggest room left,
+carrying the owner riders (right-click, debug-RAW, list-view
+ledger) and the doctrine's command-deck palette.

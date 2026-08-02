@@ -3,13 +3,24 @@
 // captured runs (pass/fail explicit), and the trace come manifest-bound from
 // the hub; asset bytes download through the authorized asset route. A changed
 // source, offline source, or missing story each render their own recovery.
-import { useEffect, useRef } from "react";
-import { motion, useReducedMotion } from "motion/react";
+//
+// HS-111-06 (audit §3.3): the facts head is a token row, captured runs and
+// assets are ledger rows (an empty command is a NAMED token, never a bare
+// mark), and the record's markdown bodies fold behind the RAW well species
+// (Disclosure → SurfaceWell) — 07's law, consumed early.
+import { useEffect } from "react";
+import { Button, Disclosure } from "../../components/signal/Signal";
 import {
   assetHref,
   useDeliveryDossier,
   type DossierRefusalCode,
 } from "../deliveryDossier";
+import {
+  SurfaceLedger,
+  SurfaceLedgerRow,
+  SurfaceState,
+  SurfaceWell,
+} from "../surface/Surface";
 import { DeskWindowFrame } from "./DeskWindow";
 
 const REFUSAL_RECOVERY: Record<
@@ -35,15 +46,14 @@ function RefusalPanel() {
       <span className="desk-arm-refusal">
         ✕ {refusal.code.replace(/_/g, " ")} · {refusal.detail || recovery.hint}
       </span>
-      <button type="button" className="desk-chip quiet" onClick={close}>
+      <Button dense variant="ghost" onClick={close}>
         {recovery.label}
-      </button>
+      </Button>
     </div>
   );
 }
 
 export function DeliveryDossierWindow() {
-  const reducedMotion = useReducedMotion();
   const dossier = useDeliveryDossier((s) => s.dossier);
   const loading = useDeliveryDossier((s) => s.loading);
   const refusal = useDeliveryDossier((s) => s.refusal);
@@ -84,32 +94,21 @@ export function DeliveryDossierWindow() {
     >
 
       <div className="desk-pullout-body desk-dlv-dossier-body">
-        {loading ? <p className="quiet">…</p> : null}
+        {loading ? <SurfaceState loading /> : null}
         <RefusalPanel />
 
         {dossier?.kind === "story" ? (
           <>
-            <dl className="desk-tool-facts">
-              <div>
-                <dt>Status</dt>
-                <dd>{dossier.status}</dd>
-              </div>
-              <div>
-                <dt>Freshness</dt>
-                <dd>{dossier.freshness}</dd>
-              </div>
-              <div>
-                <dt>Head</dt>
-                <dd>{dossier.headSha.slice(0, 12) || "uncommitted"}</dd>
-              </div>
-              <div>
-                <dt>Captures</dt>
-                <dd>
-                  {dossier.summary.passing} pass · {dossier.summary.failing}{" "}
-                  fail
-                </dd>
-              </div>
-            </dl>
+            <p className="desk-dlv-facts-line">
+              <span className="surface-token">{`STATE ${dossier.status || "unknown"}`}</span>
+              <span className="surface-token">{`FRESH ${dossier.freshness || "unknown"}`}</span>
+              <span className="surface-token">
+                {`HEAD ${dossier.headSha.slice(0, 12) || "uncommitted"}`}
+              </span>
+              <span className="surface-token">
+                {`RUNS ${dossier.summary.passing}✓ ${dossier.summary.failing}✕`}
+              </span>
+            </p>
             {dossier.bundleChanged ? (
               <p className="desk-arm-refusal" role="status">
                 ✕ bundle changed · this evidence predates the current source
@@ -117,75 +116,110 @@ export function DeliveryDossierWindow() {
             ) : null}
 
             <section>
-              <h3 className="desk-dlv-h3">Captured runs</h3>
-              {dossier.capturedRuns.length === 0 ? (
-                <p className="quiet">No captured runs.</p>
-              ) : (
-                <ul className="desk-dlv-runs">
-                  {dossier.capturedRuns.map((r, i) => (
-                    <li
-                      key={`${r.timestamp}:${i}`}
-                      className={r.passed ? "is-pass" : "is-fail"}
-                    >
-                      <span className="desk-dlv-run-mark">
-                        {r.passed ? "✓" : "✕"}
-                      </span>
-                      <code>{r.command}</code>
-                      <small>exit {r.exitCode ?? "?"}</small>
-                    </li>
-                  ))}
-                </ul>
-              )}
+              <SurfaceLedger
+                cols="facts"
+                count={`CAPTURED RUNS ${dossier.capturedRuns.length}`}
+              >
+                {dossier.capturedRuns.length ? (
+                  <ul className="surface-ledger-rows">
+                    {dossier.capturedRuns.map((r, i) => (
+                      <SurfaceLedgerRow
+                        key={`${r.timestamp}:${i}`}
+                        primary={
+                          <>
+                            <span
+                              className="surface-token"
+                              data-tone={r.passed ? "ok" : "danger"}
+                            >
+                              {r.passed ? "✓" : "✕"}
+                            </span>{" "}
+                            {r.command ? (
+                              <code>{r.command}</code>
+                            ) : (
+                              <span className="surface-token">
+                                NO COMMAND RECORDED
+                              </span>
+                            )}
+                          </>
+                        }
+                        cells={
+                          <span className="surface-ledger-cell">
+                            <span className="surface-token">
+                              {`EXIT ${r.exitCode ?? "?"}`}
+                            </span>
+                          </span>
+                        }
+                      />
+                    ))}
+                  </ul>
+                ) : null}
+              </SurfaceLedger>
             </section>
 
             <section>
-              <h3 className="desk-dlv-h3">Evidence assets</h3>
-              {dossier.members.length === 0 ? (
-                <p className="quiet">No assets in this bundle.</p>
-              ) : (
-                <ul className="desk-dlv-members">
-                  {dossier.members.map((m) => (
-                    <li key={m.assetId}>
-                      <a
-                        className="desk-chip quiet"
-                        href={assetHref(dossier.bundleId, m.assetId)}
-                        target="_blank"
-                        rel="noreferrer"
-                      >
-                        {m.label}
-                      </a>
-                      <small>
-                        {m.mediaType} · {m.bytes} bytes
-                      </small>
-                    </li>
-                  ))}
-                </ul>
-              )}
+              <SurfaceLedger cols="facts" count={`ASSETS ${dossier.members.length}`}>
+                {dossier.members.length ? (
+                  <ul className="surface-ledger-rows">
+                    {dossier.members.map((m) => (
+                      <li key={m.assetId} className="surface-ledger-row">
+                        <a
+                          className="surface-ledger-line"
+                          href={assetHref(dossier.bundleId, m.assetId)}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          <span className="surface-ledger-primary">
+                            {m.label}
+                          </span>
+                          <span className="surface-ledger-cell">
+                            {m.mediaType}
+                          </span>
+                          <span className="surface-ledger-cell">
+                            {`${m.bytes} B`}
+                          </span>
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
+              </SurfaceLedger>
             </section>
 
             {dossier.storyMarkdown ? (
-              <details>
-                <summary>Story</summary>
-                <pre className="desk-pullout-md">{dossier.storyMarkdown}</pre>
-              </details>
+              <Disclosure title="RAW · STORY">
+                <SurfaceWell
+                  head={<span className="surface-token">{`STORY ${dossier.storyId}`}</span>}
+                >
+                  <pre className="desk-pullout-md">{dossier.storyMarkdown}</pre>
+                </SurfaceWell>
+              </Disclosure>
             ) : null}
             {dossier.evidenceMarkdown ? (
-              <details>
-                <summary>Evidence log</summary>
-                <pre className="desk-pullout-md">
-                  {dossier.evidenceMarkdown}
-                </pre>
-              </details>
+              <Disclosure title="RAW · EVIDENCE LOG">
+                <SurfaceWell
+                  head={<span className="surface-token">{`EVIDENCE ${dossier.storyId}`}</span>}
+                >
+                  <pre className="desk-pullout-md">
+                    {dossier.evidenceMarkdown}
+                  </pre>
+                </SurfaceWell>
+              </Disclosure>
             ) : null}
           </>
         ) : null}
 
         {dossier?.kind === "phase" ? (
           <>
-            <p className="quiet">
-              {dossier.title || `Phase ${dossier.phase}`} ·{" "}
-              {dossier.status || "open"} · {dossier.storiesDone ?? "?"}/
-              {dossier.storiesTotal ?? "?"}
+            <p className="desk-dlv-facts-line">
+              <span className="surface-token">
+                {dossier.title || `Phase ${dossier.phase}`}
+              </span>
+              <span className="surface-token">
+                {(dossier.status || "open").toUpperCase()}
+              </span>
+              <span className="surface-token">
+                {`${dossier.storiesDone ?? "?"}/${dossier.storiesTotal ?? "?"}`}
+              </span>
             </p>
             <ul className="desk-dlv-phase-stories">
               {dossier.stories.map((s) => (

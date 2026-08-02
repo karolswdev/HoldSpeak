@@ -53,14 +53,24 @@ def build_delivery_attempts_router(
     registry_path: Optional[Path] = None,
     map_path: Optional[Path] = None,
     claims_state_path: Optional[Path] = None,
+    launches_path: Optional[Path] = None,
+    launch_sweep: Any = None,
     sync_on_read: bool = True,
 ) -> APIRouter:
     """Every keyword is a test seam (the delivery-router precedent);
     production uses the defaults: the database's work-attempt
-    repository plus a resolver over the Delivery Source registry."""
+    repository plus a resolver over the Delivery Source registry.
+
+    HS-111-06: reads also run the LAUNCH sweep (bind_rider_claims +
+    expire_unregistered) that previously ran only on the factory's
+    ``/discover`` route — state advancement happens where the truth is
+    read, never only when one particular window is opened.
+    ``launch_sweep`` is a zero-arg callable seam; the default assembles
+    lazily over the same registry/ledger seams (and stays OFF when a
+    test injects ``service``, keeping unit rigs hermetic)."""
     _ = ctx
     router = APIRouter()
-    holder: dict[str, Any] = {"service": service}
+    holder: dict[str, Any] = {"service": service, "sweep": launch_sweep}
 
     def _service() -> Any:
         if holder["service"] is None:
@@ -77,6 +87,35 @@ def build_delivery_attempts_router(
                 resolver=resolver_from_registry(registry),
             )
         return holder["service"]
+
+    def _launch_sweep() -> Any:
+        """The zero-arg launch sweep, or None. Assembled only on the
+        production path (no injected service): bind fresh rider claims
+        onto their launch attempts, then expire riderless launches past
+        the registration window — the same sweep the factory's
+        ``/discover`` runs, now on every attempts read."""
+        if holder["sweep"] is None and service is None:
+            from ...db import get_database
+            from ...delivery import DeliveryRegistry
+            from ...delivery.factory_launch import LaunchLedger, LaunchService
+
+            launcher = LaunchService(
+                # The sweep never spawns/discovers: profiles, targets,
+                # and commands are deliberately absent.
+                profiles=None,  # type: ignore[arg-type]
+                registry=DeliveryRegistry(registry_path, map_path=map_path),
+                targets=None,
+                commands=None,
+                attempts=get_database().work_attempts,
+                ledger=LaunchLedger(launches_path),
+            )
+
+            def _sweep() -> None:
+                launcher.bind_rider_claims(state_path=claims_state_path)
+                launcher.expire_unregistered()
+
+            holder["sweep"] = _sweep
+        return holder["sweep"]
 
     @router.post("/api/delivery/attempts")
     async def api_delivery_create_attempt(body: _CreateAttemptRequest) -> Any:
@@ -127,6 +166,15 @@ def build_delivery_attempts_router(
             def _read() -> dict[str, Any]:
                 svc = _service()
                 if sync_on_read:
+                    sweep = _launch_sweep()
+                    if sweep is not None:
+                        try:
+                            # Launch attempts first (HS-94-07 ordering):
+                            # once bound, the generic sweep below only
+                            # heartbeats them.
+                            sweep()
+                        except Exception as sync_exc:
+                            log.warning(f"launch sweep skipped: {sync_exc}")
                     try:
                         svc.sync_rider_claims(state_path=claims_state_path)
                     except Exception as sync_exc:  # honest read beats a lost one

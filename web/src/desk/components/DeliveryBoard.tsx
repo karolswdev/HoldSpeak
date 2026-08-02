@@ -5,8 +5,13 @@
 // sessions as node-issued terminal targets. A Story opens its dossier IN a
 // window; a target opens the immutable-target terminal. Launch is a typed
 // operation with a voice-fillable label and its destination shown up front.
+//
+// HS-111-06 (audit §3.3): active work and Coder sessions are SurfaceLedger
+// tables; the launch composer is ONE GadgetGroup with an axis-named token
+// consequence line; the footer receipt bar carries the freshness fact the
+// wire already held. The delivery wires are untouched.
 import { useEffect, useMemo, useState } from "react";
-import { MicButton } from "./MicButton";
+import { Button } from "../../components/signal/Signal";
 import { ReceiptLine } from "./ReceiptLine";
 import {
   activeAttempts,
@@ -24,20 +29,35 @@ import {
 import { useDeliveryDossier } from "../deliveryDossier";
 import { useDeliveryTerminal } from "../deliveryTerminal";
 import {
+  SurfaceLedger,
+  SurfaceLedgerRow,
+  SurfaceState,
+} from "../surface/Surface";
+import {
+  CycleGadget,
+  GadgetGroup,
+  GadgetRow,
+  StringGadget,
+  TransportKey,
+} from "../surface/gadgets";
+import {
   DeskWindowFrame,
   announceLauncher,
   retractLauncher,
 } from "./DeskWindow";
 
-const STATE_LABEL: Record<string, string> = {
-  starting: "starting",
-  working: "working",
-  waiting: "waiting",
-  idle: "idle",
-  ended: "ended",
-  abandoned: "abandoned",
-  unknown: "unknown",
-};
+function stateTone(state: string): "warn" | "danger" | undefined {
+  if (state === "waiting") return "warn";
+  if (state === "abandoned" || state === "unknown") return "danger";
+  return undefined;
+}
+
+function clockToken(ms: number | null): string {
+  if (!ms) return "";
+  const date = new Date(ms);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+}
 
 function FreshnessChip({ source }: { source: DeliverySource }) {
   const recovery = sourceRecovery(source);
@@ -65,7 +85,10 @@ function FreshnessChip({ source }: { source: DeliverySource }) {
   );
 }
 
-function AttemptRow({
+/** One active attempt as a ledger row: STORY · STATE · AGENT · NODE ·
+ * BR · WT · TARGET. Open-in-place is the terminal (bound target) or
+ * the receipt line. */
+function AttemptLedgerRow({
   attempt,
   branch,
   target,
@@ -74,40 +97,55 @@ function AttemptRow({
   branch: string | null;
   target: DiscoveredTarget | null;
 }) {
+  const [open, setOpen] = useState(false);
   return (
-    <div className="desk-dlv-attempt">
-      <span className="desk-dlv-attempt-story">{attempt.storyRef.storyId}</span>
-      <span className={"desk-dlv-state is-" + attempt.state}>
-        {STATE_LABEL[attempt.state] || attempt.state}
-      </span>
-      <span className="quiet desk-dlv-attempt-meta">
-        {attempt.claimedBy || attempt.association}
-        {attempt.nodeId ? ` · node ${attempt.nodeId}` : ""}
-        {branch ? ` · ${branch}` : ""}
-        {attempt.worktreeId ? ` · wt ${attempt.worktreeId.slice(0, 8)}` : ""}
-        {!attempt.exact ? " · inexact" : ""}
-        {target ? ` · ${target.gate === "gated" ? "GATED" : "UNGATED"}` : ""}
-      </span>
+    <SurfaceLedgerRow
+      primary={attempt.storyRef.storyId}
+      open={open}
+      onToggle={() => {
+        if (target) useDeliveryTerminal.getState().open(targetHandle(target));
+        else setOpen((v) => !v);
+      }}
+      cells={
+        <>
+          <span className="surface-ledger-cell">
+            <span className="surface-token" data-tone={stateTone(attempt.state)}>
+              {attempt.state.toUpperCase()}
+            </span>
+          </span>
+          <span className="surface-ledger-cell">
+            {[
+              attempt.claimedBy || attempt.association,
+              attempt.nodeId ? `NODE ${attempt.nodeId}` : "",
+              branch ? `BR ${branch}` : "",
+              attempt.worktreeId ? `WT ${attempt.worktreeId.slice(0, 8)}` : "",
+              !attempt.exact ? "INEXACT" : "",
+            ]
+              .filter(Boolean)
+              .join(" · ")}
+          </span>
+          {target ? (
+            <span className="surface-ledger-cell">
+              <span className="surface-token">
+                {target.gate === "gated" ? "GATED" : "UNGATED"}
+              </span>
+            </span>
+          ) : attempt.targetId ? (
+            <span className="surface-ledger-cell">
+              <span className="surface-token">
+                {`TARGET ${attempt.targetId.slice(0, 10)} · OFFLINE`}
+              </span>
+            </span>
+          ) : null}
+        </>
+      }
+    >
       {attempt.sessionId ? (
         <ReceiptLine sessionKey={`claude:${attempt.sessionId}`} />
-      ) : null}
-      {target ? (
-        <button
-          type="button"
-          className="desk-chip"
-          title={`watch and steer ${target.paneId} on ${target.nodeId}`}
-          onClick={() =>
-            useDeliveryTerminal.getState().open(targetHandle(target))
-          }
-        >
-          Open terminal
-        </button>
-      ) : attempt.targetId ? (
-        <span className="quiet desk-dlv-hint">
-          target {attempt.targetId.slice(0, 10)} · offline
-        </span>
-      ) : null}
-    </div>
+      ) : (
+        <span className="surface-token">NO SESSION BOUND</span>
+      )}
+    </SurfaceLedgerRow>
   );
 }
 
@@ -127,7 +165,7 @@ function LaunchComposer({ sources }: { sources: DeliverySource[] }) {
   }, [profiles]);
 
   // The launch targets the first live source with a worktree — its node and
-  // worktree are the destination shown before the button.
+  // worktree are the destination shown before the key.
   const site = useMemo(() => {
     const live = sources.find(
       (s) => s.status === "live" && s.worktrees.length && s.projects.length,
@@ -142,7 +180,9 @@ function LaunchComposer({ sources }: { sources: DeliverySource[] }) {
 
   if (!site) {
     return (
-      <p className="quiet desk-dlv-hint">No live source to launch on.</p>
+      <p className="desk-dlv-hint">
+        <span className="surface-token">✕ NO LIVE SOURCE TO LAUNCH ON</span>
+      </p>
     );
   }
 
@@ -165,57 +205,44 @@ function LaunchComposer({ sources }: { sources: DeliverySource[] }) {
 
   return (
     <div className="desk-dlv-launch">
-      <span className="desk-dlv-launch-label">Launch</span>
-      <div className="desk-dlv-launch-row">
-        <select
-          className="desk-classify-input"
-          value={profileId}
-          aria-label="Agent"
-          onChange={(e) => setProfileId(e.target.value)}
-        >
-          {profiles.map((p) => (
-            <option key={p.profileId} value={p.profileId}>
-              {p.label}
-            </option>
-          ))}
-        </select>
-        <MicButton
-          label="Story id"
-          draftScope={`dlv-launch-story`}
-          onText={(t) => setStoryId(t.trim())}
-        />
-        <input
-          className="desk-classify-input"
-          value={storyId}
-          placeholder="story id"
-          aria-label="Story id"
-          onChange={(e) => setStoryId(e.target.value)}
-        />
-        <MicButton
-          label="Session label"
-          draftScope={`dlv-launch-label`}
-          onText={(t) => setLabel(t.trim())}
-        />
-        <input
-          className="desk-classify-input"
-          value={label}
-          placeholder="session label"
-          aria-label="Session label"
-          onChange={(e) => setLabel(e.target.value)}
-        />
-        <button
-          type="button"
-          className="desk-chip"
-          disabled={!profileId || !storyId.trim() || launchState === "working"}
-          onClick={() => void doLaunch()}
-        >
-          Launch Coder session
-        </button>
-      </div>
-      <p className="quiet desk-dlv-consequence">
-        → {site.source.label} · {site.worktree.branch} ·{" "}
-        {site.source.nodeId || "local"} · spawns the Coder session and binds a
-        Work attempt
+      <GadgetGroup label="LAUNCH">
+        <GadgetRow label="AGENT">
+          <CycleGadget
+            label="Agent"
+            value={profileId}
+            options={profiles.map((p) => ({
+              value: p.profileId,
+              label: p.label,
+            }))}
+            onChange={setProfileId}
+          />
+        </GadgetRow>
+        <GadgetRow label="STORY">
+          <StringGadget label="Story id" value={storyId} onChange={setStoryId} />
+        </GadgetRow>
+        <GadgetRow label="LABEL">
+          <StringGadget
+            label="Session label"
+            value={label}
+            onChange={setLabel}
+          />
+        </GadgetRow>
+        <GadgetRow label="">
+          <TransportKey
+            compact
+            label="LAUNCH"
+            glyph="▸"
+            disabled={!profileId || !storyId.trim() || launchState === "working"}
+            onClick={() => void doLaunch()}
+          />
+        </GadgetRow>
+      </GadgetGroup>
+      <p className="desk-dlv-consequence">
+        <span className="surface-token">{`→ SRC ${site.source.label}`}</span>
+        <span className="surface-token">{`WT ${site.worktree.branch}`}</span>
+        <span className="surface-token">{`NODE ${site.source.nodeId || "local"}`}</span>
+        <span className="surface-token">SPAWNS SESSION</span>
+        <span className="surface-token">BINDS ATTEMPT</span>
       </p>
       {launchState === "failed" ? (
         <span className="desk-arm-refusal">✕ {launchDetail}</span>
@@ -283,20 +310,21 @@ export function DeliveryBoard() {
       title={<span className="desk-mc-title">▤ Delivery</span>}
       entrance={false}
       actions={
-        <button
-          type="button"
-          className="desk-mc-btn"
-          onClick={() => void useDelivery.getState().refresh()}
+        <Button
+          dense
+          variant="ghost"
+          aria-label="Refresh"
           title="Refresh from hub"
+          onClick={() => void useDelivery.getState().refresh()}
         >
           ↻
-        </button>
+        </Button>
       }
       open={open}
       onClose={() => setOpen(false)}
     >
 
-      {updatedAt === null ? <p className="quiet">…</p> : null}
+      {updatedAt === null ? <SurfaceState loading /> : null}
 
       {sources.map((source) => (
         <div key={source.sourceId} className="desk-dlv-source">
@@ -364,43 +392,71 @@ export function DeliveryBoard() {
 
       {active.length > 0 ? (
         <section className="desk-dlv-active">
-          <h3 className="desk-dlv-h3">Active work</h3>
-          {active.map((a) => (
-            <AttemptRow
-              key={a.attemptId}
-              attempt={a}
-              branch={branchFor(a.worktreeId)}
-              target={targetFor(a)}
-            />
-          ))}
+          <SurfaceLedger cols="facts" count={`WORK ${active.length}`}>
+            <ul className="surface-ledger-rows">
+              {active.map((a) => (
+                <AttemptLedgerRow
+                  key={a.attemptId}
+                  attempt={a}
+                  branch={branchFor(a.worktreeId)}
+                  target={targetFor(a)}
+                />
+              ))}
+            </ul>
+          </SurfaceLedger>
         </section>
       ) : null}
 
       {looseTargets.length > 0 ? (
         <section className="desk-dlv-sessions">
-          <h3 className="desk-dlv-h3">Coder sessions</h3>
-          {looseTargets.map((t) => (
-            <button
-              key={t.targetId}
-              type="button"
-              className="desk-dlv-session-open"
-              onClick={() =>
-                useDeliveryTerminal.getState().open(targetHandle(t))
-              }
-            >
-              <span className="desk-dlv-session-glyph">▮</span>
-              {t.storyRef ? t.storyRef.storyId : t.session || t.paneId}
-              <small>
-                {t.paneId} · {t.nodeId}
-                {t.attemptState ? ` · ${t.attemptState}` : ""}
-                {` · ${t.gate === "gated" ? "GATED" : "UNGATED"}`}
-              </small>
-            </button>
-          ))}
+          <SurfaceLedger cols="facts" count={`SESSIONS ${looseTargets.length}`}>
+            <ul className="surface-ledger-rows">
+              {looseTargets.map((t) => (
+                <SurfaceLedgerRow
+                  key={t.targetId}
+                  primary={
+                    t.storyRef ? t.storyRef.storyId : t.session || t.paneId
+                  }
+                  onToggle={() =>
+                    useDeliveryTerminal.getState().open(targetHandle(t))
+                  }
+                  cells={
+                    <>
+                      <span className="surface-ledger-cell">
+                        {`${t.paneId} · ${t.nodeId}`}
+                      </span>
+                      {t.attemptState ? (
+                        <span className="surface-ledger-cell">
+                          <span
+                            className="surface-token"
+                            data-tone={stateTone(t.attemptState)}
+                          >
+                            {t.attemptState.toUpperCase()}
+                          </span>
+                        </span>
+                      ) : null}
+                      <span className="surface-ledger-cell">
+                        <span className="surface-token">
+                          {t.gate === "gated" ? "GATED" : "UNGATED"}
+                        </span>
+                      </span>
+                    </>
+                  }
+                />
+              ))}
+            </ul>
+          </SurfaceLedger>
         </section>
       ) : null}
 
       <LaunchComposer sources={sources} />
+
+      <div className="surface-status surface-receiptbar">
+        <span className="surface-receiptbar-receipt" role="status">
+          {`SOURCES ${sources.length} · WORK ${active.length}` +
+            (updatedAt ? ` · READ ${clockToken(updatedAt)}` : "")}
+        </span>
+      </div>
     </DeskWindowFrame>
   );
 }
