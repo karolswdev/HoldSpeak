@@ -48,17 +48,7 @@
     },
     {
       "file": "src/desk/desk.css",
-      "match": "rgba(255, 255, 255, 0.03)",
-      "reason": "hand-tuned one-off (glass/glow/ink shade) — consolidation is HS-96-04's material fold"
-    },
-    {
-      "file": "src/desk/desk.css",
       "match": "rgba(8, 7, 12, 0.6)",
-      "reason": "hand-tuned one-off (glass/glow/ink shade) — consolidation is HS-96-04's material fold"
-    },
-    {
-      "file": "src/desk/desk.css",
-      "match": "rgba(255, 255, 255, 0.055)",
       "reason": "hand-tuned one-off (glass/glow/ink shade) — consolidation is HS-96-04's material fold"
     },
     {
@@ -129,21 +119,6 @@
     {
       "file": "src/desk/desk.css",
       "match": "rgba(8, 7, 12, 0.55)",
-      "reason": "hand-tuned one-off (glass/glow/ink shade) — consolidation is HS-96-04's material fold"
-    },
-    {
-      "file": "src/desk/desk.css",
-      "match": "#3ecf8e",
-      "reason": "hand-tuned one-off (glass/glow/ink shade) — consolidation is HS-96-04's material fold"
-    },
-    {
-      "file": "src/desk/desk.css",
-      "match": "#f5a623",
-      "reason": "hand-tuned one-off (glass/glow/ink shade) — consolidation is HS-96-04's material fold"
-    },
-    {
-      "file": "src/desk/desk.css",
-      "match": "#ff6b6b",
       "reason": "hand-tuned one-off (glass/glow/ink shade) — consolidation is HS-96-04's material fold"
     },
     {

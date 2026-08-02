@@ -1999,7 +1999,9 @@ button.surface-edit-in-place:hover {
   font-size: var(--desk-surface-detail-size);
   font-variant-numeric: tabular-nums;
 }
-.project-memory-citations {
+/* HS-111-05: the citation token species (surface/citations.tsx) — one
+   rendering for every openable "grounded on" source ref. */
+.surface-citations {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-2);

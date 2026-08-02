@@ -1,20 +1,24 @@
 # Phase 111 - The Refinement
 
-**Status:** IN PROGRESS (4/10). Chartered 2026-07-31 as the mandatory
+**Status:** IN PROGRESS (5/11). Chartered 2026-07-31 as the mandatory
 fast-follow to Phase 110. The owner's condition: every program on the
 desk gets its interior rethought — not token-tweaked, RETHOUGHT — to
 feel native to Signal Workbench. "The Settings screen needs to be
 completely rethought, and many, many others."
 
-**Last updated:** 2026-08-01 (HS-111-04 Agents SHIPPED — the crew
-console: one SurfaceLedger crew board, persona detail a personnel
-record over a SurfaceTraffic transmission log (new kit species),
-steering re-rendered in gadget grammar with the Phase-87 consent
-spine BYTE-UNTOUCHED (steering.ts zero diff, steering tests passed
-unedited); glow rings and the smuggled accent rail dead; suites
-green 4207+389. Earlier the same day: 03 Meetings (the archive
-browser), 02 Speak (the dictation deck), 01 Settings (the Prefs
-rethink + the gadget kit).)
+**Last updated:** 2026-08-02 (HS-111-05 Ask SHIPPED — the query
+console: the thread is SurfaceTraffic (one conversation language
+with persona chat), the HS-109-04 grounding receipt finally reaches
+the glass (GROUNDED ON N OF M + openable citations, CitationChips
+promoted to the kit), the owner's error-overlap report structurally
+dead (all faults in-flow: receiptbar or error turn, machine-verified
+operable at both viewports), zero naked HTML, the rack overflow
+defect dead by construction; suites green 4207+392. Plus the day's
+owner riders chartered: HS-111-11 terminal pane (xterm.js), 07
+right-click + debug-RAW + command-deck palette, 08 roving focus +
+arming deletes; the usability doctrine PROPOSAL filed awaiting the
+sitting. Earlier: 04 Agents, 03 Meetings, 02 Speak, 01 Settings —
+five rooms in ~one day.)
 
 ## Why this phase exists
 
@@ -48,12 +52,13 @@ Each story:
 | 02 | [Speak](./story-02-speak.md) | The Speak/Dictation program — the dictation cockpit, journal, correction memory, pipeline config | done |
 | 03 | [Meetings](./story-03-meetings.md) | The Meetings program — history list, meeting detail, transcript view, artifact cards, aftercare panel | done |
 | 04 | [Agents](./story-04-agents.md) | The Agents/Companion program — agent list, persona detail, session inspector, coder steering pullout | done |
-| 05 | [Ask and conversation](./story-05-ask-conversation.md) | The Ask composer, grounding picker, conversation thread, kept-card receipts | backlog |
+| 05 | [Ask and conversation](./story-05-ask-conversation.md) | The Ask composer, grounding picker, conversation thread, kept-card receipts | done |
 | 06 | [Delivery and process](./story-06-delivery-process.md) | The delivery belt, the process window, the project memory window — the kernel-facing programs | backlog |
 | 07 | [System chrome](./story-07-system-chrome.md) | Dropdown menus (Desk/Object/Go), context menus, the search palette (Cmd+K), the shortcut sheet, popovers | backlog |
 | 08 | [Interactive elements](./story-08-interactive-elements.md) | Every control type across all programs: toggles, selects, inputs, tabs, pills, buttons, badges — one kit, one language | backlog |
 | 09 | [Sprite and icon quality](./story-09-sprites.md) | Regenerate bad dock sprites on the real desk, window type icons, overview/reset glyphs | backlog |
 | 10 | [The refinement walk](./story-10-walk.md) | Open every program, screenshot at both viewports, prove every room speaks one language | backlog |
+| 11 | [The terminal pane](./story-11-terminal-pane.md) | Owner rider on 04: the pane well becomes a real terminal (xterm.js over a raw peek mode, read-only, consent spine untouched) + utility density | backlog |
 
 ## Story status
 
@@ -63,12 +68,14 @@ Each story:
 | HS-111-02 | Speak | done | [story-02-speak](./story-02-speak.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-111-03 | Meetings | done | [story-03-meetings](./story-03-meetings.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-111-04 | Agents | done | [story-04-agents](./story-04-agents.md) | [evidence-story-04](./evidence-story-04.md) |
-| HS-111-05 | Ask and conversation | backlog | [story-05-ask-conversation](./story-05-ask-conversation.md) | — |
+| HS-111-05 | Ask and conversation | done | [story-05-ask-conversation](./story-05-ask-conversation.md) | [evidence-story-05](./evidence-story-05.md) |
 | HS-111-06 | Delivery and process | backlog | [story-06-delivery-process](./story-06-delivery-process.md) | — |
 | HS-111-07 | System chrome | backlog | [story-07-system-chrome](./story-07-system-chrome.md) | — |
 | HS-111-08 | Interactive elements | backlog | [story-08-interactive-elements](./story-08-interactive-elements.md) | — |
 | HS-111-09 | Sprite and icon quality | backlog | [story-09-sprites](./story-09-sprites.md) | — |
 | HS-111-10 | The refinement walk | backlog | [story-10-walk](./story-10-walk.md) | — |
+| HS-111-11 | The terminal pane | backlog | [story-11-terminal-pane](./story-11-terminal-pane.md) | — |
+| HSEGHS001HS104-111-11 | The terminal pane | backlog | [story-11-terminal-pane](./story-11-terminal-pane.md) | - |
 
 ## Where we are
 
@@ -133,4 +140,22 @@ policy prose as axis-named tokens) with the Phase-87 CONSENT SPINE
 BYTE-UNTOUCHED — steering.ts zero diff, steering.test.ts and all
 python steering wire tests passed with zero edits. Proven live at
 1440+393 (nothing armed or steered during the walk); suites green
-(4207 python + 389 web). Next: HS-111-05 (Ask and conversation).
+(4207 python + 389 web).
+
+5/11. HS-111-05 (Ask) shipped 2026-08-02 (the small hours): the
+audit ruled AskPanel a chat app wearing Phase-110 paint and found
+the honesty gap — the HS-109-04 grounding receipt parsed off the
+wire and rendered NOWHERE — plus a live overflow defect; mid-build
+the owner hit the error-tooltip-overlap live and rated the room a
+mixed-era joke. The rethink shipped all of it: the thread is
+SurfaceTraffic (YOU>/HUB> turns, scanning RX while routing), the
+answer turn carries GROUNDED ON N OF M + openable CitationChips
+(promoted to the kit, ProjectMemoryCore imports the same species),
+every fault is in-flow (receiptbar or error turn — machine-verified
+all controls operable in the refusal state at both viewports), zero
+naked HTML controls survive, and the rack is one GadgetGroup with
+the CTX LedMeter (overflow dead by construction, proven with the
+57-char offender). No printed turn was faked — no model was
+reachable; the refusal path is the captured proof, and the next
+story's walk owes a printed turn once .43 returns. Next: HS-111-06
+(Delivery and process).

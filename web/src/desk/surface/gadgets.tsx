@@ -104,7 +104,12 @@ export function CheckGadget({
 
 /* ── CycleGadget: a real <select> wearing the ↻ VALUE face ── */
 
-export type CycleOption = { value: string; label?: string };
+export type CycleOption = {
+  value: string;
+  label?: string;
+  /** An unavailable destination stays listed and named, never picked. */
+  disabled?: boolean;
+};
 
 export function CycleGadget({
   label,
@@ -135,7 +140,11 @@ export function CycleGadget({
       >
         {known ? null : <option value={value}>{value || "—"}</option>}
         {options.map((option) => (
-          <option key={option.value} value={option.value}>
+          <option
+            key={option.value}
+            value={option.value}
+            disabled={option.disabled}
+          >
             {option.label ?? option.value}
           </option>
         ))}

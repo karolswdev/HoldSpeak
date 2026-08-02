@@ -10,6 +10,12 @@ import { RunsOnPicker } from "../../desk/components/RunsOnPicker";
 import { runAsk, type AskRunResult } from "../../desk/ask";
 import { useDesk } from "../../desk/store";
 import { openPrimitive, openSurfaceOr } from "../../desk/shell";
+import {
+  CitationChips,
+  groundedMatchCount,
+  openSourceRef,
+  sourceLabel,
+} from "../../desk/surface/citations";
 import { Material } from "../../desk/surface/Material";
 import {
   SurfaceRow,
@@ -93,51 +99,6 @@ export function LifecycleChip({ row }: { row: JsonRecord }) {
           ? "neutral"
           : "warning";
   return <StatusPill tone={tone}>{lifecycleLabel(row)}</StatusPill>;
-}
-
-export function groundedMatchCount(
-  receipt: { matchedCount: number; overflowCount: number } | null,
-): number {
-  return receipt
-    ? Math.max(0, receipt.matchedCount - receipt.overflowCount)
-    : 0;
-}
-
-function sourceLabel(ref: string): string {
-  const [kind, ...rest] = ref.split(":");
-  return `${kind[0]?.toUpperCase() || ""}${kind.slice(1)} · ${rest.join(":")}`;
-}
-
-function openSourceRef(ref: string) {
-  if (ref.startsWith("meeting:")) {
-    openSurfaceOr("review-meetings", "/history", ref);
-    return;
-  }
-  openPrimitive(ref);
-}
-
-export function CitationChips({
-  refs,
-  onOpen = openSourceRef,
-}: {
-  refs: string[];
-  onOpen?: (ref: string) => void;
-}) {
-  if (!refs.length) return null;
-  return (
-    <div className="project-memory-citations" aria-label="Citations">
-      {refs.map((ref) => (
-        <button
-          key={ref}
-          type="button"
-          className="desk-chip quiet"
-          onClick={() => onOpen(ref)}
-        >
-          {sourceLabel(ref)}
-        </button>
-      ))}
-    </div>
-  );
 }
 
 const PROMOTION_TYPES = [

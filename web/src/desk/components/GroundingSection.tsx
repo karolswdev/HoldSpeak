@@ -1,8 +1,13 @@
 // HS-83-01 — "Ground this ask" on the web composer (the HSM-15-12 parity):
 // an inline expandable section on AskPanel. Pick meetings; each expands to
 // digest / transcript / its bound artifacts, each independently toggleable;
-// the gauge prices the selection live from REAL fetched lengths and a
+// the budget prices the selection live from REAL fetched lengths and a
 // past-budget selection refuses here, before any run.
+// HS-111-05 — the rack grammar (audit §3.4): rows are full-width hover
+// bands built on CheckGadget (no per-row borders, no ✓-chips), titles
+// ellipsize inside minmax(0,1fr) so a long name can never blow the panel
+// width, and the hand-rolled hex gauge is dead — the LedMeter is the one
+// budget instrument.
 import { useEffect, useRef, useState } from "react";
 import { useDesk } from "../store";
 import {
@@ -14,9 +19,13 @@ import {
   type GroundingMeeting,
   type GroundingSelection,
 } from "../grounding";
+import { CheckGadget, LedMeter } from "../surface/gadgets";
 
 const fmt = (n: number): string =>
   n >= 1000 ? `${(n / 1000).toFixed(1)}k` : String(n);
+
+const tok = (chars: number): number =>
+  chars <= 0 ? 0 : Math.max(1, Math.floor(chars / 4));
 
 export function GroundingSection(props: {
   meetings: Array<{ id: string; title: string; startedAt?: string }>;
@@ -24,8 +33,19 @@ export function GroundingSection(props: {
   selection: GroundingSelection;
   onChange: (s: GroundingSelection) => void;
   limitTokens: number;
+  /** HS-111-05 — a host that owns a shared budget meter (the Ask rack
+   * lip, the steer composer) passes false; standalone mounts keep the
+   * section's own LedMeter. */
+  meter?: boolean;
 }) {
-  const { meetings, resources = [], selection, onChange, limitTokens } = props;
+  const {
+    meetings,
+    resources = [],
+    selection,
+    onChange,
+    limitTokens,
+    meter = true,
+  } = props;
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState<string | null>(null);
   // HS-101 B7 — the well lights while a desk object is in flight and
@@ -38,9 +58,20 @@ export function GroundingSection(props: {
   const used = groundingTokens(selection);
   const over = used > limitTokens;
   const frac = limitTokens > 0 ? Math.min(1, used / limitTokens) : 0;
-  const tone = over || frac >= 0.85 ? "bad" : frac >= 0.6 ? "warn" : "ok";
+  const tone = over || frac >= 0.85 ? "danger" : frac >= 0.6 ? "warn" : undefined;
 
   const picked = (id: string) => selection.meetings.find((m) => m.id === id);
+
+  // The whole band is the press target (a row convenience, not a second
+  // control): the CheckGadget stays the ONE focusable gadget, and a click
+  // that originated on it is not doubled.
+  const bandPress =
+    (fn: () => void, disabled?: boolean) =>
+    (event: { target: EventTarget }) => {
+      if (disabled) return;
+      if ((event.target as HTMLElement).closest(".gadget-check")) return;
+      fn();
+    };
 
   const toggleMeeting = async (row: {
     id: string;
@@ -126,6 +157,7 @@ export function GroundingSection(props: {
       <button
         type="button"
         className="desk-ground-head"
+        aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
       >
         <span
@@ -142,7 +174,7 @@ export function GroundingSection(props: {
             : `Grounded on ${groundingLabel(selection)}`}
         </span>
         {!groundingIsEmpty(selection) && (
-          <span className={"desk-ground-tokens is-" + tone}>
+          <span className="surface-token" data-tone={tone}>
             {fmt(used)} / {fmt(limitTokens)} tok
           </span>
         )}
@@ -153,22 +185,12 @@ export function GroundingSection(props: {
 
       {open && (
         <div className="desk-ground-body">
-          {!groundingIsEmpty(selection) && (
-            <div
-              className="desk-ground-gauge"
-              role="meter"
-              aria-valuenow={used}
-              aria-valuemax={limitTokens}
-            >
-              <span
-                className={"desk-ground-fill is-" + tone}
-                style={{ width: `${Math.round(frac * 100)}%` }}
-              />
-            </div>
+          {meter && !groundingIsEmpty(selection) && (
+            <LedMeter label="CTX" value={frac} />
           )}
           {over && (
-            <p className="desk-run-warning">
-              ⚠ Past the window — drop the transcript or pick less
+            <p className="desk-ground-refusal">
+              ✕ PAST THE WINDOW · DROP THE TRANSCRIPT OR PICK LESS
             </p>
           )}
           {meetings.length === 0 && (
@@ -182,72 +204,124 @@ export function GroundingSection(props: {
                   key={row.id}
                   className={"desk-ground-row" + (sel ? " is-picked" : "")}
                 >
-                  <button
-                    type="button"
-                    className="desk-ground-pick"
-                    onClick={() => void toggleMeeting(row)}
+                  <div
+                    className="desk-ground-line is-press"
+                    onClick={bandPress(() => void toggleMeeting(row))}
                   >
-                    <span className="desk-ground-check" aria-hidden="true">
-                      {sel ? "●" : "○"}
-                    </span>
+                    <CheckGadget
+                      label={row.title}
+                      checked={Boolean(sel)}
+                      onChange={() => void toggleMeeting(row)}
+                    />
                     <span className="desk-ground-name">{row.title}</span>
                     {loading === row.id && (
                       <span className="desk-ground-loading">…</span>
                     )}
                     {sel?.day && (
-                      <span className="desk-ground-day">{sel.day}</span>
+                      <span className="desk-ground-fig">{sel.day}</span>
                     )}
-                  </button>
+                  </div>
                   {sel && (
-                    <div className="desk-ground-expand">
-                      <button
-                        type="button"
+                    <div className="desk-ground-sub">
+                      <div
                         className={
-                          "desk-chip" + (sel.includeIntel ? "" : " quiet")
+                          "desk-ground-line is-sub" +
+                          (sel.hasIntel ? " is-press" : " is-off")
                         }
-                        disabled={!sel.hasIntel}
-                        onClick={() =>
-                          mutate(row.id, (m) => ({
-                            ...m,
-                            includeIntel: !m.includeIntel,
-                          }))
-                        }
+                        data-on={sel.includeIntel || undefined}
+                        onClick={bandPress(
+                          () =>
+                            mutate(row.id, (m) => ({
+                              ...m,
+                              includeIntel: !m.includeIntel,
+                            })),
+                          !sel.hasIntel,
+                        )}
                       >
-                        {sel.includeIntel ? "✓ " : ""}Digest
-                      </button>
-                      <button
-                        type="button"
+                        <CheckGadget
+                          label="Digest"
+                          checked={sel.includeIntel}
+                          disabled={!sel.hasIntel}
+                          onChange={() =>
+                            mutate(row.id, (m) => ({
+                              ...m,
+                              includeIntel: !m.includeIntel,
+                            }))
+                          }
+                        />
+                        <span className="desk-ground-name">Digest</span>
+                        {sel.intelChars > 0 && (
+                          <span className="desk-ground-fig">
+                            {fmt(tok(sel.intelChars))} tok
+                          </span>
+                        )}
+                      </div>
+                      <div
                         className={
-                          "desk-chip" + (sel.includeTranscript ? "" : " quiet")
+                          "desk-ground-line is-sub" +
+                          (sel.transcriptLines === 0 ? " is-off" : " is-press")
                         }
-                        disabled={sel.transcriptLines === 0}
-                        onClick={() =>
-                          mutate(row.id, (m) => ({
-                            ...m,
-                            includeTranscript: !m.includeTranscript,
-                          }))
-                        }
+                        data-on={sel.includeTranscript || undefined}
+                        onClick={bandPress(
+                          () =>
+                            mutate(row.id, (m) => ({
+                              ...m,
+                              includeTranscript: !m.includeTranscript,
+                            })),
+                          sel.transcriptLines === 0,
+                        )}
                       >
-                        {sel.includeTranscript ? "✓ " : ""}Transcript ·{" "}
-                        {sel.transcriptLines}
-                      </button>
+                        <CheckGadget
+                          label={`Transcript · ${sel.transcriptLines}`}
+                          checked={sel.includeTranscript}
+                          disabled={sel.transcriptLines === 0}
+                          onChange={() =>
+                            mutate(row.id, (m) => ({
+                              ...m,
+                              includeTranscript: !m.includeTranscript,
+                            }))
+                          }
+                        />
+                        <span className="desk-ground-name">
+                          Transcript · {sel.transcriptLines}
+                        </span>
+                        {sel.transcriptChars > 0 && (
+                          <span className="desk-ground-fig">
+                            {fmt(tok(sel.transcriptChars))} tok
+                          </span>
+                        )}
+                      </div>
                       {sel.artifacts.map((a) => (
-                        <button
+                        <div
                           key={a.id}
-                          type="button"
-                          className={"desk-chip" + (a.on ? "" : " quiet")}
-                          onClick={() =>
+                          className="desk-ground-line is-sub is-press"
+                          data-on={a.on || undefined}
+                          onClick={bandPress(() =>
                             mutate(row.id, (m) => ({
                               ...m,
                               artifacts: m.artifacts.map((x) =>
                                 x.id === a.id ? { ...x, on: !x.on } : x,
                               ),
-                            }))
-                          }
+                            })),
+                          )}
                         >
-                          {a.on ? "✓ " : ""}
-                          {a.title}
-                        </button>
+                          <CheckGadget
+                            label={a.title}
+                            checked={a.on}
+                            onChange={() =>
+                              mutate(row.id, (m) => ({
+                                ...m,
+                                artifacts: m.artifacts.map((x) =>
+                                  x.id === a.id ? { ...x, on: !x.on } : x,
+                                ),
+                              }))
+                            }
+                          />
+                          <span className="desk-ground-name">{a.title}</span>
+                          <span className="desk-ground-fig">
+                            {fmt(tok(a.chars))} tok
+                          </span>
+                        </div>
                       ))}
                     </div>
                   )}
@@ -257,19 +331,40 @@ export function GroundingSection(props: {
           </ul>
           {resources.length > 0 && (
             <>
-              <p className="desk-ground-empty">Desk objects and collections</p>
+              <p className="desk-ground-sect">DESK OBJECTS · COLLECTIONS</p>
               <ul className="desk-ground-list">
                 {resources.map((row) => {
-                  const selected = (selection.resources || []).some((resource) => resource.ref === row.ref);
+                  const selected = (selection.resources || []).some(
+                    (resource) => resource.ref === row.ref,
+                  );
+                  const priced = (selection.resources || []).find(
+                    (resource) => resource.ref === row.ref,
+                  );
                   return (
-                    <li key={row.ref} className={`desk-ground-row${selected ? " is-picked" : ""}`}>
-                      <button type="button" className="desk-ground-pick"
-                        aria-pressed={selected} onClick={() => void toggleResource(row)}>
-                        <span className="desk-ground-check" aria-hidden="true">{selected ? "●" : "○"}</span>
+                    <li
+                      key={row.ref}
+                      className={`desk-ground-row${selected ? " is-picked" : ""}`}
+                    >
+                      <div
+                        className="desk-ground-line is-press"
+                        onClick={bandPress(() => void toggleResource(row))}
+                      >
+                        <CheckGadget
+                          label={row.title}
+                          checked={selected}
+                          onChange={() => void toggleResource(row)}
+                        />
+                        <span className="desk-rails-kind">{row.kind}</span>
                         <span className="desk-ground-name">{row.title}</span>
-                        <span className="desk-ground-day">{row.kind}</span>
-                        {loading === row.ref && <span className="desk-ground-loading">…</span>}
-                      </button>
+                        {loading === row.ref && (
+                          <span className="desk-ground-loading">…</span>
+                        )}
+                        {priced && (
+                          <span className="desk-ground-fig">
+                            {fmt(tok(priced.chars))} tok
+                          </span>
+                        )}
+                      </div>
                     </li>
                   );
                 })}

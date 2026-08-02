@@ -226,24 +226,6 @@
 .desk-next .desk-chip.quiet {
   color: var(--text-muted);
 }
-/* HS-103-03 — a quiet per-claim grounding flag: a fact, not a button, so it
-   wraps its full text instead of the chip's usual single-line truncation. */
-.desk-next .desk-ask-grounding-flags {
-  list-style: none;
-  margin: 8px 0 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-.desk-next .desk-chip.is-flagged {
-  height: auto;
-  min-height: 27px;
-  padding: 5px 12px;
-  white-space: normal;
-  cursor: default;
-  text-align: left;
-}
 .desk-next .desk-chip[aria-pressed="true"] {
   border-color: var(--accent);
   background: rgba(255, 107, 53, 0.14);
@@ -1213,17 +1195,13 @@
   text-transform: uppercase;
 }
 
-.desk-next .runs-on-picker select {
+/* HS-111-05 — the destination is a CycleGadget (the kit species); the
+   naked select dress died with it. */
+.desk-next .runs-on-picker .gadget-cycle {
   width: 100%;
-  min-height: 38px;
-  border: 1px solid var(--border);
-  border-radius: 2px;
-  background: rgba(255, 255, 255, 0.055);
-  color: inherit;
-  padding: 0 10px;
-  font: inherit;
-  text-transform: none;
-  letter-spacing: normal;
+}
+.desk-next .runs-on-picker .gadget-cycle select {
+  width: 100%;
 }
 
 .desk-next .runs-on-picker p {
@@ -1941,44 +1919,41 @@
   color: var(--accent, #ff6b35);
   font-size: 16px;
 }
-.desk-next .desk-ask-context {
+/* HS-111-05 — the query console body: the session transcript over the
+   input deck over the grounding rack; the lens/context chip clouds died
+   into MxRadio tokens + a CTX token. */
+.desk-next .desk-ask-body {
   display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 0;
 }
-.desk-next .desk-ask-lenses {
+.desk-next .desk-ask-body .surface-traffic {
+  flex: 1;
+  min-height: 88px;
   display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
+  flex-direction: column;
 }
-.desk-next .desk-chip.desk-ask-lens-on {
-  border-color: var(--accent, #ff6b35);
-  background: color-mix(in srgb, var(--accent, #ff6b35) 20%, transparent);
-  color: var(--text);
+.desk-next .desk-ask-body .surface-traffic > .surface-well {
+  flex: 1;
+  min-height: 0;
 }
-.desk-next .desk-ask-prompt {
-  position: relative;
-}
-.desk-next .desk-ask-prompt textarea {
-  width: 100%;
+.desk-next .desk-ask .desk-chat-well .desk-chat-composer textarea {
+  flex: 1;
+  min-width: 0;
   resize: vertical;
-  padding: 10px 40px 10px 10px;
-  border-radius: 0;
-  border: 1px solid var(--border);
-  background: var(--surface-1);
-  box-shadow: inset 1px 1px 0 var(--etch-dark), inset -1px -1px 0 var(--etch-light);
+  border: 0;
+  background: none;
+  outline: none;
   color: var(--text);
   font-size: var(--font-size-sm);
   font-family: var(--font-mono);
 }
-.desk-next .desk-ask-prompt textarea:focus {
-  outline: none;
-  border-color: var(--accent, #ff6b35);
-}
-.desk-next .desk-ask-prompt .desk-mic {
-  position: absolute;
-  right: 8px;
-  bottom: 10px;
+/* The lens gadget rides the deck as one wrapping token row. */
+.desk-next .desk-ask .gadget-mx {
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 0 6px;
 }
 .desk-next .desk-ask-runson {
   width: 100%;
@@ -2079,6 +2054,11 @@
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
+.desk-next .desk-ground-head:focus-visible {
+  outline: none;
+  background: var(--desk-window-well);
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
 .desk-next .desk-ground-glyph {
   color: var(--text-muted);
 }
@@ -2087,21 +2067,12 @@
 }
 .desk-next .desk-ground-head .desk-ground-title {
   flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   text-align: left;
   color: var(--text);
-}
-.desk-next .desk-ground-tokens {
-  font-size: 11px;
-  font-weight: 800;
-}
-.desk-next .desk-ground-tokens.is-ok {
-  color: #3ecf8e;
-}
-.desk-next .desk-ground-tokens.is-warn {
-  color: #f5a623;
-}
-.desk-next .desk-ground-tokens.is-bad {
-  color: #ff6b6b;
 }
 .desk-next .desk-ground-chev {
   color: var(--text-muted);
@@ -2112,78 +2083,94 @@
   display: grid;
   gap: 8px;
 }
-.desk-next .desk-ground-gauge {
-  height: 5px;
-  border-radius: 0;
-  background: var(--border-subtle);
-  box-shadow: inset 1px 1px 0 var(--etch-dark), inset -1px -1px 0 var(--etch-light);
-  overflow: hidden;
-}
-.desk-next .desk-ground-fill {
-  display: block;
-  height: 100%;
-  border-radius: 0;
-  transition: width 0.25s ease;
-}
-.desk-next .desk-ground-fill.is-ok {
-  background: #3ecf8e;
-}
-.desk-next .desk-ground-fill.is-warn {
-  background: #f5a623;
-}
-.desk-next .desk-ground-fill.is-bad {
-  background: #ff6b6b;
-}
 .desk-next .desk-ground-empty {
   color: var(--text-muted);
   font-size: var(--font-size-sm);
   margin: 0;
 }
+/* HS-111-05 — the rack list: full-width hover bands, no per-row
+   borders; the title column is minmax(0,1fr) so a nowrap name
+   ellipsizes INSIDE the panel — the overflow defect is dead by
+   construction. */
 .desk-next .desk-ground-list {
   list-style: none;
   margin: 0;
   padding: 0;
   display: grid;
-  gap: 6px;
+  gap: 0;
 }
 .desk-next .desk-ground-row {
-  border: 1px solid var(--border);
-  border-radius: 2px;
-  background: rgba(255, 255, 255, 0.03);
+  border: 0;
+  background: none;
 }
-.desk-next .desk-ground-row.is-picked {
-  border-color: color-mix(in srgb, var(--accent-cool) 55%, transparent);
-  background: color-mix(in srgb, var(--accent-cool) 10%, transparent);
-}
-.desk-next .desk-ground-pick {
-  display: flex;
+.desk-next .desk-ground-line {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
   align-items: center;
   gap: 8px;
   width: 100%;
-  padding: 8px 10px;
-  border: 0;
-  background: none;
-  cursor: pointer;
+  min-height: 26px;
+  padding: 2px 6px;
   color: var(--text);
   font-family: var(--font-mono);
-  font-size: var(--font-size-sm);
+  font-size: 12px;
   font-weight: 600;
 }
-.desk-next .desk-ground-check {
-  color: var(--accent-cool);
-  font-size: 12px;
+/* A row that leads with a kind tag gains its column. */
+.desk-next .desk-ground-line:has(.desk-rails-kind) {
+  grid-template-columns: auto auto minmax(0, 1fr) auto auto;
+}
+.desk-next .desk-ground-line.is-fact {
+  grid-template-columns: auto minmax(0, 1fr);
+}
+.desk-next .desk-ground-line:hover {
+  background: var(--desk-window-well);
+}
+.desk-next .desk-ground-row.is-picked > .desk-ground-line,
+.desk-next .desk-ground-line[data-on] {
+  background: var(--desk-window-well);
+}
+.desk-next .desk-ground-line.is-press {
+  cursor: pointer;
+}
+.desk-next .desk-ground-line.is-off {
+  color: var(--text-faint);
 }
 .desk-next .desk-ground-name {
-  flex: 1;
-  text-align: left;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  text-align: left;
 }
+.desk-next .desk-ground-sub {
+  display: grid;
+  padding-left: 22px;
+}
+.desk-next .desk-ground-fig,
 .desk-next .desk-ground-day,
 .desk-next .desk-ground-loading {
   color: var(--text-muted);
   font-size: 11px;
+  font-family: var(--font-mono);
+  white-space: nowrap;
+}
+.desk-next .desk-ground-sect {
+  margin: 6px 0 0;
+  color: var(--text-faint);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.desk-next .desk-ground-refusal {
+  margin: 0;
+  color: var(--danger);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
 }
 /* HS-88-02: the rail object's kind, a quiet monospace tag before its title. */
 .desk-next .desk-rails-kind {
@@ -2197,46 +2184,73 @@
   padding: 1px 4px;
   flex-shrink: 0;
 }
-.desk-next .desk-ground-expand {
+/* HS-111-05 — the rack can NEVER widen the panel: every rack layer is
+   clamped to its container (minmax(0,…) tracks + max-width) so a nowrap
+   title ellipsizes instead of blowing the width — the audit §1 #11
+   defect is dead by construction. */
+.desk-next .desk-ask-body .gadget-group,
+.desk-next .desk-ask-body .gadget-sheet,
+.desk-next .desk-ask-body .gadget-sheet > * {
+  min-width: 0;
+  max-width: 100%;
+}
+.desk-next .desk-ground-body,
+.desk-next .desk-ground-list {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+/* HS-111-05 — the rack lip: the ONE shared budget instrument. The
+   "routing…" pulse and the printed-card bounce died with the chat-app
+   composition: turns appear like traffic, no animation. */
+.desk-next .desk-ask-rack-lip {
   display: flex;
-  flex-wrap: wrap;
+  justify-content: flex-end;
+  padding: 6px 6px 2px;
+}
+.desk-next .desk-ask-answer {
+  display: grid;
+  gap: 8px;
+}
+/* The grounding receipt block (the honesty law on this surface):
+   GROUNDED ON N OF M + openable citation tokens + quiet claim flags. */
+.desk-next .desk-ask-receipt {
+  display: grid;
   gap: 6px;
-  padding: 0 10px 9px 30px;
+  padding-top: 6px;
+  border-top: 1px solid var(--border-subtle);
 }
-.desk-next .desk-ground-expand .desk-chip:disabled {
-  opacity: 0.4;
-  cursor: default;
+.desk-next .desk-ask-grounded {
+  margin: 0;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  font-variant-numeric: tabular-nums;
 }
-
-.desk-next .desk-ask-routing {
-  color: var(--accent, #ff6b35);
-  font-size: var(--font-size-sm);
-  font-weight: 700;
-  animation: desk-ask-routing 1.1s ease-in-out infinite;
+.desk-next .desk-ask-claim {
+  margin: 0;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 11px;
 }
-@keyframes desk-ask-routing {
-  0%,
-  100% {
-    opacity: 0.45;
-  }
-  50% {
-    opacity: 1;
-  }
+/* The console footer wears the receipt bar species inside the pullout
+   (the surface-status bleed margins are for padded surface bodies; the
+   pullout footer sits flush). */
+.desk-next .desk-ask-foot {
+  position: static;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  border-top: 1px solid var(--border);
 }
-
-/* the printed card PRINTS from the panel head (the iPad birth beat) */
-.desk-next .desk-ask-card {
-  animation: desk-ask-print 0.5s cubic-bezier(0.2, 1.4, 0.4, 1);
-}
-@keyframes desk-ask-print {
-  0% {
-    opacity: 0;
-    transform: translateY(-16px) scale(0.92);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
+/* The Runs-on caption reads as mono tokens, not a sentence. */
+.desk-next .runs-on-facts {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
 }
 
 /* ── Station lights + evidence in place (HS-86-04) ─────────────── */
@@ -2911,8 +2925,6 @@
 @media (prefers-reduced-motion: reduce) {
   .desk-next .desk-start-action.is-recording .desk-start-record,
   .desk-next .desk-mc-pin.awaiting,
-  .desk-next .desk-ask-routing,
-  .desk-next .desk-ask-card,
   .desk-next .desk-chat-hello-avatar {
     animation: none !important;
   }
@@ -4961,18 +4973,6 @@
   display: flex;
   flex-direction: column;
   gap: 2px;
-}
-.desk-next .desk-chat-well-foot .runs-on-picker > label > span {
-  display: none;
-}
-.desk-next .desk-chat-well-foot .runs-on-picker select {
-  height: 24px;
-  min-height: 24px;
-  padding: 0 22px 0 8px;
-  border: 0;
-  font-size: var(--desk-surface-label-size);
-  color: var(--text-muted);
-  background-color: transparent;
 }
 .desk-next .desk-chat-well-foot .runs-on-picker p {
   margin: 0;
