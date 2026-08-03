@@ -6,8 +6,9 @@ import {
   humanizeWireValue,
 } from "../../lib/productLanguage";
 import { useProjections } from "../projections";
-import { CycleGadget, StringGadget } from "../surface/gadgets";
-import { SurfaceState } from "../surface/Surface";
+import { CycleGadget, FoldGadget, StringGadget } from "../surface/gadgets";
+import { SurfaceCode, SurfaceState } from "../surface/Surface";
+import { openPrimitive, openSurfaceWhenReady } from "../shell";
 import {
   DeskWindowFrame,
   announceLauncher,
@@ -30,6 +31,15 @@ export function AttentionDrawer() {
     [store.projections, store.selectedId],
   );
   const needs = Number(store.counts.needs_attention || 0);
+  const openSource = (row: (typeof store.projections)[number]) => {
+    if (row.detail_url.startsWith("/history")) {
+      openSurfaceWhenReady("review-meetings", row.subject_ref);
+    } else if (row.detail_url === "/cadence") {
+      openSurfaceWhenReady("configure-cadence", row.subject_ref);
+    } else {
+      openPrimitive(row.source_id);
+    }
+  };
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -66,8 +76,7 @@ export function AttentionDrawer() {
       glyph="◎"
         label="Desk memory"
         className="desk-attention-drawer"
-        eyebrow="Attention and Receipts"
-        title={<h2 className="desk-panel-title">Desk memory</h2>}
+        title="Desk memory"
         entrance={false}
         open={store.open}
         onClose={() => store.setOpen(false)}
@@ -116,12 +125,15 @@ export function AttentionDrawer() {
             <button type="submit">Filter</button>
           </form>
           {store.error ? (
-            <div className="desk-attention-error" role="alert">
-              <span>{store.error}</span>
-              <button type="button" onClick={() => void store.refresh(true)}>
-                Retry
-              </button>
-            </div>
+            <>
+              <SurfaceState
+                error="Desk memory unavailable"
+                onRetry={() => void store.refresh(true)}
+              />
+              <FoldGadget title="RAW · DETAIL">
+                <SurfaceCode>{store.error}</SurfaceCode>
+              </FoldGadget>
+            </>
           ) : null}
           {selected ? (
             <section
@@ -190,7 +202,9 @@ export function AttentionDrawer() {
                 </div>
               </dl>
               <div className="desk-receipt-actions">
-                <a href={selected.detail_url}>Open source</a>
+                <button type="button" onClick={() => openSource(selected)}>
+                  Open source
+                </button>
                 {selected.attention_state === "needs_attention" ? (
                   <button
                     type="button"
@@ -233,7 +247,7 @@ export function AttentionDrawer() {
               {!store.loading && store.projections.length === 0 ? (
                 <SurfaceState
                   empty
-                  emptyLabel="Nothing matches. Receipts remain in their source journals."
+                  emptyLabel="No matches"
                 />
               ) : null}
               {store.page.has_more ? (

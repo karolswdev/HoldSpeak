@@ -9,6 +9,8 @@ import { gateAge, useGate } from "../gate";
 import { useProjections } from "../projections";
 import { humanTime } from "../surface/format";
 import { StringGadget } from "../surface/gadgets";
+import { SurfaceState } from "../surface/Surface";
+import { openPrimitive, openSurfaceWhenReady } from "../shell";
 
 type Correction = Record<string, unknown>;
 
@@ -82,6 +84,16 @@ export function SystemShade({
     .filter((row) => row.attention_state !== "needs_attention")
     .slice(0, 4);
   const learned = (corrections ?? []).slice(0, 3);
+  const openSource = (row: (typeof store.projections)[number]) => {
+    onClose();
+    if (row.detail_url.startsWith("/history")) {
+      openSurfaceWhenReady("review-meetings", row.subject_ref);
+    } else if (row.detail_url === "/cadence") {
+      openSurfaceWhenReady("configure-cadence", row.subject_ref);
+    } else {
+      openPrimitive(row.source_id);
+    }
+  };
 
   return (
     <div className="desk-shade" ref={panel} role="group" aria-label="While you were away">
@@ -185,7 +197,9 @@ export function SystemShade({
                   {row.subject_label} · {humanTime(row.timestamp)}
                 </small>
                 <span className="desk-shade-do">
-                  <a href={row.detail_url}>Open</a>
+                  <button type="button" onClick={() => openSource(row)}>
+                    Open
+                  </button>
                   <button
                     type="button"
                     onClick={() => void store.present(row.id, "acknowledge")}
@@ -204,7 +218,7 @@ export function SystemShade({
             </div>
           ))
         ) : gate.held.length ? null : (
-          <p className="desk-shade-quiet">Nothing needs you</p>
+          <SurfaceState empty emptyLabel="Clear" />
         )}
       </section>
 
@@ -224,13 +238,15 @@ export function SystemShade({
                   {row.outcome || row.subject_label} · {humanTime(row.timestamp)}
                 </small>
                 <span className="desk-shade-do">
-                  <a href={row.detail_url}>Open</a>
+                  <button type="button" onClick={() => openSource(row)}>
+                    Open
+                  </button>
                 </span>
               </div>
             </div>
           ))
         ) : (
-          <p className="desk-shade-quiet">Nothing finished while you were away</p>
+          <SurfaceState empty emptyLabel="No receipts" />
         )}
       </section>
 
@@ -253,7 +269,7 @@ export function SystemShade({
             </div>
           ))
         ) : (
-          <p className="desk-shade-quiet">No corrections taught yet</p>
+          <SurfaceState empty emptyLabel="No corrections" />
         )}
       </section>
     </div>
