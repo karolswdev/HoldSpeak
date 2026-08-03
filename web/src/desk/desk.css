@@ -727,7 +727,7 @@
 }
 
 /* the in-world editor card */
-.desk-next .desk-editor {
+.desk-next .desk-inline-editor {
   position: absolute;
   z-index: 26;
   width: min(340px, 84vw);
@@ -744,9 +744,9 @@
     0 0 0 1px rgba(255, 107, 53, 0.08);
   backdrop-filter: none;
 }
-.desk-next .desk-editor input,
-.desk-next .desk-editor textarea,
-.desk-next .desk-editor select {
+.desk-next .desk-inline-editor input,
+.desk-next .desk-inline-editor textarea,
+.desk-next .desk-inline-editor select {
   width: 100%;
   padding: 8px 10px;
   border-radius: 2px;
@@ -757,13 +757,13 @@
   font-family: inherit;
   resize: vertical;
 }
-.desk-next .desk-editor input:focus,
-.desk-next .desk-editor textarea:focus,
-.desk-next .desk-editor select:focus {
+.desk-next .desk-inline-editor input:focus,
+.desk-next .desk-inline-editor textarea:focus,
+.desk-next .desk-inline-editor select:focus {
   outline-color: var(--accent, #ff6b35);
   border-color: var(--accent, #ff6b35);
 }
-.desk-next .desk-editor-head {
+.desk-next .desk-inline-editor-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -771,7 +771,7 @@
   padding-bottom: 6px;
   border-bottom: 1px solid var(--border);
 }
-.desk-next .desk-editor-more {
+.desk-next .desk-inline-editor-more {
   align-self: flex-start;
   padding: 4px 10px;
   border-radius: 0;
@@ -781,15 +781,15 @@
   font-size: var(--font-size-xs);
   cursor: pointer;
 }
-.desk-next .desk-editor-foot {
+.desk-next .desk-inline-editor-foot {
   display: flex;
   justify-content: flex-end;
 }
-.desk-next .desk-editor-row {
+.desk-next .desk-inline-editor-row {
   display: flex;
   gap: 8px;
 }
-.desk-next .desk-editor-row .desk-editor-avatar {
+.desk-next .desk-inline-editor-row .desk-inline-editor-avatar {
   width: 52px;
   flex: none;
   text-align: center;
@@ -1550,10 +1550,10 @@
   font-size: var(--font-size-xs);
   line-height: 1.35;
 }
-.desk-next .desk-editor-spacer {
+.desk-next .desk-inline-editor-spacer {
   flex: 1;
 }
-.desk-next .desk-editor-foot {
+.desk-next .desk-inline-editor-foot {
   align-items: center;
   gap: 8px;
 }
@@ -2836,7 +2836,7 @@
   }
   /* The in-world editor becomes a bottom sheet on phones: an editor
      anchored beside an object near the screen edge is unreachable. */
-  .desk-next .desk-editor {
+  .desk-next .desk-inline-editor {
     position: fixed;
     top: auto !important;
     left: 10px !important;
@@ -4050,13 +4050,13 @@
 
 /* The in-world editor is a small window: the one material, a head
    band, a primary Done. */
-.desk-next .desk-editor {
+.desk-next .desk-inline-editor {
   border: 1px solid var(--desk-window-keyline);
   background: var(--desk-window-fill);
   backdrop-filter: var(--desk-window-blur);
   box-shadow: var(--desk-window-bevel), var(--desk-glass-edge);
 }
-.desk-next .desk-editor-head {
+.desk-next .desk-inline-editor-head {
   margin: -14px -14px 0;
   padding: 8px 12px;
   background: var(--desk-window-head-fill);
@@ -4067,7 +4067,7 @@
   text-transform: uppercase;
   color: var(--text-muted);
 }
-.desk-next .desk-editor-foot button:last-child {
+.desk-next .desk-inline-editor-foot button:last-child {
   background: var(--accent);
   border-color: var(--accent);
   color: var(--text-on-accent);
@@ -5346,6 +5346,7 @@ body:has(.desk-next .desk-pullout:not(.is-card)) .ambient-qlippy {
 .desk-editor {
   display: grid;
   gap: var(--space-1);
+  min-width: 0;
 }
 .desk-editor-toolbar {
   display: flex;

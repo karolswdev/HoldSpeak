@@ -248,11 +248,11 @@ export function InlineEditor({ o, u }: { o: WorldObject; u: UnitPos }) {
       />
       <div
         ref={ref}
-        className="desk-editor"
+        className="desk-inline-editor"
         style={style}
         onPointerDown={(e) => e.stopPropagation()}
       >
-        <header className="desk-editor-head">
+        <header className="desk-inline-editor-head">
           <span className="desk-panel-eyebrow">
             {(
               {
@@ -427,9 +427,9 @@ export function InlineEditor({ o, u }: { o: WorldObject; u: UnitPos }) {
         )}
         {o.kind === "recipe" && (
           <>
-            <div className="desk-editor-row">
+            <div className="desk-inline-editor-row">
               <input
-                className="desk-editor-avatar"
+                className="desk-inline-editor-avatar"
                 value={f.avatar}
                 placeholder="🤖"
                 aria-label="Avatar"
@@ -497,7 +497,7 @@ export function InlineEditor({ o, u }: { o: WorldObject; u: UnitPos }) {
             ) : (
               <button
                 type="button"
-                className="desk-editor-more"
+                className="desk-inline-editor-more"
                 onClick={() => setMore(true)}
               >
                 More
@@ -505,7 +505,7 @@ export function InlineEditor({ o, u }: { o: WorldObject; u: UnitPos }) {
             )}
           </>
         )}
-        <div className="desk-editor-foot">
+        <div className="desk-inline-editor-foot">
           <MicButton
             draftScope={`inline:${o.kind}:${o.id}`}
             grammar={editorView ? editorVoiceGrammar : undefined}
@@ -536,7 +536,7 @@ export function InlineEditor({ o, u }: { o: WorldObject; u: UnitPos }) {
               {appliedReceipt}
             </span>
           ) : null}
-          <span className="desk-editor-spacer" />
+          <span className="desk-inline-editor-spacer" />
           <button
             type="button"
             className="desk-chip quiet"
