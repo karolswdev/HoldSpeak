@@ -57,6 +57,11 @@ describe("Phase 93 Desk arrival", () => {
 
     fireEvent.click(screen.getByRole("menuitem", { name: "Create Agent" }));
     expect(useDesk.getState().createPrimitive).toHaveBeenCalledWith("recipe");
+    fireEvent.click(screen.getByRole("button", { name: "New Note" }));
+    expect(useDesk.getState().createPrimitive).toHaveBeenCalledWith("note");
+    expect(
+      screen.getByText("or right-click for more options"),
+    ).toBeInTheDocument();
   });
 
   it("keeps every moved advanced route in the Desk tool shelf", () => {
@@ -66,6 +71,12 @@ describe("Phase 93 Desk arrival", () => {
       </MemoryRouter>,
     );
     fireEvent.click(screen.getByRole("button", { name: /Search/ }));
+    expect(
+      screen.getByRole("button", { name: /^New Note\b/ }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /^New Decision\b/ }),
+    ).toBeInTheDocument();
 
     // HS-95-04: the shelf is a dispatcher now — every advanced tool is a
     // button that opens its surface in-world (or falls back to the legacy
@@ -76,9 +87,7 @@ describe("Phase 93 Desk arrival", () => {
       const hits = screen.getAllByRole("button", {
         name: new RegExp(tool.label),
       });
-      expect(hits.some((el) => !el.className.includes("desk-mic"))).toBe(
-        true,
-      );
+      expect(hits.some((el) => !el.className.includes("desk-mic"))).toBe(true);
     }
   });
 

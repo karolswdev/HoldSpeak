@@ -5,12 +5,7 @@
  * died), the floor verbs exist, and the keymap's bound set is exactly
  * the verbs that declare a key. */
 import { describe, expect, it } from "vitest";
-import {
-  VERBS,
-  menuVerbs,
-  verbLabel,
-  verbsFor,
-} from "../verbRegistry";
+import { VERBS, menuVerbs, verbLabel, verbsFor } from "../verbRegistry";
 import { DESK_TOOLS } from "../tools";
 import { registerSurface } from "../shell";
 
@@ -22,9 +17,7 @@ describe("the verb registry (HS-105-05 / HS-111-07 v2)", () => {
     expect(new Set(ids).size).toBe(ids.length);
     for (const v of VERBS) {
       expect(verbLabel(v, CTX).length).toBeGreaterThan(0);
-      expect(["floor", "object", "go", "window", "system"]).toContain(
-        v.scope,
-      );
+      expect(["floor", "object", "go", "window", "system"]).toContain(v.scope);
       if (v.menu) expect(["desk", "object", "go"]).toContain(v.menu);
     }
   });
@@ -90,6 +83,8 @@ describe("the verb registry (HS-105-05 / HS-111-07 v2)", () => {
   it("the bound key set is the HS-101 grammar, declared in the registry", () => {
     const keys = VERBS.filter((v) => v.key).map((v) => [v.id, v.key]);
     expect(Object.fromEntries(keys)).toEqual({
+      "desk.new-note": "⌘N",
+      "desk.new-decision": "⌘⇧N",
       "desk.overview": "⌃↑",
       "go.dictate": "⌘1",
       "go.review-meetings": "⌘2",

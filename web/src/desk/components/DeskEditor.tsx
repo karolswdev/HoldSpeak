@@ -1,10 +1,10 @@
+import { forwardRef, useEffect, useImperativeHandle, useRef } from "react";
 import {
-  forwardRef,
-  useEffect,
-  useImperativeHandle,
-  useRef,
-} from "react";
-import { defaultKeymap, history, historyKeymap, indentWithTab } from "@codemirror/commands";
+  defaultKeymap,
+  history,
+  historyKeymap,
+  indentWithTab,
+} from "@codemirror/commands";
 import { markdown, markdownKeymap } from "@codemirror/lang-markdown";
 import { EditorState } from "@codemirror/state";
 import { EditorView, keymap, placeholder } from "@codemirror/view";
@@ -26,6 +26,114 @@ interface DeskEditorProps {
   onModEnter?: () => void;
   onViewChange?: (view: EditorView) => void;
   onAIBarToggle?: () => void;
+  /** The formatting rail is on by default; compact embeds may opt out. */
+  showToolbar?: boolean;
+}
+
+function toggleInlineWrap(view: EditorView, marker: string): boolean {
+  const { from, to } = view.state.selection.main;
+  const doc = view.state.doc;
+  const selected = doc.sliceString(from, to);
+
+  if (
+    selected.length >= marker.length * 2 &&
+    selected.startsWith(marker) &&
+    selected.endsWith(marker)
+  ) {
+    const text = selected.slice(marker.length, -marker.length);
+    view.dispatch({
+      changes: { from, to, insert: text },
+      selection: { anchor: from, head: from + text.length },
+    });
+  } else if (
+    from >= marker.length &&
+    doc.sliceString(from - marker.length, from) === marker &&
+    doc.sliceString(to, to + marker.length) === marker
+  ) {
+    view.dispatch({
+      changes: {
+        from: from - marker.length,
+        to: to + marker.length,
+        insert: selected,
+      },
+      selection: { anchor: from - marker.length, head: to - marker.length },
+    });
+  } else if (from === to) {
+    view.dispatch({
+      changes: { from, insert: `${marker}${marker}` },
+      selection: { anchor: from + marker.length },
+    });
+  } else {
+    view.dispatch({
+      changes: { from, to, insert: `${marker}${selected}${marker}` },
+      selection: { anchor: from + marker.length, head: to + marker.length },
+    });
+  }
+  view.focus();
+  return true;
+}
+
+function transformSelectedLines(
+  view: EditorView,
+  transform: (line: string) => string,
+): void {
+  const { from, to } = view.state.selection.main;
+  const doc = view.state.doc;
+  const first = doc.lineAt(from).number;
+  const last = doc.lineAt(to > from ? to - 1 : to).number;
+  const changes = [];
+
+  for (let number = first; number <= last; number += 1) {
+    const line = doc.line(number);
+    const next = transform(line.text);
+    if (next !== line.text)
+      changes.push({ from: line.from, to: line.to, insert: next });
+  }
+  if (changes.length) view.dispatch({ changes });
+  view.focus();
+}
+
+function setHeading(view: EditorView, level: 1 | 2 | 3): void {
+  const prefix = `${"#".repeat(level)} `;
+  transformSelectedLines(view, (line) => {
+    const bare = line.replace(/^#{1,6}\s+/, "");
+    return line.startsWith(prefix) ? bare : `${prefix}${bare}`;
+  });
+}
+
+function togglePrefix(view: EditorView, pattern: RegExp, prefix: string): void {
+  transformSelectedLines(view, (line) =>
+    pattern.test(line) ? line.replace(pattern, "") : `${prefix}${line}`,
+  );
+}
+
+function toggleCode(view: EditorView): void {
+  const { from, to } = view.state.selection.main;
+  const selected = view.state.doc.sliceString(from, to);
+  if (!selected.includes("\n")) {
+    toggleInlineWrap(view, "`");
+    return;
+  }
+  const fenced = selected.startsWith("```\n") && selected.endsWith("\n```");
+  const text = fenced ? selected.slice(4, -4) : `\`\`\`\n${selected}\n\`\`\``;
+  view.dispatch({
+    changes: { from, to, insert: text },
+    selection: {
+      anchor: fenced ? from : from + 4,
+      head: fenced ? from + text.length : from + 4 + selected.length,
+    },
+  });
+  view.focus();
+}
+
+function insertLink(view: EditorView): void {
+  const { from, to } = view.state.selection.main;
+  const selected = view.state.doc.sliceString(from, to) || "text";
+  view.dispatch({
+    changes: { from, to, insert: `[${selected}](url)` },
+    selection: { anchor: from + 1, head: from + 1 + selected.length },
+  });
+  view.focus();
 }
 
 export const DeskEditor = forwardRef<DeskEditorHandle, DeskEditorProps>(
@@ -42,6 +150,7 @@ export const DeskEditor = forwardRef<DeskEditorHandle, DeskEditorProps>(
       onModEnter,
       onViewChange,
       onAIBarToggle,
+      showToolbar = true,
     },
     forwardedRef,
   ) {
@@ -57,15 +166,19 @@ export const DeskEditor = forwardRef<DeskEditorHandle, DeskEditorProps>(
     onModEnterRef.current = onModEnter;
     onAIBarToggleRef.current = onAIBarToggle;
 
-    useImperativeHandle(forwardedRef, () => ({
-      insertAtCursor(text) {
-        const view = viewRef.current;
-        if (!view) return;
-        const { from, to } = view.state.selection.main;
-        view.dispatch({ changes: { from, to, insert: text } });
-        view.focus();
-      },
-    }), []);
+    useImperativeHandle(
+      forwardedRef,
+      () => ({
+        insertAtCursor(text) {
+          const view = viewRef.current;
+          if (!view) return;
+          const { from, to } = view.state.selection.main;
+          view.dispatch({ changes: { from, to, insert: text } });
+          view.focus();
+        },
+      }),
+      [],
+    );
 
     useEffect(() => {
       if (!host.current) return;
@@ -90,6 +203,8 @@ export const DeskEditor = forwardRef<DeskEditorHandle, DeskEditorProps>(
                   return true;
                 },
               },
+              { key: "Mod-b", run: (editor) => toggleInlineWrap(editor, "**") },
+              { key: "Mod-i", run: (editor) => toggleInlineWrap(editor, "*") },
               {
                 key: "Mod-Enter",
                 run() {
@@ -119,9 +234,12 @@ export const DeskEditor = forwardRef<DeskEditorHandle, DeskEditorProps>(
               },
             }),
             EditorView.updateListener.of((update) => {
-              if (update.docChanged) onChangeRef.current(update.state.doc.toString());
+              if (update.docChanged)
+                onChangeRef.current(update.state.doc.toString());
             }),
-            ...(ariaLabel ? [EditorView.contentAttributes.of({ "aria-label": ariaLabel })] : []),
+            ...(ariaLabel
+              ? [EditorView.contentAttributes.of({ "aria-label": ariaLabel })]
+              : []),
             ...(placeholderText ? [placeholder(placeholderText)] : []),
           ],
         }),
@@ -150,12 +268,121 @@ export const DeskEditor = forwardRef<DeskEditorHandle, DeskEditorProps>(
       });
     }, [value]);
 
+    const useView = (format: (view: EditorView) => void) => () => {
+      const view = viewRef.current;
+      if (view) format(view);
+    };
+
     return (
-      <div
-        ref={host}
-        className={["desk-code-editor", className].filter(Boolean).join(" ")}
-        style={{ "--desk-editor-min-height": minHeight } as React.CSSProperties}
-      />
+      <div className="desk-editor">
+        {showToolbar ? (
+          <div
+            className="desk-editor-toolbar"
+            role="toolbar"
+            aria-label="Markdown formatting"
+          >
+            <button
+              type="button"
+              className="desk-chip quiet"
+              aria-label="Bold"
+              title="Bold (⌘B)"
+              onMouseDown={(event) => event.preventDefault()}
+              onClick={useView((view) => toggleInlineWrap(view, "**"))}
+            >
+              <strong>B</strong>
+            </button>
+            <button
+              type="button"
+              className="desk-chip quiet"
+              aria-label="Italic"
+              title="Italic (⌘I)"
+              onMouseDown={(event) => event.preventDefault()}
+              onClick={useView((view) => toggleInlineWrap(view, "*"))}
+            >
+              <em>I</em>
+            </button>
+            <button
+              type="button"
+              className="desk-chip quiet"
+              title="Heading 1"
+              onMouseDown={(event) => event.preventDefault()}
+              onClick={useView((view) => setHeading(view, 1))}
+            >
+              H1
+            </button>
+            <button
+              type="button"
+              className="desk-chip quiet"
+              title="Heading 2"
+              onMouseDown={(event) => event.preventDefault()}
+              onClick={useView((view) => setHeading(view, 2))}
+            >
+              H2
+            </button>
+            <button
+              type="button"
+              className="desk-chip quiet"
+              title="Heading 3"
+              onMouseDown={(event) => event.preventDefault()}
+              onClick={useView((view) => setHeading(view, 3))}
+            >
+              H3
+            </button>
+            <button
+              type="button"
+              className="desk-chip quiet"
+              title="Bulleted list"
+              onMouseDown={(event) => event.preventDefault()}
+              onClick={useView((view) => togglePrefix(view, /^-\s/, "- "))}
+            >
+              List
+            </button>
+            <button
+              type="button"
+              className="desk-chip quiet"
+              title="Numbered list"
+              onMouseDown={(event) => event.preventDefault()}
+              onClick={useView((view) => togglePrefix(view, /^\d+\.\s/, "1. "))}
+            >
+              1.
+            </button>
+            <button
+              type="button"
+              className="desk-chip quiet"
+              title="Code"
+              onMouseDown={(event) => event.preventDefault()}
+              onClick={useView(toggleCode)}
+            >
+              &lt;/&gt;
+            </button>
+            <button
+              type="button"
+              className="desk-chip quiet"
+              title="Link"
+              onMouseDown={(event) => event.preventDefault()}
+              onClick={useView(insertLink)}
+            >
+              Link
+            </button>
+            <button
+              type="button"
+              className="desk-chip quiet"
+              title="Quote"
+              onMouseDown={(event) => event.preventDefault()}
+              onClick={useView((view) => togglePrefix(view, /^>\s/, "> "))}
+            >
+              Quote
+            </button>
+          </div>
+        ) : null}
+        <div
+          ref={host}
+          className={["desk-code-editor", className].filter(Boolean).join(" ")}
+          style={
+            { "--desk-editor-min-height": minHeight } as React.CSSProperties
+          }
+        />
+      </div>
     );
   },
 );

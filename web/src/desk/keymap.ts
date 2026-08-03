@@ -10,6 +10,7 @@ import { VERBS, type Verb, type VerbContext } from "./verbRegistry";
 export interface KeySpec {
   meta: boolean;
   ctrl: boolean;
+  shift?: boolean;
   key: string;
 }
 
@@ -20,9 +21,11 @@ export function parseKey(cap: string): KeySpec | null {
   const ctrl = cap.startsWith("⌃");
   if (!meta && !ctrl) return null;
   const rest = cap.slice(1);
-  const key = rest === "↑" ? "ArrowUp" : rest.toLocaleLowerCase();
+  const shift = rest.startsWith("⇧");
+  const chord = shift ? rest.slice(1) : rest;
+  const key = chord === "↑" ? "ArrowUp" : chord.toLocaleLowerCase();
   if (!key) return null;
-  return { meta, ctrl, key };
+  return { meta, ctrl, ...(shift ? { shift: true } : {}), key };
 }
 
 /** Plain-letter chords stay quiet while the user is typing (the HS-101
@@ -33,9 +36,9 @@ function typing(target: EventTarget | null): boolean {
   const el = target as HTMLElement | null;
   return Boolean(
     el &&
-      (el.tagName === "INPUT" ||
-        el.tagName === "TEXTAREA" ||
-        el.isContentEditable),
+    (el.tagName === "INPUT" ||
+      el.tagName === "TEXTAREA" ||
+      el.isContentEditable),
   );
 }
 
@@ -46,6 +49,7 @@ export function matchKey(e: KeyboardEvent, spec: KeySpec): boolean {
     (e.metaKey || e.ctrlKey) && !(e.metaKey && e.ctrlKey) && !e.altKey;
   if (spec.meta && !primary) return false;
   if (spec.ctrl && !(e.ctrlKey && !e.metaKey && !e.altKey)) return false;
+  if (Boolean(spec.shift) !== e.shiftKey) return false;
   if (e.key === spec.key) return true;
   return e.key.toLocaleLowerCase() === spec.key;
 }

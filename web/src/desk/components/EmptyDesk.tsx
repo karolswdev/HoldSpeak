@@ -23,6 +23,14 @@ export function EmptyDesk({
         ◍
       </div>
       <DeskStartActions />
+      <button
+        type="button"
+        className="desk-chip desk-start-action is-primary"
+        onClick={() => void useDesk.getState().createPrimitive("note")}
+      >
+        <span aria-hidden="true">＋</span> New Note
+      </button>
+      <p className="desk-empty-line">or right-click for more options</p>
       {/* HS-112-03 — the empty floor's start verb: the architect's desk
           in one press (additive seed; the drawers materialize). */}
       <button
@@ -37,7 +45,8 @@ export function EmptyDesk({
             .finally(() => setSeeding(false));
         }}
       >
-        <span aria-hidden="true">▤</span> {seeding ? "Seeding…" : "Seed the desk"}
+        <span aria-hidden="true">▤</span>{" "}
+        {seeding ? "Seeding…" : "Seed the desk"}
       </button>
       <p className={`desk-empty-trust is-${badge.scope}`} title={badge.title}>
         <span className="desk-empty-trust-dot" aria-hidden="true" />

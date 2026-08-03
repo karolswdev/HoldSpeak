@@ -1,7 +1,8 @@
 /** HS-111-07 — the ONE key binder: desk/keymap.ts walks the registry's
  * key fields; nothing else binds document keys. */
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { dispatchKey, matchKey, parseKey } from "../keymap";
+import { useDesk } from "../store";
 import { usePalette, useShortcutSheet } from "../chromeState";
 
 const kd = (init: KeyboardEventInit) => new KeyboardEvent("keydown", init);
@@ -9,6 +10,7 @@ const kd = (init: KeyboardEventInit) => new KeyboardEvent("keydown", init);
 beforeEach(() => {
   usePalette.setState({ open: false });
   useShortcutSheet.setState({ open: false });
+  useDesk.setState({ createPrimitive: vi.fn().mockResolvedValue(undefined) });
 });
 
 describe("parseKey / matchKey (⌘-notation is the binding truth)", () => {
@@ -28,9 +30,9 @@ describe("parseKey / matchKey (⌘-notation is the binding truth)", () => {
     const spec = parseKey("⌘K")!;
     expect(matchKey(kd({ key: "k", metaKey: true }), spec)).toBe(true);
     expect(matchKey(kd({ key: "k", ctrlKey: true }), spec)).toBe(true);
-    expect(
-      matchKey(kd({ key: "k", metaKey: true, ctrlKey: true }), spec),
-    ).toBe(false);
+    expect(matchKey(kd({ key: "k", metaKey: true, ctrlKey: true }), spec)).toBe(
+      false,
+    );
     expect(matchKey(kd({ key: "k" }), spec)).toBe(false);
   });
 });
@@ -46,6 +48,17 @@ describe("dispatchKey runs registry verbs", () => {
     const ran = dispatchKey(kd({ key: "/", metaKey: true }));
     expect(ran?.id).toBe("system.sheet");
     expect(useShortcutSheet.getState().open).toBe(true);
+  });
+
+  it("⌘N creates a note and ⌘⇧N creates a decision", () => {
+    expect(dispatchKey(kd({ key: "n", metaKey: true }))?.id).toBe(
+      "desk.new-note",
+    );
+    expect(useDesk.getState().createPrimitive).toHaveBeenCalledWith("note");
+    expect(
+      dispatchKey(kd({ key: "N", metaKey: true, shiftKey: true }))?.id,
+    ).toBe("desk.new-decision");
+    expect(useDesk.getState().createPrimitive).toHaveBeenCalledWith("decision");
   });
 
   it("a ghosted verb refuses quietly (⌘W with no window open)", () => {

@@ -87,8 +87,7 @@ export function rankRow(
   if (!query) return recent && recentBoostsEmpty ? 2 : 1;
   const label = row.label.toLocaleLowerCase();
   if (label.startsWith(query)) return 3 + (recent ? 2 : 0);
-  if (recent && (label.includes(query) || row.terms?.includes(query)))
-    return 2;
+  if (recent && (label.includes(query) || row.terms?.includes(query))) return 2;
   if (label.includes(query) || row.terms?.includes(query)) return 1;
   return 0;
 }
@@ -209,9 +208,10 @@ export function DeskToolShelf() {
       if (v.palette === false || v.scope === "go") continue;
       const label = verbLabel(v, ctx);
       const ghost = v.ghost(ctx);
-      // A cold empty deck lists runnable verbs the user has actually
-      // used; a query reaches every verb (ghosted ones say why).
-      if (!normalized && !recents.includes(v.id)) continue;
+      // A cold deck begins with the Desk's creation verbs; other verbs
+      // appear after use. A query still reaches every verb (ghosted ones
+      // say why).
+      if (!normalized && v.group !== "new" && !recents.includes(v.id)) continue;
       push({
         id: v.id,
         section: "VERBS",
@@ -413,89 +413,97 @@ export function DeskToolShelf() {
         aria-keyshortcuts="Control+K Meta+K"
         onClick={() => usePalette.getState().toggle()}
       >
-        <img src={SYSTEM.menuSearch} alt="" width={16} height={16} className="desk-chrome-sprite" draggable={false} /> Search <kbd>⌘K</kbd>
+        <img
+          src={SYSTEM.menuSearch}
+          alt=""
+          width={16}
+          height={16}
+          className="desk-chrome-sprite"
+          draggable={false}
+        />{" "}
+        Search <kbd>⌘K</kbd>
       </button>
       {/* Round 9 - the deck PORTALS to the desk root: rendered inside
           the chrome bar it inherited the bar's z-30 stacking context and
           every desk window (z 42+) covered the ⌘K results - a palette
           must sit above the window band, always. */}
-      {open ? (
-        createPortal(
-        <aside
-          ref={rootRef}
-          id="desk-tool-shelf"
-          className="desk-tool-shelf"
-          role="region"
-          aria-label="Tools and Desk search"
-          onKeyDown={onDeckKeyDown}
-        >
-          <label className="desk-tool-search">
-            <span className="sr-only">Search tools and Desk items</span>
-            <StringGadget
-              inputRef={searchRef}
-              label="Search tools and Desk items"
-              value={query}
-              placeholder="Search tools and Desk items"
-              onChange={setQuery}
-            />
-          </label>
-          {rows.length ? (
-            <ul className="desk-deck-list">
-              {rows.map((row) => {
-                const band =
-                  row.section !== lastSection ? row.section : null;
-                lastSection = row.section;
-                const isSel = selected?.id === row.id;
-                return (
-                  <li key={row.id}>
-                    {band ? (
-                      <span className="desk-deck-band">{band}</span>
-                    ) : null}
-                    <button
-                      type="button"
-                      className={
-                        "desk-deck-row" +
-                        (isSel ? " is-selected" : "") +
-                        (row.ghost ? " is-ghost" : "")
-                      }
-                      aria-disabled={row.ghost ? true : undefined}
-                      aria-current={isSel || undefined}
-                      onClick={() => runRow(row)}
-                      onPointerEnter={() => {
-                        if (row.ghost) return;
-                        const at = runnable.findIndex(
-                          (r) => r.id === row.id,
-                        );
-                        if (at >= 0) setSel(at);
-                      }}
-                    >
-                      <span className="desk-deck-glyph" aria-hidden="true">
-                        {row.glyph}
-                      </span>
-                      <span className="desk-deck-label">
-                        {row.label}
-                        {row.ghost ? (
-                          <small className="quiet"> · {row.ghost}</small>
+      {open
+        ? createPortal(
+            <aside
+              ref={rootRef}
+              id="desk-tool-shelf"
+              className="desk-tool-shelf"
+              role="region"
+              aria-label="Tools and Desk search"
+              onKeyDown={onDeckKeyDown}
+            >
+              <label className="desk-tool-search">
+                <span className="sr-only">Search tools and Desk items</span>
+                <StringGadget
+                  inputRef={searchRef}
+                  label="Search tools and Desk items"
+                  value={query}
+                  placeholder="Search tools and Desk items"
+                  onChange={setQuery}
+                />
+              </label>
+              {rows.length ? (
+                <ul className="desk-deck-list">
+                  {rows.map((row) => {
+                    const band =
+                      row.section !== lastSection ? row.section : null;
+                    lastSection = row.section;
+                    const isSel = selected?.id === row.id;
+                    return (
+                      <li key={row.id}>
+                        {band ? (
+                          <span className="desk-deck-band">{band}</span>
                         ) : null}
-                      </span>
-                      <span className="desk-deck-kind">{row.kind}</span>
-                      {row.keycap ? <kbd>{row.keycap}</kbd> : null}
-                    </button>
-                  </li>
-                );
-              })}
-            </ul>
-          ) : (
-            <p className="desk-tool-empty">
-              No matching tools or Desk items.
-            </p>
-          )}
-        </aside>,
-        launchRef.current?.closest(".desk-next") ??
-          document.getElementById("desk-next") ??
-          document.body,
-        )
-      ) : null}
+                        <button
+                          type="button"
+                          className={
+                            "desk-deck-row" +
+                            (isSel ? " is-selected" : "") +
+                            (row.ghost ? " is-ghost" : "")
+                          }
+                          aria-disabled={row.ghost ? true : undefined}
+                          aria-current={isSel || undefined}
+                          onClick={() => runRow(row)}
+                          onPointerEnter={() => {
+                            if (row.ghost) return;
+                            const at = runnable.findIndex(
+                              (r) => r.id === row.id,
+                            );
+                            if (at >= 0) setSel(at);
+                          }}
+                        >
+                          <span className="desk-deck-glyph" aria-hidden="true">
+                            {row.glyph}
+                          </span>
+                          <span className="desk-deck-label">
+                            {row.label}
+                            {row.ghost ? (
+                              <small className="quiet"> · {row.ghost}</small>
+                            ) : null}
+                          </span>
+                          <span className="desk-deck-kind">{row.kind}</span>
+                          {row.keycap ? <kbd>{row.keycap}</kbd> : null}
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              ) : (
+                <p className="desk-tool-empty">
+                  No matching tools or Desk items.
+                </p>
+              )}
+            </aside>,
+            launchRef.current?.closest(".desk-next") ??
+              document.getElementById("desk-next") ??
+              document.body,
+          )
+        : null}
     </>
   );
 }
