@@ -1,6 +1,6 @@
 # Phase 115 - The Polish
 
-**Status:** DRAFT. Seven stories that remediate the 73 violations
+**Status:** DRAFT. Eight stories that remediate the 73 violations
 found by the 2026-08-03 surface audit. Three severity tiers — 27
 BROKEN (user-visible bugs), 22 UGLY (material violations), 24 DRIFT
 (inconsistencies) — across ~30 surfaces. Every window, every chip,
@@ -84,6 +84,12 @@ content violations inside them. The 2026-08-03 audit found:
 |---|-------|--------------------|--------|
 | 06 | [The rails window](./story-06-the-rails-window.md) | "Delivery Workbench is overcomplicated and unusable" | backlog |
 
+### Craft
+
+| # | Story | The ask it answers | Status |
+|---|-------|--------------------|--------|
+| 08 | [The cooled accent](./story-08-the-cooled-accent.md) | "The orange screams web app, not operating system" | backlog |
+
 ### Proof
 
 | # | Story | The ask it answers | Status |
@@ -101,6 +107,7 @@ content violations inside them. The 2026-08-03 audit found:
 | HS-115-05 | Hosted cores | backlog | [story-05](./story-05-hosted-cores.md) | — |
 | HS-115-06 | The rails window | backlog | [story-06](./story-06-the-rails-window.md) | — |
 | HS-115-07 | The walk | backlog | [story-07](./story-07-the-walk.md) | — |
+| HS-115-08 | The cooled accent | backlog | [story-08](./story-08-the-cooled-accent.md) | — |
 
 ## Where we are
 
