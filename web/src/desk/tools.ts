@@ -14,6 +14,14 @@ export const DESK_TOOLS = [
     subjectRef: undefined,
   },
   {
+    href: "/ask",
+    label: "Ask AI",
+    description: "Ask across the work on your desk.",
+    glyph: "✦",
+    action: "ask",
+    subjectRef: undefined,
+  },
+  {
     href: "/history",
     label: "Meetings",
     description: "Outcomes, recordings, and the typed record.",

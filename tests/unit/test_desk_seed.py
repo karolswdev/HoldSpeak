@@ -16,6 +16,8 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 import holdspeak.db as hsdb
+import holdspeak.db.seed as seed_module
+from holdspeak.config import Config
 from holdspeak.db import Database, reset_database
 from holdspeak.meeting_session import MeetingState
 from holdspeak.db.seed import DEFAULT_SEED, apply_seed, load_manifest, reset_desk
@@ -34,8 +36,9 @@ DRAWERS = {
 
 
 @pytest.fixture
-def db(tmp_path):
+def db(tmp_path, monkeypatch):
     reset_database()
+    monkeypatch.setattr(seed_module, "CONFIG_FILE", tmp_path / "config.json")
     database = Database(tmp_path / "holdspeak.db")
     yield database
     reset_database()
@@ -70,13 +73,17 @@ def _snapshot(db: Database) -> dict:
 def test_fresh_db_seeds_exactly_the_manifest(db) -> None:
     report = apply_seed(db)
     assert report.manifest == DEFAULT_SEED
-    assert report.applied == {"directories": 6, "notes": 2}
+    assert report.applied == {"directories": 6, "notes": 2, "recipes": 1, "workflows": 1}
+    assert report.profiles_seeded == 1
     assert report.filed == 2
 
     snap = _snapshot(db)
     assert dict((i, n) for i, n, _ in snap["directories"]) == DRAWERS
-    # Six drawers, two starter notes, NOTHING else — sparse is the contract.
-    assert snap["kbs"] == snap["recipes"] == snap["chains"] == snap["workflows"] == []
+    assert snap["kbs"] == snap["chains"] == []
+    assert snap["recipes"] == ["hs-seed-agent-reviewer"]
+    assert snap["workflows"] == ["hs-seed-workflow-summarize"]
+    profiles = {profile.id: profile for profile in db.profiles.list()}
+    assert profiles["hs-seed-homelab"].base_url == "http://192.168.1.43:8080/v1"
 
     notes = {n[0]: n for n in snap["notes"]}
     adr = notes["hs-desk-note-adr-template"]
@@ -98,8 +105,23 @@ def test_apply_twice_is_identical_no_duplicates(db) -> None:
     apply_seed(db)
     first = _snapshot(db)
     report = apply_seed(db)
-    assert report.applied == {"directories": 6, "notes": 2}
+    assert report.applied == {"directories": 6, "notes": 2, "recipes": 1, "workflows": 1}
+    assert report.profiles_seeded == 1
     assert _snapshot(db) == first  # ids stable, zero duplicates
+
+
+def test_seed_adopts_profile_into_an_unset_existing_config(db) -> None:
+    Config().save(seed_module.CONFIG_FILE)
+
+    report = apply_seed(db)
+
+    assert report.profiles_adopted == {
+        "dictation.runtime.profile_id": "hs-seed-homelab",
+        "meeting.intel_profile_id": "hs-seed-homelab",
+    }
+    config = Config.load(seed_module.CONFIG_FILE)
+    assert config.dictation.runtime.profile_id == "hs-seed-homelab"
+    assert config.meeting.intel_profile_id == "hs-seed-homelab"
 
 
 def test_seed_route_applies_the_packaged_manifest(client, db) -> None:
@@ -107,9 +129,10 @@ def test_seed_route_applies_the_packaged_manifest(client, db) -> None:
     assert resp.status_code == 200
     body = resp.json()
     assert body["success"] is True
-    assert body["applied"] == {"directories": 6, "notes": 2}
+    assert body["applied"] == {"directories": 6, "notes": 2, "recipes": 1, "workflows": 1}
+    assert body["profiles_seeded"] == 1
     assert body["filed"] == 2
-    assert body["total"] == 8
+    assert body["total"] == 11
     assert {d.id for d in db.directories.list()} == set(DRAWERS)
 
 
@@ -147,7 +170,7 @@ def test_reset_tombstones_clutter_and_reseeds(db) -> None:
     assert {n.id for n in db.notes.list()} == {
         "hs-desk-note-adr-template", "hs-desk-note-working-rules",
     }
-    assert report.seed is not None and report.seed.total == 8
+    assert report.seed is not None and report.seed.total == 11
 
 
 def test_reset_leaves_meetings_and_journal_alone(db) -> None:
@@ -173,8 +196,10 @@ def test_reset_route_names_the_counts(client, db) -> None:
     assert body["success"] is True
     assert body["tombstoned_total"] == 7
     assert body["tombstoned"]["directories"] == 1
-    assert body["seeded"] == {"directories": 6, "notes": 2}
-    assert body["seeded_total"] == 8
+    assert body["seeded"] == {"directories": 6, "notes": 2, "recipes": 1, "workflows": 1}
+    assert body["seeded_total"] == 11
+    assert body["profiles_seeded"] == 1
+    assert "dictation.runtime.profile_id" in body["profiles_adopted"]
     assert body["filed"] == 2
     assert body["manifest"] == DEFAULT_SEED
 

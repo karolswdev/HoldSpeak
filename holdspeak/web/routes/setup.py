@@ -4,8 +4,10 @@
 the doctor + readiness + egress + presence — see `holdspeak.setup_status`). It is a
 cheap read: no large-model load, no default network call.
 """
+
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Any
 
 import os
@@ -40,6 +42,46 @@ def build_setup_router(ctx: WebContext) -> APIRouter:
             return build_setup_status(database=database)
         except Exception as exc:  # pragma: no cover - defensive
             return error_500(exc, log, "Failed to build setup status")
+
+    @router.get("/api/setup/hub-default-summary")
+    async def api_hub_default_summary() -> Any:
+        """Name the configured local default without attempting a model load."""
+        try:
+            from ...config import Config
+
+            runtime = Config.load().dictation.runtime
+            backend = str(runtime.backend or "auto").strip().lower()
+            candidates = {
+                "mlx": str(runtime.mlx_model or "").strip(),
+                "llama_cpp": str(runtime.llama_cpp_model_path or "").strip(),
+            }
+            selected = (
+                [backend]
+                if backend in candidates
+                else ["mlx", "llama_cpp"]
+                if backend == "auto"
+                else []
+            )
+            resolved = next(
+                (
+                    (engine, model_path)
+                    for engine in selected
+                    if (model_path := candidates[engine])
+                    and Path(model_path).expanduser().exists()
+                ),
+                None,
+            )
+            if resolved is None:
+                return {"engine": "", "model": "", "available": False}
+
+            engine, model_path = resolved
+            return {
+                "engine": "llama.cpp" if engine == "llama_cpp" else engine,
+                "model": Path(model_path).expanduser().stem,
+                "available": True,
+            }
+        except Exception as exc:  # pragma: no cover - defensive
+            return error_500(exc, log, "Failed to read hub default summary")
 
     @router.post("/api/setup/runtime-test")
     async def api_setup_runtime_test() -> Any:
@@ -77,7 +119,10 @@ def build_setup_router(ctx: WebContext) -> APIRouter:
         forbidden = {"text", "phrase", "transcript", "content", "audio"}
         if forbidden.intersection(payload or {}):
             return JSONResponse(
-                {"success": False, "error": "First-value receipts never accept phrase content."},
+                {
+                    "success": False,
+                    "error": "First-value receipts never accept phrase content.",
+                },
                 status_code=400,
             )
         try:
@@ -98,7 +143,10 @@ def build_setup_router(ctx: WebContext) -> APIRouter:
         forbidden = {"text", "phrase", "transcript", "content", "audio"}
         if forbidden.intersection(payload or {}):
             return JSONResponse(
-                {"success": False, "error": "First-value receipts never accept phrase content."},
+                {
+                    "success": False,
+                    "error": "First-value receipts never accept phrase content.",
+                },
                 status_code=400,
             )
         try:
@@ -176,9 +224,15 @@ def build_setup_router(ctx: WebContext) -> APIRouter:
         try:
             body = await request.json()
         except Exception:
-            return JSONResponse({"ok": False, "models": [], "detail": "Expected a JSON object."}, status_code=400)
+            return JSONResponse(
+                {"ok": False, "models": [], "detail": "Expected a JSON object."},
+                status_code=400,
+            )
         if not isinstance(body, dict):
-            return JSONResponse({"ok": False, "models": [], "detail": "Expected a JSON object."}, status_code=400)
+            return JSONResponse(
+                {"ok": False, "models": [], "detail": "Expected a JSON object."},
+                status_code=400,
+            )
         try:
             from ...intel.providers import profile_key_env
             from ...setup_runtime import discover_endpoint_models

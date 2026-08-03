@@ -58,7 +58,14 @@ export function objectMenuEntries(
   target: Extract<WorldMenuTarget, { type: "object" }>,
 ): WorkMenuEntry[] {
   const ctx: VerbContext = { selectedRef: target.ref };
-  return menuVerbs("object").map((v) => item(v, ctx));
+  const verbs = menuVerbs("object");
+  const ordinary = verbs.filter((v) => v.group !== "danger");
+  const danger = verbs.filter((v) => v.group === "danger");
+  return [
+    ...ordinary.map((v) => item(v, ctx)),
+    ...(danger.length ? [{ type: "sep" as const, id: "object.danger-sep" }] : []),
+    ...danger.map((v) => item(v, ctx)),
+  ];
 }
 
 export function zoneMenuEntries(

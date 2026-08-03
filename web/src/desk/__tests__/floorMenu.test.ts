@@ -26,6 +26,7 @@ beforeEach(() => {
     openPullout: vi.fn(),
     openInfoWindow: vi.fn(),
     openEditor: vi.fn(),
+    openAsk: vi.fn(),
   });
 });
 
@@ -53,6 +54,12 @@ describe("floorMenuEntries", () => {
     expect(
       launch.entries.map((e) => (e.type === "item" ? e.label : e.type)),
     ).toEqual(DESK_TOOLS.map((t) => t.label));
+    const ask = launch.entries.find(
+      (e) => e.type === "item" && e.id === "go.ask",
+    ) as Extract<WorkMenuEntry, { type: "item" }>;
+    expect(ask.label).toBe("Ask AI");
+    ask.onSelect();
+    expect(useDesk.getState().openAsk).toHaveBeenCalledOnce();
   });
 
   it("the floor verbs ride below a separator, ghosted honestly", () => {
@@ -75,7 +82,7 @@ describe("floorMenuEntries", () => {
 });
 
 describe("objectMenuEntries (registry-derived, parallel list #4 dead)", () => {
-  it("derives Open / Get Info / Ask this project / Edit with honest ghosts", () => {
+  it("derives Open / Get Info / Ask AI / Ask this project / Edit with honest ghosts", () => {
     const entries = objectMenuEntries({
       type: "object",
       id: "n1",
@@ -88,7 +95,11 @@ describe("objectMenuEntries (registry-derived, parallel list #4 dead)", () => {
     );
     expect(byId["object.open"].ghost).toBeNull();
     expect(byId["object.edit"].ghost).toBeNull();
+    expect(byId["object.ask"].ghost).toBeNull();
     expect(byId["object.ask-project"].ghost).toBe("Select a Project");
+    byId["object.ask"].onSelect();
+    expect(useDesk.getState().selectedIds).toEqual(["note:n1"]);
+    expect(useDesk.getState().openAsk).toHaveBeenCalledOnce();
     byId["object.open"].onSelect();
     expect(useDesk.getState().openPullout).toHaveBeenCalledWith("n1");
     byId["object.info"].onSelect();

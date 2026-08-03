@@ -10,7 +10,7 @@ import type { WorldObject } from "../world";
 import type { UnitPos } from "../store";
 import { MicButton } from "./MicButton";
 import { DeskEditor } from "./DeskEditor";
-import { EditorAIBar } from "./EditorAIBar";
+import { EditorAIBar, type EditorAIProposal } from "./EditorAIBar";
 import { runAsk } from "../ask";
 import { AI_VERBS } from "../editorAI";
 import { editorVoiceGrammar } from "../voice/grammars/editor";
@@ -47,6 +47,8 @@ export function InlineEditor({ o, u }: { o: WorldObject; u: UnitPos }) {
   const [more, setMore] = useState(false);
   const [editorView, setEditorView] = useState<EditorView | null>(null);
   const [aiBarForced, setAIBarForced] = useState(false);
+  const [proposal, setProposal] = useState<EditorAIProposal | null>(null);
+  const [appliedReceipt, setAppliedReceipt] = useState<string | null>(null);
 
   // Fresh field state seeded from the live item (the store's copy).
   const live = useMemo(
@@ -107,13 +109,24 @@ export function InlineEditor({ o, u }: { o: WorldObject; u: UnitPos }) {
         proposal.intentId === "continue" && from === to
           ? view.state.doc.sliceString(Math.max(0, from - 500), from)
           : selectedText;
+      const startedAt = performance.now();
       const result = await runAsk({
         lens: AI_VERBS[proposal.intentId].label,
         prompt: AI_VERBS[proposal.intentId].prompt.replace("{text}", context),
         context: [],
       });
       if (!result.ok) throw new Error(result.output || "AI request failed.");
-      replace(result.output);
+      setProposal({
+        original: context,
+        proposed: result.output,
+        lens: AI_VERBS[proposal.intentId].label,
+        receipt: {
+          target: result.egress?.host || result.egress?.scope || "local",
+          model: result.model,
+          latency: Math.round(performance.now() - startedAt),
+        },
+        range: { from, to },
+      });
     }
   };
 
@@ -137,6 +150,30 @@ export function InlineEditor({ o, u }: { o: WorldObject; u: UnitPos }) {
     commitGraph(next);
   };
 
+  const acceptProposal = () => {
+    if (!proposal || !editorView) return;
+    const { from, to } = proposal.range;
+    // A CodeMirror dispatch is history-aware: ⌘Z restores the source text.
+    editorView.dispatch({
+      changes: { from, to, insert: proposal.proposed },
+      selection: { anchor: from, head: from + proposal.proposed.length },
+    });
+    editorView.focus();
+    setAppliedReceipt(`${proposal.lens.toUpperCase()} APPLIED · ⌘Z TO UNDO`);
+    setProposal(null);
+  };
+
+  useEffect(() => {
+    const rejectOnEscape = (e: KeyboardEvent) => {
+      if (e.key !== "Escape" || !proposal) return;
+      e.preventDefault();
+      e.stopPropagation();
+      setProposal(null);
+    };
+    document.addEventListener("keydown", rejectOnEscape, true);
+    return () => document.removeEventListener("keydown", rejectOnEscape, true);
+  }, [proposal]);
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") closeEditor();
@@ -154,6 +191,48 @@ export function InlineEditor({ o, u }: { o: WorldObject; u: UnitPos }) {
     [side === "right" ? "left" : "right"]:
       `${(side === "right" ? u.x * 100 + 7 : (1 - u.x) * 100 + 7).toFixed(2)}%`,
   };
+  const proposalButtonStyle: React.CSSProperties = {
+    border: "1px solid var(--border)",
+    borderRadius: 0,
+    font: "600 10px/1 var(--font-mono)",
+    letterSpacing: ".06em",
+    padding: "4px 12px",
+  };
+  const proposalInset = proposal ? (
+    <div className="surface-aerogel" role="status" aria-live="polite">
+      <span style={{ fontSize: "var(--desk-surface-detail-size)", fontFamily: "var(--font-mono)", letterSpacing: ".06em" }}>
+        PROPOSED {proposal.lens.toUpperCase()}
+      </span>
+      <div style={{ fontSize: "13px", lineHeight: 1.5, whiteSpace: "pre-wrap" }}>
+        {proposal.proposed}
+      </div>
+      <div style={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 6 }}>
+        <button
+          type="button"
+          className="desk-chip"
+          style={{ ...proposalButtonStyle, background: "var(--ok-soft)", color: "var(--ok)" }}
+          onClick={acceptProposal}
+        >
+          ACCEPT
+        </button>
+        <button
+          type="button"
+          className="desk-chip"
+          style={{
+            ...proposalButtonStyle,
+            background: "var(--danger-signal-soft, color-mix(in srgb, var(--danger-signal) 12%, var(--surface-2)))",
+            color: "var(--danger-signal)",
+          }}
+          onClick={() => setProposal(null)}
+        >
+          REJECT
+        </button>
+        <span style={{ marginLeft: "auto", fontFamily: "var(--font-mono)", opacity: 0.72 }}>
+          {proposal.receipt.target} · {proposal.receipt.model || "model"} · {proposal.receipt.latency}ms
+        </span>
+      </div>
+    </div>
+  ) : null;
 
   return (
     <>
@@ -213,7 +292,10 @@ export function InlineEditor({ o, u }: { o: WorldObject; u: UnitPos }) {
               editorView={editorView}
               forceVisible={aiBarForced}
               onDismiss={() => setAIBarForced(false)}
+              onProposal={setProposal}
+              disabled={Boolean(proposal)}
             />
+            {proposalInset}
             <input
               value={f.tags}
               placeholder="Tags"
@@ -241,7 +323,10 @@ export function InlineEditor({ o, u }: { o: WorldObject; u: UnitPos }) {
               editorView={editorView}
               forceVisible={aiBarForced}
               onDismiss={() => setAIBarForced(false)}
+              onProposal={setProposal}
+              disabled={Boolean(proposal)}
             />
+            {proposalInset}
           </>
         )}
         {o.kind === "workflow" && (
@@ -446,6 +531,11 @@ export function InlineEditor({ o, u }: { o: WorldObject; u: UnitPos }) {
               }
             }}
           />
+          {appliedReceipt ? (
+            <span role="status" style={{ fontFamily: "var(--font-mono)", fontSize: "var(--desk-surface-detail-size)" }}>
+              {appliedReceipt}
+            </span>
+          ) : null}
           <span className="desk-editor-spacer" />
           <button
             type="button"

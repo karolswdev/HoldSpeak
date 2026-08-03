@@ -2,7 +2,7 @@
 // docked in-world panel — the desk stays visible and alive behind it (the
 // 17-08 atelier posture, never a modal) — and the result prints as a turn you
 // judge: keep (a real synced Artifact carrying every card read + the exact
-// instruction) or bin (nothing stored). The egress chip is per-RUN honest:
+// instruction) or bin (nothing stored). The egress lamp is per-RUN honest:
 // pre-run it names the picked profile's target; printed, it names where the
 // run actually went.
 // HS-111-05 — the query console (audit §3): the exchange is SurfaceTraffic
@@ -41,12 +41,17 @@ import { DeskWindowFrame } from "./DeskWindow";
 import { Material } from "../surface/Material";
 import { SurfaceTraffic, SurfaceTrafficTurn } from "../surface/Surface";
 import {
-  EgressChip,
   GadgetGroup,
+  LampGadget,
   LedMeter,
   MxRadio,
   TransportKey,
 } from "../surface/gadgets";
+import {
+  boundaryEgressLamp,
+  egressScopeLamp,
+  inferenceEgressLamp,
+} from "../inferenceEgress";
 import { CitationChips, groundedMatchCount } from "../surface/citations";
 import { Button } from "../../components/signal/Signal";
 
@@ -162,13 +167,15 @@ export function AskPanel() {
 
   // Before execution this names the selected boundary; the printed receipt is
   // the hub's actual placement, never a client-side inference.
-  const composeEgress = useMemo(() => {
-    const target = inferenceTargets.find((item) => item.id === profileId);
-    return {
-      local: target?.boundary === "same_device",
-      text: `${target?.boundary === "same_device" ? "⌂" : "→"} ${target?.name || "This device"}`,
-    };
-  }, [profileId, inferenceTargets]);
+  const composeTarget = useMemo(
+    () => inferenceTargets.find((item) => item.id === profileId),
+    [profileId, inferenceTargets],
+  );
+  const composeLamp = inferenceEgressLamp(composeTarget);
+  const composeEgress = {
+    local: composeLamp.tone === "ok",
+    text: composeTarget?.name || "No model",
+  };
 
   const ask = async () => {
     if (!prompt.trim() || phase === "routing" || overBudget) return;
@@ -228,30 +235,16 @@ export function AskPanel() {
     closeAsk();
   };
 
-  const printedEgress = result?.egress
-    ? result.egress.scope === "local"
-      ? {
-          text: result.model
-            ? `⌂ This device · ${result.model}`
-            : "⌂ This device",
-          title: "This run stayed on this device.",
-        }
-      : result.egress.scope === "mesh"
-        ? {
-            text: `⇄ ${["Paired", result.egress.host, result.model].filter(Boolean).join(" · ")}`,
-            title: "This run went to a paired device on your network.",
-          }
-        : {
-            text: `→ ${["Leaves device", result.egress.host, result.model].filter(Boolean).join(" · ")}`,
-            title: "This run left the device for the named service.",
-          }
-    : null;
-
   const receipt = result?.groundingReceipt || null;
   const flaggedClaims = (result?.groundingClaims || []).filter(
     (c) => c.flagged,
   );
   const placement = result?.actualPlacement || null;
+  const printedBoundary = placement?.boundary;
+  const printedLamp =
+    typeof printedBoundary === "string"
+      ? boundaryEgressLamp(printedBoundary)
+      : egressScopeLamp(result?.egress?.scope);
   const placementTokens = placement
     ? [
         placement.engine ? String(placement.engine) : "",
@@ -312,20 +305,6 @@ export function AskPanel() {
           ? askLineageLine(printedContext.current, lens)
           : "Ask AI"
       }
-      actions={
-        phase === "printed" && printedEgress ? (
-          <EgressChip label={printedEgress.text} title={printedEgress.title} />
-        ) : (
-          <EgressChip
-            label={composeEgress.text}
-            title={
-              composeEgress.local
-                ? "This run stays on this device."
-                : "This run leaves for the named destination."
-            }
-          />
-        )
-      }
       open
       onClose={() => {
         if (phase !== "routing") bin();
@@ -366,11 +345,14 @@ export function AskPanel() {
               prefix="HUB>"
               meta={
                 <>
-                  {printedEgress ? (
-                    <EgressChip
-                      label={printedEgress.text}
-                      title={printedEgress.title}
-                    />
+                  {result.egress ? (
+                    <span className="surface-detail">
+                      ran on{" "}
+                      <LampGadget on {...printedLamp} />
+                      {[result.egress.host, result.model]
+                        .filter(Boolean)
+                        .map((detail) => ` · ${detail}`)}
+                    </span>
                   ) : null}
                   {placementTokens.map((token) => (
                     <span key={token} className="surface-token">
@@ -520,6 +502,10 @@ export function AskPanel() {
                     {context.length === 1 ? "CARD" : "CARDS"}
                   </span>
                 )}
+                <LampGadget on {...composeLamp} />
+                {composeTarget?.name ? (
+                  <span className="surface-detail">{composeTarget.name}</span>
+                ) : null}
               </div>
             </div>
 

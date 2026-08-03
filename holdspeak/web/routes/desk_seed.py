@@ -48,6 +48,8 @@ def build_desk_seed_router(ctx: WebContext) -> APIRouter:
                 "tombstoned_total": report.tombstoned_total,
                 "seeded": dict(seed.applied) if seed else {},
                 "seeded_total": seed.total if seed else 0,
+                "profiles_seeded": seed.profiles_seeded if seed else 0,
+                "profiles_adopted": dict(seed.profiles_adopted) if seed else {},
                 "filed": seed.filed if seed else 0,
                 "manifest": seed.manifest if seed else None,
             })

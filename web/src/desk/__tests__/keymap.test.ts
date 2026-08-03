@@ -10,17 +10,22 @@ const kd = (init: KeyboardEventInit) => new KeyboardEvent("keydown", init);
 beforeEach(() => {
   usePalette.setState({ open: false });
   useShortcutSheet.setState({ open: false });
-  useDesk.setState({ createPrimitive: vi.fn().mockResolvedValue(undefined) });
+  useDesk.setState({
+    createPrimitive: vi.fn().mockResolvedValue(undefined),
+    openAsk: vi.fn(),
+  });
 });
 
 describe("parseKey / matchKey (⌘-notation is the binding truth)", () => {
   it("parses the grammar's chords", () => {
-    expect(parseKey("⌘K")).toEqual({ meta: true, ctrl: false, key: "k" });
-    expect(parseKey("⌘1")).toEqual({ meta: true, ctrl: false, key: "1" });
-    expect(parseKey("⌃`")).toEqual({ meta: false, ctrl: true, key: "`" });
+    expect(parseKey("⌘K")).toEqual({ meta: true, ctrl: false, plain: false, key: "k" });
+    expect(parseKey("⌘I")).toEqual({ meta: true, ctrl: false, plain: false, key: "i" });
+    expect(parseKey("⌘1")).toEqual({ meta: true, ctrl: false, plain: false, key: "1" });
+    expect(parseKey("⌃`")).toEqual({ meta: false, ctrl: true, plain: false, key: "`" });
     expect(parseKey("⌃↑")).toEqual({
       meta: false,
       ctrl: true,
+      plain: false,
       key: "ArrowUp",
     });
     expect(parseKey("Esc")).toBeNull();
@@ -48,6 +53,12 @@ describe("dispatchKey runs registry verbs", () => {
     const ran = dispatchKey(kd({ key: "/", metaKey: true }));
     expect(ran?.id).toBe("system.sheet");
     expect(useShortcutSheet.getState().open).toBe(true);
+  });
+
+  it("⌘I opens Ask AI without a selection", () => {
+    const ran = dispatchKey(kd({ key: "i", metaKey: true }));
+    expect(ran?.id).toBe("go.ask");
+    expect(useDesk.getState().openAsk).toHaveBeenCalledOnce();
   });
 
   it("⌘N creates a note and ⌘⇧N creates a decision", () => {

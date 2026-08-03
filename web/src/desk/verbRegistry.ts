@@ -58,6 +58,14 @@ export function verbLabel(v: Verb, ctx: VerbContext): string {
 }
 
 const EDITABLE = new Set(["note", "kb", "recipe", "workflow"]);
+const ASKABLE = new Set([
+  "note",
+  "kb",
+  "recipe",
+  "meeting",
+  "artifact",
+  "workflow",
+]);
 
 function selected(ctx: VerbContext) {
   if (!ctx.selectedRef) return null;
@@ -267,6 +275,24 @@ export const VERBS: Verb[] = [
     },
   },
   {
+    id: "object.ask",
+    label: "Ask AI",
+    menu: "object",
+    scope: "object",
+    ghost: (ctx) => {
+      const o = selected(ctx);
+      if (!o) return "Select an object";
+      return ASKABLE.has(o.kind) ? null : "Ask unavailable";
+    },
+    run: (ctx) => {
+      const o = selected(ctx);
+      if (!o || !ASKABLE.has(o.kind)) return;
+      const desk = useDesk.getState();
+      desk.setSelected([`${o.kind}:${o.id}`]);
+      desk.openAsk();
+    },
+  },
+  {
     id: "object.edit",
     label: "Edit",
     menu: "object",
@@ -290,10 +316,14 @@ export const VERBS: Verb[] = [
       menu: "go",
       scope: "go",
       group: "launch",
-      key: binding?.key,
+      key: tool.action === "ask" ? "⌘I" : binding?.key,
       keywords: tool.description.toLocaleLowerCase().split(/\W+/).slice(0, 6),
       ghost: never,
       run: () => {
+        if (tool.action === "ask") {
+          useDesk.getState().openAsk();
+          return;
+        }
         if (binding && focusOrRestoreApp(binding.windowId)) return;
         openSurfaceOr(tool.action, tool.href, tool.subjectRef);
       },

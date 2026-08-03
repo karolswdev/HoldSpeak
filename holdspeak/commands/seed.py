@@ -20,8 +20,11 @@ def run_seed_command(args) -> int:
         return 1
 
     print(f"Applied the packaged '{report.manifest}' seed:")
+    print(f"  profiles seeded: {report.profiles_seeded}")
     for section, count in sorted(report.applied.items()):
         print(f"  {section}: {count}")
+    for field, profile_id in sorted(report.profiles_adopted.items()):
+        print(f"  adopted {field}: {profile_id}")
     print(f"  filed: {report.filed}")
     print("Re-running is safe: the seed upserts by id, never duplicates.")
     return 0

@@ -7,6 +7,29 @@
 # `holdspeak.db.seed` (repository-level), reachable via `holdspeak seed`
 # and POST /api/desk/seed. Never auto-applied at boot: a fresh install
 # stays an empty floor until the owner asks.
+profiles:
+  - id: hs-seed-homelab
+    name: Homelab
+    kind: openAICompatible
+    base_url: "http://192.168.1.43:8080/v1"
+    model: "Qwythos-9B-Claude-Mythos-5-1M-Q6_K.gguf"
+    context_limit: 131072
+    requires_key: false
+
+recipes:
+  - id: hs-seed-agent-reviewer
+    name: Architecture reviewer
+    role: Senior software architect
+    system_prompt: |
+      You are a senior software architect reviewing work products. You read code, documents, and decisions with the eye of someone who has shipped large systems. You are direct, specific, and constructive. When you find a problem, you name it, explain why it matters, and suggest one concrete fix. You do not pad feedback with praise. You do not use jargon when a plain word works. You are the colleague who makes the work better by being honest about it.
+    tags: [architecture, review]
+
+workflows:
+  - id: hs-seed-workflow-summarize
+    name: Summarize material
+    prompt: |
+      Summarize the provided material in a concise, structured format. Lead with the single most important takeaway. Then list key points as bullets. End with any open questions or decisions that remain unresolved. Be specific — name the things, don't describe them generically.
+
 directories:
   - id: hs-desk-adrs
     name: ADRs

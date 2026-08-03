@@ -24,6 +24,8 @@ from typing import TYPE_CHECKING, Any
 
 import yaml
 
+from ..config import CONFIG_FILE, Config
+
 if TYPE_CHECKING:  # pragma: no cover
     from .core import Database
 
@@ -50,16 +52,20 @@ class SeedError(ValueError):
 class SeedReport:
     manifest: str
     applied: dict[str, int] = field(default_factory=dict)
+    profiles_seeded: int = 0
+    profiles_adopted: dict[str, str] = field(default_factory=dict)
     filed: int = 0
 
     @property
     def total(self) -> int:
-        return sum(self.applied.values())
+        return self.profiles_seeded + sum(self.applied.values())
 
     def to_dict(self) -> dict[str, Any]:
         return {
             "manifest": self.manifest,
             "applied": dict(self.applied),
+            "profiles_seeded": self.profiles_seeded,
+            "profiles_adopted": dict(self.profiles_adopted),
             "filed": self.filed,
             "total": self.total,
         }
@@ -92,10 +98,38 @@ def load_manifest(name: str = DEFAULT_SEED) -> dict[str, Any]:
     return doc
 
 
-def apply_seed(db: "Database", name: str = DEFAULT_SEED) -> SeedReport:
-    """Upsert the packaged seed into the desk repositories (idempotent by id)."""
+def apply_seed(
+    db: "Database", name: str = DEFAULT_SEED, *, adopt: bool = True
+) -> SeedReport:
+    """Upsert the packaged seed into repositories (idempotent by id)."""
     manifest = load_manifest(name)
     report = SeedReport(manifest=name)
+
+    first_profile_id: str | None = None
+    for item in manifest.get("profiles") or []:
+        if not isinstance(item, dict) or not str(item.get("id") or "").strip():
+            raise SeedError(
+                "profiles item missing deterministic id "
+                f"(the idempotency contract): {item!r}"
+            )
+        profile_id = str(item["id"]).strip()
+        db.profiles.upsert(
+            profile_id=profile_id,
+            name=str(item.get("name") or ""),
+            kind=str(item.get("kind") or "onDevice"),
+            model_file=str(item.get("model_file") or ""),
+            base_url=str(item.get("base_url") or ""),
+            model=str(item.get("model") or ""),
+            node=str(item.get("node") or ""),
+            context_limit=int(item.get("context_limit") or 16384),
+            requires_key=bool(item.get("requires_key", False)),
+        )
+        report.profiles_seeded += 1
+        if first_profile_id is None:
+            first_profile_id = profile_id
+
+    if adopt and first_profile_id:
+        report.profiles_adopted = _adopt_profiles(first_profile_id)
 
     # Deterministic id -> qualified membership ref, derived from the section
     # each item is declared in (the UAT rig's same refs contract).
@@ -129,6 +163,21 @@ def apply_seed(db: "Database", name: str = DEFAULT_SEED) -> SeedReport:
         db.directory_memberships.upsert(primitive_id=ref, directory_id=directory_id)
         report.filed += 1
     return report
+
+
+def _adopt_profiles(profile_id: str) -> dict[str, str]:
+    """Adopt a seeded profile only where the owner has no selection yet."""
+    config = Config.load(CONFIG_FILE)
+    adopted: dict[str, str] = {}
+    if config.dictation.runtime.profile_id is None:
+        config.dictation.runtime.profile_id = profile_id
+        adopted["dictation.runtime.profile_id"] = profile_id
+    if config.meeting.intel_profile_id is None:
+        config.meeting.intel_profile_id = profile_id
+        adopted["meeting.intel_profile_id"] = profile_id
+    if adopted:
+        config.save(CONFIG_FILE)
+    return adopted
 
 
 def _apply_item(db: "Database", section: str, item: dict[str, Any]) -> None:

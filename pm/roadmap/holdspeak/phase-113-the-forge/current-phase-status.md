@@ -1,12 +1,15 @@
 # Phase 113 - The Forge
 
-**Status:** DRAFT. Eleven stories that turn the Desk into an
-Architect's operating system — Workbench 2.0+ on steroids. Two
-sides of one coin: **build** (shared kit, real editor, AI,
-voice, git drawers, DW primitives, decisions) and **polish**
-(kill the animated diorama, fix the compositor, refit every
-existing surface onto the kit). When this phase ships, the Desk
-IS the OS — not a web app that approximates one.
+**Status:** DRAFT. Fifteen stories that turn the Desk into an
+Architect's operating system — Workbench 2.0+ on steroids. Three
+tracks: **build** (shared kit, real editor, AI, voice, git
+drawers, DW primitives, decisions), **polish** (kill the animated
+diorama, fix the compositor, refit every existing surface onto the
+kit), and **operate** (formatting toolbar, creation flow, delete/
+undo, discoverability). When this phase ships, the Desk IS the OS
+— not a web app that approximates one, not a developer scratchpad
+that requires knowing markdown syntax, not a maze where features
+are built but unfindable.
 
 **Last updated:** 2026-08-02 (expanded from 4 to 8 stories after
 ideation session).
@@ -92,6 +95,15 @@ promise today:
 | 10 | [The compositor](./story-10-the-compositor.md) | "Windows should behave like a real OS compositor" | backlog |
 | 11 | [The refit](./story-11-the-refit.md) | "Every surface must be built from the same kit" | backlog |
 
+### Operate — make the OS actually productive
+
+| # | Story | The ask it answers | Status |
+|---|-------|--------------------|--------|
+| 12 | [The composing desk](./story-12-the-composing-desk.md) | "Where's bold? Where's heading? These are .md files" | backlog |
+| 13 | [The creation flow](./story-13-the-creation-flow.md) | "How do I even create a note? Where's Cmd+N?" | backlog |
+| 14 | [Object lifecycle](./story-14-object-lifecycle.md) | "I can't delete anything. There's no undo." | backlog |
+| 15 | [Discoverability](./story-15-discoverability.md) | "Features exist but I can't find them" | backlog |
+
 ## Story status
 
 | ID | Story | Status | Story file | Evidence |
@@ -107,6 +119,10 @@ promise today:
 | HS-113-09 | The static desk | backlog | [story-09-the-static-desk](./story-09-the-static-desk.md) | — |
 | HS-113-10 | The compositor | backlog | [story-10-the-compositor](./story-10-the-compositor.md) | — |
 | HS-113-11 | The refit | backlog | [story-11-the-refit](./story-11-the-refit.md) | — |
+| HS-113-12 | The composing desk | backlog | [story-12-the-composing-desk](./story-12-the-composing-desk.md) | — |
+| HS-113-13 | The creation flow | backlog | [story-13-the-creation-flow](./story-13-the-creation-flow.md) | — |
+| HS-113-14 | Object lifecycle | backlog | [story-14-object-lifecycle](./story-14-object-lifecycle.md) | — |
+| HS-113-15 | Discoverability | backlog | [story-15-discoverability](./story-15-discoverability.md) | — |
 
 ## Where we are
 

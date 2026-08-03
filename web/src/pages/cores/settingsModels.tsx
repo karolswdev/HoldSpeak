@@ -8,6 +8,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "../../components/signal/Signal";
 import { apiFetch, readableError, type JsonRecord } from "../../lib/api";
+import { ConfirmVerb } from "../../desk/surface/Surface";
 import {
   CheckGadget,
   CycleGadget,
@@ -32,6 +33,13 @@ type Target = {
   key_present: boolean;
   readiness_state: string;
   readiness_reason: string;
+};
+
+type ProbeResult = {
+  reachable: boolean;
+  latency_ms: number | null;
+  models: string[];
+  error: string | null;
 };
 
 const KIND_OPTIONS = [
@@ -82,10 +90,11 @@ export function ModelsModule({
   onRefuse(refusal: string): void;
 }) {
   const [targets, setTargets] = useState<Target[]>([]);
-  const [probe, setProbe] = useState<{ ok: boolean; detail: string } | null>(
-    null,
-  );
-  const [probing, setProbing] = useState(false);
+  const [probeResults, setProbeResults] = useState<Record<string, ProbeResult>>({});
+  const [probingIds, setProbingIds] = useState<Set<string>>(() => new Set());
+  const [hubDefault, setHubDefault] = useState<{ engine: string; model: string; available: boolean }>({
+    engine: "", model: "", available: false,
+  });
   const saveTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
 
   const reload = useCallback(async () => {
@@ -123,6 +132,9 @@ export function ModelsModule({
 
   useEffect(() => {
     void reload();
+    void apiFetch<{ engine: string; model: string; available: boolean }>(
+      "/api/setup/hub-default-summary",
+    ).then(setHubDefault).catch(() => {});
     const timers = saveTimers.current;
     return () => Object.values(timers).forEach(clearTimeout);
   }, [reload]);
@@ -149,6 +161,9 @@ export function ModelsModule({
   };
 
   const patch = (id: string, next: Partial<Target>) => {
+    if ("base_url" in next || "node" in next || "kind" in next) {
+      setProbeResults(({ [id]: _discarded, ...remaining }) => remaining);
+    }
     setTargets((rows) => {
       const updated = rows.map((row) =>
         row.id === id ? { ...row, ...next } : row,
@@ -194,20 +209,49 @@ export function ModelsModule({
     }
   };
 
-  const runProbe = async () => {
-    setProbing(true);
-    setProbe(null);
+  const probeTarget = async (id: string) => {
+    setProbingIds((ids) => new Set(ids).add(id));
     try {
-      const value = await apiFetch<{ ok?: boolean; detail?: string }>(
-        "/api/setup/runtime-test",
+      const result = await apiFetch<ProbeResult>(
+        `/api/inference-targets/${encodeURIComponent(id)}/probe`,
         { method: "POST" },
       );
-      setProbe({ ok: Boolean(value.ok), detail: String(value.detail ?? "") });
+      setProbeResults((results) => ({ ...results, [id]: result }));
+      onRefuse("");
     } catch (error) {
-      setProbe({ ok: false, detail: readableError(error) });
+      setProbeResults((results) => ({
+        ...results,
+        [id]: {
+          reachable: false,
+          latency_ms: null,
+          models: [],
+          error: readableError(error),
+        },
+      }));
     } finally {
-      setProbing(false);
+      setProbingIds((ids) => {
+        const next = new Set(ids);
+        next.delete(id);
+        return next;
+      });
     }
+  };
+
+  const probeLabel = (row: Target): { on: boolean; tone: "ok" | "fail"; label: string } | null => {
+    const result = probeResults[row.id];
+    if (!result) return null;
+    if (result.reachable) {
+      return {
+        on: true,
+        tone: "ok",
+        label: `READY${result.latency_ms == null ? "" : ` ${result.latency_ms}ms`}`,
+      };
+    }
+    return {
+      on: false,
+      tone: "fail",
+      label: `UNREACHABLE${result.error ? ` ${result.error}` : ""}`,
+    };
   };
 
   const val = (path: string[]): unknown =>
@@ -218,7 +262,9 @@ export function ModelsModule({
     );
 
   const pointerOptions = [
-    { value: "", label: "HUB DEFAULT" },
+    { value: "", label: hubDefault.available
+      ? `HUB DEFAULT · ${hubDefault.engine.toUpperCase()} · ${hubDefault.model.toUpperCase()}`
+      : "HUB DEFAULT · NO MODEL" },
     ...targets.map((row) => ({
       value: row.id,
       label: (row.name || row.id).toUpperCase(),
@@ -257,10 +303,34 @@ export function ModelsModule({
             head={["NAME", "KIND", "ENDPOINT", "MODEL", "KEY", "STATE"]}
             deleteLabel="FORGET?"
             rowKey={(index) => targets[index]?.id ?? String(index)}
-            onDelete={(index) => void remove(index)}
             onAdd={() => void add()}
             addLabel="+ DESTINATION"
-            rows={targets.map((row) => [
+            verbs={(index) => {
+              const row = targets[index];
+              if (!row) return null;
+              return (
+                <>
+                  <Button
+                    dense
+                    variant="ghost"
+                    loading={probingIds.has(row.id)}
+                    onClick={() => void probeTarget(row.id)}
+                  >
+                    TEST
+                  </Button>
+                  <ConfirmVerb
+                    label="×"
+                    confirmLabel="FORGET?"
+                    ariaLabel={`Delete destination ${index + 1}`}
+                    onConfirm={() => void remove(index)}
+                  />
+                </>
+              );
+            }}
+            rows={targets.map((row) => {
+              const result = probeResults[row.id];
+              const state = probeLabel(row);
+              return [
               <StringGadget
                 key="name"
                 label={`Target ${row.id} name`}
@@ -291,12 +361,22 @@ export function ModelsModule({
                   onChange={(next) => patch(row.id, { base_url: next })}
                 />
               ),
-              <StringGadget
-                key="model"
-                label={`Target ${row.id} model`}
-                value={row.model}
-                onChange={(next) => patch(row.id, { model: next })}
-              />,
+              result?.models.length ? (
+                <CycleGadget
+                  key="model"
+                  label={`Target ${row.id} model`}
+                  value={row.model}
+                  options={result.models.map((model) => ({ value: model }))}
+                  onChange={(next) => patch(row.id, { model: next })}
+                />
+              ) : (
+                <StringGadget
+                  key="model"
+                  label={`Target ${row.id} model`}
+                  value={row.model}
+                  onChange={(next) => patch(row.id, { model: next })}
+                />
+              ),
               <span key="key" className="gadget-key-cell">
                 <CheckGadget
                   label={`Target ${row.id} requires key`}
@@ -315,24 +395,13 @@ export function ModelsModule({
               </span>,
               <LampGadget
                 key="state"
-                on={row.readiness_state === "ready"}
-                tone={lampTone(row)}
-                label={row.readiness_state.toUpperCase()}
+                on={state ? state.on : row.readiness_state === "ready"}
+                tone={state ? state.tone : lampTone(row)}
+                label={state ? state.label : row.readiness_state.toUpperCase()}
               />,
-            ])}
+            ];
+            })}
           />
-        </GadgetRow>
-        <GadgetRow label="Reachability" fact="tests the dictation leg">
-          <Button dense loading={probing} onClick={() => void runProbe()}>
-            PROBE
-          </Button>
-          {probe ? (
-            <LampGadget
-              on={probe.ok}
-              tone={probe.ok ? "ok" : "fail"}
-              label={probe.detail || (probe.ok ? "OK" : "FAILED")}
-            />
-          ) : null}
         </GadgetRow>
       </GadgetGroup>
       <GadgetGroup label="Runs on">

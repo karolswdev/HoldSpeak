@@ -23,7 +23,8 @@ import { qualifiedRef } from "../api";
 import { RunsOnPicker } from "./RunsOnPicker";
 import { DeskFilingStrip } from "./DeskFilingStrip";
 import { humanizeWireValue, productLabel } from "../../lib/productLanguage";
-import { FoldGadget } from "../surface/gadgets";
+import { FoldGadget, LampGadget } from "../surface/gadgets";
+import { inferenceEgressLamp } from "../inferenceEgress";
 import { Material } from "../surface/Material";
 import {
   SurfaceCode,
@@ -255,6 +256,7 @@ export function Pullout({
   const selectedTarget =
     inferenceTargets.find((target) => target.id === runTargetId) ||
     inferenceTargets[0];
+  const targetLamp = inferenceEgressLamp(selectedTarget);
   const runLabel =
     contextualAction?.label ||
     capability.action_label ||
@@ -801,6 +803,10 @@ export function Pullout({
                   onChange={setRunTargetId}
                   disabled={runBusy}
                 />
+                <LampGadget on {...targetLamp} />
+                {selectedTarget?.name ? (
+                  <span className="surface-detail">{selectedTarget.name}</span>
+                ) : null}
               </div>
             </div>
             {runInputRecovered ? (

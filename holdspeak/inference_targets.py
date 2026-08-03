@@ -6,11 +6,13 @@ from engine/model choice, and readiness is derived without contacting a
 destination.  A caller can therefore render one honest ``Runs on`` picker
 without discovering availability by provoking a run.
 """
+
 from __future__ import annotations
 
 import ipaddress
 import os
 from dataclasses import dataclass
+from pathlib import Path
 from datetime import datetime
 from typing import Any, Optional
 from urllib.parse import urlparse
@@ -125,7 +127,9 @@ class InferenceTarget:
         actual_fallback = fallback_reason
         if self.kind == "paired_device" and provider == "cloud":
             actual_boundary = "paired_device_then_external_service"
-            actual_fallback = actual_fallback or "Paired device used its configured external engine"
+            actual_fallback = (
+                actual_fallback or "Paired device used its configured external engine"
+            )
         return {
             "target_id": self.id,
             "target_name": self.name,
@@ -133,14 +137,52 @@ class InferenceTarget:
             "boundary": actual_boundary,
             "owner": self.owner,
             "transport": self.transport,
-            "data_classes": ["instruction", "selected_context", "grounding", "generated_output"],
+            "data_classes": [
+                "instruction",
+                "selected_context",
+                "grounding",
+                "generated_output",
+            ],
             "engine": provider or self.engine,
             "model": model or self.model,
             "fallback_reason": actual_fallback,
         }
 
 
-def this_machine_target(*, name: str = "This device", model: str = "") -> InferenceTarget:
+def _this_machine_readiness() -> tuple[str, str]:
+    """Read the configured local runtime without loading its model."""
+    from .config import Config
+
+    runtime = Config.load().dictation.runtime
+    backend = str(runtime.backend or "auto").strip().lower()
+    mlx_model = str(runtime.mlx_model or "").strip()
+    llama_model = str(runtime.llama_cpp_model_path or "").strip()
+
+    if backend == "mlx":
+        model_paths = [mlx_model]
+    elif backend == "llama_cpp":
+        model_paths = [llama_model]
+    elif backend == "auto":
+        model_paths = [mlx_model, llama_model]
+    else:
+        return "unavailable", f"unsupported local backend: {backend}"
+
+    existing_paths = [
+        model_path
+        for model_path in model_paths
+        if model_path and Path(model_path).expanduser().exists()
+    ]
+    if existing_paths:
+        return "ready", ""
+    if len(model_paths) == 1:
+        return "unavailable", f"model file not found: {model_paths[0]}"
+    return "unavailable", f"model file not found: {' or '.join(model_paths)}"
+
+
+def this_machine_target(
+    *, name: str = "This device", model: str = ""
+) -> InferenceTarget:
+    state, reason = _this_machine_readiness()
     return InferenceTarget(
         id=THIS_MACHINE_ID,
         name=name,
@@ -152,10 +194,14 @@ def this_machine_target(*, name: str = "This device", model: str = "") -> Infere
         engine="configured_local_engine",
         model=model,
         context_limit=16_384,
+        readiness_state=state,
+        readiness_reason=reason,
     )
 
 
-def paired_device_target(*, name: str = "Paired device", model: str = "") -> InferenceTarget:
+def paired_device_target(
+    *, name: str = "Paired device", model: str = ""
+) -> InferenceTarget:
     """The current hub as seen by an authenticated paired-device caller."""
     return InferenceTarget(
         id=PAIRED_DEVICE_ID,
@@ -185,12 +231,24 @@ def target_from_profile(profile: Any, db: Any = None) -> InferenceTarget:
 
     if legacy_kind == "onDevice":
         kind, boundary, owner, transport, engine = (
-            "this_device", "same_device", "you", "in_process", "local",
+            "this_device",
+            "same_device",
+            "you",
+            "in_process",
+            "local",
         )
-        model = model or str(getattr(profile, "model_file", "") or "").strip()
+        model_file = str(getattr(profile, "model_file", "") or "").strip()
+        model = model or model_file
+        if not model_file or not Path(model_file).expanduser().exists():
+            state = "unavailable"
+            reason = f"model file not found: {model_file}"
     elif legacy_kind == "desktop":
         kind, boundary, owner, transport, engine = (
-            "paired_device", "paired_device", "you", "paired_https", "paired_runtime",
+            "paired_device",
+            "paired_device",
+            "you",
+            "paired_https",
+            "paired_runtime",
         )
         if db is not None and model:
             manifests = [m for m in db.model_manifests.list() if m.node == "desktop"]
@@ -199,7 +257,11 @@ def target_from_profile(profile: Any, db: Any = None) -> InferenceTarget:
                 reason = f"Paired device no longer advertises model '{model}'"
     elif legacy_kind == "meshNode":
         kind, boundary, owner, transport, engine = (
-            "mesh_node", "private_mesh", "you", "mesh_relay", "node_runtime",
+            "mesh_node",
+            "private_mesh",
+            "you",
+            "mesh_relay",
+            "node_runtime",
         )
         if not node:
             state, reason = "unsupported", f"Destination '{name}' names no mesh node"
@@ -223,7 +285,10 @@ def target_from_profile(profile: Any, db: Any = None) -> InferenceTarget:
         transport, engine = "https", "openai_compatible"
         parsed = urlparse(base_url)
         if parsed.scheme not in {"http", "https"} or not parsed.netloc:
-            state, reason = "unsupported", f"Destination '{name}' has no valid endpoint URL"
+            state, reason = (
+                "unsupported",
+                f"Destination '{name}' has no valid endpoint URL",
+            )
         elif requires_key and not key_present:
             from .intel.providers import profile_key_env
 
@@ -231,9 +296,16 @@ def target_from_profile(profile: Any, db: Any = None) -> InferenceTarget:
             reason = f"Destination '{name}' needs a key in ${profile_key_env(pid)}"
     else:
         kind, boundary, owner, transport, engine = (
-            "unsupported", "unknown", "unknown", "none", "unknown",
+            "unsupported",
+            "unknown",
+            "unknown",
+            "none",
+            "unknown",
         )
-        state, reason = "unsupported", f"Destination '{name}' has unsupported kind '{legacy_kind or 'unknown'}'"
+        state, reason = (
+            "unsupported",
+            f"Destination '{name}' has unsupported kind '{legacy_kind or 'unknown'}'",
+        )
 
     return InferenceTarget(
         id=pid,
@@ -254,7 +326,9 @@ def target_from_profile(profile: Any, db: Any = None) -> InferenceTarget:
 
 
 def list_inference_targets(db: Any) -> list[InferenceTarget]:
-    return [this_machine_target()] + [target_from_profile(p, db) for p in db.profiles.list()]
+    return [this_machine_target()] + [
+        target_from_profile(p, db) for p in db.profiles.list()
+    ]
 
 
 def resolve_inference_target(db: Any, target_id: Optional[str]) -> InferenceTarget:
@@ -287,7 +361,8 @@ def resolve_inference_target(db: Any, target_id: Optional[str]) -> InferenceTarg
 
 def target_refusal(target: InferenceTarget) -> dict[str, Any]:
     return {
-        "error": target.readiness_reason or f"Destination '{target.name}' is unavailable",
+        "error": target.readiness_reason
+        or f"Destination '{target.name}' is unavailable",
         "code": f"inference_target_{target.readiness_state}",
         "inference_target": target.to_dict(),
         "alternate_target_id": THIS_MACHINE_ID,
@@ -311,7 +386,10 @@ def build_intel_for_target(target: InferenceTarget, db: Any) -> Any:
     """
     from .config import Config
     from .intel.engine import MeetingIntel
-    from .intel.providers import build_configured_meeting_intel, build_meeting_intel_for_profile
+    from .intel.providers import (
+        build_configured_meeting_intel,
+        build_meeting_intel_for_profile,
+    )
 
     if target.kind == "this_device":
         # Preserve the long-standing injectable constructor seam used by host

@@ -353,6 +353,8 @@ interface DeskState {
     id: string,
     patch: Record<string, unknown>,
   ): Promise<void>;
+  /** Tombstone a deletable primitive, then settle all local desk faces. */
+  deletePrimitive(id: string, kind: string): Promise<void>;
   renameZone(id: string, name: string): Promise<void>;
   /** Open an object card. A second object opens a SECOND card (windows
    * coexist); reopening an open object focuses its card. `origin` is
@@ -696,6 +698,39 @@ export const useDesk = create<DeskState>((set, get) => ({
     } catch {
       /* saves are on-change; the next one retries — the hub dot reports */
     }
+  },
+
+  async deletePrimitive(id, kind) {
+    const paths: Record<string, string> = {
+      note: "notes",
+      decision: "decisions",
+      kb: "kbs",
+      recipe: "recipes",
+      directory: "directories",
+      chain: "chains",
+      workflow: "workflows",
+    };
+    const path = paths[kind];
+    if (!path) return;
+    try {
+      await apiRequest(`/api/${path}/${encodeURIComponent(id)}`, {
+        method: "DELETE",
+      });
+    } catch {
+      /* refresh reports reachability and preserves the object on failure */
+    }
+    get().clearPosition(id);
+    set({
+      editingId: get().editingId === id ? null : get().editingId,
+      pullouts: get().pullouts.filter((pullout) => pullout.id !== id),
+      infoWindows: get().infoWindows.filter(
+        (window) => window.ref !== qualifiedRef(kind, id) && window.ref !== id,
+      ),
+      selectedIds: get().selectedIds.filter(
+        (ref) => ref !== qualifiedRef(kind, id) && ref !== id,
+      ),
+    });
+    await get().refresh();
   },
 
   setHoverZone(id) {

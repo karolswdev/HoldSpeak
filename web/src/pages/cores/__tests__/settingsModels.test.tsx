@@ -45,6 +45,14 @@ const apiFetch = vi.fn(async (url: string, init?: { method?: string }) => {
       ],
     };
   }
+  if (url === "/api/inference-targets/p-43/probe" && init?.method === "POST") {
+    return {
+      reachable: true,
+      latency_ms: 12,
+      models: ["Qwen3.5-9B-Q6_K", "Llama-3.2"],
+      error: null,
+    };
+  }
   if (url === "/api/profiles")
     return {
       profiles: [
@@ -100,7 +108,7 @@ describe("ModelsModule (HS-112-01)", () => {
     for (const label of ["Dictation runs on", "Meetings runs on", "Rails runs on"]) {
       const picker = screen.getByLabelText(label) as HTMLSelectElement;
       const options = Array.from(picker.options).map((o) => o.textContent);
-      expect(options).toContain("HUB DEFAULT");
+      expect(options.some((o) => o?.startsWith("HUB DEFAULT"))).toBe(true);
       expect(options).toContain("LAN LLAMA");
       expect(options).toContain("PAID API");
     }
@@ -123,6 +131,27 @@ describe("ModelsModule (HS-112-01)", () => {
     expect(update).toHaveBeenCalledWith(
       ["dictation", "runtime", "profile_id"],
       null,
+    );
+  });
+
+  it("tests each destination and offers its discovered models", async () => {
+    render(
+      <ModelsModule settings={settings} update={vi.fn()} onRefuse={vi.fn()} />,
+    );
+    await screen.findByDisplayValue("LAN llama");
+
+    fireEvent.click(screen.getAllByRole("button", { name: "TEST" })[0]);
+
+    expect(await screen.findByText("READY 12ms")).toBeInTheDocument();
+    const model = screen.getByLabelText("Target p-43 model") as HTMLSelectElement;
+    expect(model.value).toBe("Qwen3.5-9B-Q6_K");
+    expect(Array.from(model.options).map((option) => option.value)).toEqual([
+      "Qwen3.5-9B-Q6_K",
+      "Llama-3.2",
+    ]);
+    expect(apiFetch).toHaveBeenCalledWith(
+      "/api/inference-targets/p-43/probe",
+      { method: "POST" },
     );
   });
 

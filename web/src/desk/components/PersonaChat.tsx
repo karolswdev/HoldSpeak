@@ -4,8 +4,8 @@
 // harvested to the desk; the HSM-15-12 grounding picker rides the
 // composer, per conversation.
 // HS-111-04 — the personnel record (audit §3.2): a record head (glyph
-// tile, name, role token, facts line, the ONE EgressChip species) over
-// a transmission log — prefixed mono `YOU>` / `<NAME>>` turns in the
+// tile, name, role token, facts line) over a transmission log — prefixed mono
+// `YOU>` / `<NAME>>` turns in the
 // sunken well, no bubbles, no hello card, no slide-in.
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useDesk } from "../store";
@@ -39,7 +39,12 @@ import {
   SurfaceTraffic,
   SurfaceTrafficTurn,
 } from "../surface/Surface";
-import { EgressChip, LedMeter, TransportKey } from "../surface/gadgets";
+import { LampGadget, LedMeter, TransportKey } from "../surface/gadgets";
+import {
+  boundaryEgressLamp,
+  egressScopeLamp,
+  inferenceEgressLamp,
+} from "../inferenceEgress";
 import { Button } from "../../components/signal/Signal";
 
 const turnId = () =>
@@ -105,8 +110,12 @@ export function PersonaChat(props: { personaId: string }) {
   if (!persona) return null;
 
   const limitTokens = (() => {
-    const p = profiles.find((x) => x.id === persona.profileId);
-    return Number(p?.context_limit) > 0 ? Number(p?.context_limit) : 16_384;
+    const selectedTarget = inferenceTargets.find(
+      (target: any) => target.id === inferenceTargetId,
+    );
+    return Number(selectedTarget?.context_limit) > 0
+      ? Number(selectedTarget?.context_limit)
+      : 16_384;
   })();
   const overBudget = groundingTokens(grounding) > limitTokens;
 
@@ -177,39 +186,27 @@ export function PersonaChat(props: { personaId: string }) {
     setTurns([]);
   };
 
-  // The ONE egress species (EgressChip): the turn's honest boundary as
-  // a token, never a second hand-rolled badge.
-  const egressChip = (t: ChatTurn) => {
+  const egressReceipt = (t: ChatTurn) => {
     if (!t.egress) return null;
-    if (t.egress.scope === "local") {
-      return (
-        <EgressChip
-          label={t.model ? `⌂ This device · ${t.model}` : "⌂ This device"}
-        />
-      );
-    }
-    if (t.egress.scope === "mesh") {
-      return (
-        <EgressChip
-          label={`⇄ ${["Paired", t.egress.host, t.model].filter(Boolean).join(" · ")}`}
-          title="This reply ran on a paired device on your network."
-        />
-      );
-    }
+    const boundary = t.actualPlacement?.boundary;
+    const lamp =
+      typeof boundary === "string"
+        ? boundaryEgressLamp(boundary)
+        : egressScopeLamp(t.egress.scope);
     return (
-      <EgressChip
-        label={`→ ${["Leaves device", t.egress.host, t.model].filter(Boolean).join(" · ")}`}
-        title="This reply left the device for the named service."
-      />
+      <span className="surface-detail">
+        ran on <LampGadget on {...lamp} />
+        {[t.egress.host, t.model]
+          .filter(Boolean)
+          .map((detail) => ` · ${detail}`)}
+      </span>
     );
   };
 
   const name = String(persona.name || personaId);
   const handle = name.toUpperCase();
   const target = inferenceTargets.find((t: any) => t.id === inferenceTargetId);
-  const lastEgress = [...turns]
-    .reverse()
-    .find((t) => t.role === "agent" && !t.error && t.egress);
+  const targetLamp = inferenceEgressLamp(target);
 
   return (
     <DeskWindowFrame
@@ -262,7 +259,6 @@ export function PersonaChat(props: { personaId: string }) {
               <span className="gadget-chip">{String(persona.role)}</span>
             ) : null}
           </span>
-          {lastEgress ? egressChip(lastEgress) : <EgressChip />}
         </header>
         <SurfaceFacts
           value={{
@@ -281,7 +277,7 @@ export function PersonaChat(props: { personaId: string }) {
               prefix={t.role === "you" ? "YOU>" : `${handle}>`}
               error={t.error}
               meta={
-                t.role === "agent" && !t.error ? egressChip(t) : undefined
+                t.role === "agent" && !t.error ? egressReceipt(t) : undefined
               }
               verbs={
                 t.role === "agent" && !t.error ? (
@@ -353,6 +349,10 @@ export function PersonaChat(props: { personaId: string }) {
               onChange={setInferenceTargetId}
               disabled={thinking}
             />
+            <LampGadget on {...targetLamp} />
+            {target?.name ? (
+              <span className="surface-detail">{target.name}</span>
+            ) : null}
           </div>
         </div>
         {inputRecovered ? (

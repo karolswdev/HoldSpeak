@@ -975,10 +975,12 @@
    1px keyline ring; rest windows quiet down. One property, one ladder —
    never per-window recipes. Sheets keep their own form. */
 .desk-next .desk-window-shell:not(.is-sheet) {
-  box-shadow: var(--desk-glass-edge), var(--desk-window-shadow-rest);
+  border: 1px solid var(--border);
+  box-shadow: var(--desk-window-bevel), var(--desk-glass-edge);
 }
 .desk-next .desk-window-shell.is-front:not(.is-sheet) {
-  box-shadow: var(--desk-glass-edge), var(--desk-window-shadow);
+  border-color: var(--desk-window-keyline);
+  box-shadow: var(--desk-window-bevel), var(--desk-glass-edge);
 }
 .desk-next .desk-window-handle {
   cursor: grab;
@@ -3891,10 +3893,8 @@
 .desk-next :where(.desk-pullout, .desk-surface-window, .desk-trust-window) {
   border-radius: var(--desk-window-radius);
   background: var(--desk-window-fill);
-  border: 0;
-  /* Materials spike — the frosted-glass rim (inner dark + outer light
-     hairline) rides UNDER the elevation in the same shadow stack. */
-  box-shadow: var(--desk-glass-edge), var(--desk-window-shadow);
+  border: 1px solid var(--border);
+  box-shadow: var(--desk-window-bevel), var(--desk-glass-edge);
   backdrop-filter: var(--desk-window-blur);
 }
 
@@ -4051,10 +4051,10 @@
 /* The in-world editor is a small window: the one material, a head
    band, a primary Done. */
 .desk-next .desk-editor {
-  border: 0;
+  border: 1px solid var(--desk-window-keyline);
   background: var(--desk-window-fill);
   backdrop-filter: var(--desk-window-blur);
-  box-shadow: var(--desk-glass-edge), var(--desk-transient-shadow);
+  box-shadow: var(--desk-window-bevel), var(--desk-glass-edge);
 }
 .desk-next .desk-editor-head {
   margin: -14px -14px 0;

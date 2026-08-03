@@ -15,6 +15,8 @@ describe("the verb registry (HS-105-05 / HS-111-07 v2)", () => {
   it("every verb has a unique id, a label, and a closed scope", () => {
     const ids = VERBS.map((v) => v.id);
     expect(new Set(ids).size).toBe(ids.length);
+    expect(ids).toContain("go.ask");
+    expect(ids).toContain("object.ask");
     for (const v of VERBS) {
       expect(verbLabel(v, CTX).length).toBeGreaterThan(0);
       expect(["floor", "object", "go", "window", "system"]).toContain(v.scope);
@@ -86,6 +88,7 @@ describe("the verb registry (HS-105-05 / HS-111-07 v2)", () => {
       "desk.new-note": "⌘N",
       "desk.new-decision": "⌘⇧N",
       "desk.overview": "⌃↑",
+      "go.ask": "⌘I",
       "go.dictate": "⌘1",
       "go.review-meetings": "⌘2",
       "go.inspect-personas-and-coders": "⌘3",

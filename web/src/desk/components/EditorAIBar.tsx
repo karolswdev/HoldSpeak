@@ -2,46 +2,61 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { EditorView } from "@codemirror/view";
 import { runAsk } from "../ask";
 import { AI_VERBS, type EditorAIVerb } from "../editorAI";
-import { EgressChip } from "../surface/gadgets";
+import { useDesk } from "../store";
+import { RunsOnPicker } from "./RunsOnPicker";
+import { LampGadget } from "../surface/gadgets";
+import { inferenceEgressLamp } from "../inferenceEgress";
+
+export interface EditorAIProposal {
+  original: string;
+  proposed: string;
+  lens: string;
+  receipt: {
+    target: string;
+    model: string;
+    latency: number;
+  };
+  range: { from: number; to: number };
+}
 
 interface EditorAIBarProps {
   editorView: EditorView | null;
-  onResult?: (text: string) => void;
+  /** A transform is proposed to the editor; it is never applied here. */
+  onProposal?: (proposal: EditorAIProposal) => void;
   /** DeskEditor's Cmd+J gives the user an explicit way to open this bar. */
   forceVisible?: boolean;
   onDismiss?: () => void;
+  /** An outstanding proposal must be decided before another transform runs. */
+  disabled?: boolean;
 }
 
-type Receipt =
-  | { tone: "error"; text: string }
-  | { tone: "egress"; text: string; scope: "local" | "mixed" | "cloud" };
+type Receipt = { tone: "error"; text: string };
 
 const CONTINUE_CONTEXT_LENGTH = 500;
-
-function egressReceipt(result: Awaited<ReturnType<typeof runAsk>>): Receipt {
-  if (!result.egress) return { tone: "egress", text: result.model || "Run complete", scope: "local" };
-  const scope = result.egress.scope === "mesh" ? "mixed" : result.egress.scope;
-  const marker = result.egress.scope === "local" ? "⌂" : result.egress.scope === "mesh" ? "⇄" : "→";
-  return {
-    tone: "egress",
-    scope,
-    text: [marker, result.egress.host, result.model].filter(Boolean).join(" "),
-  };
-}
 
 /** A compact, selection-scoped Ask control. It never persists a result itself. */
 export function EditorAIBar({
   editorView,
-  onResult,
+  onProposal,
   forceVisible = false,
   onDismiss,
+  disabled = false,
 }: EditorAIBarProps) {
+  const inferenceTargets = useDesk((s) => s.inferenceTargets);
+  const [inferenceTargetId, setInferenceTargetId] = useState("this_machine");
   const [selectionKey, setSelectionKey] = useState("");
   const [shownSelection, setShownSelection] = useState("");
   const [pending, setPending] = useState(false);
   const [receipt, setReceipt] = useState<Receipt | null>(null);
   const abortRef = useRef<AbortController | null>(null);
-  const receiptTimer = useRef<number | null>(null);
+
+  const target = useMemo(
+    () =>
+      inferenceTargets.find((item) => item.id === inferenceTargetId) ||
+      inferenceTargets[0],
+    [inferenceTargetId, inferenceTargets],
+  );
+  const targetLamp = inferenceEgressLamp(target);
 
   const selection = useMemo(() => {
     if (!editorView) return null;
@@ -87,13 +102,7 @@ export function EditorAIBar({
     return () => document.removeEventListener("keydown", onKeyDown, true);
   }, [editorView, pending, onDismiss]);
 
-  useEffect(
-    () => () => {
-      abortRef.current?.abort();
-      if (receiptTimer.current) window.clearTimeout(receiptTimer.current);
-    },
-    [],
-  );
+  useEffect(() => () => abortRef.current?.abort(), []);
 
   if (!editorView || !selection) return null;
   const key = `${selection.from}:${selection.to}`;
@@ -138,13 +147,16 @@ export function EditorAIBar({
     setPending(true);
     setReceipt(null);
     editorView.dom.classList.add("is-ai-pending");
+    const startedAt = performance.now();
     const template = AI_VERBS[verb].prompt.replace("{text}", context);
     const result = await runAsk({
       prompt: template,
       lens: AI_VERBS[verb].label,
       context: [],
+      inferenceTargetId: target?.id,
       signal: controller.signal,
     });
+    const latency = Math.round(performance.now() - startedAt);
     if (controller.signal.aborted) return;
 
     editorView.dom.classList.remove("is-ai-pending");
@@ -154,15 +166,18 @@ export function EditorAIBar({
       setReceipt({ tone: "error", text: result.output || "AI request failed." });
       return;
     }
-    editorView.dispatch({ changes: { from, to, insert: result.output } });
-    editorView.focus();
-    onResult?.(result.output);
-    setReceipt(egressReceipt(result));
-    if (receiptTimer.current) window.clearTimeout(receiptTimer.current);
-    receiptTimer.current = window.setTimeout(() => {
-      setReceipt(null);
-      dismiss();
-    }, 3000);
+    onProposal?.({
+      original: context,
+      proposed: result.output,
+      lens: AI_VERBS[verb].label,
+      receipt: {
+        target: result.egress?.host || result.egress?.scope || "local",
+        model: result.model,
+        latency,
+      },
+      range: { from, to },
+    });
+    dismiss();
   };
 
   return (
@@ -173,21 +188,24 @@ export function EditorAIBar({
             key={verb}
             type="button"
             className="desk-chip quiet"
-            disabled={pending}
+            disabled={pending || disabled || !target}
             onMouseDown={(event) => event.preventDefault()}
             onClick={() => void run(verb)}
           >
             {pending ? "Working…" : AI_VERBS[verb].label}
           </button>
         ))}
+        <RunsOnPicker
+          targets={inferenceTargets}
+          selectedId={inferenceTargetId}
+          onChange={setInferenceTargetId}
+          disabled={pending}
+        />
+        <LampGadget on {...targetLamp} />
         <button type="button" className="desk-chip quiet" onClick={dismiss} aria-label="Dismiss AI controls">×</button>
       </div>
       {receipt ? (
-        receipt.tone === "egress" ? (
-          <EgressChip label={receipt.text} scope={receipt.scope} title="This AI result's actual egress." />
-        ) : (
-          <span role="status" className="desk-editor-ai-bar-error">{receipt.text}</span>
-        )
+        <span role="status" className="desk-editor-ai-bar-error">{receipt.text}</span>
       ) : null}
     </div>
   );

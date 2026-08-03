@@ -22,6 +22,10 @@ def client(tmp_path, monkeypatch) -> TestClient:
     reset_database()
     db = Database(tmp_path / "holdspeak.db")
     monkeypatch.setattr(hsdb, "get_database", lambda *a, **k: db)
+    monkeypatch.setattr(
+        "holdspeak.inference_targets._this_machine_readiness",
+        lambda: ("ready", ""),
+    )
     app = FastAPI()
     app.include_router(build_primitives_router(WebContext(get_state=lambda: {})))
     yield TestClient(app)
@@ -115,7 +119,6 @@ def test_run_agent_invokes_engine(client: TestClient, monkeypatch) -> None:
         "holdspeak.intel.providers.build_configured_meeting_intel",
         lambda: _FakeIntel(),
     )
-
     resp = client.post(f"/api/recipes/{aid}/run", json={"input": "hello"})
     assert resp.status_code == 200
     body = resp.json()
@@ -768,6 +771,35 @@ def test_profile_crud_roundtrip(client: TestClient) -> None:
     assert client.delete(f"/api/profiles/{pid}").status_code == 405
     assert client.delete(f"/api/inference-targets/{pid}").status_code == 200
     assert client.get(f"/api/profiles/{pid}").status_code == 404
+
+
+def test_inference_target_probe_discovers_models_for_that_target(client: TestClient, monkeypatch) -> None:
+    created = client.post("/api/inference-targets", json={
+        "name": "LAN llama", "kind": "openAICompatible",
+        "base_url": "http://192.168.1.43:8080/v1", "model": "",
+    })
+    target_id = created.json()["inference_target"]["id"]
+    seen = {}
+
+    def discover(base_url, *, api_key=None, **_kwargs):
+        seen.update(base_url=base_url, api_key=api_key)
+        return {"ok": True, "models": ["qwen", "llama"], "detail": "Found 2 models."}
+
+    from holdspeak.intel.providers import profile_key_env
+
+    monkeypatch.setenv(profile_key_env(target_id), "target-key")
+    monkeypatch.setattr("holdspeak.setup_runtime.discover_endpoint_models", discover)
+
+    response = client.post(f"/api/inference-targets/{target_id}/probe")
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["reachable"] is True
+    assert isinstance(body["latency_ms"], int)
+    assert body["models"] == ["qwen", "llama"]
+    assert body["error"] is None
+    assert seen == {"base_url": "http://192.168.1.43:8080/v1", "api_key": "target-key"}
+    assert client.post("/api/inference-targets/missing/probe").status_code == 404
 
 
 def test_run_agent_resolves_assigned_profile(client: TestClient, monkeypatch) -> None:
