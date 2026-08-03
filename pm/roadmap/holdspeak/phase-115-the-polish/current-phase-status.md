@@ -153,15 +153,15 @@ and proves everything.
 
 | # | Story | The ask it answers | Status |
 |---|-------|--------------------|--------|
-| 03 | [Object windows](./story-03-object-windows.md) | "The editor doesn't resize, the inspector shows raw IDs" | backlog |
-| 04 | [System surfaces](./story-04-system-surfaces.md) | "Desk memory shows internal data, shade has wrong chrome" | backlog |
-| 05 | [Hosted cores](./story-05-hosted-cores.md) | "Workbench can't resize, cores dump JSON, typography drifts" | backlog |
+| 03 | [Object windows](./story-03-object-windows.md) | "The editor doesn't resize, the inspector shows raw IDs" | done |
+| 04 | [System surfaces](./story-04-system-surfaces.md) | "Desk memory shows internal data, shade has wrong chrome" | done |
+| 05 | [Hosted cores](./story-05-hosted-cores.md) | "Workbench can't resize, cores dump JSON, typography drifts" | done |
 
 ### The hardest problem
 
 | # | Story | The ask it answers | Status |
 |---|-------|--------------------|--------|
-| 06 | [The rails window](./story-06-the-rails-window.md) | "Delivery Workbench is overcomplicated and unusable" | backlog |
+| 06 | [The rails window](./story-06-the-rails-window.md) | "Delivery Workbench is overcomplicated and unusable" | done |
 
 ### Proof
 
@@ -175,20 +175,19 @@ and proves everything.
 |---|---|---|---|---|
 | HS-115-01 | The shared material | done | [story-01](./story-01-the-shared-material.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-115-02 | The honest surface | done | [story-02](./story-02-the-honest-surface.md) | [evidence-story-02](./evidence-story-02.md) |
-| HS-115-03 | Object windows | backlog | [story-03](./story-03-object-windows.md) | — |
-| HS-115-04 | System surfaces | backlog | [story-04](./story-04-system-surfaces.md) | — |
-| HS-115-05 | Hosted cores | backlog | [story-05](./story-05-hosted-cores.md) | — |
-| HS-115-06 | The rails window | backlog | [story-06](./story-06-the-rails-window.md) | — |
+| HS-115-03 | Object windows | done | [story-03](./story-03-object-windows.md) | [evidence-story-03](./evidence-story-03.md) |
+| HS-115-04 | System surfaces | done | [story-04](./story-04-system-surfaces.md) | [evidence-story-04](./evidence-story-04.md) |
+| HS-115-05 | Hosted cores | done | [story-05](./story-05-hosted-cores.md) | [evidence-story-05](./evidence-story-05.md) |
+| HS-115-06 | The rails window | done | [story-06](./story-06-the-rails-window.md) | [evidence-story-06](./evidence-story-06.md) |
 | HS-115-07 | The walk | backlog | [story-07](./story-07-the-walk.md) | — |
 | HS-115-08 | The cooled accent | done | [story-08](./story-08-the-cooled-accent.md) | [evidence-story-08](./evidence-story-08.md) |
 
 ## Where we are
 
-Foundation shipped (3/8). Stories 01 (shared material), 02 (honest
-surface), and 08 (cooled accent — forge ember #a86e4a) done. Chip
-bevel, section hairlines, sheet keyline, pullout material, shade
-head fill, dead tokens removed. 18 C1 content violations humanized
-or folded behind RAW. Accent cooled from #ff6b35 to #a86e4a, 19
-hard-coded fallbacks cleaned, text-on-accent flipped to light.
-Surface group stories (03–06) and the walk (07) remain. Audit
-artifact: https://claude.ai/code/artifact/f5788f46-2b99-4e7f-b6e5-281c03e7c01c
+7/8 shipped. Foundation (01, 02, 08) and surface groups (03–06) done.
+Only story 07 (the verification walk) remains. Every surface on the
+Desk has been remediated: shared material unified, 18+ content
+violations humanized, accent cooled to forge ember #a86e4a, bespoke
+controls migrated to chips, workbench nodes on bevel material,
+delivery board on unified fill, overflow and typography normalized.
+Audit artifact: https://claude.ai/code/artifact/f5788f46-2b99-4e7f-b6e5-281c03e7c01c

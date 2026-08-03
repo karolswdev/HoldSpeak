@@ -220,7 +220,8 @@
    slips (desk/surface/surface.css). */
 .workbench-canvas {
   position: relative;
-  height: max(600px, calc(100vh - 250px));
+  height: 100%;
+  min-height: 200px;
   overflow: auto;
   border: 1px solid var(--border);
   border-radius: 2px;
@@ -262,13 +263,11 @@
   align-content: center;
   padding: var(--space-4);
   text-align: left;
-  border: 1px solid var(--border-strong);
-  border-radius: var(--radius-lg);
-  background:
-    linear-gradient(145deg, rgba(255, 255, 255, 0.06), transparent),
-    var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  background: var(--surface-2);
   color: var(--text);
-  box-shadow: var(--elev-2);
+  box-shadow: var(--desk-window-bevel);
   cursor: grab;
   touch-action: none;
 }
@@ -276,8 +275,8 @@
   cursor: grabbing;
 }
 .workbench-node.selected {
-  border-color: var(--accent);
-  box-shadow: var(--glow-accent);
+  border-color: var(--desk-window-keyline);
+  box-shadow: var(--desk-window-bevel), var(--desk-glass-edge);
 }
 .workbench-node > span {
   color: var(--text-faint);
@@ -321,9 +320,9 @@
   margin: 520px 16px 16px;
   padding: var(--space-2);
   border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  background: rgba(21, 23, 29, 0.94);
-  box-shadow: var(--elev-2);
+  border-radius: 2px;
+  background: var(--desk-window-fill);
+  box-shadow: var(--desk-window-bevel);
 }
 .workbench-palette > span {
   padding-inline: var(--space-2);

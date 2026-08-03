@@ -227,7 +227,7 @@ export function WorkbenchCore({ hero, scope }: CoreProps) {
       );
       setRunOutput(String(result.output || ""));
       setArtifactId(result.artifact_id ? String(result.artifact_id) : null);
-      setStatus(`Receipt · ${result.invocation_id}`);
+      setStatus("Done");
     } catch (error) {
       setStatus(readableError(error));
     } finally {

@@ -23,7 +23,7 @@ function PhaseRow({ phase, expanded, onToggle }: { phase: RoadmapPhase; expanded
       <button type="button" className="desk-roadmap-phase-row" onClick={onToggle} aria-expanded={expanded}>
         <span className="desk-roadmap-chevron" aria-hidden="true">{expanded ? "▾" : "▸"}</span>
         <strong>PH {phase.number}</strong>
-        <span className="desk-roadmap-phase-title">{phase.title}</span>
+        <span className="desk-roadmap-phase-title" title={phase.title}>{phase.title}</span>
         <span className="desk-roadmap-count">{phase.storiesDone}/{phase.storiesTotal}</span>
         <Status value={phase.status} />
       </button>
@@ -32,7 +32,7 @@ function PhaseRow({ phase, expanded, onToggle }: { phase: RoadmapPhase; expanded
           {phase.stories.map((story) => (
             <li key={story.id}>
               <span className="desk-roadmap-story-id">{story.id}</span>
-              <span className="desk-roadmap-story-title">{story.title}</span>
+              <span className="desk-roadmap-story-title" title={story.title}>{story.title}</span>
               {story.hasEvidence ? <span className="desk-roadmap-evidence" title="Evidence captured">▣</span> : null}
               <Status value={story.status} />
             </li>

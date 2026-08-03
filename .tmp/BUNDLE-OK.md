@@ -1,1 +1,1 @@
-Foundation stories 01+02+08 are designed to ship together — they share the same CSS files, the accent swap touches the same tokens the material fixes rewired, and content sanitization depends on the chip/section material being correct.
+Surface group stories 03+04+05+06 are designed to ship together — they depend on the same foundation (stories 01/02/08) and collectively remediate every surface on the Desk against the audit checklist.

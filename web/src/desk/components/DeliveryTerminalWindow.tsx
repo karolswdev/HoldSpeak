@@ -204,11 +204,7 @@ export function DeliveryTerminalWindow() {
 
       <div className="desk-pullout-body">
         <p className="desk-dlv-target-line">
-          <span className="surface-token">{`TARGET ${target.targetId.slice(0, 12)}`}</span>
-          <span className="surface-token">{`GEN ${target.targetGeneration.slice(0, 8)}`}</span>
-          {target.worktreeId ? (
-            <span className="surface-token">{`WT ${target.worktreeId.slice(0, 8)}`}</span>
-          ) : null}
+          <span className="surface-token">{target.targetId.slice(0, 12)}</span>
         </p>
         <PaneWell
           live={live || status === "resyncing"}

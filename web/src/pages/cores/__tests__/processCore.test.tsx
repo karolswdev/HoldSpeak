@@ -67,7 +67,7 @@ describe("ProcessCore", () => {
     expect(screen.getByText("NEEDS YOU 1")).toBeTruthy();
     expect(screen.getByText(/PROCESS\.SPAWN · agent:build/)).toBeTruthy();
     expect(
-      screen.getByText(/owner · node:studio · build the surface · launch:launch_1/),
+      screen.getByText(/Owner · Node:studio/),
     ).toBeTruthy();
     expect(container.querySelector(".signal-status")).toBeNull();
     const answer = screen.getByRole("link", { name: "ANSWER" });

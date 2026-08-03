@@ -247,7 +247,7 @@ export function Pullout({
   const capability = ir.capability || {};
   const readiness = capability.readiness || {
     state: "unavailable",
-    detail: "Capability contract unavailable. Nothing was run. Reload the Desk to retry.",
+    detail: "No model configured",
   };
   const capabilityCanRun =
     readiness.state === "ready" &&

@@ -145,6 +145,7 @@ export function SystemShade({
                   />
                   <button
                     type="button"
+                    className="desk-chip quiet"
                     onClick={() => {
                       void gate.decide(proposal.id, "denied", denyReason);
                       setDenyingId(null);
@@ -155,7 +156,7 @@ export function SystemShade({
                   </button>
                   <button
                     type="button"
-                    className="is-quiet"
+                    className="desk-chip quiet"
                     onClick={() => setDenyingId(null)}
                   >
                     Back
@@ -165,12 +166,14 @@ export function SystemShade({
                 <span className="desk-shade-do">
                   <button
                     type="button"
+                    className="desk-chip is-primary"
                     onClick={() => void gate.decide(proposal.id, "approved")}
                   >
                     Approve
                   </button>
                   <button
                     type="button"
+                    className="desk-chip quiet"
                     onClick={() => {
                       setDenyingId(proposal.id);
                       setDenyReason("");

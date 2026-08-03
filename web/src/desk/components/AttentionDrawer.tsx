@@ -122,7 +122,7 @@ export function AttentionDrawer() {
                 }
               />
             </label>
-            <button type="submit">Filter</button>
+            <button type="submit" className="desk-chip quiet">Filter</button>
           </form>
           {store.error ? (
             <>
@@ -254,14 +254,12 @@ export function AttentionDrawer() {
               ) : null}
               {store.page.has_more ? (
                 <button
-                  className="desk-attention-more"
+                  className="desk-chip quiet"
                   type="button"
                   disabled={store.loading}
                   onClick={() => void store.loadMore()}
                 >
-                  {store.loading
-                    ? "Loading…"
-                    : `Load older (${store.page.total - store.projections.length} remain)`}
+                  {store.loading ? "Loading…" : "Load older"}
                 </button>
               ) : null}
             </>

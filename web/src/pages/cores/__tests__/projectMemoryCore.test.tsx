@@ -165,7 +165,7 @@ describe("Project Memory", () => {
         row={{ lifecycle: "superseded", superseded_by: "d-next" }}
       />,
     );
-    expect(screen.getByText("Superseded → d-next")).toBeTruthy();
+    expect(screen.getByText("Superseded")).toBeTruthy();
   });
 
   it("renders openable citation chips and derives the honest overflow count", () => {
@@ -182,7 +182,7 @@ describe("Project Memory", () => {
 
     expect(await screen.findByText("Since Kickoff")).toBeTruthy();
     expect(screen.getByText("Keep the Desk grammar")).toBeTruthy();
-    expect(screen.getByText("Superseded → d2")).toBeTruthy();
+    expect(screen.getByText("Superseded")).toBeTruthy();
   });
 
   it("shows an honest empty timeline", async () => {

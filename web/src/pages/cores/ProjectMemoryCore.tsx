@@ -87,8 +87,7 @@ export function composeProjectTimeline(
 
 export function lifecycleLabel(row: JsonRecord): string {
   const lifecycle = String(row.lifecycle || "recorded");
-  if (lifecycle === "superseded" && row.superseded_by)
-    return `Superseded → ${String(row.superseded_by)}`;
+  if (lifecycle === "superseded") return "Superseded";
   return lifecycle[0].toUpperCase() + lifecycle.slice(1);
 }
 

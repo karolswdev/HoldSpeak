@@ -497,7 +497,7 @@ export function InlineEditor({ o, u }: { o: WorldObject; u: UnitPos }) {
             ) : (
               <button
                 type="button"
-                className="desk-inline-editor-more"
+                className="desk-chip quiet"
                 onClick={() => setMore(true)}
               >
                 More

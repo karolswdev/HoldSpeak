@@ -76,15 +76,10 @@ export function TrustWindow() {
     >
       <div className="desk-surface-body">
         <p className="surface-lede">
-          {trust?.summary ??
-            "Current data boundaries and enabled destinations."}
+          {enabledDestinations.length > 0
+            ? "External destinations configured"
+            : "All data stays on this device"}
         </p>
-        {enabledDestinations.length > 0 ? (
-          <p role="alert" className="surface-lede">
-            External destinations are enabled. Review each authority boundary
-            and revoke action below.
-          </p>
-        ) : null}
         <SurfaceGroup>
           <SurfaceSettingRow
             label="Current scope"
@@ -138,7 +133,7 @@ export function TrustWindow() {
         <p>
           <button
             type="button"
-            className="btn-link"
+            className="desk-chip quiet"
             onClick={() => {
               useTrustWindow.getState().setOpen(false);
               openSurfaceOr("configure-settings", "/settings");

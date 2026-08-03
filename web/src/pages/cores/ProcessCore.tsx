@@ -7,6 +7,7 @@ import { Fragment, useEffect } from "react";
 import { useLaunchers } from "../../desk/components/DeskWindow";
 import { useProcessWindow } from "../../desk/processWindow";
 import type { ProcessRow } from "../../desk/processWindowReducer";
+import { humanizeWireValue } from "../../lib/productLanguage";
 import {
   SurfaceLedger,
   SurfaceLedgerRow,
@@ -56,10 +57,8 @@ function LedgerRows({
         const isDecision =
           row.latestEventType === "operation.awaiting_decision";
         const facts = [
-          row.principal,
-          row.placement,
-          row.head,
-          ...row.refs.filter((ref) => ref !== row.target),
+          row.principal ? humanizeWireValue(String(row.principal)) : "",
+          row.placement ? humanizeWireValue(String(row.placement)) : "",
         ].filter(Boolean);
         return (
           <Fragment key={row.operationId}>

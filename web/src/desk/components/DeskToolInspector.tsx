@@ -268,10 +268,10 @@ export function DeskToolInspector() {
                   {resource.object ? (
                     <button
                       type="button"
+                      className="desk-chip quiet"
                       onClick={() => openPullout(resource.resource_ref)}
                     >
-                      <strong>{resource.object.title}</strong>
-                      <small>{resource.relationship}</small>
+                      {resource.object.title}
                     </button>
                   ) : (
                     <span>

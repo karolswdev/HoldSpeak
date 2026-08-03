@@ -153,8 +153,8 @@ export function SetupCore({ hero }: CoreProps) {
             <SurfaceSection label="Next step">
               <p>
                 {resource.data.first_run
-                  ? "Try one real dictation when the required checks pass."
-                  : "Your first dictation is complete. The Desk is ready."}
+                  ? "Run one dictation to verify"
+                  : "Ready"}
               </p>
               <div className="surface-actions">
                 <Button

@@ -11,6 +11,7 @@
 import { useEffect } from "react";
 import { Button } from "../../components/signal/Signal";
 import { EgressChip, FoldGadget } from "../surface/gadgets";
+import { humanizeWireValue } from "../../lib/productLanguage";
 import {
   assetHref,
   useDeliveryDossier,
@@ -101,8 +102,8 @@ export function DeliveryDossierWindow() {
         {dossier?.kind === "story" ? (
           <>
             <p className="desk-dlv-facts-line">
-              <span className="surface-token">{`STATE ${dossier.status || "unknown"}`}</span>
-              <span className="surface-token">{`FRESH ${dossier.freshness || "unknown"}`}</span>
+              <span className="surface-token">{humanizeWireValue(String(dossier.status || "unknown"))}</span>
+              <span className="surface-token">{humanizeWireValue(String(dossier.freshness || "unknown"))}</span>
               <span className="surface-token">
                 {`HEAD ${dossier.headSha.slice(0, 12) || "uncommitted"}`}
               </span>

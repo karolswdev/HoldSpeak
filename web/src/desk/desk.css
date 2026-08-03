@@ -732,6 +732,8 @@
   position: absolute;
   z-index: 26;
   width: min(340px, 84vw);
+  max-height: calc(100dvh - 120px);
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -1920,8 +1922,11 @@
 }
 .desk-next .desk-askbar-count {
   color: var(--text-muted);
-  font-size: var(--font-size-sm);
-  font-weight: 700;
+  font-family: var(--font-mono);
+  font-size: var(--desk-surface-label-size);
+  font-weight: 600;
+  letter-spacing: var(--letter-spacing-eyebrow);
+  text-transform: uppercase;
 }
 
 /* the Ask panel rides the pull-out posture (docked, desk alive behind) */
@@ -2402,9 +2407,9 @@
    draining GRANT LedMeter. The accent-glow rings are dead. ── */
 .desk-next .desk-arm-refusal {
   color: var(--danger-signal);
-  font-size: 11px;
+  font-size: var(--font-size-xs);
   font-family: var(--font-mono);
-  max-width: 220px;
+  max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -3083,12 +3088,12 @@
   overflow: auto;
   z-index: var(--desk-z-window-base);
   padding: var(--space-2) var(--space-3);
-  /* HS-111: opaque fill */
-  background: var(--surface-1);
-  border: 1px solid var(--surface-3);
+  background: var(--desk-window-fill);
+  border: 1px solid var(--border);
   border-radius: 2px;
+  box-shadow: var(--desk-window-bevel);
   backdrop-filter: none;
-  font-size: 12px;
+  font-size: var(--desk-surface-body-size);
   color: var(--text-muted);
 }
 .desk-next .desk-dlv-board.is-floating {
@@ -3106,6 +3111,10 @@
   align-items: center;
   gap: 6px;
   flex-wrap: wrap;
+  font-family: var(--font-mono);
+  font-size: var(--desk-surface-label-size);
+  letter-spacing: var(--letter-spacing-eyebrow);
+  text-transform: uppercase;
 }
 .desk-next .desk-dlv-project {
   margin: 4px 0 4px 8px;
@@ -5037,8 +5046,10 @@ body:has(.desk-next .desk-pullout:not(.is-card)) .ambient-qlippy {
   color: var(--text-muted);
   max-width: 96px;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  word-break: break-word;
 }
 .desk-zone-window .zone-list {
   width: 100%;
@@ -5254,7 +5265,10 @@ body:has(.desk-next .desk-pullout:not(.is-card)) .ambient-qlippy {
 .desk-info-window .info-kv b {
   color: var(--text-muted);
   font-weight: 400;
-  font-size: var(--font-size-sm);
+  font-family: var(--font-mono);
+  font-size: var(--desk-surface-label-size);
+  letter-spacing: var(--letter-spacing-eyebrow);
+  text-transform: uppercase;
 }
 .desk-info-window .info-id {
   font-family: var(--font-mono);
