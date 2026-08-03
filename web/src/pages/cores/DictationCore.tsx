@@ -931,7 +931,7 @@ function SpeakFace() {
               </div>
             </div>
           ) : null}
-          <FoldGadget title="Raw trace">
+          <FoldGadget title="RAW · TRACE">
             <SurfaceCode>{JSON.stringify(result, null, 2)}</SurfaceCode>
           </FoldGadget>
         </section>

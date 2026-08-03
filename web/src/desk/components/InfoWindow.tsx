@@ -11,7 +11,8 @@ import { objectByRef, type WorldObject } from "../world";
 import { filedZones, kindInfo, kindLabel } from "../infoContract";
 import { lineage } from "../lineage";
 import { humanTime } from "../surface/format";
-import { StringGadget } from "../surface/gadgets";
+import { FoldGadget, StringGadget } from "../surface/gadgets";
+import { humanizeWireValue } from "../../lib/productLanguage";
 import { DeskWindowFrame } from "./DeskWindow";
 
 function IdentityName({ o }: { o: WorldObject }) {
@@ -127,7 +128,9 @@ export function InfoWindow({
             <b>Kind</b>
             <span>{kindLabel(o.kind)}</span>
             <b>Id</b>
-            <span className="quiet info-id">{o.id}</span>
+            <FoldGadget title="RAW">
+              <span className="quiet info-id">{o.id}</span>
+            </FoldGadget>
             {created ? (
               <>
                 <b>Created</b>
@@ -191,7 +194,7 @@ export function InfoWindow({
             <div className="info-props">
               {info.properties.map((p) => (
                 <label key={p.key} className="info-prop">
-                  <code>{p.key}</code>
+                  <code>{humanizeWireValue(p.key)}</code>
                   <select
                     value={p.value(o)}
                     onChange={(e) => void p.set(o, e.target.value)}

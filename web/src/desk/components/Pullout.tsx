@@ -361,9 +361,9 @@ export function Pullout({
               <section>
                 <h3>Saved, incomplete</h3>
                 <p className="quiet">
-                  {detail.capture_status}
-                  {detail.capture_failure ? ` · ${detail.capture_failure}` : ""}
-                  {detail.provenance ? ` · from ${detail.provenance}` : ""}
+                  {humanizeWireValue(detail.capture_status)}
+                  {detail.capture_failure ? ` · ${humanizeWireValue(detail.capture_failure)}` : ""}
+                  {detail.provenance ? ` · from ${humanizeWireValue(detail.provenance)}` : ""}
                 </p>
               </section>
             ) : null}
@@ -620,7 +620,7 @@ export function Pullout({
         {o.kind === "coder" && (
           <section>
             <p className="quiet">
-              {String(ir.model || "")} · {String(ir.state || "")}
+              {humanizeWireValue(String(ir.model || ""))} · {humanizeWireValue(String(ir.state || ""))}
             </p>
             {ir.question ? (
               <Material className="desk-coder-question">
@@ -857,20 +857,10 @@ export function Pullout({
                     actualPlacement?.target_id ||
                     runTargetId,
                 )}
-                {actualPlacement?.engine
-                  ? ` · ${String(actualPlacement.engine)}`
-                  : ""}
                 {actualPlacement?.model
                   ? ` · ${String(actualPlacement.model)}`
                   : ""}
-                {actualPlacement?.boundary
-                  ? ` · ${String(actualPlacement.boundary)}`
-                  : ""}
-                {actualPlacement?.fallback_reason
-                  ? ` · fallback: ${String(actualPlacement.fallback_reason)}`
-                  : ""}
-                {runState ? ` · ${runState}` : ""}
-                {` · ${runInvocationId}`}
+                {runState ? ` · ${humanizeWireValue(runState)}` : ""}
               </p>
             )}
           </section>

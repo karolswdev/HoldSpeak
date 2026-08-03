@@ -10,6 +10,7 @@ import { useProjections } from "../projections";
 import { humanTime } from "../surface/format";
 import { StringGadget } from "../surface/gadgets";
 import { SurfaceState } from "../surface/Surface";
+import { humanizeWireValue } from "../../lib/productLanguage";
 import { openPrimitive, openSurfaceWhenReady } from "../shell";
 
 type Correction = Record<string, unknown>;
@@ -122,11 +123,8 @@ export function SystemShade({
             </span>
             <div className="desk-shade-what">
               <strong>
-                {proposal.tool} held · {proposal.session_key}
+                {humanizeWireValue(String(proposal.tool))} held
               </strong>
-              <small>
-                <code>{proposal.args_head}</code>
-              </small>
               <small>waiting {gateAge(proposal)}</small>
               {denyingId === proposal.id ? (
                 <span className="desk-shade-do">
@@ -255,19 +253,25 @@ export function SystemShade({
           Learned <b>· {(corrections ?? []).length}</b>
         </h4>
         {learned.length ? (
-          learned.map((row, index) => (
-            <div className="desk-shade-item" key={String(row.id ?? index)}>
-              <span className="desk-shade-glyph" aria-hidden="true">
-                ⌁
-              </span>
-              <div className="desk-shade-what">
-                <strong>
-                  “{String(row.gist ?? row.kind ?? "")}” →{" "}
-                  {String(row.value ?? row.replacement ?? "")}
-                </strong>
+          learned.map((row, index) => {
+            const gist = row.gist
+              ? String(row.gist)
+              : row.kind
+                ? humanizeWireValue(String(row.kind))
+                : "";
+            const val = String(row.value ?? row.replacement ?? "");
+            return (
+              <div className="desk-shade-item" key={String(row.id ?? index)}>
+                <span className="desk-shade-glyph" aria-hidden="true">
+                  ⌁
+                </span>
+                <div className="desk-shade-what">
+                  <strong>{gist}</strong>
+                  {val ? <span>{" → "}{val}</span> : null}
+                </div>
               </div>
-            </div>
-          ))
+            );
+          })
         ) : (
           <SurfaceState empty emptyLabel="No corrections" />
         )}

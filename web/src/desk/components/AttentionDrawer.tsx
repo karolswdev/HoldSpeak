@@ -197,7 +197,7 @@ export function AttentionDrawer() {
                 <div>
                   <dt>Source</dt>
                   <dd>
-                    {selected.source_kind} · {selected.source_id}
+                    {humanizeWireValue(String(selected.source_kind))}
                   </dd>
                 </div>
               </dl>

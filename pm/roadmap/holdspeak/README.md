@@ -4,7 +4,7 @@
 > pick up, and the repo conventions that bite (PMO commit gate, write-once
 > evidence, no `Co-Authored-By`, metal-test exclusion).
 
-**Newest update (2026-08-03): Phase 115 — The Polish — DRAFTED.**
+**Newest update (2026-08-03): Phase 115 — The Polish — CHARTERED.**
 73 violations found across ~30 Desk surfaces by a 7-agent terra audit
 (526k tokens, 114 tool calls). 27 BROKEN, 22 UGLY, 24 DRIFT. Seven
 stories: shared material foundations, content sanitization, object

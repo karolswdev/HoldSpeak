@@ -55,8 +55,7 @@ vi.mock("../../../lib/api", () => ({
 describe("SystemShade gate cards (HS-104-02)", () => {
   it("renders the held call with its redacted preview and Approve lands the decision", () => {
     render(<SystemShade open onClose={vi.fn()} onOpenMemory={vi.fn()} />);
-    expect(screen.getByText("Bash held · claude:s1")).toBeTruthy();
-    expect(screen.getByText('{"command":"rm -rf build"}')).toBeTruthy();
+    expect(screen.getByText("Bash held")).toBeTruthy();
     expect(screen.queryByText("Nothing needs you")).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Approve" }));
     expect(decide).toHaveBeenCalledWith("toolu_1", "approved");

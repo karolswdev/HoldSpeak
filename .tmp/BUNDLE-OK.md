@@ -1,0 +1,1 @@
+Foundation stories 01+02+08 are designed to ship together — they share the same CSS files, the accent swap touches the same tokens the material fixes rewired, and content sanitization depends on the chip/section material being correct.

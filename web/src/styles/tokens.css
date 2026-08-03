@@ -34,11 +34,11 @@
   --p-color-paper-0: #f2f3f5; /* primary text (~17:1 AAA on ink.0) */
   --p-color-paper-1: #9ba2b0; /* muted text (~7.1:1 AAA) */
   --p-color-paper-2: #767e8d; /* faint text (~4.7:1 AA) */
-  --p-color-orange-300: #ff9d5c; /* gradient amber head */
-  --p-color-orange-400: #ff7d4d; /* accent hover */
-  --p-color-orange-500: #ff6b35; /* THE signal orange (~6.8:1 on ink.0) */
-  --p-color-orange-600: #ec5a28; /* accent pressed */
-  --p-color-orange-700: #f24a2e; /* gradient ember tail */
+  --p-color-orange-300: #da9868; /* gradient amber head (HS-115-08: forge ember family) */
+  --p-color-orange-400: #bc8058; /* accent hover */
+  --p-color-orange-500: #a86e4a; /* forge ember (~3.1:1 on ink.0; system patina, not signal) */
+  --p-color-orange-600: #936041; /* accent pressed */
+  --p-color-orange-700: #834f32; /* gradient ember tail */
   --p-color-green-400: #34d399; /* ok */
   --p-color-green-500: #10b981; /* ok strong */
   --p-color-amber-400: #fbbf24; /* warn */
@@ -90,13 +90,13 @@
   --text: #f2f3f5;
   --text-muted: #9ba2b0;
   --text-faint: #767e8d;
-  --text-on-accent: #0e0f13;
-  --accent: #ff6b35;
-  --accent-hover: #ff7d4d;
-  --accent-press: #ec5a28;
-  --accent-tint: rgba(255, 107, 53, 0.12);
-  --accent-glow: rgba(255, 107, 53, 0.28);
-  --accent-gradient: linear-gradient( 135deg, #ff9d5c 0%, #ff6b35 50%, #f24a2e 100% );
+  --text-on-accent: #f2f3f5;
+  --accent: #a86e4a;
+  --accent-hover: #bc8058;
+  --accent-press: #936041;
+  --accent-tint: rgba(168, 110, 74, 0.12);
+  --accent-glow: rgba(168, 110, 74, 0.28);
+  --accent-gradient: linear-gradient( 135deg, #da9868 0%, #a86e4a 50%, #834f32 100% );
   --bg-gradient: linear-gradient( 180deg, #191b23 0%, #0e0f13 100% );
   --ok: #34d399;
   --ok-strong: #10b981;
@@ -189,7 +189,7 @@
   --elev-2: 0 8px 24px rgba(0, 0, 0, 0.5);
   --elev-3: 0 16px 48px rgba(0, 0, 0, 0.6);
   --elev-4: 0 24px 64px rgba(0, 0, 0, 0.7);
-  --glow-accent: 0 0 0 1px rgba(255, 107, 53, 0.4), 0 4px 18px var(--accent-glow);
+  --glow-accent: 0 0 0 1px rgba(168, 110, 74, 0.4), 0 4px 18px var(--accent-glow);
   --duration-short: 120ms;
   --duration-medium: 200ms;
   --duration-long: 320ms;
@@ -207,7 +207,7 @@
   --black: #000; /* absolute ink (shadow/scrim compositing) */
   --white: #fff; /* absolute paper (rare highlight compositing) */
   --accent-cool: #5b8def; /* the cool blue counterweight to the signal orange */
-  --accent-glow-strong: rgba(255, 107, 53, 0.5); /* the stronger accent glow (recording/attention) */
+  --accent-glow-strong: rgba(168, 110, 74, 0.5); /* the stronger accent glow (recording/attention) */
   --shadow-ink-1: rgba(0, 0, 0, 0.34);
   --shadow-ink-2: rgba(0, 0, 0, 0.42);
   --shadow-ink-3: rgba(0, 0, 0, 0.5);
@@ -227,9 +227,6 @@
   --desk-z-window-base: 42; /* the window band floor; focus order stacks upward from here */
   --desk-z-dock: 80; /* shell furniture above every window */
   --desk-z-transient: 81; /* an OPEN chrome transient (the room menu) rides above windows */
-  --desk-window-margin: 10px; /* viewport clamp margin for window rects */
-  --desk-window-grab: 72px; /* minimum grabbable head strip (HS-93 contract) */
-  --desk-window-cascade: 26px; /* default-corner cascade step */
   --desk-snap-top: 54px; /* snap tiles clear the chrome band */
   --desk-snap-bottom: 52px; /* snap tiles clear the dock band */
   --desk-work-top: var(--desk-snap-top); /* the working band begins below the system bar */
@@ -255,7 +252,6 @@
   --desk-panel-fill: var(--bg); /* HS-110-01: secondary panel fill, opaque */
   --desk-window-radius: 2px; /* HS-110-01: sharp Workbench corners */
   --desk-window-shadow: none; /* HS-110-01: depth from bevels, not Gaussian shadows */
-  --desk-window-shadow-rest: none; /* HS-110-01: no shadow distinction — border color IS the distinction */
   --desk-window-keyline: var(--border-strong); /* HS-110-01: front window wears the strong border, not an accent-mixed ring */
   --desk-window-blur: none; /* HS-110-01: no backdrop-filter — opaque surfaces */
   --desk-window-bevel: inset 1px 1px 0 var(--bevel-light), inset -1px -1px 0 var(--bevel-dark); /* HS-110-01: the raised bevel (Workbench depth grammar) */

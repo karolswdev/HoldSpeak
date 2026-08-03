@@ -731,8 +731,8 @@ function MeetingDetail({
           ) : null}
           {/* 5 — the routing receipt stays folded, in its own well. */}
           {timelineRows.length ? (
-            <FoldGadget title="Routing receipt">
-              <SurfaceWell head={`ROUTING · ${timelineRows.length}`}>
+            <FoldGadget title="RAW · ROUTING">
+              <SurfaceWell head={`RAW · ROUTING · ${timelineRows.length}`}>
                 <SurfaceCode>
                   {JSON.stringify(timelineRows, null, 2)}
                 </SurfaceCode>

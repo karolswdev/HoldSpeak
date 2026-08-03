@@ -50,7 +50,7 @@ export function workbenchTerminalTheme() {
     foreground: text,
     cursor: text,
     cursorAccent: screen,
-    selectionBackground: tokenValue("--accent-tint", "rgba(255, 107, 53, 0.12)"),
+    selectionBackground: tokenValue("--accent-tint", "rgba(168, 110, 74, 0.12)"),
     selectionForeground: undefined as string | undefined,
     black: tokenValue("--surface-1", "#15171d"),
     red: tokenValue("--danger-signal", "#f87171"),
@@ -74,7 +74,7 @@ export function workbenchTerminalTheme() {
 const CLEAR = "[3J[2J[H"; // scrollback + screen + home
 const SEARCH_DECORATIONS = {
   matchOverviewRuler: "#fbbf24",
-  activeMatchColorOverviewRuler: "#ff6b35",
+  activeMatchColorOverviewRuler: "#a86e4a",
   matchBackground: "#3f3520",
   activeMatchBackground: "#7a3a1d",
 };

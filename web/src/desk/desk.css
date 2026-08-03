@@ -290,6 +290,7 @@
   cursor: pointer;
   text-decoration: none;
   backdrop-filter: none;
+  box-shadow: var(--desk-window-bevel);
   transition:
     border-color var(--duration-short) var(--ease-standard),
     background var(--duration-short) var(--ease-standard),
@@ -297,7 +298,7 @@
 }
 .desk-next .desk-chip:hover {
   border-color: var(--accent);
-  background: rgba(255, 107, 53, 0.1);
+  background: var(--accent-tint);
 }
 /* HS-103-07 — a send/ask verb should carry a little weight on press, not
    just the browser's stock click; transform-only, so it costs nothing to
@@ -310,7 +311,7 @@
 }
 .desk-next .desk-chip[aria-pressed="true"] {
   border-color: var(--accent);
-  background: rgba(255, 107, 53, 0.14);
+  background: var(--accent-tint);
   color: var(--text);
 }
 .desk-next .desk-start-actions {
@@ -737,11 +738,11 @@
   padding: 14px;
   border-radius: 2px;
   border: 1px solid
-    color-mix(in srgb, var(--accent, #ff6b35) 30%, var(--border));
+    color-mix(in srgb, var(--accent) 30%, var(--border));
   background: var(--desk-panel-fill);
   box-shadow:
     0 24px 60px var(--shadow-ink-4),
-    0 0 0 1px rgba(255, 107, 53, 0.08);
+    0 0 0 1px rgba(168, 110, 74, 0.08);
   backdrop-filter: none;
 }
 .desk-next .desk-inline-editor input,
@@ -760,8 +761,8 @@
 .desk-next .desk-inline-editor input:focus,
 .desk-next .desk-inline-editor textarea:focus,
 .desk-next .desk-inline-editor select:focus {
-  outline-color: var(--accent, #ff6b35);
-  border-color: var(--accent, #ff6b35);
+  outline-color: var(--accent);
+  border-color: var(--accent);
 }
 .desk-next .desk-inline-editor-head {
   display: flex;
@@ -801,7 +802,7 @@
   width: 100%;
   padding: 2px 6px;
   border-radius: 2px;
-  border: 1px solid var(--accent, #ff6b35);
+  border: 1px solid var(--accent);
   background: var(--surface-1);
   color: var(--text);
   font-weight: 600;
@@ -818,7 +819,8 @@
   width: min(400px, 88vw);
   display: flex;
   flex-direction: column;
-  border: 1px solid color-mix(in srgb, var(--k, #ff6b35) 34%, var(--border));
+  border: 1px solid var(--border);
+  background: var(--desk-window-fill);
   /* OS chrome is not selectable text; the MATERIAL below re-enables. */
   user-select: none;
 }
@@ -875,6 +877,9 @@
      toolbar band (the mac unified-toolbar look). */
   border-radius: calc(var(--desk-window-radius) - 1px)
     calc(var(--desk-window-radius) - 1px) 0 0;
+}
+.desk-next .desk-window-shell.is-front .desk-pullout-head {
+  background: var(--desk-window-head-front);
 }
 /* Materials spike — traffic lights (macos-web values): 12.8px discs
    with darker rings; grey on an unfocused window; glyphs reveal and
@@ -974,11 +979,11 @@
 /* HS-97-04 — depth: the front window carries the full elevation and a
    1px keyline ring; rest windows quiet down. One property, one ladder —
    never per-window recipes. Sheets keep their own form. */
-.desk-next .desk-window-shell:not(.is-sheet) {
+.desk-next .desk-window-shell {
   border: 1px solid var(--border);
   box-shadow: var(--desk-window-bevel), var(--desk-glass-edge);
 }
-.desk-next .desk-window-shell.is-front:not(.is-sheet) {
+.desk-next .desk-window-shell.is-front {
   border-color: var(--desk-window-keyline);
   box-shadow: var(--desk-window-bevel), var(--desk-glass-edge);
 }
@@ -1154,13 +1159,15 @@
   gap: var(--space-3);
 }
 .desk-next .desk-pullout-body section {
-  /* Materials round 3.2 — no card-in-window: sections sit on the
-     material, separated by hairlines. */
   display: grid;
   gap: 8px;
   padding: 0;
   border: 0;
   background: transparent;
+}
+.desk-next .desk-pullout-body section:not(:first-child) {
+  border-top: 1px solid var(--border-subtle);
+  padding-top: var(--space-3);
 }
 /* HS-111: section labels — mono, 10px, 600 (system-label style) */
 .desk-next .desk-pullout-body h3 {
@@ -1447,10 +1454,10 @@
   transition: border-color var(--duration-short) var(--ease-standard);
 }
 .desk-next .desk-rail-avatar:hover {
-  border-color: var(--accent, #ff6b35);
+  border-color: var(--accent);
 }
 .desk-next .desk-rail-avatar.open {
-  border-color: var(--accent, #ff6b35);
+  border-color: var(--accent);
 }
 /* HS-111: status indicators — square, no glow */
 .desk-next .desk-rail-egress {
@@ -1479,7 +1486,7 @@
   padding: 12px;
   border-radius: 2px;
   border: 1px solid
-    color-mix(in srgb, var(--accent, #ff6b35) 30%, var(--border));
+    color-mix(in srgb, var(--accent) 30%, var(--border));
   background: var(--desk-panel-fill);
   box-shadow: var(--desk-window-shadow);
   backdrop-filter: none;
@@ -1498,8 +1505,8 @@
   font-size: var(--font-size-sm);
 }
 .desk-next .desk-rail-ask input:focus {
-  outline-color: var(--accent, #ff6b35);
-  border-color: var(--accent, #ff6b35);
+  outline-color: var(--accent);
+  border-color: var(--accent);
 }
 @media (prefers-reduced-motion: reduce) {
   .desk-next .desk-rail-avatar.working {
@@ -1529,7 +1536,7 @@
     box-shadow var(--duration-short) var(--ease-standard);
 }
 .desk-next .desk-mic.is-listening {
-  border-color: var(--accent, #ff6b35);
+  border-color: var(--accent);
 }
 .desk-next .desk-mic.is-busy {
   opacity: 0.7;
@@ -1887,9 +1894,9 @@
 .desk-next .desk-lasso {
   position: absolute;
   z-index: var(--desk-z-chrome);
-  border: 1.5px dashed var(--accent, #ff6b35);
+  border: 1.5px dashed var(--accent);
   border-radius: 2px;
-  background: color-mix(in srgb, var(--accent, #ff6b35) 10%, transparent);
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
   pointer-events: none;
 }
 
@@ -1906,7 +1913,7 @@
   padding: 8px 12px;
   border-radius: 2px;
   border: 1px solid
-    color-mix(in srgb, var(--accent, #ff6b35) 35%, var(--border));
+    color-mix(in srgb, var(--accent) 35%, var(--border));
   background: var(--surface-2);
   box-shadow: var(--desk-window-shadow);
   backdrop-filter: none;
@@ -1919,7 +1926,7 @@
 
 /* the Ask panel rides the pull-out posture (docked, desk alive behind) */
 .desk-next .desk-ask .desk-ask-glyph {
-  color: var(--accent, #ff6b35);
+  color: var(--accent);
   font-size: 16px;
 }
 /* HS-111-05 — the query console body: the session transcript over the
@@ -2026,8 +2033,8 @@
   font-family: var(--font-mono);
 }
 .desk-next .desk-chat-composer input:focus {
-  outline-color: var(--accent, #ff6b35);
-  border-color: var(--accent, #ff6b35);
+  outline-color: var(--accent);
+  border-color: var(--accent);
 }
 
 /* HS-83-01 — "Ground this ask" (the 15-12 parity): inline expandable section,
@@ -3152,7 +3159,7 @@
   gap: 6px;
   background: none;
   border: none;
-  color: var(--accent, #ff6b35);
+  color: var(--accent);
   cursor: pointer;
   padding: 3px 0;
   text-align: left;
@@ -3841,8 +3848,8 @@
   padding: 3px 10px;
   border-radius: 0;
   border: 1px solid
-    color-mix(in srgb, var(--accent, #ff6b35) 40%, var(--border));
-  background: color-mix(in srgb, var(--accent, #ff6b35) 12%, transparent);
+    color-mix(in srgb, var(--accent) 40%, var(--border));
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
   font-size: var(--font-size-xs);
   color: var(--text);
 }
@@ -4123,10 +4130,10 @@
 
 /* The tool shelf joins the one material (the accent cage retires). */
 .desk-next .desk-tool-shelf {
-  border: 0;
-  box-shadow: var(--desk-glass-edge), var(--desk-transient-shadow);
+  border: 1px solid var(--desk-window-keyline);
+  box-shadow: var(--desk-window-bevel), var(--desk-glass-edge);
   background: var(--desk-window-fill);
-  backdrop-filter: var(--desk-window-blur);
+  backdrop-filter: none;
 }
 
 /* The pane picker's spawn row: one control height. */
@@ -4580,6 +4587,7 @@
   align-items: baseline;
   gap: 10px;
   padding: 12px 14px 6px;
+  background: var(--desk-window-head-fill);
 }
 .desk-next .desk-shade-title {
   font-size: var(--desk-surface-label-size);

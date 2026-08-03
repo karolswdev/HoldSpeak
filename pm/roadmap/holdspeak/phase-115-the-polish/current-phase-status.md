@@ -1,6 +1,6 @@
 # Phase 115 - The Polish
 
-**Status:** DRAFT. Eight stories that remediate the 73 violations
+**Status:** CHARTERED. Eight stories that remediate the 73 violations
 found by the 2026-08-03 surface audit. Three severity tiers — 27
 BROKEN (user-visible bugs), 22 UGLY (material violations), 24 DRIFT
 (inconsistencies) — across ~30 surfaces. Every window, every chip,
@@ -8,8 +8,8 @@ every label brought back into the Signal Workbench grammar. When this
 phase ships, every surface on the Desk looks like it was born from
 the same OS.
 
-**Last updated:** 2026-08-03 (scaffolded from terra-trooper audit —
-7 agents, 114 tool calls, 526k tokens).
+**Last updated:** 2026-08-03 (chartered by owner; scaffolded from
+terra-trooper audit — 7 agents, 114 tool calls, 526k tokens).
 
 ## The orchestrator
 
@@ -145,9 +145,9 @@ and proves everything.
 
 | # | Story | The ask it answers | Status |
 |---|-------|--------------------|--------|
-| 01 | [The shared material](./story-01-the-shared-material.md) | "Chips have no bevel, windows have no depth, sections have no separation" | backlog |
-| 02 | [The honest surface](./story-02-the-honest-surface.md) | "Why am I seeing steering_audit and %1 in the UI?" | backlog |
-| 08 | [The cooled accent](./story-08-the-cooled-accent.md) | "The orange screams web app, not operating system" | backlog |
+| 01 | [The shared material](./story-01-the-shared-material.md) | "Chips have no bevel, windows have no depth, sections have no separation" | done |
+| 02 | [The honest surface](./story-02-the-honest-surface.md) | "Why am I seeing steering_audit and %1 in the UI?" | done |
+| 08 | [The cooled accent](./story-08-the-cooled-accent.md) | "The orange screams web app, not operating system" | done |
 
 ### Surface groups — layout, material, and content per group
 
@@ -173,16 +173,22 @@ and proves everything.
 
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
-| HS-115-01 | The shared material | backlog | [story-01](./story-01-the-shared-material.md) | — |
-| HS-115-02 | The honest surface | backlog | [story-02](./story-02-the-honest-surface.md) | — |
+| HS-115-01 | The shared material | done | [story-01](./story-01-the-shared-material.md) | [evidence-story-01](./evidence-story-01.md) |
+| HS-115-02 | The honest surface | done | [story-02](./story-02-the-honest-surface.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-115-03 | Object windows | backlog | [story-03](./story-03-object-windows.md) | — |
 | HS-115-04 | System surfaces | backlog | [story-04](./story-04-system-surfaces.md) | — |
 | HS-115-05 | Hosted cores | backlog | [story-05](./story-05-hosted-cores.md) | — |
 | HS-115-06 | The rails window | backlog | [story-06](./story-06-the-rails-window.md) | — |
 | HS-115-07 | The walk | backlog | [story-07](./story-07-the-walk.md) | — |
-| HS-115-08 | The cooled accent | backlog | [story-08](./story-08-the-cooled-accent.md) | — |
+| HS-115-08 | The cooled accent | done | [story-08](./story-08-the-cooled-accent.md) | [evidence-story-08](./evidence-story-08.md) |
 
 ## Where we are
 
-Draft. Awaiting owner charter decision. Audit artifact published at
-https://claude.ai/code/artifact/f5788f46-2b99-4e7f-b6e5-281c03e7c01c
+Foundation shipped (3/8). Stories 01 (shared material), 02 (honest
+surface), and 08 (cooled accent — forge ember #a86e4a) done. Chip
+bevel, section hairlines, sheet keyline, pullout material, shade
+head fill, dead tokens removed. 18 C1 content violations humanized
+or folded behind RAW. Accent cooled from #ff6b35 to #a86e4a, 19
+hard-coded fallbacks cleaned, text-on-accent flipped to light.
+Surface group stories (03–06) and the walk (07) remain. Audit
+artifact: https://claude.ai/code/artifact/f5788f46-2b99-4e7f-b6e5-281c03e7c01c

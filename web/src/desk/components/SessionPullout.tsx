@@ -24,7 +24,7 @@ import {
 import { flipTargetForStory, useMissionControl } from "../missioncontrol";
 import { mmss, useSteering } from "../steering";
 import { useDurableDraft } from "../../lib/durableDraft";
-import { controlModeLabel } from "../../lib/productLanguage";
+import { controlModeLabel, humanizeWireValue } from "../../lib/productLanguage";
 import { PaneWell, SurfaceFacts } from "../surface/Surface";
 import {
   CycleGadget,
@@ -733,8 +733,7 @@ export function SessionPullout() {
           changedAt={paneChangedAt}
           absence={
             <>
-              ✕ {PANE_STATE_LABEL[paneStatus] || paneStatus}
-              {paneDetail ? `: ${paneDetail}` : ""}
+              ✕ {PANE_STATE_LABEL[paneStatus] || humanizeWireValue(paneStatus)}
             </>
           }
         />

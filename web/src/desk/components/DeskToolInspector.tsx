@@ -275,9 +275,9 @@ export function DeskToolInspector() {
                     </button>
                   ) : (
                     <span>
-                      <strong>{resource.resource_ref}</strong>
+                      <strong>{humanizeWireValue(String(resource.resource_ref))}</strong>
                       <small>
-                        {resource.relationship} · unavailable on this Desk
+                        {humanizeWireValue(String(resource.relationship))} · unavailable on this Desk
                       </small>
                     </span>
                   )}

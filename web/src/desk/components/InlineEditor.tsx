@@ -376,7 +376,7 @@ export function InlineEditor({ o, u }: { o: WorldObject; u: UnitPos }) {
                     {s.kind === "llm" && (
                       <input
                         value={s.prompt}
-                        placeholder="Prompt ({input} substitutes)"
+                        placeholder="Prompt (selected text is substituted at run time)"
                         onChange={(e) =>
                           setStepParam(i, { prompt: e.target.value })
                         }

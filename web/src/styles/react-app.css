@@ -180,7 +180,7 @@
   gap: var(--space-4);
   padding: clamp(20px, 6vw, 72px);
   background:
-    radial-gradient(60% 50% at 50% 20%, rgba(255, 107, 53, 0.13), transparent),
+    radial-gradient(60% 50% at 50% 20%, rgba(168, 110, 74, 0.13), transparent),
     var(--bg-gradient);
 }
 .welcome-mark {

@@ -309,8 +309,8 @@ export function LiveCore({ hero }: CoreProps) {
                 ))}
               </GadgetGroup>
             ) : null}
-            <FoldGadget title="Route receipt">
-              <SurfaceWell head="ROUTE · JSON">
+            <FoldGadget title="RAW · ROUTE">
+              <SurfaceWell head="RAW · ROUTE">
                 <SurfaceCode>
                   {JSON.stringify(previewResult, null, 2)}
                 </SurfaceCode>

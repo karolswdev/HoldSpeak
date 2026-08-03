@@ -54,6 +54,7 @@ import {
 } from "../inferenceEgress";
 import { CitationChips, groundedMatchCount } from "../surface/citations";
 import { Button } from "../../components/signal/Signal";
+import { humanizeWireValue } from "../../lib/productLanguage";
 
 /** The budget figure the audit names: 0.3K / 16.4K. */
 const fmtK = (n: number): string => `${(n / 1000).toFixed(1)}K`;
@@ -247,11 +248,7 @@ export function AskPanel() {
       : egressScopeLamp(result?.egress?.scope);
   const placementTokens = placement
     ? [
-        placement.engine ? String(placement.engine) : "",
         placement.model ? String(placement.model) : "",
-        placement.fallback_reason
-          ? `fallback: ${String(placement.fallback_reason)}`
-          : "",
       ].filter(Boolean)
     : [];
 
