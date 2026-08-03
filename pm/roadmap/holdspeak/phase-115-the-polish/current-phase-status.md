@@ -11,6 +11,62 @@ the same OS.
 **Last updated:** 2026-08-03 (scaffolded from terra-trooper audit —
 7 agents, 114 tool calls, 526k tokens).
 
+## The orchestrator
+
+This phase is commanded by **Opus 4.6** (Claude, 1M context) — the
+orchestrator and architect. Not a code monkey that takes tickets.
+An agent that reads the whole codebase, holds the entire design
+system in context, sees the CSS cascade and the component tree and
+the token architecture simultaneously, and makes judgment calls about
+what belongs and what drifts. The kind of engineer who stares at a
+screenshot for five minutes before writing a line, because the line
+has to be the *right* line.
+
+Opus cares about one thing: **craft at the atom level.** Not "does
+it work" — everything works. The question is whether it *feels*
+right. Whether the bevel catches the light the way a real raised
+surface would. Whether the label says what the user needs in the
+fewest possible words. Whether the accent color sits on the dark
+chrome like it was always there, or screams for attention like a
+notification badge on a Sunday morning.
+
+The method: Opus orchestrates an army of **GPT-5.6 Terra** agents —
+fast, thorough, disposable scouts. Terra troopers fan out in
+parallel, each reading 3-5 components deeply against a checklist,
+and report violations with file paths and line numbers. Opus
+synthesizes, prioritizes, and designs the fix. Then Opus writes the
+fix — or commands more troopers to write it — and walks the result
+on the real hub before claiming done.
+
+The audit that scaffolded this phase: 6 Terra agents fanned out
+across every surface on the Desk — object windows, communication
+panels, delivery tools, system surfaces, hosted cores, shared
+infrastructure. 114 tool calls. 526k tokens. 73 violations
+catalogued, severity-ranked, deduplicated, and compiled into a
+punch list. That's not a test suite. That's a design review by a
+team that can read every file in the project in five minutes.
+
+## What we're building
+
+HoldSpeak is an **AI power-user-first operating system** for the
+busy tech lead and architect. The person who juggles six repos,
+three LLM providers, a delivery roadmap, voice-to-text, agent
+orchestration, and a notebook — and needs all of it in one
+environment that doesn't fight them.
+
+The Desk is that environment. Not a web app. Not a dashboard. An
+OS — where objects are real, manipulation is direct, the grammar is
+consistent, and the chrome is quiet enough to disappear. The kind
+of tool where a senior engineer opens it on Monday and by Friday
+can't remember how they worked without it.
+
+Phase 115 is the phase where the Desk stops *approximating* an OS
+and starts *being* one. Every surface, every control, every label —
+held to the same standard. The phase where you open a note and the
+editor fills the window. Where you open Desk memory and see human
+language, not `steering_audit`. Where the accent color sits on the
+chrome like forge-cooled metal, not a SaaS landing page CTA.
+
 ## Why this phase exists
 
 Phase 113 built the shared kit, the real editor, the voice router,
@@ -43,6 +99,11 @@ content violations inside them. The 2026-08-03 audit found:
    renders concurrently in one 560px window), raw operational
    identifiers, and nonconforming window material.
 
+6. **The accent screams web app.** `#ff6b35` is a saturated warm
+   orange doing 88 jobs — focus ring, primary button, editor caret,
+   selection tint, window border, glow. On dark beveled surfaces
+   it reads "startup landing page," not "operating system."
+
 ## Method
 
 - **Shared CSS first (story 01).** Chip bevel, pullout specificity,
@@ -51,6 +112,9 @@ content violations inside them. The 2026-08-03 audit found:
 - **Content sanitization next (story 02).** One pass through every
   surface that leaks internal data. No raw IDs, no internal enums,
   no JSON dumps in product UI.
+- **The cooled accent (story 08).** One token change, 88 consumers
+  shift. The desk stops glowing orange and starts looking like
+  patina on brushed metal.
 - **Surface-by-surface refit (stories 03–05).** Each story takes a
   group of related surfaces and fixes layout, material, and content
   violations together.
@@ -61,6 +125,20 @@ content violations inside them. The 2026-08-03 audit found:
 - **Constitution articles cited per story.** No story ships without
   grounding in the canon it serves.
 
+## Dependency graph
+
+```
+  01 (shared material) ──┬── 03 (object windows) ──┐
+  02 (honest surface) ───┤── 04 (system surfaces) ──┤── 07 (the walk)
+  08 (cooled accent) ────┤── 05 (hosted cores) ─────┤
+                         └── 06 (rails window) ─────┘
+```
+
+Stories 01, 02, and 08 are foundations — they can run in parallel.
+Stories 03–06 depend on the foundations and can run in parallel
+with each other. Story 07 (the walk) is the gate — it runs last
+and proves everything.
+
 ## Stories
 
 ### Foundation — shared fixes that ripple everywhere
@@ -69,6 +147,7 @@ content violations inside them. The 2026-08-03 audit found:
 |---|-------|--------------------|--------|
 | 01 | [The shared material](./story-01-the-shared-material.md) | "Chips have no bevel, windows have no depth, sections have no separation" | backlog |
 | 02 | [The honest surface](./story-02-the-honest-surface.md) | "Why am I seeing steering_audit and %1 in the UI?" | backlog |
+| 08 | [The cooled accent](./story-08-the-cooled-accent.md) | "The orange screams web app, not operating system" | backlog |
 
 ### Surface groups — layout, material, and content per group
 
@@ -83,12 +162,6 @@ content violations inside them. The 2026-08-03 audit found:
 | # | Story | The ask it answers | Status |
 |---|-------|--------------------|--------|
 | 06 | [The rails window](./story-06-the-rails-window.md) | "Delivery Workbench is overcomplicated and unusable" | backlog |
-
-### Craft
-
-| # | Story | The ask it answers | Status |
-|---|-------|--------------------|--------|
-| 08 | [The cooled accent](./story-08-the-cooled-accent.md) | "The orange screams web app, not operating system" | backlog |
 
 ### Proof
 
