@@ -3,11 +3,23 @@ import { apiRequest } from "../../lib/api";
 import { qualifiedRef } from "../api";
 import { useDesk } from "../store";
 import { FoldGadget } from "../surface/gadgets";
+import { SurfaceCode, SurfaceState } from "../surface/Surface";
 
 interface DeskFilingStripProps {
   objectRef: string;
   objectKind: string;
   objectId: string;
+}
+
+function FilingRefusal({ detail }: { detail: string }) {
+  return (
+    <>
+      <SurfaceState error="Filing unavailable" />
+      <FoldGadget title="RAW · DETAIL">
+        <SurfaceCode>{detail}</SurfaceCode>
+      </FoldGadget>
+    </>
+  );
 }
 
 /** The one filing disclosure: Zone, Knowledge, and Project membership. */
@@ -77,7 +89,7 @@ export function DeskFilingStrip({
     }
   };
 
-  if (!relationships) return relationshipError ? <p className="desk-run-warning" role="alert">{relationshipError}</p> : null;
+  if (!relationships) return relationshipError ? <FilingRefusal detail={relationshipError} /> : null;
 
   const homeZone = zones.find((zone) => {
     const members = ((zone as any).memberIds as string[]) || [];
@@ -186,15 +198,11 @@ export function DeskFilingStrip({
             </div>
           )}
           {!zones.length && !knowledgeChoices.length && !projectChoices.length && (
-            <span className="quiet">
-              Nothing to file into yet — Zones, Knowledge, and Projects appear here once they exist.
-            </span>
+            <SurfaceState empty emptyLabel="No destinations" />
           )}
         </div>
       </FoldGadget>
-      {relationshipError ? (
-        <p className="desk-run-warning" role="alert">{relationshipError}</p>
-      ) : null}
+      {relationshipError ? <FilingRefusal detail={relationshipError} /> : null}
     </>
   );
 }

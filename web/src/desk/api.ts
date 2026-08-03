@@ -4,6 +4,7 @@
  * shapes are the camelCase view shapes the world renders. */
 import { apiFetch } from "../lib/api";
 import { fetchRoadmaps, type RoadmapProject } from "./roadmap";
+import { fetchRepositories } from "./repository";
 
 export type Kind =
   | "meeting"
@@ -18,7 +19,8 @@ export type Kind =
   | "workflow"
   | "coder"
   | "roadmap"
-  | "story";
+  | "story"
+  | "repository";
 
 export interface DeskItem {
   kind: Kind;
@@ -28,12 +30,13 @@ export interface DeskItem {
   [key: string]: unknown;
 }
 
-export type Items = Record<Exclude<Kind, "project" | "roadmap" | "story" | "decision">, DeskItem[]> & {
+export type Items = Record<Exclude<Kind, "project" | "roadmap" | "story" | "decision" | "repository">, DeskItem[]> & {
   /** Additive for older test fixtures and hubs; loadAll always initializes them. */
   project?: DeskItem[];
   roadmap?: DeskItem[];
   story?: DeskItem[];
   decision?: DeskItem[];
+  repository?: DeskItem[];
 };
 export type Status = Partial<Record<Kind | "profile", "live" | "unreachable">>;
 
@@ -121,6 +124,7 @@ export const EMPTY_ITEMS: Items = {
   coder: [],
   roadmap: [],
   story: [],
+  repository: [],
 };
 
 async function fetchJson(url: string, opts?: RequestInit): Promise<any> {
@@ -260,6 +264,16 @@ export const fromWireRoadmap = (roadmap: RoadmapProject): DeskItem => ({
   id: `roadmap:${roadmap.slug}`,
   title: roadmap.name,
   ...roadmap,
+});
+
+export const fromWireRepository = (repository: any): DeskItem => ({
+  kind: "repository",
+  id: String(repository.id || repository.source_id || ""),
+  name: String(repository.name || "Repository"),
+  sourceId: String(repository.source_id || repository.id || ""),
+  branch: String(repository.branch || ""),
+  createdAt: String(repository.created_at || ""),
+  lastModified: String(repository.created_at || ""),
 });
 
 export const fromWireChain = (c: any): DeskItem => ({
@@ -489,6 +503,12 @@ export async function loadAll(): Promise<LoadResult> {
         status.roadmap = "live";
       })
       .catch((e) => fail("roadmap", "Roadmaps", e)),
+    fetchRepositories()
+      .then((repositories) => {
+        items.repository = repositories.map(fromWireRepository);
+        status.repository = "live";
+      })
+      .catch((e) => fail("repository", "Repositories", e)),
     fetchJson("/api/coders/status")
       .then((d) => {
         items.coder = fromCoderStatus(d);

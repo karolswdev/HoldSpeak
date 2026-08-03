@@ -21,6 +21,7 @@ import { useSteering } from "../steering";
 import { objectByRef, objGlow, type WorldObject } from "../world";
 import { qualifiedRef } from "../api";
 import { RunsOnPicker } from "./RunsOnPicker";
+import { DeskFilingStrip } from "./DeskFilingStrip";
 import { humanizeWireValue, productLabel } from "../../lib/productLanguage";
 import { FoldGadget } from "../surface/gadgets";
 import { Material } from "../surface/Material";
@@ -28,6 +29,7 @@ import {
   SurfaceCode,
   SurfaceRow,
   SurfaceRows,
+  SurfaceState,
   SurfaceWell,
 } from "../surface/Surface";
 import { humanTime } from "../surface/format";
@@ -88,12 +90,9 @@ export function Pullout({
     openPullout,
     openEditor,
     updatePrimitive,
-    fileIntoDir,
-    removeFromDir,
     answerCoder,
     speakToCoder,
     openChat,
-    openToolInspector,
   } = useDesk.getState();
   const [detail, setDetail] = useState<MeetingDetail | null>(null);
   const [artifacts, setArtifacts] = useState<any[]>([]);
@@ -110,10 +109,6 @@ export function Pullout({
     string,
     unknown
   > | null>(null);
-  const [relationships, setRelationships] = useState<any>(null);
-  const [knowledgeChoices, setKnowledgeChoices] = useState<any[]>([]);
-  const [projectChoices, setProjectChoices] = useState<any[]>([]);
-  const [relationshipError, setRelationshipError] = useState("");
   const [answered, setAnswered] = useState<
     "selected" | "sent" | "failed" | null
   >(null);
@@ -215,64 +210,11 @@ export function Pullout({
   }, [o.kind, o.id]);
 
   const resourceRef = qualifiedRef(o.kind, o.id);
-  const refreshRelationships = async () => {
-    if (!FILABLE.has(o.kind)) return;
-    try {
-      const [axesRes, knowledgeRes, projectRes] = await Promise.all([
-        apiRequest(
-          `/api/desk/relationships/${encodeURIComponent(resourceRef)}`,
-        ),
-        apiRequest("/api/kbs"),
-        apiRequest("/api/projects"),
-      ]);
-      const [axes, knowledge, projects] = await Promise.all([
-        axesRes.json(),
-        knowledgeRes.json(),
-        projectRes.json(),
-      ]);
-      setRelationships(axes);
-      setKnowledgeChoices((knowledge.kbs || []).filter((k: any) => !k.deleted));
-      setProjectChoices(
-        (projects.projects || []).filter((p: any) => !p.is_archived),
-      );
-      setRelationshipError("");
-    } catch (error) {
-      setRelationshipError(String(error));
-    }
-  };
 
   useEffect(() => {
-    setRelationships(null);
     setRunTargetId(String((o.ref as any).profileId || "this_machine"));
     setActualPlacement(null);
-    void refreshRelationships();
   }, [o.kind, o.id]);
-
-  const toggleRelationship = async (
-    axis: "knowledge" | "projects",
-    ownerId: string,
-    active: boolean,
-  ) => {
-    const base = axis === "knowledge" ? "kbs" : "projects";
-    try {
-      await apiRequest(
-        `/api/${base}/${encodeURIComponent(ownerId)}/${axis === "knowledge" ? "members" : "resources"}/${encodeURIComponent(resourceRef)}`,
-        {
-          method: active ? "DELETE" : "PUT",
-          ...(axis === "projects" && !active
-            ? {
-                headers: { "content-type": "application/json" },
-                body: JSON.stringify({ relationship: "member" }),
-              }
-            : {}),
-        },
-      );
-      await refreshRelationships();
-      await useDesk.getState().refresh();
-    } catch (error) {
-      setRelationshipError(String(error));
-    }
-  };
 
   const run = async () => {
     setRunBusy(true);
@@ -320,7 +262,6 @@ export function Pullout({
   const coderWaiting =
     o.kind === "coder" &&
     (String(ir.state || "") === "waiting" || Boolean(ir.question));
-  const zones = items.directory || [];
   const lin = lineage(items, ir.sources);
   const profile = profiles.find((p) => p.id === ir.profileId);
   const egress = profile
@@ -448,13 +389,16 @@ export function Pullout({
             {detail?.intel?.summary ? (
               <p className="surface-say">{detail.intel.summary}</p>
             ) : (
-              <p className="quiet">
-                {detail?.intel_status?.state === "disabled"
-                  ? "Intelligence is off. No outcomes were made for this meeting."
-                  : detail?.intel_status?.state
-                    ? `Intelligence ${intelligenceState(detail.intel_status.state)}`
-                    : "Intelligence queued"}
-              </p>
+              <SurfaceState
+                empty
+                emptyLabel={
+                  detail?.intel_status?.state === "disabled"
+                    ? "Intel off"
+                    : detail?.intel_status?.state
+                      ? `Intel ${intelligenceState(detail.intel_status.state)}`
+                      : "Intel queued"
+                }
+              />
             )}
             {detail?.intel?.action_items &&
               detail.intel.action_items.length > 0 && (
@@ -623,9 +567,7 @@ export function Pullout({
               );
             return (
               <section>
-                <p className="quiet">
-                  Nothing written here yet — Edit adds content.
-                </p>
+                <SurfaceState empty emptyLabel="Empty note" />
               </section>
             );
           })()}
@@ -928,159 +870,13 @@ export function Pullout({
           </section>
         )}
 
-        {FILABLE.has(o.kind) &&
-          relationships &&
-          (() => {
-            // The belonging strip (round 8): ONE disclosure whose summary
-            // states the truth; the label walls and the foot's separate
-            // "Move to…" both fold into it.
-            const homeZone = zones.find((z) => {
-              const members = ((z as any).memberIds as string[]) || [];
-              return members.includes(o.id) || members.includes(resourceRef);
-            });
-            const kCount = (relationships.knowledge || []).length;
-            const pCount = (relationships.projects || []).length;
-            // A Knowledge collection never offers itself as a home.
-            const knowledgeHomes = knowledgeChoices.filter(
-              (knowledge) => resourceRef !== qualifiedRef("kb", knowledge.id),
-            );
-            const filedSummary = [
-              homeZone ? String(homeZone.name || homeZone.id) : "Desk root",
-              kCount ? `${kCount} Knowledge` : "",
-              pCount
-                ? `${pCount} Project${pCount === 1 ? "" : "s"}`
-                : "",
-            ]
-              .filter(Boolean)
-              .join(" · ");
-            return (
-              <FoldGadget title={`Filed · ${filedSummary}`}>
-                <div className="desk-pullout-filed">
-                  {zones.length > 0 && (
-                    <div className="desk-pullout-filed-axis">
-                      <span className="surface-eyebrow">Zone</span>
-                      <div className="desk-pullout-lineage">
-                        {zones.map((z) => {
-                          const members =
-                            ((z as any).memberIds as string[]) || [];
-                          const inZone =
-                            members.includes(o.id) ||
-                            members.includes(resourceRef);
-                          return (
-                            <button
-                              key={String(z.id)}
-                              type="button"
-                              className={`desk-chip quiet${inZone ? " in-zone" : ""}`}
-                              aria-pressed={inZone}
-                              onClick={() =>
-                                void (inZone
-                                  ? removeFromDir(o.id, String(z.id), o.kind)
-                                  : fileIntoDir(o.id, String(z.id), o.kind))
-                              }
-                            >
-                              {inZone ? "✓ " : "+ "}
-                              {String(z.name || z.id)}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  )}
-                  {knowledgeHomes.length > 0 && (
-                    <div className="desk-pullout-filed-axis">
-                      <span className="surface-eyebrow">Knowledge</span>
-                      <div className="desk-pullout-lineage">
-                        {knowledgeHomes.map((knowledge) => {
-                            const active = (relationships.knowledge || []).some(
-                              (row: any) => row.knowledge_id === knowledge.id,
-                            );
-                            return (
-                              <button
-                                key={knowledge.id}
-                                type="button"
-                                className={`desk-chip quiet${active ? " in-zone" : ""}`}
-                                aria-pressed={active}
-                                onClick={() =>
-                                  void toggleRelationship(
-                                    "knowledge",
-                                    knowledge.id,
-                                    active,
-                                  )
-                                }
-                              >
-                                {active ? "✓ " : "+ "}
-                                {knowledge.name}
-                              </button>
-                            );
-                          })}
-                      </div>
-                    </div>
-                  )}
-                  {projectChoices.length > 0 && (
-                    <div className="desk-pullout-filed-axis">
-                      <span className="surface-eyebrow">Projects</span>
-                      <div className="desk-pullout-lineage">
-                        {projectChoices.map((project) => {
-                          const active = (relationships.projects || []).some(
-                            (row: any) => row.project_id === project.id,
-                          );
-                          return (
-                            <span
-                              className="desk-project-choice"
-                              key={project.id}
-                            >
-                              <button
-                                type="button"
-                                className={`desk-chip quiet${active ? " in-zone" : ""}`}
-                                aria-label={`${active ? "Remove from" : "Assign to"} ${project.name} Project`}
-                                aria-pressed={active}
-                                onClick={() =>
-                                  void toggleRelationship(
-                                    "projects",
-                                    project.id,
-                                    active,
-                                  )
-                                }
-                              >
-                                {active ? "✓ " : "+ "}
-                                {project.name}
-                              </button>
-                              <button
-                                type="button"
-                                className="desk-chip quiet"
-                                aria-label={`Inspect ${project.name} Project`}
-                                onClick={() =>
-                                  openToolInspector(
-                                    "project",
-                                    String(project.id),
-                                  )
-                                }
-                              >
-                                Inspect
-                              </button>
-                            </span>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  )}
-                  {!zones.length &&
-                    !knowledgeChoices.length &&
-                    !projectChoices.length && (
-                      <span className="quiet">
-                        Nothing to file into yet — Zones, Knowledge, and
-                        Projects appear here once they exist.
-                      </span>
-                    )}
-                </div>
-              </FoldGadget>
-            );
-          })()}
-        {relationshipError && (
-          <p className="desk-run-warning" role="alert">
-            {relationshipError}
-          </p>
-        )}
+        {FILABLE.has(o.kind) ? (
+          <DeskFilingStrip
+            objectRef={resourceRef}
+            objectKind={o.kind}
+            objectId={o.id}
+          />
+        ) : null}
       </div>
 
       <footer className="desk-pullout-foot">

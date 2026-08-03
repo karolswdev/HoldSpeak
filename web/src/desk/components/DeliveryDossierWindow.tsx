@@ -10,7 +10,7 @@
 // (Disclosure → SurfaceWell) — 07's law, consumed early.
 import { useEffect } from "react";
 import { Button } from "../../components/signal/Signal";
-import { FoldGadget } from "../surface/gadgets";
+import { EgressChip, FoldGadget } from "../surface/gadgets";
 import {
   assetHref,
   useDeliveryDossier,
@@ -178,6 +178,11 @@ export function DeliveryDossierWindow() {
                           <span className="surface-ledger-cell">
                             {`${m.bytes} B`}
                           </span>
+                          <EgressChip
+                            label="↗ Download"
+                            title="Opens this captured asset in a new tab."
+                            scope="local"
+                          />
                         </a>
                       </li>
                     ))}

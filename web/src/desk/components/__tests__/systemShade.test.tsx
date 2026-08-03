@@ -53,7 +53,7 @@ describe("SystemShade (canon §6.1)", () => {
     expect(screen.getByRole("button", { name: "Acknowledge" })).toBeTruthy();
     expect(screen.getByText("Dictation delivered")).toBeTruthy();
     await waitFor(() =>
-      expect(screen.getByText("No corrections taught yet")).toBeTruthy(),
+      expect(screen.getByText("No corrections")).toBeTruthy(),
     );
     fireEvent.click(screen.getByRole("button", { name: "Acknowledge" }));
     expect(present).toHaveBeenCalledWith("p1", "acknowledge");

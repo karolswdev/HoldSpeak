@@ -1,0 +1,17 @@
+.desk-repo-window { min-height: 390px; }
+.desk-repo-body { display: flex; flex: 1; min-height: 0; flex-direction: column; }
+.repo-branch { margin-left: 8px; color: var(--desk-ink-muted, #87909b); font: 11px/1 ui-monospace, SFMono-Regular, Menlo, monospace; }
+.repo-dirty { margin-left: 7px; padding: 2px 5px; border: 1px solid color-mix(in srgb, #d99829 60%, transparent); color: #d99829; font-size: 10px; }
+.repo-breadcrumb { display: flex; align-items: center; gap: 4px; min-height: 32px; padding: 4px 9px; border-bottom: 1px solid var(--desk-line, rgba(255,255,255,.14)); overflow-x: auto; }
+.repo-breadcrumb button { border: 0; padding: 2px 4px; background: none; color: inherit; font: 11px/1.2 ui-monospace, SFMono-Regular, Menlo, monospace; cursor: pointer; }
+.repo-breadcrumb button:not(:last-of-type)::after { content: "/"; margin-left: 7px; color: var(--desk-ink-muted, #87909b); }
+.repo-breadcrumb button:disabled { opacity: .62; cursor: default; }
+.repo-breadcrumb select { margin-left: auto; max-width: 170px; background: var(--desk-surface, #192027); color: inherit; border: 1px solid var(--desk-line, rgba(255,255,255,.18)); font: 11px ui-monospace, SFMono-Regular, Menlo, monospace; }
+.desk-repo-files { flex: 1; overflow: auto; }
+.repo-folder { font-weight: 650; }
+.repo-status { display: inline-block; min-width: 1em; text-align: center; color: var(--desk-ink-muted, #87909b); font: 700 12px/1 ui-monospace, SFMono-Regular, Menlo, monospace; }
+.repo-status[data-status="M"] { color: #d99829; }.repo-status[data-status="A"] { color: #65ba7a; }.repo-status[data-status="D"] { color: #d45d5d; }.repo-status[data-status="?"] { opacity: .55; }
+.repo-pr-state[data-state="open"], .repo-pr-ci[data-ci="passing"] { color: #65ba7a; }.repo-pr-state[data-state="merged"] { color: #a78bfa; }.repo-pr-state[data-state="closed"], .repo-pr-ci[data-ci="failing"] { color: #d45d5d; }.repo-pr-ci[data-ci="pending"] { color: #d99829; }
+.repo-issues { padding: 20px; }.repo-issues h3 { margin: 0 0 8px; font-size: 14px; }
+.repo-footer-actions { display: inline-flex; align-items: center; gap: 6px; }.repo-footer-actions input { width: min(220px, 28vw); min-height: 25px; padding: 3px 7px; border: 1px solid var(--desk-line, rgba(255,255,255,.18)); background: var(--desk-surface, #192027); color: inherit; font: 12px ui-monospace, SFMono-Regular, Menlo, monospace; }
+@media (max-width: 720px) { .repo-footer-actions input { width: 124px; }.repo-breadcrumb select { max-width: 110px; } }

@@ -11,6 +11,10 @@ import type { UnitPos } from "../store";
 import { MicButton } from "./MicButton";
 import { DeskEditor } from "./DeskEditor";
 import { EditorAIBar } from "./EditorAIBar";
+import { runAsk } from "../ask";
+import { AI_VERBS } from "../editorAI";
+import { editorVoiceGrammar } from "../voice/grammars/editor";
+import type { VoiceProposal } from "../voice/grammar";
 import {
   buildLinearGraph,
   parseLinearGraph,
@@ -73,6 +77,44 @@ export function InlineEditor({ o, u }: { o: WorldObject; u: UnitPos }) {
             .filter(Boolean)
         : value,
     });
+  };
+
+  const confirmEditorVoice = async (proposal: VoiceProposal) => {
+    const view = editorView;
+    if (!view) return;
+    const { from, to } = view.state.selection.main;
+    const selectedText = view.state.doc.sliceString(from, to);
+    const replace = (text: string) => {
+      view.dispatch({ changes: { from, to, insert: text } });
+      view.focus();
+    };
+    if (proposal.intentId === "bold") return replace(`**${selectedText}**`);
+    if (proposal.intentId === "italic") return replace(`*${selectedText}*`);
+    if (proposal.intentId === "heading") return replace(`# ${selectedText}`);
+    if (proposal.intentId === "list") {
+      return replace(selectedText.split("\n").map((line) => `- ${line}`).join("\n"));
+    }
+    if (proposal.intentId === "readback") {
+      window.speechSynthesis?.speak(new SpeechSynthesisUtterance(selectedText));
+      return;
+    }
+    if (
+      proposal.intentId === "rewrite" ||
+      proposal.intentId === "expand" ||
+      proposal.intentId === "continue"
+    ) {
+      const context =
+        proposal.intentId === "continue" && from === to
+          ? view.state.doc.sliceString(Math.max(0, from - 500), from)
+          : selectedText;
+      const result = await runAsk({
+        lens: AI_VERBS[proposal.intentId].label,
+        prompt: AI_VERBS[proposal.intentId].prompt.replace("{text}", context),
+        context: [],
+      });
+      if (!result.ok) throw new Error(result.output || "AI request failed.");
+      replace(result.output);
+    }
   };
 
   // HSM-22-03 — the workflow's linear-step builder. `null` = a graph this
@@ -381,6 +423,13 @@ export function InlineEditor({ o, u }: { o: WorldObject; u: UnitPos }) {
         <div className="desk-editor-foot">
           <MicButton
             draftScope={`inline:${o.kind}:${o.id}`}
+            grammar={editorView ? editorVoiceGrammar : undefined}
+            surfaceKind="editor"
+            hasSelection={Boolean(
+              editorView &&
+                editorView.state.selection.main.from !== editorView.state.selection.main.to,
+            )}
+            onProposalConfirm={confirmEditorVoice}
             onText={(t) => {
               // Fill the primary text field for the kind: a note's body,
               // otherwise the name/title.

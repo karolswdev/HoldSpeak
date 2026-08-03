@@ -35,6 +35,7 @@ from .primitives import build_primitives_router
 from .projections import build_projections_router
 from .projects import build_projects_router
 from .roadmaps import build_roadmaps_router
+from .repositories import build_repositories_router
 from .setup import build_setup_router
 from .sync import build_sync_router
 from .system import build_system_router
@@ -65,6 +66,7 @@ __all__ = [
     "build_projections_router",
     "build_projects_router",
     "build_roadmaps_router",
+    "build_repositories_router",
     "build_setup_router",
     "build_sync_router",
     "build_system_router",

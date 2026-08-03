@@ -14,6 +14,9 @@ import { ZoneWindow } from "../components/ZoneWindow";
 import { InfoWindow } from "../components/InfoWindow";
 import { AskBar, AskPanel } from "../components/AskPanel";
 import { MicButton } from "../components/MicButton";
+import { deskVoiceGrammar } from "../voice/grammars/desk";
+import type { VoiceProposal } from "../voice/grammar";
+import { verbById } from "../verbRegistry";
 import { WorkMenu } from "../components/DeskMenu";
 import {
   floorMenuEntries,
@@ -180,6 +183,35 @@ export function WorldStage() {
     .filter((p): p is typeof p & { obj: WorldObject } => Boolean(p.obj));
   const renameZone =
     scene.zones.find((z) => z.id === renamingZoneId) || null;
+  const deskVoiceAvailable =
+    !editingObj &&
+    !openCards.length &&
+    !zoneWindows.length &&
+    !infoWindows.length &&
+    !askOpen &&
+    !renamingZoneId;
+  const confirmDeskVoice = (proposal: VoiceProposal) => {
+    if (proposal.intentId === "open") {
+      const query = String(proposal.params.query || "").toLocaleLowerCase();
+      const found = Object.values(useDesk.getState().items)
+        .flat()
+        .find((item) =>
+          [item.id, item.title, item.name]
+            .filter(Boolean)
+            .some((value) => String(value).toLocaleLowerCase().includes(query)),
+        );
+      if (!found) throw new Error("No matching desk item.");
+      useDesk.getState().openPullout(String(found.id));
+      return;
+    }
+    if (proposal.intentId === "attention") {
+      useProjections.getState().setOpen(true);
+      return;
+    }
+    const verb = proposal.verbId ? verbById(proposal.verbId) : undefined;
+    if (!verb || verb.ghost({ selectedRef: null })) throw new Error("That desk action is unavailable.");
+    verb.run({ selectedRef: null });
+  };
 
   return (
     <div
@@ -188,6 +220,17 @@ export function WorldStage() {
       style={{ "--rows": scene.rows } as React.CSSProperties}
     >
       <canvas ref={canvasRef} className="desk-world-canvas" />
+      {deskVoiceAvailable ? (
+        <div style={{ position: "fixed", left: 12, bottom: 12, zIndex: 20 }}>
+          <MicButton
+            label="Speak to the desk"
+            grammar={deskVoiceGrammar}
+            surfaceKind="desk"
+            onProposalConfirm={confirmDeskVoice}
+            onText={() => undefined}
+          />
+        </div>
+      ) : null}
       {divedZone && (
         <button
           type="button"
