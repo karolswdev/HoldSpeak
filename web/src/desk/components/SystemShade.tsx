@@ -96,9 +96,9 @@ export function SystemShade({
   };
 
   return (
-    <div className="desk-shade" ref={panel} role="group" aria-label="While you were away">
+    <div className="desk-shade" ref={panel} role="group" aria-label="Missed">
       <div className="desk-shade-head">
-        <span className="desk-shade-title">While you were away</span>
+        <span className="desk-shade-title">Missed</span>
         <button
           type="button"
           className="desk-shade-memory"

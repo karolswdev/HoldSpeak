@@ -14,6 +14,7 @@ import { useDesk } from "../store";
 import { openSurfaceOr } from "../shell";
 import { allObjects } from "../world";
 import { qualifiedRef } from "../api";
+import { SurfaceState } from "../surface/Surface";
 import { DeskWindowFrame } from "./DeskWindow";
 
 interface Proposal {
@@ -249,8 +250,7 @@ export function DeskToolInspector() {
       {project ? (
         <>
           <p>
-            {project.description ||
-              "Work and material assigned to this Project."}
+            {project.description || "Project material"}
           </p>
           <dl className="desk-tool-facts">
             <Fact label="Meetings" value={project.meeting_count} />
@@ -258,9 +258,9 @@ export function DeskToolInspector() {
           </dl>
           <section>
             <h3>Related Desk material</h3>
-            {loadingProject ? <p>Loading Project material…</p> : null}
+            {loadingProject ? <SurfaceState loading /> : null}
             {!loadingProject && !resourceObjects.length ? (
-              <p>No Desk material is assigned.</p>
+              <SurfaceState empty emptyLabel="No material" />
             ) : null}
             <ul className="desk-tool-resource-list">
               {resourceObjects.map((resource) => (

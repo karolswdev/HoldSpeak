@@ -926,7 +926,7 @@ button.gadget-chip-egress {
   font-family: var(--font-mono);
   font-size: 10px;
   letter-spacing: 0.06em;
-  color: var(--text-dim);
+  color: var(--text-faint);
   white-space: nowrap;
 }
 .gadget-fold-glyph {

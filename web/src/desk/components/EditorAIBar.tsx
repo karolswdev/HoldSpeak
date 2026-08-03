@@ -106,21 +106,12 @@ export function EditorAIBar({
 
   const coords = editorView.coordsAtPos(selection.from);
   if (!coords) return null;
-  const style: React.CSSProperties = {
+  const positionStyle: React.CSSProperties = {
     position: "fixed",
     left: `${Math.max(8, coords.left)}px`,
     top: `${Math.max(8, coords.top - 42)}px`,
     zIndex: 90,
     transform: "translateX(-8px)",
-    display: "flex",
-    flexDirection: "column",
-    gap: "4px",
-    padding: "4px",
-    background: "var(--surface-2)",
-    border: "1px solid var(--border)",
-    borderRadius: "var(--radius-sm)",
-    boxShadow: "var(--desk-window-etch), 0 8px 18px rgb(0 0 0 / 0.26)",
-    fontFamily: "var(--font-mono)",
   };
 
   const dismiss = () => {
@@ -175,9 +166,8 @@ export function EditorAIBar({
   };
 
   return (
-    <div className="desk-editor-ai-bar" style={style} role="toolbar" aria-label="Selection AI">
-      <style>{`@keyframes desk-editor-ai-shimmer { 0% { opacity: .42 } 50% { opacity: .95 } 100% { opacity: .42 } } .desk-code-editor.is-ai-pending .cm-selectionBackground { animation: desk-editor-ai-shimmer 1s ease-in-out infinite; }`}</style>
-      <div style={{ display: "flex", gap: "3px" }}>
+    <div className="desk-editor-ai-bar" style={positionStyle} role="toolbar" aria-label="Selection AI">
+      <div className="desk-editor-ai-bar-verbs">
         {(Object.keys(AI_VERBS) as EditorAIVerb[]).map((verb) => (
           <button
             key={verb}
@@ -196,7 +186,7 @@ export function EditorAIBar({
         receipt.tone === "egress" ? (
           <EgressChip label={receipt.text} scope={receipt.scope} title="This AI result's actual egress." />
         ) : (
-          <span role="status" style={{ color: "var(--danger, #dc6b65)", fontSize: "11px", maxWidth: "260px" }}>{receipt.text}</span>
+          <span role="status" className="desk-editor-ai-bar-error">{receipt.text}</span>
         )
       ) : null}
     </div>

@@ -19,7 +19,7 @@ function Status({ value }: { value: string }) {
 
 function PhaseRow({ phase, expanded, onToggle }: { phase: RoadmapPhase; expanded: boolean; onToggle: () => void }) {
   return (
-    <li className="desk-roadmap-phase" data-active={phase.status === "active" || undefined}>
+    <li className="desk-roadmap-phase">
       <button type="button" className="desk-roadmap-phase-row" onClick={onToggle} aria-expanded={expanded}>
         <span className="desk-roadmap-chevron" aria-hidden="true">{expanded ? "▾" : "▸"}</span>
         <strong>PH {phase.number}</strong>

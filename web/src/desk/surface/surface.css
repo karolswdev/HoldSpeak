@@ -823,6 +823,13 @@ button.surface-edit-in-place:hover {
 
 /* The explorer archetype: a status bar on the well tone at the
    window's foot — the honest counts live here. */
+/* Scrollable bodies that contain a sticky status bar need clearance
+   so the last content row is never hidden behind the bar. */
+.desk-surface-body:has(> .surface-status),
+.desk-surface-body:has(> .prefs-status),
+.desk-surface-body:has(> .surface-receiptbar) {
+  padding-bottom: 36px;
+}
 .surface-status {
   position: sticky;
   bottom: calc(-1 * var(--desk-window-pad-x));

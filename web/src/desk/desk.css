@@ -514,7 +514,7 @@
   border-radius: 2px;
   background: var(--desk-window-fill);
   color: var(--text);
-  box-shadow: 0 26px 70px var(--shadow-ink-5);
+  box-shadow: var(--desk-window-shadow);
   backdrop-filter: none;
 }
 .desk-next .desk-tool-inspector h2,
@@ -641,7 +641,7 @@
 .desk-next .desk-empty-mark {
   font-size: 44px;
   color: var(--accent);
-  filter: drop-shadow(0 0 18px rgba(255, 107, 53, 0.45));
+  filter: none;
 }
 .desk-next .desk-empty-word {
   margin: 0;
@@ -796,7 +796,7 @@
   padding: 2px 6px;
   border-radius: 2px;
   border: 1px solid var(--accent, #ff6b35);
-  background: rgba(8, 7, 12, 0.8);
+  background: var(--surface-1);
   color: var(--text);
   font-weight: 600;
   font-size: var(--font-size-sm);
@@ -918,7 +918,7 @@
   background: var(--danger-signal, #f87171);
 }
 .desk-next .desk-window-shell.is-front .desk-light-min {
-  background: var(--warn, #f2a33c);
+  background: var(--warn, #fbbf24);
 }
 .desk-next .desk-window-shell.is-front .desk-light-max {
   background: var(--success, #34d399);
@@ -1185,7 +1185,7 @@
   margin: 0;
   padding: 10px;
   border-radius: 2px;
-  background: rgba(8, 7, 12, 0.6);
+  background: var(--surface-2);
   border: 1px solid var(--border);
   color: var(--text);
   font-size: var(--font-size-sm);
@@ -1425,7 +1425,7 @@
   height: 46px;
   border-radius: 2px;
   border: 1px solid var(--border);
-  background: rgba(12, 10, 18, 0.72);
+  background: var(--surface-2);
   box-shadow: var(--desk-window-etch);
   font-size: 21px;
   display: grid;
@@ -1469,7 +1469,7 @@
   border: 1px solid
     color-mix(in srgb, var(--accent, #ff6b35) 30%, var(--border));
   background: var(--desk-panel-fill);
-  box-shadow: 0 20px 50px var(--shadow-ink-4);
+  box-shadow: var(--desk-window-shadow);
   backdrop-filter: none;
 }
 .desk-next .desk-rail-ask-row {
@@ -1507,7 +1507,7 @@
   height: 34px;
   border-radius: 2px;
   border: 1px solid var(--border);
-  background: rgba(12, 10, 18, 0.7);
+  background: var(--surface-2);
   font-size: 15px;
   cursor: pointer;
   display: inline-grid;
@@ -1573,7 +1573,7 @@
   background: var(--surface-1);
   border: 1px solid var(--border);
   border-radius: 2px;
-  box-shadow: inset 1px 1px 0 var(--etch-dark), inset -1px -1px 0 var(--etch-light);
+  box-shadow: var(--desk-window-etch);
   padding: 8px 10px;
   font: inherit;
 }
@@ -1612,7 +1612,7 @@
 .desk-next .desk-wf-step-label {
   font-size: var(--font-size-xs);
   white-space: nowrap;
-  color: var(--text-2, #c9cfdb);
+  color: var(--text-muted);
 }
 .desk-next .desk-wf-step input {
   flex: 1;
@@ -1625,7 +1625,7 @@
   margin-top: 2px;
 }
 .desk-next .desk-run-warning {
-  color: var(--warn, #f2a33c);
+  color: var(--warn, #fbbf24);
   font-size: var(--font-size-xs);
   margin: 6px 0 0;
 }
@@ -1793,7 +1793,7 @@
 }
 .desk-next .desk-mc-pin.awaiting {
   background: var(--warn);
-  color: var(--surface-0);
+  color: var(--bg);
 }
 .desk-next .desk-mc-pin.stale {
   opacity: 0.5;
@@ -1816,7 +1816,7 @@
   padding: 4px 8px;
   border-radius: 0;
   background: var(--warn);
-  color: var(--surface-0);
+  color: var(--bg);
   font-family: var(--font-mono);
   font-size: 10px;
   font-weight: 700;
@@ -1896,7 +1896,7 @@
   border: 1px solid
     color-mix(in srgb, var(--accent, #ff6b35) 35%, var(--border));
   background: var(--surface-2);
-  box-shadow: 0 14px 40px var(--shadow-ink-3);
+  box-shadow: var(--desk-window-shadow);
   backdrop-filter: none;
 }
 .desk-next .desk-askbar-count {
@@ -2008,7 +2008,7 @@
   border-radius: 0;
   border: 1px solid var(--border);
   background: var(--surface-1);
-  box-shadow: inset 1px 1px 0 var(--etch-dark), inset -1px -1px 0 var(--etch-light);
+  box-shadow: var(--desk-window-etch);
   color: var(--text);
   font-size: var(--font-size-sm);
   font-family: var(--font-mono);
@@ -2023,7 +2023,7 @@
 .desk-next .desk-ground {
   border: 1px solid var(--border);
   border-radius: 2px;
-  background: rgba(8, 7, 12, 0.55);
+  background: var(--surface-1);
 }
 .desk-next .desk-ground.is-open {
   border-color: color-mix(in srgb, var(--accent-cool) 45%, var(--border));
@@ -2352,9 +2352,7 @@
   border: 0;
   border-radius: 2px;
   background: var(--desk-window-well);
-  box-shadow:
-    inset 1px 1px 0 var(--etch-dark),
-    inset -1px -1px 0 var(--etch-light);
+  box-shadow: var(--desk-window-etch);
   font-family: var(--font-mono);
   font-size: 11px;
   line-height: 1.5;
@@ -2420,7 +2418,7 @@
   border: 1px solid var(--surface-3);
   border-radius: 0;
   background: var(--surface-1);
-  box-shadow: inset 1px 1px 0 var(--etch-dark), inset -1px -1px 0 var(--etch-light);
+  box-shadow: var(--desk-window-etch);
   color: var(--text);
   font-family: var(--font-mono);
   font-size: 12px;
@@ -2641,7 +2639,7 @@
   border-radius: 2px;
   background: var(--desk-window-fill);
   color: var(--text);
-  box-shadow: 0 26px 70px var(--shadow-ink-5);
+  box-shadow: var(--desk-window-shadow);
   backdrop-filter: none;
 }
 .desk-next .desk-attention-drawer .desk-panel-head {
@@ -3129,8 +3127,8 @@
 .desk-next .desk-dlv-fresh.is-offline,
 .desk-next .desk-dlv-fresh.is-unavailable,
 .desk-next .desk-dlv-fresh.is-unauthorized {
-  color: var(--bad, #f87171);
-  border-color: color-mix(in srgb, var(--bad, #f87171) 40%, transparent);
+  color: var(--danger, #f87171);
+  border-color: color-mix(in srgb, var(--danger, #f87171) 40%, transparent);
 }
 .desk-next .desk-dlv-hint {
   font-size: 11px;
@@ -3240,7 +3238,7 @@
   color: var(--text);
 }
 .desk-next .desk-pr-receipts tr.is-needs-you th[scope="row"] {
-  color: var(--danger, #e5484d);
+  color: var(--danger, #f87171);
 }
 .desk-next .desk-pr-gate {
   display: inline-block;
@@ -3253,8 +3251,8 @@
   letter-spacing: .04em;
 }
 .desk-next .desk-pr-gate.is-ungated {
-  border-color: var(--danger, #e5484d);
-  color: var(--danger, #e5484d);
+  border-color: var(--danger, #f87171);
+  color: var(--danger, #f87171);
 }
 .desk-next .desk-pr-diff {
   max-height: 320px;
@@ -3282,7 +3280,7 @@
   position: sticky;
   top: 0;
   z-index: var(--desk-z-window-base);
-  background: var(--panel, var(--wash-1));
+  background: var(--wash-1);
 }
 .desk-next .desk-pr-object-table th:first-child { min-width: 240px; }
 .desk-next .desk-pr-number {
@@ -3303,7 +3301,7 @@
 }
 .desk-next .desk-pr-refusal {
   flex-basis: 100%;
-  color: var(--danger, #e5484d);
+  color: var(--danger, #f87171);
   font-size: 10px;
 }
 .desk-next .desk-pr-detail td,
@@ -3351,7 +3349,7 @@
   gap: 6px;
 }
 .desk-next .desk-pr-proposal {
-  box-shadow: inset 3px 0 0 var(--accent, #7c5cff);
+  border-left: none;
 }
 .desk-next .desk-pr-proposal-head {
   display: flex;
@@ -3368,12 +3366,12 @@
   overflow-wrap: anywhere;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
-  background: var(--paper, var(--wash-1));
+  background: var(--wash-1);
   padding: 12px;
   font: 12px/1.5 var(--font-mono, ui-monospace, monospace);
 }
 .desk-next .desk-pr-result strong { margin-right: 8px; }
-.desk-next .desk-pr-result.is-error strong { color: var(--danger, #e5484d); }
+.desk-next .desk-pr-result.is-error strong { color: var(--danger, #f87171); }
 @media (max-width: 520px) {
   .desk-next .desk-pr-object-table { min-width: 0; width: 100%; }
   .desk-next .desk-pr-object-table thead { display: none; }
@@ -3683,7 +3681,7 @@
   place-items: center;
   border-radius: 0;
   background: var(--danger-signal);
-  color: white;
+  color: var(--text);
   font-size: var(--font-size-xs);
 }
 .desk-next .desk-dock-sep {
@@ -4127,7 +4125,7 @@
   border: 1px solid var(--border);
   border-radius: var(--radius-xs);
   background: none;
-  color: var(--text-dim);
+  color: var(--text-faint);
   font-family: var(--font-mono);
   font-size: 10px;
   font-weight: 600;
@@ -4391,7 +4389,7 @@
      chrome; the door face was bleeding into the bar). */
   background:
     linear-gradient(var(--desk-window-well), var(--desk-window-well)),
-    var(--desk-window-bg, var(--surface-1));
+    var(--desk-window-fill, var(--surface-1));
   font-family: var(--font-mono);
   font-size: var(--desk-surface-label-size);
   letter-spacing: 0.04em;
@@ -4413,7 +4411,7 @@
   flex: none;
 }
 .desk-next .speak-status.is-warn .speak-status-dot {
-  background: var(--warning, var(--accent));
+  background: var(--warn, #fbbf24);
 }
 .desk-next .speak-status-fix {
   border: 1px solid var(--border);
@@ -4461,7 +4459,7 @@
   display: flex;
   align-items: center;
   gap: 7px;
-  color: var(--text-dim);
+  color: var(--text-faint);
   font-size: var(--font-size-sm);
 }
 /* HS-111: status indicators — square, no glow */
@@ -4474,7 +4472,7 @@
 }
 .desk-next .desk-empty-trust.is-mixed .desk-empty-trust-dot,
 .desk-next .desk-empty-trust.is-cloud .desk-empty-trust-dot {
-  background: var(--warning, var(--accent));
+  background: var(--warn, #fbbf24);
 }
 
 /* HS-100-11 — the system bar's attention bell (the dock carries the
@@ -4486,7 +4484,7 @@
   gap: 4px;
   border: 0;
   background: none;
-  color: var(--text-dim);
+  color: var(--text-faint);
   font: inherit;
   font-size: var(--font-size-sm);
   cursor: pointer;
@@ -4500,7 +4498,7 @@
 .desk-next .desk-bell strong {
   font-size: var(--font-size-xs);
   background: var(--accent);
-  color: var(--text-inverse, #fff);
+  color: var(--white, #fff);
   border-radius: 2px;
   padding: 0 5px;
   line-height: 1.4;
@@ -5274,4 +5272,79 @@ body:has(.desk-next .desk-pullout:not(.is-card)) .ambient-qlippy {
   .desk-verbbar {
     display: none;
   }
+}
+
+/* ── EditorAIBar: selection-scoped AI toolbar ── */
+@keyframes desk-editor-ai-shimmer {
+  0%   { opacity: .42; }
+  50%  { opacity: .95; }
+  100% { opacity: .42; }
+}
+.desk-code-editor.is-ai-pending .cm-selectionBackground {
+  animation: desk-editor-ai-shimmer 1s ease-in-out infinite;
+}
+.desk-editor-ai-bar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-1);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--desk-window-etch), var(--desk-window-shadow);
+  font-family: var(--font-mono);
+}
+.desk-editor-ai-bar-verbs {
+  display: flex;
+  gap: var(--space-1);
+}
+.desk-editor-ai-bar-error {
+  color: var(--danger);
+  font-size: 11px;
+  max-width: 260px;
+}
+
+/* ── VoiceProposalStrip ── */
+@keyframes desk-voice-scan {
+  from { transform: translateX(-105%); }
+  to   { transform: translateX(210%); }
+}
+.desk-voice-proposal {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  box-shadow: var(--desk-window-etch), var(--desk-window-shadow);
+  font: 10px/1.25 var(--font-mono);
+}
+.desk-voice-proposal-heard {
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--muted);
+}
+.desk-voice-proposal-action {
+  color: var(--text);
+  text-transform: uppercase;
+}
+.desk-voice-scan {
+  position: relative;
+  width: 44px;
+  height: 4px;
+  overflow: hidden;
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+}
+.desk-voice-scan::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  width: 45%;
+  background: var(--accent);
+  animation: desk-voice-scan .8s linear infinite;
 }

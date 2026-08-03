@@ -218,7 +218,7 @@ export function AskPanel() {
     } else {
       setKept(false);
       setError(
-        "Artifact was not saved. The Result remains open. Retry Keep as Artifact.",
+        "Save failed. Retry.",
       );
     }
   };
@@ -467,7 +467,7 @@ export function AskPanel() {
                 <textarea
                   rows={3}
                   value={prompt}
-                  placeholder="Say what to do with these"
+                  placeholder="Instruction"
                   autoFocus
                   onChange={(e) => setPrompt(e.target.value)}
                   onKeyDown={(e) => {

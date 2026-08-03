@@ -43,6 +43,7 @@ describe("the verb registry (HS-105-05 / HS-111-07 v2)", () => {
       .map((v) => v.id);
     expect(creates).toEqual([
       "desk.new-note",
+      "desk.new-decision",
       "desk.new-knowledge",
       "desk.new-agent",
       "desk.new-workflow",

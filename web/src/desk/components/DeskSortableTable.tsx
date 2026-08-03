@@ -1,5 +1,6 @@
 import { useRef, type KeyboardEvent, type ReactNode } from "react";
 import { useRovingRows } from "../surface/roving";
+import { SurfaceState } from "../surface/Surface";
 
 export interface Column<T> {
   key: string;
@@ -120,7 +121,7 @@ export function DeskSortableTable<T>({
         <tbody>
           {data.length === 0 ? (
             <tr className="desk-sortable-table-empty">
-              <td colSpan={columnCount}>{emptyLabel}</td>
+              <td colSpan={columnCount}><SurfaceState empty emptyLabel={emptyLabel} /></td>
             </tr>
           ) : (
             Array.from(groups, ([label, items]) => (

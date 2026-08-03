@@ -65,7 +65,6 @@ export function VoiceProposalStrip({
 
   return (
     <div className="desk-voice-proposal" role="status" aria-live="polite">
-      <style>{`@keyframes desk-voice-scan { from { transform: translateX(-105%); } to { transform: translateX(210%); } } .desk-voice-proposal { display:flex; align-items:center; gap:6px; flex-wrap:wrap; padding:5px 6px; border:1px solid var(--border); border-radius:var(--radius-sm); background:var(--surface-2); box-shadow:var(--desk-window-etch), 0 5px 12px rgb(0 0 0 / .22); font:10px/1.25 var(--font-mono); } .desk-voice-proposal-heard { max-width:220px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--muted); } .desk-voice-proposal-action { color:var(--text); text-transform:uppercase; } .desk-voice-scan { position:relative; width:44px; height:4px; overflow:hidden; background:var(--surface-1); border:1px solid var(--border); } .desk-voice-scan::after { content:""; position:absolute; inset:0; width:45%; background:var(--accent); animation:desk-voice-scan .8s linear infinite; }`}</style>
       {pending ? <span className="desk-voice-scan" aria-hidden="true" /> : null}
       <span className="desk-voice-proposal-heard">“{proposal.transcript}”</span>
       <strong className="desk-voice-proposal-action">{label}</strong>

@@ -140,7 +140,7 @@ export function AttentionDrawer() {
               className="desk-receipt-detail"
               aria-label={`${selected.title} detail`}
             >
-              <button type="button" onClick={() => store.select(null)}>
+              <button type="button" className="desk-chip quiet" onClick={() => store.select(null)}>
                 ← Back to list
               </button>
               <small>{selected.subject_label}</small>
@@ -202,12 +202,13 @@ export function AttentionDrawer() {
                 </div>
               </dl>
               <div className="desk-receipt-actions">
-                <button type="button" onClick={() => openSource(selected)}>
+                <button type="button" className="desk-chip quiet" onClick={() => openSource(selected)}>
                   Open source
                 </button>
                 {selected.attention_state === "needs_attention" ? (
                   <button
                     type="button"
+                    className="desk-chip quiet"
                     onClick={() =>
                       void store.present(selected.id, "acknowledge")
                     }
@@ -217,6 +218,7 @@ export function AttentionDrawer() {
                 ) : null}
                 <button
                   type="button"
+                  className="desk-chip quiet"
                   onClick={() => void store.present(selected.id, "dismiss")}
                 >
                   Dismiss card

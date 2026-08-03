@@ -30,13 +30,14 @@ beforeEach(() => {
 });
 
 describe("floorMenuEntries", () => {
-  it("NEW > carries the five creates and routes createPrimitive", () => {
+  it("NEW > carries the creates and routes createPrimitive", () => {
     const entries = floorMenuEntries();
     const news = sub(entries, "floor.new");
     expect(
       news.entries.map((e) => (e.type === "item" ? e.label : e.type)),
     ).toEqual([
       "New Note",
+      "New Decision",
       "New Knowledge",
       "New Agent",
       "New Workflow",

@@ -340,7 +340,7 @@ export function PersonaChat(props: { personaId: string }) {
               disabled={!input.trim() || thinking || overBudget}
               title={
                 overBudget
-                  ? "Grounding exceeds the context limit. Remove material."
+                  ? "Over budget"
                   : undefined
               }
               onClick={() => void send()}
@@ -360,7 +360,7 @@ export function PersonaChat(props: { personaId: string }) {
         ) : null}
         {!groundingIsEmpty(grounding) && overBudget && (
           <p className="desk-run-warning">
-            Grounding exceeds the context limit. Remove material.
+            Over budget
           </p>
         )}
       </footer>

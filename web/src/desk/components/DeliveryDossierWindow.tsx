@@ -112,7 +112,7 @@ export function DeliveryDossierWindow() {
             </p>
             {dossier.bundleChanged ? (
               <p className="desk-arm-refusal" role="status">
-                ✕ bundle changed · this evidence predates the current source
+                ✕ BUNDLE CHANGED
               </p>
             ) : null}
 
