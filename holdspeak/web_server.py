@@ -565,6 +565,7 @@ class MeetingWebServer:
             build_projections_router,
             build_projects_router,
             build_roadmaps_router,
+            build_repositories_router,
             build_setup_router,
             build_sync_router,
             build_system_router,
@@ -629,6 +630,7 @@ class MeetingWebServer:
         app.include_router(build_delivery_attempts_router(web_ctx))
         app.include_router(build_delivery_dossiers_router(web_ctx))
         app.include_router(build_delivery_prs_router(web_ctx))
+        app.include_router(build_repositories_router(web_ctx))
         # One shared NodeLinkState feeds both the node link and the terminal
         # command claim leg: commands issued at the hub reach a remote node
         # through the same authenticated long-poll. The terminal command

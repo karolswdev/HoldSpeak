@@ -16,6 +16,7 @@ import {
 } from "./api";
 import { buildLinearGraph } from "./graph";
 import { loadSetup, type SetupStatus } from "./setup";
+import { registerRepository } from "./repository";
 
 export interface UnitPos {
   x: number;
@@ -295,6 +296,8 @@ interface DeskState {
   infoWindows: { ref: string; origin: { x: number; y: number } | null }[];
   /** Delivery Workbench projects open as their own Desk application window. */
   roadmapWindows: { slug: string; origin: { x: number; y: number } | null }[];
+  /** Registered git sources open as physical desk drawers. */
+  repositoryWindows: { id: string; origin: { x: number; y: number } | null }[];
   /** The zone a live drag is hovering (the drop affordance, HS-73-05). */
   hoverZoneId: string | null;
   /** The freshly-created zone whose rename is focused. */
@@ -339,6 +342,8 @@ interface DeskState {
   createPrimitive(
     kind: "note" | "decision" | "kb" | "recipe" | "zone" | "workflow",
   ): Promise<void>;
+  /** Register a Delivery source (or local worktree) as a repository drawer. */
+  registerRepository(input: { sourceId?: string; path?: string; label?: string }): Promise<void>;
   markNew(id: string): void;
   openEditor(id: string): void;
   closeEditor(): void;
@@ -367,6 +372,8 @@ interface DeskState {
   closeInfoWindow(ref: string): void;
   openRoadmapWindow(slug: string, origin?: { x: number; y: number }): void;
   closeRoadmapWindow(slug: string): void;
+  openRepositoryWindow(id: string, origin?: { x: number; y: number }): void;
+  closeRepositoryWindow(id: string): void;
   setHoverZone(id: string | null): void;
   setRenamingZone(id: string | null): void;
   diveInto(zoneId: string): void;
@@ -485,6 +492,7 @@ export const useDesk = create<DeskState>((set, get) => ({
   zoneViewPrefs: loadZoneViewPrefs(),
   infoWindows: [],
   roadmapWindows: [],
+  repositoryWindows: [],
   hoverZoneId: null,
   renamingZoneId: null,
   selectedIds: [],
@@ -579,6 +587,20 @@ export const useDesk = create<DeskState>((set, get) => ({
       get().markNew(createdId);
       if (kind === "zone") get().setRenamingZone(createdId);
       else get().openEditor(createdId);
+    }
+  },
+
+  async registerRepository(input) {
+    try {
+      const { repository } = await registerRepository(input);
+      await get().refresh();
+      const positions = { ...get().positions, [repository.id]: { x: 0.5, y: 0.55 } };
+      set({ positions });
+      savePositions(positions);
+      get().markNew(repository.id);
+      get().openRepositoryWindow(repository.id);
+    } catch {
+      await get().refresh();
     }
   },
 
@@ -699,6 +721,10 @@ export const useDesk = create<DeskState>((set, get) => ({
       get().openRoadmapWindow(id.slice("roadmap:".length), origin);
       return;
     }
+    if ((get().items.repository || []).some((repository) => repository.id === id)) {
+      get().openRepositoryWindow(id, origin);
+      return;
+    }
     const projectId = id.startsWith("project:")
       ? id.slice("project:".length)
       : (get().items.project || []).some((project) => project.id === id)
@@ -765,6 +791,15 @@ export const useDesk = create<DeskState>((set, get) => ({
   },
   closeRoadmapWindow(slug) {
     set({ roadmapWindows: get().roadmapWindows.filter((window) => window.slug !== slug) });
+  },
+  openRepositoryWindow(id, origin) {
+    const open = get().repositoryWindows;
+    if (!open.some((window) => window.id === id))
+      set({ repositoryWindows: [...open, { id, origin: origin ?? null }] });
+    get().focusPanel(`repository:${id}`);
+  },
+  closeRepositoryWindow(id) {
+    set({ repositoryWindows: get().repositoryWindows.filter((window) => window.id !== id) });
   },
   setZoneViewPref(id, pref) {
     const current = get().zoneViewPrefs[id] || {
@@ -1178,6 +1213,7 @@ export const useDesk = create<DeskState>((set, get) => ({
       zoneViewPrefs: {},
       infoWindows: [],
       roadmapWindows: [],
+      repositoryWindows: [],
       divedZone: null,
       editingId: null,
       selectedIds: [],

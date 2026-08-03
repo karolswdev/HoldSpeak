@@ -40,7 +40,8 @@ export type PrimitiveKind =
   | "game"
   | "layout"
   | "roadmap"
-  | "story";
+  | "story"
+  | "repository";
 
 /** Static metadata for each kind — drives the type-legible Desk language. */
 export interface PrimitiveDescriptor {
@@ -159,6 +160,16 @@ export interface Project {
   updatedAt: string;
 }
 
+/** A registered local git source, opened as a Desk drawer. */
+export interface Repository {
+  kind: "repository";
+  id: string;
+  name: string;
+  sourceId: string;
+  branch: string;
+  createdAt: string;
+}
+
 // ── capability ─────────────────────────────────────────────────────────
 
 /** A saved Persona. The `recipe` discriminator is a compatibility wire name. */
@@ -267,6 +278,7 @@ export type Primitive =
   | Directory
   | KB
   | Project
+  | Repository
   | Persona
   | Chain
   | Workflow
@@ -343,6 +355,15 @@ export const PRIMITIVES: Record<PrimitiveKind, PrimitiveDescriptor> = {
     blurb: "A body of work with meetings, decisions, and cited memory.",
     icon: "M4 4h16v16H4zM8 2v4M16 2v4M8 10h8M8 14h5",
     authorable: false,
+  },
+  repository: {
+    kind: "repository",
+    label: "Repository",
+    plural: "Repositories",
+    syncClass: "organization",
+    blurb: "A registered git repository with files, pull requests, and issues.",
+    icon: "M4 3h16v18H4zM8 7h8M8 11h8M8 15h5",
+    authorable: true,
   },
   recipe: {
     kind: "recipe",
@@ -426,7 +447,7 @@ export type Agent = Persona;
 export const DESK_GROUPS: { label: string; kinds: PrimitiveKind[] }[] = [
   { label: "Content", kinds: ["meeting", "artifact", "note", "decision"] },
   { label: "Capabilities", kinds: ["recipe", "chain", "workflow"] },
-  { label: "Organization", kinds: ["directory", "kb", "project"] },
+  { label: "Organization", kinds: ["directory", "kb", "project", "repository"] },
   { label: "Live", kinds: ["coder"] },
   { label: "Delivery", kinds: ["roadmap", "story"] },
 ];
