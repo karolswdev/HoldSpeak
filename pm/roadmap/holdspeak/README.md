@@ -4,7 +4,15 @@
 > pick up, and the repo conventions that bite (PMO commit gate, write-once
 > evidence, no `Co-Authored-By`, metal-test exclusion).
 
-**Newest update (2026-08-02): Phase 112 — Enough — CHARTERED.** The
+**Newest update (2026-08-03): Phase 115 — The Polish — DRAFTED.**
+73 violations found across ~30 Desk surfaces by a 7-agent terra audit
+(526k tokens, 114 tool calls). 27 BROKEN, 22 UGLY, 24 DRIFT. Seven
+stories: shared material foundations, content sanitization, object
+windows, system surfaces, hosted cores, the Rails window redesign,
+and the verification walk. Audit artifact:
+https://claude.ai/code/artifact/f5788f46-2b99-4e7f-b6e5-281c03e7c01c
+
+**Previous update (2026-08-02): Phase 112 — Enough — CHARTERED.** The
 owner's post-111 verdict, verbatim: "Enough with the
 over-complication, enough with me not really even understanding what
 HoldSpeak does and what HoldSpeak is." Six stories, nothing else:
