@@ -1,6 +1,6 @@
 # Phase 115 - The Polish
 
-**Status:** CHARTERED. Eight stories that remediate the 73 violations
+**Status:** done. Eight stories that remediate the 73 violations
 found by the 2026-08-03 surface audit. Three severity tiers — 27
 BROKEN (user-visible bugs), 22 UGLY (material violations), 24 DRIFT
 (inconsistencies) — across ~30 surfaces. Every window, every chip,
@@ -167,7 +167,7 @@ and proves everything.
 
 | # | Story | The ask it answers | Status |
 |---|-------|--------------------|--------|
-| 07 | [The walk](./story-07-the-walk.md) | "Prove every surface passes the audit" | backlog |
+| 07 | [The walk](./story-07-the-walk.md) | "Prove every surface passes the audit" | done |
 
 ## Story status
 
@@ -179,15 +179,13 @@ and proves everything.
 | HS-115-04 | System surfaces | done | [story-04](./story-04-system-surfaces.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-115-05 | Hosted cores | done | [story-05](./story-05-hosted-cores.md) | [evidence-story-05](./evidence-story-05.md) |
 | HS-115-06 | The rails window | done | [story-06](./story-06-the-rails-window.md) | [evidence-story-06](./evidence-story-06.md) |
-| HS-115-07 | The walk | backlog | [story-07](./story-07-the-walk.md) | — |
+| HS-115-07 | The walk | done | [story-07](./story-07-the-walk.md) | [evidence-story-07](./evidence-story-07.md) |
 | HS-115-08 | The cooled accent | done | [story-08](./story-08-the-cooled-accent.md) | [evidence-story-08](./evidence-story-08.md) |
 
 ## Where we are
 
-7/8 shipped. Foundation (01, 02, 08) and surface groups (03–06) done.
-Only story 07 (the verification walk) remains. Every surface on the
-Desk has been remediated: shared material unified, 18+ content
-violations humanized, accent cooled to forge ember #a86e4a, bespoke
-controls migrated to chips, workbench nodes on bevel material,
-delivery board on unified fill, overflow and typography normalized.
-Audit artifact: https://claude.ai/code/artifact/f5788f46-2b99-4e7f-b6e5-281c03e7c01c
+8/8 shipped. Phase complete. Every surface on the Desk walks clean:
+11 screenshot routes captured at 1440px + 560px (mobile), forge ember
+accent cohesive across all surfaces, all 73 audit violations
+remediated. Screenshots: `assets/walk-115/`. Audit artifact:
+https://claude.ai/code/artifact/f5788f46-2b99-4e7f-b6e5-281c03e7c01c
