@@ -197,12 +197,12 @@ Two system-level foundations ship alongside the hopper:
 | HS-118-01 | Zone name uniqueness | done | [story-01](story-01-zone-name-uniqueness.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-118-02 | Conductor ref hydration | done | [story-02](story-02-conductor-ref-hydration.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-118-03 | The inlet | done | [story-03](story-03-the-inlet.md) | [evidence-story-03](./evidence-story-03.md) |
-| HS-118-04 | @-reference tokenizer | backlog | [story-04](story-04-at-reference-tokenizer.md) | -- |
+| HS-118-04 | @-reference tokenizer | done | [story-04](story-04-at-reference-tokenizer.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-118-05 | Voice drawer resolution | backlog | [story-05](story-05-voice-drawer-resolution.md) | -- |
 | HS-118-06 | Output minting | done | [story-06](story-06-output-minting.md) | [evidence-story-06](./evidence-story-06.md) |
 | HS-118-07 | Sprite states | done | [story-07](story-07-sprite-states.md) | [evidence-story-07](./evidence-story-07.md) |
 | HS-118-08 | Browser mic pipeline | done | [story-08](story-08-browser-mic-pipeline.md) | [evidence-story-08](./evidence-story-08.md) |
-| HS-118-09 | Artifact triage | backlog | [story-09](story-09-artifact-triage.md) | -- |
+| HS-118-09 | Artifact triage | done | [story-09](story-09-artifact-triage.md) | [evidence-story-09](./evidence-story-09.md) |
 | HS-118-10 | The walk | backlog | [story-10](story-10-the-walk.md) | -- |
 
 ## Where we are

@@ -30,6 +30,7 @@ export interface WorkbenchItem {
   result: string | null;
   result_egress: { boundary?: string } | null;
   result_artifact_id: string | null;
+  artifact_status?: string | null;
   mint_attempted: boolean;
   tokens_consumed: number;
   created_at: string;

@@ -1,5 +1,5 @@
 import "./workbench-config.css";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { spriteUrl } from "../sprites";
 import { useDesk } from "../store";
 import type {
@@ -31,11 +31,13 @@ import {
   hubGrounding,
   type GroundingSelection,
 } from "../grounding";
+import type { ResolvedRef } from "../../lib/drawerResolver";
 import { DeskWindowFrame } from "./DeskWindow";
 import { DeskWindowFooter } from "./DeskWindowFooter";
 import { AgentAvatar } from "./AgentAvatar";
 import { GroundingSection } from "./GroundingSection";
 import { MicButton } from "./MicButton";
+import type { MicState } from "./MicButton";
 import { RunsOnPicker } from "./RunsOnPicker";
 import {
   CheckGadget,
@@ -66,6 +68,13 @@ import { WorkbenchTemplatePicker } from "./WorkbenchTemplatePicker";
 import { workbenchVoiceGrammar } from "../voice/grammars/workbench";
 import type { VoiceProposal } from "../voice/grammar";
 import { humanTime } from "../surface/format";
+import {
+  InletAutocomplete,
+  findAtTrigger,
+  filterZones,
+  zoneToRef,
+  removeAtSpan,
+} from "./InletAutocomplete";
 
 /* ── schedule presets ───────────────────────────────────────────────── */
 
@@ -758,6 +767,7 @@ export function WorkbenchWindow({
   const [newBody, setNewBody] = useState("");
   const [newPriority, setNewPriority] = useState(3);
   const [grounding, setGrounding] = useState<GroundingSelection>(emptyGrounding);
+  const [groundingRefs, setGroundingRefs] = useState<ResolvedRef[]>([]);
   const [running, setRunning] = useState(false);
   const [runProgress, setRunProgress] = useState<{ index: number; total: number } | null>(null);
   const [activeWing, setActiveWing] = useState("items");
@@ -765,6 +775,79 @@ export function WorkbenchWindow({
   const [voiceProposal, setVoiceProposal] = useState<VoiceProposal | null>(null);
   const [dropHover, setDropHover] = useState(false);
   const configAutoExpanded = useRef(false);
+
+  /* ── @-reference autocomplete state ─────────────────────────────── */
+  const zones = useDesk((s) => s.items.directory || []);
+  const [cursorPos, setCursorPos] = useState(0);
+  const [acSelectedIndex, setAcSelectedIndex] = useState(0);
+  const [acDismissed, setAcDismissed] = useState(false);
+  const typedAtPosRef = useRef<number | null>(null);
+  const inletInputRef = useRef<HTMLInputElement>(null);
+  const prevAcQueryRef = useRef("");
+
+  // Fix #2: only open autocomplete for typed @ characters.
+  const rawAtPos = acDismissed ? -1 : findAtTrigger(newTitle, cursorPos, zones);
+  const atPos =
+    rawAtPos >= 0 && typedAtPosRef.current !== null && rawAtPos === typedAtPosRef.current
+      ? rawAtPos
+      : -1;
+  const acOpen = atPos >= 0;
+  const acQuery = acOpen ? newTitle.slice(atPos + 1, cursorPos) : "";
+  const acMatches = acOpen ? filterZones(acQuery, zones) : [];
+
+  // Fix #5: reset selected index when query changes.
+  if (acQuery !== prevAcQueryRef.current) {
+    prevAcQueryRef.current = acQuery;
+    if (acSelectedIndex !== 0) {
+      setAcSelectedIndex(0);
+    }
+  }
+
+  // Clamp selected index when matches change.
+  const clampedAcIndex = Math.min(acSelectedIndex, Math.max(0, acMatches.length - 1));
+  if (clampedAcIndex !== acSelectedIndex) {
+    setAcSelectedIndex(clampedAcIndex);
+  }
+
+  const addGroundingRef = useCallback((ref: ResolvedRef) => {
+    setGroundingRefs((prev) => {
+      if (prev.some((r) => r.ref === ref.ref)) return prev;
+      return [...prev, ref];
+    });
+  }, []);
+
+  const removeGroundingRef = useCallback((ref: string) => {
+    setGroundingRefs((prev) => prev.filter((r) => r.ref !== ref));
+  }, []);
+
+  const selectAutocompleteZone = useCallback((zone: typeof zones[number]) => {
+    const ref = zoneToRef(zone);
+    addGroundingRef(ref);
+    // Fix #6, #7: remove @query span with whitespace collapse.
+    if (atPos >= 0) {
+      const result = removeAtSpan(newTitle, atPos, cursorPos);
+      setNewTitle(result.text);
+      setCursorPos(result.cursor);
+      // Focus and set cursor position on next tick.
+      requestAnimationFrame(() => {
+        if (inletInputRef.current) {
+          inletInputRef.current.setSelectionRange(result.cursor, result.cursor);
+          inletInputRef.current.focus();
+        }
+      });
+    }
+    setAcSelectedIndex(0);
+    setAcDismissed(false);
+    typedAtPosRef.current = null;
+  }, [atPos, newTitle, cursorPos, addGroundingRef]);
+
+  // Fix #3: close autocomplete when mic arms.
+  const handleMicState = useCallback((state: MicState) => {
+    if (state === "listening") {
+      setAcDismissed(true);
+      typedAtPosRef.current = null;
+    }
+  }, []);
 
   const recipe = recipes.find(
     (r) => r.id === (detail?.recipe_id || wb?.recipeId),
@@ -901,13 +984,24 @@ export function WorkbenchWindow({
   const addItem = async () => {
     const title = newTitle.trim();
     if (!title) return;
+    // Derive a short title (first 64 chars at word boundary) from the full instruction.
+    const shortTitle = title.length <= 64
+      ? title
+      : title.slice(0, 64).replace(/\s+\S*$/, "") || title.slice(0, 64);
     const payload: Record<string, unknown> = {
-      title,
-      body: newBody.trim(),
+      title: shortTitle,
+      body: title,
       priority: newPriority,
     };
-    if (!groundingIsEmpty(grounding)) {
-      payload.grounding = hubGrounding(grounding);
+    // Build grounding from both legacy selection and @-ref tray.
+    const legacyGround = !groundingIsEmpty(grounding) ? hubGrounding(grounding) : null;
+    if (legacyGround || groundingRefs.length > 0) {
+      const g: Record<string, unknown> = legacyGround ? { ...legacyGround } : {};
+      if (groundingRefs.length > 0) {
+        const existingRefs = (g.refs as string[]) || [];
+        g.refs = [...existingRefs, ...groundingRefs.map((r) => r.ref)];
+      }
+      payload.grounding = g;
     }
     try {
       await addWorkbenchItem(workbenchId, payload);
@@ -915,6 +1009,9 @@ export function WorkbenchWindow({
       setNewBody("");
       setNewPriority(3);
       setGrounding(emptyGrounding());
+      setGroundingRefs([]);
+      setCursorPos(0);
+      typedAtPosRef.current = null;
       load();
     } catch {
       /* refresh will show honest state */
@@ -1203,65 +1300,134 @@ export function WorkbenchWindow({
               </div>
             ) : null}
 
-            {/* ── composer ──────────────────────────────────────────── */}
-            <div className="wb-composer">
-              <GroundingSection
-                meetings={(useDesk.getState().items.meeting || []).map(
-                  (m: any) => ({
-                    id: m.id,
-                    title: String(m.title || "Untitled meeting"),
-                    startedAt: m.startedAt,
-                  }),
-                )}
-                selection={grounding}
-                onChange={setGrounding}
-                limitTokens={8192}
-                meter={false}
-              />
-              <div className="wb-composer-row">
+            {/* ── inlet (HS-118-03/04) ─────────────────────────────── */}
+            <div className="wb-inlet" style={{ position: "relative" }}>
+              {/* grounding tray */}
+              {groundingRefs.length > 0 ? (
+                <div className="wb-inlet-tray">
+                  {groundingRefs.map((r) => (
+                    <span key={r.ref} className="desk-chip quiet">
+                      {r.name}
+                      <button
+                        type="button"
+                        className="wb-inlet-chip-remove"
+                        onClick={() => removeGroundingRef(r.ref)}
+                        aria-label={`Remove ${r.name}`}
+                      >
+                        &times;
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              ) : null}
+              {/* autocomplete popover */}
+              {acOpen ? (
+                <InletAutocomplete
+                  zones={zones}
+                  matches={acMatches}
+                  selectedIndex={clampedAcIndex}
+                  onSelect={selectAutocompleteZone}
+                  onSelectedIndexChange={setAcSelectedIndex}
+                />
+              ) : null}
+              <div className="wb-inlet-row">
                 <MicButton
                   draftScope={`workbench:${workbenchId}`}
                   grammar={workbenchVoiceGrammar}
                   onText={(t) => setNewTitle((v) => (v ? v + " " + t : t))}
                   onProposalConfirm={(p) => setVoiceProposal(p)}
+                  onState={handleMicState}
                 />
                 <input
+                  ref={inletInputRef}
                   type="text"
-                  className="wb-composer-input"
-                  placeholder="Add an item…"
+                  className="wb-inlet-input"
+                  placeholder="What needs doing?"
                   value={newTitle}
-                  onChange={(e) => setNewTitle(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") void addItem();
+                  onChange={(e) => {
+                    setNewTitle(e.target.value);
+                    setCursorPos(e.target.selectionStart ?? e.target.value.length);
+                    setAcDismissed(false);
                   }}
-                  aria-label="New item title"
+                  onPaste={() => {
+                    typedAtPosRef.current = null;
+                  }}
+                  onSelect={(e) => {
+                    setCursorPos((e.target as HTMLInputElement).selectionStart ?? cursorPos);
+                  }}
+                  onKeyDown={(e) => {
+                    // Fix #2: detect typed @ (fires before insertion).
+                    if (e.key === "@" && !e.ctrlKey && !e.metaKey && !e.altKey) {
+                      typedAtPosRef.current = (e.target as HTMLInputElement).selectionStart ?? 0;
+                    }
+                    if (acOpen) {
+                      if (e.key === "ArrowDown") {
+                        e.preventDefault();
+                        setAcSelectedIndex(Math.min(clampedAcIndex + 1, acMatches.length - 1));
+                        return;
+                      }
+                      if (e.key === "ArrowUp") {
+                        e.preventDefault();
+                        setAcSelectedIndex(Math.max(clampedAcIndex - 1, 0));
+                        return;
+                      }
+                      if (e.key === "Enter") {
+                        if (acMatches.length > 0) {
+                          e.preventDefault();
+                          selectAutocompleteZone(acMatches[clampedAcIndex]);
+                          return;
+                        }
+                      }
+                      // Fix #4: Shift+Tab should not select.
+                      if (e.key === "Tab" && !e.shiftKey) {
+                        if (acMatches.length > 0) {
+                          e.preventDefault();
+                          selectAutocompleteZone(acMatches[clampedAcIndex]);
+                          return;
+                        }
+                      }
+                      if (e.key === "Escape") {
+                        e.preventDefault();
+                        setAcDismissed(true);
+                        typedAtPosRef.current = null;
+                        return;
+                      }
+                      if (e.key === " " && acMatches.length === 0) {
+                        // Space with no matches closes popover.
+                        setAcDismissed(true);
+                        typedAtPosRef.current = null;
+                        return;
+                      }
+                      if (e.key === "Backspace") {
+                        // Check if backspacing past @ would close.
+                        const sel = (e.target as HTMLInputElement).selectionStart ?? 0;
+                        if (sel <= atPos + 1) {
+                          setAcDismissed(true);
+                          typedAtPosRef.current = null;
+                        }
+                      }
+                    }
+                    if (!acOpen && e.key === "Enter") void addItem();
+                  }}
+                  aria-label="New item instruction"
                 />
                 <button
                   type="button"
                   className="desk-chip wb-priority-cycle"
-                  onClick={() => setNewPriority((p) => (p >= 5 ? 1 : p + 1))}
+                  data-priority={newPriority}
+                  onClick={() => setNewPriority((p) => (p >= 3 ? 1 : p + 1))}
                   title={`Priority ${newPriority} — click to cycle`}
                 >
                   P{newPriority}
                 </button>
                 <TransportKey
                   compact
-                  label="ADD"
-                  glyph="＋"
+                  label="GO"
+                  glyph=">"
                   disabled={!newTitle.trim()}
                   onClick={() => void addItem()}
                 />
               </div>
-              <FoldGadget title="Body" token={newBody ? `${newBody.length}` : undefined}>
-                <PadGadget
-                  label="Item body"
-                  value={newBody}
-                  onChange={setNewBody}
-                  placeholder="Optional details…"
-                  rows={3}
-                  autoGrow
-                />
-              </FoldGadget>
             </div>
           </>
         ) : null}

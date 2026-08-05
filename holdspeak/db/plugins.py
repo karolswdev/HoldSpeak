@@ -941,7 +941,7 @@ class PluginArtifactRepository(BaseRepository):
                 """
                 SELECT *
                 FROM artifacts
-                WHERE origin = 'run' AND status != 'pending-review'
+                WHERE origin = 'run' AND status NOT IN ('pending-review', 'rejected')
                 ORDER BY created_at DESC, id DESC
                 LIMIT ?
                 """,
