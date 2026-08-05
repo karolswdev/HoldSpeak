@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import type { Note } from "../../lib/primitives";
 import { EMPTY_ITEMS } from "../api";
 import { useDesk } from "../store";
 import { DeskToolInspector } from "./DeskToolInspector";
@@ -36,7 +37,7 @@ describe("HS-93-04 Desk tool inspector", () => {
             id: "release",
             title: "Release checklist",
             bodyMarkdown: "Ship after checks pass.",
-          },
+          } as Note,
         ],
       },
       projects: [],

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { fetchRoadmap, type RoadmapDetail, type RoadmapPhase } from "../roadmap";
+import { usePrimitiveDetail } from "../hooks/usePrimitiveDetail";
 import { useDesk } from "../store";
 import { SurfaceState } from "../surface/Surface";
 import { SurfaceWings } from "../surface/wings";
@@ -45,23 +46,15 @@ function PhaseRow({ phase, expanded, onToggle }: { phase: RoadmapPhase; expanded
 
 export function RoadmapWindow({ slug, origin }: { slug: string; origin?: { x: number; y: number } | null }) {
   const [active, setActive] = useState("timeline");
-  const [detail, setDetail] = useState<RoadmapDetail | null>(null);
-  const [error, setError] = useState("");
+  const detailHook = usePrimitiveDetail("roadmap", slug, fetchRoadmap);
+  const detail = detailHook.data;
+  const error = detailHook.error ?? "";
   const [expanded, setExpanded] = useState<Set<number>>(new Set());
 
+  // Auto-expand the current phase when detail first arrives.
   useEffect(() => {
-    let live = true;
-    setDetail(null);
-    setError("");
-    void fetchRoadmap(slug)
-      .then((value) => {
-        if (!live) return;
-        setDetail(value);
-        setExpanded(new Set([value.currentPhase]));
-      })
-      .catch(() => live && setError("Roadmap unavailable"));
-    return () => { live = false; };
-  }, [slug]);
+    if (detail) setExpanded(new Set([detail.currentPhase]));
+  }, [detail]);
 
   const activePhase = useMemo(
     () => detail?.phases.find((phase) => phase.number === detail.currentPhase) ?? null,
@@ -85,7 +78,7 @@ export function RoadmapWindow({ slug, origin }: { slug: string; origin?: { x: nu
       className="desk-roadmap-window"
     >
       <div className="desk-roadmap-body">
-        {!detail && !error ? <SurfaceState loading /> : null}
+        {detailHook.loading && !detail ? <SurfaceState loading /> : null}
         {error ? <SurfaceState error={error} /> : null}
         {detail && active === "timeline" ? (
           <ul className="desk-roadmap-phases">

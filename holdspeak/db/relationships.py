@@ -78,6 +78,8 @@ class ProjectRelationshipRecord:
 
 
 class KnowledgeMembershipRepository(BaseRepository):
+    table = "knowledge_memberships"
+
     def upsert(self, *, knowledge_id: str, resource_ref: str,
                last_modified: Optional[str] = None, deleted: bool = False,
                created_at: Optional[str] = None) -> KnowledgeMembershipRecord:
@@ -174,6 +176,8 @@ class KnowledgeMembershipRepository(BaseRepository):
 
 
 class ProjectRelationshipRepository(BaseRepository):
+    table = "project_relationships"
+
     def upsert(self, *, project_id: str, resource_ref: str,
                relationship: str = "member", source: str = "manual",
                confidence: float = 1.0, last_modified: Optional[str] = None,

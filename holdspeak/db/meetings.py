@@ -30,6 +30,8 @@ log = get_logger("db.meetings")
 class MeetingRepository(BaseRepository):
     """Persistence for meetings, transcripts, speakers, and action items."""
 
+    table = "meetings"
+
     def _normalize_action_item_status(self, status: object) -> str:
         """Validate and normalize an action item status value."""
         normalized = str(status).strip().lower()

@@ -16,6 +16,8 @@ from .primitives import _now_iso
 class CapabilityInvocationRepository(BaseRepository):
     """Cross-capability run receipts without replacing domain job tables."""
 
+    table = "capability_invocations"
+
     def begin(
         self,
         *,

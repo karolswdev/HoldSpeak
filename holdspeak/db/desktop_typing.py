@@ -8,6 +8,8 @@ from .base import BaseRepository
 
 
 class DesktopTypeReceiptRepository(BaseRepository):
+    table = "desktop_type_receipts"
+
     def record(
         self,
         *,

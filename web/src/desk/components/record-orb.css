@@ -1,0 +1,64 @@
+/* ── HS-73-06: the Record orb (the live verb, bottom-center) ── */
+.desk-next .desk-orb-wrap {
+  position: fixed;
+  bottom: 34px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: var(--desk-z-chrome);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+/* HS-111-09 — the Record key: the 40px system sprite IS the face
+   (integer-true, 80 device px at DPR 2). The macOS gloss gradient,
+   glow halo, and hover swell are retired — Signal Workbench states are
+   flat brightness steps, matching the icon family's _sel treatment. */
+.desk-next .desk-orb {
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+}
+.desk-next .desk-orb:hover .desk-orb-face {
+  filter: brightness(1.15);
+}
+.desk-next .desk-orb.is-recording .desk-orb-face {
+  animation: desk-next-orb-pulse 1.2s steps(2, jump-none) infinite;
+}
+.desk-next .desk-orb.is-busy {
+  opacity: 0.6;
+  cursor: default;
+}
+@keyframes desk-next-orb-pulse {
+  0%,
+  100% {
+    filter: brightness(1);
+  }
+  50% {
+    filter: brightness(1.4);
+  }
+}
+.desk-next .desk-orb-elapsed {
+  font-size: var(--font-size-xs);
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 1px 3px var(--shadow-ink-6);
+}
+.desk-next .desk-orb-note {
+  font-size: var(--font-size-xs);
+  color: var(--text-faint);
+  letter-spacing: 0.04em;
+}
+@media (prefers-reduced-motion: reduce) {
+  .desk-next .desk-orb.is-recording .desk-orb-face {
+    animation: none;
+    filter: brightness(1.4);
+  }
+}
+

@@ -4,6 +4,7 @@
  * listed here refuses. Verbs are consent-honest: a drop that would RUN
  * something lands the object as held context beside the run verb (the
  * human presses it); a drop that files is reversible by construction. */
+import type { PrimitiveKind } from "../lib/primitives";
 
 /** What each target kind accepts, and the verb's label under the cursor. */
 export interface DropRule {
@@ -18,7 +19,7 @@ export interface DropRule {
 const GROUNDABLE = new Set(["note", "kb", "meeting", "artifact"]);
 const KNOWLEDGE_FILABLE = new Set(["note", "meeting", "artifact", "recipe"]);
 
-export const DROP_MATRIX: Record<string, DropRule> = {
+export const DROP_MATRIX = {
   recipe: {
     accepts: GROUNDABLE,
     verb: "Hold as source",
@@ -35,13 +36,13 @@ export const DROP_MATRIX: Record<string, DropRule> = {
     verb: "Add to Knowledge",
     action: "file-knowledge",
   },
-};
+} satisfies Partial<Record<PrimitiveKind, DropRule>>;
 
 /** The rule when `dragged` hovers `target`, or null (an inert pair). */
 export function dropRule(
   targetKind: string,
   draggedKind: string,
 ): DropRule | null {
-  const rule = DROP_MATRIX[targetKind];
+  const rule = (DROP_MATRIX as Partial<Record<string, DropRule>>)[targetKind];
   return rule && rule.accepts.has(draggedKind) ? rule : null;
 }

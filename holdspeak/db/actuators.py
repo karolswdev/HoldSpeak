@@ -47,6 +47,8 @@ _LEGAL_TRANSITIONS: dict[str, set[str]] = {
 class ActuatorRepository(BaseRepository):
     """Persistence for actuator proposals (lifecycle + audit trail)."""
 
+    table = "actuators"
+
     def record_proposal(
         self,
         *,

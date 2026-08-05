@@ -25,3 +25,5 @@ class ActivityRepository(
     BaseRepository,
 ):
     """Local activity-intelligence ledger."""
+
+    table = "activity"

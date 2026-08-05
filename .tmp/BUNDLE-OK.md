@@ -1,1 +1,1 @@
-Phase 116 product surface: stories 10-19 shipped as one delivery (config panel, item depth, run feedback, hardening, voice, memory, skill library, first-class app, drop-to-work, the walk).
+Phase 117 is a pure refactor phase — 16 stories, zero user-facing changes, all implemented and Terra-verified in one session. Splitting into 16 commits adds no value; the entire phase is one atomic improvement to the codebase foundation.

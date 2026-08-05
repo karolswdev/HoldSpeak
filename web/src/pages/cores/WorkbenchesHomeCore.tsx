@@ -7,46 +7,17 @@ import {
   SurfaceLedger,
   SurfaceLedgerRow,
   SurfaceState,
-  SurfaceVerbs,
 } from "../../desk/surface/Surface";
+import { renderHeroSlot } from "./core-layout";
 import { LampGadget } from "../../desk/surface/gadgets";
 import { humanTime } from "../../desk/surface/format";
-import type { CoreProps } from "./ActivityCore";
-
-interface WbSummary {
-  id: string;
-  name: string;
-  recipe_id: string | null;
-  profile_id: string | null;
-  schedule: string | null;
-  schedule_enabled: boolean;
-  item_count: number;
-  pending_count: number;
-  last_run: {
-    started_at: string;
-    completed_at: string | null;
-    items_completed: number;
-    items_attempted: number;
-    items_failed: number;
-    egress_boundary: string;
-    model: string;
-    status: string;
-  } | null;
-}
-
-interface RunSummary {
-  id: string;
-  workbench_id: string;
-  workbench_name: string;
-  started_at: string;
-  completed_at: string | null;
-  items_completed: number;
-  items_attempted: number;
-  items_failed: number;
-  egress_boundary: string;
-  model: string;
-  status: string;
-}
+import type {
+  CoreProps,
+  WbSummary,
+  RunSummary,
+  WorkbenchesListResponse,
+  WorkbenchRunsResponse,
+} from "./core-types";
 
 function humanSchedule(cron: string | null): string {
   if (!cron) return "Manual";
@@ -68,14 +39,14 @@ export function WorkbenchesHomeCore({ hero }: CoreProps) {
 
   const load = useCallback(async () => {
     try {
-      const res = await apiFetch<any>("/api/workbenches");
+      const res = await apiFetch<WorkbenchesListResponse>("/api/workbenches");
       const wbs = (res.workbenches || []) as WbSummary[];
       setWorkbenches(wbs);
 
       const allRuns: RunSummary[] = [];
       for (const wb of wbs.slice(0, 10)) {
         try {
-          const runsRes = await apiFetch<any>(`/api/workbenches/${wb.id}/runs`);
+          const runsRes = await apiFetch<WorkbenchRunsResponse>(`/api/workbenches/${wb.id}/runs`);
           for (const run of (runsRes.runs || []).slice(0, 5)) {
             allRuns.push({ ...run, workbench_name: wb.name });
           }
@@ -101,7 +72,7 @@ export function WorkbenchesHomeCore({ hero }: CoreProps) {
 
   return (
     <>
-      {hero ? hero(verbs) : <SurfaceVerbs>{verbs}</SurfaceVerbs>}
+      {renderHeroSlot(hero, verbs)}
 
       {workbenches.length === 0 ? (
         <SurfaceState

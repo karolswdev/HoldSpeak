@@ -1,0 +1,773 @@
+/* HS-112-06 — the chrome mic lamp: the same chip material the rest of the
+   cluster wears, carrying one LampGadget. Present only while a grant is
+   held; absent means the device is released. */
+.desk-next .desk-mic-lamp {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  box-shadow: var(--desk-window-etch);
+}
+.desk-next .desk-mark {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  border-radius: 0;
+  /* HS-111: opaque chip fill */
+  background: var(--surface-2);
+  color: var(--text);
+  font-weight: 600;
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  backdrop-filter: none;
+}
+.desk-next .desk-mark-glyph {
+  color: var(--accent);
+}
+.desk-next .desk-menu-wrap {
+  position: relative;
+}
+/* HS-99-04 — ONE menu vocabulary: every desk popover (room menu, the
+   window-head menu, the dock chip menu) wears this material; the
+   corner nearest its anchor squares off (the borrowed touch). */
+/* HS-111-07: Workbench menus — flat, opaque, instant, inverted bar */
+.desk-next .desk-menu-list {
+  min-width: 168px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 2px;
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  background: var(--surface-3);
+  box-shadow: none;
+  backdrop-filter: none;
+  animation: none;
+}
+.desk-next .desk-menu-list.is-below {
+  border-top-left-radius: 0;
+}
+.desk-next .desk-menu-list.is-above {
+  border-bottom-left-radius: 0;
+}
+.desk-next .desk-menu-list a,
+.desk-next .desk-menu-list button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 10px;
+  height: 28px;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  color: var(--text);
+  text-decoration: none;
+  text-align: left;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  cursor: pointer;
+}
+.desk-next .desk-menu-list a:hover,
+.desk-next .desk-menu-list button:hover,
+.desk-next .desk-menu-list a:focus-visible,
+.desk-next .desk-menu-list button:focus-visible {
+  background: var(--accent);
+  color: var(--text-on-accent);
+}
+.desk-next .desk-menu-list button:hover svg,
+.desk-next .desk-menu-list button:focus-visible svg {
+  color: var(--text-on-accent);
+}
+.desk-next .desk-menu-list svg {
+  width: 12px;
+  height: 12px;
+  flex: none;
+  color: var(--text-muted);
+}
+/* HS-111-07: species v2 — portal panel, separator, key column, submenu */
+.desk-next .desk-work-menu {
+  z-index: var(--desk-z-popover);
+}
+.desk-next .desk-menu-sep {
+  display: block;
+  height: 1px;
+  margin: 5px 0;
+  background: var(--border);
+}
+.desk-next .desk-menu-glyph {
+  width: 16px;
+  flex: none;
+  text-align: center;
+  color: var(--text-muted);
+}
+.desk-next .desk-menu-label {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.desk-next .desk-menu-list .desk-menu-key,
+.desk-next .desk-menu-list kbd {
+  margin-left: auto;
+  padding-left: 14px;
+  border: 0;
+  background: none;
+  color: var(--text-muted);
+  font: 600 11px var(--font-mono);
+  letter-spacing: 0.04em;
+}
+.desk-next .desk-menu-list button:hover kbd,
+.desk-next .desk-menu-list button:focus-visible kbd,
+.desk-next .desk-menu-list button:hover .desk-menu-glyph,
+.desk-next .desk-menu-list button:focus-visible .desk-menu-glyph {
+  color: var(--text-on-accent);
+}
+.desk-next .desk-menu-submark {
+  width: 12px;
+  flex: none;
+  margin-left: auto;
+  text-align: right;
+  color: var(--text-muted);
+}
+.desk-next .desk-menu-list button.is-subopen {
+  background: var(--accent);
+  color: var(--text-on-accent);
+}
+.desk-next .desk-menu-list button.is-subopen .desk-menu-submark {
+  color: var(--text-on-accent);
+}
+.desk-next .desk-menu-list .is-ghost {
+  color: var(--text-faint);
+  cursor: default;
+}
+.desk-next .desk-menu-list .is-ghost:hover,
+.desk-next .desk-menu-list .is-ghost:focus-visible {
+  background: var(--surface-2);
+  color: var(--text-faint);
+}
+.desk-next .desk-work-submenu {
+  min-width: 168px;
+}
+/* HS-111-07: menu flush to bar, no gap */
+.desk-next .desk-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+}
+/* HS-110-03: hub status LED — square, no glow */
+.desk-next .desk-hub-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 0;
+  background: var(--text-faint);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.4);
+}
+.desk-next .desk-hub-dot.is-live {
+  background: var(--success, #34d399);
+}
+.desk-next .desk-hub-dot.is-degraded {
+  background: var(--danger, #f87171);
+}
+.desk-next .desk-chip {
+  /* Materials round 3.2 — ONE chip geometry: every chip is the same
+     height with the same padding; variants change COLOR only. */
+  height: 27px;
+  padding: 0 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  line-height: 1;
+  white-space: nowrap;
+  border: 1px solid var(--border);
+  border-radius: 0;
+  /* HS-111: opaque chip fill */
+  background: var(--surface-2);
+  color: var(--text);
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  text-decoration: none;
+  backdrop-filter: none;
+  box-shadow: var(--desk-window-bevel);
+  transition:
+    border-color var(--duration-short) var(--ease-standard),
+    background var(--duration-short) var(--ease-standard),
+    transform var(--duration-short) var(--ease-standard);
+}
+.desk-next .desk-chip:hover {
+  border-color: var(--accent);
+  background: var(--accent-tint);
+}
+/* HS-103-07 — a send/ask verb should carry a little weight on press, not
+   just the browser's stock click; transform-only, so it costs nothing to
+   composite and respects prefers-reduced-motion below. */
+.desk-next .desk-chip:not(:disabled):active {
+  transform: scale(0.94);
+}
+.desk-next .desk-chip.quiet {
+  color: var(--text-muted);
+}
+.desk-next .desk-chip[aria-pressed="true"] {
+  border-color: var(--accent);
+  background: var(--accent-tint);
+  color: var(--text);
+}
+.desk-next .desk-start-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+}
+.desk-next .desk-start-action,
+.desk-next .desk-create-button {
+  min-height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding-inline: 16px;
+  font-weight: 700;
+}
+.desk-next .desk-start-actions.is-compact .desk-start-action,
+.desk-next .desk-start-actions.is-compact .desk-create-button {
+  min-height: 36px;
+  padding-inline: 12px;
+}
+/* HS-111: status indicators — square, no glow */
+.desk-next .desk-start-record {
+  width: 9px;
+  height: 9px;
+  border-radius: 0;
+  background: var(--accent);
+  box-shadow: none;
+}
+.desk-next .desk-start-action.is-recording {
+  border-color: color-mix(in srgb, var(--danger-signal) 60%, var(--border));
+  color: var(--text);
+}
+.desk-next .desk-start-action.is-recording .desk-start-record {
+  background: var(--danger-signal);
+}
+.desk-next .desk-create {
+  position: relative;
+}
+/* HS-111-07: the Create menu is the ONE menu species now (28px mono
+   rows from the registry's desk.new-* verbs; the 56px description
+   card rows and the soft glow shadow are gone). */
+.desk-next .desk-create-menu {
+  z-index: var(--desk-z-popover);
+  min-width: 188px;
+}
+.desk-next .desk-tools-launch {
+  min-height: 36px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+.desk-next .desk-tools-launch kbd {
+  padding: 2px 5px;
+  border: 1px solid var(--surface-3);
+  border-radius: 2px;
+  color: var(--text-muted);
+  font: 600 var(--font-size-xs) var(--font-mono);
+}
+/* HS-111-07: tool shelf — opaque, dense, mono */
+.desk-next .desk-tool-shelf {
+  position: fixed;
+  top: 28px;
+  right: 18px;
+  z-index: var(--desk-z-popover);
+  width: min(400px, calc(100vw - 36px));
+  max-height: calc(100vh - 80px);
+  padding: var(--space-2);
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  background: var(--surface-3);
+  color: var(--text);
+  box-shadow: none;
+  backdrop-filter: none;
+}
+.desk-next .desk-tool-shelf h2,
+.desk-next .desk-tool-shelf h3,
+.desk-next .desk-tool-shelf p {
+  margin: 0;
+}
+.desk-next .desk-tool-shelf h2 {
+  font: 600 12px var(--font-mono);
+}
+.desk-next .desk-tool-shelf h3 {
+  margin: 12px 0 4px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.desk-next .desk-tool-shelf header p {
+  margin-top: 4px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 10px;
+}
+.desk-next .desk-tool-search {
+  display: block;
+  margin-top: 8px;
+}
+/* HS-111-10 mic sweep: the deck's query well is StringGadget; only
+   the height is coerced to the deck rhythm. */
+.desk-next .desk-tool-search .gadget-string {
+  min-height: 28px;
+}
+/* HS-111-07: the command deck — 26px mono ledger rows in section
+   bands (VERBS / PROGRAMS / OBJECTS / SETTINGS / MEETINGS); the
+   selection is an index painted as the full-width accent band. */
+.desk-next .desk-deck-list {
+  display: block;
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.desk-next .desk-deck-band {
+  display: block;
+  margin: 8px 0 2px;
+  color: var(--text-muted);
+  font: 600 10px var(--font-mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.desk-next .desk-deck-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  height: 26px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  text-align: left;
+  cursor: pointer;
+}
+.desk-next .desk-deck-glyph {
+  width: 16px;
+  flex: none;
+  text-align: center;
+  color: var(--text-muted);
+}
+.desk-next .desk-deck-label {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.desk-next .desk-deck-kind {
+  flex: none;
+  color: var(--text-faint);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+}
+.desk-next .desk-deck-row kbd {
+  flex: none;
+  border: 0;
+  padding: 0;
+  background: none;
+  color: var(--text-muted);
+  font: 600 11px var(--font-mono);
+}
+.desk-next .desk-deck-row.is-selected,
+.desk-next .desk-deck-row:hover:not(.is-ghost),
+.desk-next .desk-deck-row:focus-visible:not(.is-ghost) {
+  background: var(--accent);
+  color: var(--text-on-accent);
+  outline: 0;
+}
+.desk-next .desk-deck-row.is-selected .desk-deck-glyph,
+.desk-next .desk-deck-row.is-selected .desk-deck-kind,
+.desk-next .desk-deck-row.is-selected kbd,
+.desk-next .desk-deck-row:hover:not(.is-ghost) .desk-deck-glyph,
+.desk-next .desk-deck-row:hover:not(.is-ghost) .desk-deck-kind,
+.desk-next .desk-deck-row:hover:not(.is-ghost) kbd {
+  color: var(--text-on-accent);
+}
+.desk-next .desk-deck-row.is-ghost {
+  color: var(--text-faint);
+  cursor: default;
+}
+.desk-next .desk-tool-empty {
+  padding: 12px;
+  border-radius: 2px;
+  background: var(--surface-1);
+  color: var(--text-muted);
+  font-size: var(--font-size-sm);
+}
+.desk-next .desk-tool-inspector {
+  position: fixed;
+  top: 64px;
+  right: 18px;
+  bottom: 18px;
+  z-index: var(--desk-z-window-base);
+  width: min(430px, calc(100vw - 36px));
+  padding: var(--space-4);
+  overflow: auto;
+  border: 1px solid color-mix(in srgb, var(--accent) 34%, var(--border));
+  border-radius: 2px;
+  background: var(--desk-window-fill);
+  color: var(--text);
+  box-shadow: var(--desk-window-shadow);
+  backdrop-filter: none;
+}
+.desk-next .desk-tool-inspector h2,
+.desk-next .desk-tool-inspector h3,
+.desk-next .desk-tool-inspector p {
+  margin: 0;
+}
+.desk-next .desk-tool-inspector h2 {
+  margin-top: 3px;
+  font: 700 var(--font-size-lg) var(--font-display);
+}
+.desk-next .desk-tool-inspector h3 {
+  margin-bottom: 8px;
+  font-size: var(--font-size-sm);
+}
+.desk-next .desk-tool-inspector > p,
+.desk-next .desk-tool-inspector > section,
+.desk-next .desk-tool-inspector > dl,
+.desk-next .desk-tool-inspector > a,
+.desk-next .desk-tool-inspector > .desk-tool-actions {
+  margin-top: 14px;
+}
+.desk-next .desk-tool-facts {
+  margin-bottom: 0;
+  border: 1px solid var(--surface-3);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.desk-next .desk-tool-facts div {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr);
+  gap: 12px;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--surface-3);
+}
+.desk-next .desk-tool-facts div:last-child {
+  border-bottom: 0;
+}
+.desk-next .desk-tool-facts dt {
+  color: var(--text-muted);
+}
+.desk-next .desk-tool-facts dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.desk-next .desk-tool-resource-list {
+  display: grid;
+  gap: 5px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.desk-next .desk-tool-resource-list button,
+.desk-next .desk-tool-resource-list span {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px;
+  border: 1px solid var(--surface-3);
+  border-radius: 2px;
+  background: var(--surface-1);
+  color: var(--text);
+  text-align: left;
+}
+.desk-next .desk-tool-resource-list button {
+  cursor: pointer;
+}
+.desk-next .desk-tool-resource-list small {
+  color: var(--text-muted);
+}
+.desk-next .desk-tool-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.desk-next .desk-integration-effect,
+.desk-next .desk-integration-proposal,
+.desk-next .desk-integration-receipt {
+  display: grid;
+  gap: 9px;
+  padding: 12px;
+  border: 1px solid var(--surface-3);
+  border-radius: 2px;
+  background: var(--surface-1);
+}
+.desk-next .desk-integration-effect pre {
+  max-height: 180px;
+  margin: 0;
+  padding: var(--space-2);
+  overflow: auto;
+  border-radius: 2px;
+  background: var(--bg);
+  color: var(--text-muted);
+  font: var(--font-size-xs) var(--font-mono);
+  white-space: pre-wrap;
+}
+.desk-next .desk-integration-receipt {
+  background: color-mix(in srgb, var(--success, #34d399) 9%, var(--surface-1));
+}
+.desk-next .sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+
+/* ── Materials round 3: the MENU BAR. The floating pill clusters were
+   a website header; an OS has a thin frosted strip — app + menus on
+   the left, status and the clock on the right. Inner classes keep
+   their names (walk + raise-rule canon); the bar flattens them. ── */
+/* ── HS-110-03: the menu bar — a solid, opaque Workbench system bar ── */
+.desk-next .desk-menubar {
+  position: fixed;
+  inset: 0 0 auto 0;
+  height: 28px;
+  z-index: var(--desk-z-dock-under);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 0 10px 0 12px;
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--border);
+  box-shadow: inset 0 1px 0 var(--bevel-light);
+}
+.desk-next .desk-menubar::before {
+  display: none;
+}
+.desk-next .desk-menubar .desk-chrome {
+  position: static;
+  pointer-events: auto;
+  gap: 2px;
+  z-index: auto;
+}
+.desk-next .desk-menubar button,
+.desk-next .desk-menubar .desk-chip {
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  border-radius: 0;
+  min-height: 22px;
+  padding: 2px 9px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text);
+}
+/* HS-110-03: Workbench-style inverted highlight on menu hover */
+.desk-next .desk-menubar button:hover,
+.desk-next .desk-menubar button:focus-visible {
+  background: var(--accent);
+  color: var(--bg);
+}
+.desk-next .desk-menubar .desk-mark {
+  font-weight: 600;
+}
+.desk-next .desk-clock {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 4px 0 8px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.desk-next .desk-clock strong {
+  font-weight: 500;
+  color: var(--text);
+}
+
+/* Materials round 3.1 — the bar FLATTENS everything it contains: the
+   daily-start pills (42px, bold, bordered) were overflowing the 30px
+   strip. Highest-specificity override, by name. */
+.desk-next .desk-menubar .desk-start-actions,
+.desk-next .desk-menubar .desk-start-actions.is-compact {
+  gap: 2px;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  padding: 0;
+}
+.desk-next .desk-menubar .desk-start-action,
+.desk-next .desk-menubar .desk-create-button,
+.desk-next .desk-menubar .desk-start-actions.is-compact .desk-start-action,
+.desk-next .desk-menubar .desk-start-actions.is-compact .desk-create-button,
+.desk-next .desk-menubar .desk-tools-launch,
+.desk-next .desk-menubar .egress-badge,
+.desk-next .desk-menubar .desk-chip {
+  min-height: 24px;
+  height: 24px;
+  padding: 0 9px;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  border-radius: 2px;
+  font-weight: 500;
+  font-size: var(--font-size-sm);
+}
+.desk-next .desk-menubar .desk-start-action:hover,
+.desk-next .desk-menubar .desk-create-button:hover,
+.desk-next .desk-menubar .desk-tools-launch:hover,
+.desk-next .desk-menubar .egress-badge:hover,
+.desk-next .desk-menubar .desk-chip:hover {
+  background: var(--wash-2);
+}
+.desk-next .desk-menubar kbd {
+  font-size: 10px;
+  padding: 0 4px;
+  min-height: 0;
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  background: transparent;
+  box-shadow: none;
+}
+
+
+/* The tool shelf joins the one material (the accent cage retires). */
+.desk-next .desk-tool-shelf {
+  border: 1px solid var(--desk-window-keyline);
+  box-shadow: var(--desk-window-bevel), var(--desk-glass-edge);
+  background: var(--desk-window-fill);
+  backdrop-filter: none;
+}
+
+/* HS-101 B8 / HS-111-07 — the shortcut sheet: an opaque Workbench
+   panel (the Phase-101 glass — blur, transient radius, ease-back pop —
+   is gone), rows DERIVED from the registry's key fields. */
+.desk-shortcut-sheet {
+  position: fixed;
+  inset: 0;
+  z-index: var(--desk-z-popover);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--shade-1);
+}
+.desk-shortcut-panel {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 8px 22px;
+  width: min(620px, calc(100vw - 32px));
+  padding: 18px 22px 20px;
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  background: var(--surface-3);
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  animation: none;
+}
+.desk-shortcut-panel h4 {
+  margin: 0 0 4px;
+  font: 600 10px var(--font-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.desk-shortcut-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 3px 0;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.desk-shortcut-row kbd {
+  min-width: 34px;
+  text-align: center;
+  font: 600 11px var(--font-mono);
+  color: var(--text);
+  padding: 2px 7px;
+  border-radius: 2px;
+  background: var(--desk-window-well);
+  box-shadow:
+    inset 0 0 0 1px var(--border-subtle),
+    inset 0 -1.5px 0 var(--shade-1);
+}
+@media (prefers-reduced-motion: reduce) {
+  .desk-shortcut-panel {
+    animation: none;
+  }
+}
+
+/* HS-105-02 — the drop verb tag: the consent surface under the cursor. */
+.desk-drop-verb {
+  z-index: var(--desk-z-transient);
+  background: var(--accent);
+  color: var(--accent-on);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  pointer-events: none;
+  box-shadow: var(--elev-2);
+}
+
+/* HS-105-05 — the verb bar: real pull-down menus from the one registry. */
+.desk-verbbar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+.desk-verbbar-item {
+  position: relative;
+}
+.desk-verbbar-title {
+  background: none;
+  border: 0;
+  color: var(--text-muted);
+  font-size: var(--font-size-sm);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+.desk-verbbar-title:hover,
+.desk-verbbar-title.on {
+  background: var(--canvas-raised);
+  color: var(--text);
+}
+/* HS-111-07: the dropdown PORTALS (WorkMenu species) — position is
+   inline (fixed at the title's rect); only width and layer live here. */
+.desk-verbbar-menu {
+  min-width: 176px;
+  z-index: var(--desk-z-popover);
+}
+.desk-verbbar-menu .is-ghost {
+  color: var(--text-faint);
+  cursor: default;
+}
+@media (max-width: 720px) {
+  /* The phone's bar has no room for pull-downs; the shelf reaches
+     every verb there (one registry, the palette face). */
+  .desk-verbbar {
+    display: none;
+  }
+}
+

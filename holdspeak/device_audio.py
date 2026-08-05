@@ -34,6 +34,7 @@ import numpy as np
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator
 
 from .audio import AudioSource, _linear_resample_mono
+from .errors import AudioError as _AudioErrorBase
 from .logging_config import get_logger
 
 if TYPE_CHECKING:
@@ -45,12 +46,16 @@ registry_log = get_logger("audio.devices")
 _INT16_SCALE = 32768.0
 
 
-class RemoteAudioRecorderError(RuntimeError):
+class RemoteAudioRecorderError(_AudioErrorBase):
     """Raised when ``RemoteAudioRecorder`` is used incorrectly."""
 
+    code: str = "REMOTE_AUDIO_RECORDER_ERROR"
 
-class DeviceRegistryError(RuntimeError):
+
+class DeviceRegistryError(_AudioErrorBase):
     """Base class for ``DeviceRegistry`` errors."""
+
+    code: str = "DEVICE_REGISTRY_ERROR"
 
 
 class DuplicateLabelError(DeviceRegistryError):

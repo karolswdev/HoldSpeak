@@ -14,7 +14,8 @@ import {
 import { lineage } from "../lineage";
 import { objectByRef, objUnit, worldObjects } from "../world";
 import { oh } from "../hash";
-import type { Items } from "../api";
+import type { Items, TypedItems } from "../api";
+import type { Meeting, Note, Artifact, Persona } from "../../lib/primitives";
 
 describe("sprite hash parity", () => {
   it("is stable per id and matches the shared picker", () => {
@@ -64,10 +65,10 @@ describe("wire normalizers", () => {
   });
   it("directory members from either shape", () => {
     expect(
-      fromWireDirectory({ id: "d", name: "D", member_ids: ["x"] }).memberIds,
+      fromWireDirectory({ id: "d", name: "D", member_ids: ["x"] })!.memberIds,
     ).toEqual(["x"]);
     expect(
-      fromWireDirectory({ id: "d", name: "D", members: { y: 1 } }).memberIds,
+      fromWireDirectory({ id: "d", name: "D", members: { y: 1 } })!.memberIds,
     ).toEqual(["y"]);
   });
   it("workflow graph_json stays an object", () => {
@@ -76,8 +77,8 @@ describe("wire normalizers", () => {
       name: "W",
       graph_json: { nodes: [] },
     });
-    expect(w.hasGraph).toBe(true);
-    expect(typeof w.graphJson).toBe("object");
+    expect(w!.hasGraph).toBe(true);
+    expect(typeof w!.graphJson).toBe("object");
   });
   it("liveValues drops tombstones and unwraps values", () => {
     expect(
@@ -159,9 +160,9 @@ describe("lineage via detection", () => {
 });
 
 describe("world math", () => {
-  const items: Items = {
-    meeting: [{ kind: "meeting", id: "m1", title: "M" }],
-    note: [{ kind: "note", id: "n1", title: "N" }],
+  const items = {
+    meeting: [{ kind: "meeting", id: "m1", title: "M" } as Meeting],
+    note: [{ kind: "note", id: "n1", title: "N" } as Note],
     kb: [],
     recipe: [],
     artifact: [],
@@ -172,7 +173,7 @@ describe("world math", () => {
     ],
     coder: [],
     workbench: [],
-  };
+  } as unknown as TypedItems;
   it("flattens in the canonical order and filters on dive", () => {
     // m1 is FILED into z: the root stage shows only the unfiled note (the
     // iPad grammar — a filed object lives on its shelf; owner feedback
@@ -208,16 +209,16 @@ describe("world math", () => {
 describe("qualified pull-out identity", () => {
   const items = {
     meeting: [],
-    note: [{ kind: "note", id: "same", title: "Note" }],
-    artifact: [{ kind: "artifact", id: "same", title: "Artifact" }],
-    recipe: [{ kind: "recipe", id: "scout", name: "Scout" }],
+    note: [{ kind: "note", id: "same", title: "Note" } as Note],
+    artifact: [{ kind: "artifact", id: "same", title: "Artifact" } as Artifact],
+    recipe: [{ kind: "recipe", id: "scout", name: "Scout" } as Persona],
     kb: [],
     directory: [],
     chain: [],
     workflow: [],
     coder: [],
     workbench: [],
-  } as Items;
+  } as unknown as TypedItems;
 
   it("resolves collisions and canonical capability aliases exactly", () => {
     expect(objectByRef(items, "artifact:same")?.title).toBe("Artifact");

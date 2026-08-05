@@ -29,6 +29,8 @@ def _now_iso() -> str:
 
 
 class WorkbenchRepository(BaseRepository):
+    table = "workbenches"
+
 
     def upsert(
         self,
@@ -143,6 +145,8 @@ class WorkbenchRepository(BaseRepository):
 
 
 class WorkbenchItemRepository(BaseRepository):
+    table = "workbench_items"
+
 
     def upsert(
         self,
@@ -280,6 +284,8 @@ class WorkbenchItemRepository(BaseRepository):
 
 
 class WorkbenchRunRepository(BaseRepository):
+    table = "workbench_runs"
+
 
     def create(
         self,
@@ -392,6 +398,8 @@ class WorkbenchRunRepository(BaseRepository):
 
 
 class SkillRepository(BaseRepository):
+    table = "skills"
+
 
     def upsert(
         self,

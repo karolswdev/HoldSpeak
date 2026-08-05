@@ -135,7 +135,7 @@ export interface SceneInputs {
 
 function projectionSubject(o: WorldObject): string {
   return o.kind === "coder"
-    ? `coder_session:${String((o.ref as any).agent || "claude")}:${o.id}`
+    ? `coder_session:${String(o.ref.kind === "coder" ? o.ref.agent : "claude")}:${o.id}`
     : qualifiedRef(o.kind, o.id);
 }
 
@@ -162,7 +162,7 @@ export function buildScene(input: SceneInputs): WorldScene {
     const m = objMotion(o);
     const selectionRef = qualifiedRef(o.kind, o.id);
     const counts = input.subjectCounts[projectionSubject(o)];
-    const ref = o.ref as Record<string, unknown>;
+    const ref = o.ref as unknown as Record<string, unknown>;
     const memberIds = Array.isArray(ref.memberIds)
       ? (ref.memberIds as string[])
       : null;
@@ -220,7 +220,7 @@ export function buildScene(input: SceneInputs): WorldScene {
               (input.compact ? 0.2 : 0.13) +
               (Math.floor(i / cols) * 12) / 100,
           };
-    const memberIds = (((z.ref as any).memberIds as string[]) || []).slice();
+    const memberIds = (z.ref.kind === "directory" ? z.ref.memberIds : []).slice();
     const dropReady = input.hoverZoneId === z.id;
     return {
       id: z.id,

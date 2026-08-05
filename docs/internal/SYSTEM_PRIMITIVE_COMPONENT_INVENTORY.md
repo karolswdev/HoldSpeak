@@ -68,7 +68,7 @@ The inventory was derived from concrete definitions and route/schema declaration
 - `class`, dataclass, enum, protocol, and manifest definitions across `holdspeak/`;
 - FastAPI route decorators under [holdspeak/web/routes](../../holdspeak/web/routes);
 - the SQLite schema and repositories in [db/core.py](../../holdspeak/db/core.py);
-- top-level and nested configuration objects in [config.py](../../holdspeak/config.py);
+- top-level and nested configuration objects in [config/](../../holdspeak/config/);
 - the Desk framework in [web/src/lib/primitives.ts](../../web/src/lib/primitives.ts);
 - Apple Desk, sync, runtime-profile, and workflow contracts;
 - plugin, connector, actuator, queue, and mesh lifecycle constants;
@@ -1205,9 +1205,9 @@ Do not delete domain journals. Add a unified event/receipt index referencing the
 
 ### Configuration and persistence
 
-- [config.py](../../holdspeak/config.py)
+- [config/](../../holdspeak/config/)
 - [db/core.py](../../holdspeak/db/core.py)
-- [db/models.py](../../holdspeak/db/models.py)
+- [db/models/](../../holdspeak/db/models/)
 - [db/primitives.py](../../holdspeak/db/primitives.py)
 - [db/actuators.py](../../holdspeak/db/actuators.py)
 - [db/cadence.py](../../holdspeak/db/cadence.py)

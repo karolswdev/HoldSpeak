@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { floorMenuEntries, objectMenuEntries } from "../floorMenu";
 import { DESK_TOOLS } from "../tools";
 import { EMPTY_ITEMS } from "../api";
+import type { Note } from "../../lib/primitives";
 import { useDesk } from "../store";
 import type { WorkMenuEntry } from "../components/DeskMenu";
 
@@ -18,7 +19,7 @@ beforeEach(() => {
   useDesk.setState({
     items: {
       ...EMPTY_ITEMS,
-      note: [{ kind: "note", id: "n1", title: "Release checklist" }],
+      note: [{ kind: "note", id: "n1", title: "Release checklist" } as Note],
     },
     selectedIds: [],
     positions: {},

@@ -3,6 +3,7 @@
 // happened while you were away. Groups are honest — real feeds, real
 // counts, zero says zero. The full Desk-memory browser (search,
 // filters, receipt detail) stays one verb away.
+import "./attention.css";
 import { useEffect, useRef, useState } from "react";
 import { apiFetch, type JsonRecord } from "../../lib/api";
 import { gateAge, useGate } from "../gate";

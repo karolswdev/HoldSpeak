@@ -29,6 +29,8 @@ VALID_CORRECTION_KINDS = frozenset({"intent", "target"})
 class DictationCorrectionRepository(BaseRepository):
     """Persistence for dictation corrections (write-through + recency load)."""
 
+    table = "dictation_corrections"
+
     def record_correction(
         self, *, kind: str, gist: str, value: str
     ) -> DictationCorrectionRecord:

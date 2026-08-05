@@ -16,13 +16,16 @@ from typing import Optional, Protocol
 
 import numpy as np
 
+from .errors import TranscriptionError as _TranscriptionErrorBase
 from .logging_config import get_logger
 
 log = get_logger("transcribe")
 
 
-class TranscriberError(RuntimeError):
+class TranscriberError(_TranscriptionErrorBase):
     """Raised when model loading or transcription fails."""
+
+    code: str = "TRANSCRIBER_ERROR"
 
 
 class TranscriberTimeoutError(TranscriberError):
@@ -31,6 +34,8 @@ class TranscriberTimeoutError(TranscriberError):
     A subclass of TranscriberError so existing transcription error handling
     (notify + return to idle) catches it without special-casing.
     """
+
+    code: str = "TRANSCRIBER_TIMEOUT_ERROR"
 
 
 class _TranscriberImpl(Protocol):

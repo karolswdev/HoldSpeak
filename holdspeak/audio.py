@@ -12,6 +12,8 @@ from typing import Callable, Optional, Protocol, runtime_checkable
 
 import numpy as np
 
+from .errors import AudioError as _AudioErrorBase
+
 try:
     import sounddevice as sd
 except Exception as exc:  # pragma: no cover
@@ -38,8 +40,10 @@ class AudioSource(Protocol):
     def stop_recording(self) -> np.ndarray: ...
 
 
-class AudioRecorderError(RuntimeError):
+class AudioRecorderError(_AudioErrorBase):
     """Raised when audio recording fails or is used incorrectly."""
+
+    code: str = "AUDIO_RECORDER_ERROR"
 
 
 def _require_sounddevice():

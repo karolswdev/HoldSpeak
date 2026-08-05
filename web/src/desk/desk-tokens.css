@@ -1,0 +1,6 @@
+/* HS-117-03 — desk token convenience index.
+   Re-exports the subset of styles/tokens.css custom properties consumed
+   by desk CSS modules. This file is import-only — it declares no rules.
+   The source of truth is styles/tokens.css; this is a convenience
+   reference, not a second source of truth. */
+@import "../styles/tokens.css";

@@ -12,6 +12,7 @@
 // schema-drifted render their honest state — never an empty belt
 // pretending the rails are idle.
 // Design: docs/internal/MISSION_CONTROL_DESK.md §2–§3.
+import "./mission-control.css";
 import { useEffect, useState } from "react";
 import { Button } from "../../components/signal/Signal";
 import {

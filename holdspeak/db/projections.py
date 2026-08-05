@@ -47,6 +47,8 @@ class DeskProjection:
 class ProjectionRepository(BaseRepository):
     """Union authoritative journals into one pageable, non-sensitive read model."""
 
+    table = "projections"
+
     def list(
         self,
         *,

@@ -28,6 +28,8 @@ VALID_JOURNAL_SOURCES = frozenset({"dictation", "dry_run"})
 class DictationJournalRepository(BaseRepository):
     """Persistence for the dictation journal (write + read + curate + prune)."""
 
+    table = "dictation_journal"
+
     def record(
         self,
         *,

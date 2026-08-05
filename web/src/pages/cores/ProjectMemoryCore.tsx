@@ -29,9 +29,20 @@ import {
 } from "../../desk/surface/Surface";
 import { CycleGadget } from "../../desk/surface/gadgets";
 import { humanTime } from "../../desk/surface/format";
-import { SurfaceWings, useWindowWings } from "../../desk/surface/wings";
-import { apiFetch, readableError, type JsonRecord } from "../../lib/api";
-import type { CoreProps } from "./ActivityCore";
+import { useCoreWings } from "./core-hooks";
+import { apiFetch, readableError } from "../../lib/api";
+import type {
+  CoreProps,
+  ProjectResponse,
+  ProjectMeetingsResponse,
+  ProjectDecisionsResponse,
+  ProjectArtifactsResponse,
+  SinceLastMeetingResponse,
+  DecisionMomentResponse,
+  DecisionTransitionResponse,
+  DecisionPromoteResponse,
+  MemorySearchResponse,
+} from "./core-types";
 
 const WINGS = [
   { id: "timeline", label: "Timeline" },
@@ -45,14 +56,14 @@ export type ProjectTimelineEntry = {
   kind: "meeting" | "decision" | "artifact";
   title: string;
   occurredAt: string;
-  row: JsonRecord;
+  row: Record<string, unknown>;
 };
 
 /** Pure composition seam pinned by the timeline tests. */
 export function composeProjectTimeline(
-  meetings: JsonRecord[],
-  decisions: JsonRecord[],
-  artifacts: JsonRecord[],
+  meetings: Record<string, unknown>[],
+  decisions: Record<string, unknown>[],
+  artifacts: Record<string, unknown>[],
 ): ProjectTimelineEntry[] {
   const promoted = artifacts.filter(
     (row) =>
@@ -85,7 +96,7 @@ export function composeProjectTimeline(
   ].sort((a, b) => b.occurredAt.localeCompare(a.occurredAt));
 }
 
-export function lifecycleLabel(row: JsonRecord): string {
+export function lifecycleLabel(row: Record<string, unknown>): string {
   const lifecycle = String(row.lifecycle || "recorded");
   if (lifecycle === "superseded") return "Superseded";
   return lifecycle[0].toUpperCase() + lifecycle.slice(1);
@@ -93,7 +104,7 @@ export function lifecycleLabel(row: JsonRecord): string {
 
 /** HS-111-06 — the lifecycle as the etched token it is (audit M2):
  * `lifecycleLabel()`'s text is test-locked; only the shell changed. */
-export function LifecycleChip({ row }: { row: JsonRecord }) {
+export function LifecycleChip({ row }: { row: Record<string, unknown> }) {
   const lifecycle = String(row.lifecycle || "recorded");
   const tone =
     lifecycle === "accepted"
@@ -120,7 +131,7 @@ export function DecisionPromotionSlot({
   decision,
   onOpenArtifact,
 }: {
-  decision: JsonRecord;
+  decision: Record<string, unknown>;
   onOpenArtifact?(artifactId: string): void;
 }) {
   const [kind, setKind] = useState<string>("adr");
@@ -136,11 +147,11 @@ export function DecisionPromotionSlot({
       const path = model
         ? `/api/decisions/${encodeURIComponent(id)}/promote/${kind}/draft-with-model`
         : `/api/decisions/${encodeURIComponent(id)}/promote/${kind}`;
-      const body = await apiFetch<JsonRecord>(path, {
+      const body = await apiFetch<DecisionPromoteResponse>(path, {
         method: "POST",
         json: model ? {} : undefined,
       });
-      const artifact = (body.artifact ?? {}) as JsonRecord;
+      const artifact = body.artifact ?? {};
       setArtifactId(String(artifact.id ?? ""));
     } catch (reason) {
       setDetail(readableError(reason));
@@ -309,8 +320,8 @@ function ProjectAsk({
 }
 
 /** HS-111-06 — the delta as a token slab, never a sentence (audit M6). */
-function SinceLastMeeting({ receipt }: { receipt: JsonRecord }) {
-  const since = receipt.since_last_meeting as JsonRecord | null | undefined;
+function SinceLastMeeting({ receipt }: { receipt: SinceLastMeetingResponse }) {
+  const since = receipt.since_last_meeting;
   if (!receipt.current_meeting)
     return (
       <p className="project-memory-since">
@@ -323,10 +334,10 @@ function SinceLastMeeting({ receipt }: { receipt: JsonRecord }) {
         <span className="surface-token">FIRST MEETING</span>
       </p>
     );
-  const previous = (since.previous_meeting || {}) as JsonRecord;
-  const decisions = ((since.new_decisions as unknown[]) || []).length;
-  const actions = ((since.new_actions as unknown[]) || []).length;
-  const closed = ((since.closed_actions as unknown[]) || []).length;
+  const previous = since.previous_meeting || {};
+  const decisions = (since.new_decisions || []).length;
+  const actions = (since.new_actions || []).length;
+  const closed = (since.closed_actions || []).length;
   const delta = [
     decisions ? `+${decisions} DEC` : "",
     actions ? `+${actions} ACT` : "",
@@ -348,26 +359,21 @@ export function ProjectMemoryCore({ hero, scope, scopeLabel }: CoreProps) {
   const projectId = scope?.startsWith("project:")
     ? scope.slice("project:".length)
     : "";
-  const [view, setView] = useState("timeline");
-  const [project, setProject] = useState<JsonRecord>({});
-  const [meetings, setMeetings] = useState<JsonRecord[]>([]);
-  const [decisions, setDecisions] = useState<JsonRecord[]>([]);
-  const [artifacts, setArtifacts] = useState<JsonRecord[]>([]);
-  const [since, setSince] = useState<JsonRecord>({});
+  const wings = useCoreWings(WINGS, "timeline");
+  const [project, setProject] = useState<Record<string, unknown>>({});
+  const [meetings, setMeetings] = useState<Record<string, unknown>[]>([]);
+  const [decisions, setDecisions] = useState<Record<string, unknown>[]>([]);
+  const [artifacts, setArtifacts] = useState<Record<string, unknown>[]>([]);
+  const [since, setSince] = useState<SinceLastMeetingResponse>({});
   const [loading, setLoading] = useState(Boolean(projectId));
   const [error, setError] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
-  const [searchHits, setSearchHits] = useState<JsonRecord[]>([]);
+  const [searchHits, setSearchHits] = useState<Record<string, unknown>[]>([]);
   const [searched, setSearched] = useState(false);
   const [searching, setSearching] = useState(false);
   const [decisionBusy, setDecisionBusy] = useState("");
   const [successors, setSuccessors] = useState<Record<string, string>>({});
   const [readAt, setReadAt] = useState<number | null>(null);
-
-  useWindowWings(
-    <SurfaceWings wings={WINGS} active={view} onChange={setView} />,
-    [view],
-  );
 
   const load = async () => {
     if (!projectId) return;
@@ -377,18 +383,18 @@ export function ProjectMemoryCore({ hero, scope, scopeLabel }: CoreProps) {
       const encoded = encodeURIComponent(projectId);
       const [projectBody, meetingBody, decisionBody, artifactBody, sinceBody] =
         await Promise.all([
-          apiFetch<JsonRecord>(`/api/projects/${encoded}`),
-          apiFetch<JsonRecord>(`/api/projects/${encoded}/meetings?limit=200`),
-          apiFetch<JsonRecord>(
+          apiFetch<ProjectResponse>(`/api/projects/${encoded}`),
+          apiFetch<ProjectMeetingsResponse>(`/api/projects/${encoded}/meetings?limit=200`),
+          apiFetch<ProjectDecisionsResponse>(
             `/api/decisions?project_id=${encoded}&limit=500`,
           ),
-          apiFetch<JsonRecord>(`/api/projects/${encoded}/artifacts`),
-          apiFetch<JsonRecord>(`/api/projects/${encoded}/since-last-meeting`),
+          apiFetch<ProjectArtifactsResponse>(`/api/projects/${encoded}/artifacts`),
+          apiFetch<SinceLastMeetingResponse>(`/api/projects/${encoded}/since-last-meeting`),
         ]);
       setProject(projectBody);
-      setMeetings((meetingBody.meetings as JsonRecord[]) || []);
-      setDecisions((decisionBody.decisions as JsonRecord[]) || []);
-      setArtifacts((artifactBody.artifacts as JsonRecord[]) || []);
+      setMeetings(meetingBody.meetings || []);
+      setDecisions(decisionBody.decisions || []);
+      setArtifacts(artifactBody.artifacts || []);
       setSince(sinceBody);
       setReadAt(Date.now());
     } catch (reason) {
@@ -408,12 +414,12 @@ export function ProjectMemoryCore({ hero, scope, scopeLabel }: CoreProps) {
   );
   const projectName = String(project.name || scopeLabel || "Project");
 
-  const openMoment = async (decision: JsonRecord) => {
+  const openMoment = async (decision: Record<string, unknown>) => {
     try {
-      const body = await apiFetch<JsonRecord>(
+      const body = await apiFetch<DecisionMomentResponse>(
         `/api/decisions/${encodeURIComponent(String(decision.id))}/moment`,
       );
-      const moment = (body.moment || {}) as JsonRecord;
+      const moment = body.moment || {};
       const meetingId = String(
         moment.meeting_id || decision.source_meeting_id || "",
       );
@@ -430,7 +436,7 @@ export function ProjectMemoryCore({ hero, scope, scopeLabel }: CoreProps) {
   };
 
   const transition = async (
-    decision: JsonRecord,
+    decision: Record<string, unknown>,
     action: "accept" | "supersede",
   ) => {
     const id = String(decision.id);
@@ -439,14 +445,14 @@ export function ProjectMemoryCore({ hero, scope, scopeLabel }: CoreProps) {
     setDecisionBusy(id);
     setError("");
     try {
-      const body = await apiFetch<JsonRecord>(
+      const body = await apiFetch<DecisionTransitionResponse>(
         `/api/decisions/${encodeURIComponent(id)}/${action}`,
         {
           method: "POST",
           json: action === "supersede" ? { superseded_by: successor } : {},
         },
       );
-      const updated = body.decision as JsonRecord;
+      const updated = body.decision as Record<string, unknown>;
       setDecisions((rows) =>
         rows.map((row) => (row.id === id ? updated : row)),
       );
@@ -459,7 +465,7 @@ export function ProjectMemoryCore({ hero, scope, scopeLabel }: CoreProps) {
 
   const openProjectRef = (ref: string) => {
     if (ref.startsWith("decision:")) {
-      setView("decisions");
+      wings.setView("decisions");
       return;
     }
     openSourceRef(ref);
@@ -475,8 +481,8 @@ export function ProjectMemoryCore({ hero, scope, scopeLabel }: CoreProps) {
         query: searchQuery.trim(),
         project_id: projectId,
       });
-      const body = await apiFetch<JsonRecord>(`/api/memory/search?${params}`);
-      setSearchHits((body.hits as JsonRecord[]) || []);
+      const body = await apiFetch<MemorySearchResponse>(`/api/memory/search?${params}`);
+      setSearchHits(body.hits || []);
     } catch (reason) {
       setSearchHits([]);
       setError(readableError(reason));
@@ -540,7 +546,7 @@ export function ProjectMemoryCore({ hero, scope, scopeLabel }: CoreProps) {
                     );
                   else if (entry.kind === "artifact")
                     openPrimitive(`artifact:${entry.id}`);
-                  else setView("decisions");
+                  else wings.setView("decisions");
                 }}
               />
             ))}
@@ -714,12 +720,12 @@ export function ProjectMemoryCore({ hero, scope, scopeLabel }: CoreProps) {
       ) : (
         <SurfaceVerbs status={projectName} />
       )}
-      <div className="project-memory-core" data-view={view}>
-        {view === "timeline" ? (
+      <div className="project-memory-core" data-view={wings.view}>
+        {wings.view === "timeline" ? (
           timelineFace
-        ) : view === "decisions" ? (
+        ) : wings.view === "decisions" ? (
           decisionsFace
-        ) : view === "search" ? (
+        ) : wings.view === "search" ? (
           searchFace
         ) : (
           <ProjectAsk

@@ -11,6 +11,7 @@
 // shared LedMeter budget, the footer is the surface-receiptbar, and the
 // server's grounding receipt (GROUNDED ON N OF M + openable citations)
 // finally reaches this glass.
+import "./chrome-menus.css";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useDesk } from "../store";
 import {
@@ -530,7 +531,7 @@ export function AskPanel() {
                 meetings={(items.meeting || []).map((m) => ({
                   id: m.id,
                   title: String(m.title || "Untitled meeting"),
-                  startedAt: (m as any).startedAt,
+                  startedAt: m.startedAt,
                 }))}
                 resources={groundableResources}
                 selection={grounding}

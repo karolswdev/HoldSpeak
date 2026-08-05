@@ -96,12 +96,12 @@ export function InfoWindow({
     : objectByRef(items, refId);
   if (!o) return null;
   const info = kindInfo(o.kind);
-  const r = o.ref as Record<string, unknown>;
+  const r = o.ref as unknown as Record<string, unknown>;
   const created = String(r.createdAt || r.startedAt || "");
   const modified = String(r.lastModified || r.endedAt || "");
   const footprint = info.footprint(o, items);
   const zones = o.kind === "directory" ? [] : filedZones(o, items);
-  const lin = lineage(items, (r as any).sources);
+  const lin = lineage(items, r.sources as unknown[]);
 
   return (
     <DeskWindowFrame

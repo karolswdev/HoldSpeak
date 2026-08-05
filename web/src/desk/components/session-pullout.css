@@ -1,0 +1,299 @@
+/* ── HS-87-01: the session pull-out (attach — the live pane view) ── */
+.desk-next .desk-pullout.is-session {
+  width: min(620px, 92vw);
+}
+.desk-next .desk-session-glyph {
+  font-size: 16px;
+}
+/* HS-111-04 — liveness is a steady LampGadget in the head; the pulsing
+   dot species is gone. */
+.desk-next .desk-chip.is-stale {
+  opacity: 0.6;
+}
+/* HS-101 B9 — the pane reads like a SCRIPT: the terminal text is the
+   material on the well tone (HS-99 depth ladder — no bordered box),
+   inset like a screen. Shared by the session pull-out and the
+   delivery terminal window. */
+.desk-next .desk-session-pane {
+  flex: 1;
+  margin: 0;
+  padding: 12px 14px;
+  border: 0;
+  border-radius: 2px;
+  background: var(--desk-window-well);
+  box-shadow: var(--desk-window-etch);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--text);
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-y: auto;
+  max-height: calc(100vh - 200px);
+}
+/* HS-101 rule 6: the asked question is a receipt — it floats in
+   aerogel (the left accent rail is banned). */
+.desk-next .desk-session-question {
+  padding: 6px 10px;
+  border-radius: 2px;
+  background: var(--desk-aerogel-fill);
+  border: 1px solid var(--desk-aerogel-edge);
+  max-height: 120px;
+  overflow-y: auto;
+}
+.desk-next .desk-session-state {
+  color: var(--text-muted);
+  font-size: var(--font-size-sm);
+  font-family: var(--font-mono);
+}
+
+/* ── HS-87-02: the arming grant. HS-111-04 — ARM is a TransportKey:
+   armed = inverted video (the kit's data-active), the countdown a
+   draining GRANT LedMeter. The accent-glow rings are dead. ── */
+.desk-next .desk-arm-refusal {
+  color: var(--danger-signal);
+  font-size: var(--font-size-xs);
+  font-family: var(--font-mono);
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* HS-111-04 — an armed pin reads as the pressed key, not a glow ring. */
+.desk-next .desk-mc-pin.armed {
+  background: var(--accent-tint);
+  color: var(--accent);
+  border-radius: 2px;
+}
+
+/* ── HS-87-03: the steer composer (voice-first, Enter deliberate) ── */
+.desk-next .desk-steer {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+}
+.desk-next .desk-steer-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  width: 100%;
+}
+.desk-next .desk-steer-input {
+  flex: 1;
+  resize: vertical;
+  min-height: 40px;
+  padding: 8px 10px;
+  border: 1px solid var(--surface-3);
+  border-radius: 0;
+  background: var(--surface-1);
+  box-shadow: var(--desk-window-etch);
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.4;
+}
+.desk-next .desk-steer-input:focus {
+  outline-color: var(--accent);
+  border-color: var(--accent);
+}
+.desk-next .desk-steer-sent {
+  color: var(--ok);
+  font-size: 11px;
+  font-family: var(--font-mono);
+}
+/* HS-111-04 — the budget is a CTX meter + a CAP token, never a caption
+   sentence. */
+.desk-next .desk-steer-grounded {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+/* ── HS-90-02: the key palette (full key control on glass) ── */
+.desk-next .desk-keypad {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  flex-wrap: wrap;
+}
+.desk-next .desk-keypad-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+/* HS-111-04 — the keys are TransportKey species (glyph over mono word);
+   the bespoke desk-key caps and the node chip's remote glow ring died
+   with the gadget rerender (NodeChip is a CycleGadget now). */
+.desk-next .desk-key-fate {
+  font-size: 11px;
+  margin-left: 2px;
+}
+
+/* ── HS-90-02: the pane picker (attach to any tmux pane) ── */
+.desk-next .desk-panepicker {
+  /* HS-97-07 — the launcher lives in the dock; this anchor holds only
+     the transient list, centered above the shelf. */
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 64px;
+  z-index: var(--desk-z-dock);
+}
+@media (max-width: 720px) {
+  /* The phone's bottom edge belongs to the sheet (same rule as the
+     dock): shelf furniture never occludes a sheet's action row. */
+  .desk-next .desk-panepicker {
+    z-index: var(--desk-z-dock-under);
+  }
+}
+.desk-next .desk-panepicker-list {
+  position: absolute;
+  left: 0;
+  bottom: calc(100% + 8px);
+  min-width: 260px;
+  max-height: 320px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px;
+  border: 1px solid var(--surface-3);
+  border-radius: 2px;
+  background: var(--surface-2);
+  box-shadow: var(--desk-transient-shadow);
+}
+.desk-next .desk-panepicker-item {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 7px 9px;
+  border: none;
+  border-radius: 2px;
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--duration-short) var(--ease-standard);
+}
+.desk-next .desk-panepicker-item:hover {
+  background: var(--surface-1);
+}
+/* HS-111-04 — the attached pane is the ledger's open row (sunken well
+   fill), never a smuggled left accent rail. */
+.desk-next .desk-panepicker-item.is-active {
+  background: var(--desk-window-well);
+  box-shadow: var(--desk-window-etch);
+}
+.desk-next .desk-panepicker-id {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--accent);
+  min-width: 34px;
+}
+.desk-next .desk-panepicker-meta {
+  font-size: 11px;
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.desk-next .desk-panepicker-empty {
+  padding: 8px 10px;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+.desk-next .desk-panepicker-spawn {
+  display: flex;
+  gap: 6px;
+  padding: 4px 4px 6px;
+}
+.desk-next .desk-panepicker-spawn .gadget-string {
+  flex: 1;
+}
+.desk-next .desk-panepicker-divider {
+  height: 1px;
+  background: var(--surface-3);
+  margin: 2px 0 6px;
+  opacity: 0.6;
+}
+
+/* ── HS-90-03: the factory controls (rename + kill on glass) ── */
+.desk-next .desk-factory {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  flex-wrap: wrap;
+}
+.desk-next .desk-factory-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.desk-next .desk-factory-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  flex: 1;
+}
+.desk-next .desk-factory-row .gadget-string {
+  flex: 1;
+  width: auto;
+  min-width: 140px;
+}
+/* HS-111-04 — Kill is a danger-tone TransportKey; the confirm state is
+   inverted danger video (the kit's data-active), not a chip repaint. */
+
+/* ── HS-87-05: classify (keep as note, pin to story, flip from here) ── */
+.desk-next .desk-classify {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+}
+/* HS-111: section labels — mono, 10px, 600 */
+.desk-next .desk-classify-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-faint);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.desk-next .desk-classify-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.desk-next .desk-classify-input {
+  flex: 1;
+  min-width: 120px;
+  padding: 6px 8px;
+  border: 1px solid var(--surface-3);
+  border-radius: var(--radius-sm);
+  background: var(--surface-1);
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+/* A manual pin is a HOLLOW ring — never the correlator's filled verdict. */
+.desk-next .desk-mc-pin.manual {
+  background: transparent;
+  box-shadow: inset 0 0 0 1px var(--text-faint);
+  border-style: dashed;
+}
+
+
+/* The pane picker's spawn row: one control height. */
+.desk-next .desk-panepicker input,
+.desk-next .desk-panepicker button {
+  min-height: 30px;
+}

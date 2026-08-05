@@ -10,6 +10,7 @@
 // tables; the launch composer is ONE GadgetGroup with an axis-named token
 // consequence line; the footer receipt bar carries the freshness fact the
 // wire already held. The delivery wires are untouched.
+import "./delivery.css";
 import { useEffect, useMemo, useState } from "react";
 import { Button } from "../../components/signal/Signal";
 import { ReceiptLine } from "./ReceiptLine";

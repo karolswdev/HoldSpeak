@@ -3,18 +3,25 @@
  * `objGlow`, so the island lays the same desk out the same way. */
 import { oh } from "./hash";
 import { GLOW_POOL } from "../lib/tokens.gen";
-import type { DeskItem, Items, Kind } from "./api";
+import type { Primitive, PrimitiveKind } from "../lib/primitives";
+import type { Items } from "./api";
 import { qualifiedRef } from "./api";
 import type { UnitPos } from "./store";
 
 export interface WorldObject {
-  kind: Kind;
+  kind: PrimitiveKind;
   id: string;
   title: string;
-  ref: DeskItem;
+  ref: Primitive;
 }
 
-const ORDER: Kind[] = [
+/** Kinds that have their own rendering path (zones, or never surfaced). */
+const WORLD_ONLY_EXCLUDE = ["directory", "game", "layout"] as const;
+
+/** The exhaustive iteration order — every PrimitiveKind is listed, but
+ * the world_exclude kinds are placed at the end (allObjects filters
+ * them out of the visual list; objectByRef still resolves them). */
+const ORDER = [
   "meeting",
   "note",
   "decision",
@@ -29,31 +36,57 @@ const ORDER: Kind[] = [
   "story",
   "repository",
   "workbench",
-];
+  ...WORLD_ONLY_EXCLUDE,
+] as const satisfies readonly PrimitiveKind[];
 
-/** Every primitive as a world object, unfiltered — the lookup surface for
- * pull-outs/editors (a FILED object still opens; it just doesn't float on
- * the root stage). */
-export function allObjects(items: Items): WorldObject[] {
+/** Compile-time gate (HS-117-14): a missing PrimitiveKind in ORDER is a
+ * type error here. Adding a new kind to the union without listing it in
+ * ORDER makes `Exclude` produce that kind, which is not assignable to
+ * `never`. */
+type _OrderKinds = (typeof ORDER)[number];
+type _AssertOrderComplete =
+  [Exclude<PrimitiveKind, _OrderKinds>] extends [never] ? true : never;
+const _orderExhaustive: _AssertOrderComplete = true;
+void _orderExhaustive;
+
+/** Every primitive as a world object — including kinds the visual desk
+ * renders through their own path (directories = zones, game/layout =
+ * local-only). Used by objectByRef for lookup; the visual list and spatial
+ * stage filter from allObjects instead. */
+function _allPrimitives(items: Items): WorldObject[] {
   const out: WorldObject[] = [];
   for (const kind of ORDER) {
     for (const it of items[kind] || []) {
-      const id = String(it.id || (it as any).sessionId || it.title || "");
+      const prim = it as Primitive;
+      const id = String(
+        prim.id || ("sessionId" in prim ? prim.sessionId : "") || ("title" in prim ? prim.title : "") || "",
+      );
       out.push({
         kind,
         id,
-        title: String(it.title || it.name || id || kind),
-        ref: it,
+        title: String(("title" in prim ? prim.title : "") || ("name" in prim ? prim.name : "") || id || kind),
+        ref: prim,
       });
     }
   }
   return out;
 }
 
-/** Resolve a pull-out/source identity without collapsing cross-kind id collisions. */
+const WORLD_EXCLUDE = new Set<PrimitiveKind>(WORLD_ONLY_EXCLUDE);
+
+/** Every primitive as a world object, excluding kinds with their own
+ * rendering path (directories are zones; game/layout are local-only).
+ * A FILED object still appears (it opens from its zone); this is the
+ * lookup surface for pull-outs/editors and the DeskListView. */
+export function allObjects(items: Items): WorldObject[] {
+  return _allPrimitives(items).filter((o) => !WORLD_EXCLUDE.has(o.kind));
+}
+
+/** Resolve a pull-out/source identity without collapsing cross-kind id
+ * collisions. Searches ALL primitive kinds (including directories). */
 export function objectByRef(items: Items, ref: string): WorldObject | null {
   return (
-    allObjects(items).find(
+    _allPrimitives(items).find(
       (object) =>
         object.id === ref || qualifiedRef(object.kind, object.id) === ref,
     ) ?? null
@@ -67,7 +100,7 @@ export function worldObjects(
   const out = allObjects(items);
   if (divedZone) {
     const dir = (items.directory || []).find((d) => d.id === divedZone);
-    const members = new Set(((dir as any)?.memberIds as string[]) || []);
+    const members = new Set(dir?.memberIds || []);
     return out.filter(
       (o) => members.has(o.id) || members.has(qualifiedRef(o.kind, o.id)),
     );
@@ -78,7 +111,7 @@ export function worldObjects(
   // filed and always show.)
   const filed = new Set<string>();
   for (const d of items.directory || []) {
-    for (const mid of ((d as any).memberIds as string[]) || []) filed.add(mid);
+    for (const mid of d.memberIds || []) filed.add(mid);
   }
   return out.filter(
     (o) =>
@@ -91,7 +124,7 @@ export interface WorldZone {
   id: string;
   title: string;
   count: number;
-  ref: DeskItem;
+  ref: Primitive;
 }
 
 export function worldZones(
@@ -101,8 +134,8 @@ export function worldZones(
   if (divedZone) return [];
   return (items.directory || []).map((d) => ({
     id: String(d.id),
-    title: String(d.title || d.name || "Zone"),
-    count: (((d as any).memberIds as string[]) || []).length,
+    title: String(d.name || "Zone"),
+    count: (d.memberIds || []).length,
     ref: d,
   }));
 }

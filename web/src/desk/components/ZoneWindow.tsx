@@ -21,7 +21,7 @@ type SortKey = ZoneViewPref["sort"];
 const DEFAULT_PREF: ZoneViewPref = { view: "icons", sort: "name", dir: "asc" };
 
 function memberTime(o: WorldObject): string {
-  const r = o.ref as Record<string, unknown>;
+  const r = o.ref as unknown as Record<string, unknown>;
   return String(r.lastModified || r.endedAt || r.createdAt || "");
 }
 
@@ -42,7 +42,7 @@ export function ZoneWindow({
     useDesk.getState();
   const [selectedMemberKey, setSelectedMemberKey] = useState<string | null>(null);
   const zone = (items.directory || []).find((d) => d.id === zoneId);
-  const memberIds: string[] = ((zone as any)?.memberIds as string[]) || [];
+  const memberIds: string[] = zone?.memberIds || [];
 
   const members = useMemo(() => {
     const resolved = memberIds
@@ -59,7 +59,7 @@ export function ZoneWindow({
   }, [items, memberIds.join(","), pref.sort, pref.dir]);
 
   if (!zone) return null;
-  const title = String(zone.name || zone.title || "Zone");
+  const title = String(zone.name || "Zone");
   const unresolved = memberIds.length - members.length;
   const columns: Column<WorldObject>[] = [
     {

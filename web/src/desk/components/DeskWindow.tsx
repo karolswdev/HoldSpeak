@@ -7,6 +7,9 @@
 // state in the store (`panelMin`/`panelMax`, persisted in the same
 // `hs.desk.panels` slot as the rects), and the phone's bottom-sheet form.
 // The hook is module-private on purpose: windows do not hand-wire physics.
+//
+// HS-117-04 — decomposed into focused modules under `window/`. This file
+// retains useDeskWindow + DeskWindowFrame + re-exports for API stability.
 import {
   useEffect,
   useLayoutEffect,
@@ -15,270 +18,79 @@ import {
   useSyncExternalStore,
   type ReactNode,
 } from "react";
-import { createPortal } from "react-dom";
 import { motion, useReducedMotion } from "motion/react";
 import { useDrag } from "@use-gesture/react";
-import { DOCK_SPRITES, SYSTEM } from "../systemSprites";
 import { useDesk, type PanelRect } from "../store";
-import { useShortcutSheet } from "../chromeState";
-import { useKeymap } from "../keymap";
-import { VERBS, verbLabel } from "../verbRegistry";
 import { DeskMenuItem, DeskMenuList } from "./DeskMenu";
-// The physics constants mirror the CSS component tokens — one generated
-// source (design-tokens.json), no drift possible (HS-96-02).
 import { DESK_WINDOW, DESK_Z } from "../../lib/tokens.gen";
 
-/** Viewport margin windows are clamped inside. */
-const MARGIN = DESK_WINDOW.margin;
+// -- Extracted modules (HS-117-04) --
+import {
+  MARGIN,
+  workBand,
+  placeWindow,
+  clampIntoBand,
+  snapForPointer,
+  resizeEdge,
+  clampRect,
+  exposeLayout,
+  mruOrder,
+} from "./window/windowGeometry";
+import {
+  chipEls,
+  shellEls,
+  windowRegistry,
+  registrySnapshot,
+  announceWindow,
+  retractWindow,
+  useOpenWindows,
+  frontWindowId,
+  openWindowCount,
+  closeFrontWindow,
+  minimizeFrontWindow,
+  cycleWindows as cycleWindowsRaw,
+  focusOrRestoreApp,
+} from "./window/windowRegistry";
+import {
+  type DockLauncher,
+  announceLauncher,
+  retractLauncher,
+  activateLauncher,
+  useLaunchers,
+} from "./window/launcherRegistry";
+import { publishGhost, SnapGhost } from "./window/SnapGhost";
+import { flashSwitcher, Switcher } from "./window/Switcher";
+import { toggleExpose, Expose } from "./window/Expose";
+import { VerbGlyph } from "./window/VerbGlyph";
+import { Dock } from "./window/Dock";
+
+// -- Re-exports: zero consumer edits (HS-117-04) --
+export { placeWindow, clampIntoBand, snapForPointer, resizeEdge, exposeLayout };
+export { SnapGhost, Switcher, Expose, Dock };
+export { toggleExpose };
+export {
+  useOpenWindows,
+  frontWindowId,
+  openWindowCount,
+  closeFrontWindow,
+  minimizeFrontWindow,
+  focusOrRestoreApp,
+};
+export {
+  type DockLauncher,
+  announceLauncher,
+  retractLauncher,
+  activateLauncher,
+  useLaunchers,
+};
+
+/** Ctrl+` — MRU cycle (binds the switcher's flashSwitcher). */
+export function cycleWindows(): void {
+  cycleWindowsRaw(flashSwitcher);
+}
+
 /** The desk-window z band (see the ladder note in desk.css). */
 const Z_BASE = DESK_Z.windowBase;
-/** Cascade step when several default-corner windows are open at once. */
-const CASCADE = DESK_WINDOW.cascade;
-
-/** The window head strip considered for title-bar occlusion (px). */
-const HEAD = 44;
-
-/** The usable desktop is one contract: below the system bar, above the dock.
- * CSS owns the dimensions so shell changes cannot make window physics drift. */
-function workBand() {
-  const fallback = {
-    top: DESK_WINDOW.snapTop,
-    bottom: DESK_WINDOW.snapBottom,
-  };
-  if (typeof window === "undefined" || typeof document === "undefined")
-    return fallback;
-  const style = getComputedStyle(document.documentElement);
-  const top = parseFloat(style.getPropertyValue("--desk-work-top"));
-  const bottom = parseFloat(style.getPropertyValue("--desk-work-bottom"));
-  return {
-    top: Number.isFinite(top) ? top : fallback.top,
-    bottom: Number.isFinite(bottom) ? bottom : fallback.bottom,
-  };
-}
-
-/** HS-97-02 — the open-placement engine. A window opening without a
- * persisted rect lands FULLY inside the working band (below the chrome,
- * clear of the dock), seeded at its CSS default home but moved off other
- * windows' title bars by a min-overlap scan (head occlusion dominates,
- * then overlap area, then distance from home). Pure, pinned by test. */
-export function placeWindow(
-  seed: PanelRect,
-  existing: PanelRect[],
-  vw: number,
-  vh: number,
-  minW = 320,
-  minH = 220,
-): PanelRect {
-  const { top, bottom } = workBand();
-  const w = Math.max(minW, Math.min(seed.w, vw - MARGIN * 2));
-  const h = Math.max(minH, Math.min(seed.h, Math.max(minH, vh - top - bottom)));
-  const maxX = Math.max(MARGIN, vw - MARGIN - w);
-  const maxY = Math.max(top, vh - bottom - h);
-  const sx = Math.min(Math.max(seed.x, MARGIN), maxX);
-  const sy = Math.min(Math.max(seed.y, top), maxY);
-  const overlap = (
-    ax: number,
-    ay: number,
-    aw: number,
-    ah: number,
-    b: PanelRect,
-    bh: number,
-  ) => {
-    const ox = Math.max(0, Math.min(ax + aw, b.x + b.w) - Math.max(ax, b.x));
-    const oy = Math.max(0, Math.min(ay + ah, b.y + bh) - Math.max(ay, b.y));
-    return ox * oy;
-  };
-  const score = (x: number, y: number) => {
-    let heads = 0;
-    let area = 0;
-    for (const r of existing) {
-      area += overlap(x, y, w, h, r, r.h);
-      if (overlap(x, y, w, HEAD, r, HEAD) > 0) heads++;
-    }
-    return heads * 1e9 + area * 10 + Math.hypot(x - sx, y - sy);
-  };
-  let best = { x: sx, y: sy, s: score(sx, sy) };
-  const STEP = 32;
-  for (let y = top; y <= maxY; y += STEP) {
-    for (let x = MARGIN; x <= maxX; x += STEP) {
-      const s = score(x, y);
-      if (s < best.s - 0.5) best = { x, y, s };
-    }
-  }
-  if (best.s >= 1e9) {
-    // Saturated: every position occludes a title bar somewhere. The
-    // cascade survives exactly here — step down-right off the home seat.
-    const step = CASCADE * Math.min(existing.length, 8);
-    return {
-      x: Math.min(Math.max(sx + step, MARGIN), maxX),
-      y: Math.min(Math.max(sy + step, top), maxY),
-      w,
-      h,
-    };
-  }
-  return { x: best.x, y: best.y, w, h };
-}
-
-/** HS-97-02 — clamp-on-open: a persisted rect (possibly from a larger
- * viewport) lands whole inside the working band; the arrangement is
- * otherwise untouched. */
-export function clampIntoBand(
-  r: PanelRect,
-  vw: number,
-  vh: number,
-  minW = 320,
-  minH = 220,
-): PanelRect {
-  const { top, bottom } = workBand();
-  const w = Math.max(minW, Math.min(r.w, vw - MARGIN * 2));
-  const h = Math.max(minH, Math.min(r.h, Math.max(minH, vh - top - bottom)));
-  const x = Math.min(Math.max(r.x, MARGIN), Math.max(MARGIN, vw - MARGIN - w));
-  const y = Math.min(Math.max(r.y, top), Math.max(top, vh - bottom - h));
-  return { x, y, w, h };
-}
-
-/** HS-95-03 — edge snap: releasing a window drag at a screen edge tiles
- * it. Corners take quarters, the left/right flanks take halves; anywhere
- * else returns null (a free park). Pure, pinned by test. */
-export function snapForPointer(
-  px: number,
-  py: number,
-  vw: number,
-  vh: number,
-): PanelRect | null {
-  const EDGE = 26;
-  const CORNER = 150;
-  const { top, bottom } = workBand(); // below chrome, clear of dock
-  const halfW = Math.floor((vw - MARGIN * 3) / 2);
-  const halfH = Math.floor((vh - top - bottom - MARGIN) / 2);
-  const left = px <= CORNER;
-  const right = px >= vw - CORNER;
-  const high = py <= CORNER + top;
-  const low = py >= vh - CORNER;
-  if (left && high) return { x: MARGIN, y: top, w: halfW, h: halfH };
-  if (right && high)
-    return { x: vw - MARGIN - halfW, y: top, w: halfW, h: halfH };
-  if (left && low)
-    return { x: MARGIN, y: top + halfH + MARGIN, w: halfW, h: halfH };
-  if (right && low)
-    return {
-      x: vw - MARGIN - halfW,
-      y: top + halfH + MARGIN,
-      w: halfW,
-      h: halfH,
-    };
-  if (px <= EDGE)
-    return { x: MARGIN, y: top, w: halfW, h: vh - top - bottom };
-  if (px >= vw - EDGE)
-    return { x: vw - MARGIN - halfW, y: top, w: halfW, h: vh - top - bottom };
-  return null;
-}
-
-/** HS-97-05 — edge resize math: which edges move with the pointer.
- * Modes: "r" | "b" | "br" | "l" | "bl"; the left edge keeps the right
- * edge fixed when the minimum bites. Pure, pinned by test. */
-export function resizeEdge(
-  mode: string,
-  base: PanelRect,
-  mx: number,
-  my: number,
-  minW: number,
-  minH: number,
-): PanelRect {
-  let { x, y, w, h } = base;
-  if (mode.includes("r")) w = base.w + mx;
-  if (mode.includes("l")) {
-    w = base.w - mx;
-    x = base.x + mx;
-    if (w < minW) {
-      x = base.x + base.w - minW;
-      w = minW;
-    }
-  }
-  if (mode.includes("b")) h = base.h + my;
-  return clampRect({ x, y, w, h }, minW, minH);
-}
-
-/** HS-97-05 — the snap ghost: while a head drag hovers a snap region,
- * the landing tile renders as a translucent preview. Module-level
- * publisher so the one ghost lives outside any window. */
-let ghostRect: PanelRect | null = null;
-const ghostListeners = new Set<() => void>();
-function publishGhost(r: PanelRect | null) {
-  const same =
-    (r === null && ghostRect === null) ||
-    (r !== null &&
-      ghostRect !== null &&
-      r.x === ghostRect.x &&
-      r.y === ghostRect.y &&
-      r.w === ghostRect.w &&
-      r.h === ghostRect.h);
-  if (same) return;
-  ghostRect = r;
-  for (const l of ghostListeners) l();
-}
-
-export function SnapGhost() {
-  const rect = useSyncExternalStore(
-    (cb) => {
-      ghostListeners.add(cb);
-      return () => ghostListeners.delete(cb);
-    },
-    () => ghostRect,
-  );
-  if (!rect) return null;
-  return (
-    <div
-      className="desk-snap-ghost"
-      style={{ top: rect.y, left: rect.x, width: rect.w, height: rect.h }}
-      aria-hidden="true"
-    />
-  );
-}
-
-/** HS-97-06 — the exposé grid: N non-overlapping cells inside the
- * working band, last row centered. Pure, pinned by test. */
-export function exposeLayout(
-  count: number,
-  vw: number,
-  vh: number,
-): PanelRect[] {
-  const band = workBand();
-  const top = band.top + 8;
-  const bottom = band.bottom + 8;
-  const GAP = 18;
-  const cols = Math.max(1, Math.ceil(Math.sqrt(count)));
-  const rows = Math.max(1, Math.ceil(count / cols));
-  const bandW = vw - MARGIN * 2;
-  const bandH = vh - top - bottom;
-  const w = Math.floor((bandW - GAP * (cols - 1)) / cols);
-  const h = Math.floor((bandH - GAP * (rows - 1)) / rows);
-  const cells: PanelRect[] = [];
-  for (let i = 0; i < count; i++) {
-    const r = Math.floor(i / cols);
-    const inRow = r === rows - 1 ? count - r * cols : cols;
-    const rowW = inRow * w + (inRow - 1) * GAP;
-    const x0 = MARGIN + Math.floor((bandW - rowW) / 2);
-    cells.push({
-      x: x0 + (i - r * cols) * (w + GAP),
-      y: top + r * (h + GAP),
-      w,
-      h,
-    });
-  }
-  return cells;
-}
-
-function clampRect(r: PanelRect, minW: number, minH: number): PanelRect {
-  const vw = window.innerWidth || 1280;
-  const vh = window.innerHeight || 800;
-  const { top, bottom } = workBand();
-  const w = Math.max(minW, Math.min(r.w, vw - MARGIN * 2));
-  const h = Math.max(minH, Math.min(r.h, Math.max(minH, vh - top - bottom)));
-  const x = Math.min(Math.max(r.x, MARGIN), Math.max(MARGIN, vw - MARGIN - w));
-  const y = Math.min(Math.max(r.y, top), Math.max(top, vh - bottom - h));
-  return { x, y, w, h };
-}
 
 export interface DeskWindowOptions {
   minW?: number;
@@ -664,362 +476,6 @@ function useDeskWindow(id: string, opts: DeskWindowOptions = {}) {
   };
 }
 
-/** Dock chip elements by window id — the minimize/restore motion's
- * target (HS-97-04). Populated by the Dock's ref callbacks. */
-const chipEls = new Map<string, HTMLElement>();
-
-/** Window shell elements by id — the exposé's fan targets (HS-97-06). */
-const shellEls = new Map<string, HTMLElement>();
-
-/** HS-97-06 — exposé state (module-level so the dock verb and the
- * keyboard share one truth). */
-let exposeActive = false;
-const exposeListeners = new Set<() => void>();
-export function toggleExpose(force?: boolean) {
-  const next = force ?? !exposeActive;
-  if (next === exposeActive) return;
-  exposeActive = next;
-  for (const l of exposeListeners) l();
-}
-
-/** HS-97-06 — the transient switcher strip's state. */
-let switcherState: {
-  items: { id: string; label: string; glyph: string }[];
-  target: string;
-} | null = null;
-let switcherTimer: ReturnType<typeof setTimeout> | undefined;
-const switcherListeners = new Set<() => void>();
-function flashSwitcher(target: string) {
-  switcherState = {
-    items: registrySnapshot.map((w) => ({
-      id: w.id,
-      label: w.label,
-      glyph: w.glyph,
-    })),
-    target,
-  };
-  for (const l of switcherListeners) l();
-  clearTimeout(switcherTimer);
-  switcherTimer = setTimeout(() => {
-    switcherState = null;
-    for (const l of switcherListeners) l();
-  }, 900);
-}
-
-/** The visible MRU switcher (HS-97-06): while Ctrl+` cycles, a strip
- * names every open window with the landing target highlighted, fading
- * once the cycle settles. */
-export function Switcher() {
-  const st = useSyncExternalStore(
-    (cb) => {
-      switcherListeners.add(cb);
-      return () => switcherListeners.delete(cb);
-    },
-    () => switcherState,
-  );
-  if (!st) return null;
-  return (
-    <div className="desk-switcher" role="status">
-      {st.items.map((w) => (
-        <span
-          key={w.id}
-          className={
-            "desk-switcher-chip" + (w.id === st.target ? " is-target" : "")
-          }
-        >
-          <span aria-hidden="true">{w.glyph}</span> {w.label}
-        </span>
-      ))}
-    </div>
-  );
-}
-
-/** The exposé (HS-97-06): fans every open window into a pick grid —
- * live shells scale into their cells (compositor transforms), minimized
- * windows join as dimmed cards; click or Enter focuses, Escape cancels. */
-export function Expose() {
-  const active = useSyncExternalStore(
-    (cb) => {
-      exposeListeners.add(cb);
-      return () => exposeListeners.delete(cb);
-    },
-    () => exposeActive,
-  );
-  const windows = useOpenWindows();
-  const panelMin = useDesk((s) => s.panelMin);
-  const reducedMotion = useReducedMotion();
-  const firstBtnRef = useRef<HTMLButtonElement | null>(null);
-  const fannedRef = useRef<
-    { el: HTMLElement; anim: Animation }[]
-  >([]);
-
-  useEffect(() => {
-    // ⌃↑ itself now arrives through desk/keymap.ts (the one binder,
-    // registry verb desk.overview); the exposé keeps only its Escape.
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && exposeActive) {
-        e.preventDefault();
-        toggleExpose(false);
-      }
-    };
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
-  }, []);
-
-  const entries = windows.map((w) => ({
-    ...w,
-    minimized: panelMin.includes(w.id),
-  }));
-  const vw = typeof window === "undefined" ? 1280 : window.innerWidth || 1280;
-  const vh = typeof window === "undefined" ? 800 : window.innerHeight || 800;
-  const cells = exposeLayout(Math.max(entries.length, 1), vw, vh);
-
-  useEffect(() => {
-    if (!active) return;
-    const fanned: { el: HTMLElement; anim: Animation }[] = [];
-    entries.forEach((en, i) => {
-      if (en.minimized) return;
-      const el = shellEls.get(en.id);
-      if (!el || typeof el.animate !== "function") return;
-      const r = el.getBoundingClientRect();
-      if (!r.width) return;
-      const cell = cells[i];
-      const s = Math.min(cell.w / r.width, cell.h / r.height, 1);
-      const dx = cell.x + cell.w / 2 - (r.x + r.width / 2);
-      const dy = cell.y + cell.h / 2 - (r.y + r.height / 2);
-      const anim = el.animate(
-        [
-          { transform: "translate(0, 0) scale(1)" },
-          { transform: `translate(${dx}px, ${dy}px) scale(${s})` },
-        ],
-        {
-          duration: reducedMotion ? 0 : 220,
-          easing: "cubic-bezier(.2, .8, .2, 1)",
-          fill: "forwards",
-        },
-      );
-      fanned.push({ el, anim });
-    });
-    fannedRef.current = fanned;
-    firstBtnRef.current?.focus();
-    return () => {
-      for (const { el, anim } of fannedRef.current) {
-        try {
-          const current = getComputedStyle(el).transform;
-          anim.cancel();
-          if (!reducedMotion && current && current !== "none")
-            el.animate(
-              [{ transform: current }, { transform: "none" }],
-              { duration: 180, easing: "cubic-bezier(.2, .8, .2, 1)" },
-            );
-        } catch {
-          /* jsdom or torn-down element: nothing to unwind */
-        }
-      }
-      fannedRef.current = [];
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [active]);
-
-  if (!active || entries.length === 0) return null;
-  return (
-    <>
-      <div className="desk-expose-scrim" aria-hidden="true" />
-      <div
-        className="desk-expose"
-        // A region, not a dialog: the desk's no-modal law holds — no
-        // trap, Escape and the backdrop dismiss (Phase 73 lock).
-        role="group"
-        aria-label="Window overview"
-        onClick={(e) => {
-          if (e.target === e.currentTarget) toggleExpose(false);
-        }}
-      >
-        {entries.map((en, i) => (
-          <button
-            key={en.id}
-            type="button"
-            ref={i === 0 ? firstBtnRef : undefined}
-            className={"desk-expose-cell" + (en.minimized ? " is-min" : "")}
-            style={{
-              top: cells[i].y,
-              left: cells[i].x,
-              width: cells[i].w,
-              height: cells[i].h,
-            }}
-            aria-label={`Focus ${en.label}`}
-            onClick={() => {
-              toggleExpose(false);
-              const s = useDesk.getState();
-              if (s.panelMin.includes(en.id)) s.restorePanel(en.id);
-              else s.focusPanel(en.id);
-            }}
-          >
-            <span className="desk-expose-name">
-              <span aria-hidden="true">{en.glyph}</span> {en.label}
-            </span>
-          </button>
-        ))}
-      </div>
-    </>
-  );
-}
-
-/** HS-97-07 — dock launchers: fixed shelf verbs (Desk memory, Delivery,
- * Panes) announce themselves so ONE dock carries launch and running
- * state; the floating pills are gone. */
-export interface DockLauncher {
-  id: string;
-  label: string;
-  glyph: string;
-  open: boolean;
-  badge?: number;
-  activate: () => void;
-}
-const LAUNCHER_SEAT: Record<string, number> = {
-  attention: 0,
-  "delivery-board": 1,
-  panes: 2,
-};
-const launcherRegistry = new Map<string, DockLauncher>();
-let launcherSnapshot: DockLauncher[] = [];
-const launcherListeners = new Set<() => void>();
-function publishLaunchers() {
-  launcherSnapshot = Array.from(launcherRegistry.values()).sort(
-    (a, b) => (LAUNCHER_SEAT[a.id] ?? 9) - (LAUNCHER_SEAT[b.id] ?? 9),
-  );
-  for (const l of launcherListeners) l();
-}
-export function announceLauncher(l: DockLauncher) {
-  launcherRegistry.set(l.id, l);
-  publishLaunchers();
-}
-export function retractLauncher(id: string) {
-  launcherRegistry.delete(id);
-  publishLaunchers();
-}
-/** HS-111-01 — programs may hand over to a docked program (the Prefs
- * Delivery module opens the Delivery board). False = not announced. */
-export function activateLauncher(id: string): boolean {
-  const launcher = launcherRegistry.get(id);
-  if (!launcher) return false;
-  launcher.activate();
-  return true;
-}
-export function useLaunchers() {
-  return useSyncExternalStore(
-    (cb) => {
-      launcherListeners.add(cb);
-      return () => launcherListeners.delete(cb);
-    },
-    () => launcherSnapshot,
-  );
-}
-
-/** Open windows announce themselves (title/icon/close) so the dock can
- * name and drive them without a parallel registry. */
-const windowRegistry = new Map<
-  string,
-  { label: string; glyph: string; close: () => void }
->();
-const registryListeners = new Set<() => void>();
-let registrySnapshot: {
-  id: string;
-  label: string;
-  glyph: string;
-  close: () => void;
-}[] = [];
-
-function announceWindow(
-  id: string,
-  label: string,
-  glyph: string,
-  close: () => void,
-) {
-  windowRegistry.set(id, { label, glyph, close });
-  publishRegistry();
-}
-
-function retractWindow(id: string) {
-  windowRegistry.delete(id);
-  publishRegistry();
-}
-
-function publishRegistry() {
-  registrySnapshot = Array.from(windowRegistry.entries()).map(
-    ([id, v]) => ({ id, ...v }),
-  );
-  for (const l of registryListeners) l();
-}
-
-export function useOpenWindows() {
-  return useSyncExternalStore(
-    (cb) => {
-      registryListeners.add(cb);
-      return () => registryListeners.delete(cb);
-    },
-    () => registrySnapshot,
-  );
-}
-
-/** HS-101 B8 — the front window: the last non-minimized id in the
- * stacking order that is actually open (the ⌘W/⌘M target). */
-export function frontWindowId(): string | null {
-  const s = useDesk.getState();
-  for (let i = s.panelOrder.length - 1; i >= 0; i--) {
-    const id = s.panelOrder[i];
-    if (s.panelMin.includes(id)) continue;
-    if (registrySnapshot.some((w) => w.id === id)) return id;
-  }
-  const open = registrySnapshot.filter((w) => !s.panelMin.includes(w.id));
-  return open.length ? open[open.length - 1].id : null;
-}
-
-/* ── HS-111-07: the window verbs the registry runs (one truth; the
-   keymap and every menu face reach them through verbRegistry). ── */
-
-/** How many windows are open right now (ghost-reason source). */
-export function openWindowCount(): number {
-  return registrySnapshot.length;
-}
-
-/** ⌘W — close the front window. */
-export function closeFrontWindow(): void {
-  const id = frontWindowId();
-  if (id) registrySnapshot.find((w) => w.id === id)?.close();
-}
-
-/** ⌘M — minimize the front window. */
-export function minimizeFrontWindow(): void {
-  const id = frontWindowId();
-  if (id) useDesk.getState().minimizePanel(id);
-}
-
-/** ⌃` — MRU cycle: the least-recent open window comes forward, and
- * the switcher strip names the landing (HS-97-06). */
-export function cycleWindows(): void {
-  const ids = mruOrder(
-    registrySnapshot.map((w) => w.id),
-    useDesk.getState().panelOrder,
-  );
-  if (ids.length < 1) return;
-  const next = ids[0];
-  const s = useDesk.getState();
-  if (s.panelMin.includes(next)) s.restorePanel(next);
-  else s.focusPanel(next);
-  flashSwitcher(next);
-}
-
-/** ⌘1-⌘4 — an application whose window is already open focuses (or
- * restores) instead of re-opening. False = not open; launch instead. */
-export function focusOrRestoreApp(windowId: string): boolean {
-  if (!registrySnapshot.some((w) => w.id === windowId)) return false;
-  const s = useDesk.getState();
-  if (s.panelMin.includes(windowId)) s.restorePanel(windowId);
-  s.focusPanel(windowId);
-  return true;
-}
-
 function useCompactViewport(): boolean {
   return useSyncExternalStore(
     (cb) => {
@@ -1078,39 +534,6 @@ export interface DeskWindowFrameProps {
 /** THE window. One chrome, one lifecycle, one physics contract — content
  * plugs in as children (Constitution, Article I: features do not own
  * surfaces). */
-/** HS-99-02 — the window verb glyphs: crisp inline SVG strokes that
- * inherit currentColor (text glyphs read as characters, not chrome). */
-function VerbGlyph({ kind }: { kind: string }) {
-  const paths: Record<string, string> = {
-    minimize: "M3 7h8",
-    maximize: "M3.5 3.5h7v7h-7Z",
-    restore: "M3 5.2h5.8V11H3Z M5.2 5.2V3H11v5.8H8.8",
-    close: "M3.5 3.5l7 7M10.5 3.5l-7 7",
-    "light-close": "M3.6 3.6l6.8 6.8M10.4 3.6l-6.8 6.8",
-    "light-min": "M3 7h8",
-    "light-max": "M7 3v8M3 7h8",
-    "light-restore": "M4 7h6M7 4l-3 3 3 3M7 4l3 3-3 3",
-    // HS-111-09 — the dock verbs join the one SVG glyph language (the
-    // ⊞/⟲/✕ dingbats were kit-law leaks): overview = the 2×2 window
-    // grid, reset = the return loop.
-    overview: "M3 3.5h3.2v3.2H3Z M7.8 3.5H11v3.2H7.8Z M3 8.3h3.2v3.2H3Z M7.8 8.3H11v3.2H7.8Z",
-    reset: "M11 7a4 4 0 1 1-1.55-3.16 M9.2 2.2l.55 1.9-1.9.55",
-  };
-  return (
-    <svg
-      viewBox="0 0 14 14"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.3"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d={paths[kind]} />
-    </svg>
-  );
-}
-
 export function DeskWindowFrame(props: DeskWindowFrameProps) {
   const {
     id,
@@ -1471,296 +894,5 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
       {!maxed && !compact ? win.grip : null}
       {!maxed && !compact ? win.edges : null}
     </motion.div>
-  );
-}
-
-/** MRU order over the currently-open windows (front last, like the z
- * band). Windows never focused yet sort first. */
-function mruOrder(ids: string[], order: string[]): string[] {
-  return [...ids].sort((a, b) => order.indexOf(a) - order.indexOf(b));
-}
-
-/** The dock (HS-95-03): every open window as a chip — tap focuses (or
- * restores a parked one), ✕ closes, ⟲ resets the layout. Ctrl+` cycles
- * focus in MRU order, restoring as it lands. Shell furniture: it rides
- * above the window band, and it is invisible while nothing is open. */
-/** HS-100-11 — the dock IS the launcher: the four applications ride it
- * always (running mark when their window is open); drawers and tools
- * moved to the menu-bar bell and the search shelf. */
-const DOCK_APPS = [
-  { key: "dictate", id: "surface-dictation", label: "Speak", glyph: "⌁", fallback: "/dictation" },
-  { key: "review-meetings", id: "surface-meetings", label: "Meetings", glyph: "▣", fallback: "/history" },
-  { key: "inspect-personas-and-coders", id: "surface-companion", label: "Agents", glyph: "◉", fallback: "/companion" },
-  { key: "configure-settings", id: "surface-settings", label: "Settings", glyph: "⚙", fallback: "/settings" },
-] as const;
-const DOCK_APP_IDS = new Set<string>(DOCK_APPS.map((a) => a.id));
-
-export function Dock({ center }: { center?: ReactNode } = {}) {
-  const panelMin = useDesk((s) => s.panelMin);
-  const panelOrder = useDesk((s) => s.panelOrder);
-  const windows = useOpenWindows();
-  const launchers = useLaunchers();
-  // HS-111-07 — the HS-101 B8 keyboard grammar (⌘1–⌘4, ⌘W, ⌘M, ⌃`,
-  // ⌘/) moved into desk/keymap.ts, driven by the registry's key
-  // fields: ONE binder (refcounted — the chrome mounts it too). The
-  // sheet's open state is shared chrome state so the system.sheet
-  // verb can draw it.
-  useKeymap();
-  const sheetOpen = useShortcutSheet((s) => s.open);
-  // HS-99-04 — the dock chip menu (one menu vocabulary).
-  const [chipMenu, setChipMenu] = useState<{
-    id: string;
-    label: string;
-    x: number;
-    y: number;
-    minimized: boolean;
-    close: () => void;
-  } | null>(null);
-  useEffect(() => {
-    if (!chipMenu) return;
-    const close = () => setChipMenu(null);
-    window.addEventListener("pointerdown", close);
-    return () => window.removeEventListener("pointerdown", close);
-  }, [chipMenu]);
-
-  void launchers; // consumed by the bell + search shelf (HS-100-11)
-  // The front chip mirrors the shell's is-front rule: the last id in
-  // the order that is open here and not minimized (HS-97-04).
-  let front: string | undefined;
-  for (let i = panelOrder.length - 1; i >= 0; i--) {
-    const oid = panelOrder[i];
-    if (panelMin.includes(oid)) continue;
-    if (!windows.some((w) => w.id === oid)) continue;
-    front = oid;
-    break;
-  }
-  // A launcher whose surface is already a window folds into that chip;
-  // it only renders as a launcher while its surface is closed.
-  const shown = launchers.filter((l) => !windows.some((w) => w.id === l.id));
-  return (
-    <div
-      className="desk-dock"
-      role="toolbar"
-      aria-label="Dock"
-      /* HS-110-04: magnification swell removed — the shelf is flat. */
-    >
-      {DOCK_APPS.map((a) => {
-        const win = windows.find((w) => w.id === a.id);
-        const minimized = win ? panelMin.includes(a.id) : false;
-        return (
-          <button
-            key={a.id}
-            type="button"
-            className={
-              "desk-dock-launch desk-dock-app" +
-              (win ? " is-run" : "") +
-              (win && a.id === front && !minimized ? " is-front" : "")
-            }
-            aria-label={a.label}
-            onClick={() => {
-              const s = useDesk.getState();
-              if (win && minimized) s.restorePanel(a.id);
-              else if (win) s.focusPanel(a.id);
-              else
-                void import("../shell").then((m) =>
-                  m.openSurfaceOr(a.key, a.fallback),
-                );
-            }}
-            onContextMenu={(e) => {
-              if (!win) return;
-              e.preventDefault();
-              setChipMenu({
-                id: a.id,
-                label: a.label,
-                x: e.clientX,
-                y: e.clientY,
-                minimized,
-                close: win.close,
-              });
-            }}
-          >
-            {/* HS-111-09 — integer-true: the 32px source renders at 32
-                CSS px (64 device px at DPR 2 = exact 2x); 24 was a 1.5x
-                smear. */}
-            {DOCK_SPRITES[a.id] ? (
-              <img src={DOCK_SPRITES[a.id]} alt="" width={32} height={32} className="desk-dock-sprite" draggable={false} />
-            ) : (
-              <span aria-hidden="true">{a.glyph}</span>
-            )}
-            <span className="desk-dock-label">{a.label}</span>
-          </button>
-        );
-      })}
-      {center}
-      {windows.some((w) => !DOCK_APP_IDS.has(w.id)) ? (
-        <span className="desk-dock-sep" aria-hidden="true" />
-      ) : null}
-      {windows.filter((w) => !DOCK_APP_IDS.has(w.id)).map((c) => {
-        const minimized = panelMin.includes(c.id);
-        return (
-          <span
-            key={c.id}
-            className={
-              "desk-dock-chip" +
-              (minimized ? " is-min" : "") +
-              (c.id === front && !minimized ? " is-front" : "")
-            }
-          >
-            <button
-              type="button"
-              className="desk-dock-main"
-              ref={(el) => {
-                if (el) chipEls.set(c.id, el);
-                else chipEls.delete(c.id);
-              }}
-              aria-label={minimized ? `Restore ${c.label}` : `Focus ${c.label}`}
-              onClick={() => {
-                const s = useDesk.getState();
-                if (minimized) s.restorePanel(c.id);
-                else s.focusPanel(c.id);
-              }}
-              onContextMenu={(e) => {
-                e.preventDefault();
-                setChipMenu({
-                  id: c.id,
-                  label: c.label,
-                  x: e.clientX,
-                  y: e.clientY,
-                  minimized,
-                  close: c.close,
-                });
-              }}
-            >
-              <span aria-hidden="true">{c.glyph}</span>
-              <span className="desk-dock-label">{c.label}</span>
-            </button>
-            <button
-              type="button"
-              className="desk-dock-x"
-              aria-label={`Close ${c.label}`}
-              onClick={c.close}
-            >
-              <VerbGlyph kind="close" />
-            </button>
-          </span>
-        );
-      })}
-      {windows.length > 0 ? (
-        <>
-          <button
-            type="button"
-            className="desk-dock-reset"
-            aria-label="Overview"
-            title="Overview"
-            onClick={() => toggleExpose(true)}
-          >
-            <VerbGlyph kind="overview" />
-          </button>
-          <button
-            type="button"
-            className="desk-dock-reset"
-            aria-label="Reset layout"
-            title="Reset layout"
-            onClick={() => useDesk.getState().resetLayout()}
-          >
-            <VerbGlyph kind="reset" />
-          </button>
-        </>
-      ) : null}
-      {chipMenu ? (
-        <DeskMenuList
-          className="desk-dock-menu"
-          label={`${chipMenu.label} dock menu`}
-          anchor="above"
-          style={{
-            left: Math.min(chipMenu.x, window.innerWidth - 184),
-            top: Math.max(8, chipMenu.y - 104),
-          }}
-          onClose={() => setChipMenu(null)}
-        >
-          <DeskMenuItem
-            onSelect={() => {
-              const s = useDesk.getState();
-              if (chipMenu.minimized) s.restorePanel(chipMenu.id);
-              else s.minimizePanel(chipMenu.id);
-              setChipMenu(null);
-            }}
-          >
-            {chipMenu.minimized ? "Restore" : "Minimize"}
-          </DeskMenuItem>
-          <DeskMenuItem
-            onSelect={() => {
-              chipMenu.close();
-              setChipMenu(null);
-            }}
-          >
-            Close
-          </DeskMenuItem>
-        </DeskMenuList>
-      ) : null}
-      {sheetOpen ? (
-        <ShortcutSheet
-          onClose={() => useShortcutSheet.getState().setOpen(false)}
-        />
-      ) : null}
-    </div>
-  );
-}
-
-/** HS-101 B8 — the shortcut sheet, drawn (never a doc link).
- * HS-111-07 — rows DERIVE from the registry's key fields (doctrine
- * P11): the hand-maintained list is gone; a verb that gains a key
- * appears here for free. Esc is grammar, not a verb; it stays a
- * fixed convention line. */
-const SHEET_GROUPS: { title: string; scopes: string[] }[] = [
-  { title: "Applications", scopes: ["go"] },
-  { title: "Windows", scopes: ["window", "floor"] },
-  { title: "Desk", scopes: ["system"] },
-];
-
-function ShortcutSheet({ onClose }: { onClose: () => void }) {
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
-  }, [onClose]);
-  const ctx = { selectedRef: null };
-  const rows: [string, [string, string][]][] = SHEET_GROUPS.map((group) => {
-    const keys = VERBS.filter(
-      (v) => v.key && group.scopes.includes(v.scope),
-    ).map((v): [string, string] => [v.key as string, verbLabel(v, ctx)]);
-    // The applications read in ⌘1..⌘4 order, whatever the registry's
-    // program-table order is.
-    if (group.scopes.includes("go"))
-      keys.sort((a, b) => a[0].localeCompare(b[0]));
-    return [group.title, keys];
-  });
-  rows[1][1].push(["Esc", "Close / cancel"]);
-  return createPortal(
-    <div
-      className="desk-shortcut-sheet"
-      role="group"
-      aria-label="Keyboard shortcuts"
-      onPointerDown={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
-    >
-      <div className="desk-shortcut-panel">
-        {rows.map(([group, keys]) => (
-          <section key={group}>
-            <h4>{group}</h4>
-            {keys.map(([cap, what]) => (
-              <div className="desk-shortcut-row" key={cap}>
-                <kbd>{cap}</kbd>
-                <span>{what}</span>
-              </div>
-            ))}
-          </section>
-        ))}
-      </div>
-    </div>,
-    document.body,
   );
 }

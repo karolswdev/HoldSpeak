@@ -7,6 +7,7 @@
 // tile, name, role token, facts line) over a transmission log — prefixed mono
 // `YOU>` / `<NAME>>` turns in the
 // sunken well, no bubbles, no hello card, no slide-in.
+import "./pullout.css";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useDesk } from "../store";
 import {
@@ -59,7 +60,7 @@ export function PersonaChat(props: { personaId: string }) {
 
   // HS-83-03: a model chat is one of THESE threads — a synthetic agent
   // pinned to one of the hub's runnable models (no recipe record behind it).
-  const persona = useMemo(() => {
+  const persona = useMemo((): { id: string; name: string; avatar: string; role: string; profileId?: string } | undefined => {
     if (isModelChat(personaId)) {
       const name = modelChatName(personaId);
       return {
@@ -70,9 +71,9 @@ export function PersonaChat(props: { personaId: string }) {
         avatar: "",
         role: "hub model",
         profileId: "",
-      } as any;
+      };
     }
-    return (items.recipe || []).find((a: any) => a.id === personaId) as any;
+    return (items.recipe || []).find((a) => a.id === personaId);
   }, [items, personaId]);
 
   const [turns, setTurns] = useState<ChatTurn[]>(() => loadThread(personaId));
@@ -203,9 +204,10 @@ export function PersonaChat(props: { personaId: string }) {
     );
   };
 
+  if (!persona) return null;
   const name = String(persona.name || personaId);
   const handle = name.toUpperCase();
-  const target = inferenceTargets.find((t: any) => t.id === inferenceTargetId);
+  const target = inferenceTargets.find((t) => t.id === inferenceTargetId);
   const targetLamp = inferenceEgressLamp(target);
 
   return (

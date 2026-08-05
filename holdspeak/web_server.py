@@ -517,6 +517,17 @@ class MeetingWebServer:
                 return JSONResponse(refusal(principal, right), status_code=status)
             return await call_next(request)
 
+        # HS-117-11: unified domain-error handler. HoldSpeakError subclasses
+        # produce a structured JSON response instead of a raw 500.
+        from .errors import HoldSpeakError, error_response
+
+        @app.exception_handler(HoldSpeakError)
+        async def _holdspeak_error_handler(
+            request: Request, exc: HoldSpeakError
+        ) -> JSONResponse:
+            log.warning("domain error on %s %s: %s", request.method, request.url.path, exc)
+            return JSONResponse(error_response(exc), status_code=400)
+
         from .device_audio_ws import register_device_audio_routes
 
         register_device_audio_routes(

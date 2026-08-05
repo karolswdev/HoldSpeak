@@ -6,6 +6,7 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { EMPTY_ITEMS } from "../api";
+import type { Note, Meeting } from "../../lib/primitives";
 import { useDesk } from "../store";
 import { usePalette } from "../chromeState";
 import { DeskToolShelf, rankRow } from "../components/DeskToolShelf";
@@ -17,10 +18,10 @@ function seed() {
     items: {
       ...EMPTY_ITEMS,
       note: [
-        { kind: "note", id: "n1", title: "Meet the team" },
-        { kind: "note", id: "n2", title: "Retro: we met" },
+        { kind: "note", id: "n1", title: "Meet the team" } as Note,
+        { kind: "note", id: "n2", title: "Retro: we met" } as Note,
       ],
-      meeting: [{ kind: "meeting", id: "m1", title: "Meeting: launch" }],
+      meeting: [{ kind: "meeting", id: "m1", title: "Meeting: launch" } as Meeting],
     },
     projects: [],
     inferenceTargets: [],

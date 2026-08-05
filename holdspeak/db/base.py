@@ -11,7 +11,22 @@ class BaseRepository:
     Receives the container's connection factory (a zero-arg callable returning a
     context manager yielding a sqlite3.Connection) and the JSON helpers every
     repository shares.
+
+    Subclasses declare a ``table`` class attribute (the attribute name under
+    ``Database``) and are auto-registered via ``__init_subclass__``.
     """
+
+    # Registry: table-name -> repository class. Populated by __init_subclass__.
+    _registry: dict[str, type["BaseRepository"]] = {}
+
+    table: str  # overridden by every concrete subclass
+
+    def __init_subclass__(cls, **kwargs: Any) -> None:
+        super().__init_subclass__(**kwargs)
+        # Only register leaf classes that declare their own ``table``.
+        # Mixin classes (e.g. ActivityRecordsMixin) lack ``table`` and are skipped.
+        if "table" in cls.__dict__:
+            BaseRepository._registry[cls.table] = cls
 
     def __init__(self, connection, container=None):
         self._connection = connection

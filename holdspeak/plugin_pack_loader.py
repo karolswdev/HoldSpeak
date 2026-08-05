@@ -37,6 +37,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable, Optional
 
+from .errors import PluginError as _PluginErrorBase
 from .plugin_packs import ALL_PACKS as FIRST_PARTY_PACKS
 from .plugin_sdk import (
     PluginManifest,
@@ -72,18 +73,23 @@ class RegisteredPluginPack:
 
 
 @dataclass(frozen=True)
-class DiscoveryError:
+class DiscoveryError(_PluginErrorBase):
     """A pack the loader refused, with enough context to fix it."""
 
-    file_path: Optional[Path]
-    pack_id: Optional[str]
-    code: str
-    message: str
+    file_path: Optional[Path] = None
+    pack_id: Optional[str] = None
+    code: str = "PLUGIN_DISCOVERY_ERROR"
+    message: str = ""
 
     def __str__(self) -> str:
         where = str(self.file_path) if self.file_path else "<n/a>"
         ident = self.pack_id or "<unknown>"
         return f"{where} (id={ident}): {self.code} — {self.message}"
+
+    def __post_init__(self) -> None:
+        # Initialize the Exception base with our string representation.
+        # Use object.__setattr__ because the dataclass is frozen.
+        object.__setattr__(self, "args", (str(self),))
 
 
 @dataclass(frozen=True)

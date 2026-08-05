@@ -1,3 +1,4 @@
+import "./attention.css";
 import { useEffect, useMemo, useState } from "react";
 import {
   authorityBasisLabel,

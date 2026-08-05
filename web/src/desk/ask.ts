@@ -3,7 +3,8 @@
  * → a card prints → keep it (a real synced Artifact with full lineage) or bin
  * it. The hub assembles the material from the canonical store and answers
  * with the run's HONEST egress — the badge states where THIS run went. */
-import { qualifiedRef, type DeskItem, type Items } from "./api";
+import type { Primitive } from "../lib/primitives";
+import { qualifiedRef, type Items } from "./api";
 import { apiRequest } from "../lib/api";
 
 /** One lasso'd card, as the ask reads it. */
@@ -48,7 +49,7 @@ export function askContexts(items: Items, selectedIds: string[]): AskContext[] {
   for (const selected of selectedIds) {
     for (const kind of Object.keys(items) as Array<keyof Items>) {
       const hit = (items[kind] || []).find(
-        (item: DeskItem) =>
+        (item: Primitive) =>
           selected === item.id || selected === qualifiedRef(kind, item.id),
       );
       if (hit) {
@@ -56,7 +57,7 @@ export function askContexts(items: Items, selectedIds: string[]): AskContext[] {
           id: hit.id,
           kind,
           ref: qualifiedRef(kind, hit.id),
-          title: String(hit.title || hit.name || hit.id),
+          title: String(("title" in hit ? hit.title : "") || ("name" in hit ? hit.name : "") || hit.id),
         });
         break;
       }

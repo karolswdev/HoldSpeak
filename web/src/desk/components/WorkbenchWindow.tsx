@@ -1,7 +1,27 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { apiFetch } from "../../lib/api";
+import "./workbench-config.css";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { spriteUrl } from "../sprites";
 import { useDesk } from "../store";
+import type {
+  WorkbenchDetail,
+  WorkbenchItem,
+  Skill,
+} from "../detail-types";
+import {
+  fetchWorkbenchDetail,
+  fetchWorkbenchRuns,
+  fetchWorkbenchMemory,
+  fetchSkills,
+  updateWorkbenchField,
+  addWorkbenchItem,
+  updateWorkbenchItem,
+  deleteWorkbenchItem,
+  triggerWorkbenchRun,
+  updateSkill,
+  clearWorkbenchMemory,
+  promoteMemoryToSkill,
+} from "../api";
+import { usePrimitiveDetail } from "../hooks/usePrimitiveDetail";
 import { boundaryEgressLamp } from "../inferenceEgress";
 import { keepReply } from "../chat";
 import {
@@ -45,67 +65,6 @@ import { WorkbenchTemplatePicker } from "./WorkbenchTemplatePicker";
 import { workbenchVoiceGrammar } from "../voice/grammars/workbench";
 import type { VoiceProposal } from "../voice/grammar";
 import { humanTime } from "../surface/format";
-
-/* ── types ─────────────────────────────────────────────────────────── */
-
-interface WorkbenchDetail {
-  id: string;
-  name: string;
-  recipe_id: string | null;
-  profile_id: string | null;
-  schedule: string | null;
-  schedule_enabled: boolean;
-  items: WorkbenchItem[];
-  item_count: number;
-  pending_count: number;
-  last_run: WorkbenchRun | null;
-}
-
-interface WorkbenchItem {
-  id: string;
-  title: string;
-  body: string;
-  priority: number;
-  status: string;
-  grounding: Record<string, unknown>;
-  result: string | null;
-  result_egress: { boundary?: string } | null;
-  tokens_consumed: number;
-  created_at: string;
-  completed_at: string | null;
-}
-
-interface WorkbenchRun {
-  id: string;
-  started_at: string;
-  completed_at: string | null;
-  items_attempted: number;
-  items_completed: number;
-  items_failed: number;
-  total_tokens: number;
-  egress_boundary: string;
-  model: string;
-  status: string;
-}
-
-interface Skill {
-  id: string;
-  title: string;
-  body: string;
-  source: string;
-  status: string;
-  recipe_ids: string[];
-  created_by: string;
-}
-
-interface MemoryEntry {
-  run_id: string;
-  timestamp: string;
-  kind: string;
-  content: string;
-  item_title: string;
-  provenance: { egress?: string; model?: string };
-}
 
 /* ── schedule presets ───────────────────────────────────────────────── */
 
@@ -517,24 +476,14 @@ function WorkbenchItemCard({
 
   const updateItem = async (fields: Record<string, unknown>) => {
     try {
-      await apiFetch<any>(
-        `/api/workbenches/${workbenchId}/items/${item.id}`,
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(fields),
-        },
-      );
+      await updateWorkbenchItem(workbenchId, item.id, fields);
       onReload();
     } catch { /* */ }
   };
 
   const deleteItem = async () => {
     try {
-      await apiFetch<any>(
-        `/api/workbenches/${workbenchId}/items/${item.id}`,
-        { method: "DELETE" },
-      );
+      await deleteWorkbenchItem(workbenchId, item.id);
       onReload();
     } catch { /* */ }
   };
@@ -603,7 +552,7 @@ function WorkbenchItemCard({
               {Object.entries(item.grounding).map(([key, val]) =>
                 val ? (
                   <span key={key} className="desk-chip quiet">
-                    ▣ {String(typeof val === "object" && val !== null && "title" in val ? (val as any).title : key)}
+                    ▣ {String(typeof val === "object" && val !== null && "title" in val ? (val as Record<string, unknown>).title : key)}
                   </span>
                 ) : null,
               )}
@@ -702,19 +651,34 @@ export function WorkbenchWindow({
   );
   const inferenceTargets = useDesk((s) => s.inferenceTargets);
   const recipes = useDesk((s) => s.items.recipe);
-  const [detail, setDetail] = useState<WorkbenchDetail | null>(null);
-  const [skills, setSkills] = useState<Skill[]>([]);
+
+  /* ── data loading (usePrimitiveDetail) ──────────────────────────── */
+
+  const detailHook = usePrimitiveDetail("workbench", workbenchId, fetchWorkbenchDetail);
+  const runsHook = usePrimitiveDetail("workbench-runs", workbenchId, fetchWorkbenchRuns);
+  const memoryHook = usePrimitiveDetail("workbench-memory", workbenchId, fetchWorkbenchMemory);
+  const skillsHook = usePrimitiveDetail<Skill[]>("skills", workbenchId, fetchSkills);
+
+  const detail = detailHook.data;
+  const runs = runsHook.data ?? [];
+  const memoryEntries = memoryHook.data ?? [];
+  const skills = skillsHook.data ?? [];
+  const error = detailHook.error ?? "";
+
+  // Convenience aliases for the old load/loadX callbacks used by WS handlers and mutations.
+  const load = detailHook.refresh;
+  const loadRuns = runsHook.refresh;
+  const loadMemory = memoryHook.refresh;
+  const loadSkills = skillsHook.refresh;
+
   const [expanded, setExpanded] = useState<string | null>(null);
   const [configOpen, setConfigOpen] = useState<boolean | null>(null);
   const [newTitle, setNewTitle] = useState("");
   const [newBody, setNewBody] = useState("");
   const [newPriority, setNewPriority] = useState(3);
   const [grounding, setGrounding] = useState<GroundingSelection>(emptyGrounding);
-  const [error, setError] = useState("");
   const [running, setRunning] = useState(false);
   const [runProgress, setRunProgress] = useState<{ index: number; total: number } | null>(null);
-  const [runs, setRuns] = useState<WorkbenchRun[]>([]);
-  const [memoryEntries, setMemoryEntries] = useState<MemoryEntry[]>([]);
   const [activeWing, setActiveWing] = useState("items");
   const [openRunId, setOpenRunId] = useState<string | null>(null);
   const [voiceProposal, setVoiceProposal] = useState<VoiceProposal | null>(null);
@@ -722,54 +686,12 @@ export function WorkbenchWindow({
   const configAutoExpanded = useRef(false);
 
   const recipe = recipes.find(
-    (r) => r.id === (detail?.recipe_id || (wb as any)?.recipeId),
+    (r) => r.id === (detail?.recipe_id || wb?.recipeId),
   );
   const target = inferenceTargets.find(
-    (t) => t.id === (detail?.profile_id || (wb as any)?.profileId),
+    (t) => t.id === (detail?.profile_id || wb?.profileId),
   );
   const lamp = boundaryEgressLamp(target?.boundary);
-
-  /* ── data loading ──────────────────────────────────────────────── */
-
-  const load = useCallback(async () => {
-    try {
-      const res = await apiFetch<any>(`/api/workbenches/${workbenchId}`);
-      setDetail(res.workbench);
-      setError("");
-    } catch {
-      setError("Workbench unavailable");
-    }
-  }, [workbenchId]);
-
-  const loadSkills = useCallback(async () => {
-    try {
-      const res = await apiFetch<any>("/api/skills");
-      setSkills(res.skills || []);
-    } catch {
-      /* skills are auxiliary — silent fail */
-    }
-  }, []);
-
-  const loadRuns = useCallback(async () => {
-    try {
-      const res = await apiFetch<any>(`/api/workbenches/${workbenchId}/runs`);
-      setRuns(res.runs || []);
-    } catch { /* */ }
-  }, [workbenchId]);
-
-  const loadMemory = useCallback(async () => {
-    try {
-      const res = await apiFetch<any>(`/api/workbenches/${workbenchId}/memory`);
-      setMemoryEntries(res.entries || []);
-    } catch { /* */ }
-  }, [workbenchId]);
-
-  useEffect(() => {
-    void load();
-    void loadSkills();
-    void loadRuns();
-    void loadMemory();
-  }, [load, loadSkills, loadRuns, loadMemory]);
 
   useEffect(() => {
     if (detail && configOpen === null && !configAutoExpanded.current) {
@@ -832,12 +754,8 @@ export function WorkbenchWindow({
 
   const updateField = async (fields: Record<string, unknown>) => {
     try {
-      await apiFetch<any>(`/api/workbenches/${workbenchId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(fields),
-      });
-      void load();
+      await updateWorkbenchField(workbenchId, fields);
+      load();
       void useDesk.getState().refresh();
     } catch {
       /* honest failure on next refresh */
@@ -861,12 +779,8 @@ export function WorkbenchWindow({
     extraFields?: Record<string, unknown>,
   ) => {
     try {
-      await apiFetch<any>(`/api/skills/${skillId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ recipe_ids: recipeIds, ...extraFields }),
-      });
-      void loadSkills();
+      await updateSkill(skillId, { recipe_ids: recipeIds, ...extraFields });
+      loadSkills();
     } catch {
       /* */
     }
@@ -889,23 +803,15 @@ export function WorkbenchWindow({
 
   const approveSkill = async (skillId: string) => {
     try {
-      await apiFetch<any>(`/api/skills/${skillId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: "active" }),
-      });
-      void loadSkills();
+      await updateSkill(skillId, { status: "active" });
+      loadSkills();
     } catch { /* */ }
   };
 
   const dismissSkill = async (skillId: string) => {
     try {
-      await apiFetch<any>(`/api/skills/${skillId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: "dismissed" }),
-      });
-      void loadSkills();
+      await updateSkill(skillId, { status: "dismissed" });
+      loadSkills();
     } catch { /* */ }
   };
 
@@ -923,16 +829,12 @@ export function WorkbenchWindow({
       payload.grounding = hubGrounding(grounding);
     }
     try {
-      await apiFetch<any>(`/api/workbenches/${workbenchId}/items`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
+      await addWorkbenchItem(workbenchId, payload);
       setNewTitle("");
       setNewBody("");
       setNewPriority(3);
       setGrounding(emptyGrounding());
-      void load();
+      load();
     } catch {
       /* refresh will show honest state */
     }
@@ -943,11 +845,9 @@ export function WorkbenchWindow({
     const pendingCount = detail?.items.filter((i) => i.status === "pending").length || 0;
     setRunProgress({ index: 0, total: pendingCount });
     try {
-      await apiFetch<any>(`/api/workbenches/${workbenchId}/run`, {
-        method: "POST",
-      });
-      void load();
-      void loadRuns();
+      await triggerWorkbenchRun(workbenchId);
+      load();
+      loadRuns();
     } catch {
       /* */
     }
@@ -958,18 +858,14 @@ export function WorkbenchWindow({
   /* ── voice command handler ─────────────────────────────────────── */
 
   const handleVoiceProposal = async (proposal: VoiceProposal) => {
-    const p = proposal.params as Record<string, any>;
+    const p = proposal.params as Record<string, unknown>;
     switch (proposal.intentId) {
       case "add-item": {
         const title = String(p.title || "").trim();
         if (!title) return;
         try {
-          await apiFetch<any>(`/api/workbenches/${workbenchId}/items`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ title, priority: p.priority || 3 }),
-          });
-          void load();
+          await addWorkbenchItem(workbenchId, { title, priority: p.priority || 3 });
+          load();
         } catch { /* */ }
         break;
       }
@@ -982,13 +878,10 @@ export function WorkbenchWindow({
         );
         for (const item of doneItems) {
           try {
-            await apiFetch<any>(
-              `/api/workbenches/${workbenchId}/items/${item.id}`,
-              { method: "DELETE" },
-            );
+            await deleteWorkbenchItem(workbenchId, item.id);
           } catch { /* */ }
         }
-        void load();
+        load();
         break;
       }
       case "set-schedule": {
@@ -1031,13 +924,9 @@ export function WorkbenchWindow({
         } else if (item.kind === "artifact" || item.kind === "note") {
           payload.grounding = { artifact_ids: [item.id] };
         }
-        await apiFetch<any>(`/api/workbenches/${workbenchId}/items`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        });
+        await addWorkbenchItem(workbenchId, payload);
       }
-      void load();
+      load();
     } catch {
       /* invalid drop data — ignore */
     }
@@ -1046,7 +935,7 @@ export function WorkbenchWindow({
   /* ── render ─────────────────────────────────────────────────────── */
 
   if (!wb) return null;
-  const name = String((wb as any).name || "Workbench");
+  const name = String(wb.name || "Workbench");
   const items = detail?.items || [];
   const lastRun = detail?.last_run;
   const isConfigured = !!detail?.recipe_id;
@@ -1209,7 +1098,7 @@ export function WorkbenchWindow({
               <div className="wb-proposal-strip">
                 <span className="wb-proposal-text">
                   {voiceProposal.intentId === "add-item"
-                    ? `Add: "${(voiceProposal.params as any).title}" P${(voiceProposal.params as any).priority || 3}`
+                    ? `Add: "${(voiceProposal.params as Record<string, unknown>).title}" P${(voiceProposal.params as Record<string, unknown>).priority || 3}`
                     : voiceProposal.intentId === "run"
                       ? "Run this workbench"
                       : voiceProposal.intentId === "clear-done"
@@ -1364,8 +1253,8 @@ export function WorkbenchWindow({
                     confirmLabel="Clear all?"
                     onConfirm={async () => {
                       try {
-                        await apiFetch<any>(`/api/workbenches/${workbenchId}/memory`, { method: "DELETE" });
-                        void loadMemory();
+                        await clearWorkbenchMemory(workbenchId);
+                        loadMemory();
                       } catch { /* */ }
                     }}
                   />
@@ -1406,11 +1295,8 @@ export function WorkbenchWindow({
                           className="desk-chip"
                           onClick={async () => {
                             try {
-                              await apiFetch<any>(
-                                `/api/workbenches/${workbenchId}/memory/${i}/promote`,
-                                { method: "POST" },
-                              );
-                              void loadSkills();
+                              await promoteMemoryToSkill(workbenchId, i);
+                              loadSkills();
                             } catch { /* */ }
                           }}
                         >

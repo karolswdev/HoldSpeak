@@ -26,6 +26,8 @@ from __future__ import annotations
 import os
 import signal
 
+from .errors import HoldSpeakError
+
 #: The only switch. Unset/empty = every fault hook is inert.
 FAULT_ENV = "HOLDSPEAK_FAULT"
 
@@ -53,8 +55,10 @@ FAULT_POINTS: dict[str, str] = {
 }
 
 
-class FaultInjected(RuntimeError):
+class FaultInjected(HoldSpeakError):
     """Raised by :func:`trip` when the named fault point is armed."""
+
+    code: str = "FAULT_INJECTED"
 
 
 def active_faults() -> frozenset[str]:

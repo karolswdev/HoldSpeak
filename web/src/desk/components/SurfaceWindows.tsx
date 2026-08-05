@@ -17,7 +17,7 @@ import { useDesk } from "../store";
 import { objectByRef } from "../world";
 import { DeskWindowFrame } from "./DeskWindow";
 import { WingSlotContext } from "../surface/wings";
-import type { CoreProps } from "../../pages/cores/ActivityCore";
+import type { CoreProps } from "../../pages/cores/core-types";
 
 interface SurfaceRow {
   key: string;

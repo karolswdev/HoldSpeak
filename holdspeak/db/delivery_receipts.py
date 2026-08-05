@@ -165,6 +165,8 @@ class DeliveryCommandReceiptRepository(BaseRepository):
     to which node/target/generation, under which authority, and — once
     the node answers — the joined node receipt."""
 
+    table = "delivery_receipts"
+
     def record_sent(
         self, envelope: dict[str, Any], *, dispatch_epoch: Optional[str] = None
     ) -> None:

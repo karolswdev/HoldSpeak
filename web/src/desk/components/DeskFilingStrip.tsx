@@ -92,7 +92,7 @@ export function DeskFilingStrip({
   if (!relationships) return relationshipError ? <FilingRefusal detail={relationshipError} /> : null;
 
   const homeZone = zones.find((zone) => {
-    const members = ((zone as any).memberIds as string[]) || [];
+    const members = zone.memberIds || [];
     return members.includes(objectId) || members.includes(objectRef);
   });
   const knowledgeHomes = knowledgeChoices.filter(
@@ -117,7 +117,7 @@ export function DeskFilingStrip({
               <span className="surface-eyebrow">Zone</span>
               <div className="desk-pullout-lineage">
                 {zones.map((zone) => {
-                  const members = ((zone as any).memberIds as string[]) || [];
+                  const members = zone.memberIds || [];
                   const inZone = members.includes(objectId) || members.includes(objectRef);
                   return (
                     <button

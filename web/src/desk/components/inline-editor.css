@@ -1,0 +1,303 @@
+/* ── the guiding empty state (a world being empty, not a page of copy) ── */
+.desk-next .desk-empty {
+  min-height: calc(100vh - 40px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  text-align: center;
+}
+.desk-next .desk-empty-mark {
+  font-size: 44px;
+  color: var(--accent);
+  filter: none;
+}
+.desk-next .desk-empty-word {
+  margin: 0;
+  font-family: var(--font-display, inherit);
+  font-size: var(--font-size-2xl, 2rem);
+  color: var(--text);
+}
+.desk-next .desk-empty-line {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--font-size-md);
+}
+.desk-next .desk-empty.is-first-value {
+  justify-content: flex-start;
+  padding: var(--space-5);
+  padding-top: 96px;
+  overflow: auto;
+}
+.desk-next .desk-first-words {
+  width: 100%;
+  max-width: 620px;
+  display: grid;
+  gap: var(--space-3);
+  text-align: left;
+  padding: clamp(20px, 4vw, 36px);
+  border: 1px solid var(--surface-3);
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--surface-1) 92%, transparent);
+  box-shadow: 0 24px 80px var(--shadow-ink-1);
+}
+.desk-next .desk-first-words h1,
+.desk-next .desk-first-words h2,
+.desk-next .desk-first-words p {
+  margin: 0;
+}
+.desk-next .desk-first-talk {
+  min-height: 58px;
+  border: 1px solid color-mix(in srgb, var(--accent) 55%, transparent);
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--accent) 16%, var(--surface-2));
+  color: var(--text);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+.desk-next .desk-first-talk.is-listening {
+  background: var(--accent);
+  color: var(--text-on-accent);
+  box-shadow: 0 0 28px color-mix(in srgb, var(--accent) 45%, transparent);
+}
+.desk-next .desk-first-talk:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 3px;
+}
+.desk-next .desk-first-success {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  color: var(--ok);
+}
+
+/* HS-110-05: .desk-stage-glow animation removed — the backdrop is static. */
+
+/* the radial vignette: the world dims AROUND the object — never a scrim */
+.desk-next .desk-vignette {
+  position: fixed;
+  inset: 0;
+  z-index: 24;
+  background: radial-gradient(
+    340px 300px at var(--vx, 50%) var(--vy, 50%),
+    transparent 0%,
+    transparent 42%,
+    rgba(5, 4, 9, 0.62) 100%
+  );
+}
+
+/* the in-world editor card */
+.desk-next .desk-inline-editor {
+  position: absolute;
+  z-index: 26;
+  width: min(340px, 84vw);
+  max-height: calc(100dvh - 120px);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px;
+  border-radius: 2px;
+  border: 1px solid
+    color-mix(in srgb, var(--accent) 30%, var(--border));
+  background: var(--desk-panel-fill);
+  box-shadow:
+    0 24px 60px var(--shadow-ink-4),
+    0 0 0 1px rgba(168, 110, 74, 0.08);
+  backdrop-filter: none;
+}
+.desk-next .desk-inline-editor input,
+.desk-next .desk-inline-editor textarea,
+.desk-next .desk-inline-editor select {
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 2px;
+  border: 1px solid var(--border);
+  background: var(--desk-glass);
+  color: var(--text);
+  font-size: var(--font-size-sm);
+  font-family: inherit;
+  resize: vertical;
+}
+.desk-next .desk-inline-editor input:focus,
+.desk-next .desk-inline-editor textarea:focus,
+.desk-next .desk-inline-editor select:focus {
+  outline-color: var(--accent);
+  border-color: var(--accent);
+}
+.desk-next .desk-inline-editor-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border);
+}
+.desk-next .desk-inline-editor-more {
+  align-self: flex-start;
+  padding: 4px 10px;
+  border-radius: 0;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-muted);
+  font-size: var(--font-size-xs);
+  cursor: pointer;
+}
+.desk-next .desk-inline-editor-foot {
+  display: flex;
+  justify-content: flex-end;
+}
+.desk-next .desk-inline-editor-row {
+  display: flex;
+  gap: 8px;
+}
+.desk-next .desk-inline-editor-row .desk-inline-editor-avatar {
+  width: 52px;
+  flex: none;
+  text-align: center;
+  font-size: 18px;
+}
+
+/* zone rename-in-place */
+.desk-next .desk-zone-rename {
+  width: 100%;
+  padding: 2px 6px;
+  border-radius: 2px;
+  border: 1px solid var(--accent);
+  background: var(--surface-1);
+  color: var(--text);
+  font-weight: 600;
+  font-size: var(--font-size-sm);
+}
+
+
+/* ── Materials round 3.3: the component sweep (no more surface left
+   behind). One pass over the legacy desk furniture: the in-world
+   editor, the Desk memory drawer, the Delivery sessions, the tool
+   shelf, and the pane picker all join the material grammar. ── */
+
+/* The in-world editor is a small window: the one material, a head
+   band, a primary Done. */
+.desk-next .desk-inline-editor {
+  border: 1px solid var(--desk-window-keyline);
+  background: var(--desk-window-fill);
+  backdrop-filter: var(--desk-window-blur);
+  box-shadow: var(--desk-window-bevel), var(--desk-glass-edge);
+}
+.desk-next .desk-inline-editor-head {
+  margin: -14px -14px 0;
+  padding: 8px 12px;
+  background: var(--desk-window-head-fill);
+  border-bottom: 0.9px solid var(--shade-1);
+  border-radius: 2px 16px 0 0;
+  font-size: var(--desk-surface-label-size);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.desk-next .desk-inline-editor-foot button:last-child {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--text-on-accent);
+  font-weight: 600;
+  box-shadow: inset 0 1px 0 var(--gleam-3);
+}
+
+
+/* ── Markdown formatting rail ── */
+.desk-editor {
+  display: grid;
+  gap: var(--space-1);
+  min-width: 0;
+}
+.desk-editor-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  min-width: 0;
+  overflow-x: auto;
+  padding: 4px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  box-shadow: var(--desk-window-etch);
+  font-family: var(--font-mono);
+}
+.desk-editor-toolbar .desk-chip {
+  height: 24px;
+  min-width: 28px;
+  justify-content: center;
+  padding: 0 7px;
+  font: 11px/1 var(--font-mono);
+}
+.desk-editor-toolbar strong,
+.desk-editor-toolbar em {
+  font: inherit;
+}
+.desk-editor-toolbar strong {
+  font-weight: 800;
+}
+.desk-editor-toolbar em {
+  font-style: italic;
+}
+
+/* ── EditorAIBar: selection-scoped AI toolbar ── */
+@keyframes desk-editor-ai-shimmer {
+  0% {
+    opacity: 0.42;
+  }
+  50% {
+    opacity: 0.95;
+  }
+  100% {
+    opacity: 0.42;
+  }
+}
+.desk-code-editor.is-ai-pending .cm-selectionBackground {
+  animation: desk-editor-ai-shimmer 1s ease-in-out infinite;
+}
+.desk-editor-ai-bar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-1);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--desk-window-etch), var(--desk-window-shadow);
+  font-family: var(--font-mono);
+}
+.desk-editor-ai-bar-verbs {
+  display: flex;
+  gap: var(--space-1);
+}
+.desk-editor-ai-bar-error {
+  color: var(--danger);
+  font-size: 11px;
+  max-width: 260px;
+}
+
+
+/* HS-100-10 — the arrival's one trust line. */
+.desk-next .desk-empty-trust {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--text-faint);
+  font-size: var(--font-size-sm);
+}
+/* HS-111: status indicators — square, no glow */
+.desk-next .desk-empty-trust-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 0;
+  background: var(--success);
+  flex: none;
+}
+.desk-next .desk-empty-trust.is-mixed .desk-empty-trust-dot,
+.desk-next .desk-empty-trust.is-cloud .desk-empty-trust-dot {
+  background: var(--warn, #fbbf24);
+}

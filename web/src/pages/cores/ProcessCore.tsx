@@ -15,7 +15,7 @@ import {
   SurfaceVerbs,
 } from "../../desk/surface/Surface";
 import { LampGadget } from "../../desk/surface/gadgets";
-import type { CoreProps } from "./ActivityCore";
+import type { CoreProps } from "./core-types";
 
 /** The fixed HH:MM:SS clock cell (mono, tabular). */
 function clockToken(value: string | number | ""): string {

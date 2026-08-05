@@ -3,7 +3,7 @@
 // species on the surface idiom are the living style guide now — the
 // legacy Signal dialect (Switch/Tabs/StatusPill/InlineMessage/
 // Disclosure/ChoiceCard/Toolbar) retired with this story.
-import type { CoreProps } from "./ActivityCore";
+import type { CoreProps } from "./core-types";
 import { useState } from "react";
 import { Button } from "../../components/signal/Signal";
 import {

@@ -4,6 +4,7 @@
 // stage renders — zero new data paths, no second dashboard.
 // HS-113-03 — the floor and zone-window lists now share DeskSortableTable:
 // compact real table rows, sortable headers, sprites, and kind bands.
+import "./list-view.css";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { qualifiedRef } from "../api";
 import { useDesk } from "../store";
@@ -82,8 +83,8 @@ export function DeskListView() {
   const zoneNames = useMemo(() => {
     const map = new Map<string, string>();
     for (const d of items.directory || []) {
-      const name = String(d.title || d.name || "Zone");
-      for (const mid of ((d as any).memberIds as string[]) || []) map.set(mid, name);
+      const name = String(d.name || "Zone");
+      for (const mid of d.memberIds || []) map.set(mid, name);
     }
     return map;
   }, [items.directory]);
@@ -92,7 +93,7 @@ export function DeskListView() {
     const ref = qualifiedRef(o.kind, o.id);
     const subject =
       o.kind === "coder"
-        ? `coder_session:${String(o.ref.agent || "claude")}:${o.id}`
+        ? `coder_session:${String(o.ref.kind === "coder" ? o.ref.agent : "claude")}:${o.id}`
         : ref;
     return subjectCounts[subject]?.needs_attention || 0;
   };

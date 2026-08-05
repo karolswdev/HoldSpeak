@@ -47,6 +47,8 @@ VALID_ARTIFACT_SOURCE_TYPES = frozenset(
 class PluginArtifactRepository(BaseRepository):
     """Plugin runs, intent windows, and artifacts."""
 
+    table = "plugins"
+
     def record_intent_window(
         self,
         *,

@@ -68,6 +68,8 @@ def _elapsed_ms(started_at: object, finished_at: object) -> Optional[int]:
 
 
 class OnboardingRepository(BaseRepository):
+    table = "onboarding"
+
     def disposition(self) -> Optional[dict[str, str]]:
         with self._connection() as conn:
             row = conn.execute(

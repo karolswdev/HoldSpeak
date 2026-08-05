@@ -1,0 +1,586 @@
+/* ── HS-116-10: workbench configuration panel ── */
+.desk-next .wb-body {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* ── config strip (collapsed) ── */
+.desk-next .wb-config-strip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px var(--desk-window-pad-x);
+  border: none;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: var(--desk-surface-label-size);
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+  box-shadow: var(--desk-window-bevel);
+  transition: background var(--duration-short) var(--ease-standard);
+}
+.desk-next .wb-config-strip:hover {
+  background: var(--accent-tint);
+}
+.desk-next .wb-config-strip-agent {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-weight: 600;
+}
+.desk-next .wb-config-strip-agent.wb-config-strip-empty {
+  color: var(--text-faint);
+  font-weight: 400;
+}
+.desk-next .wb-config-strip-sep {
+  color: var(--text-faint);
+}
+.desk-next .wb-config-strip-target {
+  color: var(--text-muted);
+}
+.desk-next .wb-config-strip-schedule {
+  color: var(--text-muted);
+}
+.desk-next .wb-config-strip-skills {
+  margin-left: auto;
+  font-size: 10px;
+  height: 20px;
+  padding: 0 8px;
+}
+
+/* ── config panel (expanded) ── */
+.desk-next .wb-config-panel {
+  border-bottom: 1px solid var(--border);
+  overflow-y: auto;
+  max-height: 50%;
+  position: relative;
+}
+.desk-next .wb-config-collapse {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  margin: 6px var(--desk-window-pad-x) 0;
+  font-size: 10px;
+}
+.desk-next .wb-config-current-agent {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px var(--desk-surface-row-pad-x);
+}
+.desk-next .wb-config-agent-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-family: var(--font-mono);
+  font-size: var(--desk-surface-body-size);
+}
+.desk-next .wb-config-agent-info strong {
+  font-weight: 600;
+}
+.desk-next .wb-config-agent-info small {
+  color: var(--text-muted);
+  font-size: var(--desk-surface-detail-size);
+}
+.desk-next .wb-config-agent-search {
+  padding: 4px var(--desk-surface-row-pad-x) 6px;
+}
+.desk-next .wb-config-runs-on {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px var(--desk-surface-row-pad-x);
+}
+.desk-next .wb-config-runs-on .runs-on-picker {
+  flex: 1;
+}
+.desk-next .wb-config-skill-count {
+  font-family: var(--font-mono);
+  font-size: var(--desk-surface-label-size);
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+/* ── schedule presets ── */
+.desk-next .wb-schedule-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding: 6px var(--desk-surface-row-pad-x);
+}
+.desk-next .wb-schedule-toggle {
+  margin-left: auto;
+}
+
+/* ── skill picker ── */
+.desk-next .wb-skill-picker {
+  border-top: 1px solid var(--border-subtle);
+  padding-top: 4px;
+}
+.desk-next .wb-skill-picker .desk-chip {
+  margin: 6px var(--desk-surface-row-pad-x);
+}
+
+/* ── workspace path ── */
+.desk-next .wb-workspace-path {
+  padding: 8px var(--desk-surface-row-pad-x);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-faint);
+  border-top: 1px solid var(--border-subtle);
+}
+
+/* ── title editing ── */
+.desk-next .wb-title-edit {
+  font: inherit;
+  color: inherit;
+}
+.desk-next .wb-title-edit.is-editing {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  padding: 0 4px;
+  box-shadow: var(--desk-window-etch);
+}
+
+/* ── item list ── */
+.desk-next .wb-items {
+  flex: 1;
+  overflow-y: auto;
+}
+
+/* ── item card (HS-116-11) ── */
+.desk-next .wb-card {
+  border-bottom: 1px solid var(--border-subtle);
+  border-left: 3px solid transparent;
+  transition: border-color 300ms var(--ease-standard);
+}
+.desk-next .wb-card[data-status="pending"] {
+  border-left-color: transparent;
+}
+.desk-next .wb-card[data-status="claimed"] {
+  border-left-color: var(--warn-signal, var(--warn));
+  animation: wb-pulse 1.6s ease-in-out infinite;
+}
+.desk-next .wb-card[data-status="done"] {
+  border-left-color: var(--ok);
+}
+.desk-next .wb-card[data-status="failed"] {
+  border-left-color: var(--danger-signal, var(--danger));
+}
+.desk-next .wb-card[data-status="dismissed"] {
+  border-left-color: transparent;
+  opacity: 0.5;
+}
+@keyframes wb-pulse {
+  0%, 100% { border-left-color: var(--warn-signal, var(--warn)); }
+  50% { border-left-color: rgba(251, 191, 36, 0.3); }
+}
+
+/* card head */
+.desk-next .wb-card-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px var(--desk-window-pad-x);
+  width: 100%;
+  border: none;
+  background: none;
+  color: var(--text);
+  cursor: pointer;
+  text-align: left;
+}
+.desk-next .wb-card-head:hover {
+  background: var(--accent-tint);
+}
+.desk-next .wb-card-title {
+  flex: 1;
+  font-family: var(--font-mono);
+  font-size: var(--desk-surface-body-size);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.desk-next .wb-card-head .gadget-ledmeter {
+  flex-shrink: 0;
+}
+.desk-next .wb-item-priority {
+  font-size: 10px;
+  font-family: var(--font-mono);
+  min-width: 24px;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* collapsed result preview */
+.desk-next .wb-card-preview {
+  padding: 0 var(--desk-window-pad-x) 6px 22px;
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: var(--desk-surface-detail-size);
+  color: var(--text-faint);
+  line-height: 1.4;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+/* expanded detail */
+.desk-next .wb-card-detail {
+  padding: 0 var(--desk-window-pad-x) 10px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.desk-next .wb-card-body-edit .gadget-pad {
+  font-size: var(--desk-surface-detail-size);
+}
+
+/* grounding chips */
+.desk-next .wb-card-grounding {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.desk-next .wb-card-grounding .desk-chip {
+  height: 22px;
+  padding: 0 8px;
+  font-size: 10px;
+}
+
+/* result section */
+.desk-next .wb-card-result {
+  background: var(--desk-window-well);
+  border-radius: 2px;
+  box-shadow: var(--desk-window-etch);
+  overflow: hidden;
+}
+.desk-next .wb-card-result-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+.desk-next .wb-card-result-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-faint);
+  letter-spacing: 0.05em;
+}
+.desk-next .wb-card-result-body {
+  padding: 8px;
+  font-family: var(--font-mono);
+  font-size: var(--desk-surface-detail-size);
+  line-height: 1.5;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+/* tokens */
+.desk-next .wb-item-tokens {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-faint);
+}
+
+/* card verbs */
+.desk-next .wb-card-verbs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+/* ── composer ── */
+.desk-next .wb-composer {
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.desk-next .wb-composer-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px var(--desk-window-pad-x);
+}
+.desk-next .wb-composer-input {
+  flex: 1;
+  font-family: var(--font-mono);
+  font-size: var(--desk-surface-body-size);
+  background: transparent;
+  border: none;
+  color: var(--text);
+  outline: none;
+}
+.desk-next .wb-composer-input::placeholder {
+  color: var(--text-faint);
+}
+.desk-next .wb-priority-cycle {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  min-width: 28px;
+  justify-content: center;
+}
+
+/* ── footer ── */
+.desk-next .wb-footer-status {
+  font-family: var(--font-mono);
+  font-size: var(--desk-surface-label-size);
+  color: var(--text-muted);
+}
+
+/* ── head scanning indicator (HS-116-12) ── */
+.desk-next .wb-head-scan {
+  padding: 2px var(--desk-window-pad-x) 4px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+.desk-next .wb-head-scan .gadget-ledmeter {
+  width: 100%;
+}
+
+/* ── runs wing (HS-116-12) ── */
+.desk-next .wb-runs-wing {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 var(--desk-window-pad-x);
+}
+.desk-next .wb-run-detail {
+  padding: 6px 0;
+}
+.desk-next .wb-run-detail .surface-facts {
+  font-size: 11px;
+}
+
+/* ── memory wing (HS-116-16) ── */
+.desk-next .wb-memory-wing {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 var(--desk-window-pad-x);
+}
+.desk-next .wb-memory-detail {
+  padding: 6px 0;
+}
+.desk-next .wb-memory-content {
+  font-family: var(--font-mono);
+  font-size: var(--desk-surface-detail-size);
+  margin: 0 0 4px;
+  white-space: pre-wrap;
+}
+.desk-next .wb-memory-source {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-faint);
+}
+.desk-next .wb-memory-model {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-faint);
+}
+.desk-next .wb-memory-verbs {
+  display: flex;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+/* ── template picker (HS-116-10, reforged HS-116-15) ── */
+.desk-next .wb-picker {
+  padding: 8px 0;
+}
+.desk-next .wb-picker-target {
+  padding: 4px var(--desk-surface-row-pad-x);
+}
+.desk-next .wb-picker-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 6px;
+  padding: 6px var(--desk-surface-row-pad-x);
+}
+.desk-next .wb-picker-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+  padding: 10px 12px;
+  text-align: left;
+  border: 1px solid var(--border);
+  border-radius: var(--radius, 2px);
+  background: var(--surface-2);
+  color: var(--text);
+  cursor: pointer;
+  box-shadow: var(--desk-window-bevel);
+  transition: border-color var(--duration-short) var(--ease-standard),
+              background var(--duration-short) var(--ease-standard);
+}
+.desk-next .wb-picker-card:hover {
+  border-color: var(--accent);
+  background: var(--accent-tint);
+}
+.desk-next .wb-picker-card:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.desk-next .wb-picker-card-blank {
+  border-style: dashed;
+  opacity: 0.7;
+}
+.desk-next .wb-picker-card-blank:hover {
+  opacity: 1;
+}
+.desk-next .wb-picker-card-icon {
+  font-size: 18px;
+  line-height: 1;
+}
+.desk-next .wb-picker-card-name {
+  font-family: var(--font-mono);
+  font-size: var(--desk-surface-body-size);
+  font-weight: 600;
+}
+.desk-next .wb-picker-card-desc {
+  font-family: var(--font-mono);
+  font-size: var(--desk-surface-detail-size);
+  color: var(--text-muted);
+  line-height: 1.35;
+}
+.desk-next .wb-picker-card-meta {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-faint);
+  margin-top: 2px;
+}
+
+/* ── drop-to-work (HS-116-18) ── */
+.desk-next .wb-body.wb-drop-hover {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+.desk-next .wb-drop-zone {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+  font-family: var(--font-mono);
+  font-size: var(--desk-surface-label-size);
+  color: var(--accent);
+  letter-spacing: 0.05em;
+  font-weight: 700;
+  background: var(--accent-tint);
+  border-bottom: 1px solid var(--accent);
+}
+
+/* ── voice proposal strip (HS-116-14) ── */
+.desk-next .wb-proposal-strip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px var(--desk-window-pad-x);
+  background: var(--accent-tint);
+  border-bottom: 1px solid var(--accent);
+  font-family: var(--font-mono);
+  font-size: var(--desk-surface-body-size);
+}
+.desk-next .wb-proposal-text {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── item state flash (HS-116-12) ── */
+.desk-next .wb-card[data-status="done"] {
+  animation: wb-done-flash 500ms ease-out;
+}
+@keyframes wb-done-flash {
+  0% { box-shadow: inset 2px 0 8px var(--ok); }
+  100% { box-shadow: none; }
+}
+
+/* ── workbenches home dashboard (HS-116-17) ── */
+.desk-next .wb-home-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 8px;
+  padding: 8px var(--desk-window-pad-x);
+}
+.desk-next .wb-home-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  background: var(--surface-2);
+  box-shadow: var(--desk-window-bevel);
+  cursor: pointer;
+  text-align: left;
+  color: var(--text);
+  transition: border-color var(--duration-short) var(--ease-standard);
+}
+.desk-next .wb-home-card:hover {
+  border-color: var(--accent);
+}
+.desk-next .wb-home-card-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.desk-next .wb-home-card-icon {
+  font-size: 14px;
+  opacity: 0.6;
+}
+.desk-next .wb-home-card-name {
+  flex: 1;
+  font-family: var(--font-mono);
+  font-size: var(--desk-surface-body-size);
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.desk-next .wb-home-needs {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+  flex-shrink: 0;
+}
+.desk-next .wb-home-card-stats {
+  display: flex;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: var(--desk-surface-detail-size);
+  color: var(--text-muted);
+}
+.desk-next .wb-home-card-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-faint);
+}
+.desk-next .wb-home-card-schedule {
+  margin-left: auto;
+}
+.desk-next .wb-home-runs {
+  padding: 8px var(--desk-window-pad-x);
+}
+
+/* ── narrow workbench (container query) ── */
+@container desk-surface (max-width: 560px) {
+  .wb-config-strip {
+    flex-wrap: wrap;
+  }
+  .wb-schedule-row {
+    flex-wrap: wrap;
+  }
+  .wb-config-strip-skills {
+    margin-left: 0;
+  }
+}
+

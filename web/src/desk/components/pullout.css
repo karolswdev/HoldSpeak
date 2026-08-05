@@ -1,0 +1,469 @@
+/* ── HS-73-04: the pull-out (the DioPullout port) ── */
+.desk-next .desk-pullout {
+  position: fixed;
+  top: 64px;
+  right: 18px;
+  bottom: 18px;
+  z-index: var(--desk-z-window-base);
+  width: min(400px, 88vw);
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border);
+  background: var(--desk-window-fill);
+  /* OS chrome is not selectable text; the MATERIAL below re-enables. */
+  user-select: none;
+}
+/* Round 8 — the OBJECT card fits its material: no fixed bottom, so a
+   short object never opens onto a two-thirds void. Working surfaces
+   (chat, sessions, terminals) keep the full-height sheet. */
+.desk-next .desk-pullout.is-card {
+  bottom: auto;
+  max-height: calc(100dvh - 96px);
+}
+/* Round 9 — the MATERIAL is copyable text (facts lines, receipts,
+   rendered bodies, transcripts); only the chrome (chips, disclosure
+   summaries, eyebrows) stays un-selectable like any OS control. */
+.desk-next .desk-pullout .desk-pullout-body,
+.desk-next .desk-pullout input,
+.desk-next .desk-pullout textarea {
+  user-select: text;
+}
+.desk-next .desk-pullout .desk-pullout-body .desk-chip,
+.desk-next .desk-pullout .desk-pullout-body summary,
+.desk-next .desk-pullout .desk-pullout-body .surface-eyebrow {
+  user-select: none;
+}
+/* Round 9 — canon rule 1: the note's text edits in place, in the same
+   reading geometry the material renders in. No box, no third chrome. */
+.desk-next .desk-pullout-editbox {
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  font-family: inherit;
+  font-size: var(--desk-surface-body-size);
+  line-height: 1.55;
+  resize: vertical;
+}
+.desk-next .desk-pullout .desk-pullout-body {
+  min-height: 0;
+}
+/* HS-99-02 — the title bar is a BAR (DESIGN_SYSTEM.md, the chrome
+   ladder): the head tone sits one step above the body, separation is
+   tonal (no border-bottom), and the verb buttons are full-height
+   squares flush to the window edge. */
+.desk-next .desk-pullout-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 40px;
+  flex: none;
+  padding: 0 12px;
+  background: var(--desk-window-head-fill);
+  /* Materials round 2 — the UNIFIED header: the verb bar below shares
+     this tint and carries the hairline; head + verbs read as one
+     toolbar band (the mac unified-toolbar look). */
+  border-radius: calc(var(--desk-window-radius) - 1px)
+    calc(var(--desk-window-radius) - 1px) 0 0;
+}
+.desk-next .desk-window-shell.is-front .desk-pullout-head {
+  background: var(--desk-window-head-front);
+}
+/* Materials spike — traffic lights (macos-web values): 12.8px discs
+   with darker rings; grey on an unfocused window; glyphs reveal and
+   the cluster swells on hover. */
+/* ── HS-110-02: Workbench window gadgets — rectangular, beveled, always visible ── */
+.desk-next .desk-traffic {
+  display: grid;
+  grid-template-columns: repeat(3, 16px);
+  gap: 4px;
+  align-items: center;
+  flex: none;
+}
+.desk-next .desk-light {
+  width: 16px;
+  height: 14px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 0;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  background: var(--gadget-fill);
+  box-shadow: var(--desk-window-bevel);
+  transition: background var(--duration-short, 120ms) ease;
+}
+.desk-next .desk-light svg {
+  width: 8px;
+  height: 8px;
+  opacity: 0.6;
+  color: var(--text-muted);
+  transition: opacity var(--duration-short, 120ms) ease;
+}
+.desk-next .desk-light:hover {
+  background: var(--gadget-fill-hover);
+}
+.desk-next .desk-light:hover svg {
+  opacity: 1;
+  color: var(--text);
+}
+/* The traffic cluster is the depth signal: colored on the front plane,
+   neutral in the background. */
+.desk-next .desk-window-shell:not(.is-front) .desk-light {
+  background: var(--surface-2);
+  border-color: var(--border);
+}
+.desk-next .desk-window-shell.is-front .desk-light-close {
+  background: var(--danger-signal, #f87171);
+}
+.desk-next .desk-window-shell.is-front .desk-light-min {
+  background: var(--warn, #fbbf24);
+}
+.desk-next .desk-window-shell.is-front .desk-light-max {
+  background: var(--success, #34d399);
+}
+.desk-next .desk-window-shell.is-front .desk-light svg {
+  color: color-mix(in srgb, var(--bg) 78%, transparent);
+  opacity: 0.82;
+}
+.desk-next .is-front .desk-light-close:hover {
+  background: var(--gadget-close-fill);
+}
+.desk-next .is-front .desk-light-close:hover svg {
+  color: var(--danger-signal, #f87171);
+}
+/* HS-110-06: mono window titles, left-aligned */
+.desk-next .desk-window-title {
+  text-align: left;
+}
+.desk-next .desk-pullout-head img {
+  image-rendering: pixelated;
+}
+.desk-next .desk-pullout-title {
+  flex: 1;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.desk-next .desk-pullout-close {
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 15px;
+  cursor: pointer;
+}
+
+
+/* HS-101 round 8 — the pull-out recomposed: the object's material
+   leads, the run lane is the ONE chat-well composer, belonging folds
+   into a single disclosure, and section walls are gone. */
+.desk-next .desk-pullout-facts {
+  font-size: var(--font-size-xs);
+}
+.desk-next .desk-pullout-agent {
+  justify-items: stretch;
+}
+.desk-next .desk-pullout-agent .desk-chat-hello {
+  padding: 10px 0 2px;
+}
+.desk-next .desk-pullout-agent-chat {
+  justify-self: center;
+  min-height: 34px;
+  padding: 0 18px;
+}
+.desk-next .desk-pullout-capability-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+}
+.desk-next .desk-pullout-capability-foot .quiet {
+  font-size: var(--font-size-xs);
+}
+.desk-next .desk-pullout-filed {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.desk-next .desk-pullout-filed-axis {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.desk-next .desk-pullout-steps {
+  margin: 0;
+  padding-left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.desk-next .desk-chat-composer textarea {
+  flex: 1;
+  min-width: 0;
+  resize: none;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-sm);
+  padding: 8px 0;
+}
+.desk-next .desk-chat-composer textarea:focus {
+  outline-color: var(--accent);
+}
+
+.desk-next .runs-on-picker {
+  display: grid;
+  gap: 5px;
+  width: 100%;
+}
+
+.desk-next .runs-on-picker label {
+  display: grid;
+  gap: 4px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+/* HS-111-05 — the destination is a CycleGadget (the kit species); the
+   naked select dress died with it. */
+.desk-next .runs-on-picker .gadget-cycle {
+  width: 100%;
+}
+.desk-next .runs-on-picker .gadget-cycle select {
+  width: 100%;
+}
+
+.desk-next .runs-on-picker p {
+  margin: 0;
+  font-size: 11px;
+}
+.desk-next .desk-pullout-foot {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 9px 12px;
+  border-top: 0.9px solid var(--shade-1);
+  background: var(--desk-window-head-fill);
+}
+.desk-next .desk-pullout-foot .desk-chip {
+  height: 30px;
+  padding: 0 14px;
+}
+.desk-next .desk-chip.is-primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--text-on-accent);
+  font-weight: 600;
+  box-shadow: inset 0 1px 0 var(--gleam-3);
+}
+.desk-next .desk-chip.is-primary:hover {
+  background: var(--accent-hover);
+}
+/* Dive changes the world contents without scaling pixel art. */
+.desk-next .desk-world {
+  transition: opacity 0.28s var(--ease-standard);
+}
+.desk-next .desk-world.dived {
+  animation: desk-next-dive 0.34s var(--ease-standard);
+}
+@keyframes desk-next-dive {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+.desk-next .desk-surface {
+  position: fixed;
+  top: 60px;
+  left: 18px;
+  z-index: var(--desk-z-chrome);
+}
+@media (prefers-reduced-motion: reduce) {
+  .desk-next .desk-world,
+  .desk-next .desk-world.dived {
+    transition: none;
+    animation: none;
+  }
+}
+
+
+/* ————— HS-100-07 — wings: the application's faces live in the HEAD
+   (the thesis's posture rule). Segmented well, one gear door. ————— */
+.desk-next .desk-pullout-head.has-wings .desk-pullout-title {
+  flex: none;
+  text-align: left;
+}
+/* HS-111-08 — the Wings reforge (audit §3.4): the last rounded pill
+   dies. A flat strip of square beveled tab gadgets on the head's own
+   field — mono uppercase, shared hairlines, and the ACTIVE face is
+   SUNKEN (the pressed key), never raised, never shadowed. */
+.desk-next .desk-wings {
+  display: flex;
+  align-items: center;
+  margin-inline: auto;
+}
+/* The tablist wrapper is semantic only; the strip stays one flex row. */
+.desk-next .desk-wings-tabs {
+  display: contents;
+}
+.desk-next .desk-wing-door {
+  margin-left: 4px;
+}
+.desk-next .desk-wing {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xs);
+  background: none;
+  color: var(--text-faint);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 4px 12px;
+  cursor: pointer;
+  transition:
+    background var(--duration-short) var(--ease-quart),
+    color var(--duration-short) var(--ease-quart);
+}
+/* Adjacent segments butt with shared hairlines (the signal-tabs
+   strip's grammar, now the ONE look). */
+.desk-next .desk-wing + .desk-wing {
+  margin-left: -1px;
+}
+.desk-next .desk-wing:hover {
+  color: var(--text);
+  background: var(--wash-1);
+}
+.desk-next .desk-wing.is-on {
+  background: var(--desk-window-well);
+  box-shadow: var(--desk-window-etch);
+  color: var(--text);
+}
+.desk-next .desk-wing-door {
+  padding: 4px 9px;
+  font-size: 11px;
+}
+
+
+/* HS-101 sitting round 2 / HS-111-04 — one composer well, the route
+   folded into the well's foot; the body is the record head over the
+   transmission log (the log well owns the scroll). */
+.desk-next .desk-chat .desk-pullout-body {
+  display: flex;
+  flex-direction: column;
+}
+.desk-next .desk-chat-hello {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  color: var(--text-muted);
+}
+.desk-next .desk-chat-hello-avatar {
+  font-size: var(--font-size-3xl);
+  filter: drop-shadow(0 6px 14px var(--shadow-ink-3));
+  animation: desk-chat-hello-in 0.4s cubic-bezier(0.2, 1, 0.4, 1);
+}
+@keyframes desk-chat-hello-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+.desk-next .desk-chat-hello small {
+  color: var(--text-faint);
+  font-family: var(--font-mono);
+  font-size: 10px;
+}
+.desk-next .desk-chat-foot {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px 12px;
+}
+.desk-next .desk-chat-well {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  background: var(--desk-window-well);
+  box-shadow: inset 0 0 0 1px var(--border-subtle);
+}
+.desk-next .desk-chat-well:focus-within {
+  box-shadow:
+    inset 0 0 0 1px var(--accent-soft),
+    0 0 0 3px var(--accent-tint);
+}
+.desk-next .desk-chat-well .desk-chat-composer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.desk-next .desk-chat-well .desk-chat-composer input {
+  flex: 1;
+  min-width: 0;
+  background: none;
+  border: 0;
+  color: var(--text);
+  font-size: var(--desk-surface-body-size);
+}
+.desk-next .desk-chat-well-foot .runs-on-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.desk-next .desk-chat-well-foot .runs-on-picker p {
+  margin: 0;
+  font-size: var(--desk-surface-label-size);
+  color: var(--text-faint);
+}
+
+/* HS-102-03 — Ask AI's grounding/rails read as captions in the well's
+   foot, not their own bordered sections (composition rule 1); the
+   collapsed head is a caption row, the expanded body still gets full
+   width so its list doesn't squeeze into the row. */
+.desk-next .desk-chat-well-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 16px;
+}
+.desk-next .desk-chat-well-foot .desk-ground {
+  border: 0;
+  background: none;
+  border-radius: 0;
+}
+.desk-next .desk-chat-well-foot .desk-ground.is-open {
+  flex-basis: 100%;
+}
+.desk-next .desk-chat-well-foot .desk-ground .gadget-fold > summary {
+  padding: 0;
+  font-size: var(--desk-surface-label-size);
+}
+
+/* HS-101 sitting round 2 — the ambient card yields to an open right
+   sheet instead of burying its composer. */
+/* Object cards (.is-card) float anywhere since round 9 — only the
+   right-docked working sheets still displace the ambient card. */
+body:has(.desk-next .desk-pullout:not(.is-card)) .ambient-qlippy {
+  right: 452px;
+}

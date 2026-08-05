@@ -1,0 +1,539 @@
+/* ── HS-92-09: attention stays on the Desk; receipts open as one drawer
+   (HS-97-07: the launcher lives in the dock). ── */
+.desk-next .desk-attention-drawer {
+  position: fixed;
+  top: 64px;
+  right: 18px;
+  bottom: 18px;
+  z-index: var(--desk-z-window-base);
+  display: flex;
+  width: min(460px, calc(100vw - 24px));
+  max-width: 100%;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--accent) 34%, var(--border));
+  border-radius: 2px;
+  background: var(--desk-window-fill);
+  color: var(--text);
+  box-shadow: var(--desk-window-shadow);
+  backdrop-filter: none;
+}
+.desk-next .desk-attention-drawer .desk-panel-head {
+  padding: 14px 18px 12px;
+  margin-bottom: 0;
+}
+.desk-next .desk-attention-drawer h2,
+.desk-next .desk-receipt-detail h3 {
+  margin: 3px 0 0;
+}
+.desk-next .desk-attention-drawer small {
+  color: var(--text-muted);
+}
+.desk-next .desk-receipt-detail > button {
+  min-width: 40px;
+  min-height: 40px;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+}
+.desk-next .desk-attention-counts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  padding: 12px 18px;
+}
+.desk-next .desk-attention-counts span {
+  min-width: 0;
+  padding: 9px;
+  border-radius: 2px;
+  background: var(--surface-1);
+  color: var(--text-muted);
+  font-size: 11px;
+}
+.desk-next .desk-attention-counts b {
+  display: block;
+  color: var(--text);
+  font-size: 18px;
+}
+.desk-next .desk-attention-filters {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 140px auto;
+  gap: 8px;
+  padding: 0 18px 12px;
+}
+.desk-next .desk-attention-filters label {
+  min-width: 0;
+  color: var(--text-muted);
+  font-size: 10px;
+}
+.desk-next .desk-attention-filters label span {
+  display: block;
+  margin-bottom: 4px;
+}
+.desk-next .desk-attention-filters button,
+.desk-next .desk-attention-more {
+  width: 100%;
+  min-height: 40px;
+  border: 1px solid var(--surface-3);
+  border-radius: 2px;
+  background: var(--surface-1);
+  color: var(--text);
+}
+/* HS-111-10: the search well is the kit's StringGadget (mic sweep);
+   only its height is coerced to the filter-row rhythm. */
+.desk-next .desk-attention-filters .gadget-string,
+.desk-next .desk-attention-filters .gadget-cycle {
+  min-height: 40px;
+}
+.desk-next .desk-attention-filters button {
+  align-self: end;
+  width: auto;
+  padding: 0 12px;
+}
+.desk-next .desk-attention-list {
+  min-height: 0;
+  margin: 0;
+  padding: 0 12px 14px;
+  overflow: auto;
+  list-style: none;
+}
+.desk-next .desk-attention-list button {
+  display: grid;
+  width: 100%;
+  grid-template-columns: 10px minmax(0, 1fr);
+  gap: 10px;
+  padding: 12px 8px;
+  border: 0;
+  border-bottom: 1px solid var(--surface-3);
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+}
+.desk-next .desk-attention-list button > span:last-child {
+  min-width: 0;
+}
+.desk-next .desk-attention-list strong,
+.desk-next .desk-attention-list em {
+  display: block;
+  overflow-wrap: anywhere;
+}
+.desk-next .desk-attention-list em {
+  margin-top: 3px;
+  color: var(--text-muted);
+  font-size: 11px;
+  font-style: normal;
+}
+/* HS-111: status indicators — square, no glow */
+.desk-next .desk-projection-mark {
+  width: 8px;
+  height: 8px;
+  margin-top: 5px;
+  border-radius: 0;
+  background: var(--accent);
+}
+.desk-next .desk-projection-mark.is-warning {
+  background: var(--warn-signal);
+}
+.desk-next .desk-projection-mark.is-error {
+  background: var(--danger-signal);
+}
+.desk-next .desk-receipt-detail {
+  min-height: 0;
+  padding: 0 18px 18px;
+  overflow: auto;
+}
+.desk-next .desk-receipt-detail dl div {
+  display: grid;
+  grid-template-columns: 120px minmax(0, 1fr);
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--surface-3);
+}
+.desk-next .desk-receipt-detail dt {
+  color: var(--text-muted);
+}
+.desk-next .desk-receipt-detail dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.desk-next .desk-receipt-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding-top: 14px;
+}
+.desk-next .desk-receipt-actions a,
+.desk-next .desk-receipt-actions button,
+.desk-next .desk-attention-error button {
+  min-height: 40px;
+  padding: 0 12px;
+  border: 1px solid var(--surface-3);
+  border-radius: 2px;
+  background: var(--surface-1);
+  color: var(--text);
+}
+.desk-next .desk-attention-error,
+.desk-next .desk-attention-empty {
+  margin: 0 18px 12px;
+  padding: 12px;
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--danger-signal) 12%, var(--surface-1));
+}
+.desk-next .desk-attention-more {
+  width: auto;
+  margin: 0 18px 18px;
+}
+@media (max-width: 720px) {
+  .desk-next .desk-chrome-tl {
+    top: 10px;
+    left: 10px;
+  }
+  .desk-next .desk-chrome-tr {
+    top: 58px;
+    left: 10px;
+    right: 10px;
+    justify-content: center;
+  }
+  .desk-next .desk-start-actions {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+  /* The in-world editor becomes a bottom sheet on phones: an editor
+     anchored beside an object near the screen edge is unreachable. */
+  .desk-next .desk-inline-editor {
+    position: fixed;
+    top: auto !important;
+    left: 10px !important;
+    right: 10px !important;
+    bottom: 84px;
+    width: auto;
+    max-height: 62vh;
+    overflow: auto;
+    z-index: 46;
+  }
+  .desk-next .desk-start-action,
+  .desk-next .desk-create-button {
+    min-height: 44px;
+    padding-inline: 14px;
+  }
+  .desk-next .desk-create-menu {
+    right: 50%;
+    transform: translateX(50%);
+  }
+  .desk-next .desk-tool-shelf {
+    inset: 6px;
+    width: auto;
+    max-height: none;
+    border-radius: 2px;
+  }
+  .desk-next .desk-tool-inspector {
+    inset: 6px;
+    width: auto;
+    border-radius: 2px;
+  }
+  .desk-next .desk-tools-launch kbd {
+    display: none;
+  }
+  .desk-next .desk-empty {
+    min-height: 100vh;
+    padding: 130px 18px 125px;
+  }
+  .desk-next .desk-empty.is-first-value {
+    padding-top: 130px;
+  }
+  .desk-next .desk-empty-line {
+    max-width: 32ch;
+  }
+  .desk-next .desk-attention-drawer {
+    inset: 6px;
+    width: auto;
+    border-radius: 2px;
+  }
+  .desk-next .desk-attention-filters {
+    grid-template-columns: 1fr;
+  }
+  .desk-next .desk-attention-filters button {
+    width: 100%;
+  }
+  .desk-next .desk-receipt-detail dl div {
+    grid-template-columns: 1fr;
+    gap: 3px;
+  }
+}
+@media (max-width: 720px) {
+  .desk-next .desk-chrome .egress-badge {
+    max-width: 40vw;
+  }
+}
+@media (max-width: 420px) {
+  .desk-next .desk-mc-tab {
+    left: 16px;
+    bottom: 60px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .desk-next .desk-session-live {
+    animation: none !important;
+  }
+}
+
+
+/* Desk memory: figures are quiet metrics, not boxes; the filter row is
+   ONE control height; messages are quiet. */
+.desk-next .desk-attention-counts span {
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  padding: 0 14px 0 0;
+  display: inline-flex;
+  flex-direction: column;
+  gap: 1px;
+  font-size: var(--desk-surface-detail-size);
+  color: var(--text-muted);
+}
+.desk-next .desk-attention-counts b {
+  font-size: var(--font-size-lg);
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+.desk-next .desk-attention-filters input,
+.desk-next .desk-attention-filters select,
+.desk-next .desk-attention-filters button {
+  min-height: 32px;
+  height: 32px;
+}
+.desk-next .desk-attention-filters select {
+  text-align: left;
+  min-width: 132px;
+}
+.desk-next .desk-attention-filters button {
+  border: 1px solid var(--border);
+  border-bottom-color: var(--shade-1);
+  border-radius: var(--radius-sm);
+  background: var(--wash-2);
+  color: var(--text);
+  padding: 0 14px;
+  cursor: pointer;
+  box-shadow: inset 0 1px 0 var(--gleam-1);
+}
+.desk-next .desk-attention-error,
+.desk-next .desk-attention-empty {
+  background: transparent;
+  border: 0;
+  color: var(--text-muted);
+  font-size: var(--desk-surface-body-size);
+}
+
+
+/* HS-100-11 — the system bar's attention bell (the dock carries the
+   applications; the approve-queue badge lives here). */
+.desk-next .desk-bell {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: 0;
+  background: none;
+  color: var(--text-faint);
+  font: inherit;
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+}
+.desk-next .desk-bell:hover {
+  color: var(--text);
+  background: var(--desk-window-head-fill);
+}
+.desk-next .desk-bell strong {
+  font-size: var(--font-size-xs);
+  background: var(--accent);
+  color: var(--white, #fff);
+  border-radius: 2px;
+  padding: 0 5px;
+  line-height: 1.4;
+}
+.desk-next .desk-dock-app.is-front {
+  color: var(--text);
+}
+
+
+/* HS-101 B6 — the system shade: one surface behind the bell. Drops
+   from the bar on the transient material; honest groups inside. */
+.desk-next .desk-shade {
+  position: fixed;
+  top: 40px;
+  right: 10px;
+  z-index: var(--desk-z-popover);
+  width: min(380px, calc(100vw - 16px));
+  max-height: calc(100vh - 60px);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border);
+  border-radius: var(--desk-transient-radius);
+  background: var(--desk-panel-fill);
+  box-shadow: var(--desk-transient-shadow);
+  backdrop-filter: var(--desk-window-blur);
+  -webkit-backdrop-filter: var(--desk-window-blur);
+  transform-origin: top right;
+  animation: desk-shade-drop var(--duration-medium) var(--ease-back);
+}
+@keyframes desk-shade-drop {
+  from {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+.desk-next .desk-shade-head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 12px 14px 6px;
+  background: var(--desk-window-head-fill);
+}
+.desk-next .desk-shade-title {
+  font-size: var(--desk-surface-label-size);
+  font-weight: 650;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.desk-next .desk-shade-memory {
+  margin-left: auto;
+  background: none;
+  border: 0;
+  color: var(--text-faint);
+  font-size: var(--desk-surface-detail-size);
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+}
+.desk-next .desk-shade-memory:hover {
+  background: var(--wash-1);
+  color: var(--text);
+}
+.desk-next .desk-shade-group {
+  padding: 4px 8px 8px;
+}
+.desk-next .desk-shade-group + .desk-shade-group {
+  border-top: 1px solid var(--wash-1);
+}
+.desk-next .desk-shade-group h4 {
+  margin: 0;
+  padding: 6px 6px 4px;
+  font-size: var(--desk-surface-label-size);
+  font-weight: 650;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+.desk-next .desk-shade-group h4 b {
+  font-weight: 400;
+  color: var(--text-muted);
+}
+.desk-next .desk-shade-item {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr);
+  gap: 2px 8px;
+  padding: 7px 6px 9px;
+  border-radius: var(--radius-md);
+}
+.desk-next .desk-shade-item:hover {
+  background: var(--wash-1);
+}
+.desk-next .desk-shade-glyph {
+  text-align: center;
+  padding-top: 1px;
+  color: var(--text-muted);
+}
+.desk-next .desk-shade-what {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.desk-next .desk-shade-what strong {
+  font-size: var(--desk-surface-body-size);
+  font-weight: 600;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+.desk-next .desk-shade-what small {
+  color: var(--text-muted);
+  font-size: var(--desk-surface-detail-size);
+}
+.desk-next .desk-shade-do {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 5px;
+}
+.desk-next .desk-shade-do a,
+.desk-next .desk-shade-do button {
+  display: inline-flex;
+  align-items: center;
+  height: 24px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: var(--wash-2);
+  color: var(--text);
+  font-size: var(--desk-surface-detail-size);
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+}
+.desk-next .desk-shade-do a:hover,
+.desk-next .desk-shade-do button:hover {
+  background: var(--surface-hover);
+}
+.desk-next .desk-shade-do .is-quiet {
+  background: none;
+  color: var(--text-faint);
+}
+.desk-next .desk-shade-quiet {
+  margin: 0;
+  padding: 4px 6px 8px;
+  color: var(--text-faint);
+  font-size: var(--desk-surface-detail-size);
+}
+@media (prefers-reduced-motion: reduce) {
+  .desk-next .desk-shade {
+    animation: none;
+  }
+}
+
+/* HS-104-02 — a held tool call on the shade: the redacted argument
+   preview in mono, the deny reason edited in place (no modal). */
+.desk-next .desk-gate-item {
+  background: var(--wash-1);
+}
+.desk-next .desk-gate-item .desk-shade-what code {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: var(--desk-surface-detail-size);
+  color: var(--text-muted);
+}
+/* HS-111-10 mic sweep: the deny-reason well is StringGadget. */
+.desk-next .desk-shade-do .gadget-string {
+  flex: 1;
+  min-width: 0;
+}
+
+/* HS-104-05 — the session receipt line: one line, minimal ink. */
+.desk-next .desk-receipt-line {
+  margin: 4px 0 0;
+  color: var(--text-muted);
+  font-size: var(--desk-surface-detail-size);
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+

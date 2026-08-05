@@ -29,6 +29,8 @@ from dataclasses import dataclass
 from enum import Enum
 from types import MappingProxyType
 
+from .errors import AgentError as _AgentErrorBase
+
 
 class Capability(str, Enum):
     """The fixed capability vocabulary. Extending it is a reviewed edit."""
@@ -103,11 +105,15 @@ LEDGER: MappingProxyType[str, MappingProxyType[Capability, Standing]] = MappingP
 LEDGER_SCHEMA_VERSION = 1
 
 
-class CapabilityError(Exception):
+class CapabilityError(_AgentErrorBase):
     """Base for ledger refusals."""
+
+    code: str = "CAPABILITY_ERROR"
 
 
 class UnknownAdapterError(CapabilityError):
+    code: str = "UNKNOWN_ADAPTER_ERROR"
+
     def __init__(self, adapter: str) -> None:
         self.adapter = adapter
         super().__init__(
@@ -117,6 +123,8 @@ class UnknownAdapterError(CapabilityError):
 
 class CapabilityUnavailableError(CapabilityError):
     """The ledger cannot vouch: the standing is ``unavailable``."""
+
+    code: str = "CAPABILITY_UNAVAILABLE_ERROR"
 
     def __init__(self, adapter: str, capability: Capability, standing: Standing) -> None:
         self.adapter = adapter

@@ -1,22 +1,15 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { apiFetch } from "../../lib/api";
+import type {
+  ContextState,
+  HistoryEntry,
+  ConstitutionalContextResponse,
+  ConstitutionalContextHistoryResponse,
+  ConstitutionalContextSaveResponse,
+} from "./core-types";
 
 const CHAR_LIMIT = 32_768;
 const WARN_THRESHOLD = 0.8;
-
-interface ContextState {
-  content: string;
-  revision: number;
-  content_hash: string;
-  char_limit?: number;
-}
-
-interface HistoryEntry {
-  content: string;
-  revision: number;
-  content_hash: string;
-  created_at: string;
-}
 
 export function ConstitutionalContextCore() {
   const [ctx, setCtx] = useState<ContextState | null>(null);
@@ -33,7 +26,7 @@ export function ConstitutionalContextCore() {
 
   const load = useCallback(async () => {
     try {
-      const res = await apiFetch<any>("/api/constitutional-context");
+      const res = await apiFetch<ConstitutionalContextResponse>("/api/constitutional-context");
       const data = res.context;
       setCtx(data);
       if (viewingRev === null) {
@@ -45,7 +38,7 @@ export function ConstitutionalContextCore() {
 
   const loadHistory = useCallback(async () => {
     try {
-      const res = await apiFetch<any>("/api/constitutional-context/history");
+      const res = await apiFetch<ConstitutionalContextHistoryResponse>("/api/constitutional-context/history");
       setHistory(res.revisions || []);
     } catch { /* */ }
   }, []);
@@ -56,7 +49,7 @@ export function ConstitutionalContextCore() {
     setSaving(true);
     setSaveError("");
     try {
-      const res = await apiFetch<any>("/api/constitutional-context", {
+      const res = await apiFetch<ConstitutionalContextSaveResponse>("/api/constitutional-context", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ content: draft }),
@@ -64,7 +57,7 @@ export function ConstitutionalContextCore() {
       if (res.error) {
         setSaveError(res.error);
       } else {
-        setCtx(res.context);
+        setCtx(res.context ?? null);
         setDirty(false);
         setViewingRev(null);
         setSaved(true);

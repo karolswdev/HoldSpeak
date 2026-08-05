@@ -7,7 +7,12 @@
 // over the UI.
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "../../components/signal/Signal";
-import { apiFetch, readableError, type JsonRecord } from "../../lib/api";
+import { apiFetch, readableError } from "../../lib/api";
+import type {
+  SettingsResponse,
+  InferenceTargetsResponse,
+  ProfilesResponse,
+} from "./core-types";
 import { ConfirmVerb } from "../../desk/surface/Surface";
 import {
   CheckGadget,
@@ -58,9 +63,9 @@ const WIRE_KIND: Record<string, string> = {
   mesh_node: "meshNode",
 };
 
-function fromWire(row: JsonRecord): Target {
-  const readiness = (row.readiness ?? {}) as JsonRecord;
-  const secret = (row.secret ?? {}) as JsonRecord;
+function fromWire(row: Record<string, unknown>): Target {
+  const readiness = (row.readiness ?? {}) as Record<string, unknown>;
+  const secret = (row.secret ?? {}) as Record<string, unknown>;
   const kind = String(row.kind ?? "");
   return {
     id: String(row.id ?? ""),
@@ -83,7 +88,7 @@ export function ModelsModule({
   update,
   onRefuse,
 }: {
-  settings: JsonRecord;
+  settings: SettingsResponse;
   /** The Prefs debounced settings writer (path → value). */
   update(path: string[], next: unknown): void;
   /** The footer receipt bar; "" clears. */
@@ -99,14 +104,14 @@ export function ModelsModule({
 
   const reload = useCallback(async () => {
     try {
-      const wire = await apiFetch<{ targets?: JsonRecord[] }>(
+      const wire = await apiFetch<InferenceTargetsResponse>(
         "/api/inference-targets",
       );
       const rows = (wire.targets ?? [])
         .filter((row) => row.profile_id != null)
         .map(fromWire);
       // The endpoint/node columns live on the profile shape.
-      const legacy = await apiFetch<{ profiles?: JsonRecord[] }>(
+      const legacy = await apiFetch<ProfilesResponse>(
         "/api/profiles",
       );
       const byId = new Map(
@@ -257,7 +262,7 @@ export function ModelsModule({
   const val = (path: string[]): unknown =>
     path.reduce<unknown>(
       (acc, part) =>
-        acc && typeof acc === "object" ? (acc as JsonRecord)[part] : undefined,
+        acc && typeof acc === "object" ? (acc as Record<string, unknown>)[part] : undefined,
       settings,
     );
 
@@ -290,8 +295,8 @@ export function ModelsModule({
         ? "warn"
         : "fail";
 
-  const runtime = (settings.dictation as JsonRecord | undefined)?.runtime as
-    | JsonRecord
+  const runtime = (settings.dictation as Record<string, unknown> | undefined)?.runtime as
+    | Record<string, unknown>
     | undefined;
   const backend = String(runtime?.backend ?? "auto");
 

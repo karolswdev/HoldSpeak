@@ -9,6 +9,7 @@
 // face (variant="transport") — same capture path, same 4-state machine;
 // the instrument strip reads the machine through onState and the capture
 // level through onLevel (the analyser tap lives in lib/speakToFill).
+import "./speak-to-fill.css";
 import { useEffect, useRef, useState } from "react";
 import {
   cancelCapture,

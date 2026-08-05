@@ -6,6 +6,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { Meeting, Note, Persona, KB } from "../../lib/primitives";
 import { EMPTY_ITEMS, qualifiedRef, type Items } from "../api";
 import { useDesk } from "../store";
 import { usePalette } from "../chromeState";
@@ -17,12 +18,12 @@ import { DeskToolShelf } from "./DeskToolShelf";
 
 const items: Items = {
   ...EMPTY_ITEMS,
-  meeting: [{ kind: "meeting", id: "m1", title: "Q3 kickoff" }],
+  meeting: [{ kind: "meeting", id: "m1", title: "Q3 kickoff" } as Meeting],
   note: [
-    { kind: "note", id: "n1", title: "Release checklist" },
-    { kind: "note", id: "filed1", title: "Rollout risks" },
+    { kind: "note", id: "n1", title: "Release checklist" } as Note,
+    { kind: "note", id: "filed1", title: "Rollout risks" } as Note,
   ],
-  recipe: [{ kind: "recipe", id: "r1", name: "Scout" }],
+  recipe: [{ kind: "recipe", id: "r1", name: "Scout" } as Persona],
   directory: [
     {
       kind: "directory",
@@ -182,8 +183,8 @@ describe("HS-93-08 pagination at 1,000 items", () => {
       kind: "note" as const,
       id: `bn${i}`,
       title: `Note ${i}`,
-    })),
-    kb: [{ kind: "kb" as const, id: "needle", name: "Meridian launch brief" }],
+    } as Note)),
+    kb: [{ kind: "kb" as const, id: "needle", name: "Meridian launch brief" } as KB],
   };
 
   beforeEach(() => resetStore(bigItems));
@@ -211,7 +212,7 @@ describe("HS-93-08 pagination at 1,000 items", () => {
         kind: "note" as const,
         id: `sn${i}`,
         title: `Small ${i}`,
-      })),
+      } as Note)),
     });
     renderList();
     const more = screen.getByRole("button", { name: "Show 50 more" });

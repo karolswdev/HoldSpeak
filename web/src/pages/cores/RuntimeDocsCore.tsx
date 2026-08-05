@@ -1,13 +1,14 @@
 // HS-95-08 — the runtime setup guide, hosted anywhere.
 import { openSurfaceOr } from "../../desk/shell";
-import type { CoreProps } from "./ActivityCore";
+import type { CoreProps } from "./core-types";
+import { renderHeroSlot } from "./core-layout";
 import { FoldGadget } from "../../desk/surface/gadgets";
 import { SurfaceCode, SurfaceSection } from "../../desk/surface/Surface";
 
 export function RuntimeDocsCore({ hero }: CoreProps) {
   return (
     <>
-      {hero ? hero(null) : null}
+      {renderHeroSlot(hero, null)}
       <p className="surface-receipt-line">
         API keys are environment variables on the hub. They never belong in a
         browser field or profile response.

@@ -5,9 +5,14 @@
 // refusals; every control is a gadget from the surface kit. The pane
 // roster is a code constant — the wire never mints a pane again.
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import type { CoreProps } from "./ActivityCore";
+import type {
+  CoreProps,
+  SecretState,
+  SettingsResponse,
+  AuthorityPolicyResponse,
+} from "./core-types";
 import { Button } from "../../components/signal/Signal";
-import { apiFetch, readableError, type JsonRecord } from "../../lib/api";
+import { apiFetch, readableError } from "../../lib/api";
 import { useResource } from "../pageSupport";
 import { SurfaceState } from "../../desk/surface/Surface";
 import {
@@ -25,8 +30,8 @@ import {
 } from "../../desk/surface/gadgets";
 import { HotkeyCapture } from "./settingsBespoke";
 import { ModelsModule } from "./settingsModels";
-import { SurfaceWings, useWindowWings } from "../../desk/surface/wings";
 import { RuntimeDocsCore } from "./RuntimeDocsCore";
+import { useCoreWings } from "./core-hooks";
 import { activateLauncher } from "../../desk/components/DeskWindow";
 import {
   CADENCE_PRESSURE_OPTIONS,
@@ -61,7 +66,6 @@ const ROTATABLE_SECRETS = new Set([
   "device_psk",
   "telegram_pairing_code",
 ]);
-type SecretState = { configured?: boolean; destination?: string };
 
 function clone<T>(value: T): T {
   return JSON.parse(JSON.stringify(value)) as T;
@@ -113,12 +117,8 @@ const SETTINGS_WINGS = [
 export function SettingsCore({ hero, scope }: CoreProps) {
   // HS-100-10 — the Runtime guide is the Guide wing (the standalone
   // doc-window died; deep links land here via the registry alias).
-  const [wing, setWing] = useState(scope === "guide" ? "guide" : "settings");
-  useWindowWings(
-    <SurfaceWings wings={SETTINGS_WINGS} active={wing} onChange={setWing} />,
-    [wing],
-  );
-  if (wing === "guide") return <RuntimeDocsCore />;
+  const wings = useCoreWings(SETTINGS_WINGS, scope === "guide" ? "guide" : "settings");
+  if (wings.view === "guide") return <RuntimeDocsCore />;
   return <SettingsFace hero={hero} scope={scope} />;
 }
 
@@ -127,8 +127,8 @@ function SettingsFace({ hero, scope }: CoreProps) {
     scope && scope.startsWith("integration:")
       ? scope.slice("integration:".length)
       : null;
-  const resource = useResource<JsonRecord>("/api/settings", {});
-  const authority = useResource<JsonRecord>("/api/authority/policy", {});
+  const resource = useResource<SettingsResponse>("/api/settings", {});
+  const authority = useResource<AuthorityPolicyResponse>("/api/authority/policy", {});
   // null = the drawer face; a module id = that module owns the body.
   // HS-112-01: the retired Runs-on room's deep links land on Models.
   const [moduleId, setModuleId] = useState<string | null>(
@@ -154,11 +154,11 @@ function SettingsFace({ hero, scope }: CoreProps) {
      a refusal replaces it in the danger tone until the next edit. */
   const saveTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
   useEffect(() => () => clearTimeout(saveTimer.current), []);
-  const save = async (payload?: JsonRecord) => {
+  const save = async (payload?: Record<string, unknown>) => {
     setSaving(true);
     setRefusal("");
     try {
-      const result = await apiFetch<{ settings?: JsonRecord }>(
+      const result = await apiFetch<{ settings?: Record<string, unknown> }>(
         "/api/settings",
         { method: "PUT", json: payload ?? resource.data },
       );
@@ -175,7 +175,7 @@ function SettingsFace({ hero, scope }: CoreProps) {
     let cursor = draft;
     path.forEach((part, index) => {
       if (index === path.length - 1) cursor[part] = next;
-      else cursor = cursor[part] as JsonRecord;
+      else cursor = cursor[part] as Record<string, unknown>;
     });
     resource.setData(draft);
     setRefusal("");
@@ -218,7 +218,7 @@ function SettingsFace({ hero, scope }: CoreProps) {
     setAuthorityBusy(true);
     setRefusal("");
     try {
-      const result = await apiFetch<JsonRecord>("/api/authority/control-mode", {
+      const result = await apiFetch<Record<string, unknown>>("/api/authority/control-mode", {
         method: "PUT",
         json: { control_mode: controlMode },
       });
@@ -246,7 +246,7 @@ function SettingsFace({ hero, scope }: CoreProps) {
   /* ── the deep setting index for the drawer filter ── */
   const deepIndex = useMemo<DeepHit[]>(() => {
     const hits: DeepHit[] = [];
-    const walk = (node: JsonRecord, path: string[]) => {
+    const walk = (node: Record<string, unknown>, path: string[]) => {
       for (const [key, item] of Object.entries(node)) {
         const nextPath = [...path, key];
         const owner =
@@ -254,7 +254,7 @@ function SettingsFace({ hero, scope }: CoreProps) {
             ? "models"
             : moduleForKey(nextPath[0]);
         if (item !== null && typeof item === "object" && !Array.isArray(item)) {
-          walk(item as JsonRecord, nextPath);
+          walk(item as Record<string, unknown>, nextPath);
         } else {
           hits.push({ module: owner, label: title(key), path: nextPath });
         }
@@ -265,7 +265,7 @@ function SettingsFace({ hero, scope }: CoreProps) {
         continue;
       const value = resource.data[key];
       if (value && typeof value === "object" && !Array.isArray(value))
-        walk(value as JsonRecord, [key]);
+        walk(value as Record<string, unknown>, [key]);
     }
     return hits;
   }, [resource.data]);
@@ -281,7 +281,7 @@ function SettingsFace({ hero, scope }: CoreProps) {
     path.reduce<unknown>(
       (acc, part) =>
         acc && typeof acc === "object"
-          ? (acc as JsonRecord)[part]
+          ? (acc as Record<string, unknown>)[part]
           : undefined,
       resource.data,
     );
@@ -391,13 +391,13 @@ function SettingsFace({ hero, scope }: CoreProps) {
   );
 
   /* ── the generic walker: survives ONLY inside System (§3.2) ── */
-  const walkerRows = (node: JsonRecord, path: string[]): ReactNode[] =>
+  const walkerRows = (node: Record<string, unknown>, path: string[]): ReactNode[] =>
     Object.entries(node).map(([key, item]) => {
       const nextPath = [...path, key];
       if (item !== null && typeof item === "object" && !Array.isArray(item))
         return (
           <GadgetGroup key={nextPath.join(".")} label={title(key)}>
-            {walkerRows(item as JsonRecord, nextPath)}
+            {walkerRows(item as Record<string, unknown>, nextPath)}
           </GadgetGroup>
         );
       if (typeof item === "boolean") return check(nextPath, title(key));
@@ -424,9 +424,9 @@ function SettingsFace({ hero, scope }: CoreProps) {
       case "hotkey":
         return (
           <HotkeyCapture
-            value={(data.hotkey ?? {}) as JsonRecord}
+            value={(data.hotkey ?? {}) as Record<string, unknown>}
             onCommit={(next) =>
-              update(["hotkey"], { ...(data.hotkey as JsonRecord), ...next })
+              update(["hotkey"], { ...(data.hotkey as Record<string, unknown>), ...next })
             }
             onRefuse={setRefusal}
           />
@@ -755,7 +755,7 @@ function SettingsFace({ hero, scope }: CoreProps) {
           </>
         );
       case "devices": {
-        const device = (data.device ?? {}) as JsonRecord;
+        const device = (data.device ?? {}) as Record<string, unknown>;
         return (
           <>
             <GadgetGroup label="Mesh">
@@ -835,7 +835,7 @@ function SettingsFace({ hero, scope }: CoreProps) {
           );
         return systemKeys.map((key) => (
           <GadgetGroup key={key} label={title(key)}>
-            {walkerRows(data[key] as JsonRecord, [key])}
+            {walkerRows(data[key] as Record<string, unknown>, [key])}
           </GadgetGroup>
         ));
       }

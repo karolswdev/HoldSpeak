@@ -33,7 +33,8 @@ function chars(body: unknown): string | null {
 }
 
 function memberCount(o: WorldObject): string | null {
-  const m = (o.ref as any).memberIds as string[] | undefined;
+  if (!("memberIds" in o.ref)) return null;
+  const m = o.ref.memberIds;
   return Array.isArray(m)
     ? `${m.length} ${m.length === 1 ? "member" : "members"}`
     : null;
@@ -42,25 +43,27 @@ function memberCount(o: WorldObject): string | null {
 /** The declared table. Kinds not listed inherit UNIVERSAL sections only. */
 export const INFO: Record<string, KindInfo> = {
   note: {
-    footprint: (o) => chars((o.ref as any).bodyMarkdown),
+    footprint: (o) => "bodyMarkdown" in o.ref ? chars(o.ref.bodyMarkdown) : null,
     properties: [],
   },
   kb: { footprint: (o) => memberCount(o), properties: [] },
   directory: { footprint: (o) => memberCount(o), properties: [] },
   artifact: {
-    footprint: (o) => chars((o.ref as any).bodyMarkdown),
+    footprint: (o) => "bodyMarkdown" in o.ref ? chars(o.ref.bodyMarkdown) : null,
     properties: [],
   },
   meeting: {
     footprint: (o) => {
-      const n = Number((o.ref as any).segmentCount || 0);
+      if (!("segmentCount" in o.ref)) return null;
+      const n = Number(o.ref.segmentCount || 0);
       return n > 0 ? `${n} ${n === 1 ? "segment" : "segments"}` : null;
     },
     properties: [],
   },
   project: {
     footprint: (o) => {
-      const n = Number((o.ref as any).meetingCount || 0);
+      if (!("meetingCount" in o.ref)) return null;
+      const n = Number(o.ref.meetingCount || 0);
       return `${n} ${n === 1 ? "meeting" : "meetings"}`;
     },
     properties: [],
@@ -80,7 +83,7 @@ export const INFO: Record<string, KindInfo> = {
             label: String(p.name || p.id),
           })),
         ],
-        value: (o) => String((o.ref as any).profileId || ""),
+        value: (o) => String("profileId" in o.ref ? o.ref.profileId || "" : ""),
         set: async (o, value) => {
           await useDesk
             .getState()
@@ -99,7 +102,7 @@ export function kindInfo(kind: string): KindInfo {
 export function filedZones(o: WorldObject, items: Items) {
   const ref = qualifiedRef(o.kind, o.id);
   return (items.directory || []).filter((d) => {
-    const members = ((d as any).memberIds as string[]) || [];
+    const members = d.memberIds || [];
     return members.includes(o.id) || members.includes(ref);
   });
 }

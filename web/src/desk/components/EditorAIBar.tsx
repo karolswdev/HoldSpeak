@@ -1,3 +1,4 @@
+import "./inline-editor.css";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { EditorView } from "@codemirror/view";
 import { runAsk } from "../ask";

@@ -4,6 +4,7 @@
 // HS-111-07 — the mark menu DERIVES from the one verb registry (its
 // hardcoded verb list was parallel list #2) and rides the WorkMenu
 // portal, so it draws over windows like every chrome transient.
+import "./chrome-menus.css";
 import { useEffect, useState, useRef } from "react";
 import { useTrustWindow } from "./TrustWindow";
 import { useDesk } from "../store";

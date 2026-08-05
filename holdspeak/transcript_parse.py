@@ -24,6 +24,8 @@ import re
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from .errors import TranscriptionError as _TranscriptionErrorBase
+
 __all__ = [
     "ParsedTranscript",
     "TranscriptCue",
@@ -40,8 +42,10 @@ TRANSCRIPT_SUFFIXES = frozenset({".vtt", ".srt", ".txt"})
 SYNTHETIC_CUE_SECONDS = 6.0
 
 
-class TranscriptParseError(Exception):
+class TranscriptParseError(_TranscriptionErrorBase):
     """Raised when a file yields no usable cues; the message is actionable."""
+
+    code: str = "TRANSCRIPT_PARSE_ERROR"
 
 
 @dataclass(frozen=True)

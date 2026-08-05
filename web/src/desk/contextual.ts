@@ -1,4 +1,5 @@
-import type { DeskItem, Items, Kind } from "./api";
+import type { Primitive, PrimitiveKind } from "../lib/primitives";
+import type { Items } from "./api";
 import { qualifiedRef } from "./api";
 import type { TrustDestination } from "./setup";
 import { allObjects, type WorldObject } from "./world";
@@ -6,7 +7,7 @@ import { allObjects, type WorldObject } from "./world";
 export interface SelectedMaterial {
   id: string;
   ref: string;
-  kind: Kind;
+  kind: PrimitiveKind;
   title: string;
   text: string;
   object: WorldObject;
@@ -30,12 +31,12 @@ export interface ContextualIntegrationAction {
 export interface ContextualCoderAction {
   id: string;
   label: string;
-  session: DeskItem;
+  session: Primitive;
   source: SelectedMaterial;
 }
 
-const CAPABILITY_KINDS = new Set<Kind>(["recipe", "chain", "workflow"]);
-const TEXT_MATERIAL_KINDS = new Set<Kind>(["note", "artifact"]);
+const CAPABILITY_KINDS = new Set<PrimitiveKind>(["recipe", "chain", "workflow"]);
+const TEXT_MATERIAL_KINDS = new Set<PrimitiveKind>(["note", "artifact"]);
 const INTEGRATION_IDS = new Set(["slack", "companion_webhook", "github"]);
 
 function selectionMatches(object: WorldObject, selected: string): boolean {
@@ -44,8 +45,8 @@ function selectionMatches(object: WorldObject, selected: string): boolean {
   );
 }
 
-function materialText(item: DeskItem): string {
-  return String(item.bodyMarkdown || "").trim();
+function materialText(item: Primitive): string {
+  return String("bodyMarkdown" in item ? item.bodyMarkdown : "").trim();
 }
 
 export function selectedMaterials(
@@ -89,11 +90,16 @@ export function contextualCapabilityActions(
   return allObjects(items)
     .filter((object) => CAPABILITY_KINDS.has(object.kind))
     .filter((object) => {
-      const capability = object.ref.capability as any;
+      const ref = object.ref;
+      const capability = ("capability" in ref ? ref.capability : null) as Record<string, unknown> | null | undefined;
+      if (!capability || typeof capability !== "object") return false;
+      const readiness = capability.readiness as Record<string, unknown> | undefined;
+      const inputSchema = capability.input_schema as Record<string, unknown> | undefined;
+      const effectClasses = capability.effect_classes as string[] | undefined;
       return (
-        capability?.readiness?.state === "ready" &&
-        capability?.input_schema?.required?.includes("input") &&
-        capability?.effect_classes?.includes("creates_artifact")
+        readiness?.state === "ready" &&
+        Array.isArray(inputSchema?.required) && (inputSchema?.required as string[]).includes("input") &&
+        Array.isArray(effectClasses) && effectClasses.includes("creates_artifact")
       );
     })
     .map((object) => ({
@@ -147,11 +153,11 @@ export function contextualCoderSessions(
       (session) => session.state === "waiting" || Boolean(session.question),
     )
     .map((session) => {
-      const target = String(session.title || "").trim();
+      const target = String(session.title || session.project || "").trim();
       return {
         id: session.id,
         label: `Send ${selected[0].title} to ${target ? `${target} Coder session` : "Coder session"}`,
-        session,
+        session: session as Primitive,
         source: selected[0],
       };
     });

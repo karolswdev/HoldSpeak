@@ -196,7 +196,7 @@ export function WorldStage() {
       const found = Object.values(useDesk.getState().items)
         .flat()
         .find((item) =>
-          [item.id, item.title, item.name]
+          [item.id, "title" in item ? item.title : "", "name" in item ? item.name : ""]
             .filter(Boolean)
             .some((value) => String(value).toLocaleLowerCase().includes(query)),
         );

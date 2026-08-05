@@ -9,10 +9,13 @@
 // are tokens behind the gear door, never a prose accordion.
 import { useMemo, useState } from "react";
 import { openCoderSession, openPersona } from "../../desk/shell";
-import type { CoreProps } from "./ActivityCore";
+import type {
+  CoreProps,
+  RecipesResponse,
+  CodersStatusResponse,
+} from "./core-types";
 import { Button } from "../../components/signal/Signal";
 import { asRows, rowId, useResource } from "../pageSupport";
-import { type JsonRecord } from "../../lib/api";
 import {
   SurfaceFacts,
   SurfaceLedger,
@@ -21,6 +24,7 @@ import {
 import { LampGadget } from "../../desk/surface/gadgets";
 import { presentValue } from "../../desk/surface/format";
 import { SurfaceWings, useWindowWings } from "../../desk/surface/wings";
+import { renderHeroSlot } from "./core-layout";
 import { DeliveryListSection } from "../../desk/components/DeliveryListSection";
 import { PrReceiptsSection } from "../../desk/components/PrReceiptsSection";
 
@@ -44,18 +48,18 @@ export function CompanionCore({ hero }: CoreProps) {
     />,
     [view, doorOpen],
   );
-  const recipes = useResource<JsonRecord>("/api/recipes", {});
-  const coders = useResource<JsonRecord>("/api/coders/status", {});
+  const recipes = useResource<RecipesResponse>("/api/recipes", {});
+  const coders = useResource<CodersStatusResponse>("/api/coders/status", {});
   const recipeRows = asRows(recipes.data, ["recipes"]).filter(
     (row) => !row.deleted,
   );
   const allSessions = asRows(
-    (coders.data.agent as JsonRecord | undefined)?.sessions,
+    coders.data.agent?.sessions,
     ["items", "sessions"],
   );
-  const isBlocked = (row: JsonRecord) =>
+  const isBlocked = (row: Record<string, unknown>) =>
     Boolean(
-      (row.session as JsonRecord | undefined)?.awaiting_response ??
+      (row.session as Record<string, unknown> | undefined)?.awaiting_response ??
         row.awaiting_response ??
         row.state === "waiting",
     );
@@ -65,14 +69,14 @@ export function CompanionCore({ hero }: CoreProps) {
     () => allSessions.filter((row) => !isBlocked(row)),
     [allSessions],
   );
-  const sessionKey = (row: JsonRecord, session: JsonRecord) =>
+  const sessionKey = (row: Record<string, unknown>, session: Record<string, unknown>) =>
     String(
       row.key ??
         session.key ??
         `${String(session.agent ?? "claude")}:${String(session.session_id ?? "")}`,
     );
-  const sessionRow = (row: JsonRecord, index: number, tone: "blocked" | "run") => {
-    const session = (row.session as JsonRecord | undefined) ?? row;
+  const sessionRow = (row: Record<string, unknown>, index: number, tone: "blocked" | "run") => {
+    const session = (row.session as Record<string, unknown> | undefined) ?? row;
     const key = sessionKey(row, session);
     // A blocked row opens in place by default: its question IS the board.
     const open = toggled[key] ?? tone === "blocked";
@@ -187,7 +191,7 @@ export function CompanionCore({ hero }: CoreProps) {
   );
   return (
     <>
-      {hero ? hero(null) : null}
+      {renderHeroSlot(hero, null)}
       {view === "delivery" ? deliveryFace : rosterFace}
     </>
   );

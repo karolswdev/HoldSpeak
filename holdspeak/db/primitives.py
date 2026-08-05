@@ -49,6 +49,8 @@ def _now_iso() -> str:
 class NoteRepository(BaseRepository):
     """CRUD + sync access for desk Notes (content/synced)."""
 
+    table = "notes"
+
     def upsert(
         self,
         *,
@@ -158,6 +160,8 @@ class NoteRepository(BaseRepository):
 
 class DeskDecisionRepository(BaseRepository):
     """CRUD access for Desk-authored Architecture Decision Records."""
+
+    table = "desk_decisions"
 
     VALID_STATUSES = frozenset({"proposed", "accepted", "superseded", "deprecated"})
 
@@ -295,6 +299,8 @@ class KBRepository(BaseRepository):
     The desk's knowledge container — NOT the project.yaml kb-map / .hs context.
     """
 
+    table = "kbs"
+
     def upsert(
         self,
         *,
@@ -423,6 +429,8 @@ class RecipeRepository(BaseRepository):
 
     The canonical persona — NOT agent_context.AgentSession (a live coding session).
     """
+
+    table = "recipes"
 
     def upsert(
         self,
@@ -558,6 +566,8 @@ class ProfileRepository(BaseRepository):
     request time. Mirrors the other primitive repos (soft-delete tombstones).
     """
 
+    table = "profiles"
+
     def upsert(
         self,
         *,
@@ -676,6 +686,8 @@ class ModelManifestRepository(BaseRepository):
     The model binary never syncs; no path/url/bytes column exists to leak it.
     Mirrors the other primitive repos (soft-delete tombstones)."""
 
+    table = "model_manifests"
+
     def upsert(
         self,
         *,
@@ -777,6 +789,8 @@ class ModelManifestRepository(BaseRepository):
 class ChainRepository(BaseRepository):
     """CRUD + sync access for Chains (capability/synced)."""
 
+    table = "chains"
+
     def upsert(
         self,
         *,
@@ -872,6 +886,8 @@ class ChainRepository(BaseRepository):
 
 class WorkflowRepository(BaseRepository):
     """CRUD + sync access for Workflows (capability/synced)."""
+
+    table = "workflows"
 
     def upsert(
         self,
@@ -980,6 +996,8 @@ class DirectoryRepository(BaseRepository):
     per-device layout and lives on the surface, never canonical. Membership (what
     is filed inside) is the separate `DirectoryMembershipRepository`.
     """
+
+    table = "directories"
 
     def upsert(
         self,
@@ -1101,6 +1119,8 @@ class DirectoryMembershipRepository(BaseRepository):
     Tombstone semantics: unfiling sets `deleted=1` (the row stays so the unfile
     propagates). `last_modified` is the last-write-wins conflict key.
     """
+
+    table = "directory_memberships"
 
     def upsert(
         self,
