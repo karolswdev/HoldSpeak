@@ -7,7 +7,7 @@ independently of the Database container.
 # Bump this when adding tables or columns; the Database container uses it to
 # decide whether to back up and re-apply. See core._ensure_schema for the
 # four-way upgrade contract.
-SCHEMA_VERSION = 36  # v36: Output minting columns (HS-118-06)
+SCHEMA_VERSION = 37  # v37: resolver_profile_id on workbenches (HS-118-05)
 
 # SQL Schema
 SCHEMA_SQL = """
@@ -1097,6 +1097,7 @@ CREATE TABLE IF NOT EXISTS workbenches (
     name TEXT NOT NULL DEFAULT '',
     recipe_id TEXT,
     profile_id TEXT,
+    resolver_profile_id TEXT,
     schedule TEXT,
     schedule_enabled INTEGER NOT NULL DEFAULT 0,
     item_order_json TEXT NOT NULL DEFAULT '[]',

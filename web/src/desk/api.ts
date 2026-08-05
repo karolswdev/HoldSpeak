@@ -279,6 +279,7 @@ export const fromWireWorkbench = (w: unknown): Workbench | null => {
     name: wireString(w, "name"),
     recipeId: wireStringOrNull(w, "recipe_id"),
     profileId: wireStringOrNull(w, "profile_id"),
+    resolverProfileId: wireStringOrNull(w, "resolver_profile_id"),
     schedule: wireRaw(w, "schedule") ?? null,
     scheduleEnabled: wireBool(w, "schedule_enabled"),
     itemCount: wireNumber(w, "item_count"),
@@ -786,4 +787,23 @@ export async function retryMint(
     { method: "POST" },
   );
   return data?.artifact_id ? String(data.artifact_id) : null;
+}
+
+/** HS-118-05: resolve voice references via the workbench's resolver profile. */
+export async function resolveVoiceReferences(
+  workbenchId: string,
+  transcript: string,
+  requestId: string,
+): Promise<{
+  refs: Array<{ name: string; id: string; ref: string; kind: string }>;
+  egress: { boundary: string; model: string };
+  request_id: string;
+  error?: string;
+  attempts?: number;
+}> {
+  return apiFetch(`/api/workbenches/${encodeURIComponent(workbenchId)}/voice/resolve`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ transcript, request_id: requestId }),
+  });
 }

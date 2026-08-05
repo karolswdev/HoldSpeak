@@ -327,6 +327,7 @@ export interface Workbench {
   name: string;
   recipeId?: string | null;
   profileId?: string | null;
+  resolverProfileId?: string | null;
   schedule?: unknown | null;
   scheduleEnabled?: boolean;
   itemCount?: number;

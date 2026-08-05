@@ -12,6 +12,7 @@ export interface WorkbenchDetail {
   name: string;
   recipe_id: string | null;
   profile_id: string | null;
+  resolver_profile_id: string | null;
   schedule: string | null;
   schedule_enabled: boolean;
   items: WorkbenchItem[];

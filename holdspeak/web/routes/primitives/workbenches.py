@@ -16,6 +16,7 @@ from ...runtime_support import error_500
 from ._shared import _json_body, _new_id
 
 log = get_logger("web.routes.workbenches")
+_resolve_timestamps: dict[str, float] = {}
 
 
 def build_workbenches_router(ctx: WebContext) -> APIRouter:
@@ -40,6 +41,7 @@ def build_workbenches_router(ctx: WebContext) -> APIRouter:
             "name": str(pick("name", existing.name if existing else "")),
             "recipe_id": (pick("recipe_id", existing.recipe_id if existing else None) or None),
             "profile_id": (pick("profile_id", existing.profile_id if existing else None) or None),
+            "resolver_profile_id": (pick("resolver_profile_id", existing.resolver_profile_id if existing else None) or None),
             "schedule": (pick("schedule", existing.schedule if existing else None) or None),
             "schedule_enabled": bool(pick("schedule_enabled", existing.schedule_enabled if existing else False)),
             "item_order": list(pick("item_order", [])),
@@ -271,6 +273,171 @@ def build_workbenches_router(ctx: WebContext) -> APIRouter:
             return JSONResponse({"run": result})
         except Exception as exc:
             return error_500(exc, log, "Failed to run workbench")
+
+    # ── Voice resolution (HS-118-05) ─────────────────────────────────────
+
+    @router.post("/api/workbenches/{workbench_id}/voice/resolve")
+    async def api_voice_resolve(workbench_id: str, request: Request) -> Any:
+        """Resolve natural-language zone references via the resolver profile."""
+        import time as _time
+        now = _time.monotonic()
+        last = _resolve_timestamps.get(workbench_id, 0.0)
+        if now - last < 2.0:
+            return JSONResponse(
+                {"error": "resolver_rate_limited", "detail": "Wait before retrying"},
+                status_code=429,
+            )
+        _resolve_timestamps[workbench_id] = now
+
+        body = await _json_body(request)
+        if body is None:
+            return JSONResponse({"error": "expected a JSON object"}, status_code=400)
+        transcript = str(body.get("transcript") or "").strip()
+        if not transcript:
+            return JSONResponse({"error": "transcript is required"}, status_code=400)
+        request_id = str(body.get("request_id") or "")
+        try:
+            from ....db import get_database
+            db = get_database()
+            wb = db.workbenches.get(workbench_id)
+            if wb is None:
+                return JSONResponse({"error": f"Unknown workbench: {workbench_id}"}, status_code=404)
+
+            if not wb.resolver_profile_id:
+                return JSONResponse(
+                    {"error": "resolver_not_configured", "detail": "No resolver profile set on this workbench"},
+                    status_code=409,
+                )
+
+            # Check target readiness
+            from ....inference_targets import resolve_inference_target
+            target = resolve_inference_target(db, wb.resolver_profile_id)
+            if not target.ready:
+                return JSONResponse(
+                    {"error": "resolver_unavailable", "detail": target.readiness_reason},
+                    status_code=503,
+                )
+
+            # Load zone catalog
+            zones_raw = db.directories.list()
+            from ....voice_resolver import ZoneCatalogEntry, resolve_voice_references
+            zones = [
+                ZoneCatalogEntry(
+                    id=z.id,
+                    name=z.name,
+                    items=0,
+                )
+                for z in zones_raw
+                if not getattr(z, "deleted", False)
+            ]
+
+            if not zones:
+                return JSONResponse({
+                    "refs": [],
+                    "egress": {"boundary": target.boundary, "model": target.model},
+                    "request_id": request_id,
+                })
+
+            # Kernel admission (Article XI)
+            operation_id = ""
+            try:
+                from ....kernel.runtime import submit as kernel_submit, receipt as kernel_receipt, _as_principal
+                from ....principals import Principal, PrincipalKind
+                import hashlib
+
+                principal = Principal(PrincipalKind.OWNER, "voice_resolver")
+                with _as_principal(principal):
+                    handle = kernel_submit({
+                        "request_schema": 1,
+                        "request_id": request_id or f"vr_{workbench_id}",
+                        "idempotency_key": f"voice_resolve:{workbench_id}:{hashlib.sha256(transcript.encode()).hexdigest()[:16]}",
+                        "operation": {"name": "voice_reference_resolve", "version": 1},
+                        "target": {},
+                        "arguments": {
+                            "workbench_id": workbench_id,
+                            "profile_id": wb.resolver_profile_id,
+                            "transcript_hash": hashlib.sha256(transcript.encode()).hexdigest(),
+                        },
+                    })
+                if handle.get("state") == "refused":
+                    return JSONResponse(
+                        {"error": "resolver_refused", "detail": handle.get("receipt", {}).get("outcome", "unknown")},
+                        status_code=403,
+                    )
+                operation_id = handle.get("operation_id", "")
+            except Exception as kernel_exc:
+                log.warning(f"Kernel admission failed for voice resolve: {kernel_exc}")
+
+            # Build model call function using the profile's engine
+            from ....intel.providers import build_meeting_intel_for_profile
+
+            def run_prompt_fn(*, prompt: str, profile_id: str, max_tokens: int, timeout: float) -> str:
+                prof = db.profiles.get(profile_id)
+                if prof is None:
+                    raise RuntimeError(f"Resolver profile not found: {profile_id}")
+                engine = build_meeting_intel_for_profile(
+                    kind=prof.kind,
+                    base_url=prof.base_url or None,
+                    model=prof.model or None,
+                    profile_id=profile_id,
+                    node=getattr(prof, "node", "") or "",
+                )
+                engine.cloud_timeout_seconds = timeout
+                engine.max_tokens = max_tokens
+                engine.temperature = 0.1
+                return engine.run_prompt(
+                    system_prompt="",
+                    user_prompt=prompt,
+                    temperature=0.1,
+                    max_tokens=max_tokens,
+                )
+
+            result = resolve_voice_references(
+                zones=zones,
+                transcript=transcript,
+                run_prompt_fn=run_prompt_fn,
+                profile_id=wb.resolver_profile_id,
+                request_id=request_id,
+            )
+
+            # Terminal receipt
+            if operation_id:
+                try:
+                    outcome = "succeeded" if result.terminal_state == "success" else result.terminal_state
+                    with _as_principal(principal):
+                        kernel_receipt(operation_id, outcome, f"workbench:{workbench_id}")
+                except Exception as receipt_exc:
+                    log.debug(f"Kernel receipt failed for voice resolve: {receipt_exc}")
+
+            if result.terminal_state == "timeout":
+                return JSONResponse({
+                    "refs": [],
+                    "error": "resolver_timeout",
+                    "egress": {"boundary": target.boundary, "model": target.model},
+                    "request_id": request_id,
+                    "attempts": result.attempts,
+                })
+
+            if result.terminal_state in ("parse_failure", "error"):
+                return JSONResponse({
+                    "refs": [],
+                    "error": f"resolver_{result.terminal_state}",
+                    "egress": {"boundary": target.boundary, "model": target.model},
+                    "request_id": request_id,
+                    "attempts": result.attempts,
+                })
+
+            return JSONResponse({
+                "refs": [
+                    {"name": r.name, "id": r.id, "ref": r.ref, "kind": r.kind}
+                    for r in result.refs
+                ],
+                "egress": {"boundary": target.boundary, "model": target.model},
+                "request_id": request_id,
+                "attempts": result.attempts,
+            })
+        except Exception as exc:
+            return error_500(exc, log, "Failed to resolve voice references")
 
     # ── Run history ─────────────────────────────────────────────────────────
 

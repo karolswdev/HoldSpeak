@@ -39,6 +39,7 @@ class WorkbenchRepository(BaseRepository):
         name: str = "",
         recipe_id: Optional[str] = None,
         profile_id: Optional[str] = None,
+        resolver_profile_id: Optional[str] = None,
         schedule: Optional[str] = None,
         schedule_enabled: bool = False,
         item_order: Optional[list[str]] = None,
@@ -57,14 +58,16 @@ class WorkbenchRepository(BaseRepository):
             created = created_at or (existing["created_at"] if existing else now)
             conn.execute(
                 """
-                INSERT INTO workbenches (id, name, recipe_id, profile_id, schedule,
+                INSERT INTO workbenches (id, name, recipe_id, profile_id,
+                                        resolver_profile_id, schedule,
                                         schedule_enabled, item_order_json,
                                         created_at, last_modified, deleted)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(id) DO UPDATE SET
                     name = excluded.name,
                     recipe_id = excluded.recipe_id,
                     profile_id = excluded.profile_id,
+                    resolver_profile_id = excluded.resolver_profile_id,
                     schedule = excluded.schedule,
                     schedule_enabled = excluded.schedule_enabled,
                     item_order_json = excluded.item_order_json,
@@ -76,6 +79,7 @@ class WorkbenchRepository(BaseRepository):
                     str(name or ""),
                     str(recipe_id).strip() if recipe_id else None,
                     str(profile_id).strip() if profile_id else None,
+                    str(resolver_profile_id).strip() if resolver_profile_id else None,
                     str(schedule).strip() if schedule else None,
                     1 if schedule_enabled else 0,
                     self._json_dumps(item_order or [], fallback="[]"),
@@ -135,6 +139,7 @@ class WorkbenchRepository(BaseRepository):
             name=row["name"],
             recipe_id=row["recipe_id"],
             profile_id=row["profile_id"],
+            resolver_profile_id=row["resolver_profile_id"] if "resolver_profile_id" in row.keys() else None,
             schedule=row["schedule"],
             schedule_enabled=bool(row["schedule_enabled"]),
             item_order_json=row["item_order_json"] or "[]",

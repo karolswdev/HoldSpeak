@@ -462,6 +462,13 @@ def _migrate_columns(conn: sqlite3.Connection, stored: int) -> None:
     if "mint_attempted" not in wb_item_cols:
         conn.execute("ALTER TABLE workbench_items ADD COLUMN mint_attempted INTEGER NOT NULL DEFAULT 0")
 
+    # HS-118-05: resolver_profile_id on workbenches
+    wb_cols = {
+        row[1] for row in conn.execute("PRAGMA table_info(workbenches)").fetchall()
+    }
+    if "resolver_profile_id" not in wb_cols:
+        conn.execute("ALTER TABLE workbenches ADD COLUMN resolver_profile_id TEXT")
+
     # HS-118-06: mint_failures on workbench_runs
     wb_run_cols = {
         row[1] for row in conn.execute("PRAGMA table_info(workbench_runs)").fetchall()

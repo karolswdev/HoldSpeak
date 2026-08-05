@@ -32,6 +32,8 @@ import {
   type GroundingSelection,
 } from "../grounding";
 import type { ResolvedRef } from "../../lib/drawerResolver";
+import { resolveDrawerNames } from "../../lib/drawerResolver";
+import { resolveVoiceReferences } from "../api";
 import { DeskWindowFrame } from "./DeskWindow";
 import { DeskWindowFooter } from "./DeskWindowFooter";
 import { AgentAvatar } from "./AgentAvatar";
@@ -180,6 +182,7 @@ function ConfigPanel({
   lamp,
   onUpdateRecipe,
   onUpdateTarget,
+  onUpdateResolverProfile,
   onUpdateSchedule,
   onToggleSchedule,
   onAttachSkill,
@@ -195,6 +198,7 @@ function ConfigPanel({
   lamp: { label: string; tone: string };
   onUpdateRecipe: (id: string) => void;
   onUpdateTarget: (id: string) => void;
+  onUpdateResolverProfile: (id: string | null) => void;
   onUpdateSchedule: (cron: string | null) => void;
   onToggleSchedule: (enabled: boolean) => void;
   onAttachSkill: (skillId: string) => void;
@@ -319,6 +323,30 @@ function ConfigPanel({
             on={lamp.tone !== "fail"}
             tone={lamp.tone as "ok" | "warn" | "fail"}
           />
+        </div>
+      </SurfaceSection>
+
+      {/* ── resolves with (HS-118-05) ──────────────────────────────── */}
+      <SurfaceSection label="RESOLVES WITH">
+        <div className="wb-config-runs-on">
+          <RunsOnPicker
+            targets={inferenceTargets}
+            selectedId={detail.resolver_profile_id || ""}
+            onChange={(id) => onUpdateResolverProfile(id || null)}
+          />
+          {detail.resolver_profile_id ? (() => {
+            const rt = inferenceTargets.find(
+              (t: any) => t.profile_id === detail.resolver_profile_id || t.id === detail.resolver_profile_id
+            );
+            const rl = rt ? boundaryEgressLamp(rt.boundary) : null;
+            return rl ? (
+              <LampGadget
+                label={rl.label}
+                on={rl.tone !== "fail"}
+                tone={rl.tone as "ok" | "warn" | "fail"}
+              />
+            ) : null;
+          })() : null}
         </div>
       </SurfaceSection>
 
@@ -774,6 +802,9 @@ export function WorkbenchWindow({
   const [openRunId, setOpenRunId] = useState<string | null>(null);
   const [voiceProposal, setVoiceProposal] = useState<VoiceProposal | null>(null);
   const [dropHover, setDropHover] = useState(false);
+  const [resolving, setResolving] = useState(false);
+  const [resolverError, setResolverError] = useState<string | null>(null);
+  const generationRef = useRef(0);
   const configAutoExpanded = useRef(false);
 
   /* ── @-reference autocomplete state ─────────────────────────────── */
@@ -857,6 +888,12 @@ export function WorkbenchWindow({
   );
   const lamp = boundaryEgressLamp(target?.boundary);
 
+  const resolverProfileId = detail?.resolver_profile_id || null;
+  const resolverTarget = resolverProfileId
+    ? inferenceTargets.find((t: any) => t.profile_id === resolverProfileId || t.id === resolverProfileId)
+    : null;
+  const resolverLamp = resolverTarget ? boundaryEgressLamp(resolverTarget.boundary) : null;
+
   useEffect(() => {
     if (detail && configOpen === null && !configAutoExpanded.current) {
       configAutoExpanded.current = true;
@@ -929,6 +966,12 @@ export function WorkbenchWindow({
   const updateName = (name: string) => void updateField({ name });
   const updateRecipe = (id: string) => void updateField({ recipe_id: id });
   const updateTarget = (id: string) => void updateField({ profile_id: id });
+  const updateResolverProfile = (id: string | null) => {
+    generationRef.current++;
+    setResolving(false);
+    setResolverError(null);
+    void updateField({ resolver_profile_id: id });
+  };
   const updateSchedule = (cron: string | null) =>
     void updateField({
       schedule: cron,
@@ -982,6 +1025,9 @@ export function WorkbenchWindow({
   /* ── item actions ──────────────────────────────────────────────── */
 
   const addItem = async () => {
+    generationRef.current++;
+    setResolverError(null);
+    setResolving(false);
     const title = newTitle.trim();
     if (!title) return;
     // Derive a short title (first 64 chars at word boundary) from the full instruction.
@@ -1006,6 +1052,7 @@ export function WorkbenchWindow({
     try {
       await addWorkbenchItem(workbenchId, payload);
       setNewTitle("");
+      setResolverError(null);
       setNewBody("");
       setNewPriority(3);
       setGrounding(emptyGrounding());
@@ -1231,6 +1278,7 @@ export function WorkbenchWindow({
             lamp={lamp}
             onUpdateRecipe={updateRecipe}
             onUpdateTarget={updateTarget}
+            onUpdateResolverProfile={updateResolverProfile}
             onUpdateSchedule={updateSchedule}
             onToggleSchedule={toggleSchedule}
             onAttachSkill={attachSkill}
@@ -1302,6 +1350,15 @@ export function WorkbenchWindow({
 
             {/* ── inlet (HS-118-03/04) ─────────────────────────────── */}
             <div className="wb-inlet" style={{ position: "relative" }}>
+              {/* pre-call egress disclosure (HS-118-05) */}
+              {resolverLamp ? (
+                <div className="wb-inlet-egress">
+                  <EgressChip
+                    label={`RESOLVER ${resolverLamp.label}`}
+                    scope={resolverLamp.tone === "ok" ? "local" : resolverLamp.tone === "fail" ? "cloud" : "mixed"}
+                  />
+                </div>
+              ) : null}
               {/* grounding tray */}
               {groundingRefs.length > 0 ? (
                 <div className="wb-inlet-tray">
@@ -1320,6 +1377,26 @@ export function WorkbenchWindow({
                   ))}
                 </div>
               ) : null}
+              {/* resolving indicator (HS-118-05) */}
+              {resolving ? (
+                <div className="wb-inlet-resolving">
+                  <LedMeter label="RESOLVING" value={0} scanning />
+                </div>
+              ) : null}
+              {/* resolver error chips (HS-118-05) */}
+              {resolverError ? (
+                <div className="wb-inlet-tray">
+                  <span className="desk-chip quiet" data-tone="fail">
+                    {resolverError === "resolver_timeout"
+                      ? "RESOLVER TIMEOUT"
+                      : resolverError === "resolver_unavailable"
+                        ? "RESOLVER UNAVAILABLE"
+                        : resolverError === "resolver_not_configured"
+                          ? "RESOLVER NOT CONFIGURED"
+                          : "RESOLVER ERROR"}
+                  </span>
+                </div>
+              ) : null}
               {/* autocomplete popover */}
               {acOpen ? (
                 <InletAutocomplete
@@ -1334,7 +1411,47 @@ export function WorkbenchWindow({
                 <MicButton
                   draftScope={`workbench:${workbenchId}`}
                   grammar={workbenchVoiceGrammar}
-                  onText={(t) => setNewTitle((v) => (v ? v + " " + t : t))}
+                  onText={(t) => {
+                    const gen = ++generationRef.current;
+
+                    // Insert transcript IMMEDIATELY — before any async work
+                    setNewTitle((v) => (v ? v + " " + t : t));
+
+                    // Fast path: immediate client-side resolution
+                    const fastZones = useDesk.getState().items.directory || [];
+                    const { refs: fastRefs } = resolveDrawerNames(t, fastZones);
+                    fastRefs.forEach((r) => addGroundingRef(r));
+
+                    // Smart path: fire-and-forget (if configured)
+                    if (resolverProfileId && detail) {
+                      setResolving(true);
+                      setResolverError(null);
+                      resolveVoiceReferences(
+                        workbenchId,
+                        t,
+                        `vr_${gen}_${Date.now()}`,
+                      ).then((result) => {
+                        if (generationRef.current !== gen) return;
+                        if (result.error) {
+                          setResolverError(result.error);
+                        } else {
+                          result.refs.forEach((r) => addGroundingRef(r));
+                        }
+                      }).catch((err: unknown) => {
+                        if (generationRef.current !== gen) return;
+                        const status = (err as { status?: number }).status;
+                        if (status === 409) {
+                          setResolverError("resolver_not_configured");
+                        } else if (status === 503) {
+                          setResolverError("resolver_unavailable");
+                        } else {
+                          setResolverError("resolver_error");
+                        }
+                      }).finally(() => {
+                        if (generationRef.current === gen) setResolving(false);
+                      });
+                    }
+                  }}
                   onProposalConfirm={(p) => setVoiceProposal(p)}
                   onState={handleMicState}
                 />

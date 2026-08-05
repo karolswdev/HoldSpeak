@@ -122,6 +122,7 @@ class WorkbenchRecord(Serializable):
     name: str
     recipe_id: Optional[str] = None
     profile_id: Optional[str] = None
+    resolver_profile_id: Optional[str] = None
     schedule: Optional[str] = None
     schedule_enabled: bool = False
     item_order_json: str = "[]"
@@ -135,6 +136,7 @@ class WorkbenchRecord(Serializable):
             "name": self.name,
             "recipe_id": self.recipe_id,
             "profile_id": self.profile_id,
+            "resolver_profile_id": self.resolver_profile_id,
             "schedule": self.schedule,
             "schedule_enabled": self.schedule_enabled,
             "item_order": json.loads(self.item_order_json) if self.item_order_json else [],
