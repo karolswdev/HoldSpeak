@@ -1,1 +1,1 @@
-Surface group stories 03+04+05+06 are designed to ship together — they depend on the same foundation (stories 01/02/08) and collectively remediate every surface on the Desk against the audit checklist.
+Phase 116 product surface: stories 10-19 shipped as one delivery (config panel, item depth, run feedback, hardening, voice, memory, skill library, first-class app, drop-to-work, the walk).

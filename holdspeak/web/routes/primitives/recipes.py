@@ -193,9 +193,10 @@ def build_recipes_router(ctx: WebContext) -> APIRouter:
             try:
                 # off the event loop: a mesh run WAITS on the relay queue, and
                 # THIS loop must stay free to serve the worker's claim polls
+                from ....skill_injection import inject_skills
                 output = await asyncio.to_thread(
                     intel.run_prompt,
-                    system_prompt=recipe.system_prompt,
+                    system_prompt=inject_skills(recipe.system_prompt, recipe_id),
                     user_prompt=user_prompt,
                     temperature=float(temperature) if temperature is not None else None,
                     max_tokens=int(max_tokens) if max_tokens is not None else None,
@@ -409,7 +410,9 @@ def build_recipes_router(ctx: WebContext) -> APIRouter:
             prof = db.profiles.get(ran_profile_id) if ran_profile_id else None
             intel = build_intel_for_target(target, db)
 
-            system_prompt = (recipe.system_prompt or "").strip() or f"You are {name}, a helpful assistant."
+            from ....skill_injection import inject_skills
+            raw_system = (recipe.system_prompt or "").strip() or f"You are {name}, a helpful assistant."
+            system_prompt = inject_skills(raw_system, recipe_id)
             _run_frame(ctx, "running", kind="recipe", ref=recipe_id, name=name)
             try:
                 output = await asyncio.to_thread(

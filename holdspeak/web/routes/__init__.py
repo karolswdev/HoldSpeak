@@ -31,6 +31,7 @@ from .memory import build_memory_router
 from .mesh import build_mesh_router
 from .missioncontrol import build_missioncontrol_router
 from .pages import build_pages_router
+from .constitutional import build_constitutional_router
 from .primitives import build_primitives_router
 from .projections import build_projections_router
 from .projects import build_projects_router
@@ -67,6 +68,7 @@ __all__ = [
     "build_projects_router",
     "build_roadmaps_router",
     "build_repositories_router",
+    "build_constitutional_router",
     "build_setup_router",
     "build_sync_router",
     "build_system_router",

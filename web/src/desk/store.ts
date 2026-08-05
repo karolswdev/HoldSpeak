@@ -298,6 +298,8 @@ interface DeskState {
   roadmapWindows: { slug: string; origin: { x: number; y: number } | null }[];
   /** Registered git sources open as physical desk drawers. */
   repositoryWindows: { id: string; origin: { x: number; y: number } | null }[];
+  /** Agent workbenches open as their own desk windows. */
+  workbenchWindows: { id: string; origin: { x: number; y: number } | null }[];
   /** The zone a live drag is hovering (the drop affordance, HS-73-05). */
   hoverZoneId: string | null;
   /** The freshly-created zone whose rename is focused. */
@@ -340,7 +342,7 @@ interface DeskState {
   /** Create in-world (HS-73-03): instant POST, spawn at center, NEW beat,
    * editor open. The object IS the editor — no modal, ever. */
   createPrimitive(
-    kind: "note" | "decision" | "kb" | "recipe" | "zone" | "workflow",
+    kind: "note" | "decision" | "kb" | "recipe" | "zone" | "workflow" | "workbench",
   ): Promise<void>;
   /** Register a Delivery source (or local worktree) as a repository drawer. */
   registerRepository(input: { sourceId?: string; path?: string; label?: string }): Promise<void>;
@@ -376,6 +378,8 @@ interface DeskState {
   closeRoadmapWindow(slug: string): void;
   openRepositoryWindow(id: string, origin?: { x: number; y: number }): void;
   closeRepositoryWindow(id: string): void;
+  openWorkbenchWindow(id: string, origin?: { x: number; y: number }): void;
+  closeWorkbenchWindow(id: string): void;
   setHoverZone(id: string | null): void;
   setRenamingZone(id: string | null): void;
   diveInto(zoneId: string): void;
@@ -495,6 +499,7 @@ export const useDesk = create<DeskState>((set, get) => ({
   infoWindows: [],
   roadmapWindows: [],
   repositoryWindows: [],
+  workbenchWindows: [],
   hoverZoneId: null,
   renamingZoneId: null,
   selectedIds: [],
@@ -548,6 +553,7 @@ export const useDesk = create<DeskState>((set, get) => ({
       // the automaton sprite" (the server's own default is "" too).
       recipe: ["/api/recipes", "recipe", { name: "New Agent", avatar: "" }],
       zone: ["/api/directories", "directory", { name: "New zone" }],
+      workbench: ["/api/workbenches", "workbench", { name: "New Workbench" }],
       // HSM-22-03 — a workflow is born with a real one-step linear graph in
       // the canonical wire shape (never an empty {} the run route must refuse).
       workflow: [
@@ -588,6 +594,7 @@ export const useDesk = create<DeskState>((set, get) => ({
     if (createdId) {
       get().markNew(createdId);
       if (kind === "zone") get().setRenamingZone(createdId);
+      else if (kind === "workbench") get().openWorkbenchWindow(createdId);
       else get().openEditor(createdId);
     }
   },
@@ -760,6 +767,10 @@ export const useDesk = create<DeskState>((set, get) => ({
       get().openRepositoryWindow(id, origin);
       return;
     }
+    if ((get().items.workbench || []).some((wb) => wb.id === id)) {
+      get().openWorkbenchWindow(id, origin);
+      return;
+    }
     const projectId = id.startsWith("project:")
       ? id.slice("project:".length)
       : (get().items.project || []).some((project) => project.id === id)
@@ -835,6 +846,29 @@ export const useDesk = create<DeskState>((set, get) => ({
   },
   closeRepositoryWindow(id) {
     set({ repositoryWindows: get().repositoryWindows.filter((window) => window.id !== id) });
+  },
+  openWorkbenchWindow(id, origin) {
+    const open = get().workbenchWindows;
+    const panelId = `workbench:${id}`;
+    if (!open.some((window) => window.id === id)) {
+      set({ workbenchWindows: [...open, { id, origin: origin ?? null }] });
+      if (!get().panelRects[panelId]) {
+        const vw = window.innerWidth || 1280;
+        const vh = window.innerHeight || 800;
+        const w = Math.min(640, vw - 40);
+        const h = Math.min(520, vh - 100);
+        get().setPanelRect(panelId, {
+          x: Math.round((vw - w) / 2),
+          y: Math.round((vh - h) * 0.3),
+          w,
+          h,
+        });
+      }
+    }
+    get().focusPanel(panelId);
+  },
+  closeWorkbenchWindow(id) {
+    set({ workbenchWindows: get().workbenchWindows.filter((window) => window.id !== id) });
   },
   setZoneViewPref(id, pref) {
     const current = get().zoneViewPrefs[id] || {
@@ -1249,6 +1283,7 @@ export const useDesk = create<DeskState>((set, get) => ({
       infoWindows: [],
       roadmapWindows: [],
       repositoryWindows: [],
+  workbenchWindows: [],
       divedZone: null,
       editingId: null,
       selectedIds: [],

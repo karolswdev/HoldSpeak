@@ -104,7 +104,7 @@ describe("the deck", () => {
     open();
     expect(screen.getByText("PROGRAMS")).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: /Workflow editor/ }),
+      screen.getByRole("button", { name: /Workbenches/ }),
     ).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: /Processes/ }),

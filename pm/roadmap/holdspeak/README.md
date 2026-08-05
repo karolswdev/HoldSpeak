@@ -4,13 +4,20 @@
 > pick up, and the repo conventions that bite (PMO commit gate, write-once
 > evidence, no `Co-Authored-By`, metal-test exclusion).
 
-**Newest update (2026-08-03): Phase 115 — The Polish — CHARTERED.**
-73 violations found across ~30 Desk surfaces by a 7-agent terra audit
-(526k tokens, 114 tool calls). 27 BROKEN, 22 UGLY, 24 DRIFT. Seven
-stories: shared material foundations, content sanitization, object
-windows, system surfaces, hosted cores, the Rails window redesign,
-and the verification walk. Audit artifact:
-https://claude.ai/code/artifact/f5788f46-2b99-4e7f-b6e5-281c03e7c01c
+**Newest update (2026-08-03): Phase 116 — The Workbench — CHARTERED.**
+The Workbench is a new desk primitive — a surface where an agent sits,
+works through items, and produces receipts. One agent, one inference
+target, one schedule. Nine stories: the contract (schema/API/kernel),
+the surface (desk window), constitutional context (always-on briefing),
+the composer (voice/text/grounding/drop), pre-built templates (TODO,
+Triage, Meeting Prep, Delivery), skills (reusable procedural knowledge),
+the conductor (scheduled runs), the morning brief (first autonomous
+workbench), and the walk. Grounded in Hermes Agent research,
+Delivery Workbench Phase 36, and the existing inference target system.
+
+**Previous update (2026-08-03): Phase 115 — The Polish — DONE (8/8).**
+73 violations remediated across ~30 Desk surfaces. Every surface on the
+Desk now looks like it was born from the same OS.
 
 **Previous update (2026-08-02): Phase 112 — Enough — CHARTERED.** The
 owner's post-111 verdict, verbatim: "Enough with the
@@ -305,6 +312,11 @@ parallel. Phase 101 itself stands at 3/4 (canon ratified and built,
 PR #359; sweep 4122/0).
 
 **Current phase (newest):**
+[**Phase 116 — The Workbench**](./phase-116-the-workbench/current-phase-status.md)
+— **CHARTERED (0/9, 2026-08-03)**. The agentic platform phase: the
+Workbench primitive (agent + target + schedule + items), constitutional
+context, skills, scheduled conductor, pre-built templates, and the
+morning brief as the first autonomous workbench. Previous:
 [**Phase 112 — Enough**](./phase-112-enough/current-phase-status.md)
 — **CHARTERED (0/6, 2026-08-02)**. The owner's verdict made a phase:
 one dial (endpoint+model collapses onto the InferenceTarget with the

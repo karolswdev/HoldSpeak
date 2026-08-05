@@ -42,6 +42,7 @@ describe("floorMenuEntries", () => {
       "New Knowledge",
       "New Agent",
       "New Workflow",
+      "New Workbench",
       "New Zone",
     ]);
     const note = news.entries[0] as Extract<WorkMenuEntry, { type: "item" }>;

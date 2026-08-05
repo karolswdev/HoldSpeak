@@ -157,6 +157,16 @@ export const VERBS: Verb[] = [
     run: () => void useDesk.getState().createPrimitive("workflow"),
   },
   {
+    id: "desk.new-workbench",
+    label: "New Workbench",
+    menu: "desk",
+    scope: "floor",
+    group: "new",
+    keywords: ["create", "agent", "todo", "backlog"],
+    ghost: never,
+    run: () => void useDesk.getState().createPrimitive("workbench"),
+  },
+  {
     id: "desk.new-zone",
     label: "New Zone",
     menu: "desk",

@@ -27,7 +27,7 @@ describe("the Desk OS route inventory", () => {
         "/commands",
         "/cadence",
         "/studio",
-        "/workbench",
+        "/workbenches",
         "/profiles",
         "/companion",
         "/docs/dictation-runtime",

@@ -42,6 +42,7 @@ describe("the verb registry (HS-105-05 / HS-111-07 v2)", () => {
       "desk.new-knowledge",
       "desk.new-agent",
       "desk.new-workflow",
+      "desk.new-workbench",
       "desk.new-zone",
     ]);
     for (const v of verbsFor("floor").filter((x) => x.group === "new"))

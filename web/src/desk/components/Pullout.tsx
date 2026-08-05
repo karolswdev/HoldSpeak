@@ -342,7 +342,7 @@ export function Pullout({
             type="button"
             className="desk-chip quiet"
             onClick={() =>
-              openSurfaceOr("build-workflow", "/workbench", resourceRef)
+              openSurfaceOr("open-workbenches", "/workbenches", resourceRef)
             }
           >
             Edit Workflow

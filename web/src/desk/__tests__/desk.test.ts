@@ -171,6 +171,7 @@ describe("world math", () => {
       { kind: "directory", id: "z", name: "Z", memberIds: ["m1"] } as any,
     ],
     coder: [],
+    workbench: [],
   };
   it("flattens in the canonical order and filters on dive", () => {
     // m1 is FILED into z: the root stage shows only the unfiled note (the
@@ -215,6 +216,7 @@ describe("qualified pull-out identity", () => {
     chain: [],
     workflow: [],
     coder: [],
+    workbench: [],
   } as Items;
 
   it("resolves collisions and canonical capability aliases exactly", () => {

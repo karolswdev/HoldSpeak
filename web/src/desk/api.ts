@@ -20,7 +20,8 @@ export type Kind =
   | "coder"
   | "roadmap"
   | "story"
-  | "repository";
+  | "repository"
+  | "workbench";
 
 export interface DeskItem {
   kind: Kind;
@@ -125,6 +126,7 @@ export const EMPTY_ITEMS: Items = {
   roadmap: [],
   story: [],
   repository: [],
+  workbench: [],
 };
 
 async function fetchJson(url: string, opts?: RequestInit): Promise<any> {
@@ -235,6 +237,21 @@ export const fromWireKb = (k: any): DeskItem => ({
   createdAt: k.created_at,
   // HS-105-01: freshness source (kbs[].last_modified), previously discarded.
   lastModified: k.last_modified || null,
+});
+
+export const fromWireWorkbench = (w: any): DeskItem => ({
+  kind: "workbench",
+  id: w.id,
+  name: w.name,
+  recipeId: w.recipe_id || null,
+  profileId: w.profile_id || null,
+  schedule: w.schedule || null,
+  scheduleEnabled: w.schedule_enabled || false,
+  itemCount: w.item_count || 0,
+  pendingCount: w.pending_count || 0,
+  lastRun: w.last_run || null,
+  createdAt: w.created_at,
+  lastModified: w.last_modified || null,
 });
 
 export const fromWireDirectory = (d: any): DeskItem => ({
@@ -440,6 +457,14 @@ export async function loadAll(): Promise<LoadResult> {
         status.workflow = "live";
       })
       .catch((e) => fail("workflow", "Workflows", e)),
+    fetchJson("/api/workbenches")
+      .then((d) => {
+        items.workbench = (d.workbenches || [])
+          .filter((w: any) => !w.deleted)
+          .map(fromWireWorkbench);
+        status.workbench = "live";
+      })
+      .catch((e) => fail("workbench", "Workbenches", e)),
     fetchJson("/api/profiles")
       .then((d) => {
         profiles = (d.profiles || []).filter((p: any) => !p.deleted);

@@ -1,0 +1,61 @@
+{
+  "contract": "holdspeak-workbench@1",
+  "schema_version": 1,
+  "description": "A Workbench is a DeskPrimitive: one agent (recipe), one inference target (profile), one schedule, N items. The agent works through items and produces receipts.",
+  "articles_served": ["II", "III", "V", "XI"],
+  "identity": {
+    "id": "TEXT PRIMARY KEY",
+    "name": "TEXT NOT NULL",
+    "recipe_id": "TEXT (FK to recipes, nullable)",
+    "profile_id": "TEXT (FK to profiles/inference targets, nullable)",
+    "schedule": "TEXT (cron expression, nullable for manual)",
+    "schedule_enabled": "BOOLEAN (default false)"
+  },
+  "item_identity": {
+    "id": "TEXT PRIMARY KEY",
+    "workbench_id": "TEXT NOT NULL (FK to workbenches)",
+    "title": "TEXT NOT NULL",
+    "body": "TEXT (markdown)",
+    "priority": "INTEGER 1-5 (default 3)",
+    "status": "pending | claimed | done | failed | dismissed",
+    "grounding": "JSON (meetings, artifacts, resources — same shape as chat grounding)",
+    "context": "JSON (ad-hoc context)",
+    "result": "TEXT (agent output, markdown)",
+    "result_egress": "JSON (placement receipt)",
+    "tokens_consumed": "INTEGER"
+  },
+  "run_receipt": {
+    "id": "TEXT PRIMARY KEY",
+    "workbench_id": "TEXT NOT NULL",
+    "started_at": "ISO-8601",
+    "completed_at": "ISO-8601 (nullable until complete)",
+    "items_attempted": "INTEGER",
+    "items_completed": "INTEGER",
+    "items_failed": "INTEGER",
+    "total_tokens": "INTEGER",
+    "egress_boundary": "same_device | private_network | paired_device | private_mesh | external_service",
+    "model": "TEXT",
+    "constitutional_context_revision": "INTEGER",
+    "constitutional_context_hash": "sha256",
+    "skills_injected": "JSON array of skill IDs",
+    "status": "running | completed | failed"
+  },
+  "kernel_effect": {
+    "kind": "workbench_run",
+    "principal": "owner",
+    "authority_basis": "recipe system_prompt + constitutional_context + item grounding",
+    "target": "workbench.profile_id",
+    "receipt_fields": ["items_attempted", "items_completed", "items_failed", "egress_boundary", "model", "tokens_consumed"]
+  },
+  "api_surface": {
+    "GET /api/workbenches": "list all workbenches with items and last run",
+    "POST /api/workbenches": "create a workbench",
+    "GET /api/workbenches/{id}": "single workbench with items and last run",
+    "PUT /api/workbenches/{id}": "update workbench config",
+    "DELETE /api/workbenches/{id}": "tombstone (refuses with active items)",
+    "POST /api/workbenches/{id}/items": "add an item",
+    "PUT /api/workbenches/{id}/items/{item_id}": "update an item",
+    "DELETE /api/workbenches/{id}/items/{item_id}": "remove an item (refuses claimed)",
+    "GET /api/workbenches/{id}/runs": "list run receipts"
+  }
+}

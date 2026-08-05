@@ -38,11 +38,11 @@ export const DESK_TOOLS = [
     subjectRef: undefined,
   },
   {
-    href: "/workbench",
-    label: "Workflow editor",
-    description: "Build and edit Workflows.",
-    glyph: "◇",
-    action: "build-workflow",
+    href: "/workbenches",
+    label: "Workbenches",
+    description: "Mission control for your agent workbenches.",
+    glyph: "⚒",
+    action: "open-workbenches",
     subjectRef: undefined,
   },
   {
@@ -86,6 +86,14 @@ export const DESK_TOOLS = [
     subjectRef: undefined,
   },
   {
+    href: "/context",
+    label: "Context",
+    description: "The always-on briefing every agent receives.",
+    glyph: "§",
+    action: "open-constitutional-context",
+    subjectRef: undefined,
+  },
+  {
     href: "/activity",
     label: "Activity",
     description: "Inspect work context and source records.",
@@ -112,5 +120,6 @@ export const KIND_LABEL: Record<string, string> = {
   note: "Note",
   project: "Project",
   recipe: "Agent",
+  workbench: "Workbench",
   workflow: "Workflow",
 };

@@ -38,6 +38,7 @@ from .primitives import (
     ProfileRepository,
     WorkflowRepository,
 )
+from .workbenches import SkillRepository, WorkbenchRepository, WorkbenchItemRepository, WorkbenchRunRepository
 from .relationships import KnowledgeMembershipRepository, ProjectRelationshipRepository
 from .invocations import CapabilityInvocationRepository
 from .delivery_attempts import WorkAttemptRepository
@@ -53,7 +54,7 @@ log = get_logger("db")
 
 # Default database location
 DEFAULT_DB_PATH = Path.home() / ".local" / "share" / "holdspeak" / "holdspeak.db"
-SCHEMA_VERSION = 33  # v33: Desk architecture decision records (HS-113-08)
+SCHEMA_VERSION = 35  # v35: Constitutional context in DB (HS-116-13)
 
 
 class SchemaVersionError(RuntimeError):
@@ -1226,6 +1227,95 @@ CREATE INDEX IF NOT EXISTS idx_knowledge_memberships_modified ON knowledge_membe
 CREATE INDEX IF NOT EXISTS idx_project_resources_resource ON project_resources(resource_ref, deleted);
 CREATE INDEX IF NOT EXISTS idx_project_resources_modified ON project_resources(last_modified);
 
+-- ── Workbench (HS-116-01) ──────────────────────────────────────────────────
+-- A Workbench is a DeskPrimitive: one agent, one target, one schedule, N items.
+CREATE TABLE IF NOT EXISTS workbenches (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL DEFAULT '',
+    recipe_id TEXT,
+    profile_id TEXT,
+    schedule TEXT,
+    schedule_enabled INTEGER NOT NULL DEFAULT 0,
+    item_order_json TEXT NOT NULL DEFAULT '[]',
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    last_modified TEXT NOT NULL DEFAULT (datetime('now')),
+    deleted INTEGER NOT NULL DEFAULT 0
+);
+CREATE TABLE IF NOT EXISTS workbench_items (
+    id TEXT PRIMARY KEY,
+    workbench_id TEXT NOT NULL,
+    title TEXT NOT NULL DEFAULT '',
+    body TEXT NOT NULL DEFAULT '',
+    priority INTEGER NOT NULL DEFAULT 3,
+    status TEXT NOT NULL DEFAULT 'pending'
+        CHECK (status IN ('pending', 'claimed', 'done', 'failed', 'dismissed')),
+    grounding_json TEXT NOT NULL DEFAULT '{}',
+    context_json TEXT NOT NULL DEFAULT '{}',
+    result TEXT,
+    result_egress_json TEXT,
+    tokens_consumed INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    last_modified TEXT NOT NULL DEFAULT (datetime('now')),
+    claimed_at TEXT,
+    completed_at TEXT
+);
+CREATE TABLE IF NOT EXISTS workbench_runs (
+    id TEXT PRIMARY KEY,
+    workbench_id TEXT NOT NULL,
+    started_at TEXT NOT NULL,
+    completed_at TEXT,
+    items_attempted INTEGER NOT NULL DEFAULT 0,
+    items_completed INTEGER NOT NULL DEFAULT 0,
+    items_failed INTEGER NOT NULL DEFAULT 0,
+    total_tokens INTEGER NOT NULL DEFAULT 0,
+    egress_boundary TEXT NOT NULL DEFAULT '',
+    model TEXT NOT NULL DEFAULT '',
+    constitutional_context_revision INTEGER NOT NULL DEFAULT 0,
+    constitutional_context_hash TEXT NOT NULL DEFAULT '',
+    skills_injected_json TEXT NOT NULL DEFAULT '[]',
+    status TEXT NOT NULL DEFAULT 'running'
+        CHECK (status IN ('running', 'completed', 'failed'))
+);
+CREATE INDEX IF NOT EXISTS idx_workbenches_modified ON workbenches(last_modified DESC);
+CREATE INDEX IF NOT EXISTS idx_workbench_items_workbench ON workbench_items(workbench_id, priority ASC);
+CREATE INDEX IF NOT EXISTS idx_workbench_items_status ON workbench_items(workbench_id, status);
+CREATE INDEX IF NOT EXISTS idx_workbench_runs_workbench ON workbench_runs(workbench_id, started_at DESC);
+
+-- Skills (HS-116-06): reusable procedural knowledge agents learn and apply.
+CREATE TABLE IF NOT EXISTS skills (
+    id TEXT PRIMARY KEY,
+    title TEXT NOT NULL DEFAULT '',
+    body TEXT NOT NULL DEFAULT '',
+    source TEXT NOT NULL DEFAULT 'owner-authored'
+        CHECK (source IN ('agent-proposed', 'owner-authored')),
+    status TEXT NOT NULL DEFAULT 'active'
+        CHECK (status IN ('draft', 'active', 'archived')),
+    recipe_ids_json TEXT NOT NULL DEFAULT '[]',
+    created_by TEXT NOT NULL DEFAULT '',
+    version INTEGER NOT NULL DEFAULT 1,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    last_modified TEXT NOT NULL DEFAULT (datetime('now')),
+    deleted INTEGER NOT NULL DEFAULT 0
+);
+CREATE INDEX IF NOT EXISTS idx_skills_modified ON skills(last_modified DESC);
+CREATE INDEX IF NOT EXISTS idx_skills_status ON skills(status);
+
+-- Constitutional context (HS-116-13): migrated from file to DB.
+CREATE TABLE IF NOT EXISTS constitutional_context (
+    id INTEGER PRIMARY KEY CHECK (id = 1),
+    content TEXT NOT NULL DEFAULT '',
+    revision INTEGER NOT NULL DEFAULT 0,
+    content_hash TEXT NOT NULL DEFAULT '',
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE TABLE IF NOT EXISTS constitutional_context_history (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    content TEXT NOT NULL DEFAULT '',
+    revision INTEGER NOT NULL DEFAULT 0,
+    content_hash TEXT NOT NULL DEFAULT '',
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
 -- ── Cadence Engine (CAD-1-01) ──────────────────────────────────────────────
 -- Open Loops are source-PROJECTED entities: the collector idempotently upserts
 -- one row per (source_type, source_id); the user's lifecycle decisions
@@ -1583,6 +1673,11 @@ class Database:
         self.desktop_type_receipts = DesktopTypeReceiptRepository(self._connection, self)
         self.decisions = DecisionRepository(self._connection, self)
         self.memory = MemoryRepository(self._connection, self)
+        # Phase 116: The Workbench
+        self.workbenches = WorkbenchRepository(self._connection, self)
+        self.workbench_items = WorkbenchItemRepository(self._connection, self)
+        self.workbench_runs = WorkbenchRunRepository(self._connection, self)
+        self.skills = SkillRepository(self._connection, self)
 
     @contextmanager
     def _connection(self) -> Iterator[sqlite3.Connection]:

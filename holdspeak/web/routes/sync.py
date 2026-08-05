@@ -42,7 +42,7 @@ log = get_logger("web.routes.sync")
 SYNC_KINDS = frozenset(
     {"meeting", "artifact", "note", "kb", "recipe", "chain", "workflow",
      "directory", "directory_membership", "knowledge_membership",
-     "project", "project_relationship", "profile", "model"}
+     "project", "project_relationship", "profile", "model", "workbench"}
 )
 
 # Repository-backed primitives the push route merges into the live store (the key
@@ -82,6 +82,11 @@ _MERGEABLE: dict[str, tuple[str, str, dict[str, str]]] = {
     # No path/url/bytes field exists on either side; the binary NEVER syncs.
     "models": ("model_manifests", "manifest_id", {
         "node": "node", "name": "name", "capabilities": "capabilities",
+    }),
+    "workbenches": ("workbenches", "workbench_id", {
+        "name": "name", "recipe_id": "recipe_id", "profile_id": "profile_id",
+        "schedule": "schedule", "schedule_enabled": "schedule_enabled",
+        "item_order": "item_order",
     }),
 }
 

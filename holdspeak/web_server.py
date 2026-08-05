@@ -560,6 +560,7 @@ class MeetingWebServer:
             build_memory_router,
             build_mesh_router,
             build_missioncontrol_router,
+            build_constitutional_router,
             build_pages_router,
             build_primitives_router,
             build_projections_router,
@@ -692,6 +693,7 @@ class MeetingWebServer:
         app.include_router(build_roadmaps_router(web_ctx))
         app.include_router(build_primitives_router(web_ctx))
         app.include_router(build_projections_router(web_ctx))
+        app.include_router(build_constitutional_router())
         app.include_router(build_setup_router(web_ctx))
         app.include_router(build_sync_router(web_ctx))
 
@@ -718,6 +720,19 @@ class MeetingWebServer:
             self._kernel_liveness_task = asyncio.create_task(
                 self._kernel_liveness_loop()
             )
+            try:
+                from .skills_library import seed_skills_if_empty
+                seeded = seed_skills_if_empty()
+                if seeded:
+                    log.info(f"Seeded {seeded} built-in skills")
+            except Exception as e:
+                log.debug(f"skill seeding skipped: {e}")
+            try:
+                from .workbench_conductor import start_conductor, set_broadcast
+                set_broadcast(lambda t, d: self.broadcast(t, d))
+                start_conductor()
+            except Exception as e:
+                log.error(f"workbench conductor startup failed: {e}")
             self._started.set()
             log.debug("Meeting web server startup complete")
 

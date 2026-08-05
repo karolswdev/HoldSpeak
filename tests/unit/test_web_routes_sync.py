@@ -92,6 +92,7 @@ def _fake_db(tmp_path, *, meetings=(), artifacts=None):
         directories=_empty_primitive_repo(),
         directory_memberships=_empty_primitive_repo(),
         model_manifests=_empty_primitive_repo(),
+        workbenches=_empty_primitive_repo(),
     )
 
 
