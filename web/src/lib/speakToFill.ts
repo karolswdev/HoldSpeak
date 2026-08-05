@@ -36,11 +36,26 @@ export function speakToFillUnsupportedReason(): string | null {
 }
 
 export async function startCapture(): Promise<void> {
+  // HS-118-08: claim the audio floor so the hotkey path knows the
+  // browser mic is active and refuses capture while we hold it.
+  // apiFetch throws ApiError on 409 (floor held by another source).
+  // Let it propagate — MicButton handles the failure state.
+  await apiFetch("/api/dictation/floor/claim", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ lease_seconds: 30 }),
+  });
   await beginHold();
 }
 
 export async function cancelCapture(): Promise<void> {
   abortHold();
+  // HS-118-08: release the audio floor claim.
+  try {
+    await apiFetch("/api/dictation/floor/release", { method: "POST" });
+  } catch {
+    // Best-effort release.
+  }
 }
 
 export function toWav16kMono(
@@ -89,15 +104,23 @@ export function toWav16kMono(
   return buffer;
 }
 
-export async function transcribeWav(audio: ArrayBuffer): Promise<string> {
-  const result = await apiFetch<{ success?: boolean; text?: string }>(
-    "/api/dictation/transcribe",
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/octet-stream" },
-      body: audio,
-    },
-  );
+export async function transcribeWav(
+  audio: ArrayBuffer,
+  { pipeline = true }: { pipeline?: boolean } = {},
+): Promise<string> {
+  const url = pipeline
+    ? "/api/dictation/transcribe?pipeline=true"
+    : "/api/dictation/transcribe";
+  const result = await apiFetch<{
+    success?: boolean;
+    text?: string;
+    raw?: string;
+    egress_boundary?: string;
+  }>(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/octet-stream" },
+    body: audio,
+  });
   return String(result.text ?? "");
 }
 
@@ -113,10 +136,24 @@ export async function retryPendingTranscription(
 
 export async function stopAndTranscribe(scope?: string): Promise<string> {
   const captured = endHold();
-  if (!captured?.chunks.length) return "";
+  if (!captured?.chunks.length) {
+    // HS-118-08: release the audio floor even if nothing was captured.
+    try {
+      await apiFetch("/api/dictation/floor/release", { method: "POST" });
+    } catch {
+      // Best-effort release.
+    }
+    return "";
+  }
   const audio = toWav16kMono(captured.chunks, captured.rate);
   if (scope) await savePendingVoice(scope, audio);
   const text = await transcribeWav(audio);
   if (scope) await clearPendingVoice(scope);
+  // HS-118-08: release the audio floor after transcription completes.
+  try {
+    await apiFetch("/api/dictation/floor/release", { method: "POST" });
+  } catch {
+    // Best-effort release.
+  }
   return text;
 }

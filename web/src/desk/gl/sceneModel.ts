@@ -9,6 +9,7 @@
 import type { UnitPos } from "../store";
 import type { Items } from "../api";
 import { qualifiedRef } from "../api";
+import { spriteVariantKey } from "../../lib/spriteVariants";
 import {
   objGlow,
   objMotion,
@@ -79,6 +80,8 @@ export interface SceneObject {
   count: number | null;
   fresh: boolean;
   stale: boolean;
+  spriteState: string | null;
+  spriteVariant: string;
 }
 
 export interface SceneZoneThumb {
@@ -199,6 +202,8 @@ export function buildScene(input: SceneInputs): WorldScene {
       count: memberIds ? memberIds.length : null,
       fresh: isFresh(ref.lastModified),
       stale,
+      spriteState: typeof ref.spriteState === "string" ? ref.spriteState : null,
+      spriteVariant: spriteVariantKey(o.kind, typeof ref.spriteState === "string" ? ref.spriteState : null),
     };
   });
 

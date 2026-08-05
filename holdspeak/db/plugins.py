@@ -39,6 +39,7 @@ VALID_ARTIFACT_SOURCE_TYPES = frozenset(
         "recipe",
         "segment",
         "window",
+        "workbench_item",
         "workflow",
     }
 )
@@ -713,7 +714,7 @@ class PluginArtifactRepository(BaseRepository):
         # v6 (Phase 74): a run-born artifact has no meeting anchor — its anchor
         # is the capability lineage. Empty meeting_id stores NULL, origin='run'.
         origin = "meeting" if clean_meeting_id else "run"
-        if clean_status not in {"draft", "needs_review", "accepted", "rejected"}:
+        if clean_status not in {"draft", "needs_review", "accepted", "rejected", "pending-review"}:
             raise ValueError(f"Invalid artifact status: {clean_status!r}")
 
         normalized_sources: list[tuple[str, str]] = []
@@ -929,14 +930,18 @@ class PluginArtifactRepository(BaseRepository):
 
     def list_run_artifacts(self, *, limit: int = 200) -> list[ArtifactSummary]:
         """List run-born artifacts (origin='run'; no meeting anchor), with
-        lineage refs — the sync pull's second artifact lane (v6, Phase 74)."""
+        lineage refs — the sync pull's second artifact lane (v6, Phase 74).
+
+        Excludes ``pending-review`` artifacts (HS-118-06): those are visible
+        only in the workbench triage surface, not the main desk listing.
+        """
         bounded_limit = max(1, min(int(limit), 2000))
         with self._connection() as conn:
             rows = conn.execute(
                 """
                 SELECT *
                 FROM artifacts
-                WHERE origin = 'run'
+                WHERE origin = 'run' AND status != 'pending-review'
                 ORDER BY created_at DESC, id DESC
                 LIMIT ?
                 """,

@@ -7,7 +7,7 @@ independently of the Database container.
 # Bump this when adding tables or columns; the Database container uses it to
 # decide whether to back up and re-apply. See core._ensure_schema for the
 # four-way upgrade contract.
-SCHEMA_VERSION = 35  # v35: Constitutional context in DB (HS-116-13)
+SCHEMA_VERSION = 36  # v36: Output minting columns (HS-118-06)
 
 # SQL Schema
 SCHEMA_SQL = """
@@ -286,9 +286,16 @@ CREATE TABLE IF NOT EXISTS artifacts (
     status TEXT NOT NULL DEFAULT 'draft',
     plugin_id TEXT NOT NULL DEFAULT 'unknown',
     plugin_version TEXT NOT NULL DEFAULT 'unknown',
+    source_run_id TEXT,
+    source_item_id TEXT,
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
+-- NOTE: The unique index on (source_run_id, source_item_id) is created
+-- in _migrate_columns (migrations.py) to handle both fresh and upgrade paths
+-- safely. Fresh CREATE TABLE includes the columns, but an upgraded DB's
+-- CREATE TABLE IF NOT EXISTS is a no-op and the index would fail on
+-- columns that don't yet exist when executescript runs.
 
 -- Artifact lineage references (window/plugin run)
 CREATE TABLE IF NOT EXISTS artifact_sources (
@@ -1027,6 +1034,7 @@ CREATE TABLE IF NOT EXISTS mesh_workers (
 CREATE TABLE IF NOT EXISTS directories (
     id TEXT PRIMARY KEY,
     name TEXT NOT NULL DEFAULT '',
+    name_normalized TEXT NOT NULL DEFAULT '',
     parent_id TEXT,
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     last_modified TEXT NOT NULL DEFAULT (datetime('now')),
@@ -1074,6 +1082,8 @@ CREATE INDEX IF NOT EXISTS idx_recipes_modified ON recipes(last_modified DESC);
 CREATE INDEX IF NOT EXISTS idx_chains_modified ON chains(last_modified DESC);
 CREATE INDEX IF NOT EXISTS idx_workflows_modified ON workflows(last_modified DESC);
 CREATE INDEX IF NOT EXISTS idx_directories_modified ON directories(last_modified DESC);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_directory_name_norm
+ON directories(name_normalized) WHERE deleted = 0;
 CREATE INDEX IF NOT EXISTS idx_directory_memberships_dir ON directory_memberships(directory_id);
 CREATE INDEX IF NOT EXISTS idx_knowledge_memberships_resource ON knowledge_memberships(resource_ref, deleted);
 CREATE INDEX IF NOT EXISTS idx_knowledge_memberships_modified ON knowledge_memberships(last_modified);
@@ -1106,6 +1116,8 @@ CREATE TABLE IF NOT EXISTS workbench_items (
     context_json TEXT NOT NULL DEFAULT '{}',
     result TEXT,
     result_egress_json TEXT,
+    result_artifact_id TEXT,
+    mint_attempted INTEGER NOT NULL DEFAULT 0,
     tokens_consumed INTEGER NOT NULL DEFAULT 0,
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     last_modified TEXT NOT NULL DEFAULT (datetime('now')),
@@ -1120,6 +1132,7 @@ CREATE TABLE IF NOT EXISTS workbench_runs (
     items_attempted INTEGER NOT NULL DEFAULT 0,
     items_completed INTEGER NOT NULL DEFAULT 0,
     items_failed INTEGER NOT NULL DEFAULT 0,
+    mint_failures INTEGER NOT NULL DEFAULT 0,
     total_tokens INTEGER NOT NULL DEFAULT 0,
     egress_boundary TEXT NOT NULL DEFAULT '',
     model TEXT NOT NULL DEFAULT '',

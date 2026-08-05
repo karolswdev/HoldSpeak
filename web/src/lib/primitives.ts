@@ -145,6 +145,7 @@ export interface Directory {
   kind: "directory";
   id: string;
   name: string;
+  nameNormalized: string;
   parentId?: string | null;
   /** Primitive ids filed in this directory (membership; syncs). */
   memberIds: string[];
@@ -335,7 +336,7 @@ export interface Workbench {
   lastModified?: string | null;
 }
 
-export type Primitive =
+export type Primitive = (
   | Meeting
   | Artifact
   | Note
@@ -352,7 +353,8 @@ export type Primitive =
   | Layout
   | Roadmap
   | Story
-  | Workbench;
+  | Workbench
+) & { spriteState?: string | null };
 
 /**
  * The descriptor table — the single source of the Desk's visual language.

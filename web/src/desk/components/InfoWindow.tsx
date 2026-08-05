@@ -6,6 +6,8 @@
 import { useState } from "react";
 // @ts-ignore — shared ESM module (see ../sprites.d.ts)
 import { spriteUrl } from "../sprites";
+import { spriteStateCssClass } from "../../lib/spriteStates";
+import { spriteVariantKey } from "../../lib/spriteVariants";
 import { useDesk } from "../store";
 import { objectByRef, type WorldObject } from "../world";
 import { filedZones, kindInfo, kindLabel } from "../infoContract";
@@ -112,7 +114,14 @@ export function InfoWindow({
       fitContent
       origin={origin}
       icon={
-        <img src={spriteUrl(o.kind, o.id)} alt="" width={26} height={26} />
+        <img
+          className={spriteStateCssClass(typeof o.ref.spriteState === "string" ? o.ref.spriteState as string : null)}
+          src={spriteUrl(o.kind, o.id)}
+          alt=""
+          width={26}
+          height={26}
+          data-sprite-variant={spriteVariantKey(o.kind, typeof o.ref.spriteState === "string" ? o.ref.spriteState as string : null)}
+        />
       }
       title={`${o.title}`}
       open

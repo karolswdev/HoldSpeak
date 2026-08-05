@@ -79,6 +79,8 @@ export type DataSlice = Pick<
   | "updatePrimitive"
   | "deletePrimitive"
   | "renameZone"
+  | "clearZoneRenameError"
+  | "zoneRenameError"
   | "fileIntoDir"
   | "removeFromDir"
   | "fileIntoKnowledge"
@@ -107,6 +109,7 @@ export const createDataSlice: SliceCreator<DataSlice> = (set, get) => ({
   setup: null,
   positions: loadPositions(),
   zoneWidths: loadZoneWidths(),
+  zoneRenameError: null,
 
   async refresh() {
     set({ loading: true, error: "" });
@@ -307,7 +310,12 @@ export const createDataSlice: SliceCreator<DataSlice> = (set, get) => ({
   },
 
   async renameZone(id, name) {
+    // Clear any prior rename error.
+    set({ zoneRenameError: null });
+    // Optimistic local rename; the PUT persists it.
     const items = get().items;
+    const oldZone = items.directory.find((d) => d.id === id);
+    const oldName = oldZone?.name ?? name;
     set({
       items: {
         ...items,
@@ -316,7 +324,54 @@ export const createDataSlice: SliceCreator<DataSlice> = (set, get) => ({
         ),
       },
     });
-    await get().updatePrimitive("directory", id, { name });
+    try {
+      const trimmed = name.trim();
+      const res = await apiRequest(
+        `/api/directories/${encodeURIComponent(id)}`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name: trimmed }),
+        },
+      );
+      if (res.status === 409) {
+        // Name taken -- revert optimistic update and show error.
+        const body = await res.json();
+        const existingName = body.existing_name || trimmed;
+        set({
+          zoneRenameError: `A zone named "${existingName}" already exists`,
+          items: {
+            ...get().items,
+            directory: get().items.directory.map((d) =>
+              d.id === id ? { ...d, name: oldName, title: oldName } : d,
+            ),
+          },
+        });
+      } else if (res.status === 422) {
+        // Validation error -- revert.
+        set({
+          items: {
+            ...get().items,
+            directory: get().items.directory.map((d) =>
+              d.id === id ? { ...d, name: oldName, title: oldName } : d,
+            ),
+          },
+        });
+      }
+    } catch {
+      // Network error -- revert silently.
+      set({
+        items: {
+          ...get().items,
+          directory: get().items.directory.map((d) =>
+            d.id === id ? { ...d, name: oldName, title: oldName } : d,
+          ),
+        },
+      });
+    }
+  },
+  clearZoneRenameError() {
+    set({ zoneRenameError: null });
   },
 
   async fileIntoDir(pid, dirId, kind = "note") {

@@ -3,6 +3,8 @@
 // @ts-ignore — shared ESM module (see ../sprites.d.ts)
 import "./pullout.css";
 import { spriteUrl } from "../sprites";
+import { spriteVariantKey } from "../../lib/spriteVariants";
+import { spriteStateCssClass } from "../../lib/spriteStates";
 import { useDesk } from "../store";
 import { openSurfaceOr } from "../shell";
 import { qualifiedRef } from "../api";
@@ -49,7 +51,7 @@ export function Pullout({
       fitContent
       origin={origin}
       rootStyle={{ "--k": objGlow(o.kind) } as React.CSSProperties}
-      icon={<img src={spriteUrl(o.kind, o.id)} alt="" width={30} height={30} />}
+      icon={<img src={spriteUrl(o.kind, o.id)} alt="" width={30} height={30} className={spriteStateCssClass((o as { spriteState?: string }).spriteState ?? null) || undefined} data-sprite-variant={spriteVariantKey(o.kind, (o as { spriteState?: string }).spriteState ?? null)} />}
       title={o.title}
       open
       onClose={() => closePullout(o.id)}

@@ -202,6 +202,60 @@ def build_workbenches_router(ctx: WebContext) -> APIRouter:
         except Exception as exc:
             return error_500(exc, log, "Failed to delete item")
 
+    # ── Retry mint (HS-118-06) ─────────────────────────────────────────────
+
+    @router.post("/api/workbenches/{workbench_id}/items/{item_id}/retry-mint")
+    async def api_retry_mint(workbench_id: str, item_id: str) -> Any:
+        """Re-attempt the kernel-admitted auto-mint for a completed item."""
+        try:
+            from ....db import get_database
+            db = get_database()
+            item = db.workbench_items.get(item_id)
+            if item is None or item.workbench_id != workbench_id:
+                return JSONResponse({"error": f"Unknown item: {item_id}"}, status_code=404)
+            if item.status != "done" or not item.result:
+                return JSONResponse({"error": "Item is not done or has no result"}, status_code=400)
+            if item.result_artifact_id:
+                return JSONResponse({"artifact_id": item.result_artifact_id})
+
+            wb = db.workbenches.get(workbench_id)
+            if wb is None:
+                return JSONResponse({"error": f"Unknown workbench: {workbench_id}"}, status_code=404)
+            recipe = db.recipes.get(wb.recipe_id) if wb.recipe_id else None
+            if recipe is None:
+                return JSONResponse({"error": "No recipe assigned"}, status_code=400)
+
+            from ....inference_targets import resolve_inference_target
+            target = resolve_inference_target(db, wb.profile_id or "this_machine")
+
+            # Issue 3 fix: use the item's original run_id, not the most recent run.
+            # Look for an existing artifact with this item_id to get source_run_id,
+            # or fall back to the item's completed_at-correlated run, then most recent.
+            run_id = None
+            with db._connection() as conn:
+                existing = conn.execute(
+                    "SELECT source_run_id FROM artifacts WHERE source_item_id = ? LIMIT 1",
+                    (item_id,),
+                ).fetchone()
+                if existing and existing["source_run_id"]:
+                    run_id = existing["source_run_id"]
+            if not run_id:
+                runs = db.workbench_runs.list_for_workbench(workbench_id, limit=1)
+                if not runs:
+                    return JSONResponse({"error": "No runs found for this workbench"}, status_code=400)
+                run_id = runs[0].id
+
+            from ....workbench_conductor import _auto_mint_artifact
+            artifact_id = _auto_mint_artifact(
+                db=db, item=item, recipe=recipe, workbench=wb,
+                run_id=run_id, target=target, output=item.result,
+            )
+            if artifact_id:
+                return JSONResponse({"artifact_id": artifact_id}, status_code=201)
+            return JSONResponse({"error": "Mint failed"}, status_code=500)
+        except Exception as exc:
+            return error_500(exc, log, "Failed to retry mint")
+
     # ── Run (manual trigger) ───────────────────────────────────────────────
 
     @router.post("/api/workbenches/{workbench_id}/run")

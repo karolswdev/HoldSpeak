@@ -20,6 +20,7 @@ import {
   updateSkill,
   clearWorkbenchMemory,
   promoteMemoryToSkill,
+  retryMint,
 } from "../api";
 import { usePrimitiveDetail } from "../hooks/usePrimitiveDetail";
 import { boundaryEgressLamp } from "../inferenceEgress";
@@ -502,6 +503,24 @@ function WorkbenchItemCard({
     setKeeping(false);
   };
 
+  // Issue 5: inline expansion for pending-review artifacts (no desk pullout)
+  const [artifactExpanded, setArtifactExpanded] = useState(false);
+
+  const [minting, setMinting] = useState(false);
+  const handleRetryMint = async () => {
+    setMinting(true);
+    try {
+      const artifactId = await retryMint(workbenchId, item.id);
+      if (artifactId) onReload();
+    } catch { /* */ }
+    setMinting(false);
+  };
+
+  const hasMintedArtifact = !!item.result_artifact_id;
+  // Issue 4 fix: use mint_attempted to distinguish "mint failed" from "legacy pre-mint item"
+  const mintFailed = item.status === "done" && !!item.result && !hasMintedArtifact && !!item.mint_attempted;
+  const legacyKeep = item.status === "done" && !!item.result && !hasMintedArtifact && !item.mint_attempted;
+
   return (
     <div className="wb-card" data-status={item.status}>
       {/* ── head line ──────────────────────────────────────────── */}
@@ -576,10 +595,49 @@ function WorkbenchItemCard({
                     }
                   />
                 ) : null}
+                {hasMintedArtifact ? (
+                  <span className="desk-chip" data-tone="info">pending-review</span>
+                ) : null}
+                {mintFailed ? (
+                  <span className="desk-chip" data-tone="fail">Mint failed</span>
+                ) : null}
               </div>
+              {hasMintedArtifact ? (
+                <div className="wb-card-artifact-link">
+                  <span className="wb-card-artifact-title">
+                    {workbenchName}: {item.title}
+                  </span>
+                </div>
+              ) : null}
               <div className="wb-card-result-body">
                 <Material>{item.result!}</Material>
               </div>
+              {/* Issue 5: inline artifact detail (not a desk pullout) */}
+              {hasMintedArtifact && artifactExpanded ? (
+                <div className="wb-card-artifact-detail">
+                  <div className="wb-card-artifact-detail-head">
+                    <span className="desk-chip" data-tone="info">pending-review</span>
+                    <span className="wb-card-artifact-detail-id">{item.result_artifact_id}</span>
+                  </div>
+                  <div className="wb-card-artifact-detail-body">
+                    <Material>{item.result!}</Material>
+                  </div>
+                  {egressLamp ? (
+                    <div className="wb-card-artifact-detail-egress">
+                      <EgressChip
+                        label={`⌂ ${egressLamp.label}`}
+                        scope={
+                          egressLamp.tone === "ok"
+                            ? "local"
+                            : egressLamp.tone === "fail"
+                              ? "cloud"
+                              : "mixed"
+                        }
+                      />
+                    </div>
+                  ) : null}
+                </div>
+              ) : null}
             </div>
           ) : null}
 
@@ -593,14 +651,37 @@ function WorkbenchItemCard({
 
           {/* verbs */}
           <div className="wb-card-verbs">
-            {item.status === "done" && item.result && recipeId ? (
+            {/* Minted artifact: inline expand (Issue 5: no desk pullout for pending-review) */}
+            {hasMintedArtifact ? (
               <button
                 type="button"
                 className="desk-chip"
+                onClick={() => setArtifactExpanded(!artifactExpanded)}
+                aria-expanded={artifactExpanded}
+              >
+                {artifactExpanded ? "Collapse" : "Open"}
+              </button>
+            ) : null}
+            {/* Mint failed: show Retry mint verb */}
+            {mintFailed ? (
+              <button
+                type="button"
+                className="desk-chip"
+                disabled={minting}
+                onClick={() => void handleRetryMint()}
+              >
+                {minting ? "Minting…" : "Retry mint"}
+              </button>
+            ) : null}
+            {/* Legacy Keep: only for pre-Phase-118 items (mint never attempted) */}
+            {legacyKeep && recipeId ? (
+              <button
+                type="button"
+                className="desk-chip quiet"
                 disabled={keeping}
                 onClick={() => void handleKeep()}
               >
-                {keeping ? "Keeping…" : "Keep ▸"}
+                {keeping ? "Keeping…" : "Keep"}
               </button>
             ) : null}
             {item.status === "done" || item.status === "failed" ? (

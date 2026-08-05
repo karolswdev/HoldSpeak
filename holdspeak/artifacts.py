@@ -6,7 +6,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 
-VALID_ARTIFACT_STATUSES = frozenset({"draft", "needs_review", "accepted", "rejected"})
+VALID_ARTIFACT_STATUSES = frozenset({"draft", "needs_review", "accepted", "rejected", "pending-review"})
 
 
 def artifact_status_from_confidence(confidence: float) -> str:

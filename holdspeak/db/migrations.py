@@ -437,6 +437,56 @@ def _migrate_columns(conn: sqlite3.Connection, stored: int) -> None:
             "CHECK (provenance_label IN ('reported','anchored'))"
         )
 
+    # v36 (HS-118-06): output minting columns.
+    artifact_cols = {
+        row[1] for row in conn.execute("PRAGMA table_info(artifacts)").fetchall()
+    }
+    if "source_run_id" not in artifact_cols:
+        conn.execute("ALTER TABLE artifacts ADD COLUMN source_run_id TEXT")
+    if "source_item_id" not in artifact_cols:
+        conn.execute("ALTER TABLE artifacts ADD COLUMN source_item_id TEXT")
+    # Unique index for idempotent minting — created in SCHEMA_SQL for new DBs,
+    # but for upgraded DBs the CREATE TABLE IF NOT EXISTS won't run so we ensure
+    # it here as well.
+    conn.execute(
+        """CREATE UNIQUE INDEX IF NOT EXISTS idx_artifacts_source_run_item
+           ON artifacts(source_run_id, source_item_id)
+           WHERE source_run_id IS NOT NULL AND source_item_id IS NOT NULL"""
+    )
+
+    wb_item_cols = {
+        row[1] for row in conn.execute("PRAGMA table_info(workbench_items)").fetchall()
+    }
+    if "result_artifact_id" not in wb_item_cols:
+        conn.execute("ALTER TABLE workbench_items ADD COLUMN result_artifact_id TEXT")
+    if "mint_attempted" not in wb_item_cols:
+        conn.execute("ALTER TABLE workbench_items ADD COLUMN mint_attempted INTEGER NOT NULL DEFAULT 0")
+
+    # HS-118-06: mint_failures on workbench_runs
+    wb_run_cols = {
+        row[1] for row in conn.execute("PRAGMA table_info(workbench_runs)").fetchall()
+    }
+    if "mint_failures" not in wb_run_cols:
+        conn.execute("ALTER TABLE workbench_runs ADD COLUMN mint_failures INTEGER NOT NULL DEFAULT 0")
+
+    # v34 (HS-118-01): zone name uniqueness -- add name_normalized column
+    # and backfill with dedup.
+    dir_cols = {
+        row[1] for row in conn.execute("PRAGMA table_info(directories)").fetchall()
+    }
+    if "name_normalized" not in dir_cols:
+        conn.execute(
+            "ALTER TABLE directories ADD COLUMN name_normalized TEXT NOT NULL DEFAULT ''"
+        )
+    from .primitives import _backfill_directory_name_normalized
+    _backfill_directory_name_normalized(conn)
+    # On upgrade, the unique index must be created AFTER the column exists and the
+    # backfill has deduped names. Fresh DBs already have it from SCHEMA_SQL.
+    conn.execute(
+        "CREATE UNIQUE INDEX IF NOT EXISTS idx_directory_name_norm "
+        "ON directories(name_normalized) WHERE deleted = 0"
+    )
+
 
 def _apply_seeds_and_backfills(conn: sqlite3.Connection) -> None:
     """Seed data and index rebuilds that run after all migrations."""

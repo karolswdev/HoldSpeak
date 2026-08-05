@@ -9,12 +9,29 @@ from typing import Any
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 
+from ....db.primitives import ZoneNameTaken, normalize_zone_name
 from ....logging_config import get_logger
 from ...context import WebContext
 from ...runtime_support import error_500
 from ._shared import _json_body, _new_id
 
 log = get_logger("web.routes.primitives")
+
+
+def _validate_zone_name(raw: str) -> JSONResponse | None:
+    """Return a 422 JSONResponse if the name is invalid, or None if OK."""
+    norm = normalize_zone_name(raw)
+    if not norm:
+        return JSONResponse(
+            {"error": "zone name is required"},
+            status_code=422,
+        )
+    if len(norm) > 64:
+        return JSONResponse(
+            {"error": "zone name must be 64 characters or fewer"},
+            status_code=422,
+        )
+    return None
 
 
 def build_directories_router(ctx: WebContext) -> APIRouter:
@@ -41,16 +58,23 @@ def build_directories_router(ctx: WebContext) -> APIRouter:
         body = await _json_body(request)
         if body is None:
             return JSONResponse({"error": "expected a JSON object"}, status_code=400)
-        if not str(body.get("name") or "").strip():
-            return JSONResponse({"error": "directory name is required"}, status_code=400)
+        raw_name = str(body.get("name") or "")
+        validation_err = _validate_zone_name(raw_name)
+        if validation_err is not None:
+            return validation_err
         try:
             from ....db import get_database
             directory = get_database().directories.upsert(
                 directory_id=str(body.get("id") or _new_id("dir")),
-                name=str(body.get("name") or ""),
+                name=raw_name,
                 parent_id=(body.get("parent_id") or None),
             )
             return JSONResponse({"directory": directory.to_dict()}, status_code=201)
+        except ZoneNameTaken as exc:
+            return JSONResponse(
+                {"error": "zone_name_taken", "existing_name": exc.existing_name},
+                status_code=409,
+            )
         except ValueError as exc:
             return JSONResponse({"error": str(exc)}, status_code=400)
         except Exception as exc:
@@ -84,12 +108,21 @@ def build_directories_router(ctx: WebContext) -> APIRouter:
             existing = db.directories.get(directory_id)
             if existing is None:
                 return JSONResponse({"error": f"Unknown directory: {directory_id}"}, status_code=404)
+            new_name = str(body["name"]) if "name" in body else existing.name
+            validation_err = _validate_zone_name(new_name)
+            if validation_err is not None:
+                return validation_err
             directory = db.directories.upsert(
                 directory_id=directory_id,
-                name=str(body["name"]) if "name" in body else existing.name,
+                name=new_name,
                 parent_id=(body["parent_id"] or None) if "parent_id" in body else existing.parent_id,
             )
             return JSONResponse({"directory": directory.to_dict()})
+        except ZoneNameTaken as exc:
+            return JSONResponse(
+                {"error": "zone_name_taken", "existing_name": exc.existing_name},
+                status_code=409,
+            )
         except Exception as exc:
             return error_500(exc, log, "Failed to update directory")
 

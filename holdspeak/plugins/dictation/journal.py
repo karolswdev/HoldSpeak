@@ -25,7 +25,7 @@ if TYPE_CHECKING:  # pragma: no cover - typing only
     from holdspeak.db.journal import DictationJournalRepository
 
 #: Run sources this recorder accepts (mirrors the repo's `VALID_JOURNAL_SOURCES`).
-VALID_SOURCES = ("dictation", "dry_run")
+VALID_SOURCES = ("dictation", "dry_run", "browser", "hotkey")
 _REDACTED = "[redacted: possible secret]"
 
 

@@ -110,6 +110,8 @@ export interface DeskState {
   hoverZoneId: string | null;
   /** The freshly-created zone whose rename is focused. */
   renamingZoneId: string | null;
+  /** Inline error shown during zone rename (409 name taken). */
+  zoneRenameError: string | null;
   /** The lasso'd/selected objects -- the Ask atom's context (HSM-16-04). */
   selectedIds: string[];
   /** The Ask composer is open (in-world, desk visible -- never a modal). */
@@ -164,6 +166,7 @@ export interface DeskState {
   /** Tombstone a deletable primitive, then settle all local desk faces. */
   deletePrimitive(id: string, kind: string): Promise<void>;
   renameZone(id: string, name: string): Promise<void>;
+  clearZoneRenameError(): void;
   /** Open an object card. A second object opens a SECOND card (windows
    * coexist); reopening an open object focuses its card. `origin` is
    * the client point the open gesture happened at (the card flies out

@@ -8,6 +8,8 @@ import { useMemo, useState } from "react";
 import { spriteUrl } from "../sprites";
 import { useDesk, type ZoneViewPref } from "../store";
 import { objectByRef, type WorldObject } from "../world";
+import { spriteVariantKey } from "../../lib/spriteVariants";
+import { spriteStateCssClass } from "../../lib/spriteStates";
 import { productLabel } from "../../lib/productLanguage";
 import { humanTime } from "../surface/format";
 import { SurfaceState } from "../surface/Surface";
@@ -66,15 +68,20 @@ export function ZoneWindow({
       key: "icon",
       label: "",
       width: "36px",
-      render: (member) => (
-        <img
-          className="desk-sortable-table-sprite"
-          src={spriteUrl(member.kind, member.id)}
-          alt=""
-          width={28}
-          height={28}
-        />
-      ),
+      render: (member) => {
+        const ss = member.ref.spriteState;
+        const cssHint = spriteStateCssClass(typeof ss === "string" ? ss : null);
+        return (
+          <img
+            className={"desk-sortable-table-sprite" + (cssHint ? ` ${cssHint}` : "")}
+            src={spriteUrl(member.kind, member.id)}
+            alt=""
+            width={28}
+            height={28}
+            data-sprite-variant={spriteVariantKey(member.kind, typeof ss === "string" ? ss : null)}
+          />
+        );
+      },
     },
     { key: "name", label: "Name", sortable: true, render: (member) => member.title },
     {
@@ -134,7 +141,14 @@ export function ZoneWindow({
                   openPullout(member.id, { x: event.clientX, y: event.clientY })
                 }
               >
-                <img src={spriteUrl(member.kind, member.id)} alt="" width={48} height={48} />
+                <img
+                  className={spriteStateCssClass(typeof member.ref.spriteState === "string" ? member.ref.spriteState as string : null)}
+                  src={spriteUrl(member.kind, member.id)}
+                  alt=""
+                  width={48}
+                  height={48}
+                  data-sprite-variant={spriteVariantKey(member.kind, typeof member.ref.spriteState === "string" ? member.ref.spriteState as string : null)}
+                />
                 <span className="zone-cell-label">{member.title}</span>
               </button>
             ))}

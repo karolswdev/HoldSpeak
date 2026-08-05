@@ -304,6 +304,7 @@ export const fromWireDirectory = (d: unknown): Directory | null => {
     name: wireString(d, "name"),
     parentId: wireStringOrNull(d, "parent_id"),
     memberIds: memberIds.length > 0 ? memberIds : fallbackMembers,
+    nameNormalized: wireString(d, "name_normalized") || "",
     createdAt: wireString(d, "created_at"),
   };
 };
@@ -774,4 +775,15 @@ export async function promoteMemoryToSkill(
     `/api/workbenches/${encodeURIComponent(workbenchId)}/memory/${index}/promote`,
     { method: "POST" },
   );
+}
+
+export async function retryMint(
+  workbenchId: string,
+  itemId: string,
+): Promise<string | null> {
+  const data = await apiFetch<Record<string, unknown>>(
+    `/api/workbenches/${encodeURIComponent(workbenchId)}/items/${encodeURIComponent(itemId)}/retry-mint`,
+    { method: "POST" },
+  );
+  return data?.artifact_id ? String(data.artifact_id) : null;
 }

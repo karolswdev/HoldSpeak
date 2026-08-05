@@ -29,6 +29,8 @@ export interface WorkbenchItem {
   grounding: Record<string, unknown>;
   result: string | null;
   result_egress: { boundary?: string } | null;
+  result_artifact_id: string | null;
+  mint_attempted: boolean;
   tokens_consumed: number;
   created_at: string;
   completed_at: string | null;
@@ -41,6 +43,7 @@ export interface WorkbenchRun {
   items_attempted: number;
   items_completed: number;
   items_failed: number;
+  mint_failures: number;
   total_tokens: number;
   egress_boundary: string;
   model: string;
