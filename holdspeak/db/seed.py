@@ -54,11 +54,12 @@ class SeedReport:
     applied: dict[str, int] = field(default_factory=dict)
     profiles_seeded: int = 0
     profiles_adopted: dict[str, str] = field(default_factory=dict)
+    workbenches_seeded: int = 0
     filed: int = 0
 
     @property
     def total(self) -> int:
-        return self.profiles_seeded + sum(self.applied.values())
+        return self.profiles_seeded + self.workbenches_seeded + sum(self.applied.values())
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -66,6 +67,7 @@ class SeedReport:
             "applied": dict(self.applied),
             "profiles_seeded": self.profiles_seeded,
             "profiles_adopted": dict(self.profiles_adopted),
+            "workbenches_seeded": self.workbenches_seeded,
             "filed": self.filed,
             "total": self.total,
         }
@@ -130,6 +132,22 @@ def apply_seed(
 
     if adopt and first_profile_id:
         report.profiles_adopted = _adopt_profiles(first_profile_id)
+
+    for item in manifest.get("workbenches") or []:
+        if not isinstance(item, dict) or not str(item.get("id") or "").strip():
+            raise SeedError(
+                "workbenches item missing deterministic id "
+                f"(the idempotency contract): {item!r}"
+            )
+        wb_id = str(item["id"]).strip()
+        db.workbenches.upsert(
+            workbench_id=wb_id,
+            name=str(item.get("name") or ""),
+            recipe_id=item.get("recipe_id") or None,
+            profile_id=item.get("profile_id") or None,
+            resolver_profile_id=item.get("resolver_profile_id") or None,
+        )
+        report.workbenches_seeded += 1
 
     # Deterministic id -> qualified membership ref, derived from the section
     # each item is declared in (the UAT rig's same refs contract).
@@ -236,6 +254,7 @@ def reset_desk(db: "Database", name: str = DEFAULT_SEED) -> ResetReport:
         ("recipes", db.recipes),
         ("chains", db.chains),
         ("workflows", db.workflows),
+        ("workbenches", db.workbenches),
     ]
     for label, repo in sweeps:
         count = 0
