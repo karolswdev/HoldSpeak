@@ -143,22 +143,20 @@ def test_enabled_pipeline_returns_final_text(monkeypatch) -> None:
 
 
 def test_web_runtime_method_delegates(monkeypatch) -> None:
-    """``WebRuntime._maybe_run_dictation_pipeline`` is now a thin delegate that passes
-    ``self.config`` / ``self.server`` through to the carved function."""
+    """``WebRuntime._maybe_run_dictation_pipeline`` delegates to ``process_transcript``
+    (HS-118-08 refactor) which receives config/server as kwargs."""
     captured: dict = {}
 
-    def _spy(text, *, config, server, audio_duration_s, transcribed_at, agent_reply_session=None, journal_source="dictation"):
+    async def _spy(raw_text, source, context=None, *, config=None, server=None):
         captured.update(
-            text=text,
+            raw_text=raw_text,
+            source=source,
             config=config,
             server=server,
-            audio_duration_s=audio_duration_s,
-            transcribed_at=transcribed_at,
-            agent_reply_session=agent_reply_session,
         )
         return "SENTINEL"
 
-    monkeypatch.setattr(dictation_capture, "run_dictation_pipeline", _spy)
+    monkeypatch.setattr(dictation_capture, "process_transcript", _spy)
     fake_self = SimpleNamespace(config="CFG", server="SRV")
     out = web_runtime.WebRuntime._maybe_run_dictation_pipeline(
         fake_self,
@@ -168,11 +166,10 @@ def test_web_runtime_method_delegates(monkeypatch) -> None:
         agent_reply_session=None,
     )
     assert out == "SENTINEL"
-    assert captured["text"] == "hi"
+    assert captured["raw_text"] == "hi"
     assert captured["config"] == "CFG"
     assert captured["server"] == "SRV"
-    assert captured["audio_duration_s"] == 2.0
-    assert captured["transcribed_at"] is _NOW
+    assert captured["source"] == "hotkey"
 
 
 class _JournalSpy:

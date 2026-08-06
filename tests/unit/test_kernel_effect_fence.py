@@ -438,6 +438,18 @@ _MIGRATED_CALLS: dict[tuple[str, str, str, int], str] = {
         "release",
         1,
     ): "confined raw desktop driver",
+    (
+        "holdspeak/web/routes/repositories.py",
+        "_run",
+        "run",
+        1,
+    ): "authenticated owner read (git)",
+    (
+        "holdspeak/web/routes/roadmaps.py",
+        "_run",
+        "run",
+        1,
+    ): "authenticated owner read (dw CLI)",
 }
 
 _SKIP_DIRS = {

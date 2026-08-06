@@ -1,8 +1,8 @@
 # Phase 119 — The Revision
 
-**Status:** backlog (0/4).
+**Status:** in-progress (1/4).
 
-**Last updated:** 2026-08-05 (chartered).
+**Last updated:** 2026-08-05.
 
 ## The orchestrator
 
@@ -130,12 +130,16 @@ integrations were broken. This phase's walk covers both 118 and 119.
 | ID | Story | Status | Story file | Evidence |
 |----|-------|--------|------------|----------|
 | HS-119-01 | Click-to-toggle mic | backlog | [story-01](story-01-click-to-toggle-mic.md) | -- |
-| HS-119-02 | Integration regression sweep | backlog | [story-02](story-02-integration-regression-sweep.md) | -- |
+| HS-119-02 | Integration regression sweep | done | [story-02](story-02-integration-regression-sweep.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-119-03 | Seed revision | backlog | [story-03](story-03-seed-revision.md) | -- |
 | HS-119-04 | The walk | backlog | [story-04](story-04-the-walk.md) | -- |
 
 ## Where we are
 
-Chartered. Three pillars: click-to-toggle mic with streaming
-transcription, integration regression sweep, seed revision. Plus the
-combined 118+119 walk. Fix first, features second. No work started.
+Story 02 (integration regression sweep) is done. Exercised all 8
+checklist items against the Phase 118 codebase. Found and fixed 5
+regressions: WorkbenchTriageCodec not registered in kernel, 2
+unledgered effect sites, stale dictation delegate test, stale UAT
+seed route, stale canon guard after HS-117-08 decomposition. Added
+6 regression tests. WebSocket, presence, meetings, conductor, voice
+resolver, and inlet all pass clean. Stories 01, 03, 04 remain backlog.
