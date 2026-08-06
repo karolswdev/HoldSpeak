@@ -1,6 +1,6 @@
 # Phase 119 — The Revision
 
-**Status:** in-progress (2/4).
+**Status:** in-progress (3/4).
 
 **Last updated:** 2026-08-05.
 
@@ -129,16 +129,15 @@ integrations were broken. This phase's walk covers both 118 and 119.
 
 | ID | Story | Status | Story file | Evidence |
 |----|-------|--------|------------|----------|
-| HS-119-01 | Click-to-toggle mic | backlog | [story-01](story-01-click-to-toggle-mic.md) | -- |
+| HS-119-01 | Click-to-toggle mic | done | [story-01](story-01-click-to-toggle-mic.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-119-02 | Integration regression sweep | done | [story-02](story-02-integration-regression-sweep.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-119-03 | Seed revision | done | [story-03](story-03-seed-revision.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-119-04 | The walk | backlog | [story-04](story-04-the-walk.md) | -- |
 
 ## Where we are
 
-Stories 02 and 03 are done. The regression sweep found and fixed 5
-regressions (HS-119-02). The seed revision replaced the noisy 15+
-object demo with a toolkit baseline: 5 inference profiles (3 local
-tiers + 2 cloud placeholders), 1 starter workbench wired to the
-local resolver, 2 empty zones. No demo content, no seeded flattery
-(Article VI). Story 01 (click-to-toggle mic) is next.
+Stories 01, 02, and 03 are done. The browser mic is now click-to-toggle
+with streaming transcription via WebSocket, a compositor-only pulse
+animation, and a level meter (HS-119-01). The regression sweep fixed 5
+regressions (HS-119-02). The seed is a clean toolkit (HS-119-03).
+Story 04 (the walk) is the final proof.

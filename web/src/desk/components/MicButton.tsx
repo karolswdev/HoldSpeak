@@ -1,25 +1,25 @@
-// HS-78-02: the speak-to-fill mic — hold to talk, release to fill.
+// HS-119-01: click-to-toggle mic with streaming transcription.
 //
-// Every desk text input carries one (the standing voice-first rule, now on
-// the web): press and hold, speak, release; the transcript lands in the
-// field through onText with NO confirm step. Capture + transcription live
-// in the shared helper (the hub's own local Whisper; nothing egresses).
+// Click once to start listening; streaming transcription fills the
+// target field with progressive Whisper corrections; click again
+// (or Enter/Escape) to stop. Every desk text input carries one.
 //
-// HS-111-02: the cockpit's TALK key is THIS button wearing the transport
-// face (variant="transport") — same capture path, same 4-state machine;
-// the instrument strip reads the machine through onState and the capture
-// level through onLevel (the analyser tap lives in lib/speakToFill).
+// The hold-to-talk hotkey path (system-level) is unmodified — this
+// is the browser surface only.
 import "./speak-to-fill.css";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
-  cancelCapture,
   speakToFillSupported,
   speakToFillUnsupportedReason,
-  startCapture,
-  stopAndTranscribe,
   retryPendingTranscription,
   subscribeCaptureLevel,
 } from "../../lib/speakToFill";
+import {
+  micStreamSupported,
+  startStreamSession,
+  type StreamSession,
+  type StreamEvent,
+} from "../../lib/micStreamSession";
 import { loadPendingVoice } from "../../lib/pendingVoice";
 import { SYSTEM } from "../systemSprites";
 import {
@@ -35,7 +35,7 @@ export type MicState = "idle" | "listening" | "busy" | "failed";
 
 export function MicButton({
   onText,
-  label = "Hold to talk",
+  label = "Speak",
   onFailure,
   draftScope,
   variant,
@@ -45,25 +45,20 @@ export function MicButton({
   surfaceKind,
   hasSelection = false,
   onProposalConfirm,
+  onPartial,
 }: {
   onText: (text: string) => void;
   label?: string;
   onFailure?: (failure: DictationFailure) => void;
   draftScope?: string;
-  /** When supplied, transcript is classified before it can change the surface. */
   grammar?: VoiceGrammar;
-  /** The focused surface's identity; defaults to the supplied grammar's kind. */
   surfaceKind?: string;
   hasSelection?: boolean;
-  /** Executes only after the user confirms the armed proposal. */
   onProposalConfirm?: (proposal: VoiceProposal) => void | Promise<void>;
-  /** "transport" — the 48×48 momentary TALK key (glyph over mono word,
-   * held = inverted video). Default: the compact in-well mic. */
   variant?: "transport";
-  /** The 4-state machine, reported outward (the cockpit's STATE register). */
   onState?: (state: MicState) => void;
-  /** Capture level 0..1 while listening (feeds a LedMeter). */
   onLevel?: (level: number) => void;
+  onPartial?: (text: string) => void;
 }) {
   const [state, setState] = useState<MicState>("idle");
   const [failure, setFailure] = useState<DictationFailure | null>(null);
@@ -71,21 +66,26 @@ export function MicButton({
   const [proposal, setProposal] = useState<VoiceProposal | null>(null);
   const [classifying, setClassifying] = useState(false);
   const [receipt, setReceipt] = useState<{ text: string; scope: string } | null>(null);
-  const holding = useRef(false);
+  const [level, setLevel] = useState(0);
+  const sessionRef = useRef<StreamSession | null>(null);
+  const startingRef = useRef(false);
   const onStateRef = useRef(onState);
   onStateRef.current = onState;
   const onLevelRef = useRef(onLevel);
   onLevelRef.current = onLevel;
+  const onPartialRef = useRef(onPartial);
+  onPartialRef.current = onPartial;
 
-  const go = (next: MicState) => {
+  const go = useCallback((next: MicState) => {
     setState(next);
     onStateRef.current?.(next);
-  };
+  }, []);
 
   useEffect(
     () =>
-      subscribeCaptureLevel((level) => {
-        onLevelRef.current?.(level);
+      subscribeCaptureLevel((l) => {
+        setLevel(l);
+        onLevelRef.current?.(l);
       }),
     [],
   );
@@ -102,38 +102,30 @@ export function MicButton({
     return () => {
       mounted = false;
     };
+  }, [draftScope, go]);
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (sessionRef.current && (e.key === "Enter" || e.key === "Escape")) {
+        e.preventDefault();
+        void stopSession();
+      }
+    };
+    document.addEventListener("keydown", handler);
+    return () => document.removeEventListener("keydown", handler);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [draftScope]);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      sessionRef.current?.cancel();
+      sessionRef.current = null;
+    };
+  }, []);
 
   const transport = variant === "transport";
-  const face = (
-    <>
-      <span
-        className={transport ? "gadget-transport-glyph" : undefined}
-        aria-hidden="true"
-      >
-        {/* HS-111-09 — the mic is a 16px system sprite (integer-true),
-            not the 🎙 emoji: the highest-traffic icon on the desk. */}
-        {state === "busy" ? (
-          "…"
-        ) : (
-          <img
-            src={SYSTEM.micGlyph}
-            alt=""
-            width={16}
-            height={16}
-            className="desk-chrome-sprite"
-            draggable={false}
-          />
-        )}
-      </span>
-      {transport ? <span className="gadget-transport-word">Talk</span> : null}
-    </>
-  );
 
-  // HS-100-06: a mic that cannot capture is visible, disabled, and says
-  // why — it never vanishes silently (Article VI; the LAN-origin trap).
-  const captureSupported = speakToFillSupported();
+  const captureSupported = speakToFillSupported() || micStreamSupported();
   if (!captureSupported && !audioRetained) {
     const reason =
       speakToFillUnsupportedReason() ??
@@ -151,7 +143,7 @@ export function MicButton({
         aria-label={`${label} (unavailable: ${reason})`}
         onClick={(e) => e.stopPropagation()}
       >
-        {face}
+        <MicFace transport={transport} busy={false} />
       </button>
     );
   }
@@ -161,8 +153,6 @@ export function MicButton({
       onText(text);
       return;
     }
-    // The strip appears while the (only when needed) classifier is working;
-    // the transcript itself is still never an instruction until Confirm.
     const loadingProposal: VoiceProposal = {
       transcript: text,
       intentId: "classifying",
@@ -206,8 +196,9 @@ export function MicButton({
     setReceipt(null);
   };
 
-  const start = async () => {
-    holding.current = true;
+  const startSession = async () => {
+    if (startingRef.current) return;
+    startingRef.current = true;
     setFailure(null);
     try {
       if (draftScope) {
@@ -225,26 +216,39 @@ export function MicButton({
           return;
         }
       }
-      await startCapture();
-      if (!holding.current) {
-        await cancelCapture();
-        return;
-      }
+
+      const onEvent = (event: StreamEvent) => {
+        if (event.type === "partial") {
+          onPartialRef.current?.(event.text);
+        } else if (event.type === "error") {
+          const category = dictationFailure(new Error(event.error));
+          setFailure(category);
+          onFailure?.(category);
+          go("failed");
+          sessionRef.current = null;
+        }
+      };
+
+      const session = await startStreamSession(onEvent);
+      sessionRef.current = session;
       go("listening");
     } catch (error) {
       const category = dictationFailure(error);
       setFailure(category);
       onFailure?.(category);
       go("failed");
+    } finally {
+      startingRef.current = false;
     }
   };
 
-  const stop = async () => {
-    holding.current = false;
-    if (state !== "listening") return;
+  const stopSession = async () => {
+    const session = sessionRef.current;
+    if (!session) return;
+    sessionRef.current = null;
     go("busy");
     try {
-      const text = await stopAndTranscribe(draftScope);
+      const text = await session.stop();
       if (text) {
         await routeTranscript(text);
         setAudioRetained(false);
@@ -258,12 +262,21 @@ export function MicButton({
       }
     } catch (error) {
       const category = dictationFailure(error);
-      if (draftScope) setAudioRetained(true);
       setFailure(category);
       onFailure?.(category);
       go("failed");
     }
   };
+
+  const toggle = () => {
+    if (state === "listening") {
+      void stopSession();
+    } else if (state === "idle" || state === "failed") {
+      void startSession();
+    }
+  };
+
+  const listening = state === "listening";
 
   return (
     <>
@@ -278,27 +291,32 @@ export function MicButton({
         aria-label={
           audioRetained
             ? "Retry retained audio"
-            : state === "failed"
-              ? `${label} again`
-              : label
+            : listening
+              ? "Stop listening"
+              : state === "failed"
+                ? `${label} again`
+                : label
         }
-        aria-pressed={transport ? state === "listening" : undefined}
-        onPointerDown={(e) => {
+        aria-pressed={listening ? true : undefined}
+        onClick={(e) => {
           e.preventDefault();
           e.stopPropagation();
-          void start();
+          toggle();
         }}
-        onPointerUp={(e) => {
-          e.stopPropagation();
-          void stop();
-        }}
-        onPointerLeave={() => {
-          if (holding.current) void stop();
-        }}
-        onClick={(e) => e.stopPropagation()}
       >
-        {face}
+        <MicFace transport={transport} busy={state === "busy"} />
       </button>
+      {listening && !transport ? (
+        <span
+          className="desk-mic-level"
+          role="meter"
+          aria-label="Audio level"
+          aria-valuenow={Math.round(level * 100)}
+          aria-valuemin={0}
+          aria-valuemax={100}
+          style={{ "--mic-level": level } as React.CSSProperties}
+        />
+      ) : null}
       {failure && !transport ? (
         <span className="desk-mic-failure" role="status">
           {audioRetained ? "Captured audio is retained locally. " : ""}
@@ -312,6 +330,31 @@ export function MicButton({
         onConfirm={() => void confirmProposal()}
         onCancel={clearProposal}
       />
+    </>
+  );
+}
+
+function MicFace({ transport, busy }: { transport: boolean; busy: boolean }) {
+  return (
+    <>
+      <span
+        className={transport ? "gadget-transport-glyph" : undefined}
+        aria-hidden="true"
+      >
+        {busy ? (
+          "…"
+        ) : (
+          <img
+            src={SYSTEM.micGlyph}
+            alt=""
+            width={16}
+            height={16}
+            className="desk-chrome-sprite"
+            draggable={false}
+          />
+        )}
+      </span>
+      {transport ? <span className="gadget-transport-word">Talk</span> : null}
     </>
   );
 }

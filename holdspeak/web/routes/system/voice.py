@@ -333,4 +333,117 @@ def build_voice_router(ctx: WebContext) -> APIRouter:
             return JSONResponse({"ok": False, "error": f"{type(exc).__name__}: {exc}"})
 
 
+    @router.websocket("/ws/dictation/stream")
+    async def ws_dictation_stream(websocket: WebSocket) -> None:
+        """HS-119-01: streaming transcription for the click-to-toggle mic.
+
+        The client sends raw 16 kHz mono 16-bit PCM chunks as binary frames.
+        The server transcribes each chunk and sends back JSON events:
+          {"type": "partial", "text": "..."}   — progressive Whisper result
+          {"type": "final",   "text": "..."}   — pipeline-processed final text
+          {"type": "error",   "error": "..."}  — named failure
+
+        The client signals end-of-stream by sending a JSON text frame:
+          {"type": "end"}
+        """
+        from .... import web_auth
+        from ....principals import derive_owner, agent_credentials, UNAUTHENTICATED, PrincipalRight
+
+        provided = web_auth.extract_request_token(
+            authorization=websocket.headers.get("authorization"),
+            header_token=websocket.headers.get("x-holdspeak-token"),
+        ) or web_auth.extract_websocket_token(
+            websocket.headers.get("sec-websocket-protocol")
+        )
+        principal = derive_owner(provided, ctx.web_auth_token)
+        if principal is None:
+            principal = agent_credentials.derive(provided)
+        principal = principal or UNAUTHENTICATED
+        if not principal.permits(PrincipalRight.OWNER):
+            await websocket.close(code=1008, reason="auth_required")
+            return
+
+        offered = {
+            item.strip()
+            for item in str(websocket.headers.get("sec-websocket-protocol") or "").split(",")
+        }
+        selected = web_auth.WEBSOCKET_PROTOCOL if web_auth.WEBSOCKET_PROTOCOL in offered else None
+        await websocket.accept(subprotocol=selected)
+
+        if ctx.on_transcribe is None:
+            await websocket.send_json({"type": "error", "error": "Transcription unavailable."})
+            await websocket.close()
+            return
+
+        if not _claim_browser_audio_floor(ctx):
+            await websocket.send_json({"type": "error", "error": "Audio floor held by another source."})
+            await websocket.close()
+            return
+
+        import io
+        import wave
+        import numpy as np
+
+        all_chunks: list[bytes] = []
+        try:
+            while True:
+                message = await websocket.receive()
+                if message.get("type") == "websocket.disconnect":
+                    break
+
+                if "bytes" in message and message["bytes"]:
+                    chunk_bytes = message["bytes"]
+                    all_chunks.append(chunk_bytes)
+                    audio = np.frombuffer(chunk_bytes, dtype=np.int16).astype(np.float32) / 32768.0
+                    if len(audio) < 1600:
+                        continue
+                    try:
+                        partial_text = ctx.on_transcribe(audio)
+                        await websocket.send_json({"type": "partial", "text": partial_text or ""})
+                    except Exception as exc:
+                        log.debug(f"Streaming partial transcription failed: {exc}")
+
+                elif "text" in message and message["text"]:
+                    try:
+                        payload = json.loads(message["text"])
+                    except Exception:
+                        continue
+                    if payload.get("type") == "end":
+                        break
+
+            if all_chunks:
+                combined = b"".join(all_chunks)
+                audio = np.frombuffer(combined, dtype=np.int16).astype(np.float32) / 32768.0
+                try:
+                    raw_text = ctx.on_transcribe(audio)
+                except Exception as exc:
+                    log.error(f"Final transcription failed: {exc}")
+                    await websocket.send_json({"type": "error", "error": "Transcription failed."})
+                    return
+
+                final_text = raw_text or ""
+                try:
+                    from ....dictation_runner import process_transcript
+                    corrected = await process_transcript(
+                        raw_text=final_text,
+                        source="browser",
+                        context=None,
+                        config=getattr(ctx, "_config", None) or _resolve_config(ctx),
+                        server=_resolve_server(ctx),
+                    )
+                    final_text = corrected
+                except Exception as exc:
+                    log.warning(f"Pipeline processing failed, returning raw: {exc}")
+
+                await websocket.send_json({"type": "final", "text": final_text})
+            else:
+                await websocket.send_json({"type": "final", "text": ""})
+
+        except WebSocketDisconnect:
+            pass
+        except Exception as exc:
+            log.debug(f"Streaming dictation error: {exc}")
+        finally:
+            _release_browser_audio_floor(ctx)
+
     return router

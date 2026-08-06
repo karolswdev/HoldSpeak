@@ -71,7 +71,7 @@ export function InstrumentStrip({
       <MicButton
         variant="transport"
         draftScope="dictation-dry-run-voice"
-        label="Hold to talk"
+        label="Speak"
         onText={onReleased}
         onState={(next) => {
           // the key came up: start the release-to-landed clock and

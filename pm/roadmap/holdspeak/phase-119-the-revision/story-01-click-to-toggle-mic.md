@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 119
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-119-02 (regression sweep lands on a stable baseline first)
 - **Unblocks:** HS-119-04 (the walk)
 - **Owner:** unassigned

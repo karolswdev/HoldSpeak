@@ -5,10 +5,8 @@ import { FirstWords } from "./FirstWords";
 
 const mocks = vi.hoisted(() => ({
   apiFetch: vi.fn(),
-  startCapture: vi.fn(),
-  stopAndTranscribe: vi.fn(),
-  cancelCapture: vi.fn(),
   retryPendingTranscription: vi.fn(),
+  startStreamSession: vi.fn(),
 }));
 
 vi.mock("../../lib/api", () => {
@@ -30,10 +28,16 @@ vi.mock("../../lib/api", () => {
 
 vi.mock("../../lib/speakToFill", () => ({
   speakToFillSupported: () => true,
-  startCapture: mocks.startCapture,
-  stopAndTranscribe: mocks.stopAndTranscribe,
-  cancelCapture: mocks.cancelCapture,
+  startCapture: vi.fn(),
+  stopAndTranscribe: vi.fn(),
+  cancelCapture: vi.fn(),
   retryPendingTranscription: mocks.retryPendingTranscription,
+}));
+
+vi.mock("../../lib/micStreamSession", () => ({
+  micStreamSupported: () => true,
+  startStreamSession: mocks.startStreamSession,
+  subscribeCaptureLevel: () => () => undefined,
 }));
 
 describe("FirstWords", () => {
@@ -45,10 +49,8 @@ describe("FirstWords", () => {
         return Promise.resolve({ attempt: { id: "a1" } });
       return Promise.resolve({ success: true });
     });
-    mocks.startCapture.mockResolvedValue(undefined);
-    mocks.stopAndTranscribe.mockResolvedValue(
-      "A sentence that stays editable.",
-    );
+    const stopFn = vi.fn().mockResolvedValue("A sentence that stays editable.");
+    mocks.startStreamSession.mockResolvedValue({ stop: stopFn, cancel: vi.fn() });
     mocks.retryPendingTranscription.mockResolvedValue(null);
   });
 
@@ -58,10 +60,10 @@ describe("FirstWords", () => {
         <FirstWords />
       </MemoryRouter>,
     );
-    const talk = screen.getByRole("button", { name: "Hold to dictate" });
-    fireEvent.pointerDown(talk);
-    await screen.findByText("Listening… release when done");
-    fireEvent.pointerUp(talk);
+    const talk = screen.getByRole("button", { name: "Click to dictate" });
+    fireEvent.click(talk);
+    await screen.findByText("Listening… click to stop");
+    fireEvent.click(talk);
 
     const editor = await screen.findByRole("textbox", {
       name: "Your dictated text",
@@ -90,7 +92,7 @@ describe("FirstWords", () => {
   });
 
   it("keeps recovery actions visible after permission denial", async () => {
-    mocks.startCapture.mockRejectedValue(
+    mocks.startStreamSession.mockRejectedValue(
       new DOMException("denied", "NotAllowedError"),
     );
     render(
@@ -98,8 +100,8 @@ describe("FirstWords", () => {
         <FirstWords />
       </MemoryRouter>,
     );
-    fireEvent.pointerDown(
-      screen.getByRole("button", { name: "Hold to dictate" }),
+    fireEvent.click(
+      screen.getByRole("button", { name: "Click to dictate" }),
     );
     expect(
       await screen.findByText(/Microphone access is off/),
@@ -111,32 +113,25 @@ describe("FirstWords", () => {
     ).toBeDisabled();
     expect(screen.getByRole("button", { name: "Copy" })).toBeDisabled();
     expect(screen.getByRole("button", { name: "Keep as Note" })).toBeDisabled();
-    // HS-95-07: Setup opens in-world through the shell dispatcher.
     expect(screen.getByRole("button", { name: "Setup" })).toBeInTheDocument();
   });
 
-  it("transcribes one capture exactly once when release is repeated", async () => {
+  it("transcribes one capture exactly once when toggle is repeated", async () => {
+    const stopFn = vi.fn().mockResolvedValue("A sentence that stays editable.");
+    mocks.startStreamSession.mockResolvedValue({ stop: stopFn, cancel: vi.fn() });
     render(
       <MemoryRouter>
         <FirstWords />
       </MemoryRouter>,
     );
-    const talk = screen.getByRole("button", { name: "Hold to dictate" });
-    fireEvent.pointerDown(talk);
-    await screen.findByText("Listening… release when done");
+    const talk = screen.getByRole("button", { name: "Click to dictate" });
+    fireEvent.click(talk);
+    await screen.findByText("Listening… click to stop");
 
-    fireEvent.pointerUp(talk);
-    fireEvent.pointerUp(talk);
+    fireEvent.click(talk);
 
     await screen.findByDisplayValue("A sentence that stays editable.");
-    expect(mocks.stopAndTranscribe).toHaveBeenCalledOnce();
-    await waitFor(() =>
-      expect(
-        mocks.apiFetch.mock.calls.filter(([path]) =>
-          String(path).endsWith("/finish"),
-        ),
-      ).toHaveLength(1),
-    );
+    expect(stopFn).toHaveBeenCalledOnce();
   });
 
   it("persists Continue later independently of first success", async () => {

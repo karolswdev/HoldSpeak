@@ -5,6 +5,7 @@ import { MicButton } from "./MicButton";
 const mocks = vi.hoisted(() => ({
   loadPendingVoice: vi.fn(),
   retryPendingTranscription: vi.fn(),
+  startStreamSession: vi.fn(),
 }));
 
 vi.mock("../../lib/pendingVoice", () => ({
@@ -23,7 +24,12 @@ vi.mock("../../lib/speakToFill", () => ({
   startCapture: vi.fn(),
   stopAndTranscribe: vi.fn(),
   retryPendingTranscription: mocks.retryPendingTranscription,
-  // HS-111-02: the level tap (returns an unsubscribe).
+  subscribeCaptureLevel: () => () => undefined,
+}));
+
+vi.mock("../../lib/micStreamSession", () => ({
+  micStreamSupported: () => support.supported,
+  startStreamSession: mocks.startStreamSession,
   subscribeCaptureLevel: () => () => undefined,
 }));
 
@@ -54,9 +60,49 @@ describe("MicButton honest states (HS-100-06)", () => {
   it("renders the live mic when capture is supported", () => {
     support.supported = true;
     render(<MicButton onText={vi.fn()} />);
-    const mic = screen.getByRole("button", { name: "Hold to talk" });
+    const mic = screen.getByRole("button", { name: "Speak" });
     expect(mic).toBeEnabled();
     expect(mic.className).not.toContain("is-unsupported");
+  });
+});
+
+describe("MicButton click-to-toggle (HS-119-01)", () => {
+  beforeEach(() => {
+    support.supported = true;
+    support.reason = null;
+    mocks.loadPendingVoice.mockResolvedValue(null);
+  });
+
+  it("click toggles between idle and listening", async () => {
+    const stopFn = vi.fn().mockResolvedValue("hello world");
+    const session = { stop: stopFn, cancel: vi.fn() };
+    mocks.startStreamSession.mockResolvedValue(session);
+
+    const onText = vi.fn();
+    render(<MicButton onText={onText} />);
+    const mic = screen.getByRole("button", { name: "Speak" });
+
+    fireEvent.click(mic);
+    await waitFor(() => expect(mic.className).toContain("is-listening"));
+
+    fireEvent.click(mic);
+    await waitFor(() => expect(onText).toHaveBeenCalledWith("hello world"));
+  });
+
+  it("claims audio floor on start, releases on stop", async () => {
+    const stopFn = vi.fn().mockResolvedValue("text");
+    const session = { stop: stopFn, cancel: vi.fn() };
+    mocks.startStreamSession.mockResolvedValue(session);
+
+    const onText = vi.fn();
+    render(<MicButton onText={onText} />);
+    const mic = screen.getByRole("button", { name: "Speak" });
+
+    fireEvent.click(mic);
+    await waitFor(() => expect(mocks.startStreamSession).toHaveBeenCalled());
+
+    fireEvent.click(mic);
+    await waitFor(() => expect(stopFn).toHaveBeenCalled());
   });
 });
 
@@ -79,7 +125,7 @@ describe("MicButton retained audio", () => {
       screen.getByText(/Captured audio is retained locally/),
     ).toBeVisible();
 
-    fireEvent.pointerDown(retry);
+    fireEvent.click(retry);
 
     await waitFor(() => expect(onText).toHaveBeenCalledWith("Recovered words"));
     expect(mocks.retryPendingTranscription).toHaveBeenCalledWith("desk-ask");
