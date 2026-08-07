@@ -12,10 +12,14 @@ from holdspeak.services.errors import NotFound, ValidationError
 class CoderService:
     def __init__(
         self,
-        db: Database,
+        db: Database | None = None,
         *,
         reply_sender: Callable[[str, str], Any] | None = None,
     ) -> None:
+        if db is None:
+            from ..db import get_database
+
+            db = get_database()
         self._db = db
         self._reply_sender = reply_sender
 
@@ -76,6 +80,74 @@ class CoderService:
             raise ValidationError("coder reply delivery is unavailable")
         outcome = self._reply_sender(session_id, clean_text)
         return {"success": True, "session": session, "reply": outcome}
+
+    def list_steering_audit(
+        self, principal: Principal, session_key: str | None, limit: int
+    ) -> list[dict[str, Any]]:
+        """Return the bounded, content-safe steering audit trail."""
+        try:
+            clean_limit = int(limit)
+        except (TypeError, ValueError) as exc:
+            raise ValidationError("limit must be an integer") from exc
+        clean_session_key = str(session_key).strip() if session_key is not None else None
+        entries = self._db.steering.list(
+            session_key=clean_session_key or None,
+            limit=clean_limit,
+        )
+        return [entry.to_dict() for entry in entries]
+
+    def keep_note(
+        self, principal: Principal, session_key: str, content: dict[str, Any]
+    ) -> dict[str, Any]:
+        """Persist a session-derived note after the route resolves its session."""
+        if not str(session_key or "").strip():
+            raise ValidationError("session_key must be non-empty")
+        if not isinstance(content, dict):
+            raise ValidationError("note content must be an object")
+        title = str(content.get("title") or "").strip()
+        body_markdown = str(content.get("body_markdown") or "").strip()
+        if not title:
+            raise ValidationError("note title must be non-empty")
+        if not body_markdown:
+            raise ValidationError("note body must be non-empty")
+        raw_tags = content.get("tags") or []
+        if not isinstance(raw_tags, list) or not all(isinstance(tag, str) for tag in raw_tags):
+            raise ValidationError("note tags must be strings")
+        from uuid import uuid4
+
+        note = self._db.notes.upsert(
+            note_id=f"note-{uuid4().hex}",
+            title=title,
+            body_markdown=body_markdown,
+            tags=[tag.strip() for tag in raw_tags if tag.strip()],
+        )
+        return note.to_dict()
+
+    def hydrate_refs(
+        self,
+        principal: Principal,
+        meeting_ids: list[str],
+        artifact_ids: list[str],
+        expand: str,
+    ) -> tuple[list[Any], list[str]]:
+        """Hydrate steer grounding through the application's database boundary."""
+        from ..grounding import hydrate_refs
+
+        return hydrate_refs(self._db, meeting_ids, artifact_ids, expand)
+
+    def process_input_commands(self, targets: Any) -> Any:
+        """Compose the local process-input command service for coder steering."""
+        from ..db.delivery_receipts import NodeReceiptLedger
+        from ..delivery.commands import HubCommandService, NodeCommandProcessor
+
+        ledger = self._db.db_path.with_name(f"{self._db.db_path.stem}-coder-node-ledger.db")
+        return HubCommandService(
+            repo=self._db.delivery_receipts,
+            processor=NodeCommandProcessor(
+                node_id="local", targets=targets, ledger=NodeReceiptLedger(ledger)
+            ),
+            local_node_id="local",
+        )
 
     @staticmethod
     def _split_session_id(value: str) -> tuple[str, str]:

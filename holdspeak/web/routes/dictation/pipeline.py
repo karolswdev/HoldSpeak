@@ -50,6 +50,15 @@ def build_pipeline_router(
     dismissed_signatures: set[str] | None = None,
 ) -> APIRouter:
     router = APIRouter()
+    dictation_service = (
+        ctx.dictation_service
+        if isinstance(ctx.dictation_service, DictationService)
+        else DictationService(
+            journal_repository=getattr(ctx.journal, "repository", None),
+            journal_available=ctx.journal is not None,
+            delivery_repository=ctx.dictation_deliveries,
+        )
+    )
 
     @router.get("/api/dictation/readiness")
     async def api_dictation_readiness(project_root: Optional[str] = None) -> Any:
@@ -318,7 +327,7 @@ def build_pipeline_router(
             return JSONResponse({"error": str(exc)}, status_code=500)
 
     @router.post("/api/dictation/remote")
-    async def api_dictation_remote(payload: dict[str, Any]) -> Any:
+    async def api_dictation_remote(request: Request, payload: dict[str, Any]) -> Any:
         """HSM-13-01 — accept a dictated answer from a companion client (iPhone/iPad),
         run it through the rich dictation pipeline (corrections/blocks/plugins), and
         deliver it into the desktop's dictation target / AI PI path.
@@ -371,7 +380,8 @@ def build_pipeline_router(
         # read the original terminal response without repeating the effect.
         delivery_id_value = payload.get("delivery_id") if isinstance(payload, dict) else None
         delivery_id = ""
-        delivery_repo = None
+        delivery_service = dictation_service
+        principal = getattr(request.state, "principal", None)
         if delivery_id_value is not None:
             if not isinstance(delivery_id_value, str) or not delivery_id_value.strip():
                 return JSONResponse(
@@ -391,15 +401,9 @@ def build_pipeline_router(
                     request_shape, separators=(",", ":"), sort_keys=True
                 ).encode("utf-8")
             ).hexdigest()
-            if ctx.dictation_deliveries is not None:
-                delivery_repo = ctx.dictation_deliveries
-            else:
-                from ....db import get_database
-
-                delivery_repo = get_database().dictation_deliveries
             try:
-                claim = delivery_repo.claim(
-                    delivery_id, request_hash=request_hash
+                claim = delivery_service.claim_delivery(
+                    principal, delivery_id, request_hash=request_hash
                 )
             except ValueError as exc:
                 return JSONResponse(
@@ -434,18 +438,20 @@ def build_pipeline_router(
             body: dict[str, Any], *, status_code: int = 200
         ) -> JSONResponse:
             response_body = dict(body)
-            if delivery_id and delivery_repo is not None:
+            if delivery_id:
                 response_body["delivery_id"] = delivery_id
                 response_body["deduplicated"] = False
                 try:
                     if 200 <= status_code < 300:
-                        delivery_repo.complete(
+                        delivery_service.complete_delivery(
+                            principal,
                             delivery_id,
                             response_status=status_code,
                             response=response_body,
                         )
                     else:
-                        delivery_repo.fail(
+                        delivery_service.fail_delivery(
+                            principal,
                             delivery_id,
                             response_status=status_code,
                             response=response_body,
@@ -468,7 +474,7 @@ def build_pipeline_router(
             body: dict[str, Any], *, legacy_status: int = 502
         ) -> JSONResponse:
             """Refuse to replay an effect whose hook outcome is ambiguous."""
-            if not delivery_id or delivery_repo is None:
+            if not delivery_id:
                 return JSONResponse(body, status_code=legacy_status)
             pending = dict(body)
             pending.update(
@@ -785,14 +791,7 @@ def build_pipeline_router(
         return [r.transcript for r in repo.recent()] if repo is not None else []
 
     def _dictation_service() -> DictationService:
-        from ....db import get_database
-
-        repository = _journal_repo()
-        return DictationService(
-            get_database(),
-            journal_repository=repository,
-            journal_available=repository is not None,
-        )
+        return dictation_service
 
     @router.get("/api/dictation/journal")
     async def api_dictation_journal_list(

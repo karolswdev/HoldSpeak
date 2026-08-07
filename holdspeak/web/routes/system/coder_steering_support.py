@@ -9,6 +9,8 @@ from typing import Any, Mapping, Optional
 
 from fastapi.responses import JSONResponse
 
+from ....services.coder_service import CoderService
+
 _PANE_ID_RE = re.compile(r"^%[0-9]+$")
 
 
@@ -85,15 +87,13 @@ def steering_commitment(
 
 
 def compose_from_body(
-    body: dict[str, Any], *, principal: Any
+    body: dict[str, Any], *, principal: Any, service: CoderService
 ) -> dict[str, Any] | JSONResponse:
     """Hydrate bounded Desk/rails grounding into the exact steer payload."""
-    from ....db import get_database
     from ....grounding import (
         GROUNDING_EXPANDS,
         GROUNDING_MAX_REFS,
         compose_steer,
-        hydrate_refs,
     )
 
     text = body.get("text")
@@ -133,7 +133,9 @@ def compose_from_body(
             {"error": f"grounding is capped at {GROUNDING_MAX_REFS} refs"},
             status_code=400,
         )
-    blocks, unknown = hydrate_refs(get_database(), meeting_ids, artifact_ids, expand)
+    blocks, unknown = service.hydrate_refs(
+        principal, meeting_ids, artifact_ids, expand
+    )
     if rails_refs:
         from ....grounding_rails import hydrate_rails_refs
 
@@ -153,7 +155,14 @@ def compose_from_body(
 class ProcessInputServices:
     """Lazy shared native services for the coder route's kernel adapter."""
 
-    def __init__(self, *, commands: Any = None, targets: Any = None) -> None:
+    def __init__(
+        self,
+        *,
+        service: CoderService,
+        commands: Any = None,
+        targets: Any = None,
+    ) -> None:
+        self._service = service
         self._commands = commands
         self._targets = targets
 
@@ -171,23 +180,7 @@ class ProcessInputServices:
 
     def commands(self) -> Any:
         if self._commands is None:
-            from ....db import get_database
-            from ....db.delivery_receipts import NodeReceiptLedger
-            from ....delivery.commands import HubCommandService, NodeCommandProcessor
-
-            database = get_database()
-            ledger = database.db_path.with_name(
-                f"{database.db_path.stem}-coder-node-ledger.db"
-            )
-            self._commands = HubCommandService(
-                repo=database.delivery_receipts,
-                processor=NodeCommandProcessor(
-                    node_id="local",
-                    targets=self.targets(),
-                    ledger=NodeReceiptLedger(ledger),
-                ),
-                local_node_id="local",
-            )
+            self._commands = self._service.process_input_commands(self.targets())
         return self._commands
 
 

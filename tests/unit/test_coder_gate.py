@@ -24,6 +24,7 @@ from holdspeak.coder_gate import (
     write_spawn_settings,
 )
 from holdspeak.db import Database, reset_database
+from holdspeak.services.gate_service import GateService
 from holdspeak.db.gate import (
     APPROVED,
     DENIED,
@@ -491,7 +492,7 @@ def test_startup_invalidation_via_route_helper(route_rig) -> None:
 
     db, clock, client = route_rig
     _wire_proposal(client)
-    assert invalidate_held_on_startup() == 1
+    assert invalidate_held_on_startup(GateService(db)) == 1
     assert db.gate.get("p1").state == INVALIDATED
     polled = client.get("/api/gate/proposals/p1").json()
     assert polled["state"] == INVALIDATED

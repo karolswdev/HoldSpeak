@@ -34,6 +34,7 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
 from ...logging_config import get_logger
+from ...services.delivery_service import DeliveryService
 from ..context import WebContext
 
 log = get_logger("web.routes.delivery_terminal")
@@ -86,7 +87,7 @@ def build_delivery_terminal_router(
     ``link`` is the shared :class:`NodeLinkState` whose token store
     authenticates the node results leg.
     """
-    _ = ctx
+    delivery_service = DeliveryService(hub_db) if hub_db is not None else ctx.delivery_service
     router = APIRouter()
     holder: dict[str, Any] = {
         "service": service,
@@ -111,19 +112,11 @@ def build_delivery_terminal_router(
 
     def _service() -> Any:
         if holder["service"] is None:
-            from ...db import get_database
-            from ...db.delivery_receipts import NodeReceiptLedger
-            from ...delivery.commands import HubCommandService, NodeCommandProcessor
-
-            db = hub_db if hub_db is not None else get_database()
-            processor = NodeCommandProcessor(
-                node_id=local_node_id,
+            if delivery_service is None:
+                raise RuntimeError("DeliveryService must be supplied at application composition")
+            holder["service"] = delivery_service.command_service(
                 targets=_targets(),
-                ledger=NodeReceiptLedger(ledger_path),
-            )
-            holder["service"] = HubCommandService(
-                repo=db.delivery_receipts,
-                processor=processor,
+                ledger_path=ledger_path,
                 local_node_id=local_node_id,
                 mode_loader=mode_loader,
             )

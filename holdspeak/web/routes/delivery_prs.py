@@ -38,7 +38,9 @@ def build_delivery_prs_router(
     map_path: Optional[Path] = None,
     runner: Any = None,
 ) -> APIRouter:
-    _ = ctx
+    delivery_service = ctx.delivery_service
+    if delivery_service is None:
+        raise RuntimeError("DeliveryService must be supplied at application composition")
     router = APIRouter()
     holder: dict[str, Any] = {"service": service, "attempts": attempts_service}
 
@@ -59,9 +61,7 @@ def build_delivery_prs_router(
             if holder["attempts"] is not None:
                 rows = holder["attempts"].list()
             else:
-                from ...db import get_database
-
-                rows = get_database().work_attempts.list()
+                rows = delivery_service.list_work_attempts()
             ids = []
             for row in rows:
                 story_id = getattr(row, "story_id", None) or (
@@ -159,12 +159,7 @@ def build_delivery_prs_router(
             "session_label": f"hs-pr-{number}-{uuid.uuid4().hex[:6]}",
         }
         try:
-            from ...db import get_database
-            from ...delivery.factory_launch import default_launch_service
-            from ...kernel.runtime import _service as kernel_service
-
-            service = default_launch_service(get_database())
-            service.bind_kernel(kernel_service())
+            service = delivery_service.default_launch_service()
             result = await asyncio.to_thread(
                 service.submit_process_spawn,
                 launch_request,
@@ -189,12 +184,7 @@ def build_delivery_prs_router(
         text = str(body.get("text") or "").strip()
         if not text or len(text) > 1600:
             return JSONResponse({"error": "input_invalid"}, status_code=400)
-        from ...db import get_database
-        from ...delivery.factory_launch import default_launch_service
-        from ...kernel.runtime import _service as kernel_service
-
-        service = default_launch_service(get_database())
-        service.bind_kernel(kernel_service())
+        service = delivery_service.default_launch_service()
         record = service.launch_record(launch_id)
         if record is None:
             return JSONResponse({"error": "launch_unknown"}, status_code=404)
@@ -240,12 +230,8 @@ def build_delivery_prs_router(
             )
         lifecycle = None
         try:
-            from ...db import get_database
-            from ...inference_targets import build_intel_for_target, resolve_inference_target
             from ...kernel.runtime import _service as kernel_service
-            from ...services.support import RunLifecycle, _persist_run_artifact
 
-            db = get_database()
             broker = kernel_service()
             invocation_id = "invocation_" + uuid.uuid4().hex
             revision = str(material.get("revision") or "unversioned")
@@ -287,16 +273,16 @@ def build_delivery_prs_router(
             handle = broker.decide(
                 handle["operation_id"], "approve", handle["revision"], request.state.principal
             )
-            lifecycle = RunLifecycle(
-                db, invocation_id, "program:pr-review-v1",
-                operation_id=handle["operation_id"], broker=broker,
+            lifecycle, target, intel = delivery_service.prepare_pr_review(
+                invocation_id=invocation_id,
+                requested_target_id=requested_target_id,
+                operation_id=handle["operation_id"],
+                broker=broker,
             )
-            target = resolve_inference_target(db, requested_target_id)
             lifecycle.start_attempt(destination=target.id, target=target)
             if not target.ready:
                 invocation = lifecycle.fail(target.readiness_reason, state="unavailable")
                 return JSONResponse({"error": target.readiness_reason, "invocation": invocation}, status_code=409)
-            intel = build_intel_for_target(target, db)
             linked_text = "\n\n".join(str(item.get("text") or "") for item in material.get("linked") or [])
             prompt = (
                 f"Review PR #{number}. Return a concise GitHub review draft with concrete findings. "
@@ -314,9 +300,11 @@ def build_delivery_prs_router(
                 {"source_type": "input", "source_ref": f"pr:{source_id}:{number}"},
                 *lifecycle.lineage(),
             ]
-            artifact_id = _persist_run_artifact(
-                kind="pr_review", name=f"PR #{number} review",
-                user_input=f"PR #{number}", output=str(output or ""), sources=sources,
+            artifact_id = delivery_service.persist_pr_review_artifact(
+                name=f"PR #{number} review",
+                user_input=f"PR #{number}",
+                output=str(output or ""),
+                sources=sources,
             )
             if not artifact_id:
                 lifecycle.fail("artifact_persistence_failed")
@@ -411,11 +399,9 @@ def build_delivery_prs_router(
         decision = str(body.get("decision") or "")
         if decision not in {"approve", "reject"}:
             return JSONResponse({"error": "decision_unknown"}, status_code=400)
-        from ...db import get_database
         from ...kernel.runtime import _service as kernel_service
         from .actuator_shared import execute_github_proposal, proposal_to_dict
 
-        db = get_database()
         broker = kernel_service()
         projection = broker.read(
             [f"actuator:{proposal_id}"], "state", "committed", request.state.principal
@@ -430,11 +416,18 @@ def build_delivery_prs_router(
             )
         except Exception as exc:
             return JSONResponse({"error": getattr(exc, "reason", "decision_failed")}, status_code=409)
-        proposal = db.actuators.get_proposal(proposal_id)
+        try:
+            proposal = delivery_service.actuator_proposal(proposal_id)
+        except Exception:
+            return JSONResponse({"error": "proposal_unknown"}, status_code=404)
         if decision == "reject":
             return JSONResponse({**handle, "proposal": proposal_to_dict(proposal)})
         executed = await asyncio.to_thread(
-            execute_github_proposal, ctx, db, proposal, actor=request.state.principal.identity
+            delivery_service.execute_actuator_proposal,
+            execute_github_proposal,
+            ctx,
+            proposal,
+            actor=request.state.principal.identity,
         )
         return JSONResponse({**handle, "proposal": proposal_to_dict(executed)})
 

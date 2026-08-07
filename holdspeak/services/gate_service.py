@@ -140,3 +140,13 @@ class GateService:
     def audit(self, principal: Principal, filters: dict[str, Any] | None = None) -> dict[str, Any]:
         limit = max(1, min(int((filters or {}).get("limit") or 100), 500))
         return {"entries": self._db.gate.audit_entries(limit=limit)}
+
+    def invalidate_held_on_startup(self) -> tuple[list[Any], int]:
+        """Expire proposals a process restart can no longer honestly resume."""
+        from ..kernel.runtime import _service
+
+        flipped = self._db.gate.invalidate_all_held(
+            reason="hub restarted while the proposal was held"
+        )
+        recovered = _service().recover_invalidated(flipped) if flipped else 0
+        return flipped, recovered

@@ -65,6 +65,21 @@ class SetupService:
             self._db.onboarding.set_disposition("completed")
         return {"success": True, "attempt": attempt}
 
+    def record_event(
+        self, principal: Principal, attempt_id: str, payload: dict[str, Any]
+    ) -> dict[str, Any]:
+        try:
+            event = self._db.onboarding.record_event(
+                attempt_id,
+                event_id=str(payload.get("event_id") or ""),
+                kind=str(payload.get("kind") or ""),
+            )
+        except KeyError as exc:
+            raise NotFound("first-value attempt", attempt_id) from exc
+        except ValueError as exc:
+            raise ValidationError(str(exc)) from exc
+        return {"success": True, "event": event}
+
     @staticmethod
     def _reject_content(payload: dict[str, Any]) -> None:
         if {"text", "phrase", "transcript", "content", "audio"}.intersection(payload):

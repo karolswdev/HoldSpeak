@@ -92,22 +92,17 @@ def build_setup_router(ctx: WebContext) -> APIRouter:
             return error_500(exc, log, "Failed to finish first-value receipt")
 
     @router.post("/api/setup/first-value/{attempt_id}/event")
-    async def api_first_value_event(attempt_id: str, payload: dict[str, Any]) -> Any:
+    async def api_first_value_event(attempt_id: str, request: Request, payload: dict[str, Any]) -> Any:
         allowed = {"event_id", "kind"}
         if set(payload or {}).difference(allowed):
             return JSONResponse({"success": False, "error": "First-value events accept only event_id and kind."}, status_code=400)
         try:
-            from ...db import get_database
-            event = get_database().onboarding.record_event(
-                attempt_id,
-                event_id=str((payload or {}).get("event_id") or ""),
-                kind=str((payload or {}).get("kind") or ""),
+            return JSONResponse(
+                service.record_event(request.state.principal, attempt_id, payload or {}),
+                status_code=201,
             )
-            return JSONResponse({"success": True, "event": event}, status_code=201)
-        except KeyError as exc:
-            return JSONResponse({"success": False, "error": str(exc)}, status_code=404)
-        except ValueError as exc:
-            return JSONResponse({"success": False, "error": str(exc)}, status_code=400)
+        except ServiceError as exc:
+            return _error(exc)
         except Exception as exc:
             return error_500(exc, log, "Failed to record first-value event")
 

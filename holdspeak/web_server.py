@@ -550,6 +550,24 @@ class MeetingWebServer:
         # device-audio WS (its own PSK handshake). `_create_app` is now a thin
         # assembler.
         from .web.context import WebContext
+        from .services.authority_service import AuthorityService
+        from .services.credential_service import CredentialService
+        from .services.delivery_service import DeliveryService
+        from .services.cadence_service import CadenceService
+        from .services.coder_service import CoderService
+        from .services.dictation_service import DictationService
+        from .services.sync_service import SyncService
+        from .services.actuator_service import ActuatorProposalService
+        from .config import Config
+        from .services.gate_service import GateService
+        from .services.memory_service import MemoryService
+        from .services.mesh_service import MeshService
+        from .services.mission_control_service import MissionControlService
+        from .services.project_service import ProjectService
+        from .services.projection_service import ProjectionService
+        from .services.settings_service import SettingsService
+        from .services.setup_service import SetupService
+        from .db import get_database
         from .web.routes import (
             build_activity_router,
             build_authority_router,
@@ -583,8 +601,28 @@ class MeetingWebServer:
             build_system_router,
         )
 
+        from .services.meeting_aftercare_service import MeetingAftercareService
+        from .services.meeting_intel_service import MeetingIntelService
+        from .services.meeting_service import MeetingService
+
+        meeting_service = MeetingService(get_database())
+        notify = lambda message_type, data: self.broadcast(message_type, data)
+        meeting_intel_service = MeetingIntelService(get_database(), notify=notify)
+        meeting_aftercare_service = MeetingAftercareService(get_database(), notify=notify)
+        meeting_service.bind_lifecycle(
+            on_start=self.on_start,
+            on_stop=self.on_stop,
+            on_bookmark=self.on_bookmark,
+            on_update=self.on_update_meeting,
+        )
         web_ctx = WebContext(
             get_state=self.get_state,
+            meeting_service=meeting_service,
+            meeting_service_factory=lambda: MeetingService(get_database()),
+            meeting_intel_service=meeting_intel_service,
+            meeting_intel_service_factory=lambda: MeetingIntelService(get_database(), notify=notify),
+            meeting_aftercare_service=meeting_aftercare_service,
+            meeting_aftercare_service_factory=lambda: MeetingAftercareService(get_database(), notify=notify),
             # Late-bind broadcast: the prior inline handlers called
             # `self.broadcast(...)`, which resolves the attribute at call time
             # (tests reassign `server.broadcast` to spy on it). A thunk keeps
@@ -600,12 +638,35 @@ class MeetingWebServer:
             on_update_meeting=self.on_update_meeting,
             on_set_title=self.on_set_title,
             on_set_tags=self.on_set_tags,
+            project_service=ProjectService(get_database()),
+            projection_service=ProjectionService(get_database()),
+            authority_service=AuthorityService(get_database()),
+            credential_service=CredentialService(
+                get_database(), on_settings_applied=self.on_settings_applied
+            ),
+            cadence_service=CadenceService(get_database(), Config.load().cadence),
+            sync_service=SyncService(get_database()),
+            gate_service=GateService(get_database()),
+            setup_service=SetupService(get_database()),
+            delivery_service=DeliveryService(get_database()),
+            mesh_service=MeshService(get_database()),
+            memory_service=MemoryService(get_database()),
+            mission_control_service=MissionControlService(get_database()),
+            settings_service=SettingsService(
+                get_database(), on_settings_applied=self.on_settings_applied
+            ),
             on_get_intent_controls=self.on_get_intent_controls,
             on_set_intent_profile=self.on_set_intent_profile,
             on_set_intent_override=self.on_set_intent_override,
             on_route_preview=self.on_route_preview,
             on_dictation_config_changed=self.on_dictation_config_changed,
             on_remote_dictation=self.on_remote_dictation,
+            coder_service=CoderService(get_database()),
+            dictation_service=DictationService(
+                get_database(),
+                journal_repository=getattr(self.dictation_journal, "repository", None),
+                journal_available=self.dictation_journal is not None,
+            ),
             on_process_plugin_jobs=self.on_process_plugin_jobs,
             device_registry=self.device_registry,
             project_detector=self._project_detector,
@@ -626,6 +687,12 @@ class MeetingWebServer:
             mesh_requires_token=not web_auth.is_loopback_host(self.host),
             web_host=self.host,
             web_auth_token=self.auth_token,
+        )
+        from .web.routes.actuator_shared import DeskActuatorLifecycle
+        web_ctx.actuator_service = ActuatorProposalService(
+            get_database(), config_provider=lambda: Config.load(path=__import__("holdspeak.config", fromlist=["CONFIG_FILE"]).CONFIG_FILE),
+            broadcast=lambda message_type, data: self.broadcast(message_type, data),
+            lifecycle=DeskActuatorLifecycle(web_ctx, get_database()),
         )
         app.include_router(build_core_router(web_ctx))
         app.include_router(build_authority_router(web_ctx))
@@ -714,7 +781,7 @@ class MeetingWebServer:
             try:
                 from .web.routes.system.gate_routes import invalidate_held_on_startup
 
-                invalidate_held_on_startup()
+                invalidate_held_on_startup(web_ctx.gate_service)
             except Exception as e:
                 log.error(f"gate startup invalidation failed: {e}")
             try:

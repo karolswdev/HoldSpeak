@@ -73,8 +73,12 @@ class WebContext:
     # their route adapters own only HTTP parsing and serialization.
     gate_service: Optional[Any] = None
     setup_service: Optional[Any] = None
+    # HS-123-12: delivery persistence/composition boundary for the delivery
+    # route family. Individual delivery collaborators remain injectable seams.
+    delivery_service: Optional[Any] = None
     mesh_service: Optional[Any] = None
     memory_service: Optional[Any] = None
+    mission_control_service: Optional[Any] = None
 
     # HS-26-03: intent-control + dictation-pipeline callbacks for the dictation
     # routes. The dictation handlers' many private helpers (project detection,
@@ -98,6 +102,10 @@ class WebContext:
     # Tests may inject an isolated repository; the production route resolves
     # the database repository lazily when this field is absent.
     dictation_deliveries: Optional[Any] = None
+    # HS-123-12: the remaining coder/dictation route handlers use these
+    # composed application services rather than importing database accessors.
+    coder_service: Optional[Any] = None
+    dictation_service: Optional[Any] = None
 
     # HS-26-04: deferred plugin-job queue processing for the activity routes.
     # The activity-intelligence reads close over no server state; the meeting-

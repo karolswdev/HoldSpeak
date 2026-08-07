@@ -98,3 +98,40 @@ criterion. Story status remains `in-progress` pending route/service extraction
 or explicitly legitimate, documented exceptions.
 
 ```
+
+### Captured run — 2026-08-07T02:48:54Z
+
+- **Command:** `grep -rn get_database() holdspeak/web/routes/ --include=*.py`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 0a1e5adb0c5ae007757f1ef7cb199012784888f7
+
+```text
+holdspeak/web/routes/sync.py:35:        service = SyncService(hsdb.get_database(), hub_model_name=lambda: _hub_model_name(None))
+holdspeak/web/routes/desk_seed.py:30:        return DeskService(get_database())
+holdspeak/web/routes/activity/enrichment.py:15:def _svc()->ActivityEnrichmentService:return ActivityEnrichmentService(get_database())
+holdspeak/web/routes/activity/plugin_jobs.py:15:def _svc()->PluginJobService:return PluginJobService(get_database())
+holdspeak/web/routes/activity/nudges.py:14:def _svc()->ActivityNudgeService:return ActivityNudgeService(get_database())
+holdspeak/web/routes/activity/ledger.py:16:def _svc() -> ActivityLedgerService: return ActivityLedgerService(get_database())
+holdspeak/web/routes/activity/rules.py:15:def _svc()->ActivityRulesService:return ActivityRulesService(get_database())
+holdspeak/web/routes/activity/candidates.py:15:def _svc()->ActivityMeetingCandidateService:return ActivityMeetingCandidateService(get_database())
+holdspeak/web/routes/core.py:29:        return JSONResponse(DeskService(get_database()).health())
+holdspeak/web/routes/primitives/chains.py:32:        return PrimitiveService(get_database())
+holdspeak/web/routes/primitives/chains.py:108:            db = get_database()
+holdspeak/web/routes/primitives/workbenches.py:24:        return WorkbenchService(get_database())
+holdspeak/web/routes/primitives/kbs.py:24:        return PrimitiveService(get_database())
+holdspeak/web/routes/primitives/directories.py:24:        return PrimitiveService(get_database())
+holdspeak/web/routes/primitives/decisions.py:25:        return PrimitiveService(get_database())
+holdspeak/web/routes/primitives/_shared.py:359:        get_database().plugins.record_artifact(
+holdspeak/web/routes/primitives/notes.py:24:        return PrimitiveService(get_database())
+holdspeak/web/routes/primitives/recipes.py:25:        return RecipeService(get_database())
+holdspeak/web/routes/primitives/workflows.py:33:        return PrimitiveService(get_database())
+holdspeak/web/routes/primitives/workflows.py:132:            db = get_database()
+holdspeak/web/routes/primitives/profiles.py:53:        return ProfileService(get_database())
+holdspeak/web/routes/system/coders.py:296:        return CoderService(get_database())
+holdspeak/web/routes/cadence.py:28:        service = CadenceService(hsdb.get_database(), Config.load().cadence)
+holdspeak/web/routes/meetings/intel.py:22:    service = MeetingIntelService(get_database(), notify=lambda topic, value: ctx.broadcast(topic, value) if ctx.broadcast else None)  # _svc composition
+holdspeak/web/routes/meetings/live.py:40:    service = MeetingService(get_database())  # _service composition
+holdspeak/web/routes/meetings/aftercare.py:21:    service = MeetingAftercareService(get_database(), notify=lambda topic, value: ctx.broadcast(topic, value) if ctx.broadcast else None)  # _svc composition
+holdspeak/web/routes/meetings/crud.py:27:    service = MeetingService(get_database())  # _service composition
+```

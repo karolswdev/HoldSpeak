@@ -157,13 +157,9 @@ def build_gate_router(ctx: WebContext) -> APIRouter:
     return router
 
 
-def invalidate_held_on_startup() -> int:
+def invalidate_held_on_startup(service: Any) -> int:
     """Invalidate pre-restart held proposals and terminalize their kernel rows."""
-    from ....db import get_database
-    from ....kernel.runtime import _service
-
-    flipped = get_database().gate.invalidate_all_held(reason="hub restarted while the proposal was held")
+    flipped, recovered = service.invalidate_held_on_startup()
     if flipped:
-        recovered = _service().recover_invalidated(flipped)
         log.info("gate: invalidated %s held proposal(s) on startup; kernel terminalized %s", len(flipped), recovered)
     return len(flipped)

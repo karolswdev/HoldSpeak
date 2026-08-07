@@ -7,10 +7,24 @@ importing a web-layer type.
 from __future__ import annotations
 
 from datetime import datetime
+from pathlib import Path
+import threading
+import uuid
 from typing import Any, Callable
 
+from ..config import Config
 from ..db.core import Database
 from ..meeting_exports import render_meeting_export
+from ..meeting_import import (
+    DEFAULT_SPEAKER_LABEL,
+    DEFAULT_TRANSCRIPT_SPEAKER_LABEL,
+    MeetingImportError,
+    import_meeting as run_meeting_import,
+    import_transcript,
+    is_transcript_filename,
+    validate_format,
+)
+from ..meeting_session import MeetingState
 from ..principals import Principal
 from holdspeak.services.errors import NotFound, ValidationError
 
@@ -38,6 +52,121 @@ class MeetingService:
         self._on_stop = on_stop
         self._on_bookmark = on_bookmark
         self._on_update = on_update
+
+    def validate_import(self, principal: Principal, filename: str) -> None:
+        try:
+            validate_format(filename)
+        except MeetingImportError as exc:
+            raise ValidationError(str(exc)) from exc
+
+    def import_meeting(
+        self,
+        principal: Principal,
+        *,
+        tmp_path: Path,
+        filename: str,
+        title: str | None,
+        speaker: str | None,
+        tags: list[str],
+        started_at: datetime,
+        config: Config,
+        transcriber_factory: Callable[[Config], Any],
+    ) -> dict[str, str]:
+        """Create the visible importing row and start its background worker."""
+        meeting_id = uuid.uuid4().hex[:8]
+        resolved_title = (title or Path(filename).stem).strip() or Path(filename).stem
+        placeholder = MeetingState(
+            id=meeting_id,
+            started_at=started_at,
+            title=resolved_title,
+            tags=tags,
+            segments=[],
+        )
+        placeholder.intel_status = "importing"
+        placeholder.intel_status_detail = (
+            "Parsing transcript…"
+            if is_transcript_filename(filename)
+            else "Preparing transcription…"
+        )
+        self._db.meetings.save_meeting(placeholder)
+        worker = threading.Thread(
+            target=self._run_import_job,
+            kwargs={
+                "config": config,
+                "meeting_id": meeting_id,
+                "tmp_path": tmp_path,
+                "title": resolved_title,
+                "speaker": speaker,
+                "tags": tags,
+                "started_at": started_at,
+                "transcriber_factory": transcriber_factory,
+            },
+            daemon=True,
+            name=f"meeting-import-{meeting_id}",
+        )
+        worker.start()
+        return {"meeting_id": meeting_id, "status": "importing"}
+
+    def _run_import_job(
+        self,
+        *,
+        config: Config,
+        meeting_id: str,
+        tmp_path: Path,
+        title: str | None,
+        speaker: str | None,
+        tags: list[str],
+        started_at: datetime,
+        transcriber_factory: Callable[[Config], Any],
+    ) -> None:
+        try:
+            if is_transcript_filename(tmp_path.name):
+                import_transcript(
+                    tmp_path,
+                    db=self._db,
+                    config=config,
+                    meeting_id=meeting_id,
+                    title=title,
+                    speaker=speaker or DEFAULT_TRANSCRIPT_SPEAKER_LABEL,
+                    tags=tags,
+                    started_at=started_at,
+                )
+                return
+            transcriber = transcriber_factory(config)
+
+            def on_progress(done: int, total: int) -> None:
+                self._set_import_status(
+                    meeting_id, "importing", f"Transcribing — window {done} of {total}."
+                )
+
+            run_meeting_import(
+                tmp_path,
+                db=self._db,
+                transcriber=transcriber,
+                config=config,
+                meeting_id=meeting_id,
+                title=title,
+                speaker=speaker or DEFAULT_SPEAKER_LABEL,
+                tags=tags,
+                started_at=started_at,
+                progress=on_progress,
+            )
+        except MeetingImportError as exc:
+            self._set_import_status(meeting_id, "import_failed", str(exc))
+        except Exception as exc:  # noqa: BLE001 — preserve the durable failure state.
+            self._set_import_status(
+                meeting_id, "import_failed", f"{type(exc).__name__}: {exc}"
+            )
+        finally:
+            tmp_path.unlink(missing_ok=True)
+
+    def _set_import_status(self, meeting_id: str, status: str, detail: str) -> None:
+        state = self._db.meetings.get_meeting(meeting_id)
+        if state is None:
+            return
+        state.intel_status = status
+        state.intel_status_detail = detail
+        self._db.meetings.save_meeting(state)
 
     def list_meetings(
         self,

@@ -60,7 +60,7 @@ def build_delivery_factory_router(
     production defaults assemble lazily on first request over the hub
     database, the Delivery Source registry, the shared target registry,
     and the HS-94-06 command service."""
-    _ = ctx
+    delivery_service = ctx.delivery_service
     router = APIRouter()
     holder: dict[str, Any] = {
         "service": service,
@@ -85,18 +85,11 @@ def build_delivery_factory_router(
 
     def _commands() -> Any:
         if holder["commands"] is None:
-            from ...db import get_database
-            from ...db.delivery_receipts import NodeReceiptLedger
-            from ...delivery.commands import HubCommandService, NodeCommandProcessor
-
-            processor = NodeCommandProcessor(
-                node_id=local_node_id,
+            if delivery_service is None:
+                raise RuntimeError("DeliveryService must be supplied at application composition")
+            holder["commands"] = delivery_service.command_service(
                 targets=_targets(),
-                ledger=NodeReceiptLedger(ledger_path),
-            )
-            holder["commands"] = HubCommandService(
-                repo=get_database().delivery_receipts,
-                processor=processor,
+                ledger_path=ledger_path,
                 local_node_id=local_node_id,
                 mode_loader=mode_loader,
             )
@@ -104,17 +97,15 @@ def build_delivery_factory_router(
 
     def _service() -> Any:
         if holder["service"] is None:
-            from ...db import get_database
-            from ...delivery import DeliveryRegistry
-            from ...delivery.factory_launch import LaunchLedger, LaunchService
-
-            holder["service"] = LaunchService(
+            if delivery_service is None:
+                raise RuntimeError("DeliveryService must be supplied at application composition")
+            holder["service"] = delivery_service.launch_service(
                 profiles=_profiles(),
-                registry=DeliveryRegistry(registry_path, map_path=map_path),
+                registry_path=registry_path,
+                map_path=map_path,
                 targets=_targets(),
                 commands=_commands(),
-                attempts=get_database().work_attempts,
-                ledger=LaunchLedger(launches_path),
+                launches_path=launches_path,
                 local_node_id=local_node_id,
             )
         return holder["service"]

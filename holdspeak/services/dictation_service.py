@@ -15,15 +15,25 @@ from holdspeak.services.errors import NotFound, ValidationError
 class DictationService:
     def __init__(
         self,
-        db: Database,
+        db: Database | None = None,
         *,
         journal_repository: Any | None = None,
         journal_available: bool = True,
+        delivery_repository: Any | None = None,
     ) -> None:
+        if db is None:
+            from ..db import get_database
+
+            db = get_database()
         self._db = db
         self._journal = journal_repository if journal_available else None
         if self._journal is None and journal_available:
             self._journal = db.dictation_journal
+        self._deliveries = (
+            delivery_repository
+            if delivery_repository is not None
+            else db.dictation_deliveries
+        )
 
     def list_journal(
         self,
@@ -77,6 +87,42 @@ class DictationService:
             raise NotFound("journal", "default")
         removed = self._journal.clear()
         return {"cleared": True, "removed": removed, "count": self._journal.count()}
+
+    def claim_delivery(
+        self, principal: Principal, delivery_id: str, *, request_hash: str
+    ) -> dict[str, Any]:
+        clean_id = str(delivery_id or "").strip()
+        if not clean_id:
+            raise ValidationError("delivery_id must be a non-empty identifier")
+        return self._deliveries.claim(clean_id, request_hash=request_hash)
+
+    def complete_delivery(
+        self,
+        principal: Principal,
+        delivery_id: str,
+        *,
+        response_status: int,
+        response: dict[str, Any],
+    ) -> None:
+        self._deliveries.complete(
+            delivery_id, response_status=response_status, response=response
+        )
+
+    def fail_delivery(
+        self,
+        principal: Principal,
+        delivery_id: str,
+        *,
+        response_status: int,
+        response: dict[str, Any],
+        error: str,
+    ) -> None:
+        self._deliveries.fail(
+            delivery_id,
+            response_status=response_status,
+            response=response,
+            error=error,
+        )
 
     def submit_dictation(
         self,

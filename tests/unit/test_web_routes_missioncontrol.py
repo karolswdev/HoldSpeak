@@ -23,6 +23,7 @@ from holdspeak.missioncontrol_bridge import (
     state_payload,
 )
 from holdspeak.principals import Principal, PrincipalKind, UNAUTHENTICATED
+from holdspeak.services.mission_control_service import MissionControlService
 from holdspeak.web.context import WebContext
 from holdspeak.web.routes import build_missioncontrol_router
 
@@ -111,11 +112,18 @@ def _make_map(tmp_path: Path) -> Path:
 
 
 def _client(map_path: Path, runner) -> TestClient:
+    from holdspeak.db import get_database
+
     app = FastAPI()
     _authenticate_owner(app)
     app.include_router(
         build_missioncontrol_router(
-            WebContext(get_state=lambda: {}), runner=runner, map_path=map_path
+            WebContext(
+                get_state=lambda: {},
+                mission_control_service=MissionControlService(get_database()),
+            ),
+            runner=runner,
+            map_path=map_path,
         )
     )
     return TestClient(app)
@@ -266,6 +274,7 @@ def _propose_client(tmp_path, monkeypatch, dw_runner):
             WebContext(
                 get_state=lambda: {},
                 broadcast=lambda kind, data: broadcasts.append((kind, data)),
+                mission_control_service=MissionControlService(db),
             ),
             runner=dw_runner,
             map_path=_make_map(tmp_path),

@@ -68,23 +68,17 @@ def build_delivery_attempts_router(
     ``launch_sweep`` is a zero-arg callable seam; the default assembles
     lazily over the same registry/ledger seams (and stays OFF when a
     test injects ``service``, keeping unit rigs hermetic)."""
-    _ = ctx
+    delivery_service = ctx.delivery_service
     router = APIRouter()
     holder: dict[str, Any] = {"service": service, "sweep": launch_sweep}
 
     def _service() -> Any:
         if holder["service"] is None:
-            from ...db import get_database
-            from ...delivery import DeliveryRegistry
-            from ...delivery.attempts import (
-                WorkAttemptService,
-                resolver_from_registry,
-            )
-
-            registry = DeliveryRegistry(registry_path, map_path=map_path)
-            holder["service"] = WorkAttemptService(
-                get_database().work_attempts,
-                resolver=resolver_from_registry(registry),
+            if delivery_service is None:
+                raise RuntimeError("DeliveryService must be supplied at application composition")
+            holder["service"] = delivery_service.attempt_service(
+                registry_path=registry_path,
+                map_path=map_path,
             )
         return holder["service"]
 
@@ -95,26 +89,14 @@ def build_delivery_attempts_router(
         the registration window — the same sweep the factory's
         ``/discover`` runs, now on every attempts read."""
         if holder["sweep"] is None and service is None:
-            from ...db import get_database
-            from ...delivery import DeliveryRegistry
-            from ...delivery.factory_launch import LaunchLedger, LaunchService
-
-            launcher = LaunchService(
-                # The sweep never spawns/discovers: profiles, targets,
-                # and commands are deliberately absent.
-                profiles=None,  # type: ignore[arg-type]
-                registry=DeliveryRegistry(registry_path, map_path=map_path),
-                targets=None,
-                commands=None,
-                attempts=get_database().work_attempts,
-                ledger=LaunchLedger(launches_path),
+            if delivery_service is None:
+                raise RuntimeError("DeliveryService must be supplied at application composition")
+            holder["sweep"] = delivery_service.launch_sweep(
+                registry_path=registry_path,
+                map_path=map_path,
+                launches_path=launches_path,
+                claims_state_path=claims_state_path,
             )
-
-            def _sweep() -> None:
-                launcher.bind_rider_claims(state_path=claims_state_path)
-                launcher.expire_unregistered()
-
-            holder["sweep"] = _sweep
         return holder["sweep"]
 
     @router.post("/api/delivery/attempts")
