@@ -4,7 +4,17 @@
 > pick up, and the repo conventions that bite (PMO commit gate, write-once
 > evidence, no `Co-Authored-By`, metal-test exclusion).
 
-**Newest update (2026-08-06): Phase 122 — The Backbone — CHARTERED.**
+**Newest update (2026-08-06): Phase 123 — The Pipeline — CHARTERED.**
+Phase 122 built the skeleton: eight services and ten MCP tools. The
+post-phase audit found 157 direct `get_database()` calls in 35 route modules,
+so only about 30% of desk operations traverse the service layer. Phase 123
+finishes the boundary: domain-coded service errors and route-free shared
+support first; authority, settings, ask/decisions, projects, meetings,
+activity, and every remaining route operation next; then the essential MCP
+tool and resource surface. The final thin-route census and a real MCP walk
+prove HTTP and MCP use the same named services.
+
+**Previous update (2026-08-06): Phase 122 — The Backbone — CHARTERED.**
 DeskOS becomes programmable. Extract transport-neutral application
 services from every route handler (workbenches and recipes are fat
 controllers requiring substantive extraction; remaining services are
@@ -344,6 +354,13 @@ parallel. Phase 101 itself stands at 3/4 (canon ratified and built,
 PR #359; sweep 4122/0).
 
 **Current phase (newest):**
+[**Phase 123 — The Pipeline**](./phase-123-the-pipeline/current-phase-status.md)
+— **CHARTERED (0/13, 2026-08-06)**. Phase 122 established eight services
+and ten MCP tools; Phase 123 completes the service boundary. It removes
+route-owned service errors and helpers, extracts the remaining direct route
+database operations into named services, expands MCP to the essential tool
+and resource surface, and closes with a structural audit plus real MCP walk.
+Previous:
 [**Phase 116 — The Workbench**](./phase-116-the-workbench/current-phase-status.md)
 — **CHARTERED (0/9, 2026-08-03)**. The agentic platform phase: the
 Workbench primitive (agent + target + schedule + items), constitutional
