@@ -5,6 +5,7 @@ at composition time, so this module can serve HTTP, MCP, and tests without
 importing a web-layer type.
 """
 from __future__ import annotations
+from holdspeak.services.observer import NullObserver, PipelineObserver, observe_service
 
 from datetime import datetime
 from pathlib import Path
@@ -29,15 +30,17 @@ from ..principals import Principal
 from holdspeak.services.errors import NotFound, ValidationError
 
 
+@observe_service
 class MeetingService:
     """One service boundary for meeting capture and persisted meeting data."""
 
-    def __init__(self, db: Database) -> None:
+    def __init__(self, db: Database, *, observer: PipelineObserver | None = None) -> None:
         self._db = db
         self._on_start: Callable[..., Any] | None = None
         self._on_stop: Callable[[], Any] | None = None
         self._on_bookmark: Callable[[str], Any] | None = None
         self._on_update: Callable[..., Any] | None = None
+        self._observer = observer or NullObserver()
 
     def bind_lifecycle(
         self,

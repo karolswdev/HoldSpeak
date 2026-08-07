@@ -4,6 +4,7 @@ import { FirstWords } from "./FirstWords";
 import { DeskStartActions } from "./DeskStartActions";
 import { useDesk } from "../store";
 import { egressBadge } from "../setup";
+import { SYSTEM } from "../systemSprites";
 
 // HS-100-10 — the arrival (thesis §2): the two modes as start verbs and
 // ONE trust line. No headline prose, no checklist wall (Article VII).
@@ -20,9 +21,15 @@ export function EmptyDesk({
     <div
       className={`desk-empty${arrivalRequired && !continued ? " is-first-value" : ""}`}
     >
-      <div className="desk-empty-mark" aria-hidden="true">
-        ◍
-      </div>
+      <img
+        className="desk-empty-mark desk-chrome-sprite"
+        src={SYSTEM.menuMark}
+        alt=""
+        width={32}
+        height={32}
+        draggable={false}
+        aria-hidden="true"
+      />
       <DeskStartActions />
       <button
         type="button"

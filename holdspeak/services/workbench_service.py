@@ -1,5 +1,6 @@
 """Transport-neutral Workbench operations (HS-122-02)."""
 from __future__ import annotations
+from holdspeak.services.observer import NullObserver, PipelineObserver, observe_service
 
 import hashlib
 import time
@@ -18,12 +19,14 @@ def _new_id(prefix: str) -> str:
     return f"{prefix}_{uuid.uuid4().hex[:12]}"
 
 
+@observe_service
 class WorkbenchService:
     # Route adapters create a short-lived service per request; limiter state is shared.
     _resolve_timestamps: dict[str, float] = {}
 
-    def __init__(self, db: Database) -> None:
+    def __init__(self, db: Database, *, observer: PipelineObserver | None = None) -> None:
         self._db = db
+        self._observer = observer or NullObserver()
 
     # ── Workbenches ──────────────────────────────────────────────────────
 

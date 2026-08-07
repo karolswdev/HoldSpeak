@@ -8,7 +8,7 @@
 .desk-roadmap-story-id { color: var(--text-faint); }
 .desk-roadmap-evidence { color: var(--text-faint); }
 .desk-roadmap-phase-title, .desk-roadmap-story-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text); cursor: default; }
-.desk-roadmap-stories { margin: 0 0 7px 25px; border-left: 1px solid var(--border); }
+.desk-roadmap-stories { margin: 0 0 7px 25px; box-shadow: inset 1px 0 0 var(--desk-aerogel-edge, var(--border)); }
 .desk-roadmap-stories li { display: grid; grid-template-columns: 96px minmax(100px, 1fr) 16px auto; gap: 7px; align-items: center; min-height: 26px; padding: 0 7px; color: var(--text); }
 .desk-roadmap-status { justify-self: end; padding: 2px 5px; border: 1px solid currentColor; font-size: 9px; line-height: 1; text-transform: uppercase; white-space: nowrap; border-radius: 2px; }
 .desk-roadmap-status[data-status="done"], .desk-roadmap-status[data-status="closed"], .desk-roadmap-status[data-status="green"] { color: var(--success, #34d399); }

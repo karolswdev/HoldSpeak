@@ -303,17 +303,29 @@ class RecipeEngine:
                 res = steering.steer(client_, session, str(opts.get("text", "")))
                 return {"action": "steer_pane", "name": name, "result": res}
         if kind == "create_profile":
-            # Register a profile through the public route. Defaults to a meshNode
-            # (so the hub surfaces its liveness); any field the route accepts —
-            # including a bogus api_key to attack key-never-syncs — passes through.
+            # InferenceTarget is the sole writable profile surface.  Secret
+            # material is deliberately refused there, so an attack recipe first
+            # submits it to prove that refusal, then creates the same public
+            # target without the secret for the read-back assertion.
             opts = arg if isinstance(arg, dict) else {"name": str(arg)}
             name = opts.get("name", "profile")
             body = {"id": opts.get("id", f"uat-profile-{name}"), "name": name, "kind": opts.get("kind", "meshNode")}
-            for k in ("node", "api_key", "requires_key", "profile_id", "avatar", "role", "system_prompt"):
+            for k in ("node", "requires_key"):
                 if k in opts:
                     body[k] = opts[k]
-            resp = client.post_json("/api/profiles", body)
-            return {"action": "create_profile", "name": name, "status": resp.status_code}
+            secret = opts.get("api_key")
+            rejected_status = None
+            if secret is not None:
+                rejected_status = client.post_json(
+                    "/api/inference-targets", {**body, "api_key": secret}
+                ).status_code
+            resp = client.post_json("/api/inference-targets", body)
+            return {
+                "action": "create_profile",
+                "name": name,
+                "status": resp.status_code,
+                "secret_rejected_status": rejected_status,
+            }
         if kind == "dispatch_run":
             # The handoff arc's verb: drive a real ask ONTO the mesh worker via
             # the hub's own /api/ask (profile_id → meshNode → relay). A mesh run

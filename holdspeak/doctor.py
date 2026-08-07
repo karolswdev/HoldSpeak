@@ -10,6 +10,7 @@ import os
 import shutil
 import subprocess
 import time
+import uuid
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from typing import Callable
@@ -63,6 +64,16 @@ def _get_html(url: str) -> tuple[int, str]:
         return response.status, response.read().decode("utf-8", errors="replace")
 
 
+def _post_json(url: str, path: str, token: str = "") -> tuple[int, object]:
+    request = Request(
+        f"{url}{path}", headers=_headers(token), data=b"{}", method="POST"
+    )
+    request.add_header("Content-Type", "application/json")
+    with urlopen(request, timeout=_TIMEOUT_SECONDS) as response:  # noqa: S310 - operator-configured hub
+        raw = response.read()
+        return response.status, json.loads(raw.decode("utf-8"))
+
+
 def _failure(exc: Exception) -> str:
     if isinstance(exc, HTTPError):
         return f"HTTP {exc.code}"
@@ -93,6 +104,20 @@ def _check_runtime_status(url: str, token: str) -> DoctorResult:
         return DoctorResult("FAIL", "runtime-status", f"unexpected response: {payload!r}")
     except Exception as exc:
         return DoctorResult("FAIL", "runtime-status", _failure(exc))
+
+
+def _check_runtime_preflight(url: str, token: str) -> DoctorResult:
+    """Report the configured inference endpoint's actual reachability."""
+    try:
+        status, payload = _post_json(url, "/api/setup/runtime-test", token)
+        if not isinstance(payload, dict):
+            return DoctorResult("FAIL", "runtime-preflight", f"unexpected response: {payload!r}")
+        detail = str(payload.get("detail") or payload.get("error") or "no detail")
+        if status == 200 and payload.get("ok") is True:
+            return DoctorResult("PASS", "runtime-preflight", detail)
+        return DoctorResult("FAIL", "runtime-preflight", detail)
+    except Exception as exc:
+        return DoctorResult("FAIL", "runtime-preflight", _failure(exc))
 
 
 def _check_websocket(url: str, token: str) -> DoctorResult:
@@ -229,6 +254,49 @@ def _check_database() -> DoctorResult:
         return DoctorResult("FAIL", "database", _failure(exc))
 
 
+def check_observer() -> DoctorResult:
+    """Verify the pipeline observer's event table can round-trip an event."""
+    try:
+        from .db import get_database
+
+        database = get_database()
+        with database._connection() as conn:
+            table = conn.execute(
+                "SELECT name FROM sqlite_master WHERE type = 'table' AND name = ?",
+                ("pipeline_events",),
+            ).fetchone()
+            if table is None:
+                return DoctorResult(
+                    "FAIL", "observer", "unhealthy: pipeline_events table missing; 24h events: unavailable"
+                )
+
+            recent_events = conn.execute(
+                "SELECT COUNT(*) FROM pipeline_events WHERE timestamp >= ?",
+                (time.time() - 86_400,),
+            ).fetchone()[0]
+            event_id = f"doctor-probe-{uuid.uuid4()}"
+            try:
+                conn.execute(
+                    """
+                    INSERT INTO pipeline_events (
+                        event_id, timestamp, service, method, principal_kind
+                    ) VALUES (?, ?, ?, ?, ?)
+                    """,
+                    (event_id, time.time(), "doctor", "check_observer", "system"),
+                )
+                event = conn.execute(
+                    "SELECT event_id FROM pipeline_events WHERE event_id = ?", (event_id,)
+                ).fetchone()
+                if event is None:
+                    raise RuntimeError("probe event was not readable")
+            finally:
+                conn.execute("DELETE FROM pipeline_events WHERE event_id = ?", (event_id,))
+
+        return DoctorResult("PASS", "observer", f"healthy: 24h events: {recent_events}")
+    except Exception as exc:
+        return DoctorResult("FAIL", "observer", f"degraded: {_failure(exc)}; 24h events: unavailable")
+
+
 def run_checks(url: str | None = None, token: str | None = None) -> list[DoctorResult]:
     """Run every desk diagnostic, collecting failures instead of raising them."""
     try:
@@ -236,18 +304,20 @@ def run_checks(url: str | None = None, token: str | None = None) -> list[DoctorR
     except ValueError as exc:
         return [DoctorResult("FAIL", name, str(exc)) for name in (
             "hub-health", "runtime-status", "websocket", "desk-bootstrap", "auth", "inference"
-        )] + [_check_mcp_server(), _check_database()]
+        )] + [_check_mcp_server(), _check_database(), check_observer()]
 
     credential = token if token is not None else os.environ.get("HOLDSPEAK_TOKEN", "")
     return [
         _check_hub_health(hub_url, credential),
         _check_runtime_status(hub_url, credential),
+        _check_runtime_preflight(hub_url, credential),
         _check_websocket(hub_url, credential),
         _check_desk_bootstrap(hub_url, credential),
         _check_auth(hub_url, credential),
         _check_mcp_server(),
         _check_inference(hub_url, credential),
         _check_database(),
+        check_observer(),
     ]
 
 

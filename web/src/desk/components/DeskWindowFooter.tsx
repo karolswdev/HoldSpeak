@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { SurfaceFooter } from "../surface/SurfaceFooter";
 
 interface DeskWindowFooterProps {
   status?: ReactNode;
@@ -8,22 +9,9 @@ interface DeskWindowFooterProps {
 /** The shared footer rail for content-sized Desk windows. */
 export function DeskWindowFooter({ status, children }: DeskWindowFooterProps) {
   return (
-    <footer className="desk-pullout-foot">
-      {status ? <span className="desk-window-footer-status">{status}</span> : null}
-      {children ? (
-        <span
-          className="desk-window-footer-actions"
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            flexWrap: "wrap",
-            gap: "8px",
-            ...(status ? { marginLeft: "auto" } : {}),
-          }}
-        >
-          {children}
-        </span>
-      ) : null}
-    </footer>
+    <SurfaceFooter
+      receipt={status ? <span className="desk-window-footer-status">{status}</span> : null}
+      verbs={children ? <span className="desk-window-footer-actions">{children}</span> : null}
+    />
   );
 }

@@ -1,3 +1,4 @@
+import { SurfaceFooter } from "../../desk/surface/SurfaceFooter";
 // HS-95-08 — the ONE roster of agents and coder sessions (reconciled
 // surfaces — no duplicate chat/list). HS-100-09 — Agents (thesis §1.3):
 // the application opens on WHO NEEDS YOU — blocked sessions first with
@@ -193,6 +194,7 @@ export function CompanionCore({ hero }: CoreProps) {
     <>
       {renderHeroSlot(hero, null)}
       {view === "delivery" ? deliveryFace : rosterFace}
+      <SurfaceFooter />
     </>
   );
 }

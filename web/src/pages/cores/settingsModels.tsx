@@ -255,7 +255,7 @@ export function ModelsModule({
     return {
       on: false,
       tone: "fail",
-      label: `UNREACHABLE${result.error ? ` ${result.error}` : ""}`,
+      label: result.error ? "OFFLINE. Settings are unchanged. Retry." : "OFFLINE",
     };
   };
 

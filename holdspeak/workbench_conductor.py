@@ -16,7 +16,7 @@ from typing import Any, Optional
 
 from .constitutional_context import constitutional_receipt
 from .logging_config import get_logger
-from .skill_injection import inject_skills
+from .services.support import _new_id, inject_skills
 
 log = get_logger("workbench_conductor")
 
@@ -163,7 +163,7 @@ def _assemble_recipe_context(db: Any, recipe: Any) -> str:
     if kb_id:
         kb = db.kbs.get(kb_id)
         if kb:
-            from .web.routes.primitives.ask import _context_material
+            from .services.support import _context_material
             texts: list[str] = []
             for mid in list(getattr(kb, "member_ids", None) or [])[:12]:
                 bare = mid.split(":", 1)[1] if ":" in mid else mid
@@ -457,7 +457,6 @@ async def run_workbench(workbench_id: str) -> dict:
         return {"error": f"target not ready: {reason}"}
 
     # Start the run receipt
-    from .web.routes.primitives._shared import _new_id
     run_id = _new_id("wbrun")
     db.workbench_runs.create(run_id=run_id, workbench_id=workbench_id)
 
@@ -475,8 +474,7 @@ async def run_workbench(workbench_id: str) -> dict:
 
     # Assemble the system prompt: recipe prompt + skills
     system_prompt = inject_skills(
-        recipe.system_prompt or f"You are {recipe.name}, a helpful assistant.",
-        recipe.id,
+        db, recipe.system_prompt or f"You are {recipe.name}, a helpful assistant.", recipe.id,
     )
 
     # Assemble the recipe's standing context (manual_context + KB)

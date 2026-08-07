@@ -96,9 +96,15 @@ def test_history_core_artifacts_wing_is_the_library() -> None:
     and `SurfaceCode` stay legal elsewhere in this file (the Outcomes
     routing receipt, round 6, out of scope) — this pins the POSITIVE
     shape rather than banning either import outright."""
-    source = (WEB_SRC / "pages" / "cores" / "HistoryCore.tsx").read_text(
+    history_dir = WEB_SRC / "pages" / "cores" / "history"
+    parts = [(WEB_SRC / "pages" / "cores" / "HistoryCore.tsx").read_text(
         encoding="utf-8"
+    )]
+    parts.extend(
+        file.read_text(encoding="utf-8")
+        for file in sorted(history_dir.glob("*.tsx"))
     )
+    source = "\n".join(parts)
     assert "SurfaceLibrary" in source and "SurfaceLibraryTile" in source, (
         "HS-102-04 regression: the Artifacts wing must compose through "
         "SurfaceLibrary/SurfaceLibraryTile, matching the Blocks wing "
@@ -176,6 +182,9 @@ def test_fluidity_census() -> None:
         encoding="utf-8"
     )
     desk = (WEB_SRC / "desk" / "desk.css").read_text(encoding="utf-8")
+    chrome = (WEB_SRC / "desk" / "components" / "window-chrome.css").read_text(
+        encoding="utf-8"
+    )
     moments = {
         "aerogel receipts inflate": (
             surface,
@@ -190,7 +199,7 @@ def test_fluidity_census() -> None:
             "transform var(--duration-short) var(--ease-quart)",
         ),
         "transient menus spring": (
-            desk,
+            chrome,
             "animation: desk-transient-in var(--duration-short) var(--ease-back)",
         ),
     }

@@ -5,6 +5,7 @@ FastAPI routes, MCP tools, test fixtures, CLI.  The service takes a Principal
 and a Database; it never imports FastAPI or touches HTTP request/response types.
 """
 from __future__ import annotations
+from holdspeak.services.observer import NullObserver, PipelineObserver, observe_service
 
 import uuid
 from typing import Any
@@ -20,9 +21,11 @@ def _new_id(prefix: str) -> str:
     return f"{prefix}_{uuid.uuid4().hex[:12]}"
 
 
+@observe_service
 class PrimitiveService:
-    def __init__(self, db: Database) -> None:
+    def __init__(self, db: Database, *, observer: PipelineObserver | None = None) -> None:
         self._db = db
+        self._observer = observer or NullObserver()
 
     # ── Notes ────────────────────────────────────────────────────────────
 

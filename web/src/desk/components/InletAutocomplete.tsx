@@ -175,18 +175,31 @@ export function InletAutocomplete({
 
   if (matches.length === 0) {
     return (
-      <div className="inlet-autocomplete" ref={listRef}>
+      <div
+        id="wb-inlet-listbox"
+        className="inlet-autocomplete"
+        ref={listRef}
+        role="listbox"
+      >
         <span className="inlet-autocomplete-empty">No zones match</span>
       </div>
     );
   }
 
   return (
-    <div className="inlet-autocomplete" ref={listRef}>
+    <div
+      id="wb-inlet-listbox"
+      className="inlet-autocomplete"
+      ref={listRef}
+      role="listbox"
+    >
       <SurfaceRows>
         {matches.map((zone, i) => (
           <SurfaceRow
             key={zone.id}
+            id={`wb-inlet-option-${zone.id}`}
+            role="option"
+            ariaSelected={i === selectedIndex}
             glyph={<ZoneGlyph />}
             title={zone.name}
             detail={`${zone.memberIds.length} ${zone.memberIds.length === 1 ? "item" : "items"}`}

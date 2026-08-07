@@ -17,6 +17,7 @@ from fastapi.testclient import TestClient
 
 import holdspeak.intel_queue as intel_queue_module
 import holdspeak.meeting_aftercare as aftercare_module
+import holdspeak.services.meeting_intel_service as intel_svc_module
 import holdspeak.db as hsdb
 from holdspeak.web.context import WebContext
 from holdspeak.web.routes.meetings import build_meetings_router
@@ -35,6 +36,13 @@ def test_on_meeting_ready_broadcasts_aftercare_ready(monkeypatch, tmp_path) -> N
     monkeypatch.setattr(
         aftercare_module, "build_aftercare_ready_event",
         lambda db, meeting_id: {"meeting_id": meeting_id, "open_count": 2},
+    )
+    monkeypatch.setattr(
+        intel_svc_module, "build_aftercare_ready_event",
+        lambda db, meeting_id: {"meeting_id": meeting_id, "open_count": 2},
+    )
+    monkeypatch.setattr(
+        intel_svc_module, "drain_intel_queue", fake_drain,
     )
     from holdspeak.db import Database, reset_database
     reset_database()

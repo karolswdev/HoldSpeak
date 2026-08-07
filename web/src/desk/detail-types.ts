@@ -29,6 +29,9 @@ export interface WorkbenchItem {
   status: string;
   grounding: Record<string, unknown>;
   result: string | null;
+  /** The backend's structured reason when a workbench run fails. */
+  error?: string | null;
+  error_reason?: string | null;
   result_egress: { boundary?: string } | null;
   result_artifact_id: string | null;
   artifact_status?: string | null;

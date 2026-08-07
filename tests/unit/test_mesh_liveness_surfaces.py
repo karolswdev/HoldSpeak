@@ -2,7 +2,7 @@
 
 A mesh model's availability is soft: `/api/models` rows carry `live` +
 last-seen; an offline meshNode target refuses the ask IMMEDIATELY with a
-400 naming the node (never queue-then-timeout); the profiles list carries
+409 naming the node (never queue-then-timeout); the profiles list carries
 liveness as an ENVELOPE sidecar (the synced shape stays pure); doctor lists
 every edge with its age and the Runtime-profiles line names the node.
 """
@@ -28,6 +28,11 @@ def env(tmp_path, monkeypatch):
     reset_database()
     db = Database(tmp_path / "holdspeak.db")
     monkeypatch.setattr(hsdb, "get_database", lambda *a, **k: db)
+    # These routes exercise mesh liveness; the local target's model-file
+    # readiness is not part of that contract.
+    monkeypatch.setattr(
+        "holdspeak.inference_targets._this_machine_readiness", lambda: ("ready", "")
+    )
     app = FastAPI()
     app.include_router(build_primitives_router(WebContext(get_state=lambda: {})))
     yield db, TestClient(app)
@@ -86,7 +91,7 @@ def test_non_mesh_rows_are_untouched(env) -> None:
 # ── the ask refuses an offline node fast, by name ────────────────────────
 
 
-def test_ask_against_offline_mesh_node_is_an_immediate_400(env) -> None:
+def test_ask_against_offline_mesh_node_is_an_immediate_409(env) -> None:
     db, client = env
     prof = _mesh_profile(db)
     resp = client.post("/api/ask", json={"prompt": "Go", "profile_id": prof.id})
@@ -97,7 +102,7 @@ def test_ask_against_offline_mesh_node_is_an_immediate_400(env) -> None:
 
     db.mesh_relay.touch_worker("walk-edge", now=datetime.now() - timedelta(seconds=60))
     resp = client.post("/api/ask", json={"prompt": "Go", "model": "qwen3.5-4b"})
-    assert resp.status_code == 400
+    assert resp.status_code == 409
     assert "last seen" in resp.json()["error"]
 
 

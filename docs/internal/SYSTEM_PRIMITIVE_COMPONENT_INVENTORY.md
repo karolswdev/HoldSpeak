@@ -1222,7 +1222,7 @@ Do not delete domain journals. Add a unified event/receipt index referencing the
 - [plugins/actuators.py](../../holdspeak/plugins/actuators.py)
 - [plugins/actuator_executor.py](../../holdspeak/plugins/actuator_executor.py)
 - [plugins/dictation](../../holdspeak/plugins/dictation)
-- [web/routes/workflow_graph.py](../../holdspeak/web/routes/workflow_graph.py)
+- [web/routes/primitives/workflows.py](../../holdspeak/web/routes/primitives/workflows.py)
 
 ### Inference and placement
 

@@ -16,7 +16,8 @@ import { AskBar, AskPanel } from "../components/AskPanel";
 import { MicButton } from "../components/MicButton";
 import { deskVoiceGrammar } from "../voice/grammars/desk";
 import type { VoiceProposal } from "../voice/grammar";
-import { verbById } from "../verbRegistry";
+import { OBJECT_DELETE_REQUEST, verbById } from "../verbRegistry";
+import { useUndoReceipt } from "../hooks/useUndoReceipt";
 import { WorkMenu } from "../components/DeskMenu";
 import {
   floorMenuEntries,
@@ -51,6 +52,7 @@ export function WorldStage() {
     s.renamingZoneId ? (s.zoneWidths[s.renamingZoneId] ?? null) : null,
   );
   const subjectCounts = useProjections((s) => s.subject_counts);
+  const { remove: queueDelete, receipt: deleteReceipt } = useUndoReceipt();
 
   const hostRef = useRef<HTMLDivElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -128,6 +130,25 @@ export function WorldStage() {
       engine.destroy();
     };
   }, []);
+
+  // Registry verbs are hook-free. The mounted desk translates a delete
+  // request into the existing receipt's delayed commit, leaving Undo as the
+  // only path that decides whether the tombstone reaches the hub.
+  useEffect(() => {
+    const onDeleteRequest = (event: Event) => {
+      const ref = (event as CustomEvent<{ ref?: string | null }>).detail?.ref;
+      if (!ref) return;
+      const object = objectByRef(useDesk.getState().items, ref);
+      if (!object) return;
+      queueDelete(
+        object.title,
+        () => void useDesk.getState().deletePrimitive(object.id, object.kind),
+        () => undefined,
+      );
+    };
+    window.addEventListener(OBJECT_DELETE_REQUEST, onDeleteRequest);
+    return () => window.removeEventListener(OBJECT_DELETE_REQUEST, onDeleteRequest);
+  }, [queueDelete]);
 
   // Escape on the desk (no window focused — focused windows own their
   // own Escape and stop it) closes the FRONT-MOST object card. Capture
@@ -209,7 +230,7 @@ export function WorldStage() {
       return;
     }
     const verb = proposal.verbId ? verbById(proposal.verbId) : undefined;
-    if (!verb || verb.ghost({ selectedRef: null })) throw new Error("That desk action is unavailable.");
+    if (!verb || verb.ghost({ selectedRef: null })) throw new Error("That desk action is unavailable. Your work is unchanged. Retry.");
     verb.run({ selectedRef: null });
   };
 
@@ -220,6 +241,14 @@ export function WorldStage() {
       style={{ "--rows": scene.rows } as React.CSSProperties}
     >
       <canvas ref={canvasRef} className="desk-world-canvas" />
+      {deleteReceipt ? (
+        <div
+          className="desk-next"
+          style={{ position: "fixed", right: 12, bottom: 12, zIndex: 60 }}
+        >
+          {deleteReceipt}
+        </div>
+      ) : null}
       {deskVoiceAvailable ? (
         <div style={{ position: "fixed", left: 12, bottom: 12, zIndex: 20 }}>
           <MicButton

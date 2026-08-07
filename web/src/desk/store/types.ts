@@ -151,6 +151,7 @@ export interface DeskState {
    * editor open. The object IS the editor -- no modal, ever. */
   createPrimitive(
     kind: "note" | "decision" | "kb" | "recipe" | "zone" | "workflow" | "workbench",
+    overrides?: Record<string, unknown>,
   ): Promise<void>;
   /** Register a Delivery source (or local worktree) as a repository drawer. */
   registerRepository(input: { sourceId?: string; path?: string; label?: string }): Promise<void>;

@@ -1,5 +1,6 @@
 """Transport-neutral first-run setup and onboarding operations."""
 from __future__ import annotations
+from holdspeak.services.observer import NullObserver, PipelineObserver, observe_service
 
 from typing import Any
 
@@ -9,9 +10,11 @@ from ..principals import Principal
 from .errors import NotFound, ValidationError
 
 
+@observe_service
 class SetupService:
-    def __init__(self, db: Database) -> None:
+    def __init__(self, db: Database, *, observer: PipelineObserver | None = None) -> None:
         self._db = db
+        self._observer = observer or NullObserver()
 
     def status(self, principal: Principal) -> dict[str, Any]:
         from ..setup_status import build_setup_status

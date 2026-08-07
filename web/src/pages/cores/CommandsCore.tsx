@@ -1,3 +1,4 @@
+import { SurfaceFooter } from "../../desk/surface/SurfaceFooter";
 // HS-95-04 — the Commands surface's core: the flat page's whole capability
 // without the flat chrome (see ActivityCore for the pattern rules).
 // HS-98-07 — re-crafted native: the editor left its modal for an
@@ -145,14 +146,9 @@ export function CommandsCore({ hero }: CoreProps) {
                 empty
                 emptyLabel="No voice commands"
                 emptyGlyph="❝"
+                actionLabel="Add command"
+                onAction={() => setEditing({ index: -1, macro: blank() })}
               />
-              <button
-                type="button"
-                className="gadget-table-add"
-                onClick={() => setEditing({ index: -1, macro: blank() })}
-              >
-                + ADD COMMAND
-              </button>
             </>
           ) : (
             <SurfaceRows>
@@ -296,6 +292,7 @@ export function CommandsCore({ hero }: CoreProps) {
           </SurfaceSection>
         ) : null}
       </SurfaceState>
+      <SurfaceFooter />
     </>
   );
 }

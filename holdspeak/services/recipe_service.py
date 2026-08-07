@@ -1,5 +1,6 @@
 """Transport-neutral recipe (persona) operations (HS-122-03)."""
 from __future__ import annotations
+from holdspeak.services.observer import NullObserver, PipelineObserver, observe_service
 
 import asyncio
 import uuid
@@ -18,9 +19,11 @@ def _new_id(prefix: str) -> str:
 Broadcast = Callable[..., None]
 
 
+@observe_service
 class RecipeService:
-    def __init__(self, db: Database) -> None:
+    def __init__(self, db: Database, *, observer: PipelineObserver | None = None) -> None:
         self._db = db
+        self._observer = observer or NullObserver()
 
     def list_recipes(self, principal: Principal) -> list[dict[str, Any]]:
         return [self._payload(recipe) for recipe in self._db.recipes.list()]

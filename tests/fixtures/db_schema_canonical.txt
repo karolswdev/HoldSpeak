@@ -1,42 +1,27 @@
 index idx_action_items_meeting: CREATE INDEX idx_action_items_meeting ON action_items(meeting_id)
 index idx_action_items_owner: CREATE INDEX idx_action_items_owner ON action_items(owner)
 index idx_action_items_status: CREATE INDEX idx_action_items_status ON action_items(status)
-index idx_activity_annotations_connector: CREATE INDEX idx_activity_annotations_connector
-ON activity_annotations(source_connector_id, created_at DESC)
-index idx_activity_annotations_record: CREATE INDEX idx_activity_annotations_record
-ON activity_annotations(activity_record_id, annotation_type)
-index idx_activity_meeting_candidates_connector: CREATE INDEX idx_activity_meeting_candidates_connector
-ON activity_meeting_candidates(source_connector_id, created_at DESC)
-index idx_activity_meeting_candidates_dedupe: CREATE UNIQUE INDEX idx_activity_meeting_candidates_dedupe
-ON activity_meeting_candidates(dedupe_key)
-WHERE dedupe_key != ''
-index idx_activity_meeting_candidates_time: CREATE INDEX idx_activity_meeting_candidates_time
-ON activity_meeting_candidates(starts_at, status)
-index idx_activity_project_rules_enabled: CREATE INDEX idx_activity_project_rules_enabled
-ON activity_project_rules(enabled, priority DESC, created_at ASC)
-index idx_activity_project_rules_project: CREATE INDEX idx_activity_project_rules_project
-ON activity_project_rules(project_id, priority DESC)
-index idx_activity_records_domain: CREATE INDEX idx_activity_records_domain
-ON activity_records(domain, last_seen_at DESC)
-index idx_activity_records_last_seen: CREATE INDEX idx_activity_records_last_seen
-ON activity_records(last_seen_at DESC)
-index idx_activity_records_project: CREATE INDEX idx_activity_records_project
-ON activity_records(project_id, last_seen_at DESC)
-index idx_activity_records_source_entity: CREATE UNIQUE INDEX idx_activity_records_source_entity
-ON activity_records(source_browser, source_profile, entity_type, entity_id)
-WHERE entity_type IS NOT NULL AND entity_id IS NOT NULL
-index idx_activity_records_source_url: CREATE UNIQUE INDEX idx_activity_records_source_url
-ON activity_records(source_browser, source_profile, normalized_url)
+index idx_activity_annotations_connector: CREATE INDEX idx_activity_annotations_connector ON activity_annotations(source_connector_id, created_at DESC)
+index idx_activity_annotations_record: CREATE INDEX idx_activity_annotations_record ON activity_annotations(activity_record_id, annotation_type)
+index idx_activity_meeting_candidates_connector: CREATE INDEX idx_activity_meeting_candidates_connector ON activity_meeting_candidates(source_connector_id, created_at DESC)
+index idx_activity_meeting_candidates_dedupe: CREATE UNIQUE INDEX idx_activity_meeting_candidates_dedupe ON activity_meeting_candidates(dedupe_key) WHERE dedupe_key != ''
+index idx_activity_meeting_candidates_time: CREATE INDEX idx_activity_meeting_candidates_time ON activity_meeting_candidates(starts_at, status)
+index idx_activity_project_rules_enabled: CREATE INDEX idx_activity_project_rules_enabled ON activity_project_rules(enabled, priority DESC, created_at ASC)
+index idx_activity_project_rules_project: CREATE INDEX idx_activity_project_rules_project ON activity_project_rules(project_id, priority DESC)
+index idx_activity_records_domain: CREATE INDEX idx_activity_records_domain ON activity_records(domain, last_seen_at DESC)
+index idx_activity_records_last_seen: CREATE INDEX idx_activity_records_last_seen ON activity_records(last_seen_at DESC)
+index idx_activity_records_project: CREATE INDEX idx_activity_records_project ON activity_records(project_id, last_seen_at DESC)
+index idx_activity_records_source_entity: CREATE UNIQUE INDEX idx_activity_records_source_entity ON activity_records(source_browser, source_profile, entity_type, entity_id) WHERE entity_type IS NOT NULL AND entity_id IS NOT NULL
+index idx_activity_records_source_url: CREATE UNIQUE INDEX idx_activity_records_source_url ON activity_records(source_browser, source_profile, normalized_url)
 index idx_actuator_proposal_audit_proposal: CREATE INDEX idx_actuator_proposal_audit_proposal ON actuator_proposal_audit(proposal_id, created_at)
 index idx_actuator_proposals_meeting: CREATE INDEX idx_actuator_proposals_meeting ON actuator_proposals(meeting_id, created_at DESC)
 index idx_actuator_proposals_status: CREATE INDEX idx_actuator_proposals_status ON actuator_proposals(status, created_at DESC)
 index idx_artifact_sources_ref: CREATE INDEX idx_artifact_sources_ref ON artifact_sources(source_type, source_ref)
 index idx_artifacts_meeting: CREATE INDEX idx_artifacts_meeting ON artifacts(meeting_id, created_at DESC)
+index idx_artifacts_source_run_item: CREATE UNIQUE INDEX idx_artifacts_source_run_item ON artifacts(source_run_id, source_item_id) WHERE source_run_id IS NOT NULL AND source_item_id IS NOT NULL
 index idx_artifacts_type: CREATE INDEX idx_artifacts_type ON artifacts(artifact_type, created_at DESC)
-index idx_authority_grant_uses_grant: CREATE INDEX idx_authority_grant_uses_grant
-ON authority_grant_uses(grant_id, used_at DESC)
-index idx_authority_grants_active: CREATE INDEX idx_authority_grants_active
-ON authority_grants(actor, operation_family, effect_class, destination, expires_at)
+index idx_authority_grant_uses_grant: CREATE INDEX idx_authority_grant_uses_grant ON authority_grant_uses(grant_id, used_at DESC)
+index idx_authority_grants_active: CREATE INDEX idx_authority_grants_active ON authority_grants(actor, operation_family, effect_class, destination, expires_at)
 index idx_bookmarks_meeting: CREATE INDEX idx_bookmarks_meeting ON bookmarks(meeting_id)
 index idx_cadence_evidence_loop: CREATE INDEX idx_cadence_evidence_loop ON cadence_evidence_refs(loop_id)
 index idx_cadence_loops_source: CREATE UNIQUE INDEX idx_cadence_loops_source ON cadence_loops(source_type, source_id)
@@ -44,38 +29,26 @@ index idx_cadence_loops_status: CREATE INDEX idx_cadence_loops_status ON cadence
 index idx_cadence_next_actions_loop: CREATE INDEX idx_cadence_next_actions_loop ON cadence_next_actions(loop_id)
 index idx_cadence_nudges_loop: CREATE INDEX idx_cadence_nudges_loop ON cadence_nudges(loop_id)
 index idx_cadence_nudges_status: CREATE INDEX idx_cadence_nudges_status ON cadence_nudges(status)
-index idx_capability_attempts_invocation: CREATE INDEX idx_capability_attempts_invocation
-ON capability_attempts(invocation_id, attempt_index)
-index idx_capability_invocations_definition: CREATE INDEX idx_capability_invocations_definition
-ON capability_invocations(definition_ref, created_at DESC)
-index idx_capability_invocations_state: CREATE INDEX idx_capability_invocations_state
-ON capability_invocations(state, created_at DESC)
+index idx_capability_attempts_invocation: CREATE INDEX idx_capability_attempts_invocation ON capability_attempts(invocation_id, attempt_index)
+index idx_capability_invocations_definition: CREATE INDEX idx_capability_invocations_definition ON capability_invocations(definition_ref, created_at DESC)
+index idx_capability_invocations_state: CREATE INDEX idx_capability_invocations_state ON capability_invocations(state, created_at DESC)
 index idx_chains_modified: CREATE INDEX idx_chains_modified ON chains(last_modified DESC)
-index idx_connector_runs_connector_started: CREATE INDEX idx_connector_runs_connector_started
-ON connector_runs(connector_id, started_at DESC)
-index idx_decisions_lifecycle: CREATE INDEX idx_decisions_lifecycle
-ON decisions(lifecycle, decided_at DESC)
-index idx_decisions_meeting: CREATE INDEX idx_decisions_meeting
-ON decisions(source_meeting_id, decided_at DESC)
-index idx_decisions_project: CREATE INDEX idx_decisions_project
-ON decisions(project_key, lifecycle, decided_at DESC)
-index idx_decisions_superseded_by: CREATE INDEX idx_decisions_superseded_by
-ON decisions(superseded_by)
-index idx_delivery_command_receipts_node: CREATE INDEX idx_delivery_command_receipts_node
-ON delivery_command_receipts(node_id, hub_state)
-index idx_desk_projection_state_attention: CREATE INDEX idx_desk_projection_state_attention
-ON desk_projection_state(attention_state, dismissed_at, updated_at DESC)
-index idx_dictation_corrections_recent: CREATE INDEX idx_dictation_corrections_recent
-ON dictation_corrections(created_at DESC, id DESC)
-index idx_dictation_journal_recent: CREATE INDEX idx_dictation_journal_recent
-ON dictation_journal(created_at DESC, id DESC)
+index idx_connector_runs_connector_started: CREATE INDEX idx_connector_runs_connector_started ON connector_runs(connector_id, started_at DESC)
+index idx_decisions_lifecycle: CREATE INDEX idx_decisions_lifecycle ON decisions(lifecycle, decided_at DESC)
+index idx_decisions_meeting: CREATE INDEX idx_decisions_meeting ON decisions(source_meeting_id, decided_at DESC)
+index idx_decisions_project: CREATE INDEX idx_decisions_project ON decisions(project_key, lifecycle, decided_at DESC)
+index idx_decisions_superseded_by: CREATE INDEX idx_decisions_superseded_by ON decisions(superseded_by)
+index idx_delivery_command_receipts_node: CREATE INDEX idx_delivery_command_receipts_node ON delivery_command_receipts(node_id, hub_state)
+index idx_desk_decisions_status: CREATE INDEX idx_desk_decisions_status ON desk_decisions(status, updated_at DESC)
+index idx_desk_decisions_superseded_by: CREATE INDEX idx_desk_decisions_superseded_by ON desk_decisions(superseded_by)
+index idx_desk_projection_state_attention: CREATE INDEX idx_desk_projection_state_attention ON desk_projection_state(attention_state, dismissed_at, updated_at DESC)
+index idx_dictation_corrections_recent: CREATE INDEX idx_dictation_corrections_recent ON dictation_corrections(created_at DESC, id DESC)
+index idx_dictation_journal_recent: CREATE INDEX idx_dictation_journal_recent ON dictation_journal(created_at DESC, id DESC)
 index idx_directories_modified: CREATE INDEX idx_directories_modified ON directories(last_modified DESC)
 index idx_directory_memberships_dir: CREATE INDEX idx_directory_memberships_dir ON directory_memberships(directory_id)
 index idx_directory_name_norm: CREATE UNIQUE INDEX idx_directory_name_norm ON directories(name_normalized) WHERE deleted = 0
-index idx_first_value_attempts_started: CREATE INDEX idx_first_value_attempts_started
-ON first_value_attempts(started_at DESC)
-index idx_first_value_events_attempt: CREATE INDEX idx_first_value_events_attempt
-ON first_value_events(attempt_id, occurred_at)
+index idx_first_value_attempts_started: CREATE INDEX idx_first_value_attempts_started ON first_value_attempts(started_at DESC)
+index idx_first_value_events_attempt: CREATE INDEX idx_first_value_events_attempt ON first_value_events(attempt_id, occurred_at)
 index idx_gate_audit_proposal: CREATE INDEX idx_gate_audit_proposal ON gate_audit(proposal_id)
 index idx_gate_audit_ts: CREATE INDEX idx_gate_audit_ts ON gate_audit(ts)
 index idx_gate_proposals_session: CREATE INDEX idx_gate_proposals_session ON gate_proposals(session_key)
@@ -85,20 +58,20 @@ index idx_intel_jobs_status: CREATE INDEX idx_intel_jobs_status ON intel_jobs(st
 index idx_intent_window_scores_meeting: CREATE INDEX idx_intent_window_scores_meeting ON intent_window_scores(meeting_id, window_id)
 index idx_intent_windows_meeting: CREATE INDEX idx_intent_windows_meeting ON intent_windows(meeting_id, start_seconds, created_at)
 index idx_kbs_modified: CREATE INDEX idx_kbs_modified ON kbs(last_modified DESC)
-index idx_kernel_journal_operation: CREATE INDEX idx_kernel_journal_operation
-ON kernel_journal(operation_id, hub_sequence)
-index idx_kernel_operations_state: CREATE INDEX idx_kernel_operations_state
-ON kernel_operations(state, created_at)
+index idx_kernel_journal_operation: CREATE INDEX idx_kernel_journal_operation ON kernel_journal(operation_id, hub_sequence)
+index idx_kernel_operations_state: CREATE INDEX idx_kernel_operations_state ON kernel_operations(state, created_at)
 index idx_knowledge_memberships_modified: CREATE INDEX idx_knowledge_memberships_modified ON knowledge_memberships(last_modified)
 index idx_knowledge_memberships_resource: CREATE INDEX idx_knowledge_memberships_resource ON knowledge_memberships(resource_ref, deleted)
 index idx_meeting_projects_meeting: CREATE INDEX idx_meeting_projects_meeting ON meeting_projects(meeting_id)
 index idx_meeting_projects_project: CREATE INDEX idx_meeting_projects_project ON meeting_projects(project_id, detected_at DESC)
-index idx_meeting_sync_conflicts_open: CREATE INDEX idx_meeting_sync_conflicts_open
-ON meeting_sync_conflicts(meeting_id, resolved_at, detected_at DESC)
+index idx_meeting_sync_conflicts_open: CREATE INDEX idx_meeting_sync_conflicts_open ON meeting_sync_conflicts(meeting_id, resolved_at, detected_at DESC)
 index idx_meetings_date: CREATE INDEX idx_meetings_date ON meetings(started_at)
-index idx_mesh_relay_jobs_node_status: CREATE INDEX idx_mesh_relay_jobs_node_status
-    ON mesh_relay_jobs(node, status)
+index idx_mesh_relay_jobs_node_status: CREATE INDEX idx_mesh_relay_jobs_node_status ON mesh_relay_jobs(node, status)
 index idx_notes_modified: CREATE INDEX idx_notes_modified ON notes(last_modified DESC)
+index idx_pipeline_events_correlation: CREATE INDEX idx_pipeline_events_correlation ON pipeline_events(correlation_id) WHERE correlation_id != ''
+index idx_pipeline_events_principal: CREATE INDEX idx_pipeline_events_principal ON pipeline_events(principal_kind, principal_identity, timestamp DESC)
+index idx_pipeline_events_service_method: CREATE INDEX idx_pipeline_events_service_method ON pipeline_events(service, method, timestamp DESC)
+index idx_pipeline_events_timestamp: CREATE INDEX idx_pipeline_events_timestamp ON pipeline_events(timestamp DESC)
 index idx_plugin_run_jobs_meeting: CREATE INDEX idx_plugin_run_jobs_meeting ON plugin_run_jobs(meeting_id, requested_at)
 index idx_plugin_run_jobs_status: CREATE INDEX idx_plugin_run_jobs_status ON plugin_run_jobs(status, requested_at)
 index idx_plugin_runs_idempotency: CREATE UNIQUE INDEX idx_plugin_runs_idempotency ON plugin_runs(idempotency_key)
@@ -111,1020 +84,144 @@ index idx_project_resources_modified: CREATE INDEX idx_project_resources_modifie
 index idx_project_resources_resource: CREATE INDEX idx_project_resources_resource ON project_resources(resource_ref, deleted)
 index idx_projects_archived: CREATE INDEX idx_projects_archived ON projects(is_archived, name)
 index idx_recipes_modified: CREATE INDEX idx_recipes_modified ON recipes(last_modified DESC)
-index idx_remote_dictation_deliveries_updated: CREATE INDEX idx_remote_dictation_deliveries_updated
-ON remote_dictation_deliveries(updated_at DESC)
+index idx_remote_dictation_deliveries_updated: CREATE INDEX idx_remote_dictation_deliveries_updated ON remote_dictation_deliveries(updated_at DESC)
 index idx_segments_meeting: CREATE INDEX idx_segments_meeting ON segments(meeting_id)
 index idx_segments_speaker: CREATE INDEX idx_segments_speaker ON segments(speaker)
 index idx_segments_speaker_id: CREATE INDEX idx_segments_speaker_id ON segments(speaker_id)
 index idx_segments_time: CREATE INDEX idx_segments_time ON segments(meeting_id, start_time)
+index idx_skills_modified: CREATE INDEX idx_skills_modified ON skills(last_modified DESC)
+index idx_skills_status: CREATE INDEX idx_skills_status ON skills(status)
 index idx_speakers_name: CREATE INDEX idx_speakers_name ON speakers(name)
 index idx_steering_audit_key: CREATE INDEX idx_steering_audit_key ON steering_audit(session_key)
 index idx_steering_audit_ts: CREATE INDEX idx_steering_audit_ts ON steering_audit(ts)
 index idx_topics_meeting: CREATE INDEX idx_topics_meeting ON topics(meeting_id)
-index idx_work_attempt_events_attempt: CREATE INDEX idx_work_attempt_events_attempt
-ON work_attempt_events(attempt_id, id)
-index idx_work_attempts_exact_session: CREATE UNIQUE INDEX idx_work_attempts_exact_session
-ON work_attempts(session_id)
-WHERE exact = 1 AND session_id IS NOT NULL AND state NOT IN ('ended','abandoned')
-index idx_work_attempts_session: CREATE INDEX idx_work_attempts_session
-ON work_attempts(session_id, state)
-index idx_work_attempts_story: CREATE INDEX idx_work_attempts_story
-ON work_attempts(source_id, project, story_id, started_at DESC)
-index idx_work_attempts_worktree: CREATE INDEX idx_work_attempts_worktree
-ON work_attempts(worktree_id, state)
+index idx_work_attempt_events_attempt: CREATE INDEX idx_work_attempt_events_attempt ON work_attempt_events(attempt_id, id)
+index idx_work_attempts_exact_session: CREATE UNIQUE INDEX idx_work_attempts_exact_session ON work_attempts(session_id) WHERE exact = 1 AND session_id IS NOT NULL AND state NOT IN ('ended','abandoned')
+index idx_work_attempts_session: CREATE INDEX idx_work_attempts_session ON work_attempts(session_id, state)
+index idx_work_attempts_story: CREATE INDEX idx_work_attempts_story ON work_attempts(source_id, project, story_id, started_at DESC)
+index idx_work_attempts_worktree: CREATE INDEX idx_work_attempts_worktree ON work_attempts(worktree_id, state)
+index idx_workbench_items_status: CREATE INDEX idx_workbench_items_status ON workbench_items(workbench_id, status)
+index idx_workbench_items_workbench: CREATE INDEX idx_workbench_items_workbench ON workbench_items(workbench_id, priority ASC)
+index idx_workbench_runs_workbench: CREATE INDEX idx_workbench_runs_workbench ON workbench_runs(workbench_id, started_at DESC)
+index idx_workbenches_modified: CREATE INDEX idx_workbenches_modified ON workbenches(last_modified DESC)
 index idx_workflows_modified: CREATE INDEX idx_workflows_modified ON workflows(last_modified DESC)
-table action_items: CREATE TABLE action_items (
-    id TEXT PRIMARY KEY,
-    meeting_id TEXT NOT NULL REFERENCES meetings(id) ON DELETE CASCADE,
-    task TEXT NOT NULL,
-    owner TEXT,
-    due TEXT,
-    status TEXT NOT NULL DEFAULT 'pending',
-    review_state TEXT NOT NULL DEFAULT 'pending',
-    reviewed_at TEXT,
-    source_timestamp REAL,
-    created_at TEXT NOT NULL DEFAULT (datetime('now')),
-    completed_at TEXT
-)
-table activity_annotations: CREATE TABLE activity_annotations (
-    id TEXT PRIMARY KEY,
-    activity_record_id INTEGER REFERENCES activity_records(id) ON DELETE CASCADE,
-    source_connector_id TEXT NOT NULL,
-    annotation_type TEXT NOT NULL,
-    title TEXT NOT NULL DEFAULT '',
-    value_json TEXT NOT NULL DEFAULT '{}',
-    confidence REAL NOT NULL DEFAULT 0,
-    created_at TEXT NOT NULL DEFAULT (datetime('now')),
-    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
-)
-table activity_domain_rules: CREATE TABLE activity_domain_rules (
-    domain TEXT PRIMARY KEY,
-    action TEXT NOT NULL DEFAULT 'exclude',
-    created_at TEXT NOT NULL DEFAULT (datetime('now')),
-    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
-)
-table activity_enrichment_connectors: CREATE TABLE activity_enrichment_connectors (
-    id TEXT PRIMARY KEY,
-    enabled INTEGER NOT NULL DEFAULT 0,
-    settings_json TEXT NOT NULL DEFAULT '{}',
-    last_run_at TEXT,
-    last_error TEXT,
-    created_at TEXT NOT NULL DEFAULT (datetime('now')),
-    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
-)
-table activity_import_checkpoints: CREATE TABLE activity_import_checkpoints (
-    source_browser TEXT NOT NULL,
-    source_profile TEXT NOT NULL DEFAULT '',
-    source_path_hash TEXT NOT NULL DEFAULT '',
-    last_visit_raw TEXT,
-    last_imported_at TEXT,
-    last_error TEXT,
-    enabled INTEGER NOT NULL DEFAULT 1,
-    created_at TEXT NOT NULL DEFAULT (datetime('now')),
-    updated_at TEXT NOT NULL DEFAULT (datetime('now')),
-    PRIMARY KEY (source_browser, source_profile, source_path_hash)
-)
-table activity_meeting_candidates: CREATE TABLE activity_meeting_candidates (
-    id TEXT PRIMARY KEY,
-    source_connector_id TEXT NOT NULL,
-    source_activity_record_id INTEGER REFERENCES activity_records(id) ON DELETE SET NULL,
-    dedupe_key TEXT NOT NULL DEFAULT '',
-    title TEXT NOT NULL,
-    starts_at TEXT,
-    ends_at TEXT,
-    meeting_url TEXT,
-    started_meeting_id TEXT,
-    confidence REAL NOT NULL DEFAULT 0,
-    status TEXT NOT NULL DEFAULT 'candidate',
-    created_at TEXT NOT NULL DEFAULT (datetime('now')),
-    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
-)
-table activity_nudge_dismissals: CREATE TABLE activity_nudge_dismissals (
-    nudge_key TEXT PRIMARY KEY,
-    dismissed_at TEXT NOT NULL DEFAULT (datetime('now'))
-)
-table activity_privacy_settings: CREATE TABLE activity_privacy_settings (
-    id INTEGER PRIMARY KEY CHECK (id = 1),
-    enabled INTEGER NOT NULL DEFAULT 1,
-    retention_days INTEGER NOT NULL DEFAULT 30,
-    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
-)
-table activity_project_rules: CREATE TABLE activity_project_rules (
-    id TEXT PRIMARY KEY,
-    project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
-    name TEXT NOT NULL DEFAULT '',
-    enabled INTEGER NOT NULL DEFAULT 1,
-    priority INTEGER NOT NULL DEFAULT 100,
-    match_type TEXT NOT NULL,
-    pattern TEXT NOT NULL,
-    entity_type TEXT,
-    created_at TEXT NOT NULL DEFAULT (datetime('now')),
-    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
-)
-table activity_records: CREATE TABLE activity_records (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    source_browser TEXT NOT NULL,
-    source_profile TEXT NOT NULL DEFAULT '',
-    source_path_hash TEXT NOT NULL DEFAULT '',
-    url TEXT NOT NULL,
-    normalized_url TEXT NOT NULL,
-    title TEXT,
-    domain TEXT NOT NULL DEFAULT '',
-    visit_count INTEGER NOT NULL DEFAULT 0,
-    first_seen_at TEXT,
-    last_seen_at TEXT,
-    last_visit_raw TEXT,
-    entity_type TEXT,
-    entity_id TEXT,
-    project_id TEXT REFERENCES projects(id) ON DELETE SET NULL,
-    created_at TEXT NOT NULL DEFAULT (datetime('now')),
-    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
-)
-table actuator_proposal_audit: CREATE TABLE actuator_proposal_audit (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    proposal_id TEXT NOT NULL REFERENCES actuator_proposals(id) ON DELETE CASCADE,
-    actor TEXT NOT NULL DEFAULT 'system',
-    from_status TEXT,
-    to_status TEXT NOT NULL,
-    detail TEXT,
-    created_at TEXT NOT NULL DEFAULT (datetime('now'))
-)
-table actuator_proposals: CREATE TABLE actuator_proposals (
-    id TEXT PRIMARY KEY,
-    -- v5 (Phase 72): a proposal is owner-typed. origin='meeting' rows carry a
-    -- real meeting_id; origin='desk' rows (the iPad desk relay) carry NULL —
-    -- the old hidden 'companion' sentinel meeting is gone.
-    meeting_id TEXT REFERENCES meetings(id) ON DELETE CASCADE,
-    origin TEXT NOT NULL DEFAULT 'meeting' CHECK (origin IN ('meeting', 'desk')),
-    window_id TEXT NOT NULL DEFAULT '',
-    plugin_id TEXT NOT NULL,
-    plugin_version TEXT NOT NULL DEFAULT 'unknown',
-    idempotency_key TEXT NOT NULL UNIQUE,
-    status TEXT NOT NULL DEFAULT 'proposed',
-    review_decision TEXT NOT NULL DEFAULT 'unreviewed'
-        CHECK (review_decision IN ('unreviewed','accepted','dismissed')),
-    authorization_state TEXT NOT NULL DEFAULT 'proposed'
-        CHECK (authorization_state IN ('not_requested','proposed','approved','rejected','expired','revoked')),
-    execution_state TEXT NOT NULL DEFAULT 'not_started'
-        CHECK (execution_state IN ('not_started','queued','running','succeeded','failed','cancelled','unavailable')),
-    target TEXT NOT NULL,
-    action TEXT NOT NULL,
-    preview TEXT NOT NULL,
-    payload_json TEXT NOT NULL DEFAULT '{}',
-    reversible INTEGER NOT NULL DEFAULT 0,
-    required_capabilities_json TEXT NOT NULL DEFAULT '[]',
-    decided_by TEXT,
-    approved_payload_hash TEXT,
-    approved_destination TEXT,
-    approved_preview_hash TEXT,
-    preview_renderer_version TEXT,
-    effect_class TEXT,
-    policy_version TEXT,
-    operation_json TEXT NOT NULL DEFAULT '{}',
-    policy_snapshot_json TEXT NOT NULL DEFAULT '{}',
-    grant_id TEXT,
-    result_json TEXT,
-    error TEXT,
-    created_at TEXT NOT NULL DEFAULT (datetime('now')),
-    decided_at TEXT,
-    executed_at TEXT,
-    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
-)
-table artifact_sources: CREATE TABLE artifact_sources (
-    artifact_id TEXT NOT NULL REFERENCES artifacts(id) ON DELETE CASCADE,
-    source_type TEXT NOT NULL,
-    source_ref TEXT NOT NULL,
-    created_at TEXT NOT NULL DEFAULT (datetime('now')),
-    PRIMARY KEY (artifact_id, source_type, source_ref)
-)
-table artifacts: CREATE TABLE artifacts (
-    id TEXT PRIMARY KEY,
-    -- v6 (Phase 74): an artifact is owner-typed like a proposal (v5).
-    -- origin='meeting' rows carry a real meeting_id; origin='run' rows (a
-    -- persona/chain/workflow run's output) carry NULL — their anchor is the
-    -- capability lineage in artifact_sources.
-    meeting_id TEXT REFERENCES meetings(id) ON DELETE CASCADE,
-    origin TEXT NOT NULL DEFAULT 'meeting' CHECK (origin IN ('meeting', 'run')),
-    artifact_type TEXT NOT NULL,
-    title TEXT NOT NULL,
-    body_markdown TEXT NOT NULL DEFAULT '',
-    structured_json TEXT NOT NULL DEFAULT '{}',
-    confidence REAL NOT NULL DEFAULT 0,
-    status TEXT NOT NULL DEFAULT 'draft',
-    plugin_id TEXT NOT NULL DEFAULT 'unknown',
-    plugin_version TEXT NOT NULL DEFAULT 'unknown',
-    created_at TEXT NOT NULL DEFAULT (datetime('now')),
-    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
-)
-table artifacts_memory_fts: CREATE VIRTUAL TABLE artifacts_memory_fts USING fts5(
-    source_id UNINDEXED, title, body_markdown
-)
+table action_items: CREATE TABLE action_items ( id TEXT PRIMARY KEY, meeting_id TEXT NOT NULL REFERENCES meetings(id) ON DELETE CASCADE, task TEXT NOT NULL, owner TEXT, due TEXT, status TEXT NOT NULL DEFAULT 'pending', review_state TEXT NOT NULL DEFAULT 'pending', reviewed_at TEXT, source_timestamp REAL, created_at TEXT NOT NULL DEFAULT (datetime('now')), completed_at TEXT )
+table activity_annotations: CREATE TABLE activity_annotations ( id TEXT PRIMARY KEY, activity_record_id INTEGER REFERENCES activity_records(id) ON DELETE CASCADE, source_connector_id TEXT NOT NULL, annotation_type TEXT NOT NULL, title TEXT NOT NULL DEFAULT '', value_json TEXT NOT NULL DEFAULT '{}', confidence REAL NOT NULL DEFAULT 0, created_at TEXT NOT NULL DEFAULT (datetime('now')), updated_at TEXT NOT NULL DEFAULT (datetime('now')) )
+table activity_domain_rules: CREATE TABLE activity_domain_rules ( domain TEXT PRIMARY KEY, action TEXT NOT NULL DEFAULT 'exclude', created_at TEXT NOT NULL DEFAULT (datetime('now')), updated_at TEXT NOT NULL DEFAULT (datetime('now')) )
+table activity_enrichment_connectors: CREATE TABLE activity_enrichment_connectors ( id TEXT PRIMARY KEY, enabled INTEGER NOT NULL DEFAULT 0, settings_json TEXT NOT NULL DEFAULT '{}', last_run_at TEXT, last_error TEXT, created_at TEXT NOT NULL DEFAULT (datetime('now')), updated_at TEXT NOT NULL DEFAULT (datetime('now')) )
+table activity_import_checkpoints: CREATE TABLE activity_import_checkpoints ( source_browser TEXT NOT NULL, source_profile TEXT NOT NULL DEFAULT '', source_path_hash TEXT NOT NULL DEFAULT '', last_visit_raw TEXT, last_imported_at TEXT, last_error TEXT, enabled INTEGER NOT NULL DEFAULT 1, created_at TEXT NOT NULL DEFAULT (datetime('now')), updated_at TEXT NOT NULL DEFAULT (datetime('now')), PRIMARY KEY (source_browser, source_profile, source_path_hash) )
+table activity_meeting_candidates: CREATE TABLE activity_meeting_candidates ( id TEXT PRIMARY KEY, source_connector_id TEXT NOT NULL, source_activity_record_id INTEGER REFERENCES activity_records(id) ON DELETE SET NULL, dedupe_key TEXT NOT NULL DEFAULT '', title TEXT NOT NULL, starts_at TEXT, ends_at TEXT, meeting_url TEXT, started_meeting_id TEXT, confidence REAL NOT NULL DEFAULT 0, status TEXT NOT NULL DEFAULT 'candidate', created_at TEXT NOT NULL DEFAULT (datetime('now')), updated_at TEXT NOT NULL DEFAULT (datetime('now')) )
+table activity_nudge_dismissals: CREATE TABLE activity_nudge_dismissals ( nudge_key TEXT PRIMARY KEY, dismissed_at TEXT NOT NULL DEFAULT (datetime('now')) )
+table activity_privacy_settings: CREATE TABLE activity_privacy_settings ( id INTEGER PRIMARY KEY CHECK (id = 1), enabled INTEGER NOT NULL DEFAULT 1, retention_days INTEGER NOT NULL DEFAULT 30, updated_at TEXT NOT NULL DEFAULT (datetime('now')) )
+table activity_project_rules: CREATE TABLE activity_project_rules ( id TEXT PRIMARY KEY, project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE, name TEXT NOT NULL DEFAULT '', enabled INTEGER NOT NULL DEFAULT 1, priority INTEGER NOT NULL DEFAULT 100, match_type TEXT NOT NULL, pattern TEXT NOT NULL, entity_type TEXT, created_at TEXT NOT NULL DEFAULT (datetime('now')), updated_at TEXT NOT NULL DEFAULT (datetime('now')) )
+table activity_records: CREATE TABLE activity_records ( id INTEGER PRIMARY KEY AUTOINCREMENT, source_browser TEXT NOT NULL, source_profile TEXT NOT NULL DEFAULT '', source_path_hash TEXT NOT NULL DEFAULT '', url TEXT NOT NULL, normalized_url TEXT NOT NULL, title TEXT, domain TEXT NOT NULL DEFAULT '', visit_count INTEGER NOT NULL DEFAULT 0, first_seen_at TEXT, last_seen_at TEXT, last_visit_raw TEXT, entity_type TEXT, entity_id TEXT, project_id TEXT REFERENCES projects(id) ON DELETE SET NULL, created_at TEXT NOT NULL DEFAULT (datetime('now')), updated_at TEXT NOT NULL DEFAULT (datetime('now')) )
+table actuator_proposal_audit: CREATE TABLE actuator_proposal_audit ( id INTEGER PRIMARY KEY AUTOINCREMENT, proposal_id TEXT NOT NULL REFERENCES actuator_proposals(id) ON DELETE CASCADE, actor TEXT NOT NULL DEFAULT 'system', from_status TEXT, to_status TEXT NOT NULL, detail TEXT, created_at TEXT NOT NULL DEFAULT (datetime('now')) )
+table actuator_proposals: CREATE TABLE actuator_proposals ( id TEXT PRIMARY KEY, -- v5 (Phase 72): a proposal is owner-typed. origin='meeting' rows carry a -- real meeting_id; origin='desk' rows (the iPad desk relay) carry NULL -- -- the old hidden 'companion' sentinel meeting is gone. meeting_id TEXT REFERENCES meetings(id) ON DELETE CASCADE, origin TEXT NOT NULL DEFAULT 'meeting' CHECK (origin IN ('meeting', 'desk')), window_id TEXT NOT NULL DEFAULT '', plugin_id TEXT NOT NULL, plugin_version TEXT NOT NULL DEFAULT 'unknown', idempotency_key TEXT NOT NULL UNIQUE, status TEXT NOT NULL DEFAULT 'proposed', review_decision TEXT NOT NULL DEFAULT 'unreviewed' CHECK (review_decision IN ('unreviewed','accepted','dismissed')), authorization_state TEXT NOT NULL DEFAULT 'proposed' CHECK (authorization_state IN ('not_requested','proposed','approved','rejected','expired','revoked')), execution_state TEXT NOT NULL DEFAULT 'not_started' CHECK (execution_state IN ('not_started','queued','running','succeeded','failed','cancelled','unavailable')), target TEXT NOT NULL, action TEXT NOT NULL, preview TEXT NOT NULL, payload_json TEXT NOT NULL DEFAULT '{}', reversible INTEGER NOT NULL DEFAULT 0, required_capabilities_json TEXT NOT NULL DEFAULT '[]', decided_by TEXT, approved_payload_hash TEXT, approved_destination TEXT, approved_preview_hash TEXT, preview_renderer_version TEXT, effect_class TEXT, policy_version TEXT, operation_json TEXT NOT NULL DEFAULT '{}', policy_snapshot_json TEXT NOT NULL DEFAULT '{}', grant_id TEXT, result_json TEXT, error TEXT, created_at TEXT NOT NULL DEFAULT (datetime('now')), decided_at TEXT, executed_at TEXT, updated_at TEXT NOT NULL DEFAULT (datetime('now')) )
+table artifact_sources: CREATE TABLE artifact_sources ( artifact_id TEXT NOT NULL REFERENCES artifacts(id) ON DELETE CASCADE, source_type TEXT NOT NULL, source_ref TEXT NOT NULL, created_at TEXT NOT NULL DEFAULT (datetime('now')), PRIMARY KEY (artifact_id, source_type, source_ref) )
+table artifacts: CREATE TABLE artifacts ( id TEXT PRIMARY KEY, -- v6 (Phase 74): an artifact is owner-typed like a proposal (v5). -- origin='meeting' rows carry a real meeting_id; origin='run' rows (a -- persona/chain/workflow run's output) carry NULL -- their anchor is the -- capability lineage in artifact_sources. meeting_id TEXT REFERENCES meetings(id) ON DELETE CASCADE, origin TEXT NOT NULL DEFAULT 'meeting' CHECK (origin IN ('meeting', 'run')), artifact_type TEXT NOT NULL, title TEXT NOT NULL, body_markdown TEXT NOT NULL DEFAULT '', structured_json TEXT NOT NULL DEFAULT '{}', confidence REAL NOT NULL DEFAULT 0, status TEXT NOT NULL DEFAULT 'draft', plugin_id TEXT NOT NULL DEFAULT 'unknown', plugin_version TEXT NOT NULL DEFAULT 'unknown', source_run_id TEXT, source_item_id TEXT, created_at TEXT NOT NULL DEFAULT (datetime('now')), updated_at TEXT NOT NULL DEFAULT (datetime('now')) )
+table artifacts_memory_fts: CREATE VIRTUAL TABLE artifacts_memory_fts USING fts5( source_id UNINDEXED, title, body_markdown )
 table artifacts_memory_fts_config: CREATE TABLE 'artifacts_memory_fts_config'(k PRIMARY KEY, v) WITHOUT ROWID
 table artifacts_memory_fts_content: CREATE TABLE 'artifacts_memory_fts_content'(id INTEGER PRIMARY KEY, c0, c1, c2)
 table artifacts_memory_fts_data: CREATE TABLE 'artifacts_memory_fts_data'(id INTEGER PRIMARY KEY, block BLOB)
 table artifacts_memory_fts_docsize: CREATE TABLE 'artifacts_memory_fts_docsize'(id INTEGER PRIMARY KEY, sz BLOB)
 table artifacts_memory_fts_idx: CREATE TABLE 'artifacts_memory_fts_idx'(segid, term, pgno, PRIMARY KEY(segid, term)) WITHOUT ROWID
-table authority_grant_uses: CREATE TABLE authority_grant_uses (
-    id TEXT PRIMARY KEY,
-    grant_id TEXT NOT NULL REFERENCES authority_grants(id) ON DELETE CASCADE,
-    operation_id TEXT NOT NULL,
-    actor TEXT NOT NULL,
-    effect_class TEXT NOT NULL,
-    destination TEXT NOT NULL,
-    outcome TEXT NOT NULL DEFAULT 'consumed',
-    used_at TEXT NOT NULL
-)
-table authority_grants: CREATE TABLE authority_grants (
-    id TEXT PRIMARY KEY,
-    actor TEXT NOT NULL,
-    operation_family TEXT NOT NULL,
-    effect_class TEXT NOT NULL,
-    destination TEXT NOT NULL,
-    data_classes_json TEXT NOT NULL DEFAULT '[]',
-    project_scope TEXT,
-    resource_scope TEXT,
-    issued_at TEXT NOT NULL,
-    expires_at TEXT NOT NULL,
-    max_uses INTEGER NOT NULL DEFAULT 1,
-    remaining_uses INTEGER NOT NULL DEFAULT 1,
-    revoked_at TEXT,
-    revoke_reason TEXT,
-    binding_hash TEXT NOT NULL,
-    control_mode TEXT NOT NULL DEFAULT 'neutral'
-        CHECK (control_mode IN ('safe','neutral','yolo'))
-)
-table bookmarks: CREATE TABLE bookmarks (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    meeting_id TEXT NOT NULL REFERENCES meetings(id) ON DELETE CASCADE,
-    timestamp REAL NOT NULL,
-    label TEXT NOT NULL DEFAULT '',
-    created_at TEXT NOT NULL DEFAULT (datetime('now'))
-)
-table cadence_evidence_refs: CREATE TABLE cadence_evidence_refs (
-    id TEXT PRIMARY KEY,
-    loop_id TEXT NOT NULL REFERENCES cadence_loops(id) ON DELETE CASCADE,
-    kind TEXT NOT NULL,
-    ref_id TEXT NOT NULL,
-    label TEXT NOT NULL DEFAULT '',
-    timestamp TEXT,
-    deep_link TEXT
-)
-table cadence_loops: CREATE TABLE cadence_loops (
-    id TEXT PRIMARY KEY,
-    source_type TEXT NOT NULL,
-    source_id TEXT NOT NULL,
-    project TEXT,
-    title TEXT NOT NULL,
-    summary TEXT NOT NULL DEFAULT '',
-    status TEXT NOT NULL DEFAULT 'open',     -- open, snoozed, closed, killed, delegated
-    priority TEXT NOT NULL DEFAULT 'normal',  -- low, normal, high, urgent
-    needs_review INTEGER NOT NULL DEFAULT 0,  -- low-confidence: quiet, never a push
-    owner TEXT,
-    created_at TEXT NOT NULL DEFAULT (datetime('now')),
-    updated_at TEXT NOT NULL DEFAULT (datetime('now')),
-    due_at TEXT,
-    snoozed_until TEXT,
-    stale_score REAL NOT NULL DEFAULT 0,
-    last_nudged_at TEXT,
-    nudge_count INTEGER NOT NULL DEFAULT 0
-)
-table cadence_next_actions: CREATE TABLE cadence_next_actions (
-    id TEXT PRIMARY KEY,
-    loop_id TEXT NOT NULL REFERENCES cadence_loops(id) ON DELETE CASCADE,
-    kind TEXT NOT NULL,
-    title TEXT NOT NULL,
-    body_markdown TEXT NOT NULL DEFAULT '',
-    confidence REAL NOT NULL DEFAULT 0,
-    reversible INTEGER NOT NULL DEFAULT 1,
-    proposal_id TEXT,
-    generated_by TEXT NOT NULL DEFAULT 'deterministic',
-    generated_at TEXT NOT NULL DEFAULT (datetime('now'))
-)
-table cadence_nudges: CREATE TABLE cadence_nudges (
-    id TEXT PRIMARY KEY,
-    loop_id TEXT NOT NULL REFERENCES cadence_loops(id) ON DELETE CASCADE,
-    next_action_id TEXT,
-    surface TEXT NOT NULL,
-    severity TEXT NOT NULL DEFAULT 'normal',  -- quiet, normal, persistent, escalated
-    title TEXT NOT NULL DEFAULT '',
-    message_markdown TEXT NOT NULL DEFAULT '',
-    status TEXT NOT NULL DEFAULT 'pending',   -- pending, shown, acted, dismissed, expired
-    created_at TEXT NOT NULL DEFAULT (datetime('now')),
-    shown_at TEXT,
-    acted_at TEXT,
-    expires_at TEXT
-)
-table cadence_policies: CREATE TABLE cadence_policies (
-    id TEXT PRIMARY KEY,
-    name TEXT NOT NULL,
-    enabled INTEGER NOT NULL DEFAULT 1,
-    config_json TEXT NOT NULL DEFAULT '{}',
-    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
-)
-table capability_attempts: CREATE TABLE capability_attempts (
-    id TEXT PRIMARY KEY,
-    invocation_id TEXT NOT NULL REFERENCES capability_invocations(id) ON DELETE CASCADE,
-    attempt_index INTEGER NOT NULL,
-    destination TEXT NOT NULL,
-    actual_placement_json TEXT NOT NULL DEFAULT '{}',
-    provider TEXT,
-    state TEXT NOT NULL DEFAULT 'running'
-        CHECK (state IN ('running','succeeded','failed','cancelled','empty','unknown')),
-    error TEXT,
-    result_ref TEXT,
-    started_at TEXT NOT NULL,
-    completed_at TEXT,
-    UNIQUE(invocation_id, attempt_index)
-)
-table capability_invocations: CREATE TABLE capability_invocations (
-    id TEXT PRIMARY KEY,
-    correlation_id TEXT NOT NULL UNIQUE,
-    definition_ref TEXT NOT NULL,
-    initiator TEXT NOT NULL DEFAULT 'owner',
-    grounding_refs_json TEXT NOT NULL DEFAULT '[]',
-    requested_placement TEXT NOT NULL DEFAULT 'this_machine',
-    input_snapshot_json TEXT NOT NULL DEFAULT '{}',
-    state TEXT NOT NULL DEFAULT 'running'
-        CHECK (state IN ('running','succeeded','failed','cancelled','unavailable','empty','unknown')),
-    result_ref TEXT,
-    error TEXT,
-    created_at TEXT NOT NULL,
-    updated_at TEXT NOT NULL,
-    completed_at TEXT
-)
-table chains: CREATE TABLE chains (
-    id TEXT PRIMARY KEY,
-    name TEXT NOT NULL DEFAULT '',
-    steps_json TEXT NOT NULL DEFAULT '[]',
-    created_at TEXT NOT NULL DEFAULT (datetime('now')),
-    last_modified TEXT NOT NULL DEFAULT (datetime('now')),
-    deleted INTEGER NOT NULL DEFAULT 0
-)
-table connector_runs: CREATE TABLE connector_runs (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    connector_id TEXT NOT NULL,
-    started_at TEXT NOT NULL,
-    finished_at TEXT NOT NULL,
-    succeeded INTEGER NOT NULL DEFAULT 0,
-    error TEXT,
-    output_bytes INTEGER NOT NULL DEFAULT 0,
-    annotation_count INTEGER NOT NULL DEFAULT 0,
-    candidate_count INTEGER NOT NULL DEFAULT 0,
-    command_count INTEGER NOT NULL DEFAULT 0
-)
-table decisions: CREATE TABLE decisions (
-    id TEXT PRIMARY KEY,
-    text TEXT NOT NULL,
-    rationale TEXT,
-    decided_at TEXT NOT NULL,
-    date_basis TEXT NOT NULL DEFAULT 'meeting_date',
-    source_timestamp REAL,
-    provenance_label TEXT
-        CHECK (provenance_label IN ('reported','anchored')),
-    source_artifact_id TEXT NOT NULL,
-    source_meeting_id TEXT NOT NULL,
-    source_state TEXT NOT NULL DEFAULT 'linked'
-        CHECK (source_state IN ('linked','source_deleted')),
-    project_key TEXT,
-    lifecycle TEXT NOT NULL DEFAULT 'recorded'
-        CHECK (lifecycle IN ('recorded','accepted','superseded','rejected')),
-    superseded_by TEXT REFERENCES decisions(id),
-    created_at TEXT NOT NULL DEFAULT (datetime('now')),
-    updated_at TEXT NOT NULL DEFAULT (datetime('now')),
-    last_modified TEXT NOT NULL DEFAULT (datetime('now')),
-    deleted INTEGER NOT NULL DEFAULT 0
-)
-table decisions_memory_fts: CREATE VIRTUAL TABLE decisions_memory_fts USING fts5(
-    source_id UNINDEXED, text, rationale
-)
+table authority_grant_uses: CREATE TABLE authority_grant_uses ( id TEXT PRIMARY KEY, grant_id TEXT NOT NULL REFERENCES authority_grants(id) ON DELETE CASCADE, operation_id TEXT NOT NULL, actor TEXT NOT NULL, effect_class TEXT NOT NULL, destination TEXT NOT NULL, outcome TEXT NOT NULL DEFAULT 'consumed', used_at TEXT NOT NULL )
+table authority_grants: CREATE TABLE authority_grants ( id TEXT PRIMARY KEY, actor TEXT NOT NULL, operation_family TEXT NOT NULL, effect_class TEXT NOT NULL, destination TEXT NOT NULL, data_classes_json TEXT NOT NULL DEFAULT '[]', project_scope TEXT, resource_scope TEXT, issued_at TEXT NOT NULL, expires_at TEXT NOT NULL, max_uses INTEGER NOT NULL DEFAULT 1, remaining_uses INTEGER NOT NULL DEFAULT 1, revoked_at TEXT, revoke_reason TEXT, binding_hash TEXT NOT NULL, control_mode TEXT NOT NULL DEFAULT 'neutral' CHECK (control_mode IN ('safe','neutral','yolo')) )
+table bookmarks: CREATE TABLE bookmarks ( id INTEGER PRIMARY KEY AUTOINCREMENT, meeting_id TEXT NOT NULL REFERENCES meetings(id) ON DELETE CASCADE, timestamp REAL NOT NULL, label TEXT NOT NULL DEFAULT '', created_at TEXT NOT NULL DEFAULT (datetime('now')) )
+table cadence_evidence_refs: CREATE TABLE cadence_evidence_refs ( id TEXT PRIMARY KEY, loop_id TEXT NOT NULL REFERENCES cadence_loops(id) ON DELETE CASCADE, kind TEXT NOT NULL, ref_id TEXT NOT NULL, label TEXT NOT NULL DEFAULT '', timestamp TEXT, deep_link TEXT )
+table cadence_loops: CREATE TABLE cadence_loops ( id TEXT PRIMARY KEY, source_type TEXT NOT NULL, source_id TEXT NOT NULL, project TEXT, title TEXT NOT NULL, summary TEXT NOT NULL DEFAULT '', status TEXT NOT NULL DEFAULT 'open', -- open, snoozed, closed, killed, delegated priority TEXT NOT NULL DEFAULT 'normal', -- low, normal, high, urgent needs_review INTEGER NOT NULL DEFAULT 0, -- low-confidence: quiet, never a push owner TEXT, created_at TEXT NOT NULL DEFAULT (datetime('now')), updated_at TEXT NOT NULL DEFAULT (datetime('now')), due_at TEXT, snoozed_until TEXT, stale_score REAL NOT NULL DEFAULT 0, last_nudged_at TEXT, nudge_count INTEGER NOT NULL DEFAULT 0 )
+table cadence_next_actions: CREATE TABLE cadence_next_actions ( id TEXT PRIMARY KEY, loop_id TEXT NOT NULL REFERENCES cadence_loops(id) ON DELETE CASCADE, kind TEXT NOT NULL, title TEXT NOT NULL, body_markdown TEXT NOT NULL DEFAULT '', confidence REAL NOT NULL DEFAULT 0, reversible INTEGER NOT NULL DEFAULT 1, proposal_id TEXT, generated_by TEXT NOT NULL DEFAULT 'deterministic', generated_at TEXT NOT NULL DEFAULT (datetime('now')) )
+table cadence_nudges: CREATE TABLE cadence_nudges ( id TEXT PRIMARY KEY, loop_id TEXT NOT NULL REFERENCES cadence_loops(id) ON DELETE CASCADE, next_action_id TEXT, surface TEXT NOT NULL, severity TEXT NOT NULL DEFAULT 'normal', -- quiet, normal, persistent, escalated title TEXT NOT NULL DEFAULT '', message_markdown TEXT NOT NULL DEFAULT '', status TEXT NOT NULL DEFAULT 'pending', -- pending, shown, acted, dismissed, expired created_at TEXT NOT NULL DEFAULT (datetime('now')), shown_at TEXT, acted_at TEXT, expires_at TEXT )
+table cadence_policies: CREATE TABLE cadence_policies ( id TEXT PRIMARY KEY, name TEXT NOT NULL, enabled INTEGER NOT NULL DEFAULT 1, config_json TEXT NOT NULL DEFAULT '{}', updated_at TEXT NOT NULL DEFAULT (datetime('now')) )
+table capability_attempts: CREATE TABLE capability_attempts ( id TEXT PRIMARY KEY, invocation_id TEXT NOT NULL REFERENCES capability_invocations(id) ON DELETE CASCADE, attempt_index INTEGER NOT NULL, destination TEXT NOT NULL, actual_placement_json TEXT NOT NULL DEFAULT '{}', provider TEXT, state TEXT NOT NULL DEFAULT 'running' CHECK (state IN ('running','succeeded','failed','cancelled','empty','unknown')), error TEXT, result_ref TEXT, started_at TEXT NOT NULL, completed_at TEXT, UNIQUE(invocation_id, attempt_index) )
+table capability_invocations: CREATE TABLE capability_invocations ( id TEXT PRIMARY KEY, correlation_id TEXT NOT NULL UNIQUE, definition_ref TEXT NOT NULL, initiator TEXT NOT NULL DEFAULT 'owner', grounding_refs_json TEXT NOT NULL DEFAULT '[]', requested_placement TEXT NOT NULL DEFAULT 'this_machine', input_snapshot_json TEXT NOT NULL DEFAULT '{}', state TEXT NOT NULL DEFAULT 'running' CHECK (state IN ('running','succeeded','failed','cancelled','unavailable','empty','unknown')), result_ref TEXT, error TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, completed_at TEXT )
+table chains: CREATE TABLE chains ( id TEXT PRIMARY KEY, name TEXT NOT NULL DEFAULT '', steps_json TEXT NOT NULL DEFAULT '[]', created_at TEXT NOT NULL DEFAULT (datetime('now')), last_modified TEXT NOT NULL DEFAULT (datetime('now')), deleted INTEGER NOT NULL DEFAULT 0 )
+table connector_runs: CREATE TABLE connector_runs ( id INTEGER PRIMARY KEY AUTOINCREMENT, connector_id TEXT NOT NULL, started_at TEXT NOT NULL, finished_at TEXT NOT NULL, succeeded INTEGER NOT NULL DEFAULT 0, error TEXT, output_bytes INTEGER NOT NULL DEFAULT 0, annotation_count INTEGER NOT NULL DEFAULT 0, candidate_count INTEGER NOT NULL DEFAULT 0, command_count INTEGER NOT NULL DEFAULT 0 )
+table constitutional_context: CREATE TABLE constitutional_context ( id INTEGER PRIMARY KEY CHECK (id = 1), content TEXT NOT NULL DEFAULT '', revision INTEGER NOT NULL DEFAULT 0, content_hash TEXT NOT NULL DEFAULT '', updated_at TEXT NOT NULL DEFAULT (datetime('now')) )
+table constitutional_context_history: CREATE TABLE constitutional_context_history ( id INTEGER PRIMARY KEY AUTOINCREMENT, content TEXT NOT NULL DEFAULT '', revision INTEGER NOT NULL DEFAULT 0, content_hash TEXT NOT NULL DEFAULT '', created_at TEXT NOT NULL DEFAULT (datetime('now')) )
+table decisions: CREATE TABLE decisions ( id TEXT PRIMARY KEY, text TEXT NOT NULL, rationale TEXT, decided_at TEXT NOT NULL, date_basis TEXT NOT NULL DEFAULT 'meeting_date', source_timestamp REAL, provenance_label TEXT CHECK (provenance_label IN ('reported','anchored')), source_artifact_id TEXT NOT NULL, source_meeting_id TEXT NOT NULL, source_state TEXT NOT NULL DEFAULT 'linked' CHECK (source_state IN ('linked','source_deleted')), project_key TEXT, lifecycle TEXT NOT NULL DEFAULT 'recorded' CHECK (lifecycle IN ('recorded','accepted','superseded','rejected')), superseded_by TEXT REFERENCES decisions(id), created_at TEXT NOT NULL DEFAULT (datetime('now')), updated_at TEXT NOT NULL DEFAULT (datetime('now')), last_modified TEXT NOT NULL DEFAULT (datetime('now')), deleted INTEGER NOT NULL DEFAULT 0 )
+table decisions_memory_fts: CREATE VIRTUAL TABLE decisions_memory_fts USING fts5( source_id UNINDEXED, text, rationale )
 table decisions_memory_fts_config: CREATE TABLE 'decisions_memory_fts_config'(k PRIMARY KEY, v) WITHOUT ROWID
 table decisions_memory_fts_content: CREATE TABLE 'decisions_memory_fts_content'(id INTEGER PRIMARY KEY, c0, c1, c2)
 table decisions_memory_fts_data: CREATE TABLE 'decisions_memory_fts_data'(id INTEGER PRIMARY KEY, block BLOB)
 table decisions_memory_fts_docsize: CREATE TABLE 'decisions_memory_fts_docsize'(id INTEGER PRIMARY KEY, sz BLOB)
 table decisions_memory_fts_idx: CREATE TABLE 'decisions_memory_fts_idx'(segid, term, pgno, PRIMARY KEY(segid, term)) WITHOUT ROWID
-table delivery_command_receipts: CREATE TABLE delivery_command_receipts (
-    command_id TEXT PRIMARY KEY,
-    node_id TEXT NOT NULL,
-    target_id TEXT NOT NULL,
-    target_generation TEXT NOT NULL,
-    operation_family TEXT NOT NULL,
-    operation_verb TEXT NOT NULL,
-    payload_sha256 TEXT NOT NULL,
-    payload_head TEXT NOT NULL DEFAULT '',
-    expected_sequence INTEGER,
-    issued_at TEXT NOT NULL,
-    expires_at TEXT NOT NULL,
-    dispatch_epoch TEXT,
-    hub_state TEXT NOT NULL DEFAULT 'sent'
-        CHECK (hub_state IN ('sent','claimed','unknown','complete',
-                             'not_executed','indeterminate_after_node_reset')),
-    receipt_id TEXT,
-    receipt_json TEXT NOT NULL DEFAULT '{}',
-    authority_json TEXT NOT NULL DEFAULT '{}',
-    created_at TEXT NOT NULL DEFAULT (datetime('now')),
-    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
-)
-table desk_projection_state: CREATE TABLE desk_projection_state (
-    projection_id TEXT PRIMARY KEY,
-    attention_state TEXT NOT NULL DEFAULT 'unseen'
-        CHECK (attention_state IN ('unseen','acknowledged')),
-    dismissed_at TEXT,
-    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
-)
-table desktop_type_receipts: CREATE TABLE desktop_type_receipts (
-    native_id TEXT PRIMARY KEY,
-    operation_id TEXT NOT NULL UNIQUE,
-    target_ref TEXT NOT NULL,
-    payload_sha256 TEXT NOT NULL,
-    text_bytes INTEGER NOT NULL,
-    submit INTEGER NOT NULL CHECK (submit IN (0, 1)),
-    head TEXT NOT NULL DEFAULT '',
-    authority_basis TEXT NOT NULL,
-    gesture TEXT NOT NULL,
-    outcome TEXT NOT NULL,
-    result_ref TEXT NOT NULL DEFAULT '',
-    metadata_json TEXT NOT NULL DEFAULT '{}',
-    created_at TEXT NOT NULL DEFAULT (datetime('now'))
-)
-table dictation_corrections: CREATE TABLE dictation_corrections (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    kind TEXT NOT NULL,
-    gist TEXT NOT NULL,
-    value TEXT NOT NULL,
-    created_at TEXT NOT NULL DEFAULT (datetime('now'))
-)
-table dictation_journal: CREATE TABLE dictation_journal (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    created_at TEXT NOT NULL DEFAULT (datetime('now')),
-    source TEXT NOT NULL,
-    project_root TEXT,
-    transcript TEXT NOT NULL DEFAULT '',
-    intent TEXT,
-    block_id TEXT,
-    target_profile TEXT,
-    final_text TEXT NOT NULL DEFAULT '',
-    stage_ms TEXT NOT NULL DEFAULT '{}',
-    total_ms REAL NOT NULL DEFAULT 0,
-    rewrite_pass_ms TEXT NOT NULL DEFAULT '[]',
-    confidence REAL,
-    warnings TEXT NOT NULL DEFAULT '[]',
-    corrected INTEGER NOT NULL DEFAULT 0,
-    correction_id INTEGER
-)
-table directories: CREATE TABLE directories (
-    id TEXT PRIMARY KEY,
-    name TEXT NOT NULL DEFAULT '',
-    name_normalized TEXT NOT NULL DEFAULT '',
-    parent_id TEXT,
-    created_at TEXT NOT NULL DEFAULT (datetime('now')),
-    last_modified TEXT NOT NULL DEFAULT (datetime('now')),
-    deleted INTEGER NOT NULL DEFAULT 0
-)
-table directory_memberships: CREATE TABLE directory_memberships (
-    primitive_id TEXT PRIMARY KEY,
-    directory_id TEXT NOT NULL DEFAULT '',
-    created_at TEXT NOT NULL DEFAULT (datetime('now')),
-    last_modified TEXT NOT NULL DEFAULT (datetime('now')),
-    deleted INTEGER NOT NULL DEFAULT 0
-)
-table first_value_attempts: CREATE TABLE first_value_attempts (
-    id TEXT PRIMARY KEY,
-    started_at TEXT NOT NULL,
-    succeeded_at TEXT,
-    steps INTEGER NOT NULL DEFAULT 0,
-    decisions INTEGER NOT NULL DEFAULT 0,
-    destination TEXT NOT NULL CHECK (destination IN ('this_machine', 'paired_desktop')),
-    failure_category TEXT,
-    finished_at TEXT
-)
-table first_value_events: CREATE TABLE first_value_events (
-    event_id TEXT PRIMARY KEY,
-    attempt_id TEXT NOT NULL REFERENCES first_value_attempts(id) ON DELETE CASCADE,
-    kind TEXT NOT NULL,
-    occurred_at TEXT NOT NULL
-)
-table gate_audit: CREATE TABLE gate_audit (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    ts TEXT NOT NULL DEFAULT (datetime('now')),
-    proposal_id TEXT NOT NULL,
-    session_key TEXT NOT NULL,
-    tool TEXT NOT NULL,
-    args_sha256 TEXT NOT NULL,
-    event TEXT NOT NULL,
-    detail TEXT,
-    decided_by TEXT
-)
-table gate_proposals: CREATE TABLE gate_proposals (
-    id TEXT PRIMARY KEY,
-    session_key TEXT NOT NULL,
-    agent TEXT NOT NULL DEFAULT '',
-    tool TEXT NOT NULL,
-    args_sha256 TEXT NOT NULL,
-    args_head TEXT NOT NULL DEFAULT '',
-    cwd TEXT NOT NULL DEFAULT '',
-    operation_json TEXT NOT NULL DEFAULT '{}',
-    policy_snapshot_json TEXT NOT NULL DEFAULT '{}',
-    created_at REAL NOT NULL,
-    expires_at REAL NOT NULL,
-    state TEXT NOT NULL DEFAULT 'held',
-    decided_by TEXT,
-    decided_at REAL,
-    reason TEXT
-)
-table intel_job_attempts: CREATE TABLE intel_job_attempts (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    meeting_id TEXT NOT NULL REFERENCES meetings(id) ON DELETE CASCADE,
-    attempt INTEGER NOT NULL,
-    outcome TEXT NOT NULL, -- scheduled_retry | terminal_failure | success
-    error TEXT,
-    retry_at TEXT,
-    created_at TEXT NOT NULL DEFAULT (datetime('now'))
-)
-table intel_jobs: CREATE TABLE intel_jobs (
-    meeting_id TEXT PRIMARY KEY REFERENCES meetings(id) ON DELETE CASCADE,
-    status TEXT NOT NULL DEFAULT 'queued',
-    transcript_hash TEXT NOT NULL,
-    requested_at TEXT NOT NULL DEFAULT (datetime('now')),
-    updated_at TEXT NOT NULL DEFAULT (datetime('now')),
-    attempts INTEGER NOT NULL DEFAULT 0,
-    last_error TEXT
-)
-table intel_snapshots: CREATE TABLE intel_snapshots (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    meeting_id TEXT NOT NULL REFERENCES meetings(id) ON DELETE CASCADE,
-    timestamp REAL NOT NULL,
-    summary TEXT NOT NULL DEFAULT '',
-    raw_response TEXT,
-    created_at TEXT NOT NULL DEFAULT (datetime('now'))
-)
-table intent_window_scores: CREATE TABLE intent_window_scores (
-    meeting_id TEXT NOT NULL,
-    window_id TEXT NOT NULL,
-    intent_label TEXT NOT NULL,
-    score REAL NOT NULL,
-    created_at TEXT NOT NULL DEFAULT (datetime('now')),
-    PRIMARY KEY (meeting_id, window_id, intent_label),
-    FOREIGN KEY (meeting_id, window_id) REFERENCES intent_windows(meeting_id, window_id) ON DELETE CASCADE
-)
-table intent_windows: CREATE TABLE intent_windows (
-    meeting_id TEXT NOT NULL REFERENCES meetings(id) ON DELETE CASCADE,
-    window_id TEXT NOT NULL,
-    start_seconds REAL NOT NULL DEFAULT 0,
-    end_seconds REAL NOT NULL DEFAULT 0,
-    transcript_hash TEXT NOT NULL DEFAULT '',
-    transcript_excerpt TEXT NOT NULL DEFAULT '',
-    profile TEXT NOT NULL DEFAULT 'balanced',
-    threshold REAL NOT NULL DEFAULT 0.6,
-    active_intents_json TEXT NOT NULL DEFAULT '[]',
-    override_intents_json TEXT NOT NULL DEFAULT '[]',
-    tags_json TEXT NOT NULL DEFAULT '[]',
-    metadata_json TEXT NOT NULL DEFAULT '{}',
-    created_at TEXT NOT NULL DEFAULT (datetime('now')),
-    updated_at TEXT NOT NULL DEFAULT (datetime('now')),
-    PRIMARY KEY (meeting_id, window_id)
-)
-table kbs: CREATE TABLE kbs (
-    id TEXT PRIMARY KEY,
-    name TEXT NOT NULL DEFAULT '',
-    member_ids_json TEXT NOT NULL DEFAULT '[]',
-    created_at TEXT NOT NULL DEFAULT (datetime('now')),
-    last_modified TEXT NOT NULL DEFAULT (datetime('now')),
-    deleted INTEGER NOT NULL DEFAULT 0
-)
-table kernel_journal: CREATE TABLE kernel_journal (
-    hub_sequence INTEGER PRIMARY KEY AUTOINCREMENT,
-    stream TEXT NOT NULL,
-    stream_sequence INTEGER NOT NULL,
-    event_id TEXT NOT NULL UNIQUE,
-    operation_id TEXT NOT NULL,
-    process_id TEXT NOT NULL DEFAULT '',
-    correlation_id TEXT NOT NULL DEFAULT '',
-    causation_id TEXT NOT NULL DEFAULT '',
-    event_type TEXT NOT NULL,
-    event_version INTEGER NOT NULL,
-    refs_json TEXT NOT NULL DEFAULT '[]',
-    privacy_class TEXT NOT NULL,
-    head TEXT NOT NULL DEFAULT '',
-    timestamp REAL NOT NULL,
-    previous_sha256 TEXT NOT NULL,
-    record_sha256 TEXT NOT NULL,
-    UNIQUE(stream, stream_sequence)
-)
-table kernel_meta: CREATE TABLE kernel_meta (
-    key TEXT PRIMARY KEY,
-    value TEXT NOT NULL
-)
-table kernel_operations: CREATE TABLE kernel_operations (
-    operation_id TEXT PRIMARY KEY,
-    request_id TEXT NOT NULL,
-    idempotency_key TEXT NOT NULL,
-    name TEXT NOT NULL,
-    version INTEGER NOT NULL,
-    principal_kind TEXT NOT NULL,
-    principal_identity TEXT NOT NULL,
-    target_ref TEXT NOT NULL,
-    placement TEXT NOT NULL,
-    envelope_sha256 TEXT NOT NULL,
-    policy_version TEXT NOT NULL,
-    authority_basis TEXT NOT NULL,
-    state TEXT NOT NULL CHECK (state IN (
-        'admitting','awaiting_decision','awaiting_execution','claimed',
-        'succeeded','failed','refused','indeterminate'
-    )),
-    revision INTEGER NOT NULL DEFAULT 1,
-    native_id TEXT NOT NULL,
-    parent_operation_id TEXT NOT NULL DEFAULT '',
-    correlation_id TEXT NOT NULL DEFAULT '',
-    decision TEXT,
-    warrant_json TEXT NOT NULL DEFAULT '{}',
-    warrant_revoked INTEGER NOT NULL DEFAULT 0,
-    claimed_by TEXT,
-    created_at REAL NOT NULL,
-    updated_at REAL NOT NULL,
-    UNIQUE(principal_identity, idempotency_key)
-)
-table kernel_receipts: CREATE TABLE kernel_receipts (
-    receipt_id TEXT PRIMARY KEY,
-    operation_id TEXT NOT NULL UNIQUE REFERENCES kernel_operations(operation_id),
-    state TEXT NOT NULL CHECK (state IN ('succeeded','failed','refused','indeterminate')),
-    outcome TEXT NOT NULL,
-    result_ref TEXT NOT NULL DEFAULT '',
-    created_at REAL NOT NULL
-)
-table knowledge_memberships: CREATE TABLE knowledge_memberships (
-    knowledge_id TEXT NOT NULL REFERENCES kbs(id) ON DELETE CASCADE,
-    resource_ref TEXT NOT NULL,
-    created_at TEXT NOT NULL DEFAULT (datetime('now')),
-    last_modified TEXT NOT NULL DEFAULT (datetime('now')),
-    deleted INTEGER NOT NULL DEFAULT 0,
-    PRIMARY KEY (knowledge_id, resource_ref)
-)
-table meeting_projects: CREATE TABLE meeting_projects (
-    meeting_id TEXT NOT NULL REFERENCES meetings(id) ON DELETE CASCADE,
-    project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
-    source TEXT NOT NULL DEFAULT 'auto',
-    confidence REAL NOT NULL DEFAULT 0.0,
-    detected_at TEXT NOT NULL DEFAULT (datetime('now')),
-    PRIMARY KEY (meeting_id, project_id)
-)
-table meeting_sync_conflicts: CREATE TABLE meeting_sync_conflicts (
-    id TEXT PRIMARY KEY,
-    meeting_id TEXT NOT NULL REFERENCES meetings(id) ON DELETE CASCADE,
-    local_json TEXT NOT NULL,
-    incoming_json TEXT NOT NULL,
-    winner TEXT NOT NULL DEFAULT 'local',
-    detected_at TEXT NOT NULL DEFAULT (datetime('now')),
-    resolved_at TEXT
-)
-table meeting_tags: CREATE TABLE meeting_tags (
-    meeting_id TEXT NOT NULL REFERENCES meetings(id) ON DELETE CASCADE,
-    tag TEXT NOT NULL,
-    PRIMARY KEY (meeting_id, tag)
-)
-table meetings: CREATE TABLE meetings (
-    id TEXT PRIMARY KEY,
-    started_at TEXT NOT NULL,
-    ended_at TEXT,
-    title TEXT,
-    duration_seconds REAL,
-    intel_status TEXT NOT NULL DEFAULT 'disabled',
-    intel_status_detail TEXT,
-    intel_requested_at TEXT,
-    intel_completed_at TEXT,
-    mic_label TEXT NOT NULL DEFAULT 'Me',
-    remote_label TEXT NOT NULL DEFAULT 'Remote',
-    web_url TEXT,
-    capture_status TEXT NOT NULL DEFAULT 'finalized',
-    capture_failure TEXT,
-    capture_checkpoint_at TEXT,
-    capture_checkpoint_seconds REAL NOT NULL DEFAULT 0,
-    provenance TEXT NOT NULL DEFAULT 'desktop',
-    sync_modified_at TEXT NOT NULL DEFAULT (datetime('now')),
-    created_at TEXT NOT NULL DEFAULT (datetime('now')),
-    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
-)
-table mesh_relay_jobs: CREATE TABLE mesh_relay_jobs (
-    id TEXT PRIMARY KEY,
-    node TEXT NOT NULL,
-    task_kind TEXT NOT NULL DEFAULT 'llm',
-    system_prompt TEXT NOT NULL DEFAULT '',
-    user_prompt TEXT NOT NULL DEFAULT '',
-    temperature REAL,
-    max_tokens INTEGER,
-    model_hint TEXT NOT NULL DEFAULT '',
-    status TEXT NOT NULL DEFAULT 'queued', -- queued | running | completed | failed
-    result TEXT,
-    error TEXT,
-    deadline_at TEXT NOT NULL,
-    created_at TEXT NOT NULL DEFAULT (datetime('now')),
-    claimed_at TEXT,
-    completed_at TEXT
-)
-table mesh_workers: CREATE TABLE mesh_workers (
-    node TEXT PRIMARY KEY,
-    last_seen TEXT NOT NULL DEFAULT (datetime('now'))
-)
-table milestones: CREATE TABLE milestones (
-    key TEXT PRIMARY KEY,
-    achieved_at TEXT NOT NULL DEFAULT (datetime('now'))
-)
-table model_manifests: CREATE TABLE model_manifests (
-    id TEXT PRIMARY KEY,
-    node TEXT NOT NULL DEFAULT '',
-    name TEXT NOT NULL DEFAULT '',
-    capabilities_json TEXT NOT NULL DEFAULT '[]',
-    created_at TEXT NOT NULL DEFAULT (datetime('now')),
-    last_modified TEXT NOT NULL DEFAULT (datetime('now')),
-    deleted INTEGER NOT NULL DEFAULT 0
-)
-table notes: CREATE TABLE notes (
-    id TEXT PRIMARY KEY,
-    title TEXT NOT NULL DEFAULT '',
-    body_markdown TEXT NOT NULL DEFAULT '',
-    tags_json TEXT NOT NULL DEFAULT '[]',
-    created_at TEXT NOT NULL DEFAULT (datetime('now')),
-    updated_at TEXT NOT NULL DEFAULT (datetime('now')),
-    last_modified TEXT NOT NULL DEFAULT (datetime('now')),
-    deleted INTEGER NOT NULL DEFAULT 0
-)
-table notes_memory_fts: CREATE VIRTUAL TABLE notes_memory_fts USING fts5(
-    source_id UNINDEXED, title, body_markdown
-)
+table delivery_command_receipts: CREATE TABLE delivery_command_receipts ( command_id TEXT PRIMARY KEY, node_id TEXT NOT NULL, target_id TEXT NOT NULL, target_generation TEXT NOT NULL, operation_family TEXT NOT NULL, operation_verb TEXT NOT NULL, payload_sha256 TEXT NOT NULL, payload_head TEXT NOT NULL DEFAULT '', expected_sequence INTEGER, issued_at TEXT NOT NULL, expires_at TEXT NOT NULL, dispatch_epoch TEXT, hub_state TEXT NOT NULL DEFAULT 'sent' CHECK (hub_state IN ('sent','claimed','unknown','complete', 'not_executed','indeterminate_after_node_reset')), receipt_id TEXT, receipt_json TEXT NOT NULL DEFAULT '{}', authority_json TEXT NOT NULL DEFAULT '{}', created_at TEXT NOT NULL DEFAULT (datetime('now')), updated_at TEXT NOT NULL DEFAULT (datetime('now')) )
+table desk_decisions: CREATE TABLE desk_decisions ( id TEXT PRIMARY KEY, title TEXT NOT NULL DEFAULT '', status TEXT NOT NULL DEFAULT 'proposed' CHECK (status IN ('proposed','accepted','superseded','deprecated')), deciders_json TEXT NOT NULL DEFAULT '[]', decided_at TEXT, context_markdown TEXT NOT NULL DEFAULT '', decision_markdown TEXT NOT NULL DEFAULT '', alternatives_json TEXT NOT NULL DEFAULT '[]', consequences_markdown TEXT NOT NULL DEFAULT '', superseded_by TEXT REFERENCES desk_decisions(id), tags_json TEXT NOT NULL DEFAULT '[]', created_at TEXT NOT NULL DEFAULT (datetime('now')), updated_at TEXT NOT NULL DEFAULT (datetime('now')), deleted INTEGER NOT NULL DEFAULT 0 )
+table desk_projection_state: CREATE TABLE desk_projection_state ( projection_id TEXT PRIMARY KEY, attention_state TEXT NOT NULL DEFAULT 'unseen' CHECK (attention_state IN ('unseen','acknowledged')), dismissed_at TEXT, updated_at TEXT NOT NULL DEFAULT (datetime('now')) )
+table desktop_type_receipts: CREATE TABLE desktop_type_receipts ( native_id TEXT PRIMARY KEY, operation_id TEXT NOT NULL UNIQUE, target_ref TEXT NOT NULL, payload_sha256 TEXT NOT NULL, text_bytes INTEGER NOT NULL, submit INTEGER NOT NULL CHECK (submit IN (0, 1)), head TEXT NOT NULL DEFAULT '', authority_basis TEXT NOT NULL, gesture TEXT NOT NULL, outcome TEXT NOT NULL, result_ref TEXT NOT NULL DEFAULT '', metadata_json TEXT NOT NULL DEFAULT '{}', created_at TEXT NOT NULL DEFAULT (datetime('now')) )
+table dictation_corrections: CREATE TABLE dictation_corrections ( id INTEGER PRIMARY KEY AUTOINCREMENT, kind TEXT NOT NULL, gist TEXT NOT NULL, value TEXT NOT NULL, created_at TEXT NOT NULL DEFAULT (datetime('now')) )
+table dictation_journal: CREATE TABLE dictation_journal ( id INTEGER PRIMARY KEY AUTOINCREMENT, created_at TEXT NOT NULL DEFAULT (datetime('now')), source TEXT NOT NULL, project_root TEXT, transcript TEXT NOT NULL DEFAULT '', intent TEXT, block_id TEXT, target_profile TEXT, final_text TEXT NOT NULL DEFAULT '', stage_ms TEXT NOT NULL DEFAULT '{}', total_ms REAL NOT NULL DEFAULT 0, rewrite_pass_ms TEXT NOT NULL DEFAULT '[]', confidence REAL, warnings TEXT NOT NULL DEFAULT '[]', corrected INTEGER NOT NULL DEFAULT 0, correction_id INTEGER )
+table directories: CREATE TABLE directories ( id TEXT PRIMARY KEY, name TEXT NOT NULL DEFAULT '', name_normalized TEXT NOT NULL DEFAULT '', parent_id TEXT, created_at TEXT NOT NULL DEFAULT (datetime('now')), last_modified TEXT NOT NULL DEFAULT (datetime('now')), deleted INTEGER NOT NULL DEFAULT 0 )
+table directory_memberships: CREATE TABLE directory_memberships ( primitive_id TEXT PRIMARY KEY, directory_id TEXT NOT NULL DEFAULT '', created_at TEXT NOT NULL DEFAULT (datetime('now')), last_modified TEXT NOT NULL DEFAULT (datetime('now')), deleted INTEGER NOT NULL DEFAULT 0 )
+table first_value_attempts: CREATE TABLE first_value_attempts ( id TEXT PRIMARY KEY, started_at TEXT NOT NULL, succeeded_at TEXT, steps INTEGER NOT NULL DEFAULT 0, decisions INTEGER NOT NULL DEFAULT 0, destination TEXT NOT NULL CHECK (destination IN ('this_machine', 'paired_desktop')), failure_category TEXT, finished_at TEXT )
+table first_value_events: CREATE TABLE first_value_events ( event_id TEXT PRIMARY KEY, attempt_id TEXT NOT NULL REFERENCES first_value_attempts(id) ON DELETE CASCADE, kind TEXT NOT NULL, occurred_at TEXT NOT NULL )
+table gate_audit: CREATE TABLE gate_audit ( id INTEGER PRIMARY KEY AUTOINCREMENT, ts TEXT NOT NULL DEFAULT (datetime('now')), proposal_id TEXT NOT NULL, session_key TEXT NOT NULL, tool TEXT NOT NULL, args_sha256 TEXT NOT NULL, event TEXT NOT NULL, detail TEXT, decided_by TEXT )
+table gate_proposals: CREATE TABLE gate_proposals ( id TEXT PRIMARY KEY, session_key TEXT NOT NULL, agent TEXT NOT NULL DEFAULT '', tool TEXT NOT NULL, args_sha256 TEXT NOT NULL, args_head TEXT NOT NULL DEFAULT '', cwd TEXT NOT NULL DEFAULT '', operation_json TEXT NOT NULL DEFAULT '{}', policy_snapshot_json TEXT NOT NULL DEFAULT '{}', created_at REAL NOT NULL, expires_at REAL NOT NULL, state TEXT NOT NULL DEFAULT 'held', decided_by TEXT, decided_at REAL, reason TEXT )
+table intel_job_attempts: CREATE TABLE intel_job_attempts ( id INTEGER PRIMARY KEY AUTOINCREMENT, meeting_id TEXT NOT NULL REFERENCES meetings(id) ON DELETE CASCADE, attempt INTEGER NOT NULL, outcome TEXT NOT NULL, -- scheduled_retry | terminal_failure | success error TEXT, retry_at TEXT, created_at TEXT NOT NULL DEFAULT (datetime('now')) )
+table intel_jobs: CREATE TABLE intel_jobs ( meeting_id TEXT PRIMARY KEY REFERENCES meetings(id) ON DELETE CASCADE, status TEXT NOT NULL DEFAULT 'queued', transcript_hash TEXT NOT NULL, requested_at TEXT NOT NULL DEFAULT (datetime('now')), updated_at TEXT NOT NULL DEFAULT (datetime('now')), attempts INTEGER NOT NULL DEFAULT 0, last_error TEXT )
+table intel_snapshots: CREATE TABLE intel_snapshots ( id INTEGER PRIMARY KEY AUTOINCREMENT, meeting_id TEXT NOT NULL REFERENCES meetings(id) ON DELETE CASCADE, timestamp REAL NOT NULL, summary TEXT NOT NULL DEFAULT '', raw_response TEXT, created_at TEXT NOT NULL DEFAULT (datetime('now')) )
+table intent_window_scores: CREATE TABLE intent_window_scores ( meeting_id TEXT NOT NULL, window_id TEXT NOT NULL, intent_label TEXT NOT NULL, score REAL NOT NULL, created_at TEXT NOT NULL DEFAULT (datetime('now')), PRIMARY KEY (meeting_id, window_id, intent_label), FOREIGN KEY (meeting_id, window_id) REFERENCES intent_windows(meeting_id, window_id) ON DELETE CASCADE )
+table intent_windows: CREATE TABLE intent_windows ( meeting_id TEXT NOT NULL REFERENCES meetings(id) ON DELETE CASCADE, window_id TEXT NOT NULL, start_seconds REAL NOT NULL DEFAULT 0, end_seconds REAL NOT NULL DEFAULT 0, transcript_hash TEXT NOT NULL DEFAULT '', transcript_excerpt TEXT NOT NULL DEFAULT '', profile TEXT NOT NULL DEFAULT 'balanced', threshold REAL NOT NULL DEFAULT 0.6, active_intents_json TEXT NOT NULL DEFAULT '[]', override_intents_json TEXT NOT NULL DEFAULT '[]', tags_json TEXT NOT NULL DEFAULT '[]', metadata_json TEXT NOT NULL DEFAULT '{}', created_at TEXT NOT NULL DEFAULT (datetime('now')), updated_at TEXT NOT NULL DEFAULT (datetime('now')), PRIMARY KEY (meeting_id, window_id) )
+table kbs: CREATE TABLE kbs ( id TEXT PRIMARY KEY, name TEXT NOT NULL DEFAULT '', member_ids_json TEXT NOT NULL DEFAULT '[]', created_at TEXT NOT NULL DEFAULT (datetime('now')), last_modified TEXT NOT NULL DEFAULT (datetime('now')), deleted INTEGER NOT NULL DEFAULT 0 )
+table kernel_journal: CREATE TABLE kernel_journal ( hub_sequence INTEGER PRIMARY KEY AUTOINCREMENT, stream TEXT NOT NULL, stream_sequence INTEGER NOT NULL, event_id TEXT NOT NULL UNIQUE, operation_id TEXT NOT NULL, process_id TEXT NOT NULL DEFAULT '', correlation_id TEXT NOT NULL DEFAULT '', causation_id TEXT NOT NULL DEFAULT '', event_type TEXT NOT NULL, event_version INTEGER NOT NULL, refs_json TEXT NOT NULL DEFAULT '[]', privacy_class TEXT NOT NULL, head TEXT NOT NULL DEFAULT '', timestamp REAL NOT NULL, previous_sha256 TEXT NOT NULL, record_sha256 TEXT NOT NULL, UNIQUE(stream, stream_sequence) )
+table kernel_meta: CREATE TABLE kernel_meta ( key TEXT PRIMARY KEY, value TEXT NOT NULL )
+table kernel_operations: CREATE TABLE kernel_operations ( operation_id TEXT PRIMARY KEY, request_id TEXT NOT NULL, idempotency_key TEXT NOT NULL, name TEXT NOT NULL, version INTEGER NOT NULL, principal_kind TEXT NOT NULL, principal_identity TEXT NOT NULL, target_ref TEXT NOT NULL, placement TEXT NOT NULL, envelope_sha256 TEXT NOT NULL, policy_version TEXT NOT NULL, authority_basis TEXT NOT NULL, state TEXT NOT NULL CHECK (state IN ( 'admitting','awaiting_decision','awaiting_execution','claimed', 'succeeded','failed','refused','indeterminate' )), revision INTEGER NOT NULL DEFAULT 1, native_id TEXT NOT NULL, parent_operation_id TEXT NOT NULL DEFAULT '', correlation_id TEXT NOT NULL DEFAULT '', decision TEXT, warrant_json TEXT NOT NULL DEFAULT '{}', warrant_revoked INTEGER NOT NULL DEFAULT 0, claimed_by TEXT, created_at REAL NOT NULL, updated_at REAL NOT NULL, UNIQUE(principal_identity, idempotency_key) )
+table kernel_receipts: CREATE TABLE kernel_receipts ( receipt_id TEXT PRIMARY KEY, operation_id TEXT NOT NULL UNIQUE REFERENCES kernel_operations(operation_id), state TEXT NOT NULL CHECK (state IN ('succeeded','failed','refused','indeterminate')), outcome TEXT NOT NULL, result_ref TEXT NOT NULL DEFAULT '', created_at REAL NOT NULL )
+table knowledge_memberships: CREATE TABLE knowledge_memberships ( knowledge_id TEXT NOT NULL REFERENCES kbs(id) ON DELETE CASCADE, resource_ref TEXT NOT NULL, created_at TEXT NOT NULL DEFAULT (datetime('now')), last_modified TEXT NOT NULL DEFAULT (datetime('now')), deleted INTEGER NOT NULL DEFAULT 0, PRIMARY KEY (knowledge_id, resource_ref) )
+table meeting_projects: CREATE TABLE meeting_projects ( meeting_id TEXT NOT NULL REFERENCES meetings(id) ON DELETE CASCADE, project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE, source TEXT NOT NULL DEFAULT 'auto', confidence REAL NOT NULL DEFAULT 0.0, detected_at TEXT NOT NULL DEFAULT (datetime('now')), PRIMARY KEY (meeting_id, project_id) )
+table meeting_sync_conflicts: CREATE TABLE meeting_sync_conflicts ( id TEXT PRIMARY KEY, meeting_id TEXT NOT NULL REFERENCES meetings(id) ON DELETE CASCADE, local_json TEXT NOT NULL, incoming_json TEXT NOT NULL, winner TEXT NOT NULL DEFAULT 'local', detected_at TEXT NOT NULL DEFAULT (datetime('now')), resolved_at TEXT )
+table meeting_tags: CREATE TABLE meeting_tags ( meeting_id TEXT NOT NULL REFERENCES meetings(id) ON DELETE CASCADE, tag TEXT NOT NULL, PRIMARY KEY (meeting_id, tag) )
+table meetings: CREATE TABLE meetings ( id TEXT PRIMARY KEY, started_at TEXT NOT NULL, ended_at TEXT, title TEXT, duration_seconds REAL, intel_status TEXT NOT NULL DEFAULT 'disabled', intel_status_detail TEXT, intel_requested_at TEXT, intel_completed_at TEXT, mic_label TEXT NOT NULL DEFAULT 'Me', remote_label TEXT NOT NULL DEFAULT 'Remote', web_url TEXT, capture_status TEXT NOT NULL DEFAULT 'finalized', capture_failure TEXT, capture_checkpoint_at TEXT, capture_checkpoint_seconds REAL NOT NULL DEFAULT 0, provenance TEXT NOT NULL DEFAULT 'desktop', sync_modified_at TEXT NOT NULL DEFAULT (datetime('now')), created_at TEXT NOT NULL DEFAULT (datetime('now')), updated_at TEXT NOT NULL DEFAULT (datetime('now')) )
+table mesh_relay_jobs: CREATE TABLE mesh_relay_jobs ( id TEXT PRIMARY KEY, node TEXT NOT NULL, task_kind TEXT NOT NULL DEFAULT 'llm', system_prompt TEXT NOT NULL DEFAULT '', user_prompt TEXT NOT NULL DEFAULT '', temperature REAL, max_tokens INTEGER, model_hint TEXT NOT NULL DEFAULT '', status TEXT NOT NULL DEFAULT 'queued', -- queued | running | completed | failed result TEXT, error TEXT, deadline_at TEXT NOT NULL, created_at TEXT NOT NULL DEFAULT (datetime('now')), claimed_at TEXT, completed_at TEXT )
+table mesh_workers: CREATE TABLE mesh_workers ( node TEXT PRIMARY KEY, last_seen TEXT NOT NULL DEFAULT (datetime('now')) )
+table milestones: CREATE TABLE milestones ( key TEXT PRIMARY KEY, achieved_at TEXT NOT NULL DEFAULT (datetime('now')) )
+table model_manifests: CREATE TABLE model_manifests ( id TEXT PRIMARY KEY, node TEXT NOT NULL DEFAULT '', name TEXT NOT NULL DEFAULT '', capabilities_json TEXT NOT NULL DEFAULT '[]', created_at TEXT NOT NULL DEFAULT (datetime('now')), last_modified TEXT NOT NULL DEFAULT (datetime('now')), deleted INTEGER NOT NULL DEFAULT 0 )
+table notes: CREATE TABLE notes ( id TEXT PRIMARY KEY, title TEXT NOT NULL DEFAULT '', body_markdown TEXT NOT NULL DEFAULT '', tags_json TEXT NOT NULL DEFAULT '[]', created_at TEXT NOT NULL DEFAULT (datetime('now')), updated_at TEXT NOT NULL DEFAULT (datetime('now')), last_modified TEXT NOT NULL DEFAULT (datetime('now')), deleted INTEGER NOT NULL DEFAULT 0 )
+table notes_memory_fts: CREATE VIRTUAL TABLE notes_memory_fts USING fts5( source_id UNINDEXED, title, body_markdown )
 table notes_memory_fts_config: CREATE TABLE 'notes_memory_fts_config'(k PRIMARY KEY, v) WITHOUT ROWID
 table notes_memory_fts_content: CREATE TABLE 'notes_memory_fts_content'(id INTEGER PRIMARY KEY, c0, c1, c2)
 table notes_memory_fts_data: CREATE TABLE 'notes_memory_fts_data'(id INTEGER PRIMARY KEY, block BLOB)
 table notes_memory_fts_docsize: CREATE TABLE 'notes_memory_fts_docsize'(id INTEGER PRIMARY KEY, sz BLOB)
 table notes_memory_fts_idx: CREATE TABLE 'notes_memory_fts_idx'(segid, term, pgno, PRIMARY KEY(segid, term)) WITHOUT ROWID
-table onboarding_state: CREATE TABLE onboarding_state (
-    id INTEGER PRIMARY KEY CHECK (id = 1),
-    disposition TEXT NOT NULL CHECK (disposition IN ('completed', 'dismissed', 'needs_help')),
-    updated_at TEXT NOT NULL
-)
-table plugin_run_jobs: CREATE TABLE plugin_run_jobs (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    meeting_id TEXT NOT NULL,
-    window_id TEXT NOT NULL,
-    plugin_id TEXT NOT NULL,
-    plugin_version TEXT NOT NULL DEFAULT 'unknown',
-    transcript_hash TEXT NOT NULL DEFAULT '',
-    idempotency_key TEXT NOT NULL UNIQUE,
-    context_json TEXT NOT NULL DEFAULT '{}',
-    status TEXT NOT NULL DEFAULT 'queued',
-    requested_at TEXT NOT NULL DEFAULT (datetime('now')),
-    updated_at TEXT NOT NULL DEFAULT (datetime('now')),
-    attempts INTEGER NOT NULL DEFAULT 0,
-    last_error TEXT
-)
-table plugin_runs: CREATE TABLE plugin_runs (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    meeting_id TEXT NOT NULL REFERENCES meetings(id) ON DELETE CASCADE,
-    window_id TEXT NOT NULL,
-    plugin_id TEXT NOT NULL,
-    plugin_version TEXT NOT NULL DEFAULT 'unknown',
-    status TEXT NOT NULL,
-    idempotency_key TEXT,
-    duration_ms REAL NOT NULL DEFAULT 0,
-    output_json TEXT,
-    error TEXT,
-    deduped INTEGER NOT NULL DEFAULT 0,
-    created_at TEXT NOT NULL DEFAULT (datetime('now')),
-    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
-)
-table profiles: CREATE TABLE profiles (
-    id TEXT PRIMARY KEY,
-    name TEXT NOT NULL DEFAULT '',
-    kind TEXT NOT NULL DEFAULT 'onDevice',
-    model_file TEXT NOT NULL DEFAULT '',
-    base_url TEXT NOT NULL DEFAULT '',
-    model TEXT NOT NULL DEFAULT '',
-    node TEXT NOT NULL DEFAULT '', -- meshNode kind (HS-85-02): the executing mesh node
-    context_limit INTEGER NOT NULL DEFAULT 16384,
-    requires_key INTEGER NOT NULL DEFAULT 0,
-    created_at TEXT NOT NULL DEFAULT (datetime('now')),
-    last_modified TEXT NOT NULL DEFAULT (datetime('now')),
-    deleted INTEGER NOT NULL DEFAULT 0
-)
-table project_detection_log: CREATE TABLE project_detection_log (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    meeting_id TEXT NOT NULL REFERENCES meetings(id) ON DELETE CASCADE,
-    project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
-    window_id TEXT NOT NULL,
-    score REAL NOT NULL,
-    keyword_hits_json TEXT NOT NULL DEFAULT '[]',
-    member_hits_json TEXT NOT NULL DEFAULT '[]',
-    created_at TEXT NOT NULL DEFAULT (datetime('now'))
-)
-table project_resources: CREATE TABLE project_resources (
-    project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
-    resource_ref TEXT NOT NULL,
-    relationship TEXT NOT NULL DEFAULT 'member',
-    source TEXT NOT NULL DEFAULT 'manual',
-    confidence REAL NOT NULL DEFAULT 1,
-    created_at TEXT NOT NULL DEFAULT (datetime('now')),
-    last_modified TEXT NOT NULL DEFAULT (datetime('now')),
-    deleted INTEGER NOT NULL DEFAULT 0,
-    PRIMARY KEY (project_id, resource_ref)
-)
-table projects: CREATE TABLE projects (
-    id TEXT PRIMARY KEY,
-    name TEXT NOT NULL,
-    description TEXT NOT NULL DEFAULT '',
-    keywords_json TEXT NOT NULL DEFAULT '[]',
-    team_members_json TEXT NOT NULL DEFAULT '[]',
-    context_json TEXT NOT NULL DEFAULT '{}',
-    detection_threshold REAL NOT NULL DEFAULT 0.4,
-    is_archived INTEGER NOT NULL DEFAULT 0,
-    created_at TEXT NOT NULL DEFAULT (datetime('now')),
-    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
-)
-table recipes: CREATE TABLE recipes (
-    id TEXT PRIMARY KEY,
-    name TEXT NOT NULL DEFAULT '',
-    avatar TEXT NOT NULL DEFAULT '',
-    role TEXT NOT NULL DEFAULT '',
-    system_prompt TEXT NOT NULL DEFAULT '',
-    user_template TEXT NOT NULL DEFAULT '',
-    tools_json TEXT NOT NULL DEFAULT '[]',
-    kb_id TEXT,
-    profile_id TEXT,
-    -- v7 (Phase 77): the iPad-authored pinned context persists on the hub
-    -- (ends the loss HS-72-01 documented in the Swift tolerant decode).
-    manual_context TEXT NOT NULL DEFAULT '',
-    use_zone_context INTEGER NOT NULL DEFAULT 0,
-    created_at TEXT NOT NULL DEFAULT (datetime('now')),
-    last_modified TEXT NOT NULL DEFAULT (datetime('now')),
-    deleted INTEGER NOT NULL DEFAULT 0
-)
-table remote_dictation_deliveries: CREATE TABLE remote_dictation_deliveries (
-    delivery_id TEXT PRIMARY KEY,
-    request_hash TEXT NOT NULL,
-    status TEXT NOT NULL CHECK (status IN ('pending', 'succeeded', 'failed')),
-    response_status INTEGER,
-    response_json TEXT,
-    error TEXT,
-    created_at TEXT NOT NULL,
-    updated_at TEXT NOT NULL
-)
-table schema_version: CREATE TABLE schema_version (
-    version INTEGER PRIMARY KEY,
-    applied_at TEXT NOT NULL DEFAULT (datetime('now'))
-)
-table segments: CREATE TABLE segments (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    meeting_id TEXT NOT NULL REFERENCES meetings(id) ON DELETE CASCADE,
-    text TEXT NOT NULL,
-    speaker TEXT NOT NULL,
-    speaker_id TEXT REFERENCES speakers(id),
-    start_time REAL NOT NULL,
-    end_time REAL NOT NULL,
-    is_bookmarked INTEGER NOT NULL DEFAULT 0,
-    created_at TEXT NOT NULL DEFAULT (datetime('now'))
-)
-table segments_fts: CREATE VIRTUAL TABLE segments_fts USING fts5(
-    text,
-    speaker,
-    content=segments,
-    content_rowid=id
-)
+table onboarding_state: CREATE TABLE onboarding_state ( id INTEGER PRIMARY KEY CHECK (id = 1), disposition TEXT NOT NULL CHECK (disposition IN ('completed', 'dismissed', 'needs_help')), updated_at TEXT NOT NULL )
+table pipeline_events: CREATE TABLE pipeline_events ( id INTEGER PRIMARY KEY AUTOINCREMENT, event_id TEXT NOT NULL UNIQUE, timestamp REAL NOT NULL, service TEXT NOT NULL, method TEXT NOT NULL, principal_kind TEXT NOT NULL, principal_identity TEXT NOT NULL DEFAULT '', args_summary TEXT NOT NULL DEFAULT '{}', result_summary TEXT NOT NULL DEFAULT '', error TEXT, error_code TEXT, duration_ms REAL NOT NULL DEFAULT 0, correlation_id TEXT NOT NULL DEFAULT '', is_async INTEGER NOT NULL DEFAULT 0 )
+table plugin_run_jobs: CREATE TABLE plugin_run_jobs ( id INTEGER PRIMARY KEY AUTOINCREMENT, meeting_id TEXT NOT NULL, window_id TEXT NOT NULL, plugin_id TEXT NOT NULL, plugin_version TEXT NOT NULL DEFAULT 'unknown', transcript_hash TEXT NOT NULL DEFAULT '', idempotency_key TEXT NOT NULL UNIQUE, context_json TEXT NOT NULL DEFAULT '{}', status TEXT NOT NULL DEFAULT 'queued', requested_at TEXT NOT NULL DEFAULT (datetime('now')), updated_at TEXT NOT NULL DEFAULT (datetime('now')), attempts INTEGER NOT NULL DEFAULT 0, last_error TEXT )
+table plugin_runs: CREATE TABLE plugin_runs ( id INTEGER PRIMARY KEY AUTOINCREMENT, meeting_id TEXT NOT NULL REFERENCES meetings(id) ON DELETE CASCADE, window_id TEXT NOT NULL, plugin_id TEXT NOT NULL, plugin_version TEXT NOT NULL DEFAULT 'unknown', status TEXT NOT NULL, idempotency_key TEXT, duration_ms REAL NOT NULL DEFAULT 0, output_json TEXT, error TEXT, deduped INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL DEFAULT (datetime('now')), updated_at TEXT NOT NULL DEFAULT (datetime('now')) )
+table profiles: CREATE TABLE profiles ( id TEXT PRIMARY KEY, name TEXT NOT NULL DEFAULT '', kind TEXT NOT NULL DEFAULT 'onDevice', model_file TEXT NOT NULL DEFAULT '', base_url TEXT NOT NULL DEFAULT '', model TEXT NOT NULL DEFAULT '', node TEXT NOT NULL DEFAULT '', -- meshNode kind (HS-85-02): the executing mesh node context_limit INTEGER NOT NULL DEFAULT 16384, requires_key INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL DEFAULT (datetime('now')), last_modified TEXT NOT NULL DEFAULT (datetime('now')), deleted INTEGER NOT NULL DEFAULT 0 )
+table project_detection_log: CREATE TABLE project_detection_log ( id INTEGER PRIMARY KEY AUTOINCREMENT, meeting_id TEXT NOT NULL REFERENCES meetings(id) ON DELETE CASCADE, project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE, window_id TEXT NOT NULL, score REAL NOT NULL, keyword_hits_json TEXT NOT NULL DEFAULT '[]', member_hits_json TEXT NOT NULL DEFAULT '[]', created_at TEXT NOT NULL DEFAULT (datetime('now')) )
+table project_resources: CREATE TABLE project_resources ( project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE, resource_ref TEXT NOT NULL, relationship TEXT NOT NULL DEFAULT 'member', source TEXT NOT NULL DEFAULT 'manual', confidence REAL NOT NULL DEFAULT 1, created_at TEXT NOT NULL DEFAULT (datetime('now')), last_modified TEXT NOT NULL DEFAULT (datetime('now')), deleted INTEGER NOT NULL DEFAULT 0, PRIMARY KEY (project_id, resource_ref) )
+table projects: CREATE TABLE projects ( id TEXT PRIMARY KEY, name TEXT NOT NULL, description TEXT NOT NULL DEFAULT '', keywords_json TEXT NOT NULL DEFAULT '[]', team_members_json TEXT NOT NULL DEFAULT '[]', context_json TEXT NOT NULL DEFAULT '{}', detection_threshold REAL NOT NULL DEFAULT 0.4, is_archived INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL DEFAULT (datetime('now')), updated_at TEXT NOT NULL DEFAULT (datetime('now')) )
+table recipes: CREATE TABLE recipes ( id TEXT PRIMARY KEY, name TEXT NOT NULL DEFAULT '', avatar TEXT NOT NULL DEFAULT '', role TEXT NOT NULL DEFAULT '', system_prompt TEXT NOT NULL DEFAULT '', user_template TEXT NOT NULL DEFAULT '', tools_json TEXT NOT NULL DEFAULT '[]', kb_id TEXT, profile_id TEXT, -- v7 (Phase 77): the iPad-authored pinned context persists on the hub -- (ends the loss HS-72-01 documented in the Swift tolerant decode). manual_context TEXT NOT NULL DEFAULT '', use_zone_context INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL DEFAULT (datetime('now')), last_modified TEXT NOT NULL DEFAULT (datetime('now')), deleted INTEGER NOT NULL DEFAULT 0 )
+table remote_dictation_deliveries: CREATE TABLE remote_dictation_deliveries ( delivery_id TEXT PRIMARY KEY, request_hash TEXT NOT NULL, status TEXT NOT NULL CHECK (status IN ('pending', 'succeeded', 'failed')), response_status INTEGER, response_json TEXT, error TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL )
+table schema_version: CREATE TABLE schema_version ( version INTEGER PRIMARY KEY, applied_at TEXT NOT NULL DEFAULT (datetime('now')) )
+table segments: CREATE TABLE segments ( id INTEGER PRIMARY KEY AUTOINCREMENT, meeting_id TEXT NOT NULL REFERENCES meetings(id) ON DELETE CASCADE, text TEXT NOT NULL, speaker TEXT NOT NULL, speaker_id TEXT REFERENCES speakers(id), start_time REAL NOT NULL, end_time REAL NOT NULL, is_bookmarked INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL DEFAULT (datetime('now')) )
+table segments_fts: CREATE VIRTUAL TABLE segments_fts USING fts5( text, speaker, content=segments, content_rowid=id )
 table segments_fts_config: CREATE TABLE 'segments_fts_config'(k PRIMARY KEY, v) WITHOUT ROWID
 table segments_fts_data: CREATE TABLE 'segments_fts_data'(id INTEGER PRIMARY KEY, block BLOB)
 table segments_fts_docsize: CREATE TABLE 'segments_fts_docsize'(id INTEGER PRIMARY KEY, sz BLOB)
 table segments_fts_idx: CREATE TABLE 'segments_fts_idx'(segid, term, pgno, PRIMARY KEY(segid, term)) WITHOUT ROWID
-table session_usage: CREATE TABLE session_usage (
-    session_key TEXT PRIMARY KEY,
-    model TEXT NOT NULL DEFAULT '',
-    input_tokens INTEGER NOT NULL DEFAULT 0,
-    output_tokens INTEGER NOT NULL DEFAULT 0,
-    cache_read_tokens INTEGER NOT NULL DEFAULT 0,
-    cache_creation_tokens INTEGER NOT NULL DEFAULT 0,
-    reported_at TEXT NOT NULL DEFAULT (datetime('now'))
-)
-table speakers: CREATE TABLE speakers (
-    id TEXT PRIMARY KEY,
-    name TEXT NOT NULL DEFAULT 'Unknown',
-    avatar TEXT,
-    embedding BLOB NOT NULL,
-    sample_count INTEGER NOT NULL DEFAULT 1,
-    created_at TEXT NOT NULL DEFAULT (datetime('now')),
-    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
-)
-table steering_audit: CREATE TABLE steering_audit (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    ts TEXT NOT NULL DEFAULT (datetime('now')),
-    session_key TEXT NOT NULL,
-    agent TEXT NOT NULL DEFAULT '',
-    pane_id TEXT,
-    text_sha256 TEXT NOT NULL,
-    text_head TEXT NOT NULL DEFAULT '',
-    grounding_json TEXT NOT NULL DEFAULT '[]',
-    submit INTEGER NOT NULL DEFAULT 1,
-    outcome TEXT NOT NULL,
-    detail TEXT,
-    operation_json TEXT NOT NULL DEFAULT '{}',
-    policy_snapshot_json TEXT NOT NULL DEFAULT '{}'
-)
-table topics: CREATE TABLE topics (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    meeting_id TEXT NOT NULL REFERENCES meetings(id) ON DELETE CASCADE,
-    topic TEXT NOT NULL,
-    extracted_at REAL NOT NULL,
-    created_at TEXT NOT NULL DEFAULT (datetime('now'))
-)
-table work_attempt_events: CREATE TABLE work_attempt_events (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    attempt_id TEXT NOT NULL REFERENCES work_attempts(attempt_id) ON DELETE CASCADE,
-    from_state TEXT,
-    to_state TEXT NOT NULL,
-    reason TEXT NOT NULL DEFAULT '',
-    occurred_at TEXT NOT NULL
-)
-table work_attempts: CREATE TABLE work_attempts (
-    attempt_id TEXT PRIMARY KEY,
-    source_id TEXT NOT NULL,
-    project TEXT NOT NULL,
-    story_id TEXT NOT NULL,
-    worktree_id TEXT NOT NULL,
-    node_id TEXT,                 -- NULL = the embedded local node
-    session_id TEXT,              -- NULL until an agent session binds
-    target_id TEXT,               -- opaque terminal handle, when known
-    association_kind TEXT NOT NULL
-        CHECK (association_kind IN ('launch','rider_claim','manual','contract','heuristic')),
-    claimed_by TEXT,
-    claimed_at TEXT,
-    exact INTEGER NOT NULL DEFAULT 0,
-    state TEXT NOT NULL DEFAULT 'starting'
-        CHECK (state IN ('starting','working','waiting','idle','ended','abandoned','unknown')),
-    started_at TEXT NOT NULL,
-    updated_at TEXT NOT NULL,
-    ended_at TEXT
-)
-table workflows: CREATE TABLE workflows (
-    id TEXT PRIMARY KEY,
-    name TEXT NOT NULL DEFAULT '',
-    prompt TEXT NOT NULL DEFAULT '',
-    graph_json TEXT NOT NULL DEFAULT '{}',
-    created_at TEXT NOT NULL DEFAULT (datetime('now')),
-    last_modified TEXT NOT NULL DEFAULT (datetime('now')),
-    deleted INTEGER NOT NULL DEFAULT 0
-)
-trigger artifacts_memory_ad: CREATE TRIGGER artifacts_memory_ad AFTER DELETE ON artifacts BEGIN
-    DELETE FROM artifacts_memory_fts WHERE source_id=OLD.id;
-END
-trigger artifacts_memory_ai: CREATE TRIGGER artifacts_memory_ai AFTER INSERT ON artifacts BEGIN
-    INSERT INTO artifacts_memory_fts(source_id,title,body_markdown)
-    VALUES(NEW.id,NEW.title,NEW.body_markdown);
-END
-trigger artifacts_memory_au: CREATE TRIGGER artifacts_memory_au AFTER UPDATE ON artifacts BEGIN
-    DELETE FROM artifacts_memory_fts WHERE source_id=OLD.id;
-    INSERT INTO artifacts_memory_fts(source_id,title,body_markdown)
-    VALUES(NEW.id,NEW.title,NEW.body_markdown);
-END
-trigger decisions_memory_ad: CREATE TRIGGER decisions_memory_ad AFTER DELETE ON decisions BEGIN
-    DELETE FROM decisions_memory_fts WHERE source_id=OLD.id;
-END
-trigger decisions_memory_ai: CREATE TRIGGER decisions_memory_ai AFTER INSERT ON decisions
-WHEN NEW.deleted = 0 AND NEW.source_state = 'linked' BEGIN
-    INSERT INTO decisions_memory_fts(source_id,text,rationale)
-    VALUES(NEW.id,NEW.text,COALESCE(NEW.rationale,''));
-END
-trigger decisions_memory_au: CREATE TRIGGER decisions_memory_au AFTER UPDATE ON decisions BEGIN
-    DELETE FROM decisions_memory_fts WHERE source_id=OLD.id;
-    INSERT INTO decisions_memory_fts(source_id,text,rationale)
-    SELECT NEW.id,NEW.text,COALESCE(NEW.rationale,'')
-    WHERE NEW.deleted=0 AND NEW.source_state='linked';
-END
-trigger decisions_sever_meeting_source: CREATE TRIGGER decisions_sever_meeting_source
-AFTER DELETE ON meetings BEGIN
-    UPDATE decisions
-       SET source_state = 'source_deleted',
-           updated_at = datetime('now'),
-           last_modified = datetime('now')
-     WHERE source_meeting_id = OLD.id AND deleted = 0;
-END
-trigger notes_memory_ad: CREATE TRIGGER notes_memory_ad AFTER DELETE ON notes BEGIN
-    DELETE FROM notes_memory_fts WHERE source_id=OLD.id;
-END
-trigger notes_memory_ai: CREATE TRIGGER notes_memory_ai AFTER INSERT ON notes
-WHEN NEW.deleted = 0 BEGIN
-    INSERT INTO notes_memory_fts(source_id,title,body_markdown)
-    VALUES(NEW.id,NEW.title,NEW.body_markdown);
-END
-trigger notes_memory_au: CREATE TRIGGER notes_memory_au AFTER UPDATE ON notes BEGIN
-    DELETE FROM notes_memory_fts WHERE source_id=OLD.id;
-    INSERT INTO notes_memory_fts(source_id,title,body_markdown)
-    SELECT NEW.id,NEW.title,NEW.body_markdown WHERE NEW.deleted=0;
-END
-trigger segments_ad: CREATE TRIGGER segments_ad AFTER DELETE ON segments BEGIN
-    INSERT INTO segments_fts(segments_fts, rowid, text, speaker)
-    VALUES('delete', OLD.id, OLD.text, OLD.speaker);
-END
-trigger segments_ai: CREATE TRIGGER segments_ai AFTER INSERT ON segments BEGIN
-    INSERT INTO segments_fts(rowid, text, speaker)
-    VALUES (NEW.id, NEW.text, NEW.speaker);
-END
-trigger segments_au: CREATE TRIGGER segments_au AFTER UPDATE ON segments BEGIN
-    INSERT INTO segments_fts(segments_fts, rowid, text, speaker)
-    VALUES('delete', OLD.id, OLD.text, OLD.speaker);
-    INSERT INTO segments_fts(rowid, text, speaker)
-    VALUES (NEW.id, NEW.text, NEW.speaker);
-END
+table session_usage: CREATE TABLE session_usage ( session_key TEXT PRIMARY KEY, model TEXT NOT NULL DEFAULT '', input_tokens INTEGER NOT NULL DEFAULT 0, output_tokens INTEGER NOT NULL DEFAULT 0, cache_read_tokens INTEGER NOT NULL DEFAULT 0, cache_creation_tokens INTEGER NOT NULL DEFAULT 0, reported_at TEXT NOT NULL DEFAULT (datetime('now')) )
+table skills: CREATE TABLE skills ( id TEXT PRIMARY KEY, title TEXT NOT NULL DEFAULT '', body TEXT NOT NULL DEFAULT '', source TEXT NOT NULL DEFAULT 'owner-authored' CHECK (source IN ('agent-proposed', 'owner-authored')), status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('draft', 'active', 'archived')), recipe_ids_json TEXT NOT NULL DEFAULT '[]', created_by TEXT NOT NULL DEFAULT '', version INTEGER NOT NULL DEFAULT 1, created_at TEXT NOT NULL DEFAULT (datetime('now')), last_modified TEXT NOT NULL DEFAULT (datetime('now')), deleted INTEGER NOT NULL DEFAULT 0 )
+table speakers: CREATE TABLE speakers ( id TEXT PRIMARY KEY, name TEXT NOT NULL DEFAULT 'Unknown', avatar TEXT, embedding BLOB NOT NULL, sample_count INTEGER NOT NULL DEFAULT 1, created_at TEXT NOT NULL DEFAULT (datetime('now')), updated_at TEXT NOT NULL DEFAULT (datetime('now')) )
+table steering_audit: CREATE TABLE steering_audit ( id INTEGER PRIMARY KEY AUTOINCREMENT, ts TEXT NOT NULL DEFAULT (datetime('now')), session_key TEXT NOT NULL, agent TEXT NOT NULL DEFAULT '', pane_id TEXT, text_sha256 TEXT NOT NULL, text_head TEXT NOT NULL DEFAULT '', grounding_json TEXT NOT NULL DEFAULT '[]', submit INTEGER NOT NULL DEFAULT 1, outcome TEXT NOT NULL, detail TEXT, operation_json TEXT NOT NULL DEFAULT '{}', policy_snapshot_json TEXT NOT NULL DEFAULT '{}' )
+table topics: CREATE TABLE topics ( id INTEGER PRIMARY KEY AUTOINCREMENT, meeting_id TEXT NOT NULL REFERENCES meetings(id) ON DELETE CASCADE, topic TEXT NOT NULL, extracted_at REAL NOT NULL, created_at TEXT NOT NULL DEFAULT (datetime('now')) )
+table work_attempt_events: CREATE TABLE work_attempt_events ( id INTEGER PRIMARY KEY AUTOINCREMENT, attempt_id TEXT NOT NULL REFERENCES work_attempts(attempt_id) ON DELETE CASCADE, from_state TEXT, to_state TEXT NOT NULL, reason TEXT NOT NULL DEFAULT '', occurred_at TEXT NOT NULL )
+table work_attempts: CREATE TABLE work_attempts ( attempt_id TEXT PRIMARY KEY, source_id TEXT NOT NULL, project TEXT NOT NULL, story_id TEXT NOT NULL, worktree_id TEXT NOT NULL, node_id TEXT, -- NULL = the embedded local node session_id TEXT, -- NULL until an agent session binds target_id TEXT, -- opaque terminal handle, when known association_kind TEXT NOT NULL CHECK (association_kind IN ('launch','rider_claim','manual','contract','heuristic')), claimed_by TEXT, claimed_at TEXT, exact INTEGER NOT NULL DEFAULT 0, state TEXT NOT NULL DEFAULT 'starting' CHECK (state IN ('starting','working','waiting','idle','ended','abandoned','unknown')), started_at TEXT NOT NULL, updated_at TEXT NOT NULL, ended_at TEXT )
+table workbench_items: CREATE TABLE workbench_items ( id TEXT PRIMARY KEY, workbench_id TEXT NOT NULL, title TEXT NOT NULL DEFAULT '', body TEXT NOT NULL DEFAULT '', priority INTEGER NOT NULL DEFAULT 3, status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'claimed', 'done', 'failed', 'dismissed')), grounding_json TEXT NOT NULL DEFAULT '{}', context_json TEXT NOT NULL DEFAULT '{}', result TEXT, result_egress_json TEXT, result_artifact_id TEXT, mint_attempted INTEGER NOT NULL DEFAULT 0, tokens_consumed INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL DEFAULT (datetime('now')), last_modified TEXT NOT NULL DEFAULT (datetime('now')), claimed_at TEXT, completed_at TEXT )
+table workbench_runs: CREATE TABLE workbench_runs ( id TEXT PRIMARY KEY, workbench_id TEXT NOT NULL, started_at TEXT NOT NULL, completed_at TEXT, items_attempted INTEGER NOT NULL DEFAULT 0, items_completed INTEGER NOT NULL DEFAULT 0, items_failed INTEGER NOT NULL DEFAULT 0, mint_failures INTEGER NOT NULL DEFAULT 0, total_tokens INTEGER NOT NULL DEFAULT 0, egress_boundary TEXT NOT NULL DEFAULT '', model TEXT NOT NULL DEFAULT '', constitutional_context_revision INTEGER NOT NULL DEFAULT 0, constitutional_context_hash TEXT NOT NULL DEFAULT '', skills_injected_json TEXT NOT NULL DEFAULT '[]', status TEXT NOT NULL DEFAULT 'running' CHECK (status IN ('running', 'completed', 'failed')) )
+table workbenches: CREATE TABLE workbenches ( id TEXT PRIMARY KEY, name TEXT NOT NULL DEFAULT '', recipe_id TEXT, profile_id TEXT, resolver_profile_id TEXT, schedule TEXT, schedule_enabled INTEGER NOT NULL DEFAULT 0, item_order_json TEXT NOT NULL DEFAULT '[]', created_at TEXT NOT NULL DEFAULT (datetime('now')), last_modified TEXT NOT NULL DEFAULT (datetime('now')), deleted INTEGER NOT NULL DEFAULT 0 )
+table workflows: CREATE TABLE workflows ( id TEXT PRIMARY KEY, name TEXT NOT NULL DEFAULT '', prompt TEXT NOT NULL DEFAULT '', graph_json TEXT NOT NULL DEFAULT '{}', created_at TEXT NOT NULL DEFAULT (datetime('now')), last_modified TEXT NOT NULL DEFAULT (datetime('now')), deleted INTEGER NOT NULL DEFAULT 0 )
+trigger artifacts_memory_ad: CREATE TRIGGER artifacts_memory_ad AFTER DELETE ON artifacts BEGIN DELETE FROM artifacts_memory_fts WHERE source_id=OLD.id; END
+trigger artifacts_memory_ai: CREATE TRIGGER artifacts_memory_ai AFTER INSERT ON artifacts BEGIN INSERT INTO artifacts_memory_fts(source_id,title,body_markdown) VALUES(NEW.id,NEW.title,NEW.body_markdown); END
+trigger artifacts_memory_au: CREATE TRIGGER artifacts_memory_au AFTER UPDATE ON artifacts BEGIN DELETE FROM artifacts_memory_fts WHERE source_id=OLD.id; INSERT INTO artifacts_memory_fts(source_id,title,body_markdown) VALUES(NEW.id,NEW.title,NEW.body_markdown); END
+trigger decisions_memory_ad: CREATE TRIGGER decisions_memory_ad AFTER DELETE ON decisions BEGIN DELETE FROM decisions_memory_fts WHERE source_id=OLD.id; END
+trigger decisions_memory_ai: CREATE TRIGGER decisions_memory_ai AFTER INSERT ON decisions WHEN NEW.deleted = 0 AND NEW.source_state = 'linked' BEGIN INSERT INTO decisions_memory_fts(source_id,text,rationale) VALUES(NEW.id,NEW.text,COALESCE(NEW.rationale,'')); END
+trigger decisions_memory_au: CREATE TRIGGER decisions_memory_au AFTER UPDATE ON decisions BEGIN DELETE FROM decisions_memory_fts WHERE source_id=OLD.id; INSERT INTO decisions_memory_fts(source_id,text,rationale) SELECT NEW.id,NEW.text,COALESCE(NEW.rationale,'') WHERE NEW.deleted=0 AND NEW.source_state='linked'; END
+trigger decisions_sever_meeting_source: CREATE TRIGGER decisions_sever_meeting_source AFTER DELETE ON meetings BEGIN UPDATE decisions SET source_state = 'source_deleted', updated_at = datetime('now'), last_modified = datetime('now') WHERE source_meeting_id = OLD.id AND deleted = 0; END
+trigger notes_memory_ad: CREATE TRIGGER notes_memory_ad AFTER DELETE ON notes BEGIN DELETE FROM notes_memory_fts WHERE source_id=OLD.id; END
+trigger notes_memory_ai: CREATE TRIGGER notes_memory_ai AFTER INSERT ON notes WHEN NEW.deleted = 0 BEGIN INSERT INTO notes_memory_fts(source_id,title,body_markdown) VALUES(NEW.id,NEW.title,NEW.body_markdown); END
+trigger notes_memory_au: CREATE TRIGGER notes_memory_au AFTER UPDATE ON notes BEGIN DELETE FROM notes_memory_fts WHERE source_id=OLD.id; INSERT INTO notes_memory_fts(source_id,title,body_markdown) SELECT NEW.id,NEW.title,NEW.body_markdown WHERE NEW.deleted=0; END
+trigger segments_ad: CREATE TRIGGER segments_ad AFTER DELETE ON segments BEGIN INSERT INTO segments_fts(segments_fts, rowid, text, speaker) VALUES('delete', OLD.id, OLD.text, OLD.speaker); END
+trigger segments_ai: CREATE TRIGGER segments_ai AFTER INSERT ON segments BEGIN INSERT INTO segments_fts(rowid, text, speaker) VALUES (NEW.id, NEW.text, NEW.speaker); END
+trigger segments_au: CREATE TRIGGER segments_au AFTER UPDATE ON segments BEGIN INSERT INTO segments_fts(segments_fts, rowid, text, speaker) VALUES('delete', OLD.id, OLD.text, OLD.speaker); INSERT INTO segments_fts(rowid, text, speaker) VALUES (NEW.id, NEW.text, NEW.speaker); END

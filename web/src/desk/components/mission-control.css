@@ -521,6 +521,12 @@
 .desk-next .desk-ground-line[data-on] {
   background: var(--desk-window-well);
 }
+.desk-next button.desk-ground-line {
+  appearance: none;
+  border: 0;
+  background: none;
+  text-align: left;
+}
 .desk-next .desk-ground-line.is-press {
   cursor: pointer;
 }

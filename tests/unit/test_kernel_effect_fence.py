@@ -285,6 +285,30 @@ _EXCLUDED_CALLS: dict[tuple[str, str, str, int], str] = {
         1,
     ): "setup/diagnostic network probe",
     (
+        "holdspeak/doctor.py",
+        "_get_json",
+        "urlopen",
+        1,
+    ): "operator-requested diagnostic network probe",
+    (
+        "holdspeak/doctor.py",
+        "_get_html",
+        "urlopen",
+        1,
+    ): "operator-requested diagnostic network probe",
+    (
+        "holdspeak/doctor.py",
+        "_post_json",
+        "urlopen",
+        1,
+    ): "operator-requested diagnostic network probe",
+    (
+        "holdspeak/doctor.py",
+        "_check_mcp_server",
+        "Popen",
+        1,
+    ): "operator-requested diagnostic MCP probe",
+    (
         "holdspeak/setup_runtime.py",
         "_default_http_get",
         "urlopen",

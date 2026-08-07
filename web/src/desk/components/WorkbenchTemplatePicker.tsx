@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { apiFetch } from "../../lib/api";
 import { useDesk } from "../store";
 import { CycleGadget } from "../surface/gadgets";
 import { SurfaceSection, SurfaceState } from "../surface/Surface";
+import { useRovingRows } from "../surface/roving";
 
 interface Template {
   id: string;
@@ -21,15 +22,23 @@ export function WorkbenchTemplatePicker({
   onCreated?: (workbenchId: string) => void;
 }) {
   const [templates, setTemplates] = useState<Template[]>([]);
+  const [error, setError] = useState(false);
   const [busy, setBusy] = useState(false);
+  const gridRef = useRef<HTMLDivElement>(null);
+  useRovingRows(gridRef, { selector: ".wb-picker-card" });
   const inferenceTargets = useDesk((s) => s.inferenceTargets);
   const [selectedTarget, setSelectedTarget] = useState("this_machine");
 
-  useEffect(() => {
-    void apiFetch<any>("/api/workbench-templates").then((d) =>
-      setTemplates(d.templates || []),
-    );
+  const loadTemplates = useCallback(() => {
+    setError(false);
+    return apiFetch<any>("/api/workbench-templates")
+      .then((d) => setTemplates(d.templates || []))
+      .catch(() => setError(true));
   }, []);
+
+  useEffect(() => {
+    void loadTemplates();
+  }, [loadTemplates]);
 
   const instantiate = async (templateId: string) => {
     setBusy(true);
@@ -94,10 +103,15 @@ export function WorkbenchTemplatePicker({
       </SurfaceSection>
 
       <SurfaceSection label="START FROM A TEMPLATE">
-        {templates.length === 0 ? (
+        {error ? (
+          <SurfaceState
+            error="Templates failed to load. Current work is unchanged. Retry."
+            onRetry={() => void loadTemplates()}
+          />
+        ) : templates.length === 0 ? (
           <SurfaceState loading />
         ) : (
-          <div className="wb-picker-grid">
+          <div ref={gridRef} className="wb-picker-grid">
             {templates.map((t) => (
               <button
                 key={t.id}
@@ -106,7 +120,7 @@ export function WorkbenchTemplatePicker({
                 disabled={busy}
                 onClick={() => void instantiate(t.id)}
               >
-                <span className="wb-picker-card-icon">{t.icon}</span>
+                <span className="wb-picker-card-icon">{t.icon + "︎"}</span>
                 <span className="wb-picker-card-name">{t.name}</span>
                 <span className="wb-picker-card-desc">{t.description}</span>
                 <span className="wb-picker-card-meta">

@@ -1,3 +1,4 @@
+import { SurfaceFooter } from "../../desk/surface/SurfaceFooter";
 // HS-95-08 — the Workbench core: the typed-step workflow editor,
 // hosted anywhere (the desk maximizes it to the full stage).
 import { openPrimitive } from "../../desk/shell";
@@ -438,6 +439,7 @@ export function WorkbenchCore({ hero, scope }: CoreProps) {
         </div>
         {runOutput && <SurfaceCode>{runOutput}</SurfaceCode>}
       </SurfaceSection>
+      <SurfaceFooter />
     </>
   );
 }

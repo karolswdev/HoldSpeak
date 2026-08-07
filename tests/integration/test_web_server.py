@@ -2460,6 +2460,8 @@ class TestPluginRunQueueApiEndpoints:
         import holdspeak.db as db_module
 
         monkeypatch.setattr(db_module, "get_database", lambda: fake_db)
+        import holdspeak.web.routes.activity.plugin_jobs as pj_route
+        monkeypatch.setattr(pj_route, "get_database", lambda: fake_db)
 
         jobs_response = test_client.get("/api/plugin-jobs?status=all&limit=10")
         assert jobs_response.status_code == 200

@@ -3,12 +3,11 @@
  * menu is: NEW > (desk.new-*, the exact createPrimitive path),
  * LAUNCH > (go.*, the exact openSurfaceOr path), then the floor
  * verbs. The object menu re-derives from object.* (its inline
- * duplicates were parallel list #4). Zone verbs keep their existing
- * store wiring, re-rendered on the v2 species, until a registry verb
- * exists for them. */
-import { useDesk } from "./store";
+ * duplicates were parallel list #4). Zone menus are the same registry
+ * verbs, executed with a directory selection. */
 import {
   menuVerbs,
+  verbById,
   verbLabel,
   verbsFor,
   type Verb,
@@ -70,25 +69,14 @@ export function objectMenuEntries(
 
 export function zoneMenuEntries(
   target: Extract<WorldMenuTarget, { type: "zone" }>,
-  at: { x: number; y: number },
+  origin: { x: number; y: number },
 ): WorkMenuEntry[] {
-  const zone = (verb: string, run: () => void): WorkMenuEntry => ({
-    type: "item",
-    id: `zone.${verb.toLocaleLowerCase()}`,
-    label: verb,
-    onSelect: run,
-  });
-  return [
-    zone("Open", () =>
-      useDesk.getState().openZoneWindow(target.id, { x: at.x, y: at.y }),
-    ),
-    zone("Info", () =>
-      useDesk.getState().openInfoWindow(`zone:${target.id}`, {
-        x: at.x,
-        y: at.y,
-      }),
-    ),
-    zone("Focus", () => useDesk.getState().diveInto(target.id)),
-    zone("Rename", () => useDesk.getState().setRenamingZone(target.id)),
-  ];
+  const ctx: VerbContext = {
+    selectedRef: `directory:${target.id}`,
+    origin,
+  };
+  return ["object.open", "object.info", "zone.focus", "object.rename"]
+    .map((id) => verbById(id))
+    .filter((verb): verb is Verb => Boolean(verb))
+    .map((verb) => item(verb, ctx));
 }

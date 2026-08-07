@@ -4,17 +4,23 @@
 > pick up, and the repo conventions that bite (PMO commit gate, write-once
 > evidence, no `Co-Authored-By`, metal-test exclusion).
 
-**Newest update (2026-08-06): Phase 123 — The Pipeline — CHARTERED.**
-Phase 122 built the skeleton: eight services and ten MCP tools. The
-post-phase audit found 157 direct `get_database()` calls in 35 route modules,
-so only about 30% of desk operations traverse the service layer. Phase 123
-finishes the boundary: domain-coded service errors and route-free shared
-support first; authority, settings, ask/decisions, projects, meetings,
-activity, and every remaining route operation next; then the essential MCP
-tool and resource surface. The final thin-route census and a real MCP walk
-prove HTTP and MCP use the same named services.
+**Newest update (2026-08-06): Phase 124 — The Observer — CHARTERED.**
+Phase 123 completed the service pipeline: 33 services own every operation
+in DeskOS, 41 MCP tools provide the full programmatic surface. Phase 124
+adds the observer — a `PipelineObserver` protocol with an `@observed`
+decorator that records every public service method call (who, what, args,
+result, timing, correlation) to a local append-only `pipeline_events`
+SQLite table. An `EventQueryService` answers "what did the desk do?",
+MCP resources expose the event stream, and the walk proves every service
+is observed. No telemetry leaves the machine (Article III.3). The desk
+knows what it did.
 
-**Previous update (2026-08-06): Phase 122 — The Backbone — CHARTERED.**
+**Previous update (2026-08-06): Phase 123 — The Pipeline — SHIPPED.**
+Phase 122 built the skeleton: eight services and ten MCP tools. Phase 123
+finished the boundary: 33 services, 41 MCP tools, 16 resources, route
+handler bypass census 157 → 2. PR #441.
+
+**Previous update (2026-08-06): Phase 122 — The Backbone — SHIPPED.**
 DeskOS becomes programmable. Extract transport-neutral application
 services from every route handler (workbenches and recipes are fat
 controllers requiring substantive extraction; remaining services are
@@ -354,12 +360,16 @@ parallel. Phase 101 itself stands at 3/4 (canon ratified and built,
 PR #359; sweep 4122/0).
 
 **Current phase (newest):**
+[**Phase 124 — The Observer**](./phase-124-the-observer/current-phase-status.md)
+— **CHARTERED (0/10, 2026-08-06)**. The service pipeline (Phase 123) is
+complete. Phase 124 adds the observer: every public service method call is
+recorded to a local append-only `pipeline_events` table. Protocol,
+decorator, SQLite backend, wiring to all 33 services, event query service,
+MCP resources, doctor check, docs, and the walk.
+Previous:
 [**Phase 123 — The Pipeline**](./phase-123-the-pipeline/current-phase-status.md)
-— **CHARTERED (0/13, 2026-08-06)**. Phase 122 established eight services
-and ten MCP tools; Phase 123 completes the service boundary. It removes
-route-owned service errors and helpers, extracts the remaining direct route
-database operations into named services, expands MCP to the essential tool
-and resource surface, and closes with a structural audit plus real MCP walk.
+— **SHIPPED (13/13, PR #441)**. 33 services, 41 MCP tools, 16 resources,
+route bypass census 157 → 2.
 Previous:
 [**Phase 116 — The Workbench**](./phase-116-the-workbench/current-phase-status.md)
 — **CHARTERED (0/9, 2026-08-03)**. The agentic platform phase: the

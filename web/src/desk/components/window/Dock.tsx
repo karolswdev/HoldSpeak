@@ -22,6 +22,7 @@ const DOCK_APPS = [
   { key: "configure-settings", id: "surface-settings", label: "Settings", glyph: "⚙", fallback: "/settings" },
 ] as const;
 const DOCK_APP_IDS = new Set<string>(DOCK_APPS.map((a) => a.id));
+const ACTIONABLE_LAUNCHERS = new Set(["attention", "delivery-board"]);
 
 /** The dock (HS-95-03): every open window as a chip -- tap focuses (or
  * restores a parked one), x closes, loop resets the layout. Ctrl+` cycles
@@ -55,7 +56,6 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
     return () => window.removeEventListener("pointerdown", close);
   }, [chipMenu]);
 
-  void launchers; // consumed by the bell + search shelf (HS-100-11)
   // The front chip mirrors the shell's is-front rule: the last id in
   // the order that is open here and not minimized (HS-97-04).
   let front: string | undefined;
@@ -120,6 +120,37 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
               <span aria-hidden="true">{a.glyph}</span>
             )}
             <span className="desk-dock-label">{a.label}</span>
+          </button>
+        );
+      })}
+      {shown.map((launcher) => {
+        const actionable = ACTIONABLE_LAUNCHERS.has(launcher.id);
+        return (
+          <button
+            key={launcher.id}
+            type="button"
+            className={
+              "desk-dock-launch" +
+              (launcher.open ? " is-run" : "") +
+              (launcher.badge && actionable ? " is-attention" : "")
+            }
+            aria-label={
+              launcher.badge
+                ? `${launcher.label}, ${launcher.badge} ${actionable ? "need attention" : "items"}`
+                : launcher.label
+            }
+            onClick={launcher.activate}
+          >
+            <span aria-hidden="true">{launcher.glyph}</span>
+            <span className="desk-dock-label">{launcher.label}</span>
+            {launcher.badge ? (
+              <span
+                className="desk-chip desk-dock-badge"
+                data-tone={actionable ? "warn" : undefined}
+              >
+                {launcher.badge}
+              </span>
+            ) : null}
           </button>
         );
       })}

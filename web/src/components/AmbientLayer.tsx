@@ -20,6 +20,7 @@ function PreviewCard() {
   const [hiddenToken, setHiddenToken] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [failedChoice, setFailedChoice] = useState<"type" | "discard" | null>(null);
   const preview = hold?.token
     ? { ...hold, kind: "preview" as const }
     : wake?.token
@@ -33,6 +34,7 @@ function PreviewCard() {
     }
     setBusy(true);
     setError("");
+    setFailedChoice(null);
     try {
       const path =
         preview.kind === "wake"
@@ -47,6 +49,7 @@ function PreviewCard() {
       setHiddenToken(preview.token ?? "");
     } catch (reason) {
       setError(readableError(reason));
+      setFailedChoice(choice);
     } finally {
       setBusy(false);
     }
@@ -55,7 +58,12 @@ function PreviewCard() {
     <aside className="ambient-preview" aria-label="Dictation preview">
       <span className="signal-eyebrow">Preview before type</span>
       <p>{preview.text ?? "Your dictation is ready."}</p>
-      {error ? <SurfaceState error={error} /> : null}
+      {error ? (
+        <SurfaceState
+          error={error}
+          onRetry={failedChoice ? () => void act(failedChoice) : undefined}
+        />
+      ) : null}
       <div className="button-row">
         <Button
           dense

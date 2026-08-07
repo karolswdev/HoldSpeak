@@ -17,6 +17,11 @@ def rig(tmp_path, monkeypatch):
     reset_database()
     db = Database(tmp_path / "ask_grounding.db")
     monkeypatch.setattr(hsdb, "get_database", lambda *a, **k: db)
+    # These route tests inject an engine; local model-file readiness is outside
+    # the behavior they cover.
+    monkeypatch.setattr(
+        "holdspeak.inference_targets._this_machine_readiness", lambda: ("ready", "")
+    )
     app = FastAPI()
     app.include_router(build_primitives_router(WebContext(get_state=lambda: {})))
     yield db, TestClient(app)

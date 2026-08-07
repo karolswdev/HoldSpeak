@@ -202,7 +202,8 @@ export function GroundingSection(props: {
                   key={row.id}
                   className={"desk-ground-row" + (sel ? " is-picked" : "")}
                 >
-                  <div
+                  <button
+                    type="button"
                     className="desk-ground-line is-press"
                     onClick={bandPress(() => void toggleMeeting(row))}
                   >
@@ -218,10 +219,11 @@ export function GroundingSection(props: {
                     {sel?.day && (
                       <span className="desk-ground-fig">{sel.day}</span>
                     )}
-                  </div>
+                  </button>
                   {sel && (
                     <div className="desk-ground-sub">
-                      <div
+                      <button
+                        type="button"
                         className={
                           "desk-ground-line is-sub" +
                           (sel.hasIntel ? " is-press" : " is-off")
@@ -253,8 +255,9 @@ export function GroundingSection(props: {
                             {fmt(tok(sel.intelChars))} tok
                           </span>
                         )}
-                      </div>
-                      <div
+                      </button>
+                      <button
+                        type="button"
                         className={
                           "desk-ground-line is-sub" +
                           (sel.transcriptLines === 0 ? " is-off" : " is-press")
@@ -288,10 +291,11 @@ export function GroundingSection(props: {
                             {fmt(tok(sel.transcriptChars))} tok
                           </span>
                         )}
-                      </div>
+                      </button>
                       {sel.artifacts.map((a) => (
-                        <div
+                        <button
                           key={a.id}
+                          type="button"
                           className="desk-ground-line is-sub is-press"
                           data-on={a.on || undefined}
                           onClick={bandPress(() =>
@@ -319,7 +323,7 @@ export function GroundingSection(props: {
                           <span className="desk-ground-fig">
                             {fmt(tok(a.chars))} tok
                           </span>
-                        </div>
+                        </button>
                       ))}
                     </div>
                   )}
@@ -343,7 +347,8 @@ export function GroundingSection(props: {
                       key={row.ref}
                       className={`desk-ground-row${selected ? " is-picked" : ""}`}
                     >
-                      <div
+                      <button
+                        type="button"
                         className="desk-ground-line is-press"
                         onClick={bandPress(() => void toggleResource(row))}
                       >
@@ -362,7 +367,7 @@ export function GroundingSection(props: {
                             {fmt(tok(priced.chars))} tok
                           </span>
                         )}
-                      </div>
+                      </button>
                     </li>
                   );
                 })}

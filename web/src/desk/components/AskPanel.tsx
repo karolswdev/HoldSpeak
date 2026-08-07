@@ -1,3 +1,4 @@
+import { SurfaceFooter } from "../surface/SurfaceFooter";
 // The Ask AI atom (HSM-16-04, the web parity of HSM-16-09): the composer is a
 // docked in-world panel — the desk stays visible and alive behind it (the
 // 17-08 atelier posture, never a modal) — and the result prints as a turn you
@@ -56,6 +57,7 @@ import {
 import { CitationChips, groundedMatchCount } from "../surface/citations";
 import { Button } from "../../components/signal/Signal";
 import { humanizeWireValue } from "../../lib/productLanguage";
+import { useCopyReceipt } from "../hooks/useCopyReceipt";
 
 /** The budget figure the audit names: 0.3K / 16.4K. */
 const fmtK = (n: number): string => `${(n / 1000).toFixed(1)}K`;
@@ -92,6 +94,7 @@ export function AskPanel() {
   const [projects, setProjects] = useState<Array<{ id: string; name: string }>>(
     [],
   );
+  const { copy, receipt: copyReceipt } = useCopyReceipt();
   const endRef = useRef<HTMLDivElement | null>(null);
 
   // The transcript keeps its newest transmission in view (the
@@ -227,7 +230,7 @@ export function AskPanel() {
     } else {
       setKept(false);
       setError(
-        "Save failed. Retry.",
+        "Save failed. Your ask is retained. Retry.",
       );
     }
   };
@@ -361,6 +364,13 @@ export function AskPanel() {
               }
               verbs={
                 <>
+                  <button
+                    type="button"
+                    className="desk-chip"
+                    onClick={() => void copy(result.output)}
+                  >
+                    Copy
+                  </button>
                   <Button
                     dense
                     variant="ghost"
@@ -556,32 +566,7 @@ export function AskPanel() {
         )}
       </div>
 
-      <footer className="surface-status surface-receiptbar desk-ask-foot">
-        <span className="surface-receiptbar-verbs">
-          <Button
-            dense
-            variant="ghost"
-            disabled={phase === "routing"}
-            onClick={bin}
-          >
-            {phase === "printed" ? "Bin" : "Cancel"}
-          </Button>
-        </span>
-        <span
-          className="surface-receiptbar-receipt"
-          data-tone={statusTone}
-          role="status"
-        >
-          {statusLine}
-        </span>
-        <span className="surface-receiptbar-verbs">
-          {phase === "printed" && result ? (
-            <Button dense disabled={kept} onClick={() => void keep()}>
-              {kept ? "Kept" : "Keep"}
-            </Button>
-          ) : null}
-        </span>
-      </footer>
+      <SurfaceFooter receipt={copyReceipt || <span data-tone={statusTone} role="status">{statusLine}</span>} verbs={<><Button dense variant="ghost" disabled={phase === "routing"} onClick={bin}>{phase === "printed" ? "Bin" : "Cancel"}</Button>{phase === "printed" && result ? <Button dense disabled={kept} onClick={() => void keep()}>{kept ? "Kept" : "Keep"}</Button> : null}</>} />
     </DeskWindowFrame>
   );
 }

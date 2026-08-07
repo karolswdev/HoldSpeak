@@ -1,5 +1,6 @@
 """Transport-neutral Ask orchestration (HS-123-04)."""
 from __future__ import annotations
+from holdspeak.services.observer import NullObserver, PipelineObserver, observe_service
 
 import asyncio
 from collections.abc import Callable
@@ -18,11 +19,13 @@ _MATERIAL_CAP = 6000
 _ASK_SYSTEM_PROMPT = "You are the desk's AI core. Follow the instruction using the material provided. Be concrete and brief."
 
 
+@observe_service
 class AskService:
-    def __init__(self, db: Database, *, hub_model: Callable[[], str] | None = None,
+    def __init__(self, db: Database, hub_model: Callable[[], str] | None = None,
                  broadcast: Callable[..., None] | None = None,
-                 rails_hydrator: Callable[[list[dict[str, Any]], Principal], tuple[list[Any], list[str]]] | None = None) -> None:
+                 rails_hydrator: Callable[[list[dict[str, Any]], Principal], tuple[list[Any], list[str]]] | None = None, *, observer: PipelineObserver | None = None) -> None:
         self._db, self._hub_model, self._broadcast, self._rails_hydrator = db, hub_model or (lambda: ""), broadcast, rails_hydrator
+        self._observer = observer or NullObserver()
 
     def list_models(self, principal: Principal) -> list[dict[str, Any]]:
         rows, seen = [], set()
@@ -67,7 +70,6 @@ class AskService:
         target = resolve_inference_target(self._db, requested)
         ran_profile_id = target.profile_id
         prof = self._db.profiles.get(ran_profile_id) if ran_profile_id else None
-        if not target.ready: raise ServiceError("target_unavailable", target.readiness_reason, context={**target_refusal(target), "status": 409})
         override = str(model or "").strip() or None
         if override:
             if prof is not None and (prof.model or "") == override: pass
@@ -76,6 +78,7 @@ class AskService:
             elif override == self._hub_model():
                 prof, ran_profile_id, target = None, None, resolve_inference_target(self._db, "this_machine")
             else: raise ValidationError(f"model {override!r} is not runnable on this hub", context={"allowed_models": sorted({r['name'] for r in self.list_models(principal)})})
+        if not target.ready: raise ServiceError("target_unavailable", target.readiness_reason, context={**target_refusal(target), "status": 409})
         if prof is not None and prof.kind == "meshNode":
             from ..intel.mesh_relay import DEFAULT_LIVENESS_WINDOW_SECONDS
             node = str(getattr(prof, "node", "") or ""); last = self._db.mesh_relay.worker_last_seen(node) if node else None

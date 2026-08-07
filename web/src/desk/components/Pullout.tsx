@@ -11,7 +11,7 @@ import { qualifiedRef } from "../api";
 import { objGlow, type WorldObject } from "../world";
 import { inferenceEgressLamp } from "../inferenceEgress";
 import { DeskWindowFrame } from "./DeskWindow";
-import { PULLOUT_CONTENT, FallbackPullout } from "../pullouts";
+import { PULLOUT_CONTENT } from "../pullouts";
 
 export function Pullout({
   o,
@@ -87,11 +87,7 @@ export function Pullout({
         </>
       }
     >
-      {Content ? (
-        <Content object={o} onClose={() => closePullout(o.id)} />
-      ) : (
-        <FallbackPullout kind={o.kind} />
-      )}
+      <Content object={o} onClose={() => closePullout(o.id)} />
     </DeskWindowFrame>
   );
 }

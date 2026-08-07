@@ -13,7 +13,10 @@
 // HS-117-08 — decomposed: sub-components live under dictation/.
 import "../../desk/components/speak.css";
 import { useCallback, useMemo, useState } from "react";
-import type { CoreProps } from "./core-types";
+import { SurfaceFooter } from "../../desk/surface/SurfaceFooter";
+import { apiFetch } from "../../lib/api";
+import { download } from "./history";
+import type { CoreProps, DictationJournalResponse } from "./core-types";
 import { useCoreWings } from "./core-hooks";
 import { renderHeroSlot } from "./core-layout";
 import {
@@ -61,6 +64,38 @@ export function DictationCore({ hero, scope, scopeLabel }: CoreProps) {
   const announce = useCallback((text: string, tone: ReceiptTone = "ok") => {
     setReceipt(text ? { text, tone } : null);
   }, []);
+  const exportJournal = async () => {
+    try {
+      const overview = await apiFetch<DictationJournalResponse>(
+        "/api/dictation/journal?limit=1",
+      );
+      const { items = [] } = await apiFetch<DictationJournalResponse>(
+        `/api/dictation/journal?limit=${Math.max(Number(overview.count) || 0, 1)}`,
+      );
+      const markdown = [
+        "# HoldSpeak journal",
+        "",
+        ...items.flatMap((entry) => {
+          const timestamp = String(entry.created_at ?? entry.timestamp ?? "");
+          const destination = String(entry.target_profile ?? entry.intent ?? "");
+          return [
+            `## ${timestamp || "Undated"}`,
+            "",
+            String(entry.transcript ?? ""),
+            ...(destination ? ["", `- Destination: ${destination}`] : []),
+            "",
+          ];
+        }),
+      ].join("\n");
+      download(
+        new Blob([markdown], { type: "text/markdown;charset=utf-8" }),
+        `holdspeak-journal-${new Date().toISOString().slice(0, 10)}.md`,
+      );
+      announce("EXPORTED MD");
+    } catch {
+      announce("EXPORT FAILED", "warn");
+    }
+  };
   const active = wings.doorOpen ? "configure" : wings.view;
   const current = useMemo(
     () =>
@@ -84,6 +119,17 @@ export function DictationCore({ hero, scope, scopeLabel }: CoreProps) {
         {current}
       </ReceiptContext.Provider>
       <ReadinessLine onOpenDoor={() => wings.setDoorOpen(true)} receipt={receipt} />
+      <SurfaceFooter
+        verbs={
+          <button
+            type="button"
+            className="desk-chip"
+            onClick={() => void exportJournal()}
+          >
+            Export
+          </button>
+        }
+      />
     </>
   );
 }

@@ -1,3 +1,4 @@
+import { SurfaceFooter } from "../surface/SurfaceFooter";
 /** Recipe (Persona) pullout content (HS-117-15). */
 import { useDesk } from "../store";
 import { openSurfaceOr } from "../shell";
@@ -46,8 +47,7 @@ export function RecipePullout({ object: o }: PulloutContentProps) {
           objectId={o.id}
         />
       </div>
-      <footer className="desk-pullout-foot">
-        <button
+      <SurfaceFooter verbs={<> <button
           type="button"
           className="desk-chip quiet"
           onClick={() =>
@@ -62,8 +62,7 @@ export function RecipePullout({ object: o }: PulloutContentProps) {
           onClick={() => openEditor(o.id)}
         >
           Edit
-        </button>
-      </footer>
+        </button> </>} />
     </>
   );
 }

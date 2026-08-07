@@ -13,8 +13,14 @@ import { ChainPullout } from "./ChainPullout";
 import { WorkflowPullout } from "./WorkflowPullout";
 import { CoderPullout } from "./CoderPullout";
 import { DirectoryPullout } from "./DirectoryPullout";
+import { FallbackPullout } from "./FallbackPullout";
 
-export const PULLOUT_CONTENT: Record<PrimitiveKind, PulloutContent | null> = {
+/**
+ * Pullout-capable kinds use their own content. Window and surface kinds are
+ * redirected by `openPullout` before this registry renders; the fallback
+ * keeps the registry exhaustive for kinds that deliberately have no detail.
+ */
+export const PULLOUT_CONTENT: Record<PrimitiveKind, PulloutContent> = {
   meeting: MeetingPullout,
   artifact: ArtifactPullout,
   note: NotePullout,
@@ -25,11 +31,11 @@ export const PULLOUT_CONTENT: Record<PrimitiveKind, PulloutContent | null> = {
   workflow: WorkflowPullout,
   coder: CoderPullout,
   directory: DirectoryPullout,
-  project: null,
-  repository: null,
-  roadmap: null,
-  story: null,
-  workbench: null,
-  game: null,
-  layout: null,
-} satisfies Record<PrimitiveKind, PulloutContent | null>;
+  project: FallbackPullout,
+  repository: FallbackPullout,
+  roadmap: FallbackPullout,
+  story: FallbackPullout,
+  workbench: FallbackPullout,
+  game: FallbackPullout,
+  layout: FallbackPullout,
+} satisfies Record<PrimitiveKind, PulloutContent>;

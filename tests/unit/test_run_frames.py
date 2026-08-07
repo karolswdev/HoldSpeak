@@ -28,6 +28,10 @@ def rig(monkeypatch):
     reset_database()
     database = Database(Path(tempfile.mkdtemp()) / "run-frames.db")
     monkeypatch.setattr(hsdb, "get_database", lambda *a, **k: database)
+    # The engine is stubbed below; target model-file readiness is not under test.
+    monkeypatch.setattr(
+        "holdspeak.inference_targets._this_machine_readiness", lambda: ("ready", "")
+    )
     server = MeetingWebServer(WebRuntimeCallbacks(
         on_bookmark=lambda *a, **k: None, on_stop=lambda *a, **k: None,
         get_state=lambda: {"activity": {"state": "idle"}},

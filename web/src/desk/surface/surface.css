@@ -238,6 +238,15 @@
   animation: surface-state-pulse calc(var(--duration-long) * 4) ease-in-out
     infinite;
 }
+.surface-state-action {
+  margin-top: 12px;
+  border-color: var(--accent);
+  background: var(--accent-tint);
+}
+.surface-state-action:hover {
+  background: var(--surface-3);
+  border-color: var(--accent-hover);
+}
 @keyframes surface-state-pulse {
   50% {
     opacity: 0.25;

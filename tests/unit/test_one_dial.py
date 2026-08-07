@@ -319,7 +319,7 @@ def test_redacted_settings_omits_legacy_endpoint_fields() -> None:
 
 
 def test_settings_put_strips_legacy_endpoint_fields() -> None:
-    from holdspeak.web.routes.system.settings import _strip_legacy_endpoint_fields
+    from holdspeak.services.settings_service import _strip_legacy_endpoint_fields
 
     cleaned = _strip_legacy_endpoint_fields(
         {
@@ -339,9 +339,9 @@ def test_settings_put_strips_legacy_endpoint_fields() -> None:
 def test_feature_legs_resolve_through_the_one_resolver() -> None:
     resolver_legs = {
         "holdspeak/rails_observer.py": "resolve_inference_target",
-        "holdspeak/web/routes/primitives/ask.py": "resolve_inference_target",
+        "holdspeak/services/ask_service.py": "resolve_inference_target",
         "holdspeak/web/routes/primitives/chains.py": "resolve_inference_target",
-        "holdspeak/web/routes/primitives/recipes.py": "resolve_inference_target",
+        "holdspeak/services/recipe_service.py": "resolve_inference_target",
         "holdspeak/web/routes/primitives/workflows.py": "resolve_inference_target",
         "holdspeak/plugins/dictation/assembly.py": "effective_dictation_llm",
         "holdspeak/runtime/meeting_glue.py": "effective_intel_cloud",

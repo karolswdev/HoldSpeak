@@ -16,8 +16,6 @@ from types import SimpleNamespace
 import numpy as np
 import pytest
 
-import holdspeak.runtime.dictation_capture as dictation_capture
-import holdspeak.web_runtime as web_runtime
 from holdspeak.voice_typing import VoiceTypingSession
 from holdspeak.wake_word import FRAME_SAMPLES, ArmedCapture
 from holdspeak.web_runtime import WebRuntime
@@ -154,7 +152,7 @@ def test_preview_default_never_types(monkeypatch):
         seen.update(kwargs, text=text)
         return text.upper()
 
-    monkeypatch.setattr(dictation_capture, "run_dictation_pipeline", fake_pipeline)
+    monkeypatch.setattr(rt, "_maybe_run_dictation_pipeline", fake_pipeline)
     rt._transcribe_wake(np.zeros(16000, dtype=np.float32))
 
     assert rt.typer.typed == []  # the condition: preview NEVER types
@@ -168,7 +166,7 @@ def test_preview_default_never_types(monkeypatch):
 
 def test_type_action_is_the_explicit_opt_in(monkeypatch):
     rt = _bare_runtime(action="type")
-    monkeypatch.setattr(web_runtime, "run_dictation_pipeline", lambda text, **kw: text)
+    monkeypatch.setattr(rt, "_maybe_run_dictation_pipeline", lambda text, **kw: text)
     rt._transcribe_wake(np.zeros(16000, dtype=np.float32))
     assert rt.typer.typed == ["ship the fix."]
     assert all(t != "wake_preview" for t, _ in rt.server.broadcasts)
@@ -176,7 +174,7 @@ def test_type_action_is_the_explicit_opt_in(monkeypatch):
 
 def test_a_new_preview_invalidates_the_old(monkeypatch):
     rt = _bare_runtime(action="preview")
-    monkeypatch.setattr(web_runtime, "run_dictation_pipeline", lambda text, **kw: text)
+    monkeypatch.setattr(rt, "_maybe_run_dictation_pipeline", lambda text, **kw: text)
     rt._transcribe_wake(np.zeros(16000, dtype=np.float32))
     first = list(rt.wake_previews)[0]
     rt._transcribe_wake(np.zeros(16000, dtype=np.float32))

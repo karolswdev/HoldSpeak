@@ -1,3 +1,4 @@
+import { SurfaceFooter } from "../surface/SurfaceFooter";
 // The Delivery board (HS-94-08) — delivery work through familiar Desk
 // objects, not a new dashboard. Sources with honest freshness, Projects and
 // Stories over the one read model, active Work attempts naming their Story,
@@ -452,12 +453,12 @@ export function DeliveryBoard() {
 
       <LaunchComposer sources={sources} />
 
-      <div className="surface-status surface-receiptbar">
+      <SurfaceFooter verbs={<>
         <span className="surface-receiptbar-receipt" role="status">
           {`SOURCES ${sources.length} · WORK ${active.length}` +
             (updatedAt ? ` · READ ${clockToken(updatedAt)}` : "")}
         </span>
-      </div>
+      </>} />
     </DeskWindowFrame>
   );
 }

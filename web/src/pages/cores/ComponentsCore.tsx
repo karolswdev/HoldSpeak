@@ -1,3 +1,4 @@
+import { SurfaceFooter } from "../../desk/surface/SurfaceFooter";
 // HS-95-08 — the component grammar gallery, hosted anywhere.
 // HS-111-08 — the gallery shows the KIT (audit §3.5): the gadget
 // species on the surface idiom are the living style guide now — the
@@ -221,6 +222,7 @@ export function ComponentsCore({ hero }: CoreProps) {
         <SurfaceState empty emptyLabel="A quiet empty state" emptyGlyph="○" />
         <SurfaceState error="The error leg renders in the flow" />
       </SurfaceSection>
+      <SurfaceFooter />
     </>
   );
 }

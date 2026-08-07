@@ -131,7 +131,7 @@ export function CapabilitySection({ object: o }: { object: WorldObject }) {
       <div className="desk-chat-well">
         <div className="desk-chat-composer">
           <MicButton
-            label={`Hold to fill ${runLabel.toLowerCase()} material`}
+            label={`Speak to fill ${runLabel.toLowerCase()} material`}
             draftScope={`capability:${o.kind}:${o.id}`}
             onText={(text) =>
               setRunInput((current) =>

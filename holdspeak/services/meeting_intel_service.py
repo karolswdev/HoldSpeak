@@ -1,5 +1,6 @@
 """Transport-neutral deferred meeting-intelligence operations."""
 from __future__ import annotations
+from holdspeak.services.observer import NullObserver, PipelineObserver, observe_service
 from datetime import datetime
 from typing import Any, Callable
 from ..config import Config
@@ -10,9 +11,11 @@ from ..meeting_aftercare import build_aftercare_ready_event
 from ..principals import Principal
 from .errors import ConflictError, NotFound, ValidationError
 
+@observe_service
 class MeetingIntelService:
-    def __init__(self, db: Database, *, notify: Callable[[str, Any], None] | None = None) -> None:
+    def __init__(self, db: Database, notify: Callable[[str, Any], None] | None = None, *, observer: PipelineObserver | None = None) -> None:
         self._db, self._notify = db, notify
+        self._observer = observer or NullObserver()
     def _broadcast_queue(self) -> None:
         if self._notify: self._notify("runtime_queue", build_runtime_queue_frame(self._db))
     def list_jobs(self, principal: Principal, filters: dict[str, Any]) -> dict[str, Any]:

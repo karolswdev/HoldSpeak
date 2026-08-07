@@ -1,3 +1,4 @@
+import { SurfaceFooter } from "../../desk/surface/SurfaceFooter";
 // HS-109-05 — one Project, opened as its long memory in the Desk grammar.
 // HS-111-06 (audit §3.5): the filed archive — a ledger timeline, lifecycle
 // as surface-tokens (the StatusPill species died), decision verbs in the
@@ -302,7 +303,7 @@ function ProjectAsk({
           <span className="desk-chip quiet">{projectName}</span>
         </div>
       </div>
-      {error ? <SurfaceState error={error} /> : null}
+      {error ? <SurfaceState error={error} onRetry={() => void ask()} /> : null}
       {result ? (
         <div className="project-memory-answer">
           <Material>{result.output}</Material>
@@ -737,14 +738,14 @@ export function ProjectMemoryCore({ hero, scope, scopeLabel }: CoreProps) {
       </div>
       {/* HS-111-06 — the one footer receipt bar (audit M7): the read
           fact the window already held, plus the Refresh verb. */}
-      <div className="surface-status surface-receiptbar">
+      <SurfaceFooter verbs={<>
         <span className="surface-receiptbar-receipt" role="status">
           {`PROJECT ${projectName}${readToken}`}
         </span>
         {hero ? null : (
           <span className="surface-receiptbar-verbs">{verbs}</span>
         )}
-      </div>
+      </>} />
     </>
   );
 }

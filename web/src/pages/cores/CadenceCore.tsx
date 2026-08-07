@@ -1,3 +1,4 @@
+import { SurfaceFooter } from "../../desk/surface/SurfaceFooter";
 // HS-95-07 — the Cadence core: loops and history, hosted anywhere.
 // HS-98-01 — re-crafted as the reference NATIVE surface: composed from
 // the surface kit on the window material (DESIGN_SYSTEM.md, "The
@@ -81,6 +82,8 @@ export function CadenceCore({ hero }: CoreProps) {
               empty={!loops.length}
               emptyLabel="No open loops"
               emptyImage={spriteUrl("note", "cadence-empty")}
+              actionLabel="Run now"
+              onAction={() => void run()}
             >
               <SurfaceRows>
                 {loops.map((loop, index) => {
@@ -178,6 +181,7 @@ export function CadenceCore({ hero }: CoreProps) {
           </SurfaceSection>
         }
       />
+      <SurfaceFooter />
     </>
   );
 }

@@ -12,8 +12,12 @@ config:
   meeting:
     intel_enabled: true
     intel_provider: cloud
+    # The currently served .43 model follows the extraction schema reliably at
+    # greedy decoding; this is a deck choice, not a product-wide default.
+    intel_temperature: 0.0
+    intel_profile_id: uat-golden-43
     intel_cloud_base_url: http://192.168.1.43:8080/v1
-    intel_cloud_model: Qwythos-9B-Claude-Mythos-5-1M-Q6_K.gguf
+    intel_cloud_model: Qwen3.6-35B-A3B-UD-Q5_K_XL.gguf
     intent_router_enabled: true
     mir_profile: balanced
     allow_actuators: false
@@ -26,6 +30,6 @@ config:
     runtime:
       backend: openai_compatible
       openai_compatible_base_url: http://192.168.1.43:8080/v1
-      openai_compatible_model: Qwythos-9B-Claude-Mythos-5-1M-Q6_K.gguf
+      openai_compatible_model: Qwen3.6-35B-A3B-UD-Q5_K_XL.gguf
       openai_compatible_api_key_env: OPENAI_API_KEY
       openai_compatible_timeout_seconds: 30.0

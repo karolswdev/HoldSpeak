@@ -156,6 +156,13 @@
   font-size: 15px;
   cursor: pointer;
 }
+.desk-next .desk-pullout-close:hover {
+  color: var(--text);
+}
+.desk-next .desk-pullout-close:focus-visible {
+  outline: 1px solid var(--accent);
+  outline-offset: 2px;
+}
 
 
 /* HS-101 round 8 — the pull-out recomposed: the object's material
@@ -226,7 +233,7 @@
 .desk-next .runs-on-picker label {
   display: grid;
   gap: 4px;
-  color: var(--muted);
+  color: var(--text-muted);
   font-size: 11px;
   font-weight: 800;
   letter-spacing: 0.05em;
@@ -252,8 +259,21 @@
   flex-wrap: wrap;
   gap: 8px;
   padding: 9px 12px;
-  border-top: 0.9px solid var(--shade-1);
+  border-top: 1px solid var(--shade-1);
   background: var(--desk-window-head-fill);
+}
+.desk-next .desk-window-footer-status {
+  color: var(--text-muted);
+  font-size: var(--font-size-xs);
+}
+.desk-next .desk-window-footer-actions {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.desk-next .desk-window-footer-status + .desk-window-footer-actions {
+  margin-left: auto;
 }
 .desk-next .desk-pullout-foot .desk-chip {
   height: 30px;

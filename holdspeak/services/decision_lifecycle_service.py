@@ -1,5 +1,6 @@
 """Transport-neutral decision lifecycle operations (HS-123-04)."""
 from __future__ import annotations
+from holdspeak.services.observer import NullObserver, PipelineObserver, observe_service
 import asyncio
 import time
 import uuid
@@ -8,9 +9,11 @@ from ..db.core import Database
 from ..principals import Principal, PrincipalKind, PrincipalRight
 from .errors import ConflictError, NotFound, ServiceError, ValidationError
 
+@observe_service
 class DecisionLifecycleService:
-    def __init__(self, db: Database, *, kernel: Any | None = None, model_generator: Any | None = None) -> None:
+    def __init__(self, db: Database, kernel: Any | None = None, model_generator: Any | None = None, *, observer: PipelineObserver | None = None) -> None:
         self._db, self._kernel, self._model_generator = db, kernel, model_generator
+        self._observer = observer or NullObserver()
     def list_decisions(self, principal: Principal, *, project_id: str | None = None, project_key: str | None = None, meeting_id: str | None = None, lifecycle: str | None = None, limit: int = 200, offset: int = 0) -> dict[str, Any]:
         if project_id and project_key and project_id != project_key: raise ValidationError("project_id and project_key must name the same project")
         if not any((project_id, project_key, meeting_id, lifecycle)): return {"decisions":[r.to_dict() for r in self._db.desk_decisions.list(limit=limit)]}

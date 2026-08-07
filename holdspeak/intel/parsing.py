@@ -57,7 +57,27 @@ def _extract_json(text: str) -> Optional[dict]:
 
     try:
         obj = json.loads(s)
-        return obj if isinstance(obj, dict) else None
+        if not isinstance(obj, dict):
+            return None
+        # Some OpenAI-compatible local models wrap an otherwise schema-shaped
+        # answer in a JSON ``line`` string. Recover its action array instead of
+        # accepting a false-ready meeting with no extracted actions.
+        embedded = obj.get("line")
+        if isinstance(embedded, str) and "action_items:" in embedded:
+            actions = re.search(
+                r"action_items:\s*(\[.*?\])\s*,?\s*(?:[\"']?summary[\"']?:|$)",
+                embedded,
+                flags=re.DOTALL,
+            )
+            if actions:
+                try:
+                    obj["action_items"] = json.loads(actions.group(1))
+                except json.JSONDecodeError:
+                    pass
+            summary = re.search(r'summary:\s*"(.*?)"\s*$', embedded, flags=re.DOTALL)
+            if summary:
+                obj["summary"] = summary.group(1)
+        return obj
     except Exception:
         pass
 

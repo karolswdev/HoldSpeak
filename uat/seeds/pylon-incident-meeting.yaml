@@ -1,6 +1,12 @@
 # Import a committed dogfood transcript so meeting intel produces REAL
 # artifacts and open actions (on golden-43). Guarded by title: re-applying
 # skips the import if the meeting already exists (no duplicate, no re-dedup).
+profiles:
+  - id: uat-golden-43
+    name: Golden .43 LAN model
+    kind: openAICompatible
+    base_url: http://192.168.1.43:8080/v1
+    model: Qwen3.6-35B-A3B-UD-Q5_K_XL.gguf
 meetings:
   - transcript: dogfood/transcripts/pylon-incident.vtt
     title: Pylon incident war room (UAT seed)

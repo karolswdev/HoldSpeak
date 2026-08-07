@@ -1,6 +1,9 @@
+import { SurfaceFooter } from "../surface/SurfaceFooter";
 /** Coder pullout content (HS-117-15). */
 import { useState } from "react";
 import { useDesk } from "../store";
+import { openSurfaceOr } from "../shell";
+import { qualifiedRef } from "../api";
 import { useDurableDraft } from "../../lib/durableDraft";
 import { useSteering } from "../steering";
 import { MicButton } from "../components/MicButton";
@@ -22,6 +25,7 @@ export function CoderPullout({ object: o, onClose }: PulloutContentProps) {
   const { closePullout, speakToCoder, answerCoder } = useDesk.getState();
   if (o.ref.kind !== "coder") return null;
   const ir = o.ref;
+  const resourceRef = qualifiedRef(o.kind, o.id);
 
   const [answered, setAnswered] = useState<
     "selected" | "sent" | "failed" | null
@@ -94,7 +98,7 @@ export function CoderPullout({ object: o, onClose }: PulloutContentProps) {
                 <div className="desk-chat-well">
                   <div className="desk-chat-composer">
                     <MicButton
-                      label="Hold to answer"
+                      label="Speak to answer"
                       draftScope={`coder-reply:${coderSessionId}`}
                       onText={(t) =>
                         setCoderDraft((current) =>
@@ -138,7 +142,7 @@ export function CoderPullout({ object: o, onClose }: PulloutContentProps) {
                       ? "Delivery failed. Your reply remains editable."
                       : coderDraftRecovered
                         ? "Recovered local reply draft."
-                        : "Hold to fill or type a reply."}
+                        : "Speak to fill or type a reply."}
                 </span>
                 <button
                   type="button"
@@ -156,24 +160,30 @@ export function CoderPullout({ object: o, onClose }: PulloutContentProps) {
                 </button>
               </>
             ) : null}
-            <button
-              type="button"
-              className="desk-chip quiet"
-              onClick={() => {
-                closePullout(o.id);
-                useSteering
-                  .getState()
-                  .openSession(
-                    `${String(ir.agent || "claude")}:${String(ir.sessionId || o.id)}`,
-                  );
-              }}
-            >
-              Watch live
-            </button>
           </div>
         </section>
       </div>
-      <footer className="desk-pullout-foot" />
+      <SurfaceFooter verbs={<> <button
+          type="button"
+          className="desk-chip quiet"
+          onClick={() => openSurfaceOr("dictate", "/dictation", resourceRef)}
+        >
+          Dictate about this
+        </button>
+        <button
+          type="button"
+          className="desk-chip quiet"
+          onClick={() => {
+            closePullout(o.id);
+            useSteering
+              .getState()
+              .openSession(
+                `${String(ir.agent || "claude")}:${String(ir.sessionId || o.id)}`,
+              );
+          }}
+        >
+          Watch live
+        </button> </>} />
     </>
   );
 }

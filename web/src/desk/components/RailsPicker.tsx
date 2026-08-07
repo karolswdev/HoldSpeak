@@ -143,7 +143,8 @@ export function RailsPicker(props: {
                   key={key(r)}
                   className={"desk-ground-row" + (sel ? " is-picked" : "")}
                 >
-                  <div
+                  <button
+                    type="button"
                     className="desk-ground-line is-press"
                     onClick={(event) => {
                       if (
@@ -168,7 +169,7 @@ export function RailsPicker(props: {
                         {fmt(tok(priced.chars))} tok
                       </span>
                     )}
-                  </div>
+                  </button>
                 </li>
               );
             })}

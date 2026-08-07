@@ -127,18 +127,15 @@ function SettingsFace({ hero, scope }: CoreProps) {
     scope && scope.startsWith("integration:")
       ? scope.slice("integration:".length)
       : null;
+  const scopedModule = PREF_MODULES.some((module) => module.id === scope)
+    ? (scope ?? null)
+    : null;
   const resource = useResource<SettingsResponse>("/api/settings", {});
   const authority = useResource<AuthorityPolicyResponse>("/api/authority/policy", {});
   // null = the drawer face; a module id = that module owns the body.
   // HS-112-01: the retired Runs-on room's deep links land on Models.
   const [moduleId, setModuleId] = useState<string | null>(
-    integrationSubject
-      ? "integrations"
-      : scope === "models"
-        ? "models"
-        : scope === "desk"
-          ? "desk"
-          : null,
+    integrationSubject ? "integrations" : scopedModule,
   );
   const [highlight, setHighlight] = useState("");
   const [saving, setSaving] = useState(false);
@@ -231,17 +228,12 @@ function SettingsFace({ hero, scope }: CoreProps) {
     }
   };
 
-  // HS-98-05 / HS-111-01: the `integration:` scope alias opens the
-  // Integrations module directly.
+  // A scope names the focused module. Integration links retain their
+  // subject alias while the palette can address every module directly.
   useEffect(() => {
     if (integrationSubject) setModuleId("integrations");
-    else if (scope === "models") setModuleId("models");
-  }, [integrationSubject, scope]);
-
-  // HS-112-03 — the reset-to-seed verb lands on the Desk module directly.
-  useEffect(() => {
-    if (scope === "desk") setModuleId("desk");
-  }, [scope]);
+    else if (scopedModule) setModuleId(scopedModule);
+  }, [integrationSubject, scopedModule]);
 
   /* ── the deep setting index for the drawer filter ── */
   const deepIndex = useMemo<DeepHit[]>(() => {

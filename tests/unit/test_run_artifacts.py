@@ -26,6 +26,10 @@ def db(monkeypatch):
     reset_database()
     database = Database(Path(tempfile.mkdtemp()) / "run-artifacts.db")
     monkeypatch.setattr(hsdb, "get_database", lambda *a, **k: database)
+    # Route tests inject an engine; local model-file readiness is tested elsewhere.
+    monkeypatch.setattr(
+        "holdspeak.inference_targets._this_machine_readiness", lambda: ("ready", "")
+    )
     yield database
     reset_database()
 

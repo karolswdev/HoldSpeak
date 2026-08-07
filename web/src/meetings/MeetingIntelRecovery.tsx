@@ -114,7 +114,7 @@ export function MeetingIntelRecovery({
       className="meeting-intel-recovery"
       aria-label="Meeting intelligence recovery"
     >
-      {error ? <SurfaceState error={error} /> : null}
+      {error ? <SurfaceState error={error} onRetry={() => void load()} /> : null}
       {/* "Intelligence", never "intel" — the HS-100-05 vocabulary
           guard bans the abbreviation in rendered copy. */}
       {recovery?.visible ? (

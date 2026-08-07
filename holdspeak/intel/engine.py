@@ -407,7 +407,9 @@ class MeetingIntel:
 
         return IntelResult(
             topics=_coerce_str_list(data.get("topics", [])),
-            action_items=_coerce_action_items(data.get("action_items", [])),
+            action_items=_coerce_action_items(
+                data.get("action_items", data.get("actionItems", data.get("actions", [])))
+            ),
             summary=str(data.get("summary", "")).strip(),
             raw_response=raw_text,
         )

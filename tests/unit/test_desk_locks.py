@@ -70,7 +70,8 @@ def test_no_privacy_narration_in_desk_ui() -> None:
 
 
 def test_positions_contract_stays_bare() -> None:
-    store = (DESK / "store.ts").read_text(encoding="utf-8")
+    """HS-117-02 split persistence into the focused data slice."""
+    store = (DESK / "store" / "dataSlice.ts").read_text(encoding="utf-8")
     assert '"hs.diorama.pos"' in store, "the legacy positions key is gone"
     assert "zustand/middleware" not in store, (
         "persist middleware would envelope the positions map and break the "

@@ -1,3 +1,4 @@
+import { SurfaceFooter } from "../surface/SurfaceFooter";
 import { useEffect, useMemo, useState } from "react";
 import { fetchRoadmap, type RoadmapDetail, type RoadmapPhase } from "../roadmap";
 import { usePrimitiveDetail } from "../hooks/usePrimitiveDetail";
@@ -79,7 +80,7 @@ export function RoadmapWindow({ slug, origin }: { slug: string; origin?: { x: nu
     >
       <div className="desk-roadmap-body">
         {detailHook.loading && !detail ? <SurfaceState loading /> : null}
-        {error ? <SurfaceState error={error} /> : null}
+        {error ? <SurfaceState error={error} onRetry={() => void detailHook.refresh()} /> : null}
         {detail && active === "timeline" ? (
           <ul className="desk-roadmap-phases">
             {detail.phases.map((phase) => (
@@ -110,10 +111,7 @@ export function RoadmapWindow({ slug, origin }: { slug: string; origin?: { x: nu
           detail.healthIssues.length ? <ul className="desk-roadmap-health">{detail.healthIssues.map((issue, index) => <li key={`${issue.path}:${index}`} data-severity={issue.severity}><Status value={issue.severity} /><code>{issue.path || "roadmap"}</code><span>{issue.issue}</span></li>)}</ul> : <SurfaceState empty emptyLabel="0 issues" />
         ) : null}
       </div>
-      <footer className="desk-roadmap-footer">
-        <span>{issueCount} {issueCount === 1 ? "issue" : "issues"}</span>
-        {detail?.nextStoryId ? <span className="desk-roadmap-next-chip">WHAT'S NEXT · {detail.nextStoryId}</span> : null}
-      </footer>
+      <SurfaceFooter receipt={<span>{issueCount} {issueCount === 1 ? "issue" : "issues"}</span>} verbs={detail?.nextStoryId ? <span className="desk-roadmap-next-chip">WHAT'S NEXT · {detail.nextStoryId}</span> : null} />
     </DeskWindowFrame>
   );
 }

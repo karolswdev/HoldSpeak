@@ -152,7 +152,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  color: var(--muted);
+  color: var(--text-muted);
 }
 .desk-voice-proposal-action {
   color: var(--text);

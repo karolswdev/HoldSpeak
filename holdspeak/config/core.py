@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import json
 import logging
+import sys
 from dataclasses import dataclass, field, asdict, fields
 from pathlib import Path
 from typing import Optional
@@ -26,6 +27,19 @@ logger = logging.getLogger(__name__)
 # Default config location
 CONFIG_DIR = Path.home() / ".config" / "holdspeak"
 CONFIG_FILE = CONFIG_DIR / "config.json"
+
+
+def _active_config_file() -> Path:
+    """Honor legacy patches to the public ``holdspeak.config`` facade.
+
+    The package split keeps this module as the implementation owner, while
+    callers historically patched ``holdspeak.config.CONFIG_FILE`` as their
+    test/runtime seam. Resolve that facade dynamically so the split preserves
+    the public contract.
+    """
+    facade = sys.modules.get("holdspeak.config")
+    return getattr(facade, "CONFIG_FILE", CONFIG_FILE)
+
 
 # HS-112-01 -- the one dial. Endpoint/model identity lives ONLY in the
 # profiles table (`InferenceTarget`); these config fields are dead legacy
@@ -183,7 +197,7 @@ class Config:
     @classmethod
     def load(cls, path: Optional[Path] = None) -> "Config":
         """Load configuration from file, or create default."""
-        config_path = path or CONFIG_FILE
+        config_path = path or _active_config_file()
 
         if not config_path.exists():
             config = cls()
@@ -257,7 +271,7 @@ class Config:
 
     def save(self, path: Optional[Path] = None) -> None:
         """Save configuration to file."""
-        config_path = path or CONFIG_FILE
+        config_path = path or _active_config_file()
         config_path.parent.mkdir(parents=True, exist_ok=True)
 
         with open(config_path, "w") as f:

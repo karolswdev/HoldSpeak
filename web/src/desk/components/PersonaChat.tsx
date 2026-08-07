@@ -1,3 +1,4 @@
+import { SurfaceFooter } from "../surface/SurfaceFooter";
 // HS-83-02 — the agent's home on the web desk: a LIVING CONVERSATION.
 // Docked pullout, desk alive behind; turns accumulate and persist
 // device-local; each reply wears the turn's honest egress and can be
@@ -47,6 +48,7 @@ import {
   inferenceEgressLamp,
 } from "../inferenceEgress";
 import { Button } from "../../components/signal/Signal";
+import { useCopyReceipt } from "../hooks/useCopyReceipt";
 
 const turnId = () =>
   `t_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`;
@@ -88,6 +90,7 @@ export function PersonaChat(props: { personaId: string }) {
   const [thinking, setThinking] = useState(false);
   const [savedId, setSavedId] = useState<string | null>(null);
   const [inferenceTargetId, setInferenceTargetId] = useState("this_machine");
+  const { copy, receipt: copyReceipt } = useCopyReceipt();
   const endRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -283,13 +286,22 @@ export function PersonaChat(props: { personaId: string }) {
               }
               verbs={
                 t.role === "agent" && !t.error ? (
-                  <Button
-                    dense
-                    variant="ghost"
-                    onClick={() => void harvest(t)}
-                  >
-                    {savedId === t.id ? "Kept" : "Keep"}
-                  </Button>
+                  <>
+                    <button
+                      type="button"
+                      className="desk-chip"
+                      onClick={() => void copy(t.text)}
+                    >
+                      Copy
+                    </button>
+                    <Button
+                      dense
+                      variant="ghost"
+                      onClick={() => void harvest(t)}
+                    >
+                      {savedId === t.id ? "Kept" : "Keep"}
+                    </Button>
+                  </>
                 ) : undefined
               }
             >
@@ -305,7 +317,7 @@ export function PersonaChat(props: { personaId: string }) {
         </SurfaceTraffic>
       </div>
 
-      <footer className="desk-chat-foot">
+      <SurfaceFooter receipt={copyReceipt} egress={<><LampGadget on {...targetLamp} />{target?.name ? <span className="surface-detail">{target.name}</span> : null}</>} verbs={<>
         <GroundingSection
           meetings={(items.meeting || []).map((m: any) => ({
             id: m.id,
@@ -351,11 +363,7 @@ export function PersonaChat(props: { personaId: string }) {
               onChange={setInferenceTargetId}
               disabled={thinking}
             />
-            <LampGadget on {...targetLamp} />
-            {target?.name ? (
-              <span className="surface-detail">{target.name}</span>
-            ) : null}
-          </div>
+</div>
         </div>
         {inputRecovered ? (
           <span className="quiet">Recovered local message draft.</span>
@@ -365,7 +373,7 @@ export function PersonaChat(props: { personaId: string }) {
             Over budget
           </p>
         )}
-      </footer>
+      </>} />
     </DeskWindowFrame>
   );
 }

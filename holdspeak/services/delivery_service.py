@@ -1,5 +1,6 @@
 """Transport-neutral composition for the delivery domain."""
 from __future__ import annotations
+from holdspeak.services.observer import NullObserver, PipelineObserver, observe_service
 
 from pathlib import Path
 from typing import Any
@@ -8,6 +9,7 @@ from ..db.core import Database
 from .errors import NotFound, ValidationError
 
 
+@observe_service
 class DeliveryService:
     """Own delivery persistence and compose delivery collaborators.
 
@@ -16,8 +18,9 @@ class DeliveryService:
     into the process-global database accessor.
     """
 
-    def __init__(self, db: Database) -> None:
+    def __init__(self, db: Database, *, observer: PipelineObserver | None = None) -> None:
         self._db = db
+        self._observer = observer or NullObserver()
 
     def list_work_attempts(self) -> list[Any]:
         return self._db.work_attempts.list()

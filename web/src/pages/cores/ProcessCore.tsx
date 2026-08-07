@@ -1,3 +1,4 @@
+import { SurfaceFooter } from "../../desk/surface/SurfaceFooter";
 // HS-109-06 — the process window: a read-only fold over kernel read + events.
 // HS-111-06 — the process monitor face (audit §3.2): SurfaceLedger tables,
 // states as surface-tokens (StatusPill died), the zero face renders every
@@ -166,13 +167,13 @@ export function ProcessCore(_props: CoreProps) {
           </SurfaceLedger>
         ))
       )}
-      <div className="surface-status surface-receiptbar">
+      <SurfaceFooter verbs={<>
         <span className="surface-receiptbar-receipt" role="status">
           {store.error
             ? `KERNEL UNREACHABLE · CURSOR ${store.cursor}`
             : `KERNEL · CURSOR ${store.cursor} · RUNS ${total}`}
         </span>
-      </div>
+      </>} />
     </>
   );
 }

@@ -1,3 +1,4 @@
+import { SurfaceFooter } from "../surface/SurfaceFooter";
 /** Artifact pullout content (HS-117-15). */
 import { useDesk } from "../store";
 import { openSurfaceOr } from "../shell";
@@ -7,6 +8,7 @@ import { DeskFilingStrip } from "../components/DeskFilingStrip";
 import { humanizeWireValue } from "../../lib/productLanguage";
 import { Material } from "../surface/Material";
 import type { PulloutContentProps } from "./types";
+import { useCopyReceipt } from "../hooks/useCopyReceipt";
 
 export function ArtifactPullout({ object: o }: PulloutContentProps) {
   const items = useDesk((s) => s.items);
@@ -14,6 +16,8 @@ export function ArtifactPullout({ object: o }: PulloutContentProps) {
   if (o.ref.kind !== "artifact") return null;
   const ir = o.ref;
   const resourceRef = qualifiedRef(o.kind, o.id);
+  const { copy, receipt: copyReceipt } = useCopyReceipt();
+  const body = String(ir.bodyMarkdown || "");
   const lin = lineage(items, ir.sources);
 
   return (
@@ -21,7 +25,7 @@ export function ArtifactPullout({ object: o }: PulloutContentProps) {
       <div className="desk-pullout-body desk-surface-body">
         <section>
           <h3>{humanizeWireValue(String(ir.artifactType || "artifact"))}</h3>
-          <Material>{String(ir.bodyMarkdown || "")}</Material>
+          <Material>{body}</Material>
         </section>
         {lin.any && (
           <section>
@@ -49,7 +53,14 @@ export function ArtifactPullout({ object: o }: PulloutContentProps) {
           objectId={o.id}
         />
       </div>
-      <footer className="desk-pullout-foot">
+      <SurfaceFooter receipt={copyReceipt} verbs={<>
+        <button
+          type="button"
+          className="desk-chip quiet"
+          onClick={() => void copy(body)}
+        >
+          Copy
+        </button>
         <button
           type="button"
           className="desk-chip quiet"
@@ -58,8 +69,7 @@ export function ArtifactPullout({ object: o }: PulloutContentProps) {
           }
         >
           Dictate about this
-        </button>
-      </footer>
+        </button> </>} />
     </>
   );
 }

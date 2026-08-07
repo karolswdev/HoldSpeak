@@ -611,6 +611,9 @@ class ProbeEvaluator:
 
         env = os.environ.copy()
         env["HOME"] = str(self.home)
+        env["HOLDSPEAK_URL"] = self.client.base_url
+        if self.client.token:
+            env["HOLDSPEAK_TOKEN"] = self.client.token
         try:
             proc = subprocess.run(
                 [sys.executable, "-m", "holdspeak.main", "doctor"],

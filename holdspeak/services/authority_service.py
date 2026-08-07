@@ -1,5 +1,6 @@
 """Transport-neutral authority policy and scoped-grant lifecycle."""
 from __future__ import annotations
+from holdspeak.services.observer import NullObserver, PipelineObserver, observe_service
 
 from dataclasses import dataclass
 from typing import Any
@@ -24,11 +25,13 @@ class EvaluationRequest:
     configured_preview: bool = False
 
 
+@observe_service
 class AuthorityService:
     """Own authority policy decisions and the durable scoped-grant lifecycle."""
 
-    def __init__(self, db: Database) -> None:
+    def __init__(self, db: Database, *, observer: PipelineObserver | None = None) -> None:
         self._db = db
+        self._observer = observer or NullObserver()
 
     def get_policy(self, principal: Principal) -> dict[str, Any]:
         from ..config import Config

@@ -244,6 +244,8 @@ class Hub:
         from fastapi import FastAPI, Request
 
         from holdspeak.principals import Principal, PrincipalKind
+        from holdspeak.services.delivery_service import DeliveryService
+        from holdspeak.web.context import WebContext
         from holdspeak.web.routes.delivery import build_delivery_router
         from holdspeak.web.routes.delivery_attempts import (
             build_delivery_attempts_router,
@@ -257,7 +259,9 @@ class Hub:
             build_delivery_terminal_router,
         )
 
-        ctx = None  # the delivery routers only do `_ = ctx`
+        ctx = WebContext(
+            get_state=lambda: {}, delivery_service=DeliveryService(self.db)
+        )
         app = FastAPI()
 
         @app.middleware("http")

@@ -13,6 +13,7 @@ REPO = Path(__file__).resolve().parents[2]
 DOC = REPO / "docs" / "internal" / "DESIGN_SYSTEM.md"
 GLOBAL = REPO / "web" / "src" / "styles" / "global.css"
 DESK = REPO / "web" / "src" / "desk" / "desk.css"
+WINDOW_CHROME = REPO / "web" / "src" / "desk" / "components" / "window-chrome.css"
 
 COMPONENTS = (
     "Signal Button",
@@ -62,8 +63,9 @@ def test_global_focus_grammar_holds() -> None:
 
 
 def test_one_pressed_grammar_covers_the_chrome() -> None:
-    desk = DESK.read_text(encoding="utf-8")
-    block = desk[desk.index("HS-96-03") :]
+    """The chrome state contract moved with the window-chrome extraction."""
+    chrome = WINDOW_CHROME.read_text(encoding="utf-8")
+    block = chrome[chrome.index("HS-96-03") :]
     for family in PRESSED_FAMILIES:
         assert family in block, f"pressed grammar lost {family}"
     assert "translateY(1px)" in block

@@ -220,6 +220,7 @@ def process_next_intel_job(
                     "cloud_store": bool(
                         getattr(meeting_cfg, "intel_cloud_store", False)
                     ),
+                    "temperature": float(getattr(meeting_cfg, "intel_temperature", 0.2)),
                 }
                 if model_path:
                     kwargs["model_path"] = model_path

@@ -9,7 +9,7 @@ and the clients that call it (extracted from the real call sites in
 `web/src` and `apple/`). "server only" means no in-repo client calls
 it today.
 
-Routes: 419 (plus static mounts). iOS-consumed: 88. Web-consumed: 317.
+Routes: 425 (plus static mounts). iOS-consumed: 88. Web-consumed: 326.
 
 ## device_audio_ws
 
@@ -123,7 +123,6 @@ Routes: 419 (plus static mounts). iOS-consumed: 88. Web-consumed: 317.
 | GET | `/api/cadence/loops/{loop_id}` | server only |
 | POST | `/api/cadence/loops/{loop_id}/close` | web |
 | POST | `/api/cadence/loops/{loop_id}/kill` | web |
-| POST | `/api/cadence/loops/{loop_id}/reply` | web |
 | POST | `/api/cadence/loops/{loop_id}/snooze` | web |
 | POST | `/api/cadence/run-now` | web |
 | GET | `/api/cadence/status` | web |
@@ -134,6 +133,7 @@ Routes: 419 (plus static mounts). iOS-consumed: 88. Web-consumed: 317.
 |---|---|---|
 | GET | `/api/constitutional-context` | web |
 | PUT | `/api/constitutional-context` | web |
+| GET | `/api/constitutional-context/history` | web |
 
 ## web.routes.core
 
@@ -560,8 +560,8 @@ Routes: 419 (plus static mounts). iOS-consumed: 88. Web-consumed: 317.
 
 | Method | Path | Consumers |
 |---|---|---|
-| GET | `/api/skills` | server only |
-| POST | `/api/skills` | server only |
+| GET | `/api/skills` | web |
+| POST | `/api/skills` | web |
 | DELETE | `/api/skills/{skill_id}` | web |
 | PUT | `/api/skills/{skill_id}` | web |
 | GET | `/api/workbench-templates` | web |
@@ -574,8 +574,13 @@ Routes: 419 (plus static mounts). iOS-consumed: 88. Web-consumed: 317.
 | POST | `/api/workbenches/{workbench_id}/items` | web |
 | DELETE | `/api/workbenches/{workbench_id}/items/{item_id}` | web |
 | PUT | `/api/workbenches/{workbench_id}/items/{item_id}` | web |
+| POST | `/api/workbenches/{workbench_id}/items/{item_id}/retry-mint` | web |
+| DELETE | `/api/workbenches/{workbench_id}/memory` | web |
+| GET | `/api/workbenches/{workbench_id}/memory` | web |
+| POST | `/api/workbenches/{workbench_id}/memory/{index}/promote` | web |
 | POST | `/api/workbenches/{workbench_id}/run` | web |
-| GET | `/api/workbenches/{workbench_id}/runs` | server only |
+| GET | `/api/workbenches/{workbench_id}/runs` | web |
+| POST | `/api/workbenches/{workbench_id}/voice/resolve` | web |
 
 ## web.routes.primitives.workflows
 
@@ -669,12 +674,17 @@ Routes: 419 (plus static mounts). iOS-consumed: 88. Web-consumed: 317.
 |---|---|---|
 | GET | `/api/agents/capabilities` | web |
 
-## web.routes.system.coder_steering_routes
+## web.routes.system.coder_factory_routes
 
 | Method | Path | Consumers |
 |---|---|---|
 | POST | `/api/coders/factory/rename` | ios, web |
 | POST | `/api/coders/factory/spawn` | ios, web |
+
+## web.routes.system.coder_steering_routes
+
+| Method | Path | Consumers |
+|---|---|---|
 | POST | `/api/coders/relay/{node}/arm` | ios, web |
 | POST | `/api/coders/relay/{node}/disarm` | ios, web |
 | POST | `/api/coders/relay/{node}/keys` | ios, web |
@@ -763,6 +773,7 @@ Routes: 419 (plus static mounts). iOS-consumed: 88. Web-consumed: 317.
 | POST | `/api/dictation/preview/type` | web |
 | POST | `/api/dictation/transcribe` | web |
 | POST | `/api/dictation/wake/type` | web |
+| WS | `/ws/dictation/stream` | web |
 
 ## web.routes.system.ws
 

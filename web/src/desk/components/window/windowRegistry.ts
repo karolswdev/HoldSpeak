@@ -105,6 +105,23 @@ export function cycleWindows(flashSwitcher: (target: string) => void): void {
   flashSwitcher(next);
 }
 
+/** Ctrl+Shift+` — reverse the MRU cycle, landing on the window immediately
+ * behind the frontmost one. */
+export function cycleWindowsReverse(
+  flashSwitcher: (target: string) => void,
+): void {
+  const ids = mruOrder(
+    registrySnapshot.map((w) => w.id),
+    useDesk.getState().panelOrder,
+  );
+  if (ids.length < 1) return;
+  const next = ids[Math.max(0, ids.length - 2)];
+  const s = useDesk.getState();
+  if (s.panelMin.includes(next)) s.restorePanel(next);
+  else s.focusPanel(next);
+  flashSwitcher(next);
+}
+
 /** Cmd+1-Cmd+4 — an application whose window is already open focuses (or
  * restores) instead of re-opening. False = not open; launch instead. */
 export function focusOrRestoreApp(windowId: string): boolean {

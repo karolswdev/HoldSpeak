@@ -1,5 +1,6 @@
 """Principal-aware desk actuator proposal boundary."""
 from __future__ import annotations
+from holdspeak.services.observer import NullObserver, PipelineObserver, observe_service
 
 import hashlib
 import re
@@ -11,17 +12,19 @@ from .errors import NotFound, ValidationError
 _REPO = re.compile(r"^[A-Za-z0-9._-]+/[A-Za-z0-9._-]+$")
 
 
+@observe_service
 class ActuatorProposalService:
     """Own desk proposal validation, provenance, and lifecycle delegation.
 
     The injected lifecycle collaborator owns connector execution and is deliberately
     transport-neutral: it receives a proposal and broadcaster, never a request.
     """
-    def __init__(self, db: Any, *, config_provider: Callable[[], Any], broadcast: Callable[[str, Any], None], lifecycle: Any) -> None:
+    def __init__(self, db: Any, config_provider: Callable[[], Any], broadcast: Callable[[str, Any], None], lifecycle: Any, *, observer: PipelineObserver | None = None) -> None:
         self._db = db
         self._config_provider = config_provider
         self._broadcast = broadcast
         self._lifecycle = lifecycle
+        self._observer = observer or NullObserver()
 
     def _source_binding(self, payload: Any) -> tuple[str, dict[str, Any]]:
         raw = str(getattr(payload, "source_ref", "") or "").strip()

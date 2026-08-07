@@ -1,5 +1,6 @@
 """Transport-neutral capability invocation inspection and cancellation."""
 from __future__ import annotations
+from holdspeak.services.observer import NullObserver, PipelineObserver, observe_service
 
 import uuid
 from typing import Any
@@ -9,12 +10,14 @@ from ..principals import Principal, PrincipalKind
 from .errors import ConflictError, NotFound
 
 
+@observe_service
 class InvocationService:
     """Own the durable invocation receipt and cancellation operation boundary."""
 
-    def __init__(self, db: Database, broker: Any) -> None:
+    def __init__(self, db: Database, broker: Any, *, observer: PipelineObserver | None = None) -> None:
         self._db = db
         self._broker = broker
+        self._observer = observer or NullObserver()
 
     @classmethod
     def from_runtime(cls) -> "InvocationService":

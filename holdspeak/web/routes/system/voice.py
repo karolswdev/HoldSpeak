@@ -177,7 +177,7 @@ def build_voice_router(ctx: WebContext) -> APIRouter:
                 admitted, egress_boundary = _admit_browser_pipeline(request)
                 if not admitted:
                     return JSONResponse(
-                        {"success": False, "error": "Kernel refused the browser pipeline operation."},
+                        {"success": False, "error": "Kernel refused the browser pipeline operation. Your recording is retained. Retry."},
                         status_code=403,
                     )
             except Exception as exc:

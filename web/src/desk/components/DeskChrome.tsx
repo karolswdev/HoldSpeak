@@ -17,6 +17,8 @@ import { subscribeMicPhase, type MicPhase } from "../../lib/micSession";
 import { DeskToolShelf } from "./DeskToolShelf";
 import { DeskMenuBar } from "./DeskMenuBar";
 import { useLaunchers } from "./DeskWindow";
+import { useGate } from "../gate";
+import { useRuntimeBus } from "../../runtime/RuntimeBus";
 import { SYSTEM } from "../systemSprites";
 
 /** The mark menu's registry rows: the floor verbs, then the four
@@ -33,15 +35,17 @@ const MARK_APPS = [
  * the system bar, not the dock (the dock carries the applications). */
 function AttentionBell() {
   const launchers = useLaunchers();
+  const heldCount = useGate((s) => s.held.length);
   const attention = launchers.find((l) => l.id === "attention");
   if (!attention) return null;
+  const badge = (attention.badge ?? 0) + heldCount;
   return (
     <button
       type="button"
       className={`desk-bell${attention.open ? " is-open" : ""}`}
       aria-label={
-        attention.badge
-          ? `Desk memory: ${attention.badge} need attention`
+        badge
+          ? `Desk memory: ${badge} need attention`
           : "Desk memory"
       }
       title="Desk memory"
@@ -49,7 +53,7 @@ function AttentionBell() {
     >
       {/* HS-111-09 — 16px source renders at 16 CSS px (integer-true). */}
       <img src={SYSTEM.menuBell} alt="" width={16} height={16} className="desk-chrome-sprite" draggable={false} />
-      {attention.badge ? <strong>{attention.badge}</strong> : null}
+      {badge ? <strong>{badge}</strong> : null}
     </button>
   );
 }
@@ -118,6 +122,7 @@ export function DeskChrome({
   const error = useDesk((s) => s.error);
   const setup = useDesk((s) => s.setup);
   const loading = useDesk((s) => s.loading);
+  const { state: runtimeState } = useRuntimeBus();
   // Subscribed so the mark menu's derived labels/ghosts re-render live.
   useDesk((s) => s.positions);
   useDesk((s) => s.viewMode);
@@ -210,6 +215,11 @@ export function DeskChrome({
           title={hubTitle}
           aria-label={hubTitle}
         />
+        {runtimeState === "reconnecting" ? (
+          <LampGadget label="RECONNECTING" on tone="warn" />
+        ) : runtimeState === "offline" ? (
+          <LampGadget label="OFFLINE" on tone="fail" />
+        ) : null}
         {/* HS-111-07 — ONE badge species: the chrome badge is the same
             EgressChip the gadget rows wear, with the trust click-through
             (egressBadge() stays the data source). */}

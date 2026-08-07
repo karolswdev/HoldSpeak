@@ -10,6 +10,7 @@ from holdspeak.db import get_database
 from holdspeak.principals import Principal
 from holdspeak.services.desk_service import DeskService
 from holdspeak.services.dictation_service import DictationService
+from holdspeak.services.event_query_service import EventQueryService
 from holdspeak.services.meeting_service import MeetingService
 from holdspeak.services.primitive_service import PrimitiveService
 from holdspeak.services.profile_service import ProfileService
@@ -169,6 +170,18 @@ _STATIC_RESOURCES = [
         "description": "Canonical journal of stored dictation entries.",
         "mimeType": _JSON_MIME,
     },
+    {
+        "uri": "pipeline://events/recent",
+        "name": "Recent pipeline events",
+        "description": "Most recent observed pipeline events.",
+        "mimeType": _JSON_MIME,
+    },
+    {
+        "uri": "pipeline://events/stats",
+        "name": "Pipeline event statistics",
+        "description": "Aggregate statistics for observed pipeline events.",
+        "mimeType": _JSON_MIME,
+    },
 ]
 
 _RESOURCE_TEMPLATES = [
@@ -214,6 +227,18 @@ _RESOURCE_TEMPLATES = [
         "description": "One archived meeting and its stored detail.",
         "mimeType": _JSON_MIME,
     },
+    {
+        "uriTemplate": "pipeline://events/recent/{service}",
+        "name": "Recent pipeline events by service",
+        "description": "Most recent observed pipeline events for one service.",
+        "mimeType": _JSON_MIME,
+    },
+    {
+        "uriTemplate": "pipeline://events/correlation/{id}",
+        "name": "Pipeline events by correlation",
+        "description": "All observed pipeline events in one correlation chain.",
+        "mimeType": _JSON_MIME,
+    },
 ]
 
 _PRIMITIVE_KIND_ALIASES = {
@@ -231,6 +256,8 @@ _RECIPE_DETAIL_PATTERN = re.compile(r"^holdspeak://recipes/([^/]+)$")
 _PROFILE_DETAIL_PATTERN = re.compile(r"^holdspeak://profiles/([^/]+)$")
 _ZONE_MEMBERS_PATTERN = re.compile(r"^holdspeak://zones/([^/]+)/members$")
 _MEETING_DETAIL_PATTERN = re.compile(r"^holdspeak://meetings/([^/]+)$")
+_PIPELINE_RECENT_SERVICE_PATTERN = re.compile(r"^pipeline://events/recent/([^/]+)$")
+_PIPELINE_CORRELATION_PATTERN = re.compile(r"^pipeline://events/correlation/([^/]+)$")
 
 
 class ResourceError(ValueError):
@@ -271,6 +298,10 @@ def read_resource(uri: str, principal: Principal) -> dict[str, list[dict[str, st
         return _contents(uri, _JSON_MIME, ProfileService(get_database()).list_profiles(principal))
     if uri == "holdspeak://dictation/journal":
         return _contents(uri, _JSON_MIME, DictationService(get_database()).list_journal(principal))
+    if uri == "pipeline://events/recent":
+        return _contents(uri, _JSON_MIME, EventQueryService(get_database()).recent(principal))
+    if uri == "pipeline://events/stats":
+        return _contents(uri, _JSON_MIME, EventQueryService(get_database()).stats(principal))
 
     if match := _PRIMITIVE_DETAIL_PATTERN.fullmatch(uri):
         kind = _PRIMITIVE_KIND_ALIASES.get(match.group(1))
@@ -295,5 +326,11 @@ def read_resource(uri: str, principal: Principal) -> dict[str, list[dict[str, st
         return _contents(uri, _JSON_MIME, value)
     if match := _MEETING_DETAIL_PATTERN.fullmatch(uri):
         value = MeetingService(get_database()).get_meeting(principal, match.group(1))
+        return _contents(uri, _JSON_MIME, value)
+    if match := _PIPELINE_RECENT_SERVICE_PATTERN.fullmatch(uri):
+        value = EventQueryService(get_database()).recent(principal, service=match.group(1))
+        return _contents(uri, _JSON_MIME, value)
+    if match := _PIPELINE_CORRELATION_PATTERN.fullmatch(uri):
+        value = EventQueryService(get_database()).by_correlation(principal, correlation_id=match.group(1))
         return _contents(uri, _JSON_MIME, value)
     raise ResourceError(f"Unknown resource: {uri}")

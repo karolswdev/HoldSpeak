@@ -23,6 +23,8 @@ import {
   retryMint,
 } from "../api";
 import { usePrimitiveDetail } from "../hooks/usePrimitiveDetail";
+import { useUndoReceipt } from "../hooks/useUndoReceipt";
+import { useCopyReceipt } from "../hooks/useCopyReceipt";
 import { boundaryEgressLamp } from "../inferenceEgress";
 import { keepReply } from "../chat";
 import {
@@ -35,7 +37,7 @@ import type { ResolvedRef } from "../../lib/drawerResolver";
 import { resolveDrawerNames } from "../../lib/drawerResolver";
 import { resolveVoiceReferences } from "../api";
 import { DeskWindowFrame } from "./DeskWindow";
-import { DeskWindowFooter } from "./DeskWindowFooter";
+import { SurfaceFooter } from "../surface/SurfaceFooter";
 import { AgentAvatar } from "./AgentAvatar";
 import { GroundingSection } from "./GroundingSection";
 import { MicButton } from "./MicButton";
@@ -98,7 +100,7 @@ function humanSchedule(cron: string | null): string {
 /* ── item status ───────────────────────────────────────────────────── */
 
 const STATUS_CHIPS: Record<string, { label: string; tone: string }> = {
-  pending: { label: "PENDING", tone: "" },
+  pending: { label: "NEEDS REVIEW", tone: "" },
   claimed: { label: "RUNNING", tone: "warn" },
   done: { label: "DONE", tone: "ok" },
   failed: { label: "FAILED", tone: "fail" },
@@ -168,6 +170,7 @@ function ConfigStrip({
           {skillCount} {skillCount === 1 ? "skill" : "skills"}
         </span>
       ) : null}
+      <span className="wb-config-strip-chevron" aria-hidden="true">▾</span>
     </button>
   );
 }
@@ -493,6 +496,8 @@ function WorkbenchItemCard({
   workbenchName,
   onToggle,
   onReload,
+  onRemove,
+  onCopy,
 }: {
   item: WorkbenchItem;
   expanded: boolean;
@@ -501,12 +506,16 @@ function WorkbenchItemCard({
   workbenchName: string;
   onToggle: () => void;
   onReload: () => void;
+  onRemove: (item: WorkbenchItem) => void;
+  onCopy: (text: string) => void;
 }) {
   const chip = STATUS_CHIPS[item.status] || STATUS_CHIPS.pending;
   const egressLamp = item.result_egress?.boundary
     ? boundaryEgressLamp(item.result_egress.boundary)
     : null;
   const hasResult = !!(item.result && (item.status === "done" || item.status === "failed"));
+  const failureReason =
+    item.status === "failed" ? item.error_reason || item.error : null;
   const hasGrounding =
     item.grounding &&
     typeof item.grounding === "object" &&
@@ -515,13 +524,6 @@ function WorkbenchItemCard({
   const updateItem = async (fields: Record<string, unknown>) => {
     try {
       await updateWorkbenchItem(workbenchId, item.id, fields);
-      onReload();
-    } catch { /* */ }
-  };
-
-  const deleteItem = async () => {
-    try {
-      await deleteWorkbenchItem(workbenchId, item.id);
       onReload();
     } catch { /* */ }
   };
@@ -567,7 +569,10 @@ function WorkbenchItemCard({
         onClick={onToggle}
         aria-expanded={expanded}
       >
-        <span className="desk-chip wb-item-priority">
+        <span
+          className="desk-chip wb-item-priority"
+          data-tone={item.priority === 1 ? "fail" : item.priority === 2 ? "warn" : undefined}
+        >
           {PRIORITY_LABELS[item.priority] || "P3"}
         </span>
         <span className="wb-card-title">{item.title}</span>
@@ -619,7 +624,16 @@ function WorkbenchItemCard({
           {hasResult ? (
             <div className="wb-card-result">
               <div className="wb-card-result-head">
-                <span className="wb-card-result-label">RESULT</span>
+                <span className="wb-card-result-label">
+                  {item.status === "failed" ? "FAILED" : "RESULT"}
+                </span>
+                <button
+                  type="button"
+                  className="desk-chip quiet"
+                  onClick={() => onCopy(item.result!)}
+                >
+                  Copy
+                </button>
                 {egressLamp ? (
                   <EgressChip
                     label={`⌂ ${egressLamp.label}`}
@@ -644,6 +658,12 @@ function WorkbenchItemCard({
                   <span className="wb-card-artifact-title">
                     {workbenchName}: {item.title}
                   </span>
+                </div>
+              ) : null}
+              {failureReason ? (
+                <div className="wb-card-error-reason" role="alert">
+                  <span>ERROR</span>
+                  <span>{failureReason}</span>
                 </div>
               ) : null}
               <div className="wb-card-result-body">
@@ -743,7 +763,7 @@ function WorkbenchItemCard({
               <button
                 type="button"
                 className="desk-chip quiet"
-                onClick={() => void deleteItem()}
+                onClick={() => onRemove(item)}
               >
                 Remove
               </button>
@@ -788,8 +808,11 @@ export function WorkbenchWindow({
   const loadRuns = runsHook.refresh;
   const loadMemory = memoryHook.refresh;
   const loadSkills = skillsHook.refresh;
+  const { remove, receipt: undoReceipt } = useUndoReceipt();
+  const { copy, receipt: copyReceipt } = useCopyReceipt();
 
   const [expanded, setExpanded] = useState<string | null>(null);
+  const [saved, setSaved] = useState(false);
   const [configOpen, setConfigOpen] = useState<boolean | null>(null);
   const [newTitle, setNewTitle] = useState("");
   const [newBody, setNewBody] = useState("");
@@ -806,6 +829,15 @@ export function WorkbenchWindow({
   const [resolverError, setResolverError] = useState<string | null>(null);
   const generationRef = useRef(0);
   const configAutoExpanded = useRef(false);
+  const runTimeoutRef = useRef<number | null>(null);
+
+  const clearRunTimeout = useCallback(() => {
+    if (runTimeoutRef.current === null) return;
+    window.clearTimeout(runTimeoutRef.current);
+    runTimeoutRef.current = null;
+  }, []);
+
+  useEffect(() => clearRunTimeout, [clearRunTimeout]);
 
   /* ── @-reference autocomplete state ─────────────────────────────── */
   const zones = useDesk((s) => s.items.directory || []);
@@ -839,6 +871,10 @@ export function WorkbenchWindow({
   if (clampedAcIndex !== acSelectedIndex) {
     setAcSelectedIndex(clampedAcIndex);
   }
+  const acActiveId =
+    acOpen && acMatches.length > 0
+      ? `wb-inlet-option-${acMatches[clampedAcIndex].id}`
+      : undefined;
 
   const addGroundingRef = useCallback((ref: ResolvedRef) => {
     setGroundingRefs((prev) => {
@@ -933,6 +969,7 @@ export function WorkbenchWindow({
       bus.subscribe("workbench.run_complete", (frame) => {
         const ev = d(frame);
         if (ev?.workbench_id !== workbenchId) return;
+        clearRunTimeout();
         setRunning(false);
         setRunProgress(null);
         void load();
@@ -941,7 +978,7 @@ export function WorkbenchWindow({
       }),
     ];
     return () => unsubs.forEach((u) => u());
-  }, [bus, workbenchId, load, loadRuns, loadMemory]);
+  }, [bus, workbenchId, load, loadRuns, loadMemory, clearRunTimeout]);
 
   // Reconnect-safe: detect in-progress run from item states
   useEffect(() => {
@@ -956,6 +993,8 @@ export function WorkbenchWindow({
   const updateField = async (fields: Record<string, unknown>) => {
     try {
       await updateWorkbenchField(workbenchId, fields);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
       load();
       void useDesk.getState().refresh();
     } catch {
@@ -1024,6 +1063,14 @@ export function WorkbenchWindow({
 
   /* ── item actions ──────────────────────────────────────────────── */
 
+  const handleRemove = (item: WorkbenchItem) => {
+    remove(
+      item.title,
+      () => deleteWorkbenchItem(workbenchId, item.id).then(() => load()),
+      () => load(),
+    );
+  };
+
   const addItem = async () => {
     generationRef.current++;
     setResolverError(null);
@@ -1066,18 +1113,26 @@ export function WorkbenchWindow({
   };
 
   const triggerRun = async () => {
+    clearRunTimeout();
     setRunning(true);
     const pendingCount = detail?.items.filter((i) => i.status === "pending").length || 0;
     setRunProgress({ index: 0, total: pendingCount });
+    const timeout = window.setTimeout(() => {
+      if (runTimeoutRef.current !== timeout) return;
+      runTimeoutRef.current = null;
+      setRunning(false);
+      setRunProgress(null);
+    }, 60_000);
+    runTimeoutRef.current = timeout;
     try {
       await triggerWorkbenchRun(workbenchId);
       load();
       loadRuns();
     } catch {
-      /* */
+      clearRunTimeout();
+      setRunning(false);
+      setRunProgress(null);
     }
-    setRunning(false);
-    setRunProgress(null);
   };
 
   /* ── voice command handler ─────────────────────────────────────── */
@@ -1101,12 +1156,18 @@ export function WorkbenchWindow({
         const doneItems = (detail?.items || []).filter(
           (i) => i.status === "done" || i.status === "dismissed",
         );
-        for (const item of doneItems) {
-          try {
-            await deleteWorkbenchItem(workbenchId, item.id);
-          } catch { /* */ }
-        }
-        load();
+        remove(
+          `${doneItems.length} done items`,
+          async () => {
+            for (const item of doneItems) {
+              try {
+                await deleteWorkbenchItem(workbenchId, item.id);
+              } catch { /* */ }
+            }
+            load();
+          },
+          () => load(),
+        );
         break;
       }
       case "set-schedule": {
@@ -1247,7 +1308,7 @@ export function WorkbenchWindow({
         {dropHover ? (
           <div className="wb-drop-zone">Drop to add</div>
         ) : null}
-        {error ? <SurfaceState error={error} /> : null}
+        {error ? <SurfaceState error={error} onRetry={() => void load()} /> : null}
 
         {/* ── head scanning indicator ─────────────────────────────── */}
         {running ? (
@@ -1300,6 +1361,8 @@ export function WorkbenchWindow({
                   empty
                   emptyLabel="No items yet"
                   emptyGlyph="○"
+                  actionLabel="Add an item"
+                  onAction={() => inletInputRef.current?.focus()}
                 />
               ) : null}
 
@@ -1315,6 +1378,8 @@ export function WorkbenchWindow({
                     setExpanded(expanded === item.id ? null : item.id)
                   }
                   onReload={load}
+                  onRemove={handleRemove}
+                  onCopy={(text) => void copy(text)}
                 />
               ))}
             </div>
@@ -1349,7 +1414,7 @@ export function WorkbenchWindow({
             ) : null}
 
             {/* ── inlet (HS-118-03/04) ─────────────────────────────── */}
-            <div className="wb-inlet" style={{ position: "relative" }}>
+            <div className="wb-inlet">
               {/* pre-call egress disclosure (HS-118-05) */}
               {resolverLamp ? (
                 <div className="wb-inlet-egress">
@@ -1460,6 +1525,10 @@ export function WorkbenchWindow({
                   type="text"
                   className="wb-inlet-input"
                   placeholder="What needs doing?"
+                  role="combobox"
+                  aria-expanded={acOpen}
+                  aria-controls="wb-inlet-listbox"
+                  aria-activedescendant={acActiveId}
                   value={newTitle}
                   onChange={(e) => {
                     setNewTitle(e.target.value);
@@ -1533,7 +1602,7 @@ export function WorkbenchWindow({
                   className="desk-chip wb-priority-cycle"
                   data-priority={newPriority}
                   onClick={() => setNewPriority((p) => (p >= 3 ? 1 : p + 1))}
-                  title={`Priority ${newPriority} — click to cycle`}
+                  title={`Priority ${newPriority}. Click to cycle`}
                 >
                   P{newPriority}
                 </button>
@@ -1556,7 +1625,13 @@ export function WorkbenchWindow({
               count={`${runs.length} RUNS`}
             >
               {runs.length === 0 ? (
-                <SurfaceState empty emptyLabel="No runs yet" emptyGlyph="○" />
+                <SurfaceState
+                  empty
+                  emptyLabel="No runs yet"
+                  emptyGlyph="○"
+                  actionLabel="Run now"
+                  onAction={detail?.recipe_id && !running ? () => void triggerRun() : undefined}
+                />
               ) : null}
               {runs.map((run) => {
                 const runLamp = boundaryEgressLamp(run.egress_boundary);
@@ -1637,7 +1712,7 @@ export function WorkbenchWindow({
                     primary={entry.content}
                     cells={
                       <>
-                        <span className="desk-chip" style={{ fontSize: "9px", height: "18px", padding: "0 6px" }}>
+                        <span className="desk-chip wb-badge-compact">
                           {kindBadge}
                         </span>
                         {entry.provenance?.model ? (
@@ -1676,17 +1751,21 @@ export function WorkbenchWindow({
         ) : null}
       </div>
 
-      <DeskWindowFooter
-        status={
-          <span className="wb-footer-status">
-            {items.length} {items.length === 1 ? "item" : "items"}
-            {lastRun
-              ? ` · last run ${humanTime(lastRun.completed_at || lastRun.started_at)}`
-              : ""}
-            {lastRun?.total_tokens
-              ? ` · ${lastRun.total_tokens.toLocaleString()} tok`
-              : ""}
-          </span>
+      <SurfaceFooter
+        receipt={
+          undoReceipt ||
+          copyReceipt || (
+            <span className="wb-footer-status">
+              {items.length} {items.length === 1 ? "item" : "items"}
+              {lastRun
+                ? ` · last run ${humanTime(lastRun.completed_at || lastRun.started_at)}`
+                : ""}
+              {lastRun?.total_tokens
+                ? ` · ${lastRun.total_tokens.toLocaleString()} tok`
+                : ""}
+              {saved ? <LampGadget label="Saved" on tone="ok" /> : null}
+            </span>
+          )
         }
       />
     </DeskWindowFrame>

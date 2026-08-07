@@ -28,6 +28,10 @@ def env(tmp_path, monkeypatch):
     reset_database()
     db = Database(tmp_path / "holdspeak.db")
     monkeypatch.setattr(hsdb, "get_database", lambda *a, **k: db)
+    # This suite injects its engine; model-file readiness belongs to target tests.
+    monkeypatch.setattr(
+        "holdspeak.inference_targets._this_machine_readiness", lambda: ("ready", "")
+    )
     app = FastAPI()
     app.include_router(build_primitives_router(WebContext(get_state=lambda: {})))
     yield db, TestClient(app)

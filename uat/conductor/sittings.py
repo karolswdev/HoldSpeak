@@ -609,7 +609,11 @@ class SittingManager:
                 detail = resp.json().get("error", "")
             except Exception:
                 pass
-            return {"ok": False, "error": detail or f"Transcribe failed (HTTP {resp.status_code})."}
+            return {
+                "ok": False,
+                "error": detail
+                or f"Could not reach the product's transcribe route (HTTP {resp.status_code}).",
+            }
         return {"ok": True, "text": resp.json().get("text", "")}
 
     def finish(self, sitting_id: str) -> dict:

@@ -164,7 +164,7 @@ export function EditorAIBar({
     setPending(false);
     abortRef.current = null;
     if (!result.ok) {
-      setReceipt({ tone: "error", text: result.output || "AI request failed." });
+      setReceipt({ tone: "error", text: result.output || "AI request failed. Your draft is unchanged. Retry." });
       return;
     }
     onProposal?.({

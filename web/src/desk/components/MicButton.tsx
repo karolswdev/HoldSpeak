@@ -106,6 +106,8 @@ export function MicButton({
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement;
+      if (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable) return;
       if (sessionRef.current && (e.key === "Enter" || e.key === "Escape")) {
         e.preventDefault();
         void stopSession();

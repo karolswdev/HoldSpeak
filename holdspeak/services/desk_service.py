@@ -1,5 +1,6 @@
 """Transport-neutral desk bootstrap and aggregate reads (HS-122-05)."""
 from __future__ import annotations
+from holdspeak.services.observer import NullObserver, PipelineObserver, observe_service
 
 from typing import Any
 
@@ -8,9 +9,11 @@ from ..db.seed import apply_seed, reset_desk
 from ..principals import Principal
 
 
+@observe_service
 class DeskService:
-    def __init__(self, db: Database) -> None:
+    def __init__(self, db: Database, *, observer: PipelineObserver | None = None) -> None:
         self._db = db
+        self._observer = observer or NullObserver()
 
     def seed(self, principal: Principal) -> dict[str, Any]:
         report = apply_seed(self._db)
