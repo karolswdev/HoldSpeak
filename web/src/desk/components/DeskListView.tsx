@@ -4,6 +4,7 @@
 // stage renders — zero new data paths, no second dashboard.
 // HS-113-03 — the floor and zone-window lists now share DeskSortableTable:
 // compact real table rows, sortable headers, sprites, and kind bands.
+import "./list-view.css";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { qualifiedRef } from "../api";
 import { useDesk } from "../store";
@@ -12,6 +13,8 @@ import { allObjects, objectByRef, worldObjects, worldZones, type WorldObject } f
 import { KIND_LABEL } from "../tools";
 // @ts-ignore — shared ESM module (see ../sprites.d.ts)
 import { spriteUrl } from "../sprites";
+import { spriteVariantKey } from "../../lib/spriteVariants";
+import { spriteStateCssClass } from "../../lib/spriteStates";
 import { objectMenuEntries } from "../floorMenu";
 import { WorkMenu } from "./DeskMenu";
 import { InlineEditor } from "./InlineEditor";
@@ -82,8 +85,8 @@ export function DeskListView() {
   const zoneNames = useMemo(() => {
     const map = new Map<string, string>();
     for (const d of items.directory || []) {
-      const name = String(d.title || d.name || "Zone");
-      for (const mid of ((d as any).memberIds as string[]) || []) map.set(mid, name);
+      const name = String(d.name || "Zone");
+      for (const mid of d.memberIds || []) map.set(mid, name);
     }
     return map;
   }, [items.directory]);
@@ -92,7 +95,7 @@ export function DeskListView() {
     const ref = qualifiedRef(o.kind, o.id);
     const subject =
       o.kind === "coder"
-        ? `coder_session:${String(o.ref.agent || "claude")}:${o.id}`
+        ? `coder_session:${String(o.ref.kind === "coder" ? o.ref.agent : "claude")}:${o.id}`
         : ref;
     return subjectCounts[subject]?.needs_attention || 0;
   };
@@ -176,15 +179,22 @@ export function DeskListView() {
       key: "icon",
       label: "",
       width: "40px",
-      render: (row) => (
-        <img
-          className="desk-sortable-table-sprite"
-          src={spriteUrl(row.type === "zone" ? "directory" : row.object.kind, row.type === "zone" ? row.id : row.object.id)}
-          alt=""
-          width={28}
-          height={28}
-        />
-      ),
+      render: (row) => {
+        const ss = row.type === "zone" ? null : row.object.ref.spriteState;
+        const state = typeof ss === "string" ? ss : null;
+        const cssHint = spriteStateCssClass(state);
+        const kind = row.type === "zone" ? "directory" : row.object.kind;
+        return (
+          <img
+            className={"desk-sortable-table-sprite" + (cssHint ? ` ${cssHint}` : "")}
+            src={spriteUrl(kind, row.type === "zone" ? row.id : row.object.id)}
+            alt=""
+            width={28}
+            height={28}
+            data-sprite-variant={spriteVariantKey(kind, state)}
+          />
+        );
+      },
     },
     {
       key: "name",

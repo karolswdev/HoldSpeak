@@ -147,6 +147,183 @@ def _journal_passthrough(
         log.debug(f"Passthrough journal write failed: {exc}")
 
 
+async def process_transcript(
+    raw_text: str,
+    source: str,
+    context: dict | None = None,
+    *,
+    config: Any = None,
+    server: Any = None,
+) -> str:
+    """Run the transcript-processing stages (corrections, learning, journaling).
+
+    HS-118-08: factored out of ``run_dictation_pipeline`` so both the hotkey
+    and browser paths share the same pipeline. The hotkey path retains target
+    detection and desktop paste (those live in the caller); this function
+    handles only the model-level processing that is source-independent.
+
+    ``source`` tags the journal entry ("hotkey" | "browser") and is passed
+    through verbatim -- no remapping.
+
+    When ``source`` is "browser", target detection is skipped (the browser IS
+    the target); the pipeline still runs corrections and learning.
+
+    Returns the pipeline-processed text, or ``raw_text`` unchanged on any
+    error or when the pipeline is disabled.
+    """
+    if config is None or server is None:
+        return raw_text
+
+    skip_target_detection = source == "browser"
+
+    return run_pipeline_corrections_only(
+        raw_text,
+        config=config,
+        server=server,
+        audio_duration_s=0.0,
+        transcribed_at=datetime.now(),
+        journal_source=source,
+        skip_target_detection=skip_target_detection,
+    )
+
+
+def run_pipeline_corrections_only(
+    text: str,
+    *,
+    config: Any,
+    server: Any,
+    audio_duration_s: float,
+    transcribed_at: datetime,
+    agent_reply_session: Any | None = None,
+    journal_source: str = "dictation",
+    skip_target_detection: bool = False,
+) -> str:
+    """Run the dictation pipeline -- corrections and learning only when
+    ``skip_target_detection`` is True, full pipeline otherwise.
+
+    HS-118-08: the browser path must skip target detection (the browser IS
+    the target). The hotkey path still runs the full pipeline with target
+    detection, activity context, and agent session support.
+    """
+    dictation_cfg = getattr(config, "dictation", None)
+    pipeline_cfg = getattr(dictation_cfg, "pipeline", None)
+    if dictation_cfg is None or pipeline_cfg is None or not bool(getattr(pipeline_cfg, "enabled", False)):
+        if pipeline_cfg is not None:
+            _journal_passthrough(
+                text,
+                server=server,
+                pipeline_cfg=pipeline_cfg,
+                source=journal_source,
+            )
+        return text
+
+    try:
+        from holdspeak.plugins.dictation.assembly import build_pipeline
+        from holdspeak.plugins.dictation.contracts import Utterance
+        from holdspeak.plugins.dictation.project_root import detect_project_for_cwd
+
+        if agent_reply_session is not None and getattr(agent_reply_session, "cwd", None):
+            project = detect_project_for_cwd(
+                Path(str(agent_reply_session.cwd)),
+                prefer_agent_session=False,
+            )
+        else:
+            project = detect_project_for_cwd()
+        project_root = Path(project["root"]) if project else None
+
+        corrections_store = getattr(server, "dictation_corrections", None)
+        correction_snapshot = (
+            corrections_store.snapshot()
+            if corrections_store is not None and bool(getattr(pipeline_cfg, "corrections_enabled", False))
+            else None
+        )
+
+        telemetry_store = getattr(server, "dictation_telemetry", None)
+        result = build_pipeline(
+            dictation_cfg,
+            project_root=project_root,
+            corrections=correction_snapshot,
+            on_run=(telemetry_store.record_run if telemetry_store is not None else None),
+        )
+        if result.runtime_status != "loaded":
+            return text
+
+        activity: dict[str, Any] = {}
+        target_profile = None
+
+        if skip_target_detection:
+            # Browser path: no target detection, no activity context.
+            # The browser IS the target -- corrections and learning run,
+            # but target detection is meaningless.
+            activity = {}
+        else:
+            # Hotkey path: full target detection, activity context, agent session.
+            from holdspeak.activity_context import build_activity_context
+            from holdspeak.agent_context import get_recent_agent_session
+            from holdspeak.agent_device import target_profile_override_for_agent
+            from holdspeak.target_profile import (
+                apply_model_assisted_target,
+                apply_target_correction,
+                collect_active_target_hints,
+                detect_target_profile_with_override,
+            )
+
+            target_override = (
+                target_profile_override_for_agent(agent_reply_session)
+                or getattr(pipeline_cfg, "target_profile_override", "auto")
+            )
+            from holdspeak.dictation_selection import consume_selected_record
+
+            selected_record_id = consume_selected_record()
+            activity = build_activity_context(
+                limit=20, refresh=False, selected_record_id=selected_record_id
+            ).to_dict()
+            target_hints = collect_active_target_hints()
+            target_profile = detect_target_profile_with_override(target_hints, target_override)
+            target_profile = apply_target_correction(
+                target_profile, text=text, corrections=correction_snapshot
+            )
+            target_profile = apply_model_assisted_target(
+                target_profile,
+                runtime=getattr(result, "runtime", None),
+                hints=target_hints,
+                text=text,
+                enabled=bool(getattr(pipeline_cfg, "target_detect_llm_enabled", False)),
+                below_confidence=float(getattr(pipeline_cfg, "target_detect_llm_below", 0.8)),
+            )
+            activity["target"] = target_profile.to_dict()
+            recent_agent = agent_reply_session or get_recent_agent_session(max_age_seconds=120)
+            if recent_agent is not None and bool(getattr(recent_agent, "awaiting_response", False)):
+                agent_project_root = getattr(recent_agent, "repo_root", None)
+                if not project_root or not agent_project_root or str(project_root) == str(agent_project_root):
+                    activity["agent"] = recent_agent.to_dict()
+
+        run = result.pipeline.run(
+            Utterance(
+                raw_text=text,
+                audio_duration_s=audio_duration_s,
+                transcribed_at=transcribed_at,
+                project=project,
+                activity=activity,
+            )
+        )
+        journal = getattr(server, "dictation_journal", None)
+        if journal is not None:
+            journal.record(
+                run,
+                source=journal_source,
+                transcript=text,
+                target_profile=target_profile,
+                project_root=project_root,
+                enabled=bool(getattr(pipeline_cfg, "journal_enabled", True)),
+                retention=int(getattr(pipeline_cfg, "journal_retention", 500)),
+            )
+        return run.final_text
+    except Exception as exc:
+        log.warning(f"Web dictation pipeline raised; falling back to processed text: {exc}")
+        return text
+
+
 def run_dictation_pipeline(
     text: str,
     *,

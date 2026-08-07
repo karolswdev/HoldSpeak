@@ -698,9 +698,10 @@ export const useSteering = create<SteeringState>((set, get) => ({
       const body = await res.json().catch(() => ({}));
       const now = Date.now();
       const armedKeys: Record<string, number> = {};
-      for (const [key, grant] of Object.entries(body.grants || {})) {
+      for (const [key, grant] of Object.entries(body.grants || {} as Record<string, unknown>)) {
+        const g = grant as Record<string, unknown>;
         armedKeys[key] =
-          now + Number((grant as any).expires_in_seconds || 0) * 1000;
+          now + Number(g.expires_in_seconds || 0) * 1000;
       }
       set({ armedKeys });
     } catch {

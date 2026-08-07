@@ -63,10 +63,8 @@ export const DEMOTED_ROUTES: DemotedRoute[] = [
   { path: "/commands", surface: "configure-commands" },
   { path: "/cadence", surface: "configure-cadence" },
   {
-    path: "/workbench",
-    surface: "build-workflow",
-    subjectKind: "workflow",
-    legacyParam: "workflow",
+    path: "/workbenches",
+    surface: "open-workbenches",
   },
   { path: "/profiles", surface: "configure-runs-on" },
   // HS-100-10 — Studio died; its address lands on Settings (the tools

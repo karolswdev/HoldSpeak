@@ -24,6 +24,8 @@ _DELIVERY_ID = re.compile(r"^[A-Za-z0-9._:-]{1,128}$")
 class DictationDeliveryRepository(BaseRepository):
     """Claim and complete exactly one remote-dictation request identity."""
 
+    table = "dictation_deliveries"
+
     def claim(
         self,
         delivery_id: str,

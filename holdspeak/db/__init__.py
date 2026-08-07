@@ -40,12 +40,11 @@ from .primitives import (  # noqa: F401
     DirectoryRepository,
     DirectoryMembershipRepository,
 )
+from .schema import SCHEMA_VERSION, SCHEMA_SQL  # noqa: F401
 from .core import *  # noqa: F401,F403
 from .core import (  # noqa: F401  explicit: names import * may skip
     Database,
     DEFAULT_DB_PATH,
-    SCHEMA_VERSION,
-    SCHEMA_SQL,
     SchemaVersionError,
     backup_database,
     restore_database,

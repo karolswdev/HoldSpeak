@@ -1,0 +1,701 @@
+/* ── The desk-window contract (Phase 93 UI remediation): any floating panel
+   can be moved by its head, resized by its grip, and raised by a click; a
+   user-arranged rect persists beside the object layout. ── */
+.desk-next .desk-window.is-floating {
+  right: auto;
+  bottom: auto;
+  max-height: none;
+}
+/* HS-97-04 — depth: the front window carries the full elevation and a
+   1px keyline ring; rest windows quiet down. One property, one ladder —
+   never per-window recipes. Sheets keep their own form. */
+.desk-next .desk-window-shell {
+  border: 1px solid var(--border);
+  box-shadow: var(--desk-window-bevel), var(--desk-glass-edge);
+}
+.desk-next .desk-window-shell.is-front {
+  border-color: var(--desk-window-keyline);
+  box-shadow: var(--desk-window-bevel), var(--desk-glass-edge);
+}
+.desk-next .desk-window-handle {
+  cursor: grab;
+  user-select: none;
+}
+.desk-next .desk-window-handle:active {
+  cursor: grabbing;
+}
+/* HS-97-05 — hands on the frame: edge handles and the snap ghost. */
+.desk-next .desk-window-edge {
+  position: absolute;
+}
+.desk-next .desk-window-edge-l {
+  top: 0;
+  bottom: 0;
+  left: -3px;
+  width: 6px;
+  cursor: ew-resize;
+}
+.desk-next .desk-window-edge-r {
+  top: 0;
+  bottom: 0;
+  right: -3px;
+  width: 6px;
+  cursor: ew-resize;
+}
+.desk-next .desk-window-edge-b {
+  right: 14px;
+  bottom: -3px;
+  left: 14px;
+  height: 6px;
+  cursor: ns-resize;
+}
+.desk-next .desk-window-corner {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+}
+.desk-next .desk-window-corner-bl {
+  bottom: -3px;
+  left: -3px;
+  cursor: nesw-resize;
+}
+.desk-next .desk-snap-ghost {
+  position: fixed;
+  z-index: var(--desk-z-transient);
+  border: 1px solid var(--desk-window-keyline);
+  border-radius: var(--desk-window-radius);
+  background: var(--accent-tint);
+  pointer-events: none;
+}
+
+/* HS-97-06 — the exposé: the world dims below the window band while the
+   pick grid rides the transient band above it. */
+.desk-next .desk-expose-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: var(--desk-z-world-overlay);
+  background: var(--desk-glass);
+}
+.desk-next .desk-expose {
+  position: fixed;
+  inset: 0;
+  z-index: var(--desk-z-transient);
+}
+.desk-next .desk-expose-cell {
+  position: absolute;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--desk-window-radius);
+  background: none;
+  cursor: pointer;
+}
+.desk-next .desk-expose-cell:hover,
+.desk-next .desk-expose-cell:focus-visible {
+  border-color: var(--desk-window-keyline);
+}
+.desk-next .desk-expose-cell.is-min {
+  background: var(--desk-panel-fill);
+  opacity: 0.78;
+}
+.desk-next .desk-expose-name {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 4px 12px;
+  border-radius: 0;
+  background: var(--desk-glass);
+  color: var(--text);
+  font-size: var(--font-size-sm);
+  white-space: nowrap;
+}
+
+/* HS-97-06 — the visible MRU switcher strip. */
+.desk-next .desk-switcher {
+  position: fixed;
+  top: 64px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 8px;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--desk-transient-radius);
+  background: var(--desk-panel-fill);
+  box-shadow: var(--desk-transient-shadow);
+  z-index: var(--desk-z-transient);
+}
+.desk-next .desk-switcher-chip {
+  padding: 5px 10px;
+  border-radius: 0;
+  color: var(--text-muted);
+  font-size: var(--font-size-sm);
+  white-space: nowrap;
+}
+.desk-next .desk-switcher-chip.is-target {
+  background: var(--accent-tint);
+  color: var(--text);
+}
+.desk-next .desk-window-grip {
+  position: absolute;
+  right: 4px;
+  bottom: 4px;
+  width: 16px;
+  height: 16px;
+  cursor: nwse-resize;
+  touch-action: none;
+  opacity: 0.55;
+  background: linear-gradient(
+      135deg,
+      transparent 0 50%,
+      var(--text-faint) 50% 58%,
+      transparent 58% 72%,
+      var(--text-faint) 72% 80%,
+      transparent 80%
+    )
+    no-repeat;
+}
+.desk-next .desk-window-grip:hover {
+  opacity: 1;
+}
+
+/* Shared panel-head anatomy for non-pullout windows and the palette. */
+.desk-next .desk-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: var(--space-3);
+}
+.desk-next .desk-panel-title {
+  margin: 0;
+  font: 700 var(--font-size-lg) var(--font-display);
+}
+.desk-next .desk-panel-eyebrow {
+  display: block;
+  color: var(--accent);
+  font: 700 10px var(--font-mono);
+  letter-spacing: var(--letter-spacing-eyebrow);
+  text-transform: uppercase;
+}
+.desk-next .desk-pullout-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--desk-window-pad-y) var(--desk-window-pad-x);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+.desk-next .desk-pullout-body section {
+  display: grid;
+  gap: 8px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+.desk-next .desk-pullout-body section:not(:first-child) {
+  border-top: 1px solid var(--border-subtle);
+  padding-top: var(--space-3);
+}
+/* HS-111: section labels — mono, 10px, 600 (system-label style) */
+.desk-next .desk-pullout-body h3 {
+  margin: 0 0 6px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  /* The object tint stays on the WINDOW EDGE; headings are quiet. */
+  color: var(--text-muted);
+}
+.desk-next .desk-pullout-body p,
+.desk-next .desk-pullout-body li {
+  font-size: var(--font-size-sm);
+  color: var(--text);
+  margin: 0;
+}
+.desk-next .desk-pullout-body ul {
+  margin: 0;
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.desk-next .desk-pullout-body .quiet {
+  color: var(--text-muted);
+}
+.desk-next .desk-pullout-md {
+  margin: 0;
+  padding: 10px;
+  border-radius: 2px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-size: var(--font-size-sm);
+  font-family: inherit;
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 320px;
+  overflow-y: auto;
+}
+.desk-next .desk-pullout-lineage {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.desk-next .desk-project-choice {
+  display: inline-flex;
+  gap: 3px;
+}
+
+/* ── HS-95-02: the OS window chrome — one head, one verb cluster, the
+   minimized tray, the maximized stage, the phone sheet. ── */
+.desk-next .desk-window-verbs {
+  margin-left: auto;
+  align-self: stretch;
+  height: 100%;
+  display: inline-flex;
+  align-items: stretch;
+  gap: 0;
+  flex: none;
+}
+.desk-next .desk-window-verb {
+  /* The hover fill is a VARIABLE the close button overrides — one
+     rule, and focus-visible shares it (PROZILLAOS_STUDY.md). */
+  --verb-hover: var(--wash-2);
+  --verb-hover-ink: var(--text);
+  height: 100%;
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--text-muted);
+  line-height: 1;
+  cursor: pointer;
+  transition: background var(--duration-short) var(--ease-quart);
+}
+.desk-next .desk-window-verb:hover,
+.desk-next .desk-window-verb:focus-visible {
+  background: var(--verb-hover);
+  color: var(--verb-hover-ink);
+}
+.desk-next .desk-window-verb:last-child {
+  border-top-right-radius: calc(var(--desk-window-radius) - 1px);
+}
+.desk-next .desk-window-verb.desk-window-close {
+  --verb-hover: var(--danger-fill);
+  --verb-hover-ink: var(--text);
+}
+.desk-next .desk-window-verb svg {
+  width: 14px;
+  height: 14px;
+}
+.desk-next .desk-window-shell.is-max {
+  position: fixed;
+  /* HS-99-02 — corners square off when docked to the frame. */
+  border-radius: 0;
+}
+.desk-next .desk-window-shell.is-max .desk-pullout-head,
+.desk-next .desk-window-shell.is-max .desk-window-verb:last-child {
+  border-radius: 0;
+}
+
+/* HS-99-02/04 — the head and dock menus float fixed at the pointer;
+   material and items come from .desk-menu-list. */
+.desk-next .desk-head-menu,
+.desk-next .desk-dock-menu {
+  position: fixed;
+  z-index: var(--desk-z-popover);
+}
+
+/* ── HS-95-04: page cores hosted in desk windows ── */
+.desk-next .desk-surface-window {
+  /* The default home: the left flank, below the chrome band and clear of
+     the top-right clusters and the dock (chrome sits UNDER the window
+     band — z 30 vs 42+ — so a default must not cover the launchers).
+     Arranged rects override (the window contract). */
+  position: fixed;
+  top: 72px;
+  left: 24px;
+  width: min(640px, 46vw);
+  max-height: calc(100vh - 148px);
+  display: flex;
+  flex-direction: column;
+  min-width: 420px;
+}
+/* HS-99-02 — the surface window's head is the SAME bar as the family
+   (the old padded/bordered override is gone; the base rule carries
+   the tone, height, and edge-flush verbs). */
+.desk-next .desk-surface-window .desk-pullout-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.desk-next .desk-surface-body {
+  flex: 1;
+  overflow: auto;
+  padding: var(--desk-window-pad-y) var(--desk-window-pad-x)
+    var(--desk-window-pad-x);
+  display: flex;
+  flex-direction: column;
+  gap: var(--desk-surface-section-gap);
+  /* HS-98-01: the WINDOW is the viewport — the surface kit reflows via
+     @container queries against this container, never viewport media. */
+  container-type: inline-size;
+  container-name: surface;
+}
+.desk-next .desk-core-verbs {
+  display: flex;
+  justify-content: flex-end;
+}
+/* The shelf's tool rows are buttons now (the dispatcher); keep the link look. */
+.desk-next .desk-tool-link {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+  text-align: left;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  padding: 0;
+  cursor: pointer;
+}
+
+/* HS-95-05: the window's subject scope — one quiet chip, product label. */
+.desk-next .desk-scope-chip {
+  align-self: flex-start;
+  margin: 0;
+  padding: 3px 10px;
+  border-radius: 0;
+  border: 1px solid
+    color-mix(in srgb, var(--accent) 40%, var(--border));
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  font-size: var(--font-size-xs);
+  color: var(--text);
+}
+.desk-next .desk-mic-row,
+.page-wrap .desk-mic-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+.desk-next .desk-mic-row > :first-child,
+.page-wrap .desk-mic-row > :first-child {
+  flex: 1;
+}
+
+/* HS-95-09: a chrome cluster hosting an OPEN transient (the room menu)
+   rides above the window band — a window's default home must never bury
+   an open menu. The cluster returns to its band when the menu closes. */
+.desk-next .desk-chrome:has(.desk-menu),
+.desk-next .desk-chrome:has(.desk-tool-shelf) {
+  /* An open transient (room menu, tool shelf) lifts its chrome cluster
+     above the window band — windows may genuinely sit under the
+     cluster since HS-97-02's honest placement. */
+  z-index: var(--desk-z-transient);
+}
+
+/* HS-95-10: the egress badge is a button — the one tap into Privacy & Trust. */
+.desk-next .egress-badge-button {
+  cursor: pointer;
+  border: 0;
+  font: inherit;
+}
+.desk-next .desk-trust-window {
+  position: fixed;
+  top: 64px;
+  right: 18px;
+  width: min(460px, calc(100vw - 36px));
+  max-height: calc(100vh - 140px);
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── HS-96-04: ONE window material (docs/internal/DESIGN_SYSTEM.md).
+   Pull-outs, surface windows, and the trust window differ only by
+   tokens; per-window recipes are forbidden. Named normalizations:
+   surface/trust fills 0.96 → the R2-06 --desk-window-fill (0.985),
+   radius 16 → 18, elevation unified on --desk-window-shadow, and the
+   window glass (backdrop blur) now applies family-wide. ── */
+.desk-next :where(.desk-pullout, .desk-surface-window, .desk-trust-window) {
+  border-radius: var(--desk-window-radius);
+  background: var(--desk-window-fill);
+  border: 1px solid var(--border);
+  box-shadow: var(--desk-window-bevel), var(--desk-glass-edge);
+  backdrop-filter: var(--desk-window-blur);
+}
+
+/* ── HS-96-03: the component state contract (docs/internal/DESIGN_SYSTEM.md).
+   One pressed grammar for every chrome affordance — a 1px settle,
+   compositor-only; focus-visible rides the global accent outline. ── */
+.desk-next
+  :where(
+    .desk-chip,
+    .desk-window-verb,
+    .desk-dock-main,
+    .desk-dock-x,
+    .desk-dock-reset,
+    .desk-tool-link,
+    .desk-mark,
+    .desk-menu button,
+    .studio-card,
+    .desk-dock-launch,
+    .desk-create-button,
+    .egress-badge-button,
+    .btn-link
+  ):active {
+  transform: translateY(1px);
+}
+/* The orb presses inward instead of down (it is a circle, not a chip). */
+.desk-next .desk-orb:active:not(:disabled) .desk-orb-core {
+  transform: scale(0.92);
+}
+
+/* Materials spike — a WINDOW is not a form control: the shell never
+   wears the focus ring (front state is carried by the lifted shadow
+   and the colored traffic lights; interior elements keep the global
+   ring). */
+.desk-next .desk-window-shell:focus-visible {
+  outline: none;
+}
+
+
+/* HS-101 B7 — the glass-drop well lights BEFORE the drop. */
+.desk-next .desk-ground.is-drop-ready {
+  box-shadow:
+    inset 0 0 0 1.5px var(--accent-soft),
+    0 0 0 4px var(--accent-tint);
+  background: var(--accent-tint);
+  border-radius: var(--radius-md);
+  transition: box-shadow var(--duration-short) var(--ease-quart);
+}
+
+/* HS-101 B7 — the file-drop veil: lights before the drop, refuses by
+   name, and hands the result a verb. */
+.desk-next .desk-glassdrop {
+  position: fixed;
+  inset: 0;
+  z-index: var(--desk-z-popover);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+.desk-next .desk-glassdrop.is-armed {
+  background: var(--shade-1);
+  box-shadow: inset 0 0 0 2px var(--accent-soft);
+}
+.desk-next .desk-glassdrop-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 16px 22px;
+  border-radius: var(--desk-transient-radius);
+  background: var(--desk-panel-fill);
+  border: 1.5px dashed var(--accent-soft);
+  box-shadow: var(--desk-transient-shadow);
+  backdrop-filter: var(--desk-window-blur);
+  -webkit-backdrop-filter: var(--desk-window-blur);
+  pointer-events: auto;
+  animation: desk-transient-in var(--duration-short) var(--ease-back);
+}
+.desk-next .desk-glassdrop-card strong {
+  font-size: var(--desk-type-primary-size);
+  font-weight: var(--desk-type-primary-weight);
+}
+.desk-next .desk-glassdrop-card small {
+  color: var(--text-muted);
+  font-size: var(--desk-surface-detail-size);
+}
+.desk-next .desk-glassdrop-verbs {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+.desk-next .desk-glassdrop-verbs button {
+  height: 26px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: var(--accent);
+  color: var(--text-on-accent);
+  font-weight: 650;
+  font-size: var(--desk-surface-detail-size);
+  cursor: pointer;
+}
+.desk-next .desk-glassdrop-verbs .is-quiet {
+  background: var(--wash-2);
+  color: var(--text);
+  font-weight: 600;
+}
+@media (prefers-reduced-motion: reduce) {
+  .desk-next .desk-glassdrop-card {
+    animation: none;
+  }
+}
+
+/* HS-105-03 — the zone window: a drawer opened into a real desk window.
+   Icons view speaks the world's cell contract; List is the density
+   altitude. Values ride the token vars only. */
+.desk-zone-window .zone-wings {
+  display: inline-flex;
+  gap: var(--space-1);
+}
+.desk-zone-window .zone-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  gap: var(--space-3) var(--space-1);
+}
+.desk-zone-window .zone-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-2);
+  background: none;
+  border: 0;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  color: var(--text);
+}
+.desk-zone-window .zone-cell:hover,
+.desk-zone-window .zone-cell:focus-visible,
+.desk-zone-window .zone-cell.is-selected {
+  background: var(--accent-tint);
+  outline-color: var(--accent);
+}
+.desk-zone-window .zone-list tr.is-selected {
+  background: var(--accent-tint);
+}
+.desk-zone-window .zone-cell img {
+  image-rendering: pixelated;
+}
+.desk-zone-window .zone-cell-label {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  max-width: 96px;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  word-break: break-word;
+}
+.desk-zone-window .zone-list {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--font-size-sm);
+}
+.desk-zone-window .zone-list th {
+  text-align: left;
+  padding: var(--space-1) var(--space-2);
+  border-bottom: 1px solid var(--border-subtle);
+}
+.desk-zone-window .zone-list td {
+  padding: var(--space-1) var(--space-2);
+  border-bottom: 1px solid var(--border-subtle);
+  white-space: nowrap;
+}
+.desk-zone-window .zone-list-ic img {
+  image-rendering: pixelated;
+  vertical-align: middle;
+}
+.desk-zone-window .zone-sort {
+  background: none;
+  border: 0;
+  color: var(--text-muted);
+  font-size: var(--font-size-xs);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  padding: 0;
+}
+.desk-zone-window .zone-sort.on {
+  color: var(--text);
+}
+.desk-zone-window .zone-list-open {
+  background: none;
+  border: 0;
+  color: var(--text);
+  cursor: pointer;
+  padding: 0;
+  font-size: var(--font-size-sm);
+}
+.desk-zone-window .zone-list-open:hover {
+  text-decoration: underline;
+}
+.desk-zone-window .zone-unfile {
+  opacity: 0;
+}
+.desk-zone-window .zone-list tr:hover .zone-unfile,
+.desk-zone-window .zone-unfile:focus-visible {
+  opacity: 1;
+}
+
+
+/* HS-105-04 — the Info card: one contract-derived surface. */
+.desk-info-window .desk-info-body section h3 {
+  font-size: var(--font-size-xs);
+  letter-spacing: var(--letter-spacing-eyebrow);
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+.desk-info-window .info-kv {
+  display: grid;
+  grid-template-columns: 96px 1fr;
+  gap: var(--space-1) var(--space-3);
+  align-items: baseline;
+}
+.desk-info-window .info-kv b {
+  color: var(--text-muted);
+  font-weight: 400;
+  font-family: var(--font-mono);
+  font-size: var(--desk-surface-label-size);
+  letter-spacing: var(--letter-spacing-eyebrow);
+  text-transform: uppercase;
+}
+.desk-info-window .info-id {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-xs);
+}
+.desk-info-window .info-name {
+  background: none;
+  border: 0;
+  border-bottom: 1px dashed var(--border-subtle);
+  color: var(--text);
+  font-size: var(--font-size-sm);
+  cursor: text;
+  padding: 0;
+  text-align: left;
+  width: max-content;
+}
+/* HS-111-10 mic sweep: the rename well is StringGadget; the wrapper
+   only bounds its width inside the identity row. */
+.desk-info-window .info-name-edit {
+  display: block;
+  max-width: 260px;
+}
+.desk-info-window .info-props {
+  display: grid;
+  gap: var(--space-2);
+}
+.desk-info-window .info-prop {
+  display: grid;
+  grid-template-columns: 130px 1fr;
+  gap: var(--space-3);
+  align-items: center;
+}
+.desk-info-window .info-prop code {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+}
+.desk-info-window .info-kind {
+  font-size: var(--font-size-xs);
+}
+

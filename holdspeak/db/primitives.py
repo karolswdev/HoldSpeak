@@ -19,6 +19,10 @@ NOTE on naming overlap (intentional, do not conflate):
 """
 from __future__ import annotations
 
+import logging
+import re
+import sqlite3
+import unicodedata
 from datetime import datetime, timezone
 from typing import Any, Optional
 
@@ -39,6 +43,29 @@ from .models import (
 )
 
 log = get_logger("db.primitives")
+_migration_log = logging.getLogger(__name__)
+
+
+# ── Zone name uniqueness (HS-118-01) ─────────────────────────────────────────
+
+class ZoneNameTaken(Exception):
+    """Raised when a zone name collides with an existing live zone."""
+
+    def __init__(self, existing_name: str) -> None:
+        self.existing_name = existing_name
+        super().__init__(f"A zone named {existing_name!r} already exists")
+
+
+def normalize_zone_name(raw: str) -> str:
+    """Strip, collapse whitespace, NFC-normalize, casefold.
+
+    Returns the normalized form used for uniqueness comparison.
+    """
+    s = str(raw or "").strip()
+    s = re.sub(r"\s+", " ", s)
+    s = unicodedata.normalize("NFC", s)
+    s = s.casefold()
+    return s
 
 
 def _now_iso() -> str:
@@ -48,6 +75,8 @@ def _now_iso() -> str:
 
 class NoteRepository(BaseRepository):
     """CRUD + sync access for desk Notes (content/synced)."""
+
+    table = "notes"
 
     def upsert(
         self,
@@ -158,6 +187,8 @@ class NoteRepository(BaseRepository):
 
 class DeskDecisionRepository(BaseRepository):
     """CRUD access for Desk-authored Architecture Decision Records."""
+
+    table = "desk_decisions"
 
     VALID_STATUSES = frozenset({"proposed", "accepted", "superseded", "deprecated"})
 
@@ -295,6 +326,8 @@ class KBRepository(BaseRepository):
     The desk's knowledge container — NOT the project.yaml kb-map / .hs context.
     """
 
+    table = "kbs"
+
     def upsert(
         self,
         *,
@@ -423,6 +456,8 @@ class RecipeRepository(BaseRepository):
 
     The canonical persona — NOT agent_context.AgentSession (a live coding session).
     """
+
+    table = "recipes"
 
     def upsert(
         self,
@@ -558,6 +593,8 @@ class ProfileRepository(BaseRepository):
     request time. Mirrors the other primitive repos (soft-delete tombstones).
     """
 
+    table = "profiles"
+
     def upsert(
         self,
         *,
@@ -676,6 +713,8 @@ class ModelManifestRepository(BaseRepository):
     The model binary never syncs; no path/url/bytes column exists to leak it.
     Mirrors the other primitive repos (soft-delete tombstones)."""
 
+    table = "model_manifests"
+
     def upsert(
         self,
         *,
@@ -777,6 +816,8 @@ class ModelManifestRepository(BaseRepository):
 class ChainRepository(BaseRepository):
     """CRUD + sync access for Chains (capability/synced)."""
 
+    table = "chains"
+
     def upsert(
         self,
         *,
@@ -872,6 +913,8 @@ class ChainRepository(BaseRepository):
 
 class WorkflowRepository(BaseRepository):
     """CRUD + sync access for Workflows (capability/synced)."""
+
+    table = "workflows"
 
     def upsert(
         self,
@@ -981,6 +1024,8 @@ class DirectoryRepository(BaseRepository):
     is filed inside) is the separate `DirectoryMembershipRepository`.
     """
 
+    table = "directories"
+
     def upsert(
         self,
         *,
@@ -994,33 +1039,67 @@ class DirectoryRepository(BaseRepository):
         clean_id = str(directory_id or "").strip()
         if not clean_id:
             raise ValueError("directory id is required")
+        clean_name = str(name or "").strip()
+        norm = normalize_zone_name(clean_name)
+        # Validate character constraints (1-64 after normalization) for live rows.
+        if not deleted:
+            if not norm:
+                raise ValueError("zone name is required")
+            if len(norm) > 64:
+                raise ValueError("zone name must be 64 characters or fewer")
         now = _now_iso()
         with self._connection() as conn:
             existing = conn.execute(
                 "SELECT created_at FROM directories WHERE id = ?", (clean_id,)
             ).fetchone()
             created = created_at or (existing["created_at"] if existing else now)
-            conn.execute(
-                """
-                INSERT INTO directories (id, name, parent_id, created_at,
-                                         last_modified, deleted)
-                VALUES (?, ?, ?, ?, ?, ?)
-                ON CONFLICT(id) DO UPDATE SET
-                    name = excluded.name,
-                    parent_id = excluded.parent_id,
-                    last_modified = excluded.last_modified,
-                    deleted = excluded.deleted
-                """,
-                (
-                    clean_id,
-                    str(name or ""),
-                    str(parent_id).strip() if parent_id else None,
-                    created,
-                    last_modified or now,
-                    1 if deleted else 0,
-                ),
-            )
+            try:
+                conn.execute(
+                    """
+                    INSERT INTO directories (id, name, name_normalized, parent_id,
+                                             created_at, last_modified, deleted)
+                    VALUES (?, ?, ?, ?, ?, ?, ?)
+                    ON CONFLICT(id) DO UPDATE SET
+                        name = excluded.name,
+                        name_normalized = excluded.name_normalized,
+                        parent_id = excluded.parent_id,
+                        last_modified = excluded.last_modified,
+                        deleted = excluded.deleted
+                    """,
+                    (
+                        clean_id,
+                        clean_name,
+                        norm,
+                        str(parent_id).strip() if parent_id else None,
+                        created,
+                        last_modified or now,
+                        1 if deleted else 0,
+                    ),
+                )
+            except sqlite3.IntegrityError:
+                # The unique partial index on name_normalized fired — find the
+                # existing zone that owns this name.
+                row = conn.execute(
+                    "SELECT name FROM directories "
+                    "WHERE name_normalized = ? AND deleted = 0 AND id != ?",
+                    (norm, clean_id),
+                ).fetchone()
+                raise ZoneNameTaken(row["name"] if row else clean_name)
         return self.get(clean_id, include_deleted=True)  # type: ignore[return-value]
+
+    def find_by_normalized_name(self, name: str) -> Optional[DirectoryRecord]:
+        """Look up a live directory by its normalized name."""
+        norm = normalize_zone_name(name)
+        if not norm:
+            return None
+        with self._connection() as conn:
+            row = conn.execute(
+                "SELECT * FROM directories WHERE name_normalized = ? AND deleted = 0",
+                (norm,),
+            ).fetchone()
+        if not row:
+            return None
+        return self._row(row)
 
     def get(self, directory_id: str, *, include_deleted: bool = False) -> Optional[DirectoryRecord]:
         clean_id = str(directory_id or "").strip()
@@ -1082,6 +1161,7 @@ class DirectoryRepository(BaseRepository):
         return DirectoryRecord(
             id=row["id"],
             name=row["name"],
+            name_normalized=row["name_normalized"] if "name_normalized" in row.keys() else "",
             parent_id=row["parent_id"],
             created_at=row["created_at"],
             last_modified=row["last_modified"],
@@ -1101,6 +1181,8 @@ class DirectoryMembershipRepository(BaseRepository):
     Tombstone semantics: unfiling sets `deleted=1` (the row stays so the unfile
     propagates). `last_modified` is the last-write-wins conflict key.
     """
+
+    table = "directory_memberships"
 
     def upsert(
         self,
@@ -1217,4 +1299,154 @@ class DirectoryMembershipRepository(BaseRepository):
             created_at=row["created_at"],
             last_modified=row["last_modified"],
             deleted=bool(row["deleted"]),
+        )
+
+
+def _backfill_directory_name_normalized(conn: sqlite3.Connection) -> None:
+    """One-time backfill: compute name_normalized for all directories and
+    disambiguate duplicates among live (deleted=0) rows.
+
+    Idempotent: rows that already have a non-empty name_normalized whose
+    value matches normalize_zone_name(name) are skipped.
+    """
+    rows = conn.execute(
+        "SELECT id, name, name_normalized, deleted FROM directories ORDER BY created_at ASC, id ASC"
+    ).fetchall()
+    # First pass: compute normalized names for all rows.
+    updates: list[tuple[str, str]] = []  # (norm, id)
+    for row in rows:
+        expected = normalize_zone_name(row["name"])
+        if row["name_normalized"] == expected and expected:
+            continue  # already correct
+        updates.append((expected, row["id"]))
+    # Apply raw normalized values first.
+    for norm, row_id in updates:
+        conn.execute(
+            "UPDATE directories SET name_normalized = ? WHERE id = ?",
+            (norm, row_id),
+        )
+    # Second pass: disambiguate duplicates among live rows.
+    # Bug fix: query ALL existing live normalized names from the DB before
+    # starting dedup, so suffix collisions with non-duplicate names are caught.
+    live_rows = conn.execute(
+        "SELECT id, name, name_normalized FROM directories "
+        "WHERE deleted = 0 ORDER BY created_at ASC, id ASC"
+    ).fetchall()
+    all_live_norms: set[str] = {row["name_normalized"] for row in live_rows if row["name_normalized"]}
+    seen: dict[str, int] = {}  # norm -> count of times seen
+    for row in live_rows:
+        norm = row["name_normalized"]
+        if not norm:
+            continue
+        if norm not in seen:
+            seen[norm] = 1
+            continue
+        # Duplicate: disambiguate with suffix.
+        seen[norm] += 1
+        counter = seen[norm]
+        base_name = row["name"]
+        while True:
+            suffix = f" ({counter})"
+            # Handle 64-char limit: truncate base name to fit, preserving word boundary.
+            max_base = 64 - len(suffix)
+            if max_base < 1:
+                # Extreme edge case: suffix alone exceeds 64 chars.
+                candidate = str(counter)
+            else:
+                truncated = base_name[:max_base]
+                # Preserve word boundary: find last space before cut point.
+                if len(base_name) > max_base:
+                    last_space = truncated.rfind(" ")
+                    if last_space > 0:
+                        truncated = truncated[:last_space]
+                candidate = truncated + suffix
+            candidate_norm = normalize_zone_name(candidate)
+            if candidate_norm not in seen and candidate_norm not in all_live_norms:
+                break
+            counter += 1
+        seen[candidate_norm] = 1
+        all_live_norms.add(candidate_norm)
+        _migration_log.info(
+            "Zone name migration: zone %s renamed normalized %r -> %r",
+            row["id"], norm, candidate_norm,
+        )
+        conn.execute(
+            "UPDATE directories SET name = ?, name_normalized = ? WHERE id = ?",
+            (candidate, candidate_norm, row["id"]),
+        )
+
+
+# ── Migration helper (HS-118-01) ─────────────────────────────────────────────
+
+def _backfill_directory_name_normalized(conn: sqlite3.Connection) -> None:
+    """One-time backfill: compute name_normalized for all directories and
+    disambiguate duplicates among live (deleted=0) rows.
+
+    Idempotent: rows that already have a non-empty name_normalized whose
+    value matches normalize_zone_name(name) are skipped.
+    """
+    rows = conn.execute(
+        "SELECT id, name, name_normalized, deleted FROM directories ORDER BY created_at ASC, id ASC"
+    ).fetchall()
+    # First pass: compute normalized names for all rows.
+    updates: list[tuple[str, str]] = []  # (norm, id)
+    for row in rows:
+        expected = normalize_zone_name(row["name"])
+        if row["name_normalized"] == expected and expected:
+            continue  # already correct
+        updates.append((expected, row["id"]))
+    # Apply raw normalized values first.
+    for norm, row_id in updates:
+        conn.execute(
+            "UPDATE directories SET name_normalized = ? WHERE id = ?",
+            (norm, row_id),
+        )
+    # Second pass: disambiguate duplicates among live rows.
+    # Bug fix: query ALL existing live normalized names from the DB before
+    # starting dedup, so suffix collisions with non-duplicate names are caught.
+    live_rows = conn.execute(
+        "SELECT id, name, name_normalized FROM directories "
+        "WHERE deleted = 0 ORDER BY created_at ASC, id ASC"
+    ).fetchall()
+    all_live_norms: set[str] = {row["name_normalized"] for row in live_rows if row["name_normalized"]}
+    seen: dict[str, int] = {}  # norm -> count of times seen
+    for row in live_rows:
+        norm = row["name_normalized"]
+        if not norm:
+            continue
+        if norm not in seen:
+            seen[norm] = 1
+            continue
+        # Duplicate: disambiguate with suffix.
+        seen[norm] += 1
+        counter = seen[norm]
+        base_name = row["name"]
+        while True:
+            suffix = f" ({counter})"
+            # Handle 64-char limit: truncate base name to fit, preserving word boundary.
+            max_base = 64 - len(suffix)
+            if max_base < 1:
+                # Extreme edge case: suffix alone exceeds 64 chars.
+                candidate = str(counter)
+            else:
+                truncated = base_name[:max_base]
+                # Preserve word boundary: find last space before cut point.
+                if len(base_name) > max_base:
+                    last_space = truncated.rfind(" ")
+                    if last_space > 0:
+                        truncated = truncated[:last_space]
+                candidate = truncated + suffix
+            candidate_norm = normalize_zone_name(candidate)
+            if candidate_norm not in seen and candidate_norm not in all_live_norms:
+                break
+            counter += 1
+        seen[candidate_norm] = 1
+        all_live_norms.add(candidate_norm)
+        _migration_log.info(
+            "Zone name migration: zone %s renamed normalized %r -> %r",
+            row["id"], norm, candidate_norm,
+        )
+        conn.execute(
+            "UPDATE directories SET name = ?, name_normalized = ? WHERE id = ?",
+            (candidate, candidate_norm, row["id"]),
         )

@@ -18,6 +18,8 @@ from fastapi import APIRouter, Request, WebSocket, WebSocketDisconnect
 from fastapi.responses import JSONResponse
 
 from ....logging_config import get_logger
+from ....services.coder_service import CoderService
+from ....services.errors import NotFound, ValidationError
 from ...context import WebContext
 from ...runtime_support import error_500
 
@@ -288,9 +290,14 @@ def build_coders_router(ctx: WebContext) -> APIRouter:
             return JSONResponse({"error": "session_id is required"}, status_code=400)
         return agent, session_id
 
+    def _service() -> CoderService:
+        from ....db import get_database
+
+        return CoderService(get_database())
+
     @router.get("/api/coders/sessions")
     async def api_coders_sessions(
-        agent: Optional[str] = None, include_ended: bool = True
+        request: Request, agent: Optional[str] = None, include_ended: bool = True
     ) -> Any:
         """The live coder set (HSM-17-02) in the HSM-17-01 shape.
 
@@ -301,53 +308,33 @@ def build_coders_router(ctx: WebContext) -> APIRouter:
         window fall out of the live set entirely; `include_ended=false` also
         drops fresh tombstones.
         """
-        from ....agent_context import (
-            DEFAULT_LIFECYCLE_DEAD_SECONDS,
-            LIFECYCLE_ENDED,
-            effective_state,
-            list_agent_sessions,
-        )
-        from ....agent_device import build_agent_identity_payload
-
         try:
-            now = datetime.now(timezone.utc)
-            items: list[dict[str, Any]] = []
-            for session in list_agent_sessions(agent=agent):
-                age = _session_age_seconds(session.updated_at, now)
-                if age is not None and age > DEFAULT_LIFECYCLE_DEAD_SECONDS:
-                    continue
-                state = effective_state(session, now=now)
-                if state == LIFECYCLE_ENDED and not include_ended:
-                    continue
-                payload = session.to_dict()
-                payload["state"] = state
-                items.append(
-                    {
-                        "session": payload,
-                        "age_seconds": age,
-                        "identity": build_agent_identity_payload(session),
-                    }
-                )
+            items = _service().list_sessions(
+                getattr(request.state, "principal", None), agent=agent, include_ended=include_ended
+            )
             return JSONResponse({"sessions": items, "count": len(items)})
         except Exception as e:
             return error_500("coders sessions", e, log)
 
     @router.post("/api/coders/select")
-    async def api_companion_select(payload: Optional[dict[str, Any]] = None) -> Any:
+    async def api_companion_select(
+        request: Request, payload: Optional[dict[str, Any]] = None
+    ) -> Any:
         """Select a specific waiting session as AI PI's active reply target."""
-        from ....agent_context import select_awaiting_agent_session
-
         target = _companion_agent_target(payload)
         if isinstance(target, JSONResponse):
             return target
         agent, session_id = target
-        session = select_awaiting_agent_session(agent, session_id)
-        if session is None:
+        try:
+            session = _service().select_session(
+                getattr(request.state, "principal", None), f"{agent}:{session_id}"
+            )
+        except NotFound:
             return JSONResponse(
                 {"success": False, "error": "unknown_session", "session": None},
                 status_code=404,
             )
-        return JSONResponse({"success": True, "session": session.to_dict()})
+        return JSONResponse({"success": True, "session": session})
 
     @router.post("/api/coders/dismiss")
     async def api_companion_dismiss(payload: Optional[dict[str, Any]] = None) -> Any:

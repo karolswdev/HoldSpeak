@@ -994,7 +994,67 @@
       ]
     },
     {
+      "path": "/api/constitutional-context",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.constitutional",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/constitutional-context",
+      "methods": [
+        "PUT"
+      ],
+      "module": "web.routes.constitutional",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/decisions",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.decisions",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/decisions",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.primitives.decisions",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/decisions",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.primitives.decisions",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/decisions/{decision_id}",
+      "methods": [
+        "DELETE"
+      ],
+      "module": "web.routes.primitives.decisions",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/decisions/{decision_id}",
       "methods": [
         "GET"
       ],
@@ -1008,7 +1068,17 @@
       "methods": [
         "GET"
       ],
-      "module": "web.routes.decisions",
+      "module": "web.routes.primitives.decisions",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/decisions/{decision_id}",
+      "methods": [
+        "PUT"
+      ],
+      "module": "web.routes.primitives.decisions",
       "consumers": [
         "web"
       ]
@@ -1064,11 +1134,31 @@
       ]
     },
     {
+      "path": "/api/decisions/{decision_id}/status",
+      "methods": [
+        "PUT"
+      ],
+      "module": "web.routes.primitives.decisions",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/decisions/{decision_id}/supersede",
       "methods": [
         "POST"
       ],
       "module": "web.routes.decisions",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/decisions/{decision_id}/supersede",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.primitives.decisions",
       "consumers": [
         "web"
       ]
@@ -2151,6 +2241,16 @@
       ]
     },
     {
+      "path": "/api/inference-targets/{target_id}/probe",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.primitives.profiles",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/intel/jobs",
       "methods": [
         "GET"
@@ -3223,6 +3323,130 @@
       ]
     },
     {
+      "path": "/api/repositories",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.repositories",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/repositories",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.repositories",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/repositories/{repository_id}/branches",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.repositories",
+      "consumers": []
+    },
+    {
+      "path": "/api/repositories/{repository_id}/checkout",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.repositories",
+      "consumers": []
+    },
+    {
+      "path": "/api/repositories/{repository_id}/commit",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.repositories",
+      "consumers": []
+    },
+    {
+      "path": "/api/repositories/{repository_id}/file/{path:path}",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.repositories",
+      "consumers": []
+    },
+    {
+      "path": "/api/repositories/{repository_id}/file/{path:path}",
+      "methods": [
+        "PUT"
+      ],
+      "module": "web.routes.repositories",
+      "consumers": []
+    },
+    {
+      "path": "/api/repositories/{repository_id}/stage",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.repositories",
+      "consumers": []
+    },
+    {
+      "path": "/api/repositories/{repository_id}/status",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.repositories",
+      "consumers": []
+    },
+    {
+      "path": "/api/repositories/{repository_id}/tree",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.repositories",
+      "consumers": []
+    },
+    {
+      "path": "/api/roadmaps",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.roadmaps",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/roadmaps/{slug}",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.roadmaps",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/roadmaps/{slug}/health",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.roadmaps",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/roadmaps/{slug}/next",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.roadmaps",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/runtime/status",
       "methods": [
         "GET"
@@ -3336,6 +3560,16 @@
       ]
     },
     {
+      "path": "/api/setup/hub-default-summary",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.setup",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/setup/onboarding",
       "methods": [
         "PUT"
@@ -3373,6 +3607,42 @@
       "module": "web.routes.setup",
       "consumers": [
         "ios",
+        "web"
+      ]
+    },
+    {
+      "path": "/api/skills",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.primitives.workbenches",
+      "consumers": []
+    },
+    {
+      "path": "/api/skills",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.primitives.workbenches",
+      "consumers": []
+    },
+    {
+      "path": "/api/skills/{skill_id}",
+      "methods": [
+        "DELETE"
+      ],
+      "module": "web.routes.primitives.workbenches",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/skills/{skill_id}",
+      "methods": [
+        "PUT"
+      ],
+      "module": "web.routes.primitives.workbenches",
+      "consumers": [
         "web"
       ]
     },
@@ -3445,6 +3715,124 @@
         "ios",
         "web"
       ]
+    },
+    {
+      "path": "/api/workbench-templates",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.primitives.workbenches",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/workbench-templates/{template_id}/instantiate",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.primitives.workbenches",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/workbenches",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.primitives.workbenches",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/workbenches",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.primitives.workbenches",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/workbenches/{workbench_id}",
+      "methods": [
+        "DELETE"
+      ],
+      "module": "web.routes.primitives.workbenches",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/workbenches/{workbench_id}",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.primitives.workbenches",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/workbenches/{workbench_id}",
+      "methods": [
+        "PUT"
+      ],
+      "module": "web.routes.primitives.workbenches",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/workbenches/{workbench_id}/items",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.primitives.workbenches",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/workbenches/{workbench_id}/items/{item_id}",
+      "methods": [
+        "DELETE"
+      ],
+      "module": "web.routes.primitives.workbenches",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/workbenches/{workbench_id}/items/{item_id}",
+      "methods": [
+        "PUT"
+      ],
+      "module": "web.routes.primitives.workbenches",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/workbenches/{workbench_id}/run",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.primitives.workbenches",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/workbenches/{workbench_id}/runs",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.primitives.workbenches",
+      "consumers": []
     },
     {
       "path": "/api/workflows",

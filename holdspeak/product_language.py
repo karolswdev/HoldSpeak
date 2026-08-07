@@ -13,9 +13,13 @@ import json
 from pathlib import Path
 from typing import Any, Mapping
 
+from .errors import HoldSpeakError
 
-class ProductLanguageError(ValueError):
+
+class ProductLanguageError(HoldSpeakError):
     """Raised when a product-language value is unknown or the registry drifts."""
+
+    code: str = "PRODUCT_LANGUAGE_ERROR"
 
 
 class DestinationClass(str, Enum):

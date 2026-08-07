@@ -6,6 +6,11 @@ import { humanizeWireValue } from "../lib/productLanguage";
 import { Button } from "./signal/Signal";
 import { LampGadget } from "../desk/surface/gadgets";
 import { SurfaceState } from "../desk/surface/Surface";
+import {
+  handleWorkbenchRunStart,
+  handleWorkbenchRunComplete,
+  clearAllFreshTimers,
+} from "../lib/spriteStateStore";
 
 type Preview = { token?: string; text?: string; kind?: "wake" | "preview" };
 
@@ -305,6 +310,29 @@ function GenerationTheater() {
   );
 }
 
+function SpriteStateWatcher() {
+  const { subscribe } = useRuntimeBus();
+  useEffect(() => {
+    const unsub = subscribe("*", (frame) => {
+      const d = frame.data as Record<string, unknown> | undefined;
+      if (!d) return;
+      const wbId = d.workbench_id as string | undefined;
+      if (!wbId) return;
+      if (frame.type === "workbench.run_start") {
+        handleWorkbenchRunStart(wbId);
+      } else if (frame.type === "workbench.run_complete") {
+        const pending = typeof d.pending_count === "number" ? d.pending_count : 0;
+        handleWorkbenchRunComplete(wbId, pending);
+      }
+    });
+    return () => {
+      unsub();
+      clearAllFreshTimers();
+    };
+  }, [subscribe]);
+  return null;
+}
+
 export function AmbientLayer() {
   return (
     <>
@@ -313,6 +341,7 @@ export function AmbientLayer() {
       <Qlippy />
       <Waveform />
       <GenerationTheater />
+      <SpriteStateWatcher />
     </>
   );
 }

@@ -15,6 +15,7 @@ const mocks = vi.hoisted(() => ({
   apiFetch: vi.fn(),
   startCapture: vi.fn(),
   stopAndTranscribe: vi.fn(),
+  startStreamSession: vi.fn(),
 }));
 
 vi.mock("../../../lib/api", () => {
@@ -52,6 +53,12 @@ vi.mock("../../../lib/speakToFill", () => ({
   subscribeCaptureLevel: () => () => undefined,
 }));
 
+vi.mock("../../../lib/micStreamSession", () => ({
+  micStreamSupported: () => true,
+  startStreamSession: mocks.startStreamSession,
+  subscribeCaptureLevel: () => () => undefined,
+}));
+
 import { ApiError } from "../../../lib/api";
 
 type Route = (init?: { method?: string; json?: unknown }) => Promise<unknown>;
@@ -79,14 +86,14 @@ async function openDeck() {
       <DictationCore />
     </MemoryRouter>,
   );
-  return screen.findByRole("button", { name: "Hold to talk" });
+  return screen.findByRole("button", { name: "Speak" });
 }
 
-/** Hold the TALK key, speak, release — the one gesture contract. */
-async function holdAndRelease(talk: HTMLElement) {
-  fireEvent.pointerDown(talk);
+/** Click-to-toggle: click to start, then click to stop. */
+async function clickToggle(talk: HTMLElement) {
+  fireEvent.click(talk);
   await waitFor(() => expect(talk).toHaveAttribute("aria-pressed", "true"));
-  fireEvent.pointerUp(talk);
+  fireEvent.click(talk);
 }
 
 beforeEach(() => {
@@ -94,6 +101,8 @@ beforeEach(() => {
   localStorage.clear();
   mocks.startCapture.mockResolvedValue(undefined);
   mocks.stopAndTranscribe.mockResolvedValue("ship it friday");
+  const stopFn = vi.fn().mockResolvedValue("ship it friday");
+  mocks.startStreamSession.mockResolvedValue({ stop: stopFn, cancel: vi.fn() });
   mockRoutes();
 });
 
@@ -105,7 +114,7 @@ describe("Speak delivers for real (HS-112-02)", () => {
     });
     const talk = await openDeck();
 
-    await holdAndRelease(talk);
+    await clickToggle(talk);
 
     await waitFor(() => expect(callsTo("/api/dictation/remote")).toHaveLength(1));
     const [call] = callsTo("/api/dictation/remote");
@@ -126,7 +135,7 @@ describe("Speak delivers for real (HS-112-02)", () => {
     });
     const talk = await openDeck();
 
-    await holdAndRelease(talk);
+    await clickToggle(talk);
 
     const receipt = await screen.findByText(/^LANDED \d+ MS -> FOCUSED APP$/);
     expect(receipt).toBeVisible();
@@ -145,9 +154,9 @@ describe("Speak delivers for real (HS-112-02)", () => {
     });
     const talk = await openDeck();
 
-    await holdAndRelease(talk);
+    await clickToggle(talk);
     await waitFor(() => expect(callsTo("/api/dictation/remote")).toHaveLength(1));
-    await holdAndRelease(talk);
+    await clickToggle(talk);
     await waitFor(() => expect(callsTo("/api/dictation/remote")).toHaveLength(2));
 
     const [first, second] = callsTo("/api/dictation/remote");
@@ -166,7 +175,7 @@ describe("Speak aim selector", () => {
       target: { value: "agent" },
     });
 
-    await holdAndRelease(talk);
+    await clickToggle(talk);
 
     await waitFor(() => expect(callsTo("/api/dictation/remote")).toHaveLength(1));
     const [call] = callsTo("/api/dictation/remote");
@@ -180,7 +189,7 @@ describe("Speak aim selector", () => {
       target: { value: "field" },
     });
 
-    await holdAndRelease(talk);
+    await clickToggle(talk);
 
     await waitFor(() =>
       expect(screen.getByLabelText("Utterance")).toHaveValue("ship it friday"),
@@ -221,7 +230,7 @@ describe("Speak REHEARSE stays explicit", () => {
     const talk = await openDeck();
     fireEvent.click(screen.getByRole("checkbox", { name: "Rehearse" }));
 
-    await holdAndRelease(talk);
+    await clickToggle(talk);
 
     await waitFor(() => expect(callsTo("/api/dictation/dry-run")).toHaveLength(1));
     expect(callsTo("/api/dictation/remote")).toHaveLength(0);
@@ -250,7 +259,7 @@ describe("Speak refusals land in-flow", () => {
     });
     const talk = await openDeck();
 
-    await holdAndRelease(talk);
+    await clickToggle(talk);
 
     const receipt = await screen.findByText("⚠ REFUSED · NO FOCUSED APP");
     expect(receipt).toBeVisible();
@@ -282,7 +291,7 @@ describe("Speak refusals land in-flow", () => {
       target: { value: "agent" },
     });
 
-    await holdAndRelease(talk);
+    await clickToggle(talk);
 
     expect(
       await screen.findByText("⚠ REFUSED · NO AGENT AWAITING"),
@@ -291,9 +300,11 @@ describe("Speak refusals land in-flow", () => {
 
   it("names a transcription failure without losing the deck", async () => {
     mocks.stopAndTranscribe.mockRejectedValue(new ApiError(504, "timeout", {}));
+    const stopFn = vi.fn().mockRejectedValue(new ApiError(504, "timeout", {}));
+    mocks.startStreamSession.mockResolvedValue({ stop: stopFn, cancel: vi.fn() });
     const talk = await openDeck();
 
-    await holdAndRelease(talk);
+    await clickToggle(talk);
 
     expect(await screen.findByText(/Transcription timed out/)).toBeVisible();
     expect(callsTo("/api/dictation/remote")).toHaveLength(0);
@@ -311,7 +322,7 @@ describe("Speak refusals land in-flow", () => {
     });
     const talk = await openDeck();
 
-    await holdAndRelease(talk);
+    await clickToggle(talk);
 
     expect(
       await screen.findByText("⚠ REFUSED · NO DELIVERY TARGET"),

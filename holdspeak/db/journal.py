@@ -22,11 +22,13 @@ from .base import BaseRepository
 from .models import DictationJournalRecord
 
 #: Run sources accepted for persistence (mirrors the recorder's `VALID_SOURCES`).
-VALID_JOURNAL_SOURCES = frozenset({"dictation", "dry_run"})
+VALID_JOURNAL_SOURCES = frozenset({"dictation", "dry_run", "browser", "hotkey"})
 
 
 class DictationJournalRepository(BaseRepository):
     """Persistence for the dictation journal (write + read + curate + prune)."""
+
+    table = "dictation_journal"
 
     def record(
         self,

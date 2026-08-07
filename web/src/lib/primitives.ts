@@ -41,7 +41,15 @@ export type PrimitiveKind =
   | "layout"
   | "roadmap"
   | "story"
-  | "repository";
+  | "repository"
+  | "workbench";
+
+/** How a primitive kind opens on the Desk (HS-117-16). */
+export type SurfaceDeclaration =
+  | { type: "pullout" }
+  | { type: "window"; windowKey: string }
+  | { type: "surface"; surfaceKey: string }
+  | { type: "none" };
 
 /** Static metadata for each kind — drives the type-legible Desk language. */
 export interface PrimitiveDescriptor {
@@ -56,6 +64,9 @@ export interface PrimitiveDescriptor {
   icon: string;
   /** Whether the web Desk can author this primitive today. */
   authorable: boolean;
+  /** How this kind opens on the desk: pullout card, dedicated window,
+   * whole-page surface, or none (HS-117-16). */
+  surface: SurfaceDeclaration;
 }
 
 // ── content ────────────────────────────────────────────────────────────
@@ -103,6 +114,7 @@ export interface Note {
   bodyMarkdown: string;
   tags: string[];
   createdAt: string; // ISO-8601 UTC
+  lastModified?: string | null;
 }
 
 export interface Decision {
@@ -133,6 +145,7 @@ export interface Directory {
   kind: "directory";
   id: string;
   name: string;
+  nameNormalized: string;
   parentId?: string | null;
   /** Primitive ids filed in this directory (membership; syncs). */
   memberIds: string[];
@@ -145,6 +158,7 @@ export interface KB {
   name: string;
   memberIds: string[];
   createdAt: string;
+  lastModified?: string | null;
 }
 
 /** A durable body of work whose relationships form its long memory. */
@@ -158,6 +172,7 @@ export interface Project {
   meetingCount: number;
   createdAt: string;
   updatedAt: string;
+  lastModified?: string | null;
 }
 
 /** A registered local git source, opened as a Desk drawer. */
@@ -168,6 +183,7 @@ export interface Repository {
   sourceId: string;
   branch: string;
   createdAt: string;
+  lastModified?: string | null;
 }
 
 // ── capability ─────────────────────────────────────────────────────────
@@ -183,6 +199,8 @@ export interface Persona {
   userTemplate: string;
   tools: string[];
   kbId?: string | null;
+  profileId?: string;
+  capability?: unknown | null;
 }
 
 export interface Chain {
@@ -190,6 +208,7 @@ export interface Chain {
   id: string;
   name: string;
   steps: string[]; // agentId[]
+  capability?: unknown | null;
 }
 
 /** The canonical `graph_json` wire (HSM-22-01 golden fixtures): Swift
@@ -216,6 +235,8 @@ export interface Workflow {
   name: string;
   prompt?: string;
   graphJson?: WorkflowGraphJson;
+  hasGraph?: boolean;
+  capability?: unknown | null;
 }
 
 // ── presence / stream ──────────────────────────────────────────────────
@@ -241,6 +262,8 @@ export type CoderAgent = "claude" | "codex";
 
 export interface Coder {
   kind: "coder";
+  id: string;
+  title?: string;
   agent: CoderAgent;
   sessionId: string;
   project?: string;
@@ -270,7 +293,51 @@ export interface Layout {
   positions: Record<string, { x: number; y: number }>;
 }
 
-export type Primitive =
+/** A Delivery Workbench project surfaced on the desk (HS-117-01). */
+export interface Roadmap {
+  kind: "roadmap";
+  id: string;
+  title: string;
+  slug: string;
+  name: string;
+  phaseCount: number;
+  currentPhase: number;
+  currentPhaseTitle: string;
+  storiesDone: number;
+  storiesTotal: number;
+  health: string;
+  issues: string[];
+  nextStoryId: string | null;
+}
+
+/** A Delivery story card surfaced on the desk (HS-117-01). */
+export interface Story {
+  kind: "story";
+  id: string;
+  title: string;
+  status: string;
+  hasEvidence: boolean;
+  phase: number;
+}
+
+/** An agent workbench — scheduled or interactive (HS-117-01). */
+export interface Workbench {
+  kind: "workbench";
+  id: string;
+  name: string;
+  recipeId?: string | null;
+  profileId?: string | null;
+  resolverProfileId?: string | null;
+  schedule?: unknown | null;
+  scheduleEnabled?: boolean;
+  itemCount?: number;
+  pendingCount?: number;
+  lastRun?: string | null;
+  createdAt?: string;
+  lastModified?: string | null;
+}
+
+export type Primitive = (
   | Meeting
   | Artifact
   | Note
@@ -284,13 +351,17 @@ export type Primitive =
   | Workflow
   | Coder
   | Game
-  | Layout;
+  | Layout
+  | Roadmap
+  | Story
+  | Workbench
+) & { spriteState?: string | null };
 
 /**
  * The descriptor table — the single source of the Desk's visual language.
  * Icons are 24×24 stroke paths (rendered with currentColor).
  */
-export const PRIMITIVES: Record<PrimitiveKind, PrimitiveDescriptor> = {
+export const PRIMITIVES = {
   meeting: {
     kind: "meeting",
     label: "Meeting",
@@ -299,6 +370,7 @@ export const PRIMITIVES: Record<PrimitiveKind, PrimitiveDescriptor> = {
     blurb: "A captured conversation with transcript and intelligence.",
     icon: "M3 5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H8l-5 4z",
     authorable: false,
+    surface: { type: "pullout" },
   },
   artifact: {
     kind: "artifact",
@@ -309,6 +381,7 @@ export const PRIMITIVES: Record<PrimitiveKind, PrimitiveDescriptor> = {
       "A synthesized output (summary, decisions, actions …) from a meeting.",
     icon: "M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6M9 13h6M9 17h6",
     authorable: false,
+    surface: { type: "pullout" },
   },
   note: {
     kind: "note",
@@ -318,6 +391,7 @@ export const PRIMITIVES: Record<PrimitiveKind, PrimitiveDescriptor> = {
     blurb: "A free-standing markdown note you write anywhere.",
     icon: "M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4z",
     authorable: true,
+    surface: { type: "pullout" },
   },
   decision: {
     kind: "decision",
@@ -327,6 +401,7 @@ export const PRIMITIVES: Record<PrimitiveKind, PrimitiveDescriptor> = {
     blurb: "Architecture decision record",
     icon: "M5 3h14v18H5zM8 8h8M8 12h8M8 16h5",
     authorable: true,
+    surface: { type: "pullout" },
   },
   directory: {
     kind: "directory",
@@ -337,6 +412,7 @@ export const PRIMITIVES: Record<PrimitiveKind, PrimitiveDescriptor> = {
     // an open folder holding contents (24×24 stroke path)
     icon: "M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2zM3 11h18",
     authorable: true,
+    surface: { type: "pullout" },
   },
   kb: {
     kind: "kb",
@@ -346,6 +422,7 @@ export const PRIMITIVES: Record<PrimitiveKind, PrimitiveDescriptor> = {
     blurb: "A named collection of material used to ground answers.",
     icon: "M2 7l10-4 10 4-10 4zM2 7v10l10 4 10-4V7M2 12l10 4 10-4",
     authorable: true,
+    surface: { type: "pullout" },
   },
   project: {
     kind: "project",
@@ -355,6 +432,7 @@ export const PRIMITIVES: Record<PrimitiveKind, PrimitiveDescriptor> = {
     blurb: "A body of work with meetings, decisions, and cited memory.",
     icon: "M4 4h16v16H4zM8 2v4M16 2v4M8 10h8M8 14h5",
     authorable: false,
+    surface: { type: "surface", surfaceKey: "open-project-memory" },
   },
   repository: {
     kind: "repository",
@@ -364,6 +442,7 @@ export const PRIMITIVES: Record<PrimitiveKind, PrimitiveDescriptor> = {
     blurb: "A registered git repository with files, pull requests, and issues.",
     icon: "M4 3h16v18H4zM8 7h8M8 11h8M8 15h5",
     authorable: true,
+    surface: { type: "window", windowKey: "RepositoryWindow" },
   },
   recipe: {
     kind: "recipe",
@@ -373,6 +452,7 @@ export const PRIMITIVES: Record<PrimitiveKind, PrimitiveDescriptor> = {
     blurb: "Saved instructions, tools, and Knowledge for reusable work.",
     icon: "M12 8V4H8M4 8a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-8a2 2 0 0 0-2-2zM9 13h.01M15 13h.01M9 17h6",
     authorable: true,
+    surface: { type: "pullout" },
   },
   chain: {
     kind: "chain",
@@ -383,6 +463,7 @@ export const PRIMITIVES: Record<PrimitiveKind, PrimitiveDescriptor> = {
       "An advanced linear Workflow whose output flows through ordered steps.",
     icon: "M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1",
     authorable: true,
+    surface: { type: "pullout" },
   },
   workflow: {
     kind: "workflow",
@@ -392,6 +473,7 @@ export const PRIMITIVES: Record<PrimitiveKind, PrimitiveDescriptor> = {
     blurb: "Saved multi-step behavior that runs on selected material.",
     icon: "M6 3v12M18 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6zM6 21a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM6 15a9 9 0 0 0 9 9",
     authorable: true,
+    surface: { type: "pullout" },
   },
   coder: {
     kind: "coder",
@@ -401,6 +483,7 @@ export const PRIMITIVES: Record<PrimitiveKind, PrimitiveDescriptor> = {
     blurb: "A live Claude or Codex session. Answer the coder by voice.",
     icon: "M16 18l6-6-6-6M8 6l-6 6 6 6",
     authorable: false,
+    surface: { type: "pullout" },
   },
   game: {
     kind: "game",
@@ -410,6 +493,7 @@ export const PRIMITIVES: Record<PrimitiveKind, PrimitiveDescriptor> = {
     blurb: "A Desk game stored only on this device.",
     icon: "M6 12h4M8 10v4M15 13h.01M18 11h.01M17.32 5H6.68a4 4 0 0 0-3.98 3.59L2 14a3 3 0 0 0 5.4 1.8L8 15h8l.6.8A3 3 0 0 0 22 14l-.7-5.41A4 4 0 0 0 17.32 5z",
     authorable: false,
+    surface: { type: "none" },
   },
   roadmap: {
     kind: "roadmap",
@@ -419,6 +503,7 @@ export const PRIMITIVES: Record<PrimitiveKind, PrimitiveDescriptor> = {
     blurb: "Delivery Workbench project",
     icon: "M4 4h16v16H4zM7 8h10M7 12h7M7 16h10",
     authorable: false,
+    surface: { type: "window", windowKey: "RoadmapWindow" },
   },
   story: {
     kind: "story",
@@ -428,6 +513,17 @@ export const PRIMITIVES: Record<PrimitiveKind, PrimitiveDescriptor> = {
     blurb: "Delivery story card",
     icon: "M6 3h12v18H6zM9 8h6M9 12h6M9 16h4",
     authorable: false,
+    surface: { type: "none" },
+  },
+  workbench: {
+    kind: "workbench",
+    label: "Workbench",
+    plural: "Workbenches",
+    syncClass: "capability",
+    blurb: "An agent workbench with a schedule, targets, and items.",
+    icon: "M3 6h18M3 6v12a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6M3 6l3-3h12l3 3M8 10h8M8 14h5",
+    authorable: true,
+    surface: { type: "window", windowKey: "WorkbenchWindow" },
   },
   layout: {
     kind: "layout",
@@ -437,17 +533,60 @@ export const PRIMITIVES: Record<PrimitiveKind, PrimitiveDescriptor> = {
     blurb: "Per-device card positions. Never synced.",
     icon: "M3 3h7v9H3zM14 3h7v5h-7zM14 12h7v9h-7zM3 16h7v5H3z",
     authorable: false,
+    surface: { type: "none" },
   },
+} as const satisfies Record<PrimitiveKind, PrimitiveDescriptor>;
+
+/** Exhaustive kind → concrete type map (HS-117-01). */
+export type PrimitiveMap = {
+  meeting: Meeting;
+  artifact: Artifact;
+  note: Note;
+  decision: Decision;
+  directory: Directory;
+  kb: KB;
+  project: Project;
+  repository: Repository;
+  recipe: Persona;
+  chain: Chain;
+  workflow: Workflow;
+  coder: Coder;
+  game: Game;
+  layout: Layout;
+  roadmap: Roadmap;
+  story: Story;
+  workbench: Workbench;
 };
+
+/** Look up the surface declaration for a kind (HS-117-16). */
+export function surfaceOf(kind: PrimitiveKind): PrimitiveDescriptor["surface"] {
+  return PRIMITIVES[kind].surface;
+}
+
+/** Extract a display label from any primitive (title or name, whichever exists). */
+export function primitiveLabel(p: Primitive): string {
+  if ("title" in p && p.title) return p.title;
+  if ("name" in p && p.name) return p.name;
+  return p.id;
+}
 
 /** @deprecated Compatibility name for code that still mirrors the recipe wire. */
 export type Agent = Persona;
 
 /** Order of the Desk's primitive sections, grouped by sync class. */
-export const DESK_GROUPS: { label: string; kinds: PrimitiveKind[] }[] = [
+export const DESK_GROUPS = [
   { label: "Content", kinds: ["meeting", "artifact", "note", "decision"] },
-  { label: "Capabilities", kinds: ["recipe", "chain", "workflow"] },
+  { label: "Capabilities", kinds: ["recipe", "chain", "workflow", "workbench"] },
   { label: "Organization", kinds: ["directory", "kb", "project", "repository"] },
   { label: "Live", kinds: ["coder"] },
   { label: "Delivery", kinds: ["roadmap", "story"] },
-];
+  { label: "Local", kinds: ["game", "layout"] },
+] as const satisfies readonly { readonly label: string; readonly kinds: readonly PrimitiveKind[] }[];
+
+/** Compile-time proof that every PrimitiveKind appears in exactly one
+ * DESK_GROUPS entry (HS-117-14). A missing kind is a type error here. */
+type _DeskGroupKinds = (typeof DESK_GROUPS)[number]["kinds"][number];
+type _AssertAllGrouped =
+  [Exclude<PrimitiveKind, _DeskGroupKinds>] extends [never] ? true : never;
+const _deskGroupsExhaustive: _AssertAllGrouped = true;
+void _deskGroupsExhaustive;

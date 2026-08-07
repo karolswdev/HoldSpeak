@@ -13,6 +13,7 @@ from fastapi import APIRouter
 from fastapi.responses import JSONResponse
 
 from ...logging_config import get_logger
+from ...services.desk_service import DeskService
 from ..context import WebContext
 
 log = get_logger("web.routes.core")
@@ -23,7 +24,9 @@ def build_core_router(ctx: WebContext) -> APIRouter:
 
     @router.get("/health")
     async def health() -> Any:
-        return JSONResponse({"status": "ok"})
+        from ...db import get_database
+
+        return JSONResponse(DeskService(get_database()).health())
 
     @router.get("/api/state")
     async def api_state() -> Any:

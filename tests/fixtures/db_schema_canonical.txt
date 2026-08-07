@@ -71,6 +71,7 @@ index idx_dictation_journal_recent: CREATE INDEX idx_dictation_journal_recent
 ON dictation_journal(created_at DESC, id DESC)
 index idx_directories_modified: CREATE INDEX idx_directories_modified ON directories(last_modified DESC)
 index idx_directory_memberships_dir: CREATE INDEX idx_directory_memberships_dir ON directory_memberships(directory_id)
+index idx_directory_name_norm: CREATE UNIQUE INDEX idx_directory_name_norm ON directories(name_normalized) WHERE deleted = 0
 index idx_first_value_attempts_started: CREATE INDEX idx_first_value_attempts_started
 ON first_value_attempts(started_at DESC)
 index idx_first_value_events_attempt: CREATE INDEX idx_first_value_events_attempt
@@ -573,6 +574,7 @@ table dictation_journal: CREATE TABLE dictation_journal (
 table directories: CREATE TABLE directories (
     id TEXT PRIMARY KEY,
     name TEXT NOT NULL DEFAULT '',
+    name_normalized TEXT NOT NULL DEFAULT '',
     parent_id TEXT,
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     last_modified TEXT NOT NULL DEFAULT (datetime('now')),

@@ -21,6 +21,89 @@ from ...runtime_support import error_500
 log = get_logger("web.routes.system")
 
 
+_BROWSER_MIC_OWNER = "browser_mic"
+
+
+def _resolve_config(ctx: WebContext) -> Any:
+    """Load the runtime config for pipeline processing."""
+    from ....config import Config
+    return Config.load()
+
+
+def _resolve_server(ctx: WebContext) -> Any:
+    """Build a server-like namespace the dictation pipeline can read."""
+    from types import SimpleNamespace
+    return SimpleNamespace(
+        dictation_corrections=ctx.corrections,
+        dictation_telemetry=ctx.telemetry,
+        dictation_journal=ctx.journal,
+    )
+
+
+def _admit_browser_pipeline(request: Any) -> tuple[bool, str]:
+    """Admit the browser pipeline operation through the kernel.
+
+    Returns (admitted, egress_boundary). If the kernel refuses, admitted
+    is False and the caller must not process. Best-effort: if the kernel
+    is not available, returns (True, "local").
+    """
+    try:
+        from ....kernel.runtime import _service
+        from ....principals import UNAUTHENTICATED
+
+        principal = getattr(getattr(request, "state", None), "principal", UNAUTHENTICATED)
+        broker = _service()
+
+        import uuid
+
+        operation_id = "op_" + uuid.uuid4().hex
+        invocation_id = "browser_pipeline_" + uuid.uuid4().hex
+        handle = broker.submit(
+            {
+                "request_schema": 1,
+                "request_id": str(uuid.uuid4()),
+                "idempotency_key": invocation_id,
+                "operation": {"name": "inference.run", "version": 1},
+                "target": {},
+                "arguments": {
+                    "invocation_id": invocation_id,
+                    "definition_ref": "program:browser-mic-pipeline-v1",
+                    "definition_revision": "1",
+                    "grounding_refs": [],
+                    "requested_target_id": "this_machine",
+                    "deadline_at": __import__("time").time() + 30,
+                    "input_snapshot": {"source": "browser"},
+                },
+            },
+            principal,
+        )
+        state = handle.get("state", "")
+        if state == "refused":
+            reason = handle.get("reason", "kernel refused the operation")
+            return False, "none"
+        # Derive boundary from the admitted operation
+        boundary = handle.get("egress_boundary", "local")
+        return True, str(boundary) if boundary else "local"
+    except Exception:
+        # Kernel not available -- admit by default (local Whisper is safe)
+        return True, "local"
+
+
+def _claim_browser_audio_floor(ctx: WebContext) -> bool:
+    """Claim the audio floor for the browser mic, returning True if granted."""
+    session = getattr(ctx, "voice_session", None)
+    if session is None:
+        return True  # no arbiter -- nothing to contend with
+    return session.acquire(_BROWSER_MIC_OWNER, lease_seconds=30.0)
+
+
+def _release_browser_audio_floor(ctx: WebContext) -> None:
+    """Release the browser mic's audio floor claim."""
+    session = getattr(ctx, "voice_session", None)
+    if session is not None:
+        session.release(_BROWSER_MIC_OWNER)
+
+
 def build_voice_router(ctx: WebContext) -> APIRouter:
     router = APIRouter()
 
@@ -53,19 +136,30 @@ def build_voice_router(ctx: WebContext) -> APIRouter:
 
     @router.post("/api/dictation/transcribe")
     async def api_transcribe(request: Request) -> Any:
-        """HS-78-01: speak-to-fill — browser-captured audio in, text out.
+        """HS-78-01: speak-to-fill -- browser-captured audio in, text out.
 
         Accepts one WAV (16 kHz mono, 16-bit PCM) body and runs the
         runtime's OWN transcriber (one model, one lock) + the dictation
         punctuation pass. The audio is never persisted and nothing
         egresses (local Whisper); the route rides the same
         loopback/token posture as every other route. Size-capped.
+
+        HS-118-08: the ``pipeline`` field in the JSON body (or, for raw
+        audio bodies, a query parameter) gates the full dictation pipeline
+        (corrections, learning loop, journaling). The kernel admits the
+        operation BEFORE inference; if refused, an error is returned. The
+        response carries ``text`` (corrected), ``raw`` (original), and
+        ``egress_boundary`` (derived from the kernel admission).
         """
         if ctx.on_transcribe is None:
             return JSONResponse(
                 {"success": False, "error": "Transcription is unavailable in this runtime. Your audio is kept in the browser for Retry. Start the desktop runtime."},
                 status_code=503,
             )
+
+        # Read pipeline flag from query params (for octet-stream bodies)
+        pipeline = request.query_params.get("pipeline", "").lower() in ("true", "1")
+
         raw = await request.body()
         if not raw:
             return JSONResponse(
@@ -75,6 +169,20 @@ def build_voice_router(ctx: WebContext) -> APIRouter:
             return JSONResponse(
                 {"success": False, "error": "Audio too large (cap: 16 MB)."}, status_code=413
             )
+
+        # HS-118-08: kernel admission BEFORE inference.
+        egress_boundary = "local"
+        if pipeline:
+            try:
+                admitted, egress_boundary = _admit_browser_pipeline(request)
+                if not admitted:
+                    return JSONResponse(
+                        {"success": False, "error": "Kernel refused the browser pipeline operation."},
+                        status_code=403,
+                    )
+            except Exception as exc:
+                log.debug(f"Kernel admission skipped for browser pipeline: {exc}")
+
         try:
             import io
             import wave
@@ -104,7 +212,32 @@ def build_voice_router(ctx: WebContext) -> APIRouter:
                 {"success": False, "error": "Transcription failed. Your audio is kept in the browser for Retry."},
                 status_code=502,
             )
-        return {"success": True, "text": text}
+
+        if not pipeline:
+            return {"success": True, "text": text}
+
+        # HS-118-08: full pipeline path -- corrections, learning, journaling.
+        raw_text = text
+        try:
+            from ....dictation_runner import process_transcript
+
+            corrected = await process_transcript(
+                raw_text=raw_text,
+                source="browser",
+                context=None,
+                config=getattr(ctx, "_config", None) or _resolve_config(ctx),
+                server=_resolve_server(ctx),
+            )
+        except Exception as exc:
+            log.warning(f"Browser pipeline processing failed, returning raw: {exc}")
+            corrected = raw_text
+
+        return {
+            "success": True,
+            "text": corrected,
+            "raw": raw_text,
+            "egress_boundary": egress_boundary,
+        }
 
     @router.post("/api/dictation/preview/type")
     async def api_preview_type(payload: dict[str, Any]) -> Any:
@@ -199,5 +332,118 @@ def build_voice_router(ctx: WebContext) -> APIRouter:
         except Exception as exc:  # a failed command is reported inline, not as a 5xx
             return JSONResponse({"ok": False, "error": f"{type(exc).__name__}: {exc}"})
 
+
+    @router.websocket("/ws/dictation/stream")
+    async def ws_dictation_stream(websocket: WebSocket) -> None:
+        """HS-119-01: streaming transcription for the click-to-toggle mic.
+
+        The client sends raw 16 kHz mono 16-bit PCM chunks as binary frames.
+        The server transcribes each chunk and sends back JSON events:
+          {"type": "partial", "text": "..."}   — progressive Whisper result
+          {"type": "final",   "text": "..."}   — pipeline-processed final text
+          {"type": "error",   "error": "..."}  — named failure
+
+        The client signals end-of-stream by sending a JSON text frame:
+          {"type": "end"}
+        """
+        from .... import web_auth
+        from ....principals import derive_owner, agent_credentials, UNAUTHENTICATED, PrincipalRight
+
+        provided = web_auth.extract_request_token(
+            authorization=websocket.headers.get("authorization"),
+            header_token=websocket.headers.get("x-holdspeak-token"),
+        ) or web_auth.extract_websocket_token(
+            websocket.headers.get("sec-websocket-protocol")
+        )
+        principal = derive_owner(provided, ctx.web_auth_token)
+        if principal is None:
+            principal = agent_credentials.derive(provided)
+        principal = principal or UNAUTHENTICATED
+        if not principal.permits(PrincipalRight.OWNER):
+            await websocket.close(code=1008, reason="auth_required")
+            return
+
+        offered = {
+            item.strip()
+            for item in str(websocket.headers.get("sec-websocket-protocol") or "").split(",")
+        }
+        selected = web_auth.WEBSOCKET_PROTOCOL if web_auth.WEBSOCKET_PROTOCOL in offered else None
+        await websocket.accept(subprotocol=selected)
+
+        if ctx.on_transcribe is None:
+            await websocket.send_json({"type": "error", "error": "Transcription unavailable."})
+            await websocket.close()
+            return
+
+        if not _claim_browser_audio_floor(ctx):
+            await websocket.send_json({"type": "error", "error": "Audio floor held by another source."})
+            await websocket.close()
+            return
+
+        import io
+        import wave
+        import numpy as np
+
+        all_chunks: list[bytes] = []
+        try:
+            while True:
+                message = await websocket.receive()
+                if message.get("type") == "websocket.disconnect":
+                    break
+
+                if "bytes" in message and message["bytes"]:
+                    chunk_bytes = message["bytes"]
+                    all_chunks.append(chunk_bytes)
+                    audio = np.frombuffer(chunk_bytes, dtype=np.int16).astype(np.float32) / 32768.0
+                    if len(audio) < 1600:
+                        continue
+                    try:
+                        partial_text = ctx.on_transcribe(audio)
+                        await websocket.send_json({"type": "partial", "text": partial_text or ""})
+                    except Exception as exc:
+                        log.debug(f"Streaming partial transcription failed: {exc}")
+
+                elif "text" in message and message["text"]:
+                    try:
+                        payload = json.loads(message["text"])
+                    except Exception:
+                        continue
+                    if payload.get("type") == "end":
+                        break
+
+            if all_chunks:
+                combined = b"".join(all_chunks)
+                audio = np.frombuffer(combined, dtype=np.int16).astype(np.float32) / 32768.0
+                try:
+                    raw_text = ctx.on_transcribe(audio)
+                except Exception as exc:
+                    log.error(f"Final transcription failed: {exc}")
+                    await websocket.send_json({"type": "error", "error": "Transcription failed."})
+                    return
+
+                final_text = raw_text or ""
+                try:
+                    from ....dictation_runner import process_transcript
+                    corrected = await process_transcript(
+                        raw_text=final_text,
+                        source="browser",
+                        context=None,
+                        config=getattr(ctx, "_config", None) or _resolve_config(ctx),
+                        server=_resolve_server(ctx),
+                    )
+                    final_text = corrected
+                except Exception as exc:
+                    log.warning(f"Pipeline processing failed, returning raw: {exc}")
+
+                await websocket.send_json({"type": "final", "text": final_text})
+            else:
+                await websocket.send_json({"type": "final", "text": ""})
+
+        except WebSocketDisconnect:
+            pass
+        except Exception as exc:
+            log.debug(f"Streaming dictation error: {exc}")
+        finally:
+            _release_browser_audio_floor(ctx)
 
     return router

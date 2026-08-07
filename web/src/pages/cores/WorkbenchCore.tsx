@@ -1,7 +1,11 @@
 // HS-95-08 — the Workbench core: the typed-step workflow editor,
 // hosted anywhere (the desk maximizes it to the full stage).
 import { openPrimitive } from "../../desk/shell";
-import type { CoreProps } from "./ActivityCore";
+import type {
+  CoreProps,
+  WorkflowFetchResponse,
+  WorkflowRunResponse,
+} from "./core-types";
 import {
   type PointerEvent as ReactPointerEvent,
   useEffect,
@@ -20,8 +24,8 @@ import {
   SurfaceCode,
   SurfaceSection,
   SurfaceState,
-  SurfaceVerbs,
 } from "../../desk/surface/Surface";
+import { renderHeroSlot } from "./core-layout";
 import {
   PRESETS,
   STEP_KINDS,
@@ -145,7 +149,7 @@ export function WorkbenchCore({ hero, scope }: CoreProps) {
       return;
     }
     setBusy(true);
-    apiFetch<any>(`/api/workflows/${encodeURIComponent(id)}`)
+    apiFetch<WorkflowFetchResponse>(`/api/workflows/${encodeURIComponent(id)}`)
       .then(({ workflow: row }) => {
         const loaded = toWorkbench(row.id, row.name, row.graph_json);
         setLinked(true);
@@ -218,7 +222,7 @@ export function WorkbenchCore({ hero, scope }: CoreProps) {
     setRunOutput("");
     setArtifactId(null);
     try {
-      const result = await apiFetch<any>(
+      const result = await apiFetch<WorkflowRunResponse>(
         `/api/workflows/${encodeURIComponent(workflow.id)}/run`,
         {
           method: "POST",
@@ -306,7 +310,7 @@ export function WorkbenchCore({ hero, scope }: CoreProps) {
   );
   return (
     <>
-      {hero ? hero(verbs) : <SurfaceVerbs>{verbs}</SurfaceVerbs>}
+      {renderHeroSlot(hero, verbs)}
       {linked ? (
         <p className="desk-scope-chip">
           <span aria-hidden="true">⧉</span> Editing {workflow.name}

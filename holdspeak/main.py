@@ -25,12 +25,20 @@ from .commands.dictation import (
     normalize_args as _normalize_dictation_args,
     run_dictation_command,
 )
-from .commands.doctor import run_doctor_command
+from .doctor import run_doctor
 from .commands.history import run_history_command
 from .commands.intel import run_intel_command
 from .logging_config import setup_logging, get_logger, LOG_FILE
 
 log = get_logger("main")
+
+
+# Kept as a small command seam for callers that dispatch subcommands directly.
+# The desk doctor itself lives in ``holdspeak.doctor`` so it is also runnable
+# independently with ``python -m holdspeak.doctor``.
+def run_doctor_command(_args: object) -> int:
+    return run_doctor()
+
 
 def main():
     """Entry point for the holdspeak command."""
@@ -496,7 +504,7 @@ Logs are written to: {LOG_FILE}
         ))
         return
 
-    # Handle doctor subcommand
+    # Handle desk doctor subcommand.
     if args.command == "doctor":
         raise SystemExit(run_doctor_command(args))
 

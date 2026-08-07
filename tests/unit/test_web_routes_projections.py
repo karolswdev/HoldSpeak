@@ -9,6 +9,7 @@ from fastapi.testclient import TestClient
 import holdspeak.db as hsdb
 from holdspeak.db import Database, reset_database
 from holdspeak.meeting_session import MeetingState
+from holdspeak.services.projection_service import ProjectionService
 from holdspeak.web.context import WebContext
 from holdspeak.web.routes import build_projections_router
 
@@ -23,7 +24,9 @@ def rig(tmp_path, monkeypatch):
     ))
     monkeypatch.setattr(hsdb, "get_database", lambda *args, **kwargs: db)
     app = FastAPI()
-    app.include_router(build_projections_router(WebContext(get_state=lambda: {})))
+    app.include_router(build_projections_router(WebContext(
+        get_state=lambda: {}, projection_service=ProjectionService(db)
+    )))
     yield db, TestClient(app)
     reset_database()
 

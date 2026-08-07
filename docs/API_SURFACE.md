@@ -9,7 +9,7 @@ and the clients that call it (extracted from the real call sites in
 `web/src` and `apple/`). "server only" means no in-repo client calls
 it today.
 
-Routes: 378 (plus static mounts). iOS-consumed: 88. Web-consumed: 287.
+Routes: 419 (plus static mounts). iOS-consumed: 88. Web-consumed: 317.
 
 ## device_audio_ws
 
@@ -127,6 +127,13 @@ Routes: 378 (plus static mounts). iOS-consumed: 88. Web-consumed: 287.
 | POST | `/api/cadence/loops/{loop_id}/snooze` | web |
 | POST | `/api/cadence/run-now` | web |
 | GET | `/api/cadence/status` | web |
+
+## web.routes.constitutional
+
+| Method | Path | Consumers |
+|---|---|---|
+| GET | `/api/constitutional-context` | web |
+| PUT | `/api/constitutional-context` | web |
 
 ## web.routes.core
 
@@ -464,6 +471,18 @@ Routes: 378 (plus static mounts). iOS-consumed: 88. Web-consumed: 287.
 | PUT | `/api/chains/{chain_id}` | web |
 | POST | `/api/chains/{chain_id}/run` | ios, web |
 
+## web.routes.primitives.decisions
+
+| Method | Path | Consumers |
+|---|---|---|
+| GET | `/api/decisions` | web |
+| POST | `/api/decisions` | web |
+| DELETE | `/api/decisions/{decision_id}` | web |
+| GET | `/api/decisions/{decision_id}` | web |
+| PUT | `/api/decisions/{decision_id}` | web |
+| PUT | `/api/decisions/{decision_id}/status` | web |
+| POST | `/api/decisions/{decision_id}/supersede` | web |
+
 ## web.routes.primitives.directories
 
 | Method | Path | Consumers |
@@ -517,6 +536,7 @@ Routes: 378 (plus static mounts). iOS-consumed: 88. Web-consumed: 287.
 | DELETE | `/api/inference-targets/{target_id}` | web |
 | GET | `/api/inference-targets/{target_id}` | web |
 | PUT | `/api/inference-targets/{target_id}` | web |
+| POST | `/api/inference-targets/{target_id}/probe` | web |
 | GET | `/api/profiles` | web |
 | POST | `/api/profiles` | web |
 | DELETE | `/api/profiles/{profile_id}` | web |
@@ -535,6 +555,27 @@ Routes: 378 (plus static mounts). iOS-consumed: 88. Web-consumed: 287.
 | POST | `/api/recipes/{recipe_id}/chat` | web |
 | POST | `/api/recipes/{recipe_id}/keep` | web |
 | POST | `/api/recipes/{recipe_id}/run` | ios, web |
+
+## web.routes.primitives.workbenches
+
+| Method | Path | Consumers |
+|---|---|---|
+| GET | `/api/skills` | server only |
+| POST | `/api/skills` | server only |
+| DELETE | `/api/skills/{skill_id}` | web |
+| PUT | `/api/skills/{skill_id}` | web |
+| GET | `/api/workbench-templates` | web |
+| POST | `/api/workbench-templates/{template_id}/instantiate` | web |
+| GET | `/api/workbenches` | web |
+| POST | `/api/workbenches` | web |
+| DELETE | `/api/workbenches/{workbench_id}` | web |
+| GET | `/api/workbenches/{workbench_id}` | web |
+| PUT | `/api/workbenches/{workbench_id}` | web |
+| POST | `/api/workbenches/{workbench_id}/items` | web |
+| DELETE | `/api/workbenches/{workbench_id}/items/{item_id}` | web |
+| PUT | `/api/workbenches/{workbench_id}/items/{item_id}` | web |
+| POST | `/api/workbenches/{workbench_id}/run` | web |
+| GET | `/api/workbenches/{workbench_id}/runs` | server only |
 
 ## web.routes.primitives.workflows
 
@@ -577,6 +618,30 @@ Routes: 378 (plus static mounts). iOS-consumed: 88. Web-consumed: 287.
 | GET | `/api/projects/{project_id}/since-last-meeting` | web |
 | GET | `/api/projects/{project_id}/summary` | server only |
 
+## web.routes.repositories
+
+| Method | Path | Consumers |
+|---|---|---|
+| GET | `/api/repositories` | web |
+| POST | `/api/repositories` | web |
+| GET | `/api/repositories/{repository_id}/branches` | server only |
+| POST | `/api/repositories/{repository_id}/checkout` | server only |
+| POST | `/api/repositories/{repository_id}/commit` | server only |
+| GET | `/api/repositories/{repository_id}/file/{path:path}` | server only |
+| PUT | `/api/repositories/{repository_id}/file/{path:path}` | server only |
+| POST | `/api/repositories/{repository_id}/stage` | server only |
+| GET | `/api/repositories/{repository_id}/status` | server only |
+| GET | `/api/repositories/{repository_id}/tree` | server only |
+
+## web.routes.roadmaps
+
+| Method | Path | Consumers |
+|---|---|---|
+| GET | `/api/roadmaps` | web |
+| GET | `/api/roadmaps/{slug}` | web |
+| GET | `/api/roadmaps/{slug}/health` | web |
+| GET | `/api/roadmaps/{slug}/next` | web |
+
 ## web.routes.setup
 
 | Method | Path | Consumers |
@@ -585,6 +650,7 @@ Routes: 378 (plus static mounts). iOS-consumed: 88. Web-consumed: 287.
 | POST | `/api/setup/first-value/start` | web |
 | POST | `/api/setup/first-value/{attempt_id}/event` | web |
 | POST | `/api/setup/first-value/{attempt_id}/finish` | web |
+| GET | `/api/setup/hub-default-summary` | web |
 | PUT | `/api/setup/onboarding` | web |
 | GET | `/api/setup/runtime-options` | web |
 | POST | `/api/setup/runtime-test` | web |

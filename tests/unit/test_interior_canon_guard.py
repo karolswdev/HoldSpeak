@@ -133,10 +133,16 @@ def test_dictation_core_speech_settings_never_regresses() -> None:
     composed groups + EditInPlace + the shared RuntimeDestination, never
     the raw-wire dumps / Save-button forms / label-over-Select stack the
     owner's screenshots convicted ("an absolute joke — a cacophony of
-    tiles, panes, forms, form groups")."""
-    source = (WEB_SRC / "pages" / "cores" / "DictationCore.tsx").read_text(
-        encoding="utf-8"
-    )
+    tiles, panes, forms, form groups").
+    HS-117-08 decomposed the core into dictation/ sub-files; read the
+    full tree."""
+    core_file = WEB_SRC / "pages" / "cores" / "DictationCore.tsx"
+    sub_dir = WEB_SRC / "pages" / "cores" / "dictation"
+    parts = [core_file.read_text(encoding="utf-8")]
+    if sub_dir.is_dir():
+        for f in sorted(sub_dir.glob("*.tsx")):
+            parts.append(f.read_text(encoding="utf-8"))
+    source = "\n".join(parts)
     assert "Save knowledge" not in source and "Save instructions" not in source, (
         "HS-102-06 regression: Knowledge/Instructions must save on commit "
         "through EditInPlace, never an orange Save button."

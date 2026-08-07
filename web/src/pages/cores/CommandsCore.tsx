@@ -12,19 +12,23 @@ import {
   GadgetRow,
   StringGadget,
 } from "../../desk/surface/gadgets";
-import { apiFetch, readableError, type JsonRecord } from "../../lib/api";
+import { apiFetch, readableError } from "../../lib/api";
 import { useResource } from "../pageSupport";
-import type { CoreProps } from "./ActivityCore";
+import type {
+  CoreProps,
+  Macro,
+  SettingsResponse,
+  CommandTestResponse,
+} from "./core-types";
 import {
   ConfirmVerb,
   SurfaceRow,
   SurfaceRows,
   SurfaceSection,
   SurfaceState,
-  SurfaceVerbs,
 } from "../../desk/surface/Surface";
+import { renderHeroSlot } from "./core-layout";
 
-type Macro = { keyword: string; action: { kind: string; payload: string } };
 const blank = (): Macro => ({
   keyword: "",
   action: { kind: "open_url", payload: "" },
@@ -38,9 +42,8 @@ const preview = (macro: Macro) =>
   })[macro.action.kind] ?? "uses") + ` ${macro.action.payload}`;
 
 export function CommandsCore({ hero }: CoreProps) {
-  const resource = useResource<JsonRecord>("/api/settings", {});
-  const macros = ((resource.data.dictation as JsonRecord | undefined)?.macros ??
-    {}) as JsonRecord;
+  const resource = useResource<SettingsResponse>("/api/settings", {});
+  const macros = resource.data.dictation?.macros ?? {};
   const items = (Array.isArray(macros.items) ? macros.items : []) as Macro[];
   const enabled = Boolean(macros.enabled);
   const [editing, setEditing] = useState<{
@@ -57,7 +60,7 @@ export function CommandsCore({ hero }: CoreProps) {
     setBusy(true);
     setMessage(null);
     try {
-      const value = await apiFetch<{ settings?: JsonRecord }>("/api/settings", {
+      const value = await apiFetch<{ settings?: SettingsResponse }>("/api/settings", {
         method: "PUT",
         json: { dictation: { macros: { enabled: on, items: next } } },
       });
@@ -71,7 +74,7 @@ export function CommandsCore({ hero }: CoreProps) {
   const test = async (macro: Macro) => {
     setBusy(true);
     try {
-      const value = await apiFetch<JsonRecord>("/api/commands/test", {
+      const value = await apiFetch<CommandTestResponse>("/api/commands/test", {
         method: "POST",
         json: macro.action,
       });
@@ -120,11 +123,7 @@ export function CommandsCore({ hero }: CoreProps) {
   );
   return (
     <>
-      {hero ? (
-        hero(verbs)
-      ) : (
-        <SurfaceVerbs status={`${items.length} ${items.length === 1 ? "command" : "commands"}`}>{verbs}</SurfaceVerbs>
-      )}
+      {renderHeroSlot(hero, verbs, `${items.length} ${items.length === 1 ? "command" : "commands"}`)}
       {message ? (
         message.error ? (
           <SurfaceState error={message.text} />

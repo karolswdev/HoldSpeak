@@ -3,6 +3,7 @@
 import { describe, expect, it } from "vitest";
 import { INFO, kindInfo, filedZones } from "../infoContract";
 import { EMPTY_ITEMS, type Items } from "../api";
+import type { Directory } from "../../lib/primitives";
 import type { WorldObject } from "../world";
 
 const obj = (kind: string, ref: Record<string, unknown> = {}): WorldObject =>
@@ -42,8 +43,8 @@ describe("the Info contract (HS-105-04)", () => {
     const items: Items = {
       ...EMPTY_ITEMS,
       directory: [
-        { kind: "directory", id: "d1", name: "Z", memberIds: ["note:x1"] },
-        { kind: "directory", id: "d2", name: "Y", memberIds: ["other"] },
+        { kind: "directory", id: "d1", name: "Z", memberIds: ["note:x1"] } as Directory,
+        { kind: "directory", id: "d2", name: "Y", memberIds: ["other"] } as Directory,
       ],
     };
     expect(filedZones(obj("note"), items).map((d) => d.id)).toEqual(["d1"]);

@@ -19,6 +19,9 @@ from .process_input import ProcessInputCodec
 from .process_spawn import ProcessSpawnCodec
 from .subprocess_exec import SubprocessExecCodec
 from .tool_call import ToolCallCodec
+from .voice_resolve import VoiceResolveCodec
+from .workbench_mint import WorkbenchMintCodec
+from .workbench_triage import WorkbenchTriageCodec
 
 _principal = ContextVar("kernel_principal", default=UNAUTHENTICATED)
 _broker: Broker | None = None
@@ -58,6 +61,9 @@ def _build(database: Any, *, clock: Any = None) -> Broker:
     actuator = ActuatorCodec(database.actuators, _mode)
     inference = InferenceRunCodec(database, **({"clock": clock} if clock else {}))
     cancellation = InferenceCancelCodec(database, store)
+    voice_resolve = VoiceResolveCodec()
+    workbench_mint = WorkbenchMintCodec()
+    workbench_triage = WorkbenchTriageCodec()
     specs = (
         OperationSpec(tool_calls.name, tool_calls.version, tool_calls, "agent.submit", "propose"),
         OperationSpec(process_input.name, process_input.version, process_input, "agent.submit", "propose"),
@@ -74,6 +80,9 @@ def _build(database: Any, *, clock: Any = None) -> Broker:
         OperationSpec(actuator.name, actuator.version, actuator, "agent.submit", "propose"),
         OperationSpec(inference.name, inference.version, inference, "agent.submit", "propose"),
         OperationSpec(cancellation.name, cancellation.version, cancellation, "agent.submit", "propose"),
+        OperationSpec(voice_resolve.name, voice_resolve.version, voice_resolve, "agent.submit", "propose"),
+        OperationSpec(workbench_mint.name, workbench_mint.version, workbench_mint, "agent.submit", "propose"),
+        OperationSpec(workbench_triage.name, workbench_triage.version, workbench_triage, "agent.submit", "propose"),
     )
     broker = Broker(store, specs, **({"clock": clock} if clock else {}))
     launch_service.bind_kernel(broker)

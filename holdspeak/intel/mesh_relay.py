@@ -81,9 +81,12 @@ class MeshRelayIntel:
                 f"mesh node '{self.node}' is offline (last seen {int(age)}s ago)"
             )
 
+        from ..constitutional_context import constitutional_system_message
+        constitutional = constitutional_system_message()
+        full_system = (constitutional + "\n\n" + system_prompt).strip() if constitutional else system_prompt
         job = queue.enqueue(
             node=self.node,
-            system_prompt=system_prompt,
+            system_prompt=full_system,
             user_prompt=user_prompt,
             temperature=temperature,
             max_tokens=max_tokens,

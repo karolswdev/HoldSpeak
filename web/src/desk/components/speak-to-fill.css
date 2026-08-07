@@ -1,0 +1,176 @@
+/* ── HS-78-02: the speak-to-fill mic (hold to talk) ── */
+/* HS-111: mic — rectangular, etched */
+.desk-next .desk-mic {
+  width: 34px;
+  height: 34px;
+  border-radius: 2px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  font-size: 15px;
+  cursor: pointer;
+  display: inline-grid;
+  place-items: center;
+  transition:
+    border-color var(--duration-short) var(--ease-standard),
+    box-shadow var(--duration-short) var(--ease-standard);
+}
+@keyframes desk-mic-pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.06); opacity: 0.85; }
+}
+.desk-next .desk-mic.is-listening {
+  border-color: var(--accent);
+  animation: desk-mic-pulse 1.5s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+.desk-next .desk-mic.is-busy {
+  opacity: 0.7;
+}
+.desk-next .desk-mic.is-failed {
+  border-color: var(--danger, #f87171);
+}
+/* HS-100-06: capture unavailable — visible, disabled, reason in the
+   title. Never display: none (the mic must not vanish silently). */
+.desk-next .desk-mic.is-unsupported {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* HS-119-01: level meter — a 4-bar strip adjacent to the mic, driven by
+   --mic-level (0..1) via scaleY. Compositor-only: transform + opacity. */
+.desk-next .desk-mic-level {
+  display: inline-block;
+  width: 4px;
+  height: 20px;
+  background: var(--accent);
+  border-radius: 1px;
+  transform-origin: bottom;
+  transform: scaleY(var(--mic-level, 0));
+  opacity: calc(0.3 + 0.7 * var(--mic-level, 0));
+  transition: transform 60ms linear, opacity 60ms linear;
+  vertical-align: middle;
+  margin-left: 4px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .desk-next .desk-mic-level {
+    transform: none;
+    opacity: 0.6;
+  }
+}
+
+.desk-next .desk-mic-failure {
+  max-width: 24rem;
+  color: color-mix(in srgb, var(--danger, #f87171) 65%, var(--text));
+  font-size: var(--font-size-xs);
+  line-height: 1.35;
+}
+.desk-next .desk-inline-editor-spacer {
+  flex: 1;
+}
+.desk-next .desk-inline-editor-foot {
+  align-items: center;
+  gap: 8px;
+}
+.desk-next .desk-zone-rename-row {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+@media (prefers-reduced-motion: reduce) {
+  .desk-next .desk-mic.is-listening {
+    animation: none;
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+}
+
+/* ── HS-78-03: hold to answer the coder ── */
+.desk-next .desk-coder-answer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.desk-next .desk-coder-draft-input {
+  width: min(100%, 28rem);
+  min-height: 4.5rem;
+  resize: vertical;
+  color: var(--text);
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  box-shadow: var(--desk-window-etch);
+  padding: 8px 10px;
+  font: inherit;
+}
+.desk-next .desk-coder-context {
+  display: grid;
+  width: 100%;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid var(--surface-3);
+  border-radius: 2px;
+  background: var(--surface-1);
+}
+.desk-next .desk-coder-context pre {
+  max-height: 140px;
+  margin: 0;
+  overflow: auto;
+  color: var(--text-muted);
+  font: var(--font-size-xs) var(--font-mono);
+  white-space: pre-wrap;
+}
+.desk-next .desk-coder-answer-state {
+  font-size: var(--font-size-xs);
+}
+
+
+/* ── VoiceProposalStrip ── */
+@keyframes desk-voice-scan {
+  from {
+    transform: translateX(-105%);
+  }
+  to {
+    transform: translateX(210%);
+  }
+}
+.desk-voice-proposal {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  box-shadow: var(--desk-window-etch), var(--desk-window-shadow);
+  font: 10px/1.25 var(--font-mono);
+}
+.desk-voice-proposal-heard {
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--muted);
+}
+.desk-voice-proposal-action {
+  color: var(--text);
+  text-transform: uppercase;
+}
+.desk-voice-scan {
+  position: relative;
+  width: 44px;
+  height: 4px;
+  overflow: hidden;
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+}
+.desk-voice-scan::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  width: 45%;
+  background: var(--accent);
+  animation: desk-voice-scan 0.8s linear infinite;
+}

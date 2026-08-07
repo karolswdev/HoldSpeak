@@ -361,7 +361,11 @@ class MeetingIntel:
         the meeting intel engine already uses (so a persona honours the user's
         configured endpoint). No JSON coercion — personas produce free text.
         """
+        from ..constitutional_context import constitutional_system_message
+        constitutional = constitutional_system_message()
         messages: list[dict[str, str]] = []
+        if constitutional:
+            messages.append({"role": "system", "content": constitutional})
         if system_prompt:
             messages.append({"role": "system", "content": system_prompt})
         messages.append({"role": "user", "content": user_prompt})

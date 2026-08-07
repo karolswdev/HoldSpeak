@@ -250,6 +250,7 @@ def test_stop_hook_failure_is_silent(tmp_path) -> None:
 
 @pytest.fixture
 def route_rig(tmp_path, monkeypatch):
+    from holdspeak.services.gate_service import GateService
     from holdspeak.web.context import WebContext
     from holdspeak.web.routes.system.gate_routes import build_gate_router
 
@@ -266,7 +267,7 @@ def route_rig(tmp_path, monkeypatch):
         request.state.principal = Principal(PrincipalKind.AGENT, "claude:s1")
         return await call_next(request)
 
-    app.include_router(build_gate_router(WebContext(get_state=lambda: {})))
+    app.include_router(build_gate_router(WebContext(get_state=lambda: {}, gate_service=GateService(db))))
     yield db, TestClient(app)
     reset_database()
 

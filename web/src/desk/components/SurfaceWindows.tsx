@@ -17,7 +17,7 @@ import { useDesk } from "../store";
 import { objectByRef } from "../world";
 import { DeskWindowFrame } from "./DeskWindow";
 import { WingSlotContext } from "../surface/wings";
-import type { CoreProps } from "../../pages/cores/ActivityCore";
+import type { CoreProps } from "../../pages/cores/core-types";
 
 interface SurfaceRow {
   key: string;
@@ -111,16 +111,30 @@ const SURFACES: SurfaceRow[] = [
     ),
   },
   {
-    key: "build-workflow",
-    id: "surface-workbench",
-    title: "Workbench",
-    glyph: "⧉",
-    eyebrow: "Build",
-    minW: 720,
-    maximized: true,
+    key: "open-constitutional-context",
+    id: "surface-constitutional-context",
+    title: "Context",
+    glyph: "§",
+    eyebrow: "Owner",
+    minW: 480,
+    maximized: false,
     Core: lazy(() =>
-      import("../../pages/cores/WorkbenchCore").then((m) => ({
-        default: m.WorkbenchCore,
+      import("../../pages/cores/ConstitutionalContextCore").then((m) => ({
+        default: m.ConstitutionalContextCore,
+      })),
+    ),
+  },
+  {
+    key: "open-workbenches",
+    id: "surface-workbenches",
+    title: "Workbenches",
+    glyph: "⚒",
+    eyebrow: "Work",
+    minW: 560,
+    maximized: false,
+    Core: lazy(() =>
+      import("../../pages/cores/WorkbenchesHomeCore").then((m) => ({
+        default: m.WorkbenchesHomeCore,
       })),
     ),
   },

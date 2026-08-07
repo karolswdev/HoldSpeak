@@ -34,6 +34,8 @@ def _iso(dt: datetime) -> str:
 class MeshRelayRepository(BaseRepository):
     """CRUD + lifecycle for `mesh_relay_jobs` and `mesh_workers`."""
 
+    table = "mesh_relay"
+
     # ── enqueue / read ───────────────────────────────────────────────────
 
     def enqueue(

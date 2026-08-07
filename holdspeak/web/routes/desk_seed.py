@@ -10,10 +10,11 @@ from __future__ import annotations
 
 from typing import Any
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 
 from ...logging_config import get_logger
+from ...services.desk_service import DeskService
 from ..context import WebContext
 from ..runtime_support import error_500
 
@@ -23,36 +24,22 @@ log = get_logger("web.routes.desk_seed")
 def build_desk_seed_router(ctx: WebContext) -> APIRouter:
     router = APIRouter()
 
-    @router.post("/api/desk/seed")
-    async def api_desk_seed() -> Any:
-        try:
-            from ...db import get_database
-            from ...db.seed import apply_seed
+    def _svc() -> DeskService:
+        from ...db import get_database
 
-            report = apply_seed(get_database())
-            return JSONResponse({"success": True, **report.to_dict()})
+        return DeskService(get_database())
+
+    @router.post("/api/desk/seed")
+    async def api_desk_seed(request: Request) -> Any:
+        try:
+            return JSONResponse(_svc().seed(getattr(request.state, "principal", None)))
         except Exception as exc:
             return error_500(exc, log, "Failed to seed the desk")
 
     @router.post("/api/desk/reset")
-    async def api_desk_reset() -> Any:
+    async def api_desk_reset(request: Request) -> Any:
         try:
-            from ...db import get_database
-            from ...db.seed import reset_desk
-
-            report = reset_desk(get_database())
-            seed = report.seed
-            return JSONResponse({
-                "success": True,
-                "tombstoned": dict(report.tombstoned),
-                "tombstoned_total": report.tombstoned_total,
-                "seeded": dict(seed.applied) if seed else {},
-                "seeded_total": seed.total if seed else 0,
-                "profiles_seeded": seed.profiles_seeded if seed else 0,
-                "profiles_adopted": dict(seed.profiles_adopted) if seed else {},
-                "filed": seed.filed if seed else 0,
-                "manifest": seed.manifest if seed else None,
-            })
+            return JSONResponse(_svc().reset(getattr(request.state, "principal", None)))
         except Exception as exc:
             return error_500(exc, log, "Failed to reset the desk")
 

@@ -1,6 +1,7 @@
-"""Chains (crews): CRUD + the hub run endpoint.
+"""Chains (crews): CRUD (thin adapter) + the hub run endpoint.
 
-Bodies moved verbatim from routes/primitives.py (HS-79-03, the Phase-63 discipline).
+CRUD delegates to PrimitiveService (HS-122-01).
+The run endpoint stays in the route layer (story 02/03 territory).
 """
 from __future__ import annotations
 
@@ -11,6 +12,8 @@ from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 
 from ....logging_config import get_logger
+from ....services.errors import NotFound, ValidationError
+from ....services.primitive_service import PrimitiveService
 from ...context import WebContext
 from ...runtime_support import error_500
 from ._shared import (
@@ -24,30 +27,17 @@ log = get_logger("web.routes.primitives")
 def build_chains_router(ctx: WebContext) -> APIRouter:
     router = APIRouter()
 
-    def _payload(db: Any, chain: Any) -> dict[str, Any]:
-        missing = [rid for rid in chain.steps if db.recipes.get(str(rid)) is None]
-        ready = bool(chain.steps) and not missing
-        detail = ""
-        if not chain.steps:
-            detail = "Add at least one Agent to this linear Sequence."
-        elif missing:
-            detail = "Missing Agents: " + ", ".join(map(str, missing))
-        row = chain.to_dict()
-        row["capability"] = capability_descriptor(
-            kind="sequence", name=chain.name or chain.id,
-            readiness="ready" if ready else "unavailable", detail=detail,
-            action_label=f"Run {chain.name or 'Sequence'}",
-            support="linear_compatibility",
-        )
-        return row
+    def _svc() -> PrimitiveService:
+        from ....db import get_database
+        return PrimitiveService(get_database())
+
+    def _principal(request: Request) -> Any:
+        return getattr(request.state, "principal", None)
 
     @router.get("/api/chains")
-    async def api_list_chains() -> Any:
+    async def api_list_chains(request: Request) -> Any:
         try:
-            from ....db import get_database
-            db = get_database()
-            chains = db.chains.list()
-            return JSONResponse({"chains": [_payload(db, c) for c in chains]})
+            return JSONResponse({"chains": _svc().list_chains(_principal(request))})
         except Exception as exc:
             return error_500(exc, log, "Failed to list chains")
 
@@ -56,31 +46,27 @@ def build_chains_router(ctx: WebContext) -> APIRouter:
         body = await _json_body(request)
         if body is None:
             return JSONResponse({"error": "expected a JSON object"}, status_code=400)
-        if not str(body.get("name") or "").strip():
-            return JSONResponse({"error": "Sequence name is required"}, status_code=400)
         try:
-            from ....db import get_database
-            db = get_database()
-            chain = db.chains.upsert(
-                chain_id=str(body.get("id") or _new_id("chain")),
+            chain = _svc().create_chain(
+                _principal(request),
+                chain_id=str(body.get("id") or "") or None,
                 name=str(body.get("name") or ""),
                 steps=list(body.get("steps") or []),
             )
-            return JSONResponse({"chain": _payload(db, chain)}, status_code=201)
+            return JSONResponse({"chain": chain}, status_code=201)
+        except ValidationError as exc:
+            return JSONResponse({"error": str(exc)}, status_code=400)
         except ValueError as exc:
             return JSONResponse({"error": str(exc)}, status_code=400)
         except Exception as exc:
             return error_500(exc, log, "Failed to create chain")
 
     @router.get("/api/chains/{chain_id}")
-    async def api_get_chain(chain_id: str) -> Any:
+    async def api_get_chain(chain_id: str, request: Request) -> Any:
         try:
-            from ....db import get_database
-            db = get_database()
-            chain = db.chains.get(chain_id)
-            if chain is None:
-                return JSONResponse({"error": f"Unknown Sequence: {chain_id}"}, status_code=404)
-            return JSONResponse({"chain": _payload(db, chain)})
+            return JSONResponse({"chain": _svc().get_chain(_principal(request), chain_id)})
+        except NotFound:
+            return JSONResponse({"error": f"Unknown Sequence: {chain_id}"}, status_code=404)
         except Exception as exc:
             return error_500(exc, log, "Failed to get chain")
 
@@ -90,43 +76,31 @@ def build_chains_router(ctx: WebContext) -> APIRouter:
         if body is None:
             return JSONResponse({"error": "expected a JSON object"}, status_code=400)
         try:
-            from ....db import get_database
-            db = get_database()
-            existing = db.chains.get(chain_id)
-            if existing is None:
-                return JSONResponse({"error": f"Unknown Sequence: {chain_id}"}, status_code=404)
-            chain = db.chains.upsert(
-                chain_id=chain_id,
-                name=str(body["name"]) if "name" in body else existing.name,
-                steps=list(body["steps"]) if "steps" in body else existing.steps,
+            chain = _svc().update_chain(
+                _principal(request),
+                chain_id,
+                name=body.get("name"),
+                steps=body.get("steps"),
             )
-            return JSONResponse({"chain": _payload(db, chain)})
+            return JSONResponse({"chain": chain})
+        except NotFound:
+            return JSONResponse({"error": f"Unknown Sequence: {chain_id}"}, status_code=404)
         except Exception as exc:
             return error_500(exc, log, "Failed to update chain")
 
     @router.delete("/api/chains/{chain_id}")
-    async def api_delete_chain(chain_id: str) -> Any:
+    async def api_delete_chain(chain_id: str, request: Request) -> Any:
         try:
-            from ....db import get_database
-            removed = get_database().chains.delete(chain_id)
-            if not removed:
-                return JSONResponse({"error": f"Unknown Sequence: {chain_id}"}, status_code=404)
+            _svc().delete_chain(_principal(request), chain_id)
             return JSONResponse({"success": True})
+        except NotFound:
+            return JSONResponse({"error": f"Unknown Sequence: {chain_id}"}, status_code=404)
         except Exception as exc:
             return error_500(exc, log, "Failed to delete chain")
 
     @router.post("/api/chains/{chain_id}/run")
     async def api_run_chain(chain_id: str, request: Request) -> Any:
-        """Run a Chain (crew): each agent in `steps` in sequence, threading output.
-
-        Each step loads its AgentRecord, renders its `user_template` against the
-        current input (the previous step's output, or the request `input` for the
-        first step) + the shared `variables`, and runs it through the same
-        persona-run path as `POST /api/recipes/{id}/run`
-        (`build_configured_meeting_intel().run_prompt`). 404 if the chain or any
-        referenced agent is missing; 502 on the first engine failure (no silent
-        empty). Returns the per-step trail plus the last step's output.
-        """
+        """Run a Chain (crew): each agent in `steps` in sequence, threading output."""
         body = await _json_body(request) or {}
         lifecycle: Optional[RunLifecycle] = None
         try:
@@ -150,7 +124,6 @@ def build_chains_router(ctx: WebContext) -> APIRouter:
                      "invocation": invocation, "invocation_id": lifecycle.invocation_id}, status_code=409
                 )
 
-            # Resolve every agent up front so a missing one 404s before any run.
             agents = []
             for recipe_id in steps:
                 agent = db.recipes.get(str(recipe_id))
@@ -215,8 +188,6 @@ def build_chains_router(ctx: WebContext) -> APIRouter:
                         status_code=400,
                     )
                 try:
-                    # off the event loop: a mesh run WAITS on the relay queue,
-                    # and THIS loop must serve the worker's claim polls
                     output = await asyncio.to_thread(
                         intel.run_prompt,
                         system_prompt=agent.system_prompt,
@@ -245,14 +216,10 @@ def build_chains_router(ctx: WebContext) -> APIRouter:
                     "output": output,
                     "provider": intel.active_provider,
                 })
-                # Thread this step's output as the next step's input (the pipeline).
                 current_input = output
 
-            # Top-level provider = the last step's provider (so the web badge stops
-            # reading "provider unknown"); per-step providers are kept on `steps`.
             top_provider = run_steps[-1]["provider"] if run_steps else None
 
-            # Provenance: the chain, plus each step's agent as contributing source.
             sources: list[dict[str, str]] = [
                 {"source_type": "chain", "source_ref": chain_id}
             ]
@@ -298,7 +265,5 @@ def build_chains_router(ctx: WebContext) -> APIRouter:
                 except Exception:
                     pass
             return error_500(exc, log, "Failed to run chain")
-
-    # ── Workflows ─────────────────────────────────────────────────────────
 
     return router

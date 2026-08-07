@@ -24,6 +24,7 @@ from .kbs import build_kbs_router
 from .notes import build_notes_router
 from .profiles import build_profiles_router
 from .workflows import build_workflows_router
+from .workbenches import build_workbenches_router
 from .invocations import build_invocations_router
 
 
@@ -39,4 +40,5 @@ def build_primitives_router(ctx: WebContext) -> APIRouter:
     router.include_router(build_workflows_router(ctx))
     router.include_router(build_invocations_router(ctx))
     router.include_router(build_directories_router(ctx))
+    router.include_router(build_workbenches_router(ctx))
     return router

@@ -663,8 +663,8 @@ def test_run_workflow_engine_error_is_502(client: TestClient, monkeypatch) -> No
 def test_directory_crud_flow(client: TestClient) -> None:
     assert client.get("/api/directories").json() == {"directories": []}
 
-    # Create requires a name.
-    assert client.post("/api/directories", json={}).status_code == 400
+    # Create requires a name (HS-118-01: 422 for validation failures).
+    assert client.post("/api/directories", json={}).status_code == 422
 
     resp = client.post("/api/directories", json={"name": "Inbox"})
     assert resp.status_code == 201

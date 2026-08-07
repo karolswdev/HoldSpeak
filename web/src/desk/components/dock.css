@@ -1,0 +1,202 @@
+/* ── HS-110-03: the dock — a solid, opaque Workbench taskbar strip ── */
+.desk-next .desk-dock {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 0;
+  z-index: var(--desk-z-dock);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border-radius: 0;
+  background: var(--desk-glass);
+  border: none;
+  border-top: 1px solid var(--border);
+  box-shadow: inset 0 1px 0 var(--bevel-light);
+}
+.desk-next .desk-dock-chip {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  border-radius: 0;
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  box-shadow: var(--desk-window-etch);
+  animation: desk-chip-in var(--duration-short) var(--ease-quart);
+}
+@keyframes desk-chip-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.92);
+  }
+}
+/* HS-110-03: front chip wears accent tint, not a running underline */
+.desk-next .desk-dock-chip.is-front {
+  background: var(--accent-tint);
+  border-color: var(--border-strong);
+}
+/* HS-110-03: no glyph swell — flat shelf */
+.desk-next .desk-dock-launch {
+  position: relative;
+}
+.desk-next .desk-dock-launch.is-run {
+  border-bottom: 2px solid var(--accent);
+}
+.desk-next .desk-dock-launch.is-front {
+  background: var(--surface-3);
+}
+.desk-next .desk-dock-chip.is-min {
+  opacity: 0.55;
+}
+.desk-next .desk-dock-main {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 168px;
+  padding: 5px 8px;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  cursor: pointer;
+}
+.desk-next .desk-dock-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.desk-next .desk-dock-x {
+  width: 0;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 11px;
+  cursor: pointer;
+  transition: width var(--duration-short) var(--ease-standard);
+}
+.desk-next .desk-dock-chip:hover .desk-dock-x,
+.desk-next .desk-dock-x:focus-visible {
+  width: 20px;
+}
+.desk-next .desk-dock-x:hover {
+  color: var(--text);
+}
+.desk-next .desk-dock-reset {
+  border: 0;
+  background: transparent;
+  color: var(--text-faint);
+  font-size: 13px;
+  padding: 4px 6px;
+  cursor: pointer;
+}
+.desk-next .desk-dock-reset:hover {
+  color: var(--text);
+}
+/* HS-111-09 — the dock verbs are VerbGlyph SVGs (⊞/⟲/✕ retired). */
+.desk-next .desk-dock-reset svg {
+  width: 14px;
+  height: 14px;
+  display: block;
+}
+.desk-next .desk-dock-x svg {
+  width: 11px;
+  height: 11px;
+  display: block;
+  margin: 0 auto;
+}
+
+/* HS-97-07 — launcher chips + the shelf's orb seat. */
+.desk-next .desk-dock-launch {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border: 0;
+  border-radius: 2px;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.desk-next .desk-dock-launch:hover {
+  background: var(--accent-tint);
+  color: var(--text);
+}
+/* HS-111-09 — dock hover brightens the sprite itself (the icon-family
+   _sel treatment; chrome states are CSS per ICON-DISCIPLINE). */
+.desk-next .desk-dock-launch:hover .desk-dock-sprite {
+  filter: brightness(1.15);
+}
+.desk-next .desk-dock-launch.is-run {
+  color: var(--text);
+  box-shadow: inset 0 -2px 0 var(--desk-window-keyline);
+}
+.desk-next .desk-dock-launch strong {
+  display: grid;
+  min-width: 18px;
+  height: 18px;
+  place-items: center;
+  border-radius: 0;
+  background: var(--danger-signal);
+  color: var(--text);
+  font-size: var(--font-size-xs);
+}
+.desk-next .desk-dock-sep {
+  width: 1px;
+  height: 22px;
+  background: var(--border);
+}
+.desk-next .desk-dock .desk-orb-wrap {
+  position: relative;
+  bottom: auto;
+  left: auto;
+  transform: none;
+  z-index: auto;
+}
+.desk-next .desk-dock .desk-orb {
+  width: 40px;
+  height: 40px;
+}
+.desk-next .desk-dock .desk-orb-note,
+.desk-next .desk-dock .desk-orb-elapsed {
+  position: absolute;
+  top: -26px;
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+@media (max-width: 720px) {
+  .desk-next .desk-window-shell.is-sheet {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    top: auto;
+    width: auto;
+    /* HS-98-02: a desktop min-width (420px surface floor) must never
+       push a sheet past a 393px phone — the sheet owns the edge. */
+    min-width: 0;
+    max-height: 78vh;
+    border-radius: 2px 18px 0 0;
+    overflow: auto;
+  }
+  .desk-next .desk-dock {
+    left: 8px;
+    right: 8px;
+    bottom: calc(8px + env(safe-area-inset-bottom, 0px));
+    transform: none;
+    max-width: none;
+    overflow-x: auto;
+    /* Sheets own the phone's bottom; the dock yields beneath them. */
+    z-index: var(--desk-z-dock-under);
+  }
+  .desk-next .desk-dock-main {
+    max-width: 96px;
+  }
+}
+

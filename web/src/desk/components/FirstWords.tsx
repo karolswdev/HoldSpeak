@@ -12,12 +12,14 @@ import {
 import { useDurableDraft } from "../../lib/durableDraft";
 import { loadPendingVoice } from "../../lib/pendingVoice";
 import {
-  cancelCapture,
   retryPendingTranscription,
   speakToFillSupported,
-  startCapture,
-  stopAndTranscribe,
 } from "../../lib/speakToFill";
+import {
+  micStreamSupported,
+  startStreamSession,
+  type StreamSession,
+} from "../../lib/micStreamSession";
 import { FirstValueTracker } from "../firstValue";
 
 type CaptureState =
@@ -43,8 +45,8 @@ export function FirstWords({
   const [saving, setSaving] = useState(false);
   const tracker = useRef<FirstValueTracker | null>(null);
   if (!tracker.current) tracker.current = new FirstValueTracker();
-  const listening = useRef(false);
-  const holding = useRef(false);
+  const sessionRef = useRef<StreamSession | null>(null);
+  const startingRef = useRef(false);
   const draftEdited = useRef(false);
 
   useEffect(() => {
@@ -91,8 +93,8 @@ export function FirstWords({
   };
 
   const begin = async () => {
-    if (listening.current || state === "transcribing") return;
-    holding.current = true;
+    if (startingRef.current || state === "transcribing") return;
+    startingRef.current = true;
     setFailure(null);
     setMessage("");
     try {
@@ -102,32 +104,35 @@ export function FirstWords({
         await acceptTranscript(recovered);
         return;
       }
-      await startCapture();
-      if (!holding.current) {
-        await cancelCapture();
-        fail("unknown");
-        return;
-      }
-      listening.current = true;
+      const session = await startStreamSession(() => {});
+      sessionRef.current = session;
       setState("listening");
       void tracker.current?.event("capture_started");
     } catch (error) {
       fail(dictationFailure(error));
+    } finally {
+      startingRef.current = false;
     }
   };
 
   const stop = async () => {
-    holding.current = false;
-    if (!listening.current) return;
-    listening.current = false;
+    const session = sessionRef.current;
+    if (!session) return;
+    sessionRef.current = null;
     setState("transcribing");
     void tracker.current?.event("capture_released");
     try {
-      await acceptTranscript(await stopAndTranscribe("first-words"));
+      const result = await session.stop();
+      await acceptTranscript(result);
     } catch (error) {
       fail(dictationFailure(error));
       setMessage("Captured audio is retained on this browser for Retry.");
     }
+  };
+
+  const toggle = () => {
+    if (state === "listening") void stop();
+    else if (state === "idle" || state === "failed") void begin();
   };
 
   const dismiss = async (disposition: "dismissed" | "needs_help") => {
@@ -166,14 +171,14 @@ export function FirstWords({
     }
   };
 
-  const supported = speakToFillSupported();
+  const supported = speakToFillSupported() || micStreamSupported();
   const failureContract = failure ? DICTATION_FAILURES[failure] : null;
   const Heading = embedded ? "h2" : "h1";
   return (
     <section className="desk-first-words" aria-labelledby="first-words-title">
       <span className="surface-eyebrow">Voice typing</span>
       <Heading id="first-words-title">Dictate one sentence</Heading>
-      <p>Hold to speak. Your words stay editable here before you use them.</p>
+      <p>Click to speak. Your words stay editable here before you use them.</p>
       <button
         type="button"
         className={`desk-first-talk is-${state}`}
@@ -183,42 +188,28 @@ export function FirstWords({
           Boolean(failureContract && !failureContract.retry)
         }
         aria-label={
-          state === "failed" && failureContract?.retry
-            ? "Hold to retry dictation"
-            : state === "failed"
-              ? "Dictation unavailable until setup is fixed"
-              : "Hold to dictate"
+          state === "listening"
+            ? "Stop listening"
+            : state === "failed" && failureContract?.retry
+              ? "Click to retry dictation"
+              : state === "failed"
+                ? "Dictation unavailable until setup is fixed"
+                : "Click to dictate"
         }
-        onPointerDown={(event) => {
+        onClick={(event) => {
           event.preventDefault();
-          void begin();
-        }}
-        onPointerUp={() => void stop()}
-        onPointerLeave={() => {
-          if (holding.current) void stop();
-        }}
-        onKeyDown={(event) => {
-          if ((event.key === " " || event.key === "Enter") && !event.repeat) {
-            event.preventDefault();
-            void begin();
-          }
-        }}
-        onKeyUp={(event) => {
-          if (event.key === " " || event.key === "Enter") {
-            event.preventDefault();
-            void stop();
-          }
+          toggle();
         }}
       >
         {state === "listening"
-          ? "Listening… release when done"
+          ? "Listening… click to stop"
           : state === "transcribing"
             ? "Transcribing…"
             : state === "failed" && failureContract?.retry
-              ? "Hold to retry"
+              ? "Click to retry"
               : state === "failed"
                 ? "Open Setup to continue"
-                : "Hold to speak"}
+                : "Click to speak"}
       </button>
       {!supported ? <SurfaceState error={micUnsupportedMessage} /> : null}
       {failureContract ? (

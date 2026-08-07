@@ -1,21 +1,36 @@
 """DB-backed meeting listing, facets, detail, delete, and export routes.
 
-These read routes close over no server state and call the module-level
-`get_database()` directly, exactly as before the Phase-72 package split.
+These read routes delegate through the composition-bound meeting service.
 """
 
 from __future__ import annotations
 
 from typing import Any, Optional
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse, Response
 
 from ....logging_config import get_logger
+from ....principals import UNAUTHENTICATED
+from ....services.meeting_service import MeetingService
+from ....services.errors import NotFound, ValidationError
 from ...context import WebContext
-from ._shared import _parse_facet_date
 
 log = get_logger("web.routes.meetings")
+
+
+def _service(ctx: WebContext) -> MeetingService:
+    if isinstance(ctx.meeting_service, MeetingService):
+        return ctx.meeting_service
+    from ....db import get_database
+
+    service = MeetingService(get_database())  # _service composition
+    ctx.meeting_service = service
+    return service
+
+
+def _principal(request: Request):
+    return getattr(request.state, "principal", UNAUTHENTICATED)
 
 
 def build_crud_router(ctx: WebContext) -> APIRouter:
@@ -23,6 +38,7 @@ def build_crud_router(ctx: WebContext) -> APIRouter:
 
     @router.get("/api/meetings")
     async def api_list_meetings(
+        request: Request,
         limit: int = 50,
         offset: int = 0,
         search: Optional[str] = None,
@@ -47,50 +63,20 @@ def build_crud_router(ctx: WebContext) -> APIRouter:
                 status_code=422,
             )
         try:
-            from ....db import get_database
-            db = get_database()
-
-            parsed_from = _parse_facet_date(date_from)
-            parsed_to = _parse_facet_date(date_to, end_of_day=True)
-
-            search_ids: Optional[list[str]] = None
-            if search:
-                results = db.meetings.search_transcripts(search, limit=500)
-                search_ids = list(dict.fromkeys([r[0] for r in results]))
-
-            meetings = db.meetings.list_meetings(
+            result = _service(ctx).list_meetings(
+                _principal(request),
+                query=search,
+                from_date=date_from,
+                to_date=date_to,
                 limit=limit,
-                offset=offset,
-                date_from=parsed_from,
-                date_to=parsed_to,
-                tag=tag,
+                cursor=offset,
                 speaker=speaker,
+                tag=tag,
                 has_open_actions=has_open_actions,
-                meeting_ids=search_ids,
             )
-            filtered = bool(search or date_from or date_to or speaker or tag or has_open_actions)
-            return JSONResponse({
-                "meetings": [
-                    {
-                        "id": m.id,
-                        "started_at": m.started_at.isoformat(),
-                        "ended_at": m.ended_at.isoformat() if m.ended_at else None,
-                        "title": m.title,
-                        "duration_seconds": m.duration_seconds,
-                        "segment_count": m.segment_count,
-                        "action_item_count": m.action_item_count,
-                        "tags": m.tags,
-                        "intel_status": m.intel_status,
-                        "intel_status_detail": m.intel_status_detail,
-                        "capture_status": m.capture_status,
-                        "capture_failure": m.capture_failure,
-                        "capture_checkpoint_seconds": m.capture_checkpoint_seconds,
-                        "provenance": m.provenance,
-                    }
-                    for m in meetings
-                ],
-                "total": len(meetings) if filtered else db.meetings.get_meeting_count(),
-            })
+            # The legacy endpoint was offset-based and did not expose cursors.
+            result.pop("next_cursor", None)
+            return JSONResponse(result)
         except Exception as e:
             log.error(f"Failed to list meetings: {e}")
             return JSONResponse(
@@ -98,34 +84,21 @@ def build_crud_router(ctx: WebContext) -> APIRouter:
             )
 
     @router.get("/api/meetings/facets")
-    async def api_meeting_facets() -> Any:
-        """Distinct speakers + tags for the /history filter row (HS-55-04).
-
-        Registered before ``/api/meetings/{meeting_id}`` so "facets" never
-        matches as a meeting id.
-        """
+    async def api_meeting_facets(request: Request) -> Any:
+        """Distinct speakers + tags for the /history filter row (HS-55-04)."""
         try:
-            from ....db import get_database
-            db = get_database()
-            return JSONResponse(db.meetings.list_facet_values())
+            return JSONResponse(_service(ctx).facets(_principal(request)))
         except Exception as e:
             log.error(f"Failed to list meeting facets: {e}")
-            return JSONResponse(
-                {"error": str(e)}, status_code=500
-            )
+            return JSONResponse({"error": str(e)}, status_code=500)
 
     @router.get("/api/meetings/{meeting_id}")
-    async def api_get_meeting(meeting_id: str) -> Any:
+    async def api_get_meeting(meeting_id: str, request: Request) -> Any:
         """Get meeting details from database."""
         try:
-            from ....db import get_database
-            db = get_database()
-            meeting = db.meetings.get_meeting(meeting_id)
-            if meeting is None:
-                return JSONResponse(
-                    {"error": "Meeting not found"}, status_code=404
-                )
-            return JSONResponse(meeting.to_dict())
+            return JSONResponse(_service(ctx).get_meeting(_principal(request), meeting_id))
+        except NotFound:
+            return JSONResponse({"error": "Meeting not found"}, status_code=404)
         except Exception as e:
             log.error(f"Failed to get meeting: {e}")
             return JSONResponse(
@@ -133,16 +106,13 @@ def build_crud_router(ctx: WebContext) -> APIRouter:
             )
 
     @router.delete("/api/meetings/{meeting_id}")
-    async def api_delete_meeting(meeting_id: str) -> Any:
+    async def api_delete_meeting(meeting_id: str, request: Request) -> Any:
         """Delete a meeting (HS-55-02: e.g. a failed import's honest row)."""
         try:
-            from ....db import get_database
-            db = get_database()
-            if not db.meetings.delete_meeting(meeting_id):
-                return JSONResponse(
-                    {"error": "Meeting not found"}, status_code=404
-                )
+            _service(ctx).delete_meeting(_principal(request), meeting_id)
             return JSONResponse({"deleted": meeting_id})
+        except NotFound:
+            return JSONResponse({"error": "Meeting not found"}, status_code=404)
         except Exception as e:
             log.error(f"Failed to delete meeting: {e}")
             return JSONResponse(
@@ -150,28 +120,23 @@ def build_crud_router(ctx: WebContext) -> APIRouter:
             )
 
     @router.post("/api/meetings/{meeting_id}/capture/recover")
-    async def api_recover_meeting_capture(meeting_id: str) -> Any:
+    async def api_recover_meeting_capture(meeting_id: str, request: Request) -> Any:
         """Keep the last atomic checkpoint as an honestly partial Meeting."""
         try:
-            from ....db import get_database
-
-            meeting = get_database().meetings.recover_capture(meeting_id)
-            if meeting is None:
-                return JSONResponse({"error": "Meeting not found"}, status_code=404)
-            return JSONResponse({"meeting": meeting.to_dict(), "recovered": True})
+            return JSONResponse(_service(ctx).recover_capture(_principal(request), meeting_id))
+        except NotFound:
+            return JSONResponse({"error": "Meeting not found"}, status_code=404)
         except Exception as exc:
-            return JSONResponse(
-                {"error": f"Recovery failed; the original Meeting is retained: {exc}. Retry recovery."},
-                status_code=500,
-            )
+            return JSONResponse({"error": f"Recovery failed; the original Meeting is retained: {exc}. Retry recovery."}, status_code=500)
 
     @router.get("/api/meetings/{meeting_id}/sync-conflicts")
-    async def api_meeting_sync_conflicts(meeting_id: str) -> Any:
-        from ....db import get_database
-
-        return JSONResponse({
-            "conflicts": get_database().meetings.list_sync_conflicts(meeting_id)
-        })
+    async def api_meeting_sync_conflicts(meeting_id: str, request: Request) -> Any:
+        try:
+            return JSONResponse(_service(ctx).list_sync_conflicts(_principal(request), meeting_id))
+        except NotFound:
+            return JSONResponse({"error": "Meeting not found"}, status_code=404)
+        except Exception as exc:
+            return JSONResponse({"error": str(exc)}, status_code=500)
 
     @router.post(
         "/api/meetings/{meeting_id}/sync-conflicts/{conflict_id}/resolve"
@@ -180,135 +145,42 @@ def build_crud_router(ctx: WebContext) -> APIRouter:
         meeting_id: str,
         conflict_id: str,
         payload: dict[str, Any],
+        request: Request,
     ) -> Any:
         """Apply the owner's explicit choice between two Meeting versions."""
-        resolution = str(payload.get("resolution") or "").strip()
-        if resolution not in {"keep_current", "use_incoming"}:
-            return JSONResponse(
-                {"error": "resolution must be keep_current or use_incoming"},
-                status_code=400,
-            )
-
-        from ....db import get_database
-
-        db = get_database()
-        conflict = db.meetings.get_sync_conflict(meeting_id, conflict_id)
-        if conflict is None:
-            return JSONResponse({"error": "Meeting conflict not found"}, status_code=404)
-        if conflict.get("resolved_at") is not None:
-            return JSONResponse(
-                {"error": "Meeting conflict was already resolved; reload the Meeting."},
-                status_code=409,
-            )
-
-        incoming_state = None
-        incoming = conflict.get("incoming")
-        if resolution == "use_incoming" and not (
-            isinstance(incoming, dict) and bool(incoming.get("deleted"))
-        ):
-            if not isinstance(incoming, dict):
-                return JSONResponse(
-                    {"error": "Incoming Meeting version is unreadable; current work retained."},
-                    status_code=409,
-                )
-            try:
-                from ..sync import meeting_state_from_sync_value
-
-                incoming_state = meeting_state_from_sync_value(
-                    {**incoming, "id": meeting_id}
-                )
-            except (TypeError, ValueError) as exc:
-                return JSONResponse(
-                    {
-                        "error": (
-                            "Incoming Meeting version is unreadable; current work retained: "
-                            f"{exc}"
-                        )
-                    },
-                    status_code=409,
-                )
-
         try:
-            outcome = db.meetings.resolve_sync_conflict(
-                meeting_id,
-                conflict_id,
-                resolution=resolution,
-                incoming_state=incoming_state,
-            )
-        except (TypeError, ValueError) as exc:
-            return JSONResponse(
-                {"error": f"Conflict was not changed; both versions remain: {exc}. Choose a version and retry."},
-                status_code=409,
-            )
-        except Exception as exc:
-            log.error("Failed to resolve Meeting sync conflict: %s", exc)
-            return JSONResponse(
-                {"error": f"Conflict recovery failed; both versions remain: {exc}. Retry the resolution."},
-                status_code=500,
-            )
-
-        if outcome == "missing":
+            return JSONResponse(_service(ctx).resolve_sync_conflict(_principal(request), meeting_id, conflict_id, payload))
+        except ValidationError as exc:
+            return JSONResponse({"error": str(exc)}, status_code=400)
+        except NotFound:
             return JSONResponse({"error": "Meeting conflict not found"}, status_code=404)
-        if outcome == "already_resolved":
-            return JSONResponse(
-                {"error": "Meeting conflict was already resolved; reload the Meeting."},
-                status_code=409,
-            )
-
-        meeting = db.meetings.get_meeting(meeting_id)
-        return JSONResponse(
-            {
-                "resolution": resolution,
-                "deleted": outcome == "deleted",
-                "meeting": meeting.to_dict() if meeting is not None else None,
-                "remaining_conflicts": db.meetings.list_sync_conflicts(meeting_id),
-            }
-        )
+        except Exception as exc:
+            from ....services.errors import ConflictError
+            if isinstance(exc, ConflictError):
+                return JSONResponse({"error": str(exc)}, status_code=409)
+            log.error("Failed to resolve Meeting sync conflict: %s", exc)
+            return JSONResponse({"error": f"Conflict recovery failed; both versions remain: {exc}. Retry the resolution."}, status_code=500)
 
     @router.get("/api/meetings/{meeting_id}/export")
     async def api_export_meeting(
         meeting_id: str,
+        request: Request,
         format: str = "markdown",
     ) -> Any:
         """Render a saved meeting handoff export."""
-        export_format = str(format or "").strip().lower()
-        if export_format == "md":
-            export_format = "markdown"
-        if export_format not in {"markdown", "json"}:
-            return JSONResponse(
-                {"error": f"Invalid export format: {format}"},
-                status_code=400,
-            )
-
         try:
-            from ....db import get_database
-            from ....meeting_exports import render_meeting_export
-
-            db = get_database()
-            meeting = db.meetings.get_meeting(meeting_id)
-            if meeting is None:
-                return JSONResponse(
-                    {"error": "Meeting not found"}, status_code=404
-                )
-
-            artifacts = db.plugins.list_artifacts(meeting_id, limit=200)
-            content = render_meeting_export(
-                meeting,
-                export_format,  # type: ignore[arg-type]
-                artifacts=artifacts,
+            export = _service(ctx).export_meeting(
+                _principal(request), meeting_id, format
             )
-            extension = "md" if export_format == "markdown" else "json"
-            media_type = (
-                "text/markdown; charset=utf-8"
-                if export_format == "markdown"
-                else "application/json; charset=utf-8"
-            )
-            filename = f"holdspeak-meeting-{meeting_id}.{extension}"
             return Response(
-                content=content,
-                media_type=media_type,
-                headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+                content=export["content"],
+                media_type=export["media_type"],
+                headers={"Content-Disposition": 'attachment; filename="%s"' % export["filename"]},
             )
+        except ValidationError as exc:
+            return JSONResponse({"error": str(exc)}, status_code=400)
+        except NotFound:
+            return JSONResponse({"error": "Meeting not found"}, status_code=404)
         except Exception as e:
             log.error(f"Failed to export meeting: {e}")
             return JSONResponse(

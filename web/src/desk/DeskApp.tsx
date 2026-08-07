@@ -19,6 +19,7 @@ import { DeliveryDossierWindow } from "./components/DeliveryDossierWindow";
 import { DeliveryTerminalWindow } from "./components/DeliveryTerminalWindow";
 import { RoadmapWindow } from "./components/RoadmapWindow";
 import { RepoWindow } from "./components/RepoWindow";
+import { WorkbenchWindow } from "./components/WorkbenchWindow";
 import { AttentionDrawer } from "./components/AttentionDrawer";
 import { GlassDropLayer } from "./components/GlassDropLayer";
 import { DeskToolInspector } from "./components/DeskToolInspector";
@@ -34,6 +35,7 @@ export default function DeskApp() {
   const chatPersonaId = useDesk((s) => s.chatPersonaId);
   const roadmapWindows = useDesk((s) => s.roadmapWindows);
   const repositoryWindows = useDesk((s) => s.repositoryWindows);
+  const workbenchWindows = useDesk((s) => s.workbenchWindows);
   const setup = useDesk((s) => s.setup);
   const viewMode = useDesk((s) => s.viewMode);
   const { refresh } = useDesk.getState();
@@ -73,6 +75,9 @@ export default function DeskApp() {
       ))}
       {repositoryWindows.map((repository) => (
         <RepoWindow key={repository.id} repositoryId={repository.id} origin={repository.origin} />
+      ))}
+      {workbenchWindows.map((wb) => (
+        <WorkbenchWindow key={wb.id} workbenchId={wb.id} origin={wb.origin} />
       ))}
       <PanePicker />
       <SessionPullout />

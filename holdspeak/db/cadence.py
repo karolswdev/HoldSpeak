@@ -33,6 +33,8 @@ def _now() -> str:
 class CadenceRepository(BaseRepository):
     """Durable home for cadence loops/evidence/next-actions/nudges/policies."""
 
+    table = "cadence"
+
     # ── loops ──────────────────────────────────────────────────────────────
     def upsert_loop(self, loop: OpenLoop) -> OpenLoop:
         """Idempotently project a loop from its source.

@@ -64,6 +64,8 @@ class SteeringAuditEntry:
 
 
 class SteeringAuditRepository(BaseRepository):
+    table = "steering"
+
     def record(
         self,
         *,

@@ -4,9 +4,13 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import Any
 
+from .errors import HoldSpeakError
 
-class DesktopEffectWarrantRequired(RuntimeError):
+
+class DesktopEffectWarrantRequired(HoldSpeakError):
     """Raw desktop input is unavailable without a claimed kernel warrant."""
+
+    code: str = "DESKTOP_EFFECT_WARRANT_REQUIRED"
 
 
 class TextTyper:

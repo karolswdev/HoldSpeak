@@ -39,7 +39,7 @@ PRIMITIVE_ROUTES: dict[str, str] = {
     "recipes": "/api/recipes",
     "chains": "/api/chains",
     "workflows": "/api/workflows",
-    "profiles": "/api/profiles",
+    "profiles": "/api/inference-targets",
 }
 
 # Friendly aliases accepted in a manifest.

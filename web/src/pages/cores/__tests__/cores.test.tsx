@@ -60,7 +60,7 @@ describe("route demotion (HS-95-08): every former page is a deep link", () => {
     expect(table["/activity"].surface).toBe("inspect-activity");
     expect(table["/commands"].surface).toBe("configure-commands");
     expect(table["/cadence"].surface).toBe("configure-cadence");
-    expect(table["/workbench"].surface).toBe("build-workflow");
+    expect(table["/workbenches"].surface).toBe("open-workbenches");
     expect(table["/profiles"].surface).toBe("configure-runs-on");
     expect(table["/companion"].surface).toBe("inspect-personas-and-coders");
     expect(table["/setup"].surface).toBe("configure-setup");
@@ -70,7 +70,6 @@ describe("route demotion (HS-95-08): every former page is a deep link", () => {
 
   it("carries subject decoding where deep links need scope", () => {
     expect(table["/history"].subjectKind).toBe("meeting");
-    expect(table["/workbench"].subjectKind).toBe("workflow");
     expect(table["/settings"].subjectKind).toBe("integration");
   });
 });

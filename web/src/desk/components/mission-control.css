@@ -1,0 +1,734 @@
+/* ── HSM-22-03: the workflow's linear-step builder + the honest run warning ── */
+.desk-next .desk-wf-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.desk-next .desk-wf-step {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.desk-next .desk-wf-step-label {
+  font-size: var(--font-size-xs);
+  white-space: nowrap;
+  color: var(--text-muted);
+}
+.desk-next .desk-wf-step input {
+  flex: 1;
+  min-width: 60px;
+}
+.desk-next .desk-wf-palette {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 2px;
+}
+.desk-next .desk-run-warning {
+  color: var(--warn, #fbbf24);
+  font-size: var(--font-size-xs);
+  margin: 6px 0 0;
+}
+
+/* ── Mission control conveyor (HS-82-03) ─────────────────────────
+   A fixture at the foot of the desk: belts of phases and stories
+   relayed from the Delivery Workbench rails. Signal tokens only;
+   the one --accent use is the next actionable story. */
+.desk-next .desk-mc {
+  position: fixed;
+  left: var(--space-3);
+  right: var(--space-3);
+  bottom: var(--space-3);
+  z-index: var(--desk-z-chrome);
+  padding: var(--space-2) var(--space-3);
+  /* HS-111: opaque fill — no translucent surfaces */
+  background: var(--surface-1);
+  border: 1px solid var(--surface-3);
+  border-radius: 2px;
+  backdrop-filter: none;
+  font-family: var(--font-mono, "JetBrains Mono", monospace);
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.desk-next .desk-mc-tab {
+  position: fixed;
+  left: 112px;
+  bottom: var(--space-3);
+  z-index: var(--desk-z-chrome);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 2px 10px;
+  /* HS-111: opaque fill */
+  background: var(--surface-1);
+  border: 1px solid var(--surface-3);
+  border-radius: 2px;
+  color: var(--text-muted);
+  font-size: 12px;
+  cursor: pointer;
+}
+.desk-next .desk-mc-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-1);
+}
+/* HS-111: section labels — system-label style */
+.desk-next .desk-mc-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.desk-next .desk-mc-project {
+  margin-top: var(--space-1);
+}
+.desk-next .desk-mc-phases {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+.desk-next .desk-mc-slug {
+  color: var(--text);
+  margin-right: var(--space-2);
+}
+.desk-next .desk-mc-phase {
+  min-width: 20px;
+  text-align: center;
+  padding: 0 4px;
+  border: 1px solid var(--surface-3);
+  border-radius: 2px;
+  color: var(--text-faint);
+}
+.desk-next .desk-mc-phase.closed {
+  opacity: 0.45;
+}
+.desk-next .desk-mc-phase.current {
+  color: var(--text);
+  border-color: var(--text-muted);
+}
+.desk-next .desk-mc-belt {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin: 4px 0 2px calc(var(--space-2) + 8px);
+}
+.desk-next .desk-mc-story {
+  min-height: 36px;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 1px 4px;
+  border-radius: 0;
+  border: 1px solid var(--surface-3);
+  color: var(--text-muted);
+}
+.desk-next .desk-mc-story-pick {
+  min-height: 32px;
+  appearance: none;
+  padding: 0 4px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+.desk-next .desk-mc-story.st-done {
+  color: var(--ok);
+  border-color: color-mix(in srgb, var(--ok) 40%, transparent);
+}
+.desk-next .desk-mc-story.st-in-progress {
+  color: var(--text);
+}
+.desk-next .desk-mc-story.st-blocked {
+  color: var(--danger);
+}
+/* HS-111: no glow on next story — rectangular, etched */
+.desk-next .desk-mc-story.next {
+  color: var(--accent);
+  border-color: var(--accent);
+  box-shadow: none;
+}
+.desk-next .desk-mc-warn {
+  color: var(--warn);
+  margin-left: var(--space-2);
+}
+.desk-next .desk-mc-honest {
+  display: flex;
+  gap: var(--space-2);
+  align-items: baseline;
+  margin-top: var(--space-1);
+}
+
+/* ── Sessions and events on the belt (HS-82-04) ────────────────── */
+/* HS-111-06 — the on-belt pin: a mono token riding its story cell.
+   The emoji chip and the opacity-blink species died (audit B2/B8);
+   awaiting is STEADY inverted video — the operator call, not a
+   blinker. */
+.desk-next .desk-mc-pin {
+  min-height: 32px;
+  appearance: none;
+  border: 0;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  margin-left: 2px;
+  padding: 0 6px;
+  border-radius: 0;
+  background: var(--surface-2);
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.desk-next .desk-mc-pin.awaiting {
+  background: var(--warn);
+  color: var(--bg);
+}
+.desk-next .desk-mc-pin.stale {
+  opacity: 0.5;
+}
+.desk-next .desk-mc-sessions {
+  display: flex;
+  gap: var(--space-1);
+  flex-wrap: wrap;
+  align-items: flex-start;
+  margin-top: var(--space-1);
+  padding-top: var(--space-1);
+  border-top: 1px dashed var(--surface-3);
+}
+/* The needs-you cell: the ONLY loud off-belt layer — steady inverted
+   video (audit §3.1, attention ladder). */
+.desk-next .desk-mc-needs {
+  appearance: none;
+  border: 0;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 0;
+  background: var(--warn);
+  color: var(--bg);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+/* The census fold: one FoldGadget per agent, roster in a well. */
+.desk-next .desk-mc-sessions .gadget-fold {
+  flex: 1 1 100%;
+  min-width: 0;
+}
+.desk-next .desk-mc-sessions .gadget-fold > summary {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+/* ── The approval leg (HS-82-05) ────────────────────────────────── */
+.desk-next .desk-mc-story {
+  cursor: pointer;
+}
+.desk-next .desk-mc-story.picked {
+  outline: 1px solid var(--text-muted);
+}
+.desk-next .desk-mc-flip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: var(--space-1);
+}
+.desk-next .desk-mc-proposal {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-1);
+  padding: var(--space-1) var(--space-2);
+  border: 1px dashed var(--surface-3);
+  border-radius: 2px;
+}
+.desk-next .desk-mc-proposal.failed {
+  border-color: color-mix(in srgb, var(--danger) 50%, transparent);
+}
+.desk-next .desk-mc-preview {
+  color: var(--text);
+}
+
+/* ── HSM-16-04: the Ask AI atom (lasso → ask → print → keep/bin) ── */
+
+/* the lasso rope: drawn while roping context on the empty desk */
+.desk-next .desk-lasso {
+  position: absolute;
+  z-index: var(--desk-z-chrome);
+  border: 1.5px dashed var(--accent);
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  pointer-events: none;
+}
+
+/* the bundle bar: the roped count + the one action that gives it meaning */
+.desk-next .desk-askbar {
+  position: absolute;
+  z-index: 34;
+  left: 50%;
+  bottom: 84px;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 8px 12px;
+  border-radius: 2px;
+  border: 1px solid
+    color-mix(in srgb, var(--accent) 35%, var(--border));
+  background: var(--surface-2);
+  box-shadow: var(--desk-window-shadow);
+  backdrop-filter: none;
+}
+.desk-next .desk-askbar-count {
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: var(--desk-surface-label-size);
+  font-weight: 600;
+  letter-spacing: var(--letter-spacing-eyebrow);
+  text-transform: uppercase;
+}
+
+/* the Ask panel rides the pull-out posture (docked, desk alive behind) */
+.desk-next .desk-ask .desk-ask-glyph {
+  color: var(--accent);
+  font-size: 16px;
+}
+/* HS-111-05 — the query console body: the session transcript over the
+   input deck over the grounding rack; the lens/context chip clouds died
+   into MxRadio tokens + a CTX token. */
+.desk-next .desk-ask-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 0;
+}
+.desk-next .desk-ask-body .surface-traffic {
+  flex: 1;
+  min-height: 88px;
+  display: flex;
+  flex-direction: column;
+}
+.desk-next .desk-ask-body .surface-traffic > .surface-well {
+  flex: 1;
+  min-height: 0;
+}
+.desk-next .desk-ask .desk-chat-well .desk-chat-composer textarea {
+  flex: 1;
+  min-width: 0;
+  resize: vertical;
+  border: 0;
+  background: none;
+  color: var(--text);
+  font-size: var(--font-size-sm);
+  font-family: var(--font-mono);
+}
+/* The lens gadget rides the deck as one wrapping token row. */
+.desk-next .desk-ask .gadget-mx {
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 0 6px;
+}
+.desk-next .desk-ask-runson {
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 2px;
+  border: 1px solid var(--border);
+  background: var(--desk-glass);
+  color: var(--text);
+  font-size: var(--font-size-sm);
+  font-family: inherit;
+}
+/* HS-83-03 — the models front door on the rail. */
+.desk-next .desk-rail-rule {
+  height: 1px;
+  margin: 4px 6px;
+  background: var(--border);
+}
+.desk-next .desk-rail-model {
+  filter: saturate(0.7);
+}
+.desk-next .desk-rail-model.open {
+  filter: none;
+}
+/* HS-85-04: an offline mesh model is visibly asleep, not gone */
+.desk-next .desk-rail-model.is-offline {
+  opacity: 0.45;
+  filter: grayscale(0.8);
+}
+
+/* HS-83-02 / HS-111-04 — the agent's window: a personnel record over
+   a transmission log (SurfaceTraffic). The bubbles, the slide-in beat,
+   and the hand-rolled per-turn badge are gone — the log renders in the
+   surface kit; only the frame plumbing lives here. */
+.desk-next .desk-chat {
+  display: flex;
+  flex-direction: column;
+}
+.desk-next .desk-chat-avatar {
+  font-size: 20px;
+}
+/* The record body: head + facts + the log well, which owns the scroll. */
+.desk-next .desk-chat-scroll {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  gap: 10px;
+}
+.desk-next .desk-chat-foot {
+  display: grid;
+  gap: 8px;
+  padding: 10px 12px;
+  border-top: 1px solid var(--border);
+}
+.desk-next .desk-chat-composer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.desk-next .desk-chat-composer input {
+  flex: 1;
+  padding: 9px 12px;
+  border-radius: 0;
+  border: 1px solid var(--border);
+  background: var(--surface-1);
+  box-shadow: var(--desk-window-etch);
+  color: var(--text);
+  font-size: var(--font-size-sm);
+  font-family: var(--font-mono);
+}
+.desk-next .desk-chat-composer input:focus {
+  outline-color: var(--accent);
+  border-color: var(--accent);
+}
+
+/* HS-83-01 — "Ground this ask" (the 15-12 parity): inline expandable section,
+   the gauge prices real fetched lengths, past-budget wears the bad tone. */
+.desk-next .desk-ground {
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  background: var(--surface-1);
+}
+.desk-next .desk-ground.is-open {
+  border-color: color-mix(in srgb, var(--accent-cool) 45%, var(--border));
+}
+/* HS-111-08 — the hand-rolled ground head died; the rack head is the
+   ONE FoldGadget wearing the rack's mono dress. */
+.desk-next .desk-ground .gadget-fold > summary {
+  width: 100%;
+  gap: 8px;
+  margin: 0;
+  padding: 9px 11px;
+  border-radius: 0;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.desk-next .desk-ground .gadget-fold > summary:focus-visible {
+  outline: none;
+  background: var(--desk-window-well);
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+.desk-next .desk-ground-glyph {
+  color: var(--text-muted);
+}
+.desk-next .desk-ground-glyph.is-on {
+  color: var(--accent-cool);
+}
+.desk-next .desk-ground .gadget-fold-title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: left;
+  color: var(--text);
+}
+.desk-next .desk-ground .gadget-fold-body {
+  padding: 0;
+}
+.desk-next .desk-ground-body {
+  padding: 0 11px 10px;
+  display: grid;
+  gap: 8px;
+}
+.desk-next .desk-ground-empty {
+  color: var(--text-muted);
+  font-size: var(--font-size-sm);
+  margin: 0;
+}
+/* HS-111-05 — the rack list: full-width hover bands, no per-row
+   borders; the title column is minmax(0,1fr) so a nowrap name
+   ellipsizes INSIDE the panel — the overflow defect is dead by
+   construction. */
+.desk-next .desk-ground-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0;
+}
+.desk-next .desk-ground-row {
+  border: 0;
+  background: none;
+}
+.desk-next .desk-ground-line {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 26px;
+  padding: 2px 6px;
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+}
+/* A row that leads with a kind tag gains its column. */
+.desk-next .desk-ground-line:has(.desk-rails-kind) {
+  grid-template-columns: auto auto minmax(0, 1fr) auto auto;
+}
+.desk-next .desk-ground-line.is-fact {
+  grid-template-columns: auto minmax(0, 1fr);
+}
+.desk-next .desk-ground-line:hover {
+  background: var(--desk-window-well);
+}
+.desk-next .desk-ground-row.is-picked > .desk-ground-line,
+.desk-next .desk-ground-line[data-on] {
+  background: var(--desk-window-well);
+}
+.desk-next .desk-ground-line.is-press {
+  cursor: pointer;
+}
+.desk-next .desk-ground-line.is-off {
+  color: var(--text-faint);
+}
+.desk-next .desk-ground-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: left;
+}
+.desk-next .desk-ground-sub {
+  display: grid;
+  padding-left: 22px;
+}
+.desk-next .desk-ground-fig,
+.desk-next .desk-ground-day,
+.desk-next .desk-ground-loading {
+  color: var(--text-muted);
+  font-size: 11px;
+  font-family: var(--font-mono);
+  white-space: nowrap;
+}
+.desk-next .desk-ground-sect {
+  margin: 6px 0 0;
+  color: var(--text-faint);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.desk-next .desk-ground-refusal {
+  margin: 0;
+  color: var(--danger);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+}
+/* HS-88-02: the rail object's kind, a quiet monospace tag before its title. */
+.desk-next .desk-rails-kind {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-faint);
+  border: 1px solid var(--surface-3);
+  border-radius: 2px;
+  padding: 1px 4px;
+  flex-shrink: 0;
+}
+/* HS-111-05 — the rack can NEVER widen the panel: every rack layer is
+   clamped to its container (minmax(0,…) tracks + max-width) so a nowrap
+   title ellipsizes instead of blowing the width — the audit §1 #11
+   defect is dead by construction. */
+.desk-next .desk-ask-body .gadget-group,
+.desk-next .desk-ask-body .gadget-sheet,
+.desk-next .desk-ask-body .gadget-sheet > * {
+  min-width: 0;
+  max-width: 100%;
+}
+.desk-next .desk-ground-body,
+.desk-next .desk-ground-list {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+/* HS-111-05 — the rack lip: the ONE shared budget instrument. The
+   "routing…" pulse and the printed-card bounce died with the chat-app
+   composition: turns appear like traffic, no animation. */
+.desk-next .desk-ask-rack-lip {
+  display: flex;
+  justify-content: flex-end;
+  padding: 6px 6px 2px;
+}
+.desk-next .desk-ask-answer {
+  display: grid;
+  gap: 8px;
+}
+/* The grounding receipt block (the honesty law on this surface):
+   GROUNDED ON N OF M + openable citation tokens + quiet claim flags. */
+.desk-next .desk-ask-receipt {
+  display: grid;
+  gap: 6px;
+  padding-top: 6px;
+  border-top: 1px solid var(--border-subtle);
+}
+.desk-next .desk-ask-grounded {
+  margin: 0;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  font-variant-numeric: tabular-nums;
+}
+.desk-next .desk-ask-claim {
+  margin: 0;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+/* The console footer wears the receipt bar species inside the pullout
+   (the surface-status bleed margins are for padded surface bodies; the
+   pullout footer sits flush). */
+.desk-next .desk-ask-foot {
+  position: static;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  border-top: 1px solid var(--border);
+}
+/* The Runs-on caption reads as mono tokens, not a sentence. */
+.desk-next .runs-on-facts {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+/* ── Station lights + evidence in place (HS-86-04) ─────────────── */
+.desk-next .desk-mc-repo-head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-1);
+}
+.desk-next .desk-mc-repo-name {
+  color: var(--text-faint);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.desk-next .desk-mc-lights {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.desk-next .desk-mc-light {
+  font-size: 11px;
+  color: var(--text-faint);
+  text-decoration: none;
+}
+.desk-next .desk-mc-light.pr:hover {
+  color: var(--accent);
+}
+.desk-next .desk-mc-light.ci-pass {
+  color: var(--ok);
+}
+.desk-next .desk-mc-light.ci-fail {
+  color: var(--danger);
+}
+.desk-next .desk-mc-light.ci-pending {
+  color: var(--warn);
+}
+.desk-next .desk-mc-light.ci-none {
+  color: var(--text-faint);
+}
+.desk-next .desk-mc-light.off {
+  opacity: 0.6;
+}
+.desk-next .desk-mc-light.gate-pass {
+  color: var(--ok);
+}
+.desk-next .desk-mc-light.gate-refusal {
+  color: var(--danger);
+  font-size: 11px;
+  max-width: 340px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.desk-next .desk-mc-evidence-open {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+.desk-next .desk-mc-evidence-open:hover {
+  color: var(--accent);
+}
+.desk-next .desk-mc-evidence {
+  margin-top: var(--space-1);
+  border: 1px solid var(--surface-3);
+  border-radius: 2px;
+  background: var(--surface-1);
+  padding: var(--space-2);
+}
+.desk-next .desk-mc-evidence-path {
+  color: var(--text-faint);
+  font-size: 11px;
+  font-family: var(--font-mono);
+}
+.desk-next .desk-mc-evidence-body {
+  margin: 0;
+  max-height: 260px;
+  overflow: auto;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--text);
+  white-space: pre-wrap;
+}
+

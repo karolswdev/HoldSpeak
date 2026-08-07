@@ -39,6 +39,7 @@ from typing import Callable, Optional, Sequence
 
 import numpy as np
 
+from .errors import HoldSpeakError
 from .audio import _linear_resample_mono
 from .meeting_session import MeetingState, TranscriptSegment
 from .transcript_parse import (
@@ -64,8 +65,10 @@ DEFAULT_TRANSCRIPT_SPEAKER_LABEL = "Transcript"
 ProgressCallback = Callable[[int, int], None]
 
 
-class MeetingImportError(Exception):
+class MeetingImportError(HoldSpeakError):
     """A user-actionable import failure (bad file, missing ffmpeg, no speech)."""
+
+    code: str = "MEETING_IMPORT_ERROR"
 
 
 @dataclass

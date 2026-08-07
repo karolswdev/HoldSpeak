@@ -149,6 +149,8 @@ def _optional(value: Any) -> Optional[str]:
 class WorkAttemptRepository(BaseRepository):
     """SQLite persistence for Work attempts + their transition events."""
 
+    table = "work_attempts"
+
     # ── creation ─────────────────────────────────────────────────
 
     def create(

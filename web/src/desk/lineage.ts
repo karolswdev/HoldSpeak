@@ -2,9 +2,10 @@
  * original desk's `resolveRef` / `lineage`, tolerating the same
  * wire drift: `{source_type, source_ref}` (canonical), bare strings, and
  * `{type, ref}` / `{source}` variants. */
-import type { Items, Kind } from "./api";
+import type { PrimitiveKind } from "../lib/primitives";
+import type { Items } from "./api";
 
-const RESOLVE_ORDER: Kind[] = [
+const RESOLVE_ORDER: PrimitiveKind[] = [
   "meeting",
   "artifact",
   "note",
@@ -29,7 +30,7 @@ export function resolveRef(items: Items, ref: string): ResolvedRef {
     if (hit) {
       return {
         kind,
-        label: String(hit.title || hit.name || hit.id),
+        label: String(("title" in hit ? hit.title : "") || ("name" in hit ? hit.name : "") || hit.id),
         resolved: true,
       };
     }
@@ -49,6 +50,16 @@ export interface Lineage {
   any: boolean;
 }
 
+/** Wire-format lineage source — tolerates canonical + legacy shapes. */
+interface LineageSource {
+  source_type?: string;
+  type?: string;
+  source_ref?: string;
+  ref?: string;
+  source?: string;
+  id?: string;
+}
+
 export function lineage(items: Items, sources: unknown): Lineage {
   const list = Array.isArray(sources) ? sources : [];
   const from: LineageEntry[] = [];
@@ -58,16 +69,16 @@ export function lineage(items: Items, sources: unknown): Lineage {
     const type = (
       typeof s === "string"
         ? ""
-        : String((s as any).source_type || (s as any).type || "")
+        : String((s as LineageSource).source_type || (s as LineageSource).type || "")
     ).toLowerCase();
     const ref =
       typeof s === "string"
         ? s
         : String(
-            (s as any).source_ref ||
-              (s as any).ref ||
-              (s as any).source ||
-              (s as any).id ||
+            (s as LineageSource).source_ref ||
+              (s as LineageSource).ref ||
+              (s as LineageSource).source ||
+              (s as LineageSource).id ||
               "",
           );
     if (!ref) continue;

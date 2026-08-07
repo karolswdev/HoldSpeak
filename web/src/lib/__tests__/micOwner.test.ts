@@ -10,6 +10,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cancelCapture, startCapture, stopAndTranscribe } from "../speakToFill";
 import { closeMicSession } from "../micSession";
 
+vi.mock("../api", () => ({
+  apiFetch: vi.fn().mockResolvedValue({}),
+  apiBlob: vi.fn(),
+}));
+
 function fakeStream() {
   const track = { enabled: true, readyState: "live", stop: vi.fn() };
   return {

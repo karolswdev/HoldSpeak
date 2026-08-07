@@ -60,7 +60,7 @@ This distinction prevents the proposed usability change from adding another over
 This review traces operator control through:
 
 - product and positioning claims in [README.md](../../README.md), [POSITIONING.md](POSITIONING.md), and [SECURITY.md](../SECURITY.md);
-- configuration defaults and persistence in [config.py](../../holdspeak/config.py);
+- configuration defaults and persistence in [config/](../../holdspeak/config/);
 - command-line entry points in [main.py](../../holdspeak/main.py);
 - web authentication, REST routes, WebSockets, setup status, settings, and the legacy and React interfaces;
 - dictation, wake word, pipeline rewriting, journal, corrections, target assistance, and voice macros;
@@ -600,7 +600,7 @@ That registry is a prerequisite for profiles and for credible trust UI.
 
 ### 9.1 Desktop configuration
 
-[config.py](../../holdspeak/config.py) serializes the entire configuration as indented plaintext JSON. This includes web tokens, device PSKs, webhook URLs, Telegram tokens, and failure-webhook headers. There is no application-level encryption, atomic replacement, or explicit permission hardening in the save method.
+[config/](../../holdspeak/config/) serializes the entire configuration as indented plaintext JSON. This includes web tokens, device PSKs, webhook URLs, Telegram tokens, and failure-webhook headers. There is no application-level encryption, atomic replacement, or explicit permission hardening in the save method.
 
 If config loading encounters a genuinely invalid structure/value, it logs a warning and returns defaults. Failing safe is preferable to honoring malformed dangerous values, but silently reverting an operator's expected posture can also be surprising. The runtime should expose a blocking “configuration rejected; defaults active” state rather than relying on logs.
 
@@ -1216,7 +1216,7 @@ These are intentional decisions, not implementation details:
 
 ### Configuration, trust, and runtime
 
-- [config.py](../../holdspeak/config.py)
+- [config/](../../holdspeak/config/)
 - [main.py](../../holdspeak/main.py)
 - [setup_status.py](../../holdspeak/setup_status.py)
 - [setup_runtime.py](../../holdspeak/setup_runtime.py)

@@ -24,6 +24,7 @@ from holdspeak.coder_gate import (
     write_spawn_settings,
 )
 from holdspeak.db import Database, reset_database
+from holdspeak.services.gate_service import GateService
 from holdspeak.db.gate import (
     APPROVED,
     DENIED,
@@ -386,6 +387,7 @@ def test_hook_reuses_one_idempotency_key_across_retries(tmp_path) -> None:
 
 @pytest.fixture
 def route_rig(tmp_path, monkeypatch):
+    from holdspeak.services.gate_service import GateService
     from holdspeak.web.context import WebContext
     from holdspeak.web.routes.system.gate_routes import build_gate_router
 
@@ -404,7 +406,7 @@ def route_rig(tmp_path, monkeypatch):
         request.state.principal = Principal(PrincipalKind.OWNER, "owner-session")
         return await call_next(request)
 
-    app.include_router(build_gate_router(WebContext(get_state=lambda: {})))
+    app.include_router(build_gate_router(WebContext(get_state=lambda: {}, gate_service=GateService(db))))
     yield db, clock, TestClient(app)
     reset_database()
 
@@ -490,7 +492,7 @@ def test_startup_invalidation_via_route_helper(route_rig) -> None:
 
     db, clock, client = route_rig
     _wire_proposal(client)
-    assert invalidate_held_on_startup() == 1
+    assert invalidate_held_on_startup(GateService(db)) == 1
     assert db.gate.get("p1").state == INVALIDATED
     polled = client.get("/api/gate/proposals/p1").json()
     assert polled["state"] == INVALIDATED

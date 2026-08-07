@@ -5,6 +5,8 @@
 // Sizes must stay integer divisors of the 64px source (16/32/64) so the
 // pixelated downscale samples uniformly.
 import { spriteUrl } from "../sprites";
+import { spriteStateCssClass } from "../../lib/spriteStates";
+import { spriteVariantKey } from "../../lib/spriteVariants";
 
 export function AgentAvatar({
   avatar,
@@ -12,14 +14,17 @@ export function AgentAvatar({
   kind = "agent",
   size = 32,
   className,
+  spriteState,
 }: {
-  /** The wire avatar (free text). Empty or the legacy 🤖 default → sprite. */
+  /** The wire avatar (free text). Empty or the legacy 🤖 default -> sprite. */
   avatar?: string | null;
   id: string;
   /** Sprite pool: "agent" (automaton) or "model" (cartridge). */
   kind?: "agent" | "model";
   size?: 16 | 32 | 64;
   className?: string;
+  /** HS-118-07 — the primitive's sprite state for CSS hint class. */
+  spriteState?: string | null;
 }) {
   const custom = String(avatar || "").trim();
   if (custom && custom !== "🤖")
@@ -28,6 +33,7 @@ export function AgentAvatar({
         {custom}
       </span>
     );
+  const cssHint = spriteStateCssClass(spriteState);
   return (
     <img
       src={spriteUrl(kind, id)}
@@ -35,10 +41,11 @@ export function AgentAvatar({
       width={size}
       height={size}
       className={
-        "desk-chrome-sprite" + (className ? ` ${className}` : "")
+        "desk-chrome-sprite" + (cssHint ? ` ${cssHint}` : "") + (className ? ` ${className}` : "")
       }
       draggable={false}
       aria-hidden="true"
+      data-sprite-variant={spriteVariantKey(kind === "agent" ? "workbench" : kind, spriteState)}
     />
   );
 }

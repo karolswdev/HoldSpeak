@@ -1,3 +1,4 @@
+import "./inline-editor.css";
 import { forwardRef, useEffect, useImperativeHandle, useRef } from "react";
 import {
   defaultKeymap,

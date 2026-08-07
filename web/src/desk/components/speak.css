@@ -1,0 +1,299 @@
+/* ————— HS-111-02 — Speak: the OS's dictation deck (audit §3.1).
+   Instrument strip, state register, etched readout cells, the
+   utterance well, the receipt, the footer bar. ————— */
+.desk-next .speak-face {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 6px;
+  /* room for the sticky footer bar — the run row never slides under it */
+  padding-bottom: 34px;
+  min-height: 100%;
+  flex: 1;
+}
+/* The instrument strip: one full-width sunken panel. Never
+   flex-compressed when the face overflows — the well scrolls, the
+   instruments do not. */
+.desk-next .speak-strip {
+  flex: none;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  min-height: 64px;
+  padding: 7px 9px;
+  border: 1px solid var(--border);
+  background: var(--desk-window-well);
+  box-shadow: var(--desk-window-etch);
+  font-family: var(--font-mono);
+}
+/* The state register: STATE + the three axis tokens, active inverted. */
+.desk-next .speak-register {
+  display: inline-flex;
+  align-items: stretch;
+  border: 1px solid var(--border);
+  background: var(--surface-1);
+  box-shadow: var(--desk-window-etch);
+}
+.desk-next .speak-register-axis,
+.desk-next .speak-register-token {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 7px;
+  font: 600 10px / 1 var(--font-mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.desk-next .speak-register-axis {
+  color: var(--text-faint);
+}
+.desk-next .speak-register-token {
+  color: var(--text-faint);
+}
+.desk-next .speak-register-token[data-active] {
+  background: var(--accent);
+  color: var(--text-on-accent);
+}
+/* Etched readout cells: the patch panel on the face. */
+.desk-next .speak-cells {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-left: auto;
+  min-width: 0;
+}
+.desk-next .speak-cell {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 3px 8px 4px;
+  border: 1px solid var(--border);
+  background: var(--surface-1);
+  box-shadow: var(--desk-window-etch);
+  min-width: 0;
+}
+.desk-next .speak-cell-label {
+  font: 600 9px / 1 var(--font-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  white-space: nowrap;
+}
+.desk-next .speak-cell-value {
+  font: 500 11px / 1.2 var(--font-mono);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 18ch;
+}
+/* HS-112-02 — the aim row: one gadget sheet under the strip naming
+   where a released TALK sends the words. Never flex-compressed. */
+.desk-next .speak-aim {
+  flex: none;
+}
+.desk-next .speak-aim .gadget-group {
+  margin: 0;
+}
+/* The utterance well fills; the face never shows a void. */
+.desk-next .speak-well {
+  display: flex;
+  flex: 1;
+  min-height: 110px;
+}
+.desk-next .speak-well textarea {
+  flex: 1;
+  min-height: 110px;
+  height: auto;
+  resize: none;
+  font-family: var(--font-mono);
+  font-size: var(--font-size-sm);
+  line-height: 1.6;
+}
+.desk-next .speak-run-row {
+  flex: none;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.desk-next .speak-grounding {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  flex: 1;
+  min-width: 180px;
+  max-width: 380px;
+}
+.desk-next .speak-grounding-label {
+  font: 600 10px / 1 var(--font-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  white-space: nowrap;
+}
+/* The result receipt: FINAL_TEXT readout, fact tokens, verdict verbs
+   on the rule line, the WRONG sheet extending in place. */
+.desk-next .speak-result {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: var(--desk-window-well);
+  box-shadow: var(--desk-window-etch);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  font-family: var(--font-mono);
+  font-size: var(--desk-surface-detail-size);
+}
+.desk-next .speak-result-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  font: 500 10px / 1.4 var(--font-mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.desk-next .speak-result-verdict {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+  box-shadow: 0 -1px 0 var(--etch-dark);
+}
+.desk-next .speak-correct {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+  box-shadow: 0 -1px 0 var(--etch-dark);
+}
+/* Token fact lines (delivery facts, digest, warnings). */
+.desk-next .speak-token-line {
+  margin: 0;
+  font: 500 11px / 1.5 var(--font-mono);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+.desk-next .speak-token-line[data-tone="warn"] {
+  color: var(--warn);
+  text-transform: none;
+}
+/* Nudge ledger rows behind the door. */
+.desk-next .speak-nudge-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 26px;
+  padding: 2px 6px;
+}
+.desk-next .speak-nudge-row:hover,
+.desk-next .speak-nudge-row:focus-within {
+  background: var(--desk-window-well);
+}
+.desk-next .speak-nudge-token {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font: 500 11px / 1.4 var(--font-mono);
+  letter-spacing: 0.04em;
+  color: var(--text);
+}
+.desk-next .speak-nudge-row .surface-row-verbs {
+  margin-left: auto;
+}
+/* Blocks wing: the tile NAME is machine material — mono. */
+.desk-next .speak-blocks .surface-tile-name {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+.desk-next .speak-status {
+  position: sticky;
+  bottom: calc(-1 * var(--desk-window-pad-x));
+  margin: auto calc(-1 * var(--desk-window-pad-x))
+    calc(-1 * var(--desk-window-pad-x));
+  padding: 5px var(--desk-window-pad-x);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 26px;
+  /* HS-111-10 walk: the receipt bar is sticky over scrolled faces —
+     the well tint must ride an OPAQUE surface (110 law: no see-through
+     chrome; the door face was bleeding into the bar). */
+  background:
+    linear-gradient(var(--desk-window-well), var(--desk-window-well)),
+    var(--desk-window-fill, var(--surface-1));
+  font-family: var(--font-mono);
+  font-size: var(--desk-surface-label-size);
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+.desk-next .speak-status > span + span::before {
+  content: "|";
+  margin-right: 10px;
+  color: var(--text-faint);
+}
+/* HS-111: status indicators — square, no glow */
+.desk-next .speak-status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 0;
+  background: var(--success);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.4);
+  flex: none;
+}
+.desk-next .speak-status.is-warn .speak-status-dot {
+  background: var(--warn, #fbbf24);
+}
+.desk-next .speak-status-fix {
+  border: 1px solid var(--border);
+  background: var(--desk-window-rail);
+  box-shadow: var(--desk-window-bevel);
+  padding: 1px 8px;
+  border-radius: var(--radius-sm);
+  text-decoration: none;
+  font-family: var(--font-mono);
+  color: var(--text);
+  cursor: pointer;
+}
+/* HS-111-02 — the footer bar's receipt slot (the Prefs receipt/refusal
+   pattern): every InlineMessage in this program died into this token. */
+.desk-next .speak-status {
+  border-top: 1px solid var(--border);
+  z-index: var(--z-sticky);
+}
+.desk-next .speak-receipt {
+  margin-left: auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: right;
+  color: var(--text);
+}
+.desk-next .speak-status > .speak-receipt::before {
+  content: none;
+}
+.desk-next .speak-receipt[data-tone="warn"] {
+  color: var(--warn);
+  text-transform: none;
+}
+/* HS-111-02 — the gear door is ONE gadget sheet on the window
+   material, full width (no well box, no settings mile chrome). */
+.desk-next .surface-door {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+

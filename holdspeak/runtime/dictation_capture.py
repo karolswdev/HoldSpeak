@@ -13,7 +13,7 @@ from typing import Any, Callable, Optional
 
 import numpy as np
 
-from ..dictation_runner import dispatch_voice_command, run_dictation_pipeline
+from ..dictation_runner import dispatch_voice_command, process_transcript, run_dictation_pipeline
 from ..logging_config import get_logger
 
 log = get_logger("web_runtime")
@@ -376,18 +376,44 @@ class DictationCaptureMixin:
         agent_reply_session: Any | None = None,
         journal_source: str = "dictation",
     ) -> str:
-        # HS-52-01: the orchestration was carved out of this god-object into
-        # `holdspeak.dictation_runner`; this stays as the thin delegate the
-        # transcription path calls. Behaviour is unchanged.
-        return run_dictation_pipeline(
-            text,
-            config=self.config,
-            server=self.server,
-            audio_duration_s=audio_duration_s,
-            transcribed_at=transcribed_at,
-            agent_reply_session=agent_reply_session,
-            journal_source=journal_source,
-        )
+        # HS-118-08: the hotkey path now delegates to process_transcript so
+        # both hotkey and browser share the same factored function.
+        import asyncio
+
+        try:
+            loop = asyncio.get_event_loop()
+            if loop.is_running():
+                import concurrent.futures
+                with concurrent.futures.ThreadPoolExecutor() as pool:
+                    return pool.submit(
+                        asyncio.run,
+                        process_transcript(
+                            text,
+                            source="hotkey",
+                            context=None,
+                            config=self.config,
+                            server=self.server,
+                        ),
+                    ).result()
+            return asyncio.run(
+                process_transcript(
+                    text,
+                    source="hotkey",
+                    context=None,
+                    config=self.config,
+                    server=self.server,
+                )
+            )
+        except RuntimeError:
+            return asyncio.run(
+                process_transcript(
+                    text,
+                    source="hotkey",
+                    context=None,
+                    config=self.config,
+                    server=self.server,
+                )
+            )
 
     def _paste_target_profile(self, agent_reply_session: Any | None) -> str | None:
         if agent_reply_session is None:

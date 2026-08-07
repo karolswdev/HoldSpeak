@@ -111,6 +111,7 @@ def test_doctor_config_check_flags_newer_config(tmp_path, monkeypatch) -> None:
     # _check_config imports CONFIG_VERSION and loads CONFIG_FILE via Config.load();
     # point both at the temp file.
     monkeypatch.setattr("holdspeak.config.CONFIG_FILE", path)
+    monkeypatch.setattr("holdspeak.config.core.CONFIG_FILE", path)
     check, _ = doctor._check_config()
     assert check.status == "WARN"
     assert "newer than this build" in check.detail

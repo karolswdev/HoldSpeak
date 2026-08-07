@@ -17,6 +17,7 @@ import {
 } from "pixi.js";
 import { useDesk } from "../store";
 import { useProjections } from "../projections";
+import { applySpriteStateTint } from "./spriteTints";
 import {
   buildScene,
   clampLabel,
@@ -503,8 +504,13 @@ export class WorldEngine {
       node.newBadge.destroy({ children: true });
       node.newBadge = null;
     }
-    node.root.alpha = 1;
     node.root.scale.set(o.scale);
+    // HS-118-07: apply sprite state tint (replaces the static alpha = 1).
+    if (node.sprite && this.app) {
+      applySpriteStateTint(o.key, node.sprite, o.spriteState, this.app.ticker);
+    } else {
+      node.root.alpha = 1;
+    }
   }
 
   /** HS-105-02 — light/unlight the drop target under an object drag. */

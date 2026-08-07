@@ -22,9 +22,9 @@ describe("capability presentation adapters", () => {
     } });
     const workflow = fromWireWorkflow({ id: "w1", name: "Release", graph_json: {}, capability });
 
-    expect((persona.capability as any).action_label).toBe("Ask Scout");
-    expect((sequence.capability as any).support).toBe("linear_compatibility");
-    expect((workflow.capability as any).readiness.state).toBe("ready");
+    expect((persona!.capability as any).action_label).toBe("Ask Scout");
+    expect((sequence!.capability as any).support).toBe("linear_compatibility");
+    expect((workflow!.capability as any).readiness.state).toBe("ready");
   });
 
   it("preserves an unavailable graph instead of pretending it can run", () => {
@@ -36,7 +36,7 @@ describe("capability presentation adapters", () => {
         support: "unsupported_graph",
       },
     });
-    expect(workflow.hasGraph).toBe(true);
-    expect((workflow.capability as any).support).toBe("unsupported_graph");
+    expect(workflow!.hasGraph).toBe(true);
+    expect((workflow!.capability as any).support).toBe("unsupported_graph");
   });
 });

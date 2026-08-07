@@ -6,7 +6,7 @@ with control flow, fan-out, fan-in, cycles, or dangling edges is refused.
 """
 from __future__ import annotations
 
-from holdspeak.web.routes.workflow_graph import (
+from holdspeak.services.support import (
     apply_pure_transform,
     build_node_prompt,
     linearize,

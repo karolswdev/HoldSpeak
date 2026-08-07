@@ -8,6 +8,7 @@ from fastapi.testclient import TestClient
 import holdspeak.db as hsdb
 from holdspeak.db import Database
 from holdspeak.grounding import hydrate_refs
+from holdspeak.services.project_service import ProjectService
 from holdspeak.web.context import WebContext
 from holdspeak.web.routes.primitives.directories import build_directories_router
 from holdspeak.web.routes.primitives.kbs import build_kbs_router
@@ -18,7 +19,7 @@ from holdspeak.web.routes.sync import build_sync_router
 def _client(db: Database, monkeypatch) -> TestClient:
     monkeypatch.setattr(hsdb, "get_database", lambda *args, **kwargs: db)
     app = FastAPI()
-    ctx = WebContext(get_state=lambda: {})
+    ctx = WebContext(get_state=lambda: {}, project_service=ProjectService(db))
     app.include_router(build_kbs_router(ctx))
     app.include_router(build_directories_router(ctx))
     app.include_router(build_projects_router(ctx))

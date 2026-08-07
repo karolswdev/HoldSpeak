@@ -1,6 +1,7 @@
 // HS-106-08 — PR rows become actionable desk objects: state at rest,
 // Info and four kernel operations in-world. Proposals expose their complete
 // GitHub text before the owner approves or denies; no modal owns the loop.
+import "./delivery.css";
 import { Fragment, useEffect, useState } from "react";
 import {
   attributionLabel,

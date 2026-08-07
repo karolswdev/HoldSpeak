@@ -10,6 +10,7 @@ import { LIFT, SPRITE, SPRITE_SMALL, buildScene, isFresh } from "../sceneModel";
 import { objMotion } from "../../world";
 // @ts-ignore — shared ESM module (see ../sprites.d.ts)
 import { VARIANTS } from "../../sprites";
+import type { KB, Note, Coder } from "../../../lib/primitives";
 import { EMPTY_ITEMS, type Items } from "../../api";
 
 const SPRITES_DIR = join(
@@ -73,8 +74,8 @@ describe("badges ride only named live fields (the source-map census)", () => {
   it("count = memberIds.length; absent memberIds = no count badge", () => {
     const items: Items = {
       ...EMPTY_ITEMS,
-      kb: [{ kind: "kb", id: "k1", name: "KB", memberIds: ["a", "b", "c"] }],
-      note: [{ kind: "note", id: "n1", title: "Note" }],
+      kb: [{ kind: "kb", id: "k1", name: "KB", memberIds: ["a", "b", "c"] } as KB],
+      note: [{ kind: "note", id: "n1", title: "Note" } as Note],
     };
     const scene = sceneFor(items);
     const kb = scene.objects.find((o) => o.id === "k1")!;
@@ -97,8 +98,8 @@ describe("badges ride only named live fields (the source-map census)", () => {
     const items: Items = {
       ...EMPTY_ITEMS,
       coder: [
-        { kind: "coder", id: "c1", title: "stale one", stale: true },
-        { kind: "coder", id: "c2", title: "live one", stale: false },
+        { kind: "coder", id: "c1", title: "stale one", stale: true } as Coder,
+        { kind: "coder", id: "c2", title: "live one", stale: false } as Coder,
       ],
     };
     const scene = sceneFor(items, ["coder_session:claude:c1"]);

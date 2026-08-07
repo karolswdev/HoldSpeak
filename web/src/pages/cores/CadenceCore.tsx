@@ -3,10 +3,15 @@
 // the surface kit on the window material (DESIGN_SYSTEM.md, "The
 // surface idiom"), no page grammar.
 import { useState } from "react";
-import type { CoreProps } from "./ActivityCore";
+import type {
+  CoreProps,
+  CadenceStatusResponse,
+  CadenceLoopsResponse,
+  CadenceHistoryResponse,
+} from "./core-types";
 import { Button } from "../../components/signal/Signal";
 import { LampGadget, PadGadget } from "../../desk/surface/gadgets";
-import { apiFetch, readableError, type JsonRecord } from "../../lib/api";
+import { apiFetch } from "../../lib/api";
 import { asRows, rowId, useResource } from "../pageSupport";
 import {
   ConfirmVerb,
@@ -15,91 +20,72 @@ import {
   SurfaceRows,
   SurfaceSection,
   SurfaceState,
-  SurfaceVerbs,
 } from "../../desk/surface/Surface";
+import { useAction } from "./core-hooks";
+import { CoreResourceGuard, renderHeroSlot } from "./core-layout";
 import { deSnake, humanTime, presentValue } from "../../desk/surface/format";
 import { spriteUrl } from "../../desk/sprites";
 
 export function CadenceCore({ hero }: CoreProps) {
-  const status = useResource<JsonRecord>("/api/cadence/status", {});
-  const loopsResource = useResource<JsonRecord>("/api/cadence/loops", {});
-  const history = useResource<JsonRecord>("/api/cadence/history?limit=20", {});
+  const status = useResource<CadenceStatusResponse>("/api/cadence/status", {});
+  const loopsResource = useResource<CadenceLoopsResponse>("/api/cadence/loops", {});
+  const history = useResource<CadenceHistoryResponse>("/api/cadence/history?limit=20", {});
   const loops = asRows(loopsResource.data, ["loops"]);
   const nudges = asRows(history.data, ["nudges"]);
   const [replies, setReplies] = useState<Record<string, string>>({});
-  const [message, setMessage] = useState("");
-  const [busy, setBusy] = useState(false);
-  const act = async (id: string, action: string) => {
-    setBusy(true);
-    setMessage("");
-    try {
-      await apiFetch(`/api/cadence/loops/${encodeURIComponent(id)}/${action}`, {
+  const action = useAction();
+  const act = async (id: string, verb: string) => {
+    await action.run(async () => {
+      await apiFetch(`/api/cadence/loops/${encodeURIComponent(id)}/${verb}`, {
         method: "POST",
         json:
-          action === "snooze"
+          verb === "snooze"
             ? { hours: 24 }
-            : action === "reply"
+            : verb === "reply"
               ? { text: replies[id] ?? "" }
               : {},
       });
       await loopsResource.reload();
       await history.reload();
-    } catch (error) {
-      setMessage(readableError(error));
-    } finally {
-      setBusy(false);
-    }
+    });
   };
   const run = async () => {
-    setBusy(true);
-    try {
+    await action.run(async () => {
       await apiFetch("/api/cadence/run-now", { method: "POST", json: {} });
       await loopsResource.reload();
-    } catch (error) {
-      setMessage(readableError(error));
-    } finally {
-      setBusy(false);
-    }
+    });
   };
   const verbs = (
-    <Button variant="primary" dense loading={busy} onClick={run}>
+    <Button variant="primary" dense loading={action.busy} onClick={run}>
       Run now
     </Button>
   );
   return (
     <>
-      {hero ? (
-        hero(verbs)
-      ) : (
-        <SurfaceVerbs
-          status={
-            <>
-              {status.data.enabled ? "On" : "Off"}
-              {presentValue(status.data.pressure)
-                ? ` · ${presentValue(status.data.pressure)}`
-                : ""}
-            </>
-          }
-        >
-          {verbs}
-        </SurfaceVerbs>
+      {renderHeroSlot(
+        hero,
+        verbs,
+        <>
+          {status.data.enabled ? "On" : "Off"}
+          {presentValue(status.data.pressure)
+            ? ` · ${presentValue(status.data.pressure)}`
+            : ""}
+        </>,
       )}
-      {message ? <SurfaceState error={message} /> : null}
+      {action.message ? <SurfaceState error={action.message} /> : null}
       <SurfaceColumns
         main={
           <SurfaceSection label="Now">
-            <SurfaceState
-              loading={loopsResource.loading}
-              error={loopsResource.error}
+            <CoreResourceGuard
+              resource={loopsResource}
               empty={!loops.length}
               emptyLabel="No open loops"
               emptyImage={spriteUrl("note", "cadence-empty")}
-              onRetry={() => void loopsResource.reload()}
             >
               <SurfaceRows>
                 {loops.map((loop, index) => {
                   const id = rowId(loop, index);
-                  const next = loop.next_action as JsonRecord | undefined;
+                  const next = loop.next_action as Record<string, unknown> | undefined;
                   const score = Number(loop.stale_score ?? 0);
                   const isQuestion = loop.source_type === "agent_question";
                   return (
@@ -136,13 +122,13 @@ export function CadenceCore({ hero }: CoreProps) {
                           <ConfirmVerb
                             label="Mark done"
                             confirmLabel="Done?"
-                            busy={busy}
+                            busy={action.busy}
                             onConfirm={() => void act(id, "close")}
                           />
                           <ConfirmVerb
                             label="Kill loop"
                             confirmLabel="Kill?"
-                            busy={busy}
+                            busy={action.busy}
                             onConfirm={() => void act(id, "kill")}
                           />
                         </>
@@ -167,18 +153,16 @@ export function CadenceCore({ hero }: CoreProps) {
                   );
                 })}
               </SurfaceRows>
-            </SurfaceState>
+            </CoreResourceGuard>
           </SurfaceSection>
         }
         side={
           <SurfaceSection label="Nudge history">
-            <SurfaceState
-              loading={history.loading}
-              error={history.error}
+            <CoreResourceGuard
+              resource={history}
               empty={!nudges.length}
               emptyLabel="No nudges yet"
               emptyImage={spriteUrl("note", "cadence-nudges")}
-              onRetry={() => void history.reload()}
             >
               <SurfaceRows>
                 {nudges.map((row, index) => (
@@ -190,7 +174,7 @@ export function CadenceCore({ hero }: CoreProps) {
                   />
                 ))}
               </SurfaceRows>
-            </SurfaceState>
+            </CoreResourceGuard>
           </SurfaceSection>
         }
       />

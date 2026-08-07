@@ -2,6 +2,7 @@
 // out. These tests pin the geometry/state contract the renderer draws and
 // the DOM overlays anchor to.
 import { describe, expect, it } from "vitest";
+import type { Note, Meeting } from "../../../lib/primitives";
 import { EMPTY_ITEMS, type Items } from "../../api";
 import { objUnit, worldObjects } from "../../world";
 import {
@@ -49,10 +50,10 @@ function inputs(partial: Partial<SceneInputs> = {}): SceneInputs {
 const someItems: Items = {
   ...EMPTY_ITEMS,
   note: [
-    { kind: "note", id: "n1", title: "Standup notes from the long Tuesday" },
-    { kind: "note", id: "n2", title: "Second" },
+    { kind: "note", id: "n1", title: "Standup notes from the long Tuesday" } as Note,
+    { kind: "note", id: "n2", title: "Second" } as Note,
   ],
-  meeting: [{ kind: "meeting", id: "m1", title: "Launch sync" }],
+  meeting: [{ kind: "meeting", id: "m1", title: "Launch sync" } as Meeting],
   directory: [
     {
       kind: "directory",
@@ -92,7 +93,7 @@ describe("buildScene", () => {
         kind: "note" as const,
         id: `n${i}`,
         title: `Note ${i}`,
-      })),
+      } as Note)),
     };
     const scene = buildScene(inputs({ items: many }));
     expect(scene.objects).toHaveLength(MAX_FLOATERS);

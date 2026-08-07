@@ -4,6 +4,7 @@
 // everything.
 import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it } from "vitest";
+import type { Note, KB, Persona, Workflow } from "../../lib/primitives";
 import { EMPTY_ITEMS, type Items } from "../api";
 import { useDesk } from "../store";
 import { allObjects } from "../world";
@@ -18,19 +19,19 @@ const thousand: Items = {
     kind: "note" as const,
     id: `n${i}`,
     title: `Note ${i}`,
-  })),
+  } as Note)),
   kb: Array.from({ length: 200 }, (_, i) => ({
     kind: "kb" as const,
     id: `k${i}`,
     name: `Knowledge ${i}`,
-  })),
+  } as KB)),
   recipe: Array.from({ length: 200 }, (_, i) => ({
     kind: "recipe" as const,
     id: `r${i}`,
     name: `Persona ${i}`,
-  })),
+  } as Persona)),
   workflow: [
-    { kind: "workflow" as const, id: "w-needle", name: "Meridian sweep" },
+    { kind: "workflow" as const, id: "w-needle", name: "Meridian sweep" } as Workflow,
   ],
 };
 
@@ -74,7 +75,7 @@ describe("HS-93-08 spatial bound at 1,000 items", () => {
     useDesk.setState({
       items: {
         ...EMPTY_ITEMS,
-        note: [{ kind: "note", id: "solo", title: "Solo" }],
+        note: [{ kind: "note", id: "solo", title: "Solo" } as Note],
       },
     });
     const { container } = render(<WorldStage />);

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { EMPTY_ITEMS, type Items } from "../api";
+import type { Note, Artifact, Persona, Coder } from "../../lib/primitives";
 import {
   contextualCapabilityActions,
   contextualCoderSessions,
@@ -44,7 +45,7 @@ function fixture(): Items {
         id: "same",
         title: "Release checklist",
         bodyMarkdown: "Ship after checks pass.",
-      },
+      } as Note,
     ],
     artifact: [
       {
@@ -52,7 +53,7 @@ function fixture(): Items {
         id: "same",
         title: "Risk report",
         bodyMarkdown: "One open risk.",
-      },
+      } as Artifact,
     ],
     recipe: [
       {
@@ -64,7 +65,7 @@ function fixture(): Items {
           input_schema: { required: ["input"] },
           effect_classes: ["creates_artifact"],
         },
-      },
+      } as Persona,
       {
         kind: "recipe",
         id: "offline",
@@ -74,7 +75,7 @@ function fixture(): Items {
           input_schema: { required: ["input"] },
           effect_classes: ["creates_artifact"],
         },
-      },
+      } as Persona,
       {
         kind: "recipe",
         id: "unscoped",
@@ -84,7 +85,7 @@ function fixture(): Items {
           input_schema: { required: ["input"] },
           effect_classes: [],
         },
-      },
+      } as Persona,
     ],
     workflow: [
       {
@@ -99,8 +100,8 @@ function fixture(): Items {
       },
     ],
     coder: [
-      { kind: "coder", id: "waiting", title: "App", state: "waiting" },
-      { kind: "coder", id: "busy", title: "Docs", state: "running" },
+      { kind: "coder", id: "waiting", title: "App", state: "waiting" } as Coder,
+      { kind: "coder", id: "busy", title: "Docs", state: "running" } as Coder,
     ],
   };
 }

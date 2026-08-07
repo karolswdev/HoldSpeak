@@ -13,13 +13,14 @@ from dataclasses import asdict, dataclass
 from datetime import datetime, timedelta
 from typing import Any, Optional
 
+from ..errors import DatabaseError as _DatabaseErrorBase
 from .base import BaseRepository
 
 _LIFECYCLES = frozenset({"recorded", "accepted", "superseded", "rejected"})
 _PROMOTION_TYPES = frozenset({"adr", "note", "decision_announcement"})
 
 
-class DecisionPromotionRefused(ValueError):
+class DecisionPromotionRefused(_DatabaseErrorBase):
     """Named product refusal for a decision that cannot be promoted."""
 
     code = "decision_promotion_refused"
@@ -30,7 +31,7 @@ class DecisionPromotionRefused(ValueError):
         self.detail = detail
 
 
-class DecisionTransitionRefused(ValueError):
+class DecisionTransitionRefused(_DatabaseErrorBase):
     """A named refusal for an illegal decision lifecycle transition."""
 
     code = "illegal_decision_lifecycle_transition"
@@ -359,6 +360,8 @@ def backfill_decisions(conn: sqlite3.Connection) -> dict[str, int]:
 
 class DecisionRepository(BaseRepository):
     """Query, reconcile, and transition durable decision records."""
+
+    table = "decisions"
 
     def reconcile_artifact(self, artifact_id: str) -> dict[str, int]:
         clean_id = str(artifact_id or "").strip()

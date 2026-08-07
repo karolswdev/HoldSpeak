@@ -383,6 +383,9 @@ def test_census_no_feature_code_readers_outside_config() -> None:
     for path in _files(REPO / "holdspeak", (".py",)):
         if path.name == "config.py" and path.parent.name == "holdspeak":
             continue  # declaration + the one migration shim
+        # HS-117-12: config.py split into holdspeak/config/ package
+        if "holdspeak/config/" in str(path):
+            continue
         if _BANNED.search(path.read_text()):
             offenders.append(str(path))
     assert offenders == []

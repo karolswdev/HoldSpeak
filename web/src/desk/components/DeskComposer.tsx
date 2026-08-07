@@ -1,3 +1,4 @@
+import "./session-pullout.css";
 import { MicButton } from "./MicButton";
 
 interface DeskComposerProps {

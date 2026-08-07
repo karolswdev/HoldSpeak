@@ -21,6 +21,8 @@ ROUTED_INTEL_RETRY_REASON = "Retry remaining routed intelligence requested."
 
 
 class IntelRepository(BaseRepository):
+    table = "intel"
+
     """Persistence for the deferred-intel queue (jobs, attempts, status)."""
 
     def enqueue_intel_job(

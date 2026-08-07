@@ -15,7 +15,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from holdspeak.web.routes.workflow_graph import linearize
+from holdspeak.services.support import linearize
 
 _FIXTURES = (
     Path(__file__).resolve().parents[2]

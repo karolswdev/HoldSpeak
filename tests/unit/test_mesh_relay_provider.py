@@ -319,9 +319,9 @@ def test_endpoint_egress_mesh_shape() -> None:
 
 
 def test_run_egress_reports_mesh_for_profile_and_default(monkeypatch) -> None:
-    from holdspeak.web.routes.primitives.ask import _run_egress
+    from holdspeak.services.support import _run_egress
 
-    egress, model = _run_egress(ctx=None, prof=_mesh_profile(), intel=SimpleNamespace(active_provider="cloud"))
+    egress, model = _run_egress(_mesh_profile(), SimpleNamespace(active_provider="cloud"), default_model="")
     assert egress == {"scope": "mesh", "host": "walk-edge"} and model == "qwen3.5-4b"
 
     relay = MeshRelayIntel(node="walk-edge", model_hint="qwen3.5-4b", relay=object())

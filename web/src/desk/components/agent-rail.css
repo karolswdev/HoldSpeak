@@ -1,0 +1,96 @@
+/* ── HS-73-07: the agent rail (personas run from the world) ── */
+.desk-next .desk-rail {
+  position: fixed;
+  top: 50%;
+  right: 14px;
+  transform: translateY(-50%);
+  z-index: 29;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.desk-next .desk-rail-slot {
+  position: relative;
+}
+/* HS-111: agent rail — rectangular, etched border, dense */
+.desk-next .desk-rail-avatar {
+  position: relative;
+  width: 46px;
+  height: 46px;
+  border-radius: 2px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  box-shadow: var(--desk-window-etch);
+  font-size: 21px;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  backdrop-filter: none;
+  transition: border-color var(--duration-short) var(--ease-standard);
+}
+.desk-next .desk-rail-avatar:hover {
+  border-color: var(--accent);
+}
+.desk-next .desk-rail-avatar.open {
+  border-color: var(--accent);
+}
+/* HS-111: status indicators — square, no glow */
+.desk-next .desk-rail-egress {
+  position: absolute;
+  bottom: 1px;
+  right: 1px;
+  width: 9px;
+  height: 9px;
+  border-radius: 0;
+  border: 1px solid var(--shadow-ink-5);
+}
+.desk-next .desk-rail-egress.is-local {
+  background: var(--success, #34d399);
+}
+.desk-next .desk-rail-egress.is-cloud {
+  background: var(--info);
+}
+.desk-next .desk-rail-ask {
+  position: absolute;
+  right: 56px;
+  top: 0;
+  width: min(330px, 70vw);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  border-radius: 2px;
+  border: 1px solid
+    color-mix(in srgb, var(--accent) 30%, var(--border));
+  background: var(--desk-panel-fill);
+  box-shadow: var(--desk-window-shadow);
+  backdrop-filter: none;
+}
+.desk-next .desk-rail-ask-row {
+  display: flex;
+  gap: 8px;
+}
+.desk-next .desk-rail-ask input {
+  flex: 1;
+  padding: 8px 10px;
+  border-radius: 2px;
+  border: 1px solid var(--border);
+  background: var(--desk-glass);
+  color: var(--text);
+  font-size: var(--font-size-sm);
+}
+.desk-next .desk-rail-ask input:focus {
+  outline-color: var(--accent);
+  border-color: var(--accent);
+}
+@media (prefers-reduced-motion: reduce) {
+  .desk-next .desk-rail-avatar.working {
+    animation: none;
+    box-shadow: 0 0 0 3px var(--accent-glow-strong);
+  }
+}
+
+.desk-next .desk-chip.in-zone {
+  border-color: color-mix(in srgb, var(--zk, #e0a458) 60%, var(--border));
+}
+

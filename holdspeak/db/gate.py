@@ -104,6 +104,8 @@ class GateProposalRepository(BaseRepository):
     grant-store clock pattern) so expiry races are testable without
     sleeps."""
 
+    table = "gate"
+
     def __init__(self, connection, container=None, *, now_fn: Callable[[], float] = time.time):
         super().__init__(connection, container)
         self._now = now_fn

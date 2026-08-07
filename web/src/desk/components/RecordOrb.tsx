@@ -5,6 +5,7 @@
 // from /api/state and kept live by the ONE runtime bus; a meeting started
 // anywhere (the /live page, the CLI, the iPad) shows here and the orb can
 // only stop it — never double-start.
+import "./record-orb.css";
 import { useEffect, useState } from "react";
 import { apiFetch } from "../../lib/api";
 import { useRuntimeBus } from "../../runtime/RuntimeBus";

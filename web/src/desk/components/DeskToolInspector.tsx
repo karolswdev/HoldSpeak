@@ -1,3 +1,4 @@
+import "./chrome-menus.css";
 import { useEffect, useMemo, useState } from "react";
 import { apiFetch, readableError } from "../../lib/api";
 import {

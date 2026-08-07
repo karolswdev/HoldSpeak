@@ -4,15 +4,14 @@ Bodies moved verbatim from routes/primitives.py (HS-79-03, the Phase-63 discipli
 """
 from __future__ import annotations
 
-import os
-import time
-from pathlib import Path
 from typing import Any, Optional
 
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 
 from ....logging_config import get_logger
+from ....services.profile_service import ProfileService
+from ....services.errors import NotFound, ServiceError, ValidationError
 from ...context import WebContext
 from ...runtime_support import error_500
 from ._shared import _json_body, _new_id
@@ -49,33 +48,17 @@ def build_profiles_router(ctx: WebContext) -> APIRouter:
             "requires_key": bool(pick("requires_key", existing.requires_key if existing else False)),
         }
 
+    def _svc() -> ProfileService:
+        from ....db import get_database
+        return ProfileService(get_database())
+
+    def _principal(request: Request) -> Any:
+        return getattr(request.state, "principal", None)
+
     @router.get("/api/profiles")
-    async def api_list_profiles() -> Any:
+    async def api_list_profiles(request: Request) -> Any:
         try:
-            from ....db import get_database
-            db = get_database()
-            profiles = db.profiles.list()
-            # HS-85-04: mesh liveness rides the ENVELOPE, never the profile
-            # shape (the synced primitive stays pure; the shape guard pins it).
-            liveness: dict[str, Any] = {}
-            nodes = {str(getattr(p, "node", "") or "") for p in profiles if p.kind == "meshNode"}
-            if nodes - {""}:
-                from datetime import datetime as _dt
-
-                from ....intel.mesh_relay import DEFAULT_LIVENESS_WINDOW_SECONDS
-
-                now = _dt.now()
-                for node in sorted(nodes - {""}):
-                    last = db.mesh_relay.worker_last_seen(node)
-                    age = None if last is None else (now - last).total_seconds()
-                    liveness[node] = {
-                        "live": age is not None and age <= DEFAULT_LIVENESS_WINDOW_SECONDS,
-                        "last_seen_seconds": None if age is None else int(age),
-                    }
-            return JSONResponse({
-                "profiles": [p.to_dict() for p in profiles],
-                "mesh_liveness": liveness,
-            })
+            return JSONResponse(_svc().list_profiles(_principal(request)))
         except Exception as exc:
             return error_500(exc, log, "Failed to list profiles")
 
@@ -95,13 +78,11 @@ def build_profiles_router(ctx: WebContext) -> APIRouter:
         return _profiles_read_only()
 
     @router.get("/api/profiles/{profile_id}")
-    async def api_get_profile(profile_id: str) -> Any:
+    async def api_get_profile(profile_id: str, request: Request) -> Any:
         try:
-            from ....db import get_database
-            profile = get_database().profiles.get(profile_id)
-            if profile is None:
-                return JSONResponse({"error": f"Unknown profile: {profile_id}"}, status_code=404)
-            return JSONResponse({"profile": profile.to_dict()})
+            return JSONResponse({"profile": _svc().get_profile(_principal(request), profile_id)})
+        except NotFound:
+            return JSONResponse({"error": f"Unknown profile: {profile_id}"}, status_code=404)
         except Exception as exc:
             return error_500(exc, log, "Failed to get profile")
 
@@ -143,94 +124,19 @@ def build_profiles_router(ctx: WebContext) -> APIRouter:
         return _profile_fields(adapted, existing)
 
     @router.get("/api/inference-targets")
-    async def api_list_inference_targets() -> Any:
+    async def api_list_inference_targets(request: Request) -> Any:
         try:
-            from ....db import get_database
-            from ....inference_targets import (
-                PROFILE_ALIAS_VERSION,
-                TARGET_CONTRACT_VERSION,
-                list_inference_targets,
-            )
-
-            db = get_database()
-            return JSONResponse({
-                "version": TARGET_CONTRACT_VERSION,
-                "targets": [target.to_dict() for target in list_inference_targets(db)],
-                "profile_alias": {
-                    "version": PROFILE_ALIAS_VERSION,
-                    "status": "supported",
-                    "removal": "not_before_inference_target_v3",
-                },
-            })
+            return JSONResponse(_svc().list_inference_targets(_principal(request)))
         except Exception as exc:
             return error_500(exc, log, "Failed to list inference targets")
 
     @router.post("/api/inference-targets/{target_id}/probe")
-    async def api_probe_target(target_id: str) -> Any:
+    async def api_probe_target(target_id: str, request: Request) -> Any:
         """Test this destination without persisting a connection result."""
         try:
-            from ....db import get_database
-            from ....intel.providers import profile_key_env
-            from ....setup_runtime import discover_endpoint_models
-
-            db = get_database()
-            profile = db.profiles.get(target_id)
-            if profile is None:
-                return JSONResponse(
-                    {"error": f"Unknown destination: {target_id}"}, status_code=404
-                )
-
-            if profile.kind == "openAICompatible":
-                started = time.perf_counter()
-                discovered = discover_endpoint_models(
-                    profile.base_url,
-                    api_key=os.environ.get(profile_key_env(profile.id)),
-                )
-                latency_ms = int((time.perf_counter() - started) * 1000)
-                reachable = bool(discovered.get("ok"))
-                return JSONResponse({
-                    "reachable": reachable,
-                    "latency_ms": latency_ms,
-                    "models": list(discovered.get("models") or []),
-                    "error": None if reachable else str(discovered.get("detail") or "Unreachable"),
-                })
-
-            if profile.kind == "onDevice":
-                model_file = Path(profile.model_file).expanduser()
-                reachable = model_file.is_file()
-                return JSONResponse({
-                    "reachable": reachable,
-                    "latency_ms": None,
-                    "models": [profile.model] if reachable and profile.model else [],
-                    "error": None if reachable else f"Model file not found: {model_file}",
-                })
-
-            if profile.kind == "meshNode":
-                from datetime import datetime
-
-                from ....intel.mesh_relay import DEFAULT_LIVENESS_WINDOW_SECONDS
-
-                last_seen = db.mesh_relay.worker_last_seen(profile.node)
-                age = None if last_seen is None else (datetime.now() - last_seen).total_seconds()
-                reachable = age is not None and age <= DEFAULT_LIVENESS_WINDOW_SECONDS
-                error = None if reachable else (
-                    f"Mesh node '{profile.node}' has never checked in"
-                    if age is None
-                    else f"Mesh node '{profile.node}' last checked in {int(age)}s ago"
-                )
-                return JSONResponse({
-                    "reachable": reachable,
-                    "latency_ms": None,
-                    "models": [],
-                    "error": error,
-                })
-
-            return JSONResponse({
-                "reachable": False,
-                "latency_ms": None,
-                "models": [],
-                "error": f"Destination kind '{profile.kind}' cannot be probed",
-            })
+            return JSONResponse(_svc().probe_inference_target(_principal(request), target_id))
+        except NotFound:
+            return JSONResponse({"error": f"Unknown destination: {target_id}"}, status_code=404)
         except Exception as exc:
             return error_500(exc, log, "Failed to probe inference target")
 
@@ -241,36 +147,24 @@ def build_profiles_router(ctx: WebContext) -> APIRouter:
             return JSONResponse({"error": "expected a JSON object"}, status_code=400)
         if rejected := _reject_secret(body):
             return rejected
-        if not str(body.get("name") or "").strip():
-            return JSONResponse({"error": "destination name is required"}, status_code=400)
         try:
-            from ....db import get_database
-            from ....inference_targets import target_from_profile
-
-            db = get_database()
-            profile = db.profiles.upsert(
-                profile_id=str(body.get("id") or _new_id("target")),
-                **_target_fields(body),
-            )
-            return JSONResponse(
-                {"inference_target": target_from_profile(profile, db).to_dict()},
-                status_code=201,
-            )
+            target = _svc().create_profile(_principal(request), body)
+            return JSONResponse({"inference_target": target}, status_code=201)
+        except ValidationError as exc:
+            return JSONResponse({"error": str(exc)}, status_code=400)
         except ValueError as exc:
             return JSONResponse({"error": str(exc)}, status_code=400)
         except Exception as exc:
             return error_500(exc, log, "Failed to create inference target")
 
     @router.get("/api/inference-targets/{target_id}")
-    async def api_get_inference_target(target_id: str) -> Any:
+    async def api_get_inference_target(target_id: str, request: Request) -> Any:
         try:
-            from ....db import get_database
-            from ....inference_targets import resolve_inference_target
-
-            target = resolve_inference_target(get_database(), target_id)
-            if target.readiness_state == "unavailable":
-                return JSONResponse({"error": target.readiness_reason}, status_code=404)
-            return JSONResponse({"inference_target": target.to_dict()})
+            return JSONResponse(_svc().get_inference_target(_principal(request), target_id))
+        except NotFound:
+            return JSONResponse({"error": f"Unknown destination: {target_id}"}, status_code=404)
+        except ServiceError as exc:
+            return JSONResponse({"error": exc.detail}, status_code=int(exc.context.get("status") or 400))
         except Exception as exc:
             return error_500(exc, log, "Failed to get inference target")
 
@@ -279,34 +173,27 @@ def build_profiles_router(ctx: WebContext) -> APIRouter:
         body = await _json_body(request)
         if body is None:
             return JSONResponse({"error": "expected a JSON object"}, status_code=400)
-        if target_id == "this_machine":
-            return JSONResponse({"error": "This device is a built-in destination"}, status_code=400)
         if rejected := _reject_secret(body):
             return rejected
         try:
-            from ....db import get_database
-            from ....inference_targets import target_from_profile
-
-            db = get_database()
-            existing = db.profiles.get(target_id)
-            if existing is None:
-                return JSONResponse({"error": f"Unknown destination: {target_id}"}, status_code=404)
-            profile = db.profiles.upsert(
-                profile_id=target_id, **_target_fields(body, existing)
-            )
-            return JSONResponse({"inference_target": target_from_profile(profile, db).to_dict()})
+            target = _svc().update_profile(_principal(request), target_id, body)
+            return JSONResponse({"inference_target": target})
+        except ValidationError as exc:
+            return JSONResponse({"error": str(exc)}, status_code=400)
+        except NotFound:
+            return JSONResponse({"error": f"Unknown destination: {target_id}"}, status_code=404)
         except Exception as exc:
             return error_500(exc, log, "Failed to update inference target")
 
     @router.delete("/api/inference-targets/{target_id}")
-    async def api_delete_inference_target(target_id: str) -> Any:
-        if target_id == "this_machine":
-            return JSONResponse({"error": "This device is a built-in destination"}, status_code=400)
+    async def api_delete_inference_target(target_id: str, request: Request) -> Any:
         try:
-            from ....db import get_database
-            if not get_database().profiles.delete(target_id):
-                return JSONResponse({"error": f"Unknown destination: {target_id}"}, status_code=404)
+            _svc().delete_profile(_principal(request), target_id)
             return JSONResponse({"success": True})
+        except ValidationError as exc:
+            return JSONResponse({"error": str(exc)}, status_code=400)
+        except NotFound:
+            return JSONResponse({"error": f"Unknown destination: {target_id}"}, status_code=404)
         except Exception as exc:
             return error_500(exc, log, "Failed to delete inference target")
 

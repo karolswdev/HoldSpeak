@@ -1,0 +1,118 @@
+// HS-117-09 — extracted from HistoryCore.tsx: helpers and constants.
+// HS-100-08 — Meetings opens on OUTCOMES (thesis §1.2): what needs
+// you, what settled, the transcript as a receipt. Record/import and
+// the typed artifacts are wings; speakers/projects/queues plumbing
+// stacks behind the one gear door.
+import type { ReactNode } from "react";
+
+export const WINGS = [
+  { id: "outcomes", label: "Outcomes" },
+  { id: "record", label: "Record" },
+  { id: "artifacts", label: "Artifacts" },
+];
+// Door sections (ids are part of the phase-91 archive lock).
+export const DOOR_SECTIONS = ["actions", "speakers", "projects", "queues"] as const;
+// Receipt sections inside a meeting ("transcript", "aftercare",
+// "routing", "proposals" remain the wire vocabulary).
+
+export function displayState(value: unknown): string {
+  const state = String(value ?? "").trim();
+  const known: Record<string, string> = {
+    pending: "Queued",
+    complete: "Succeeded",
+    capture_failed: "Capture failed",
+    import_failed: "Import failed",
+    recoverable: "Recovery available",
+    recording: "Recording",
+    finalized: "Saved",
+    error: "Intelligence failed",
+    partial: "Intelligence incomplete",
+    skipped: "Intelligence skipped",
+    queued: "Intelligence queued",
+    running: "Intelligence running",
+    ready: "Intelligence ready",
+  };
+  return (
+    known[state] ||
+    state
+      .replace(/_/g, " ")
+      .replace(/^./, (character) => character.toUpperCase())
+  );
+}
+
+/* HS-111-03 — the catalog's state token: axis-named, tone as color on
+   the words (never a shuffle, never a pill). "Intelligence", never
+   the banned abbreviation (HS-100-05 vocabulary guard). The axis word
+   rides its own span so the narrow rail can fold it away without
+   losing the state. */
+export type StateToken = { axis?: string; label: string; tone?: "warn" | "danger" };
+
+export function stateToken(row: Record<string, unknown>): StateToken {
+  const capture = String(row.capture_status ?? "");
+  if (capture === "recording") return { label: "REC", tone: "danger" };
+  if (capture === "capture_failed")
+    return { label: "CAPTURE FAILED", tone: "danger" };
+  if (capture === "recoverable") return { label: "RECOVERABLE", tone: "warn" };
+  const intelValue = row.intel_status;
+  const state =
+    typeof intelValue === "object" && intelValue !== null
+      ? String((intelValue as Record<string, unknown>).state ?? "")
+      : String(intelValue ?? "");
+  const axis = "INTELLIGENCE";
+  const known: Record<string, StateToken> = {
+    disabled: { axis, label: "OFF" },
+    skipped: { axis, label: "SKIPPED", tone: "warn" },
+    queued: { axis, label: "QUEUED", tone: "warn" },
+    pending: { axis, label: "QUEUED", tone: "warn" },
+    running: { axis, label: "RUNNING", tone: "warn" },
+    partial: { axis, label: "PARTIAL", tone: "warn" },
+    error: { axis, label: "FAILED", tone: "danger" },
+    failed: { axis, label: "FAILED", tone: "danger" },
+    import_failed: { label: "IMPORT FAILED", tone: "danger" },
+  };
+  if (row.status === "failed") return { label: "FAILED", tone: "danger" };
+  return known[state] ?? { label: "SAVED" };
+}
+
+export const MONTHS = [
+  "JAN", "FEB", "MAR", "APR", "MAY", "JUN",
+  "JUL", "AUG", "SEP", "OCT", "NOV", "DEC",
+];
+
+/** MMM DD — the catalog's date column. */
+export function ledgerDate(value: unknown): string {
+  const date = new Date(String(value ?? ""));
+  if (Number.isNaN(date.getTime())) return "";
+  return `${MONTHS[date.getMonth()]} ${String(date.getDate()).padStart(2, "0")}`;
+}
+
+/** n MIN, folding to n HR past ten hours — a catalog cell, not a
+ * six-digit minute wall. Empty when the wire has no duration. */
+export function durationToken(seconds: unknown): string {
+  const minutes = Math.round(Number(seconds ?? 0) / 60);
+  if (!Number.isFinite(minutes) || minutes <= 0) return "";
+  if (minutes >= 600) return `${Math.round(minutes / 60)} HR`;
+  return `${minutes} MIN`;
+}
+
+/** hh:mm — the receipt stamp's clock. */
+export function clockTime(value: unknown): string {
+  const date = new Date(String(value ?? ""));
+  if (Number.isNaN(date.getTime())) return "";
+  return `${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
+}
+
+export function download(blob: Blob, name: string) {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = name;
+  link.click();
+  window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+/** The one receipt channel: what the machine just did, on the footer. */
+export type Receipt = { text: string; tone?: "danger" };
+
+/** Needs-you table row shape shared between useMeetingData and NeedsYouTable. */
+export type NeedsRow = { cells: ReactNode[]; verbs: ReactNode };

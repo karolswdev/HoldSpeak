@@ -6,6 +6,7 @@
 // byte-for-byte unchanged (every arm/disarm/steer/sendKeys/killOpen call,
 // the typed-refusal rendering, the grant re-sync); only the RENDER moved
 // to the gadget grammar — transport keys, lamps, LedMeters, facts tokens.
+import "./session-pullout.css";
 import { useEffect, useRef, useState } from "react";
 import { MicButton } from "./MicButton";
 import { GroundingSection } from "./GroundingSection";
@@ -493,8 +494,8 @@ function SteerComposer() {
       <GroundingSection
         meetings={(meetings || []).map((m) => ({
           id: m.id,
-          title: String((m as any).title || "Untitled meeting"),
-          startedAt: (m as any).startedAt,
+          title: String(m.title || "Untitled meeting"),
+          startedAt: m.startedAt,
         }))}
         selection={grounding}
         onChange={setGrounding}

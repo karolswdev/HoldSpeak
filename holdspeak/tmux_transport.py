@@ -6,9 +6,13 @@ import shutil
 import subprocess
 from dataclasses import dataclass
 
+from .errors import HoldSpeakError
 
-class TmuxTransportError(RuntimeError):
+
+class TmuxTransportError(HoldSpeakError):
     """Raised when a tmux reply cannot be delivered."""
+
+    code: str = "TMUX_TRANSPORT_ERROR"
 
 
 @dataclass(frozen=True)

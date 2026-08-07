@@ -2,7 +2,7 @@
 // HS-98-05 — re-crafted native on the surface kit; wire calls unchanged.
 import { useState } from "react";
 import { openSurfaceOr } from "../../desk/shell";
-import type { CoreProps } from "./ActivityCore";
+import type { CoreProps, SetupStatus } from "./core-types";
 import { Button } from "../../components/signal/Signal";
 import { LampGadget } from "../../desk/surface/gadgets";
 import { apiFetch, readableError } from "../../lib/api";
@@ -13,17 +13,9 @@ import {
   SurfaceRows,
   SurfaceSection,
   SurfaceState,
-  SurfaceVerbs,
 } from "../../desk/surface/Surface";
+import { CoreResourceGuard, renderHeroSlot } from "./core-layout";
 import { deSnake, presentValue } from "../../desk/surface/format";
-
-type SetupStatus = {
-  overall?: string;
-  first_run?: boolean;
-  sections?: Array<Record<string, unknown>>;
-  trust?: Record<string, unknown>;
-  presence?: Record<string, unknown>;
-};
 
 export function SetupCore({ hero }: CoreProps) {
   const resource = useResource<SetupStatus>("/api/setup/status", {});
@@ -64,34 +56,22 @@ export function SetupCore({ hero }: CoreProps) {
   );
   return (
     <>
-      {hero ? (
-        hero(verbs)
-      ) : (
-        <SurfaceVerbs
-          status={
-            <LampGadget
-              on
-              tone={
-                resource.data.overall === "ready"
-                  ? "ok"
-                  : resource.data.overall === "blocked"
-                    ? "fail"
-                    : "warn"
-              }
-              label={
-                deSnake(String(resource.data.overall ?? "")) || "checking"
-              }
-            />
+      {renderHeroSlot(
+        hero,
+        verbs,
+        <LampGadget
+          on
+          tone={
+            resource.data.overall === "ready"
+              ? "ok"
+              : resource.data.overall === "blocked"
+                ? "fail"
+                : "warn"
           }
-        >
-          {verbs}
-        </SurfaceVerbs>
+          label={deSnake(String(resource.data.overall ?? "")) || "checking"}
+        />,
       )}
-      <SurfaceState
-        loading={resource.loading}
-        error={resource.error}
-        onRetry={() => void resource.reload()}
-      >
+      <CoreResourceGuard resource={resource}>
         <SurfaceColumns
           main={
             <SurfaceSection
@@ -182,7 +162,7 @@ export function SetupCore({ hero }: CoreProps) {
             </SurfaceSection>
           }
         />
-      </SurfaceState>
+      </CoreResourceGuard>
     </>
   );
 }

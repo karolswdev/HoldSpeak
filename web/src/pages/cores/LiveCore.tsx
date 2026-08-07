@@ -19,9 +19,16 @@
 // footer receipt bar. Wire calls unchanged.
 import { useEffect, useMemo, useState } from "react";
 import { openPrimitive } from "../../desk/shell";
-import type { CoreProps } from "./ActivityCore";
+import type {
+  CoreProps,
+  MeetingStateResponse,
+  RuntimeStatusResponse,
+  IntentControlResponse,
+  PluginJobsSummaryResponse,
+  DevicesHealthResponse,
+} from "./core-types";
 import { Button } from "../../components/signal/Signal";
-import { apiFetch, readableError, type JsonRecord } from "../../lib/api";
+import { apiFetch } from "../../lib/api";
 import { useRuntimeBus } from "../../runtime/RuntimeBus";
 import { asRows, rowId, useResource } from "../pageSupport";
 import {
@@ -33,9 +40,10 @@ import {
   SurfaceState,
   SurfaceStream,
   SurfaceStreamEntry,
-  SurfaceVerbs,
   SurfaceWell,
 } from "../../desk/surface/Surface";
+import { useAction } from "./core-hooks";
+import { renderHeroSlot } from "./core-layout";
 import {
   CycleGadget,
   EgressChip,
@@ -52,23 +60,22 @@ import { presentValue } from "../../desk/surface/format";
 type Segment = Record<string, unknown>;
 
 export function LiveCore({ hero }: CoreProps) {
-  const initial = useResource<JsonRecord>("/api/state", {});
-  const runtimeStatus = useResource<JsonRecord>("/api/runtime/status", {});
-  const intentControl = useResource<JsonRecord>("/api/intents/control", {});
-  const pluginJobs = useResource<JsonRecord>("/api/plugin-jobs/summary", {});
-  const devices = useResource<JsonRecord>("/api/devices/health", {});
+  const initial = useResource<MeetingStateResponse>("/api/state", {});
+  const runtimeStatus = useResource<RuntimeStatusResponse>("/api/runtime/status", {});
+  const intentControl = useResource<IntentControlResponse>("/api/intents/control", {});
+  const pluginJobs = useResource<PluginJobsSummaryResponse>("/api/plugin-jobs/summary", {});
+  const devices = useResource<DevicesHealthResponse>("/api/devices/health", {});
   const { state: connection, subscribe } = useRuntimeBus();
-  const [state, setState] = useState<JsonRecord>({});
+  const [state, setState] = useState<Record<string, unknown>>({});
   const [segments, setSegments] = useState<Segment[]>([]);
-  const [busy, setBusy] = useState(false);
-  const [message, setMessage] = useState("");
+  const action = useAction();
   const [bookmark, setBookmark] = useState("");
   const [bookmarking, setBookmarking] = useState(false);
   const [metaOpen, setMetaOpen] = useState(false);
   const [title, setTitle] = useState("");
   const [tags, setTags] = useState("");
   const [previewText, setPreviewText] = useState("");
-  const [previewResult, setPreviewResult] = useState<JsonRecord | null>(null);
+  const [previewResult, setPreviewResult] = useState<Record<string, unknown> | null>(null);
   const [retainedMeetingId, setRetainedMeetingId] = useState("");
   const [doorOpen, setDoorOpen] = useState(false);
   useWindowWings(
@@ -115,7 +122,7 @@ export function LiveCore({ hero }: CoreProps) {
             [frame.type]: frame.data,
             ...(frame.type === "meeting_started" ||
             frame.type === "meeting_updated"
-              ? (frame.data as JsonRecord)
+              ? (frame.data as Record<string, unknown>)
               : {}),
           }));
       }),
@@ -127,20 +134,18 @@ export function LiveCore({ hero }: CoreProps) {
   );
   const duration = String(
     state.formatted_duration ??
-      (state.duration as JsonRecord | undefined)?.formatted ??
+      (state.duration as Record<string, unknown> | undefined)?.formatted ??
       state.duration ??
       "00:00",
   );
-  const action = async (path: string, json: unknown = {}) => {
-    setBusy(true);
-    setMessage("");
-    try {
-      const value = await apiFetch<JsonRecord>(path, { method: "POST", json });
+  const perform = async (path: string, json: unknown = {}) => {
+    await action.run(async () => {
+      const value = await apiFetch<Record<string, unknown>>(path, { method: "POST", json });
       if (path.endsWith("start")) {
         setRetainedMeetingId("");
         setState((current) => ({
           ...current,
-          ...((value.meeting as JsonRecord) ?? {}),
+          ...((value.meeting as Record<string, unknown>) ?? {}),
           active: true,
         }));
       }
@@ -149,17 +154,10 @@ export function LiveCore({ hero }: CoreProps) {
         if (meetingId) setRetainedMeetingId(meetingId);
         setState((current) => ({ ...current, active: false }));
       }
-      return value;
-    } catch (error) {
-      setMessage(readableError(error));
-      return null;
-    } finally {
-      setBusy(false);
-    }
+    });
   };
   const saveMetadata = async () => {
-    setBusy(true);
-    try {
+    await action.run(async () => {
       await apiFetch("/api/meeting", {
         method: "PATCH",
         json: {
@@ -179,33 +177,24 @@ export function LiveCore({ hero }: CoreProps) {
           .filter(Boolean),
       }));
       setMetaOpen(false);
-    } catch (error) {
-      setMessage(readableError(error));
-    } finally {
-      setBusy(false);
-    }
+    });
   };
   const previewRoute = async () => {
-    setBusy(true);
-    try {
+    await action.run(async () => {
       setPreviewResult(
-        await apiFetch<JsonRecord>("/api/intents/preview", {
+        await apiFetch<Record<string, unknown>>("/api/intents/preview", {
           method: "POST",
           json: { text: previewText },
         }),
       );
-    } catch (error) {
-      setMessage(readableError(error));
-    } finally {
-      setBusy(false);
-    }
+    });
   };
   const commitBookmark = async () => {
     if (!bookmarking) return;
     setBookmarking(false);
     const label = bookmark;
     setBookmark("");
-    await action("/api/bookmark", { label });
+    await perform("/api/bookmark", { label });
   };
   const transcript = useMemo<Array<Segment & { key: string }>>(
     () =>
@@ -220,16 +209,16 @@ export function LiveCore({ hero }: CoreProps) {
     <Button
       variant={active ? "danger" : "primary"}
       dense
-      loading={busy}
+      loading={action.busy}
       onClick={() =>
-        void action(active ? "/api/meeting/stop" : "/api/meeting/start")
+        void perform(active ? "/api/meeting/stop" : "/api/meeting/start")
       }
     >
       {active ? "Stop meeting" : "Start meeting"}
     </Button>
   );
   const intelState = String(
-    (state.intel_status as JsonRecord | undefined)?.state ??
+    (state.intel_status as Record<string, unknown> | undefined)?.state ??
       state.intel_status ??
       "idle",
   );
@@ -243,7 +232,7 @@ export function LiveCore({ hero }: CoreProps) {
         .filter(([, value]) => value !== "")
     : [];
   const egressLabel = presentValue(
-    (runtimeStatus.data.intel_egress as JsonRecord | undefined)?.label ??
+    (runtimeStatus.data.intel_egress as Record<string, unknown> | undefined)?.label ??
       (typeof runtimeStatus.data.intel_egress === "string"
         ? runtimeStatus.data.intel_egress
         : ""),
@@ -291,7 +280,7 @@ export function LiveCore({ hero }: CoreProps) {
         <div className="surface-actions">
           <Button
             dense
-            loading={busy}
+            loading={action.busy}
             disabled={!previewText.trim()}
             onClick={previewRoute}
           >
@@ -396,19 +385,8 @@ export function LiveCore({ hero }: CoreProps) {
 
   return (
     <>
-      {hero ? (
-        hero(verbs)
-      ) : (
-        <SurfaceVerbs
-          status={
-            presentValue(state.title) ||
-            (active ? "Recording" : "Ready to record")
-          }
-        >
-          {verbs}
-        </SurfaceVerbs>
-      )}
-      {message ? <SurfaceState error={message} /> : null}
+      {renderHeroSlot(hero, verbs, presentValue(state.title) || (active ? "Recording" : "Ready to record"))}
+      {action.message ? <SurfaceState error={action.message} /> : null}
       {retainedMeetingId ? (
         <p className="surface-receipt-line" data-tone="ok" role="status">
           ✓ Meeting saved{" "}
@@ -452,7 +430,7 @@ export function LiveCore({ hero }: CoreProps) {
                   <Button
                     variant="primary"
                     dense
-                    loading={busy}
+                    loading={action.busy}
                     onClick={saveMetadata}
                   >
                     Save

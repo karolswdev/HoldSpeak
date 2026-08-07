@@ -10,6 +10,8 @@ from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 
 from ....logging_config import get_logger
+from ....services.coder_service import CoderService
+from ....services.errors import ValidationError
 from ...context import WebContext
 from ...runtime_support import error_500
 from .coders import _coder_frame, _session_age_seconds
@@ -31,7 +33,10 @@ def build_coder_steering_router(
     ctx: WebContext, *, commands: Any = None, targets: Any = None
 ) -> APIRouter:
     router = APIRouter()
-    process_input = ProcessInputServices(commands=commands, targets=targets)
+    service = ctx.coder_service if isinstance(ctx.coder_service, CoderService) else CoderService()
+    process_input = ProcessInputServices(
+        service=service, commands=commands, targets=targets
+    )
 
     def _registry_session(key: str):
         """Resolve a steering key to a session-like target.
@@ -369,7 +374,7 @@ def build_coder_steering_router(
             return session
         body = payload if isinstance(payload, dict) else {}
         composed = compose_from_body(
-            body, principal=request.state.principal
+            body, principal=request.state.principal, service=service
         )
         if isinstance(composed, JSONResponse):
             return composed
@@ -534,24 +539,27 @@ def build_coder_steering_router(
 
     @router.get("/api/coders/steering/audit")
     async def api_coder_steering_audit(
-        session_key: Optional[str] = None, limit: int = 50
+        request: Request, session_key: Optional[str] = None, limit: int = 50
     ) -> Any:
         """The steering trail (HS-87-03): who/when/session/pane/shape,
         newest first — refusals included. Heads and hashes only; the
         full steer text is never stored."""
-        from ....db import get_database
-
         try:
-            entries = await asyncio.to_thread(
-                get_database().steering.list, session_key=session_key, limit=limit
+            audit = await asyncio.to_thread(
+                service.list_steering_audit,
+                getattr(request.state, "principal", None),
+                session_key,
+                limit,
             )
-            return JSONResponse({"audit": [e.to_dict() for e in entries]})
+            return JSONResponse({"audit": audit})
+        except ValidationError as exc:
+            return JSONResponse({"error": str(exc)}, status_code=400)
         except Exception as e:
             return error_500("steering audit", e, log)
 
     @router.post("/api/coders/{key}/keep-note")
     async def api_coder_keep_note(
-        key: str, payload: Optional[dict[str, Any]] = None
+        key: str, request: Request, payload: Optional[dict[str, Any]] = None
     ) -> Any:
         """Classify (HS-87-05): keep the session's current ask as a desk
         note. The body is the ask; a lineage line names the session, the
@@ -559,9 +567,6 @@ def build_coder_steering_router(
         traces like any primitive (no new store). An override title/body
         lets the composer name it (with the mic, per canon)."""
         from datetime import datetime, timezone
-
-        from ....db import get_database
-        from ..primitives._shared import _new_id  # the primitives id minter
 
         try:
             session = _registry_session(key)
@@ -587,13 +592,18 @@ def build_coder_steering_router(
         note_body = f"{lineage}\n\n{ask}"
         try:
             note = await asyncio.to_thread(
-                get_database().notes.upsert,
-                note_id=_new_id("note"),
-                title=title,
-                body_markdown=note_body,
-                tags=["session", session.agent],
+                service.keep_note,
+                getattr(request.state, "principal", None),
+                key,
+                {
+                    "title": title,
+                    "body_markdown": note_body,
+                    "tags": ["session", session.agent],
+                },
             )
-            return JSONResponse({"note": note.to_dict()}, status_code=201)
+            return JSONResponse({"note": note}, status_code=201)
+        except ValidationError as exc:
+            return JSONResponse({"error": str(exc)}, status_code=400)
         except Exception as e:
             return error_500("coder keep-note", e, log)
 

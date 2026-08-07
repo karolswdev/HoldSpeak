@@ -1,7 +1,4 @@
-"""Directories (zones) + membership edges.
-
-Bodies moved verbatim from routes/primitives.py (HS-79-03, the Phase-63 discipline).
-"""
+"""Directories (zones) + membership edges — thin adapter (HS-122-01)."""
 from __future__ import annotations
 
 from typing import Any
@@ -10,9 +7,11 @@ from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 
 from ....logging_config import get_logger
+from ....services.errors import ConflictError, NotFound, ValidationError
+from ....services.primitive_service import PrimitiveService
 from ...context import WebContext
 from ...runtime_support import error_500
-from ._shared import _json_body, _new_id
+from ._shared import _json_body
 
 log = get_logger("web.routes.primitives")
 
@@ -20,19 +19,17 @@ log = get_logger("web.routes.primitives")
 def build_directories_router(ctx: WebContext) -> APIRouter:
     router = APIRouter()
 
+    def _svc() -> PrimitiveService:
+        from ....db import get_database
+        return PrimitiveService(get_database())
+
+    def _principal(request: Request) -> Any:
+        return getattr(request.state, "principal", None)
+
     @router.get("/api/directories")
-    async def api_list_directories() -> Any:
+    async def api_list_directories(request: Request) -> Any:
         try:
-            from ....db import get_database
-            db = get_database()
-            directories = db.directories.list()
-            out = []
-            for d in directories:
-                item = d.to_dict()
-                members = db.directory_memberships.list_for_directory(d.id)
-                item["member_ids"] = [m.primitive_id for m in members]
-                out.append(item)
-            return JSONResponse({"directories": out})
+            return JSONResponse({"directories": _svc().list_directories(_principal(request))})
         except Exception as exc:
             return error_500(exc, log, "Failed to list directories")
 
@@ -41,35 +38,32 @@ def build_directories_router(ctx: WebContext) -> APIRouter:
         body = await _json_body(request)
         if body is None:
             return JSONResponse({"error": "expected a JSON object"}, status_code=400)
-        if not str(body.get("name") or "").strip():
-            return JSONResponse({"error": "directory name is required"}, status_code=400)
         try:
-            from ....db import get_database
-            directory = get_database().directories.upsert(
-                directory_id=str(body.get("id") or _new_id("dir")),
+            directory = _svc().create_directory(
+                _principal(request),
+                directory_id=str(body.get("id") or "") or None,
                 name=str(body.get("name") or ""),
-                parent_id=(body.get("parent_id") or None),
+                parent_id=body.get("parent_id") or None,
             )
-            return JSONResponse({"directory": directory.to_dict()}, status_code=201)
+            return JSONResponse({"directory": directory}, status_code=201)
+        except ValidationError as exc:
+            return JSONResponse({"error": str(exc)}, status_code=422)
+        except ConflictError as exc:
+            return JSONResponse(
+                {"error": "zone_name_taken", "existing_name": exc.existing_name},
+                status_code=409,
+            )
         except ValueError as exc:
             return JSONResponse({"error": str(exc)}, status_code=400)
         except Exception as exc:
             return error_500(exc, log, "Failed to create directory")
 
     @router.get("/api/directories/{directory_id}")
-    async def api_get_directory(directory_id: str) -> Any:
+    async def api_get_directory(directory_id: str, request: Request) -> Any:
         try:
-            from ....db import get_database
-            db = get_database()
-            directory = db.directories.get(directory_id)
-            if directory is None:
-                return JSONResponse({"error": f"Unknown directory: {directory_id}"}, status_code=404)
-            members = db.directory_memberships.list_for_directory(directory_id)
-            return JSONResponse({
-                "directory": directory.to_dict(),
-                "member_ids": [m.primitive_id for m in members],
-                "members": [m.to_dict() for m in members],
-            })
+            return JSONResponse(_svc().get_directory(_principal(request), directory_id))
+        except NotFound:
+            return JSONResponse({"error": f"Unknown directory: {directory_id}"}, status_code=404)
         except Exception as exc:
             return error_500(exc, log, "Failed to get directory")
 
@@ -79,91 +73,68 @@ def build_directories_router(ctx: WebContext) -> APIRouter:
         if body is None:
             return JSONResponse({"error": "expected a JSON object"}, status_code=400)
         try:
-            from ....db import get_database
-            db = get_database()
-            existing = db.directories.get(directory_id)
-            if existing is None:
-                return JSONResponse({"error": f"Unknown directory: {directory_id}"}, status_code=404)
-            directory = db.directories.upsert(
-                directory_id=directory_id,
-                name=str(body["name"]) if "name" in body else existing.name,
-                parent_id=(body["parent_id"] or None) if "parent_id" in body else existing.parent_id,
+            directory = _svc().update_directory(
+                _principal(request),
+                directory_id,
+                name=body.get("name"),
+                parent_id=body.get("parent_id") if "parent_id" in body else ...,
             )
-            return JSONResponse({"directory": directory.to_dict()})
+            return JSONResponse({"directory": directory})
+        except NotFound:
+            return JSONResponse({"error": f"Unknown directory: {directory_id}"}, status_code=404)
+        except ValidationError as exc:
+            return JSONResponse({"error": str(exc)}, status_code=422)
+        except ConflictError as exc:
+            return JSONResponse(
+                {"error": "zone_name_taken", "existing_name": exc.existing_name},
+                status_code=409,
+            )
         except Exception as exc:
             return error_500(exc, log, "Failed to update directory")
 
     @router.delete("/api/directories/{directory_id}")
-    async def api_delete_directory(directory_id: str) -> Any:
+    async def api_delete_directory(directory_id: str, request: Request) -> Any:
         try:
-            from ....db import get_database
-            removed = get_database().directories.delete(directory_id)
-            if not removed:
-                return JSONResponse({"error": f"Unknown directory: {directory_id}"}, status_code=404)
+            _svc().delete_directory(_principal(request), directory_id)
             return JSONResponse({"success": True})
+        except NotFound:
+            return JSONResponse({"error": f"Unknown directory: {directory_id}"}, status_code=404)
         except Exception as exc:
             return error_500(exc, log, "Failed to delete directory")
 
-    # ── Directory membership (the synced filing map; supersedes `filed`) ───
     @router.get("/api/directories/{directory_id}/members")
-    async def api_list_directory_members(directory_id: str) -> Any:
+    async def api_list_directory_members(directory_id: str, request: Request) -> Any:
         try:
-            from ....db import get_database
-            db = get_database()
-            if db.directories.get(directory_id) is None:
-                return JSONResponse({"error": f"Unknown directory: {directory_id}"}, status_code=404)
-            members = db.directory_memberships.list_for_directory(directory_id)
-            return JSONResponse({
-                "directory_id": directory_id,
-                "members": [m.to_dict() for m in members],
-            })
+            members = _svc().list_directory_members(_principal(request), directory_id)
+            return JSONResponse({"directory_id": directory_id, "members": members})
+        except NotFound:
+            return JSONResponse({"error": f"Unknown directory: {directory_id}"}, status_code=404)
         except Exception as exc:
             return error_500(exc, log, "Failed to list directory members")
 
     @router.put("/api/directories/{directory_id}/members/{primitive_id:path}")
-    async def api_file_member(directory_id: str, primitive_id: str) -> Any:
-        """File a primitive into a directory (idempotent; a re-file moves it).
-
-        Membership is keyed by `primitive_id` (a primitive lives in one
-        directory), so PUTting the same primitive elsewhere overwrites the edge.
-        """
+    async def api_file_member(directory_id: str, primitive_id: str, request: Request) -> Any:
         try:
-            from ....db import get_database
-            from ....db.relationships import qualified_ref
-            db = get_database()
-            if db.directories.get(directory_id) is None:
-                return JSONResponse({"error": f"Unknown directory: {directory_id}"}, status_code=404)
-            membership = db.directory_memberships.upsert(
-                primitive_id=qualified_ref(primitive_id),
-                directory_id=directory_id,
-            )
-            return JSONResponse({"membership": membership.to_dict()})
+            membership = _svc().file_member(_principal(request), directory_id, primitive_id)
+            return JSONResponse({"membership": membership})
+        except NotFound:
+            return JSONResponse({"error": f"Unknown directory: {directory_id}"}, status_code=404)
         except ValueError as exc:
             return JSONResponse({"error": str(exc)}, status_code=400)
         except Exception as exc:
             return error_500(exc, log, "Failed to file directory member")
 
     @router.delete("/api/directories/{directory_id}/members/{primitive_id:path}")
-    async def api_unfile_member(directory_id: str, primitive_id: str) -> Any:
-        """Unfile a primitive from a directory (tombstone).
-
-        404 if the primitive isn't currently filed into THIS directory.
-        """
+    async def api_unfile_member(directory_id: str, primitive_id: str, request: Request) -> Any:
         try:
-            from ....db import get_database
-            from ....db.relationships import qualified_ref
-            db = get_database()
-            ref = qualified_ref(primitive_id)
-            existing = db.directory_memberships.get(ref)
-            if existing is None or existing.directory_id != directory_id:
-                return JSONResponse(
-                    {"error": f"{primitive_id} is not filed in {directory_id}"},
-                    status_code=404,
-                )
-            db.directory_memberships.delete(ref)
+            _svc().unfile_member(_principal(request), directory_id, primitive_id)
             return JSONResponse({"success": True})
+        except NotFound:
+            return JSONResponse(
+                {"error": f"{primitive_id} is not filed in {directory_id}"},
+                status_code=404,
+            )
         except Exception as exc:
             return error_500(exc, log, "Failed to unfile directory member")
-
 
     return router

@@ -24,6 +24,8 @@ FIRST_DICTATION_SUCCESS = "first_dictation_success"
 class MilestoneRepository(BaseRepository):
     """Durable one-time markers (achieved/at), keyed by a stable string."""
 
+    table = "milestones"
+
     def mark(self, key: str) -> str:
         """Record a milestone as achieved (idempotent). Returns its timestamp.
 

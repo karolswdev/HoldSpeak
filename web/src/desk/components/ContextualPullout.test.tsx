@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { Note, Coder } from "../../lib/primitives";
 import { EMPTY_ITEMS } from "../api";
 import { useDesk } from "../store";
 import { Pullout } from "./Pullout";
@@ -17,7 +18,7 @@ describe("HS-93-04 contextual pull-out actions", () => {
             id: "release",
             title: "Release checklist",
             bodyMarkdown: "Ship after checks pass.",
-          },
+          } as Note,
         ],
         coder: [
           {
@@ -28,7 +29,7 @@ describe("HS-93-04 contextual pull-out actions", () => {
             agent: "codex",
             state: "waiting",
             question: "Should I publish?",
-          },
+          } as Coder,
         ],
       },
       profiles: [],

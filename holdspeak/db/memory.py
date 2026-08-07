@@ -99,6 +99,8 @@ def rebuild_memory_index(conn: sqlite3.Connection) -> dict[str, int]:
 class MemoryRepository(BaseRepository):
     """One search contract over three independently normalized FTS corpora."""
 
+    table = "memory"
+
     def rebuild(self) -> dict[str, int]:
         with self._connection() as conn:
             return rebuild_memory_index(conn)

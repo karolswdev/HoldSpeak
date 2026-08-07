@@ -8,6 +8,7 @@ import holdspeak.config as config_module
 import holdspeak.db as hsdb
 from holdspeak import coder_steering
 from holdspeak.db import Database, reset_database
+from holdspeak.services.authority_service import AuthorityService
 from holdspeak.web.context import WebContext
 from holdspeak.web.routes import build_authority_router
 
@@ -28,7 +29,11 @@ def rig(tmp_path, monkeypatch):
         request.state.principal = Principal(PrincipalKind.OWNER, "owner-session")
         return await call_next(request)
 
-    app.include_router(build_authority_router(WebContext(get_state=lambda: {})))
+    app.include_router(
+        build_authority_router(
+            WebContext(get_state=lambda: {}, authority_service=AuthorityService(db))
+        )
+    )
     yield db, TestClient(app)
     coder_steering.clear_grants()
     reset_database()

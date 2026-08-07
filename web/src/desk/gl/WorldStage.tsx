@@ -196,7 +196,7 @@ export function WorldStage() {
       const found = Object.values(useDesk.getState().items)
         .flat()
         .find((item) =>
-          [item.id, item.title, item.name]
+          [item.id, "title" in item ? item.title : "", "name" in item ? item.name : ""]
             .filter(Boolean)
             .some((value) => String(value).toLocaleLowerCase().includes(query)),
         );
@@ -377,14 +377,24 @@ function ZoneRenameOverlay({
   width: number;
 }) {
   const [name, setName] = useState(title);
-  const { renameZone, setRenamingZone } = useDesk.getState();
-  const commit = () => {
-    setRenamingZone(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const { renameZone, setRenamingZone, clearZoneRenameError } = useDesk.getState();
+  const zoneRenameError = useDesk((s) => s.zoneRenameError);
+  const commit = async () => {
+    clearZoneRenameError();
     const clean = name.trim();
-    if (clean && clean !== title) void renameZone(zoneId, clean);
+    if (clean && clean !== title) {
+      await renameZone(zoneId, clean);
+      if (useDesk.getState().zoneRenameError) {
+        inputRef.current?.focus();
+        return;
+      }
+    }
+    setRenamingZone(null);
   };
   const cancel = () => {
     setRenamingZone(null);
+    clearZoneRenameError();
   };
   return (
     <span
@@ -399,16 +409,20 @@ function ZoneRenameOverlay({
         // HS-111-10: commit only when focus LEAVES the row — pressing
         // the speak-to-fill mic must not commit-and-unmount mid-press.
         if (!e.currentTarget.contains(e.relatedTarget as Node | null))
-          commit();
+          void commit();
       }}
     >
       <input
+        ref={inputRef}
         className="desk-zone-rename"
         value={name}
         autoFocus
-        onChange={(e) => setName(e.target.value)}
+        onChange={(e) => {
+          setName(e.target.value);
+          if (zoneRenameError) clearZoneRenameError();
+        }}
         onKeyDown={(e) => {
-          if (e.key === "Enter") commit();
+          if (e.key === "Enter") void commit();
           if (e.key === "Escape") cancel();
         }}
       />
@@ -416,6 +430,11 @@ function ZoneRenameOverlay({
         draftScope={`zone-rename:${zoneId}`}
         onText={(t) => setName(t)}
       />
+      {zoneRenameError && (
+        <span className="desk-zone-rename-error" role="alert">
+          {zoneRenameError}
+        </span>
+      )}
     </span>
   );
 }

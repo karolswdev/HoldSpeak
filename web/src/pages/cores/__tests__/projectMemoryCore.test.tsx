@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { EMPTY_ITEMS } from "../../../desk/api";
 import { kindInfo } from "../../../desk/infoContract";
 import { VERBS } from "../../../desk/verbRegistry";
-import { PRIMITIVES } from "../../../lib/primitives";
+import { PRIMITIVES, type Primitive } from "../../../lib/primitives";
 import {
   SurfaceWindows,
   useSurfaceWindows,
@@ -114,7 +114,7 @@ describe("Project Memory", () => {
         id: "p1",
         name: "Long memory",
         meetingCount: 2,
-      },
+      } as unknown as Primitive,
     };
     expect(kindInfo("project").footprint(project, { ...EMPTY_ITEMS })).toBe(
       "2 meetings",

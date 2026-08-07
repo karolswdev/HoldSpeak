@@ -8,6 +8,8 @@ import { useMemo, useState } from "react";
 import { spriteUrl } from "../sprites";
 import { useDesk, type ZoneViewPref } from "../store";
 import { objectByRef, type WorldObject } from "../world";
+import { spriteVariantKey } from "../../lib/spriteVariants";
+import { spriteStateCssClass } from "../../lib/spriteStates";
 import { productLabel } from "../../lib/productLanguage";
 import { humanTime } from "../surface/format";
 import { SurfaceState } from "../surface/Surface";
@@ -21,7 +23,7 @@ type SortKey = ZoneViewPref["sort"];
 const DEFAULT_PREF: ZoneViewPref = { view: "icons", sort: "name", dir: "asc" };
 
 function memberTime(o: WorldObject): string {
-  const r = o.ref as Record<string, unknown>;
+  const r = o.ref as unknown as Record<string, unknown>;
   return String(r.lastModified || r.endedAt || r.createdAt || "");
 }
 
@@ -42,7 +44,7 @@ export function ZoneWindow({
     useDesk.getState();
   const [selectedMemberKey, setSelectedMemberKey] = useState<string | null>(null);
   const zone = (items.directory || []).find((d) => d.id === zoneId);
-  const memberIds: string[] = ((zone as any)?.memberIds as string[]) || [];
+  const memberIds: string[] = zone?.memberIds || [];
 
   const members = useMemo(() => {
     const resolved = memberIds
@@ -59,22 +61,27 @@ export function ZoneWindow({
   }, [items, memberIds.join(","), pref.sort, pref.dir]);
 
   if (!zone) return null;
-  const title = String(zone.name || zone.title || "Zone");
+  const title = String(zone.name || "Zone");
   const unresolved = memberIds.length - members.length;
   const columns: Column<WorldObject>[] = [
     {
       key: "icon",
       label: "",
       width: "36px",
-      render: (member) => (
-        <img
-          className="desk-sortable-table-sprite"
-          src={spriteUrl(member.kind, member.id)}
-          alt=""
-          width={28}
-          height={28}
-        />
-      ),
+      render: (member) => {
+        const ss = member.ref.spriteState;
+        const cssHint = spriteStateCssClass(typeof ss === "string" ? ss : null);
+        return (
+          <img
+            className={"desk-sortable-table-sprite" + (cssHint ? ` ${cssHint}` : "")}
+            src={spriteUrl(member.kind, member.id)}
+            alt=""
+            width={28}
+            height={28}
+            data-sprite-variant={spriteVariantKey(member.kind, typeof ss === "string" ? ss : null)}
+          />
+        );
+      },
     },
     { key: "name", label: "Name", sortable: true, render: (member) => member.title },
     {
@@ -134,7 +141,14 @@ export function ZoneWindow({
                   openPullout(member.id, { x: event.clientX, y: event.clientY })
                 }
               >
-                <img src={spriteUrl(member.kind, member.id)} alt="" width={48} height={48} />
+                <img
+                  className={spriteStateCssClass(typeof member.ref.spriteState === "string" ? member.ref.spriteState as string : null)}
+                  src={spriteUrl(member.kind, member.id)}
+                  alt=""
+                  width={48}
+                  height={48}
+                  data-sprite-variant={spriteVariantKey(member.kind, typeof member.ref.spriteState === "string" ? member.ref.spriteState as string : null)}
+                />
                 <span className="zone-cell-label">{member.title}</span>
               </button>
             ))}

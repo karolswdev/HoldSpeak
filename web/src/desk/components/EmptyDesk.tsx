@@ -1,3 +1,4 @@
+import "./inline-editor.css";
 import { useState } from "react";
 import { FirstWords } from "./FirstWords";
 import { DeskStartActions } from "./DeskStartActions";

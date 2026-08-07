@@ -22,6 +22,8 @@ log = get_logger("db.projects")
 class ProjectRepository(BaseRepository):
     """Projects, associations, and detection log."""
 
+    table = "projects"
+
     def create_project(
         self,
         *,

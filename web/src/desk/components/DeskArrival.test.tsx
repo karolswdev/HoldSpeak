@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { Note, Persona } from "../../lib/primitives";
 import { EMPTY_ITEMS } from "../api";
 import { registerSurface } from "../shell";
 import { useDesk } from "../store";
@@ -96,7 +97,7 @@ describe("Phase 93 Desk arrival", () => {
     useDesk.setState({
       items: {
         ...EMPTY_ITEMS,
-        note: [{ kind: "note", id: "n1", title: "Release checklist" }],
+        note: [{ kind: "note", id: "n1", title: "Release checklist" } as Note],
       },
       openPullout,
     });
@@ -213,7 +214,7 @@ describe("Phase 93 Desk arrival", () => {
             id: "release",
             title: "Release checklist",
             bodyMarkdown: "Ship after checks pass.",
-          },
+          } as Note,
         ],
         recipe: [
           {
@@ -225,7 +226,7 @@ describe("Phase 93 Desk arrival", () => {
               input_schema: { required: ["input"] },
               effect_classes: ["creates_artifact"],
             },
-          },
+          } as Persona,
           {
             kind: "recipe",
             id: "offline",
@@ -235,7 +236,7 @@ describe("Phase 93 Desk arrival", () => {
               input_schema: { required: ["input"] },
               effect_classes: ["creates_artifact"],
             },
-          },
+          } as Persona,
         ],
       },
       selectedIds: ["note:release"],

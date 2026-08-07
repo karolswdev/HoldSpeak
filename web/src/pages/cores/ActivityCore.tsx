@@ -9,71 +9,54 @@
 // LampGadget/chip tokens), errors in-flow, and the wings posture fix —
 // Candidates/Connectors fold behind the gear door (they are
 // configuration, not daily reads).
-import { useState, type ReactNode } from "react";
+import { useState } from "react";
 import { Button } from "../../components/signal/Signal";
 import {
   CheckGadget,
   LampGadget,
   StringGadget,
 } from "../../desk/surface/gadgets";
-import { apiFetch, readableError, type JsonRecord } from "../../lib/api";
+import { apiFetch } from "../../lib/api";
 import { asRows, rowId, useResource } from "../pageSupport";
+import type {
+  ActivityStatusResponse,
+  ActivityRecordsResponse,
+  ActivityRulesResponse,
+  ActivityCandidatesResponse,
+  ActivityConnectorsResponse,
+  CoreProps,
+} from "./core-types";
 import {
   ConfirmVerb,
   SurfaceRow,
   SurfaceRows,
   SurfaceSection,
   SurfaceState,
-  SurfaceVerbs,
 } from "../../desk/surface/Surface";
 import { humanTime, presentValue } from "../../desk/surface/format";
-import { SurfaceWings, useWindowWings } from "../../desk/surface/wings";
+import { useAction, useCoreWings } from "./core-hooks";
+import { CoreResourceGuard, renderHeroSlot } from "./core-layout";
 
 const WINGS = [
   { id: "records", label: "Records" },
   { id: "rules", label: "Rules" },
 ];
 
-export interface CoreProps {
-  /** Optional chrome the host renders around the core's own verbs. */
-  hero?: (actions: ReactNode) => ReactNode;
-  /** The subject this window is scoped to (a qualified ref). */
-  scope?: string;
-  /** The subject's product label (hosts resolve it; never a raw ref). */
-  scopeLabel?: string;
-}
-
 export function ActivityCore({ hero }: CoreProps) {
-  const [active, setActive] = useState("records");
-  const [doorOpen, setDoorOpen] = useState(false);
-  useWindowWings(
-    <SurfaceWings
-      wings={WINGS}
-      active={doorOpen ? "" : active}
-      onChange={(id) => {
-        setDoorOpen(false);
-        setActive(id);
-      }}
-      door="Candidates and connectors"
-      doorOpen={doorOpen}
-      onDoor={() => setDoorOpen((open) => !open)}
-    />,
-    [active, doorOpen],
-  );
+  const wings = useCoreWings(WINGS, "records", "Candidates and connectors");
   const [query, setQuery] = useState("");
-  const [message, setMessage] = useState("");
-  const [busy, setBusy] = useState(false);
-  const status = useResource<JsonRecord>("/api/activity/status", {});
-  const records = useResource<JsonRecord>(
+  const action = useAction();
+  const status = useResource<ActivityStatusResponse>("/api/activity/status", {});
+  const records = useResource<ActivityRecordsResponse>(
     "/api/activity/records?limit=100",
     {},
   );
-  const rules = useResource<JsonRecord>("/api/activity/project-rules", {});
-  const candidates = useResource<JsonRecord>(
+  const rules = useResource<ActivityRulesResponse>("/api/activity/project-rules", {});
+  const candidates = useResource<ActivityCandidatesResponse>(
     "/api/activity/meeting-candidates",
     {},
   );
-  const connectors = useResource<JsonRecord>(
+  const connectors = useResource<ActivityConnectorsResponse>(
     "/api/activity/enrichment/connectors",
     {},
   );
@@ -84,34 +67,27 @@ export function ActivityCore({ hero }: CoreProps) {
     connectors: { resource: connectors, keys: ["connectors"] },
   } as const;
   type Kind = keyof typeof sources;
-  const invoke = async (
+  const invoke = (
     url: string,
     init: Parameters<typeof apiFetch>[1] = { method: "POST", json: {} },
-  ) => {
-    setBusy(true);
-    setMessage("");
-    try {
+  ) =>
+    action.run(async () => {
       await apiFetch(url, init);
       await Promise.all(
-        (doorOpen ? ["candidates", "connectors"] : [active]).map((kind) =>
-          sources[kind as Kind].resource.reload(),
+        (wings.doorOpen ? ["candidates", "connectors"] : [wings.view]).map(
+          (kind) => sources[kind as Kind].resource.reload(),
         ),
       );
       await status.reload();
-    } catch (error) {
-      setMessage(readableError(error));
-    } finally {
-      setBusy(false);
-    }
-  };
+    });
   const enabled = Boolean(
-    (status.data.settings as JsonRecord | undefined)?.enabled,
+    status.data.settings?.enabled,
   );
   const verbs = (
     <>
       <Button
         dense
-        loading={busy}
+        loading={action.busy}
         onClick={() => void invoke("/api/activity/refresh")}
       >
         Refresh now
@@ -142,13 +118,11 @@ export function ActivityCore({ hero }: CoreProps) {
         JSON.stringify(row).toLowerCase().includes(query.toLowerCase()),
     );
     return (
-      <SurfaceState
-        loading={resource.loading}
-        error={resource.error}
+      <CoreResourceGuard
+        resource={resource}
         empty={!rows.length}
         emptyLabel="No activity yet"
         emptyGlyph="◍"
-        onRetry={() => void resource.reload()}
       >
         <SurfaceRows>
           {rows.map((row, index) => {
@@ -229,7 +203,7 @@ export function ActivityCore({ hero }: CoreProps) {
             );
           })}
         </SurfaceRows>
-      </SurfaceState>
+      </CoreResourceGuard>
     );
   };
 
@@ -244,9 +218,9 @@ export function ActivityCore({ hero }: CoreProps) {
 
   return (
     <>
-      {hero ? hero(verbs) : <SurfaceVerbs>{verbs}</SurfaceVerbs>}
-      {message ? <SurfaceState error={message} /> : null}
-      {doorOpen ? (
+      {renderHeroSlot(hero, verbs)}
+      {action.message ? <SurfaceState error={action.message} /> : null}
+      {wings.doorOpen ? (
         <>
           <SurfaceSection label="Meeting candidates">
             {filter}
@@ -258,13 +232,13 @@ export function ActivityCore({ hero }: CoreProps) {
         </>
       ) : (
         <SurfaceSection
-          label={active === "records" ? "Records" : "Project rules"}
+          label={wings.view === "records" ? "Records" : "Project rules"}
           actions={
-            active === "records" ? (
+            wings.view === "records" ? (
               <ConfirmVerb
                 label="Clear records"
                 confirmLabel="Clear all?"
-                busy={busy}
+                busy={action.busy}
                 onConfirm={() =>
                   void invoke("/api/activity/records", { method: "DELETE" })
                 }
@@ -273,7 +247,7 @@ export function ActivityCore({ hero }: CoreProps) {
           }
         >
           {filter}
-          {list(active as Kind)}
+          {list(wings.view as Kind)}
         </SurfaceSection>
       )}
     </>

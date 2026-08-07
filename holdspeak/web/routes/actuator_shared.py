@@ -346,3 +346,27 @@ def execute_github_proposal(ctx: WebContext, db: Any, proposal: Any, *, actor: s
         operation_broker=broker, executor_principal=node,
     )
     return executor.execute(proposal.id)
+
+
+class DeskActuatorLifecycle:
+    """Composition adapter for connector execution and broadcasts."""
+    def __init__(self, ctx: WebContext, db: Any) -> None:
+        self._ctx = ctx
+        self._db = db
+
+    def serialize(self, proposal: Any) -> dict[str, Any]:
+        return proposal_to_dict(proposal)
+
+    def apply(self, proposal: Any, target: str) -> Any:
+        return apply_control_posture(self._ctx, self._db, proposal, executors=self._executors(target))
+
+    def decide(self, proposal_id: str, payload: Any, target: str) -> tuple[Any, str | None, int]:
+        return decide_proposal(self._ctx, self._db, proposal_id, decision=payload.decision,
+            actor=(payload.decided_by or "companion").strip() or "companion",
+            belongs=lambda proposal: proposal.origin == "desk" and proposal.target == target,
+            executors=self._executors(target), grant_id=payload.grant_id)
+
+    @staticmethod
+    def _executors(target: str) -> dict[str, Any]:
+        return {target: {"slack": execute_slack_proposal, "webhook": execute_webhook_proposal,
+                         "github": execute_github_proposal}[target]}

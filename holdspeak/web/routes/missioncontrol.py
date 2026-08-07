@@ -18,8 +18,6 @@ banner riding back verbatim. Design: docs/internal/MISSION_CONTROL_DESK.md §4.
 from __future__ import annotations
 
 import asyncio
-import hashlib
-import json
 from pathlib import Path
 from typing import Any, Optional
 
@@ -28,6 +26,7 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
 from ...logging_config import get_logger
+from ...services.errors import NotFound, ValidationError
 from ..context import WebContext
 from ..runtime_support import error_500
 
@@ -35,9 +34,6 @@ log = get_logger("web.routes.missioncontrol")
 
 # Test seam for the dw subprocess (the _GITHUB_RUNNER precedent).
 _DW_RUNNER = None
-
-MC_PLUGIN_ID = "missioncontrol_desk"
-MC_PLUGIN_VERSION = "0.1.0"
 
 # Last observed state-feed tree per repo (HS-86-03). Process-lifetime
 # memory for change detection only — never a truth store; the feed
@@ -92,52 +88,6 @@ class _DecisionRequest(BaseModel):
     actor: str = "desk"
 
 
-def execute_dw_proposal(
-    ctx: WebContext,
-    db: Any,
-    proposal: Any,
-    *,
-    actor: str,
-    map_path: Optional[Path] = None,
-    runner: Any = None,
-) -> Any:
-    """The execute leg for an approved Delivery Workbench story verb.
-
-    The repo is re-resolved from the project map at execution time —
-    a payload naming a path outside the map fails honestly here, the
-    lifecycle's path-allow-list. The connector admits exactly two
-    argv shapes and the dw gate downstream still refuses anything
-    dishonest; an approved-but-refused proposal lands `failed` with
-    the banner verbatim in its error field. That is the stack
-    working, not a bug.
-    """
-    from ...missioncontrol_bridge import build_dw_story_connector, load_project_map
-    from ...plugins.actuator_executor import ActuatorExecutor
-    from ..routes.actuator_shared import actuator_result_event
-
-    payload = dict(proposal.payload or {})
-    repo_path = str(payload.get("repo") or "")
-    allowed = set(load_project_map(map_path)["projects"].values())
-    if repo_path not in allowed:
-        updated = db.actuators.transition_proposal(
-            proposal.id, to_status="failed", actor=actor,
-            detail="mission control: repo not in the project map at execution time",
-            error=f"repo {repo_path!r} is not in the operator's project map",
-        )
-        ctx.broadcast("actuator_result", actuator_result_event(updated))
-        return updated
-
-    executor = ActuatorExecutor(
-        db,
-        connector=build_dw_story_connector(
-            Path(repo_path), runner=runner or _DW_RUNNER
-        ),
-        allow_actuators=True,
-        actor=actor,
-        on_result=lambda event: ctx.broadcast("actuator_result", event),
-    )
-    return executor.execute(proposal.id)
-
 
 def build_missioncontrol_router(
     ctx: WebContext,
@@ -158,6 +108,12 @@ def build_missioncontrol_router(
         from ...principals import UNAUTHENTICATED
 
         return getattr(request.state, "principal", UNAUTHENTICATED)
+
+    def _service():
+        service = ctx.mission_control_service
+        if service is None:
+            raise RuntimeError("MissionControlService is not composed")
+        return service
 
     @router.get("/api/missioncontrol/state")
     async def api_missioncontrol_state(request: Request) -> Any:
@@ -268,27 +224,23 @@ def build_missioncontrol_router(
         return {"accepted": True, "node": node, "events": count}
 
     @router.get("/api/missioncontrol/rails/journal")
-    async def api_missioncontrol_rails_journal(limit: int = 50) -> Any:
-        """The ambient observer's journal (HS-88-03) — the local model's
-        running note of what the rails did, newest first. Read-only; the
-        journal entries are notes, openable and groundable like any
-        primitive."""
+    async def api_missioncontrol_rails_journal(
+        request: Request, limit: int = 50
+    ) -> Any:
+        """Return the ambient observer journal, newest first."""
         try:
-            from ...db import get_database
-            from ...rails_observer import list_journal
-
-            entries = await asyncio.to_thread(list_journal, get_database(), limit=limit)
-            return {
-                "entries": [
-                    {
-                        "id": n.id,
-                        "title": n.title,
-                        "body_markdown": n.body_markdown,
-                        "created_at": getattr(n, "created_at", ""),
-                    }
-                    for n in entries
-                ]
-            }
+            entries = await asyncio.to_thread(
+                _service().list_rails_journal, _principal(request), limit=limit
+            )
+            return {"entries": [
+                {
+                    "id": note.id,
+                    "title": note.title,
+                    "body_markdown": note.body_markdown,
+                    "created_at": getattr(note, "created_at", ""),
+                }
+                for note in entries
+            ]}
         except Exception as exc:
             log.warning(f"rails journal read failed ({exc})")
             return {"entries": [], "error": "rails journal read failed"}
@@ -331,118 +283,19 @@ def build_missioncontrol_router(
     async def api_missioncontrol_story_propose(
         request: Request, body: _StoryProposeRequest
     ) -> Any:
-        """Record a story-verb proposal (§4): fields validated against
-        the LIVE feed, never trusted from the UI; the preview names
-        the act and the gate's standing right of refusal."""
+        """Validate and record a Delivery Workbench story proposal."""
         try:
-            from ...db import get_database
-            from ...missioncontrol_bridge import (
-                ALLOWED_STORY_STATUSES,
-                build_story_preview,
-                state_entry,
-            )
             from ..routes.actuator_shared import proposal_to_dict
 
-            project_map = _map()
-            repo_path = project_map["projects"].get(body.repo)
-            if not repo_path:
-                return JSONResponse(
-                    {"success": False, "error": f"repo {body.repo!r} is not in the project map"},
-                    status_code=400,
-                )
-            entry = state_entry(
-                body.repo,
-                repo_path,
-                runner,
-                principal=_principal(request),
+            proposal = await asyncio.to_thread(
+                _service().propose_story,
+                _principal(request),
+                body,
+                project_map=_map(),
+                runner=runner,
             )
-            if entry.get("status") != "live":
-                return JSONResponse(
-                    {"success": False, "error": f"rails unreadable: {entry.get('detail')}"},
-                    status_code=400,
-                )
-            projects = {
-                p.get("slug"): p for p in entry["feed"].get("projects") or []
-            }
-            project = projects.get(body.project)
-            if project is None:
-                return JSONResponse(
-                    {"success": False, "error": f"project {body.project!r} is not on the roadmap"},
-                    status_code=400,
-                )
-            verb = str(body.verb or "").strip()
-            if verb == "status":
-                story = next(
-                    (s for s in project.get("stories") or [] if s.get("story_id") == body.story),
-                    None,
-                )
-                if story is None:
-                    return JSONResponse(
-                        {"success": False, "error": f"story {body.story!r} is not on the {body.project} roadmap"},
-                        status_code=400,
-                    )
-                status = str(body.status or "").strip().lower()
-                if status not in ALLOWED_STORY_STATUSES:
-                    return JSONResponse(
-                        {"success": False, "error": f"status {status!r} is not one of {', '.join(ALLOWED_STORY_STATUSES)}"},
-                        status_code=400,
-                    )
-                payload = {
-                    "repo": repo_path, "verb": "status",
-                    "project": body.project, "phase": str(story.get("phase")),
-                    "story": body.story, "status": status,
-                }
-                preview = build_story_preview(
-                    payload, story.get("title") or "", story.get("status") or ""
-                )
-                action = "dw_story_status"
-            elif verb == "create":
-                phases = {str(p.get("number")) for p in project.get("phases") or []}
-                phase = str(body.phase or "").strip()
-                title = str(body.title or "").strip()
-                if phase not in phases:
-                    return JSONResponse(
-                        {"success": False, "error": f"phase {phase!r} is not on the {body.project} roadmap"},
-                        status_code=400,
-                    )
-                if not title:
-                    return JSONResponse(
-                        {"success": False, "error": "a story create needs a title"},
-                        status_code=400,
-                    )
-                payload = {
-                    "repo": repo_path, "verb": "create",
-                    "project": body.project, "phase": phase, "title": title,
-                }
-                preview = build_story_preview(payload)
-                action = "dw_story_create"
-            else:
-                return JSONResponse(
-                    {"success": False, "error": f"verb {verb!r} is not an allow-listed story verb"},
-                    status_code=400,
-                )
-
-            payload_key = hashlib.sha256(
-                json.dumps(payload, sort_keys=True).encode("utf-8")
-            ).hexdigest()[:16]
-            db = get_database()
-            proposal = db.actuators.record_proposal(
-                meeting_id=None,
-                origin="desk",
-                window_id="desk:missioncontrol",
-                plugin_id=MC_PLUGIN_ID,
-                plugin_version=MC_PLUGIN_VERSION,
-                idempotency_key=f"mc-story:{payload_key}",
-                target="delivery-workbench",
-                action=action,
-                preview=preview,
-                payload=payload,
-                reversible=True,
-                required_capabilities=["actuator"],
-            )
-            ctx.broadcast(
-                "actuator_proposed",
-                {
+            if ctx.broadcast is not None:
+                ctx.broadcast("actuator_proposed", {
                     "id": proposal.id,
                     "meeting_id": proposal.meeting_id,
                     "plugin_id": proposal.plugin_id,
@@ -451,50 +304,36 @@ def build_missioncontrol_router(
                     "action": proposal.action,
                     "preview": proposal.preview,
                     "reversible": bool(proposal.reversible),
-                },
-            )
-            return JSONResponse(
-                {"success": True, "proposal": proposal_to_dict(proposal)}
-            )
+                })
+            return JSONResponse({"success": True, "proposal": proposal_to_dict(proposal)})
+        except ValidationError as exc:
+            return JSONResponse({"success": False, "error": exc.detail}, status_code=400)
         except Exception as exc:
             return error_500(exc, log, "Failed to propose a story verb")
 
     @router.post("/api/missioncontrol/proposals/{proposal_id}/decision")
     async def api_missioncontrol_decision(
-        proposal_id: str, body: _DecisionRequest
+        request: Request, proposal_id: str, body: _DecisionRequest
     ) -> Any:
-        """The approval tap (§4): the shared lifecycle transitions the
-        proposal and, on approve, the dw execute leg runs."""
+        """Decide and, when approved, execute a story proposal."""
         try:
-            from ...db import get_database
-            from ..routes.actuator_shared import decide_proposal, proposal_to_dict
+            from ..routes.actuator_shared import proposal_to_dict
 
-            updated, err, status_code = decide_proposal(
-                ctx,
-                get_database(),
+            updated = await asyncio.to_thread(
+                _service().decide_proposal,
+                _principal(request),
                 proposal_id,
                 decision=body.decision,
                 actor=body.actor,
-                belongs=lambda p: (
-                    getattr(p, "origin", "") == "desk"
-                    and p.target == "delivery-workbench"
-                ),
-                executors={
-                    "delivery-workbench": lambda c, d, p, *, actor: (
-                        execute_dw_proposal(
-                            c, d, p, actor=actor,
-                            map_path=map_path, runner=runner,
-                        )
-                    )
-                },
+                map_path=map_path,
+                runner=runner or _DW_RUNNER,
+                broadcast=ctx.broadcast,
             )
-            if err is not None:
-                return JSONResponse(
-                    {"success": False, "error": err}, status_code=status_code
-                )
-            return JSONResponse(
-                {"success": True, "proposal": proposal_to_dict(updated)}
-            )
+            return JSONResponse({"success": True, "proposal": proposal_to_dict(updated)})
+        except NotFound:
+            return JSONResponse({"success": False, "error": "Proposal not found"}, status_code=404)
+        except ValidationError as exc:
+            return JSONResponse({"success": False, "error": exc.detail}, status_code=400)
         except Exception as exc:
             return error_500(exc, log, "Failed to decide a story proposal")
 

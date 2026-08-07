@@ -33,13 +33,16 @@ from .audio_devices import (
     find_pulse_monitor_source,
     get_default_input_device,
 )
+from .errors import HoldSpeakError
 from .logging_config import get_logger
 
 log = get_logger("meeting")
 
 
-class MeetingRecorderError(RuntimeError):
+class MeetingRecorderError(HoldSpeakError):
     """Raised when meeting recording fails."""
+
+    code: str = "MEETING_RECORDER_ERROR"
 
 
 def _require_sounddevice():

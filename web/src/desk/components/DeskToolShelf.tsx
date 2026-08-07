@@ -9,6 +9,7 @@
 // in as more SETTINGS rows once settingsPrefs exports its module
 // index; meeting CONTENT search plugs in as more MEETINGS rows via the
 // History program's existing query. Both ride this same ranking.
+import "./chrome-menus.css";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { openSurface } from "../shell";
@@ -259,7 +260,7 @@ export function DeskToolShelf() {
           id: `zone:${zone.id}`,
           section: "OBJECTS",
           glyph: "□",
-          label: String(zone.name ?? zone.title ?? "Zone"),
+          label: String(zone.name ?? "Zone"),
           kind: "ZONE",
           run: () => diveInto(String(zone.id)),
         });

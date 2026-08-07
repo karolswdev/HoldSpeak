@@ -6,6 +6,7 @@
 // chrome cluster they inherited the z-30 stacking context and windows
 // (z-42) covered open menus. The OS's own voice draws OVER the programs
 // it hosts, always.
+import "./chrome-menus.css";
 import { useEffect, useRef, useState } from "react";
 import { useDesk } from "../store";
 import {
