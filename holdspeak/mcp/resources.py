@@ -1,0 +1,216 @@
+"""MCP resources for read-oriented HoldSpeak desk context."""
+from __future__ import annotations
+
+import json
+import re
+from pathlib import Path
+from typing import Any
+
+from holdspeak.db import get_database
+from holdspeak.principals import Principal
+from holdspeak.services.meeting_service import MeetingService
+from holdspeak.services.primitive_service import PrimitiveService
+from holdspeak.services.profile_service import ProfileService
+from holdspeak.services.workbench_service import WorkbenchService
+
+_JSON_MIME = "application/json"
+_TEXT_MIME = "text/markdown"
+_REPO_ROOT = Path(__file__).resolve().parents[2]
+
+# These descriptors mirror web/src/lib/primitives.ts. They intentionally include
+# every Desk kind, including remote and local-only kinds, so MCP clients can
+# reason about the entire Desk rather than only the CRUD subset.
+_PRIMITIVE_SCHEMA = [
+    {"kind": "meeting", "product_noun": "Meeting", "sync_class": "content"},
+    {"kind": "artifact", "product_noun": "Artifact", "sync_class": "content"},
+    {"kind": "note", "product_noun": "Note", "sync_class": "content"},
+    {"kind": "decision", "product_noun": "Decision", "sync_class": "content"},
+    {"kind": "directory", "product_noun": "Zone", "sync_class": "organization"},
+    {"kind": "kb", "product_noun": "Knowledge", "sync_class": "organization"},
+    {"kind": "project", "product_noun": "Project", "sync_class": "organization"},
+    {"kind": "repository", "product_noun": "Repository", "sync_class": "organization"},
+    {"kind": "recipe", "product_noun": "Agent", "sync_class": "capability"},
+    {"kind": "chain", "product_noun": "Sequence", "sync_class": "capability"},
+    {"kind": "workflow", "product_noun": "Workflow", "sync_class": "capability"},
+    {"kind": "coder", "product_noun": "Coder session", "sync_class": "presence"},
+    {"kind": "game", "product_noun": "Game", "sync_class": "local"},
+    {"kind": "roadmap", "product_noun": "Roadmap", "sync_class": "organization"},
+    {"kind": "story", "product_noun": "Story", "sync_class": "local"},
+    {"kind": "workbench", "product_noun": "Workbench", "sync_class": "capability"},
+    {"kind": "layout", "product_noun": "Layout", "sync_class": "local"},
+]
+
+# Mirrors web/src/desk/verbRegistry.ts, including verbs derived from DESK_TOOLS.
+# ``server`` means the external MCP verb dispatcher can invoke it; all other
+# registered Desk verbs remain UI-owned presentation actions.
+_VERBS = [
+    ("desk.new-note", "New Note", "floor", "⌘N"),
+    ("desk.new-decision", "New Decision", "floor", "⌘⇧N"),
+    ("desk.new-knowledge", "New Knowledge", "floor", None),
+    ("desk.new-agent", "New Agent", "floor", None),
+    ("desk.new-workflow", "New Workflow", "floor", None),
+    ("desk.new-workbench", "New Workbench", "floor", None),
+    ("desk.new-zone", "New Zone", "floor", None),
+    ("desk.toggle-view", "Spatial view / List view", "floor", None),
+    ("desk.arrange", "Arrange desk", "floor", None),
+    ("desk.overview", "Overview", "floor", "⌃↑"),
+    ("desk.reset-layout", "Reset layout", "floor", None),
+    ("desk.reset-to-seed", "Reset to seed…", "floor", None),
+    ("desk.refresh", "Refresh from hub", "floor", None),
+    ("object.open", "Open", "object", None),
+    ("object.info", "Get Info", "object", None),
+    ("object.ask-project", "Ask this project", "object", None),
+    ("object.ask", "Ask AI", "object", None),
+    ("object.edit", "Edit", "object", None),
+    ("object.rename", "Rename", "object", "F2"),
+    ("object.duplicate", "Duplicate", "object", None),
+    ("object.file", "Move to Zone", "object", None),
+    ("object.delete", "Delete", "object", "Delete"),
+    ("zone.focus", "Focus", "object", None),
+    ("go.dictate", "Speak", "go", "⌘1"),
+    ("go.ask", "Ask AI", "go", "⌘I"),
+    ("go.review-meetings", "Meetings", "go", "⌘2"),
+    ("go.configure-settings", "Settings", "go", "⌘4"),
+    ("go.open-workbenches", "Workbenches", "go", None),
+    ("go.inspect-personas-and-coders", "Agents and coder sessions", "go", "⌘3"),
+    ("go.configure-runs-on", "Runs on", "go", None),
+    ("go.configure-integrations", "Integrations", "go", None),
+    ("go.configure-commands", "Commands", "go", None),
+    ("go.configure-cadence", "Cadence", "go", None),
+    ("go.open-constitutional-context", "Context", "go", None),
+    ("go.inspect-activity", "Activity", "go", None),
+    ("go.inspect-processes", "Processes", "go", None),
+    ("window.close", "Close window", "window", "⌘W"),
+    ("window.minimize", "Minimize window", "window", "⌘M"),
+    ("window.cycle", "Cycle windows", "window", "⌃`"),
+    ("window.cycle-reverse", "Cycle Windows (Reverse)", "window", "⌃⇧`"),
+    ("window.snap-left", "Snap Left", "window", None),
+    ("window.snap-right", "Snap Right", "window", None),
+    ("window.maximize", "Maximize", "window", None),
+    ("system.search", "Search", "system", "⌘K"),
+    ("system.sheet", "Keyboard shortcuts", "system", "⌘/"),
+]
+_SERVER_VERBS = [
+    ("desk.create", "Create primitive", "server", None),
+    ("desk.update", "Update primitive", "server", None),
+    ("desk.delete", "Delete primitive", "server", None),
+    ("workbench.add_item", "Add workbench item", "server", None),
+    ("workbench.run", "Run workbench", "server", None),
+]
+_VERB_CATALOG = [
+    {
+        "id": verb_id,
+        "label": label,
+        "scope": scope,
+        "key_binding": key,
+        "designation": designation,
+    }
+    for verb_id, label, scope, key, designation in (
+        [(verb_id, label, scope, key, "ui_only") for verb_id, label, scope, key in _VERBS]
+        + [(verb_id, label, scope, key, "server") for verb_id, label, scope, key in _SERVER_VERBS]
+    )
+]
+
+_STATIC_RESOURCES = [
+    {
+        "uri": "holdspeak://desk/schema",
+        "name": "Desk primitive schema",
+        "description": "Primitive kinds, product nouns, and synchronization classes.",
+        "mimeType": _JSON_MIME,
+    },
+    {
+        "uri": "holdspeak://desk/verbs",
+        "name": "Desk verb catalog",
+        "description": "Registered Desk verbs, scopes, key bindings, and MCP designation.",
+        "mimeType": _JSON_MIME,
+    },
+    {
+        "uri": "holdspeak://desk/constitution",
+        "name": "HoldSpeak Constitution",
+        "description": "The project’s constitutional context.",
+        "mimeType": _TEXT_MIME,
+    },
+    {
+        "uri": "holdspeak://desk/inference-targets",
+        "name": "Inference targets",
+        "description": "Available local and configured inference profiles.",
+        "mimeType": _JSON_MIME,
+    },
+]
+
+_RESOURCE_TEMPLATES = [
+    {
+        "uriTemplate": "holdspeak://primitives/{kind}/{id}",
+        "name": "Primitive detail",
+        "description": "One stored desk primitive by kind and identifier.",
+        "mimeType": _JSON_MIME,
+    },
+    {
+        "uriTemplate": "holdspeak://workbenches/{id}",
+        "name": "Workbench detail",
+        "description": "One workbench, including its item and run summary.",
+        "mimeType": _JSON_MIME,
+    },
+    {
+        "uriTemplate": "holdspeak://meetings/{id}",
+        "name": "Meeting detail",
+        "description": "One archived meeting and its stored detail.",
+        "mimeType": _JSON_MIME,
+    },
+]
+
+_PRIMITIVE_KIND_ALIASES = {
+    "notes": "note", "note": "note",
+    "decisions": "decision", "decision": "decision",
+    "kbs": "kb", "kb": "kb",
+    "directories": "directory", "directory": "directory",
+    "workflows": "workflow", "workflow": "workflow",
+    "chains": "chain", "chain": "chain",
+}
+_PRIMITIVE_DETAIL_PATTERN = re.compile(r"^holdspeak://primitives/([^/]+)/([^/]+)$")
+_WORKBENCH_DETAIL_PATTERN = re.compile(r"^holdspeak://workbenches/([^/]+)$")
+_MEETING_DETAIL_PATTERN = re.compile(r"^holdspeak://meetings/([^/]+)$")
+
+
+class ResourceError(ValueError):
+    """A resource failure that is safe to surface through JSON-RPC."""
+
+
+def list_resources() -> dict[str, list[dict[str, Any]]]:
+    """Return the static resources and parameterized resource templates."""
+    return {"resources": _STATIC_RESOURCES, "resourceTemplates": _RESOURCE_TEMPLATES}
+
+
+def _contents(uri: str, mime_type: str, value: Any) -> dict[str, list[dict[str, str]]]:
+    text = value if isinstance(value, str) else json.dumps(value, sort_keys=True, default=str)
+    return {"contents": [{"uri": uri, "mimeType": mime_type, "text": text}]}
+
+
+def read_resource(uri: str, principal: Principal) -> dict[str, list[dict[str, str]]]:
+    """Read one static or templated resource as MCP resource contents."""
+    if uri == "holdspeak://desk/schema":
+        return _contents(uri, _JSON_MIME, {"kinds": _PRIMITIVE_SCHEMA})
+    if uri == "holdspeak://desk/verbs":
+        return _contents(uri, _JSON_MIME, {"verbs": _VERB_CATALOG})
+    if uri == "holdspeak://desk/constitution":
+        try:
+            text = (_REPO_ROOT / "docs/internal/CONSTITUTION.md").read_text(encoding="utf-8")
+        except OSError as exc:
+            raise ResourceError(f"Constitution unavailable: {exc}") from exc
+        return _contents(uri, _TEXT_MIME, text)
+    if uri == "holdspeak://desk/inference-targets":
+        return _contents(uri, _JSON_MIME, ProfileService(get_database()).list_inference_targets(principal))
+
+    if match := _PRIMITIVE_DETAIL_PATTERN.fullmatch(uri):
+        kind = _PRIMITIVE_KIND_ALIASES.get(match.group(1))
+        if kind is None:
+            raise ResourceError(f"Unsupported primitive kind: {match.group(1)}")
+        value = getattr(PrimitiveService(get_database()), f"get_{kind}")(principal, match.group(2))
+        return _contents(uri, _JSON_MIME, value)
+    if match := _WORKBENCH_DETAIL_PATTERN.fullmatch(uri):
+        value = WorkbenchService(get_database()).get_workbench(principal, match.group(1))
+        return _contents(uri, _JSON_MIME, value)
+    if match := _MEETING_DETAIL_PATTERN.fullmatch(uri):
+        value = MeetingService(get_database()).get_meeting(principal, match.group(1))
+        return _contents(uri, _JSON_MIME, value)
+    raise ResourceError(f"Unknown resource: {uri}")

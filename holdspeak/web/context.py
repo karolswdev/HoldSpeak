@@ -42,6 +42,10 @@ class WebContext:
     on_update_meeting: Optional[Callable[..., Any]] = None
     on_set_title: Optional[Callable[[str], None]] = None
     on_set_tags: Optional[Callable[[list[str]], None]] = None
+    # HS-122-04: transport-neutral meeting archive and lifecycle boundary.
+    # The runtime-owned callbacks above remain bound into this service at app
+    # composition, keeping the service itself independent of the web layer.
+    meeting_service: Optional[Any] = None
 
     # HS-26-03: intent-control + dictation-pipeline callbacks for the dictation
     # routes. The dictation handlers' many private helpers (project detection,

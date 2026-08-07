@@ -13,10 +13,11 @@ import json
 from pathlib import Path
 from typing import Any, Optional
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 
 from ....logging_config import get_logger
+from ....services.dictation_service import DictationService
 from ...context import WebContext
 from ._helpers import (
     _block_summary,
@@ -783,9 +784,19 @@ def build_pipeline_router(
         repo = _journal_repo()
         return [r.transcript for r in repo.recent()] if repo is not None else []
 
+    def _dictation_service() -> DictationService:
+        from ....db import get_database
+
+        repository = _journal_repo()
+        return DictationService(
+            get_database(),
+            journal_repository=repository,
+            journal_available=repository is not None,
+        )
+
     @router.get("/api/dictation/journal")
     async def api_dictation_journal_list(
-        limit: int = 200, source: Optional[str] = None
+        request: Request, limit: int = 200, source: Optional[str] = None
     ) -> Any:
         """List journal entries newest-first (HS-45-02).
 
@@ -797,10 +808,12 @@ def build_pipeline_router(
         from ....dictation_learning import best_correction_signal, reach_by_gist_map
 
         cfg = Config.load().dictation
-        repo = _journal_repo()
-        clean_source = source if source in ("dictation", "dry_run") else None
-        records = repo.recent(limit=limit, source=clean_source) if repo is not None else []
-        items = [_journal_to_dict(r) for r in records]
+        journal = _dictation_service().list_journal(
+            getattr(request.state, "principal", None),
+            limit=limit,
+            source=source if source in ("dictation", "dry_run") else None,
+        )
+        items = journal["items"]
         # HS-48-02: a per-entry "learned from N similar" signal — the correction
         # the live router would apply to this utterance, and its reach. Gated on
         # `corrections_enabled`: a None snapshot means the router nudges nothing,
@@ -825,7 +838,7 @@ def build_pipeline_router(
             {
                 "enabled": bool(getattr(cfg.pipeline, "journal_enabled", True)),
                 "retention": int(getattr(cfg.pipeline, "journal_retention", 500)),
-                "count": repo.count() if repo is not None else 0,
+                "count": journal["count"],
                 "items": items,
             }
         )
@@ -865,13 +878,11 @@ def build_pipeline_router(
         return JSONResponse({"removed": False, "error": "entry not found"}, status_code=404)
 
     @router.delete("/api/dictation/journal")
-    async def api_dictation_journal_clear() -> Any:
+    async def api_dictation_journal_clear(request: Request) -> Any:
         """Wipe the whole journal (HS-45-02 — the one-click local wipe)."""
-        repo = _journal_repo()
-        if repo is None:
+        if _journal_repo() is None:
             return JSONResponse({"error": "journal unavailable"}, status_code=404)
-        removed = repo.clear()
-        return JSONResponse({"cleared": True, "removed": removed, "count": repo.count()})
+        return JSONResponse(_dictation_service().clear_journal(getattr(request.state, "principal", None)))
 
     @router.post("/api/dictation/journal/{entry_id}/correct")
     async def api_dictation_journal_correct(entry_id: int, payload: dict[str, Any]) -> Any:

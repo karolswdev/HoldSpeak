@@ -4,7 +4,39 @@
 > pick up, and the repo conventions that bite (PMO commit gate, write-once
 > evidence, no `Co-Authored-By`, metal-test exclusion).
 
-**Newest update (2026-08-03): Phase 116 — The Workbench — CHARTERED.**
+**Newest update (2026-08-06): Phase 122 — The Backbone — CHARTERED.**
+DeskOS becomes programmable. Extract transport-neutral application
+services from every route handler (workbenches and recipes are fat
+controllers requiring substantive extraction; remaining services are
+mechanical wrapping for pipeline consistency). Then plug two adapters:
+thinned FastAPI routes and a new MCP server (10 day-one tools, Python
+stdio sidecar). Walk harness (Python Playwright page objects, isolated
+hub fixture, screenshot manifest) and desk doctor. Every operation in
+the system flows through one pipeline regardless of caller.
+
+**Previous update (2026-08-06): Phase 121 — The Fluency — CHARTERED.**
+Kit-first resequence: story 01 builds five missing OS primitives
+(SurfaceState action slot, SurfaceFooter with egress|receipt|verbs
+slots, LedgerFilter with persistence, useCopyReceipt, useUndoReceipt);
+story 02 migrates all 8 footer species + 10 footerless programs to
+SurfaceFooter; stories 03-11 are adoption passes (pullout dead ends,
+undo, keyboard/ARIA, windowcraft, universal verbs, command center
+palette, live desk truth, error recovery, copy/export + attention).
+The walk proves keyboard-first fluency. Held: escape consolidation,
+onboarding, frecency, push notifications, lazy mounting, per-object
+deep links.
+
+**Previous update (2026-08-06): Phase 120 — The Reckoning — DONE (11/11).**
+Four Opus scouts audited every UI surface. Terra verified. Ten Terra
+builders implemented across three waves, ten Opus verifiers confirmed —
+all passed first attempt. ~30 files modified, 1 deleted, 1 created.
+Workbench agents reforged (inlet CSS, status hierarchy, sprites),
+blank pullouts filled, chains readable, mic labels swept, constitutional
+context rebuilt with desk primitives, editors unified on gadgets, emoji
+replaced with sprites, dead ends closed, chrome bugs fixed, runtime
+faces converged on Signal material. Owner walked it.
+
+**Previous update (2026-08-03): Phase 116 — The Workbench — CHARTERED.**
 The Workbench is a new desk primitive — a surface where an agent sits,
 works through items, and produces receipts. One agent, one inference
 target, one schedule. Nine stories: the contract (schema/API/kernel),

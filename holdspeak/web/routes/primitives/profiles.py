@@ -13,6 +13,8 @@ from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 
 from ....logging_config import get_logger
+from ....services.profile_service import ProfileService
+from ....services.primitive_service import NotFound, ValidationError
 from ...context import WebContext
 from ...runtime_support import error_500
 from ._shared import _json_body, _new_id
@@ -49,33 +51,18 @@ def build_profiles_router(ctx: WebContext) -> APIRouter:
             "requires_key": bool(pick("requires_key", existing.requires_key if existing else False)),
         }
 
+    def _svc() -> ProfileService:
+        from ....db import get_database
+
+        return ProfileService(get_database())
+
+    def _principal(request: Request) -> Any:
+        return getattr(request.state, "principal", None)
+
     @router.get("/api/profiles")
-    async def api_list_profiles() -> Any:
+    async def api_list_profiles(request: Request) -> Any:
         try:
-            from ....db import get_database
-            db = get_database()
-            profiles = db.profiles.list()
-            # HS-85-04: mesh liveness rides the ENVELOPE, never the profile
-            # shape (the synced primitive stays pure; the shape guard pins it).
-            liveness: dict[str, Any] = {}
-            nodes = {str(getattr(p, "node", "") or "") for p in profiles if p.kind == "meshNode"}
-            if nodes - {""}:
-                from datetime import datetime as _dt
-
-                from ....intel.mesh_relay import DEFAULT_LIVENESS_WINDOW_SECONDS
-
-                now = _dt.now()
-                for node in sorted(nodes - {""}):
-                    last = db.mesh_relay.worker_last_seen(node)
-                    age = None if last is None else (now - last).total_seconds()
-                    liveness[node] = {
-                        "live": age is not None and age <= DEFAULT_LIVENESS_WINDOW_SECONDS,
-                        "last_seen_seconds": None if age is None else int(age),
-                    }
-            return JSONResponse({
-                "profiles": [p.to_dict() for p in profiles],
-                "mesh_liveness": liveness,
-            })
+            return JSONResponse(_svc().list_profiles(_principal(request)))
         except Exception as exc:
             return error_500(exc, log, "Failed to list profiles")
 
@@ -95,13 +82,11 @@ def build_profiles_router(ctx: WebContext) -> APIRouter:
         return _profiles_read_only()
 
     @router.get("/api/profiles/{profile_id}")
-    async def api_get_profile(profile_id: str) -> Any:
+    async def api_get_profile(profile_id: str, request: Request) -> Any:
         try:
-            from ....db import get_database
-            profile = get_database().profiles.get(profile_id)
-            if profile is None:
-                return JSONResponse({"error": f"Unknown profile: {profile_id}"}, status_code=404)
-            return JSONResponse({"profile": profile.to_dict()})
+            return JSONResponse({"profile": _svc().get_profile(_principal(request), profile_id)})
+        except NotFound:
+            return JSONResponse({"error": f"Unknown profile: {profile_id}"}, status_code=404)
         except Exception as exc:
             return error_500(exc, log, "Failed to get profile")
 
@@ -143,25 +128,9 @@ def build_profiles_router(ctx: WebContext) -> APIRouter:
         return _profile_fields(adapted, existing)
 
     @router.get("/api/inference-targets")
-    async def api_list_inference_targets() -> Any:
+    async def api_list_inference_targets(request: Request) -> Any:
         try:
-            from ....db import get_database
-            from ....inference_targets import (
-                PROFILE_ALIAS_VERSION,
-                TARGET_CONTRACT_VERSION,
-                list_inference_targets,
-            )
-
-            db = get_database()
-            return JSONResponse({
-                "version": TARGET_CONTRACT_VERSION,
-                "targets": [target.to_dict() for target in list_inference_targets(db)],
-                "profile_alias": {
-                    "version": PROFILE_ALIAS_VERSION,
-                    "status": "supported",
-                    "removal": "not_before_inference_target_v3",
-                },
-            })
+            return JSONResponse(_svc().list_inference_targets(_principal(request)))
         except Exception as exc:
             return error_500(exc, log, "Failed to list inference targets")
 
@@ -241,21 +210,11 @@ def build_profiles_router(ctx: WebContext) -> APIRouter:
             return JSONResponse({"error": "expected a JSON object"}, status_code=400)
         if rejected := _reject_secret(body):
             return rejected
-        if not str(body.get("name") or "").strip():
-            return JSONResponse({"error": "destination name is required"}, status_code=400)
         try:
-            from ....db import get_database
-            from ....inference_targets import target_from_profile
-
-            db = get_database()
-            profile = db.profiles.upsert(
-                profile_id=str(body.get("id") or _new_id("target")),
-                **_target_fields(body),
-            )
-            return JSONResponse(
-                {"inference_target": target_from_profile(profile, db).to_dict()},
-                status_code=201,
-            )
+            target = _svc().create_profile(_principal(request), body)
+            return JSONResponse({"inference_target": target}, status_code=201)
+        except ValidationError as exc:
+            return JSONResponse({"error": str(exc)}, status_code=400)
         except ValueError as exc:
             return JSONResponse({"error": str(exc)}, status_code=400)
         except Exception as exc:
@@ -279,34 +238,27 @@ def build_profiles_router(ctx: WebContext) -> APIRouter:
         body = await _json_body(request)
         if body is None:
             return JSONResponse({"error": "expected a JSON object"}, status_code=400)
-        if target_id == "this_machine":
-            return JSONResponse({"error": "This device is a built-in destination"}, status_code=400)
         if rejected := _reject_secret(body):
             return rejected
         try:
-            from ....db import get_database
-            from ....inference_targets import target_from_profile
-
-            db = get_database()
-            existing = db.profiles.get(target_id)
-            if existing is None:
-                return JSONResponse({"error": f"Unknown destination: {target_id}"}, status_code=404)
-            profile = db.profiles.upsert(
-                profile_id=target_id, **_target_fields(body, existing)
-            )
-            return JSONResponse({"inference_target": target_from_profile(profile, db).to_dict()})
+            target = _svc().update_profile(_principal(request), target_id, body)
+            return JSONResponse({"inference_target": target})
+        except ValidationError as exc:
+            return JSONResponse({"error": str(exc)}, status_code=400)
+        except NotFound:
+            return JSONResponse({"error": f"Unknown destination: {target_id}"}, status_code=404)
         except Exception as exc:
             return error_500(exc, log, "Failed to update inference target")
 
     @router.delete("/api/inference-targets/{target_id}")
-    async def api_delete_inference_target(target_id: str) -> Any:
-        if target_id == "this_machine":
-            return JSONResponse({"error": "This device is a built-in destination"}, status_code=400)
+    async def api_delete_inference_target(target_id: str, request: Request) -> Any:
         try:
-            from ....db import get_database
-            if not get_database().profiles.delete(target_id):
-                return JSONResponse({"error": f"Unknown destination: {target_id}"}, status_code=404)
+            _svc().delete_profile(_principal(request), target_id)
             return JSONResponse({"success": True})
+        except ValidationError as exc:
+            return JSONResponse({"error": str(exc)}, status_code=400)
+        except NotFound:
+            return JSONResponse({"error": f"Unknown destination: {target_id}"}, status_code=404)
         except Exception as exc:
             return error_500(exc, log, "Failed to delete inference target")
 

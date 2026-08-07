@@ -1,4 +1,4 @@
-"""Desk-authored Architecture Decision Record CRUD (HS-113-08)."""
+"""Desk-authored Architecture Decision Record CRUD — thin adapter (HS-122-01)."""
 from __future__ import annotations
 
 from typing import Any
@@ -7,26 +7,29 @@ from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 
 from ....logging_config import get_logger
+from ....services.primitive_service import NotFound, PrimitiveService
 from ...context import WebContext
 from ...runtime_support import error_500
-from ._shared import _json_body, _new_id
+from ._shared import _json_body
 
 log = get_logger("web.routes.primitives")
-
-
-def _decision_payload(record: Any) -> dict[str, Any]:
-    return record.to_dict()
 
 
 def build_desk_decisions_router(ctx: WebContext) -> APIRouter:
     del ctx
     router = APIRouter()
 
+    def _svc() -> PrimitiveService:
+        from ....db import get_database
+        return PrimitiveService(get_database())
+
+    def _principal(request: Request) -> Any:
+        return getattr(request.state, "principal", None)
+
     @router.get("/api/decisions")
-    async def api_list_desk_decisions() -> Any:
+    async def api_list_desk_decisions(request: Request) -> Any:
         try:
-            from ....db import get_database
-            return JSONResponse({"decisions": [_decision_payload(row) for row in get_database().desk_decisions.list()]})
+            return JSONResponse({"decisions": _svc().list_decisions(_principal(request))})
         except Exception as exc:
             return error_500(exc, log, "Failed to list decisions")
 
@@ -36,9 +39,9 @@ def build_desk_decisions_router(ctx: WebContext) -> APIRouter:
         if body is None:
             return JSONResponse({"error": "expected a JSON object"}, status_code=400)
         try:
-            from ....db import get_database
-            decision = get_database().desk_decisions.upsert(
-                decision_id=str(body.get("id") or _new_id("decision")),
+            decision = _svc().create_decision(
+                _principal(request),
+                decision_id=str(body.get("id") or "") or None,
                 title=str(body.get("title") or "New decision"),
                 status=str(body.get("status") or "proposed"),
                 deciders=list(body.get("deciders") or []),
@@ -49,20 +52,18 @@ def build_desk_decisions_router(ctx: WebContext) -> APIRouter:
                 consequences_markdown=str(body.get("consequences_markdown") or ""),
                 tags=list(body.get("tags") or []),
             )
-            return JSONResponse({"decision": _decision_payload(decision)}, status_code=201)
+            return JSONResponse({"decision": decision}, status_code=201)
         except ValueError as exc:
             return JSONResponse({"error": str(exc)}, status_code=400)
         except Exception as exc:
             return error_500(exc, log, "Failed to create decision")
 
     @router.get("/api/decisions/{decision_id}")
-    async def api_get_desk_decision(decision_id: str) -> Any:
+    async def api_get_desk_decision(decision_id: str, request: Request) -> Any:
         try:
-            from ....db import get_database
-            decision = get_database().desk_decisions.get(decision_id)
-            if decision is None:
-                return JSONResponse({"error": f"Unknown decision: {decision_id}"}, status_code=404)
-            return JSONResponse({"decision": _decision_payload(decision)})
+            return JSONResponse({"decision": _svc().get_decision(_principal(request), decision_id)})
+        except NotFound:
+            return JSONResponse({"error": f"Unknown decision: {decision_id}"}, status_code=404)
         except Exception as exc:
             return error_500(exc, log, "Failed to get decision")
 
@@ -72,23 +73,22 @@ def build_desk_decisions_router(ctx: WebContext) -> APIRouter:
         if body is None:
             return JSONResponse({"error": "expected a JSON object"}, status_code=400)
         try:
-            from ....db import get_database
-            decision = get_database().desk_decisions.update(decision_id, **body)
-            if decision is None:
-                return JSONResponse({"error": f"Unknown decision: {decision_id}"}, status_code=404)
-            return JSONResponse({"decision": _decision_payload(decision)})
+            decision = _svc().update_decision(_principal(request), decision_id, **body)
+            return JSONResponse({"decision": decision})
+        except NotFound:
+            return JSONResponse({"error": f"Unknown decision: {decision_id}"}, status_code=404)
         except ValueError as exc:
             return JSONResponse({"error": str(exc)}, status_code=400)
         except Exception as exc:
             return error_500(exc, log, "Failed to update decision")
 
     @router.delete("/api/decisions/{decision_id}")
-    async def api_delete_decision(decision_id: str) -> Any:
+    async def api_delete_decision(decision_id: str, request: Request) -> Any:
         try:
-            from ....db import get_database
-            if not get_database().desk_decisions.delete(decision_id):
-                return JSONResponse({"error": f"Unknown decision: {decision_id}"}, status_code=404)
+            _svc().delete_decision(_principal(request), decision_id)
             return JSONResponse({"success": True})
+        except NotFound:
+            return JSONResponse({"error": f"Unknown decision: {decision_id}"}, status_code=404)
         except Exception as exc:
             return error_500(exc, log, "Failed to delete decision")
 
@@ -98,24 +98,24 @@ def build_desk_decisions_router(ctx: WebContext) -> APIRouter:
         if body is None:
             return JSONResponse({"error": "expected a JSON object"}, status_code=400)
         try:
-            from ....db import get_database
-            decision = get_database().desk_decisions.update(decision_id, status=body.get("status"))
-            if decision is None:
-                return JSONResponse({"error": f"Unknown decision: {decision_id}"}, status_code=404)
-            return JSONResponse({"decision": _decision_payload(decision)})
+            decision = _svc().update_decision_status(
+                _principal(request), decision_id, body.get("status", "")
+            )
+            return JSONResponse({"decision": decision})
+        except NotFound:
+            return JSONResponse({"error": f"Unknown decision: {decision_id}"}, status_code=404)
         except ValueError as exc:
             return JSONResponse({"error": str(exc)}, status_code=400)
         except Exception as exc:
             return error_500(exc, log, "Failed to update decision status")
 
     @router.post("/api/decisions/{decision_id}/supersede")
-    async def api_supersede_decision(decision_id: str) -> Any:
+    async def api_supersede_decision(decision_id: str, request: Request) -> Any:
         try:
-            from ....db import get_database
-            successor = get_database().desk_decisions.supersede(decision_id, _new_id("decision"))
-            if successor is None:
-                return JSONResponse({"error": f"Unknown decision: {decision_id}"}, status_code=404)
-            return JSONResponse({"decision": _decision_payload(successor) }, status_code=201)
+            decision = _svc().supersede_decision(_principal(request), decision_id)
+            return JSONResponse({"decision": decision}, status_code=201)
+        except NotFound:
+            return JSONResponse({"error": f"Unknown decision: {decision_id}"}, status_code=404)
         except Exception as exc:
             return error_500(exc, log, "Failed to supersede decision")
 

@@ -1,6 +1,8 @@
-"""Workflows: CRUD + the graph-aware hub run endpoint.
+"""Workflows: CRUD (thin adapter) + the graph-aware hub run endpoint.
 
-Bodies moved verbatim from routes/primitives.py (HS-79-03, the Phase-63 discipline).
+CRUD delegates to PrimitiveService (HS-122-01).
+The run endpoint stays in the route layer — it owns ctx, WebSocket
+broadcast, and the inference lifecycle (story 02/03 territory).
 """
 from __future__ import annotations
 
@@ -11,6 +13,7 @@ from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 
 from ....logging_config import get_logger
+from ....services.primitive_service import NotFound, PrimitiveService, ValidationError
 from ...context import WebContext
 from ...runtime_support import error_500
 from ._shared import (
@@ -24,37 +27,17 @@ log = get_logger("web.routes.primitives")
 def build_workflows_router(ctx: WebContext) -> APIRouter:
     router = APIRouter()
 
-    def _payload(workflow: Any) -> dict[str, Any]:
-        from ..workflow_graph import linearize
+    def _svc() -> PrimitiveService:
+        from ....db import get_database
+        return PrimitiveService(get_database())
 
-        plan = linearize(workflow.graph_json) if workflow.graph_json else None
-        if plan is not None and plan.linearizable:
-            readiness, detail, support = "ready", "", "linear_graph"
-        elif plan is not None:
-            readiness = "unavailable"
-            detail = f"This graph needs a Workbench host that supports it: {plan.reason}."
-            support = "unsupported_graph"
-        elif str(workflow.prompt or "").strip():
-            readiness, detail, support = "ready", "", "prompt_workflow"
-        else:
-            readiness, detail, support = (
-                "unavailable", "Add a runnable graph or prompt in Workbench.", "empty"
-            )
-        row = workflow.to_dict()
-        row["capability"] = capability_descriptor(
-            kind="workflow", name=workflow.name or workflow.id,
-            readiness=readiness, detail=detail,
-            action_label=f"Run {workflow.name or 'Workflow'}",
-            support=support,
-        )
-        return row
+    def _principal(request: Request) -> Any:
+        return getattr(request.state, "principal", None)
 
     @router.get("/api/workflows")
-    async def api_list_workflows() -> Any:
+    async def api_list_workflows(request: Request) -> Any:
         try:
-            from ....db import get_database
-            workflows = get_database().workflows.list()
-            return JSONResponse({"workflows": [_payload(w) for w in workflows]})
+            return JSONResponse({"workflows": _svc().list_workflows(_principal(request))})
         except Exception as exc:
             return error_500(exc, log, "Failed to list workflows")
 
@@ -63,30 +46,28 @@ def build_workflows_router(ctx: WebContext) -> APIRouter:
         body = await _json_body(request)
         if body is None:
             return JSONResponse({"error": "expected a JSON object"}, status_code=400)
-        if not str(body.get("name") or "").strip():
-            return JSONResponse({"error": "workflow name is required"}, status_code=400)
         try:
-            from ....db import get_database
-            workflow = get_database().workflows.upsert(
-                workflow_id=str(body.get("id") or _new_id("workflow")),
+            workflow = _svc().create_workflow(
+                _principal(request),
+                workflow_id=str(body.get("id") or "") or None,
                 name=str(body.get("name") or ""),
                 prompt=str(body.get("prompt") or ""),
                 graph_json=dict(body.get("graph_json") or {}),
             )
-            return JSONResponse({"workflow": _payload(workflow)}, status_code=201)
+            return JSONResponse({"workflow": workflow}, status_code=201)
+        except ValidationError as exc:
+            return JSONResponse({"error": str(exc)}, status_code=400)
         except ValueError as exc:
             return JSONResponse({"error": str(exc)}, status_code=400)
         except Exception as exc:
             return error_500(exc, log, "Failed to create workflow")
 
     @router.get("/api/workflows/{workflow_id}")
-    async def api_get_workflow(workflow_id: str) -> Any:
+    async def api_get_workflow(workflow_id: str, request: Request) -> Any:
         try:
-            from ....db import get_database
-            workflow = get_database().workflows.get(workflow_id)
-            if workflow is None:
-                return JSONResponse({"error": f"Unknown workflow: {workflow_id}"}, status_code=404)
-            return JSONResponse({"workflow": _payload(workflow)})
+            return JSONResponse({"workflow": _svc().get_workflow(_principal(request), workflow_id)})
+        except NotFound:
+            return JSONResponse({"error": f"Unknown workflow: {workflow_id}"}, status_code=404)
         except Exception as exc:
             return error_500(exc, log, "Failed to get workflow")
 
@@ -96,29 +77,26 @@ def build_workflows_router(ctx: WebContext) -> APIRouter:
         if body is None:
             return JSONResponse({"error": "expected a JSON object"}, status_code=400)
         try:
-            from ....db import get_database
-            db = get_database()
-            existing = db.workflows.get(workflow_id)
-            if existing is None:
-                return JSONResponse({"error": f"Unknown workflow: {workflow_id}"}, status_code=404)
-            workflow = db.workflows.upsert(
-                workflow_id=workflow_id,
-                name=str(body["name"]) if "name" in body else existing.name,
-                prompt=str(body["prompt"]) if "prompt" in body else existing.prompt,
-                graph_json=dict(body["graph_json"]) if "graph_json" in body else existing.graph_json,
+            workflow = _svc().update_workflow(
+                _principal(request),
+                workflow_id,
+                name=body.get("name"),
+                prompt=body.get("prompt"),
+                graph_json=body.get("graph_json"),
             )
-            return JSONResponse({"workflow": _payload(workflow)})
+            return JSONResponse({"workflow": workflow})
+        except NotFound:
+            return JSONResponse({"error": f"Unknown workflow: {workflow_id}"}, status_code=404)
         except Exception as exc:
             return error_500(exc, log, "Failed to update workflow")
 
     @router.delete("/api/workflows/{workflow_id}")
-    async def api_delete_workflow(workflow_id: str) -> Any:
+    async def api_delete_workflow(workflow_id: str, request: Request) -> Any:
         try:
-            from ....db import get_database
-            removed = get_database().workflows.delete(workflow_id)
-            if not removed:
-                return JSONResponse({"error": f"Unknown workflow: {workflow_id}"}, status_code=404)
+            _svc().delete_workflow(_principal(request), workflow_id)
             return JSONResponse({"success": True})
+        except NotFound:
+            return JSONResponse({"error": f"Unknown workflow: {workflow_id}"}, status_code=404)
         except Exception as exc:
             return error_500(exc, log, "Failed to delete workflow")
 
@@ -141,26 +119,6 @@ def build_workflows_router(ctx: WebContext) -> APIRouter:
         3. **Unsupported graph.** If the graph contains control flow / fan-out the
            hub cannot execute, refuse it before Run. It is never lowered to a prompt;
            the exact graph remains available to a capable Workbench host.
-
-        Per-node provenance: the iPad Blueprint carries a per-node `failure_policy`
-        (retryThenQueue / fallbackOnDevice / skip) and a `runs_on` model preference
-        (auto / onDevice / endpoint). The linearizer now carries both, and each
-        linear `steps` entry surfaces the node's resolved `failure_policy` and
-        `runs_on` so the trail is honest about what was requested. On a model-op
-        error the hub honours a faithful subset of the failure policy: `skip` and
-        `fallbackOnDevice` carry the input through unchanged and continue the chain
-        (the step's `status` records which), while `retryThenQueue` / unset surface
-        the error as a 502 (no silent empty).
-
-        NOT yet applied on the hub (carried + surfaced honestly, not enforced):
-        `runs_on` does not pin a node to a specific provider — the hub runs every
-        model op on its single configured provider, so `runs_on` is reported but the
-        target is not switched per node. `retryThenQueue` does not retry-with-backoff
-        or park/queue the run (the hub has no run queue); it fails fast. `fallbackOnDevice`
-        has no separate on-device fallback to swap to on the hub, so it degrades to
-        carrying the input through rather than re-running on another model. Full
-        per-node target routing and queue/park semantics live on the iPad runner
-        (`WorkflowRunner` / `BlueprintInterpreter`) and the mesh (HSM-15).
 
         404 if the workflow is missing; 502 on engine failure (no silent empty).
         Returns `{workflow_id, output, provider}` (+ optional `steps`, `warning`,
@@ -220,7 +178,6 @@ def build_workflows_router(ctx: WebContext) -> APIRouter:
                     status_code=409,
                 )
 
-            # ── 1) Try the linear graph runner ─────────────────────────────
             plan = linearize(workflow.graph_json) if workflow.graph_json else None
             if plan is not None and not plan.linearizable:
                 error = (
@@ -237,7 +194,6 @@ def build_workflows_router(ctx: WebContext) -> APIRouter:
 
             _run_frame(ctx, "running", kind="workflow", ref=workflow_id, name=wf_name)
             if plan is not None and plan.linearizable:
-                # Seed the chain with the rendered request input (variables applied).
                 current = _render_user_prompt("", variables or {}, user_input)
                 intel = build_intel_for_target(target, db)
                 lifecycle.start_attempt(
@@ -252,8 +208,6 @@ def build_workflows_router(ctx: WebContext) -> APIRouter:
                         if not node_prompt.strip():
                             continue
                         try:
-                            # off the event loop: a mesh run WAITS on the relay
-                            # queue, and THIS loop must serve the claim polls
                             out = await asyncio.to_thread(
                                 intel.run_prompt,
                                 system_prompt="",
@@ -263,9 +217,6 @@ def build_workflows_router(ctx: WebContext) -> APIRouter:
                             )
                         except MeetingIntelError as exc:
                             error = target_runtime_error(target, exc)
-                            # Honour a faithful subset of the node's failure policy:
-                            # `skip` / `fallbackOnDevice` carry the input through and
-                            # continue; `retryThenQueue` / unset surface the error.
                             handled = on_node_error(gnode, current)
                             if handled is None:
                                 _run_frame(ctx, "error", kind="workflow",
@@ -320,7 +271,6 @@ def build_workflows_router(ctx: WebContext) -> APIRouter:
                             "runs_on": gnode.runs_on,
                             "status": "ok",
                         })
-                    # pass-through nodes (entry/source/merge/output) carry `current`.
 
                 if not run_steps:
                     error = (
@@ -377,7 +327,6 @@ def build_workflows_router(ctx: WebContext) -> APIRouter:
                     "actual_placement": invocation["attempts"][-1]["actual_placement"],
                 })
 
-            # ── 2) Prompt-only compatibility path ──────────────────────────
             prompt = str(workflow.prompt or "").strip()
 
             user_prompt = _render_user_prompt(prompt, variables or {}, user_input)
@@ -464,7 +413,5 @@ def build_workflows_router(ctx: WebContext) -> APIRouter:
                 except Exception:
                     pass
             return error_500(exc, log, "Failed to run workflow")
-
-    # ── Directories (the canonical organization container; iPad "zone") ────
 
     return router

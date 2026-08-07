@@ -1,22 +1,18 @@
-"""Recipes (user-authored personas): CRUD + the hub run endpoint.
-
-Bodies moved verbatim from routes/primitives.py (HS-79-03, the Phase-63 discipline).
-"""
+"""Recipe routes — thin FastAPI adapters over :class:`RecipeService` (HS-122-03)."""
 from __future__ import annotations
 
-import asyncio
-from typing import Any, Optional
+from typing import Any
 
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 
 from ....logging_config import get_logger
+from ....principals import Principal, PrincipalKind
+from ....services.primitive_service import NotFound, ValidationError
+from ....services.recipe_service import RecipeService, RecipeServiceError
 from ...context import WebContext
 from ...runtime_support import error_500
-from ._shared import (
-    RunLifecycle, _json_body, _new_id, _persist_run_artifact, _render_user_prompt,
-    _run_frame, canonical_source_type, capability_descriptor,
-)
+from ._shared import _json_body, _run_frame
 
 log = get_logger("web.routes.primitives")
 
@@ -24,37 +20,22 @@ log = get_logger("web.routes.primitives")
 def build_recipes_router(ctx: WebContext) -> APIRouter:
     router = APIRouter()
 
-    def _payload(recipe: Any) -> dict[str, Any]:
-        row = recipe.to_dict()
-        row["capability"] = capability_descriptor(
-            kind="persona", name=recipe.name or recipe.id,
-            supported_placements=[f"profile:{recipe.profile_id}"] if recipe.profile_id else ["this_machine"],
-            action_label=f"Ask {recipe.name or 'Agent'}",
-        )
-        return row
+    def _svc() -> RecipeService:
+        from ....db import get_database
+        return RecipeService(get_database())
 
-    def _recipe_fields(body: dict[str, Any], existing=None) -> dict[str, Any]:
-        def pick(key: str, default: Any) -> Any:
-            return body[key] if key in body else default
-        return {
-            "name": str(pick("name", existing.name if existing else "")),
-            "avatar": str(pick("avatar", existing.avatar if existing else "")),
-            "role": str(pick("role", existing.role if existing else "")),
-            "system_prompt": str(pick("system_prompt", existing.system_prompt if existing else "")),
-            "user_template": str(pick("user_template", existing.user_template if existing else "")),
-            "tools": list(pick("tools", existing.tools if existing else [])),
-            "kb_id": (pick("kb_id", existing.kb_id if existing else None) or None),
-            "profile_id": (pick("profile_id", existing.profile_id if existing else None) or None),
-            "manual_context": str(pick("manual_context", existing.manual_context if existing else "")),
-            "use_zone_context": bool(pick("use_zone_context", existing.use_zone_context if existing else False)),
-        }
+    def _principal(request: Request) -> Principal:
+        return getattr(
+            request.state, "principal", Principal(PrincipalKind.OWNER, "owner-session")
+        )
+
+    def _broadcast(state: str, **frame: Any) -> None:
+        _run_frame(ctx, state, **frame)
 
     @router.get("/api/recipes")
-    async def api_list_recipes() -> Any:
+    async def api_list_recipes(request: Request) -> Any:
         try:
-            from ....db import get_database
-            recipes = get_database().recipes.list()
-            return JSONResponse({"recipes": [_payload(r) for r in recipes]})
+            return JSONResponse({"recipes": _svc().list_recipes(_principal(request))})
         except Exception as exc:
             return error_500(exc, log, "Failed to list recipes")
 
@@ -63,28 +44,24 @@ def build_recipes_router(ctx: WebContext) -> APIRouter:
         body = await _json_body(request)
         if body is None:
             return JSONResponse({"error": "expected a JSON object"}, status_code=400)
-        if not str(body.get("name") or "").strip():
-            return JSONResponse({"error": "Agent name is required"}, status_code=400)
         try:
-            from ....db import get_database
-            recipe = get_database().recipes.upsert(
-                recipe_id=str(body.get("id") or _new_id("recipe")),
-                **_recipe_fields(body),
+            fields = dict(body)
+            recipe_id = str(fields.pop("id", "") or fields.pop("recipe_id", "") or "") or None
+            recipe = _svc().create_recipe(
+                _principal(request), recipe_id=recipe_id, **fields
             )
-            return JSONResponse({"recipe": _payload(recipe)}, status_code=201)
-        except ValueError as exc:
+            return JSONResponse({"recipe": recipe}, status_code=201)
+        except (ValidationError, ValueError) as exc:
             return JSONResponse({"error": str(exc)}, status_code=400)
         except Exception as exc:
             return error_500(exc, log, "Failed to create recipe")
 
     @router.get("/api/recipes/{recipe_id}")
-    async def api_get_recipe(recipe_id: str) -> Any:
+    async def api_get_recipe(recipe_id: str, request: Request) -> Any:
         try:
-            from ....db import get_database
-            recipe = get_database().recipes.get(recipe_id)
-            if recipe is None:
-                return JSONResponse({"error": f"Unknown Agent: {recipe_id}"}, status_code=404)
-            return JSONResponse({"recipe": _payload(recipe)})
+            return JSONResponse({"recipe": _svc().get_recipe(_principal(request), recipe_id)})
+        except NotFound:
+            return JSONResponse({"error": f"Unknown Agent: {recipe_id}"}, status_code=404)
         except Exception as exc:
             return error_500(exc, log, "Failed to get recipe")
 
@@ -94,393 +71,79 @@ def build_recipes_router(ctx: WebContext) -> APIRouter:
         if body is None:
             return JSONResponse({"error": "expected a JSON object"}, status_code=400)
         try:
-            from ....db import get_database
-            db = get_database()
-            existing = db.recipes.get(recipe_id)
-            if existing is None:
-                return JSONResponse({"error": f"Unknown Agent: {recipe_id}"}, status_code=404)
-            recipe = db.recipes.upsert(recipe_id=recipe_id, **_recipe_fields(body, existing))
-            return JSONResponse({"recipe": _payload(recipe)})
+            return JSONResponse({
+                "recipe": _svc().update_recipe(_principal(request), recipe_id, **body)
+            })
+        except NotFound:
+            return JSONResponse({"error": f"Unknown Agent: {recipe_id}"}, status_code=404)
         except Exception as exc:
             return error_500(exc, log, "Failed to update recipe")
 
     @router.delete("/api/recipes/{recipe_id}")
-    async def api_delete_recipe(recipe_id: str) -> Any:
+    async def api_delete_recipe(recipe_id: str, request: Request) -> Any:
         try:
-            from ....db import get_database
-            removed = get_database().recipes.delete(recipe_id)
-            if not removed:
-                return JSONResponse({"error": f"Unknown Agent: {recipe_id}"}, status_code=404)
+            _svc().delete_recipe(_principal(request), recipe_id)
             return JSONResponse({"success": True})
+        except NotFound:
+            return JSONResponse({"error": f"Unknown Agent: {recipe_id}"}, status_code=404)
         except Exception as exc:
             return error_500(exc, log, "Failed to delete recipe")
 
     @router.post("/api/recipes/{recipe_id}/run")
     async def api_run_recipe(recipe_id: str, request: Request) -> Any:
-        """Run a saved persona against an input through the intel/LLM engine.
-
-        Builds the messages from the persona's `system_prompt` + rendered
-        `user_template` and runs them through `build_configured_meeting_intel()`
-        (so the user's configured provider/endpoint is honoured). A model/endpoint
-        failure surfaces as a 502 with the engine's message — no silent empty
-        output.
-        """
         body = await _json_body(request) or {}
-        lifecycle: Optional[RunLifecycle] = None
         try:
-            from ....db import get_database
-            db = get_database()
-            recipe = db.recipes.get(recipe_id)
-            if recipe is None:
-                return JSONResponse({"error": f"Unknown Agent: {recipe_id}"}, status_code=404)
-
-            from ....principals import Principal, PrincipalKind
-            principal = getattr(
-                request.state, "principal", Principal(PrincipalKind.OWNER, "owner-session")
+            result = await _svc().run(
+                _principal(request), recipe_id, broadcast=_broadcast, **body
             )
-            lifecycle = RunLifecycle.begin(
-                db, definition_ref=f"persona:{recipe_id}", body=body,
-                default_placement=f"profile:{recipe.profile_id}" if recipe.profile_id else "this_machine",
-                principal=principal,
-                definition_revision=recipe.last_modified or recipe.created_at or "unversioned",
-            )
-
-            user_input = str(body.get("input") or "")
-            variables = body.get("variables") if isinstance(body.get("variables"), dict) else {}
-            user_prompt = _render_user_prompt(recipe.user_template, variables or {}, user_input)
-            if not user_prompt.strip():
-                invocation = lifecycle.fail(
-                    "nothing to run: provide `input` or a Agent input template", state="empty"
-                )
-                return JSONResponse(
-                    {"error": "nothing to run: provide `input` or a Agent input template",
-                     "invocation": invocation, "invocation_id": lifecycle.invocation_id},
-                    status_code=400,
-                )
-
-            max_tokens = body.get("max_tokens")
-            temperature = body.get("temperature")
-
-            from ....intel.models import MeetingIntelError
-            from ....inference_targets import (
-                build_intel_for_target,
-                resolve_inference_target,
-                target_refusal,
-                target_runtime_error,
-            )
-
-            requested_target_id = str(
-                body.get("inference_target_id")
-                or body.get("requested_placement")
-                or recipe.profile_id
-                or "this_machine"
-            ).strip()
-            target = resolve_inference_target(db, requested_target_id)
-            ran_profile_id = target.profile_id
-            lifecycle.start_attempt(
-                destination=target.id,
-                target=target,
-            )
-            if not target.ready:
-                invocation = lifecycle.fail(target.readiness_reason, state="unavailable")
-                return JSONResponse(
-                    {**target_refusal(target), "recipe_id": recipe_id,
-                     "invocation": invocation, "invocation_id": lifecycle.invocation_id},
-                    status_code=409,
-                )
-            intel = build_intel_for_target(target, db)
-            _run_frame(ctx, "running", kind="recipe", ref=recipe_id, name=recipe.name or recipe_id)
-            try:
-                # off the event loop: a mesh run WAITS on the relay queue, and
-                # THIS loop must stay free to serve the worker's claim polls
-                from ....skill_injection import inject_skills
-                output = await asyncio.to_thread(
-                    intel.run_prompt,
-                    system_prompt=inject_skills(recipe.system_prompt, recipe_id),
-                    user_prompt=user_prompt,
-                    temperature=float(temperature) if temperature is not None else None,
-                    max_tokens=int(max_tokens) if max_tokens is not None else None,
-                )
-            except MeetingIntelError as exc:
-                error = target_runtime_error(target, exc)
-                _run_frame(ctx, "error", kind="recipe", ref=recipe_id,
-                           name=recipe.name or recipe_id, error=error)
-                invocation = lifecycle.fail(error, provider=getattr(intel, "active_provider", None))
-                return JSONResponse(
-                    {"error": error, "recipe_id": recipe_id,
-                     "invocation": invocation, "invocation_id": lifecycle.invocation_id}, status_code=502
-                )
-            cancelled = lifecycle.cancelled()
-            if cancelled is not None:
-                _run_frame(ctx, "error", kind="recipe", ref=recipe_id,
-                           name=recipe.name or recipe_id, error="cancelled")
-                return JSONResponse(
-                    {"error": "cancelled", "recipe_id": recipe_id,
-                     "invocation": cancelled, "invocation_id": lifecycle.invocation_id,
-                     "operation_id": lifecycle.operation_id}, status_code=409,
-                )
-            if not str(output or "").strip():
-                error = "Agent returned no output; your input is retained for Retry."
-                _run_frame(ctx, "error", kind="recipe", ref=recipe_id,
-                           name=recipe.name or recipe_id, error=error)
-                invocation = lifecycle.fail(error, state="empty", provider=getattr(intel, "active_provider", None))
-                return JSONResponse({"error": error, "recipe_id": recipe_id,
-                                     "invocation": invocation,
-                                     "invocation_id": lifecycle.invocation_id}, status_code=502)
-            _run_frame(ctx, "ready", kind="recipe", ref=recipe_id, name=recipe.name or recipe_id)
-
-            # Provenance: what produced this output, so a surface that keeps the
-            # result as an Artifact can attach lineage ("from <recipe>").
-            sources: list[dict[str, str]] = [
-                {"source_type": "recipe", "source_ref": recipe_id}
-            ]
-            provided_ref = str(body.get("source_ref") or "").strip()
-            if provided_ref:
-                # The input source is canonical "input"; if a caller (e.g. the
-                # iPad) hands us its own source_type we fold it to the canonical
-                # vocab (its "card" → "input"), defaulting to "input" when unset.
-                provided_type = body.get("source_type")
-                input_type = (
-                    canonical_source_type(provided_type) if provided_type else "input"
-                )
-                sources.append({"source_type": input_type, "source_ref": provided_ref})
-            sources.extend(lifecycle.lineage())
-
-            artifact_id = _persist_run_artifact(
-                kind="recipe", name=recipe.name or recipe_id,
-                user_input=user_input, output=output, sources=sources,
-            )
-            if not artifact_id:
-                invocation = lifecycle.fail("The result could not be kept as an Artifact.")
-                return JSONResponse({"error": invocation["error"], "recipe_id": recipe_id,
-                                     "invocation": invocation,
-                                     "invocation_id": lifecycle.invocation_id}, status_code=500)
-            invocation = lifecycle.succeed(
-                artifact_id,
-                provider=getattr(intel, "active_provider", None),
-                model=target.model,
-            )
-            return JSONResponse({
-                "recipe_id": recipe_id,
-                "output": output,
-                "provider": intel.active_provider,
-                "profile_id": ran_profile_id,
-                "inference_target": target.to_dict(),
-                "actual_placement": invocation["attempts"][-1]["actual_placement"],
-                "sources": sources,
-                "artifact_id": artifact_id,
-                "result_ref": f"artifact:{artifact_id}",
-                "invocation_id": lifecycle.invocation_id,
-                "operation_id": lifecycle.operation_id,
-                "correlation_id": lifecycle.invocation_id,
-                "invocation": invocation,
-            })
+            return JSONResponse(result)
+        except NotFound:
+            return JSONResponse({"error": f"Unknown Agent: {recipe_id}"}, status_code=404)
+        except RecipeServiceError as exc:
+            return JSONResponse(exc.payload, status_code=exc.status_code)
         except Exception as exc:
-            if lifecycle is not None:
-                try:
-                    lifecycle.fail(str(exc))
-                except Exception:
-                    pass
             return error_500(exc, log, "Failed to run recipe")
-
-    def _kb_block(db: Any, kb_id: str) -> str:
-        """The KB honesty rider (HS-83-02, the 15-12 grammar): real hydrated
-        member content, or an explicit marker — never a hint string."""
-        from .ask import _context_material
-
-        kb = db.kbs.get(kb_id)
-        if kb is None:
-            return ""
-        name = kb.name or kb_id
-        texts: list[str] = []
-        for mid in list(getattr(kb, "member_ids", None) or [])[:12]:
-            bare = mid.split(":", 1)[1] if ":" in mid else mid
-            for kind in ("note", "artifact", "meeting"):
-                _, text = _context_material(db, bare, kind, "")
-                if text:
-                    texts.append(text[:1200])
-                    break
-        if texts:
-            return f"[KB: {name}]\n" + "\n\n".join(texts)
-        return f"[KB: {name} — no hydrated members]"
 
     @router.post("/api/recipes/{recipe_id}/chat")
     async def api_chat_recipe(recipe_id: str, request: Request) -> Any:
-        """One conversational turn with a persona (HS-83-02). Persists NOTHING —
-        harvest is the human's judgment (`/keep` below).
-
-        The turn's envelope mirrors the iPad's `recipeReply`: the persona's
-        standing context (`manual_context` + the KB honesty block), the
-        HSM-15-12 grounding refs hydrated from the canonical store, the last
-        12 turns, then the question. The role rides the system channel (the
-        transport-correct seat for `run_prompt`); everything else is the same
-        block grammar.
-        """
         body = await _json_body(request) or {}
-        question = str(body.get("question") or "").strip()
-        if not question:
-            return JSONResponse({"error": "question is required"}, status_code=400)
         try:
-            from ....db import get_database
-            from ....intel.models import MeetingIntelError
-            from ....inference_targets import (
-                build_intel_for_target,
-                resolve_inference_target,
-                target_refusal,
-                target_runtime_error,
+            result = await _svc().chat(
+                _principal(request), recipe_id,
+                question=str(body.get("question") or ""),
+                history=body.get("history") if isinstance(body.get("history"), list) else [],
+                grounding=body.get("grounding"),
+                inference_target_id=body.get("inference_target_id"),
+                broadcast=_broadcast,
+                egress_context=ctx,
             )
-            from .ask import (
-                _GROUNDING_EXPANDS, _GROUNDING_MAX_REFS, _hydrate_grounding, _run_egress,
-            )
-
-            db = get_database()
-            recipe = db.recipes.get(recipe_id)
-            if recipe is None:
-                return JSONResponse({"error": f"Unknown Agent: {recipe_id}"}, status_code=404)
-            name = recipe.name or recipe_id
-
-            blocks: list[str] = []
-            ctx_parts: list[str] = []
-            if (recipe.manual_context or "").strip():
-                ctx_parts.append(recipe.manual_context)
-            if recipe.kb_id:
-                kb_text = _kb_block(db, recipe.kb_id)
-                if kb_text:
-                    ctx_parts.append(kb_text)
-            if ctx_parts:
-                blocks.append("[CONTEXT]\n" + "\n\n".join(ctx_parts))
-
-            # HSM-15-12 grounding — the SAME wire and refusal grammar as /api/ask.
-            grounding = body.get("grounding")
-            context_ids: list[str] = []
-            context_titles: list[str] = []
-            grounding_echo = None
-            if grounding is not None:
-                if not isinstance(grounding, dict):
-                    return JSONResponse({"error": "grounding must be an object"}, status_code=400)
-                raw_m = grounding.get("meeting_ids")
-                raw_a = grounding.get("artifact_ids")
-                meeting_ids = [str(x).strip() for x in raw_m if str(x).strip()] if isinstance(raw_m, list) else []
-                artifact_ids = [str(x).strip() for x in raw_a if str(x).strip()] if isinstance(raw_a, list) else []
-                expand = str(grounding.get("expand") or "summary").strip() or "summary"
-                if expand not in _GROUNDING_EXPANDS:
-                    return JSONResponse(
-                        {"error": f"expand {expand!r} is not one of {list(_GROUNDING_EXPANDS)}"},
-                        status_code=400,
-                    )
-                if len(meeting_ids) + len(artifact_ids) > _GROUNDING_MAX_REFS:
-                    return JSONResponse(
-                        {"error": f"grounding is capped at {_GROUNDING_MAX_REFS} refs"},
-                        status_code=400,
-                    )
-                g_blocks, g_ids, g_titles, unknown = _hydrate_grounding(
-                    db, meeting_ids, artifact_ids, expand
-                )
-                if unknown:
-                    return JSONResponse(
-                        {"error": "grounding ids not on this hub", "unknown_ids": unknown},
-                        status_code=400,
-                    )
-                if g_blocks:
-                    blocks.append("[GROUNDING]\n" + "\n\n".join(g_blocks))
-                context_ids += g_ids
-                context_titles += g_titles
-                grounding_echo = {
-                    "meeting_ids": meeting_ids, "artifact_ids": artifact_ids,
-                    "expand": expand, "titles": g_titles,
-                }
-
-            history = body.get("history") if isinstance(body.get("history"), list) else []
-            window = [h for h in history if isinstance(h, dict)][-12:]
-            if window:
-                convo = "\n".join(
-                    ("User: " if str(h.get("role")) == "you" else f"{name}: ") + str(h.get("text") or "")
-                    for h in window
-                )
-                blocks.append("[CONVERSATION SO FAR]\n" + convo)
-            blocks.append("[USER]\n" + question[:6000] + f"\n\nReply as {name}.")
-
-            target = resolve_inference_target(
-                db,
-                body.get("inference_target_id") or recipe.profile_id or "this_machine",
-            )
-            if not target.ready:
-                return JSONResponse(target_refusal(target), status_code=409)
-            ran_profile_id = target.profile_id
-            prof = db.profiles.get(ran_profile_id) if ran_profile_id else None
-            intel = build_intel_for_target(target, db)
-
-            from ....skill_injection import inject_skills
-            raw_system = (recipe.system_prompt or "").strip() or f"You are {name}, a helpful assistant."
-            system_prompt = inject_skills(raw_system, recipe_id)
-            _run_frame(ctx, "running", kind="recipe", ref=recipe_id, name=name)
-            try:
-                output = await asyncio.to_thread(
-                    intel.run_prompt,
-                    system_prompt=system_prompt,
-                    user_prompt="\n\n".join(blocks),
-                )
-            except MeetingIntelError as exc:
-                error = target_runtime_error(target, exc)
-                _run_frame(ctx, "error", kind="recipe", ref=recipe_id, name=name, error=error)
-                return JSONResponse(
-                    {"error": error, "recipe_id": recipe_id,
-                     "inference_target": target.to_dict(), "alternate_target_id": "this_machine"},
-                    status_code=502,
-                )
-            _run_frame(ctx, "ready", kind="recipe", ref=recipe_id, name=name)
-
-            # The turn's HONEST egress — the 16-09 grammar, the same ONE
-            # derivation as /api/ask (HS-84-04).
-            egress, model = _run_egress(ctx, prof, intel)
-
-            payload: dict[str, Any] = {
-                "recipe_id": recipe_id,
-                "output": output,
-                "provider": intel.active_provider,
-                "profile_id": ran_profile_id,
-                "inference_target": target.to_dict(),
-                "actual_placement": target.placement_receipt(
-                    provider=intel.active_provider, model=model
-                ),
-                "egress": egress,
-                "model": model,
-                "context_ids": context_ids,
-                "context_titles": context_titles,
-            }
-            if grounding_echo is not None:
-                payload["grounding"] = grounding_echo
-            return JSONResponse(payload)
+            return JSONResponse(result)
+        except ValidationError as exc:
+            return JSONResponse({"error": str(exc)}, status_code=400)
+        except NotFound:
+            return JSONResponse({"error": f"Unknown Agent: {recipe_id}"}, status_code=404)
+        except RecipeServiceError as exc:
+            return JSONResponse(exc.payload, status_code=exc.status_code)
         except Exception as exc:
             return error_500(exc, log, "Failed to chat with recipe")
 
     @router.post("/api/recipes/{recipe_id}/keep")
     async def api_keep_recipe_reply(recipe_id: str, request: Request) -> Any:
-        """Harvest one chat reply onto the desk — the run-born artifact the
-        run route mints, minted only when the human says keep."""
         body = await _json_body(request) or {}
-        output = str(body.get("output") or "")
-        if not output.strip():
-            return JSONResponse({"error": "output is required"}, status_code=400)
         try:
-            from ....db import get_database
-            recipe = get_database().recipes.get(recipe_id)
-            if recipe is None:
-                return JSONResponse({"error": f"Unknown Agent: {recipe_id}"}, status_code=404)
-            artifact_id = _persist_run_artifact(
-                kind="recipe", name=recipe.name or recipe_id,
-                user_input=str(body.get("question") or ""),
-                output=output,
-                sources=[{"source_type": "recipe", "source_ref": recipe_id}],
+            result = _svc().keep(
+                _principal(request), recipe_id,
+                output=str(body.get("output") or ""), input=str(body.get("question") or ""),
+                sources=body.get("sources") if isinstance(body.get("sources"), list) else None,
             )
-            if not artifact_id:
-                return JSONResponse({"error": "keep failed"}, status_code=500)
-            return JSONResponse({"artifact_id": artifact_id}, status_code=201)
+            return JSONResponse(result, status_code=201)
+        except ValidationError as exc:
+            return JSONResponse({"error": str(exc)}, status_code=400)
+        except NotFound:
+            return JSONResponse({"error": f"Unknown Agent: {recipe_id}"}, status_code=404)
+        except RecipeServiceError as exc:
+            return JSONResponse(exc.payload, status_code=exc.status_code)
         except Exception as exc:
             return error_500(exc, log, "Failed to keep chat reply")
-
-    # ── Runtime profiles (Phase 24) ───────────────────────────────────────
-    # SHAPE ONLY over the API. The api key never rides a profile body; it lives in
-    # the hub's secrets (env: HOLDSPEAK_PROFILE_<ID>_KEY) and is joined at run time.
 
     return router

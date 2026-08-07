@@ -1,152 +1,132 @@
-"""Live-meeting lifecycle routes: bookmark, start/stop, and meeting metadata.
-
-The lifecycle/mutation handlers read callbacks (`on_*`, `broadcast`) from the
-shared `WebContext`, exactly as before the Phase-72 package split.
-"""
-
+"""Live-meeting lifecycle routes backed by :class:`MeetingService`."""
 from __future__ import annotations
 
-from typing import Any, Callable, Optional
+from typing import Any, Optional
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 
 from ....logging_config import get_logger
+from ....principals import UNAUTHENTICATED
+from ....services.meeting_service import MeetingService
+from ....services.primitive_service import ValidationError
 from ....web_requests import (
     _BookmarkRequest,
     _MeetingStartRequest,
     _StopRequest,
     _UpdateMeetingRequest,
 )
-from ...runtime_support import _UnknownDeviceError, _meeting_callback_payload
+from ...runtime_support import _UnknownDeviceError
 from ...context import WebContext
 
 log = get_logger("web.routes.meetings")
+
+
+def _service(ctx: WebContext) -> MeetingService:
+    """Get the composition-bound service, retaining partial-context support."""
+    if isinstance(ctx.meeting_service, MeetingService):
+        return ctx.meeting_service
+    from ....db import get_database
+
+    def update_callback(*, title: str | None, tags: list[str] | None) -> Any:
+        if ctx.on_update_meeting is not None:
+            return ctx.on_update_meeting(title=title, tags=tags)
+        if title is not None and ctx.on_set_title is not None:
+            ctx.on_set_title(title)
+        if tags is not None and ctx.on_set_tags is not None:
+            ctx.on_set_tags(tags)
+        return ctx.get_state() or {}
+
+    service = MeetingService(get_database())
+    service.bind_lifecycle(
+        on_start=ctx.on_start,
+        on_stop=ctx.on_meeting_stop or ctx.on_stop,
+        on_bookmark=ctx.on_bookmark,
+        on_update=update_callback,
+    )
+    ctx.meeting_service = service
+    return service
+
+
+def _principal(request: Request):
+    return getattr(request.state, "principal", UNAUTHENTICATED)
 
 
 def build_live_router(ctx: WebContext) -> APIRouter:
     router = APIRouter()
 
     @router.post("/api/bookmark")
-    async def api_bookmark(payload: Optional[_BookmarkRequest] = None) -> Any:
+    async def api_bookmark(
+        request: Request, payload: Optional[_BookmarkRequest] = None
+    ) -> Any:
         try:
-            label = payload.label if payload is not None else ""
-            result = ctx.on_bookmark(label)
-        except Exception as e:
-            log.error(f"on_bookmark failed: {e}")
-            return JSONResponse({"success": False, "error": str(e)}, status_code=500)
+            result = _service(ctx).bookmark(
+                _principal(request), label=payload.label if payload else ""
+            )
+            if result is not None:
+                ctx.broadcast("bookmark", result)
+            return JSONResponse({"success": True})
+        except Exception as exc:
+            log.error("on_bookmark failed: %s", exc)
+            return JSONResponse({"success": False, "error": str(exc)}, status_code=500)
 
-        bookmark_data: Any = None
-        if hasattr(result, "to_dict"):
-            try:
-                bookmark_data = result.to_dict()
-            except Exception:
-                bookmark_data = None
-        elif isinstance(result, dict):
-            bookmark_data = result
-
-        if bookmark_data is not None:
-            ctx.broadcast("bookmark", bookmark_data)
-
-        return JSONResponse({"success": True})
-
-    async def _handle_stop_request(callback: Callable[[], Any]) -> Any:
+    def _stop(request: Request) -> Any:
         try:
-            result = callback()
-        except Exception as e:
-            log.error(f"on_stop failed: {e}")
-            return JSONResponse({"success": False, "error": str(e)}, status_code=500)
-
-        stopped_data: Any = None
-        if hasattr(result, "to_dict"):
-            try:
-                stopped_data = result.to_dict()
-            except Exception:
-                stopped_data = None
-        elif isinstance(result, dict):
-            stopped_data = result
-        else:
-            stopped_data = {"status": "stopped"}
-
-        ctx.broadcast("stopped", stopped_data)
-        return JSONResponse({"success": True})
+            stopped = _service(ctx).stop_capture(_principal(request))
+            ctx.broadcast("stopped", stopped)
+            return JSONResponse({"success": True})
+        except Exception as exc:
+            log.error("on_stop failed: %s", exc)
+            return JSONResponse({"success": False, "error": str(exc)}, status_code=500)
 
     @router.post("/api/meeting/start")
     async def api_meeting_start(
-        payload: Optional[_MeetingStartRequest] = None,
+        request: Request, payload: Optional[_MeetingStartRequest] = None
     ) -> Any:
-        if ctx.on_start is None:
-            return JSONResponse(
-                {"success": False, "error": "Meeting start control not supported"},
-                status_code=501,
-            )
-
-        devices = list(payload.devices) if payload and payload.devices else []
-
         try:
-            result = ctx.on_start(devices=devices) if devices else ctx.on_start()
+            meeting = _service(ctx).start_capture(
+                _principal(request), {"devices": list(payload.devices) if payload and payload.devices else []}
+            )
+        except ValidationError as exc:
+            return JSONResponse({"success": False, "error": str(exc)}, status_code=501)
         except _UnknownDeviceError as exc:
             return JSONResponse(
                 {"success": False, "error": str(exc), "device_id": exc.device_id},
                 status_code=404,
             )
-        except Exception as e:
-            log.error(f"on_start failed: {e}")
-            return JSONResponse({"success": False, "error": str(e)}, status_code=500)
-
-        meeting_data = _meeting_callback_payload(result)
-
-        if meeting_data is not None:
-            ctx.broadcast("meeting_started", meeting_data)
-        return JSONResponse({"success": True, "meeting": meeting_data})
+        except Exception as exc:
+            log.error("on_start failed: %s", exc)
+            return JSONResponse({"success": False, "error": str(exc)}, status_code=500)
+        if meeting is not None:
+            ctx.broadcast("meeting_started", meeting)
+        return JSONResponse({"success": True, "meeting": meeting})
 
     @router.post("/api/meeting/stop")
-    async def api_meeting_stop(_: Optional[_StopRequest] = None) -> Any:
-        callback = ctx.on_meeting_stop or ctx.on_stop
-        return await _handle_stop_request(callback)
+    async def api_meeting_stop(request: Request, _: Optional[_StopRequest] = None) -> Any:
+        return _stop(request)
 
     @router.post("/api/stop")
-    async def api_stop(_: Optional[_StopRequest] = None) -> Any:
-        # Backward-compatible alias.
-        return await _handle_stop_request(ctx.on_stop)
+    async def api_stop(request: Request, _: Optional[_StopRequest] = None) -> Any:
+        return _stop(request)
 
     @router.patch("/api/meeting")
-    async def api_update_meeting(payload: _UpdateMeetingRequest) -> Any:
-        """Update meeting title and/or tags."""
+    async def api_update_meeting(request: Request, payload: _UpdateMeetingRequest) -> Any:
         try:
-            meeting_data: Optional[dict[str, Any]] = None
-            if ctx.on_update_meeting is not None:
-                result = ctx.on_update_meeting(title=payload.title, tags=payload.tags)
-                if hasattr(result, "to_dict"):
-                    try:
-                        meeting_data = result.to_dict()
-                    except Exception:
-                        meeting_data = None
-                elif isinstance(result, dict):
-                    meeting_data = result
-            else:
-                if payload.title is not None and ctx.on_set_title is not None:
-                    ctx.on_set_title(payload.title)
-                if payload.tags is not None and ctx.on_set_tags is not None:
-                    ctx.on_set_tags(payload.tags)
-                try:
-                    meeting_data = ctx.get_state() or {}
-                except Exception:
-                    meeting_data = None
-
-            if isinstance(meeting_data, dict):
-                ctx.broadcast(
-                    "meeting_updated",
-                    {
-                        "title": meeting_data.get("title"),
-                        "tags": meeting_data.get("tags") if isinstance(meeting_data.get("tags"), list) else [],
-                    },
-                )
-            return JSONResponse({"success": True, "meeting": meeting_data})
-        except Exception as e:
-            log.error(f"Failed to update meeting: {e}")
-            return JSONResponse(
-                {"success": False, "error": str(e)}, status_code=500
+            state = ctx.get_state() or {}
+            meeting_id = str(state.get("id") or state.get("meeting_id") or "")
+            meeting = _service(ctx).update_meeting(
+                _principal(request), meeting_id, title=payload.title, tags=payload.tags
             )
+            ctx.broadcast(
+                "meeting_updated",
+                {
+                    "title": meeting.get("title"),
+                    "tags": meeting.get("tags") if isinstance(meeting.get("tags"), list) else [],
+                },
+            )
+            return JSONResponse({"success": True, "meeting": meeting})
+        except Exception as exc:
+            log.error("Failed to update meeting: %s", exc)
+            return JSONResponse({"success": False, "error": str(exc)}, status_code=500)
 
     return router
