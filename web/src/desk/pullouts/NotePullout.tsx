@@ -1,3 +1,4 @@
+import { SurfaceFooter } from "../surface/SurfaceFooter";
 /** Note pullout content (HS-117-15). */
 import { useState } from "react";
 import type { EditorView } from "@codemirror/view";
@@ -10,6 +11,7 @@ import { DeskEditor } from "../components/DeskEditor";
 import { EditorAIBar } from "../components/EditorAIBar";
 import { Material } from "../surface/Material";
 import { SurfaceState } from "../surface/Surface";
+import { useCopyReceipt } from "../hooks/useCopyReceipt";
 import type { PulloutContentProps } from "./types";
 
 export function NotePullout({ object: o }: PulloutContentProps) {
@@ -22,6 +24,7 @@ export function NotePullout({ object: o }: PulloutContentProps) {
   const [bodyDraft, setBodyDraft] = useState("");
   const [editorView, setEditorView] = useState<EditorView | null>(null);
   const [aiBarForced, setAIBarForced] = useState(false);
+  const { copy, receipt: copyReceipt } = useCopyReceipt();
 
   const startBodyEdit = () => {
     setBodyDraft(String(ir.bodyMarkdown || ""));
@@ -64,7 +67,12 @@ export function NotePullout({ object: o }: PulloutContentProps) {
           </section>
         ) : (
           <section>
-            <SurfaceState empty emptyLabel="Empty note" />
+            <SurfaceState
+              empty
+              emptyLabel="Empty note"
+              actionLabel="Start writing"
+              onAction={startBodyEdit}
+            />
           </section>
         )}
         <DeskFilingStrip
@@ -73,7 +81,14 @@ export function NotePullout({ object: o }: PulloutContentProps) {
           objectId={o.id}
         />
       </div>
-      <footer className="desk-pullout-foot">
+      <SurfaceFooter receipt={copyReceipt} verbs={<>
+        <button
+          type="button"
+          className="desk-chip quiet"
+          onClick={() => void copy(editingBody ? bodyDraft : body)}
+        >
+          Copy
+        </button>
         {!editingBody && (
           <button
             type="button"
@@ -88,7 +103,7 @@ export function NotePullout({ object: o }: PulloutContentProps) {
         {editingBody ? (
           <>
             <MicButton
-              label="Hold to fill"
+              label="Speak to fill"
               draftScope={`card-edit:${o.id}`}
               onText={(t) =>
                 setBodyDraft((current) => (current ? `${current} ${t}` : t))
@@ -117,8 +132,7 @@ export function NotePullout({ object: o }: PulloutContentProps) {
           >
             Edit
           </button>
-        )}
-      </footer>
+        )} </>} />
     </>
   );
 }

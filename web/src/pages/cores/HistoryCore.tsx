@@ -1,3 +1,4 @@
+import { SurfaceFooter } from "../../desk/surface/SurfaceFooter";
 // HS-117-09 — decomposed shell: sub-components live in ./history/.
 import { useEffect, useMemo, useState } from "react";
 import { openSurfaceOr } from "../../desk/shell";
@@ -17,6 +18,7 @@ import { apiBlob, apiFetch, readableError } from "../../lib/api";
 import { asRows, useResource } from "../pageSupport";
 import { ConfirmVerb, SurfaceSplit, SurfaceState } from "../../desk/surface/Surface";
 import { EgressChip } from "../../desk/surface/gadgets";
+import { useLedgerFilter } from "../../desk/surface/LedgerFilter";
 import { useCoreWings } from "./core-hooks";
 import { renderHeroSlot } from "./core-layout";
 import {
@@ -37,7 +39,6 @@ export function HistoryCore({ hero, scope }: CoreProps) {
     ? Number(new URLSearchParams(requestedMeetingQuery).get("segment"))
     : null;
   const wings = useCoreWings(WINGS, "outcomes", "Meeting plumbing");
-  const [query, setQuery] = useState("");
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
@@ -53,7 +54,6 @@ export function HistoryCore({ hero, scope }: CoreProps) {
   const [requestedMeetingError, setRequestedMeetingError] = useState("");
   const [queueStatus, setQueueStatus] = useState("pending");
   const meetingParams = new URLSearchParams({ limit: "100" });
-  if (query) meetingParams.set("search", query);
   if (dateFrom) meetingParams.set("date_from", dateFrom);
   if (dateTo) meetingParams.set("date_to", dateTo);
   if (speaker) meetingParams.set("speaker", speaker);
@@ -76,6 +76,20 @@ export function HistoryCore({ hero, scope }: CoreProps) {
     () => asRows(meetings.data, ["meetings"]),
     [meetings.data],
   );
+  const {
+    query,
+    setQuery,
+    tokens,
+    removeToken,
+    clear: clearFilter,
+    filtered: filteredMeetings,
+    isActive: isFilterActive,
+    total: meetingTotal,
+  } = useLedgerFilter(meetingRows, {
+    key: "meetings",
+    match: (meeting, search) =>
+      String(meeting.title ?? "").toLowerCase().includes(search.toLowerCase()),
+  });
   const requestedMeeting = useMemo(
     () =>
       requestedMeetingId
@@ -132,7 +146,7 @@ export function HistoryCore({ hero, scope }: CoreProps) {
     </>
   );
   const filtered = Boolean(
-    query || speaker || tag || dateFrom || dateTo || openActions,
+    isFilterActive || speaker || tag || dateFrom || dateTo || openActions,
   );
   /* HS-111-03 — the footer's export/delete verbs act on the OPEN
      record; receipts land in the same bar's center channel. */
@@ -175,17 +189,22 @@ export function HistoryCore({ hero, scope }: CoreProps) {
       setRemoving(false);
     }
   };
-  const needing = meetingRows.filter((row) => stateToken(row).tone).length;
+  const needing = filteredMeetings.filter((row) => stateToken(row).tone).length;
 
   const rail = (
     <CatalogRail
-      meetingRows={meetingRows}
+      meetingRows={filteredMeetings}
       meetings={meetings}
       facets={facets}
       selected={selected}
       setSelected={setSelected}
       query={query}
       setQuery={setQuery}
+      filterTokens={tokens}
+      removeFilterToken={removeToken}
+      clearFilter={clearFilter}
+      filterActive={isFilterActive}
+      filterTotal={meetingTotal}
       filtersOpen={filtersOpen}
       setFiltersOpen={setFiltersOpen}
       dateFrom={dateFrom}
@@ -266,7 +285,7 @@ export function HistoryCore({ hero, scope }: CoreProps) {
       {face}
       {/* HS-111-03 — the ONE footer receipt bar: residency chip, the
           receipt center channel, the open record's export + delete. */}
-      <div className="surface-status surface-receiptbar">
+      <SurfaceFooter verbs={<>
         <EgressChip />
         <span
           className="surface-receiptbar-receipt"
@@ -275,7 +294,7 @@ export function HistoryCore({ hero, scope }: CoreProps) {
         >
           {receipt
             ? receipt.text
-            : `${meetingRows.length} RECORDS${filtered ? " · FILTERED" : ""}`}
+            : `${filteredMeetings.length} RECORDS${filtered ? " · FILTERED" : ""}`}
         </span>
         {selected && !wings.doorOpen && wings.view !== "record" ? (
           <span className="surface-receiptbar-verbs">
@@ -315,7 +334,7 @@ export function HistoryCore({ hero, scope }: CoreProps) {
             />
           </span>
         ) : null}
-      </div>
+      </>} />
     </>
   );
 }

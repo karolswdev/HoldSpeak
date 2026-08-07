@@ -15,6 +15,7 @@ from ....services.errors import ValidationError
 from ...context import WebContext
 from ...runtime_support import error_500
 from .coders import _coder_frame, _session_age_seconds
+from .coder_factory_routes import register_factory_routes
 from .coder_steering_support import (
     active_policy_grant,
     canonical_pane_id,
@@ -33,6 +34,7 @@ def build_coder_steering_router(
     ctx: WebContext, *, commands: Any = None, targets: Any = None
 ) -> APIRouter:
     router = APIRouter()
+    register_factory_routes(router)
     service = ctx.coder_service if isinstance(ctx.coder_service, CoderService) else CoderService()
     process_input = ProcessInputServices(
         service=service, commands=commands, targets=targets
@@ -479,34 +481,6 @@ def build_coder_steering_router(
         if result["status"] == "delivered":
             return JSONResponse(result)
         return JSONResponse(result, status_code=409)
-
-    # Session factory: audited create/label acts; kill remains grant-gated.
-
-    @router.post("/api/coders/factory/spawn")
-    async def api_factory_spawn(payload: Optional[dict[str, Any]] = None) -> Any:
-        from .... import coder_factory
-
-        body = payload if isinstance(payload, dict) else {}
-        name = str(body.get("name", "")).strip()
-        command = body.get("command")
-        result = await asyncio.to_thread(
-            coder_factory.spawn, name, command=(str(command) if command else None)
-        )
-        code = 200 if result["status"] == "spawned" else 409
-        return JSONResponse(result, status_code=code)
-
-    @router.post("/api/coders/factory/rename")
-    async def api_factory_rename(payload: Optional[dict[str, Any]] = None) -> Any:
-        from .... import coder_factory
-
-        body = payload if isinstance(payload, dict) else {}
-        target = str(body.get("target", "")).strip()
-        new_name = str(body.get("name", "")).strip()
-        if not target:
-            return JSONResponse({"error": "target is required"}, status_code=400)
-        result = await asyncio.to_thread(coder_factory.rename, target, new_name)
-        code = 200 if result["status"] == "renamed" else 409
-        return JSONResponse(result, status_code=code)
 
     @router.post("/api/coders/{key}/kill")
     async def api_coder_kill(key: str, payload: Optional[dict[str, Any]] = None) -> Any:

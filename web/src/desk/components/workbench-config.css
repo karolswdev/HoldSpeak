@@ -156,30 +156,27 @@
 
 /* ── item card (HS-116-11) ── */
 .desk-next .wb-card {
+  --wb-card-edge: transparent;
   border-bottom: 1px solid var(--border-subtle);
-  border-left: 3px solid transparent;
-  transition: border-color 300ms var(--ease-standard);
-}
-.desk-next .wb-card[data-status="pending"] {
-  border-left-color: transparent;
+  box-shadow: inset 3px 0 0 var(--wb-card-edge);
+  transition: box-shadow 300ms var(--ease-standard);
 }
 .desk-next .wb-card[data-status="claimed"] {
-  border-left-color: var(--warn-signal, var(--warn));
+  --wb-card-edge: var(--warn-signal, var(--warn));
   animation: wb-pulse 1.6s ease-in-out infinite;
 }
 .desk-next .wb-card[data-status="done"] {
-  border-left-color: var(--ok);
+  --wb-card-edge: var(--ok);
 }
 .desk-next .wb-card[data-status="failed"] {
-  border-left-color: var(--danger-signal, var(--danger));
+  --wb-card-edge: var(--danger-signal, var(--danger));
 }
 .desk-next .wb-card[data-status="dismissed"] {
-  border-left-color: transparent;
   opacity: 0.5;
 }
 @keyframes wb-pulse {
-  0%, 100% { border-left-color: var(--warn-signal, var(--warn)); }
-  50% { border-left-color: rgba(251, 191, 36, 0.3); }
+  0%, 100% { --wb-card-edge: var(--warn-signal, var(--warn)); }
+  50% { --wb-card-edge: color-mix(in srgb, var(--warn-signal, var(--warn)) 30%, transparent); }
 }
 
 /* card head */

@@ -26,6 +26,7 @@ ALLOWED_TRANSITION = {
 ALLOWED_FLIP_CALLERS = {
     "holdspeak/db/gate.py",
     "holdspeak/web/routes/system/gate_routes.py",  # the decision routes
+    "holdspeak/services/gate_service.py",  # transport-neutral gate service
     "holdspeak/web_server.py",  # startup invalidation only
 }
 

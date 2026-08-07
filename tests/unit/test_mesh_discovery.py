@@ -31,6 +31,7 @@ from holdspeak.mesh import (
     resolve_device_name,
     should_advertise,
 )
+from holdspeak.services.mesh_service import MeshService
 from holdspeak.web.context import WebContext
 from holdspeak.web.routes import build_mesh_router
 
@@ -186,7 +187,13 @@ def test_advertiser_is_best_effort_when_registration_fails():
 
 def _mesh_client(*, requires_token: bool) -> TestClient:
     app = FastAPI()
-    ctx = WebContext(get_state=lambda: {}, mesh_requires_token=requires_token)
+    # Mesh routes require their application service at composition, even though
+    # these identify-only tests never invoke an operation on it.
+    ctx = WebContext(
+        get_state=lambda: {},
+        mesh_requires_token=requires_token,
+        mesh_service=MeshService(MagicMock()),
+    )
     app.include_router(build_mesh_router(ctx))
     return TestClient(app)
 

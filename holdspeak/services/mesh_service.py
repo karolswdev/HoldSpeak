@@ -1,5 +1,6 @@
 """Transport-neutral mesh inbox and relay operations."""
 from __future__ import annotations
+from holdspeak.services.observer import NullObserver, PipelineObserver, observe_service
 
 from typing import Any
 
@@ -8,9 +9,11 @@ from ..principals import Principal
 from .errors import ConflictError, ValidationError
 
 
+@observe_service
 class MeshService:
-    def __init__(self, db: Database) -> None:
+    def __init__(self, db: Database, *, observer: PipelineObserver | None = None) -> None:
         self._db = db
+        self._observer = observer or NullObserver()
 
     def list_inbox(self, principal: Principal, filters: dict[str, Any] | None = None) -> dict[str, Any]:
         from ..intel_queue import build_runtime_queue_frame

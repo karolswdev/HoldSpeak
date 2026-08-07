@@ -9,6 +9,7 @@ from holdspeak.db import get_database
 from holdspeak.principals import Principal
 from holdspeak.services.desk_service import DeskService
 from holdspeak.services.dictation_service import DictationService
+from holdspeak.services.event_query_service import EventQueryService
 from holdspeak.services.meeting_service import MeetingService
 from holdspeak.services.primitive_service import PrimitiveService
 from holdspeak.services.profile_service import ProfileService
@@ -272,6 +273,20 @@ TOOLS.extend([
         {"decision_id": {"type": "string", "description": "Decision to supersede."}},
         ["decision_id"],
     ),
+    _mcp_tool(
+        "pipeline_events_query",
+        "Query observed pipeline events with optional filters.",
+        {
+            "service": {"type": "string"},
+            "method": {"type": "string"},
+            "principal_kind": {"type": "string"},
+            "since": {"type": "number", "description": "Inclusive epoch timestamp."},
+            "until": {"type": "number", "description": "Inclusive epoch timestamp."},
+            "correlation_id": {"type": "string"},
+            "errors_only": {"type": "boolean", "default": False},
+            "limit": {"type": "integer", "default": 50},
+        },
+    ),
 ])
 
 # The UI owns local surface state. These IDs deliberately never mutate the
@@ -340,6 +355,7 @@ def dispatch(name: str, arguments: dict[str, Any] | None, principal: Principal) 
     recipes = RecipeService(db)
     profiles = ProfileService(db)
     dictation = DictationService(db)
+    events = EventQueryService(db)
     desk = DeskService(db)
 
     if name == "desk.list":
@@ -449,6 +465,10 @@ def dispatch(name: str, arguments: dict[str, Any] | None, principal: Principal) 
         return desk.snapshot(principal)
     if name == "decision.supersede":
         return primitives.supersede_decision(principal, str(args.get("decision_id") or ""))
+    if name == "pipeline_events_query":
+        allowed = ("service", "method", "principal_kind", "since", "until", "correlation_id", "errors_only", "limit")
+        filters = {key: args[key] for key in allowed if key in args}
+        return events.recent(principal, **filters)
     raise ToolError(f"Unknown tool: {name}")
 
 

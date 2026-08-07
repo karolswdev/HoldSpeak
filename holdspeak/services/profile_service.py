@@ -1,5 +1,6 @@
 """Transport-neutral profile and inference-target operations (HS-122-05)."""
 from __future__ import annotations
+from holdspeak.services.observer import NullObserver, PipelineObserver, observe_service
 
 from datetime import datetime
 import os
@@ -12,9 +13,11 @@ from ..principals import Principal
 from holdspeak.services.errors import NotFound, ServiceError, ValidationError
 
 
+@observe_service
 class ProfileService:
-    def __init__(self, db: Database) -> None:
+    def __init__(self, db: Database, *, observer: PipelineObserver | None = None) -> None:
         self._db = db
+        self._observer = observer or NullObserver()
 
     def list_profiles(self, principal: Principal) -> dict[str, Any]:
         from ..intel.mesh_relay import DEFAULT_LIVENESS_WINDOW_SECONDS

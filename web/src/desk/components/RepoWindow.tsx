@@ -16,7 +16,7 @@ import { humanTime } from "../surface/format";
 import { SurfaceState } from "../surface/Surface";
 import { SurfaceWings } from "../surface/wings";
 import { DeskSortableTable, type Column } from "./DeskSortableTable";
-import { DeskWindowFooter } from "./DeskWindowFooter";
+import { SurfaceFooter } from "../surface/SurfaceFooter";
 import { DeskWindowFrame } from "./DeskWindow";
 import "./RepoWindow.css";
 
@@ -135,7 +135,7 @@ export function RepoWindow({
     if (!message.trim()) return;
     setBusy(true); setError("");
     try { await commit(repositoryId, message); setMessage(""); setSelected(new Set()); await refresh(); }
-    catch { setError("Commit failed — stage files and check your git identity"); }
+    catch { setError("Commit failed. Files are unchanged. Stage files and check your git identity, then retry."); }
     finally { setBusy(false); }
   };
 
@@ -172,12 +172,12 @@ export function RepoWindow({
       className="desk-repo-window"
     >
       <div className="desk-repo-body desk-surface-body">
-        {error ? <SurfaceState error={error} /> : null}
+        {error ? <SurfaceState error={error} onRetry={() => void refresh()} /> : null}
         {!error && wing === "files" ? <>
           <nav className="repo-breadcrumb" aria-label="Repository path">
             <button type="button" onClick={() => ascend(0)} disabled={!path}>root</button>
             {breadcrumb.map((part, index) => <button type="button" key={`${part}-${index}`} onClick={() => ascend(index + 1)} disabled={index === breadcrumb.length - 1}>{part}</button>)}
-            {branches.length > 1 ? <select aria-label="Branch" value={branch} onChange={(event) => { setBusy(true); void checkout(repositoryId, event.target.value).then((next) => { setStatus(next); return refresh(); }).catch(() => setError("Branch switch failed")).finally(() => setBusy(false)); }}><option value={branch}>{branch}</option>{branches.filter((item) => item !== branch).map((item) => <option key={item} value={item}>{item}</option>)}</select> : null}
+            {branches.length > 1 ? <select aria-label="Branch" value={branch} onChange={(event) => { setBusy(true); void checkout(repositoryId, event.target.value).then((next) => { setStatus(next); return refresh(); }).catch(() => setError("Branch switch failed. Branch is unchanged. Retry.")).finally(() => setBusy(false)); }}><option value={branch}>{branch}</option>{branches.filter((item) => item !== branch).map((item) => <option key={item} value={item}>{item}</option>)}</select> : null}
           </nav>
           <DeskSortableTable
             className="desk-repo-files"
@@ -195,13 +195,9 @@ export function RepoWindow({
           prSource?.prs === null ? <SurfaceState empty emptyLabel={prSource.detail || "No PR receipt yet"} /> :
           <DeskSortableTable data={prs} columns={prColumns} sort={prSort} onSort={(key, dir) => setPrSort({ key: key as PrSortKey, dir })} rowKey={(pr) => String(pr.number)} rowLabel={(pr) => `PR ${pr.number}: ${pr.title}`} />
         ) : null}
-        {!error && wing === "issues" ? <section className="repo-issues"><h3>GitHub Issues</h3><p className="quiet">gh CLI issue integration is pending.</p></section> : null}
+        {!error && wing === "issues" ? <SurfaceState empty emptyLabel="Issues integration coming soon" emptyGlyph="○" /> : null}
       </div>
-      <DeskWindowFooter
-        status={<span className="quiet">{files.length} {files.length === 1 ? "item" : "items"}{status?.ahead ? ` · ${status.ahead} ahead` : ""}{status?.behind ? ` · ${status.behind} behind` : ""}</span>}
-      >
-        <div className="repo-footer-actions"><button type="button" className="desk-chip" disabled={busy || !selected.size} onClick={() => void stage()}>Stage {selected.size || ""}</button><input aria-label="Commit message" placeholder="Commit message" value={message} onChange={(event) => setMessage(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") void commitSelected(); }} /><button type="button" className="desk-chip" disabled={busy || !message.trim()} title={message.trim() ? `Commit: ${message.trim()}` : "Enter a commit message"} onClick={() => void commitSelected()}>Commit</button></div>
-      </DeskWindowFooter>
+      <SurfaceFooter receipt={<span className="quiet">{files.length} {files.length === 1 ? "item" : "items"}{status?.ahead ? ` · ${status.ahead} ahead` : ""}{status?.behind ? ` · ${status.behind} behind` : ""}</span>} verbs={<div className="repo-footer-actions"><button type="button" className="desk-chip" disabled={busy || !selected.size} onClick={() => void stage()}>Stage {selected.size || ""}</button><input aria-label="Commit message" placeholder="Commit message" value={message} onChange={(event) => setMessage(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") void commitSelected(); }} /><button type="button" className="desk-chip" disabled={busy || !message.trim()} title={message.trim() ? `Commit: ${message.trim()}` : "Enter a commit message"} onClick={() => void commitSelected()}>Commit</button></div>} />
     </DeskWindowFrame>
   );
 }

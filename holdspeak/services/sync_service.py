@@ -1,5 +1,6 @@
 """Principal-aware synchronization boundary."""
 from __future__ import annotations
+from holdspeak.services.observer import NullObserver, PipelineObserver, observe_service
 
 import json
 from typing import Any
@@ -445,10 +446,12 @@ def _hub_model_name(_ctx: Any = None) -> str:
         from ..principals import Principal
 from .errors import ConflictError, ValidationError
 
+@observe_service
 class SyncService:
-    def __init__(self, db: Any, *, hub_model_name: Any = _hub_model_name) -> None:
+    def __init__(self, db: Any, *, hub_model_name: Any = _hub_model_name, observer: PipelineObserver | None = None) -> None:
         self._db = db
         self._hub_model_name = hub_model_name
+        self._observer = observer or NullObserver()
 
     def pull(self, principal: Principal, *, limit: int = 50) -> dict[str, Any]:
         db = self._db

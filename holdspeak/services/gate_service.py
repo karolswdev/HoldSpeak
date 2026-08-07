@@ -1,5 +1,6 @@
 """Transport-neutral tool-call gate operations."""
 from __future__ import annotations
+from holdspeak.services.observer import NullObserver, PipelineObserver, observe_service
 
 from typing import Any
 
@@ -9,9 +10,11 @@ from ..principals import Principal, PrincipalKind
 from .errors import ConflictError, NotFound, ServiceError, ValidationError
 
 
+@observe_service
 class GateService:
-    def __init__(self, db: Database) -> None:
+    def __init__(self, db: Database, *, observer: PipelineObserver | None = None) -> None:
         self._db = db
+        self._observer = observer or NullObserver()
 
     def propose(self, principal: Principal, payload: dict[str, Any]) -> dict[str, Any]:
         from .. import kernel

@@ -1,4 +1,7 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { SurfaceFooter } from "../../desk/surface/SurfaceFooter";
+import { useCallback, useEffect, useState } from "react";
+import { CycleGadget, LampGadget, PadGadget } from "../../desk/surface/gadgets";
+import { SurfaceSection, SurfaceState } from "../../desk/surface/Surface";
 import { apiFetch } from "../../lib/api";
 import type {
   ContextState,
@@ -7,12 +10,14 @@ import type {
   ConstitutionalContextHistoryResponse,
   ConstitutionalContextSaveResponse,
 } from "./core-types";
+import "./constitutional-context.css";
 
 const CHAR_LIMIT = 32_768;
 const WARN_THRESHOLD = 0.8;
 
 export function ConstitutionalContextCore() {
   const [ctx, setCtx] = useState<ContextState | null>(null);
+  const [loadError, setLoadError] = useState("");
   const [draft, setDraft] = useState("");
   const [dirty, setDirty] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -20,11 +25,11 @@ export function ConstitutionalContextCore() {
   const [saveError, setSaveError] = useState("");
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [viewingRev, setViewingRev] = useState<number | null>(null);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const limit = ctx?.char_limit || CHAR_LIMIT;
 
   const load = useCallback(async () => {
+    setLoadError("");
     try {
       const res = await apiFetch<ConstitutionalContextResponse>("/api/constitutional-context");
       const data = res.context;
@@ -33,7 +38,9 @@ export function ConstitutionalContextCore() {
         setDraft(data.content || "");
         setDirty(false);
       }
-    } catch { /* honest empty state */ }
+    } catch {
+      setLoadError("Failed to load constitutional context");
+    }
   }, [viewingRev]);
 
   const loadHistory = useCallback(async () => {
@@ -87,106 +94,100 @@ export function ConstitutionalContextCore() {
   const pct = charCount / limit;
   const overLimit = charCount > limit;
   const nearLimit = pct >= WARN_THRESHOLD && !overLimit;
+  const version = viewingRev === null ? "current" : String(viewingRev);
+
+  if (ctx === null) {
+    return (
+      <div className="desk-surface-body constitutional-context-core">
+        {loadError ? (
+          <SurfaceState error={loadError} onRetry={() => void load()} />
+        ) : (
+          <SurfaceState loading />
+        )}
+      </div>
+    );
+  }
 
   return (
-    <div className="desk-surface-body" style={{ display: "flex", flexDirection: "column", height: "100%", overflow: "hidden" }}>
-      {/* Status bar */}
-      <div style={{ display: "flex", alignItems: "center", gap: "8px", padding: "8px 12px", borderBottom: "1px solid var(--border-rule)", fontFamily: "var(--font-mono)", fontSize: "11px", flexWrap: "wrap" }}>
-        <span style={{ opacity: 0.6 }}>
-          rev {ctx?.revision || 0}
-        </span>
-        <span style={{ opacity: 0.6 }}>
-          ~{tokenEstimate.toLocaleString()} tokens
-        </span>
-        <span style={{
-          color: overLimit ? "var(--danger-signal, #f87171)" : nearLimit ? "var(--warn-signal, #fbbf24)" : "var(--text-faint)",
-          fontWeight: overLimit || nearLimit ? 700 : 400,
-        }}>
-          {charCount.toLocaleString()}/{limit.toLocaleString()}
-        </span>
-        {overLimit ? (
-          <span style={{ color: "var(--danger-signal, #f87171)", fontWeight: 700 }}>OVER LIMIT</span>
-        ) : null}
-        {dirty ? (
-          <span style={{ color: "var(--accent-text, orange)" }}>UNSAVED</span>
-        ) : null}
-        {saved ? (
-          <span style={{ color: "var(--ok, #34d399)" }}>SAVED</span>
-        ) : null}
-        {saveError ? (
-          <span style={{ color: "var(--danger-signal, #f87171)" }}>{saveError}</span>
-        ) : null}
-        {viewingRev !== null ? (
-          <span style={{ color: "var(--warn-signal, #fbbf24)" }}>
-            VIEWING REV {viewingRev}
-          </span>
-        ) : null}
-        <span style={{ flex: 1 }} />
-        {history.length > 0 ? (
-          <select
-            value={viewingRev ?? ""}
-            onChange={(e) => {
-              const val = e.target.value;
-              if (!val) { exitHistory(); return; }
-              const rev = history.find((h) => h.revision === Number(val));
-              if (rev) restoreRevision(rev);
-            }}
-            style={{ fontFamily: "var(--font-mono)", fontSize: "10px" }}
-            aria-label="Version history"
-          >
-            <option value="">current</option>
-            {history.map((h) => (
-              <option key={h.revision} value={h.revision}>
-                rev {h.revision}
-              </option>
-            ))}
-          </select>
-        ) : null}
-        {viewingRev !== null ? (
-          <button
-            type="button"
-            className="desk-chip quiet"
-            onClick={exitHistory}
-          >
-            Cancel
-          </button>
-        ) : null}
-        <button
-          type="button"
-          className="desk-chip"
-          disabled={!dirty || saving || overLimit}
-          onClick={() => void save()}
-        >
-          {saving ? "Saving…" : viewingRev !== null ? "Restore" : "Save"}
-        </button>
-      </div>
+    <div className="desk-surface-body constitutional-context-core">
+      <SurfaceSection
+        label="Status"
+        actions={
+          <div className="constitutional-context-actions">
+            {history.length > 0 ? (
+              <CycleGadget
+                label="Version history"
+                value={version}
+                onChange={(next) => {
+                  if (next === "current") {
+                    exitHistory();
+                    return;
+                  }
+                  const revision = history.find((entry) => entry.revision === Number(next));
+                  if (revision) restoreRevision(revision);
+                }}
+                options={[
+                  { value: "current", label: "current" },
+                  ...history.map((entry) => ({
+                    value: String(entry.revision),
+                    label: `rev ${entry.revision}`,
+                  })),
+                ]}
+              />
+            ) : null}
+            {viewingRev !== null ? (
+              <button type="button" className="desk-chip quiet" onClick={exitHistory}>
+                Cancel
+              </button>
+            ) : null}
+            <button
+              type="button"
+              className="desk-chip"
+              disabled={!dirty || saving || overLimit}
+              onClick={() => void save()}
+            >
+              {saving ? "Saving…" : viewingRev !== null ? "Restore" : "Save"}
+            </button>
+          </div>
+        }
+      >
+        <div className="constitutional-context-status" aria-live="polite">
+          <span className="constitutional-context-fact">rev {ctx?.revision || 0}</span>
+          <span className="constitutional-context-fact">~{tokenEstimate.toLocaleString()} tokens</span>
+          <LampGadget
+            label={`${charCount.toLocaleString()}/${limit.toLocaleString()} chars`}
+            on={overLimit || nearLimit}
+            tone={overLimit ? "fail" : "warn"}
+          />
+          {overLimit ? <LampGadget label="over limit" on tone="fail" /> : null}
+          {dirty ? <LampGadget label="unsaved" on tone="warn" /> : null}
+          {saved ? <LampGadget label="saved" on tone="ok" /> : null}
+          {saveError ? <LampGadget label={saveError} on tone="fail" /> : null}
+          {viewingRev !== null ? <LampGadget label={`viewing rev ${viewingRev}`} on tone="warn" /> : null}
+        </div>
+      </SurfaceSection>
 
-      {/* Editor */}
-      <textarea
-        ref={textareaRef}
-        value={draft}
-        onChange={(e) => { setDraft(e.target.value); setDirty(true); setSaveError(""); }}
-        onKeyDown={(e) => {
-          if ((e.metaKey || e.ctrlKey) && e.key === "s") {
-            e.preventDefault();
-            if (dirty && !overLimit) void save();
-          }
-        }}
-        placeholder={"Write context that every agent receives.\n\nExample:\nI'm a senior architect at Acme Corp.\nWe use TypeScript, Python, and Go.\nOur LLM provider is OpenRouter.\nNever use React class components.\nPrefer concise, direct communication."}
-        style={{
-          flex: 1,
-          resize: "none",
-          border: "none",
-          outline: "none",
-          padding: "12px",
-          fontFamily: "var(--font-mono)",
-          fontSize: "13px",
-          lineHeight: "1.6",
-          background: "transparent",
-          color: "inherit",
-        }}
-        aria-label="Constitutional context"
-      />
+      <SurfaceSection label="Constitutional context" className="constitutional-context-editor-section">
+        <PadGadget
+          label="Constitutional context"
+          value={draft}
+          onChange={(next) => {
+            setDraft(next);
+            setDirty(true);
+            setSaveError("");
+          }}
+          onKeyDown={(event) => {
+            if ((event.metaKey || event.ctrlKey) && event.key === "s") {
+              event.preventDefault();
+              if (dirty && !overLimit) void save();
+            }
+          }}
+          placeholder={"Write context that every agent receives.\n\nExample:\nI'm a senior architect at Acme Corp.\nWe use TypeScript, Python, and Go.\nOur LLM provider is OpenRouter.\nNever use React class components.\nPrefer concise, direct communication."}
+          rows={10}
+          autoGrow
+        />
+      </SurfaceSection>
+      <SurfaceFooter />
     </div>
   );
 }

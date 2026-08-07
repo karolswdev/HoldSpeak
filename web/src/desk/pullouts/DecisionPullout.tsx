@@ -1,3 +1,4 @@
+import { SurfaceFooter } from "../surface/SurfaceFooter";
 /** Decision pullout content (HS-117-15). */
 import { useState } from "react";
 import { apiRequest } from "../../lib/api";
@@ -11,8 +12,9 @@ import {
   SurfaceRows,
 } from "../surface/Surface";
 import { humanTime } from "../surface/format";
-import { FoldGadget } from "../surface/gadgets";
+import { FoldGadget, PadGadget } from "../surface/gadgets";
 import type { PulloutContentProps } from "./types";
+import { useCopyReceipt } from "../hooks/useCopyReceipt";
 
 export function DecisionPullout({ object: o }: PulloutContentProps) {
   const items = useDesk((s) => s.items);
@@ -20,6 +22,12 @@ export function DecisionPullout({ object: o }: PulloutContentProps) {
   if (o.ref.kind !== "decision") return null;
   const ir = o.ref;
   const resourceRef = qualifiedRef(o.kind, o.id);
+  const { copy, receipt: copyReceipt } = useCopyReceipt();
+  const decisionContent = [
+    `# Context\n\n${String(ir.contextMarkdown || "")}`,
+    `# Decision\n\n${String(ir.decisionMarkdown || "")}`,
+    `# Consequences\n\n${String(ir.consequencesMarkdown || "")}`,
+  ].join("\n\n");
 
   const [editingDecision, setEditingDecision] = useState(false);
   const [decisionDraft, setDecisionDraft] = useState({
@@ -57,7 +65,7 @@ export function DecisionPullout({ object: o }: PulloutContentProps) {
         <section className="desk-decision-card">
           <div className="desk-pullout-facts">
             <button type="button" className="desk-chip quiet" onClick={cycleDecisionStatus}>
-              {String(ir.status || "proposed")}
+              {String(ir.status || "proposed")} ↻
             </button>
             {Array.isArray(ir.deciders) && ir.deciders.length ? (
               <span>{ir.deciders.join(" · ")}</span>
@@ -66,21 +74,25 @@ export function DecisionPullout({ object: o }: PulloutContentProps) {
           </div>
           {editingDecision ? (
             <div className="desk-decision-editor">
-              {(["context_markdown", "decision_markdown", "consequences_markdown"] as const).map((field) => (
+              {([
+                ["context_markdown", "Context"],
+                ["decision_markdown", "Decision"],
+                ["consequences_markdown", "Consequences"],
+              ] as const).map(([field, label]) => (
                 <label key={field} className="surface-eyebrow">
-                  {field.replace("_markdown", "").replace("_", " ")}
-                  <textarea
-                    className="desk-pullout-editbox"
+                  {label}
+                  <PadGadget
+                    label={label}
                     value={decisionDraft[field]}
                     rows={5}
-                    onChange={(event) => setDecisionDraft({ ...decisionDraft, [field]: event.target.value })}
+                    onChange={(value) => setDecisionDraft({ ...decisionDraft, [field]: value })}
                   />
                 </label>
               ))}
             </div>
           ) : (
             <>
-              <section><h3>Context</h3><Material>{String(ir.contextMarkdown || "")}</Material></section>
+              <section><h3>Decision context</h3><Material>{String(ir.contextMarkdown || "")}</Material></section>
               <section><h3>Decision</h3><Material>{String(ir.decisionMarkdown || "")}</Material></section>
               <section><h3>Consequences</h3><Material>{String(ir.consequencesMarkdown || "")}</Material></section>
             </>
@@ -109,7 +121,14 @@ export function DecisionPullout({ object: o }: PulloutContentProps) {
           objectId={o.id}
         />
       </div>
-      <footer className="desk-pullout-foot">
+      <SurfaceFooter receipt={copyReceipt} verbs={<>
+        <button
+          type="button"
+          className="desk-chip quiet"
+          onClick={() => void copy(decisionContent)}
+        >
+          Copy
+        </button>
         <button
           type="button"
           className="desk-chip quiet"
@@ -126,8 +145,7 @@ export function DecisionPullout({ object: o }: PulloutContentProps) {
           </>
         ) : (
           <button type="button" className="desk-chip is-primary" onClick={startDecisionEdit}>Edit</button>
-        )}
-      </footer>
+        )} </>} />
     </>
   );
 }

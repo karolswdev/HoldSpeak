@@ -35,6 +35,8 @@ export function CoreResourceGuard({
   emptyLabel,
   emptyGlyph,
   emptyImage,
+  onAction,
+  actionLabel,
   children,
 }: {
   resource: { loading: boolean; error: string; reload(): unknown };
@@ -42,6 +44,8 @@ export function CoreResourceGuard({
   emptyLabel?: string;
   emptyGlyph?: string;
   emptyImage?: string;
+  onAction?: () => void;
+  actionLabel?: string;
   children: ReactNode;
 }) {
   return (
@@ -52,6 +56,8 @@ export function CoreResourceGuard({
       emptyLabel={emptyLabel}
       emptyGlyph={emptyGlyph}
       emptyImage={emptyImage}
+      onAction={onAction}
+      actionLabel={actionLabel}
       onRetry={() => void resource.reload()}
     >
       {children}

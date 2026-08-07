@@ -1,3 +1,4 @@
+import { SurfaceFooter } from "../../desk/surface/SurfaceFooter";
 // HS-111-01 — the Prefs program's face (audit §3.1-§3.4): a drawer of
 // pref modules, authored — never wire-derived. The module registry is a
 // CODE CONSTANT: a new wire key never mints a pane again (unmapped keys
@@ -383,7 +384,7 @@ export function PrefStatusBar({
       </span>
     );
   return (
-    <div className="surface-status prefs-status">
+    <SurfaceFooter verbs={<>
       {onBack ? (
         <button type="button" className="prefs-back" onClick={onBack}>
           « PREFS
@@ -392,14 +393,6 @@ export function PrefStatusBar({
         <EgressChip />
       )}
       {center}
-      <button
-        type="button"
-        className="prefs-defaults"
-        disabled
-        title="defaults source pending"
-      >
-        DEFAULTS
-      </button>
-    </div>
+    </>} />
   );
 }

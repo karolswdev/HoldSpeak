@@ -1,0 +1,31 @@
+.constitutional-context-core {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  gap: var(--desk-surface-section-gap);
+}
+
+.constitutional-context-status,
+.constitutional-context-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.constitutional-context-fact {
+  color: var(--text-faint);
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+
+.constitutional-context-editor-section {
+  flex: 1;
+  min-height: 0;
+}
+
+.constitutional-context-editor-section .gadget-pad,
+.constitutional-context-editor-section .gadget-pad textarea {
+  width: 100%;
+}

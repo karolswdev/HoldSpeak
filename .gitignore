@@ -36,6 +36,9 @@ ENV/
 
 # Whisper models (downloaded on first run)
 models/
+# The persistence-model package is source, not a downloaded Whisper model.
+!holdspeak/db/models/
+!holdspeak/db/models/__init__.py
 *.bin
 
 # Test fixtures (large audio files)

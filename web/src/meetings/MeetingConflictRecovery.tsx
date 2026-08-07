@@ -168,7 +168,7 @@ export function MeetingConflictRecovery({
       className="meeting-conflict-recovery"
       aria-label="Meeting conflicts"
     >
-      {error ? <SurfaceState error={error} /> : null}
+      {error ? <SurfaceState error={error} onRetry={() => void load()} /> : null}
       {conflicts.map((conflict) => {
         const incomingDeletes = Boolean(conflict.incoming.deleted);
         return (

@@ -59,6 +59,11 @@ def test_failed_run_keeps_input_and_grounding_for_retry(rig, monkeypatch) -> Non
         def run_prompt(self, **kwargs):
             raise MeetingIntelError("model offline")
 
+    # This test owns the engine failure path; model-file readiness is covered by
+    # inference-target tests and must not short-circuit the injected engine.
+    monkeypatch.setattr(
+        "holdspeak.inference_targets._this_machine_readiness", lambda: ("ready", "")
+    )
     monkeypatch.setattr(
         "holdspeak.intel.providers.build_configured_meeting_intel", lambda: Broken()
     )

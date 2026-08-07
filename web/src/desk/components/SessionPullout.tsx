@@ -1,3 +1,4 @@
+import { SurfaceFooter } from "../surface/SurfaceFooter";
 // The session pull-out (HS-87-01/02) — attach + arm, in the desk
 // grammar. Watching is free. Secure/Normal use an exact pane grant; a Hub
 // policy decision can make a registered pane directly steerable in YOLO.
@@ -40,6 +41,7 @@ import {
   announceLauncher,
   retractLauncher,
 } from "./DeskWindow";
+import { spriteUrl } from "../sprites";
 
 // The steer's context budget mirrors the hub's 8 KB cap (≈2000 tokens
 // at 4 chars/token); the gauge refuses past it before any send.
@@ -455,7 +457,7 @@ function SteerComposer() {
     <div className="desk-steer">
       <div className="desk-steer-row">
         <MicButton
-          label="Hold to speak"
+          label="Speak"
           draftScope={`steer:${openKey || "unattached"}`}
           onText={(t) => setText((prev) => (prev ? `${prev} ${t}` : t))}
         />
@@ -691,9 +693,14 @@ export function SessionPullout() {
       label={`${session?.agent || openKey.split(":", 2)[0]} · ${sessionId.slice(0, 8)}`}
       className="desk-pullout is-session"
       icon={
-        <span className="desk-session-glyph">
-          {session?.awaitingResponse ? "🙋" : "🤖"}
-        </span>
+        <img
+          src={spriteUrl("agent", sessionId)}
+          alt=""
+          width={16}
+          height={16}
+          className="desk-session-glyph desk-chrome-sprite"
+          draggable={false}
+        />
       }
       title={
         <>
@@ -740,31 +747,31 @@ export function SessionPullout() {
         />
       </div>
 
-      <footer className="desk-pullout-foot">
-        <ArmStrip />
-        {(armed || postureAuthorized) && (
-          <>
-            <SteeringPolicyFacts />
-            <KeyPalette />
-            <SteerComposer />
-            {armed ? (
-              <FactoryControls />
-            ) : (
-              <button
-                type="button"
-                className="desk-chip quiet"
-                onClick={() => void useSteering.getState().arm()}
-              >
-                Arm pane {paneId || "unresolved"} for rename and kill
-              </button>
-            )}
-          </>
-        )}
-      </footer>
-      <footer className="desk-pullout-foot">
-        <ReceiptLine sessionKey={openKey} />
-        <ClassifySection sessionKey={openKey} />
-      </footer>
+      <SurfaceFooter
+        receipt={<ReceiptLine sessionKey={openKey} />}
+        verbs={<>
+          <ArmStrip />
+          {(armed || postureAuthorized) && (
+            <>
+              <SteeringPolicyFacts />
+              <KeyPalette />
+              <SteerComposer />
+              {armed ? (
+                <FactoryControls />
+              ) : (
+                <button
+                  type="button"
+                  className="desk-chip quiet"
+                  onClick={() => void useSteering.getState().arm()}
+                >
+                  Arm pane {paneId || "unresolved"} for rename and kill
+                </button>
+              )}
+            </>
+          )}
+          <ClassifySection sessionKey={openKey} />
+        </>}
+      />
     </DeskWindowFrame>
   );
 }

@@ -18,19 +18,27 @@ import { usePalette, useShortcutSheet } from "./chromeState";
 import {
   closeFrontWindow,
   cycleWindows,
+  cycleWindowsReverse,
   focusOrRestoreApp,
+  maximizeFrontWindow,
   minimizeFrontWindow,
   openWindowCount,
+  snapFrontWindow,
   toggleExpose,
 } from "./components/DeskWindow";
 
-export type MenuId = "desk" | "object" | "go";
+export type MenuId = "desk" | "object" | "go" | "window";
 export type VerbScope = "floor" | "object" | "go" | "window" | "system";
 
 export interface VerbContext {
   /** The single selected object ref, when exactly one is selected. */
   selectedRef: string | null;
+  /** The pointer origin for context-menu actions that open a window. */
+  origin?: { x: number; y: number };
 }
+
+/** A registry verb requests deletion; the rendered desk owns its undo receipt. */
+export const OBJECT_DELETE_REQUEST = "desk:request-object-delete";
 
 export interface Verb {
   id: string;
@@ -58,6 +66,23 @@ export function verbLabel(v: Verb, ctx: VerbContext): string {
 }
 
 const EDITABLE = new Set(["note", "kb", "recipe", "workflow"]);
+const DELETABLE = new Set([
+  "note",
+  "decision",
+  "kb",
+  "recipe",
+  "directory",
+  "chain",
+  "workflow",
+]);
+const DUPLICABLE = new Set([
+  "note",
+  "decision",
+  "kb",
+  "recipe",
+  "workflow",
+  "workbench",
+]);
 const ASKABLE = new Set([
   "note",
   "kb",
@@ -76,6 +101,38 @@ const needSelection = (ctx: VerbContext): string | null =>
   selected(ctx) ? null : "Select an object";
 
 const never = () => null;
+
+/** Preserve the editable payload while letting createPrimitive own IDs, routes,
+ * placement, the NEW beat, and the destination editor. */
+function duplicateOverrides(o: NonNullable<ReturnType<typeof selected>>) {
+  const source = o.ref as unknown as Record<string, unknown>;
+  const copyName = `Copy of ${o.title}`;
+  switch (o.kind) {
+    case "note":
+      return {
+        title: copyName,
+        body_markdown: source.bodyMarkdown ?? "",
+        tags: source.tags ?? [],
+      };
+    case "decision":
+      return {
+        title: copyName,
+        status: source.status ?? "proposed",
+        context_markdown: source.contextMarkdown ?? "",
+        decision_markdown: source.decisionMarkdown ?? "",
+        consequences_markdown: source.consequencesMarkdown ?? "",
+        alternatives: source.alternatives ?? [],
+      };
+    case "kb":
+      return { name: copyName };
+    case "recipe":
+      return { name: copyName, avatar: source.avatar ?? "" };
+    case "workflow":
+      return { name: copyName, graph_json: source.graphJson };
+    case "workbench":
+      return { name: copyName };
+  }
+}
 
 /** The view the toggle verb would LEAVE (HS-105-01 density default). */
 function currentView(): "list" | "spatial" {
@@ -206,6 +263,7 @@ export const VERBS: Verb[] = [
   {
     id: "desk.overview",
     label: "Overview",
+    menu: "window",
     scope: "floor",
     group: "floor",
     key: "⌃↑",
@@ -252,7 +310,10 @@ export const VERBS: Verb[] = [
     ghost: needSelection,
     run: (ctx) => {
       const o = selected(ctx);
-      if (o) useDesk.getState().openPullout(o.id);
+      if (!o) return;
+      if (o.kind === "directory")
+        useDesk.getState().openZoneWindow(o.id, ctx.origin);
+      else useDesk.getState().openPullout(o.id, ctx.origin);
     },
   },
   {
@@ -317,6 +378,98 @@ export const VERBS: Verb[] = [
       if (o) useDesk.getState().openEditor(o.id);
     },
   },
+  {
+    id: "object.rename",
+    label: "Rename",
+    menu: "object",
+    scope: "object",
+    key: "F2",
+    ghost: (ctx) => {
+      const o = selected(ctx);
+      if (!o) return "Select an object";
+      return o.kind === "directory" || EDITABLE.has(o.kind)
+        ? null
+        : "Not renameable";
+    },
+    run: (ctx) => {
+      const o = selected(ctx);
+      if (!o) return;
+      if (o.kind === "directory") useDesk.getState().setRenamingZone(o.id);
+      else if (EDITABLE.has(o.kind)) useDesk.getState().openEditor(o.id);
+    },
+  },
+  {
+    id: "object.duplicate",
+    label: "Duplicate",
+    menu: "object",
+    scope: "object",
+    ghost: (ctx) => {
+      const o = selected(ctx);
+      if (!o) return "Select an object";
+      return DUPLICABLE.has(o.kind) ? null : "Cannot duplicate";
+    },
+    run: (ctx) => {
+      const o = selected(ctx);
+      if (!o || !DUPLICABLE.has(o.kind)) return;
+      const overrides = duplicateOverrides(o);
+      if (!overrides) return;
+      void useDesk.getState().createPrimitive(
+        o.kind as "note" | "decision" | "kb" | "recipe" | "workflow" | "workbench",
+        overrides,
+      );
+    },
+  },
+  {
+    id: "object.file",
+    label: "Move to Zone",
+    menu: "object",
+    scope: "object",
+    ghost: (ctx) => {
+      const o = selected(ctx);
+      if (!o) return "Select an object";
+      return o.kind === "directory" ? "A zone cannot file itself" : null;
+    },
+    run: (ctx) => {
+      const o = selected(ctx);
+      // The pullout's Filing disclosure is the one Zone picker; opening it
+      // preserves a single membership path instead of inventing a second.
+      if (o && o.kind !== "directory") useDesk.getState().openPullout(o.id, ctx.origin);
+    },
+  },
+  {
+    id: "object.delete",
+    label: "Delete",
+    menu: "object",
+    scope: "object",
+    group: "danger",
+    key: "Delete",
+    ghost: (ctx) => {
+      const o = selected(ctx);
+      if (!o) return "Select an object";
+      return DELETABLE.has(o.kind) ? null : "Cannot delete";
+    },
+    run: (ctx) => {
+      const o = selected(ctx);
+      if (!o || !DELETABLE.has(o.kind) || typeof window === "undefined") return;
+      window.dispatchEvent(
+        new CustomEvent(OBJECT_DELETE_REQUEST, { detail: { ref: ctx.selectedRef } }),
+      );
+    },
+  },
+  {
+    id: "zone.focus",
+    label: "Focus",
+    scope: "object",
+    ghost: (ctx) => {
+      const o = selected(ctx);
+      if (!o) return "Select a Zone";
+      return o.kind === "directory" ? null : "Select a Zone";
+    },
+    run: (ctx) => {
+      const o = selected(ctx);
+      if (o?.kind === "directory") useDesk.getState().diveInto(o.id);
+    },
+  },
   // ── Go (the applications - DESK_TOOLS is the data truth) ────────────
   ...DESK_TOOLS.map((tool): Verb => {
     const binding = APP_BINDINGS[tool.action];
@@ -343,6 +496,7 @@ export const VERBS: Verb[] = [
   {
     id: "window.close",
     label: "Close window",
+    menu: "window",
     scope: "window",
     key: "⌘W",
     ghost: needWindow,
@@ -351,6 +505,7 @@ export const VERBS: Verb[] = [
   {
     id: "window.minimize",
     label: "Minimize window",
+    menu: "window",
     scope: "window",
     key: "⌘M",
     ghost: needWindow,
@@ -359,11 +514,49 @@ export const VERBS: Verb[] = [
   {
     id: "window.cycle",
     label: "Cycle windows",
+    menu: "window",
     scope: "window",
     key: "⌃`",
     palette: false,
     ghost: needWindow,
     run: () => cycleWindows(),
+  },
+  {
+    id: "window.cycle-reverse",
+    label: "Cycle Windows (Reverse)",
+    menu: "window",
+    scope: "window",
+    key: "⌃⇧`",
+    palette: false,
+    ghost: needWindow,
+    run: () => cycleWindowsReverse(),
+  },
+  {
+    id: "window.snap-left",
+    label: "Snap Left",
+    menu: "window",
+    scope: "window",
+    group: "layout",
+    ghost: needWindow,
+    run: () => snapFrontWindow("left"),
+  },
+  {
+    id: "window.snap-right",
+    label: "Snap Right",
+    menu: "window",
+    scope: "window",
+    group: "layout",
+    ghost: needWindow,
+    run: () => snapFrontWindow("right"),
+  },
+  {
+    id: "window.maximize",
+    label: "Maximize",
+    menu: "window",
+    scope: "window",
+    group: "layout",
+    ghost: needWindow,
+    run: () => maximizeFrontWindow(),
   },
   // ── System ──────────────────────────────────────────────────────────
   {

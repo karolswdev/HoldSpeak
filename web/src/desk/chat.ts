@@ -12,6 +12,7 @@ import {
   type GroundingSelection,
 } from "./grounding";
 import { apiRequest } from "../lib/api";
+import { humanizeError } from "./ask";
 
 export interface ChatTurn {
   id: string;
@@ -117,13 +118,7 @@ export async function runChatTurn(
       },
     );
     const data = await res.json().catch(() => ({}));
-    if (!res.ok) {
-      const unknown =
-        Array.isArray(data.unknown_ids) && data.unknown_ids.length
-          ? ` (${data.unknown_ids.join(", ")})`
-          : "";
-      return fail(String(data.error || `HTTP ${res.status}`) + unknown);
-    }
+    if (!res.ok) return fail(humanizeError(res));
     return {
       ok: true,
       output: String(data.output || ""),
@@ -132,8 +127,8 @@ export async function runChatTurn(
       actualPlacement: data.actual_placement && typeof data.actual_placement === "object"
         ? data.actual_placement : null,
     };
-  } catch (e) {
-    return fail(String(e));
+  } catch (error) {
+    return fail(humanizeError(error));
   }
 }
 

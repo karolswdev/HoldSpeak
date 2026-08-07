@@ -213,7 +213,10 @@ export function FirstWords({
       </button>
       {!supported ? <SurfaceState error={micUnsupportedMessage} /> : null}
       {failureContract ? (
-        <SurfaceState error={failureContract.message} />
+        <SurfaceState
+          error={failureContract.message}
+          onRetry={failureContract.retry ? toggle : undefined}
+        />
       ) : recovered ? (
         <p className="surface-receipt-line" role="status">
           Recovered your local draft after relaunch. It remains editable below.

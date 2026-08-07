@@ -46,7 +46,7 @@ def test_first_dictation_retains_editable_text_and_all_recovery_doors() -> None:
     recovery = (_REPO / "web/src/lib/dictationRecovery.ts").read_text()
     tracker = (_REPO / "web/src/desk/firstValue.ts").read_text()
     for marker in (
-        "Hold to retry",
+        "Click to retry",
         "Copy",
         "Keep as Note",
         "Setup",

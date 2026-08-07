@@ -116,7 +116,7 @@ export function SurfaceWings({
           aria-pressed={doorOpen}
           onClick={onDoor}
         >
-          <span aria-hidden="true">⚙</span>
+          <span aria-hidden="true">⚙︎</span>
         </button>
       ) : null}
     </span>

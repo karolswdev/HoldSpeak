@@ -131,7 +131,7 @@ export const createDataSlice: SliceCreator<DataSlice> = (set, get) => ({
     });
   },
 
-  async createPrimitive(kind) {
+  async createPrimitive(kind, overrides = {}) {
     const posts = {
       note: ["/api/notes", "note", { title: "New note", body_markdown: "" }],
       decision: [
@@ -167,7 +167,7 @@ export const createDataSlice: SliceCreator<DataSlice> = (set, get) => ({
       const res = await apiRequest(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
+        body: JSON.stringify({ ...body, ...overrides }),
       });
       const data = await res.json().catch(() => ({}));
       createdId = data?.[wireKey]?.id || null;

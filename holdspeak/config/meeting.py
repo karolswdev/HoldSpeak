@@ -34,6 +34,7 @@ class MeetingConfig:
     # Suggested default -- bring your own GGUF (see docs/MODELS.md). Names are a
     # moving target; this points at a current small/mid instruct model.
     intel_realtime_model: str = "~/Models/gguf/Qwen3.5-9B-Instruct-Q6_K.gguf"
+    intel_temperature: float = 0.2
     intel_summary_model: Optional[str] = None  # Falls back to realtime if None
     intel_deferred_enabled: bool = True  # Queue intel when no suitable local model is available
     intel_queue_poll_seconds: int = 120  # Background retry interval for deferred intel jobs

@@ -39,6 +39,8 @@ export function VoiceProposalStrip({
   useEffect(() => {
     if (!proposal || pending) return;
     const onKeyDown = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement;
+      if (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable) return;
       if (event.key === "Enter") {
         event.preventDefault();
         onConfirm();

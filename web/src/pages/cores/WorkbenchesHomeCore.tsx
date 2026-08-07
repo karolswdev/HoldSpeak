@@ -1,7 +1,9 @@
+import { SurfaceFooter } from "../../desk/surface/SurfaceFooter";
 import { useCallback, useEffect, useState } from "react";
 import { apiFetch } from "../../lib/api";
 import { useDesk } from "../../desk/store";
 import { boundaryEgressLamp } from "../../desk/inferenceEgress";
+import { spriteUrl } from "../../desk/sprites";
 import { AgentAvatar } from "../../desk/components/AgentAvatar";
 import {
   SurfaceLedger,
@@ -92,6 +94,7 @@ export function WorkbenchesHomeCore({ hero }: CoreProps) {
                 key={wb.id}
                 type="button"
                 className="wb-home-card"
+                data-needs={needsYou ? "true" : undefined}
                 onClick={() => useDesk.getState().openWorkbenchWindow(wb.id)}
               >
                 <div className="wb-home-card-head">
@@ -103,10 +106,9 @@ export function WorkbenchesHomeCore({ hero }: CoreProps) {
                       size={16}
                     />
                   ) : (
-                    <span className="wb-home-card-icon">⚙</span>
+                    <img src={spriteUrl("workbench", wb.id)} alt="" width={16} height={16} className="desk-chrome-sprite" />
                   )}
                   <span className="wb-home-card-name">{wb.name}</span>
-                  {needsYou ? <span className="wb-home-needs" title="Needs attention" /> : null}
                 </div>
                 <div className="wb-home-card-stats">
                   {wb.pending_count > 0 ? (
@@ -154,9 +156,8 @@ export function WorkbenchesHomeCore({ hero }: CoreProps) {
                   }
                   cells={
                     <span
-                      className="desk-chip"
+                      className="desk-chip wb-badge-compact"
                       data-tone={run.status === "completed" ? "ok" : "fail"}
-                      style={{ fontSize: "9px", height: "18px", padding: "0 6px" }}
                     >
                       {run.status === "completed" ? "OK" : "FAIL"}
                     </span>
@@ -171,6 +172,7 @@ export function WorkbenchesHomeCore({ hero }: CoreProps) {
           </SurfaceLedger>
         </div>
       ) : null}
+      <SurfaceFooter />
     </>
   );
 }

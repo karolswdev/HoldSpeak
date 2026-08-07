@@ -18,6 +18,7 @@ from fastapi.testclient import TestClient
 import holdspeak.db as hsdb
 from holdspeak.db import Database, reset_database
 from holdspeak.meeting_session.models import MeetingState
+from holdspeak.services.mesh_service import MeshService
 from holdspeak.web.context import WebContext
 from holdspeak.web.routes import build_mesh_router
 
@@ -28,7 +29,9 @@ def env(tmp_path, monkeypatch):
     db = Database(tmp_path / "holdspeak.db")
     monkeypatch.setattr(hsdb, "get_database", lambda *a, **k: db)
     app = FastAPI()
-    app.include_router(build_mesh_router(WebContext(get_state=lambda: {})))
+    app.include_router(
+        build_mesh_router(WebContext(get_state=lambda: {}, mesh_service=MeshService(db)))
+    )
     yield db, TestClient(app)
     reset_database()
 

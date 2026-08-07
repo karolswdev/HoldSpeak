@@ -1,3 +1,4 @@
+import { SurfaceFooter } from "../surface/SurfaceFooter";
 /** Meeting pullout content (HS-117-15). */
 import { useEffect, useState } from "react";
 import { apiRequest } from "../../lib/api";
@@ -123,10 +124,10 @@ export function MeetingPullout({ object: o, onClose }: PulloutContentProps) {
             empty
             emptyLabel={
               detail?.intel_status?.state === "disabled"
-                ? "Intel off"
+                ? "Intelligence off"
                 : detail?.intel_status?.state
-                  ? `Intel ${intelligenceState(detail.intel_status.state)}`
-                  : "Intel queued"
+                  ? `Intelligence ${intelligenceState(detail.intel_status.state)}`
+                  : "Intelligence queued"
             }
           />
         )}
@@ -159,8 +160,7 @@ export function MeetingPullout({ object: o, onClose }: PulloutContentProps) {
           objectId={o.id}
         />
       </div>
-      <footer className="desk-pullout-foot">
-        <button
+      <SurfaceFooter verbs={<> <button
           type="button"
           className="desk-chip quiet"
           onClick={() =>
@@ -175,8 +175,7 @@ export function MeetingPullout({ object: o, onClose }: PulloutContentProps) {
           onClick={() => openSurfaceOr("record-live", "/live", resourceRef)}
         >
           Record follow-up
-        </button>
-      </footer>
+        </button> </>} />
     </>
   );
 }

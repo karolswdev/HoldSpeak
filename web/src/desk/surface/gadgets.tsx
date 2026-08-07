@@ -9,6 +9,7 @@ import {
   useId,
   useRef,
   useState,
+  type ComponentPropsWithoutRef,
   type CSSProperties,
   type KeyboardEvent,
   type ReactNode,
@@ -224,6 +225,7 @@ export function StringGadget({
   autoFocus,
   onKeyDown,
   inputRef,
+  inputProps,
 }: {
   label: string;
   value: string;
@@ -237,10 +239,16 @@ export function StringGadget({
   onKeyDown?: (event: KeyboardEvent<HTMLInputElement>) => void;
   /** Chrome consumers (the palette) focus the well imperatively. */
   inputRef?: Ref<HTMLInputElement>;
+  /** Extra native input attributes for specialized patterns such as a combobox. */
+  inputProps?: Omit<
+    ComponentPropsWithoutRef<"input">,
+    "aria-label" | "autoFocus" | "disabled" | "onChange" | "onKeyDown" | "placeholder" | "ref" | "type" | "value"
+  >;
 }) {
   return (
     <span className="gadget-string">
       <input
+        {...inputProps}
         ref={inputRef}
         aria-label={label}
         type={type}

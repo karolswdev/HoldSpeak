@@ -346,7 +346,7 @@
   /* HS-98-01: the WINDOW is the viewport — the surface kit reflows via
      @container queries against this container, never viewport media. */
   container-type: inline-size;
-  container-name: surface;
+  container-name: surface desk-surface;
 }
 .desk-next .desk-core-verbs {
   display: flex;

@@ -147,7 +147,7 @@ def test_web_runtime_method_delegates(monkeypatch) -> None:
     (HS-118-08 refactor) which receives config/server as kwargs."""
     captured: dict = {}
 
-    async def _spy(raw_text, source, context=None, *, config=None, server=None):
+    async def _spy(raw_text, source, context=None, *, config=None, server=None, agent_reply_session=None):
         captured.update(
             raw_text=raw_text,
             source=source,

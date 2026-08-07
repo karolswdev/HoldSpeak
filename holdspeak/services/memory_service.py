@@ -1,5 +1,6 @@
 """Transport-neutral long-horizon memory retrieval."""
 from __future__ import annotations
+from holdspeak.services.observer import NullObserver, PipelineObserver, observe_service
 
 from typing import Any
 
@@ -8,9 +9,11 @@ from ..principals import Principal, PrincipalKind, PrincipalRight, refusal
 from .errors import ServiceError, ValidationError
 
 
+@observe_service
 class MemoryService:
-    def __init__(self, db: Database) -> None:
+    def __init__(self, db: Database, *, observer: PipelineObserver | None = None) -> None:
         self._db = db
+        self._observer = observer or NullObserver()
 
     def search(
         self,

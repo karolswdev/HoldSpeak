@@ -5,6 +5,7 @@ lifecycle work. HTTP adapters supply only composition-time collaborators such
 as the project-map path, subprocess runner, and broadcast callback.
 """
 from __future__ import annotations
+from holdspeak.services.observer import NullObserver, PipelineObserver, observe_service
 
 import hashlib
 import json
@@ -19,9 +20,11 @@ MC_PLUGIN_ID = "missioncontrol_desk"
 MC_PLUGIN_VERSION = "0.1.0"
 
 
+@observe_service
 class MissionControlService:
-    def __init__(self, db: Database) -> None:
+    def __init__(self, db: Database, *, observer: PipelineObserver | None = None) -> None:
         self._db = db
+        self._observer = observer or NullObserver()
 
     def list_rails_journal(self, principal: Principal, *, limit: int = 50) -> list[Any]:
         from ..rails_observer import list_journal

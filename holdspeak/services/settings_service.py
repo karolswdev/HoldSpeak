@@ -1,6 +1,7 @@
 """Transport-neutral settings read and update service (HS-123-03)."""
 
 from __future__ import annotations
+from holdspeak.services.observer import NullObserver, PipelineObserver, observe_service
 
 import re
 from copy import deepcopy
@@ -95,11 +96,13 @@ def _merge_dict(dst: dict[str, Any], src: dict[str, Any]) -> dict[str, Any]:
     return dst
 
 
+@observe_service
 class SettingsService:
     def __init__(
         self, db: Database, on_settings_applied: SettingsApplied | None = None
-    ) -> None:
+    , *, observer: PipelineObserver | None = None) -> None:
         self._db, self._on_settings_applied = db, on_settings_applied
+        self._observer = observer or NullObserver()
 
     def get_settings(self, principal: Principal) -> dict[str, Any]:
         return self.get_redacted(principal)

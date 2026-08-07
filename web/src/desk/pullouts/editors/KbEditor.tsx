@@ -69,7 +69,7 @@ export function KbEditor({ object: o, onClose }: InlineEditorContentProps) {
         prompt: AI_VERBS[p.intentId].prompt.replace("{text}", context),
         context: [],
       });
-      if (!result.ok) throw new Error(result.output || "AI request failed.");
+      if (!result.ok) throw new Error(result.output || "AI request failed. Your draft is unchanged. Retry.");
       setProposal({
         original: context,
         proposed: result.output,
@@ -96,43 +96,28 @@ export function KbEditor({ object: o, onClose }: InlineEditorContentProps) {
     setProposal(null);
   };
 
-  const proposalButtonStyle: React.CSSProperties = {
-    border: "1px solid var(--border)",
-    borderRadius: 0,
-    font: "600 10px/1 var(--font-mono)",
-    letterSpacing: ".06em",
-    padding: "4px 12px",
-  };
   const proposalInset = proposal ? (
-    <div className="surface-aerogel" role="status" aria-live="polite">
-      <span style={{ fontSize: "var(--desk-surface-detail-size)", fontFamily: "var(--font-mono)", letterSpacing: ".06em" }}>
+    <div className="surface-aerogel editor-proposal-inset" role="status" aria-live="polite">
+      <span className="editor-proposal-heading">
         PROPOSED {proposal.lens.toUpperCase()}
       </span>
-      <div style={{ fontSize: "13px", lineHeight: 1.5, whiteSpace: "pre-wrap" }}>
-        {proposal.proposed}
-      </div>
-      <div style={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 6 }}>
+      <div className="editor-proposal-copy">{proposal.proposed}</div>
+      <div className="editor-proposal-actions">
         <button
           type="button"
-          className="desk-chip"
-          style={{ ...proposalButtonStyle, background: "var(--ok-soft)", color: "var(--ok)" }}
+          className="desk-chip editor-proposal-action is-accept"
           onClick={acceptProposal}
         >
           ACCEPT
         </button>
         <button
           type="button"
-          className="desk-chip"
-          style={{
-            ...proposalButtonStyle,
-            background: "var(--danger-signal-soft, color-mix(in srgb, var(--danger-signal) 12%, var(--surface-2)))",
-            color: "var(--danger-signal)",
-          }}
+          className="desk-chip editor-proposal-action is-reject"
           onClick={() => setProposal(null)}
         >
           REJECT
         </button>
-        <span style={{ marginLeft: "auto", fontFamily: "var(--font-mono)", opacity: 0.72 }}>
+        <span className="editor-proposal-receipt">
           {proposal.receipt.target} · {proposal.receipt.model || "model"} · {proposal.receipt.latency}ms
         </span>
       </div>

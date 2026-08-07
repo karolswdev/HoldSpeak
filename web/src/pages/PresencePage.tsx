@@ -11,40 +11,17 @@ type Activity = {
 export default function PresencePage() {
   const activity = useRuntimeFrame<Activity>("runtime_activity");
   const { state } = useRuntimeBus();
-  const tone =
-    activity?.state === "error"
-      ? "error"
-      : activity?.state === "complete"
-        ? "complete"
-        : ["recording", "listening"].includes(activity?.state ?? "")
-          ? "recording"
-          : activity
-            ? "working"
-            : "idle";
+  const label =
+    activity?.label ?? (state === "connected" ? "Ready" : "Connecting");
+  const tone = activity?.state === "error" ? "fail" : state === "connected" ? "ok" : "warn";
+
   return (
-    <div className="presence-body">
-      <section
-        className={`presence-card tone-${tone}`}
-        role="status"
-        aria-live="polite"
-      >
-        <span className="presence-orb" aria-hidden="true" />
-        <div>
-          <strong>
-            {activity?.label ??
-              (state === "connected" ? "Ready" : "Connecting")}
-          </strong>
-          <p>{activity?.detail ?? "Waiting for activity."}</p>
-          <small>
-            {activity?.source ?? "HoldSpeak"}
-            {activity?.window ? ` · ${activity.window}` : ""}
-          </small>
-        </div>
-        <LampGadget
-          on
-          tone={state === "connected" ? "ok" : "warn"}
-          label={state}
-        />
+    <div className="desk-next presence-body">
+      <a href="/" className="desk-chip quiet presence-back">
+        ← Desk
+      </a>
+      <section className="presence-card" role="status" aria-live="polite">
+        <LampGadget on={state === "connected"} tone={tone} label={label} />
       </section>
     </div>
   );

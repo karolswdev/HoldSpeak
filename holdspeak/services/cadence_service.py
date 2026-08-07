@@ -1,5 +1,6 @@
 """Principal-aware cadence query and lifecycle boundary."""
 from __future__ import annotations
+from holdspeak.services.observer import NullObserver, PipelineObserver, observe_service
 
 import asyncio
 from datetime import datetime, timedelta
@@ -24,10 +25,12 @@ def _cadence_llm() -> Any:
         return None
 
 
+@observe_service
 class CadenceService:
-    def __init__(self, db: Any, config: Any) -> None:
+    def __init__(self, db: Any, config: Any, *, observer: PipelineObserver | None = None) -> None:
         self._db = db
         self._config = config
+        self._observer = observer or NullObserver()
 
     def _loop_dict(self, loop: Any, *, with_next_action: bool = True) -> dict[str, Any]:
         from ..cadence.next_action import generate_next_action

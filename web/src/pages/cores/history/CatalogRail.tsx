@@ -20,6 +20,10 @@ import { stateToken, durationToken, ledgerDate } from "./helpers";
 import { StateTokenSpan } from "./StateTokenSpan";
 import type { MeetingsFacetsResponse } from "../core-types";
 import { apiFetch } from "../../../lib/api";
+import {
+  LedgerFilterBar,
+  type LedgerFilterToken,
+} from "../../../desk/surface/LedgerFilter";
 
 export function CatalogRail({
   meetingRows,
@@ -29,6 +33,11 @@ export function CatalogRail({
   setSelected,
   query,
   setQuery,
+  filterTokens,
+  removeFilterToken,
+  clearFilter,
+  filterActive,
+  filterTotal,
   filtersOpen,
   setFiltersOpen,
   dateFrom,
@@ -50,6 +59,11 @@ export function CatalogRail({
   setSelected: (row: Record<string, unknown> | null) => void;
   query: string;
   setQuery: (value: string) => void;
+  filterTokens: LedgerFilterToken[];
+  removeFilterToken: (field: string, value: string) => void;
+  clearFilter: () => void;
+  filterActive: boolean;
+  filterTotal: number;
   filtersOpen: boolean;
   setFiltersOpen: (fn: (open: boolean) => boolean) => void;
   dateFrom: string;
@@ -71,10 +85,15 @@ export function CatalogRail({
         count={`${meetingRows.length} RECORDS${needing ? ` · ${needing} NEEDS YOU` : ""}`}
         controls={
           <>
-            <StringGadget
-              label="Search meetings"
-              value={query}
-              onChange={setQuery}
+            <LedgerFilterBar
+              query={query}
+              onQueryChange={setQuery}
+              tokens={filterTokens}
+              onRemoveToken={removeFilterToken}
+              onClear={clearFilter}
+              total={filterTotal}
+              matchCount={meetingRows.length}
+              isActive={filterActive}
             />
             <Button
               dense
@@ -149,7 +168,7 @@ export function CatalogRail({
                 dense
                 variant="ghost"
                 onClick={() => {
-                  setQuery("");
+                  clearFilter();
                   setDateFrom("");
                   setDateTo("");
                   setSpeaker("");

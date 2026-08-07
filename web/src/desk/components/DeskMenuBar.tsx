@@ -21,6 +21,7 @@ const MENUS: { id: MenuId; label: string }[] = [
   { id: "desk", label: "Desk" },
   { id: "object", label: "Object" },
   { id: "go", label: "Go" },
+  { id: "window", label: "Window" },
 ];
 
 export function DeskMenuBar() {

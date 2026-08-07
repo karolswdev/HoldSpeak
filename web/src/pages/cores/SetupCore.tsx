@@ -1,3 +1,4 @@
+import { SurfaceFooter } from "../../desk/surface/SurfaceFooter";
 // HS-95-07 — the Setup core: readiness truth, hosted anywhere.
 // HS-98-05 — re-crafted native on the surface kit; wire calls unchanged.
 import { useState } from "react";
@@ -124,7 +125,10 @@ export function SetupCore({ hero }: CoreProps) {
                     ✓ {testResult.detail}
                   </p>
                 ) : (
-                  <SurfaceState error={testResult.detail} />
+                  <SurfaceState
+                    error={testResult.detail}
+                    onRetry={() => void testRuntime()}
+                  />
                 )
               ) : null}
             </SurfaceSection>
@@ -163,6 +167,7 @@ export function SetupCore({ hero }: CoreProps) {
           }
         />
       </CoreResourceGuard>
+      <SurfaceFooter />
     </>
   );
 }

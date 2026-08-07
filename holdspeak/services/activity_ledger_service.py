@@ -1,14 +1,17 @@
 """Transport-neutral activity ledger operations (HS-123-07)."""
 from __future__ import annotations
+from holdspeak.services.observer import NullObserver, PipelineObserver, observe_service
 from typing import Any
 from ..db.core import Database
 from ..principals import Principal
 from .errors import ValidationError
 
 
+@observe_service
 class ActivityLedgerService:
-    def __init__(self, db: Database) -> None:
+    def __init__(self, db: Database, *, observer: PipelineObserver | None = None) -> None:
         self._db = db
+        self._observer = observer or NullObserver()
 
     def status(self, principal: Principal) -> dict[str, Any]:
         from ..activity_history import discover_browser_history_sources

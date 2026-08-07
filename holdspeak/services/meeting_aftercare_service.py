@@ -1,5 +1,6 @@
 """Transport-neutral meeting aftercare and proposal operations."""
 from __future__ import annotations
+from holdspeak.services.observer import NullObserver, PipelineObserver, observe_service
 
 import hashlib
 from typing import Any, Callable
@@ -14,12 +15,14 @@ from ..slack_export import EXPORT_KINDS, slack_message_for
 from .errors import ConflictError, NotFound, ValidationError
 
 
+@observe_service
 class MeetingAftercareService:
     """Own aftercare projections and the durable proposal lifecycle."""
 
-    def __init__(self, db: Database, *, notify: Callable[[str, Any], None] | None = None) -> None:
+    def __init__(self, db: Database, notify: Callable[[str, Any], None] | None = None, *, observer: PipelineObserver | None = None) -> None:
         self._db = db
         self._notify = notify
+        self._observer = observer or NullObserver()
 
     def _emit(self, topic: str, value: Any) -> None:
         if self._notify:
@@ -113,10 +116,10 @@ class MeetingAftercareService:
     def export_slack(self, principal: Principal, meeting_id: str, payload: dict[str, Any]) -> dict[str, Any]:
         what = str(payload.get("what") or "").strip().lower()
         if what not in EXPORT_KINDS: raise ValidationError(f"Unknown export kind: {what!r} (expected 'digest' or 'followup')")
-        config = Config.load()
-        if not config.meeting.slack_webhook_url: raise ValidationError("Slack is not configured (set the webhook URL in Settings first)")
         digest = compute_meeting_aftercare(self._db, meeting_id)
         if digest is None: raise NotFound("meeting", meeting_id)
+        config = Config.load()
+        if not config.meeting.slack_webhook_url: raise ValidationError("Slack is not configured (set the webhook URL in Settings first)")
         if digest.get("is_empty"): raise ValidationError("This meeting has nothing open, decided, or changed to send")
         text = slack_message_for(digest, what); content_key = hashlib.sha256(text.encode("utf-8")).hexdigest()[:16]
         proposal = self._db.actuators.record_proposal(meeting_id=meeting_id, window_id=f"{meeting_id}:aftercare", plugin_id=WebhookPostActuator.id, plugin_version=WebhookPostActuator.version, idempotency_key=f"slack-export:{meeting_id}:{what}:{content_key}", target="slack", action="post_message", preview=text, payload={"body": {"text": text}}, reversible=False, required_capabilities=["actuator"], control_mode=config.control_mode, fixed_destination=True)

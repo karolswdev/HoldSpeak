@@ -1,3 +1,4 @@
+import { SurfaceFooter } from "../surface/SurfaceFooter";
 // The immutable-target terminal window (HS-94-08) — the Phase-93 session
 // pull-out, migrated onto the node-issued target. It subscribes by the
 // server's {target_id, target_generation}; selecting a different node or
@@ -97,7 +98,7 @@ function SteerComposer() {
     <div className="desk-steer">
       <div className="desk-steer-row">
         <MicButton
-          label="Hold to speak"
+          label="Speak"
           draftScope={scope}
           onText={(t) => setText((prev) => (prev ? `${prev} ${t}` : t))}
         />
@@ -140,6 +141,15 @@ function SteerComposer() {
       {sendState === "refused" && (
         <span className="desk-arm-refusal">✕ {sendDetail}</span>
       )}
+      {sendState === "refused" && text.trim() ? (
+        <TransportKey
+          compact
+          label="RETRY"
+          glyph="↻"
+          title="Retry this message"
+          onClick={() => void send()}
+        />
+      ) : null}
       {sendState === "sent" && (
         <span className="desk-steer-sent">✓ {sendDetail}</span>
       )}
@@ -221,10 +231,7 @@ export function DeliveryTerminalWindow() {
       </div>
 
       {!absent ? (
-        <footer className="desk-pullout-foot">
-          <KeyPalette />
-          <SteerComposer />
-        </footer>
+        <SurfaceFooter verbs={<><KeyPalette /><SteerComposer /></>} />
       ) : null}
     </DeskWindowFrame>
   );

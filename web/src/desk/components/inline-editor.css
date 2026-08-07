@@ -13,12 +13,6 @@
   color: var(--accent);
   filter: none;
 }
-.desk-next .desk-empty-word {
-  margin: 0;
-  font-family: var(--font-display, inherit);
-  font-size: var(--font-size-2xl, 2rem);
-  color: var(--text);
-}
 .desk-next .desk-empty-line {
   margin: 0;
   color: var(--text-muted);
@@ -192,7 +186,7 @@
   margin: -14px -14px 0;
   padding: 8px 12px;
   background: var(--desk-window-head-fill);
-  border-bottom: 0.9px solid var(--shade-1);
+  border-bottom: 1px solid var(--shade-1);
   border-radius: 2px 16px 0 0;
   font-size: var(--desk-surface-label-size);
   letter-spacing: 0.08em;
@@ -280,6 +274,47 @@
   max-width: 260px;
 }
 
+/* AI edit proposals share one inset across note and knowledge editors. */
+.editor-proposal-inset {
+  display: grid;
+  gap: var(--space-2);
+}
+.editor-proposal-heading {
+  font-size: var(--desk-surface-detail-size);
+  font-family: var(--font-mono);
+  letter-spacing: 0.06em;
+}
+.editor-proposal-copy {
+  font-size: 13px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+.editor-proposal-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.editor-proposal-action {
+  border: 1px solid var(--border);
+  border-radius: 0;
+  font: 600 10px/1 var(--font-mono);
+  letter-spacing: 0.06em;
+  padding: 4px 12px;
+}
+.editor-proposal-action.is-accept {
+  background: var(--ok-soft);
+  color: var(--ok);
+}
+.editor-proposal-action.is-reject {
+  background: var(--danger-signal-soft, color-mix(in srgb, var(--danger-signal) 12%, var(--surface-2)));
+  color: var(--danger-signal);
+}
+.editor-proposal-receipt {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  opacity: 0.72;
+}
 
 /* HS-100-10 — the arrival's one trust line. */
 .desk-next .desk-empty-trust {

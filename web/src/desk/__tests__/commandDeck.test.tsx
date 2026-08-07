@@ -9,7 +9,11 @@ import { EMPTY_ITEMS } from "../api";
 import type { Note, Meeting } from "../../lib/primitives";
 import { useDesk } from "../store";
 import { usePalette } from "../chromeState";
-import { DeskToolShelf, rankRow } from "../components/DeskToolShelf";
+import {
+  DeskToolShelf,
+  fuzzyScore,
+  rankRow,
+} from "../components/DeskToolShelf";
 
 function seed() {
   localStorage.clear();
@@ -50,11 +54,17 @@ function open() {
 beforeEach(seed);
 
 describe("ranking", () => {
-  it("prefix(3) beats recents(2) beats substring(1)", () => {
-    expect(rankRow({ label: "Meetings" }, "meet", false)).toBe(3);
-    expect(rankRow({ label: "Team meet" }, "meet", true)).toBe(2);
-    expect(rankRow({ label: "Team meet" }, "meet", false)).toBe(1);
-    expect(rankRow({ label: "Settings" }, "meet", false)).toBe(0);
+  it("scores exact, prefix, word-boundary, and ordered fuzzy matches", () => {
+    expect(fuzzyScore("meetings", "Meetings")).toBe(100);
+    expect(fuzzyScore("meet", "Meetings")).toBe(80);
+    expect(fuzzyScore("meet", "Team meetings")).toBe(60);
+    expect(fuzzyScore("mgs", "Meetings")).toBe(30);
+    expect(fuzzyScore("meet", "Settings")).toBe(0);
+  });
+
+  it("applies recency after fuzzy relevance", () => {
+    expect(rankRow({ label: "Meetings" }, "meet", false)).toBe(80);
+    expect(rankRow({ label: "Team meetings" }, "meet", true)).toBe(70);
   });
 });
 

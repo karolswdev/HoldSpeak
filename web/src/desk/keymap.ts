@@ -20,7 +20,7 @@ export interface KeySpec {
 export function parseKey(cap: string): KeySpec | null {
   const meta = cap.startsWith("⌘");
   const ctrl = cap.startsWith("⌃");
-  const plain = cap === "Delete";
+  const plain = cap === "Delete" || /^F\d+$/.test(cap);
   if (!meta && !ctrl && !plain) return null;
   const rest = plain ? cap : cap.slice(1);
   const shift = rest.startsWith("⇧");
@@ -81,6 +81,7 @@ export function keyContext(): VerbContext {
 
 /** The one handler (exported for tests). Returns the verb it ran. */
 export function dispatchKey(e: KeyboardEvent): Verb | null {
+  if (e.repeat) return null;
   for (const { verb, spec } of bound()) {
     if (!matchKey(e, spec)) continue;
     if ((TYPING_GUARDED.has(spec.key) || spec.plain) && typing(e.target))

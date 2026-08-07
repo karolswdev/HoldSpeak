@@ -83,6 +83,9 @@ export function SurfaceRow({
   onOpen,
   children,
   quiet,
+  id,
+  role,
+  ariaSelected,
 }: {
   glyph?: ReactNode;
   title: ReactNode;
@@ -96,6 +99,9 @@ export function SurfaceRow({
    * waiting on a verdict (composition rule 2's reviewing posture);
    * never the only signal (pair with `meta`, never color/weight alone). */
   quiet?: boolean;
+  id?: string;
+  role?: "option";
+  ariaSelected?: boolean;
 }) {
   const body = (
     <>
@@ -109,6 +115,9 @@ export function SurfaceRow({
   );
   return (
     <li
+      id={id}
+      role={role}
+      aria-selected={ariaSelected}
       className="surface-row"
       data-selected={selected || undefined}
       data-quiet={quiet || undefined}
@@ -137,6 +146,8 @@ export function SurfaceState({
   emptyGlyph = "○",
   emptyImage,
   onRetry,
+  onAction,
+  actionLabel,
   children,
 }: {
   loading?: boolean;
@@ -148,6 +159,10 @@ export function SurfaceState({
    * state (wins over the glyph). */
   emptyImage?: string;
   onRetry?: () => void;
+  /** An optional in-flow action for the empty state. */
+  onAction?: () => void;
+  /** The visible label for the empty-state action. */
+  actionLabel?: string;
   children?: ReactNode;
 }) {
   if (loading)
@@ -163,7 +178,7 @@ export function SurfaceState({
     return (
       <div className="surface-state" data-kind="error" role="alert">
         <span className="surface-state-glyph" aria-hidden>
-          ⚠
+          ⚠︎
         </span>
         <span>{error}</span>
         {onRetry ? (
@@ -189,6 +204,15 @@ export function SurfaceState({
           </span>
         )}
         <span>{emptyLabel}</span>
+        {onAction && actionLabel ? (
+          <button
+            type="button"
+            className="desk-chip surface-state-action"
+            onClick={onAction}
+          >
+            {actionLabel}
+          </button>
+        ) : null}
       </div>
     );
   return children;

@@ -620,16 +620,6 @@
       ]
     },
     {
-      "path": "/api/cadence/loops/{loop_id}/reply",
-      "methods": [
-        "POST"
-      ],
-      "module": "web.routes.cadence",
-      "consumers": [
-        "web"
-      ]
-    },
-    {
       "path": "/api/cadence/loops/{loop_id}/snooze",
       "methods": [
         "POST"
@@ -746,7 +736,7 @@
       "methods": [
         "POST"
       ],
-      "module": "web.routes.system.coder_steering_routes",
+      "module": "web.routes.system.coder_factory_routes",
       "consumers": [
         "ios",
         "web"
@@ -757,7 +747,7 @@
       "methods": [
         "POST"
       ],
-      "module": "web.routes.system.coder_steering_routes",
+      "module": "web.routes.system.coder_factory_routes",
       "consumers": [
         "ios",
         "web"
@@ -1007,6 +997,16 @@
       "path": "/api/constitutional-context",
       "methods": [
         "PUT"
+      ],
+      "module": "web.routes.constitutional",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/constitutional-context/history",
+      "methods": [
+        "GET"
       ],
       "module": "web.routes.constitutional",
       "consumers": [
@@ -3616,7 +3616,9 @@
         "GET"
       ],
       "module": "web.routes.primitives.workbenches",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/skills",
@@ -3624,7 +3626,9 @@
         "POST"
       ],
       "module": "web.routes.primitives.workbenches",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/skills/{skill_id}",
@@ -3817,6 +3821,46 @@
       ]
     },
     {
+      "path": "/api/workbenches/{workbench_id}/items/{item_id}/retry-mint",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.primitives.workbenches",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/workbenches/{workbench_id}/memory",
+      "methods": [
+        "DELETE"
+      ],
+      "module": "web.routes.primitives.workbenches",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/workbenches/{workbench_id}/memory",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.primitives.workbenches",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/workbenches/{workbench_id}/memory/{index}/promote",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.primitives.workbenches",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/workbenches/{workbench_id}/run",
       "methods": [
         "POST"
@@ -3832,7 +3876,19 @@
         "GET"
       ],
       "module": "web.routes.primitives.workbenches",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/workbenches/{workbench_id}/voice/resolve",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.primitives.workbenches",
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/workflows",
@@ -4081,6 +4137,16 @@
       "module": "web.routes.system.ws",
       "consumers": [
         "ios",
+        "web"
+      ]
+    },
+    {
+      "path": "/ws/dictation/stream",
+      "methods": [
+        "WS"
+      ],
+      "module": "web.routes.system.voice",
+      "consumers": [
         "web"
       ]
     }

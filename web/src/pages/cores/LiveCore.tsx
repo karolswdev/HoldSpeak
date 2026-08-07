@@ -1,3 +1,4 @@
+import { SurfaceFooter } from "../../desk/surface/SurfaceFooter";
 // HS-95-06 — the live meeting's core: record, watch the transcript
 // arrive, keep the result — hosted anywhere (see ActivityCore's rules).
 // HS-98-04 — re-crafted native: the transcript is the primary pane, the
@@ -510,13 +511,13 @@ export function LiveCore({ hero }: CoreProps) {
       )}
       {/* HS-111-03 — the readiness foot: the ONE footer receipt bar
           (ReadinessLine pattern). Residency chip + the honest state. */}
-      <div className="surface-status surface-receiptbar">
+      <SurfaceFooter verbs={<>
         <EgressChip />
         <span className="surface-receiptbar-receipt" role="status">
           {active ? `REC ${duration}` : "READY"}
           {segments.length ? ` · ${segments.length} SEG` : ""}
         </span>
-      </div>
+      </>} />
     </>
   );
 }

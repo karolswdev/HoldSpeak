@@ -1,3 +1,4 @@
+import { SurfaceFooter } from "../surface/SurfaceFooter";
 /** Knowledge pullout content (HS-117-15). */
 // @ts-ignore — shared ESM module (see ../sprites.d.ts)
 import { spriteUrl } from "../sprites";
@@ -14,6 +15,7 @@ import {
   SurfaceState,
 } from "../surface/Surface";
 import type { PulloutContentProps } from "./types";
+import { useCopyReceipt } from "../hooks/useCopyReceipt";
 
 export function KbPullout({ object: o }: PulloutContentProps) {
   const items = useDesk((s) => s.items);
@@ -21,6 +23,7 @@ export function KbPullout({ object: o }: PulloutContentProps) {
   if (o.ref.kind !== "kb") return null;
   const ir = o.ref;
   const resourceRef = qualifiedRef(o.kind, o.id);
+  const { copy, receipt: copyReceipt } = useCopyReceipt();
 
   const body = String("bodyMarkdown" in ir ? ir.bodyMarkdown || "" : "");
   const members = (ir.memberIds || [])
@@ -57,7 +60,7 @@ export function KbPullout({ object: o }: PulloutContentProps) {
           </section>
         ) : (
           <section>
-            <SurfaceState empty emptyLabel="Empty note" />
+            <SurfaceState empty emptyLabel="No entries" />
           </section>
         )}
         <DeskFilingStrip
@@ -66,7 +69,14 @@ export function KbPullout({ object: o }: PulloutContentProps) {
           objectId={o.id}
         />
       </div>
-      <footer className="desk-pullout-foot">
+      <SurfaceFooter receipt={copyReceipt} verbs={<>
+        <button
+          type="button"
+          className="desk-chip quiet"
+          onClick={() => void copy(body || members.map(({ member }) => member!.title).join("\n"))}
+        >
+          Copy
+        </button>
         <button
           type="button"
           className="desk-chip quiet"
@@ -82,8 +92,7 @@ export function KbPullout({ object: o }: PulloutContentProps) {
           onClick={() => openEditor(o.id)}
         >
           Edit
-        </button>
-      </footer>
+        </button> </>} />
     </>
   );
 }

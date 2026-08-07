@@ -49,6 +49,7 @@ import {
   closeFrontWindow,
   minimizeFrontWindow,
   cycleWindows as cycleWindowsRaw,
+  cycleWindowsReverse as cycleWindowsReverseRaw,
   focusOrRestoreApp,
 } from "./window/windowRegistry";
 import {
@@ -87,6 +88,36 @@ export {
 /** Ctrl+` — MRU cycle (binds the switcher's flashSwitcher). */
 export function cycleWindows(): void {
   cycleWindowsRaw(flashSwitcher);
+}
+
+/** Ctrl+Shift+` — reverse MRU cycle (binds the switcher's flashSwitcher). */
+export function cycleWindowsReverse(): void {
+  cycleWindowsReverseRaw(flashSwitcher);
+}
+
+/** Apply the same working-band geometry as an edge drag to the front window. */
+export function snapFrontWindow(side: "left" | "right"): void {
+  const id = frontWindowId();
+  if (!id || typeof window === "undefined") return;
+  const state = useDesk.getState();
+  const vw = window.innerWidth || 1280;
+  const vh = window.innerHeight || 800;
+  const rect = snapForPointer(side === "left" ? 0 : vw, vh / 2, vw, vh);
+  if (!rect) return;
+  if (state.panelMax.includes(id)) state.toggleMaximizePanel(id);
+  if (state.panelMin.includes(id)) state.restorePanel(id);
+  state.setPanelRect(id, rect, true);
+  state.focusPanel(id);
+}
+
+/** Fill the desk working band with the front window. */
+export function maximizeFrontWindow(): void {
+  const id = frontWindowId();
+  if (!id) return;
+  const state = useDesk.getState();
+  if (state.panelMin.includes(id)) state.restorePanel(id);
+  if (!state.panelMax.includes(id)) state.toggleMaximizePanel(id);
+  else state.focusPanel(id);
 }
 
 /** The desk-window z band (see the ladder note in desk.css). */

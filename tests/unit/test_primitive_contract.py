@@ -44,6 +44,9 @@ from holdspeak.web.routes.sync import SYNC_KINDS
 REPO = Path(__file__).parents[2]
 SCHEMA_DIR = REPO / "pm/roadmap/holdspeak-mobile/contracts/schemas"
 SYNC_SWIFT = REPO / "apple/Sources/Contracts/Sync.swift"
+# Workbench is a web-only primitive while the iPad client remains dormant.
+MOBILE_CONTRACT_EXCLUSIONS = frozenset({"workbench"})
+MOBILE_CONTRACT_KINDS = set(SYNC_KINDS) - MOBILE_CONTRACT_EXCLUSIONS
 PRIMITIVES_TS = REPO / "web/src/lib/primitives.ts"
 
 # sync kind -> (pull bucket, value schema $id)
@@ -172,9 +175,9 @@ class TestKindSetCannotDrift:
         schema_kinds = {
             s["x-sync-kind"] for s in SCHEMAS.values() if "x-sync-kind" in s
         }
-        assert schema_kinds == set(SYNC_KINDS), (
+        assert schema_kinds == MOBILE_CONTRACT_KINDS, (
             f"schema kinds {sorted(schema_kinds)} != hub SYNC_KINDS "
-            f"{sorted(SYNC_KINDS)} — a kind was added/removed on one side only")
+            f"{sorted(MOBILE_CONTRACT_KINDS)} — a mobile contract kind was added/removed on one side only")
 
     def test_swift_sync_kind_matches_hub(self) -> None:
         text = SYNC_SWIFT.read_text()
@@ -185,9 +188,9 @@ class TestKindSetCannotDrift:
             r"^\s*case\s+(\w+)(?:\s*=\s*\"([^\"]+)\")?",
             enum_body.group(1), re.MULTILINE)
         swift_kinds = {raw or name for name, raw in cases}
-        assert swift_kinds == set(SYNC_KINDS), (
+        assert swift_kinds == MOBILE_CONTRACT_KINDS, (
             f"Swift SyncKind {sorted(swift_kinds)} != hub SYNC_KINDS "
-            f"{sorted(SYNC_KINDS)} — the surfaces drifted")
+            f"{sorted(MOBILE_CONTRACT_KINDS)} — the mobile surfaces drifted")
 
     def test_changeset_buckets_cover_every_kind(self) -> None:
         envelope = SCHEMAS["https://holdspeak.dev/contracts/v0/changeset.schema.json"]

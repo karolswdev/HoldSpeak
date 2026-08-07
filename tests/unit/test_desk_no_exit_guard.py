@@ -45,7 +45,7 @@ def test_routes_are_three_surfaces_plus_deep_links() -> None:
     for path in (
         "/setup", "/dictation", "/live", "/history", "/meetings",
         "/settings", "/activity", "/commands", "/cadence", "/studio",
-        "/workbench", "/profiles", "/companion", "/docs/dictation-runtime",
+        "/workbenches", "/profiles", "/companion", "/docs/dictation-runtime",
         "/design/components",
     ):
         assert f'path: "{path}"' in text, f"missing demoted path {path}"

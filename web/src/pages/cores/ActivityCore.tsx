@@ -1,3 +1,4 @@
+import { SurfaceFooter } from "../../desk/surface/SurfaceFooter";
 // HS-95-04 — the Activity surface's core: everything the flat page did,
 // minus the flat chrome. Cores are host-agnostic (Constitution, Article I:
 // features do not own surfaces): no page chrome, no router coupling — the
@@ -250,6 +251,7 @@ export function ActivityCore({ hero }: CoreProps) {
           {list(wings.view as Kind)}
         </SurfaceSection>
       )}
+      <SurfaceFooter />
     </>
   );
 }

@@ -12,6 +12,7 @@ the PMO roadmap corpus is the historical record and is kept verbatim by design.
 
 from __future__ import annotations
 
+import ast
 import json
 import re
 from pathlib import Path
@@ -138,9 +139,23 @@ _PLUGIN_COUNT_CLAIM = re.compile(r"(\d+)\s+built-in plugins", re.IGNORECASE)
 
 
 def test_readme_plugin_count_matches_registry() -> None:
-    from holdspeak.plugins.builtin import _BUILTIN_PLUGIN_DEFS
-
-    registry_count = len(_BUILTIN_PLUGIN_DEFS)
+    builtin_source = _REPO / "holdspeak/plugins/builtin/__init__.py"
+    tree = ast.parse(builtin_source.read_text(encoding="utf-8"), filename=str(builtin_source))
+    definition = next(
+        (
+            node
+            for node in tree.body
+            if isinstance(node, ast.AnnAssign)
+            and isinstance(node.target, ast.Name)
+            and node.target.id == "_BUILTIN_PLUGIN_DEFS"
+        ),
+        None,
+    )
+    assert definition is not None and isinstance(definition.value, ast.Tuple), (
+        "holdspeak/plugins/builtin/__init__.py must define _BUILTIN_PLUGIN_DEFS "
+        "as a tuple literal"
+    )
+    registry_count = len(definition.value.elts)
     readme = (_REPO / "README.md").read_text(encoding="utf-8")
     claims = [int(m) for m in _PLUGIN_COUNT_CLAIM.findall(readme)]
 

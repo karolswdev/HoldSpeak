@@ -325,5 +325,5 @@ def test_run_egress_reports_mesh_for_profile_and_default(monkeypatch) -> None:
     assert egress == {"scope": "mesh", "host": "walk-edge"} and model == "qwen3.5-4b"
 
     relay = MeshRelayIntel(node="walk-edge", model_hint="qwen3.5-4b", relay=object())
-    egress, model = _run_egress(ctx=None, prof=None, intel=relay)
+    egress, model = _run_egress(None, relay, default_model="")
     assert egress == {"scope": "mesh", "host": "walk-edge"} and model == "qwen3.5-4b"

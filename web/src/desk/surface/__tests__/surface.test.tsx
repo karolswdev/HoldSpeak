@@ -72,6 +72,24 @@ describe("one state grammar (idiom rule 6)", () => {
   });
 });
 
+describe("SurfaceState action slot", () => {
+  it("renders an action button when onAction and actionLabel are provided", () => {
+    const onAction = vi.fn();
+    render(
+      <SurfaceState empty emptyLabel="No items" onAction={onAction} actionLabel="Add item" />,
+    );
+    const btn = screen.getByRole("button", { name: "Add item" });
+    expect(btn).toBeInTheDocument();
+    fireEvent.click(btn);
+    expect(onAction).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not render an action button when props are absent", () => {
+    render(<SurfaceState empty emptyLabel="No items" />);
+    expect(screen.queryByRole("button", { name: "Add item" })).toBeNull();
+  });
+});
+
 describe("rows and verbs (idiom rules 3–5)", () => {
   it("a row carries title, detail, meta, and a verb slot", () => {
     render(

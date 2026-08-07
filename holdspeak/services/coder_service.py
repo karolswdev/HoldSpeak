@@ -1,5 +1,6 @@
 """Transport-neutral coder-session operations (HS-122-05)."""
 from __future__ import annotations
+from holdspeak.services.observer import NullObserver, PipelineObserver, observe_service
 
 from datetime import datetime, timezone
 from typing import Any, Callable
@@ -9,12 +10,14 @@ from ..principals import Principal
 from holdspeak.services.errors import NotFound, ValidationError
 
 
+@observe_service
 class CoderService:
     def __init__(
         self,
         db: Database | None = None,
         *,
         reply_sender: Callable[[str, str], Any] | None = None,
+        observer: PipelineObserver | None = None,
     ) -> None:
         if db is None:
             from ..db import get_database
@@ -22,6 +25,7 @@ class CoderService:
             db = get_database()
         self._db = db
         self._reply_sender = reply_sender
+        self._observer = observer or NullObserver()
 
     def list_sessions(
         self,

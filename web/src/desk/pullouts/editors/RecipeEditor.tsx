@@ -2,6 +2,8 @@
 import { useMemo, useState } from "react";
 import { useDesk } from "../../store";
 import { MicButton } from "../../components/MicButton";
+import { AgentAvatar } from "../../components/AgentAvatar";
+import { CycleGadget, PadGadget, StringGadget } from "../../surface/gadgets";
 import type { Persona } from "../../../lib/primitives";
 import { useDebouncedSave } from "./useDebouncedSave";
 import type { InlineEditorContentProps } from "./types";
@@ -39,71 +41,77 @@ export function RecipeEditor({ object: o, onClose }: InlineEditorContentProps) {
   return (
     <>
       <div className="desk-inline-editor-row">
-        <input
+        <AgentAvatar
+          avatar={f.avatar}
+          id={o.id}
+          size={32}
           className="desk-inline-editor-avatar"
-          value={f.avatar}
-          placeholder="🤖"
-          aria-label="Avatar"
-          onChange={(e) => set("avatar", "avatar", e.target.value)}
         />
-        <input
+        <StringGadget
+          label="Name"
           value={f.name}
           placeholder="Name"
-          onChange={(e) => set("name", "name", e.target.value)}
+          onChange={(value) => set("name", "name", value)}
         />
       </div>
-      <input
+      <StringGadget
+        label="Role"
         value={f.role}
         placeholder="Role"
-        onChange={(e) => set("role", "role", e.target.value)}
+        onChange={(value) => set("role", "role", value)}
       />
-      <textarea
+      <PadGadget
+        label="System prompt"
         rows={4}
         value={f.systemPrompt}
         placeholder="System prompt"
-        onChange={(e) =>
-          set("systemPrompt", "system_prompt", e.target.value)
-        }
+        onChange={(value) => set("systemPrompt", "system_prompt", value)}
       />
       {more ? (
         <>
-          <textarea
+          <StringGadget
+            label="Avatar"
+            value={f.avatar}
+            placeholder="Avatar"
+            onChange={(value) => set("avatar", "avatar", value)}
+          />
+          <PadGadget
+            label="User template"
             rows={3}
             value={f.userTemplate}
             placeholder="User template"
-            onChange={(e) =>
-              set("userTemplate", "user_template", e.target.value)
-            }
+            onChange={(value) => set("userTemplate", "user_template", value)}
           />
-          <input
+          <StringGadget
+            label="Tools"
             value={f.tools}
             placeholder="Tools"
-            onChange={(e) => set("tools", "tools", e.target.value, true)}
+            onChange={(value) => set("tools", "tools", value, true)}
           />
-          <select
+          <CycleGadget
+            label="Knowledge"
             value={f.kbId}
-            onChange={(e) => set("kbId", "kb_id", e.target.value)}
-          >
-            <option value="">No Knowledge</option>
-            {(items.kb || []).map((k) => (
-              <option key={String(k.id)} value={String(k.id)}>
-                {String(k.name || k.id)}
-              </option>
-            ))}
-          </select>
-          <select
+            options={[
+              { value: "", label: "No Knowledge" },
+              ...(items.kb || []).map((k) => ({
+                value: String(k.id),
+                label: String(k.name || k.id),
+              })),
+            ]}
+            onChange={(value) => set("kbId", "kb_id", value)}
+          />
+          <CycleGadget
+            label="Runs on"
             value={f.profileId}
-            onChange={(e) =>
-              set("profileId", "profile_id", e.target.value)
-            }
-          >
-            <option value="">Default Runs on</option>
-            {profiles.map((p) => (
-              <option key={String(p.id)} value={String(p.id)}>
-                {String(p.name || p.id)}
-              </option>
-            ))}
-          </select>
+            options={[
+              { value: "", label: "Default Runs on" },
+              ...profiles.map((p) => ({
+                value: String(p.id),
+                label: String(p.name || p.id),
+              })),
+            ]}
+            onChange={(value) => set("profileId", "profile_id", value)}
+          />
         </>
       ) : (
         <button

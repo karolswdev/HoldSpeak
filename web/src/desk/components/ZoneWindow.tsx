@@ -14,7 +14,7 @@ import { productLabel } from "../../lib/productLanguage";
 import { humanTime } from "../surface/format";
 import { SurfaceState } from "../surface/Surface";
 import { SurfaceWings } from "../surface/wings";
-import { DeskWindowFooter } from "./DeskWindowFooter";
+import { SurfaceFooter } from "../surface/SurfaceFooter";
 import { DeskWindowFrame } from "./DeskWindow";
 import { DeskSortableTable, type Column } from "./DeskSortableTable";
 
@@ -126,7 +126,12 @@ export function ZoneWindow({
     >
       <div className="desk-pullout-body desk-surface-body">
         {members.length === 0 ? (
-          <SurfaceState empty emptyLabel="Empty" />
+          <SurfaceState
+            empty
+            emptyLabel="Empty"
+            actionLabel="Drop items here"
+            onAction={() => undefined}
+          />
         ) : pref.view === "icons" ? (
           <div className="zone-grid" role="list">
             {members.map((member) => (
@@ -181,14 +186,10 @@ export function ZoneWindow({
           />
         )}
       </div>
-      <DeskWindowFooter
-        status={
-          <span className="quiet">
+      <SurfaceFooter receipt={<span className="quiet">
             {members.length} {members.length === 1 ? "item" : "items"}
             {unresolved > 0 ? ` · ${unresolved} unavailable` : ""}
-          </span>
-        }
-      />
+          </span>} />
     </DeskWindowFrame>
   );
 }

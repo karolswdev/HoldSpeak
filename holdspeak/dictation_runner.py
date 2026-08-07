@@ -154,6 +154,7 @@ async def process_transcript(
     *,
     config: Any = None,
     server: Any = None,
+    agent_reply_session: Any | None = None,
 ) -> str:
     """Run the transcript-processing stages (corrections, learning, journaling).
 
@@ -184,6 +185,7 @@ async def process_transcript(
         transcribed_at=datetime.now(),
         journal_source=source,
         skip_target_detection=skip_target_detection,
+        agent_reply_session=agent_reply_session,
     )
 
 

@@ -11,10 +11,16 @@ interface DeskFilingStripProps {
   objectId: string;
 }
 
-function FilingRefusal({ detail }: { detail: string }) {
+function FilingRefusal({
+  detail,
+  onRetry,
+}: {
+  detail: string;
+  onRetry: () => void;
+}) {
   return (
     <>
-      <SurfaceState error="Filing unavailable" />
+      <SurfaceState error="Filing unavailable" onRetry={onRetry} />
       <FoldGadget title="RAW · DETAIL">
         <SurfaceCode>{detail}</SurfaceCode>
       </FoldGadget>
@@ -89,7 +95,12 @@ export function DeskFilingStrip({
     }
   };
 
-  if (!relationships) return relationshipError ? <FilingRefusal detail={relationshipError} /> : null;
+  if (!relationships) return relationshipError ? (
+    <FilingRefusal
+      detail={relationshipError}
+      onRetry={() => void refreshRelationships()}
+    />
+  ) : null;
 
   const homeZone = zones.find((zone) => {
     const members = zone.memberIds || [];
@@ -202,7 +213,12 @@ export function DeskFilingStrip({
           )}
         </div>
       </FoldGadget>
-      {relationshipError ? <FilingRefusal detail={relationshipError} /> : null}
+      {relationshipError ? (
+        <FilingRefusal
+          detail={relationshipError}
+          onRetry={() => void refreshRelationships()}
+        />
+      ) : null}
     </>
   );
 }

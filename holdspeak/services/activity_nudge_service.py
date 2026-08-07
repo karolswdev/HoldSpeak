@@ -1,14 +1,17 @@
 """Transport-neutral activity nudge operations (HS-123-07)."""
 from __future__ import annotations
+from holdspeak.services.observer import NullObserver, PipelineObserver, observe_service
 from typing import Any
 from ..db.core import Database
 from ..principals import Principal
 from .errors import ValidationError
 
 
+@observe_service
 class ActivityNudgeService:
-    def __init__(self, db: Database) -> None:
+    def __init__(self, db: Database, *, observer: PipelineObserver | None = None) -> None:
         self._db = db
+        self._observer = observer or NullObserver()
 
     def list(self, principal: Principal, project_id: str | None, limit: int) -> dict[str, Any]:
         from ..activity_nudges import compute_nudges

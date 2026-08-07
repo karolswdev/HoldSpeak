@@ -83,7 +83,7 @@ def test_endpoint_egress_shapes() -> None:
 
 def test_the_scattered_egress_sites_use_the_one_constructor() -> None:
     from holdspeak.cadence.audit import export_audit
-    from holdspeak.web.routes.cadence import _LOCAL_EGRESS
+    from holdspeak.services.cadence_service import _LOCAL_EGRESS
 
     assert _LOCAL_EGRESS == endpoint_egress(cloud=False, label="Local only")
 

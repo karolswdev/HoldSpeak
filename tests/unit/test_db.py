@@ -1742,7 +1742,7 @@ class TestDatabaseShape:
             "WHERE name NOT LIKE 'sqlite_%' ORDER BY type, name"
         ).fetchall()
         actual = "\n".join(
-            f"{r['type']} {r['name']}: {re.sub(r'\\s+', ' ', (r['sql'] or '').strip())}"
+            f"{r['type']} {r['name']}: {re.sub(r'\s+', ' ', (r['sql'] or '').strip())}"
             for r in rows
         ) + "\n"
         conn.close()

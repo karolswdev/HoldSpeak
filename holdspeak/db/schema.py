@@ -7,7 +7,7 @@ independently of the Database container.
 # Bump this when adding tables or columns; the Database container uses it to
 # decide whether to back up and re-apply. See core._ensure_schema for the
 # four-way upgrade contract.
-SCHEMA_VERSION = 37  # v37: resolver_profile_id on workbenches (HS-118-05)
+SCHEMA_VERSION = 38  # v38: pipeline_events (HS-124-02)
 
 # SQL Schema
 SCHEMA_SQL = """
@@ -1495,4 +1495,36 @@ CREATE TABLE IF NOT EXISTS kernel_journal (
 );
 CREATE INDEX IF NOT EXISTS idx_kernel_journal_operation
 ON kernel_journal(operation_id, hub_sequence);
+
+-- Phase 124: pipeline observer events. Append-only structured event log
+-- for every public service method call.
+CREATE TABLE IF NOT EXISTS pipeline_events (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    event_id TEXT NOT NULL UNIQUE,
+    timestamp REAL NOT NULL,
+    service TEXT NOT NULL,
+    method TEXT NOT NULL,
+    principal_kind TEXT NOT NULL,
+    principal_identity TEXT NOT NULL DEFAULT '',
+    args_summary TEXT NOT NULL DEFAULT '{}',
+    result_summary TEXT NOT NULL DEFAULT '',
+    error TEXT,
+    error_code TEXT,
+    duration_ms REAL NOT NULL DEFAULT 0,
+    correlation_id TEXT NOT NULL DEFAULT '',
+    is_async INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE INDEX IF NOT EXISTS idx_pipeline_events_timestamp
+ON pipeline_events(timestamp DESC);
+
+CREATE INDEX IF NOT EXISTS idx_pipeline_events_service_method
+ON pipeline_events(service, method, timestamp DESC);
+
+CREATE INDEX IF NOT EXISTS idx_pipeline_events_principal
+ON pipeline_events(principal_kind, principal_identity, timestamp DESC);
+
+CREATE INDEX IF NOT EXISTS idx_pipeline_events_correlation
+ON pipeline_events(correlation_id)
+WHERE correlation_id != '';
 """

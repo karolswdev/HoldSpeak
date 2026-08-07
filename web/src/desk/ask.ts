@@ -74,6 +74,24 @@ export function askLineageLine(context: AskContext[], lens: string): string {
   return `${src} → ${lens}`;
 }
 
+export function humanizeError(err: unknown): string {
+  const status =
+    err && typeof err === "object" ? (err as { status?: number }).status : undefined;
+  if (status === 502 || status === 503)
+    return "The model is temporarily unavailable. Try again in a moment.";
+  if (status === 429)
+    return "Rate limit reached. Wait a moment and try again.";
+  if (status === 408)
+    return "The request timed out. Try again.";
+  if (
+    err instanceof TypeError &&
+    String(err.message).toLowerCase().includes("fetch")
+  ) {
+    return "Could not reach the server. Check your connection.";
+  }
+  return "Something went wrong. Try again.";
+}
+
 export interface AskRunResult {
   ok: boolean;
   output: string;
@@ -163,13 +181,7 @@ export async function runAsk(opts: {
       }),
     });
     const data = await res.json().catch(() => ({}));
-    if (!res.ok) {
-      const unknown =
-        Array.isArray(data.unknown_ids) && data.unknown_ids.length
-          ? ` (${data.unknown_ids.join(", ")})`
-          : "";
-      return fail(String(data.error || `HTTP ${res.status}`) + unknown);
-    }
+    if (!res.ok) return fail(humanizeError(res));
     return {
       ok: true,
       output: String(data.output || ""),
@@ -213,8 +225,8 @@ export async function runAsk(opts: {
             }
           : null,
     };
-  } catch (e) {
-    return fail(String(e));
+  } catch (error) {
+    return fail(humanizeError(error));
   }
 }
 

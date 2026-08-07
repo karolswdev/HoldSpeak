@@ -1,5 +1,6 @@
 """Transport-neutral, write-only settings credential lifecycle."""
 from __future__ import annotations
+from holdspeak.services.observer import NullObserver, PipelineObserver, observe_service
 
 import re
 from copy import deepcopy
@@ -81,17 +82,20 @@ def strip_secret_mutations(payload: dict[str, Any]) -> dict[str, Any]:
     return clean
 
 
+@observe_service
 class CredentialService:
     """Persist credentials while returning only redacted metadata."""
 
     def __init__(
         self,
         db: Database,
-        *,
         on_settings_applied: Callable[[Any], None] | None = None,
+        *,
+        observer: PipelineObserver | None = None,
     ) -> None:
         self._db = db
         self._on_settings_applied = on_settings_applied
+        self._observer = observer or NullObserver()
 
     def list_redacted(self, principal: Principal) -> dict[str, dict[str, Any]]:
         from ..config import Config

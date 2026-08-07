@@ -27,6 +27,7 @@ import { StringGadget } from "../surface/gadgets";
 import { allObjects } from "../world";
 import { DESK_TOOLS, KIND_LABEL } from "../tools";
 import { VERBS, verbLabel, type VerbContext } from "../verbRegistry";
+import { PREF_MODULES } from "../../pages/cores/settingsPrefs";
 import { useLaunchers } from "./DeskWindow";
 
 // Re-exported so existing imports keep one source (the data moved to
@@ -78,7 +79,23 @@ function recordRecent(id: string): void {
   }
 }
 
-/** prefix(3) > recent(2) > substring(1); 0 = no match. */
+export function fuzzyScore(query: string, target: string): number {
+  const q = query.toLowerCase();
+  const t = target.toLowerCase();
+  if (t === q) return 100;
+  if (t.startsWith(q)) return 80;
+  const words = t.split(/[\s\-_]+/);
+  if (words.some((word) => word.startsWith(q))) return 60;
+  let qi = 0;
+  for (let ti = 0; ti < t.length && qi < q.length; ti++) {
+    if (t[ti] === q[qi]) qi++;
+  }
+  if (qi === q.length) return 30;
+  if (t.includes(q)) return 20;
+  return 0;
+}
+
+/** Fuzzy relevance with a recency boost; 0 = no match. */
 export function rankRow(
   row: { label: string; terms?: string },
   query: string,
@@ -86,11 +103,11 @@ export function rankRow(
   recentBoostsEmpty = false,
 ): number {
   if (!query) return recent && recentBoostsEmpty ? 2 : 1;
-  const label = row.label.toLocaleLowerCase();
-  if (label.startsWith(query)) return 3 + (recent ? 2 : 0);
-  if (recent && (label.includes(query) || row.terms?.includes(query))) return 2;
-  if (label.includes(query) || row.terms?.includes(query)) return 1;
-  return 0;
+  const score = Math.max(
+    fuzzyScore(query, row.label),
+    fuzzyScore(query, row.terms ?? ""),
+  );
+  return score ? score + (recent ? 10 : 0) : 0;
 }
 
 export function DeskToolShelf() {
@@ -288,7 +305,17 @@ export function DeskToolShelf() {
         run: () => openSurface("open-project-memory", `project:${project.id}`),
       });
 
-    // ── SETTINGS: integrations, runtime targets, models ──
+    // ── SETTINGS: preference modules, integrations, runtime targets, models ──
+    for (const module of PREF_MODULES)
+      push({
+        id: `settings:${module.id}`,
+        section: "SETTINGS",
+        glyph: "⚙",
+        label: module.label,
+        kind: "SETTINGS",
+        terms: `${module.id} ${module.keys.join(" ")}`,
+        run: () => openSurface("configure-settings", module.id),
+      });
     for (const integration of integrations) {
       if (!normalized && !integration.enabled) continue;
       push({
@@ -334,16 +361,22 @@ export function DeskToolShelf() {
       .filter((r) => r.score > 0);
     const sectionRank = (s: Section) => SECTIONS.indexOf(s);
     ranked.sort((a, b) => {
+      if (b.score !== a.score) return b.score - a.score;
       const sec = sectionRank(a.row.section) - sectionRank(b.row.section);
       if (sec !== 0) return sec;
-      if (b.score !== a.score) return b.score - a.score;
-      return a.i - b.i; // stable inside the section
+      return a.i - b.i;
     });
     // Per-section cut: a query keeps the deck dense; the cold deck
     // shows every PROGRAM (they are the launcher truth) and a short
     // head of everything else.
     const cap = (s: Section) =>
-      normalized ? 10 : s === "PROGRAMS" ? Number.POSITIVE_INFINITY : 6;
+      normalized
+        ? s === "OBJECTS"
+          ? 5
+          : 10
+        : s === "PROGRAMS"
+          ? Number.POSITIVE_INFINITY
+          : 6;
     const byCount = new Map<Section, number>();
     return ranked
       .filter(({ row }) => {
@@ -376,6 +409,7 @@ export function DeskToolShelf() {
   const selected = runnable.length
     ? runnable[Math.min(sel, runnable.length - 1)]
     : null;
+  const activeId = selected ? `desk-palette-option-${selected.id}` : undefined;
 
   const runRow = (row: DeckRow) => {
     if (row.ghost) return;
@@ -446,10 +480,20 @@ export function DeskToolShelf() {
                   value={query}
                   placeholder="Search tools and Desk items"
                   onChange={setQuery}
+                  inputProps={{
+                    role: "combobox",
+                    "aria-expanded": open,
+                    "aria-controls": "desk-palette-listbox",
+                    "aria-activedescendant": activeId,
+                  }}
                 />
               </label>
               {rows.length ? (
-                <ul className="desk-deck-list">
+                <ul
+                  id="desk-palette-listbox"
+                  className="desk-deck-list"
+                  role="listbox"
+                >
                   {rows.map((row) => {
                     const band =
                       row.section !== lastSection ? row.section : null;
@@ -461,7 +505,10 @@ export function DeskToolShelf() {
                           <span className="desk-deck-band">{band}</span>
                         ) : null}
                         <button
+                          id={`desk-palette-option-${row.id}`}
                           type="button"
+                          role="option"
+                          aria-selected={isSel}
                           className={
                             "desk-deck-row" +
                             (isSel ? " is-selected" : "") +

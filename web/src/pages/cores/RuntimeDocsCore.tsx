@@ -1,3 +1,4 @@
+import { SurfaceFooter } from "../../desk/surface/SurfaceFooter";
 // HS-95-08 — the runtime setup guide, hosted anywhere.
 import { openSurfaceOr } from "../../desk/shell";
 import type { CoreProps } from "./core-types";
@@ -72,6 +73,7 @@ export function RuntimeDocsCore({ hero }: CoreProps) {
           <li>Only then enable rewrite stages for daily dictation.</li>
         </ol>
       </SurfaceSection>
+      <SurfaceFooter />
     </>
   );
 }
