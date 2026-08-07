@@ -8,8 +8,8 @@ from fastapi.responses import JSONResponse
 
 from ....logging_config import get_logger
 from ....principals import Principal, PrincipalKind
-from ....services.primitive_service import NotFound, ValidationError
-from ....services.recipe_service import RecipeService, RecipeServiceError
+from ....services.errors import NotFound, ServiceError, ValidationError
+from ....services.recipe_service import RecipeService
 from ...context import WebContext
 from ...runtime_support import error_500
 from ._shared import _json_body, _run_frame
@@ -31,6 +31,10 @@ def build_recipes_router(ctx: WebContext) -> APIRouter:
 
     def _broadcast(state: str, **frame: Any) -> None:
         _run_frame(ctx, state, **frame)
+
+    def _service_error(exc: ServiceError) -> JSONResponse:
+        statuses = {"empty_input": 400, "target_unavailable": 409, "inference_failed": 502, "cancelled": 409, "empty_output": 502, "artifact_persist_failed": 500, "grounding_not_found": 400}
+        return JSONResponse({"error": exc.detail, **exc.context}, status_code=statuses.get(exc.code, 500))
 
     @router.get("/api/recipes")
     async def api_list_recipes(request: Request) -> Any:
@@ -99,8 +103,8 @@ def build_recipes_router(ctx: WebContext) -> APIRouter:
             return JSONResponse(result)
         except NotFound:
             return JSONResponse({"error": f"Unknown Agent: {recipe_id}"}, status_code=404)
-        except RecipeServiceError as exc:
-            return JSONResponse(exc.payload, status_code=exc.status_code)
+        except ServiceError as exc:
+            return _service_error(exc)
         except Exception as exc:
             return error_500(exc, log, "Failed to run recipe")
 
@@ -115,15 +119,15 @@ def build_recipes_router(ctx: WebContext) -> APIRouter:
                 grounding=body.get("grounding"),
                 inference_target_id=body.get("inference_target_id"),
                 broadcast=_broadcast,
-                egress_context=ctx,
+                default_model=__import__("holdspeak.web.routes.sync", fromlist=["_hub_model_name"])._hub_model_name(ctx),
             )
             return JSONResponse(result)
         except ValidationError as exc:
             return JSONResponse({"error": str(exc)}, status_code=400)
         except NotFound:
             return JSONResponse({"error": f"Unknown Agent: {recipe_id}"}, status_code=404)
-        except RecipeServiceError as exc:
-            return JSONResponse(exc.payload, status_code=exc.status_code)
+        except ServiceError as exc:
+            return _service_error(exc)
         except Exception as exc:
             return error_500(exc, log, "Failed to chat with recipe")
 
@@ -141,8 +145,8 @@ def build_recipes_router(ctx: WebContext) -> APIRouter:
             return JSONResponse({"error": str(exc)}, status_code=400)
         except NotFound:
             return JSONResponse({"error": f"Unknown Agent: {recipe_id}"}, status_code=404)
-        except RecipeServiceError as exc:
-            return JSONResponse(exc.payload, status_code=exc.status_code)
+        except ServiceError as exc:
+            return _service_error(exc)
         except Exception as exc:
             return error_500(exc, log, "Failed to keep chat reply")
 

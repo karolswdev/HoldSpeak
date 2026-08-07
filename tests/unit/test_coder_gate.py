@@ -386,6 +386,7 @@ def test_hook_reuses_one_idempotency_key_across_retries(tmp_path) -> None:
 
 @pytest.fixture
 def route_rig(tmp_path, monkeypatch):
+    from holdspeak.services.gate_service import GateService
     from holdspeak.web.context import WebContext
     from holdspeak.web.routes.system.gate_routes import build_gate_router
 
@@ -404,7 +405,7 @@ def route_rig(tmp_path, monkeypatch):
         request.state.principal = Principal(PrincipalKind.OWNER, "owner-session")
         return await call_next(request)
 
-    app.include_router(build_gate_router(WebContext(get_state=lambda: {})))
+    app.include_router(build_gate_router(WebContext(get_state=lambda: {}, gate_service=GateService(db))))
     yield db, clock, TestClient(app)
     reset_database()
 

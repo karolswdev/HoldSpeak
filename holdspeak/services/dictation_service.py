@@ -9,7 +9,7 @@ from typing import Any
 from ..config import Config
 from ..db.core import Database
 from ..principals import Principal
-from .primitive_service import NotFound, ValidationError
+from holdspeak.services.errors import NotFound, ValidationError
 
 
 class DictationService:

@@ -41,7 +41,140 @@ unchanged.  The run SOURCE for the first op is the request `input` (rendered thr
 from __future__ import annotations
 
 from dataclasses import dataclass
+import uuid
 from typing import Any, Optional
+
+from ..grounding import (
+    GROUNDING_EXPANDS as _GROUNDING_EXPANDS,
+    GROUNDING_MAX_REFS as _GROUNDING_MAX_REFS,
+    hydrate_grounding_blocks as _hydrate_grounding,
+    hydrate_grounding_blocks_detailed as _hydrate_grounding_detailed,
+    meeting_digest as _meeting_digest,
+)
+from ..intel.providers import endpoint_egress
+from ..logging_config import get_logger
+
+log = get_logger("services.support")
+
+CANONICAL_SOURCE_TYPES: frozenset[str] = frozenset({"recipe", "input", "chain", "workflow", "invocation", "attempt"})
+_SOURCE_TYPE_ALIASES: dict[str, str] = {"card": "input", "agent": "recipe"}
+
+def _new_id(prefix: str) -> str:
+    return f"{prefix}_{uuid.uuid4().hex[:12]}"
+
+def canonical_source_type(raw: Any) -> str:
+    val = str(raw or "").strip().lower()
+    return _SOURCE_TYPE_ALIASES.get(val, val)
+
+def capability_descriptor(*, kind: str, name: str, readiness: str = "ready", detail: str = "", supported_placements: Optional[list[str]] = None, effect_classes: Optional[list[str]] = None, action_label: str = "", support: str = "supported") -> dict[str, Any]:
+    return {"kind": kind, "input_schema": {"type": "object", "required": ["input"], "properties": {"input": {"type": "string", "help": "Material to work on."}}}, "input_help": "Choose or enter the material this capability should work on.", "supported_placements": supported_placements or ["this_machine"], "effect_classes": effect_classes or ["creates_artifact"], "readiness": {"state": readiness, "detail": detail}, "action_label": action_label or f"Run {name}", "support": support}
+
+class RunLifecycle:
+    def __init__(self, db: Any, invocation_id: str, definition_ref: str, *, operation_id: str = "", broker: Any = None) -> None:
+        self.db, self.invocation_id, self.definition_ref = db, invocation_id, definition_ref
+        self.operation_id, self.broker, self.node_principal, self.attempt_id, self.target = operation_id, broker, None, None, None
+    @classmethod
+    def begin(cls, db: Any, *, definition_ref: str, body: dict[str, Any], default_placement: str = "this_machine", principal: Any = None, definition_revision: str = "") -> "RunLifecycle":
+        invocation_id = _new_id("invocation"); raw_refs, grounding = body.get("grounding_refs", []), []
+        if isinstance(raw_refs, list):
+            revisions = body.get("grounding_revisions") if isinstance(body.get("grounding_revisions"), dict) else {}
+            for item in raw_refs:
+                if isinstance(item, dict): grounding.append({"ref": str(item.get("ref") or ""), "revision": str(item.get("revision") or "")})
+                elif str(item).strip(): grounding.append({"ref": str(item).strip(), "revision": str(revisions.get(str(item)) or "unversioned")})
+        source_ref = str(body.get("source_ref") or "").strip()
+        if source_ref:
+            source_kind = canonical_source_type(body.get("source_type") or "input") or "input"; grounding.append({"ref": source_ref if ":" in source_ref else f"{source_kind}:{source_ref}", "revision": str(body.get("source_revision") or "unversioned")})
+        snapshot: dict[str, Any] = {"input": str(body.get("input") or "")}
+        if isinstance(body.get("variables"), dict): snapshot["variables"] = dict(body["variables"])
+        requested = str(body.get("inference_target_id") or body.get("requested_placement") or default_placement)
+        if principal is not None and definition_ref.startswith("persona:"):
+            import time
+            from ..kernel.runtime import _service
+            broker = _service(); handle = broker.submit({"request_schema": 1, "request_id": _new_id("request"), "idempotency_key": invocation_id, "operation": {"name": "inference.run", "version": 1}, "target": {}, "arguments": {"invocation_id": invocation_id, "definition_ref": definition_ref, "definition_revision": definition_revision or "unversioned", "grounding_refs": grounding, "requested_target_id": requested, "deadline_at": float(body.get("deadline_at") or time.time() + 300.0), "input_snapshot": snapshot}}, principal)
+            if handle["state"] == "refused": raise ValueError(handle["receipt"]["outcome"])
+            handle = broker.decide(handle["operation_id"], "approve", handle["revision"], principal); return cls(db, invocation_id, definition_ref, operation_id=handle["operation_id"], broker=broker)
+        db.capability_invocations.begin(invocation_id=invocation_id, definition_ref=definition_ref, initiator=str(body.get("initiator") or "owner"), grounding_refs=[f"{item['ref']}@{item['revision']}" for item in grounding], requested_placement=requested, input_snapshot=snapshot); return cls(db, invocation_id, definition_ref)
+    def start_attempt(self, *, destination: str, provider: Optional[str] = None, target: Any = None) -> str:
+        self.attempt_id, self.target = _new_id("attempt"), target
+        if self.broker is not None and self.operation_id:
+            from ..principals import Principal, PrincipalKind
+            operation = self.broker.store.operation(self.operation_id); self.node_principal = Principal(PrincipalKind.NODE, str(operation["placement"]).removeprefix("node:")); claimed = self.broker.claim(self.node_principal, self.invocation_id)
+            if not claimed["operations"] or claimed["operations"][0]["operation_id"] != self.operation_id: raise ValueError("inference operation could not be claimed")
+        self.db.capability_invocations.start_attempt(invocation_id=self.invocation_id, attempt_id=self.attempt_id, destination=destination, provider=provider, actual_placement=target.placement_receipt(provider=provider) if target else None); return self.attempt_id
+    def fail(self, error: str, *, state: str = "failed", provider: Optional[str] = None, model: Optional[str] = None) -> dict[str, Any]:
+        if self.attempt_id: self.db.capability_invocations.finish_attempt(self.attempt_id, state="failed" if state != "empty" else "empty", provider=provider, error=error, actual_placement=self.target.placement_receipt(provider=provider, model=model) if self.target else None)
+        value = self.db.capability_invocations.finish(self.invocation_id, state=state, error=error).to_dict(); self._close("failed", f"invocation:{self.invocation_id}"); return value
+    def succeed(self, artifact_id: str, *, provider: Optional[str] = None, model: Optional[str] = None) -> dict[str, Any]:
+        result_ref = f"artifact:{artifact_id}"
+        if self.attempt_id: self.db.capability_invocations.finish_attempt(self.attempt_id, state="succeeded", provider=provider, result_ref=result_ref, actual_placement=self.target.placement_receipt(provider=provider, model=model) if self.target else None)
+        value = self.db.capability_invocations.finish(self.invocation_id, state="succeeded", result_ref=result_ref).to_dict(); self._close("succeeded", result_ref); return value
+    def cancelled(self) -> Optional[dict[str, Any]]:
+        value = self.db.capability_invocations.get(self.invocation_id)
+        if value is None or value.state != "cancelled": return None
+        self._close("refused", f"invocation:{self.invocation_id}"); return value.to_dict()
+    def _close(self, outcome: str, result_ref: str) -> None:
+        if self.broker is not None and self.node_principal is not None and self.operation_id and self.broker.store.receipt(self.operation_id) is None: self.broker.receipt(self.operation_id, outcome, result_ref, self.node_principal)
+    def lineage(self) -> list[dict[str, str]]:
+        rows = [{"source_type": "invocation", "source_ref": self.invocation_id}]
+        if self.attempt_id: rows.append({"source_type": "attempt", "source_ref": self.attempt_id})
+        return rows
+
+def _render_user_prompt(template: str, variables: dict[str, Any], user_input: str) -> str:
+    if not template: return user_input
+    mapping = dict(variables or {}); mapping.setdefault("input", user_input)
+    class _Safe(dict):
+        def __missing__(self, key: str) -> str: return "{" + key + "}"
+    try: return template.format_map(_Safe(mapping))
+    except Exception: return f"{template}\n\n{user_input}".strip()
+
+def _persist_run_artifact(*, db: Any, kind: str, name: str, user_input: str, output: str, sources: list[dict[str, str]]) -> Optional[str]:
+    try:
+        artifact_id = _new_id("artifact"); head = " ".join(user_input.split())[:48]; title = f"{name}: {head}" if head else f"{name} run"
+        db.plugins.record_artifact(artifact_id=artifact_id, meeting_id="", artifact_type="run_output", title=title, body_markdown=str(output or ""), status="draft", plugin_id=f"{kind}_run", plugin_version="1", sources=sources); return artifact_id
+    except Exception as exc: log.error(f"Failed to persist run artifact: {exc}"); return None
+
+SKILL_BUDGET_BYTES = 8192
+def skills_for_recipe(db: Any, recipe_id: Optional[str]) -> str:
+    if not recipe_id: return ""
+    try: skills = db.skills.list_for_recipe(recipe_id, active_only=True)
+    except Exception: return ""
+    parts, dropped, total = [], [], 0
+    for skill in skills:
+        entry = f"## {skill.title}\n{skill.body}"; entry_bytes = len(entry.encode("utf-8"))
+        if total + entry_bytes > SKILL_BUDGET_BYTES: dropped.append(skill.title); continue
+        parts.append(entry); total += entry_bytes
+    if dropped: log.warning(f"Skills dropped for recipe {recipe_id} (budget {SKILL_BUDGET_BYTES}B): " + ", ".join(dropped))
+    return "# Skills\n\n" + "\n\n".join(parts) if parts else ""
+def inject_skills(db: Any, system_prompt: str, recipe_id: Optional[str]) -> str:
+    skills_text = skills_for_recipe(db, recipe_id); return system_prompt + "\n\n" + skills_text if skills_text and system_prompt else skills_text or system_prompt
+
+def _run_egress(profile: Any, intel: Any, *, default_model: str) -> tuple[dict[str, Any], str]:
+    if profile is not None and profile.kind == "meshNode" and getattr(profile, "node", ""): return endpoint_egress(node=profile.node), str(profile.model or "")
+    if profile is not None and profile.kind == "openAICompatible" and profile.base_url: return endpoint_egress(cloud=True, base_url=profile.base_url), str(profile.model or "")
+    if getattr(intel, "active_provider", "") == "mesh": return endpoint_egress(node=getattr(intel, "node", "")), str(getattr(intel, "model_hint", "") or "")
+    if intel.active_provider == "cloud":
+        from ..config import Config
+        from ..intel.providers import effective_intel_cloud
+        effective = effective_intel_cloud(Config.load().meeting); return endpoint_egress(cloud=True, base_url=effective.base_url), str(effective.model or "")
+    return endpoint_egress(cloud=False), default_model
+
+def _context_material(db: Any, cid: str, kind: str, title: str) -> tuple[str, str]:
+    kind = str(kind or "").strip().lower()
+    try:
+        if kind == "note":
+            note = db.notes.get(cid)
+            if note is not None and not getattr(note, "deleted", False): return note.title or title or cid, str(note.body_markdown or "")
+        elif kind == "artifact":
+            art = db.plugins.get_artifact(cid)
+            if art is not None: return art.title or title or cid, str(art.body_markdown or "")
+        elif kind == "meeting":
+            state = db.meetings.get_meeting(cid)
+            if state is not None: return state.title or title or cid, _meeting_digest(state)
+        elif kind == "kb":
+            kb = db.kbs.get(cid)
+            if kb is not None and not getattr(kb, "deleted", False): return kb.name or title or cid, "\n".join(f"- {m}" for m in list(getattr(kb, "member_ids", None) or []))
+    except Exception as exc: log.debug(f"ask context {kind}:{cid} unavailable: {exc}")
+    return title or cid, ""
 
 # Node kinds that are pure control flow / fan-out — their presence makes a graph
 # NON-linear (the hub will not guess an order for these).

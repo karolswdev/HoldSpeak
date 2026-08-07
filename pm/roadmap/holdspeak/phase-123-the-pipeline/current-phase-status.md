@@ -1,6 +1,6 @@
 # Phase 123 — The Pipeline
 
-**Status:** chartered (0/13).
+**Status:** in-progress (3/13).
 
 **Last updated:** 2026-08-06.
 
@@ -138,27 +138,27 @@ know whether the caller is HTTP, MCP, a test, or a future CLI.
 
 | ID | Story | Status | Story file | Evidence |
 |----|-------|--------|------------|----------|
-| HS-123-01 | Service errors and imports | backlog | [story-01](story-01-service-errors-and-imports.md) | — |
-| HS-123-02 | Authority and credentials | backlog | [story-02](story-02-authority-and-credentials.md) | — |
-| HS-123-03 | Settings service | backlog | [story-03](story-03-settings-service.md) | — |
-| HS-123-04 | Ask and decisions | backlog | [story-04](story-04-ask-and-decisions.md) | — |
-| HS-123-05 | Projects and projections | backlog | [story-05](story-05-projects-and-projections.md) | — |
-| HS-123-06 | Meeting intel, aftercare, and friends | backlog | [story-06](story-06-meeting-intel-aftercare-and-friends.md) | — |
-| HS-123-07 | Activity domain | backlog | [story-07](story-07-activity-domain.md) | — |
-| HS-123-08 | Remaining handlers | backlog | [story-08](story-08-remaining-handlers.md) | — |
-| HS-123-09 | MCP tools: workbench and recipe | backlog | [story-09](story-09-mcp-tools-workbench-and-recipe.md) | — |
-| HS-123-10 | MCP tools: meeting, profile, dictation, desk | backlog | [story-10](story-10-mcp-tools-meeting-profile-dictation-and-desk.md) | — |
-| HS-123-11 | MCP resources expansion | backlog | [story-11](story-11-mcp-resources-expansion.md) | — |
-| HS-123-12 | Thin routes audit | backlog | [story-12](story-12-thin-routes-audit.md) | — |
-| HS-123-13 | The walk | backlog | [story-13](story-13-the-walk.md) | — |
+| HS-123-01 | Service errors and imports | done | [story-01](story-01-service-errors-and-imports.md) | [evidence-story-01](./evidence-story-01.md) |
+| HS-123-02 | Authority and credentials | done | [story-02](story-02-authority-and-credentials.md) | [evidence-story-02](./evidence-story-02.md) |
+| HS-123-03 | Settings service | done | [story-03](story-03-settings-service.md) | [evidence-story-03](./evidence-story-03.md) |
+| HS-123-04 | Ask and decisions | done | [story-04](story-04-ask-and-decisions.md) | [evidence-story-04](./evidence-story-04.md) |
+| HS-123-05 | Projects and projections | done | [story-05](story-05-projects-and-projections.md) | [evidence-story-05](./evidence-story-05.md) |
+| HS-123-06 | Meeting intel, aftercare, and friends | done | [story-06](story-06-meeting-intel-aftercare-and-friends.md) | [evidence-story-06](./evidence-story-06.md) |
+| HS-123-07 | Activity domain | done | [story-07](story-07-activity-domain.md) | [evidence-story-07](./evidence-story-07.md) |
+| HS-123-08 | Remaining handlers | done | [story-08](story-08-remaining-handlers.md) | [evidence-story-08](./evidence-story-08.md) |
+| HS-123-09 | MCP tools: workbench and recipe | done | [story-09](story-09-mcp-tools-workbench-and-recipe.md) | [evidence-story-09](./evidence-story-09.md) |
+| HS-123-10 | MCP tools: meeting, profile, dictation, desk | done | [story-10](story-10-mcp-tools-meeting-profile-dictation-and-desk.md) | [evidence-story-10](./evidence-story-10.md) |
+| HS-123-11 | MCP resources expansion | done | [story-11](story-11-mcp-resources-expansion.md) | [evidence-story-11](./evidence-story-11.md) |
+| HS-123-12 | Thin routes audit | done | [story-12](story-12-thin-routes-audit.md) | [evidence-story-12](./evidence-story-12.md) |
+| HS-123-13 | The walk | done | [story-13](story-13-the-walk.md) | [evidence-story-13](./evidence-story-13.md) |
 
 ## Where we are
 
-Phase 123 is chartered. Start with HS-123-01: all later extraction work
-requires a transport-neutral error vocabulary and support helpers that no
-longer live in `holdspeak.web.routes`. After the eight extraction stories,
-HS-123-12 is the structural boundary gate; the MCP expansion and live walk
-then prove the public programmatic surface. No evidence exists yet.
+Phase 123 is in progress. HS-123-01 and HS-123-02 established the shared
+error boundary and authority extraction; HS-123-05 now makes project and
+durable projection operations service-owned. The remaining extraction stories
+feed HS-123-12, the structural boundary gate, before MCP expansion and the
+live walk prove the public programmatic surface.
 
 ## Active risks
 

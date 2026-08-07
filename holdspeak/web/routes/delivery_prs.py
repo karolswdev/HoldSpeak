@@ -243,7 +243,7 @@ def build_delivery_prs_router(
             from ...db import get_database
             from ...inference_targets import build_intel_for_target, resolve_inference_target
             from ...kernel.runtime import _service as kernel_service
-            from .primitives._shared import RunLifecycle, _persist_run_artifact
+            from ...services.support import RunLifecycle, _persist_run_artifact
 
             db = get_database()
             broker = kernel_service()

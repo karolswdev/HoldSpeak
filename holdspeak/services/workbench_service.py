@@ -8,7 +8,7 @@ from typing import Any
 
 from holdspeak.db.core import Database
 from holdspeak.principals import Principal, PrincipalKind
-from holdspeak.services.primitive_service import ConflictError, NotFound, ValidationError
+from holdspeak.services.errors import ConflictError, NotFound, ServiceError, ValidationError
 
 
 SKILL_BODY_LIMIT = 8192
@@ -16,16 +16,6 @@ SKILL_BODY_LIMIT = 8192
 
 def _new_id(prefix: str) -> str:
     return f"{prefix}_{uuid.uuid4().hex[:12]}"
-
-
-class WorkbenchServiceError(Exception):
-    """An operation failure whose HTTP mapping is part of the public API."""
-
-    def __init__(self, error: str, *, status_code: int, detail: str | None = None) -> None:
-        self.error = error
-        self.status_code = status_code
-        self.detail = detail
-        super().__init__(detail or error)
 
 
 class WorkbenchService:
@@ -158,7 +148,7 @@ class WorkbenchService:
             run_id=run_id, target=target, output=item.result,
         )
         if not artifact_id:
-            raise WorkbenchServiceError("Mint failed", status_code=500)
+            raise ServiceError("artifact_persist_failed", "Mint failed")
         return {"artifact_id": artifact_id, "created": True}
 
     async def run(self, principal: Principal, workbench_id: str) -> dict[str, Any]:
@@ -293,24 +283,17 @@ class WorkbenchService:
     ) -> dict[str, Any]:
         now = time.monotonic()
         if now - self._resolve_timestamps.get(workbench_id, 0.0) < 2.0:
-            raise WorkbenchServiceError(
-                "resolver_rate_limited", status_code=429, detail="Wait before retrying"
-            )
+            raise ServiceError("resolver_rate_limited", "Wait before retrying", context={"error": "resolver_rate_limited", "detail": "Wait before retrying"})
         self._resolve_timestamps[workbench_id] = now
         if not text.strip():
             raise ValidationError("transcript is required")
         wb = self._require_workbench(workbench_id)
         if not wb.resolver_profile_id:
-            raise WorkbenchServiceError(
-                "resolver_not_configured", status_code=409,
-                detail="No resolver profile set on this workbench",
-            )
+            raise ServiceError("resolver_not_configured", "No resolver profile set on this workbench", context={"error": "resolver_not_configured", "detail": "No resolver profile set on this workbench"})
         from holdspeak.inference_targets import resolve_inference_target
         target = resolve_inference_target(self._db, wb.resolver_profile_id)
         if not target.ready:
-            raise WorkbenchServiceError(
-                "resolver_unavailable", status_code=503, detail=target.readiness_reason
-            )
+            raise ServiceError("resolver_unavailable", target.readiness_reason, context={"error": "resolver_unavailable", "detail": target.readiness_reason})
         from holdspeak.voice_resolver import ZoneCatalogEntry, resolve_voice_references
         zones = [
             ZoneCatalogEntry(id=z.id, name=z.name, items=0)
@@ -333,12 +316,9 @@ class WorkbenchService:
                                   "transcript_hash": hashlib.sha256(text.encode()).hexdigest()},
                 })
             if handle.get("state") == "refused":
-                raise WorkbenchServiceError(
-                    "resolver_refused", status_code=403,
-                    detail=handle.get("receipt", {}).get("outcome", "unknown"),
-                )
+                raise ServiceError("resolver_refused", handle.get("receipt", {}).get("outcome", "unknown"), context={"error": "resolver_refused", "detail": handle.get("receipt", {}).get("outcome", "unknown")})
             operation_id = handle.get("operation_id", "")
-        except WorkbenchServiceError:
+        except ServiceError:
             raise
         except Exception:
             pass

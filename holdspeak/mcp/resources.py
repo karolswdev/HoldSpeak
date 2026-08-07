@@ -8,9 +8,12 @@ from typing import Any
 
 from holdspeak.db import get_database
 from holdspeak.principals import Principal
+from holdspeak.services.desk_service import DeskService
+from holdspeak.services.dictation_service import DictationService
 from holdspeak.services.meeting_service import MeetingService
 from holdspeak.services.primitive_service import PrimitiveService
 from holdspeak.services.profile_service import ProfileService
+from holdspeak.services.recipe_service import RecipeService
 from holdspeak.services.workbench_service import WorkbenchService
 
 _JSON_MIME = "application/json"
@@ -136,6 +139,36 @@ _STATIC_RESOURCES = [
         "description": "Available local and configured inference profiles.",
         "mimeType": _JSON_MIME,
     },
+    {
+        "uri": "holdspeak://desk/snapshot",
+        "name": "Desk snapshot",
+        "description": "Canonical current Desk state, including its stored objects and layout.",
+        "mimeType": _JSON_MIME,
+    },
+    {
+        "uri": "holdspeak://workbenches",
+        "name": "Workbenches",
+        "description": "Canonical list of available workbenches and their current summaries.",
+        "mimeType": _JSON_MIME,
+    },
+    {
+        "uri": "holdspeak://recipes",
+        "name": "Recipes",
+        "description": "Canonical list of agent recipes available on the Desk.",
+        "mimeType": _JSON_MIME,
+    },
+    {
+        "uri": "holdspeak://profiles",
+        "name": "Profiles",
+        "description": "Canonical redacted list of configured inference profiles.",
+        "mimeType": _JSON_MIME,
+    },
+    {
+        "uri": "holdspeak://dictation/journal",
+        "name": "Dictation journal",
+        "description": "Canonical journal of stored dictation entries.",
+        "mimeType": _JSON_MIME,
+    },
 ]
 
 _RESOURCE_TEMPLATES = [
@@ -149,6 +182,30 @@ _RESOURCE_TEMPLATES = [
         "uriTemplate": "holdspeak://workbenches/{id}",
         "name": "Workbench detail",
         "description": "One workbench, including its item and run summary.",
+        "mimeType": _JSON_MIME,
+    },
+    {
+        "uriTemplate": "holdspeak://workbenches/{id}/runs",
+        "name": "Workbench runs",
+        "description": "Canonical run history for one workbench.",
+        "mimeType": _JSON_MIME,
+    },
+    {
+        "uriTemplate": "holdspeak://recipes/{id}",
+        "name": "Recipe detail",
+        "description": "Canonical stored definition for one agent recipe.",
+        "mimeType": _JSON_MIME,
+    },
+    {
+        "uriTemplate": "holdspeak://profiles/{id}",
+        "name": "Profile detail",
+        "description": "Canonical redacted configuration for one inference profile.",
+        "mimeType": _JSON_MIME,
+    },
+    {
+        "uriTemplate": "holdspeak://zones/{id}/members",
+        "name": "Zone members",
+        "description": "Canonical directory members for one Desk zone.",
         "mimeType": _JSON_MIME,
     },
     {
@@ -169,6 +226,10 @@ _PRIMITIVE_KIND_ALIASES = {
 }
 _PRIMITIVE_DETAIL_PATTERN = re.compile(r"^holdspeak://primitives/([^/]+)/([^/]+)$")
 _WORKBENCH_DETAIL_PATTERN = re.compile(r"^holdspeak://workbenches/([^/]+)$")
+_WORKBENCH_RUNS_PATTERN = re.compile(r"^holdspeak://workbenches/([^/]+)/runs$")
+_RECIPE_DETAIL_PATTERN = re.compile(r"^holdspeak://recipes/([^/]+)$")
+_PROFILE_DETAIL_PATTERN = re.compile(r"^holdspeak://profiles/([^/]+)$")
+_ZONE_MEMBERS_PATTERN = re.compile(r"^holdspeak://zones/([^/]+)/members$")
 _MEETING_DETAIL_PATTERN = re.compile(r"^holdspeak://meetings/([^/]+)$")
 
 
@@ -200,6 +261,16 @@ def read_resource(uri: str, principal: Principal) -> dict[str, list[dict[str, st
         return _contents(uri, _TEXT_MIME, text)
     if uri == "holdspeak://desk/inference-targets":
         return _contents(uri, _JSON_MIME, ProfileService(get_database()).list_inference_targets(principal))
+    if uri == "holdspeak://desk/snapshot":
+        return _contents(uri, _JSON_MIME, DeskService(get_database()).snapshot(principal))
+    if uri == "holdspeak://workbenches":
+        return _contents(uri, _JSON_MIME, WorkbenchService(get_database()).list_workbenches(principal))
+    if uri == "holdspeak://recipes":
+        return _contents(uri, _JSON_MIME, RecipeService(get_database()).list_recipes(principal))
+    if uri == "holdspeak://profiles":
+        return _contents(uri, _JSON_MIME, ProfileService(get_database()).list_profiles(principal))
+    if uri == "holdspeak://dictation/journal":
+        return _contents(uri, _JSON_MIME, DictationService(get_database()).list_journal(principal))
 
     if match := _PRIMITIVE_DETAIL_PATTERN.fullmatch(uri):
         kind = _PRIMITIVE_KIND_ALIASES.get(match.group(1))
@@ -207,8 +278,20 @@ def read_resource(uri: str, principal: Principal) -> dict[str, list[dict[str, st
             raise ResourceError(f"Unsupported primitive kind: {match.group(1)}")
         value = getattr(PrimitiveService(get_database()), f"get_{kind}")(principal, match.group(2))
         return _contents(uri, _JSON_MIME, value)
+    if match := _WORKBENCH_RUNS_PATTERN.fullmatch(uri):
+        value = WorkbenchService(get_database()).list_runs(principal, match.group(1))
+        return _contents(uri, _JSON_MIME, value)
     if match := _WORKBENCH_DETAIL_PATTERN.fullmatch(uri):
         value = WorkbenchService(get_database()).get_workbench(principal, match.group(1))
+        return _contents(uri, _JSON_MIME, value)
+    if match := _RECIPE_DETAIL_PATTERN.fullmatch(uri):
+        value = RecipeService(get_database()).get_recipe(principal, match.group(1))
+        return _contents(uri, _JSON_MIME, value)
+    if match := _PROFILE_DETAIL_PATTERN.fullmatch(uri):
+        value = ProfileService(get_database()).get_profile(principal, match.group(1))
+        return _contents(uri, _JSON_MIME, value)
+    if match := _ZONE_MEMBERS_PATTERN.fullmatch(uri):
+        value = PrimitiveService(get_database()).list_directory_members(principal, match.group(1))
         return _contents(uri, _JSON_MIME, value)
     if match := _MEETING_DETAIL_PATTERN.fullmatch(uri):
         value = MeetingService(get_database()).get_meeting(principal, match.group(1))

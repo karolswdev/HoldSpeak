@@ -12,7 +12,7 @@ from typing import Any, Callable
 from ..db.core import Database
 from ..meeting_exports import render_meeting_export
 from ..principals import Principal
-from .primitive_service import NotFound, ValidationError
+from holdspeak.services.errors import NotFound, ValidationError
 
 
 class MeetingService:
@@ -195,6 +195,151 @@ class MeetingService:
         return self._db.memory.search(
             clean_query, kinds=("artifact",), limit=limit
         ).to_dict()
+
+    def get_intent_timeline(self, principal: Principal, meeting_id: str, limit: int = 200) -> dict[str, Any]:
+        if self._db.meetings.get_meeting(meeting_id) is None:
+            raise NotFound("meeting", meeting_id)
+        from ..intent_timeline import detect_intent_transitions
+        windows = self._db.plugins.list_intent_windows(meeting_id, limit=limit)
+        return {"meeting_id": meeting_id, "windows": [{"meeting_id": window.meeting_id, "window_id": window.window_id, "start_seconds": window.start_seconds, "end_seconds": window.end_seconds, "transcript_hash": window.transcript_hash, "transcript_excerpt": window.transcript_excerpt, "profile": window.profile, "threshold": window.threshold, "active_intents": window.active_intents, "intent_scores": window.intent_scores, "override_intents": window.override_intents, "tags": window.tags, "metadata": window.metadata, "created_at": window.created_at.isoformat(), "updated_at": window.updated_at.isoformat()} for window in windows], "transitions": detect_intent_transitions([(window.window_id, list(window.active_intents)) for window in windows])}
+
+    def list_plugin_runs(self, principal: Principal, meeting_id: str, *, limit: int = 500, window_id: str | None = None) -> dict[str, Any]:
+        if self._db.meetings.get_meeting(meeting_id) is None:
+            raise NotFound("meeting", meeting_id)
+        runs = self._db.plugins.list_plugin_runs(meeting_id, window_id=window_id, limit=limit)
+        return {"meeting_id": meeting_id, "window_id": window_id, "runs": [{"id": run.id, "meeting_id": run.meeting_id, "window_id": run.window_id, "plugin_id": run.plugin_id, "plugin_version": run.plugin_version, "status": run.status, "idempotency_key": run.idempotency_key, "duration_ms": run.duration_ms, "output": run.output, "error": run.error, "deduped": run.deduped, "created_at": run.created_at.isoformat(), "updated_at": run.updated_at.isoformat()} for run in runs]}
+
+    def list_artifacts(self, principal: Principal, meeting_id: str, limit: int = 200) -> dict[str, Any]:
+        if self._db.meetings.get_meeting(meeting_id) is None:
+            raise NotFound("meeting", meeting_id)
+        artifacts = self._db.plugins.list_artifacts(meeting_id, limit=limit)
+        return {"meeting_id": meeting_id, "artifacts": [{"id": artifact.id, "meeting_id": artifact.meeting_id, "artifact_type": artifact.artifact_type, "title": artifact.title, "body_markdown": artifact.body_markdown, "structured_json": artifact.structured_json, "confidence": artifact.confidence, "status": artifact.status, "plugin_id": artifact.plugin_id, "plugin_version": artifact.plugin_version, "sources": artifact.sources, "created_at": artifact.created_at.isoformat(), "updated_at": artifact.updated_at.isoformat(), "origin": artifact.origin} for artifact in artifacts]}
+
+    def facets(self, principal: Principal, filters: dict[str, Any] | None = None) -> dict[str, Any]:
+        """Return archive facet values from the same durable meeting store."""
+        return self._db.meetings.list_facet_values()
+
+    def recover_capture(self, principal: Principal, meeting_id: str, payload: dict[str, Any] | None = None) -> dict[str, Any]:
+        meeting = self._db.meetings.recover_capture(meeting_id)
+        if meeting is None:
+            raise NotFound("meeting", meeting_id)
+        return {"meeting": meeting.to_dict(), "recovered": True}
+
+    def list_sync_conflicts(self, principal: Principal, meeting_id: str) -> dict[str, Any]:
+        if self._db.meetings.get_meeting(meeting_id) is None:
+            raise NotFound("meeting", meeting_id)
+        return {"conflicts": self._db.meetings.list_sync_conflicts(meeting_id)}
+
+    def resolve_sync_conflict(self, principal: Principal, meeting_id: str, conflict_id: str, payload: dict[str, Any]) -> dict[str, Any]:
+        resolution = str(payload.get("resolution") or "").strip()
+        if resolution not in {"keep_current", "use_incoming"}:
+            raise ValidationError("resolution must be keep_current or use_incoming")
+        conflict = self._db.meetings.get_sync_conflict(meeting_id, conflict_id)
+        if conflict is None:
+            raise NotFound("meeting conflict", conflict_id)
+        if conflict.get("resolved_at") is not None:
+            raise ConflictError("Meeting conflict was already resolved; reload the Meeting.", code="already_resolved")
+        incoming_state = None
+        incoming = conflict.get("incoming")
+        if resolution == "use_incoming" and not (isinstance(incoming, dict) and bool(incoming.get("deleted"))):
+            if not isinstance(incoming, dict):
+                raise ConflictError("Incoming Meeting version is unreadable; current work retained.", code="unreadable_incoming")
+            try:
+                from .sync_service import meeting_state_from_sync_value
+                incoming_state = meeting_state_from_sync_value({**incoming, "id": meeting_id})
+            except (TypeError, ValueError) as exc:
+                raise ConflictError(f"Incoming Meeting version is unreadable; current work retained: {exc}", code="unreadable_incoming") from exc
+        try:
+            outcome = self._db.meetings.resolve_sync_conflict(meeting_id, conflict_id, resolution=resolution, incoming_state=incoming_state)
+        except (TypeError, ValueError) as exc:
+            raise ConflictError(f"Conflict was not changed; both versions remain: {exc}. Choose a version and retry.", code="resolution_failed") from exc
+        if outcome == "missing":
+            raise NotFound("meeting conflict", conflict_id)
+        if outcome == "already_resolved":
+            raise ConflictError("Meeting conflict was already resolved; reload the Meeting.", code="already_resolved")
+        meeting = self._db.meetings.get_meeting(meeting_id)
+        return {"resolution": resolution, "deleted": outcome == "deleted", "meeting": meeting.to_dict() if meeting is not None else None, "remaining_conflicts": self._db.meetings.list_sync_conflicts(meeting_id)}
+
+    def list_speakers(self, principal: Principal, filters: dict[str, Any] | None = None) -> dict[str, Any]:
+        speakers = []
+        for speaker in self._db.meetings.get_all_speakers():
+            stats = self._db.meetings.get_speaker_stats(speaker.id)
+            speakers.append({
+                "id": speaker.id, "name": speaker.name, "avatar": speaker.avatar,
+                "sample_count": speaker.sample_count,
+                "total_segments": stats.get("total_segments", 0),
+                "total_speaking_time": stats.get("total_speaking_time", 0.0),
+                "meeting_count": stats.get("meeting_count", 0),
+                "first_seen": stats["first_seen"].isoformat() if stats.get("first_seen") else None,
+                "last_seen": stats["last_seen"].isoformat() if stats.get("last_seen") else None,
+            })
+        speakers.sort(key=lambda item: (item.get("last_seen") or "", item.get("sample_count") or 0), reverse=True)
+        return {"speakers": speakers, "total": len(speakers)}
+
+    def get_speaker(self, principal: Principal, speaker_id: str, limit: int = 500) -> dict[str, Any]:
+        speaker = self._db.meetings.get_speaker(speaker_id)
+        if speaker is None:
+            raise NotFound("speaker", speaker_id)
+        stats = self._db.meetings.get_speaker_stats(speaker_id)
+        groups = self._db.meetings.get_speaker_segments(speaker_id, limit=limit)
+        for group in groups:
+            if isinstance(group.get("meeting_date"), datetime):
+                group["meeting_date"] = group["meeting_date"].isoformat()
+        return {"speaker": {"id": speaker.id, "name": speaker.name, "avatar": speaker.avatar, "sample_count": speaker.sample_count}, "stats": {"total_segments": stats.get("total_segments", 0), "total_speaking_time": stats.get("total_speaking_time", 0.0), "meeting_count": stats.get("meeting_count", 0), "first_seen": stats["first_seen"].isoformat() if stats.get("first_seen") else None, "last_seen": stats["last_seen"].isoformat() if stats.get("last_seen") else None}, "meetings": groups}
+
+    def update_speaker(self, principal: Principal, speaker_id: str, patch: dict[str, Any]) -> dict[str, Any]:
+        updated = False
+        if patch.get("name") is not None:
+            name = str(patch["name"]).strip()
+            if not name:
+                raise ValidationError("Speaker name cannot be empty. The saved name is unchanged. Enter a name and retry.")
+            updated = self._db.meetings.update_speaker_name(speaker_id, name) or updated
+        if patch.get("avatar") is not None:
+            avatar = str(patch["avatar"]).strip()
+            if not avatar:
+                raise ValidationError("Speaker avatar cannot be empty. The saved avatar is unchanged. Pick an avatar and retry.")
+            updated = self._db.meetings.update_speaker_avatar(speaker_id, avatar) or updated
+        speaker = self._db.meetings.get_speaker(speaker_id) if updated else None
+        if speaker is None:
+            raise NotFound("speaker", speaker_id)
+        return {"success": True, "speaker": {"id": speaker.id, "name": speaker.name, "avatar": speaker.avatar, "sample_count": speaker.sample_count}}
+
+    def list_all_action_items(self, principal: Principal, filters: dict[str, Any] | None = None) -> dict[str, Any]:
+        filters = filters or {}
+        items = self._db.meetings.list_action_items(include_completed=bool(filters.get("include_completed", False)), owner=filters.get("owner"), meeting_id=filters.get("meeting_id"))
+        return {"action_items": [self._action_item_payload(item) for item in items]}
+
+    def update_action_item(self, principal: Principal, item_id: str, patch: dict[str, Any]) -> dict[str, Any]:
+        status = patch.get("status")
+        if status not in ("done", "pending", "dismissed"):
+            raise ValidationError(f"Invalid status: {status}")
+        if not self._db.meetings.update_action_item_status(item_id, status):
+            raise NotFound("action item", item_id)
+        return self._updated_action_item(item_id)
+
+    def review_action_item(self, principal: Principal, item_id: str, patch: dict[str, Any]) -> dict[str, Any]:
+        state = str(patch.get("review_state") or "").strip().lower()
+        if state not in ("pending", "accepted"):
+            raise ValidationError(f"Invalid review_state: {state}")
+        if not self._db.meetings.update_action_item_review_state(item_id, state):
+            raise NotFound("action item", item_id)
+        return self._updated_action_item(item_id)
+
+    def edit_action_item(self, principal: Principal, item_id: str, patch: dict[str, Any]) -> dict[str, Any]:
+        task = str(patch.get("task") or "").strip()
+        if not task:
+            raise ValidationError("Action item task cannot be empty. The saved task is unchanged. Enter a task and retry.")
+        if not self._db.meetings.edit_action_item(item_id, task=task, owner=patch.get("owner"), due=patch.get("due")):
+            raise NotFound("action item", item_id)
+        return self._updated_action_item(item_id)
+
+    def _updated_action_item(self, item_id: str) -> dict[str, Any]:
+        item = self._db.meetings.get_action_item(item_id)
+        return {"success": True, "action_item": self._action_item_payload(item) if item is not None else None}
+
+    @staticmethod
+    def _action_item_payload(item: Any) -> dict[str, Any]:
+        return {"id": item.id, "task": item.task, "owner": item.owner, "due": item.due, "status": item.status, "review_state": item.review_state, "source_timestamp": item.source_timestamp, "meeting_id": item.meeting_id, "meeting_title": item.meeting_title, "meeting_date": item.meeting_date.isoformat(), "created_at": item.created_at.isoformat(), "completed_at": item.completed_at.isoformat() if item.completed_at else None, "reviewed_at": item.reviewed_at.isoformat() if item.reviewed_at else None}
 
     @staticmethod
     def _callback_payload(result: Any) -> dict[str, Any] | Any | None:

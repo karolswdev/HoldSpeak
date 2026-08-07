@@ -12,8 +12,7 @@ owns one route cluster and exposes `build_<name>_router(ctx)`; this package's
 `from .meetings import build_meetings_router` keeps working unchanged.
 
 The lifecycle/mutation handlers read callbacks (`on_*`, `broadcast`) from the
-context; the DB-backed read routes close over no server state and call the
-module-level `get_database()` directly, exactly as before.
+context; persisted meeting operations delegate to composition-bound services.
 """
 
 from __future__ import annotations

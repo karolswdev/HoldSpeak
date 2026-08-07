@@ -19,7 +19,7 @@ from fastapi.responses import JSONResponse
 
 from ....logging_config import get_logger
 from ....services.coder_service import CoderService
-from ....services.primitive_service import NotFound, ValidationError
+from ....services.errors import NotFound, ValidationError
 from ...context import WebContext
 from ...runtime_support import error_500
 

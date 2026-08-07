@@ -1,11 +1,4 @@
-"""Cadence Engine HTTP routes (CAD-2-02/03).
-
-A read API over the Phase-1 substrate + local lifecycle actions (snooze/kill/close)
-+ a synchronous run-now. Every loop carries its evidence, a deterministic prepared
-next action, and an honest egress badge. NO autonomous external side effect: lifecycle
-actions are local cadence_* writes; a `next_action` that maps to a connector is a DRAFT
-(executing it is the actuator approve→execute path, Phase 6/7).
-"""
+"""Cadence transport adapters; cadence state lives in the application service."""
 from __future__ import annotations
 
 import asyncio
@@ -14,286 +7,78 @@ from typing import Any
 
 from fastapi import APIRouter, Body, HTTPException, Request
 
-from ...intel.providers import endpoint_egress
+from ...principals import UNAUTHENTICATED
+from ...services.errors import NotFound, ServiceError
 from ..context import WebContext
 
-# Phase 2 reads/writes are local-only; the badge is honest about that —
-# built by the one egress constructor (HS-84-04).
-_LOCAL_EGRESS = endpoint_egress(cloud=False, label="Local only")
 
-
-def _cadence_llm():
-    """The capability-gated LLM callable (CAD-7) — None unless `cadence.use_llm` is on.
-
-    Builds the user's configured intel provider; returns (system, user) -> text. The
-    next-action generator is fail-closed, so a None or a failing llm is harmless."""
-    from ...config import Config
-
-    if not getattr(Config.load().cadence, "use_llm", False):
-        return None
-    try:
-        from ...intel.providers import build_configured_meeting_intel
-
-        intel = build_configured_meeting_intel()
-        return lambda sysp, usr: intel.run_prompt(system_prompt=sysp, user_prompt=usr)
-    except Exception:
-        return None
-
-
-def _loop_dict(loop, *, with_next_action: bool = True) -> dict[str, Any]:
-    from ...cadence.next_action import generate_next_action
-
-    out: dict[str, Any] = {
-        "id": loop.id,
-        "title": loop.title,
-        "summary": loop.summary,
-        "project": loop.project,
-        "source_type": loop.source_type,
-        "status": loop.status,
-        "priority": loop.priority,
-        "needs_review": loop.needs_review,
-        "owner": loop.owner,
-        "due_at": loop.due_at,
-        "snoozed_until": loop.snoozed_until,
-        "stale_score": loop.stale_score,
-        "nudge_count": loop.nudge_count,
-        "evidence": [
-            {"kind": e.kind, "ref_id": e.ref_id, "label": e.label,
-             "timestamp": e.timestamp, "deep_link": e.deep_link}
-            for e in loop.evidence
-        ],
-        "egress": _LOCAL_EGRESS,
-    }
-    if with_next_action:
-        na = generate_next_action(loop)
-        out["next_action"] = {
-            "kind": na.kind, "title": na.title, "body_markdown": na.body_markdown,
-            "reversible": na.reversible, "confidence": na.confidence,
-        }
-    return out
+def _raise(exc: ServiceError) -> None:
+    if isinstance(exc, NotFound):
+        raise HTTPException(status_code=404, detail="loop not found") from exc
+    raise HTTPException(status_code=400, detail=exc.detail) from exc
 
 
 def build_cadence_router(ctx: WebContext) -> APIRouter:
     router = APIRouter(prefix="/api/cadence", tags=["cadence"])
+    service = ctx.cadence_service
+    if service is None:  # compatibility composition for isolated route fixtures
+        from ... import db as hsdb
+        from ...config import Config
+        from ...services.cadence_service import CadenceService
+        service = CadenceService(hsdb.get_database(), Config.load().cadence)
+    principal = lambda request: getattr(request.state, "principal", UNAUTHENTICATED)
 
     @router.get("/status")
-    async def status() -> dict[str, Any]:
-        from ...config import Config
-        from ...db import get_database
-
-        db = get_database()
-        c = Config.load().cadence
-        counts: dict[str, int] = {}
-        for loop in db.cadence.list_loops(include_terminal=True):
-            counts[loop.status] = counts.get(loop.status, 0) + 1
-        return {
-            "enabled": c.enabled,
-            "pressure": c.pressure,
-            "tick_interval_seconds": c.tick_interval_seconds,
-            "quiet_hours": {"start": c.quiet_hours_start, "end": c.quiet_hours_end},
-            "max_nudges_per_day": c.max_nudges_per_day,
-            "policies": len(db.cadence.list_policies()),
-            "counts": counts,
-            "egress": _LOCAL_EGRESS,
-        }
+    async def status(request: Request) -> dict[str, Any]:
+        return service.status(principal(request))
 
     @router.get("/loops")
-    async def loops(all: bool = False) -> dict[str, Any]:
-        from ...db import get_database
-
-        db = get_database()
-        items = db.cadence.list_loops(include_terminal=all)
-        return {"loops": [_loop_dict(loop) for loop in items], "egress": _LOCAL_EGRESS}
+    async def loops(request: Request, all: bool = False) -> dict[str, Any]:
+        return service.list_loops(principal(request), include_terminal=all)
 
     @router.get("/brief")
-    async def brief() -> dict[str, Any]:
-        from ...cadence.brief import build_brief
-        from ...db import get_database
-
-        b = build_brief(get_database())
-        return {
-            "date": b.date,
-            "headline": b.headline,
-            "open_count": b.open_count,
-            "generated_by": b.generated_by,
-            "items": [
-                {"loop": _loop_dict(it.loop, with_next_action=False),
-                 "next_action": {"kind": it.next_action.kind, "title": it.next_action.title,
-                                 "body_markdown": it.next_action.body_markdown}}
-                for it in b.items
-            ],
-            "egress": _LOCAL_EGRESS,
-        }
+    async def brief(request: Request) -> dict[str, Any]:
+        return service.brief(principal(request))
 
     @router.get("/closeout")
-    async def closeout() -> dict[str, Any]:
-        from datetime import datetime
-
-        from ...cadence.closeout import build_closeout, escalation_severity
-        from ...db import get_database
-
-        now = datetime.now()
-        co = build_closeout(get_database(), now=now)
-        return {
-            "date": co.date,
-            "open_count": co.open_count,
-            "summary": co.summary,
-            "recs": [
-                {"loop": _loop_dict(r.loop), "severity": r.severity,
-                 "action": r.action, "reason": r.reason}
-                for r in co.recs
-            ],
-            "egress": _LOCAL_EGRESS,
-        }
+    async def closeout(request: Request) -> dict[str, Any]:
+        return service.closeout(principal(request))
 
     @router.post("/closeout/apply")
-    async def closeout_apply(body: dict = Body(default={})) -> dict[str, Any]:
-        """Batch-apply lifecycle decisions: [{loop_id, action}]. Local only."""
-        from ...cadence.closeout import apply_decision
-        from ...db import get_database
-
-        db = get_database()
-        applied, skipped = 0, 0
-        for d in (body.get("decisions") or []):
-            if apply_decision(db, str(d.get("loop_id", "")), str(d.get("action", ""))):
-                applied += 1
-            else:
-                skipped += 1
-        return {"applied": applied, "skipped": skipped, "egress": _LOCAL_EGRESS}
+    async def closeout_apply(request: Request, body: dict = Body(default={})) -> dict[str, Any]:
+        return service.apply_closeout(principal(request), body)
 
     @router.get("/history")
-    async def history(limit: int = 50) -> dict[str, Any]:
-        from ...db import get_database
-
-        return {"nudges": get_database().cadence.list_nudges(limit=limit), "egress": _LOCAL_EGRESS}
+    async def history(request: Request, limit: int = 50) -> dict[str, Any]:
+        return service.history(principal(request), limit=limit)
 
     @router.get("/audit")
-    async def audit() -> dict[str, Any]:
-        """The telemetry-free local audit snapshot (CAD-8) — nothing leaves the machine."""
-        from ...cadence.audit import export_audit
-        from ...db import get_database
-
-        return export_audit(get_database())
+    async def audit(request: Request) -> dict[str, Any]:
+        return service.audit(principal(request))
 
     @router.get("/loops/{loop_id}")
-    async def loop_detail(loop_id: str) -> dict[str, Any]:
-        from ...db import get_database
+    async def loop_detail(request: Request, loop_id: str) -> dict[str, Any]:
+        try:
+            return await service.get_loop(principal(request), loop_id)
+        except ServiceError as exc:
+            _raise(exc)
 
-        loop = get_database().cadence.get_loop(loop_id)
-        if loop is None:
-            raise HTTPException(status_code=404, detail="loop not found")
-        # The single-loop detail is where a drafted next action is worth the LLM call
-        # (gated; fail-closed to deterministic). The list/brief stay deterministic.
-        from ...cadence.llm_action import next_action_for
-
-        out = _loop_dict(loop, with_next_action=False)
-        # off the event loop: the llm callable can resolve to a mesh relay,
-        # which waits on this same loop serving the worker's claim polls
-        na = await asyncio.to_thread(next_action_for, loop, llm=_cadence_llm())
-        out["next_action"] = {"kind": na.kind, "title": na.title,
-                              "body_markdown": na.body_markdown, "reversible": na.reversible,
-                              "confidence": na.confidence, "generated_by": na.generated_by}
-        return out
-
-    def _require(loop_id: str):
-        from ...db import get_database
-
-        db = get_database()
-        loop = db.cadence.get_loop(loop_id)
-        if loop is None:
-            raise HTTPException(status_code=404, detail="loop not found")
-        return db, loop
-
+    # These existing lifecycle actions remain local-only. They delegate through
+    # the same service-owned database rather than reopening a route database seam.
     @router.post("/loops/{loop_id}/snooze")
-    async def snooze(loop_id: str, body: dict = Body(default={})) -> dict[str, Any]:
-        db, _ = _require(loop_id)
-        until = body.get("until")
-        if not until:
-            hours = float(body.get("hours", 24))
-            until = (datetime.now() + timedelta(hours=hours)).isoformat()
-        db.cadence.snooze(loop_id, until)
-        return _loop_dict(db.cadence.get_loop(loop_id))
+    async def snooze(request: Request, loop_id: str, body: dict = Body(default={})) -> dict[str, Any]:
+        return service.snooze(principal(request), loop_id, body)
 
     @router.post("/loops/{loop_id}/kill")
-    async def kill(loop_id: str) -> dict[str, Any]:
-        db, _ = _require(loop_id)
-        db.cadence.set_status(loop_id, "killed")  # stays killed across re-collection
-        return _loop_dict(db.cadence.get_loop(loop_id))
+    async def kill(request: Request, loop_id: str) -> dict[str, Any]:
+        return service.set_status(principal(request), loop_id, "killed")
 
     @router.post("/loops/{loop_id}/close")
-    async def close(loop_id: str) -> dict[str, Any]:
-        db, _ = _require(loop_id)
-        db.cadence.set_status(loop_id, "closed")
-        return _loop_dict(db.cadence.get_loop(loop_id))
-
-    @router.post("/loops/{loop_id}/reply")
-    async def reply_to_agent(
-        loop_id: str, request: Request, body: dict = Body(default={})
-    ) -> dict[str, Any]:
-        """Deliver a USER-TYPED reply into a waiting agent's terminal (CAD-3-03).
-
-        Never autonomous: requires an explicit non-empty `text`. Only valid for an
-        `agent_question` loop whose session still has a tmux pane. Delivery adapts
-        onto the existing `process.input@1` operation before terminal input.
-        """
-        db, loop = _require(loop_id)
-        if loop.source_type != "agent_question":
-            raise HTTPException(status_code=400, detail="not an agent loop")
-        text = str(body.get("text", "")).strip()
-        if not text:
-            raise HTTPException(status_code=400, detail="reply text is required")
-
-        from ...agent_context import list_recent_awaiting_agent_sessions
-        from ...delivery.direct_gesture_input import (
-            ProcessInputRefused,
-            submit_process_input_from_owner_gesture,
-        )
-        from ...principals import UNAUTHENTICATED
-
-        session = next(
-            (s for s in list_recent_awaiting_agent_sessions() if s.session_id == loop.source_id),
-            None,
-        )
-        pane = getattr(session, "tmux_pane", None) if session else None
-        if not pane:
-            raise HTTPException(status_code=409, detail="no terminal pane for this agent session")
-        try:
-            delivery = await asyncio.to_thread(
-                submit_process_input_from_owner_gesture,
-                pane=str(pane),
-                text=text,
-                session_key=str(session.session_id),
-                agent=str(getattr(session, "agent", "") or ""),
-                principal=getattr(request.state, "principal", UNAUTHENTICATED),
-            )
-        except ProcessInputRefused as exc:
-            raise HTTPException(status_code=409, detail=exc.reason) from exc
-
-        # The reply answers the agent — close the loop (its question is handled).
-        db.cadence.set_status(loop_id, "closed")
-        db.cadence.bump_nudge(loop_id)
-        return {
-            "delivered": True,
-            "pane": pane,
-            "submitted": True,
-            "operation_id": delivery["operation_id"],
-            "command_id": delivery["command_id"],
-            "egress": _LOCAL_EGRESS,
-        }
+    async def close(request: Request, loop_id: str) -> dict[str, Any]:
+        return service.set_status(principal(request), loop_id, "closed")
 
     @router.post("/run-now")
-    async def run_now() -> dict[str, Any]:
-        from ...cadence.service import CadenceService
-        from ...config import Config
-        from ...db import get_database
-
-        result = CadenceService(get_database(), Config.load().cadence).tick(datetime.now())
-        return {
-            "at": result.at,
-            "projected": result.projected,
-            "open_loops": result.open_loops,
-            "due": [_loop_dict(loop) for loop in result.due],
-            "egress": _LOCAL_EGRESS,
-        }
+    async def run_now(request: Request) -> dict[str, Any]:
+        return service.run_now(principal(request))
 
     return router

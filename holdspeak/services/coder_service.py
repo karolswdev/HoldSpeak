@@ -6,7 +6,7 @@ from typing import Any, Callable
 
 from ..db.core import Database
 from ..principals import Principal
-from .primitive_service import NotFound, ValidationError
+from holdspeak.services.errors import NotFound, ValidationError
 
 
 class CoderService:

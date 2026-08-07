@@ -7,8 +7,8 @@ from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 
 from ....logging_config import get_logger
-from ....services.primitive_service import ConflictError, NotFound, ValidationError
-from ....services.workbench_service import WorkbenchService, WorkbenchServiceError
+from ....services.errors import ConflictError, NotFound, ServiceError, ValidationError
+from ....services.workbench_service import WorkbenchService
 from ...context import WebContext
 from ...runtime_support import error_500
 from ._shared import _json_body
@@ -29,11 +29,12 @@ def build_workbenches_router(ctx: WebContext) -> APIRouter:
     def _not_found(kind: str, item_id: str) -> JSONResponse:
         return JSONResponse({"error": f"Unknown {kind}: {item_id}"}, status_code=404)
 
-    def _service_error(exc: WorkbenchServiceError) -> JSONResponse:
-        body: dict[str, Any] = {"error": exc.error}
-        if exc.detail is not None:
-            body["detail"] = exc.detail
-        return JSONResponse(body, status_code=exc.status_code)
+    def _service_error(exc: ServiceError) -> JSONResponse:
+        statuses = {"artifact_persist_failed": 500, "resolver_rate_limited": 429, "resolver_not_configured": 409, "resolver_unavailable": 503, "resolver_refused": 403}
+        body: dict[str, Any] = {"error": exc.context.get("error", exc.detail)}
+        if "detail" in exc.context:
+            body["detail"] = exc.context["detail"]
+        return JSONResponse(body, status_code=statuses.get(exc.code, 500))
 
     @router.get("/api/workbenches")
     async def api_list_workbenches(request: Request) -> Any:
@@ -145,7 +146,7 @@ def build_workbenches_router(ctx: WebContext) -> APIRouter:
             return _not_found("item", item_id)
         except ValidationError as exc:
             return JSONResponse({"error": str(exc)}, status_code=400)
-        except WorkbenchServiceError as exc:
+        except ServiceError as exc:
             return _service_error(exc)
         except Exception as exc:
             return error_500(exc, log, "Failed to retry mint")
@@ -174,7 +175,7 @@ def build_workbenches_router(ctx: WebContext) -> APIRouter:
             return _not_found("workbench", workbench_id)
         except ValidationError as exc:
             return JSONResponse({"error": str(exc)}, status_code=400)
-        except WorkbenchServiceError as exc:
+        except ServiceError as exc:
             return _service_error(exc)
         except Exception as exc:
             return error_500(exc, log, "Failed to resolve voice references")

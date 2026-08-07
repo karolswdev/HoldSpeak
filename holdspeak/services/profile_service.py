@@ -2,11 +2,14 @@
 from __future__ import annotations
 
 from datetime import datetime
+import os
+from pathlib import Path
+import time
 from typing import Any
 
 from ..db.core import Database
 from ..principals import Principal
-from .primitive_service import NotFound, ValidationError
+from holdspeak.services.errors import NotFound, ServiceError, ValidationError
 
 
 class ProfileService:
@@ -78,6 +81,40 @@ class ProfileService:
                 "removal": "not_before_inference_target_v3",
             },
         }
+
+    def probe_inference_target(
+        self, principal: Principal, target_id: str, payload: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
+        from ..intel.providers import profile_key_env
+        from ..setup_runtime import discover_endpoint_models
+
+        profile = self._db.profiles.get(target_id)
+        if profile is None:
+            raise NotFound("destination", target_id)
+        if profile.kind == "openAICompatible":
+            started = time.perf_counter()
+            discovered = discover_endpoint_models(profile.base_url, api_key=os.environ.get(profile_key_env(profile.id)))
+            reachable = bool(discovered.get("ok"))
+            return {"reachable": reachable, "latency_ms": int((time.perf_counter() - started) * 1000), "models": list(discovered.get("models") or []), "error": None if reachable else str(discovered.get("detail") or "Unreachable")}
+        if profile.kind == "onDevice":
+            model_file = Path(profile.model_file).expanduser()
+            reachable = model_file.is_file()
+            return {"reachable": reachable, "latency_ms": None, "models": [profile.model] if reachable and profile.model else [], "error": None if reachable else f"Model file not found: {model_file}"}
+        if profile.kind == "meshNode":
+            from ..intel.mesh_relay import DEFAULT_LIVENESS_WINDOW_SECONDS
+            last_seen = self._db.mesh_relay.worker_last_seen(profile.node)
+            age = None if last_seen is None else (datetime.now() - last_seen).total_seconds()
+            reachable = age is not None and age <= DEFAULT_LIVENESS_WINDOW_SECONDS
+            error = None if reachable else (f"Mesh node '{profile.node}' has never checked in" if age is None else f"Mesh node '{profile.node}' last checked in {int(age)}s ago")
+            return {"reachable": reachable, "latency_ms": None, "models": [], "error": error}
+        return {"reachable": False, "latency_ms": None, "models": [], "error": f"Destination kind '{profile.kind}' cannot be probed"}
+
+    def get_inference_target(self, principal: Principal, target_id: str) -> dict[str, Any]:
+        from ..inference_targets import resolve_inference_target
+        target = resolve_inference_target(self._db, target_id)
+        if target.readiness_state == "unavailable":
+            raise ServiceError("target_unavailable", target.readiness_reason, context={"status": 404})
+        return {"inference_target": target.to_dict()}
 
     @staticmethod
     def _new_id() -> str:

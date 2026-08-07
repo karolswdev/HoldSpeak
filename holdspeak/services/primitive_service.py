@@ -12,27 +12,12 @@ from typing import Any
 from ..db.core import Database
 from ..db.primitives import ZoneNameTaken, normalize_zone_name
 from ..principals import Principal
+from holdspeak.services.errors import ConflictError, NotFound, ValidationError
+from .support import capability_descriptor, linearize
 
 
 def _new_id(prefix: str) -> str:
     return f"{prefix}_{uuid.uuid4().hex[:12]}"
-
-
-class NotFound(Exception):
-    def __init__(self, kind: str, id: str) -> None:
-        self.kind = kind
-        self.id = id
-        super().__init__(f"Unknown {kind}: {id}")
-
-
-class ValidationError(Exception):
-    pass
-
-
-class ConflictError(Exception):
-    def __init__(self, message: str, *, existing_name: str = "") -> None:
-        self.existing_name = existing_name
-        super().__init__(message)
 
 
 class PrimitiveService:
@@ -462,9 +447,6 @@ class PrimitiveService:
             raise ValidationError("zone name must be 64 characters or fewer")
 
     def _workflow_payload(self, workflow: Any) -> dict[str, Any]:
-        from ..web.routes.primitives._shared import capability_descriptor
-        from ..web.routes.workflow_graph import linearize
-
         plan = linearize(workflow.graph_json) if workflow.graph_json else None
         if plan is not None and plan.linearizable:
             readiness, detail, support = "ready", "", "linear_graph"
@@ -492,8 +474,6 @@ class PrimitiveService:
         return row
 
     def _chain_payload(self, chain: Any) -> dict[str, Any]:
-        from ..web.routes.primitives._shared import capability_descriptor
-
         missing = [
             rid for rid in chain.steps if self._db.recipes.get(str(rid)) is None
         ]

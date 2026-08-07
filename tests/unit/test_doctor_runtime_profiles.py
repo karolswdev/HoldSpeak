@@ -106,7 +106,7 @@ def test_the_scattered_egress_sites_use_the_one_constructor() -> None:
 def test_run_egress_default_cloud_reports_the_effective_endpoint(monkeypatch) -> None:
     # HS-84-01 made the default engine adopt the assigned intel profile; the
     # badge must report THAT endpoint, not the raw legacy config field.
-    from holdspeak.web.routes.primitives.ask import _run_egress
+    from holdspeak.services.support import _run_egress
 
     cfg = SimpleNamespace(meeting=_config(intel_profile_id="p-43").meeting)
     monkeypatch.setattr("holdspeak.config.Config.load", classmethod(lambda cls, path=None: cfg))
@@ -115,7 +115,7 @@ def test_run_egress_default_cloud_reports_the_effective_endpoint(monkeypatch) ->
     )
 
     egress, model = _run_egress(
-        ctx=None, prof=None, intel=SimpleNamespace(active_provider="cloud")
+        None, SimpleNamespace(active_provider="cloud"), default_model=""
     )
     assert egress == {"scope": "cloud", "host": "192.168.1.43"}
     assert model == "Qwen3.5-9B-Q6_K"

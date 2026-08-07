@@ -1,18 +1,15 @@
-"""Project KB / association routes (HS-26-05).
-
-Project CRUD, meeting<->project association, per-project summary / action-items /
-artifacts, the cross-meeting briefings timeline, and a meeting's project list.
-Handlers move verbatim (`self._project_detector` -> `ctx.project_detector`).
-"""
-
+"""Thin HTTP adapters for the durable project boundary (HS-123-05)."""
 from __future__ import annotations
 
 from typing import Any
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 
 from ...logging_config import get_logger
+from ...principals import UNAUTHENTICATED
+from ...services.errors import NotFound, ValidationError
+from ...services.project_service import ProjectService
 from ..context import WebContext
 from ..runtime_support import error_500
 
@@ -21,460 +18,191 @@ log = get_logger("web.routes.projects")
 
 def build_projects_router(ctx: WebContext) -> APIRouter:
     router = APIRouter()
+    service: ProjectService = ctx.project_service
+
+    def principal(request: Request) -> Any:
+        return getattr(request.state, "principal", UNAUTHENTICATED)
+
+    def not_found(exc: NotFound, *, success: bool = False) -> JSONResponse:
+        body: dict[str, Any] = {"error": "Project not found" if exc.kind == "project" else str(exc)}
+        if success:
+            body["success"] = False
+        return JSONResponse(body, status_code=404)
 
     @router.get("/api/projects/{project_id}/briefings")
-    async def api_list_project_briefings(
-        project_id: str,
-        limit: int = 50,
-    ) -> Any:
-        """HS-13-09: per-project meeting_context timeline.
-
-        Returns every meeting_context briefing whose
-        `value.project_id` matches, ordered newest first.
-        The /history Projects-tab panel walks this for the
-        cross-meeting narrative.
-        """
-        from ...db import get_database
-
+    async def api_list_project_briefings(project_id: str, request: Request, limit: int = 50) -> Any:
         try:
-            clean_limit = max(1, min(int(limit), 200))
-        except (TypeError, ValueError):
-            clean_limit = 50
-        try:
-            db = get_database()
-            if db.projects.get_project(project_id) is None:
-                return JSONResponse(
-                    {"error": f"Unknown project: {project_id}"},
-                    status_code=404,
-                )
-            annotations = db.activity.list_activity_annotations(
-                source_connector_id="meeting_context",
-                annotation_type="meeting_context_briefing",
-                limit=max(clean_limit * 4, 100),
-            )
-            rows = []
-            for ann in annotations:
-                if not isinstance(ann.value, dict):
-                    continue
-                if ann.value.get("project_id") != project_id:
-                    continue
-                rows.append(
-                    {
-                        "id": ann.id,
-                        "title": ann.title,
-                        "value": ann.value,
-                        "created_at": ann.created_at.isoformat(),
-                        "updated_at": ann.updated_at.isoformat(),
-                    }
-                )
-                if len(rows) >= clean_limit:
-                    break
-            return JSONResponse(
-                {"project_id": project_id, "briefings": rows}
-            )
-        except Exception as e:
-            return error_500(e, log, "Failed to list project briefings")
+            return JSONResponse(service.list_briefings(principal(request), project_id, limit))
+        except NotFound:
+            return JSONResponse({"error": f"Unknown project: {project_id}"}, status_code=404)
+        except Exception as exc:
+            return error_500(exc, log, "Failed to list project briefings")
 
     @router.get("/api/projects")
-    async def api_list_projects(include_archived: bool = False) -> Any:
+    async def api_list_projects(request: Request, include_archived: bool = False) -> Any:
         try:
-            from ...db import get_database
-            db = get_database()
-            projects = db.projects.list_projects(include_archived=include_archived)
-            return JSONResponse({
-                "projects": [
-                    {
-                        "id": p.id,
-                        "name": p.name,
-                        "description": p.description,
-                        "keywords": p.keywords,
-                        "team_members": p.team_members,
-                        "context": p.context,
-                        "detection_threshold": p.detection_threshold,
-                        "is_archived": p.is_archived,
-                        "meeting_count": p.meeting_count,
-                        "created_at": p.created_at.isoformat(),
-                        "updated_at": p.updated_at.isoformat(),
-                    }
-                    for p in projects
-                ]
-            })
-        except Exception as e:
-            return error_500(e, log, "Failed to list projects")
+            return JSONResponse({"projects": service.list_projects(principal(request), {"include_archived": include_archived})})
+        except Exception as exc:
+            return error_500(exc, log, "Failed to list projects")
 
     @router.post("/api/projects")
-    async def api_create_project(payload: dict[str, Any]) -> Any:
+    async def api_create_project(payload: dict[str, Any], request: Request) -> Any:
         try:
-            import uuid
-            from ...db import get_database
-            db = get_database()
-            name = str(payload.get("name") or "").strip()
-            if not name:
-                return JSONResponse(
-                    {"success": False, "error": "Project name is required"},
-                    status_code=400,
-                )
-            project_id = f"proj-{uuid.uuid4().hex[:12]}"
-            keywords = payload.get("keywords") or []
-            if isinstance(keywords, str):
-                keywords = [k.strip() for k in keywords.split(",") if k.strip()]
-            team_members = payload.get("team_members") or []
-            if isinstance(team_members, str):
-                team_members = [m.strip() for m in team_members.split(",") if m.strip()]
-            threshold = float(payload.get("detection_threshold", 0.4))
-            if not (0.0 <= threshold <= 1.0):
-                return JSONResponse(
-                    {"success": False, "error": "detection_threshold must be between 0 and 1"},
-                    status_code=400,
-                )
-            db.projects.create_project(
-                project_id=project_id,
-                name=name,
-                description=str(payload.get("description") or ""),
-                keywords=keywords,
-                team_members=team_members,
-                context=payload.get("context") or {},
-                detection_threshold=threshold,
-            )
-            # Reload detector
-            if ctx.project_detector is not None:
-                ctx.project_detector.reload_projects(
-                    db.projects.get_all_projects_for_detector()
-                )
-            project = db.projects.get_project(project_id)
-            return JSONResponse({
-                "success": True,
-                "project": {
-                    "id": project.id,
-                    "name": project.name,
-                    "description": project.description,
-                    "keywords": project.keywords,
-                    "team_members": project.team_members,
-                    "context": project.context,
-                    "detection_threshold": project.detection_threshold,
-                    "is_archived": project.is_archived,
-                    "meeting_count": project.meeting_count,
-                    "created_at": project.created_at.isoformat(),
-                    "updated_at": project.updated_at.isoformat(),
-                } if project else None,
-            })
-        except Exception as e:
-            log.error(f"Failed to create project: {e}")
-            return JSONResponse({"success": False, "error": str(e)}, status_code=500)
+            return JSONResponse({"success": True, "project": service.create_project(principal(request), payload)})
+        except ValidationError as exc:
+            return JSONResponse({"success": False, "error": exc.detail}, status_code=400)
+        except Exception as exc:
+            log.error(f"Failed to create project: {exc}")
+            return JSONResponse({"success": False, "error": str(exc)}, status_code=500)
 
     @router.get("/api/projects/{project_id}")
-    async def api_get_project(project_id: str) -> Any:
+    async def api_get_project(project_id: str, request: Request) -> Any:
         try:
-            from ...db import get_database
-            db = get_database()
-            project = db.projects.get_project(project_id)
-            if not project:
-                return JSONResponse({"error": "Project not found"}, status_code=404)
-            return JSONResponse({
-                "id": project.id,
-                "name": project.name,
-                "description": project.description,
-                "keywords": project.keywords,
-                "team_members": project.team_members,
-                "context": project.context,
-                "detection_threshold": project.detection_threshold,
-                "is_archived": project.is_archived,
-                "meeting_count": project.meeting_count,
-                "created_at": project.created_at.isoformat(),
-                "updated_at": project.updated_at.isoformat(),
-            })
-        except Exception as e:
-            return error_500(e, log, "Failed to get project")
+            return JSONResponse(service.get_project(principal(request), project_id))
+        except NotFound as exc:
+            return not_found(exc)
+        except Exception as exc:
+            return error_500(exc, log, "Failed to get project")
 
     @router.patch("/api/projects/{project_id}")
-    async def api_update_project(project_id: str, payload: dict[str, Any]) -> Any:
+    async def api_update_project(project_id: str, payload: dict[str, Any], request: Request) -> Any:
         try:
-            from ...db import get_database
-            db = get_database()
-            existing = db.projects.get_project(project_id)
-            if not existing:
-                return JSONResponse(
-                    {"success": False, "error": "Project not found"},
-                    status_code=404,
-                )
-            update_fields: dict[str, Any] = {}
-            if "name" in payload:
-                name = str(payload["name"]).strip()
-                if not name:
-                    return JSONResponse(
-                        {"success": False, "error": "Project name cannot be empty"},
-                        status_code=400,
-                    )
-                update_fields["name"] = name
-            if "description" in payload:
-                update_fields["description"] = str(payload["description"] or "")
-            if "keywords" in payload:
-                kw = payload["keywords"]
-                if isinstance(kw, str):
-                    kw = [k.strip() for k in kw.split(",") if k.strip()]
-                update_fields["keywords"] = kw
-            if "team_members" in payload:
-                tm = payload["team_members"]
-                if isinstance(tm, str):
-                    tm = [m.strip() for m in tm.split(",") if m.strip()]
-                update_fields["team_members"] = tm
-            if "context" in payload:
-                update_fields["context"] = payload["context"] or {}
-            if "detection_threshold" in payload:
-                threshold = float(payload["detection_threshold"])
-                if not (0.0 <= threshold <= 1.0):
-                    return JSONResponse(
-                        {"success": False, "error": "detection_threshold must be between 0 and 1"},
-                        status_code=400,
-                    )
-                update_fields["detection_threshold"] = threshold
-            if update_fields:
-                db.projects.update_project(project_id, **update_fields)
-            # Reload detector
-            if ctx.project_detector is not None:
-                ctx.project_detector.reload_projects(
-                    db.projects.get_all_projects_for_detector()
-                )
-            updated = db.projects.get_project(project_id)
-            return JSONResponse({
-                "success": True,
-                "project": {
-                    "id": updated.id,
-                    "name": updated.name,
-                    "description": updated.description,
-                    "keywords": updated.keywords,
-                    "team_members": updated.team_members,
-                    "context": updated.context,
-                    "detection_threshold": updated.detection_threshold,
-                    "is_archived": updated.is_archived,
-                    "meeting_count": updated.meeting_count,
-                    "created_at": updated.created_at.isoformat(),
-                    "updated_at": updated.updated_at.isoformat(),
-                } if updated else None,
-            })
-        except Exception as e:
-            log.error(f"Failed to update project: {e}")
-            return JSONResponse({"success": False, "error": str(e)}, status_code=500)
+            return JSONResponse({"success": True, "project": service.update_project(principal(request), project_id, payload)})
+        except NotFound as exc:
+            return not_found(exc, success=True)
+        except ValidationError as exc:
+            return JSONResponse({"success": False, "error": exc.detail}, status_code=400)
+        except Exception as exc:
+            log.error(f"Failed to update project: {exc}")
+            return JSONResponse({"success": False, "error": str(exc)}, status_code=500)
 
     @router.delete("/api/projects/{project_id}")
-    async def api_archive_project(project_id: str) -> Any:
+    async def api_archive_project(project_id: str, request: Request) -> Any:
         try:
-            from ...db import get_database
-            db = get_database()
-            existing = db.projects.get_project(project_id)
-            if not existing:
-                return JSONResponse(
-                    {"success": False, "error": "Project not found"},
-                    status_code=404,
-                )
-            db.projects.update_project(project_id, is_archived=True)
-            if ctx.project_detector is not None:
-                ctx.project_detector.reload_projects(
-                    db.projects.get_all_projects_for_detector()
-                )
+            service.archive_project(principal(request), project_id)
             return JSONResponse({"success": True})
-        except Exception as e:
-            log.error(f"Failed to archive project: {e}")
-            return JSONResponse({"success": False, "error": str(e)}, status_code=500)
+        except NotFound as exc:
+            return not_found(exc, success=True)
+        except Exception as exc:
+            log.error(f"Failed to archive project: {exc}")
+            return JSONResponse({"success": False, "error": str(exc)}, status_code=500)
 
     @router.get("/api/projects/{project_id}/meetings")
-    async def api_project_meetings(
-        project_id: str, limit: int = 50, offset: int = 0
-    ) -> Any:
+    async def api_project_meetings(project_id: str, request: Request, limit: int = 50, offset: int = 0) -> Any:
         try:
-            from ...db import get_database
-            db = get_database()
-            meetings = db.projects.get_project_meetings(project_id, limit=limit, offset=offset)
-            return JSONResponse({"meetings": meetings})
-        except Exception as e:
-            return error_500(e, log, "Failed to get project meetings")
+            return JSONResponse({"meetings": service.list_meetings(principal(request), project_id, limit=limit, offset=offset)})
+        except NotFound as exc:
+            return not_found(exc)
+        except Exception as exc:
+            return error_500(exc, log, "Failed to get project meetings")
 
     @router.get("/api/projects/{project_id}/resources")
-    async def api_project_resources(project_id: str) -> Any:
+    async def api_project_resources(project_id: str, request: Request) -> Any:
         try:
-            from ...db import get_database
-            db = get_database()
-            if db.projects.get_project(project_id) is None:
-                return JSONResponse({"error": f"Unknown Project: {project_id}"}, status_code=404)
-            rows = db.project_relationships.list_for_project(project_id)
-            return JSONResponse({"resources": [row.to_dict() for row in rows]})
+            return JSONResponse({"resources": service.list_resources(principal(request), project_id)})
+        except NotFound:
+            return JSONResponse({"error": f"Unknown Project: {project_id}"}, status_code=404)
         except Exception as exc:
             return error_500(exc, log, "Failed to list Project resources")
 
     @router.put("/api/projects/{project_id}/resources/{resource_ref:path}")
-    async def api_add_project_resource(
-        project_id: str, resource_ref: str, payload: dict[str, Any] | None = None
-    ) -> Any:
+    async def api_add_project_resource(project_id: str, resource_ref: str, request: Request, payload: dict[str, Any] | None = None) -> Any:
         try:
-            from ...db import get_database
-            body = payload or {}
-            row = get_database().project_relationships.upsert(
-                project_id=project_id,
-                resource_ref=resource_ref,
-                relationship=str(body.get("relationship") or "member"),
-                source="manual",
-                confidence=1.0,
-            )
-            return JSONResponse({"resource": row.to_dict()})
+            return JSONResponse({"resource": service.add_resource(principal(request), project_id, resource_ref, payload)})
+        except ValidationError as exc:
+            return JSONResponse({"error": exc.detail}, status_code=400)
         except ValueError as exc:
             return JSONResponse({"error": str(exc)}, status_code=400)
+        except NotFound as exc:
+            return not_found(exc)
         except Exception as exc:
             return error_500(exc, log, "Failed to add Project resource")
 
     @router.delete("/api/projects/{project_id}/resources/{resource_ref:path}")
-    async def api_remove_project_resource(project_id: str, resource_ref: str) -> Any:
+    async def api_remove_project_resource(project_id: str, resource_ref: str, request: Request) -> Any:
         try:
-            from ...db import get_database
-            removed = get_database().project_relationships.delete(project_id, resource_ref)
-            return JSONResponse({"success": True, "removed": removed})
+            return JSONResponse({"success": True, "removed": service.remove_resource(principal(request), project_id, resource_ref)})
         except ValueError as exc:
             return JSONResponse({"error": str(exc)}, status_code=400)
+        except NotFound as exc:
+            return not_found(exc)
         except Exception as exc:
             return error_500(exc, log, "Failed to remove Project resource")
 
     @router.get("/api/desk/relationships/{resource_ref:path}")
-    async def api_resource_relationships(resource_ref: str) -> Any:
-        """Return the three independent Desk axes without conflating them."""
+    async def api_resource_relationships(resource_ref: str, request: Request) -> Any:
         try:
-            from ...db import get_database
-            from ...db.relationships import qualified_ref
-            db = get_database()
-            ref = qualified_ref(resource_ref)
-            placement = db.directory_memberships.get(ref)
-            knowledge = db.knowledge_memberships.list_for_resource(ref)
-            projects = db.project_relationships.list_for_resource(ref)
-            return JSONResponse({
-                "resource_ref": ref,
-                "zone": placement.to_dict() if placement else None,
-                "knowledge": [row.to_dict() for row in knowledge],
-                "projects": [row.to_dict() for row in projects],
-                "explanations": {
-                    "zone": "Where this object lives; exactly one Zone or the Desk root.",
-                    "knowledge": "Reusable collections this object informs; membership does not move it.",
-                    "projects": "Work this object supports; a relationship does not file or copy it.",
-                },
-            })
+            return JSONResponse(service.list_resource_relationships(principal(request), resource_ref))
         except ValueError as exc:
             return JSONResponse({"error": str(exc)}, status_code=400)
         except Exception as exc:
             return error_500(exc, log, "Failed to inspect Desk relationships")
 
     @router.post("/api/projects/{project_id}/meetings/{meeting_id}")
-    async def api_associate_meeting(project_id: str, meeting_id: str) -> Any:
+    async def api_associate_meeting(project_id: str, meeting_id: str, request: Request) -> Any:
         try:
-            from ...db import get_database
-            db = get_database()
-            db.projects.associate_meeting_project(
-                meeting_id=meeting_id,
-                project_id=project_id,
-                source="manual",
-                confidence=1.0,
-            )
+            service.associate_meeting(principal(request), project_id, meeting_id)
             return JSONResponse({"success": True})
-        except Exception as e:
-            log.error(f"Failed to associate meeting: {e}")
-            return JSONResponse({"success": False, "error": str(e)}, status_code=500)
+        except NotFound as exc:
+            return JSONResponse({"success": False, "error": str(exc)}, status_code=404)
+        except Exception as exc:
+            log.error(f"Failed to associate meeting: {exc}")
+            return JSONResponse({"success": False, "error": str(exc)}, status_code=500)
 
     @router.delete("/api/projects/{project_id}/meetings/{meeting_id}")
-    async def api_disassociate_meeting(project_id: str, meeting_id: str) -> Any:
+    async def api_disassociate_meeting(project_id: str, meeting_id: str, request: Request) -> Any:
         try:
-            from ...db import get_database
-            db = get_database()
-            db.projects.disassociate_meeting_project(
-                meeting_id=meeting_id,
-                project_id=project_id,
-            )
+            service.disassociate_meeting(principal(request), project_id, meeting_id)
             return JSONResponse({"success": True})
-        except Exception as e:
-            log.error(f"Failed to disassociate meeting: {e}")
-            return JSONResponse({"success": False, "error": str(e)}, status_code=500)
+        except NotFound as exc:
+            return JSONResponse({"success": False, "error": str(exc)}, status_code=404)
+        except Exception as exc:
+            log.error(f"Failed to disassociate meeting: {exc}")
+            return JSONResponse({"success": False, "error": str(exc)}, status_code=500)
 
     @router.get("/api/meetings/{meeting_id}/projects")
-    async def api_meeting_projects(meeting_id: str) -> Any:
+    async def api_meeting_projects(meeting_id: str, request: Request) -> Any:
         try:
-            from ...db import get_database
-            db = get_database()
-            projects = db.projects.get_meeting_projects(meeting_id)
-            return JSONResponse({"projects": projects})
-        except Exception as e:
-            return error_500(e, log, "Failed to get meeting projects")
+            return JSONResponse({"projects": service.list_meeting_projects(principal(request), meeting_id)})
+        except NotFound as exc:
+            return JSONResponse({"error": str(exc)}, status_code=404)
+        except Exception as exc:
+            return error_500(exc, log, "Failed to get meeting projects")
 
     @router.get("/api/projects/{project_id}/since-last-meeting")
-    async def api_project_since_last_meeting(project_id: str) -> Any:
-        """Compare only the latest two meetings filed to this Project."""
+    async def api_project_since_last_meeting(project_id: str, request: Request) -> Any:
         try:
-            from ...db import get_database
-            from ...meeting_aftercare import compute_project_since_last_meeting
-
-            result = compute_project_since_last_meeting(get_database(), project_id)
-            if result is None:
-                return JSONResponse({"error": "Project not found"}, status_code=404)
-            return JSONResponse(result)
-        except Exception as e:
-            return error_500(e, log, "Failed to compare Project meetings")
+            return JSONResponse(service.since_last_meeting(principal(request), project_id))
+        except NotFound as exc:
+            return not_found(exc)
+        except Exception as exc:
+            return error_500(exc, log, "Failed to compare Project meetings")
 
     @router.get("/api/projects/{project_id}/summary")
-    async def api_project_summary(project_id: str) -> Any:
+    async def api_project_summary(project_id: str, request: Request) -> Any:
         try:
-            from ...db import get_database
-            db = get_database()
-            summary = db.projects.get_project_summary(project_id)
-            return JSONResponse(summary)
-        except Exception as e:
-            return error_500(e, log, "Failed to get project summary")
+            return JSONResponse(service.summary(principal(request), project_id))
+        except NotFound as exc:
+            return not_found(exc)
+        except Exception as exc:
+            return error_500(exc, log, "Failed to get project summary")
 
     @router.get("/api/projects/{project_id}/action-items")
-    async def api_project_action_items(project_id: str) -> Any:
+    async def api_project_action_items(project_id: str, request: Request) -> Any:
         try:
-            from ...db import get_database
-            db = get_database()
-            items = db.projects.get_project_action_items(project_id)
-            return JSONResponse({
-                "action_items": [
-                    {
-                        "id": ai.id,
-                        "task": ai.task,
-                        "owner": ai.owner,
-                        "due": ai.due,
-                        "status": ai.status,
-                        "review_state": ai.review_state,
-                        "source_timestamp": ai.source_timestamp,
-                        "meeting_id": ai.meeting_id,
-                        "meeting_title": ai.meeting_title,
-                        "meeting_date": ai.meeting_date.isoformat(),
-                        "created_at": ai.created_at.isoformat(),
-                        "completed_at": ai.completed_at.isoformat() if ai.completed_at else None,
-                        "reviewed_at": ai.reviewed_at.isoformat() if ai.reviewed_at else None,
-                    }
-                    for ai in items
-                ]
-            })
-        except Exception as e:
-            return error_500(e, log, "Failed to get project action items")
+            return JSONResponse({"action_items": service.list_action_items(principal(request), project_id)})
+        except NotFound as exc:
+            return not_found(exc)
+        except Exception as exc:
+            return error_500(exc, log, "Failed to get project action items")
 
     @router.get("/api/projects/{project_id}/artifacts")
-    async def api_project_artifacts(project_id: str) -> Any:
+    async def api_project_artifacts(project_id: str, request: Request) -> Any:
         try:
-            from ...db import get_database
-            db = get_database()
-            artifacts = db.projects.get_project_artifacts(project_id)
-            return JSONResponse({
-                "artifacts": [
-                    {
-                        "id": a.id,
-                        "meeting_id": a.meeting_id,
-                        "artifact_type": a.artifact_type,
-                        "title": a.title,
-                        "body_markdown": a.body_markdown,
-                        "confidence": a.confidence,
-                        "status": a.status,
-                        "plugin_id": a.plugin_id,
-                        "created_at": a.created_at.isoformat(),
-                    }
-                    for a in artifacts
-                ]
-            })
-        except Exception as e:
-            return error_500(e, log, "Failed to get project artifacts")
+            return JSONResponse({"artifacts": service.list_artifacts(principal(request), project_id)})
+        except NotFound as exc:
+            return not_found(exc)
+        except Exception as exc:
+            return error_500(exc, log, "Failed to get project artifacts")
 
     return router

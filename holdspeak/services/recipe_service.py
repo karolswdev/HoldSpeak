@@ -8,7 +8,7 @@ from typing import Any
 
 from ..db.core import Database
 from ..principals import Principal
-from .primitive_service import NotFound, ValidationError
+from holdspeak.services.errors import NotFound, ServiceError, ValidationError
 
 
 def _new_id(prefix: str) -> str:
@@ -16,15 +16,6 @@ def _new_id(prefix: str) -> str:
 
 
 Broadcast = Callable[..., None]
-
-
-class RecipeServiceError(Exception):
-    """An expected operation failure with its established HTTP response shape."""
-
-    def __init__(self, status_code: int, payload: dict[str, Any]) -> None:
-        self.status_code = status_code
-        self.payload = payload
-        super().__init__(str(payload.get("error") or "recipe operation failed"))
 
 
 class RecipeService:
@@ -90,9 +81,7 @@ class RecipeService:
         broadcast: Broadcast | None = None,
         **extra: Any,
     ) -> dict[str, Any]:
-        from ..web.routes.primitives._shared import (
-            RunLifecycle, _persist_run_artifact, _render_user_prompt, canonical_source_type,
-        )
+        from .support import RunLifecycle, _persist_run_artifact, _render_user_prompt, canonical_source_type, inject_skills
 
         recipe = self._db.recipes.get(recipe_id)
         if recipe is None:
@@ -130,10 +119,7 @@ class RecipeService:
                 invocation = lifecycle.fail(
                     "nothing to run: provide `input` or a Agent input template", state="empty"
                 )
-                raise RecipeServiceError(400, {
-                    "error": "nothing to run: provide `input` or a Agent input template",
-                    "invocation": invocation, "invocation_id": lifecycle.invocation_id,
-                })
+                raise ServiceError("empty_input", "nothing to run: provide `input` or a Agent input template", context={"invocation": invocation, "invocation_id": lifecycle.invocation_id})
 
             from ..inference_targets import (
                 build_intel_for_target, resolve_inference_target, target_refusal, target_runtime_error,
@@ -148,17 +134,13 @@ class RecipeService:
             lifecycle.start_attempt(destination=target.id, target=target)
             if not target.ready:
                 invocation = lifecycle.fail(target.readiness_reason, state="unavailable")
-                raise RecipeServiceError(409, {
-                    **target_refusal(target), "recipe_id": recipe_id,
-                    "invocation": invocation, "invocation_id": lifecycle.invocation_id,
-                })
+                raise ServiceError("target_unavailable", target.readiness_reason, context={**target_refusal(target), "recipe_id": recipe_id, "invocation": invocation, "invocation_id": lifecycle.invocation_id})
             intel = build_intel_for_target(target, self._db)
             self._broadcast(broadcast, "running", kind="recipe", ref=recipe_id, name=recipe.name or recipe_id)
             try:
-                from ..skill_injection import inject_skills
                 output = await asyncio.to_thread(
                     intel.run_prompt,
-                    system_prompt=inject_skills(recipe.system_prompt, recipe_id),
+                    system_prompt=inject_skills(self._db, recipe.system_prompt, recipe_id),
                     user_prompt=user_prompt,
                     temperature=float(temperature) if temperature is not None else None,
                     max_tokens=int(max_tokens) if max_tokens is not None else None,
@@ -168,28 +150,18 @@ class RecipeService:
                 self._broadcast(broadcast, "error", kind="recipe", ref=recipe_id,
                                 name=recipe.name or recipe_id, error=error)
                 invocation = lifecycle.fail(error, provider=getattr(intel, "active_provider", None))
-                raise RecipeServiceError(502, {
-                    "error": error, "recipe_id": recipe_id,
-                    "invocation": invocation, "invocation_id": lifecycle.invocation_id,
-                }) from exc
+                raise ServiceError("inference_failed", error, context={"recipe_id": recipe_id, "invocation": invocation, "invocation_id": lifecycle.invocation_id}) from exc
             cancelled = lifecycle.cancelled()
             if cancelled is not None:
                 self._broadcast(broadcast, "error", kind="recipe", ref=recipe_id,
                                 name=recipe.name or recipe_id, error="cancelled")
-                raise RecipeServiceError(409, {
-                    "error": "cancelled", "recipe_id": recipe_id,
-                    "invocation": cancelled, "invocation_id": lifecycle.invocation_id,
-                    "operation_id": lifecycle.operation_id,
-                })
+                raise ServiceError("cancelled", "cancelled", context={"recipe_id": recipe_id, "invocation": cancelled, "invocation_id": lifecycle.invocation_id, "operation_id": lifecycle.operation_id})
             if not str(output or "").strip():
                 error = "Agent returned no output; your input is retained for Retry."
                 self._broadcast(broadcast, "error", kind="recipe", ref=recipe_id,
                                 name=recipe.name or recipe_id, error=error)
                 invocation = lifecycle.fail(error, state="empty", provider=getattr(intel, "active_provider", None))
-                raise RecipeServiceError(502, {
-                    "error": error, "recipe_id": recipe_id,
-                    "invocation": invocation, "invocation_id": lifecycle.invocation_id,
-                })
+                raise ServiceError("empty_output", error, context={"recipe_id": recipe_id, "invocation": invocation, "invocation_id": lifecycle.invocation_id})
             self._broadcast(broadcast, "ready", kind="recipe", ref=recipe_id, name=recipe.name or recipe_id)
 
             sources: list[dict[str, str]] = [{"source_type": "recipe", "source_ref": recipe_id}]
@@ -199,15 +171,12 @@ class RecipeService:
                 sources.append({"source_type": input_type, "source_ref": provided_ref})
             sources.extend(lifecycle.lineage())
             artifact_id = _persist_run_artifact(
-                kind="recipe", name=recipe.name or recipe_id, user_input=user_input,
+                db=self._db, kind="recipe", name=recipe.name or recipe_id, user_input=user_input,
                 output=output, sources=sources,
             )
             if not artifact_id:
                 invocation = lifecycle.fail("The result could not be kept as an Artifact.")
-                raise RecipeServiceError(500, {
-                    "error": invocation["error"], "recipe_id": recipe_id,
-                    "invocation": invocation, "invocation_id": lifecycle.invocation_id,
-                })
+                raise ServiceError("artifact_persist_failed", invocation["error"], context={"recipe_id": recipe_id, "invocation": invocation, "invocation_id": lifecycle.invocation_id})
             invocation = lifecycle.succeed(
                 artifact_id, provider=getattr(intel, "active_provider", None), model=target.model,
             )
@@ -219,7 +188,7 @@ class RecipeService:
                 "invocation_id": lifecycle.invocation_id, "operation_id": lifecycle.operation_id,
                 "correlation_id": lifecycle.invocation_id, "invocation": invocation,
             }
-        except RecipeServiceError:
+        except ServiceError:
             raise
         except Exception as exc:
             if lifecycle is not None:
@@ -232,8 +201,8 @@ class RecipeService:
     async def chat(
         self, principal: Principal, recipe_id: str, *, question: str,
         history: list[Any] | None = None, grounding: Any = None,
-        inference_target_id: str | None = None, broadcast: Broadcast | None = None,
-        egress_context: Any = None,
+        inference_target_id: str | None = None, egress_context: Any = None,
+        broadcast: Broadcast | None = None, default_model: str = "",
     ) -> dict[str, Any]:
         question = str(question or "").strip()
         if not question:
@@ -245,9 +214,7 @@ class RecipeService:
             build_intel_for_target, resolve_inference_target, target_refusal, target_runtime_error,
         )
         from ..intel.models import MeetingIntelError
-        from ..web.routes.primitives.ask import (
-            _GROUNDING_EXPANDS, _GROUNDING_MAX_REFS, _hydrate_grounding, _run_egress,
-        )
+        from .support import _GROUNDING_EXPANDS, _GROUNDING_MAX_REFS, _hydrate_grounding, _run_egress, inject_skills
 
         name = recipe.name or recipe_id
         blocks: list[str] = []
@@ -279,7 +246,7 @@ class RecipeService:
                 self._db, meeting_ids, artifact_ids, expand
             )
             if unknown:
-                raise RecipeServiceError(400, {"error": "grounding ids not on this hub", "unknown_ids": unknown})
+                raise ServiceError("grounding_not_found", "grounding ids not on this hub", context={"unknown_ids": unknown})
             if g_blocks:
                 blocks.append("[GROUNDING]\n" + "\n\n".join(g_blocks))
             context_ids += g_ids
@@ -300,13 +267,12 @@ class RecipeService:
             self._db, inference_target_id or recipe.profile_id or "this_machine"
         )
         if not target.ready:
-            raise RecipeServiceError(409, target_refusal(target))
+            raise ServiceError("target_unavailable", target.readiness_reason, context=target_refusal(target))
         ran_profile_id = target.profile_id
         profile = self._db.profiles.get(ran_profile_id) if ran_profile_id else None
         intel = build_intel_for_target(target, self._db)
-        from ..skill_injection import inject_skills
         raw_system = (recipe.system_prompt or "").strip() or f"You are {name}, a helpful assistant."
-        system_prompt = inject_skills(raw_system, recipe_id)
+        system_prompt = inject_skills(self._db, raw_system, recipe_id)
         self._broadcast(broadcast, "running", kind="recipe", ref=recipe_id, name=name)
         try:
             output = await asyncio.to_thread(
@@ -315,12 +281,9 @@ class RecipeService:
         except MeetingIntelError as exc:
             error = target_runtime_error(target, exc)
             self._broadcast(broadcast, "error", kind="recipe", ref=recipe_id, name=name, error=error)
-            raise RecipeServiceError(502, {
-                "error": error, "recipe_id": recipe_id,
-                "inference_target": target.to_dict(), "alternate_target_id": "this_machine",
-            }) from exc
+            raise ServiceError("inference_failed", error, context={"recipe_id": recipe_id, "inference_target": target.to_dict(), "alternate_target_id": "this_machine"}) from exc
         self._broadcast(broadcast, "ready", kind="recipe", ref=recipe_id, name=name)
-        egress, model = _run_egress(egress_context, profile, intel)
+        egress, model = _run_egress(profile, intel, default_model=default_model)
         payload: dict[str, Any] = {
             "recipe_id": recipe_id, "output": output, "provider": intel.active_provider,
             "profile_id": ran_profile_id, "inference_target": target.to_dict(),
@@ -336,7 +299,7 @@ class RecipeService:
         self, principal: Principal, recipe_id: str, *, output: str,
         input: str = "", sources: list[dict[str, str]] | None = None,
     ) -> dict[str, Any]:
-        from ..web.routes.primitives._shared import _persist_run_artifact
+        from .support import _persist_run_artifact
 
         if not str(output or "").strip():
             raise ValidationError("output is required")
@@ -344,11 +307,11 @@ class RecipeService:
         if recipe is None:
             raise NotFound("Agent", recipe_id)
         artifact_id = _persist_run_artifact(
-            kind="recipe", name=recipe.name or recipe_id, user_input=str(input or ""),
+            db=self._db, kind="recipe", name=recipe.name or recipe_id, user_input=str(input or ""),
             output=str(output), sources=sources or [{"source_type": "recipe", "source_ref": recipe_id}],
         )
         if not artifact_id:
-            raise RecipeServiceError(500, {"error": "keep failed"})
+            raise ServiceError("artifact_persist_failed", "keep failed")
         return {"artifact_id": artifact_id}
 
     @staticmethod
@@ -357,7 +320,7 @@ class RecipeService:
             broadcast(state, **frame)
 
     def _payload(self, recipe: Any) -> dict[str, Any]:
-        from ..web.routes.primitives._shared import capability_descriptor
+        from .support import capability_descriptor
 
         row = recipe.to_dict()
         row["capability"] = capability_descriptor(
@@ -385,7 +348,7 @@ class RecipeService:
         }
 
     def _kb_block(self, kb_id: str) -> str:
-        from ..web.routes.primitives.ask import _context_material
+        from .support import _context_material
         kb = self._db.kbs.get(kb_id)
         if kb is None:
             return ""

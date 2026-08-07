@@ -46,6 +46,35 @@ class WebContext:
     # The runtime-owned callbacks above remain bound into this service at app
     # composition, keeping the service itself independent of the web layer.
     meeting_service: Optional[Any] = None
+    # A composition-owned factory permits isolated test databases to supply the
+    # current service without routes importing database accessors.
+    meeting_service_factory: Optional[Callable[[], Any]] = None
+    # HS-123-06: focused meeting collaborators composed at the application edge.
+    meeting_intel_service: Optional[Any] = None
+    meeting_intel_service_factory: Optional[Callable[[], Any]] = None
+    meeting_aftercare_service: Optional[Any] = None
+    meeting_aftercare_service_factory: Optional[Callable[[], Any]] = None
+
+    # HS-123-05: durable project and projection domain boundaries, composed once
+    # by the server so their routes stay transport-only adapters.
+    project_service: Optional[Any] = None
+    projection_service: Optional[Any] = None
+
+    # HS-123-02: authority and credential lifecycle services are composed once
+    # by the server so their routes remain transport-only adapters.
+    authority_service: Optional[Any] = None
+    credential_service: Optional[Any] = None
+    # HS-123-08: cadence, sync, and desk-actuator application boundaries.
+    cadence_service: Optional[Any] = None
+    sync_service: Optional[Any] = None
+    actuator_service: Optional[Any] = None
+
+    # HS-123-08: remaining operational services are composed by the server;
+    # their route adapters own only HTTP parsing and serialization.
+    gate_service: Optional[Any] = None
+    setup_service: Optional[Any] = None
+    mesh_service: Optional[Any] = None
+    memory_service: Optional[Any] = None
 
     # HS-26-03: intent-control + dictation-pipeline callbacks for the dictation
     # routes. The dictation handlers' many private helpers (project detection,
@@ -84,6 +113,9 @@ class WebContext:
     ws: Optional[Any] = None
     on_get_status: Optional[Callable[[], Any]] = None
     on_settings_applied: Optional[Callable[[Any], None]] = None
+    # HS-123-03: settings policy and persistence are composed once here; routes
+    # receive the already-bound application service.
+    settings_service: Optional[Any] = None
     on_wake_type: Optional[Callable[[str], Optional[str]]] = None
     on_preview_type: Optional[Callable[[str], Optional[str]]] = None
     on_preview_discard: Optional[Callable[[str], bool]] = None

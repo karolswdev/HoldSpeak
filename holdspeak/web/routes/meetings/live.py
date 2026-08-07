@@ -9,7 +9,7 @@ from fastapi.responses import JSONResponse
 from ....logging_config import get_logger
 from ....principals import UNAUTHENTICATED
 from ....services.meeting_service import MeetingService
-from ....services.primitive_service import ValidationError
+from ....services.errors import ValidationError
 from ....web_requests import (
     _BookmarkRequest,
     _MeetingStartRequest,
@@ -37,7 +37,7 @@ def _service(ctx: WebContext) -> MeetingService:
             ctx.on_set_tags(tags)
         return ctx.get_state() or {}
 
-    service = MeetingService(get_database())
+    service = MeetingService(get_database())  # _service composition
     service.bind_lifecycle(
         on_start=ctx.on_start,
         on_stop=ctx.on_meeting_stop or ctx.on_stop,

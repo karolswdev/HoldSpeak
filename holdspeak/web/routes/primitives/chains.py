@@ -12,7 +12,8 @@ from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 
 from ....logging_config import get_logger
-from ....services.primitive_service import NotFound, PrimitiveService, ValidationError
+from ....services.errors import NotFound, ValidationError
+from ....services.primitive_service import PrimitiveService
 from ...context import WebContext
 from ...runtime_support import error_500
 from ._shared import (
