@@ -1,229 +1,186 @@
-# Handover — Phase 118→119
+# HANDOVER — Phase 122-123 Complete
 
-**Written:** 2026-08-05, end of a marathon session.
-**Author:** Opus 4.6 (1M context), acting as orchestrator.
-**For:** The next agent who picks up this repo cold.
+**Date:** 2026-08-07
+**Author:** Opus 4.6 orchestrator session
+**PR:** #441 (merged)
+
+## What just shipped
+
+Two phases in one session. DeskOS went from zero programmatic API to a
+fully MCP-drivable platform.
+
+**Phase 122 — The Backbone (12/12):** The service layer was born. Eight
+services extracted from route handlers. An MCP server with 10 tools.
+A walk harness. A desk doctor.
+
+**Phase 123 — The Pipeline (13/13):** The service layer was completed.
+33 services now own every operation in the system. The MCP server
+expanded to 41 tools and 16 resources. Route handler bypass census:
+157 → 2 (the two intentional chain/workflow run endpoints).
+
+## The numbers
+
+| Metric | Before | After |
+|--------|--------|-------|
+| Transport-neutral services | 0 | 33 |
+| MCP tools | 0 | 41 |
+| MCP resources | 0 | 16 |
+| Route handlers calling DB directly | 157 | 2 |
+| Service + MCP code | 0 | ~15,000 lines |
+
+## What's on the desk for the next agent
+
+### The NeXT moment: the service pipeline as a data lake
+
+Here's the idea the owner planted, and it's a big one.
+
+Every operation in DeskOS now flows through a named service method with
+a typed `Principal`, typed arguments, and a typed result. Today those
+calls execute and return. But imagine if every service call was also
+*recorded* — not just its name, but its principal, its arguments, its
+result, its timing, its causal chain.
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                   Service Pipeline                       │
+│                                                         │
+│  MCP client ───┐                                        │
+│  FastAPI route ─┤──→ Service.method(principal, args)     │
+│  Test fixture ──┤         │                              │
+│  CLI ───────────┘         │                              │
+│                           ▼                              │
+│                    ┌─────────────┐                       │
+│                    │  Pipeline   │──→ Repository layer    │
+│                    │  Observer   │                        │
+│                    └──────┬──────┘                       │
+│                           │                              │
+│                           ▼                              │
+│                    ┌─────────────┐                       │
+│                    │  Data Lake  │                        │
+│                    │             │                        │
+│                    │  Every call │                        │
+│                    │  Every arg  │                        │
+│                    │  Every result│                       │
+│                    │  Every timing│                       │
+│                    │  Every who   │                       │
+│                    └─────────────┘                       │
+│                           │                              │
+│                           ▼                              │
+│                                                         │
+│  "What did the desk DO today?"                          │
+│  "Which services are hot? Which are dead?"              │
+│  "What did agent X actually touch?"                     │
+│  "Replay this user's last hour"                         │
+│  "What operations correlate with this outcome?"         │
+│  "Build me a briefing from what actually happened"      │
+│                                                         │
+└─────────────────────────────────────────────────────────┘
+```
+
+This is why the service extraction mattered. It wasn't refactoring for
+purity. It was the **prerequisite for observability**. When operations
+were scattered across 157 route handlers calling repositories directly,
+there was no single chokepoint to observe. Now there is: 33 services,
+each with a `Principal` and typed arguments. One decorator, one
+middleware, one observer — and the entire system becomes a stream of
+structured events.
+
+The kernel already has a journal (the SHA-256 chain from Phase 106).
+The service pipeline is the same idea at the application layer: every
+`create`, `delete`, `run`, `chat`, `ask`, `file`, `resolve`, `seed`,
+`approve`, `revoke` — recorded, correlated, replayable.
+
+This is the NeXT moment. The desk isn't just an OS with a programmatic
+API. It's an OS that *knows what it did*.
+
+### Concrete next steps
+
+1. **Phase 124 — The Observer.** A `PipelineObserver` protocol that
+   services call (or a decorator wraps) on every public method. The
+   observer records `{service, method, principal, args_summary,
+   result_summary, duration_ms, timestamp, correlation_id}` to a
+   durable append-only store. Day one: a SQLite `pipeline_events`
+   table. Day two: the desk's own analytics surface. Day three: an
+   MCP resource that answers "what happened?"
+
+2. **The two remaining run endpoints.** `chains.py:108` and
+   `workflows.py:132` are the last direct-DB handlers. They're
+   complex orchestration (inference, graph linearization, artifact
+   persistence). Extract them into `ChainRunService` and
+   `WorkflowRunService` when the observer is ready — then even
+   inference calls are observable.
+
+3. **Phase 120 web changes.** The UI reckoning work (11 stories) is
+   in the working tree but was not committed because its evidence
+   files were missing. A fresh session should create evidence for
+   each Phase 120 story and commit them.
+
+4. **Phase 121 — The Fluency.** Chartered but not started. Kit-first
+   UX architecture (SurfaceFooter, LedgerFilter, useCopyReceipt,
+   useUndoReceipt — most primitives already exist and have tests).
+   This is the web-side complement to the backend pipeline work.
+
+### Repo conventions that bite
+
+- **PMO commit gate:** `git config core.hooksPath .githooks` in every
+  fresh clone. The gate requires `.tmp/CONTRACT.md` with all boxes
+  flipped. Evidence files must ship with done-flipped stories.
+- **Bundle rule:** Multiple stories in one commit need
+  `.tmp/BUNDLE-OK.md` with a rationale.
+- **Test exclusion:** `tests/e2e/test_metal.py` hangs without a mic.
+  Use `-k "not metal"`.
+- **Terra agents:** Run ONLY focused tests for their changes. The
+  orchestrator runs the full suite. Standing rule in memory:
+  `feedback_terra_scoped_tests_only.md`.
+- **Web bundle is gitignored:** Edit `web/src/`, commit source only.
+- **The .43 box:** LAN LLM at `192.168.1.43:8080`. Sandboxed Bash
+  can't reach it.
+
+### The service inventory
+
+33 services under `holdspeak/services/`:
+
+```
+primitive_service.py          workbench_service.py
+recipe_service.py             meeting_service.py
+meeting_intel_service.py      meeting_aftercare_service.py
+dictation_service.py          coder_service.py
+profile_service.py            desk_service.py
+authority_service.py          credential_service.py
+settings_service.py           ask_service.py
+decision_lifecycle_service.py project_service.py
+projection_service.py         activity_ledger_service.py
+activity_rules_service.py     activity_meeting_candidate_service.py
+activity_enrichment_service.py plugin_job_service.py
+activity_nudge_service.py     cadence_service.py
+sync_service.py               actuator_service.py
+gate_service.py               setup_service.py
+mesh_service.py               memory_service.py
+invocation_service.py         mission_control_service.py
+delivery_service.py
+```
+
+Shared infrastructure:
+- `errors.py` — `ServiceError`, `NotFound`, `ValidationError`, `ConflictError`
+- `support.py` — capability descriptors, graph linearization, prompt
+  rendering, artifact persistence, skill injection, grounding
+
+MCP server at `holdspeak/mcp/`:
+- `server.py` — stdio JSON-RPC loop
+- `tools.py` — 41 tools
+- `resources.py` — 16 resources (9 static + 7 templates)
+- `auth.py` — principal from env token
+
+Walk harness at `scripts/desk_walk/`:
+- `fixtures.py` — isolated hub with temp DB
+- `pages/` — DeskPage, Palette, WorkbenchWindow, Pullout
+- `assertions.py` — footer/failure helpers
+- `walk_mcp_122.py`, `walk_mcp_123.py`, `walk_keyboard_122.py`
+
+Desk doctor at `holdspeak/doctor.py` — 8 health checks, runnable as
+`holdspeak doctor` or `python -m holdspeak.doctor`.
 
 ---
 
-## What HoldSpeak is
-
-HoldSpeak is a **local-first voice desk OS** for developers. Two
-modes: dictation (hold hotkey, speak, text lands in your editor with
-corrections and learning) and meetings (record, extract decisions/
-action items/ADRs via LLM plugins). Everything runs on the user's
-machine — Whisper transcribes locally, LLM is user-provided.
-
-The product surface is **the Desk** — a spatial 2.5D PixiJS diorama
-where meetings, notes, agents, and artifacts live as draggable objects
-in a windowed OS metaphor. Think macOS if macOS were built by one
-developer who cares about consent, privacy, and honest construction.
-
-**Scale:** ~103K Python, ~69K TypeScript, ~228K Swift (iPad, dormant),
-452 test files, 118 phases shipped. This is a real product, not a
-weekend hack.
-
-## The Constitution
-
-`docs/internal/CONSTITUTION.md` — the supreme canon. 11 articles.
-Every phase, story, and design decision is measured against them.
-The ones you'll hit most:
-
-- **Article II:** Everything is a DeskPrimitive. UI is derived.
-- **Article IV:** Every text input can be spoken into.
-- **Article V:** Consent is the spine. Propose → approve → execute.
-- **Article VI:** Honest by construction. No demo state, no silent
-  failures, counts honest at zero.
-- **Article VII:** No prose in UI. No modals.
-- **Article VIII:** Native-grade craft. 60fps, compositor-only motion.
-- **Article XI:** Every consequential operation admitted through the
-  kernel before acting, with terminal receipts.
-
-Cite articles in every phase charter. If you disagree with one,
-don't ignore it — flag it for the owner to amend.
-
-## The orchestration philosophy
-
-This session established a pipeline that works. Follow it:
-
-### Opus implements → Terra verifies → Sol reviews → Orchestrator decides
-
-1. **You (Opus) implement** in isolated worktrees. Each story gets a
-   full brief with the spec, relevant file paths, and clear
-   instructions. Use `isolation: "worktree"` on Agent calls.
-
-2. **Terra verifies against spec.** Launch a Terra agent for each
-   story with the story spec + worktree path. Terra checks every
-   deliverable, finds bugs, reports PASS or FAIL with specific issues.
-   Terra is rigorous, sometimes pedantic — that's the point.
-
-3. **Sol reviews for product feel.** Brief Sol with full HoldSpeak
-   context (Constitution, what the Desk is, what the phase is
-   building, why it matters). Sol thinks about UX, cohesion, edge
-   cases, and whether the interaction feels right. Sol is verbose and
-   explicit about reasoning — that's what you need to make decisions.
-
-4. **You make the call.** Synthesize Terra (spec compliance) and Sol
-   (product vision). Fix what's real. Reject what's pedantic. Accept
-   remediations where the fix is real but not a blocker. Be explicit
-   about your reasoning — the owner reads it.
-
-### Practical mechanics
-
-- **Launch agents in parallel** where dependencies allow. Wave one of
-  Phase 118 ran 6 Opus agents simultaneously, then 6 Terra agents,
-  then 4 fix agents.
-- **Worktree merging is painful.** Patches from worktrees often fail
-  due to line-number shifts when the worktree is behind main. Use
-  `git apply --3way` and resolve conflicts manually. For files
-  modified in multiple worktrees, apply in dependency order.
-- **The DW gate is real.** Every commit needs: story status flipped,
-  evidence file created, contract generated (`.githooks/dw contract
-  new`), checkboxes flipped, then `git commit`. The gate refuses
-  hand-written contracts. See CLAUDE.md for the full process.
-- **Bundle multiple stories** with `.tmp/BUNDLE-OK.md` containing a
-  one-line rationale. The gate allows it.
-- **Read test output before flipping.** The standing feedback
-  (`feedback_read_output_before_flip.md`) says: never chain
-  flip/commit behind a test run. Read the output first.
-
-### What went well this session
-
-- 25+ Opus agents, 20+ Terra passes, 4 Sol reviews, ~10K lines
-  shipped across 3 commits in one session
-- The Opus→Terra→Sol→Orchestrator pipeline caught real bugs every
-  round (migration ordering, kernel admission, transcript delay,
-  paste suppression, triage lifecycle)
-- Worktree isolation prevented agent conflicts
-- Direct orchestrator fixes for narrow issues were faster than
-  launching another agent round
-
-### What to watch out for
-
-- **Worktrees fall behind main.** Phase 117 split `db/models.py` into
-  `db/models/`. Worktrees created from main HEAD have the split, but
-  agents that rewrite files from scratch often reference the old path.
-  The `models/` directory is in `.gitignore` (broad pattern). You may
-  need to `git add -f holdspeak/db/models/workbench.py`.
-- **Schema version must match.** If you add columns, bump
-  `SCHEMA_VERSION` in `schema.py` AND add migration logic in
-  `migrations.py`. The user's live DB is at v37 now.
-- **The user's DB is at `~/.local/share/holdspeak/holdspeak.db`.**
-  Config is at `~/.config/holdspeak/config.json`. Auth token:
-  `uMcN-J7wwRrQRTWcac5Ucc_2Wf9kv6wf`. Hub URL:
-  `http://localhost:PORT?token=...` (port is dynamic, check with
-  `lsof -iTCP -sTCP:LISTEN -P | grep Python`).
-- **`tests/e2e/test_metal.py` hangs without a mic.** Always exclude
-  it: `--ignore=tests/e2e/test_metal.py`.
-- **The web bundle is gitignored.** Edit `web/src/`, commit source
-  only. Run `npx vite build` to update the served assets.
-- **`uv run` is the Python runner.** Not `python` or `pip`.
-
-## Where we are
-
-### Phase 118 — The Hopper (9/10 shipped)
-
-The Workbench evolved from a configured agent workspace into a hopper.
-Nine stories shipped in three commits:
-
-| Story | What | Status |
-|-------|------|--------|
-| 01 Zone name uniqueness | DB-enforced unique zone names | Done |
-| 02 Conductor ref hydration | Forward qualified refs to agent | Done |
-| 03 The inlet | Single text field + grounding tray replaces composer | Done |
-| 04 @-reference tokenizer | Type @zonename, autocomplete resolves | Done |
-| 05 Voice drawer resolution | Two-tier: fast substring + LLM resolver | Done |
-| 06 Output minting | Auto-mint pending-review artifacts, kernel-admitted | Done |
-| 07 Sprite states | System-level: every primitive has visual state | Done |
-| 08 Browser mic pipeline | Browser mic feeds full dictation pipeline | Done |
-| 09 Artifact triage | Accept/reject/rework on minted outputs | Done |
-| 10 The walk | **NOT DONE** — rolled into Phase 119 | Blocked |
-
-Story 10 blocked because: the dev environment exposed integration
-regressions (presence freezes, WebSocket "RECONNECTING", mic UX
-hostile). Can't prove the walk when the platform isn't stable.
-
-### Phase 119 — The Revision (chartered, 0/4)
-
-Three pillars + the walk:
-
-1. **Click-to-toggle mic** — Browser MicButton changes from
-   hold-to-talk to click-to-toggle with streaming real-time
-   transcription. Every surface inherits it.
-2. **Integration regression sweep** — Exercise every existing system
-   path (presence, WS, meetings, dictation, conductor, kernel,
-   seed, migration) against the Phase 118 codebase. Fix what broke.
-3. **Seed revision** — Curated toolkit baseline: inference profiles
-   (local-4B, local-medium, cloud), starter workbench, one zone.
-4. **The walk** — Phase 118+119 combined proof on real device.
-
-### Key files you'll touch
-
-**Backend:**
-- `holdspeak/web_server.py` — FastAPI app
-- `holdspeak/workbench_conductor.py` — the agent run engine
-- `holdspeak/voice_resolver.py` — LLM voice resolution (new)
-- `holdspeak/dictation_runner.py` — dictation pipeline
-- `holdspeak/kernel/` — operation admission broker
-- `holdspeak/db/schema.py` — schema (v37)
-- `holdspeak/db/migrations.py` — upgrade path
-- `holdspeak/db/workbenches.py` — workbench repository
-- `holdspeak/db/plugins.py` — artifact repository
-- `holdspeak/db/primitives.py` — directory repository (zone uniqueness)
-- `holdspeak/web/routes/primitives/workbenches.py` — all workbench API
-
-**Frontend:**
-- `web/src/desk/components/WorkbenchWindow.tsx` — the big one (~1600 lines)
-- `web/src/desk/components/MicButton.tsx` — **your Phase 119 target**
-- `web/src/lib/speakToFill.ts` — capture lifecycle
-- `web/src/lib/micSession.ts` — session management
-- `web/src/lib/drawerResolver.ts` — zone name resolver
-- `web/src/desk/components/InletAutocomplete.tsx` — @-reference popover
-- `web/src/lib/spriteStates.ts` + `spriteVariants.ts` + `spriteStateStore.ts`
-- `web/src/desk/gl/engine.ts` — PixiJS world renderer
-- `web/src/components/AmbientLayer.tsx` — sprite state watcher lives here
-
-**Test commands:**
-- `uv run pytest -q` (all Python tests)
-- `uv run pytest -q tests/ -k workbench` (workbench tests)
-- `npx tsc --noEmit` (type check, run from `web/`)
-- `npx vitest run` (frontend tests, run from `web/`)
-
-**DW commands:**
-- `.githooks/dw context holdspeak --compact` — status snapshot
-- `.githooks/dw next holdspeak` — next actionable story
-- `.githooks/dw story status holdspeak <phase> <story> <status>`
-- `.githooks/dw contract new --story HS-NNN-NN --consent yes --reasons "..."`
-
-## The owner
-
-The owner has high standards. They care about:
-- **UX quality** — flat/basic is rejected. Things must feel good.
-- **Honesty** — no demo state, no silent failures, no prose in UI.
-- **Voice-first** — every input gets a mic. Voice is a system
-  primitive, not a feature.
-- **The Constitution** — cite articles. Don't hand-wave.
-- **Deep design, not mechanical** — research first, then implement.
-  Material model, not decorations.
-- **Proof on real metal** — seeded sims aren't proof. Use real mic,
-  real model, real device.
-
-Read the full memory index at
-`~/.claude/projects/-Users-karol-dev-tools-HoldSpeak/memory/MEMORY.md`
-for all standing directions and feedback.
-
-## Your first move
-
-1. Read Phase 119's charter:
-   `pm/roadmap/holdspeak/phase-119-the-revision/current-phase-status.md`
-2. Run `.githooks/dw context holdspeak --compact` to see the roadmap
-   state.
-3. Start with **Story 02 (integration regression)** — find and fix
-   what broke before building new things. The presence freeze and
-   WebSocket issues are the immediate blockers.
-4. Then **Story 03 (seed revision)** — so the dev environment has a
-   clean baseline for testing.
-5. Then **Story 01 (click-to-toggle mic)** — the big UX change.
-6. Finally **Story 04 (the walk)** — prove it all works.
-
-Good luck. Make this desk sing.
+*The desk is programmable. The pipeline is one observer away from
+being observable. That's the seed.*
