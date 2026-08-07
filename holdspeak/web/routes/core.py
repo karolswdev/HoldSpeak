@@ -24,9 +24,9 @@ def build_core_router(ctx: WebContext) -> APIRouter:
 
     @router.get("/health")
     async def health() -> Any:
-        from ...db import get_database
+        from ...db import get_database, get_observer
 
-        return JSONResponse(DeskService(get_database()).health())
+        return JSONResponse(DeskService(get_database(), observer=get_observer()).health())
 
     @router.get("/api/state")
     async def api_state() -> Any:

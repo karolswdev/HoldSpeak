@@ -20,8 +20,8 @@ def build_directories_router(ctx: WebContext) -> APIRouter:
     router = APIRouter()
 
     def _svc() -> PrimitiveService:
-        from ....db import get_database
-        return PrimitiveService(get_database())
+        from ....db import get_database, get_observer
+        return PrimitiveService(get_database(), observer=get_observer())
 
     def _principal(request: Request) -> Any:
         return getattr(request.state, "principal", None)

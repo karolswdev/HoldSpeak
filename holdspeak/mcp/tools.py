@@ -5,7 +5,7 @@ import asyncio
 from collections.abc import Callable
 from typing import Any
 
-from holdspeak.db import get_database
+from holdspeak.db import get_database, get_observer
 from holdspeak.principals import Principal
 from holdspeak.services.desk_service import DeskService
 from holdspeak.services.dictation_service import DictationService
@@ -349,14 +349,15 @@ def dispatch(name: str, arguments: dict[str, Any] | None, principal: Principal) 
     if not isinstance(args, dict):
         raise ToolError("arguments must be an object")
     db = get_database()
-    primitives = PrimitiveService(db)
-    workbenches = WorkbenchService(db)
-    meetings = MeetingService(db)
-    recipes = RecipeService(db)
-    profiles = ProfileService(db)
-    dictation = DictationService(db)
+    obs = get_observer()
+    primitives = PrimitiveService(db, observer=obs)
+    workbenches = WorkbenchService(db, observer=obs)
+    meetings = MeetingService(db, observer=obs)
+    recipes = RecipeService(db, observer=obs)
+    profiles = ProfileService(db, observer=obs)
+    dictation = DictationService(db, observer=obs)
     events = EventQueryService(db)
-    desk = DeskService(db)
+    desk = DeskService(db, observer=obs)
 
     if name == "desk.list":
         return _primitive_list(primitives, principal, _kind(args.get("kind")))

@@ -4,6 +4,7 @@ from typing import Any, Optional
 from fastapi import APIRouter, Body, Request
 from fastapi.responses import JSONResponse
 from ... import db as hsdb
+from ...db import get_observer
 
 def _database() -> Any:
     return getattr(hsdb, "get_database")()
@@ -44,7 +45,7 @@ def _error(exc: ServiceError) -> JSONResponse:
 def build_decisions_router(ctx: Any) -> APIRouter:
     del ctx
     router=APIRouter(prefix="/api/decisions",tags=["decisions"])
-    def service() -> DecisionLifecycleService: return DecisionLifecycleService(_database(), kernel=_kernel_service(), model_generator=_generate_with_model)
+    def service() -> DecisionLifecycleService: return DecisionLifecycleService(_database(), kernel=_kernel_service(), model_generator=_generate_with_model, observer=get_observer())
     @router.get("")
     async def list_decisions(request: Request,project_id: Optional[str]=None,project_key: Optional[str]=None,meeting_id: Optional[str]=None,lifecycle: Optional[str]=None,limit: int=200,offset: int=0) -> Any:
         try: return JSONResponse(service().list_decisions(_principal(request),project_id=project_id,project_key=project_key,meeting_id=meeting_id,lifecycle=lifecycle,limit=limit,offset=offset))

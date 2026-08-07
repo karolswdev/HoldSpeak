@@ -291,9 +291,9 @@ def build_coders_router(ctx: WebContext) -> APIRouter:
         return agent, session_id
 
     def _service() -> CoderService:
-        from ....db import get_database
+        from ....db import get_database, get_observer
 
-        return CoderService(get_database())
+        return CoderService(get_database(), observer=get_observer())
 
     @router.get("/api/coders/sessions")
     async def api_coders_sessions(

@@ -7,6 +7,7 @@ from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 
 from ...principals import UNAUTHENTICATED
+from ...db import get_observer
 from ...services.errors import ConflictError, ServiceError, ValidationError
 from ...services.sync_service import (
     SYNC_KINDS,
@@ -32,7 +33,7 @@ def build_sync_router(ctx: WebContext) -> APIRouter:
     if service is None:  # compatibility composition for isolated route fixtures
         from ... import db as hsdb
         from ...services.sync_service import SyncService
-        service = SyncService(hsdb.get_database(), hub_model_name=lambda: _hub_model_name(None))
+        service = SyncService(hsdb.get_database(), hub_model_name=lambda: _hub_model_name(None), observer=get_observer())
 
     @router.get("/api/sync/pull")
     async def api_sync_pull(request: Request, limit: int = 50) -> Any:

@@ -33,6 +33,7 @@ from fastapi import APIRouter, Header, Request
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
+from ...db import get_observer
 from ...logging_config import get_logger
 from ...services.delivery_service import DeliveryService
 from ..context import WebContext
@@ -87,7 +88,7 @@ def build_delivery_terminal_router(
     ``link`` is the shared :class:`NodeLinkState` whose token store
     authenticates the node results leg.
     """
-    delivery_service = DeliveryService(hub_db) if hub_db is not None else ctx.delivery_service
+    delivery_service = DeliveryService(hub_db, observer=get_observer()) if hub_db is not None else ctx.delivery_service
     router = APIRouter()
     holder: dict[str, Any] = {
         "service": service,

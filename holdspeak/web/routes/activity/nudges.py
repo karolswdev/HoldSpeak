@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any, Optional
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
-from ....db import get_database
+from ....db import get_database, get_observer
 from ....principals import UNAUTHENTICATED
 from ....services.activity_nudge_service import ActivityNudgeService
 from ....services.errors import ValidationError
@@ -11,7 +11,7 @@ from ...context import WebContext
 from ...runtime_support import error_500
 from ....logging_config import get_logger
 log=get_logger("web.routes.activity.nudges")
-def _svc()->ActivityNudgeService:return ActivityNudgeService(get_database())
+def _svc()->ActivityNudgeService:return ActivityNudgeService(get_database(), observer=get_observer())
 def _principal(r:Request):return getattr(r.state,"principal",UNAUTHENTICATED)
 def build_nudges_router(ctx:WebContext)->APIRouter:
  router=APIRouter()

@@ -4,6 +4,7 @@ from typing import Any
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 from .... import db as hsdb
+from ....db import get_observer
 
 def _database() -> Any:
     return getattr(hsdb, "get_database")()
@@ -26,7 +27,7 @@ def build_ask_router(ctx: WebContext) -> APIRouter:
     router=APIRouter()
     def service() -> AskService:
         from ..sync import _hub_model_name
-        return AskService(_database(),hub_model=lambda: _hub_model_name(ctx),broadcast=lambda state, **frame: _run_frame(ctx,state,**frame),rails_hydrator=lambda refs,principal: hydrate_rails_refs(refs,principal=principal))
+        return AskService(_database(),hub_model=lambda: _hub_model_name(ctx),broadcast=lambda state, **frame: _run_frame(ctx,state,**frame),rails_hydrator=lambda refs,principal: hydrate_rails_refs(refs,principal=principal),observer=get_observer())
     @router.get("/api/models")
     async def api_list_models(request: Request) -> Any:
         try: return JSONResponse({"models":service().list_models(getattr(request.state, "principal", UNAUTHENTICATED))})

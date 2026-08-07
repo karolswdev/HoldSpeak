@@ -21,8 +21,8 @@ def build_recipes_router(ctx: WebContext) -> APIRouter:
     router = APIRouter()
 
     def _svc() -> RecipeService:
-        from ....db import get_database
-        return RecipeService(get_database())
+        from ....db import get_database, get_observer
+        return RecipeService(get_database(), observer=get_observer())
 
     def _principal(request: Request) -> Principal:
         return getattr(

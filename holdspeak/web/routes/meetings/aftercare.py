@@ -17,8 +17,8 @@ def _svc(ctx: WebContext) -> MeetingAftercareService:
     if factory is not None: return factory()
     service = getattr(ctx, "meeting_aftercare_service", None)
     if isinstance(service, MeetingAftercareService): return service
-    from ....db import get_database
-    service = MeetingAftercareService(get_database(), notify=lambda topic, value: ctx.broadcast(topic, value) if ctx.broadcast else None)  # _svc composition
+    from ....db import get_database, get_observer
+    service = MeetingAftercareService(get_database(), notify=lambda topic, value: ctx.broadcast(topic, value) if ctx.broadcast else None, observer=get_observer())  # _svc composition
     ctx.meeting_aftercare_service = service
     return service
 def _error(exc: Exception, action: str) -> JSONResponse:

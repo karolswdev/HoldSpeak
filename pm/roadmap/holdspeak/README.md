@@ -4,16 +4,25 @@
 > pick up, and the repo conventions that bite (PMO commit gate, write-once
 > evidence, no `Co-Authored-By`, metal-test exclusion).
 
-**Newest update (2026-08-06): Phase 124 — The Observer — CHARTERED.**
+**Newest update (2026-08-07): Phase 125 — The Follow-Through — ACTIVE (1/10).**
+Phase 124 shipped the observer: every service call recorded. Phase 125
+makes the desk follow through. Every meeting becomes a living execution
+board: decisions bridge into commitments with owners and due dates,
+aftercare enforces triage, and a unified board answers "who owes what?"
+with provenance back to the sentence where it was promised. 10 stories:
+wire observer into production, board projection, decision commitments,
+aftercare triage, decision loop collection, due/stall semantics,
+write-through verbs, provenance on cards, Desk surface + MCP, the walk.
+
+**Previous update (2026-08-07): Phase 124 — The Observer — SHIPPED.**
 Phase 123 completed the service pipeline: 33 services own every operation
 in DeskOS, 41 MCP tools provide the full programmatic surface. Phase 124
-adds the observer — a `PipelineObserver` protocol with an `@observed`
+added the observer — a `PipelineObserver` protocol with an `@observed`
 decorator that records every public service method call (who, what, args,
 result, timing, correlation) to a local append-only `pipeline_events`
 SQLite table. An `EventQueryService` answers "what did the desk do?",
 MCP resources expose the event stream, and the walk proves every service
-is observed. No telemetry leaves the machine (Article III.3). The desk
-knows what it did.
+is observed. No telemetry leaves the machine (Article III.3). PR #442.
 
 **Previous update (2026-08-06): Phase 123 — The Pipeline — SHIPPED.**
 Phase 122 built the skeleton: eight services and ten MCP tools. Phase 123
@@ -360,12 +369,17 @@ parallel. Phase 101 itself stands at 3/4 (canon ratified and built,
 PR #359; sweep 4122/0).
 
 **Current phase (newest):**
+[**Phase 125 — The Follow-Through**](./phase-125-the-follow-through/current-phase-status.md)
+— **ACTIVE (1/10, 2026-08-07)**. Every meeting becomes a living
+execution board: decisions bridge into commitments with owners and due
+dates, aftercare enforces triage, and a unified board answers "who owes
+what?" with provenance back to the sentence where it was promised.
+Previous:
 [**Phase 124 — The Observer**](./phase-124-the-observer/current-phase-status.md)
-— **CHARTERED (0/10, 2026-08-06)**. The service pipeline (Phase 123) is
-complete. Phase 124 adds the observer: every public service method call is
-recorded to a local append-only `pipeline_events` table. Protocol,
-decorator, SQLite backend, wiring to all 33 services, event query service,
-MCP resources, doctor check, docs, and the walk.
+— **SHIPPED (10/10, PR #442)**. Every public service method call recorded
+to a local append-only `pipeline_events` table. Protocol, decorator,
+SQLite backend, wiring to all 33 services, event query service, MCP
+resources, doctor check, docs, and the walk.
 Previous:
 [**Phase 123 — The Pipeline**](./phase-123-the-pipeline/current-phase-status.md)
 — **SHIPPED (13/13, PR #441)**. 33 services, 41 MCP tools, 16 resources,

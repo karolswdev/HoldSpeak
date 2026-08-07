@@ -567,7 +567,7 @@ class MeetingWebServer:
         from .services.projection_service import ProjectionService
         from .services.settings_service import SettingsService
         from .services.setup_service import SetupService
-        from .db import get_database
+        from .db import get_database, get_observer
         from .web.routes import (
             build_activity_router,
             build_authority_router,
@@ -605,10 +605,11 @@ class MeetingWebServer:
         from .services.meeting_intel_service import MeetingIntelService
         from .services.meeting_service import MeetingService
 
-        meeting_service = MeetingService(get_database())
+        obs = get_observer()
+        meeting_service = MeetingService(get_database(), observer=obs)
         notify = lambda message_type, data: self.broadcast(message_type, data)
-        meeting_intel_service = MeetingIntelService(get_database(), notify=notify)
-        meeting_aftercare_service = MeetingAftercareService(get_database(), notify=notify)
+        meeting_intel_service = MeetingIntelService(get_database(), notify=notify, observer=obs)
+        meeting_aftercare_service = MeetingAftercareService(get_database(), notify=notify, observer=obs)
         meeting_service.bind_lifecycle(
             on_start=self.on_start,
             on_stop=self.on_stop,
@@ -618,11 +619,11 @@ class MeetingWebServer:
         web_ctx = WebContext(
             get_state=self.get_state,
             meeting_service=meeting_service,
-            meeting_service_factory=lambda: MeetingService(get_database()),
+            meeting_service_factory=lambda: MeetingService(get_database(), observer=obs),
             meeting_intel_service=meeting_intel_service,
-            meeting_intel_service_factory=lambda: MeetingIntelService(get_database(), notify=notify),
+            meeting_intel_service_factory=lambda: MeetingIntelService(get_database(), notify=notify, observer=obs),
             meeting_aftercare_service=meeting_aftercare_service,
-            meeting_aftercare_service_factory=lambda: MeetingAftercareService(get_database(), notify=notify),
+            meeting_aftercare_service_factory=lambda: MeetingAftercareService(get_database(), notify=notify, observer=obs),
             # Late-bind broadcast: the prior inline handlers called
             # `self.broadcast(...)`, which resolves the attribute at call time
             # (tests reassign `server.broadcast` to spy on it). A thunk keeps
@@ -638,22 +639,22 @@ class MeetingWebServer:
             on_update_meeting=self.on_update_meeting,
             on_set_title=self.on_set_title,
             on_set_tags=self.on_set_tags,
-            project_service=ProjectService(get_database()),
-            projection_service=ProjectionService(get_database()),
-            authority_service=AuthorityService(get_database()),
+            project_service=ProjectService(get_database(), observer=obs),
+            projection_service=ProjectionService(get_database(), observer=obs),
+            authority_service=AuthorityService(get_database(), observer=obs),
             credential_service=CredentialService(
-                get_database(), on_settings_applied=self.on_settings_applied
+                get_database(), on_settings_applied=self.on_settings_applied, observer=obs
             ),
-            cadence_service=CadenceService(get_database(), Config.load().cadence),
-            sync_service=SyncService(get_database()),
-            gate_service=GateService(get_database()),
-            setup_service=SetupService(get_database()),
-            delivery_service=DeliveryService(get_database()),
-            mesh_service=MeshService(get_database()),
-            memory_service=MemoryService(get_database()),
-            mission_control_service=MissionControlService(get_database()),
+            cadence_service=CadenceService(get_database(), Config.load().cadence, observer=obs),
+            sync_service=SyncService(get_database(), observer=obs),
+            gate_service=GateService(get_database(), observer=obs),
+            setup_service=SetupService(get_database(), observer=obs),
+            delivery_service=DeliveryService(get_database(), observer=obs),
+            mesh_service=MeshService(get_database(), observer=obs),
+            memory_service=MemoryService(get_database(), observer=obs),
+            mission_control_service=MissionControlService(get_database(), observer=obs),
             settings_service=SettingsService(
-                get_database(), on_settings_applied=self.on_settings_applied
+                get_database(), on_settings_applied=self.on_settings_applied, observer=obs
             ),
             on_get_intent_controls=self.on_get_intent_controls,
             on_set_intent_profile=self.on_set_intent_profile,
@@ -661,9 +662,9 @@ class MeetingWebServer:
             on_route_preview=self.on_route_preview,
             on_dictation_config_changed=self.on_dictation_config_changed,
             on_remote_dictation=self.on_remote_dictation,
-            coder_service=CoderService(get_database()),
+            coder_service=CoderService(get_database(), observer=obs),
             dictation_service=DictationService(
-                get_database(),
+                get_database(), observer=obs,
                 journal_repository=getattr(self.dictation_journal, "repository", None),
                 journal_available=self.dictation_journal is not None,
             ),

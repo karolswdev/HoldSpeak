@@ -26,7 +26,7 @@ def _service(ctx: WebContext) -> MeetingService:
     """Get the composition-bound service, retaining partial-context support."""
     if isinstance(ctx.meeting_service, MeetingService):
         return ctx.meeting_service
-    from ....db import get_database
+    from ....db import get_database, get_observer
 
     def update_callback(*, title: str | None, tags: list[str] | None) -> Any:
         if ctx.on_update_meeting is not None:
@@ -37,7 +37,7 @@ def _service(ctx: WebContext) -> MeetingService:
             ctx.on_set_tags(tags)
         return ctx.get_state() or {}
 
-    service = MeetingService(get_database())  # _service composition
+    service = MeetingService(get_database(), observer=get_observer())  # _service composition
     service.bind_lifecycle(
         on_start=ctx.on_start,
         on_stop=ctx.on_meeting_stop or ctx.on_stop,

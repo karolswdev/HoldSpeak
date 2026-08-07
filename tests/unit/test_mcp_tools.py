@@ -31,21 +31,21 @@ def test_tools_list_exposes_pipeline_mcp_tools_with_closed_schemas() -> None:
 
 def test_pipeline_tools_dispatch_through_mcp_protocol(monkeypatch) -> None:
     class Workbenches:
-        def __init__(self, db): pass
+        def __init__(self, db, **kw): pass
         def create_workbench(self, principal, *, name, **fields): return {"id": fields.get("id", "wb"), "name": name}
         def update_workbench(self, principal, workbench_id, **fields): return {"id": workbench_id, **fields}
         def update_item(self, principal, workbench_id, item_id, **fields): return {"id": item_id, **fields}
         def list_runs(self, principal, workbench_id): return [{"workbench_id": workbench_id}]
 
     class Recipes:
-        def __init__(self, db): pass
+        def __init__(self, db, **kw): pass
         def list_recipes(self, principal): return [{"id": "recipe"}]
         def get_recipe(self, principal, recipe_id): return {"id": recipe_id}
         async def run(self, principal, recipe_id, *, input="", **options): return {"recipe_id": recipe_id, "input": input, **options}
         async def chat(self, principal, recipe_id, *, question, **options): return {"recipe_id": recipe_id, "question": question, **options}
 
     class Primitives:
-        def __init__(self, db): pass
+        def __init__(self, db, **kw): pass
         def file_member(self, principal, directory_id, primitive_id): return {"directory_id": directory_id, "primitive_id": primitive_id}
         def unfile_member(self, principal, directory_id, primitive_id): return True
         def list_directory_members(self, principal, directory_id): return [{"directory_id": directory_id}]
@@ -54,13 +54,14 @@ def test_pipeline_tools_dispatch_through_mcp_protocol(monkeypatch) -> None:
         def list_kb_members(self, principal, kb_id): return [{"kb_id": kb_id}]
 
     monkeypatch.setattr(mcp_tools, "get_database", lambda: object())
+    monkeypatch.setattr(mcp_tools, "get_observer", lambda: None)
     monkeypatch.setattr(mcp_tools, "WorkbenchService", Workbenches)
     monkeypatch.setattr(mcp_tools, "RecipeService", Recipes)
     monkeypatch.setattr(mcp_tools, "PrimitiveService", Primitives)
-    monkeypatch.setattr(mcp_tools, "MeetingService", lambda db: object())
-    monkeypatch.setattr(mcp_tools, "ProfileService", lambda db: object())
-    monkeypatch.setattr(mcp_tools, "DictationService", lambda db: object())
-    monkeypatch.setattr(mcp_tools, "DeskService", lambda db: object())
+    monkeypatch.setattr(mcp_tools, "MeetingService", lambda db, **kw: object())
+    monkeypatch.setattr(mcp_tools, "ProfileService", lambda db, **kw: object())
+    monkeypatch.setattr(mcp_tools, "DictationService", lambda db, **kw: object())
+    monkeypatch.setattr(mcp_tools, "DeskService", lambda db, **kw: object())
     monkeypatch.setattr(server, "resolve_auth", lambda: SimpleNamespace(principal=object()))
 
     def call(name, arguments):
