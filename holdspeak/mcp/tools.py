@@ -13,6 +13,7 @@ from holdspeak.services.dictation_service import DictationService
 from holdspeak.services.event_query_service import EventQueryService
 from holdspeak.services.follow_through_service import FollowThroughService
 from holdspeak.services.meeting_service import MeetingService
+from holdspeak.services.monday_brief_service import MondayBriefService
 from holdspeak.services.primitive_service import PrimitiveService
 from holdspeak.services.profile_service import ProfileService
 from holdspeak.services.recipe_service import RecipeService
@@ -318,6 +319,16 @@ TOOLS.extend([
         },
         ["decision_id"],
     ),
+    _mcp_tool(
+        "monday_brief.get",
+        "Read the latest persisted Monday Brief; set generate to true when no brief exists and one should be composed.",
+        {"generate": {"type": "boolean", "default": False, "description": "Generate the current brief when no persisted brief exists."}},
+    ),
+    _mcp_tool(
+        "monday_brief.generate",
+        "Generate the current Monday Brief from durable sources. Repeated calls return the day's existing brief.",
+        {},
+    ),
 ])
 
 # The UI owns local surface state. These IDs deliberately never mutate the
@@ -394,6 +405,7 @@ def dispatch(name: str, arguments: dict[str, Any] | None, principal: Principal) 
     dictation = DictationService(db, observer=obs)
     events = EventQueryService(db)
     follow_through = FollowThroughService(db, observer=obs)
+    monday_brief = MondayBriefService(db, observer=obs)
     desk = DeskService(db, observer=obs)
 
     if name == "desk.list":
@@ -536,6 +548,11 @@ def dispatch(name: str, arguments: dict[str, Any] | None, principal: Principal) 
             owner=args.get("owner"),
             due_at=args.get("due_at"),
         )
+    if name == "monday_brief.get":
+        brief = monday_brief.generate(principal) if args.get("generate") else monday_brief.get_latest(principal)
+        return asdict(brief) if brief is not None else None
+    if name == "monday_brief.generate":
+        return asdict(monday_brief.generate(principal))
     raise ToolError(f"Unknown tool: {name}")
 
 

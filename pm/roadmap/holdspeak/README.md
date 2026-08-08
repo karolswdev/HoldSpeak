@@ -4,7 +4,16 @@
 > pick up, and the repo conventions that bite (PMO commit gate, write-once
 > evidence, no `Co-Authored-By`, metal-test exclusion).
 
-**Newest update (2026-08-07): Phase 125 — The Follow-Through — DONE (10/10).**
+**Newest update (2026-08-07): Phase 126 — The Monday Brief — DONE (9/9).**
+The desk speaks first. At first open each day, the brief reconstructs the
+operating picture: material changes from pipeline events, breakage with
+repair paths, waiting work (overdue follow-through + high-priority loops),
+and decisions requiring the owner. Deterministic composition — empty state
+says "Nothing material changed," never invented content. Schema v40,
+MondayBriefService with four collectors, MCP tools + resource, FastAPI
+routes, and the walk proving the full pipeline.
+
+**Previous update (2026-08-07): Phase 125 — The Follow-Through — DONE (10/10).**
 Phase 124 shipped the observer: every service call recorded. Phase 125
 made the desk follow through. Every meeting becomes a living execution
 board: decisions bridge into commitments with owners and due dates,

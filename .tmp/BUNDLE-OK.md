@@ -1,4 +1,3 @@
-HS-125-06 and HS-125-07 are tightly coupled: both modify FollowThroughService
-in follow_through_service.py. Story 06 refines lane assignment logic (due/stall
-semantics) and story 07 adds completion verbs that depend on the refined states.
-Splitting would require an artificial intermediate commit.
+HS-126-08 and HS-126-09 are the delivery and walk stories — 08 adds MCP
+tools/resource and FastAPI routes, 09 proves the full pipeline end to end.
+Both share monday_brief_service.py and complete the phase.

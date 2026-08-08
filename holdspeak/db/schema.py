@@ -7,7 +7,7 @@ independently of the Database container.
 # Bump this when adding tables or columns; the Database container uses it to
 # decide whether to back up and re-apply. See core._ensure_schema for the
 # four-way upgrade contract.
-SCHEMA_VERSION = 39  # v39: decision_commitments (HS-125-03)
+SCHEMA_VERSION = 40  # v40: Monday brief persistence (HS-126-01)
 
 # SQL Schema
 SCHEMA_SQL = """
@@ -1542,4 +1542,27 @@ ON pipeline_events(principal_kind, principal_identity, timestamp DESC);
 CREATE INDEX IF NOT EXISTS idx_pipeline_events_correlation
 ON pipeline_events(correlation_id)
 WHERE correlation_id != '';
+
+-- HS-126-01: persisted, window-keyed Monday briefs. Items are deliberately
+-- separate so collectors can add them without changing the brief identity.
+CREATE TABLE IF NOT EXISTS monday_briefs (
+    id TEXT PRIMARY KEY,
+    period_start TEXT NOT NULL,
+    period_end TEXT NOT NULL,
+    headline TEXT NOT NULL DEFAULT '',
+    generated_at TEXT NOT NULL,
+    spoken INTEGER NOT NULL DEFAULT 0,
+    disposition TEXT
+);
+
+CREATE TABLE IF NOT EXISTS monday_brief_items (
+    id TEXT PRIMARY KEY,
+    brief_id TEXT NOT NULL REFERENCES monday_briefs(id),
+    section TEXT NOT NULL,
+    text TEXT NOT NULL,
+    detail TEXT,
+    source_ref TEXT,
+    priority INTEGER NOT NULL DEFAULT 0
+);
+CREATE INDEX IF NOT EXISTS idx_monday_brief_items_brief ON monday_brief_items(brief_id);
 """
