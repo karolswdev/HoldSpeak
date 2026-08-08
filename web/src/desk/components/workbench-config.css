@@ -569,7 +569,8 @@
 }
 
 /* ── narrow workbench (container query) ── */
-@container desk-surface (max-width: 560px) {
+/* HS-129-06 — Workbench uses the public window-body container name. */
+@container surface (max-width: 560px) {
   .wb-config-strip {
     flex-wrap: wrap;
   }

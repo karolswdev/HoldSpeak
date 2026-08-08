@@ -1,6 +1,6 @@
 # Phase 129 — One Grammar
 
-**Status:** chartered (0/11).
+**Status:** in-progress (8/11).
 
 **Last updated:** 2026-08-08.
 
@@ -74,7 +74,7 @@ phase is self-contained:
 | HS-129-03 | The Brief pathology and Intelligence polish | done | [story-03](story-03-brief-pathology.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-129-04 | Shell-scroller and double-scroll repairs | done | [story-04](story-04-shell-scroller-repairs.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-129-05 | One foot in Speak; the great deletion | done | [story-05](story-05-speak-foot-and-deletion.md) | [evidence-story-05](./evidence-story-05.md) |
-| HS-129-06 | The container-query law | in-progress | [story-06](story-06-container-query-law.md) | — |
+| HS-129-06 | The container-query law | done | [story-06](story-06-container-query-law.md) | [evidence-story-06](./evidence-story-06.md) |
 | HS-129-07 | The speakable desk | done | [story-07](story-07-the-speakable-desk.md) | [evidence-story-07](./evidence-story-07.md) |
 | HS-129-08 | In-world editing — the lightbox dies | done | [story-08](story-08-in-world-editing.md) | [evidence-story-08](./evidence-story-08.md) |
 | HS-129-09 | One state grammar | in-progress | [story-09](story-09-one-state-grammar.md) | — |
@@ -103,7 +103,11 @@ pinned foot in the live walk. HS-129-07 closes Audit C's unspeakable-field
 census with shared text controls and field-owned mics. HS-129-08 closes Audit C's modal
 breach: Note, KB, Recipe, and Workflow editors now live in their open pullout
 or a real origin window, with standard Escape and focus return while their
-autosave path remains unchanged. The non-waivable exit remains story 11's walk.
+autosave path remains unchanged. HS-129-06 makes `surface` the only public
+window-body container name and moves Delivery, Intelligence, Roadmap, and
+list content breakpoints onto it, so a 460px window reflows inside a 1440px
+browser; the remaining viewport rules are shell/sheet exceptions. The
+non-waivable exit remains story 11's walk.
 
 ## Active risks
 

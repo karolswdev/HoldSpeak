@@ -333,7 +333,8 @@
 .desk-next .desk-pr-result.is-error strong {
   color: var(--danger, #f87171);
 }
-@media (max-width: 520px) {
+/* HS-129-06 — Delivery reflows with its window body, not the browser. */
+@container surface (max-width: 520px) {
   .desk-next .desk-pr-object-table {
     min-width: 0;
     width: 100%;

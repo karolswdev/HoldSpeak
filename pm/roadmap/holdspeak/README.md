@@ -4,7 +4,14 @@
 > pick up, and the repo conventions that bite (PMO commit gate, write-once
 > evidence, no `Co-Authored-By`, metal-test exclusion).
 
-**Newest update (2026-08-08): Phase 129 — One Grammar — HS-129-05 shipped.**
+**Newest update (2026-08-08): Phase 129 — One Grammar — HS-129-06 shipped.**
+The window is now the responsive viewport: Delivery, Intelligence, Roadmap,
+and list content reflow through the named `surface` container at their own
+window-body widths, never the browser width. The retired `desk-surface` alias
+and anonymous container queries are gone; shell and sheet media rules remain
+explicit exceptions.
+
+**Previous update (2026-08-08): Phase 129 — One Grammar — HS-129-05 shipped.**
 Speak now has one frame-owned foot: the shared slots carry readiness, landing
 receipts, Review, and Export. The last sticky Speak rail is gone, seven dead
 footer/style paths are deleted, and History, Live, Process, Project Memory,

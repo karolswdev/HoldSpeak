@@ -261,7 +261,8 @@
 .receipts-view button:focus-visible,
 .receipt-detail button:focus-visible { outline: none; box-shadow: var(--focus-ring); }
 
-@media (max-width: 420px) {
+/* HS-129-06 — Receipt detail follows the Intelligence window body. */
+@container surface (max-width: 420px) {
   .receipt-revisions li { grid-template-columns: 1fr; gap: 2px; }
   .receipt-fields { grid-template-columns: 5rem minmax(0, 1fr); }
 }
@@ -373,7 +374,8 @@
   font-size: 0.6875rem;
 }
 
-@container (max-width: 390px) {
+/* HS-129-06 — Name the window body that governs Brief density. */
+@container surface (max-width: 390px) {
   .intelligence-brief-headline {
     font-size: 1.625rem;
   }
@@ -565,7 +567,8 @@
   .receipt-revisions li { grid-template-columns: 1fr; gap: 2px; }
 }
 
-@container (max-width: 380px) {
+/* HS-129-06 — Name the window body that governs Follow-Through density. */
+@container surface (max-width: 380px) {
   .surface-ledger[data-cols="follow-through"] .surface-ledger-line {
     grid-template-columns: minmax(0, 1fr) auto auto;
   }
