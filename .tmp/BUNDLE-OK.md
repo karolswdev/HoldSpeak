@@ -1,3 +1,3 @@
-Phase 127 charter and HS-127-01 are shipped together — the charter
-establishes the phase structure and story 01 adds the receipt canon
-tables (schema v41) and DecisionReceiptService skeleton.
+HS-127-02 and HS-127-03 both extend DecisionReceiptService in
+decision_receipt_service.py: 02 adds factory methods for meeting and
+desk origins, 03 adds exact meeting evidence with segment provenance.

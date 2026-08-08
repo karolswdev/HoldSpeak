@@ -88,6 +88,191 @@ def test_list_receipts_returns_all_receipts(tmp_path):
     assert {receipt["id"] for receipt in receipts} == {first["id"], second["id"]}
 
 
+def _accepted_meeting_decision(db: Database, decision_id: str = "dec-127") -> None:
+    with db._connection() as conn:
+        conn.execute(
+            """INSERT INTO decisions (
+                   id, text, rationale, decided_at, date_basis, source_artifact_id,
+                   source_meeting_id, source_state, lifecycle, created_at, updated_at,
+                   last_modified, deleted
+               ) VALUES (?, 'Use receipt-backed decisions.', 'One durable canon.',
+                         '2026-08-07T00:00:00+00:00', 'meeting_date', 'artifact-127',
+                         'meeting-127', 'linked', 'accepted', '2026-08-07T00:00:00+00:00',
+                         '2026-08-07T00:00:00+00:00', '2026-08-07T00:00:00+00:00', 0)""",
+            (decision_id,),
+        )
+
+
+def test_create_from_meeting_mints_idempotent_receipt_with_lineage(tmp_path):
+    db = Database(tmp_path / "receipts.db")
+    _accepted_meeting_decision(db)
+    source_before = db.decisions.get("dec-127").to_dict()
+    service = DecisionReceiptService(db)
+
+    receipt = service.create_from_meeting(None, "dec-127")
+    repeated = service.create_from_meeting(None, "dec-127")
+    loaded = service.get(None, receipt["id"])
+
+    assert receipt["source_type"] == "meeting"
+    assert receipt["source_id"] == "dec-127"
+    assert receipt["decision_text"] == "Use receipt-backed decisions."
+    assert receipt["rationale"] == "One durable canon."
+    assert repeated["id"] == receipt["id"]
+    assert loaded is not None
+    assert {(source["source_type"], source["source_ref"]) for source in loaded["sources"]} == {
+        ("meeting", "meeting-127"),
+        ("artifact", "artifact-127"),
+    }
+    assert db.decisions.get("dec-127").to_dict() == source_before
+
+
+def _meeting_evidence(db: Database, *, with_segment: bool, artifact_id: str = "artifact-evidence") -> None:
+    with db._connection() as conn:
+        conn.execute(
+            "INSERT INTO meetings (id, started_at, title) VALUES (?, ?, ?)",
+            ("meeting-evidence", "2026-08-07T09:00:00+00:00", "Receipt evidence"),
+        )
+        if artifact_id:
+            conn.execute(
+                """INSERT INTO artifacts (id, meeting_id, artifact_type, title)
+                   VALUES (?, 'meeting-evidence', 'decisions', 'Decision capture')""",
+                (artifact_id,),
+            )
+        conn.execute(
+            """INSERT INTO decisions (
+                   id, text, rationale, decided_at, date_basis, source_timestamp,
+                   provenance_label, source_artifact_id, source_meeting_id,
+                   source_state, lifecycle, created_at, updated_at, last_modified, deleted
+               ) VALUES (
+                   'dec-evidence', 'Ship the receipt evidence.', NULL,
+                   '2026-08-07T09:00:30+00:00', 'transcript_moment', 30.0,
+                   'reported', ?, 'meeting-evidence', 'linked', 'accepted',
+                   '2026-08-07T00:00:00+00:00', '2026-08-07T00:00:00+00:00',
+                   '2026-08-07T00:00:00+00:00', 0
+               )""",
+            (artifact_id,),
+        )
+        if with_segment:
+            conn.execute(
+                """INSERT INTO segments (meeting_id, text, speaker, start_time, end_time)
+                   VALUES ('meeting-evidence', 'Ship the receipt evidence.', 'Mina', 20.0, 40.0)"""
+            )
+
+
+def test_create_from_meeting_persists_exact_segment_evidence(tmp_path):
+    db = Database(tmp_path / "receipts.db")
+    _meeting_evidence(db, with_segment=True)
+    service = DecisionReceiptService(db)
+
+    receipt = service.create_from_meeting(None, "dec-evidence")
+    loaded = service.get(None, receipt["id"])
+
+    assert loaded is not None
+    sources = {source["source_type"]: source for source in loaded["sources"]}
+    assert sources["meeting"]["source_ref"] == "meeting-evidence"
+    assert sources["artifact"]["source_ref"] == "artifact-evidence"
+    assert sources["segment"]["text"] == "Ship the receipt evidence."
+    assert sources["segment"]["speaker"] == "Mina"
+
+
+def test_create_from_meeting_without_segments_keeps_meeting_only(tmp_path):
+    db = Database(tmp_path / "receipts.db")
+    _meeting_evidence(db, with_segment=False, artifact_id="")
+    service = DecisionReceiptService(db)
+
+    receipt = service.create_from_meeting(None, "dec-evidence")
+    loaded = service.get(None, receipt["id"])
+
+    assert loaded is not None
+    assert [(source["source_type"], source["source_ref"]) for source in loaded["sources"]] == [
+        ("meeting", "meeting-evidence")
+    ]
+
+
+def test_get_receipt_resolves_source_details(tmp_path):
+    db = Database(tmp_path / "receipts.db")
+    _meeting_evidence(db, with_segment=True)
+    service = DecisionReceiptService(db)
+
+    receipt = service.create_from_meeting(None, "dec-evidence")
+    loaded = service.get(None, receipt["id"])
+
+    assert loaded is not None
+    sources = {source["source_type"]: source for source in loaded["sources"]}
+    assert sources["meeting"]["title"] == "Receipt evidence"
+    assert sources["meeting"]["date"] == "2026-08-07T09:00:00+00:00"
+    assert sources["artifact"]["artifact_type"] == "decisions"
+    assert sources["segment"]["details"]["speaker"] == "Mina"
+
+
+def test_provenance_resolution_failure_still_mints_receipt(tmp_path, monkeypatch):
+    db = Database(tmp_path / "receipts.db")
+    _meeting_evidence(db, with_segment=True)
+    service = DecisionReceiptService(db)
+
+    def fail_resolution(decision_id: str):
+        raise RuntimeError("transcript unavailable")
+
+    monkeypatch.setattr(db.decisions, "resolve_decision_moment", fail_resolution)
+    receipt = service.create_from_meeting(None, "dec-evidence")
+    loaded = service.get(None, receipt["id"])
+
+    assert loaded is not None
+    assert {source["source_type"] for source in loaded["sources"]} == {"meeting", "artifact"}
+
+
+def test_create_from_desk_mints_idempotent_receipt(tmp_path):
+    db = Database(tmp_path / "receipts.db")
+    db.desk_decisions.upsert(
+        decision_id="desk-127",
+        title="Receipt origin",
+        status="accepted",
+        deciders=["Karol", "Mina"],
+        context_markdown="Decisions need one durable canon.",
+        decision_markdown="Use receipt-backed decisions.",
+        alternatives=[{"name": "Separate stores", "reason": "Harder to trace"}],
+        consequences_markdown="Sources remain authoritative.",
+    )
+    source_before = db.desk_decisions.get("desk-127").to_dict()
+    service = DecisionReceiptService(db)
+
+    receipt = service.create_from_desk(None, "desk-127")
+    repeated = service.create_from_desk(None, "desk-127")
+
+    assert receipt["source_type"] == "desk"
+    assert receipt["source_id"] == "desk-127"
+    assert receipt["decision_text"] == "Use receipt-backed decisions."
+    assert receipt["rationale"] == (
+        "Decisions need one durable canon.\n\nSources remain authoritative."
+    )
+    assert receipt["alternatives"] == '[{"name": "Separate stores", "reason": "Harder to trace"}]'
+    assert receipt["owner"] == "Karol, Mina"
+    assert repeated["id"] == receipt["id"]
+    assert db.desk_decisions.get("desk-127").to_dict() == source_before
+
+
+def test_receipts_from_each_origin_have_the_same_shape(tmp_path):
+    db = Database(tmp_path / "receipts.db")
+    _accepted_meeting_decision(db)
+    db.desk_decisions.upsert(
+        decision_id="desk-127",
+        decision_markdown="Choose the receipt origin.",
+    )
+    service = DecisionReceiptService(db)
+
+    meeting_receipt = service.create_from_meeting(None, "dec-127")
+    desk_receipt = service.create_from_desk(None, "desk-127")
+
+    assert set(meeting_receipt) == set(desk_receipt)
+
+
+def test_create_from_meeting_rejects_unknown_decision(tmp_path):
+    service = DecisionReceiptService(Database(tmp_path / "receipts.db"))
+
+    with pytest.raises(KeyError, match="missing-decision"):
+        service.create_from_meeting(None, "missing-decision")
+
+
 def test_receipt_requires_decision_text_and_source_type(tmp_path):
     service = DecisionReceiptService(Database(tmp_path / "receipts.db"))
 
