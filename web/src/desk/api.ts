@@ -12,6 +12,7 @@ import type {
   Coder,
   Decision,
   Directory,
+  Intelligence,
   KB,
   Meeting,
   Note,
@@ -133,6 +134,9 @@ export const EMPTY_ITEMS = {
   story: [],
   repository: [],
   workbench: [],
+  intelligence: [
+    { kind: "intelligence", id: "desk", name: "Intelligence" } satisfies Intelligence,
+  ],
   game: [],
   layout: [],
 } satisfies TypedItems;
@@ -464,7 +468,10 @@ export const fromCoderStatus = (data: unknown): Coder[] =>
   });
 
 /** The subset of PrimitiveKind that has a wire endpoint and a fromWire mapper. */
-type WireKind = Exclude<PrimitiveKind, "game" | "layout" | "story">;
+type WireKind = Exclude<
+  PrimitiveKind,
+  "game" | "layout" | "story" | "intelligence"
+>;
 
 /** Compile-time completeness guard: adding a new WireKind without a mapper
  * here is a type error. The registry is declarative — loadAll() still drives

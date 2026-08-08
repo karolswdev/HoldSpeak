@@ -1,3 +1,3 @@
-HS-127-08, 09, 10 complete the Decision Receipt phase: search, MCP
-tools + walk, and local-first sync. All extend DecisionReceiptService
-and share the same test/evidence pipeline.
+Phase 128 charter and HS-128-01 shipped together — the charter
+establishes the phase and story 01 adds the Intelligence pullout shell
+with segmented header and desk verb registration.

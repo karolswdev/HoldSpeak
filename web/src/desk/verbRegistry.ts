@@ -301,6 +301,16 @@ export const VERBS: Verb[] = [
     ghost: never,
     run: () => void useDesk.getState().refresh(),
   },
+  {
+    id: "desk.open-intelligence",
+    label: "Open Intelligence",
+    menu: "desk",
+    scope: "floor",
+    group: "view",
+    keywords: ["brief", "follow-through", "receipts"],
+    ghost: never,
+    run: () => useDesk.getState().openPullout("intelligence:desk"),
+  },
   // ── Object (selection-aware; ghosted with the reason) ───────────────
   {
     id: "object.open",

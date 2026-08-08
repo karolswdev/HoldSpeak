@@ -63,6 +63,7 @@ function resetStore() {
       chain: [], workflow: [], coder: [], game: [], layout: [], roadmap: [],
       story: [], repository: [{ kind: "repository", id: "r1", name: "R", sourceId: "s1", branch: "main", createdAt: "" }],
       workbench: [{ kind: "workbench", id: "wb1", name: "WB", createdAt: "" }],
+      intelligence: [{ kind: "intelligence", id: "desk", name: "Intelligence" }],
     },
   });
 }

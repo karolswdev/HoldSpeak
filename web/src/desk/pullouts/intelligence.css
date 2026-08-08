@@ -1,0 +1,68 @@
+/* HS-128-01 — Intelligence is a desk instrument, not a page tab bar. */
+.intelligence-pullout {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-width: 320px;
+}
+
+.intelligence-segments {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 2px;
+  padding: 2px;
+  border: 1px solid var(--border);
+  background: var(--desk-window-well);
+  box-shadow: var(--desk-window-etch);
+}
+
+.intelligence-segment {
+  min-height: 30px;
+  padding: 0 var(--space-1);
+  border: 1px solid transparent;
+  border-radius: var(--radius-xs);
+  background: transparent;
+  color: var(--text-faint);
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.055em;
+  line-height: 1;
+  text-transform: uppercase;
+  transition:
+    background-color var(--duration-short) var(--ease-standard),
+    border-color var(--duration-short) var(--ease-standard),
+    color var(--duration-short) var(--ease-standard);
+}
+
+.intelligence-segment:hover:not(.is-active) {
+  background: var(--surface-hover);
+  color: var(--text-muted);
+}
+
+.intelligence-segment.is-active {
+  border-color: var(--accent);
+  background: var(--accent-tint);
+  box-shadow: inset 1px 1px 0 var(--bevel-light), inset -1px -1px 0 var(--bevel-dark);
+  color: var(--text);
+}
+
+.intelligence-segment:focus-visible {
+  position: relative;
+  z-index: 1;
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.intelligence-view {
+  display: grid;
+  min-height: 132px;
+  place-items: center;
+  border: 1px solid var(--border);
+  background: var(--desk-panel-fill);
+  box-shadow: var(--desk-window-etch);
+  color: var(--text-muted);
+  font-family: var(--font-display);
+  font-size: var(--desk-type-primary-size);
+  font-weight: var(--desk-type-primary-weight);
+}

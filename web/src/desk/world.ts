@@ -16,7 +16,12 @@ export interface WorldObject {
 }
 
 /** Kinds that have their own rendering path (zones, or never surfaced). */
-const WORLD_ONLY_EXCLUDE = ["directory", "game", "layout"] as const;
+const WORLD_ONLY_EXCLUDE = [
+  "directory",
+  "game",
+  "layout",
+  "intelligence",
+] as const;
 
 /** The exhaustive iteration order — every PrimitiveKind is listed, but
  * the world_exclude kinds are placed at the end (allObjects filters
