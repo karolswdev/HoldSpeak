@@ -1,6 +1,6 @@
 # Phase 128 — Desk Intelligence
 
-**Status:** in-progress (4/10).
+**Status:** done (10/10).
 
 **Last updated:** 2026-08-07.
 
@@ -54,10 +54,12 @@ Brief   Service.board()   Service search/detail
 | HS-128-07 | Cross-link drill paths | done | [story-07](story-07-cross-links.md) | [evidence-story-07](./evidence-story-07.md) |
 | HS-128-08 | Attention badges and notifications | done | [story-08](story-08-attention-badges.md) | [evidence-story-08](./evidence-story-08.md) |
 | HS-128-09 | Responsive and mobile behavior | done | [story-09](story-09-responsive.md) | [evidence-story-09](./evidence-story-09.md) |
-| HS-128-10 | The walk | backlog | [story-10](story-10-the-walk.md) | — |
+| HS-128-10 | The walk | done | [story-10](story-10-the-walk.md) | [evidence-story-10](./evidence-story-10.md) |
 
 ## Where we are
 
-HS-128-01 through HS-128-04 are complete: the Desk shell now exposes Brief,
-Follow-Through, and Receipts over the Phase 125–127 intelligence services. Next:
-dock and palette entry points (HS-128-05).
+Phase 128 is complete (10/10). One Desk Intelligence pullout now joins Brief,
+Follow-Through, and Receipts with dock and palette entry, WHY affordances,
+cross-links, attention badges, and responsive sheet behavior. The walk proves
+the segmented surface, its three views, search, type safety, and intelligence
+service regression coverage.
