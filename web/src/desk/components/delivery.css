@@ -1,13 +1,15 @@
 /* ── HS-94-08 Delivery on the Desk ─────────────────────────────── */
+/* HS-129-04 — Delivery's frame stays fixed; its body is the only primary scroll path. */
 .desk-next .desk-dlv-board {
   position: fixed;
   right: var(--space-3);
   bottom: 56px;
   width: min(560px, calc(100vw - 2 * var(--space-3)));
   max-height: 70vh;
-  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
   z-index: var(--desk-z-window-base);
-  padding: var(--space-2) var(--space-3);
   background: var(--desk-window-fill);
   border: 1px solid var(--border);
   border-radius: 2px;
@@ -123,10 +125,6 @@
 .desk-next .desk-dlv-terminal {
   min-width: 420px;
 }
-.desk-next .desk-dlv-dossier-body {
-  max-height: 60vh;
-  overflow: auto;
-}
 .desk-next .desk-dlv-phase-stories {
   list-style: none;
   margin: 2px 0;
@@ -229,7 +227,8 @@
 .desk-next .desk-pr-object-table thead th {
   position: sticky;
   top: 0;
-  z-index: var(--desk-z-window-base);
+  /* HS-129-04 — this is only above its scrolling rows, never a window plane. */
+  z-index: 1;
   background: var(--wash-1);
 }
 .desk-next .desk-pr-object-table th:first-child {

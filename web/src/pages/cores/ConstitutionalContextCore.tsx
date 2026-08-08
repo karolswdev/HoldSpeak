@@ -98,7 +98,7 @@ export function ConstitutionalContextCore() {
 
   if (ctx === null) {
     return (
-      <div className="desk-surface-body constitutional-context-core">
+      <div className="constitutional-context-core">
         {loadError ? (
           <SurfaceState error={loadError} onRetry={() => void load()} />
         ) : (
@@ -109,7 +109,7 @@ export function ConstitutionalContextCore() {
   }
 
   return (
-    <div className="desk-surface-body constitutional-context-core">
+    <div className="constitutional-context-core">
       <SurfaceSection
         label="Status"
         actions={

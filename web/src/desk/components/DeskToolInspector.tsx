@@ -248,7 +248,8 @@ export function DeskToolInspector() {
       open={Boolean(inspector)}
       onClose={closeToolInspector}
     >
-
+      {/* HS-129-04 — inspector material scrolls below the fixed window head. */}
+      <div className="desk-pullout-body desk-surface-body desk-tool-inspector-body">
       {project ? (
         <>
           <p>
@@ -529,6 +530,7 @@ export function DeskToolInspector() {
           {error} Selected material is retained; retry the action.
         </p>
       ) : null}
+      </div>
     </DeskWindowFrame>
   );
 }

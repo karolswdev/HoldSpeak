@@ -1,8 +1,7 @@
+/* HS-129-04 — the hosted surface body is the one scroll owner. */
 .constitutional-context-core {
   display: flex;
   flex-direction: column;
-  height: 100%;
-  overflow: hidden;
   gap: var(--desk-surface-section-gap);
 }
 

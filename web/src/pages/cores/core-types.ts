@@ -251,28 +251,6 @@ export interface WorkbenchRunsResponse {
   [key: string]: unknown;
 }
 
-/** WorkbenchCore endpoints */
-export interface WorkflowFetchResponse {
-  workflow: {
-    id: string;
-    name: string;
-    graph_json: unknown;
-    capability?: {
-      support?: string;
-      readiness?: { detail?: string; [key: string]: unknown };
-      [key: string]: unknown;
-    };
-    [key: string]: unknown;
-  };
-  [key: string]: unknown;
-}
-
-export interface WorkflowRunResponse {
-  output?: string;
-  artifact_id?: string;
-  [key: string]: unknown;
-}
-
 /** DictationCore endpoints */
 export interface DictationReadinessResponse {
   config?: Record<string, unknown>;

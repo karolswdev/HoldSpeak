@@ -409,6 +409,7 @@
   color: var(--text-muted);
   font-size: var(--font-size-sm);
 }
+/* HS-129-04 — Tool Inspector's frame never scrolls its title bar. */
 .desk-next .desk-tool-inspector {
   position: fixed;
   top: 64px;
@@ -416,8 +417,9 @@
   bottom: 18px;
   z-index: var(--desk-z-window-base);
   width: min(430px, calc(100vw - 36px));
-  padding: var(--space-4);
-  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
   border: 1px solid color-mix(in srgb, var(--accent) 34%, var(--border));
   border-radius: 2px;
   background: var(--desk-window-fill);

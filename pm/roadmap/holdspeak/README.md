@@ -4,7 +4,14 @@
 > pick up, and the repo conventions that bite (PMO commit gate, write-once
 > evidence, no `Co-Authored-By`, metal-test exclusion).
 
-**Newest update (2026-08-08): Phase 129 — One Grammar — HS-129-02 shipped.**
+**Newest update (2026-08-08): Phase 129 — One Grammar — HS-129-04 shipped.**
+Delivery and Tool Inspector frames now keep their heads fixed over one body
+scroller; Constitutional Context and Delivery Dossier lost their duplicate
+scroll paths. The Activity list was verified fixed by HS-129-01's host-body
+repair, and unreachable legacy WorkbenchCore plus its orphan types/styles were
+deleted after a repo-wide route/registry/import census.
+
+**Previous update (2026-08-08): Phase 129 — One Grammar — HS-129-02 shipped.**
 At ≤720px, every DeskWindowFrame sheet keeps its head and foot pinned while
 its body is the sole scroll owner. The contract is covered by a mocked compact
 viewport test and a 393×852 Playwright walk through Speak, Settings, Meetings,
