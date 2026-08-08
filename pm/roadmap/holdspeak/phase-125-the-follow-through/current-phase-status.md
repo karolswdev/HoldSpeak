@@ -1,6 +1,6 @@
 # Phase 125 — The Follow-Through
 
-**Status:** active (1/10).
+**Status:** active (4/10).
 
 **Last updated:** 2026-08-07.
 
@@ -87,7 +87,7 @@ Meeting ──→ Aftercare ──→ Triage (ownerless? undated? review?)
 | HS-125-01 | Wire SQLiteObserver into production composition | done | [story-01](story-01-wire-observer-production.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-125-02 | Board projection service | done | [story-02](story-02-board-projection-service.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-125-03 | Decision commitments | done | [story-03](story-03-decision-commitments.md) | [evidence-story-03](./evidence-story-03.md) |
-| HS-125-04 | Aftercare triage queue | backlog | [story-04](story-04-aftercare-triage.md) | — |
+| HS-125-04 | Aftercare triage queue | done | [story-04](story-04-aftercare-triage.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-125-05 | Decision loop collection | backlog | [story-05](story-05-decision-loop-collection.md) | — |
 | HS-125-06 | Due and stall semantics | backlog | [story-06](story-06-due-and-stall-semantics.md) | — |
 | HS-125-07 | Write-through completion verbs | backlog | [story-07](story-07-write-through-completion.md) | — |
@@ -97,6 +97,7 @@ Meeting ──→ Aftercare ──→ Triage (ownerless? undated? review?)
 
 ## Where we are
 
-HS-125-01 done: all production service composition points now share a
-`SQLiteObserver`, so real HTTP and MCP calls persist pipeline events.
-HS-125-02 is next.
+HS-125-01 through HS-125-04 done: production service composition shares a
+`SQLiteObserver`; the board projection and decision commitments are durable;
+and aftercare now triages open actions missing review, owner, or due date.
+HS-125-05 is next.
