@@ -66,3 +66,466 @@
   font-size: var(--desk-type-primary-size);
   font-weight: var(--desk-type-primary-weight);
 }
+
+/* HS-128-04 — Receipts are a searchable evidence ledger, not a second window. */
+.intelligence-view:has(.receipts-view) {
+  display: block;
+}
+
+.receipts-view,
+.receipt-detail {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+}
+
+.receipts-search {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: stretch;
+  border: 1px solid var(--border-strong, var(--border));
+  background: var(--desk-window-well);
+  box-shadow: var(--desk-window-etch);
+}
+
+.receipts-search-prefix {
+  display: grid;
+  place-items: center;
+  padding: 0 var(--space-2);
+  border-right: 1px solid var(--accent);
+  background: var(--accent-tint);
+  color: var(--text);
+  font-size: 0.6875rem;
+  font-weight: 800;
+  letter-spacing: 0.09em;
+}
+
+.receipts-search input {
+  min-width: 0;
+  min-height: 34px;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  padding: 0 var(--space-2);
+}
+
+.receipts-search:focus-within {
+  border-color: var(--accent);
+  box-shadow: var(--focus-ring);
+}
+
+.receipts-search input::placeholder { color: var(--text-faint); }
+
+.receipts-search-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  color: var(--text-faint);
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+}
+
+.receipts-why-filter,
+.receipt-back,
+.receipt-go,
+.receipt-work-chip,
+.receipt-chain button {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xs);
+  background: var(--desk-window-well);
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  padding: 4px 7px;
+}
+
+.receipts-why-filter.is-active,
+.receipts-why-filter:hover,
+.receipt-back:hover,
+.receipt-go:hover,
+.receipt-work-chip:hover,
+.receipt-chain button:hover {
+  border-color: var(--accent);
+  background: var(--accent-tint);
+  color: var(--text);
+}
+
+.receipts-id { color: var(--text-faint); font-size: 0.625rem; }
+.receipts-results .surface-ledger-primary { font-weight: 700; }
+
+.receipt-detail-head {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: var(--space-1) var(--space-2);
+  align-items: center;
+}
+
+.receipt-detail-head h3 {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: var(--text);
+  font-family: var(--font-display);
+  font-size: var(--desk-type-primary-size);
+  line-height: 1.3;
+}
+
+.receipt-fields {
+  display: grid;
+  grid-template-columns: 6rem minmax(0, 1fr);
+  margin: 0;
+  border-top: 1px solid var(--border);
+  border-left: 1px solid var(--border);
+}
+
+.receipt-fields dt,
+.receipt-fields dd {
+  margin: 0;
+  min-width: 0;
+  padding: var(--space-2);
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.receipt-fields dt {
+  color: var(--text-faint);
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.receipt-fields dd { white-space: pre-wrap; overflow-wrap: anywhere; }
+
+.receipt-detail h4 {
+  margin: 0 0 var(--space-1);
+  color: var(--text-faint);
+  font-size: 0.625rem;
+  letter-spacing: 0.08em;
+}
+
+.receipt-provenance,
+.receipt-work,
+.receipt-chain,
+.receipt-revisions {
+  border-top: 1px solid var(--border);
+  padding-top: var(--space-2);
+}
+
+.receipt-provenance blockquote {
+  margin: 0;
+  padding: var(--space-2);
+  border-left: 2px solid var(--accent);
+  background: var(--desk-window-well);
+  color: var(--text-muted);
+}
+
+.receipt-provenance blockquote p { margin: 0; white-space: pre-wrap; }
+.receipt-provenance blockquote footer { margin-top: var(--space-1); color: var(--text-faint); }
+.receipt-go { margin-top: var(--space-2); }
+
+.receipt-work-chip { margin: 0 var(--space-1) var(--space-1) 0; }
+
+.receipt-chain > div {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--text-faint);
+}
+
+.receipt-chain strong { color: var(--text); font-size: 0.625rem; }
+.receipt-chain span:last-child, .receipt-chain button:last-child { text-align: right; }
+
+.receipt-revisions ol { display: grid; gap: 2px; margin: 0; padding: 0; list-style: none; }
+.receipt-revisions li {
+  display: grid;
+  grid-template-columns: 5.5rem 1fr minmax(0, 2fr);
+  gap: var(--space-2);
+  padding: var(--space-1) 0;
+  border-bottom: 1px solid var(--border);
+  color: var(--text-muted);
+}
+.receipt-revisions time { color: var(--text-faint); }
+.receipt-revisions li span:last-child { overflow-wrap: anywhere; }
+
+.receipts-view button:focus-visible,
+.receipt-detail button:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+
+@media (max-width: 420px) {
+  .receipt-revisions li { grid-template-columns: 1fr; gap: 2px; }
+  .receipt-fields { grid-template-columns: 5rem minmax(0, 1fr); }
+}
+
+/* HS-128-02 — the brief is a compact operating picture, not a dashboard. */
+.intelligence-view.intelligence-brief {
+  display: block;
+  min-height: 0;
+  padding: var(--space-3);
+  color: var(--text);
+}
+
+.intelligence-brief-headline {
+  margin: 0 0 var(--space-4);
+  color: var(--text);
+  font-family: var(--font-display);
+  font-size: 2rem;
+  font-weight: 700;
+  letter-spacing: -0.035em;
+  line-height: 1.05;
+}
+
+.intelligence-brief-groups {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.intelligence-brief-group {
+  border-radius: 0;
+}
+
+.intelligence-brief-group .gadget-fold-body {
+  padding: 0;
+  border-top: 1px solid var(--border);
+  background: var(--desk-window-well);
+}
+
+.intelligence-brief-group .gadget-fold-token {
+  font-variant-numeric: tabular-nums;
+}
+
+.intelligence-brief-rows {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.intelligence-brief-rows .surface-ledger-line {
+  min-height: 32px;
+}
+
+.intelligence-brief-group-broke .surface-ledger-line {
+  box-shadow: inset 2px 0 0 var(--danger, var(--accent));
+}
+
+.intelligence-brief-group-broke .surface-ledger-primary {
+  color: var(--danger-text, var(--text));
+}
+
+.intelligence-brief-item-detail {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3) var(--space-3);
+  border-top: 1px solid var(--border);
+  color: var(--text-muted);
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+  line-height: 1.4;
+}
+
+.intelligence-brief-item-detail p {
+  margin: 0;
+}
+
+.intelligence-brief-source,
+.intelligence-brief-shelf-state {
+  justify-self: start;
+  padding: 2px 5px;
+  border: 1px solid var(--border);
+  background: var(--desk-window-well);
+  box-shadow: inset 1px 1px 0 var(--bevel-dark), inset -1px -1px 0 var(--bevel-light);
+  color: var(--text-faint);
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.intelligence-brief-shelf-state {
+  color: var(--text-muted);
+}
+
+.intelligence-brief-none {
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  color: var(--text-faint);
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+}
+
+@container (max-width: 390px) {
+  .intelligence-brief-headline {
+    font-size: 1.625rem;
+  }
+}
+
+/* HS-128-03 — Follow-Through is a lane ledger, not a task board of cards. */
+.intelligence-view:has(.follow-through-view) {
+  display: block;
+  place-items: initial;
+  min-height: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.follow-through-view {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.follow-through-lane {
+  margin: 0;
+}
+
+.follow-through-lane .surface-section-head {
+  align-items: center;
+}
+
+.follow-through-count {
+  min-width: 1.5rem;
+  padding: 1px var(--space-1);
+  border: 1px solid var(--border-strong);
+  background: var(--desk-window-well);
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  font-weight: 700;
+  line-height: 1.25;
+  text-align: center;
+}
+
+.follow-through-lane.is-overdue {
+  padding-inline: var(--space-2);
+  border-inline-start: 2px solid var(--accent);
+  background: color-mix(in srgb, var(--accent-tint) 36%, transparent);
+}
+
+.follow-through-lane.is-overdue .follow-through-count {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.surface-ledger[data-cols="follow-through"] .surface-ledger-line {
+  grid-template-columns: minmax(0, 1fr) auto auto 1.25rem;
+  gap: var(--space-2);
+}
+
+.follow-through-owner {
+  display: grid;
+  width: 1.35rem;
+  height: 1.35rem;
+  place-items: center;
+  border: 1px solid var(--border-strong);
+  background: var(--desk-window-well);
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 0.5625rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.follow-through-due {
+  min-width: 3.75rem;
+  color: var(--text-faint);
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  text-align: right;
+}
+
+.follow-through-due[data-overdue] {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.follow-through-source {
+  display: grid;
+  width: 1.25rem;
+  min-height: 1.25rem;
+  place-items: center;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+}
+
+.follow-through-source:hover {
+  color: var(--accent);
+}
+
+.follow-through-expanded {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-2) 0;
+}
+
+.follow-through-verbs {
+  display: flex;
+  gap: 2px;
+}
+
+.follow-through-verbs .signal-button {
+  min-width: 1.75rem;
+  padding-inline: var(--space-1);
+  font-family: var(--font-mono);
+}
+
+.follow-through-delegate {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.follow-through-delegate .gadget-string {
+  flex: 1;
+}
+
+.follow-through-provenance {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  padding: var(--space-2);
+  border-inline-start: 2px solid var(--border-strong);
+  background: var(--desk-window-well);
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  line-height: 1.45;
+}
+
+.follow-through-provenance cite {
+  color: var(--text-faint);
+  font-size: 0.625rem;
+  font-style: normal;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.follow-through-provenance.is-unavailable,
+.follow-through-lane-empty {
+  padding: var(--space-2) 0;
+  color: var(--text-faint);
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  text-transform: uppercase;
+}
+
+@container (max-width: 380px) {
+  .surface-ledger[data-cols="follow-through"] .surface-ledger-line {
+    grid-template-columns: minmax(0, 1fr) auto auto;
+  }
+
+  .follow-through-source {
+    display: none;
+  }
+}

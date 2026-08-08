@@ -20,7 +20,6 @@ describe("HS-128-01 Intelligence pullout", () => {
   it("opens on Brief and changes the active view", () => {
     render(<IntelligencePullout object={object} onClose={() => {}} />);
 
-    expect(screen.getByText("Brief view")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Brief" })).toHaveAttribute(
       "aria-pressed",
       "true",
@@ -28,7 +27,6 @@ describe("HS-128-01 Intelligence pullout", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Follow-through" }));
 
-    expect(screen.getByText("Follow-Through view")).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: "Follow-through" }),
     ).toHaveAttribute("aria-pressed", "true");
@@ -43,6 +41,8 @@ describe("HS-128-01 Intelligence pullout", () => {
 
     render(<IntelligencePullout object={object} onClose={() => {}} />);
 
-    expect(screen.getByText("Receipts view")).toBeInTheDocument();
+    expect(
+      screen.getByRole("searchbox", { name: "Search decision receipts" }),
+    ).toBeInTheDocument();
   });
 });

@@ -1,3 +1,3 @@
-Phase 128 charter and HS-128-01 shipped together — the charter
-establishes the phase and story 01 adds the Intelligence pullout shell
-with segmented header and desk verb registration.
+HS-128-02, 03, 04 are the three Intelligence views — Brief, Follow-Through,
+and Receipts. All modify IntelligencePullout.tsx and intelligence.css. They
+are the parallel content components of the unified Intelligence pullout.

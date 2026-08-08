@@ -1,6 +1,6 @@
 # Phase 128 — Desk Intelligence
 
-**Status:** chartered (0/10).
+**Status:** in-progress (4/10).
 
 **Last updated:** 2026-08-07.
 
@@ -46,9 +46,9 @@ Brief   Service.board()   Service search/detail
 | ID | Story | Status | Story file | Evidence |
 |----|-------|--------|------------|----------|
 | HS-128-01 | Intelligence pullout shell | done | [story-01](story-01-pullout-shell.md) | [evidence-story-01](./evidence-story-01.md) |
-| HS-128-02 | Brief view | in-progress | [story-02](story-02-brief-view.md) | — |
-| HS-128-03 | Follow-Through view | backlog | [story-03](story-03-follow-through-view.md) | — |
-| HS-128-04 | Receipts view | backlog | [story-04](story-04-receipts-view.md) | — |
+| HS-128-02 | Brief view | done | [story-02](story-02-brief-view.md) | [evidence-story-02](./evidence-story-02.md) |
+| HS-128-03 | Follow-Through view | done | [story-03](story-03-follow-through-view.md) | [evidence-story-03](./evidence-story-03.md) |
+| HS-128-04 | Receipts view | done | [story-04](story-04-receipts-view.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-128-05 | Dock icon and palette commands | backlog | [story-05](story-05-dock-and-palette.md) | — |
 | HS-128-06 | WHY affordance on primitives | backlog | [story-06](story-06-why-affordance.md) | — |
 | HS-128-07 | Cross-link drill paths | backlog | [story-07](story-07-cross-links.md) | — |
@@ -58,5 +58,6 @@ Brief   Service.board()   Service search/detail
 
 ## Where we are
 
-Chartered. Backend services, MCP tools, and FastAPI endpoints landed in Phases
-125–127; Phase 128 supplies their unified web-side Desk surface.
+HS-128-01 through HS-128-04 are complete: the Desk shell now exposes Brief,
+Follow-Through, and Receipts over the Phase 125–127 intelligence services. Next:
+dock and palette entry points (HS-128-05).
