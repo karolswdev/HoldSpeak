@@ -7,7 +7,7 @@ independently of the Database container.
 # Bump this when adding tables or columns; the Database container uses it to
 # decide whether to back up and re-apply. See core._ensure_schema for the
 # four-way upgrade contract.
-SCHEMA_VERSION = 41  # v41: decision receipt canon (HS-127-01)
+SCHEMA_VERSION = 42  # v42: receipt sync tombstones (HS-127-10)
 
 # SQL Schema
 SCHEMA_SQL = """
@@ -843,7 +843,8 @@ CREATE TABLE IF NOT EXISTS decision_receipts (
     source_type TEXT NOT NULL,
     source_id TEXT NOT NULL,
     created_at TEXT NOT NULL,
-    updated_at TEXT NOT NULL
+    updated_at TEXT NOT NULL,
+    deleted INTEGER NOT NULL DEFAULT 0
 );
 
 CREATE TABLE IF NOT EXISTS decision_receipt_sources (

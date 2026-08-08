@@ -375,7 +375,30 @@ def test_receipt_requires_decision_text_and_source_type(tmp_path):
         service.create(None, decision_text="A decision", source_type="", source_id="dec-1")
 
 
-def test_schema_migrates_v40_to_v41(tmp_path):
+def test_search_finds_kafka_in_decision_text_and_linked_work(tmp_path):
+    service = DecisionReceiptService(Database(tmp_path / "receipts.db"))
+    kafka = service.create(
+        None,
+        decision_text="Use Kafka for the event stream.",
+        rationale="Durable ordered delivery.",
+        source_type="desk",
+        source_id="desk-kafka",
+    )
+    work_link = service.create(
+        None,
+        decision_text="Track the streaming migration.",
+        source_type="desk",
+        source_id="desk-work-link",
+    )
+    service.link_work(None, work_link["id"], "project", "Kafka migration")
+
+    matches = service.search(None, "Why Kafka?")
+
+    assert matches[0]["id"] == kafka["id"]
+    assert {receipt["id"] for receipt in matches} == {kafka["id"], work_link["id"]}
+
+
+def test_schema_migrates_v40_to_v42(tmp_path):
     path = tmp_path / "v40.db"
     Database(path)
     with Database(path)._connection() as conn:
@@ -393,8 +416,10 @@ def test_schema_migrates_v40_to_v41(tmp_path):
 
     migrated = Database(path)
 
-    assert SCHEMA_VERSION == 41
-    assert read_schema_version(path) == 41
+    assert SCHEMA_VERSION == 42
+    assert read_schema_version(path) == 42
+    with migrated._connection() as conn:
+        assert "deleted" in {row[1] for row in conn.execute("PRAGMA table_info(decision_receipts)")}
     with migrated._connection() as conn:
         tables = {
             row[0]

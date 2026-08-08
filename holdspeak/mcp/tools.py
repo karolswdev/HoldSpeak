@@ -8,6 +8,7 @@ from typing import Any
 
 from holdspeak.db import get_database, get_observer
 from holdspeak.principals import Principal
+from holdspeak.services.decision_receipt_service import DecisionReceiptService
 from holdspeak.services.desk_service import DeskService
 from holdspeak.services.dictation_service import DictationService
 from holdspeak.services.event_query_service import EventQueryService
@@ -271,6 +272,26 @@ TOOLS.extend([
     ),
     _mcp_tool("desk.snapshot", "Read one coherent snapshot of the durable HoldSpeak desk.", {}),
     _mcp_tool(
+        "decision_receipt.list", "List durable decision receipts, newest first.",
+        {"limit": {"type": "integer", "minimum": 1, "maximum": 500}, "offset": {"type": "integer", "minimum": 0}},
+    ),
+    _mcp_tool(
+        "decision_receipt.get", "Get one decision receipt with sources, work, and revisions.",
+        {"receipt_id": {"type": "string"}}, ["receipt_id"],
+    ),
+    _mcp_tool(
+        "decision_receipt.create_from_meeting", "Mint a durable receipt from a meeting decision.",
+        {"decision_id": {"type": "string"}}, ["decision_id"],
+    ),
+    _mcp_tool(
+        "decision_receipt.create_from_desk", "Mint a durable receipt from an authored desk decision.",
+        {"decision_id": {"type": "string"}}, ["decision_id"],
+    ),
+    _mcp_tool(
+        "decision_receipt.search", "Search decision receipts and their affected-work labels.",
+        {"query": {"type": "string"}, "limit": {"type": "integer", "minimum": 1, "maximum": 500}}, ["query"],
+    ),
+    _mcp_tool(
         "decision.supersede",
         "Supersede a decision when a successor decision replaces it.",
         {"decision_id": {"type": "string", "description": "Decision to supersede."}},
@@ -407,6 +428,7 @@ def dispatch(name: str, arguments: dict[str, Any] | None, principal: Principal) 
     follow_through = FollowThroughService(db, observer=obs)
     monday_brief = MondayBriefService(db, observer=obs)
     desk = DeskService(db, observer=obs)
+    receipts = DecisionReceiptService(db, observer=obs)
 
     if name == "desk.list":
         return _primitive_list(primitives, principal, _kind(args.get("kind")))
@@ -513,6 +535,20 @@ def dispatch(name: str, arguments: dict[str, Any] | None, principal: Principal) 
         return dictation.get_entry(principal, entry_id)
     if name == "desk.snapshot":
         return desk.snapshot(principal)
+    if name == "decision_receipt.list":
+        allowed = ("limit", "offset")
+        return receipts.list_receipts(principal, **{key: args[key] for key in allowed if key in args})
+    if name == "decision_receipt.get":
+        return receipts.get(principal, str(args.get("receipt_id") or ""))
+    if name == "decision_receipt.create_from_meeting":
+        return receipts.create_from_meeting(principal, str(args.get("decision_id") or ""))
+    if name == "decision_receipt.create_from_desk":
+        return receipts.create_from_desk(principal, str(args.get("decision_id") or ""))
+    if name == "decision_receipt.search":
+        return receipts.search(
+            principal, str(args.get("query") or ""),
+            **({"limit": args["limit"]} if "limit" in args else {}),
+        )
     if name == "decision.supersede":
         return primitives.supersede_decision(principal, str(args.get("decision_id") or ""))
     if name == "pipeline_events_query":

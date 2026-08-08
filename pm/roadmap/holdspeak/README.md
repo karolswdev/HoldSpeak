@@ -4,13 +4,13 @@
 > pick up, and the repo conventions that bite (PMO commit gate, write-once
 > evidence, no `Co-Authored-By`, metal-test exclusion).
 
-**Newest update (2026-08-07): Phase 127 — The Decision Receipt — CHARTERED (0/10).**
-Every consequential choice receives a compact, permanent, local-first
-receipt: decision, rationale, alternatives, owner, affected work, review
-date, and its conversation evidence. Ten stories take existing meeting and
-desk decisions through the v41 receipt canon, exact provenance, append-only
-revisions and supersession, review attention, receipt-first retrieval, MCP
-and walk proof, then conflict-honest sync.
+**Newest update (2026-08-07): Phase 127 — The Decision Receipt — DONE (10/10).**
+Every consequential choice gets a permanent receipt: decision, rationale,
+alternatives, owner, affected work, review date, and the conversation that
+produced it. Schema v40→v42, DecisionReceiptService (create from meeting
+or desk, append-only revisions, bidirectional work links, review queue,
+supersession with retained evidence chains, ten-second FTS retrieval),
+5 MCP tools, 1 MCP resource, local-first sync with LWW and tombstones.
 
 **Previous update (2026-08-07): Phase 126 — The Monday Brief — DONE (9/9).**
 The desk speaks first. At first open each day, the brief reconstructs the

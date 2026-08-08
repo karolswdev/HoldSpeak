@@ -65,7 +65,7 @@ class DecisionReceiptService:
                 ),
             )
             row = conn.execute(
-                "SELECT * FROM decision_receipts WHERE id = ?", (receipt_id,)
+                "SELECT * FROM decision_receipts WHERE id = ? AND deleted = 0", (receipt_id,)
             ).fetchone()
         assert row is not None
         return self._receipt_dict(row)
@@ -141,7 +141,7 @@ class DecisionReceiptService:
 
         with self._db._connection() as conn:
             row = conn.execute(
-                "SELECT * FROM decision_receipts WHERE id = ?", (receipt_id,)
+                "SELECT * FROM decision_receipts WHERE id = ? AND deleted = 0", (receipt_id,)
             ).fetchone()
             if row is None:
                 raise KeyError(str(receipt_id or "").strip())
@@ -174,7 +174,7 @@ class DecisionReceiptService:
                     ),
                 )
             updated = conn.execute(
-                "SELECT * FROM decision_receipts WHERE id = ?", (receipt_id,)
+                "SELECT * FROM decision_receipts WHERE id = ? AND deleted = 0", (receipt_id,)
             ).fetchone()
         assert updated is not None
         return self._receipt_dict(updated)
@@ -258,7 +258,7 @@ class DecisionReceiptService:
             raise ValueError("receipt cannot supersede itself")
         with self._db._connection() as conn:
             predecessor = conn.execute(
-                "SELECT * FROM decision_receipts WHERE id = ?", (receipt_id,)
+                "SELECT * FROM decision_receipts WHERE id = ? AND deleted = 0", (receipt_id,)
             ).fetchone()
             if predecessor is None:
                 raise KeyError(str(receipt_id or "").strip())
@@ -327,7 +327,7 @@ class DecisionReceiptService:
             rows = conn.execute(
                 """SELECT * FROM decision_receipts
                    WHERE review_date IS NOT NULL AND review_date <= ?
-                     AND lifecycle = 'active'
+                     AND lifecycle = 'active' AND deleted = 0
                    ORDER BY review_date, created_at, id""",
                 (date.today().isoformat(),),
             ).fetchall()
@@ -337,7 +337,7 @@ class DecisionReceiptService:
         """Get a receipt by ID with its sources, work links, and revisions."""
         with self._db._connection() as conn:
             row = conn.execute(
-                "SELECT * FROM decision_receipts WHERE id = ?", (receipt_id,)
+                "SELECT * FROM decision_receipts WHERE id = ? AND deleted = 0", (receipt_id,)
             ).fetchone()
             if row is None:
                 return None
@@ -387,9 +387,59 @@ class DecisionReceiptService:
         bounded_offset = max(0, int(offset))
         with self._db._connection() as conn:
             rows = conn.execute(
-                """SELECT * FROM decision_receipts
+                """SELECT * FROM decision_receipts WHERE deleted = 0
                    ORDER BY created_at DESC, id DESC LIMIT ? OFFSET ?""",
                 (bounded_limit, bounded_offset),
+            ).fetchall()
+        return [self._receipt_dict(row) for row in rows]
+
+    def search(self, principal: Any, query: str, *, limit: int = 50) -> list[dict[str, Any]]:
+        """Find receipts by their decision facts or linked affected-work labels.
+
+        Receipt tables deliberately remain ordinary SQLite tables, so this uses a
+        portable case-insensitive LIKE search rather than requiring an FTS build.
+        The CASE expression keeps direct decision matches ahead of supporting
+        rationale, owner, and work-link matches.
+        """
+        terms = [
+            term.strip("?!.,:;\"'()[]{}")
+            for term in str(query or "").strip().split()
+            if term.strip("?!.,:;\"'()[]{}") and term.lower().strip("?!.,:;\"'()[]{}")
+            not in {"why", "what", "when", "where", "who", "how", "is", "are", "was", "were", "the", "a", "an"}
+        ]
+        if not terms:
+            return []
+        bounded_limit = max(1, min(int(limit), 500))
+        predicates: list[str] = []
+        params: list[str] = []
+        for term in terms:
+            pattern = f"%{term}%"
+            predicates.append(
+                "(r.decision_text LIKE ? COLLATE NOCASE OR "
+                "COALESCE(r.rationale, '') LIKE ? COLLATE NOCASE OR "
+                "COALESCE(r.alternatives, '') LIKE ? COLLATE NOCASE OR "
+                "COALESCE(r.owner, '') LIKE ? COLLATE NOCASE OR "
+                "EXISTS (SELECT 1 FROM decision_receipt_work AS w "
+                "WHERE w.receipt_id = r.id AND "
+                "(w.work_type LIKE ? COLLATE NOCASE OR w.work_ref LIKE ? COLLATE NOCASE)))"
+            )
+            params.extend([pattern] * 6)
+        relevance = (
+            "CASE WHEN r.decision_text LIKE ? COLLATE NOCASE THEN 4 "
+            "WHEN COALESCE(r.rationale, '') LIKE ? COLLATE NOCASE THEN 3 "
+            "WHEN COALESCE(r.alternatives, '') LIKE ? COLLATE NOCASE THEN 2 "
+            "WHEN COALESCE(r.owner, '') LIKE ? COLLATE NOCASE THEN 1 "
+            "ELSE 0 END"
+        )
+        phrase = f"%{' '.join(terms)}%"
+        with self._db._connection() as conn:
+            rows = conn.execute(
+                f"""SELECT r.*, {relevance} AS relevance
+                    FROM decision_receipts AS r
+                    WHERE r.deleted = 0 AND {' AND '.join(predicates)}
+                    ORDER BY relevance DESC, r.updated_at DESC, r.id DESC
+                    LIMIT ?""",
+                [phrase] * 4 + params + [bounded_limit],
             ).fetchall()
         return [self._receipt_dict(row) for row in rows]
 

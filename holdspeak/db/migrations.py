@@ -577,6 +577,16 @@ def _migrate_columns(conn: sqlite3.Connection, stored: int) -> None:
             """
         )
 
+    # v42 (HS-127-10): receipt tombstones make a deletion durable across
+    # local-first peers without erasing its evidence chain.
+    receipt_cols = {
+        row[1] for row in conn.execute("PRAGMA table_info(decision_receipts)").fetchall()
+    }
+    if receipt_cols and "deleted" not in receipt_cols:
+        conn.execute(
+            "ALTER TABLE decision_receipts ADD COLUMN deleted INTEGER NOT NULL DEFAULT 0"
+        )
+
     # v34 (HS-118-01): zone name uniqueness -- add name_normalized column
     # and backfill with dedup.
     dir_cols = {
