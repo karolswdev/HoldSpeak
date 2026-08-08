@@ -4,7 +4,15 @@
 > pick up, and the repo conventions that bite (PMO commit gate, write-once
 > evidence, no `Co-Authored-By`, metal-test exclusion).
 
-**Newest update (2026-08-07): Phase 126 — The Monday Brief — DONE (9/9).**
+**Newest update (2026-08-07): Phase 127 — The Decision Receipt — CHARTERED (0/10).**
+Every consequential choice receives a compact, permanent, local-first
+receipt: decision, rationale, alternatives, owner, affected work, review
+date, and its conversation evidence. Ten stories take existing meeting and
+desk decisions through the v41 receipt canon, exact provenance, append-only
+revisions and supersession, review attention, receipt-first retrieval, MCP
+and walk proof, then conflict-honest sync.
+
+**Previous update (2026-08-07): Phase 126 — The Monday Brief — DONE (9/9).**
 The desk speaks first. At first open each day, the brief reconstructs the
 operating picture: material changes from pipeline events, breakage with
 repair paths, waiting work (overdue follow-through + high-priority loops),
@@ -379,11 +387,12 @@ parallel. Phase 101 itself stands at 3/4 (canon ratified and built,
 PR #359; sweep 4122/0).
 
 **Current phase (newest):**
-[**Phase 125 — The Follow-Through**](./phase-125-the-follow-through/current-phase-status.md)
-— **ACTIVE (1/10, 2026-08-07)**. Every meeting becomes a living
-execution board: decisions bridge into commitments with owners and due
-dates, aftercare enforces triage, and a unified board answers "who owes
-what?" with provenance back to the sentence where it was promised.
+[**Phase 127 — The Decision Receipt**](./phase-127-the-decision-receipt/current-phase-status.md)
+— **CHARTERED (0/10, 2026-08-07)**. Every consequential choice gains a
+compact, permanent receipt: decision, rationale, alternatives, owner,
+affected work, review date, and conversation evidence. The phase unifies
+existing origins without replacing them, then proves append-only history,
+review, retrieval, MCP delivery, and local-first sync.
 Previous:
 [**Phase 124 — The Observer**](./phase-124-the-observer/current-phase-status.md)
 — **SHIPPED (10/10, PR #442)**. Every public service method call recorded

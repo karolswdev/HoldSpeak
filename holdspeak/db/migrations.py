@@ -528,6 +528,55 @@ def _migrate_columns(conn: sqlite3.Connection, stored: int) -> None:
             """
         )
 
+    # v41 (HS-127-01): durable decision receipts and traceable links. SCHEMA_SQL
+    # covers fresh databases; retain this explicit upgrade leg for v40 archives.
+    if stored < 41:
+        conn.executescript(
+            """
+            CREATE TABLE IF NOT EXISTS decision_receipts (
+                id TEXT PRIMARY KEY,
+                decision_text TEXT NOT NULL,
+                rationale TEXT,
+                alternatives TEXT,
+                owner TEXT,
+                review_date TEXT,
+                lifecycle TEXT NOT NULL DEFAULT 'active',
+                source_type TEXT NOT NULL,
+                source_id TEXT NOT NULL,
+                created_at TEXT NOT NULL,
+                updated_at TEXT NOT NULL
+            );
+            CREATE TABLE IF NOT EXISTS decision_receipt_sources (
+                id TEXT PRIMARY KEY,
+                receipt_id TEXT NOT NULL REFERENCES decision_receipts(id),
+                source_type TEXT NOT NULL,
+                source_ref TEXT NOT NULL,
+                created_at TEXT NOT NULL
+            );
+            CREATE INDEX IF NOT EXISTS idx_receipt_sources_receipt
+                ON decision_receipt_sources(receipt_id);
+            CREATE TABLE IF NOT EXISTS decision_receipt_work (
+                id TEXT PRIMARY KEY,
+                receipt_id TEXT NOT NULL REFERENCES decision_receipts(id),
+                work_type TEXT NOT NULL,
+                work_ref TEXT NOT NULL,
+                created_at TEXT NOT NULL
+            );
+            CREATE INDEX IF NOT EXISTS idx_receipt_work_receipt
+                ON decision_receipt_work(receipt_id);
+            CREATE TABLE IF NOT EXISTS decision_receipt_revisions (
+                id TEXT PRIMARY KEY,
+                receipt_id TEXT NOT NULL REFERENCES decision_receipts(id),
+                field_name TEXT NOT NULL,
+                old_value TEXT,
+                new_value TEXT,
+                created_at TEXT NOT NULL
+            );
+            CREATE INDEX IF NOT EXISTS idx_receipt_revisions_receipt
+                ON decision_receipt_revisions(receipt_id);
+            """
+        )
+
     # v34 (HS-118-01): zone name uniqueness -- add name_normalized column
     # and backfill with dedup.
     dir_cols = {

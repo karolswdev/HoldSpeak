@@ -1,3 +1,3 @@
-HS-126-08 and HS-126-09 are the delivery and walk stories — 08 adds MCP
-tools/resource and FastAPI routes, 09 proves the full pipeline end to end.
-Both share monday_brief_service.py and complete the phase.
+Phase 127 charter and HS-127-01 are shipped together — the charter
+establishes the phase structure and story 01 adds the receipt canon
+tables (schema v41) and DecisionReceiptService skeleton.
