@@ -1,8 +1,9 @@
 """Unified read model for work that must follow a meeting."""
 from __future__ import annotations
 
+import uuid
 from dataclasses import dataclass
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 from typing import Any
 
 from holdspeak.services.observer import NullObserver, PipelineObserver, observe_service
@@ -82,7 +83,7 @@ class FollowThroughService:
                 due=self._date_text(action["due"]),
                 status=status,
                 meeting_id=action["meeting_id"],
-                decision_id=None,
+                decision_id=action["decision_id"],
                 stale_score=float(loop["stale_score"]) if loop is not None else None,
                 source="action_item",
                 lane=self._lane(action["owner"], action["due"], status, today),
@@ -119,9 +120,73 @@ class FollowThroughService:
                     lanes[lane] = []
         return FollowThroughBoard(**lanes)
 
+    def commit_decision(
+        self,
+        principal: Any,
+        decision_id: str,
+        owner: str | None = None,
+        due_at: str | None = None,
+    ) -> dict[str, Any]:
+        """Create an accountable action from an accepted decision."""
+        del principal  # The caller's authority is enforced by the transport.
+        now = datetime.now().isoformat()
+        action_item_id = f"action-{uuid.uuid4().hex}"
+        commitment_id = f"commitment-{uuid.uuid4().hex}"
+
+        with self._db._connection() as conn:
+            decision = conn.execute(
+                """SELECT id, text, source_meeting_id, lifecycle
+                   FROM decisions WHERE id = ? AND deleted = 0""",
+                (decision_id,),
+            ).fetchone()
+            if decision is None:
+                raise ValueError(f"Decision not found: {decision_id}")
+            if decision["lifecycle"] != "accepted":
+                raise ValueError("Only accepted decisions can be committed")
+
+            conn.execute(
+                """INSERT INTO action_items
+                   (id, meeting_id, task, owner, due, status, created_at)
+                   VALUES (?, ?, ?, ?, ?, 'open', ?)""",
+                (
+                    action_item_id,
+                    decision["source_meeting_id"],
+                    str(decision["text"]),
+                    owner,
+                    due_at,
+                    now,
+                ),
+            )
+            conn.execute(
+                """INSERT INTO decision_commitments
+                   (id, decision_id, action_item_id, owner, due_at, status,
+                    created_at, updated_at)
+                   VALUES (?, ?, ?, ?, ?, 'open', ?, ?)""",
+                (
+                    commitment_id,
+                    decision["id"],
+                    action_item_id,
+                    owner,
+                    due_at,
+                    now,
+                    now,
+                ),
+            )
+
+        return {
+            "id": commitment_id,
+            "decision_id": str(decision["id"]),
+            "action_item_id": action_item_id,
+            "owner": owner,
+            "due_at": due_at,
+            "status": "open",
+            "created_at": now,
+            "updated_at": now,
+        }
+
     @staticmethod
     def _action_rows(conn: Any, *, project_id: str | None, owner: str | None) -> list[Any]:
-        query = "SELECT a.* FROM action_items a"
+        query = "SELECT a.*, dc.decision_id FROM action_items a LEFT JOIN decision_commitments dc ON dc.action_item_id = a.id"
         clauses: list[str] = []
         params: list[str] = []
         if project_id:

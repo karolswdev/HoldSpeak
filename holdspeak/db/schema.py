@@ -7,7 +7,7 @@ independently of the Database container.
 # Bump this when adding tables or columns; the Database container uses it to
 # decide whether to back up and re-apply. See core._ensure_schema for the
 # four-way upgrade contract.
-SCHEMA_VERSION = 38  # v38: pipeline_events (HS-124-02)
+SCHEMA_VERSION = 39  # v39: decision_commitments (HS-125-03)
 
 # SQL Schema
 SCHEMA_SQL = """
@@ -189,6 +189,21 @@ CREATE INDEX IF NOT EXISTS idx_bookmarks_meeting ON bookmarks(meeting_id);
 CREATE INDEX IF NOT EXISTS idx_action_items_meeting ON action_items(meeting_id);
 CREATE INDEX IF NOT EXISTS idx_action_items_status ON action_items(status);
 CREATE INDEX IF NOT EXISTS idx_action_items_owner ON action_items(owner);
+
+-- HS-125-03: optional accountable action minted from an accepted decision.
+CREATE TABLE IF NOT EXISTS decision_commitments (
+    id          TEXT PRIMARY KEY,
+    decision_id TEXT NOT NULL,
+    action_item_id TEXT NOT NULL,
+    owner       TEXT,
+    due_at      TEXT,
+    status      TEXT NOT NULL DEFAULT 'open',
+    created_at  TEXT NOT NULL,
+    updated_at  TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_decision_commitments_decision ON decision_commitments(decision_id);
+CREATE INDEX IF NOT EXISTS idx_decision_commitments_status ON decision_commitments(status);
+
 CREATE INDEX IF NOT EXISTS idx_topics_meeting ON topics(meeting_id);
 CREATE INDEX IF NOT EXISTS idx_meetings_date ON meetings(started_at);
 CREATE INDEX IF NOT EXISTS idx_intel_jobs_status ON intel_jobs(status, requested_at);
