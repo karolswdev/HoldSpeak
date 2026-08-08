@@ -1,124 +1,194 @@
-# HANDOVER — Phase 122-123 Complete
+# HANDOVER — Phases 125-128 Complete
 
-**Date:** 2026-08-07
+**Date:** 2026-08-08
 **Author:** Opus 4.6 orchestrator session
-**PR:** #441 (merged)
+**PRs:** #443, #444, #445, #446 (all merged)
 
 ## What just shipped
 
-Two phases in one session. DeskOS went from zero programmatic API to a
-fully MCP-drivable platform.
+Four phases in one session. HoldSpeak went from a blind pipeline to a
+desk that follows through, speaks first, remembers its decisions, and
+shows all three on glass.
 
-**Phase 122 — The Backbone (12/12):** The service layer was born. Eight
-services extracted from route handlers. An MCP server with 10 tools.
-A walk harness. A desk doctor.
+**Phase 125 — The Follow-Through (10/10, PR #443):** Meetings become
+living execution boards. `FollowThroughService` with `board()` (four
+lanes: Now/Waiting/Unassigned/Overdue), `commit_decision()` (bridges
+accepted decisions into accountable commitments with owners and due
+dates), `complete()` (write-through verbs: done/dismiss/snooze/
+delegate/reopen that atomically update action_items + cadence_loops +
+decision_commitments). Aftercare triage surfaces ownerless/undated/
+unreviewed actions. Provenance on every card via
+`resolve_provenance_segment()` and `get_moment()`. Schema v38→v39
+(`decision_commitments` table). 3 MCP tools, 1 MCP resource, 3 FastAPI
+endpoints. 50+ tests. **Critical prerequisite completed:** SQLiteObserver
+wired into ALL production composition roots (route factories, MCP
+dispatch, web_server.py WebContext) — Phase 124's observer was decorated
+but never injected in production.
 
-**Phase 123 — The Pipeline (13/13):** The service layer was completed.
-33 services now own every operation in the system. The MCP server
-expanded to 41 tools and 16 resources. Route handler bypass census:
-157 → 2 (the two intentional chain/workflow run endpoints).
+**Phase 126 — The Monday Brief (9/9, PR #444):** The desk speaks first.
+`MondayBriefService` with timezone-aware window computation (Friday→Monday
+span, daily 17:00 boundaries), same-day idempotent generation, and four
+deterministic collectors: `_collect_changes()` (reduces pipeline events by
+correlation into material state changes), `_collect_breakage()` (gathers
+errors + failed connectors), `_collect_waiting()` (overdue follow-through +
+high-priority loops + pending proposals), `_collect_decisions()` (pending
+approvals + decision reviews + approaching commitments). Honest composition:
+count-based headlines ("2 things need you"), empty = "Nothing material
+changed." — never invented content. Schema v39→v40 (`monday_briefs` +
+`monday_brief_items` tables). 2 MCP tools, 1 MCP resource, 2 FastAPI
+endpoints. 37 tests.
+
+**Phase 127 — The Decision Receipt (10/10, PR #445):** Every consequential
+choice gets a permanent receipt. `DecisionReceiptService` with
+`create_from_meeting()` and `create_from_desk()` (identical receipt shape
+regardless of origin), append-only revision audit trail, bidirectional
+affected-work links, review queue (`due_for_review()`), supersession with
+retained evidence chains, ten-second FTS retrieval (`search()`), and
+local-first sync with LWW conflict resolution and tombstones. Schema
+v40→v42 (4 tables: `decision_receipts`, `decision_receipt_sources`,
+`decision_receipt_work`, `decision_receipt_revisions`). 5 MCP tools, 1 MCP
+resource, 3 FastAPI endpoints. 22 tests.
+
+**Phase 128 — Desk Intelligence (10/10, PR #446):** One Intelligence pullout
+with three time-horizon views on the desk surface. `IntelligencePullout`
+registered in `PULLOUT_CONTENT` with segmented Brief/Follow-Through/Receipts
+header. `BriefView`: headline hero, FoldGadget groups, acknowledge/defer/
+speak. `FollowThroughView`: four-lane board with owner chips, relative due
+dates, source glyphs, inline verbs, in-place provenance expansion.
+`ReceiptsView`: search-first with WHY mode, structured receipt detail with
+provenance quote, affected-work chips, supersession chain, revision
+timeline. Intelligence dock icon with overdue/brief badge. `WhyControl`
+[WHY N] affordance on primitives. Cross-link drill paths with back
+navigation. Attention projections. Container responsive at 560/420px with
+mobile sheet mode. Receipt REST routes added. 5 walk tests + typecheck.
 
 ## The numbers
 
 | Metric | Before | After |
 |--------|--------|-------|
-| Transport-neutral services | 0 | 33 |
-| MCP tools | 0 | 41 |
-| MCP resources | 0 | 16 |
-| Route handlers calling DB directly | 157 | 2 |
-| Service + MCP code | 0 | ~15,000 lines |
+| Backend services | 33 | 36 (+ FollowThrough, MondayBrief, DecisionReceipt) |
+| MCP tools | 41 | 51 |
+| MCP resources | 16 | 19 |
+| FastAPI endpoints | ~80 | ~88 |
+| Schema version | 38 | 42 |
+| Observer in production | Decorated but NullObserver | SQLiteObserver in all roots |
+| Desk Intelligence surfaces | 0 | 3 views in 1 pullout |
+| Tests added this session | 0 | 100+ |
 
-## What's on the desk for the next agent
-
-### The NeXT moment: the service pipeline as a data lake
-
-Here's the idea the owner planted, and it's a big one.
-
-Every operation in DeskOS now flows through a named service method with
-a typed `Principal`, typed arguments, and a typed result. Today those
-calls execute and return. But imagine if every service call was also
-*recorded* — not just its name, but its principal, its arguments, its
-result, its timing, its causal chain.
+## The architecture after this session
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│                   Service Pipeline                       │
+│                   Desk Intelligence                      │
 │                                                         │
-│  MCP client ───┐                                        │
-│  FastAPI route ─┤──→ Service.method(principal, args)     │
-│  Test fixture ──┤         │                              │
-│  CLI ───────────┘         │                              │
-│                           ▼                              │
-│                    ┌─────────────┐                       │
-│                    │  Pipeline   │──→ Repository layer    │
-│                    │  Observer   │                        │
-│                    └──────┬──────┘                       │
-│                           │                              │
-│                           ▼                              │
-│                    ┌─────────────┐                       │
-│                    │  Data Lake  │                        │
-│                    │             │                        │
-│                    │  Every call │                        │
-│                    │  Every arg  │                        │
-│                    │  Every result│                       │
-│                    │  Every timing│                       │
-│                    │  Every who   │                       │
-│                    └─────────────┘                       │
-│                           │                              │
-│                           ▼                              │
+│  ┌─────────────┐ ┌──────────────┐ ┌───────────────┐    │
+│  │  BRIEF      │ │ FOLLOW-      │ │  RECEIPTS     │    │
+│  │  today      │ │ THROUGH      │ │  archive      │    │
+│  │             │ │ open         │ │               │    │
+│  │ Changed     │ │ Now          │ │ Search (WHY)  │    │
+│  │ Broke       │ │ Waiting      │ │ Detail        │    │
+│  │ Waiting     │ │ Unassigned   │ │ Provenance    │    │
+│  │ Decisions   │ │ Overdue      │ │ Affected work │    │
+│  └──────┬──────┘ └──────┬───────┘ └──────┬────────┘    │
+│         │               │               │              │
+│         └───────────┬────┘───────────────┘              │
+│                     │                                   │
+│              Cross-link drill paths                     │
+│              Brief → Card → Receipt → Primitive         │
 │                                                         │
-│  "What did the desk DO today?"                          │
-│  "Which services are hot? Which are dead?"              │
-│  "What did agent X actually touch?"                     │
-│  "Replay this user's last hour"                         │
-│  "What operations correlate with this outcome?"         │
-│  "Build me a briefing from what actually happened"      │
+├─────────────────────────────────────────────────────────┤
+│                   Backend Services                       │
 │                                                         │
+│  MondayBriefService ─── FollowThroughService             │
+│         │                       │                        │
+│         │               DecisionReceiptService            │
+│         │                       │                        │
+│         └───────────┬───────────┘                        │
+│                     │                                   │
+│              Pipeline Observer                          │
+│         (SQLiteObserver in ALL roots)                    │
+│                     │                                   │
+│              33 original services                       │
+│              (all @observed, all wired)                  │
+│                                                         │
+│  MCP: 51 tools, 19 resources                            │
+│  REST: ~88 endpoints                                    │
+│  Schema: v42                                            │
 └─────────────────────────────────────────────────────────┘
 ```
 
-This is why the service extraction mattered. It wasn't refactoring for
-purity. It was the **prerequisite for observability**. When operations
-were scattered across 157 route handlers calling repositories directly,
-there was no single chokepoint to observe. Now there is: 33 services,
-each with a `Principal` and typed arguments. One decorator, one
-middleware, one observer — and the entire system becomes a stream of
-structured events.
+## What's on the desk for the next agent
 
-The kernel already has a journal (the SHA-256 chain from Phase 106).
-The service pipeline is the same idea at the application layer: every
-`create`, `delete`, `run`, `chat`, `ask`, `file`, `resolve`, `seed`,
-`approve`, `revoke` — recorded, correlated, replayable.
+### The Terra Council's remaining pillar
 
-This is the NeXT moment. The desk isn't just an OS with a programmatic
-API. It's an OS that *knows what it did*.
+The session began with a four-persona Terra Council ideation. Three of
+the four pillars are built and dressed in glass:
+
+1. ✅ **The Follow-Through Desk** (Phase 125) — meetings → boards
+2. ✅ **The Monday Brief** (Phase 126) — desk speaks first
+3. ✅ **Decision Receipts** (Phase 127) — "Why Kafka?" in ten seconds
+4. ⬜ **The Causal Graph** (Phase 128 recipe exists) — typed evidence
+   edges linking every primitive to its cause
+
+The Causal Graph is the structural leap: promote `correlation_id` from
+an observability label into a durable, typed evidence graph with edges
+like `created-by`, `informed`, `superseded`, `blocked`, `violated`. Any
+primitive answers "why is this here?" by walking its complete causal
+chain. The recipe (from the Terra Council) has 10 stories — see the
+strategic briefing artifact and recipe artifact from this session.
+
+After the Causal Graph, the council's fifth pillar is **The Intent
+Compiler**: the LLM becomes a planner emitting inspectable, reversible
+Desk Plans — operations with preconditions, effects, and constitutional
+constraints. Article XI becomes the compiler's type system.
 
 ### Concrete next steps
 
-1. **Phase 124 — The Observer.** A `PipelineObserver` protocol that
-   services call (or a decorator wraps) on every public method. The
-   observer records `{service, method, principal, args_summary,
-   result_summary, duration_ms, timestamp, correlation_id}` to a
-   durable append-only store. Day one: a SQLite `pipeline_events`
-   table. Day two: the desk's own analytics surface. Day three: an
-   MCP resource that answers "what happened?"
+1. **UI verification.** Phase 128's web components type-check and have
+   unit tests, but have NOT been visually verified in the browser. The
+   next session should run the desk (`holdspeak web`), open the
+   Intelligence pullout, and screenshot-walk all three views. The token
+   for the current running instance is in the config
+   (`Config.load().meeting.web_auth_token`).
 
-2. **The two remaining run endpoints.** `chains.py:108` and
-   `workflows.py:132` are the last direct-DB handlers. They're
-   complex orchestration (inference, graph linearization, artifact
-   persistence). Extract them into `ChainRunService` and
-   `WorkflowRunService` when the observer is ready — then even
-   inference calls are observable.
+2. **Phase 128 visual polish.** The three views were built by Terra
+   agents reading the component library and matching patterns. A visual
+   review may find spacing, color, or interaction issues that only show
+   on glass. The standing feedback "screenshot-walk before claiming UI
+   done" applies.
 
-3. **Phase 120 web changes.** The UI reckoning work (11 stories) is
-   in the working tree but was not committed because its evidence
-   files were missing. A fresh session should create evidence for
-   each Phase 120 story and commit them.
+3. **The Causal Graph (Phase 129).** The recipe is grounded in the
+   codebase. Key files: `holdspeak/services/observer.py` (correlation
+   via contextvars), `holdspeak/services/event_query_service.py`
+   (by_correlation), `holdspeak/kernel/broker.py` (kernel causality),
+   `holdspeak/kernel/journal.py` (SHA-256 chain). The gap: no typed
+   edges, no polymorphic refs, no recursive "why" query.
 
-4. **Phase 121 — The Fluency.** Chartered but not started. Kit-first
-   UX architecture (SurfaceFooter, LedgerFilter, useCopyReceipt,
-   useUndoReceipt — most primitives already exist and have tests).
-   This is the web-side complement to the backend pipeline work.
+4. **Phase 120 evidence.** The untracked
+   `pm/roadmap/holdspeak/phase-120-the-reckoning/` directory has been
+   sitting uncommitted since before this session. It needs evidence
+   files created for its 11 done stories.
+
+5. **The two remaining run endpoints.** `chains.py` and `workflows.py`
+   still have direct-DB handlers (the 157→2 census from Phase 123).
+   Extract into `ChainRunService` and `WorkflowRunService` when the
+   Causal Graph is ready — then even inference calls are observable.
+
+### Session artifacts
+
+Three published artifacts from this session:
+
+1. **Terra Council Briefing** — four-persona strategic ideation on
+   where HoldSpeak goes after the observer pipeline. The convergence
+   on four pillars.
+
+2. **Phase Recipes** — four concrete, codebase-grounded phase recipes
+   (Follow-Through, Monday Brief, Decision Receipts, Causal Graph)
+   with named methods, tables, and stories.
+
+3. **Desk Intelligence UI Spec** — unified pullout design with ASCII
+   mockups for all three views, the WHY affordance, cross-link drill
+   paths, dock/palette integration, and responsive behavior.
 
 ### Repo conventions that bite
 
@@ -135,10 +205,28 @@ API. It's an OS that *knows what it did*.
 - **Web bundle is gitignored:** Edit `web/src/`, commit source only.
 - **The .43 box:** LAN LLM at `192.168.1.43:8080`. Sandboxed Bash
   can't reach it.
+- **Screenshot-walk before claiming UI done:** Standing feedback.
+  Playwright shots at 1440 + 393 against the real hub.
 
-### The service inventory
+### The orchestration model
 
-33 services under `holdspeak/services/`:
+This session ran as Opus 4.6 orchestrating Terra agents:
+
+- **Opus decides** what to build, writes the prompts, verifies results.
+- **Terra implements** — reads codebase, writes code, runs focused tests.
+- **Terra ships** — captures DW evidence, flips stories, generates
+  contracts, commits through the gate.
+- **Parallel pipeline:** implement story N while committing story N-1.
+  Fan out independent stories (e.g. four collectors in parallel).
+  Bundle tightly-coupled stories into one commit with rationale.
+
+The session shipped 39 stories across 4 phases with this model. The
+key to velocity: Terra agents briefed with exact file paths, method
+names, and patterns from the codebase — not abstract instructions.
+
+### The service inventory (updated)
+
+36 services under `holdspeak/services/`:
 
 ```
 primitive_service.py          workbench_service.py
@@ -157,30 +245,15 @@ sync_service.py               actuator_service.py
 gate_service.py               setup_service.py
 mesh_service.py               memory_service.py
 invocation_service.py         mission_control_service.py
-delivery_service.py
+delivery_service.py           follow_through_service.py    ← NEW
+monday_brief_service.py       decision_receipt_service.py  ← NEW
 ```
-
-Shared infrastructure:
-- `errors.py` — `ServiceError`, `NotFound`, `ValidationError`, `ConflictError`
-- `support.py` — capability descriptors, graph linearization, prompt
-  rendering, artifact persistence, skill injection, grounding
-
-MCP server at `holdspeak/mcp/`:
-- `server.py` — stdio JSON-RPC loop
-- `tools.py` — 41 tools
-- `resources.py` — 16 resources (9 static + 7 templates)
-- `auth.py` — principal from env token
-
-Walk harness at `scripts/desk_walk/`:
-- `fixtures.py` — isolated hub with temp DB
-- `pages/` — DeskPage, Palette, WorkbenchWindow, Pullout
-- `assertions.py` — footer/failure helpers
-- `walk_mcp_122.py`, `walk_mcp_123.py`, `walk_keyboard_122.py`
-
-Desk doctor at `holdspeak/doctor.py` — 8 health checks, runnable as
-`holdspeak doctor` or `python -m holdspeak.doctor`.
 
 ---
 
-*The desk is programmable. The pipeline is one observer away from
-being observable. That's the seed.*
+*The desk follows through, speaks first, and remembers its decisions.
+The Causal Graph is the next structural leap — typed evidence edges
+that let any primitive answer "why is this here?" That's the seed.*
+
+*To the next orchestrator: you are Muad'Dib. The Terras are your
+Fedaykin. The spice is the pipeline. It must flow.*
