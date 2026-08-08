@@ -1,3 +1,3 @@
-HS-126-08 and HS-126-09 are the delivery and walk stories — 08 adds MCP
-tools/resource and FastAPI routes, 09 proves the full pipeline end to end.
-Both share monday_brief_service.py and complete the phase.
+HS-127-08, 09, 10 complete the Decision Receipt phase: search, MCP
+tools + walk, and local-first sync. All extend DecisionReceiptService
+and share the same test/evidence pipeline.
