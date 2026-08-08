@@ -4,7 +4,12 @@
 > pick up, and the repo conventions that bite (PMO commit gate, write-once
 > evidence, no `Co-Authored-By`, metal-test exclusion).
 
-**Newest update (2026-08-08): Phase 129 — One Grammar — HS-129-03 shipped.**
+**Newest update (2026-08-08): Phase 129 — One Grammar — HS-129-08 shipped.**
+The fixed InlineEditor lightbox is gone. Note, KB, Recipe, and Workflow editing
+now stays in an open pullout or opens as a real origin window with standard
+Escape and focus return; the existing autosave path is unchanged.
+
+**Previous update (2026-08-08): Phase 129 — One Grammar — HS-129-03 shipped.**
 The populated Intelligence Brief now keeps its fit-content card within the
 working band: the 9,710px pathology becomes an 804px desktop window with a
 scrollable body and reachable foot/grip. Its headline wraps at the pullout

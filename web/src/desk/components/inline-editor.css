@@ -71,75 +71,10 @@
 
 /* HS-110-05: .desk-stage-glow animation removed — the backdrop is static. */
 
-/* the radial vignette: the world dims AROUND the object — never a scrim */
-.desk-next .desk-vignette {
-  position: fixed;
-  inset: 0;
-  z-index: 24;
-  background: radial-gradient(
-    340px 300px at var(--vx, 50%) var(--vy, 50%),
-    transparent 0%,
-    transparent 42%,
-    rgba(5, 4, 9, 0.62) 100%
-  );
-}
-
-/* the in-world editor card */
-.desk-next .desk-inline-editor {
-  position: absolute;
-  z-index: 26;
-  width: min(340px, 84vw);
-  max-height: calc(100dvh - 120px);
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 14px;
-  border-radius: 2px;
-  border: 1px solid
-    color-mix(in srgb, var(--accent) 30%, var(--border));
-  background: var(--desk-panel-fill);
-  box-shadow:
-    0 24px 60px var(--shadow-ink-4),
-    0 0 0 1px rgba(168, 110, 74, 0.08);
-  backdrop-filter: none;
-}
-.desk-next .desk-inline-editor input,
-.desk-next .desk-inline-editor textarea,
-.desk-next .desk-inline-editor select {
-  width: 100%;
-  padding: 8px 10px;
-  border-radius: 2px;
-  border: 1px solid var(--border);
-  background: var(--desk-glass);
-  color: var(--text);
-  font-size: var(--font-size-sm);
-  font-family: inherit;
-  resize: vertical;
-}
-.desk-next .desk-inline-editor input:focus,
-.desk-next .desk-inline-editor textarea:focus,
-.desk-next .desk-inline-editor select:focus {
-  outline-color: var(--accent);
-  border-color: var(--accent);
-}
-.desk-next .desk-inline-editor-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  padding-bottom: 6px;
-  border-bottom: 1px solid var(--border);
-}
-.desk-next .desk-inline-editor-more {
-  align-self: flex-start;
-  padding: 4px 10px;
-  border-radius: 0;
-  border: 1px solid var(--border);
-  background: transparent;
-  color: var(--text-muted);
-  font-size: var(--font-size-xs);
-  cursor: pointer;
+/* HS-129-08 — editor content lives in a pullout or DeskWindowFrame. */
+.desk-next .desk-editor-body {
+  display: grid;
+  gap: var(--space-2);
 }
 .desk-next .desk-inline-editor-foot {
   display: flex;
@@ -147,7 +82,7 @@
 }
 .desk-next .desk-inline-editor-row {
   display: flex;
-  gap: 8px;
+  gap: var(--space-2);
 }
 .desk-next .desk-inline-editor-row .desk-inline-editor-avatar {
   width: 52px;
@@ -168,38 +103,6 @@
   font-size: var(--font-size-sm);
 }
 
-
-/* ── Materials round 3.3: the component sweep (no more surface left
-   behind). One pass over the legacy desk furniture: the in-world
-   editor, the Desk memory drawer, the Delivery sessions, the tool
-   shelf, and the pane picker all join the material grammar. ── */
-
-/* The in-world editor is a small window: the one material, a head
-   band, a primary Done. */
-.desk-next .desk-inline-editor {
-  border: 1px solid var(--desk-window-keyline);
-  background: var(--desk-window-fill);
-  backdrop-filter: var(--desk-window-blur);
-  box-shadow: var(--desk-window-bevel), var(--desk-glass-edge);
-}
-.desk-next .desk-inline-editor-head {
-  margin: -14px -14px 0;
-  padding: 8px 12px;
-  background: var(--desk-window-head-fill);
-  border-bottom: 1px solid var(--shade-1);
-  border-radius: 2px 16px 0 0;
-  font-size: var(--desk-surface-label-size);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--text-muted);
-}
-.desk-next .desk-inline-editor-foot button:last-child {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: var(--text-on-accent);
-  font-weight: 600;
-  box-shadow: inset 0 1px 0 var(--gleam-3);
-}
 
 
 /* ── Markdown formatting rail ── */

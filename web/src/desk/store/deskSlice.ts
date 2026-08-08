@@ -45,6 +45,7 @@ export type DeskSlice = Pick<
   | "draggingId"
   | "newIds"
   | "editingId"
+  | "editorOrigin"
   | "hoverZoneId"
   | "renamingZoneId"
   | "selectedIds"
@@ -77,6 +78,7 @@ export const createDeskSlice: SliceCreator<DeskSlice> = (set, get) => ({
   draggingId: null,
   newIds: [],
   editingId: null,
+  editorOrigin: null,
   hoverZoneId: null,
   renamingZoneId: null,
   selectedIds: [],
@@ -97,15 +99,13 @@ export const createDeskSlice: SliceCreator<DeskSlice> = (set, get) => ({
     }, 4500);
   },
 
-  openEditor(id) {
-    set({
-      editingId: id,
-      pullouts: get().pullouts.filter((p) => p.id !== id),
-      toolInspector: null,
-    });
+  // HS-129-08 — an open pullout keeps its editor in-world; otherwise the
+  // editor takes a regular window from the invoking object.
+  openEditor(id, origin) {
+    set({ editingId: id, editorOrigin: origin ?? null, toolInspector: null });
   },
   closeEditor() {
-    set({ editingId: null });
+    set({ editingId: null, editorOrigin: null });
     void get().refresh();
   },
 
@@ -120,6 +120,7 @@ export const createDeskSlice: SliceCreator<DeskSlice> = (set, get) => ({
       divedZone: zoneId,
       pullouts: [],
       editingId: null,
+      editorOrigin: null,
       toolInspector: null,
     });
   },

@@ -84,6 +84,8 @@ export interface DeskState {
   newIds: string[];
   /** The world object id whose in-world editor is open (one at a time). */
   editingId: string | null;
+  /** The client point that invoked the editor's separate window path. */
+  editorOrigin: { x: number; y: number } | null;
   /** Open object cards (HS-101 round 9): real windows -- they COEXIST,
    * each remembering the tap point it opened from (the origin its
    * open/close motion flies to). Order is open order; the panel order
@@ -156,7 +158,7 @@ export interface DeskState {
   /** Register a Delivery source (or local worktree) as a repository drawer. */
   registerRepository(input: { sourceId?: string; path?: string; label?: string }): Promise<void>;
   markNew(id: string): void;
-  openEditor(id: string): void;
+  openEditor(id: string, origin?: { x: number; y: number }): void;
   closeEditor(): void;
   /** Autosaving field update through the real PUT routes. */
   updatePrimitive(

@@ -171,13 +171,6 @@ export function KbEditor({ object: o, onClose }: InlineEditorContentProps) {
           </span>
         ) : null}
         <span className="desk-inline-editor-spacer" />
-        <button
-          type="button"
-          className="desk-chip quiet"
-          onClick={onClose}
-        >
-          Done
-        </button>
       </div>
     </>
   );

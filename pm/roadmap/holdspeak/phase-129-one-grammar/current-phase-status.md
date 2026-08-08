@@ -76,7 +76,7 @@ phase is self-contained:
 | HS-129-05 | One foot in Speak; the great deletion | in-progress | [story-05](story-05-speak-foot-and-deletion.md) | — |
 | HS-129-06 | The container-query law | backlog | [story-06](story-06-container-query-law.md) | — |
 | HS-129-07 | The speakable desk | done | [story-07](story-07-the-speakable-desk.md) | [evidence-story-07](./evidence-story-07.md) |
-| HS-129-08 | In-world editing — the lightbox dies | in-progress | [story-08](story-08-in-world-editing.md) | — |
+| HS-129-08 | In-world editing — the lightbox dies | done | [story-08](story-08-in-world-editing.md) | [evidence-story-08](./evidence-story-08.md) |
 | HS-129-09 | One state grammar | backlog | [story-09](story-09-one-state-grammar.md) | — |
 | HS-129-10 | Tokens green and the dead paths | backlog | [story-10](story-10-tokens-and-dead-paths.md) | — |
 | HS-129-11 | The walk | backlog | [story-11](story-11-the-walk.md) | — |
@@ -97,8 +97,10 @@ floating-window rule no longer clears a fit-content card's working-band cap,
 so the populated Brief scrolls inside an 804px desktop window; its headline
 wraps and dock-open Brief no longer mints a phantom BACK step. HS-129-05
 remains unblocked; HS-129-07 closes Audit C's unspeakable-field census with
-shared text controls and field-owned mics. The non-waivable exit remains
-story 11's walk.
+shared text controls and field-owned mics. HS-129-08 closes Audit C's modal
+breach: Note, KB, Recipe, and Workflow editors now live in their open pullout
+or a real origin window, with standard Escape and focus return while their
+autosave path remains unchanged. The non-waivable exit remains story 11's walk.
 
 ## Active risks
 

@@ -13,7 +13,7 @@ import type { Workflow } from "../../../lib/primitives";
 import { useDebouncedSave } from "./useDebouncedSave";
 import type { InlineEditorContentProps } from "./types";
 
-export function WorkflowEditor({ object: o, onClose }: InlineEditorContentProps) {
+export function WorkflowEditor({ object: o }: InlineEditorContentProps) {
   const items = useDesk((s) => s.items);
   const save = useDebouncedSave("workflow", o.id);
 
@@ -131,16 +131,6 @@ export function WorkflowEditor({ object: o, onClose }: InlineEditorContentProps)
       ) : (
         <p className="quiet">Graphed on iPad</p>
       )}
-      <div className="desk-inline-editor-foot">
-        <span className="desk-inline-editor-spacer" />
-        <button
-          type="button"
-          className="desk-chip quiet"
-          onClick={onClose}
-        >
-          Done
-        </button>
-      </div>
     </>
   );
 }

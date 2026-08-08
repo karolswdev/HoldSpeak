@@ -14,14 +14,17 @@ import {
   SurfaceRows,
   SurfaceState,
 } from "../surface/Surface";
+import { INLINE_EDITOR_CONTENT } from "./editors";
 import type { PulloutContentProps } from "./types";
 import { useCopyReceipt } from "../hooks/useCopyReceipt";
 
 export function KbPullout({ object: o }: PulloutContentProps) {
   const items = useDesk((s) => s.items);
-  const { openPullout, openEditor } = useDesk.getState();
+  const editing = useDesk((s) => s.editingId === o.id);
+  const { openPullout, openEditor, closeEditor } = useDesk.getState();
   if (o.ref.kind !== "kb") return null;
   const ir = o.ref;
+  const Content = INLINE_EDITOR_CONTENT[o.kind];
   const resourceRef = qualifiedRef(o.kind, o.id);
   const { copy, receipt: copyReceipt } = useCopyReceipt();
 
@@ -32,8 +35,10 @@ export function KbPullout({ object: o }: PulloutContentProps) {
 
   return (
     <>
-      <div className="desk-pullout-body desk-surface-body">
-        {body ? (
+      <div className="desk-pullout-body desk-surface-body desk-editor-body">
+        {editing && Content ? (
+          <Content object={o} onClose={closeEditor} />
+        ) : body ? (
           <section>
             <Material>{body}</Material>
           </section>
@@ -63,13 +68,18 @@ export function KbPullout({ object: o }: PulloutContentProps) {
             <SurfaceState empty emptyLabel="No entries" />
           </section>
         )}
-        <DeskFilingStrip
-          objectRef={resourceRef}
-          objectKind={o.kind}
-          objectId={o.id}
-        />
+        {!editing && (
+          <DeskFilingStrip
+            objectRef={resourceRef}
+            objectKind={o.kind}
+            objectId={o.id}
+          />
+        )}
       </div>
-      <SurfaceFooter receipt={copyReceipt} verbs={<>
+      <SurfaceFooter receipt={editing ? null : copyReceipt} verbs={editing ? <>
+        <button type="button" className="desk-chip quiet" onClick={closeEditor}>Cancel</button>
+        <button type="button" className="desk-chip is-primary" onClick={closeEditor}>Save</button>
+      </> : <>
         <button
           type="button"
           className="desk-chip quiet"
@@ -92,7 +102,8 @@ export function KbPullout({ object: o }: PulloutContentProps) {
           onClick={() => openEditor(o.id)}
         >
           Edit
-        </button> </>} />
+        </button>
+      </>} />
     </>
   );
 }
