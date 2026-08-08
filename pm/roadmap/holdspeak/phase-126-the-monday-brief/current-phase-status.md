@@ -1,6 +1,6 @@
 # Phase 126 — The Monday Brief
 
-**Status:** in progress (1/9).
+**Status:** in progress (2/9).
 
 **Last updated:** 2026-08-07.
 
@@ -83,7 +83,7 @@ decisions ────────┘    │  Brief  │
 | ID | Story | Status | Story file | Evidence |
 |----|-------|--------|------------|----------|
 | HS-126-01 | Brief window and generation model | done | [story-01](story-01-brief-window-model.md) | [evidence-story-01](./evidence-story-01.md) |
-| HS-126-02 | Persist the brief | backlog | [story-02](story-02-persist-brief.md) | — |
+| HS-126-02 | Persist the brief | done | [story-02](story-02-persist-brief.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-126-03 | Collect changes | backlog | [story-03](story-03-collect-changes.md) | — |
 | HS-126-04 | Collect breakage | backlog | [story-04](story-04-collect-breakage.md) | — |
 | HS-126-05 | Collect waiting work | backlog | [story-05](story-05-collect-waiting.md) | — |
@@ -94,7 +94,9 @@ decisions ────────┘    │  Brief  │
 
 ## Where we are
 
-HS-126-01 is done. `MondayBriefService` now computes local 17:00 windows
-(including the Friday-to-Monday span), persists one empty brief per local date,
-and returns the existing identity on repeat generation. The Follow-Through
-(Phase 125) is the prerequisite and it shipped as PR #443.
+HS-126-01 and HS-126-02 are done. `MondayBriefService` computes local 17:00
+windows (including the Friday-to-Monday span), persists one empty brief per
+local date, and returns the existing identity on repeat generation. Briefs and
+their ordered section items load from the local SQLite store through the
+`brief_id` foreign key. The Follow-Through (Phase 125) is the prerequisite and
+it shipped as PR #443.

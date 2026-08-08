@@ -4,11 +4,12 @@
 > pick up, and the repo conventions that bite (PMO commit gate, write-once
 > evidence, no `Co-Authored-By`, metal-test exclusion).
 
-**Newest update (2026-08-07): Phase 126 — The Monday Brief — in progress (1/9).**
+**Newest update (2026-08-07): Phase 126 — The Monday Brief — in progress (2/9).**
 The brief now has a durable, local-time generation model: daily windows begin
 at the previous 17:00 close, Monday and weekend windows begin Friday at 17:00,
 and repeated generation returns one persisted brief for the local date. Schema
-v40 adds the brief and item stores; collectors will populate its four sections.
+v40 adds the brief and item stores with foreign-key linkage; collectors will
+populate its four sections.
 
 **Previous update (2026-08-07): Phase 125 — The Follow-Through — DONE (10/10).**
 Phase 124 shipped the observer: every service call recorded. Phase 125
