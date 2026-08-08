@@ -42,6 +42,7 @@ class LoopCollector:
         now = now or datetime.now()
         loops: list[OpenLoop] = []
         loops += self._collect_meeting_actions(now)
+        loops += self._collect_meeting_decisions(now)
         loops += self._collect_pending_proposals(now)
         loops += self._collect_agent_questions(now)
         return loops
@@ -119,6 +120,56 @@ class LoopCollector:
             self._score(saved, now, LoopSignals(unowned=unowned))
             out.append(saved)
         self._db.cadence.close_missing("meeting_action", present_ids)
+        return out
+
+    # ── meeting decisions with open commitments ─────────────────────────────
+    def _collect_meeting_decisions(self, now: datetime) -> list[OpenLoop]:
+        """Collect accepted decisions with open commitments into cadence loops."""
+        with self._db._connection() as conn:
+            rows = conn.execute(
+                """
+                SELECT dc.decision_id, dc.owner, dc.due_at, d.text,
+                       d.project_key, d.source_meeting_id, m.title AS meeting_title
+                  FROM decision_commitments AS dc
+                  JOIN decisions AS d ON d.id = dc.decision_id
+             LEFT JOIN meetings AS m ON m.id = d.source_meeting_id
+                 WHERE dc.status = 'open'
+                   AND d.deleted = 0
+                   AND d.lifecycle = 'accepted'
+                """
+            ).fetchall()
+
+        present_ids = [str(row["decision_id"]) for row in rows]
+        out = []
+        for row in rows:
+            decision_id = str(row["decision_id"])
+            owner = row["owner"]
+            due_at = row["due_at"]
+            unowned = not (owner and owner.strip())
+            loop = OpenLoop(
+                source_type="meeting_decision",
+                source_id=decision_id,
+                title=str(row["text"]),
+                summary=f"Decision from {row['meeting_title'] or 'a meeting'}",
+                project=resolve_project(
+                    explicit=row["project_key"], meeting_label=row["meeting_title"]
+                ),
+                priority="high" if (due_at and not unowned) else "normal",
+                owner=owner,
+                due_at=due_at,
+                evidence=[
+                    EvidenceRef(
+                        kind="decision",
+                        ref_id=decision_id,
+                        label=str(row["text"])[:80],
+                        deep_link=f"/meetings/{row['source_meeting_id']}#decision-{decision_id}",
+                    )
+                ],
+            )
+            saved = self._db.cadence.upsert_loop(loop)
+            self._score(saved, now, LoopSignals(unowned=unowned))
+            out.append(saved)
+        self._db.cadence.close_missing("meeting_decision", present_ids)
         return out
 
     # ── pending actuator proposals (read only) ──────────────────────────────
