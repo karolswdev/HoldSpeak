@@ -68,9 +68,13 @@ describe("HS-93-04 contextual pull-out actions", () => {
     });
     fireEvent.click(screen.getByRole("button", { name: "Send reply" }));
 
-    expect(
-      await screen.findByText("Delivery failed. Your reply remains editable."),
-    ).toBeInTheDocument();
+    await waitFor(() =>
+      expect(
+        screen
+          .getAllByRole("status")
+          .some((status) => status.textContent === "REPLY FAILED · RETRY"),
+      ).toBe(true),
+    );
     expect(editor).toHaveValue("Keep this answer until delivery succeeds.");
     first.unmount();
 
@@ -82,9 +86,7 @@ describe("HS-93-04 contextual pull-out actions", () => {
     expect(
       screen.getByRole("textbox", { name: "Coder reply draft" }),
     ).toHaveValue("Keep this answer until delivery succeeds.");
-    expect(
-      screen.getByText("Recovered local reply draft."),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("status")).toHaveTextContent("DRAFT RECOVERED");
   });
 
   it("reviews and explicitly sends selected material only to a waiting Coder", async () => {

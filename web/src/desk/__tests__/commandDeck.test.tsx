@@ -46,7 +46,7 @@ function open() {
     </MemoryRouter>,
   );
   fireEvent.click(screen.getByRole("button", { name: /Search/ }));
-  return screen.getByRole("textbox", {
+  return screen.getByRole("combobox", {
     name: "Search tools and Desk items",
   });
 }
@@ -73,7 +73,7 @@ describe("the deck", () => {
     const deck = open();
     fireEvent.change(deck, { target: { value: "meet the team" } });
     // The top hit is the prefix match on the note's title.
-    const top = screen.getByRole("button", { name: /Meet the team/ });
+    const top = screen.getByRole("option", { name: /Meet the team/ });
     expect(top.className).toContain("is-selected");
     fireEvent.keyDown(deck, { key: "Enter" });
     expect(useDesk.getState().openPullout).toHaveBeenCalledWith("note:n1");
@@ -86,9 +86,16 @@ describe("the deck", () => {
   it("ArrowDown moves the selection index; Enter runs the moved hit", () => {
     const deck = open();
     fireEvent.change(deck, { target: { value: "met" } });
+    const first = screen.getByRole("option", { selected: true }).id;
     fireEvent.keyDown(deck, { key: "ArrowDown" });
+    const moved = screen.getByRole("option", { selected: true }).id;
+    expect(moved).not.toBe(first);
     fireEvent.keyDown(deck, { key: "Enter" });
-    expect(useDesk.getState().openPullout).toHaveBeenCalled();
+    // The current launcher can rank a program before an object. A run is
+    // therefore proved by its shared receipt rather than a stale pullout path.
+    expect(usePalette.getState().open).toBe(false);
+    expect(JSON.parse(localStorage.getItem("hs.desk.palette-recents") || "[]"))
+      .toContain(moved.replace("desk-palette-option-", ""));
   });
 
   it("meetings sit in their own MEETINGS band", () => {
@@ -96,7 +103,7 @@ describe("the deck", () => {
     fireEvent.change(deck, { target: { value: "launch" } });
     expect(screen.getByText("MEETINGS")).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: /Meeting: launch/ }),
+      screen.getByRole("option", { name: /Meeting: launch/ }),
     ).toBeInTheDocument();
   });
 
@@ -105,7 +112,7 @@ describe("the deck", () => {
     fireEvent.change(deck, { target: { value: "meet" } });
     fireEvent.keyDown(document, { key: "Escape" });
     expect(
-      screen.getByRole("textbox", { name: "Search tools and Desk items" }),
+      screen.getByRole("combobox", { name: "Search tools and Desk items" }),
     ).toHaveValue("");
     fireEvent.keyDown(document, { key: "Escape" });
     expect(usePalette.getState().open).toBe(false);
@@ -115,10 +122,10 @@ describe("the deck", () => {
     open();
     expect(screen.getByText("PROGRAMS")).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: /Workbenches/ }),
+      screen.getByRole("option", { name: /Workbenches/ }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: /Processes/ }),
+      screen.getByRole("option", { name: /Processes/ }),
     ).toBeInTheDocument();
   });
 });

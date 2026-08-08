@@ -16,6 +16,16 @@ import { DeskListView, LIST_PAGE } from "./DeskListView";
 import { DeskChrome } from "./DeskChrome";
 import { DeskToolShelf } from "./DeskToolShelf";
 
+// DeskChrome reads the production runtime bus; the list-mode unit fixture
+// exercises its menu state, not a websocket connection.
+vi.mock("../../runtime/RuntimeBus", () => ({
+  useRuntimeBus: () => ({
+    state: "connected",
+    lastFrame: null,
+    subscribe: () => () => undefined,
+  }),
+}));
+
 const items: Items = {
   ...EMPTY_ITEMS,
   meeting: [{ kind: "meeting", id: "m1", title: "Q3 kickoff" } as Meeting],
@@ -235,7 +245,7 @@ describe("HS-93-08 pagination at 1,000 items", () => {
       screen.getByPlaceholderText("Search tools and Desk items"),
       { target: { value: "Meridian" } },
     );
-    const hit = screen.getByRole("button", {
+    const hit = screen.getByRole("option", {
       name: /Meridian launch brief/,
     });
     fireEvent.click(hit);

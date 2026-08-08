@@ -79,7 +79,7 @@ phase is self-contained:
 | HS-129-08 | In-world editing — the lightbox dies | done | [story-08](story-08-in-world-editing.md) | [evidence-story-08](./evidence-story-08.md) |
 | HS-129-09 | One state grammar | done | [story-09](story-09-one-state-grammar.md) | [evidence-story-09](./evidence-story-09.md) |
 | HS-129-10 | Tokens green and the dead paths | done | [story-10](story-10-tokens-and-dead-paths.md) | [evidence-story-10](./evidence-story-10.md) |
-| HS-129-11 | The walk | backlog | [story-11](story-11-the-walk.md) | — |
+| HS-129-11 | The walk | in-progress | [story-11](story-11-the-walk.md) | — |
 
 ## Where we are
 
@@ -118,8 +118,9 @@ allowlist. The live walk proves zone, meeting, artifact, and workbench opening;
 the audit's failure was a scripted-walk artifact, so its title-addressed,
 engine-hit-tested helper now gives HS-129-11 a reliable object-open primitive.
 Delivery now names a rail missing `capabilities --json` and cursor events as
-incompatible rather than exposing `DW exited 2`. The non-waivable exit remains
-story 11's walk.
+incompatible rather than exposing `DW exited 2`. HS-129-11's first half repairs
+and re-baselines the web suite (778 passing tests); the non-waivable exit remains
+story 11's live walk.
 
 ## Active risks
 

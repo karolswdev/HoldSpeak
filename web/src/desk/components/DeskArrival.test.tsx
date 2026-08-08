@@ -73,10 +73,10 @@ describe("Phase 93 Desk arrival", () => {
     );
     fireEvent.click(screen.getByRole("button", { name: /Search/ }));
     expect(
-      screen.getByRole("button", { name: /^New Note\b/ }),
+      screen.getByRole("option", { name: /^New Note\b/ }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: /^New Decision\b/ }),
+      screen.getByRole("option", { name: /^New Decision\b/ }),
     ).toBeInTheDocument();
 
     // HS-95-04: the shelf is a dispatcher now — every advanced tool is a
@@ -85,7 +85,7 @@ describe("Phase 93 Desk arrival", () => {
     for (const tool of DESK_TOOLS) {
       // HS-111-10: the query well's speak-to-fill mic is also a button
       // ("Speak …") — the dispatcher row is the non-mic hit.
-      const hits = screen.getAllByRole("button", {
+      const hits = screen.getAllByRole("option", {
         name: new RegExp(tool.label),
       });
       expect(hits.some((el) => !el.className.includes("desk-mic"))).toBe(true);
@@ -108,10 +108,10 @@ describe("Phase 93 Desk arrival", () => {
     );
     fireEvent.click(screen.getByRole("button", { name: /Search/ }));
     fireEvent.change(
-      screen.getByRole("textbox", { name: "Search tools and Desk items" }),
+      screen.getByRole("combobox", { name: "Search tools and Desk items" }),
       { target: { value: "release" } },
     );
-    fireEvent.click(screen.getByRole("button", { name: /Release checklist/ }));
+    fireEvent.click(screen.getByRole("option", { name: /Release checklist/ }));
     expect(openPullout).toHaveBeenCalledWith("note:n1");
   });
 
@@ -187,19 +187,26 @@ describe("Phase 93 Desk arrival", () => {
     );
     fireEvent.click(screen.getByRole("button", { name: /Search/ }));
 
+    // The cold deck keeps SETTINGS intentionally dense; every resource remains
+    // discoverable through its own combobox query.
     expect(
-      screen.getByRole("button", { name: /Project Orion/ }),
+      screen.getByRole("combobox", { name: "Search tools and Desk items" }),
     ).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Slack/ })).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: /This device/ }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: /Qwen local/ }),
-    ).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: /Project Orion/ }));
+    expect(screen.getByRole("option", { name: /Project Orion/ })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("option", { name: /Project Orion/ }));
     expect(openProject).toHaveBeenCalledWith("project:orion");
     expect(openToolInspector).not.toHaveBeenCalledWith("project", "orion");
+
+    fireEvent.click(screen.getByRole("button", { name: /Search/ }));
+    const reopenedSearch = screen.getByRole("combobox", {
+      name: "Search tools and Desk items",
+    });
+    fireEvent.change(reopenedSearch, { target: { value: "Slack" } });
+    expect(screen.getByRole("option", { name: /Slack/ })).toBeInTheDocument();
+    fireEvent.change(reopenedSearch, { target: { value: "This device" } });
+    expect(screen.getByRole("option", { name: /This device/ })).toBeInTheDocument();
+    fireEvent.change(reopenedSearch, { target: { value: "Qwen local" } });
+    expect(screen.getByRole("option", { name: /Qwen local/ })).toBeInTheDocument();
     unregisterProject();
   });
 
@@ -249,7 +256,7 @@ describe("Phase 93 Desk arrival", () => {
     );
     fireEvent.click(screen.getByRole("button", { name: /Search/ }));
 
-    const action = screen.getByRole("button", {
+    const action = screen.getByRole("option", {
       name: /Ask Scout about Release checklist/,
     });
     expect(action).toBeInTheDocument();

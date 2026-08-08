@@ -20,7 +20,7 @@ describe("the verb registry (HS-105-05 / HS-111-07 v2)", () => {
     for (const v of VERBS) {
       expect(verbLabel(v, CTX).length).toBeGreaterThan(0);
       expect(["floor", "object", "go", "window", "system"]).toContain(v.scope);
-      if (v.menu) expect(["desk", "object", "go"]).toContain(v.menu);
+      if (v.menu) expect(["desk", "object", "go", "window"]).toContain(v.menu);
     }
   });
 
@@ -89,6 +89,8 @@ describe("the verb registry (HS-105-05 / HS-111-07 v2)", () => {
       "desk.new-note": "⌘N",
       "desk.new-decision": "⌘⇧N",
       "desk.overview": "⌃↑",
+      "object.rename": "F2",
+      "object.delete": "Delete",
       "go.ask": "⌘I",
       "go.dictate": "⌘1",
       "go.review-meetings": "⌘2",
@@ -97,6 +99,7 @@ describe("the verb registry (HS-105-05 / HS-111-07 v2)", () => {
       "window.close": "⌘W",
       "window.minimize": "⌘M",
       "window.cycle": "⌃`",
+      "window.cycle-reverse": "⌃⇧`",
       "system.search": "⌘K",
       "system.sheet": "⌘/",
     });
