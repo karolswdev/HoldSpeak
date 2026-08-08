@@ -66,19 +66,19 @@
   letter-spacing: 0.06em;
 }
 .desk-next .desk-dlv-fresh.is-live {
-  color: var(--ok, #34d399);
-  border-color: color-mix(in srgb, var(--ok, #34d399) 40%, transparent);
+  color: var(--ok);
+  border-color: color-mix(in srgb, var(--ok) 40%, transparent);
 }
 .desk-next .desk-dlv-fresh.is-stale,
 .desk-next .desk-dlv-fresh.is-incompatible {
-  color: var(--warn, #fbbf24);
-  border-color: color-mix(in srgb, var(--warn, #fbbf24) 40%, transparent);
+  color: var(--warn-signal);
+  border-color: color-mix(in srgb, var(--warn-signal) 40%, transparent);
 }
 .desk-next .desk-dlv-fresh.is-offline,
 .desk-next .desk-dlv-fresh.is-unavailable,
 .desk-next .desk-dlv-fresh.is-unauthorized {
-  color: var(--danger, #f87171);
-  border-color: color-mix(in srgb, var(--danger, #f87171) 40%, transparent);
+  color: var(--danger);
+  border-color: color-mix(in srgb, var(--danger) 40%, transparent);
 }
 .desk-next .desk-dlv-hint {
   font-size: 11px;
@@ -118,7 +118,7 @@
   margin: 4px 0 0;
 }
 .desk-next .desk-dlv-evidence {
-  color: var(--ok, #34d399);
+  color: var(--ok);
   margin-left: 2px;
 }
 .desk-next .desk-dlv-dossier,
@@ -184,7 +184,7 @@
   color: var(--text);
 }
 .desk-next .desk-pr-receipts tr.is-needs-you th[scope="row"] {
-  color: var(--danger, #f87171);
+  color: var(--danger);
 }
 .desk-next .desk-pr-gate {
   display: inline-block;
@@ -197,8 +197,8 @@
   letter-spacing: 0.04em;
 }
 .desk-next .desk-pr-gate.is-ungated {
-  border-color: var(--danger, #f87171);
-  color: var(--danger, #f87171);
+  border-color: var(--danger);
+  color: var(--danger);
 }
 .desk-next .desk-pr-diff {
   max-height: 320px;
@@ -228,7 +228,7 @@
   position: sticky;
   top: 0;
   /* HS-129-04 — this is only above its scrolling rows, never a window plane. */
-  z-index: 1;
+  z-index: var(--desk-z-local);
   background: var(--wash-1);
 }
 .desk-next .desk-pr-object-table th:first-child {
@@ -252,7 +252,7 @@
 }
 .desk-next .desk-pr-refusal {
   flex-basis: 100%;
-  color: var(--danger, #f87171);
+  color: var(--danger);
   font-size: 10px;
 }
 .desk-next .desk-pr-detail td,
@@ -331,7 +331,7 @@
   margin-right: 8px;
 }
 .desk-next .desk-pr-result.is-error strong {
-  color: var(--danger, #f87171);
+  color: var(--danger);
 }
 /* HS-129-06 — Delivery reflows with its window body, not the browser. */
 @container surface (max-width: 520px) {

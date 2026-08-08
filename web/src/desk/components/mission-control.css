@@ -25,7 +25,7 @@
   margin-top: 2px;
 }
 .desk-next .desk-run-warning {
-  color: var(--warn, #fbbf24);
+  color: var(--warn-signal);
   font-size: var(--font-size-xs);
   margin: 6px 0 0;
 }
@@ -284,7 +284,7 @@
 /* the bundle bar: the roped count + the one action that gives it meaning */
 .desk-next .desk-askbar {
   position: absolute;
-  z-index: 34;
+  z-index: var(--desk-z-chrome);
   left: 50%;
   bottom: 84px;
   transform: translateX(-50%);

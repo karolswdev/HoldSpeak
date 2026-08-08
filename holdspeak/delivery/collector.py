@@ -274,7 +274,15 @@ class DeliveryCollector:
 
         caps_doc, err = self._run_json([*argv_base, "capabilities", "--json"], root)
         if caps_doc is None:
-            self._degrade(state, err or "capabilities unavailable")
+            # HS-129-10 — argparse exit 2 on this first protocol probe means
+            # an older registered rail cannot satisfy Delivery's contract.
+            # Name the missing precondition rather than surfacing an opaque
+            # process exit code as an unavailable source.
+            if err == "dw exited 2":
+                state.status = "incompatible"
+                state.detail = "requires dw capabilities --json and cursor events"
+            else:
+                self._degrade(state, err or "capabilities unavailable")
             return
         if (
             not isinstance(caps_doc, dict)

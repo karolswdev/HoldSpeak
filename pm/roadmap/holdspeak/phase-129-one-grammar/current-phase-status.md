@@ -1,6 +1,6 @@
 # Phase 129 — One Grammar
 
-**Status:** in-progress (8/11).
+**Status:** in-progress (9/11).
 
 **Last updated:** 2026-08-08.
 
@@ -78,7 +78,7 @@ phase is self-contained:
 | HS-129-07 | The speakable desk | done | [story-07](story-07-the-speakable-desk.md) | [evidence-story-07](./evidence-story-07.md) |
 | HS-129-08 | In-world editing — the lightbox dies | done | [story-08](story-08-in-world-editing.md) | [evidence-story-08](./evidence-story-08.md) |
 | HS-129-09 | One state grammar | done | [story-09](story-09-one-state-grammar.md) | [evidence-story-09](./evidence-story-09.md) |
-| HS-129-10 | Tokens green and the dead paths | in-progress | [story-10](story-10-tokens-and-dead-paths.md) | — |
+| HS-129-10 | Tokens green and the dead paths | done | [story-10](story-10-tokens-and-dead-paths.md) | [evidence-story-10](./evidence-story-10.md) |
 | HS-129-11 | The walk | backlog | [story-11](story-11-the-walk.md) | — |
 
 ## Where we are
@@ -111,8 +111,15 @@ converges the named Audit C state dialects onto `SurfaceState`, named receipts,
 and RAW folds without a new visual language; Runtime Guide is now compact
 reference rows. WorkbenchCore was already deleted, and the Decision Edit,
 Workbench triple-home, and Repo split verb-home questions remain deferred
-because they are more than placement moves. The non-waivable exit remains story
-11's walk.
+because they are more than placement moves. HS-129-10 turns the token gate green
+(23 raw values to zero), retains reviewed inlet and sheet-radius exceptions as
+component tokens, and leaves only current per-file material exceptions in the
+allowlist. The live walk proves zone, meeting, artifact, and workbench opening;
+the audit's failure was a scripted-walk artifact, so its title-addressed,
+engine-hit-tested helper now gives HS-129-11 a reliable object-open primitive.
+Delivery now names a rail missing `capabilities --json` and cursor events as
+incompatible rather than exposing `DW exited 2`. The non-waivable exit remains
+story 11's walk.
 
 ## Active risks
 
@@ -132,13 +139,16 @@ because they are more than placement moves. The non-waivable exit remains story
   generalizing them — audit D's consolidation map.
 - 2026-08-08 — The foot slot mirrors `WingSlotContext` (a portal seam in
   `SurfaceWindowHost`), not another sticky-CSS workaround — audit A §3.4.
+- 2026-08-08 — Keep the 18px top corners on ≤720px sheets as the reviewed
+  `--desk-sheet-top-radius` exception; the 6px inlet picker is likewise named
+  `--desk-inlet-radius`, preserving both established silhouettes.
+- 2026-08-08 — ShortcutSheet and attention/system surfaces are documented OS
+  chrome outside Article VII.2's modal ban.
 
 ## Decisions deferred
 
 - RuntimeDocsCore's future (demote to real docs page vs restructure as
   compact reference) — default: restructure minimally in 129-09, revisit
   under the docs program.
-- A formal sheet-radius exception token (18px top corners at ≤720px) —
-  default: keep the current look, document the exception in 129-10.
 - Workbench template-picker empty state — named in C §3; kept, as a
   deliberate application state, pending owner taste.

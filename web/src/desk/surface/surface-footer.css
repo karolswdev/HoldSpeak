@@ -108,8 +108,8 @@
   height: 24px;
   padding: 0 7px;
   border-radius: 2px;
-  background: rgba(255, 255, 255, 0.035);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--wash-1);
+  border: 1px solid var(--border-subtle);
   box-shadow: var(--desk-window-etch);
   font-family: var(--font-mono);
   font-size: 10px;
@@ -117,16 +117,16 @@
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--text-muted);
-  animation: receipt-seat 120ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  animation: receipt-seat var(--duration-short) cubic-bezier(0.34, 1.56, 0.64, 1) both;
 }
-.desk-next .copy-receipt.is-failed { color: var(--danger-signal, var(--danger)); }
+.desk-next .copy-receipt.is-failed { color: var(--danger-signal); }
 .desk-next .copy-receipt-lamp {
   width: 6px;
   height: 6px;
   flex-shrink: 0;
 }
 .desk-next .copy-receipt-lamp.is-ok { background: var(--ok); }
-.desk-next .copy-receipt-lamp.is-fail { background: var(--danger-signal, var(--danger)); }
+.desk-next .copy-receipt-lamp.is-fail { background: var(--danger-signal); }
 .desk-next .copy-receipt-dismiss {
   height: 18px;
   font-size: 9px;
@@ -144,20 +144,20 @@
   height: 27px;
   padding: 0 6px;
   border-radius: 2px;
-  background: rgba(255, 255, 255, 0.035);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--wash-1);
+  border: 1px solid var(--border-subtle);
   box-shadow: var(--desk-window-etch);
   font-family: var(--font-mono);
   font-size: 11px;
   max-width: 100%;
-  animation: receipt-seat 120ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  animation: receipt-seat var(--duration-short) cubic-bezier(0.34, 1.56, 0.64, 1) both;
 }
 .desk-next .undo-receipt-lamp {
   width: 6px;
   height: 6px;
   flex-shrink: 0;
 }
-.desk-next .undo-receipt-lamp.is-warn { background: var(--warn-signal, var(--warn)); }
+.desk-next .undo-receipt-lamp.is-warn { background: var(--warn-signal); }
 .desk-next .undo-receipt-lamp.is-ok { background: var(--ok); }
 .desk-next .undo-receipt-lamp.is-off { background: var(--text-faint); opacity: 0.4; }
 .desk-next .undo-receipt-label {
@@ -173,7 +173,7 @@
   height: 21px;
   font-size: 9px;
   padding: 0 8px;
-  color: var(--warn-signal, var(--warn));
+  color: var(--warn-signal);
 }
 .desk-next .undo-receipt-btn:hover {
   color: var(--text);
@@ -182,7 +182,7 @@
   display: flex;
   gap: 2px;
   padding: 2px;
-  background: rgba(0, 0, 0, 0.25);
+  background: var(--etch-dark);
   border-radius: 1px;
 }
 .desk-next .undo-receipt-seg {
@@ -190,10 +190,10 @@
   height: 6px;
 }
 .desk-next .undo-receipt-seg.is-lit {
-  background: var(--warn-signal, var(--warn));
+  background: var(--warn-signal);
 }
 .desk-next .undo-receipt-seg.is-dim {
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--border-subtle);
 }
 .desk-next .undo-receipt-time {
   font-family: var(--font-mono);
@@ -345,6 +345,6 @@
 .desk-next .ledger-filter-token-remove:hover,
 .desk-next .ledger-filter-token-remove:focus-visible {
   background: var(--danger-soft, var(--accent-tint));
-  color: var(--danger-signal, var(--danger));
+  color: var(--danger-signal);
   outline: none;
 }

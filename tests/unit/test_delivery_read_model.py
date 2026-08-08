@@ -168,6 +168,7 @@ class FakeDw:
         self.docs: dict[str, dict[str, dict]] = {}  # cwd -> verb -> doc
         self.events: dict[str, list[dict]] = {}  # cwd -> journal
         self.broken: set[str] = set()
+        self.protocol_incompatible: set[str] = set()
         self.delay: float = 0.0
         self._lock = threading.Lock()
 
@@ -192,6 +193,8 @@ class FakeDw:
             time.sleep(self.delay)
         if str(cwd) in self.broken:
             return SimpleNamespace(returncode=3, stdout="", stderr="boom")
+        if str(cwd) in self.protocol_incompatible and verb == "capabilities":
+            return SimpleNamespace(returncode=2, stdout="", stderr="invalid choice")
         repo_docs = self.docs.get(str(cwd))
         if repo_docs is None:
             return SimpleNamespace(returncode=1, stdout="", stderr="unknown repo")
@@ -377,6 +380,16 @@ class TestFailureRetention:
         row = snap["sources"][0]
         assert row["status"] == "unavailable"
         assert row["projects"] is None  # None, never a fake empty array
+
+    def test_missing_capabilities_protocol_names_the_precondition(self, tmp_path):
+        fake = FakeDw()
+        repo = _make_plain_repo(tmp_path, "alpha")
+        collector = _fake_collector(tmp_path, fake, [("alpha", repo)])
+        fake.protocol_incompatible.add(str(repo.resolve()))
+        row = collector.snapshot()["sources"][0]
+        assert row["status"] == "incompatible"
+        assert row["detail"] == "requires dw capabilities --json and cursor events"
+        assert row["projects"] is None
 
     def test_missing_dw_cli_is_unavailable(self, tmp_path):
         fake = FakeDw()

@@ -164,13 +164,13 @@
   height: 8px;
   border-radius: 0;
   background: var(--text-faint);
-  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 0 0 1px var(--bevel-dark);
 }
 .desk-next .desk-hub-dot.is-live {
-  background: var(--success, #34d399);
+  background: var(--ok);
 }
 .desk-next .desk-hub-dot.is-degraded {
-  background: var(--danger, #f87171);
+  background: var(--danger);
 }
 .desk-next .desk-chip {
   /* Materials round 3.2 — ONE chip geometry: every chip is the same
@@ -524,7 +524,7 @@
   white-space: pre-wrap;
 }
 .desk-next .desk-integration-receipt {
-  background: color-mix(in srgb, var(--success, #34d399) 9%, var(--surface-1));
+  background: color-mix(in srgb, var(--ok) 9%, var(--surface-1));
 }
 .desk-next .sr-only {
   position: absolute;

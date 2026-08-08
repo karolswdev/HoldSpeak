@@ -237,5 +237,5 @@
 }
 .desk-next .desk-empty-trust.is-mixed .desk-empty-trust-dot,
 .desk-next .desk-empty-trust.is-cloud .desk-empty-trust-dot {
-  background: var(--warn, #fbbf24);
+  background: var(--warn-signal);
 }

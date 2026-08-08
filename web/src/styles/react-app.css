@@ -180,7 +180,7 @@
   gap: var(--space-4);
   padding: clamp(20px, 6vw, 72px);
   background:
-    radial-gradient(60% 50% at 50% 20%, rgba(168, 110, 74, 0.13), transparent),
+    radial-gradient(60% 50% at 50% 20%, var(--accent-tint), transparent),
     var(--bg-gradient);
 }
 .welcome-mark {
@@ -317,7 +317,7 @@
 }
 .ambient-waveform {
   position: fixed;
-  z-index: 78;
+  z-index: var(--desk-z-waveform);
   left: 50%;
   bottom: 18px;
   height: 46px;

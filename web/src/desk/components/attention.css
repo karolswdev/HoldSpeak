@@ -209,7 +209,7 @@
     width: auto;
     max-height: 62vh;
     overflow: auto;
-    z-index: 46;
+    z-index: var(--desk-z-window-base);
   }
   .desk-next .desk-start-action,
   .desk-next .desk-create-button {

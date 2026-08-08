@@ -11,10 +11,10 @@
 .repo-folder { font-weight: 650; }
 .repo-status { display: inline-block; min-width: 1em; text-align: center; color: var(--text-muted); font: 700 12px/1 var(--font-mono); }
 .repo-status[data-status="M"] { color: var(--warn); }
-.repo-status[data-status="A"] { color: var(--ok, #34d399); }
+.repo-status[data-status="A"] { color: var(--ok); }
 .repo-status[data-status="D"] { color: var(--danger); }
 .repo-status[data-status="?"] { opacity: .55; }
-.repo-pr-state[data-state="open"], .repo-pr-ci[data-ci="passing"] { color: var(--ok, #34d399); }
+.repo-pr-state[data-state="open"], .repo-pr-ci[data-ci="passing"] { color: var(--ok); }
 .repo-pr-state[data-state="merged"] { color: var(--info, #818cf8); }
 .repo-pr-state[data-state="closed"], .repo-pr-ci[data-ci="failing"] { color: var(--danger); }
 .repo-pr-ci[data-ci="pending"] { color: var(--warn); }

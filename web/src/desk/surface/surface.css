@@ -20,7 +20,7 @@
   gap: 8px;
   background: var(--desk-window-fill);
   border-bottom: 1px solid var(--border);
-  z-index: var(--z-sticky);
+  z-index: var(--desk-z-local);
 }
 .surface-verbs-status {
   display: flex;
@@ -501,7 +501,7 @@
 }
 .surface-traffic-prefix {
   font-weight: 700;
-  letter-spacing: 0.04em;
+  letter-spacing: var(--letter-spacing-label-compact);
   color: var(--text-muted);
   white-space: nowrap;
   max-width: 16ch;
@@ -535,7 +535,7 @@
 .surface-traffic-empty {
   padding: 10px 6px;
   font: 600 11px / 1 var(--font-mono);
-  letter-spacing: 0.08em;
+  letter-spacing: var(--letter-spacing-label-wide);
   text-transform: uppercase;
   color: var(--text-faint);
 }
@@ -546,7 +546,7 @@
   font-family: var(--font-mono);
   font-size: 11px;
   font-weight: 600;
-  letter-spacing: 0.05em;
+  letter-spacing: var(--letter-spacing-eyebrow);
   text-transform: uppercase;
   color: var(--text-muted);
   white-space: nowrap;
@@ -717,7 +717,7 @@ button.surface-edit-in-place:hover {
   font-size: var(--desk-surface-label-size);
   font-family: var(--font-mono);
   font-weight: 600;
-  letter-spacing: 0.08em;
+  letter-spacing: var(--letter-spacing-label-wide);
   text-transform: uppercase;
   color: var(--text-muted);
 }
@@ -1309,7 +1309,7 @@ button.surface-edit-in-place:hover {
   margin: 10px 0 2px;
   padding: 0 6px;
   font: 600 10px / 1 var(--font-mono);
-  letter-spacing: 0.08em;
+  letter-spacing: var(--letter-spacing-label-wide);
   text-transform: uppercase;
   color: var(--text-faint);
 }
@@ -1694,7 +1694,7 @@ button.surface-edit-in-place:hover {
 .surface-bay-tag {
   font-size: 0.625rem;
   font-weight: 700;
-  letter-spacing: 0.09em;
+  letter-spacing: var(--letter-spacing-label-wide);
   text-transform: uppercase;
   color: var(--accent);
   background: var(--accent-tint);
@@ -1820,7 +1820,7 @@ button.surface-edit-in-place:hover {
 .surface-detail-facts {
   font-family: var(--font-mono);
   font-size: 11px;
-  letter-spacing: 0.04em;
+  letter-spacing: var(--letter-spacing-label-compact);
   text-transform: uppercase;
   color: var(--text-muted);
   font-variant-numeric: tabular-nums;
@@ -1917,7 +1917,7 @@ button.surface-edit-in-place:hover {
   color: var(--text-faint);
   font-family: var(--font-mono);
   font-size: var(--desk-surface-label-size);
-  letter-spacing: 0.04em;
+  letter-spacing: var(--letter-spacing-label-compact);
   text-transform: uppercase;
 }
 .surface-dropwell-glyph {
@@ -2116,7 +2116,7 @@ button.surface-edit-in-place:hover {
   font-family: var(--font-mono);
   font-size: 10px;
   font-weight: 600;
-  letter-spacing: 0.05em;
+  letter-spacing: var(--letter-spacing-eyebrow);
   text-transform: uppercase;
   text-align: center;
   line-height: 1.2;
@@ -2142,14 +2142,14 @@ button.surface-edit-in-place:hover {
   font-family: var(--font-mono);
   font-size: 10px;
   font-weight: 600;
-  letter-spacing: 0.08em;
+  letter-spacing: var(--letter-spacing-label-wide);
   color: var(--text-muted);
 }
 .prefs-precedence {
   padding: 0 6px;
   font-family: var(--font-mono);
   font-size: 10px;
-  letter-spacing: 0.04em;
+  letter-spacing: var(--letter-spacing-label-compact);
   color: var(--text-faint);
   overflow-wrap: anywhere;
 }
@@ -2171,7 +2171,7 @@ button.surface-edit-in-place:hover {
   font-family: var(--font-mono);
   font-size: 12px;
   font-weight: 600;
-  letter-spacing: 0.08em;
+  letter-spacing: var(--letter-spacing-label-wide);
   color: var(--text-muted);
 }
 .prefs-egress-line {
@@ -2272,7 +2272,7 @@ button.surface-edit-in-place:hover {
 }
 .meeting-conflict-slip-facts dt {
   color: var(--text-faint);
-  letter-spacing: 0.05em;
+  letter-spacing: var(--letter-spacing-eyebrow);
   text-transform: uppercase;
 }
 .meeting-conflict-slip-facts dd {

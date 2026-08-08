@@ -4,7 +4,15 @@
 > pick up, and the repo conventions that bite (PMO commit gate, write-once
 > evidence, no `Co-Authored-By`, metal-test exclusion).
 
-**Newest update (2026-08-08): Phase 129 — One Grammar — HS-129-09 shipped.**
+**Newest update (2026-08-08): Phase 129 — One Grammar — HS-129-10 shipped.**
+The token gate is green (23 raw values to zero) with reviewed inlet and phone-sheet
+radius tokens plus a current, per-file material allowlist. The live desk walk
+proves zone, meeting, artifact, and workbench opens; its earlier double-click
+failure was a canvas-walk artifact, now guarded by a title-addressed engine-hit
+helper. Delivery names an old rail's missing capabilities/cursor-events protocol
+as incompatible instead of exposing `DW exited 2`.
+
+**Previous update (2026-08-08): Phase 129 — One Grammar — HS-129-09 shipped.**
 Audit C's state dialects now use the shared grammar: `SurfaceState` legs,
 compact named receipts, and folded RAW material. Runtime Guide is a compact
 reference surface; the legacy WorkbenchCore item was moot because the core was

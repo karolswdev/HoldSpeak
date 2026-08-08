@@ -27,7 +27,7 @@
   opacity: 0.7;
 }
 .desk-next .desk-mic.is-failed {
-  border-color: var(--danger, #f87171);
+  border-color: var(--danger);
 }
 /* HS-100-06: capture unavailable — visible, disabled, reason in the
    title. Never display: none (the mic must not vanish silently). */
@@ -47,7 +47,7 @@
   transform-origin: bottom;
   transform: scaleY(var(--mic-level, 0));
   opacity: calc(0.3 + 0.7 * var(--mic-level, 0));
-  transition: transform 60ms linear, opacity 60ms linear;
+  transition: transform var(--duration-micro) linear, opacity var(--duration-micro) linear;
   vertical-align: middle;
   margin-left: 4px;
 }
@@ -60,7 +60,7 @@
 
 .desk-next .desk-mic-failure {
   max-width: 24rem;
-  color: color-mix(in srgb, var(--danger, #f87171) 65%, var(--text));
+  color: color-mix(in srgb, var(--danger) 65%, var(--text));
   font-size: var(--font-size-xs);
   line-height: 1.35;
 }

@@ -94,13 +94,13 @@
   border-color: var(--border);
 }
 .desk-next .desk-window-shell.is-front .desk-light-close {
-  background: var(--danger-signal, #f87171);
+  background: var(--danger-signal);
 }
 .desk-next .desk-window-shell.is-front .desk-light-min {
-  background: var(--warn, #fbbf24);
+  background: var(--warn-signal);
 }
 .desk-next .desk-window-shell.is-front .desk-light-max {
-  background: var(--success, #34d399);
+  background: var(--ok);
 }
 .desk-next .desk-window-shell.is-front .desk-light svg {
   color: color-mix(in srgb, var(--bg) 78%, transparent);
@@ -110,7 +110,7 @@
   background: var(--gadget-close-fill);
 }
 .desk-next .is-front .desk-light-close:hover svg {
-  color: var(--danger-signal, #f87171);
+  color: var(--danger-signal);
 }
 /* HS-110-06: mono window titles, left-aligned */
 .desk-next .desk-window-title {
