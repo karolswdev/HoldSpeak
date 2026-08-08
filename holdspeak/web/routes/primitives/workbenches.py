@@ -20,8 +20,8 @@ def build_workbenches_router(ctx: WebContext) -> APIRouter:
     router = APIRouter()
 
     def _svc() -> WorkbenchService:
-        from ....db import get_database
-        return WorkbenchService(get_database())
+        from ....db import get_database, get_observer
+        return WorkbenchService(get_database(), observer=get_observer())
 
     def _principal(request: Request) -> Any:
         return getattr(request.state, "principal", None)

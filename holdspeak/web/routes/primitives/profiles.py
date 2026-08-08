@@ -49,8 +49,8 @@ def build_profiles_router(ctx: WebContext) -> APIRouter:
         }
 
     def _svc() -> ProfileService:
-        from ....db import get_database
-        return ProfileService(get_database())
+        from ....db import get_database, get_observer
+        return ProfileService(get_database(), observer=get_observer())
 
     def _principal(request: Request) -> Any:
         return getattr(request.state, "principal", None)

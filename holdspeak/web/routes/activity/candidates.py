@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any, Optional
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
-from ....db import get_database
+from ....db import get_database, get_observer
 from ....principals import UNAUTHENTICATED
 from ....services.activity_meeting_candidate_service import ActivityMeetingCandidateService
 from ....services.errors import NotFound, ValidationError
@@ -12,7 +12,7 @@ from ...context import WebContext
 from ...runtime_support import _meeting_callback_payload, error_500
 from ....logging_config import get_logger
 log=get_logger("web.routes.activity")
-def _svc()->ActivityMeetingCandidateService:return ActivityMeetingCandidateService(get_database())
+def _svc()->ActivityMeetingCandidateService:return ActivityMeetingCandidateService(get_database(), observer=get_observer())
 def _principal(r:Request):return getattr(r.state,"principal",UNAUTHENTICATED)
 def _err(e:Exception)->JSONResponse:return JSONResponse({"error":"activity meeting candidate not found" if isinstance(e,NotFound) else str(e)},status_code=404 if isinstance(e,NotFound) else 400)
 def build_candidates_router(ctx:WebContext)->APIRouter:

@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any, Optional
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
-from ....db import get_database
+from ....db import get_database, get_observer
 from ....principals import UNAUTHENTICATED
 from ....services.activity_enrichment_service import ActivityEnrichmentService
 from ....services.errors import NotFound, ServiceError, ValidationError
@@ -12,7 +12,7 @@ from ...context import WebContext
 from ...runtime_support import error_500
 from ....logging_config import get_logger
 log=get_logger("web.routes.activity")
-def _svc()->ActivityEnrichmentService:return ActivityEnrichmentService(get_database())
+def _svc()->ActivityEnrichmentService:return ActivityEnrichmentService(get_database(), observer=get_observer())
 def _principal(r:Request):return getattr(r.state,"principal",UNAUTHENTICATED)
 def _payload(p:Any)->dict[str,Any]:return p.model_dump() if p is not None else {}
 def _err(e:ServiceError, *, github:bool=False)->JSONResponse:

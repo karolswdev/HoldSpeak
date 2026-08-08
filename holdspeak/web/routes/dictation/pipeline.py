@@ -16,6 +16,7 @@ from typing import Any, Optional
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 
+from ....db import get_observer
 from ....logging_config import get_logger
 from ....services.dictation_service import DictationService
 from ...context import WebContext
@@ -57,6 +58,7 @@ def build_pipeline_router(
             journal_repository=getattr(ctx.journal, "repository", None),
             journal_available=ctx.journal is not None,
             delivery_repository=ctx.dictation_deliveries,
+            observer=get_observer(),
         )
     )
 

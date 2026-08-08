@@ -7,7 +7,11 @@ from typing import Any, Callable
 
 from ..config import Config
 from ..db.core import Database
-from ..meeting_aftercare import build_followup_draft, compute_meeting_aftercare
+from ..meeting_aftercare import (
+    build_followup_draft,
+    compute_meeting_aftercare,
+    resolve_provenance_segment,
+)
 from ..plugins.builtin.github_issue_actuator import GithubIssueActuator, build_github_issue_proposal
 from ..plugins.builtin.webhook_post_actuator import WebhookPostActuator
 from ..principals import Principal
@@ -39,6 +43,43 @@ class MeetingAftercareService:
         digest = compute_meeting_aftercare(self._db, meeting_id)
         if digest is None:
             raise NotFound("meeting", meeting_id)
+
+        meeting = self._db.meetings.get_meeting(meeting_id)
+        triage: list[dict[str, Any]] = []
+        for item in self._db.meetings.list_action_items(
+            include_completed=False, meeting_id=meeting_id
+        ):
+            gaps: list[str] = []
+            if str(item.review_state or "").strip().lower() != "accepted":
+                gaps.append("needs_review")
+            if not str(item.owner or "").strip():
+                gaps.append("no_owner")
+            if not str(item.due or "").strip():
+                gaps.append("no_date")
+            if not gaps:
+                continue
+
+            source: dict[str, Any] = {"meeting_id": item.meeting_id}
+            if item.source_timestamp is not None:
+                source["source_timestamp"] = item.source_timestamp
+            provenance = resolve_provenance_segment(
+                meeting.segments if meeting is not None else [], item.source_timestamp
+            )
+            if provenance is not None:
+                source["segment"] = provenance
+            triage.append(
+                {
+                    "id": item.id,
+                    "text": item.task,
+                    "owner": item.owner,
+                    "due": item.due,
+                    "status": item.status,
+                    "gaps": gaps,
+                    "source": source,
+                }
+            )
+
+        digest["triage"] = triage
         digest["slack_configured"] = bool(Config.load().meeting.slack_webhook_url)
         return digest
 

@@ -9,6 +9,7 @@ from typing import Any, Optional
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 
+from ....db import get_observer
 from ....logging_config import get_logger
 from ....services.coder_service import CoderService
 from ....services.errors import ValidationError
@@ -35,7 +36,7 @@ def build_coder_steering_router(
 ) -> APIRouter:
     router = APIRouter()
     register_factory_routes(router)
-    service = ctx.coder_service if isinstance(ctx.coder_service, CoderService) else CoderService()
+    service = ctx.coder_service if isinstance(ctx.coder_service, CoderService) else CoderService(observer=get_observer())
     process_input = ProcessInputServices(
         service=service, commands=commands, targets=targets
     )

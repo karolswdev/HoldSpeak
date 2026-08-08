@@ -25,9 +25,9 @@ def build_desk_seed_router(ctx: WebContext) -> APIRouter:
     router = APIRouter()
 
     def _svc() -> DeskService:
-        from ...db import get_database
+        from ...db import get_database, get_observer
 
-        return DeskService(get_database())
+        return DeskService(get_database(), observer=get_observer())
 
     @router.post("/api/desk/seed")
     async def api_desk_seed(request: Request) -> Any:

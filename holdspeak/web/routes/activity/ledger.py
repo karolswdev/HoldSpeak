@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any, Optional
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
-from ....db import get_database
+from ....db import get_database, get_observer
 from ....principals import UNAUTHENTICATED
 from ....services.activity_ledger_service import ActivityLedgerService
 from ....services.errors import ValidationError
@@ -13,7 +13,7 @@ from ...runtime_support import error_500
 from ....logging_config import get_logger
 log = get_logger("web.routes.activity")
 def _principal(request: Request): return getattr(request.state, "principal", UNAUTHENTICATED)
-def _svc() -> ActivityLedgerService: return ActivityLedgerService(get_database())
+def _svc() -> ActivityLedgerService: return ActivityLedgerService(get_database(), observer=get_observer())
 def build_ledger_router(ctx: WebContext) -> APIRouter:
  router=APIRouter()
  @router.get("/api/activity/status")

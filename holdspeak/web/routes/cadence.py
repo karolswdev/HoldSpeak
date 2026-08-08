@@ -7,6 +7,7 @@ from typing import Any
 
 from fastapi import APIRouter, Body, HTTPException, Request
 
+from ...db import get_observer
 from ...principals import UNAUTHENTICATED
 from ...services.errors import NotFound, ServiceError
 from ..context import WebContext
@@ -25,7 +26,7 @@ def build_cadence_router(ctx: WebContext) -> APIRouter:
         from ... import db as hsdb
         from ...config import Config
         from ...services.cadence_service import CadenceService
-        service = CadenceService(hsdb.get_database(), Config.load().cadence)
+        service = CadenceService(hsdb.get_database(), Config.load().cadence, observer=get_observer())
     principal = lambda request: getattr(request.state, "principal", UNAUTHENTICATED)
 
     @router.get("/status")

@@ -476,6 +476,29 @@ def _migrate_columns(conn: sqlite3.Connection, stored: int) -> None:
     if "mint_failures" not in wb_run_cols:
         conn.execute("ALTER TABLE workbench_runs ADD COLUMN mint_failures INTEGER NOT NULL DEFAULT 0")
 
+    # v39 (HS-125-03): decision commitments bridge accepted decisions to
+    # accountable action items.  SCHEMA_SQL creates this on fresh databases;
+    # keep the versioned case so v38 archives receive the table and indexes.
+    if stored < 39:
+        conn.executescript(
+            """
+            CREATE TABLE IF NOT EXISTS decision_commitments (
+                id TEXT PRIMARY KEY,
+                decision_id TEXT NOT NULL,
+                action_item_id TEXT NOT NULL,
+                owner TEXT,
+                due_at TEXT,
+                status TEXT NOT NULL DEFAULT 'open',
+                created_at TEXT NOT NULL,
+                updated_at TEXT NOT NULL
+            );
+            CREATE INDEX IF NOT EXISTS idx_decision_commitments_decision
+                ON decision_commitments(decision_id);
+            CREATE INDEX IF NOT EXISTS idx_decision_commitments_status
+                ON decision_commitments(status);
+            """
+        )
+
     # v34 (HS-118-01): zone name uniqueness -- add name_normalized column
     # and backfill with dedup.
     dir_cols = {

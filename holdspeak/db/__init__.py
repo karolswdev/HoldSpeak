@@ -47,6 +47,7 @@ from .core import (  # noqa: F401  explicit: names import * may skip
     DEFAULT_DB_PATH,
     SchemaVersionError,
     backup_database,
+    get_observer,
     restore_database,
     read_schema_version,
 )

@@ -66,6 +66,7 @@ class WebContext:
     credential_service: Optional[Any] = None
     # HS-123-08: cadence, sync, and desk-actuator application boundaries.
     cadence_service: Optional[Any] = None
+    follow_through_service: Optional[Any] = None
     sync_service: Optional[Any] = None
     actuator_service: Optional[Any] = None
 

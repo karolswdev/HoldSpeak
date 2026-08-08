@@ -22,9 +22,9 @@ log = get_logger("web.routes.meetings")
 def _service(ctx: WebContext) -> MeetingService:
     if isinstance(ctx.meeting_service, MeetingService):
         return ctx.meeting_service
-    from ....db import get_database
+    from ....db import get_database, get_observer
 
-    service = MeetingService(get_database())  # _service composition
+    service = MeetingService(get_database(), observer=get_observer())  # _service composition
     ctx.meeting_service = service
     return service
 

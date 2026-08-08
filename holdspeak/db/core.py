@@ -167,6 +167,7 @@ class Database:
 
 
 _db: Optional[Database] = None
+_observer: Optional[Any] = None
 
 
 def get_database(db_path: Optional[Path] = None) -> Database:
@@ -177,7 +178,20 @@ def get_database(db_path: Optional[Path] = None) -> Database:
     return _db
 
 
+def get_observer() -> Any:
+    """Get or create the pipeline observer singleton.
+
+    Returns a SQLiteObserver wired to the database singleton's connection.
+    """
+    global _observer
+    if _observer is None:
+        from holdspeak.services.sqlite_observer import SQLiteObserver
+        _observer = SQLiteObserver(get_database()._connection)
+    return _observer
+
+
 def reset_database() -> None:
     """Reset the database singleton (for testing)."""
-    global _db
+    global _db, _observer
     _db = None
+    _observer = None
