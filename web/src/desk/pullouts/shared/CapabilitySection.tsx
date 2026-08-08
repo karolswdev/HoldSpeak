@@ -11,6 +11,7 @@ import { RunsOnPicker } from "../../components/RunsOnPicker";
 import { LampGadget } from "../../surface/gadgets";
 import { inferenceEgressLamp } from "../../inferenceEgress";
 import { Material } from "../../surface/Material";
+import { SurfaceState } from "../../surface/Surface";
 import { humanizeWireValue } from "../../../lib/productLanguage";
 import {
   contextualCapabilityActions,
@@ -123,11 +124,9 @@ export function CapabilitySection({ object: o }: { object: WorldObject }) {
 
   return (
     <section className="desk-pullout-capability">
-      {readiness.state !== "ready" && (
-        <p className="desk-run-warning">
-          {readiness.detail || "Unavailable here."}
-        </p>
-      )}
+      {readiness.state !== "ready" ? (
+        <SurfaceState error={readiness.detail || "Unavailable"} />
+      ) : null}
       <div className="desk-chat-well">
         <div className="desk-chat-composer">
           <MicButton

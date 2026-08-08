@@ -4,7 +4,13 @@
 > pick up, and the repo conventions that bite (PMO commit gate, write-once
 > evidence, no `Co-Authored-By`, metal-test exclusion).
 
-**Newest update (2026-08-08): Phase 129 — One Grammar — HS-129-06 shipped.**
+**Newest update (2026-08-08): Phase 129 — One Grammar — HS-129-09 shipped.**
+Audit C's state dialects now use the shared grammar: `SurfaceState` legs,
+compact named receipts, and folded RAW material. Runtime Guide is a compact
+reference surface; the legacy WorkbenchCore item was moot because the core was
+already deleted.
+
+**Previous update (2026-08-08): Phase 129 — One Grammar — HS-129-06 shipped.**
 The window is now the responsive viewport: Delivery, Intelligence, Roadmap,
 and list content reflow through the named `surface` container at their own
 window-body widths, never the browser width. The retired `desk-surface` alias

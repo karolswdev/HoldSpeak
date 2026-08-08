@@ -126,14 +126,14 @@ function SteerComposer() {
         />
       </div>
       {target ? (
-        <p className="desk-dlv-consequence">
-          <span className="surface-token">{`→ ${target.label}`}</span>
-          <span className="surface-token">{`NODE ${target.nodeId}`}</span>
+        <div className="desk-dlv-consequence" role="status">
+          <span className="surface-token">TARGET · {target.label}</span>
+          <span className="surface-token">NODE · {target.nodeId}</span>
           <span className="surface-token">
-            {submitOn ? "TEXT+ENTER" : "TEXT ONLY"}
+            {submitOn ? "SEND · TEXT+ENTER" : "SEND · TEXT ONLY"}
           </span>
-          <span className="surface-token">RECEIPT PER SEND</span>
-        </p>
+          <span className="surface-token">RECEIPT · PER SEND</span>
+        </div>
       ) : null}
       {recovered ? (
         <span className="quiet">Recovered local steer draft.</span>

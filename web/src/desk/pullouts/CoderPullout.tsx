@@ -137,12 +137,12 @@ export function CoderPullout({ object: o, onClose }: PulloutContentProps) {
                 </div>
                 <span className="quiet desk-coder-answer-state" role="status">
                   {answered === "sent"
-                    ? "Sent"
+                    ? "REPLY SENT"
                     : answered === "failed"
-                      ? "Delivery failed. Your reply remains editable."
+                      ? "REPLY FAILED · RETRY"
                       : coderDraftRecovered
-                        ? "Recovered local reply draft."
-                        : "Speak to fill or type a reply."}
+                        ? "DRAFT RECOVERED"
+                        : "REPLY"}
                 </span>
                 <button
                   type="button"

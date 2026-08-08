@@ -265,14 +265,17 @@ export function AttentionDrawer() {
                 />
               ) : null}
               {store.page.has_more ? (
-                <button
-                  className="desk-chip quiet"
-                  type="button"
-                  disabled={store.loading}
-                  onClick={() => void store.loadMore()}
-                >
-                  {store.loading ? "Loading…" : "Load older"}
-                </button>
+                store.loading ? (
+                  <SurfaceState loading />
+                ) : (
+                  <button
+                    className="desk-chip quiet"
+                    type="button"
+                    onClick={() => void store.loadMore()}
+                  >
+                    Load older
+                  </button>
+                )
               ) : null}
             </>
           )}

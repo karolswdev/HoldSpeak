@@ -77,8 +77,8 @@ phase is self-contained:
 | HS-129-06 | The container-query law | done | [story-06](story-06-container-query-law.md) | [evidence-story-06](./evidence-story-06.md) |
 | HS-129-07 | The speakable desk | done | [story-07](story-07-the-speakable-desk.md) | [evidence-story-07](./evidence-story-07.md) |
 | HS-129-08 | In-world editing — the lightbox dies | done | [story-08](story-08-in-world-editing.md) | [evidence-story-08](./evidence-story-08.md) |
-| HS-129-09 | One state grammar | in-progress | [story-09](story-09-one-state-grammar.md) | — |
-| HS-129-10 | Tokens green and the dead paths | backlog | [story-10](story-10-tokens-and-dead-paths.md) | — |
+| HS-129-09 | One state grammar | done | [story-09](story-09-one-state-grammar.md) | [evidence-story-09](./evidence-story-09.md) |
+| HS-129-10 | Tokens green and the dead paths | in-progress | [story-10](story-10-tokens-and-dead-paths.md) | — |
 | HS-129-11 | The walk | backlog | [story-11](story-11-the-walk.md) | — |
 
 ## Where we are
@@ -106,8 +106,13 @@ or a real origin window, with standard Escape and focus return while their
 autosave path remains unchanged. HS-129-06 makes `surface` the only public
 window-body container name and moves Delivery, Intelligence, Roadmap, and
 list content breakpoints onto it, so a 460px window reflows inside a 1440px
-browser; the remaining viewport rules are shell/sheet exceptions. The
-non-waivable exit remains story 11's walk.
+browser; the remaining viewport rules are shell/sheet exceptions. HS-129-09
+converges the named Audit C state dialects onto `SurfaceState`, named receipts,
+and RAW folds without a new visual language; Runtime Guide is now compact
+reference rows. WorkbenchCore was already deleted, and the Decision Edit,
+Workbench triple-home, and Repo split verb-home questions remain deferred
+because they are more than placement moves. The non-waivable exit remains story
+11's walk.
 
 ## Active risks
 
