@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from datetime import date, timedelta
+
 import pytest
 
 from holdspeak.db.core import Database, read_schema_version
@@ -86,6 +88,97 @@ def test_list_receipts_returns_all_receipts(tmp_path):
     receipts = service.list_receipts(None)
 
     assert {receipt["id"] for receipt in receipts} == {first["id"], second["id"]}
+
+
+def test_update_receipt_records_each_changed_field_without_erasing_original(tmp_path):
+    service = DecisionReceiptService(Database(tmp_path / "receipts.db"))
+    receipt = service.create(
+        None,
+        decision_text="Keep the original decision.",
+        rationale="Initial rationale.",
+        source_type="desk",
+        source_id="desk-127",
+    )
+
+    updated = service.update_receipt(
+        None, receipt["id"], {"rationale": "Revised rationale."}
+    )
+    loaded = service.get(None, receipt["id"])
+
+    assert updated["rationale"] == "Revised rationale."
+    assert loaded is not None
+    assert loaded["decision_text"] == "Keep the original decision."
+    assert [(revision["field_name"], revision["old_value"], revision["new_value"])
+            for revision in loaded["revisions"]] == [
+        ("rationale", "Initial rationale.", "Revised rationale.")
+    ]
+
+
+def test_affected_work_links_are_listed_in_both_directions_and_removable(tmp_path):
+    service = DecisionReceiptService(Database(tmp_path / "receipts.db"))
+    receipt = service.create(
+        None, decision_text="Govern HS-127.", source_type="desk", source_id="desk-work"
+    )
+
+    link = service.link_work(None, receipt["id"], "project", "HS-127")
+    duplicate = service.link_work(None, receipt["id"], "project", "HS-127")
+
+    assert duplicate["id"] == link["id"]
+    assert service.list_work(None, receipt["id"]) == [link]
+    assert [item["id"] for item in service.receipts_for_work(None, "project", "HS-127")] == [
+        receipt["id"]
+    ]
+    assert service.unlink_work(None, receipt["id"], "project", "HS-127") is True
+    assert service.list_work(None, receipt["id"]) == []
+    assert service.receipts_for_work(None, "project", "HS-127") == []
+
+
+def test_due_for_review_includes_overdue_and_excludes_future_receipts(tmp_path):
+    service = DecisionReceiptService(Database(tmp_path / "receipts.db"))
+    overdue = service.create(
+        None,
+        decision_text="Review the overdue decision.",
+        review_date=(date.today() - timedelta(days=1)).isoformat(),
+        source_type="desk",
+        source_id="desk-overdue",
+    )
+    service.create(
+        None,
+        decision_text="Review the future decision.",
+        review_date=(date.today() + timedelta(days=1)).isoformat(),
+        source_type="desk",
+        source_id="desk-future",
+    )
+
+    due = service.due_for_review(None)
+
+    assert [receipt["id"] for receipt in due] == [overdue["id"]]
+
+
+def test_supersede_seals_predecessor_and_preserves_both_receipts(tmp_path):
+    service = DecisionReceiptService(Database(tmp_path / "receipts.db"))
+    predecessor = service.create(
+        None, decision_text="Use the original plan.", source_type="desk", source_id="desk-old"
+    )
+    successor = service.create(
+        None, decision_text="Use the replacement plan.", source_type="desk", source_id="desk-new"
+    )
+    service.link_work(None, predecessor["id"], "project", "HS-127")
+
+    sealed = service.supersede(
+        None, predecessor["id"], successor["id"], "Requirements changed."
+    )
+    loaded_successor = service.get(None, successor["id"])
+
+    assert sealed["lifecycle"] == "superseded"
+    assert sealed["successor_id"] == successor["id"]
+    assert sealed["supersession_reason"] == "Requirements changed."
+    assert sealed["work"][0]["work_ref"] == "HS-127"
+    assert loaded_successor is not None
+    assert loaded_successor["predecessor_id"] == predecessor["id"]
+    assert loaded_successor["decision_text"] == "Use the replacement plan."
+    with pytest.raises(ValueError, match="sealed"):
+        service.update_receipt(None, predecessor["id"], {"rationale": "Rewrite history."})
 
 
 def _accepted_meeting_decision(db: Database, decision_id: str = "dec-127") -> None:

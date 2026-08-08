@@ -57,10 +57,10 @@ local-first decision memory with evidence rather than a mutable ADR copy.
 | HS-127-01 | Receipt canon | done | [story-01](story-01-receipt-canon.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-127-02 | Unify decision origins | done | [story-02](story-02-unify-origins.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-127-03 | Exact meeting evidence | done | [story-03](story-03-meeting-evidence.md) | [evidence-story-03](./evidence-story-03.md) |
-| HS-127-04 | Receipt editor | backlog | [story-04](story-04-receipt-editor.md) | — |
-| HS-127-05 | Affected-work links | backlog | [story-05](story-05-affected-work.md) | — |
-| HS-127-06 | Review queue | backlog | [story-06](story-06-review-queue.md) | — |
-| HS-127-07 | Supersede, never erase | backlog | [story-07](story-07-supersede-never-erase.md) | — |
+| HS-127-04 | Receipt editor | done | [story-04](story-04-receipt-editor.md) | [evidence-story-04](./evidence-story-04.md) |
+| HS-127-05 | Affected-work links | done | [story-05](story-05-affected-work.md) | [evidence-story-05](./evidence-story-05.md) |
+| HS-127-06 | Review queue | done | [story-06](story-06-review-queue.md) | [evidence-story-06](./evidence-story-06.md) |
+| HS-127-07 | Supersede, never erase | done | [story-07](story-07-supersede-never-erase.md) | [evidence-story-07](./evidence-story-07.md) |
 | HS-127-08 | Ten-second retrieval | backlog | [story-08](story-08-ten-second-retrieval.md) | — |
 | HS-127-09 | MCP tools and the walk | backlog | [story-09](story-09-mcp-and-walk.md) | — |
 | HS-127-10 | Local-first sync | backlog | [story-10](story-10-sync.md) | — |

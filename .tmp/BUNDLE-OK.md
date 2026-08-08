@@ -1,3 +1,4 @@
-HS-127-02 and HS-127-03 both extend DecisionReceiptService in
-decision_receipt_service.py: 02 adds factory methods for meeting and
-desk origins, 03 adds exact meeting evidence with segment provenance.
+HS-127-04 through HS-127-07 all extend DecisionReceiptService: receipt
+editor with revision audit trail, affected-work links, review queue,
+and supersession. Tightly coupled operations on the same service and
+test file.
