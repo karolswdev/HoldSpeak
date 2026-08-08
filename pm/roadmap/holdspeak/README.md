@@ -4,7 +4,14 @@
 > pick up, and the repo conventions that bite (PMO commit gate, write-once
 > evidence, no `Co-Authored-By`, metal-test exclusion).
 
-**Newest update (2026-08-07): Phase 127 — The Decision Receipt — DONE (10/10).**
+**Newest update (2026-08-07): Phase 128 — Desk Intelligence — DONE (10/10).**
+One Intelligence pullout brings Brief, Follow-Through, and Receipts together
+on the Desk. Ten stories delivered its shell, three views, dock and palette
+entry, WHY affordances, cross-links, attention badges, responsive sheet
+behavior, and the walk covering every view, receipt search, type safety, and
+intelligence services.
+
+**Previous update (2026-08-07): Phase 127 — The Decision Receipt — DONE (10/10).**
 Every consequential choice gets a permanent receipt: decision, rationale,
 alternatives, owner, affected work, review date, and the conversation that
 produced it. Schema v40→v42, DecisionReceiptService (create from meeting

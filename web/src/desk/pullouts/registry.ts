@@ -13,6 +13,7 @@ import { ChainPullout } from "./ChainPullout";
 import { WorkflowPullout } from "./WorkflowPullout";
 import { CoderPullout } from "./CoderPullout";
 import { DirectoryPullout } from "./DirectoryPullout";
+import { IntelligencePullout } from "./IntelligencePullout";
 import { FallbackPullout } from "./FallbackPullout";
 
 /**
@@ -36,6 +37,7 @@ export const PULLOUT_CONTENT: Record<PrimitiveKind, PulloutContent> = {
   roadmap: FallbackPullout,
   story: FallbackPullout,
   workbench: FallbackPullout,
+  intelligence: IntelligencePullout,
   game: FallbackPullout,
   layout: FallbackPullout,
 } satisfies Record<PrimitiveKind, PulloutContent>;

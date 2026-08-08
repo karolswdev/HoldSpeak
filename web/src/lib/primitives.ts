@@ -42,7 +42,8 @@ export type PrimitiveKind =
   | "roadmap"
   | "story"
   | "repository"
-  | "workbench";
+  | "workbench"
+  | "intelligence";
 
 /** How a primitive kind opens on the Desk (HS-117-16). */
 export type SurfaceDeclaration =
@@ -337,6 +338,13 @@ export interface Workbench {
   lastModified?: string | null;
 }
 
+/** The Desk-local singleton that opens the intelligence pullout. */
+export interface Intelligence {
+  kind: "intelligence";
+  id: string;
+  name: string;
+}
+
 export type Primitive = (
   | Meeting
   | Artifact
@@ -355,6 +363,7 @@ export type Primitive = (
   | Roadmap
   | Story
   | Workbench
+  | Intelligence
 ) & { spriteState?: string | null };
 
 /**
@@ -525,6 +534,16 @@ export const PRIMITIVES = {
     authorable: true,
     surface: { type: "window", windowKey: "WorkbenchWindow" },
   },
+  intelligence: {
+    kind: "intelligence",
+    label: "Intelligence",
+    plural: "Intelligence",
+    syncClass: "local",
+    blurb: "A desk-wide brief, follow-through, and receipt view.",
+    icon: "M4 4h16v16H4zM8 8h8M8 12h5M8 16h3",
+    authorable: false,
+    surface: { type: "pullout" },
+  },
   layout: {
     kind: "layout",
     label: "Layout",
@@ -556,6 +575,7 @@ export type PrimitiveMap = {
   roadmap: Roadmap;
   story: Story;
   workbench: Workbench;
+  intelligence: Intelligence;
 };
 
 /** Look up the surface declaration for a kind (HS-117-16). */
@@ -580,7 +600,7 @@ export const DESK_GROUPS = [
   { label: "Organization", kinds: ["directory", "kb", "project", "repository"] },
   { label: "Live", kinds: ["coder"] },
   { label: "Delivery", kinds: ["roadmap", "story"] },
-  { label: "Local", kinds: ["game", "layout"] },
+  { label: "Local", kinds: ["game", "layout", "intelligence"] },
 ] as const satisfies readonly { readonly label: string; readonly kinds: readonly PrimitiveKind[] }[];
 
 /** Compile-time proof that every PrimitiveKind appears in exactly one

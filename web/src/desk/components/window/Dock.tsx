@@ -1,6 +1,8 @@
 // Dock — the application launcher + running window toolbar.
 // Extracted from DeskWindow.tsx (HS-117-04).
 import { useEffect, useState, type ReactNode } from "react";
+import { useIntelligenceAttention } from "../../intelligenceAttention";
+import { openIntelligence } from "../../intelligenceNavigation";
 import { DOCK_SPRITES } from "../../systemSprites";
 import { useDesk } from "../../store";
 import { useShortcutSheet } from "../../chromeState";
@@ -16,6 +18,7 @@ import { ShortcutSheet } from "./ShortcutSheet";
  * always (running mark when their window is open); drawers and tools
  * moved to the menu-bar bell and the search shelf. */
 const DOCK_APPS = [
+  { key: "open-intelligence", id: "intelligence:desk", label: "Intelligence", glyph: "◈", fallback: "/" },
   { key: "dictate", id: "surface-dictation", label: "Speak", glyph: "⌁", fallback: "/dictation" },
   { key: "review-meetings", id: "surface-meetings", label: "Meetings", glyph: "▣", fallback: "/history" },
   { key: "inspect-personas-and-coders", id: "surface-companion", label: "Agents", glyph: "◉", fallback: "/companion" },
@@ -40,6 +43,10 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
   // verb can draw it.
   useKeymap();
   const sheetOpen = useShortcutSheet((s) => s.open);
+  const intelligenceAttention = useIntelligenceAttention();
+  const intelligenceBadge = intelligenceAttention.overdue
+    ? String(intelligenceAttention.overdue)
+    : intelligenceAttention.briefReady ? "•" : null;
   // HS-99-04 — the dock chip menu (one menu vocabulary).
   const [chipMenu, setChipMenu] = useState<{
     id: string;
@@ -79,6 +86,8 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
       {DOCK_APPS.map((a) => {
         const win = windows.find((w) => w.id === a.id);
         const minimized = win ? panelMin.includes(a.id) : false;
+        const badge = a.id === "intelligence:desk" ? intelligenceBadge : null;
+        const overdue = badge !== null && badge !== "•";
         return (
           <button
             key={a.id}
@@ -86,13 +95,15 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
             className={
               "desk-dock-launch desk-dock-app" +
               (win ? " is-run" : "") +
-              (win && a.id === front && !minimized ? " is-front" : "")
+              (win && a.id === front && !minimized ? " is-front" : "") +
+              (overdue ? " is-attention" : "")
             }
-            aria-label={a.label}
+            aria-label={badge ? `${a.label}, ${overdue ? `${badge} overdue` : "brief ready"}` : a.label}
             onClick={() => {
               const s = useDesk.getState();
               if (win && minimized) s.restorePanel(a.id);
               else if (win) s.focusPanel(a.id);
+              else if (a.key === "open-intelligence") openIntelligence({ view: "brief" });
               else
                 void import("../../shell").then((m) =>
                   m.openSurfaceOr(a.key, a.fallback),
@@ -120,6 +131,11 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
               <span aria-hidden="true">{a.glyph}</span>
             )}
             <span className="desk-dock-label">{a.label}</span>
+            {badge ? (
+              <span className="desk-chip desk-dock-badge" data-tone={overdue ? "warn" : undefined}>
+                {badge}
+              </span>
+            ) : null}
           </button>
         );
       })}

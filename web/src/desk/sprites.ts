@@ -45,6 +45,7 @@ export const VARIANTS: Record<string, string[]> = {
   // and branches live in its window, not in a second sprite language.
   repository: ["drawer"],
   workbench: ["cartridge"],
+  intelligence: ["cartridge"],
 };
 export const SPRITE_BASE = `${import.meta.env.BASE_URL || "/_built/"}desk/sprites/`;
 export function variantIndex(id: string, poolLength: number): number {

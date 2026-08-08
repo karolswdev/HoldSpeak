@@ -246,6 +246,20 @@ class DecisionReceiptService:
             ).fetchall()
         return [self._receipt_dict(row) for row in rows]
 
+    def receipts_for_source(
+        self, principal: Any, source_type: str, source_id: str
+    ) -> list[dict[str, Any]]:
+        """List receipts minted from one stable source identity."""
+        del principal
+        with self._db._connection() as conn:
+            rows = conn.execute(
+                """SELECT * FROM decision_receipts
+                   WHERE source_type = ? AND source_id = ? AND deleted = 0
+                   ORDER BY created_at DESC, id DESC""",
+                (self._required("source_type", source_type), self._required("source_id", source_id)),
+            ).fetchall()
+        return [self._receipt_dict(row) for row in rows]
+
     def supersede(
         self,
         principal: Any,

@@ -6,6 +6,7 @@ import { useDesk } from "../store";
 import { openSurfaceOr } from "../shell";
 import { qualifiedRef } from "../api";
 import { DeskFilingStrip } from "../components/DeskFilingStrip";
+import { WhyControl } from "../components/WhyControl";
 import { humanizeWireValue } from "../../lib/productLanguage";
 import { Material } from "../surface/Material";
 import {
@@ -140,9 +141,8 @@ export function MeetingPullout({ object: o, onClose }: PulloutContentProps) {
                   .slice(0, 8)
                   .map((a: any, i: number) => (
                     <li key={i}>
-                      {typeof a === "string"
-                        ? a
-                        : a.task || a.text || a.title || ""}
+                      <span>{typeof a === "string" ? a : a.task || a.text || a.title || ""}</span>
+                      <WhyControl workType="action_item" workRef={`${o.id}:${i}`} />
                     </li>
                   ))}
               </ul>

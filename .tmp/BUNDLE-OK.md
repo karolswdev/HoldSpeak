@@ -1,3 +1,3 @@
-HS-127-08, 09, 10 complete the Decision Receipt phase: search, MCP
-tools + walk, and local-first sync. All extend DecisionReceiptService
-and share the same test/evidence pipeline.
+HS-128-05 through HS-128-09: dock/palette, WHY affordance, cross-links,
+attention badges, responsive. All extend the Intelligence pullout surface
+and share interconnected UI components.

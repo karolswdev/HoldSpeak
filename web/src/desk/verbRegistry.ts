@@ -11,6 +11,7 @@
  * Ghosting over hiding: a verb that cannot run now stays visible with
  * its reason - the system admits what it can do. */
 import { defaultViewFor, useDesk } from "./store";
+import { openIntelligence } from "./intelligenceNavigation";
 import { openSurfaceOr } from "./shell";
 import { objectByRef } from "./world";
 import { DESK_TOOLS } from "./tools";
@@ -300,6 +301,48 @@ export const VERBS: Verb[] = [
     keywords: ["reload", "sync"],
     ghost: never,
     run: () => void useDesk.getState().refresh(),
+  },
+  {
+    id: "desk.open-intelligence",
+    label: "Open Intelligence",
+    menu: "desk",
+    scope: "floor",
+    group: "view",
+    keywords: ["brief", "follow-through", "receipts"],
+    ghost: never,
+    run: () => openIntelligence({ view: "brief" }),
+  },
+  {
+    id: "desk.intelligence-brief",
+    label: "Show today's brief",
+    scope: "floor",
+    keywords: ["intelligence", "daily", "brief"],
+    ghost: never,
+    run: () => openIntelligence({ view: "brief" }),
+  },
+  {
+    id: "desk.intelligence-overdue",
+    label: "Show overdue follow-through",
+    scope: "floor",
+    keywords: ["intelligence", "follow-through", "overdue"],
+    ghost: never,
+    run: () => openIntelligence({ view: "follow-through", overdueOnly: true }),
+  },
+  {
+    id: "desk.intelligence-find-receipt",
+    label: "Find receipt…",
+    scope: "floor",
+    keywords: ["intelligence", "receipt", "decision", "why"],
+    ghost: never,
+    run: () => openIntelligence({ view: "receipts" }),
+  },
+  {
+    id: "desk.intelligence-review-decisions",
+    label: "Review decisions",
+    scope: "floor",
+    keywords: ["intelligence", "receipts", "governing", "why"],
+    ghost: never,
+    run: () => openIntelligence({ view: "receipts", receiptQuery: "", whyOnly: true }),
   },
   // ── Object (selection-aware; ghosted with the reason) ───────────────
   {

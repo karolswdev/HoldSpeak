@@ -39,6 +39,7 @@ import { resolveVoiceReferences } from "../api";
 import { DeskWindowFrame } from "./DeskWindow";
 import { SurfaceFooter } from "../surface/SurfaceFooter";
 import { AgentAvatar } from "./AgentAvatar";
+import { WhyControl } from "./WhyControl";
 import { GroundingSection } from "./GroundingSection";
 import { MicButton } from "./MicButton";
 import type { MicState } from "./MicButton";
@@ -583,6 +584,7 @@ function WorkbenchItemCard({
           {chip.label}
         </span>
       </button>
+      <WhyControl workType="workbench_item" workRef={item.id} />
 
       {/* ── collapsed result preview ───────────────────────────── */}
       {!expanded && hasResult ? (
