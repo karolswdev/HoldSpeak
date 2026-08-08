@@ -329,3 +329,27 @@ describe("Speak refusals land in-flow", () => {
     ).toBeVisible();
   });
 });
+
+describe("HS-129-05 Speak footer composition", () => {
+  it("publishes readiness, Review, and Export through one foot", async () => {
+    mockRoutes({
+      "/api/dictation/readiness": () =>
+        Promise.resolve({
+          config: { pipeline_enabled: false },
+          target: {},
+          warnings: [{ code: "pipeline_disabled" }],
+        }),
+    });
+    const { container } = render(
+      <MemoryRouter>
+        <DictationCore />
+      </MemoryRouter>,
+    );
+
+    await screen.findAllByText("PIPELINE OFF");
+    expect(container.querySelectorAll(".surface-footer")).toHaveLength(1);
+    expect(screen.getByRole("button", { name: "Review" })).toBeVisible();
+    expect(screen.getByRole("button", { name: "Export" })).toBeVisible();
+    expect(container.querySelector(".speak-status")).toBeNull();
+  });
+});

@@ -1,14 +1,17 @@
 .desk-next .surface-footer {
-  display: grid;
-  grid-template-columns: max-content minmax(0, 1fr) max-content;
-  align-items: center;
   height: 36px;
   padding: 0 8px;
-  gap: 6px;
   background: var(--surface-2);
   border-top: 1px solid var(--border);
   box-shadow: var(--desk-window-bevel);
   flex-shrink: 0;
+}
+.desk-next .surface-footer-layout {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr) max-content;
+  align-items: center;
+  height: 100%;
+  gap: 6px;
 }
 .desk-next .surface-footer-egress {
   display: flex;
@@ -42,18 +45,60 @@
   display: none;
 }
 
-@container desk-surface (max-width: 420px) {
-  .surface-footer {
+/* HS-129-05 — footer center states are one shared receipt species. */
+.desk-next .surface-footer-readiness {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.desk-next .surface-footer-readiness[data-tone="warn"] {
+  color: var(--warn);
+}
+
+/* HS-129-05 — migrated receipt-bar children retain their prior slot face. */
+.desk-next .surface-footer-receipt > .surface-footer-receipt-line {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.desk-next .surface-footer-receipt > .surface-footer-receipt-line[data-tone="danger"] {
+  color: var(--danger);
+}
+.desk-next .surface-footer-verbs > .surface-footer-verbs-group {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+@container surface (max-width: 420px) {
+  .desk-next .surface-footer {
+    height: auto;
+    min-height: 36px;
+  }
+  .desk-next .surface-footer-layout {
     grid-template-columns: minmax(0, 1fr) max-content;
     grid-template-areas: "egress verbs" "receipt receipt";
-    height: auto;
     min-height: 36px;
     row-gap: 3px;
   }
-  .surface-footer-egress { grid-area: egress; }
-  .surface-footer-verbs { grid-area: verbs; }
-  .surface-footer-receipt { grid-area: receipt; height: 27px; }
-  .surface-footer-receipt:empty { display: none; }
+  .desk-next .surface-footer-egress { grid-area: egress; }
+  .desk-next .surface-footer-verbs { grid-area: verbs; }
+  .desk-next .surface-footer-receipt { grid-area: receipt; height: 27px; }
+  .desk-next .surface-footer-receipt:empty { display: none; }
 }
 
 .desk-next .copy-receipt {

@@ -1,10 +1,11 @@
 // HS-111-02 — the gear door's Pipeline/Delivery sheet and footer bar.
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { Button } from "../../../components/signal/Signal";
 import { apiFetch } from "../../../lib/api";
 import { useResource } from "../../pageSupport";
 import type { DictationReadinessResponse } from "../core-types";
 import { presentValue } from "../../../desk/surface/format";
+import { SurfaceFooter } from "../../../desk/surface/SurfaceFooter";
 import {
   SurfaceFacts,
   SurfaceState,
@@ -14,6 +15,7 @@ import {
   FoldGadget,
   GadgetGroup,
   GadgetRow,
+  LampGadget,
 } from "../../../desk/surface/gadgets";
 import { readableValue, type Receipt } from "./shared";
 
@@ -134,15 +136,17 @@ export function Readiness() {
   );
 }
 
-/* HS-100-07/HS-111-02 — the footer bar: readiness tokens on the left
-   (quiet when live, a warning that opens the door when not), the
-   program's last receipt/refusal on the right. The one status line. */
-export function ReadinessLine({
+/* HS-129-05 — Speak's readiness is not a second sticky rail. The same
+   readiness wire publishes through the frame-owned footer: lamp at egress,
+   state or landing receipt at center, and Review beside Export. */
+export function ReadinessFooter({
   onOpenDoor,
   receipt,
+  exportVerb,
 }: {
   onOpenDoor: () => void;
   receipt: Receipt | null;
+  exportVerb: ReactNode;
 }) {
   const root = localStorage.getItem("holdspeak.projectRootOverride") ?? "";
   const resource = useResource<DictationReadinessResponse>(
@@ -151,46 +155,64 @@ export function ReadinessLine({
   );
   const receiptSlot = receipt ? (
     <span
-      className="speak-receipt"
+      className="surface-footer-readiness"
       data-tone={receipt.tone === "warn" ? "warn" : undefined}
       role={receipt.tone === "warn" ? "alert" : "status"}
     >
       {receipt.text}
     </span>
   ) : null;
-  if (resource.loading || resource.error) {
-    return receiptSlot ? (
-      <p className="speak-status">{receiptSlot}</p>
-    ) : null;
+
+  if (resource.loading) {
+    return (
+      <SurfaceFooter
+        egress={<LampGadget label="PIPELINE" on={false} tone="warn" />}
+        receipt={receiptSlot || <span className="surface-footer-readiness">CHECKING PIPELINE</span>}
+        verbs={exportVerb}
+      />
+    );
   }
+  if (resource.error) {
+    return (
+      <SurfaceFooter
+        egress={<LampGadget label="PIPELINE UNAVAILABLE" on={false} tone="fail" />}
+        receipt={receiptSlot || <span className="surface-footer-readiness" role="alert">READINESS UNAVAILABLE</span>}
+        verbs={<>{exportVerb}<button type="button" className="desk-chip" onClick={onOpenDoor}>Review</button></>}
+      />
+    );
+  }
+
   const config = (resource.data.config ?? {}) as Record<string, unknown>;
   const target = (resource.data.target ?? {}) as Record<string, unknown>;
   const warnings = Array.isArray(resource.data.warnings)
     ? resource.data.warnings
     : [];
   const live = config.pipeline_enabled === true && warnings.length === 0;
-  if (live) {
-    const budget = config.max_total_latency_ms;
-    return (
-      <p className="speak-status" role="status">
-        <span><span className="speak-status-dot is-live" aria-hidden="true" /> Pipeline live</span>
-        {target.label ? <span>{"-> "}{presentValue(target.label)}</span> : null}
-        {budget ? <span>{presentValue(budget)} ms</span> : null}
-        {receiptSlot}
-      </p>
-    );
-  }
+  const state = live
+    ? [
+        target.label ? `→ ${presentValue(target.label)}` : "PIPELINE LIVE",
+        config.max_total_latency_ms ? `${presentValue(config.max_total_latency_ms)} MS` : "",
+      ].filter(Boolean).join(" · ")
+    : config.pipeline_enabled === true
+      ? `${warnings.length} ${warnings.length === 1 ? "WARNING" : "WARNINGS"}`
+      : "PIPELINE OFF";
+
   return (
-    <p className="speak-status is-warn" role="status">
-      <span><span className="speak-status-dot" aria-hidden="true" /> {config.pipeline_enabled === true
-        ? `${warnings.length} ${warnings.length === 1 ? "warning" : "warnings"}`
-        : "Pipeline off"}</span>
-      <span>
-        <button type="button" className="speak-status-fix" onClick={onOpenDoor}>
-          Review
-        </button>
-      </span>
-      {receiptSlot}
-    </p>
+    <SurfaceFooter
+      egress={
+        <LampGadget
+          label={live ? "PIPELINE LIVE" : state}
+          on={live}
+          tone={live ? "ok" : "warn"}
+        />
+      }
+      receipt={receiptSlot || <span className="surface-footer-readiness" role="status">{state}</span>}
+      verbs={
+        <>
+          {live ? null : <button type="button" className="desk-chip" onClick={onOpenDoor}>Review</button>}
+          {exportVerb}
+        </>
+      }
+    />
   );
 }

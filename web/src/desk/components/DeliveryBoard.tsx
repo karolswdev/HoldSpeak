@@ -455,12 +455,15 @@ export function DeliveryBoard() {
       <LaunchComposer sources={sources} />
       </div>
 
-      <SurfaceFooter verbs={<>
-        <span className="surface-receiptbar-receipt" role="status">
-          {`SOURCES ${sources.length} · WORK ${active.length}` +
-            (updatedAt ? ` · READ ${clockToken(updatedAt)}` : "")}
-        </span>
-      </>} />
+      {/* HS-129-05 — Delivery publishes its fact through the shared receipt slot. */}
+      <SurfaceFooter
+        receipt={
+          <span className="surface-footer-receipt-line" role="status">
+            {`SOURCES ${sources.length} · WORK ${active.length}` +
+              (updatedAt ? ` · READ ${clockToken(updatedAt)}` : "")}
+          </span>
+        }
+      />
     </DeskWindowFrame>
   );
 }

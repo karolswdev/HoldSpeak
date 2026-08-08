@@ -4,7 +4,13 @@
 > pick up, and the repo conventions that bite (PMO commit gate, write-once
 > evidence, no `Co-Authored-By`, metal-test exclusion).
 
-**Newest update (2026-08-08): Phase 129 — One Grammar — HS-129-08 shipped.**
+**Newest update (2026-08-08): Phase 129 — One Grammar — HS-129-05 shipped.**
+Speak now has one frame-owned foot: the shared slots carry readiness, landing
+receipts, Review, and Export. The last sticky Speak rail is gone, seven dead
+footer/style paths are deleted, and History, Live, Process, Project Memory,
+and Delivery now use the shared receipt-slot grammar.
+
+**Previous update (2026-08-08): Phase 129 — One Grammar — HS-129-08 shipped.**
 The fixed InlineEditor lightbox is gone. Note, KB, Recipe, and Workflow editing
 now stays in an open pullout or opens as a real origin window with standard
 Escape and focus return; the existing autosave path is unchanged.

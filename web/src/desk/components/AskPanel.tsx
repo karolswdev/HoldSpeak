@@ -9,7 +9,7 @@ import { SurfaceFooter } from "../surface/SurfaceFooter";
 // HS-111-05 — the query console (audit §3): the exchange is SurfaceTraffic
 // (the OS's one conversation grammar, HS-111-04), the input deck keeps the
 // one-well grammar, the pickers ride one etched GROUNDING rack with the
-// shared LedMeter budget, the footer is the surface-receiptbar, and the
+// shared LedMeter budget, the footer is frame-owned, and the
 // server's grounding receipt (GROUNDED ON N OF M + openable citations)
 // finally reaches this glass.
 import "./chrome-menus.css";

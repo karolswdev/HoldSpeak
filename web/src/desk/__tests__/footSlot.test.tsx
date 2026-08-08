@@ -13,6 +13,9 @@ import { SurfaceFooter } from "../surface/SurfaceFooter";
 import "../components/window-chrome.css";
 import "../components/dock.css";
 import dockCss from "../components/dock.css?raw";
+import surfaceCss from "../surface/surface.css?raw";
+import pulloutCss from "../components/pullout.css?raw";
+import globalCss from "../../styles/global.css?raw";
 
 const HostedCore = () => (
   <>
@@ -126,5 +129,20 @@ describe("HS-129-01 foot slot", () => {
     const reference = container.querySelector(".zone-window-reference");
     expect(reference?.querySelector(".surface-footer")).toBeTruthy();
     expect(reference?.textContent).toContain("Zone receipt");
+  });
+
+  it("has no retired footer grammar selectors", () => {
+    // Keep the names split: this guard proves their absence without becoming a
+    // false grep consumer itself.
+    const retired = [
+      ["surface", "status"],
+      ["prefs", "status"],
+      ["surface", "receiptbar"],
+      ["desk", "pullout", "foot"],
+      ["process", "row", "state"],
+      ["glyph", "chip"],
+    ].map((parts) => `.${parts.join("-")}`);
+    const styles = `${surfaceCss}\n${pulloutCss}\n${globalCss}`;
+    retired.forEach((selector) => expect(styles).not.toContain(selector));
   });
 });

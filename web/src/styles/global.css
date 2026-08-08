@@ -364,26 +364,6 @@ pre {
  * relic) is deleted: zero consumers, and the Signal Workbench material
  * model (opaque, beveled, 2px) owns every surface now. */
 
-/* The glyph chip — a gradient-filled rounded icon container (iPad
- * `GlyphChip`, :452-463). Default 46px; radius ≈ size × 0.28 ≈ 13px.
- * Size overridable via `--chip-size` for smaller chips. */
-.glyph-chip {
-  --chip-size: 46px;
-  flex: none;
-  display: grid;
-  place-items: center;
-  width: var(--chip-size);
-  height: var(--chip-size);
-  border-radius: calc(var(--chip-size) * 0.28);
-  background: var(--accent-gradient);
-  color: var(--white);
-  box-shadow: 0 4px 14px var(--accent-glow);
-}
-.glyph-chip svg {
-  width: 55%;
-  height: 55%;
-}
-
 /* HS-69-02: a pressable scale-on-press feedback (iPad `PressableCard`,
  * :466-474; web spec .98 vs iPad .975, cosmetic). Opt-in. */
 .is-pressable {

@@ -283,58 +283,61 @@ export function HistoryCore({ hero, scope }: CoreProps) {
         />
       ) : null}
       {face}
-      {/* HS-111-03 — the ONE footer receipt bar: residency chip, the
-          receipt center channel, the open record's export + delete. */}
-      <SurfaceFooter verbs={<>
-        <EgressChip />
-        <span
-          className="surface-receiptbar-receipt"
-          data-tone={receipt?.tone}
-          role="status"
-        >
-          {receipt
-            ? receipt.text
-            : `${filteredMeetings.length} RECORDS${filtered ? " · FILTERED" : ""}`}
-        </span>
-        {selected && !wings.doorOpen && wings.view !== "record" ? (
-          <span className="surface-receiptbar-verbs">
-            <Button
-              dense
-              variant="ghost"
-              onClick={() => void exportMeeting("markdown")}
-            >
-              MD
-            </Button>
-            <Button
-              dense
-              variant="ghost"
-              onClick={() => void exportMeeting("txt")}
-            >
-              TXT
-            </Button>
-            <Button
-              dense
-              variant="ghost"
-              onClick={() => void exportMeeting("json")}
-            >
-              JSON
-            </Button>
-            <Button
-              dense
-              variant="ghost"
-              onClick={() => void exportMeeting("srt")}
-            >
-              SRT
-            </Button>
-            <ConfirmVerb
-              label="Delete"
-              confirmLabel="Delete?"
-              busy={removing}
-              onConfirm={() => void removeSelected()}
-            />
+      {/* HS-129-05 — receipt and verbs occupy their frame-owned slots. */}
+      <SurfaceFooter
+        egress={<EgressChip />}
+        receipt={
+          <span
+            className="surface-footer-receipt-line"
+            data-tone={receipt?.tone}
+            role="status"
+          >
+            {receipt
+              ? receipt.text
+              : `${filteredMeetings.length} RECORDS${filtered ? " · FILTERED" : ""}`}
           </span>
-        ) : null}
-      </>} />
+        }
+        verbs={
+          selected && !wings.doorOpen && wings.view !== "record" ? (
+            <span className="surface-footer-verbs-group">
+              <Button
+                dense
+                variant="ghost"
+                onClick={() => void exportMeeting("markdown")}
+              >
+                MD
+              </Button>
+              <Button
+                dense
+                variant="ghost"
+                onClick={() => void exportMeeting("txt")}
+              >
+                TXT
+              </Button>
+              <Button
+                dense
+                variant="ghost"
+                onClick={() => void exportMeeting("json")}
+              >
+                JSON
+              </Button>
+              <Button
+                dense
+                variant="ghost"
+                onClick={() => void exportMeeting("srt")}
+              >
+                SRT
+              </Button>
+              <ConfirmVerb
+                label="Delete"
+                confirmLabel="Delete?"
+                busy={removing}
+                onConfirm={() => void removeSelected()}
+              />
+            </span>
+          ) : null
+        }
+      />
     </>
   );
 }
