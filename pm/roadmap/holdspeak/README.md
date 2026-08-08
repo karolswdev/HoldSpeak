@@ -4,7 +4,13 @@
 > pick up, and the repo conventions that bite (PMO commit gate, write-once
 > evidence, no `Co-Authored-By`, metal-test exclusion).
 
-**Newest update (2026-08-07): Phase 128 — Desk Intelligence — DONE (10/10).**
+**Newest update (2026-08-08): Phase 129 — One Grammar — HS-129-02 shipped.**
+At ≤720px, every DeskWindowFrame sheet keeps its head and foot pinned while
+its body is the sole scroll owner. The contract is covered by a mocked compact
+viewport test and a 393×852 Playwright walk through Speak, Settings, Meetings,
+and Intelligence.
+
+**Previous update (2026-08-07): Phase 128 — Desk Intelligence — DONE (10/10).**
 One Intelligence pullout brings Brief, Follow-Through, and Receipts together
 on the Desk. Ten stories delivered its shell, three views, dock and palette
 entry, WHY affordances, cross-links, attention badges, responsive sheet

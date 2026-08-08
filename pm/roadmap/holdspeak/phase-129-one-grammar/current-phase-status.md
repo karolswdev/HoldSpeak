@@ -70,7 +70,7 @@ phase is self-contained:
 | ID | Story | Status | Story file | Evidence |
 |----|-------|--------|------------|----------|
 | HS-129-01 | The foot slot — one window anatomy | done | [story-01](story-01-the-foot-slot.md) | [evidence-story-01](./evidence-story-01.md) |
-| HS-129-02 | The sheet contract at ≤720px | in-progress | [story-02](story-02-the-sheet-contract.md) | — |
+| HS-129-02 | The sheet contract at ≤720px | done | [story-02](story-02-the-sheet-contract.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-129-03 | The Brief pathology and Intelligence polish | in-progress | [story-03](story-03-brief-pathology.md) | — |
 | HS-129-04 | Shell-scroller and double-scroll repairs | in-progress | [story-04](story-04-shell-scroller-repairs.md) | — |
 | HS-129-05 | One foot in Speak; the great deletion | backlog | [story-05](story-05-speak-foot-and-deletion.md) | — |
@@ -85,8 +85,9 @@ phase is self-contained:
 
 HS-129-01 landed the frame-owned foot slot: hosted `SurfaceFooter` instances
 now portal into a sibling after the scrolling body, while pullouts and direct
-windows retain their in-place composition. The body now shrinks before the
-foot and frame-head ownership lives in `window-chrome.css`. HS-129-02–05 remain
+windows retain their in-place composition. HS-129-02 preserves that frame
+anatomy at ≤720px: sheet shells no longer scroll, while the body remains the
+single scroll owner and the head and foot stay pinned. HS-129-03–05 remain
 unblocked; HS-129-07 closes Audit C's unspeakable-field census with shared text
 controls and field-owned mics. The non-waivable exit remains story 11's walk.
 
