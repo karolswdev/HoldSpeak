@@ -85,7 +85,7 @@ Meeting ──→ Aftercare ──→ Triage (ownerless? undated? review?)
 | ID | Story | Status | Story file | Evidence |
 |----|-------|--------|------------|----------|
 | HS-125-01 | Wire SQLiteObserver into production composition | done | [story-01](story-01-wire-observer-production.md) | [evidence-story-01](./evidence-story-01.md) |
-| HS-125-02 | Board projection service | backlog | [story-02](story-02-board-projection-service.md) | — |
+| HS-125-02 | Board projection service | done | [story-02](story-02-board-projection-service.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-125-03 | Decision commitments | backlog | [story-03](story-03-decision-commitments.md) | — |
 | HS-125-04 | Aftercare triage queue | backlog | [story-04](story-04-aftercare-triage.md) | — |
 | HS-125-05 | Decision loop collection | backlog | [story-05](story-05-decision-loop-collection.md) | — |
