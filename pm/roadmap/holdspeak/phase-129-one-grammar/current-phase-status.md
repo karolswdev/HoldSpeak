@@ -1,6 +1,6 @@
 # Phase 129 — One Grammar
 
-**Status:** in-progress (9/11).
+**Status:** done (11/11).
 
 **Last updated:** 2026-08-08.
 
@@ -79,48 +79,21 @@ phase is self-contained:
 | HS-129-08 | In-world editing — the lightbox dies | done | [story-08](story-08-in-world-editing.md) | [evidence-story-08](./evidence-story-08.md) |
 | HS-129-09 | One state grammar | done | [story-09](story-09-one-state-grammar.md) | [evidence-story-09](./evidence-story-09.md) |
 | HS-129-10 | Tokens green and the dead paths | done | [story-10](story-10-tokens-and-dead-paths.md) | [evidence-story-10](./evidence-story-10.md) |
-| HS-129-11 | The walk | in-progress | [story-11](story-11-the-walk.md) | — |
+| HS-129-11 | The walk | done | [story-11](story-11-the-walk.md) | [evidence-story-11](./evidence-story-11.md) |
 
 ## Where we are
 
-HS-129-01 landed the frame-owned foot slot: hosted `SurfaceFooter` instances
-now portal into a sibling after the scrolling body, while pullouts and direct
-windows retain their in-place composition. HS-129-02 preserves that frame
-anatomy at ≤720px: sheet shells no longer scroll, while the body remains the
-single scroll owner and the head and foot stay pinned. HS-129-04 repairs the
-remaining shell and duplicate scroll paths: DeliveryBoard and DeskToolInspector
-now keep their heads fixed, Constitutional Context and Delivery Dossier have
-one primary body scroller, and the unreachable legacy WorkbenchCore is gone.
-Activity needs no source change: HS-129-01's host body fix made its records
-scrollable in the live walk. HS-129-03 closes Audit B's Brief pathology: the
-floating-window rule no longer clears a fit-content card's working-band cap,
-so the populated Brief scrolls inside an 804px desktop window; its headline
-wraps and dock-open Brief no longer mints a phantom BACK step. HS-129-05 makes
-Speak one-footed: readiness, the landing receipt, Review, and Export publish
-through the frame-owned slots, while the last sticky impostor and seven dead
-footer/style paths are deleted; all five migrated receipt-slot rooms retain a
-pinned foot in the live walk. HS-129-07 closes Audit C's unspeakable-field
-census with shared text controls and field-owned mics. HS-129-08 closes Audit C's modal
-breach: Note, KB, Recipe, and Workflow editors now live in their open pullout
-or a real origin window, with standard Escape and focus return while their
-autosave path remains unchanged. HS-129-06 makes `surface` the only public
-window-body container name and moves Delivery, Intelligence, Roadmap, and
-list content breakpoints onto it, so a 460px window reflows inside a 1440px
-browser; the remaining viewport rules are shell/sheet exceptions. HS-129-09
-converges the named Audit C state dialects onto `SurfaceState`, named receipts,
-and RAW folds without a new visual language; Runtime Guide is now compact
-reference rows. WorkbenchCore was already deleted, and the Decision Edit,
-Workbench triple-home, and Repo split verb-home questions remain deferred
-because they are more than placement moves. HS-129-10 turns the token gate green
-(23 raw values to zero), retains reviewed inlet and sheet-radius exceptions as
-component tokens, and leaves only current per-file material exceptions in the
-allowlist. The live walk proves zone, meeting, artifact, and workbench opening;
-the audit's failure was a scripted-walk artifact, so its title-addressed,
-engine-hit-tested helper now gives HS-129-11 a reliable object-open primitive.
-Delivery now names a rail missing `capabilities --json` and cursor events as
-incompatible rather than exposing `DW exited 2`. HS-129-11's first half repairs
-and re-baselines the web suite (778 passing tests); the non-waivable exit remains
-story 11's live walk.
+Phase 129 is complete: the frame owns one pinned-foot anatomy across desktop
+windows and sheets; shell and double-scroll paths are repaired; Speak, state,
+editing, and responsive container grammar converge on the shared primitives; and
+the token gate is green. HS-129-11's final live walk passes 38 surfaces with
+zero assertion violations and zero console errors, including every dock and Go
+surface, engine-hit zone/meeting/artifact/workbench opening, Trust, Components,
+the in-world Note editor, and the four mobile sheets. The web check chain is
+green (779 tests). The backend criterion is amended by the recorded triage:
+96 failures reproduce on pre-129 main and transfer as inherited debt to Phase
+130, the one 129-caused delivery failure is fixed, and the mesh case is
+flaky/environmental; the owner may overrule that amendment at the sitting.
 
 ## Active risks
 

@@ -4,7 +4,17 @@
 > pick up, and the repo conventions that bite (PMO commit gate, write-once
 > evidence, no `Co-Authored-By`, metal-test exclusion).
 
-**Newest update (2026-08-08): Phase 129 — One Grammar — HS-129-10 shipped.**
+**Newest update (2026-08-08): Phase 129 — One Grammar — COMPLETE (11/11).**
+The exit walk passes all 38 surfaces with pinned-foot, stationary-head,
+no-overflow, height-cap, and console assertions green at desktop and mobile;
+engine-hit desk-object openings, the in-world Note editor, Trust, Components,
+and every live Go entry are in the evidence pack. The full web check chain is
+green (779 tests). Backend triage records 96 pre-129 inherited failures for
+Phase 130, fixes the one 129-caused delivery collector failure, and marks mesh
+dispatch flaky/environmental; the owner may overrule this amendment at the
+sitting.
+
+**Previous update (2026-08-08): Phase 129 — One Grammar — HS-129-10 shipped.**
 The token gate is green (23 raw values to zero) with reviewed inlet and phone-sheet
 radius tokens plus a current, per-file material allowlist. The live desk walk
 proves zone, meeting, artifact, and workbench opens; its earlier double-click
