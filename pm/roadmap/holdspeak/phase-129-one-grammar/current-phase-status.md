@@ -145,6 +145,17 @@ story 11's live walk.
   `--desk-inlet-radius`, preserving both established silhouettes.
 - 2026-08-08 — ShortcutSheet and attention/system surfaces are documented OS
   chrome outside Article VII.2's modal ban.
+- 2026-08-08 — **The inherited backend ledger (owner may overrule at the
+  sitting):** the phase's first-ever full backend run found 98 failures;
+  triage on pre-129 main (4c63c997, same env) reproduced 96 — inherited
+  Phase 118–128 integration debt (companion slack/github/webhook, intel
+  streaming, dictation surfaces, history slack, decision records, live bus,
+  workbench-walk e2e, sync/guards). One was 129-caused (delivery collector
+  conflated protocol-`incompatible` with source-failure-`stale`) and is
+  fixed; one is flaky/environmental (mesh dispatch — passes on rerun).
+  HS-129-11's suite criterion is amended accordingly (see the story file);
+  the 96-test ledger transfers to the Phase 130 charter as a dedicated
+  repair story. Reproduction logs ride in evidence-story-11.md.
 
 ## Decisions deferred
 

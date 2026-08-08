@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 129
-- **Status:** backlog
+- **Status:** in-progress
 - **Depends on:** HS-129-01, HS-129-02, HS-129-03, HS-129-04, HS-129-05, HS-129-06, HS-129-07, HS-129-08, HS-129-09, HS-129-10
 - **Unblocks:** none
 - **Owner:** unassigned
@@ -28,6 +28,16 @@ This story is non-waivable and cannot be closed by tests alone.
    named per the audit-B convention, captured into the phase evidence.
 4. Full test suite + `npm run check` + `uv run pytest -q` (with the metal
    exclusion) green at the walk commit.
+   **Amended 2026-08-08 (orchestrator, recorded in the phase decision log):**
+   the first-ever full backend run revealed 96 failures that reproduce
+   identically on pre-129 main (4c63c997) — inherited Phase 118–128
+   integration debt, not this phase's regressions. The criterion is
+   amended to: web check-chain fully green; backend green MINUS the
+   named 96-test inherited ledger (reproduction log in evidence); any
+   129-caused backend failure fixed (one was found and fixed: the
+   delivery collector's incompatible/stale conflation). The inherited
+   ledger transfers to the Phase 130 charter as a dedicated repair
+   story. The owner may overrule this amendment at the sitting.
 
 ## Acceptance criteria
 
