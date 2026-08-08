@@ -6,6 +6,7 @@ from pathlib import Path
 
 import pytest
 
+import holdspeak.services.follow_through_service as follow_through_module
 from holdspeak.db.core import Database, reset_database
 from holdspeak.principals import Principal, PrincipalKind
 from holdspeak.services.decision_lifecycle_service import DecisionLifecycleService
@@ -32,6 +33,7 @@ def _insert_action(
     owner: str | None = "Ada",
     due: str | None = None,
     status: str = "open",
+    review_state: str = "accepted",
 ) -> None:
     with db._connection() as conn:
         conn.execute(
@@ -39,9 +41,10 @@ def _insert_action(
             (meeting_id, "2026-08-01T09:00:00", "Planning"),
         )
         conn.execute(
-            "INSERT INTO action_items (id, meeting_id, task, owner, due, status) "
-            "VALUES (?, ?, ?, ?, ?, ?)",
-            (item_id, meeting_id, task, owner, due, status),
+            "INSERT INTO action_items "
+            "(id, meeting_id, task, owner, due, status, review_state) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?)",
+            (item_id, meeting_id, task, owner, due, status, review_state),
         )
 
 
@@ -210,3 +213,73 @@ def test_accepting_decision_without_commitment_remains_supported(db: Database) -
             "SELECT COUNT(*) FROM decision_commitments WHERE decision_id = ?", (decision_id,)
         ).fetchone()[0]
     assert count == 0
+
+
+def test_pending_review_action_with_past_due_is_unassigned_not_overdue(db: Database) -> None:
+    _insert_action(
+        db,
+        "needs-review",
+        due=(date.today() - timedelta(days=1)).isoformat(),
+        review_state="pending",
+    )
+
+    board = FollowThroughService(db).board(OWNER)
+
+    assert _card_ids(board.unassigned) == ["needs-review"]
+    assert board.overdue == []
+
+
+def test_accepted_review_action_with_past_due_is_overdue(db: Database) -> None:
+    _insert_action(
+        db,
+        "reviewed-overdue",
+        due=(date.today() - timedelta(days=1)).isoformat(),
+        review_state="accepted",
+    )
+
+    board = FollowThroughService(db).board(OWNER)
+
+    assert _card_ids(board.overdue) == ["reviewed-overdue"]
+
+
+def test_due_lane_changes_as_today_advances(db: Database, monkeypatch: pytest.MonkeyPatch) -> None:
+    start = date(2026, 8, 7)
+    _insert_action(db, "time-travel", due=(start + timedelta(days=3)).isoformat())
+
+    class FrozenDate(date):
+        @classmethod
+        def today(cls) -> date:
+            return current_day[0]
+
+    current_day = [start]
+    monkeypatch.setattr(follow_through_module, "date", FrozenDate)
+    service = FollowThroughService(db)
+
+    assert _card_ids(service.board(OWNER).waiting) == ["time-travel"]
+    current_day[0] = start + timedelta(days=1)
+    assert _card_ids(service.board(OWNER).now) == ["time-travel"]
+    current_day[0] = start + timedelta(days=4)
+    assert _card_ids(service.board(OWNER).overdue) == ["time-travel"]
+
+
+def test_snoozed_action_loop_is_excluded_from_active_lanes(db: Database) -> None:
+    _insert_action(db, "snoozed", due=(date.today() - timedelta(days=1)).isoformat())
+    with db._connection() as conn:
+        conn.execute(
+            """INSERT INTO cadence_loops
+               (id, source_type, source_id, title, status, snoozed_until)
+               VALUES (?, 'meeting_action', ?, ?, 'snoozed', ?)""",
+            (
+                "loop-snoozed",
+                "snoozed",
+                "Follow up",
+                (date.today() + timedelta(days=1)).isoformat(),
+            ),
+        )
+
+    board = FollowThroughService(db).board(OWNER)
+
+    assert board.now == []
+    assert board.waiting == []
+    assert board.unassigned == []
+    assert board.overdue == []

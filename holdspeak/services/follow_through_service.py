@@ -76,6 +76,8 @@ class FollowThroughService:
             if status.lower() in _TERMINAL_STATES:
                 continue
             loop = action_loops.get(str(action["id"]))
+            if loop is not None and self._is_snoozed(loop["snoozed_until"], today):
+                continue
             card = FollowThroughCard(
                 id=str(action["id"]),
                 text=str(action["task"]),
@@ -86,7 +88,13 @@ class FollowThroughService:
                 decision_id=action["decision_id"],
                 stale_score=float(loop["stale_score"]) if loop is not None else None,
                 source="action_item",
-                lane=self._lane(action["owner"], action["due"], status, today),
+                lane=self._lane(
+                    action["owner"],
+                    action["due"],
+                    status,
+                    today,
+                    review_state=action["review_state"],
+                ),
             )
             lanes[card.lane].append(card)
 
@@ -97,6 +105,8 @@ class FollowThroughService:
                 continue
             status = str(loop["status"])
             if status.lower() in _TERMINAL_STATES:
+                continue
+            if self._is_snoozed(loop["snoozed_until"], today):
                 continue
             decision = decisions.get(str(loop["source_id"])) if loop["source_type"] == "meeting_decision" else None
             source = "decision" if decision is not None else "cadence_loop"
@@ -146,8 +156,8 @@ class FollowThroughService:
 
             conn.execute(
                 """INSERT INTO action_items
-                   (id, meeting_id, task, owner, due, status, created_at)
-                   VALUES (?, ?, ?, ?, ?, 'open', ?)""",
+                   (id, meeting_id, task, owner, due, status, review_state, created_at)
+                   VALUES (?, ?, ?, ?, ?, 'open', 'accepted', ?)""",
                 (
                     action_item_id,
                     decision["source_meeting_id"],
@@ -182,6 +192,99 @@ class FollowThroughService:
             "status": "open",
             "created_at": now,
             "updated_at": now,
+        }
+
+    def complete(
+        self,
+        principal: Any,
+        card_id: str,
+        verb: str,
+        payload: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        """Apply a write-through verb to an action card and its linked records.
+
+        ``card_id`` is an ``action_items.id``.  The action, every cadence loop
+        sourced from it, and every associated decision commitment are changed in
+        one SQLite transaction so board reads cannot observe a partial result.
+        """
+        del principal  # The caller's authority is enforced by the transport.
+        normalized_verb = str(verb).strip().lower()
+        if normalized_verb not in {"done", "dismiss", "snooze", "delegate", "reopen"}:
+            raise ValueError(f"Unknown follow-through verb: {verb}")
+        data = payload or {}
+        now = datetime.now().isoformat()
+
+        with self._db._connection() as conn:
+            action = conn.execute(
+                "SELECT id FROM action_items WHERE id = ?", (card_id,)
+            ).fetchone()
+            if action is None:
+                raise ValueError(f"Action item not found: {card_id}")
+
+            loop_rows = conn.execute(
+                "SELECT id FROM cadence_loops WHERE source_id = ?", (card_id,)
+            ).fetchall()
+            commitment_rows = conn.execute(
+                "SELECT id FROM decision_commitments WHERE action_item_id = ?", (card_id,)
+            ).fetchall()
+            loop_ids = [str(row["id"]) for row in loop_rows]
+            commitment_ids = [str(row["id"]) for row in commitment_rows]
+
+            if normalized_verb in {"done", "dismiss"}:
+                action_status = "done" if normalized_verb == "done" else "dismissed"
+                conn.execute(
+                    "UPDATE action_items SET status = ?, completed_at = ? WHERE id = ?",
+                    (action_status, now, card_id),
+                )
+                conn.execute(
+                    "UPDATE cadence_loops SET status = 'closed', updated_at = ? WHERE source_id = ?",
+                    (now, card_id),
+                )
+                conn.execute(
+                    "UPDATE decision_commitments SET status = 'closed', updated_at = ? WHERE action_item_id = ?",
+                    (now, card_id),
+                )
+            elif normalized_verb == "snooze":
+                until = data.get("until")
+                if not isinstance(until, str) or not until.strip():
+                    raise ValueError("snooze requires payload['until']")
+                conn.execute(
+                    """UPDATE cadence_loops
+                       SET status = 'snoozed', snoozed_until = ?, updated_at = ?
+                       WHERE source_id = ?""",
+                    (until.strip(), now, card_id),
+                )
+            elif normalized_verb == "delegate":
+                owner = data.get("to")
+                if not isinstance(owner, str) or not owner.strip():
+                    raise ValueError("delegate requires payload['to']")
+                owner = owner.strip()
+                conn.execute("UPDATE action_items SET owner = ? WHERE id = ?", (owner, card_id))
+                conn.execute(
+                    "UPDATE decision_commitments SET owner = ?, updated_at = ? WHERE action_item_id = ?",
+                    (owner, now, card_id),
+                )
+            else:  # reopen
+                conn.execute(
+                    "UPDATE action_items SET status = 'open', completed_at = NULL WHERE id = ?",
+                    (card_id,),
+                )
+                conn.execute(
+                    """UPDATE cadence_loops
+                       SET status = 'open', snoozed_until = NULL, updated_at = ?
+                       WHERE source_id = ?""",
+                    (now, card_id),
+                )
+                conn.execute(
+                    "UPDATE decision_commitments SET status = 'open', updated_at = ? WHERE action_item_id = ?",
+                    (now, card_id),
+                )
+
+        return {
+            "card_id": card_id,
+            "verb": normalized_verb,
+            "loop_ids": loop_ids,
+            "commitment_ids": commitment_ids,
         }
 
     @staticmethod
@@ -239,7 +342,27 @@ class FollowThroughService:
         return text[:10] if text else None
 
     @classmethod
-    def _lane(cls, owner: Any, due: Any, status: str, today: date) -> str:
+    def _is_snoozed(cls, snoozed_until: Any, today: date) -> bool:
+        snooze_text = cls._date_text(snoozed_until)
+        if snooze_text is None:
+            return False
+        try:
+            return date.fromisoformat(snooze_text) > today
+        except ValueError:
+            return False
+
+    @classmethod
+    def _lane(
+        cls,
+        owner: Any,
+        due: Any,
+        status: str,
+        today: date,
+        *,
+        review_state: Any = None,
+    ) -> str:
+        if str(review_state or "").lower() == "pending":
+            return "unassigned"
         if not owner or not str(owner).strip():
             return "unassigned"
         due_text = cls._date_text(due)

@@ -1,6 +1,6 @@
 # Phase 125 — The Follow-Through
 
-**Status:** active (5/10).
+**Status:** active (7/10).
 
 **Last updated:** 2026-08-07.
 
@@ -89,16 +89,17 @@ Meeting ──→ Aftercare ──→ Triage (ownerless? undated? review?)
 | HS-125-03 | Decision commitments | done | [story-03](story-03-decision-commitments.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-125-04 | Aftercare triage queue | done | [story-04](story-04-aftercare-triage.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-125-05 | Decision loop collection | done | [story-05](story-05-decision-loop-collection.md) | [evidence-story-05](./evidence-story-05.md) |
-| HS-125-06 | Due and stall semantics | backlog | [story-06](story-06-due-and-stall-semantics.md) | — |
-| HS-125-07 | Write-through completion verbs | backlog | [story-07](story-07-write-through-completion.md) | — |
+| HS-125-06 | Due and stall semantics | done | [story-06](story-06-due-and-stall-semantics.md) | [evidence-story-06](./evidence-story-06.md) |
+| HS-125-07 | Write-through completion verbs | done | [story-07](story-07-write-through-completion.md) | [evidence-story-07](./evidence-story-07.md) |
 | HS-125-08 | Provenance on every card | backlog | [story-08](story-08-provenance-on-cards.md) | — |
 | HS-125-09 | Desk surface and MCP tools | backlog | [story-09](story-09-desk-surface-and-mcp.md) | — |
 | HS-125-10 | The walk | backlog | [story-10](story-10-the-walk.md) | — |
 
 ## Where we are
 
-HS-125-01 through HS-125-05 done: production service composition shares a
+HS-125-01 through HS-125-07 done: production service composition shares a
 `SQLiteObserver`; the board projection and decision commitments are durable;
-aftercare triages open actions missing review, owner, or due date; and open
-decision commitments now project idempotently into cadence loops. HS-125-06 is
-next.
+aftercare triages open actions missing review, owner, or due date; open
+decision commitments project idempotently into cadence loops; overdue and
+snoozed board state now has deterministic precedence; and write-through verbs
+keep action, cadence, and commitment records aligned. HS-125-08 is next.
