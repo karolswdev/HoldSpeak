@@ -4,14 +4,16 @@
 > pick up, and the repo conventions that bite (PMO commit gate, write-once
 > evidence, no `Co-Authored-By`, metal-test exclusion).
 
-**Newest update (2026-08-07): Phase 125 — The Follow-Through — ACTIVE (9/10).**
+**Newest update (2026-08-07): Phase 125 — The Follow-Through — DONE (10/10).**
 Phase 124 shipped the observer: every service call recorded. Phase 125
-makes the desk follow through. Nine stories done: observer wired into
-production, board projection with four lanes, decision commitments
-(schema v39), aftercare triage, cadence loop collection, due/stall
-semantics, write-through verbs, provenance on every card, MCP tools
-(board/complete/commit_decision) + resource + FastAPI routes. The walk
-(HS-125-10) is in progress.
+made the desk follow through. Every meeting becomes a living execution
+board: decisions bridge into commitments with owners and due dates,
+aftercare enforces triage, and a unified board answers "who owes what?"
+with provenance back to the sentence where it was promised. Observer
+wired into production, board projection, decision commitments (schema
+v39), aftercare triage, cadence loop collection, due/stall semantics,
+write-through verbs, provenance on cards, MCP tools + resource + routes,
+and the walk proving the full pipeline end to end.
 
 **Previous update (2026-08-07): Phase 124 — The Observer — SHIPPED.**
 Phase 123 completed the service pipeline: 33 services own every operation

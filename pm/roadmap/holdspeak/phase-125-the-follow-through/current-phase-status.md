@@ -1,6 +1,6 @@
 # Phase 125 — The Follow-Through
 
-**Status:** active (9/10).
+**Status:** done (10/10).
 
 **Last updated:** 2026-08-07.
 
@@ -93,12 +93,12 @@ Meeting ──→ Aftercare ──→ Triage (ownerless? undated? review?)
 | HS-125-07 | Write-through completion verbs | done | [story-07](story-07-write-through-completion.md) | [evidence-story-07](./evidence-story-07.md) |
 | HS-125-08 | Provenance on every card | done | [story-08](story-08-provenance-on-cards.md) | [evidence-story-08](./evidence-story-08.md) |
 | HS-125-09 | Desk surface and MCP tools | done | [story-09](story-09-desk-surface-and-mcp.md) | [evidence-story-09](./evidence-story-09.md) |
-| HS-125-10 | The walk | in-progress | [story-10](story-10-the-walk.md) | — |
+| HS-125-10 | The walk | done | [story-10](story-10-the-walk.md) | [evidence-story-10](./evidence-story-10.md) |
 
 ## Where we are
 
-HS-125-01 through HS-125-09 done. Production observer wired, board
-projection with lanes, decision commitments, aftercare triage, cadence
-loop collection, due/stall semantics, write-through verbs, provenance
-on every card, MCP tools (board/complete/commit_decision), MCP resource,
-and FastAPI routes. HS-125-10 (the walk) is in progress.
+Phase complete (10/10). The desk follows through. Production observer
+wired, board projection with four lanes, decision commitments (schema
+v39), aftercare triage, cadence loop collection, due/stall semantics,
+write-through verbs, provenance on every card, MCP tools + resource +
+FastAPI routes, and the walk proving the full pipeline end to end.
