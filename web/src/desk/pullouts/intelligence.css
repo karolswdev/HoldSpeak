@@ -520,6 +520,41 @@
   text-transform: uppercase;
 }
 
+@container surface (max-width: 560px) {
+  .intelligence-pullout { min-width: 0; gap: var(--space-2); }
+  .intelligence-header { display: grid; gap: var(--space-1); }
+  .intelligence-segments { width: 100%; }
+  .follow-through-view { gap: var(--space-2); }
+  .surface-ledger[data-cols="follow-through"] .surface-ledger-line {
+    grid-template-columns: minmax(0, 1fr) auto auto 1.25rem;
+    gap: var(--space-1);
+  }
+  .follow-through-verbs { flex-wrap: wrap; }
+  .follow-through-delegate { align-items: stretch; flex-wrap: wrap; }
+  .receipt-revisions li { grid-template-columns: 5rem minmax(0, 1fr); }
+  .receipt-revisions li span:last-child { grid-column: 1 / -1; }
+}
+
+@container surface (max-width: 420px) {
+  .intelligence-segments { grid-template-columns: 1fr; }
+  .intelligence-segment { min-height: 28px; }
+  .intelligence-brief-headline { font-size: 1.625rem; }
+  .intelligence-brief-groups { gap: var(--space-1); }
+  .intelligence-brief-group:not(:first-child) .gadget-fold-body { max-height: 0; overflow: hidden; }
+  .intelligence-brief-group:focus-within .gadget-fold-body,
+  .intelligence-brief-group[open] .gadget-fold-body { max-height: none; }
+  .surface-ledger[data-cols="follow-through"] .surface-ledger-line {
+    grid-template-columns: minmax(0, 1fr) auto auto;
+  }
+  .follow-through-source { display: none; }
+  .follow-through-verbs { padding-top: var(--space-1); border-top: 1px solid var(--border); }
+  .receipts-search-actions { align-items: flex-start; flex-direction: column; }
+  .receipt-fields { grid-template-columns: 5rem minmax(0, 1fr); }
+  .receipt-chain > div { grid-template-columns: 1fr; }
+  .receipt-chain span:last-child, .receipt-chain button:last-child { text-align: left; }
+  .receipt-revisions li { grid-template-columns: 1fr; gap: 2px; }
+}
+
 @container (max-width: 380px) {
   .surface-ledger[data-cols="follow-through"] .surface-ledger-line {
     grid-template-columns: minmax(0, 1fr) auto auto;
@@ -527,5 +562,18 @@
 
   .follow-through-source {
     display: none;
+  }
+}
+
+@media (max-width: 560px) {
+  .desk-next .desk-pullout:has(.intelligence-pullout) {
+    top: auto;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    max-width: none;
+    max-height: min(82dvh, 42rem);
+    border-inline: 0;
   }
 }

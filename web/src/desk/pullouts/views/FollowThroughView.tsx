@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Button } from "../../../components/signal/Signal";
 import { apiFetch, readableError } from "../../../lib/api";
+import { refreshIntelligenceAttention } from "../../intelligenceAttention";
 import {
   SurfaceLedger,
   SurfaceLedgerRow,
@@ -26,6 +27,7 @@ type FollowThroughCard = {
   owner: string | null;
   due: string | null;
   source: string;
+  decision_id?: string | null;
   provenance: Provenance | null;
 };
 
@@ -77,7 +79,15 @@ function tomorrow(): string {
 }
 
 /** Execution lanes rendered directly from FollowThroughService's board read model. */
-export function FollowThroughView() {
+export function FollowThroughView({
+  overdueOnly = false,
+  focusCardId,
+  onOpenReceipts,
+}: {
+  overdueOnly?: boolean;
+  focusCardId?: string;
+  onOpenReceipts?: (receiptId: string) => void;
+}) {
   const [board, setBoard] = useState<FollowThroughBoard | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -102,6 +112,10 @@ export function FollowThroughView() {
     void reload();
   }, [reload]);
 
+  useEffect(() => {
+    if (focusCardId) setOpenCardId(focusCardId);
+  }, [focusCardId]);
+
   const complete = async (
     cardId: string,
     verb: FollowThroughVerb,
@@ -117,6 +131,7 @@ export function FollowThroughView() {
       setDelegatingCardId(null);
       setDelegateTo("");
       await reload();
+      refreshIntelligenceAttention();
     } catch (cause) {
       setError(readableError(cause));
     } finally {
@@ -124,11 +139,25 @@ export function FollowThroughView() {
     }
   };
 
+  const openDecisionReceipt = (card: FollowThroughCard) => {
+    if (!card.decision_id) {
+      setError("No decision receipt recorded for this follow-through.");
+      return;
+    }
+    void apiFetch<Array<{ id: string }>>(
+      `/api/receipts/source/meeting/${encodeURIComponent(card.decision_id)}`,
+    ).then((receipts) => {
+      if (receipts[0]) onOpenReceipts?.(receipts[0].id);
+      else setError("No decision receipt recorded for this follow-through.");
+    }).catch((cause) => setError(readableError(cause)));
+  };
+
   if (loading) return <SurfaceState loading />;
   if (error && !board) return <SurfaceState error={error} onRetry={() => void reload()} />;
   if (!board) return null;
 
-  const total = LANES.reduce((count, lane) => count + board[lane.id].length, 0);
+  const visibleLanes = overdueOnly ? LANES.filter((lane) => lane.id === "overdue") : LANES;
+  const total = visibleLanes.reduce((count, lane) => count + board[lane.id].length, 0);
   if (!total) {
     return <SurfaceState empty emptyLabel="ALL CLEAR — no follow-through yet" />;
   }
@@ -136,7 +165,7 @@ export function FollowThroughView() {
   return (
     <div className="follow-through-view">
       {error ? <SurfaceState error={error} onRetry={() => void reload()} /> : null}
-      {LANES.map((lane) => {
+      {visibleLanes.map((lane) => {
         const cards = board[lane.id];
         return (
           <SurfaceSection
@@ -169,16 +198,18 @@ export function FollowThroughView() {
                           >
                             {dueLabel(card.due)}
                           </span>
-                          <span
+                          <button
+                            type="button"
                             className="follow-through-source"
-                            title={`Show ${source.label} provenance`}
+                            title="Open governing decision receipt"
+                            aria-label={`Open decision receipt for ${card.text}`}
                             onClick={(event) => {
                               event.stopPropagation();
-                              setOpenCardId(open ? null : card.id);
+                              openDecisionReceipt(card);
                             }}
                           >
                             {source.glyph}
-                          </span>
+                          </button>
                         </>
                       }
                     >

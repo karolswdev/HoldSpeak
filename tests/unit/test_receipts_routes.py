@@ -34,6 +34,14 @@ def test_receipt_routes_list_search_and_expand_detail(tmp_path, monkeypatch) -> 
     assert searched.status_code == 200
     assert [item["id"] for item in searched.json()] == [receipt["id"]]
 
+    source = client.get("/api/receipts/source/desk/HS-128-04")
+    assert source.status_code == 200
+    assert [item["id"] for item in source.json()] == [receipt["id"]]
+
+    governing = client.get("/api/receipts/work/story/HS-128-04")
+    assert governing.status_code == 200
+    assert [item["id"] for item in governing.json()] == [receipt["id"]]
+
     detail = client.get(f"/api/receipts/{receipt['id']}")
     assert detail.status_code == 200
     assert detail.json()["work"][0]["work_type"] == "story"

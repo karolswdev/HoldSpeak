@@ -35,6 +35,22 @@ def build_receipts_router(ctx: Any) -> APIRouter:
     ) -> list[dict[str, Any]]:
         return service().search(principal(request), q, limit=limit)
 
+    @router.get("/review")
+    async def receipts_due_for_review(request: Request) -> list[dict[str, Any]]:
+        return service().due_for_review(principal(request))
+
+    @router.get("/source/{source_type}/{source_id}")
+    async def receipts_for_source(
+        source_type: str, source_id: str, request: Request
+    ) -> list[dict[str, Any]]:
+        return service().receipts_for_source(principal(request), source_type, source_id)
+
+    @router.get("/work/{work_type}/{work_ref}")
+    async def receipts_for_work(
+        work_type: str, work_ref: str, request: Request
+    ) -> list[dict[str, Any]]:
+        return service().receipts_for_work(principal(request), work_type, work_ref)
+
     @router.get("/{receipt_id}")
     async def get_receipt(receipt_id: str, request: Request) -> dict[str, Any]:
         receipt = service().get(principal(request), receipt_id)

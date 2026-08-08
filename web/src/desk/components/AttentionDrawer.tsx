@@ -7,6 +7,8 @@ import {
   humanizeWireValue,
 } from "../../lib/productLanguage";
 import { useProjections } from "../projections";
+import { useIntelligenceAttention } from "../intelligenceAttention";
+import { openIntelligence } from "../intelligenceNavigation";
 import { CycleGadget, FoldGadget, StringGadget } from "../surface/gadgets";
 import { SurfaceCode, SurfaceState } from "../surface/Surface";
 import { openPrimitive, openSurfaceWhenReady } from "../shell";
@@ -32,6 +34,7 @@ export function AttentionDrawer() {
     [store.projections, store.selectedId],
   );
   const needs = Number(store.counts.needs_attention || 0);
+  const intelligence = useIntelligenceAttention();
   const openSource = (row: (typeof store.projections)[number]) => {
     if (row.detail_url.startsWith("/history")) {
       openSurfaceWhenReady("review-meetings", row.subject_ref);
@@ -125,6 +128,14 @@ export function AttentionDrawer() {
             </label>
             <button type="submit" className="desk-chip quiet">Filter</button>
           </form>
+          {intelligence.briefReady || intelligence.overdue || intelligence.review ? (
+            <section className="desk-attention-intelligence" aria-label="Intelligence attention">
+              <h3>Intelligence</h3>
+              {intelligence.briefReady ? <button type="button" className="desk-chip quiet" onClick={() => openIntelligence({ view: "brief" })}>Brief ready</button> : null}
+              {intelligence.overdue ? <button type="button" className="desk-chip" data-tone="fail" onClick={() => openIntelligence({ view: "follow-through", overdueOnly: true })}>{intelligence.overdue} overdue</button> : null}
+              {intelligence.review ? <button type="button" className="desk-chip quiet" onClick={() => openIntelligence({ view: "receipts", whyOnly: true })}>{intelligence.review} receipt review{intelligence.review === 1 ? "" : "s"}</button> : null}
+            </section>
+          ) : null}
           {store.error ? (
             <>
               <SurfaceState

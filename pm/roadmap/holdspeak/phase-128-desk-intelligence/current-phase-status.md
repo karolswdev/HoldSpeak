@@ -49,11 +49,11 @@ Brief   Service.board()   Service search/detail
 | HS-128-02 | Brief view | done | [story-02](story-02-brief-view.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-128-03 | Follow-Through view | done | [story-03](story-03-follow-through-view.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-128-04 | Receipts view | done | [story-04](story-04-receipts-view.md) | [evidence-story-04](./evidence-story-04.md) |
-| HS-128-05 | Dock icon and palette commands | backlog | [story-05](story-05-dock-and-palette.md) | — |
-| HS-128-06 | WHY affordance on primitives | backlog | [story-06](story-06-why-affordance.md) | — |
-| HS-128-07 | Cross-link drill paths | backlog | [story-07](story-07-cross-links.md) | — |
-| HS-128-08 | Attention badges and notifications | backlog | [story-08](story-08-attention-badges.md) | — |
-| HS-128-09 | Responsive and mobile behavior | backlog | [story-09](story-09-responsive.md) | — |
+| HS-128-05 | Dock icon and palette commands | done | [story-05](story-05-dock-and-palette.md) | [evidence-story-05](./evidence-story-05.md) |
+| HS-128-06 | WHY affordance on primitives | done | [story-06](story-06-why-affordance.md) | [evidence-story-06](./evidence-story-06.md) |
+| HS-128-07 | Cross-link drill paths | done | [story-07](story-07-cross-links.md) | [evidence-story-07](./evidence-story-07.md) |
+| HS-128-08 | Attention badges and notifications | done | [story-08](story-08-attention-badges.md) | [evidence-story-08](./evidence-story-08.md) |
+| HS-128-09 | Responsive and mobile behavior | done | [story-09](story-09-responsive.md) | [evidence-story-09](./evidence-story-09.md) |
 | HS-128-10 | The walk | backlog | [story-10](story-10-the-walk.md) | — |
 
 ## Where we are

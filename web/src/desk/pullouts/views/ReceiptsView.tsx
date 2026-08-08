@@ -53,10 +53,20 @@ function humanDate(value: string | null | undefined): string {
 }
 
 /** Search-first, in-place decision history for the Intelligence pullout. */
-export function ReceiptsView() {
+export function ReceiptsView({
+  initialQuery = "",
+  initialWhyOnly = false,
+  workRef,
+  receiptId,
+}: {
+  initialQuery?: string;
+  initialWhyOnly?: boolean;
+  workRef?: string;
+  receiptId?: string;
+}) {
   const openPullout = useDesk((state) => state.openPullout);
-  const [query, setQuery] = useState("");
-  const [whyOnly, setWhyOnly] = useState(false);
+  const [query, setQuery] = useState(initialQuery);
+  const [whyOnly, setWhyOnly] = useState(initialWhyOnly);
   const [results, setResults] = useState<Receipt[]>([]);
   const [selected, setSelected] = useState<Receipt | null>(null);
   const [loading, setLoading] = useState(true);
@@ -64,13 +74,22 @@ export function ReceiptsView() {
   const [error, setError] = useState("");
 
   useEffect(() => {
+    setQuery(initialQuery);
+    setWhyOnly(initialWhyOnly);
+  }, [initialQuery, initialWhyOnly]);
+
+  useEffect(() => {
     let current = true;
     const timer = window.setTimeout(() => {
       setLoading(true);
       setError("");
-      const endpoint = query.trim()
-        ? `/api/receipts/search?q=${encodeURIComponent(query.trim())}`
-        : "/api/receipts";
+      const [workType, ...workRefParts] = workRef?.split(":") ?? [];
+      const linkedWorkRef = workRefParts.join(":");
+      const endpoint = workType && linkedWorkRef
+        ? `/api/receipts/work/${encodeURIComponent(workType)}/${encodeURIComponent(linkedWorkRef)}`
+        : query.trim()
+          ? `/api/receipts/search?q=${encodeURIComponent(query.trim())}`
+          : "/api/receipts";
       void apiFetch<Receipt[]>(endpoint)
         .then((receipts) => {
           if (current) setResults(Array.isArray(receipts) ? receipts : []);
@@ -89,7 +108,7 @@ export function ReceiptsView() {
       current = false;
       window.clearTimeout(timer);
     };
-  }, [query]);
+  }, [query, workRef]);
 
   const visibleResults = whyOnly
     ? results.filter((receipt) => receiptStatus(receipt) === "governing")
@@ -103,6 +122,10 @@ export function ReceiptsView() {
       .catch((reason) => setError(readableError(reason)))
       .finally(() => setDetailLoading(false));
   };
+
+  useEffect(() => {
+    if (receiptId) openReceipt(receiptId);
+  }, [receiptId]);
 
   const openSource = (source: ReceiptSource) => {
     const meetingId = source.meeting_id ?? (source.source_type === "meeting" ? source.source_ref : "");

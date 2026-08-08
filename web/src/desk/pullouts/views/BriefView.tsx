@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { Button } from "../../../components/signal/Signal";
 import { apiFetch, readableError } from "../../../lib/api";
+import { refreshIntelligenceAttention } from "../../intelligenceAttention";
 import { openSurfaceOr } from "../../shell";
 import { FoldGadget } from "../../surface/gadgets";
 import { SurfaceLedgerRow, SurfaceState } from "../../surface/Surface";
@@ -38,13 +39,23 @@ function sourceLabel(sourceRef: string): string {
 }
 
 /** The desk's compact daily operating picture, sourced only from MondayBriefService facts. */
-export function BriefView({ header }: { header: ReactNode }) {
+export function BriefView({ header, onOpenFollowThrough }: { header: ReactNode; onOpenFollowThrough?: (id: string) => void }) {
   const [brief, setBrief] = useState<MondayBrief | null>(null);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [shelf, setShelf] = useState<Record<string, ShelfState>>({});
+  const [narrow, setNarrow] = useState(false);
+  const [openGroup, setOpenGroup] = useState<BriefSection | null>("changed");
+
+  useEffect(() => {
+    const media = window.matchMedia("(max-width: 420px)");
+    const update = () => setNarrow(media.matches);
+    update();
+    media.addEventListener("change", update);
+    return () => media.removeEventListener("change", update);
+  }, []);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -80,6 +91,7 @@ export function BriefView({ header }: { header: ReactNode }) {
   const setShelfState = (state: ShelfState) => {
     if (!selectedId) return;
     setShelf((current) => ({ ...current, [selectedId]: state }));
+    refreshIntelligenceAttention();
   };
 
   const body = loading ? (
@@ -106,7 +118,10 @@ export function BriefView({ header }: { header: ReactNode }) {
               key={id}
               title={label}
               token={String(items.length).padStart(2, "0")}
-              open={items.length > 0}
+              open={narrow ? openGroup === id : items.length > 0}
+              onToggle={(open) => {
+                if (narrow) setOpenGroup(open ? id : null);
+              }}
               className={`intelligence-brief-group intelligence-brief-group-${id}`}
             >
               {items.length ? (
@@ -119,7 +134,11 @@ export function BriefView({ header }: { header: ReactNode }) {
                         key={item.id}
                         primary={item.text}
                         open={isOpen}
-                        onToggle={() => setSelectedId(isOpen ? null : item.id)}
+                        onToggle={() => {
+                          const followThroughId = item.source_ref?.match(/^(?:follow-through|action_item):(.+)$/)?.[1];
+                          if (followThroughId && onOpenFollowThrough) onOpenFollowThrough(followThroughId);
+                          else setSelectedId(isOpen ? null : item.id);
+                        }}
                         lineLabel={`${label}: ${item.text}`}
                         cells={
                           state ? (

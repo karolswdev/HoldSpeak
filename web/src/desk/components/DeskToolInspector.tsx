@@ -17,6 +17,7 @@ import { allObjects } from "../world";
 import { qualifiedRef } from "../api";
 import { SurfaceState } from "../surface/Surface";
 import { DeskWindowFrame } from "./DeskWindow";
+import { WhyControl } from "./WhyControl";
 
 interface Proposal {
   id: string;
@@ -257,6 +258,7 @@ export function DeskToolInspector() {
             <Fact label="Meetings" value={project.meeting_count} />
             <Fact label="Updated" value={when(project.updated_at)} />
           </dl>
+          <WhyControl workType="project" workRef={project.id} />
           <section>
             <h3>Related Desk material</h3>
             {loadingProject ? <SurfaceState loading /> : null}
