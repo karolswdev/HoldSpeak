@@ -7,7 +7,7 @@ from zoneinfo import ZoneInfo
 
 from holdspeak.db.core import Database, read_schema_version
 from holdspeak.db.schema import SCHEMA_VERSION
-from holdspeak.services.monday_brief_service import MondayBriefService
+from holdspeak.services.monday_brief_service import BriefItem, MondayBriefService
 
 
 def _insert_pipeline_event(
@@ -134,6 +134,7 @@ def test_generate_collects_write_operations_as_persisted_changes(tmp_path, monke
     assert [
         (item.section, item.text, item.source_ref) for item in brief.sections["changed"]
     ] == [("changed", "NoteService.create_note", "pipeline:note-1")]
+    assert brief.headline == "1 thing changed."
     with service._db._connection() as conn:
         assert (
             conn.execute("SELECT COUNT(*) FROM monday_brief_items").fetchone()[0] == 1
@@ -270,3 +271,89 @@ def test_schema_migrates_v39_to_v40(tmp_path):
             ).fetchone()
             is not None
         )
+
+
+def _brief_item(section, item_id, *, priority=0):
+    return BriefItem(
+        id=item_id,
+        section=section,
+        text=item_id,
+        priority=priority,
+    )
+
+
+def test_compose_headline_mentions_each_populated_section(tmp_path):
+    service = MondayBriefService(Database(tmp_path / "brief.db"))
+    sections = {
+        "changed": [_brief_item("changed", "change")],
+        "broke": [_brief_item("broke", "break")],
+        "waiting": [_brief_item("waiting", "wait")],
+        "decisions": [_brief_item("decisions", "decision")],
+    }
+
+    headline, composed = service._compose(sections)
+
+    assert headline == "1 thing changed, 1 thing broke, 1 thing waiting, 1 decision waiting."
+    assert all(composed[section] for section in sections)
+
+
+def test_compose_headline_is_specific_to_the_populated_section(tmp_path):
+    service = MondayBriefService(Database(tmp_path / "brief.db"))
+
+    headline, composed = service._compose(
+        {
+            "changed": [],
+            "broke": [_brief_item("broke", "break-1"), _brief_item("broke", "break-2")],
+            "waiting": [],
+            "decisions": [],
+        }
+    )
+
+    assert headline == "2 things broke."
+    assert composed["changed"] == []
+    assert composed["waiting"] == []
+    assert composed["decisions"] == []
+
+
+def test_compose_empty_brief_has_honest_headline(tmp_path):
+    service = MondayBriefService(Database(tmp_path / "brief.db"))
+
+    headline, sections = service._compose({})
+
+    assert headline == "Nothing material changed."
+    assert sections == {"changed": [], "broke": [], "waiting": [], "decisions": []}
+    brief = service.generate(None, now=datetime.datetime(2026, 8, 3, 9, 30))
+    assert brief.headline == "Nothing material changed."
+    assert brief.is_empty is True
+
+
+def test_compose_sorts_items_within_each_section_by_priority(tmp_path):
+    service = MondayBriefService(Database(tmp_path / "brief.db"))
+
+    _, sections = service._compose(
+        {
+            "changed": [
+                _brief_item("changed", "low", priority=1),
+                _brief_item("changed", "high", priority=3),
+                _brief_item("changed", "middle", priority=2),
+            ]
+        }
+    )
+
+    assert [item.id for item in sections["changed"]] == ["high", "middle", "low"]
+
+
+def test_compose_headline_is_deterministic(tmp_path):
+    service = MondayBriefService(Database(tmp_path / "brief.db"))
+    sections = {
+        "changed": [_brief_item("changed", "change", priority=1)],
+        "broke": [_brief_item("broke", "break", priority=2)],
+        "waiting": [],
+        "decisions": [],
+    }
+
+    first_headline, first_sections = service._compose(sections)
+    second_headline, second_sections = service._compose(sections)
+
+    assert first_headline == second_headline
+    assert first_sections == second_sections

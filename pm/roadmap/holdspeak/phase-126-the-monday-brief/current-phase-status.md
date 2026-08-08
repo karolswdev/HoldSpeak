@@ -88,7 +88,7 @@ decisions ────────┘    │  Brief  │
 | HS-126-04 | Collect breakage | done | [story-04](story-04-collect-breakage.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-126-05 | Collect waiting work | done | [story-05](story-05-collect-waiting.md) | [evidence-story-05](./evidence-story-05.md) |
 | HS-126-06 | Identify owner decisions | done | [story-06](story-06-owner-decisions.md) | [evidence-story-06](./evidence-story-06.md) |
-| HS-126-07 | Compose honestly | backlog | [story-07](story-07-compose-honestly.md) | — |
+| HS-126-07 | Compose honestly | done | [story-07](story-07-compose-honestly.md) | [evidence-story-07](./evidence-story-07.md) |
 | HS-126-08 | Deliver and inspect (MCP + pullout) | backlog | [story-08](story-08-deliver-inspect.md) | — |
 | HS-126-09 | The walk | backlog | [story-09](story-09-the-walk.md) | — |
 

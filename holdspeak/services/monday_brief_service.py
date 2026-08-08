@@ -98,29 +98,32 @@ class MondayBriefService:
             if row is not None:
                 return self._load_brief(conn, row)
 
+            sections = {
+                "changed": self._collect_changes(
+                    period_start.isoformat(), period_end.isoformat()
+                ),
+                "broke": self._collect_breakage(
+                    period_start.isoformat(), period_end.isoformat()
+                ),
+                "waiting": waiting_items,
+                "decisions": self._collect_decisions(principal),
+            }
+            headline, sections = self._compose(sections)
             brief_id = f"brief-{uuid.uuid4().hex}"
             generated_at = period_end.isoformat()
             conn.execute(
                 """INSERT INTO monday_briefs
                    (id, period_start, period_end, headline, generated_at)
-                   VALUES (?, ?, ?, '', ?)""",
+                   VALUES (?, ?, ?, ?, ?)""",
                 (
                     brief_id,
                     period_start.isoformat(),
                     period_end.isoformat(),
+                    headline,
                     generated_at,
                 ),
             )
-            items = [
-                *self._collect_changes(
-                    period_start.isoformat(), period_end.isoformat()
-                ),
-                *self._collect_breakage(
-                    period_start.isoformat(), period_end.isoformat()
-                ),
-                *waiting_items,
-                *self._collect_decisions(principal),
-            ]
+            items = [item for section in _SECTIONS for item in sections[section]]
             for item in items:
                 conn.execute(
                     """INSERT INTO monday_brief_items
@@ -141,6 +144,38 @@ class MondayBriefService:
             ).fetchone()
             assert row is not None
             return self._load_brief(conn, row)
+
+    def _compose(
+        self, sections: dict[str, list[BriefItem]]
+    ) -> tuple[str, dict[str, list[BriefItem]]]:
+        """Compose an honest, deterministic headline and ordered fixed sections."""
+        finalized_sections = {
+            section: sorted(
+                sections.get(section, []),
+                key=lambda item: (-item.priority, item.source_ref or "", item.id),
+            )
+            for section in _SECTIONS
+        }
+        counts = {section: len(items) for section, items in finalized_sections.items()}
+        total_items = sum(counts.values())
+        if total_items == 0:
+            return "Nothing material changed.", finalized_sections
+
+        def phrase(count: int, singular: str, plural: str) -> str:
+            return f"{count} {singular if count == 1 else plural}"
+
+        headline_parts = []
+        if counts["changed"]:
+            headline_parts.append(phrase(counts["changed"], "thing changed", "things changed"))
+        if counts["broke"]:
+            headline_parts.append(phrase(counts["broke"], "thing broke", "things broke"))
+        if counts["waiting"]:
+            headline_parts.append(phrase(counts["waiting"], "thing waiting", "things waiting"))
+        if counts["decisions"]:
+            headline_parts.append(
+                phrase(counts["decisions"], "decision waiting", "decisions waiting")
+            )
+        return ", ".join(headline_parts) + ".", finalized_sections
 
     def _collect_changes(self, window_start: str, window_end: str) -> list[BriefItem]:
         """Reduce pipeline events in the window to material state changes."""
