@@ -499,6 +499,35 @@ def _migrate_columns(conn: sqlite3.Connection, stored: int) -> None:
             """
         )
 
+    # v40 (HS-126-01): persist generated Monday briefs and their collector
+    # output. SCHEMA_SQL creates these for fresh databases; retain the explicit
+    # migration for archived v39 databases as the versioned upgrade contract.
+    if stored < 40:
+        conn.executescript(
+            """
+            CREATE TABLE IF NOT EXISTS monday_briefs (
+                id TEXT PRIMARY KEY,
+                period_start TEXT NOT NULL,
+                period_end TEXT NOT NULL,
+                headline TEXT NOT NULL DEFAULT '',
+                generated_at TEXT NOT NULL,
+                spoken INTEGER NOT NULL DEFAULT 0,
+                disposition TEXT
+            );
+            CREATE TABLE IF NOT EXISTS monday_brief_items (
+                id TEXT PRIMARY KEY,
+                brief_id TEXT NOT NULL REFERENCES monday_briefs(id),
+                section TEXT NOT NULL,
+                text TEXT NOT NULL,
+                detail TEXT,
+                source_ref TEXT,
+                priority INTEGER NOT NULL DEFAULT 0
+            );
+            CREATE INDEX IF NOT EXISTS idx_monday_brief_items_brief
+                ON monday_brief_items(brief_id);
+            """
+        )
+
     # v34 (HS-118-01): zone name uniqueness -- add name_normalized column
     # and backfill with dedup.
     dir_cols = {
