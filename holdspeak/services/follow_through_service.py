@@ -10,6 +10,18 @@ from holdspeak.services.observer import NullObserver, PipelineObserver, observe_
 
 
 @dataclass(frozen=True)
+class CardProvenance:
+    """The verified meeting moment from which a follow-through card derives."""
+
+    meeting_id: str | None
+    segment_text: str | None
+    segment_speaker: str | None
+    segment_start: float | None
+    moment: dict[str, Any] | None
+    available: bool
+
+
+@dataclass(frozen=True)
 class FollowThroughCard:
     id: str
     text: str
@@ -21,6 +33,7 @@ class FollowThroughCard:
     stale_score: float | None
     source: str
     lane: str
+    provenance: CardProvenance | None
 
 
 @dataclass(frozen=True)
@@ -95,6 +108,11 @@ class FollowThroughService:
                     today,
                     review_state=action["review_state"],
                 ),
+                provenance=self._provenance_for(
+                    meeting_id=action["meeting_id"],
+                    source_timestamp=action["source_timestamp"],
+                    decision_id=action["decision_id"],
+                ),
             )
             lanes[card.lane].append(card)
 
@@ -121,6 +139,11 @@ class FollowThroughService:
                 stale_score=float(loop["stale_score"]),
                 source=source,
                 lane=self._lane(loop["owner"], loop["due_at"], status, today),
+                provenance=self._provenance_for(
+                    meeting_id=decision["source_meeting_id"] if decision is not None else None,
+                    source_timestamp=None,
+                    decision_id=decision["id"] if decision is not None else None,
+                ),
             )
             lanes[card.lane].append(card)
 
@@ -286,6 +309,55 @@ class FollowThroughService:
             "loop_ids": loop_ids,
             "commitment_ids": commitment_ids,
         }
+
+    def _provenance_for(
+        self,
+        *,
+        meeting_id: Any,
+        source_timestamp: Any,
+        decision_id: Any,
+    ) -> CardProvenance:
+        """Return only a repository-verified source moment for a board card.
+
+        A missing, stale, or malformed source is deliberately represented as
+        unavailable rather than inferred from neighbouring meeting data.
+        """
+        unavailable = CardProvenance(
+            meeting_id=str(meeting_id) if meeting_id else None,
+            segment_text=None,
+            segment_speaker=None,
+            segment_start=None,
+            moment=None,
+            available=False,
+        )
+        try:
+            if decision_id:
+                moment = self._db.decisions.resolve_decision_moment(str(decision_id))
+                if moment is None:
+                    return unavailable
+                return CardProvenance(
+                    meeting_id=moment.meeting_id,
+                    segment_text=moment.text,
+                    segment_speaker=moment.speaker,
+                    segment_start=moment.segment_start,
+                    moment=moment.to_dict(),
+                    available=True,
+                )
+            if not meeting_id or source_timestamp is None:
+                return unavailable
+            moment = self._db.decisions.resolve_segment(meeting_id, source_timestamp)
+            if moment is None:
+                return unavailable
+            return CardProvenance(
+                meeting_id=moment.meeting_id,
+                segment_text=moment.text,
+                segment_speaker=moment.speaker,
+                segment_start=moment.segment_start,
+                moment=None,
+                available=True,
+            )
+        except Exception:
+            return unavailable
 
     @staticmethod
     def _action_rows(conn: Any, *, project_id: str | None, owner: str | None) -> list[Any]:

@@ -91,7 +91,7 @@ Meeting ──→ Aftercare ──→ Triage (ownerless? undated? review?)
 | HS-125-05 | Decision loop collection | done | [story-05](story-05-decision-loop-collection.md) | [evidence-story-05](./evidence-story-05.md) |
 | HS-125-06 | Due and stall semantics | done | [story-06](story-06-due-and-stall-semantics.md) | [evidence-story-06](./evidence-story-06.md) |
 | HS-125-07 | Write-through completion verbs | done | [story-07](story-07-write-through-completion.md) | [evidence-story-07](./evidence-story-07.md) |
-| HS-125-08 | Provenance on every card | backlog | [story-08](story-08-provenance-on-cards.md) | — |
+| HS-125-08 | Provenance on every card | done | [story-08](story-08-provenance-on-cards.md) | [evidence-story-08](./evidence-story-08.md) |
 | HS-125-09 | Desk surface and MCP tools | backlog | [story-09](story-09-desk-surface-and-mcp.md) | — |
 | HS-125-10 | The walk | backlog | [story-10](story-10-the-walk.md) | — |
 
@@ -102,4 +102,6 @@ HS-125-01 through HS-125-07 done: production service composition shares a
 aftercare triages open actions missing review, owner, or due date; open
 decision commitments project idempotently into cadence loops; overdue and
 snoozed board state now has deterministic precedence; and write-through verbs
-keep action, cadence, and commitment records aligned. HS-125-08 is next.
+keep action, cadence, and commitment records aligned. HS-125-08 resolves honest card
+provenance from transcript segments and decision moments; unresolved sources remain
+explicitly unavailable. HS-125-09 is next.

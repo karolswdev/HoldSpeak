@@ -34,6 +34,7 @@ def _insert_action(
     due: str | None = None,
     status: str = "open",
     review_state: str = "accepted",
+    source_timestamp: float | None = None,
 ) -> None:
     with db._connection() as conn:
         conn.execute(
@@ -42,9 +43,26 @@ def _insert_action(
         )
         conn.execute(
             "INSERT INTO action_items "
-            "(id, meeting_id, task, owner, due, status, review_state) "
-            "VALUES (?, ?, ?, ?, ?, ?, ?)",
-            (item_id, meeting_id, task, owner, due, status, review_state),
+            "(id, meeting_id, task, owner, due, status, review_state, source_timestamp) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            (item_id, meeting_id, task, owner, due, status, review_state, source_timestamp),
+        )
+
+
+def _insert_segment(
+    db: Database,
+    *,
+    meeting_id: str = "meeting-1",
+    text: str = "Ada will follow up after the meeting.",
+    speaker: str = "Ada",
+    start_time: float = 30.0,
+    end_time: float = 60.0,
+) -> None:
+    with db._connection() as conn:
+        conn.execute(
+            "INSERT INTO segments (meeting_id, text, speaker, start_time, end_time) "
+            "VALUES (?, ?, ?, ?, ?)",
+            (meeting_id, text, speaker, start_time, end_time),
         )
 
 
@@ -203,6 +221,84 @@ def test_board_shows_decision_on_commitment_card(db: Database) -> None:
 
     assert card.decision_id == decision_id
     assert card.source == "action_item"
+
+
+def test_action_card_provenance_resolves_its_source_segment(db: Database) -> None:
+    _insert_action(db, "with-source", source_timestamp=45.0)
+    _insert_segment(db, text="Ada promised to follow up.", speaker="Ada")
+
+    card = FollowThroughService(db).board(OWNER).waiting[0]
+
+    assert card.provenance is not None
+    assert card.provenance.available is True
+    assert card.provenance.meeting_id == "meeting-1"
+    assert card.provenance.segment_text == "Ada promised to follow up."
+    assert card.provenance.segment_speaker == "Ada"
+    assert card.provenance.segment_start == 30.0
+    assert card.provenance.moment is None
+
+
+def test_commitment_card_provenance_includes_decision_moment(db: Database) -> None:
+    decision_id = _insert_accepted_decision(db)
+    _insert_segment(
+        db,
+        meeting_id="decision-meeting",
+        text="We will ship the accountable commitment flow.",
+        start_time=20.0,
+        end_time=50.0,
+    )
+    with db._connection() as conn:
+        conn.execute(
+            "UPDATE decisions SET source_timestamp = ? WHERE id = ?",
+            (30.0, decision_id),
+        )
+    commitment = FollowThroughService(db).commit_decision(OWNER, decision_id, owner="Ada")
+
+    card = next(
+        card
+        for card in FollowThroughService(db).board(OWNER).waiting
+        if card.id == commitment["action_item_id"]
+    )
+
+    assert card.provenance is not None
+    assert card.provenance.available is True
+    assert card.provenance.moment is not None
+    assert card.provenance.moment["meeting_id"] == "decision-meeting"
+    assert card.provenance.moment["text"] == "We will ship the accountable commitment flow."
+
+
+def test_action_card_without_source_timestamp_has_unavailable_provenance(db: Database) -> None:
+    _insert_action(db, "no-source")
+
+    card = FollowThroughService(db).board(OWNER).waiting[0]
+
+    assert card.provenance is not None
+    assert card.provenance.available is False
+
+
+def test_action_card_with_no_meeting_segments_has_unavailable_provenance(db: Database) -> None:
+    _insert_action(db, "no-segments", source_timestamp=45.0)
+
+    card = FollowThroughService(db).board(OWNER).waiting[0]
+
+    assert card.provenance is not None
+    assert card.provenance.available is False
+
+
+def test_provenance_resolution_failure_is_unavailable_not_an_error(
+    db: Database, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _insert_action(db, "resolver-failure", source_timestamp=45.0)
+
+    def raise_resolution_error(*args: object, **kwargs: object) -> None:
+        raise RuntimeError("database unavailable")
+
+    monkeypatch.setattr(db.decisions, "resolve_segment", raise_resolution_error)
+
+    card = FollowThroughService(db).board(OWNER).waiting[0]
+
+    assert card.provenance is not None
+    assert card.provenance.available is False
 
 
 def test_accepting_decision_without_commitment_remains_supported(db: Database) -> None:
