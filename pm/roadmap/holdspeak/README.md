@@ -4,7 +4,13 @@
 > pick up, and the repo conventions that bite (PMO commit gate, write-once
 > evidence, no `Co-Authored-By`, metal-test exclusion).
 
-**Newest update (2026-08-08): Phase 129 — One Grammar — HS-129-04 shipped.**
+**Newest update (2026-08-08): Phase 129 — One Grammar — HS-129-03 shipped.**
+The populated Intelligence Brief now keeps its fit-content card within the
+working band: the 9,710px pathology becomes an 804px desktop window with a
+scrollable body and reachable foot/grip. Its headline wraps at the pullout
+edge, and dock-opening Brief no longer creates a phantom BACK step.
+
+**Previous update (2026-08-08): Phase 129 — One Grammar — HS-129-04 shipped.**
 Delivery and Tool Inspector frames now keep their heads fixed over one body
 scroller; Constitutional Context and Delivery Dossier lost their duplicate
 scroll paths. The Activity list was verified fixed by HS-129-01's host-body

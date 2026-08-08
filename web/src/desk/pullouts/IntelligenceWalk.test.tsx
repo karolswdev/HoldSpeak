@@ -1,6 +1,8 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { IntelligencePullout } from "./IntelligencePullout";
+import { INTELLIGENCE_NAVIGATE } from "../intelligenceNavigation";
+import windowChromeCss from "../components/window-chrome.css?raw";
 
 const apiFetch = vi.hoisted(() => vi.fn());
 
@@ -32,6 +34,21 @@ const brief = {
     broke: [],
     waiting: [],
     decisions: [],
+  },
+};
+
+const largeBrief = {
+  ...brief,
+  headline: "193 things changed, 55 things broke, and an intentionally unbroken source reference verifies wrapping.",
+  sections: {
+    changed: Array.from({ length: 193 }, (_, index) => ({
+      id: `brief-item-${index}`,
+      section: "changed" as const,
+      text: `Changed material ${index + 1}`,
+      detail: "A large Brief remains inside the pullout body.",
+      source_ref: null,
+      priority: index + 1,
+    })),
   },
 };
 
@@ -127,5 +144,34 @@ describe("HS-128-10 Desk Intelligence walk", () => {
 
     expect(await screen.findByRole("searchbox", { name: "Search decision receipts" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Receipts" })).toHaveAttribute("aria-pressed", "true");
+  });
+
+  it("HS-129-03 keeps a large Brief in the scrollable body under the card cap", async () => {
+    apiFetch.mockImplementation((path: string) =>
+      path === "/api/brief/latest" ? Promise.resolve(largeBrief) : Promise.resolve([]),
+    );
+    const { container } = render(<IntelligencePullout object={object} onClose={() => {}} />);
+
+    expect(await screen.findByText(largeBrief.headline)).toBeInTheDocument();
+    expect(container.querySelector(".desk-pullout-body.intelligence-pullout")).toBeInTheDocument();
+    expect(container.querySelectorAll(".intelligence-brief-rows .surface-ledger-row")).toHaveLength(193);
+    expect(windowChromeCss).toContain(".desk-next .desk-window.is-floating:not(.is-card)");
+    expect(windowChromeCss).toContain("max-height: none;");
+  });
+
+  it("HS-129-03 hides BACK until a cross-link drill and returns to Brief", async () => {
+    render(<IntelligencePullout object={object} onClose={() => {}} />);
+
+    expect(screen.queryByRole("button", { name: "← BACK" })).not.toBeInTheDocument();
+    fireEvent(window, new CustomEvent(INTELLIGENCE_NAVIGATE, { detail: { view: "brief" } }));
+    expect(screen.queryByRole("button", { name: "← BACK" })).not.toBeInTheDocument();
+    await screen.findByText(brief.headline);
+    fireEvent.click(screen.getByRole("button", { name: "Changed: Desk Intelligence is ready." }));
+
+    expect(await screen.findByText(board.now[0].text)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "← BACK" }));
+
+    expect(await screen.findByText(brief.headline)).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "← BACK" })).not.toBeInTheDocument();
   });
 });

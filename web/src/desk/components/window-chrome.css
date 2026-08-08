@@ -1,9 +1,13 @@
 /* ── The desk-window contract (Phase 93 UI remediation): any floating panel
    can be moved by its head, resized by its grip, and raised by a click; a
    user-arranged rect persists beside the object layout. ── */
+/* HS-129-03 — an arranged window owns its rect, but an unarranged
+   fit-content card still owns its working-band cap. */
 .desk-next .desk-window.is-floating {
   right: auto;
   bottom: auto;
+}
+.desk-next .desk-window.is-floating:not(.is-card) {
   max-height: none;
 }
 /* HS-97-04 — depth: the front window carries the full elevation and a

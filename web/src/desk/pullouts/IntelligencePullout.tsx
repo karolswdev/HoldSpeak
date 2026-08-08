@@ -62,7 +62,18 @@ export function IntelligencePullout({ object }: PulloutContentProps) {
   useEffect(() => {
     const navigate = (event: Event) => {
       const request = (event as CustomEvent<IntelligenceNavigation>).detail;
-      setHistory((current) => [...current, navigationRef.current]);
+      const current = navigationRef.current;
+      // HS-129-03 — the dock opens Brief by dispatching its current destination;
+      // that is not a drill and must not mint a phantom BACK step.
+      const sameDestination = request.view === current.view
+        && request.followThroughId === current.followThroughId
+        && request.overdueOnly === current.overdueOnly
+        && request.receiptId === current.receiptId
+        && request.receiptQuery === current.receiptQuery
+        && request.whyOnly === current.whyOnly
+        && request.receiptWorkRef === current.receiptWorkRef;
+      if (!sameDestination)
+        setHistory((history) => [...history, current]);
       setNavigation(request);
       setActiveView(request.view);
     };

@@ -2,8 +2,9 @@
 .intelligence-pullout {
   display: flex;
   flex-direction: column;
+  width: 100%;
+  min-width: 0;
   gap: var(--space-4);
-  min-width: 320px;
 }
 
 .intelligence-segments {
@@ -268,13 +269,22 @@
 /* HS-128-02 — the brief is a compact operating picture, not a dashboard. */
 .intelligence-view.intelligence-brief {
   display: block;
+  container-type: inline-size;
+  min-width: 0;
   min-height: 0;
   padding: var(--space-3);
   color: var(--text);
 }
 
+/* HS-129-03 — a real brief headline is material, never a clipped title. */
 .intelligence-brief-headline {
+  width: 100cqi;
+  min-width: 0;
+  max-width: 100%;
+  justify-self: stretch;
   margin: 0 0 var(--space-4);
+  overflow-wrap: anywhere;
+  white-space: normal;
   color: var(--text);
   font-family: var(--font-display);
   font-size: 2rem;
