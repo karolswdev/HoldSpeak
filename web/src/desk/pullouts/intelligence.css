@@ -57,6 +57,9 @@
 
 .intelligence-view {
   display: grid;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
   min-height: 132px;
   place-items: center;
   border: 1px solid var(--border);
@@ -76,11 +79,26 @@
 .receipts-view,
 .receipt-detail {
   display: grid;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
   gap: var(--space-3);
   padding: var(--space-3);
   color: var(--text);
   font-family: var(--font-mono);
   font-size: 0.75rem;
+}
+
+/* The pullout can be a card-width desk window. Every grid/flex link must
+   surrender intrinsic width before an ID or search well can widen the body. */
+.receipts-view > *,
+.receipt-detail > *,
+.receipts-view .surface-ledger,
+.receipts-view .surface-ledger-row,
+.receipts-view .surface-ledger-line {
+  min-width: 0;
+  max-width: 100%;
 }
 
 .receipts-search {
@@ -279,7 +297,7 @@
 
 /* HS-129-03 — a real brief headline is material, never a clipped title. */
 .intelligence-brief-headline {
-  width: 100cqi;
+  width: 100%;
   min-width: 0;
   max-width: 100%;
   justify-self: stretch;
@@ -292,6 +310,13 @@
   font-weight: 700;
   letter-spacing: -0.035em;
   line-height: 1.05;
+}
+
+.intelligence-brief-groups,
+.intelligence-brief-group,
+.intelligence-brief-rows {
+  min-width: 0;
+  max-width: 100%;
 }
 
 .intelligence-brief-groups {
@@ -359,6 +384,7 @@
   font-weight: 700;
   letter-spacing: 0.05em;
   line-height: 1.2;
+  overflow-wrap: anywhere;
   text-transform: uppercase;
 }
 

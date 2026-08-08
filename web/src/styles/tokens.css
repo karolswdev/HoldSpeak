@@ -233,6 +233,9 @@
   --desk-z-waveform: 78; /* ambient input feedback below the dock, above windows */
   --desk-z-dock: 80; /* shell furniture above every window */
   --desk-z-transient: 81; /* an OPEN chrome transient (the room menu) rides above windows */
+  --desk-window-margin: 10px; /* viewport clamp margin for window rects */
+  --desk-window-grab: 72px; /* minimum grabbable head strip (HS-93 contract) */
+  --desk-window-cascade: 26px; /* default-corner cascade step */
   --desk-snap-top: 54px; /* snap tiles clear the chrome band */
   --desk-snap-bottom: 52px; /* snap tiles clear the dock band */
   --desk-work-top: var(--desk-snap-top); /* the working band begins below the system bar */
@@ -258,6 +261,7 @@
   --desk-panel-fill: var(--bg); /* HS-110-01: secondary panel fill, opaque */
   --desk-window-radius: 2px; /* HS-110-01: sharp Workbench corners */
   --desk-window-shadow: none; /* HS-110-01: depth from bevels, not Gaussian shadows */
+  --desk-window-shadow-rest: none; /* HS-110-01: no shadow distinction — border color IS the distinction */
   --desk-window-keyline: var(--border-strong); /* HS-110-01: front window wears the strong border, not an accent-mixed ring */
   --desk-window-blur: none; /* HS-110-01: no backdrop-filter — opaque surfaces */
   --desk-window-bevel: inset 1px 1px 0 var(--bevel-light), inset -1px -1px 0 var(--bevel-dark); /* HS-110-01: the raised bevel (Workbench depth grammar) */

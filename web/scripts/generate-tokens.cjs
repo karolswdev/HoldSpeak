@@ -141,9 +141,9 @@ function generate(tokens) {
   out.push("");
   out.push("@media (prefers-reduced-motion: reduce) {");
   out.push("  :root {");
-  out.push("    --duration-short: 0ms;");
-  out.push("    --duration-medium: 0ms;");
-  out.push("    --duration-long: 0ms;");
+  for (const { name } of tokens.semantic.groups.filter(({ name }) => name.startsWith("--duration-"))) {
+    out.push(`    ${name}: 0ms;`);
+  }
   out.push("  }");
   out.push("");
   out.push("  *,");

@@ -40,23 +40,23 @@
       },
       "orange": {
         "300": {
-          "value": "#ff9d5c",
-          "doc": "gradient amber head"
+          "value": "#da9868",
+          "doc": "gradient amber head (HS-115-08: forge ember family)"
         },
         "400": {
-          "value": "#ff7d4d",
+          "value": "#bc8058",
           "doc": "accent hover"
         },
         "500": {
-          "value": "#ff6b35",
-          "doc": "THE signal orange (~6.8:1 on ink.0)"
+          "value": "#a86e4a",
+          "doc": "forge ember (~3.1:1 on ink.0; system patina, not signal)"
         },
         "600": {
-          "value": "#ec5a28",
+          "value": "#936041",
           "doc": "accent pressed"
         },
         "700": {
-          "value": "#f24a2e",
+          "value": "#834f32",
           "doc": "gradient ember tail"
         }
       },
@@ -244,7 +244,7 @@
       },
       {
         "name": "--text-on-accent",
-        "value": "{primitive.color.ink.0}"
+        "value": "{primitive.color.paper.0}"
       },
       {
         "name": "--accent",
@@ -260,15 +260,15 @@
       },
       {
         "name": "--accent-tint",
-        "value": "rgba(255, 107, 53, 0.12)"
+        "value": "rgba(168, 110, 74, 0.12)"
       },
       {
         "name": "--accent-glow",
-        "value": "rgba(255, 107, 53, 0.28)"
+        "value": "rgba(168, 110, 74, 0.28)"
       },
       {
         "name": "--accent-gradient",
-        "value": "linear-gradient( 135deg, #ff9d5c 0%, #ff6b35 50%, #f24a2e 100% )"
+        "value": "linear-gradient( 135deg, #da9868 0%, #a86e4a 50%, #834f32 100% )"
       },
       {
         "name": "--bg-gradient",
@@ -541,8 +541,18 @@
         "value": "0.02em"
       },
       {
+        "name": "--letter-spacing-label-compact",
+        "value": "0.04em",
+        "doc": "dense mono labels"
+      },
+      {
         "name": "--letter-spacing-eyebrow",
         "value": "0.06em"
+      },
+      {
+        "name": "--letter-spacing-label-wide",
+        "value": "0.08em",
+        "doc": "wide mono labels"
       },
       {
         "name": "--space-1",
@@ -636,7 +646,12 @@
       },
       {
         "name": "--glow-accent",
-        "value": "0 0 0 1px rgba(255, 107, 53, 0.4), 0 4px 18px var(--accent-glow)"
+        "value": "0 0 0 1px rgba(168, 110, 74, 0.4), 0 4px 18px var(--accent-glow)"
+      },
+      {
+        "name": "--duration-micro",
+        "value": "60ms",
+        "doc": "immediate input feedback"
       },
       {
         "name": "--duration-short",
@@ -649,6 +664,11 @@
       {
         "name": "--duration-long",
         "value": "320ms"
+      },
+      {
+        "name": "--duration-slow",
+        "value": "500ms",
+        "doc": "one-shot completion acknowledgement"
       },
       {
         "name": "--ease-standard",
@@ -711,7 +731,7 @@
       },
       {
         "name": "--accent-glow-strong",
-        "value": "rgba(255, 107, 53, 0.5)",
+        "value": "rgba(168, 110, 74, 0.5)",
         "doc": "the stronger accent glow (recording/attention)"
       },
       {
@@ -759,6 +779,11 @@
         "doc": "the GL world canvas — the floor of the desk"
       },
       {
+        "name": "--desk-z-local",
+        "value": "1",
+        "doc": "descendants layered inside their own local stacking context"
+      },
+      {
         "name": "--desk-z-world-overlay",
         "value": "25",
         "doc": "in-world DOM overlays (rename row, lasso)"
@@ -772,6 +797,11 @@
         "name": "--desk-z-window-base",
         "value": "42",
         "doc": "the window band floor; focus order stacks upward from here"
+      },
+      {
+        "name": "--desk-z-waveform",
+        "value": "78",
+        "doc": "ambient input feedback below the dock, above windows"
       },
       {
         "name": "--desk-z-dock",
@@ -939,6 +969,16 @@
         "name": "--desk-transient-radius",
         "value": "2px",
         "doc": "HS-110-01: menus/popovers — sharp corners"
+      },
+      {
+        "name": "--desk-inlet-radius",
+        "value": "6px",
+        "doc": "HS-129-10: compact reference picker remains distinguishable from OS chrome"
+      },
+      {
+        "name": "--desk-sheet-top-radius",
+        "value": "18px",
+        "doc": "HS-129-10: reviewed phone-sheet exception; preserve the existing grip silhouette"
       },
       {
         "name": "--desk-transient-shadow",
