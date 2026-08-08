@@ -560,6 +560,7 @@ class MeetingWebServer:
         from .services.actuator_service import ActuatorProposalService
         from .config import Config
         from .services.gate_service import GateService
+        from .services.follow_through_service import FollowThroughService
         from .services.memory_service import MemoryService
         from .services.mesh_service import MeshService
         from .services.mission_control_service import MissionControlService
@@ -582,6 +583,7 @@ class MeetingWebServer:
             build_delivery_terminal_router,
             build_delivery_factory_router,
             build_dictation_router,
+            build_follow_through_router,
             build_desk_actuators_router,
             build_desk_seed_router,
             build_meeting_import_router,
@@ -646,6 +648,7 @@ class MeetingWebServer:
                 get_database(), on_settings_applied=self.on_settings_applied, observer=obs
             ),
             cadence_service=CadenceService(get_database(), Config.load().cadence, observer=obs),
+            follow_through_service=FollowThroughService(get_database(), observer=obs),
             sync_service=SyncService(get_database(), observer=obs),
             gate_service=GateService(get_database(), observer=obs),
             setup_service=SetupService(get_database(), observer=obs),
@@ -698,6 +701,7 @@ class MeetingWebServer:
         app.include_router(build_core_router(web_ctx))
         app.include_router(build_authority_router(web_ctx))
         app.include_router(build_cadence_router(web_ctx))
+        app.include_router(build_follow_through_router(web_ctx))
         app.include_router(build_decisions_router(web_ctx))
         app.include_router(build_memory_router(web_ctx))
         app.include_router(build_meetings_router(web_ctx))

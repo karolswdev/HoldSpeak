@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import asyncio
 from collections.abc import Callable
+from dataclasses import asdict
 from typing import Any
 
 from holdspeak.db import get_database, get_observer
@@ -10,6 +11,7 @@ from holdspeak.principals import Principal
 from holdspeak.services.desk_service import DeskService
 from holdspeak.services.dictation_service import DictationService
 from holdspeak.services.event_query_service import EventQueryService
+from holdspeak.services.follow_through_service import FollowThroughService
 from holdspeak.services.meeting_service import MeetingService
 from holdspeak.services.primitive_service import PrimitiveService
 from holdspeak.services.profile_service import ProfileService
@@ -287,6 +289,35 @@ TOOLS.extend([
             "limit": {"type": "integer", "default": 50},
         },
     ),
+    _mcp_tool(
+        "follow_through.board",
+        "Read the Follow-Through board, optionally filtered by project, owner, or lane.",
+        {
+            "project_id": {"type": "string", "description": "Optional project identifier."},
+            "owner": {"type": "string", "description": "Optional accountable owner."},
+            "state": {"type": "string", "enum": ["now", "waiting", "unassigned", "overdue"], "description": "Optional board lane."},
+        },
+    ),
+    _mcp_tool(
+        "follow_through.complete",
+        "Apply a completion verb to a Follow-Through action card.",
+        {
+            "card_id": {"type": "string", "description": "Action card identifier."},
+            "verb": {"type": "string", "enum": ["done", "dismiss", "snooze", "delegate", "reopen"], "description": "Write-through board verb."},
+            "payload": {"type": "object", "description": "Verb data: until for snooze, to for delegate."},
+        },
+        ["card_id", "verb"],
+    ),
+    _mcp_tool(
+        "follow_through.commit_decision",
+        "Create an accountable commitment from an accepted decision.",
+        {
+            "decision_id": {"type": "string", "description": "Accepted decision identifier."},
+            "owner": {"type": "string", "description": "Optional accountable owner."},
+            "due_at": {"type": "string", "description": "Optional ISO-8601 due date."},
+        },
+        ["decision_id"],
+    ),
 ])
 
 # The UI owns local surface state. These IDs deliberately never mutate the
@@ -335,6 +366,11 @@ def _primitive_delete(service: PrimitiveService, principal: Principal, kind: str
     return {"deleted": getattr(service, f"delete_{kind}")(principal, item_id), "id": item_id}
 
 
+def _card_dict(card: Any) -> dict[str, Any]:
+    """Serialize a follow-through card, including its provenance, for MCP."""
+    return asdict(card)
+
+
 def _run(coro: Any) -> Any:
     try:
         asyncio.get_running_loop()
@@ -357,6 +393,7 @@ def dispatch(name: str, arguments: dict[str, Any] | None, principal: Principal) 
     profiles = ProfileService(db, observer=obs)
     dictation = DictationService(db, observer=obs)
     events = EventQueryService(db)
+    follow_through = FollowThroughService(db, observer=obs)
     desk = DeskService(db, observer=obs)
 
     if name == "desk.list":
@@ -470,6 +507,35 @@ def dispatch(name: str, arguments: dict[str, Any] | None, principal: Principal) 
         allowed = ("service", "method", "principal_kind", "since", "until", "correlation_id", "errors_only", "limit")
         filters = {key: args[key] for key in allowed if key in args}
         return events.recent(principal, **filters)
+    if name == "follow_through.board":
+        filters = {}
+        if args.get("project_id"):
+            filters["project_id"] = args["project_id"]
+        if args.get("owner"):
+            filters["owner"] = args["owner"]
+        if args.get("state"):
+            filters["state"] = args["state"]
+        board = follow_through.board(principal, **filters)
+        return {
+            "now": [_card_dict(card) for card in board.now],
+            "waiting": [_card_dict(card) for card in board.waiting],
+            "unassigned": [_card_dict(card) for card in board.unassigned],
+            "overdue": [_card_dict(card) for card in board.overdue],
+        }
+    if name == "follow_through.complete":
+        return follow_through.complete(
+            principal,
+            str(args.get("card_id") or ""),
+            str(args.get("verb") or ""),
+            args.get("payload"),
+        )
+    if name == "follow_through.commit_decision":
+        return follow_through.commit_decision(
+            principal,
+            str(args.get("decision_id") or ""),
+            owner=args.get("owner"),
+            due_at=args.get("due_at"),
+        )
     raise ToolError(f"Unknown tool: {name}")
 
 

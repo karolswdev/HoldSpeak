@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json
 import re
+from dataclasses import asdict
 from pathlib import Path
 from typing import Any
 
@@ -11,6 +12,7 @@ from holdspeak.principals import Principal
 from holdspeak.services.desk_service import DeskService
 from holdspeak.services.dictation_service import DictationService
 from holdspeak.services.event_query_service import EventQueryService
+from holdspeak.services.follow_through_service import FollowThroughService
 from holdspeak.services.meeting_service import MeetingService
 from holdspeak.services.primitive_service import PrimitiveService
 from holdspeak.services.profile_service import ProfileService
@@ -171,6 +173,12 @@ _STATIC_RESOURCES = [
         "mimeType": _JSON_MIME,
     },
     {
+        "uri": "holdspeak://follow-through/board",
+        "name": "Follow-Through board",
+        "description": "Canonical current Follow-Through execution lanes and card provenance.",
+        "mimeType": _JSON_MIME,
+    },
+    {
         "uri": "pipeline://events/recent",
         "name": "Recent pipeline events",
         "description": "Most recent observed pipeline events.",
@@ -298,6 +306,14 @@ def read_resource(uri: str, principal: Principal) -> dict[str, list[dict[str, st
         return _contents(uri, _JSON_MIME, ProfileService(get_database()).list_profiles(principal))
     if uri == "holdspeak://dictation/journal":
         return _contents(uri, _JSON_MIME, DictationService(get_database()).list_journal(principal))
+    if uri == "holdspeak://follow-through/board":
+        board = FollowThroughService(get_database()).board(principal)
+        return _contents(uri, _JSON_MIME, {
+            "now": [asdict(card) for card in board.now],
+            "waiting": [asdict(card) for card in board.waiting],
+            "unassigned": [asdict(card) for card in board.unassigned],
+            "overdue": [asdict(card) for card in board.overdue],
+        })
     if uri == "pipeline://events/recent":
         return _contents(uri, _JSON_MIME, EventQueryService(get_database()).recent(principal))
     if uri == "pipeline://events/stats":

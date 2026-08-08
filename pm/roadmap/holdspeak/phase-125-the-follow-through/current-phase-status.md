@@ -1,6 +1,6 @@
 # Phase 125 — The Follow-Through
 
-**Status:** active (7/10).
+**Status:** active (9/10).
 
 **Last updated:** 2026-08-07.
 
@@ -92,16 +92,13 @@ Meeting ──→ Aftercare ──→ Triage (ownerless? undated? review?)
 | HS-125-06 | Due and stall semantics | done | [story-06](story-06-due-and-stall-semantics.md) | [evidence-story-06](./evidence-story-06.md) |
 | HS-125-07 | Write-through completion verbs | done | [story-07](story-07-write-through-completion.md) | [evidence-story-07](./evidence-story-07.md) |
 | HS-125-08 | Provenance on every card | done | [story-08](story-08-provenance-on-cards.md) | [evidence-story-08](./evidence-story-08.md) |
-| HS-125-09 | Desk surface and MCP tools | backlog | [story-09](story-09-desk-surface-and-mcp.md) | — |
-| HS-125-10 | The walk | backlog | [story-10](story-10-the-walk.md) | — |
+| HS-125-09 | Desk surface and MCP tools | done | [story-09](story-09-desk-surface-and-mcp.md) | [evidence-story-09](./evidence-story-09.md) |
+| HS-125-10 | The walk | in-progress | [story-10](story-10-the-walk.md) | — |
 
 ## Where we are
 
-HS-125-01 through HS-125-07 done: production service composition shares a
-`SQLiteObserver`; the board projection and decision commitments are durable;
-aftercare triages open actions missing review, owner, or due date; open
-decision commitments project idempotently into cadence loops; overdue and
-snoozed board state now has deterministic precedence; and write-through verbs
-keep action, cadence, and commitment records aligned. HS-125-08 resolves honest card
-provenance from transcript segments and decision moments; unresolved sources remain
-explicitly unavailable. HS-125-09 is next.
+HS-125-01 through HS-125-09 done. Production observer wired, board
+projection with lanes, decision commitments, aftercare triage, cadence
+loop collection, due/stall semantics, write-through verbs, provenance
+on every card, MCP tools (board/complete/commit_decision), MCP resource,
+and FastAPI routes. HS-125-10 (the walk) is in progress.
