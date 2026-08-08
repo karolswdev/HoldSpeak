@@ -1,4 +1,5 @@
 """Tests for the persistent Monday Brief generation model."""
+
 from __future__ import annotations
 
 import datetime
@@ -7,6 +8,39 @@ from zoneinfo import ZoneInfo
 from holdspeak.db.core import Database, read_schema_version
 from holdspeak.db.schema import SCHEMA_VERSION
 from holdspeak.services.monday_brief_service import MondayBriefService
+
+
+def _insert_pipeline_event(
+    service,
+    *,
+    event_id,
+    timestamp,
+    service_name,
+    method,
+    correlation_id="",
+    args_summary="{}",
+    error=None,
+):
+    with service._db._connection() as conn:
+        conn.execute(
+            """INSERT INTO pipeline_events
+               (event_id, timestamp, service, method, principal_kind, args_summary,
+                correlation_id, error)
+               VALUES (?, ?, ?, ?, 'test', ?, ?, ?)""",
+            (
+                event_id,
+                timestamp,
+                service_name,
+                method,
+                args_summary,
+                correlation_id,
+                error,
+            ),
+        )
+
+
+def _utc_timestamp(day, hour=12):
+    return datetime.datetime(2026, 8, day, hour, tzinfo=datetime.UTC).timestamp()
 
 
 def test_compute_window_on_monday_starts_previous_friday(tmp_path):
@@ -78,6 +112,132 @@ def test_get_latest_returns_most_recent_brief(tmp_path):
     assert later.id != earlier.id
 
 
+def test_generate_collects_write_operations_as_persisted_changes(tmp_path, monkeypatch):
+    service = MondayBriefService(Database(tmp_path / "brief.db"))
+    monkeypatch.setattr(service, "_collect_breakage", lambda *_: [], raising=False)
+    monkeypatch.setattr(service, "_collect_waiting", lambda *_: [], raising=False)
+    monkeypatch.setattr(service, "_collect_decisions", lambda *_: [], raising=False)
+    _insert_pipeline_event(
+        service,
+        event_id="created-note",
+        timestamp=_utc_timestamp(1),
+        service_name="NoteService",
+        method="create_note",
+        correlation_id="note-1",
+        args_summary='{"title":"Plan"}',
+    )
+
+    brief = service.generate(
+        None, now=datetime.datetime(2026, 8, 3, 9, 30, tzinfo=datetime.UTC)
+    )
+
+    assert [
+        (item.section, item.text, item.source_ref) for item in brief.sections["changed"]
+    ] == [("changed", "NoteService.create_note", "pipeline:note-1")]
+    with service._db._connection() as conn:
+        assert (
+            conn.execute("SELECT COUNT(*) FROM monday_brief_items").fetchone()[0] == 1
+        )
+
+
+def test_collect_changes_excludes_read_only_operations(tmp_path):
+    service = MondayBriefService(Database(tmp_path / "brief.db"))
+    for event_id, method in (("list", "list_notes"), ("get", "get_note")):
+        _insert_pipeline_event(
+            service,
+            event_id=event_id,
+            timestamp=_utc_timestamp(1),
+            service_name="NoteService",
+            method=method,
+        )
+
+    assert (
+        service._collect_changes(
+            "2026-08-01T00:00:00+00:00", "2026-08-02T00:00:00+00:00"
+        )
+        == []
+    )
+
+
+def test_collect_changes_collapses_a_correlated_retry(tmp_path):
+    service = MondayBriefService(Database(tmp_path / "brief.db"))
+    for event_id, timestamp, error in (
+        ("first-attempt", _utc_timestamp(1, 12), "connection reset"),
+        ("retry", _utc_timestamp(1, 12) + 10, None),
+    ):
+        _insert_pipeline_event(
+            service,
+            event_id=event_id,
+            timestamp=timestamp,
+            service_name="WorkflowService",
+            method="run_workflow",
+            correlation_id="run-1",
+            args_summary='{"workflow_id":"weekly"}',
+            error=error,
+        )
+
+    changes = service._collect_changes(
+        "2026-08-01T00:00:00+00:00", "2026-08-02T00:00:00+00:00"
+    )
+
+    assert len(changes) == 1
+    assert changes[0].text == "WorkflowService.run_workflow"
+    assert changes[0].source_ref == "pipeline:run-1"
+
+
+def test_collect_changes_collapses_an_uncorrelated_failed_retry(tmp_path):
+    service = MondayBriefService(Database(tmp_path / "brief.db"))
+    for event_id, timestamp, error in (
+        ("failed", _utc_timestamp(1, 12), "connection reset"),
+        ("retry", _utc_timestamp(1, 12) + 10, None),
+    ):
+        _insert_pipeline_event(
+            service,
+            event_id=event_id,
+            timestamp=timestamp,
+            service_name="NoteService",
+            method="update_note",
+            args_summary='{"note_id":"weekly"}',
+            error=error,
+        )
+
+    changes = service._collect_changes(
+        "2026-08-01T00:00:00+00:00", "2026-08-02T00:00:00+00:00"
+    )
+
+    assert len(changes) == 1
+    assert changes[0].source_ref == "pipeline-event:failed"
+
+
+def test_collect_changes_excludes_events_outside_the_window(tmp_path):
+    service = MondayBriefService(Database(tmp_path / "brief.db"))
+    _insert_pipeline_event(
+        service,
+        event_id="outside",
+        timestamp=_utc_timestamp(3),
+        service_name="NoteService",
+        method="update_note",
+    )
+
+    assert (
+        service._collect_changes(
+            "2026-08-01T00:00:00+00:00", "2026-08-02T00:00:00+00:00"
+        )
+        == []
+    )
+
+
+def test_collect_changes_returns_no_items_for_an_empty_window(tmp_path):
+    service = MondayBriefService(Database(tmp_path / "brief.db"))
+
+    assert (
+        service._collect_changes(
+            "2026-08-01T00:00:00+00:00", "2026-08-02T00:00:00+00:00"
+        )
+        == []
+    )
+
+
 def test_schema_migrates_v39_to_v40(tmp_path):
     path = tmp_path / "v39.db"
     Database(path)
@@ -92,12 +252,21 @@ def test_schema_migrates_v39_to_v40(tmp_path):
     assert SCHEMA_VERSION == 40
     assert read_schema_version(path) == 40
     with migrated._connection() as conn:
-        assert conn.execute(
-            "SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'monday_briefs'"
-        ).fetchone() is not None
-        assert conn.execute(
-            "SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'monday_brief_items'"
-        ).fetchone() is not None
-        assert conn.execute(
-            "SELECT name FROM sqlite_master WHERE type = 'index' AND name = 'idx_monday_brief_items_brief'"
-        ).fetchone() is not None
+        assert (
+            conn.execute(
+                "SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'monday_briefs'"
+            ).fetchone()
+            is not None
+        )
+        assert (
+            conn.execute(
+                "SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'monday_brief_items'"
+            ).fetchone()
+            is not None
+        )
+        assert (
+            conn.execute(
+                "SELECT name FROM sqlite_master WHERE type = 'index' AND name = 'idx_monday_brief_items_brief'"
+            ).fetchone()
+            is not None
+        )

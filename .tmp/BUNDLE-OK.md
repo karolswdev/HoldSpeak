@@ -1,4 +1,4 @@
-HS-125-06 and HS-125-07 are tightly coupled: both modify FollowThroughService
-in follow_through_service.py. Story 06 refines lane assignment logic (due/stall
-semantics) and story 07 adds completion verbs that depend on the refined states.
-Splitting would require an artificial intermediate commit.
+HS-126-03, 04, 05, 06 are the four brief collectors — all modify
+MondayBriefService in monday_brief_service.py and share
+test_brief_collectors.py. They're independent data gatherers
+(changes, breakage, waiting, decisions) feeding into the composer.
