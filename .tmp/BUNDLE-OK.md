@@ -1,4 +1,3 @@
-HS-126-03, 04, 05, 06 are the four brief collectors — all modify
-MondayBriefService in monday_brief_service.py and share
-test_brief_collectors.py. They're independent data gatherers
-(changes, breakage, waiting, decisions) feeding into the composer.
+HS-126-08 and HS-126-09 are the delivery and walk stories — 08 adds MCP
+tools/resource and FastAPI routes, 09 proves the full pipeline end to end.
+Both share monday_brief_service.py and complete the phase.

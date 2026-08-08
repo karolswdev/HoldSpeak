@@ -29,6 +29,7 @@ from .follow_through import build_follow_through_router
 from .meeting_import import build_meeting_import_router
 from .meetings import build_meetings_router
 from .memory import build_memory_router
+from .monday_brief import build_monday_brief_router
 from .mesh import build_mesh_router
 from .missioncontrol import build_missioncontrol_router
 from .pages import build_pages_router
@@ -62,6 +63,7 @@ __all__ = [
     "build_meeting_import_router",
     "build_meetings_router",
     "build_memory_router",
+    "build_monday_brief_router",
     "build_mesh_router",
     "build_missioncontrol_router",
     "build_pages_router",

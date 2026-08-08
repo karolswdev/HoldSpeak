@@ -14,6 +14,7 @@ from holdspeak.services.dictation_service import DictationService
 from holdspeak.services.event_query_service import EventQueryService
 from holdspeak.services.follow_through_service import FollowThroughService
 from holdspeak.services.meeting_service import MeetingService
+from holdspeak.services.monday_brief_service import MondayBriefService
 from holdspeak.services.primitive_service import PrimitiveService
 from holdspeak.services.profile_service import ProfileService
 from holdspeak.services.recipe_service import RecipeService
@@ -179,6 +180,12 @@ _STATIC_RESOURCES = [
         "mimeType": _JSON_MIME,
     },
     {
+        "uri": "holdspeak://briefs/latest",
+        "name": "Latest Monday Brief",
+        "description": "Latest persisted Monday Brief, or null when none has been generated.",
+        "mimeType": _JSON_MIME,
+    },
+    {
         "uri": "pipeline://events/recent",
         "name": "Recent pipeline events",
         "description": "Most recent observed pipeline events.",
@@ -314,6 +321,9 @@ def read_resource(uri: str, principal: Principal) -> dict[str, list[dict[str, st
             "unassigned": [asdict(card) for card in board.unassigned],
             "overdue": [asdict(card) for card in board.overdue],
         })
+    if uri == "holdspeak://briefs/latest":
+        brief = MondayBriefService(get_database()).get_latest(principal)
+        return _contents(uri, _JSON_MIME, asdict(brief) if brief is not None else None)
     if uri == "pipeline://events/recent":
         return _contents(uri, _JSON_MIME, EventQueryService(get_database()).recent(principal))
     if uri == "pipeline://events/stats":

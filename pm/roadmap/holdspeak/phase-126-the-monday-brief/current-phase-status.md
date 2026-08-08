@@ -1,6 +1,6 @@
 # Phase 126 — The Monday Brief
 
-**Status:** in progress (6/9).
+**Status:** done (9/9).
 
 **Last updated:** 2026-08-07.
 
@@ -89,8 +89,8 @@ decisions ────────┘    │  Brief  │
 | HS-126-05 | Collect waiting work | done | [story-05](story-05-collect-waiting.md) | [evidence-story-05](./evidence-story-05.md) |
 | HS-126-06 | Identify owner decisions | done | [story-06](story-06-owner-decisions.md) | [evidence-story-06](./evidence-story-06.md) |
 | HS-126-07 | Compose honestly | done | [story-07](story-07-compose-honestly.md) | [evidence-story-07](./evidence-story-07.md) |
-| HS-126-08 | Deliver and inspect (MCP + pullout) | backlog | [story-08](story-08-deliver-inspect.md) | — |
-| HS-126-09 | The walk | backlog | [story-09](story-09-the-walk.md) | — |
+| HS-126-08 | Deliver and inspect (MCP + pullout) | done | [story-08](story-08-deliver-inspect.md) | [evidence-story-08](./evidence-story-08.md) |
+| HS-126-09 | The walk | done | [story-09](story-09-the-walk.md) | [evidence-story-09](./evidence-story-09.md) |
 
 ## Where we are
 
@@ -100,5 +100,10 @@ local date, and returns the existing identity on repeat generation. Its four
 collectors now surface material changes, breakage, waiting work, and owner
 decisions: authorization proposals rank ahead of unresolved decision reviews
 and due-soon commitments. Brief items retain their source references through
-the `brief_id` foreign key. The Follow-Through (Phase 125) is the prerequisite
-and it shipped as PR #443.
+the `brief_id` foreign key. HS-126-07 composes count-based headlines and the
+honest empty state. HS-126-08 delivers the same persisted brief through MCP
+(`monday_brief.get`, `monday_brief.generate`, and `holdspeak://briefs/latest`)
+and FastAPI (`GET /api/brief/latest`, `POST /api/brief/generate`). HS-126-09
+walks all four populated sections, the empty-window receipt, MCP delivery, and
+same-day idempotence. The Follow-Through (Phase 125) is the prerequisite and
+it shipped as PR #443.
