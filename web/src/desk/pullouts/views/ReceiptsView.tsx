@@ -3,6 +3,7 @@ import { apiFetch, readableError } from "../../../lib/api";
 import { qualifiedRef } from "../../api";
 import { useDesk } from "../../store";
 import { SurfaceLedger, SurfaceLedgerRow, SurfaceState } from "../../surface/Surface";
+import { StringGadget } from "../../surface/gadgets";
 
 type ReceiptSource = {
   source_type: string;
@@ -151,17 +152,16 @@ export function ReceiptsView({
 
   return (
     <div className="receipts-view">
-      <label className="receipts-search">
+      <div className="receipts-search">
         <span className="receipts-search-prefix" aria-hidden="true">WHY</span>
-        <span className="sr-only">Search decision receipts</span>
-        <input
+        <StringGadget
+          label="Search decision receipts"
           type="search"
           value={query}
-          onChange={(event) => setQuery(event.target.value)}
+          onChange={setQuery}
           placeholder="Search decisions"
-          aria-label="Search decision receipts"
         />
-      </label>
+      </div>
       <div className="receipts-search-actions">
         <button
           type="button"

@@ -70,12 +70,12 @@ phase is self-contained:
 | ID | Story | Status | Story file | Evidence |
 |----|-------|--------|------------|----------|
 | HS-129-01 | The foot slot — one window anatomy | done | [story-01](story-01-the-foot-slot.md) | [evidence-story-01](./evidence-story-01.md) |
-| HS-129-02 | The sheet contract at ≤720px | backlog | [story-02](story-02-the-sheet-contract.md) | — |
-| HS-129-03 | The Brief pathology and Intelligence polish | backlog | [story-03](story-03-brief-pathology.md) | — |
-| HS-129-04 | Shell-scroller and double-scroll repairs | backlog | [story-04](story-04-shell-scroller-repairs.md) | — |
+| HS-129-02 | The sheet contract at ≤720px | in-progress | [story-02](story-02-the-sheet-contract.md) | — |
+| HS-129-03 | The Brief pathology and Intelligence polish | in-progress | [story-03](story-03-brief-pathology.md) | — |
+| HS-129-04 | Shell-scroller and double-scroll repairs | in-progress | [story-04](story-04-shell-scroller-repairs.md) | — |
 | HS-129-05 | One foot in Speak; the great deletion | backlog | [story-05](story-05-speak-foot-and-deletion.md) | — |
 | HS-129-06 | The container-query law | backlog | [story-06](story-06-container-query-law.md) | — |
-| HS-129-07 | The speakable desk | in-progress | [story-07](story-07-the-speakable-desk.md) | — |
+| HS-129-07 | The speakable desk | done | [story-07](story-07-the-speakable-desk.md) | [evidence-story-07](./evidence-story-07.md) |
 | HS-129-08 | In-world editing — the lightbox dies | backlog | [story-08](story-08-in-world-editing.md) | — |
 | HS-129-09 | One state grammar | backlog | [story-09](story-09-one-state-grammar.md) | — |
 | HS-129-10 | Tokens green and the dead paths | backlog | [story-10](story-10-tokens-and-dead-paths.md) | — |
@@ -87,8 +87,8 @@ HS-129-01 landed the frame-owned foot slot: hosted `SurfaceFooter` instances
 now portal into a sibling after the scrolling body, while pullouts and direct
 windows retain their in-place composition. The body now shrinks before the
 foot and frame-head ownership lives in `window-chrome.css`. HS-129-02–05 remain
-unblocked; HS-129-07 is in progress. The non-waivable exit remains story 11's
-walk.
+unblocked; HS-129-07 closes Audit C's unspeakable-field census with shared text
+controls and field-owned mics. The non-waivable exit remains story 11's walk.
 
 ## Active risks
 

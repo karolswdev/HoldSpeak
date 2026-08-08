@@ -1,7 +1,7 @@
 /** Workflow inline editor content (HS-117-15). */
 import { useMemo, useState } from "react";
 import { useDesk } from "../../store";
-import { MicButton } from "../../components/MicButton";
+import { StringGadget } from "../../surface/gadgets";
 import {
   buildLinearGraph,
   parseLinearGraph,
@@ -45,22 +45,19 @@ export function WorkflowEditor({ object: o, onClose }: InlineEditorContentProps)
 
   return (
     <>
-      <input
+      <StringGadget
+        label="Workflow name"
         value={f.name}
         placeholder="Name"
-        onChange={(e) => {
-          setF((prev) => ({ ...prev, name: e.target.value }));
+        onChange={(value) => {
+          setF((prev) => ({ ...prev, name: value }));
           if (steps) {
             save({
-              name: e.target.value,
-              graph_json: buildLinearGraph(
-                o.id,
-                e.target.value || "Workflow",
-                steps,
-              ),
+              name: value,
+              graph_json: buildLinearGraph(o.id, value || "Workflow", steps),
             });
           } else {
-            save({ name: e.target.value });
+            save({ name: value });
           }
         }}
       />
@@ -70,30 +67,27 @@ export function WorkflowEditor({ object: o, onClose }: InlineEditorContentProps)
             <div key={i} className="desk-wf-step">
               <span className="desk-wf-step-label">{stepLabel(s)}</span>
               {s.kind === "rewrite" && (
-                <input
+                <StringGadget
+                  label="Tone"
                   value={s.tone}
                   placeholder="Tone"
-                  onChange={(e) =>
-                    setStepParam(i, { tone: e.target.value })
-                  }
+                  onChange={(tone) => setStepParam(i, { tone })}
                 />
               )}
               {s.kind === "keepIf" && (
-                <input
+                <StringGadget
+                  label="Keyword"
                   value={s.keyword}
                   placeholder="Keyword"
-                  onChange={(e) =>
-                    setStepParam(i, { keyword: e.target.value })
-                  }
+                  onChange={(keyword) => setStepParam(i, { keyword })}
                 />
               )}
               {s.kind === "llm" && (
-                <input
+                <StringGadget
+                  label="Prompt"
                   value={s.prompt}
                   placeholder="Prompt (selected text is substituted at run time)"
-                  onChange={(e) =>
-                    setStepParam(i, { prompt: e.target.value })
-                  }
+                  onChange={(prompt) => setStepParam(i, { prompt })}
                 />
               )}
               <button
@@ -138,13 +132,6 @@ export function WorkflowEditor({ object: o, onClose }: InlineEditorContentProps)
         <p className="quiet">Graphed on iPad</p>
       )}
       <div className="desk-inline-editor-foot">
-        <MicButton
-          draftScope={`inline:${o.kind}:${o.id}`}
-          onText={(t) => {
-            setF((prev) => ({ ...prev, name: (prev.name ? prev.name + " " : "") + t }));
-            save({ name: (f.name ? f.name + " " : "") + t });
-          }}
-        />
         <span className="desk-inline-editor-spacer" />
         <button
           type="button"

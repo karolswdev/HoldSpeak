@@ -6,7 +6,7 @@
 .repo-breadcrumb button { border: 0; padding: 2px 4px; background: none; color: inherit; font: 11px/1.2 var(--font-mono); cursor: pointer; }
 .repo-breadcrumb button:not(:last-of-type)::after { content: "/"; margin-left: 7px; color: var(--text-muted); }
 .repo-breadcrumb button:disabled { opacity: .62; cursor: default; }
-.repo-breadcrumb select { margin-left: auto; max-width: 170px; background: var(--surface-2); color: inherit; border: 1px solid var(--border); border-radius: 2px; font: 11px var(--font-mono); }
+.repo-breadcrumb .gadget-cycle { margin-left: auto; }
 .desk-repo-files { flex: 1; overflow: auto; }
 .repo-folder { font-weight: 650; }
 .repo-status { display: inline-block; min-width: 1em; text-align: center; color: var(--text-muted); font: 700 12px/1 var(--font-mono); }
@@ -21,5 +21,3 @@
 .repo-issues { padding: 20px; }
 .repo-issues h3 { margin: 0 0 8px; font-size: 14px; }
 .repo-footer-actions { display: inline-flex; align-items: center; gap: 6px; }
-.repo-footer-actions input { width: min(220px, 28vw); min-height: 25px; padding: 3px 7px; border: 1px solid var(--border); border-radius: 2px; background: var(--surface-2); color: inherit; font: 12px var(--font-mono); }
-@media (max-width: 720px) { .repo-footer-actions input { width: 124px; } .repo-breadcrumb select { max-width: 110px; } }
