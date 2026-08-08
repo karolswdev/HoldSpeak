@@ -16,10 +16,11 @@ import { registerSurface } from "../shell";
 import { useDesk } from "../store";
 import { objectByRef } from "../world";
 import { DeskWindowFrame } from "./DeskWindow";
+import { FootSlotContext } from "../surface/foot";
 import { WingSlotContext } from "../surface/wings";
 import type { CoreProps } from "../../pages/cores/core-types";
 
-interface SurfaceRow {
+export interface SurfaceRow {
   key: string;
   id: string;
   title: string;
@@ -322,8 +323,9 @@ export function SurfaceWindows() {
 }
 
 /** One hosted core: owns the head's wing slot so the core can publish
- * its faces into the window chrome (HS-100-07, the posture rule). */
-function SurfaceWindowHost({
+ * its faces into the window chrome (HS-100-07, the posture rule), and the
+ * foot slot so its footer belongs to the frame (HS-129-01). */
+export function SurfaceWindowHost({
   row,
   scope,
   items,
@@ -333,6 +335,7 @@ function SurfaceWindowHost({
   items: ReturnType<typeof useDesk.getState>["items"];
 }) {
   const [wings, setWings] = useState<ReactNode>(null);
+  const [foot, setFoot] = useState<HTMLElement | null>(null);
   return (
     <DeskWindowFrame
       id={row.id}
@@ -346,20 +349,26 @@ function SurfaceWindowHost({
       onClose={() => useSurfaceWindows.getState().closeSurfaceWindow(row.key)}
       className="desk-surface-window"
     >
-      <div className="desk-surface-body">
-        <WingSlotContext.Provider value={setWings}>
-          <Suspense fallback={<p className="quiet">…</p>}>
-            <row.Core
-              scope={scope}
-              scopeLabel={
-                scope
-                  ? (objectByRef(items, scope)?.title ?? undefined)
-                  : undefined
-              }
-            />
-          </Suspense>
-        </WingSlotContext.Provider>
-      </div>
+      <FootSlotContext.Provider value={foot}>
+        <div className="desk-surface-body">
+          <WingSlotContext.Provider value={setWings}>
+            <Suspense fallback={<p className="quiet">…</p>}>
+              <row.Core
+                scope={scope}
+                scopeLabel={
+                  scope
+                    ? (objectByRef(items, scope)?.title ?? undefined)
+                    : undefined
+                }
+              />
+            </Suspense>
+          </WingSlotContext.Provider>
+        </div>
+        <footer
+          ref={setFoot}
+          className="desk-surface-foot surface-footer"
+        />
+      </FootSlotContext.Provider>
     </DeskWindowFrame>
   );
 }

@@ -49,27 +49,6 @@
 .desk-next .desk-pullout .desk-pullout-body {
   min-height: 0;
 }
-/* HS-99-02 — the title bar is a BAR (DESIGN_SYSTEM.md, the chrome
-   ladder): the head tone sits one step above the body, separation is
-   tonal (no border-bottom), and the verb buttons are full-height
-   squares flush to the window edge. */
-.desk-next .desk-pullout-head {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  height: 40px;
-  flex: none;
-  padding: 0 12px;
-  background: var(--desk-window-head-fill);
-  /* Materials round 2 — the UNIFIED header: the verb bar below shares
-     this tint and carries the hairline; head + verbs read as one
-     toolbar band (the mac unified-toolbar look). */
-  border-radius: calc(var(--desk-window-radius) - 1px)
-    calc(var(--desk-window-radius) - 1px) 0 0;
-}
-.desk-next .desk-window-shell.is-front .desk-pullout-head {
-  background: var(--desk-window-head-front);
-}
 /* Materials spike — traffic lights (macos-web values): 12.8px discs
    with darker rings; grey on an unfocused window; glyphs reveal and
    the cluster swells on hover. */
