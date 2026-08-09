@@ -472,6 +472,13 @@ function useDeskWindow(id: string, opts: DeskWindowOptions = {}) {
     </>
   );
 
+  // HS-129-11 — a fit-content card may grow after placement (async detail
+  // content), but its CSS-driven height must still stop at the same lower
+  // working-band edge that `placeWindow` used for its rect. Arranged and
+  // maximized windows retain their explicit geometry below.
+  const cardBandCap = rect
+    ? Math.max(minH, (typeof window === "undefined" ? 800 : window.innerHeight) - workBand().bottom - rect.y)
+    : undefined;
   const style: React.CSSProperties = rect
     ? {
         top: rect.y,
@@ -483,7 +490,7 @@ function useDeskWindow(id: string, opts: DeskWindowOptions = {}) {
         // A content-sized card keeps its CSS height (the material
         // decides) until the user arranges it; arranged rects pin.
         ...(opts.fitContent && !arranged && !liveResize
-          ? {}
+          ? { maxHeight: cardBandCap }
           : { height: rect.h, maxHeight: "none" }),
       }
     : { zIndex: Z_BASE + Math.max(orderIndex, 0) };

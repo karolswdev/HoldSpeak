@@ -117,7 +117,12 @@ flaky/environmental; the owner may overrule that amendment at the sitting.
   `--desk-sheet-top-radius` exception; the 6px inlet picker is likewise named
   `--desk-inlet-radius`, preserving both established silhouettes.
 - 2026-08-08 — ShortcutSheet and attention/system surfaces are documented OS
-  chrome outside Article VII.2's modal ban.
+  chrome outside Article VII.2's modal ban. **Narrowed 2026-08-09 per Sol's
+  counsel (SOL-COUNSEL.md #7):** the exemption covers ONLY surfaces that are
+  read-only, non-focus-trapping, immediately dismissible (Escape/backdrop),
+  carry no creation/edit flow, and conceal no actionable failure. It is not
+  an open-ended 'system chrome' escape hatch; anything beyond that boundary
+  is an Article VII.2 modal and must become an in-world window or drawer.
 - 2026-08-08 — **The inherited backend ledger (owner may overrule at the
   sitting):** the phase's first-ever full backend run found 98 failures;
   triage on pre-129 main (4c63c997, same env) reproduced 96 — inherited

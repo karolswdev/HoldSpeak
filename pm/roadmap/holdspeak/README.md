@@ -19,7 +19,7 @@ dispatch flaky/environmental; the owner may overrule this amendment at the
 sitting.
 
 **Previous update (2026-08-08): Phase 129 — One Grammar — HS-129-10 shipped.**
-The token gate is green (23 raw values to zero) with reviewed inlet and phone-sheet
+The token gate is green (23 remaining raw-value findings to zero; 27 findings at charter) with reviewed inlet and phone-sheet
 radius tokens plus a current, per-file material allowlist. The live desk walk
 proves zone, meeting, artifact, and workbench opens; its earlier double-click
 failure was a canvas-walk artifact, now guarded by a title-addressed engine-hit

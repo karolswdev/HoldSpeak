@@ -61,6 +61,7 @@ sequence. This file is the "all of them" container; the phases are how they land
 | P | Transcript import (`.vtt`/`.srt`/`.txt` → real meetings) | feature | user direction, post-P56 conversation | **shipped → [phase-57](./phase-57-transcript-import/) (CLOSED 5/5)** (real speakers + timestamps from the file; proven on `.43` intel; recording path untouched) |
 | Q | The Front Door (positioning + user-facing docs revision) | release/community | user direction, post-P57 conversation | **shipped → [phase-58](./phase-58-front-door/) (CLOSED 6/6)** (positioning canon + README pitch + named comparisons + the voice guard) |
 | Y | §5b Confinement + the audited remainder (the register to empty) | security/architecture | Phase 107 closeout; the HS-107-05 audit | **graduated → [Phase 108](./phase-108-the-locked-room/), CLOSED 7/7** — 15 debt → 0; corrected machine closeout 8/8; owner verdict "'s all's good, moyt." |
+| Z | The Inherited Ledger (96 backend repairs + walk deepening) | repair | Phase 129 full-suite triage + Sol counsel | **filed** — see §Candidate Z; owner ruling at the 129 sitting |
 
 ### A. Meeting aftercare ("close the loop") — shipped as Phase 49 (CLOSED 6/6)
 The meeting side has plugins + artifacts; the next value is follow-through, not
@@ -237,6 +238,32 @@ The other carryovers have also landed: Phase 109 shipped the second
 userland program and process window; HS-108-05 shipped the generic
 liveness seam and made `tests/e2e/test_live_bus.py` a built-bundle,
 Chromium-backed, no-skip CI gate.
+
+## Candidate Z — The Inherited Ledger (the 96 + the walk deepening)
+
+**Type:** repair · **Source:** Phase 129's first-ever full backend run + Sol's
+acceptance counsel (phase-129-one-grammar/SOL-COUNSEL.md) · **Signal:** filed
+2026-08-09, owner ruling pending at the Phase 129 sitting.
+
+The 96 backend test failures that reproduce on pre-129 main
+(exact list: phase-129-one-grammar/assets/hs-129-11/inherited-ledger-96.txt;
+raw logs beside it) — inherited Phase 118–128 integration debt across
+companion actuators (slack/github/webhook), intel streaming, dictation
+surfaces, history slack, decision records, live bus, sync/primitive
+contracts, and guards. Sol's conditions for the graduated phase, adopted:
+an owner, an exit condition (the ledger reaches zero or each residual is
+individually owner-ruled), and **no baseline expansion** — a red-CI merge
+comparison is an exception per PR with the failure-name diff attached
+(precedent artifacts: assets/hs-129-11/ci-*.txt), never a default; any NEW
+name entering the set blocks.
+
+Riders from the same counsel: the walk deepening (fresh-home pass,
+hostile-content pass, interaction pass incl. mic/edit/error forcing, a
+second browser engine, occlusion assertions — SOL-COUNSEL.md finding 6)
+and the commandDeck target-specific test cases (finding 8). The 14
+workbench-walk e2e ERRORs are NOT in this ledger — proven environmental
+(all pass with a hub at HOLDSPEAK_HUB_URL; evidence-story-11.md,
+2026-08-09 capture).
 
 ## Sequencing note
 

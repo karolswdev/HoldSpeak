@@ -291,6 +291,8 @@
   container-type: inline-size;
   min-width: 0;
   min-height: 0;
+  /* The 100%-wide brief owns padding inside its resizeable body. */
+  box-sizing: border-box;
   padding: var(--space-3);
   color: var(--text);
 }
@@ -343,6 +345,18 @@
   padding: 0;
   list-style: none;
 }
+
+/* A generic list reset lands after this sheet in the bundle. Keep the Brief
+   ledger's box within the resized body, including its row controls. */
+.intelligence-brief-group .intelligence-brief-rows,
+.intelligence-brief-group .surface-ledger-row,
+.intelligence-brief-group .surface-ledger-line {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+.desk-next .desk-pullout-body .intelligence-brief-group .intelligence-brief-rows { padding: 0; }
 
 .intelligence-brief-rows .surface-ledger-line {
   min-height: 32px;

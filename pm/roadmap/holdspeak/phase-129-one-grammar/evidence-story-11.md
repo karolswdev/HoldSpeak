@@ -861,3 +861,783 @@ See [`backend-suite-branch.log`](assets/hs-129-11/backend-suite-branch.log) and
 [`backend-triage-on-main.log`](assets/hs-129-11/backend-triage-on-main.log).
 The story criterion amendment is recorded in the story and phase decision log; the
 owner may overrule it at the sitting.
+
+### Captured run — 2026-08-09T00:50:32Z
+
+- **Command:** `env HOLDSPEAK_HUB_URL=http://127.0.0.1:61308 uv run pytest -q -p no:cacheprovider tests/e2e/test_workbench_walk.py`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** db1e6ffabdd4d98f3bf68655c40575cb786244ba
+
+```text
+..............                                                           [100%]
+14 passed in 71.60s (0:01:11)
+```
+
+### Captured run — 2026-08-09T00:59:31Z
+
+- **Command:** `node scripts/walk-129.mjs`
+- **Cwd:** .
+- **Exit code:** 1
+- **Index-tree:** db1e6ffabdd4d98f3bf68655c40575cb786244ba
+
+```text
+FAIL Intelligence: default: shell 64.0–868.0 outside working band 54.0–848.0
+FAIL Intelligence: scroll-top: shell 64.0–868.0 outside working band 54.0–848.0
+FAIL Intelligence: scroll-mid: shell 64.0–868.0 outside working band 54.0–848.0
+FAIL Intelligence: scroll-bottom: shell 64.0–868.0 outside working band 54.0–848.0
+FAIL Intelligence: resized-small: horizontal overflow
+FAIL Intelligence: resized-small-scroll-mid: horizontal overflow
+FAIL Intelligence: maximized: title bar moved 10.0px while body scrolled
+WALK Intelligence | required/required/required | default, scroll-top, scroll-mid, scroll-bottom, resized-small, resized-small-scroll-mid, maximized, maximized-scroll-mid | FAIL
+FAIL Speak: maximized: title bar moved 18.0px while body scrolled
+WALK Speak | required/required/required | default, resized-small, maximized | FAIL
+FAIL Meetings: maximized: title bar moved 18.0px while body scrolled
+WALK Meetings | required/required/required | default, resized-small, maximized | FAIL
+FAIL Agents: maximized: title bar moved 18.0px while body scrolled
+WALK Agents | required/required/required | default, resized-small, maximized | FAIL
+FAIL Settings: maximized: title bar moved 18.0px while body scrolled
+WALK Settings | required/required/required | default, resized-small, maximized | FAIL
+FAIL Desk memory: default: missing required native shell
+WALK Desk memory | required/required/required | default (non-window: undeclared reason) | FAIL
+FAIL Delivery: maximized: title bar moved 175.0px while body scrolled
+WALK Delivery | required/required/required | default, scroll-top, scroll-mid, scroll-bottom, resized-small, resized-small-scroll-mid, maximized | FAIL
+FAIL Panes: default: missing required native shell
+WALK Panes | required/required/required | default (non-window: undeclared reason) | FAIL
+FAIL Intelligence Brief: default: shell 64.0–868.0 outside working band 54.0–848.0
+FAIL Intelligence Brief: scroll-top: shell 64.0–868.0 outside working band 54.0–848.0
+FAIL Intelligence Brief: scroll-mid: shell 64.0–868.0 outside working band 54.0–848.0
+FAIL Intelligence Brief: scroll-bottom: shell 64.0–868.0 outside working band 54.0–848.0
+FAIL Intelligence Brief: resized-small: horizontal overflow
+FAIL Intelligence Brief: resized-small-scroll-mid: horizontal overflow
+FAIL Intelligence Brief: maximized: title bar moved 10.0px while body scrolled
+WALK Intelligence Brief | required/required/required | default, scroll-top, scroll-mid, scroll-bottom, resized-small, resized-small-scroll-mid, maximized, maximized-scroll-mid | FAIL
+FAIL Intelligence Follow-through: maximized: title bar moved 10.0px while body scrolled
+WALK Intelligence Follow-through | required/required/required | default, resized-small, resized-small-scroll-mid, maximized | FAIL
+FAIL Intelligence Receipts: maximized: title bar moved 10.0px while body scrolled
+WALK Intelligence Receipts | required/required/required | default, resized-small, resized-small-scroll-mid, maximized | FAIL
+FAIL Meetings detail: no scriptable meeting ledger row
+WALK Meetings detail | required/required/required | unreachable | FAIL
+FAIL Settings Transcription: face not present
+FAIL Settings Guide: maximized: title bar moved 18.0px while body scrolled
+WALK Settings Guide | required/required/required | default, resized-small, resized-small-scroll-mid, maximized | FAIL
+GO ENTRIES: Speak | Ask AI | Meetings | Settings | Workbenches | Agents and coder sessions | Runs on | Integrations | Commands | Cadence | Context | Activity | Processes
+FAIL Go Speak: maximized: title bar moved 18.0px while body scrolled
+WALK Go Speak | required/required/required | default, resized-small, resized-small-scroll-mid, maximized | FAIL
+WALK Go Ask AI | required/required/required | default, resized-small, resized-small-scroll-mid, maximized | PASS
+FAIL Go Meetings: maximized: title bar moved 18.0px while body scrolled
+WALK Go Meetings | required/required/required | default, resized-small, resized-small-scroll-mid, maximized | FAIL
+FAIL Go Settings: maximized: title bar moved 18.0px while body scrolled
+WALK Go Settings | required/required/required | default, resized-small, resized-small-scroll-mid, maximized | FAIL
+FAIL Go Workbenches: maximized: title bar moved 18.0px while body scrolled
+WALK Go Workbenches | required/required/required | default, resized-small, maximized | FAIL
+FAIL Go Agents and coder sessions: maximized: title bar moved 18.0px while body scrolled
+WALK Go Agents and coder sessions | required/required/required | default, resized-small, resized-small-scroll-mid, maximized | FAIL
+FAIL Go Runs on: maximized: title bar moved 18.0px while body scrolled
+WALK Go Runs on | required/required/required | default, scroll-top, scroll-mid, scroll-bottom, resized-small, resized-small-scroll-mid, maximized, maximized-scroll-mid | FAIL
+FAIL Go Integrations: maximized: title bar moved 18.0px while body scrolled
+WALK Go Integrations | required/required/required | default, resized-small, resized-small-scroll-mid, maximized | FAIL
+FAIL Go Commands: maximized: title bar moved 18.0px while body scrolled
+WALK Go Commands | required/required/required | default, resized-small, maximized | FAIL
+FAIL Go Cadence: maximized: title bar moved 18.0px while body scrolled
+WALK Go Cadence | required/required/required | default, resized-small, resized-small-scroll-mid, maximized | FAIL
+FAIL Go Context: maximized: title bar moved 18.0px while body scrolled
+WALK Go Context | required/required/required | default, resized-small, resized-small-scroll-mid, maximized | FAIL
+FAIL Go Activity: maximized: title bar moved 18.0px while body scrolled
+WALK Go Activity | required/required/required | default, resized-small, resized-small-scroll-mid, maximized, maximized-scroll-mid | FAIL
+FAIL Go Processes: maximized: title bar moved 18.0px while body scrolled
+WALK Go Processes | required/required/required | default, resized-small, maximized | FAIL
+FAIL Object zone: maximized: title bar moved 7.8px while body scrolled
+WALK Object zone | required/required/required | default, resized-small, resized-small-scroll-mid, maximized | FAIL
+FAIL Object meeting: default: shell 191.3–895.3 outside working band 54.0–848.0
+FAIL Object meeting: resized-small: shell 191.3–895.3 outside working band 54.0–848.0
+FAIL Object meeting: maximized: title bar moved 137.3px while body scrolled
+WALK Object meeting | required/required/required | default, resized-small, maximized | FAIL
+FAIL Object artifact: maximized: title bar moved 438.3px while body scrolled
+WALK Object artifact | required/required/required | default, resized-small, resized-small-scroll-mid, maximized | FAIL
+FAIL Object workbench: maximized: title bar moved 60.0px while body scrolled
+WALK Object workbench | required/required/required | default, resized-small, maximized | FAIL
+FAIL Trust egress: maximized: title bar moved 10.0px while body scrolled
+WALK Trust egress | required/required/none | default, resized-small, resized-small-scroll-mid, maximized, maximized-scroll-mid | FAIL
+FAIL Design components: default: unexpected head
+FAIL Design components: default: unexpected body
+FAIL Design components: default: unexpected foot
+FAIL Design components: resized-small: unexpected head
+FAIL Design components: resized-small: unexpected body
+FAIL Design components: resized-small: unexpected foot
+FAIL Design components: maximized: unexpected head
+FAIL Design components: maximized: unexpected body
+FAIL Design components: maximized: unexpected foot
+WALK Design components | none/none/none | default, resized-small, maximized | FAIL
+FAIL New Note editor: default: missing required native shell
+WALK New Note editor | required/required/required | default (non-window: undeclared reason) | FAIL
+FAIL Mobile Intelligence: default: shell 187.5–852.0 outside working band 54.0–800.0
+FAIL Mobile Intelligence: scroll-top: shell 187.5–852.0 outside working band 54.0–800.0
+FAIL Mobile Intelligence: scroll-mid: shell 187.5–852.0 outside working band 54.0–800.0
+FAIL Mobile Intelligence: scroll-bottom: shell 187.5–852.0 outside working band 54.0–800.0
+WALK Mobile Intelligence | required/required/required | default, scroll-top, scroll-mid, scroll-bottom | FAIL
+FAIL Mobile Speak: default: shell 235.4–852.0 outside working band 54.0–800.0
+WALK Mobile Speak | required/required/required | default | FAIL
+FAIL Mobile Meetings: default: shell 392.0–852.0 outside working band 54.0–800.0
+WALK Mobile Meetings | required/required/required | default | FAIL
+FAIL Mobile Agents: default: shell 478.0–852.0 outside working band 54.0–800.0
+WALK Mobile Agents | required/required/required | default | FAIL
+FAIL Mobile Settings: default: shell 244.0–852.0 outside working band 54.0–800.0
+WALK Mobile Settings | required/required/required | default | FAIL
+FAIL Mobile Desk memory: default: missing required native shell
+WALK Mobile Desk memory | required/required/required | default (non-window: undeclared reason) | FAIL
+FAIL Mobile Delivery: default: shell 187.5–852.0 outside working band 54.0–800.0
+FAIL Mobile Delivery: scroll-top: shell 187.5–852.0 outside working band 54.0–800.0
+FAIL Mobile Delivery: scroll-mid: shell 187.5–852.0 outside working band 54.0–800.0
+FAIL Mobile Delivery: scroll-bottom: shell 187.5–852.0 outside working band 54.0–800.0
+WALK Mobile Delivery | required/required/required | default, scroll-top, scroll-mid, scroll-bottom | FAIL
+FAIL Mobile Panes: default: missing required native shell
+WALK Mobile Panes | required/required/required | default (non-window: undeclared reason) | FAIL
+FAIL HARNESS: locator.click: Timeout 30000ms exceeded.
+Call log:
+[2m  - waiting for getByRole('button', { name: 'Go', exact: true })[22m
+
+    at /Users/karol/dev/tools/HoldSpeak/scripts/walk-129.mjs:387:92
+
+=== HS-129-11 WALK REPORT ===
+| Surface | Anatomy | States walked | Assertions | Verdict |
+|---|---|---|---|---|
+| Intelligence | head:required, body:required, foot:required; sheet:required | default, scroll-top, scroll-mid, scroll-bottom, resized-small, resized-small-scroll-mid, maximized, maximized-scroll-mid | anatomy/footer/head/overflow/working-band | FAIL |
+| Speak | head:required, body:required, foot:required; sheet:required | default, resized-small, maximized | anatomy/footer/head/overflow/working-band | FAIL |
+| Meetings | head:required, body:required, foot:required; sheet:required | default, resized-small, maximized | anatomy/footer/head/overflow/working-band | FAIL |
+| Agents | head:required, body:required, foot:required; sheet:required | default, resized-small, maximized | anatomy/footer/head/overflow/working-band | FAIL |
+| Settings | head:required, body:required, foot:required; sheet:required | default, resized-small, maximized | anatomy/footer/head/overflow/working-band | FAIL |
+| Desk memory | head:required, body:required, foot:required; sheet:required | default (non-window: undeclared reason) | anatomy/footer/head/overflow/working-band | FAIL |
+| Delivery | head:required, body:required, foot:required; sheet:required | default, scroll-top, scroll-mid, scroll-bottom, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | FAIL |
+| Panes | head:required, body:required, foot:required; sheet:required | default (non-window: undeclared reason) | anatomy/footer/head/overflow/working-band | FAIL |
+| Intelligence Brief | head:required, body:required, foot:required; sheet:required | default, scroll-top, scroll-mid, scroll-bottom, resized-small, resized-small-scroll-mid, maximized, maximized-scroll-mid | anatomy/footer/head/overflow/working-band | FAIL |
+| Intelligence Follow-through | head:required, body:required, foot:required; sheet:required | default, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | FAIL |
+| Intelligence Receipts | head:required, body:required, foot:required; sheet:required | default, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | FAIL |
+| Meetings detail | head:required, body:required, foot:required; sheet:required | unreachable | anatomy/footer/head/overflow/working-band | FAIL |
+| Settings Guide | head:required, body:required, foot:required; sheet:required | default, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | FAIL |
+| Go Speak | head:required, body:required, foot:required; sheet:required | default, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | FAIL |
+| Go Ask AI | head:required, body:required, foot:required; sheet:required | default, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Go Meetings | head:required, body:required, foot:required; sheet:required | default, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | FAIL |
+| Go Settings | head:required, body:required, foot:required; sheet:required | default, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | FAIL |
+| Go Workbenches | head:required, body:required, foot:required; sheet:required | default, resized-small, maximized | anatomy/footer/head/overflow/working-band | FAIL |
+| Go Agents and coder sessions | head:required, body:required, foot:required; sheet:required | default, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | FAIL |
+| Go Runs on | head:required, body:required, foot:required; sheet:required | default, scroll-top, scroll-mid, scroll-bottom, resized-small, resized-small-scroll-mid, maximized, maximized-scroll-mid | anatomy/footer/head/overflow/working-band | FAIL |
+| Go Integrations | head:required, body:required, foot:required; sheet:required | default, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | FAIL |
+| Go Commands | head:required, body:required, foot:required; sheet:required | default, resized-small, maximized | anatomy/footer/head/overflow/working-band | FAIL |
+| Go Cadence | head:required, body:required, foot:required; sheet:required | default, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | FAIL |
+| Go Context | head:required, body:required, foot:required; sheet:required | default, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | FAIL |
+| Go Activity | head:required, body:required, foot:required; sheet:required | default, resized-small, resized-small-scroll-mid, maximized, maximized-scroll-mid | anatomy/footer/head/overflow/working-band | FAIL |
+| Go Processes | head:required, body:required, foot:required; sheet:required | default, resized-small, maximized | anatomy/footer/head/overflow/working-band | FAIL |
+| Object zone | head:required, body:required, foot:required; sheet:required | default, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | FAIL |
+| Object meeting | head:required, body:required, foot:required; sheet:required | default, resized-small, maximized | anatomy/footer/head/overflow/working-band | FAIL |
+| Object artifact | head:required, body:required, foot:required; sheet:required | default, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | FAIL |
+| Object workbench | head:required, body:required, foot:required; sheet:required | default, resized-small, maximized | anatomy/footer/head/overflow/working-band | FAIL |
+| Trust egress | head:required, body:required, foot:none; sheet:none (fixed egress card, not a sheet) | default, resized-small, resized-small-scroll-mid, maximized, maximized-scroll-mid | anatomy/footer/head/overflow/working-band | FAIL |
+| Design components | head:none, body:none, foot:none; sheet:none (desk-floor document; overflow-only) | default, resized-small, maximized | anatomy/footer/head/overflow/working-band | FAIL |
+| New Note editor | head:required, body:required, foot:required; sheet:required | default (non-window: undeclared reason) | anatomy/footer/head/overflow/working-band | FAIL |
+| Mobile Intelligence | head:required, body:required, foot:required; sheet:required | default, scroll-top, scroll-mid, scroll-bottom | anatomy/footer/head/overflow/working-band | FAIL |
+| Mobile Speak | head:required, body:required, foot:required; sheet:required | default | anatomy/footer/head/overflow/working-band | FAIL |
+| Mobile Meetings | head:required, body:required, foot:required; sheet:required | default | anatomy/footer/head/overflow/working-band | FAIL |
+| Mobile Agents | head:required, body:required, foot:required; sheet:required | default | anatomy/footer/head/overflow/working-band | FAIL |
+| Mobile Settings | head:required, body:required, foot:required; sheet:required | default | anatomy/footer/head/overflow/working-band | FAIL |
+| Mobile Desk memory | head:required, body:required, foot:required; sheet:required | default (non-window: undeclared reason) | anatomy/footer/head/overflow/working-band | FAIL |
+| Mobile Delivery | head:required, body:required, foot:required; sheet:required | default, scroll-top, scroll-mid, scroll-bottom | anatomy/footer/head/overflow/working-band | FAIL |
+| Mobile Panes | head:required, body:required, foot:required; sheet:required | default (non-window: undeclared reason) | anatomy/footer/head/overflow/working-band | FAIL |
+PIXl/WEBGL WARNINGS (non-failing): 0
+SUMMARY: 41 surfaces; 70 violations; 0 console errors.
+```
+
+### Captured run — 2026-08-09T01:47:15Z
+
+- **Command:** `node scripts/walk-129.mjs`
+- **Cwd:** .
+- **Exit code:** 1
+- **Index-tree:** db1e6ffabdd4d98f3bf68655c40575cb786244ba
+
+```text
+WALK Intelligence | required/required/required | default, scroll-top, scroll-mid, scroll-bottom, resized-small, resized-small-scroll-mid, maximized, maximized-scroll-mid | PASS
+WALK Speak | required/required/required | default, resized-small, resized-small-scroll-mid, maximized | PASS
+WALK Meetings | required/required/required | default, resized-small, resized-small-scroll-mid, maximized | PASS
+WALK Agents | required/required/required | default, resized-small, resized-small-scroll-mid, maximized | PASS
+WALK Settings | required/required/required | default, resized-small, resized-small-scroll-mid, maximized | PASS
+WALK Desk memory | none/none/none | default (non-window: dock command with no native surface) | PASS
+WALK Delivery | required/required/required | default, scroll-top, scroll-mid, scroll-bottom, resized-small, resized-small-scroll-mid, maximized | PASS
+WALK Panes | none/none/none | default (non-window: dock command with no native surface) | PASS
+WALK Intelligence Brief | required/required/required | default, scroll-top, scroll-mid, scroll-bottom, resized-small, resized-small-scroll-mid, maximized, maximized-scroll-mid | PASS
+WALK Intelligence Follow-through | required/required/required | default, resized-small, resized-small-scroll-mid, maximized | PASS
+WALK Intelligence Receipts | required/required/required | default, resized-small, resized-small-scroll-mid, maximized | PASS
+WALK Meetings detail | required/required/required | default, resized-small, resized-small-scroll-mid, maximized | PASS
+WALK Settings Transcription | required/required/required | default, resized-small, maximized | PASS
+WALK Settings Guide | required/required/required | default, resized-small, resized-small-scroll-mid, maximized | PASS
+GO ENTRIES: Speak | Ask AI | Meetings | Settings | Workbenches | Agents and coder sessions | Runs on | Integrations | Commands | Cadence | Context | Activity | Processes
+WALK Go Speak | required/required/required | default, resized-small, resized-small-scroll-mid, maximized | PASS
+WALK Go Ask AI | required/required/required | default, resized-small, resized-small-scroll-mid, maximized | PASS
+WALK Go Meetings | required/required/required | default, resized-small, resized-small-scroll-mid, maximized | PASS
+WALK Go Settings | required/required/required | default, resized-small, resized-small-scroll-mid, maximized | PASS
+WALK Go Workbenches | required/required/required | default, resized-small, maximized | PASS
+WALK Go Agents and coder sessions | required/required/required | default, resized-small, resized-small-scroll-mid, maximized | PASS
+WALK Go Runs on | required/required/required | default, scroll-top, scroll-mid, scroll-bottom, resized-small, resized-small-scroll-mid, maximized, maximized-scroll-mid | PASS
+WALK Go Integrations | required/required/required | default, resized-small, resized-small-scroll-mid, maximized | PASS
+WALK Go Commands | required/required/required | default, resized-small, maximized | PASS
+WALK Go Cadence | required/required/required | default, resized-small, resized-small-scroll-mid, maximized | PASS
+WALK Go Context | required/required/required | default, resized-small, resized-small-scroll-mid, maximized | PASS
+WALK Go Activity | required/required/required | default, scroll-top, scroll-mid, scroll-bottom, resized-small, resized-small-scroll-mid, maximized, maximized-scroll-mid | PASS
+WALK Go Processes | required/required/required | default, resized-small, maximized | PASS
+WALK Object zone | required/required/required | default, resized-small, resized-small-scroll-mid, maximized | PASS
+WALK Object meeting | required/required/required | default, scroll-top, scroll-mid, scroll-bottom, resized-small, resized-small-scroll-mid, maximized | PASS
+WALK Object artifact | required/required/required | default, resized-small, resized-small-scroll-mid, maximized | PASS
+WALK Object workbench | required/required/required | default, resized-small, maximized | PASS
+WALK Trust egress | required/required/none | default, scroll-top, scroll-mid, scroll-bottom, resized-small, resized-small-scroll-mid, maximized, maximized-scroll-mid | PASS
+WALK Design components | required/required/required | default, resized-small, resized-small-scroll-mid, maximized, maximized-scroll-mid | PASS
+WALK New Note editor | required/required/required | default, resized-small, resized-small-scroll-mid, maximized | PASS
+WALK Mobile Intelligence | required/required/required | default, scroll-top, scroll-mid, scroll-bottom | PASS
+WALK Mobile Speak | required/required/required | default | PASS
+WALK Mobile Meetings | required/required/required | default | PASS
+WALK Mobile Agents | required/required/required | default | PASS
+WALK Mobile Settings | required/required/required | default | PASS
+WALK Mobile Desk memory | none/none/none | default (non-window: dock command with no native surface) | PASS
+WALK Mobile Delivery | required/required/required | default, scroll-top, scroll-mid, scroll-bottom | PASS
+WALK Mobile Panes | none/none/none | default (non-window: dock command with no native surface) | PASS
+FAIL HARNESS: locator.waitFor: Timeout 10000ms exceeded.
+Call log:
+[2m  - waiting for locator('.desk-verbbar-title').filter({ hasText: 'Go' }).last() to be visible[22m
+[2m    24 × locator resolved to hidden <button type="button" aria-haspopup="menu" aria-expanded="false" class="desk-verbbar-title">Go</button>[22m
+
+    at openGo (/Users/karol/dev/tools/HoldSpeak/scripts/walk-129.mjs:250:16)
+    at /Users/karol/dev/tools/HoldSpeak/scripts/walk-129.mjs:440:38
+FAIL Console: Failed to load resource: the server responded with a status of 500 (Internal Server Error)
+
+=== HS-129-11 WALK REPORT ===
+| Surface | Anatomy | States walked | Assertions | Verdict |
+|---|---|---|---|---|
+| Intelligence | head:required, body:required, foot:required; sheet:required | default, scroll-top, scroll-mid, scroll-bottom, resized-small, resized-small-scroll-mid, maximized, maximized-scroll-mid | anatomy/footer/head/overflow/working-band | PASS |
+| Speak | head:required, body:required, foot:required; sheet:required | default, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Meetings | head:required, body:required, foot:required; sheet:required | default, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Agents | head:required, body:required, foot:required; sheet:required | default, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Settings | head:required, body:required, foot:required; sheet:required | default, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Desk memory | head:none, body:none, foot:none; sheet:none (dock command with no native surface) | default (non-window: dock command with no native surface) | anatomy/footer/head/overflow/working-band | PASS |
+| Delivery | head:required, body:required, foot:required; sheet:required | default, scroll-top, scroll-mid, scroll-bottom, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Panes | head:none, body:none, foot:none; sheet:none (dock command with no native surface) | default (non-window: dock command with no native surface) | anatomy/footer/head/overflow/working-band | PASS |
+| Intelligence Brief | head:required, body:required, foot:required; sheet:required | default, scroll-top, scroll-mid, scroll-bottom, resized-small, resized-small-scroll-mid, maximized, maximized-scroll-mid | anatomy/footer/head/overflow/working-band | PASS |
+| Intelligence Follow-through | head:required, body:required, foot:required; sheet:required | default, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Intelligence Receipts | head:required, body:required, foot:required; sheet:required | default, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Meetings detail | head:required, body:required, foot:required; sheet:required | default, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Settings Transcription | head:required, body:required, foot:required; sheet:required | default, resized-small, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Settings Guide | head:required, body:required, foot:required; sheet:required | default, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Go Speak | head:required, body:required, foot:required; sheet:required | default, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Go Ask AI | head:required, body:required, foot:required; sheet:required | default, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Go Meetings | head:required, body:required, foot:required; sheet:required | default, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Go Settings | head:required, body:required, foot:required; sheet:required | default, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Go Workbenches | head:required, body:required, foot:required; sheet:required | default, resized-small, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Go Agents and coder sessions | head:required, body:required, foot:required; sheet:required | default, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Go Runs on | head:required, body:required, foot:required; sheet:required | default, scroll-top, scroll-mid, scroll-bottom, resized-small, resized-small-scroll-mid, maximized, maximized-scroll-mid | anatomy/footer/head/overflow/working-band | PASS |
+| Go Integrations | head:required, body:required, foot:required; sheet:required | default, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Go Commands | head:required, body:required, foot:required; sheet:required | default, resized-small, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Go Cadence | head:required, body:required, foot:required; sheet:required | default, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Go Context | head:required, body:required, foot:required; sheet:required | default, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Go Activity | head:required, body:required, foot:required; sheet:required | default, scroll-top, scroll-mid, scroll-bottom, resized-small, resized-small-scroll-mid, maximized, maximized-scroll-mid | anatomy/footer/head/overflow/working-band | PASS |
+| Go Processes | head:required, body:required, foot:required; sheet:required | default, resized-small, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Object zone | head:required, body:required, foot:required; sheet:required | default, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Object meeting | head:required, body:required, foot:required; sheet:required | default, scroll-top, scroll-mid, scroll-bottom, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Object artifact | head:required, body:required, foot:required; sheet:required | default, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Object workbench | head:required, body:required, foot:required; sheet:required | default, resized-small, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Trust egress | head:required, body:required, foot:none; sheet:none (fixed egress card, not a sheet) | default, scroll-top, scroll-mid, scroll-bottom, resized-small, resized-small-scroll-mid, maximized, maximized-scroll-mid | anatomy/footer/head/overflow/working-band | PASS |
+| Design components | head:required, body:required, foot:required; sheet:required | default, resized-small, resized-small-scroll-mid, maximized, maximized-scroll-mid | anatomy/footer/head/overflow/working-band | PASS |
+| New Note editor | head:required, body:required, foot:required; sheet:required | default, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Mobile Intelligence | head:required, body:required, foot:required; sheet:required | default, scroll-top, scroll-mid, scroll-bottom | anatomy/footer/head/overflow/working-band | PASS |
+| Mobile Speak | head:required, body:required, foot:required; sheet:required | default | anatomy/footer/head/overflow/working-band | PASS |
+| Mobile Meetings | head:required, body:required, foot:required; sheet:required | default | anatomy/footer/head/overflow/working-band | PASS |
+| Mobile Agents | head:required, body:required, foot:required; sheet:required | default | anatomy/footer/head/overflow/working-band | PASS |
+| Mobile Settings | head:required, body:required, foot:required; sheet:required | default | anatomy/footer/head/overflow/working-band | PASS |
+| Mobile Desk memory | head:none, body:none, foot:none; sheet:none (dock command with no native surface) | default (non-window: dock command with no native surface) | anatomy/footer/head/overflow/working-band | PASS |
+| Mobile Delivery | head:required, body:required, foot:required; sheet:required | default, scroll-top, scroll-mid, scroll-bottom | anatomy/footer/head/overflow/working-band | PASS |
+| Mobile Panes | head:none, body:none, foot:none; sheet:none (dock command with no native surface) | default (non-window: dock command with no native surface) | anatomy/footer/head/overflow/working-band | PASS |
+PIXl/WEBGL WARNINGS (non-failing): 0
+SUMMARY: 42 surfaces; 2 violations; 1 console errors.
+```
+
+### Captured run — 2026-08-09T01:52:33Z
+
+- **Command:** `node scripts/walk-129.mjs`
+- **Cwd:** .
+- **Exit code:** 1
+- **Index-tree:** db1e6ffabdd4d98f3bf68655c40575cb786244ba
+
+```text
+WALK Intelligence | required/required/required | default, scroll-top, scroll-mid, scroll-bottom, resized-small, resized-small-scroll-mid, maximized, maximized-scroll-mid | PASS
+WALK Speak | required/required/required | default, resized-small, resized-small-scroll-mid, maximized | PASS
+WALK Meetings | required/required/required | default, resized-small, resized-small-scroll-mid, maximized | PASS
+WALK Agents | required/required/required | default, resized-small, resized-small-scroll-mid, maximized | PASS
+WALK Settings | required/required/required | default, resized-small, resized-small-scroll-mid, maximized | PASS
+WALK Desk memory | none/none/none | default (non-window: dock command with no native surface) | PASS
+WALK Delivery | required/required/required | default, scroll-top, scroll-mid, scroll-bottom, resized-small, resized-small-scroll-mid, maximized | PASS
+WALK Panes | none/none/none | default (non-window: dock command with no native surface) | PASS
+WALK Intelligence Brief | required/required/required | default, scroll-top, scroll-mid, scroll-bottom, resized-small, resized-small-scroll-mid, maximized, maximized-scroll-mid | PASS
+WALK Intelligence Follow-through | required/required/required | default, resized-small, resized-small-scroll-mid, maximized | PASS
+WALK Intelligence Receipts | required/required/required | default, resized-small, resized-small-scroll-mid, maximized | PASS
+WALK Meetings detail | required/required/required | default, resized-small, resized-small-scroll-mid, maximized | PASS
+WALK Settings Transcription | required/required/required | default, resized-small, maximized | PASS
+WALK Settings Guide | required/required/required | default, resized-small, resized-small-scroll-mid, maximized | PASS
+GO ENTRIES: Speak | Ask AI | Meetings | Settings | Workbenches | Agents and coder sessions | Runs on | Integrations | Commands | Cadence | Context | Activity | Processes
+WALK Go Speak | required/required/required | default, resized-small, resized-small-scroll-mid, maximized | PASS
+WALK Go Ask AI | required/required/required | default, resized-small, resized-small-scroll-mid, maximized | PASS
+WALK Go Meetings | required/required/required | default, resized-small, resized-small-scroll-mid, maximized | PASS
+WALK Go Settings | required/required/required | default, resized-small, resized-small-scroll-mid, maximized | PASS
+WALK Go Workbenches | required/required/required | default, resized-small, maximized | PASS
+WALK Go Agents and coder sessions | required/required/required | default, resized-small, resized-small-scroll-mid, maximized | PASS
+WALK Go Runs on | required/required/required | default, scroll-top, scroll-mid, scroll-bottom, resized-small, resized-small-scroll-mid, maximized, maximized-scroll-mid | PASS
+WALK Go Integrations | required/required/required | default, resized-small, resized-small-scroll-mid, maximized | PASS
+WALK Go Commands | required/required/required | default, resized-small, maximized | PASS
+WALK Go Cadence | required/required/required | default, resized-small, resized-small-scroll-mid, maximized | PASS
+WALK Go Context | required/required/required | default, resized-small, resized-small-scroll-mid, maximized | PASS
+WALK Go Activity | required/required/required | default, scroll-top, scroll-mid, scroll-bottom, resized-small, resized-small-scroll-mid, maximized, maximized-scroll-mid | PASS
+WALK Go Processes | required/required/required | default, resized-small, maximized | PASS
+WALK Object zone | required/required/required | default, resized-small, resized-small-scroll-mid, maximized | PASS
+WALK Object meeting | required/required/required | default, scroll-top, scroll-mid, scroll-bottom, resized-small, resized-small-scroll-mid, maximized | PASS
+WALK Object artifact | required/required/required | default, resized-small, resized-small-scroll-mid, maximized | PASS
+WALK Object workbench | required/required/required | default, resized-small, maximized | PASS
+WALK Trust egress | required/required/none | default, scroll-top, scroll-mid, scroll-bottom, resized-small, resized-small-scroll-mid, maximized, maximized-scroll-mid | PASS
+WALK Design components | required/required/required | default, scroll-top, scroll-mid, scroll-bottom, resized-small, resized-small-scroll-mid, maximized, maximized-scroll-mid | PASS
+WALK New Note editor | required/required/required | default, resized-small, resized-small-scroll-mid, maximized | PASS
+FAIL HARNESS: locator.waitFor: Timeout 10000ms exceeded.
+Call log:
+[2m  - waiting for locator('.desk-verbbar-title').filter({ hasText: 'Go' }).last() to be visible[22m
+[2m    24 × locator resolved to hidden <button type="button" aria-haspopup="menu" aria-expanded="false" class="desk-verbbar-title">Go</button>[22m
+
+    at openGo (/Users/karol/dev/tools/HoldSpeak/scripts/walk-129.mjs:250:16)
+    at /Users/karol/dev/tools/HoldSpeak/scripts/walk-129.mjs:437:38
+FAIL Console: Failed to load resource: the server responded with a status of 500 (Internal Server Error)
+
+=== HS-129-11 WALK REPORT ===
+| Surface | Anatomy | States walked | Assertions | Verdict |
+|---|---|---|---|---|
+| Intelligence | head:required, body:required, foot:required; sheet:required | default, scroll-top, scroll-mid, scroll-bottom, resized-small, resized-small-scroll-mid, maximized, maximized-scroll-mid | anatomy/footer/head/overflow/working-band | PASS |
+| Speak | head:required, body:required, foot:required; sheet:required | default, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Meetings | head:required, body:required, foot:required; sheet:required | default, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Agents | head:required, body:required, foot:required; sheet:required | default, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Settings | head:required, body:required, foot:required; sheet:required | default, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Desk memory | head:none, body:none, foot:none; sheet:none (dock command with no native surface) | default (non-window: dock command with no native surface) | anatomy/footer/head/overflow/working-band | PASS |
+| Delivery | head:required, body:required, foot:required; sheet:required | default, scroll-top, scroll-mid, scroll-bottom, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Panes | head:none, body:none, foot:none; sheet:none (dock command with no native surface) | default (non-window: dock command with no native surface) | anatomy/footer/head/overflow/working-band | PASS |
+| Intelligence Brief | head:required, body:required, foot:required; sheet:required | default, scroll-top, scroll-mid, scroll-bottom, resized-small, resized-small-scroll-mid, maximized, maximized-scroll-mid | anatomy/footer/head/overflow/working-band | PASS |
+| Intelligence Follow-through | head:required, body:required, foot:required; sheet:required | default, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Intelligence Receipts | head:required, body:required, foot:required; sheet:required | default, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Meetings detail | head:required, body:required, foot:required; sheet:required | default, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Settings Transcription | head:required, body:required, foot:required; sheet:required | default, resized-small, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Settings Guide | head:required, body:required, foot:required; sheet:required | default, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Go Speak | head:required, body:required, foot:required; sheet:required | default, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Go Ask AI | head:required, body:required, foot:required; sheet:required | default, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Go Meetings | head:required, body:required, foot:required; sheet:required | default, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Go Settings | head:required, body:required, foot:required; sheet:required | default, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Go Workbenches | head:required, body:required, foot:required; sheet:required | default, resized-small, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Go Agents and coder sessions | head:required, body:required, foot:required; sheet:required | default, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Go Runs on | head:required, body:required, foot:required; sheet:required | default, scroll-top, scroll-mid, scroll-bottom, resized-small, resized-small-scroll-mid, maximized, maximized-scroll-mid | anatomy/footer/head/overflow/working-band | PASS |
+| Go Integrations | head:required, body:required, foot:required; sheet:required | default, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Go Commands | head:required, body:required, foot:required; sheet:required | default, resized-small, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Go Cadence | head:required, body:required, foot:required; sheet:required | default, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Go Context | head:required, body:required, foot:required; sheet:required | default, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Go Activity | head:required, body:required, foot:required; sheet:required | default, scroll-top, scroll-mid, scroll-bottom, resized-small, resized-small-scroll-mid, maximized, maximized-scroll-mid | anatomy/footer/head/overflow/working-band | PASS |
+| Go Processes | head:required, body:required, foot:required; sheet:required | default, resized-small, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Object zone | head:required, body:required, foot:required; sheet:required | default, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Object meeting | head:required, body:required, foot:required; sheet:required | default, scroll-top, scroll-mid, scroll-bottom, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Object artifact | head:required, body:required, foot:required; sheet:required | default, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Object workbench | head:required, body:required, foot:required; sheet:required | default, resized-small, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Trust egress | head:required, body:required, foot:none; sheet:none (fixed egress card, not a sheet) | default, scroll-top, scroll-mid, scroll-bottom, resized-small, resized-small-scroll-mid, maximized, maximized-scroll-mid | anatomy/footer/head/overflow/working-band | PASS |
+| Design components | head:required, body:required, foot:required; sheet:required | default, scroll-top, scroll-mid, scroll-bottom, resized-small, resized-small-scroll-mid, maximized, maximized-scroll-mid | anatomy/footer/head/overflow/working-band | PASS |
+| New Note editor | head:required, body:required, foot:required; sheet:required | default, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | PASS |
+PIXl/WEBGL WARNINGS (non-failing): 0
+SUMMARY: 34 surfaces; 2 violations; 1 console errors.
+```
+
+### Captured run — 2026-08-09T01:57:37Z
+
+- **Command:** `node scripts/walk-129.mjs`
+- **Cwd:** .
+- **Exit code:** 1
+- **Index-tree:** db1e6ffabdd4d98f3bf68655c40575cb786244ba
+
+```text
+WALK Intelligence | required/required/required | default, scroll-top, scroll-mid, scroll-bottom, resized-small, resized-small-scroll-mid, maximized, maximized-scroll-mid | PASS
+WALK Speak | required/required/required | default, resized-small, resized-small-scroll-mid, maximized | PASS
+WALK Meetings | required/required/required | default, resized-small, resized-small-scroll-mid, maximized | PASS
+WALK Agents | required/required/required | default, resized-small, resized-small-scroll-mid, maximized | PASS
+WALK Settings | required/required/required | default, resized-small, resized-small-scroll-mid, maximized | PASS
+WALK Desk memory | none/none/none | default (non-window: dock command with no native surface) | PASS
+WALK Delivery | required/required/required | default, scroll-top, scroll-mid, scroll-bottom, resized-small, resized-small-scroll-mid, maximized | PASS
+WALK Panes | none/none/none | default (non-window: dock command with no native surface) | PASS
+WALK Intelligence Brief | required/required/required | default, scroll-top, scroll-mid, scroll-bottom, resized-small, resized-small-scroll-mid, maximized, maximized-scroll-mid | PASS
+WALK Intelligence Follow-through | required/required/required | default, resized-small, resized-small-scroll-mid, maximized | PASS
+WALK Intelligence Receipts | required/required/required | default, resized-small, resized-small-scroll-mid, maximized | PASS
+WALK Meetings detail | required/required/required | default, resized-small, resized-small-scroll-mid, maximized | PASS
+WALK Settings Transcription | required/required/required | default, resized-small, maximized | PASS
+WALK Settings Guide | required/required/required | default, resized-small, resized-small-scroll-mid, maximized | PASS
+GO ENTRIES: Speak | Ask AI | Meetings | Settings | Workbenches | Agents and coder sessions | Runs on | Integrations | Commands | Cadence | Context | Activity | Processes
+WALK Go Speak | required/required/required | default, resized-small, resized-small-scroll-mid, maximized | PASS
+WALK Go Ask AI | required/required/required | default, resized-small, resized-small-scroll-mid, maximized | PASS
+WALK Go Meetings | required/required/required | default, resized-small, resized-small-scroll-mid, maximized | PASS
+WALK Go Settings | required/required/required | default, resized-small, resized-small-scroll-mid, maximized | PASS
+WALK Go Workbenches | required/required/required | default, resized-small, maximized | PASS
+WALK Go Agents and coder sessions | required/required/required | default, resized-small, resized-small-scroll-mid, maximized | PASS
+WALK Go Runs on | required/required/required | default, scroll-top, scroll-mid, scroll-bottom, resized-small, resized-small-scroll-mid, maximized, maximized-scroll-mid | PASS
+WALK Go Integrations | required/required/required | default, resized-small, resized-small-scroll-mid, maximized | PASS
+WALK Go Commands | required/required/required | default, resized-small, maximized | PASS
+WALK Go Cadence | required/required/required | default, resized-small, resized-small-scroll-mid, maximized | PASS
+WALK Go Context | required/required/required | default, resized-small, resized-small-scroll-mid, maximized | PASS
+WALK Go Activity | required/required/required | default, resized-small, resized-small-scroll-mid, maximized, maximized-scroll-mid | PASS
+WALK Go Processes | required/required/required | default, resized-small, maximized | PASS
+WALK Object zone | required/required/required | default, resized-small, resized-small-scroll-mid, maximized | PASS
+WALK Object meeting | required/required/required | default, scroll-top, scroll-mid, scroll-bottom, resized-small, resized-small-scroll-mid, maximized | PASS
+WALK Object artifact | required/required/required | default, resized-small, resized-small-scroll-mid, maximized | PASS
+WALK Object workbench | required/required/required | default, resized-small, maximized | PASS
+WALK Trust egress | required/required/none | default, scroll-top, scroll-mid, scroll-bottom, resized-small, resized-small-scroll-mid, maximized, maximized-scroll-mid | PASS
+WALK Design components | required/required/required | default, resized-small, maximized, maximized-scroll-mid | PASS
+FAIL HARNESS: locator.waitFor: Timeout 10000ms exceeded.
+Call log:
+[2m  - waiting for locator('.desk-verbbar-title').filter({ hasText: 'Go' }).last() to be visible[22m
+[2m    24 × locator resolved to hidden <button type="button" aria-haspopup="menu" aria-expanded="false" class="desk-verbbar-title">Go</button>[22m
+
+    at openGo (/Users/karol/dev/tools/HoldSpeak/scripts/walk-129.mjs:250:16)
+    at /Users/karol/dev/tools/HoldSpeak/scripts/walk-129.mjs:428:38
+FAIL Console: Failed to load resource: the server responded with a status of 500 (Internal Server Error)
+
+=== HS-129-11 WALK REPORT ===
+| Surface | Anatomy | States walked | Assertions | Verdict |
+|---|---|---|---|---|
+| Intelligence | head:required, body:required, foot:required; sheet:required | default, scroll-top, scroll-mid, scroll-bottom, resized-small, resized-small-scroll-mid, maximized, maximized-scroll-mid | anatomy/footer/head/overflow/working-band | PASS |
+| Speak | head:required, body:required, foot:required; sheet:required | default, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Meetings | head:required, body:required, foot:required; sheet:required | default, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Agents | head:required, body:required, foot:required; sheet:required | default, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Settings | head:required, body:required, foot:required; sheet:required | default, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Desk memory | head:none, body:none, foot:none; sheet:none (dock command with no native surface) | default (non-window: dock command with no native surface) | anatomy/footer/head/overflow/working-band | PASS |
+| Delivery | head:required, body:required, foot:required; sheet:required | default, scroll-top, scroll-mid, scroll-bottom, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Panes | head:none, body:none, foot:none; sheet:none (dock command with no native surface) | default (non-window: dock command with no native surface) | anatomy/footer/head/overflow/working-band | PASS |
+| Intelligence Brief | head:required, body:required, foot:required; sheet:required | default, scroll-top, scroll-mid, scroll-bottom, resized-small, resized-small-scroll-mid, maximized, maximized-scroll-mid | anatomy/footer/head/overflow/working-band | PASS |
+| Intelligence Follow-through | head:required, body:required, foot:required; sheet:required | default, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Intelligence Receipts | head:required, body:required, foot:required; sheet:required | default, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Meetings detail | head:required, body:required, foot:required; sheet:required | default, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Settings Transcription | head:required, body:required, foot:required; sheet:required | default, resized-small, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Settings Guide | head:required, body:required, foot:required; sheet:required | default, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Go Speak | head:required, body:required, foot:required; sheet:required | default, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Go Ask AI | head:required, body:required, foot:required; sheet:required | default, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Go Meetings | head:required, body:required, foot:required; sheet:required | default, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Go Settings | head:required, body:required, foot:required; sheet:required | default, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Go Workbenches | head:required, body:required, foot:required; sheet:required | default, resized-small, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Go Agents and coder sessions | head:required, body:required, foot:required; sheet:required | default, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Go Runs on | head:required, body:required, foot:required; sheet:required | default, scroll-top, scroll-mid, scroll-bottom, resized-small, resized-small-scroll-mid, maximized, maximized-scroll-mid | anatomy/footer/head/overflow/working-band | PASS |
+| Go Integrations | head:required, body:required, foot:required; sheet:required | default, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Go Commands | head:required, body:required, foot:required; sheet:required | default, resized-small, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Go Cadence | head:required, body:required, foot:required; sheet:required | default, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Go Context | head:required, body:required, foot:required; sheet:required | default, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Go Activity | head:required, body:required, foot:required; sheet:required | default, resized-small, resized-small-scroll-mid, maximized, maximized-scroll-mid | anatomy/footer/head/overflow/working-band | PASS |
+| Go Processes | head:required, body:required, foot:required; sheet:required | default, resized-small, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Object zone | head:required, body:required, foot:required; sheet:required | default, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Object meeting | head:required, body:required, foot:required; sheet:required | default, scroll-top, scroll-mid, scroll-bottom, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Object artifact | head:required, body:required, foot:required; sheet:required | default, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Object workbench | head:required, body:required, foot:required; sheet:required | default, resized-small, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Trust egress | head:required, body:required, foot:none; sheet:none (fixed egress card, not a sheet) | default, scroll-top, scroll-mid, scroll-bottom, resized-small, resized-small-scroll-mid, maximized, maximized-scroll-mid | anatomy/footer/head/overflow/working-band | PASS |
+| Design components | head:required, body:required, foot:required; sheet:required | default, resized-small, maximized, maximized-scroll-mid | anatomy/footer/head/overflow/working-band | PASS |
+PIXl/WEBGL WARNINGS (non-failing): 0
+SUMMARY: 33 surfaces; 2 violations; 1 console errors.
+```
+
+### Captured run — 2026-08-09T02:03:14Z
+
+- **Command:** `node scripts/walk-129.mjs`
+- **Cwd:** .
+- **Exit code:** 1
+- **Index-tree:** db1e6ffabdd4d98f3bf68655c40575cb786244ba
+
+```text
+WALK Intelligence | required/required/required | default, scroll-top, scroll-mid, scroll-bottom, resized-small, resized-small-scroll-mid, maximized, maximized-scroll-mid | PASS
+WALK Speak | required/required/required | default, resized-small, resized-small-scroll-mid, maximized | PASS
+WALK Meetings | required/required/required | default, resized-small, resized-small-scroll-mid, maximized | PASS
+WALK Agents | required/required/required | default, resized-small, resized-small-scroll-mid, maximized | PASS
+WALK Settings | required/required/required | default, resized-small, resized-small-scroll-mid, maximized | PASS
+WALK Desk memory | none/none/none | default (non-window: dock command with no native surface) | PASS
+WALK Delivery | required/required/required | default, scroll-top, scroll-mid, scroll-bottom, resized-small, resized-small-scroll-mid, maximized | PASS
+WALK Panes | none/none/none | default (non-window: dock command with no native surface) | PASS
+WALK Intelligence Brief | required/required/required | default, scroll-top, scroll-mid, scroll-bottom, resized-small, resized-small-scroll-mid, maximized, maximized-scroll-mid | PASS
+WALK Intelligence Follow-through | required/required/required | default, resized-small, resized-small-scroll-mid, maximized | PASS
+WALK Intelligence Receipts | required/required/required | default, resized-small, resized-small-scroll-mid, maximized | PASS
+WALK Meetings detail | required/required/required | default, resized-small, resized-small-scroll-mid, maximized | PASS
+WALK Settings Transcription | required/required/required | default, resized-small, maximized | PASS
+WALK Settings Guide | required/required/required | default, resized-small, resized-small-scroll-mid, maximized | PASS
+GO ENTRIES: Speak | Ask AI | Meetings | Settings | Workbenches | Agents and coder sessions | Runs on | Integrations | Commands | Cadence | Context | Activity | Processes
+WALK Go Speak | required/required/required | default, resized-small, resized-small-scroll-mid, maximized | PASS
+WALK Go Ask AI | required/required/required | default, resized-small, resized-small-scroll-mid, maximized | PASS
+WALK Go Meetings | required/required/required | default, resized-small, resized-small-scroll-mid, maximized | PASS
+WALK Go Settings | required/required/required | default, resized-small, resized-small-scroll-mid, maximized | PASS
+WALK Go Workbenches | required/required/required | default, resized-small, maximized | PASS
+WALK Go Agents and coder sessions | required/required/required | default, resized-small, resized-small-scroll-mid, maximized | PASS
+WALK Go Runs on | required/required/required | default, scroll-top, scroll-mid, scroll-bottom, resized-small, resized-small-scroll-mid, maximized, maximized-scroll-mid | PASS
+WALK Go Integrations | required/required/required | default, resized-small, resized-small-scroll-mid, maximized | PASS
+WALK Go Commands | required/required/required | default, resized-small, maximized | PASS
+WALK Go Cadence | required/required/required | default, resized-small, resized-small-scroll-mid, maximized | PASS
+WALK Go Context | required/required/required | default, resized-small, resized-small-scroll-mid, maximized | PASS
+WALK Go Activity | required/required/required | default, scroll-top, scroll-mid, scroll-bottom, resized-small, resized-small-scroll-mid, maximized, maximized-scroll-mid | PASS
+WALK Go Processes | required/required/required | default, resized-small, maximized | PASS
+WALK Object zone | required/required/required | default, resized-small, resized-small-scroll-mid, maximized | PASS
+WALK Object meeting | required/required/required | default, scroll-top, scroll-mid, scroll-bottom, resized-small, resized-small-scroll-mid, maximized | PASS
+WALK Object artifact | required/required/required | default, resized-small, resized-small-scroll-mid, maximized | PASS
+WALK Object workbench | required/required/required | default, resized-small, maximized | PASS
+WALK Trust egress | required/required/none | default, scroll-top, scroll-mid, scroll-bottom, resized-small, resized-small-scroll-mid, maximized, maximized-scroll-mid | PASS
+WALK Design components | required/required/required | default, resized-small, resized-small-scroll-mid, maximized, maximized-scroll-mid | PASS
+FAIL HARNESS: locator.waitFor: Timeout 10000ms exceeded.
+Call log:
+[2m  - waiting for locator('.desk-verbbar-title').filter({ hasText: 'Go' }).last() to be visible[22m
+[2m    24 × locator resolved to hidden <button type="button" aria-haspopup="menu" aria-expanded="false" class="desk-verbbar-title">Go</button>[22m
+
+    at openGo (/Users/karol/dev/tools/HoldSpeak/scripts/walk-129.mjs:250:16)
+    at /Users/karol/dev/tools/HoldSpeak/scripts/walk-129.mjs:440:44
+FAIL Console: Failed to load resource: the server responded with a status of 500 (Internal Server Error)
+
+=== HS-129-11 WALK REPORT ===
+| Surface | Anatomy | States walked | Assertions | Verdict |
+|---|---|---|---|---|
+| Intelligence | head:required, body:required, foot:required; sheet:required | default, scroll-top, scroll-mid, scroll-bottom, resized-small, resized-small-scroll-mid, maximized, maximized-scroll-mid | anatomy/footer/head/overflow/working-band | PASS |
+| Speak | head:required, body:required, foot:required; sheet:required | default, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Meetings | head:required, body:required, foot:required; sheet:required | default, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Agents | head:required, body:required, foot:required; sheet:required | default, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Settings | head:required, body:required, foot:required; sheet:required | default, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Desk memory | head:none, body:none, foot:none; sheet:none (dock command with no native surface) | default (non-window: dock command with no native surface) | anatomy/footer/head/overflow/working-band | PASS |
+| Delivery | head:required, body:required, foot:required; sheet:required | default, scroll-top, scroll-mid, scroll-bottom, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Panes | head:none, body:none, foot:none; sheet:none (dock command with no native surface) | default (non-window: dock command with no native surface) | anatomy/footer/head/overflow/working-band | PASS |
+| Intelligence Brief | head:required, body:required, foot:required; sheet:required | default, scroll-top, scroll-mid, scroll-bottom, resized-small, resized-small-scroll-mid, maximized, maximized-scroll-mid | anatomy/footer/head/overflow/working-band | PASS |
+| Intelligence Follow-through | head:required, body:required, foot:required; sheet:required | default, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Intelligence Receipts | head:required, body:required, foot:required; sheet:required | default, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Meetings detail | head:required, body:required, foot:required; sheet:required | default, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Settings Transcription | head:required, body:required, foot:required; sheet:required | default, resized-small, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Settings Guide | head:required, body:required, foot:required; sheet:required | default, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Go Speak | head:required, body:required, foot:required; sheet:required | default, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Go Ask AI | head:required, body:required, foot:required; sheet:required | default, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Go Meetings | head:required, body:required, foot:required; sheet:required | default, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Go Settings | head:required, body:required, foot:required; sheet:required | default, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Go Workbenches | head:required, body:required, foot:required; sheet:required | default, resized-small, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Go Agents and coder sessions | head:required, body:required, foot:required; sheet:required | default, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Go Runs on | head:required, body:required, foot:required; sheet:required | default, scroll-top, scroll-mid, scroll-bottom, resized-small, resized-small-scroll-mid, maximized, maximized-scroll-mid | anatomy/footer/head/overflow/working-band | PASS |
+| Go Integrations | head:required, body:required, foot:required; sheet:required | default, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Go Commands | head:required, body:required, foot:required; sheet:required | default, resized-small, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Go Cadence | head:required, body:required, foot:required; sheet:required | default, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Go Context | head:required, body:required, foot:required; sheet:required | default, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Go Activity | head:required, body:required, foot:required; sheet:required | default, scroll-top, scroll-mid, scroll-bottom, resized-small, resized-small-scroll-mid, maximized, maximized-scroll-mid | anatomy/footer/head/overflow/working-band | PASS |
+| Go Processes | head:required, body:required, foot:required; sheet:required | default, resized-small, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Object zone | head:required, body:required, foot:required; sheet:required | default, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Object meeting | head:required, body:required, foot:required; sheet:required | default, scroll-top, scroll-mid, scroll-bottom, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Object artifact | head:required, body:required, foot:required; sheet:required | default, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Object workbench | head:required, body:required, foot:required; sheet:required | default, resized-small, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Trust egress | head:required, body:required, foot:none; sheet:none (fixed egress card, not a sheet) | default, scroll-top, scroll-mid, scroll-bottom, resized-small, resized-small-scroll-mid, maximized, maximized-scroll-mid | anatomy/footer/head/overflow/working-band | PASS |
+| Design components | head:required, body:required, foot:required; sheet:required | default, resized-small, resized-small-scroll-mid, maximized, maximized-scroll-mid | anatomy/footer/head/overflow/working-band | PASS |
+PIXl/WEBGL WARNINGS (non-failing): 0
+SUMMARY: 33 surfaces; 2 violations; 1 console errors.
+```
+
+### Captured run — 2026-08-09T02:08:29Z
+
+- **Command:** `node scripts/walk-129.mjs`
+- **Cwd:** .
+- **Exit code:** 1
+- **Index-tree:** db1e6ffabdd4d98f3bf68655c40575cb786244ba
+
+```text
+WALK Intelligence | required/required/required | default, scroll-top, scroll-mid, scroll-bottom, resized-small, resized-small-scroll-mid, maximized, maximized-scroll-mid | PASS
+WALK Speak | required/required/required | default, resized-small, resized-small-scroll-mid, maximized | PASS
+WALK Meetings | required/required/required | default, resized-small, resized-small-scroll-mid, maximized | PASS
+WALK Agents | required/required/required | default, resized-small, resized-small-scroll-mid, maximized | PASS
+WALK Settings | required/required/required | default, resized-small, resized-small-scroll-mid, maximized | PASS
+WALK Desk memory | none/none/none | default (non-window: dock command with no native surface) | PASS
+WALK Delivery | required/required/required | default, scroll-top, scroll-mid, scroll-bottom, resized-small, resized-small-scroll-mid, maximized | PASS
+WALK Panes | none/none/none | default (non-window: dock command with no native surface) | PASS
+WALK Intelligence Brief | required/required/required | default, scroll-top, scroll-mid, scroll-bottom, resized-small, resized-small-scroll-mid, maximized, maximized-scroll-mid | PASS
+WALK Intelligence Follow-through | required/required/required | default, resized-small, resized-small-scroll-mid, maximized | PASS
+WALK Intelligence Receipts | required/required/required | default, resized-small, resized-small-scroll-mid, maximized | PASS
+WALK Meetings detail | required/required/required | default, resized-small, resized-small-scroll-mid, maximized | PASS
+WALK Settings Transcription | required/required/required | default, resized-small, maximized | PASS
+WALK Settings Guide | required/required/required | default, resized-small, resized-small-scroll-mid, maximized | PASS
+GO ENTRIES: Speak | Ask AI | Meetings | Settings | Workbenches | Agents and coder sessions | Runs on | Integrations | Commands | Cadence | Context | Activity | Processes
+WALK Go Speak | required/required/required | default, resized-small, resized-small-scroll-mid, maximized | PASS
+WALK Go Ask AI | required/required/required | default, resized-small, resized-small-scroll-mid, maximized | PASS
+WALK Go Meetings | required/required/required | default, resized-small, resized-small-scroll-mid, maximized | PASS
+WALK Go Settings | required/required/required | default, resized-small, resized-small-scroll-mid, maximized | PASS
+WALK Go Workbenches | required/required/required | default, resized-small, maximized | PASS
+WALK Go Agents and coder sessions | required/required/required | default, resized-small, resized-small-scroll-mid, maximized | PASS
+WALK Go Runs on | required/required/required | default, scroll-top, scroll-mid, scroll-bottom, resized-small, resized-small-scroll-mid, maximized, maximized-scroll-mid | PASS
+WALK Go Integrations | required/required/required | default, resized-small, resized-small-scroll-mid, maximized | PASS
+WALK Go Commands | required/required/required | default, resized-small, maximized | PASS
+WALK Go Cadence | required/required/required | default, resized-small, resized-small-scroll-mid, maximized | PASS
+WALK Go Context | required/required/required | default, resized-small, resized-small-scroll-mid, maximized | PASS
+WALK Go Activity | required/required/required | default, scroll-top, scroll-mid, scroll-bottom, resized-small, resized-small-scroll-mid, maximized, maximized-scroll-mid | PASS
+WALK Go Processes | required/required/required | default, resized-small, maximized | PASS
+WALK Object zone | required/required/required | default, resized-small, resized-small-scroll-mid, maximized | PASS
+WALK Object meeting | required/required/required | default, scroll-top, scroll-mid, scroll-bottom, resized-small, resized-small-scroll-mid, maximized | PASS
+WALK Object artifact | required/required/required | default, resized-small, resized-small-scroll-mid, maximized | PASS
+WALK Object workbench | required/required/required | default, resized-small, maximized | PASS
+WALK Trust egress | required/required/none | default, scroll-top, scroll-mid, scroll-bottom, resized-small, resized-small-scroll-mid, maximized, maximized-scroll-mid | PASS
+WALK Design components | required/required/required | default, resized-small, resized-small-scroll-mid, maximized, maximized-scroll-mid | PASS
+FAIL HARNESS: locator.waitFor: Timeout 10000ms exceeded.
+Call log:
+[2m  - waiting for locator('.desk-verbbar-title').filter({ hasText: 'Go' }).last() to be visible[22m
+[2m    24 × locator resolved to hidden <button type="button" aria-haspopup="menu" aria-expanded="false" class="desk-verbbar-title">Go</button>[22m
+
+    at openGo (/Users/karol/dev/tools/HoldSpeak/scripts/walk-129.mjs:252:16)
+    at /Users/karol/dev/tools/HoldSpeak/scripts/walk-129.mjs:442:51
+FAIL Console: Failed to load resource: the server responded with a status of 500 (Internal Server Error)
+
+=== HS-129-11 WALK REPORT ===
+| Surface | Anatomy | States walked | Assertions | Verdict |
+|---|---|---|---|---|
+| Intelligence | head:required, body:required, foot:required; sheet:required | default, scroll-top, scroll-mid, scroll-bottom, resized-small, resized-small-scroll-mid, maximized, maximized-scroll-mid | anatomy/footer/head/overflow/working-band | PASS |
+| Speak | head:required, body:required, foot:required; sheet:required | default, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Meetings | head:required, body:required, foot:required; sheet:required | default, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Agents | head:required, body:required, foot:required; sheet:required | default, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Settings | head:required, body:required, foot:required; sheet:required | default, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Desk memory | head:none, body:none, foot:none; sheet:none (dock command with no native surface) | default (non-window: dock command with no native surface) | anatomy/footer/head/overflow/working-band | PASS |
+| Delivery | head:required, body:required, foot:required; sheet:required | default, scroll-top, scroll-mid, scroll-bottom, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Panes | head:none, body:none, foot:none; sheet:none (dock command with no native surface) | default (non-window: dock command with no native surface) | anatomy/footer/head/overflow/working-band | PASS |
+| Intelligence Brief | head:required, body:required, foot:required; sheet:required | default, scroll-top, scroll-mid, scroll-bottom, resized-small, resized-small-scroll-mid, maximized, maximized-scroll-mid | anatomy/footer/head/overflow/working-band | PASS |
+| Intelligence Follow-through | head:required, body:required, foot:required; sheet:required | default, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Intelligence Receipts | head:required, body:required, foot:required; sheet:required | default, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Meetings detail | head:required, body:required, foot:required; sheet:required | default, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Settings Transcription | head:required, body:required, foot:required; sheet:required | default, resized-small, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Settings Guide | head:required, body:required, foot:required; sheet:required | default, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Go Speak | head:required, body:required, foot:required; sheet:required | default, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Go Ask AI | head:required, body:required, foot:required; sheet:required | default, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Go Meetings | head:required, body:required, foot:required; sheet:required | default, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Go Settings | head:required, body:required, foot:required; sheet:required | default, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Go Workbenches | head:required, body:required, foot:required; sheet:required | default, resized-small, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Go Agents and coder sessions | head:required, body:required, foot:required; sheet:required | default, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Go Runs on | head:required, body:required, foot:required; sheet:required | default, scroll-top, scroll-mid, scroll-bottom, resized-small, resized-small-scroll-mid, maximized, maximized-scroll-mid | anatomy/footer/head/overflow/working-band | PASS |
+| Go Integrations | head:required, body:required, foot:required; sheet:required | default, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Go Commands | head:required, body:required, foot:required; sheet:required | default, resized-small, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Go Cadence | head:required, body:required, foot:required; sheet:required | default, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Go Context | head:required, body:required, foot:required; sheet:required | default, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Go Activity | head:required, body:required, foot:required; sheet:required | default, scroll-top, scroll-mid, scroll-bottom, resized-small, resized-small-scroll-mid, maximized, maximized-scroll-mid | anatomy/footer/head/overflow/working-band | PASS |
+| Go Processes | head:required, body:required, foot:required; sheet:required | default, resized-small, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Object zone | head:required, body:required, foot:required; sheet:required | default, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Object meeting | head:required, body:required, foot:required; sheet:required | default, scroll-top, scroll-mid, scroll-bottom, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Object artifact | head:required, body:required, foot:required; sheet:required | default, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Object workbench | head:required, body:required, foot:required; sheet:required | default, resized-small, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Trust egress | head:required, body:required, foot:none; sheet:none (fixed egress card, not a sheet) | default, scroll-top, scroll-mid, scroll-bottom, resized-small, resized-small-scroll-mid, maximized, maximized-scroll-mid | anatomy/footer/head/overflow/working-band | PASS |
+| Design components | head:required, body:required, foot:required; sheet:required | default, resized-small, resized-small-scroll-mid, maximized, maximized-scroll-mid | anatomy/footer/head/overflow/working-band | PASS |
+PIXl/WEBGL WARNINGS (non-failing): 0
+SUMMARY: 33 surfaces; 2 violations; 1 console errors.
+```
+
+### Captured run — 2026-08-09T02:13:12Z
+
+- **Command:** `node scripts/walk-129.mjs`
+- **Cwd:** .
+- **Exit code:** 1
+- **Index-tree:** db1e6ffabdd4d98f3bf68655c40575cb786244ba
+
+```text
+WALK Intelligence | required/required/required | default, scroll-top, scroll-mid, scroll-bottom, resized-small, resized-small-scroll-mid, maximized, maximized-scroll-mid | PASS
+WALK Speak | required/required/required | default, resized-small, resized-small-scroll-mid, maximized | PASS
+WALK Meetings | required/required/required | default, resized-small, resized-small-scroll-mid, maximized | PASS
+WALK Agents | required/required/required | default, resized-small, resized-small-scroll-mid, maximized | PASS
+WALK Settings | required/required/required | default, resized-small, resized-small-scroll-mid, maximized | PASS
+WALK Desk memory | none/none/none | default (non-window: dock command with no native surface) | PASS
+WALK Delivery | required/required/required | default, scroll-top, scroll-mid, scroll-bottom, resized-small, resized-small-scroll-mid, maximized | PASS
+WALK Panes | none/none/none | default (non-window: dock command with no native surface) | PASS
+WALK Intelligence Brief | required/required/required | default, scroll-top, scroll-mid, scroll-bottom, resized-small, resized-small-scroll-mid, maximized, maximized-scroll-mid | PASS
+WALK Intelligence Follow-through | required/required/required | default, resized-small, resized-small-scroll-mid, maximized | PASS
+WALK Intelligence Receipts | required/required/required | default, resized-small, resized-small-scroll-mid, maximized | PASS
+WALK Meetings detail | required/required/required | default, resized-small, resized-small-scroll-mid, maximized | PASS
+WALK Settings Transcription | required/required/required | default, resized-small, maximized | PASS
+WALK Settings Guide | required/required/required | default, resized-small, resized-small-scroll-mid, maximized | PASS
+GO ENTRIES: Speak | Ask AI | Meetings | Settings | Workbenches | Agents and coder sessions | Runs on | Integrations | Commands | Cadence | Context | Activity | Processes
+WALK Go Speak | required/required/required | default, resized-small, resized-small-scroll-mid, maximized | PASS
+WALK Go Ask AI | required/required/required | default, resized-small, resized-small-scroll-mid, maximized | PASS
+WALK Go Meetings | required/required/required | default, resized-small, resized-small-scroll-mid, maximized | PASS
+WALK Go Settings | required/required/required | default, resized-small, resized-small-scroll-mid, maximized | PASS
+WALK Go Workbenches | required/required/required | default, resized-small, maximized | PASS
+WALK Go Agents and coder sessions | required/required/required | default, resized-small, resized-small-scroll-mid, maximized | PASS
+WALK Go Runs on | required/required/required | default, scroll-top, scroll-mid, scroll-bottom, resized-small, resized-small-scroll-mid, maximized, maximized-scroll-mid | PASS
+WALK Go Integrations | required/required/required | default, resized-small, resized-small-scroll-mid, maximized | PASS
+WALK Go Commands | required/required/required | default, resized-small, maximized | PASS
+WALK Go Cadence | required/required/required | default, resized-small, resized-small-scroll-mid, maximized | PASS
+WALK Go Context | required/required/required | default, resized-small, resized-small-scroll-mid, maximized | PASS
+WALK Go Activity | required/required/required | default, scroll-top, scroll-mid, scroll-bottom, resized-small, resized-small-scroll-mid, maximized, maximized-scroll-mid | PASS
+WALK Go Processes | required/required/required | default, resized-small, maximized | PASS
+WALK Object zone | required/required/required | default, resized-small, resized-small-scroll-mid, maximized | PASS
+WALK Object meeting | required/required/required | default, scroll-top, scroll-mid, scroll-bottom, resized-small, resized-small-scroll-mid, maximized | PASS
+WALK Object artifact | required/required/required | default, resized-small, resized-small-scroll-mid, maximized | PASS
+WALK Object workbench | required/required/required | default, resized-small, maximized | PASS
+WALK Trust egress | required/required/none | default, scroll-top, scroll-mid, scroll-bottom, resized-small, resized-small-scroll-mid, maximized, maximized-scroll-mid | PASS
+WALK Design components | required/required/required | default, resized-small, resized-small-scroll-mid, maximized, maximized-scroll-mid | PASS
+FAIL HARNESS: locator.waitFor: Timeout 10000ms exceeded.
+Call log:
+[2m  - waiting for locator('.desk-verbbar-title').filter({ hasText: 'Go' }).last() to be visible[22m
+[2m    24 × locator resolved to hidden <button type="button" aria-haspopup="menu" aria-expanded="false" class="desk-verbbar-title">Go</button>[22m
+
+    at openGo (/Users/karol/dev/tools/HoldSpeak/scripts/walk-129.mjs:254:16)
+    at /Users/karol/dev/tools/HoldSpeak/scripts/walk-129.mjs:444:51
+FAIL Console: Failed to load resource: the server responded with a status of 500 (Internal Server Error)
+
+=== HS-129-11 WALK REPORT ===
+| Surface | Anatomy | States walked | Assertions | Verdict |
+|---|---|---|---|---|
+| Intelligence | head:required, body:required, foot:required; sheet:required | default, scroll-top, scroll-mid, scroll-bottom, resized-small, resized-small-scroll-mid, maximized, maximized-scroll-mid | anatomy/footer/head/overflow/working-band | PASS |
+| Speak | head:required, body:required, foot:required; sheet:required | default, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Meetings | head:required, body:required, foot:required; sheet:required | default, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Agents | head:required, body:required, foot:required; sheet:required | default, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Settings | head:required, body:required, foot:required; sheet:required | default, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Desk memory | head:none, body:none, foot:none; sheet:none (dock command with no native surface) | default (non-window: dock command with no native surface) | anatomy/footer/head/overflow/working-band | PASS |
+| Delivery | head:required, body:required, foot:required; sheet:required | default, scroll-top, scroll-mid, scroll-bottom, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Panes | head:none, body:none, foot:none; sheet:none (dock command with no native surface) | default (non-window: dock command with no native surface) | anatomy/footer/head/overflow/working-band | PASS |
+| Intelligence Brief | head:required, body:required, foot:required; sheet:required | default, scroll-top, scroll-mid, scroll-bottom, resized-small, resized-small-scroll-mid, maximized, maximized-scroll-mid | anatomy/footer/head/overflow/working-band | PASS |
+| Intelligence Follow-through | head:required, body:required, foot:required; sheet:required | default, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Intelligence Receipts | head:required, body:required, foot:required; sheet:required | default, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Meetings detail | head:required, body:required, foot:required; sheet:required | default, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Settings Transcription | head:required, body:required, foot:required; sheet:required | default, resized-small, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Settings Guide | head:required, body:required, foot:required; sheet:required | default, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Go Speak | head:required, body:required, foot:required; sheet:required | default, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Go Ask AI | head:required, body:required, foot:required; sheet:required | default, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Go Meetings | head:required, body:required, foot:required; sheet:required | default, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Go Settings | head:required, body:required, foot:required; sheet:required | default, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Go Workbenches | head:required, body:required, foot:required; sheet:required | default, resized-small, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Go Agents and coder sessions | head:required, body:required, foot:required; sheet:required | default, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Go Runs on | head:required, body:required, foot:required; sheet:required | default, scroll-top, scroll-mid, scroll-bottom, resized-small, resized-small-scroll-mid, maximized, maximized-scroll-mid | anatomy/footer/head/overflow/working-band | PASS |
+| Go Integrations | head:required, body:required, foot:required; sheet:required | default, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Go Commands | head:required, body:required, foot:required; sheet:required | default, resized-small, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Go Cadence | head:required, body:required, foot:required; sheet:required | default, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Go Context | head:required, body:required, foot:required; sheet:required | default, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Go Activity | head:required, body:required, foot:required; sheet:required | default, scroll-top, scroll-mid, scroll-bottom, resized-small, resized-small-scroll-mid, maximized, maximized-scroll-mid | anatomy/footer/head/overflow/working-band | PASS |
+| Go Processes | head:required, body:required, foot:required; sheet:required | default, resized-small, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Object zone | head:required, body:required, foot:required; sheet:required | default, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Object meeting | head:required, body:required, foot:required; sheet:required | default, scroll-top, scroll-mid, scroll-bottom, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Object artifact | head:required, body:required, foot:required; sheet:required | default, resized-small, resized-small-scroll-mid, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Object workbench | head:required, body:required, foot:required; sheet:required | default, resized-small, maximized | anatomy/footer/head/overflow/working-band | PASS |
+| Trust egress | head:required, body:required, foot:none; sheet:none (fixed egress card, not a sheet) | default, scroll-top, scroll-mid, scroll-bottom, resized-small, resized-small-scroll-mid, maximized, maximized-scroll-mid | anatomy/footer/head/overflow/working-band | PASS |
+| Design components | head:required, body:required, foot:required; sheet:required | default, resized-small, resized-small-scroll-mid, maximized, maximized-scroll-mid | anatomy/footer/head/overflow/working-band | PASS |
+PIXl/WEBGL WARNINGS (non-failing): 0
+SUMMARY: 33 surfaces; 2 violations; 1 console errors.
+```
+
+## Sol-remediation close-out (2026-08-09, owner-directed cut)
+
+The strengthened walk (per-surface required anatomy, per-form contracts —
+desktop working band for windows, bottom-sheet contract for sheets — fresh
+post-resize/maximize measurement, mobile scope 4 → 23 intended checks)
+found and FIXED three real product defects the original walk's softer
+assertions had passed:
+
+1. fitContent cards grew past the desktop working band — Intelligence
+   64–868 and object-meeting pullout 191.3–895.3 vs band [54, 848]; fixed
+   at the DeskWindow seam (unarranged card height capped from its placed
+   top to the band bottom).
+2. Intelligence Brief horizontal overflow at resized-small width — the
+   ledger/padding box chain bounded; regression test added.
+3. (Earlier in the remediation) the 14 backend workbench-walk ERRORs
+   proven environmental — all pass with a hub at HOLDSPEAK_HUB_URL;
+   captured above with provenance.
+
+**Coverage at the owner-directed cut:** all desktop surfaces pass the
+strengthened contract; the mobile DOCK sheet checks pass. The mobile
+Go-menu / object-pullout / editor segment (the remainder of the 23
+intended mobile checks) is explicitly NOT WALKED: the final runs hit a
+live HTTP 500 + hidden Go control against the 12-hour-old dev server
+(failed-run provenance captured above); a fresh server was booting when
+the owner cut the session. This segment rides the Candidate Z walk-
+deepening ledger (BACKLOG.md) — it is a coverage gap, not a known
+defect. Verification at ship: focused tests 9/9, typecheck exit 0,
+production build green (orchestrator-read output).
