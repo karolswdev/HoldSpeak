@@ -7,7 +7,7 @@ independently of the Database container.
 # Bump this when adding tables or columns; the Database container uses it to
 # decide whether to back up and re-apply. See core._ensure_schema for the
 # four-way upgrade contract.
-SCHEMA_VERSION = 43  # v43: decision_receipt* tables renamed to decision_record* (HS-130-08)
+SCHEMA_VERSION = 44  # v44: immutable deployment revisions (HS-131-01)
 
 # SQL Schema
 SCHEMA_SQL = """
@@ -1616,4 +1616,19 @@ CREATE TABLE IF NOT EXISTS monday_brief_items (
     priority INTEGER NOT NULL DEFAULT 0
 );
 CREATE INDEX IF NOT EXISTS idx_monday_brief_items_brief ON monday_brief_items(brief_id);
+
+-- Immutable admitted deployment specifications. ``secret_slot`` identifies a
+-- device-local credential lookup location; credentials never enter this table.
+CREATE TABLE IF NOT EXISTS deployment_revisions (
+    id TEXT PRIMARY KEY,
+    destination_id TEXT NOT NULL,
+    kind TEXT NOT NULL,
+    engine TEXT NOT NULL,
+    model TEXT NOT NULL,
+    node TEXT NOT NULL DEFAULT '',
+    boundary TEXT NOT NULL,
+    endpoint TEXT NOT NULL DEFAULT '',
+    model_path TEXT,
+    secret_slot TEXT NOT NULL DEFAULT ''
+);
 """

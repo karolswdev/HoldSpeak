@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://holdspeak.dev/contracts/v0/decision-record.schema.json",
+  "title": "decision_record",
+  "x-sync-kind": "decision_record",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "id": {},
+    "decision_text": {},
+    "rationale": {},
+    "alternatives": {},
+    "owner": {},
+    "review_date": {},
+    "lifecycle": {},
+    "source_type": {},
+    "source_id": {},
+    "created_at": {},
+    "updated_at": {},
+    "deleted": {}
+  },
+  "required": [
+    "id",
+    "created_at",
+    "updated_at",
+    "deleted"
+  ]
+}

@@ -95,6 +95,8 @@ class DeploymentIdentity:
     node: str
     boundary: str
     model_path: Optional[str] = None
+    endpoint: str = ""
+    secret_slot: str = ""
 
 
 @dataclass(frozen=True)
@@ -394,6 +396,11 @@ def target_from_profile(profile: Any, db: Any = None) -> InferenceTarget:
             f"Destination '{name}' has unsupported kind '{legacy_kind or 'unknown'}'",
         )
 
+    secret_slot = ""
+    if requires_key and pid:
+        from .intel.providers import profile_key_env
+
+        secret_slot = profile_key_env(pid)
     deployment = DeploymentIdentity(
         destination_id=pid,
         kind=kind,
@@ -402,6 +409,8 @@ def target_from_profile(profile: Any, db: Any = None) -> InferenceTarget:
         node=node,
         boundary=boundary,
         model_path=deploy_model_path,
+        endpoint=base_url,
+        secret_slot=secret_slot,
     )
     return InferenceTarget(
         id=pid,
@@ -540,6 +549,36 @@ def target_runtime_error(target: InferenceTarget, error: Any) -> str:
     return f"Destination '{target.name}' refused the run: {detail}"
 
 
+def build_intel_for_revision(revision: Any) -> Any:
+    """Construct from an admitted revision, never a mutable profile row.
+
+    The established profile builder owns engine-specific behavior (notably mesh
+    adapters and exact provider configuration). It receives only frozen values
+    from the revision; it never receives or reads the editable profile record.
+    """
+    from .intel.providers import build_configured_meeting_intel, build_meeting_intel_for_profile
+
+    profile_kind = {
+        "mesh_node": "meshNode",
+        "private_endpoint": "openAICompatible",
+        "external_service": "openAICompatible",
+        "this_device": "onDevice",
+        "paired_device": "desktop",
+    }.get(revision.kind)
+    if profile_kind is not None and revision.destination_id:
+        return build_meeting_intel_for_profile(
+            kind=profile_kind,
+            base_url=revision.endpoint,
+            model=revision.model,
+            profile_id=revision.destination_id,
+            node=revision.node,
+            model_file=revision.model_path or "",
+        )
+    if revision.kind == "paired_device":
+        return build_configured_meeting_intel()
+    raise ValueError(f"unsupported admitted deployment revision {revision.id}")
+
+
 def build_intel_for_target(target: InferenceTarget, db: Any) -> Any:
     """Construct the engine for one already-resolved target.
 
@@ -549,10 +588,7 @@ def build_intel_for_target(target: InferenceTarget, db: Any) -> Any:
     """
     from .config import Config
     from .intel.engine import MeetingIntel
-    from .intel.providers import (
-        build_configured_meeting_intel,
-        build_meeting_intel_for_profile,
-    )
+    from .intel.providers import build_configured_meeting_intel
 
     deployment_model_path = target.deployment.model_path if target.deployment else None
 
@@ -592,17 +628,10 @@ def build_intel_for_target(target: InferenceTarget, db: Any) -> Any:
         return MeetingIntel(**kwargs)
     if target.kind == "paired_device" and target.profile_id is None:
         return build_configured_meeting_intel()
-    if target.profile_id:
-        profile = db.profiles.get(target.profile_id)
-        if profile is not None:
-            return build_meeting_intel_for_profile(
-                kind=profile.kind,
-                base_url=profile.base_url,
-                model=profile.model,
-                profile_id=profile.id,
-                node=getattr(profile, "node", ""),
-                model_file=str(getattr(profile, "model_file", "") or ""),
-            )
+    if target.deployment is not None:
+        from .deployment_revisions import DeploymentRevision
+
+        return build_intel_for_revision(DeploymentRevision.from_identity(target.deployment))
     # Kept solely as a tolerant guard for an older caller; resolver users never
     # reach it with an unavailable target.
     return build_configured_meeting_intel()

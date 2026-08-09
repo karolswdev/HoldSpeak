@@ -30,7 +30,15 @@ class ActuatorProposalService:
         raw = str(getattr(payload, "source_ref", "") or "").strip()
         if not raw: return "", {}
         from ..db.relationships import qualified_ref
-        source_ref = qualified_ref(raw); kind, identifier = source_ref.split(":", 1)
+        from .sync_service import SYNC_KINDS
+        raw_kind = raw.partition(":")[0].strip().lower()
+        if raw_kind not in SYNC_KINDS:
+            raise ValidationError(f"unknown resource kind: {raw_kind}")
+        try:
+            source_ref = qualified_ref(raw)
+        except ValueError as exc:
+            raise ValidationError(str(exc)) from exc
+        kind, identifier = source_ref.split(":", 1)
         source = {"meeting": self._db.meetings.get_meeting, "note": self._db.notes.get,
                   "artifact": self._db.plugins.get_artifact}.get(kind)
         if source is None: raise ValidationError("source_ref must identify a Meeting, Note, or Artifact")

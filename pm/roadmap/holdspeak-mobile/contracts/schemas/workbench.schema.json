@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://holdspeak.dev/contracts/v0/workbench.schema.json",
+  "title": "workbench",
+  "x-sync-kind": "workbench",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string"
+    },
+    "recipe_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "profile_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "schedule": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "schedule_enabled": {
+      "type": "boolean"
+    },
+    "item_order": {
+      "type": "array"
+    },
+    "created_at": {
+      "type": "string"
+    },
+    "last_modified": {
+      "type": "string"
+    },
+    "deleted": {
+      "type": "boolean"
+    },
+    "resolver_profile_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  },
+  "required": [
+    "id",
+    "name",
+    "schedule_enabled",
+    "item_order",
+    "last_modified",
+    "deleted"
+  ]
+}

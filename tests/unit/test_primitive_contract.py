@@ -40,13 +40,11 @@ from holdspeak.db import Database, reset_database
 from holdspeak.web.context import WebContext
 from holdspeak.web.routes import build_sync_router
 from holdspeak.web.routes.sync import SYNC_KINDS
+from holdspeak.services.sync_service import SYNC_BUCKETS, SYNC_REGISTRY, SYNC_SCHEMAS
 
 REPO = Path(__file__).parents[2]
 SCHEMA_DIR = REPO / "pm/roadmap/holdspeak-mobile/contracts/schemas"
-SYNC_SWIFT = REPO / "apple/Sources/Contracts/Sync.swift"
-# Workbench is a web-only primitive while the iPad client remains dormant.
-MOBILE_CONTRACT_EXCLUSIONS = frozenset({"workbench"})
-MOBILE_CONTRACT_KINDS = set(SYNC_KINDS) - MOBILE_CONTRACT_EXCLUSIONS
+PYTHON_WEB_CONTRACT_KINDS = set(SYNC_KINDS)
 PRIMITIVES_TS = REPO / "web/src/lib/primitives.ts"
 
 # sync kind -> (pull bucket, value schema $id)
@@ -175,28 +173,27 @@ class TestKindSetCannotDrift:
         schema_kinds = {
             s["x-sync-kind"] for s in SCHEMAS.values() if "x-sync-kind" in s
         }
-        assert schema_kinds == MOBILE_CONTRACT_KINDS, (
-            f"schema kinds {sorted(schema_kinds)} != hub SYNC_KINDS "
-            f"{sorted(MOBILE_CONTRACT_KINDS)} — a mobile contract kind was added/removed on one side only")
+        assert schema_kinds == PYTHON_WEB_CONTRACT_KINDS, (
+            f"schema kinds {sorted(schema_kinds)} != registry kinds "
+            f"{sorted(PYTHON_WEB_CONTRACT_KINDS)}")
 
-    def test_swift_sync_kind_matches_hub(self) -> None:
-        text = SYNC_SWIFT.read_text()
-        enum_body = re.search(
-            r"enum SyncKind[^{]*\{(.*?)\n\}", text, re.DOTALL)
-        assert enum_body, "SyncKind enum not found in Sync.swift"
-        cases = re.findall(
-            r"^\s*case\s+(\w+)(?:\s*=\s*\"([^\"]+)\")?",
-            enum_body.group(1), re.MULTILINE)
-        swift_kinds = {raw or name for name, raw in cases}
-        assert swift_kinds == MOBILE_CONTRACT_KINDS, (
-            f"Swift SyncKind {sorted(swift_kinds)} != hub SYNC_KINDS "
-            f"{sorted(MOBILE_CONTRACT_KINDS)} — the mobile surfaces drifted")
+    def test_python_web_sync_contract_is_complete(self) -> None:
+        """Retires Swift-as-authority: the dormant client cannot define the
+        Python/web protocol; every registry kind must name exactly its schema."""
+        assert set(SYNC_SCHEMAS) == PYTHON_WEB_CONTRACT_KINDS
+        for kind, filename in SYNC_SCHEMAS.items():
+            assert filename is not None
+            assert _schema_for_kind(kind)["$id"].endswith(filename)
 
     def test_changeset_buckets_cover_every_kind(self) -> None:
         envelope = SCHEMAS["https://holdspeak.dev/contracts/v0/changeset.schema.json"]
-        buckets = set(envelope["properties"])
-        expected = {"meetings", "artifacts"} | set(KIND_BUCKETS.values())
-        assert buckets == expected
+        assert set(envelope["properties"]) == set(SYNC_BUCKETS)
+
+    def test_registry_qualifies_each_bucket_kind(self) -> None:
+        from holdspeak.services.sync_service import qualified_sync_kind
+        for kind, bucket in ((spec.kind, spec.bucket) for spec in SYNC_REGISTRY):
+            assert qualified_sync_kind(bucket, kind)
+        assert not qualified_sync_kind("notes", "profile")
 
 
 class TestWebShapesCannotInventFields:

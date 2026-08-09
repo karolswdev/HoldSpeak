@@ -1,6 +1,6 @@
 # Phase 131 — One Admission Path
 
-**Status:** CHARTERED (0/12).
+**Status:** IN PROGRESS (1/12).
 
 **Last updated:** 2026-08-09.
 
@@ -123,7 +123,7 @@ gates while keeping every known site bounded now.
 
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
-| HS-131-01 | Frozen deployment revisions and one sync registry | ready | [story-01](./story-01-frozen-deployment-revisions.md) | — |
+| HS-131-01 | Frozen deployment revisions and one sync registry | done | [story-01](./story-01-frozen-deployment-revisions.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-131-02 | The admitted invocation runner | backlog | [story-02](./story-02-admitted-invocation-runner.md) | — |
 | HS-131-03 | Ask and Agents take the same door | backlog | [story-03](./story-03-ask-and-agents.md) | — |
 | HS-131-04 | Sequence and Workflow admit every model step | backlog | [story-04](./story-04-sequence-and-workflow.md) | — |
@@ -162,7 +162,16 @@ dictation admission is per session, and deliberately enabling a recurring
 schedule grants bounded delegation for that exact work, effective target, and
 cadence until changed or disabled. Terra's hostile charter review returned
 seven findings; Sol sustained and amended every one, then recorded the final
-judgment in [SOL-CHARTER-COUNSEL](./SOL-CHARTER-COUNSEL.md). HS-131-01 is ready.
+judgment in [SOL-CHARTER-COUNSEL](./SOL-CHARTER-COUNSEL.md).
+HS-131-01 is done: deployment revisions are immutable and content-addressed
+(schema v44), engine construction has no mutable profile re-read, one
+`SYNC_REGISTRY` derives the entire Python/web sync taxonomy, and revision
+references round-trip over sync without credentials. The six assigned
+HS-130-10 sync failures are repaired — full-suite diff against the pinned
+charter baseline shows zero new failure names (84→78 failed, 17 errors
+unchanged; artifacts under `assets/hs-131-01/`). The Swift-as-authority test
+is retired for a stricter Python-contract assertion. Next: HS-131-02, the
+admitted invocation runner.
 The roadmap still has nine inherited structural lint errors in old phases; they
 are named baseline and are not silently bundled into this product phase.
 

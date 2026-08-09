@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://holdspeak.dev/contracts/v0/deployment-revision.schema.json",
+  "title": "deployment_revision",
+  "x-sync-kind": "deployment_revision",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "type": "string"
+    },
+    "destination_id": {
+      "type": "string"
+    },
+    "kind": {
+      "type": "string"
+    },
+    "engine": {
+      "type": "string"
+    },
+    "model": {
+      "type": "string"
+    },
+    "node": {
+      "type": "string"
+    },
+    "boundary": {
+      "type": "string"
+    },
+    "endpoint": {
+      "type": "string"
+    },
+    "model_path": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "secret_slot": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "id",
+    "destination_id",
+    "kind",
+    "engine",
+    "model",
+    "node",
+    "boundary",
+    "endpoint",
+    "model_path",
+    "secret_slot"
+  ]
+}

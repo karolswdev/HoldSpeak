@@ -3,81 +3,76 @@ from __future__ import annotations
 from holdspeak.services.observer import NullObserver, PipelineObserver, observe_service
 
 import json
-from typing import Any
+from dataclasses import dataclass, replace
+from typing import Any, Callable
 
 from ..logging_config import get_logger
+from ..principals import Principal
+from .errors import ConflictError, ValidationError
 
 log = get_logger("services.sync")
 
-# The full sync taxonomy. Meetings/artifacts are the shipped content primitives;
-# the rest are the Primitive Framework desk primitives, each backed by a real
-# repository on the hub. Keep this in lockstep with the mobile/web SyncKind enum.
-SYNC_KINDS = frozenset(
-    {"meeting", "artifact", "note", "kb", "recipe", "chain", "workflow",
-     "directory", "directory_membership", "knowledge_membership",
-     "project", "project_relationship", "profile", "model", "workbench",
-     "decision_record", "decision_record_source", "decision_record_work",
-     "decision_record_revision"}
+@dataclass(frozen=True)
+class SyncKindSpec:
+    """One authoritative declaration of a syncable kind's wire obligations."""
+
+    kind: str
+    bucket: str
+    schema: str | None
+    mergeable: bool = False
+    pull_serializer: Callable[[dict[str, list[dict[str, Any]]]], list[dict[str, Any]]] | None = None
+    merger: Callable[[Any, "SyncKindSpec", list[dict[str, Any]]], int] | None = None
+
+
+# The Python/web contract. Add a kind here, then provide the declared schema and
+# serializer/merger; all public taxonomy views below are derived from it.
+SYNC_REGISTRY = (
+    SyncKindSpec("meeting", "meetings", "meeting.schema.json"),
+    SyncKindSpec("artifact", "artifacts", "artifact.schema.json"),
+    SyncKindSpec("note", "notes", "note.schema.json", True),
+    SyncKindSpec("kb", "kbs", "kb.schema.json", True),
+    SyncKindSpec("recipe", "recipes", "recipe.schema.json", True),
+    SyncKindSpec("chain", "chains", "chain.schema.json", True),
+    SyncKindSpec("workflow", "workflows", "workflow.schema.json", True),
+    SyncKindSpec("directory", "directories", "directory.schema.json", True),
+    SyncKindSpec("directory_membership", "directory_memberships", "directory-membership.schema.json", True),
+    SyncKindSpec("knowledge_membership", "knowledge_memberships", "knowledge-membership.schema.json"),
+    SyncKindSpec("project", "projects", "project.schema.json"),
+    SyncKindSpec("project_relationship", "project_relationships", "project-relationship.schema.json"),
+    SyncKindSpec("profile", "profiles", "profile.schema.json", True),
+    SyncKindSpec("model", "models", "model-manifest.schema.json", True),
+    SyncKindSpec("workbench", "workbenches", "workbench.schema.json", True),
+    SyncKindSpec("decision_record", "decision_records", "decision-record.schema.json"),
+    SyncKindSpec("decision_record_source", "decision_record_sources", "decision-record-source.schema.json"),
+    SyncKindSpec("decision_record_work", "decision_record_work", "decision-record-work.schema.json"),
+    SyncKindSpec("decision_record_revision", "decision_record_revisions", "decision-record-revision.schema.json"),
+    SyncKindSpec("deployment_revision", "deployment_revisions", "deployment-revision.schema.json"),
 )
+SYNC_KINDS = frozenset(spec.kind for spec in SYNC_REGISTRY)
+_BUCKET_KIND = {spec.bucket: spec.kind for spec in SYNC_REGISTRY}
+SYNC_BUCKETS = frozenset(_BUCKET_KIND)
+SYNC_SCHEMAS = {spec.kind: spec.schema for spec in SYNC_REGISTRY}
+SYNC_MERGER_KINDS = frozenset(spec.kind for spec in SYNC_REGISTRY if spec.mergeable)
 
-# Repository-backed primitives the push route merges into the live store (the key
-# is both the change-set bucket name and the repo attribute on the Database).
-#   bucket -> (db attribute, repo-id kwarg, upsert-field map from `value`)
+
+def qualified_sync_kind(bucket: str, kind: str) -> bool:
+    """Whether a record kind is valid for its specific change-set bucket."""
+    return _BUCKET_KIND.get(bucket) == kind
+
+
+# Repository-backed primitive mergers. The bucket and kind are derived from the
+# registry above rather than separately named taxonomies.
 _MERGEABLE: dict[str, tuple[str, str, dict[str, str]]] = {
-    "notes": ("notes", "note_id", {
-        "title": "title", "body_markdown": "body_markdown", "tags": "tags",
-    }),
+    "notes": ("notes", "note_id", {"title": "title", "body_markdown": "body_markdown", "tags": "tags"}),
     "kbs": ("kbs", "kb_id", {"name": "name", "member_ids": "member_ids"}),
-    "recipes": ("recipes", "recipe_id", {
-        "name": "name", "avatar": "avatar", "role": "role",
-        "system_prompt": "system_prompt", "user_template": "user_template",
-        "tools": "tools", "kb_id": "kb_id", "profile_id": "profile_id",
-        # v7 (Phase 77): the pinned context rides the wire both ways now.
-        "manual_context": "manual_context", "use_zone_context": "use_zone_context",
-    }),
-    # Runtime profiles (Phase 24) — SHAPE ONLY; no api key field crosses the wire.
-    "profiles": ("profiles", "profile_id", {
-        "name": "name", "kind": "kind", "model_file": "model_file",
-        "base_url": "base_url", "model": "model", "node": "node",
-        "context_limit": "context_limit", "requires_key": "requires_key",
-    }),
+    "recipes": ("recipes", "recipe_id", {"name": "name", "avatar": "avatar", "role": "role", "system_prompt": "system_prompt", "user_template": "user_template", "tools": "tools", "kb_id": "kb_id", "profile_id": "profile_id", "manual_context": "manual_context", "use_zone_context": "use_zone_context"}),
+    "profiles": ("profiles", "profile_id", {"name": "name", "kind": "kind", "model_file": "model_file", "base_url": "base_url", "model": "model", "node": "node", "context_limit": "context_limit", "requires_key": "requires_key"}),
     "chains": ("chains", "chain_id", {"name": "name", "steps": "steps"}),
-    "workflows": ("workflows", "workflow_id", {
-        "name": "name", "prompt": "prompt", "graph_json": "graph_json",
-    }),
-    "directories": ("directories", "directory_id", {
-        "name": "name", "parent_id": "parent_id",
-    }),
-    # Membership: the synced filing map. Keyed by `primitive_id` (the record id),
-    # value carries the `directory_id` edge. Supersedes the legacy `filed` maps.
-    "directory_memberships": ("directory_memberships", "primitive_id", {
-        "directory_id": "directory_id",
-    }),
-    # Model MANIFESTS (HSM-16-08): availability only — id/node/name/capabilities.
-    # No path/url/bytes field exists on either side; the binary NEVER syncs.
-    "models": ("model_manifests", "manifest_id", {
-        "node": "node", "name": "name", "capabilities": "capabilities",
-    }),
-    "workbenches": ("workbenches", "workbench_id", {
-        "name": "name", "recipe_id": "recipe_id", "profile_id": "profile_id",
-        "schedule": "schedule", "schedule_enabled": "schedule_enabled",
-        "item_order": "item_order",
-    }),
-}
-
-# bucket name -> the kind string each record's meta must carry.
-_BUCKET_KIND = {
-    "meetings": "meeting", "artifacts": "artifact", "notes": "note",
-    "kbs": "kb", "recipes": "recipe", "chains": "chain", "workflows": "workflow",
-    "directories": "directory", "directory_memberships": "directory_membership",
-    "knowledge_memberships": "knowledge_membership",
-    "project_relationships": "project_relationship",
-    "projects": "project",
-    "profiles": "profile", "models": "model",
-    "decision_records": "decision_record",
-    "decision_record_sources": "decision_record_source",
-    "decision_record_work": "decision_record_work",
-    "decision_record_revisions": "decision_record_revision",
+    "workflows": ("workflows", "workflow_id", {"name": "name", "prompt": "prompt", "graph_json": "graph_json"}),
+    "directories": ("directories", "directory_id", {"name": "name", "parent_id": "parent_id"}),
+    "directory_memberships": ("directory_memberships", "primitive_id", {"directory_id": "directory_id"}),
+    "models": ("model_manifests", "manifest_id", {"node": "node", "name": "name", "capabilities": "capabilities"}),
+    "workbenches": ("workbenches", "workbench_id", {"name": "name", "recipe_id": "recipe_id", "profile_id": "profile_id", "resolver_profile_id": "resolver_profile_id", "schedule": "schedule", "schedule_enabled": "schedule_enabled", "item_order": "item_order"}),
 }
 
 
@@ -116,7 +111,7 @@ def _iso(value: Any) -> Any:
         return raw
 
 
-def _records_valid(records: Any) -> bool:
+def _records_valid(records: Any, *, bucket: str | None = None) -> bool:
     """Every record is a `synced<T>` with a well-formed `meta` (id + known kind)."""
     if not isinstance(records, list):
         return False
@@ -126,7 +121,10 @@ def _records_valid(records: Any) -> bool:
         meta = rec.get("meta")
         if not isinstance(meta, dict):
             return False
-        if not meta.get("id") or meta.get("kind") not in SYNC_KINDS:
+        kind = meta.get("kind")
+        if not meta.get("id") or kind not in SYNC_KINDS:
+            return False
+        if bucket is not None and not qualified_sync_kind(bucket, str(kind)):
             return False
     return True
 
@@ -174,6 +172,13 @@ def _primitive_record(rec: Any, kind: str) -> dict[str, Any]:
             "deleted": deleted,
         },
         "value": None if deleted else value,
+    }
+
+
+def _deployment_revision_record(revision: Any) -> dict[str, Any]:
+    return {
+        "meta": {"id": revision.id, "kind": "deployment_revision", "last_modified": revision.id, "deleted": False},
+        "value": revision.to_dict(),
     }
 
 
@@ -448,6 +453,8 @@ def _decision_record_child(row: Any, kind: str) -> dict[str, Any]:
 
 def _merge_decision_records(db: Any, records: list[dict[str, Any]]) -> int:
     """LWW-merge record roots; a delete is a tombstone, never evidence erasure."""
+    if not records:
+        return 0
     merged = 0
     with db._connection() as conn:
         for rec in records:
@@ -487,6 +494,8 @@ def _merge_decision_records(db: Any, records: list[dict[str, Any]]) -> int:
 
 def _merge_decision_record_children(db: Any, table: str, records: list[dict[str, Any]]) -> int:
     """Merge append-only record evidence rows after their record roots exist."""
+    if not records:
+        return 0
     columns = {
         "decision_record_sources": ("id", "record_id", "source_type", "source_ref", "created_at"),
         "decision_record_work": ("id", "record_id", "work_type", "work_ref", "created_at"),
@@ -539,8 +548,54 @@ def _hub_model_name(_ctx: Any = None) -> str:
         return ""
 
 
-        from ..principals import Principal
-from .errors import ConflictError, ValidationError
+def _pull_from(bucket: str) -> Callable[[dict[str, list[dict[str, Any]]]], list[dict[str, Any]]]:
+    return lambda pulled: pulled.get(bucket, [])
+
+
+# Every pull bucket is selected through its declared registry serializer. The
+# local collection phase may omit an optional repository, but it never changes
+# the public envelope's bucket set.
+SYNC_REGISTRY = tuple(
+    replace(spec, pull_serializer=_pull_from(spec.bucket))
+    for spec in SYNC_REGISTRY
+)
+
+def _merge_primitive_spec(db: Any, spec: SyncKindSpec, records: list[dict[str, Any]]) -> int:
+    """Merge one registry-declared primitive bucket into its own repository."""
+    if not records:
+        return 0
+    attr, id_kwarg, field_map = _MERGEABLE[spec.bucket]
+    repo = getattr(db, attr)
+    merged = 0
+    for rec in records:
+        meta = rec["meta"]
+        value = rec.get("value") or {}
+        rec_id = str(meta["id"])
+        incoming_lm = str(meta.get("last_modified") or "")
+        existing = repo.get(rec_id, include_deleted=True)
+        if existing is not None and existing.last_modified and incoming_lm:
+            if existing.last_modified >= incoming_lm:
+                continue
+        kwargs: dict[str, Any] = {
+            id_kwarg: rec_id,
+            "last_modified": incoming_lm or None,
+            "deleted": bool(meta.get("deleted")),
+        }
+        if value.get("created_at"):
+            kwargs["created_at"] = str(value["created_at"])
+        for value_key, upsert_key in field_map.items():
+            if value_key in value:
+                kwargs[upsert_key] = value[value_key]
+        repo.upsert(**kwargs)
+        merged += 1
+    return merged
+
+
+SYNC_REGISTRY = tuple(
+    replace(spec, merger=_merge_primitive_spec if spec.bucket in _MERGEABLE else None)
+    for spec in SYNC_REGISTRY
+)
+
 
 @observe_service
 class SyncService:
@@ -603,6 +658,10 @@ class SyncService:
                      for w in db.workflows.list(include_deleted=True, limit=bounded)]
         profiles = [_primitive_record(p, "profile")
                     for p in db.profiles.list(include_deleted=True, limit=bounded)]
+        workbenches = [_primitive_record(w, "workbench")
+                       for w in getattr(db, "workbenches", _EmptySyncRepo()).list(
+                           include_deleted=True, limit=bounded
+                       )]
         directories = [_primitive_record(d, "directory")
                        for d in db.directories.list(include_deleted=True, limit=bounded)]
         # Membership rides the wire too (organization, not layout). The record's
@@ -649,42 +708,49 @@ class SyncService:
         
         # Record roots carry their own LWW clocks and tombstones; their
         # immutable evidence children follow as separate, idempotent buckets.
-        with db._connection() as conn:
-            record_rows = conn.execute(
-                "SELECT * FROM decision_records ORDER BY updated_at DESC, id DESC LIMIT ?", (bounded,)
-            ).fetchall()
-            record_ids = [row["id"] for row in record_rows]
-            placeholders = ", ".join("?" for _ in record_ids)
-            child_rows: dict[str, list[Any]] = {}
-            for table in ("decision_record_sources", "decision_record_work", "decision_record_revisions"):
-                child_rows[table] = conn.execute(
-                    f"SELECT * FROM {table} WHERE record_id IN ({placeholders})" if placeholders else f"SELECT * FROM {table} WHERE 0",
-                    record_ids,
+        record_rows: list[Any] = []
+        child_rows: dict[str, list[Any]] = {
+            "decision_record_sources": [], "decision_record_work": [],
+            "decision_record_revisions": [],
+        }
+        if hasattr(db, "_connection"):
+            with db._connection() as conn:
+                record_rows = conn.execute(
+                    "SELECT * FROM decision_records ORDER BY updated_at DESC, id DESC LIMIT ?", (bounded,)
                 ).fetchall()
+                record_ids = [row["id"] for row in record_rows]
+                placeholders = ", ".join("?" for _ in record_ids)
+                child_rows: dict[str, list[Any]] = {}
+                for table in ("decision_record_sources", "decision_record_work", "decision_record_revisions"):
+                    child_rows[table] = conn.execute(
+                        f"SELECT * FROM {table} WHERE record_id IN ({placeholders})" if placeholders else f"SELECT * FROM {table} WHERE 0",
+                        record_ids,
+                    ).fetchall()
         decision_records = [_decision_record_root(row) for row in record_rows]
         decision_record_sources = [_decision_record_child(row, "decision_record_source") for row in child_rows["decision_record_sources"]]
         decision_record_work = [_decision_record_child(row, "decision_record_work") for row in child_rows["decision_record_work"]]
         decision_record_revisions = [_decision_record_child(row, "decision_record_revision") for row in child_rows["decision_record_revisions"]]
+        deployment_revisions = [
+            _deployment_revision_record(revision)
+            for revision in getattr(db, "deployment_revisions", _EmptySyncRepo()).list(limit=bounded)
+        ]
 
-        return {
-            "meetings": meetings,
-            "artifacts": artifacts,
-            "notes": notes,
-            "kbs": kbs,
-            "recipes": recipes,
-            "chains": chains,
-            "workflows": workflows,
-            "profiles": profiles,
-            "directories": directories,
-            "directory_memberships": directory_memberships,
+        pulled = {
+            "meetings": meetings, "artifacts": artifacts, "notes": notes,
+            "kbs": kbs, "recipes": recipes, "chains": chains,
+            "workflows": workflows, "profiles": profiles, "workbenches": workbenches,
+            "directories": directories, "directory_memberships": directory_memberships,
             "knowledge_memberships": knowledge_memberships,
-            "project_relationships": project_relationships,
-            "projects": projects,
-            "models": models,
-            "decision_records": decision_records,
+            "project_relationships": project_relationships, "projects": projects,
+            "models": models, "decision_records": decision_records,
             "decision_record_sources": decision_record_sources,
             "decision_record_work": decision_record_work,
             "decision_record_revisions": decision_record_revisions,
+            "deployment_revisions": deployment_revisions,
+        }
+        return {
+            spec.bucket: spec.pull_serializer(pulled) if spec.pull_serializer else []
+            for spec in SYNC_REGISTRY
         }
 
     def push(self, principal: Principal, payload: Any) -> dict[str, Any]:
@@ -700,7 +766,7 @@ class SyncService:
         # HSM-10-03 — validate the envelope: every record needs a well-formed sync
         # header (id + a known kind). Malformed → 422, never stored/merged.
         for bucket in known_buckets:
-            if not _records_valid(body.get(bucket) or []):
+            if not _records_valid(body.get(bucket) or [], bucket=bucket):
                 raise ValidationError(f"malformed sync record in {bucket} (need meta.id + meta.kind)")
         
         db = self._db
@@ -829,32 +895,26 @@ class SyncService:
                 merged += 1
             received[bucket] = merged
         
-        # Desk primitives: merge into the live store, last-write-wins on
-        # last_modified, tombstone deletes.
-        for bucket, (attr, id_kwarg, field_map) in _MERGEABLE.items():
-            repo = getattr(db, attr)
-            merged = 0
-            for rec in body.get(bucket) or []:
-                meta = rec["meta"]
-                value = rec.get("value") or {}
-                rec_id = str(meta["id"])
-                incoming_lm = str(meta.get("last_modified") or "")
-                existing = repo.get(rec_id, include_deleted=True)
-                # Last-write-wins: skip if the stored copy is newer.
-                if existing is not None and existing.last_modified and incoming_lm:
-                    if existing.last_modified >= incoming_lm:
-                        continue
-                kwargs: dict[str, Any] = {
-                    id_kwarg: rec_id,
-                    "last_modified": incoming_lm or None,
-                    "deleted": bool(meta.get("deleted")),
-                }
-                if value.get("created_at"):
-                    kwargs["created_at"] = str(value["created_at"])
-                for value_key, upsert_key in field_map.items():
-                    if value_key in value:
-                        kwargs[upsert_key] = value[value_key]
-                repo.upsert(**kwargs)
-                merged += 1
-            received[bucket] = merged
+        revision_merged = 0
+        from ..deployment_revisions import DeploymentRevision
+        for rec in body.get("deployment_revisions") or []:
+            if rec["meta"].get("deleted"):
+                continue
+            value = rec.get("value")
+            if not isinstance(value, dict) or value.get("id") != rec["meta"]["id"]:
+                continue
+            if "secret" in value or "credential" in value:
+                raise ValidationError("deployment revision must not carry credentials")
+            try:
+                db.deployment_revisions.upsert(DeploymentRevision(**value))
+            except TypeError as exc:
+                raise ValidationError("malformed deployment revision") from exc
+            revision_merged += 1
+        received["deployment_revisions"] = revision_merged
+
+        # Primitive merge dispatch is registry-owned; adding an unrelated
+        # bucket therefore cannot make an optional repository mandatory.
+        for spec in SYNC_REGISTRY:
+            if spec.merger is not None:
+                received[spec.bucket] = spec.merger(db, spec, body.get(spec.bucket) or [])
         return {"success": True, "received": received}

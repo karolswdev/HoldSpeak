@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://holdspeak.dev/contracts/v0/decision-record-source.schema.json",
+  "title": "decision_record_source",
+  "x-sync-kind": "decision_record_source",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "id": {},
+    "record_id": {},
+    "source_type": {},
+    "source_ref": {},
+    "created_at": {}
+  },
+  "required": [
+    "id",
+    "record_id",
+    "created_at"
+  ]
+}
