@@ -1,6 +1,6 @@
 # Phase 130 — One Truth
 
-**Status:** in-progress (10/11).
+**Status:** DONE (11/11).
 
 **Last updated:** 2026-08-09.
 
@@ -110,7 +110,7 @@ and the full suites — not why it exists; recorded as an adopted correction.)
 | HS-130-08 | DecisionReceipt → Decision — the word returns to evidence | done | [story-08](story-08-decision-rename.md) | [evidence-story-08](./evidence-story-08.md) |
 | HS-130-09 | Workbench — one gesture one record, live voice | done | [story-09](story-09-workbench-one-gesture.md) | [evidence-story-09](./evidence-story-09.md) |
 | HS-130-10 | The inherited ledger — triage and assign the 96 | done | [story-10](story-10-inherited-ledger.md) | [evidence-story-10](./evidence-story-10.md) |
-| HS-130-11 | The walk | backlog | [story-11](story-11-the-walk.md) | [evidence-story-11](./evidence-story-11.md) |
+| HS-130-11 | The walk | done | [story-11](story-11-the-walk.md) | [evidence-story-11](./evidence-story-11.md) |
 
 ## Delivery order (waves)
 
@@ -239,6 +239,26 @@ committed code with the owner's data.
   before teardown) asserted by a pure-node command, so exit codes reflect
   test results, not the teardown signal. HS-130-11's walk must run web checks
   with this in mind (isolate or JSON-report).
+
+- 2026-08-09 — **Sol CLOSE counsel: ratify with named reservations (one
+  blocking, resolved).** Sol's acceptance pass on the finished phase caught:
+  (a) [BLOCKING] a stale `docs/api-surface.json` — the DecisionRecord rename
+  added `/api/decision-records` routes without regenerating the manifest;
+  regenerated (436 routes), `test_api_surface` green, reclassified
+  repaired-by-130; (b) a tautological walk assertion (`_badge_host` returned
+  `{}`), deleted and made real against `endpoint_egress`; (c) the exhibit's
+  '02 ships first' overstatement (it landed 4th) — corrected. All 7 charter
+  reservations confirmed honored; the .43 leg confirmed genuine; the
+  DecisionRecord migration confirmed row-preserving. Full counsel in
+  SOL-COUNSEL-CLOSE.md. Two minds on the close, per ORCHESTRATION §6.
+
+- 2026-08-09 — **HS-130-11 walk: live-.43 PROVEN, screenshot-walk DEFERRED.**
+  The harness `scripts/walk_one_truth.py` asserts 19/19 with the live `.43`
+  LAN endpoint (Qwen3.6-35B): private_network end-to-end across badge,
+  DeploymentIdentity, and receipt (control: api.openai.com → cloud). The
+  Playwright screenshot-walk (1440+393) is deferred to the owner's sitting —
+  this job has no browser/built bundle — with the one-command harness handed
+  over. Amended visibly per the walk; owner may overrule at the sitting.
 
 ## Decisions deferred (Phase 131 preconditions — owner rules at or before the 131 charter)
 

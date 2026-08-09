@@ -9,7 +9,7 @@ and the clients that call it (extracted from the real call sites in
 `web/src` and `apple/`). "server only" means no in-repo client calls
 it today.
 
-Routes: 425 (plus static mounts). iOS-consumed: 88. Web-consumed: 326.
+Routes: 436 (plus static mounts). iOS-consumed: 88. Web-consumed: 337.
 
 ## device_audio_ws
 
@@ -141,6 +141,17 @@ Routes: 425 (plus static mounts). iOS-consumed: 88. Web-consumed: 326.
 |---|---|---|
 | GET | `/api/state` | web |
 | GET | `/health` | ios |
+
+## web.routes.decision_records
+
+| Method | Path | Consumers |
+|---|---|---|
+| GET | `/api/decision-records` | web |
+| GET | `/api/decision-records/review` | web |
+| GET | `/api/decision-records/search` | web |
+| GET | `/api/decision-records/source/{source_type}/{source_id}` | web |
+| GET | `/api/decision-records/work/{work_type}/{work_ref}` | web |
+| GET | `/api/decision-records/{record_id}` | web |
 
 ## web.routes.decisions
 
@@ -316,6 +327,14 @@ Routes: 425 (plus static mounts). iOS-consumed: 88. Web-consumed: 326.
 | GET | `/api/dictation/project-hs` | web |
 | PUT | `/api/dictation/project-hs` | web |
 
+## web.routes.follow_through
+
+| Method | Path | Consumers |
+|---|---|---|
+| GET | `/api/follow-through/board` | web |
+| POST | `/api/follow-through/commit-decision` | web |
+| POST | `/api/follow-through/complete` | web |
+
 ## web.routes.meeting_import
 
 | Method | Path | Consumers |
@@ -426,6 +445,13 @@ Routes: 425 (plus static mounts). iOS-consumed: 88. Web-consumed: 326.
 | GET | `/api/missioncontrol/sessions` | web |
 | GET | `/api/missioncontrol/state` | ios, web |
 | POST | `/api/missioncontrol/story/propose` | web |
+
+## web.routes.monday_brief
+
+| Method | Path | Consumers |
+|---|---|---|
+| POST | `/api/brief/generate` | web |
+| GET | `/api/brief/latest` | web |
 
 ## web.routes.pages
 

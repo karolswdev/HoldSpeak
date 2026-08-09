@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 130
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-130-01, HS-130-02, HS-130-03, HS-130-04, HS-130-05, HS-130-06, HS-130-07, HS-130-08, HS-130-09, HS-130-10
 - **Unblocks:** —
 - **Owner:** unassigned
@@ -71,3 +71,30 @@ without knowing the implementation?
   *admission*.
 - The owner sitting itself (this story produces the exhibit; the sitting is
   the owner's).
+
+## Amendment (2026-08-09, orchestrator — owner may overrule at the sitting)
+
+Two legs were adapted to what this environment can reach; both amendments are
+visible here and in the phase decision log:
+
+1. **Live metal (.43) — DONE, and better than chartered.** The `.43` LAN
+   endpoint (`http://192.168.1.43:8080/v1`, serving Qwen3.6-35B) was reached
+   live and driven through the harness: it classifies **private_network
+   end-to-end** — the badge, the DeploymentIdentity boundary, and the receipt
+   boundary all agree, `owner=you`, with no fabricated cloud host. Control:
+   `api.openai.com` classifies `cloud`. This is the HS-130-04 control-vs-
+   treatment proven on real hardware. Output: `assets/hs-130-11/walk-output.txt`.
+
+2. **The live Playwright screenshot-walk (1440+393) — DEFERRED to the owner's
+   sitting.** This job has no browser and no built web bundle (`web/dist`
+   absent, `playwright` not installed), so the before/after UI shot pairs
+   cannot be produced here. The BACKEND/CLI truth the phase exists to establish
+   is proven live (19/19 assertions, incl. real `.43`); the reusable harness
+   `scripts/walk_one_truth.py` is checked in so the owner runs the whole proof
+   with one command (`HS_WALK_LAN=… .venv/bin/python scripts/walk_one_truth.py`).
+   The UI screenshot-walk rides the owner's sitting on a machine with the built
+   hub, per the standing screenshot-walk rule.
+
+Nothing in the phase's truth claim rests on the deferred leg — placement,
+egress, deployment identity, secret slots, and settings versioning are all
+asserted live. The screenshot pairs are a presentation artifact, not the proof.

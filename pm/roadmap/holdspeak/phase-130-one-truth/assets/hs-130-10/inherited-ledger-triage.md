@@ -2,10 +2,10 @@
 
 Full isolated-HOME backend suite on phase-130 HEAD == pre-phase baseline, **byte-identical failing set** across all 9 stories (zero regressions, zero inherited failures touched).
 
-- **repaired-by-130:** 0 (this phase added truth without editing inherited failures)
+- **repaired-by-130:** 1 (`test_api_surface` — the DecisionRecord rename's manifest drift, regenerated at close per Sol's counsel)
 - **newly-caused:** 0 (every story shipped at zero net regression vs baseline)
 - **131-owned (sync contract):** 7
-- **still-inherited (re-ledgered):** 95 across 36 test files
+- **still-inherited (re-ledgered):** 94 across 35 test files (was 95; `test_api_surface` reclassified repaired-by-130)
 
 ## 131-owned — route to Phase 131 (sync registry + deployment revisions)
 
@@ -55,9 +55,12 @@ Unrelated to placement/execution truth; grouped by test file with a named provis
 | `test_web_project_kb_api` | 1 | Project KB API — remediation phase |
 | `test_induction_integration_43` | 1 | Induction .43 — remediation phase (needs metal) |
 | `test_mesh_dispatch` | 1 | KNOWN FLAKE (passes on rerun) — quarantine candidate |
-| `test_api_surface` | 1 | API surface snapshot — remediation phase |
 | `test_db` | 1 | DB — remediation phase |
 | `test_decision_commitments` | 1 | Decision commitments — remediation phase |
 | `test_interior_canon_guard` | 1 | CSS left-rail canon guard — remediation phase |
 | `test_product_copy` | 1 | Product-copy drift guard — remediation phase |
 | `test_web_vocabulary_guard` | 1 | Web prose dash guard — remediation phase |
+
+## Close addendum (2026-08-09, Sol counsel)
+
+`test_api_surface` was originally listed still-inherited; Sol's close counsel showed it is 130-caused drift (the DecisionRecord rename added `/api/decision-records` routes without regenerating `docs/api-surface.json`). Regenerated via `scripts/gen_api_surface.py` (436 routes) and reclassified **repaired-by-130**. No other reclassification.

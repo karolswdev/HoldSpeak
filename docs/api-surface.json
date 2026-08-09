@@ -534,6 +534,26 @@
       ]
     },
     {
+      "path": "/api/brief/generate",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.monday_brief",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/brief/latest",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.monday_brief",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/cadence/audit",
       "methods": [
         "GET"
@@ -1009,6 +1029,66 @@
         "GET"
       ],
       "module": "web.routes.constitutional",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/decision-records",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.decision_records",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/decision-records/review",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.decision_records",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/decision-records/search",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.decision_records",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/decision-records/source/{source_type}/{source_id}",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.decision_records",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/decision-records/work/{work_type}/{work_ref}",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.decision_records",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/decision-records/{record_id}",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.decision_records",
       "consumers": [
         "web"
       ]
@@ -2100,6 +2180,36 @@
         "PUT"
       ],
       "module": "web.routes.primitives.directories",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/follow-through/board",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.follow_through",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/follow-through/commit-decision",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.follow_through",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/follow-through/complete",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.follow_through",
       "consumers": [
         "web"
       ]
