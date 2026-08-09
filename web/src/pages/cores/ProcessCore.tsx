@@ -167,13 +167,16 @@ export function ProcessCore(_props: CoreProps) {
           </SurfaceLedger>
         ))
       )}
-      <SurfaceFooter verbs={<>
-        <span className="surface-receiptbar-receipt" role="status">
-          {store.error
-            ? `KERNEL UNREACHABLE · CURSOR ${store.cursor}`
-            : `KERNEL · CURSOR ${store.cursor} · RUNS ${total}`}
-        </span>
-      </>} />
+      {/* HS-129-05 — the kernel fact uses the shared receipt slot. */}
+      <SurfaceFooter
+        receipt={
+          <span className="surface-footer-receipt-line" role="status">
+            {store.error
+              ? `KERNEL UNREACHABLE · CURSOR ${store.cursor}`
+              : `KERNEL · CURSOR ${store.cursor} · RUNS ${total}`}
+          </span>
+        }
+      />
     </>
   );
 }

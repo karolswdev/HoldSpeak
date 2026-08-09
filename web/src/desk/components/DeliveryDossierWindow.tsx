@@ -95,7 +95,8 @@ export function DeliveryDossierWindow() {
       onClose={close}
     >
 
-      <div className="desk-pullout-body desk-dlv-dossier-body">
+      {/* HS-129-04 — the frame body scrolls; RAW wells remain bounded within it. */}
+      <div className="desk-pullout-body">
         {loading ? <SurfaceState loading /> : null}
         <RefusalPanel />
 

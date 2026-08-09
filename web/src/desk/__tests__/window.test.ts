@@ -140,13 +140,14 @@ describe("desk windows", () => {
     expect(useDesk.getState().pullouts).toEqual([]);
   });
 
-  it("the origin rides the card; the editor takes only its own card", () => {
+  it("the origin rides the card; editing keeps an open card in-world", () => {
     useDesk.getState().openPullout("note:n1", { x: 42, y: 43 });
     useDesk.getState().openPullout("kb:k1");
     expect(useDesk.getState().pullouts[0].origin).toEqual({ x: 42, y: 43 });
     expect(useDesk.getState().pullouts[1].origin).toBeNull();
-    useDesk.getState().openEditor("kb:k1");
-    expect(useDesk.getState().pullouts.map((p) => p.id)).toEqual(["note:n1"]);
+    useDesk.getState().openEditor("kb:k1", { x: 73, y: 74 });
+    expect(useDesk.getState().pullouts.map((p) => p.id)).toEqual(["note:n1", "kb:k1"]);
+    expect(useDesk.getState().editorOrigin).toEqual({ x: 73, y: 74 });
   });
 });
 

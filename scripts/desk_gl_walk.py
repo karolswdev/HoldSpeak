@@ -40,36 +40,43 @@ def wait_world(page):
     page.wait_for_timeout(1200)
 
 
-def free_object(page, prefix: str | None = None):
-    """The first world object with a tappable point that actually hits
-    the canvas (windows and the dock are honest geometry since HS-97):
-    the tap must reach the world, not furniture above it. Tries the
-    object center and a slightly higher point (an object parked half
-    under the dock still shows its top). Returns {x, y, ref} or None."""
+def free_object(page, title: str | None = None):
+    """Find a title-addressed object at a point the engine itself resolves.
+
+    DOM hit testing alone cannot see a zone painted inside the same canvas,
+    so the walk also asks the engine's read-only hit probe. That prevents a
+    native double-click from being misreported as an object-open failure when
+    it actually selects a zone."""
     return page.evaluate(
-        """(prefix) => {
+        """(title) => {
           const objs = window.__hsWorldProbe();
-          const pool = prefix
-            ? objs.filter(o => o.ref.startsWith(prefix))
-            : objs;
+          const pool = title ? objs.filter(o => o.title === title) : objs;
           for (const o of pool) {
             for (const dy of [0, -28, -48]) {
-              const el = document.elementFromPoint(o.x, o.y + dy);
-              // The canvas is the world; the vignette is atmosphere the
-              // world's own tap handling still owns. Anything else
-              // (windows, the dock) is furniture covering the object.
-              if (
-                el &&
+              const x = o.x;
+              const y = o.y + dy;
+              const el = document.elementFromPoint(x, y);
+              const hitsWorld = el &&
                 (el.classList.contains('desk-world-canvas') ||
-                  el.classList.contains('desk-vignette'))
-              )
-                return { x: o.x, y: o.y + dy, ref: o.ref };
+                  el.classList.contains('desk-vignette'));
+              const hit = window.__hsWorldHitProbe(x, y);
+              if (hitsWorld && hit.type === 'object' && hit.ref === o.ref)
+                return { x, y, ref: o.ref, title: o.title };
             }
           }
           return null;
         }""",
-        prefix,
+        title,
     )
+
+
+def open_desk_object(page, title: str):
+    """Open one named object through the desktop's actual pointer grammar."""
+    target = free_object(page, title)
+    assert target, f"no reachable desk object titled {title!r}"
+    page.mouse.dblclick(target["x"], target["y"])
+    page.wait_for_timeout(450)
+    return target
 
 
 def launch_tool(page, label):
@@ -158,7 +165,8 @@ def smoke() -> None:
         wait_world(page)
         objs = page.evaluate("() => window.__hsWorldProbe()")
         assert objs, "no objects on the seeded desk"
-        target = objs[0]
+        target = free_object(page, objs[0]["title"])
+        assert target, "no object has a reachable engine hit point"
         # 1. The OS click grammar THROUGH the canvas (round 9): a single
         # click SELECTS (the Ask bar answers the selection, no card); a
         # double-click OPENS the card.
@@ -170,10 +178,13 @@ def smoke() -> None:
         assert page.locator(".desk-askbar").count() > 0, (
             "a single click did not select (no ask bar)"
         )
-        marked = page.evaluate("() => window.__hsWorldProbe()")[0]
+        marked = next(
+            o for o in page.evaluate("() => window.__hsWorldProbe()")
+            if o["ref"] == target["ref"]
+        )
         assert marked["selected"], "a single click did not mark the ring"
-        page.mouse.dblclick(target["x"], target["y"])
-        page.wait_for_timeout(500)
+        open_desk_object(page, target["title"])
+        page.wait_for_timeout(50)
         assert page.locator(".desk-pullout").count() > 0, (
             "double-click did not open"
         )
@@ -182,7 +193,10 @@ def smoke() -> None:
         assert page.locator(".desk-askbar").count() == 0, (
             "double-click open left the selection mark standing"
         )
-        opened = page.evaluate("() => window.__hsWorldProbe()")[0]
+        opened = next(
+            o for o in page.evaluate("() => window.__hsWorldProbe()")
+            if o["ref"] == target["ref"]
+        )
         assert not opened["selected"], (
             "double-click open left the selection ring on the object"
         )
@@ -1242,7 +1256,9 @@ def arrangement() -> None:
         page.wait_for_timeout(500)
         objs = page.evaluate("() => window.__hsWorldProbe()")
         assert objs, "no object on the phone desk"
-        open_object(page, objs[0])
+        target = free_object(page, objs[0]["title"])
+        assert target, "no phone object has a reachable engine hit point"
+        open_object(page, target)
         page.wait_for_selector(".desk-pullout", timeout=8000)
         page.wait_for_timeout(400)
         hit = page.evaluate(

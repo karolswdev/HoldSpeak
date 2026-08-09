@@ -20,7 +20,7 @@
   gap: 8px;
   background: var(--desk-window-fill);
   border-bottom: 1px solid var(--border);
-  z-index: var(--z-sticky);
+  z-index: var(--desk-z-local);
 }
 .surface-verbs-status {
   display: flex;
@@ -149,32 +149,6 @@
   font-size: var(--desk-surface-detail-size);
   font-variant-numeric: tabular-nums;
 }
-/* HS-109-06 — projected state and age share the quiet row edge. Nested
-   SurfaceRows inherit the row inset above, so child runs read as children
-   without a second card or a fixed-width process table. */
-.process-row-state {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 6px;
-}
-/* HS-111-01: process timestamps in mono */
-.process-row-state time {
-  white-space: nowrap;
-  font-family: var(--font-mono);
-  font-variant-numeric: tabular-nums;
-}
-@container surface (max-width: 559px) {
-  .process-row-state {
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 2px;
-  }
-  .surface-row:has(.process-row-state):has(> .surface-rows) > .surface-rows {
-    margin-left: calc(var(--desk-surface-row-pad-x) + 10px);
-  }
-}
-
 /* Rule 5 — row verbs reveal on hover/focus; always present for coarse
    pointers. Opacity only (the verbs stay in the tree for focus). */
 .surface-row-verbs {
@@ -527,7 +501,7 @@
 }
 .surface-traffic-prefix {
   font-weight: 700;
-  letter-spacing: 0.04em;
+  letter-spacing: var(--letter-spacing-label-compact);
   color: var(--text-muted);
   white-space: nowrap;
   max-width: 16ch;
@@ -561,7 +535,7 @@
 .surface-traffic-empty {
   padding: 10px 6px;
   font: 600 11px / 1 var(--font-mono);
-  letter-spacing: 0.08em;
+  letter-spacing: var(--letter-spacing-label-wide);
   text-transform: uppercase;
   color: var(--text-faint);
 }
@@ -572,7 +546,7 @@
   font-family: var(--font-mono);
   font-size: 11px;
   font-weight: 600;
-  letter-spacing: 0.05em;
+  letter-spacing: var(--letter-spacing-eyebrow);
   text-transform: uppercase;
   color: var(--text-muted);
   white-space: nowrap;
@@ -743,7 +717,7 @@ button.surface-edit-in-place:hover {
   font-size: var(--desk-surface-label-size);
   font-family: var(--font-mono);
   font-weight: 600;
-  letter-spacing: 0.08em;
+  letter-spacing: var(--letter-spacing-label-wide);
   text-transform: uppercase;
   color: var(--text-muted);
 }
@@ -829,36 +803,6 @@ button.surface-edit-in-place:hover {
 /* HS-111-01: the settings rail archetype died — Settings is the Prefs
    drawer face now (a module swaps the whole window body; the footer
    status bar walks back). See the prefs block at the end of this file. */
-
-/* The explorer archetype: a status bar on the well tone at the
-   window's foot — the honest counts live here. */
-/* Scrollable bodies that contain a sticky status bar need clearance
-   so the last content row is never hidden behind the bar. */
-.desk-surface-body:has(> .surface-status),
-.desk-surface-body:has(> .prefs-status),
-.desk-surface-body:has(> .surface-receiptbar) {
-  padding-bottom: 36px;
-}
-.surface-status {
-  position: sticky;
-  bottom: calc(-1 * var(--desk-window-pad-x));
-  margin: auto calc(-1 * var(--desk-window-pad-x))
-    calc(-1 * var(--desk-window-pad-x));
-  padding: 5px var(--desk-window-pad-x);
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  min-height: 26px;
-  background: var(--desk-window-well);
-  color: var(--text-muted);
-  font-size: var(--desk-surface-label-size);
-  letter-spacing: 0.04em;
-}
-.surface-status > span + span::before {
-  content: "·";
-  margin-right: 10px;
-  color: var(--text-faint);
-}
 
 /* The split's detail pane sits on the rail tone (tonal, borderless). */
 .surface-split-detail {
@@ -1365,7 +1309,7 @@ button.surface-edit-in-place:hover {
   margin: 10px 0 2px;
   padding: 0 6px;
   font: 600 10px / 1 var(--font-mono);
-  letter-spacing: 0.08em;
+  letter-spacing: var(--letter-spacing-label-wide);
   text-transform: uppercase;
   color: var(--text-faint);
 }
@@ -1750,7 +1694,7 @@ button.surface-edit-in-place:hover {
 .surface-bay-tag {
   font-size: 0.625rem;
   font-weight: 700;
-  letter-spacing: 0.09em;
+  letter-spacing: var(--letter-spacing-label-wide);
   text-transform: uppercase;
   color: var(--accent);
   background: var(--accent-tint);
@@ -1876,7 +1820,7 @@ button.surface-edit-in-place:hover {
 .surface-detail-facts {
   font-family: var(--font-mono);
   font-size: 11px;
-  letter-spacing: 0.04em;
+  letter-spacing: var(--letter-spacing-label-compact);
   text-transform: uppercase;
   color: var(--text-muted);
   font-variant-numeric: tabular-nums;
@@ -1973,7 +1917,7 @@ button.surface-edit-in-place:hover {
   color: var(--text-faint);
   font-family: var(--font-mono);
   font-size: var(--desk-surface-label-size);
-  letter-spacing: 0.04em;
+  letter-spacing: var(--letter-spacing-label-compact);
   text-transform: uppercase;
 }
 .surface-dropwell-glyph {
@@ -2050,7 +1994,8 @@ button.surface-edit-in-place:hover {
   max-width: 14rem;
 }
 
-@container (max-width: 540px) {
+/* HS-129-06 — Project Memory reflows against its window body. */
+@container surface (max-width: 540px) {
   .project-memory-since {
     align-items: flex-start;
     flex-direction: column;
@@ -2171,7 +2116,7 @@ button.surface-edit-in-place:hover {
   font-family: var(--font-mono);
   font-size: 10px;
   font-weight: 600;
-  letter-spacing: 0.05em;
+  letter-spacing: var(--letter-spacing-eyebrow);
   text-transform: uppercase;
   text-align: center;
   line-height: 1.2;
@@ -2197,14 +2142,14 @@ button.surface-edit-in-place:hover {
   font-family: var(--font-mono);
   font-size: 10px;
   font-weight: 600;
-  letter-spacing: 0.08em;
+  letter-spacing: var(--letter-spacing-label-wide);
   color: var(--text-muted);
 }
 .prefs-precedence {
   padding: 0 6px;
   font-family: var(--font-mono);
   font-size: 10px;
-  letter-spacing: 0.04em;
+  letter-spacing: var(--letter-spacing-label-compact);
   color: var(--text-faint);
   overflow-wrap: anywhere;
 }
@@ -2226,7 +2171,7 @@ button.surface-edit-in-place:hover {
   font-family: var(--font-mono);
   font-size: 12px;
   font-weight: 600;
-  letter-spacing: 0.08em;
+  letter-spacing: var(--letter-spacing-label-wide);
   color: var(--text-muted);
 }
 .prefs-egress-line {
@@ -2235,22 +2180,6 @@ button.surface-edit-in-place:hover {
   align-items: center;
   gap: 8px;
   padding: 2px 6px;
-}
-/* The footer status bar: « PREFS | receipt | DEFAULTS. Rides the
-   explorer status-bar grammar (.surface-status) and stays mono. */
-.prefs-status {
-  font-family: var(--font-mono);
-  justify-content: space-between;
-  gap: 12px;
-  margin-top: auto;
-  /* Opaque: rows scroll away UNDER the bar, never through it. */
-  background: var(--desk-window-head-fill);
-  border-top: 1px solid var(--border);
-  z-index: var(--z-sticky);
-}
-.prefs-status > span + span::before {
-  content: none;
-  margin: 0;
 }
 .prefs-receipt {
   flex: 1;
@@ -2300,44 +2229,6 @@ button.surface-edit-in-place:hover {
   cursor: not-allowed;
 }
 
-/* ── HS-111-03: the Meetings receipt bar — the ONE footer status line
-   (the PrefStatusBar/ReadinessLine pattern on .surface-status). Opaque
-   and sticky: content scrolls away UNDER it, never through it — this
-   is what retires the artifact-tile/footer overlap by construction. ── */
-.surface-receiptbar {
-  font-family: var(--font-mono);
-  gap: 10px;
-  margin-top: auto;
-  background: var(--desk-window-head-fill);
-  border-top: 1px solid var(--border);
-  z-index: var(--z-sticky);
-}
-.surface-receiptbar > span + span::before {
-  content: none;
-  margin: 0;
-}
-.surface-receiptbar-receipt {
-  flex: 1;
-  min-width: 0;
-  text-align: center;
-  font-size: 10px;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--text-muted);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.surface-receiptbar-receipt[data-tone="danger"] {
-  color: var(--danger);
-}
-.surface-receiptbar-verbs {
-  flex: none;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
 /* ── HS-111-03: recovery attention slabs (the rounded warn-tinted
    recovery-card died). The conflict face is twin receipt slips:
    opaque two-tone insets, mono fact stacks, verbs on the slip. ── */
@@ -2381,7 +2272,7 @@ button.surface-edit-in-place:hover {
 }
 .meeting-conflict-slip-facts dt {
   color: var(--text-faint);
-  letter-spacing: 0.05em;
+  letter-spacing: var(--letter-spacing-eyebrow);
   text-transform: uppercase;
 }
 .meeting-conflict-slip-facts dd {

@@ -13,7 +13,6 @@
 // HS-117-08 — decomposed: sub-components live under dictation/.
 import "../../desk/components/speak.css";
 import { useCallback, useMemo, useState } from "react";
-import { SurfaceFooter } from "../../desk/surface/SurfaceFooter";
 import { apiFetch } from "../../lib/api";
 import { download } from "./history";
 import type { CoreProps, DictationJournalResponse } from "./core-types";
@@ -24,7 +23,7 @@ import {
   Journal,
   Blocks,
   Readiness,
-  ReadinessLine,
+  ReadinessFooter,
   Memory,
   Knowledge,
   Runtime,
@@ -118,9 +117,12 @@ export function DictationCore({ hero, scope, scopeLabel }: CoreProps) {
       <ReceiptContext.Provider value={announce}>
         {current}
       </ReceiptContext.Provider>
-      <ReadinessLine onOpenDoor={() => wings.setDoorOpen(true)} receipt={receipt} />
-      <SurfaceFooter
-        verbs={
+      {/* HS-129-05 — Speak publishes one frame-owned foot: pipeline state,
+          the landing receipt, Review, and Export share the same slots. */}
+      <ReadinessFooter
+        onOpenDoor={() => wings.setDoorOpen(true)}
+        receipt={receipt}
+        exportVerb={
           <button
             type="button"
             className="desk-chip"

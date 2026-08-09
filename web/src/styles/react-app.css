@@ -180,7 +180,7 @@
   gap: var(--space-4);
   padding: clamp(20px, 6vw, 72px);
   background:
-    radial-gradient(60% 50% at 50% 20%, rgba(168, 110, 74, 0.13), transparent),
+    radial-gradient(60% 50% at 50% 20%, var(--accent-tint), transparent),
     var(--bg-gradient);
 }
 .welcome-mark {
@@ -218,128 +218,6 @@
 /* HS-111-03 — the rounded warn-tinted recovery-card family died: intel
    recovery is a one-row gadget slab, sync conflicts are twin receipt
    slips (desk/surface/surface.css). */
-.workbench-canvas {
-  position: relative;
-  height: 100%;
-  min-height: 200px;
-  overflow: auto;
-  border: 1px solid var(--border);
-  border-radius: 2px;
-  background-color: var(--bg);
-  background-image: radial-gradient(
-    circle,
-    var(--text-faint) 1px,
-    transparent 1.3px
-  );
-  background-size: 34px 34px;
-  touch-action: none;
-}
-.workbench-cables {
-  position: absolute;
-  inset: 0;
-  width: 1800px;
-  height: 900px;
-  pointer-events: none;
-  overflow: visible;
-}
-.workbench-cables path {
-  fill: none;
-  stroke: var(--accent);
-  stroke-width: 3;
-  filter: drop-shadow(0 0 5px var(--accent-glow));
-}
-.workbench-cables path.is-findings {
-  stroke: var(--ok);
-}
-.workbench-cables path.is-signal {
-  stroke: var(--info);
-}
-.workbench-node {
-  position: absolute;
-  width: 210px;
-  min-height: 100px;
-  display: grid;
-  gap: 5px;
-  align-content: center;
-  padding: var(--space-4);
-  text-align: left;
-  border: 1px solid var(--border);
-  border-radius: 2px;
-  background: var(--surface-2);
-  color: var(--text);
-  box-shadow: var(--desk-window-bevel);
-  cursor: grab;
-  touch-action: none;
-}
-.workbench-node:active {
-  cursor: grabbing;
-}
-.workbench-node.selected {
-  border-color: var(--desk-window-keyline);
-  box-shadow: var(--desk-window-bevel), var(--desk-glass-edge);
-}
-.workbench-node > span {
-  color: var(--text-faint);
-  font: var(--font-size-xs) var(--font-mono);
-  text-transform: uppercase;
-}
-.workbench-node > strong {
-  font-family: var(--font-display);
-}
-.workbench-node > small {
-  min-height: 1.3em;
-  color: var(--text-muted);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.workbench-node > i {
-  position: absolute;
-  top: 42px;
-  right: -7px;
-  width: 14px;
-  height: 14px;
-  border: 3px solid var(--bg);
-  border-radius: 50%;
-  background: var(--accent);
-}
-.workbench-node.is-findings > i {
-  background: var(--ok);
-}
-.workbench-node.is-signal > i {
-  background: var(--info);
-}
-.workbench-palette {
-  position: sticky;
-  left: 16px;
-  bottom: 16px;
-  width: max-content;
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  margin: 520px 16px 16px;
-  padding: var(--space-2);
-  border: 1px solid var(--border);
-  border-radius: 2px;
-  background: var(--desk-window-fill);
-  box-shadow: var(--desk-window-bevel);
-}
-.workbench-palette > span {
-  padding-inline: var(--space-2);
-  color: var(--text-faint);
-  font: var(--font-size-xs) var(--font-mono);
-  text-transform: uppercase;
-}
-.workbench-inspector {
-  position: sticky;
-  left: calc(100% - 360px);
-  bottom: 16px;
-  width: 340px;
-  margin: -220px 16px 16px auto;
-  z-index: 5;
-  box-shadow: var(--elev-3);
-}
-
 .presence-body {
   min-height: 100vh;
   display: grid;
@@ -439,7 +317,7 @@
 }
 .ambient-waveform {
   position: fixed;
-  z-index: 78;
+  z-index: var(--desk-z-waveform);
   left: 50%;
   bottom: 18px;
   height: 46px;
@@ -500,11 +378,6 @@
   }
   .welcome-mark {
     position: static;
-  }
-  .workbench-inspector {
-    left: 0;
-    width: calc(100% - 32px);
-    margin-left: 16px;
   }
 }
 

@@ -932,6 +932,36 @@ export function WorkbenchWindow({
     : null;
   const resolverLamp = resolverTarget ? boundaryEgressLamp(resolverTarget.boundary) : null;
 
+  const resolveInletReferences = useCallback((text = newTitle) => {
+    if (!resolverProfileId || !detail || !text.trim()) return;
+    const gen = ++generationRef.current;
+    setResolving(true);
+    setResolverError(null);
+    void resolveVoiceReferences(workbenchId, text, `vr_${gen}_${Date.now()}`)
+      .then((result) => {
+        if (generationRef.current !== gen) return;
+        if (result.error) {
+          setResolverError(result.error);
+        } else {
+          result.refs.forEach((ref) => addGroundingRef(ref));
+        }
+      })
+      .catch((err: unknown) => {
+        if (generationRef.current !== gen) return;
+        const status = (err as { status?: number }).status;
+        setResolverError(
+          status === 409
+            ? "resolver_not_configured"
+            : status === 503
+              ? "resolver_unavailable"
+              : "resolver_error",
+        );
+      })
+      .finally(() => {
+        if (generationRef.current === gen) setResolving(false);
+      });
+  }, [addGroundingRef, detail, newTitle, resolverProfileId, workbenchId]);
+
   useEffect(() => {
     if (detail && configOpen === null && !configAutoExpanded.current) {
       configAutoExpanded.current = true;
@@ -1308,16 +1338,14 @@ export function WorkbenchWindow({
         onDrop={handleDrop}
       >
         {dropHover ? (
-          <div className="wb-drop-zone">Drop to add</div>
+          <div className="wb-drop-zone">
+            <span className="desk-chip">DROP TARGET · ADD ITEM</span>
+          </div>
         ) : null}
         {error ? <SurfaceState error={error} onRetry={() => void load()} /> : null}
 
-        {/* ── head scanning indicator ─────────────────────────────── */}
-        {running ? (
-          <div className="wb-head-scan">
-            <LedMeter label="RUNNING" value={0} scanning />
-          </div>
-        ) : null}
+        {/* ── quiet run state ─────────────────────────────────────── */}
+        {running ? <SurfaceState loading /> : null}
 
         {/* ── config strip / panel ────────────────────────────────── */}
         {detail && !showConfig ? (
@@ -1444,25 +1472,21 @@ export function WorkbenchWindow({
                   ))}
                 </div>
               ) : null}
-              {/* resolving indicator (HS-118-05) */}
-              {resolving ? (
-                <div className="wb-inlet-resolving">
-                  <LedMeter label="RESOLVING" value={0} scanning />
-                </div>
-              ) : null}
-              {/* resolver error chips (HS-118-05) */}
+              {/* resolver state (HS-118-05) */}
+              {resolving ? <SurfaceState loading /> : null}
               {resolverError ? (
-                <div className="wb-inlet-tray">
-                  <span className="desk-chip quiet" data-tone="fail">
-                    {resolverError === "resolver_timeout"
+                <SurfaceState
+                  error={
+                    resolverError === "resolver_timeout"
                       ? "RESOLVER TIMEOUT"
                       : resolverError === "resolver_unavailable"
                         ? "RESOLVER UNAVAILABLE"
                         : resolverError === "resolver_not_configured"
                           ? "RESOLVER NOT CONFIGURED"
-                          : "RESOLVER ERROR"}
-                  </span>
-                </div>
+                          : "RESOLVER ERROR"
+                  }
+                  onRetry={() => void resolveInletReferences()}
+                />
               ) : null}
               {/* autocomplete popover */}
               {acOpen ? (
@@ -1479,8 +1503,6 @@ export function WorkbenchWindow({
                   draftScope={`workbench:${workbenchId}`}
                   grammar={workbenchVoiceGrammar}
                   onText={(t) => {
-                    const gen = ++generationRef.current;
-
                     // Insert transcript IMMEDIATELY — before any async work
                     setNewTitle((v) => (v ? v + " " + t : t));
 
@@ -1489,35 +1511,8 @@ export function WorkbenchWindow({
                     const { refs: fastRefs } = resolveDrawerNames(t, fastZones);
                     fastRefs.forEach((r) => addGroundingRef(r));
 
-                    // Smart path: fire-and-forget (if configured)
-                    if (resolverProfileId && detail) {
-                      setResolving(true);
-                      setResolverError(null);
-                      resolveVoiceReferences(
-                        workbenchId,
-                        t,
-                        `vr_${gen}_${Date.now()}`,
-                      ).then((result) => {
-                        if (generationRef.current !== gen) return;
-                        if (result.error) {
-                          setResolverError(result.error);
-                        } else {
-                          result.refs.forEach((r) => addGroundingRef(r));
-                        }
-                      }).catch((err: unknown) => {
-                        if (generationRef.current !== gen) return;
-                        const status = (err as { status?: number }).status;
-                        if (status === 409) {
-                          setResolverError("resolver_not_configured");
-                        } else if (status === 503) {
-                          setResolverError("resolver_unavailable");
-                        } else {
-                          setResolverError("resolver_error");
-                        }
-                      }).finally(() => {
-                        if (generationRef.current === gen) setResolving(false);
-                      });
-                    }
+                    // Smart path: fire-and-forget (if configured).
+                    if (resolverProfileId && detail) void resolveInletReferences(t);
                   }}
                   onProposalConfirm={(p) => setVoiceProposal(p)}
                   onState={handleMicState}

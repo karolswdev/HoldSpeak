@@ -736,16 +736,19 @@ export function ProjectMemoryCore({ hero, scope, scopeLabel }: CoreProps) {
           />
         )}
       </div>
-      {/* HS-111-06 — the one footer receipt bar (audit M7): the read
-          fact the window already held, plus the Refresh verb. */}
-      <SurfaceFooter verbs={<>
-        <span className="surface-receiptbar-receipt" role="status">
-          {`PROJECT ${projectName}${readToken}`}
-        </span>
-        {hero ? null : (
-          <span className="surface-receiptbar-verbs">{verbs}</span>
-        )}
-      </>} />
+      {/* HS-129-05 — the read fact and Refresh verb use shared foot slots. */}
+      <SurfaceFooter
+        receipt={
+          <span className="surface-footer-receipt-line" role="status">
+            {`PROJECT ${projectName}${readToken}`}
+          </span>
+        }
+        verbs={
+          hero ? null : (
+            <span className="surface-footer-verbs-group">{verbs}</span>
+          )
+        }
+      />
     </>
   );
 }

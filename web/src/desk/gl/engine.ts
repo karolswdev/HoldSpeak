@@ -239,10 +239,26 @@ export class WorldEngine {
       return (this.scene?.objects || []).map((o) => ({
         id: o.id,
         ref: o.selectionRef,
+        title: o.title,
         x: rect.left + o.u.x * rect.width,
         y: rect.top + o.u.y * rect.height,
         selected: o.selected,
       }));
+    };
+    // HS-129-10 — walk helpers must confirm the engine sees the intended
+    // object, not merely that its pixel is unobscured by DOM furniture.
+    (window as unknown as Record<string, unknown>).__hsWorldHitProbe = (
+      clientX: number,
+      clientY: number,
+    ) => {
+      if (!this.scene) return { type: "background" };
+      const rect = this.worldRect();
+      const hit = hitTest(this.scene, rect, clientX - rect.left, clientY - rect.top);
+      if (hit.type === "object")
+        return { type: hit.type, id: hit.object.id, ref: hit.object.selectionRef };
+      if (hit.type === "zone" || hit.type === "zone-title" || hit.type === "zone-grip")
+        return { type: hit.type, id: hit.zone.id };
+      return { type: hit.type };
     };
     (window as unknown as Record<string, unknown>).__hsWorldZoneProbe = () => {
       const rect = this.worldRect();

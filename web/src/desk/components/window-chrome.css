@@ -1,9 +1,13 @@
 /* ── The desk-window contract (Phase 93 UI remediation): any floating panel
    can be moved by its head, resized by its grip, and raised by a click; a
    user-arranged rect persists beside the object layout. ── */
+/* HS-129-03 — an arranged window owns its rect, but an unarranged
+   fit-content card still owns its working-band cap. */
 .desk-next .desk-window.is-floating {
   right: auto;
   bottom: auto;
+}
+.desk-next .desk-window.is-floating:not(.is-card) {
   max-height: none;
 }
 /* HS-97-04 — depth: the front window carries the full elevation and a
@@ -312,6 +316,28 @@
   z-index: var(--desk-z-popover);
 }
 
+/* HS-99-02 — the title bar is a BAR (DESIGN_SYSTEM.md, the chrome
+   ladder): the head tone sits one step above the body, separation is
+   tonal (no border-bottom), and the verb buttons are full-height
+   squares flush to the window edge. */
+.desk-next .desk-pullout-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 40px;
+  flex: none;
+  padding: 0 12px;
+  background: var(--desk-window-head-fill);
+  /* Materials round 2 — the UNIFIED header: the verb bar below shares
+     this tint and carries the hairline; head + verbs read as one
+     toolbar band (the mac unified-toolbar look). */
+  border-radius: calc(var(--desk-window-radius) - 1px)
+    calc(var(--desk-window-radius) - 1px) 0 0;
+}
+.desk-next .desk-window-shell.is-front .desk-pullout-head {
+  background: var(--desk-window-head-front);
+}
+
 /* ── HS-95-04: page cores hosted in desk windows ── */
 .desk-next .desk-surface-window {
   /* The default home: the left flank, below the chrome band and clear of
@@ -337,6 +363,7 @@
 }
 .desk-next .desk-surface-body {
   flex: 1;
+  min-height: 0;
   overflow: auto;
   padding: var(--desk-window-pad-y) var(--desk-window-pad-x)
     var(--desk-window-pad-x);
@@ -346,7 +373,16 @@
   /* HS-98-01: the WINDOW is the viewport — the surface kit reflows via
      @container queries against this container, never viewport media. */
   container-type: inline-size;
-  container-name: surface desk-surface;
+  /* HS-129-06 — surface is the one public window-body container name. */
+  container-name: surface;
+}
+/* HS-129-01 — mirrors the body container so narrow footer rules remain
+   local to this window after the footer moves out of the scrolling body. */
+.desk-next .desk-surface-foot {
+  flex: none;
+  container-type: inline-size;
+  /* HS-129-06 — surface is the one public window-body container name. */
+  container-name: surface;
 }
 .desk-next .desk-core-verbs {
   display: flex;

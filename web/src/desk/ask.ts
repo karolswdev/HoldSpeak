@@ -181,7 +181,26 @@ export async function runAsk(opts: {
       }),
     });
     const data = await res.json().catch(() => ({}));
-    if (!res.ok) return fail(humanizeError(res));
+    if (!res.ok) {
+      // The hub's deliberate refusals name the constraint it enforced. Keep
+      // that receipt intact, including the ids it could not resolve; only
+      // transport and unstructured failures need the friendly fallback.
+      const error =
+        data && typeof data === "object" && typeof data.error === "string"
+          ? data.error
+          : "";
+      const unknownIds =
+        data && typeof data === "object" && Array.isArray(data.unknown_ids)
+          ? data.unknown_ids.map(String)
+          : [];
+      return fail(
+        error
+          ? unknownIds.length
+            ? `${error} (${unknownIds.join(", ")})`
+            : error
+          : humanizeError(res),
+      );
+    }
     return {
       ok: true,
       output: String(data.output || ""),

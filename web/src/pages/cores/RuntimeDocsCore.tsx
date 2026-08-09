@@ -4,74 +4,54 @@ import { openSurfaceOr } from "../../desk/shell";
 import type { CoreProps } from "./core-types";
 import { renderHeroSlot } from "./core-layout";
 import { FoldGadget } from "../../desk/surface/gadgets";
-import { SurfaceCode, SurfaceSection } from "../../desk/surface/Surface";
+import { SurfaceRow, SurfaceRows, SurfaceSection } from "../../desk/surface/Surface";
 
 export function RuntimeDocsCore({ hero }: CoreProps) {
   return (
     <>
       {renderHeroSlot(hero, null)}
-      <p className="surface-receipt-line">
-        API keys are environment variables on the hub. They never belong in a
-        browser field or profile response.
-      </p>
-      <SurfaceSection label="Choose a runtime">
+      <SurfaceSection label="Runtime reference">
         <FoldGadget title="Basic voice typing" open>
-          <p>
-            Install HoldSpeak and a Whisper backend. Leave the dictation LLM
-            pipeline disabled to transcribe and type locally.
-          </p>
-          <SurfaceCode>uv pip install -e '.[whisper]'</SurfaceCode>
+          <SurfaceRows>
+            <SurfaceRow title="INSTALL" detail="uv pip install -e '.[whisper]'" />
+            <SurfaceRow title="PIPELINE" detail="LOCAL TRANSCRIBE" />
+          </SurfaceRows>
         </FoldGadget>
         <FoldGadget title="Apple Silicon with MLX">
-          <p>
-            Put an MLX model under <code>~/Models/mlx/</code>, then choose it
-            during arrival or in Dictation → Runtime.
-          </p>
-          <SurfaceCode>uv pip install -e '.[dictation-mlx]'</SurfaceCode>
+          <SurfaceRows>
+            <SurfaceRow title="INSTALL" detail="uv pip install -e '.[dictation-mlx]'" />
+            <SurfaceRow title="MODEL PATH" detail="~/Models/mlx/" />
+            <SurfaceRow title="SELECT" detail="DICTATION · RUNTIME" />
+          </SurfaceRows>
         </FoldGadget>
         <FoldGadget title="Local GGUF with llama.cpp">
-          <p>
-            Put a GGUF file under <code>~/Models/gguf/</code> and select its
-            full path.
-          </p>
-          <SurfaceCode>uv pip install -e '.[dictation-llama]'</SurfaceCode>
+          <SurfaceRows>
+            <SurfaceRow title="INSTALL" detail="uv pip install -e '.[dictation-llama]'" />
+            <SurfaceRow title="MODEL PATH" detail="~/Models/gguf/" />
+            <SurfaceRow title="VALUE" detail="FULL MODEL PATH" />
+          </SurfaceRows>
         </FoldGadget>
         <FoldGadget title="OpenAI-compatible endpoint">
-          <p>
-            Create a Runs on destination with the server URL and model. If it
-            needs a key, set <code>HOLDSPEAK_PROFILE_&lt;ID&gt;_KEY</code> on the
-            hub.
-          </p>
-          <SurfaceCode>uv pip install -e '.[dictation-openai]'</SurfaceCode>
+          <SurfaceRows>
+            <SurfaceRow title="INSTALL" detail="uv pip install -e '.[dictation-openai]'" />
+            <SurfaceRow title="DESTINATION" detail="SERVER URL · MODEL" />
+            <SurfaceRow title="KEY ENV" detail="HOLDSPEAK_PROFILE_<ID>_KEY" />
+          </SurfaceRows>
         </FoldGadget>
       </SurfaceSection>
       <SurfaceSection label="Verify">
-        <ol>
-          <li>
-            Open{" "}
-            <button
-              type="button"
-              className="btn-link"
-              onClick={() => openSurfaceOr("configure-setup", "/setup")}
-            >
-              Setup
-            </button>{" "}
-            and run the runtime test.
-          </li>
-          <li>
-            Open{" "}
-            <button
-              type="button"
-              className="btn-link"
-              onClick={() => openSurfaceOr("dictate", "/dictation")}
-            >
-              Dictation
-            </button>{" "}
-            and check Readiness.
-          </li>
-          <li>Use Try it to run one no-type dry test.</li>
-          <li>Only then enable rewrite stages for daily dictation.</li>
-        </ol>
+        <SurfaceRows>
+          <SurfaceRow
+            title="SETUP"
+            detail={<button type="button" className="btn-link" onClick={() => openSurfaceOr("configure-setup", "/setup")}>RUN RUNTIME TEST</button>}
+          />
+          <SurfaceRow
+            title="DICTATION"
+            detail={<button type="button" className="btn-link" onClick={() => openSurfaceOr("dictate", "/dictation")}>CHECK READINESS</button>}
+          />
+          <SurfaceRow title="TRY IT" detail="NO-TYPE DRY TEST" />
+          <SurfaceRow title="REWRITE" detail="ENABLE AFTER VERIFY" />
+        </SurfaceRows>
       </SurfaceSection>
       <SurfaceFooter />
     </>

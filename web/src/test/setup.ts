@@ -15,6 +15,8 @@ if (!("ResizeObserver" in globalThis)) {
 // jsdom has no matchMedia; motion's useReducedMotion (HS-93-08) needs one.
 if (typeof window !== "undefined" && !window.matchMedia) {
   Object.defineProperty(window, "matchMedia", {
+    configurable: true,
+    writable: true,
     value: (query: string) => ({
       matches: false,
       media: query,

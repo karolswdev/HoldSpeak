@@ -4,10 +4,10 @@
   bottom: 100%;
   left: 0;
   right: 0;
-  z-index: var(--desk-z-popover, 200);
+  z-index: var(--desk-z-popover);
   background: var(--surface-2);
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: var(--desk-inlet-radius);
   box-shadow: var(--desk-window-bevel);
   max-height: 240px;
   overflow-y: auto;

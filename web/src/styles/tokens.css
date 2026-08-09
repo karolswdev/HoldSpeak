@@ -166,7 +166,9 @@
   --line-height-relaxed: 1.6;
   --letter-spacing-tight: -0.01em;
   --letter-spacing-loose: 0.02em;
+  --letter-spacing-label-compact: 0.04em; /* dense mono labels */
   --letter-spacing-eyebrow: 0.06em;
+  --letter-spacing-label-wide: 0.08em; /* wide mono labels */
   --space-1: 0.25rem;
   --space-2: 0.5rem;
   --space-3: 0.75rem;
@@ -190,9 +192,11 @@
   --elev-3: 0 16px 48px rgba(0, 0, 0, 0.6);
   --elev-4: 0 24px 64px rgba(0, 0, 0, 0.7);
   --glow-accent: 0 0 0 1px rgba(168, 110, 74, 0.4), 0 4px 18px var(--accent-glow);
+  --duration-micro: 60ms; /* immediate input feedback */
   --duration-short: 120ms;
   --duration-medium: 200ms;
   --duration-long: 320ms;
+  --duration-slow: 500ms; /* one-shot completion acknowledgement */
   --ease-standard: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-emphasized: cubic-bezier(0.2, 0, 0, 1);
   --ease-decelerate: cubic-bezier(0, 0, 0, 1);
@@ -222,11 +226,16 @@
    * ============================================================ */
 
   --desk-z-canvas: 0; /* the GL world canvas — the floor of the desk */
+  --desk-z-local: 1; /* descendants layered inside their own local stacking context */
   --desk-z-world-overlay: 25; /* in-world DOM overlays (rename row, lasso) */
   --desk-z-chrome: 30; /* the chrome band (menus/launchers) — UNDER windows by design */
   --desk-z-window-base: 42; /* the window band floor; focus order stacks upward from here */
+  --desk-z-waveform: 78; /* ambient input feedback below the dock, above windows */
   --desk-z-dock: 80; /* shell furniture above every window */
   --desk-z-transient: 81; /* an OPEN chrome transient (the room menu) rides above windows */
+  --desk-window-margin: 10px; /* viewport clamp margin for window rects */
+  --desk-window-grab: 72px; /* minimum grabbable head strip (HS-93 contract) */
+  --desk-window-cascade: 26px; /* default-corner cascade step */
   --desk-snap-top: 54px; /* snap tiles clear the chrome band */
   --desk-snap-bottom: 52px; /* snap tiles clear the dock band */
   --desk-work-top: var(--desk-snap-top); /* the working band begins below the system bar */
@@ -252,11 +261,14 @@
   --desk-panel-fill: var(--bg); /* HS-110-01: secondary panel fill, opaque */
   --desk-window-radius: 2px; /* HS-110-01: sharp Workbench corners */
   --desk-window-shadow: none; /* HS-110-01: depth from bevels, not Gaussian shadows */
+  --desk-window-shadow-rest: none; /* HS-110-01: no shadow distinction — border color IS the distinction */
   --desk-window-keyline: var(--border-strong); /* HS-110-01: front window wears the strong border, not an accent-mixed ring */
   --desk-window-blur: none; /* HS-110-01: no backdrop-filter — opaque surfaces */
   --desk-window-bevel: inset 1px 1px 0 var(--bevel-light), inset -1px -1px 0 var(--bevel-dark); /* HS-110-01: the raised bevel (Workbench depth grammar) */
   --desk-window-etch: inset 1px 1px 0 var(--etch-dark), inset -1px -1px 0 var(--etch-light); /* HS-110-01: the sunken etch (wells, inputs) */
   --desk-transient-radius: 2px; /* HS-110-01: menus/popovers — sharp corners */
+  --desk-inlet-radius: 6px; /* HS-129-10: compact reference picker remains distinguishable from OS chrome */
+  --desk-sheet-top-radius: 18px; /* HS-129-10: reviewed phone-sheet exception; preserve the existing grip silhouette */
   --desk-transient-shadow: none; /* HS-110-01: no shadow on menus — border only */
   --desk-window-pad-x: 14px; /* window body horizontal padding */
   --desk-window-pad-y: 12px; /* window body vertical padding */
@@ -301,9 +313,11 @@
 
 @media (prefers-reduced-motion: reduce) {
   :root {
+    --duration-micro: 0ms;
     --duration-short: 0ms;
     --duration-medium: 0ms;
     --duration-long: 0ms;
+    --duration-slow: 0ms;
   }
 
   *,

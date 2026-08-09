@@ -63,7 +63,7 @@
 .desk-next .wb-config-collapse {
   position: sticky;
   top: 0;
-  z-index: 1;
+  z-index: var(--desk-z-local);
   margin: 6px var(--desk-window-pad-x) 0;
   font-size: 10px;
 }
@@ -159,7 +159,7 @@
   --wb-card-edge: transparent;
   border-bottom: 1px solid var(--border-subtle);
   box-shadow: inset 3px 0 0 var(--wb-card-edge);
-  transition: box-shadow 300ms var(--ease-standard);
+  transition: box-shadow var(--duration-long) var(--ease-standard);
 }
 .desk-next .wb-card[data-status="claimed"] {
   --wb-card-edge: var(--warn-signal, var(--warn));
@@ -490,7 +490,7 @@
 
 /* ── item state flash (HS-116-12) ── */
 .desk-next .wb-card[data-status="done"] {
-  animation: wb-done-flash 500ms ease-out;
+  animation: wb-done-flash var(--duration-slow) ease-out;
 }
 @keyframes wb-done-flash {
   0% { box-shadow: inset 2px 0 8px var(--ok); }
@@ -569,7 +569,8 @@
 }
 
 /* ── narrow workbench (container query) ── */
-@container desk-surface (max-width: 560px) {
+/* HS-129-06 — Workbench uses the public window-body container name. */
+@container surface (max-width: 560px) {
   .wb-config-strip {
     flex-wrap: wrap;
   }

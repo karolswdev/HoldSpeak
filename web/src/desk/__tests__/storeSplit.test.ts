@@ -386,10 +386,10 @@ describe("store split: desk interaction slice", () => {
     expect(useDesk.getState().askOpen).toBe(false);
   });
 
-  it("openEditor closes the object's pullout", () => {
+  it("openEditor keeps an existing object's pullout as its in-world host", () => {
     useDesk.setState({ pullouts: [{ id: "n1", origin: null }] });
     useDesk.getState().openEditor("n1");
     expect(useDesk.getState().editingId).toBe("n1");
-    expect(useDesk.getState().pullouts).toHaveLength(0);
+    expect(useDesk.getState().pullouts).toEqual([{ id: "n1", origin: null }]);
   });
 });

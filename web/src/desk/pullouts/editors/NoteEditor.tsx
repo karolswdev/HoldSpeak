@@ -5,6 +5,7 @@ import { useDesk } from "../../store";
 import { DeskEditor } from "../../components/DeskEditor";
 import { EditorAIBar, type EditorAIProposal } from "../../components/EditorAIBar";
 import { MicButton } from "../../components/MicButton";
+import { StringGadget } from "../../surface/gadgets";
 import { runAsk } from "../../ask";
 import { AI_VERBS } from "../../editorAI";
 import { editorVoiceGrammar } from "../../voice/grammars/editor";
@@ -131,10 +132,11 @@ export function NoteEditor({ object: o, onClose }: InlineEditorContentProps) {
 
   return (
     <>
-      <input
+      <StringGadget
+        label="Title"
         value={f.title}
         placeholder="Title"
-        onChange={(e) => set("title", "title", e.target.value)}
+        onChange={(value) => set("title", "title", value)}
       />
       <DeskEditor
         value={f.body}
@@ -153,10 +155,11 @@ export function NoteEditor({ object: o, onClose }: InlineEditorContentProps) {
         disabled={Boolean(proposal)}
       />
       {proposalInset}
-      <input
+      <StringGadget
+        label="Tags"
         value={f.tags}
         placeholder="Tags"
-        onChange={(e) => set("tags", "tags", e.target.value, true)}
+        onChange={(value) => set("tags", "tags", value, true)}
       />
       <div className="desk-inline-editor-foot">
         <MicButton
@@ -178,13 +181,6 @@ export function NoteEditor({ object: o, onClose }: InlineEditorContentProps) {
           </span>
         ) : null}
         <span className="desk-inline-editor-spacer" />
-        <button
-          type="button"
-          className="desk-chip quiet"
-          onClick={onClose}
-        >
-          Done
-        </button>
       </div>
     </>
   );

@@ -49,27 +49,6 @@
 .desk-next .desk-pullout .desk-pullout-body {
   min-height: 0;
 }
-/* HS-99-02 — the title bar is a BAR (DESIGN_SYSTEM.md, the chrome
-   ladder): the head tone sits one step above the body, separation is
-   tonal (no border-bottom), and the verb buttons are full-height
-   squares flush to the window edge. */
-.desk-next .desk-pullout-head {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  height: 40px;
-  flex: none;
-  padding: 0 12px;
-  background: var(--desk-window-head-fill);
-  /* Materials round 2 — the UNIFIED header: the verb bar below shares
-     this tint and carries the hairline; head + verbs read as one
-     toolbar band (the mac unified-toolbar look). */
-  border-radius: calc(var(--desk-window-radius) - 1px)
-    calc(var(--desk-window-radius) - 1px) 0 0;
-}
-.desk-next .desk-window-shell.is-front .desk-pullout-head {
-  background: var(--desk-window-head-front);
-}
 /* Materials spike — traffic lights (macos-web values): 12.8px discs
    with darker rings; grey on an unfocused window; glyphs reveal and
    the cluster swells on hover. */
@@ -115,13 +94,13 @@
   border-color: var(--border);
 }
 .desk-next .desk-window-shell.is-front .desk-light-close {
-  background: var(--danger-signal, #f87171);
+  background: var(--danger-signal);
 }
 .desk-next .desk-window-shell.is-front .desk-light-min {
-  background: var(--warn, #fbbf24);
+  background: var(--warn-signal);
 }
 .desk-next .desk-window-shell.is-front .desk-light-max {
-  background: var(--success, #34d399);
+  background: var(--ok);
 }
 .desk-next .desk-window-shell.is-front .desk-light svg {
   color: color-mix(in srgb, var(--bg) 78%, transparent);
@@ -131,7 +110,7 @@
   background: var(--gadget-close-fill);
 }
 .desk-next .is-front .desk-light-close:hover svg {
-  color: var(--danger-signal, #f87171);
+  color: var(--danger-signal);
 }
 /* HS-110-06: mono window titles, left-aligned */
 .desk-next .desk-window-title {
@@ -252,32 +231,6 @@
 .desk-next .runs-on-picker p {
   margin: 0;
   font-size: 11px;
-}
-.desk-next .desk-pullout-foot {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 8px;
-  padding: 9px 12px;
-  border-top: 1px solid var(--shade-1);
-  background: var(--desk-window-head-fill);
-}
-.desk-next .desk-window-footer-status {
-  color: var(--text-muted);
-  font-size: var(--font-size-xs);
-}
-.desk-next .desk-window-footer-actions {
-  display: inline-flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-.desk-next .desk-window-footer-status + .desk-window-footer-actions {
-  margin-left: auto;
-}
-.desk-next .desk-pullout-foot .desk-chip {
-  height: 30px;
-  padding: 0 14px;
 }
 .desk-next .desk-chip.is-primary {
   background: var(--accent);

@@ -21,8 +21,9 @@ import {
   SurfaceFacts,
   SurfaceLedger,
   SurfaceLedgerRow,
+  SurfaceState,
 } from "../../desk/surface/Surface";
-import { LampGadget } from "../../desk/surface/gadgets";
+import { FoldGadget, LampGadget } from "../../desk/surface/gadgets";
 import { presentValue } from "../../desk/surface/format";
 import { SurfaceWings, useWindowWings } from "../../desk/surface/wings";
 import { renderHeroSlot } from "./core-layout";
@@ -105,9 +106,11 @@ export function CompanionCore({ hero }: CoreProps) {
         }
       >
         {tone === "blocked" && session.question ? (
-          <pre className="desk-pullout-md desk-session-question">
-            {String(session.question)}
-          </pre>
+          <FoldGadget title="RAW · QUESTION">
+            <pre className="desk-pullout-md desk-session-question">
+              {String(session.question)}
+            </pre>
+          </FoldGadget>
         ) : null}
         <div className="surface-row-verbs">
           <Button
@@ -144,18 +147,14 @@ export function CompanionCore({ hero }: CoreProps) {
             {running.map((row, index) => sessionRow(row, index, "run"))}
           </ul>
         ) : (
-          <div className="surface-ledger-empty">
-            NO SESSIONS · NO ONE WAITING
-          </div>
+          <SurfaceState empty emptyLabel="No sessions" />
         )}
         <h4 className="surface-ledger-band">Crew</h4>
         {recipes.error ? (
-          <div className="surface-ledger-empty">
-            {recipes.error}{" "}
-            <Button dense variant="ghost" onClick={() => void recipes.reload()}>
-              Try again
-            </Button>
-          </div>
+          <SurfaceState
+            error={recipes.error}
+            onRetry={() => void recipes.reload()}
+          />
         ) : recipeRows.length ? (
           <ul className="surface-ledger-rows">
             {recipeRows.map((recipe, index) => (
@@ -177,9 +176,11 @@ export function CompanionCore({ hero }: CoreProps) {
             ))}
           </ul>
         ) : (
-          <div className="surface-ledger-empty">
-            {recipes.loading ? "READING" : "NO AGENTS"}
-          </div>
+          <SurfaceState
+            loading={recipes.loading}
+            empty={!recipes.loading}
+            emptyLabel="No agents"
+          />
         )}
       </SurfaceLedger>
     </>

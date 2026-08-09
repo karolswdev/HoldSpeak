@@ -418,7 +418,7 @@ export const VERBS: Verb[] = [
     },
     run: (ctx) => {
       const o = selected(ctx);
-      if (o) useDesk.getState().openEditor(o.id);
+      if (o) useDesk.getState().openEditor(o.id, ctx.origin);
     },
   },
   {
@@ -438,7 +438,7 @@ export const VERBS: Verb[] = [
       const o = selected(ctx);
       if (!o) return;
       if (o.kind === "directory") useDesk.getState().setRenamingZone(o.id);
-      else if (EDITABLE.has(o.kind)) useDesk.getState().openEditor(o.id);
+      else if (EDITABLE.has(o.kind)) useDesk.getState().openEditor(o.id, ctx.origin);
     },
   },
   {

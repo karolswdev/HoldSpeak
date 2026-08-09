@@ -25,7 +25,7 @@
   margin-top: 2px;
 }
 .desk-next .desk-run-warning {
-  color: var(--warn, #fbbf24);
+  color: var(--warn-signal);
   font-size: var(--font-size-xs);
   margin: 6px 0 0;
 }
@@ -284,7 +284,7 @@
 /* the bundle bar: the roped count + the one action that gives it meaning */
 .desk-next .desk-askbar {
   position: absolute;
-  z-index: 34;
+  z-index: var(--desk-z-chrome);
   left: 50%;
   bottom: 84px;
   transform: translateX(-50%);
@@ -631,9 +631,7 @@
   font-family: var(--font-mono);
   font-size: 11px;
 }
-/* The console footer wears the receipt bar species inside the pullout
-   (the surface-status bleed margins are for padded surface bodies; the
-   pullout footer sits flush). */
+/* The console footer composes directly with the frame-owned foot. */
 .desk-next .desk-ask-foot {
   position: static;
   margin: 0;

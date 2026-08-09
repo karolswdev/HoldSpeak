@@ -325,7 +325,8 @@ export function DeliveryBoard() {
       open={open}
       onClose={() => setOpen(false)}
     >
-
+      {/* HS-129-04 — body owns scroll; head and receipt stay on the frame. */}
+      <div className="desk-pullout-body desk-surface-body desk-dlv-board-body">
       {updatedAt === null ? <SurfaceState loading /> : null}
 
       {sources.map((source) => (
@@ -452,13 +453,17 @@ export function DeliveryBoard() {
       ) : null}
 
       <LaunchComposer sources={sources} />
+      </div>
 
-      <SurfaceFooter verbs={<>
-        <span className="surface-receiptbar-receipt" role="status">
-          {`SOURCES ${sources.length} · WORK ${active.length}` +
-            (updatedAt ? ` · READ ${clockToken(updatedAt)}` : "")}
-        </span>
-      </>} />
+      {/* HS-129-05 — Delivery publishes its fact through the shared receipt slot. */}
+      <SurfaceFooter
+        receipt={
+          <span className="surface-footer-receipt-line" role="status">
+            {`SOURCES ${sources.length} · WORK ${active.length}` +
+              (updatedAt ? ` · READ ${clockToken(updatedAt)}` : "")}
+          </span>
+        }
+      />
     </DeskWindowFrame>
   );
 }

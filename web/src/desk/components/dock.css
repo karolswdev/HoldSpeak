@@ -182,8 +182,10 @@
        push a sheet past a 393px phone — the sheet owns the edge. */
     min-width: 0;
     max-height: 78vh;
-    border-radius: 2px 18px 0 0;
-    overflow: auto;
+    border-radius: var(--radius-sm) var(--desk-sheet-top-radius) 0 0;
+    /* HS-129-02 — the sheet is still a window: its body owns scroll so
+       the fixed head and foot stay visible above the material. */
+    overflow: hidden;
   }
   .desk-next .desk-dock {
     left: 8px;

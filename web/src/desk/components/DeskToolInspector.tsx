@@ -16,6 +16,7 @@ import { openSurfaceOr } from "../shell";
 import { allObjects } from "../world";
 import { qualifiedRef } from "../api";
 import { SurfaceState } from "../surface/Surface";
+import { FoldGadget } from "../surface/gadgets";
 import { DeskWindowFrame } from "./DeskWindow";
 import { WhyControl } from "./WhyControl";
 
@@ -248,7 +249,8 @@ export function DeskToolInspector() {
       open={Boolean(inspector)}
       onClose={closeToolInspector}
     >
-
+      {/* HS-129-04 — inspector material scrolls below the fixed window head. */}
+      <div className="desk-pullout-body desk-surface-body desk-tool-inspector-body">
       {project ? (
         <>
           <p>
@@ -378,7 +380,9 @@ export function DeskToolInspector() {
             <section className="desk-integration-effect">
               <h3>Selected source</h3>
               <strong>{integrationAction.source.title}</strong>
-              <pre>{integrationAction.source.text}</pre>
+              <FoldGadget title="RAW · SOURCE">
+                <pre>{integrationAction.source.text}</pre>
+              </FoldGadget>
               {!proposal ? (
                 <button
                   type="button"
@@ -529,6 +533,7 @@ export function DeskToolInspector() {
           {error} Selected material is retained; retry the action.
         </p>
       ) : null}
+      </div>
     </DeskWindowFrame>
   );
 }

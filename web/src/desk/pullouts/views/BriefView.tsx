@@ -109,7 +109,7 @@ export function BriefView({ header, onOpenFollowThrough }: { header: ReactNode; 
     <SurfaceState empty emptyLabel="Nothing material changed." />
   ) : (
     <>
-      <h2 className="intelligence-brief-headline">{brief.headline}</h2>
+      <div className="intelligence-brief-headline" role="heading" aria-level={2}>{brief.headline}</div>
       <div className="intelligence-brief-groups">
         {GROUPS.map(({ id, label }) => {
           const items = brief.sections[id] ?? [];

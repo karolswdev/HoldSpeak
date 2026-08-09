@@ -5,6 +5,7 @@ import { useDesk } from "../../store";
 import { DeskEditor } from "../../components/DeskEditor";
 import { EditorAIBar, type EditorAIProposal } from "../../components/EditorAIBar";
 import { MicButton } from "../../components/MicButton";
+import { StringGadget } from "../../surface/gadgets";
 import { runAsk } from "../../ask";
 import { AI_VERBS } from "../../editorAI";
 import { editorVoiceGrammar } from "../../voice/grammars/editor";
@@ -126,10 +127,11 @@ export function KbEditor({ object: o, onClose }: InlineEditorContentProps) {
 
   return (
     <>
-      <input
+      <StringGadget
+        label="Knowledge base name"
         value={f.name}
         placeholder="Name"
-        onChange={(e) => set("name", "name", e.target.value)}
+        onChange={(value) => set("name", "name", value)}
       />
       <DeskEditor
         value={f.body}
@@ -158,8 +160,9 @@ export function KbEditor({ object: o, onClose }: InlineEditorContentProps) {
               editorView.state.selection.main.from !== editorView.state.selection.main.to,
           )}
           onProposalConfirm={confirmEditorVoice}
+          // HS-129-07 — the editor mic fills the document, not its name.
           onText={(t) => {
-            set("name", "name", (f.name ? f.name + " " : "") + t);
+            set("body", "body_markdown", (f.body ? f.body + " " : "") + t);
           }}
         />
         {appliedReceipt ? (
@@ -168,13 +171,6 @@ export function KbEditor({ object: o, onClose }: InlineEditorContentProps) {
           </span>
         ) : null}
         <span className="desk-inline-editor-spacer" />
-        <button
-          type="button"
-          className="desk-chip quiet"
-          onClick={onClose}
-        >
-          Done
-        </button>
       </div>
     </>
   );

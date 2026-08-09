@@ -118,7 +118,25 @@ export async function runChatTurn(
       },
     );
     const data = await res.json().catch(() => ({}));
-    if (!res.ok) return fail(humanizeError(res));
+    if (!res.ok) {
+      // A hub refusal is an execution receipt, not a generic failure. Preserve
+      // its exact reason and unresolved ids so the operator can repair it.
+      const error =
+        data && typeof data === "object" && typeof data.error === "string"
+          ? data.error
+          : "";
+      const unknownIds =
+        data && typeof data === "object" && Array.isArray(data.unknown_ids)
+          ? data.unknown_ids.map(String)
+          : [];
+      return fail(
+        error
+          ? unknownIds.length
+            ? `${error} (${unknownIds.join(", ")})`
+            : error
+          : humanizeError(res),
+      );
+    }
     return {
       ok: true,
       output: String(data.output || ""),

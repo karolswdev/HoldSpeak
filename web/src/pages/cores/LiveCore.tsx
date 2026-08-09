@@ -509,15 +509,16 @@ export function LiveCore({ hero }: CoreProps) {
           </SurfaceSection>
         </>
       )}
-      {/* HS-111-03 — the readiness foot: the ONE footer receipt bar
-          (ReadinessLine pattern). Residency chip + the honest state. */}
-      <SurfaceFooter verbs={<>
-        <EgressChip />
-        <span className="surface-receiptbar-receipt" role="status">
-          {active ? `REC ${duration}` : "READY"}
-          {segments.length ? ` · ${segments.length} SEG` : ""}
-        </span>
-      </>} />
+      {/* HS-129-05 — the readiness fact rides the shared receipt slot. */}
+      <SurfaceFooter
+        egress={<EgressChip />}
+        receipt={
+          <span className="surface-footer-receipt-line" role="status">
+            {active ? `REC ${duration}` : "READY"}
+            {segments.length ? ` · ${segments.length} SEG` : ""}
+          </span>
+        }
+      />
     </>
   );
 }

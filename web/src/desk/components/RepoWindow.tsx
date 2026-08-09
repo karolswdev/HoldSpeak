@@ -15,6 +15,7 @@ import { usePrReceipts, type PrRow } from "../prReceipts";
 import { humanTime } from "../surface/format";
 import { SurfaceState } from "../surface/Surface";
 import { SurfaceWings } from "../surface/wings";
+import { CheckGadget, CycleGadget, StringGadget } from "../surface/gadgets";
 import { DeskSortableTable, type Column } from "./DeskSortableTable";
 import { SurfaceFooter } from "../surface/SurfaceFooter";
 import { DeskWindowFrame } from "./DeskWindow";
@@ -57,6 +58,7 @@ export function RepoWindow({
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [retry, setRetry] = useState<(() => void) | null>(null);
   const [sort, setSort] = useState<{ key: SortKey; dir: "asc" | "desc" }>({ key: "name", dir: "asc" });
   const [prSort, setPrSort] = useState<{ key: PrSortKey; dir: "asc" | "desc" }>({ key: "number", dir: "desc" });
   const prsLoaded = usePrReceipts((s) => s.loaded);
@@ -65,6 +67,7 @@ export function RepoWindow({
 
   const refresh = async (nextPath = path) => {
     setError("");
+    setRetry(null);
     try {
       const [nextFiles, nextStatus, nextBranches] = await Promise.all([
         fetchTree(repositoryId, nextPath),
@@ -128,20 +131,32 @@ export function RepoWindow({
     if (!selected.size) return;
     setBusy(true); setError("");
     try { await stageFiles(repositoryId, [...selected]); setSelected(new Set()); await refresh(); }
-    catch { setError("Stage failed"); }
+    catch {
+      setError("STAGE FAILED");
+      setRetry(() => () => void stage());
+    }
     finally { setBusy(false); }
   };
   const commitSelected = async () => {
     if (!message.trim()) return;
     setBusy(true); setError("");
     try { await commit(repositoryId, message); setMessage(""); setSelected(new Set()); await refresh(); }
-    catch { setError("Commit failed. Files are unchanged. Stage files and check your git identity, then retry."); }
+    catch {
+      setError("COMMIT FAILED");
+      setRetry(() => () => void commitSelected());
+    }
     finally { setBusy(false); }
   };
 
   const fileColumns: Column<RepoFile>[] = [
     { key: "select", label: "", width: "32px", render: (file) => file.type === "file" ? (
-      <input aria-label={`Select ${file.name}`} type="checkbox" checked={selected.has(file.path)} onClick={(event) => event.stopPropagation()} onChange={() => toggleFile(file.path)} />
+      <span onClick={(event) => event.stopPropagation()}>
+        <CheckGadget
+          label={`Select ${file.name}`}
+          checked={selected.has(file.path)}
+          onChange={() => toggleFile(file.path)}
+        />
+      </span>
     ) : null },
     { key: "status", label: "", width: "28px", render: (file) => statusMark(file.status) },
     { key: "name", label: "Name", sortable: true, render: (file) => <span className={file.type === "dir" ? "repo-folder" : ""}>{file.type === "dir" ? "▸ " : ""}{file.name}</span> },
@@ -172,12 +187,40 @@ export function RepoWindow({
       className="desk-repo-window"
     >
       <div className="desk-repo-body desk-surface-body">
-        {error ? <SurfaceState error={error} onRetry={() => void refresh()} /> : null}
+        {error ? <SurfaceState error={error} onRetry={retry ?? (() => void refresh())} /> : null}
         {!error && wing === "files" ? <>
           <nav className="repo-breadcrumb" aria-label="Repository path">
             <button type="button" onClick={() => ascend(0)} disabled={!path}>root</button>
             {breadcrumb.map((part, index) => <button type="button" key={`${part}-${index}`} onClick={() => ascend(index + 1)} disabled={index === breadcrumb.length - 1}>{part}</button>)}
-            {branches.length > 1 ? <select aria-label="Branch" value={branch} onChange={(event) => { setBusy(true); void checkout(repositoryId, event.target.value).then((next) => { setStatus(next); return refresh(); }).catch(() => setError("Branch switch failed. Branch is unchanged. Retry.")).finally(() => setBusy(false)); }}><option value={branch}>{branch}</option>{branches.filter((item) => item !== branch).map((item) => <option key={item} value={item}>{item}</option>)}</select> : null}
+            {branches.length > 1 ? (
+              <CycleGadget
+                label="Branch"
+                value={branch}
+                options={branches.map((item) => ({ value: item }))}
+                onChange={(nextBranch) => {
+                  setBusy(true);
+                  void checkout(repositoryId, nextBranch)
+                    .then((next) => {
+                      setStatus(next);
+                      return refresh();
+                    })
+                    .catch(() => {
+                      setError("BRANCH SWITCH FAILED");
+                      setRetry(() => () => {
+                        setBusy(true);
+                        void checkout(repositoryId, nextBranch)
+                          .then((next) => {
+                            setStatus(next);
+                            return refresh();
+                          })
+                          .catch(() => setError("BRANCH SWITCH FAILED"))
+                          .finally(() => setBusy(false));
+                      });
+                    })
+                    .finally(() => setBusy(false));
+                }}
+              />
+            ) : null}
           </nav>
           <DeskSortableTable
             className="desk-repo-files"
@@ -195,9 +238,36 @@ export function RepoWindow({
           prSource?.prs === null ? <SurfaceState empty emptyLabel={prSource.detail || "No PR receipt yet"} /> :
           <DeskSortableTable data={prs} columns={prColumns} sort={prSort} onSort={(key, dir) => setPrSort({ key: key as PrSortKey, dir })} rowKey={(pr) => String(pr.number)} rowLabel={(pr) => `PR ${pr.number}: ${pr.title}`} />
         ) : null}
-        {!error && wing === "issues" ? <SurfaceState empty emptyLabel="Issues integration coming soon" emptyGlyph="○" /> : null}
+        {!error && wing === "issues" ? <SurfaceState empty emptyLabel="ISSUES UNAVAILABLE" emptyGlyph="○" /> : null}
       </div>
-      <SurfaceFooter receipt={<span className="quiet">{files.length} {files.length === 1 ? "item" : "items"}{status?.ahead ? ` · ${status.ahead} ahead` : ""}{status?.behind ? ` · ${status.behind} behind` : ""}</span>} verbs={<div className="repo-footer-actions"><button type="button" className="desk-chip" disabled={busy || !selected.size} onClick={() => void stage()}>Stage {selected.size || ""}</button><input aria-label="Commit message" placeholder="Commit message" value={message} onChange={(event) => setMessage(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") void commitSelected(); }} /><button type="button" className="desk-chip" disabled={busy || !message.trim()} title={message.trim() ? `Commit: ${message.trim()}` : "Enter a commit message"} onClick={() => void commitSelected()}>Commit</button></div>} />
+      <SurfaceFooter
+        receipt={<span className="quiet">{files.length} {files.length === 1 ? "item" : "items"}{status?.ahead ? ` · ${status.ahead} ahead` : ""}{status?.behind ? ` · ${status.behind} behind` : ""}</span>}
+        verbs={
+          <div className="repo-footer-actions">
+            <button type="button" className="desk-chip" disabled={busy || !selected.size} onClick={() => void stage()}>
+              Stage {selected.size || ""}
+            </button>
+            <StringGadget
+              label="Commit message"
+              value={message}
+              placeholder="Commit message"
+              onChange={setMessage}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") void commitSelected();
+              }}
+            />
+            <button
+              type="button"
+              className="desk-chip"
+              disabled={busy || !message.trim()}
+              title={message.trim() ? `Commit: ${message.trim()}` : "Enter a commit message"}
+              onClick={() => void commitSelected()}
+            >
+              Commit
+            </button>
+          </div>
+        }
+      />
     </DeskWindowFrame>
   );
 }

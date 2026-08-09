@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it } from "vitest";
 import { IntelligencePullout } from "./IntelligencePullout";
@@ -44,5 +46,21 @@ describe("HS-128-01 Intelligence pullout", () => {
     expect(
       screen.getByRole("searchbox", { name: "Search decision receipts" }),
     ).toBeInTheDocument();
+  });
+
+  it("keeps Brief and Receipts inside a card-width pullout", () => {
+    const css = readFileSync(resolve(process.cwd(), "src/desk/pullouts/intelligence.css"), "utf8");
+
+    expect(css).toContain(`.intelligence-brief-headline {
+  width: 100%;
+  min-width: 0;`);
+    expect(css).toContain(`.receipts-view > *,
+.receipt-detail > *,
+.receipts-view .surface-ledger,
+.receipts-view .surface-ledger-row,
+.receipts-view .surface-ledger-line {
+  min-width: 0;
+  max-width: 100%;
+}`);
   });
 });
