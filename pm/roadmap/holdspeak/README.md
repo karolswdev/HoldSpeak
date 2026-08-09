@@ -3,6 +3,10 @@
 > **New here? Read [`HANDOVER.md`](./HANDOVER.md) first** — current state, where to
 > pick up, and the repo conventions that bite (PMO commit gate, write-once
 > evidence, no `Co-Authored-By`, metal-test exclusion).
+>
+> **Orchestrating a phase?** The multi-agent method — audit fleets, charter
+> from evidence, Terra waves with serialized shipping, walks, honest ledgers —
+> is canon at [`docs/internal/ORCHESTRATION.md`](../../../docs/internal/ORCHESTRATION.md).
 
 **Newest update (2026-08-08): Phase 129 — One Grammar — COMPLETE (11/11).**
 The exit walk passes all 38 surfaces with pinned-foot, stationary-head,
