@@ -11,7 +11,7 @@ export function WhyControl({ workType, workRef }: { workType: string; workRef: s
   useEffect(() => {
     let live = true;
     void apiFetch<ReceiptLink[]>(
-      `/api/receipts/work/${encodeURIComponent(workType)}/${encodeURIComponent(workRef)}`,
+      `/api/decision-records/work/${encodeURIComponent(workType)}/${encodeURIComponent(workRef)}`,
     ).then((receipts) => {
       if (!live) return;
       setReceiptIds(

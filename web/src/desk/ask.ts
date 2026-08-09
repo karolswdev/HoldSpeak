@@ -95,7 +95,7 @@ export function humanizeError(err: unknown): string {
 export interface AskRunResult {
   ok: boolean;
   output: string;
-  egress: { scope: "local" | "mesh" | "cloud"; host?: string } | null;
+  egress: { scope: "local" | "private_network" | "mesh" | "cloud"; host?: string } | null;
   model: string;
   profileId: string | null;
   inferenceTarget: Record<string, unknown> | null;

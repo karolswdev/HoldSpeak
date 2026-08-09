@@ -1,6 +1,6 @@
 # Phase 130 — One Truth
 
-**Status:** chartered (0/11).
+**Status:** DONE (11/11).
 
 **Last updated:** 2026-08-09.
 
@@ -100,17 +100,17 @@ and the full suites — not why it exists; recorded as an adopted correction.)
 
 | ID | Story | Status | Story file | Evidence |
 |----|-------|--------|------------|----------|
-| HS-130-01 | The precedence resolver — one placement authority | backlog | [story-01](story-01-the-precedence-resolver.md) | [evidence-story-01](./evidence-story-01.md) |
-| HS-130-02 | Collision-free secret slots — the exfiltration path closes | backlog | [story-02](story-02-secret-slots.md) | [evidence-story-02](./evidence-story-02.md) |
-| HS-130-03 | One deployment identity — readiness, execution, receipt agree | backlog | [story-03](story-03-one-deployment-identity.md) | [evidence-story-03](./evidence-story-03.md) |
-| HS-130-04 | One egress vocabulary — the four lies become one truth | backlog | [story-04](story-04-one-egress-vocabulary.md) | [evidence-story-04](./evidence-story-04.md) |
-| HS-130-05 | One meeting placement policy | backlog | [story-05](story-05-meeting-placement-policy.md) | [evidence-story-05](./evidence-story-05.md) |
-| HS-130-06 | Ask tells the truth — no model-name retargeting | backlog | [story-06](story-06-ask-tells-the-truth.md) | [evidence-story-06](./evidence-story-06.md) |
-| HS-130-07 | Settings, one honest writer — versioned, transient retry | backlog | [story-07](story-07-settings-one-writer.md) | [evidence-story-07](./evidence-story-07.md) |
-| HS-130-08 | DecisionReceipt → Decision — the word returns to evidence | backlog | [story-08](story-08-decision-rename.md) | [evidence-story-08](./evidence-story-08.md) |
-| HS-130-09 | Workbench — one gesture one record, live voice | backlog | [story-09](story-09-workbench-one-gesture.md) | [evidence-story-09](./evidence-story-09.md) |
-| HS-130-10 | The inherited ledger — triage and assign the 96 | backlog | [story-10](story-10-inherited-ledger.md) | [evidence-story-10](./evidence-story-10.md) |
-| HS-130-11 | The walk | backlog | [story-11](story-11-the-walk.md) | [evidence-story-11](./evidence-story-11.md) |
+| HS-130-01 | The precedence resolver — one placement authority | done | [story-01](story-01-the-precedence-resolver.md) | [evidence-story-01](./evidence-story-01.md) |
+| HS-130-02 | Collision-free secret slots — the exfiltration path closes | done | [story-02](story-02-secret-slots.md) | [evidence-story-02](./evidence-story-02.md) |
+| HS-130-03 | One deployment identity — readiness, execution, receipt agree | done | [story-03](story-03-one-deployment-identity.md) | [evidence-story-03](./evidence-story-03.md) |
+| HS-130-04 | One egress vocabulary — the four lies become one truth | done | [story-04](story-04-one-egress-vocabulary.md) | [evidence-story-04](./evidence-story-04.md) |
+| HS-130-05 | One meeting placement policy | done | [story-05](story-05-meeting-placement-policy.md) | [evidence-story-05](./evidence-story-05.md) |
+| HS-130-06 | Ask tells the truth — no model-name retargeting | done | [story-06](story-06-ask-tells-the-truth.md) | [evidence-story-06](./evidence-story-06.md) |
+| HS-130-07 | Settings, one honest writer — versioned, transient retry | done | [story-07](story-07-settings-one-writer.md) | [evidence-story-07](./evidence-story-07.md) |
+| HS-130-08 | DecisionReceipt → Decision — the word returns to evidence | done | [story-08](story-08-decision-rename.md) | [evidence-story-08](./evidence-story-08.md) |
+| HS-130-09 | Workbench — one gesture one record, live voice | done | [story-09](story-09-workbench-one-gesture.md) | [evidence-story-09](./evidence-story-09.md) |
+| HS-130-10 | The inherited ledger — triage and assign the 96 | done | [story-10](story-10-inherited-ledger.md) | [evidence-story-10](./evidence-story-10.md) |
+| HS-130-11 | The walk | done | [story-11](story-11-the-walk.md) | [evidence-story-11](./evidence-story-11.md) |
 
 ## Delivery order (waves)
 
@@ -131,6 +131,19 @@ Sol returned *"ratify as amended"* with seven reservations, all adopted (see
 SOL-COUNSEL.md and the decision log). This phase is the kernel-free "One Truth"
 half of a **four-phase program** — 130 One Truth, 131 One Admission Path, 132
 One Owner Per Decision, 133 One Word Per Thing.
+
+**Wave A in flight (2026-08-09):** three disjoint-file stories implemented by
+parallel worktree-isolated Terras and integrated with zero conflicts —
+**HS-130-01 (resolver, keystone)** ships first, then HS-130-08 (Decision rename)
+and HS-130-09 (Workbench one-gesture + voice). Verified against a clean isolated
+baseline: the integrated tree matches the inherited red baseline **exactly**
+(105 fail/error, all reproduce on pre-phase main — the 96-ledger + env; HS-130-10
+owns the triage), **zero new regressions** after one orchestrator seam-fix (the
+v39→v40 migration test's hardcoded `SCHEMA_VERSION == 42` bumped to 43 alongside
+08's schema change), web suite 797 green. The local baseline needed an isolated
+HOME: the default DB path is `Path.home()`-relative and the owner's real hub DB
+is at schema v43 while pre-phase code is v42 — 08's bump to v43 is what realigns
+committed code with the owner's data.
 
 ## Active risks
 
@@ -170,11 +183,82 @@ One Owner Per Decision, 133 One Word Per Thing.
 - 2026-08-09 — **DecisionReceipt rename is the word only, now.** Model
   convergence (Decision links to immutable receipts for create/accept/change/
   supersede) deferred to Phase 133 with an owner beat. (SOL-COUNSEL.md #3.)
+- 2026-08-09 — **HS-130-03 changed what `this_machine` readiness checks
+  (intended).** Readiness now checks the LOCAL meeting-intel model
+  (`meeting.intel_realtime_model`) that agent execution actually loads, not the
+  dictation/transcription runtime it read before — the whole point is
+  readiness == execution == receipt. Owner-facing consequence: on a machine
+  with the dictation model but not the 9B meeting default (or vice versa),
+  `this_machine` readiness flips to track the model a run would truly load.
+  One deployment identity (`DeploymentIdentity`) is now the single snapshot;
+  Phase 131 freezes it into an admission-captured revision.
+- 2026-08-09 — **HS-130-02 secret-slot scheme changed the credential env-var
+  names (operational impact, flagged to owner).** Slots are now injective:
+  `HOLDSPEAK_PROFILE_<SLUG>_<sha256-16>_KEY` (the old lossy slug was the
+  vulnerability — `foo-bar`/`foo_bar` shared one slot, exfiltratable through
+  the shape-only sync merge of client-supplied ids). No backward-compat env
+  fallback (a fallback reopens the collision; per the not-really-released
+  rule). Keys exported under the old names must be re-exported — `doctor`
+  prints the correct `export …` line. Two tests that hardcoded the old scheme
+  were fixed by the orchestrator to derive the name from the production
+  `profile_key_env` (doctor cloud-preflight ×3). Sync-push principal auth
+  stays HS-131.
+- 2026-08-09 — **HS-130-08 renamed to `DecisionRecord`, not `Decision`.** A
+  bare `Decision*` rename would have collided with the existing
+  `DecisionLifecycleService` / `/api/decisions` (meeting-decision lifecycle).
+  The mutable governing document is now `DecisionRecordService` /
+  `decision_record*` / `/api/decision-records`; "Receipt" is freed for
+  immutable kernel evidence, which was the point. Behavior-preserving; schema
+  v42→v43 (one idempotent migration). Owner may rename further at the sitting.
+- 2026-08-09 — **HS-130-10 triage RESULT (Candidate Z reconciled).** The full
+  isolated-HOME suite on phase-130 HEAD is byte-identical to the pre-phase
+  baseline — **102 test failures/errors, zero repaired-by-130, zero
+  newly-caused** (every story shipped at zero net regression). Split: **7
+  route to Phase 131** (the sync-registry/kind-drift/changeset-envelope
+  contract — test_web_routes_sync ×2, test_primitive_contract kind-drift ×3,
+  test_primitive_framework_sync, companion-slack qualified-kind); **95
+  re-ledgered** as still-inherited Phase 118–128 integration debt across 36
+  files (workbench-walk e2e 14, web_server 13, intel_streaming 9, companion
+  slack/github/webhook, dictation surfaces, history, live-bus, cadence,
+  decision-records, the ConflictError NameError at meetings/crud.py:161, and
+  the known mesh_dispatch flake). The 95 need a dedicated remediation phase —
+  owner rules its scope at the sitting; this is Candidate Z minus the 131
+  slice. Ledger + reproducible classifier: assets/hs-130-10/.
 - 2026-08-09 — **The inherited-96 ledger comes to 130 for triage** (per the
   Phase 129 handoff) but its **sync-contract slice routes to Phase 131**,
   where the sync registry and deployment revisions live — the two cannot be
   fixed apart. HS-130-10 assigns each failure exactly one home. (Reconciles
   the 129 handoff with SOL-COUNSEL.md #3; Candidate Z, BACKLOG.md:242-258.)
+
+- 2026-08-09 — **Web-suite teardown flake documented (not a regression).**
+  vitest SIGABRTs ("Abort trap: 6") on jsdom/pixi WebGL teardown, which
+  intermittently bleeds a DOM-query failure into a sibling test under shared
+  workers (observed: `IntelligenceWalk.test.tsx` "renders Receipts with a
+  search input" — passes 7/7 in isolation, failed once under full-suite
+  concurrency). Story evidence is captured via vitest's JSON report (written
+  before teardown) asserted by a pure-node command, so exit codes reflect
+  test results, not the teardown signal. HS-130-11's walk must run web checks
+  with this in mind (isolate or JSON-report).
+
+- 2026-08-09 — **Sol CLOSE counsel: ratify with named reservations (one
+  blocking, resolved).** Sol's acceptance pass on the finished phase caught:
+  (a) [BLOCKING] a stale `docs/api-surface.json` — the DecisionRecord rename
+  added `/api/decision-records` routes without regenerating the manifest;
+  regenerated (436 routes), `test_api_surface` green, reclassified
+  repaired-by-130; (b) a tautological walk assertion (`_badge_host` returned
+  `{}`), deleted and made real against `endpoint_egress`; (c) the exhibit's
+  '02 ships first' overstatement (it landed 4th) — corrected. All 7 charter
+  reservations confirmed honored; the .43 leg confirmed genuine; the
+  DecisionRecord migration confirmed row-preserving. Full counsel in
+  SOL-COUNSEL-CLOSE.md. Two minds on the close, per ORCHESTRATION §6.
+
+- 2026-08-09 — **HS-130-11 walk: live-.43 PROVEN, screenshot-walk DEFERRED.**
+  The harness `scripts/walk_one_truth.py` asserts 19/19 with the live `.43`
+  LAN endpoint (Qwen3.6-35B): private_network end-to-end across badge,
+  DeploymentIdentity, and receipt (control: api.openai.com → cloud). The
+  Playwright screenshot-walk (1440+393) is deferred to the owner's sitting —
+  this job has no browser/built bundle — with the one-command harness handed
+  over. Amended visibly per the walk; owner may overrule at the sitting.
 
 ## Decisions deferred (Phase 131 preconditions — owner rules at or before the 131 charter)
 

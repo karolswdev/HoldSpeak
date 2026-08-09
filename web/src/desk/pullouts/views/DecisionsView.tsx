@@ -44,7 +44,7 @@ function receiptStatus(receipt: Receipt): "governing" | "superseded" | "related"
 }
 
 function shortId(id: string): string {
-  return id.replace(/^receipt-/, "").slice(0, 12);
+  return id.replace(/^record-/, "").slice(0, 12);
 }
 
 function humanDate(value: string | null | undefined): string {
@@ -54,7 +54,7 @@ function humanDate(value: string | null | undefined): string {
 }
 
 /** Search-first, in-place decision history for the Intelligence pullout. */
-export function ReceiptsView({
+export function DecisionsView({
   initialQuery = "",
   initialWhyOnly = false,
   workRef,
@@ -87,10 +87,10 @@ export function ReceiptsView({
       const [workType, ...workRefParts] = workRef?.split(":") ?? [];
       const linkedWorkRef = workRefParts.join(":");
       const endpoint = workType && linkedWorkRef
-        ? `/api/receipts/work/${encodeURIComponent(workType)}/${encodeURIComponent(linkedWorkRef)}`
+        ? `/api/decision-records/work/${encodeURIComponent(workType)}/${encodeURIComponent(linkedWorkRef)}`
         : query.trim()
-          ? `/api/receipts/search?q=${encodeURIComponent(query.trim())}`
-          : "/api/receipts";
+          ? `/api/decision-records/search?q=${encodeURIComponent(query.trim())}`
+          : "/api/decision-records";
       void apiFetch<Receipt[]>(endpoint)
         .then((receipts) => {
           if (current) setResults(Array.isArray(receipts) ? receipts : []);
@@ -118,7 +118,7 @@ export function ReceiptsView({
   const openReceipt = (receiptId: string) => {
     setDetailLoading(true);
     setError("");
-    void apiFetch<Receipt>(`/api/receipts/${encodeURIComponent(receiptId)}`)
+    void apiFetch<Receipt>(`/api/decision-records/${encodeURIComponent(receiptId)}`)
       .then(setSelected)
       .catch((reason) => setError(readableError(reason)))
       .finally(() => setDetailLoading(false));
@@ -155,7 +155,7 @@ export function ReceiptsView({
       <div className="receipts-search">
         <span className="receipts-search-prefix" aria-hidden="true">WHY</span>
         <StringGadget
-          label="Search decision receipts"
+          label="Search decisions"
           type="search"
           value={query}
           onChange={setQuery}
@@ -171,10 +171,10 @@ export function ReceiptsView({
         >
           WHY ONLY
         </button>
-        {whyOnly ? <span>GOVERNING RECEIPTS</span> : <span>ALL RECEIPTS</span>}
+        {whyOnly ? <span>GOVERNING DECISIONS</span> : <span>ALL DECISIONS</span>}
       </div>
       {error ? <SurfaceState error={error} /> : null}
-      <SurfaceLedger cols="facts" count={`RECEIPTS ${visibleResults.length}`}>
+      <SurfaceLedger cols="facts" count={`DECISIONS ${visibleResults.length}`}>
         {loading ? (
           <SurfaceState loading />
         ) : visibleResults.length ? (
@@ -185,11 +185,11 @@ export function ReceiptsView({
                 <SurfaceLedgerRow
                   key={receipt.id}
                   primary={receipt.decision_text}
-                  lineLabel={`Open receipt ${receipt.decision_text}`}
+                  lineLabel={`Open decision ${receipt.decision_text}`}
                   onToggle={() => openReceipt(receipt.id)}
                   cells={
                     <>
-                      <span className="surface-ledger-cell receipts-id">R-{shortId(receipt.id)}</span>
+                      <span className="surface-ledger-cell receipts-id">D-{shortId(receipt.id)}</span>
                       <span className="surface-ledger-cell">{receipt.owner || "UNASSIGNED"}</span>
                       <span className="surface-ledger-cell">
                         <span className="surface-token" data-tone={status === "superseded" ? "muted" : "ok"}>
@@ -203,7 +203,7 @@ export function ReceiptsView({
             })}
           </ul>
         ) : (
-          <SurfaceState empty emptyLabel={whyOnly ? "No governing receipts." : "No receipts match this search."} />
+          <SurfaceState empty emptyLabel={whyOnly ? "No governing decisions." : "No decisions match this search."} />
         )}
       </SurfaceLedger>
     </div>
@@ -228,14 +228,14 @@ function ReceiptDetail({
   onOpenWork: (work: ReceiptWork) => void;
 }) {
   if (loading) return <SurfaceState loading />;
-  if (!receipt) return <SurfaceState error={error || "Receipt unavailable."} />;
+  if (!receipt) return <SurfaceState error={error || "Decision unavailable."} />;
 
   const provenance = receipt.sources?.find((source) => source.source_type === "segment");
   return (
     <article className="receipt-detail">
       <button type="button" className="receipt-back" onClick={onBack}>← RESULTS</button>
       <header className="receipt-detail-head">
-        <span className="receipts-id">R-{shortId(receipt.id)}</span>
+        <span className="receipts-id">D-{shortId(receipt.id)}</span>
         <span className="surface-token" data-tone={receiptStatus(receipt) === "superseded" ? "muted" : "ok"}>
           {receiptStatus(receipt).toUpperCase()}
         </span>
@@ -272,9 +272,9 @@ function ReceiptDetail({
       <section className="receipt-chain" aria-label="Supersession chain">
         <h4>SUPERSESSION</h4>
         <div>
-          {receipt.predecessor_id ? <button type="button" onClick={() => onOpenReceipt(receipt.predecessor_id!)}>← R-{shortId(receipt.predecessor_id)}</button> : <span>← ORIGIN</span>}
+          {receipt.predecessor_id ? <button type="button" onClick={() => onOpenReceipt(receipt.predecessor_id!)}>← D-{shortId(receipt.predecessor_id)}</button> : <span>← ORIGIN</span>}
           <strong>THIS</strong>
-          {receipt.successor_id ? <button type="button" onClick={() => onOpenReceipt(receipt.successor_id!)}>R-{shortId(receipt.successor_id)} →</button> : <span>CURRENT →</span>}
+          {receipt.successor_id ? <button type="button" onClick={() => onOpenReceipt(receipt.successor_id!)}>D-{shortId(receipt.successor_id)} →</button> : <span>CURRENT →</span>}
         </div>
       </section>
       <section className="receipt-revisions" aria-label="Revision timeline">

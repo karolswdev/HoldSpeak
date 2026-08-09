@@ -65,6 +65,15 @@ class MeetingConfig:
     # The auto-open URL bootstraps it without a visible login step.
     web_auth_token: str = ""
     mir_enabled: bool = True  # Enable multi-intent routing controls in web runtime
+    # The ONE meeting routing profile (HS-130-05): balanced, architect,
+    # delivery, product, incident. Read by `effective_routing_profile()`, which
+    # both the runtime and doctor go through so they can never name different
+    # values. `mir_profile`/`plugin_profile` below are the two legacy owners it
+    # converged; `migrate_routing_profile` folds their values in here ONCE.
+    routing_profile: str = "balanced"
+    # LEGACY (HS-130-05): the runtime once read this; converged into
+    # `routing_profile`. Kept only so a stored value survives load long enough
+    # for the one-time migration to adopt it; reset to the default afterward.
     mir_profile: str = "balanced"  # balanced, architect, delivery, product, incident
 
     # MIR-01 routing pipeline gating + tuning (spec $9.9). The pipeline runs
@@ -76,6 +85,8 @@ class MeetingConfig:
     intent_step_seconds: int = 30        # rolling-window step
     intent_score_threshold: float = 0.6  # gate above which an intent is "active"
     intent_hysteresis_windows: int = 1   # damping windows; converted to float via intent_hysteresis()
+    # LEGACY (HS-130-05): doctor once reported this; converged into
+    # `routing_profile`. Same one-time migration adopts it (mir_profile wins).
     plugin_profile: str = "balanced"     # routing profile selecting the chain
     # HS-35-03: per-project plugin enable/disable. Plugin ids listed here are
     # dropped from the *executed* set at dispatch (recorded as `skipped`, not
@@ -162,6 +173,11 @@ class MeetingConfig:
                 f"plugin_profile must be a non-empty string, "
                 f"got {self.plugin_profile!r}"
             )
+        if not isinstance(self.routing_profile, str) or not self.routing_profile.strip():
+            raise ValueError(
+                f"routing_profile must be a non-empty string, "
+                f"got {self.routing_profile!r}"
+            )
         if not isinstance(self.disabled_plugins, list) or not all(
             isinstance(p, str) for p in self.disabled_plugins
         ):
@@ -234,12 +250,46 @@ class MeetingConfig:
                 raise ValueError(f"slack_webhook_url: {exc}") from exc
         self.slack_webhook_url = slack_url
 
+    def effective_routing_profile(self) -> str:
+        """The ONE meeting routing profile (HS-130-05) — see the module-level
+        :func:`effective_routing_profile`. Sugar for ``self``."""
+        return effective_routing_profile(self)
+
     def intent_hysteresis(self) -> float:
         """Convert `intent_hysteresis_windows` (int) to the float gap value
         used by `iter_intent_transitions(hysteresis=...)`. Each window of
         damping subtracts 0.05 from the threshold gate; capped at 0.5 to
         keep hysteresis below half the score range."""
         return min(0.5, max(0.0, 0.05 * float(self.intent_hysteresis_windows)))
+
+
+_ROUTING_PROFILE_DEFAULT = "balanced"
+
+
+def effective_routing_profile(meeting_cfg: object) -> str:
+    """The ONE meeting routing profile accessor (HS-130-05).
+
+    Converges the two legacy owners — ``mir_profile`` (once read by the runtime:
+    web_runtime, intel_queue, meeting session) and ``plugin_profile`` (once
+    reported by doctor) — into a single read, so the runtime and doctor can
+    never name different values. ``migrate_routing_profile`` folds a stored
+    legacy value into ``routing_profile`` once at load; this accessor is robust
+    even before that runs (an explicit-path / test load skips migration): an
+    explicitly set ``routing_profile`` wins, else a non-default legacy value
+    (``mir_profile`` first, matching what the runtime historically read), else
+    the default. Reads via ``getattr`` so it works on a real ``MeetingConfig``
+    or any config-shaped object.
+    """
+    rp = str(getattr(meeting_cfg, "routing_profile", "") or "").strip()
+    if rp and rp != _ROUTING_PROFILE_DEFAULT:
+        return rp
+    mir = str(getattr(meeting_cfg, "mir_profile", "") or "").strip()
+    if mir and mir != _ROUTING_PROFILE_DEFAULT:
+        return mir
+    plugin = str(getattr(meeting_cfg, "plugin_profile", "") or "").strip()
+    if plugin and plugin != _ROUTING_PROFILE_DEFAULT:
+        return plugin
+    return rp or _ROUTING_PROFILE_DEFAULT
 
 
 _KNOWN_DICTATION_STAGES = ("intent-router", "project-rewriter", "kb-enricher")

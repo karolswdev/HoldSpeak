@@ -15,6 +15,7 @@ from .core import (  # noqa: F401
     _coerce,
     _coerce_config_version,
     migrate_legacy_endpoints,
+    migrate_routing_profile,
 )
 
 # Meeting & dictation

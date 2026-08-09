@@ -61,8 +61,12 @@ export interface ProjectSummary {
   context?: Record<string, unknown>;
 }
 
-/** One runnable model (HS-83-03): what a `model` override on /api/ask accepts. */
+/** One runnable model (HS-83-03): what a `model` override on /api/ask accepts.
+ * HS-130-06: one row PER DESTINATION (never deduped by name); `id` is the
+ * selector, so two destinations serving the same model name are both present
+ * and addressable — the picker must key on `id`, not `name`. */
 export interface HubModel {
+  id: string;
   name: string;
   source: "hub" | "profile";
   profile_id: string | null;

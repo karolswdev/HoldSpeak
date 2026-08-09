@@ -44,6 +44,7 @@ import { GroundingSection } from "./GroundingSection";
 import { MicButton } from "./MicButton";
 import type { MicState } from "./MicButton";
 import { RunsOnPicker } from "./RunsOnPicker";
+import { displayTargetToken, isInheritedTarget } from "./workbenchTarget";
 import {
   CheckGadget,
   EgressChip,
@@ -69,7 +70,6 @@ import {
 import { Material } from "../surface/Material";
 import { SurfaceWings, type WingSpec } from "../surface/wings";
 import { useRuntimeBus } from "../../runtime/RuntimeBus";
-import { WorkbenchTemplatePicker } from "./WorkbenchTemplatePicker";
 import { workbenchVoiceGrammar } from "../voice/grammars/workbench";
 import type { VoiceProposal } from "../voice/grammar";
 import { humanTime } from "../surface/format";
@@ -315,18 +315,29 @@ function ConfigPanel({
       </SurfaceSection>
 
       {/* ── runs on ─────────────────────────────────────────────────── */}
+      {/* HS-130-09 — the display token equals the stored token. An unset
+         target reads as an explicit inherited default (never a fabricated
+         "this_machine"); the effective target is resolved server-side
+         (HS-130-01). */}
       <SurfaceSection label="RUNS ON">
         <div className="wb-config-runs-on">
+          {isInheritedTarget(detail.profile_id) ? (
+            <span className="desk-chip" data-tone="quiet">
+              DEFAULT · INHERITED
+            </span>
+          ) : null}
           <RunsOnPicker
             targets={inferenceTargets}
-            selectedId={detail.profile_id || "this_machine"}
+            selectedId={displayTargetToken(detail.profile_id)}
             onChange={onUpdateTarget}
           />
-          <LampGadget
-            label={lamp.label}
-            on={lamp.tone !== "fail"}
-            tone={lamp.tone as "ok" | "warn" | "fail"}
-          />
+          {!isInheritedTarget(detail.profile_id) ? (
+            <LampGadget
+              label={lamp.label}
+              on={lamp.tone !== "fail"}
+              tone={lamp.tone as "ok" | "warn" | "fail"}
+            />
+          ) : null}
         </div>
       </SurfaceSection>
 
@@ -1217,6 +1228,41 @@ export function WorkbenchWindow({
         }
         break;
       }
+      case "set-agent": {
+        // HS-130-09 — the same assignment the config UI performs
+        // (updateRecipe → updateField({ recipe_id })). Resolve the spoken
+        // name against the loaded recipes; exact match wins, else a
+        // case-insensitive substring.
+        const q = String(p.agentName || "").trim().toLowerCase();
+        if (!q) break;
+        const match =
+          recipes.find((r) => String(r.name || "").toLowerCase() === q) ||
+          recipes.find((r) => String(r.name || "").toLowerCase().includes(q));
+        if (match) void updateField({ recipe_id: match.id });
+        break;
+      }
+      case "dismiss": {
+        // HS-130-09 — dismiss the workbench item whose title matches the
+        // spoken query (the same status the item card's Dismiss verb sets).
+        const q = String(p.query || "").trim().toLowerCase();
+        if (!q) break;
+        const item =
+          (detail?.items || []).find(
+            (i) => String(i.title || "").toLowerCase() === q,
+          ) ||
+          (detail?.items || []).find((i) =>
+            String(i.title || "").toLowerCase().includes(q),
+          );
+        if (item) {
+          try {
+            await updateWorkbenchItem(workbenchId, item.id, {
+              status: "dismissed",
+            });
+            load();
+          } catch { /* honest failure on next load */ }
+        }
+        break;
+      }
     }
     setVoiceProposal(null);
   };
@@ -1384,9 +1430,11 @@ export function WorkbenchWindow({
         {activeWing === "items" ? (
           <>
             <div className="wb-items">
-              {items.length === 0 && !error && !detail?.recipe_id ? (
-                <WorkbenchTemplatePicker onCreated={() => void load()} />
-              ) : items.length === 0 && !error ? (
+              {/* HS-130-09 — the template picker is a PRE-persistence chooser
+                 (NewWorkbenchChooser); a persisted blank Workbench shows the
+                 empty state, never another picker (which would create yet
+                 another record). */}
+              {items.length === 0 && !error ? (
                 <SurfaceState
                   empty
                   emptyLabel="No items yet"
@@ -1424,7 +1472,11 @@ export function WorkbenchWindow({
                       ? "Run this workbench"
                       : voiceProposal.intentId === "clear-done"
                         ? "Clear done items"
-                        : voiceProposal.transcript}
+                        : voiceProposal.intentId === "set-agent"
+                          ? `Set agent: ${(voiceProposal.params as Record<string, unknown>).agentName}`
+                          : voiceProposal.intentId === "dismiss"
+                            ? `Dismiss: ${(voiceProposal.params as Record<string, unknown>).query}`
+                            : voiceProposal.transcript}
                 </span>
                 <button
                   type="button"

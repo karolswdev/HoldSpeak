@@ -20,7 +20,7 @@ export interface ChatTurn {
   text: string;
   error?: boolean;
   /** The turn's HONEST egress — the hub's answer, never inferred. */
-  egress?: { scope: "local" | "mesh" | "cloud"; host?: string } | null;
+  egress?: { scope: "local" | "private_network" | "mesh" | "cloud"; host?: string } | null;
   model?: string;
   actualPlacement?: Record<string, unknown> | null;
 }
@@ -78,7 +78,7 @@ export function saveChatGrounding(
 export interface ChatTurnResult {
   ok: boolean;
   output: string;
-  egress: { scope: "local" | "mesh" | "cloud"; host?: string } | null;
+  egress: { scope: "local" | "private_network" | "mesh" | "cloud"; host?: string } | null;
   model: string;
   actualPlacement: Record<string, unknown> | null;
 }

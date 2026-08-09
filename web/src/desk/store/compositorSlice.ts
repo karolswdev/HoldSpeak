@@ -128,6 +128,7 @@ export type CompositorSlice = Pick<
   | "roadmapWindows"
   | "repositoryWindows"
   | "workbenchWindows"
+  | "newWorkbenchChooser"
   | "openPullout"
   | "closePullout"
   | "openZoneWindow"
@@ -141,6 +142,8 @@ export type CompositorSlice = Pick<
   | "closeRepositoryWindow"
   | "openWorkbenchWindow"
   | "closeWorkbenchWindow"
+  | "openNewWorkbenchChooser"
+  | "closeNewWorkbenchChooser"
   | "setPanelRect"
   | "resetPanelRect"
   | "focusPanel"
@@ -165,6 +168,7 @@ export const createCompositorSlice: SliceCreator<CompositorSlice> = (set, get) =
   roadmapWindows: [],
   repositoryWindows: [],
   workbenchWindows: [],
+  newWorkbenchChooser: null,
 
   // ---- pullouts (hand-written: custom close with optional id) -----------
 
@@ -254,6 +258,12 @@ export const createCompositorSlice: SliceCreator<CompositorSlice> = (set, get) =
   },
   closeWorkbenchWindow(id) {
     closeWorkbench(id, set, get);
+  },
+  openNewWorkbenchChooser(origin) {
+    set({ newWorkbenchChooser: { origin: origin ?? null } });
+  },
+  closeNewWorkbenchChooser() {
+    set({ newWorkbenchChooser: null });
   },
 
   // ---- zone view prefs --------------------------------------------------

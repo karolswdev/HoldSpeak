@@ -128,8 +128,13 @@ class WorkbenchService:
         recipe = self._db.recipes.get(wb.recipe_id) if wb.recipe_id else None
         if recipe is None:
             raise ValidationError("No recipe assigned")
-        from holdspeak.inference_targets import resolve_inference_target
-        target = resolve_inference_target(self._db, wb.profile_id or "this_machine")
+        from holdspeak.inference_targets import resolve_placement
+        # One placement authority (HS-130-01): Workbench override → Agent
+        # default (recipe.profile_id) → named global default. Retry inherits
+        # the same precedence the run used; no invocation override here.
+        target = resolve_placement(
+            self._db, workbench=wb.profile_id, agent=recipe.profile_id
+        ).target
 
         run_id = None
         with self._db._connection() as conn:
@@ -335,6 +340,7 @@ class WorkbenchService:
             engine = build_meeting_intel_for_profile(
                 kind=prof.kind, base_url=prof.base_url or None, model=prof.model or None,
                 profile_id=profile_id, node=getattr(prof, "node", "") or "",
+                model_file=str(getattr(prof, "model_file", "") or ""),
             )
             engine.cloud_timeout_seconds = timeout
             engine.max_tokens = max_tokens

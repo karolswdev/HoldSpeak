@@ -115,7 +115,7 @@ def test_ask_runs_on_profile_and_names_honest_egress(env, monkeypatch) -> None:
 
     captured = {}
 
-    def fake_for_profile(*, kind, base_url, model, profile_id, node=""):
+    def fake_for_profile(*, kind, base_url, model, profile_id, node="", model_file=""):
         captured.update(kind=kind, base_url=base_url, model=model, profile_id=profile_id)
         intel = _FakeIntel()
         intel.active_provider = "cloud"
@@ -130,14 +130,16 @@ def test_ask_runs_on_profile_and_names_honest_egress(env, monkeypatch) -> None:
     body = resp.json()
     assert captured["profile_id"] == pid
     # The badge names where THIS run went — the run's profile, never the app default.
-    assert body["egress"] == {"scope": "cloud", "host": "192.168.1.43"}
+    # HS-130-04: a LAN endpoint is honestly private_network, not a flat cloud lie.
+    assert body["egress"] == {"scope": "private_network", "host": "192.168.1.43"}
     assert body["model"] == "Qwen3.5-9B-Q6_K"
     assert body["profile_id"] == pid
 
 
-def test_ask_model_override_picks_the_matching_profile(env, monkeypatch) -> None:
-    """HSM-15-11: `model` alone selects the hub profile that runs that model —
-    the phone can say "think with Qwen3.5-9B" without knowing profile ids."""
+def test_ask_target_id_selects_placement_and_advertised_model_runs(env, monkeypatch) -> None:
+    """HS-130-06: the id selects the placement. Addressing a destination by its
+    inference_target_id and naming the model it advertises runs THERE — the
+    former HSM-15-11 "model alone hops to whatever profile runs it" is gone."""
     _, client = env
     pid = client.post("/api/inference-targets", json={
         "name": "LAN box", "kind": "openAICompatible",
@@ -146,7 +148,7 @@ def test_ask_model_override_picks_the_matching_profile(env, monkeypatch) -> None
 
     captured = {}
 
-    def fake_for_profile(*, kind, base_url, model, profile_id, node=""):
+    def fake_for_profile(*, kind, base_url, model, profile_id, node="", model_file=""):
         captured.update(model=model, profile_id=profile_id)
         intel = _FakeIntel()
         intel.active_provider = "cloud"
@@ -159,13 +161,45 @@ def test_ask_model_override_picks_the_matching_profile(env, monkeypatch) -> None
         "holdspeak.web.routes.sync._hub_model_name", lambda ctx: "HubModel-9B"
     )
 
-    resp = client.post("/api/ask", json={"prompt": "Go", "model": "Qwen3.5-9B-Q6_K"})
+    resp = client.post("/api/ask", json={
+        "prompt": "Go", "inference_target_id": pid, "model": "Qwen3.5-9B-Q6_K"})
     assert resp.status_code == 200
     body = resp.json()
     assert captured == {"model": "Qwen3.5-9B-Q6_K", "profile_id": pid}
     assert body["model"] == "Qwen3.5-9B-Q6_K"     # the run record names what ran
     assert body["profile_id"] == pid
-    assert body["egress"] == {"scope": "cloud", "host": "192.168.1.43"}
+    # HS-130-04: a LAN endpoint is honestly private_network, not a flat cloud lie.
+    assert body["egress"] == {"scope": "private_network", "host": "192.168.1.43"}
+
+
+def test_ask_model_alone_never_hops_to_the_profile_that_runs_it(env, monkeypatch) -> None:
+    """HS-130-06: the silent-hop regression. `model` with no id resolves the
+    GLOBAL default (this_machine); a profile's model name does NOT silently
+    retarget the run to that profile — it refuses, naming the resolved target."""
+    _, client = env
+    hopped = {"ran": False}
+
+    def fake_for_profile(*, kind, base_url, model, profile_id, node="", model_file=""):
+        hopped["ran"] = True  # a hop would build the profile's engine
+        return _FakeIntel()
+
+    client.post("/api/inference-targets", json={
+        "name": "LAN box", "kind": "openAICompatible",
+        "base_url": "http://192.168.1.43:8080/v1", "model": "Qwen3.5-9B-Q6_K",
+    })
+    monkeypatch.setattr(
+        "holdspeak.intel.providers.build_meeting_intel_for_profile", fake_for_profile
+    )
+    monkeypatch.setattr(
+        "holdspeak.web.routes.sync._hub_model_name", lambda ctx: "HubModel-9B"
+    )
+
+    resp = client.post("/api/ask", json={"prompt": "Go", "model": "Qwen3.5-9B-Q6_K"})
+    assert resp.status_code == 400
+    body = resp.json()
+    assert hopped["ran"] is False  # never crossed to the profile's boundary
+    assert "This device" in body["error"] and "Qwen3.5-9B-Q6_K" in body["error"]
+    assert body["available_models"] == ["HubModel-9B"]
 
 
 def test_ask_model_override_matching_the_hubs_own_model_runs_the_default_engine(env, monkeypatch) -> None:
@@ -185,9 +219,10 @@ def test_ask_model_override_matching_the_hubs_own_model_runs_the_default_engine(
     assert body["profile_id"] is None
 
 
-def test_ask_model_override_refuses_a_model_the_hub_cannot_run(env, monkeypatch) -> None:
-    """The manifest is the allow-list: a model some other node pushed (or a
-    typo) refuses loudly with the runnable set — never a silent fallback."""
+def test_ask_model_override_refuses_a_model_the_target_does_not_advertise(env, monkeypatch) -> None:
+    """HS-130-06: a `model` the RESOLVED target does not advertise refuses
+    loudly, naming the target and the model it runs — never a silent fallback
+    and never a hop to some other destination that happens to run the name."""
     _, client = env
     client.post("/api/inference-targets", json={
         "name": "LAN box", "kind": "openAICompatible",
@@ -199,8 +234,9 @@ def test_ask_model_override_refuses_a_model_the_hub_cannot_run(env, monkeypatch)
     resp = client.post("/api/ask", json={"prompt": "Go", "model": "iphone-gemma4-2B"})
     assert resp.status_code == 400
     body = resp.json()
-    assert "not runnable" in body["error"]
-    assert body["allowed_models"] == ["HubModel-9B", "Qwen3.5-9B-Q6_K"]
+    assert "not available on destination" in body["error"]
+    assert body["target_name"] == "This device"
+    assert body["available_models"] == ["HubModel-9B"]
 
 
 def _seed_meeting(db, mid: str, title: str, *, segments=None, intel=None) -> None:
@@ -334,19 +370,20 @@ def test_ask_grounding_refuses_bad_shapes(env) -> None:
     assert "capped at 16" in resp.json()["error"]
 
 
-def test_models_route_names_exactly_the_ask_allow_list(env, monkeypatch) -> None:
-    """HS-83-03: GET /api/models IS the ask route's allow-list — one shared
-    derivation (hub row first, deduped by name), so no client discovers
-    capability by provoking the 400."""
+def test_models_route_lists_every_destination_without_deduping(env, monkeypatch) -> None:
+    """HS-130-06: GET /api/models lists one row PER DESTINATION, each carrying
+    its id. Two destinations serving the SAME model name are BOTH present and
+    distinguishable by id — id, not name, is the selector, so no destination is
+    silently collapsed into another."""
     _, client = env
     pid = client.post("/api/inference-targets", json={
         "name": "LAN box", "kind": "openAICompatible",
         "base_url": "http://192.168.1.43:8080/v1", "model": "Qwen3.5-9B-Q6_K",
     }).json()["inference_target"]["id"]
-    client.post("/api/inference-targets", json={
+    twin = client.post("/api/inference-targets", json={
         "name": "Twin", "kind": "openAICompatible",
         "base_url": "http://192.168.1.44:8080/v1", "model": "Qwen3.5-9B-Q6_K",
-    })  # a second profile serving the SAME model dedupes away
+    }).json()["inference_target"]["id"]  # SAME model name — both must survive
     monkeypatch.setattr(
         "holdspeak.web.routes.sync._hub_model_name", lambda ctx: "HubModel-9B"
     )
@@ -354,13 +391,14 @@ def test_models_route_names_exactly_the_ask_allow_list(env, monkeypatch) -> None
     resp = client.get("/api/models")
     assert resp.status_code == 200
     rows = resp.json()["models"]
-    assert rows[0] == {"name": "HubModel-9B", "source": "hub", "profile_id": None}
-    assert {"name": "Qwen3.5-9B-Q6_K", "source": "profile", "profile_id": pid} in rows
-    assert len(rows) == 2  # deduped by name
+    assert rows[0] == {"id": "this_machine", "name": "HubModel-9B", "source": "hub", "profile_id": None}
+    assert {"id": pid, "name": "Qwen3.5-9B-Q6_K", "source": "profile", "profile_id": pid} in rows
+    assert {"id": twin, "name": "Qwen3.5-9B-Q6_K", "source": "profile", "profile_id": twin} in rows
+    assert len(rows) == 3  # hub + two distinct destinations, NOT deduped
 
     refusal = client.post("/api/ask", json={"prompt": "Go", "model": "nope"})
     assert refusal.status_code == 400
-    assert sorted(r["name"] for r in rows) == refusal.json()["allowed_models"]
+    assert refusal.json()["target_name"] == "This device"
 
 
 def test_ask_surfaces_engine_error_as_502(env, monkeypatch) -> None:

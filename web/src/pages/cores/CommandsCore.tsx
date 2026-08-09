@@ -7,13 +7,14 @@ import { SurfaceFooter } from "../../desk/surface/SurfaceFooter";
 import { useState } from "react";
 import { Button } from "../../components/signal/Signal";
 import {
-  CheckGadget,
   CycleGadget,
   GadgetGroup,
   GadgetRow,
   StringGadget,
 } from "../../desk/surface/gadgets";
 import { apiFetch, readableError } from "../../lib/api";
+import { withRevision } from "../../lib/settingsWrite";
+import { openSurfaceOr } from "../../desk/shell";
 import { useResource } from "../pageSupport";
 import type {
   CoreProps,
@@ -57,13 +58,21 @@ export function CommandsCore({ hero }: CoreProps) {
   } | null>(null);
   const [busy, setBusy] = useState(false);
 
-  const persist = async (next: Macro[], on = enabled) => {
+  /* HS-130-07: the command board writes ONLY the macro `items` — it never
+     re-sends the enablement bit. Enablement is a Settings-owned preference
+     (one writer), so a checkbox toggle can no longer round-trip (and
+     clobber) the whole macro array. The `_revision` it read rides along so a
+     concurrent Settings write is reconciled, not silently overwritten. */
+  const persist = async (next: Macro[]) => {
     setBusy(true);
     setMessage(null);
     try {
       const value = await apiFetch<{ settings?: SettingsResponse }>("/api/settings", {
         method: "PUT",
-        json: { dictation: { macros: { enabled: on, items: next } } },
+        json: withRevision(
+          { dictation: { macros: { items: next } } },
+          resource.data,
+        ),
       });
       resource.setData(value.settings ?? resource.data);
     } catch (error) {
@@ -110,15 +119,22 @@ export function CommandsCore({ hero }: CoreProps) {
       >
         Add command
       </Button>
+      {/* HS-130-07: enablement has ONE writer (Settings). This feature
+          surface reflects the EFFECTIVE state and opens the exact Settings
+          module; it never persists the toggle itself. */}
       <span className="gadget-checkline">
-        <CheckGadget
-          label="Commands enabled"
-          checked={enabled}
-          onChange={(next) => void persist(items, next)}
-        />
-        <span className="gadget-checkline-word">
+        <span className="gadget-checkline-word" data-tone={enabled ? "ok" : "warn"}>
           {enabled ? "Commands on" : "Commands off"}
         </span>
+        <Button
+          dense
+          variant="ghost"
+          onClick={() =>
+            openSurfaceOr("configure-settings", "/settings", "voice-typing")
+          }
+        >
+          {enabled ? "Manage in Settings" : "Enable in Settings"}
+        </Button>
       </span>
     </>
   );

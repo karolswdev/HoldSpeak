@@ -8,7 +8,7 @@ from fastapi.responses import JSONResponse
 
 from ....logging_config import get_logger
 from ....principals import UNAUTHENTICATED
-from ....services.errors import ValidationError
+from ....services.errors import ConflictError, ValidationError
 from ....services.settings_service import SettingsService
 from ...context import WebContext
 from ...runtime_support import error_500
@@ -50,6 +50,17 @@ def build_settings_router(ctx: WebContext) -> APIRouter:
     async def api_update_settings(payload: dict[str, Any], request: Request) -> Any:
         try:
             return JSONResponse(_service(ctx).update_settings(_principal(request), payload))
+        except ConflictError as exc:
+            # HS-130-07: a stale partial-tree write. Reject with 409 and hand
+            # back the current revision so the client can reload + reconcile.
+            return JSONResponse(
+                {
+                    "success": False,
+                    "error": exc.detail,
+                    "revision": exc.context.get("revision", ""),
+                },
+                status_code=409,
+            )
         except ValidationError as exc:
             return JSONResponse({"success": False, "error": exc.detail}, status_code=400)
         except Exception as exc:

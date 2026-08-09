@@ -20,6 +20,7 @@ import { DeliveryTerminalWindow } from "./components/DeliveryTerminalWindow";
 import { RoadmapWindow } from "./components/RoadmapWindow";
 import { RepoWindow } from "./components/RepoWindow";
 import { WorkbenchWindow } from "./components/WorkbenchWindow";
+import { NewWorkbenchChooser } from "./components/NewWorkbenchChooser";
 import { AttentionDrawer } from "./components/AttentionDrawer";
 import { GlassDropLayer } from "./components/GlassDropLayer";
 import { DeskToolInspector } from "./components/DeskToolInspector";
@@ -79,6 +80,7 @@ export default function DeskApp() {
       {workbenchWindows.map((wb) => (
         <WorkbenchWindow key={wb.id} workbenchId={wb.id} origin={wb.origin} />
       ))}
+      <NewWorkbenchChooser />
       <PanePicker />
       <SessionPullout />
       <AttentionDrawer />

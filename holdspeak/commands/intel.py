@@ -145,7 +145,9 @@ def _run_mir_route_command(
     persist: bool,
 ) -> int:
     config = Config.load()
-    default_profile = str(getattr(config.meeting, "mir_profile", "balanced") or "balanced")
+    from ..config.meeting import effective_routing_profile
+
+    default_profile = effective_routing_profile(config.meeting)
     profile, profile_error = _resolve_profile(profile_arg, default_profile=default_profile)
     if profile_error is not None:
         print(profile_error, file=sys.stderr)

@@ -132,6 +132,13 @@ export const createDataSlice: SliceCreator<DataSlice> = (set, get) => ({
   },
 
   async createPrimitive(kind, overrides = {}) {
+    // HS-130-09 — a Workbench is chosen BEFORE it is persisted. The create
+    // gesture opens the pre-persistence chooser; exactly one of its exits
+    // persists exactly one Workbench (no orphaned blank record).
+    if (kind === "workbench") {
+      get().openNewWorkbenchChooser();
+      return;
+    }
     const posts = {
       note: ["/api/notes", "note", { title: "New note", body_markdown: "" }],
       decision: [
@@ -185,8 +192,9 @@ export const createDataSlice: SliceCreator<DataSlice> = (set, get) => ({
     await get().refresh();
     if (createdId) {
       get().markNew(createdId);
+      // "workbench" never reaches here — it returns early to the
+      // pre-persistence chooser (HS-130-09).
       if (kind === "zone") get().setRenamingZone(createdId);
-      else if (kind === "workbench") get().openWorkbenchWindow(createdId);
       else get().openEditor(createdId);
     }
   },

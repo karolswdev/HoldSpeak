@@ -3,6 +3,8 @@
 from __future__ import annotations
 from holdspeak.services.observer import NullObserver, PipelineObserver, observe_service
 
+import hashlib
+import json
 import re
 from copy import deepcopy
 from dataclasses import replace
@@ -12,7 +14,7 @@ from urllib.parse import urlparse
 from holdspeak.config import Config
 from holdspeak.db.core import Database
 from holdspeak.principals import Principal
-from holdspeak.services.errors import ValidationError
+from holdspeak.services.errors import ConflictError, ValidationError
 
 SettingsApplied = Callable[[Config], None]
 _HTTP_HEADER_NAME_RE = re.compile(r"^[A-Za-z0-9-]+$")
@@ -32,10 +34,26 @@ SECRET_PATHS = {
 }
 
 
+# HS-130-07: the settings document's optimistic-concurrency token. It is a
+# content hash of the persisted config — a stable, stateless revision that
+# needs no new persisted field and no schema migration. A GET carries it as
+# `_revision`; a PUT echoes the revision it read. The server rejects a PUT
+# whose echoed revision no longer matches the on-disk config (a concurrent
+# surface already wrote), so two open surfaces reconcile rather than clobber.
+REVISION_KEY = "_revision"
+
+
+def settings_revision(config: Config) -> str:
+    """A deterministic short hash of the persisted config."""
+    canonical = json.dumps(config.to_dict(), sort_keys=True, default=str)
+    return hashlib.sha256(canonical.encode("utf-8")).hexdigest()[:16]
+
+
 def redacted_settings(config: Config) -> dict[str, Any]:
     from holdspeak.config import LEGACY_ENDPOINT_FIELDS
 
     payload = deepcopy(config.to_dict())
+    payload[REVISION_KEY] = settings_revision(config)
     for path, fields in LEGACY_ENDPOINT_FIELDS.items():
         node: Any = payload
         for part in path.split("."):
@@ -115,6 +133,23 @@ class SettingsService:
     ) -> dict[str, Any]:
         if not isinstance(patch, dict):
             raise ValidationError("Settings patch must be an object")
+        # HS-130-07: optimistic concurrency. A client that read a revision must
+        # echo it; if the on-disk config has moved since, the partial-tree write
+        # would silently clobber the concurrent surface's edit, so we reject it
+        # with a reconcilable conflict carrying the current revision. A patch
+        # that omits the token (a legacy caller) is applied last-writer-wins as
+        # before — the guard is opt-in per writer.
+        patch = dict(patch)
+        expected = patch.pop(REVISION_KEY, None)
+        if expected is not None:
+            current_revision = settings_revision(Config.load())
+            if str(expected) != current_revision:
+                raise ConflictError(
+                    "Settings changed in another surface since you loaded them. "
+                    "Reload and reapply your edit.",
+                    code="settings_stale",
+                    context={"revision": current_revision},
+                )
         result = self._update(patch)
         if result.get("success") is False:
             raise ValidationError(str(result["error"]))
@@ -280,14 +315,27 @@ class SettingsService:
         meeting_data["mir_enabled"] = bool(
             meeting_data.get("mir_enabled", current.meeting.mir_enabled)
         )
-        mir_profile = (
-            str(meeting_data.get("mir_profile", current.meeting.mir_profile))
+        # HS-130-05: the ONE routing profile. Accept the converged
+        # `routing_profile` key; fall back to the legacy `mir_profile` key so an
+        # older client still writes the effective value. Persist to
+        # `routing_profile` (the field the runtime + doctor read via
+        # `effective_routing_profile`), never the legacy owners.
+        routing_profile = (
+            str(
+                meeting_data.get(
+                    "routing_profile",
+                    meeting_data.get(
+                        "mir_profile", current.meeting.effective_routing_profile()
+                    ),
+                )
+            )
             .strip()
             .lower()
         )
-        if mir_profile not in set(available_profiles()):
-            return {"success": False, "error": f"Invalid mir profile: {mir_profile}"}
-        meeting_data["mir_profile"] = mir_profile
+        if routing_profile not in set(available_profiles()):
+            return {"success": False, "error": f"Invalid routing profile: {routing_profile}"}
+        meeting_data["routing_profile"] = routing_profile
+        meeting_data.pop("mir_profile", None)
 
         poll_seconds = int(
             meeting_data.get(

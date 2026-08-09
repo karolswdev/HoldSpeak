@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { ReceiptsView } from "./ReceiptsView";
+import { DecisionsView } from "./DecisionsView";
 
 const apiFetch = vi.hoisted(() => vi.fn());
 
@@ -51,24 +51,24 @@ describe("HS-128-04 Receipts view", () => {
   });
 
   it("searches on keystroke and supports a governing-only WHY filter", async () => {
-    render(<ReceiptsView />);
+    render(<DecisionsView />);
     await screen.findByText(receipt.decision_text);
 
-    fireEvent.change(screen.getByRole("searchbox", { name: "Search decision receipts" }), {
+    fireEvent.change(screen.getByRole("searchbox", { name: "Search decisions" }), {
       target: { value: "Intelligence" },
     });
     await waitFor(() =>
-      expect(apiFetch).toHaveBeenCalledWith("/api/receipts/search?q=Intelligence"),
+      expect(apiFetch).toHaveBeenCalledWith("/api/decision-records/search?q=Intelligence"),
     );
 
     fireEvent.click(screen.getByRole("button", { name: "WHY ONLY" }));
-    expect(screen.getByText("GOVERNING RECEIPTS")).toBeInTheDocument();
+    expect(screen.getByText("GOVERNING DECISIONS")).toBeInTheDocument();
     expect(screen.getByText(receipt.decision_text)).toBeInTheDocument();
   });
 
   it("opens full receipt evidence in place and returns to the preserved ledger", async () => {
-    render(<ReceiptsView />);
-    const row = await screen.findByRole("button", { name: `Open receipt ${receipt.decision_text}` });
+    render(<DecisionsView />);
+    const row = await screen.findByRole("button", { name: `Open decision ${receipt.decision_text}` });
     fireEvent.click(row);
 
     expect(await screen.findByText(receipt.rationale)).toBeInTheDocument();

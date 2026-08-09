@@ -324,6 +324,7 @@ class RecipeService:
 
     def _payload(self, recipe: Any) -> dict[str, Any]:
         from .support import capability_descriptor
+        from ..inference_targets import resolve_placement
 
         row = recipe.to_dict()
         row["capability"] = capability_descriptor(
@@ -331,6 +332,13 @@ class RecipeService:
             supported_placements=[f"profile:{recipe.profile_id}"] if recipe.profile_id else ["this_machine"],
             action_label=f"Ask {recipe.name or 'Agent'}",
         )
+        # HS-130-01: every placement API response carries {effective_target_id,
+        # source}. A bare recipe resolves through the Agent default → global;
+        # an unset recipe reports the source it inherited from, never a bare
+        # target with no provenance.
+        row["placement"] = resolve_placement(
+            self._db, agent=recipe.profile_id
+        ).placement_dict()
         return row
 
     @staticmethod

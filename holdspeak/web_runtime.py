@@ -17,6 +17,7 @@ import numpy as np
 
 from .audio import AudioRecorder
 from .config import Config
+from .config.meeting import effective_routing_profile
 from .audio import AudioSource
 from .device_audio import DeviceRegistry, ensure_device_psk
 from .web_auth import authenticated_browser_url, ensure_web_token
@@ -179,7 +180,7 @@ class WebRuntime(
         self.pending_plugin_runs: list[dict[str, object]] = []
         self.preview_window_seq = 0
         self.mir_enabled = bool(getattr(self.config.meeting, "mir_enabled", False))
-        self.mir_profile = normalize_profile(getattr(self.config.meeting, "mir_profile", None))
+        self.mir_profile = normalize_profile(effective_routing_profile(self.config.meeting))
         self.mir_override_intents: list[str] = []
         self.last_route_preview: Optional[dict[str, object]] = None
         self.runtime_url: Optional[str] = None

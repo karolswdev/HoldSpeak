@@ -157,7 +157,9 @@ def _trust_block(
             endpoints.append(base)
 
     # Static intent description reused from the doctor/web egress source of truth.
-    _, egress_description = intel_egress_posture(meeting.intel_provider)
+    _, egress_description = intel_egress_posture(
+        meeting.intel_provider, meeting_cfg=meeting
+    )
     from .trust_destinations import destination_inventory
 
     destinations = destination_inventory(config, database=database)

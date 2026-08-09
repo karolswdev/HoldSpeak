@@ -1,0 +1,52 @@
+# Evidence - HS-130-11
+
+- **Story:** HS-130-11 - The walk
+- **Status:** done
+- **Date:** 2026-08-09
+
+## Proof
+
+### Captured run — 2026-08-09T10:13:55Z
+
+- **Command:** `bash -lc HOME='/Users/karol/.claude/jobs/b0c53811/tmp/walk-ev' XDG_DATA_HOME='/Users/karol/.claude/jobs/b0c53811/tmp/walk-ev/.local/share' HS_WALK_LAN='http://192.168.1.43:8080/v1' .venv/bin/python scripts/walk_one_truth.py`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** f6d41bf36366fd55475cee7c84c6d3c44771332e
+
+```text
+
+== HS-130-04 — one egress vocabulary (control vs treatment) ==
+  PASS  LAN 192.168.x → private_network (NOT cloud) — private_network
+  PASS  public host api.openai.com → cloud (control)
+  PASS  loopback 127.0.0.1 → local
+  PASS  mesh node → mesh (never Local only)
+  PASS  no parseable host → no fabricated host (intent only)
+
+== HS-130-02 — collision-free secret slots ==
+  PASS  punctuation siblings → 4 distinct slots — {'foo-bar': 'FOO_BAR_7D89C4F517E3BD4B', 'foo_bar': 'FOO_BAR_4928CAE8B37B3D11', 'foo.bar': 'FOO_BAR_2595D08AD22C733F', 'foo bar': 'FOO_BAR_FBC1A9F858EA9E17'}
+  PASS  env names are 4 distinct too
+
+== HS-130-01 — precedence resolver reports its source ==
+  PASS  agent-only resolves to agent, source=agent — p-agent/agent
+  PASS  invocation overrides agent, source=invocation — p-run/invocation
+  PASS  all-unset inherits to the named global default (never accidental this_machine) — this_machine/global
+
+== HS-130-03 — one deployment identity ==
+  PASS  target carries a DeploymentIdentity
+  PASS  receipt model == deployment.model (no advertised-but-unloaded model) — agent-model == agent-model
+  PASS  deployment boundary == egress_boundary of its endpoint (private_network) — private_network
+
+== HS-130-07 — settings versioned writes ==
+  PASS  revision changes when the config changes — 90c0ee339c004586 -> 914e7df8bf48097d
+  PASS  revision is stable for identical config
+
+== LIVE METAL — http://192.168.1.43:8080/v1 (control-vs-treatment on real hardware) ==
+  PASS  real LAN endpoint reachable — 1 model(s): ['Qwen3.6-35B-A3B-UD-Q5_K_XL.gguf']
+  PASS  live .43 classifies private_network (the metal proof) — private_network
+  PASS  live .43 deployment boundary == private_network — private_network
+  PASS  live .43 receipt boundary == private_network (not cloud), no fabricated host — boundary=private_network owner=you
+
+========================================================
+19 passed, 0 failed
+ALL ONE-TRUTH ASSERTIONS PASS
+```

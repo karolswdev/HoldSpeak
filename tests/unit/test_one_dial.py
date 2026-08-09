@@ -339,7 +339,10 @@ def test_settings_put_strips_legacy_endpoint_fields() -> None:
 def test_feature_legs_resolve_through_the_one_resolver() -> None:
     resolver_legs = {
         "holdspeak/rails_observer.py": "resolve_inference_target",
-        "holdspeak/services/ask_service.py": "resolve_inference_target",
+        # HS-130-06: Ask resolves through the HS-130-01 placement authority
+        # (resolve_placement composes the one resolve_inference_target seam),
+        # so the id selects placement and Ask never model-name-hops.
+        "holdspeak/services/ask_service.py": "resolve_placement",
         "holdspeak/web/routes/primitives/chains.py": "resolve_inference_target",
         "holdspeak/services/recipe_service.py": "resolve_inference_target",
         "holdspeak/web/routes/primitives/workflows.py": "resolve_inference_target",

@@ -51,7 +51,7 @@ from ..grounding import (
     hydrate_grounding_blocks_detailed as _hydrate_grounding_detailed,
     meeting_digest as _meeting_digest,
 )
-from ..intel.providers import endpoint_egress
+from ..intel.providers import run_egress as _run_egress
 from ..logging_config import get_logger
 
 log = get_logger("services.support")
@@ -148,15 +148,8 @@ def skills_for_recipe(db: Any, recipe_id: Optional[str]) -> str:
 def inject_skills(db: Any, system_prompt: str, recipe_id: Optional[str]) -> str:
     skills_text = skills_for_recipe(db, recipe_id); return system_prompt + "\n\n" + skills_text if skills_text and system_prompt else skills_text or system_prompt
 
-def _run_egress(profile: Any, intel: Any, *, default_model: str) -> tuple[dict[str, Any], str]:
-    if profile is not None and profile.kind == "meshNode" and getattr(profile, "node", ""): return endpoint_egress(node=profile.node), str(profile.model or "")
-    if profile is not None and profile.kind == "openAICompatible" and profile.base_url: return endpoint_egress(cloud=True, base_url=profile.base_url), str(profile.model or "")
-    if getattr(intel, "active_provider", "") == "mesh": return endpoint_egress(node=getattr(intel, "node", "")), str(getattr(intel, "model_hint", "") or "")
-    if intel.active_provider == "cloud":
-        from ..config import Config
-        from ..intel.providers import effective_intel_cloud
-        effective = effective_intel_cloud(Config.load().meeting); return endpoint_egress(cloud=True, base_url=effective.base_url), str(effective.model or "")
-    return endpoint_egress(cloud=False), default_model
+# The run-egress badge rule is ONE function (`run_egress`, HS-130-04), re-exported
+# here as `_run_egress` for the recipe pipeline and its tests.
 
 def _context_material(db: Any, cid: str, kind: str, title: str) -> tuple[str, str]:
     kind = str(kind or "").strip().lower()

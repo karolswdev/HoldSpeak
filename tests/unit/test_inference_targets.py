@@ -74,27 +74,30 @@ def test_five_destination_kinds_are_independent_of_engine_and_model(rig) -> None
 def test_local_destinations_are_unavailable_without_their_model_files(
     tmp_path, monkeypatch
 ) -> None:
-    missing_mlx = tmp_path / "missing-mlx"
-    missing_llama = tmp_path / "missing.gguf"
-    runtime = SimpleNamespace(
-        backend="auto",
-        mlx_model=str(missing_mlx),
-        llama_cpp_model_path=str(missing_llama),
-    )
+    # HS-130-03: this_machine readiness reflects the LOCAL meeting-intel model
+    # its execution actually loads (meeting.intel_realtime_model), not the
+    # dictation-runtime (transcription) model of a different subsystem.
+    missing_meeting = tmp_path / "meeting.gguf"
     monkeypatch.setattr(
         "holdspeak.config.Config.load",
-        lambda: SimpleNamespace(dictation=SimpleNamespace(runtime=runtime)),
+        lambda: SimpleNamespace(
+            meeting=SimpleNamespace(intel_realtime_model=str(missing_meeting))
+        ),
     )
 
     target = this_machine_target()
     assert target.readiness_state == "unavailable"
-    assert target.readiness_reason == (
-        f"model file not found: {missing_mlx} or {missing_llama}"
-    )
+    assert target.readiness_reason == f"model file not found: {missing_meeting}"
 
-    missing_llama.touch()
-    assert this_machine_target().ready is True
+    missing_meeting.touch()
+    ready = this_machine_target()
+    assert ready.ready is True
+    # readiness == the identity execution will load == what the receipt names.
+    assert ready.deployment is not None
+    assert ready.deployment.model_path == str(missing_meeting)
+    assert ready.placement_receipt(provider="local")["model"] == missing_meeting.stem
 
+    missing_mlx = tmp_path / "missing-mlx"
     profile = SimpleNamespace(
         id="local",
         name="Local profile",

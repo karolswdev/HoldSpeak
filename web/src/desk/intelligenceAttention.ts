@@ -21,7 +21,7 @@ export function useIntelligenceAttention() {
     void Promise.all([
       apiFetch<{ is_empty?: boolean } | null>("/api/brief/latest"),
       apiFetch<{ overdue?: unknown[] }>("/api/follow-through/board"),
-      apiFetch<unknown[]>("/api/receipts/review"),
+      apiFetch<unknown[]>("/api/decision-records/review"),
     ]).then(([brief, board, review]) => {
       setAttention({
         briefReady: Boolean(brief && !brief.is_empty),

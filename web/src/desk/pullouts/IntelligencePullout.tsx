@@ -3,7 +3,7 @@ import { SurfaceFooter } from "../surface/SurfaceFooter";
 import { INTELLIGENCE_NAVIGATE, type IntelligenceNavigation, type IntelligenceView } from "../intelligenceNavigation";
 import { BriefView } from "./views/BriefView";
 import { FollowThroughView } from "./views/FollowThroughView";
-import { ReceiptsView } from "./views/ReceiptsView";
+import { DecisionsView } from "./views/DecisionsView";
 import type { PulloutContentProps } from "./types";
 import "./intelligence.css";
 
@@ -12,7 +12,7 @@ const VIEW_STORAGE_KEY = "hs.desk.intelligence-view";
 const VIEWS: ReadonlyArray<{ id: IntelligenceView; label: string }> = [
   { id: "brief", label: "Brief" },
   { id: "follow-through", label: "Follow-through" },
-  { id: "receipts", label: "Receipts" },
+  { id: "receipts", label: "Decisions" },
 ];
 
 function initialView(): IntelligenceView {
@@ -126,7 +126,7 @@ export function IntelligencePullout({ object }: PulloutContentProps) {
       <div className="desk-pullout-body desk-surface-body intelligence-pullout">
         {header}
         <section className="intelligence-view" aria-live="polite">
-          <ReceiptsView initialQuery={navigation.receiptQuery} initialWhyOnly={navigation.whyOnly} workRef={navigation.receiptWorkRef} receiptId={navigation.receiptId} />
+          <DecisionsView initialQuery={navigation.receiptQuery} initialWhyOnly={navigation.whyOnly} workRef={navigation.receiptWorkRef} receiptId={navigation.receiptId} />
         </section>
       </div>
       <SurfaceFooter />

@@ -101,16 +101,22 @@ export function RecipeEditor({ object: o }: InlineEditorContentProps) {
             onChange={(value) => set("kbId", "kb_id", value)}
           />
           <CycleGadget
-            label="Runs on"
+            label="Default runs on"
             value={f.profileId}
             options={[
-              { value: "", label: "Default Runs on" },
+              // HS-130-01: unset = INHERIT (falls through to the global
+              // default), NOT "this device". One empty-value meaning, one
+              // token: write null, the same token InfoWindow writes.
+              { value: "", label: "Inherit default" },
               ...profiles.map((p) => ({
                 value: String(p.id),
                 label: String(p.name || p.id),
               })),
             ]}
-            onChange={(value) => set("profileId", "profile_id", value)}
+            onChange={(value) => {
+              setF((prev) => ({ ...prev, profileId: value }));
+              save({ profile_id: value || null });
+            }}
           />
         </>
       ) : (

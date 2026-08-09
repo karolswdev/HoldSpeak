@@ -38,13 +38,13 @@ describe("HS-128-01 Intelligence pullout", () => {
     const first = render(
       <IntelligencePullout object={object} onClose={() => {}} />,
     );
-    fireEvent.click(screen.getByRole("button", { name: "Receipts" }));
+    fireEvent.click(screen.getByRole("button", { name: "Decisions" }));
     first.unmount();
 
     render(<IntelligencePullout object={object} onClose={() => {}} />);
 
     expect(
-      screen.getByRole("searchbox", { name: "Search decision receipts" }),
+      screen.getByRole("searchbox", { name: "Search decisions" }),
     ).toBeInTheDocument();
   });
 

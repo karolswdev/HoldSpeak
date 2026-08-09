@@ -88,7 +88,10 @@ def test_non_mesh_rows_are_untouched(env) -> None:
     assert "live" not in row and "node" not in row
 
 
-# ── the ask refuses an offline node fast, by name ────────────────────────
+# ── the ask refuses an offline node fast, addressed by target id ─────────
+# HS-130-06: a mesh node is reached by its inference_target_id/profile_id, not
+# by a bare model name (Ask no longer retargets by model name); the liveness
+# 409/200 behavior is unchanged, only the selector is.
 
 
 def test_ask_against_offline_mesh_node_is_an_immediate_409(env) -> None:
@@ -101,14 +104,14 @@ def test_ask_against_offline_mesh_node_is_an_immediate_409(env) -> None:
     assert db.mesh_relay.claim_next("walk-edge") is None
 
     db.mesh_relay.touch_worker("walk-edge", now=datetime.now() - timedelta(seconds=60))
-    resp = client.post("/api/ask", json={"prompt": "Go", "model": "qwen3.5-4b"})
+    resp = client.post("/api/ask", json={"prompt": "Go", "profile_id": prof.id})
     assert resp.status_code == 409
     assert "last seen" in resp.json()["error"]
 
 
 def test_ask_against_live_mesh_node_proceeds(env, monkeypatch) -> None:
     db, client = env
-    _mesh_profile(db)
+    prof = _mesh_profile(db)
     db.mesh_relay.touch_worker("walk-edge")
 
     class _FakeRelay:
@@ -123,7 +126,7 @@ def test_ask_against_live_mesh_node_proceeds(env, monkeypatch) -> None:
         "holdspeak.intel.providers.build_meeting_intel_for_profile",
         lambda **kw: _FakeRelay(),
     )
-    resp = client.post("/api/ask", json={"prompt": "Go", "model": "qwen3.5-4b"})
+    resp = client.post("/api/ask", json={"prompt": "Go", "profile_id": prof.id})
     assert resp.status_code == 200
     body = resp.json()
     assert body["output"] == "FROM THE EDGE"

@@ -65,8 +65,10 @@ export interface DeskState {
   profiles: Array<Record<string, unknown>>;
   projects: ProjectSummary[];
   inferenceTargets: InferenceTarget[];
-  /** HS-83-03 -- the hub's runnable models (the ask allow-list). */
+  /** HS-83-03 -- the hub's runnable models (the ask allow-list).
+   * HS-130-06: one entry per destination, keyed by `id` (name may repeat). */
   models: Array<{
+    id: string;
     name: string;
     source: "hub" | "profile";
     profile_id: string | null;
@@ -108,6 +110,10 @@ export interface DeskState {
   repositoryWindows: { id: string; origin: { x: number; y: number } | null }[];
   /** Agent workbenches open as their own desk windows. */
   workbenchWindows: { id: string; origin: { x: number; y: number } | null }[];
+  /** The pre-persistence "new workbench" chooser (HS-130-09): open before
+   * any record exists so exactly one Workbench is persisted per creation
+   * gesture. Null when closed. */
+  newWorkbenchChooser: { origin: { x: number; y: number } | null } | null;
   /** The zone a live drag is hovering (the drop affordance, HS-73-05). */
   hoverZoneId: string | null;
   /** The freshly-created zone whose rename is focused. */
@@ -192,6 +198,10 @@ export interface DeskState {
   closeRepositoryWindow(id: string): void;
   openWorkbenchWindow(id: string, origin?: { x: number; y: number }): void;
   closeWorkbenchWindow(id: string): void;
+  /** Open the pre-persistence workbench chooser (no record created yet). */
+  openNewWorkbenchChooser(origin?: { x: number; y: number }): void;
+  /** Dismiss the pre-persistence workbench chooser. */
+  closeNewWorkbenchChooser(): void;
   setHoverZone(id: string | null): void;
   setRenamingZone(id: string | null): void;
   diveInto(zoneId: string): void;

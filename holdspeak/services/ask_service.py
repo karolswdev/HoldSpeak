@@ -28,14 +28,18 @@ class AskService:
         self._observer = observer or NullObserver()
 
     def list_models(self, principal: Principal) -> list[dict[str, Any]]:
-        rows, seen = [], set()
+        # HS-130-06: one row PER DESTINATION, never deduped by model name. Id
+        # (not name) is the selector, so two destinations serving one model name
+        # both appear and are addressable — Ask can never "first-match" hop.
+        from ..inference_targets import THIS_MACHINE_ID
+        rows: list[dict[str, Any]] = []
         hub_model = self._hub_model()
         if hub_model:
-            rows.append({"name": hub_model, "source": "hub", "profile_id": None}); seen.add(hub_model)
+            rows.append({"id": THIS_MACHINE_ID, "name": hub_model, "source": "hub", "profile_id": None})
         for profile in self._db.profiles.list():
             name = str(profile.model or "")
-            if profile.deleted or not name or name in seen: continue
-            row: dict[str, Any] = {"name": name, "source": "profile", "profile_id": profile.id}
+            if profile.deleted or not name: continue
+            row: dict[str, Any] = {"id": profile.id, "name": name, "source": "profile", "profile_id": profile.id}
             node = str(getattr(profile, "node", "") or "")
             if profile.kind == "meshNode" and node:
                 from ..intel.mesh_relay import DEFAULT_LIVENESS_WINDOW_SECONDS
@@ -43,7 +47,7 @@ class AskService:
                 age = None if last is None else (datetime.now() - last).total_seconds()
                 row.update(node=node, live=age is not None and age <= DEFAULT_LIVENESS_WINDOW_SECONDS,
                            last_seen_seconds=None if age is None else int(age))
-            rows.append(row); seen.add(name)
+            rows.append(row)
         return rows
 
     def resolve_grounding(self, principal: Principal, refs: list[str]) -> dict[str, Any]:
@@ -65,19 +69,30 @@ class AskService:
         if grounding_echo:
             context_ids += grounding_echo.pop("_ids"); context_titles += grounding_echo.pop("_titles")
         user_prompt = prompt + ("\n\nMaterial:\n" + material if material else "") + ("\n\nGrounding:\n" + envelope if envelope else "")
-        from ..inference_targets import build_intel_for_target, resolve_inference_target, target_refusal, target_runtime_error
-        requested = str(inference_target_id or profile_id or "this_machine").strip()
-        target = resolve_inference_target(self._db, requested)
+        from ..inference_targets import build_intel_for_target, resolve_placement, target_refusal, target_runtime_error
+        # HS-130-06: the id selects the placement (HS-130-01 resolver, invocation
+        # tier); Ask stays on that target and never cross-profile hops by model
+        # name. A `model` override may only NAME what the resolved target already
+        # advertises — otherwise refuse, naming the target and its model.
+        placement = resolve_placement(self._db, invocation=(inference_target_id or profile_id) or None)
+        target = placement.target
+        requested = placement.effective_target_id
         ran_profile_id = target.profile_id
         prof = self._db.profiles.get(ran_profile_id) if ran_profile_id else None
+        advertised = ((prof.model or "") if prof is not None else self._hub_model()) or target.model
         override = str(model or "").strip() or None
-        if override:
-            if prof is not None and (prof.model or "") == override: pass
-            elif (by_model := next((p for p in self._db.profiles.list() if not p.deleted and (p.model or "") == override), None)) is not None:
-                prof, ran_profile_id, target = by_model, by_model.id, resolve_inference_target(self._db, by_model.id)
-            elif override == self._hub_model():
-                prof, ran_profile_id, target = None, None, resolve_inference_target(self._db, "this_machine")
-            else: raise ValidationError(f"model {override!r} is not runnable on this hub", context={"allowed_models": sorted({r['name'] for r in self.list_models(principal)})})
+        if override and override != advertised:
+            offer = advertised or "no model"
+            raise ValidationError(
+                f"model {override!r} is not available on destination '{target.name}' "
+                f"(id {requested!r}); it runs {offer!r}. Address the destination that "
+                f"advertises {override!r} by its inference_target_id — Ask does not "
+                f"retarget by model name.",
+                code="model_not_advertised",
+                context={"inference_target_id": requested, "target_name": target.name,
+                         "requested_model": override, "available_models": [advertised] if advertised else [],
+                         "status": 400},
+            )
         if not target.ready: raise ServiceError("target_unavailable", target.readiness_reason, context={**target_refusal(target), "status": 409})
         if prof is not None and prof.kind == "meshNode":
             from ..intel.mesh_relay import DEFAULT_LIVENESS_WINDOW_SECONDS
@@ -169,15 +184,10 @@ class AskService:
         return "\n\n".join(blocks), echo
 
     def _egress(self, profile: Any, intel: Any) -> tuple[dict[str, Any], str]:
-        from ..intel.providers import endpoint_egress
-        if profile is not None and profile.kind == "meshNode" and getattr(profile,"node",""): return endpoint_egress(node=profile.node), str(profile.model or "")
-        if profile is not None and profile.kind == "openAICompatible" and profile.base_url: return endpoint_egress(cloud=True, base_url=profile.base_url), str(profile.model or "")
-        if getattr(intel,"active_provider","") == "mesh": return endpoint_egress(node=getattr(intel,"node","")), str(getattr(intel,"model_hint","") or "")
-        if getattr(intel,"active_provider","") == "cloud":
-            from ..config import Config
-            from ..intel.providers import effective_intel_cloud
-            effective=effective_intel_cloud(Config.load().meeting); return endpoint_egress(cloud=True, base_url=effective.base_url), str(effective.model or "")
-        return endpoint_egress(cloud=False), self._hub_model()
+        # ONE run-egress rule (HS-130-04): ask and recipe runs share it, so a LAN
+        # destination badges private_network everywhere instead of a flat cloud.
+        from ..intel.providers import run_egress
+        return run_egress(profile, intel, default_model=self._hub_model())
     def _emit(self, state: str, **frame: Any) -> None:
         if self._broadcast: self._broadcast(state, **frame)
     @staticmethod

@@ -7,6 +7,8 @@ that monkeypatch `holdspeak.intel.OpenAI` / `holdspeak.intel.Llama` are honored.
 
 from __future__ import annotations
 
+import hashlib
+import ipaddress
 import os
 from dataclasses import dataclass, replace
 from pathlib import Path
@@ -20,7 +22,6 @@ from ..logging_config import get_logger
 if TYPE_CHECKING:
     from .engine import MeetingIntel
 from .models import (
-    DEFAULT_CLOUD_HOST,
     DEFAULT_INTEL_CLOUD_API_KEY_ENV,
     DEFAULT_INTEL_CLOUD_MODEL,
     DEFAULT_INTEL_MODEL_PATH,
@@ -185,22 +186,23 @@ def resolve_llm_capability(meeting_config: Any) -> bool:
     try:
         if not bool(getattr(meeting_config, "intel_enabled", False)):
             return False
-        provider = getattr(meeting_config, "intel_provider", None) or DEFAULT_INTEL_PROVIDER
-        effective = effective_intel_cloud(meeting_config)
-        if effective.node:
+        # HS-130-05: judge the ONE placement decision (an adopted destination
+        # wins over the local/auto/cloud intent), not ``intel_provider`` alone.
+        placement = resolve_meeting_placement(meeting_config)
+        if placement.node:
             # a mesh-adopted endpoint has no base_url for the resolver to
             # judge; the capability EXISTS (the relay provider is the engine)
             # and node liveness is a run-time question with a named refusal
             return True
         kwargs: dict[str, Any] = {
-            "cloud_model": effective.model,
-            "cloud_api_key_env": effective.api_key_env,
-            "cloud_base_url": effective.base_url,
+            "cloud_model": placement.model,
+            "cloud_api_key_env": placement.api_key_env,
+            "cloud_base_url": placement.base_url,
         }
         model_path = getattr(meeting_config, "intel_realtime_model", None)
         if model_path:
             kwargs["model_path"] = model_path
-        resolved, _reason = _intel_pkg.resolve_intel_provider(provider, **kwargs)
+        resolved, _reason = _intel_pkg.resolve_intel_provider(placement.provider, **kwargs)
         return resolved is not None
     except Exception:
         return False
@@ -218,16 +220,20 @@ def build_configured_meeting_intel() -> "MeetingIntel":
     from .engine import MeetingIntel
 
     meeting = Config.load().meeting
-    effective = effective_intel_cloud(meeting)
-    if effective.node:
+    # HS-130-05: the ONE placement decision. An adopted destination (mesh or
+    # openAICompatible ``intel_profile_id``) wins over the local/auto/cloud
+    # intent, so a selected Meetings destination is honored instead of silently
+    # ignored; otherwise ``intel_provider`` decides against the hub default.
+    placement = resolve_meeting_placement(meeting)
+    if placement.node:
         from .mesh_relay import MeshRelayIntel
 
-        return MeshRelayIntel(node=effective.node, model_hint=effective.model)  # type: ignore[return-value]
+        return MeshRelayIntel(node=placement.node, model_hint=placement.model)  # type: ignore[return-value]
     kwargs: dict[str, Any] = {
-        "provider": getattr(meeting, "intel_provider", DEFAULT_INTEL_PROVIDER),
-        "cloud_model": effective.model,
-        "cloud_api_key_env": effective.api_key_env,
-        "cloud_base_url": effective.base_url,
+        "provider": placement.provider,
+        "cloud_model": placement.model,
+        "cloud_api_key_env": placement.api_key_env,
+        "cloud_base_url": placement.base_url,
         "cloud_reasoning_effort": getattr(meeting, "intel_cloud_reasoning_effort", None),
         "cloud_store": bool(getattr(meeting, "intel_cloud_store", False)),
     }
@@ -235,6 +241,88 @@ def build_configured_meeting_intel() -> "MeetingIntel":
     if model_path:
         kwargs["model_path"] = model_path
     return MeetingIntel(**kwargs)
+
+
+def configured_local_meeting_model_path() -> str:
+    """The concrete local GGUF the in-process meeting-intel engine loads (HS-130-03).
+
+    This is the SINGLE artifact the ``this_device`` execution branch actually
+    loads (``build_intel_for_target`` pins ``this_device`` to ``local`` and hands
+    ``MeetingIntel`` this path). ``this_machine`` readiness must therefore check
+    THIS file and the receipt must name it — not the dictation-runtime model,
+    which is a different subsystem.
+    """
+    from ..config import Config
+
+    meeting = Config.load().meeting
+    raw = str(getattr(meeting, "intel_realtime_model", "") or "").strip()
+    return raw or DEFAULT_INTEL_MODEL_PATH
+
+
+@dataclass(frozen=True)
+class ConfiguredMeetingDeployment:
+    """What ``build_configured_meeting_intel`` will actually load right now.
+
+    ``paired_device`` delegates its execution to ``build_configured_meeting_intel``,
+    so paired readiness (``runnable``) and the paired receipt (``model``) both
+    derive from this snapshot instead of hardcoding ``ready`` (HS-130-03).
+    """
+
+    engine: str  # "local" | "cloud" | "mesh"
+    model: str
+    model_path: Optional[str]
+    node: str
+    runnable: bool
+    reason: Optional[str]
+
+
+def configured_meeting_deployment() -> ConfiguredMeetingDeployment:
+    """Resolve the deployment ``build_configured_meeting_intel`` would load.
+
+    Honors the meeting placement policy (``intel_provider`` / ``intel_profile_id``)
+    exactly as ``build_configured_meeting_intel`` does — this READS that policy to
+    describe runnability; it does not own or change it (that is HS-130-05).
+    """
+    from ..config import Config
+
+    meeting = Config.load().meeting
+    # HS-130-05: describe what the ONE placement decision (and therefore
+    # ``build_configured_meeting_intel``) will load, not ``intel_provider``
+    # alone — an adopted openAICompatible destination reports its cloud
+    # deployment even under ``intel_provider="local"``, matching execution.
+    placement = resolve_meeting_placement(meeting)
+    if placement.node:
+        # Mesh liveness is a run-time question with its own named refusal; the
+        # relay provider itself exists, so the deployment is runnable here.
+        return ConfiguredMeetingDeployment(
+            engine="mesh", model=str(placement.model or ""), model_path=None,
+            node=str(placement.node), runnable=True, reason=None,
+        )
+    provider = placement.provider
+    model_path = configured_local_meeting_model_path()
+    active, reason = resolve_intel_provider(
+        provider,
+        model_path=model_path,
+        cloud_model=placement.model,
+        cloud_api_key_env=placement.api_key_env,
+        cloud_base_url=placement.base_url,
+    )
+    if active == "cloud":
+        return ConfiguredMeetingDeployment(
+            engine="cloud", model=str(placement.model or ""), model_path=None,
+            node="", runnable=True, reason=None,
+        )
+    local_model = Path(model_path).expanduser().stem
+    if active == "local":
+        return ConfiguredMeetingDeployment(
+            engine="local", model=local_model, model_path=model_path,
+            node="", runnable=True, reason=None,
+        )
+    # No provider resolved: the delegated execution path cannot load.
+    return ConfiguredMeetingDeployment(
+        engine="local", model=local_model, model_path=model_path,
+        node="", runnable=False, reason=reason,
+    )
 
 
 def endpoint_host(base_url: Any) -> str:
@@ -246,6 +334,53 @@ def endpoint_host(base_url: Any) -> str:
     return parsed.hostname or ""
 
 
+# The ONE egress vocabulary (HS-130-04). Every surface that states where a run
+# went reports exactly one of these four boundaries.
+EGRESS_LOCAL = "local"
+EGRESS_PRIVATE_NETWORK = "private_network"
+EGRESS_MESH = "mesh"
+EGRESS_CLOUD = "cloud"
+EGRESS_BOUNDARIES = (EGRESS_LOCAL, EGRESS_PRIVATE_NETWORK, EGRESS_MESH, EGRESS_CLOUD)
+
+
+def egress_boundary(
+    *, cloud: bool = False, base_url: Optional[str] = None, node: Optional[str] = None
+) -> str:
+    """THE one egress-vocabulary classifier (HS-130-04).
+
+    Maps the endpoint a run ACTUALLY used to one of the four egress boundaries
+    ``{local, private_network, mesh, cloud}``. Every surface that states where a
+    run went — the badge (`endpoint_egress`), the run egress (`run_egress`),
+    doctor, and the posture string — reads its verdict HERE, so a LAN box is
+    ``private_network`` everywhere and a mesh route is ``mesh`` (never
+    "Local only"). No host is invented: an endpoint with no parseable host is
+    classified by intent (``cloud=True`` = the default public endpoint) and is
+    NEVER stamped with a fabricated host name (the old ``DEFAULT_CLOUD_HOST`` lie
+    is gone).
+    """
+    if node and str(node).strip():
+        return EGRESS_MESH
+    host = endpoint_host(base_url).lower().rstrip(".")
+    if not host:
+        # No concrete endpoint host. ``cloud=True`` is the default public cloud
+        # endpoint (contacted later, named nowhere here); otherwise the run
+        # stays on THIS machine.
+        return EGRESS_CLOUD if cloud else EGRESS_LOCAL
+    if host in {"localhost", "localhost.localdomain"} or host.endswith(".localhost"):
+        return EGRESS_LOCAL
+    try:
+        address = ipaddress.ip_address(host)
+    except ValueError:
+        if host.endswith((".local", ".internal", ".lan", ".home")):
+            return EGRESS_PRIVATE_NETWORK
+        return EGRESS_CLOUD
+    if address.is_loopback:
+        return EGRESS_LOCAL
+    if address.is_private or address.is_link_local:
+        return EGRESS_PRIVATE_NETWORK
+    return EGRESS_CLOUD
+
+
 def endpoint_egress(
     *, cloud: bool = False, base_url: Optional[str] = None,
     label: Optional[str] = None, node: Optional[str] = None
@@ -253,25 +388,83 @@ def endpoint_egress(
     """The ONE egress badge constructor (HS-84-04): ``{scope, host?, label?}``.
 
     Every surface that states where a run went builds its badge here — routes,
-    cadence, audit — so the wire shape can't drift per call site. Badges stay
-    REPORTED facts: pass the endpoint the run actually used, never a default.
+    cadence, audit — so the wire shape can't drift per call site. ``scope`` is
+    the boundary from :func:`egress_boundary` (HS-130-04), so a LAN endpoint
+    badges ``private_network`` and a mesh route badges ``mesh`` — the flat
+    three-value ``{mesh, cloud, local}`` model is gone. Badges stay REPORTED
+    facts: a host is stamped only when it was actually resolved from the
+    endpoint the run used, never a fabricated default.
     """
-    if node:
-        badge: dict[str, Any] = {"scope": "mesh", "host": str(node)}
-    else:
-        badge = {"scope": "cloud" if cloud else "local"}
-        if cloud:
-            badge["host"] = endpoint_host(base_url) or DEFAULT_CLOUD_HOST
+    scope = egress_boundary(cloud=cloud, base_url=base_url, node=node)
+    badge: dict[str, Any] = {"scope": scope}
+    if scope == EGRESS_MESH:
+        badge["host"] = str(node)
+    elif scope in (EGRESS_PRIVATE_NETWORK, EGRESS_CLOUD):
+        host = endpoint_host(base_url)
+        if host:
+            badge["host"] = host
     if label:
         badge["label"] = label
     return badge
 
 
+def run_egress(profile: Any, intel: Any, *, default_model: str) -> tuple[dict[str, Any], str]:
+    """The ONE run-egress badge rule (HS-130-04) shared by every run surface.
+
+    Ask (`services.ask_service`) and recipe runs (`services.support`) both call
+    HERE, so "where did this run go" has a single owner instead of two drifting
+    copies. The endpoint the run actually used is classified through
+    :func:`egress_boundary` via :func:`endpoint_egress`, so a LAN destination
+    badges ``private_network`` and a mesh route badges ``mesh`` — never the old
+    flat ``cloud`` for every remote endpoint.
+    """
+    kind = getattr(profile, "kind", "") if profile is not None else ""
+    if kind == "meshNode" and getattr(profile, "node", ""):
+        return endpoint_egress(node=profile.node), str(getattr(profile, "model", "") or "")
+    if kind == "openAICompatible" and getattr(profile, "base_url", ""):
+        return endpoint_egress(cloud=True, base_url=profile.base_url), str(getattr(profile, "model", "") or "")
+    if getattr(intel, "active_provider", "") == "mesh":
+        return endpoint_egress(node=getattr(intel, "node", "")), str(getattr(intel, "model_hint", "") or "")
+    if getattr(intel, "active_provider", "") == "cloud":
+        from ..config import Config
+
+        effective = effective_intel_cloud(Config.load().meeting)
+        return endpoint_egress(cloud=True, base_url=effective.base_url), str(effective.model or "")
+    return endpoint_egress(cloud=False), default_model
+
+
+def profile_slot_id(profile_id: str) -> str:
+    """Injective, deterministic, non-secret secret-slot id for a profile (HS-130-02).
+
+    The legacy scheme mapped every non-alphanumeric char to ``_``, so ``foo-bar``,
+    ``foo_bar`` and ``foo.bar`` all collapsed to one slot — a device-local
+    credential could be exfiltrated by a synced/created profile whose id merely
+    *shaped* like an existing one (the key belongs to the slot, not the id).
+
+    This slot is collision-free by construction: a human-readable slug (which may
+    still collide under the lossy alnum map) is disambiguated by a hex digest of
+    the RAW id bytes, so two distinct ids ALWAYS land in distinct slots. The
+    digest is a pure function of the raw id, so a synced profile resolves the same
+    slot on every device and across process restarts. A blank id has no slot and
+    REFUSES — callers must never fall back to a shared name.
+    """
+    raw = str(profile_id or "")
+    if not raw.strip():
+        raise ValueError("cannot derive a secret slot from a blank profile id")
+    slug = "".join(ch if ch.isalnum() else "_" for ch in raw.upper())[:48]
+    digest = hashlib.sha256(raw.encode("utf-8")).hexdigest()[:16].upper()
+    return f"{slug}_{digest}"
+
+
 def profile_key_env(profile_id: str) -> str:
     """The hub env var that holds a runtime profile's API key (Phase 24). The key lives in
-    the hub's SECRETS (env), never on the synced profile shape or in the payload."""
-    safe = "".join(ch if ch.isalnum() else "_" for ch in str(profile_id or "").upper())
-    return f"HOLDSPEAK_PROFILE_{safe}_KEY"
+    the hub's SECRETS (env), never on the synced profile shape or in the payload.
+
+    The env name is derived from the injective secret-slot id (HS-130-02), so two
+    profile ids that differ only in punctuation NEVER read each other's key. A
+    blank id raises rather than resolving to a shared ``HOLDSPEAK_PROFILE__KEY``.
+    """
+    return f"HOLDSPEAK_PROFILE_{profile_slot_id(profile_id)}_KEY"
 
 
 @dataclass(frozen=True)
@@ -377,6 +570,118 @@ def effective_intel_cloud(
     return _apply_runtime_profile(default, profile_id, get_profile)
 
 
+# Placement sources (HS-130-05): why the meeting run landed where it did. A
+# surface states exactly one of these so the effective placement is never silent.
+PLACEMENT_DESTINATION = "destination"  # an adopted intel_profile_id destination won
+PLACEMENT_PROVIDER = "provider"        # no destination adopted; intel_provider decided
+PLACEMENT_PROVIDER_OVERRIDDEN = "provider-selection-ignored"  # a pointer was set but not usable
+
+
+@dataclass(frozen=True)
+class MeetingPlacement:
+    """The ONE meeting-intel placement decision (HS-130-05).
+
+    Meeting intelligence had two owners with no stated precedence: the
+    ``intel_provider`` intent (local/auto/cloud) and the ``intel_profile_id``
+    destination pointer. With ``intel_provider`` defaulting to ``"local"``,
+    ``build_configured_meeting_intel`` passed ``provider="local"`` and the
+    resolved destination was ignored — selecting a Meetings destination did
+    nothing (a silent no-op), except a ``meshNode`` pointer which silently won.
+
+    This composes both into ONE decision with an explicit precedence:
+
+      1. An **adopted destination wins** — a live ``meshNode`` or
+         ``openAICompatible`` ``intel_profile_id`` places the run there
+         regardless of the local/auto/cloud intent (mesh already behaved this
+         way; an ``openAICompatible`` destination now does too, ending the
+         no-op). The destination is USED, and every describer states its real
+         ``boundary`` — so the placement is surfaced, never silent.
+      2. **Otherwise** ``intel_provider`` decides (local / auto / cloud) against
+         the hub-default endpoint. A pointer that was set but is not usable
+         (dangling / deleted / non-endpoint kind) does NOT silently win: it
+         falls back to the provider intent and its ``reason`` rides ``source``
+         so the surface can say why the selection was overridden.
+
+    ``build_configured_meeting_intel`` (the selection) and the describers
+    (``configured_egress_boundary``, ``configured_meeting_deployment``) all
+    resolve through here, so "where does the meeting run go" has one owner.
+    """
+
+    node: Optional[str]      # truthy => mesh relay to this node
+    provider: str            # what MeetingIntel is handed: "local" | "cloud" | "auto"
+    model: str
+    base_url: Optional[str]
+    api_key_env: str
+    boundary: str            # HS-130-04 vocabulary: local|private_network|mesh|cloud
+    source: str              # PLACEMENT_* — why the run landed here
+    profile_id: Optional[str] = None
+    profile_name: Optional[str] = None
+    reason: Optional[str] = None  # set when a pointer was set but not usable
+
+
+def resolve_meeting_placement(
+    meeting_cfg: Any,
+    *,
+    get_profile: Optional[Callable[[str], Any]] = None,
+) -> MeetingPlacement:
+    """Resolve the ONE meeting-intel placement (HS-130-05). See ``MeetingPlacement``."""
+    effective = effective_intel_cloud(meeting_cfg, get_profile=get_profile)
+    provider_intent = _normalize_provider(getattr(meeting_cfg, "intel_provider", None))
+
+    # (1a) An adopted mesh destination places the run on the relay, regardless
+    # of intel_provider (the pointer already won here; now it is also surfaced
+    # as `mesh`, never "Local only").
+    if effective.node:
+        return MeetingPlacement(
+            node=effective.node,
+            provider="cloud",  # unused by the relay path; a non-local marker
+            model=str(effective.model or ""),
+            base_url=None,
+            api_key_env=effective.api_key_env,
+            boundary=EGRESS_MESH,
+            source=PLACEMENT_DESTINATION,
+            profile_id=effective.profile_id,
+            profile_name=effective.profile_name,
+        )
+
+    # (1b) An adopted openAICompatible destination places the run on that
+    # endpoint, regardless of the local/auto/cloud intent. THIS is the fix for
+    # the silent no-op: a selected Meetings destination now takes effect.
+    if effective.profile_id and effective.base_url:
+        return MeetingPlacement(
+            node=None,
+            provider="cloud",
+            model=str(effective.model or ""),
+            base_url=effective.base_url,
+            api_key_env=effective.api_key_env,
+            boundary=egress_boundary(cloud=True, base_url=effective.base_url),
+            source=PLACEMENT_DESTINATION,
+            profile_id=effective.profile_id,
+            profile_name=effective.profile_name,
+        )
+
+    # (2) No destination adopted: intel_provider decides against the hub default.
+    # A pointer that was set but is not usable degrades to the provider intent
+    # with its reason surfaced (never a silent override).
+    source = PLACEMENT_PROVIDER_OVERRIDDEN if effective.reason else PLACEMENT_PROVIDER
+    if provider_intent == "local":
+        boundary = EGRESS_LOCAL
+    else:
+        boundary = egress_boundary(cloud=True, base_url=effective.base_url)
+    return MeetingPlacement(
+        node=None,
+        provider=provider_intent,
+        model=str(effective.model or ""),
+        base_url=effective.base_url,
+        api_key_env=effective.api_key_env,
+        boundary=boundary,
+        source=source,
+        profile_id=None,
+        profile_name=None,
+        reason=effective.reason,
+    )
+
+
 def effective_dictation_llm(
     runtime_cfg: Any,
     *,
@@ -404,7 +709,7 @@ def effective_dictation_llm(
 
 def build_meeting_intel_for_profile(
     *, kind: str, base_url: Optional[str], model: Optional[str], profile_id: str,
-    node: str = ""
+    node: str = "", model_file: str = ""
 ) -> "MeetingIntel":
     """Build a `MeetingIntel` for a specific RuntimeProfile (Phase 24).
 
@@ -412,6 +717,9 @@ def build_meeting_intel_for_profile(
     per-profile secret name (``HOLDSPEAK_PROFILE_<ID>_KEY``). A key from an
     unrelated default destination is never borrowed. ``onDevice`` is
     local-only, so the legacy ``auto`` setting cannot silently cross a boundary.
+
+    ``onDevice`` loads THIS profile's ``model_file`` — the exact local model that
+    made the destination ready — never the global meeting model (HS-130-03).
     """
     from .engine import MeetingIntel
 
@@ -420,6 +728,12 @@ def build_meeting_intel_for_profile(
 
         return MeshRelayIntel(node=str(node).strip(), model_hint=str(model or ""))  # type: ignore[return-value]
     if kind == "openAICompatible" and str(base_url or "").strip():
+        # Refuse on ambiguity: a blank profile id has no unique secret slot, and
+        # borrowing a shared env name would let an unidentified destination read
+        # another's key (HS-130-02). Fall back to the configured local engine
+        # rather than send a transcript out under a collided credential.
+        if not str(profile_id or "").strip():
+            return build_configured_meeting_intel()
         env = profile_key_env(profile_id)
         return MeetingIntel(
             provider="cloud",
@@ -428,39 +742,86 @@ def build_meeting_intel_for_profile(
             cloud_api_key_env=env,
         )
     if kind == "onDevice":
-        from ..config import Config
-
-        meeting = Config.load().meeting
         kwargs: dict[str, Any] = {"provider": "local"}
-        model_path = getattr(meeting, "intel_realtime_model", None)
+        # The profile's own model_file is the deployment; fall back to the
+        # configured local meeting model only when a profile names none.
+        model_path = str(model_file or "").strip() or configured_local_meeting_model_path()
         if model_path:
             kwargs["model_path"] = model_path
         return MeetingIntel(**kwargs)
     return build_configured_meeting_intel()
 
 
-def intel_egress_posture(provider: str = DEFAULT_INTEL_PROVIDER) -> tuple[bool, str]:
-    """Describe whether the configured provider can send transcripts off-machine.
+def configured_egress_boundary(meeting_cfg: Any) -> str:
+    """The egress boundary the CONFIGURED meeting-intel run will actually cross.
 
-    This is a *static* description of intent from config — it answers "can this
-    setting transmit a transcript to the cloud?", not "is a model loaded right
-    now?". It is the single source of truth for the egress posture surfaced in
-    ``holdspeak doctor`` and the web runtime status (HS-25-01).
+    Reads the RESOLVED endpoint (`effective_intel_cloud` honors the
+    ``intel_profile_id`` pointer — mesh node / private endpoint / default cloud),
+    NOT ``intel_provider`` alone. A ``meshNode`` pointer therefore reports
+    ``mesh`` even when ``intel_provider`` still says ``local`` — matching what
+    `build_configured_meeting_intel` actually loads (the relay wins regardless of
+    provider). This DESCRIBES the chosen route; it does not own the selection —
+    that is the meeting placement policy (`resolve_meeting_placement`,
+    HS-130-05), which this delegates to so the described boundary always equals
+    the run's actual boundary. An adopted ``openAICompatible`` destination
+    therefore reports its endpoint's boundary even when ``intel_provider`` still
+    says ``local`` (the selection wins), exactly matching what
+    `build_configured_meeting_intel` loads — the "Local only" string can no
+    longer describe an off-machine run. The four-value verdict itself still
+    comes from `egress_boundary` (HS-130-04), which the placement policy calls.
+    """
+    return resolve_meeting_placement(meeting_cfg).boundary
+
+
+# Boundary → (can_transmit_offmachine, human description). The ONE mapping the
+# posture string and doctor/web status read (HS-130-04).
+_EGRESS_POSTURE: dict[str, tuple[bool, str]] = {
+    EGRESS_LOCAL: (False, "Local only — transcripts never leave this machine."),
+    EGRESS_PRIVATE_NETWORK: (
+        True,
+        "Private network — transcripts are sent to a device on your local network.",
+    ),
+    EGRESS_MESH: (
+        True,
+        "Private mesh — transcripts are relayed to your configured mesh node.",
+    ),
+    EGRESS_CLOUD: (
+        True,
+        "Cloud — transcripts are sent to the configured cloud endpoint.",
+    ),
+}
+
+
+def _provider_only_boundary(provider: Optional[str]) -> str:
+    """Boundary from a bare provider string with no profile pointer (legacy)."""
+    normalized = _normalize_provider(provider)
+    if normalized == "local":
+        return EGRESS_LOCAL
+    # cloud / auto with no resolved endpoint = the default public cloud endpoint.
+    return EGRESS_CLOUD
+
+
+def intel_egress_posture(
+    provider: str = DEFAULT_INTEL_PROVIDER, *, meeting_cfg: Any = None
+) -> tuple[bool, str]:
+    """Describe the egress boundary the configured meeting-intel run will cross.
+
+    The single source of truth for the egress posture surfaced in
+    ``holdspeak doctor`` and the web runtime status (HS-25-01). When
+    ``meeting_cfg`` is given the verdict derives from the RESOLVED endpoint
+    (`configured_egress_boundary`), so a ``meshNode`` route reports mesh and a
+    LAN endpoint reports the private network — the "Local only" string can no
+    longer appear for an off-machine route (HS-130-04). With only a bare
+    ``provider`` string (legacy callers), the boundary is derived from the
+    provider alone.
 
     Returns ``(can_transmit_offmachine, human_description)``.
     """
-    normalized = _normalize_provider(provider)
-    if normalized == "local":
-        return False, "Local only — transcripts never leave this machine."
-    if normalized == "cloud":
-        return True, "Cloud — transcripts are sent to the configured cloud endpoint."
-    # auto = local-first, but will fall back to the cloud when no local model is
-    # available, so the configuration *can* transmit off-machine.
-    return (
-        True,
-        "Auto — local first, but falls back to sending transcripts to the cloud "
-        "when no local model is available.",
-    )
+    if meeting_cfg is not None:
+        boundary = configured_egress_boundary(meeting_cfg)
+    else:
+        boundary = _provider_only_boundary(provider)
+    return _EGRESS_POSTURE[boundary]
 
 
 def get_intel_runtime_status(

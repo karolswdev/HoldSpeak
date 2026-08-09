@@ -84,7 +84,7 @@ describe("HS-128-10 Desk Intelligence walk", () => {
     apiFetch.mockImplementation((path: string) => {
       if (path === "/api/brief/latest") return Promise.resolve(brief);
       if (path === "/api/follow-through/board") return Promise.resolve(board);
-      if (path.startsWith("/api/receipts")) return Promise.resolve([receipt]);
+      if (path.startsWith("/api/decision-records")) return Promise.resolve([receipt]);
       return Promise.resolve([]);
     });
   });
@@ -95,7 +95,7 @@ describe("HS-128-10 Desk Intelligence walk", () => {
     expect(screen.getByRole("group", { name: "Intelligence view" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Brief" })).toHaveAttribute("aria-pressed", "true");
     expect(screen.getByRole("button", { name: "Follow-through" })).toHaveAttribute("aria-pressed", "false");
-    expect(screen.getByRole("button", { name: "Receipts" })).toHaveAttribute("aria-pressed", "false");
+    expect(screen.getByRole("button", { name: "Decisions" })).toHaveAttribute("aria-pressed", "false");
     expect(await screen.findByText(brief.headline)).toBeInTheDocument();
   });
 
@@ -123,27 +123,27 @@ describe("HS-128-10 Desk Intelligence walk", () => {
 
   it("renders Receipts with a search input that queries the ledger", async () => {
     render(<IntelligencePullout object={object} onClose={() => {}} />);
-    fireEvent.click(screen.getByRole("button", { name: "Receipts" }));
+    fireEvent.click(screen.getByRole("button", { name: "Decisions" }));
 
-    const search = await screen.findByRole("searchbox", { name: "Search decision receipts" });
+    const search = await screen.findByRole("searchbox", { name: "Search decisions" });
     expect(screen.getByText(receipt.decision_text)).toBeInTheDocument();
     fireEvent.change(search, { target: { value: "Intelligence" } });
 
     await waitFor(() =>
-      expect(apiFetch).toHaveBeenCalledWith("/api/receipts/search?q=Intelligence"),
+      expect(apiFetch).toHaveBeenCalledWith("/api/decision-records/search?q=Intelligence"),
     );
   });
 
   it("preserves the selected view when the pullout closes and reopens", async () => {
     const first = render(<IntelligencePullout object={object} onClose={() => {}} />);
-    fireEvent.click(screen.getByRole("button", { name: "Receipts" }));
-    await screen.findByRole("searchbox", { name: "Search decision receipts" });
+    fireEvent.click(screen.getByRole("button", { name: "Decisions" }));
+    await screen.findByRole("searchbox", { name: "Search decisions" });
     first.unmount();
 
     render(<IntelligencePullout object={object} onClose={() => {}} />);
 
-    expect(await screen.findByRole("searchbox", { name: "Search decision receipts" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Receipts" })).toHaveAttribute("aria-pressed", "true");
+    expect(await screen.findByRole("searchbox", { name: "Search decisions" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Decisions" })).toHaveAttribute("aria-pressed", "true");
   });
 
   it("HS-129-03 keeps a large Brief in the scrollable body under the card cap", async () => {
