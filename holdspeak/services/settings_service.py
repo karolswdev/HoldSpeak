@@ -280,14 +280,27 @@ class SettingsService:
         meeting_data["mir_enabled"] = bool(
             meeting_data.get("mir_enabled", current.meeting.mir_enabled)
         )
-        mir_profile = (
-            str(meeting_data.get("mir_profile", current.meeting.mir_profile))
+        # HS-130-05: the ONE routing profile. Accept the converged
+        # `routing_profile` key; fall back to the legacy `mir_profile` key so an
+        # older client still writes the effective value. Persist to
+        # `routing_profile` (the field the runtime + doctor read via
+        # `effective_routing_profile`), never the legacy owners.
+        routing_profile = (
+            str(
+                meeting_data.get(
+                    "routing_profile",
+                    meeting_data.get(
+                        "mir_profile", current.meeting.effective_routing_profile()
+                    ),
+                )
+            )
             .strip()
             .lower()
         )
-        if mir_profile not in set(available_profiles()):
-            return {"success": False, "error": f"Invalid mir profile: {mir_profile}"}
-        meeting_data["mir_profile"] = mir_profile
+        if routing_profile not in set(available_profiles()):
+            return {"success": False, "error": f"Invalid routing profile: {routing_profile}"}
+        meeting_data["routing_profile"] = routing_profile
+        meeting_data.pop("mir_profile", None)
 
         poll_seconds = int(
             meeting_data.get(

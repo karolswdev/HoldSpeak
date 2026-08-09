@@ -174,6 +174,43 @@ def migrate_legacy_endpoints(config: "Config", path: Optional[Path] = None, *, d
     return True
 
 
+def migrate_routing_profile(config: "Config", path: Optional[Path] = None) -> bool:
+    """The ONE one-time meeting routing-profile convergence (HS-130-05).
+
+    `mir_profile` (once read by the runtime) and `plugin_profile` (once
+    reported by doctor) collapse into `meeting.routing_profile`. If a legacy
+    field carries a non-default value and `routing_profile` is still the
+    default, adopt it (mir_profile wins, matching what the runtime historically
+    read), reset the legacy fields to the default so the migration never
+    recurs, and save. Idempotent: once `routing_profile` is non-default (or a
+    fresh config leaves everything at the default) this is a no-op. Returns
+    whether anything was migrated.
+    """
+    meeting = config.meeting
+    if str(meeting.routing_profile or "").strip() not in ("", "balanced"):
+        # Already migrated or explicitly set -- never re-adopt a legacy value.
+        return False
+    mir = str(meeting.mir_profile or "").strip()
+    plugin = str(meeting.plugin_profile or "").strip()
+    chosen = ""
+    if mir and mir != "balanced":
+        chosen = mir
+    elif plugin and plugin != "balanced":
+        chosen = plugin
+    if not chosen:
+        return False
+    meeting.routing_profile = chosen
+    # Consume the legacy owners so the accessor and doctor read one value and
+    # the migration is a one-shot.
+    meeting.mir_profile = "balanced"
+    meeting.plugin_profile = "balanced"
+    try:
+        config.save(path)
+    except Exception as exc:  # pragma: no cover - save failure is non-fatal
+        logger.warning("config: routing-profile migration save skipped (%s)", exc)
+    return True
+
+
 @dataclass
 class Config:
     """Main configuration container."""
@@ -258,6 +295,7 @@ class Config:
             # load and stays inert).
             if path is None:
                 migrate_legacy_endpoints(config, config_path)
+                migrate_routing_profile(config, config_path)
             return config
         except Exception as exc:
             # Last-resort fallback for a genuinely broken config (bad JSON, wrong

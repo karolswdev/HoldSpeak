@@ -70,6 +70,7 @@ from .providers import (  # noqa: E402
     intel_egress_posture,
     resolve_intel_provider,
     resolve_llm_capability,
+    resolve_meeting_placement,
 )
 from .engine import MeetingIntel  # noqa: E402
 
@@ -108,4 +109,5 @@ __all__ = [
     "log",
     "resolve_intel_provider",
     "resolve_llm_capability",
+    "resolve_meeting_placement",
 ]

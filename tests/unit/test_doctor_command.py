@@ -419,7 +419,7 @@ def test_mir_routing_check_warn_for_unknown_profile() -> None:
     result = doctor._check_mir_routing(config)
     assert result.status == "WARN"
     assert "no-such-profile" in result.detail
-    assert result.fix and "plugin_profile" in result.fix
+    assert result.fix and "routing_profile" in result.fix
 
 
 def test_mir_routing_check_never_returns_fail() -> None:

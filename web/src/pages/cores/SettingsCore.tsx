@@ -670,10 +670,12 @@ function SettingsFace({ hero, scope }: CoreProps) {
             </GadgetGroup>
             <GadgetGroup label="Routing">
               {check(["meeting", "mir_enabled"], "Multi-intent routing")}
-              {cyc(["meeting", "mir_profile"], "MIR profile", MIR_PROFILE_OPTIONS)}
+              {/* HS-130-05: one routing profile. The old `MIR profile` +
+                  `Plugin profile` pickers were two owners of one setting;
+                  they converged into `meeting.routing_profile`. */}
               {cyc(
-                ["meeting", "plugin_profile"],
-                "Plugin profile",
+                ["meeting", "routing_profile"],
+                "Routing profile",
                 MIR_PROFILE_OPTIONS,
               )}
               {check(["meeting", "intent_router_enabled"], "Intent router")}

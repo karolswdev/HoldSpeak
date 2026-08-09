@@ -146,6 +146,7 @@ def process_next_intel_job(
     here, through the one resolver, from the assigned InferenceTarget.
     """
     from .config import Config
+    from .config.meeting import effective_routing_profile
     from .intel.providers import effective_intel_cloud
 
     meeting_cfg = Config.load().meeting
@@ -269,7 +270,7 @@ def process_next_intel_job(
                 from .meeting_plugins import run_meeting_plugin_chain
 
                 chain_summary = run_meeting_plugin_chain(
-                    db, meeting, profile=getattr(meeting_cfg, "mir_profile", None)
+                    db, meeting, profile=effective_routing_profile(meeting_cfg)
                 )
                 artifact_count = len(
                     db.plugins.list_artifacts(job.meeting_id, limit=2000)

@@ -1119,16 +1119,23 @@ def _check_mir_routing(config: Config) -> DoctorCheck:
         )
 
     profiles = list(available_profiles())
-    if cfg.plugin_profile not in profiles:
+    # HS-130-05: doctor reports the ONE routing profile the runtime reads
+    # (`effective_routing_profile`), converging the old `plugin_profile` /
+    # `mir_profile` split so doctor and the runtime can never name different
+    # values.
+    from ..config.meeting import effective_routing_profile
+
+    routing_profile = effective_routing_profile(cfg)
+    if routing_profile not in profiles:
         return DoctorCheck(
             name="MIR routing",
             status="WARN",
             detail=(
-                f"plugin_profile={cfg.plugin_profile!r} not in available profiles "
+                f"routing_profile={routing_profile!r} not in available profiles "
                 f"({', '.join(profiles)})"
             ),
             fix=(
-                "Set meeting.plugin_profile to one of the available profiles "
+                "Set meeting.routing_profile to one of the available profiles "
                 "in your config.json."
             ),
         )
@@ -1137,7 +1144,7 @@ def _check_mir_routing(config: Config) -> DoctorCheck:
         name="MIR routing",
         status="PASS",
         detail=(
-            f"enabled; profile={cfg.plugin_profile}, "
+            f"enabled; profile={routing_profile}, "
             f"window={cfg.intent_window_seconds}s/step={cfg.intent_step_seconds}s, "
             f"threshold={cfg.intent_score_threshold}, "
             f"hysteresis_windows={cfg.intent_hysteresis_windows}"

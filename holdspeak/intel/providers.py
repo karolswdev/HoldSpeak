@@ -186,22 +186,23 @@ def resolve_llm_capability(meeting_config: Any) -> bool:
     try:
         if not bool(getattr(meeting_config, "intel_enabled", False)):
             return False
-        provider = getattr(meeting_config, "intel_provider", None) or DEFAULT_INTEL_PROVIDER
-        effective = effective_intel_cloud(meeting_config)
-        if effective.node:
+        # HS-130-05: judge the ONE placement decision (an adopted destination
+        # wins over the local/auto/cloud intent), not ``intel_provider`` alone.
+        placement = resolve_meeting_placement(meeting_config)
+        if placement.node:
             # a mesh-adopted endpoint has no base_url for the resolver to
             # judge; the capability EXISTS (the relay provider is the engine)
             # and node liveness is a run-time question with a named refusal
             return True
         kwargs: dict[str, Any] = {
-            "cloud_model": effective.model,
-            "cloud_api_key_env": effective.api_key_env,
-            "cloud_base_url": effective.base_url,
+            "cloud_model": placement.model,
+            "cloud_api_key_env": placement.api_key_env,
+            "cloud_base_url": placement.base_url,
         }
         model_path = getattr(meeting_config, "intel_realtime_model", None)
         if model_path:
             kwargs["model_path"] = model_path
-        resolved, _reason = _intel_pkg.resolve_intel_provider(provider, **kwargs)
+        resolved, _reason = _intel_pkg.resolve_intel_provider(placement.provider, **kwargs)
         return resolved is not None
     except Exception:
         return False
@@ -219,16 +220,20 @@ def build_configured_meeting_intel() -> "MeetingIntel":
     from .engine import MeetingIntel
 
     meeting = Config.load().meeting
-    effective = effective_intel_cloud(meeting)
-    if effective.node:
+    # HS-130-05: the ONE placement decision. An adopted destination (mesh or
+    # openAICompatible ``intel_profile_id``) wins over the local/auto/cloud
+    # intent, so a selected Meetings destination is honored instead of silently
+    # ignored; otherwise ``intel_provider`` decides against the hub default.
+    placement = resolve_meeting_placement(meeting)
+    if placement.node:
         from .mesh_relay import MeshRelayIntel
 
-        return MeshRelayIntel(node=effective.node, model_hint=effective.model)  # type: ignore[return-value]
+        return MeshRelayIntel(node=placement.node, model_hint=placement.model)  # type: ignore[return-value]
     kwargs: dict[str, Any] = {
-        "provider": getattr(meeting, "intel_provider", DEFAULT_INTEL_PROVIDER),
-        "cloud_model": effective.model,
-        "cloud_api_key_env": effective.api_key_env,
-        "cloud_base_url": effective.base_url,
+        "provider": placement.provider,
+        "cloud_model": placement.model,
+        "cloud_api_key_env": placement.api_key_env,
+        "cloud_base_url": placement.base_url,
         "cloud_reasoning_effort": getattr(meeting, "intel_cloud_reasoning_effort", None),
         "cloud_store": bool(getattr(meeting, "intel_cloud_store", False)),
     }
@@ -281,28 +286,30 @@ def configured_meeting_deployment() -> ConfiguredMeetingDeployment:
     from ..config import Config
 
     meeting = Config.load().meeting
-    effective = effective_intel_cloud(meeting)
-    if effective.node:
+    # HS-130-05: describe what the ONE placement decision (and therefore
+    # ``build_configured_meeting_intel``) will load, not ``intel_provider``
+    # alone — an adopted openAICompatible destination reports its cloud
+    # deployment even under ``intel_provider="local"``, matching execution.
+    placement = resolve_meeting_placement(meeting)
+    if placement.node:
         # Mesh liveness is a run-time question with its own named refusal; the
         # relay provider itself exists, so the deployment is runnable here.
         return ConfiguredMeetingDeployment(
-            engine="mesh", model=str(effective.model or ""), model_path=None,
-            node=str(effective.node), runnable=True, reason=None,
+            engine="mesh", model=str(placement.model or ""), model_path=None,
+            node=str(placement.node), runnable=True, reason=None,
         )
-    provider = str(
-        getattr(meeting, "intel_provider", DEFAULT_INTEL_PROVIDER) or DEFAULT_INTEL_PROVIDER
-    )
+    provider = placement.provider
     model_path = configured_local_meeting_model_path()
     active, reason = resolve_intel_provider(
         provider,
         model_path=model_path,
-        cloud_model=effective.model,
-        cloud_api_key_env=effective.api_key_env,
-        cloud_base_url=effective.base_url,
+        cloud_model=placement.model,
+        cloud_api_key_env=placement.api_key_env,
+        cloud_base_url=placement.base_url,
     )
     if active == "cloud":
         return ConfiguredMeetingDeployment(
-            engine="cloud", model=str(effective.model or ""), model_path=None,
+            engine="cloud", model=str(placement.model or ""), model_path=None,
             node="", runnable=True, reason=None,
         )
     local_model = Path(model_path).expanduser().stem
@@ -563,6 +570,118 @@ def effective_intel_cloud(
     return _apply_runtime_profile(default, profile_id, get_profile)
 
 
+# Placement sources (HS-130-05): why the meeting run landed where it did. A
+# surface states exactly one of these so the effective placement is never silent.
+PLACEMENT_DESTINATION = "destination"  # an adopted intel_profile_id destination won
+PLACEMENT_PROVIDER = "provider"        # no destination adopted; intel_provider decided
+PLACEMENT_PROVIDER_OVERRIDDEN = "provider-selection-ignored"  # a pointer was set but not usable
+
+
+@dataclass(frozen=True)
+class MeetingPlacement:
+    """The ONE meeting-intel placement decision (HS-130-05).
+
+    Meeting intelligence had two owners with no stated precedence: the
+    ``intel_provider`` intent (local/auto/cloud) and the ``intel_profile_id``
+    destination pointer. With ``intel_provider`` defaulting to ``"local"``,
+    ``build_configured_meeting_intel`` passed ``provider="local"`` and the
+    resolved destination was ignored — selecting a Meetings destination did
+    nothing (a silent no-op), except a ``meshNode`` pointer which silently won.
+
+    This composes both into ONE decision with an explicit precedence:
+
+      1. An **adopted destination wins** — a live ``meshNode`` or
+         ``openAICompatible`` ``intel_profile_id`` places the run there
+         regardless of the local/auto/cloud intent (mesh already behaved this
+         way; an ``openAICompatible`` destination now does too, ending the
+         no-op). The destination is USED, and every describer states its real
+         ``boundary`` — so the placement is surfaced, never silent.
+      2. **Otherwise** ``intel_provider`` decides (local / auto / cloud) against
+         the hub-default endpoint. A pointer that was set but is not usable
+         (dangling / deleted / non-endpoint kind) does NOT silently win: it
+         falls back to the provider intent and its ``reason`` rides ``source``
+         so the surface can say why the selection was overridden.
+
+    ``build_configured_meeting_intel`` (the selection) and the describers
+    (``configured_egress_boundary``, ``configured_meeting_deployment``) all
+    resolve through here, so "where does the meeting run go" has one owner.
+    """
+
+    node: Optional[str]      # truthy => mesh relay to this node
+    provider: str            # what MeetingIntel is handed: "local" | "cloud" | "auto"
+    model: str
+    base_url: Optional[str]
+    api_key_env: str
+    boundary: str            # HS-130-04 vocabulary: local|private_network|mesh|cloud
+    source: str              # PLACEMENT_* — why the run landed here
+    profile_id: Optional[str] = None
+    profile_name: Optional[str] = None
+    reason: Optional[str] = None  # set when a pointer was set but not usable
+
+
+def resolve_meeting_placement(
+    meeting_cfg: Any,
+    *,
+    get_profile: Optional[Callable[[str], Any]] = None,
+) -> MeetingPlacement:
+    """Resolve the ONE meeting-intel placement (HS-130-05). See ``MeetingPlacement``."""
+    effective = effective_intel_cloud(meeting_cfg, get_profile=get_profile)
+    provider_intent = _normalize_provider(getattr(meeting_cfg, "intel_provider", None))
+
+    # (1a) An adopted mesh destination places the run on the relay, regardless
+    # of intel_provider (the pointer already won here; now it is also surfaced
+    # as `mesh`, never "Local only").
+    if effective.node:
+        return MeetingPlacement(
+            node=effective.node,
+            provider="cloud",  # unused by the relay path; a non-local marker
+            model=str(effective.model or ""),
+            base_url=None,
+            api_key_env=effective.api_key_env,
+            boundary=EGRESS_MESH,
+            source=PLACEMENT_DESTINATION,
+            profile_id=effective.profile_id,
+            profile_name=effective.profile_name,
+        )
+
+    # (1b) An adopted openAICompatible destination places the run on that
+    # endpoint, regardless of the local/auto/cloud intent. THIS is the fix for
+    # the silent no-op: a selected Meetings destination now takes effect.
+    if effective.profile_id and effective.base_url:
+        return MeetingPlacement(
+            node=None,
+            provider="cloud",
+            model=str(effective.model or ""),
+            base_url=effective.base_url,
+            api_key_env=effective.api_key_env,
+            boundary=egress_boundary(cloud=True, base_url=effective.base_url),
+            source=PLACEMENT_DESTINATION,
+            profile_id=effective.profile_id,
+            profile_name=effective.profile_name,
+        )
+
+    # (2) No destination adopted: intel_provider decides against the hub default.
+    # A pointer that was set but is not usable degrades to the provider intent
+    # with its reason surfaced (never a silent override).
+    source = PLACEMENT_PROVIDER_OVERRIDDEN if effective.reason else PLACEMENT_PROVIDER
+    if provider_intent == "local":
+        boundary = EGRESS_LOCAL
+    else:
+        boundary = egress_boundary(cloud=True, base_url=effective.base_url)
+    return MeetingPlacement(
+        node=None,
+        provider=provider_intent,
+        model=str(effective.model or ""),
+        base_url=effective.base_url,
+        api_key_env=effective.api_key_env,
+        boundary=boundary,
+        source=source,
+        profile_id=None,
+        profile_name=None,
+        reason=effective.reason,
+    )
+
+
 def effective_dictation_llm(
     runtime_cfg: Any,
     *,
@@ -641,20 +760,17 @@ def configured_egress_boundary(meeting_cfg: Any) -> str:
     NOT ``intel_provider`` alone. A ``meshNode`` pointer therefore reports
     ``mesh`` even when ``intel_provider`` still says ``local`` — matching what
     `build_configured_meeting_intel` actually loads (the relay wins regardless of
-    provider). This DESCRIBES the chosen route; it does not select it (placement
-    is HS-130-05).
+    provider). This DESCRIBES the chosen route; it does not own the selection —
+    that is the meeting placement policy (`resolve_meeting_placement`,
+    HS-130-05), which this delegates to so the described boundary always equals
+    the run's actual boundary. An adopted ``openAICompatible`` destination
+    therefore reports its endpoint's boundary even when ``intel_provider`` still
+    says ``local`` (the selection wins), exactly matching what
+    `build_configured_meeting_intel` loads — the "Local only" string can no
+    longer describe an off-machine run. The four-value verdict itself still
+    comes from `egress_boundary` (HS-130-04), which the placement policy calls.
     """
-    effective = effective_intel_cloud(meeting_cfg)
-    if effective.node:
-        return EGRESS_MESH
-    provider = _normalize_provider(getattr(meeting_cfg, "intel_provider", None))
-    if provider == "local":
-        # A local provider runs in-process even when a cloud endpoint is
-        # configured: ``MeetingIntel(provider="local", ...)`` ignores the
-        # base_url, so nothing leaves this machine.
-        return EGRESS_LOCAL
-    # cloud / auto: the cloud leg's endpoint decides private vs public.
-    return egress_boundary(cloud=True, base_url=effective.base_url)
+    return resolve_meeting_placement(meeting_cfg).boundary
 
 
 # Boundary → (can_transmit_offmachine, human description). The ONE mapping the
