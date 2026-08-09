@@ -186,11 +186,13 @@ One Owner Per Decision, 133 One Word Per Thing.
   in its own terminal receipt.* Recorded now, applied in 131. (SOL-COUNSEL.md
   #1.)
 - **Dictation and meeting kernel admission** — the highest-volume model paths
-  (per-utterance, streaming); Phase 107 priced admission at ~25ms/op. The
-  working ruling carried into 131: **admit once per session, not per
-  utterance.** The owner has given the go on the program; this specific ruling
-  is a **131 precondition** and is overrulable at the sitting. (SOL-COUNSEL.md
-  #2 — the reservation that decides whether the program is four phases or six.)
+  (per-utterance, streaming); Phase 107 priced admission at ~25ms/op.
+  **RULED by the owner 2026-08-09: "per sesh" — admit once per SESSION, not
+  per utterance.** This resolves SOL-COUNSEL.md #2, keeps the program at four
+  phases, and is the admission contract Phase 131 builds the streaming paths
+  against (a session opens one admitted operation; per-utterance runs are
+  children/continuations of it, not fresh admissions). Overrulable at the
+  sitting, but this is the standing ruling.
 - **Sequence and Workflow admission** — chains.py:113 and workflows.py:137
   begin lifecycles with no principal and non-`persona:` refs; four of five run
   families bypass admission today. Belongs to 131 with the Ask-definition
