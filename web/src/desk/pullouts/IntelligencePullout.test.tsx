@@ -51,6 +51,13 @@ describe("HS-128-01 Intelligence pullout", () => {
   it("keeps Brief and Receipts inside a card-width pullout", () => {
     const css = readFileSync(resolve(process.cwd(), "src/desk/pullouts/intelligence.css"), "utf8");
 
+    expect(css).toContain(`.intelligence-view.intelligence-brief {
+  display: block;
+  container-type: inline-size;
+  min-width: 0;
+  min-height: 0;
+  /* The 100%-wide brief owns padding inside its resizeable body. */
+  box-sizing: border-box;`);
     expect(css).toContain(`.intelligence-brief-headline {
   width: 100%;
   min-width: 0;`);
@@ -61,6 +68,14 @@ describe("HS-128-01 Intelligence pullout", () => {
 .receipts-view .surface-ledger-line {
   min-width: 0;
   max-width: 100%;
+}`);
+    expect(css).toContain(`.intelligence-brief-group .intelligence-brief-rows,
+.intelligence-brief-group .surface-ledger-row,
+.intelligence-brief-group .surface-ledger-line {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
 }`);
   });
 });

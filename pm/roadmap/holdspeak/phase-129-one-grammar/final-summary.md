@@ -43,7 +43,8 @@ one branch, the orchestrator verifying on glass between landings.
   prose became receipts; RuntimeDocs became compact reference rows.
 - **One CSS architecture.** Room content reflows on window width
   (`@container surface`), never viewport; the `desk-surface` alias is
-  gone; the tokens gate went 23 violations → 0 with tokens generated
+  gone; the tokens gate went to 0 (27 gate findings at charter, 23 of them raw
+  values, 23 remaining at HS-129-10's start) with tokens generated
   from `design-tokens.json` only; radius/letter-spacing exceptions are
   named tokens.
 - **The suite tells the truth.** 17 web test failures repaired — three
@@ -65,7 +66,7 @@ one branch, the orchestrator verifying on glass between landings.
 | Hosted cores violating the foot contract | 14 | 0 |
 | Sheets scrolling their own chrome | all | 0 |
 | Footer grammars | 5 (4 dead) | 1 |
-| Tokens-gate violations | 27 (gate red) | 0 (gate green) |
+| Tokens-gate findings (27 at charter, 23 raw values) | gate red | 0, gate green |
 | Viewport-media law violations | 6 rooms | 0 |
 | Unspeakable audited inputs | 10 | 0 |
 | Modal editors | 1 (Note/KB/Recipe/Workflow) | 0 |
