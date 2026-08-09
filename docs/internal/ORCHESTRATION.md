@@ -99,7 +99,34 @@ check chain captured through `dw evidence capture`, and a reusable
 harness checked into `scripts/`. The walk story cannot be closed by
 unit tests alone and cannot be waived.
 
-### 6. The close
+### 6. The Sol counsel
+
+Before the close is called, the orchestrator **takes the phase to Sol
+and asks for Sol's opinion — always**. Sol is the sounding board and
+acceptance partner, a different mind with standing in this repo's
+history: the Phase 106 council pass where Sol returned *"do not ratify
+yet"* with file-level evidence — and was right — is the precedent this
+section canonizes.
+
+- **What Sol reviews:** the final summary, the evidence pack, every
+  judgment call the orchestrator made alone (amendments, ledgers,
+  deferred items), and the merge verdict. Sol is briefed with pointers
+  to the actual artifacts, never a summary of a summary.
+- **What Sol is asked:** not "approve this" but *"what did I miss, what
+  would you not ratify, and why — with evidence."* Sol's dissent is a
+  finding, not an obstacle; a Sol concern gets the same treatment as a
+  failing test: reproduce, classify, fix or ledger.
+- **What Sol's verdict is:** counsel, recorded alongside the evidence
+  for the owner's sitting. The orchestrator may proceed over a Sol
+  concern only by naming it and the reason — never by omitting it. The
+  owner sees both opinions, always.
+- Sol is also the mid-phase sounding board for judgment-heavy calls —
+  a chartered criterion about to be amended, a scope question, a
+  deletion that feels too easy. When the orchestrator is about to
+  decide something alone that the owner will only see later, that is
+  the moment to ask Sol first.
+
+### 7. The close
 
 Push, PR, then **watch → read → merge as separate acts**: watch CI to
 conclusion, READ the failures, diff the failure NAMES against main's
@@ -129,8 +156,10 @@ loudly, with the diff attached, is the house practice made honest.
 
 Status reports that lead with the outcome; a scoreboard, not a log;
 judgment calls surfaced as decisions with the evidence attached and
-the overrule explicitly offered; and a sitting exhibit at the end —
-the before-pictures they sent, next to the afters.
+the overrule explicitly offered; Sol's acceptance opinion recorded
+next to the orchestrator's — two minds on every close, disagreements
+included; and a sitting exhibit at the end — the before-pictures they
+sent, next to the afters.
 
 *The Terras are the Fedaykin. The spice is the pipeline. It must
 flow — through the gate, every time.*
