@@ -139,16 +139,16 @@ export function FollowThroughView({
     }
   };
 
-  const openDecisionReceipt = (card: FollowThroughCard) => {
+  const openDecision = (card: FollowThroughCard) => {
     if (!card.decision_id) {
-      setError("No decision receipt recorded for this follow-through.");
+      setError("No decision recorded for this follow-through.");
       return;
     }
     void apiFetch<Array<{ id: string }>>(
-      `/api/receipts/source/meeting/${encodeURIComponent(card.decision_id)}`,
+      `/api/decision-records/source/meeting/${encodeURIComponent(card.decision_id)}`,
     ).then((receipts) => {
       if (receipts[0]) onOpenReceipts?.(receipts[0].id);
-      else setError("No decision receipt recorded for this follow-through.");
+      else setError("No decision recorded for this follow-through.");
     }).catch((cause) => setError(readableError(cause)));
   };
 
@@ -201,11 +201,11 @@ export function FollowThroughView({
                           <button
                             type="button"
                             className="follow-through-source"
-                            title="Open governing decision receipt"
-                            aria-label={`Open decision receipt for ${card.text}`}
+                            title="Open governing decision"
+                            aria-label={`Open decision for ${card.text}`}
                             onClick={(event) => {
                               event.stopPropagation();
-                              openDecisionReceipt(card);
+                              openDecision(card);
                             }}
                           >
                             {source.glyph}

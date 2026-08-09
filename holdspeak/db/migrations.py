@@ -73,6 +73,35 @@ def _migrate_renames(conn: sqlite3.Connection, stored: int) -> None:
                     "ALTER TABLE profiles ADD COLUMN node TEXT NOT NULL DEFAULT ''"
                 )
 
+    # v43 (HS-130-08): "Receipt" is reserved for immutable kernel evidence
+    # (Constitution Art. XI). The mutable governing document's tables become
+    # ``decision_record*`` and their FK column ``receipt_id`` becomes
+    # ``record_id``. Rename in place BEFORE SCHEMA_SQL so the carried rows
+    # survive rather than sitting beside a fresh empty table (the agents→recipes
+    # pattern). Guarded so it runs exactly once and is idempotent.
+    if stored < 43:
+        has_old = conn.execute(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name='decision_receipts'"
+        ).fetchone()
+        has_new = conn.execute(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name='decision_records'"
+        ).fetchone()
+        if has_old and not has_new:
+            conn.executescript(
+                """
+                DROP INDEX IF EXISTS idx_receipt_sources_receipt;
+                DROP INDEX IF EXISTS idx_receipt_work_receipt;
+                DROP INDEX IF EXISTS idx_receipt_revisions_receipt;
+                ALTER TABLE decision_receipts RENAME TO decision_records;
+                ALTER TABLE decision_receipt_sources RENAME TO decision_record_sources;
+                ALTER TABLE decision_receipt_work RENAME TO decision_record_work;
+                ALTER TABLE decision_receipt_revisions RENAME TO decision_record_revisions;
+                ALTER TABLE decision_record_sources RENAME COLUMN receipt_id TO record_id;
+                ALTER TABLE decision_record_work RENAME COLUMN receipt_id TO record_id;
+                ALTER TABLE decision_record_revisions RENAME COLUMN receipt_id TO record_id;
+                """
+            )
+
 
 # ── Post-schema additive migrations ─────────────────────────────────────
 
@@ -528,12 +557,13 @@ def _migrate_columns(conn: sqlite3.Connection, stored: int) -> None:
             """
         )
 
-    # v41 (HS-127-01): durable decision receipts and traceable links. SCHEMA_SQL
-    # covers fresh databases; retain this explicit upgrade leg for v40 archives.
+    # v41 (HS-127-01) / v43 (HS-130-08): durable decision records and traceable
+    # links. SCHEMA_SQL covers fresh databases; retain this explicit upgrade leg
+    # for v40 archives, now emitting the renamed decision_record* tables.
     if stored < 41:
         conn.executescript(
             """
-            CREATE TABLE IF NOT EXISTS decision_receipts (
+            CREATE TABLE IF NOT EXISTS decision_records (
                 id TEXT PRIMARY KEY,
                 decision_text TEXT NOT NULL,
                 rationale TEXT,
@@ -546,45 +576,45 @@ def _migrate_columns(conn: sqlite3.Connection, stored: int) -> None:
                 created_at TEXT NOT NULL,
                 updated_at TEXT NOT NULL
             );
-            CREATE TABLE IF NOT EXISTS decision_receipt_sources (
+            CREATE TABLE IF NOT EXISTS decision_record_sources (
                 id TEXT PRIMARY KEY,
-                receipt_id TEXT NOT NULL REFERENCES decision_receipts(id),
+                record_id TEXT NOT NULL REFERENCES decision_records(id),
                 source_type TEXT NOT NULL,
                 source_ref TEXT NOT NULL,
                 created_at TEXT NOT NULL
             );
-            CREATE INDEX IF NOT EXISTS idx_receipt_sources_receipt
-                ON decision_receipt_sources(receipt_id);
-            CREATE TABLE IF NOT EXISTS decision_receipt_work (
+            CREATE INDEX IF NOT EXISTS idx_decision_record_sources
+                ON decision_record_sources(record_id);
+            CREATE TABLE IF NOT EXISTS decision_record_work (
                 id TEXT PRIMARY KEY,
-                receipt_id TEXT NOT NULL REFERENCES decision_receipts(id),
+                record_id TEXT NOT NULL REFERENCES decision_records(id),
                 work_type TEXT NOT NULL,
                 work_ref TEXT NOT NULL,
                 created_at TEXT NOT NULL
             );
-            CREATE INDEX IF NOT EXISTS idx_receipt_work_receipt
-                ON decision_receipt_work(receipt_id);
-            CREATE TABLE IF NOT EXISTS decision_receipt_revisions (
+            CREATE INDEX IF NOT EXISTS idx_decision_record_work
+                ON decision_record_work(record_id);
+            CREATE TABLE IF NOT EXISTS decision_record_revisions (
                 id TEXT PRIMARY KEY,
-                receipt_id TEXT NOT NULL REFERENCES decision_receipts(id),
+                record_id TEXT NOT NULL REFERENCES decision_records(id),
                 field_name TEXT NOT NULL,
                 old_value TEXT,
                 new_value TEXT,
                 created_at TEXT NOT NULL
             );
-            CREATE INDEX IF NOT EXISTS idx_receipt_revisions_receipt
-                ON decision_receipt_revisions(receipt_id);
+            CREATE INDEX IF NOT EXISTS idx_decision_record_revisions
+                ON decision_record_revisions(record_id);
             """
         )
 
-    # v42 (HS-127-10): receipt tombstones make a deletion durable across
+    # v42 (HS-127-10): decision-record tombstones make a deletion durable across
     # local-first peers without erasing its evidence chain.
-    receipt_cols = {
-        row[1] for row in conn.execute("PRAGMA table_info(decision_receipts)").fetchall()
+    record_cols = {
+        row[1] for row in conn.execute("PRAGMA table_info(decision_records)").fetchall()
     }
-    if receipt_cols and "deleted" not in receipt_cols:
+    if record_cols and "deleted" not in record_cols:
         conn.execute(
-            "ALTER TABLE decision_receipts ADD COLUMN deleted INTEGER NOT NULL DEFAULT 0"
+            "ALTER TABLE decision_records ADD COLUMN deleted INTEGER NOT NULL DEFAULT 0"
         )
 
     # v34 (HS-118-01): zone name uniqueness -- add name_normalized column

@@ -16,8 +16,8 @@ SYNC_KINDS = frozenset(
     {"meeting", "artifact", "note", "kb", "recipe", "chain", "workflow",
      "directory", "directory_membership", "knowledge_membership",
      "project", "project_relationship", "profile", "model", "workbench",
-     "decision_receipt", "decision_receipt_source", "decision_receipt_work",
-     "decision_receipt_revision"}
+     "decision_record", "decision_record_source", "decision_record_work",
+     "decision_record_revision"}
 )
 
 # Repository-backed primitives the push route merges into the live store (the key
@@ -74,10 +74,10 @@ _BUCKET_KIND = {
     "project_relationships": "project_relationship",
     "projects": "project",
     "profiles": "profile", "models": "model",
-    "decision_receipts": "decision_receipt",
-    "decision_receipt_sources": "decision_receipt_source",
-    "decision_receipt_work": "decision_receipt_work",
-    "decision_receipt_revisions": "decision_receipt_revision",
+    "decision_records": "decision_record",
+    "decision_record_sources": "decision_record_source",
+    "decision_record_work": "decision_record_work",
+    "decision_record_revisions": "decision_record_revision",
 }
 
 
@@ -421,22 +421,22 @@ def _merge_artifacts(db: Any, records: list[dict[str, Any]]) -> int:
     return merged
 
 
-def _receipt_record(row: Any) -> dict[str, Any]:
-    """Serialize a receipt using ``updated_at`` as its LWW clock."""
+def _decision_record_root(row: Any) -> dict[str, Any]:
+    """Serialize a record using ``updated_at`` as its LWW clock."""
     value = dict(row)
     value["deleted"] = bool(value.get("deleted"))
     for field in ("created_at", "updated_at"):
         value[field] = _iso(value.get(field))
     return {
         "meta": {
-            "id": value["id"], "kind": "decision_receipt",
+            "id": value["id"], "kind": "decision_record",
             "last_modified": value["updated_at"], "deleted": value["deleted"],
         },
         "value": None if value["deleted"] else value,
     }
 
 
-def _receipt_child_record(row: Any, kind: str) -> dict[str, Any]:
+def _decision_record_child(row: Any, kind: str) -> dict[str, Any]:
     value = dict(row)
     value["created_at"] = _iso(value.get("created_at"))
     return {
@@ -446,26 +446,26 @@ def _receipt_child_record(row: Any, kind: str) -> dict[str, Any]:
     }
 
 
-def _merge_receipt_records(db: Any, records: list[dict[str, Any]]) -> int:
-    """LWW-merge receipt roots; a delete is a tombstone, never evidence erasure."""
+def _merge_decision_records(db: Any, records: list[dict[str, Any]]) -> int:
+    """LWW-merge record roots; a delete is a tombstone, never evidence erasure."""
     merged = 0
     with db._connection() as conn:
         for rec in records:
             meta, value = rec["meta"], rec.get("value") or {}
-            receipt_id = str(meta["id"] or "").strip()
-            if not receipt_id:
+            record_id = str(meta["id"] or "").strip()
+            if not record_id:
                 continue
             incoming = str(meta.get("last_modified") or "")
             existing = conn.execute(
-                "SELECT updated_at FROM decision_receipts WHERE id = ?", (receipt_id,)
+                "SELECT updated_at FROM decision_records WHERE id = ?", (record_id,)
             ).fetchone()
             if existing is not None and incoming and str(existing["updated_at"]) >= incoming:
                 continue
             if meta.get("deleted"):
                 if existing is not None:
                     conn.execute(
-                        "UPDATE decision_receipts SET deleted = 1, updated_at = ? WHERE id = ?",
-                        (incoming or existing["updated_at"], receipt_id),
+                        "UPDATE decision_records SET deleted = 1, updated_at = ? WHERE id = ?",
+                        (incoming or existing["updated_at"], record_id),
                     )
                     merged += 1
                 continue
@@ -475,22 +475,22 @@ def _merge_receipt_records(db: Any, records: list[dict[str, Any]]) -> int:
                       "lifecycle", "source_type", "source_id", "created_at", "updated_at")
             values = [value.get(field) for field in fields]
             conn.execute(
-                f"""INSERT INTO decision_receipts (id, {', '.join(fields)}, deleted)
+                f"""INSERT INTO decision_records (id, {', '.join(fields)}, deleted)
                     VALUES (?, {', '.join('?' for _ in fields)}, 0)
                     ON CONFLICT(id) DO UPDATE SET
                     {', '.join(f'{field} = excluded.{field}' for field in fields)}, deleted = 0""",
-                [receipt_id, *values],
+                [record_id, *values],
             )
             merged += 1
     return merged
 
 
-def _merge_receipt_children(db: Any, table: str, records: list[dict[str, Any]]) -> int:
-    """Merge append-only receipt evidence rows after their receipt roots exist."""
+def _merge_decision_record_children(db: Any, table: str, records: list[dict[str, Any]]) -> int:
+    """Merge append-only record evidence rows after their record roots exist."""
     columns = {
-        "decision_receipt_sources": ("id", "receipt_id", "source_type", "source_ref", "created_at"),
-        "decision_receipt_work": ("id", "receipt_id", "work_type", "work_ref", "created_at"),
-        "decision_receipt_revisions": ("id", "receipt_id", "field_name", "old_value", "new_value", "created_at"),
+        "decision_record_sources": ("id", "record_id", "source_type", "source_ref", "created_at"),
+        "decision_record_work": ("id", "record_id", "work_type", "work_ref", "created_at"),
+        "decision_record_revisions": ("id", "record_id", "field_name", "old_value", "new_value", "created_at"),
     }[table]
     merged = 0
     with db._connection() as conn:
@@ -501,7 +501,7 @@ def _merge_receipt_children(db: Any, table: str, records: list[dict[str, Any]]) 
             values = [value.get(column) for column in columns]
             if not values[0] or not values[1]:
                 continue
-            if conn.execute("SELECT 1 FROM decision_receipts WHERE id = ?", (values[1],)).fetchone() is None:
+            if conn.execute("SELECT 1 FROM decision_records WHERE id = ?", (values[1],)).fetchone() is None:
                 continue
             conn.execute(
                 f"INSERT OR IGNORE INTO {table} ({', '.join(columns)}) VALUES ({', '.join('?' for _ in columns)})",
@@ -647,24 +647,24 @@ class SyncService:
                           "last_modified": now, "deleted": False},
             })
         
-        # Receipt roots carry their own LWW clocks and tombstones; their
+        # Record roots carry their own LWW clocks and tombstones; their
         # immutable evidence children follow as separate, idempotent buckets.
         with db._connection() as conn:
-            receipt_rows = conn.execute(
-                "SELECT * FROM decision_receipts ORDER BY updated_at DESC, id DESC LIMIT ?", (bounded,)
+            record_rows = conn.execute(
+                "SELECT * FROM decision_records ORDER BY updated_at DESC, id DESC LIMIT ?", (bounded,)
             ).fetchall()
-            receipt_ids = [row["id"] for row in receipt_rows]
-            placeholders = ", ".join("?" for _ in receipt_ids)
+            record_ids = [row["id"] for row in record_rows]
+            placeholders = ", ".join("?" for _ in record_ids)
             child_rows: dict[str, list[Any]] = {}
-            for table in ("decision_receipt_sources", "decision_receipt_work", "decision_receipt_revisions"):
+            for table in ("decision_record_sources", "decision_record_work", "decision_record_revisions"):
                 child_rows[table] = conn.execute(
-                    f"SELECT * FROM {table} WHERE receipt_id IN ({placeholders})" if placeholders else f"SELECT * FROM {table} WHERE 0",
-                    receipt_ids,
+                    f"SELECT * FROM {table} WHERE record_id IN ({placeholders})" if placeholders else f"SELECT * FROM {table} WHERE 0",
+                    record_ids,
                 ).fetchall()
-        decision_receipts = [_receipt_record(row) for row in receipt_rows]
-        decision_receipt_sources = [_receipt_child_record(row, "decision_receipt_source") for row in child_rows["decision_receipt_sources"]]
-        decision_receipt_work = [_receipt_child_record(row, "decision_receipt_work") for row in child_rows["decision_receipt_work"]]
-        decision_receipt_revisions = [_receipt_child_record(row, "decision_receipt_revision") for row in child_rows["decision_receipt_revisions"]]
+        decision_records = [_decision_record_root(row) for row in record_rows]
+        decision_record_sources = [_decision_record_child(row, "decision_record_source") for row in child_rows["decision_record_sources"]]
+        decision_record_work = [_decision_record_child(row, "decision_record_work") for row in child_rows["decision_record_work"]]
+        decision_record_revisions = [_decision_record_child(row, "decision_record_revision") for row in child_rows["decision_record_revisions"]]
 
         return {
             "meetings": meetings,
@@ -681,10 +681,10 @@ class SyncService:
             "project_relationships": project_relationships,
             "projects": projects,
             "models": models,
-            "decision_receipts": decision_receipts,
-            "decision_receipt_sources": decision_receipt_sources,
-            "decision_receipt_work": decision_receipt_work,
-            "decision_receipt_revisions": decision_receipt_revisions,
+            "decision_records": decision_records,
+            "decision_record_sources": decision_record_sources,
+            "decision_record_work": decision_record_work,
+            "decision_record_revisions": decision_record_revisions,
         }
 
     def push(self, principal: Principal, payload: Any) -> dict[str, Any]:
@@ -730,16 +730,16 @@ class SyncService:
             received["artifacts"], len(artifact_records),
         )
         
-        # Receipt roots merge before their append-only source/work/revision
-        # evidence, allowing a complete receipt to arrive in one change set.
-        receipt_records = body.get("decision_receipts") or []
-        received["decision_receipts"] = _merge_receipt_records(db, receipt_records)
+        # Record roots merge before their append-only source/work/revision
+        # evidence, allowing a complete record to arrive in one change set.
+        record_records = body.get("decision_records") or []
+        received["decision_records"] = _merge_decision_records(db, record_records)
         for table, bucket in (
-            ("decision_receipt_sources", "decision_receipt_sources"),
-            ("decision_receipt_work", "decision_receipt_work"),
-            ("decision_receipt_revisions", "decision_receipt_revisions"),
+            ("decision_record_sources", "decision_record_sources"),
+            ("decision_record_work", "decision_record_work"),
+            ("decision_record_revisions", "decision_record_revisions"),
         ):
-            received[bucket] = _merge_receipt_children(db, table, body.get(bucket) or [])
+            received[bucket] = _merge_decision_record_children(db, table, body.get(bucket) or [])
 
         project_records = body.get("projects") or []
         merged_projects = 0

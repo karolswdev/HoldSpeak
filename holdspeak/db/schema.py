@@ -7,7 +7,7 @@ independently of the Database container.
 # Bump this when adding tables or columns; the Database container uses it to
 # decide whether to back up and re-apply. See core._ensure_schema for the
 # four-way upgrade contract.
-SCHEMA_VERSION = 42  # v42: receipt sync tombstones (HS-127-10)
+SCHEMA_VERSION = 43  # v43: decision_receipt* tables renamed to decision_record* (HS-130-08)
 
 # SQL Schema
 SCHEMA_SQL = """
@@ -829,10 +829,12 @@ ON desk_decisions(status, updated_at DESC);
 CREATE INDEX IF NOT EXISTS idx_desk_decisions_superseded_by
 ON desk_decisions(superseded_by);
 
--- HS-127-01: durable, source-neutral decision receipts. Receipts preserve a
--- decision's canonical record while sources, follow-through, and edits remain
--- separately traceable.
-CREATE TABLE IF NOT EXISTS decision_receipts (
+-- HS-127-01 / HS-130-08: durable, source-neutral decision records. A decision
+-- record preserves a decision's canonical governing document while sources,
+-- follow-through, and edits remain separately traceable. "Receipt" is reserved
+-- for immutable kernel evidence (Constitution Art. XI); this mutable governing
+-- document is a Decision Record.
+CREATE TABLE IF NOT EXISTS decision_records (
     id TEXT PRIMARY KEY,
     decision_text TEXT NOT NULL,
     rationale TEXT,
@@ -847,36 +849,36 @@ CREATE TABLE IF NOT EXISTS decision_receipts (
     deleted INTEGER NOT NULL DEFAULT 0
 );
 
-CREATE TABLE IF NOT EXISTS decision_receipt_sources (
+CREATE TABLE IF NOT EXISTS decision_record_sources (
     id TEXT PRIMARY KEY,
-    receipt_id TEXT NOT NULL REFERENCES decision_receipts(id),
+    record_id TEXT NOT NULL REFERENCES decision_records(id),
     source_type TEXT NOT NULL,
     source_ref TEXT NOT NULL,
     created_at TEXT NOT NULL
 );
-CREATE INDEX IF NOT EXISTS idx_receipt_sources_receipt
-ON decision_receipt_sources(receipt_id);
+CREATE INDEX IF NOT EXISTS idx_decision_record_sources
+ON decision_record_sources(record_id);
 
-CREATE TABLE IF NOT EXISTS decision_receipt_work (
+CREATE TABLE IF NOT EXISTS decision_record_work (
     id TEXT PRIMARY KEY,
-    receipt_id TEXT NOT NULL REFERENCES decision_receipts(id),
+    record_id TEXT NOT NULL REFERENCES decision_records(id),
     work_type TEXT NOT NULL,
     work_ref TEXT NOT NULL,
     created_at TEXT NOT NULL
 );
-CREATE INDEX IF NOT EXISTS idx_receipt_work_receipt
-ON decision_receipt_work(receipt_id);
+CREATE INDEX IF NOT EXISTS idx_decision_record_work
+ON decision_record_work(record_id);
 
-CREATE TABLE IF NOT EXISTS decision_receipt_revisions (
+CREATE TABLE IF NOT EXISTS decision_record_revisions (
     id TEXT PRIMARY KEY,
-    receipt_id TEXT NOT NULL REFERENCES decision_receipts(id),
+    record_id TEXT NOT NULL REFERENCES decision_records(id),
     field_name TEXT NOT NULL,
     old_value TEXT,
     new_value TEXT,
     created_at TEXT NOT NULL
 );
-CREATE INDEX IF NOT EXISTS idx_receipt_revisions_receipt
-ON decision_receipt_revisions(receipt_id);
+CREATE INDEX IF NOT EXISTS idx_decision_record_revisions
+ON decision_record_revisions(record_id);
 
 -- HS-109-04: one retrieval contract, three separately ranked FTS corpora.
 -- Internal-content tables retain stable text source ids directly; this avoids

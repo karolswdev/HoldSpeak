@@ -1,6 +1,6 @@
 # Phase 130 — One Truth
 
-**Status:** in-progress (1/11).
+**Status:** in-progress (2/11).
 
 **Last updated:** 2026-08-09.
 
@@ -107,7 +107,7 @@ and the full suites — not why it exists; recorded as an adopted correction.)
 | HS-130-05 | One meeting placement policy | backlog | [story-05](story-05-meeting-placement-policy.md) | [evidence-story-05](./evidence-story-05.md) |
 | HS-130-06 | Ask tells the truth — no model-name retargeting | backlog | [story-06](story-06-ask-tells-the-truth.md) | [evidence-story-06](./evidence-story-06.md) |
 | HS-130-07 | Settings, one honest writer — versioned, transient retry | backlog | [story-07](story-07-settings-one-writer.md) | [evidence-story-07](./evidence-story-07.md) |
-| HS-130-08 | DecisionReceipt → Decision — the word returns to evidence | backlog | [story-08](story-08-decision-rename.md) | [evidence-story-08](./evidence-story-08.md) |
+| HS-130-08 | DecisionReceipt → Decision — the word returns to evidence | done | [story-08](story-08-decision-rename.md) | [evidence-story-08](./evidence-story-08.md) |
 | HS-130-09 | Workbench — one gesture one record, live voice | backlog | [story-09](story-09-workbench-one-gesture.md) | [evidence-story-09](./evidence-story-09.md) |
 | HS-130-10 | The inherited ledger — triage and assign the 96 | backlog | [story-10](story-10-inherited-ledger.md) | [evidence-story-10](./evidence-story-10.md) |
 | HS-130-11 | The walk | backlog | [story-11](story-11-the-walk.md) | [evidence-story-11](./evidence-story-11.md) |
@@ -183,6 +183,13 @@ committed code with the owner's data.
 - 2026-08-09 — **DecisionReceipt rename is the word only, now.** Model
   convergence (Decision links to immutable receipts for create/accept/change/
   supersede) deferred to Phase 133 with an owner beat. (SOL-COUNSEL.md #3.)
+- 2026-08-09 — **HS-130-08 renamed to `DecisionRecord`, not `Decision`.** A
+  bare `Decision*` rename would have collided with the existing
+  `DecisionLifecycleService` / `/api/decisions` (meeting-decision lifecycle).
+  The mutable governing document is now `DecisionRecordService` /
+  `decision_record*` / `/api/decision-records`; "Receipt" is freed for
+  immutable kernel evidence, which was the point. Behavior-preserving; schema
+  v42→v43 (one idempotent migration). Owner may rename further at the sitting.
 - 2026-08-09 — **The inherited-96 ledger comes to 130 for triage** (per the
   Phase 129 handoff) but its **sync-contract slice routes to Phase 131**,
   where the sync registry and deployment revisions live — the two cannot be

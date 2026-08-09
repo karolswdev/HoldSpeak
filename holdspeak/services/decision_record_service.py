@@ -1,4 +1,4 @@
-"""Durable decision receipt operations (HS-127-01)."""
+"""Durable decision record operations (HS-127-01)."""
 
 from __future__ import annotations
 
@@ -17,7 +17,7 @@ _EDITABLE_FIELDS = frozenset(
 
 
 @observe_service
-class DecisionReceiptService:
+class DecisionRecordService:
     """Create and retrieve the durable canon for a decision."""
 
     def __init__(self, db: Any, *, observer: PipelineObserver | None = None) -> None:
@@ -36,23 +36,23 @@ class DecisionReceiptService:
         source_type: str,
         source_id: str,
     ) -> dict[str, Any]:
-        """Create a new decision receipt."""
+        """Create a new decision record."""
         text = self._required("decision_text", decision_text)
         source_kind = self._required("source_type", source_type)
         if source_kind not in _SOURCE_TYPES:
             raise ValueError("source_type must be 'meeting' or 'desk'")
         source = self._required("source_id", source_id)
-        receipt_id = f"receipt-{uuid4().hex}"
+        record_id = f"record-{uuid4().hex}"
         now = datetime.now(UTC).isoformat()
 
         with self._db._connection() as conn:
             conn.execute(
-                """INSERT INTO decision_receipts
+                """INSERT INTO decision_records
                    (id, decision_text, rationale, alternatives, owner, review_date,
                     source_type, source_id, created_at, updated_at)
                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                 (
-                    receipt_id,
+                    record_id,
                     text,
                     rationale,
                     alternatives,
@@ -65,21 +65,21 @@ class DecisionReceiptService:
                 ),
             )
             row = conn.execute(
-                "SELECT * FROM decision_receipts WHERE id = ? AND deleted = 0", (receipt_id,)
+                "SELECT * FROM decision_records WHERE id = ? AND deleted = 0", (record_id,)
             ).fetchone()
         assert row is not None
-        return self._receipt_dict(row)
+        return self._record_dict(row)
 
     def create_from_meeting(self, principal: Any, decision_id: str) -> dict[str, Any]:
-        """Mint a receipt from a meeting-derived decision."""
+        """Mint a record from a meeting-derived decision."""
         decision = self._db.decisions.get(decision_id)
         if decision is None:
             raise KeyError(str(decision_id or "").strip())
-        existing = self._receipt_for_source("meeting", decision.id)
+        existing = self._record_for_source("meeting", decision.id)
         if existing is not None:
             return existing
 
-        receipt = self.create(
+        record = self.create(
             principal,
             decision_text=decision.text,
             rationale=decision.rationale,
@@ -87,7 +87,7 @@ class DecisionReceiptService:
             source_id=decision.id,
         )
         # A segment is precision evidence, not a prerequisite for minting the
-        # receipt.  Keep its absence honest when the decision's moment cannot
+        # record.  Keep its absence honest when the decision's moment cannot
         # be resolved from the current transcript.
         try:
             moment = self._db.decisions.resolve_decision_moment(decision.id)
@@ -99,15 +99,15 @@ class DecisionReceiptService:
         ]
         if moment is not None:
             sources.append(("segment", str(moment.segment_id)))
-        self._add_sources(receipt["id"], tuple(sources))
-        return receipt
+        self._add_sources(record["id"], tuple(sources))
+        return record
 
     def create_from_desk(self, principal: Any, desk_decision_id: str) -> dict[str, Any]:
-        """Mint a receipt from an authored desk decision."""
+        """Mint a record from an authored desk decision."""
         decision = self._db.desk_decisions.get(desk_decision_id)
         if decision is None:
             raise KeyError(str(desk_decision_id or "").strip())
-        existing = self._receipt_for_source("desk", decision.id)
+        existing = self._record_for_source("desk", decision.id)
         if existing is not None:
             return existing
 
@@ -129,44 +129,44 @@ class DecisionReceiptService:
             source_id=decision.id,
         )
 
-    def update_receipt(
-        self, principal: Any, receipt_id: str, fields: dict[str, Any]
+    def update_record(
+        self, principal: Any, record_id: str, fields: dict[str, Any]
     ) -> dict[str, Any]:
-        """Update receipt facts and record every changed field as a revision."""
+        """Update record facts and record every changed field as a revision."""
         unknown_fields = set(fields) - _EDITABLE_FIELDS
         if unknown_fields:
-            raise ValueError(f"receipt fields cannot be edited: {', '.join(sorted(unknown_fields))}")
+            raise ValueError(f"record fields cannot be edited: {', '.join(sorted(unknown_fields))}")
         if "decision_text" in fields:
             fields = {**fields, "decision_text": self._required("decision_text", fields["decision_text"])}
 
         with self._db._connection() as conn:
             row = conn.execute(
-                "SELECT * FROM decision_receipts WHERE id = ? AND deleted = 0", (receipt_id,)
+                "SELECT * FROM decision_records WHERE id = ? AND deleted = 0", (record_id,)
             ).fetchone()
             if row is None:
-                raise KeyError(str(receipt_id or "").strip())
+                raise KeyError(str(record_id or "").strip())
             if row["lifecycle"] != "active":
-                raise ValueError(f"receipt is sealed: {receipt_id}")
+                raise ValueError(f"record is sealed: {record_id}")
             changes = {
                 field: value for field, value in fields.items() if row[field] != value
             }
             if not changes:
-                return self._receipt_dict(row)
+                return self._record_dict(row)
 
             now = datetime.now(UTC).isoformat()
             conn.execute(
-                f"UPDATE decision_receipts SET {', '.join(f'{field} = ?' for field in changes)}, "
+                f"UPDATE decision_records SET {', '.join(f'{field} = ?' for field in changes)}, "
                 "updated_at = ? WHERE id = ?",
-                (*changes.values(), now, receipt_id),
+                (*changes.values(), now, record_id),
             )
             for field, value in changes.items():
                 conn.execute(
-                    """INSERT INTO decision_receipt_revisions
-                       (id, receipt_id, field_name, old_value, new_value, created_at)
+                    """INSERT INTO decision_record_revisions
+                       (id, record_id, field_name, old_value, new_value, created_at)
                        VALUES (?, ?, ?, ?, ?, ?)""",
                     (
-                        f"receipt-revision-{uuid4().hex}",
-                        receipt_id,
+                        f"record-revision-{uuid4().hex}",
+                        record_id,
                         field,
                         row[field],
                         value,
@@ -174,128 +174,128 @@ class DecisionReceiptService:
                     ),
                 )
             updated = conn.execute(
-                "SELECT * FROM decision_receipts WHERE id = ? AND deleted = 0", (receipt_id,)
+                "SELECT * FROM decision_records WHERE id = ? AND deleted = 0", (record_id,)
             ).fetchone()
         assert updated is not None
-        return self._receipt_dict(updated)
+        return self._record_dict(updated)
 
     def link_work(
-        self, principal: Any, receipt_id: str, work_type: str, work_ref: str
+        self, principal: Any, record_id: str, work_type: str, work_ref: str
     ) -> dict[str, Any]:
-        """Link typed affected work to a receipt without duplicating the link."""
+        """Link typed affected work to a record without duplicating the link."""
         kind = self._required("work_type", work_type)
         reference = self._required("work_ref", work_ref)
         with self._db._connection() as conn:
             if conn.execute(
-                "SELECT 1 FROM decision_receipts WHERE id = ?", (receipt_id,)
+                "SELECT 1 FROM decision_records WHERE id = ?", (record_id,)
             ).fetchone() is None:
-                raise KeyError(str(receipt_id or "").strip())
+                raise KeyError(str(record_id or "").strip())
             row = conn.execute(
-                """SELECT * FROM decision_receipt_work
-                   WHERE receipt_id = ? AND work_type = ? AND work_ref = ?""",
-                (receipt_id, kind, reference),
+                """SELECT * FROM decision_record_work
+                   WHERE record_id = ? AND work_type = ? AND work_ref = ?""",
+                (record_id, kind, reference),
             ).fetchone()
             if row is None:
                 now = datetime.now(UTC).isoformat()
-                work_id = f"receipt-work-{uuid4().hex}"
+                work_id = f"record-work-{uuid4().hex}"
                 conn.execute(
-                    """INSERT INTO decision_receipt_work
-                       (id, receipt_id, work_type, work_ref, created_at)
+                    """INSERT INTO decision_record_work
+                       (id, record_id, work_type, work_ref, created_at)
                        VALUES (?, ?, ?, ?, ?)""",
-                    (work_id, receipt_id, kind, reference, now),
+                    (work_id, record_id, kind, reference, now),
                 )
                 row = conn.execute(
-                    "SELECT * FROM decision_receipt_work WHERE id = ?", (work_id,)
+                    "SELECT * FROM decision_record_work WHERE id = ?", (work_id,)
                 ).fetchone()
         assert row is not None
         return dict(row)
 
     def unlink_work(
-        self, principal: Any, receipt_id: str, work_type: str, work_ref: str
+        self, principal: Any, record_id: str, work_type: str, work_ref: str
     ) -> bool:
-        """Remove one typed receipt-to-work link without deleting either end."""
+        """Remove one typed record-to-work link without deleting either end."""
         with self._db._connection() as conn:
             result = conn.execute(
-                """DELETE FROM decision_receipt_work
-                   WHERE receipt_id = ? AND work_type = ? AND work_ref = ?""",
-                (receipt_id, self._required("work_type", work_type), self._required("work_ref", work_ref)),
+                """DELETE FROM decision_record_work
+                   WHERE record_id = ? AND work_type = ? AND work_ref = ?""",
+                (record_id, self._required("work_type", work_type), self._required("work_ref", work_ref)),
             )
         return result.rowcount > 0
 
-    def list_work(self, principal: Any, receipt_id: str) -> list[dict[str, Any]]:
-        """List typed work governed by a receipt."""
+    def list_work(self, principal: Any, record_id: str) -> list[dict[str, Any]]:
+        """List typed work governed by a record."""
         with self._db._connection() as conn:
             rows = conn.execute(
-                """SELECT * FROM decision_receipt_work
-                   WHERE receipt_id = ? ORDER BY created_at, id""",
-                (receipt_id,),
+                """SELECT * FROM decision_record_work
+                   WHERE record_id = ? ORDER BY created_at, id""",
+                (record_id,),
             ).fetchall()
         return self._rows(rows)
 
-    def receipts_for_work(
+    def records_for_work(
         self, principal: Any, work_type: str, work_ref: str
     ) -> list[dict[str, Any]]:
-        """List receipts that govern one typed work item."""
+        """List records that govern one typed work item."""
         with self._db._connection() as conn:
             rows = conn.execute(
-                """SELECT r.* FROM decision_receipts AS r
-                   JOIN decision_receipt_work AS w ON w.receipt_id = r.id
+                """SELECT r.* FROM decision_records AS r
+                   JOIN decision_record_work AS w ON w.record_id = r.id
                    WHERE w.work_type = ? AND w.work_ref = ?
                    ORDER BY r.created_at DESC, r.id DESC""",
                 (self._required("work_type", work_type), self._required("work_ref", work_ref)),
             ).fetchall()
-        return [self._receipt_dict(row) for row in rows]
+        return [self._record_dict(row) for row in rows]
 
-    def receipts_for_source(
+    def records_for_source(
         self, principal: Any, source_type: str, source_id: str
     ) -> list[dict[str, Any]]:
-        """List receipts minted from one stable source identity."""
+        """List records minted from one stable source identity."""
         del principal
         with self._db._connection() as conn:
             rows = conn.execute(
-                """SELECT * FROM decision_receipts
+                """SELECT * FROM decision_records
                    WHERE source_type = ? AND source_id = ? AND deleted = 0
                    ORDER BY created_at DESC, id DESC""",
                 (self._required("source_type", source_type), self._required("source_id", source_id)),
             ).fetchall()
-        return [self._receipt_dict(row) for row in rows]
+        return [self._record_dict(row) for row in rows]
 
     def supersede(
         self,
         principal: Any,
-        receipt_id: str,
+        record_id: str,
         successor_id: str,
         reason: str | None = None,
     ) -> dict[str, Any]:
-        """Seal a receipt while retaining its navigable successor lineage."""
-        if receipt_id == successor_id:
-            raise ValueError("receipt cannot supersede itself")
+        """Seal a record while retaining its navigable successor lineage."""
+        if record_id == successor_id:
+            raise ValueError("record cannot supersede itself")
         with self._db._connection() as conn:
             predecessor = conn.execute(
-                "SELECT * FROM decision_receipts WHERE id = ? AND deleted = 0", (receipt_id,)
+                "SELECT * FROM decision_records WHERE id = ? AND deleted = 0", (record_id,)
             ).fetchone()
             if predecessor is None:
-                raise KeyError(str(receipt_id or "").strip())
+                raise KeyError(str(record_id or "").strip())
             successor = conn.execute(
-                "SELECT * FROM decision_receipts WHERE id = ?", (successor_id,)
+                "SELECT * FROM decision_records WHERE id = ?", (successor_id,)
             ).fetchone()
             if successor is None:
                 raise KeyError(str(successor_id or "").strip())
             if predecessor["lifecycle"] != "active":
-                raise ValueError(f"receipt is sealed: {receipt_id}")
+                raise ValueError(f"record is sealed: {record_id}")
             if successor["lifecycle"] != "active":
                 raise ValueError(f"successor is sealed: {successor_id}")
             if conn.execute(
-                """SELECT 1 FROM decision_receipt_sources
-                   WHERE receipt_id = ? AND source_type = 'predecessor'""",
+                """SELECT 1 FROM decision_record_sources
+                   WHERE record_id = ? AND source_type = 'predecessor'""",
                 (successor_id,),
             ).fetchone() is not None:
                 raise ValueError(f"successor already has a predecessor: {successor_id}")
 
             now = datetime.now(UTC).isoformat()
             conn.execute(
-                "UPDATE decision_receipts SET lifecycle = 'superseded', updated_at = ? WHERE id = ?",
-                (now, receipt_id),
+                "UPDATE decision_records SET lifecycle = 'superseded', updated_at = ? WHERE id = ?",
+                (now, record_id),
             )
             for field_name, old_value, new_value in (
                 ("lifecycle", predecessor["lifecycle"], "superseded"),
@@ -303,114 +303,114 @@ class DecisionReceiptService:
                 ("supersession_reason", None, reason),
             ):
                 conn.execute(
-                    """INSERT INTO decision_receipt_revisions
-                       (id, receipt_id, field_name, old_value, new_value, created_at)
+                    """INSERT INTO decision_record_revisions
+                       (id, record_id, field_name, old_value, new_value, created_at)
                        VALUES (?, ?, ?, ?, ?, ?)""",
                     (
-                        f"receipt-revision-{uuid4().hex}",
-                        receipt_id,
+                        f"record-revision-{uuid4().hex}",
+                        record_id,
                         field_name,
                         old_value,
                         new_value,
                         now,
                     ),
                 )
-            for linked_receipt_id, source_type, source_ref in (
-                (receipt_id, "successor", successor_id),
-                (successor_id, "predecessor", receipt_id),
+            for linked_record_id, source_type, source_ref in (
+                (record_id, "successor", successor_id),
+                (successor_id, "predecessor", record_id),
             ):
                 conn.execute(
-                    """INSERT INTO decision_receipt_sources
-                       (id, receipt_id, source_type, source_ref, created_at)
+                    """INSERT INTO decision_record_sources
+                       (id, record_id, source_type, source_ref, created_at)
                        VALUES (?, ?, ?, ?, ?)""",
                     (
-                        f"receipt-source-{uuid4().hex}",
-                        linked_receipt_id,
+                        f"record-source-{uuid4().hex}",
+                        linked_record_id,
                         source_type,
                         source_ref,
                         now,
                     ),
                 )
-        sealed = self.get(principal, receipt_id)
+        sealed = self.get(principal, record_id)
         assert sealed is not None
         return sealed
 
     def due_for_review(self, principal: Any) -> list[dict[str, Any]]:
-        """Return active receipts whose review date is today or earlier."""
+        """Return active records whose review date is today or earlier."""
         with self._db._connection() as conn:
             rows = conn.execute(
-                """SELECT * FROM decision_receipts
+                """SELECT * FROM decision_records
                    WHERE review_date IS NOT NULL AND review_date <= ?
                      AND lifecycle = 'active' AND deleted = 0
                    ORDER BY review_date, created_at, id""",
                 (date.today().isoformat(),),
             ).fetchall()
-        return [self._receipt_dict(row) for row in rows]
+        return [self._record_dict(row) for row in rows]
 
-    def get(self, principal: Any, receipt_id: str) -> dict[str, Any] | None:
-        """Get a receipt by ID with its sources, work links, and revisions."""
+    def get(self, principal: Any, record_id: str) -> dict[str, Any] | None:
+        """Get a record by ID with its sources, work links, and revisions."""
         with self._db._connection() as conn:
             row = conn.execute(
-                "SELECT * FROM decision_receipts WHERE id = ? AND deleted = 0", (receipt_id,)
+                "SELECT * FROM decision_records WHERE id = ? AND deleted = 0", (record_id,)
             ).fetchone()
             if row is None:
                 return None
-            receipt = self._receipt_dict(row)
-            receipt["sources"] = [
+            record = self._record_dict(row)
+            record["sources"] = [
                 self._source_dict(conn, source)
                 for source in conn.execute(
-                    """SELECT * FROM decision_receipt_sources
-                       WHERE receipt_id = ? ORDER BY created_at, id""",
-                    (receipt_id,),
+                    """SELECT * FROM decision_record_sources
+                       WHERE record_id = ? ORDER BY created_at, id""",
+                    (record_id,),
                 ).fetchall()
             ]
-            receipt["work"] = self._rows(
+            record["work"] = self._rows(
                 conn.execute(
-                    """SELECT * FROM decision_receipt_work
-                       WHERE receipt_id = ? ORDER BY created_at, id""",
-                    (receipt_id,),
+                    """SELECT * FROM decision_record_work
+                       WHERE record_id = ? ORDER BY created_at, id""",
+                    (record_id,),
                 ).fetchall()
             )
-            receipt["revisions"] = self._rows(
+            record["revisions"] = self._rows(
                 conn.execute(
-                    """SELECT * FROM decision_receipt_revisions
-                       WHERE receipt_id = ? ORDER BY created_at, id""",
-                    (receipt_id,),
+                    """SELECT * FROM decision_record_revisions
+                       WHERE record_id = ? ORDER BY created_at, id""",
+                    (record_id,),
                 ).fetchall()
             )
-            receipt["successor_id"] = next(
-                (source["source_ref"] for source in receipt["sources"] if source["source_type"] == "successor"),
+            record["successor_id"] = next(
+                (source["source_ref"] for source in record["sources"] if source["source_type"] == "successor"),
                 None,
             )
-            receipt["predecessor_id"] = next(
-                (source["source_ref"] for source in receipt["sources"] if source["source_type"] == "predecessor"),
+            record["predecessor_id"] = next(
+                (source["source_ref"] for source in record["sources"] if source["source_type"] == "predecessor"),
                 None,
             )
-            receipt["supersession_reason"] = next(
-                (revision["new_value"] for revision in receipt["revisions"]
+            record["supersession_reason"] = next(
+                (revision["new_value"] for revision in record["revisions"]
                  if revision["field_name"] == "supersession_reason"),
                 None,
             )
-            return receipt
+            return record
 
-    def list_receipts(
+    def list_records(
         self, principal: Any, *, limit: int = 50, offset: int = 0
     ) -> list[dict[str, Any]]:
-        """List receipts, newest first."""
+        """List records, newest first."""
         bounded_limit = max(1, min(int(limit), 500))
         bounded_offset = max(0, int(offset))
         with self._db._connection() as conn:
             rows = conn.execute(
-                """SELECT * FROM decision_receipts WHERE deleted = 0
+                """SELECT * FROM decision_records WHERE deleted = 0
                    ORDER BY created_at DESC, id DESC LIMIT ? OFFSET ?""",
                 (bounded_limit, bounded_offset),
             ).fetchall()
-        return [self._receipt_dict(row) for row in rows]
+        return [self._record_dict(row) for row in rows]
 
     def search(self, principal: Any, query: str, *, limit: int = 50) -> list[dict[str, Any]]:
-        """Find receipts by their decision facts or linked affected-work labels.
+        """Find records by their decision facts or linked affected-work labels.
 
-        Receipt tables deliberately remain ordinary SQLite tables, so this uses a
+        Record tables deliberately remain ordinary SQLite tables, so this uses a
         portable case-insensitive LIKE search rather than requiring an FTS build.
         The CASE expression keeps direct decision matches ahead of supporting
         rationale, owner, and work-link matches.
@@ -433,8 +433,8 @@ class DecisionReceiptService:
                 "COALESCE(r.rationale, '') LIKE ? COLLATE NOCASE OR "
                 "COALESCE(r.alternatives, '') LIKE ? COLLATE NOCASE OR "
                 "COALESCE(r.owner, '') LIKE ? COLLATE NOCASE OR "
-                "EXISTS (SELECT 1 FROM decision_receipt_work AS w "
-                "WHERE w.receipt_id = r.id AND "
+                "EXISTS (SELECT 1 FROM decision_record_work AS w "
+                "WHERE w.record_id = r.id AND "
                 "(w.work_type LIKE ? COLLATE NOCASE OR w.work_ref LIKE ? COLLATE NOCASE)))"
             )
             params.extend([pattern] * 6)
@@ -449,26 +449,26 @@ class DecisionReceiptService:
         with self._db._connection() as conn:
             rows = conn.execute(
                 f"""SELECT r.*, {relevance} AS relevance
-                    FROM decision_receipts AS r
+                    FROM decision_records AS r
                     WHERE r.deleted = 0 AND {' AND '.join(predicates)}
                     ORDER BY relevance DESC, r.updated_at DESC, r.id DESC
                     LIMIT ?""",
                 [phrase] * 4 + params + [bounded_limit],
             ).fetchall()
-        return [self._receipt_dict(row) for row in rows]
+        return [self._record_dict(row) for row in rows]
 
-    def _receipt_for_source(self, source_type: str, source_id: str) -> dict[str, Any] | None:
+    def _record_for_source(self, source_type: str, source_id: str) -> dict[str, Any] | None:
         with self._db._connection() as conn:
             row = conn.execute(
-                """SELECT * FROM decision_receipts
+                """SELECT * FROM decision_records
                    WHERE source_type = ? AND source_id = ?
                    ORDER BY created_at, id LIMIT 1""",
                 (source_type, source_id),
             ).fetchone()
-        return self._receipt_dict(row) if row is not None else None
+        return self._record_dict(row) if row is not None else None
 
     def _add_sources(
-        self, receipt_id: str, sources: tuple[tuple[str, str], ...]
+        self, record_id: str, sources: tuple[tuple[str, str], ...]
     ) -> None:
         now = datetime.now(UTC).isoformat()
         with self._db._connection() as conn:
@@ -477,10 +477,10 @@ class DecisionReceiptService:
                 if not clean_ref:
                     continue
                 conn.execute(
-                    """INSERT INTO decision_receipt_sources
-                       (id, receipt_id, source_type, source_ref, created_at)
+                    """INSERT INTO decision_record_sources
+                       (id, record_id, source_type, source_ref, created_at)
                        VALUES (?, ?, ?, ?, ?)""",
-                    (f"receipt-source-{uuid4().hex}", receipt_id, source_type, clean_ref, now),
+                    (f"record-source-{uuid4().hex}", record_id, source_type, clean_ref, now),
                 )
 
     @staticmethod
@@ -503,12 +503,12 @@ class DecisionReceiptService:
         return clean
 
     @staticmethod
-    def _receipt_dict(row: Any) -> dict[str, Any]:
+    def _record_dict(row: Any) -> dict[str, Any]:
         return dict(row)
 
     @staticmethod
     def _source_dict(conn: Any, row: Any) -> dict[str, Any]:
-        """Enrich a receipt source with the target data needed to open it."""
+        """Enrich a record source with the target data needed to open it."""
         source = dict(row)
         source_type = source["source_type"]
         source_ref = source["source_ref"]

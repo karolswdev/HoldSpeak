@@ -9,7 +9,7 @@ from typing import Any
 
 from holdspeak.db import get_database
 from holdspeak.principals import Principal
-from holdspeak.services.decision_receipt_service import DecisionReceiptService
+from holdspeak.services.decision_record_service import DecisionRecordService
 from holdspeak.services.desk_service import DeskService
 from holdspeak.services.dictation_service import DictationService
 from holdspeak.services.event_query_service import EventQueryService
@@ -244,9 +244,9 @@ _RESOURCE_TEMPLATES = [
         "mimeType": _JSON_MIME,
     },
     {
-        "uriTemplate": "holdspeak://decision-receipts/{id}",
-        "name": "Decision receipt detail",
-        "description": "One durable decision receipt with its evidence and revision trail.",
+        "uriTemplate": "holdspeak://decision-records/{id}",
+        "name": "Decision record detail",
+        "description": "One durable decision record with its evidence and revision trail.",
         "mimeType": _JSON_MIME,
     },
     {
@@ -278,7 +278,7 @@ _RECIPE_DETAIL_PATTERN = re.compile(r"^holdspeak://recipes/([^/]+)$")
 _PROFILE_DETAIL_PATTERN = re.compile(r"^holdspeak://profiles/([^/]+)$")
 _ZONE_MEMBERS_PATTERN = re.compile(r"^holdspeak://zones/([^/]+)/members$")
 _MEETING_DETAIL_PATTERN = re.compile(r"^holdspeak://meetings/([^/]+)$")
-_DECISION_RECEIPT_PATTERN = re.compile(r"^holdspeak://decision-receipts/([^/]+)$")
+_DECISION_RECORD_PATTERN = re.compile(r"^holdspeak://decision-records/([^/]+)$")
 _PIPELINE_RECENT_SERVICE_PATTERN = re.compile(r"^pipeline://events/recent/([^/]+)$")
 _PIPELINE_CORRELATION_PATTERN = re.compile(r"^pipeline://events/correlation/([^/]+)$")
 
@@ -361,8 +361,8 @@ def read_resource(uri: str, principal: Principal) -> dict[str, list[dict[str, st
     if match := _MEETING_DETAIL_PATTERN.fullmatch(uri):
         value = MeetingService(get_database()).get_meeting(principal, match.group(1))
         return _contents(uri, _JSON_MIME, value)
-    if match := _DECISION_RECEIPT_PATTERN.fullmatch(uri):
-        value = DecisionReceiptService(get_database()).get(principal, match.group(1))
+    if match := _DECISION_RECORD_PATTERN.fullmatch(uri):
+        value = DecisionRecordService(get_database()).get(principal, match.group(1))
         return _contents(uri, _JSON_MIME, value)
     if match := _PIPELINE_RECENT_SERVICE_PATTERN.fullmatch(uri):
         value = EventQueryService(get_database()).recent(principal, service=match.group(1))

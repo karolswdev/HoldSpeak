@@ -1,4 +1,4 @@
-"""End-to-end service and MCP walk for HS-127 decision receipts."""
+"""End-to-end service and MCP walk for HS-127 decision records."""
 from __future__ import annotations
 
 import json
@@ -6,14 +6,14 @@ import json
 from holdspeak.db.core import Database, reset_database
 from holdspeak.mcp import resources, tools
 from holdspeak.principals import Principal, PrincipalKind
-from holdspeak.services.decision_receipt_service import DecisionReceiptService
+from holdspeak.services.decision_record_service import DecisionRecordService
 
-OWNER = Principal(PrincipalKind.OWNER, "receipt-walk-owner")
+OWNER = Principal(PrincipalKind.OWNER, "record-walk-owner")
 
 
-def test_decision_receipt_walk_from_origins_through_mcp(tmp_path, monkeypatch) -> None:
+def test_decision_record_walk_from_origins_through_mcp(tmp_path, monkeypatch) -> None:
     reset_database()
-    db = Database(tmp_path / "receipt-walk.db")
+    db = Database(tmp_path / "record-walk.db")
     monkeypatch.setattr(tools, "get_database", lambda: db)
     monkeypatch.setattr(tools, "get_observer", lambda: None)
     monkeypatch.setattr(resources, "get_database", lambda: db)
@@ -38,28 +38,28 @@ def test_decision_receipt_walk_from_origins_through_mcp(tmp_path, monkeypatch) -
         db.desk_decisions.upsert(
             decision_id="desk-decision-127", decision_markdown="Use Kafka with a schema registry."
         )
-        service = DecisionReceiptService(db)
+        service = DecisionRecordService(db)
 
-        meeting_receipt = service.create_from_meeting(OWNER, "meeting-decision-127")
-        desk_receipt = service.create_from_desk(OWNER, "desk-decision-127")
-        meeting_full = service.get(OWNER, meeting_receipt["id"])
+        meeting_record = service.create_from_meeting(OWNER, "meeting-decision-127")
+        desk_record = service.create_from_desk(OWNER, "desk-decision-127")
+        meeting_full = service.get(OWNER, meeting_record["id"])
         assert meeting_full is not None
         assert {source["source_type"] for source in meeting_full["sources"]} == {"meeting", "artifact"}
-        assert set(meeting_receipt) == set(desk_receipt)
+        assert set(meeting_record) == set(desk_record)
 
-        service.link_work(OWNER, meeting_receipt["id"], "project", "Kafka migration")
-        assert service.receipts_for_work(OWNER, "project", "Kafka migration")[0]["id"] == meeting_receipt["id"]
-        assert meeting_receipt["id"] in {receipt["id"] for receipt in service.search(OWNER, "Why Kafka?")}
+        service.link_work(OWNER, meeting_record["id"], "project", "Kafka migration")
+        assert service.records_for_work(OWNER, "project", "Kafka migration")[0]["id"] == meeting_record["id"]
+        assert meeting_record["id"] in {record["id"] for record in service.search(OWNER, "Why Kafka?")}
 
-        sealed = service.supersede(OWNER, meeting_receipt["id"], desk_receipt["id"], "Schema registry added.")
-        successor = service.get(OWNER, desk_receipt["id"])
-        assert sealed["successor_id"] == desk_receipt["id"]
-        assert successor is not None and successor["predecessor_id"] == meeting_receipt["id"]
+        sealed = service.supersede(OWNER, meeting_record["id"], desk_record["id"], "Schema registry added.")
+        successor = service.get(OWNER, desk_record["id"])
+        assert sealed["successor_id"] == desk_record["id"]
+        assert successor is not None and successor["predecessor_id"] == meeting_record["id"]
 
-        returned = tools.dispatch("decision_receipt.get", {"receipt_id": desk_receipt["id"]}, OWNER)
-        assert returned["id"] == desk_receipt["id"]
-        assert tools.dispatch("decision_receipt.search", {"query": "Why Kafka?"}, OWNER)
-        payload = json.loads(resources.read_resource(f"holdspeak://decision-receipts/{desk_receipt['id']}", OWNER)["contents"][0]["text"])
-        assert payload["id"] == desk_receipt["id"]
+        returned = tools.dispatch("decision_record.get", {"record_id": desk_record["id"]}, OWNER)
+        assert returned["id"] == desk_record["id"]
+        assert tools.dispatch("decision_record.search", {"query": "Why Kafka?"}, OWNER)
+        payload = json.loads(resources.read_resource(f"holdspeak://decision-records/{desk_record['id']}", OWNER)["contents"][0]["text"])
+        assert payload["id"] == desk_record["id"]
     finally:
         reset_database()

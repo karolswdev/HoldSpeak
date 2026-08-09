@@ -6,7 +6,7 @@ import { DeskComposer } from "../components/DeskComposer";
 import { KbEditor } from "../pullouts/editors/KbEditor";
 import { NoteEditor } from "../pullouts/editors/NoteEditor";
 import { WorkflowEditor } from "../pullouts/editors/WorkflowEditor";
-import { ReceiptsView } from "../pullouts/views/ReceiptsView";
+import { DecisionsView } from "../pullouts/views/DecisionsView";
 
 const save = vi.hoisted(() => vi.fn());
 const apiFetch = vi.hoisted(() => vi.fn());
@@ -70,7 +70,7 @@ describe("HS-129-07 speakable desk", () => {
         <WorkflowEditor object={workflow} onClose={vi.fn()} />
         <NoteEditor object={note} onClose={vi.fn()} />
         <KbEditor object={kb} onClose={vi.fn()} />
-        <ReceiptsView />
+        <DecisionsView />
         <DeskComposer value="" onChange={vi.fn()} actionLabel="Send" onAction={vi.fn()} />
         <DeskComposer multiline value="" onChange={vi.fn()} actionLabel="Send" onAction={vi.fn()} />
       </>,
@@ -112,14 +112,14 @@ describe("HS-129-07 speakable desk", () => {
     const onPadChange = vi.fn();
     render(
       <>
-        <ReceiptsView />
+        <DecisionsView />
         <DeskComposer value="" onChange={onLineChange} actionLabel="Send" onAction={vi.fn()} />
         <DeskComposer multiline value="" onChange={onPadChange} actionLabel="Send" onAction={vi.fn()} />
       </>,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "Speak Search decision receipts" }));
-    expect(screen.getByRole("searchbox", { name: "Search decision receipts" })).toHaveValue("spoken");
+    fireEvent.click(screen.getByRole("button", { name: "Speak Search decisions" }));
+    expect(screen.getByRole("searchbox", { name: "Search decisions" })).toHaveValue("spoken");
     fireEvent.click(screen.getAllByRole("button", { name: "Speak" })[0]);
     fireEvent.click(screen.getAllByRole("button", { name: "Speak" })[1]);
     expect(onLineChange).toHaveBeenCalledWith("spoken");
