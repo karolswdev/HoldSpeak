@@ -1,6 +1,6 @@
 # Phase 130 — One Truth
 
-**Status:** in-progress (4/11).
+**Status:** in-progress (5/11).
 
 **Last updated:** 2026-08-09.
 
@@ -102,7 +102,7 @@ and the full suites — not why it exists; recorded as an adopted correction.)
 |----|-------|--------|------------|----------|
 | HS-130-01 | The precedence resolver — one placement authority | done | [story-01](story-01-the-precedence-resolver.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-130-02 | Collision-free secret slots — the exfiltration path closes | done | [story-02](story-02-secret-slots.md) | [evidence-story-02](./evidence-story-02.md) |
-| HS-130-03 | One deployment identity — readiness, execution, receipt agree | backlog | [story-03](story-03-one-deployment-identity.md) | [evidence-story-03](./evidence-story-03.md) |
+| HS-130-03 | One deployment identity — readiness, execution, receipt agree | done | [story-03](story-03-one-deployment-identity.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-130-04 | One egress vocabulary — the four lies become one truth | backlog | [story-04](story-04-one-egress-vocabulary.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-130-05 | One meeting placement policy | backlog | [story-05](story-05-meeting-placement-policy.md) | [evidence-story-05](./evidence-story-05.md) |
 | HS-130-06 | Ask tells the truth — no model-name retargeting | backlog | [story-06](story-06-ask-tells-the-truth.md) | [evidence-story-06](./evidence-story-06.md) |
@@ -183,6 +183,15 @@ committed code with the owner's data.
 - 2026-08-09 — **DecisionReceipt rename is the word only, now.** Model
   convergence (Decision links to immutable receipts for create/accept/change/
   supersede) deferred to Phase 133 with an owner beat. (SOL-COUNSEL.md #3.)
+- 2026-08-09 — **HS-130-03 changed what `this_machine` readiness checks
+  (intended).** Readiness now checks the LOCAL meeting-intel model
+  (`meeting.intel_realtime_model`) that agent execution actually loads, not the
+  dictation/transcription runtime it read before — the whole point is
+  readiness == execution == receipt. Owner-facing consequence: on a machine
+  with the dictation model but not the 9B meeting default (or vice versa),
+  `this_machine` readiness flips to track the model a run would truly load.
+  One deployment identity (`DeploymentIdentity`) is now the single snapshot;
+  Phase 131 freezes it into an admission-captured revision.
 - 2026-08-09 — **HS-130-02 secret-slot scheme changed the credential env-var
   names (operational impact, flagged to owner).** Slots are now injective:
   `HOLDSPEAK_PROFILE_<SLUG>_<sha256-16>_KEY` (the old lossy slug was the

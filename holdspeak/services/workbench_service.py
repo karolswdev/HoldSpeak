@@ -340,6 +340,7 @@ class WorkbenchService:
             engine = build_meeting_intel_for_profile(
                 kind=prof.kind, base_url=prof.base_url or None, model=prof.model or None,
                 profile_id=profile_id, node=getattr(prof, "node", "") or "",
+                model_file=str(getattr(prof, "model_file", "") or ""),
             )
             engine.cloud_timeout_seconds = timeout
             engine.max_tokens = max_tokens

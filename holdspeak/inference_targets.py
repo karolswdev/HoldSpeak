@@ -76,6 +76,28 @@ def _recovery(reason: str, *, alternate: str = THIS_MACHINE_ID) -> dict[str, str
 
 
 @dataclass(frozen=True)
+class DeploymentIdentity:
+    """The ONE (destination, engine, model, node, boundary) a run is pinned to (HS-130-03).
+
+    Computed ONCE from a resolved destination + config, then consumed unchanged by
+    readiness (does THIS deployment load?), execution (load exactly it), and the
+    receipt (name exactly what loaded). ``model_path`` is the concrete local
+    artifact readiness checks and execution loads for a file-loading engine;
+    ``model`` is the name the receipt stamps. This is a plain snapshot — Phase 131
+    freezes it into an immutable, admission-captured revision. It makes the
+    identity SINGULAR so 131 has one true thing to freeze.
+    """
+
+    destination_id: str
+    kind: str
+    engine: str
+    model: str
+    node: str
+    boundary: str
+    model_path: Optional[str] = None
+
+
+@dataclass(frozen=True)
 class InferenceTarget:
     """One named execution destination, independent of model and engine."""
 
@@ -93,6 +115,11 @@ class InferenceTarget:
     readiness_reason: str = ""
     requires_key: bool = False
     key_present: bool = False
+    # The single deployment identity this destination resolved to (HS-130-03):
+    # the thing readiness checked, execution loads, and the receipt names. Kept
+    # optional so older direct constructions still build; the target's own
+    # ``model``/``engine`` mirror ``deployment.model``/``deployment.engine``.
+    deployment: Optional["DeploymentIdentity"] = None
 
     @property
     def ready(self) -> bool:
@@ -140,7 +167,15 @@ class InferenceTarget:
         model: Optional[str] = None,
         fallback_reason: Optional[str] = None,
     ) -> dict[str, Any]:
-        """The immutable actual-placement part of an attempt receipt."""
+        """The immutable actual-placement part of an attempt receipt.
+
+        With no explicit override, the receipt names the resolved deployment
+        (HS-130-03) — the same identity readiness checked and execution loaded —
+        never an advertised model the run did not load.
+        """
+        deployment = self.deployment
+        if model is None and deployment is not None:
+            model = deployment.model
         actual_boundary = self.boundary
         actual_fallback = fallback_reason
         if self.kind == "paired_device" and provider == "cloud":
@@ -168,39 +203,38 @@ class InferenceTarget:
 
 
 def _this_machine_readiness() -> tuple[str, str]:
-    """Read the configured local runtime without loading its model."""
-    from .config import Config
+    """Readiness for the LOCAL meeting-intel model this device will actually load.
 
-    runtime = Config.load().dictation.runtime
-    backend = str(runtime.backend or "auto").strip().lower()
-    mlx_model = str(runtime.mlx_model or "").strip()
-    llama_model = str(runtime.llama_cpp_model_path or "").strip()
+    HS-130-03: ``this_device`` execution pins ``local`` and loads the configured
+    meeting-intel model (``build_intel_for_target``), so readiness checks THAT
+    file — not the dictation-runtime (transcription) model, a different subsystem
+    the old check read. Ready here means *this deployment will load*.
+    """
+    from .intel.providers import configured_local_meeting_model_path
 
-    if backend == "mlx":
-        model_paths = [mlx_model]
-    elif backend == "llama_cpp":
-        model_paths = [llama_model]
-    elif backend == "auto":
-        model_paths = [mlx_model, llama_model]
-    else:
-        return "unavailable", f"unsupported local backend: {backend}"
-
-    existing_paths = [
-        model_path
-        for model_path in model_paths
-        if model_path and Path(model_path).expanduser().exists()
-    ]
-    if existing_paths:
+    model_path = configured_local_meeting_model_path()
+    if model_path and Path(model_path).expanduser().exists():
         return "ready", ""
-    if len(model_paths) == 1:
-        return "unavailable", f"model file not found: {model_paths[0]}"
-    return "unavailable", f"model file not found: {' or '.join(model_paths)}"
+    return "unavailable", f"model file not found: {model_path}"
 
 
 def this_machine_target(
     *, name: str = "This device", model: str = ""
 ) -> InferenceTarget:
+    from .intel.providers import configured_local_meeting_model_path
+
+    model_path = configured_local_meeting_model_path()
     state, reason = _this_machine_readiness()
+    deployment_model = model or Path(model_path).expanduser().stem
+    deployment = DeploymentIdentity(
+        destination_id=THIS_MACHINE_ID,
+        kind="this_device",
+        engine="configured_local_engine",
+        model=deployment_model,
+        node="",
+        boundary="same_device",
+        model_path=model_path,
+    )
     return InferenceTarget(
         id=THIS_MACHINE_ID,
         name=name,
@@ -210,17 +244,41 @@ def this_machine_target(
         transport="in_process",
         profile_id=None,
         engine="configured_local_engine",
-        model=model,
+        model=deployment_model,
         context_limit=16_384,
         readiness_state=state,
         readiness_reason=reason,
+        deployment=deployment,
     )
 
 
 def paired_device_target(
     *, name: str = "Paired device", model: str = ""
 ) -> InferenceTarget:
-    """The current hub as seen by an authenticated paired-device caller."""
+    """The current hub as seen by an authenticated paired-device caller.
+
+    Readiness reflects a REAL check of the delegated execution path
+    (``build_configured_meeting_intel``): a paired target whose hub engine cannot
+    load does not report ready (HS-130-03).
+    """
+    from .intel.providers import configured_meeting_deployment
+
+    dep = configured_meeting_deployment()
+    if dep.runnable:
+        state, reason = "ready", ""
+    else:
+        state = "unavailable"
+        reason = dep.reason or "Paired device has no runnable engine configured"
+    deployment_model = model or dep.model
+    deployment = DeploymentIdentity(
+        destination_id=PAIRED_DEVICE_ID,
+        kind="paired_device",
+        engine=dep.engine,
+        model=deployment_model,
+        node=dep.node,
+        boundary="paired_device",
+        model_path=dep.model_path,
+    )
     return InferenceTarget(
         id=PAIRED_DEVICE_ID,
         name=name,
@@ -230,8 +288,11 @@ def paired_device_target(
         transport="paired_https",
         profile_id=None,
         engine="configured_hub_engine",
-        model=model,
+        model=deployment_model,
         context_limit=16_384,
+        readiness_state=state,
+        readiness_reason=reason,
+        deployment=deployment,
     )
 
 
@@ -246,6 +307,10 @@ def target_from_profile(profile: Any, db: Any = None) -> InferenceTarget:
     requires_key = bool(getattr(profile, "requires_key", False))
     key_present = _profile_key_present(pid) if pid else False
     state, reason = "ready", ""
+    # The concrete local artifact this deployment loads, for file-loading engines
+    # (HS-130-03). Set for on-device profiles so execution loads exactly the
+    # model_file readiness checked; None for endpoint/mesh engines.
+    deploy_model_path: Optional[str] = None
 
     if legacy_kind == "onDevice":
         kind, boundary, owner, transport, engine = (
@@ -257,6 +322,7 @@ def target_from_profile(profile: Any, db: Any = None) -> InferenceTarget:
         )
         model_file = str(getattr(profile, "model_file", "") or "").strip()
         model = model or model_file
+        deploy_model_path = model_file or None
         if not model_file:
             state = "unavailable"
             reason = f"Destination '{name}' names no on-device model file"
@@ -328,6 +394,15 @@ def target_from_profile(profile: Any, db: Any = None) -> InferenceTarget:
             f"Destination '{name}' has unsupported kind '{legacy_kind or 'unknown'}'",
         )
 
+    deployment = DeploymentIdentity(
+        destination_id=pid,
+        kind=kind,
+        engine=engine,
+        model=model,
+        node=node,
+        boundary=boundary,
+        model_path=deploy_model_path,
+    )
     return InferenceTarget(
         id=pid,
         name=name,
@@ -343,6 +418,7 @@ def target_from_profile(profile: Any, db: Any = None) -> InferenceTarget:
         readiness_reason=reason,
         requires_key=requires_key,
         key_present=key_present,
+        deployment=deployment,
     )
 
 
@@ -478,6 +554,18 @@ def build_intel_for_target(target: InferenceTarget, db: Any) -> Any:
         build_meeting_intel_for_profile,
     )
 
+    deployment_model_path = target.deployment.model_path if target.deployment else None
+
+    # A NAMED on-device profile loads ITS OWN model_file — the exact local model
+    # that made this deployment ready (HS-130-03) — never the global meeting
+    # model. The anonymous ``this_machine`` (profile_id is None) keeps the
+    # injectable host-adapter seam below.
+    if target.kind == "this_device" and target.profile_id:
+        kwargs: dict[str, Any] = {"provider": "local"}
+        if deployment_model_path:
+            kwargs["model_path"] = deployment_model_path
+        return MeetingIntel(**kwargs)
+
     if target.kind == "this_device":
         # Preserve the long-standing injectable constructor seam used by host
         # integrations, then pin real MeetingIntel instances to local. A mesh
@@ -493,9 +581,12 @@ def build_intel_for_target(target: InferenceTarget, db: Any) -> Any:
             if hasattr(configured, "_active_provider"):
                 configured._active_provider = None
             return configured
-        meeting = Config.load().meeting
-        kwargs: dict[str, Any] = {"provider": "local"}
-        model_path = getattr(meeting, "intel_realtime_model", None)
+        # Load exactly the local model this deployment named (== the configured
+        # meeting model), so execution matches readiness and the receipt.
+        kwargs = {"provider": "local"}
+        model_path = deployment_model_path or getattr(
+            Config.load().meeting, "intel_realtime_model", None
+        )
         if model_path:
             kwargs["model_path"] = model_path
         return MeetingIntel(**kwargs)
@@ -510,6 +601,7 @@ def build_intel_for_target(target: InferenceTarget, db: Any) -> Any:
                 model=profile.model,
                 profile_id=profile.id,
                 node=getattr(profile, "node", ""),
+                model_file=str(getattr(profile, "model_file", "") or ""),
             )
     # Kept solely as a tolerant guard for an older caller; resolver users never
     # reach it with an unavailable target.

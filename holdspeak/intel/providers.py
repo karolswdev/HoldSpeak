@@ -238,6 +238,86 @@ def build_configured_meeting_intel() -> "MeetingIntel":
     return MeetingIntel(**kwargs)
 
 
+def configured_local_meeting_model_path() -> str:
+    """The concrete local GGUF the in-process meeting-intel engine loads (HS-130-03).
+
+    This is the SINGLE artifact the ``this_device`` execution branch actually
+    loads (``build_intel_for_target`` pins ``this_device`` to ``local`` and hands
+    ``MeetingIntel`` this path). ``this_machine`` readiness must therefore check
+    THIS file and the receipt must name it — not the dictation-runtime model,
+    which is a different subsystem.
+    """
+    from ..config import Config
+
+    meeting = Config.load().meeting
+    raw = str(getattr(meeting, "intel_realtime_model", "") or "").strip()
+    return raw or DEFAULT_INTEL_MODEL_PATH
+
+
+@dataclass(frozen=True)
+class ConfiguredMeetingDeployment:
+    """What ``build_configured_meeting_intel`` will actually load right now.
+
+    ``paired_device`` delegates its execution to ``build_configured_meeting_intel``,
+    so paired readiness (``runnable``) and the paired receipt (``model``) both
+    derive from this snapshot instead of hardcoding ``ready`` (HS-130-03).
+    """
+
+    engine: str  # "local" | "cloud" | "mesh"
+    model: str
+    model_path: Optional[str]
+    node: str
+    runnable: bool
+    reason: Optional[str]
+
+
+def configured_meeting_deployment() -> ConfiguredMeetingDeployment:
+    """Resolve the deployment ``build_configured_meeting_intel`` would load.
+
+    Honors the meeting placement policy (``intel_provider`` / ``intel_profile_id``)
+    exactly as ``build_configured_meeting_intel`` does — this READS that policy to
+    describe runnability; it does not own or change it (that is HS-130-05).
+    """
+    from ..config import Config
+
+    meeting = Config.load().meeting
+    effective = effective_intel_cloud(meeting)
+    if effective.node:
+        # Mesh liveness is a run-time question with its own named refusal; the
+        # relay provider itself exists, so the deployment is runnable here.
+        return ConfiguredMeetingDeployment(
+            engine="mesh", model=str(effective.model or ""), model_path=None,
+            node=str(effective.node), runnable=True, reason=None,
+        )
+    provider = str(
+        getattr(meeting, "intel_provider", DEFAULT_INTEL_PROVIDER) or DEFAULT_INTEL_PROVIDER
+    )
+    model_path = configured_local_meeting_model_path()
+    active, reason = resolve_intel_provider(
+        provider,
+        model_path=model_path,
+        cloud_model=effective.model,
+        cloud_api_key_env=effective.api_key_env,
+        cloud_base_url=effective.base_url,
+    )
+    if active == "cloud":
+        return ConfiguredMeetingDeployment(
+            engine="cloud", model=str(effective.model or ""), model_path=None,
+            node="", runnable=True, reason=None,
+        )
+    local_model = Path(model_path).expanduser().stem
+    if active == "local":
+        return ConfiguredMeetingDeployment(
+            engine="local", model=local_model, model_path=model_path,
+            node="", runnable=True, reason=None,
+        )
+    # No provider resolved: the delegated execution path cannot load.
+    return ConfiguredMeetingDeployment(
+        engine="local", model=local_model, model_path=model_path,
+        node="", runnable=False, reason=reason,
+    )
+
+
 def endpoint_host(base_url: Any) -> str:
     """The bare host an endpoint egresses to (never a full URL in a badge)."""
     raw = str(base_url or "").strip()
@@ -432,7 +512,7 @@ def effective_dictation_llm(
 
 def build_meeting_intel_for_profile(
     *, kind: str, base_url: Optional[str], model: Optional[str], profile_id: str,
-    node: str = ""
+    node: str = "", model_file: str = ""
 ) -> "MeetingIntel":
     """Build a `MeetingIntel` for a specific RuntimeProfile (Phase 24).
 
@@ -440,6 +520,9 @@ def build_meeting_intel_for_profile(
     per-profile secret name (``HOLDSPEAK_PROFILE_<ID>_KEY``). A key from an
     unrelated default destination is never borrowed. ``onDevice`` is
     local-only, so the legacy ``auto`` setting cannot silently cross a boundary.
+
+    ``onDevice`` loads THIS profile's ``model_file`` — the exact local model that
+    made the destination ready — never the global meeting model (HS-130-03).
     """
     from .engine import MeetingIntel
 
@@ -462,11 +545,10 @@ def build_meeting_intel_for_profile(
             cloud_api_key_env=env,
         )
     if kind == "onDevice":
-        from ..config import Config
-
-        meeting = Config.load().meeting
         kwargs: dict[str, Any] = {"provider": "local"}
-        model_path = getattr(meeting, "intel_realtime_model", None)
+        # The profile's own model_file is the deployment; fall back to the
+        # configured local meeting model only when a profile names none.
+        model_path = str(model_file or "").strip() or configured_local_meeting_model_path()
         if model_path:
             kwargs["model_path"] = model_path
         return MeetingIntel(**kwargs)

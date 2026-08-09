@@ -115,7 +115,7 @@ def test_ask_runs_on_profile_and_names_honest_egress(env, monkeypatch) -> None:
 
     captured = {}
 
-    def fake_for_profile(*, kind, base_url, model, profile_id, node=""):
+    def fake_for_profile(*, kind, base_url, model, profile_id, node="", model_file=""):
         captured.update(kind=kind, base_url=base_url, model=model, profile_id=profile_id)
         intel = _FakeIntel()
         intel.active_provider = "cloud"
@@ -146,7 +146,7 @@ def test_ask_model_override_picks_the_matching_profile(env, monkeypatch) -> None
 
     captured = {}
 
-    def fake_for_profile(*, kind, base_url, model, profile_id, node=""):
+    def fake_for_profile(*, kind, base_url, model, profile_id, node="", model_file=""):
         captured.update(model=model, profile_id=profile_id)
         intel = _FakeIntel()
         intel.active_provider = "cloud"
