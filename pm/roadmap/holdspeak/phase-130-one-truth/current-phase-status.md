@@ -1,6 +1,6 @@
 # Phase 130 — One Truth
 
-**Status:** in-progress (9/11).
+**Status:** in-progress (10/11).
 
 **Last updated:** 2026-08-09.
 
@@ -109,7 +109,7 @@ and the full suites — not why it exists; recorded as an adopted correction.)
 | HS-130-07 | Settings, one honest writer — versioned, transient retry | done | [story-07](story-07-settings-one-writer.md) | [evidence-story-07](./evidence-story-07.md) |
 | HS-130-08 | DecisionReceipt → Decision — the word returns to evidence | done | [story-08](story-08-decision-rename.md) | [evidence-story-08](./evidence-story-08.md) |
 | HS-130-09 | Workbench — one gesture one record, live voice | done | [story-09](story-09-workbench-one-gesture.md) | [evidence-story-09](./evidence-story-09.md) |
-| HS-130-10 | The inherited ledger — triage and assign the 96 | backlog | [story-10](story-10-inherited-ledger.md) | [evidence-story-10](./evidence-story-10.md) |
+| HS-130-10 | The inherited ledger — triage and assign the 96 | done | [story-10](story-10-inherited-ledger.md) | [evidence-story-10](./evidence-story-10.md) |
 | HS-130-11 | The walk | backlog | [story-11](story-11-the-walk.md) | [evidence-story-11](./evidence-story-11.md) |
 
 ## Delivery order (waves)
@@ -210,6 +210,20 @@ committed code with the owner's data.
   `decision_record*` / `/api/decision-records`; "Receipt" is freed for
   immutable kernel evidence, which was the point. Behavior-preserving; schema
   v42→v43 (one idempotent migration). Owner may rename further at the sitting.
+- 2026-08-09 — **HS-130-10 triage RESULT (Candidate Z reconciled).** The full
+  isolated-HOME suite on phase-130 HEAD is byte-identical to the pre-phase
+  baseline — **102 test failures/errors, zero repaired-by-130, zero
+  newly-caused** (every story shipped at zero net regression). Split: **7
+  route to Phase 131** (the sync-registry/kind-drift/changeset-envelope
+  contract — test_web_routes_sync ×2, test_primitive_contract kind-drift ×3,
+  test_primitive_framework_sync, companion-slack qualified-kind); **95
+  re-ledgered** as still-inherited Phase 118–128 integration debt across 36
+  files (workbench-walk e2e 14, web_server 13, intel_streaming 9, companion
+  slack/github/webhook, dictation surfaces, history, live-bus, cadence,
+  decision-records, the ConflictError NameError at meetings/crud.py:161, and
+  the known mesh_dispatch flake). The 95 need a dedicated remediation phase —
+  owner rules its scope at the sitting; this is Candidate Z minus the 131
+  slice. Ledger + reproducible classifier: assets/hs-130-10/.
 - 2026-08-09 — **The inherited-96 ledger comes to 130 for triage** (per the
   Phase 129 handoff) but its **sync-contract slice routes to Phase 131**,
   where the sync registry and deployment revisions live — the two cannot be
