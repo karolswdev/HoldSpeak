@@ -128,8 +128,13 @@ class WorkbenchService:
         recipe = self._db.recipes.get(wb.recipe_id) if wb.recipe_id else None
         if recipe is None:
             raise ValidationError("No recipe assigned")
-        from holdspeak.inference_targets import resolve_inference_target
-        target = resolve_inference_target(self._db, wb.profile_id or "this_machine")
+        from holdspeak.inference_targets import resolve_placement
+        # One placement authority (HS-130-01): Workbench override → Agent
+        # default (recipe.profile_id) → named global default. Retry inherits
+        # the same precedence the run used; no invocation override here.
+        target = resolve_placement(
+            self._db, workbench=wb.profile_id, agent=recipe.profile_id
+        ).target
 
         run_id = None
         with self._db._connection() as conn:

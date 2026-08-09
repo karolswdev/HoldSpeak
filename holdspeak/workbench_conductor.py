@@ -430,7 +430,7 @@ async def run_workbench(workbench_id: str) -> dict:
       → item body (the task itself)
     """
     from .db import get_database
-    from .inference_targets import resolve_inference_target, build_intel_for_target
+    from .inference_targets import resolve_placement, build_intel_for_target
     from .intel.models import MeetingIntelError
 
     db = get_database()
@@ -449,8 +449,18 @@ async def run_workbench(workbench_id: str) -> dict:
     if not recipe:
         return {"error": f"workbench {wb.name}: no recipe assigned"}
 
-    # Resolve and CHECK the target
-    target = resolve_inference_target(db, wb.profile_id or "this_machine")
+    # Resolve and CHECK the target through the ONE placement authority
+    # (HS-130-01). Precedence: invocation override → Workbench override →
+    # Agent default (recipe.profile_id, previously never consulted — the bug)
+    # → named global default. Invocation override has no caller in this
+    # signature yet; the seam is left clean as ``None``.
+    placement = resolve_placement(
+        db,
+        invocation=None,
+        workbench=wb.profile_id,
+        agent=recipe.profile_id,
+    )
+    target = placement.target
     if not target.ready:
         reason = getattr(target, "readiness_reason", "") or "target unavailable"
         log.warning(f"Workbench {wb.name}: target not ready — {reason}")

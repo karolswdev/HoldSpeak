@@ -12,6 +12,8 @@ import { productLabel } from "../lib/productLanguage";
 
 export interface InfoProperty {
   key: string;
+  /** Scoped display label (HS-130-01); falls back to the humanized key. */
+  label?: string;
   /** Control shape the one surface renders. */
   type: "choice";
   /** Choice ids + labels; the current value's id, "" when absent. */
@@ -72,12 +74,16 @@ export const INFO: Record<string, KindInfo> = {
     footprint: () => null,
     properties: [
       {
-        // Runs on: the ONE property with a real update path today (the
-        // recipe PUT's profile_id, the same field the composer writes).
+        // Default runs on: the ONE property with a real update path today
+        // (the recipe PUT's profile_id, the same field the composer writes).
+        // HS-130-01: unset = INHERIT (empty resolves through the global
+        // default), reconciled with RecipeEditor — same label vocabulary,
+        // same empty-value meaning, same token (null).
         key: "runs_on",
+        label: "Default runs on",
         type: "choice",
         choices: (_o, _items) => [
-          { id: "", label: "This device" },
+          { id: "", label: "Inherit default" },
           ...useDesk.getState().profiles.map((p) => ({
             id: String(p.id),
             label: String(p.name || p.id),

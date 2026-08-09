@@ -1,6 +1,6 @@
 # Phase 130 — One Truth
 
-**Status:** chartered (0/11).
+**Status:** in-progress (1/11).
 
 **Last updated:** 2026-08-09.
 
@@ -100,7 +100,7 @@ and the full suites — not why it exists; recorded as an adopted correction.)
 
 | ID | Story | Status | Story file | Evidence |
 |----|-------|--------|------------|----------|
-| HS-130-01 | The precedence resolver — one placement authority | backlog | [story-01](story-01-the-precedence-resolver.md) | [evidence-story-01](./evidence-story-01.md) |
+| HS-130-01 | The precedence resolver — one placement authority | done | [story-01](story-01-the-precedence-resolver.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-130-02 | Collision-free secret slots — the exfiltration path closes | backlog | [story-02](story-02-secret-slots.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-130-03 | One deployment identity — readiness, execution, receipt agree | backlog | [story-03](story-03-one-deployment-identity.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-130-04 | One egress vocabulary — the four lies become one truth | backlog | [story-04](story-04-one-egress-vocabulary.md) | [evidence-story-04](./evidence-story-04.md) |
@@ -131,6 +131,19 @@ Sol returned *"ratify as amended"* with seven reservations, all adopted (see
 SOL-COUNSEL.md and the decision log). This phase is the kernel-free "One Truth"
 half of a **four-phase program** — 130 One Truth, 131 One Admission Path, 132
 One Owner Per Decision, 133 One Word Per Thing.
+
+**Wave A in flight (2026-08-09):** three disjoint-file stories implemented by
+parallel worktree-isolated Terras and integrated with zero conflicts —
+**HS-130-01 (resolver, keystone)** ships first, then HS-130-08 (Decision rename)
+and HS-130-09 (Workbench one-gesture + voice). Verified against a clean isolated
+baseline: the integrated tree matches the inherited red baseline **exactly**
+(105 fail/error, all reproduce on pre-phase main — the 96-ledger + env; HS-130-10
+owns the triage), **zero new regressions** after one orchestrator seam-fix (the
+v39→v40 migration test's hardcoded `SCHEMA_VERSION == 42` bumped to 43 alongside
+08's schema change), web suite 797 green. The local baseline needed an isolated
+HOME: the default DB path is `Path.home()`-relative and the owner's real hub DB
+is at schema v43 while pre-phase code is v42 — 08's bump to v43 is what realigns
+committed code with the owner's data.
 
 ## Active risks
 

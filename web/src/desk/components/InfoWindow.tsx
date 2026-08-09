@@ -203,7 +203,7 @@ export function InfoWindow({
             <div className="info-props">
               {info.properties.map((p) => (
                 <label key={p.key} className="info-prop">
-                  <code>{humanizeWireValue(p.key)}</code>
+                  <code>{p.label ?? humanizeWireValue(p.key)}</code>
                   <select
                     value={p.value(o)}
                     onChange={(e) => void p.set(o, e.target.value)}

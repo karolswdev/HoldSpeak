@@ -22,6 +22,16 @@ TARGET_CONTRACT_VERSION = 1
 PROFILE_ALIAS_VERSION = 1
 THIS_MACHINE_ID = "this_machine"
 PAIRED_DEVICE_ID = "paired_device"
+
+# HS-130-01: the ONE terminal, NAMED global placement default. Placement
+# inherits DOWN through the precedence tiers; when every tier is unset this is
+# the explicit fallback — never `something or "this_machine"` reached by an
+# accidental Python ``or``. To move the global default, change this binding.
+GLOBAL_DEFAULT_TARGET_ID = THIS_MACHINE_ID
+
+# The four placement tiers, highest precedence first (HS-130-01).
+PLACEMENT_SOURCES = ("invocation", "workbench", "agent", "global")
+
 SUPPORTED_PROFILE_KINDS = frozenset(
     {"onDevice", "openAICompatible", "desktop", "meshNode"}
 )
@@ -357,6 +367,72 @@ def resolve_inference_target(db: Any, target_id: Optional[str]) -> InferenceTarg
             readiness_reason=f"Destination '{raw}' does not exist on this device",
         )
     return target_from_profile(profile, db)
+
+
+@dataclass(frozen=True)
+class PlacementResolution:
+    """The outcome of precedence resolution: a target AND its provenance.
+
+    ``source`` names the tier that WON — one of :data:`PLACEMENT_SOURCES`.
+    ``effective_target_id`` is the canonical id the winning pointer resolved
+    to; ``target`` is the fully-constructed destination for that id.
+    """
+
+    effective_target_id: str
+    source: str
+    target: InferenceTarget
+
+    def placement_dict(self) -> dict[str, Any]:
+        """The wire shape every placement API response carries (HS-130-01)."""
+        return {
+            "effective_target_id": self.effective_target_id,
+            "source": self.source,
+        }
+
+
+def _placement_set(pointer: Optional[str]) -> bool:
+    """A tier is SET only when it names a real pointer. ``None``/blank inherits."""
+    return bool(pointer is not None and str(pointer).strip())
+
+
+def resolve_placement(
+    db: Any,
+    *,
+    invocation: Optional[str] = None,
+    workbench: Optional[str] = None,
+    agent: Optional[str] = None,
+) -> PlacementResolution:
+    """The ONE placement authority (HS-130-01).
+
+    Turn a stored placement pointer into an effective target, carrying the
+    provenance of the tier that won. Precedence, highest first:
+
+        invocation override → Workbench override → Agent/capability default
+        → global default
+
+    ``None``/unset at every tier inherits DOWN. The global default
+    (:data:`GLOBAL_DEFAULT_TARGET_ID`) is the one terminal, NAMED fallback;
+    it is NEVER reached by an accidental ``pointer or "this_machine"``.
+
+    This composes :func:`resolve_inference_target` for the winning tier — it
+    does NOT reimplement target construction.
+    """
+    tiers = (
+        ("invocation", invocation),
+        ("workbench", workbench),
+        ("agent", agent),
+    )
+    source = "global"
+    pointer: Optional[str] = GLOBAL_DEFAULT_TARGET_ID
+    for name, value in tiers:
+        if _placement_set(value):
+            source = name
+            pointer = value
+            break
+    target = resolve_inference_target(db, pointer)
+    return PlacementResolution(
+        effective_target_id=target.id, source=source, target=target
+    )
 
 
 def target_refusal(target: InferenceTarget) -> dict[str, Any]:
