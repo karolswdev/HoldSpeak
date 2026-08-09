@@ -131,15 +131,24 @@ describe("DictationPage Try it failure actions", () => {
     // HS-111: the pipeline result renders as a mono receipt
     // (FINAL_TEXT: …), so match within the receipt line.
     await screen.findByText(/FINAL_TEXT: Ran on the alternate target\./);
-    expect(mocks.apiFetch).toHaveBeenCalledWith("/api/settings", {
-      method: "PUT",
-      json: { dictation: { runtime: { profile_id: "p1" } } },
-    });
+    // HS-130-07: "Run elsewhere" is a TRANSIENT one-run override — the chosen
+    // target rides the re-run's dry-run request, and the standing target in
+    // settings is never rewritten.
+    const dryRunCalls = mocks.apiFetch.mock.calls.filter(
+      (c) => c[0] === "/api/dictation/dry-run",
+    );
+    expect((dryRunCalls.at(-1)?.[1] as { json?: any }).json.profile_id).toBe(
+      "p1",
+    );
+    expect(mocks.apiFetch).not.toHaveBeenCalledWith(
+      "/api/settings",
+      expect.objectContaining({ method: "PUT" }),
+    );
     expect(calls).toBe(2);
     expect(editor).toHaveValue("A draft that must not disappear.");
   });
 
-  it("maps this-device back to the hub default profile", async () => {
+  it("maps this-device back to the hub default profile for that run only", async () => {
     let calls = 0;
     mockRoutes({
       dryRun: () => {
@@ -157,10 +166,18 @@ describe("DictationPage Try it failure actions", () => {
     fireEvent.change(picker, { target: { value: "this_machine" } });
 
     await screen.findByText(/FINAL_TEXT: Done\./);
-    expect(mocks.apiFetch).toHaveBeenCalledWith("/api/settings", {
-      method: "PUT",
-      json: { dictation: { runtime: { profile_id: null } } },
-    });
+    // HS-130-07: this-machine clears the per-run override (null) on the
+    // re-run's dry-run request — it does NOT persist a standing target.
+    const dryRunCalls = mocks.apiFetch.mock.calls.filter(
+      (c) => c[0] === "/api/dictation/dry-run",
+    );
+    expect(
+      (dryRunCalls.at(-1)?.[1] as { json?: any }).json.profile_id,
+    ).toBeNull();
+    expect(mocks.apiFetch).not.toHaveBeenCalledWith(
+      "/api/settings",
+      expect.objectContaining({ method: "PUT" }),
+    );
   });
 
   it("offers Setup without Retry or alternate Runs on for a rejected token", async () => {

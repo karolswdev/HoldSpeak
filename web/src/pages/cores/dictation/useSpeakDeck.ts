@@ -87,8 +87,11 @@ export function useSpeakDeck(announce: (text: string, tone?: "ok" | "warn") => v
     if (utteranceRecovered) announce("Draft restored");
   }, [utteranceRecovered, announce]);
   /* REHEARSE — the explicit dry run. It previews the pipeline and
-     delivers NOTHING; it is never what a plain TALK release does. */
-  const run = async (text: string = utterance) => {
+     delivers NOTHING; it is never what a plain TALK release does.
+     HS-130-07: an optional `profileId` is a TRANSIENT one-run target
+     override (the "Retry on" recovery). It rides the dry-run request for
+     this run only and never persists to settings. */
+  const run = async (text: string = utterance, profileId?: string | null) => {
     setBusy(true);
     setError("");
     setFailure(null);
@@ -100,6 +103,9 @@ export function useSpeakDeck(announce: (text: string, tone?: "ok" | "warn") => v
           json: {
             utterance: text,
             ...(projectRoot ? { project_root: projectRoot } : {}),
+            ...(profileId !== undefined
+              ? { profile_id: profileId === "this_machine" ? null : profileId }
+              : {}),
           },
         }),
       );
@@ -260,18 +266,15 @@ export function useSpeakDeck(announce: (text: string, tone?: "ok" | "warn") => v
       mounted = false;
     };
   }, [actions, targets.length]);
+  /* HS-130-07: "Run elsewhere" is a TRANSIENT one-run override, not a
+     standing preference. It retries THIS run on the chosen target and
+     leaves `dictation.runtime.profile_id` in settings untouched — a
+     recovery must never silently rewrite the desk's standing target
+     (Settings is the one writer of that preference). */
   const runElsewhere = async (id: string) => {
     setTargetId(id);
     try {
-      await apiFetch("/api/settings", {
-        method: "PUT",
-        json: {
-          dictation: {
-            runtime: { profile_id: id === "this_machine" ? null : id },
-          },
-        },
-      });
-      await run();
+      await run(utterance, id);
     } catch (reason) {
       announce(`⚠ ${readableError(reason)}`, "warn");
     }

@@ -136,6 +136,8 @@ export interface CadenceHistoryResponse {
 export interface SettingsResponse {
   config_version?: number;
   control_mode?: string;
+  /** HS-130-07: the optimistic-concurrency token; echoed on PUT. */
+  _revision?: string;
   _secrets?: Record<string, SecretState>;
   dictation?: DictationSettings;
   hotkey?: Record<string, unknown>;

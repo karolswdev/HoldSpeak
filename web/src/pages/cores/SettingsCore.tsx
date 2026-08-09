@@ -151,13 +151,25 @@ function SettingsFace({ hero, scope }: CoreProps) {
      a refusal replaces it in the danger tone until the next edit. */
   const saveTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
   useEffect(() => () => clearTimeout(saveTimer.current), []);
+  // HS-130-07: Settings is the canonical full-document writer. It threads the
+  // FRESHEST `_revision` (via a ref, not the possibly-stale debounced draft)
+  // so its own back-to-back saves never self-conflict, while a genuinely
+  // concurrent write from another surface is still rejected + reconciled.
+  const revisionRef = useRef<string | undefined>(undefined);
+  revisionRef.current = resource.data._revision;
   const save = async (payload?: Record<string, unknown>) => {
     setSaving(true);
     setRefusal("");
     try {
+      const body = payload ?? resource.data;
       const result = await apiFetch<{ settings?: Record<string, unknown> }>(
         "/api/settings",
-        { method: "PUT", json: payload ?? resource.data },
+        {
+          method: "PUT",
+          json: revisionRef.current
+            ? { ...body, _revision: revisionRef.current }
+            : body,
+        },
       );
       resource.setData(result.settings ?? payload ?? resource.data);
       setWrittenAt(new Date().toTimeString().slice(0, 8));

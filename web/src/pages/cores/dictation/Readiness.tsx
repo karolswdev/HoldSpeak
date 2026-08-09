@@ -2,6 +2,7 @@
 import { useState, type ReactNode } from "react";
 import { Button } from "../../../components/signal/Signal";
 import { apiFetch } from "../../../lib/api";
+import { openSurfaceOr } from "../../../desk/shell";
 import { useResource } from "../../pageSupport";
 import type { DictationReadinessResponse } from "../core-types";
 import { presentValue } from "../../../desk/surface/format";
@@ -11,7 +12,6 @@ import {
   SurfaceState,
 } from "../../../desk/surface/Surface";
 import {
-  CheckGadget,
   FoldGadget,
   GadgetGroup,
   GadgetRow,
@@ -30,7 +30,6 @@ export function Readiness() {
     `/api/dictation/readiness${query}`,
     {},
   );
-  const [pending, setPending] = useState(false);
   const [kbBusy, setKbBusy] = useState(false);
   const config = (resource.data.config ?? {}) as Record<string, unknown>;
   const target = (resource.data.target ?? {}) as Record<string, unknown>;
@@ -39,18 +38,6 @@ export function Readiness() {
     ? (resource.data.warnings as Record<string, unknown>[])
     : [];
   const enabled = config.pipeline_enabled === true;
-  const togglePipeline = async (next: boolean) => {
-    setPending(true);
-    try {
-      await apiFetch("/api/settings", {
-        method: "PUT",
-        json: { dictation: { pipeline: { enabled: next } } },
-      });
-      await resource.reload();
-    } finally {
-      setPending(false);
-    }
-  };
   const createStarterKb = async () => {
     setKbBusy(true);
     try {
@@ -78,18 +65,32 @@ export function Readiness() {
       onRetry={() => void resource.reload()}
     >
       <GadgetGroup label="Pipeline">
+        {/* HS-130-07: the pipeline's ON/OFF is a Settings-owned preference
+            (one writer). This readiness sheet shows the EFFECTIVE state and
+            opens the exact Settings module; it no longer persists the toggle
+            (two writers silently clobbered each other before). */}
         <GadgetRow
           label="Dictation pipeline"
           fact={`${presentValue(config.backend) || "automatic"} · ${
             presentValue(config.max_total_latency_ms) || "—"
           } MS`}
         >
-          <CheckGadget
-            label="Dictation pipeline"
-            checked={enabled}
-            disabled={pending}
-            onChange={(next) => void togglePipeline(next)}
-          />
+          <span className="gadget-checkline">
+            <LampGadget
+              label={enabled ? "ON" : "OFF"}
+              on={enabled}
+              tone={enabled ? "ok" : "warn"}
+            />
+            <Button
+              dense
+              variant="ghost"
+              onClick={() =>
+                openSurfaceOr("configure-settings", "/settings", "voice-typing")
+              }
+            >
+              {enabled ? "Manage in Settings" : "Enable in Settings"}
+            </Button>
+          </span>
         </GadgetRow>
         {hasKbWarning ? (
           <GadgetRow label="Project KB" fact="MISSING">

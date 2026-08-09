@@ -1,6 +1,6 @@
 # Phase 130 — One Truth
 
-**Status:** in-progress (8/11).
+**Status:** in-progress (9/11).
 
 **Last updated:** 2026-08-09.
 
@@ -106,7 +106,7 @@ and the full suites — not why it exists; recorded as an adopted correction.)
 | HS-130-04 | One egress vocabulary — the four lies become one truth | done | [story-04](story-04-one-egress-vocabulary.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-130-05 | One meeting placement policy | done | [story-05](story-05-meeting-placement-policy.md) | [evidence-story-05](./evidence-story-05.md) |
 | HS-130-06 | Ask tells the truth — no model-name retargeting | done | [story-06](story-06-ask-tells-the-truth.md) | [evidence-story-06](./evidence-story-06.md) |
-| HS-130-07 | Settings, one honest writer — versioned, transient retry | backlog | [story-07](story-07-settings-one-writer.md) | [evidence-story-07](./evidence-story-07.md) |
+| HS-130-07 | Settings, one honest writer — versioned, transient retry | done | [story-07](story-07-settings-one-writer.md) | [evidence-story-07](./evidence-story-07.md) |
 | HS-130-08 | DecisionReceipt → Decision — the word returns to evidence | done | [story-08](story-08-decision-rename.md) | [evidence-story-08](./evidence-story-08.md) |
 | HS-130-09 | Workbench — one gesture one record, live voice | done | [story-09](story-09-workbench-one-gesture.md) | [evidence-story-09](./evidence-story-09.md) |
 | HS-130-10 | The inherited ledger — triage and assign the 96 | backlog | [story-10](story-10-inherited-ledger.md) | [evidence-story-10](./evidence-story-10.md) |
