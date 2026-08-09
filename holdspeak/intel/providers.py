@@ -7,6 +7,7 @@ that monkeypatch `holdspeak.intel.OpenAI` / `holdspeak.intel.Llama` are honored.
 
 from __future__ import annotations
 
+import hashlib
 import os
 from dataclasses import dataclass, replace
 from pathlib import Path
@@ -267,11 +268,38 @@ def endpoint_egress(
     return badge
 
 
+def profile_slot_id(profile_id: str) -> str:
+    """Injective, deterministic, non-secret secret-slot id for a profile (HS-130-02).
+
+    The legacy scheme mapped every non-alphanumeric char to ``_``, so ``foo-bar``,
+    ``foo_bar`` and ``foo.bar`` all collapsed to one slot — a device-local
+    credential could be exfiltrated by a synced/created profile whose id merely
+    *shaped* like an existing one (the key belongs to the slot, not the id).
+
+    This slot is collision-free by construction: a human-readable slug (which may
+    still collide under the lossy alnum map) is disambiguated by a hex digest of
+    the RAW id bytes, so two distinct ids ALWAYS land in distinct slots. The
+    digest is a pure function of the raw id, so a synced profile resolves the same
+    slot on every device and across process restarts. A blank id has no slot and
+    REFUSES — callers must never fall back to a shared name.
+    """
+    raw = str(profile_id or "")
+    if not raw.strip():
+        raise ValueError("cannot derive a secret slot from a blank profile id")
+    slug = "".join(ch if ch.isalnum() else "_" for ch in raw.upper())[:48]
+    digest = hashlib.sha256(raw.encode("utf-8")).hexdigest()[:16].upper()
+    return f"{slug}_{digest}"
+
+
 def profile_key_env(profile_id: str) -> str:
     """The hub env var that holds a runtime profile's API key (Phase 24). The key lives in
-    the hub's SECRETS (env), never on the synced profile shape or in the payload."""
-    safe = "".join(ch if ch.isalnum() else "_" for ch in str(profile_id or "").upper())
-    return f"HOLDSPEAK_PROFILE_{safe}_KEY"
+    the hub's SECRETS (env), never on the synced profile shape or in the payload.
+
+    The env name is derived from the injective secret-slot id (HS-130-02), so two
+    profile ids that differ only in punctuation NEVER read each other's key. A
+    blank id raises rather than resolving to a shared ``HOLDSPEAK_PROFILE__KEY``.
+    """
+    return f"HOLDSPEAK_PROFILE_{profile_slot_id(profile_id)}_KEY"
 
 
 @dataclass(frozen=True)
@@ -420,6 +448,12 @@ def build_meeting_intel_for_profile(
 
         return MeshRelayIntel(node=str(node).strip(), model_hint=str(model or ""))  # type: ignore[return-value]
     if kind == "openAICompatible" and str(base_url or "").strip():
+        # Refuse on ambiguity: a blank profile id has no unique secret slot, and
+        # borrowing a shared env name would let an unidentified destination read
+        # another's key (HS-130-02). Fall back to the configured local engine
+        # rather than send a transcript out under a collided credential.
+        if not str(profile_id or "").strip():
+            return build_configured_meeting_intel()
         env = profile_key_env(profile_id)
         return MeetingIntel(
             provider="cloud",

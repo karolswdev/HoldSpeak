@@ -53,10 +53,18 @@ def _private_endpoint(base_url: str) -> bool:
 
 
 def _profile_key_present(profile_id: str) -> bool:
+    # Readiness is true ONLY when THIS destination has its OWN key under its OWN
+    # injective slot (HS-130-02) — never because a punctuation-collided sibling's
+    # key happens to be present. A profile with no unique slot (blank id) is never
+    # "ready"; it refuses rather than reading a shared name.
     # Import lazily: provider imports this module on some boot paths.
     from .intel.providers import profile_key_env
 
-    return bool(os.environ.get(profile_key_env(profile_id), "").strip())
+    try:
+        env = profile_key_env(profile_id)
+    except ValueError:
+        return False
+    return bool(os.environ.get(env, "").strip())
 
 
 def _recovery(reason: str, *, alternate: str = THIS_MACHINE_ID) -> dict[str, str]:
@@ -249,7 +257,10 @@ def target_from_profile(profile: Any, db: Any = None) -> InferenceTarget:
         )
         model_file = str(getattr(profile, "model_file", "") or "").strip()
         model = model or model_file
-        if not model_file or not Path(model_file).expanduser().exists():
+        if not model_file:
+            state = "unavailable"
+            reason = f"Destination '{name}' names no on-device model file"
+        elif not Path(model_file).expanduser().exists():
             state = "unavailable"
             reason = f"model file not found: {model_file}"
     elif legacy_kind == "desktop":

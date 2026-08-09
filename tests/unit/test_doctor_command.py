@@ -9,6 +9,7 @@ import pytest
 
 import holdspeak.commands.doctor as doctor
 from holdspeak.config import Config
+from holdspeak.intel.providers import profile_key_env
 
 
 def test_check_hotkey_wayland_failure_is_warn(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -68,7 +69,9 @@ def _cloud_config(*, provider: str = "cloud") -> SimpleNamespace:
     )
 
 
-HOMELAB_KEY_ENV = "HOLDSPEAK_PROFILE_P_HOMELAB_KEY"
+# Derived from the production slot scheme (HS-130-02: injective, hash-suffixed)
+# so the test tracks whatever env-name scheme ships rather than a hardcoded one.
+HOMELAB_KEY_ENV = profile_key_env("p-homelab")
 
 
 def _wire_homelab_target(monkeypatch, *, model: str = "qwen2.5-32b-instruct") -> None:
