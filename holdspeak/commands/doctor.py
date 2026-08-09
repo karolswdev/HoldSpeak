@@ -459,7 +459,9 @@ def _check_meeting_intel_egress(config: Config) -> DoctorCheck:
             detail="Disabled — no transcript leaves this machine.",
         )
 
-    can_transmit, description = intel_egress_posture(meeting.intel_provider)
+    can_transmit, description = intel_egress_posture(
+        meeting.intel_provider, meeting_cfg=meeting
+    )
     if not can_transmit:
         return DoctorCheck(
             name="Meeting intelligence egress",

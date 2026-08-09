@@ -130,7 +130,8 @@ def test_ask_runs_on_profile_and_names_honest_egress(env, monkeypatch) -> None:
     body = resp.json()
     assert captured["profile_id"] == pid
     # The badge names where THIS run went — the run's profile, never the app default.
-    assert body["egress"] == {"scope": "cloud", "host": "192.168.1.43"}
+    # HS-130-04: a LAN endpoint is honestly private_network, not a flat cloud lie.
+    assert body["egress"] == {"scope": "private_network", "host": "192.168.1.43"}
     assert body["model"] == "Qwen3.5-9B-Q6_K"
     assert body["profile_id"] == pid
 
@@ -165,7 +166,8 @@ def test_ask_model_override_picks_the_matching_profile(env, monkeypatch) -> None
     assert captured == {"model": "Qwen3.5-9B-Q6_K", "profile_id": pid}
     assert body["model"] == "Qwen3.5-9B-Q6_K"     # the run record names what ran
     assert body["profile_id"] == pid
-    assert body["egress"] == {"scope": "cloud", "host": "192.168.1.43"}
+    # HS-130-04: a LAN endpoint is honestly private_network, not a flat cloud lie.
+    assert body["egress"] == {"scope": "private_network", "host": "192.168.1.43"}
 
 
 def test_ask_model_override_matching_the_hubs_own_model_runs_the_default_engine(env, monkeypatch) -> None:

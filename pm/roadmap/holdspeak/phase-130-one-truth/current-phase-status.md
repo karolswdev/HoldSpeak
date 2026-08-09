@@ -1,6 +1,6 @@
 # Phase 130 — One Truth
 
-**Status:** in-progress (5/11).
+**Status:** in-progress (6/11).
 
 **Last updated:** 2026-08-09.
 
@@ -103,7 +103,7 @@ and the full suites — not why it exists; recorded as an adopted correction.)
 | HS-130-01 | The precedence resolver — one placement authority | done | [story-01](story-01-the-precedence-resolver.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-130-02 | Collision-free secret slots — the exfiltration path closes | done | [story-02](story-02-secret-slots.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-130-03 | One deployment identity — readiness, execution, receipt agree | done | [story-03](story-03-one-deployment-identity.md) | [evidence-story-03](./evidence-story-03.md) |
-| HS-130-04 | One egress vocabulary — the four lies become one truth | backlog | [story-04](story-04-one-egress-vocabulary.md) | [evidence-story-04](./evidence-story-04.md) |
+| HS-130-04 | One egress vocabulary — the four lies become one truth | done | [story-04](story-04-one-egress-vocabulary.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-130-05 | One meeting placement policy | backlog | [story-05](story-05-meeting-placement-policy.md) | [evidence-story-05](./evidence-story-05.md) |
 | HS-130-06 | Ask tells the truth — no model-name retargeting | backlog | [story-06](story-06-ask-tells-the-truth.md) | [evidence-story-06](./evidence-story-06.md) |
 | HS-130-07 | Settings, one honest writer — versioned, transient retry | backlog | [story-07](story-07-settings-one-writer.md) | [evidence-story-07](./evidence-story-07.md) |

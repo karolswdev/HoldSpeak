@@ -73,12 +73,14 @@ def test_endpoint_egress_shapes() -> None:
         "scope": "local",
         "label": "Local only",
     }
+    # HS-130-04: a LAN endpoint is private_network, never a flat cloud lie.
     assert endpoint_egress(cloud=True, base_url="http://192.168.1.43:8080/v1") == {
-        "scope": "cloud",
+        "scope": "private_network",
         "host": "192.168.1.43",
     }
-    # a cloud badge with no URL is the default OpenAI endpoint, never blank
-    assert endpoint_egress(cloud=True, base_url=None)["host"] == "api.openai.com"
+    # HS-130-04: a cloud badge with no URL names NO host (the DEFAULT_CLOUD_HOST
+    # fabrication is gone — a run never claims a host it did not contact).
+    assert endpoint_egress(cloud=True, base_url=None) == {"scope": "cloud"}
 
 
 def test_the_scattered_egress_sites_use_the_one_constructor() -> None:
@@ -117,7 +119,8 @@ def test_run_egress_default_cloud_reports_the_effective_endpoint(monkeypatch) ->
     egress, model = _run_egress(
         None, SimpleNamespace(active_provider="cloud"), default_model=""
     )
-    assert egress == {"scope": "cloud", "host": "192.168.1.43"}
+    # HS-130-04: the adopted LAN endpoint is private_network, not a flat cloud.
+    assert egress == {"scope": "private_network", "host": "192.168.1.43"}
     assert model == "Qwen3.5-9B-Q6_K"
 
 

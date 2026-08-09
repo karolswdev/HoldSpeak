@@ -36,6 +36,10 @@ export function egressScopeLamp(scope: string | null | undefined): EgressLamp {
   switch (scope) {
     case "local":
       return { label: "LOCAL", tone: "ok" };
+    // HS-130-04: the run-egress badge now speaks the four-value vocabulary. A
+    // LAN endpoint is private_network (LAN), never a flat cloud lie.
+    case "private_network":
+      return { label: "LAN", tone: "warn" };
     case "mesh":
       return { label: "PAIRED", tone: "warn" };
     case "cloud":

@@ -216,7 +216,9 @@ class RuntimeActivityMixin:
                 "can_transmit_offmachine": False,
                 "egress": "Disabled — no transcript leaves this machine.",
             }
-        can_transmit, description = intel_egress_posture(meeting.intel_provider)
+        can_transmit, description = intel_egress_posture(
+            meeting.intel_provider, meeting_cfg=meeting
+        )
         return {
             "enabled": True,
             "provider": meeting.intel_provider,

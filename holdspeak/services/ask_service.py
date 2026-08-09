@@ -169,15 +169,10 @@ class AskService:
         return "\n\n".join(blocks), echo
 
     def _egress(self, profile: Any, intel: Any) -> tuple[dict[str, Any], str]:
-        from ..intel.providers import endpoint_egress
-        if profile is not None and profile.kind == "meshNode" and getattr(profile,"node",""): return endpoint_egress(node=profile.node), str(profile.model or "")
-        if profile is not None and profile.kind == "openAICompatible" and profile.base_url: return endpoint_egress(cloud=True, base_url=profile.base_url), str(profile.model or "")
-        if getattr(intel,"active_provider","") == "mesh": return endpoint_egress(node=getattr(intel,"node","")), str(getattr(intel,"model_hint","") or "")
-        if getattr(intel,"active_provider","") == "cloud":
-            from ..config import Config
-            from ..intel.providers import effective_intel_cloud
-            effective=effective_intel_cloud(Config.load().meeting); return endpoint_egress(cloud=True, base_url=effective.base_url), str(effective.model or "")
-        return endpoint_egress(cloud=False), self._hub_model()
+        # ONE run-egress rule (HS-130-04): ask and recipe runs share it, so a LAN
+        # destination badges private_network everywhere instead of a flat cloud.
+        from ..intel.providers import run_egress
+        return run_egress(profile, intel, default_model=self._hub_model())
     def _emit(self, state: str, **frame: Any) -> None:
         if self._broadcast: self._broadcast(state, **frame)
     @staticmethod

@@ -8,6 +8,7 @@ that monkeypatch `holdspeak.intel.OpenAI` / `holdspeak.intel.Llama` are honored.
 from __future__ import annotations
 
 import hashlib
+import ipaddress
 import os
 from dataclasses import dataclass, replace
 from pathlib import Path
@@ -21,7 +22,6 @@ from ..logging_config import get_logger
 if TYPE_CHECKING:
     from .engine import MeetingIntel
 from .models import (
-    DEFAULT_CLOUD_HOST,
     DEFAULT_INTEL_CLOUD_API_KEY_ENV,
     DEFAULT_INTEL_CLOUD_MODEL,
     DEFAULT_INTEL_MODEL_PATH,
@@ -327,6 +327,53 @@ def endpoint_host(base_url: Any) -> str:
     return parsed.hostname or ""
 
 
+# The ONE egress vocabulary (HS-130-04). Every surface that states where a run
+# went reports exactly one of these four boundaries.
+EGRESS_LOCAL = "local"
+EGRESS_PRIVATE_NETWORK = "private_network"
+EGRESS_MESH = "mesh"
+EGRESS_CLOUD = "cloud"
+EGRESS_BOUNDARIES = (EGRESS_LOCAL, EGRESS_PRIVATE_NETWORK, EGRESS_MESH, EGRESS_CLOUD)
+
+
+def egress_boundary(
+    *, cloud: bool = False, base_url: Optional[str] = None, node: Optional[str] = None
+) -> str:
+    """THE one egress-vocabulary classifier (HS-130-04).
+
+    Maps the endpoint a run ACTUALLY used to one of the four egress boundaries
+    ``{local, private_network, mesh, cloud}``. Every surface that states where a
+    run went — the badge (`endpoint_egress`), the run egress (`run_egress`),
+    doctor, and the posture string — reads its verdict HERE, so a LAN box is
+    ``private_network`` everywhere and a mesh route is ``mesh`` (never
+    "Local only"). No host is invented: an endpoint with no parseable host is
+    classified by intent (``cloud=True`` = the default public endpoint) and is
+    NEVER stamped with a fabricated host name (the old ``DEFAULT_CLOUD_HOST`` lie
+    is gone).
+    """
+    if node and str(node).strip():
+        return EGRESS_MESH
+    host = endpoint_host(base_url).lower().rstrip(".")
+    if not host:
+        # No concrete endpoint host. ``cloud=True`` is the default public cloud
+        # endpoint (contacted later, named nowhere here); otherwise the run
+        # stays on THIS machine.
+        return EGRESS_CLOUD if cloud else EGRESS_LOCAL
+    if host in {"localhost", "localhost.localdomain"} or host.endswith(".localhost"):
+        return EGRESS_LOCAL
+    try:
+        address = ipaddress.ip_address(host)
+    except ValueError:
+        if host.endswith((".local", ".internal", ".lan", ".home")):
+            return EGRESS_PRIVATE_NETWORK
+        return EGRESS_CLOUD
+    if address.is_loopback:
+        return EGRESS_LOCAL
+    if address.is_private or address.is_link_local:
+        return EGRESS_PRIVATE_NETWORK
+    return EGRESS_CLOUD
+
+
 def endpoint_egress(
     *, cloud: bool = False, base_url: Optional[str] = None,
     label: Optional[str] = None, node: Optional[str] = None
@@ -334,18 +381,49 @@ def endpoint_egress(
     """The ONE egress badge constructor (HS-84-04): ``{scope, host?, label?}``.
 
     Every surface that states where a run went builds its badge here — routes,
-    cadence, audit — so the wire shape can't drift per call site. Badges stay
-    REPORTED facts: pass the endpoint the run actually used, never a default.
+    cadence, audit — so the wire shape can't drift per call site. ``scope`` is
+    the boundary from :func:`egress_boundary` (HS-130-04), so a LAN endpoint
+    badges ``private_network`` and a mesh route badges ``mesh`` — the flat
+    three-value ``{mesh, cloud, local}`` model is gone. Badges stay REPORTED
+    facts: a host is stamped only when it was actually resolved from the
+    endpoint the run used, never a fabricated default.
     """
-    if node:
-        badge: dict[str, Any] = {"scope": "mesh", "host": str(node)}
-    else:
-        badge = {"scope": "cloud" if cloud else "local"}
-        if cloud:
-            badge["host"] = endpoint_host(base_url) or DEFAULT_CLOUD_HOST
+    scope = egress_boundary(cloud=cloud, base_url=base_url, node=node)
+    badge: dict[str, Any] = {"scope": scope}
+    if scope == EGRESS_MESH:
+        badge["host"] = str(node)
+    elif scope in (EGRESS_PRIVATE_NETWORK, EGRESS_CLOUD):
+        host = endpoint_host(base_url)
+        if host:
+            badge["host"] = host
     if label:
         badge["label"] = label
     return badge
+
+
+def run_egress(profile: Any, intel: Any, *, default_model: str) -> tuple[dict[str, Any], str]:
+    """The ONE run-egress badge rule (HS-130-04) shared by every run surface.
+
+    Ask (`services.ask_service`) and recipe runs (`services.support`) both call
+    HERE, so "where did this run go" has a single owner instead of two drifting
+    copies. The endpoint the run actually used is classified through
+    :func:`egress_boundary` via :func:`endpoint_egress`, so a LAN destination
+    badges ``private_network`` and a mesh route badges ``mesh`` — never the old
+    flat ``cloud`` for every remote endpoint.
+    """
+    kind = getattr(profile, "kind", "") if profile is not None else ""
+    if kind == "meshNode" and getattr(profile, "node", ""):
+        return endpoint_egress(node=profile.node), str(getattr(profile, "model", "") or "")
+    if kind == "openAICompatible" and getattr(profile, "base_url", ""):
+        return endpoint_egress(cloud=True, base_url=profile.base_url), str(getattr(profile, "model", "") or "")
+    if getattr(intel, "active_provider", "") == "mesh":
+        return endpoint_egress(node=getattr(intel, "node", "")), str(getattr(intel, "model_hint", "") or "")
+    if getattr(intel, "active_provider", "") == "cloud":
+        from ..config import Config
+
+        effective = effective_intel_cloud(Config.load().meeting)
+        return endpoint_egress(cloud=True, base_url=effective.base_url), str(effective.model or "")
+    return endpoint_egress(cloud=False), default_model
 
 
 def profile_slot_id(profile_id: str) -> str:
@@ -555,28 +633,79 @@ def build_meeting_intel_for_profile(
     return build_configured_meeting_intel()
 
 
-def intel_egress_posture(provider: str = DEFAULT_INTEL_PROVIDER) -> tuple[bool, str]:
-    """Describe whether the configured provider can send transcripts off-machine.
+def configured_egress_boundary(meeting_cfg: Any) -> str:
+    """The egress boundary the CONFIGURED meeting-intel run will actually cross.
 
-    This is a *static* description of intent from config — it answers "can this
-    setting transmit a transcript to the cloud?", not "is a model loaded right
-    now?". It is the single source of truth for the egress posture surfaced in
-    ``holdspeak doctor`` and the web runtime status (HS-25-01).
+    Reads the RESOLVED endpoint (`effective_intel_cloud` honors the
+    ``intel_profile_id`` pointer — mesh node / private endpoint / default cloud),
+    NOT ``intel_provider`` alone. A ``meshNode`` pointer therefore reports
+    ``mesh`` even when ``intel_provider`` still says ``local`` — matching what
+    `build_configured_meeting_intel` actually loads (the relay wins regardless of
+    provider). This DESCRIBES the chosen route; it does not select it (placement
+    is HS-130-05).
+    """
+    effective = effective_intel_cloud(meeting_cfg)
+    if effective.node:
+        return EGRESS_MESH
+    provider = _normalize_provider(getattr(meeting_cfg, "intel_provider", None))
+    if provider == "local":
+        # A local provider runs in-process even when a cloud endpoint is
+        # configured: ``MeetingIntel(provider="local", ...)`` ignores the
+        # base_url, so nothing leaves this machine.
+        return EGRESS_LOCAL
+    # cloud / auto: the cloud leg's endpoint decides private vs public.
+    return egress_boundary(cloud=True, base_url=effective.base_url)
+
+
+# Boundary → (can_transmit_offmachine, human description). The ONE mapping the
+# posture string and doctor/web status read (HS-130-04).
+_EGRESS_POSTURE: dict[str, tuple[bool, str]] = {
+    EGRESS_LOCAL: (False, "Local only — transcripts never leave this machine."),
+    EGRESS_PRIVATE_NETWORK: (
+        True,
+        "Private network — transcripts are sent to a device on your local network.",
+    ),
+    EGRESS_MESH: (
+        True,
+        "Private mesh — transcripts are relayed to your configured mesh node.",
+    ),
+    EGRESS_CLOUD: (
+        True,
+        "Cloud — transcripts are sent to the configured cloud endpoint.",
+    ),
+}
+
+
+def _provider_only_boundary(provider: Optional[str]) -> str:
+    """Boundary from a bare provider string with no profile pointer (legacy)."""
+    normalized = _normalize_provider(provider)
+    if normalized == "local":
+        return EGRESS_LOCAL
+    # cloud / auto with no resolved endpoint = the default public cloud endpoint.
+    return EGRESS_CLOUD
+
+
+def intel_egress_posture(
+    provider: str = DEFAULT_INTEL_PROVIDER, *, meeting_cfg: Any = None
+) -> tuple[bool, str]:
+    """Describe the egress boundary the configured meeting-intel run will cross.
+
+    The single source of truth for the egress posture surfaced in
+    ``holdspeak doctor`` and the web runtime status (HS-25-01). When
+    ``meeting_cfg`` is given the verdict derives from the RESOLVED endpoint
+    (`configured_egress_boundary`), so a ``meshNode`` route reports mesh and a
+    LAN endpoint reports the private network — the "Local only" string can no
+    longer appear for an off-machine route (HS-130-04). With only a bare
+    ``provider`` string (legacy callers), the boundary is derived from the
+    provider alone.
 
     Returns ``(can_transmit_offmachine, human_description)``.
     """
-    normalized = _normalize_provider(provider)
-    if normalized == "local":
-        return False, "Local only — transcripts never leave this machine."
-    if normalized == "cloud":
-        return True, "Cloud — transcripts are sent to the configured cloud endpoint."
-    # auto = local-first, but will fall back to the cloud when no local model is
-    # available, so the configuration *can* transmit off-machine.
-    return (
-        True,
-        "Auto — local first, but falls back to sending transcripts to the cloud "
-        "when no local model is available.",
-    )
+    if meeting_cfg is not None:
+        boundary = configured_egress_boundary(meeting_cfg)
+    else:
+        boundary = _provider_only_boundary(provider)
+    return _EGRESS_POSTURE[boundary]
 
 
 def get_intel_runtime_status(
