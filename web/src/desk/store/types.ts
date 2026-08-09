@@ -65,8 +65,10 @@ export interface DeskState {
   profiles: Array<Record<string, unknown>>;
   projects: ProjectSummary[];
   inferenceTargets: InferenceTarget[];
-  /** HS-83-03 -- the hub's runnable models (the ask allow-list). */
+  /** HS-83-03 -- the hub's runnable models (the ask allow-list).
+   * HS-130-06: one entry per destination, keyed by `id` (name may repeat). */
   models: Array<{
+    id: string;
     name: string;
     source: "hub" | "profile";
     profile_id: string | null;

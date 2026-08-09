@@ -155,6 +155,7 @@ describe("Phase 93 Desk arrival", () => {
       ],
       models: [
         {
+          id: "this_machine",
           name: "Qwen local",
           source: "hub",
           profile_id: null,
