@@ -1,0 +1,35 @@
+# Audit 1 — Python runtime defect claims (issue #450), verified 2026-08-08
+
+Verdicts against the current tree (post-PR #451). All eight claims CONFIRMED.
+
+**1. `this_machine` readiness vs. execution model — CONFIRMED**
+`holdspeak/inference_targets.py:152-179` (`_this_machine_readiness`) loads `Config.load().dictation.runtime` and checks `runtime.backend` / `runtime.mlx_model` / `runtime.llama_cpp_model_path` on disk. Execution for the same target (`build_intel_for_target`, same file 394-414) builds meeting intelligence: `build_configured_meeting_intel()` (providers.py:209-237) or `MeetingIntel(provider="local", model_path=meeting.intel_realtime_model)` at 411-414. Neither the dictation backend nor its model path is consulted at run time, and `meeting.intel_realtime_model` (config/meeting.py:36) is never checked for existence at readiness time. `this_machine` can report `ready` off a present MLX/llama dictation model while the run loads (or fails to load) a completely different GGUF.
+
+**2. Named on-device target reports model A, runs model B — CONFIRMED**
+`target_from_profile` (inference_targets.py:232-244) derives both readiness and identity for `onDevice` from `profile.model_file`. The execution branch, `build_meeting_intel_for_profile` at `holdspeak/intel/providers.py:430-438`, ignores `model_file`/`model` entirely and constructs `MeetingIntel(provider="local", model_path=meeting.intel_realtime_model)` from global config. `build_intel_for_target` (inference_targets.py:417-426) passes `profile.model` but not `model_file`, so the field that made the target ready never reaches the engine. The receipt then stamps the profile's model: `recipe_service.py:183-185` calls `lifecycle.succeed(..., model=target.model)`, and `placement_receipt` (inference_targets.py:146-147) prefers `model or self.model` — an attested model the run did not load.
+
+**3. Ask silently replaces an explicit target — CONFIRMED**
+`holdspeak/services/ask_service.py:69-80`: target resolved from `inference_target_id or profile_id` (69-70); if `model` doesn't match the resolved profile's model, 76-77 scans `self._db.profiles.list()` for the first profile whose model name matches and rebinds `prof, ran_profile_id, target` — the caller's explicit destination is discarded with no error and no receipt of the substitution. 78-79 does the same toward `this_machine` when the name equals the hub model. `list_models` (30-47) dedupes by model name across destinations, so two destinations serving the same model name are indistinguishable and the "first match" is arbitrary (profiles listed ORDER BY name, db/primitives.py:669-674).
+
+**4. Meeting placement has two owners — CONFIRMED**
+`intel_provider` (config/meeting.py:33) and `intel_profile_id` (config/meeting.py:59) both steer the meeting leg. `effective_intel_cloud` (providers.py:359-377) resolves the profile pointer; `build_configured_meeting_intel` (providers.py:220-237) also passes `provider=meeting.intel_provider`. With `intel_provider="local"` and an `openAICompatible` `intel_profile_id`, the named destination is silently unused; conversely at providers.py:222-225 a `meshNode` profile returns `MeshRelayIntel` regardless of `intel_provider="local"` — the pointer overrides a local-only setting and egresses to the mesh node. Two fields, one placement, no precedence rule.
+
+**5. Ask and Workbench bypass kernel inference admission — CONFIRMED**
+Kernel admission lives in `RunLifecycle.begin` (`holdspeak/services/support.py:88-93`), gated on `principal is not None and definition_ref.startswith("persona:")`; agent runs reach it via recipe_service.py:111-118. `AskService.ask` (ask_service.py:68-92) goes resolve → build → `run_prompt`; the file imports nothing from `holdspeak.kernel`. `run_workbench` (workbench_conductor.py:434-466) same; its kernel usage (226-254, 303-312) covers only minting items. No `operation.admitted` journal entry, no `InferenceRunCodec.authorize` placement/egress binding (kernel/inference.py:106-135), no cancellation handle for these paths.
+
+**6. Target config mutable after resolution — CONFIRMED**
+`resolve_inference_target` (inference_targets.py:334-359) snapshots the profile into a frozen `InferenceTarget`. `build_intel_for_target` (417-426) re-reads `db.profiles.get(target.profile_id)` and builds the engine from the live row. Any edit between readiness check and engine construction executes against the new row while the receipt describes the old one. Sharper: `ProfileStore.get` excludes soft-deleted rows (db/primitives.py:657-667), so a profile deleted in that window makes 419's guard fail and the call falls through to `build_configured_meeting_intel()` at 429 — a silent retarget to the hub default engine under a receipt naming the deleted destination.
+
+**7. Egress truth derived twice — CONFIRMED**
+`_private_endpoint` (inference_targets.py:30-42) and the `openAICompatible` branch at 280-285 yield `kind="private_endpoint"`, `boundary="private_network"`, `owner="you"`. The badge constructor `endpoint_egress` (providers.py:249-267) has only {mesh, cloud, local} and collapses every remote endpoint into `cloud`; call sites feed it a flat boolean — ask_service.py:174 and services/support.py:153 pass `cloud=True` for any `openAICompatible` profile with a base_url. A LAN 192.168.x destination renders `scope: "cloud"` in the badge while the same run's `actual_placement` says `private_network`.
+
+**8. Destination secret-name collision — CONFIRMED**
+`profile_key_env` (providers.py:270-274) maps every non-alphanumeric to `_`: `foo-bar`, `foo_bar`, `foo.bar`, `foo bar` → `HOLDSPEAK_PROFILE_FOO_BAR_KEY`. No reverse check or uniqueness constraint. Consequences: key-presence readiness (`_profile_key_present`, inference_targets.py:45-49, used at 229 and 292-296) reports ready for a destination with no key of its own, and `_apply_runtime_profile` (providers.py:347-356) / `build_meeting_intel_for_profile` (providers.py:422-429) send the colliding destination's credential to a different endpoint.
+
+## Auditor-found (not claimed in #450)
+
+- providers.py:442-463 — `intel_egress_posture` judges only `intel_provider`, so with `intel_provider="local"` plus a `meshNode` `intel_profile_id` it reports "Local only — transcripts never leave this machine" while the run actually routes to the mesh relay. A third, unreconciled egress derivation — the one doctor/web status shows.
+- recipe_service.py:269-298 — `RecipeService.chat` resolves and runs a target with no `RunLifecycle` at all. Claim 5's bypass extends to agent chat; "agent runs go through the kernel" is only true of the non-chat entry point.
+- inference_targets.py:202-217 — `paired_device_target` hardcodes `readiness_state="ready"` with no check; execution (415-416) delegates to `build_configured_meeting_intel()`, which can be unrunnable.
+- services/support.py:151-159 and ask_service.py:171-180 — duplicate byte-for-byte copies of `_run_egress` logic; two owners of the badge rule `endpoint_egress` claims is centralized.
+- inference_targets.py:242-244 — empty `model_file` yields refusal "model file not found: " with a blank path.
