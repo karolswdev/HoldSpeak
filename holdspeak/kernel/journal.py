@@ -7,31 +7,18 @@ import json
 import secrets
 import time
 import uuid
+import threading
 from typing import Any, Mapping
 
-from .model import KernelRefused, forbidden_content
-
-_HEAD_LIMIT = 120
-_EVENT_FIELDS = (
-    "stream", "stream_sequence", "event_id", "operation_id", "process_id",
-    "correlation_id", "causation_id", "event_type", "event_version", "refs",
-    "privacy_class", "head", "timestamp", "previous_sha256",
-)
-
-
-def _json(value: Any) -> str:
-    return json.dumps(value, separators=(",", ":"), sort_keys=True)
-
-
-def _hash(record: Mapping[str, Any]) -> str:
-    material = {field: record[field] for field in _EVENT_FIELDS}
-    return "sha256:" + hashlib.sha256(_json(material).encode()).hexdigest()
+from .journal_txn import append_record, json_encode as _json, record_hash as _hash
+from .model import KernelRefused
 
 
 class JournalStore:
     def __init__(self, connection: Any, *, clock: Any = time.time) -> None:
         self._connection = connection
         self._clock = clock
+        self._append_lock = threading.Lock()
     def _secret(self) -> str:
         with self._connection() as conn:
             row = conn.execute("SELECT value FROM kernel_meta WHERE key='warrant_secret'").fetchone()
@@ -46,56 +33,11 @@ class JournalStore:
         head: str = "", privacy_class: str = "private", stream: str = "operations",
         process_id: str = "", correlation_id: str = "", causation_id: str = "",
     ) -> dict[str, Any]:
-        metadata = {"refs": refs, "head": head}
-        if forbidden_content(metadata):
-            raise KernelRefused("journal_content_forbidden")
-        with self._connection() as conn:
-            if not correlation_id or not causation_id:
-                operation = conn.execute(
-                    "SELECT correlation_id,parent_operation_id FROM kernel_operations WHERE operation_id=?",
-                    (operation_id,),
-                ).fetchone()
-                if operation is not None:
-                    correlation_id = correlation_id or str(operation["correlation_id"] or "")
-                    causation_id = causation_id or str(operation["parent_operation_id"] or "")
-            previous = conn.execute(
-                "SELECT stream_sequence, record_sha256 FROM kernel_journal WHERE stream=? ORDER BY stream_sequence DESC LIMIT 1",
-                (stream,),
-            ).fetchone()
-            sequence = int(previous[0]) + 1 if previous is not None else 1
-            record = {
-                "stream": stream,
-                "stream_sequence": sequence,
-                "event_id": "evt_" + uuid.uuid4().hex,
-                "operation_id": operation_id,
-                "process_id": process_id,
-                "correlation_id": correlation_id,
-                "causation_id": causation_id,
-                "event_type": event_type,
-                "event_version": 1,
-                "refs": list(refs),
-                "privacy_class": privacy_class,
-                "head": str(head)[:_HEAD_LIMIT],
-                "timestamp": self._clock(),
-                "previous_sha256": str(previous[1]) if previous is not None else "sha256:genesis",
-            }
-            record_hash = _hash(record)
-            cursor = conn.execute(
-                """INSERT INTO kernel_journal(
-                    stream,stream_sequence,event_id,operation_id,process_id,correlation_id,
-                    causation_id,event_type,event_version,refs_json,privacy_class,head,
-                    timestamp,previous_sha256,record_sha256
-                ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
-                (
-                    record["stream"], sequence, record["event_id"], operation_id,
-                    process_id, correlation_id, causation_id, event_type, 1,
-                    _json(record["refs"]), privacy_class, record["head"],
-                    record["timestamp"], record["previous_sha256"], record_hash,
-                ),
-            )
-            record["cursor"] = int(cursor.lastrowid)
-            record["record_sha256"] = record_hash
-            return record
+        return append_record(
+            self._connection, self._append_lock, self._clock, event_type, operation_id,
+            refs=refs, head=head, privacy_class=privacy_class, stream=stream,
+            process_id=process_id, correlation_id=correlation_id, causation_id=causation_id,
+        )
 
     def verify(self, stream: str = "operations") -> dict[str, Any]:
         with self._connection() as conn:
@@ -254,6 +196,39 @@ class JournalStore:
                 (self._clock(), operation_id),
             )
         return self.operation(operation_id) or {}
+
+    def transition_and_receipt(
+        self, operation_id: str, expected_revision: int, state: str, outcome: str,
+        result_ref: str = "",
+    ) -> tuple[dict[str, Any], dict[str, Any]]:
+        """Durably couple a claimed operation's terminal state and receipt."""
+        receipt_id = "rcpt_" + uuid.uuid4().hex
+        with self._connection() as conn:
+            existing = conn.execute(
+                "SELECT * FROM kernel_receipts WHERE operation_id=?", (operation_id,)
+            ).fetchone()
+            if existing is not None:
+                return self._operation(conn.execute(
+                    "SELECT * FROM kernel_operations WHERE operation_id=?", (operation_id,)
+                ).fetchone()), dict(existing)
+            result = conn.execute(
+                "UPDATE kernel_operations SET state=?,revision=revision+1,updated_at=? "
+                "WHERE operation_id=? AND revision=?",
+                (state, self._clock(), operation_id, expected_revision),
+            )
+            if result.rowcount != 1:
+                raise KernelRefused("operation_revision_conflict", operation_id=operation_id)
+            conn.execute(
+                "INSERT INTO kernel_receipts(receipt_id,operation_id,state,outcome,result_ref,created_at) VALUES(?,?,?,?,?,?)",
+                (receipt_id, operation_id, state, outcome, result_ref, self._clock()),
+            )
+            operation = conn.execute(
+                "SELECT * FROM kernel_operations WHERE operation_id=?", (operation_id,)
+            ).fetchone()
+            receipt = conn.execute(
+                "SELECT * FROM kernel_receipts WHERE operation_id=?", (operation_id,)
+            ).fetchone()
+        return self._operation(operation), dict(receipt)
 
     def add_receipt(self, operation_id: str, state: str, outcome: str, result_ref: str = "") -> dict[str, Any]:
         receipt_id = "rcpt_" + uuid.uuid4().hex

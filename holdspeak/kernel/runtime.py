@@ -12,7 +12,8 @@ from .actuator import ActuatorCodec
 from .broker import Broker
 from .desktop_type_text import DesktopTypeTextCodec
 from .external_egress import ExternalEgressCodec
-from .inference import InferenceCancelCodec, InferenceRunCodec
+from .inference import InferenceInvokeCodec, InferenceRunCodec
+from .inference_cancel import InferenceCancelCodec
 from .journal import JournalStore
 from .model import OperationSpec
 from .process_input import ProcessInputCodec
@@ -60,6 +61,7 @@ def _build(database: Any, *, clock: Any = None) -> Broker:
     external_egress = ExternalEgressCodec()
     actuator = ActuatorCodec(database.actuators, _mode)
     inference = InferenceRunCodec(database, **({"clock": clock} if clock else {}))
+    invocation = InferenceInvokeCodec(database, store, **({"clock": clock} if clock else {}))
     cancellation = InferenceCancelCodec(database, store)
     voice_resolve = VoiceResolveCodec()
     workbench_mint = WorkbenchMintCodec()
@@ -79,6 +81,7 @@ def _build(database: Any, *, clock: Any = None) -> Broker:
         OperationSpec(external_egress.name, external_egress.version, external_egress, "agent.submit", "propose"),
         OperationSpec(actuator.name, actuator.version, actuator, "agent.submit", "propose"),
         OperationSpec(inference.name, inference.version, inference, "agent.submit", "propose"),
+        OperationSpec(invocation.name, invocation.version, invocation, "agent.submit", "propose"),
         OperationSpec(cancellation.name, cancellation.version, cancellation, "agent.submit", "propose"),
         OperationSpec(voice_resolve.name, voice_resolve.version, voice_resolve, "agent.submit", "propose"),
         OperationSpec(workbench_mint.name, workbench_mint.version, workbench_mint, "agent.submit", "propose"),

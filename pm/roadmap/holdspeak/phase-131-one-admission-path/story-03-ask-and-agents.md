@@ -36,6 +36,15 @@ fan-out callers migrate.
   boundaries.
 - Render new synchronous admission/claim refusals through the existing in-flow
   error contract; do not add a modal or overlapping banner.
+- *Added 2026-08-09 (HS-131-02 amendment; Sol counsel; owner may overrule at
+  the sitting):* establish the **shared projection-staging primitive** — one
+  durable protocol closing the crash window between a caller's domain write
+  and the runner's terminal receipt — before Ask/Recipe become the first
+  production migrations. It becomes the required publication path for every
+  later domain migration story (HS-131-04 through HS-131-09). Crash-recovery
+  tests are mandatory: stage-before-terminal, crash-after-stage-before-
+  receipt, cancellation-after-stage, interrupted finalization, idempotent
+  recovery without duplicate domain objects.
 
 ### Out
 

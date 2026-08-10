@@ -8,6 +8,7 @@ from typing import Any, Mapping, Sequence
 from ..operation_policy import POLICY_VERSION
 from ..principals import PrincipalKind, PrincipalRight
 from .admission import parse_request, refusal_values
+from .causation import causality, live_owner_parent
 from .executor import ExecutorPlane
 from .journal import JournalStore
 from .model import KernelRefused, OperationRequest, OperationSpec
@@ -139,13 +140,21 @@ class Broker(ExecutorPlane):
         self, operation_id: str, decision: str, expected_revision: int,
         principal: Any, *, reason: str = "",
     ) -> dict[str, Any]:
-        if principal.kind is not PrincipalKind.OWNER or not principal.permits(PrincipalRight.DECIDE):
-            raise KernelRefused("owner_principal_required_to_decide", operation_id=operation_id)
-        if decision not in {"approve", "reject"}:
-            raise KernelRefused("decision_unknown", operation_id=operation_id)
         operation = self.store.operation(operation_id)
         if operation is None:
             raise KernelRefused("operation_unknown", operation_id=operation_id)
+        delegated = self._live_owner_parent(operation, principal)
+        if (
+            (principal.kind is not PrincipalKind.OWNER or not principal.permits(PrincipalRight.DECIDE))
+            and not delegated
+        ):
+            reason = (
+                "owner_or_live_parent_authority_required"
+                if operation["parent_operation_id"] else "owner_principal_required_to_decide"
+            )
+            raise KernelRefused(reason, operation_id=operation_id)
+        if decision not in {"approve", "reject"}:
+            raise KernelRefused("decision_unknown", operation_id=operation_id)
         if operation["state"] != "awaiting_decision":
             raise KernelRefused("operation_already_decided", operation_id=operation_id)
         if operation["revision"] != expected_revision:
@@ -180,6 +189,11 @@ class Broker(ExecutorPlane):
                 "expires_at": now + claim_ttl,
                 "execution_expires_at": now + execution_ttl,
                 "uses": 1,
+                "continuation_identities": list(
+                    getattr(spec.codec, "continuation_identities", lambda _native: ())(
+                        operation["native_id"]
+                    )
+                ),
             }
         )
         operation = self.store.transition(
@@ -236,20 +250,10 @@ class Broker(ExecutorPlane):
     def _causality(
         self, request: OperationRequest, principal: Any, operation_id: str,
     ) -> tuple[str, str]:
-        parent_id = request.parent_operation_id
-        if not parent_id:
-            return "", operation_id
-        parent = self.store.operation(parent_id)
-        if parent is None:
-            raise KernelRefused("parent_operation_unknown")
-        if parent["state"] != "claimed":
-            raise KernelRefused("parent_operation_not_running")
-        if (
-            parent["principal_kind"] != "owner"
-            and parent["principal_identity"] != principal.identity
-        ):
-            raise KernelRefused("parent_operation_scope_required")
-        return parent_id, str(parent["correlation_id"] or parent_id)
+        return causality(self.store, self._clock, request, principal, operation_id)
+
+    def _live_owner_parent(self, operation: Mapping[str, Any], principal: Any) -> bool:
+        return live_owner_parent(self.store, self._clock, operation, principal)
 
     def _refuse_attempt(
         self, raw: Any, principal: Any, operation_id: str, reason: str, *, unique: bool = False,

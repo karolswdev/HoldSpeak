@@ -1,6 +1,6 @@
 # Phase 131 — One Admission Path
 
-**Status:** IN PROGRESS (1/12).
+**Status:** IN PROGRESS (2/12).
 
 **Last updated:** 2026-08-09.
 
@@ -124,7 +124,7 @@ gates while keeping every known site bounded now.
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
 | HS-131-01 | Frozen deployment revisions and one sync registry | done | [story-01](./story-01-frozen-deployment-revisions.md) | [evidence-story-01](./evidence-story-01.md) |
-| HS-131-02 | The admitted invocation runner | backlog | [story-02](./story-02-admitted-invocation-runner.md) | — |
+| HS-131-02 | The admitted invocation runner | done | [story-02](./story-02-admitted-invocation-runner.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-131-03 | Ask and Agents take the same door | backlog | [story-03](./story-03-ask-and-agents.md) | — |
 | HS-131-04 | Sequence and Workflow admit every model step | backlog | [story-04](./story-04-sequence-and-workflow.md) | — |
 | HS-131-05 | Workbench work and memory cannot outrun cancellation | backlog | [story-05](./story-05-workbench-and-memory.md) | — |
@@ -170,8 +170,20 @@ references round-trip over sync without credentials. The six assigned
 HS-130-10 sync failures are repaired — full-suite diff against the pinned
 charter baseline shows zero new failure names (84→78 failed, 17 errors
 unchanged; artifacts under `assets/hs-131-01/`). The Swift-as-authority test
-is retired for a stricter Python-contract assertion. Next: HS-131-02, the
-admitted invocation runner.
+is retired for a stricter Python-contract assertion.
+HS-131-02 is done: the admitted invocation runner exists — one gateway
+owning admission → claim → exact-revision dispatch → one terminal receipt,
+with `cancelled` first-class (schema v45), a per-invocation state machine
+whose cancellation semantics survived a fourteen-round Sol counsel loop
+(ledger in [SOL-COUNSEL-HS-131-02](./SOL-COUNSEL-HS-131-02.md); final
+verdict: ratify), warrant-bound continuation identities, full-ancestor
+claim revalidation, and a real-model walk on the live LAN endpoint
+(revision immutability proven on metal; mid-generation cancellation
+suppressed late output). Ship-gate full suite: zero new failure names,
+one repaired (`test_migrates_v38_database_to_decision_commitments`).
+The publication-staging protocol is HS-131-03's blocking criterion by
+visible amendment. Next: HS-131-03, Ask and Agents take the same door —
+opening with the staging design beat.
 The roadmap still has nine inherited structural lint errors in old phases; they
 are named baseline and are not silently bundled into this product phase.
 
@@ -230,6 +242,18 @@ are named baseline and are not silently bundled into this product phase.
   defers to first-session admission or refuses before invoking the model.
 - 2026-08-09 — **No new product surface.** Phase 131 changes runtime truth and
   receipts. The web ownership and language work stays in Phases 132 and 133.
+- 2026-08-09 — **`cancelled` is a first-class kernel terminal state**
+  (HS-131-02, Sol counsel round 1, sustained). A receipt whose outcome and
+  durable state disagree is a representational contradiction; schema v45
+  extends both kernel CHECK constraints with a rebuild migration preserving
+  immutable evidence. Owner may overrule at the sitting.
+- 2026-08-09 — **The durable publication-staging protocol is HS-131-03's
+  blocking criterion** (Sol counsel round 2, sustained; owner may overrule).
+  HS-131-02 ships the in-process gate, the atomic transition+receipt
+  transaction, and defined publish-failure semantics; the cross-table crash
+  window closes with one shared staging primitive in HS-131-03, required by
+  every later domain migration, never re-implemented per story. Recorded in
+  both story files and [SOL-COUNSEL-HS-131-02](./SOL-COUNSEL-HS-131-02.md).
 
 ## Decisions deferred
 

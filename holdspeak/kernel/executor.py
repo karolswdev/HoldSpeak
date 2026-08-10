@@ -27,6 +27,27 @@ class ExecutorPlane:
             reason = "warrant_expired"
         elif warrant.get("envelope_sha256") != operation["envelope_sha256"]:
             reason = "warrant_payload_mismatch"
+        if not reason:
+            parent_id = str(operation.get("parent_operation_id") or "")
+            while parent_id:
+                parent = self.store.operation(parent_id)
+                warrant = {} if parent is None else parent["warrant"]
+                if (
+                    parent is None or parent["state"] != "claimed" or bool(parent["warrant_revoked"])
+                    or not self.store.valid_warrant(warrant)
+                    or float(warrant.get("execution_expires_at") or 0) <= self._clock()
+                ):
+                    reason = "parent_operation_not_live"
+                    break
+                parent_id = str(parent.get("parent_operation_id") or "")
+        if not reason:
+            spec = getattr(self, "_specs", {}).get((operation["name"], operation["version"]))
+            validate_claim = getattr(getattr(spec, "codec", None), "validate_claim", None)
+            if callable(validate_claim):
+                try:
+                    validate_claim(operation)
+                except KernelRefused as exc:
+                    reason = exc.reason
         if reason:
             operation = self.store.transition(
                 operation["operation_id"], operation["revision"], "refused"
@@ -58,13 +79,13 @@ class ExecutorPlane:
                 raise KernelRefused("receipt_immutable", operation_id=operation_id)
             return existing
         states = {
-            "succeeded": "succeeded", "failed": "failed",
+            "succeeded": "succeeded", "failed": "failed", "cancelled": "cancelled",
             "refused": "refused", "indeterminate": "indeterminate",
         }
         if outcome not in states:
             raise KernelRefused("receipt_outcome_unknown", operation_id=operation_id)
-        operation = self.store.transition(
-            operation_id, operation["revision"], states[outcome]
+        operation, _ = self.store.transition_and_receipt(
+            operation_id, operation["revision"], states[outcome], outcome, result_ref
         )
         return self._terminal(operation, states[outcome], outcome, result_ref)
 

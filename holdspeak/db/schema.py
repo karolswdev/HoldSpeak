@@ -7,7 +7,7 @@ independently of the Database container.
 # Bump this when adding tables or columns; the Database container uses it to
 # decide whether to back up and re-apply. See core._ensure_schema for the
 # four-way upgrade contract.
-SCHEMA_VERSION = 44  # v44: immutable deployment revisions (HS-131-01)
+SCHEMA_VERSION = 45  # v45: cancelled is a first-class kernel terminal state (HS-131-02)
 
 # SQL Schema
 SCHEMA_SQL = """
@@ -1516,7 +1516,7 @@ CREATE TABLE IF NOT EXISTS kernel_operations (
     authority_basis TEXT NOT NULL,
     state TEXT NOT NULL CHECK (state IN (
         'admitting','awaiting_decision','awaiting_execution','claimed',
-        'succeeded','failed','refused','indeterminate'
+        'succeeded','failed','refused','cancelled','indeterminate'
     )),
     revision INTEGER NOT NULL DEFAULT 1,
     native_id TEXT NOT NULL,
@@ -1535,7 +1535,7 @@ ON kernel_operations(state, created_at);
 CREATE TABLE IF NOT EXISTS kernel_receipts (
     receipt_id TEXT PRIMARY KEY,
     operation_id TEXT NOT NULL UNIQUE REFERENCES kernel_operations(operation_id),
-    state TEXT NOT NULL CHECK (state IN ('succeeded','failed','refused','indeterminate')),
+    state TEXT NOT NULL CHECK (state IN ('succeeded','failed','refused','cancelled','indeterminate')),
     outcome TEXT NOT NULL,
     result_ref TEXT NOT NULL DEFAULT '',
     created_at REAL NOT NULL

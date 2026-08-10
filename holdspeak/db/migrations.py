@@ -635,6 +635,72 @@ def _migrate_columns(conn: sqlite3.Connection, stored: int) -> None:
         "ON directories(name_normalized) WHERE deleted = 0"
     )
 
+    # v45 (HS-131-02): `cancelled` is a distinct kernel terminal fact. SQLite
+    # cannot alter CHECK constraints, so carry immutable operations and receipts
+    # through matching tables without rewriting any row values.
+    if stored < 45:
+        kernel_sql = conn.execute(
+            "SELECT sql FROM sqlite_master WHERE type='table' AND name='kernel_operations'"
+        ).fetchone()
+        if kernel_sql and "'cancelled'" not in str(kernel_sql[0]):
+            conn.execute("PRAGMA foreign_keys = OFF")
+            conn.executescript(
+                """
+                DROP INDEX IF EXISTS idx_kernel_operations_state;
+                CREATE TABLE kernel_operations_v45 (
+                    operation_id TEXT PRIMARY KEY,
+                    request_id TEXT NOT NULL,
+                    idempotency_key TEXT NOT NULL,
+                    name TEXT NOT NULL,
+                    version INTEGER NOT NULL,
+                    principal_kind TEXT NOT NULL,
+                    principal_identity TEXT NOT NULL,
+                    target_ref TEXT NOT NULL,
+                    placement TEXT NOT NULL,
+                    envelope_sha256 TEXT NOT NULL,
+                    policy_version TEXT NOT NULL,
+                    authority_basis TEXT NOT NULL,
+                    state TEXT NOT NULL CHECK (state IN (
+                        'admitting','awaiting_decision','awaiting_execution','claimed',
+                        'succeeded','failed','refused','cancelled','indeterminate'
+                    )),
+                    revision INTEGER NOT NULL DEFAULT 1,
+                    native_id TEXT NOT NULL,
+                    parent_operation_id TEXT NOT NULL DEFAULT '',
+                    correlation_id TEXT NOT NULL DEFAULT '',
+                    decision TEXT,
+                    warrant_json TEXT NOT NULL DEFAULT '{}',
+                    warrant_revoked INTEGER NOT NULL DEFAULT 0,
+                    claimed_by TEXT,
+                    created_at REAL NOT NULL,
+                    updated_at REAL NOT NULL,
+                    UNIQUE(principal_identity, idempotency_key)
+                );
+                CREATE TABLE kernel_receipts_v45 (
+                    receipt_id TEXT PRIMARY KEY,
+                    operation_id TEXT NOT NULL UNIQUE REFERENCES kernel_operations_v45(operation_id),
+                    state TEXT NOT NULL CHECK (state IN (
+                        'succeeded','failed','refused','cancelled','indeterminate'
+                    )),
+                    outcome TEXT NOT NULL,
+                    result_ref TEXT NOT NULL DEFAULT '',
+                    created_at REAL NOT NULL
+                );
+                INSERT INTO kernel_operations_v45 SELECT * FROM kernel_operations;
+                INSERT INTO kernel_receipts_v45 SELECT * FROM kernel_receipts;
+                DROP TABLE kernel_receipts;
+                DROP TABLE kernel_operations;
+                ALTER TABLE kernel_operations_v45 RENAME TO kernel_operations;
+                ALTER TABLE kernel_receipts_v45 RENAME TO kernel_receipts;
+                CREATE INDEX idx_kernel_operations_state
+                    ON kernel_operations(state, created_at);
+                """
+            )
+            conn.execute("PRAGMA foreign_keys = ON")
+            violations = conn.execute("PRAGMA foreign_key_check").fetchall()
+            if violations:
+                raise RuntimeError("kernel_v45_foreign_key_check_failed")
+
 
 def _apply_seeds_and_backfills(conn: sqlite3.Connection) -> None:
     """Seed data and index rebuilds that run after all migrations."""

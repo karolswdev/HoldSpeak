@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 131
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-131-01
 - **Unblocks:** HS-131-03, HS-131-04, HS-131-05, HS-131-07, HS-131-08, HS-131-09
 - **Owner:** unassigned
@@ -37,6 +37,18 @@ calls, post-hoc cancellation, and domain-specific lifecycle forks.
   publication atomically so output arriving after cancellation cannot become a
   domain answer, artifact, memory, or step result. If the provider outcome
   cannot be known, close as `indeterminate` rather than guessing.
+  *Amended 2026-08-09 (Sol counsel, orchestrator sustained; owner may
+  overrule at the sitting):* the in-process publication gate, the atomic
+  kernel transition-plus-receipt transaction, and defined publish-failure
+  semantics ship here. The durable cross-table staging protocol for the
+  crash window between an arbitrary caller's domain write and the runner's
+  terminal receipt is deferred to **HS-131-03 as its blocking acceptance
+  criterion** — one shared projection-staging primitive established before
+  the first production caller migrates, required by every later domain
+  migration story, with crash-recovery tests (stage-before-terminal,
+  crash-after-stage-before-receipt, cancellation-after-stage, interrupted
+  finalization, idempotent recovery). No caller may substitute a direct
+  domain write under the runner's process lock.
 - Preserve the existing immutable-receipt rule in
   `holdspeak/kernel/executor.py:43-69`: an identical repeated receipt is
   idempotent; a changed terminal result is refused.
