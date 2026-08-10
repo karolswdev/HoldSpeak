@@ -126,7 +126,7 @@ gates while keeping every known site bounded now.
 | HS-131-01 | Frozen deployment revisions and one sync registry | done | [story-01](./story-01-frozen-deployment-revisions.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-131-02 | The admitted invocation runner | done | [story-02](./story-02-admitted-invocation-runner.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-131-03 | Ask and Agents take the same door | done | [story-03](./story-03-ask-and-agents.md) | [evidence-story-03](./evidence-story-03.md) |
-| HS-131-04 | Sequence and Workflow admit every model step | backlog | [story-04](./story-04-sequence-and-workflow.md) | — |
+| HS-131-04 | Sequence and Workflow admit every model step | in-progress | [story-04](./story-04-sequence-and-workflow.md) | — |
 | HS-131-05 | Workbench work and memory cannot outrun cancellation | backlog | [story-05](./story-05-workbench-and-memory.md) | — |
 | HS-131-06 | Scheduled work carries bounded delegation | backlog | [story-06](./story-06-bounded-schedules.md) | — |
 | HS-131-07 | The remaining direct callers join the spine | backlog | [story-07](./story-07-service-callers.md) | — |
