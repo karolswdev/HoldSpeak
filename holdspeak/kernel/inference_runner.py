@@ -163,7 +163,7 @@ class InferenceRunner:
         with active.condition:
             active.closing=False; active.state="CLOSURE_FAILED"; active.closure_error=error; active.condition.notify_all()
         raise error from last
-    def invoke(self, request, adapter, *, publish=None):
+    def invoke(self, request, adapter, *, publish=None, parent_context=None, planned_node: str = ""):
         principal=self._principal_provider(); material=_canonical_payload(request.payload)
         if isinstance(request.definition_origin,ServiceContract):
             digest="sha256:"+hashlib.sha256(material.encode()).hexdigest()
@@ -175,7 +175,7 @@ class InferenceRunner:
         iid=request.invocation_id or "invoke_"+uuid.uuid4().hex
         if not iid.replace("_","").isalnum(): raise KernelRefused("inference_invocation_id_invalid")
         raw={"request_schema":1,"request_id":"request_"+uuid.uuid4().hex,"idempotency_key":iid,"operation":{"name":"inference.invoke","version":1},"target":{},"parent_operation_id":request.parent_operation_id,"arguments":{"invocation_id":iid,"deployment_revision":request.deployment_revision,"definition_origin":origin.journal_value(),"deadline_at":request.deadline_at,"attempt_ordinal":request.attempt_ordinal}}
-        submitted=self._broker.submit(raw,principal)
+        submitted=(self._broker.submit_trusted_child(raw, principal, parent_context, planned_node=planned_node) if parent_context is not None else self._broker.submit(raw,principal))
         if submitted["state"]=="refused": return InvocationOutcome(submitted["operation_id"],iid,"refused","",submitted["receipt"])
         approved=self._broker.decide(submitted["operation_id"],"approve",submitted["revision"],principal); op=self._broker.store.operation(approved["operation_id"]); node=Principal(PrincipalKind.NODE,executor_identity(self._revision(request.deployment_revision).destination_id))
         claimed=self._broker.claim(node,iid)

@@ -115,5 +115,15 @@ def test_capability_readiness_refuses_unsupported_graph_before_engine(rig, monke
     monkeypatch.setattr("holdspeak.intel.providers.build_configured_meeting_intel", engine)
     response = client.post("/api/workflows/branchy/run", json={"input": "retained"})
     assert response.status_code == 409
-    assert response.json()["invocation"]["state"] == "unavailable"
+    refused = response.json()
+    # HS-131-04 replaces the legacy invocation envelope with an admitted native
+    # parent. Unsupported control flow is typed, receipt-closed as refused, and
+    # admits no child or provider construction.
+    assert refused["support"] == "unsupported_graph"
+    parent_id = refused["parent_operation_id"]
+    with db._connection() as conn:
+        parent = conn.execute("SELECT state FROM kernel_operations WHERE operation_id=?", (parent_id,)).fetchone()
+        receipt = conn.execute("SELECT outcome FROM kernel_receipts WHERE operation_id=?", (parent_id,)).fetchone()
+        children = conn.execute("SELECT count(*) FROM kernel_operations WHERE parent_operation_id=?", (parent_id,)).fetchone()[0]
+    assert parent[0] == "refused" and receipt[0] == "refused" and children == 0
     assert called is False

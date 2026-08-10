@@ -16,6 +16,7 @@ from .inference import InferenceInvokeCodec, InferenceRunCodec
 from .inference_cancel import InferenceCancelCodec
 from .journal import JournalStore
 from .model import OperationSpec
+from .parent_run import ParentRunCodec, ParentRunController
 from .process_input import ProcessInputCodec
 from .process_spawn import ProcessSpawnCodec
 from .subprocess_exec import SubprocessExecCodec
@@ -33,6 +34,10 @@ def _dispose(broker: Broker | None) -> None:
     """Close typed-codec resources without adding type dispatch to the broker."""
     if broker is None:
         return
+    controller = getattr(broker, "parent_run_controller", None)
+    shutdown = getattr(controller, "shutdown", None)
+    if callable(shutdown):
+        shutdown()
     for spec in broker._specs.values():
         close = getattr(spec.codec, "close", None)
         if callable(close):
@@ -66,6 +71,8 @@ def _build(database: Any, *, clock: Any = None) -> Broker:
     voice_resolve = VoiceResolveCodec()
     workbench_mint = WorkbenchMintCodec()
     workbench_triage = WorkbenchTriageCodec()
+    sequence_run = ParentRunCodec("sequence", **({"clock": clock} if clock else {}))
+    workflow_run = ParentRunCodec("workflow", **({"clock": clock} if clock else {}))
     specs = (
         OperationSpec(tool_calls.name, tool_calls.version, tool_calls, "agent.submit", "propose"),
         OperationSpec(process_input.name, process_input.version, process_input, "agent.submit", "propose"),
@@ -86,11 +93,16 @@ def _build(database: Any, *, clock: Any = None) -> Broker:
         OperationSpec(voice_resolve.name, voice_resolve.version, voice_resolve, "agent.submit", "propose"),
         OperationSpec(workbench_mint.name, workbench_mint.version, workbench_mint, "agent.submit", "propose"),
         OperationSpec(workbench_triage.name, workbench_triage.version, workbench_triage, "agent.submit", "propose"),
+        OperationSpec(sequence_run.name, sequence_run.version, sequence_run, "agent.submit", "propose"),
+        OperationSpec(workflow_run.name, workflow_run.version, workflow_run, "agent.submit", "propose"),
     )
     broker = Broker(store, specs, **({"clock": clock} if clock else {}))
     # Services must never pair a runner database with a broker codec built for
     # another database singleton; invoke admission validates revisions there.
     broker.database = database
+    broker.parent_run_controller = ParentRunController(
+        broker, database, **({"clock": clock} if clock else {})
+    )
     # The liveness reaper runs before stage recovery: an expired claimed
     # invocation first receives its authoritative indeterminate receipt.
     from .projection_stager import ProjectionStager
@@ -100,8 +112,11 @@ def _build(database: Any, *, clock: Any = None) -> Broker:
     # before the first recovery pass, never after it.
     from .ask_projection import register as register_ask_projection
     from .recipe_projection import register as register_recipe_projection
+    from .sequence_workflow_projection import register as register_sequence_workflow_projection
     register_ask_projection(broker.projection_stager)
     register_recipe_projection(broker.projection_stager)
+    register_sequence_workflow_projection(broker.projection_stager)
+    broker.parent_run_controller.reconcile_abandoned()
     broker.projection_stager.recover()
     # One inference runner per configured broker: the runner's in-process
     # invocation registry is what makes cancellation reachable, so every

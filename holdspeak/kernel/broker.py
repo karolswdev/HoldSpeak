@@ -136,6 +136,12 @@ class Broker(ExecutorPlane):
             receipt = self._terminal(operation, "refused", str(reason))
             return self._handle(operation, receipt)
 
+    def submit_trusted_child(self, raw: Any, principal: Any, context: Any, *, planned_node: str) -> dict[str, Any]:
+        """Admit a controller-issued child through its atomic typed concern."""
+        from .trusted_child import submit
+
+        return submit(self, raw, principal, context, planned_node=planned_node)
+
     def decide(
         self, operation_id: str, decision: str, expected_revision: int,
         principal: Any, *, reason: str = "",
@@ -216,13 +222,14 @@ class Broker(ExecutorPlane):
 
     def reap_and_recover_projections(self) -> dict[str, Any]:
         """Run the required liveness-before-projection-recovery ordering."""
+        parent_recovered = getattr(getattr(self, "parent_run_controller", None), "reconcile_abandoned", lambda: 0)()
         reaped = self.reap_expired()
         stager = getattr(self, "projection_stager", None)
         if stager is None:
-            return {"reaped": reaped, "projections": None}
+            return {"parents": parent_recovered, "reaped": reaped, "projections": None}
         # recover() runs a second, harmless reap immediately before its scan so
         # callers cannot accidentally reverse the durable ordering.
-        return {"reaped": reaped, "projections": stager.recover()}
+        return {"parents": parent_recovered, "reaped": reaped, "projections": stager.recover()}
 
     def events(self, after_cursor: int, filters: Mapping[str, Any], principal: Any) -> dict[str, Any]:
         if principal.kind is PrincipalKind.NONE:

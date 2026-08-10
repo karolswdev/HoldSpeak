@@ -7,7 +7,7 @@ independently of the Database container.
 # Bump this when adding tables or columns; the Database container uses it to
 # decide whether to back up and re-apply. See core._ensure_schema for the
 # four-way upgrade contract.
-SCHEMA_VERSION = 46  # v46: durable receipt-gated projection stages (HS-131-03)
+SCHEMA_VERSION = 49  # v49: durable parent execution lease (HS-131-04)
 
 # SQL Schema
 SCHEMA_SQL = """
@@ -1677,4 +1677,45 @@ CREATE TABLE IF NOT EXISTS deployment_revisions (
     model_path TEXT,
     secret_slot TEXT NOT NULL DEFAULT ''
 );
+
+-- HS-131-04: the graph/sequence controller is durable independently of its
+-- admitted children.  The JSON fields are canonical snapshots, never a
+-- transport capability or provider secret.
+CREATE TABLE IF NOT EXISTS kernel_parent_runs (
+    operation_id TEXT PRIMARY KEY REFERENCES kernel_operations(operation_id),
+    native_id TEXT NOT NULL UNIQUE,
+    kind TEXT NOT NULL CHECK (kind IN ('sequence','workflow')),
+    definition_ref TEXT NOT NULL,
+    definition_revision TEXT NOT NULL,
+    input_json TEXT NOT NULL,
+    deadline_at REAL NOT NULL,
+    execution_epoch INTEGER NOT NULL DEFAULT 1,
+    planned_node TEXT NOT NULL DEFAULT '',
+    active_child_invocation_id TEXT NOT NULL DEFAULT '',
+    child_budget INTEGER NOT NULL,
+    children_json TEXT NOT NULL DEFAULT '[]',
+    state TEXT NOT NULL CHECK (state IN ('OPEN','CANCELLING','SUCCEEDED','FAILED','CANCELLED','REFUSED','INDETERMINATE')),
+    lease_process_id TEXT NOT NULL DEFAULT '',
+    lease_heartbeat_at REAL,
+    created_at REAL NOT NULL,
+    updated_at REAL NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_kernel_parent_runs_state ON kernel_parent_runs(state, updated_at);
+
+-- A receipt-gated, durable domain checkpoint for each admitted model child.
+-- ``advanced`` says whether the child won the parent tuple CAS; stale stages are
+-- retained as truthful receipt-linked facts but never become graph input.
+CREATE TABLE IF NOT EXISTS kernel_parent_checkpoints (
+    stage_id TEXT PRIMARY KEY REFERENCES kernel_projection_stages(stage_id),
+    parent_operation_id TEXT NOT NULL REFERENCES kernel_parent_runs(operation_id),
+    child_invocation_id TEXT NOT NULL,
+    execution_epoch INTEGER NOT NULL,
+    planned_node TEXT NOT NULL,
+    checkpoint_json TEXT NOT NULL,
+    advanced INTEGER NOT NULL CHECK (advanced IN (0,1)),
+    created_at REAL NOT NULL,
+    UNIQUE(parent_operation_id, child_invocation_id)
+);
+CREATE INDEX IF NOT EXISTS idx_kernel_parent_checkpoints_parent
+ON kernel_parent_checkpoints(parent_operation_id, execution_epoch);
 """

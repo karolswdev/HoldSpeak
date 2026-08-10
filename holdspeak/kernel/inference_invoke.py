@@ -32,6 +32,7 @@ class InferenceInvokeCodec:
 
     name = "inference.invoke"
     version = 1
+    trusted_child = True
 
     def __init__(self, database: Any, store: Any, *, clock: Any = time.time) -> None:
         self._database = database

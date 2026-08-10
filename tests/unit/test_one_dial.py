@@ -343,9 +343,10 @@ def test_feature_legs_resolve_through_the_one_resolver() -> None:
         # (resolve_placement composes the one resolve_inference_target seam),
         # so the id selects placement and Ask never model-name-hops.
         "holdspeak/services/ask_service.py": "resolve_placement",
-        "holdspeak/web/routes/primitives/chains.py": "resolve_inference_target",
+        # HS-131-04: Sequence and Workflow now share the admitted service;
+        # _target resolves placement for every eligible child.
+        "holdspeak/services/sequence_workflow_service.py": "resolve_placement",
         "holdspeak/services/recipe_service.py": "resolve_inference_target",
-        "holdspeak/web/routes/primitives/workflows.py": "resolve_inference_target",
         "holdspeak/plugins/dictation/assembly.py": "effective_dictation_llm",
         "holdspeak/runtime/meeting_glue.py": "effective_intel_cloud",
         "holdspeak/intel_queue.py": "effective_intel_cloud",

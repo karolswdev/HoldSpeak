@@ -1,0 +1,6 @@
+leg1 parent=op_929385e176c64bd28e030dc70b3e5676 children=2 receipts=succeeded output='{ "line": "RED" }'
+leg2 parent=op_1d2d70b8dfa347399dcddfae711d0324 model_children=2 pure_nodes=1 kinds=['llm', 'extract', 'keep_if']
+leg3 run surfaced ServiceError after cancel (honest)
+leg3 child=op_27ac50653e3a47ffa5e66726840bba9a receipt=cancelled
+leg3 disposition=pending parent_state=CANCELLED
+WALK OK: Sequence and Workflow dispatch admitted parent+children with receipts; pure nodes mint no children; mid-run cancel fences admission while receipts survive.

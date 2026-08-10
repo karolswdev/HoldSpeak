@@ -698,6 +698,14 @@
       ]
     },
     {
+      "path": "/api/chains/runs/{parent_operation_id}/cancel",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.primitives.chains",
+      "consumers": []
+    },
+    {
       "path": "/api/chains/{chain_id}",
       "methods": [
         "DELETE"
@@ -4035,6 +4043,14 @@
       "consumers": [
         "web"
       ]
+    },
+    {
+      "path": "/api/workflows/runs/{parent_operation_id}/cancel",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.primitives.workflows",
+      "consumers": []
     },
     {
       "path": "/api/workflows/{workflow_id}",

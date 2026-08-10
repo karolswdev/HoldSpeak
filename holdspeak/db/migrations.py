@@ -747,6 +747,53 @@ def _migrate_columns(conn: sqlite3.Connection, stored: int) -> None:
             """
         )
 
+    # v47 (HS-131-04): durable native-parent controller state.  This must
+    # precede v48 because the checkpoint table has a parent-run foreign key.
+    if stored < 47:
+        conn.execute("""CREATE TABLE IF NOT EXISTS kernel_parent_runs (
+            operation_id TEXT PRIMARY KEY REFERENCES kernel_operations(operation_id),
+            native_id TEXT NOT NULL UNIQUE,
+            kind TEXT NOT NULL CHECK (kind IN ('sequence','workflow')),
+            definition_ref TEXT NOT NULL, definition_revision TEXT NOT NULL,
+            input_json TEXT NOT NULL, deadline_at REAL NOT NULL,
+            execution_epoch INTEGER NOT NULL DEFAULT 1, planned_node TEXT NOT NULL DEFAULT '',
+            active_child_invocation_id TEXT NOT NULL DEFAULT '', child_budget INTEGER NOT NULL,
+            children_json TEXT NOT NULL DEFAULT '[]',
+            state TEXT NOT NULL CHECK (state IN ('OPEN','CANCELLING','SUCCEEDED','FAILED','CANCELLED','REFUSED','INDETERMINATE')),
+            created_at REAL NOT NULL, updated_at REAL NOT NULL
+        )""")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_kernel_parent_runs_state ON kernel_parent_runs(state, updated_at)")
+
+    # v48 (HS-131-04): child output must be a durable receipt-gated checkpoint
+    # before it can advance a Sequence/Workflow parent tuple.
+    if stored < 48:
+        conn.executescript(
+            """
+            CREATE TABLE IF NOT EXISTS kernel_parent_checkpoints (
+                stage_id TEXT PRIMARY KEY REFERENCES kernel_projection_stages(stage_id),
+                parent_operation_id TEXT NOT NULL REFERENCES kernel_parent_runs(operation_id),
+                child_invocation_id TEXT NOT NULL,
+                execution_epoch INTEGER NOT NULL,
+                planned_node TEXT NOT NULL,
+                checkpoint_json TEXT NOT NULL,
+                advanced INTEGER NOT NULL CHECK (advanced IN (0,1)),
+                created_at REAL NOT NULL,
+                UNIQUE(parent_operation_id, child_invocation_id)
+            );
+            CREATE INDEX IF NOT EXISTS idx_kernel_parent_checkpoints_parent
+            ON kernel_parent_checkpoints(parent_operation_id, execution_epoch);
+            """
+        )
+
+    # v49 (HS-131-04): a parent is abandoned only when its local execution
+    # lease goes stale; warrant expiry is not a substitute for this evidence.
+    if stored < 49:
+        parent_columns = {row[1] for row in conn.execute("PRAGMA table_info(kernel_parent_runs)").fetchall()}
+        if "lease_process_id" not in parent_columns:
+            conn.execute("ALTER TABLE kernel_parent_runs ADD COLUMN lease_process_id TEXT NOT NULL DEFAULT ''")
+        if "lease_heartbeat_at" not in parent_columns:
+            conn.execute("ALTER TABLE kernel_parent_runs ADD COLUMN lease_heartbeat_at REAL")
+
 
 def _apply_seeds_and_backfills(conn: sqlite3.Connection) -> None:
     """Seed data and index rebuilds that run after all migrations."""

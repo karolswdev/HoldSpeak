@@ -32,18 +32,15 @@ def client(tmp_path, monkeypatch) -> TestClient:
     reset_database()
 
 
-def _assert_run_receipt(body: dict, definition_ref: str, input_text: str) -> None:
-    # Legacy invocation/correlation shape: still the truthful contract for
-    # Sequence and Workflow until HS-131-04 migrates them onto the runner.
-    assert body["invocation_id"] == body["correlation_id"]
+def _assert_admitted_parent_run(body: dict, child_count: int) -> None:
+    """HS-131-04 parent summary: each actual model call remains a child receipt."""
+    assert body["parent_operation_id"].startswith("op_")
+    assert body["parent_native_id"]
     assert body["result_ref"] == f"artifact:{body['artifact_id']}"
-    invocation = body["invocation"]
-    assert invocation["id"] == body["invocation_id"]
-    assert invocation["definition_ref"] == definition_ref
-    assert invocation["input_snapshot"]["input"] == input_text
-    assert invocation["state"] == "succeeded"
-    assert len(invocation["attempts"]) == 1
-    assert invocation["attempts"][0]["state"] == "succeeded"
+    assert len(body["children"]) == child_count
+    assert all(child["operation_id"].startswith("op_") for child in body["children"])
+    assert all(child["invocation_id"] for child in body["children"])
+    assert all(child["outcome"] == "succeeded" for child in body["children"])
 
 
 def _assert_admitted_run(body: dict, recipe_id: str, input_text: str) -> None:
@@ -368,7 +365,7 @@ def test_run_chain_threads_steps(client: TestClient, monkeypatch) -> None:
         {"source_type": "recipe", "source_ref": a1},
         {"source_type": "recipe", "source_ref": a2},
     ]
-    _assert_run_receipt(body, f"sequence:{cid}", "hello")
+    _assert_admitted_parent_run(body, 2)
 
 
 def test_run_chain_unknown_chain_is_404(client: TestClient) -> None:
@@ -382,14 +379,14 @@ def test_run_chain_missing_persona_is_unavailable(client: TestClient) -> None:
     resp = client.post(f"/api/chains/{cid}/run", json={"input": "x"})
     assert resp.status_code == 409
     assert "ghost_agent" in resp.json()["error"]
-    assert resp.json()["invocation"]["state"] == "unavailable"
+    assert resp.json()["error"]
 
 
 def test_run_chain_empty_steps_is_unavailable(client: TestClient) -> None:
     cid = client.post("/api/chains", json={"name": "Empty", "steps": []}).json()["chain"]["id"]
     resp = client.post(f"/api/chains/{cid}/run", json={"input": "x"})
     assert resp.status_code == 409
-    assert resp.json()["invocation"]["input_snapshot"]["input"] == "x"
+    assert resp.json()["parent_operation_id"].startswith("op_")
 
 
 def test_run_chain_engine_error_is_502(client: TestClient, monkeypatch) -> None:
@@ -477,12 +474,10 @@ def test_run_workflow_prompt(client: TestClient, monkeypatch) -> None:
     # HS-74-01: the run persists as a run-born artifact; the id is minted.
     assert body.pop("artifact_id")
     body["artifact_id"] = body["result_ref"].split(":", 1)[1]
-    _assert_run_receipt(body, f"workflow:{wid}", "the thing")
+    _assert_admitted_parent_run(body, 1)
     assert body["workflow_id"] == wid and body["output"] == "WF-OUT"
     assert body["provider"] == "local"
-    assert [row["source_type"] for row in body["sources"]] == [
-        "workflow", "invocation", "attempt"
-    ]
+    assert [row["source_type"] for row in body["sources"]] == ["workflow"]
     # Workflow runs with an empty system prompt + the rendered prompt.
     assert fake.captured == {"system_prompt": "", "user_prompt": "Do: the thing"}
 
@@ -566,10 +561,8 @@ def test_run_workflow_linear_graph_runs_in_order(client: TestClient, monkeypatch
     assert [s["kind"] for s in body["steps"]] == ["summarize", "rewrite"]
     assert body["output"] == "out2"
     assert body["provider"] == "local"
-    assert [row["source_type"] for row in body["sources"]] == [
-        "workflow", "invocation", "attempt"
-    ]
-    _assert_run_receipt(body, f"workflow:{wid}", "the meeting")
+    assert [row["source_type"] for row in body["sources"]] == ["workflow"]
+    _assert_admitted_parent_run(body, 2)
     assert "warning" not in body
 
 
@@ -587,8 +580,7 @@ def test_run_workflow_branching_graph_is_refused_before_run(client: TestClient, 
     assert "control-flow" in body["error"]
     assert "not lowered to a prompt" in body["error"]
     assert fake.captured == {}
-    assert body["invocation"]["state"] == "unavailable"
-    assert body["invocation"]["input_snapshot"]["input"] == "x"
+    assert body["error"]
 
 
 def test_run_workflow_branching_graph_no_prompt_is_unavailable(client: TestClient, monkeypatch) -> None:

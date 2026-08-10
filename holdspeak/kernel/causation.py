@@ -25,14 +25,20 @@ def causality(
         or float(warrant.get("execution_expires_at") or 0) <= clock()
     ):
         raise KernelRefused("parent_operation_not_live")
-    if (
-        parent["principal_kind"] != "owner"
-        and parent["principal_identity"] != principal.identity
-    ):
+    # A direct parent id is never an owner-shaped bearer credential. A child
+    # either acts as the exact parent principal, or is an agent explicitly
+    # named by the live owner's warrant as a continuation identity.
+    direct_parent_principal = (
+        parent["principal_kind"] == principal.name
+        and parent["principal_identity"] == principal.identity
+    )
+    delegated_continuation = (
+        principal.kind is PrincipalKind.AGENT
+        and live_owner_parent(store, clock, {"parent_operation_id": parent_id}, principal)
+    )
+    if not direct_parent_principal and not delegated_continuation:
         raise KernelRefused("parent_operation_scope_required")
-    if principal.kind is PrincipalKind.AGENT and not live_owner_parent(
-        store, clock, {"parent_operation_id": parent_id}, principal
-    ):
+    if principal.kind is PrincipalKind.AGENT and not delegated_continuation:
         raise KernelRefused("parent_continuation_identity_required")
     return parent_id, str(parent["correlation_id"] or parent_id)
 

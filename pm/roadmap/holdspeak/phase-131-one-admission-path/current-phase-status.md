@@ -126,7 +126,7 @@ gates while keeping every known site bounded now.
 | HS-131-01 | Frozen deployment revisions and one sync registry | done | [story-01](./story-01-frozen-deployment-revisions.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-131-02 | The admitted invocation runner | done | [story-02](./story-02-admitted-invocation-runner.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-131-03 | Ask and Agents take the same door | done | [story-03](./story-03-ask-and-agents.md) | [evidence-story-03](./evidence-story-03.md) |
-| HS-131-04 | Sequence and Workflow admit every model step | in-progress | [story-04](./story-04-sequence-and-workflow.md) | — |
+| HS-131-04 | Sequence and Workflow admit every model step | done | [story-04](./story-04-sequence-and-workflow.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-131-05 | Workbench work and memory cannot outrun cancellation | backlog | [story-05](./story-05-workbench-and-memory.md) | — |
 | HS-131-06 | Scheduled work carries bounded delegation | backlog | [story-06](./story-06-bounded-schedules.md) | — |
 | HS-131-07 | The remaining direct callers join the spine | backlog | [story-07](./story-07-service-callers.md) | — |
@@ -193,7 +193,29 @@ choreographed proofs, Sol's review, the full gate) — including a real
 event-loop regression — and each is fixed with a regression test. Gate:
 zero unaccounted new names, one repaired
 (uat mesh dispatch). Sol: ratify with five named design-floor
-reservations for the sitting. Next: HS-131-04, Sequence and Workflow.
+reservations for the sitting.
+HS-131-04 is done — the second design-beat story, and the deepest counsel
+loop yet resolved on paper-plus-metal: Sol ruled the Sequence/Workflow
+design before implementation (eight amendments), then rode five total
+rounds to RATIFY FOR STORY CLOSE. Every Sequence step and Workflow model
+node now dispatches as an admitted child of one authenticated native
+parent (`sequence.run@1`/`workflow.run@1`, schema v47-v49): trusted-parent
+admission is one atomic broker transaction (closing the causation
+owner-parent loophole), `OuterRunContext` is an unexportable epoch-scoped
+capability, parent closure is a terminal CAS electing the receipt winner,
+abandoned parents are lease-protected (10s heartbeat daemon, 90s window,
+stale-lease re-election in the closing transaction) and reconciled
+indeterminate, advancement is a durable compare-and-swap that fences late
+and superseded child output, aggregates stage before their receipts, and
+child budgets are finite and transactional. The seventh HS-130-10 ledger
+failure (`test_ipad_synced_graph_workflow_runs_on_the_hub`) is repaired
+with the double confined to provider construction. Real-metal walk on .43
+(parent+children receipts, pure nodes mint no children, mid-run cancel
+fences admission). Gate: zero new failure names vs the HS-131-03
+baseline, SEVEN repaired (the sync test + six intel_cloud tail flakes);
+one gate-found product bug (lease daemon leak across broker replacement)
+fixed. Sol's three reservations ride in the evidence.
+Next: HS-131-05, Workbench and memory.
 The roadmap still has nine inherited structural lint errors in old phases; they
 are named baseline and are not silently bundled into this product phase.
 
