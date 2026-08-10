@@ -130,7 +130,7 @@ gates while keeping every known site bounded now.
 | HS-131-05 | Workbench work and memory cannot outrun cancellation | done | [story-05](./story-05-workbench-and-memory.md) | [evidence-story-05](./evidence-story-05.md) |
 | HS-131-06 | Scheduled work carries bounded delegation | done | [story-06](./story-06-bounded-schedules.md) | [evidence-story-06](./evidence-story-06.md) |
 | HS-131-07 | The remaining direct callers join the spine | done | [story-07](./story-07-service-callers.md) | [evidence-story-07](./evidence-story-07.md) |
-| HS-131-08 | Meetings are admitted per session | backlog | [story-08](./story-08-meeting-sessions.md) | — |
+| HS-131-08 | Meetings are admitted per session | in-progress | [story-08](./story-08-meeting-sessions.md) | — |
 | HS-131-09 | Dictation and transcription are admitted per session | backlog | [story-09](./story-09-dictation-sessions.md) | — |
 | HS-131-10 | The one-path fence | backlog | [story-10](./story-10-one-path-fence.md) | — |
 | HS-131-11 | The entry-point contract | backlog | [story-11](./story-11-entry-point-docs.md) | — |
