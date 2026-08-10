@@ -1063,6 +1063,7 @@ class WorkbenchRecord:
     schedule: Optional[str] = None
     resolver_profile_id: Optional[str] = None
     schedule_enabled: bool = False
+    schedule_revision: int = 1
     item_order_json: str = "[]"
     created_at: str = ""
     last_modified: str = ""
@@ -1077,6 +1078,7 @@ class WorkbenchRecord:
             "resolver_profile_id": self.resolver_profile_id,
             "schedule": self.schedule,
             "schedule_enabled": self.schedule_enabled,
+            "schedule_revision": self.schedule_revision,
             "item_order": json.loads(self.item_order_json) if self.item_order_json else [],
             "created_at": self.created_at,
             "last_modified": self.last_modified,
@@ -1142,6 +1144,7 @@ class WorkbenchRunRecord:
     items_attempted: int = 0
     items_completed: int = 0
     items_failed: int = 0
+    mint_failures: int = 0
     total_tokens: int = 0
     egress_boundary: str = ""
     model: str = ""
@@ -1159,6 +1162,7 @@ class WorkbenchRunRecord:
             "items_attempted": self.items_attempted,
             "items_completed": self.items_completed,
             "items_failed": self.items_failed,
+            "mint_failures": self.mint_failures,
             "total_tokens": self.total_tokens,
             "egress_boundary": self.egress_boundary,
             "model": self.model,

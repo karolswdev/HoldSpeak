@@ -415,3 +415,30 @@ def test_cancel_after_parent_result_stage_never_finalizes_completed_history(runn
     assert {link["receipt_id"] for link in json.loads(run["child_links_json"])} == {
         broker.store.receipt(child["operation_id"])["receipt_id"] for child in children
     }
+
+
+def test_cancellation_before_claim_does_not_strand_item_and_next_run_processes_it(runner_rig, monkeypatch):
+    """Cancellation winning between loop validation and claim leaves no claimed orphan."""
+    from holdspeak.services.workbench_runner import WorkbenchRunner
+
+    db, broker, workbench, items, _ = runner_rig
+    runner = WorkbenchRunner(db, broker)
+    original = broker.parent_run_controller.expire_if_due
+    fired = False
+
+    def cancel_before_claim(context, principal):
+        nonlocal fired
+        if not fired:
+            fired = True
+            broker.parent_run_controller.cancel_by_operation_id(principal, context.operation_id)
+            return False
+        return original(context, principal)
+
+    monkeypatch.setattr(broker.parent_run_controller, "expire_if_due", cancel_before_claim)
+    cancelled = asyncio.run(runner.run(OWNER, workbench.id, memory_enabled=False))
+    assert cancelled["terminal_disposition"] == "cancelled"
+    assert db.workbench_items.get(items[0].id).status == "pending"
+    monkeypatch.setattr(broker.parent_run_controller, "expire_if_due", original)
+    completed = _run(db, broker, workbench.id, memory_enabled=False)
+    assert completed["receipt_id"]
+    assert db.workbench_items.get(items[0].id).status == "done"

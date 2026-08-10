@@ -586,7 +586,31 @@ def _merge_primitive_spec(db: Any, spec: SyncKindSpec, records: list[dict[str, A
         for value_key, upsert_key in field_map.items():
             if value_key in value:
                 kwargs[upsert_key] = value[value_key]
-        repo.upsert(**kwargs)
+        prior_bound = None
+        if spec.bucket == "workbenches" and existing is not None:
+            prior_bound = (existing.schedule, existing.schedule_enabled, existing.recipe_id, existing.profile_id)
+        if spec.bucket != "workbenches":
+            repo.upsert(**kwargs)
+        else:
+            # The incoming configuration is not authority.  Persist it, advance
+            # our local bound revision, revoke the old grant, and epoch-fence its
+            # open parents under the same BEGIN IMMEDIATE.
+            from .schedule_delegation import ScheduleDelegationService
+            service = ScheduleDelegationService(db)
+            with db._connection() as conn:
+                conn.execute("BEGIN IMMEDIATE")
+                if existing is not None:
+                    kwargs["schedule_revision"] = existing.schedule_revision
+                current = repo.upsert_in_transaction(conn, **kwargs)
+                changed = prior_bound is not None and prior_bound != (
+                    current.schedule, current.schedule_enabled, current.recipe_id, current.profile_id,
+                )
+                if changed:
+                    conn.execute("UPDATE workbenches SET schedule_revision=schedule_revision+1 WHERE id=?", (rec_id,))
+                    fenced = service.revoke_in_transaction(conn, rec_id, "synced_bound_terms_changed")
+                else:
+                    fenced = []
+            service.complete_fenced(fenced)
         merged += 1
     return merged
 

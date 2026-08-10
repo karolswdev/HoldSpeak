@@ -7,7 +7,7 @@ independently of the Database container.
 # Bump this when adding tables or columns; the Database container uses it to
 # decide whether to back up and re-apply. See core._ensure_schema for the
 # four-way upgrade contract.
-SCHEMA_VERSION = 51  # v51: terminal Workbench receipt disposition (HS-131-05)
+SCHEMA_VERSION = 52  # v52: local bounded schedule delegations (HS-131-06)
 
 # SQL Schema
 SCHEMA_SQL = """
@@ -1166,6 +1166,7 @@ CREATE TABLE IF NOT EXISTS workbenches (
     resolver_profile_id TEXT,
     schedule TEXT,
     schedule_enabled INTEGER NOT NULL DEFAULT 0,
+    schedule_revision INTEGER NOT NULL DEFAULT 1,
     item_order_json TEXT NOT NULL DEFAULT '[]',
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     last_modified TEXT NOT NULL DEFAULT (datetime('now')),
@@ -1216,6 +1217,28 @@ CREATE INDEX IF NOT EXISTS idx_workbenches_modified ON workbenches(last_modified
 CREATE INDEX IF NOT EXISTS idx_workbench_items_workbench ON workbench_items(workbench_id, priority ASC);
 CREATE INDEX IF NOT EXISTS idx_workbench_items_status ON workbench_items(workbench_id, status);
 CREATE INDEX IF NOT EXISTS idx_workbench_runs_workbench ON workbench_runs(workbench_id, started_at DESC);
+
+-- Device-local owner authority for scheduled Workbench inference. Never sync.
+CREATE TABLE IF NOT EXISTS kernel_schedule_delegations (
+    id TEXT PRIMARY KEY, workbench_id TEXT NOT NULL,
+    delegator_kind TEXT NOT NULL, delegator_identity TEXT NOT NULL,
+    recipe_id TEXT NOT NULL, recipe_revision TEXT NOT NULL,
+    workbench_revision TEXT NOT NULL, schedule_revision TEXT NOT NULL,
+    cadence TEXT NOT NULL, deployment_revision_id TEXT NOT NULL,
+    terms_sha256 TEXT NOT NULL, expires_at REAL,
+    state TEXT NOT NULL CHECK (state IN ('LIVE','REVOKED','EXPIRED')),
+    revoked_at REAL, revocation_reason TEXT NOT NULL DEFAULT '',
+    created_at REAL NOT NULL, updated_at REAL NOT NULL
+);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_schedule_delegation_one_live
+ON kernel_schedule_delegations(workbench_id) WHERE state='LIVE';
+CREATE INDEX IF NOT EXISTS idx_schedule_delegations_workbench_state
+ON kernel_schedule_delegations(workbench_id, state);
+CREATE TABLE IF NOT EXISTS kernel_schedule_ticks (
+    workbench_id TEXT NOT NULL, due_minute INTEGER NOT NULL,
+    delegation_id TEXT NOT NULL, created_at REAL NOT NULL,
+    PRIMARY KEY(workbench_id, due_minute)
+);
 
 -- Skills (HS-116-06): reusable procedural knowledge agents learn and apply.
 CREATE TABLE IF NOT EXISTS skills (
@@ -1517,6 +1540,8 @@ CREATE TABLE IF NOT EXISTS kernel_operations (
     envelope_sha256 TEXT NOT NULL,
     policy_version TEXT NOT NULL,
     authority_basis TEXT NOT NULL,
+    delegator_kind TEXT NOT NULL DEFAULT '',
+    delegator_identity TEXT NOT NULL DEFAULT '',
     state TEXT NOT NULL CHECK (state IN (
         'admitting','awaiting_decision','awaiting_execution','claimed',
         'succeeded','failed','refused','cancelled','indeterminate'

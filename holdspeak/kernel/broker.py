@@ -150,9 +150,15 @@ class Broker(ExecutorPlane):
         if operation is None:
             raise KernelRefused("operation_unknown", operation_id=operation_id)
         delegated = self._live_owner_parent(operation, principal)
+        scheduler_child = False
+        if principal.kind is PrincipalKind.SCHEDULER and operation.get("parent_operation_id"):
+            with self.store._connection() as conn:
+                parent = conn.execute("SELECT o.principal_kind,p.state,p.input_json FROM kernel_operations o JOIN kernel_parent_runs p ON p.operation_id=o.operation_id WHERE o.operation_id=?", (operation["parent_operation_id"],)).fetchone()
+            scheduler_child = bool(parent and parent["principal_kind"] == "scheduler" and parent["state"] == "OPEN" and "delegation_id" in str(parent["input_json"]))
         if (
             (principal.kind is not PrincipalKind.OWNER or not principal.permits(PrincipalRight.DECIDE))
-            and not delegated
+            and not delegated and not scheduler_child
+            and not (principal.kind is PrincipalKind.SCHEDULER and getattr(self, "_delegated_schedule_admission", False))
         ):
             reason = (
                 "owner_or_live_parent_authority_required"
@@ -251,7 +257,14 @@ class Broker(ExecutorPlane):
         required = PrincipalRight(spec.required_capability)
         if principal.kind is PrincipalKind.AGENT and not principal.permits(required):
             raise KernelRefused("declared_capability_required")
-        if principal.kind not in {PrincipalKind.OWNER, PrincipalKind.AGENT}:
+        # Scheduler authority is never generic: the controller sets this
+        # one-shot private guard only while opening a validated delegated parent.
+        if principal.kind not in {PrincipalKind.OWNER, PrincipalKind.AGENT} and not (
+            principal.kind is PrincipalKind.SCHEDULER and (
+                (getattr(self, "_delegated_schedule_admission", False) and request.name == "workbench.run")
+                or getattr(self, "_trusted_scheduler_child", False)
+            )
+        ):
             raise KernelRefused("declared_capability_required")
         layers.append("declared_capability")
         admission = spec.codec.validate(request)
@@ -274,8 +287,11 @@ class Broker(ExecutorPlane):
 
     def _refuse_attempt(
         self, raw: Any, principal: Any, operation_id: str, reason: str, *, unique: bool = False,
+        provenance: Mapping[str, str] | None = None,
     ) -> dict[str, Any]:
         values = refusal_values(raw, principal, operation_id, reason)
+        allowed = {"delegator_kind", "delegator_identity", "authority_basis", "target_ref"}
+        values.update({k: str(v) for k, v in (provenance or {}).items() if k in allowed})
         if unique:
             values["idempotency_key"] = operation_id
         operation = self.store.create_operation(values)

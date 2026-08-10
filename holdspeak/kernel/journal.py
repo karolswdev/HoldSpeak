@@ -13,6 +13,15 @@ from typing import Any, Mapping
 from .journal_txn import append_record, json_encode as _json, record_hash as _hash
 from .model import KernelRefused
 
+# Receipt readers must see the executing scheduler separately from the owner
+# who delegated it; every receipt read path returns this same joined shape.
+_RECEIPT_SQL = (
+    "SELECT r.*, o.principal_kind AS actor_kind, o.principal_identity AS actor_identity,"
+    " o.delegator_kind, o.delegator_identity, o.authority_basis, o.target_ref"
+    " FROM kernel_receipts r JOIN kernel_operations o ON o.operation_id=r.operation_id"
+    " WHERE r.operation_id=?"
+)
+
 
 class JournalStore:
     def __init__(self, connection: Any, *, clock: Any = time.time) -> None:
@@ -110,8 +119,8 @@ class JournalStore:
                     operation_id,request_id,idempotency_key,name,version,principal_kind,
                     principal_identity,target_ref,placement,envelope_sha256,policy_version,
                     authority_basis,state,revision,native_id,parent_operation_id,
-                    correlation_id,created_at,updated_at
-                ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                    correlation_id,delegator_kind,delegator_identity,created_at,updated_at
+                ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
                 (
                     values["operation_id"], values["request_id"], values["idempotency_key"],
                     values["name"], values["version"], values["principal_kind"],
@@ -119,6 +128,7 @@ class JournalStore:
                     values["envelope_sha256"], values["policy_version"],
                     values["authority_basis"], values["state"], 1, values["native_id"],
                     values.get("parent_operation_id", ""), values.get("correlation_id", ""),
+                    values.get("delegator_kind", ""), values.get("delegator_identity", ""),
                     self._clock(), self._clock(),
                 ),
             )
@@ -204,9 +214,7 @@ class JournalStore:
         """Durably couple a claimed operation's terminal state and receipt."""
         receipt_id = "rcpt_" + uuid.uuid4().hex
         with self._connection() as conn:
-            existing = conn.execute(
-                "SELECT * FROM kernel_receipts WHERE operation_id=?", (operation_id,)
-            ).fetchone()
+            existing = conn.execute(_RECEIPT_SQL, (operation_id,)).fetchone()
             if existing is not None:
                 return self._operation(conn.execute(
                     "SELECT * FROM kernel_operations WHERE operation_id=?", (operation_id,)
@@ -225,17 +233,13 @@ class JournalStore:
             operation = conn.execute(
                 "SELECT * FROM kernel_operations WHERE operation_id=?", (operation_id,)
             ).fetchone()
-            receipt = conn.execute(
-                "SELECT * FROM kernel_receipts WHERE operation_id=?", (operation_id,)
-            ).fetchone()
+            receipt = conn.execute(_RECEIPT_SQL, (operation_id,)).fetchone()
         return self._operation(operation), dict(receipt)
 
     def add_receipt(self, operation_id: str, state: str, outcome: str, result_ref: str = "") -> dict[str, Any]:
         receipt_id = "rcpt_" + uuid.uuid4().hex
         with self._connection() as conn:
-            existing = conn.execute(
-                "SELECT * FROM kernel_receipts WHERE operation_id=?", (operation_id,)
-            ).fetchone()
+            existing = conn.execute(_RECEIPT_SQL, (operation_id,)).fetchone()
             if existing is not None:
                 return dict(existing)
             conn.execute(
@@ -245,9 +249,7 @@ class JournalStore:
         return self.receipt(operation_id) or {}
     def receipt(self, operation_id: str) -> dict[str, Any] | None:
         with self._connection() as conn:
-            row = conn.execute(
-                "SELECT * FROM kernel_receipts WHERE operation_id=?", (operation_id,)
-            ).fetchone()
+            row = conn.execute(_RECEIPT_SQL, (operation_id,)).fetchone()
         return dict(row) if row is not None else None
     def sign_warrant(self, payload: Mapping[str, Any]) -> dict[str, Any]:
         warrant = dict(payload)

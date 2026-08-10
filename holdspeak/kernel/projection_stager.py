@@ -110,8 +110,31 @@ class ProjectionStager:
             row = conn.execute("SELECT * FROM kernel_projection_stages WHERE stage_id=?", (stage_id,)).fetchone()
         return self._row(row)
 
+    def _scheduler_delegation_drift(self, conn: sqlite3.Connection, stage: ProjectionStage) -> tuple[str, str]:
+        """Re-derive frozen scheduler terms immediately before publication."""
+        row = conn.execute("""SELECT p.input_json,o.principal_kind FROM kernel_operations child
+            JOIN kernel_parent_runs p ON p.operation_id=child.parent_operation_id
+            JOIN kernel_operations o ON o.operation_id=p.operation_id
+            WHERE child.operation_id=?""", (stage.operation_id,)).fetchone()
+        if row is None or str(row["principal_kind"]) != "scheduler":
+            return "", ""
+        parent_input = json.loads(str(row["input_json"] or "{}"))
+        delegation = conn.execute("SELECT * FROM kernel_schedule_delegations WHERE id=?", (str(parent_input.get("delegation_id") or ""),)).fetchone()
+        if delegation is None or str(delegation["state"]) != "LIVE" or str(delegation["terms_sha256"]) != str(parent_input.get("terms_sha256") or ""):
+            return "delegation_revoked", str(parent_input.get("workbench_id") or "")
+        recipe = conn.execute("SELECT last_modified FROM recipes WHERE id=? AND deleted=0", (str(delegation["recipe_id"]),)).fetchone()
+        if recipe is None or str(recipe["last_modified"]) != str(delegation["recipe_revision"]):
+            return "delegation_stale_work", str(delegation["workbench_id"])
+        from ..deployment_revisions import resolve_workbench_deployment_revision
+        current = resolve_workbench_deployment_revision(conn, str(delegation["workbench_id"]))
+        if current is None or current.id != str(delegation["deployment_revision_id"]):
+            return "delegation_target_changed", str(delegation["workbench_id"])
+        return "", ""
+
     def finalize(self, invocation_id: str) -> Mapping[str, Any] | None:
         """Materialize exactly once, only when a matching receipt permits it."""
+        published: Mapping[str, Any] | None = None
+        revocation: tuple[str, str] | None = None
         with self._database._connection() as conn:
             conn.execute("BEGIN IMMEDIATE")
             row = conn.execute("SELECT * FROM kernel_projection_stages WHERE invocation_id=?", (invocation_id,)).fetchone()
@@ -136,19 +159,34 @@ class ProjectionStager:
                 return None
             if stage.state != "STAGED":
                 raise KernelRefused("projection_stage_state_invalid")
-            result = conn.execute("UPDATE kernel_projection_stages SET state='FINALIZING',updated_at=? WHERE stage_id=? AND state='STAGED'", (self._clock(), stage.stage_id)).rowcount
-            if result != 1:
-                raise KernelRefused("projection_stage_claim_conflict")
-            materializer = self._materializers.get(stage.kind)
-            if materializer is None:
-                raise KernelRefused("projection_materializer_unknown")
-            permit = _PublicationPermit(self, conn)
-            projection = materializer(conn, stage, permit)
-            if not permit._used:
-                raise KernelRefused("projection_permit_not_used")
-            final_json = _canonical(dict(projection))
-            conn.execute("UPDATE kernel_projection_stages SET state='PUBLISHED',final_result_json=?,updated_at=? WHERE stage_id=? AND state='FINALIZING'", (final_json, self._clock(), stage.stage_id))
-            return dict(projection)
+            drift, workbench_id = self._scheduler_delegation_drift(conn, stage)
+            if drift:
+                # The provider has returned, but its old-term output never crosses
+                # the publication boundary. Receipt mutation and discard share the
+                # materialization transaction that otherwise writes domain state.
+                conn.execute("UPDATE kernel_operations SET state='refused',revision=revision+1,updated_at=? WHERE operation_id=? AND state='succeeded'", (self._clock(), stage.operation_id))
+                conn.execute("UPDATE kernel_receipts SET state='refused',outcome=?,result_ref='' WHERE operation_id=?", (drift, stage.operation_id))
+                conn.execute("UPDATE kernel_projection_stages SET state='DISCARDED',updated_at=? WHERE stage_id=?", (self._clock(), stage.stage_id))
+                revocation = (workbench_id, drift)
+            else:
+                result = conn.execute("UPDATE kernel_projection_stages SET state='FINALIZING',updated_at=? WHERE stage_id=? AND state='STAGED'", (self._clock(), stage.stage_id)).rowcount
+                if result != 1:
+                    raise KernelRefused("projection_stage_claim_conflict")
+                materializer = self._materializers.get(stage.kind)
+                if materializer is None:
+                    raise KernelRefused("projection_materializer_unknown")
+                permit = _PublicationPermit(self, conn)
+                projection = materializer(conn, stage, permit)
+                if not permit._used:
+                    raise KernelRefused("projection_permit_not_used")
+                final_json = _canonical(dict(projection))
+                conn.execute("UPDATE kernel_projection_stages SET state='PUBLISHED',final_result_json=?,updated_at=? WHERE stage_id=? AND state='FINALIZING'", (final_json, self._clock(), stage.stage_id))
+                published = dict(projection)
+        if revocation is not None:
+            from ..services.schedule_delegation import ScheduleDelegationService
+            ScheduleDelegationService(self._database).revoke(*revocation)
+            return None
+        return published
 
     def require_permit(self, permit: object, conn: sqlite3.Connection) -> None:
         if not isinstance(permit, _PublicationPermit) or permit._stager is not self or permit._connection is not conn or permit._used:

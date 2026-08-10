@@ -24,7 +24,11 @@ def submit(broker: Any, raw: Any, principal: Any, context: Any, *, planned_node:
     spec = broker._specs.get((request.name, request.version))
     if spec is None: raise KernelRefused("operation_type_unregistered")
     if not getattr(spec.codec, "trusted_child", False): raise KernelRefused("parent_context_client_supplied")
-    admission, layers = broker._admit_authority(request, spec, principal, operation_id)
+    broker._trusted_scheduler_child = principal.name == "scheduler"
+    try:
+        admission, layers = broker._admit_authority(request, spec, principal, operation_id)
+    finally:
+        broker._trusted_scheduler_child = False
     now = broker._clock()
     with broker.store._connection() as conn:
         conn.execute("BEGIN IMMEDIATE")
@@ -32,7 +36,7 @@ def submit(broker: Any, raw: Any, principal: Any, context: Any, *, planned_node:
         # private identity and durable owner/epoch have been re-derived.
         parent_id = getattr(context, "operation_id", "")
         row = conn.execute("""SELECT o.*,p.execution_epoch,p.state AS parent_state,p.child_budget,p.children_json,p.deadline_at,
-            p.native_id AS parent_native_id FROM kernel_operations o JOIN kernel_parent_runs p
+            p.native_id AS parent_native_id,p.input_json FROM kernel_operations o JOIN kernel_parent_runs p
             ON p.operation_id=o.operation_id WHERE o.operation_id=?""", (parent_id,)).fetchone()
         if row is None: raise KernelRefused("parent_operation_unknown")
         controller = getattr(broker, "parent_run_controller", None)
@@ -61,7 +65,21 @@ def submit(broker: Any, raw: Any, principal: Any, context: Any, *, planned_node:
         if existing is not None:
             if str(existing["envelope_sha256"]) != admission.payload_hash: raise KernelRefused("idempotency_payload_mismatch", operation_id=str(existing["operation_id"]))
             return broker._handle(broker.store._operation(existing))
-        conn.execute("""INSERT INTO kernel_operations(operation_id,request_id,idempotency_key,name,version,principal_kind,principal_identity,target_ref,placement,envelope_sha256,policy_version,authority_basis,state,revision,native_id,parent_operation_id,correlation_id,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", (operation_id, request.request_id, request.idempotency_key, request.name, request.version, principal.name, principal.identity, admission.target_ref, admission.placement, admission.payload_hash, POLICY_VERSION, "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy", "admitting", 1, admission.native_id, str(row["operation_id"]), str(row["correlation_id"] or row["operation_id"]), now, now))
+        parent_input = json.loads(str(row['input_json'] or '{}'))
+        if str(row["principal_kind"]) == "scheduler":
+            delegation = conn.execute("SELECT * FROM kernel_schedule_delegations WHERE id=?", (str(parent_input.get("delegation_id") or ""),)).fetchone()
+            if delegation is None or str(delegation["state"]) != "LIVE" or str(delegation["terms_sha256"]) != str(parent_input.get("terms_sha256") or ""):
+                raise KernelRefused("delegation_revoked")
+            recipe = conn.execute("SELECT last_modified FROM recipes WHERE id=? AND deleted=0", (str(delegation["recipe_id"]),)).fetchone()
+            if recipe is None or str(recipe["last_modified"]) != str(delegation["recipe_revision"]):
+                raise KernelRefused("delegation_stale_work")
+            if str(request.arguments.get("deployment_revision") or "") != str(delegation["deployment_revision_id"]):
+                raise KernelRefused("delegation_target_changed")
+        basis = (f"schedule-delegation:{parent_input.get('delegation_id')}:{parent_input.get('terms_sha256')}"
+                 if principal.name == 'scheduler' else "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy")
+        conn.execute("""INSERT INTO kernel_operations(operation_id,request_id,idempotency_key,name,version,principal_kind,principal_identity,target_ref,placement,envelope_sha256,policy_version,authority_basis,state,revision,native_id,parent_operation_id,correlation_id,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", (operation_id, request.request_id, request.idempotency_key, request.name, request.version, principal.name, principal.identity, admission.target_ref, admission.placement, admission.payload_hash, POLICY_VERSION, basis, "admitting", 1, admission.native_id, str(row["operation_id"]), str(row["correlation_id"] or row["operation_id"]), now, now))
+        if principal.name == 'scheduler':
+            conn.execute("UPDATE kernel_operations SET delegator_kind=?,delegator_identity=? WHERE operation_id=?", (str(row['delegator_kind']), str(row['delegator_identity']), operation_id))
         children.append(admission.native_id)
         changed = conn.execute("UPDATE kernel_parent_runs SET planned_node=?,active_child_invocation_id=?,children_json=?,lease_process_id=?,lease_heartbeat_at=?,updated_at=? WHERE operation_id=? AND state='OPEN' AND execution_epoch=?", (planned_node, admission.native_id, json.dumps(children, separators=(",", ":")), controller._process_id, now, now, str(row["operation_id"]), int(row["execution_epoch"])))
         if changed.rowcount != 1: raise KernelRefused("parent_operation_not_running")

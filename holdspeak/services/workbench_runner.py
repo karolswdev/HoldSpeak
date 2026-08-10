@@ -82,6 +82,26 @@ class WorkbenchRunner:
             raise ServiceError("parent_terminal_unresolved", "The replayed Workbench parent did not retain a terminal receipt.", context={"status": 409, "parent_operation_id": parent_operation_id})
         return {"parent_operation_id":parent_operation_id,"receipt_id":str(receipt["receipt_id"]),"parent_receipt_id":str(receipt["receipt_id"]),"terminal_disposition":str(receipt.get("outcome") or "indeterminate"),"replayed":True,"children":_children(self.db,self.broker,parent_operation_id)}
 
+    def _scheduled_drift(self, delegation: dict[str, Any] | None, recipe: Any, deployment: Any) -> str:
+        """Re-derive mutable scheduled terms before every provider dispatch."""
+        if delegation is None:
+            return ""
+        current = self.db.recipes.get(recipe.id)
+        if current is None or str(current.last_modified) != str(delegation["recipe_revision"]):
+            return "delegation_stale_work"
+        if str(deployment.id) != str(delegation["deployment_revision_id"]):
+            return "delegation_target_changed"
+        return ""
+
+    def _release_unpublished_claim(self, item_id: str) -> None:
+        """Return a claim that lost its parent election to the pending queue."""
+        with self.db._connection() as conn:
+            conn.execute(
+                """UPDATE workbench_items SET status='pending', claimed_at=NULL
+                   WHERE id=? AND status='claimed' AND (result IS NULL OR result='')""",
+                (item_id,),
+            )
+
     def _adopt_terminal(self, run_id: str, parent: Any) -> dict[str, Any]:
         # cancel_by_operation_id makes CANCELLING durable before its in-flight
         # child returns; let that closer publish its elected receipt.
@@ -97,12 +117,12 @@ class WorkbenchRunner:
         links = self._record_terminal(run_id, parent, receipt)
         return {"run_id": run_id, "parent_operation_id": parent.operation_id, "receipt_id": receipt["receipt_id"], "terminal_disposition": receipt.get("outcome"), "children": links}
 
-    async def run(self, principal: Principal, workbench_id: str, *, memory_enabled: bool=True, request_id: str|None=None, deadline_seconds: float=60) -> dict[str,Any]:
+    async def run(self, principal: Principal, workbench_id: str, *, memory_enabled: bool=True, request_id: str|None=None, deadline_seconds: float=60, delegation: dict[str, Any] | None = None, due_minute: int | None = None) -> dict[str,Any]:
         wb=self.db.workbenches.get(workbench_id)
         if wb is None: raise ServiceError("not_found","Unknown Workbench",context={"status":404})
         recipe=self.db.recipes.get(wb.recipe_id) if wb.recipe_id else None
         if recipe is None: return {"error":f"workbench {wb.name}: no recipe assigned"}
-        if request_id:
+        if request_id and delegation is None:
             with self.db._connection() as conn:
                 existing=conn.execute("SELECT p.operation_id FROM kernel_parent_runs p JOIN kernel_operations o ON o.operation_id=p.operation_id WHERE o.principal_kind=? AND o.principal_identity=? AND o.idempotency_key=? AND p.kind='workbench' AND p.definition_ref=?",(principal.name,principal.identity,request_id,f"workbench:{workbench_id}")).fetchone()
             if existing is not None and self.broker.store.receipt(str(existing["operation_id"])) is not None:
@@ -110,7 +130,13 @@ class WorkbenchRunner:
         items=self.db.workbench_items.list_for_workbench(workbench_id,status="pending")
         run_id="wbrun_"+uuid.uuid4().hex[:12]; deadline=time.time()+deadline_seconds
         snapshot={"workbench_id":workbench_id,"items":[x.id for x in items],"recipe_id":recipe.id,"recipe_revision":str(recipe.last_modified),"memory_enabled":memory_enabled,"request_id":request_id or ""}
-        parent=self.broker.parent_run_controller.start(principal,kind="workbench",definition_ref=f"workbench:{workbench_id}",definition_revision=str(wb.last_modified),input_snapshot=snapshot,deadline_at=deadline,child_budget=len(items)*(2 if memory_enabled else 1),idempotency_key=request_id)
+        if delegation is not None:
+            snapshot.update({"delegation_id": delegation["id"], "terms_sha256": delegation["terms_sha256"],
+                             "delegator_kind": delegation["delegator_kind"], "delegator_identity": delegation["delegator_identity"],
+                             "deployment_revision_id": delegation["deployment_revision_id"], "due_minute": due_minute})
+            parent=self.broker.parent_run_controller.start_delegated_schedule(principal,definition_ref=f"workbench:{workbench_id}",definition_revision=str(wb.last_modified),input_snapshot=snapshot,deadline_at=deadline,child_budget=len(items)*(2 if memory_enabled else 1),idempotency_key=request_id or f"schedule:{workbench_id}:{due_minute}")
+        else:
+            parent=self.broker.parent_run_controller.start(principal,kind="workbench",definition_ref=f"workbench:{workbench_id}",definition_revision=str(wb.last_modified),input_snapshot=snapshot,deadline_at=deadline,child_budget=len(items)*(2 if memory_enabled else 1),idempotency_key=request_id)
         if parent.replayed:
             return self._replayed_result(parent.operation_id)
         # This is coordination metadata only; its receipt links are always retained.
@@ -134,34 +160,63 @@ class WorkbenchRunner:
             for ordinal,item in enumerate(items,1):
                 if self.broker.parent_run_controller.expire_if_due(parent.context,principal):
                     return self._adopt_terminal(run_id,parent)
-                now=datetime.now().isoformat(); self.db.workbench_items.upsert(item_id=item.id,workbench_id=workbench_id,title=item.title,body=item.body,priority=item.priority,status="claimed",claimed_at=now)
+                # Claim and epoch validation share one transaction. A cancellation
+                # that wins cannot leave this item claimed without a runnable child.
+                now = datetime.now().isoformat()
+                with self.db._connection() as conn:
+                    conn.execute("BEGIN IMMEDIATE")
+                    claimed = conn.execute(
+                        """UPDATE workbench_items SET status='claimed', claimed_at=?
+                           WHERE id=? AND status='pending' AND EXISTS (
+                             SELECT 1 FROM kernel_parent_runs
+                             WHERE operation_id=? AND state='OPEN' AND execution_epoch=?
+                           )""",
+                        (now, item.id, parent.operation_id, parent.context.epoch),
+                    ).rowcount
+                if claimed != 1:
+                    return self._adopt_terminal(run_id, parent)
                 parts=[x for x in (context,memory,_hydrate_item_grounding(self.db,item.grounding_json),f"[TASK]\n{item.title}",item.body) if x]
-                prompt="\n\n".join(parts); target,deployment=self._target(wb,recipe); iid="workbench_item_"+uuid.uuid4().hex
+                prompt="\n\n".join(parts); target,deployment=self._target(wb,recipe)
+                drift = self._scheduled_drift(delegation, recipe, deployment)
+                if drift:
+                    from .schedule_delegation import ScheduleDelegationService
+                    ScheduleDelegationService(self.db).revoke(workbench_id, drift)
+                    self._release_unpublished_claim(item.id)
+                    return self._adopt_terminal(run_id, parent)
+                iid="workbench_item_"+uuid.uuid4().hex
                 payload={"workbench_id":workbench_id,"workbench_revision":str(wb.last_modified),"item_id":item.id,"item_revision":str(item.last_modified),"recipe_id":recipe.id,"recipe_revision":str(recipe.last_modified),"system_prompt":system,"user_prompt":prompt,"rendered_input_sha256":_sha(prompt),"skills":skills,"context_hash":_sha(context),"attempt_ordinal":ordinal,"deployment_revision":deployment.id}
-                projection=lambda r,iid=iid,item=item,target=target,epoch=parent.context.epoch: {"parent_operation_id":parent.operation_id,"execution_epoch":epoch,"planned_node":f"item:{item.id}","run_id":run_id,"workbench_id":workbench_id,"item_id":item.id,"output":str(r.get("output") if isinstance(r,dict) else r),"egress":{"boundary":target.boundary,"model":target.model},"artifact_id":"artifact_"+iid[-12:],"artifact_title":f"{recipe.name or recipe.id}: {item.title}"}
+                projection=lambda r,iid=iid,item=item,target=target,epoch=parent.context.epoch: {"parent_operation_id":parent.operation_id,"execution_epoch":epoch,"planned_node":f"item:{item.id}","run_id":run_id,"workbench_id":workbench_id,"item_id":item.id,"output":str(r.get("output") if isinstance(r,dict) else r),"egress":{"boundary":target.boundary,"model":target.model},"artifact_id":"artifact_"+iid[-12:],"artifact_title":f"{recipe.name or recipe.id}: {item.title}","deployment_revision":deployment.id}
                 outcome=await asyncio.to_thread(self._invoke,principal,InvocationRequest(deployment.id,SavedDefinition(f"recipe:{recipe.id}",str(recipe.last_modified)),min(deadline,time.time()+60),payload,iid,parent.operation_id),parent.context,f"item:{item.id}",self.broker.projection_stager.publisher(iid,"workbench-item-output",projection))
                 # The deadline is an execution fence: a dispatch that returns
                 # past it must not advance. Expiry bumps the epoch, so the
                 # child's staged output stays receipt-linked but stale.
                 if self.broker.parent_run_controller.expire_if_due(parent.context,principal):
+                    self._release_unpublished_claim(item.id)
                     return self._adopt_terminal(run_id,parent)
                 if outcome.outcome!="succeeded":
                     # Cancellation can arrive while the provider is in flight.
                     # Do not turn that elected parent outcome into an item failure.
                     if outcome.outcome in {"cancelled", "indeterminate"} or self._winner(parent) is not None:
+                        self._release_unpublished_claim(item.id)
                         return self._adopt_terminal(run_id,parent)
                     failed+=1; self.db.workbench_items.upsert(item_id=item.id,workbench_id=workbench_id,title=item.title,body=item.body,priority=item.priority,status="failed",result=f"Error: {outcome.error or outcome.outcome}",completed_at=datetime.now().isoformat()); continue
                 check=self.broker.projection_stager.finalize(iid)
                 if not check or not check.get("advanced"):
                     # A checkpoint that cannot advance lost the parent election.
                     # Its child receipt remains durable; never mint a success aggregate.
+                    self._release_unpublished_claim(item.id)
                     return self._adopt_terminal(run_id,parent)
                 complete+=1
                 if not memory_enabled or self.broker.parent_run_controller.expire_if_due(parent.context,principal): continue
                 target,deployment=self._target(wb,recipe)
+                drift = self._scheduled_drift(delegation, recipe, deployment)
+                if drift:
+                    from .schedule_delegation import ScheduleDelegationService
+                    ScheduleDelegationService(self.db).revoke(workbench_id, drift)
+                    return self._adopt_terminal(run_id, parent)
                 mid="workbench_memory_"+uuid.uuid4().hex; out=str(check["output"]); mp={"workbench_id":workbench_id,"item_id":item.id,"parent_operation_id":parent.operation_id,"source_item_invocation_id":iid,"source_item_operation_id":check["operation_id"],"source_item_receipt_id":check["receipt_id"],"source_output_sha256":_sha(out),"source_output":out[:500],"prompt_contract_revision":"1","deployment_revision":deployment.id}
                 mprompt="Based on the task and your output, what ONE thing should future runs on this workbench remember? Reply with a single sentence. If nothing is worth remembering, reply exactly 'nothing'."
-                publish=lambda r,epoch=parent.context.epoch,item=item: {"parent_operation_id":parent.operation_id,"execution_epoch":epoch,"planned_node":f"memory:{item.id}","run_id":run_id,"workbench_id":workbench_id,"item_title":item.title,"observation":str(r.get("output") if isinstance(r,dict) else r),"source_item_receipt_id":check["receipt_id"]}
+                publish=lambda r,epoch=parent.context.epoch,item=item: {"parent_operation_id":parent.operation_id,"execution_epoch":epoch,"planned_node":f"memory:{item.id}","run_id":run_id,"workbench_id":workbench_id,"item_title":item.title,"observation":str(r.get("output") if isinstance(r,dict) else r),"source_item_receipt_id":check["receipt_id"],"deployment_revision":deployment.id}
                 mpayload={**mp,"system_prompt":"You are a concise assistant. Reply in one sentence only.","user_prompt":f"Task: {item.title}\n\nYour output:\n{out[:500]}\n\n{mprompt}"}
                 mo=await asyncio.to_thread(self._invoke,principal,InvocationRequest(deployment.id,ServiceContract.for_payload("holdspeak.workbench-memory@1","1",mpayload),min(deadline,time.time()+60),mpayload,mid,parent.operation_id),parent.context,f"memory:{item.id}",self.broker.projection_stager.publisher(mid,"workbench-memory-writeback",publish))
                 if mo.outcome=="succeeded": self.broker.projection_stager.finalize(mid)
@@ -176,3 +231,24 @@ class WorkbenchRunner:
             receipt=self._close_or_adopt(parent,"failed",principal=principal)
             self._record_terminal(run_id,parent,receipt)
             raise
+
+    async def run_scheduled(self, scheduler_principal: Principal, workbench_id: str, *, due_minute: int | None = None) -> dict[str, Any]:
+        """Revalidate local delegated terms, then use the ordinary admitted loop."""
+        from .schedule_delegation import ScheduleDelegationService
+        if scheduler_principal.kind.name != "SCHEDULER":
+            raise ServiceError("scheduler_principal_required", "Scheduler principal required", context={"status": 403})
+        minute = int(time.time() // 60 if due_minute is None else due_minute)
+        try:
+            delegation = ScheduleDelegationService(self.db).validate(workbench_id)
+        except ServiceError as exc:
+            wb = self.db.workbenches.get(workbench_id)
+            if wb is not None:
+                self.broker.parent_run_controller.record_delegated_refusal(
+                    scheduler_principal, definition_ref=f"workbench:{workbench_id}",
+                    definition_revision=str(wb.last_modified),
+                    input_snapshot={"workbench_id": workbench_id, "due_minute": minute},
+                    deadline_at=time.time() + 60, child_budget=0,
+                    idempotency_key=f"schedule:{workbench_id}:{minute}", reason=exc.code,
+                )
+            raise
+        return await self.run(scheduler_principal, workbench_id, request_id=f"schedule:{workbench_id}:{minute}", delegation=delegation, due_minute=minute)

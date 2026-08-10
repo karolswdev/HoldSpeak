@@ -102,11 +102,19 @@ class ParentRunController:
         if principal is not None and (principal.name != str(row["principal_kind"]) or principal.identity != str(row["principal_identity"])):
             raise KernelRefused("parent_operation_scope_required")
 
-    def start(self, principal: Any, *, kind: str, definition_ref: str, definition_revision: str, input_snapshot: Mapping[str, Any], deadline_at: float, child_budget: int, idempotency_key: str | None = None) -> ParentRun:
+    def _persist_parent(self, conn: Any, *, operation_id: str, native_id: str, kind: str, definition_ref: str, definition_revision: str, input_snapshot: Mapping[str, Any], deadline_at: float, child_budget: int, now: float) -> Any:
+        conn.execute("""INSERT OR IGNORE INTO kernel_parent_runs(operation_id,native_id,kind,definition_ref,definition_revision,input_json,deadline_at,execution_epoch,planned_node,active_child_invocation_id,child_budget,children_json,state,lease_process_id,lease_heartbeat_at,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", (operation_id, native_id, kind, definition_ref, definition_revision, json.dumps(dict(input_snapshot), sort_keys=True, separators=(",", ":")), deadline_at, 1, "", "", child_budget, "[]", "OPEN", self._process_id, now, now, now))
+        return conn.execute("SELECT p.*,o.principal_kind,o.principal_identity FROM kernel_parent_runs p JOIN kernel_operations o ON o.operation_id=p.operation_id WHERE p.operation_id=?", (operation_id,)).fetchone()
+
+    def _delegated_refusal(self, conn: Any, input_snapshot: Mapping[str, Any], *, authoritative: bool = False) -> tuple[str, Any | None]:
+        from .schedule_delegated import delegated_refusal
+        return delegated_refusal(self, conn, input_snapshot, authoritative=authoritative)
+
+    def start(self, principal: Any, *, kind: str, definition_ref: str, definition_revision: str, input_snapshot: Mapping[str, Any], deadline_at: float, child_budget: int, idempotency_key: str | None = None, _defer_persist: bool = False) -> ParentRun:
         if principal is None or principal.kind is PrincipalKind.NONE: raise KernelRefused("principal_authentication_required")
         if kind not in {"sequence", "workflow", "workbench"}: raise KernelRefused("parent_run_kind_unknown")
         request_id = idempotency_key or "request_" + uuid.uuid4().hex
-        if idempotency_key:
+        if idempotency_key and not getattr(self, "_delegated_parent_start", False):
             with self._database._connection() as conn:
                 row = conn.execute("SELECT p.*,o.principal_kind,o.principal_identity FROM kernel_parent_runs p JOIN kernel_operations o ON o.operation_id=p.operation_id WHERE o.principal_kind=? AND o.principal_identity=? AND o.idempotency_key=?", (principal.name, principal.identity, request_id)).fetchone()
             if row is not None:
@@ -120,13 +128,22 @@ class ParentRunController:
         operation_id = str(submitted["operation_id"])
         if submitted["state"] == "awaiting_decision": self._broker.decide(operation_id, "approve", submitted["revision"], principal)
         if (self._broker.store.operation(operation_id) or {}).get("state") == "awaiting_execution": self._broker.claim(self._node, native_id)
+        if _defer_persist:
+            return ParentRun(operation_id, native_id, None)  # type: ignore[arg-type]
         now = self._clock()
         with self._database._connection() as conn:
             conn.execute("BEGIN IMMEDIATE")
-            conn.execute("""INSERT OR IGNORE INTO kernel_parent_runs(operation_id,native_id,kind,definition_ref,definition_revision,input_json,deadline_at,execution_epoch,planned_node,active_child_invocation_id,child_budget,children_json,state,lease_process_id,lease_heartbeat_at,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", (operation_id, native_id, kind, definition_ref, definition_revision, json.dumps(dict(input_snapshot), sort_keys=True, separators=(",", ":")), deadline_at, 1, "", "", child_budget, "[]", "OPEN", self._process_id, now, now, now))
-            row = conn.execute("SELECT p.*,o.principal_kind,o.principal_identity FROM kernel_parent_runs p JOIN kernel_operations o ON o.operation_id=p.operation_id WHERE p.operation_id=?", (operation_id,)).fetchone()
+            row = self._persist_parent(conn, operation_id=operation_id, native_id=native_id, kind=kind, definition_ref=definition_ref, definition_revision=definition_revision, input_snapshot=input_snapshot, deadline_at=deadline_at, child_budget=child_budget, now=now)
         if row is None: raise KernelRefused("parent_run_persistence_failed")
         return ParentRun(operation_id, str(row["native_id"]), self._context(row))
+
+    def record_delegated_refusal(self, principal: Any, **kwargs: Any) -> Mapping[str, Any]:
+        from .schedule_delegated import record_delegated_refusal
+        return record_delegated_refusal(self, principal, **kwargs)
+
+    def start_delegated_schedule(self, principal: Any, **kwargs: Any) -> ParentRun:
+        from .schedule_delegated import start_delegated_schedule
+        return start_delegated_schedule(self, principal, **kwargs)
 
     def reserve_child(self, context: OuterRunContext, principal: Any, *, planned_node: str, invocation_id: str) -> int:
         """Test/pure-controller reservation; production admission uses trusted_child."""

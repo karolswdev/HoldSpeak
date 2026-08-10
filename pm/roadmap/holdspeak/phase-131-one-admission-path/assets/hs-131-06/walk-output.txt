@@ -1,0 +1,8 @@
+leg1 parent=op_7f9a7d16843142afa195328b4533bf85 basis=schedule-delegation:scheddeleg_83366390f84d4bf89d4fde6f6c3becdc:sha256:de0ee8fcf3d50336e76175d53f4bbb77129f2ad0cbf0d83b827503b37030c512 item=done output='{\n  "line": "Blue"\n}'
+leg2 duplicate_tick refused with terminal receipt rcpt_b9d21a54daa041d9b47e44f0da86614b
+leg3a bound edit -> tick refused delegation_revoked with receipt
+leg3b re-enable -> new delegation scheddeleg_c9b33455ac2645638dc1838af2f8984a ran on metal
+leg4 synced schedule_enabled -> delegation_missing, no model call
+leg5 run returned (not raised): keys=['children', 'parent_operation_id', 'receipt_id', 'run_id', 'terminal_disposition']
+leg5 disable mid-run -> parent=CANCELLED item=pending delegation revoked
+WALK OK: enable minted an exact-terms delegation and the scheduler ran admitted work on real metal with honest receipts; duplicate, revoked, and sync-only ticks refused by name with terminal receipts; re-enable minted new terms; disable mid-run fenced late output.

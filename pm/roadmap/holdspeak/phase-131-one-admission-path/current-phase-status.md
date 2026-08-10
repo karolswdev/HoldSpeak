@@ -128,7 +128,7 @@ gates while keeping every known site bounded now.
 | HS-131-03 | Ask and Agents take the same door | done | [story-03](./story-03-ask-and-agents.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-131-04 | Sequence and Workflow admit every model step | done | [story-04](./story-04-sequence-and-workflow.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-131-05 | Workbench work and memory cannot outrun cancellation | done | [story-05](./story-05-workbench-and-memory.md) | [evidence-story-05](./evidence-story-05.md) |
-| HS-131-06 | Scheduled work carries bounded delegation | in-progress | [story-06](./story-06-bounded-schedules.md) | — |
+| HS-131-06 | Scheduled work carries bounded delegation | done | [story-06](./story-06-bounded-schedules.md) | [evidence-story-06](./evidence-story-06.md) |
 | HS-131-07 | The remaining direct callers join the spine | backlog | [story-07](./story-07-service-callers.md) | — |
 | HS-131-08 | Meetings are admitted per session | backlog | [story-08](./story-08-meeting-sessions.md) | — |
 | HS-131-09 | Dictation and transcription are admitted per session | backlog | [story-09](./story-09-dictation-sessions.md) | — |
@@ -233,7 +233,39 @@ mid-run cancel honest end-to-end). Gate: zero deterministic new names
 vs the HS-131-04 baseline; two run-to-run tail flakes accounted with
 serial passes. Sol's reservation (best-effort provider signal after the
 durable fence) rides in the evidence.
-Next: HS-131-06, bounded schedules.
+HS-131-06 is done — scheduled Workbench work now runs on bounded owner
+delegation (design ruled in ONE Sol round with nine binding amendments;
+four implementation rounds to RATIFY-WITH-RESERVATIONS): deliberately
+enabling a schedule mints one device-local, exact-terms delegation
+(schema v52: `kernel_schedule_delegations` under a partial live-unique
+index, durable due-minute tick claims, `workbenches.schedule_revision`),
+the conductor authenticates as a rights-empty SCHEDULER principal, and
+every due tick admits atomically — term re-verification, tick claim,
+parent persistence, and delegator/authority-basis provenance in ONE
+transaction, with every named refusal (schedule_disabled,
+delegation_missing/revoked/expired/cadence_changed/stale_work/
+target_changed, duplicate_tick) leaving a provenance-stamped terminal
+receipt before dispatch. Bound-term edits and incoming sync changes
+revoke and epoch-fence in the same write transaction; recipe and
+effective-deployment drift is refused at child admission AND re-derived
+from live rows inside the publication transaction, so an in-flight
+provider result cannot publish after any bounded term changes. The
+legacy no-principal scheduler leg (`_run_scheduled_workbench_legacy`)
+is deleted; synced `schedule_enabled` is configuration, never
+authority. The walk on .43 caught a live inherited crash
+(`WorkbenchRunRecord` lacking the `mint_failures` field its repository
+passes — every run-history read on main raises TypeError once a run
+row exists; repaired) and Sol's review surfaced a latent HS-131-05
+claimed-item stranding race (fixed with an epoch-conditioned claim).
+Real-metal walk on .43: five legs green (admitted scheduler run with
+honest receipts, duplicate refusal, revoke→re-enable with new terms,
+sync-flag refusal, disable-mid-run fence). Sol's four reservations
+(process-global admission guards, internal enable helper,
+pre-authoritative crash shell, provisional child-success observability)
+ride in the evidence. Cadence census: its scheduled tick performs no
+model work; the sole Cadence LLM call is request-time authenticated and
+belongs to HS-131-07.
+Next: HS-131-07, the remaining direct callers.
 The roadmap still has nine inherited structural lint errors in old phases; they
 are named baseline and are not silently bundled into this product phase.
 

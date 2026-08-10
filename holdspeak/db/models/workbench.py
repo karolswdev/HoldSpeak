@@ -203,6 +203,7 @@ class WorkbenchRunRecord(Serializable):
     items_attempted: int = 0
     items_completed: int = 0
     items_failed: int = 0
+    mint_failures: int = 0
     total_tokens: int = 0
     egress_boundary: str = ""
     model: str = ""
@@ -220,6 +221,7 @@ class WorkbenchRunRecord(Serializable):
             "items_attempted": self.items_attempted,
             "items_completed": self.items_completed,
             "items_failed": self.items_failed,
+            "mint_failures": self.mint_failures,
             "total_tokens": self.total_tokens,
             "egress_boundary": self.egress_boundary,
             "model": self.model,

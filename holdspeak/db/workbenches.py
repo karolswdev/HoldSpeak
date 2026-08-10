@@ -42,6 +42,7 @@ class WorkbenchRepository(BaseRepository):
         resolver_profile_id: Optional[str] = None,
         schedule: Optional[str] = None,
         schedule_enabled: bool = False,
+        schedule_revision: Optional[int] = None,
         item_order: Optional[list[str]] = None,
         last_modified: Optional[str] = None,
         deleted: bool = False,
@@ -60,9 +61,9 @@ class WorkbenchRepository(BaseRepository):
                 """
                 INSERT INTO workbenches (id, name, recipe_id, profile_id,
                                         resolver_profile_id, schedule,
-                                        schedule_enabled, item_order_json,
+                                        schedule_enabled, schedule_revision, item_order_json,
                                         created_at, last_modified, deleted)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(id) DO UPDATE SET
                     name = excluded.name,
                     recipe_id = excluded.recipe_id,
@@ -70,6 +71,7 @@ class WorkbenchRepository(BaseRepository):
                     resolver_profile_id = excluded.resolver_profile_id,
                     schedule = excluded.schedule,
                     schedule_enabled = excluded.schedule_enabled,
+                    schedule_revision = excluded.schedule_revision,
                     item_order_json = excluded.item_order_json,
                     last_modified = excluded.last_modified,
                     deleted = excluded.deleted
@@ -82,6 +84,7 @@ class WorkbenchRepository(BaseRepository):
                     str(resolver_profile_id).strip() if resolver_profile_id else None,
                     str(schedule).strip() if schedule else None,
                     1 if schedule_enabled else 0,
+                    int(schedule_revision if schedule_revision is not None else 1),
                     self._json_dumps(item_order or [], fallback="[]"),
                     created,
                     last_modified or now,
@@ -89,6 +92,38 @@ class WorkbenchRepository(BaseRepository):
                 ),
             )
         return self.get(clean_id, include_deleted=True)  # type: ignore[return-value]
+
+    def upsert_in_transaction(
+        self, conn: Any, **kwargs: Any,
+    ) -> WorkbenchRecord:
+        """The normal upsert semantics, using the caller's BEGIN IMMEDIATE."""
+        workbench_id = kwargs["workbench_id"]
+        clean_id = str(workbench_id or "").strip()
+        if not clean_id:
+            raise ValueError("workbench id is required")
+        now = _now_iso()
+        existing = conn.execute("SELECT created_at FROM workbenches WHERE id = ?", (clean_id,)).fetchone()
+        created = kwargs.get("created_at") or (existing["created_at"] if existing else now)
+        conn.execute(
+            """INSERT INTO workbenches (id, name, recipe_id, profile_id, resolver_profile_id,
+               schedule, schedule_enabled, schedule_revision, item_order_json, created_at,
+               last_modified, deleted) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+               ON CONFLICT(id) DO UPDATE SET name=excluded.name, recipe_id=excluded.recipe_id,
+               profile_id=excluded.profile_id, resolver_profile_id=excluded.resolver_profile_id,
+               schedule=excluded.schedule, schedule_enabled=excluded.schedule_enabled,
+               schedule_revision=excluded.schedule_revision, item_order_json=excluded.item_order_json,
+               last_modified=excluded.last_modified, deleted=excluded.deleted""",
+            (clean_id, str(kwargs.get("name") or ""),
+             str(kwargs.get("recipe_id")).strip() if kwargs.get("recipe_id") else None,
+             str(kwargs.get("profile_id")).strip() if kwargs.get("profile_id") else None,
+             str(kwargs.get("resolver_profile_id")).strip() if kwargs.get("resolver_profile_id") else None,
+             str(kwargs.get("schedule")).strip() if kwargs.get("schedule") else None,
+             1 if kwargs.get("schedule_enabled", False) else 0,
+             int(kwargs.get("schedule_revision") if kwargs.get("schedule_revision") is not None else 1),
+             self._json_dumps(kwargs.get("item_order") or [], fallback="[]"), created,
+             kwargs.get("last_modified") or now, 1 if kwargs.get("deleted", False) else 0),
+        )
+        return self._row(conn.execute("SELECT * FROM workbenches WHERE id = ?", (clean_id,)).fetchone())
 
     def get(self, workbench_id: str, *, include_deleted: bool = False) -> Optional[WorkbenchRecord]:
         clean_id = str(workbench_id or "").strip()
@@ -142,6 +177,7 @@ class WorkbenchRepository(BaseRepository):
             resolver_profile_id=row["resolver_profile_id"] if "resolver_profile_id" in row.keys() else None,
             schedule=row["schedule"],
             schedule_enabled=bool(row["schedule_enabled"]),
+            schedule_revision=int(row["schedule_revision"]) if "schedule_revision" in row.keys() else 1,
             item_order_json=row["item_order_json"] or "[]",
             created_at=row["created_at"],
             last_modified=row["last_modified"],

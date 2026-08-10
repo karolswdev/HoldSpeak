@@ -123,3 +123,10 @@ def test_manual_run_receipt_linkage_and_cancellation_boundaries():
     # The fixture host owns the live route and blocks its adapter at both
     # boundaries. Keep this test named and separate from visual screenshots.
     pytest.fail("HOLDSPEAK_WORKBENCH_WALK_FIXTURE is not wired in this checkout")
+
+
+def test_local_owner_schedule_receipt_and_reenable():
+    """Reserved production-hub schedule walk; adapter fixture owns real metal."""
+    if not os.environ.get("HOLDSPEAK_WORKBENCH_WALK_FIXTURE"):
+        pytest.skip("requires the production app fixture and deployment-adapter fake")
+    pytest.fail("HOLDSPEAK_WORKBENCH_WALK_FIXTURE schedule adapter is not wired in this checkout")

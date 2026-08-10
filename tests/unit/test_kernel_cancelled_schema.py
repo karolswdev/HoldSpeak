@@ -17,7 +17,7 @@ def test_v44_kernel_rows_upgrade_byte_for_byte_and_accept_cancelled(tmp_path: Pa
     receipt = ("receipt-v44", "op-v44", "succeeded", "succeeded", "result:one", 3.0)
     with database._connection() as conn:
         conn.execute(
-            "INSERT INTO kernel_operations VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", operation
+            "INSERT INTO kernel_operations(operation_id,request_id,idempotency_key,name,version,principal_kind,principal_identity,target_ref,placement,envelope_sha256,policy_version,authority_basis,state,revision,native_id,parent_operation_id,correlation_id,decision,warrant_json,warrant_revoked,claimed_by,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", operation
         )
         conn.execute("INSERT INTO kernel_receipts VALUES(?,?,?,?,?,?)", receipt)
         # Recreate the actual v44 constraints, rather than faking only its version pin.
@@ -25,7 +25,7 @@ def test_v44_kernel_rows_upgrade_byte_for_byte_and_accept_cancelled(tmp_path: Pa
             """
             PRAGMA foreign_keys = OFF;
             DROP INDEX idx_kernel_operations_state;
-            CREATE TABLE kernel_operations_v44 AS SELECT * FROM kernel_operations;
+            CREATE TABLE kernel_operations_v44 AS SELECT operation_id,request_id,idempotency_key,name,version,principal_kind,principal_identity,target_ref,placement,envelope_sha256,policy_version,authority_basis,state,revision,native_id,parent_operation_id,correlation_id,decision,warrant_json,warrant_revoked,claimed_by,created_at,updated_at FROM kernel_operations;
             DROP TABLE kernel_operations;
             CREATE TABLE kernel_operations (
                 operation_id TEXT PRIMARY KEY, request_id TEXT NOT NULL, idempotency_key TEXT NOT NULL,
@@ -59,7 +59,7 @@ def test_v44_kernel_rows_upgrade_byte_for_byte_and_accept_cancelled(tmp_path: Pa
 
     upgraded = Database(path)
     with upgraded._connection() as conn:
-        carried_operation = tuple(conn.execute("SELECT * FROM kernel_operations WHERE operation_id='op-v44'").fetchone())
+        carried_operation = tuple(conn.execute("SELECT operation_id,request_id,idempotency_key,name,version,principal_kind,principal_identity,target_ref,placement,envelope_sha256,policy_version,authority_basis,state,revision,native_id,parent_operation_id,correlation_id,decision,warrant_json,warrant_revoked,claimed_by,created_at,updated_at FROM kernel_operations WHERE operation_id='op-v44'").fetchone())
         carried_receipt = tuple(conn.execute("SELECT * FROM kernel_receipts WHERE operation_id='op-v44'").fetchone())
         conn.execute("UPDATE kernel_operations SET state='cancelled' WHERE operation_id='op-v44'")
         conn.execute("UPDATE kernel_receipts SET state='cancelled', outcome='cancelled' WHERE operation_id='op-v44'")
@@ -70,5 +70,5 @@ def test_v44_kernel_rows_upgrade_byte_for_byte_and_accept_cancelled(tmp_path: Pa
     assert carried_operation == operation
     assert carried_receipt == receipt
     assert "idx_kernel_operations_state" in indexes
-    assert version == 51
+    assert version == 52
     assert foreign_keys == []

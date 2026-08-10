@@ -41,19 +41,52 @@ class WorkbenchService:
         if not name.strip():
             raise ValidationError("Workbench name is required")
         body = {"name": name, **fields}
-        wb = self._db.workbenches.upsert(
-            workbench_id=str(body.pop("id", "") or _new_id("workbench")),
-            **self._wb_fields(body),
-        )
+        fields = self._wb_fields(body)
+        if fields["schedule_enabled"] and principal.kind is not PrincipalKind.OWNER:
+            raise ServiceError("owner_principal_required", "Only the owner can enable a schedule", context={"status": 403})
+        workbench_id = str(body.pop("id", "") or _new_id("workbench"))
+        if not fields["schedule_enabled"]:
+            wb = self._db.workbenches.upsert(workbench_id=workbench_id, **fields)
+            return self._wb_payload(wb)
+        # The owner's single enable gesture commits its configuration, captured
+        # deployment revision, and local delegation as one crash-consistent unit.
+        from .schedule_delegation import ScheduleDelegationService
+        with self._db._connection() as conn:
+            conn.execute("BEGIN IMMEDIATE")
+            wb = self._db.workbenches.upsert_in_transaction(conn, workbench_id=workbench_id, **fields)
+            ScheduleDelegationService(self._db).enable_from_owner_in_transaction(principal, wb, conn)
         return self._wb_payload(wb)
 
     def update_workbench(
         self, principal: Principal, workbench_id: str, **fields: Any
     ) -> dict[str, Any]:
         existing = self._require_workbench(workbench_id)
-        wb = self._db.workbenches.upsert(
-            workbench_id=workbench_id, **self._wb_fields(fields, existing)
-        )
+        proposed = self._wb_fields(fields, existing)
+        bound_changed = any(proposed[key] != getattr(existing, key) for key in ("schedule", "schedule_enabled", "recipe_id", "profile_id"))
+        enabling = not existing.schedule_enabled and proposed["schedule_enabled"]
+        if enabling and principal.kind is not PrincipalKind.OWNER:
+            raise ServiceError("owner_principal_required", "Only the owner can enable a schedule", context={"status": 403})
+        if bound_changed:
+            proposed["schedule_revision"] = existing.schedule_revision + 1
+        else:
+            proposed["schedule_revision"] = existing.schedule_revision
+        if not bound_changed:
+            wb = self._db.workbenches.upsert(workbench_id=workbench_id, **proposed)
+            return self._wb_payload(wb)
+        # Bound configuration and the authority it invalidates share one lock.
+        # A provider is only signalled after the epoch fence has committed.
+        from .schedule_delegation import ScheduleDelegationService
+        service = ScheduleDelegationService(self._db)
+        with self._db._connection() as conn:
+            conn.execute("BEGIN IMMEDIATE")
+            wb = self._db.workbenches.upsert_in_transaction(conn, workbench_id=workbench_id, **proposed)
+            fenced = service.revoke_in_transaction(
+                conn, workbench_id,
+                "schedule_disabled" if not wb.schedule_enabled else "bound_terms_changed",
+            )
+            if enabling:
+                service.enable_from_owner_in_transaction(principal, wb, conn)
+        service.complete_fenced(fenced)
         return self._wb_payload(wb)
 
     def delete_workbench(self, principal: Principal, workbench_id: str) -> bool:
@@ -195,7 +228,8 @@ class WorkbenchService:
         wb = self._db.workbenches.upsert(
             workbench_id=_new_id("workbench"), name=template["name"], recipe_id=recipe.id,
             profile_id=profile_id or None, schedule=wb_config.get("schedule"),
-            schedule_enabled=bool(wb_config.get("schedule")),
+            # Instantiating a template is not recurring-inference approval.
+            schedule_enabled=False,
         )
         for starter in template.get("starter_items", []):
             self._db.workbench_items.upsert(
@@ -408,5 +442,6 @@ class WorkbenchService:
             "resolver_profile_id": pick("resolver_profile_id", existing.resolver_profile_id if existing else None) or None,
             "schedule": pick("schedule", existing.schedule if existing else None) or None,
             "schedule_enabled": bool(pick("schedule_enabled", existing.schedule_enabled if existing else False)),
+            "schedule_revision": int(pick("schedule_revision", existing.schedule_revision if existing else 1)),
             "item_order": list(pick("item_order", [])),
         }

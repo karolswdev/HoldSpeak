@@ -19,6 +19,9 @@ class PrincipalKind(str, Enum):
     OWNER = "owner"
     AGENT = "agent"
     NODE = "node"
+    # Internal-only scheduler identity. It has no edge rights and is admitted
+    # solely by ParentRunController.start_delegated_schedule.
+    SCHEDULER = "scheduler"
     NONE = "none"
 
 
@@ -46,6 +49,7 @@ _RIGHTS: dict[PrincipalKind, frozenset[PrincipalRight]] = {
         }
     ),
     PrincipalKind.NODE: frozenset({PrincipalRight.NODE_LINK}),
+    PrincipalKind.SCHEDULER: frozenset(),
     PrincipalKind.NONE: frozenset(),
 }
 

@@ -825,6 +825,18 @@ def _migrate_columns(conn: sqlite3.Connection, stored: int) -> None:
             conn.execute("DROP TABLE workbench_runs_v50")
             conn.execute("CREATE INDEX IF NOT EXISTS idx_workbench_runs_workbench ON workbench_runs(workbench_id, started_at DESC)")
 
+    # v52 (HS-131-06): local schedule revision and delegation tables are
+    # additive. Existing enabled schedules intentionally receive no authority.
+    if stored < 52:
+        columns = {row[1] for row in conn.execute("PRAGMA table_info(workbenches)").fetchall()}
+        if "schedule_revision" not in columns:
+            conn.execute("ALTER TABLE workbenches ADD COLUMN schedule_revision INTEGER NOT NULL DEFAULT 1")
+        operation_columns = {row[1] for row in conn.execute("PRAGMA table_info(kernel_operations)").fetchall()}
+        if "delegator_kind" not in operation_columns:
+            conn.execute("ALTER TABLE kernel_operations ADD COLUMN delegator_kind TEXT NOT NULL DEFAULT ''")
+        if "delegator_identity" not in operation_columns:
+            conn.execute("ALTER TABLE kernel_operations ADD COLUMN delegator_identity TEXT NOT NULL DEFAULT ''")
+
 
 def _apply_seeds_and_backfills(conn: sqlite3.Connection) -> None:
     """Seed data and index rebuilds that run after all migrations."""
