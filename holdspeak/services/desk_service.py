@@ -46,5 +46,9 @@ class DeskService:
             "workbenches": [item.to_dict() for item in self._db.workbenches.list()],
         }
 
-    def health(self) -> dict[str, str]:
-        return {"status": "ok"}
+    def health(self) -> dict[str, Any]:
+        from ..kernel.runtime import _service
+        faults = list(getattr(_service(), "projection_stager", None).health_faults)
+        if not faults:
+            return {"status": "ok"}
+        return {"status": "unhealthy", "projection_reconciliation_faults": faults}

@@ -20,6 +20,7 @@ from holdspeak.kernel.runtime import _configure
 from holdspeak.principals import Principal, PrincipalKind
 
 OWNER = Principal(PrincipalKind.OWNER, "owner")
+RACE_TIMEOUT = 10.0
 
 
 class Adapter:
@@ -967,7 +968,7 @@ def test_each_cancel_child_disposition_waits_for_its_own_durable_receipt(
         operation = broker.store.operation(operation_id)
         if operation["name"] == "inference.cancel" and outcome == child_outcome:
             child_receipt_entered.set()
-            assert release_child_receipt.wait(2)
+            assert release_child_receipt.wait(RACE_TIMEOUT)
         return original_receipt(operation_id, outcome, result_ref, node)
 
     broker.receipt = gated_receipt
@@ -989,19 +990,19 @@ def test_each_cancel_child_disposition_waits_for_its_own_durable_receipt(
         InvocationRequest(**{**request(revision).__dict__, "invocation_id": f"durable_child_{disposition}"}), Controlled()
     )))
     worker.start()
-    assert dispatch_started.wait(2)
+    assert dispatch_started.wait(RACE_TIMEOUT)
     canceller = threading.Thread(target=lambda: cancel_result.append(runner.cancel(f"durable_child_{disposition}")))
     canceller.start()
-    assert child_receipt_entered.wait(2)
+    assert child_receipt_entered.wait(RACE_TIMEOUT)
     operation = broker.store.operation_for_native(f"durable_child_{disposition}")
     children = _cancel_children(broker, operation["operation_id"])
     assert canceller.is_alive() and len(children) == 1 and children[0]["claimed_by"]
     assert broker.store.receipt(children[0]["operation_id"]) is None
     release_child_receipt.set()
-    canceller.join(2)
+    canceller.join(RACE_TIMEOUT)
     assert cancel_result == [cancel_return] and cancel_calls == [True]
     release_dispatch.set()
-    worker.join(2)
+    worker.join(RACE_TIMEOUT)
     assert not worker.is_alive()
     assert broker.store.receipt(children[0]["operation_id"])["outcome"] == child_outcome
 

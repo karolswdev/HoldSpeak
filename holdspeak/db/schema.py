@@ -7,7 +7,7 @@ independently of the Database container.
 # Bump this when adding tables or columns; the Database container uses it to
 # decide whether to back up and re-apply. See core._ensure_schema for the
 # four-way upgrade contract.
-SCHEMA_VERSION = 45  # v45: cancelled is a first-class kernel terminal state (HS-131-02)
+SCHEMA_VERSION = 46  # v46: durable receipt-gated projection stages (HS-131-03)
 
 # SQL Schema
 SCHEMA_SQL = """
@@ -1561,6 +1561,52 @@ CREATE TABLE IF NOT EXISTS kernel_journal (
 );
 CREATE INDEX IF NOT EXISTS idx_kernel_journal_operation
 ON kernel_journal(operation_id, hub_sequence);
+
+-- HS-131-03: runner results stage before their terminal receipt and materialize
+-- only after that receipt is durable. Domain tables carry the corresponding
+-- projection_stage_id unique key in their registered materializers.
+CREATE TABLE IF NOT EXISTS kernel_projection_stages (
+    stage_id TEXT PRIMARY KEY,
+    invocation_id TEXT NOT NULL,
+    operation_id TEXT NOT NULL REFERENCES kernel_operations(operation_id),
+    kind TEXT NOT NULL,
+    projection_json TEXT NOT NULL,
+    projection_sha256 TEXT NOT NULL,
+    result_ref TEXT NOT NULL UNIQUE,
+    state TEXT NOT NULL CHECK (state IN ('STAGED','FINALIZING','PUBLISHED','DISCARDED')),
+    final_result_json TEXT NOT NULL DEFAULT '',
+    created_at REAL NOT NULL,
+    updated_at REAL NOT NULL,
+    UNIQUE(invocation_id, kind)
+);
+CREATE INDEX IF NOT EXISTS idx_kernel_projection_stages_recovery
+ON kernel_projection_stages(state, updated_at);
+
+-- HS-131-03: Ask has no caller-owned write window. The response itself is a
+-- receipt-gated native projection and may be replayed after a lost response.
+CREATE TABLE IF NOT EXISTS ask_results (
+    projection_stage_id TEXT PRIMARY KEY REFERENCES kernel_projection_stages(stage_id),
+    invocation_id TEXT NOT NULL UNIQUE,
+    operation_id TEXT NOT NULL UNIQUE REFERENCES kernel_operations(operation_id),
+    receipt_id TEXT NOT NULL UNIQUE REFERENCES kernel_receipts(receipt_id),
+    payload_json TEXT NOT NULL,
+    created_at REAL NOT NULL
+);
+CREATE TABLE IF NOT EXISTS recipe_results (
+    projection_stage_id TEXT PRIMARY KEY REFERENCES kernel_projection_stages(stage_id),
+    invocation_id TEXT NOT NULL UNIQUE,
+    operation_id TEXT NOT NULL UNIQUE REFERENCES kernel_operations(operation_id),
+    receipt_id TEXT NOT NULL UNIQUE REFERENCES kernel_receipts(receipt_id),
+    artifact_id TEXT NOT NULL UNIQUE REFERENCES artifacts(id)
+);
+CREATE TABLE IF NOT EXISTS recipe_chat_results (
+    projection_stage_id TEXT PRIMARY KEY REFERENCES kernel_projection_stages(stage_id),
+    invocation_id TEXT NOT NULL UNIQUE,
+    operation_id TEXT NOT NULL UNIQUE REFERENCES kernel_operations(operation_id),
+    receipt_id TEXT NOT NULL UNIQUE REFERENCES kernel_receipts(receipt_id),
+    payload_json TEXT NOT NULL,
+    created_at REAL NOT NULL
+);
 
 -- Phase 124: pipeline observer events. Append-only structured event log
 -- for every public service method call.

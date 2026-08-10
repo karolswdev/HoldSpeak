@@ -35,7 +35,7 @@ class InvocationRequest:
     deployment_revision: str; definition_origin: DefinitionOrigin; deadline_at: float; payload: Any; invocation_id: str=""; parent_operation_id: str=""; attempt_ordinal: int=1
 @dataclass(frozen=True)
 class InvocationOutcome:
-    operation_id: str; invocation_id: str; outcome: str; result_ref: str; receipt: Mapping[str, Any]
+    operation_id: str; invocation_id: str; outcome: str; result_ref: str; receipt: Mapping[str, Any]; error: str = ""
 @dataclass
 class _Active:
     adapter: ProviderAdapter; operation_id: str; node: Principal; principal: Principal
@@ -220,7 +220,7 @@ class InferenceRunner:
             return InvocationOutcome(active.operation_id,iid,outcome,result_ref if outcome=="succeeded" else "",receipt)
         except ProviderIndeterminate: return self._finish(active,iid,"indeterminate")
         except KernelRefused: return self._finish(active,iid,"refused")
-        except Exception: return self._finish(active,iid,"failed")
+        except Exception as exc: return self._finish(active,iid,"failed", error=str(exc))
         finally:
             watchdog.cancel()
             with self._active_lock:
@@ -230,7 +230,7 @@ class InferenceRunner:
         if not destination: return adapter.dispatch(engine,payload,active.cancelled)
         from .external_egress import run_external_egress
         return run_external_egress(connector_id=str(getattr(adapter,"connector_id","inference-provider")),destination=destination,data_classes=tuple(getattr(adapter,"egress_data_classes",("instruction",))),payload_material={"payload_hash":""},sender=lambda:adapter.dispatch(engine,payload,active.cancelled),allowed_destinations=(destination,),parent_operation_id=operation_id,principal=principal,broker=self._broker)
-    def _finish(self,active,iid,outcome, *, cancellation_owner=False):
+    def _finish(self,active,iid,outcome, *, cancellation_owner=False, error=""):
         with active.condition:
             # Cancellation owns CANCELLING.  A dispatch-side failure cannot
             # overwrite an acknowledged (or unknown) cancellation while its
@@ -252,7 +252,7 @@ class InferenceRunner:
         receipt=self._persist_receipt(active,active.operation_id,outcome,"")
         with active.condition:
             active.state=outcome.upper(); active.terminal_outcome=outcome; active.closing=False; active.condition.notify_all()
-        return InvocationOutcome(active.operation_id,iid,outcome,"",receipt)
+        return InvocationOutcome(active.operation_id,iid,outcome,"",receipt,error)
     @staticmethod
     def _runtime_principal():
         from .runtime import _principal

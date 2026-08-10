@@ -565,6 +565,8 @@ def build_intel_for_revision(revision: Any) -> Any:
         "this_device": "onDevice",
         "paired_device": "desktop",
     }.get(revision.kind)
+    if revision.destination_id == THIS_MACHINE_ID:
+        return build_configured_meeting_intel()
     if profile_kind is not None and revision.destination_id:
         return build_meeting_intel_for_profile(
             kind=profile_kind,

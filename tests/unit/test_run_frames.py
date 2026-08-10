@@ -91,7 +91,7 @@ def test_agent_run_error_frame_on_502(rig, monkeypatch) -> None:
 
     run = _run_frames(frames)
     assert [f["state"] for f in run] == ["running", "error"]
-    assert run[1]["error"] == "endpoint down"
+    assert run[1]["error"] == "failed"
 
 
 def test_chain_and_workflow_bracket_the_whole_run(rig, monkeypatch) -> None:

@@ -33,8 +33,8 @@ def build_recipes_router(ctx: WebContext) -> APIRouter:
         _run_frame(ctx, state, **frame)
 
     def _service_error(exc: ServiceError) -> JSONResponse:
-        statuses = {"empty_input": 400, "target_unavailable": 409, "inference_failed": 502, "cancelled": 409, "empty_output": 502, "artifact_persist_failed": 500, "grounding_not_found": 400}
-        return JSONResponse({"error": exc.detail, **exc.context}, status_code=statuses.get(exc.code, 500))
+        statuses = {"empty_input": 400, "target_unavailable": 409, "inference_failed": 502, "failed": 502, "cancelled": 409, "refused": 409, "indeterminate": 409, "empty_output": 502, "artifact_persist_failed": 500, "grounding_not_found": 400}
+        return JSONResponse({"error": exc.detail, **exc.context}, status_code=int(exc.context.get("status", statuses.get(exc.code, 500))))
 
     @router.get("/api/recipes")
     async def api_list_recipes(request: Request) -> Any:
@@ -149,5 +149,14 @@ def build_recipes_router(ctx: WebContext) -> APIRouter:
             return _service_error(exc)
         except Exception as exc:
             return error_500(exc, log, "Failed to keep chat reply")
+
+    @router.post("/api/recipes/{recipe_id}/invocations/{invocation_id}/cancel")
+    async def api_cancel_recipe_invocation(recipe_id: str, invocation_id: str, request: Request) -> Any:
+        try:
+            return JSONResponse(_svc().cancel(_principal(request), invocation_id))
+        except ServiceError as exc:
+            return _service_error(exc)
+        except Exception as exc:
+            return error_500(exc, log, "Failed to cancel recipe invocation")
 
     return router

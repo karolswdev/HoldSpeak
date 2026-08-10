@@ -88,6 +88,31 @@ def _build(database: Any, *, clock: Any = None) -> Broker:
         OperationSpec(workbench_triage.name, workbench_triage.version, workbench_triage, "agent.submit", "propose"),
     )
     broker = Broker(store, specs, **({"clock": clock} if clock else {}))
+    # Services must never pair a runner database with a broker codec built for
+    # another database singleton; invoke admission validates revisions there.
+    broker.database = database
+    # The liveness reaper runs before stage recovery: an expired claimed
+    # invocation first receives its authoritative indeterminate receipt.
+    from .projection_stager import ProjectionStager
+    broker.projection_stager = ProjectionStager(database, broker, **({"clock": clock} if clock else {}))
+    # Recovery may encounter a durable projection before a web route has ever
+    # constructed its service. Register all migrated production materializers
+    # before the first recovery pass, never after it.
+    from .ask_projection import register as register_ask_projection
+    from .recipe_projection import register as register_recipe_projection
+    register_ask_projection(broker.projection_stager)
+    register_recipe_projection(broker.projection_stager)
+    broker.projection_stager.recover()
+    # One inference runner per configured broker: the runner's in-process
+    # invocation registry is what makes cancellation reachable, so every
+    # service (and every per-request route construction) must share it. The
+    # acting principal rides the existing `_principal` context (services wrap
+    # calls in `_as_principal`).
+    from .inference_runner import InferenceRunner
+    broker.inference_runner = InferenceRunner(
+        broker, database, principal_provider=_principal.get,
+        **({"clock": clock} if clock else {}),
+    )
     launch_service.bind_kernel(broker)
     return broker
 

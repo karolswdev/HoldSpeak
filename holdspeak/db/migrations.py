@@ -700,6 +700,52 @@ def _migrate_columns(conn: sqlite3.Connection, stored: int) -> None:
             violations = conn.execute("PRAGMA foreign_key_check").fetchall()
             if violations:
                 raise RuntimeError("kernel_v45_foreign_key_check_failed")
+    # v46 (HS-131-03): durable runner projection staging.  This is additive so
+    # stage references can be introduced one domain materializer at a time.
+    if stored < 46:
+        conn.executescript(
+            """
+            CREATE TABLE IF NOT EXISTS kernel_projection_stages (
+                stage_id TEXT PRIMARY KEY,
+                invocation_id TEXT NOT NULL,
+                operation_id TEXT NOT NULL REFERENCES kernel_operations(operation_id),
+                kind TEXT NOT NULL,
+                projection_json TEXT NOT NULL,
+                projection_sha256 TEXT NOT NULL,
+                result_ref TEXT NOT NULL UNIQUE,
+                state TEXT NOT NULL CHECK (state IN ('STAGED','FINALIZING','PUBLISHED','DISCARDED')),
+                final_result_json TEXT NOT NULL DEFAULT '',
+                created_at REAL NOT NULL,
+                updated_at REAL NOT NULL,
+                UNIQUE(invocation_id, kind)
+            );
+            CREATE INDEX IF NOT EXISTS idx_kernel_projection_stages_recovery
+            ON kernel_projection_stages(state, updated_at);
+            CREATE TABLE IF NOT EXISTS ask_results (
+                projection_stage_id TEXT PRIMARY KEY REFERENCES kernel_projection_stages(stage_id),
+                invocation_id TEXT NOT NULL UNIQUE,
+                operation_id TEXT NOT NULL UNIQUE REFERENCES kernel_operations(operation_id),
+                receipt_id TEXT NOT NULL UNIQUE REFERENCES kernel_receipts(receipt_id),
+                payload_json TEXT NOT NULL,
+                created_at REAL NOT NULL
+            );
+            CREATE TABLE IF NOT EXISTS recipe_results (
+                projection_stage_id TEXT PRIMARY KEY REFERENCES kernel_projection_stages(stage_id),
+                invocation_id TEXT NOT NULL UNIQUE,
+                operation_id TEXT NOT NULL UNIQUE REFERENCES kernel_operations(operation_id),
+                receipt_id TEXT NOT NULL UNIQUE REFERENCES kernel_receipts(receipt_id),
+                artifact_id TEXT NOT NULL UNIQUE REFERENCES artifacts(id)
+            );
+            CREATE TABLE IF NOT EXISTS recipe_chat_results (
+                projection_stage_id TEXT PRIMARY KEY REFERENCES kernel_projection_stages(stage_id),
+                invocation_id TEXT NOT NULL UNIQUE,
+                operation_id TEXT NOT NULL UNIQUE REFERENCES kernel_operations(operation_id),
+                receipt_id TEXT NOT NULL UNIQUE REFERENCES kernel_receipts(receipt_id),
+                payload_json TEXT NOT NULL,
+                created_at REAL NOT NULL
+            );
+            """
+        )
 
 
 def _apply_seeds_and_backfills(conn: sqlite3.Connection) -> None:

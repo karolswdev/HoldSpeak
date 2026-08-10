@@ -456,6 +456,14 @@
       ]
     },
     {
+      "path": "/api/ask/{invocation_id}/cancel",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.primitives.ask",
+      "consumers": []
+    },
+    {
       "path": "/api/authority/control-mode",
       "methods": [
         "PUT"
@@ -3410,6 +3418,14 @@
       "consumers": [
         "web"
       ]
+    },
+    {
+      "path": "/api/recipes/{recipe_id}/invocations/{invocation_id}/cancel",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.primitives.recipes",
+      "consumers": []
     },
     {
       "path": "/api/recipes/{recipe_id}/keep",

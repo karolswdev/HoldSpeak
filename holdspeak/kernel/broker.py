@@ -214,6 +214,16 @@ class Broker(ExecutorPlane):
 
         return reap_expired(self)
 
+    def reap_and_recover_projections(self) -> dict[str, Any]:
+        """Run the required liveness-before-projection-recovery ordering."""
+        reaped = self.reap_expired()
+        stager = getattr(self, "projection_stager", None)
+        if stager is None:
+            return {"reaped": reaped, "projections": None}
+        # recover() runs a second, harmless reap immediately before its scan so
+        # callers cannot accidentally reverse the durable ordering.
+        return {"reaped": reaped, "projections": stager.recover()}
+
     def events(self, after_cursor: int, filters: Mapping[str, Any], principal: Any) -> dict[str, Any]:
         if principal.kind is PrincipalKind.NONE:
             raise KernelRefused("principal_authentication_required")

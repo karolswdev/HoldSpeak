@@ -803,7 +803,7 @@ class MeetingWebServer:
             self._duration_task = asyncio.create_task(self._duration_loop())
             self._coder_frames_task = asyncio.create_task(self._coder_frames_loop())
             self._rails_observer_task = asyncio.create_task(self._rails_observer_loop())
-            await asyncio.to_thread(_kernel_service().reap_expired)
+            await asyncio.to_thread(_kernel_service().reap_and_recover_projections)
             self._kernel_liveness_task = asyncio.create_task(
                 self._kernel_liveness_loop()
             )
@@ -896,7 +896,7 @@ class MeetingWebServer:
         while True:
             await asyncio.sleep(1.0)
             try:
-                await asyncio.to_thread(_kernel_service().reap_expired)
+                await asyncio.to_thread(_kernel_service().reap_and_recover_projections)
             except asyncio.CancelledError:
                 raise
             except Exception as exc:

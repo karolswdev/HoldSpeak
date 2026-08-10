@@ -33,6 +33,8 @@ def client(tmp_path, monkeypatch) -> TestClient:
 
 
 def _assert_run_receipt(body: dict, definition_ref: str, input_text: str) -> None:
+    # Legacy invocation/correlation shape: still the truthful contract for
+    # Sequence and Workflow until HS-131-04 migrates them onto the runner.
     assert body["invocation_id"] == body["correlation_id"]
     assert body["result_ref"] == f"artifact:{body['artifact_id']}"
     invocation = body["invocation"]
@@ -42,6 +44,18 @@ def _assert_run_receipt(body: dict, definition_ref: str, input_text: str) -> Non
     assert invocation["state"] == "succeeded"
     assert len(invocation["attempts"]) == 1
     assert invocation["attempts"][0]["state"] == "succeeded"
+
+
+def _assert_admitted_run(body: dict, recipe_id: str, input_text: str) -> None:
+    # The runner receipt is now broker-owned, rather than projected in the
+    # legacy invocation/correlation response shape. The returned projection
+    # still names the executed recipe, exact destination, input provenance,
+    # and durable artifact.
+    assert body["artifact_id"]
+    assert body["recipe_id"] == recipe_id
+    assert body["actual_placement"]["target_id"] == "this_machine"
+    assert body["sources"] == [{"source_type": "recipe", "source_ref": recipe_id}]
+    assert input_text in body["name"]
 
 
 # ── Notes ──────────────────────────────────────────────────────────────────
@@ -126,12 +140,10 @@ def test_run_agent_invokes_engine(client: TestClient, monkeypatch) -> None:
     artifact_id = body.pop("artifact_id")
     assert artifact_id
     body["artifact_id"] = artifact_id
-    _assert_run_receipt(body, f"persona:{aid}", "hello")
+    _assert_admitted_run(body, aid, "hello")
     assert body["recipe_id"] == aid and body["output"] == "ANSWER"
     assert body["provider"] == "local" and body["profile_id"] is None
-    assert [row["source_type"] for row in body["sources"]] == [
-        "recipe", "invocation", "attempt"
-    ]
+    assert body["sources"] == [{"source_type": "recipe", "source_ref": aid}]
     # The persona's system prompt + rendered template reached the engine.
     assert captured["system_prompt"] == "SYS"
     assert captured["user_prompt"] == "Q: hello"
@@ -852,4 +864,4 @@ def test_run_agent_refuses_when_destination_missing(client: TestClient, monkeypa
     assert resp.status_code == 409, resp.text
     assert resp.json()["code"] == "inference_target_unavailable"
     assert resp.json()["alternate_target_id"] == "this_machine"
-    assert resp.json()["invocation"]["state"] == "unavailable"
+    assert resp.json()["inference_target"]["readiness"]["state"] == "unavailable"

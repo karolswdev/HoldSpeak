@@ -3,29 +3,57 @@ from __future__ import annotations
 from holdspeak.services.observer import NullObserver, PipelineObserver, observe_service
 
 import asyncio
+import time
+import uuid
 from collections.abc import Callable
 from datetime import datetime
 from typing import Any
 
 from ..db.core import Database
+from ..deployment_revisions import capture_deployment_revision
+from ..kernel.inference_runner import InferenceRunner, InvocationRequest, ServiceContract
+from ..kernel.model import KernelRefused
+from ..kernel.prompt_adapter import CanonicalPromptAdapter
 from ..principals import Principal
 from ..grounding import (
     GROUNDING_EXPANDS, GROUNDING_MAX_REFS, hydrate_grounding_blocks,
     hydrate_grounding_blocks_detailed, meeting_digest, score_claims,
 )
 from .errors import ServiceError, ValidationError
+from .inference_outcomes import map_inference_outcome
 
 _MATERIAL_CAP = 6000
 _ASK_SYSTEM_PROMPT = "You are the desk's AI core. Follow the instruction using the material provided. Be concrete and brief."
+ASK_SERVICE_CONTRACT = "holdspeak.ask"
+ASK_SERVICE_SCHEMA_VERSION = "1"
+ASK_PAYLOAD_SCHEMA_VERSION = 1
 
 
 @observe_service
 class AskService:
     def __init__(self, db: Database, hub_model: Callable[[], str] | None = None,
                  broadcast: Callable[..., None] | None = None,
-                 rails_hydrator: Callable[[list[dict[str, Any]], Principal], tuple[list[Any], list[str]]] | None = None, *, observer: PipelineObserver | None = None) -> None:
-        self._db, self._hub_model, self._broadcast, self._rails_hydrator = db, hub_model or (lambda: ""), broadcast, rails_hydrator
+                 rails_hydrator: Callable[[list[dict[str, Any]], Principal], tuple[list[Any], list[str]]] | None = None, *, observer: PipelineObserver | None = None, broker: Any = None) -> None:
+        if broker is None:
+            from ..kernel.runtime import _service
+            broker = _service()
+        if getattr(broker, "database", db) is not db:
+            from ..kernel.runtime import _configure
+            broker = _configure(db)
+        self._db, self._hub_model, self._broadcast, self._rails_hydrator, self._broker = db, hub_model or (lambda: ""), broadcast, rails_hydrator, broker
+        from ..kernel.ask_projection import register
+        register(self._broker.projection_stager)
         self._observer = observer or NullObserver()
+        # Cancellation must reach the SAME runner instance whose in-process
+        # registry holds the in-flight invocation, across per-request service
+        # constructions: the runner is the broker-owned singleton, and the
+        # acting principal rides the kernel `_as_principal` context.
+        self._runner = self._broker.inference_runner
+
+    def _invoke(self, principal: Principal, request: InvocationRequest, *, publish: Any) -> Any:
+        from ..kernel.runtime import _as_principal
+        with _as_principal(principal):
+            return self._runner.invoke(request, CanonicalPromptAdapter(), publish=publish)
 
     def list_models(self, principal: Principal) -> list[dict[str, Any]]:
         # HS-130-06: one row PER DESTINATION, never deduped by model name. Id
@@ -69,31 +97,18 @@ class AskService:
         if grounding_echo:
             context_ids += grounding_echo.pop("_ids"); context_titles += grounding_echo.pop("_titles")
         user_prompt = prompt + ("\n\nMaterial:\n" + material if material else "") + ("\n\nGrounding:\n" + envelope if envelope else "")
-        from ..inference_targets import build_intel_for_target, resolve_placement, target_refusal, target_runtime_error
-        # HS-130-06: the id selects the placement (HS-130-01 resolver, invocation
-        # tier); Ask stays on that target and never cross-profile hops by model
-        # name. A `model` override may only NAME what the resolved target already
-        # advertises — otherwise refuse, naming the target and its model.
+        from ..inference_targets import resolve_placement, target_refusal
         placement = resolve_placement(self._db, invocation=(inference_target_id or profile_id) or None)
-        target = placement.target
-        requested = placement.effective_target_id
+        target, requested = placement.target, placement.effective_target_id
         ran_profile_id = target.profile_id
         prof = self._db.profiles.get(ran_profile_id) if ran_profile_id else None
         advertised = ((prof.model or "") if prof is not None else self._hub_model()) or target.model
         override = str(model or "").strip() or None
         if override and override != advertised:
             offer = advertised or "no model"
-            raise ValidationError(
-                f"model {override!r} is not available on destination '{target.name}' "
-                f"(id {requested!r}); it runs {offer!r}. Address the destination that "
-                f"advertises {override!r} by its inference_target_id — Ask does not "
-                f"retarget by model name.",
-                code="model_not_advertised",
-                context={"inference_target_id": requested, "target_name": target.name,
-                         "requested_model": override, "available_models": [advertised] if advertised else [],
-                         "status": 400},
-            )
-        if not target.ready: raise ServiceError("target_unavailable", target.readiness_reason, context={**target_refusal(target), "status": 409})
+            raise ValidationError(f"model {override!r} is not available on destination '{target.name}' (id {requested!r}); it runs {offer!r}. Address the destination that advertises {override!r} by its inference_target_id — Ask does not retarget by model name.", code="model_not_advertised", context={"inference_target_id": requested, "target_name": target.name, "requested_model": override, "available_models": [advertised] if advertised else [], "status": 400})
+        if not target.ready:
+            raise ServiceError("target_unavailable", target.readiness_reason, context={**target_refusal(target), "status": 409})
         if prof is not None and prof.kind == "meshNode":
             from ..intel.mesh_relay import DEFAULT_LIVENESS_WINDOW_SECONDS
             node = str(getattr(prof, "node", "") or ""); last = self._db.mesh_relay.worker_last_seen(node) if node else None
@@ -101,23 +116,61 @@ class AskService:
             if age is None or age > DEFAULT_LIVENESS_WINDOW_SECONDS:
                 seen = "no worker has ever polled" if age is None else f"last seen {int(age)}s ago"
                 raise ValidationError(f"mesh node '{node}' is offline ({seen})")
-        intel = build_intel_for_target(target, self._db)
+        # Resolve and persist the immutable deployment before payload construction
+        # and ServiceContract hashing. Mutable target state cannot retarget this turn.
+        revision = capture_deployment_revision(self._db, target)
+        source_text = material + ("\n\n" + envelope if envelope else "")
+        payload: dict[str, Any] = {"schema_version": ASK_PAYLOAD_SCHEMA_VERSION, "system_prompt": _ASK_SYSTEM_PROMPT, "user_prompt": user_prompt, "lens": lens, "context_ids": context_ids, "context_titles": context_titles, "grounding": grounding_echo, "source_text": source_text, "temperature": float(temperature) if temperature is not None else None, "max_tokens": int(max_tokens) if max_tokens is not None else None, "deployment_revision": revision.id, "selected_model": advertised}
+        invocation_id = "ask_" + uuid.uuid4().hex
         self._emit("running", kind="ask", ref="ask", name=lens)
         try:
-            output = await asyncio.to_thread(intel.run_prompt, system_prompt=_ASK_SYSTEM_PROMPT, user_prompt=user_prompt, temperature=float(temperature) if temperature is not None else None, max_tokens=int(max_tokens) if max_tokens is not None else None)
-        except Exception as exc:
-            from ..intel.models import MeetingIntelError
-            if isinstance(exc, MeetingIntelError):
-                error = target_runtime_error(target, exc); self._emit("error", kind="ask", ref="ask", name=lens, error=error)
-                raise ServiceError("inference_failed", error, context={"inference_target": target.to_dict(), "alternate_target_id": "this_machine", "status": 502}) from exc
-            raise
+            outcome = await asyncio.to_thread(
+                self._invoke,
+                principal,
+                InvocationRequest(revision.id, ServiceContract.for_payload(ASK_SERVICE_CONTRACT, ASK_SERVICE_SCHEMA_VERSION, payload), time.time() + 60, payload, invocation_id),
+                publish=self._broker.projection_stager.publisher(invocation_id, "ask-result", lambda output: self._ask_projection(output, payload, target, ran_profile_id)),
+            )
+        except KernelRefused as exc:
+            self._emit("error", kind="ask", ref="ask", name=lens, error=exc.reason)
+            raise self._outcome_error(None, exc)
+        if outcome.outcome != "succeeded":
+            self._emit("error", kind="ask", ref="ask", name=lens, error=outcome.outcome)
+            raise self._outcome_error(outcome, None, target=target)
+        result = self._broker.projection_stager.finalize(invocation_id)
+        if result is None:
+            raise ServiceError("projection_not_published", "Ask result is awaiting receipt reconciliation", context={"invocation_id": invocation_id, "operation_id": outcome.operation_id, "receipt": dict(outcome.receipt), "result_ref": outcome.result_ref, "status": 409})
         self._emit("ready", kind="ask", ref="ask", name=lens)
-        egress, selected_model = self._egress(prof, intel)
-        payload: dict[str, Any] = {"output": output, "lens": lens, "provider": intel.active_provider, "profile_id": ran_profile_id, "inference_target": target.to_dict(), "actual_placement": target.placement_receipt(provider=intel.active_provider, model=selected_model), "egress": egress, "model": selected_model, "context_ids": context_ids, "context_titles": context_titles}
-        if grounding_echo is not None: payload["grounding"] = grounding_echo
-        source_text = material + ("\n\n" + envelope if envelope else "")
-        if source_text.strip(): payload["grounding_claims"] = score_claims(output, source_text)
-        return payload
+        return dict(result)
+
+    def _ask_projection(self, output: Any, payload: dict[str, Any], target: Any, profile_id: str | None) -> dict[str, Any]:
+        dispatched = dict(output) if isinstance(output, dict) else {"output": str(output)}
+        answer = str(dispatched["output"])
+        provider = str(dispatched.get("provider") or target.deployment.engine)
+        selected_model = str(dispatched.get("model") or payload["selected_model"] or target.deployment.model)
+        from urllib.parse import urlparse
+        egress: dict[str, Any] = {"scope": "local"}
+        if target.deployment.boundary == "private_network":
+            egress = {"scope": "private_network", "host": urlparse(target.deployment.endpoint).hostname or ""}
+        elif target.deployment.boundary in {"cloud", "external_service"}:
+            egress = {"scope": "cloud"}
+        elif target.kind == "mesh_node":
+            egress = {"scope": "mesh", "host": target.deployment.node}
+        result: dict[str, Any] = {"output": answer, "lens": payload["lens"], "provider": provider,
+                                  "profile_id": profile_id, "inference_target": target.to_dict(),
+                                  "actual_placement": target.placement_receipt(provider=provider, model=selected_model),
+                                  "egress": egress, "model": selected_model,
+                                  "context_ids": list(payload["context_ids"]), "context_titles": list(payload["context_titles"])}
+        if payload["grounding"] is not None: result["grounding"] = payload["grounding"]
+        source_text = str(payload["source_text"])
+        if source_text.strip(): result["grounding_claims"] = score_claims(answer, source_text)
+        return result
+
+    _outcome_error = staticmethod(map_inference_outcome)
+
+    def cancel(self, principal: Principal, invocation_id: str) -> dict[str, str]:
+        from ..kernel.runtime import _as_principal
+        with _as_principal(principal):
+            return {"invocation_id": invocation_id, "disposition": self._runner.cancel(invocation_id)}
 
     def keep(self, principal: Principal, output: str, sources: list[dict[str, Any]], *, lens: str = "Ask", prompt: str = "", grounding: Any = None) -> dict[str, Any]:
         if not str(output or "").strip(): raise ValidationError("output is required")
@@ -183,11 +236,6 @@ class AskService:
         if rails: echo["rails"] = rails
         return "\n\n".join(blocks), echo
 
-    def _egress(self, profile: Any, intel: Any) -> tuple[dict[str, Any], str]:
-        # ONE run-egress rule (HS-130-04): ask and recipe runs share it, so a LAN
-        # destination badges private_network everywhere instead of a flat cloud.
-        from ..intel.providers import run_egress
-        return run_egress(profile, intel, default_model=self._hub_model())
     def _emit(self, state: str, **frame: Any) -> None:
         if self._broadcast: self._broadcast(state, **frame)
     @staticmethod

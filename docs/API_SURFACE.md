@@ -9,7 +9,7 @@ and the clients that call it (extracted from the real call sites in
 `web/src` and `apple/`). "server only" means no in-repo client calls
 it today.
 
-Routes: 436 (plus static mounts). iOS-consumed: 88. Web-consumed: 337.
+Routes: 438 (plus static mounts). iOS-consumed: 88. Web-consumed: 337.
 
 ## device_audio_ws
 
@@ -483,6 +483,7 @@ Routes: 436 (plus static mounts). iOS-consumed: 88. Web-consumed: 337.
 |---|---|---|
 | POST | `/api/ask` | ios, web |
 | POST | `/api/ask/keep` | web |
+| POST | `/api/ask/{invocation_id}/cancel` | server only |
 | POST | `/api/grounding/resolve` | web |
 | GET | `/api/models` | web |
 
@@ -579,6 +580,7 @@ Routes: 436 (plus static mounts). iOS-consumed: 88. Web-consumed: 337.
 | GET | `/api/recipes/{recipe_id}` | web |
 | PUT | `/api/recipes/{recipe_id}` | web |
 | POST | `/api/recipes/{recipe_id}/chat` | web |
+| POST | `/api/recipes/{recipe_id}/invocations/{invocation_id}/cancel` | server only |
 | POST | `/api/recipes/{recipe_id}/keep` | web |
 | POST | `/api/recipes/{recipe_id}/run` | ios, web |
 

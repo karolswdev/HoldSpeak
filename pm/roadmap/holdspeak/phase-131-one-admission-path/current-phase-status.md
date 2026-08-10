@@ -1,6 +1,6 @@
 # Phase 131 — One Admission Path
 
-**Status:** IN PROGRESS (2/12).
+**Status:** IN PROGRESS (3/12).
 
 **Last updated:** 2026-08-09.
 
@@ -125,7 +125,7 @@ gates while keeping every known site bounded now.
 |---|---|---|---|---|
 | HS-131-01 | Frozen deployment revisions and one sync registry | done | [story-01](./story-01-frozen-deployment-revisions.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-131-02 | The admitted invocation runner | done | [story-02](./story-02-admitted-invocation-runner.md) | [evidence-story-02](./evidence-story-02.md) |
-| HS-131-03 | Ask and Agents take the same door | in-progress | [story-03](./story-03-ask-and-agents.md) | — |
+| HS-131-03 | Ask and Agents take the same door | done | [story-03](./story-03-ask-and-agents.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-131-04 | Sequence and Workflow admit every model step | backlog | [story-04](./story-04-sequence-and-workflow.md) | — |
 | HS-131-05 | Workbench work and memory cannot outrun cancellation | backlog | [story-05](./story-05-workbench-and-memory.md) | — |
 | HS-131-06 | Scheduled work carries bounded delegation | backlog | [story-06](./story-06-bounded-schedules.md) | — |
@@ -182,8 +182,18 @@ claim revalidation, and a real-model walk on the live LAN endpoint
 suppressed late output). Ship-gate full suite: zero new failure names,
 one repaired (`test_migrates_v38_database_to_decision_commitments`).
 The publication-staging protocol is HS-131-03's blocking criterion by
-visible amendment. Next: HS-131-03, Ask and Agents take the same door —
-opening with the staging design beat.
+visible amendment.
+HS-131-03 is done — the first design-beat story: Sol ruled the
+ProjectionStager design before implementation (eight amendments on
+paper), then Ask and Recipe run/chat migrated onto the admitted runner
+with staged projections (schema v46), a broker-owned runner making
+cancellation reachable across request lifetimes, and cancel routes.
+Four defects were caught by the layered verification (metal walk, the
+choreographed proofs, Sol's review, the full gate) — including a real
+event-loop regression — and each is fixed with a regression test. Gate:
+zero unaccounted new names, one repaired
+(uat mesh dispatch). Sol: ratify with five named design-floor
+reservations for the sitting. Next: HS-131-04, Sequence and Workflow.
 The roadmap still has nine inherited structural lint errors in old phases; they
 are named baseline and are not silently bundled into this product phase.
 

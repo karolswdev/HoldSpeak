@@ -9,7 +9,10 @@ import asyncio
 import pytest
 
 from holdspeak.db import Database
-from holdspeak.principals import UNAUTHENTICATED
+from holdspeak.kernel.runtime import _configure
+from holdspeak.principals import Principal, PrincipalKind
+
+OWNER = Principal(PrincipalKind.OWNER, "owner")
 from holdspeak.services.ask_service import AskService
 from holdspeak.services.errors import ValidationError
 
@@ -33,14 +36,15 @@ def rig(tmp_path, monkeypatch):
     # A second private endpoint serving the SAME model name as prof_a.
     db.profiles.upsert(profile_id="prof_c", name="Gamma", kind="openAICompatible",
                        base_url="http://192.168.1.51:8080", model="model-a", requires_key=False)
-    # Do not construct a real engine; behaviour under test is targeting, not the run.
-    monkeypatch.setattr("holdspeak.inference_targets.build_intel_for_target",
-                        lambda target, db: _FakeIntel())
-    return AskService(db, hub_model=lambda: "")
+    # The admitted runner loads engines from the frozen deployment revision.
+    # Targeting is the behavior here, so its runner seam supplies a test engine.
+    broker = _configure(db)
+    monkeypatch.setattr(broker.inference_runner, "_engine_factory", lambda revision: _FakeIntel())
+    return AskService(db, hub_model=lambda: "", broker=broker)
 
 
 def _ask(service, **kw):
-    return asyncio.run(service.ask(UNAUTHENTICATED, "summarize", **kw))
+    return asyncio.run(service.ask(OWNER, "summarize", **kw))
 
 
 def test_explicit_target_runs_on_that_target(rig) -> None:
@@ -75,7 +79,7 @@ def test_silent_hop_never_returns_the_other_destination(rig) -> None:
 
 
 def test_list_models_does_not_dedupe_across_destinations(rig) -> None:
-    rows = rig.list_models(UNAUTHENTICATED)
+    rows = rig.list_models(OWNER)
     ids = {r["id"] for r in rows}
     assert {"prof_a", "prof_b", "prof_c"} <= ids
     # prof_a and prof_c serve the SAME model name yet BOTH appear, distinct by id.
@@ -88,6 +92,6 @@ def test_hub_row_carries_its_id(tmp_path, monkeypatch) -> None:
     monkeypatch.setattr("holdspeak.inference_targets.build_intel_for_target",
                         lambda target, db: _FakeIntel())
     service = AskService(db, hub_model=lambda: "hub-model")
-    rows = service.list_models(UNAUTHENTICATED)
+    rows = service.list_models(OWNER)
     hub = [r for r in rows if r["source"] == "hub"]
     assert len(hub) == 1 and hub[0]["id"] == "this_machine"

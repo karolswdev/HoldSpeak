@@ -70,5 +70,5 @@ def test_v44_kernel_rows_upgrade_byte_for_byte_and_accept_cancelled(tmp_path: Pa
     assert carried_operation == operation
     assert carried_receipt == receipt
     assert "idx_kernel_operations_state" in indexes
-    assert version == 45
+    assert version == 46
     assert foreign_keys == []
