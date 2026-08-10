@@ -1,0 +1,6 @@
+leg1 parent=op_a1e36933aca2499d9ac922f75897e824 items=2 memory_children=2 receipts=all memory_rows=2
+leg2 parent=op_bbb7807d412f4349baf67306e674ac3e item_children=1 memory_children=0
+leg3 run returned (not raised): keys=['children', 'parent_operation_id', 'receipt_id', 'run_id', 'terminal_disposition']
+leg3 child=op_7035649d18b540bf9c5c788a9fae8000 receipt=cancelled
+leg3 disposition=cancelled parent_state=CANCELLED item_status=claimed memory_rows=0
+WALK OK: manual Workbench runs admitted parent+item+memory children with receipts; disabled memory minted none; mid-run cancel left no item output or memory while receipts survived.

@@ -154,11 +154,23 @@ def build_workbenches_router(ctx: WebContext) -> APIRouter:
     @router.post("/api/workbenches/{workbench_id}/run")
     async def api_run_workbench(workbench_id: str, request: Request) -> Any:
         try:
-            return JSONResponse({"run": await _svc().run(_principal(request), workbench_id)})
+            body = await _json_body(request) or {}
+            return JSONResponse({"run": await _svc().run(_principal(request), workbench_id, memory_enabled=bool(body.get("memory_enabled", True)) )})
         except NotFound:
             return _not_found("workbench", workbench_id)
+        except ServiceError as exc:
+            return _service_error(exc)
         except Exception as exc:
             return error_500(exc, log, "Failed to run workbench")
+
+    @router.post("/api/workbenches/{workbench_id}/runs/{parent_operation_id}/cancel")
+    async def api_cancel_workbench_run(workbench_id: str, parent_operation_id: str, request: Request) -> Any:
+        try:
+            return JSONResponse({"disposition": _svc().cancel_run(_principal(request), parent_operation_id)})
+        except ServiceError as exc:
+            return _service_error(exc)
+        except Exception as exc:
+            return error_500(exc, log, "Failed to cancel workbench run")
 
     @router.post("/api/workbenches/{workbench_id}/voice/resolve")
     async def api_voice_resolve(workbench_id: str, request: Request) -> Any:

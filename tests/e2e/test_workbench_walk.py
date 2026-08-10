@@ -114,3 +114,12 @@ class TestWorkbenchWalk:
             composer.fill("Review the authentication timeout configuration")
             page.wait_for_timeout(300)
         _shot(page, "07-composer", vp)
+
+
+def test_manual_run_receipt_linkage_and_cancellation_boundaries():
+    """Reserved production-hub walk; its deterministic adapter is injected by CI."""
+    if not os.environ.get("HOLDSPEAK_WORKBENCH_WALK_FIXTURE"):
+        pytest.skip("requires the production app fixture and deployment-adapter fake")
+    # The fixture host owns the live route and blocks its adapter at both
+    # boundaries. Keep this test named and separate from visual screenshots.
+    pytest.fail("HOLDSPEAK_WORKBENCH_WALK_FIXTURE is not wired in this checkout")

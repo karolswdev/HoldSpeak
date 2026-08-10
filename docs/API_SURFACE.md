@@ -9,7 +9,7 @@ and the clients that call it (extracted from the real call sites in
 `web/src` and `apple/`). "server only" means no in-repo client calls
 it today.
 
-Routes: 440 (plus static mounts). iOS-consumed: 88. Web-consumed: 337.
+Routes: 441 (plus static mounts). iOS-consumed: 88. Web-consumed: 337.
 
 ## device_audio_ws
 
@@ -609,6 +609,7 @@ Routes: 440 (plus static mounts). iOS-consumed: 88. Web-consumed: 337.
 | POST | `/api/workbenches/{workbench_id}/memory/{index}/promote` | web |
 | POST | `/api/workbenches/{workbench_id}/run` | web |
 | GET | `/api/workbenches/{workbench_id}/runs` | web |
+| POST | `/api/workbenches/{workbench_id}/runs/{parent_operation_id}/cancel` | server only |
 | POST | `/api/workbenches/{workbench_id}/voice/resolve` | web |
 
 ## web.routes.primitives.workflows

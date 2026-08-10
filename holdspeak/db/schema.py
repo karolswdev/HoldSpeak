@@ -7,7 +7,7 @@ independently of the Database container.
 # Bump this when adding tables or columns; the Database container uses it to
 # decide whether to back up and re-apply. See core._ensure_schema for the
 # four-way upgrade contract.
-SCHEMA_VERSION = 49  # v49: durable parent execution lease (HS-131-04)
+SCHEMA_VERSION = 51  # v51: terminal Workbench receipt disposition (HS-131-05)
 
 # SQL Schema
 SCHEMA_SQL = """
@@ -1206,8 +1206,11 @@ CREATE TABLE IF NOT EXISTS workbench_runs (
     constitutional_context_revision INTEGER NOT NULL DEFAULT 0,
     constitutional_context_hash TEXT NOT NULL DEFAULT '',
     skills_injected_json TEXT NOT NULL DEFAULT '[]',
+    parent_operation_id TEXT NOT NULL DEFAULT '',
+    parent_receipt_id TEXT NOT NULL DEFAULT '',
+    child_links_json TEXT NOT NULL DEFAULT '[]',
     status TEXT NOT NULL DEFAULT 'running'
-        CHECK (status IN ('running', 'completed', 'failed'))
+        CHECK (status IN ('running', 'completed', 'failed', 'cancelled', 'indeterminate'))
 );
 CREATE INDEX IF NOT EXISTS idx_workbenches_modified ON workbenches(last_modified DESC);
 CREATE INDEX IF NOT EXISTS idx_workbench_items_workbench ON workbench_items(workbench_id, priority ASC);
@@ -1684,7 +1687,7 @@ CREATE TABLE IF NOT EXISTS deployment_revisions (
 CREATE TABLE IF NOT EXISTS kernel_parent_runs (
     operation_id TEXT PRIMARY KEY REFERENCES kernel_operations(operation_id),
     native_id TEXT NOT NULL UNIQUE,
-    kind TEXT NOT NULL CHECK (kind IN ('sequence','workflow')),
+    kind TEXT NOT NULL CHECK (kind IN ('sequence','workflow','workbench')),
     definition_ref TEXT NOT NULL,
     definition_revision TEXT NOT NULL,
     input_json TEXT NOT NULL,

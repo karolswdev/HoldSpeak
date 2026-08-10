@@ -159,10 +159,15 @@ class WorkbenchService:
             raise ServiceError("artifact_persist_failed", "Mint failed")
         return {"artifact_id": artifact_id, "created": True}
 
-    async def run(self, principal: Principal, workbench_id: str) -> dict[str, Any]:
+    async def run(self, principal: Principal, workbench_id: str, *, memory_enabled: bool = True) -> dict[str, Any]:
         self._require_workbench(workbench_id)
         from holdspeak.workbench_conductor import run_workbench
-        return await run_workbench(workbench_id)
+        return await run_workbench(workbench_id, principal, memory_enabled=memory_enabled)
+
+    def cancel_run(self, principal: Principal, parent_operation_id: str) -> str:
+        """Cancel exactly the authenticated parent, never a Workbench lookup."""
+        from holdspeak.kernel.runtime import _service
+        return _service().parent_run_controller.cancel_by_operation_id(principal, parent_operation_id)
 
     def list_runs(self, principal: Principal, workbench_id: str) -> list[dict[str, Any]]:
         return [r.to_dict() for r in self._db.workbench_runs.list_for_workbench(workbench_id)]

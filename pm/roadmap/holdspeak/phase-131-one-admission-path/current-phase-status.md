@@ -127,7 +127,7 @@ gates while keeping every known site bounded now.
 | HS-131-02 | The admitted invocation runner | done | [story-02](./story-02-admitted-invocation-runner.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-131-03 | Ask and Agents take the same door | done | [story-03](./story-03-ask-and-agents.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-131-04 | Sequence and Workflow admit every model step | done | [story-04](./story-04-sequence-and-workflow.md) | [evidence-story-04](./evidence-story-04.md) |
-| HS-131-05 | Workbench work and memory cannot outrun cancellation | in-progress | [story-05](./story-05-workbench-and-memory.md) | — |
+| HS-131-05 | Workbench work and memory cannot outrun cancellation | done | [story-05](./story-05-workbench-and-memory.md) | [evidence-story-05](./evidence-story-05.md) |
 | HS-131-06 | Scheduled work carries bounded delegation | backlog | [story-06](./story-06-bounded-schedules.md) | — |
 | HS-131-07 | The remaining direct callers join the spine | backlog | [story-07](./story-07-service-callers.md) | — |
 | HS-131-08 | Meetings are admitted per session | backlog | [story-08](./story-08-meeting-sessions.md) | — |
@@ -215,7 +215,25 @@ fences admission). Gate: zero new failure names vs the HS-131-03
 baseline, SEVEN repaired (the sync test + six intel_cloud tail flakes);
 one gate-found product bug (lease daemon leak across broker replacement)
 fixed. Sol's three reservations ride in the evidence.
-Next: HS-131-05, Workbench and memory.
+HS-131-05 is done — the first story shipped under the owner's yolo-mode
+rigor bar (design ruled in ONE Sol round; two implementation rounds to
+RATIFY FOR STORY CLOSE): manual Workbench execution admits one
+authenticated workbench.run@1 parent per attempt with one child per
+item-generation call and the memory writeback surfaced as its own
+distinct holdspeak.workbench-memory@1 child (schema v50-v51), per-child
+Phase-130 placement, receipt-gated item/memory/artifact/history
+projections, and parent-scoped cancellation with the deadline as an
+epoch-changing fence. The layered verification caught five REAL defects
+— including a production concurrency bug (per-request _configure
+rebuilds destroying every in-flight parent controller) and a
+100%-deterministic memory-child payload-hash refusal that vacuous tests
+had masked — all fixed with regression tests. Real-metal walk on .43
+(item+memory children with receipts; disabled memory mints none;
+mid-run cancel honest end-to-end). Gate: zero deterministic new names
+vs the HS-131-04 baseline; two run-to-run tail flakes accounted with
+serial passes. Sol's reservation (best-effort provider signal after the
+durable fence) rides in the evidence.
+Next: HS-131-06, bounded schedules.
 The roadmap still has nine inherited structural lint errors in old phases; they
 are named baseline and are not silently bundled into this product phase.
 

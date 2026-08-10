@@ -794,6 +794,37 @@ def _migrate_columns(conn: sqlite3.Connection, stored: int) -> None:
         if "lease_heartbeat_at" not in parent_columns:
             conn.execute("ALTER TABLE kernel_parent_runs ADD COLUMN lease_heartbeat_at REAL")
 
+    # v50 (HS-131-05): every native Workbench attempt retains resolvable
+    # admitted parent/child receipt links, including cancelled attempts.
+    if stored < 50:
+        # SQLite cannot widen the parent-kind CHECK in place. Rebuild the tiny
+        # controller table while retaining every durable parent fact.
+        parent_sql = str(conn.execute("SELECT sql FROM sqlite_master WHERE type='table' AND name='kernel_parent_runs'").fetchone()[0])
+        if "'workbench'" not in parent_sql:
+            conn.execute("ALTER TABLE kernel_parent_runs RENAME TO kernel_parent_runs_v49")
+            conn.execute("CREATE TABLE kernel_parent_runs (operation_id TEXT PRIMARY KEY REFERENCES kernel_operations(operation_id),native_id TEXT NOT NULL UNIQUE,kind TEXT NOT NULL CHECK (kind IN ('sequence','workflow','workbench')),definition_ref TEXT NOT NULL,definition_revision TEXT NOT NULL,input_json TEXT NOT NULL,deadline_at REAL NOT NULL,execution_epoch INTEGER NOT NULL DEFAULT 1,planned_node TEXT NOT NULL DEFAULT '',active_child_invocation_id TEXT NOT NULL DEFAULT '',child_budget INTEGER NOT NULL,children_json TEXT NOT NULL DEFAULT '[]',state TEXT NOT NULL CHECK (state IN ('OPEN','CANCELLING','SUCCEEDED','FAILED','CANCELLED','REFUSED','INDETERMINATE')),lease_process_id TEXT NOT NULL DEFAULT '',lease_heartbeat_at REAL,created_at REAL NOT NULL,updated_at REAL NOT NULL)")
+            conn.execute("INSERT INTO kernel_parent_runs SELECT * FROM kernel_parent_runs_v49")
+            conn.execute("DROP TABLE kernel_parent_runs_v49")
+            conn.execute("CREATE INDEX IF NOT EXISTS idx_kernel_parent_runs_state ON kernel_parent_runs(state, updated_at)")
+        columns = {row[1] for row in conn.execute("PRAGMA table_info(workbench_runs)").fetchall()}
+        if "parent_operation_id" not in columns:
+            conn.execute("ALTER TABLE workbench_runs ADD COLUMN parent_operation_id TEXT NOT NULL DEFAULT ''")
+        if "parent_receipt_id" not in columns:
+            conn.execute("ALTER TABLE workbench_runs ADD COLUMN parent_receipt_id TEXT NOT NULL DEFAULT ''")
+        if "child_links_json" not in columns:
+            conn.execute("ALTER TABLE workbench_runs ADD COLUMN child_links_json TEXT NOT NULL DEFAULT '[]'")
+
+    # v51 (HS-131-05): cancellation and reconciliation winners are visible in
+    # Workbench coordination history, rather than being misreported as running.
+    if stored < 51:
+        workbench_sql = str(conn.execute("SELECT sql FROM sqlite_master WHERE type='table' AND name='workbench_runs'").fetchone()[0])
+        if "'cancelled'" not in workbench_sql:
+            conn.execute("ALTER TABLE workbench_runs RENAME TO workbench_runs_v50")
+            conn.execute("CREATE TABLE workbench_runs (id TEXT PRIMARY KEY,workbench_id TEXT NOT NULL,started_at TEXT NOT NULL,completed_at TEXT,items_attempted INTEGER NOT NULL DEFAULT 0,items_completed INTEGER NOT NULL DEFAULT 0,items_failed INTEGER NOT NULL DEFAULT 0,mint_failures INTEGER NOT NULL DEFAULT 0,total_tokens INTEGER NOT NULL DEFAULT 0,egress_boundary TEXT NOT NULL DEFAULT '',model TEXT NOT NULL DEFAULT '',constitutional_context_revision INTEGER NOT NULL DEFAULT 0,constitutional_context_hash TEXT NOT NULL DEFAULT '',skills_injected_json TEXT NOT NULL DEFAULT '[]',parent_operation_id TEXT NOT NULL DEFAULT '',parent_receipt_id TEXT NOT NULL DEFAULT '',child_links_json TEXT NOT NULL DEFAULT '[]',status TEXT NOT NULL DEFAULT 'running' CHECK (status IN ('running','completed','failed','cancelled','indeterminate')))")
+            conn.execute("INSERT INTO workbench_runs SELECT * FROM workbench_runs_v50")
+            conn.execute("DROP TABLE workbench_runs_v50")
+            conn.execute("CREATE INDEX IF NOT EXISTS idx_workbench_runs_workbench ON workbench_runs(workbench_id, started_at DESC)")
+
 
 def _apply_seeds_and_backfills(conn: sqlite3.Connection) -> None:
     """Seed data and index rebuilds that run after all migrations."""

@@ -418,7 +418,7 @@ def _mark_mint_attempted(db: Any, item_id: str) -> None:
         log.debug(f"Failed to mark mint_attempted for {item_id}: {exc}")
 
 
-async def run_workbench(workbench_id: str) -> dict:
+async def _run_scheduled_workbench_legacy(workbench_id: str) -> dict:
     """Execute one workbench run: process all pending items, produce a receipt.
 
     Each run is a FRESH session — no chat history from previous runs.
@@ -677,6 +677,22 @@ async def run_workbench(workbench_id: str) -> dict:
         "workbench_name": wb.name,
     })
     return run_record.to_dict() if run_record else {"completed": True}
+
+
+async def run_workbench(workbench_id: str, principal: Any | None = None, *, memory_enabled: bool = True) -> dict:
+    """Compatibility seam: authenticated/manual calls use the admitted runner.
+
+    The no-principal scheduler leg is intentionally left for HS-131-06, where
+    its bounded delegated authority is introduced; it is not a manual route.
+    """
+    if principal is None:
+        return await _run_scheduled_workbench_legacy(workbench_id)
+    from .kernel.runtime import _service
+    from .services.workbench_runner import WorkbenchRunner
+    from .db import get_database
+    return await WorkbenchRunner(get_database(), _service()).run(
+        principal, workbench_id, memory_enabled=memory_enabled
+    )
 
 
 class WorkbenchConductor:

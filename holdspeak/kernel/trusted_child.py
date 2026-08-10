@@ -31,7 +31,7 @@ def submit(broker: Any, raw: Any, principal: Any, context: Any, *, planned_node:
         # All authority starts here. Even a genuine object is untrusted until its
         # private identity and durable owner/epoch have been re-derived.
         parent_id = getattr(context, "operation_id", "")
-        row = conn.execute("""SELECT o.*,p.execution_epoch,p.state AS parent_state,p.child_budget,p.children_json,
+        row = conn.execute("""SELECT o.*,p.execution_epoch,p.state AS parent_state,p.child_budget,p.children_json,p.deadline_at,
             p.native_id AS parent_native_id FROM kernel_operations o JOIN kernel_parent_runs p
             ON p.operation_id=o.operation_id WHERE o.operation_id=?""", (parent_id,)).fetchone()
         if row is None: raise KernelRefused("parent_operation_unknown")
@@ -43,6 +43,11 @@ def submit(broker: Any, raw: Any, principal: Any, context: Any, *, planned_node:
             raise KernelRefused("parent_context_client_supplied")
         if str(row["state"]) != "claimed" or str(row["parent_state"]) != "OPEN":
             raise KernelRefused("parent_operation_not_running")
+        # A parent deadline is an execution fence, not annotation. The caller
+        # closes it through the controller before dispatch; this lock still
+        # rejects a child that races that closure.
+        if float(row["deadline_at"]) <= now:
+            raise KernelRefused("parent_deadline_expired")
         warrant = json.loads(str(row["warrant_json"] or "{}"))
         secret = conn.execute("SELECT value FROM kernel_meta WHERE key='warrant_secret'").fetchone()
         unsigned = {key: value for key, value in warrant.items() if key != "signature"}

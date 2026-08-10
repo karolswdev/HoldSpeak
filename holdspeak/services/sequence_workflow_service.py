@@ -50,13 +50,38 @@ class SequenceWorkflowService:
         return [{"operation_id": str(r["operation_id"]), "invocation_id": str(r["native_id"]),
                  "outcome": str((self.broker.store.receipt(str(r["operation_id"])) or {}).get("outcome") or "")} for r in rows]
 
+    def _close_or_adopt(self, parent: Any, outcome: str, *, principal: Principal, result_ref: str = "") -> dict[str, Any]:
+        """Use this runner's close if live, otherwise report the elected receipt."""
+        from ..kernel.model import KernelRefused
+        try:
+            return dict(self.broker.parent_run_controller.close(parent.context, outcome, result_ref, principal=principal))
+        except KernelRefused as exc:
+            receipt = self.broker.store.receipt(parent.operation_id)
+            if exc.reason == "parent_context_invalid":
+                # The canceler installs CANCELLING before its in-flight child
+                # returns; wait briefly for that elected terminal receipt.
+                for _ in range(100):
+                    if receipt is not None:
+                        return dict(receipt)
+                    time.sleep(.01)
+                    receipt = self.broker.store.receipt(parent.operation_id)
+            raise
+
+    def _terminal_result(self, parent: Any, kind: str, definition_id: str, receipt: dict[str, Any]) -> dict[str, Any]:
+        return {"parent_operation_id": parent.operation_id, "parent_native_id": parent.native_id,
+                "operation": f"{kind}.run", f"{kind}_id": definition_id,
+                "receipt_id": receipt["receipt_id"], "terminal_disposition": receipt.get("outcome"),
+                "children": self._children(parent.operation_id)}
+
     def _finish(self, parent: Any, principal: Principal, kind: str, definition_id: str, revision: str, output: str, sources: list[dict[str, str]], steps: list[dict[str, Any]], target: Any | None) -> dict[str, Any]:
         aid = "artifact_" + uuid.uuid4().hex[:12]
         stage = self.broker.projection_stager.stage(parent.native_id, f"{kind}-run-result", {
             "kind": kind, "parent_operation_id": parent.operation_id, "definition_revision": revision,
             "artifact_id": aid, "name": definition_id, "output": output, "sources": sources, "steps": steps,
             "created_at": datetime.now().isoformat(), "inference_target": target.to_dict() if target else None})
-        self.broker.parent_run_controller.close(parent.context, "succeeded", stage.result_ref, principal=principal)
+        receipt = self._close_or_adopt(parent, "succeeded", result_ref=stage.result_ref, principal=principal)
+        if receipt.get("outcome") != "succeeded":
+            return self._terminal_result(parent, kind, definition_id, receipt)
         result = self.broker.projection_stager.finalize(parent.native_id)
         if result is None:
             raise ServiceError("projection_not_published", "result is awaiting receipt reconciliation", context={"status": 409})
@@ -66,8 +91,12 @@ class SequenceWorkflowService:
         return result
 
     def _fail(self, parent: Any, principal: Principal, exc: Exception) -> None:
-        try: self.broker.parent_run_controller.close(parent.context, "failed", principal=principal)
-        except Exception: pass
+        # A cross-request cancel invalidates this context, but its receipt is the
+        # durable winner and must not turn the original service error into a kernel error.
+        try:
+            self._close_or_adopt(parent, "failed", principal=principal)
+        except Exception:
+            pass
 
     def _replay(self, parent: Any, kind: str, definition_id: str) -> dict[str, Any]:
         result = self.broker.projection_stager.finalize(parent.native_id)
@@ -108,6 +137,8 @@ class SequenceWorkflowService:
                     raise ServiceError("parent_child_stale", "The child receipt was retained but cannot advance this Sequence.", context={"status":409})
                 current=str(checkpoint["output"]); records.append({"recipe_id":recipe.id,"output":current,"provider":str((checkpoint.get("provider") or target.engine))}); sources.append({"source_type":"recipe","source_ref":recipe.id})
             result=self._finish(parent,principal,"sequence",chain_id,str(chain.last_modified),current,sources,records,target)
+            if result.get("terminal_disposition"):
+                return result
             result.update({"chain_id":chain_id,"output":current,"provider":records[-1]["provider"],"steps":records,"sources":sources,"inference_target":target.to_dict(),"actual_placement":target.placement_receipt(provider=records[-1]["provider"])})
             return result
         except Exception as exc: self._fail(parent,principal,exc); raise
@@ -171,6 +202,8 @@ class SequenceWorkflowService:
                 current=str(checkpoint["output"]); records.append({"node_id":node.id,"kind":node.kind,"output":current,"provider":str(checkpoint.get("provider") or target.engine),"status":"ok","runs_on":node.runs_on,"failure_policy":resolved_failure_policy(node)})
             if not records: raise ServiceError("empty_workflow","Nothing executable ran; the Workflow input is retained for Retry.",context={"status":400})
             result=self._finish(parent,principal,"workflow",workflow_id,str(workflow.last_modified),current,sources,records,target)
+            if result.get("terminal_disposition"):
+                return result
             result.update({"workflow_id":workflow_id,"output":current,"provider":next((x["provider"] for x in reversed(records) if x["provider"]),None),"steps":records,"sources":sources,"inference_target":target.to_dict() if target else None,"actual_placement":target.placement_receipt(provider=next((x["provider"] for x in reversed(records) if x["provider"]),None)) if target else None})
             return result
         except Exception as exc: self._fail(parent,principal,exc); raise

@@ -336,13 +336,15 @@ def test_startup_recovers_orphaned_succeeded_stage_once(rig):
     with db._connection() as conn:
         assert conn.execute("SELECT COUNT(*) FROM ask_results").fetchone()[0] == 0
 
-    # _configure is the production boot seam: registrations must precede recovery.
-    booted = _configure(db)
+    # A process restart creates a new Database object over the same durable file.
+    # _configure deliberately reuses the broker for repeated calls on one object.
+    restarted = Database(db.db_path)
+    booted = _configure(restarted)
     assert booted.projection_stager.get(invocation_id).state == "PUBLISHED"
-    with db._connection() as conn:
+    with restarted._connection() as conn:
         assert conn.execute("SELECT COUNT(*) FROM ask_results WHERE invocation_id=?", (invocation_id,)).fetchone()[0] == 1
-    _configure(db)
-    with db._connection() as conn:
+    _configure(restarted)
+    with restarted._connection() as conn:
         assert conn.execute("SELECT COUNT(*) FROM ask_results WHERE invocation_id=?", (invocation_id,)).fetchone()[0] == 1
 
 

@@ -4015,6 +4015,14 @@
       ]
     },
     {
+      "path": "/api/workbenches/{workbench_id}/runs/{parent_operation_id}/cancel",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.primitives.workbenches",
+      "consumers": []
+    },
+    {
       "path": "/api/workbenches/{workbench_id}/voice/resolve",
       "methods": [
         "POST"

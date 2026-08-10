@@ -73,6 +73,7 @@ def _build(database: Any, *, clock: Any = None) -> Broker:
     workbench_triage = WorkbenchTriageCodec()
     sequence_run = ParentRunCodec("sequence", **({"clock": clock} if clock else {}))
     workflow_run = ParentRunCodec("workflow", **({"clock": clock} if clock else {}))
+    workbench_run = ParentRunCodec("workbench", **({"clock": clock} if clock else {}))
     specs = (
         OperationSpec(tool_calls.name, tool_calls.version, tool_calls, "agent.submit", "propose"),
         OperationSpec(process_input.name, process_input.version, process_input, "agent.submit", "propose"),
@@ -95,6 +96,7 @@ def _build(database: Any, *, clock: Any = None) -> Broker:
         OperationSpec(workbench_triage.name, workbench_triage.version, workbench_triage, "agent.submit", "propose"),
         OperationSpec(sequence_run.name, sequence_run.version, sequence_run, "agent.submit", "propose"),
         OperationSpec(workflow_run.name, workflow_run.version, workflow_run, "agent.submit", "propose"),
+        OperationSpec(workbench_run.name, workbench_run.version, workbench_run, "agent.submit", "propose"),
     )
     broker = Broker(store, specs, **({"clock": clock} if clock else {}))
     # Services must never pair a runner database with a broker codec built for
@@ -113,9 +115,11 @@ def _build(database: Any, *, clock: Any = None) -> Broker:
     from .ask_projection import register as register_ask_projection
     from .recipe_projection import register as register_recipe_projection
     from .sequence_workflow_projection import register as register_sequence_workflow_projection
+    from .workbench_projection import register as register_workbench_projection
     register_ask_projection(broker.projection_stager)
     register_recipe_projection(broker.projection_stager)
     register_sequence_workflow_projection(broker.projection_stager)
+    register_workbench_projection(broker.projection_stager)
     broker.parent_run_controller.reconcile_abandoned()
     broker.projection_stager.recover()
     # One inference runner per configured broker: the runner's in-process
@@ -145,8 +149,16 @@ def _service() -> Broker:
 
 
 def _configure(database: Any, *, clock: Any = None) -> Broker:
-    """Test/startup seam; deliberately private, never an operation registration API."""
+    """Test/startup seam; deliberately private, never an operation registration API.
+
+    Idempotent for the same database: rebuilding on every call would dispose the
+    parent-run controller (clearing issued contexts and lease refreshers) under
+    every in-flight run, so per-request callers must reuse the live broker. A
+    custom clock always rebuilds — it is a test seam that must take effect.
+    """
     global _broker, _database_id
+    if _broker is not None and _database_id == id(database) and clock is None:
+        return _broker
     _dispose(_broker)
     _broker = _build(database, clock=clock)
     _database_id = id(database)

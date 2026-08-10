@@ -1,4 +1,4 @@
-"""Durable native controllers for Sequence and Workflow outer runs."""
+"""Durable native controllers for admitted outer runs."""
 from __future__ import annotations
 
 import json
@@ -104,7 +104,7 @@ class ParentRunController:
 
     def start(self, principal: Any, *, kind: str, definition_ref: str, definition_revision: str, input_snapshot: Mapping[str, Any], deadline_at: float, child_budget: int, idempotency_key: str | None = None) -> ParentRun:
         if principal is None or principal.kind is PrincipalKind.NONE: raise KernelRefused("principal_authentication_required")
-        if kind not in {"sequence", "workflow"}: raise KernelRefused("parent_run_kind_unknown")
+        if kind not in {"sequence", "workflow", "workbench"}: raise KernelRefused("parent_run_kind_unknown")
         request_id = idempotency_key or "request_" + uuid.uuid4().hex
         if idempotency_key:
             with self._database._connection() as conn:
@@ -166,6 +166,19 @@ class ParentRunController:
     def cancel(self, context: OuterRunContext, principal: Any) -> str:
         return self._cancel(context, principal)
 
+    def expire_if_due(self, context: OuterRunContext, principal: Any) -> bool:
+        """Fence an expired parent through its normal epoch-changing cancel path."""
+        with self._database._connection() as conn:
+            row = conn.execute("SELECT deadline_at,state FROM kernel_parent_runs WHERE operation_id=?", (context.operation_id,)).fetchone()
+        if row is None or str(row["state"]) != "OPEN" or float(row["deadline_at"]) > self._clock():
+            return False
+        self._cancel(context, principal)
+        with self._database._connection() as conn:
+            row = conn.execute("SELECT p.*,o.principal_kind,o.principal_identity FROM kernel_parent_runs p JOIN kernel_operations o ON o.operation_id=p.operation_id WHERE p.operation_id=?", (context.operation_id,)).fetchone()
+        if row is not None and str(row["state"]) == "CANCELLING":
+            self.close(self._context(row), "cancelled", principal=principal)
+        return True
+
     def cancel_by_operation_id(self, principal: Any, operation_id: str) -> str:
         """Route-only cancellation authority: exact durable owner, checked under lock."""
         with self._database._connection() as conn:
@@ -178,8 +191,12 @@ class ParentRunController:
         with self._database._connection() as conn:
             row = conn.execute("SELECT p.*,o.principal_kind,o.principal_identity FROM kernel_parent_runs p JOIN kernel_operations o ON o.operation_id=p.operation_id WHERE p.operation_id=?", (operation_id,)).fetchone()
         if row is not None and str(row["state"]) == "CANCELLING":
-            self.close(self._context(row), "cancelled", principal=principal)
-        return disposition
+            receipt = self.close(self._context(row), "cancelled", principal=principal)
+            return str(receipt.get("outcome") or disposition)
+        # The provider signal may still be in flight ("pending"), but the
+        # durable terminal receipt is the disposition the caller acts on.
+        receipt = self._broker.store.receipt(operation_id)
+        return str(receipt["outcome"]) if receipt else disposition
 
     def _cancel(self, context: OuterRunContext, principal: Any) -> str:
         with self._database._connection() as conn:
@@ -191,7 +208,13 @@ class ParentRunController:
             conn.execute("UPDATE kernel_parent_runs SET state='CANCELLING',execution_epoch=execution_epoch+1,active_child_invocation_id='',lease_heartbeat_at=?,updated_at=? WHERE operation_id=? AND state='OPEN' AND execution_epoch=?", (self._clock(), self._clock(), context.operation_id, context.epoch))
             child = str(row["active_child_invocation_id"] or "")
         self.end_child_dispatch(context.operation_id)
-        return self._broker.inference_runner._cancel_internal(child, principal) if child else "cancelled"
+        if not child:
+            return "cancelled"
+        # Durable cancellation is already elected above. Do not let a provider's
+        # in-flight dispatch hold the cancelling HTTP request hostage.
+        from threading import Thread
+        Thread(target=self._broker.inference_runner._cancel_internal, args=(child, principal), daemon=True).start()
+        return "pending"
 
     def close(self, context: OuterRunContext, outcome: str, result_ref: str = "", *, principal: Any | None = None) -> Mapping[str, Any]:
         receipt, _ = self._close(context, outcome, result_ref, principal=principal)

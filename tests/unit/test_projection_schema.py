@@ -22,6 +22,6 @@ def test_v45_upgrades_to_projection_stage_schema(tmp_path: Path) -> None:
     with Database(path)._connection() as conn:
         stages = {row[1] for row in conn.execute("PRAGMA table_info(kernel_projection_stages)")}
         ask = {row[1] for row in conn.execute("PRAGMA table_info(ask_results)")}
-    assert read_schema_version(path) == 49
+    assert read_schema_version(path) == 51
     assert {"stage_id", "invocation_id", "operation_id", "result_ref", "state", "final_result_json"} <= stages
     assert {"projection_stage_id", "invocation_id", "operation_id", "receipt_id", "payload_json"} <= ask
