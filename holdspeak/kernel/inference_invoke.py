@@ -101,7 +101,7 @@ class InferenceInvokeCodec:
         }
         return InferenceInvocationAdmission(
             **{
-                **admission.__dict__, "placement": placement,
+                **admission.__dict__, "target_ref": f"deployment-revision:{revision.id}", "placement": placement,
                 "payload_hash": digest(material),
                 "refs": (
                     f"deployment-revision:{revision.id}",

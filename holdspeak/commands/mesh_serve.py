@@ -54,7 +54,7 @@ class MeshServeWorker:
         token: str = "",
         poll_interval_seconds: float = DEFAULT_POLL_INTERVAL_SECONDS,
         http_post: Optional[Callable[..., dict[str, Any]]] = None,
-        engine_factory: Optional[Callable[[], Any]] = None,
+        engine_factory: Optional[Callable[[Any], Any]] = None,
         sleep: Callable[[float], None] = time.sleep,
         timeout_seconds: float = 30.0,
     ) -> None:
@@ -64,7 +64,7 @@ class MeshServeWorker:
         self.poll_interval = max(0.5, float(poll_interval_seconds))
         self._http_post = http_post or _default_http_post
         self._engine_factory = engine_factory
-        self._engine: Any = None
+        self._engines: dict[str, Any] = {}
         self._sleep = sleep
         self._timeout = timeout_seconds
         self._stop = False
@@ -85,36 +85,66 @@ class MeshServeWorker:
         data = self._post("/api/mesh/relay/claim", {"node": self.node})
         return data.get("job")
 
-    def _engine_for_run(self) -> Any:
-        if self._engine is None:
-            if self._engine_factory is not None:
-                engine = self._engine_factory()
-            else:
-                # THIS node's own resolution — its engine, its profiles, its keys
-                from ..intel.providers import build_configured_meeting_intel
+    def _revision_from_envelope(self, job: dict[str, Any]) -> Any:
+        envelope = job.get("envelope")
+        if not isinstance(envelope, dict):
+            raise RuntimeError("mesh_envelope_missing")
+        fields, warrant = envelope.get("deployment_revision"), envelope.get("warrant")
+        if not isinstance(fields, dict) or not isinstance(warrant, dict):
+            raise RuntimeError("mesh_envelope_invalid")
+        # A worker lacks the hub-local HMAC secret, but it can reject an empty
+        # or unbound warrant before it sends work to its provider.
+        if not all(str(warrant.get(key) or "").strip() for key in ("operation_id", "envelope_sha256", "target_ref", "target_binding", "signature")):
+            raise RuntimeError("mesh_envelope_invalid")
+        try:
+            from ..deployment_revisions import DeploymentRevision
 
-                engine = build_configured_meeting_intel()
+            stated = DeploymentRevision(**fields)
+            computed = DeploymentRevision.from_identity(stated.identity())
+        except (KeyError, TypeError, ValueError):
+            raise RuntimeError("mesh_envelope_invalid") from None
+        if stated.id != computed.id:
+            raise RuntimeError("mesh_envelope_invalid")
+        if warrant["target_binding"] != f"deployment-revision:{stated.id}":
+            raise RuntimeError("mesh_envelope_revision_mismatch")
+        if stated.node != self.node:
+            raise RuntimeError("mesh_envelope_node_mismatch")
+        return stated
+
+    def _engine_for_run(self, revision: Any) -> Any:
+        if revision.id not in self._engines:
+            if self._engine_factory is not None:
+                engine = self._engine_factory(revision)
+            else:
+                # A mesh revision names the hub relay destination, but this node
+                # must execute the admitted endpoint/model directly. Its secret
+                # stays local through the frozen destination id's secret slot.
+                from ..intel.providers import build_meeting_intel_for_profile
+
+                kind = "onDevice" if revision.model_path else "openAICompatible"
+                engine = build_meeting_intel_for_profile(
+                    kind=kind, base_url=revision.endpoint, model=revision.model,
+                    profile_id=revision.destination_id, node=revision.node,
+                    model_file=revision.model_path or "",
+                )
             from ..intel.mesh_relay import MeshRelayIntel
 
             if isinstance(engine, MeshRelayIntel):
-                # the recursion guard (the walk's design find): this machine's
-                # own engine resolves to a mesh profile, so "executing" would
-                # relay onward (or back to itself) instead of running anything.
-                # Refuse by name; the job fails honestly instead of looping.
                 raise RuntimeError(
                     f"this node's engine resolves to mesh node '{engine.node}' — "
                     "a serving node needs a REAL provider (local model or "
                     "endpoint) in its own config"
                 )
-            self._engine = engine
-        return self._engine
+            self._engines[revision.id] = engine
+        return self._engines[revision.id]
 
     def execute(self, job: dict[str, Any]) -> bool:
         """Run one claimed job on this node's provider; report the outcome."""
         job_id = str(job.get("id") or "")
         started = time.monotonic()
         try:
-            engine = self._engine_for_run()
+            revision = self._revision_from_envelope(job)
+            engine = self._engine_for_run(revision)
             kwargs: dict[str, Any] = {
                 "system_prompt": str(job.get("system_prompt") or ""),
                 "user_prompt": str(job.get("user_prompt") or ""),

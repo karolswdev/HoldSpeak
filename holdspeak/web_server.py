@@ -954,8 +954,11 @@ class MeetingWebServer:
         from . import rails_observer
         from .config import Config
         from .missioncontrol_bridge import events_payload, load_project_map
-        from .principals import derive_owner
+        from .principals import Principal, PrincipalKind, derive_owner
 
+        # An ambient observer is not an owner. Its single kernel capability is
+        # admission of the receipt-gated journal summary invocation.
+        observer_principal = Principal(PrincipalKind.SERVICE, "rails-observer", frozenset({("inference.invoke", 1)}), "rails-observer:journal-only")
         seen: set[str] = set()
         primed = False
         while True:
@@ -989,7 +992,9 @@ class MeetingWebServer:
                     continue
                 if not fresh:
                     continue
-                summarizer = rails_observer.build_profile_summarizer(cfg.profile_id)
+                from .db import get_database
+                from .kernel.runtime import _service
+                summarizer = rails_observer.build_profile_summarizer(cfg.profile_id, db=get_database(), broker=_service(), principal=observer_principal)
                 batch = await asyncio.to_thread(
                     rails_observer.summarize_batch, fresh, summarize_fn=summarizer
                 )

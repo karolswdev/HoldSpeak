@@ -549,7 +549,7 @@ def target_runtime_error(target: InferenceTarget, error: Any) -> str:
     return f"Destination '{target.name}' refused the run: {detail}"
 
 
-def build_intel_for_revision(revision: Any) -> Any:
+def build_intel_for_revision(revision: Any, *, warrant: Any = None) -> Any:
     """Construct from an admitted revision, never a mutable profile row.
 
     The established profile builder owns engine-specific behavior (notably mesh
@@ -575,6 +575,8 @@ def build_intel_for_revision(revision: Any) -> Any:
             profile_id=revision.destination_id,
             node=revision.node,
             model_file=revision.model_path or "",
+            deployment_revision=revision,
+            warrant=warrant,
         )
     if revision.kind == "paired_device":
         return build_configured_meeting_intel()

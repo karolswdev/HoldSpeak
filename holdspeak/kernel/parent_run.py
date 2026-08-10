@@ -23,8 +23,8 @@ class _ParentAdmission(Admission):
 
 class ParentRunCodec:
     version = 1
-    def __init__(self, kind: str, *, clock: Any = time.time) -> None:
-        self.kind, self.name, self._clock = kind, f"{kind}.run", clock
+    def __init__(self, kind: str, *, clock: Any = time.time, operation_name: str = "") -> None:
+        self.kind, self.name, self._clock = kind, operation_name or f"{kind}.run", clock
     def validate(self, request: OperationRequest) -> Admission:
         if request.target_ref or request.placement or set(request.arguments) != _PARENT_FIELDS:
             raise KernelRefused("parent_run_prerequisite_failed")
@@ -62,8 +62,9 @@ class ParentRunController:
     # Three beats fit within the stale window, so one missed refresh is harmless.
     _lease_seconds = 90.0
     _heartbeat_seconds = 10.0
-    def __init__(self, broker: Any, database: Any, *, clock: Any = time.time) -> None:
+    def __init__(self, broker: Any, database: Any, *, clock: Any = time.time, operation_names: Mapping[str, str] | None = None) -> None:
         self._broker, self._database, self._clock = broker, database, clock
+        self._operation_names = operation_names or {kind: f"{kind}.run" for kind in ("sequence", "workflow", "workbench")}
         self._process_id, self._issued = "parent-process_" + uuid.uuid4().hex, {}
         self._heartbeats = ParentLeaseHeartbeats(self._refresh_lease, interval=lambda: self._heartbeat_seconds)
 
@@ -112,7 +113,7 @@ class ParentRunController:
 
     def start(self, principal: Any, *, kind: str, definition_ref: str, definition_revision: str, input_snapshot: Mapping[str, Any], deadline_at: float, child_budget: int, idempotency_key: str | None = None, _defer_persist: bool = False) -> ParentRun:
         if principal is None or principal.kind is PrincipalKind.NONE: raise KernelRefused("principal_authentication_required")
-        if kind not in {"sequence", "workflow", "workbench"}: raise KernelRefused("parent_run_kind_unknown")
+        if kind not in self._operation_names: raise KernelRefused("parent_run_kind_unknown")
         request_id = idempotency_key or "request_" + uuid.uuid4().hex
         if idempotency_key and not getattr(self, "_delegated_parent_start", False):
             with self._database._connection() as conn:
@@ -122,7 +123,7 @@ class ParentRunController:
                 if not same: raise KernelRefused("idempotency_payload_mismatch")
                 return ParentRun(str(row["operation_id"]), str(row["native_id"]), self._context(row), replayed=True)
         native_id = f"{kind}_run_" + (uuid.uuid5(uuid.NAMESPACE_URL, f"{principal.name}:{principal.identity}:{kind}:{definition_ref}:{definition_revision}:{request_id}").hex if idempotency_key else uuid.uuid4().hex)
-        raw = {"request_schema": 1, "request_id": request_id, "idempotency_key": request_id, "operation": {"name": f"{kind}.run", "version": 1}, "target": {}, "arguments": {"native_id": native_id, "definition_ref": definition_ref, "definition_revision": definition_revision, "input": dict(input_snapshot), "deadline_at": deadline_at, "child_budget": child_budget}}
+        raw = {"request_schema": 1, "request_id": request_id, "idempotency_key": request_id, "operation": {"name": self._operation_names[kind], "version": 1}, "target": {}, "arguments": {"native_id": native_id, "definition_ref": definition_ref, "definition_revision": definition_revision, "input": dict(input_snapshot), "deadline_at": deadline_at, "child_budget": child_budget}}
         submitted = self._broker.submit(raw, principal)
         if submitted["state"] == "refused": raise KernelRefused(str(submitted.get("receipt", {}).get("outcome") or "parent_admission_refused"))
         operation_id = str(submitted["operation_id"])

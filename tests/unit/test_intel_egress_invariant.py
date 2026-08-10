@@ -13,6 +13,7 @@ fail. They are the regression guard for the "local-first & private" promise.
 
 from __future__ import annotations
 
+from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
@@ -162,3 +163,22 @@ def test_egress_posture_unknown_provider_defaults_local_safe():
     # Garbage provider normalizes to the safe default ('local'), never to cloud.
     can_transmit, _ = intel_egress_posture("nonsense")
     assert can_transmit is False
+
+
+def test_hs_131_census_callers_cannot_execute_intel_outside_admitted_runner():
+    """The four migrated seams may select a placement, never build or resolve
+    a mutable Intel target for provider execution themselves."""
+    root = Path(__file__).resolve().parents[2]
+    callers = (
+        "holdspeak/rails_observer.py",
+        "holdspeak/services/decision_lifecycle_service.py",
+        "holdspeak/web/routes/delivery_prs.py",
+        "holdspeak/services/workbench_service.py",
+    )
+    for relative in callers:
+        source = (root / relative).read_text()
+        for forbidden in ("build_intel_for_target(", "resolve_inference_target("):
+            assert forbidden not in source, (
+                f"{relative} executes {forbidden}; all provider dispatch must enter "
+                "InferenceRunner with its admitted deployment revision"
+            )

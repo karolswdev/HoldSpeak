@@ -37,6 +37,8 @@ class MeshRelayIntel:
         liveness_window_seconds: int = DEFAULT_LIVENESS_WINDOW_SECONDS,
         poll_interval_seconds: float = DEFAULT_POLL_INTERVAL_SECONDS,
         relay: Any = None,
+        deployment_revision: Any = None,
+        warrant: Optional[dict[str, Any]] = None,
         sleep: Callable[[float], None] = _time.sleep,
         now: Callable[[], datetime] = datetime.now,
     ) -> None:
@@ -47,6 +49,8 @@ class MeshRelayIntel:
         self._liveness_window = max(1, int(liveness_window_seconds))
         self._poll_interval = max(0.05, float(poll_interval_seconds))
         self._relay = relay
+        self._deployment_revision = deployment_revision
+        self._warrant = warrant
         self._sleep = sleep
         self._now = now
 
@@ -81,6 +85,12 @@ class MeshRelayIntel:
                 f"mesh node '{self.node}' is offline (last seen {int(age)}s ago)"
             )
 
+        if self._deployment_revision is None or not isinstance(self._warrant, dict):
+            raise MeetingIntelError("mesh relay: mesh_envelope_missing")
+        revision = self._deployment_revision.to_dict()
+        if not str(revision.get("id") or ""):
+            raise MeetingIntelError("mesh relay: mesh_envelope_missing")
+
         from ..constitutional_context import constitutional_system_message
         constitutional = constitutional_system_message()
         full_system = (constitutional + "\n\n" + system_prompt).strip() if constitutional else system_prompt
@@ -91,6 +101,7 @@ class MeshRelayIntel:
             temperature=temperature,
             max_tokens=max_tokens,
             model_hint=self.model_hint,
+            envelope={"deployment_revision": revision, "warrant": self._warrant},
             deadline_seconds=self._deadline_seconds,
             now=now,
         )

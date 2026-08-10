@@ -22,6 +22,8 @@ class PrincipalKind(str, Enum):
     # Internal-only scheduler identity. It has no edge rights and is admitted
     # solely by ParentRunController.start_delegated_schedule.
     SCHEDULER = "scheduler"
+    # Narrow runtime identity for an explicitly-issued ambient service.
+    SERVICE = "service"
     NONE = "none"
 
 
@@ -50,6 +52,7 @@ _RIGHTS: dict[PrincipalKind, frozenset[PrincipalRight]] = {
     ),
     PrincipalKind.NODE: frozenset({PrincipalRight.NODE_LINK}),
     PrincipalKind.SCHEDULER: frozenset(),
+    PrincipalKind.SERVICE: frozenset(),
     PrincipalKind.NONE: frozenset(),
 }
 
@@ -58,6 +61,8 @@ _RIGHTS: dict[PrincipalKind, frozenset[PrincipalRight]] = {
 class Principal:
     kind: PrincipalKind
     identity: str
+    allowed_operations: frozenset[tuple[str, int]] = frozenset()
+    authority_basis: str = ""
 
     @property
     def name(self) -> str:

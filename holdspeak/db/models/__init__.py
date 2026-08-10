@@ -975,6 +975,7 @@ class MeshRelayJob:
     temperature: Optional[float] = None
     max_tokens: Optional[int] = None
     model_hint: str = ""
+    envelope: Optional[dict[str, Any]] = None
     status: str = "queued"  # queued | running | completed | failed
     result: Optional[str] = None
     error: Optional[str] = None
@@ -993,6 +994,7 @@ class MeshRelayJob:
             "temperature": self.temperature,
             "max_tokens": self.max_tokens,
             "model_hint": self.model_hint,
+            "envelope": self.envelope,
             "status": self.status,
             "result": self.result,
             "error": self.error,

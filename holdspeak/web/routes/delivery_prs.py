@@ -230,100 +230,40 @@ def build_delivery_prs_router(
             )
         lifecycle = None
         try:
-            from ...kernel.runtime import _service as kernel_service
-
-            broker = kernel_service()
-            invocation_id = "invocation_" + uuid.uuid4().hex
-            revision = str(material.get("revision") or "unversioned")
-            grounding = [
-                {"ref": str(item["ref"]), "revision": revision}
-                for item in material.get("linked") or []
-            ]
-            requested_target_id = str(
-                body.get("inference_target_id") or "this_machine"
-            ).strip()
-            snapshot = {
-                "pr": number,
-                "source_id": source_id,
-                "diff_sha256": __import__("hashlib").sha256(
-                    str(material.get("diff") or "").encode()
-                ).hexdigest(),
-            }
-            handle = broker.submit(
-                {
-                    "request_schema": 1,
-                    "request_id": str(uuid.uuid4()),
-                    "idempotency_key": invocation_id,
-                    "operation": {"name": "inference.run", "version": 1},
-                    "target": {},
-                    "arguments": {
-                        "invocation_id": invocation_id,
-                        "definition_ref": "program:pr-review-v1",
-                        "definition_revision": "1",
-                        "grounding_refs": grounding,
-                        "requested_target_id": requested_target_id,
-                        "deadline_at": time.time() + 300.0,
-                        "input_snapshot": snapshot,
-                    },
-                },
-                request.state.principal,
-            )
-            if handle.get("state") == "refused":
-                return JSONResponse(handle, status_code=409)
-            handle = broker.decide(
-                handle["operation_id"], "approve", handle["revision"], request.state.principal
-            )
-            lifecycle, target, intel = delivery_service.prepare_pr_review(
-                invocation_id=invocation_id,
-                requested_target_id=requested_target_id,
-                operation_id=handle["operation_id"],
-                broker=broker,
-            )
-            lifecycle.start_attempt(destination=target.id, target=target)
-            if not target.ready:
-                invocation = lifecycle.fail(target.readiness_reason, state="unavailable")
-                return JSONResponse({"error": target.readiness_reason, "invocation": invocation}, status_code=409)
+            from ...deployment_revisions import capture_deployment_revision
+            from ...inference_targets import resolve_placement
+            from ...kernel.inference_runner import InvocationRequest, ServiceContract
+            from ...kernel.prompt_adapter import CanonicalPromptAdapter
+            from ...kernel.runtime import _as_principal, _service as kernel_service
+            from ...db import get_database
+            broker = kernel_service(); principal = request.state.principal; db = get_database()
+            requested_target_id = str(body.get("inference_target_id") or "this_machine").strip()
+            target = resolve_placement(db, invocation=requested_target_id).target
+            if not target.ready: return JSONResponse({"error": target.readiness_reason}, status_code=409)
+            revision = capture_deployment_revision(db, target); invocation_id = "pr_review_" + uuid.uuid4().hex
+            diff_sha256 = __import__("hashlib").sha256(str(material.get("diff") or "").encode()).hexdigest()
             linked_text = "\n\n".join(str(item.get("text") or "") for item in material.get("linked") or [])
-            prompt = (
-                f"Review PR #{number}. Return a concise GitHub review draft with concrete findings. "
-                "Do not claim to have posted, approved, merged, or run checks.\n\n"
-                f"Linked story and evidence:\n{linked_text[:48000]}\n\n"
-                f"Diff:\n{str(material.get('diff') or '')[:120000]}"
-            )
-            output = await asyncio.to_thread(
-                intel.run_prompt,
-                system_prompt="You are a precise code reviewer. Findings first; cite files and lines when possible.",
-                user_prompt=prompt,
-                max_tokens=1800,
-            )
-            sources = [
-                {"source_type": "input", "source_ref": f"pr:{source_id}:{number}"},
-                *lifecycle.lineage(),
-            ]
-            artifact_id = delivery_service.persist_pr_review_artifact(
-                name=f"PR #{number} review",
-                user_input=f"PR #{number}",
-                output=str(output or ""),
-                sources=sources,
-            )
+            prompt = f"Review PR #{number}. Return a concise GitHub review draft with concrete findings. Do not claim to have posted, approved, merged, or run checks.\n\nLinked story and evidence:\n{linked_text[:48000]}\n\nDiff:\n{str(material.get('diff') or '')[:120000]}"
+            parent = broker.parent_run_controller.start(principal, kind="delivery.pr-review-draft", definition_ref=f"pr:{source_id}:{number}", definition_revision=str(material.get("revision") or "unversioned"), input_snapshot={"source_id":source_id,"number":number,"diff_sha256":diff_sha256}, deadline_at=time.time()+300, child_budget=1)
+            payload = {"system_prompt":"You are a precise code reviewer. Findings first; cite files and lines when possible.","user_prompt":prompt,"max_tokens":1800,"temperature":None,"source_id":source_id,"number":number,"material_revision":str(material.get("revision") or "unversioned"),"diff_sha256":diff_sha256,"linked_revisions":[str(item.get("revision") or "") for item in material.get("linked") or []]}
+            invoke = InvocationRequest(revision.id,ServiceContract.for_payload("holdspeak.delivery-pr-review","1",payload),time.time()+300,payload,invocation_id,parent.operation_id)
+            def projection_payload(value: Any) -> dict[str, Any]:
+                return {"output":str(dict(value).get("output") or ""),"source_id":source_id,"number":number}
+            with _as_principal(principal): outcome = await asyncio.to_thread(broker.inference_runner.invoke,invoke,CanonicalPromptAdapter(),publish=broker.projection_stager.publisher(invocation_id,"delivery-pr-review",projection_payload),parent_context=parent.context)
+            if outcome.outcome != "succeeded": broker.parent_run_controller.close(parent.context,outcome.outcome,principal=principal); return JSONResponse({"error":f"inference_{outcome.outcome}"},status_code=409)
+            projection=broker.projection_stager.finalize(invocation_id)
+            if projection is None:
+                if broker.store.receipt(parent.operation_id) is None:
+                    broker.parent_run_controller.close(parent.context, "cancelled", principal=principal)
+                return JSONResponse({"error": "delivery_pr_review_cancelled"}, status_code=409)
+            output=str(projection.get("output") or "")
+            lifecycle = None
+            artifact_id = str(projection.get("artifact_id") or "")
             if not artifact_id:
-                lifecycle.fail("artifact_persistence_failed")
+                broker.parent_run_controller.close(parent.context, "failed", principal=principal)
                 return JSONResponse({"error": "artifact_persistence_failed"}, status_code=500)
-            invocation = lifecycle.succeed(
-                artifact_id,
-                provider=getattr(intel, "active_provider", None),
-                model=target.model,
-            )
-            return JSONResponse(
-                {
-                    "output": str(output or ""),
-                    "artifact_id": artifact_id,
-                    "result_ref": f"artifact:{artifact_id}",
-                    "invocation_id": invocation_id,
-                    "operation_id": handle["operation_id"],
-                    "invocation": invocation,
-                }
-            )
+            parent_receipt = broker.parent_run_controller.close(parent.context, "succeeded", artifact_id, principal=principal)
+            return JSONResponse({"output": output, "artifact_id": artifact_id, "result_ref": f"artifact:{artifact_id}", "invocation_id": invocation_id, "operation_id": parent.operation_id, "invocation": {"operation_id": outcome.operation_id, "deployment_revision": revision.id, "outcome": outcome.outcome, "receipt": dict(outcome.receipt)}, "parent_receipt": dict(parent_receipt)})
         except Exception as exc:
             if lifecycle is not None:
                 try:

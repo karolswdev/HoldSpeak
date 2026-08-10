@@ -68,12 +68,14 @@ def _build(database: Any, *, clock: Any = None) -> Broker:
     inference = InferenceRunCodec(database, **({"clock": clock} if clock else {}))
     invocation = InferenceInvokeCodec(database, store, **({"clock": clock} if clock else {}))
     cancellation = InferenceCancelCodec(database, store)
-    voice_resolve = VoiceResolveCodec()
+    voice_resolve = ParentRunCodec("voice_reference_resolve", operation_name="voice_reference_resolve", **({"clock": clock} if clock else {}))
     workbench_mint = WorkbenchMintCodec()
     workbench_triage = WorkbenchTriageCodec()
     sequence_run = ParentRunCodec("sequence", **({"clock": clock} if clock else {}))
     workflow_run = ParentRunCodec("workflow", **({"clock": clock} if clock else {}))
     workbench_run = ParentRunCodec("workbench", **({"clock": clock} if clock else {}))
+    decision_draft = ParentRunCodec("decision.promotion-draft", operation_name="decision.promotion-draft", **({"clock": clock} if clock else {}))
+    delivery_draft = ParentRunCodec("delivery.pr-review-draft", operation_name="delivery.pr-review-draft", **({"clock": clock} if clock else {}))
     specs = (
         OperationSpec(tool_calls.name, tool_calls.version, tool_calls, "agent.submit", "propose"),
         OperationSpec(process_input.name, process_input.version, process_input, "agent.submit", "propose"),
@@ -97,14 +99,15 @@ def _build(database: Any, *, clock: Any = None) -> Broker:
         OperationSpec(sequence_run.name, sequence_run.version, sequence_run, "agent.submit", "propose"),
         OperationSpec(workflow_run.name, workflow_run.version, workflow_run, "agent.submit", "propose"),
         OperationSpec(workbench_run.name, workbench_run.version, workbench_run, "agent.submit", "propose"),
+        OperationSpec(decision_draft.name, decision_draft.version, decision_draft, "agent.submit", "propose"),
+        OperationSpec(delivery_draft.name, delivery_draft.version, delivery_draft, "agent.submit", "propose"),
     )
     broker = Broker(store, specs, **({"clock": clock} if clock else {}))
     # Services must never pair a runner database with a broker codec built for
     # another database singleton; invoke admission validates revisions there.
     broker.database = database
-    broker.parent_run_controller = ParentRunController(
-        broker, database, **({"clock": clock} if clock else {})
-    )
+    broker.parent_run_controller = ParentRunController(broker, database,
+        operation_names={"sequence":"sequence.run", "workflow":"workflow.run", "workbench":"workbench.run", "decision.promotion-draft":"decision.promotion-draft", "delivery.pr-review-draft":"delivery.pr-review-draft", "voice_reference_resolve":"voice_reference_resolve"}, **({"clock": clock} if clock else {}))
     # The liveness reaper runs before stage recovery: an expired claimed
     # invocation first receives its authoritative indeterminate receipt.
     from .projection_stager import ProjectionStager
@@ -114,10 +117,12 @@ def _build(database: Any, *, clock: Any = None) -> Broker:
     # before the first recovery pass, never after it.
     from .ask_projection import register as register_ask_projection
     from .recipe_projection import register as register_recipe_projection
+    from .rails_journal_projection import register as register_rails_journal_projection
     from .sequence_workflow_projection import register as register_sequence_workflow_projection
     from .workbench_projection import register as register_workbench_projection
     register_ask_projection(broker.projection_stager)
     register_recipe_projection(broker.projection_stager)
+    register_rails_journal_projection(broker.projection_stager)
     register_sequence_workflow_projection(broker.projection_stager)
     register_workbench_projection(broker.projection_stager)
     broker.parent_run_controller.reconcile_abandoned()

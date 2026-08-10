@@ -2,6 +2,7 @@
 from __future__ import annotations
 from holdspeak.services.observer import NullObserver, PipelineObserver, observe_service
 
+import time
 from typing import Any
 
 from ..db.core import Database
@@ -11,9 +12,34 @@ from .errors import ConflictError, ValidationError
 
 @observe_service
 class MeshService:
-    def __init__(self, db: Database, *, observer: PipelineObserver | None = None) -> None:
-        self._db = db
+    def __init__(self, db: Database, kernel: Any | None = None, *, observer: PipelineObserver | None = None) -> None:
+        self._db, self._kernel = db, kernel
         self._observer = observer or NullObserver()
+
+    def _relay_warrant_live(self, job_id: str) -> bool:
+        job = self._db.mesh_relay.get(job_id)
+        envelope = None if job is None else job.envelope
+        warrant = envelope.get("warrant") if isinstance(envelope, dict) else None
+        revision = envelope.get("deployment_revision") if isinstance(envelope, dict) else None
+        revision_id = str(revision.get("id") or "") if isinstance(revision, dict) else ""
+        expected_binding = f"deployment-revision:{revision_id}" if revision_id else ""
+        if not isinstance(warrant, dict) or not expected_binding:
+            return False
+        from ..kernel.runtime import _service
+        broker = self._kernel or _service()
+        operation_id = str(warrant.get("operation_id") or "")
+        warrant_valid = broker.store.valid_warrant(warrant)
+        operation = broker.store.operation(operation_id) if warrant_valid and operation_id else None
+        return bool(
+            warrant_valid
+            and operation is not None
+            and operation.get("warrant") == warrant
+            and warrant.get("target_binding") == expected_binding
+            and operation.get("target_ref") == expected_binding
+            and not operation.get("warrant_revoked")
+            and operation.get("state") == "claimed"
+            and float(warrant.get("execution_expires_at") or 0) > time.time()
+        )
 
     def list_inbox(self, principal: Principal, filters: dict[str, Any] | None = None) -> dict[str, Any]:
         from ..intel_queue import build_runtime_queue_frame
@@ -67,6 +93,8 @@ class MeshService:
         result = payload.get("result")
         if not isinstance(result, str) or not result.strip():
             raise ValidationError("result must be a non-empty string")
+        if not self._relay_warrant_live(job_id):
+            raise ConflictError("relay result warrant is invalid or no longer live", code="mesh_result_warrant_invalid")
         if not self._db.mesh_relay.complete(job_id, result=result):
             raise ConflictError(
                 f"relay job {job_id} is not completable (expired, failed, or unknown)",
@@ -78,6 +106,8 @@ class MeshService:
         error = str(payload.get("error") or "").strip()
         if not error:
             raise ValidationError("error must be a non-empty string")
+        if not self._relay_warrant_live(job_id):
+            raise ConflictError("relay result warrant is invalid or no longer live", code="mesh_result_warrant_invalid")
         if not self._db.mesh_relay.fail(job_id, error=error):
             raise ConflictError(
                 f"relay job {job_id} is not failable (already terminal or unknown)",

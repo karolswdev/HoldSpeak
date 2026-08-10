@@ -16,6 +16,8 @@ import pytest
 
 from holdspeak.db import Database, reset_database
 from holdspeak.db.models import ProfileRecord
+from holdspeak.deployment_revisions import DeploymentRevision
+from holdspeak.inference_targets import DeploymentIdentity
 from holdspeak.intel.mesh_relay import MeshRelayIntel
 from holdspeak.intel.models import MeetingIntelError
 from holdspeak.intel.providers import (
@@ -59,10 +61,19 @@ class _Clock:
 # ── the provider ─────────────────────────────────────────────────────────
 
 
+def _revision() -> DeploymentRevision:
+    return DeploymentRevision.from_identity(DeploymentIdentity(
+        destination_id="p-phone", kind="mesh_node", engine="cloud", model="qwen3.5-4b",
+        node="walk-edge", boundary="mesh", endpoint="http://edge.example/v1",
+        model_path=None, secret_slot="HOLDSPEAK_PROFILE_P_PHONE_KEY",
+    ))
+
+
 def _provider(db, clock, **kw) -> MeshRelayIntel:
     return MeshRelayIntel(
-        node="walk-edge", model_hint="qwen3.5-4b",
-        relay=db.mesh_relay, sleep=clock.sleep, now=clock.now, **kw,
+        node="walk-edge", model_hint="qwen3.5-4b", deployment_revision=_revision(),
+        warrant={"signed": "warrant"}, relay=db.mesh_relay, sleep=clock.sleep,
+        now=clock.now, **kw,
     )
 
 
@@ -92,11 +103,15 @@ def test_run_round_trips_through_the_queue(db) -> None:
             assert job.system_prompt == "Be brief."
             assert job.user_prompt == "What is dictation?"
             assert job.model_hint == "qwen3.5-4b"
+            assert job.envelope == {
+                "deployment_revision": _revision().to_dict(), "warrant": {"signed": "warrant"},
+            }
             db.mesh_relay.complete(job.id, result="Speaking words.", now=clock.now())
 
     provider = MeshRelayIntel(
-        node="walk-edge", model_hint="qwen3.5-4b",
-        relay=db.mesh_relay, sleep=sleep_and_work, now=clock.now,
+        node="walk-edge", model_hint="qwen3.5-4b", deployment_revision=_revision(),
+        warrant={"signed": "warrant"}, relay=db.mesh_relay,
+        sleep=sleep_and_work, now=clock.now,
     )
     out = provider.run_prompt(system_prompt="Be brief.", user_prompt="What is dictation?")
     assert out == "Speaking words."
@@ -119,7 +134,8 @@ def test_chat_seam_folds_messages_onto_the_relay(db) -> None:
             db.mesh_relay.complete(job.id, result="{}", now=clock.now())
 
     provider = MeshRelayIntel(
-        node="walk-edge", relay=db.mesh_relay, sleep=sleep_and_work, now=clock.now,
+        node="walk-edge", deployment_revision=_revision(), warrant={"signed": "warrant"},
+        relay=db.mesh_relay, sleep=sleep_and_work, now=clock.now,
     )
     out = provider._chat_completion_text(
         [
@@ -144,7 +160,8 @@ def test_node_side_failure_surfaces_verbatim(db) -> None:
             db.mesh_relay.fail(job.id, error="no model loaded", now=clock.now())
 
     provider = MeshRelayIntel(
-        node="walk-edge", relay=db.mesh_relay, sleep=sleep_and_fail, now=clock.now,
+        node="walk-edge", deployment_revision=_revision(), warrant={"signed": "warrant"},
+        relay=db.mesh_relay, sleep=sleep_and_fail, now=clock.now,
     )
     with pytest.raises(MeetingIntelError, match="walk-edge.*no model loaded"):
         provider.run_prompt(user_prompt="hi")

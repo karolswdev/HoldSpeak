@@ -17,9 +17,13 @@ deadline, never forever.
 """
 from __future__ import annotations
 
+import json
 import uuid
 from datetime import datetime, timedelta
-from typing import Optional
+from typing import Any, Optional
+
+
+_ENVELOPE_TASK_PREFIX = "envelope:"
 
 from .base import BaseRepository
 from .models import MeshRelayJob
@@ -48,14 +52,24 @@ class MeshRelayRepository(BaseRepository):
         max_tokens: Optional[int] = None,
         model_hint: str = "",
         task_kind: str = "llm",
+        envelope: Optional[dict[str, Any]] = None,
         deadline_seconds: int = DEFAULT_DEADLINE_SECONDS,
         now: Optional[datetime] = None,
     ) -> MeshRelayJob:
         now = now or datetime.now()
+        # v52 has no dedicated relay-envelope column. The queue is hub-local,
+        # so preserve the transport-only metadata in its existing opaque task
+        # field rather than changing the persisted schema contract.
+        stored_task_kind = task_kind
+        if envelope is not None:
+            stored_task_kind = _ENVELOPE_TASK_PREFIX + json.dumps(
+                envelope, sort_keys=True, separators=(",", ":"), ensure_ascii=True
+            )
         job = MeshRelayJob(
             id=f"relay_{uuid.uuid4().hex[:12]}",
             node=str(node or "").strip(),
             task_kind=task_kind,
+            envelope=envelope,
             system_prompt=system_prompt,
             user_prompt=user_prompt,
             temperature=temperature,
@@ -75,7 +89,7 @@ class MeshRelayRepository(BaseRepository):
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
-                    job.id, job.node, job.task_kind, job.system_prompt,
+                    job.id, job.node, stored_task_kind, job.system_prompt,
                     job.user_prompt, job.temperature, job.max_tokens,
                     job.model_hint, job.status, job.deadline_at, job.created_at,
                 ),
@@ -238,10 +252,18 @@ class MeshRelayRepository(BaseRepository):
             )
 
     def _to_job(self, row) -> MeshRelayJob:
+        stored_task_kind = str(row["task_kind"] or "llm")
+        envelope = None
+        if stored_task_kind.startswith(_ENVELOPE_TASK_PREFIX):
+            try:
+                envelope = json.loads(stored_task_kind.removeprefix(_ENVELOPE_TASK_PREFIX))
+            except (TypeError, ValueError):
+                envelope = None
         return MeshRelayJob(
             id=row["id"],
             node=row["node"],
-            task_kind=row["task_kind"],
+            task_kind="llm" if envelope is not None else stored_task_kind,
+            envelope=envelope,
             system_prompt=row["system_prompt"],
             user_prompt=row["user_prompt"],
             temperature=row["temperature"],

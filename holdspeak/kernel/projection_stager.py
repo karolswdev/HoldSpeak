@@ -61,12 +61,15 @@ class ProjectionStager:
     def __init__(self, database: Any, broker: Any, *, clock: Callable[[], float] = time.time) -> None:
         self._database, self._broker, self._clock = database, broker, clock
         self._materializers: dict[str, Materializer] = {}
+        self._parent_cancel_discards: set[str] = set()
         self._health_faults: list[dict[str, str]] = []
 
-    def register(self, kind: str, materializer: Materializer) -> None:
+    def register(self, kind: str, materializer: Materializer, *, discard_on_parent_cancel: bool = False) -> None:
         if not kind or kind in self._materializers:
             raise ValueError(f"projection materializer already registered: {kind!r}")
         self._materializers[kind] = materializer
+        if discard_on_parent_cancel:
+            self._parent_cancel_discards.add(kind)
 
     def publisher(self, invocation_id: str, kind: str, encoder: Callable[[Any], Mapping[str, Any]]) -> Callable[[Any], str]:
         """Return the sole callback shape that a migrated service may give runner."""
@@ -153,6 +156,19 @@ class ProjectionStager:
                 return None
             if outcome != "succeeded" or str(receipt["result_ref"]) != stage.result_ref:
                 raise KernelRefused("projection_receipt_result_ref_mismatch")
+            # Kinds registered with discard_on_parent_cancel have no checkpoint
+            # CAS of their own; the parent election is their only publication
+            # fence.  Checkpointed kinds (sequence/workflow/workbench) keep the
+            # HS-131-04 contract: the earned child receipt survives and the
+            # stale checkpoint (advanced=0) blocks late output instead.
+            if stage.kind in self._parent_cancel_discards:
+                parent = conn.execute(
+                    "SELECT p.state FROM kernel_operations child JOIN kernel_parent_runs p ON p.operation_id=child.parent_operation_id WHERE child.operation_id=?",
+                    (stage.operation_id,),
+                ).fetchone()
+                if parent is not None and str(parent["state"]) in {"CANCELLING", "CANCELLED", "INDETERMINATE"}:
+                    conn.execute("UPDATE kernel_projection_stages SET state='DISCARDED',updated_at=? WHERE stage_id=? AND state != 'PUBLISHED'", (self._clock(), stage.stage_id))
+                    return None
             if stage.state == "PUBLISHED":
                 return self._published(stage, conn)
             if stage.state == "DISCARDED":

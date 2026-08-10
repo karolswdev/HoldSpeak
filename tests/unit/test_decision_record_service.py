@@ -2,11 +2,15 @@
 
 from __future__ import annotations
 
+import asyncio
 from datetime import date, timedelta
 
 import pytest
 
 from holdspeak.db.core import Database, read_schema_version
+from holdspeak.principals import Principal, PrincipalKind
+from holdspeak.services.decision_lifecycle_service import DecisionLifecycleService
+from holdspeak.services.errors import ConflictError
 from holdspeak.db.schema import SCHEMA_VERSION
 from holdspeak.services.decision_record_service import DecisionRecordService
 
@@ -416,8 +420,8 @@ def test_schema_migrates_v40_to_v43(tmp_path):
 
     migrated = Database(path)
 
-    assert SCHEMA_VERSION == 52
-    assert read_schema_version(path) == 52
+    assert SCHEMA_VERSION == 53
+    assert read_schema_version(path) == 53
     with migrated._connection() as conn:
         assert "deleted" in {row[1] for row in conn.execute("PRAGMA table_info(decision_records)")}
     with migrated._connection() as conn:
@@ -504,7 +508,7 @@ def test_v43_renames_legacy_decision_receipt_tables_once(tmp_path):
         conn.execute("INSERT INTO schema_version (version) VALUES (42)")
 
     migrated = Database(path)
-    assert read_schema_version(path) == 52
+    assert read_schema_version(path) == 53
     with migrated._connection() as conn:
         legacy = conn.execute(
             "SELECT name FROM sqlite_master WHERE type='table' AND name='decision_receipts'"
@@ -527,3 +531,73 @@ def test_v43_renames_legacy_decision_receipt_tables_once(tmp_path):
         assert conn.execute(
             "SELECT decision_text FROM decision_records WHERE id = 'receipt-legacy'"
         ).fetchone()[0] == "Adopt the record."
+
+
+# --- admitted promotion fence (HS-131-07) -----------------------------------
+
+
+def test_promotion_cancellation_after_provider_return_never_publishes_artifact(tmp_path):
+    db = Database(tmp_path / "promotion.db")
+    _accepted_meeting_decision(db, "dec-fence")
+    profile = db.profiles.upsert(
+        profile_id="promotion", name="Promotion", kind="openAICompatible",
+        base_url="http://promotion", model="promotion-model",
+    )
+    from holdspeak.kernel.runtime import _configure
+    broker = _configure(db)
+    owner = Principal(PrincipalKind.OWNER, "promotion-owner")
+
+    class CancellingIntel:
+        def run_prompt(self, **_):
+            with db._connection() as conn:
+                parent_id = conn.execute(
+                    "SELECT operation_id FROM kernel_parent_runs WHERE kind='decision.promotion-draft'"
+                ).fetchone()[0]
+            # The durable parent cancellation lands while the provider call is
+            # in flight, before the runner can elect a successful child receipt.
+            broker.parent_run_controller.cancel_by_operation_id(owner, parent_id)
+            return "late draft that must not publish"
+
+    broker.inference_runner._engine_factory = lambda _: CancellingIntel()
+    service = DecisionLifecycleService(db, kernel=broker)
+    # The child's provider work completed, so its receipt is EARNED
+    # (succeeded); the cancellation election fences PUBLICATION instead —
+    # the finalize discard refuses the artifact by name.
+    with pytest.raises(ConflictError, match="decision_promotion_cancelled"):
+        asyncio.run(service.draft_promoted_with_model(
+            owner, "dec-fence", "note", {"inference_target_id": profile.id},
+        ))
+
+    with db._connection() as conn:
+        parent_id = conn.execute(
+            "SELECT operation_id FROM kernel_parent_runs WHERE kind='decision.promotion-draft'"
+        ).fetchone()[0]
+        child_id = conn.execute(
+            "SELECT operation_id FROM kernel_operations WHERE parent_operation_id=?",
+            (parent_id,),
+        ).fetchone()[0]
+        artifact_count = conn.execute("SELECT COUNT(*) FROM artifacts").fetchone()[0]
+    child_receipt = broker.store.receipt(child_id)
+    parent_receipt = broker.store.receipt(parent_id)
+    assert artifact_count == 0
+    assert child_receipt is not None and child_receipt["outcome"] == "succeeded"
+    assert parent_receipt is not None and parent_receipt["outcome"] == "cancelled"
+
+
+def test_promotion_cancelled_after_child_is_eligible_discards_artifact(tmp_path):
+    db = Database(tmp_path / "promotion-late.db")
+    _accepted_meeting_decision(db, "dec-late")
+    profile = db.profiles.upsert(profile_id="promotion-late", name="Promotion", kind="openAICompatible", base_url="http://promotion", model="promotion-model")
+    from holdspeak.kernel.runtime import _configure
+    broker = _configure(db); owner = Principal(PrincipalKind.OWNER, "promotion-owner")
+    broker.inference_runner._engine_factory = lambda _: type("Intel", (), {"run_prompt": lambda self, **_: "eligible draft"})()
+    finalize = broker.projection_stager.finalize
+    def cancel_before_finalize(invocation_id):
+        parent_id = broker.store.operation(broker.projection_stager.get(invocation_id).operation_id)["parent_operation_id"]
+        broker.parent_run_controller.cancel_by_operation_id(owner, parent_id)
+        return finalize(invocation_id)
+    broker.projection_stager.finalize = cancel_before_finalize
+    with pytest.raises(ConflictError, match="decision_promotion_cancelled"):
+        asyncio.run(DecisionLifecycleService(db, kernel=broker).draft_promoted_with_model(owner, "dec-late", "note", {"inference_target_id": profile.id}))
+    with db._connection() as conn:
+        assert conn.execute("SELECT COUNT(*) FROM artifacts").fetchone()[0] == 0

@@ -234,24 +234,44 @@ def clear_remote_buffer() -> None:
         _REMOTE.clear()
 
 
-def build_profile_summarizer(profile_id: Optional[str] = None) -> SummarizeFn:
-    """Production summarizer: run the prompt on the named InferenceTarget
-    (None = hub default, the one pointer sentinel), through the SAME intel
-    seam ask uses. Kept out of the pure core so tests inject a fake instead."""
+def build_profile_summarizer(profile_id: Optional[str] = None, *, db: Any = None,
+                             broker: Any = None, principal: Any = None) -> SummarizeFn:
+    """Return the root, receipt-gated Rails invocation callable.
+
+    The hub issues the narrow observer principal; this pure-module seam never
+    invents an owner identity.  A non-success raises so ``summarize_batch``
+    retains its established honest event-only degradation.
+    """
+    from .kernel.inference_runner import InvocationRequest, ServiceContract
+    from .kernel.prompt_adapter import CanonicalPromptAdapter
+    from .kernel.runtime import _as_principal, _service
+    from .deployment_revisions import capture_deployment_revision
+    from .inference_targets import resolve_placement
+    from .principals import PrincipalKind
+    if principal is None or principal.kind is not PrincipalKind.SERVICE:
+        raise RuntimeError("rails_observer_principal_required")
+    db = db or __import__("holdspeak.db", fromlist=["get_database"]).get_database()
+    broker = broker or _service()
+    target = resolve_placement(db, invocation=profile_id or "this_machine").target
+    if not target.ready:
+        raise RuntimeError(target.readiness_reason)
+    revision = capture_deployment_revision(db, target)
 
     def summarize(system_prompt: str, user_prompt: str) -> str:
-        from .db import get_database
-        from .inference_targets import build_intel_for_target, resolve_inference_target
-
-        db = get_database()
-        target = resolve_inference_target(db, profile_id or "this_machine")
-        if not target.ready:
-            raise RuntimeError(target.readiness_reason)
-        intel = build_intel_for_target(target, db)
-        return intel.run_prompt(
-            system_prompt=system_prompt, user_prompt=user_prompt,
-            temperature=0.2, max_tokens=220,
-        )
+        batch_hash = "sha256:" + hashlib.sha256(user_prompt.encode()).hexdigest()
+        payload = {"system_prompt": system_prompt, "user_prompt": user_prompt,
+                   "temperature": 0.2, "max_tokens": 220,
+                   "selected_target": profile_id or "this_machine", "event_batch_hash": batch_hash}
+        invocation_id = "rails_" + hashlib.sha256((batch_hash + str(time.time())).encode()).hexdigest()[:24]
+        request = InvocationRequest(revision.id, ServiceContract.for_payload("holdspeak.rails-summary", "1", payload), time.time() + 60, payload, invocation_id)
+        with _as_principal(principal):
+            outcome = broker.inference_runner.invoke(request, CanonicalPromptAdapter(), publish=broker.projection_stager.publisher(invocation_id, "rails-journal", lambda output: {"summary": str(dict(output).get("output") or ""), "event_batch_hash": batch_hash}))
+        if outcome.outcome != "succeeded":
+            raise RuntimeError(f"rails_summary_{outcome.outcome}")
+        projection = broker.projection_stager.finalize(invocation_id)
+        if projection is None:
+            raise RuntimeError("rails_journal_projection_not_published")
+        return str(projection["summary"])
 
     return summarize
 

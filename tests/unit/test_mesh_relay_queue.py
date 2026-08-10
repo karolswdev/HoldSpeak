@@ -9,6 +9,7 @@ deadline, never forever.
 from __future__ import annotations
 
 from datetime import datetime, timedelta
+from types import SimpleNamespace
 
 import pytest
 from fastapi import FastAPI
@@ -34,9 +35,35 @@ def db(tmp_path) -> Database:
 @pytest.fixture
 def client(db, monkeypatch) -> TestClient:
     monkeypatch.setattr(hsdb, "get_database", lambda *a, **k: db)
+
+    class Store:
+        def valid_warrant(self, warrant):
+            return warrant.get("signature") == "signed"
+
+        def operation(self, operation_id):
+            return {
+                "warrant": _relay_envelope()["warrant"],
+                "target_ref": "deployment-revision:dep_wire",
+                "warrant_revoked": False,
+                "state": "claimed",
+            }
+
     app = FastAPI()
-    app.include_router(build_mesh_router(WebContext(get_state=lambda: {}, mesh_service=MeshService(db))))
+    app.include_router(build_mesh_router(WebContext(
+        get_state=lambda: {}, mesh_service=MeshService(db, kernel=SimpleNamespace(store=Store()))
+    )))
     return TestClient(app)
+
+
+def _relay_envelope() -> dict:
+    binding = "deployment-revision:dep_wire"
+    return {
+        "deployment_revision": {"id": "dep_wire"},
+        "warrant": {
+            "operation_id": "op_wire", "target_binding": binding,
+            "signature": "signed", "execution_expires_at": 9_999_999_999,
+        },
+    }
 
 
 # ── the repository lifecycle ─────────────────────────────────────────────
@@ -132,12 +159,16 @@ def test_worker_last_seen_reads_back(db) -> None:
 def test_wire_claim_complete_lifecycle(db, client) -> None:
     # the wire runs on the real clock — enqueue there too, or the deadline
     # (T0 + 120s) is already in the past and the claim honestly expires it
-    job = db.mesh_relay.enqueue(node="wire-node", user_prompt="over the wire", now=datetime.now())
+    envelope = _relay_envelope()
+    job = db.mesh_relay.enqueue(
+        node="wire-node", user_prompt="over the wire", envelope=envelope, now=datetime.now()
+    )
 
     resp = client.post("/api/mesh/relay/claim", json={"node": "wire-node"})
     assert resp.status_code == 200
     claimed = resp.json()["job"]
     assert claimed["id"] == job.id and claimed["user_prompt"] == "over the wire"
+    assert claimed["envelope"] == envelope
 
     resp = client.post(f"/api/mesh/relay/{job.id}/complete", json={"result": "answered"})
     assert resp.status_code == 200 and resp.json() == {"success": True}
@@ -150,7 +181,9 @@ def test_wire_claim_complete_lifecycle(db, client) -> None:
 
 
 def test_wire_fail_and_validation(db, client) -> None:
-    job = db.mesh_relay.enqueue(node="wire-node", user_prompt="x", now=datetime.now())
+    job = db.mesh_relay.enqueue(
+        node="wire-node", user_prompt="x", envelope=_relay_envelope(), now=datetime.now()
+    )
     client.post("/api/mesh/relay/claim", json={"node": "wire-node"})
 
     assert client.post("/api/mesh/relay/claim", json={}).status_code == 400

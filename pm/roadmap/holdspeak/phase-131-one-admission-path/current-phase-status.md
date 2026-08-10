@@ -1,8 +1,8 @@
 # Phase 131 — One Admission Path
 
-**Status:** IN PROGRESS (3/12).
+**Status:** IN PROGRESS (7/12).
 
-**Last updated:** 2026-08-09.
+**Last updated:** 2026-08-10.
 
 ## Goal
 
@@ -129,7 +129,7 @@ gates while keeping every known site bounded now.
 | HS-131-04 | Sequence and Workflow admit every model step | done | [story-04](./story-04-sequence-and-workflow.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-131-05 | Workbench work and memory cannot outrun cancellation | done | [story-05](./story-05-workbench-and-memory.md) | [evidence-story-05](./evidence-story-05.md) |
 | HS-131-06 | Scheduled work carries bounded delegation | done | [story-06](./story-06-bounded-schedules.md) | [evidence-story-06](./evidence-story-06.md) |
-| HS-131-07 | The remaining direct callers join the spine | in-progress | [story-07](./story-07-service-callers.md) | — |
+| HS-131-07 | The remaining direct callers join the spine | done | [story-07](./story-07-service-callers.md) | [evidence-story-07](./evidence-story-07.md) |
 | HS-131-08 | Meetings are admitted per session | backlog | [story-08](./story-08-meeting-sessions.md) | — |
 | HS-131-09 | Dictation and transcription are admitted per session | backlog | [story-09](./story-09-dictation-sessions.md) | — |
 | HS-131-10 | The one-path fence | backlog | [story-10](./story-10-one-path-fence.md) | — |
@@ -265,7 +265,38 @@ pre-authoritative crash shell, provisional child-success observability)
 ride in the evidence. Cadence census: its scheduled tick performs no
 model work; the sole Cadence LLM call is request-time authenticated and
 belongs to HS-131-07.
-Next: HS-131-07, the remaining direct callers.
+HS-131-07 is done — the bounded four-caller census (Rails observer
+summary, Decision promotion, Delivery PR review, voice reference
+resolution) executes models only through the admitted InferenceRunner
+(design ruled in ONE Sol round with four binding amendments; three
+implementation rounds to RATIFY-WITH-RESERVATIONS). One generic
+`inference.invoke@1` with versioned ServiceContracts; real domain parents
+(`decision.promotion-draft@1`, `delivery.pr-review-draft@1`,
+`voice_reference_resolve@1` — schema v53 admits the new parent kinds)
+replace the generic `inference.run@1` placeholders and pass trusted
+parent contexts into every child so no retry escapes cancellation. Rails
+runs as an explicit non-owner SERVICE principal
+(`rails-observer:journal-only`); the silent owner-elevation fallback in
+voice resolution is dead (missing principal refuses
+`resolver_principal_required`); domain artifact writes happen INSIDE the
+projection-finalization transaction under the publication permit, so a
+cancellation election can never publish a decision draft, PR review, or
+voice resolution late. Mesh dispatch carries an envelope with the
+admitted deployment revision and a warrant whose signed `target_binding`
+names that exact revision — the worker refuses missing/tampered/
+foreign-node/swapped-revision envelopes by name and builds ONLY from the
+frozen fields, and the hub independently re-validates warrant, operation
+target, and envelope revision before accepting any result: worker-side
+silent retargeting is dead. The Cadence get_loop LLM call is recorded as
+an explicit HS-131-10 fence finding, not absorbed. The walk on .43 (all
+four legs through the real services/route) caught a 100%-deterministic
+persistence bug (invalid "inference" artifact source type — the review
+route could never persist); the orchestrator's diff read caught two more
+(outcome-object passed to parent close, copy-pasted projection kinds).
+Sol's four reservations (rails note crash gap, exceptional parent
+cleanup, mesh unit-proof scope, parent-close-after-commit ordering) ride
+in the evidence.
+Next: HS-131-08, meeting sessions.
 The roadmap still has nine inherited structural lint errors in old phases; they
 are named baseline and are not silently bundled into this product phase.
 

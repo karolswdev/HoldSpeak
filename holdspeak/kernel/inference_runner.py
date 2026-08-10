@@ -185,7 +185,12 @@ class InferenceRunner:
         if pending is not None: self._request_cancel(iid,pending)
         watchdog=threading.Timer(max(0,request.deadline_at-self._clock()),lambda:self._cancel_internal(iid,principal)); watchdog.daemon=True; watchdog.start()
         try:
-            engine=self._engine_factory(self._revision(request.deployment_revision))
+            revision = self._revision(request.deployment_revision)
+            engine = (
+                self._engine_factory(revision, warrant=claimed["operations"][0]["warrant"])
+                if self._engine_factory is build_intel_for_revision
+                else self._engine_factory(revision)
+            )
             with active.condition:
                 while active.state=="CANCELLING" or active.closing: active.condition.wait()
                 pending_principal=active.cancel_principal if active.state=="CANCEL_REQUESTED" else None

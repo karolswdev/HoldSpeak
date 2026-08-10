@@ -709,7 +709,8 @@ def effective_dictation_llm(
 
 def build_meeting_intel_for_profile(
     *, kind: str, base_url: Optional[str], model: Optional[str], profile_id: str,
-    node: str = "", model_file: str = ""
+    node: str = "", model_file: str = "", deployment_revision: Any = None,
+    warrant: Optional[dict[str, Any]] = None,
 ) -> "MeetingIntel":
     """Build a `MeetingIntel` for a specific RuntimeProfile (Phase 24).
 
@@ -726,7 +727,10 @@ def build_meeting_intel_for_profile(
     if kind == "meshNode" and str(node or "").strip():
         from .mesh_relay import MeshRelayIntel
 
-        return MeshRelayIntel(node=str(node).strip(), model_hint=str(model or ""))  # type: ignore[return-value]
+        return MeshRelayIntel(
+            node=str(node).strip(), model_hint=str(model or ""),
+            deployment_revision=deployment_revision, warrant=warrant,
+        )  # type: ignore[return-value]
     if kind == "openAICompatible" and str(base_url or "").strip():
         # Refuse on ambiguity: a blank profile id has no unique secret slot, and
         # borrowing a shared env name would let an unidentified destination read

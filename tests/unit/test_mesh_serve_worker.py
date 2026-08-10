@@ -10,6 +10,7 @@ crashing; claims stamp liveness end to end.
 from __future__ import annotations
 
 import json
+from types import SimpleNamespace
 from typing import Any
 
 import pytest
@@ -19,6 +20,8 @@ from fastapi.testclient import TestClient
 import holdspeak.db as hsdb
 from holdspeak.commands.mesh_serve import MeshServeWorker
 from holdspeak.db import Database, reset_database
+from holdspeak.deployment_revisions import DeploymentRevision
+from holdspeak.inference_targets import DeploymentIdentity
 from holdspeak.services.mesh_service import MeshService
 from holdspeak.web.context import WebContext
 from holdspeak.web.routes.mesh import build_mesh_router
@@ -35,9 +38,18 @@ def db(tmp_path) -> Database:
 @pytest.fixture
 def hub(db, monkeypatch) -> TestClient:
     monkeypatch.setattr(hsdb, "get_database", lambda *a, **k: db)
+    class Store:
+        warrant = None
+        def valid_warrant(self, warrant):
+            if warrant.get("signature") != "signed": return False
+            self.warrant = warrant
+            return True
+        def operation(self, operation_id):
+            warrant = self.warrant
+            return {"warrant": warrant, "target_ref": warrant["target_binding"], "warrant_revoked": False, "state": "claimed"}
     app = FastAPI()
     app.include_router(
-        build_mesh_router(WebContext(get_state=lambda: {}, mesh_service=MeshService(db)))
+        build_mesh_router(WebContext(get_state=lambda: {}, mesh_service=MeshService(db, kernel=SimpleNamespace(store=Store()))))
     )
     return TestClient(app)
 
@@ -65,10 +77,22 @@ class _Engine:
         return self.reply
 
 
+def _envelope(**overrides: str) -> dict[str, Any]:
+    fields = dict(
+        destination_id="p-edge", kind="mesh_node", engine="cloud", model="frozen-model",
+        node="walk-edge", boundary="mesh", endpoint="http://frozen.example/v1",
+        model_path=None, secret_slot="HOLDSPEAK_PROFILE_P_EDGE_KEY",
+    )
+    fields.update(overrides)
+    revision = DeploymentRevision.from_identity(DeploymentIdentity(**fields))
+    binding = f"deployment-revision:{revision.id}"
+    return {"deployment_revision": revision.to_dict(), "warrant": {"operation_id": "op-edge", "envelope_sha256": "envelope", "target_ref": binding, "target_binding": binding, "signature": "signed", "execution_expires_at": 9_999_999_999}}
+
+
 def _worker(hub, engine=None, **kw) -> MeshServeWorker:
     return MeshServeWorker(
         hub_url="http://test-hub", node="walk-edge", token="t",
-        http_post=_http_via(hub), engine_factory=(lambda: engine) if engine else None,
+        http_post=_http_via(hub), engine_factory=(lambda revision: engine) if engine else None,
         sleep=lambda s: None, **kw,
     )
 
@@ -76,7 +100,7 @@ def _worker(hub, engine=None, **kw) -> MeshServeWorker:
 def test_once_claims_executes_and_completes_verbatim(db, hub) -> None:
     job = db.mesh_relay.enqueue(
         node="walk-edge", system_prompt="Be brief.", user_prompt="What is dictation?",
-        temperature=0.2, max_tokens=64,
+        temperature=0.2, max_tokens=64, envelope=_envelope(),
     )
     engine = _Engine()
     assert _worker(hub, engine).run_once() == 0
@@ -89,6 +113,89 @@ def test_once_claims_executes_and_completes_verbatim(db, hub) -> None:
     assert done.status == "completed" and done.result == "answered on the edge"
 
 
+def test_worker_refuses_missing_envelope_without_building_engine(db, hub) -> None:
+    job = db.mesh_relay.enqueue(node="walk-edge", user_prompt="x")
+    built: list[Any] = []
+    worker = MeshServeWorker(
+        hub_url="http://test-hub", node="walk-edge", http_post=_http_via(hub),
+        engine_factory=lambda revision: built.append(revision), sleep=lambda s: None,
+    )
+    assert worker.run_once() == 1
+    assert built == []
+    assert db.mesh_relay.get(job.id).status == "running"
+    with pytest.raises(RuntimeError, match="mesh_envelope_missing"):
+        worker._revision_from_envelope({})
+
+
+def test_worker_refuses_tampered_envelope(db, hub) -> None:
+    envelope = _envelope()
+    envelope["deployment_revision"]["model"] = "tampered-model"
+    job = db.mesh_relay.enqueue(node="walk-edge", user_prompt="x", envelope=envelope)
+    assert _worker(hub, _Engine()).run_once() == 1
+    assert db.mesh_relay.get(job.id).error == "mesh_envelope_invalid"
+
+
+def test_worker_refuses_envelope_for_another_node(db, hub) -> None:
+    job = db.mesh_relay.enqueue(node="walk-edge", user_prompt="x", envelope=_envelope(node="other-edge"))
+    assert _worker(hub, _Engine()).run_once() == 1
+    assert db.mesh_relay.get(job.id).error == "mesh_envelope_node_mismatch"
+
+
+def test_worker_refuses_warrant_bound_to_different_revision(db, hub) -> None:
+    envelope = _envelope()
+    other = _envelope(model="other-frozen-model")
+    other["warrant"] = envelope["warrant"]
+    job = db.mesh_relay.enqueue(node="walk-edge", user_prompt="x", envelope=other)
+    assert _worker(hub, _Engine()).run_once() == 1
+    with pytest.raises(RuntimeError, match="mesh_envelope_revision_mismatch"):
+        _worker(hub, _Engine())._revision_from_envelope({"envelope": other})
+    assert db.mesh_relay.get(job.id).status == "running"
+
+
+def test_worker_refuses_empty_warrant(db, hub) -> None:
+    envelope = _envelope(); envelope["warrant"] = {}
+    job = db.mesh_relay.enqueue(node="walk-edge", user_prompt="x", envelope=envelope)
+    assert _worker(hub, _Engine()).run_once() == 1
+    assert db.mesh_relay.get(job.id).status == "running"
+    with pytest.raises(RuntimeError, match="mesh_envelope_invalid"):
+        _worker(hub, _Engine())._revision_from_envelope({"envelope": envelope})
+
+
+def test_hub_refuses_foreign_warrant_and_accepts_bound_warrant(db, hub) -> None:
+    foreign = _envelope(); foreign["warrant"]["signature"] = "foreign"
+    rejected = db.mesh_relay.enqueue(node="walk-edge", user_prompt="x", envelope=foreign)
+    db.mesh_relay.claim_next("walk-edge")
+    response = hub.post(f"/api/mesh/relay/{rejected.id}/complete", json={"result": "x"})
+    assert response.status_code == 409 and "warrant is invalid" in response.text
+    assert db.mesh_relay.get(rejected.id).status == "running"
+
+    paired = _envelope(); swapped = _envelope(model="other-frozen-model")
+    swapped["warrant"] = paired["warrant"]
+    mismatch = db.mesh_relay.enqueue(node="walk-edge", user_prompt="x", envelope=swapped)
+    db.mesh_relay.claim_next("walk-edge")
+    assert hub.post(f"/api/mesh/relay/{mismatch.id}/complete", json={"result": "x"}).status_code == 409
+    assert db.mesh_relay.get(mismatch.id).status == "running"
+
+    genuine = db.mesh_relay.enqueue(node="walk-edge", user_prompt="x", envelope=_envelope())
+    db.mesh_relay.claim_next("walk-edge")
+    assert hub.post(f"/api/mesh/relay/{genuine.id}/complete", json={"result": "x"}).status_code == 200
+    assert db.mesh_relay.get(genuine.id).result == "x"
+
+
+def test_worker_builds_from_frozen_envelope_fields(db, hub) -> None:
+    job = db.mesh_relay.enqueue(node="walk-edge", user_prompt="x", envelope=_envelope())
+    received: list[Any] = []
+    engine = _Engine()
+    worker = MeshServeWorker(
+        hub_url="http://test-hub", node="walk-edge", http_post=_http_via(hub),
+        engine_factory=lambda revision: (received.append(revision), engine)[1], sleep=lambda s: None,
+    )
+    assert worker.run_once() == 0
+    assert received[0].endpoint == "http://frozen.example/v1"
+    assert received[0].model == "frozen-model"
+    assert db.mesh_relay.get(job.id).status == "completed"
+
+
 def test_once_with_no_work_exits_clean(db, hub) -> None:
     assert _worker(hub, _Engine()).run_once() == 0
     # the empty poll still stamped liveness — the whole point of claim-as-heartbeat
@@ -96,7 +203,7 @@ def test_once_with_no_work_exits_clean(db, hub) -> None:
 
 
 def test_engine_failure_posts_fail_verbatim(db, hub) -> None:
-    job = db.mesh_relay.enqueue(node="walk-edge", user_prompt="x")
+    job = db.mesh_relay.enqueue(node="walk-edge", user_prompt="x", envelope=_envelope())
 
     class _Boom:
         def run_prompt(self, **kwargs: Any) -> str:
@@ -104,7 +211,7 @@ def test_engine_failure_posts_fail_verbatim(db, hub) -> None:
 
     worker = MeshServeWorker(
         hub_url="http://test-hub", node="walk-edge",
-        http_post=_http_via(hub), engine_factory=lambda: _Boom(),
+        http_post=_http_via(hub), engine_factory=lambda revision: _Boom(),
         sleep=lambda s: None,
     )
     assert worker.run_once() == 1
@@ -131,7 +238,7 @@ def test_unreachable_hub_backs_off_without_crashing() -> None:
 
 
 def test_run_forever_stops_on_stop_and_does_work(db, hub) -> None:
-    db.mesh_relay.enqueue(node="walk-edge", user_prompt="one")
+    db.mesh_relay.enqueue(node="walk-edge", user_prompt="one", envelope=_envelope())
     engine = _Engine()
     worker = _worker(hub, engine)
 
@@ -166,11 +273,11 @@ def test_recursion_guard_refuses_a_mesh_engine(db, hub) -> None:
     # the job by name instead of relaying onward (or back to itself)
     from holdspeak.intel.mesh_relay import MeshRelayIntel
 
-    job = db.mesh_relay.enqueue(node="walk-edge", user_prompt="x")
+    job = db.mesh_relay.enqueue(node="walk-edge", user_prompt="x", envelope=_envelope())
     worker = MeshServeWorker(
         hub_url="http://test-hub", node="walk-edge",
         http_post=_http_via(hub),
-        engine_factory=lambda: MeshRelayIntel(node="walk-edge", relay=object()),
+        engine_factory=lambda revision: MeshRelayIntel(node="walk-edge", relay=object()),
         sleep=lambda s: None,
     )
     assert worker.run_once() == 1
