@@ -101,8 +101,9 @@ def _bare_runtime(action="preview", window_seconds=8.0):
     from holdspeak.text_processor import TextProcessor
 
     rt.text_processor = TextProcessor()
+    # HS-131-09: the transcriber now receives the wake session's admission.
     rt._ensure_transcriber_loaded = lambda: SimpleNamespace(
-        transcribe=lambda audio: "ship the fix period"
+        transcribe=lambda audio, **kwargs: "ship the fix period"
     )
     return rt
 

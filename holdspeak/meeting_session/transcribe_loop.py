@@ -63,11 +63,23 @@ class TranscribeLoopMixin:
         HS-93-06: the ``meeting.transcribe`` fault point trips here, so a
         deterministic mid-meeting transcription failure exercises exactly the
         real error path (segment dropped, meeting alive, checkpoints running).
+
+        HS-131-09: each interval is one ``whisper-transcribe`` child of the LIVE
+        EXISTING ``meeting.session`` established by HS-131-08 — never a separate
+        dictation session. With no live meeting context the interval is dropped
+        BEFORE Whisper: an unadmitted transcription is not a fallback.
         """
         from ..faults import trip as _fault_trip
 
         _fault_trip("meeting.transcribe")
-        return self.transcriber.transcribe(audio)
+        admission = self._transcription_admission()
+        if admission is None:
+            log.warning(
+                "meeting transcription interval dropped: %s",
+                self._transcription_refusal or "meeting_transcription_not_admitted",
+            )
+            return None
+        return self.transcriber.transcribe(audio, admission=admission)
 
     def _transcribe_loop(self) -> None:
         """Background thread that transcribes audio periodically."""

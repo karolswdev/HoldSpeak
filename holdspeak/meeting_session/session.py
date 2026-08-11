@@ -185,6 +185,10 @@ class MeetingSession(
         self._intel_plan: Optional[Any] = None
         self._intel_parent: Optional[Any] = None
         self._intel_refusal: str = ""
+        # HS-131-09: why a transcription interval would be dropped, if it is. The
+        # parent covers transcription too, so a session that admitted nothing
+        # transcribes nothing — never an unadmitted Whisper call.
+        self._transcription_refusal: str = ""
         # Once the live parent is closed it is never revived: a later dispatch
         # attempt is refused by name, not silently re-admitted (HS-131-08).
         self._intel_closed: bool = False

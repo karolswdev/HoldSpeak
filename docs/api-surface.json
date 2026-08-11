@@ -1964,6 +1964,26 @@
       ]
     },
     {
+      "path": "/api/dictation/mic/close",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.system.voice",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/dictation/mic/open",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.system.voice",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/dictation/preview/discard",
       "methods": [
         "POST"

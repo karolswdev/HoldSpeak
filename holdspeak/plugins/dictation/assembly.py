@@ -57,6 +57,7 @@ def build_pipeline(
     global_blocks_path: Path | None = None,
     runtime_factory: Callable[..., LLMRuntime] | None = None,
     corrections: list[Any] | None = None,
+    admission: Any = None,
 ) -> BuildResult:
     """Resolve blocks + runtime, return a wired `DictationPipeline`.
 
@@ -71,6 +72,14 @@ def build_pipeline(
 
     runtime, runtime_status, runtime_detail = _try_build_runtime(cfg, runtime_factory)
     llm_enabled = runtime is not None
+    # HS-131-09: ONE seam admits every provider-reaching pipeline call. The
+    # stages, the rewriter, and model-assisted target detection all hold this
+    # wrapper, so none of them can reach a model outside the live session's
+    # frozen plan — and none of them learns about the kernel.
+    if runtime is not None and admission is not None:
+        from ...speech_session.provider import admitted_runtime
+
+        runtime = admitted_runtime(runtime, admission)
 
     # HS-39-02: corrections only influence routing when the feature is on AND
     # the store has entries; otherwise pass None so the router is byte-identical.

@@ -29,6 +29,7 @@ from .intel_plan import (
     CAPABILITY_BOOKMARK_LABEL,
     CAPABILITY_DEFERRED_ANALYSIS,
     CAPABILITY_LIVE_ANALYSIS,
+    TRANSCRIPTION_CAPABILITIES,
     DISPLACED_AUTO_TITLE,
     DISPLACED_BOOKMARK_LABELS,
     DISPLACED_FINAL_ANALYSIS,
@@ -40,6 +41,12 @@ from .intel_plan import (
     SESSION_CLOSED,
     SESSION_NOT_ADMITTED,
     freeze_meeting_intel_plan,
+)
+from .transcribe_admission import (
+    TRANSCRIPTION_INTERVAL_SECONDS,
+    TRANSCRIPTION_NOT_ADMITTED,
+    TranscribeAdmissionMixin,
+    session_child_budget,
 )
 
 log = get_logger("meeting_session")
@@ -66,7 +73,7 @@ CANCEL_DRAIN_SECONDS = 15.0
 WINDOW_SUPERSEDED = "meeting_live_window_superseded"
 
 
-class IntelAdmissionMixin:
+class IntelAdmissionMixin(TranscribeAdmissionMixin):
     """Session-side admission of the meeting parent and its provider children."""
 
     # ---------------------------------------------------------------- parent
@@ -91,24 +98,35 @@ class IntelAdmissionMixin:
         """Admit ONE authenticated ``meeting.session`` parent over a frozen plan.
 
         Called immediately after ``MeetingState`` exists and before any Intel
-        engine. A start with no authenticated principal admits NOTHING: the
-        recording proceeds and intelligence is refused by name. Synthesizing an
-        OWNER principal for a device/auto start would be authority elevation.
+        engine. A start with no authenticated principal admits NOTHING:
+        intelligence is refused by name, and (HS-131-09) so is transcription —
+        synthesizing an OWNER principal for a device/auto start would be
+        authority elevation, and an unadmitted Whisper call is not a fallback.
+
+        HS-131-09: the parent covers TRANSCRIPTION as well as intelligence, so it
+        is admitted for an intel-disabled recording too; the plan then declares
+        only the transcription capabilities.
         """
         self._intel_refusal = ""
+        self._transcription_refusal = ""
         self._intel_plan = None
         self._intel_parent = None
         self._intel_closed = False
-        if not self.intel_enabled or self._state is None:
+        if self._state is None:
             return False
         principal = self.intel_principal
         if principal is None or str(getattr(principal, "name", "none")) == "none":
-            self._intel_refuse(
+            self._refuse_session(
                 PRINCIPAL_REQUIRED,
                 f"Meeting intelligence refused: {PRINCIPAL_REQUIRED}. Recording continues.",
             )
-            log.warning("meeting intelligence refused: %s", PRINCIPAL_REQUIRED)
+            log.warning("meeting session refused: %s", PRINCIPAL_REQUIRED)
             return False
+        budget = session_child_budget(
+            transcription=True,
+            session_seconds=SESSION_DEADLINE_SECONDS,
+            intelligence_budget=SESSION_CHILD_BUDGET,
+        )
         try:
             from ..db import get_database
 
@@ -121,7 +139,7 @@ class IntelAdmissionMixin:
                 meeting_id=self._state.id,
                 capabilities=self._intel_declared_capabilities(),
                 deadline_at=deadline,
-                child_budget=SESSION_CHILD_BUDGET,
+                child_budget=budget,
                 provenance=str(self._state.provenance or "desktop"),
                 plugin_ids=self._intel_plugin_ids(),
                 created_at=now,
@@ -133,16 +151,16 @@ class IntelAdmissionMixin:
                 definition_revision=plan.sha256,
                 input_snapshot=plan.summary(),
                 deadline_at=deadline,
-                child_budget=SESSION_CHILD_BUDGET,
+                child_budget=budget,
                 idempotency_key=f"meeting-intel-session:{self._state.id}",
             )
         except Exception as exc:
             reason = str(getattr(exc, "reason", "") or SESSION_NOT_ADMITTED)
-            self._intel_refuse(
+            self._refuse_session(
                 reason,
                 f"Meeting intelligence refused: {reason}. Recording continues.",
             )
-            log.error("meeting intelligence admission refused: %s", reason)
+            log.error("meeting session admission refused: %s", reason)
             return False
         self._intel_plan = plan
         # The opaque context lives ONLY on the live session object; durable rows
@@ -153,8 +171,28 @@ class IntelAdmissionMixin:
         )
         return True
 
+    def _refuse_session(self, reason: str, detail: str) -> None:
+        """Record the refusal on every face the session has.
+
+        With intelligence enabled that is the named intel status; with
+        intelligence disabled there is no intel face to stamp — only transcription
+        was refused, and the recording keeps its honest ``disabled`` intel status.
+        """
+        self._transcription_refusal = reason
+        if self.intel_enabled:
+            self._intel_refuse(reason, detail)
+            return
+        self._intel_plan = None
+        self._intel_parent = None
+        self._intel = None
+
     def _intel_declared_capabilities(self) -> tuple[str, ...]:
-        declared = list(SESSION_CAPABILITIES)
+        # HS-131-09: a recorded session always transcribes; the intelligence
+        # capabilities are declared only when intelligence is actually enabled.
+        declared = list(TRANSCRIPTION_CAPABILITIES)
+        if not self.intel_enabled:
+            return tuple(declared)
+        declared.extend(SESSION_CAPABILITIES)
         if self.intel_deferred_enabled:
             declared.append(CAPABILITY_DEFERRED_ANALYSIS)
         return tuple(declared)
@@ -523,5 +561,8 @@ __all__ = [
     "PROJECTION_LIVE_WINDOW",
     "SESSION_CHILD_BUDGET",
     "SESSION_DEADLINE_SECONDS",
+    "TRANSCRIPTION_INTERVAL_SECONDS",
+    "TRANSCRIPTION_NOT_ADMITTED",
     "WINDOW_SUPERSEDED",
+    "session_child_budget",
 ]

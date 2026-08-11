@@ -15,93 +15,21 @@ from fastapi import APIRouter, Request, WebSocket, WebSocketDisconnect
 from fastapi.responses import JSONResponse
 
 from ....logging_config import get_logger
+from ....speech_session import MIC_INTERVAL_CLOSED, SpeechSessionRefused, browser_mic_sessions
 from ...context import WebContext
 from ...runtime_support import error_500
 
+from .voice_support import (
+    _BROWSER_MIC_OWNER,
+    _claim_browser_audio_floor,
+    _mic_interval_closed,
+    _release_browser_audio_floor,
+    _resolve_config,
+    _resolve_server,
+    _route_principal,
+)
+
 log = get_logger("web.routes.system")
-
-
-_BROWSER_MIC_OWNER = "browser_mic"
-
-
-def _resolve_config(ctx: WebContext) -> Any:
-    """Load the runtime config for pipeline processing."""
-    from ....config import Config
-    return Config.load()
-
-
-def _resolve_server(ctx: WebContext) -> Any:
-    """Build a server-like namespace the dictation pipeline can read."""
-    from types import SimpleNamespace
-    return SimpleNamespace(
-        dictation_corrections=ctx.corrections,
-        dictation_telemetry=ctx.telemetry,
-        dictation_journal=ctx.journal,
-    )
-
-
-def _admit_browser_pipeline(request: Any) -> tuple[bool, str]:
-    """Admit the browser pipeline operation through the kernel.
-
-    Returns (admitted, egress_boundary). If the kernel refuses, admitted
-    is False and the caller must not process. Best-effort: if the kernel
-    is not available, returns (True, "local").
-    """
-    try:
-        from ....kernel.runtime import _service
-        from ....principals import UNAUTHENTICATED
-
-        principal = getattr(getattr(request, "state", None), "principal", UNAUTHENTICATED)
-        broker = _service()
-
-        import uuid
-
-        operation_id = "op_" + uuid.uuid4().hex
-        invocation_id = "browser_pipeline_" + uuid.uuid4().hex
-        handle = broker.submit(
-            {
-                "request_schema": 1,
-                "request_id": str(uuid.uuid4()),
-                "idempotency_key": invocation_id,
-                "operation": {"name": "inference.run", "version": 1},
-                "target": {},
-                "arguments": {
-                    "invocation_id": invocation_id,
-                    "definition_ref": "program:browser-mic-pipeline-v1",
-                    "definition_revision": "1",
-                    "grounding_refs": [],
-                    "requested_target_id": "this_machine",
-                    "deadline_at": __import__("time").time() + 30,
-                    "input_snapshot": {"source": "browser"},
-                },
-            },
-            principal,
-        )
-        state = handle.get("state", "")
-        if state == "refused":
-            reason = handle.get("reason", "kernel refused the operation")
-            return False, "none"
-        # Derive boundary from the admitted operation
-        boundary = handle.get("egress_boundary", "local")
-        return True, str(boundary) if boundary else "local"
-    except Exception:
-        # Kernel not available -- admit by default (local Whisper is safe)
-        return True, "local"
-
-
-def _claim_browser_audio_floor(ctx: WebContext) -> bool:
-    """Claim the audio floor for the browser mic, returning True if granted."""
-    session = getattr(ctx, "voice_session", None)
-    if session is None:
-        return True  # no arbiter -- nothing to contend with
-    return session.acquire(_BROWSER_MIC_OWNER, lease_seconds=30.0)
-
-
-def _release_browser_audio_floor(ctx: WebContext) -> None:
-    """Release the browser mic's audio floor claim."""
-    session = getattr(ctx, "voice_session", None)
-    if session is not None:
-        session.release(_BROWSER_MIC_OWNER)
 
 
 def build_voice_router(ctx: WebContext) -> APIRouter:
@@ -134,6 +62,41 @@ def build_voice_router(ctx: WebContext) -> APIRouter:
             )
         return {"success": True, "typed": typed}
 
+    @router.post("/api/dictation/mic/open")
+    async def api_mic_open(request: Request) -> Any:
+        """Open ONE admitted open-mic interval for this authenticated identity.
+
+        HS-131-09: the click-to-toggle mic is one authority lifetime, so it admits
+        exactly one ``dictation.session`` here and every utterance in the interval
+        is a trusted child of it. The response carries an OPAQUE server-issued
+        handle; the client cannot name a parent.
+        """
+        try:
+            interval = browser_mic_sessions().open(_route_principal(request))
+        except SpeechSessionRefused as exc:
+            return JSONResponse(
+                {
+                    "success": False,
+                    "reason": exc.reason,
+                    "error": "The microphone session was not admitted. Nothing is being captured.",
+                },
+                status_code=403,
+            )
+        return {
+            "success": True,
+            "mic_session": interval.handle,
+            "expires_at": interval.ceiling_at,
+            "inactivity_expires_at": interval.lease_until,
+        }
+
+    @router.post("/api/dictation/mic/close")
+    async def api_mic_close(request: Request) -> Any:
+        """Close the interval: the parent is cancelled and closed, not left live."""
+        closed = browser_mic_sessions().close(
+            _route_principal(request), reason="browser_mic_stopped"
+        )
+        return {"success": True, "closed": bool(closed)}
+
     @router.post("/api/dictation/transcribe")
     async def api_transcribe(request: Request) -> Any:
         """HS-78-01: speak-to-fill -- browser-captured audio in, text out.
@@ -146,10 +109,14 @@ def build_voice_router(ctx: WebContext) -> APIRouter:
 
         HS-118-08: the ``pipeline`` field in the JSON body (or, for raw
         audio bodies, a query parameter) gates the full dictation pipeline
-        (corrections, learning loop, journaling). The kernel admits the
-        operation BEFORE inference; if refused, an error is returned. The
-        response carries ``text`` (corrected), ``raw`` (original), and
-        ``egress_boundary`` (derived from the kernel admission).
+        (corrections, learning loop, journaling). The response carries ``text``
+        (corrected), ``raw`` (original), and ``egress_boundary``.
+
+        HS-131-09: the utterance's OWN admitted speech session is the kernel
+        admission — every transcription and every pipeline model call is a
+        receipted child of it, and a refusal comes from THAT admission. The
+        ``egress_boundary`` is read from the deployment revision the session
+        froze, so the label and the receipts name the same destination.
         """
         if ctx.on_transcribe is None:
             return JSONResponse(
@@ -170,19 +137,13 @@ def build_voice_router(ctx: WebContext) -> APIRouter:
                 {"success": False, "error": "Audio too large (cap: 16 MB)."}, status_code=413
             )
 
-        # HS-118-08: kernel admission BEFORE inference.
+        # HS-131-09 (Sol round 2): there is no separate browser-pipeline
+        # admission any more. The utterance's OWN speech session is the
+        # admission — it parents and authorizes every model call below — and the
+        # egress label is read from the revision that session FROZE, not from a
+        # parallel operation that could refuse a valid session or default to
+        # "local" whenever the kernel errored.
         egress_boundary = "local"
-        if pipeline:
-            try:
-                admitted, egress_boundary = _admit_browser_pipeline(request)
-                if not admitted:
-                    return JSONResponse(
-                        {"success": False, "error": "Kernel refused the browser pipeline operation. Your recording is retained. Retry."},
-                        status_code=403,
-                    )
-            except Exception as exc:
-                log.debug(f"Kernel admission skipped for browser pipeline: {exc}")
-
         try:
             import io
             import wave
@@ -204,8 +165,47 @@ def build_voice_router(ctx: WebContext) -> APIRouter:
             return JSONResponse(
                 {"success": False, "error": "Not a readable WAV body."}, status_code=400
             )
+        # HS-131-09: with the pipeline on, classify/rewrite are real model calls,
+        # so the utterance's parent must stay OPEN through them and they must run
+        # as its children. The admitted seam hands that authority back; the raw
+        # path (no pipeline) keeps the closes-immediately seam.
+        admitted = None
+        transcribe = ctx.on_transcribe_admitted if pipeline else None
+        if pipeline and transcribe is None:
+            # The pipeline reaches a model. Without the admitted seam there is no
+            # authority to run it under, and an unadmitted dispatch is never the
+            # fallback.
+            return JSONResponse(
+                {
+                    "success": False,
+                    "error": "The dictation pipeline is unavailable in this runtime. "
+                    "Nothing was processed. Retry without the pipeline.",
+                },
+                status_code=503,
+            )
         try:
-            text = ctx.on_transcribe(audio)
+            if transcribe is not None:
+                admitted = transcribe(
+                    audio,
+                    principal=_route_principal(request),
+                    mic_handle=str(request.query_params.get("mic_session", "") or ""),
+                )
+                text = str(admitted.text)
+                egress_boundary = str(admitted.provider.egress_boundary)
+            else:
+                text = ctx.on_transcribe(
+                    audio,
+                    principal=_route_principal(request),
+                    mic_handle=str(request.query_params.get("mic_session", "") or ""),
+                )
+        except SpeechSessionRefused as exc:
+            # Inside an interval that just hit a fence: the client is told by name
+            # and closes the interval (Sol Amendment 3).
+            return _mic_interval_closed(
+                exc.reason,
+                "The microphone session closed. Click the mic again to continue; "
+                "your audio is kept in the browser for Retry.",
+            )
         except Exception as exc:
             log.error(f"speak-to-fill transcription failed: {exc}")
             return JSONResponse(
@@ -217,7 +217,11 @@ def build_voice_router(ctx: WebContext) -> APIRouter:
             return {"success": True, "text": text}
 
         # HS-118-08: full pipeline path -- corrections, learning, journaling.
+        # HS-131-09: run under the utterance's OWN admission, so every classify and
+        # rewrite is a receipted child; the parent then closes with the honest
+        # outcome (failed when the pipeline raised).
         raw_text = text
+        outcome = "succeeded"
         try:
             from ....dictation_runner import process_transcript
 
@@ -227,10 +231,15 @@ def build_voice_router(ctx: WebContext) -> APIRouter:
                 context=None,
                 config=getattr(ctx, "_config", None) or _resolve_config(ctx),
                 server=_resolve_server(ctx),
+                admission=None if admitted is None else admitted.provider,
             )
         except Exception as exc:
             log.warning(f"Browser pipeline processing failed, returning raw: {exc}")
             corrected = raw_text
+            outcome = "failed"
+        finally:
+            if admitted is not None:
+                admitted.close(outcome)
 
         return {
             "success": True,
@@ -384,6 +393,26 @@ def build_voice_router(ctx: WebContext) -> APIRouter:
         import wave
         import numpy as np
 
+        # HS-131-09: ONE admitted interval for this socket's whole lifetime. Every
+        # partial and the final utterance are trusted children of it — never one
+        # session per streamed chunk, which would be admission per frame.
+        try:
+            interval = browser_mic_sessions().open(principal)
+        except SpeechSessionRefused as exc:
+            await websocket.send_json(
+                {"type": "error", "error": "The microphone session was not admitted.",
+                 "reason": exc.reason}
+            )
+            _release_browser_audio_floor(ctx)
+            await websocket.close()
+            return
+        mic_handle = interval.handle
+
+        def transcribe(chunk: Any) -> str:
+            return str(
+                ctx.on_transcribe(chunk, principal=principal, mic_handle=mic_handle) or ""
+            )
+
         all_chunks: list[bytes] = []
         try:
             while True:
@@ -398,8 +427,16 @@ def build_voice_router(ctx: WebContext) -> APIRouter:
                     if len(audio) < 1600:
                         continue
                     try:
-                        partial_text = ctx.on_transcribe(audio)
+                        partial_text = transcribe(audio)
                         await websocket.send_json({"type": "partial", "text": partial_text or ""})
+                    except SpeechSessionRefused as exc:
+                        # The interval hit a fence mid-stream: named, closed, and
+                        # the client must click again (Sol Amendment 3).
+                        await websocket.send_json(
+                            {"type": "error", "error": "The microphone session closed.",
+                             "mic_interval": MIC_INTERVAL_CLOSED, "reason": exc.reason}
+                        )
+                        break
                     except Exception as exc:
                         log.debug(f"Streaming partial transcription failed: {exc}")
 
@@ -415,7 +452,13 @@ def build_voice_router(ctx: WebContext) -> APIRouter:
                 combined = b"".join(all_chunks)
                 audio = np.frombuffer(combined, dtype=np.int16).astype(np.float32) / 32768.0
                 try:
-                    raw_text = ctx.on_transcribe(audio)
+                    raw_text = transcribe(audio)
+                except SpeechSessionRefused as exc:
+                    await websocket.send_json(
+                        {"type": "error", "error": "The microphone session closed.",
+                         "mic_interval": MIC_INTERVAL_CLOSED, "reason": exc.reason}
+                    )
+                    return
                 except Exception as exc:
                     log.error(f"Final transcription failed: {exc}")
                     await websocket.send_json({"type": "error", "error": "Transcription failed."})
@@ -424,12 +467,16 @@ def build_voice_router(ctx: WebContext) -> APIRouter:
                 final_text = raw_text or ""
                 try:
                     from ....dictation_runner import process_transcript
+                    # HS-131-09: the final pass's classify/rewrite are children of
+                    # THIS socket's interval parent — the same authority the
+                    # utterance transcribed under, never unwrapped runtime work.
                     corrected = await process_transcript(
                         raw_text=final_text,
                         source="browser",
                         context=None,
                         config=getattr(ctx, "_config", None) or _resolve_config(ctx),
                         server=_resolve_server(ctx),
+                        admission=interval.session.provider(),
                     )
                     final_text = corrected
                 except Exception as exc:
@@ -444,6 +491,9 @@ def build_voice_router(ctx: WebContext) -> APIRouter:
         except Exception as exc:
             log.debug(f"Streaming dictation error: {exc}")
         finally:
+            # The socket closing IS the interval ending: the parent is cancelled
+            # and closed here, never left holding authority.
+            browser_mic_sessions().close(principal, reason="browser_mic_stream_closed")
             _release_browser_audio_floor(ctx)
 
     return router

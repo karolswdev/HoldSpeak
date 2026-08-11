@@ -1,6 +1,6 @@
 # Phase 131 — One Admission Path
 
-**Status:** IN PROGRESS (8/12).
+**Status:** IN PROGRESS (9/12).
 
 **Last updated:** 2026-08-10.
 
@@ -131,7 +131,7 @@ gates while keeping every known site bounded now.
 | HS-131-06 | Scheduled work carries bounded delegation | done | [story-06](./story-06-bounded-schedules.md) | [evidence-story-06](./evidence-story-06.md) |
 | HS-131-07 | The remaining direct callers join the spine | done | [story-07](./story-07-service-callers.md) | [evidence-story-07](./evidence-story-07.md) |
 | HS-131-08 | Meetings are admitted per session | done | [story-08](./story-08-meeting-sessions.md) | [evidence-story-08](./evidence-story-08.md) |
-| HS-131-09 | Dictation and transcription are admitted per session | in-progress | [story-09](./story-09-dictation-sessions.md) | — |
+| HS-131-09 | Dictation and transcription are admitted per session | done | [story-09](./story-09-dictation-sessions.md) | [evidence-story-09](./evidence-story-09.md) |
 | HS-131-10 | The one-path fence | backlog | [story-10](./story-10-one-path-fence.md) | — |
 | HS-131-11 | The entry-point contract | backlog | [story-11](./story-11-entry-point-docs.md) | — |
 | HS-131-12 | The walk | backlog | [story-12](./story-12-the-walk.md) | — |
@@ -322,7 +322,38 @@ plugin_llm_engine_not_injectable. Walk on .43: four legs green.
 Sol reservations R1-R3/R6/R9 ride in the evidence — R9 surfaces an
 INHERITED live production bug (undefined ConflictError at
 web/routes/meetings/crud.py:161) needing a separate hotfix.
-Next: HS-131-09, dictation and transcription sessions.
+HS-131-09 is done — dictation, wake, and shared Whisper admitted per
+SESSION, and DICTATION GOT FASTER (one Sol design round with eight
+amendments incl. his 12-hour budget-exhaustion arithmetic; four
+implementation rounds — 8→2→1→ratify blockers — to
+RATIFY-WITH-RESERVATIONS). Schema v56 adds dictation.session and
+wake.session; the new speech_session package freezes content-free plans
+ONCE at session open (ordered per-capability revision lists carrying the
+frozen DeploymentRevision objects). Desktop hold = one session per press
+with a generation token and a two-stage sealed deadline; browser open mic
+= one session per authenticated interval (opaque server handle,
+30m/1024/90s-inactivity, the lease refreshed inside the first Whisper
+child claim with NO resurrection, terminal fences forcing the client
+interval closed); wake = 30s/12 under SERVICE wake-capture with the
+authority revision derived from the canonical config, stop
+generation-fenced through the admission window. Every Whisper call is a
+receipted child (MLX preload and silent-audio fallback as SEPARATE
+sibling children; pre-session warmup requires the new preload-authority
+knob naming the exact model-config revision); classify/rewrite/mesh/
+intent-router calls are children whose dispatched runtime is
+verified/REBOUND from the frozen revision (config changes after
+admission cannot retarget; the legacy browser-pipeline admission is
+DELETED; egress labels derive from the frozen revisions through the one
+classifier, combining all provider capabilities). The charter's latency
+A/B initially FAILED (+36ms median — profiled to 24 short-lived SQLite
+connections per child admission); the per-Database connection cache
+(Sol-accepted in-story, strict 8-cap, zero new suite names) took child
+admission 39.6→6.8ms and the final A/B PASSES with dictation FASTER
+than the fork point: median 82.5→68.3ms, p95 85.1→70.5ms. Walk on .43
+green. Sol's five reservations + the runtime._dispose production hazard
+ride in the evidence; the two recorded unadmitted seams go to the
+HS-131-10 fence by name.
+Next: HS-131-10, the one-path fence.
 The roadmap still has nine inherited structural lint errors in old phases; they
 are named baseline and are not silently bundled into this product phase.
 

@@ -147,12 +147,24 @@ def test_web_runtime_method_delegates(monkeypatch) -> None:
     (HS-118-08 refactor) which receives config/server as kwargs."""
     captured: dict = {}
 
-    async def _spy(raw_text, source, context=None, *, config=None, server=None, agent_reply_session=None):
+    async def _spy(
+        raw_text,
+        source,
+        context=None,
+        *,
+        config=None,
+        server=None,
+        agent_reply_session=None,
+        admission=None,
+    ):
         captured.update(
             raw_text=raw_text,
             source=source,
             config=config,
             server=server,
+            # HS-131-09: the session's provider admission travels EXPLICITLY with
+            # the transcript (Sol OQ5); no ambient session field exists to read.
+            admission=admission,
         )
         return "SENTINEL"
 
@@ -170,6 +182,7 @@ def test_web_runtime_method_delegates(monkeypatch) -> None:
     assert captured["config"] == "CFG"
     assert captured["server"] == "SRV"
     assert captured["source"] == "hotkey"
+    assert captured["admission"] is None  # this caller has no live session
 
 
 class _JournalSpy:

@@ -6,6 +6,7 @@ the one-shot token store — verbatim moves out of WebRuntime.
 
 from __future__ import annotations
 
+import threading
 from datetime import datetime
 from typing import Any, Optional
 
@@ -27,6 +28,72 @@ log = get_logger("web_runtime")
 
 
 class WakeWordGlueMixin:
+    # HS-131-09: the ONE thread-safe slot the in-flight wake session is
+    # registered in. Stopping the listener is an authority revocation, so it must
+    # be able to REACH the capture that is already running: without a carrier, a
+    # `wake.session` admitted a moment before the stop kept its parent live, kept
+    # dispatching children, and could still issue a preview or type.
+    _wake_session: Any = None
+    _wake_session_lock: Any = None
+    # Sol round 2: admission is not instantaneous, so the slot alone leaves a
+    # window — a stop landing between `admit` and `register` sees an EMPTY slot
+    # and the newly admitted session survives it. The same monotonic generation
+    # rule the desktop hold and the browser open use closes it: the token is taken
+    # BEFORE admitting, a stop retires it, and the loser cancels its own parent.
+    _wake_generation: Any = None
+
+    def _wake_session_slot(self) -> Any:
+        if self._wake_session_lock is None:
+            self._wake_session_lock = threading.Lock()
+        return self._wake_session_lock
+
+    def _wake_stop_generation(self) -> Any:
+        if self._wake_generation is None:
+            from ..speech_session import SessionGeneration
+
+            self._wake_generation = SessionGeneration()
+        return self._wake_generation
+
+    def _register_wake_session(self, session: Any, token: int) -> bool:
+        """Publish this session ATOMICALLY with the token re-check.
+
+        Returns False when a stop won the race: the caller cancels the parent it
+        just admitted and discards the audio. Both the token check and the slot
+        write happen under the slot lock, so a stop can never land "between" them.
+        """
+        with self._wake_session_slot():
+            if not self._wake_stop_generation().is_live(token):
+                return False
+            self._wake_session = session
+            return True
+
+    def _release_wake_session(self, session: Any) -> None:
+        """Clear the slot only if it still holds THIS session."""
+        with self._wake_session_slot():
+            if self._wake_session is session:
+                self._wake_session = None
+
+    def _cancel_wake_session(self) -> str:
+        """Retire the generation and cancel whatever capture is in flight.
+
+        Retiring under the SAME lock the registration re-checks is what makes an
+        admission that is still in flight lose: it finds its token stale and
+        cancels itself, so a stop is never silently outlived by a session admitted
+        a microsecond earlier.
+        """
+        with self._wake_session_slot():
+            self._wake_stop_generation().retire()
+            session, self._wake_session = self._wake_session, None
+        if session is None:
+            return ""
+        try:
+            outcome = str(session.cancel_and_close())
+        except Exception as exc:
+            log.error("wake session cancel failed: %s", type(exc).__name__)
+            return ""
+        log.info("wake session cancelled by listener stop")
+        return outcome
+
     # ── HS-60: the wake word ────────────────────────────────────────────
 
     def _sync_wake_word(self) -> None:
@@ -129,6 +196,10 @@ class WakeWordGlueMixin:
         log.info(f"Wake word active: {cfg.model!r} (threshold {cfg.threshold})")
 
     def _stop_wake_listener(self) -> None:
+        # The in-flight capture goes FIRST: its fence must be flipped before the
+        # stream closes, so a transcription already inside the model cannot come
+        # back and reach preview issuance or typing.
+        self._cancel_wake_session()
         listener, self._wake_listener = self._wake_listener, None
         if listener is not None:
             try:
@@ -208,8 +279,77 @@ class WakeWordGlueMixin:
         stores a one-shot preview token, and broadcasts `wake_preview` —
         it NEVER types. `action="type"` is the user's explicit opt-in and
         behaves like a hotkey run's tail.
+
+        HS-131-09: the capture that reached here is ONE bounded `wake.session`
+        under the narrow `wake-capture` SERVICE identity, whose authority basis is
+        derived from the owner's persisted wake configuration. Its transcription
+        is a child of that parent; any resulting typing keeps its own separate
+        effect admission.
         """
         cfg = self.config.wake_word
+        # The token is taken BEFORE admission (Sol round 2): a stop from here on
+        # retires it, and this capture then cancels itself instead of surviving.
+        token = self._wake_stop_generation().begin()
+        session = self._admit_wake_session(cfg)
+        if session is None:
+            return
+        if not self._register_wake_session(session, token):
+            # The stop won. The freshly admitted parent is cancelled, the audio is
+            # discarded, and no Whisper child ever exists for it.
+            log.info("wake session cancelled: a listener stop won the acquisition race")
+            session.cancel_and_close()
+            self._set_runtime_activity(
+                "complete",
+                source="wake",
+                label="Stopped",
+                detail="The wake listener stopped before this capture ran.",
+                last_event="wake_session_stopped",
+                last_error="",
+            )
+            return
+        outcome = "succeeded"
+        try:
+            outcome = self._transcribe_wake_admitted(audio, cfg, session) or "succeeded"
+        except BaseException:
+            outcome = "failed"
+            raise
+        finally:
+            self._release_wake_session(session)
+            # The parent's outcome is the SESSION's, not a child's: a failed
+            # transcription already has its own honest child receipt — and a
+            # session whose tail raised closes FAILED, never succeeded.
+            session.close(outcome)
+
+    def _admit_wake_session(self, cfg: Any) -> Any:
+        """Admit ONE bounded `wake.session`, or refuse by name (no OWNER synthesis)."""
+        from ..speech_session import SpeechSessionRefused, admit_wake_session
+
+        try:
+            return admit_wake_session(wake_config=cfg, config_snapshot=self.config)
+        except SpeechSessionRefused as exc:
+            log.error("wake session refused: %s", exc.reason)
+            self._set_runtime_activity(
+                "error",
+                source="wake",
+                label="Not admitted",
+                detail="The wake capture was not admitted.",
+                last_event="wake_session_refused",
+                last_error=exc.reason,
+            )
+            return None
+        except Exception as exc:
+            log.error("wake session admission failed: %s", type(exc).__name__)
+            return None
+
+    def _transcribe_wake_admitted(
+        self, audio: np.ndarray, cfg: Any, session: Any
+    ) -> Optional[str]:
+        # HS-131-09 (Sol OQ5): this frame owns its own handles for its whole life
+        # — the transcription admission, the provider admission every pipeline
+        # model call runs under, and the immutable fence that discards late text.
+        admission = session.transcription()
+        provider = session.provider()
+        fence = session.fence
         with self.transcription_lock:
             try:
                 self._set_runtime_activity(
@@ -219,7 +359,7 @@ class WakeWordGlueMixin:
                     last_event="wake_transcribing",
                     last_error="",
                 )
-                text = self._ensure_transcriber_loaded().transcribe(audio)
+                text = self._ensure_transcriber_loaded().transcribe(audio, admission=admission)
                 if not text:
                     self._set_runtime_activity(
                         "complete",
@@ -230,13 +370,22 @@ class WakeWordGlueMixin:
                         last_error="",
                     )
                     return
+                if fence.discarded("wake text processing"):
+                    return
                 text = self.text_processor.process(text)
                 final = self._maybe_run_dictation_pipeline(
                     text,
                     audio_duration_s=len(audio) / 16000.0,
                     transcribed_at=datetime.now(),
                     journal_source="wake",
+                    admission=provider,
                 )
+                if not final:
+                    # Nothing survived, or the session was fenced mid-run: no
+                    # preview is issued and nothing is typed.
+                    return
+                if fence.discarded("wake publication"):
+                    return
                 if cfg.action == "type":
                     self._set_runtime_activity(
                         "typing",
@@ -245,6 +394,10 @@ class WakeWordGlueMixin:
                         last_event="wake_typing",
                         last_error="",
                     )
+                    if fence.discarded("wake delivery"):
+                        return
+                    # Delivery keeps its OWN separate effect admission past this
+                    # inference fence; nothing here duplicates that receipt.
                     from ..desktop_typing import type_text_from_owner_gesture
 
                     type_text_from_owner_gesture(
@@ -297,6 +450,10 @@ class WakeWordGlueMixin:
                     last_event="wake_failed",
                     last_error=f"{type(exc).__name__}: {exc}",
                 )
+                # The swallow stays (a wake failure is not a crash), but the
+                # SESSION's outcome is now honest.
+                return "failed"
+        return None
 
     def consume_wake_preview(self, token: str) -> Optional[str]:
         """One-shot: return the stored preview text and burn the token."""

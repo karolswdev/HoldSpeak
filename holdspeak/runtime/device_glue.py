@@ -190,11 +190,31 @@ class DeviceGlueMixin:
             snippet = (text or "").strip()[:150]
             self.device_status.send(device_id, snippet, ttl_ms=4000)
 
+        # HS-131-09: a paired-device hold is a capture like any other, so its
+        # transcription runs under one finite admitted `dictation.session` — under
+        # the narrow paired-device identity, never a synthesized OWNER.
+        from ..speech_session import SpeechSessionRefused, admit_device_session
+
+        try:
+            session = admit_device_session(
+                device_id=device_id, config_snapshot=self.config
+            )
+        except SpeechSessionRefused as exc:
+            log.error("device dictation session refused: %s", exc.reason)
+            self._set_voice_state(
+                "idle",
+                source="device",
+                detail="Device dictation was not admitted.",
+                last_event="device_dictation_session_refused",
+                last_error=exc.reason,
+            )
+            return None
         self._kick_off_transcribe(
             audio,
             on_complete=_device_transcript_complete,
             agent_reply_session=agent_reply_session,
             source="device",
+            session=session,
         )
         return audio
 

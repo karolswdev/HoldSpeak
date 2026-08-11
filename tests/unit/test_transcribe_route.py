@@ -44,7 +44,7 @@ def _client(on_transcribe=None) -> TestClient:
 def test_transcribes_a_valid_wav_through_the_runtime_verb() -> None:
     heard: list[np.ndarray] = []
 
-    def on_transcribe(audio):
+    def on_transcribe(audio, **kwargs):
         heard.append(audio)
         return "hello desk"
 
@@ -63,7 +63,7 @@ def test_transcribes_a_valid_wav_through_the_runtime_verb() -> None:
 
 
 def test_refuses_wrong_format_wavs() -> None:
-    client = _client(lambda a: "never")
+    client = _client(lambda a, **k: "never")
     for bad in (
         _wav_bytes(rate=44100),
         _wav_bytes(channels=2),
@@ -75,7 +75,7 @@ def test_refuses_wrong_format_wavs() -> None:
 
 
 def test_refuses_garbage_empty_and_oversize() -> None:
-    client = _client(lambda a: "never")
+    client = _client(lambda a, **k: "never")
     assert client.post("/api/dictation/transcribe", content=b"").status_code == 400
     assert client.post(
         "/api/dictation/transcribe", content=b"not a wav at all"
@@ -98,17 +98,49 @@ def test_the_runtime_verb_runs_the_real_pipeline_pieces() -> None:
 
     from holdspeak.runtime.dictation_capture import DictationCaptureMixin
 
+    from holdspeak.config import Config
+
     class Rig:
         transcription_lock = threading.Lock()
         text_processor = SimpleNamespace(process=lambda self_, t=None: None)
 
         def __init__(self):
             self.text_processor = SimpleNamespace(process=lambda t: t.upper())
+            # HS-131-09 (Sol OQ3): a one-shot speak-to-fill admits its own short
+            # `dictation.session`, so the verb needs the real configuration.
+            self.config = Config()
 
         def _ensure_transcriber_loaded(self):
-            return SimpleNamespace(transcribe=lambda a: "quiet words")
+            return SimpleNamespace(transcribe=lambda a, **kwargs: "quiet words")
 
         transcribe_audio = DictationCaptureMixin.transcribe_audio
+        # HS-131-09: the no-pipeline seam delegates to the admitted seam.
+        transcribe_audio_admitted = DictationCaptureMixin.transcribe_audio_admitted
 
     rig = Rig()
     assert rig.transcribe_audio(np.zeros(16000, dtype=np.float32)) == "QUIET WORDS"
+
+
+def test_a_fenced_mic_interval_answers_with_the_named_terminal_status() -> None:
+    """HS-131-09 (Sol Amendment 3): the client is told to CLOSE its interval.
+
+    A fenced interval (inactivity, the 30-minute ceiling, the child budget, a
+    cancel, or a revocation) is never silently continued under a new parent: the
+    utterance response carries the one named terminal status the client honors.
+    """
+    from holdspeak.speech_session import MIC_INTERVAL_CLOSED, SpeechSessionRefused
+
+    def on_transcribe(audio, **kwargs):
+        raise SpeechSessionRefused("browser_mic_inactivity_lapsed")
+
+    client = _client(on_transcribe)
+    resp = client.post(
+        "/api/dictation/transcribe",
+        content=_wav_bytes(),
+        headers={"Content-Type": "application/octet-stream"},
+    )
+    assert resp.status_code == 409
+    body = resp.json()
+    assert body["mic_interval"] == MIC_INTERVAL_CLOSED == "closed"
+    assert body["reason"] == "browser_mic_inactivity_lapsed"
+    assert body["success"] is False

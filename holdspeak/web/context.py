@@ -128,7 +128,11 @@ class WebContext:
     on_wake_type: Optional[Callable[[str], Optional[str]]] = None
     on_preview_type: Optional[Callable[[str], Optional[str]]] = None
     on_preview_discard: Optional[Callable[[str], bool]] = None
-    on_transcribe: Optional[Callable[[Any], str]] = None
+    on_transcribe: Optional[Callable[..., str]] = None
+    # HS-131-09: the ADMITTED speak-to-fill seam — same transcription, but the
+    # utterance's authority is handed back so the browser pipeline's model calls
+    # are children of it. The pipeline path uses this; the raw path does not.
+    on_transcribe_admitted: Optional[Callable[..., Any]] = None
     current_formatted_duration: Optional[Callable[[], Optional[str]]] = None
 
     # HS-39-02: session dictation correction store (a `CorrectionStore`). The

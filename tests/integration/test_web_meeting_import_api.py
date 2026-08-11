@@ -60,8 +60,13 @@ def client(db):
     return TestClient(server.app)
 
 
+# HS-131-09: the import path dispatches every window through the live session's
+# transcription admission (`transcribe(chunk, admission=...)`), so a stand-in
+# transcriber accepts the admission the real `Transcriber` requires. These stubs
+# never dispatch a model, so they ignore it — the admission itself is proven in
+# tests/unit/test_dictation_session_admission.py.
 class InstantTranscriber:
-    def transcribe(self, audio):
+    def transcribe(self, audio, **_admission):
         return "imported text"
 
 
@@ -71,13 +76,13 @@ class SlowTranscriber:
     def __init__(self):
         self.release = threading.Event()
 
-    def transcribe(self, audio):
+    def transcribe(self, audio, **_admission):
         self.release.wait(timeout=10)
         return "slow text"
 
 
 class ExplodingTranscriber:
-    def transcribe(self, audio):
+    def transcribe(self, audio, **_admission):
         raise RuntimeError("model fell over")
 
 

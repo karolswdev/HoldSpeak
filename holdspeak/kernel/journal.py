@@ -29,13 +29,26 @@ class JournalStore:
         self._clock = clock
         self._append_lock = threading.Lock()
     def _secret(self) -> str:
+        """Read the warrant secret, minting it exactly once per database.
+
+        Two callers can reach a fresh database at the same moment (a route thread
+        and a background worker both building the broker). The mint is therefore
+        idempotent and the value is re-read afterwards, so the loser of the race
+        adopts the winner's secret instead of raising on the UNIQUE constraint or
+        returning a secret the database does not hold.
+        """
         with self._connection() as conn:
             row = conn.execute("SELECT value FROM kernel_meta WHERE key='warrant_secret'").fetchone()
             if row is not None:
                 return str(row[0])
-            value = secrets.token_hex(32)
-            conn.execute("INSERT INTO kernel_meta(key,value) VALUES('warrant_secret',?)", (value,))
-            return value
+            conn.execute(
+                "INSERT OR IGNORE INTO kernel_meta(key,value) VALUES('warrant_secret',?)",
+                (secrets.token_hex(32),),
+            )
+            stored = conn.execute(
+                "SELECT value FROM kernel_meta WHERE key='warrant_secret'"
+            ).fetchone()
+            return str(stored[0])
 
     def append(
         self, event_type: str, operation_id: str, *, refs: tuple[str, ...] = (),

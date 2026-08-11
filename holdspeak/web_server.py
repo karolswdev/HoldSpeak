@@ -153,7 +153,12 @@ class WebRuntimeCallbacks:
     on_preview_type: Optional[Callable[[str], Optional[str]]] = None
     on_preview_discard: Optional[Callable[[str], bool]] = None
     # HS-78-01: speak-to-fill — browser audio in, the runtime's transcript out.
-    on_transcribe: Optional[Callable[[Any], str]] = None
+    # HS-131-09: `(audio, *, principal, mic_handle)` — the route supplies the
+    # authenticated identity and the opaque interval handle.
+    on_transcribe: Optional[Callable[..., str]] = None
+    # HS-131-09: the admitted variant — returns a handle carrying the text, the
+    # live provider admission, and the parent's close.
+    on_transcribe_admitted: Optional[Callable[..., Any]] = None
     on_dictation_config_changed: Optional[Callable[[], None]] = None
     # HSM-13-04: deliver a companion-dictated answer (already pipeline-processed by the
     # route) into the waiting coder session via the SAME tmux/type path local dictation
@@ -251,6 +256,7 @@ class MeetingWebServer:
         self.on_preview_type = callbacks.on_preview_type
         self.on_preview_discard = callbacks.on_preview_discard
         self.on_transcribe = callbacks.on_transcribe
+        self.on_transcribe_admitted = callbacks.on_transcribe_admitted
         self.on_dictation_config_changed = callbacks.on_dictation_config_changed
         self.on_remote_dictation = callbacks.on_remote_dictation
         # HS-112-06: the shared audio-floor arbiter (None on a bare server).
@@ -683,6 +689,7 @@ class MeetingWebServer:
             on_preview_type=self.on_preview_type,
             on_preview_discard=self.on_preview_discard,
             on_transcribe=self.on_transcribe,
+            on_transcribe_admitted=self.on_transcribe_admitted,
             current_formatted_duration=self._current_formatted_duration,
             corrections=self.dictation_corrections,
             telemetry=self.dictation_telemetry,

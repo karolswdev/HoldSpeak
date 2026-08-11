@@ -41,6 +41,7 @@ _CHILD_SOURCE = textwrap.dedent(
     import holdspeak.meeting_session.session as session_module
     from holdspeak.meeting_recorder import AudioChunk
     from holdspeak.meeting_session import MeetingSession
+    from holdspeak.principals import Principal, PrincipalKind
 
 
     class Recorder:
@@ -68,12 +69,21 @@ _CHILD_SOURCE = textwrap.dedent(
 
 
     class Transcriber:
-        def transcribe(self, _audio):
+        # HS-131-09: the loop dispatches `transcribe(audio, admission=...)`.
+        def transcribe(self, _audio, **_admission):
             return {EXPECTED_PREFIX!r}
 
 
     session_module.MeetingRecorder = Recorder
-    session = MeetingSession(transcriber=Transcriber())
+    # HS-131-09: transcription is admitted per interval under the meeting's own
+    # authenticated `meeting.session`. This child models the owner's desktop
+    # capture, so it starts with the owner identity — without one the meeting
+    # would record but transcribe nothing (refusal by design), and the durable
+    # transcript prefix this crash test checkpoints would never exist.
+    session = MeetingSession(
+        transcriber=Transcriber(),
+        principal=Principal(PrincipalKind.OWNER, "meeting-owner"),
+    )
     state = session.start()
     print(json.dumps({{"meeting_id": state.id}}), flush=True)
     session.stop()

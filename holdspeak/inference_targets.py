@@ -620,7 +620,13 @@ def build_intel_for_revision(revision: Any, *, warrant: Any = None) -> Any:
     """
     from .intel.engine import MeetingIntel
     from .intel.providers import build_configured_meeting_intel, build_meeting_intel_for_profile
+    from .speech_session.plan import WHISPER_KIND, LocalWhisperDeployment
 
+    if revision.kind == WHISPER_KIND:
+        # On-device speech-to-text (HS-131-09). The loaded Whisper backend lives
+        # in the caller's `Transcriber`, so construction here loads nothing and
+        # reads no mutable config — it only carries the frozen revision.
+        return LocalWhisperDeployment(revision)
     if revision.destination_id == HUB_DEFAULT_CLOUD_ID:
         return MeetingIntel(
             provider="cloud",

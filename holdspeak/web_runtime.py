@@ -478,6 +478,7 @@ class WebRuntime(
                 on_preview_type=self.type_dictation_preview,
                 on_preview_discard=self.discard_dictation_preview,
                 on_transcribe=self.transcribe_audio,
+                on_transcribe_admitted=self.transcribe_audio_admitted,
                     # HS-112-06: the browser's open mic claims THIS floor.
                     voice_session=self.voice_session,
                     project_detector=self.project_detector,

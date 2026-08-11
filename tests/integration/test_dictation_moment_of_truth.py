@@ -209,7 +209,14 @@ def test_moment_affordance_present_and_focus_safe(persistent_db: Database) -> No
     client = _client(persistent_db)
     body = client.get("/dictation").text
     assert '<div id="root"></div>' in body
-    source = (Path(__file__).resolve().parents[2] / "web/src/pages/cores/DictationCore.tsx").read_text()
+    # The in-moment affordance lives with the result panel the core renders
+    # (it moved out of DictationCore.tsx when the core was split); the surface is
+    # both files, so both are read.
+    root = Path(__file__).resolve().parents[2] / "web/src/pages/cores"
+    source = "\n".join(
+        [(root / "DictationCore.tsx").read_text()]
+        + [part.read_text() for part in sorted((root / "dictation").glob("*.ts*"))]
+    )
     assert "Correct this result" in source
     assert "Teach correction" in source
     assert "/api/dictation/corrections" in source

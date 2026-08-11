@@ -26,6 +26,27 @@ class ModelConfig:
     # long utterance; <= 0 disables. On timeout the utterance is abandoned and
     # the pipeline returns to idle for the next one.
     transcribe_timeout_seconds: float = 120.0
+    # HS-131-09 (Sol Amendment 4): the owner's EXPLICIT authority for loading a
+    # local speech model BEFORE any admitted session exists. A pre-session warm
+    # is a real model invocation with no session to parent it, so it runs as the
+    # narrow ``local-model-preload`` service under
+    # ``configured-local-model-preload:<this value>``. Blank (the default) is not
+    # a refusal of warm-on-start: the preload simply DEFERS to the first admitted
+    # session, or refuses before any MLX dispatch when a caller demands warmup.
+    # Never inferred from local process identity.
+    #
+    # The value must NAME this model configuration's revision — exactly
+    # ``holdspeak.speech_session.model_config_revision(config.model)`` (a
+    # ``sha256:…`` hash of name/backend/language/transcribe ceiling). An arbitrary
+    # nonblank string is refused ``local_model_preload_authority_mismatched``, and
+    # the refusal states the revision to set, so the authority is bound to ONE
+    # configuration instead of standing forever.
+    local_model_preload_authority: str = ""
+
+    def __post_init__(self) -> None:
+        self.local_model_preload_authority = str(
+            self.local_model_preload_authority or ""
+        ).strip()
 
 
 @dataclass

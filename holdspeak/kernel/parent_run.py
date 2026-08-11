@@ -164,6 +164,22 @@ class ParentRunController:
         self.begin_child_dispatch(context.operation_id)
         return context.epoch
 
+    def seal_deadline(self, context: OuterRunContext, principal: Any, deadline_at: float) -> float:
+        """Lower an OPEN parent's deadline in one transition; never raise it.
+
+        A capture parent is admitted with its worst-case ceiling and SEALED once
+        its real end is known (HS-131-09, Amendment 2), so the persisted fence
+        trusted-child admission reads is never a fiction."""
+        with self._database._connection() as conn:
+            conn.execute("BEGIN IMMEDIATE")
+            row = conn.execute("SELECT p.*,o.principal_kind,o.principal_identity FROM kernel_parent_runs p JOIN kernel_operations o ON o.operation_id=p.operation_id WHERE p.operation_id=?", (getattr(context, "operation_id", ""),)).fetchone()
+            if row is None: raise KernelRefused("parent_operation_unknown")
+            self._valid_context(context, row, principal)
+            if str(row["state"]) != "OPEN": raise KernelRefused("parent_operation_not_running")
+            sealed = min(float(row["deadline_at"]), float(deadline_at))
+            conn.execute("UPDATE kernel_parent_runs SET deadline_at=?,updated_at=? WHERE operation_id=? AND state='OPEN' AND execution_epoch=?", (sealed, self._clock(), context.operation_id, context.epoch))
+        return sealed
+
     def finalize_child_checkpoint(self, conn: Any, **kwargs: Any) -> bool:
         from .parent_checkpoint import finalize
         result = finalize(conn, clock=self._clock, **kwargs)

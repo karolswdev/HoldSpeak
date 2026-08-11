@@ -112,6 +112,11 @@ class MeetingService:
         worker = threading.Thread(
             target=self._run_import_job,
             kwargs={
+                # HS-131-09: the import transcribes with local Whisper under its own
+                # admitted session, so the AUTHENTICATED route principal must reach
+                # it. Dropping it here would let a remote import run under the
+                # synthesized local-owner hold identity — authority elevation.
+                "principal": principal,
                 "config": config,
                 "meeting_id": meeting_id,
                 "tmp_path": tmp_path,
@@ -130,6 +135,7 @@ class MeetingService:
     def _run_import_job(
         self,
         *,
+        principal: Principal,
         config: Config,
         meeting_id: str,
         tmp_path: Path,
@@ -170,6 +176,7 @@ class MeetingService:
                 tags=tags,
                 started_at=started_at,
                 progress=on_progress,
+                principal=principal,
             )
         except MeetingImportError as exc:
             self._set_import_status(meeting_id, "import_failed", str(exc))

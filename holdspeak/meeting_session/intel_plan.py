@@ -47,6 +47,14 @@ SESSION_CAPABILITIES = (
     CAPABILITY_AUTO_TITLE,
 )
 
+# HS-131-09: the recorded session's own transcription capabilities. They resolve
+# to the LOCAL WHISPER deployment, not the intel destination, so they are frozen
+# separately below.
+CAPABILITY_WHISPER_TRANSCRIBE = "whisper-transcribe"
+CAPABILITY_WHISPER_PRELOAD = "whisper-preload"
+TRANSCRIPTION_CAPABILITIES = (CAPABILITY_WHISPER_TRANSCRIBE, CAPABILITY_WHISPER_PRELOAD)
+_SPEECH_CAPABILITIES = frozenset(TRANSCRIPTION_CAPABILITIES)
+
 # Named refusals. These are the only honest outcomes when the frozen plan does
 # not authorize what a seam is about to do.
 CAPABILITY_NOT_PLANNED = "meeting_intel_capability_not_planned"
@@ -89,6 +97,11 @@ class MeetingIntelPlan:
     capabilities: Mapping[str, tuple[str, ...]]
     placements: Mapping[str, Mapping[str, Any]]
     sha256: str
+
+    @property
+    def session_id(self) -> str:
+        """The subject id a speech child names (HS-131-09 shares this shape)."""
+        return self.meeting_id
 
     def has(self, capability: str) -> bool:
         return capability in self.capabilities
@@ -138,6 +151,13 @@ def _config_terms(meeting_config: Any) -> dict[str, Any]:
         "intel_realtime_model": str(getattr(meeting_config, "intel_realtime_model", "") or ""),
         "disabled_plugins": sorted(str(p) for p in (getattr(meeting_config, "disabled_plugins", None) or [])),
     }
+
+
+def _model_config() -> Any:
+    """The Whisper model configuration a transcription revision is frozen on."""
+    from ..config import Config
+
+    return Config.load().model
 
 
 def _placement_legs(db: Any, meeting_config: Any) -> tuple[tuple[Any, ...], dict[str, Any]]:
@@ -244,6 +264,29 @@ def freeze_meeting_intel_plan(
     # different revision without changing any child's contract.
     frozen = {name: revision_ids for name in sorted(declared)}
     placements = {name: dict(metadata) for name in sorted(declared)}
+    # HS-131-09: local Whisper is its OWN deployment (a same-device speech engine
+    # and model), never the intel destination. A transcription-bearing plan freezes
+    # that revision explicitly, so a transcription child can never name the leg
+    # the analysis prompt runs on.
+    speech = [name for name in frozen if name in _SPEECH_CAPABILITIES]
+    if speech:
+        from ..speech_session.plan import whisper_deployment_identity
+
+        whisper = capture_deployment_revision(
+            db, whisper_deployment_identity(_model_config())
+        )
+        for name in speech:
+            frozen[name] = (whisper.id,)
+            placements[name] = {
+                "placement_source": "local-whisper",
+                "placement_reason": "on-device speech-to-text",
+                "boundary": "same_device",
+                "target_id": whisper.destination_id,
+                "target_kind": whisper.kind,
+                "target_ready": True,
+                "target_readiness_reason": "",
+                "internal_provider_fallback": False,
+            }
 
     terms = _config_terms(meeting_config)
     plugin_registry_hash = _sha({"plugins": sorted(dict.fromkeys(str(p) for p in plugin_ids)),
@@ -296,7 +339,10 @@ __all__ = [
     "PLUGIN_CAPABILITY_PREFIX",
     "PRINCIPAL_REQUIRED",
     "REVISION_NOT_PLANNED",
+    "CAPABILITY_WHISPER_PRELOAD",
+    "CAPABILITY_WHISPER_TRANSCRIBE",
     "SESSION_CAPABILITIES",
+    "TRANSCRIPTION_CAPABILITIES",
     "SESSION_CLOSED",
     "SESSION_NOT_ADMITTED",
     "SESSION_NOT_LIVE",

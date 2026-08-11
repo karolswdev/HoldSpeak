@@ -1,0 +1,225 @@
+bringing up nodes...
+bringing up nodes...
+
+........................................................................ [  1%]
+........................................................................ [  2%]
+........................................................................ [  4%]
+........................................................................ [  5%]
+.................F....................F................................. [  7%]
+........................................................................ [  8%]
+...F..........s......F.................FFFFFF.F......................... [ 10%]
+.......................FF..............F...............F................ [ 11%]
+........................................................................ [ 13%]
+........................................................................ [ 14%]
+........................................................................ [ 16%]
+........................................................................ [ 17%]
+........................................................................ [ 19%]
+........................................................................ [ 20%]
+...................FF...........................F....FFF.FF............. [ 22%]
+............F.F......F...F.........F....F......FF.......F............... [ 23%]
+.............F.......................................................... [ 25%]
+.......................................F..........F..................F.. [ 26%]
+......F.....................F........................................ss. [ 28%]
+......Fss............................................................... [ 29%]
+..............................................sss..........F............ [ 31%]
+..................................F..FFF................................ [ 32%]
+.........................................................F.............. [ 34%]
+.............................................................F.......... [ 35%]
+..................F..................................................... [ 37%]
+....................................................................F... [ 38%]
+...........................................F............................ [ 40%]
+......................................................F..F.............. [ 41%]
+..............................................................F......... [ 43%]
+........................F............................................... [ 44%]
+.......................FF.........F..................................... [ 46%]
+........................................................................ [ 47%]
+........................................................................ [ 49%]
+........................................................................ [ 50%]
+......................................................F................. [ 52%]
+........................................................................ [ 53%]
+........................................................................ [ 55%]
+........................................................................ [ 56%]
+.....................F.................................................. [ 58%]
+........................................................................ [ 59%]
+...................................................................F.... [ 61%]
+........................................................................ [ 62%]
+........................................................................ [ 64%]
+...................................F.................................... [ 65%]
+.............F.......................................................... [ 67%]
+........................................................................ [ 68%]
+........................................................................ [ 70%]
+........................................................................ [ 71%]
+........................................................................ [ 73%]
+..................................................................F..... [ 74%]
+......................................................................F. [ 76%]
+........................................................................ [ 77%]
+........................................................................ [ 79%]
+........................................................................ [ 80%]
+........................................................................ [ 81%]
+.....FF................................................................. [ 83%]
+........................................................................ [ 84%]
+........................................................................ [ 86%]
+........................................................................ [ 87%]
+........................................................................ [ 89%]
+........................................................................ [ 90%]
+........................................................................ [ 92%]
+........................................................................ [ 93%]
+........................................................................ [ 95%]
+........................................................................ [ 96%]
+.....................F.................................................. [ 98%]
+..................................Mic transcription error: parent_operation_unknown:whisper-transcribe
+System transcription error: parent_operation_unknown:whisper-transcribe
+meeting transcription interval dropped: meeting_intel_principal_required
+meeting transcription interval dropped: meeting_intel_principal_required
+Mic transcription error: parent_operation_unknown:whisper-transcribe
+System transcription error: parent_operation_unknown:whisper-transcribe
+meeting transcription interval dropped: meeting_intel_principal_required
+meeting transcription interval dropped: meeting_intel_principal_required
+.........................Mic transcription error: parent_operation_unknown:whisper-transcribe
+System transcription error: parent_operation_unknown:whisper-transcribe
+meeting transcription interval dropped: meeting_intel_principal_required
+meeting transcription interval dropped: meeting_intel_principal_required
+............. [ 99%]
+......                                                                   [100%]
+=========================== short test summary info ============================
+SKIPPED [1] tests/integration/test_dictation_llama_cpp_e2e.py:72: llama-cpp-python and /var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.YJb9R5qHl8/Models/gguf/Qwen3.5-4B-Instruct-Q4_K_M.gguf are required for this integration test
+SKIPPED [1] tests/integration/test_rails_observer_live.py:37: no rail events on this machine to summarize
+SKIPPED [1] tests/integration/test_rails_observer_live.py:72: no rail events on this machine
+SKIPPED [1] tests/integration/test_runtime_llama_cpp.py:38: llama-cpp-python and /var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.YJb9R5qHl8/Models/gguf/Qwen3.5-4B-Instruct-Q4_K_M.gguf are required for this integration test
+SKIPPED [1] tests/integration/test_runtime_mlx.py:38: mlx-lm + outlines + /var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.YJb9R5qHl8/Models/mlx/Qwen3.5-8B-MLX-4bit are required for this integration test
+SKIPPED [1] tests/integration/test_grounding_rails_live.py:35: holdspeak not in the project map on this machine
+SKIPPED [1] tests/integration/test_grounding_rails_live.py:54: holdspeak not in the project map on this machine
+SKIPPED [1] tests/integration/test_grounding_rails_live.py:71: holdspeak not in the project map on this machine
+FAILED tests/integration/test_web_project_kb_api.py::test_dictation_page_includes_project_kb_section
+FAILED tests/integration/test_dictation_journal_replay.py::test_journal_card_has_replay_action
+FAILED tests/integration/test_actuator_presence_broadcasts.py::test_qlippy_events_mirror_the_dashboard_decision_exactly
+FAILED tests/integration/test_web_server.py::TestDashboardEndpoint::test_dashboard_bootstrap_prefers_runtime_status_payload
+FAILED tests/integration/test_web_dictation_cockpit.py::test_dictation_is_one_typed_section_graph
+FAILED tests/integration/test_web_dictation_cockpit.py::test_dictation_preserves_primary_api_verbs
+FAILED tests/integration/test_web_dictation_cockpit.py::test_dictation_keeps_device_local_project_scope
+FAILED tests/integration/test_web_dictation_cockpit.py::test_dictation_lists_are_react_owned_and_focus_safe
+FAILED tests/integration/test_web_dictation_correction_ritual.py::test_ritual_component_is_shipped
+FAILED tests/integration/test_web_dictation_correction_ritual.py::test_ritual_is_wired_into_dry_run_result
+FAILED tests/integration/test_web_dictation_correction_ritual.py::test_ritual_uses_shared_react_controls
+FAILED tests/integration/test_cadence_agent.py::test_reply_delivers_into_pane_and_closes
+FAILED tests/integration/test_web_dictation_correction_ritual.py::test_dry_run_moment_host_present
+FAILED tests/integration/test_cadence_agent.py::test_reply_rejects_empty_and_non_agent_and_missing_pane
+FAILED tests/integration/test_web_dictation_trust_signals.py::test_trust_chip_css_is_global
+FAILED tests/integration/test_web_dictation_corrections_api.py::test_dictation_page_includes_memory_tab
+FAILED tests/integration/test_web_dry_run_api.py::test_dictation_page_includes_dry_run_section
+FAILED tests/integration/test_web_server.py::TestRuntimeControlEndpoints::test_meeting_stop_prefers_on_meeting_stop_callback
+FAILED tests/integration/test_web_history_archive.py::test_history_uses_bounded_archive_and_detail_sections
+FAILED tests/integration/test_web_history_archive.py::test_history_keeps_approval_and_export_governance
+FAILED tests/integration/test_web_history_import_ui.py::test_history_has_audio_and_transcript_import
+FAILED tests/integration/test_web_history_import_ui.py::test_history_search_uses_backend_search_contract
+FAILED tests/integration/test_web_history_import_ui.py::test_failed_import_and_queue_states_stay_visible
+FAILED tests/integration/test_web_server.py::TestMirHistoryApiEndpoints::test_meeting_intent_timeline_endpoint
+FAILED tests/integration/test_web_server.py::TestMirHistoryApiEndpoints::test_meeting_plugin_runs_endpoint
+FAILED tests/integration/test_web_server.py::TestMirHistoryApiEndpoints::test_meeting_artifacts_endpoint
+FAILED tests/integration/test_web_server.py::TestMirHistoryApiEndpoints::test_meeting_export_endpoint_renders_handoff_formats
+FAILED tests/integration/test_web_server.py::TestMirHistoryApiEndpoints::test_legacy_meeting_without_mir_history_rows_remains_loadable
+FAILED tests/integration/test_web_server.py::TestMirHistoryApiEndpoints::test_cli_reroute_persistence_is_visible_in_timeline_api
+FAILED tests/integration/test_web_dictation_journal.py::test_dictation_page_includes_journal_tab
+FAILED tests/integration/test_web_server.py::TestMeetingMetadataEndpoints::test_meeting_patch_falls_back_to_title_and_tags_callbacks
+FAILED tests/integration/test_web_dictation_journal.py::test_dictation_journal_premium_and_a11y_markers
+FAILED tests/integration/test_web_server.py::TestHistoryUiSmoke::test_history_page_contains_control_plane_tabs_and_handlers
+FAILED tests/integration/test_web_dictation_learning_digest.py::test_dictation_page_includes_learning_digest
+FAILED tests/integration/test_web_dictation_learning_digest.py::test_learning_digest_styles_are_global
+FAILED tests/integration/test_web_server.py::TestSpeakerApiEndpoints::test_speaker_endpoints
+FAILED tests/integration/test_web_server.py::TestGlobalActionItemsApiEndpoints::test_action_item_endpoints_include_review_and_edit
+FAILED tests/integration/test_web_server.py::TestIntelQueueApiEndpoints::test_intel_jobs_list_retry_and_process
+FAILED tests/integration/test_rails_observer_live.py::test_remote_flip_reaches_the_journal_node_named
+FAILED tests/integration/test_web_dictation_readiness_api.py::test_dictation_page_includes_readiness_panel
+FAILED tests/integration/test_history_slack_surfaces.py::test_history_buttons_are_gated_on_the_flag
+FAILED tests/integration/test_history_slack_surfaces.py::test_proposal_rows_render_the_central_policy_and_refusal_truth
+FAILED tests/integration/test_history_slack_surfaces.py::test_history_app_wires_the_export_route
+FAILED tests/integration/test_history_slack_surfaces.py::test_settings_field_ships_the_honest_copy
+FAILED tests/integration/test_intel_streaming.py::TestActionItemPatchEndpoint::test_patch_action_item_done
+FAILED tests/integration/test_intel_streaming.py::TestActionItemPatchEndpoint::test_patch_action_item_pending
+FAILED tests/integration/test_intel_streaming.py::TestActionItemPatchEndpoint::test_patch_action_item_dismissed
+FAILED tests/integration/test_decision_records.py::test_v32_migration_adds_decision_moment_columns
+FAILED tests/integration/test_intel_streaming.py::TestActionItemPatchEndpoint::test_patch_without_handler_returns_501
+FAILED tests/integration/test_intel_streaming.py::TestActionItemPatchEndpoint::test_patch_callback_error_returns_500
+FAILED tests/integration/test_intel_streaming.py::TestActionItemPatchEndpoint::test_patch_action_item_review_accepts
+FAILED tests/integration/test_intel_streaming.py::TestActionItemPatchEndpoint::test_patch_action_item_edit_auto_accepts
+FAILED tests/integration/test_decision_records.py::test_model_promotion_admits_before_generation_and_leaves_receipt
+FAILED tests/integration/test_decision_records.py::test_superseded_promotion_route_names_successor_without_model_call
+FAILED tests/integration/test_intel_streaming.py::TestActionItemPatchEndpoint::test_patch_action_item_review_without_handler_returns_501
+FAILED tests/integration/test_intel_streaming.py::TestActionItemPatchEndpoint::test_patch_action_item_edit_without_handler_returns_501
+FAILED tests/integration/test_web_dictation_settings_api.py::test_dictation_page_includes_runtime_section
+FAILED tests/unit/test_interior_canon_guard.py::test_no_left_border_rails_in_web_css
+FAILED tests/integration/test_meeting_conflict_recovery.py::test_keep_current_resolves_without_changing_the_meeting
+FAILED tests/integration/test_web_companion_github.py::test_yolo_files_to_the_registered_repo_without_a_decision
+FAILED tests/integration/test_web_companion_github.py::test_yolo_refuses_an_unregistered_repo_without_filing_or_prompting
+FAILED tests/integration/test_web_companion_webhook.py::test_yolo_executes_the_configured_webhook_without_a_decision
+FAILED tests/integration/test_web_companion_webhook.py::test_url_removed_between_propose_and_approve_fails_honestly
+FAILED tests/unit/test_product_copy.py::test_primary_copy_has_no_prohibited_operational_drift
+FAILED tests/integration/test_web_dictation_blocks_api.py::test_dictation_page_route_serves_html
+FAILED tests/unit/test_web_vocabulary_guard.py::test_web_copy_has_no_dash_in_prose
+66 failed, 4756 passed, 8 skipped in 175.48s (0:02:55)
+ssssssssssssssssssssssEEEssssssssss...s............EEEEEEEEEEEEEEss..... [ 24%]
+................................................+++++++++++++++++++++++++++++++++++ Timeout ++++++++++++++++++++++++++++++++++++
+~~~~~~~~~~~~~~~~~~ Stack of workbench-conductor (6215348224) ~~~~~~~~~~~~~~~~~~~
+  File "/Users/karol/.local/share/uv/python/cpython-3.13.11-macos-aarch64-none/lib/python3.13/threading.py", line 1015, in _bootstrap
+    self._bootstrap_inner()
+  File "/Users/karol/.local/share/uv/python/cpython-3.13.11-macos-aarch64-none/lib/python3.13/threading.py", line 1044, in _bootstrap_inner
+    self.run()
+  File "/Users/karol/.local/share/uv/python/cpython-3.13.11-macos-aarch64-none/lib/python3.13/threading.py", line 995, in run
+    self._target(*self._args, **self._kwargs)
+  File "/Users/karol/dev/tools/HoldSpeak/holdspeak/workbench_conductor.py", line 462, in _loop
+    self._stop.wait(60)
+  File "/Users/karol/.local/share/uv/python/cpython-3.13.11-macos-aarch64-none/lib/python3.13/threading.py", line 660, in wait
+    signaled = self._cond.wait(timeout)
+  File "/Users/karol/.local/share/uv/python/cpython-3.13.11-macos-aarch64-none/lib/python3.13/threading.py", line 363, in wait
+    gotit = waiter.acquire(True, timeout)
++++++++++++++++++++++++++++++++++++ Timeout ++++++++++++++++++++++++++++++++++++
+F....................................................................... [ 64%]
+..............................................................F..F.FF.F. [ 88%]
+.F...............................                                        [100%]
+=========================== short test summary info ============================
+SKIPPED [1] tests/e2e/test_dictation_learning_digest_spoken_e2e.py:33: opt-in: set HOLDSPEAK_SPOKEN_DICTATION_E2E=1 to run the spoken-dictation learning-digest e2e (uses macOS `say` + the Whisper base model)
+SKIPPED [1] tests/e2e/test_spoken_meeting_e2e.py:41: opt-in: set HOLDSPEAK_SPOKEN_E2E=1 to run the spoken-meeting e2e
+SKIPPED [1] tests/e2e/test_dictation_enrichment_e2e.py:57: set HOLDSPEAK_DICTATION_E2E_BASE_URL + HOLDSPEAK_DICTATION_E2E_MODEL to a reachable OpenAI-compatible endpoint to run the real dictation enrichment e2e
+SKIPPED [1] tests/e2e/test_dictation_journal_e2e.py:57: set HOLDSPEAK_DICTATION_E2E_BASE_URL + HOLDSPEAK_DICTATION_E2E_MODEL to a reachable OpenAI-compatible endpoint to run the real dictation journal e2e
+SKIPPED [1] tests/e2e/test_dogfood_plumbing_e2e.py:44: set HOLDSPEAK_DOGFOOD=1 to run the dogfood plumbing e2e
+SKIPPED [3] tests/e2e/test_dogfood_plumbing_e2e.py:52: set HOLDSPEAK_DOGFOOD=1 to run the dogfood plumbing e2e
+SKIPPED [12] tests/e2e/test_dogfood_plumbing_e2e.py:66: set HOLDSPEAK_DOGFOOD=1 to run the dogfood plumbing e2e
+SKIPPED [1] tests/e2e/test_dogfood_plumbing_e2e.py:85: set HOLDSPEAK_DOGFOOD=1 to run the dogfood plumbing e2e
+SKIPPED [3] tests/e2e/test_dogfood_plumbing_e2e.py:95: set HOLDSPEAK_DOGFOOD=1 to run the dogfood plumbing e2e
+SKIPPED [10] tests/e2e/test_meeting_transcription.py: Mock meeting fixture not found: /Users/karol/dev/tools/HoldSpeak/tests/fixtures/mock_meeting.wav
+SKIPPED [1] tests/e2e/test_route_preflight.py:148: no Chromium available for the pre-flight: BrowserType.launch: Executable doesn't exist at /var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.YJb9R5qHl8/Library/Caches/ms-playwright/chromium_headless_shell-1200/chrome-headless-shell-mac-arm64/chrome-headless-shell
+╔════════════════════════════════════════════════════════════╗
+║ Looks like Playwright was just installed or updated.       ║
+║ Please run the following command to download new browsers: ║
+║                                                            ║
+║     playwright install                                     ║
+║                                                            ║
+║ <3 Playwright Team                                         ║
+╚════════════════════════════════════════════════════════════╝
+SKIPPED [1] tests/e2e/test_workbench_walk.py:122: requires the production app fixture and deployment-adapter fake
+SKIPPED [1] tests/e2e/test_workbench_walk.py:131: requires the production app fixture and deployment-adapter fake
+ERROR tests/e2e/test_live_bus.py::test_every_live_page_opens_exactly_one_runtime_socket
+ERROR tests/e2e/test_live_bus.py::test_a_real_broadcast_reaches_the_presence_card_via_the_bus
+ERROR tests/e2e/test_live_bus.py::test_the_bus_reconnects_after_a_server_restart
+ERROR tests/e2e/test_workbench_walk.py::TestWorkbenchWalk::test_desk_with_workbench_objects[desktop]
+ERROR tests/e2e/test_workbench_walk.py::TestWorkbenchWalk::test_desk_with_workbench_objects[mobile]
+ERROR tests/e2e/test_workbench_walk.py::TestWorkbenchWalk::test_workbenches_home[desktop]
+ERROR tests/e2e/test_workbench_walk.py::TestWorkbenchWalk::test_workbenches_home[mobile]
+ERROR tests/e2e/test_workbench_walk.py::TestWorkbenchWalk::test_template_picker[desktop]
+ERROR tests/e2e/test_workbench_walk.py::TestWorkbenchWalk::test_template_picker[mobile]
+ERROR tests/e2e/test_workbench_walk.py::TestWorkbenchWalk::test_workbench_window_configured[desktop]
+ERROR tests/e2e/test_workbench_walk.py::TestWorkbenchWalk::test_workbench_window_configured[mobile]
+ERROR tests/e2e/test_workbench_walk.py::TestWorkbenchWalk::test_config_panel_expanded[desktop]
+ERROR tests/e2e/test_workbench_walk.py::TestWorkbenchWalk::test_config_panel_expanded[mobile]
+ERROR tests/e2e/test_workbench_walk.py::TestWorkbenchWalk::test_constitutional_context_editor[desktop]
+ERROR tests/e2e/test_workbench_walk.py::TestWorkbenchWalk::test_constitutional_context_editor[mobile]
+ERROR tests/e2e/test_workbench_walk.py::TestWorkbenchWalk::test_composer_with_body[desktop]
+ERROR tests/e2e/test_workbench_walk.py::TestWorkbenchWalk::test_composer_with_body[mobile]
+FAILED tests/uat/test_induction_integration_43.py::test_meeting_recipe_yields_a_real_open_action
+FAILED tests/integration/test_web_companion_slack.py::test_source_identity_returns_the_receipt_to_the_desk_subject
+FAILED tests/integration/test_web_companion_slack.py::test_a_proposed_send_never_posts
+FAILED tests/integration/test_web_companion_slack.py::test_approval_posts_the_preview_byte_equal
+FAILED tests/integration/test_web_companion_slack.py::test_yolo_executes_configured_slack_without_a_prompt_and_returns_receipt
+FAILED tests/integration/test_web_companion_slack.py::test_url_removed_between_propose_and_approve_fails_honestly
+FAILED tests/integration/test_web_companion_slack.py::test_the_wire_events_ride_for_qlippy
+7 failed, 238 passed, 37 skipped, 16 deselected, 17 errors in 787.97s (0:13:07)

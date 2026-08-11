@@ -35,7 +35,7 @@ import wave
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Callable, Optional, Sequence
+from typing import Any, Callable, Optional, Sequence
 
 import numpy as np
 
@@ -211,6 +211,7 @@ def import_meeting(
     window_seconds: float = DEFAULT_WINDOW_SECONDS,
     progress: Optional[ProgressCallback] = None,
     meeting_id: Optional[str] = None,
+    principal: Any = None,
 ) -> ImportResult:
     """Import one recording as a meeting; returns the persisted state.
 
@@ -243,22 +244,33 @@ def import_meeting(
 
     segments: list[TranscriptSegment] = []
     windows_empty = 0
-    for index in range(windows_total):
-        chunk = audio[index * window_samples : (index + 1) * window_samples]
-        text = (transcriber.transcribe(chunk) or "").strip()
-        if text:
-            segments.append(
-                TranscriptSegment(
-                    text=text,
-                    speaker=speaker_label,
-                    start_time=index * window_seconds,
-                    end_time=min((index + 1) * window_seconds, duration),
-                )
-            )
-        else:
-            windows_empty += 1
-        if progress is not None:
-            progress(index + 1, windows_total)
+    # HS-131-09: importing a recording transcribes with the same local Whisper as
+    # live capture, so it runs under its own finite admitted session — one child
+    # per window, bounded by the windows this file actually has.
+    from .speech_session import admit_speech_session, hold_gesture_principal
+
+    session = admit_speech_session(
+        kind="dictation.session",
+        principal=principal or hold_gesture_principal(),
+        insertion_aim="recording-import",
+        config_snapshot=config,
+        registry_snapshot=db,
+        deadline_seconds=max(300.0, 60.0 * windows_total),
+        child_budget=2 * windows_total + 4,
+    )
+    admission = session.transcription()
+    try:
+        segments, windows_empty = _transcribe_import_windows(
+            transcriber, audio, admission,
+            windows_total=windows_total, window_samples=window_samples,
+            window_seconds=window_seconds, duration=duration,
+            speaker_label=speaker_label, progress=progress,
+        )
+    except BaseException:
+        session.cancel_and_close()
+        raise
+    else:
+        session.close("succeeded")
 
     if not segments:
         raise MeetingImportError(
@@ -279,6 +291,40 @@ def import_meeting(
         windows_total=windows_total,
         windows_empty=windows_empty,
     )
+
+
+def _transcribe_import_windows(
+    transcriber: Any,
+    audio: Any,
+    admission: Any,
+    *,
+    windows_total: int,
+    window_samples: int,
+    window_seconds: float,
+    duration: float,
+    speaker_label: str,
+    progress: Any = None,
+) -> tuple[list[TranscriptSegment], int]:
+    """One admitted transcription child per import window."""
+    segments: list[TranscriptSegment] = []
+    windows_empty = 0
+    for index in range(windows_total):
+        chunk = audio[index * window_samples : (index + 1) * window_samples]
+        text = (transcriber.transcribe(chunk, admission=admission) or "").strip()
+        if text:
+            segments.append(
+                TranscriptSegment(
+                    text=text,
+                    speaker=speaker_label,
+                    start_time=index * window_seconds,
+                    end_time=min((index + 1) * window_seconds, duration),
+                )
+            )
+        else:
+            windows_empty += 1
+        if progress is not None:
+            progress(index + 1, windows_total)
+    return segments, windows_empty
 
 
 def _persist_import(

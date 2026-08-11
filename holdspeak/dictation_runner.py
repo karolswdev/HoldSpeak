@@ -122,6 +122,17 @@ def dispatch_voice_command(
         )
 
 
+def _fenced(admission: Any, stage: str) -> bool:
+    """True when the session that owns this run may no longer publish (HS-131-09).
+
+    The carrier arrives EXPLICITLY as ``admission`` (Sol OQ5) — this module reads
+    no ambient session state. A fenced run publishes nothing: no journal row, no
+    final text, and no provider child (each child re-checks the same fence).
+    """
+    fence = getattr(admission, "fence", None)
+    return fence is not None and fence.discarded(stage)
+
+
 def _journal_passthrough(
     text: str,
     *,
@@ -155,6 +166,7 @@ async def process_transcript(
     config: Any = None,
     server: Any = None,
     agent_reply_session: Any | None = None,
+    admission: Any = None,
 ) -> str:
     """Run the transcript-processing stages (corrections, learning, journaling).
 
@@ -186,6 +198,7 @@ async def process_transcript(
         journal_source=source,
         skip_target_detection=skip_target_detection,
         agent_reply_session=agent_reply_session,
+        admission=admission,
     )
 
 
@@ -199,6 +212,7 @@ def run_pipeline_corrections_only(
     agent_reply_session: Any | None = None,
     journal_source: str = "dictation",
     skip_target_detection: bool = False,
+    admission: Any = None,
 ) -> str:
     """Run the dictation pipeline -- corrections and learning only when
     ``skip_target_detection`` is True, full pipeline otherwise.
@@ -246,6 +260,7 @@ def run_pipeline_corrections_only(
             project_root=project_root,
             corrections=correction_snapshot,
             on_run=(telemetry_store.record_run if telemetry_store is not None else None),
+            admission=admission,
         )
         if result.runtime_status != "loaded":
             return text
@@ -300,6 +315,8 @@ def run_pipeline_corrections_only(
                 if not project_root or not agent_project_root or str(project_root) == str(agent_project_root):
                     activity["agent"] = recent_agent.to_dict()
 
+        if _fenced(admission, "dictation pipeline"):
+            return ""
         run = result.pipeline.run(
             Utterance(
                 raw_text=text,
@@ -309,6 +326,8 @@ def run_pipeline_corrections_only(
                 activity=activity,
             )
         )
+        if _fenced(admission, "dictation pipeline publication"):
+            return ""
         journal = getattr(server, "dictation_journal", None)
         if journal is not None:
             journal.record(
@@ -335,6 +354,7 @@ def run_dictation_pipeline(
     transcribed_at: datetime,
     agent_reply_session: Any | None = None,
     journal_source: str = "dictation",
+    admission: Any = None,
 ) -> str:
     """Run the dictation pipeline over ``text`` and return the text to type.
 
@@ -397,6 +417,7 @@ def run_dictation_pipeline(
             project_root=project_root,
             corrections=correction_snapshot,
             on_run=(telemetry_store.record_run if telemetry_store is not None else None),
+            admission=admission,
         )
         if result.runtime_status != "loaded":
             return text
@@ -435,6 +456,8 @@ def run_dictation_pipeline(
             if not project_root or not agent_project_root or str(project_root) == str(agent_project_root):
                 activity["agent"] = recent_agent.to_dict()
 
+        if _fenced(admission, "dictation pipeline"):
+            return ""
         run = result.pipeline.run(
             Utterance(
                 raw_text=text,
@@ -444,6 +467,8 @@ def run_dictation_pipeline(
                 activity=activity,
             )
         )
+        if _fenced(admission, "dictation pipeline publication"):
+            return ""
         # HS-45-01: journal this run as a side-channel (best-effort, never
         # alters the typed result). Same post-run seam telemetry uses.
         journal = getattr(server, "dictation_journal", None)

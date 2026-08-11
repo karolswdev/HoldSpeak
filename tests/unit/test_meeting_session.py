@@ -14,9 +14,25 @@ from holdspeak.meeting_session import MeetingSession, MeetingState, TranscriptSe
 
 
 class _FakeTranscriber:
-    def transcribe(self, audio) -> str:
+    def transcribe(self, audio, **kwargs) -> str:
         _ = audio
         return "final transcript"
+
+
+class _StubAdmission:
+    """The admitted-transcription seam, reduced to running the dispatch.
+
+    HS-131-09 makes every interval a child of the live ``meeting.session``; the
+    real parent, child, and the drop-without-one are proven in
+    ``test_dictation_session_admission.py``. These sessions never call
+    ``start()``, so they never admitted a parent — the concern here is locking.
+    """
+
+    class _Outcome:
+        outcome = "succeeded"
+
+    def transcribe_child(self, *, material, run, seed, **kwargs):
+        return self._Outcome(), run()
 
 
 class _FakeRecorder:
@@ -50,6 +66,7 @@ def test_stop_completes_without_deadlock_during_final_transcription_and_intel() 
     )
     session._recorder = _FakeRecorder()
     session._intel = object()
+    session._transcription_admission = lambda: _StubAdmission()  # type: ignore[method-assign]
 
     intel_calls: list[tuple[bool, str]] = []
 

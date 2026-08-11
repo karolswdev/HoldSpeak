@@ -384,12 +384,11 @@ _MIGRATED_CALLS: dict[tuple[str, str, str, int], str] = {
         "create",
         1,
     ): "owner-ratified clause-5 computation",
-    (
-        "holdspeak/plugins/dictation/runtime_openai_compatible.py",
-        "OpenAICompatibleRuntime.classify",
-        "create",
-        2,
-    ): "owner-ratified clause-5 computation",
+    # HS-131-09B: the second `create` is GONE from this method. The
+    # `response_format` compatibility retry was a hidden second request to a
+    # model; it now runs as its own admitted `inference.invoke@1` child from
+    # `speech_session/provider.py`, which calls back in here with
+    # `response_format=False`. One method, one call site.
     (
         "holdspeak/plugins/dictation/runtime_openai_compatible.py",
         "OpenAICompatibleRuntime.rewrite",

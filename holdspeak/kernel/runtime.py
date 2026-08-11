@@ -78,6 +78,8 @@ def _build(database: Any, *, clock: Any = None) -> Broker:
     delivery_draft = ParentRunCodec("delivery.pr-review-draft", operation_name="delivery.pr-review-draft", **({"clock": clock} if clock else {}))
     meeting_session = ParentRunCodec("meeting.session", operation_name="meeting.session", **({"clock": clock} if clock else {}))
     meeting_deferred = ParentRunCodec("meeting.deferred-intel-job", operation_name="meeting.deferred-intel-job", **({"clock": clock} if clock else {}))
+    dictation_session = ParentRunCodec("dictation.session", operation_name="dictation.session", **({"clock": clock} if clock else {}))
+    wake_session = ParentRunCodec("wake.session", operation_name="wake.session", **({"clock": clock} if clock else {}))
     specs = (
         OperationSpec(tool_calls.name, tool_calls.version, tool_calls, "agent.submit", "propose"),
         OperationSpec(process_input.name, process_input.version, process_input, "agent.submit", "propose"),
@@ -105,13 +107,15 @@ def _build(database: Any, *, clock: Any = None) -> Broker:
         OperationSpec(delivery_draft.name, delivery_draft.version, delivery_draft, "agent.submit", "propose"),
         OperationSpec(meeting_session.name, meeting_session.version, meeting_session, "agent.submit", "propose"),
         OperationSpec(meeting_deferred.name, meeting_deferred.version, meeting_deferred, "agent.submit", "propose"),
+        OperationSpec(dictation_session.name, dictation_session.version, dictation_session, "agent.submit", "propose"),
+        OperationSpec(wake_session.name, wake_session.version, wake_session, "agent.submit", "propose"),
     )
     broker = Broker(store, specs, **({"clock": clock} if clock else {}))
     # Services must never pair a runner database with a broker codec built for
     # another database singleton; invoke admission validates revisions there.
     broker.database = database
     broker.parent_run_controller = ParentRunController(broker, database,
-        operation_names={"sequence":"sequence.run", "workflow":"workflow.run", "workbench":"workbench.run", "decision.promotion-draft":"decision.promotion-draft", "delivery.pr-review-draft":"delivery.pr-review-draft", "voice_reference_resolve":"voice_reference_resolve", "meeting.session":"meeting.session", "meeting.deferred-intel-job":"meeting.deferred-intel-job"}, **({"clock": clock} if clock else {}))
+        operation_names={"sequence":"sequence.run", "workflow":"workflow.run", "workbench":"workbench.run", "decision.promotion-draft":"decision.promotion-draft", "delivery.pr-review-draft":"delivery.pr-review-draft", "voice_reference_resolve":"voice_reference_resolve", "meeting.session":"meeting.session", "meeting.deferred-intel-job":"meeting.deferred-intel-job", "dictation.session":"dictation.session", "wake.session":"wake.session"}, **({"clock": clock} if clock else {}))
     # The liveness reaper runs before stage recovery: an expired claimed
     # invocation first receives its authoritative indeterminate receipt.
     from .projection_stager import ProjectionStager

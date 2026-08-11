@@ -18,6 +18,8 @@ const mocks = vi.hoisted(() => ({
   startOpenMic: vi.fn(),
   stopOpenMic: vi.fn(),
   transcribeWav: vi.fn(),
+  openMicInterval: vi.fn(),
+  closeMicInterval: vi.fn(),
   segment: null as
     | ((segment: { chunks: Float32Array[]; rate: number }) => void)
     | null,
@@ -59,6 +61,13 @@ vi.mock("../../../lib/speakToFill", () => ({
   subscribeCaptureLevel: () => () => undefined,
   toWav16kMono: () => new ArrayBuffer(8),
   transcribeWav: mocks.transcribeWav,
+  // HS-131-09: the open mic now opens ONE admitted server-side interval and
+  // honors its one terminal status.
+  openMicInterval: mocks.openMicInterval,
+  closeMicInterval: mocks.closeMicInterval,
+  micIntervalClosed: (error: unknown) =>
+    !!(error as { payload?: { mic_interval?: string } })?.payload
+      ?.mic_interval,
 }));
 
 vi.mock("../../../lib/micSession", () => ({
@@ -122,6 +131,8 @@ beforeEach(() => {
   vi.clearAllMocks();
   localStorage.clear();
   mocks.segment = null;
+  mocks.openMicInterval.mockResolvedValue(undefined);
+  mocks.closeMicInterval.mockResolvedValue(undefined);
   mocks.startOpenMic.mockImplementation(
     async (handler: (segment: { chunks: Float32Array[]; rate: number }) => void) => {
       mocks.segment = handler;
@@ -291,6 +302,32 @@ describe("the open mic on the Speak deck (HS-112-06)", () => {
         ),
       ).toBe(true),
     );
+  });
+
+  it("admits ONE interval before the device opens (HS-131-09)", async () => {
+    await latchOpen();
+    expect(mocks.openMicInterval).toHaveBeenCalledTimes(1);
+    await utterance("one");
+    await utterance("two");
+    // Two utterances, still ONE interval: the mic is one authority lifetime.
+    expect(mocks.openMicInterval).toHaveBeenCalledTimes(1);
+  });
+
+  it("closes the interval and requires a fresh click when the server fences it", async () => {
+    const latch = await latchOpen();
+    mocks.transcribeWav.mockRejectedValueOnce(
+      new ApiError(409, "The microphone session closed.", {
+        mic_interval: "closed",
+        reason: "browser_mic_inactivity_lapsed",
+      }),
+    );
+
+    await mocks.segment?.({ chunks: [new Float32Array(8)], rate: 16_000 });
+
+    // Sol Amendment 3: one visible interval never crosses authority epochs.
+    await waitFor(() => expect(mocks.stopOpenMic).toHaveBeenCalled());
+    await waitFor(() => expect(latch).not.toHaveAttribute("aria-pressed"));
+    expect(callsTo("/api/dictation/remote")).toHaveLength(0);
   });
 
   it("drops the stream when the room closes", async () => {

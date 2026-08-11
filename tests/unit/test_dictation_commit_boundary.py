@@ -57,7 +57,7 @@ class _CaptureRig:
     def _ensure_transcriber_loaded(self) -> Any:
         return SimpleNamespace(transcribe=self._transcribe)
 
-    def _transcribe(self, _audio: np.ndarray) -> str:
+    def _transcribe(self, _audio: np.ndarray, **kwargs) -> str:
         self.events.append("transcribe")
         return "bounded words"
 

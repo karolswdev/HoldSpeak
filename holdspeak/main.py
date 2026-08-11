@@ -714,23 +714,39 @@ def _run_meeting_mode(args):
 
     results = []
 
-    # Transcribe mic audio
-    if mic_chunks:
-        print(f"Transcribing {len(mic_chunks)} mic chunks...")
-        mic_audio = concatenate_chunks(mic_chunks)
-        if len(mic_audio) > 1600:  # At least 0.1s
-            mic_text = transcriber.transcribe(mic_audio)
-            if mic_text:
-                results.append((mic_label, mic_text))
+    # HS-131-09: the CLI meeting transcribes with the same local Whisper as every
+    # other path, so it runs under one finite admitted session too.
+    from .speech_session import admit_speech_session, hold_gesture_principal
 
-    # Transcribe system audio
-    if system_chunks:
-        print(f"Transcribing {len(system_chunks)} system audio chunks...")
-        system_audio = concatenate_chunks(system_chunks)
-        if len(system_audio) > 1600:
-            system_text = transcriber.transcribe(system_audio)
-            if system_text:
-                results.append((remote_label, system_text))
+    speech_session = admit_speech_session(
+        kind="dictation.session",
+        principal=hold_gesture_principal(),
+        insertion_aim="cli-meeting",
+        config_snapshot=config,
+        deadline_seconds=1800.0,
+        child_budget=8,
+    )
+    admission = speech_session.transcription()
+    try:
+        # Transcribe mic audio
+        if mic_chunks:
+            print(f"Transcribing {len(mic_chunks)} mic chunks...")
+            mic_audio = concatenate_chunks(mic_chunks)
+            if len(mic_audio) > 1600:  # At least 0.1s
+                mic_text = transcriber.transcribe(mic_audio, admission=admission)
+                if mic_text:
+                    results.append((mic_label, mic_text))
+
+        # Transcribe system audio
+        if system_chunks:
+            print(f"Transcribing {len(system_chunks)} system audio chunks...")
+            system_audio = concatenate_chunks(system_chunks)
+            if len(system_audio) > 1600:
+                system_text = transcriber.transcribe(system_audio, admission=admission)
+                if system_text:
+                    results.append((remote_label, system_text))
+    finally:
+        speech_session.close("succeeded")
 
     # Display results
     print()

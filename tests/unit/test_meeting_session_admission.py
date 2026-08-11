@@ -188,7 +188,10 @@ def test_start_admits_one_authenticated_parent_over_a_frozen_plan(tmp_path, monk
     assert parent["kind"] == "meeting.session"
     assert parent["definition_ref"] == f"meeting:{state.id}:intel"
     assert parent["state"] == "OPEN"
-    assert parent["child_budget"] == 4096
+    # HS-131-09 Sol Amendment 6: a transcription-bearing session buys its own
+    # headroom (4096 + ceil(12h / 10s) + 2), so 12 hours of intervals can no
+    # longer deterministically exhaust the intelligence allocation.
+    assert parent["child_budget"] == 8418
 
     plan = session._intel_plan
     assert plan is not None

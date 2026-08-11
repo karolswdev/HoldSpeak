@@ -295,7 +295,7 @@ def test_run_web_runtime_warms_transcriber_on_start(monkeypatch: pytest.MonkeyPa
             self.model_name = model_name
             loaded.set()
 
-        def transcribe(self, _audio):
+        def transcribe(self, _audio, **kwargs):
             return "hello world"
 
     monkeypatch.setattr(web_runtime, "MeetingWebServer", FakeServer)
@@ -610,7 +610,7 @@ def test_runtime_meeting_control_callbacks_are_wired(monkeypatch: pytest.MonkeyP
         def __init__(self, model_name: str, backend: str = "auto", language: str = "auto"):
             self.model_name = model_name
 
-        def transcribe(self, _audio):
+        def transcribe(self, _audio, **kwargs):
             return "hello world"
 
     class FakeTextTyper:
@@ -711,7 +711,7 @@ def test_device_voice_reply_uses_waiting_agent_target_profile(
         def __init__(self, model_name: str, backend: str = "auto", language: str = "auto"):
             self.model_name = model_name
 
-        def transcribe(self, _audio):
+        def transcribe(self, _audio, **kwargs):
             return "yes run focused tests first"
 
     class FakeTextTyper:
@@ -838,7 +838,7 @@ def test_device_voice_reply_prefers_tmux_pane_over_gui_typing(
         def __init__(self, model_name: str, backend: str = "auto", language: str = "auto"):
             self.model_name = model_name
 
-        def transcribe(self, _audio):
+        def transcribe(self, _audio, **kwargs):
             return "yes proceed"
 
     class FakeTextTyper:
@@ -951,7 +951,7 @@ def test_device_voice_reply_rejects_undeliverable_agent_target(
         def __init__(self, model_name: str, backend: str = "auto", language: str = "auto"):
             self.model_name = model_name
 
-        def transcribe(self, _audio):
+        def transcribe(self, _audio, **kwargs):
             raise AssertionError("undeliverable agent target should not transcribe")
 
     class BrokenTextTyper:
