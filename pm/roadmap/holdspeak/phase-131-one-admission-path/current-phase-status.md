@@ -1,6 +1,6 @@
 # Phase 131 — One Admission Path
 
-**Status:** IN PROGRESS (7/12).
+**Status:** IN PROGRESS (8/12).
 
 **Last updated:** 2026-08-10.
 
@@ -130,7 +130,7 @@ gates while keeping every known site bounded now.
 | HS-131-05 | Workbench work and memory cannot outrun cancellation | done | [story-05](./story-05-workbench-and-memory.md) | [evidence-story-05](./evidence-story-05.md) |
 | HS-131-06 | Scheduled work carries bounded delegation | done | [story-06](./story-06-bounded-schedules.md) | [evidence-story-06](./evidence-story-06.md) |
 | HS-131-07 | The remaining direct callers join the spine | done | [story-07](./story-07-service-callers.md) | [evidence-story-07](./evidence-story-07.md) |
-| HS-131-08 | Meetings are admitted per session | in-progress | [story-08](./story-08-meeting-sessions.md) | — |
+| HS-131-08 | Meetings are admitted per session | done | [story-08](./story-08-meeting-sessions.md) | [evidence-story-08](./evidence-story-08.md) |
 | HS-131-09 | Dictation and transcription are admitted per session | backlog | [story-09](./story-09-dictation-sessions.md) | — |
 | HS-131-10 | The one-path fence | backlog | [story-10](./story-10-one-path-fence.md) | — |
 | HS-131-11 | The entry-point contract | backlog | [story-11](./story-11-entry-point-docs.md) | — |
@@ -296,7 +296,33 @@ route could never persist); the orchestrator's diff read caught two more
 Sol's four reservations (rails note crash gap, exceptional parent
 cleanup, mesh unit-proof scope, parent-close-after-commit ordering) ride
 in the evidence.
-Next: HS-131-08, meeting sessions.
+HS-131-08 is done — meeting intelligence admits once per SESSION (the
+owner's per-sesh ruling made real; one Sol design round with two
+amendments, three implementation rounds to RATIFY-WITH-RESERVATIONS).
+One authenticated `meeting.session` parent (schema v54; 12h/4096 bounds,
+route principal threaded through _start_meeting; no-principal starts
+refuse intelligence honestly while recording proceeds) over a frozen
+content-free MeetingIntelPlan whose capabilities carry ORDERED immutable
+revision lists — the legacy intra-engine auto local→cloud fallback is
+DEAD: the cloud leg freezes as a real second revision and each entry runs
+as its own admitted child, advancing only on an honest failed receipt
+(returned IntelResult.error is classified before receipt election, so a
+receipt never says succeeded for a failed attempt). Live windows,
+bookmark labels, and auto-title (two seams the design ABSORBED by Sol's
+ruling) are trusted children; transcript text is dispatch-only. stop()
+cancels the live parent first and durably enqueues the displaced work
+(structured intel_jobs.displaced_work, schema v55) before returning; the
+late-ready race is fenced under the session lock; the meeting reaches
+ready only after ALL displaced work settles. Deferred queue jobs admit
+their own short-lived parent under the meeting-intel-queue SERVICE
+principal (a closed live session is never revived; every retry is a new
+bounded parent); plugin llm dispatches run ON the revision-built engine
+inside the child's cancellation seam or refuse
+plugin_llm_engine_not_injectable. Walk on .43: four legs green.
+Sol reservations R1-R3/R6/R9 ride in the evidence — R9 surfaces an
+INHERITED live production bug (undefined ConflictError at
+web/routes/meetings/crud.py:161) needing a separate hotfix.
+Next: HS-131-09, dictation and transcription sessions.
 The roadmap still has nine inherited structural lint errors in old phases; they
 are named baseline and are not silently bundled into this product phase.
 

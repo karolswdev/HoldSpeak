@@ -200,7 +200,7 @@ def test_empty_meeting_raises(env) -> None:
 
 def test_deferred_intel_runs_the_chain_when_router_enabled(env, monkeypatch, tmp_path) -> None:
     """HS-80-02: the queue path — after base analyze, artifacts appear."""
-    db, _ = env
+    db, fake = env
     meeting = _saved_meeting(db, meeting_id="m84")
     db.intel.enqueue_intel_job(
         "m84", transcript_hash=meeting.transcript_hash(), reason="test import"
@@ -219,9 +219,12 @@ def test_deferred_intel_runs_the_chain_when_router_enabled(env, monkeypatch, tmp
         action_items = []
         summary = "Adopt event sourcing."
 
+    # HS-131-08: the deferred base analysis is an admitted child whose engine is
+    # built from the job plan's frozen deployment revision, so the stub belongs on
+    # the one admitted engine seam (the fixture's fake) rather than on a
+    # queue-constructed MeetingIntel.
     monkeypatch.setattr(
-        "holdspeak.intel.engine.MeetingIntel.analyze",
-        lambda self, transcript, stream=False: _Analyze(),
+        fake, "analyze", lambda transcript, stream=False: _Analyze(), raising=False
     )
     monkeypatch.setattr(
         "holdspeak.intel_queue.get_intel_runtime_status", lambda *a, **k: (True, "ready")
@@ -242,7 +245,7 @@ def test_deferred_intel_retains_base_analysis_when_routed_work_fails(
     env, monkeypatch
 ) -> None:
     """A routed failure stays partial and recoverable instead of becoming Ready."""
-    db, _ = env
+    db, fake = env
     meeting = _saved_meeting(db, meeting_id="m84-partial")
     db.intel.enqueue_intel_job(
         meeting.id,
@@ -262,9 +265,9 @@ def test_deferred_intel_retains_base_analysis_when_routed_work_fails(
         summary = "Base analysis retained."
 
     monkeypatch.setattr("holdspeak.config.Config.load", classmethod(lambda cls: _Cfg))
+    # HS-131-08: stub the one admitted engine seam (see the test above).
     monkeypatch.setattr(
-        "holdspeak.intel.engine.MeetingIntel.analyze",
-        lambda self, transcript, stream=False: _Analyze(),
+        fake, "analyze", lambda transcript, stream=False: _Analyze(), raising=False
     )
     monkeypatch.setattr(
         "holdspeak.intel_queue.get_intel_runtime_status",

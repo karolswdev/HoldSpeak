@@ -7,7 +7,7 @@ independently of the Database container.
 # Bump this when adding tables or columns; the Database container uses it to
 # decide whether to back up and re-apply. See core._ensure_schema for the
 # four-way upgrade contract.
-SCHEMA_VERSION = 53  # v53: admitted Decision, Delivery, and Voice domain parents (HS-131-07)
+SCHEMA_VERSION = 55  # v55: intel_jobs.displaced_work — the work stop handed off (HS-131-08)
 
 # SQL Schema
 SCHEMA_SQL = """
@@ -122,7 +122,10 @@ CREATE TABLE IF NOT EXISTS intel_snapshots (
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
--- Deferred intel jobs for meetings that need later processing
+-- Deferred intel jobs for meetings that need later processing.
+-- `displaced_work` (HS-131-08) is the STRUCTURED list of work stop() displaced
+-- onto this job (a JSON array of slugs); empty for an ordinary deferred job,
+-- which runs base analysis and routed plugins only.
 CREATE TABLE IF NOT EXISTS intel_jobs (
     meeting_id TEXT PRIMARY KEY REFERENCES meetings(id) ON DELETE CASCADE,
     status TEXT NOT NULL DEFAULT 'queued',
@@ -130,7 +133,8 @@ CREATE TABLE IF NOT EXISTS intel_jobs (
     requested_at TEXT NOT NULL DEFAULT (datetime('now')),
     updated_at TEXT NOT NULL DEFAULT (datetime('now')),
     attempts INTEGER NOT NULL DEFAULT 0,
-    last_error TEXT
+    last_error TEXT,
+    displaced_work TEXT NOT NULL DEFAULT '[]'
 );
 
 -- Deferred-intel attempt history (retry and terminal outcomes)
@@ -1712,7 +1716,7 @@ CREATE TABLE IF NOT EXISTS deployment_revisions (
 CREATE TABLE IF NOT EXISTS kernel_parent_runs (
     operation_id TEXT PRIMARY KEY REFERENCES kernel_operations(operation_id),
     native_id TEXT NOT NULL UNIQUE,
-    kind TEXT NOT NULL CHECK (kind IN ('sequence','workflow','workbench','decision.promotion-draft','delivery.pr-review-draft','voice_reference_resolve')),
+    kind TEXT NOT NULL CHECK (kind IN ('sequence','workflow','workbench','decision.promotion-draft','delivery.pr-review-draft','voice_reference_resolve','meeting.session','meeting.deferred-intel-job')),
     definition_ref TEXT NOT NULL,
     definition_revision TEXT NOT NULL,
     input_json TEXT NOT NULL,

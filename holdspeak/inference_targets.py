@@ -22,6 +22,12 @@ TARGET_CONTRACT_VERSION = 1
 PROFILE_ALIAS_VERSION = 1
 THIS_MACHINE_ID = "this_machine"
 PAIRED_DEVICE_ID = "paired_device"
+# HS-131-08 (Sol Amendment 1): the hub-default cloud leg, as a NAMEABLE
+# destination. The historical `auto` provider fell back local->cloud INSIDE one
+# engine, so a receipt could claim the local revision while the cloud endpoint
+# ran. Naming this destination lets the plan freeze that fallback as a real
+# second entry, and a child that uses it says so.
+HUB_DEFAULT_CLOUD_ID = "hub_default_cloud"
 
 # HS-130-01: the ONE terminal, NAMED global placement default. Placement
 # inherits DOWN through the precedence tiers; when every tier is unset this is
@@ -251,6 +257,28 @@ def this_machine_target(
         readiness_state=state,
         readiness_reason=reason,
         deployment=deployment,
+    )
+
+
+def hub_default_cloud_deployment(effective: Any) -> DeploymentIdentity:
+    """The deployment identity of the hub-default cloud leg (HS-131-08).
+
+    ``effective`` is an ``EffectiveEndpoint`` from ``effective_intel_cloud``: the
+    resolved endpoint/model/key-slot the cloud leg would actually use. No
+    credential material enters the identity — only the slot NAME.
+    """
+    base_url = str(getattr(effective, "base_url", "") or "")
+    private = bool(base_url) and _private_endpoint(base_url)
+    return DeploymentIdentity(
+        destination_id=HUB_DEFAULT_CLOUD_ID,
+        kind="private_endpoint" if private else "external_service",
+        engine="openai_compatible",
+        model=str(getattr(effective, "model", "") or ""),
+        node="",
+        boundary="private_network" if private else "external_service",
+        model_path=None,
+        endpoint=base_url,
+        secret_slot=str(getattr(effective, "api_key_env", "") or ""),
     )
 
 
@@ -549,14 +577,59 @@ def target_runtime_error(target: InferenceTarget, error: Any) -> str:
     return f"Destination '{target.name}' refused the run: {detail}"
 
 
+def local_pinned_meeting_intel(model_path: Optional[str] = None) -> Any:
+    """The same-device engine with the intra-engine `auto` fallback DISABLED.
+
+    The configured constructor is the long-standing injectable host-adapter seam,
+    so it is still used; any provider-bearing adapter it returns is then pinned to
+    ``local``. A same-device deployment therefore cannot silently become a
+    cross-boundary cloud run (HS-131-08): the cloud leg is a separately named
+    deployment revision and a separately admitted child.
+    """
+    from .config import Config
+    from .intel.engine import MeetingIntel
+    from .intel.mesh_relay import MeshRelayIntel
+    from .intel.providers import build_configured_meeting_intel
+
+    configured = build_configured_meeting_intel()
+    if not isinstance(configured, MeshRelayIntel):
+        if hasattr(configured, "provider"):
+            configured.provider = "local"
+        if hasattr(configured, "_active_provider"):
+            configured._active_provider = None
+        return configured
+    # A mesh default is never reused for a same-device choice: load exactly the
+    # local model this deployment named.
+    kwargs: dict[str, Any] = {"provider": "local"}
+    path = model_path or getattr(Config.load().meeting, "intel_realtime_model", None)
+    if path:
+        kwargs["model_path"] = path
+    return MeetingIntel(**kwargs)
+
+
 def build_intel_for_revision(revision: Any, *, warrant: Any = None) -> Any:
     """Construct from an admitted revision, never a mutable profile row.
 
     The established profile builder owns engine-specific behavior (notably mesh
     adapters and exact provider configuration). It receives only frozen values
     from the revision; it never receives or reads the editable profile record.
+
+    ``this_machine`` is pinned LOCAL and the hub-default cloud leg is built from
+    its own named revision, so a revision is never a lie about where the run went
+    (HS-131-08, Sol Amendment 1).
     """
+    from .intel.engine import MeetingIntel
     from .intel.providers import build_configured_meeting_intel, build_meeting_intel_for_profile
+
+    if revision.destination_id == HUB_DEFAULT_CLOUD_ID:
+        return MeetingIntel(
+            provider="cloud",
+            cloud_model=revision.model,
+            cloud_api_key_env=revision.secret_slot,
+            cloud_base_url=revision.endpoint or None,
+        )
+    if revision.destination_id == THIS_MACHINE_ID:
+        return local_pinned_meeting_intel(revision.model_path)
 
     profile_kind = {
         "mesh_node": "meshNode",
@@ -565,8 +638,6 @@ def build_intel_for_revision(revision: Any, *, warrant: Any = None) -> Any:
         "this_device": "onDevice",
         "paired_device": "desktop",
     }.get(revision.kind)
-    if revision.destination_id == THIS_MACHINE_ID:
-        return build_configured_meeting_intel()
     if profile_kind is not None and revision.destination_id:
         return build_meeting_intel_for_profile(
             kind=profile_kind,
@@ -590,7 +661,6 @@ def build_intel_for_target(target: InferenceTarget, db: Any) -> Any:
     ``auto`` provider, because doing so could turn a same-device choice into an
     invisible cross-boundary fallback.
     """
-    from .config import Config
     from .intel.engine import MeetingIntel
     from .intel.providers import build_configured_meeting_intel
 
@@ -608,28 +678,9 @@ def build_intel_for_target(target: InferenceTarget, db: Any) -> Any:
 
     if target.kind == "this_device":
         # Preserve the long-standing injectable constructor seam used by host
-        # integrations, then pin real MeetingIntel instances to local. A mesh
-        # default is never reused for a same-device choice.
-        configured = build_configured_meeting_intel()
-        from .intel.mesh_relay import MeshRelayIntel
-
-        if not isinstance(configured, MeshRelayIntel):
-            # MeetingIntel and injected host adapters share this constructor
-            # seam. Pin any provider-bearing adapter locally before returning.
-            if hasattr(configured, "provider"):
-                configured.provider = "local"
-            if hasattr(configured, "_active_provider"):
-                configured._active_provider = None
-            return configured
-        # Load exactly the local model this deployment named (== the configured
-        # meeting model), so execution matches readiness and the receipt.
-        kwargs = {"provider": "local"}
-        model_path = deployment_model_path or getattr(
-            Config.load().meeting, "intel_realtime_model", None
-        )
-        if model_path:
-            kwargs["model_path"] = model_path
-        return MeetingIntel(**kwargs)
+        # integrations, then pin it to local (the ONE same-device pinning rule,
+        # shared with `build_intel_for_revision`).
+        return local_pinned_meeting_intel(deployment_model_path)
     if target.kind == "paired_device" and target.profile_id is None:
         return build_configured_meeting_intel()
     if target.deployment is not None:

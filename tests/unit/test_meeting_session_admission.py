@@ -1,0 +1,701 @@
+"""HS-131-08 Part A: live meeting intelligence is admitted per session.
+
+One authenticated ``meeting.session`` parent over one frozen
+``MeetingIntelPlan@1``; every ACTUAL provider dispatch during the live session
+is one trusted ``inference.invoke@1`` child. A start with no authenticated
+principal records without admitting anything. No transcript ever reaches the
+kernel journal.
+
+Only the admitted provider constructor is faked; the plan, the parent, the
+runner, the projections, and the receipts are production code.
+"""
+
+from __future__ import annotations
+
+import json
+from pathlib import Path
+from typing import Any, Iterator
+
+import pytest
+
+from holdspeak.db import Database
+from holdspeak.intel import ActionItem, IntelResult
+from holdspeak.kernel.runtime import _configure
+from holdspeak.meeting_session.intel_plan import (
+    CAPABILITY_AUTO_TITLE,
+    CAPABILITY_BOOKMARK_LABEL,
+    CAPABILITY_DEFERRED_ANALYSIS,
+    CAPABILITY_LIVE_ANALYSIS,
+    CAPABILITY_NOT_PLANNED,
+    MeetingIntelRefused,
+    PRINCIPAL_REQUIRED,
+)
+from holdspeak.meeting_session.models import Bookmark, TranscriptSegment
+from holdspeak.principals import Principal, PrincipalKind
+
+pytestmark = pytest.mark.timeout(60, method="signal")
+
+OWNER = Principal(PrincipalKind.OWNER, "meeting-owner")
+SENTINEL = "PINEAPPLEQUARTERLYSECRET"
+
+
+class FakeIntel:
+    """The one faked seam: the engine the admitted deployment revision builds."""
+
+    active_provider = "test-provider"
+    active_model = "test-model"
+
+    def __init__(self) -> None:
+        self.analyzed: list[str] = []
+        self.labels: list[dict[str, str]] = []
+        self.titles: list[str] = []
+        self.result = IntelResult(
+            topics=["Budget"],
+            action_items=[ActionItem(task="Send the deck", owner="Me")],
+            summary="The team reviewed the budget.",
+            raw_response="{}",
+        )
+
+    def analyze(self, transcript: str, *, stream: bool = False) -> Iterator[Any]:
+        self.analyzed.append(transcript)
+        if not stream:
+            return self.result
+
+        def generate() -> Iterator[Any]:
+            yield '{"topics":'
+            yield ' ["Budget"]}'
+            yield self.result
+
+        return generate()
+
+    def generate_bookmark_label_with_context(self, *, local_context: str, meeting_summary: str) -> str:
+        self.labels.append({"context": local_context, "summary": meeting_summary})
+        return "Budget decision"
+
+    def generate_title(self, transcript: str) -> str:
+        self.titles.append(transcript)
+        return "Quarterly budget review"
+
+
+class FakeRecorder:
+    def __init__(self, **kwargs: Any) -> None:
+        self.started = False
+
+    def start(self) -> None:
+        self.started = True
+
+    def stop(self) -> tuple[list[Any], list[Any]]:
+        return [], []
+
+    def get_pending_chunks(self, since: float = 0.0) -> tuple[list[Any], list[Any]]:
+        return [], []
+
+    def get_pending_device_chunks(self) -> list[Any]:
+        return []
+
+
+class FakeJournal:
+    def __init__(self, meeting_id: str) -> None:
+        self.meeting_id = meeting_id
+
+    def append(self, *args: Any, **kwargs: Any) -> None:
+        return None
+
+    def finalize(self) -> None:
+        return None
+
+    def mark_recoverable(self, reason: str) -> None:
+        return None
+
+
+def _rig(tmp_path: Path, monkeypatch, *, principal: Any = OWNER, intel_enabled: bool = True):
+    """Build a real database + broker + MeetingSession with a fake provider."""
+    db = Database(tmp_path / "meeting.db")
+    monkeypatch.setattr("holdspeak.db.get_database", lambda: db)
+    broker = _configure(db)
+    engine = FakeIntel()
+
+    # `build_intel_for_revision` resolves `this_machine` through this builder, so
+    # the production revision -> engine path is exercised, not bypassed.
+    monkeypatch.setattr("holdspeak.intel.providers.build_configured_meeting_intel", lambda: engine)
+    monkeypatch.setattr("holdspeak.meeting_session.session.MeetingRecorder", FakeRecorder)
+    monkeypatch.setattr("holdspeak.meeting_capture_journal.MeetingCaptureJournal", FakeJournal)
+    monkeypatch.setattr(
+        "holdspeak.meeting_session.session.get_intel_runtime_status", lambda *a, **k: (True, None)
+    )
+    monkeypatch.setattr(
+        "holdspeak.meeting_session.session.resolve_intel_provider", lambda *a, **k: ("local", None)
+    )
+    monkeypatch.setattr("holdspeak.meeting_session.session.MeetingIntel", lambda **kwargs: engine)
+
+    requests: list[Any] = []
+    real_invoke = broker.inference_runner.invoke
+
+    def observed_invoke(request, *args, **kwargs):
+        requests.append(request)
+        return real_invoke(request, *args, **kwargs)
+
+    monkeypatch.setattr(broker.inference_runner, "invoke", observed_invoke)
+
+    from holdspeak.meeting_session import MeetingSession
+
+    class _Transcriber:
+        model_name = "test-model"
+
+        def transcribe(self, *args: Any, **kwargs: Any) -> str:
+            return ""
+
+    session = MeetingSession(
+        _Transcriber(),  # type: ignore[arg-type]
+        intel_enabled=intel_enabled,
+        intel_deferred_enabled=True,
+        principal=principal,
+    )
+    return db, broker, session, engine, requests
+
+
+def _parent_rows(db: Database) -> list[dict[str, Any]]:
+    with db._connection() as conn:
+        return [dict(row) for row in conn.execute("SELECT * FROM kernel_parent_runs")]
+
+
+def _operations(db: Database, *, name: str = "") -> list[dict[str, Any]]:
+    query = "SELECT * FROM kernel_operations"
+    parameters: tuple[Any, ...] = ()
+    if name:
+        query += " WHERE name=?"
+        parameters = (name,)
+    with db._connection() as conn:
+        return [dict(row) for row in conn.execute(query + " ORDER BY created_at", parameters)]
+
+
+def _add_segment(session: Any, text: str, start: float) -> None:
+    session._state.segments.append(
+        TranscriptSegment(text=text, speaker="Me", start_time=start, end_time=start + 5.0)
+    )
+
+
+# --------------------------------------------------------------- the parent
+
+
+def test_start_admits_one_authenticated_parent_over_a_frozen_plan(tmp_path, monkeypatch):
+    db, broker, session, _, _ = _rig(tmp_path, monkeypatch)
+    state = session.start()
+
+    rows = _parent_rows(db)
+    assert len(rows) == 1
+    parent = rows[0]
+    assert parent["kind"] == "meeting.session"
+    assert parent["definition_ref"] == f"meeting:{state.id}:intel"
+    assert parent["state"] == "OPEN"
+    assert parent["child_budget"] == 4096
+
+    plan = session._intel_plan
+    assert plan is not None
+    # The immutable definition revision IS the plan hash.
+    assert parent["definition_revision"] == plan.sha256
+    assert plan.deadline_at - plan.created_at == pytest.approx(12 * 60 * 60, abs=1)
+
+    operation = _operations(db, name="meeting.session")
+    assert len(operation) == 1
+    assert operation[0]["principal_kind"] == "owner"
+    assert operation[0]["principal_identity"] == "meeting-owner"
+    assert operation[0]["idempotency_key"] == f"meeting-intel-session:{state.id}"
+
+    # Every capability names an ORDERED set of frozen deployment revisions, and
+    # each entry really exists in `deployment_revisions`.
+    for capability in (
+        CAPABILITY_LIVE_ANALYSIS,
+        CAPABILITY_BOOKMARK_LABEL,
+        CAPABILITY_AUTO_TITLE,
+        CAPABILITY_DEFERRED_ANALYSIS,
+    ):
+        revisions = plan.revisions(capability)
+        assert revisions and all(str(item).startswith("dep_") for item in revisions)
+        with db._connection() as conn:
+            found = conn.execute(
+                "SELECT id FROM deployment_revisions WHERE id=?", (revisions[0],)
+            ).fetchone()
+        assert found is not None, capability
+        assert plan.assert_planned(capability, revisions[0]) == revisions[0]
+
+    # The durable parent snapshot is hashes, ids, and capability names only.
+    snapshot = json.loads(parent["input_json"])
+    assert snapshot["plan_sha256"] == plan.sha256
+    assert set(snapshot["capabilities"]) == set(plan.capabilities)
+    assert "transcript" not in json.dumps(snapshot).lower()
+
+
+def test_device_start_without_principal_refuses_intelligence_and_still_records(tmp_path, monkeypatch):
+    db, broker, session, engine, requests = _rig(tmp_path, monkeypatch, principal=None)
+    state = session.start()
+
+    # Recording is unaffected.
+    assert state.capture_status == "recording"
+    assert session._recorder is not None
+
+    # Intelligence is refused by name; no OWNER principal was synthesized.
+    assert state.intel_status == "refused"
+    assert PRINCIPAL_REQUIRED in str(state.intel_status_detail)
+    assert session.intel_enabled is False
+    assert session._intel is None
+    assert session._intel_parent is None
+
+    # ZERO kernel operations exist.
+    assert _parent_rows(db) == []
+    assert _operations(db) == []
+    assert requests == []
+    assert engine.analyzed == []
+
+
+# --------------------------------------------------------------- live windows
+
+
+def test_two_model_windows_admit_two_distinct_children_and_empty_window_admits_none(tmp_path, monkeypatch):
+    db, broker, session, engine, requests = _rig(tmp_path, monkeypatch)
+    session.start()
+    parent_id = session.intel_session_operation_id()
+
+    _add_segment(session, f"First window about {SENTINEL}", 0.0)
+    session._run_intel_analysis()
+    _add_segment(session, "Second window with more detail", 10.0)
+    session._run_intel_analysis()
+
+    children = [row for row in _operations(db, name="inference.invoke") if row["parent_operation_id"] == parent_id]
+    assert len(children) == 2
+    assert len({row["native_id"] for row in children}) == 2
+    assert all(broker.store.receipt(row["operation_id"])["outcome"] == "succeeded" for row in children)
+    assert len(engine.analyzed) == 2
+    assert [request.definition_origin.contract for request in requests] == [
+        "holdspeak.meeting-live-analysis",
+        "holdspeak.meeting-live-analysis",
+    ]
+    # Each child repeats the exact plan-selected revision for its capability.
+    planned = session._intel_plan.primary(CAPABILITY_LIVE_ANALYSIS)
+    assert {request.deployment_revision for request in requests} == {planned}
+    # The earned result reached meeting state only through the staged projection.
+    assert session._state.intel is not None
+    assert session._state.intel_status == "ready"
+
+    # An empty window is not model work: it admits nothing.
+    session._state.segments.clear()
+    session._run_intel_analysis()
+    still = [row for row in _operations(db, name="inference.invoke") if row["parent_operation_id"] == parent_id]
+    assert len(still) == 2
+    assert len(engine.analyzed) == 2
+
+
+def test_already_running_window_is_skipped_without_admitting(tmp_path, monkeypatch):
+    _db, _broker, session, engine, requests = _rig(tmp_path, monkeypatch)
+    session.start()
+    _add_segment(session, "Some discussion", 0.0)
+
+    class _AliveThread:
+        def is_alive(self) -> bool:
+            return True
+
+    session._intel_thread = _AliveThread()  # type: ignore[assignment]
+    session._maybe_run_intel()
+    assert requests == []
+    assert engine.analyzed == []
+
+
+def test_cancelled_parent_refuses_the_next_window_before_any_provider_call(tmp_path, monkeypatch):
+    db, broker, session, engine, requests = _rig(tmp_path, monkeypatch)
+    session.start()
+    parent = session._intel_parent
+    _add_segment(session, "First window", 0.0)
+    session._run_intel_analysis()
+    assert len(engine.analyzed) == 1
+
+    broker.parent_run_controller.cancel(parent.context, OWNER)
+
+    _add_segment(session, "Window after cancellation", 10.0)
+    session._run_intel_analysis()
+
+    # The second window was refused at admission: no operation, no provider call.
+    assert len(engine.analyzed) == 1
+    assert len(_operations(db, name="inference.invoke")) == 1
+    assert session._state.intel_status == "refused"
+    detail = str(session._state.intel_status_detail)
+    assert any(
+        reason in detail for reason in ("parent_context_invalid", "parent_operation_not_running")
+    ), detail
+
+
+# ----------------------------------------------------------- absorbed seams
+
+
+def test_bookmark_label_and_auto_title_run_as_session_children(tmp_path, monkeypatch):
+    db, broker, session, engine, requests = _rig(tmp_path, monkeypatch)
+    session.start()
+    parent_id = session.intel_session_operation_id()
+    _add_segment(session, "We agreed to cut the travel budget", 0.0)
+    session._state.bookmarks.append(Bookmark(timestamp=2.0, label="Bookmark 1"))
+
+    session._refine_bookmark_labels("The team reviewed the budget.")
+    _, projection, _ = session._admitted_auto_title("We agreed to cut the travel budget")
+
+    assert engine.labels and engine.titles
+    assert session._state.bookmarks[0].label == "Budget decision"
+    assert str((projection or {}).get("title")) == "Quarterly budget review"
+
+    contracts = [request.definition_origin.contract for request in requests]
+    assert contracts == ["holdspeak.meeting-bookmark-label", "holdspeak.meeting-auto-title"]
+    children = [row for row in _operations(db, name="inference.invoke") if row["parent_operation_id"] == parent_id]
+    assert len(children) == 2
+    assert all(broker.store.receipt(row["operation_id"])["outcome"] == "succeeded" for row in children)
+
+
+def test_capability_absent_from_the_plan_refuses_with_no_direct_dispatch(tmp_path, monkeypatch):
+    from dataclasses import replace
+
+    _db, _broker, session, engine, requests = _rig(tmp_path, monkeypatch)
+    session.start()
+    plan = session._intel_plan
+    reduced = {
+        name: value for name, value in plan.capabilities.items() if name != CAPABILITY_AUTO_TITLE
+    }
+    session._intel_plan = replace(plan, capabilities=reduced)
+
+    with pytest.raises(MeetingIntelRefused) as refusal:
+        session._admitted_auto_title("Anything at all")
+    assert refusal.value.reason == CAPABILITY_NOT_PLANNED
+    assert refusal.value.capability == CAPABILITY_AUTO_TITLE
+    assert engine.titles == []
+    assert requests == []
+
+
+# ------------------------------- Amendment 1: the frozen `auto` cloud fallback
+
+
+class _AutoConfig:
+    """A meeting config with no adopted destination and the `auto` intent."""
+
+    intel_enabled = True
+    intel_provider = "auto"
+    intel_profile_id = ""
+    intel_deferred_enabled = True
+    intel_realtime_model = ""
+    disabled_plugins: list[str] = []
+    intel_cloud_reasoning_effort = None
+    intel_cloud_store = False
+
+
+def _freeze_auto_plan(db: Database, *, cloud: bool, monkeypatch) -> Any:
+    from holdspeak.intel import providers as providers_module
+    from holdspeak.meeting_session.intel_plan import freeze_meeting_intel_plan
+
+    monkeypatch.setattr(
+        providers_module,
+        "get_cloud_intel_runtime_status",
+        lambda **kwargs: (True, None) if cloud else (False, "Missing API key in $OPENAI_API_KEY"),
+    )
+    return freeze_meeting_intel_plan(
+        db,
+        meeting_id="m-auto",
+        capabilities=(CAPABILITY_LIVE_ANALYSIS,),
+        deadline_at=9e9,
+        child_budget=8,
+        meeting_config=_AutoConfig(),
+    )
+
+
+def _revision_rows(db: Database, revision_ids: tuple[str, ...]) -> list[dict[str, Any]]:
+    with db._connection() as conn:
+        return [
+            dict(
+                conn.execute(
+                    "SELECT * FROM deployment_revisions WHERE id=?", (revision_id,)
+                ).fetchone()
+            )
+            for revision_id in revision_ids
+        ]
+
+
+def test_auto_placement_freezes_the_cloud_fallback_as_a_real_second_entry(tmp_path, monkeypatch):
+    """The internal local->cloud retarget becomes a NAMED second plan entry."""
+    from holdspeak.inference_targets import HUB_DEFAULT_CLOUD_ID, THIS_MACHINE_ID
+
+    db = Database(tmp_path / "auto.db")
+    plan = _freeze_auto_plan(db, cloud=True, monkeypatch=monkeypatch)
+
+    entries = plan.revisions(CAPABILITY_LIVE_ANALYSIS)
+    assert len(entries) == 2, entries
+    rows = _revision_rows(db, entries)
+    assert rows[0]["destination_id"] == THIS_MACHINE_ID
+    assert rows[1]["destination_id"] == HUB_DEFAULT_CLOUD_ID
+    assert rows[1]["engine"] == "openai_compatible"
+    assert rows[1]["boundary"] == "external_service"
+    assert rows[1]["model"], "the frozen cloud leg must name the model it would use"
+    # No credential material is ever frozen — only the slot NAME.
+    assert rows[1]["secret_slot"] and "sk-" not in str(rows[1]["secret_slot"])
+
+    placement = plan.placement(CAPABILITY_LIVE_ANALYSIS)
+    assert placement["auto_cloud_fallback"] == "frozen"
+    assert placement["internal_provider_fallback"] is False
+    assert placement["auto_cloud_fallback_boundary"] == "external_service"
+    # Both entries are selectable by a child; neither is resolved late.
+    for entry in entries:
+        assert plan.assert_planned(CAPABILITY_LIVE_ANALYSIS, entry) == entry
+
+
+def test_auto_placement_with_an_unreachable_cloud_leg_keeps_one_entry_and_pins_local(tmp_path, monkeypatch):
+    """With no reachable cloud leg the list stays ONE entry and nothing retargets."""
+    from holdspeak.deployment_revisions import resolve_deployment_revision
+    from holdspeak.inference_targets import build_intel_for_revision
+
+    db = Database(tmp_path / "auto-nocloud.db")
+    plan = _freeze_auto_plan(db, cloud=False, monkeypatch=monkeypatch)
+
+    entries = plan.revisions(CAPABILITY_LIVE_ANALYSIS)
+    assert len(entries) == 1, entries
+    placement = plan.placement(CAPABILITY_LIVE_ANALYSIS)
+    assert placement["auto_cloud_fallback"] == "unconfigured"
+    assert "Missing API key" in placement["auto_cloud_fallback_reason"]
+    assert placement["internal_provider_fallback"] is False
+
+    # ...and the engine built from that ONE entry has its intra-engine `auto`
+    # fallback disabled: the provider is pinned local, so it cannot silently
+    # reach the cloud endpoint under a receipt naming this_machine.
+    class _AutoEngine:
+        def __init__(self) -> None:
+            self.provider = "auto"
+            self._active_provider = "cloud"
+
+    engine = _AutoEngine()
+    monkeypatch.setattr(
+        "holdspeak.intel.providers.build_configured_meeting_intel", lambda: engine
+    )
+    built = build_intel_for_revision(resolve_deployment_revision(db, entries[0]))
+    assert built is engine
+    assert built.provider == "local"
+    assert built._active_provider is None
+
+
+def test_a_failed_local_entry_admits_a_second_child_naming_the_cloud_revision(tmp_path, monkeypatch):
+    """A provider failure on entry 1 runs entry 2 as its OWN admitted child."""
+    from holdspeak.inference_targets import HUB_DEFAULT_CLOUD_ID
+
+    db, broker, session, engine, requests = _rig(tmp_path, monkeypatch)
+    session.start()
+    parent_id = session.intel_session_operation_id()
+
+    # The live parent stays exactly as admitted; only the plan is re-frozen (by
+    # production code) so the `auto` path's two entries are in play.
+    plan = _freeze_auto_plan(db, cloud=True, monkeypatch=monkeypatch)
+    from dataclasses import replace
+
+    session._intel_plan = replace(plan, meeting_id=session._state.id)
+    entries = session._intel_plan.revisions(CAPABILITY_LIVE_ANALYSIS)
+    assert len(entries) == 2
+
+    # Entry 1 (this_machine) fails at the provider; entry 2 is a distinct cloud
+    # engine built from the cloud revision.
+    cloud = FakeIntel()
+    monkeypatch.setattr("holdspeak.intel.engine.MeetingIntel", lambda **kwargs: cloud)
+
+    def explode(transcript: str, *, stream: bool = False):
+        raise RuntimeError("local engine is out of memory")
+
+    monkeypatch.setattr(engine, "analyze", explode)
+
+    _add_segment(session, "A window that fails locally", 0.0)
+    session._run_intel_analysis()
+
+    # TWO children, each naming the entry it really used, at distinct attempts.
+    assert [request.deployment_revision for request in requests] == [entries[0], entries[1]]
+    assert [request.attempt_ordinal for request in requests] == [1, 2]
+    assert len({request.invocation_id for request in requests}) == 2
+    children = [
+        row for row in _operations(db, name="inference.invoke")
+        if row["parent_operation_id"] == parent_id
+    ]
+    assert len(children) == 2
+    assert [broker.store.receipt(row["operation_id"])["outcome"] for row in children] == [
+        "failed",
+        "succeeded",
+    ]
+    # The cloud engine is the one that actually ran the second attempt.
+    assert cloud.analyzed and "fails locally" in cloud.analyzed[0]
+    with db._connection() as conn:
+        row = dict(conn.execute(
+            "SELECT * FROM deployment_revisions WHERE id=?", (entries[1],)
+        ).fetchone())
+    assert row["destination_id"] == HUB_DEFAULT_CLOUD_ID
+    # The earned result published, and it published under the cloud entry.
+    assert session._state.intel is not None
+    assert session._state.intel_status == "ready"
+
+
+def _error_window(message: str):
+    """A streaming window whose engine RETURNS a provider error result."""
+
+    def analyze(transcript: str, *, stream: bool = False):
+        result = IntelResult(
+            topics=[], action_items=[], summary="", raw_response="", error=message
+        )
+        if not stream:
+            return result
+
+        def generate() -> Iterator[Any]:
+            yield '{"topics":'
+            yield result
+
+        return generate()
+
+    return analyze
+
+
+def _auto_two_entry_session(tmp_path, monkeypatch):
+    """A live session whose live-analysis capability has TWO frozen entries."""
+    from dataclasses import replace
+
+    db, broker, session, engine, requests = _rig(tmp_path, monkeypatch)
+    session.start()
+    plan = _freeze_auto_plan(db, cloud=True, monkeypatch=monkeypatch)
+    session._intel_plan = replace(plan, meeting_id=session._state.id)
+    entries = session._intel_plan.revisions(CAPABILITY_LIVE_ANALYSIS)
+    assert len(entries) == 2
+    return db, broker, session, engine, requests, entries
+
+
+def test_a_returned_error_result_fails_its_child_and_admits_the_cloud_entry(tmp_path, monkeypatch):
+    """A provider failure the engine RETURNS is a failure, not a `succeeded` child.
+
+    An ``IntelResult`` carrying ``.error`` is the domain's established way to say
+    "the provider failed" (``intel_analysis`` defers on it, the queue retries on
+    it). It must therefore close its child ``failed`` — sanitized — and let the
+    frozen cloud entry take its own admitted attempt.
+    """
+    db, broker, session, engine, requests, entries = _auto_two_entry_session(tmp_path, monkeypatch)
+    parent_id = session.intel_session_operation_id()
+
+    cloud = FakeIntel()
+    monkeypatch.setattr("holdspeak.intel.engine.MeetingIntel", lambda **kwargs: cloud)
+    monkeypatch.setattr(engine, "analyze", _error_window(f"local engine said {SENTINEL}"))
+
+    _add_segment(session, "A window whose local engine returns an error", 0.0)
+    session._run_intel_analysis()
+
+    # Two children, each naming the entry it really used, at distinct attempts.
+    assert [request.deployment_revision for request in requests] == [entries[0], entries[1]]
+    assert [request.attempt_ordinal for request in requests] == [1, 2]
+    children = [
+        row for row in _operations(db, name="inference.invoke")
+        if row["parent_operation_id"] == parent_id
+    ]
+    receipts = [broker.store.receipt(row["operation_id"]) for row in children]
+    assert [receipt["outcome"] for receipt in receipts] == ["failed", "succeeded"]
+    # The cloud engine ran the second attempt and ITS result is the domain result.
+    assert cloud.analyzed and "returns an error" in cloud.analyzed[0]
+    assert session._state.intel is not None
+    assert session._state.intel.summary == cloud.result.summary
+    assert session._state.intel_status == "ready"
+    # No provider text reached the journal rows.
+    with db._connection() as conn:
+        rows = [dict(row) for row in conn.execute("SELECT * FROM kernel_receipts")]
+        rows += [dict(row) for row in conn.execute("SELECT * FROM kernel_operations")]
+        rows += [dict(row) for row in conn.execute("SELECT * FROM kernel_journal")]
+    for row in rows:
+        assert SENTINEL not in json.dumps(row, default=str)
+
+
+def test_a_one_entry_plan_fails_its_child_sanitized_and_still_returns_the_error_result(tmp_path, monkeypatch):
+    """One frozen entry: the child fails by NAME, the caller still reads `.error`."""
+    from holdspeak.meeting_session.intel_admission import CONTRACT_LIVE_ANALYSIS
+
+    db, _broker, session, engine, _requests = _rig(tmp_path, monkeypatch)
+    session.start()
+    assert len(session._intel_plan.revisions(CAPABILITY_LIVE_ANALYSIS)) == 1
+    monkeypatch.setattr(engine, "analyze", _error_window(f"provider said {SENTINEL}"))
+    _add_segment(session, "One entry, one error result", 0.0)
+
+    session._current_analysis_id = "a1"
+    outcome, projection, result = session._admitted_live_window(
+        session.get_formatted_transcript(), final=False, analysis_id="a1"
+    )
+    assert outcome.outcome == "failed"
+    # Sanitized: contract + classification, never the provider's own words.
+    assert outcome.error == f"{CONTRACT_LIVE_ANALYSIS}:provider_error_result"
+    assert SENTINEL not in str(outcome.error)
+    assert projection is None
+    # ...and the pre-existing domain vocabulary is intact: the returned result
+    # still carries the provider's error for the deferral/queue paths to read.
+    assert result is not None and SENTINEL in str(result.error)
+
+
+def test_error_results_on_every_frozen_entry_fail_both_children_and_defer(tmp_path, monkeypatch):
+    """Exhausting the entries keeps the caller's existing error vocabulary."""
+    db, broker, session, engine, requests, _entries = _auto_two_entry_session(tmp_path, monkeypatch)
+    parent_id = session.intel_session_operation_id()
+
+    cloud = FakeIntel()
+    monkeypatch.setattr("holdspeak.intel.engine.MeetingIntel", lambda **kwargs: cloud)
+    monkeypatch.setattr(engine, "analyze", _error_window("local engine is out of memory"))
+    monkeypatch.setattr(cloud, "analyze", _error_window("cloud endpoint returned 503"))
+
+    _add_segment(session, "A window that fails at both entries", 0.0)
+    session._run_intel_analysis()
+
+    children = [
+        row for row in _operations(db, name="inference.invoke")
+        if row["parent_operation_id"] == parent_id
+    ]
+    assert len(children) == 2
+    assert [broker.store.receipt(row["operation_id"])["outcome"] for row in children] == [
+        "failed",
+        "failed",
+    ]
+    assert len(requests) == 2
+    # ...and the live session takes its PRE-EXISTING deferral path, with the
+    # provider's own reason, exactly as a returned error result always did.
+    assert session._state.intel is None
+    assert session._state.intel_status == "queued"
+    assert "cloud endpoint returned 503" in str(session._state.intel_status_detail)
+    assert session._state.intel_completed_at is None
+
+
+# ------------------------------------------------------------ journal hygiene
+
+
+def test_no_transcript_material_reaches_the_kernel_journal(tmp_path, monkeypatch):
+    db, broker, session, engine, _requests = _rig(tmp_path, monkeypatch)
+    session.start()
+    _add_segment(session, f"The revenue number is {SENTINEL}", 0.0)
+    session._state.bookmarks.append(Bookmark(timestamp=1.0, label="Bookmark 1"))
+
+    # (1) success + bookmark label, (2) auto title
+    session._run_intel_analysis(final=True)
+    session._admitted_auto_title(f"Closing note: {SENTINEL}")
+
+    # (3) a provider FAILURE whose exception text quotes the transcript
+    def explode(transcript: str, *, stream: bool = False):
+        raise RuntimeError(f"endpoint echoed: {transcript}")
+
+    monkeypatch.setattr(engine, "analyze", explode)
+    _add_segment(session, f"More about {SENTINEL}", 10.0)
+    session._run_intel_analysis()
+    assert SENTINEL not in str(session._state.intel_status_detail)
+
+    # (4) a REFUSED window under a cancelled parent
+    session._intel = engine
+    broker.parent_run_controller.cancel(session._intel_parent.context, OWNER)
+    _add_segment(session, f"Even more {SENTINEL}", 20.0)
+    session._run_intel_analysis()
+
+    # The provider really received the material...
+    assert any(SENTINEL in text for text in engine.analyzed)
+    assert any(SENTINEL in text for text in engine.titles)
+
+    # ...and no kernel operation or receipt row carries it.
+    with db._connection() as conn:
+        operations = [dict(row) for row in conn.execute("SELECT * FROM kernel_operations")]
+        receipts = [dict(row) for row in conn.execute("SELECT * FROM kernel_receipts")]
+        events = [dict(row) for row in conn.execute("SELECT * FROM kernel_journal")]
+    # Success, failure, and cancellation receipts are all represented.
+    outcomes = {str(row["outcome"]) for row in receipts}
+    assert {"succeeded", "failed"} <= outcomes, outcomes
+    assert operations and receipts
+    for row in operations + receipts + events:
+        assert SENTINEL not in json.dumps(row, default=str)

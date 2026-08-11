@@ -59,6 +59,7 @@ from .models import (
     _iso_or_none,
 )
 
+from .intel_admission import IntelAdmissionMixin
 from .intel_analysis import IntelAnalysisMixin
 from .mutations import MeetingMutationsMixin
 from .persistence import PersistenceMixin
@@ -68,6 +69,7 @@ from .bookmarks import BookmarkViewsMixin
 
 class MeetingSession(
     TranscribeLoopMixin,
+    IntelAdmissionMixin,
     IntelAnalysisMixin,
     PersistenceMixin,
     MeetingMutationsMixin,
@@ -123,6 +125,7 @@ class MeetingSession(
         mir_synthesize: bool = False,
         mir_disabled_plugins: Optional[list[str]] = None,
         mir_segment_probe: Optional[Any] = None,
+        principal: Optional[Any] = None,
     ) -> None:
         """Initialize meeting session.
 
@@ -174,6 +177,19 @@ class MeetingSession(
         self.cloud_reasoning_effort = cloud_reasoning_effort
         self.cloud_store = cloud_store
         self.intel_deferred_enabled = intel_deferred_enabled
+        # HS-131-08: the authenticated principal live meeting intelligence is
+        # admitted under. ``None`` (device/auto start with no issued principal)
+        # keeps recording available and refuses intelligence by name — an OWNER
+        # principal is NEVER synthesized here.
+        self.intel_principal = principal
+        self._intel_plan: Optional[Any] = None
+        self._intel_parent: Optional[Any] = None
+        self._intel_refusal: str = ""
+        # Once the live parent is closed it is never revived: a later dispatch
+        # attempt is refused by name, not silently re-admitted (HS-131-08).
+        self._intel_closed: bool = False
+        # The structured work the stop handoff displaced onto the deferred job.
+        self._intel_displaced_work: tuple[str, ...] = ()
         self.diarization_enabled = diarization_enabled and SpeakerDiarizer is not None
         self.diarize_mic = diarize_mic and SpeakerDiarizer is not None
         self.cross_meeting_recognition = cross_meeting_recognition
@@ -394,9 +410,22 @@ class MeetingSession(
         *,
         requested_at: Optional[datetime] = None,
         completed_at: Optional[datetime] = None,
+        after_handoff: bool = False,
     ) -> None:
-        """Update meeting intel status while already holding the session lock."""
+        """Update meeting intel status while already holding the session lock.
+
+        HS-131-08 (D4): once ``stop()`` raised the intelligence closed flag, only
+        the handoff itself (``after_handoff=True``) may stamp intel state. A
+        lingering live-analysis thread that comes back later is discarded, so no
+        late `ready`/`error` can overwrite the honest `queued` handoff.
+        """
         if self._state is None:
+            return
+        if getattr(self, "_intel_closed", False) and not after_handoff:
+            log.info(
+                "Discarding late intel status '%s': the stop handoff already fired",
+                status,
+            )
             return
 
         self._state.intel_status = status
@@ -413,6 +442,7 @@ class MeetingSession(
         *,
         requested_at: Optional[datetime] = None,
         completed_at: Optional[datetime] = None,
+        after_handoff: bool = False,
     ) -> None:
         """Update meeting intel status and broadcast it to the web dashboard."""
         with self._lock:
@@ -421,6 +451,7 @@ class MeetingSession(
                 detail,
                 requested_at=requested_at,
                 completed_at=completed_at,
+                after_handoff=after_handoff,
             )
             state = self._state
 
@@ -450,7 +481,15 @@ class MeetingSession(
                 provenance="desktop",
             )
 
-            if self.intel_enabled:
+            # HS-131-08: admit the ONE authenticated `meeting.session` parent over
+            # a frozen MeetingIntelPlan@1 before any Intel engine exists. A
+            # refusal here disables intelligence with a named status and leaves
+            # recording untouched.
+            self._admit_intel_session()
+
+            if self._intel_refusal:
+                pass  # _admit_intel_session already set the honest named status
+            elif self.intel_enabled:
                 self._state.intel_requested_at = datetime.now()
                 self._state.intel_status = "initializing"
                 self._state.intel_status_detail = "Checking meeting intelligence runtime."
@@ -676,27 +715,13 @@ class MeetingSession(
 
         assert state is not None
 
-        # Run final intel analysis outside the lock. The analysis path calls
-        # back into methods like get_formatted_transcript(), which also use
-        # self._lock.
-        if intel is not None and state.segments:
-            try:
-                self._run_intel_analysis(final=True)
-            except Exception as e:
-                log.error(f"Final intel analysis failed: {e}")
-
-        # Auto-generate title if not manually set.
-        if intel is not None and not state.title and state.segments:
-            try:
-                transcript = "\n".join(str(s) for s in state.segments)
-                title = intel.generate_title(transcript)
-                if title:
-                    with self._lock:
-                        if self._state is not None and not self._state.title:
-                            self._state.title = title
-                    log.info(f"Auto-generated meeting title: {title}")
-            except Exception as e:
-                log.error(f"Auto-title generation failed: {e}")
+        # HS-131-08 (Sol Amendment 2): stop CANCELS the live intelligence parent
+        # first and then DURABLY enqueues the displaced final work before this
+        # method returns. No final provider dispatch happens here any more —
+        # final analysis, bookmark refinement, auto-title, and routed plugin work
+        # all belong to a separately admitted `meeting.deferred-intel-job`.
+        # Nothing may report readiness while that job is still outstanding.
+        displaced = self._handoff_intel_at_stop(state)
 
         # Save speaker embeddings outside the lock because it performs DB I/O.
         if diarizer is not None:
@@ -711,7 +736,15 @@ class MeetingSession(
         # `mir_routing_enabled=True` and a plugin host. Per-stage failures
         # degrade gracefully (MIR-F-012); nothing here can raise into the
         # caller and nothing holds `self._lock`.
-        if self.mir_routing_enabled and self._mir_plugin_host is not None and state.segments:
+        # HS-131-08: when the displaced-work handoff fired, the provider-backed
+        # routing pass is the deferred job's (it runs the admitted plugin chain);
+        # running it here as well would be an unadmitted post-close dispatch.
+        if (
+            not displaced
+            and self.mir_routing_enabled
+            and self._mir_plugin_host is not None
+            and state.segments
+        ):
             try:
                 from ..plugins.pipeline import process_meeting_state as _mir_process
 
@@ -792,6 +825,11 @@ class MeetingSession(
                 final_state.capture_status = "recoverable"
                 final_state.capture_failure = f"Final Meeting checkpoint failed: {exc}"
             log.error(final_state.capture_failure)
+
+        # HS-131-08: the live parent was already cancelled and closed by the
+        # handoff above. This close is the no-parent / never-admitted case only;
+        # it can never turn a cancelled parent into a success.
+        self._close_intel_session("succeeded")
 
         log.info(f"Meeting stopped: {final_state.id}, duration={final_state.format_duration()}")
         return final_state

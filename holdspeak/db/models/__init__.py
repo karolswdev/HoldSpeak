@@ -61,6 +61,10 @@ class IntelJob:
     meeting_title: Optional[str] = None
     started_at: Optional[datetime] = None
     intel_status_detail: Optional[str] = None
+    # HS-131-08: the structured work stop() displaced onto this job (slugs from
+    # `holdspeak.meeting_session.intel_plan.DISPLACED_*`). Empty for an ordinary
+    # deferred job, which runs base analysis and routed plugins only.
+    displaced_work: tuple[str, ...] = ()
 
 
 @dataclass

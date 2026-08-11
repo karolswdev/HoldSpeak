@@ -250,8 +250,8 @@ def test_schema_migrates_v39_to_v40(tmp_path):
 
     migrated = Database(path)
 
-    assert SCHEMA_VERSION == 53
-    assert read_schema_version(path) == 53
+    assert SCHEMA_VERSION == 55
+    assert read_schema_version(path) == 55
     with migrated._connection() as conn:
         assert (
             conn.execute(

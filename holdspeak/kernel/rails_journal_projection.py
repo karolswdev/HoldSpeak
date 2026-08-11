@@ -83,9 +83,12 @@ def materialize(conn: Any, stage: Any, permit: Any) -> dict[str, Any]:
 
 
 def register(stager: Any) -> None:
-    # The three parented service kinds have no checkpoint CAS; the parent
-    # election is their only publication fence.  Rails is a root invocation.
-    for kind in ("rails-journal", "voice-resolver-attempt", "delivery-pr-review", "decision-promotion-draft"):
+    # The parented service kinds have no checkpoint CAS; the parent election is
+    # their only publication fence.  Rails is a root invocation.  The three
+    # meeting kinds are passthrough: their staged projection carries the
+    # authorized meeting output the session applies after the winning receipt.
+    for kind in ("rails-journal", "voice-resolver-attempt", "delivery-pr-review", "decision-promotion-draft",
+                 "meeting-live-window", "meeting-bookmark-label", "meeting-auto-title"):
         try:
             stager.register(kind, materialize, discard_on_parent_cancel=kind != "rails-journal")
         except ValueError:

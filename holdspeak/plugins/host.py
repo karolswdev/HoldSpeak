@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 from concurrent.futures import ThreadPoolExecutor, TimeoutError as FutureTimeoutError
-from collections.abc import Callable
+from collections.abc import Callable, Iterator
+from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import datetime
 import hashlib
@@ -16,6 +17,21 @@ from ..logging_config import get_logger
 from .actuators import ActuatorProposal, ActuatorProposalError
 
 log = get_logger("plugins.host")
+
+#: The named refusal for an ``llm`` plugin that cannot be handed the admitted
+#: engine (HS-131-08). An admitted plugin child names one frozen deployment
+#: revision, so the plugin must run on THAT engine; a plugin with no injection
+#: seam would silently build its own and make the receipt a lie.
+PLUGIN_LLM_ENGINE_NOT_INJECTABLE = "plugin_llm_engine_not_injectable"
+
+
+class PluginEngineNotInjectable(RuntimeError):
+    """Raised when an admitted engine cannot be threaded into an llm plugin."""
+
+    def __init__(self, plugin_id: str) -> None:
+        super().__init__(f"{PLUGIN_LLM_ENGINE_NOT_INJECTABLE}:{plugin_id}")
+        self.reason = PLUGIN_LLM_ENGINE_NOT_INJECTABLE
+
 
 _SENSITIVE_KEY_TOKENS = (
     "api_key",
@@ -120,8 +136,13 @@ class PluginHost:
         enabled_capabilities: set[str] | None = None,
         allow_actuators: bool = False,
         context_providers: list[Callable[[dict[str, Any]], dict[str, Any]]] | None = None,
+        llm_engine: Any = None,
     ) -> None:
         self._plugins: dict[str, HostPlugin] = {}
+        # HS-131-08: the engine an ADMITTED caller built from the frozen
+        # deployment revision its plugin child names. None on every unadmitted
+        # path, where plugins keep resolving their own configured provider.
+        self._llm_engine: Any = llm_engine
         self._default_timeout_seconds = max(0.01, float(default_timeout_seconds))
         self._idempotency_cache: dict[str, PluginRunResult] = {}
         # Reserved for HS-37-04: gates *execution* of an approved actuator
@@ -194,6 +215,46 @@ class PluginHost:
 
     def list_plugins(self) -> list[str]:
         return sorted(self._plugins.keys())
+
+    @contextmanager
+    def bound_llm_engine(self, engine: Any) -> Iterator[Any]:
+        """Bind the ADMITTED engine for the plugin runs inside this block.
+
+        ``engine=None`` is an explicit no-op: unadmitted callers (the live
+        routing pass, the reroute CLI, tests) behave exactly as before.
+        """
+        previous = self._llm_engine
+        if engine is not None:
+            self._llm_engine = engine
+        try:
+            yield self._llm_engine
+        finally:
+            self._llm_engine = previous
+
+    def _wants_llm(self, plugin: HostPlugin) -> bool:
+        return "llm" in {
+            str(cap).strip().lower()
+            for cap in (getattr(plugin, "required_capabilities", None) or [])
+        }
+
+    def _run_plugin(self, plugin: HostPlugin, context: dict[str, Any]) -> Any:
+        """Run one plugin, on the ADMITTED engine when one is bound.
+
+        The engine is threaded into the plugin's provider slot for the duration of
+        this run and then restored, so a bound admitted engine can never leak into
+        a later unadmitted run.
+        """
+        engine = self._llm_engine
+        if engine is None or not self._wants_llm(plugin):
+            return plugin.run(context)
+        if not hasattr(plugin, "_cached_provider"):
+            raise PluginEngineNotInjectable(str(getattr(plugin, "id", "unknown")))
+        previous = plugin._cached_provider  # type: ignore[attr-defined]
+        plugin._cached_provider = engine  # type: ignore[attr-defined]
+        try:
+            return plugin.run(context)
+        finally:
+            plugin._cached_provider = previous  # type: ignore[attr-defined]
 
     def _is_actuator_plugin(self, plugin: HostPlugin) -> bool:
         kind = str(getattr(plugin, "kind", "")).strip().lower()
@@ -474,7 +535,7 @@ class PluginHost:
         started_at = time.monotonic()
 
         executor = ThreadPoolExecutor(max_workers=1)
-        future = executor.submit(plugin.run, dict(context))
+        future = executor.submit(self._run_plugin, plugin, dict(context))
         try:
             raw_output = future.result(timeout=run_timeout)
             duration_ms = (time.monotonic() - started_at) * 1000.0

@@ -95,6 +95,9 @@ class PersistenceMixin:
                     state.id,
                     transcript_hash=state.transcript_hash(),
                     reason=state.intel_status_detail,
+                    # HS-131-08: a save that follows the stop handoff must not
+                    # erase the structured work that handoff displaced.
+                    displaced_work=getattr(self, "_intel_displaced_work", ()) or (),
                 )
                 intel_job_enqueued = True
             log.info(f"Meeting saved to database: {state.id}")

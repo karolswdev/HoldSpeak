@@ -76,6 +76,8 @@ def _build(database: Any, *, clock: Any = None) -> Broker:
     workbench_run = ParentRunCodec("workbench", **({"clock": clock} if clock else {}))
     decision_draft = ParentRunCodec("decision.promotion-draft", operation_name="decision.promotion-draft", **({"clock": clock} if clock else {}))
     delivery_draft = ParentRunCodec("delivery.pr-review-draft", operation_name="delivery.pr-review-draft", **({"clock": clock} if clock else {}))
+    meeting_session = ParentRunCodec("meeting.session", operation_name="meeting.session", **({"clock": clock} if clock else {}))
+    meeting_deferred = ParentRunCodec("meeting.deferred-intel-job", operation_name="meeting.deferred-intel-job", **({"clock": clock} if clock else {}))
     specs = (
         OperationSpec(tool_calls.name, tool_calls.version, tool_calls, "agent.submit", "propose"),
         OperationSpec(process_input.name, process_input.version, process_input, "agent.submit", "propose"),
@@ -101,13 +103,15 @@ def _build(database: Any, *, clock: Any = None) -> Broker:
         OperationSpec(workbench_run.name, workbench_run.version, workbench_run, "agent.submit", "propose"),
         OperationSpec(decision_draft.name, decision_draft.version, decision_draft, "agent.submit", "propose"),
         OperationSpec(delivery_draft.name, delivery_draft.version, delivery_draft, "agent.submit", "propose"),
+        OperationSpec(meeting_session.name, meeting_session.version, meeting_session, "agent.submit", "propose"),
+        OperationSpec(meeting_deferred.name, meeting_deferred.version, meeting_deferred, "agent.submit", "propose"),
     )
     broker = Broker(store, specs, **({"clock": clock} if clock else {}))
     # Services must never pair a runner database with a broker codec built for
     # another database singleton; invoke admission validates revisions there.
     broker.database = database
     broker.parent_run_controller = ParentRunController(broker, database,
-        operation_names={"sequence":"sequence.run", "workflow":"workflow.run", "workbench":"workbench.run", "decision.promotion-draft":"decision.promotion-draft", "delivery.pr-review-draft":"delivery.pr-review-draft", "voice_reference_resolve":"voice_reference_resolve"}, **({"clock": clock} if clock else {}))
+        operation_names={"sequence":"sequence.run", "workflow":"workflow.run", "workbench":"workbench.run", "decision.promotion-draft":"decision.promotion-draft", "delivery.pr-review-draft":"delivery.pr-review-draft", "voice_reference_resolve":"voice_reference_resolve", "meeting.session":"meeting.session", "meeting.deferred-intel-job":"meeting.deferred-intel-job"}, **({"clock": clock} if clock else {}))
     # The liveness reaper runs before stage recovery: an expired claimed
     # invocation first receives its authoritative indeterminate receipt.
     from .projection_stager import ProjectionStager
@@ -117,12 +121,14 @@ def _build(database: Any, *, clock: Any = None) -> Broker:
     # before the first recovery pass, never after it.
     from .ask_projection import register as register_ask_projection
     from .recipe_projection import register as register_recipe_projection
+    from .meeting_plugin_projection import register as register_meeting_plugin_projection
     from .rails_journal_projection import register as register_rails_journal_projection
     from .sequence_workflow_projection import register as register_sequence_workflow_projection
     from .workbench_projection import register as register_workbench_projection
     register_ask_projection(broker.projection_stager)
     register_recipe_projection(broker.projection_stager)
     register_rails_journal_projection(broker.projection_stager)
+    register_meeting_plugin_projection(broker.projection_stager)
     register_sequence_workflow_projection(broker.projection_stager)
     register_workbench_projection(broker.projection_stager)
     broker.parent_run_controller.reconcile_abandoned()

@@ -848,6 +848,32 @@ def _migrate_columns(conn: sqlite3.Connection, stored: int) -> None:
             conn.execute("DROP TABLE kernel_parent_runs_v52")
             conn.execute("CREATE INDEX IF NOT EXISTS idx_kernel_parent_runs_state ON kernel_parent_runs(state, updated_at)")
 
+    # v54 (HS-131-08): live meeting intelligence and its post-close deferred
+    # queue job are two DISTINCT admitted parents, so the durable controller
+    # table must accept both kinds. A closed live session is never revived.
+    if stored < 54:
+        parent_sql = str(conn.execute("SELECT sql FROM sqlite_master WHERE type='table' AND name='kernel_parent_runs'").fetchone()[0])
+        if "'meeting.session'" not in parent_sql:
+            conn.execute("ALTER TABLE kernel_parent_runs RENAME TO kernel_parent_runs_v53")
+            conn.execute("CREATE TABLE kernel_parent_runs (operation_id TEXT PRIMARY KEY REFERENCES kernel_operations(operation_id),native_id TEXT NOT NULL UNIQUE,kind TEXT NOT NULL CHECK (kind IN ('sequence','workflow','workbench','decision.promotion-draft','delivery.pr-review-draft','voice_reference_resolve','meeting.session','meeting.deferred-intel-job')),definition_ref TEXT NOT NULL,definition_revision TEXT NOT NULL,input_json TEXT NOT NULL,deadline_at REAL NOT NULL,execution_epoch INTEGER NOT NULL DEFAULT 1,planned_node TEXT NOT NULL DEFAULT '',active_child_invocation_id TEXT NOT NULL DEFAULT '',child_budget INTEGER NOT NULL,children_json TEXT NOT NULL DEFAULT '[]',state TEXT NOT NULL CHECK (state IN ('OPEN','CANCELLING','SUCCEEDED','FAILED','CANCELLED','REFUSED','INDETERMINATE')),lease_process_id TEXT NOT NULL DEFAULT '',lease_heartbeat_at REAL,created_at REAL NOT NULL,updated_at REAL NOT NULL)")
+            conn.execute("INSERT INTO kernel_parent_runs SELECT * FROM kernel_parent_runs_v53")
+            conn.execute("DROP TABLE kernel_parent_runs_v53")
+            conn.execute("CREATE INDEX IF NOT EXISTS idx_kernel_parent_runs_state ON kernel_parent_runs(state, updated_at)")
+
+
+    # v55 (HS-131-08): the deferred job carries the STRUCTURED list of work the
+    # stop handoff displaced onto it, so the queue runs exactly that work instead
+    # of parsing an owner-facing status sentence.
+    if stored < 55:
+        job_columns = {
+            str(row["name"])
+            for row in conn.execute("PRAGMA table_info(intel_jobs)")
+        }
+        if "displaced_work" not in job_columns:
+            conn.execute(
+                "ALTER TABLE intel_jobs ADD COLUMN displaced_work TEXT NOT NULL DEFAULT '[]'"
+            )
+
 
 def _apply_seeds_and_backfills(conn: sqlite3.Connection) -> None:
     """Seed data and index rebuilds that run after all migrations."""

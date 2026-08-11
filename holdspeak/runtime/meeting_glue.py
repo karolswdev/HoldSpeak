@@ -183,7 +183,20 @@ class MeetingGlueMixin:
                 last_error="",
             )
 
-    def _start_meeting(self, *, devices: Optional[list[str]] = None) -> dict[str, object]:
+    def _start_meeting(
+        self,
+        *,
+        devices: Optional[list[str]] = None,
+        principal: Optional[object] = None,
+    ) -> dict[str, object]:
+        """Start capture. ``principal`` is the AUTHENTICATED caller (HS-131-08).
+
+        Live meeting intelligence is admitted under exactly this principal. A
+        start with no authenticated principal (a device/auto start, or an
+        unauthenticated caller) still records: intelligence is refused with a
+        named status instead. An OWNER principal is never synthesized here — the
+        narrow ``meeting-capture`` service-principal issuer does not exist yet.
+        """
         if self._active_meeting_session() is not None:
             raise RuntimeError("Meeting already active")
 
@@ -264,6 +277,7 @@ class MeetingGlueMixin:
                     getattr(self.config.meeting, "disabled_plugins", []) or []
                 ),
                 mir_segment_probe=segment_probe,
+                principal=principal,
             )
             state = session.start()
             if self.config.meeting.intel_enabled and effective_cloud.reason:

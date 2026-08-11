@@ -30,6 +30,23 @@ from ..principals import Principal
 from holdspeak.services.errors import NotFound, ValidationError
 
 
+def _accepts_principal(callback: Any) -> bool:
+    """Whether a bound capture-start callback takes the authenticated principal.
+
+    The runtime's ``_start_meeting`` does; partial test/adapter bindings need not,
+    and must not be handed an argument they cannot name.
+    """
+    import inspect
+
+    try:
+        parameters = inspect.signature(callback).parameters
+    except (TypeError, ValueError):
+        return False
+    if "principal" in parameters:
+        return True
+    return any(p.kind is inspect.Parameter.VAR_KEYWORD for p in parameters.values())
+
+
 @observe_service
 class MeetingService:
     """One service boundary for meeting capture and persisted meeting data."""
@@ -240,7 +257,12 @@ class MeetingService:
         if self._on_start is None:
             raise ValidationError("Meeting start control not supported")
         devices = list((config or {}).get("devices") or [])
-        result = self._on_start(devices=devices) if devices else self._on_start()
+        # HS-131-08: the AUTHENTICATED caller reaches capture start, because live
+        # meeting intelligence is admitted under exactly this principal.
+        kwargs: dict[str, Any] = {"principal": principal} if _accepts_principal(self._on_start) else {}
+        if devices:
+            kwargs["devices"] = devices
+        result = self._on_start(**kwargs)
         return self._callback_payload(result)
 
     def stop_capture(

@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from holdspeak.db import Database
+from holdspeak.db import SCHEMA_VERSION, Database
 
 
 def test_v44_kernel_rows_upgrade_byte_for_byte_and_accept_cancelled(tmp_path: Path) -> None:
@@ -70,5 +70,5 @@ def test_v44_kernel_rows_upgrade_byte_for_byte_and_accept_cancelled(tmp_path: Pa
     assert carried_operation == operation
     assert carried_receipt == receipt
     assert "idx_kernel_operations_state" in indexes
-    assert version == 53
+    assert version == SCHEMA_VERSION
     assert foreign_keys == []
