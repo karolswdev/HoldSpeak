@@ -132,7 +132,7 @@ gates while keeping every known site bounded now.
 | HS-131-07 | The remaining direct callers join the spine | done | [story-07](./story-07-service-callers.md) | [evidence-story-07](./evidence-story-07.md) |
 | HS-131-08 | Meetings are admitted per session | done | [story-08](./story-08-meeting-sessions.md) | [evidence-story-08](./evidence-story-08.md) |
 | HS-131-09 | Dictation and transcription are admitted per session | done | [story-09](./story-09-dictation-sessions.md) | [evidence-story-09](./evidence-story-09.md) |
-| HS-131-10 | The one-path fence | backlog | [story-10](./story-10-one-path-fence.md) | — |
+| HS-131-10 | The one-path fence | in-progress | [story-10](./story-10-one-path-fence.md) | — |
 | HS-131-11 | The entry-point contract | backlog | [story-11](./story-11-entry-point-docs.md) | — |
 | HS-131-12 | The walk | backlog | [story-12](./story-12-the-walk.md) | — |
 
