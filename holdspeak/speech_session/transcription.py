@@ -52,6 +52,7 @@ class TranscriptionAdmission:
     principal: Any
     plan: SpeechSessionPlan
     parent: Any = None
+    fence: Any = None
     capability: str = CAPABILITY_WHISPER_TRANSCRIBE
     preload_capability: str = CAPABILITY_WHISPER_PRELOAD
     #: Every preload child this admission has run, in order (stage, outcome).
@@ -86,6 +87,16 @@ class TranscriptionAdmission:
     def revision(self, capability: str = "") -> str:
         return self.plan.primary(capability or self.capability)
 
+    def _refuse_if_fenced(self, capability: str) -> None:
+        if self.fence is None:
+            return
+        reason = self.fence.reason()
+        if reason:
+            # Preserve the speech carrier's fixed, content-free durable reason.
+            # Letting the child runner rediscover a dead parent would collapse an
+            # exact revocation/expiry into generic ``parent_operation_not_live``.
+            raise SpeechSessionRefused(reason, capability)
+
     # ------------------------------------------------------------ transcribe
 
     def transcribe_child(
@@ -98,6 +109,8 @@ class TranscriptionAdmission:
         deadline_seconds: float = TRANSCRIBE_DEADLINE_SECONDS,
     ) -> tuple[Any, Any]:
         """ONE admitted transcription dispatch, walking the frozen entries."""
+
+        self._refuse_if_fenced(self.capability)
 
         def dispatch(engine: Any, payload: Mapping[str, Any], cancellation: Any) -> str:
             # Inside the claim: the kernel has already revalidated the parent's
@@ -150,6 +163,7 @@ class TranscriptionAdmission:
         ordinary transcription child. This never reacquires the caller's
         transcription lock: it holds no lock of its own.
         """
+        self._refuse_if_fenced(self.preload_capability)
         outcome, result = run_admitted_speech_child(
             broker=self.broker,
             principal=self.principal,

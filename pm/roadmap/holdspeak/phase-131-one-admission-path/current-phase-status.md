@@ -1,6 +1,6 @@
 # Phase 131 — One Admission Path
 
-**Status:** IN PROGRESS (11/17).
+**Status:** IN PROGRESS (12/17).
 
 **Last updated:** 2026-08-13.
 
@@ -156,7 +156,7 @@ HS-131-11 and HS-131-12 remain held behind the fence.
 | HS-131-12 | The walk | backlog | [story-12](./story-12-the-walk.md) | — |
 | HS-131-13 | Residual services take the admitted door | done | [story-13](./story-13-residual-service-admission.md) | [evidence-story-13](./evidence-story-13.md) |
 | HS-131-14 | Plugins receive admitted intelligence | done | [story-14](./story-14-plugin-provider-admission.md) | [evidence-story-14](./evidence-story-14.md) |
-| HS-131-15 | Speech side doors become sessions or stay lexical | backlog | [story-15](./story-15-speech-side-door-admission.md) | — |
+| HS-131-15 | Speech side doors become sessions or stay lexical | done | [story-15](./story-15-speech-side-door-admission.md) | [evidence-story-15](./evidence-story-15.md) |
 | HS-131-16 | The mesh receiver proves authority locally | backlog | [story-16](./story-16-mesh-receiver-authority.md) | — |
 | HS-131-17 | Meetings lose the parallel engine | backlog | [story-17](./story-17-meeting-residual-admission.md) | — |
 
@@ -429,9 +429,28 @@ focused proof: 811 passed. The quiet isolated full gate found and repaired one
 HS-131-14 test-double regression; its final 91-name ledger has no current-diff
 product regression. The one apparent new name is the inherited live `.43` mesh
 canary flake, reproduced on the untouched HS-131-13 control tree and present in
-earlier Phase-131 ledgers. Next: HS-131-15 chooses admitted sessions versus
-lexical-only for the two speech side doors. HS-131-11 and HS-131-12 remain held
-until the remaining three amendments land and HS-131-10 closes at zero
+earlier Phase-131 ledgers.
+HS-131-15 is done — synthetic-text speech side doors now admit exactly when
+provider work exists and remain honestly lexical otherwise. Browser rehearsal,
+replay, template preview, and authenticated CLI dry-run open one fresh bounded
+`dictation.session` (90 seconds / 12 children), freeze only the physically
+selected capability revisions, and construct exclusively from that parent-bound
+plan with warm-on-start disabled. CLI authority comes only from
+`$HOLDSPEAK_TOKEN` checked against the hub bearer through the central owner
+authenticator; missing or invalid credentials refuse before construction. Fatal
+speech controls escape raw-text degradation. A durable SQLite publication claim
+serializes final response/journal/effect handoff against cancellation,
+revocation, expiry, new children, and cross-process mutation; exact-token live
+recovery clears transient release faults without replay. Browser egress at the
+decision point and response proof share the frozen-plan resolver. The census is
+105 sites, four findings in four families, zero unregistered; both speech
+findings became admitted seams and no product scope entered the allowlist.
+Hostile verification returned SHIP-CANDIDATE; focused proof is 501 + 304 passing,
+both mutations are caught, web typecheck and 45 tests pass. The inherited-red
+full gate found five current-diff regressions, all repaired and re-proved; the
+final three apparent Slack names were xdist lock-contamination and pass serially.
+Next: HS-131-16 proves mesh receiver authority locally. HS-131-11 and HS-131-12
+remain held until the remaining two amendments land and HS-131-10 closes at zero
 findings.
 The roadmap still has inherited structural lint errors in old phases; they are
 named baseline and are not silently bundled into this product phase.

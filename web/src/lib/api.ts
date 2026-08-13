@@ -2,6 +2,15 @@ import { authenticatedHeaders } from "./auth";
 
 export type JsonRecord = Record<string, unknown>;
 
+/** One stable client claim per committed delivery. */
+export function newDeliveryId(): string {
+  const entropy =
+    typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
+      ? crypto.randomUUID()
+      : Math.random().toString(36).slice(2);
+  return `speak:${Date.now()}-${entropy}`;
+}
+
 export class ApiError extends Error {
   readonly status: number;
   readonly payload: unknown;

@@ -113,6 +113,7 @@ def test_readiness_ready_with_project_blocks_kb_and_model(
     assert body["blocks"]["resolved"]["count"] == 1
     assert body["project_kb"]["keys"] == ["stack"]
     assert body["runtime"]["status"] == "available"
+    assert body["egress_boundary"] == "local"
     assert body["telemetry"]["status"] == "ok"
     assert body["telemetry"]["counters"]["classify_calls"] >= 0
     assert body["telemetry"]["latency"]["max_total_latency_ms"] == float(
@@ -334,12 +335,20 @@ def test_dictation_page_includes_readiness_panel() -> None:
 
     assert response.status_code == 200
     assert '<div id="root"></div>' in response.text
-    js = (Path(__file__).resolve().parents[2] / "web/src/pages/cores/DictationCore.tsx").read_text()
+    core_root = Path(__file__).resolve().parents[2] / "web/src/pages/cores"
+    js = "\n".join(
+        path.read_text()
+        for path in (
+            core_root / "DictationCore.tsx",
+            *sorted((core_root / "dictation").glob("*.tsx")),
+            *sorted((core_root / "dictation").glob("*.ts")),
+        )
+    )
     assert "/api/dictation/readiness" in js
-    # HS-100-07: readiness is the composed ReadinessLine under the loop
-    # (panel copy retired). HS-112-01: Runs on lives ONLY in the Prefs
-    # models module — the Speak face hands over, never embeds an editor.
-    assert "ReadinessLine" in js and "RUNS ON LIVES IN MODELS" in js
+    # HS-129-05: readiness is the composed footer below the loop. HS-112-01:
+    # Runs on lives ONLY in the Prefs models module — Speak hands over and never
+    # embeds a destination editor.
+    assert "ReadinessFooter" in js and "RUNS ON LIVES IN MODELS" in js
     assert "RuntimeDestination" not in js
     assert "warnings" in js
 

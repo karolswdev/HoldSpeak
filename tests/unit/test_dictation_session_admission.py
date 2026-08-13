@@ -30,8 +30,10 @@ from holdspeak.speech_session import (
     HOLD_CAPTURE_CEILING_SECONDS,
     HOLD_CHILD_BUDGET,
     HOLD_DRAIN_SECONDS,
+    OUTCOME_INDETERMINATE,
     WAKE_CHILD_BUDGET,
     WAKE_DEADLINE_SECONDS,
+    SpeechProviderFailure,
     SpeechSessionRefused,
     admit_hold_session,
     admit_wake_session,
@@ -1078,6 +1080,7 @@ def test_a_revoked_warrant_fences_the_session_through_the_durable_read(
     tmp_path, monkeypatch
 ):
     """Sol defect 3: revocation reaches a closure that only holds the carrier."""
+    from holdspeak.speech_session import SpeechSessionRefused
     from holdspeak.speech_session import admit_hold_session as admit
 
     db, broker, host, _impl = _build_host(tmp_path, monkeypatch)
@@ -1094,10 +1097,13 @@ def test_a_revoked_warrant_fences_the_session_through_the_durable_read(
 
     assert fence.reason() == "speech_session_warrant_revoked"
     assert fence.discarded("dictation publication") is True
-    # And the publication path really refuses to publish under it.
-    host._transcribe_and_type(
-        np.full(16000, AUDIO_SENTINEL, dtype=np.float32), session=session
-    )
+    # And the first child preserves that exact safe reason instead of degrading
+    # it to raw text or generic parent-not-live.
+    with pytest.raises(SpeechSessionRefused) as refusal:
+        host._transcribe_and_type(
+            np.full(16000, AUDIO_SENTINEL, dtype=np.float32), session=session
+        )
+    assert refusal.value.reason == "speech_session_warrant_revoked"
     assert typed == []
     assert _operations(db, name="desktop.type_text") == []
 
@@ -1230,6 +1236,130 @@ def test_the_http_pipeline_route_closes_the_parent_failed_when_the_pipeline_rais
     assert (_receipt(db, parent["operation_id"]) or {}).get("outcome") == "failed"
 
 
+@pytest.mark.parametrize(
+    ("fatal", "status_code", "parent_outcome"),
+    [
+        pytest.param(
+            lambda: SpeechSessionRefused("speech_child_budget_exhausted"),
+            422,
+            "refused",
+            id="session-refusal",
+        ),
+        pytest.param(
+            lambda: SpeechProviderFailure(
+                "dictation.rewrite", reason="provider_budget_refused"
+            ),
+            502,
+            "failed",
+            id="provider-failure",
+        ),
+    ],
+)
+def test_the_http_pipeline_route_never_turns_a_fatal_signal_into_raw_success(
+    fatal, status_code, parent_outcome, tmp_path, monkeypatch
+):
+    """A fatal speech signal closes honestly and publishes no raw transcript."""
+    import asyncio
+    import json
+
+    from holdspeak.web.context import WebContext
+    from holdspeak.web.routes.system.voice import build_voice_router
+
+    db, _broker, host, _impl = _build_host(tmp_path, monkeypatch)
+    _endpoint_profile(db, host.config)
+    _sessions()
+
+    async def refusing(*_args: Any, **_kwargs: Any) -> str:
+        raise fatal()
+
+    monkeypatch.setattr("holdspeak.dictation_runner.process_transcript", refusing)
+    monkeypatch.setattr(
+        "holdspeak.web.routes.system.voice._resolve_config", lambda ctx: host.config
+    )
+    monkeypatch.setattr(
+        "holdspeak.web.routes.system.voice._route_principal",
+        lambda request: _browser_principal(),
+    )
+    ctx = WebContext(
+        get_state=lambda: {},
+        on_transcribe=host.transcribe_audio,
+        on_transcribe_admitted=host.transcribe_audio_admitted,
+    )
+    endpoint = _endpoint_for(build_voice_router(ctx), "/api/dictation/transcribe")
+
+    response = asyncio.run(endpoint(_FakeRequest(_wav_body(), {"pipeline": "true"})))
+    body = json.loads(response.body)
+
+    assert response.status_code == status_code
+    assert body["success"] is False
+    assert body["reason"] in {
+        "speech_child_budget_exhausted",
+        "provider_budget_refused",
+    }
+    assert "text" not in body and TEXT_SENTINEL not in str(body)
+    parent = _parents(db)[0]
+    assert (_receipt(db, parent["operation_id"]) or {}).get("outcome") == parent_outcome
+
+
+@pytest.mark.parametrize("fatal", [False, True], ids=["success", "refusal"])
+def test_the_http_pipeline_route_reports_an_indeterminate_parent_close(
+    fatal, monkeypatch
+):
+    """One-shot terminal persistence uncertainty cannot hide behind a clean body."""
+    import asyncio
+    import json
+    from types import SimpleNamespace
+
+    from holdspeak.web.context import WebContext
+    from holdspeak.web.routes.system.voice import build_voice_router
+
+    closed_as: list[str] = []
+
+    class UnrecordableTranscription:
+        text = TEXT_SENTINEL
+        provider = SimpleNamespace(egress_boundary="same_device")
+
+        def close(self, outcome: str) -> str:
+            closed_as.append(outcome)
+            return OUTCOME_INDETERMINATE
+
+    async def process(*_args: Any, **_kwargs: Any) -> str:
+        if fatal:
+            raise SpeechSessionRefused("speech_session_revoked")
+        return "REWRITTEN"
+
+    monkeypatch.setattr("holdspeak.dictation_runner.process_transcript", process)
+    monkeypatch.setattr(
+        "holdspeak.web.routes.system.voice._route_principal",
+        lambda _request: _browser_principal(),
+    )
+    monkeypatch.setattr(
+        "holdspeak.web.routes.system.voice._resolve_config", lambda _ctx: Config()
+    )
+    monkeypatch.setattr(
+        "holdspeak.web.routes.system.voice._resolve_server", lambda _ctx: None
+    )
+    ctx = WebContext(
+        get_state=lambda: {},
+        on_transcribe=lambda *_args, **_kwargs: TEXT_SENTINEL,
+        on_transcribe_admitted=lambda *_args, **_kwargs: UnrecordableTranscription(),
+    )
+    endpoint = _endpoint_for(build_voice_router(ctx), "/api/dictation/transcribe")
+
+    response = asyncio.run(endpoint(_FakeRequest(_wav_body(), {"pipeline": "true"})))
+    if fatal:
+        body = json.loads(response.body)
+        assert response.status_code == 422
+        assert body["reason"] == "speech_session_revoked"
+        assert body["session_terminal"] == OUTCOME_INDETERMINATE
+        assert closed_as == ["refused"]
+    else:
+        assert response["success"] is True
+        assert response["text"] == "REWRITTEN"
+        assert response["session_terminal"] == OUTCOME_INDETERMINATE
+        assert closed_as == ["succeeded"]
+
+
 def test_the_ws_final_pass_runs_under_the_intervals_admission(tmp_path, monkeypatch):
     """Sol defect 4: the streaming final pass is a child of the socket's interval."""
     db, _broker, host, _impl = _build_host(tmp_path, monkeypatch)
@@ -1257,6 +1387,73 @@ def test_the_ws_final_pass_runs_under_the_intervals_admission(tmp_path, monkeypa
     # The interval still owns its parent; the final pass never closed it.
     assert _parents(db)[0]["state"] == "OPEN"
     registry.reset()
+
+
+def test_the_ws_final_pass_sends_an_error_not_raw_text_for_a_fatal_signal(
+    tmp_path, monkeypatch
+):
+    """A fatal final-pass refusal cannot become a normal WebSocket final event."""
+    import asyncio
+    import json
+
+    from holdspeak.web.context import WebContext
+    from holdspeak.web.routes.system.voice import build_voice_router
+
+    _db, _broker, host, _impl = _build_host(tmp_path, monkeypatch)
+    _endpoint_profile(_db, host.config)
+    _sessions()
+    host.config.meeting.web_auth_token = "ws-fatal-owner-token"
+    monkeypatch.setattr(Config, "load", classmethod(lambda _cls: host.config))
+
+    async def refusing(*_args: Any, **_kwargs: Any) -> str:
+        raise SpeechSessionRefused("speech_child_budget_exhausted")
+
+    monkeypatch.setattr("holdspeak.dictation_runner.process_transcript", refusing)
+
+    class Socket:
+        def __init__(self) -> None:
+            self.headers = {
+                "authorization": "Bearer ws-fatal-owner-token",
+                "sec-websocket-protocol": "",
+            }
+            self.sent: list[dict[str, Any]] = []
+            self.messages = [
+                {"bytes": np.zeros(1600, dtype=np.int16).tobytes()},
+                {"text": json.dumps({"type": "end"})},
+            ]
+            self.closed = False
+
+        async def accept(self, **_kwargs: Any) -> None:
+            return None
+
+        async def receive(self) -> dict[str, Any]:
+            return self.messages.pop(0)
+
+        async def send_json(self, payload: dict[str, Any]) -> None:
+            self.sent.append(dict(payload))
+
+        async def close(self, **_kwargs: Any) -> None:
+            self.closed = True
+
+    ctx = WebContext(
+        get_state=lambda: {},
+        on_transcribe=lambda _audio, **_kwargs: TEXT_SENTINEL,
+        web_auth_token="ws-fatal-owner-token",
+    )
+    endpoint = _endpoint_for(build_voice_router(ctx), "/ws/dictation/stream")
+    socket = Socket()
+
+    asyncio.run(endpoint(socket))
+
+    assert any(
+        event.get("type") == "error"
+        and event.get("reason") == "speech_child_budget_exhausted"
+        for event in socket.sent
+    )
+    assert not [event for event in socket.sent if event.get("type") == "final"]
+    assert TEXT_SENTINEL not in str(
+        [event for event in socket.sent if event.get("type") != "partial"]
+    )
 
 
 # --------------------------------------------- 6. the preload knob is bound

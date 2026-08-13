@@ -15,7 +15,13 @@ from fastapi import APIRouter, Request, WebSocket, WebSocketDisconnect
 from fastapi.responses import JSONResponse
 
 from ....logging_config import get_logger
-from ....speech_session import MIC_INTERVAL_CLOSED, SpeechSessionRefused, browser_mic_sessions
+from ....speech_session import (
+    MIC_INTERVAL_CLOSED,
+    OUTCOME_INDETERMINATE,
+    SpeechProviderFailure,
+    SpeechSessionRefused,
+    browser_mic_sessions,
+)
 from ...context import WebContext
 from ...runtime_support import error_500
 
@@ -222,6 +228,9 @@ def build_voice_router(ctx: WebContext) -> APIRouter:
         # outcome (failed when the pipeline raised).
         raw_text = text
         outcome = "succeeded"
+        failure_body: dict[str, Any] | None = None
+        failure_status = 0
+        terminal = ""
         try:
             from ....dictation_runner import process_transcript
 
@@ -233,19 +242,51 @@ def build_voice_router(ctx: WebContext) -> APIRouter:
                 server=_resolve_server(ctx),
                 admission=None if admitted is None else admitted.provider,
             )
+        except SpeechSessionRefused as exc:
+            # A control refusal is never DIR-F-003 degradation. Nothing may turn
+            # it into a successful raw transcript after the admitted child said
+            # this session/capability/revision was not authorized or no longer live.
+            outcome = "refused"
+            failure_status = 422
+            failure_body = {
+                "success": False,
+                "error": exc.reason,
+                "reason": exc.reason,
+                "refusal": exc.reason,
+                "failure_category": "speech_session_refused",
+            }
+        except SpeechProviderFailure as exc:
+            outcome = "failed"
+            failure_status = 502
+            failure_body = {
+                "success": False,
+                "error": f"{exc.contract}:{exc.reason}",
+                "reason": exc.reason,
+                "failure_category": "speech_provider_failure",
+            }
         except Exception as exc:
             log.warning(f"Browser pipeline processing failed, returning raw: {exc}")
             corrected = raw_text
             outcome = "failed"
         finally:
             if admitted is not None:
-                admitted.close(outcome)
+                terminal = admitted.close(outcome)
 
+        terminal_marker = (
+            {"session_terminal": OUTCOME_INDETERMINATE}
+            if terminal == OUTCOME_INDETERMINATE
+            else {}
+        )
+        if failure_body is not None:
+            return JSONResponse(
+                {**failure_body, **terminal_marker}, status_code=failure_status
+            )
         return {
             "success": True,
             "text": corrected,
             "raw": raw_text,
             "egress_boundary": egress_boundary,
+            **terminal_marker,
         }
 
     @router.post("/api/dictation/preview/type")
@@ -479,6 +520,26 @@ def build_voice_router(ctx: WebContext) -> APIRouter:
                         admission=interval.session.provider(),
                     )
                     final_text = corrected
+                except SpeechSessionRefused as exc:
+                    await websocket.send_json(
+                        {
+                            "type": "error",
+                            "error": exc.reason,
+                            "reason": exc.reason,
+                            "failure_category": "speech_session_refused",
+                        }
+                    )
+                    return
+                except SpeechProviderFailure as exc:
+                    await websocket.send_json(
+                        {
+                            "type": "error",
+                            "error": f"{exc.contract}:{exc.reason}",
+                            "reason": exc.reason,
+                            "failure_category": "speech_provider_failure",
+                        }
+                    )
+                    return
                 except Exception as exc:
                     log.warning(f"Pipeline processing failed, returning raw: {exc}")
 

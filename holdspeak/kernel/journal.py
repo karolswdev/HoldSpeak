@@ -24,6 +24,9 @@ _RECEIPT_SQL = (
 
 
 class JournalStore:
+    _publication_wait_seconds = 5.0
+    _publication_poll_seconds = 0.01
+
     def __init__(self, connection: Any, *, clock: Any = time.time) -> None:
         self._connection = connection
         self._clock = clock
@@ -172,23 +175,9 @@ class JournalStore:
         return [self._operation(row) for row in rows]
 
     def transition(self, operation_id: str, expected_revision: int, state: str, **changes: Any) -> dict[str, Any]:
-        assignments = ["state=?", "revision=revision+1", "updated_at=?"]
-        values: list[Any] = [state, self._clock()]
-        allowed = {"decision", "warrant_json", "warrant_revoked", "claimed_by"}
-        for key, value in changes.items():
-            if key not in allowed:
-                raise KernelRefused("operation_mutation_not_allowed", key)
-            assignments.append(f"{key}=?")
-            values.append(_json(value) if key == "warrant_json" else value)
-        values.extend((operation_id, expected_revision))
-        with self._connection() as conn:
-            result = conn.execute(
-                f"UPDATE kernel_operations SET {','.join(assignments)} WHERE operation_id=? AND revision=?",
-                values,
-            )
-            if result.rowcount != 1:
-                raise KernelRefused("operation_revision_conflict", operation_id=operation_id)
-        return self.operation(operation_id) or {}
+        from .publication_transition import transition
+
+        return transition(self, operation_id, expected_revision, state, **changes)
     def claim_candidate(
         self, executor: str, native_id: str = ""
     ) -> dict[str, Any] | None:
@@ -213,11 +202,27 @@ class JournalStore:
                 return None
         return self.operation(str(row["operation_id"]))
     def revoke_warrant(self, operation_id: str) -> dict[str, Any]:
-        with self._connection() as conn:
-            conn.execute(
-                "UPDATE kernel_operations SET warrant_revoked=1,revision=revision+1,updated_at=? WHERE operation_id=?",
-                (self._clock(), operation_id),
-            )
+        wait_until = time.monotonic() + 5.0
+        while True:
+            with self._connection() as conn:
+                conn.execute("BEGIN IMMEDIATE")
+                parent = conn.execute(
+                    "SELECT publication_claim_id FROM kernel_parent_runs "
+                    "WHERE operation_id=?",
+                    (operation_id,),
+                ).fetchone()
+                if parent is None or not str(parent["publication_claim_id"] or ""):
+                    conn.execute(
+                        "UPDATE kernel_operations SET warrant_revoked=1,"
+                        "revision=revision+1,updated_at=? WHERE operation_id=?",
+                        (self._clock(), operation_id),
+                    )
+                    break
+            if time.monotonic() >= wait_until:
+                raise KernelRefused(
+                    "parent_publication_in_progress", operation_id=operation_id
+                )
+            time.sleep(0.01)
         return self.operation(operation_id) or {}
 
     def transition_and_receipt(

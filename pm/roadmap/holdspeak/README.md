@@ -9,19 +9,22 @@
 > is canon at [`docs/internal/ORCHESTRATION.md`](../../../docs/internal/ORCHESTRATION.md).
 
 **Newest update (2026-08-13): Phase 131 — One Admission Path — IN PROGRESS
-(11/17).** HS-131-14 closes the second fence amendment: fourteen builtin plugins
-and `segment_probe` consume one opaque, single-use `PluginDispatch` bound to the
-runner's exact context, revision, destination, warrant, ordinal, and cancellation
-signal; they no longer construct or cache providers. Claim/release is one atomic
-timeout election, provider failure stays failed, compatibility retry gets a new
-child/handle/receipt, and only the winner materializes. Meeting startup remains
-lexical pending HS-131-17, and the public uncontextual configured-provider factory
-is deleted. Hostile verification found and repaired ambient cross-child state,
-multi-call cardinality, and release/claim races before returning RATIFY FOR STORY
-CLOSE. The fence is now 105 sites, six pinned findings in six families, and zero
-unregistered execution (134→105 / 38→6 / 8→6); no plugin entered the adapter
-allowlist. Captured focused proof: 811 passed. The inherited-red quiet gate has no
-current-diff product regression. HS-131-15 speech-side-door design and delivery is
+(12/17).** HS-131-15 closes the speech fence amendment. Browser rehearsal,
+replay, template preview, and authenticated CLI dry-run open one fresh bounded
+`dictation.session` exactly when the frozen configuration selects provider work;
+provider-free configurations stay lexical and mint no parent or child. CLI
+authority comes only from `$HOLDSPEAK_TOKEN` checked against the hub bearer.
+Construction, child revisions, and egress proof are bound to the durable frozen
+plan; fatal controls never quietly degrade to raw text. A durable publication
+claim serializes final response/journal/effect handoff against cancellation,
+revocation, expiry, new children, and cross-process mutation, with exact-token
+live recovery after transient release failure. Hostile review returned
+SHIP-CANDIDATE; focused proof is 501 + 304 passing, both mutations are caught,
+web typecheck and 45 tests pass. The inherited-red full gate found five
+current-diff regressions, all repaired and re-proved; its final unrelated Slack
+names pass serially and are xdist lock-contamination. The fence remains 105 sites
+but falls from six to four findings/families, with zero unregistered execution
+and no speech scope added to the allowlist. HS-131-16 mesh receiver authority is
 next; docs and the final real-model walk remain held until zero findings. Swift
 remains explicitly out of scope.
 

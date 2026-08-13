@@ -900,6 +900,55 @@ def _migrate_columns(conn: sqlite3.Connection, stored: int) -> None:
             conn.execute("DROP TABLE kernel_parent_runs_v56")
             conn.execute("CREATE INDEX IF NOT EXISTS idx_kernel_parent_runs_state ON kernel_parent_runs(state, updated_at)")
 
+    # v58 (HS-131-15): the in-process publication lock becomes a durable CAS
+    # claim too. Cancellation, terminalization, and warrant revocation from a
+    # second process therefore serialize with the exact liveness read that lets
+    # a speech result publish or an effect handoff begin.
+    if stored < 58:
+        parent_columns = {
+            str(row["name"])
+            for row in conn.execute("PRAGMA table_info(kernel_parent_runs)")
+        }
+        if "publication_claim_id" not in parent_columns:
+            conn.execute(
+                "ALTER TABLE kernel_parent_runs "
+                "ADD COLUMN publication_claim_id TEXT NOT NULL DEFAULT ''"
+            )
+        if "publication_claimed_at" not in parent_columns:
+            conn.execute(
+                "ALTER TABLE kernel_parent_runs ADD COLUMN publication_claimed_at REAL"
+            )
+
+    # Created after additive migrations: on an upgrade, SCHEMA_SQL saw the old
+    # parent table before v58's columns existed. A publication callback may
+    # terminalize its own parent only by clearing the exact claim in that same
+    # update; every ordinary state transition and warrant revocation must wait.
+    conn.executescript(
+        """
+        CREATE TRIGGER IF NOT EXISTS kernel_parent_publication_blocks_transition
+        BEFORE UPDATE OF state ON kernel_parent_runs
+        WHEN OLD.publication_claim_id != ''
+          AND NEW.state != OLD.state
+          AND NEW.publication_claim_id = OLD.publication_claim_id
+        BEGIN
+            SELECT RAISE(ABORT, 'kernel_parent_publication_in_progress');
+        END;
+
+        CREATE TRIGGER IF NOT EXISTS kernel_parent_publication_blocks_warrant_revocation
+        BEFORE UPDATE OF warrant_revoked ON kernel_operations
+        WHEN OLD.warrant_revoked = 0
+          AND NEW.warrant_revoked = 1
+          AND EXISTS (
+              SELECT 1 FROM kernel_parent_runs p
+              WHERE p.operation_id = OLD.operation_id
+                AND p.publication_claim_id != ''
+          )
+        BEGIN
+            SELECT RAISE(ABORT, 'kernel_parent_publication_in_progress');
+        END;
+        """
+    )
+
 
 def _apply_seeds_and_backfills(conn: sqlite3.Connection) -> None:
     """Seed data and index rebuilds that run after all migrations."""

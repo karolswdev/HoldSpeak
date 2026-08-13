@@ -54,6 +54,25 @@ PROVIDER_FENCED = "speech_provider_fenced"
 MESH_ENGINE_REQUIRED = "speech_mesh_admitted_engine_required"
 
 
+def _safe_refusal_reason(outcome: Any) -> str:
+    """The kernel's own fixed refusal reason class for a refused child.
+
+    Both refusal paths — admission (`_refuse_attempt`) and claim — record the
+    reason as the terminal receipt's ``outcome`` field, so the receipt and the
+    exception name the same thing. ``error`` is the runner's own secondary
+    carrier. Everything here is a fixed reason CLASS, never provider text; if
+    neither is present we fall back to the fence reason rather than invent one.
+    """
+    receipt = getattr(outcome, "receipt", None)
+    if isinstance(receipt, Mapping):
+        reason = str(receipt.get("outcome") or "").strip()
+        # A receipt whose outcome is literally the state carries no reason.
+        if reason and reason not in {"refused", "succeeded", "failed"}:
+            return reason
+    error = str(getattr(outcome, "error", "") or "").strip()
+    return error or PROVIDER_FENCED
+
+
 @dataclass
 class ProviderAdmission:
     """The live authority one dictation pipeline run dispatches providers under.
@@ -188,7 +207,11 @@ class ProviderAdmission:
             reason = self.fence.reason()
             if reason:
                 log.info("speech provider dispatch fenced: %s (%s)", reason, capability)
-                raise SpeechSessionRefused(PROVIDER_FENCED, capability)
+                # ``reason`` is one of SessionFence's fixed, content-free control
+                # classes. Preserve the fact it already proved — expired, revoked,
+                # closed, or cancelled — instead of overwriting every fence with
+                # the generic fallback and telling the owner the wrong refusal.
+                raise SpeechSessionRefused(reason, capability)
         attempt = self._next_ordinal()
         outcome, result = run_admitted_speech_child(
             broker=self.broker,
@@ -211,7 +234,14 @@ class ProviderAdmission:
         # child surfaces as one — named by contract and a SAFE reason only, never
         # provider text. The receipt already recorded the honest outcome.
         if state == "refused":
-            raise SpeechSessionRefused(PROVIDER_FENCED, capability)
+            # Sol Amendment 3: do NOT rewrite every refusal to
+            # `speech_provider_fenced`. That reason means one specific thing —
+            # "this session may no longer publish" — and stamping it on a budget
+            # refusal, a payload-hash mismatch, an unknown revision, or a claim
+            # refusal told the owner the wrong story about their own desk and
+            # made the receipt and the exception disagree. The kernel already
+            # chose a fixed, safe, content-free reason class; carry THAT.
+            raise SpeechSessionRefused(_safe_refusal_reason(outcome), capability)
         raise SpeechProviderFailure(contract, reason=state)
 
     # ------------------------------------------------------- the capabilities

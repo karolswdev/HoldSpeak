@@ -22,13 +22,71 @@ from ....services.dictation_service import DictationService
 from ...context import WebContext
 from ._helpers import (
     _block_summary,
+    _open_text_entry,
     _resolve_blocks_target,
     _resolve_project_context,
+    _run_cancellable_entry,
     _run_dictation_dry_run_text,
     _runtime_readiness,
+    session_terminal_of,
 )
 
 log = get_logger("web.routes.dictation")
+
+
+def _log_detached_delivery(task: Any) -> None:
+    """Record how a committed send finished after its client disconnected."""
+    try:
+        if task.cancelled():
+            log.error("Remote dictation delivery task was cancelled after disconnect")
+            return
+        exc = task.exception()
+    except Exception:  # pragma: no cover - defensive
+        return
+    if exc is not None:
+        log.error(f"Remote dictation delivery failed after disconnect: {exc}")
+    else:
+        log.info("Remote dictation delivery completed after client disconnect")
+
+
+def _speech_refusal(exc: Any) -> JSONResponse:
+    """One named, content-free speech refusal on the wire (HS-131-15).
+
+    The kernel's own safe reason is preserved verbatim rather than being rewritten
+    into a generic failure, so the deck can name what happened and the owner can
+    act on it. No transcript, prompt, or provider text ever rides along.
+    """
+    reason = str(getattr(exc, "reason", "") or "speech_session_not_admitted")
+    return JSONResponse(
+        {
+            "error": reason,
+            "refusal": reason,
+            "failure_category": "speech_session_refused",
+            "capability": str(getattr(exc, "capability", "") or ""),
+            # A run that refused AND could not record its own terminal state is
+            # two facts. The marker rides the exception from the entry owner.
+            **session_terminal_of(exc),
+        },
+        status_code=422,
+    )
+
+
+def _speech_failure(exc: Any) -> JSONResponse:
+    """One admitted provider attempt's safe failed outcome on the wire."""
+
+    contract = str(getattr(exc, "contract", "") or "speech_provider")
+    reason = str(getattr(exc, "reason", "") or "provider_failed")
+    return JSONResponse(
+        {
+            "error": f"{contract}:{reason}",
+            "failure_category": "speech_provider_failed",
+            "contract": contract,
+            "reason": reason,
+            **session_terminal_of(exc),
+        },
+        status_code=502,
+    )
+
 
 # HS-112-02 — the kernel refusals that are known to have happened BEFORE any
 # keystroke left the machine. They are deterministic and safe to make terminal:
@@ -70,7 +128,8 @@ def build_pipeline_router(
         from ....plugins.dictation.project_kb import ProjectKBError, kb_path_for, read_project_kb
         from ....target_profile import detect_active_target_profile, detect_target_profile_with_override
 
-        cfg = Config.load().dictation
+        config_snapshot = Config.load()
+        cfg = config_snapshot.dictation
         warnings: list[dict[str, Any]] = []
 
         project: Optional[dict[str, Any]]
@@ -131,6 +190,12 @@ def build_pipeline_router(
             hs_context_payload["exists"] = hs_dir.is_dir()
 
         runtime_payload = _runtime_readiness(cfg)
+        from ....db import get_database
+        from ....speech_session import configured_pipeline_egress_boundary
+
+        egress_boundary = configured_pipeline_egress_boundary(
+            config_snapshot, get_database()
+        )
         try:
             target_payload = detect_active_target_profile(
                 cfg.pipeline.target_profile_override
@@ -245,6 +310,7 @@ def build_pipeline_router(
             {
                 "ready": ready,
                 "project": project,
+                "egress_boundary": egress_boundary,
                 "config": {
                     "pipeline_enabled": cfg.pipeline.enabled,
                     "max_total_latency_ms": cfg.pipeline.max_total_latency_ms,
@@ -268,7 +334,7 @@ def build_pipeline_router(
         )
 
     @router.post("/api/dictation/dry-run")
-    async def api_dictation_dry_run(payload: dict[str, Any]) -> Any:
+    async def api_dictation_dry_run(request: Request, payload: dict[str, Any]) -> Any:
         utterance = payload.get("utterance") if isinstance(payload, dict) else None
         if not isinstance(utterance, str):
             return JSONResponse(
@@ -306,22 +372,42 @@ def build_pipeline_router(
                 status_code=400,
             )
 
-        try:
-            # off the event loop: a mesh-routed rewrite WAITS on the relay
-            # queue, and THIS loop must serve the worker's claim polls
-            return JSONResponse(
-                await asyncio.to_thread(
-                    _run_dictation_dry_run_text,
-                    text,
-                    project_root_override,
-                    target_hints,
-                    suggestions=project_doc_suggestions,
-                    corrections=ctx.corrections,
-                    dismissed_signatures=dismissed_signatures,
-                    telemetry=ctx.telemetry,
-                    journal=ctx.journal,
-                )
+        # HS-131-15: the rehearsal runs the FULL configured pipeline, so it opens
+        # ONE fresh `dictation.session` derived from the middleware principal —
+        # never the payload, never the open-mic interval — before any runtime is
+        # constructed. Off the event loop: a mesh-routed rewrite WAITS on the
+        # relay queue, and THIS loop must serve the worker's claim polls.
+        def _work(config_snapshot: Any, entry: Any) -> dict[str, Any]:
+            return _run_dictation_dry_run_text(
+                text,
+                project_root_override,
+                target_hints,
+                suggestions=project_doc_suggestions,
+                config_snapshot=config_snapshot,
+                admission=None if entry is None else entry.provider,
+                fence=None if entry is None else entry.fence,
+                terminal_entry=entry,
+                corrections=ctx.corrections,
+                dismissed_signatures=dismissed_signatures,
+                telemetry=ctx.telemetry,
+                journal=ctx.journal,
             )
+
+        from ....speech_session import (
+            AIM_BROWSER_REHEARSE,
+            SpeechProviderFailure,
+            SpeechSessionRefused,
+        )
+
+        try:
+            return JSONResponse(
+                await _run_cancellable_entry(request, AIM_BROWSER_REHEARSE, _work)
+            )
+        except SpeechSessionRefused as exc:
+            return _speech_refusal(exc)
+        except SpeechProviderFailure as exc:
+            log.error(f"Dictation dry-run provider failed: {exc.contract}:{exc.reason}")
+            return _speech_failure(exc)
         except ValueError as exc:
             return JSONResponse({"error": str(exc)}, status_code=400)
         except Exception as exc:
@@ -384,57 +470,68 @@ def build_pipeline_router(
         delivery_id = ""
         delivery_service = dictation_service
         principal = getattr(request.state, "principal", None)
-        if delivery_id_value is not None:
-            if not isinstance(delivery_id_value, str) or not delivery_id_value.strip():
-                return JSONResponse(
-                    {"error": "delivery_id must be a non-empty identifier"},
-                    status_code=400,
-                )
-            delivery_id = delivery_id_value.strip()
-            request_shape = {
-                "text": text,
-                "target": target_hints,
-                "target_mode": target_mode,
-                "raw": bool(payload.get("raw")),
-                "require_agent": require_agent,
-            }
-            request_hash = hashlib.sha256(
-                json.dumps(
-                    request_shape, separators=(",", ":"), sort_keys=True
-                ).encode("utf-8")
-            ).hexdigest()
-            try:
-                claim = delivery_service.claim_delivery(
-                    principal, delivery_id, request_hash=request_hash
-                )
-            except ValueError as exc:
-                return JSONResponse(
-                    {
-                        "error": str(exc),
-                        "failure_category": "delivery_conflict",
-                        "delivery_id": delivery_id,
-                    },
-                    status_code=409,
-                )
-            claim_state = claim.get("claim_state")
-            if claim_state in {"succeeded", "failed"}:
-                cached = dict(claim.get("response") or {})
-                cached["delivery_id"] = delivery_id
-                cached["deduplicated"] = True
-                return JSONResponse(
-                    cached,
-                    status_code=int(claim.get("response_status") or 200),
-                )
-            if claim_state == "pending":
-                return JSONResponse(
-                    {
-                        "error": "Delivery is still pending. The draft remains on the sending device; retry this delivery id.",
-                        "error_code": "delivery_pending",
-                        "failure_category": "delivery_conflict",
-                        "delivery_id": delivery_id,
-                    },
-                    status_code=425,
-                )
+        if delivery_id_value is None:
+            # A remote send becomes committed work: it may outlive this HTTP
+            # connection. Without a client-stable claim there is no honest retry
+            # answer and a reconnect can type the same effect twice.
+            return JSONResponse(
+                {
+                    "error": "delivery_id is required for committed remote delivery",
+                    "error_code": "delivery_id_required",
+                    "failure_category": "delivery_conflict",
+                },
+                status_code=400,
+            )
+        if not isinstance(delivery_id_value, str) or not delivery_id_value.strip():
+            return JSONResponse(
+                {"error": "delivery_id must be a non-empty identifier"},
+                status_code=400,
+            )
+        delivery_id = delivery_id_value.strip()
+        request_shape = {
+            "text": text,
+            "target": target_hints,
+            "target_mode": target_mode,
+            "raw": bool(payload.get("raw")),
+            "require_agent": require_agent,
+        }
+        request_hash = hashlib.sha256(
+            json.dumps(
+                request_shape, separators=(",", ":"), sort_keys=True
+            ).encode("utf-8")
+        ).hexdigest()
+        try:
+            claim = delivery_service.claim_delivery(
+                principal, delivery_id, request_hash=request_hash
+            )
+        except ValueError as exc:
+            return JSONResponse(
+                {
+                    "error": str(exc),
+                    "failure_category": "delivery_conflict",
+                    "delivery_id": delivery_id,
+                },
+                status_code=409,
+            )
+        claim_state = claim.get("claim_state")
+        if claim_state in {"succeeded", "failed"}:
+            cached = dict(claim.get("response") or {})
+            cached["delivery_id"] = delivery_id
+            cached["deduplicated"] = True
+            return JSONResponse(
+                cached,
+                status_code=int(claim.get("response_status") or 200),
+            )
+        if claim_state == "pending":
+            return JSONResponse(
+                {
+                    "error": "Delivery is still pending. The draft remains on the sending device; retry this delivery id.",
+                    "error_code": "delivery_pending",
+                    "failure_category": "delivery_conflict",
+                    "delivery_id": delivery_id,
+                },
+                status_code=425,
+            )
 
         def terminal_response(
             body: dict[str, Any], *, status_code: int = 200
@@ -491,8 +588,15 @@ def build_pipeline_router(
             # this id reads that state and never invokes the hook again.
             return JSONResponse(pending, status_code=425)
 
-        def refusal_response(reason: str, *, final_text: str = "") -> JSONResponse:
-            """A named, terminal refusal — nothing was typed, say so plainly."""
+        def refusal_response(
+            reason: str, *, final_text: str = "", session: Any = None
+        ) -> JSONResponse:
+            """A named, terminal refusal — nothing was typed, say so plainly.
+
+            ``session`` carries the speech entry (or the exception that came from
+            it) so a refusal whose parent close ALSO could not be recorded reports
+            both facts rather than the first one only.
+            """
             return terminal_response(
                 {
                     "error": reason,
@@ -500,19 +604,27 @@ def build_pipeline_router(
                     "failure_category": "delivery_refused",
                     "delivered": False,
                     "final_text": final_text,
+                    **session_terminal_of(session),
                 },
                 status_code=422,
             )
 
-        def deliver(body_text: str) -> tuple[bool, dict[str, Any] | None, JSONResponse | None]:
+        def deliver(
+            body_text: str, *, terminal_entry: Any = None
+        ) -> tuple[bool, dict[str, Any] | None, JSONResponse | None]:
             """Run the ONE delivery hook. Returns (delivered, receipt, refusal).
 
             HS-112-02: the two call sites (raw + processed) share this so the
             room and the companion cannot drift apart on how a refusal reads.
+            When a provider-backed remote entry is supplied, settle its honest
+            terminal outcome before constructing the response and before the
+            caller releases the speech/effect handoff election.
             """
             from ....desktop_typing import DesktopTypeRefused
 
             if ctx.on_remote_dictation is None:
+                if terminal_entry is not None:
+                    terminal_entry.close("succeeded")
                 return False, None, None
             try:
                 if target_mode == "agent":
@@ -523,8 +635,20 @@ def build_pipeline_router(
                     outcome = ctx.on_remote_dictation(body_text, target=target_mode)
             except DesktopTypeRefused as exc:
                 if str(exc.reason) in PRE_EFFECT_REFUSALS:
-                    return False, None, refusal_response(str(exc.reason), final_text=body_text)
+                    if terminal_entry is not None:
+                        terminal_entry.close("refused")
+                    return (
+                        False,
+                        None,
+                        refusal_response(
+                            str(exc.reason),
+                            final_text=body_text,
+                            session=terminal_entry,
+                        ),
+                    )
                 log.error(f"Remote dictation delivery refused mid-effect: {exc}")
+                if terminal_entry is not None:
+                    terminal_entry.close("failed")
                 return (
                     False,
                     None,
@@ -533,11 +657,14 @@ def build_pipeline_router(
                             "error": f"delivery failed: {exc}",
                             "final_text": body_text,
                             "delivered": False,
+                            **session_terminal_of(terminal_entry),
                         },
                     ),
                 )
             except Exception as exc:
                 log.error(f"Remote dictation delivery failed: {exc}")
+                if terminal_entry is not None:
+                    terminal_entry.close("failed")
                 return (
                     False,
                     None,
@@ -546,139 +673,246 @@ def build_pipeline_router(
                             "error": f"delivery failed: {exc}",
                             "final_text": body_text,
                             "delivered": False,
+                            **session_terminal_of(terminal_entry),
                         },
                     ),
                 )
             receipt = dict(outcome) if isinstance(outcome, dict) else None
+            if terminal_entry is not None:
+                terminal_entry.close("succeeded")
             return True, receipt, None
 
-        # HS-112-02 — the aimed-agent refusal, decided BEFORE any pipeline or
-        # effect work: no awaiting agent means no delivery, named in one word.
-        if require_agent and target_mode == "agent":
-            from ....agent_context import get_recent_awaiting_agent_session
+        # ── everything below is COMMITTED work (HS-131-15) ───────────────────
+        # The idempotency claim above was ACCEPTED: the user pressed send and the
+        # hub took responsibility for it. A phone that walks out of Wi-Fi is not a
+        # revocation of that decision, so the remainder runs in a shielded task
+        # and continues to a terminal delivery claim even if this HTTP request is
+        # cancelled. (Explicit session expiry or revocation before the delivery
+        # gate still refuses — see the pre-delivery election below.)
+        async def _committed_send() -> JSONResponse:
+            # HS-112-02 — the aimed-agent refusal, decided BEFORE any pipeline or
+            # effect work: no awaiting agent means no delivery, named in one word.
+            if require_agent and target_mode == "agent":
+                from ....agent_context import get_recent_awaiting_agent_session
 
+                try:
+                    awaiting = get_recent_awaiting_agent_session(max_age_seconds=120)
+                except Exception as exc:  # pragma: no cover - defensive probe
+                    log.warning(f"Awaiting-agent probe failed: {exc}")
+                    awaiting = None
+                if awaiting is None:
+                    return refusal_response("no_awaiting_agent")
+
+            # HSM-18-01 — verbatim delivery for a client holding a dry-run receipt.
+            # A previewed `final_text` has already been through the pipeline; running
+            # it again would make the receipt a lie (the rewrite is not idempotent).
+            # `raw: true` types EXACTLY the given text: no pipeline, no macro
+            # dispatch. Absent/false -> the paths below run byte-identical.
+            if bool(payload.get("raw")):
+                delivered, receipt, refused = deliver(text)
+                if refused is not None:
+                    return refused
+                body: dict[str, Any] = {
+                    "success": True,
+                    "final_text": text,
+                    "delivered": delivered,
+                }
+                if receipt is not None:
+                    body["delivery"] = receipt
+                return terminal_response(body)
+
+            # HSM-18-02 — voice command macros must fire on the remote relay too, exactly
+            # as they do on the local dictation path (dictation_capture._maybe_dispatch_
+            # voice_command). A configured, enabled macro keyword is NOT dictated as prose;
+            # it fires through the same bounded, guarded connector and returns a "fired"
+            # result the companion renders as the macro-object chip (the Phase-18 signature
+            # moment). Off by default: macros disabled -> dispatch returns None -> the
+            # normal dictation path below runs, byte-identical to before this fix.
+            from ....config import Config
+            from ....dictation_runner import dispatch_voice_command
+
+            def _remote_type(t: str) -> None:
+                # a `type_text` macro free-types into the focused Mac app via the proven
+                # focused-delivery relay; if nothing can deliver, the macro still fires its
+                # action, it just cannot type.
+                if ctx.on_remote_dictation is None:
+                    raise RuntimeError("voice_macro_direct_gesture_required")
+                ctx.on_remote_dictation(t, target="focused")
+
+            config_snapshot = Config.load()
             try:
-                awaiting = get_recent_awaiting_agent_session(max_age_seconds=120)
-            except Exception as exc:  # pragma: no cover - defensive probe
-                log.warning(f"Awaiting-agent probe failed: {exc}")
-                awaiting = None
-            if awaiting is None:
-                return refusal_response("no_awaiting_agent")
+                fired = dispatch_voice_command(
+                    text, config=config_snapshot, type_writer=_remote_type
+                )
+            except Exception as exc:  # a macro failure must never block plain dictation
+                log.error(f"Remote voice-command dispatch failed: {exc}")
+                fired = None
+            if fired is not None and fired.handled:
+                return terminal_response(
+                    {
+                        "success": True,
+                        "fired": {
+                            "keyword": fired.keyword,
+                            "kind": fired.kind,
+                            "preview": fired.preview,
+                            "ok": fired.ok,
+                            "error": fired.error,
+                        },
+                        "delivered": fired.ok,
+                        "final_text": "",
+                    }
+                )
 
-        # HSM-18-01 — verbatim delivery for a client holding a dry-run receipt.
-        # A previewed `final_text` has already been through the pipeline; running
-        # it again would make the receipt a lie (the rewrite is not idempotent).
-        # `raw: true` types EXACTLY the given text: no pipeline, no macro
-        # dispatch. Absent/false -> the paths below run byte-identical.
-        if bool(payload.get("raw")):
-            delivered, receipt, refused = deliver(text)
+            # HSM-18-05 — the pre-briefing loop closes on the REMOTE lane too, exactly
+            # as it does in the local runner (HS-53-07): a "Dictate with this" tap
+            # parked a record id; consume it (one-shot, recency-bounded) and fold the
+            # activity context in so the rewrite grounds in the selected record. This
+            # was the third silent relay hole of the audit's pattern: the pin existed,
+            # the local path consumed it, and the remote path never did. No pending
+            # pin -> activity_context is None -> byte-identical to before this fix.
+            activity_context = None
+            try:
+                from ....activity_context import build_activity_context
+                from ....dictation_selection import consume_selected_record
+
+                selected_record_id = consume_selected_record()
+                if selected_record_id is not None:
+                    activity_context = build_activity_context(
+                        limit=20, refresh=False, selected_record_id=selected_record_id
+                    ).to_dict()
+            except Exception as exc:
+                log.warning(f"Remote dictation activity grounding unavailable: {exc}")
+
+            # Reuse the exact rich-pipeline path the browser dry-run uses, so the same
+            # corrections/blocks/plugins apply — the answer is as smart as one spoken at
+            # the desk, not raw transcript.
+            #
+            # HS-131-15: the processing is real classify/rewrite work, so it runs
+            # under its OWN fresh `dictation.session` derived from the SAME
+            # middleware principal that took the delivery claim. It never borrows
+            # the browser's open-mic authority, and it encloses the provider work
+            # right through the final pre-delivery gate.
+            from ....speech_session import (
+                AIM_REMOTE_DELIVERY,
+                SpeechProviderFailure,
+                SpeechSessionRefused,
+                pipeline_provider_capabilities,
+            )
+
+            # `None` until admission succeeds, so the failure paths below can tell
+            # "never admitted" from "admitted, then could not record its end".
+            entry = None
+            final_text = text
+            try:
+                def _run_text(owned: Any) -> Any:
+                    return _run_dictation_dry_run_text(
+                        text,
+                        None,
+                        target_hints,
+                        suggestions=project_doc_suggestions,
+                        config_snapshot=config_snapshot,
+                        admission=None if owned is None else owned.provider,
+                        fence=None if owned is None else owned.fence,
+                        corrections=ctx.corrections,
+                        dismissed_signatures=dismissed_signatures,
+                        telemetry=ctx.telemetry,
+                        journal=ctx.journal,
+                        activity_context=activity_context,
+                        # HS-112-02: a delivery is a dictation, not a rehearsal. The
+                        # journal now shows the room's and the companion's utterances
+                        # beside the hotkey's, same schema; `dry_run` is reserved for
+                        # the explicit REHEARSE preview.
+                        journal_source="dictation",
+                    )
+
+                if not pipeline_provider_capabilities(config_snapshot):
+                    processed = await asyncio.to_thread(_run_text, None)
+                    final_text = (
+                        processed.get("final_text", text)
+                        if isinstance(processed, dict)
+                        else text
+                    )
+                    delivered, receipt, refused = deliver(final_text)
+                else:
+                    # Inside the try on purpose: admission itself can refuse (no
+                    # principal, no plan, a capability this configuration needs and
+                    # the registry cannot resolve), and a refusal owes the sender a
+                    # NAMED terminal response — never an unhandled 500 that leaves the
+                    # accepted claim without an outcome.
+                    config_snapshot, entry = _open_text_entry(
+                        request,
+                        AIM_REMOTE_DELIVERY,
+                        config_snapshot=config_snapshot,
+                    )
+                    with entry:
+                        processed = await asyncio.to_thread(_run_text, entry)
+                        final_text = (
+                            processed.get("final_text", text)
+                            if isinstance(processed, dict)
+                            else text
+                        )
+                        # The last gate before the effect. An explicit expiry or
+                        # revocation that landed while the model was working still
+                        # refuses here; past it, the existing delivery operation and
+                        # its receipt own the typing effect, and this fence never
+                        # becomes a second delivery record.
+                        cleared, delivery = entry.fence.publish(
+                            "remote pre-delivery handoff",
+                            lambda: deliver(final_text, terminal_entry=entry),
+                        )
+                        if not cleared:
+                            # Escape the context manager so the parent records the
+                            # same named refusal returned to the sender. Returning
+                            # normally here would falsely close it ``succeeded``.
+                            raise SpeechSessionRefused(
+                                entry.fence.reason() or "speech_session_not_live"
+                            )
+                        assert delivery is not None
+                        delivered, receipt, refused = delivery
+            except SpeechSessionRefused as exc:
+                reason = str(getattr(exc, "reason", "") or "speech_session_not_admitted")
+                log.error(f"Remote dictation refused: {reason}")
+                return refusal_response(reason, final_text=final_text, session=entry)
+            except SpeechProviderFailure as exc:
+                log.error(f"Remote dictation provider failed: {exc.contract}:{exc.reason}")
+                return terminal_response(
+                    {
+                        "error": f"{exc.contract}:{exc.reason}",
+                        "delivered": False,
+                        **session_terminal_of(entry),
+                    },
+                    status_code=502,
+                )
+            except Exception as exc:
+                log.error(f"Remote dictation pipeline failed: {exc}")
+                return terminal_response(
+                    {"error": str(exc), **session_terminal_of(entry)},
+                    status_code=500,
+                )
+
             if refused is not None:
                 return refused
-            body: dict[str, Any] = {
-                "success": True,
-                "final_text": text,
-                "delivered": delivered,
-            }
+            body = {"success": True, "final_text": final_text, "delivered": delivered}
             if receipt is not None:
                 body["delivery"] = receipt
+            if entry is not None and entry.indeterminate:
+                # The typing effect either happened or it did not, and the
+                # delivery receipt above is the record of THAT. An unknown
+                # terminal state on the speech parent is a separate, lesser fact,
+                # so it is reported beside the delivery instead of demoting a
+                # known-typed effect into a pre-effect failure.
+                body["session_terminal"] = "indeterminate"
             return terminal_response(body)
 
-        # HSM-18-02 — voice command macros must fire on the remote relay too, exactly
-        # as they do on the local dictation path (dictation_capture._maybe_dispatch_
-        # voice_command). A configured, enabled macro keyword is NOT dictated as prose;
-        # it fires through the same bounded, guarded connector and returns a "fired"
-        # result the companion renders as the macro-object chip (the Phase-18 signature
-        # moment). Off by default: macros disabled -> dispatch returns None -> the
-        # normal dictation path below runs, byte-identical to before this fix.
-        from ....config import Config
-        from ....dictation_runner import dispatch_voice_command
-
-        def _remote_type(t: str) -> None:
-            # a `type_text` macro free-types into the focused Mac app via the proven
-            # focused-delivery relay; if nothing can deliver, the macro still fires its
-            # action, it just cannot type.
-            if ctx.on_remote_dictation is None:
-                raise RuntimeError("voice_macro_direct_gesture_required")
-            ctx.on_remote_dictation(t, target="focused")
-
+        task = asyncio.ensure_future(_committed_send())
         try:
-            fired = dispatch_voice_command(
-                text, config=Config.load(), type_writer=_remote_type
-            )
-        except Exception as exc:  # a macro failure must never block plain dictation
-            log.error(f"Remote voice-command dispatch failed: {exc}")
-            fired = None
-        if fired is not None and fired.handled:
-            return terminal_response(
-                {
-                    "success": True,
-                    "fired": {
-                        "keyword": fired.keyword,
-                        "kind": fired.kind,
-                        "preview": fired.preview,
-                        "ok": fired.ok,
-                        "error": fired.error,
-                    },
-                    "delivered": fired.ok,
-                    "final_text": "",
-                }
-            )
-
-        # HSM-18-05 — the pre-briefing loop closes on the REMOTE lane too, exactly
-        # as it does in the local runner (HS-53-07): a "Dictate with this" tap
-        # parked a record id; consume it (one-shot, recency-bounded) and fold the
-        # activity context in so the rewrite grounds in the selected record. This
-        # was the third silent relay hole of the audit's pattern: the pin existed,
-        # the local path consumed it, and the remote path never did. No pending
-        # pin -> activity_context is None -> byte-identical to before this fix.
-        activity_context = None
-        try:
-            from ....activity_context import build_activity_context
-            from ....dictation_selection import consume_selected_record
-
-            selected_record_id = consume_selected_record()
-            if selected_record_id is not None:
-                activity_context = build_activity_context(
-                    limit=20, refresh=False, selected_record_id=selected_record_id
-                ).to_dict()
-        except Exception as exc:
-            log.warning(f"Remote dictation activity grounding unavailable: {exc}")
-
-        # Reuse the exact rich-pipeline path the browser dry-run uses, so the same
-        # corrections/blocks/plugins apply — the answer is as smart as one spoken at
-        # the desk, not raw transcript.
-        try:
-            processed = await asyncio.to_thread(
-                _run_dictation_dry_run_text,
-                text,
-                None,
-                target_hints,
-                suggestions=project_doc_suggestions,
-                corrections=ctx.corrections,
-                dismissed_signatures=dismissed_signatures,
-                telemetry=ctx.telemetry,
-                journal=ctx.journal,
-                activity_context=activity_context,
-                # HS-112-02: a delivery is a dictation, not a rehearsal. The
-                # journal now shows the room's and the companion's utterances
-                # beside the hotkey's, same schema; `dry_run` is reserved for
-                # the explicit REHEARSE preview.
-                journal_source="dictation",
-            )
-        except Exception as exc:
-            log.error(f"Remote dictation pipeline failed: {exc}")
-            return terminal_response({"error": str(exc)}, status_code=500)
-
-        final_text = (
-            processed.get("final_text", text) if isinstance(processed, dict) else text
-        )
-        delivered, receipt, refused = deliver(final_text)
-        if refused is not None:
-            return refused
-        body = {"success": True, "final_text": final_text, "delivered": delivered}
-        if receipt is not None:
-            body["delivery"] = receipt
-        return terminal_response(body)
+            return await asyncio.shield(task)
+        except asyncio.CancelledError:
+            # The client is gone; the send is not. Let the task finish writing its
+            # terminal delivery claim so a retry of this id reads the real outcome
+            # instead of replaying an effect that already happened.
+            task.add_done_callback(_log_detached_delivery)
+            raise
 
     @router.get("/api/dictation/corrections")
     async def api_dictation_corrections_list() -> Any:
@@ -967,7 +1201,7 @@ def build_pipeline_router(
         )
 
     @router.post("/api/dictation/journal/{entry_id}/replay")
-    async def api_dictation_journal_replay(entry_id: int) -> Any:
+    async def api_dictation_journal_replay(request: Request, entry_id: int) -> Any:
         """HS-45-04: re-run a stored utterance through the *current* pipeline.
 
         Replays the entry's stored **transcript** (not audio) through the dry-run
@@ -982,17 +1216,39 @@ def build_pipeline_router(
         entry = repo.get(entry_id)
         if entry is None:
             return JSONResponse({"error": "entry not found"}, status_code=404)
-        try:
-            after = _run_dictation_dry_run_text(
+        # HS-131-15: a replay re-runs classify/rewrite, so it is admitted like any
+        # other provider-bearing entry — its own fresh session, never an open-mic
+        # parent — and it runs OFF the event loop so a mesh-routed rewrite cannot
+        # deadlock against the relay poller this loop is serving.
+        def _work(config_snapshot: Any, admitted: Any) -> dict[str, Any]:
+            return _run_dictation_dry_run_text(
                 entry.transcript,
                 entry.project_root,  # original context
                 None,
                 suggestions=project_doc_suggestions,
+                config_snapshot=config_snapshot,
+                admission=None if admitted is None else admitted.provider,
+                fence=None if admitted is None else admitted.fence,
+                terminal_entry=admitted,
                 corrections=ctx.corrections,
                 dismissed_signatures=dismissed_signatures,
                 telemetry=None,  # a preview — don't pollute readiness telemetry
                 journal=None,  # replay never journals (it's not a new dictation)
             )
+
+        from ....speech_session import (
+            AIM_JOURNAL_REPLAY,
+            SpeechProviderFailure,
+            SpeechSessionRefused,
+        )
+
+        try:
+            after = await _run_cancellable_entry(request, AIM_JOURNAL_REPLAY, _work)
+        except SpeechSessionRefused as exc:
+            return _speech_refusal(exc)
+        except SpeechProviderFailure as exc:
+            log.error(f"Journal replay provider failed: {exc.contract}:{exc.reason}")
+            return _speech_failure(exc)
         except ValueError as exc:
             return JSONResponse({"error": str(exc)}, status_code=400)
         except Exception as exc:  # pragma: no cover - mirrors the dry-run route

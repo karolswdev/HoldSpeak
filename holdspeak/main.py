@@ -471,7 +471,28 @@ Logs are written to: {LOG_FILE}
 
     # Handle dictation subcommand (DIR-01 CLI surface)
     if args.command == "dictation":
-        raise SystemExit(run_dictation_command(_normalize_dictation_args(args)))
+        # HS-131-15: authority is derived HERE, at the top level, from the
+        # hub-issued owner credential this process holds — through the same
+        # centralized authenticator the web edge uses. The command never mints an
+        # owner, never reads UID/TTY/loopback/process location, and takes no
+        # `--principal`. `None` means "no valid credential"; a provider-bearing
+        # dry-run then refuses by name before it constructs anything, while a
+        # configuration that reaches no model stays lexical.
+        from .speech_session import cli_owner_principal
+
+        # ONE snapshot for the whole command: the credential is checked against
+        # it, the plan is frozen from it, and the pipeline is assembled from it.
+        # Loading twice would mean authenticating against one configuration and
+        # running against another — a window where an edit between the two reads
+        # changes where the model runs after the authority decision was made.
+        dictation_config = Config.load()
+        raise SystemExit(
+            run_dictation_command(
+                _normalize_dictation_args(args),
+                principal=cli_owner_principal(dictation_config),
+                config_snapshot=dictation_config,
+            )
+        )
 
     # Handle agent-hook subcommand
     if args.command == "agent-hook":

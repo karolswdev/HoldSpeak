@@ -7,7 +7,7 @@ independently of the Database container.
 # Bump this when adding tables or columns; the Database container uses it to
 # decide whether to back up and re-apply. See core._ensure_schema for the
 # four-way upgrade contract.
-SCHEMA_VERSION = 57  # v57: kernel_parent_runs.kind accepts cadence.next-action-draft (HS-131-13)
+SCHEMA_VERSION = 58  # v58: durable parent publication election (HS-131-15)
 
 # SQL Schema
 SCHEMA_SQL = """
@@ -1729,6 +1729,8 @@ CREATE TABLE IF NOT EXISTS kernel_parent_runs (
     state TEXT NOT NULL CHECK (state IN ('OPEN','CANCELLING','SUCCEEDED','FAILED','CANCELLED','REFUSED','INDETERMINATE')),
     lease_process_id TEXT NOT NULL DEFAULT '',
     lease_heartbeat_at REAL,
+    publication_claim_id TEXT NOT NULL DEFAULT '',
+    publication_claimed_at REAL,
     created_at REAL NOT NULL,
     updated_at REAL NOT NULL
 );

@@ -17,6 +17,7 @@ import hashlib
 import json
 import time
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any, Mapping, Optional, Sequence
 
 PLAN_SCHEMA = 1
@@ -52,6 +53,18 @@ WHISPER_DESTINATION_ID = "local_whisper"
 WHISPER_KIND = "local_speech_to_text"
 WHISPER_BOUNDARY = "same_device"
 
+# The one on-device DICTATION-LLM destination. When `dictation.runtime.profile_id`
+# points nowhere, a provider-backed dictation stage runs HERE: on the artifact
+# `dictation.runtime` names. It is a real deployment (engine + model + same-device
+# boundary), so it is frozen and receipted like every other place a model runs.
+#
+# Its `kind` is deliberately the EXISTING same-device kind rather than a new one:
+# the runner's engine factory already builds `this_device` from a revision's own
+# frozen fields, so this destination needs no new construction branch.
+DICTATION_DESTINATION_ID = "local_dictation"
+DICTATION_KIND = "this_device"
+DICTATION_BOUNDARY = "same_device"
+
 # Named refusals. These are the only honest outcomes when the frozen plan, the
 # live parent, or the owner's configured authority does not permit the dispatch.
 CAPABILITY_NOT_PLANNED = "speech_capability_not_planned"
@@ -81,6 +94,25 @@ SESSION_REVOKED = "speech_session_warrant_revoked"
 #: The dispatch would have reached a target other than the frozen admitted
 #: revision, and the backend cannot be rebound onto that revision.
 REVISION_TARGET_UNBINDABLE = "speech_revision_target_unbindable"
+#: A synthetic-text entry (browser rehearse / replay / template preview / remote
+#: processing, or the CLI dry-run) was handed something other than its OWN fresh,
+#: live text-entry admission: a missing or duck-typed value, a fence belonging to
+#: another session, an ended session, or an open-mic/hold parent it tried to
+#: borrow (HS-131-15).
+ENTRY_SESSION_REQUIRED = "speech_entry_session_required"
+#: `holdspeak dictation dry-run` would reach a provider, but this process holds no
+#: hub-issued owner credential. It refuses BEFORE provider construction; it never
+#: mints an owner for itself (HS-131-15, Sol Amendment 1).
+CLI_CREDENTIAL_REQUIRED = "speech_cli_owner_credential_required"
+
+#: The capabilities that reach a PROVIDER rather than Whisper, in the order the
+#: pipeline would use them — so "which frozen revision does this pipeline
+#: construct against?" has one deterministic answer.
+PROVIDER_CAPABILITIES: tuple[str, ...] = (
+    CAPABILITY_INTENT_CLASSIFY,
+    CAPABILITY_REWRITE,
+    CAPABILITY_PUNCTUATE,
+)
 
 
 class SpeechSessionRefused(RuntimeError):
@@ -259,6 +291,82 @@ class LocalWhisperDeployment:
         self.revision = revision
 
 
+def _local_dictation_engine(backend: str) -> str:
+    """The on-device engine one configured dictation backend selects, at PLAN time.
+
+    ``auto`` uses the runtime resolver's real importability semantics at plan
+    time. A discoverable ``mlx_lm`` package can still fail import because of a
+    missing transitive dependency or ABI mismatch; freezing MLX from a module spec
+    would then remove the existing valid fallback to ``llama_cpp``. The import is
+    the availability probe only — admitted construction still forces
+    ``warm_on_start=False``, so no model is loaded before a child exists.
+
+    ``openai_compatible`` (and any unknown value) names NO on-device artifact and
+    resolves to ``""``: with no profile pointer there is nothing to freeze, and
+    the capability is recorded UNRESOLVED rather than aimed at another
+    subsystem's model.
+    """
+    requested = str(backend or "auto").strip().lower()
+    if requested in ("mlx", "llama_cpp"):
+        return requested
+    if requested != "auto":
+        return ""
+
+    import importlib
+    import platform
+
+    def importable(name: str) -> bool:
+        try:
+            importlib.import_module(name)
+        except Exception:  # pragma: no cover - environment-dependent probe
+            return False
+        return True
+
+    if platform.system() == "Darwin" and platform.machine() == "arm64":
+        if importable("mlx_lm"):
+            return "mlx"
+    # Preserve the historical no-runtime plan shape when neither optional package
+    # exists; construction will report unavailable. When llama.cpp IS importable,
+    # this is the same concrete fallback runtime.resolve_backend would choose.
+    return "llama_cpp"
+
+
+def dictation_local_deployment_identity(terms: Mapping[str, Any]) -> Any:
+    """The same-device deployment a provider-backed dictation stage would load.
+
+    Built from the SAME frozen pipeline terms the plan hashes, so the artifact the
+    plan FREEZES and the artifact ``config_revision`` COVERS can never be two
+    different things. ``None`` means this configuration names no on-device
+    dictation artifact at all.
+    """
+    from ..inference_targets import DeploymentIdentity
+
+    engine = _local_dictation_engine(str(terms.get("runtime_backend", "") or ""))
+    if engine == "mlx":
+        artifact = str(terms.get("runtime_mlx_model", "") or "").strip()
+    elif engine == "llama_cpp":
+        artifact = str(terms.get("runtime_llama_cpp_model_path", "") or "").strip()
+    else:
+        artifact = ""
+    if not artifact:
+        return None
+    # The receipt name. A GGUF file drops its extension; an MLX model is a
+    # DIRECTORY or repo id whose leaf carries dots ("Qwen3.5-8B-MLX-4bit"), so
+    # `.stem` would truncate it to "Qwen3" and name a model that does not exist.
+    leaf = Path(artifact)
+    return DeploymentIdentity(
+        destination_id=DICTATION_DESTINATION_ID,
+        kind=DICTATION_KIND,
+        engine=engine,
+        model=leaf.stem if engine == "llama_cpp" else leaf.name,
+        node="",
+        boundary=DICTATION_BOUNDARY,
+        model_path=artifact,
+        endpoint="",
+        secret_slot="",
+    )
+
+
 def _model_terms(model_config: Any) -> dict[str, Any]:
     return {
         "name": str(getattr(model_config, "name", "") or ""),
@@ -282,6 +390,15 @@ def _pipeline_terms(config_snapshot: Any) -> dict[str, Any]:
         ),
         "runtime_backend": str(getattr(runtime, "backend", "") or ""),
         "runtime_profile_id": str(getattr(runtime, "profile_id", "") or ""),
+        # HS-131-15: the LOCAL artifacts a provider-backed run would actually
+        # load. They were missing from the hash, so swapping the configured
+        # dictation model between admission and construction changed WHICH model
+        # ran while `config_revision` — the thing the receipt names — stayed
+        # identical. A local retarget must be visible in the plan.
+        "runtime_mlx_model": str(getattr(runtime, "mlx_model", "") or ""),
+        "runtime_llama_cpp_model_path": str(
+            getattr(runtime, "llama_cpp_model_path", "") or ""
+        ),
     }
 
 
@@ -297,11 +414,65 @@ def _pipeline_capabilities(terms: Mapping[str, Any]) -> tuple[str, ...]:
         return ()
     stages = [str(stage) for stage in (terms.get("stages") or [])]
     declared: list[str] = []
-    if "intent-router" in stages or bool(terms.get("target_detect_llm_enabled")):
+    if "intent-router" in stages:
         declared.append(CAPABILITY_INTENT_CLASSIFY)
-    if "project-rewriter" in stages:
+    # Sol Amendment 2: model-assisted target detection calls
+    # ``runtime.rewrite`` (see ``target_profile.apply_model_assisted_target``),
+    # NOT ``classify``. A target-detection-only configuration therefore plans
+    # REWRITE; planning classify for it left the detector's real dispatch
+    # unplanned, so it refused by name — or, worse, was swallowed by the
+    # detector's broad catch and degraded silently to the heuristic.
+    if "project-rewriter" in stages or bool(terms.get("target_detect_llm_enabled")):
         declared.append(CAPABILITY_REWRITE)
-    return tuple(declared)
+    return tuple(dict.fromkeys(declared))
+
+
+def pipeline_provider_capabilities(config_snapshot: Any) -> tuple[str, ...]:
+    """The provider-backed capabilities ONE config snapshot actually selects.
+
+    The single derivation shared by every synthetic-text entry (HS-131-15), so a
+    route, the CLI, and the plan resolver can never disagree about whether this
+    configuration reaches a model at all. An empty tuple means intentionally
+    lexical: no runtime is constructed and no inference child is minted.
+    """
+    return _pipeline_capabilities(_pipeline_terms(config_snapshot))
+
+
+def configured_pipeline_egress_boundary(
+    config_snapshot: Any, registry_snapshot: Any
+) -> str:
+    """The prospective decision-point egress for one configuration snapshot.
+
+    This is the browser's BEFORE-ACTION disclosure, not execution proof. It uses
+    the same capability derivation and placement resolver as admission but does
+    not capture a deployment revision or mint a parent. The dry-run response later
+    carries the boundary from the actual frozen plan, which is authoritative.
+    ``""`` means the configured provider leg cannot currently resolve.
+    """
+    from ..inference_targets import resolve_placement
+    from ..intel.providers import EGRESS_LOCAL, egress_boundary
+
+    terms = _pipeline_terms(config_snapshot)
+    if not _pipeline_capabilities(terms):
+        return EGRESS_LOCAL
+    profile_id = str(terms.get("runtime_profile_id", "") or "").strip()
+    try:
+        if profile_id:
+            target = resolve_placement(
+                registry_snapshot, invocation=profile_id
+            ).target
+            deployment = None if target is None else target.deployment
+        else:
+            deployment = dictation_local_deployment_identity(terms)
+        if deployment is None:
+            return ""
+        endpoint = str(getattr(deployment, "endpoint", "") or "")
+        node = str(getattr(deployment, "node", "") or "")
+        return str(
+            egress_boundary(cloud=bool(endpoint), base_url=endpoint, node=node)
+        )
+    except Exception:
+        return ""
 
 
 class DictationSessionPlanResolver:
@@ -324,6 +495,7 @@ class DictationSessionPlanResolver:
         child_budget: int,
         plan_kind: str = PLAN_DICTATION,
         capabilities: Sequence[str] = (),
+        plan_defaults: bool = True,
         insertion_context: str = "",
         created_at: Optional[float] = None,
     ) -> SpeechSessionPlan:
@@ -334,28 +506,40 @@ class DictationSessionPlanResolver:
 
         model_terms = _model_terms(getattr(config_snapshot, "model", None))
         pipeline_terms = _pipeline_terms(config_snapshot)
-        whisper = capture_deployment_revision(
-            registry_snapshot,
-            whisper_deployment_identity(getattr(config_snapshot, "model", None)),
-        )
 
         declared = list(dict.fromkeys(str(name) for name in capabilities if str(name).strip()))
-        if not declared:
+        # ``plan_defaults=False`` (HS-131-15) is how a SYNTHETIC-TEXT entry says
+        # "these capabilities and no others". Without it an empty request fell
+        # through to the capture defaults, and a browser rehearsal or a CLI
+        # dry-run would have planned Whisper transcription and preload it can
+        # never legitimately use.
+        if not declared and plan_defaults:
             declared = [CAPABILITY_WHISPER_TRANSCRIBE, CAPABILITY_WHISPER_PRELOAD]
             declared.extend(_pipeline_capabilities(pipeline_terms))
 
         frozen: dict[str, tuple[str, ...]] = {}
         unresolved: list[str] = []
-        deployments: dict[str, Any] = {whisper.id: whisper}
+        deployments: dict[str, Any] = {}
+        whisper = None
+        if any(
+            name in (CAPABILITY_WHISPER_TRANSCRIBE, CAPABILITY_WHISPER_PRELOAD)
+            for name in declared
+        ):
+            # Synthetic-text entries declare no Whisper capability, so they do not
+            # upsert an unused deployment revision on every preview/replay/CLI run.
+            whisper = capture_deployment_revision(
+                registry_snapshot,
+                whisper_deployment_identity(getattr(config_snapshot, "model", None)),
+            )
+            deployments[whisper.id] = whisper
         provider_legs: tuple[Any, ...] | None = None
         for name in declared:
             if name in (CAPABILITY_WHISPER_TRANSCRIBE, CAPABILITY_WHISPER_PRELOAD):
+                assert whisper is not None
                 frozen[name] = (whisper.id,)
                 continue
             if provider_legs is None:
-                provider_legs = self._provider_legs(
-                    registry_snapshot, pipeline_terms["runtime_profile_id"]
-                )
+                provider_legs = self._provider_legs(registry_snapshot, pipeline_terms)
             if provider_legs:
                 frozen[name] = tuple(leg.id for leg in provider_legs)
                 deployments.update({leg.id: leg for leg in provider_legs})
@@ -404,15 +588,36 @@ class DictationSessionPlanResolver:
         )
 
     @staticmethod
-    def _provider_legs(registry_snapshot: Any, profile_id: str) -> tuple[Any, ...]:
-        """The ordered dictation-LLM legs, resolved ONCE at session opening."""
+    def _provider_legs(
+        registry_snapshot: Any, terms: Mapping[str, Any]
+    ) -> tuple[Any, ...]:
+        """The ordered dictation-LLM legs, resolved ONCE at session opening.
+
+        A runtime profile pointer means the profiles table decides. WITHOUT one,
+        the dictation leg runs on THIS device's configured DICTATION artifact, so
+        that is what the plan freezes.
+
+        HS-131-15: a blank pointer used to fall through to ``resolve_placement``'s
+        global default, which resolves the MEETING-intel ``this_machine``
+        destination. The session therefore froze ``meeting.intel_realtime_model``
+        for a dictation stage — a model dictation never loads — and, because that
+        revision carries the generic ``configured_local_engine``,
+        ``_try_build_runtime`` found no frozen artifact to bind to and kept
+        reading mutable config. Editing ``dictation.runtime`` after admission
+        silently retargeted construction and warm-on-start while the plan hash and
+        the receipt still named the meeting dial.
+        """
         from ..deployment_revisions import capture_deployment_revision
         from ..inference_targets import resolve_placement
 
+        profile_id = str(terms.get("runtime_profile_id", "") or "").strip()
         try:
-            resolution = resolve_placement(
-                registry_snapshot, invocation=str(profile_id).strip() or None
-            )
+            if not profile_id:
+                identity = dictation_local_deployment_identity(terms)
+                if identity is None:
+                    return ()
+                return (capture_deployment_revision(registry_snapshot, identity),)
+            resolution = resolve_placement(registry_snapshot, invocation=profile_id)
             target = resolution.target
             if target is None or target.deployment is None:
                 return ()
@@ -432,13 +637,18 @@ __all__ = [
     "CAPABILITY_REWRITE",
     "CAPABILITY_WHISPER_PRELOAD",
     "CAPABILITY_WHISPER_TRANSCRIBE",
+    "CLI_CREDENTIAL_REQUIRED",
     "CONTRACT_INTENT_CLASSIFY",
     "CONTRACT_PUNCTUATE",
     "CONTRACT_REWRITE",
     "CONTRACT_WHISPER_PRELOAD",
     "CONTRACT_WHISPER_TRANSCRIBE",
+    "DICTATION_BOUNDARY",
+    "DICTATION_DESTINATION_ID",
+    "DICTATION_KIND",
     "DictationSessionPlanResolver",
     "LocalWhisperDeployment",
+    "configured_pipeline_egress_boundary",
     "PARENT_DICTATION_SESSION",
     "PARENT_WAKE_SESSION",
     "PLAN_DICTATION",
@@ -462,6 +672,8 @@ __all__ = [
     "TRANSCRIPTION_CONTEXT_REQUIRED",
     "WHISPER_DESTINATION_ID",
     "WHISPER_KIND",
+    "dictation_local_deployment_identity",
+    "pipeline_provider_capabilities",
     "sha",
     "text_sha",
     "whisper_deployment_identity",

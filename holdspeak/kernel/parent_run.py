@@ -12,9 +12,6 @@ from .parent_lease import ParentLeaseHeartbeats
 from .model import Admission, KernelRefused, OperationRequest, valid_ref
 
 _PARENT_FIELDS = frozenset({"native_id", "definition_ref", "definition_revision", "input", "deadline_at", "child_budget"})
-_OUTCOME_STATES = {"succeeded": "SUCCEEDED", "failed": "FAILED", "cancelled": "CANCELLED", "refused": "REFUSED", "indeterminate": "INDETERMINATE"}
-
-
 @dataclass(frozen=True)
 class _ParentAdmission(Admission):
     kind: str; definition_ref: str; definition_revision: str
@@ -62,6 +59,7 @@ class ParentRunController:
     # Three beats fit within the stale window, so one missed refresh is harmless.
     _lease_seconds = 90.0
     _heartbeat_seconds = 10.0
+    _publication_wait_seconds = 5.0
     def __init__(self, broker: Any, database: Any, *, clock: Any = time.time, operation_names: Mapping[str, str] | None = None) -> None:
         self._broker, self._database, self._clock = broker, database, clock
         self._operation_names = operation_names or {kind: f"{kind}.run" for kind in ("sequence", "workflow", "workbench")}
@@ -155,12 +153,13 @@ class ParentRunController:
             if row is None: raise KernelRefused("parent_operation_unknown")
             self._valid_context(context, row, principal)
             if str(row["state"]) != "OPEN" or str(row["operation_state"]) != "claimed": raise KernelRefused("parent_operation_not_running")
+            if str(row["publication_claim_id"] or ""): raise KernelRefused("parent_publication_in_progress")
             warrant = json.loads(str(row["warrant_json"] or "{}"))
             if bool(row["warrant_revoked"]) or float(warrant.get("execution_expires_at") or 0) <= self._clock() or not self._broker.store.valid_warrant(warrant): raise KernelRefused("parent_operation_not_live")
             children = json.loads(str(row["children_json"]))
             if len(children) >= int(row["child_budget"]): raise KernelRefused("parent_child_budget_exhausted")
             children.append(invocation_id)
-            if conn.execute("UPDATE kernel_parent_runs SET planned_node=?,active_child_invocation_id=?,children_json=?,lease_process_id=?,lease_heartbeat_at=?,updated_at=? WHERE operation_id=? AND state='OPEN' AND execution_epoch=?", (planned_node, invocation_id, json.dumps(children, separators=(",", ":")), self._process_id, self._clock(), self._clock(), context.operation_id, context.epoch)).rowcount != 1: raise KernelRefused("parent_operation_not_running")
+            if conn.execute("UPDATE kernel_parent_runs SET planned_node=?,active_child_invocation_id=?,children_json=?,lease_process_id=?,lease_heartbeat_at=?,updated_at=? WHERE operation_id=? AND state='OPEN' AND execution_epoch=? AND publication_claim_id=''", (planned_node, invocation_id, json.dumps(children, separators=(",", ":")), self._process_id, self._clock(), self._clock(), context.operation_id, context.epoch)).rowcount != 1: raise KernelRefused("parent_operation_not_running")
         self.begin_child_dispatch(context.operation_id)
         return context.epoch
 
@@ -192,7 +191,9 @@ class ParentRunController:
             row = conn.execute("SELECT p.*,o.principal_kind,o.principal_identity FROM kernel_parent_runs p JOIN kernel_operations o ON o.operation_id=p.operation_id WHERE p.operation_id=?", (getattr(context, "operation_id", ""),)).fetchone()
             if row is None: raise KernelRefused("parent_operation_unknown")
             self._valid_context(context, row, principal)
-            if conn.execute("UPDATE kernel_parent_runs SET execution_epoch=execution_epoch+1,planned_node='',active_child_invocation_id='',lease_heartbeat_at=?,updated_at=? WHERE operation_id=? AND state='OPEN' AND execution_epoch=?", (self._clock(), self._clock(), context.operation_id, context.epoch)).rowcount != 1: raise KernelRefused("parent_operation_not_running")
+            if str(row["publication_claim_id"] or ""):
+                raise KernelRefused("parent_publication_in_progress")
+            if conn.execute("UPDATE kernel_parent_runs SET execution_epoch=execution_epoch+1,planned_node='',active_child_invocation_id='',lease_heartbeat_at=?,updated_at=? WHERE operation_id=? AND state='OPEN' AND execution_epoch=? AND publication_claim_id=''", (self._clock(), self._clock(), context.operation_id, context.epoch)).rowcount != 1: raise KernelRefused("parent_operation_not_running")
             row = conn.execute("SELECT p.*,o.principal_kind,o.principal_identity FROM kernel_parent_runs p JOIN kernel_operations o ON o.operation_id=p.operation_id WHERE p.operation_id=?", (context.operation_id,)).fetchone()
         self.end_child_dispatch(context.operation_id)
         return self._context(row)
@@ -211,7 +212,10 @@ class ParentRunController:
             row = conn.execute("SELECT p.*,o.principal_kind,o.principal_identity FROM kernel_parent_runs p JOIN kernel_operations o ON o.operation_id=p.operation_id WHERE p.operation_id=?", (context.operation_id,)).fetchone()
         if row is not None and str(row["state"]) == "CANCELLING":
             self.close(self._context(row), "cancelled", principal=principal)
-        return True
+        # A publication claim can outlive the bounded cancellation wait while the
+        # parent remains OPEN. No expiry transition was then elected; the caller
+        # must retry instead of adopting a terminal receipt that does not exist.
+        return row is not None and str(row["state"]) != "OPEN"
 
     def cancel_by_operation_id(self, principal: Any, operation_id: str) -> str:
         """Route-only cancellation authority: exact durable owner, checked under lock."""
@@ -227,57 +231,45 @@ class ParentRunController:
         if row is not None and str(row["state"]) == "CANCELLING":
             receipt = self.close(self._context(row), "cancelled", principal=principal)
             return str(receipt.get("outcome") or disposition)
+        if disposition == "pending" and row is not None and str(row["state"]) == "OPEN":
+            # A durable publication callback outlived the bounded wait. The
+            # caller must remain retryable rather than treating "pending" as a
+            # terminal cancellation it owns.
+            raise KernelRefused("parent_publication_in_progress")
         # The provider signal may still be in flight ("pending"), but the
         # durable terminal receipt is the disposition the caller acts on.
         receipt = self._broker.store.receipt(operation_id)
         return str(receipt["outcome"]) if receipt else disposition
 
     def _cancel(self, context: OuterRunContext, principal: Any) -> str:
-        with self._database._connection() as conn:
-            conn.execute("BEGIN IMMEDIATE")
-            row = conn.execute("SELECT p.*,o.principal_kind,o.principal_identity FROM kernel_parent_runs p JOIN kernel_operations o ON o.operation_id=p.operation_id WHERE p.operation_id=?", (getattr(context, "operation_id", ""),)).fetchone()
-            if row is None: raise KernelRefused("parent_operation_unknown")
-            self._valid_context(context, row, principal)
-            if str(row["state"]) != "OPEN": return str(row["state"]).lower()
-            conn.execute("UPDATE kernel_parent_runs SET state='CANCELLING',execution_epoch=execution_epoch+1,active_child_invocation_id='',lease_heartbeat_at=?,updated_at=? WHERE operation_id=? AND state='OPEN' AND execution_epoch=?", (self._clock(), self._clock(), context.operation_id, context.epoch))
-            child = str(row["active_child_invocation_id"] or "")
-        self.end_child_dispatch(context.operation_id)
-        if not child:
-            return "cancelled"
-        # Durable cancellation is already elected above. Do not let a provider's
-        # in-flight dispatch hold the cancelling HTTP request hostage.
-        from threading import Thread
-        Thread(target=self._broker.inference_runner._cancel_internal, args=(child, principal), daemon=True).start()
-        return "pending"
+        from .parent_terminal import cancel_parent
 
-    def close(self, context: OuterRunContext, outcome: str, result_ref: str = "", *, principal: Any | None = None) -> Mapping[str, Any]:
-        receipt, _ = self._close(context, outcome, result_ref, principal=principal)
+        return cancel_parent(self, context, principal)
+
+    def close(self, context: OuterRunContext, outcome: str, result_ref: str = "", *, principal: Any | None = None, publication_claim_id: str = "") -> Mapping[str, Any]:
+        receipt, _ = self._close(
+            context,
+            outcome,
+            result_ref,
+            principal=principal,
+            publication_claim_id=publication_claim_id,
+        )
         if receipt is None: raise KernelRefused("parent_operation_not_running")
         return receipt
 
-    def _close(self, context: OuterRunContext, outcome: str, result_ref: str = "", *, principal: Any | None = None, stale_before: float | None = None, stale_process_id: str | None = None) -> tuple[Mapping[str, Any] | None, bool]:
-        if outcome not in _OUTCOME_STATES: raise KernelRefused("receipt_outcome_unknown")
-        with self._database._connection() as conn:
-            conn.execute("BEGIN IMMEDIATE")
-            row = conn.execute("SELECT p.*,o.principal_kind,o.principal_identity,o.claimed_by,o.revision,o.target_ref,o.state AS operation_state FROM kernel_parent_runs p JOIN kernel_operations o ON o.operation_id=p.operation_id WHERE p.operation_id=?", (getattr(context, "operation_id", ""),)).fetchone()
-            if row is None: raise KernelRefused("parent_operation_unknown")
-            self._valid_context(context, row, principal)
-            existing = conn.execute("SELECT * FROM kernel_receipts WHERE operation_id=?", (context.operation_id,)).fetchone()
-            if existing is not None: return dict(existing), False
-            winner = "cancelled" if str(row["state"]) == "CANCELLING" else outcome
-            predicate, parameters = "", []
-            if stale_before is not None:
-                predicate, parameters = " AND lease_process_id IS ? AND (lease_heartbeat_at IS NULL OR lease_heartbeat_at < ?)", [stale_process_id, stale_before]
-            changed = conn.execute("UPDATE kernel_parent_runs SET state=?,active_child_invocation_id='',lease_heartbeat_at=?,updated_at=? WHERE operation_id=? AND state IN ('OPEN','CANCELLING')" + predicate, (_OUTCOME_STATES[winner], self._clock(), self._clock(), context.operation_id, *parameters)).rowcount
-            if changed != 1:
-                if stale_before is not None: return None, False
-                winner = next((key for key, value in _OUTCOME_STATES.items() if value == str(row["state"])), outcome)
-            conn.execute("UPDATE kernel_operations SET state=?,revision=revision+1,updated_at=? WHERE operation_id=? AND state='claimed'", (winner, self._clock(), context.operation_id))
-            conn.execute("INSERT OR IGNORE INTO kernel_receipts(receipt_id,operation_id,state,outcome,result_ref,created_at) VALUES(?,?,?,?,?,?)", ("rcpt_" + uuid.uuid4().hex, context.operation_id, winner, winner, result_ref if winner == outcome else "", self._clock()))
-            receipt = conn.execute("SELECT * FROM kernel_receipts WHERE operation_id=?", (context.operation_id,)).fetchone()
-        self.end_child_dispatch(context.operation_id)
-        self._broker.store.append("operation.receipt", context.operation_id, refs=tuple(filter(None, (str(row["target_ref"]), str(receipt["result_ref"])))), head=str(receipt["outcome"]))
-        return dict(receipt), True
+    def _close(self, context: OuterRunContext, outcome: str, result_ref: str = "", *, principal: Any | None = None, stale_before: float | None = None, stale_process_id: str | None = None, publication_claim_id: str = "") -> tuple[Mapping[str, Any] | None, bool]:
+        from .parent_terminal import close_parent
+
+        return close_parent(
+            self,
+            context,
+            outcome,
+            result_ref,
+            principal=principal,
+            stale_before=stale_before,
+            stale_process_id=stale_process_id,
+            publication_claim_id=publication_claim_id,
+        )
 
     def reconcile_abandoned(self) -> int:
         now, closed = self._clock(), 0

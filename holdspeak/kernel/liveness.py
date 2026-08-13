@@ -44,7 +44,10 @@ def reap_expired(broker: Any) -> dict[str, Any]:
                 warrant_revoked=1,
             )
         except KernelRefused as exc:
-            if exc.reason == "operation_revision_conflict":
+            if exc.reason in {
+                "operation_revision_conflict",
+                "parent_publication_in_progress",
+            }:
                 continue
             raise
         broker._terminal(terminal, terminal_state, reason)

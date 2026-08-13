@@ -6,7 +6,6 @@ voice-command dispatch — verbatim moves out of WebRuntime.
 
 from __future__ import annotations
 
-import hashlib
 import threading
 import time
 from datetime import datetime
@@ -14,12 +13,12 @@ from typing import Any, Callable, Optional
 
 import numpy as np
 
-from ..dictation_runner import dispatch_voice_command, process_transcript, run_dictation_pipeline
 from ..logging_config import get_logger
 from ..speech_session import HOLD_DRAIN_SECONDS as _HOLD_DRAIN_SECONDS
-from ..speech_session import admit_one_shot_session
+from ..speech_session import SpeechSessionRefused, admit_one_shot_session, fatal_speech_signal
 from .dictation_delivery import DictationDeliveryMixin
 from .dictation_previews import DictationPreviewMixin
+from .dictation_processing import DictationProcessingMixin
 from .dictation_session import HoldSessionMixin
 
 log = get_logger("web_runtime")
@@ -59,7 +58,12 @@ class BrowserTranscription:
         return str(self._session.close(outcome))
 
 
-class DictationCaptureMixin(HoldSessionMixin, DictationPreviewMixin, DictationDeliveryMixin):
+class DictationCaptureMixin(
+    HoldSessionMixin,
+    DictationPreviewMixin,
+    DictationDeliveryMixin,
+    DictationProcessingMixin,
+):
     def _transcribe_and_type(
         self,
         audio: np.ndarray,
@@ -113,8 +117,20 @@ class DictationCaptureMixin(HoldSessionMixin, DictationPreviewMixin, DictationDe
                 # HS-52-04: voice command dispatch. A configured, enabled keyword fires
                 # an action instead of being typed; on a match we return early and type
                 # nothing. Off by default and on no match this is inert (byte-identical).
-                voice_command = self._maybe_dispatch_voice_command(text, agent_reply_session)
-                if voice_command is not None:
+                #
+                # HS-131-15 closes the interval between the two: the fence was
+                # checked BEFORE `text_processor.process`, and dispatch then ran
+                # with no further election — so a cancellation landing in between
+                # still fired a macro, which is a real connector/typing EFFECT.
+                # Dispatch now happens INSIDE the same lock-protected election
+                # that cancellation contends for. A cancellation winner discards
+                # and returns; it is not treated as an ordinary unmatched command.
+                def _dispatch_voice_command() -> Any:
+                    voice_command = self._maybe_dispatch_voice_command(
+                        text, agent_reply_session
+                    )
+                    if voice_command is None:
+                        return None
                     if voice_command.ok:
                         self._set_runtime_activity(
                             "complete",
@@ -138,6 +154,22 @@ class DictationCaptureMixin(HoldSessionMixin, DictationPreviewMixin, DictationDe
                             last_event="voice_command_failed",
                             last_error=voice_command.error,
                         )
+                    if session is not None:
+                        # Command publication won. Settle the speech parent before
+                        # releasing the same election; cancellation cannot overwrite
+                        # an effect that has already fired.
+                        session.close("succeeded")
+                    return voice_command
+
+                if fence is not None:
+                    dispatched, voice_command = fence.publish(
+                        "dictation voice-command dispatch", _dispatch_voice_command
+                    )
+                    if not dispatched:
+                        return
+                else:
+                    voice_command = _dispatch_voice_command()
+                if voice_command is not None:
                     return
                 self._set_runtime_activity(
                     "processing",
@@ -157,11 +189,6 @@ class DictationCaptureMixin(HoldSessionMixin, DictationPreviewMixin, DictationDe
                     # Either nothing survived the pipeline or the session was
                     # fenced mid-run: no preview, no delivery, no journal row.
                     return
-                completed_text = text
-                with self.state_lock:
-                    self.runtime_status["last_transcription"] = text
-                    self.runtime_status["last_error"] = ""
-                print(f"-> {text}")
                 # HS-75-01: preview before it types (opt-in; the P60 wake
                 # grammar on hold-key dictation). An agent-reply session is
                 # never previewed — answering the coder is an explicit,
@@ -172,77 +199,127 @@ class DictationCaptureMixin(HoldSessionMixin, DictationPreviewMixin, DictationDe
                 policy_snapshot, dictation_policy = resolve_dictation_policy(self.config)
                 with self.state_lock:
                     self.runtime_status["last_operation_policy"] = policy_snapshot
-                if fence is not None and fence.discarded("dictation publication"):
-                    completed_text = None
-                    return
-                if agent_reply_session is None and dictation_policy.requires_review:
-                    self._arm_dictation_preview(text)
-                    if on_complete is not None:
-                        on_complete(text)
-                    return
-                delivered = self._try_tmux_agent_reply(text, agent_reply_session)
-                if delivered:
-                    self._set_runtime_activity(
-                        "complete",
-                        source="dictation",
-                        label="Sent",
-                        detail="Sent dictated text to the agent session.",
-                        last_event="dictation_delivered",
-                        last_error="",
-                    )
-                    self._mark_first_dictation()
-                if not delivered:
-                    try:
-                        paste_target_profile = self._paste_target_profile(agent_reply_session)
-                        self._set_runtime_activity(
-                            "typing",
-                            source="dictation",
-                            detail="Typing dictated text.",
-                            last_event="dictation_typing",
-                            last_error="",
-                        )
-                        if fence is not None and fence.discarded("dictation delivery"):
-                            completed_text = None
-                            return
-                        # Past the inference fence, delivery performs its OWN
-                        # existing effect admission and idempotency — this fence
-                        # never becomes a second delivery receipt.
-                        from ..desktop_typing import type_text_from_owner_gesture
 
-                        type_text_from_owner_gesture(
-                            text,
-                            typer=self.typer,
-                            gesture="hold_release",
-                            target_profile=paste_target_profile,
-                            submit=False,
-                            requested_target=(
-                                "agent_fallback" if agent_reply_session is not None else "focused"
-                            ),
-                            delivery_method="desktop_fallback",
+                def _publish_text() -> None:
+                    nonlocal completed_text
+                    completed_text = text
+                    with self.state_lock:
+                        self.runtime_status["last_transcription"] = text
+                        self.runtime_status["last_error"] = ""
+                    print(f"-> {text}")
+
+                if agent_reply_session is None and dictation_policy.requires_review:
+                    def _publish_preview() -> None:
+                        _publish_text()
+                        self._arm_dictation_preview(text)
+                        if on_complete is not None:
+                            on_complete(text)
+                        if session is not None:
+                            session.close("succeeded")
+
+                    if fence is not None:
+                        published, _value = fence.publish(
+                            "dictation preview publication", _publish_preview
                         )
+                        if not published:
+                            completed_text = None
+                    else:
+                        _publish_preview()
+                    return
+
+                def _deliver_text() -> None:
+                    _publish_text()
+                    delivered = self._try_tmux_agent_reply(text, agent_reply_session)
+                    if delivered:
                         self._set_runtime_activity(
                             "complete",
                             source="dictation",
-                            label="Typed",
-                            detail="Dictated text was inserted.",
-                            last_event="dictation_typed",
+                            label="Sent",
+                            detail="Sent dictated text to the agent session.",
+                            last_event="dictation_delivered",
                             last_error="",
                         )
                         self._mark_first_dictation()
-                    except Exception as exc:
-                        with self.state_lock:
-                            self.runtime_status["last_error"] = f"Typing failed: {exc}"
-                            self.runtime_status["text_injection_enabled"] = False
-                            self.runtime_status["text_injection_error"] = f"{type(exc).__name__}: {exc}"
-                        self._set_runtime_activity(
-                            "error",
-                            source="dictation",
-                            detail="Typing failed.",
-                            last_event="dictation_typing_failed",
-                            last_error=f"{type(exc).__name__}: {exc}",
-                        )
-                        log.warning(f"Typing failed in web mode: {exc}")
+                    else:
+                        try:
+                            paste_target_profile = self._paste_target_profile(
+                                agent_reply_session
+                            )
+                            self._set_runtime_activity(
+                                "typing",
+                                source="dictation",
+                                detail="Typing dictated text.",
+                                last_event="dictation_typing",
+                                last_error="",
+                            )
+                            # Delivery performs its OWN existing effect admission and
+                            # idempotency. The speech fence elects only whether this
+                            # exact handoff may begin; it is not a second effect receipt.
+                            from ..desktop_typing import type_text_from_owner_gesture
+
+                            type_text_from_owner_gesture(
+                                text,
+                                typer=self.typer,
+                                gesture="hold_release",
+                                target_profile=paste_target_profile,
+                                submit=False,
+                                requested_target=(
+                                    "agent_fallback"
+                                    if agent_reply_session is not None
+                                    else "focused"
+                                ),
+                                delivery_method="desktop_fallback",
+                            )
+                            self._set_runtime_activity(
+                                "complete",
+                                source="dictation",
+                                label="Typed",
+                                detail="Dictated text was inserted.",
+                                last_event="dictation_typed",
+                                last_error="",
+                            )
+                            self._mark_first_dictation()
+                        except Exception as exc:
+                            with self.state_lock:
+                                self.runtime_status["last_error"] = f"Typing failed: {exc}"
+                                self.runtime_status["text_injection_enabled"] = False
+                                self.runtime_status["text_injection_error"] = (
+                                    f"{type(exc).__name__}: {exc}"
+                                )
+                            self._set_runtime_activity(
+                                "error",
+                                source="dictation",
+                                detail="Typing failed.",
+                                last_event="dictation_typing_failed",
+                                last_error=f"{type(exc).__name__}: {exc}",
+                            )
+                            log.warning(f"Typing failed in web mode: {exc}")
+                    if on_complete is not None and completed_text is not None:
+                        try:
+                            on_complete(completed_text)
+                        except Exception as exc:
+                            log.warning(f"on_complete hook raised: {exc}")
+                    if session is not None:
+                        # Effect/publication first settles the speech parent before
+                        # releasing the SAME election. The caller's final close is
+                        # idempotent and cannot be overwritten by cancellation.
+                        session.close("succeeded")
+
+                if fence is not None:
+                    published, _value = fence.publish(
+                        "dictation delivery handoff", _deliver_text
+                    )
+                    if not published:
+                        completed_text = None
+                        return
+                else:
+                    _deliver_text()
             except Exception as exc:
+                if fatal_speech_signal(exc):
+                    # Admission, revision, provider, expiry, and cancellation are
+                    # control outcomes. The session owner maps them honestly; this
+                    # broad UI failure path must not rename them "Transcription failed".
+                    raise
                 failure.append(f"{type(exc).__name__}")
                 with self.state_lock:
                     self.runtime_status["last_error"] = f"Transcription failed: {exc}"
@@ -256,11 +333,6 @@ class DictationCaptureMixin(HoldSessionMixin, DictationPreviewMixin, DictationDe
                 log.error(f"Transcription failed in web mode: {exc}")
             finally:
                 self._set_voice_state("idle", update_activity=False)
-        if on_complete is not None and completed_text is not None:
-            try:
-                on_complete(completed_text)
-            except Exception as exc:
-                log.warning(f"on_complete hook raised: {exc}")
         return "failed" if failure else None
 
     def transcribe_audio(
@@ -379,9 +451,15 @@ class DictationCaptureMixin(HoldSessionMixin, DictationPreviewMixin, DictationDe
                     )
                     or "succeeded"
                 )
+            except SpeechSessionRefused:
+                # A liveness/revision/authority refusal is not a provider crash.
+                # Preserve the named control outcome on the parent receipt.
+                outcome = "refused"
+                raise
             except BaseException:
-                # Nothing may reach here (the tail records its own failure), but a
-                # parent must never close succeeded over an escaped exception.
+                # Nothing else should reach here (the tail records ordinary UI
+                # failures), but a parent must never close succeeded over an
+                # escaped provider failure or unexpected exception.
                 outcome = "failed"
                 raise
             finally:
@@ -392,100 +470,6 @@ class DictationCaptureMixin(HoldSessionMixin, DictationPreviewMixin, DictationDe
                     session.close(outcome)
 
         threading.Thread(target=_run, daemon=True).start()
-
-    def _maybe_dispatch_voice_command(
-        self, text: str, agent_reply_session: Any | None = None
-    ) -> Any:
-        # HS-52-04: thin delegate to the carved dispatch seam. Injects the runtime
-        # typer for `type_text` macros and surfaces a matched command as a runtime
-        # activity. Returns a VoiceCommandResult if a command fired (caller types
-        # nothing), else None.
-        def _type(t: str) -> None:
-            from ..desktop_typing import type_text_from_owner_gesture
-
-            macro_id = hashlib.sha256(text.encode("utf-8")).hexdigest()[:24]
-            type_text_from_owner_gesture(
-                t,
-                typer=self.typer,
-                gesture="hold_release",
-                target_profile=self._paste_target_profile(agent_reply_session),
-                submit=False,
-                macro_ref=f"voice-macro:{macro_id}",
-                requested_target="focused",
-                delivery_method="voice_macro",
-            )
-
-        def _activity(label: str) -> None:
-            self._set_runtime_activity(
-                "processing",
-                source="dictation",
-                label=label,
-                detail=label,
-                last_event="voice_command_match",
-                last_error="",
-            )
-
-        return dispatch_voice_command(
-            text,
-            config=self.config,
-            type_writer=_type,
-            on_activity=_activity,
-        )
-
-    def _maybe_run_dictation_pipeline(
-        self,
-        text: str,
-        *,
-        audio_duration_s: float,
-        transcribed_at: datetime,
-        agent_reply_session: Any | None = None,
-        journal_source: str = "hotkey",
-        admission: Any = None,
-    ) -> str:
-        # HS-118-08: the hotkey path now delegates to process_transcript so
-        # both hotkey and browser share the same factored function.
-        import asyncio
-
-        try:
-            loop = asyncio.get_event_loop()
-            if loop.is_running():
-                import concurrent.futures
-                with concurrent.futures.ThreadPoolExecutor() as pool:
-                    return pool.submit(
-                        asyncio.run,
-                        process_transcript(
-                            text,
-                            source=journal_source,
-                            context=None,
-                            config=self.config,
-                            server=self.server,
-                            agent_reply_session=agent_reply_session,
-                            admission=admission,
-                        ),
-                    ).result()
-            return asyncio.run(
-                process_transcript(
-                    text,
-                    source=journal_source,
-                    context=None,
-                    config=self.config,
-                    server=self.server,
-                    agent_reply_session=agent_reply_session,
-                    admission=admission,
-                )
-            )
-        except RuntimeError:
-            return asyncio.run(
-                process_transcript(
-                    text,
-                    source=journal_source,
-                    context=None,
-                    config=self.config,
-                    server=self.server,
-                    agent_reply_session=agent_reply_session,
-                    admission=admission,
-                )
-            )
 
     def _on_hotkey_press(self) -> None:
         if self.runtime_stop_event.is_set():

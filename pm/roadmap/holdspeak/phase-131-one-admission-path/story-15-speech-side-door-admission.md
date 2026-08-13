@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 131
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-131-02, HS-131-09
 - **Unblocks:** HS-131-10
 - **Owner:** unassigned
@@ -49,20 +49,20 @@ Constitution Articles V.2–3 and XI.1–3.
 
 ## Acceptance criteria
 
-- [ ] A Sol-ruled design records the admit-versus-lexical decision for each
+- [x] A Sol-ruled design records the admit-versus-lexical decision for each
   entry point and names principal, authority basis, parent, frozen plan,
   cancellation, and publication boundaries for every retained provider path.
-- [ ] Neither entry point can construct a model-bearing pipeline before its
+- [x] Neither entry point can construct a model-bearing pipeline before its
   authenticated parent and immutable plan exist.
-- [ ] Every retained physical model attempt has one causally linked invocation
+- [x] Every retained physical model attempt has one causally linked invocation
   child and one immutable terminal receipt; lexical-only paths mint none.
-- [ ] Missing authentication, authority, session liveness, or exact revision
+- [x] Missing authentication, authority, session liveness, or exact revision
   refuses by name before provider construction or dispatch.
-- [ ] Cancellation, expiry, route disconnect, or command interruption prevents
+- [x] Cancellation, expiry, route disconnect, or command interruption prevents
   late transcript/rewrite output from landing.
-- [ ] Kernel rows contain no audio, dictated text, prompt, token stream, or model
+- [x] Kernel rows contain no audio, dictated text, prompt, token stream, or model
   response body.
-- [ ] The one-path census removes both speech findings with no product scope in
+- [x] The one-path census removes both speech findings with no product scope in
   `ADAPTER_ALLOWLIST` and zero unregistered execution.
 
 ## Test plan

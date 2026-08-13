@@ -36,7 +36,7 @@ def submit(broker: Any, raw: Any, principal: Any, context: Any, *, planned_node:
         # private identity and durable owner/epoch have been re-derived.
         parent_id = getattr(context, "operation_id", "")
         row = conn.execute("""SELECT o.*,p.execution_epoch,p.state AS parent_state,p.child_budget,p.children_json,p.deadline_at,
-            p.native_id AS parent_native_id,p.input_json FROM kernel_operations o JOIN kernel_parent_runs p
+            p.publication_claim_id,p.native_id AS parent_native_id,p.input_json FROM kernel_operations o JOIN kernel_parent_runs p
             ON p.operation_id=o.operation_id WHERE o.operation_id=?""", (parent_id,)).fetchone()
         if row is None: raise KernelRefused("parent_operation_unknown")
         controller = getattr(broker, "parent_run_controller", None)
@@ -47,6 +47,8 @@ def submit(broker: Any, raw: Any, principal: Any, context: Any, *, planned_node:
             raise KernelRefused("parent_context_client_supplied")
         if str(row["state"]) != "claimed" or str(row["parent_state"]) != "OPEN":
             raise KernelRefused("parent_operation_not_running")
+        if str(row["publication_claim_id"] or ""):
+            raise KernelRefused("parent_publication_in_progress")
         # A parent deadline is an execution fence, not annotation. The caller
         # closes it through the controller before dispatch; this lock still
         # rejects a child that races that closure.
@@ -81,7 +83,7 @@ def submit(broker: Any, raw: Any, principal: Any, context: Any, *, planned_node:
         if principal.name == 'scheduler':
             conn.execute("UPDATE kernel_operations SET delegator_kind=?,delegator_identity=? WHERE operation_id=?", (str(row['delegator_kind']), str(row['delegator_identity']), operation_id))
         children.append(admission.native_id)
-        changed = conn.execute("UPDATE kernel_parent_runs SET planned_node=?,active_child_invocation_id=?,children_json=?,lease_process_id=?,lease_heartbeat_at=?,updated_at=? WHERE operation_id=? AND state='OPEN' AND execution_epoch=?", (planned_node, admission.native_id, json.dumps(children, separators=(",", ":")), controller._process_id, now, now, str(row["operation_id"]), int(row["execution_epoch"])))
+        changed = conn.execute("UPDATE kernel_parent_runs SET planned_node=?,active_child_invocation_id=?,children_json=?,lease_process_id=?,lease_heartbeat_at=?,updated_at=? WHERE operation_id=? AND state='OPEN' AND execution_epoch=? AND publication_claim_id=''", (planned_node, admission.native_id, json.dumps(children, separators=(",", ":")), controller._process_id, now, now, str(row["operation_id"]), int(row["execution_epoch"])))
         if changed.rowcount != 1: raise KernelRefused("parent_operation_not_running")
     controller.begin_child_dispatch(str(row["operation_id"]))
     broker.last_authority_layers = tuple(layers)

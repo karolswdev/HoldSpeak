@@ -197,7 +197,17 @@ def apply_model_assisted_target(
             max_tokens=16,
             temperature=0.0,
         )
-    except Exception:
+    except Exception as exc:
+        # HS-131-15 (Sol Amendment 3): "degrade back to the heuristic" is the right
+        # answer for an unparseable reply or a flaky provider — and the WRONG
+        # answer for a session refusal, a provider failure, an exact-revision
+        # mismatch, an expiry/revocation, or a budget refusal. This catch used to
+        # hide a missing `rewrite` capability behind a confident-looking heuristic
+        # result; those signals now escape to the entry owner unchanged.
+        from .speech_session.child import fatal_speech_signal
+
+        if fatal_speech_signal(exc):
+            raise
         return profile
     choice = _parse_target_choice(str(raw))
     if choice is None or choice == profile.id:

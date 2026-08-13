@@ -14,6 +14,7 @@ receipts, the frozen revisions, and the refusals are production code.
 from __future__ import annotations
 
 import json
+import threading
 from datetime import datetime, timezone
 from types import SimpleNamespace
 from pathlib import Path
@@ -33,6 +34,7 @@ from holdspeak.speech_session import (
     CONTRACT_INTENT_CLASSIFY,
     CONTRACT_REWRITE,
     AdmittedDictationRuntime,
+    SpeechProviderFailure,
     SpeechSessionRefused,
     admit_hold_session,
 )
@@ -717,6 +719,50 @@ def test_an_exception_without_a_fence_still_falls_back_to_the_text(
 @pytest.mark.parametrize(
     "entry_point", ["run_dictation_pipeline", "run_pipeline_corrections_only"]
 )
+@pytest.mark.parametrize(
+    "fatal",
+    [
+        pytest.param(
+            lambda: SpeechSessionRefused("speech_child_budget_exhausted"),
+            id="session-refusal",
+        ),
+        pytest.param(
+            lambda: SpeechProviderFailure(
+                "dictation.rewrite", reason="provider_budget_refused"
+            ),
+            id="provider-failure",
+        ),
+    ],
+)
+def test_outer_dictation_runner_never_degrades_fatal_speech_signals(
+    entry_point, fatal, tmp_path, monkeypatch
+):
+    """Outer orchestration must preserve the same fatal channel as its stages."""
+    import holdspeak.dictation_runner as runner_module
+    import holdspeak.plugins.dictation.assembly as assembly
+
+    _db, _broker, session, _engine, _requests = _rig(tmp_path, monkeypatch)
+    admission = session.provider()
+
+    def refuse(*_args: Any, **_kwargs: Any) -> Any:
+        raise fatal()
+
+    monkeypatch.setattr(assembly, "build_pipeline", refuse)
+
+    with pytest.raises((SpeechSessionRefused, SpeechProviderFailure)):
+        getattr(runner_module, entry_point)(
+            PROMPT_SENTINEL,
+            config=_config(),
+            server=SimpleNamespace(dictation_journal=None),
+            audio_duration_s=1.0,
+            transcribed_at=None,
+            admission=admission,
+        )
+
+
+@pytest.mark.parametrize(
+    "entry_point", ["run_dictation_pipeline", "run_pipeline_corrections_only"]
+)
 def test_a_fenced_session_publishes_nothing_even_with_the_pipeline_off(
     entry_point, tmp_path, monkeypatch
 ):
@@ -754,6 +800,79 @@ def test_a_fenced_session_publishes_nothing_even_with_the_pipeline_off(
 
     assert final == ""
     assert journal.rows == [], "a fenced session recorded a journal row"
+
+
+def test_runner_journal_and_result_handoff_win_before_cancellation(
+    tmp_path, monkeypatch
+):
+    """A journal callback already elected completes before cancellation owns the fence."""
+    import holdspeak.dictation_runner as runner_module
+    import holdspeak.plugins.dictation.assembly as assembly
+
+    _db, _broker, session, _engine, _requests = _rig(tmp_path, monkeypatch)
+    admission = session.provider()
+    config = _config()
+    config.dictation.pipeline.enabled = True
+    run = SimpleNamespace(final_text="processed", stage_results=[])
+    monkeypatch.setattr(
+        assembly,
+        "build_pipeline",
+        lambda *_args, **_kwargs: SimpleNamespace(
+            runtime_status="loaded",
+            runtime=SimpleNamespace(),
+            pipeline=SimpleNamespace(run=lambda _utterance: run),
+        ),
+    )
+
+    journal_entered = threading.Event()
+    release_journal = threading.Event()
+    cancellation_started = threading.Event()
+    cancellation_done = threading.Event()
+    rows: list[Any] = []
+    results: list[str] = []
+
+    class Journal:
+        def record(self, *args: Any, **kwargs: Any) -> None:
+            journal_entered.set()
+            assert release_journal.wait(5), "test never released journal publication"
+            rows.append((args, kwargs))
+
+    run_thread = threading.Thread(
+        target=lambda: results.append(
+            runner_module.run_pipeline_corrections_only(
+                PROMPT_SENTINEL,
+                config=config,
+                server=SimpleNamespace(
+                    dictation_journal=Journal(),
+                    dictation_corrections=None,
+                    dictation_telemetry=None,
+                ),
+                audio_duration_s=1.0,
+                transcribed_at=None,
+                skip_target_detection=True,
+                admission=admission,
+            )
+        )
+    )
+    run_thread.start()
+    assert journal_entered.wait(5), "journal never won the publication election"
+
+    def cancel() -> None:
+        cancellation_started.set()
+        session.cancel_and_close()
+        cancellation_done.set()
+
+    cancel_thread = threading.Thread(target=cancel)
+    cancel_thread.start()
+    assert cancellation_started.wait(5)
+    assert not cancellation_done.wait(0.05), "cancellation crossed journal publication"
+    release_journal.set()
+    run_thread.join(5)
+    cancel_thread.join(5)
+
+    assert results == ["processed"]
+    assert len(rows) == 1
+    assert cancellation_done.is_set()
 
 
 def test_an_unreadable_fence_fails_closed() -> None:

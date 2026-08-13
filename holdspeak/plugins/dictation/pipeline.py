@@ -23,6 +23,27 @@ from holdspeak.plugins.dictation.contracts import (
 )
 
 
+def _fatal_speech_signal(exc: BaseException) -> bool:
+    """True when ``exc`` is a speech CONTROL signal, not an ordinary stage failure.
+
+    HS-131-15 (Sol Amendment 3). DIR-F-003 says a stage that blows up degrades to
+    the original post-`TextProcessor` text. That is right for a bad block, a
+    malformed model answer, or a plugin bug — and exactly wrong for a session
+    refusal, a provider failure, an exact-revision mismatch, an expiry or
+    revocation, or a child-budget refusal. Degrading THOSE produced the quiet
+    raw-text path this story closes: the refusal was caught here, `current_text`
+    reset to the utterance, and a successful-looking response and journal row
+    landed for work that was never authorized.
+
+    Imported lazily and only on the failure path, so the hot loop pays nothing.
+    """
+    try:
+        from holdspeak.speech_session.child import fatal_speech_signal
+    except Exception:  # noqa: BLE001 - never let the guard itself break a run
+        return False
+    return bool(fatal_speech_signal(exc))
+
+
 @dataclass(frozen=True)
 class PipelineRun:
     """One full pipeline run's record (kept in the ring buffer)."""
@@ -86,6 +107,11 @@ class DictationPipeline:
             try:
                 result = stage.run(utt, list(results))
             except Exception as exc:  # DIR-F-003
+                if _fatal_speech_signal(exc):
+                    # Propagate UNCHANGED so the entry owner sees the kernel's own
+                    # safe reason, closes its parent honestly, and publishes
+                    # nothing. Never rewritten, never degraded to raw text.
+                    raise
                 elapsed = (self._clock() - stage_start) * 1000.0
                 warnings.append(
                     f"{stage.id}: {type(exc).__name__}: {exc}"

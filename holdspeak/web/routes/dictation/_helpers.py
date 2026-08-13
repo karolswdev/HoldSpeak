@@ -447,12 +447,180 @@ def _serialize_stage_result(result: Any) -> dict[str, Any]:
     return payload
 
 
+def _open_text_entry(
+    request: Any, insertion_aim: str, *, config_snapshot: Any = None
+) -> tuple[Any, Any]:
+    """ONE fresh, credential-authenticated text-entry session for this request.
+
+    HS-131-15. Three properties this seam exists to guarantee:
+
+    * **Authority comes only from the credential middleware.** The principal is
+      ``request.state.principal`` and nothing else — never a payload field, never
+      the request's network location, never a synthesized owner. A request that
+      arrived without a principal refuses by name inside ``admit_*``.
+    * **The session is always fresh.** Four different routes share the pipeline
+      helper; each opens its own short parent and never joins the browser open-mic
+      interval, whose authority belongs to a visible microphone the caller is not
+      holding.
+    * **One snapshot.** The ``Config`` returned here is the SAME object the plan
+      was frozen from and the same one assembly builds from, so mutation after
+      admission cannot retarget construction, dispatch, egress, or publication.
+
+    Returns ``(config_snapshot, entry)``; the caller owns the entry's terminal
+    outcome.
+    """
+    from ....config import Config
+    from ....db import get_database
+    from ....speech_session import SpeechEntry, admit_text_entry_session
+
+    config_snapshot = Config.load() if config_snapshot is None else config_snapshot
+    session = admit_text_entry_session(
+        principal=getattr(getattr(request, "state", None), "principal", None),
+        insertion_aim=insertion_aim,
+        config_snapshot=config_snapshot,
+        registry_snapshot=get_database(),
+    )
+    return config_snapshot, SpeechEntry(session)
+
+
+#: How often a cancellable preview asks whether its client is still there.
+_DISCONNECT_POLL_SECONDS = 0.25
+
+
+async def _watch_disconnect(request: Any, entry: Any) -> None:
+    """Cancel ``entry`` as soon as this request's client goes away.
+
+    The ASGI server does NOT reliably cancel a handler when the socket closes —
+    it depends on the server, the protocol, and whether the handler is awaiting
+    something cancellable at that moment. A preview that relied on handler
+    cancellation therefore kept a real classify/rewrite running with a live
+    session behind it, and its publication could still land minutes after the
+    person had closed the tab. So the disconnect is OBSERVED, not assumed:
+    ``request.is_disconnected()`` is polled, and the first observation cancels
+    the session. The worker thread keeps running (a native model call is not
+    interruptible), but the fence is now closed, so it loses the publication
+    election and nothing it produced is written or returned.
+    """
+    import asyncio
+
+    probe = getattr(request, "is_disconnected", None)
+    if not callable(probe):
+        return
+    while True:
+        # Probe BEFORE the first sleep. A lexical or already-warm preview can
+        # publish in less than one polling interval, and ASGI servers such as
+        # Uvicorn report connection_lost without cancelling the application task.
+        try:
+            gone = bool(await probe())
+        except Exception:  # noqa: BLE001 - an unreadable socket is not a cancel
+            return
+        if gone:
+            try:
+                # Terminal cancellation performs SQLite transactions and may wait
+                # behind a publication election. Keep that blocking work off the
+                # ASGI loop; the worker still contends on the same lock, so exactly
+                # one of cancellation or publication wins.
+                await asyncio.to_thread(entry.cancel)
+            except Exception as exc:  # noqa: BLE001 - best-effort teardown
+                from ....logging_config import get_logger
+
+                get_logger("web.routes.dictation").error(
+                    f"Preview cancellation after disconnect failed: {exc}"
+                )
+            return
+        await asyncio.sleep(_DISCONNECT_POLL_SECONDS)
+
+
+async def _run_cancellable_entry(request: Any, insertion_aim: str, work: Any) -> Any:
+    """Run ``work(config_snapshot, entry)`` off the loop under a fresh entry.
+
+    A provider-free snapshot takes the lexical branch: ``entry`` is ``None`` and
+    no parent/watcher/terminal I/O exists. For provider-bearing work, three things
+    happen here that a bare ``await asyncio.to_thread(...)`` did not:
+
+    * **Off the event loop, always.** A mesh-routed rewrite WAITS on the relay
+      queue, and this loop is what serves the worker's claim polls. Journal replay
+      and template preview used to call the helper inline and could deadlock a
+      mesh-backed pipeline against its own poller.
+    * **Disconnect actively cancels.** These entries are cancellable PREVIEWS, not
+      committed effects, and a watcher polls ``request.is_disconnected()`` rather
+      than trusting the server to cancel this coroutine. Either route to
+      cancellation — the watcher or a real ``CancelledError`` — closes the fence
+      before the worker can publish.
+    * **The terminal outcome is reported, not swallowed** — on BOTH exits. If the
+      parent's close could not be persisted, the success payload says so, and so
+      does the refusal or failure that propagates instead of one. A run that
+      refused AND could not record its own terminal state is two facts, and the
+      caller is owed both; reporting only the first is the same swallow the
+      success path already fixed.
+    """
+    import asyncio
+
+    from ....config import Config
+    from ....speech_session import pipeline_provider_capabilities
+
+    config_snapshot = Config.load()
+    if not pipeline_provider_capabilities(config_snapshot):
+        # Intentionally lexical: no provider runtime, parent, child, disconnect
+        # watcher, or terminal receipt exists. This is the same contract as CLI
+        # dry-run; only the caller's text and lexical stages run off-loop.
+        return await asyncio.to_thread(work, config_snapshot, None)
+
+    config_snapshot, entry = _open_text_entry(
+        request, insertion_aim, config_snapshot=config_snapshot
+    )
+    watcher = asyncio.ensure_future(_watch_disconnect(request, entry))
+    try:
+        try:
+            with entry:
+                payload = await asyncio.to_thread(work, config_snapshot, entry)
+        except BaseException as exc:
+            # `with entry` has already run its terminal close by the time this
+            # handler sees the exception, so `indeterminate` is settled. Ride the
+            # marker on the exception (a fixed string, never content) so the
+            # route's named-refusal response can carry it too.
+            mark_session_terminal(exc, entry)
+            raise
+    finally:
+        watcher.cancel()
+    if entry.indeterminate and isinstance(payload, dict):
+        payload["session_terminal"] = "indeterminate"
+    return payload
+
+
+def mark_session_terminal(exc: BaseException, entry: Any) -> None:
+    """Stamp an unknown parent terminal state onto a propagating safe exception."""
+    if entry is not None and getattr(entry, "indeterminate", False):
+        try:
+            exc.session_terminal = "indeterminate"  # type: ignore[attr-defined]
+        except Exception:  # noqa: BLE001 - a slotted exception is not worth failing over
+            pass
+
+
+def session_terminal_of(source: Any) -> dict[str, str]:
+    """``{"session_terminal": "indeterminate"}`` when known, else ``{}``.
+
+    A merge-in fragment so every response shape can carry the marker without each
+    call site re-deriving it. Content-free by construction: the only value it ever
+    produces is the fixed string.
+    """
+    if str(getattr(source, "session_terminal", "") or "") == "indeterminate":
+        return {"session_terminal": "indeterminate"}
+    if getattr(source, "indeterminate", False):
+        return {"session_terminal": "indeterminate"}
+    return {}
+
+
 def _run_dictation_dry_run_text(
     text: str,
     project_root_override: Optional[str],
     target_hints: Optional[dict[str, Any]] = None,
     *,
     suggestions: dict[str, dict[str, str]],
+    config_snapshot: Any,
+    admission: Any,
+    fence: Any,
+    terminal_entry: Any = None,
     corrections: Any = None,
     dismissed_signatures: set[str] | None = None,
     telemetry: Any = None,
@@ -472,11 +640,32 @@ def _run_dictation_dry_run_text(
     pipeline is shared by the REHEARSE preview (``dry_run``) and by a real
     delivery (``dictation``) — one helper, one journal schema, an honest row.
     Only an explicit rehearsal writes a ``dry_run`` entry.
+
+    HS-131-15 — ``config_snapshot`` is caller-owned; ``admission`` and ``fence``
+    are REQUIRED exactly when that frozen snapshot selects a provider capability,
+    and MUST be absent when it is intentionally lexical. This helper mints no
+    session and reads no ambient one; it takes no principal, parent id, warrant,
+    placement, client profile, or revision, so a payload cannot choose authority
+    or where the model runs. A provider path proves its handed admission is a
+    live, fresh text-entry admission before construction, and every model-derived
+    publication — returned body, stored suggestion, journal row — goes through
+    that session's election. A lexical path constructs no runtime and mints no
+    parent or child.
+
+    A cancellable preview also passes its ``terminal_entry``. Its final publication
+    and successful parent close then happen inside ONE election: publication-first
+    cannot be overwritten by a disconnect watcher. Committed remote delivery omits
+    it because that session must remain live through the later pre-delivery gate.
     """
-    from ....config import Config
     from ....dictation_telemetry import summarize_dry_run
     from ....plugins.dictation.assembly import DEFAULT_GLOBAL_BLOCKS_PATH, build_pipeline
     from ....plugins.dictation.contracts import Utterance
+    from ....speech_session import (
+        ENTRY_SESSION_REQUIRED,
+        SpeechSessionRefused,
+        pipeline_provider_capabilities,
+        require_entry_admission,
+    )
     from ....target_profile import (
         apply_model_assisted_target,
         apply_target_correction,
@@ -484,7 +673,45 @@ def _run_dictation_dry_run_text(
         detect_target_profile_with_override,
     )
 
-    cfg = Config.load().dictation
+    capabilities = pipeline_provider_capabilities(config_snapshot)
+    lexical = not capabilities
+    # Before construction: provider work needs OUR live, fresh entry admission.
+    # An intentionally provider-free configuration is the opposite contract: it
+    # mints no parent and constructs no runtime.
+    if lexical:
+        if admission is not None or fence is not None or terminal_entry is not None:
+            raise SpeechSessionRefused(ENTRY_SESSION_REQUIRED)
+        egress_boundary = "local"
+    else:
+        frozen_plan = require_entry_admission(admission, fence)
+        # Execution proof comes only from the same immutable revisions every child
+        # dispatches under. Mutable config is not consulted for the result badge.
+        egress_boundary = str(frozen_plan.egress_boundary())
+        if terminal_entry is not None and (
+            getattr(terminal_entry, "provider", None) is not admission
+            or getattr(terminal_entry, "fence", None) is not fence
+        ):
+            raise SpeechSessionRefused(ENTRY_SESSION_REQUIRED)
+
+    def _elect_publication(stage: str, publication: Any) -> tuple[bool, Any]:
+        """Publish, then settle a cancellable entry before releasing its election."""
+
+        def _publish_and_settle() -> Any:
+            payload = publication()
+            if terminal_entry is not None:
+                terminal_entry.close("succeeded")
+            return payload
+
+        if lexical:
+            return True, _publish_and_settle()
+        return fence.publish(stage, _publish_and_settle)
+
+    def _lost(stage: str) -> SpeechSessionRefused:
+        from ....speech_session import SESSION_NOT_LIVE
+
+        return SpeechSessionRefused(fence.reason() or SESSION_NOT_LIVE, stage)
+
+    cfg = config_snapshot.dictation
     # HS-39-02: only consult corrections when the feature is on; a None snapshot
     # keeps routing + target detection byte-identical.
     correction_snapshot = (
@@ -502,49 +729,79 @@ def _run_dictation_dry_run_text(
 
     if not cfg.pipeline.enabled:
         warnings = ["dictation pipeline disabled"]
-        # F-07: the journal follows `journal_enabled`, not the pipeline gate —
-        # a pipeline-off dry-run records a passthrough row so the review
-        # surface reflects real activity. Best-effort like every journal write.
-        journal_id = None
-        if journal is not None:
-            from ....plugins.dictation.journal import passthrough_run
 
-            recorded = journal.record(
-                passthrough_run(text),
-                source=journal_source,
-                transcript=text,
-                enabled=bool(getattr(cfg.pipeline, "journal_enabled", True)),
-                retention=int(getattr(cfg.pipeline, "journal_retention", 500)),
-            )
-            journal_id = getattr(recorded, "id", None)
-        return {
-            "project": dict(project) if project else None,
-            "runtime_status": "disabled",
-            "runtime_detail": "dictation pipeline disabled (opt-in)",
-            "blocks_count": 0,
-            "stages": [],
-            "final_text": text,
-            "total_elapsed_ms": 0.0,
-            "warnings": warnings,
-            "journal_id": journal_id,
-            "learning": None,
-            "telemetry": summarize_dry_run(
-                runtime_status="disabled",
-                runtime_detail="dictation pipeline disabled (opt-in)",
-                stages=[],
-                warnings=warnings,
-                total_elapsed_ms=0.0,
-                max_total_latency_ms=cfg.pipeline.max_total_latency_ms,
-            ),
-        }
+        def _publish_disabled() -> dict[str, Any]:
+            # F-07: the journal follows `journal_enabled`, not the pipeline gate —
+            # a pipeline-off dry-run records a passthrough row so the review
+            # surface reflects real activity. Best-effort like every journal write.
+            journal_id = None
+            if journal is not None:
+                from ....plugins.dictation.journal import passthrough_run
 
-    result = build_pipeline(
+                recorded = journal.record(
+                    passthrough_run(text),
+                    source=journal_source,
+                    transcript=text,
+                    enabled=bool(getattr(cfg.pipeline, "journal_enabled", True)),
+                    retention=int(getattr(cfg.pipeline, "journal_retention", 500)),
+                )
+                journal_id = getattr(recorded, "id", None)
+            return {
+                "project": dict(project) if project else None,
+                "egress_boundary": egress_boundary,
+                "runtime_status": "disabled",
+                "runtime_detail": "dictation pipeline disabled (opt-in)",
+                "blocks_count": 0,
+                "stages": [],
+                "final_text": text,
+                "total_elapsed_ms": 0.0,
+                "warnings": warnings,
+                "journal_id": journal_id,
+                "learning": None,
+                "telemetry": summarize_dry_run(
+                    runtime_status="disabled",
+                    runtime_detail="dictation pipeline disabled (opt-in)",
+                    stages=[],
+                    warnings=warnings,
+                    total_elapsed_ms=0.0,
+                    max_total_latency_ms=cfg.pipeline.max_total_latency_ms,
+                ),
+            }
+
+        # A disabled pipeline is not an exemption from the election: a cancelled
+        # session still writes no journal row and returns no body.
+        won, payload = _elect_publication(
+            "dictation entry (pipeline disabled)", _publish_disabled
+        )
+        if not won:
+            raise _lost("dictation entry (pipeline disabled)")
+        return payload
+
+    # Runtime construction and cancellation elect one winner. A preceding
+    # liveness check was only a snapshot: the worker could then build a runtime
+    # after the disconnect watcher had cancelled this entry. Construction itself
+    # is bounded by the fence; no model attempt occurs here (admitted construction
+    # forces warm_on_start=False), and each later physical attempt still mints its
+    # own child.
+    construction = lambda: build_pipeline(
         cfg,
         project_root=project_root,
         global_blocks_path=DEFAULT_GLOBAL_BLOCKS_PATH,
         corrections=correction_snapshot,
         on_run=(telemetry.record_run if telemetry is not None else None),
+        admission=admission,
+        lexical=lexical,
     )
+
+    if lexical:
+        result = construction()
+    else:
+        constructed, result = fence.publish(
+            "dictation entry construction", construction
+        )
+        if not constructed:
+            raise _lost("dictation entry construction")
+        assert result is not None
     resolved_hints = target_hints or collect_active_target_hints()
     target_profile = detect_target_profile_with_override(
         resolved_hints,
@@ -561,6 +818,10 @@ def _run_dictation_dry_run_text(
         enabled=bool(getattr(cfg.pipeline, "target_detect_llm_enabled", False)),
         below_confidence=float(getattr(cfg.pipeline, "target_detect_llm_below", 0.8)),
     )
+    # Model-assisted target detection is a provider-bearing continuation; check
+    # the fence again before the pipeline's own provider work begins.
+    if not lexical and fence.discarded("dictation entry pipeline"):
+        raise _lost("dictation entry pipeline")
     activity = dict(activity_context) if activity_context else {}
     activity["target"] = target_profile.to_dict()
     run = result.pipeline.run(
@@ -593,45 +854,59 @@ def _run_dictation_dry_run_text(
         reach_map = reach_by_gist_map(correction_snapshot, past_transcripts)
         learning_signal = best_correction_signal(text, correction_snapshot, reach_map)
 
-    journal_id = None
-    if journal is not None:
-        recorded = journal.record(
-            run,
-            source=journal_source,
-            transcript=text,
-            target_profile=target_profile,
-            project_root=project_root,
-            enabled=bool(getattr(cfg.pipeline, "journal_enabled", True)),
-            retention=int(getattr(cfg.pipeline, "journal_retention", 500)),
+    def _publish() -> dict[str, Any]:
+        """Every model-derived output of this run, under one election.
+
+        The journal row, the stored project-doc suggestion, and the returned body
+        are ONE publication. Splitting them would let a cancellation land between
+        a written journal row and a suppressed response — a persisted claim about
+        work whose result the caller never receives.
+        """
+        journal_id = None
+        if journal is not None:
+            recorded = journal.record(
+                run,
+                source=journal_source,
+                transcript=text,
+                target_profile=target_profile,
+                project_root=project_root,
+                enabled=bool(getattr(cfg.pipeline, "journal_enabled", True)),
+                retention=int(getattr(cfg.pipeline, "journal_retention", 500)),
+            )
+            journal_id = getattr(recorded, "id", None)
+        stages = [_serialize_stage_result(sr) for sr in run.stage_results]
+        suggestion_status = _store_project_doc_suggestion(
+            project, stages, suggestions, dismissed_signatures=dismissed_signatures
         )
-        journal_id = getattr(recorded, "id", None)
-    stages = [_serialize_stage_result(sr) for sr in run.stage_results]
-    suggestion_status = _store_project_doc_suggestion(
-        project, stages, suggestions, dismissed_signatures=dismissed_signatures
-    )
-    warnings = list(run.warnings)
-    return {
-        "project": dict(project) if project else None,
-        "target": target_profile.to_dict(),
-        "suggestion_status": suggestion_status,
-        "journal_id": journal_id,
-        "learning": learning_signal,
-        "runtime_status": result.runtime_status,
-        "runtime_detail": result.runtime_detail,
-        "blocks_count": len(result.blocks.blocks),
-        "stages": stages,
-        "final_text": run.final_text,
-        "total_elapsed_ms": float(run.total_elapsed_ms),
-        "warnings": warnings,
-        "telemetry": summarize_dry_run(
-            runtime_status=result.runtime_status,
-            runtime_detail=result.runtime_detail,
-            stages=stages,
-            warnings=warnings,
-            total_elapsed_ms=float(run.total_elapsed_ms),
-            max_total_latency_ms=cfg.pipeline.max_total_latency_ms,
-        ),
-    }
+        warnings = list(run.warnings)
+        return {
+            "project": dict(project) if project else None,
+            "egress_boundary": egress_boundary,
+            "target": target_profile.to_dict(),
+            "suggestion_status": suggestion_status,
+            "journal_id": journal_id,
+            "learning": learning_signal,
+            "runtime_status": result.runtime_status,
+            "runtime_detail": result.runtime_detail,
+            "blocks_count": len(result.blocks.blocks),
+            "stages": stages,
+            "final_text": run.final_text,
+            "total_elapsed_ms": float(run.total_elapsed_ms),
+            "warnings": warnings,
+            "telemetry": summarize_dry_run(
+                runtime_status=result.runtime_status,
+                runtime_detail=result.runtime_detail,
+                stages=stages,
+                warnings=warnings,
+                total_elapsed_ms=float(run.total_elapsed_ms),
+                max_total_latency_ms=cfg.pipeline.max_total_latency_ms,
+            ),
+        }
+
+    won, payload = _elect_publication("dictation entry publication", _publish)
+    if not won:
+        raise _lost("dictation entry publication")
+    return payload
 
 
 def _runtime_readiness(cfg: Any) -> dict[str, Any]:

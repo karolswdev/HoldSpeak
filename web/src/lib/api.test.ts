@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { ApiError, apiFetch, readableError } from "./api";
+import { ApiError, apiFetch, newDeliveryId, readableError } from "./api";
 
 describe("apiFetch", () => {
   afterEach(() => vi.unstubAllGlobals());
@@ -38,6 +38,14 @@ describe("apiFetch", () => {
     const error = await apiFetch("/api/example").catch((reason) => reason);
     expect(error).toBeInstanceOf(ApiError);
     expect(error).toMatchObject({ status: 503, message: "Model unavailable" });
+  });
+
+  it("mints one client-stable claim id per committed delivery", () => {
+    const first = newDeliveryId();
+    const second = newDeliveryId();
+    expect(first).toMatch(/^speak:/);
+    expect(second).toMatch(/^speak:/);
+    expect(second).not.toBe(first);
   });
 
   it("uses factual fallback copy for an unknown failure", () => {

@@ -45,6 +45,22 @@ class SpeechProviderFailure(RuntimeError):
         self.reason = short
 
 
+def fatal_speech_signal(exc: BaseException) -> bool:
+    """True for the speech CONTROL signals that may never degrade to raw text.
+
+    HS-131-15 (Sol Amendment 3). Session refusal, provider failure, exact-revision
+    mismatch, expiry/revocation, and child-budget refusal all arrive as one of
+    these two types. They are not "a stage had a bad day": they mean the work was
+    never authorized, never reached its admitted target, or must not publish. A
+    broad ``except Exception`` that swallows them turns a refusal into a
+    successful-looking raw-text result with a journal row behind it, which is the
+    dishonest receipt this story exists to close.
+
+    DIR-F-003 degradation still applies to every ORDINARY stage failure.
+    """
+    return isinstance(exc, (SpeechSessionRefused, SpeechProviderFailure))
+
+
 class SpeechAdapter:
     """One admitted dispatch against an already-frozen local/remote deployment.
 
@@ -81,8 +97,15 @@ class SpeechAdapter:
             # sanitizing it into a failure hides a physical attempt that the
             # endpoint would have answered.
             raise
-        except (KernelRefused, SpeechSessionRefused):
+        except KernelRefused:
             raise
+        except SpeechSessionRefused as exc:
+            # The speech adapter can discover an exact-revision refusal only after
+            # the runner has minted this child's dispatch context. Translate that
+            # fixed, content-free control class into the runner's refusal channel;
+            # it returns through InvocationOutcome.error and is restored at the
+            # speech edge instead of becoming a generic provider failure.
+            raise KernelRefused(exc.reason) from None
         except BaseException as exc:  # sanitized: no backend text crosses this line
             raise SpeechProviderFailure(self._contract, exc) from None
         return {"contract": self._contract, "cancelled": self.cancelled.is_set()}

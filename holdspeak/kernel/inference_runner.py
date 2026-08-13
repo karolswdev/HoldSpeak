@@ -229,7 +229,11 @@ class InferenceRunner:
             # One physical attempt happened and failed on dialect; `invoke` admits the follow-up.
             if signal is not None: signal.append(exc)
             return self._finish(active,iid,"failed", error=str(exc))
-        except KernelRefused: return self._finish(active,iid,"refused")
+        except KernelRefused as exc:
+            # KernelRefused.reason is a fixed, content-free control class. Carry it
+            # to the domain adapter without persisting provider exception text, so
+            # a post-claim context/revision refusal stays named at the speech edge.
+            return self._finish(active,iid,"refused",error=str(exc.reason))
         except Exception as exc: return self._finish(active,iid,"failed", error=str(exc))
         finally:
             watchdog.cancel()

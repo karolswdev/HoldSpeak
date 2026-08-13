@@ -72,10 +72,13 @@ class _ConfigStub:
 # ---------------------------------------------------------------------------
 
 
-def test_dry_run_falls_back_to_no_llm_when_runtime_unavailable(monkeypatch, tmp_blocks):
+def test_dry_run_keeps_intentionally_disabled_pipeline_lexical(monkeypatch, tmp_blocks):
+    """No provider stage means no synthetic owner, runtime, or child is needed."""
+    calls: list[dict] = []
+
     def _broken_factory(**_kwargs):
-        from holdspeak.plugins.dictation.runtime import RuntimeUnavailableError
-        raise RuntimeUnavailableError("no model configured")
+        calls.append(dict(_kwargs))
+        raise AssertionError("lexical dry-run tried to construct a runtime")
 
     monkeypatch.setattr(assembly, "build_runtime", _broken_factory)
 
@@ -85,46 +88,39 @@ def test_dry_run_falls_back_to_no_llm_when_runtime_unavailable(monkeypatch, tmp_
 
     text = out.getvalue()
     assert rc == 0
-    assert "warning: LLM runtime unavailable" in text
+    assert "note: no provider-backed stage is configured" in text
     assert "[intent-router]" not in text  # skipped when llm_enabled=False
     assert "[kb-enricher]" in text
     assert "final_text:" in text
+    assert calls == []
 
 
-def test_dry_run_prints_each_stage_when_runtime_loaded(monkeypatch, tmp_blocks):
-    class _StubRuntime:
-        backend = "stub"
+def test_dry_run_refuses_provider_pipeline_without_derived_principal_before_runtime(
+    monkeypatch, tmp_blocks
+):
+    """Credential absence is a named refusal, never the old runtime fallback."""
+    config = Config()
+    config.dictation.pipeline.enabled = True
+    config.dictation.pipeline.stages = ["intent-router"]
+    config.dictation.runtime.profile_id = "provider-that-must-not-be-constructed"
+    monkeypatch.setattr(cli, "Config", SimpleNamespace(load=lambda: config))
+    constructed: list[dict] = []
 
-        def load(self) -> None:
-            pass
+    def _forbidden_factory(**kwargs):
+        constructed.append(dict(kwargs))
+        raise AssertionError("missing CLI credential reached runtime construction")
 
-        def info(self):
-            return {"backend": "stub"}
-
-        def classify(self, prompt, schema, *, max_tokens=128, temperature=0.0):
-            return {
-                "matched": True,
-                "block_id": "ai_prompt_buildout",
-                "confidence": 0.95,
-                "extras": {},
-            }
-
-    def _factory(**_kwargs):
-        return _StubRuntime()
-
-    monkeypatch.setattr(assembly, "build_runtime", _factory)
+    monkeypatch.setattr(assembly, "build_runtime", _forbidden_factory)
 
     args = SimpleNamespace(dictation_action="dry-run", text="claude do thing")
     out = io.StringIO()
     rc = cli.run_dictation_command(args, stream=out)
 
     text = out.getvalue()
-    assert rc == 0
-    assert "warning: LLM runtime unavailable" not in text
-    assert "[intent-router]" in text
-    assert "[kb-enricher]" in text
-    assert "matched=True block_id=ai_prompt_buildout" in text
-    assert "(HoldSpeak context appended)" in text
+    assert rc == 2
+    assert "refused: speech_cli_owner_credential_required" in text
+    assert "HOLDSPEAK_TOKEN" in text
+    assert constructed == []
 
 
 # ---------------------------------------------------------------------------

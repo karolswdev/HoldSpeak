@@ -23,7 +23,9 @@ from holdspeak.web_server import MeetingWebServer, WebRuntimeCallbacks
 
 
 class _StubRuntime:
-    backend = "stub"
+    # Backend intentionally unobservable: the explicit runtime_factory seam tests
+    # route behavior, not a competing concrete loader.
+    backend = ""
 
     def __init__(self, block_id: str | None = None, rewrite_text: str | None = None) -> None:
         self.block_id = block_id
@@ -157,6 +159,7 @@ def test_dry_run_matches_block_and_enriches_with_project_kb(
     assert response.status_code == 200, response.text
     body = response.json()
     assert body["project"]["name"] == "proj"
+    assert body["egress_boundary"] == "local"
     assert body["runtime_status"] == "loaded"
     assert body["blocks_count"] == 1
     assert body["stages"][0]["stage_id"] == "intent-router"
@@ -435,6 +438,7 @@ def test_dry_run_pipeline_disabled_returns_empty_trace(
     assert response.status_code == 200
     body = response.json()
     assert body["runtime_status"] == "disabled"
+    assert body["egress_boundary"] == "local"
     assert body["stages"] == []
     assert body["final_text"] == "keep me"
     assert body["warnings"] == ["dictation pipeline disabled"]
@@ -483,7 +487,15 @@ def test_dictation_page_includes_dry_run_section() -> None:
     response = client.get("/dictation")
     assert response.status_code == 200
     assert '<div id="root"></div>' in response.text
-    js = (Path(__file__).resolve().parents[2] / "web/src/pages/cores/DictationCore.tsx").read_text()
+    core_root = Path(__file__).resolve().parents[2] / "web/src/pages/cores"
+    js = "\n".join(
+        path.read_text()
+        for path in (
+            core_root / "DictationCore.tsx",
+            *sorted((core_root / "dictation").glob("*.tsx")),
+            *sorted((core_root / "dictation").glob("*.ts")),
+        )
+    )
     assert "/api/dictation/dry-run" in js
     assert "Rehearse" in js
     assert "projectRoot" in js and "Pipeline result" in js

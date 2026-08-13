@@ -502,6 +502,8 @@ ADMITTED_SEAM_CALLERS: dict[tuple[str, str], str] = {
     ("holdspeak/target_profile.py", "apply_model_assisted_target"): "AdmittedDictationRuntime.rewrite",
     ("holdspeak/dictation_runner.py", "run_dictation_pipeline"): "build_pipeline(admission=…) wraps the runtime in the admitted seam",
     ("holdspeak/dictation_runner.py", "run_pipeline_corrections_only"): "build_pipeline(admission=…) wraps the runtime in the admitted seam",
+    ("holdspeak/web/routes/dictation/_helpers.py", "_run_dictation_dry_run_text"): "requires a caller-owned live text-entry admission before construction",
+    ("holdspeak/commands/dictation.py", "_cmd_dry_run"): "requires the top-level CLI's derived owner and live text-entry admission before construction",
     ("holdspeak/intel_queue.py", "process_next_intel_job"): "DeferredIntelJob.analyze (an admitted deferred child)",
     # HS-131-14. The plugin dispatch handle is a CONSUMER of an admitted child, not
     # an adapter: it constructs nothing, resolves no placement, and holds no
@@ -524,8 +526,6 @@ NAMED_FINDINGS: dict[str, str] = {
     # `delivery-legacy-factory` (the dormant helper is deleted), and the five
     # `legacy-uncontextual-factory` sites that sat inside `build_intel_for_target`
     # (the factory itself is deleted). Nothing moved to an allowlist.
-    "holdspeak/web/routes/dictation/_helpers.py:541 build_pipeline": "dictation-dry-run",
-    "holdspeak/commands/dictation.py:79 build_pipeline": "dictation-command",
     "holdspeak/commands/mesh_serve.py:132 build_meeting_intel_for_profile": "mesh-receiver",
     "holdspeak/commands/mesh_serve.py:164 run_prompt": "mesh-receiver",
     # HS-131-14 CLOSED two families here, both by deletion rather than promotion.
@@ -655,6 +655,10 @@ def test_every_model_execution_site_is_in_exactly_one_bucket() -> None:
     for site in sites:
         counts[str(_bucket(site))] += 1
     assert sum(counts.values()) == len(sites)
+    # Measured after the HS-131-15 migration: both physical sites remain, but
+    # each is now dominated by its caller-owned text-entry admission.
+    assert len(sites) == 105
+    assert counts["finding"] == 4
     print(
         "one-path census:", len(sites), "sites",
         {**counts, "unregistered": 0},
@@ -891,19 +895,17 @@ def test_no_public_factory_scope_can_escape_context_validation() -> None:
 def test_the_findings_ledger_is_the_complete_blocking_package() -> None:
     """What is LEFT of the eleven-family package. All still blocking.
 
-    HS-131-14 closed two more (`plugin-default-provider`,
-    `legacy-uncontextual-factory`), both by deletion. HS-131-13 closed three
-    families outright — `cadence` (migrated onto the
-    admitted spine), `decisions-route` and `delivery-legacy-factory` (both
+    HS-131-15 closed two more (`dictation-dry-run`, `dictation-command`) by
+    admission through their callers' fresh text-entry sessions. HS-131-14 closed
+    two more (`plugin-default-provider`, `legacy-uncontextual-factory`), both by
+    deletion. HS-131-13 closed three families outright — `cadence` (migrated onto
+    the admitted spine), `decisions-route` and `delivery-legacy-factory` (both
     deleted) — and emptied `legacy-uncontextual-factory` of every site that lived
-    in `build_intel_for_target`. The remaining eight are the four chartered
-    amendment stories still to land. A family may only leave this set by being
-    deleted or admitted; promoting one into `ADAPTER_ALLOWLIST` is not available.
+    in `build_intel_for_target`. A family may only leave this set by being deleted
+    or admitted; promoting one into `ADAPTER_ALLOWLIST` is not available.
     """
     assert BLOCKING_FAMILIES == {
         "dormant-mir",
-        "dictation-dry-run",
-        "dictation-command",
         "mesh-receiver",
         # HS-131-14 removed `plugin-default-provider` (30 sites) and
         # `legacy-uncontextual-factory` (2 sites). Both left by DELETION: the
@@ -913,11 +915,53 @@ def test_the_findings_ledger_is_the_complete_blocking_package() -> None:
         "legacy-live-meeting-engine",
         "bookmark-auto-label",
     }
-    # Five families still have pinned executable sites; `dormant-mir` is the one
+    # Three families still have pinned executable sites; `dormant-mir` is the one
     # inventoried branch with none. Asserting the split keeps a family from
     # vanishing into the site-less bucket instead of being fixed.
     assert set(NAMED_FINDINGS.values()) == BLOCKING_FAMILIES - {"dormant-mir"}
-    assert len(set(NAMED_FINDINGS.values())) == 5
+    assert len(set(NAMED_FINDINGS.values())) == 3
+
+
+def test_text_entry_build_pipeline_sites_are_admitted_seams_not_findings() -> None:
+    """HS-131-15's two former findings must visibly thread their admission."""
+    expected = {
+        ("holdspeak/web/routes/dictation/_helpers.py", "_run_dictation_dry_run_text"): "dictation-dry-run",
+        ("holdspeak/commands/dictation.py", "_cmd_dry_run"): "dictation-command",
+    }
+    sites = [site for site in census() if site.target == "build_pipeline"]
+    assert {site.where for site in sites} >= set(expected)
+    assert all(site.where not in NAMED_FINDINGS for site in sites)
+    assert all(_bucket(site) == "seam" for site in sites if site.where in expected)
+
+    # The seam ledger is not itself authority. A scope that remained on the list
+    # after dropping `admission=...` would otherwise look admitted merely because
+    # its name had not changed. Pin the executable keyword in both callers; the
+    # mutation proof removes each one in turn and expects the named family here.
+    for (path, scope), family in expected.items():
+        tree = ast.parse((REPO / path).read_text(encoding="utf-8"))
+        body = next(
+            node
+            for node in ast.walk(tree)
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+            and node.name == scope
+        )
+        calls = [
+            node
+            for node in ast.walk(body)
+            if isinstance(node, ast.Call)
+            and isinstance(node.func, ast.Name)
+            and node.func.id == "build_pipeline"
+        ]
+        assert len(calls) == 1, f"{family}: expected one build_pipeline call"
+        keywords = {keyword.arg: keyword.value for keyword in calls[0].keywords}
+        assert "admission" in keywords, (
+            f"{family}: build_pipeline lost its caller-owned admission"
+        )
+        assert not (
+            isinstance(keywords["admission"], ast.Constant)
+            and keywords["admission"].value is None
+        ), f"{family}: build_pipeline hard-coded admission=None"
+
 
 def test_the_owner_inventory_covers_every_finding() -> None:
     """The ledger above is worthless to the owner if the decision package omits a row.

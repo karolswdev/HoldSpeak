@@ -35,7 +35,13 @@ log = get_logger("speech_session")
 #: The revision engines that mean "run on an OpenAI-compatible endpoint".
 ENDPOINT_ENGINES = frozenset({"openai_compatible"})
 #: The revision engines that mean "run on this device's configured local engine".
-LOCAL_ENGINES = frozenset({"local", "configured_local_engine", "auto", ""})
+#: ``mlx`` and ``llama_cpp`` are the two on-device DICTATION engines: a
+#: dictation-local revision names WHICH loader it froze rather than leaving
+#: construction to re-derive it, and it is still a same-device engine — never
+#: rebindable, and never confusable with a remote backend.
+LOCAL_ENGINES = frozenset(
+    {"local", "configured_local_engine", "auto", "", "mlx", "llama_cpp"}
+)
 #: The revision engines that mean "relay to a mesh node" (handled by the mesh leg).
 MESH_ENGINES = frozenset({"mesh", "node_runtime", "mesh_relay"})
 
@@ -76,6 +82,11 @@ def agrees(runtime: Any, revision: Any) -> bool:
         )
     if engine in LOCAL_ENGINES:
         if backend in _REMOTE_BACKENDS:
+            return False
+        if engine in {"mlx", "llama_cpp"} and backend and backend != engine:
+            # A concrete local revision freezes the loader as well as the artifact.
+            # Sharing a path does not make an MLX and llama.cpp runtime the same
+            # dispatch target.
             return False
         frozen_path = _path(getattr(revision, "model_path", None))
         observed = _path(getattr(inner, "model_path", None) or getattr(inner, "model", None))

@@ -16,6 +16,7 @@ vi.mock("../../lib/api", () => ({
     Promise.resolve({ ok: true, json: () => Promise.resolve({}) }),
   ),
   apiFetch: vi.fn(() => Promise.resolve({})),
+  newDeliveryId: vi.fn(() => "speak:test-coder-delivery"),
 }));
 
 vi.mock("../setup", () => ({
@@ -33,6 +34,7 @@ vi.mock("../roadmap", () => ({
   fetchRoadmaps: vi.fn(() => Promise.resolve([])),
 }));
 
+import { apiRequest } from "../../lib/api";
 import { useDesk, GHOST_LAYOUT_KEYS, loadPanelLayout, defaultViewFor, COMPACT_LIST_THRESHOLD } from "../store";
 import type { UnitPos, PanelRect, DeskView, ZoneViewPref } from "../store";
 
@@ -276,6 +278,28 @@ describe("store split: recording state transitions", () => {
     useDesk.setState({ recordingStartedAt: Date.now() });
     useDesk.getState().applyRecordingActivity({ state: "meeting_live" });
     expect(useDesk.getState().recordingExternal).toBe(false);
+  });
+});
+
+describe("store split: committed coder delivery", () => {
+  beforeEach(() => {
+    resetStore();
+    vi.mocked(apiRequest).mockClear();
+  });
+
+  it("mints a stable delivery claim before posting remote dictation", async () => {
+    await expect(
+      useDesk.getState().speakToCoder("claude", "session-1", "Ship it"),
+    ).resolves.toBe(true);
+
+    expect(apiRequest).toHaveBeenCalledTimes(2);
+    const [url, init] = vi.mocked(apiRequest).mock.calls[1];
+    expect(url).toBe("/api/dictation/remote");
+    expect(JSON.parse(String(init?.body))).toMatchObject({
+      text: "Ship it",
+      target_mode: "agent",
+      delivery_id: "speak:test-coder-delivery",
+    });
   });
 });
 

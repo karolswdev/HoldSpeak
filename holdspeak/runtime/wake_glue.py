@@ -13,6 +13,7 @@ from typing import Any, Optional
 import numpy as np
 
 from ..logging_config import get_logger
+from ..speech_session import SpeechSessionRefused, fatal_speech_signal
 
 log = get_logger("web_runtime")
 
@@ -310,6 +311,9 @@ class WakeWordGlueMixin:
         outcome = "succeeded"
         try:
             outcome = self._transcribe_wake_admitted(audio, cfg, session) or "succeeded"
+        except SpeechSessionRefused:
+            outcome = "refused"
+            raise
         except BaseException:
             outcome = "failed"
             raise
@@ -384,65 +388,78 @@ class WakeWordGlueMixin:
                     # Nothing survived, or the session was fenced mid-run: no
                     # preview is issued and nothing is typed.
                     return
-                if fence.discarded("wake publication"):
-                    return
                 if cfg.action == "type":
-                    self._set_runtime_activity(
-                        "typing",
-                        source="wake",
-                        detail="Typing into the active app.",
-                        last_event="wake_typing",
-                        last_error="",
-                    )
-                    if fence.discarded("wake delivery"):
-                        return
-                    # Delivery keeps its OWN separate effect admission past this
-                    # inference fence; nothing here duplicates that receipt.
-                    from ..desktop_typing import type_text_from_owner_gesture
+                    def _deliver() -> None:
+                        self._set_runtime_activity(
+                            "typing",
+                            source="wake",
+                            detail="Typing into the active app.",
+                            last_event="wake_typing",
+                            last_error="",
+                        )
+                        # Delivery keeps its OWN separate effect admission past this
+                        # speech election; nothing here duplicates that receipt.
+                        from ..desktop_typing import type_text_from_owner_gesture
 
-                    type_text_from_owner_gesture(
-                        final,
-                        typer=self.typer,
-                        gesture="wake_utterance",
-                        submit=False,
-                        requested_target="focused",
-                        delivery_method="wake_type",
-                    )
+                        type_text_from_owner_gesture(
+                            final,
+                            typer=self.typer,
+                            gesture="wake_utterance",
+                            submit=False,
+                            requested_target="focused",
+                            delivery_method="wake_type",
+                        )
+                        self._set_runtime_activity(
+                            "complete",
+                            source="wake",
+                            label="Typed",
+                            detail=final[:120],
+                            last_event="wake_typed",
+                            last_error="",
+                        )
+                        session.close("succeeded")
+
+                    delivered, _value = fence.publish("wake delivery handoff", _deliver)
+                    if not delivered:
+                        return
+                    return
+
+                def _publish_preview() -> None:
+                    # The preview default: one active preview at a time.
+                    import uuid as uuid_mod
+
+                    token = uuid_mod.uuid4().hex
+                    self.wake_previews.clear()
+                    self.wake_previews[token] = {
+                        "text": final,
+                        "transcript": text,
+                        "created_at": datetime.now().isoformat(),
+                    }
+                    try:
+                        self.server.broadcast(
+                            "wake_preview",
+                            {"token": token, "transcript": text, "text": final},
+                        )
+                    except Exception:
+                        pass
                     self._set_runtime_activity(
                         "complete",
                         source="wake",
-                        label="Typed",
+                        label="Preview ready",
                         detail=final[:120],
-                        last_event="wake_typed",
+                        last_event="wake_preview",
                         last_error="",
                     )
-                    return
-                # The preview default: one active preview at a time.
-                import uuid as uuid_mod
+                    session.close("succeeded")
 
-                token = uuid_mod.uuid4().hex
-                self.wake_previews.clear()
-                self.wake_previews[token] = {
-                    "text": final,
-                    "transcript": text,
-                    "created_at": datetime.now().isoformat(),
-                }
-                try:
-                    self.server.broadcast(
-                        "wake_preview",
-                        {"token": token, "transcript": text, "text": final},
-                    )
-                except Exception:
-                    pass
-                self._set_runtime_activity(
-                    "complete",
-                    source="wake",
-                    label="Preview ready",
-                    detail=final[:120],
-                    last_event="wake_preview",
-                    last_error="",
+                published, _value = fence.publish(
+                    "wake preview publication", _publish_preview
                 )
+                if not published:
+                    return
             except Exception as exc:
+                if fatal_speech_signal(exc):
+                    raise
                 self._set_runtime_activity(
                     "error",
                     source="wake",

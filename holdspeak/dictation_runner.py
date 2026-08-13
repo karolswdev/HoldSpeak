@@ -145,6 +145,48 @@ def _fenced(admission: Any, stage: str) -> bool:
         return True
 
 
+def _elected_publication(
+    admission: Any,
+    stage: str,
+    publication: Callable[[], Any],
+    *,
+    discarded: Any,
+) -> Any:
+    """Run one result/journal handoff atomically against session cancellation.
+
+    A preceding ``_fenced`` check is not a permit: cancellation can win between
+    that check and a journal write or returned text. The fence's callback is the
+    permit, so the complete bounded publication happens while its election is held.
+    Legacy callers without an admission retain their established behavior.
+    """
+    fence = getattr(admission, "fence", None)
+    if fence is None:
+        return publication()
+    publish = getattr(fence, "publish", None)
+    if not callable(publish):
+        log.warning("dictation fence has no publication election at %s; refusing", stage)
+        return discarded
+    callback_started = False
+
+    def _bounded() -> Any:
+        nonlocal callback_started
+        callback_started = True
+        return publication()
+
+    try:
+        won, value = publish(stage, _bounded)
+    except Exception as exc:
+        if callback_started:
+            raise
+        log.warning(
+            "dictation publication election unreadable at %s; refusing: %s",
+            stage,
+            type(exc).__name__,
+        )
+        return discarded
+    return value if won else discarded
+
+
 def _publishable(text: str, admission: Any, stage: str) -> str:
     """The ONE way this module hands un-pipelined text back to be typed.
 
@@ -158,7 +200,9 @@ def _publishable(text: str, admission: Any, stage: str) -> str:
     has to hold on the error paths especially, because that is where a
     cancellation lands.
     """
-    return "" if _fenced(admission, stage) else text
+    return str(
+        _elected_publication(admission, stage, lambda: text, discarded="")
+    )
 
 
 def _journal_passthrough(
@@ -252,19 +296,26 @@ def run_pipeline_corrections_only(
     dictation_cfg = getattr(config, "dictation", None)
     pipeline_cfg = getattr(dictation_cfg, "pipeline", None)
     if dictation_cfg is None or pipeline_cfg is None or not bool(getattr(pipeline_cfg, "enabled", False)):
-        # A fenced session records NO journal row and types NOTHING, even with the
-        # pipeline off: `_fenced`'s own contract is "no journal row, no final
-        # text", and a disabled pipeline is not an exemption from it.
-        if _fenced(admission, "dictation pipeline disabled"):
-            return ""
-        if pipeline_cfg is not None:
-            _journal_passthrough(
-                text,
-                server=server,
-                pipeline_cfg=pipeline_cfg,
-                source=journal_source,
+        # Pipeline-off journal + raw-text handoff are ONE publication. A check
+        # followed by these two writes let cancellation land in between them.
+        def _publish_disabled() -> str:
+            if pipeline_cfg is not None:
+                _journal_passthrough(
+                    text,
+                    server=server,
+                    pipeline_cfg=pipeline_cfg,
+                    source=journal_source,
+                )
+            return text
+
+        return str(
+            _elected_publication(
+                admission,
+                "dictation pipeline disabled",
+                _publish_disabled,
+                discarded="",
             )
-        return text
+        )
 
     try:
         from holdspeak.plugins.dictation.assembly import build_pipeline
@@ -364,21 +415,37 @@ def run_pipeline_corrections_only(
                 activity=activity,
             )
         )
-        if _fenced(admission, "dictation pipeline publication"):
-            return ""
-        journal = getattr(server, "dictation_journal", None)
-        if journal is not None:
-            journal.record(
-                run,
-                source=journal_source,
-                transcript=text,
-                target_profile=target_profile,
-                project_root=project_root,
-                enabled=bool(getattr(pipeline_cfg, "journal_enabled", True)),
-                retention=int(getattr(pipeline_cfg, "journal_retention", 500)),
+
+        def _publish_run() -> str:
+            journal = getattr(server, "dictation_journal", None)
+            if journal is not None:
+                journal.record(
+                    run,
+                    source=journal_source,
+                    transcript=text,
+                    target_profile=target_profile,
+                    project_root=project_root,
+                    enabled=bool(getattr(pipeline_cfg, "journal_enabled", True)),
+                    retention=int(getattr(pipeline_cfg, "journal_retention", 500)),
+                )
+            return run.final_text
+
+        return str(
+            _elected_publication(
+                admission,
+                "dictation pipeline publication",
+                _publish_run,
+                discarded="",
             )
-        return run.final_text
+        )
     except Exception as exc:
+        from .speech_session.child import fatal_speech_signal
+
+        if fatal_speech_signal(exc):
+            # Admission/provider/revision/liveness failures are control signals,
+            # not DIR-F-003 plugin degradation. The entry owner must see the
+            # original named failure and suppress publication.
+            raise
         log.warning(f"Web dictation pipeline raised; falling back to processed text: {exc}")
         # The fallback is a PUBLICATION. If the session was fenced and the run
         # then raised anywhere — a config read, project detection, the pipeline
@@ -411,18 +478,25 @@ def run_dictation_pipeline(
         # F-07: the journal follows `journal_enabled`, not the pipeline gate.
         # A pipeline-off dictation records a passthrough row (no stages,
         # final = transcript) so the review surface reflects real activity.
-        # Best-effort like every journal write; the typed text is untouched.
-        # ...unless the session is fenced, which publishes nothing at all.
-        if _fenced(admission, "dictation pipeline disabled"):
-            return ""
-        if pipeline_cfg is not None:
-            _journal_passthrough(
-                text,
-                server=server,
-                pipeline_cfg=pipeline_cfg,
-                source=journal_source,
+        # Journal + typed-text handoff still share the cancellation election.
+        def _publish_disabled() -> str:
+            if pipeline_cfg is not None:
+                _journal_passthrough(
+                    text,
+                    server=server,
+                    pipeline_cfg=pipeline_cfg,
+                    source=journal_source,
+                )
+            return text
+
+        return str(
+            _elected_publication(
+                admission,
+                "dictation pipeline disabled",
+                _publish_disabled,
+                discarded="",
             )
-        return text
+        )
 
     try:
         from holdspeak.activity_context import build_activity_context
@@ -517,23 +591,39 @@ def run_dictation_pipeline(
                 activity=activity,
             )
         )
-        if _fenced(admission, "dictation pipeline publication"):
-            return ""
-        # HS-45-01: journal this run as a side-channel (best-effort, never
-        # alters the typed result). Same post-run seam telemetry uses.
-        journal = getattr(server, "dictation_journal", None)
-        if journal is not None:
-            journal.record(
-                run,
-                source=journal_source,
-                transcript=text,
-                target_profile=target_profile,
-                project_root=project_root,
-                enabled=bool(getattr(pipeline_cfg, "journal_enabled", True)),
-                retention=int(getattr(pipeline_cfg, "journal_retention", 500)),
+
+        def _publish_run() -> str:
+            # HS-45-01: journal this run as a side-channel (best-effort, never
+            # alters the typed result). Same post-run seam telemetry uses.
+            journal = getattr(server, "dictation_journal", None)
+            if journal is not None:
+                journal.record(
+                    run,
+                    source=journal_source,
+                    transcript=text,
+                    target_profile=target_profile,
+                    project_root=project_root,
+                    enabled=bool(getattr(pipeline_cfg, "journal_enabled", True)),
+                    retention=int(getattr(pipeline_cfg, "journal_retention", 500)),
+                )
+            return run.final_text
+
+        return str(
+            _elected_publication(
+                admission,
+                "dictation pipeline publication",
+                _publish_run,
+                discarded="",
             )
-        return run.final_text
+        )
     except Exception as exc:
+        from .speech_session.child import fatal_speech_signal
+
+        if fatal_speech_signal(exc):
+            # Admission/provider/revision/liveness failures are control signals,
+            # not DIR-F-003 plugin degradation. The entry owner must see the
+            # original named failure and suppress publication.
+            raise
         log.warning(f"Web dictation pipeline raised; falling back to processed text: {exc}")
         # The fallback is a PUBLICATION. If the session was fenced and the run
         # then raised anywhere — a config read, project detection, the pipeline

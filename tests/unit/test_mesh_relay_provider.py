@@ -275,17 +275,26 @@ def test_dictation_mesh_runtime_maps_relay_errors_to_the_pipeline_contract() -> 
         rt.rewrite("x")
 
 
-def test_assembly_builds_the_mesh_runtime_on_adoption(monkeypatch) -> None:
+def test_assembly_builds_the_mesh_runtime_from_the_frozen_admission() -> None:
     from holdspeak.config import DictationConfig
     from holdspeak.plugins.dictation.assembly import _try_build_runtime
 
-    monkeypatch.setattr(
-        "holdspeak.intel.providers._lookup_profile_record", lambda pid: _mesh_profile()
+    revision = SimpleNamespace(
+        engine="mesh_relay",
+        node="walk-edge",
+        model="qwen3.5-4b",
+    )
+    admission = SimpleNamespace(
+        declares=lambda _capability: True,
+        revision=lambda _capability: "dep_mesh_relay",
+        plan=SimpleNamespace(deployment=lambda _revision_id: revision),
     )
     cfg = DictationConfig()
     cfg.runtime.backend = "mlx"
-    cfg.runtime.profile_id = "p-phone"
-    runtime, status, detail = _try_build_runtime(cfg, None)
+    cfg.runtime.profile_id = "ambient-profile-must-not-win"
+
+    runtime, status, detail = _try_build_runtime(cfg, None, admission=admission)
+
     assert status == "loaded"
     assert "backend=mesh_relay node=walk-edge" in detail
     assert runtime.info()["backend"] == "mesh_relay"
