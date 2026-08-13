@@ -84,6 +84,9 @@ def test_chat_assembles_the_turn_and_persists_nothing(env, monkeypatch) -> None:
     ))
 
     fake = _FakeIntel()
+    # HS-131-13: an admitted `this_machine` child builds `MeetingIntel` from its
+    # FROZEN revision, so the same double is installed on the engine class too.
+    monkeypatch.setattr("holdspeak.intel.engine.MeetingIntel", lambda **_kw: fake)
     monkeypatch.setattr("holdspeak.intel.providers.build_configured_meeting_intel", lambda: fake)
     monkeypatch.setattr("holdspeak.web.routes.sync._hub_model_name", lambda ctx: "HubModel-9B")
 
@@ -128,6 +131,9 @@ def test_chat_kb_honesty_marker_when_nothing_hydrates(env, monkeypatch) -> None:
     db.kbs.upsert(kb_id="kb_empty", name="Ghost shelf", member_ids=["note:missing"])
     _seed_persona(db, kb_id="kb_empty", manual="")
     fake = _FakeIntel()
+    # HS-131-13: an admitted `this_machine` child builds `MeetingIntel` from its
+    # FROZEN revision, so the same double is installed on the engine class too.
+    monkeypatch.setattr("holdspeak.intel.engine.MeetingIntel", lambda **_kw: fake)
     monkeypatch.setattr("holdspeak.intel.providers.build_configured_meeting_intel", lambda: fake)
     monkeypatch.setattr("holdspeak.web.routes.sync._hub_model_name", lambda ctx: "HubModel-9B")
     assert client.post("/api/recipes/recipe_scout/chat", json={"question": "hi"}).status_code == 200

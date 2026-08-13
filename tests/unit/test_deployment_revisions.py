@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from holdspeak.db import Database
 from holdspeak.deployment_revisions import capture_deployment_revision, resolve_deployment_revision
-from holdspeak.inference_targets import build_intel_for_revision, build_intel_for_target, resolve_inference_target
+from holdspeak.inference_targets import build_intel_for_revision, resolve_inference_target
 from holdspeak.principals import UNAUTHENTICATED
 from holdspeak.services.sync_service import SyncService
 
@@ -40,17 +40,18 @@ def test_capture_survives_profile_mutation_and_deletion(tmp_path, monkeypatch) -
     monkeypatch.setattr("holdspeak.intel.engine.MeetingIntel", Engine)
     from tests.unit.admitted_context import admitted_context
 
-    # HS-131-10: context-requiring factory (the legacy `build_intel_for_target`
-    # below still reaches it through the ONE named legacy marker).
+    # HS-131-10: context-requiring factory. HS-131-13 deleted the legacy
+    # `build_intel_for_target` companion assertion with the factory itself —
+    # re-capturing the (now mutated, now deleted) target is the ONLY remaining way
+    # to reach construction, and it still yields the frozen revision's endpoint.
     engine = build_intel_for_revision(
         resolved,
         context=admitted_context(revision=resolved),
     )
     assert engine.kwargs["cloud_base_url"] == revision.endpoint
-    engine_from_target = build_intel_for_target(captured_target, db)
-    assert engine_from_target.kwargs["cloud_base_url"] == revision.endpoint
     assert engine.kwargs["cloud_model"] == revision.model
     assert engine.kwargs["cloud_api_key_env"] == revision.secret_slot
+    assert captured_target.deployment.endpoint == revision.endpoint
 
 
 def test_deployment_revision_sync_round_trip_without_credential(tmp_path) -> None:

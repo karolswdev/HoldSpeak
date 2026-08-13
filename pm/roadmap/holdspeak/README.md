@@ -9,16 +9,18 @@
 > is canon at [`docs/internal/ORCHESTRATION.md`](../../../docs/internal/ORCHESTRATION.md).
 
 **Newest update (2026-08-12): Phase 131 — One Admission Path — IN PROGRESS
-(9/17).** Nine migrations are done. HS-131-10's executable fence now classifies
-145 model-bearing sites with zero unregistered execution and proves all fifteen
-named surfaces through one literal admission, claim, exact-revision dispatch,
-and immutable-terminal spine. It also found eleven residual execution families
-across 48 pinned sites, so the owner chartered five explicit amendments rather
-than waive them: residual services, plugin providers, speech side doors, mesh
-receiver authority, and meeting residuals. HS-131-10 ships as a verified
-[blocked checkpoint](./phase-131-one-admission-path/OWNER-DECISION-PACKAGE-HS-131-10.md);
-HS-131-13 is next, while docs and the final real-model walk remain held until the
-finding count reaches zero. Swift remains explicitly out of scope.
+(10/17).** HS-131-13 closes the first fence amendment: Cadence request-time
+intelligence now uses an authenticated domain parent, one exact-revision runner
+child, staged publication, and durable cancellation; the duplicate Decisions
+route seam, dormant Delivery review, and `build_intel_for_target` are deleted.
+Hostile verification caught and repaired mutable model retargeting plus an outer
+request-cancellation publication race, then returned RATIFY FOR STORY CLOSE. The
+mechanical fence is now 134 sites, 38 pinned findings in eight families, and zero
+unregistered execution (145→134 / 48→38 / 11→8). The quiet isolated full gate
+has zero new failure names against the HS-131-10 checkpoint and one repaired.
+HS-131-14 plugin-provider admission is next; docs and the final real-model walk
+remain held until the finding count reaches zero. Swift remains explicitly out
+of scope.
 
 **Previous update (2026-08-08): Phase 129 — One Grammar — COMPLETE (11/11).**
 The exit walk passes all 38 surfaces with pinned-foot, stationary-head,

@@ -218,11 +218,11 @@ def build_configured_meeting_intel() -> "MeetingIntel":
 
     HS-131-10 FINDING ``plugin-default-provider``: this is the legacy UNCONTEXTUAL
     constructor. Its remaining direct callers — fourteen builtin
-    ``_cached_provider`` sites, `plugins/segment_probe.py`, and
-    `services/cadence_service.py` — have NO admitted child behind them, which is
-    why they are named blocking findings the census pins at their call sites.
-    It also stays the long-standing injectable construction seam. An ADMITTED
-    caller never reaches it directly: it goes through
+    ``_cached_provider`` sites and `plugins/segment_probe.py` — have NO admitted
+    child behind them, which is why they are named blocking findings the census
+    pins at their call sites (HS-131-13 removed the cadence caller; HS-131-14 owns
+    the rest). It also stays the long-standing injectable construction seam. An
+    ADMITTED caller never reaches it directly: it goes through
     :func:`configured_meeting_intel`, which refuses without the runner's dispatch
     context before this body runs.
     """
@@ -281,10 +281,10 @@ def configured_local_meeting_model_path() -> str:
     """The concrete local GGUF the in-process meeting-intel engine loads (HS-130-03).
 
     This is the SINGLE artifact the ``this_device`` execution branch actually
-    loads (``build_intel_for_target`` pins ``this_device`` to ``local`` and hands
-    ``MeetingIntel`` this path). ``this_machine`` readiness must therefore check
-    THIS file and the receipt must name it — not the dictation-runtime model,
-    which is a different subsystem.
+    loads (``build_intel_for_revision`` pins ``this_machine`` to ``local`` and
+    hands ``MeetingIntel`` this path). ``this_machine`` readiness must therefore
+    check THIS file and the receipt must name it — not the dictation-runtime
+    model, which is a different subsystem.
     """
     from ..config import Config
 

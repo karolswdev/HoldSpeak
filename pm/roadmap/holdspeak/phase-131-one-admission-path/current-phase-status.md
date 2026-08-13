@@ -1,6 +1,6 @@
 # Phase 131 — One Admission Path
 
-**Status:** IN PROGRESS (9/17).
+**Status:** IN PROGRESS (10/17).
 
 **Last updated:** 2026-08-12.
 
@@ -154,7 +154,7 @@ HS-131-11 and HS-131-12 remain held behind the fence.
 | HS-131-10 | The one-path fence | blocked | [story-10](./story-10-one-path-fence.md) | — |
 | HS-131-11 | The entry-point contract | backlog | [story-11](./story-11-entry-point-docs.md) | — |
 | HS-131-12 | The walk | backlog | [story-12](./story-12-the-walk.md) | — |
-| HS-131-13 | Residual services take the admitted door | ready | [story-13](./story-13-residual-service-admission.md) | — |
+| HS-131-13 | Residual services take the admitted door | done | [story-13](./story-13-residual-service-admission.md) | [evidence-story-13](./evidence-story-13.md) |
 | HS-131-14 | Plugins receive admitted intelligence | backlog | [story-14](./story-14-plugin-provider-admission.md) | — |
 | HS-131-15 | Speech side doors become sessions or stay lexical | backlog | [story-15](./story-15-speech-side-door-admission.md) | — |
 | HS-131-16 | The mesh receiver proves authority locally | backlog | [story-16](./story-16-mesh-receiver-authority.md) | — |
@@ -396,9 +396,21 @@ families across 48 pinned sites; the owner accepted the complete ledger on
 2026-08-12, chartered HS-131-13 through HS-131-17, and authorized this blocked
 checkpoint to ship. The ruling and reservations are in
 [OWNER-DECISION-PACKAGE-HS-131-10](./OWNER-DECISION-PACKAGE-HS-131-10.md).
-Next: HS-131-13, residual services take the admitted door. HS-131-11 and
-HS-131-12 remain held until all five amendments land and HS-131-10 closes at
-zero findings.
+HS-131-13 is done — the first fence amendment removes the residual service
+side doors. Cadence request-time drafting now opens one authenticated
+`cadence.next-action-draft` parent (schema v57), freezes placement and the exact
+local model before child admission, dispatches through the generic runner, and
+stages output behind the parent cancellation fence. The first hostile pass found
+two real defects — mutable model A→B retargeting and outer-task cancellation that
+could publish during recovery — and both were repaired with production-path
+race tests; the final verdict is RATIFY FOR STORY CLOSE. The duplicate Decisions
+route model seam, dormant Delivery review helper, and `build_intel_for_target`
+are deleted with no shims. The census is now 134 sites, 38 findings, eight
+families, zero unregistered (145→134 / 48→38 / 11→8). The quiet isolated full
+gate has zero new failure names against the HS-131-10 checkpoint and one repaired
+meeting fallback name. Next: HS-131-14, plugins receive admitted intelligence.
+HS-131-11 and HS-131-12 remain held until the remaining four amendments land and
+HS-131-10 closes at zero findings.
 The roadmap still has inherited structural lint errors in old phases; they are
 named baseline and are not silently bundled into this product phase.
 

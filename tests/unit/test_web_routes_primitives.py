@@ -126,6 +126,9 @@ def test_run_agent_invokes_engine(client: TestClient, monkeypatch) -> None:
             captured["user_prompt"] = user_prompt
             return "ANSWER"
 
+    # HS-131-13: the admitted `this_machine` child builds `MeetingIntel` from
+    # its FROZEN revision, so the same double goes on the engine class too.
+    monkeypatch.setattr("holdspeak.intel.engine.MeetingIntel", lambda **_kw: _FakeIntel())
     monkeypatch.setattr(
         "holdspeak.intel.providers.build_configured_meeting_intel",
         lambda: _FakeIntel(),
@@ -158,6 +161,9 @@ def test_run_agent_includes_input_source(client: TestClient, monkeypatch) -> Non
         def run_prompt(self, **kwargs):
             return "OUT"
 
+    # HS-131-13: the admitted `this_machine` child builds `MeetingIntel` from
+    # its FROZEN revision, so the same double goes on the engine class too.
+    monkeypatch.setattr("holdspeak.intel.engine.MeetingIntel", lambda **_kw: _FakeIntel())
     monkeypatch.setattr(
         "holdspeak.intel.providers.build_configured_meeting_intel", lambda: _FakeIntel()
     )
@@ -218,6 +224,9 @@ def test_run_agent_input_source_accepts_ipad_card_alias(
         def run_prompt(self, **kwargs):
             return "OUT"
 
+    # HS-131-13: the admitted `this_machine` child builds `MeetingIntel` from
+    # its FROZEN revision, so the same double goes on the engine class too.
+    monkeypatch.setattr("holdspeak.intel.engine.MeetingIntel", lambda **_kw: _FakeIntel())
     monkeypatch.setattr(
         "holdspeak.intel.providers.build_configured_meeting_intel", lambda: _FakeIntel()
     )
@@ -248,6 +257,9 @@ def test_run_agent_engine_error_is_502(client: TestClient, monkeypatch) -> None:
         def run_prompt(self, **kwargs):
             raise MeetingIntelError("no model")
 
+    # HS-131-13: the admitted `this_machine` child builds `MeetingIntel` from
+    # its FROZEN revision, so the same double goes on the engine class too.
+    monkeypatch.setattr("holdspeak.intel.engine.MeetingIntel", lambda **_kw: _Boom())
     monkeypatch.setattr(
         "holdspeak.intel.providers.build_configured_meeting_intel", lambda: _Boom()
     )
@@ -339,6 +351,9 @@ def test_run_chain_threads_steps(client: TestClient, monkeypatch) -> None:
             calls.append((system_prompt, user_prompt))
             return f"out({user_prompt})"
 
+    # HS-131-13: the admitted `this_machine` child builds `MeetingIntel` from
+    # its FROZEN revision, so the same double goes on the engine class too.
+    monkeypatch.setattr("holdspeak.intel.engine.MeetingIntel", lambda **_kw: _FakeIntel())
     monkeypatch.setattr(
         "holdspeak.intel.providers.build_configured_meeting_intel", lambda: _FakeIntel()
     )
@@ -401,6 +416,9 @@ def test_run_chain_engine_error_is_502(client: TestClient, monkeypatch) -> None:
         def run_prompt(self, **kwargs):
             raise MeetingIntelError("no model")
 
+    # HS-131-13: the admitted `this_machine` child builds `MeetingIntel` from
+    # its FROZEN revision, so the same double goes on the engine class too.
+    monkeypatch.setattr("holdspeak.intel.engine.MeetingIntel", lambda **_kw: _Boom())
     monkeypatch.setattr(
         "holdspeak.intel.providers.build_configured_meeting_intel", lambda: _Boom()
     )
@@ -456,6 +474,9 @@ def _stub_intel(monkeypatch, output="WF-OUT", provider="local"):
             return output
 
     fake = _FakeIntel()
+    # HS-131-13: the admitted `this_machine` child builds `MeetingIntel` from
+    # its FROZEN revision, so the same double goes on the engine class too.
+    monkeypatch.setattr("holdspeak.intel.engine.MeetingIntel", lambda **_kw: fake)
     monkeypatch.setattr(
         "holdspeak.intel.providers.build_configured_meeting_intel", lambda: fake
     )
@@ -540,6 +561,9 @@ def test_run_workflow_linear_graph_runs_in_order(client: TestClient, monkeypatch
             calls.append(user_prompt)
             return f"out{len(calls)}"
 
+    # HS-131-13: the admitted `this_machine` child builds `MeetingIntel` from
+    # its FROZEN revision, so the same double goes on the engine class too.
+    monkeypatch.setattr("holdspeak.intel.engine.MeetingIntel", lambda **_kw: _FakeIntel())
     monkeypatch.setattr(
         "holdspeak.intel.providers.build_configured_meeting_intel", lambda: _FakeIntel()
     )
@@ -624,6 +648,9 @@ def test_run_workflow_web_authored_graph_runs(client: TestClient, monkeypatch) -
         def run_prompt(self, *, system_prompt, user_prompt, temperature=None, max_tokens=None):
             return "risk: the demo\nnothing else"
 
+    # HS-131-13: the admitted `this_machine` child builds `MeetingIntel` from
+    # its FROZEN revision, so the same double goes on the engine class too.
+    monkeypatch.setattr("holdspeak.intel.engine.MeetingIntel", lambda **_kw: _FakeIntel())
     monkeypatch.setattr(
         "holdspeak.intel.providers.build_configured_meeting_intel", lambda: _FakeIntel()
     )
@@ -655,6 +682,9 @@ def test_run_workflow_engine_error_is_502(client: TestClient, monkeypatch) -> No
         def run_prompt(self, **kwargs):
             raise MeetingIntelError("no model")
 
+    # HS-131-13: the admitted `this_machine` child builds `MeetingIntel` from
+    # its FROZEN revision, so the same double goes on the engine class too.
+    monkeypatch.setattr("holdspeak.intel.engine.MeetingIntel", lambda **_kw: _Boom())
     monkeypatch.setattr(
         "holdspeak.intel.providers.build_configured_meeting_intel", lambda: _Boom()
     )
@@ -834,6 +864,9 @@ def test_run_agent_resolves_assigned_profile(client: TestClient, monkeypatch) ->
         return _FakeIntel()
 
     monkeypatch.setattr("holdspeak.intel.providers.build_meeting_intel_for_profile", _for_profile)
+    # HS-131-13: the admitted `this_machine` child builds `MeetingIntel` from
+    # its FROZEN revision, so the same double goes on the engine class too.
+    monkeypatch.setattr("holdspeak.intel.engine.MeetingIntel", lambda **_kw: (_ for _ in ()).throw(AssertionError("default builder must NOT be used when a profile is assigned")))
     monkeypatch.setattr(
         "holdspeak.intel.providers.build_configured_meeting_intel",
         lambda: (_ for _ in ()).throw(AssertionError("default builder must NOT be used when a profile is assigned")),
@@ -850,6 +883,9 @@ def test_run_agent_refuses_when_destination_missing(client: TestClient, monkeypa
         "name": "Ghost", "system_prompt": "S", "user_template": "{input}", "profile_id": "gone",
     }).json()["recipe"]["id"]
 
+    # HS-131-13: the admitted `this_machine` child builds `MeetingIntel` from
+    # its FROZEN revision, so the same double goes on the engine class too.
+    monkeypatch.setattr("holdspeak.intel.engine.MeetingIntel", lambda **_kw: (_ for _ in ()).throw(AssertionError("missing destination must not build an engine")))
     monkeypatch.setattr(
         "holdspeak.intel.providers.build_configured_meeting_intel",
         lambda: (_ for _ in ()).throw(AssertionError("missing destination must not build an engine")),

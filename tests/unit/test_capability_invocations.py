@@ -64,6 +64,9 @@ def test_failed_run_keeps_input_and_grounding_for_retry(rig, monkeypatch) -> Non
     monkeypatch.setattr(
         "holdspeak.inference_targets._this_machine_readiness", lambda: ("ready", "")
     )
+    # HS-131-13: an admitted `this_machine` child builds `MeetingIntel` from its
+    # FROZEN revision, so the same double is installed on the engine class too.
+    monkeypatch.setattr("holdspeak.intel.engine.MeetingIntel", lambda **_kw: Broken())
     monkeypatch.setattr(
         "holdspeak.intel.providers.build_configured_meeting_intel", lambda: Broken()
     )
@@ -82,6 +85,7 @@ def test_failed_run_keeps_input_and_grounding_for_retry(rig, monkeypatch) -> Non
         def run_prompt(self, **kwargs):
             return "retried"
 
+    monkeypatch.setattr("holdspeak.intel.engine.MeetingIntel", lambda **_kw: Recovered())
     monkeypatch.setattr(
         "holdspeak.intel.providers.build_configured_meeting_intel", lambda: Recovered()
     )
@@ -112,6 +116,9 @@ def test_capability_readiness_refuses_unsupported_graph_before_engine(rig, monke
         called = True
         raise AssertionError("engine must not be constructed")
 
+    # Both construction seams must stay untouched: the refusal happens before any
+    # engine exists, so either one firing is the defect this test names.
+    monkeypatch.setattr("holdspeak.intel.engine.MeetingIntel", lambda **_kw: engine())
     monkeypatch.setattr("holdspeak.intel.providers.build_configured_meeting_intel", engine)
     response = client.post("/api/workflows/branchy/run", json={"input": "retained"})
     assert response.status_code == 409

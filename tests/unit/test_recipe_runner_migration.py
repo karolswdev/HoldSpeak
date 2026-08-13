@@ -17,8 +17,12 @@ class Engine:
 def rig(tmp_path,monkeypatch):
     db=Database(tmp_path/"recipe.db"); db.recipes.upsert(recipe_id="r1",name="Recipe",system_prompt="system")
     monkeypatch.setattr("holdspeak.inference_targets._this_machine_readiness",lambda:("ready",""))
-    monkeypatch.setattr("holdspeak.intel.providers.build_configured_meeting_intel",lambda:Engine())
-    return db,_configure(db)
+    broker=_configure(db)
+    # HS-131-13: a `this_machine` child now builds from its FROZEN revision, so it
+    # no longer passes through the configured-provider seam this rig used to patch.
+    # Inject at the sanctioned boundary instead — the runner's engine factory.
+    broker.inference_runner._engine_factory=lambda _revision,**_:Engine()
+    return db,broker
 def test_recipe_run_and_root_chat_use_exact_saved_revision_and_stages(rig):
     db,broker=rig; service=RecipeService(db,broker=broker); recipe=db.recipes.get("r1")
     run=asyncio.run(service.run(OWNER,"r1",input="hello")); chat=asyncio.run(service.chat(OWNER,"r1",question="hello"))

@@ -49,6 +49,15 @@ def env(tmp_path, monkeypatch):
     # rule): patch where it is LOOKED UP, not where it lives.
     monkeypatch.setattr("holdspeak.intel_queue.get_database", lambda *a, **k: db)
     fake = _FakeIntel()
+    # HS-131-13: an admitted child builds its engine from the job plan's FROZEN
+    # deployment revision — the `this_machine` branch no longer re-reads the
+    # configured default — so the ONE admitted engine seam is the runner's factory.
+    # `build_configured_meeting_intel` stays stubbed because the plugin chain still
+    # reaches the configured default provider through it.
+    from holdspeak.kernel.runtime import _configure
+
+    broker = _configure(db)
+    broker.inference_runner._engine_factory = lambda _revision, **_: fake
     monkeypatch.setattr(
         "holdspeak.intel.providers.build_configured_meeting_intel", lambda: fake
     )
@@ -335,7 +344,7 @@ def test_deferred_intel_retains_base_analysis_when_routed_work_fails(
 
 
 def test_deferred_intel_skips_the_chain_when_router_disabled(env, monkeypatch) -> None:
-    db, _ = env
+    db, fake = env
     meeting = _saved_meeting(db, meeting_id="m85")
     db.intel.enqueue_intel_job(
         "m85", transcript_hash=meeting.transcript_hash(), reason="test import"
@@ -354,9 +363,11 @@ def test_deferred_intel_skips_the_chain_when_router_disabled(env, monkeypatch) -
         action_items = []
         summary = "s"
 
+    # HS-131-13: same seam as the two router-enabled tests above — the deferred base
+    # analysis runs on the admitted engine (the fixture's fake), not on a
+    # queue-constructed `MeetingIntel`, so the stub goes there.
     monkeypatch.setattr(
-        "holdspeak.intel.engine.MeetingIntel.analyze",
-        lambda self, transcript, stream=False: _Analyze(),
+        fake, "analyze", lambda transcript, stream=False: _Analyze(), raising=False
     )
     monkeypatch.setattr(
         "holdspeak.intel_queue.get_intel_runtime_status", lambda *a, **k: (True, "ready")

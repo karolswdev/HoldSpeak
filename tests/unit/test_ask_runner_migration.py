@@ -34,6 +34,9 @@ def rig(tmp_path: Path, monkeypatch):
     db = Database(tmp_path / "ask-runner.db")
     monkeypatch.setattr("holdspeak.inference_targets._this_machine_readiness", lambda: ("ready", ""))
     engine = Engine()
+    # HS-131-13: an admitted `this_machine` child builds `MeetingIntel` from its
+    # FROZEN revision, so the same double is installed on the engine class too.
+    monkeypatch.setattr("holdspeak.intel.engine.MeetingIntel", lambda **_kw: engine)
     monkeypatch.setattr("holdspeak.intel.providers.build_configured_meeting_intel", lambda: engine)
     broker = _configure(db)
     return db, broker, engine
@@ -64,14 +67,19 @@ def test_ask_uses_versioned_contract_hash_runner_and_staged_projection(rig):
     assert len(db.plugins.list_run_artifacts()) == before_artifacts
 
 
-def test_profile_ask_persists_revision_before_claim_without_preseed(rig):
+def test_profile_ask_persists_revision_before_claim_without_preseed(rig, monkeypatch):
     db, broker, engine = rig
     db.profiles.upsert(profile_id="profile", name="Profile", kind="openAICompatible", base_url="http://profile", model="model")
     # Admission, codec authorization, claim, and runner revision lookup all use
     # real database reads; only the final provider adapter is fake.
-    from holdspeak import intel
-    import holdspeak.intel.providers as providers
-    providers.build_meeting_intel_for_profile = lambda **_: engine
+    #
+    # HS-131-13: through `monkeypatch`, not a bare module assignment. The bare
+    # form leaked this stub into every LATER test in the process, so any suite
+    # that legitimately builds a profile-shaped engine silently received Ask's
+    # fake instead — an ordering landmine that only fires in a combined run.
+    monkeypatch.setattr(
+        "holdspeak.intel.providers.build_meeting_intel_for_profile", lambda **_: engine
+    )
     result = asyncio.run(AskService(db, broker=broker).ask(OWNER, "profile", inference_target_id="profile"))
     assert result["output"] == "runner answer"
     with db._connection() as conn:

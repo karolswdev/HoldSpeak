@@ -70,6 +70,9 @@ def test_ask_grounds_and_receipt_gates_its_projection(env, monkeypatch) -> None:
     )
 
     fake = _FakeIntel()
+    # HS-131-13: an admitted `this_machine` child builds `MeetingIntel` from its
+    # FROZEN revision, so the same double is installed on the engine class too.
+    monkeypatch.setattr("holdspeak.intel.engine.MeetingIntel", lambda **_kw: fake)
     monkeypatch.setattr(
         "holdspeak.intel.providers.build_configured_meeting_intel", lambda: fake
     )
@@ -216,6 +219,9 @@ def test_ask_model_alone_never_hops_to_the_profile_that_runs_it(env, monkeypatch
 def test_ask_model_override_matching_the_hubs_own_model_runs_the_default_engine(env, monkeypatch) -> None:
     _, client = env
     fake = _FakeIntel()
+    # HS-131-13: an admitted `this_machine` child builds `MeetingIntel` from its
+    # FROZEN revision, so the same double is installed on the engine class too.
+    monkeypatch.setattr("holdspeak.intel.engine.MeetingIntel", lambda **_kw: fake)
     monkeypatch.setattr(
         "holdspeak.intel.providers.build_configured_meeting_intel", lambda: fake
     )
@@ -282,6 +288,9 @@ def test_ask_grounding_hydrates_references_from_the_hub_store(env, monkeypatch) 
     )
 
     fake = _FakeIntel()
+    # HS-131-13: an admitted `this_machine` child builds `MeetingIntel` from its
+    # FROZEN revision, so the same double is installed on the engine class too.
+    monkeypatch.setattr("holdspeak.intel.engine.MeetingIntel", lambda **_kw: fake)
     monkeypatch.setattr(
         "holdspeak.intel.providers.build_configured_meeting_intel", lambda: fake
     )
@@ -330,6 +339,9 @@ def test_ask_grounding_full_expand_hydrates_the_transcript_and_marks_a_cut(env, 
     _seed_meeting(db, "m_env2", "Deep dive", segments=segs)
 
     fake = _FakeIntel()
+    # HS-131-13: an admitted `this_machine` child builds `MeetingIntel` from its
+    # FROZEN revision, so the same double is installed on the engine class too.
+    monkeypatch.setattr("holdspeak.intel.engine.MeetingIntel", lambda **_kw: fake)
     monkeypatch.setattr(
         "holdspeak.intel.providers.build_configured_meeting_intel", lambda: fake
     )
@@ -422,6 +434,9 @@ def test_ask_surfaces_engine_error_as_502(env, monkeypatch) -> None:
         def run_prompt(self, **kwargs):
             raise MeetingIntelError("no model")
 
+    # HS-131-13: an admitted `this_machine` child builds `MeetingIntel` from its
+    # FROZEN revision, so the same double is installed on the engine class too.
+    monkeypatch.setattr("holdspeak.intel.engine.MeetingIntel", lambda **_kw: _Boom())
     monkeypatch.setattr(
         "holdspeak.intel.providers.build_configured_meeting_intel", lambda: _Boom()
     )

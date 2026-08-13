@@ -33,6 +33,12 @@ HUB_DEFAULT_CLOUD_ID = "hub_default_cloud"
 #: device, so there is nothing here to build from the revision's frozen fields —
 #: and the old fallback silently re-read mutable meeting config instead.
 PAIRED_DEVICE_EXECUTION_UNSUPPORTED = "inference_paired_device_execution_unsupported"
+#: HS-131-13: the named refusal for a same-device revision that froze no local
+#: model path. The old branch answered that case by re-reading mutable meeting
+#: config, which is how an admitted child could load a model its immutable
+#: revision never named. Fail closed instead: the frozen fields are the only
+#: description of what a `this_machine` child is allowed to load.
+LOCAL_DEPLOYMENT_MODEL_UNKNOWN = "inference_local_deployment_model_unknown"
 
 # HS-130-01: the ONE terminal, NAMED global placement default. Placement
 # inherits DOWN through the precedence tiers; when every tier is unset this is
@@ -219,7 +225,7 @@ def _this_machine_readiness() -> tuple[str, str]:
     """Readiness for the LOCAL meeting-intel model this device will actually load.
 
     HS-130-03: ``this_device`` execution pins ``local`` and loads the configured
-    meeting-intel model (``build_intel_for_target``), so readiness checks THAT
+    meeting-intel model (``build_intel_for_revision``), so readiness checks THAT
     file — not the dictation-runtime (transcription) model, a different subsystem
     the old check read. Ready here means *this deployment will load*.
     """
@@ -585,13 +591,12 @@ def target_runtime_error(target: InferenceTarget, error: Any) -> str:
 def local_pinned_meeting_intel(
     model_path: Optional[str] = None, *, context: Any = None, revision: Any = None
 ) -> Any:
-    """The same-device engine with the intra-engine `auto` fallback DISABLED.
+    """The same-device engine, built from the FROZEN revision and nothing else.
 
-    The configured constructor is the long-standing injectable host-adapter seam,
-    so it is still used; any provider-bearing adapter it returns is then pinned to
-    ``local``. A same-device deployment therefore cannot silently become a
-    cross-boundary cloud run (HS-131-08): the cloud leg is a separately named
-    deployment revision and a separately admitted child.
+    A same-device deployment cannot silently become a cross-boundary cloud run
+    (HS-131-08): the cloud leg is a separately named deployment revision and a
+    separately admitted child. The local model is pinned the same way — to the
+    exact path the revision froze.
 
     HS-131-10: an allowlisted adapter factory, so it requires the runner's dispatch
     context (or the ONE named legacy marker) before it loads anything.
@@ -602,6 +607,15 @@ def local_pinned_meeting_intel(
     child was sufficient authority to build a LOCAL engine: the fence proved that
     SOME child had been admitted, not that THIS deployment was the one it was
     admitted for.
+
+    HS-131-13 — the context gate proved WHICH child; it never proved WHAT gets
+    loaded. This branch used to construct through ``configured_meeting_intel``,
+    whose body re-reads ``Config.load().meeting`` and hands ``MeetingIntel`` the
+    CURRENT ``intel_realtime_model``. An admitted child could therefore run model
+    ``B`` while its immutable revision, its child row, and its receipt all named
+    model ``A`` — the exact silent retarget Article XI.3 forbids. Construction is
+    now from the revision's own fields, with no post-admission configuration read
+    on this path at all.
     """
     from .kernel.dispatch_context import bind_dispatch_context, require_bound_context
 
@@ -614,26 +628,22 @@ def local_pinned_meeting_intel(
 def _local_pinned_engine(
     model_path: Optional[str] = None, *, context: Any = None, revision: Any = None
 ) -> Any:
-    """Construct the pinned same-device engine (reached only past the context gate)."""
-    from .config import Config
-    from .intel.engine import MeetingIntel
-    from .intel.mesh_relay import MeshRelayIntel
-    from .intel.providers import configured_meeting_intel
+    """Construct the pinned same-device engine (reached only past the context gate).
 
-    configured = configured_meeting_intel(context=context, revision=revision)
-    if not isinstance(configured, MeshRelayIntel):
-        if hasattr(configured, "provider"):
-            configured.provider = "local"
-        if hasattr(configured, "_active_provider"):
-            configured._active_provider = None
-        return configured
-    # A mesh default is never reused for a same-device choice: load exactly the
-    # local model this deployment named.
-    kwargs: dict[str, Any] = {"provider": "local"}
-    path = model_path or getattr(Config.load().meeting, "intel_realtime_model", None)
-    if path:
-        kwargs["model_path"] = path
-    return MeetingIntel(**kwargs)
+    Exactly one source of truth for what loads: the frozen local model path — the
+    caller's explicit one, else the revision's own. ``provider`` is pinned
+    ``local`` at construction rather than corrected afterwards, so there is no
+    window in which a cloud-capable adapter exists for a same-device child.
+    """
+    from .intel.engine import MeetingIntel
+    from .kernel.model import KernelRefused
+
+    path = str(model_path or getattr(revision, "model_path", "") or "").strip()
+    if not path:
+        # No frozen local model, no run. Reading the live config here is what the
+        # HS-131-13 audit caught; refusing by name is the honest alternative.
+        raise KernelRefused(LOCAL_DEPLOYMENT_MODEL_UNKNOWN)
+    return MeetingIntel(provider="local", model_path=path)
 
 
 def build_intel_for_revision(
@@ -723,53 +733,11 @@ def _engine_for_revision(
     raise ValueError(f"unsupported admitted deployment revision {revision.id}")
 
 
-def build_intel_for_target(target: InferenceTarget, db: Any) -> Any:
-    """Construct the engine for one already-resolved target.
-
-    ``this_device`` is deliberately local-only.  It never inherits the legacy
-    ``auto`` provider, because doing so could turn a same-device choice into an
-    invisible cross-boundary fallback.
-
-    HS-131-10 FINDING ``legacy-uncontextual-factory``: this factory has NO admitted
-    child behind it — its callers (`web/routes/decisions.py`,
-    `services/delivery_service.py`) are themselves named blocking findings. It is
-    therefore NOT an allowlisted adapter: it passes the ONE named
-    :data:`~holdspeak.kernel.dispatch_context.LEGACY_UNCONTEXTUAL` marker, which
-    the fence census pins to exactly this scope and the mesh receiver, so the
-    family can only shrink. Do not add a caller.
-    """
-    from .intel.engine import MeetingIntel
-    from .intel.providers import configured_meeting_intel
-    from .kernel.dispatch_context import LEGACY_UNCONTEXTUAL
-
-    deployment_model_path = target.deployment.model_path if target.deployment else None
-
-    # A NAMED on-device profile loads ITS OWN model_file — the exact local model
-    # that made this deployment ready (HS-130-03) — never the global meeting
-    # model. The anonymous ``this_machine`` (profile_id is None) keeps the
-    # injectable host-adapter seam below.
-    if target.kind == "this_device" and target.profile_id:
-        kwargs: dict[str, Any] = {"provider": "local"}
-        if deployment_model_path:
-            kwargs["model_path"] = deployment_model_path
-        return MeetingIntel(**kwargs)
-
-    if target.kind == "this_device":
-        # Preserve the long-standing injectable constructor seam used by host
-        # integrations, then pin it to local (the ONE same-device pinning rule,
-        # shared with `build_intel_for_revision`).
-        return local_pinned_meeting_intel(
-            deployment_model_path, context=LEGACY_UNCONTEXTUAL
-        )
-    if target.kind == "paired_device" and target.profile_id is None:
-        return configured_meeting_intel(context=LEGACY_UNCONTEXTUAL)
-    if target.deployment is not None:
-        from .deployment_revisions import DeploymentRevision
-
-        return build_intel_for_revision(
-            DeploymentRevision.from_identity(target.deployment),
-            context=LEGACY_UNCONTEXTUAL,
-        )
-    # Kept solely as a tolerant guard for an older caller; resolver users never
-    # reach it with an unavailable target.
-    return configured_meeting_intel(context=LEGACY_UNCONTEXTUAL)
+# HS-131-13 deleted `build_intel_for_target(target, db)`. It was the second legacy
+# uncontextual factory: it took a MUTABLE resolved target, re-read the profile row,
+# and constructed an engine with no admitted child, no immutable revision, and no
+# terminal receipt behind it. Its two callers (the second Decisions route seam and
+# the dormant Delivery review helper) are gone, so the factory goes with them —
+# NOT wrapped in a compatibility shim. `build_intel_for_revision(revision, *,
+# context=...)` is the one construction path, and it validates the runner's
+# dispatch context against the exact frozen revision before anything is built.

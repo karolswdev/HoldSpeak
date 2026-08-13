@@ -1,0 +1,6 @@
+current=90 baseline=91 new=0 repaired=1
+
+NEW
+
+REPAIRED
+tests/unit/test_meeting_session_admission.py::test_a_failed_local_entry_admits_a_second_child_naming_the_cloud_revision

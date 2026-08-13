@@ -33,11 +33,12 @@ the child.
 :data:`LEGACY_UNCONTEXTUAL` is the ONE named marker for the legacy factories the
 census records as blocking findings. It is semantically distinct from a context —
 it is not accepted by :func:`require_dispatch_context`, it can never validate, and
-it only ever means "this scope has NO admitted child behind it". Exactly three
-named finding scopes carry it today (the mesh receiver, ``build_intel_for_target``,
-and the configured default-provider entry the plugin family calls), each pinnable
-by the Stage-B AST census, so the family can only shrink. Everything else is
-fail-closed: there is no optional-context path.
+it only ever means "this scope has NO admitted child behind it". Exactly ONE named
+finding scope carries it today — the mesh receiver
+(``commands/mesh_serve.py:MeshServeWorker._engine_for_run``), pinned by the Stage-B
+AST census; HS-131-13 retired the second (``build_intel_for_target``), so the family
+has only shrunk and can only shrink. Everything else is fail-closed: there is no
+optional-context path.
 """
 
 from __future__ import annotations

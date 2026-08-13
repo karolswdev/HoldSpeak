@@ -1,9 +1,10 @@
-"""HS-131-10 — the one-path fence: literal spine, fifteen surfaces.
+"""HS-131-10 — the one-path fence: literal spine, every named surface.
 
 Section 2 of DESIGN-HS-131-10.md (Sol-ratified 2026-08-11) requires that
-every named product surface — of which there are FIFTEEN distinct entry
-forms, not the charter's miscounted thirteen — reaches the SAME literal
-admission spine for every physical model dispatch:
+every named product surface — FIFTEEN distinct entry forms, not the
+charter's miscounted thirteen, and SIXTEEN once HS-131-13 migrated Cadence
+onto the spine — reaches the SAME literal admission spine for every
+physical model dispatch:
 
     1. InferenceRunner.invoke            (admission entry)
     2. Broker.submit_trusted_child (parent-scoped child) or Broker.submit
@@ -65,8 +66,8 @@ class SurfaceRun:
 
     The spine test (below) only needs the driver to EXECUTE; the provenance
     suite (``test_one_path_provenance.py``) needs to find the rows that
-    execution wrote. Rather than keep a second, drifting copy of all fifteen
-    rigs over there, every driver returns this: the database it actually used,
+    execution wrote. Rather than keep a second, drifting copy of every rig
+    over there, every driver returns this: the database it actually used,
     the principal it authenticated as, the parent it ran under (``None`` for a
     root-shaped admission), the destination its plan froze, and how many
     ``inference.invoke`` children that exercise is expected to emit.
@@ -193,7 +194,7 @@ def _assert_spine_reached(calls: list[str]) -> str:
 # ---------------------------------------------------------------------------
 
 # ---------------------------------------------------------------------------
-# Fifteen surface drivers. Each performs >=1 real model invocation through
+# The surface drivers. Each performs >=1 real model invocation through
 # production admission code; only the engine/provider CONSTRUCTION seam is
 # faked. Drivers run INSIDE the _spine_trace context (see the parametrized
 # test at the bottom), so any rig that itself wraps
@@ -240,8 +241,11 @@ def _recipe_rig(tmp_path, monkeypatch, name: str):
         def run_prompt(self, **kwargs):
             return "runner recipe"
 
-    monkeypatch.setattr("holdspeak.intel.providers.build_configured_meeting_intel", lambda: Engine())
     broker = _configure(db)
+    # HS-131-13: `this_machine` builds from the FROZEN revision, so the provider
+    # double is injected at the runner's engine factory — the one construction
+    # boundary a migrated surface actually goes through.
+    broker.inference_runner._engine_factory = lambda _revision, **_: Engine()
     return db, RecipeService(db, broker=broker)
 
 
@@ -564,6 +568,43 @@ def _drive_dictation(tmp_path, monkeypatch) -> SurfaceRun:
     )
 
 
+def _drive_cadence(tmp_path, monkeypatch) -> SurfaceRun:
+    """HS-131-13: request-time Cadence next-action drafting.
+
+    The sixteenth surface. It is a distinct entry form, not a variant of an
+    existing one: a foreground READ (`GET /api/cadence/loops/{id}`) that draws one
+    model draft under the caller the transport authenticated — never the owner and
+    never the scheduler, which is the distinction HS-131-06 drew and this story
+    had to keep while moving the work onto the admitted spine.
+    """
+    from holdspeak.cadence.models import OpenLoop
+    from holdspeak.config.integrations import CadenceConfig
+    from holdspeak.services.cadence_service import CadenceService
+
+    reset_database()
+    db = Database(tmp_path / "cadence.db")
+    monkeypatch.setattr("holdspeak.inference_targets._this_machine_readiness", lambda: ("ready", ""))
+    loop = db.cadence.upsert_loop(
+        OpenLoop(source_type="meeting_action", source_id="a1", title="Ship the watchdog", owner="Karol")
+    )
+    broker = _configure(db)
+
+    class FakeIntel:
+        active_provider = "local"
+
+        def run_prompt(self, **_):
+            return '{"kind":"create_issue","title":"Watchdog the queue","body_markdown":"body"}'
+
+    broker.inference_runner._engine_factory = lambda _revision, **_: FakeIntel()
+    service = CadenceService(db, CadenceConfig(use_llm=True), kernel=broker)
+    detail = asyncio.run(service.get_loop(WEB_OWNER_SESSION, loop.id))
+    assert detail["next_action"]["generated_by"] == "llm", detail["next_action"]
+    return SurfaceRun(
+        db, WEB_OWNER_SESSION, _parent_run_operation_id(db, "cadence.next-action-draft"),
+        THIS_MACHINE_ID, parent_kind="cadence.next-action-draft",
+    )
+
+
 SURFACE_DRIVERS: dict[str, Callable[[Any, Any], SurfaceRun]] = {
     "Ask": _drive_ask,
     "Recipe run": _drive_recipe_run,
@@ -580,9 +621,14 @@ SURFACE_DRIVERS: dict[str, Callable[[Any, Any], SurfaceRun]] = {
     "meeting live": _drive_meeting_live,
     "meeting deferred": _drive_meeting_deferred,
     "dictation pipeline": _drive_dictation,
+    "cadence next action": _drive_cadence,
 }
 
-assert len(SURFACE_DRIVERS) == 15, "the charter names fifteen distinct surface forms; none may be collapsed"
+#: HS-131-10 named fifteen; HS-131-13 migrated Cadence onto the spine and it takes
+#: its seat here rather than riding in unproven. The other two families that story
+#: closed added no surface: both were DELETED as duplicates of a surface already
+#: below (Decision promotion, Delivery review).
+assert len(SURFACE_DRIVERS) == 16, "every named surface form is proven here; none may be collapsed"
 
 #: Which admission shape each surface uses. Module-level (rather than buried in
 #: the sanity test below) because ``test_one_path_provenance.py`` imports these
@@ -592,13 +638,13 @@ ROOT_SHAPED_SURFACES = frozenset({"Ask", "Recipe run", "Recipe chat", "Rails"})
 CHILD_SHAPED_SURFACES = frozenset({
     "Sequence", "Workflow", "manual Workbench", "scheduled Workbench",
     "memory writeback", "Decision promotion", "Delivery review", "voice",
-    "meeting live", "meeting deferred", "dictation pipeline",
+    "meeting live", "meeting deferred", "dictation pipeline", "cadence next action",
 })
 
 
 @pytest.mark.parametrize("surface", sorted(SURFACE_DRIVERS), ids=sorted(SURFACE_DRIVERS))
 def test_surface_reaches_the_literal_admission_spine(surface: str, tmp_path, monkeypatch) -> None:
-    """Every one of the fifteen named surfaces reaches the SAME literal
+    """Every one of the named surfaces reaches the SAME literal
     InferenceRunner.invoke -> Broker.{submit_trusted_child,submit} ->
     Broker._admit_authority -> Broker.claim -> InferenceRunner._dispatch ->
     ExecutorPlane._terminal spine, in that order, at least once."""
@@ -608,7 +654,7 @@ def test_surface_reaches_the_literal_admission_spine(surface: str, tmp_path, mon
     _assert_spine_reached(calls)
 
 
-def test_the_two_admission_shapes_both_appear_across_the_fifteen_surfaces() -> None:
+def test_the_two_admission_shapes_both_appear_across_every_surface() -> None:
     """Sanity on the trace mechanism itself: the fence would be worthless if
     every surface happened to use the same admission shape — prove both a
     root (Broker.submit) and a parent-scoped child (Broker.submit_trusted_child)
@@ -629,7 +675,7 @@ def test_each_driver_reports_the_run_it_actually_performed(tmp_path, monkeypatch
     its rows through, so a driver that stopped running under its parent — or
     started running under one — has to be caught HERE rather than quietly
     changing which cohort the fence inspects. Exercised on one surface of each
-    shape; the provenance suite re-checks all fifteen against the stored rows.
+    shape; the provenance suite re-checks every one against the stored rows.
     """
     for surface in ("Ask", "manual Workbench"):
         run = SURFACE_DRIVERS[surface](tmp_path / surface.replace(" ", "-"), monkeypatch)

@@ -292,6 +292,11 @@ def test_process_next_intel_job_notifies_on_meeting_ready(db, monkeypatch):
     # HS-131-08: the deferred base analysis runs as an admitted child whose
     # engine is built from the job plan's frozen deployment revision, so the fake
     # belongs on that one admitted engine seam.
+    # HS-131-13: that seam is now the engine CLASS. The `this_machine` branch
+    # constructs `MeetingIntel(provider="local", model_path=<frozen>)` directly
+    # instead of re-reading the configured default, so a double installed only on
+    # `build_configured_meeting_intel` no longer intercepts the admitted child.
+    monkeypatch.setattr("holdspeak.intel.engine.MeetingIntel", _FakeIntel)
     monkeypatch.setattr(
         "holdspeak.intel.providers.build_configured_meeting_intel", lambda: _FakeIntel()
     )
@@ -310,6 +315,11 @@ def test_exploding_on_meeting_ready_never_breaks_the_job(db, monkeypatch):
     # HS-131-08: the deferred base analysis runs as an admitted child whose
     # engine is built from the job plan's frozen deployment revision, so the fake
     # belongs on that one admitted engine seam.
+    # HS-131-13: that seam is now the engine CLASS. The `this_machine` branch
+    # constructs `MeetingIntel(provider="local", model_path=<frozen>)` directly
+    # instead of re-reading the configured default, so a double installed only on
+    # `build_configured_meeting_intel` no longer intercepts the admitted child.
+    monkeypatch.setattr("holdspeak.intel.engine.MeetingIntel", _FakeIntel)
     monkeypatch.setattr(
         "holdspeak.intel.providers.build_configured_meeting_intel", lambda: _FakeIntel()
     )

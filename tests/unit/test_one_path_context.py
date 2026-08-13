@@ -546,7 +546,13 @@ def test_the_whisper_branch_carries_the_context_too() -> None:
 def test_the_named_legacy_marker_is_the_only_uncontextual_way_through(
     no_construction: Recorder,
 ) -> None:
-    """`build_intel_for_target`'s family passes the marker; the engine carries NO context."""
+    """The ONE remaining marker scope (the mesh receiver) buys no admission.
+
+    HS-131-13 deleted `build_intel_for_target`, so the marker family is down to
+    `commands/mesh_serve.py:MeshServeWorker._engine_for_run` — still a blocking
+    finding, and still handed an engine that carries NO context, which is exactly
+    what stops a marker-built engine from passing the dispatch-leg gate.
+    """
     frozen = revision()
     engine = build_intel_for_revision(frozen, context=LEGACY_UNCONTEXTUAL)
 

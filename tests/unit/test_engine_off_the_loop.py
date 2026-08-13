@@ -69,6 +69,9 @@ def spy(monkeypatch) -> _LoopSpy:
     monkeypatch.setitem(InferenceRunner.__init__.__kwdefaults__, "engine_factory", lambda revision, **_kw: s)
     # Ask and legacy Recipe surfaces still construct their provider through this
     # long-standing seam; Sequence/Workflow is deliberately covered above.
+    # HS-131-13: an admitted `this_machine` child builds `MeetingIntel` from its
+    # FROZEN revision, so the same double is installed on the engine class too.
+    monkeypatch.setattr("holdspeak.intel.engine.MeetingIntel", lambda **_kw: s)
     monkeypatch.setattr("holdspeak.intel.providers.build_configured_meeting_intel", lambda: s)
     return s
 

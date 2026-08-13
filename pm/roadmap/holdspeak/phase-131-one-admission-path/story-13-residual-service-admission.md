@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 131
-- **Status:** ready
+- **Status:** done
 - **Depends on:** HS-131-02, HS-131-06, HS-131-07
 - **Unblocks:** HS-131-10
 - **Owner:** unassigned
@@ -31,9 +31,10 @@ terminal receipt required by Constitution Articles V.2 and XI.2–3.
 - Delete dormant `DeliveryService.prepare_pr_review` if unreachable; otherwise
   route it through the admitted Delivery review parent, frozen revision, staged
   publication, and terminal receipt established by HS-131-07.
-- Remove `build_intel_for_target` and every `LEGACY_UNCONTEXTUAL` call site once
-  the last caller leaves. The validating exact-revision factory remains the only
-  construction path.
+- Remove `build_intel_for_target`, its `LEGACY_UNCONTEXTUAL` marker use, and
+  every caller once the last caller leaves. The validating exact-revision factory
+  remains the only construction path. The separately chartered mesh receiver's
+  marker stays mechanically pinned to HS-131-16 rather than being hidden here.
 - Keep domain shaping and persistence in the owning services. The generic runner
   must not branch on Cadence, Decision, or Delivery types.
 - Add the three families to the fifteen-surface provenance/cardinality harness
@@ -49,18 +50,19 @@ terminal receipt required by Constitution Articles V.2 and XI.2–3.
 
 ## Acceptance criteria
 
-- [ ] Cadence model work has an authenticated domain parent, frozen deployment
+- [x] Cadence model work has an authenticated domain parent, frozen deployment
   revision, one invocation child per physical attempt, and one immutable
   terminal receipt; it never authenticates as the owner or scheduler by default.
-- [ ] The Decisions route reaches the existing admitted Decision service or is
+- [x] The Decisions route reaches the existing admitted Decision service or is
   deleted; no route-held engine or `run_prompt` callable remains.
-- [ ] Dormant Delivery review is deleted or reaches the existing admitted
+- [x] Dormant Delivery review is deleted or reaches the existing admitted
   Delivery parent and staging protocol.
-- [ ] `build_intel_for_target`, its `LEGACY_UNCONTEXTUAL` marker, and every
-  executable caller are absent.
-- [ ] Cancellation or parent invalidation prevents late Cadence, Decision, or
+- [x] `build_intel_for_target`, its `LEGACY_UNCONTEXTUAL` marker use, and every
+  executable caller are absent; the only remaining marker is mechanically pinned
+  to the separately chartered HS-131-16 mesh receiver.
+- [x] Cancellation or parent invalidation prevents late Cadence, Decision, or
   Delivery output from publishing.
-- [ ] The one-path census removes `cadence`, `decisions-route`,
+- [x] The one-path census removes `cadence`, `decisions-route`,
   `delivery-legacy-factory`, and the related `legacy-uncontextual-factory`
   sites without adding an adapter exception or unregistered site.
 

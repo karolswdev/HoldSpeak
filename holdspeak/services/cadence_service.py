@@ -3,6 +3,8 @@ from __future__ import annotations
 from holdspeak.services.observer import NullObserver, PipelineObserver, observe_service
 
 import asyncio
+import time
+import uuid
 from datetime import datetime, timedelta
 from typing import Any
 
@@ -11,25 +13,20 @@ from ..principals import Principal
 from .errors import NotFound
 
 _LOCAL_EGRESS = endpoint_egress(cloud=False, label="Local only")
-
-
-def _cadence_llm() -> Any:
-    from ..config import Config
-    if not getattr(Config.load().cadence, "use_llm", False):
-        return None
-    try:
-        from ..intel.providers import build_configured_meeting_intel
-        intel = build_configured_meeting_intel()
-        return lambda system, user: intel.run_prompt(system_prompt=system, user_prompt=user)
-    except Exception:
-        return None
+#: One loop detail is a foreground read; its drafted action never outlives it.
+_DRAFT_DEADLINE_SECONDS = 120.0
+#: The canonical payload contract this service admits its one child under.
+_DRAFT_CONTRACT = "holdspeak.cadence-next-action"
+#: The kernel projection kind the drafted output is staged as.
+_DRAFT_PROJECTION = "cadence-next-action"
 
 
 @observe_service
 class CadenceService:
-    def __init__(self, db: Any, config: Any, *, observer: PipelineObserver | None = None) -> None:
+    def __init__(self, db: Any, config: Any, kernel: Any | None = None, *, observer: PipelineObserver | None = None) -> None:
         self._db = db
         self._config = config
+        self._kernel = kernel
         self._observer = observer or NullObserver()
 
     def _loop_dict(self, loop: Any, *, with_next_action: bool = True) -> dict[str, Any]:
@@ -126,10 +123,139 @@ class CadenceService:
     async def get_loop(self, principal: Principal, loop_id: str) -> dict[str, Any]:
         loop = self._db.cadence.get_loop(loop_id)
         if loop is None: raise NotFound("loop", loop_id)
-        from ..cadence.llm_action import next_action_for
         result = self._loop_dict(loop, with_next_action=False)
-        action = await asyncio.to_thread(next_action_for, loop, llm=_cadence_llm())
+        action = await self._next_action(principal, loop)
         result["next_action"] = {"kind": action.kind, "title": action.title,
                                  "body_markdown": action.body_markdown, "reversible": action.reversible,
                                  "confidence": action.confidence, "generated_by": action.generated_by}
         return result
+
+    async def _next_action(self, principal: Principal, loop: Any) -> Any:
+        """The drafted action when one was really admitted; otherwise the deterministic one.
+
+        CAD-7 has always been fail-closed, and HS-131-13 keeps that shape while
+        moving the model work onto the one admission path: a refused, cancelled,
+        failed, or off-contract draft is not an error the caller sees — it is a
+        `generated_by="deterministic"` action, and the kernel already holds the
+        receipt that says what happened.
+        """
+        from ..cadence.next_action import generate_next_action
+        if getattr(self._config, "use_llm", False):
+            try:
+                drafted = await self._drafted_next_action(principal, loop)
+            except Exception:
+                drafted = None
+            if drafted is not None:
+                return drafted
+        return await asyncio.to_thread(generate_next_action, loop)
+
+    async def _drafted_next_action(self, principal: Principal, loop: Any) -> Any:
+        """ONE admitted Cadence child, or ``None``. Never a manufactured principal.
+
+        Request-time cadence intelligence is not scheduler authority (HS-131-06):
+        the parent starts as the caller the transport authenticated, so an
+        unauthenticated read is refused at admission rather than quietly borrowing
+        the owner's rights. Placement comes from the one placement authority and is
+        frozen into a deployment revision BEFORE the child is admitted, so the run
+        can never drift onto whatever the config says when the provider answers.
+        """
+        from ..deployment_revisions import capture_deployment_revision
+        from ..inference_targets import resolve_placement
+        from ..kernel.runtime import _service
+
+        broker = self._kernel or _service()
+        target = resolve_placement(self._db).target
+        if not target.ready:
+            return None
+        revision = capture_deployment_revision(self._db, target)
+        loop_revision = str(loop.updated_at or loop.created_at or "unversioned")
+        parent = broker.parent_run_controller.start(
+            principal, kind="cadence.next-action-draft", definition_ref=f"cadence-loop:{loop.id}",
+            definition_revision=loop_revision,
+            input_snapshot={"loop_id": loop.id, "source_type": loop.source_type, "loop_revision": loop_revision},
+            deadline_at=time.time() + _DRAFT_DEADLINE_SECONDS, child_budget=1)
+        try:
+            return await self._draft_child(broker, parent, principal, loop, revision, loop_revision)
+        except asyncio.CancelledError:
+            # The REQUEST went away (client disconnect, shutdown, timeout) while the
+            # provider still runs in its worker thread — cancelling this coroutine
+            # stops nothing downstream. Closing the parent `failed` here would be
+            # both dishonest and unsafe: `failed` is not one of the states the
+            # projection stager fences on, so the surviving thread's output would
+            # publish through the next recovery pass. Elect a DURABLE cancellation
+            # instead: the controller signals the live child and leaves the parent
+            # CANCELLED, which is what makes the stage discard rather than publish.
+            self._cancel_parent(broker, parent, principal)
+            raise
+        except BaseException:
+            # Article XI.2: an unexpected failure still ends in a terminal receipt,
+            # here and now rather than whenever the lease reaper next runs. A
+            # closure problem never masks the error that actually happened.
+            try:
+                self._close_parent(broker, parent, principal, "failed")
+            except Exception:
+                pass
+            raise
+
+    async def _draft_child(self, broker: Any, parent: Any, principal: Principal, loop: Any,
+                           revision: Any, loop_revision: str) -> Any:
+        """The ONE admitted invocation child under an already-open Cadence parent."""
+        from ..cadence.llm_action import next_action_from_output, next_action_prompt
+        from ..kernel.inference_runner import InvocationRequest, ServiceContract
+        from ..kernel.prompt_adapter import CanonicalPromptAdapter
+        from ..kernel.runtime import _as_principal
+
+        system_prompt, user_prompt = next_action_prompt(loop)
+        material = {"system_prompt": system_prompt, "user_prompt": user_prompt, "max_tokens": 900,
+                    "temperature": None, "loop_id": loop.id, "loop_revision": loop_revision}
+        invocation_id = "cadence_next_action_" + uuid.uuid4().hex
+        request = InvocationRequest(revision.id, ServiceContract.for_payload(_DRAFT_CONTRACT, "1", material),
+                                    time.time() + _DRAFT_DEADLINE_SECONDS, material, invocation_id,
+                                    parent.operation_id)
+        def projection_payload(value: Any) -> dict[str, Any]:
+            return {"output": str(dict(value).get("output") or ""), "loop_id": loop.id,
+                    "actor": principal.identity}
+        with _as_principal(principal):
+            outcome = await asyncio.to_thread(
+                broker.inference_runner.invoke, request, CanonicalPromptAdapter(),
+                publish=broker.projection_stager.publisher(invocation_id, _DRAFT_PROJECTION, projection_payload),
+                parent_context=parent.context)
+        if outcome.outcome != "succeeded":
+            self._close_parent(broker, parent, principal, outcome.outcome)
+            return None
+        # Staged, never applied directly: a cancelled parent (or a receipt that never
+        # became durable) discards the stage, and this read returns nothing to publish.
+        projection = broker.projection_stager.finalize(invocation_id)
+        if projection is None:
+            self._close_parent(broker, parent, principal, "cancelled")
+            return None
+        # The CHILD's receipt records what the provider did; the PARENT records
+        # whether a usable draft came out of it. An off-contract answer is a failed
+        # draft, not a success the caller never sees.
+        action = next_action_from_output(loop, str(projection.get("output") or ""))
+        drafted = action.generated_by == "llm"
+        self._close_parent(broker, parent, principal, "succeeded" if drafted else "failed")
+        return action if drafted else None
+
+    @staticmethod
+    def _close_parent(broker: Any, parent: Any, principal: Principal, outcome: str) -> None:
+        if broker.store.receipt(parent.operation_id) is None:
+            broker.parent_run_controller.close(parent.context, outcome, principal=principal)
+
+    @staticmethod
+    def _cancel_parent(broker: Any, parent: Any, principal: Principal) -> None:
+        """Durably elect cancellation, and never let it raise over the cancellation.
+
+        ``cancel_by_operation_id`` is the controller's own route-side path: it
+        checks the durable owner, moves the parent to CANCELLING, signals the live
+        invocation child, and closes the parent ``cancelled``. If it cannot (the
+        parent already terminalized, the row is gone), the fallback is still a
+        terminal receipt rather than an OPEN parent left for the lease reaper.
+        """
+        try:
+            broker.parent_run_controller.cancel_by_operation_id(principal, parent.operation_id)
+        except Exception:
+            try:
+                CadenceService._close_parent(broker, parent, principal, "cancelled")
+            except Exception:
+                pass

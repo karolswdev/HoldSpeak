@@ -7,7 +7,7 @@ independently of the Database container.
 # Bump this when adding tables or columns; the Database container uses it to
 # decide whether to back up and re-apply. See core._ensure_schema for the
 # four-way upgrade contract.
-SCHEMA_VERSION = 56  # v56: kernel_parent_runs.kind accepts dictation.session/wake.session (HS-131-09)
+SCHEMA_VERSION = 57  # v57: kernel_parent_runs.kind accepts cadence.next-action-draft (HS-131-13)
 
 # SQL Schema
 SCHEMA_SQL = """
@@ -1716,7 +1716,7 @@ CREATE TABLE IF NOT EXISTS deployment_revisions (
 CREATE TABLE IF NOT EXISTS kernel_parent_runs (
     operation_id TEXT PRIMARY KEY REFERENCES kernel_operations(operation_id),
     native_id TEXT NOT NULL UNIQUE,
-    kind TEXT NOT NULL CHECK (kind IN ('sequence','workflow','workbench','decision.promotion-draft','delivery.pr-review-draft','voice_reference_resolve','meeting.session','meeting.deferred-intel-job','dictation.session','wake.session')),
+    kind TEXT NOT NULL CHECK (kind IN ('sequence','workflow','workbench','decision.promotion-draft','delivery.pr-review-draft','voice_reference_resolve','meeting.session','meeting.deferred-intel-job','dictation.session','wake.session','cadence.next-action-draft')),
     definition_ref TEXT NOT NULL,
     definition_revision TEXT NOT NULL,
     input_json TEXT NOT NULL,

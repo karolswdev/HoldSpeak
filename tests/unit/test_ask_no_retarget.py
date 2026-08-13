@@ -88,9 +88,10 @@ def test_list_models_does_not_dedupe_across_destinations(rig) -> None:
 
 
 def test_hub_row_carries_its_id(tmp_path, monkeypatch) -> None:
+    # Listing destinations builds no engine at all — HS-131-13 removed the
+    # vestigial `build_intel_for_target` patch this test used to carry (the
+    # factory is gone, and listing never reached it in the first place).
     db = Database(tmp_path / "ask_hub.db")
-    monkeypatch.setattr("holdspeak.inference_targets.build_intel_for_target",
-                        lambda target, db: _FakeIntel())
     service = AskService(db, hub_model=lambda: "hub-model")
     rows = service.list_models(OWNER)
     hub = [r for r in rows if r["source"] == "hub"]

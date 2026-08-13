@@ -189,6 +189,9 @@ def test_real_migrated_ask_cancellation_after_stage_is_completed_and_not_duplica
     db, broker, _ = rig
     stager = broker.projection_stager
     monkeypatch.setattr("holdspeak.inference_targets._this_machine_readiness", lambda: ("ready", ""))
+    # HS-131-13: an admitted `this_machine` child builds `MeetingIntel` from its
+    # FROZEN revision, so the same double is installed on the engine class too.
+    monkeypatch.setattr("holdspeak.intel.engine.MeetingIntel", lambda **_kw: AskEngine())
     monkeypatch.setattr("holdspeak.intel.providers.build_configured_meeting_intel", lambda: AskEngine())
     stage_committed = threading.Event()
     release_publish = threading.Event()
@@ -283,6 +286,9 @@ _DECLARED_ASK_V1_SHAPE_SHA256 = "sha256:1548b559f79b7bdccf43485c168abf04840bec37
 def test_ask_v1_contract_shape_hash_guards_service_payload_drift(rig, monkeypatch):
     db, broker, _ = rig
     monkeypatch.setattr("holdspeak.inference_targets._this_machine_readiness", lambda: ("ready", ""))
+    # HS-131-13: an admitted `this_machine` child builds `MeetingIntel` from its
+    # FROZEN revision, so the same double is installed on the engine class too.
+    monkeypatch.setattr("holdspeak.intel.engine.MeetingIntel", lambda **_kw: AskEngine())
     monkeypatch.setattr("holdspeak.intel.providers.build_configured_meeting_intel", lambda: AskEngine())
     captured: list[tuple[str, str, dict[str, Any]]] = []
     original = ServiceContract.for_payload.__func__
@@ -504,6 +510,9 @@ def test_cancel_routes_delegate_to_migrated_services(rig, monkeypatch):
 def test_ask_v1_golden_field_names_and_schema_version_are_exact(rig, monkeypatch):
     db, broker, _ = rig
     monkeypatch.setattr("holdspeak.inference_targets._this_machine_readiness", lambda: ("ready", ""))
+    # HS-131-13: an admitted `this_machine` child builds `MeetingIntel` from its
+    # FROZEN revision, so the same double is installed on the engine class too.
+    monkeypatch.setattr("holdspeak.intel.engine.MeetingIntel", lambda **_kw: AskEngine())
     monkeypatch.setattr("holdspeak.intel.providers.build_configured_meeting_intel", lambda: AskEngine())
     captured: list[dict[str, Any]] = []
     original = ServiceContract.for_payload.__func__

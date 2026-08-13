@@ -39,6 +39,11 @@ class _FakeIntel:
 
 
 def _mock_intel(monkeypatch, output: str) -> None:
+    # HS-131-13: an admitted `this_machine` child builds `MeetingIntel` from its
+    # FROZEN revision, so the same double is installed on the engine class too.
+    monkeypatch.setattr(
+        "holdspeak.intel.engine.MeetingIntel", lambda **_kw: _FakeIntel(output)
+    )
     monkeypatch.setattr(
         "holdspeak.intel.providers.build_configured_meeting_intel",
         lambda: _FakeIntel(output),

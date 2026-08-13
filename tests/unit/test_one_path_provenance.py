@@ -274,13 +274,16 @@ def test_the_provenance_matrix_covers_every_named_surface() -> None:
     named entry forms. This is the guard against the matrix quietly shrinking
     back to a convenient subset.
     """
-    assert len(SURFACE_DRIVERS) == 15
+    assert len(SURFACE_DRIVERS) == 16
     assert ROOT_SHAPED_SURFACES | CHILD_SHAPED_SURFACES == set(SURFACE_DRIVERS)
     assert set(SURFACE_DRIVERS) == {
         "Ask", "Recipe run", "Recipe chat", "Sequence", "Workflow",
         "manual Workbench", "scheduled Workbench", "memory writeback", "Rails",
         "Decision promotion", "Delivery review", "voice", "meeting live",
         "meeting deferred", "dictation pipeline",
+        # HS-131-13's migration; the story's other two families were deleted as
+        # duplicates of "Decision promotion" and "Delivery review" above.
+        "cadence next action",
     }
 
 

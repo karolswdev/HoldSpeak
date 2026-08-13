@@ -11,8 +11,8 @@ from .errors import ConflictError, NotFound, ServiceError, ValidationError
 
 @observe_service
 class DecisionLifecycleService:
-    def __init__(self, db: Database, kernel: Any | None = None, model_generator: Any | None = None, *, observer: PipelineObserver | None = None) -> None:
-        self._db, self._kernel, self._model_generator = db, kernel, model_generator
+    def __init__(self, db: Database, kernel: Any | None = None, *, observer: PipelineObserver | None = None) -> None:
+        self._db, self._kernel = db, kernel
         self._observer = observer or NullObserver()
     def list_decisions(self, principal: Principal, *, project_id: str | None = None, project_key: str | None = None, meeting_id: str | None = None, lifecycle: str | None = None, limit: int = 200, offset: int = 0) -> dict[str, Any]:
         if project_id and project_key and project_id != project_key: raise ValidationError("project_id and project_key must name the same project")

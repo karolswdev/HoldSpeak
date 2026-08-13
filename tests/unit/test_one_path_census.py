@@ -504,15 +504,17 @@ ADMITTED_SEAM_CALLERS: dict[tuple[str, str], str] = {
 # Sol Amendment 4's package, plus the TWO families this census newly found
 # (`legacy-live-meeting-engine`, `bookmark-auto-label`). key = "path:line target".
 NAMED_FINDINGS: dict[str, str] = {
-    "holdspeak/services/cadence_service.py:22 build_configured_meeting_intel": "cadence",
-    "holdspeak/services/cadence_service.py:23 run_prompt": "cadence",
+    # HS-131-13 retired four rows of this ledger by DELETION and MIGRATION, never
+    # by promotion: `cadence` (now an admitted `cadence.next-action-draft` parent
+    # with one `inference.invoke` child), `decisions-route` (the duplicate route
+    # seam is gone; the admitted Decision promotion service is the only path),
+    # `delivery-legacy-factory` (the dormant helper is deleted), and the five
+    # `legacy-uncontextual-factory` sites that sat inside `build_intel_for_target`
+    # (the factory itself is deleted). Nothing moved to an allowlist.
     "holdspeak/web/routes/dictation/_helpers.py:541 build_pipeline": "dictation-dry-run",
     "holdspeak/commands/dictation.py:79 build_pipeline": "dictation-command",
     "holdspeak/commands/mesh_serve.py:132 build_meeting_intel_for_profile": "mesh-receiver",
     "holdspeak/commands/mesh_serve.py:164 run_prompt": "mesh-receiver",
-    "holdspeak/web/routes/decisions.py:23 build_intel_for_target": "decisions-route",
-    "holdspeak/web/routes/decisions.py:25 run_prompt": "decisions-route",
-    "holdspeak/services/delivery_service.py:142 build_intel_for_target": "delivery-legacy-factory",
     # `build_configured_meeting_intel()` takes NO context and validates nothing —
     # its signature is literally `()`. It was bucketed onto the adapter allowlist,
     # which laundered the fence: the two constructors in its body read as
@@ -520,22 +522,14 @@ NAMED_FINDINGS: dict[str, str] = {
     # child from a plugin. It joins Sol Amendment 4's `legacy-uncontextual-factory`
     # family (not `plugin-default-provider`) because the family names the DEFECT
     # and therefore the owner decision: an uncontextual factory body that
-    # physically constructs an engine, delete-or-migrate, exactly like
+    # physically constructs an engine, delete-or-migrate, exactly like the deleted
     # `build_intel_for_target`. `plugin-default-provider` names its CALLERS —
     # fifteen sites with no admitted child — a different owner story with a
     # different fix. The admitted path reaches this body only through
-    # `configured_meeting_intel`, which refuses first.
+    # `configured_meeting_intel`, which refuses first. HS-131-14 owns what remains
+    # of this family: these two construction lines and nothing else.
     "holdspeak/intel/providers.py:241 MeshRelayIntel": "legacy-uncontextual-factory",
     "holdspeak/intel/providers.py:253 MeetingIntel": "legacy-uncontextual-factory",
-    "holdspeak/inference_targets.py:755 MeetingIntel": "legacy-uncontextual-factory",
-    "holdspeak/inference_targets.py:761 local_pinned_meeting_intel": "legacy-uncontextual-factory",
-    # Re-reviewed (not line-bumped): both sites still sit in `build_intel_for_target`
-    # and still reach the host-adapter seam with NO admitted child — they now go
-    # through the gated `configured_meeting_intel` wrapper carrying the ONE named
-    # legacy marker, which is a refusal-by-name, not an admission. Same family.
-    "holdspeak/inference_targets.py:765 configured_meeting_intel": "legacy-uncontextual-factory",
-    "holdspeak/inference_targets.py:769 build_intel_for_revision": "legacy-uncontextual-factory",
-    "holdspeak/inference_targets.py:775 configured_meeting_intel": "legacy-uncontextual-factory",
     "holdspeak/meeting_session/session.py:548 MeetingIntel": "legacy-live-meeting-engine",
     "holdspeak/meeting_session/bookmarks.py:45 generate_bookmark_label": "bookmark-auto-label",
     "holdspeak/plugins/builtin/action_owner_enforcer.py:158 build_configured_meeting_intel": "plugin-default-provider",
@@ -583,11 +577,11 @@ BLOCKING_FAMILIES: frozenset[str] = frozenset(NAMED_FINDINGS.values()) | frozens
     FINDINGS_WITHOUT_A_SITE.values()
 )
 
-#: The named legacy marker may appear ONLY in its own module and in the two named
-#: legacy finding scopes. This is what keeps `LEGACY_UNCONTEXTUAL` from becoming a
-#: general escape hatch: the family can only ever shrink.
+#: The named legacy marker may appear ONLY in its own module and in the ONE named
+#: legacy finding scope left. This is what keeps `LEGACY_UNCONTEXTUAL` from becoming
+#: a general escape hatch: the family can only ever shrink, and HS-131-13 shrank it
+#: by deleting `build_intel_for_target` rather than by exempting it.
 LEGACY_MARKER_SCOPES: frozenset[tuple[str, str]] = frozenset({
-    ("holdspeak/inference_targets.py", "build_intel_for_target"),
     ("holdspeak/commands/mesh_serve.py", "MeshServeWorker._engine_for_run"),
 })
 
@@ -910,30 +904,44 @@ def test_no_public_factory_scope_can_escape_context_validation() -> None:
 
 
 def test_the_findings_ledger_is_the_complete_blocking_package() -> None:
-    """The eight Sol families plus the two this census found. All blocking."""
+    """What is LEFT of the eleven-family package. All still blocking.
+
+    HS-131-13 closed three families outright — `cadence` (migrated onto the
+    admitted spine), `decisions-route` and `delivery-legacy-factory` (both
+    deleted) — and emptied `legacy-uncontextual-factory` of every site that lived
+    in `build_intel_for_target`. The remaining eight are the four chartered
+    amendment stories still to land. A family may only leave this set by being
+    deleted or admitted; promoting one into `ADAPTER_ALLOWLIST` is not available.
+    """
     assert BLOCKING_FAMILIES == {
-        "cadence",
         "dormant-mir",
         "dictation-dry-run",
         "dictation-command",
         "mesh-receiver",
         "plugin-default-provider",
-        "decisions-route",
-        "delivery-legacy-factory",
-        # Sol Amendment 4's explicit classification of `build_intel_for_target`:
+        # What survives of Sol Amendment 4's family: the uncontextual
+        # `build_configured_meeting_intel()` body itself (HS-131-14).
         "legacy-uncontextual-factory",
         # NEW in HS-131-10's own census (not in the Sol ruling's package):
         "legacy-live-meeting-engine",
         "bookmark-auto-label",
     }
+    # Seven families still have pinned executable sites; `dormant-mir` is the one
+    # inventoried branch with none. Asserting the split keeps a family from
+    # vanishing into the site-less bucket instead of being fixed.
+    assert set(NAMED_FINDINGS.values()) == BLOCKING_FAMILIES - {"dormant-mir"}
+    assert len(set(NAMED_FINDINGS.values())) == 7
 
 def test_the_owner_inventory_covers_every_finding() -> None:
     """The ledger above is worthless to the owner if the decision package omits a row.
 
-    The inventory is the owner's decision artifact for the eleven blocking
-    families; it is authored into the story's evidence assets. This asserts the
-    two never drift: every family name AND every ``path:line`` in the code-side
-    ledger has to appear in it.
+    The inventory is the owner's decision artifact for the blocking families it
+    found; it is authored into the story's evidence assets. This asserts the two
+    never drift in the direction that matters: every family name AND every
+    ``path:line`` still in the code-side ledger has to appear in it. The inventory
+    is deliberately allowed to be a SUPERSET — it is the historical record of the
+    eleven families HS-131-10 found, and a row that the amendment wave has since
+    closed stays written down rather than being edited out of the owner's package.
     """
     inventory_path = (
         REPO / "pm/roadmap/holdspeak/phase-131-one-admission-path/assets/hs-131-10"
@@ -943,8 +951,8 @@ def test_the_owner_inventory_covers_every_finding() -> None:
         pytest.fail(
             "the owner's findings inventory is missing: "
             f"{inventory_path.relative_to(REPO)}\n"
-            "HS-131-10 is BLOCKED on ELEVEN families; the decision package that "
-            "names them must ship with this fence, not after it."
+            "HS-131-10 is BLOCKED while any family stands; the decision package "
+            "that names them must ship with this fence, not after it."
         )
     inventory = inventory_path.read_text(encoding="utf-8")
     missing_families = sorted(f for f in BLOCKING_FAMILIES if f not in inventory)
@@ -1112,6 +1120,9 @@ class Store:
         return self._h(name), self._mk(row), self._computed(row)
 '''
 
+#: ``build_intel_for_target`` no longer EXISTS (HS-131-13 deleted it), and that is
+#: exactly why it stays in the census vocabulary and in this mutation: the fence
+#: must fail on the name coming BACK, not merely on it being absent today.
 SYNTHETIC_ALIASED_IMPORT = '''
 """A synthetic product module: the RENAMED-ON-IMPORT door."""
 from openai import OpenAI as _Client
@@ -1120,6 +1131,25 @@ from holdspeak.inference_targets import build_intel_for_target as _factory
 
 def summarize(text):
     return _Client(api_key="k"), _factory(None)
+'''
+
+SYNTHETIC_REINTRODUCED_ROUTE_SEAM = '''
+"""HS-131-13's own mutation: the exact route seam this story deleted.
+
+The Decisions route used to build an engine from a MUTABLE resolved target and
+hand `intel.run_prompt` to a thread pool, beside a service that already admits
+its own child. Both halves must fail the census by name if anyone types them
+again — the deleted code is not a fence.
+"""
+import asyncio
+
+from holdspeak.inference_targets import build_intel_for_target
+
+
+async def _generate_with_model(db, target, prompt):
+    intel = build_intel_for_target(target, db)
+    output = await asyncio.to_thread(intel.run_prompt, system_prompt="s", user_prompt=prompt)
+    return str(output or "").strip(), intel
 '''
 
 #: Each mutation's EXACT expected census output (Sol Amendment 5: a mutation
@@ -1219,6 +1249,19 @@ MUTATIONS: tuple[tuple[str, str, list[str]], ...] = (
             " summarize OpenAI",
             "UNREGISTERED_MODEL_EXECUTION holdspeak/services/synthetic_alias.py:8"
             " summarize build_intel_for_target",
+        ],
+    ),
+    (
+        # HS-131-13: the deleted Decisions route seam, retyped. Both halves —
+        # the mutable-target factory AND the bound `run_prompt` handed to a
+        # thread pool — must reappear as unregistered, by name.
+        "holdspeak/web/routes/synthetic_decisions_seam.py",
+        SYNTHETIC_REINTRODUCED_ROUTE_SEAM,
+        [
+            "UNREGISTERED_MODEL_EXECUTION holdspeak/web/routes/synthetic_decisions_seam.py:15"
+            " _generate_with_model build_intel_for_target",
+            "UNREGISTERED_MODEL_EXECUTION holdspeak/web/routes/synthetic_decisions_seam.py:16"
+            " _generate_with_model run_prompt",
         ],
     ),
 )

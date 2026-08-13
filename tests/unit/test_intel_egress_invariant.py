@@ -166,14 +166,23 @@ def test_egress_posture_unknown_provider_defaults_local_safe():
 
 
 def test_hs_131_census_callers_cannot_execute_intel_outside_admitted_runner():
-    """The four migrated seams may select a placement, never build or resolve
-    a mutable Intel target for provider execution themselves."""
+    """The migrated seams may select a placement, never build or resolve
+    a mutable Intel target for provider execution themselves.
+
+    HS-131-13 added the last three: the Cadence service (migrated onto an admitted
+    domain parent), the Decisions route (its duplicate model seam deleted), and the
+    Delivery service (its dormant `prepare_pr_review` deleted). The forbidden names
+    include `build_intel_for_target`, which no longer exists — so this also pins
+    that none of these modules brings it back."""
     root = Path(__file__).resolve().parents[2]
     callers = (
         "holdspeak/rails_observer.py",
         "holdspeak/services/decision_lifecycle_service.py",
         "holdspeak/web/routes/delivery_prs.py",
         "holdspeak/services/workbench_service.py",
+        "holdspeak/services/cadence_service.py",
+        "holdspeak/services/delivery_service.py",
+        "holdspeak/web/routes/decisions.py",
     )
     for relative in callers:
         source = (root / relative).read_text()

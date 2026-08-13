@@ -206,6 +206,9 @@ def _session_rig(tmp_path: Path, monkeypatch, *, engine: Any = None):
     broker = _configure(db)
     engine = engine if engine is not None else FakeIntel()
 
+    # HS-131-13: the pinned `this_machine` branch builds `MeetingIntel` from the
+    # FROZEN revision, so the double goes on the engine class the real path ends at.
+    monkeypatch.setattr("holdspeak.intel.engine.MeetingIntel", lambda **kwargs: engine)
     monkeypatch.setattr("holdspeak.intel.providers.build_configured_meeting_intel", lambda: engine)
     monkeypatch.setattr("holdspeak.meeting_session.session.MeetingRecorder", _FakeRecorder)
     monkeypatch.setattr("holdspeak.meeting_capture_journal.MeetingCaptureJournal", _FakeJournal)
@@ -245,6 +248,9 @@ def _queue_rig(tmp_path: Path, monkeypatch, *, plugins: tuple[str, ...] = (), ch
     engine = FakeIntel()
     host = FakeHost(plugins)
 
+    # HS-131-13: same reason as `_session_rig` — the frozen-revision local branch
+    # constructs the engine class directly and reads no configured default.
+    monkeypatch.setattr("holdspeak.intel.engine.MeetingIntel", lambda **kwargs: engine)
     monkeypatch.setattr("holdspeak.intel.providers.build_configured_meeting_intel", lambda: engine)
     monkeypatch.setattr("holdspeak.config.Config.load", classmethod(lambda cls: _Cfg))
     monkeypatch.setattr(

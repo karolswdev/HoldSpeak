@@ -115,8 +115,14 @@ def _rig(tmp_path: Path, monkeypatch, *, principal: Any = OWNER, intel_enabled: 
     broker = _configure(db)
     engine = FakeIntel()
 
-    # `build_intel_for_revision` resolves `this_machine` through this builder, so
-    # the production revision -> engine path is exercised, not bypassed.
+    # `build_intel_for_revision` resolves `this_machine` through the pinned local
+    # branch, so the production revision -> engine path is exercised, not bypassed.
+    # HS-131-13 made that branch construct `MeetingIntel` straight from the FROZEN
+    # revision's `model_path` (it used to re-read mutable meeting config through
+    # `build_configured_meeting_intel`), so the provider double is injected at the
+    # engine class — the last constructor on the real path — rather than at the
+    # configured-default seam that path no longer touches.
+    monkeypatch.setattr("holdspeak.intel.engine.MeetingIntel", lambda **kwargs: engine)
     monkeypatch.setattr("holdspeak.intel.providers.build_configured_meeting_intel", lambda: engine)
     monkeypatch.setattr("holdspeak.meeting_session.session.MeetingRecorder", FakeRecorder)
     monkeypatch.setattr("holdspeak.meeting_capture_journal.MeetingCaptureJournal", FakeJournal)
@@ -152,6 +158,22 @@ def _rig(tmp_path: Path, monkeypatch, *, principal: Any = OWNER, intel_enabled: 
         principal=principal,
     )
     return db, broker, session, engine, requests
+
+
+def _split_legs(monkeypatch, *, local: Any, cloud: Any) -> None:
+    """Tell an ``auto`` plan's two frozen entries apart at their ONE constructor.
+
+    HS-131-13 made the pinned ``this_machine`` branch build ``MeetingIntel``
+    straight from the frozen revision instead of re-reading the configured default,
+    so BOTH legs of an ``auto`` plan now reach this class. Production separates
+    them by the provider it pins (``local`` on the same-device branch, ``cloud`` on
+    the hub-default leg) and so does this double — patching the class flat would
+    hand the local entry the cloud engine and quietly collapse the two-child proof.
+    """
+    monkeypatch.setattr(
+        "holdspeak.intel.engine.MeetingIntel",
+        lambda **kwargs: local if str(kwargs.get("provider")) == "local" else cloud,
+    )
 
 
 def _parent_rows(db: Database) -> list[dict[str, Any]]:
@@ -458,30 +480,46 @@ def test_auto_placement_with_an_unreachable_cloud_leg_keeps_one_entry_and_pins_l
     assert "Missing API key" in placement["auto_cloud_fallback_reason"]
     assert placement["internal_provider_fallback"] is False
 
-    # ...and the engine built from that ONE entry has its intra-engine `auto`
-    # fallback disabled: the provider is pinned local, so it cannot silently
-    # reach the cloud endpoint under a receipt naming this_machine.
-    class _AutoEngine:
-        def __init__(self) -> None:
-            self.provider = "auto"
-            self._active_provider = "cloud"
-
-    engine = _AutoEngine()
-    monkeypatch.setattr(
-        "holdspeak.intel.providers.build_configured_meeting_intel", lambda: engine
-    )
-    # HS-131-10: the factory is context-requiring, so mint the runner's context
-    # for exactly this revision (a missing one refuses `adapter_context_required`).
+    # ...and the engine built from that ONE entry cannot silently reach the cloud
+    # endpoint under a receipt naming this_machine.
+    #
+    # HS-131-13 strengthened HOW that holds. It used to be a CORRECTION: the branch
+    # built the configured default (which could arrive with `provider="auto"` and an
+    # already-resolved cloud runtime) and then overwrote `provider`/`_active_provider`
+    # afterwards. Now it is a CONSTRUCTION: the branch builds `MeetingIntel` from the
+    # frozen revision with `provider="local"` and the revision's own `model_path`, so
+    # a cloud-capable adapter for a same-device child never exists at any instant —
+    # and the mutable config the old path re-read is not consulted at all.
     from tests.unit.admitted_context import admitted_context
 
+    built_with: list[dict[str, Any]] = []
+
+    class _Built:
+        def __init__(self, **kwargs: Any) -> None:
+            built_with.append(kwargs)
+            self.provider = kwargs.get("provider")
+            self.model_path = kwargs.get("model_path")
+            self._active_provider = None
+
+    monkeypatch.setattr("holdspeak.intel.engine.MeetingIntel", _Built)
+    # If the frozen path were ignored, the live config would win — so make them
+    # DIFFER, then prove the frozen one is what got built.
+    monkeypatch.setattr(
+        "holdspeak.intel.providers.configured_local_meeting_model_path",
+        lambda: "/mutated-after-freeze.gguf",
+    )
+
+    # HS-131-10: the factory is context-requiring, so mint the runner's context
+    # for exactly this revision (a missing one refuses `adapter_context_required`).
     frozen = resolve_deployment_revision(db, entries[0])
     built = build_intel_for_revision(
         frozen,
         context=admitted_context(revision=frozen),
     )
-    assert built is engine
     assert built.provider == "local"
     assert built._active_provider is None
+    assert built.model_path == frozen.model_path != "/mutated-after-freeze.gguf"
+    assert built_with == [{"provider": "local", "model_path": frozen.model_path}]
 
 
 def test_a_failed_local_entry_admits_a_second_child_naming_the_cloud_revision(tmp_path, monkeypatch):
@@ -504,7 +542,7 @@ def test_a_failed_local_entry_admits_a_second_child_naming_the_cloud_revision(tm
     # Entry 1 (this_machine) fails at the provider; entry 2 is a distinct cloud
     # engine built from the cloud revision.
     cloud = FakeIntel()
-    monkeypatch.setattr("holdspeak.intel.engine.MeetingIntel", lambda **kwargs: cloud)
+    _split_legs(monkeypatch, local=engine, cloud=cloud)
 
     def explode(transcript: str, *, stream: bool = False):
         raise RuntimeError("local engine is out of memory")
@@ -583,7 +621,7 @@ def test_a_returned_error_result_fails_its_child_and_admits_the_cloud_entry(tmp_
     parent_id = session.intel_session_operation_id()
 
     cloud = FakeIntel()
-    monkeypatch.setattr("holdspeak.intel.engine.MeetingIntel", lambda **kwargs: cloud)
+    _split_legs(monkeypatch, local=engine, cloud=cloud)
     monkeypatch.setattr(engine, "analyze", _error_window(f"local engine said {SENTINEL}"))
 
     _add_segment(session, "A window whose local engine returns an error", 0.0)
@@ -642,7 +680,7 @@ def test_error_results_on_every_frozen_entry_fail_both_children_and_defer(tmp_pa
     parent_id = session.intel_session_operation_id()
 
     cloud = FakeIntel()
-    monkeypatch.setattr("holdspeak.intel.engine.MeetingIntel", lambda **kwargs: cloud)
+    _split_legs(monkeypatch, local=engine, cloud=cloud)
     monkeypatch.setattr(engine, "analyze", _error_window("local engine is out of memory"))
     monkeypatch.setattr(cloud, "analyze", _error_window("cloud endpoint returned 503"))
 
