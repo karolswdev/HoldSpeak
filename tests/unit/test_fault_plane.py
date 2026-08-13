@@ -300,9 +300,9 @@ def test_named_plugin_fault_fails_exactly_that_key_then_exact_retry(
 
         def execute_chain(
             self, plugin_chain, *, context, meeting_id, window_id,
-            transcript_hash, defer_heavy,
+            transcript_hash, defer_heavy, dispatch=None,
         ):
-            _ = context, defer_heavy
+            _ = context, defer_heavy, dispatch
             self.calls.append(list(plugin_chain))
             return [
                 PluginRunResult(

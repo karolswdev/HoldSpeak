@@ -8,19 +8,22 @@
 > from evidence, Terra waves with serialized shipping, walks, honest ledgers —
 > is canon at [`docs/internal/ORCHESTRATION.md`](../../../docs/internal/ORCHESTRATION.md).
 
-**Newest update (2026-08-12): Phase 131 — One Admission Path — IN PROGRESS
-(10/17).** HS-131-13 closes the first fence amendment: Cadence request-time
-intelligence now uses an authenticated domain parent, one exact-revision runner
-child, staged publication, and durable cancellation; the duplicate Decisions
-route seam, dormant Delivery review, and `build_intel_for_target` are deleted.
-Hostile verification caught and repaired mutable model retargeting plus an outer
-request-cancellation publication race, then returned RATIFY FOR STORY CLOSE. The
-mechanical fence is now 134 sites, 38 pinned findings in eight families, and zero
-unregistered execution (145→134 / 48→38 / 11→8). The quiet isolated full gate
-has zero new failure names against the HS-131-10 checkpoint and one repaired.
-HS-131-14 plugin-provider admission is next; docs and the final real-model walk
-remain held until the finding count reaches zero. Swift remains explicitly out
-of scope.
+**Newest update (2026-08-13): Phase 131 — One Admission Path — IN PROGRESS
+(11/17).** HS-131-14 closes the second fence amendment: fourteen builtin plugins
+and `segment_probe` consume one opaque, single-use `PluginDispatch` bound to the
+runner's exact context, revision, destination, warrant, ordinal, and cancellation
+signal; they no longer construct or cache providers. Claim/release is one atomic
+timeout election, provider failure stays failed, compatibility retry gets a new
+child/handle/receipt, and only the winner materializes. Meeting startup remains
+lexical pending HS-131-17, and the public uncontextual configured-provider factory
+is deleted. Hostile verification found and repaired ambient cross-child state,
+multi-call cardinality, and release/claim races before returning RATIFY FOR STORY
+CLOSE. The fence is now 105 sites, six pinned findings in six families, and zero
+unregistered execution (134→105 / 38→6 / 8→6); no plugin entered the adapter
+allowlist. Captured focused proof: 811 passed. The inherited-red quiet gate has no
+current-diff product regression. HS-131-15 speech-side-door design and delivery is
+next; docs and the final real-model walk remain held until zero findings. Swift
+remains explicitly out of scope.
 
 **Previous update (2026-08-08): Phase 129 — One Grammar — COMPLETE (11/11).**
 The exit walk passes all 38 surfaces with pinned-foot, stationary-head,

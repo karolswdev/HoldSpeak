@@ -588,7 +588,7 @@ def test_retry_fallback_dictation_response_format_is_two_children_two_receipts_t
     )
     broker = _configure(db)
     monkeypatch.setattr(
-        "holdspeak.intel.providers.build_configured_meeting_intel", lambda: object()
+        "holdspeak.intel.providers._configured_engine", lambda: object()
     )
     counts = _instrument(broker.inference_runner)
 

@@ -272,7 +272,7 @@ def run_meeting_plugin_chain(
         "profile": route_payload.get("profile"),
         "threshold": route_payload.get("threshold"),
     }
-    def _run_chain(chain: list[str]) -> list[Any]:
+    def _run_chain(chain: list[str], dispatch: Any = None) -> list[Any]:
         return host.execute_chain(
             chain,
             context=context,
@@ -280,24 +280,28 @@ def run_meeting_plugin_chain(
             window_id=window_id,
             transcript_hash=transcript_hash,
             defer_heavy=False,
+            dispatch=dispatch,
         )
 
-    def _execute(chain: list[str], engine: Any = None) -> list[Any]:
-        # HS-131-08: under an admitted plugin child, `engine` is the engine built
-        # from the deployment revision that child NAMES, so the plugin's provider
-        # work runs on exactly it. Unadmitted callers pass nothing and the host
-        # keeps resolving each plugin's configured provider, unchanged.
+    def _execute(chain: list[str], engine: Any = None, cancellation: Any = None) -> list[Any]:
+        # HS-131-08 / HS-131-14: under an admitted plugin child, `engine` is the
+        # engine built from the deployment revision that child NAMES, and
+        # `cancellation` is that child's signal. The host issues ONE dispatch
+        # handle over the pair and hands it to exactly this run — no host state,
+        # no plugin state, nothing a later child could borrow. An UNADMITTED
+        # caller passes neither, and every `llm` plugin refuses by name rather
+        # than resolving a provider of its own.
         if engine is None:
             return _run_chain(chain)
-        binder = getattr(host, "bound_llm_engine", None)
-        if binder is None:
+        issuer = getattr(host, "issued_dispatch", None)
+        if issuer is None:
             # An admitted child names ONE deployment revision. A host that cannot
             # be handed that engine would silently build its own, so it refuses.
             from .plugins.host import PluginEngineNotInjectable
 
             raise PluginEngineNotInjectable(type(host).__name__)
-        with binder(engine):
-            return _run_chain(chain)
+        with issuer(engine, cancellation) as dispatch:
+            return _run_chain(chain, dispatch)
 
     if admission is None:
         results = _execute(remaining_chain)
@@ -406,11 +410,12 @@ def _run_admitted_chain(
                 window_id=window_id,
                 idempotency_key=key,
                 transcript_hash=transcript_hash,
-                # The engine the child's frozen revision built is threaded in, and
-                # the whole plugin execution happens INSIDE the child's dispatch —
-                # inside its cancellation seam, never beside it.
-                execute=lambda engine, plugin_id=plugin_id: (
-                    (execute([plugin_id], engine) or [None])[0].to_dict()
+                # The engine the child's frozen revision built is threaded in with
+                # that child's cancellation signal, and the whole plugin execution
+                # happens INSIDE the child's dispatch — inside its cancellation
+                # seam, never beside it.
+                execute=lambda engine, cancellation, plugin_id=plugin_id: (
+                    (execute([plugin_id], engine, cancellation) or [None])[0].to_dict()
                 ),
             )
         except Exception as exc:

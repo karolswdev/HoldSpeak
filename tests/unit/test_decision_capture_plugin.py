@@ -2,6 +2,10 @@
 
 from __future__ import annotations
 
+import pytest
+
+from holdspeak.plugins.intelligence import PluginProviderFailure
+from tests.unit.plugin_dispatch_rig import intel_plugin
 from holdspeak.plugins.builtin import register_builtin_plugins
 from holdspeak.plugins.builtin.decision_capture import (
     DecisionCapturePlugin,
@@ -20,7 +24,7 @@ _GOOD_JSON = """```json
 
 
 def _plugin(response):
-    return DecisionCapturePlugin(intel_call=lambda _m: response)
+    return intel_plugin(DecisionCapturePlugin(), lambda _m, **_kw: response)
 
 
 def test_attributes() -> None:
@@ -100,13 +104,20 @@ def test_run_no_transcript_is_failure() -> None:
     assert out["confidence_hint"] == 0.0
 
 
-def test_run_provider_exception_is_caught() -> None:
-    def _boom(_m):
+def test_run_provider_failure_reaches_the_admitted_child() -> None:
+    """HS-131-14: a physical failure is the CHILD's outcome, not a summary.
+
+    The plugin used to catch it and return a failure-shaped record, so the
+    admitted child earned a `succeeded` receipt for an attempt that failed.
+    It is now un-absorbable by `except Exception` and reaches the adapter.
+    """
+    def _boom(_messages, **_kwargs):
         raise RuntimeError("down")
 
-    out = DecisionCapturePlugin(intel_call=_boom).run({"transcript": "t"})
-    assert out["confidence_hint"] == 0.0
-    assert "intel call failed" in out["summary"]
+    bound = intel_plugin(DecisionCapturePlugin(), _boom)
+    with pytest.raises(PluginProviderFailure) as failure:
+        bound.run({"transcript": "t"})
+    assert failure.value.reason == "RuntimeError"
 
 
 def test_extract_returns_none_without_recognizable_keys() -> None:

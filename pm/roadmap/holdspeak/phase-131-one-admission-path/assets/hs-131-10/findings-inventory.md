@@ -3,32 +3,36 @@
 **Generated from:** `tests/unit/test_one_path_census.py` over production
 `holdspeak/**/*.py` (tests excluded).
 
-**Census date:** 2026-08-12.
+**Census date:** 2026-08-13.
 **Disposition:** **BLOCKED; FIVE-STORY AMENDMENT WAVE IN PROGRESS.** These are
 findings, not adapter exceptions. The owner chartered HS-131-13 through HS-131-17
-to delete or admit every family. HS-131-13 is complete in the current tree;
-HS-131-10 cannot close until the remaining four amendments land and the census
-returns zero findings.
+to delete or admit every family. HS-131-13 and HS-131-14 are complete in the
+current tree; HS-131-10 cannot close until the remaining three amendments land
+and the census returns zero findings.
 
-## Current census result — after HS-131-13
+## Current census result — after HS-131-14
 
 | Bucket | Function scopes | Executable sites |
 |---|---:|---:|
 | `AUTHORIZED_GATEWAY` | 2 | 1 context mint |
 | `CLAIM_WITNESS_MINT` | 2 | 2 witness-issuer sites |
 | `GATEWAY_FACTORY_BINDING` | 1 | 1 default-factory binding |
-| `ADAPTER_ALLOWLIST` | 55 | 68 |
-| `ADMITTED_SEAM_CALLERS` | 15 | 24 |
-| `NAMED_FINDINGS` | — | 38 |
+| `ADAPTER_ALLOWLIST` | 56 | 70 |
+| `ADMITTED_SEAM_CALLERS` | 16 | 25 |
+| `NAMED_FINDINGS` | — | 6 |
 | Unregistered | — | **0** |
-| **Total** | — | **134** |
+| **Total** | — | **105** |
 
-HS-131-13 reduced the checkpoint baseline from **145 to 134 executable sites**,
-**48 to 38 findings**, and **11 to 8 families**. It removed the two Cadence
-findings by admission, deleted the two Decisions-route findings and one dormant
-Delivery finding, deleted all five `build_intel_for_target` findings, and removed
-that retired factory's final non-finding adapter site. Nothing moved to an
-allowlist, and zero unregistered sites remain.
+HS-131-14 reduced the HS-131-13 state from **134 to 105 executable sites**,
+**38 to 6 findings**, and **8 to 6 families**. It removed all thirty
+`plugin-default-provider` sites, removed both `legacy-uncontextual-factory`
+sites, and replaced them with one admitted single-use `PluginDispatch.chat`
+seam plus one private provider-construction body dominated by exact context
+validation. No builtin plugin or segment-probe scope moved to an allowlist, and
+zero unregistered sites remain.
+
+Across the amendment wave so far, the original checkpoint has moved from
+**145 to 105 executable sites**, **48 to 6 findings**, and **11 to 6 families**.
 
 The authorized gateway is exactly `InferenceRunner._attempt` and
 `InferenceRunner._dispatch`; public `InferenceRunner.invoke` only orchestrates
@@ -53,7 +57,7 @@ repository/store `.create` methods. Physical cardinality is counted at the cloud
 SDK, llama.cpp, mesh enqueue, and Whisper backend edges—not at engine
 construction.
 
-## Exact remaining blocking ledger — 8 families, 38 pinned sites
+## Exact remaining blocking ledger — 6 families, 6 pinned sites
 
 ### 1. `dormant-mir` — inventoried branch, 0 executable sites
 
@@ -89,55 +93,7 @@ remaining executable `LEGACY_UNCONTEXTUAL` marker is mechanically pinned to
 `MeshServeWorker._engine_for_run`; it is not an adapter exception. Owned by
 HS-131-16.
 
-### 5. `plugin-default-provider` — 30 sites
-
-Each plugin's `_cached_provider` family constructs the configured engine and
-calls `_chat_completion_text` directly rather than using the host-injected
-admitted dispatch handle. Owned by HS-131-14.
-
-- `holdspeak/plugins/builtin/action_owner_enforcer.py:158` — `build_configured_meeting_intel`
-- `holdspeak/plugins/builtin/action_owner_enforcer.py:159` — `_chat_completion_text`
-- `holdspeak/plugins/builtin/adr_drafter.py:165` — `build_configured_meeting_intel`
-- `holdspeak/plugins/builtin/adr_drafter.py:166` — `_chat_completion_text`
-- `holdspeak/plugins/builtin/customer_signal_extractor.py:157` — `build_configured_meeting_intel`
-- `holdspeak/plugins/builtin/customer_signal_extractor.py:158` — `_chat_completion_text`
-- `holdspeak/plugins/builtin/decision_announcement_drafter.py:123` — `build_configured_meeting_intel`
-- `holdspeak/plugins/builtin/decision_announcement_drafter.py:124` — `_chat_completion_text`
-- `holdspeak/plugins/builtin/decision_capture.py:198` — `build_configured_meeting_intel`
-- `holdspeak/plugins/builtin/decision_capture.py:199` — `_chat_completion_text`
-- `holdspeak/plugins/builtin/dependency_mapper.py:124` — `build_configured_meeting_intel`
-- `holdspeak/plugins/builtin/dependency_mapper.py:125` — `_chat_completion_text`
-- `holdspeak/plugins/builtin/incident_timeline.py:125` — `build_configured_meeting_intel`
-- `holdspeak/plugins/builtin/incident_timeline.py:126` — `_chat_completion_text`
-- `holdspeak/plugins/builtin/mermaid_architecture.py:213` — `build_configured_meeting_intel`
-- `holdspeak/plugins/builtin/mermaid_architecture.py:214` — `_chat_completion_text`
-- `holdspeak/plugins/builtin/milestone_planner.py:150` — `build_configured_meeting_intel`
-- `holdspeak/plugins/builtin/milestone_planner.py:151` — `_chat_completion_text`
-- `holdspeak/plugins/builtin/requirements_extractor.py:157` — `build_configured_meeting_intel`
-- `holdspeak/plugins/builtin/requirements_extractor.py:158` — `_chat_completion_text`
-- `holdspeak/plugins/builtin/risk_heatmap.py:171` — `build_configured_meeting_intel`
-- `holdspeak/plugins/builtin/risk_heatmap.py:172` — `_chat_completion_text`
-- `holdspeak/plugins/builtin/runbook_delta.py:149` — `build_configured_meeting_intel`
-- `holdspeak/plugins/builtin/runbook_delta.py:150` — `_chat_completion_text`
-- `holdspeak/plugins/builtin/scope_guard.py:152` — `build_configured_meeting_intel`
-- `holdspeak/plugins/builtin/scope_guard.py:153` — `_chat_completion_text`
-- `holdspeak/plugins/builtin/stakeholder_update_drafter.py:126` — `build_configured_meeting_intel`
-- `holdspeak/plugins/builtin/stakeholder_update_drafter.py:127` — `_chat_completion_text`
-- `holdspeak/plugins/segment_probe.py:158` — `build_configured_meeting_intel`
-- `holdspeak/plugins/segment_probe.py:160` — `_chat_completion_text`
-
-### 6. `legacy-uncontextual-factory` — 2 sites
-
-- `holdspeak/intel/providers.py:241` — `MeshRelayIntel`
-- `holdspeak/intel/providers.py:253` — `MeetingIntel`
-
-`build_configured_meeting_intel()` takes no context and constructs either a
-mesh or local/cloud engine, so its constructor body is a finding rather than an
-allowlisted adapter. The admitted path reaches it only through the validating
-`configured_meeting_intel(*, context)` wrapper. HS-131-14 owns deletion or
-privatization after the last plugin caller migrates.
-
-### 7. `legacy-live-meeting-engine` — 1 site
+### 5. `legacy-live-meeting-engine` — 1 site
 
 - `holdspeak/meeting_session/session.py:548` — `MeetingIntel`
 
@@ -145,7 +101,7 @@ privatization after the last plugin caller migrates.
 admitted plan. That parallel object is both a silent-retargeting risk and the
 engine used by the bookmark finding below. Owned by HS-131-17.
 
-### 8. `bookmark-auto-label` — 1 site
+### 6. `bookmark-auto-label` — 1 site
 
 - `holdspeak/meeting_session/bookmarks.py:45` — `generate_bookmark_label`
 
@@ -153,25 +109,31 @@ engine used by the bookmark finding below. Owned by HS-131-17.
 directly. The admitted `_admitted_bookmark_label` seam already exists; this
 caller bypasses it and leaves no child receipt. Owned by HS-131-17.
 
-## HS-131-13 disposition
+## HS-131-14 disposition
 
-The first amendment is complete in the current tree:
+The second amendment is complete in the current tree:
 
-- **Cadence admitted:** one authenticated `cadence.next-action-draft` parent,
-  one `inference.invoke` child per physical attempt, exact frozen local model
-  construction, staged publication, and durable cancellation fencing.
-- **Decisions duplicate deleted:** the route no longer holds an engine,
-  `run_prompt` callable, or `model_generator` injection seam.
-- **Dormant Delivery helper deleted:** the shipped admitted Delivery review
-  service remains the sole path.
-- **Legacy target factory deleted:** `build_intel_for_target` has no symbol,
-  shim, caller, or marker use. The separate mesh receiver marker remains
-  visibly pinned to HS-131-16.
+- **Providers deleted from plugins:** all fourteen builtins and `segment_probe`
+  consume an admitted dispatch handle and no longer construct or cache engines.
+- **One physical completion per handle:** one lock elects exactly one claim;
+  released, cancelled, stale, cross-child, incompatible, replayed, or
+  over-cardinality handles refuse before physical work.
+- **Timeout is atomic:** host timeout revokes and classifies the same handle in
+  one election; a zero-claim timeout cannot dispatch late, while an in-flight
+  attempt is indeterminate and cannot publish.
+- **Failures and retries stay honest:** provider errors fail the admitted child;
+  compatibility retry receives a distinct `_r2` child, handle, context, and
+  receipt, and only the winner materializes.
+- **Uncontextual factory retired:** public `build_configured_meeting_intel` is
+  gone; private `_configured_engine` is reachable only after exact context and
+  revision validation.
+- **Pre-admission probe retired:** meeting startup remains lexical until
+  HS-131-17 admits MIR routing rather than creating intelligence early.
 
 ## Owner ruling
 
 **RULING RECEIVED 2026-08-12:** charter all five amendment stories, with design
 beats for the delete-vs-admit choices in Speech, Mesh, and Meeting. The wave is
-HS-131-13 through HS-131-17. Until the remaining four land, HS-131-10 remains
+HS-131-13 through HS-131-17. Until the remaining three land, HS-131-10 remains
 `blocked`; HS-131-11 and HS-131-12 remain held; none of these families may enter
 `ADAPTER_ALLOWLIST`.

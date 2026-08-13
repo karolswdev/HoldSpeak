@@ -284,7 +284,7 @@ def _http_engine_rig(tmp_path, monkeypatch, name: str):
 
     engine = _Engine()
     monkeypatch.setitem(InferenceRunner.__init__.__kwdefaults__, "engine_factory", lambda revision, **_: engine)
-    monkeypatch.setattr("holdspeak.intel.providers.build_configured_meeting_intel", lambda: engine)
+    monkeypatch.setattr("holdspeak.intel.providers._configured_engine", lambda: engine)
 
     app = FastAPI()
     app.include_router(build_primitives_router(WebContext(get_state=lambda: {})))
@@ -699,6 +699,11 @@ def test_each_driver_reports_the_run_it_actually_performed(tmp_path, monkeypatch
 SANITIZING_ADAPTERS: tuple[tuple[str, str], ...] = (
     ("holdspeak/meeting_session/intel_child.py", "MeetingAdapter.dispatch"),
     ("holdspeak/speech_session/child.py", "SpeechAdapter.dispatch"),
+    # HS-131-14: a routed plugin's completion goes through the dispatch handle,
+    # which wraps the provider exception so a plugin's `except Exception` cannot
+    # turn a physical failure into a summary string. That wrapper is a sanitizer
+    # and inherits the same ordering duty.
+    ("holdspeak/plugins/intelligence.py", "PluginDispatch.chat"),
 )
 
 

@@ -7,6 +7,23 @@ import pytest
 import holdspeak.intel as intel_module
 from holdspeak.intel import MeetingIntel, resolve_intel_provider, get_cloud_intel_runtime_status
 
+from holdspeak.intel.providers import configured_meeting_intel
+from tests.unit.admitted_context import admitted_context
+
+
+
+def _configured_intel():
+    """The ONE configured-construction entrance (HS-131-14).
+
+    The old public uncontextual factory is gone: the body is private and reachable
+    only through ``configured_meeting_intel``, which refuses without the dispatch
+    context an admitted child carries. The placement assertions below are unchanged
+    — what changed is that reaching the constructor now requires admission.
+    """
+    revision = SimpleNamespace(id="dep_configured", destination_id="configured")
+    return configured_meeting_intel(
+        context=admitted_context(revision=revision), revision=revision
+    )
 
 def test_resolve_provider_auto_falls_back_to_cloud(monkeypatch) -> None:
     monkeypatch.setattr(intel_module, "Llama", None)
@@ -38,12 +55,11 @@ def test_get_cloud_runtime_status_requires_api_key(monkeypatch) -> None:
     assert "OPENAI_API_KEY" in reason
 
 
-def test_build_configured_meeting_intel_reads_the_assigned_target(monkeypatch) -> None:
+def test_configured_meeting_intel_reads_the_assigned_target(monkeypatch) -> None:
     # Plugins must honour the user's assigned InferenceTarget, not
     # MeetingIntel() bare module defaults (HS-27-02, retargeted HS-112-01:
     # the endpoint lives ONLY in the profiles table).
     from holdspeak.db.models import ProfileRecord
-    from holdspeak.intel import build_configured_meeting_intel
 
     cfg = SimpleNamespace(
         meeting=SimpleNamespace(
@@ -66,7 +82,7 @@ def test_build_configured_meeting_intel_reads_the_assigned_target(monkeypatch) -
         ),
     )
 
-    intel = build_configured_meeting_intel()
+    intel = _configured_intel()
     assert intel.provider == "cloud"
     assert intel.cloud_base_url == "http://192.168.1.43:8080/v1"
     assert intel.cloud_model == "Qwen3.5-9B-UD-Q6_K_XL.gguf"

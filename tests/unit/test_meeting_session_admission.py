@@ -123,7 +123,7 @@ def _rig(tmp_path: Path, monkeypatch, *, principal: Any = OWNER, intel_enabled: 
     # engine class — the last constructor on the real path — rather than at the
     # configured-default seam that path no longer touches.
     monkeypatch.setattr("holdspeak.intel.engine.MeetingIntel", lambda **kwargs: engine)
-    monkeypatch.setattr("holdspeak.intel.providers.build_configured_meeting_intel", lambda: engine)
+    monkeypatch.setattr("holdspeak.intel.providers._configured_engine", lambda: engine)
     monkeypatch.setattr("holdspeak.meeting_session.session.MeetingRecorder", FakeRecorder)
     monkeypatch.setattr("holdspeak.meeting_capture_journal.MeetingCaptureJournal", FakeJournal)
     monkeypatch.setattr(

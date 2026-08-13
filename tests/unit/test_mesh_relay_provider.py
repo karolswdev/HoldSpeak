@@ -20,6 +20,8 @@ from holdspeak.deployment_revisions import DeploymentRevision
 from holdspeak.inference_targets import DeploymentIdentity
 from holdspeak.intel.mesh_relay import MeshRelayIntel
 from holdspeak.intel.models import MeetingIntelError
+from holdspeak.intel.providers import configured_meeting_intel
+from tests.unit.admitted_context import admitted_context
 from holdspeak.intel.providers import (
     build_meeting_intel_for_profile,
     effective_dictation_llm,
@@ -76,6 +78,19 @@ def _provider(db, clock, **kw) -> MeshRelayIntel:
         now=clock.now, **kw,
     )
 
+
+def _configured_intel():
+    """The ONE configured-construction entrance (HS-131-14).
+
+    The old public uncontextual factory is gone: the body is private and reachable
+    only through ``configured_meeting_intel``, which refuses without the dispatch
+    context an admitted child carries. The placement assertions below are unchanged
+    — what changed is that reaching the constructor now requires admission.
+    """
+    revision = SimpleNamespace(id="dep_configured", destination_id="configured")
+    return configured_meeting_intel(
+        context=admitted_context(revision=revision), revision=revision
+    )
 
 def test_offline_node_refuses_immediately_by_name(db) -> None:
     clock = _Clock(T0)
@@ -320,14 +335,12 @@ def test_per_run_profile_builder_returns_the_relay_provider() -> None:
 
 
 def test_configured_builder_returns_the_relay_provider(monkeypatch) -> None:
-    from holdspeak.intel.providers import build_configured_meeting_intel
-
     cfg = SimpleNamespace(meeting=_meeting_cfg(intel_profile_id="p-phone"))
     monkeypatch.setattr("holdspeak.config.Config.load", classmethod(lambda cls, path=None: cfg))
     monkeypatch.setattr(
         "holdspeak.intel.providers._lookup_profile_record", lambda pid: _mesh_profile()
     )
-    intel = build_configured_meeting_intel()
+    intel = _configured_intel()
     assert isinstance(intel, MeshRelayIntel) and intel.node == "walk-edge"
 
 

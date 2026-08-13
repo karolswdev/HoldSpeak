@@ -92,7 +92,11 @@ VOCABULARY: dict[str, frozenset[str]] = {
     "engine-factory": frozenset({
         "MeetingIntel", "MeshRelayIntel", "MeshRelayRuntime",
         "OpenAICompatibleRuntime", "LlamaCppRuntime",
+        # `build_configured_meeting_intel` no longer EXISTS (HS-131-14 privatized
+        # the body to `_configured_engine` and deleted the public export), which is
+        # exactly why the name stays here: the fence must fail on it coming BACK.
         "build_configured_meeting_intel", "configured_meeting_intel",
+        "_configured_engine",
         "build_meeting_intel_for_profile",
         "build_intel_for_revision", "build_intel_for_target",
         "local_pinned_meeting_intel", "_engine_for_revision",
@@ -429,6 +433,7 @@ ADAPTER_ALLOWLIST: dict[tuple[str, str], str] = {
     ("holdspeak/intel/providers.py", "build_meeting_intel_for_profile"): "F: profile-shaped engine; context-requiring, matched to the deployment revision",
     ("holdspeak/intel/providers.py", "_profile_engine"): "F: the profile construction body, reached only from the validating wrapper",
     ("holdspeak/intel/providers.py", "configured_meeting_intel"): "F: the gate in front of the host-adapter seam; validates the context (or the ONE named legacy marker) BEFORE any provider object exists",
+    ("holdspeak/intel/providers.py", "_configured_engine"): "F: the configured-placement construction body, reached only from the validating wrapper (HS-131-14 privatized it; it was the uncontextual `build_configured_meeting_intel`)",
     ("holdspeak/speech_session/revision_target.py", "rebind"): "F: rebuilds a dictation backend onto the frozen revision; context-requiring",
     ("holdspeak/speech_session/revision_target.py", "bound_target"): "F: agrees-or-rebind decision; forwards the child's context to rebind",
     ("holdspeak/speech_session/provider.py", "ProviderAdmission.target"): "F: reads the context off the runner-built engine and binds the dispatch target",
@@ -498,6 +503,14 @@ ADMITTED_SEAM_CALLERS: dict[tuple[str, str], str] = {
     ("holdspeak/dictation_runner.py", "run_dictation_pipeline"): "build_pipeline(admission=…) wraps the runtime in the admitted seam",
     ("holdspeak/dictation_runner.py", "run_pipeline_corrections_only"): "build_pipeline(admission=…) wraps the runtime in the admitted seam",
     ("holdspeak/intel_queue.py", "process_next_intel_job"): "DeferredIntelJob.analyze (an admitted deferred child)",
+    # HS-131-14. The plugin dispatch handle is a CONSUMER of an admitted child, not
+    # an adapter: it constructs nothing, resolves no placement, and holds no
+    # configuration. It is handed the engine `InferenceRunner._attempt` already
+    # built for the claimed child, and it re-proves that child's context — by
+    # identity — plus its own liveness and cancellation signal before every
+    # completion. Charter §Scope forbids a plugin scope on the ADAPTER_ALLOWLIST,
+    # and this is the seam list, which is where a migrated caller belongs.
+    ("holdspeak/plugins/intelligence.py", "PluginDispatch.chat"): "the runner-built engine of ONE admitted `inference.invoke` child; refuses by name before the leaf when the handle is released, cancelled, or no longer that child's",
 }
 
 # ------------------------------------------------------- bucket 4: the findings
@@ -515,53 +528,23 @@ NAMED_FINDINGS: dict[str, str] = {
     "holdspeak/commands/dictation.py:79 build_pipeline": "dictation-command",
     "holdspeak/commands/mesh_serve.py:132 build_meeting_intel_for_profile": "mesh-receiver",
     "holdspeak/commands/mesh_serve.py:164 run_prompt": "mesh-receiver",
-    # `build_configured_meeting_intel()` takes NO context and validates nothing —
-    # its signature is literally `()`. It was bucketed onto the adapter allowlist,
-    # which laundered the fence: the two constructors in its body read as
-    # "allowlisted adapter" while the function they sit in cannot tell an admitted
-    # child from a plugin. It joins Sol Amendment 4's `legacy-uncontextual-factory`
-    # family (not `plugin-default-provider`) because the family names the DEFECT
-    # and therefore the owner decision: an uncontextual factory body that
-    # physically constructs an engine, delete-or-migrate, exactly like the deleted
-    # `build_intel_for_target`. `plugin-default-provider` names its CALLERS —
-    # fifteen sites with no admitted child — a different owner story with a
-    # different fix. The admitted path reaches this body only through
-    # `configured_meeting_intel`, which refuses first. HS-131-14 owns what remains
-    # of this family: these two construction lines and nothing else.
-    "holdspeak/intel/providers.py:241 MeshRelayIntel": "legacy-uncontextual-factory",
-    "holdspeak/intel/providers.py:253 MeetingIntel": "legacy-uncontextual-factory",
+    # HS-131-14 CLOSED two families here, both by deletion rather than promotion.
+    #
+    # `plugin-default-provider` (30 sites): every builtin's `_cached_provider`
+    # fallback and the segment probe's default construction are GONE. A plugin now
+    # consumes intelligence through the host-issued dispatch handle its invocation
+    # carries, and an `llm` plugin with no handle refuses by name. No plugin scope
+    # entered any list.
+    #
+    # `legacy-uncontextual-factory` (2 sites): `build_configured_meeting_intel()`
+    # took NO context and validated nothing — its signature was literally `()` —
+    # and it was PUBLIC and exported, which is how fifteen callers each built their
+    # own engine. Its last caller migrated, so the body was privatized to
+    # `_configured_engine`, dominated by the validating `configured_meeting_intel`
+    # (asserted below), and the public name deleted. The name stays in the
+    # vocabulary with zero permitted sites, so typing it again fails the fence.
     "holdspeak/meeting_session/session.py:548 MeetingIntel": "legacy-live-meeting-engine",
     "holdspeak/meeting_session/bookmarks.py:45 generate_bookmark_label": "bookmark-auto-label",
-    "holdspeak/plugins/builtin/action_owner_enforcer.py:158 build_configured_meeting_intel": "plugin-default-provider",
-    "holdspeak/plugins/builtin/action_owner_enforcer.py:159 _chat_completion_text": "plugin-default-provider",
-    "holdspeak/plugins/builtin/adr_drafter.py:165 build_configured_meeting_intel": "plugin-default-provider",
-    "holdspeak/plugins/builtin/adr_drafter.py:166 _chat_completion_text": "plugin-default-provider",
-    "holdspeak/plugins/builtin/customer_signal_extractor.py:157 build_configured_meeting_intel": "plugin-default-provider",
-    "holdspeak/plugins/builtin/customer_signal_extractor.py:158 _chat_completion_text": "plugin-default-provider",
-    "holdspeak/plugins/builtin/decision_announcement_drafter.py:123 build_configured_meeting_intel": "plugin-default-provider",
-    "holdspeak/plugins/builtin/decision_announcement_drafter.py:124 _chat_completion_text": "plugin-default-provider",
-    "holdspeak/plugins/builtin/decision_capture.py:198 build_configured_meeting_intel": "plugin-default-provider",
-    "holdspeak/plugins/builtin/decision_capture.py:199 _chat_completion_text": "plugin-default-provider",
-    "holdspeak/plugins/builtin/dependency_mapper.py:124 build_configured_meeting_intel": "plugin-default-provider",
-    "holdspeak/plugins/builtin/dependency_mapper.py:125 _chat_completion_text": "plugin-default-provider",
-    "holdspeak/plugins/builtin/incident_timeline.py:125 build_configured_meeting_intel": "plugin-default-provider",
-    "holdspeak/plugins/builtin/incident_timeline.py:126 _chat_completion_text": "plugin-default-provider",
-    "holdspeak/plugins/builtin/mermaid_architecture.py:213 build_configured_meeting_intel": "plugin-default-provider",
-    "holdspeak/plugins/builtin/mermaid_architecture.py:214 _chat_completion_text": "plugin-default-provider",
-    "holdspeak/plugins/builtin/milestone_planner.py:150 build_configured_meeting_intel": "plugin-default-provider",
-    "holdspeak/plugins/builtin/milestone_planner.py:151 _chat_completion_text": "plugin-default-provider",
-    "holdspeak/plugins/builtin/requirements_extractor.py:157 build_configured_meeting_intel": "plugin-default-provider",
-    "holdspeak/plugins/builtin/requirements_extractor.py:158 _chat_completion_text": "plugin-default-provider",
-    "holdspeak/plugins/builtin/risk_heatmap.py:171 build_configured_meeting_intel": "plugin-default-provider",
-    "holdspeak/plugins/builtin/risk_heatmap.py:172 _chat_completion_text": "plugin-default-provider",
-    "holdspeak/plugins/builtin/runbook_delta.py:149 build_configured_meeting_intel": "plugin-default-provider",
-    "holdspeak/plugins/builtin/runbook_delta.py:150 _chat_completion_text": "plugin-default-provider",
-    "holdspeak/plugins/builtin/scope_guard.py:152 build_configured_meeting_intel": "plugin-default-provider",
-    "holdspeak/plugins/builtin/scope_guard.py:153 _chat_completion_text": "plugin-default-provider",
-    "holdspeak/plugins/builtin/stakeholder_update_drafter.py:126 build_configured_meeting_intel": "plugin-default-provider",
-    "holdspeak/plugins/builtin/stakeholder_update_drafter.py:127 _chat_completion_text": "plugin-default-provider",
-    "holdspeak/plugins/segment_probe.py:158 build_configured_meeting_intel": "plugin-default-provider",
-    "holdspeak/plugins/segment_probe.py:160 _chat_completion_text": "plugin-default-provider",
 }
 
 #: The one family with no executable site to pin: a DORMANT branch
@@ -595,6 +578,7 @@ ADAPTER_INTERNAL_FACTORY_SCOPES: frozenset[tuple[str, str]] = frozenset({
     ("holdspeak/inference_targets.py", "_engine_for_revision"),
     ("holdspeak/inference_targets.py", "_local_pinned_engine"),
     ("holdspeak/intel/providers.py", "_profile_engine"),
+    ("holdspeak/intel/providers.py", "_configured_engine"),
     ("holdspeak/speech_session/provider.py", "ProviderAdmission.target"),
     ("holdspeak/speech_session/provider.py", "_mesh_bound"),
     ("holdspeak/plugins/dictation/assembly.py", "_try_build_runtime"),
@@ -620,6 +604,7 @@ DOMINATED_CONSTRUCTION_BODIES: dict[tuple[str, str], str] = {
     ("holdspeak/inference_targets.py", "_engine_for_revision"): "build_intel_for_revision",
     ("holdspeak/inference_targets.py", "_local_pinned_engine"): "local_pinned_meeting_intel",
     ("holdspeak/intel/providers.py", "_profile_engine"): "build_meeting_intel_for_profile",
+    ("holdspeak/intel/providers.py", "_configured_engine"): "configured_meeting_intel",
 }
 
 #: The factory scopes whose bodies must NAME the validator (Sol Amendment 1).
@@ -906,7 +891,9 @@ def test_no_public_factory_scope_can_escape_context_validation() -> None:
 def test_the_findings_ledger_is_the_complete_blocking_package() -> None:
     """What is LEFT of the eleven-family package. All still blocking.
 
-    HS-131-13 closed three families outright — `cadence` (migrated onto the
+    HS-131-14 closed two more (`plugin-default-provider`,
+    `legacy-uncontextual-factory`), both by deletion. HS-131-13 closed three
+    families outright — `cadence` (migrated onto the
     admitted spine), `decisions-route` and `delivery-legacy-factory` (both
     deleted) — and emptied `legacy-uncontextual-factory` of every site that lived
     in `build_intel_for_target`. The remaining eight are the four chartered
@@ -918,19 +905,19 @@ def test_the_findings_ledger_is_the_complete_blocking_package() -> None:
         "dictation-dry-run",
         "dictation-command",
         "mesh-receiver",
-        "plugin-default-provider",
-        # What survives of Sol Amendment 4's family: the uncontextual
-        # `build_configured_meeting_intel()` body itself (HS-131-14).
-        "legacy-uncontextual-factory",
+        # HS-131-14 removed `plugin-default-provider` (30 sites) and
+        # `legacy-uncontextual-factory` (2 sites). Both left by DELETION: the
+        # plugin fallbacks no longer exist and the uncontextual factory is a
+        # private, dominated body behind the validating entrance.
         # NEW in HS-131-10's own census (not in the Sol ruling's package):
         "legacy-live-meeting-engine",
         "bookmark-auto-label",
     }
-    # Seven families still have pinned executable sites; `dormant-mir` is the one
+    # Five families still have pinned executable sites; `dormant-mir` is the one
     # inventoried branch with none. Asserting the split keeps a family from
     # vanishing into the site-less bucket instead of being fixed.
     assert set(NAMED_FINDINGS.values()) == BLOCKING_FAMILIES - {"dormant-mir"}
-    assert len(set(NAMED_FINDINGS.values())) == 7
+    assert len(set(NAMED_FINDINGS.values())) == 5
 
 def test_the_owner_inventory_covers_every_finding() -> None:
     """The ledger above is worthless to the owner if the decision package omits a row.
@@ -1152,6 +1139,35 @@ async def _generate_with_model(db, target, prompt):
     return str(output or "").strip(), intel
 '''
 
+SYNTHETIC_REINTRODUCED_PLUGIN_FALLBACK = '''
+"""HS-131-14's own mutation: the plugin default-provider family, retyped.
+
+Every LLM builtin used to carry exactly this: a `_cached_provider` that lazily
+built the configured engine and then dispatched `_chat_completion_text` on it —
+thirty sites, no admitted child behind any of them. The deleted code is not a
+fence, so both halves must come back as unregistered, by name: the uncontextual
+factory (whose symbol no longer exists) and the completion leaf, in both the
+called and the first-class-reference spelling.
+"""
+from typing import Any
+
+
+class RetypedPlugin:
+    id = "retyped"
+    required_capabilities = ["llm"]
+
+    def __init__(self) -> None:
+        self._cached_provider: Any = None
+
+    def _call_intel(self, messages):
+        if self._cached_provider is None:
+            from holdspeak.intel import build_configured_meeting_intel
+
+            self._cached_provider = build_configured_meeting_intel()
+        chat = self._cached_provider._chat_completion_text
+        return self._cached_provider._chat_completion_text(messages, temperature=0.2, max_tokens=800), chat
+'''
+
 #: Each mutation's EXACT expected census output (Sol Amendment 5: a mutation
 #: proof must show the INTENDED guard fired, naming the intended site — "some
 #: assertion failed" is not a proof). Written literally so a change in the
@@ -1262,6 +1278,20 @@ MUTATIONS: tuple[tuple[str, str, list[str]], ...] = (
             " _generate_with_model build_intel_for_target",
             "UNREGISTERED_MODEL_EXECUTION holdspeak/web/routes/synthetic_decisions_seam.py:16"
             " _generate_with_model run_prompt",
+        ],
+    ),
+    (
+        # HS-131-14: the plugin fallback, retyped. Three doors in one method —
+        # the uncontextual factory, the held completion reference, and the call.
+        "holdspeak/plugins/builtin/synthetic_retyped_fallback.py",
+        SYNTHETIC_REINTRODUCED_PLUGIN_FALLBACK,
+        [
+            "UNREGISTERED_MODEL_EXECUTION holdspeak/plugins/builtin/synthetic_retyped_fallback.py:25"
+            " RetypedPlugin._call_intel build_configured_meeting_intel",
+            "UNREGISTERED_MODEL_EXECUTION holdspeak/plugins/builtin/synthetic_retyped_fallback.py:26"
+            " RetypedPlugin._call_intel _chat_completion_text",
+            "UNREGISTERED_MODEL_EXECUTION holdspeak/plugins/builtin/synthetic_retyped_fallback.py:27"
+            " RetypedPlugin._call_intel _chat_completion_text",
         ],
     ),
 )

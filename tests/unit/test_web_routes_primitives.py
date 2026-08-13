@@ -130,7 +130,7 @@ def test_run_agent_invokes_engine(client: TestClient, monkeypatch) -> None:
     # its FROZEN revision, so the same double goes on the engine class too.
     monkeypatch.setattr("holdspeak.intel.engine.MeetingIntel", lambda **_kw: _FakeIntel())
     monkeypatch.setattr(
-        "holdspeak.intel.providers.build_configured_meeting_intel",
+        "holdspeak.intel.providers._configured_engine",
         lambda: _FakeIntel(),
     )
     resp = client.post(f"/api/recipes/{aid}/run", json={"input": "hello"})
@@ -165,7 +165,7 @@ def test_run_agent_includes_input_source(client: TestClient, monkeypatch) -> Non
     # its FROZEN revision, so the same double goes on the engine class too.
     monkeypatch.setattr("holdspeak.intel.engine.MeetingIntel", lambda **_kw: _FakeIntel())
     monkeypatch.setattr(
-        "holdspeak.intel.providers.build_configured_meeting_intel", lambda: _FakeIntel()
+        "holdspeak.intel.providers._configured_engine", lambda: _FakeIntel()
     )
     resp = client.post(
         f"/api/recipes/{aid}/run", json={"input": "x", "source_ref": "meeting_7"}
@@ -228,7 +228,7 @@ def test_run_agent_input_source_accepts_ipad_card_alias(
     # its FROZEN revision, so the same double goes on the engine class too.
     monkeypatch.setattr("holdspeak.intel.engine.MeetingIntel", lambda **_kw: _FakeIntel())
     monkeypatch.setattr(
-        "holdspeak.intel.providers.build_configured_meeting_intel", lambda: _FakeIntel()
+        "holdspeak.intel.providers._configured_engine", lambda: _FakeIntel()
     )
     resp = client.post(
         f"/api/recipes/{aid}/run",
@@ -261,7 +261,7 @@ def test_run_agent_engine_error_is_502(client: TestClient, monkeypatch) -> None:
     # its FROZEN revision, so the same double goes on the engine class too.
     monkeypatch.setattr("holdspeak.intel.engine.MeetingIntel", lambda **_kw: _Boom())
     monkeypatch.setattr(
-        "holdspeak.intel.providers.build_configured_meeting_intel", lambda: _Boom()
+        "holdspeak.intel.providers._configured_engine", lambda: _Boom()
     )
     resp = client.post(f"/api/recipes/{aid}/run", json={"input": "x"})
     assert resp.status_code == 502
@@ -355,7 +355,7 @@ def test_run_chain_threads_steps(client: TestClient, monkeypatch) -> None:
     # its FROZEN revision, so the same double goes on the engine class too.
     monkeypatch.setattr("holdspeak.intel.engine.MeetingIntel", lambda **_kw: _FakeIntel())
     monkeypatch.setattr(
-        "holdspeak.intel.providers.build_configured_meeting_intel", lambda: _FakeIntel()
+        "holdspeak.intel.providers._configured_engine", lambda: _FakeIntel()
     )
 
     resp = client.post(f"/api/chains/{cid}/run", json={"input": "hello"})
@@ -420,7 +420,7 @@ def test_run_chain_engine_error_is_502(client: TestClient, monkeypatch) -> None:
     # its FROZEN revision, so the same double goes on the engine class too.
     monkeypatch.setattr("holdspeak.intel.engine.MeetingIntel", lambda **_kw: _Boom())
     monkeypatch.setattr(
-        "holdspeak.intel.providers.build_configured_meeting_intel", lambda: _Boom()
+        "holdspeak.intel.providers._configured_engine", lambda: _Boom()
     )
     resp = client.post(f"/api/chains/{cid}/run", json={"input": "x"})
     assert resp.status_code == 502
@@ -478,7 +478,7 @@ def _stub_intel(monkeypatch, output="WF-OUT", provider="local"):
     # its FROZEN revision, so the same double goes on the engine class too.
     monkeypatch.setattr("holdspeak.intel.engine.MeetingIntel", lambda **_kw: fake)
     monkeypatch.setattr(
-        "holdspeak.intel.providers.build_configured_meeting_intel", lambda: fake
+        "holdspeak.intel.providers._configured_engine", lambda: fake
     )
     return fake
 
@@ -565,7 +565,7 @@ def test_run_workflow_linear_graph_runs_in_order(client: TestClient, monkeypatch
     # its FROZEN revision, so the same double goes on the engine class too.
     monkeypatch.setattr("holdspeak.intel.engine.MeetingIntel", lambda **_kw: _FakeIntel())
     monkeypatch.setattr(
-        "holdspeak.intel.providers.build_configured_meeting_intel", lambda: _FakeIntel()
+        "holdspeak.intel.providers._configured_engine", lambda: _FakeIntel()
     )
 
     resp = client.post(f"/api/workflows/{wid}/run", json={"input": "the meeting"})
@@ -652,7 +652,7 @@ def test_run_workflow_web_authored_graph_runs(client: TestClient, monkeypatch) -
     # its FROZEN revision, so the same double goes on the engine class too.
     monkeypatch.setattr("holdspeak.intel.engine.MeetingIntel", lambda **_kw: _FakeIntel())
     monkeypatch.setattr(
-        "holdspeak.intel.providers.build_configured_meeting_intel", lambda: _FakeIntel()
+        "holdspeak.intel.providers._configured_engine", lambda: _FakeIntel()
     )
 
     resp = client.post(f"/api/workflows/{wid}/run", json={"input": "the meeting"})
@@ -686,7 +686,7 @@ def test_run_workflow_engine_error_is_502(client: TestClient, monkeypatch) -> No
     # its FROZEN revision, so the same double goes on the engine class too.
     monkeypatch.setattr("holdspeak.intel.engine.MeetingIntel", lambda **_kw: _Boom())
     monkeypatch.setattr(
-        "holdspeak.intel.providers.build_configured_meeting_intel", lambda: _Boom()
+        "holdspeak.intel.providers._configured_engine", lambda: _Boom()
     )
     resp = client.post(f"/api/workflows/{wid}/run", json={"input": "x"})
     assert resp.status_code == 502
@@ -868,7 +868,7 @@ def test_run_agent_resolves_assigned_profile(client: TestClient, monkeypatch) ->
     # its FROZEN revision, so the same double goes on the engine class too.
     monkeypatch.setattr("holdspeak.intel.engine.MeetingIntel", lambda **_kw: (_ for _ in ()).throw(AssertionError("default builder must NOT be used when a profile is assigned")))
     monkeypatch.setattr(
-        "holdspeak.intel.providers.build_configured_meeting_intel",
+        "holdspeak.intel.providers._configured_engine",
         lambda: (_ for _ in ()).throw(AssertionError("default builder must NOT be used when a profile is assigned")),
     )
     resp = client.post(f"/api/recipes/{aid}/run", json={"input": "hi"})
@@ -887,7 +887,7 @@ def test_run_agent_refuses_when_destination_missing(client: TestClient, monkeypa
     # its FROZEN revision, so the same double goes on the engine class too.
     monkeypatch.setattr("holdspeak.intel.engine.MeetingIntel", lambda **_kw: (_ for _ in ()).throw(AssertionError("missing destination must not build an engine")))
     monkeypatch.setattr(
-        "holdspeak.intel.providers.build_configured_meeting_intel",
+        "holdspeak.intel.providers._configured_engine",
         lambda: (_ for _ in ()).throw(AssertionError("missing destination must not build an engine")),
     )
     resp = client.post(f"/api/recipes/{aid}/run", json={"input": "hi"})

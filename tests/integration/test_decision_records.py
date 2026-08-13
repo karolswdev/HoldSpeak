@@ -10,6 +10,7 @@ import holdspeak.db as hsdb
 from holdspeak.db import Database
 from holdspeak.meeting_aftercare import _decisions_for_meeting
 from holdspeak.plugins.builtin.decision_capture import DecisionCapturePlugin
+from tests.unit.plugin_dispatch_rig import intel_plugin
 from holdspeak.plugins.synthesis import synthesize_and_persist
 from holdspeak.principals import agent_credentials
 from holdspeak.web_server import MeetingWebServer, WebRuntimeCallbacks
@@ -128,9 +129,9 @@ def test_capture_projection_carries_reported_moment_and_records_named_drop(
   {"decision": "Do not invent provenance", "rationale": null, "source_timestamp": 99.0}
 ], "open_questions": []}
 ```"""
-    output = DecisionCapturePlugin(intel_call=lambda _messages: response).run(
-        {"transcript": "Use the durable record", "transcript_segments": segments}
-    )
+    output = intel_plugin(
+        DecisionCapturePlugin(), lambda _messages, **_kw: response
+    ).run({"transcript": "Use the durable record", "transcript_segments": segments})
     db.plugins.record_plugin_run(
         meeting_id="meeting-1",
         window_id="window-1",

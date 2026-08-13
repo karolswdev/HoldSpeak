@@ -226,19 +226,19 @@ class MeetingGlueMixin:
             raise RuntimeError(
                 f"Cannot start meeting: audio floor held by {self.voice_session.active_owner!r}"
             )
-        # HS-36-05: build the LLM-assisted per-segment intent probe only when the
-        # config knob is on. Defensive: any failure to construct it (missing optional
-        # deps, unconfigured endpoint) leaves it None and routing falls back to the
-        # lexical path — meeting start must never break on this.
+        # HS-36-05 built the LLM-assisted per-segment intent probe here, from the
+        # configured engine, BEFORE the session was admitted — a model call with no
+        # child, no receipt, and no frozen revision behind it. HS-131-14 deletes that
+        # construction outright: a probe exists only where an admitted dispatch handle
+        # does (`build_segment_probe(dispatch)`), and MIR's admitted routing pass is
+        # HS-131-17's to build. Until then this path is exactly what it already was on
+        # every probe failure — lexical scoring.
         segment_probe = None
         if getattr(self.config.meeting, "intent_segment_probe_enabled", False):
-            try:
-                from ..plugins.segment_probe import build_segment_probe
-
-                segment_probe = build_segment_probe()
-            except Exception:
-                log.warning("segment intent probe unavailable; using lexical scoring", exc_info=True)
-                segment_probe = None
+            log.info(
+                "segment intent probe requires an admitted routing child; "
+                "using lexical scoring"
+            )
 
         # HS-84-01: the session's cloud leg runs where the assigned RuntimeProfile
         # says (dangling/none ⇒ the legacy intel_cloud_* shape, byte-identical).

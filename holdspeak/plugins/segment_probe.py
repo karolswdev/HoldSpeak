@@ -20,24 +20,27 @@ It is **additive and gated**:
   lexical scores, so the probe can only *raise* an intent's score, never suppress one.
 - Any probe failure / parse-miss degrades gracefully to the lexical path (returns `{}`).
 
-The probe sends the segment transcript to the configured intel endpoint exactly as the
-built-in plugins already do (`build_configured_meeting_intel`), honouring the same
-provider/egress posture (HS-25).
+HS-131-14 closed the probe's own side door. It used to build the configured engine
+itself (`build_configured_meeting_intel()`), which re-read mutable configuration and
+put a model call outside any admitted child. A probe now EXISTS only where an
+admitted dispatch handle does: `build_segment_probe(dispatch)` returns ``None``
+without one, and the caller keeps the lexical path it already falls back to on any
+probe failure. There is no unadmitted construction to degrade from.
 """
 
 from __future__ import annotations
 
 import json
 import re
-from typing import Callable, Optional
+from typing import Any, Callable, Optional
 
 from ..logging_config import get_logger
 from .signals import SUPPORTED_INTENTS
 
 log = get_logger("plugins.segment_probe")
 
-# Mirrors the built-in plugins' intel seam: messages -> text, with the engine's
-# `_chat_completion_text(messages, *, temperature, max_tokens)` keyword signature.
+# The admitted chat seam: messages -> text, with the handle's
+# `chat(messages, *, temperature, max_tokens)` keyword signature.
 IntelChat = Callable[..., str]
 SegmentProbe = Callable[[str], dict[str, float]]
 
@@ -137,27 +140,42 @@ def probe_intents(
         {"role": "system", "content": _system_prompt()},
         {"role": "user", "content": text},
     ]
+    from ..kernel.provider_signals import CONTROL_SIGNALS
+
     try:
         raw = chat_fn(messages, temperature=temperature, max_tokens=max_tokens)
+    except CONTROL_SIGNALS:
+        # HS-131-14: a dialect retry is the RUNNER's second admitted child, and an
+        # indeterminate attempt is a real outcome. Degrading either to lexical
+        # would hide a physical attempt that already happened. Ordered ahead of the
+        # catch-all, exactly like every other sanitizing seam.
+        raise
     except Exception as exc:  # endpoint down, bad kwargs, etc. — degrade to lexical
         log.warning("segment intent probe failed: %s", exc)
         return {}
     return parse_probe_scores(raw, supported_intents=supported_intents)
 
 
-def build_segment_probe(intel: object | None = None) -> SegmentProbe:
-    """Build a `(transcript) -> {intent: confidence}` probe over the configured intel.
+def build_segment_probe(dispatch: Any = None) -> Optional[SegmentProbe]:
+    """Build a `(transcript) -> {intent: confidence}` probe over an ADMITTED handle.
 
-    With no ``intel``, uses `build_configured_meeting_intel()` — the same configured
-    endpoint the built-in plugins use. The returned callable never raises: a failed
-    probe yields ``{}`` and routing falls back to lexical scoring.
+    ``dispatch`` is the :class:`~holdspeak.plugins.intelligence.PluginDispatch` issued
+    for the child that authorized this routing pass. Without one there is no probe:
+    this returns ``None`` and the caller scores lexically — the same degradation a
+    probe failure already produces, and the only honest one, because a probe with no
+    admitted child would be an unrecorded model call (Article XI.2).
+
+    The returned callable never raises for a PROBE failure — a dead endpoint or
+    an unparseable answer yields ``{}`` and the caller scores lexically. A
+    REVOKED handle (released, cancelled, or rebound to another child) is not a
+    probe failure but withdrawn authority, and propagates.
     """
-    if intel is None:
-        from ..intel import build_configured_meeting_intel  # lazy: optional deps
+    if dispatch is None:
+        return None
+    from .intelligence import require_plugin_dispatch
 
-        intel = build_configured_meeting_intel()
-
-    chat_fn = intel._chat_completion_text  # type: ignore[attr-defined]
+    handle = require_plugin_dispatch(dispatch, plugin_id="segment_probe")
+    chat_fn = handle.chat
 
     def _probe(transcript: str) -> dict[str, float]:
         return probe_intents(transcript, chat_fn=chat_fn)

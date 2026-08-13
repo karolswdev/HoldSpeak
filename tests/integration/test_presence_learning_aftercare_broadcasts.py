@@ -298,7 +298,7 @@ def test_process_next_intel_job_notifies_on_meeting_ready(db, monkeypatch):
     # `build_configured_meeting_intel` no longer intercepts the admitted child.
     monkeypatch.setattr("holdspeak.intel.engine.MeetingIntel", _FakeIntel)
     monkeypatch.setattr(
-        "holdspeak.intel.providers.build_configured_meeting_intel", lambda: _FakeIntel()
+        "holdspeak.intel.providers._configured_engine", lambda: _FakeIntel()
     )
     _queued_meeting(db, "m-intel")
 
@@ -321,7 +321,7 @@ def test_exploding_on_meeting_ready_never_breaks_the_job(db, monkeypatch):
     # `build_configured_meeting_intel` no longer intercepts the admitted child.
     monkeypatch.setattr("holdspeak.intel.engine.MeetingIntel", _FakeIntel)
     monkeypatch.setattr(
-        "holdspeak.intel.providers.build_configured_meeting_intel", lambda: _FakeIntel()
+        "holdspeak.intel.providers._configured_engine", lambda: _FakeIntel()
     )
     _queued_meeting(db, "m-boom")
 

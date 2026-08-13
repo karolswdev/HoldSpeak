@@ -128,8 +128,8 @@ def no_construction(monkeypatch: Any) -> Recorder:
         "holdspeak.intel.mesh_relay.MeshRelayIntel", recorder.constructor("MeshRelayIntel")
     )
     monkeypatch.setattr(
-        "holdspeak.intel.providers.build_configured_meeting_intel",
-        recorder.constructor("build_configured_meeting_intel"),
+        "holdspeak.intel.providers._configured_engine",
+        recorder.constructor("_configured_engine"),
     )
     monkeypatch.setattr(
         "holdspeak.plugins.dictation.runtime_openai_compatible.OpenAICompatibleRuntime",
@@ -476,7 +476,7 @@ def test_a_frozen_paired_revision_refuses_instead_of_rereading_mutable_config(
         source = "mutable-config-at-dispatch-time"
 
     monkeypatch.setattr(
-        "holdspeak.intel.providers.build_configured_meeting_intel",
+        "holdspeak.intel.providers._configured_engine",
         lambda: _MutableConfigEngine(),
     )
 

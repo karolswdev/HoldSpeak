@@ -208,23 +208,19 @@ def resolve_llm_capability(meeting_config: Any) -> bool:
         return False
 
 
-def build_configured_meeting_intel() -> "MeetingIntel":
+def _configured_engine() -> "MeetingIntel":
     """Construct a `MeetingIntel` from the user's saved meeting config.
 
-    Built-in plugins (`mermaid_architecture`, `action_owner_enforcer`, …) call
-    this for their default intel provider so they honour the configured endpoint
-    (e.g. a self-hosted `.43` cloud base URL) instead of the bare `MeetingIntel()`
-    module defaults — which would otherwise ignore the user's provider entirely.
+    PRIVATE and dominated (HS-131-14). This was ``build_configured_meeting_intel()``
+    — a public, exported, UNCONTEXTUAL factory whose signature was literally ``()``,
+    which is how fourteen builtin plugins and the segment probe each built their own
+    engine with no admitted child behind them. Those callers are deleted and the name
+    is gone: the census keeps it in the vocabulary with zero permitted sites, so
+    typing it again fails the fence.
 
-    HS-131-10 FINDING ``plugin-default-provider``: this is the legacy UNCONTEXTUAL
-    constructor. Its remaining direct callers — fourteen builtin
-    ``_cached_provider`` sites and `plugins/segment_probe.py` — have NO admitted
-    child behind them, which is why they are named blocking findings the census
-    pins at their call sites (HS-131-13 removed the cadence caller; HS-131-14 owns
-    the rest). It also stays the long-standing injectable construction seam. An
-    ADMITTED caller never reaches it directly: it goes through
-    :func:`configured_meeting_intel`, which refuses without the runner's dispatch
-    context before this body runs.
+    The only caller is :func:`configured_meeting_intel`, which refuses without the
+    runner's dispatch context BEFORE this body runs — so no provider object exists
+    until an admitted child has proved which deployment it is for.
     """
     from ..config import Config
     from .engine import MeetingIntel
@@ -262,9 +258,10 @@ def configured_meeting_intel(*, context: Any, revision: Any = None) -> "MeetingI
     claimed child (or the ONE named legacy marker the census pins to its exact
     finding scopes).
 
-    The construction itself is deliberately the module-level
-    ``build_configured_meeting_intel`` attribute, so the long-standing injectable
-    seam keeps working; the gate is what is new.
+    The construction itself is deliberately the module-level ``_configured_engine``
+    attribute, so the long-standing injectable seam keeps working; the gate is what
+    is new. HS-131-14 privatized that body and deleted its public export — this is
+    now the ONE entrance to configured construction, contextual by construction.
 
     Round 2 — a REAL context must arrive with the exact immutable ``revision``
     it was minted for. Validating a context against nothing proved only that some
@@ -274,7 +271,7 @@ def configured_meeting_intel(*, context: Any, revision: Any = None) -> "MeetingI
     from ..kernel.dispatch_context import bind_dispatch_context, require_bound_context
 
     bound = require_bound_context(context, revision)
-    return bind_dispatch_context(build_configured_meeting_intel(), bound)
+    return bind_dispatch_context(_configured_engine(), bound)
 
 
 def configured_local_meeting_model_path() -> str:

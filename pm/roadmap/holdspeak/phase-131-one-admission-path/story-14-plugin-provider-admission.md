@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 131
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-131-02, HS-131-08
 - **Unblocks:** HS-131-10
 - **Owner:** unassigned
@@ -54,18 +54,18 @@ the fence allowlist under Constitution Articles II.2, V.4, and XI.1–3.
 
 ## Acceptance criteria
 
-- [ ] No plugin constructs `MeetingIntel`, calls a configured provider factory,
+- [x] No plugin constructs `MeetingIntel`, calls a configured provider factory,
   or invokes `_chat_completion_text` outside an admitted dispatch handle.
-- [ ] All provider-bearing plugin calls name the correct meeting/deferred parent,
+- [x] All provider-bearing plugin calls name the correct meeting/deferred parent,
   exact deployment revision, child warrant basis, attempt ordinal, and terminal
   receipt.
-- [ ] Missing, stale, forged, cross-child, or incompatible injected handles
+- [x] Missing, stale, forged, cross-child, or incompatible injected handles
   refuse before physical model work.
-- [ ] Cancellation, session stop, and deferred-parent closure prevent late
+- [x] Cancellation, session stop, and deferred-parent closure prevent late
   plugin output from publishing.
-- [ ] Deterministic plugin paths remain usable without minting inference
+- [x] Deterministic plugin paths remain usable without minting inference
   children.
-- [ ] The one-path census removes all 30 `plugin-default-provider` sites and
+- [x] The one-path census removes all 30 `plugin-default-provider` sites and
   related uncontextual construction sites with zero new findings, exceptions,
   or unregistered execution.
 

@@ -336,14 +336,17 @@ class DeferredIntelJob:
         window_id: str,
         idempotency_key: str,
         transcript_hash: str,
-        execute: Callable[[Any], Any],
+        execute: Callable[[Any, threading.Event], Any],
     ) -> tuple[Any, Optional[Mapping[str, Any]], Any]:
         """One EXECUTED routed plugin = one trusted child + one staged result.
 
         ``execute`` receives the engine built from the deployment revision THIS
-        child names and must run the plugin on it (HS-131-08 D2): the plugin's
-        provider work happens inside this dispatch, so it is inside the child's
-        cancellation seam and its receipt cannot name a revision it did not use.
+        child names AND that child's cancellation signal, and must run the plugin
+        on the pair (HS-131-08 D2, HS-131-14): the plugin's provider work happens
+        inside this dispatch, so it is inside the child's cancellation seam and its
+        receipt cannot name a revision it did not use. Handing the signal down is
+        what lets the plugin's dispatch handle refuse a completion that starts
+        after the child was cancelled.
 
         The plugin's own run record and its synthesized artifacts are staged
         (``meeting-plugin-result``) and written only by the in-transaction
@@ -353,7 +356,7 @@ class DeferredIntelJob:
         def call(engine: Any, payload: Mapping[str, Any], cancellation: threading.Event) -> Any:
             if cancellation.is_set():
                 return None
-            return execute(engine)
+            return execute(engine, cancellation)
 
         def encode(result: Any, payload: Mapping[str, Any]) -> Mapping[str, Any]:
             record = dict(result or {})

@@ -45,7 +45,7 @@ def _mock_intel(monkeypatch, output: str) -> None:
         "holdspeak.intel.engine.MeetingIntel", lambda **_kw: _FakeIntel(output)
     )
     monkeypatch.setattr(
-        "holdspeak.intel.providers.build_configured_meeting_intel",
+        "holdspeak.intel.providers._configured_engine",
         lambda: _FakeIntel(output),
     )
 

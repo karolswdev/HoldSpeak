@@ -64,7 +64,7 @@ def _stub_engine(monkeypatch, *, fail: bool = False):
     # come from this one `_Stub`.
     monkeypatch.setattr("holdspeak.intel.engine.MeetingIntel", lambda **_kw: _Stub())
     monkeypatch.setattr(
-        providers, "build_configured_meeting_intel", lambda: _Stub()
+        providers, "_configured_engine", lambda: _Stub()
     )
 
 

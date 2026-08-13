@@ -96,7 +96,7 @@ def test_agent_run_persists_and_responds_with_artifact_id(db, monkeypatch) -> No
     # stub goes on the engine class too.
     monkeypatch.setattr("holdspeak.intel.engine.MeetingIntel", lambda **_kw: _StubIntel())
     monkeypatch.setattr(
-        providers, "build_configured_meeting_intel", lambda: _StubIntel()
+        providers, "_configured_engine", lambda: _StubIntel()
     )
 
     server = MeetingWebServer(WebRuntimeCallbacks(

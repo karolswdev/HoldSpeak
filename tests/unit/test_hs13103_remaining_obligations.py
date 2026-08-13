@@ -192,7 +192,7 @@ def test_real_migrated_ask_cancellation_after_stage_is_completed_and_not_duplica
     # HS-131-13: an admitted `this_machine` child builds `MeetingIntel` from its
     # FROZEN revision, so the same double is installed on the engine class too.
     monkeypatch.setattr("holdspeak.intel.engine.MeetingIntel", lambda **_kw: AskEngine())
-    monkeypatch.setattr("holdspeak.intel.providers.build_configured_meeting_intel", lambda: AskEngine())
+    monkeypatch.setattr("holdspeak.intel.providers._configured_engine", lambda: AskEngine())
     stage_committed = threading.Event()
     release_publish = threading.Event()
     staged_ids: list[str] = []
@@ -289,7 +289,7 @@ def test_ask_v1_contract_shape_hash_guards_service_payload_drift(rig, monkeypatc
     # HS-131-13: an admitted `this_machine` child builds `MeetingIntel` from its
     # FROZEN revision, so the same double is installed on the engine class too.
     monkeypatch.setattr("holdspeak.intel.engine.MeetingIntel", lambda **_kw: AskEngine())
-    monkeypatch.setattr("holdspeak.intel.providers.build_configured_meeting_intel", lambda: AskEngine())
+    monkeypatch.setattr("holdspeak.intel.providers._configured_engine", lambda: AskEngine())
     captured: list[tuple[str, str, dict[str, Any]]] = []
     original = ServiceContract.for_payload.__func__
 
@@ -513,7 +513,7 @@ def test_ask_v1_golden_field_names_and_schema_version_are_exact(rig, monkeypatch
     # HS-131-13: an admitted `this_machine` child builds `MeetingIntel` from its
     # FROZEN revision, so the same double is installed on the engine class too.
     monkeypatch.setattr("holdspeak.intel.engine.MeetingIntel", lambda **_kw: AskEngine())
-    monkeypatch.setattr("holdspeak.intel.providers.build_configured_meeting_intel", lambda: AskEngine())
+    monkeypatch.setattr("holdspeak.intel.providers._configured_engine", lambda: AskEngine())
     captured: list[dict[str, Any]] = []
     original = ServiceContract.for_payload.__func__
 

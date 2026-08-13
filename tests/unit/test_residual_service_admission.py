@@ -245,7 +245,7 @@ def test_a_config_edit_after_capture_cannot_change_the_model_cadence_loads(
     # and `configured_meeting_intel` is reached again, THIS is what answers — with
     # whatever the config says at that moment, which is the defect.
     monkeypatch.setattr(
-        "holdspeak.intel.providers.build_configured_meeting_intel",
+        "holdspeak.intel.providers._configured_engine",
         lambda: _Recorder(provider="local", model_path=saved["model"]),
     )
 

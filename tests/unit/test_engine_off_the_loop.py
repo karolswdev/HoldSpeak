@@ -72,7 +72,7 @@ def spy(monkeypatch) -> _LoopSpy:
     # HS-131-13: an admitted `this_machine` child builds `MeetingIntel` from its
     # FROZEN revision, so the same double is installed on the engine class too.
     monkeypatch.setattr("holdspeak.intel.engine.MeetingIntel", lambda **_kw: s)
-    monkeypatch.setattr("holdspeak.intel.providers.build_configured_meeting_intel", lambda: s)
+    monkeypatch.setattr("holdspeak.intel.providers._configured_engine", lambda: s)
     return s
 
 

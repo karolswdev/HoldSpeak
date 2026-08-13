@@ -27,6 +27,7 @@ from holdspeak.db import Database, reset_database
 from holdspeak.meeting_session import MeetingState, TranscriptSegment
 from holdspeak.plugins.builtin import MermaidArchitecturePlugin
 from holdspeak.plugins.host import PluginHost
+from tests.unit.plugin_dispatch_rig import admitted_dispatch
 from holdspeak.plugins.synthesis import synthesize_and_persist
 
 
@@ -57,8 +58,11 @@ def temp_db():
 @pytest.mark.integration
 def test_mermaid_architecture_plugin_lands_diagram_artifact(temp_db) -> None:
     host = PluginHost(default_timeout_seconds=5.0, enabled_capabilities={"llm"})
-    host.register(
-        MermaidArchitecturePlugin(intel_call=lambda _messages: _STUB_RESPONSE)
+    host.register(MermaidArchitecturePlugin())
+    # HS-131-14: the plugin reaches a model ONLY through the handle the host issues
+    # over an admitted child's engine, so the pipeline holds one for this run.
+    dispatch, _engine, _context = admitted_dispatch(
+        lambda _messages, **_kw: _STUB_RESPONSE
     )
 
     state = MeetingState(
@@ -91,9 +95,9 @@ def test_mermaid_architecture_plugin_lands_diagram_artifact(temp_db) -> None:
     )
     assert queued.status == "queued"
 
-    # Step 2 — drain the deferred queue: this is where run() actually
-    # fires (host's worker uses our stubbed intel_call).
-    executed = host.process_next_deferred_run(timeout_seconds=5.0)
+    # Step 2 — drain the deferred queue: this is where run() actually fires, on
+    # the admitted handle this call hands to that one worker invocation.
+    executed = host.process_next_deferred_run(timeout_seconds=5.0, dispatch=dispatch)
     assert executed is not None, "deferred queue was unexpectedly empty"
     assert executed.status == "success", f"plugin failed: {executed.error}"
     assert executed.output is not None

@@ -68,6 +68,7 @@ class FakeIntel:
         self.analyzed: list[str] = []
         self.titles: list[str] = []
         self.labels: list[dict[str, str]] = []
+        self.completions: list[dict[str, Any]] = []
         self.stream_gate: threading.Event | None = None
         self.entered = threading.Event()
         self.error: str | None = None
@@ -106,6 +107,11 @@ class FakeIntel:
         self.titles.append(transcript)
         return "Quarterly budget review"
 
+    def _chat_completion_text(self, messages: Any, *, temperature: float, max_tokens: int) -> str:
+        """The seam a routed plugin's admitted handle dispatches on (HS-131-14)."""
+        self.completions.append({"messages": messages, "max_tokens": max_tokens})
+        return "{}"
+
 
 class FakeHost:
     """The plugin registry seam: declares capabilities and executes the chain."""
@@ -113,25 +119,33 @@ class FakeHost:
     def __init__(self, plugins: tuple[str, ...]) -> None:
         self._plugins = list(plugins)
         self.executed: list[str] = []
+        self.dispatches: list[Any] = []
         self.on_execute: Any = None
-        # The engines the admitted path bound while executing, in order.
+        # The engines the admitted path issued a handle over, in order.
         self.bound_engines: list[Any] = []
-        self._llm_engine: Any = None
+        # Every handle this host issued, and whether it was released on exit.
+        self.issued: list[Any] = []
 
     def list_plugins(self) -> list[str]:
         return list(self._plugins)
 
     @contextmanager
-    def bound_llm_engine(self, engine: Any) -> Any:
-        """The injected-engine seam the admitted plugin child must use."""
-        previous = self._llm_engine
-        if engine is not None:
-            self._llm_engine = engine
-            self.bound_engines.append(engine)
+    def issued_dispatch(self, engine: Any, cancellation: Any = None) -> Any:
+        """The admitted seam: ONE handle per plugin child, released on exit.
+
+        HS-131-14 — the host holds no engine and no handle between runs; the
+        handle is issued over the admitted child's engine + cancellation signal
+        and travels into exactly the invocation it authorizes.
+        """
+        from holdspeak.plugins.intelligence import _issue_plugin_dispatch
+
+        self.bound_engines.append(engine)
+        handle = _issue_plugin_dispatch(engine=engine, cancellation=cancellation)
+        self.issued.append(handle)
         try:
-            yield self._llm_engine
+            yield handle
         finally:
-            self._llm_engine = previous
+            handle.release()
 
     def execute_chain(
         self,
@@ -143,7 +157,9 @@ class FakeHost:
         transcript_hash: str,
         timeout_seconds: float | None = None,
         defer_heavy: bool = True,
+        dispatch: Any = None,
     ) -> list[PluginRunResult]:
+        self.dispatches.append(dispatch)
         results: list[PluginRunResult] = []
         for plugin_id in chain:
             self.executed.append(plugin_id)
@@ -209,7 +225,7 @@ def _session_rig(tmp_path: Path, monkeypatch, *, engine: Any = None):
     # HS-131-13: the pinned `this_machine` branch builds `MeetingIntel` from the
     # FROZEN revision, so the double goes on the engine class the real path ends at.
     monkeypatch.setattr("holdspeak.intel.engine.MeetingIntel", lambda **kwargs: engine)
-    monkeypatch.setattr("holdspeak.intel.providers.build_configured_meeting_intel", lambda: engine)
+    monkeypatch.setattr("holdspeak.intel.providers._configured_engine", lambda: engine)
     monkeypatch.setattr("holdspeak.meeting_session.session.MeetingRecorder", _FakeRecorder)
     monkeypatch.setattr("holdspeak.meeting_capture_journal.MeetingCaptureJournal", _FakeJournal)
     monkeypatch.setattr(
@@ -251,7 +267,7 @@ def _queue_rig(tmp_path: Path, monkeypatch, *, plugins: tuple[str, ...] = (), ch
     # HS-131-13: same reason as `_session_rig` — the frozen-revision local branch
     # constructs the engine class directly and reads no configured default.
     monkeypatch.setattr("holdspeak.intel.engine.MeetingIntel", lambda **kwargs: engine)
-    monkeypatch.setattr("holdspeak.intel.providers.build_configured_meeting_intel", lambda: engine)
+    monkeypatch.setattr("holdspeak.intel.providers._configured_engine", lambda: engine)
     monkeypatch.setattr("holdspeak.config.Config.load", classmethod(lambda cls: _Cfg))
     monkeypatch.setattr(
         "holdspeak.intel_queue.get_intel_runtime_status", lambda *a, **k: (True, "ready")
@@ -715,13 +731,19 @@ def test_an_executed_plugin_runs_on_the_engine_its_frozen_revision_built(tmp_pat
     assert {row["plugin_id"] for row in _rows(db, "plugin_runs")} == {"requirements_extractor"}
 
 
-def test_a_host_that_cannot_take_the_admitted_engine_is_refused(tmp_path, monkeypatch):
-    """An llm plugin the admitted engine cannot reach refuses; it never self-builds."""
+def test_an_llm_plugin_with_no_admitted_handle_is_refused_by_name(tmp_path, monkeypatch):
+    """An llm plugin never self-builds: with no handle it refuses, by name.
+
+    HS-131-08 phrased this as "the engine cannot be injected"; HS-131-14 makes the
+    seam per-invocation, so the honest statement is simpler — an `llm` plugin that
+    was handed no admitted handle does no model work and says which rule refused.
+    """
     from holdspeak.plugins.host import (
         PLUGIN_LLM_ENGINE_NOT_INJECTABLE,
         PluginEngineNotInjectable,
         PluginHost,
     )
+    from holdspeak.plugins.intelligence import PLUGIN_DISPATCH_REQUIRED
 
     class _SelfBuilding:
         id = "self_builder"
@@ -729,17 +751,18 @@ def test_a_host_that_cannot_take_the_admitted_engine_is_refused(tmp_path, monkey
         required_capabilities = ["llm"]
 
         def run(self, context: dict[str, Any]) -> dict[str, Any]:  # pragma: no cover
-            raise AssertionError("an unreachable engine must refuse before run()")
+            raise AssertionError("an unadmitted llm plugin must refuse before run()")
 
     host = PluginHost(enabled_capabilities={"llm"})
     host.register(_SelfBuilding())
-    with host.bound_llm_engine(FakeIntel()):
-        result = host.execute(
-            "self_builder", context={"transcript": "t"}, meeting_id="m",
-            window_id="m:full", transcript_hash="h",
-        )
+    result = host.execute(
+        "self_builder", context={"transcript": "t"}, meeting_id="m",
+        window_id="m:full", transcript_hash="h",
+    )
     assert result.status == "error"
-    assert PLUGIN_LLM_ENGINE_NOT_INJECTABLE in str(result.error)
+    assert PLUGIN_DISPATCH_REQUIRED in str(result.error)
+    # The host-seam refusal keeps its own name: a HOST that cannot be handed the
+    # admitted child's engine at all (no `issued_dispatch`) is a different fault.
     assert PluginEngineNotInjectable("x").reason == PLUGIN_LLM_ENGINE_NOT_INJECTABLE
 
 

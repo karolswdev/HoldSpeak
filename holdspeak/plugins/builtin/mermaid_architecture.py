@@ -7,8 +7,8 @@ The plugin:
   1. Builds a strict prompt asking the LLM for a one-line summary plus a
      single fenced ```mermaid block (any of the supported Mermaid
      diagram kinds).
-  2. Calls the configured intel provider (local llama-cpp or cloud
-     OpenAI-compatible) via `MeetingIntel._chat_completion_text`.
+  2. Asks for one completion through the admitted dispatch handle the
+     host put in the run context; it never touches a provider itself.
   3. Parses the response with `_extract_mermaid_block`, which
      validates that the block declares a known diagram kind on its
      first non-empty line and contains a minimum amount of structure
@@ -20,24 +20,21 @@ The plugin:
      — `mermaid` key absent). Downstream rendering (HS-16-03 / HS-16-04)
      keys off the presence of the `mermaid` key.
 
-The LLM call is injected via the `intel_call` constructor argument so
-unit tests can stub it without wiring a real provider. The default
-factory lazily constructs a `MeetingIntel` and caches it on the plugin
-instance — loading a local GGUF model is expensive, so we don't want
-to do it per `run()`.
+The LLM call reaches the model through the admitted dispatch handle the host
+puts in the run context (HS-131-14). The plugin constructs no provider and
+caches no engine: it names the prompt and the decoding envelope, and the
+admitted child names the deployment.
 """
 
 from __future__ import annotations
 
 import re
-from typing import Any, Callable, Optional
+from typing import Any, Optional
 
 from ...logging_config import get_logger
+from ..intelligence import PLUGIN_INTEL_SIGNALS, IntelligenceConsumer
 
 log = get_logger("plugins.mermaid_architecture")
-
-
-IntelChat = Callable[[list[dict[str, str]]], str]
 
 
 _DIAGRAM_KINDS: tuple[str, ...] = (
@@ -191,7 +188,7 @@ def _build_user_prompt(
     )
 
 
-class MermaidArchitecturePlugin:
+class MermaidArchitecturePlugin(IntelligenceConsumer):
     """LLM-backed plugin emitting a Mermaid architecture diagram per window."""
 
     id: str = "mermaid_architecture"
@@ -200,22 +197,9 @@ class MermaidArchitecturePlugin:
     execution_mode: str = "deferred"
     required_capabilities: list[str] = ["llm"]
 
-    def __init__(self, *, intel_call: Optional[IntelChat] = None) -> None:
-        self._intel_call_override = intel_call
-        self._cached_provider: Any = None
-
-    def _call_intel(self, messages: list[dict[str, str]]) -> str:
-        if self._intel_call_override is not None:
-            return self._intel_call_override(messages)
-        if self._cached_provider is None:
-            from ...intel import build_configured_meeting_intel  # lazy import: optional deps
-
-            self._cached_provider = build_configured_meeting_intel()
-        return self._cached_provider._chat_completion_text(
-            messages,
-            temperature=0.2,
-            max_tokens=800,
-        )
+    #: This plugin's decoding envelope; the host supplies the engine.
+    intel_temperature: float = 0.2
+    intel_max_tokens: int = 800
 
     def run(self, context: dict[str, Any]) -> dict[str, Any]:
         transcript = str(context.get("transcript") or "").strip()
@@ -257,7 +241,11 @@ class MermaidArchitecturePlugin:
         ]
 
         try:
-            raw = self._call_intel(messages)
+            raw = self._call_intel(messages, context)
+        except PLUGIN_INTEL_SIGNALS:
+            # A revoked handle, a provider failure, or a dialect signal is the
+            # admitted CHILD's outcome — never a plugin summary string.
+            raise
         except Exception as exc:
             log.info("mermaid_architecture: intel call failed: %s", exc)
             return _failure(f"mermaid_architecture: intel call failed: {exc}")

@@ -13,8 +13,17 @@ import time
 from threading import Lock
 from typing import Any, Protocol
 
+from ..kernel.provider_signals import CONTROL_SIGNALS, ProviderIndeterminate
 from ..logging_config import get_logger
 from .actuators import ActuatorProposal, ActuatorProposalError
+from .intelligence import (
+    PLUGIN_DISPATCH_CHAIN_CARDINALITY,
+    PLUGIN_DISPATCH_KEY,
+    PLUGIN_DISPATCH_REQUIRED,
+    PluginDispatch,
+    PluginDispatchRefused,
+    _issue_plugin_dispatch,
+)
 
 log = get_logger("plugins.host")
 
@@ -136,13 +145,8 @@ class PluginHost:
         enabled_capabilities: set[str] | None = None,
         allow_actuators: bool = False,
         context_providers: list[Callable[[dict[str, Any]], dict[str, Any]]] | None = None,
-        llm_engine: Any = None,
     ) -> None:
         self._plugins: dict[str, HostPlugin] = {}
-        # HS-131-08: the engine an ADMITTED caller built from the frozen
-        # deployment revision its plugin child names. None on every unadmitted
-        # path, where plugins keep resolving their own configured provider.
-        self._llm_engine: Any = llm_engine
         self._default_timeout_seconds = max(0.01, float(default_timeout_seconds))
         self._idempotency_cache: dict[str, PluginRunResult] = {}
         # Reserved for HS-37-04: gates *execution* of an approved actuator
@@ -217,19 +221,24 @@ class PluginHost:
         return sorted(self._plugins.keys())
 
     @contextmanager
-    def bound_llm_engine(self, engine: Any) -> Iterator[Any]:
-        """Bind the ADMITTED engine for the plugin runs inside this block.
+    def issued_dispatch(
+        self, engine: Any, cancellation: Any = None
+    ) -> Iterator[PluginDispatch]:
+        """Issue ONE plugin dispatch handle over an admitted child's engine.
 
-        ``engine=None`` is an explicit no-op: unadmitted callers (the live
-        routing pass, the reroute CLI, tests) behave exactly as before.
+        The handle is the caller's to pass into exactly the runs that child
+        authorizes; the host keeps NO reference to it. Released on exit, so the
+        moment the child's dispatch returns, a worker still holding it (a timeout
+        the host abandoned) refuses instead of completing late.
+
+        Refuses by name for an unadmitted or incompatible engine — before any
+        plugin runs, so before any prompt exists.
         """
-        previous = self._llm_engine
-        if engine is not None:
-            self._llm_engine = engine
+        handle = _issue_plugin_dispatch(engine=engine, cancellation=cancellation)
         try:
-            yield self._llm_engine
+            yield handle
         finally:
-            self._llm_engine = previous
+            handle.release()
 
     def _wants_llm(self, plugin: HostPlugin) -> bool:
         return "llm" in {
@@ -237,24 +246,27 @@ class PluginHost:
             for cap in (getattr(plugin, "required_capabilities", None) or [])
         }
 
-    def _run_plugin(self, plugin: HostPlugin, context: dict[str, Any]) -> Any:
-        """Run one plugin, on the ADMITTED engine when one is bound.
+    def _run_plugin(
+        self, plugin: HostPlugin, context: dict[str, Any], dispatch: Any = None
+    ) -> Any:
+        """Run one plugin, with the admitted handle carried BY THIS INVOCATION.
 
-        The engine is threaded into the plugin's provider slot for the duration of
-        this run and then restored, so a bound admitted engine can never leak into
-        a later unadmitted run.
+        ``context`` is already this invocation's private copy, so the handle it
+        carries cannot be seen by any other run — including a worker this host
+        timed out and abandoned, which keeps only its own (released) handle.
+
+        An ``llm`` plugin with no handle refuses by name rather than resolving a
+        provider of its own; a deterministic plugin never sees the key.
         """
-        engine = self._llm_engine
-        if engine is None or not self._wants_llm(plugin):
+        if not self._wants_llm(plugin):
             return plugin.run(context)
-        if not hasattr(plugin, "_cached_provider"):
-            raise PluginEngineNotInjectable(str(getattr(plugin, "id", "unknown")))
-        previous = plugin._cached_provider  # type: ignore[attr-defined]
-        plugin._cached_provider = engine  # type: ignore[attr-defined]
-        try:
-            return plugin.run(context)
-        finally:
-            plugin._cached_provider = previous  # type: ignore[attr-defined]
+        plugin_id = str(getattr(plugin, "id", "unknown"))
+        if dispatch is None:
+            raise PluginDispatchRefused(PLUGIN_DISPATCH_REQUIRED, plugin_id)
+        # Delivered, not installed. A plugin that reads the key gets the admitted
+        # handle; one that ignores it simply does no model work, because the
+        # fallback it would have used no longer exists.
+        return plugin.run({**context, PLUGIN_DISPATCH_KEY: dispatch})
 
     def _is_actuator_plugin(self, plugin: HostPlugin) -> bool:
         kind = str(getattr(plugin, "kind", "")).strip().lower()
@@ -367,6 +379,7 @@ class PluginHost:
         *,
         timeout_seconds: float | None = None,
         allow_duplicate: bool = False,
+        dispatch: PluginDispatch | None = None,
     ) -> PluginRunResult | None:
         """Execute the next queued deferred run, if available."""
         queued = self.pop_next_deferred_run()
@@ -381,6 +394,7 @@ class PluginHost:
             timeout_seconds=timeout_seconds,
             allow_duplicate=allow_duplicate,
             defer_heavy=False,
+            dispatch=dispatch,
         )
 
     def execute(
@@ -394,12 +408,24 @@ class PluginHost:
         timeout_seconds: float | None = None,
         allow_duplicate: bool = False,
         defer_heavy: bool = True,
+        dispatch: PluginDispatch | None = None,
     ) -> PluginRunResult:
+        """Run one plugin. ``dispatch`` is THIS invocation's admitted handle.
+
+        The handle is an argument, never host state: it reaches exactly the
+        worker started below and nothing else.
+        """
         plugin = self.get_plugin(plugin_id)
         if plugin is None:
             raise KeyError(f"Unknown plugin: {plugin_id}")
 
-        context = self._enrich_context(context)
+        # A caller cannot smuggle authority in through the context, and neither
+        # can a context provider: the reserved key is the HOST's to set, on the
+        # worker's private copy, from the handle it was explicitly given.
+        context = self._enrich_context(
+            {key: value for key, value in dict(context).items() if key != PLUGIN_DISPATCH_KEY}
+        )
+        context.pop(PLUGIN_DISPATCH_KEY, None)
 
         key = build_idempotency_key(
             meeting_id=meeting_id,
@@ -535,7 +561,7 @@ class PluginHost:
         started_at = time.monotonic()
 
         executor = ThreadPoolExecutor(max_workers=1)
-        future = executor.submit(self._run_plugin, plugin, dict(context))
+        future = executor.submit(self._run_plugin, plugin, dict(context), dispatch)
         try:
             raw_output = future.result(timeout=run_timeout)
             duration_ms = (time.monotonic() - started_at) * 1000.0
@@ -582,6 +608,40 @@ class PluginHost:
             return result
         except FutureTimeoutError:
             future.cancel()
+            # THE timeout election, in ONE atomic step (HS-131-14). Revoking and
+            # ASKING are the same call because they cannot be two: reading
+            # `dispatch.calls` and releasing afterwards leaves a gap in which the
+            # abandoned worker claims the completion — the host has already
+            # decided "nothing physical happened" and records an ordinary
+            # `timeout`, and then the request goes out. `release()` therefore
+            # revokes and returns the verdict under one lock, so the two possible
+            # worlds are decided here and cannot both happen:
+            #
+            #   claimed   -> a request is (or was) in flight; the outcome cannot be
+            #                known, so the child is told INDETERMINATE and
+            #                publishes nothing (Article XI.2).
+            #   unclaimed -> the handle is dead before any request existed; an
+            #                ordinary `timeout` record is honest, and the worker
+            #                is now guaranteed unable to claim.
+            #
+            # `issued_dispatch`'s own release, as this dispatch unwinds, is then a
+            # harmless idempotent repeat that reports the same verdict.
+            claimed = dispatch.release() if dispatch is not None else False
+            if claimed:
+                self._increment_metric("timeout")
+                self._log_event(
+                    event="mir_plugin_run_finish",
+                    meeting_id=meeting_id,
+                    window_id=window_id,
+                    plugin_id=plugin_id,
+                    intent_set=intent_set,
+                    context=context,
+                    status="timeout",
+                    error="indeterminate: a physical attempt was in flight",
+                )
+                raise ProviderIndeterminate(
+                    f"plugin {plugin_id} timed out with a physical attempt in flight"
+                )
             duration_ms = (time.monotonic() - started_at) * 1000.0
             result = PluginRunResult(
                 plugin_id=plugin_id,
@@ -603,6 +663,13 @@ class PluginHost:
                 error=result.error,
             )
             return result
+        except CONTROL_SIGNALS:
+            # HS-131-14: the kernel's typed signals are the RUNNER's business. A
+            # dialect retry recorded here as an `error` plugin record would close
+            # the admitted child `succeeded` and the second attempt would never be
+            # admitted — one physical attempt, one dead receipt, a working endpoint
+            # reported as failed. Ordered ahead of the catch-all on purpose.
+            raise
         except Exception as exc:
             duration_ms = (time.monotonic() - started_at) * 1000.0
             result = PluginRunResult(
@@ -638,10 +705,25 @@ class PluginHost:
         transcript_hash: str,
         timeout_seconds: float | None = None,
         defer_heavy: bool = True,
+        dispatch: PluginDispatch | None = None,
     ) -> list[PluginRunResult]:
-        """Execute chain left-to-right while isolating plugin failures."""
+        """Execute chain left-to-right while isolating plugin failures.
+
+        A handle belongs to ONE plugin child. Offering one to a chain is refused
+        here — before any plugin runs, so before any prompt exists — because the
+        alternative is a chain of plugins sharing one child's revision, ordinal,
+        and terminal receipt. An admitted caller therefore passes a one-plugin
+        chain per child; an unadmitted caller passes no handle and runs the whole
+        chain deterministically, exactly as before.
+        """
+        chain = list(plugin_chain)
+        if dispatch is not None and len(chain) != 1:
+            raise PluginDispatchRefused(
+                PLUGIN_DISPATCH_CHAIN_CARDINALITY,
+                detail=f"{len(chain)} plugins under one admitted child",
+            )
         results: list[PluginRunResult] = []
-        for plugin_id in plugin_chain:
+        for plugin_id in chain:
             try:
                 result = self.execute(
                     plugin_id,
@@ -651,7 +733,10 @@ class PluginHost:
                     transcript_hash=transcript_hash,
                     timeout_seconds=timeout_seconds,
                     defer_heavy=defer_heavy,
+                    dispatch=dispatch,
                 )
+            except CONTROL_SIGNALS:
+                raise  # the runner's signal, not this chain's per-plugin failure
             except Exception as exc:
                 key = build_idempotency_key(
                     meeting_id=meeting_id,

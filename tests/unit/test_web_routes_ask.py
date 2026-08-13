@@ -74,7 +74,7 @@ def test_ask_grounds_and_receipt_gates_its_projection(env, monkeypatch) -> None:
     # FROZEN revision, so the same double is installed on the engine class too.
     monkeypatch.setattr("holdspeak.intel.engine.MeetingIntel", lambda **_kw: fake)
     monkeypatch.setattr(
-        "holdspeak.intel.providers.build_configured_meeting_intel", lambda: fake
+        "holdspeak.intel.providers._configured_engine", lambda: fake
     )
     monkeypatch.setattr(
         "holdspeak.web.routes.sync._hub_model_name", lambda ctx: "HubModel-9B"
@@ -223,7 +223,7 @@ def test_ask_model_override_matching_the_hubs_own_model_runs_the_default_engine(
     # FROZEN revision, so the same double is installed on the engine class too.
     monkeypatch.setattr("holdspeak.intel.engine.MeetingIntel", lambda **_kw: fake)
     monkeypatch.setattr(
-        "holdspeak.intel.providers.build_configured_meeting_intel", lambda: fake
+        "holdspeak.intel.providers._configured_engine", lambda: fake
     )
     monkeypatch.setattr(
         "holdspeak.web.routes.sync._hub_model_name", lambda ctx: "HubModel-9B"
@@ -292,7 +292,7 @@ def test_ask_grounding_hydrates_references_from_the_hub_store(env, monkeypatch) 
     # FROZEN revision, so the same double is installed on the engine class too.
     monkeypatch.setattr("holdspeak.intel.engine.MeetingIntel", lambda **_kw: fake)
     monkeypatch.setattr(
-        "holdspeak.intel.providers.build_configured_meeting_intel", lambda: fake
+        "holdspeak.intel.providers._configured_engine", lambda: fake
     )
     monkeypatch.setattr(
         "holdspeak.web.routes.sync._hub_model_name", lambda ctx: "HubModel-9B"
@@ -343,7 +343,7 @@ def test_ask_grounding_full_expand_hydrates_the_transcript_and_marks_a_cut(env, 
     # FROZEN revision, so the same double is installed on the engine class too.
     monkeypatch.setattr("holdspeak.intel.engine.MeetingIntel", lambda **_kw: fake)
     monkeypatch.setattr(
-        "holdspeak.intel.providers.build_configured_meeting_intel", lambda: fake
+        "holdspeak.intel.providers._configured_engine", lambda: fake
     )
     monkeypatch.setattr(
         "holdspeak.web.routes.sync._hub_model_name", lambda ctx: "HubModel-9B"
@@ -438,7 +438,7 @@ def test_ask_surfaces_engine_error_as_502(env, monkeypatch) -> None:
     # FROZEN revision, so the same double is installed on the engine class too.
     monkeypatch.setattr("holdspeak.intel.engine.MeetingIntel", lambda **_kw: _Boom())
     monkeypatch.setattr(
-        "holdspeak.intel.providers.build_configured_meeting_intel", lambda: _Boom()
+        "holdspeak.intel.providers._configured_engine", lambda: _Boom()
     )
     resp = client.post("/api/ask", json={"prompt": "Go"})
     assert resp.status_code == 502

@@ -149,7 +149,7 @@ def _rig(tmp_path: Path, monkeypatch, *, engine: Any = None):
     # `this_machine` resolves through the production builder, so the frozen
     # revision -> engine path is exercised rather than bypassed.
     monkeypatch.setattr(
-        "holdspeak.intel.providers.build_configured_meeting_intel", lambda: engine
+        "holdspeak.intel.providers._configured_engine", lambda: engine
     )
     requests: list[Any] = []
     real_invoke = broker.inference_runner.invoke

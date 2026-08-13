@@ -796,7 +796,10 @@ def test_spoken_dynamic_meeting_after_probe_end_to_end(tmp_path):
     db = get_database(tmp_path / "e2e_dynamic_after.db")
     db.meetings.save_meeting(state)
 
-    segment_probe = build_segment_probe()  # real .43 intel
+    # HS-131-14: a probe exists only where an admitted dispatch handle does, and
+    # this harness admits no routing child (HS-131-17 owns MIR admission). Until
+    # then the probe leg of this e2e cannot run: `None` is the lexical path.
+    segment_probe = build_segment_probe()  # None until MIR routing is admitted
     result = process_meeting_state(
         state,
         host,

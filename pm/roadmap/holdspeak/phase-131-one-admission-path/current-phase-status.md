@@ -1,8 +1,8 @@
 # Phase 131 — One Admission Path
 
-**Status:** IN PROGRESS (10/17).
+**Status:** IN PROGRESS (11/17).
 
-**Last updated:** 2026-08-12.
+**Last updated:** 2026-08-13.
 
 ## Goal
 
@@ -155,7 +155,7 @@ HS-131-11 and HS-131-12 remain held behind the fence.
 | HS-131-11 | The entry-point contract | backlog | [story-11](./story-11-entry-point-docs.md) | — |
 | HS-131-12 | The walk | backlog | [story-12](./story-12-the-walk.md) | — |
 | HS-131-13 | Residual services take the admitted door | done | [story-13](./story-13-residual-service-admission.md) | [evidence-story-13](./evidence-story-13.md) |
-| HS-131-14 | Plugins receive admitted intelligence | backlog | [story-14](./story-14-plugin-provider-admission.md) | — |
+| HS-131-14 | Plugins receive admitted intelligence | done | [story-14](./story-14-plugin-provider-admission.md) | [evidence-story-14](./evidence-story-14.md) |
 | HS-131-15 | Speech side doors become sessions or stay lexical | backlog | [story-15](./story-15-speech-side-door-admission.md) | — |
 | HS-131-16 | The mesh receiver proves authority locally | backlog | [story-16](./story-16-mesh-receiver-authority.md) | — |
 | HS-131-17 | Meetings lose the parallel engine | backlog | [story-17](./story-17-meeting-residual-admission.md) | — |
@@ -409,8 +409,30 @@ are deleted with no shims. The census is now 134 sites, 38 findings, eight
 families, zero unregistered (145→134 / 48→38 / 11→8). The quiet isolated full
 gate has zero new failure names against the HS-131-10 checkpoint and one repaired
 meeting fallback name. Next: HS-131-14, plugins receive admitted intelligence.
-HS-131-11 and HS-131-12 remain held until the remaining four amendments land and
-HS-131-10 closes at zero findings.
+HS-131-14 is done — plugins now receive intelligence rather than constructing
+providers (one Sol design round; the hostile implementation pass found and
+repaired three real concurrency/cardinality defects before returning RATIFY FOR
+STORY CLOSE). Fourteen builtins and `segment_probe` lost `_cached_provider`,
+configured-factory, and `intel_call` side doors; one opaque per-invocation
+`PluginDispatch` binds the runner's exact context, revision, destination,
+warrant basis, ordinal, cancellation signal, and exactly one physical
+completion. A single lock elects claim versus release: timeout before claim
+mechanically prevents late work; timeout after claim is indeterminate and
+cannot publish. Provider failure now fails the child, while compatibility retry
+gets a distinct `_r2` child/handle/context/receipt and only the winner
+materializes. Meeting startup stays lexical until HS-131-17 rather than building
+a segment probe before admission. The public uncontextual configured-provider
+factory is gone; its private body is dominated by exact context validation. The
+census is 105 sites, six findings in six families, zero unregistered
+(134→105 / 38→6 / 8→6); no plugin entered the adapter allowlist. Captured
+focused proof: 811 passed. The quiet isolated full gate found and repaired one
+HS-131-14 test-double regression; its final 91-name ledger has no current-diff
+product regression. The one apparent new name is the inherited live `.43` mesh
+canary flake, reproduced on the untouched HS-131-13 control tree and present in
+earlier Phase-131 ledgers. Next: HS-131-15 chooses admitted sessions versus
+lexical-only for the two speech side doors. HS-131-11 and HS-131-12 remain held
+until the remaining three amendments land and HS-131-10 closes at zero
+findings.
 The roadmap still has inherited structural lint errors in old phases; they are
 named baseline and are not silently bundled into this product phase.
 
