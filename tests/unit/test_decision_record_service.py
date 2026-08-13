@@ -558,7 +558,7 @@ def test_promotion_cancellation_after_provider_return_never_publishes_artifact(t
             broker.parent_run_controller.cancel_by_operation_id(owner, parent_id)
             return "late draft that must not publish"
 
-    broker.inference_runner._engine_factory = lambda _: CancellingIntel()
+    broker.inference_runner._engine_factory = lambda _revision, **_kw: CancellingIntel()
     service = DecisionLifecycleService(db, kernel=broker)
     # The child's provider work completed, so its receipt is EARNED
     # (succeeded); the cancellation election fences PUBLICATION instead —
@@ -590,7 +590,7 @@ def test_promotion_cancelled_after_child_is_eligible_discards_artifact(tmp_path)
     profile = db.profiles.upsert(profile_id="promotion-late", name="Promotion", kind="openAICompatible", base_url="http://promotion", model="promotion-model")
     from holdspeak.kernel.runtime import _configure
     broker = _configure(db); owner = Principal(PrincipalKind.OWNER, "promotion-owner")
-    broker.inference_runner._engine_factory = lambda _: type("Intel", (), {"run_prompt": lambda self, **_: "eligible draft"})()
+    broker.inference_runner._engine_factory = lambda _revision, **_kw: type("Intel", (), {"run_prompt": lambda self, **_: "eligible draft"})()
     finalize = broker.projection_stager.finalize
     def cancel_before_finalize(invocation_id):
         parent_id = broker.store.operation(broker.projection_stager.get(invocation_id).operation_id)["parent_operation_id"]

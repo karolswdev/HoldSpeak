@@ -220,6 +220,21 @@ def test_disable_between_precheck_and_atomic_admission_leaves_tick_unconsumed(tm
     assert result["receipt_id"]
 
 
+def stage_state(db, operation_id: str) -> tuple[str, str]:
+    """The projection stage's state and, when discarded, why (HS-131-10 round 2)."""
+    import json
+
+    with db._connection() as conn:
+        row = conn.execute(
+            "SELECT state,final_result_json FROM kernel_projection_stages WHERE operation_id=?",
+            (operation_id,),
+        ).fetchone()
+    if row is None:
+        return ("", "")
+    payload = json.loads(str(row["final_result_json"]) or "{}")
+    return (str(row["state"]), str(payload.get("discarded") or ""))
+
+
 def test_recipe_edit_during_scheduled_provider_call_cannot_publish_output(tmp_path, monkeypatch):
     db, service, wid = _rig(tmp_path)
     db.workbench_items.upsert(item_id="in-flight", workbench_id=wid, title="in flight")
@@ -242,8 +257,18 @@ def test_recipe_edit_during_scheduled_provider_call_cannot_publish_output(tmp_pa
     child_receipt = broker.store.receipt(child_id)
     parent_receipt = broker.store.receipt(result["parent_operation_id"])
     item = db.workbench_items.get("in-flight")
+    # The output never crosses the publication boundary...
     assert item.status != "done" and item.result in (None, "")
-    assert child_receipt is not None and child_receipt["outcome"] == "delegation_stale_work"
+    # ...but the CHILD's terminal receipt is the honest, IMMUTABLE record of what
+    # the provider actually did (HS-131-10 round 2, Terra blocker 8). The stager
+    # used to rewrite this succeeded receipt to refused/delegation_stale_work,
+    # which is precisely the mutation this story forbids and which
+    # `ExecutorPlane.receipt` refuses by name as `receipt_immutable`.
+    assert child_receipt is not None and child_receipt["outcome"] == "succeeded"
+    assert child_receipt["state"] == "succeeded"
+    # The fence lives on the PROJECTION instead: discarded, carrying the reason.
+    assert stage_state(db, child_id) == ("DISCARDED", "delegation_stale_work")
+    # And the delegation -- the thing that actually went stale -- is revoked.
     assert delegation == {"state": "REVOKED", "revocation_reason": "delegation_stale_work"}
     assert parent_receipt is not None and parent_receipt["outcome"] != "succeeded"
 
@@ -269,8 +294,18 @@ def test_profile_edit_during_scheduled_provider_call_cannot_publish_output(tmp_p
     child_receipt = broker.store.receipt(child_id)
     parent_receipt = broker.store.receipt(result["parent_operation_id"])
     item = db.workbench_items.get("profile-in-flight")
+    # The output never crosses the publication boundary...
     assert item.status != "done" and item.result in (None, "")
-    assert child_receipt is not None and child_receipt["outcome"] == "delegation_target_changed"
+    # ...but the CHILD's terminal receipt is the honest, IMMUTABLE record of what
+    # the provider actually did (HS-131-10 round 2, Terra blocker 8). The stager
+    # used to rewrite this succeeded receipt to refused/delegation_target_changed,
+    # which is precisely the mutation this story forbids and which
+    # `ExecutorPlane.receipt` refuses by name as `receipt_immutable`.
+    assert child_receipt is not None and child_receipt["outcome"] == "succeeded"
+    assert child_receipt["state"] == "succeeded"
+    # The fence lives on the PROJECTION instead: discarded, carrying the reason.
+    assert stage_state(db, child_id) == ("DISCARDED", "delegation_target_changed")
+    # And the delegation -- the thing that actually went stale -- is revoked.
     assert delegation == {"state": "REVOKED", "revocation_reason": "delegation_target_changed"}
     assert parent_receipt is not None and parent_receipt["outcome"] != "succeeded"
 

@@ -23,6 +23,8 @@ import pytest
 
 from holdspeak.config import Config
 from holdspeak.db import Database
+from tests.unit.admitted_context import admitted_context
+from holdspeak.kernel.model import KernelRefused
 from holdspeak.kernel.runtime import _configure
 from holdspeak.speech_session import (
     CAPABILITY_INTENT_CLASSIFY,
@@ -35,6 +37,14 @@ from holdspeak.speech_session import (
     admit_hold_session,
 )
 from holdspeak.speech_session.plan import CAPABILITY_NOT_PLANNED
+
+
+def _admitted_engine(session: Any, capability: str) -> Any:
+    """Stand in for the engine the RUNNER builds: it carries the dispatch context."""
+    revision = session.plan.deployment(session.plan.primary(capability))
+    return SimpleNamespace(
+        _dispatch_context=admitted_context(revision=revision, attempt_ordinal=1)
+    )
 
 pytestmark = pytest.mark.timeout(90, method="signal")
 
@@ -54,6 +64,7 @@ class FakeSchema:
 #: The endpoint the rig's profile adopts, and therefore the endpoint the frozen
 #: revision names. A fake backend must advertise EXACTLY this to be dispatched
 #: unchanged — that is the anti-retargeting check, exercised on every test here.
+FROZEN_PROFILE_ID = "prof_frozen"
 FROZEN_BASE_URL = "http://127.0.0.1:1234/v1"
 FROZEN_MODEL = "qwen-local"
 
@@ -120,7 +131,7 @@ def _config(*, profile_id: str = "prof_frozen") -> Config:
     return config
 
 
-def _seed_profile(db: Database, *, profile_id: str = "prof_frozen", base_url: str = FROZEN_BASE_URL,
+def _seed_profile(db: Database, *, profile_id: str = FROZEN_PROFILE_ID, base_url: str = FROZEN_BASE_URL,
                   model: str = FROZEN_MODEL) -> None:
     db.profiles.upsert(
         profile_id=profile_id, name=profile_id, kind="openAICompatible",
@@ -544,8 +555,16 @@ def test_a_profile_change_after_admission_cannot_retarget_the_dispatch(
         ),
     )
     admission = session.provider()
+    # HS-131-10: the rebind is an adapter FACTORY, so it needs the dispatch context
+    # the runner minted for the claimed child. The engine the runner built carries
+    # it; a bare `None` engine now refuses by name (asserted below).
+    admitted_engine = _admitted_engine(session, CAPABILITY_REWRITE)
 
-    bound = admission.target(elsewhere, None, CAPABILITY_REWRITE)
+    with pytest.raises(KernelRefused) as uncontextual:
+        admission.target(elsewhere, None, CAPABILITY_REWRITE)
+    assert uncontextual.value.reason == "adapter_context_required"
+
+    bound = admission.target(elsewhere, admitted_engine, CAPABILITY_REWRITE)
 
     # The dispatch target was rebuilt from the frozen revision's own fields.
     assert bound is not elsewhere
@@ -553,7 +572,7 @@ def test_a_profile_change_after_admission_cannot_retarget_the_dispatch(
     assert bound.model == FROZEN_MODEL
     assert bound.api_key_env == frozen.secret_slot
     # And it is cached: one construction per revision per session, not per call.
-    assert admission.target(elsewhere, None, CAPABILITY_REWRITE) is bound
+    assert admission.target(elsewhere, admitted_engine, CAPABILITY_REWRITE) is bound
 
     # A real dispatch therefore never reaches the retargeted endpoint. It fails
     # honestly (nothing is listening on the frozen one) instead of succeeding
@@ -603,3 +622,157 @@ def test_a_backend_that_cannot_be_rebound_refuses_by_name(tmp_path, monkeypatch)
     assert raised.value.detail == "paired_runtime"
     # The refusal lands BEFORE the child exists: no operation, no receipt.
     assert _invocations(db) == []
+
+
+# ============ ROUND 2 (coordinator finding): the FALLBACK is a publication ====
+
+
+@pytest.mark.parametrize(
+    "entry_point", ["run_dictation_pipeline", "run_pipeline_corrections_only"]
+)
+def test_an_exception_after_the_fence_still_publishes_nothing(
+    entry_point, tmp_path, monkeypatch
+):
+    """A cancelled session whose run then RAISES must type nothing.
+
+    Both entry points end in ``except Exception -> return text``. That fallback is
+    a publication, and it was unconditional: fence the session, have anything in
+    the run raise — a config read, project detection, the pipeline build, a stage
+    — and the raw transcript was handed back to be typed, after the session had
+    been cancelled. The three explicit fence checks all sat on the happy path,
+    which is exactly the path a cancellation does NOT take.
+
+    Deterministic: the exception is injected at ``build_pipeline``, which every
+    run reaches inside the try and before the first fence check, so there is no
+    ordering to race.
+    """
+    import holdspeak.dictation_runner as runner_module
+    import holdspeak.plugins.dictation.assembly as assembly
+
+    _db, _broker, session, _engine, _requests = _rig(tmp_path, monkeypatch)
+    admission = session.provider()
+    session.cancel_and_close()
+
+    def explode(*_args: Any, **_kwargs: Any) -> Any:
+        raise RuntimeError("the run fell over after the session was cancelled")
+
+    monkeypatch.setattr(assembly, "build_pipeline", explode)
+
+    class _Journal:
+        def __init__(self) -> None:
+            self.rows: list[Any] = []
+
+        def record(self, *args: Any, **kwargs: Any) -> None:
+            self.rows.append(args)
+
+    journal = _Journal()
+    final = getattr(runner_module, entry_point)(
+        PROMPT_SENTINEL,
+        config=_config(),
+        server=SimpleNamespace(dictation_journal=journal),
+        audio_duration_s=1.0,
+        transcribed_at=None,
+        admission=admission,
+    )
+
+    assert final == "", f"{entry_point} typed a cancelled session's transcript"
+    assert PROMPT_SENTINEL not in str(final)
+    assert journal.rows == []
+
+
+@pytest.mark.parametrize(
+    "entry_point", ["run_dictation_pipeline", "run_pipeline_corrections_only"]
+)
+def test_an_exception_without_a_fence_still_falls_back_to_the_text(
+    entry_point, tmp_path, monkeypatch
+):
+    """The guard is the FENCE, not the exception: a live session still recovers.
+
+    The fallback exists so a pipeline bug never costs the user their words. That
+    behaviour is unchanged for any session that has not been cancelled.
+    """
+    import holdspeak.dictation_runner as runner_module
+    import holdspeak.plugins.dictation.assembly as assembly
+
+    _db, _broker, session, _engine, _requests = _rig(tmp_path, monkeypatch)
+    admission = session.provider()  # live: never cancelled
+
+    def explode(*_args: Any, **_kwargs: Any) -> Any:
+        raise RuntimeError("a pipeline bug, on a healthy session")
+
+    monkeypatch.setattr(assembly, "build_pipeline", explode)
+
+    final = getattr(runner_module, entry_point)(
+        PROMPT_SENTINEL,
+        config=_config(),
+        server=SimpleNamespace(dictation_journal=None),
+        audio_duration_s=1.0,
+        transcribed_at=None,
+        admission=admission,
+    )
+
+    assert final == PROMPT_SENTINEL, f"{entry_point} lost a live session's words"
+
+
+@pytest.mark.parametrize(
+    "entry_point", ["run_dictation_pipeline", "run_pipeline_corrections_only"]
+)
+def test_a_fenced_session_publishes_nothing_even_with_the_pipeline_off(
+    entry_point, tmp_path, monkeypatch
+):
+    """The pipeline-disabled return journalled a row and typed the transcript.
+
+    ``_fenced``'s own contract is "no journal row, no final text". The disabled
+    path honoured neither: it ran ``_journal_passthrough`` and returned the
+    transcript before any fence was consulted.
+    """
+    import holdspeak.dictation_runner as runner_module
+
+    _db, _broker, session, _engine, _requests = _rig(tmp_path, monkeypatch)
+    admission = session.provider()
+    session.cancel_and_close()
+
+    config = _config()
+    config.dictation.pipeline.enabled = False
+
+    class _Journal:
+        def __init__(self) -> None:
+            self.rows: list[Any] = []
+
+        def record(self, *args: Any, **kwargs: Any) -> None:
+            self.rows.append(args)
+
+    journal = _Journal()
+    final = getattr(runner_module, entry_point)(
+        PROMPT_SENTINEL,
+        config=config,
+        server=SimpleNamespace(dictation_journal=journal),
+        audio_duration_s=1.0,
+        transcribed_at=None,
+        admission=admission,
+    )
+
+    assert final == ""
+    assert journal.rows == [], "a fenced session recorded a journal row"
+
+
+def test_an_unreadable_fence_fails_closed() -> None:
+    """We cannot tell whether this session may publish, so it may not.
+
+    ``_fenced`` used to be ``fence is not None and fence.discarded(stage)``, so a
+    fence that raised took the whole run into the ``except Exception`` fallback —
+    and that fallback published. Failing closed keeps the one honest answer.
+    """
+    from holdspeak.dictation_runner import _fenced, _publishable
+
+    class _Unreadable:
+        def discarded(self, _stage: str) -> bool:
+            raise RuntimeError("the fence cannot be read")
+
+    admission = SimpleNamespace(fence=_Unreadable())
+    assert _fenced(admission, "any stage") is True
+    assert _publishable(PROMPT_SENTINEL, admission, "any stage") == ""
+
+    # No admission at all (the legacy, unadmitted callers) is NOT fenced.
+    assert _fenced(None, "any stage") is False
+    assert _publishable(PROMPT_SENTINEL, None, "any stage") == PROMPT_SENTINEL

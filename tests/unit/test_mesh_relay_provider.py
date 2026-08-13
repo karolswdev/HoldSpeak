@@ -303,9 +303,17 @@ def test_probe_runtime_reports_mesh_node_liveness(monkeypatch, tmp_path) -> None
 
 
 def test_per_run_profile_builder_returns_the_relay_provider() -> None:
+    from types import SimpleNamespace
+
+    from tests.unit.admitted_context import admitted_context
+
+    # HS-131-10: the profile builder is a context-requiring adapter factory, and
+    # the context is minted from the frozen revision the child was admitted for.
+    frozen = SimpleNamespace(id="dep_relay", destination_id="p-phone")
     intel = build_meeting_intel_for_profile(
         kind="meshNode", base_url=None, model="qwen3.5-4b",
-        profile_id="p-phone", node="walk-edge",
+        profile_id="p-phone", node="walk-edge", deployment_revision=frozen,
+        context=admitted_context(revision=frozen),
     )
     assert isinstance(intel, MeshRelayIntel)
     assert intel.node == "walk-edge" and intel.model_hint == "qwen3.5-4b"
@@ -344,3 +352,75 @@ def test_run_egress_reports_mesh_for_profile_and_default(monkeypatch) -> None:
     relay = MeshRelayIntel(node="walk-edge", model_hint="qwen3.5-4b", relay=object())
     egress, model = _run_egress(None, relay, default_model="")
     assert egress == {"scope": "mesh", "host": "walk-edge"} and model == "qwen3.5-4b"
+
+
+# ── HS-131-10 round 2: the relay cannot ride a stale warrant ─────────────────
+
+
+def test_a_relay_reused_across_children_refuses_its_stale_warrant(db) -> None:
+    """Terra blocker 6, mesh half: the envelope must be THIS child's.
+
+    The revision and the warrant are CONSTRUCTOR state. A relay engine that
+    outlived one admitted child therefore carried that child's warrant into the
+    next one's request: the mesh node would have been handed an envelope whose
+    authority belonged to a different operation, while the receipt named this
+    one. Nothing on the wire would have looked wrong.
+
+    The runner now refuses to rebind a foreign context onto an engine at all, so
+    the reuse cannot happen; this is the same fact checked from the relay's own
+    side, at the last possible moment, and named rather than relayed.
+    """
+    from holdspeak.kernel.dispatch_context import bind_dispatch_context
+    from tests.unit.admitted_context import admitted_context
+
+    clock = _Clock(T0)
+    db.mesh_relay.touch_worker("walk-edge", now=T0)
+    frozen = _revision()
+    warrant = {"signature": "the-warrant-this-engine-was-built-with"}
+    provider = MeshRelayIntel(
+        node="walk-edge", model_hint="qwen3.5-4b", deployment_revision=frozen,
+        warrant=warrant, relay=db.mesh_relay, sleep=clock.sleep, now=clock.now,
+    )
+
+    # A LATER child's context, bound onto the engine an earlier child built.
+    later = admitted_context(
+        revision=SimpleNamespace(id=frozen.id, destination_id=frozen.destination_id)
+    )
+    bind_dispatch_context(provider, later)
+
+    with pytest.raises(MeetingIntelError, match="mesh_envelope_stale_warrant"):
+        provider.run_prompt(user_prompt="hi")
+    # Refused BEFORE the queue: no job carries the wrong authority.
+    assert db.mesh_relay.claim_next("walk-edge", now=T0) is None
+
+
+def test_a_relay_whose_context_agrees_still_relays(db) -> None:
+    """The guard is about disagreement, not about carrying a context at all."""
+    from holdspeak.kernel.dispatch_context import bind_dispatch_context
+    from tests.unit.admitted_context import admitted_context
+
+    clock = _Clock(T0)
+    db.mesh_relay.touch_worker("walk-edge", now=T0)
+    frozen = _revision()
+    context = admitted_context(
+        revision=SimpleNamespace(id=frozen.id, destination_id=frozen.destination_id)
+    )
+    # The warrant the claim actually verified is the one the envelope carries.
+    warrant = {"signature": context.warrant_basis}
+
+    original_sleep = clock.sleep
+
+    def sleep_and_work(seconds: float) -> None:
+        original_sleep(seconds)
+        job = db.mesh_relay.claim_next("walk-edge", now=clock.now())
+        if job is not None:
+            assert job.envelope["warrant"] == warrant
+            db.mesh_relay.complete(job.id, result="relayed", now=clock.now())
+
+    provider = MeshRelayIntel(
+        node="walk-edge", model_hint="qwen3.5-4b", deployment_revision=frozen,
+        warrant=warrant, relay=db.mesh_relay, sleep=sleep_and_work, now=clock.now,
+    )
+    bind_dispatch_context(provider, context)
+
+    assert provider.run_prompt(user_prompt="hi") == "relayed"

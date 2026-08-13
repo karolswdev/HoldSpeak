@@ -161,10 +161,10 @@ close census/cardinality holes that would let a door stay open.
 
 ### Orchestrator disposition
 
-All five amendments ADOPTED. The findings ledger now stands at EIGHT
-families (Cadence get_loop; dormant MIR; dictation dry-run route;
-commands/dictation.py; the mesh receiver; the plugin default-provider
-family; web-route Decisions; the dormant Delivery factory) — per the
-charter, EACH blocks this story's close until the owner charters an
-explicit amendment story. The story will flip BLOCKED with the complete
-inventory + draft amendment shapes as the owner's decision package.
+All five design amendments ADOPTED. Implementation expanded the ledger to
+ELEVEN families: the ruled eight plus the legacy uncontextual factory, the
+parallel live meeting engine, and bookmark auto-label. On 2026-08-12 the owner
+accepted the complete ledger, chartered HS-131-13 through HS-131-17, and
+authorized the verified blocked checkpoint to ship. Each family remains a
+finding, never an exception; HS-131-10 cannot close until the amendment wave
+deletes or admits every pinned site and the census returns zero findings.

@@ -66,7 +66,7 @@ def spy(monkeypatch) -> _LoopSpy:
     # route helper. Keep the production admission/runner path and replace only
     # its provider-construction boundary.
     from holdspeak.kernel.inference_runner import InferenceRunner
-    monkeypatch.setitem(InferenceRunner.__init__.__kwdefaults__, "engine_factory", lambda revision: s)
+    monkeypatch.setitem(InferenceRunner.__init__.__kwdefaults__, "engine_factory", lambda revision, **_kw: s)
     # Ask and legacy Recipe surfaces still construct their provider through this
     # long-standing seam; Sequence/Workflow is deliberately covered above.
     monkeypatch.setattr("holdspeak.intel.providers.build_configured_meeting_intel", lambda: s)

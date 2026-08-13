@@ -59,7 +59,9 @@ def route_rig(tmp_path: Path, monkeypatch):
                 raise RuntimeError("provider failed")
             return f"out:{user_prompt}"
 
-    def build_engine(revision):
+    def build_engine(revision, **_kw):
+        # HS-131-10: the runner hands EVERY factory the same (revision, warrant,
+        # context) convention, so a double takes the kwargs it does not read.
         state["revisions"].append(revision.id)
         return FakeEngine()
 

@@ -95,9 +95,16 @@ class MeetingAdapter:
 
     def dispatch(self, engine: Any, payload: Mapping[str, Any], cancellation: threading.Event) -> dict[str, Any]:
         from ..kernel.model import KernelRefused
+        from ..kernel.provider_signals import CONTROL_SIGNALS
 
         try:
             self.result = self._call(engine, payload, cancellation)
+        except CONTROL_SIGNALS:
+            # HS-131-10 round 2: a typed KERNEL signal, not provider content. The
+            # sanitizer below is about TEXT; swallowing the dialect signal here
+            # meant the runner never admitted the second child, so a compatible
+            # endpoint recorded one physical attempt and a `failed` receipt.
+            raise
         except (KernelRefused, MeetingIntelRefused):
             raise
         except BaseException as exc:  # sanitized: no provider text crosses this line
@@ -195,7 +202,15 @@ def run_admitted_child(
         raise MeetingIntelRefused(exc.reason or SESSION_NOT_LIVE, capability) from None
     if outcome.outcome != "succeeded":
         return outcome, None, dispatcher.result
-    return outcome, broker.projection_stager.finalize(identifier), dispatcher.result
+    # The WINNING attempt's id, not the one we asked for: a dialect retry is a
+    # second admitted child (``<identifier>_r2``) that stages against itself, so
+    # finalizing ``identifier`` would resolve the failed first attempt and discard
+    # the output the run actually produced (HS-131-10 round 2).
+    return (
+        outcome,
+        broker.projection_stager.finalize(outcome.invocation_id or identifier),
+        dispatcher.result,
+    )
 
 
 def run_admitted_capability(

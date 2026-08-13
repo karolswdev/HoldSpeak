@@ -470,7 +470,15 @@ def test_auto_placement_with_an_unreachable_cloud_leg_keeps_one_entry_and_pins_l
     monkeypatch.setattr(
         "holdspeak.intel.providers.build_configured_meeting_intel", lambda: engine
     )
-    built = build_intel_for_revision(resolve_deployment_revision(db, entries[0]))
+    # HS-131-10: the factory is context-requiring, so mint the runner's context
+    # for exactly this revision (a missing one refuses `adapter_context_required`).
+    from tests.unit.admitted_context import admitted_context
+
+    frozen = resolve_deployment_revision(db, entries[0])
+    built = build_intel_for_revision(
+        frozen,
+        context=admitted_context(revision=frozen),
+    )
     assert built is engine
     assert built.provider == "local"
     assert built._active_provider is None

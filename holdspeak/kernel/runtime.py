@@ -213,7 +213,19 @@ def events(after_cursor: int = 0, filter: Mapping[str, Any] | None = None) -> di
 
 
 def claim() -> dict[str, Any]:
-    return _service().claim(_principal.get())
+    """Claim work as an out-of-process executor would.
+
+    HS-131-10: the in-memory claim witness never leaves the process. It is proof
+    that THIS runtime claimed the child (an object identity, not a token), so it
+    is meaningless — and unserializable — on the wire. In-process callers that
+    need it (the inference runner) claim through the broker directly.
+    """
+    result = _service().claim(_principal.get())
+    operations = [
+        {key: value for key, value in operation.items() if key != "claim_witness"}
+        for operation in result.get("operations", [])
+    ]
+    return {**result, "operations": operations}
 
 
 def receipt(operation_id: str, outcome: str, result_ref: str = "") -> dict[str, Any]:

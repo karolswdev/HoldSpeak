@@ -85,13 +85,38 @@ def agrees(runtime: Any, revision: Any) -> bool:
     return False
 
 
-def rebind(runtime: Any, revision: Any) -> Any:
+def ensure_rebindable(revision: Any) -> None:
+    """Refuse by name when this frozen engine has no constructible backend here.
+
+    Split out of :func:`rebind` (HS-131-10) so the pre-admission check can still
+    refuse an unbindable engine before any operation exists, while CONSTRUCTION
+    stays behind the runner's dispatch context.
+    """
+    engine = str(getattr(revision, "engine", "") or "")
+    if engine in ENDPOINT_ENGINES:
+        endpoint = str(getattr(revision, "endpoint", "") or "").strip()
+        model = str(getattr(revision, "model", "") or "").strip()
+        if endpoint and model:
+            return
+    raise SpeechSessionRefused(REVISION_TARGET_UNBINDABLE, detail=engine)
+
+
+def rebind(runtime: Any, revision: Any, *, context: Any = None) -> Any:
     """Rebuild ``runtime``'s dispatch target from ``revision``'s frozen fields.
+
+    HS-131-10: this is an adapter FACTORY — it constructs a real backend — so it
+    requires the dispatch context the runner minted for this claimed child, bound
+    to this exact revision. A missing, hand-built, or wrong-revision context
+    refuses by name (``adapter_context_required`` / ``adapter_context_mismatch``)
+    before the backend exists.
 
     Refuses by name when the frozen engine has no constructible backend here — a
     paired-device or unknown engine, or a mesh engine reached outside the mesh leg
     that carries the admitted envelope.
     """
+    from ..kernel.dispatch_context import bind_dispatch_context, require_dispatch_context
+
+    bound = require_dispatch_context(context, revision)
     engine = str(getattr(revision, "engine", "") or "")
     if engine in ENDPOINT_ENGINES:
         endpoint = str(getattr(revision, "endpoint", "") or "").strip()
@@ -103,16 +128,19 @@ def rebind(runtime: Any, revision: Any) -> Any:
         inner = innermost(runtime)
         timeout = float(getattr(inner, "timeout_seconds", 0.0) or 8.0)
         log.info("speech dispatch rebound onto the admitted revision: %s", revision.id)
-        return OpenAICompatibleRuntime(
-            model=model,
-            base_url=endpoint,
-            api_key_env=str(getattr(revision, "secret_slot", "") or ""),
-            timeout_seconds=timeout,
+        return bind_dispatch_context(
+            OpenAICompatibleRuntime(
+                model=model,
+                base_url=endpoint,
+                api_key_env=str(getattr(revision, "secret_slot", "") or ""),
+                timeout_seconds=timeout,
+            ),
+            bound,
         )
     raise SpeechSessionRefused(REVISION_TARGET_UNBINDABLE, detail=engine)
 
 
-def bound_target(runtime: Any, revision: Optional[Any]) -> Any:
+def bound_target(runtime: Any, revision: Optional[Any], *, context: Any = None) -> Any:
     """The object a non-mesh admitted child may dispatch through.
 
     ``revision`` of ``None`` (a plan that froze no deployment object for this
@@ -123,7 +151,7 @@ def bound_target(runtime: Any, revision: Optional[Any]) -> Any:
         return runtime
     if agrees(runtime, revision):
         return runtime
-    return rebind(runtime, revision)
+    return rebind(runtime, revision, context=context)
 
 
 __all__ = [
@@ -132,6 +160,7 @@ __all__ = [
     "MESH_ENGINES",
     "agrees",
     "bound_target",
+    "ensure_rebindable",
     "innermost",
     "rebind",
 ]

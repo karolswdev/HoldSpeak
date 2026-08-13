@@ -38,7 +38,14 @@ def test_capture_survives_profile_mutation_and_deletion(tmp_path, monkeypatch) -
             self.kwargs = kwargs
 
     monkeypatch.setattr("holdspeak.intel.engine.MeetingIntel", Engine)
-    engine = build_intel_for_revision(resolved)
+    from tests.unit.admitted_context import admitted_context
+
+    # HS-131-10: context-requiring factory (the legacy `build_intel_for_target`
+    # below still reaches it through the ONE named legacy marker).
+    engine = build_intel_for_revision(
+        resolved,
+        context=admitted_context(revision=resolved),
+    )
     assert engine.kwargs["cloud_base_url"] == revision.endpoint
     engine_from_target = build_intel_for_target(captured_target, db)
     assert engine_from_target.kwargs["cloud_base_url"] == revision.endpoint

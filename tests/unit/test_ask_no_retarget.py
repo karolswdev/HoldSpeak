@@ -39,7 +39,7 @@ def rig(tmp_path, monkeypatch):
     # The admitted runner loads engines from the frozen deployment revision.
     # Targeting is the behavior here, so its runner seam supplies a test engine.
     broker = _configure(db)
-    monkeypatch.setattr(broker.inference_runner, "_engine_factory", lambda revision: _FakeIntel())
+    monkeypatch.setattr(broker.inference_runner, "_engine_factory", lambda revision, **_kw: _FakeIntel())
     return AskService(db, hub_model=lambda: "", broker=broker)
 
 

@@ -4,7 +4,14 @@ from __future__ import annotations
 from typing import Any, Mapping
 
 from ..principals import PrincipalKind
+from .claim_witness import _install_claim_issuer
 from .model import FINAL_STATES, KernelRefused, valid_ref
+
+# HS-131-10 round 2: the process's ONE witness issuer, taken here at import and
+# unobtainable afterwards (`_install_claim_issuer` refuses every later call). It
+# is a module local rather than an importable mint, so no product module can be
+# handed authority by calling something with a string and a mapping.
+_issue_claim_witness = _install_claim_issuer()
 
 
 class ExecutorPlane:
@@ -17,6 +24,11 @@ class ExecutorPlane:
         operation = self.store.claim_candidate(principal.identity, native_id)
         if operation is None:
             return {"operations": []}
+        # HS-131-10: the CHILD's warrant, kept separate from the ancestor walk's.
+        # The walk used to assign through this same name, so a claimed child was
+        # handed back its last ANCESTOR's warrant — and everything downstream (the
+        # engine's mesh envelope, the dispatch context's authenticated basis) was
+        # then bound to the wrong operation.
         warrant = operation["warrant"]
         reason = ""
         if not self.store.valid_warrant(warrant):
@@ -31,11 +43,11 @@ class ExecutorPlane:
             parent_id = str(operation.get("parent_operation_id") or "")
             while parent_id:
                 parent = self.store.operation(parent_id)
-                warrant = {} if parent is None else parent["warrant"]
+                ancestor = {} if parent is None else parent["warrant"]
                 if (
                     parent is None or parent["state"] != "claimed" or bool(parent["warrant_revoked"])
-                    or not self.store.valid_warrant(warrant)
-                    or float(warrant.get("execution_expires_at") or 0) <= self._clock()
+                    or not self.store.valid_warrant(ancestor)
+                    or float(ancestor.get("execution_expires_at") or 0) <= self._clock()
                 ):
                     reason = "parent_operation_not_live"
                     break
@@ -59,6 +71,14 @@ class ExecutorPlane:
         )
         claimed = self._handle(operation)
         claimed["warrant"] = warrant
+        # HS-131-10: the ONE witness mint. Everything an adapter factory later
+        # demands is proven HERE — the signature, the revocation state, the
+        # expiry, the payload binding, and the whole ancestor chain have just been
+        # verified for THIS operation — so the dispatch context is minted from an
+        # event that happened rather than from arguments a caller can write down.
+        claimed["claim_witness"] = _issue_claim_witness(
+            operation_id=str(operation["operation_id"]), warrant=warrant
+        )
         return {"operations": [claimed]}
 
     def receipt(

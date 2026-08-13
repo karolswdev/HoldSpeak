@@ -250,7 +250,7 @@ def test_synthetic_admitted_reference_invocation_and_cancelled_stream(tmp_path: 
     broker = _configure(database)
     owner = Principal(PrincipalKind.OWNER, "integration-owner")
     runner = InferenceRunner(
-        broker, database, engine_factory=lambda value: {"revision": value.id},
+        broker, database, engine_factory=lambda value, **_kw: {"revision": value.id},
         principal_provider=lambda: owner,
     )
 

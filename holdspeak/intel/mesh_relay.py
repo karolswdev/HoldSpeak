@@ -90,6 +90,7 @@ class MeshRelayIntel:
         revision = self._deployment_revision.to_dict()
         if not str(revision.get("id") or ""):
             raise MeetingIntelError("mesh relay: mesh_envelope_missing")
+        self._assert_envelope_is_this_childs(revision)
 
         from ..constitutional_context import constitutional_system_message
         constitutional = constitutional_system_message()
@@ -116,6 +117,32 @@ class MeshRelayIntel:
                     f"mesh node '{self.node}': {current.error or 'run failed'}"
                 )
             self._sleep(self._poll_interval)
+
+    def _assert_envelope_is_this_childs(self, revision: dict[str, Any]) -> None:
+        """The envelope must belong to the child that is dispatching RIGHT NOW.
+
+        HS-131-10 round 2. The revision and the warrant are CONSTRUCTOR state, so
+        a relay engine that outlived one admitted child carried that child's
+        warrant into the next one's request — the mesh node would then have been
+        handed an envelope whose authority belonged to a different operation while
+        the receipt named this one.
+
+        The runner refuses to rebind a foreign context onto an engine, which stops
+        the reuse itself; this is the same fact checked at the last possible
+        moment, from the relay's own side, and it names the mismatch rather than
+        relaying under a stale basis. No context bound (a mesh receiver replaying
+        an already-verified envelope) leaves the existing posture untouched.
+        """
+        from ..kernel.dispatch_context import dispatch_context_of
+
+        context = dispatch_context_of(self)
+        if context is None:
+            return
+        warrant = self._warrant if isinstance(self._warrant, dict) else {}
+        if context.warrant_basis != str(warrant.get("signature") or ""):
+            raise MeetingIntelError("mesh relay: mesh_envelope_stale_warrant")
+        if context.revision_id != str(revision.get("id") or ""):
+            raise MeetingIntelError("mesh relay: mesh_envelope_stale_revision")
 
     def _chat_completion_text(
         self,

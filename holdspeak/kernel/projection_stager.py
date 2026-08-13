@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 import sqlite3
 import time
 import uuid
@@ -15,7 +16,9 @@ from dataclasses import dataclass
 from typing import Any
 
 from .model import KernelRefused
+from .projection_publisher import StagePublisher, retarget_publisher
 
+__all__ = ["ProjectionStage", "ProjectionStager", "StagePublisher", "retarget_publisher"]
 
 _COMPLETED_STATES = frozenset({"succeeded", "failed", "refused", "cancelled", "indeterminate"})
 _NON_SUCCESS = _COMPLETED_STATES - {"succeeded"}
@@ -71,16 +74,15 @@ class ProjectionStager:
         if discard_on_parent_cancel:
             self._parent_cancel_discards.add(kind)
 
-    def publisher(self, invocation_id: str, kind: str, encoder: Callable[[Any], Mapping[str, Any]]) -> Callable[[Any], str]:
-        """Return the sole callback shape that a migrated service may give runner."""
+    def publisher(self, invocation_id: str, kind: str, encoder: Callable[[Any], Mapping[str, Any]]) -> StagePublisher:
+        """Return the sole callback shape that a migrated service may give runner.
+
+        A rebindable :class:`~.projection_publisher.StagePublisher`, so a dialect
+        retry stages against the child that actually ran it (HS-131-10 round 2).
+        """
         if not callable(encoder):
             raise TypeError("projection encoder must be callable")
-        def publish(result: Any) -> str:
-            projection = encoder(result)
-            if not isinstance(projection, Mapping):
-                raise KernelRefused("projection_encoder_not_mapping")
-            return self.stage(invocation_id, kind, projection).result_ref
-        return publish
+        return StagePublisher(self, invocation_id, kind, encoder)
 
     def stage(self, invocation_id: str, kind: str, projection: Mapping[str, Any]) -> ProjectionStage:
         material = _canonical(dict(projection))
@@ -134,6 +136,34 @@ class ProjectionStager:
             return "delegation_target_changed", str(delegation["workbench_id"])
         return "", ""
 
+    @staticmethod
+    def _retry_stage(conn: sqlite3.Connection, invocation_id: str) -> Any:
+        """The stage a dialect RETRY of this logical invocation left, if any.
+
+        A caller holds the invocation id it asked for. HS-131-10 admits a dialect
+        retry as a second child under a derived id (``<iid>_r2``,
+        :func:`~.provider_signals.retry_invocation_id`) which stages against
+        itself — correctly, since it is the child that ran. Without this lookup
+        every existing service would finalize the id it remembers, find no row,
+        and silently drop the output the retry earned.
+
+        Deliberately narrow: only ``<invocation_id>_r<digits>``, only when the
+        asked-for id staged NOTHING (the first attempt raised its dialect signal
+        before ever publishing), and the ordinary receipt/parent/drift gates below
+        still decide whether the row may publish. The LIKE only narrows the scan;
+        the regex is what decides membership.
+        """
+        rows = conn.execute(
+            "SELECT * FROM kernel_projection_stages WHERE invocation_id LIKE ?"
+            " ORDER BY created_at DESC",
+            (f"{invocation_id}_r%",),
+        ).fetchall()
+        pattern = re.compile(rf"^{re.escape(invocation_id)}_r\d+$")
+        for row in rows:
+            if pattern.match(str(row["invocation_id"])):
+                return row
+        return None
+
     def finalize(self, invocation_id: str) -> Mapping[str, Any] | None:
         """Materialize exactly once, only when a matching receipt permits it."""
         published: Mapping[str, Any] | None = None
@@ -141,6 +171,8 @@ class ProjectionStager:
         with self._database._connection() as conn:
             conn.execute("BEGIN IMMEDIATE")
             row = conn.execute("SELECT * FROM kernel_projection_stages WHERE invocation_id=?", (invocation_id,)).fetchone()
+            if row is None:
+                row = self._retry_stage(conn, invocation_id)
             if row is None:
                 return None
             stage = self._row(row)
@@ -177,12 +209,24 @@ class ProjectionStager:
                 raise KernelRefused("projection_stage_state_invalid")
             drift, workbench_id = self._scheduler_delegation_drift(conn, stage)
             if drift:
-                # The provider has returned, but its old-term output never crosses
-                # the publication boundary. Receipt mutation and discard share the
-                # materialization transaction that otherwise writes domain state.
-                conn.execute("UPDATE kernel_operations SET state='refused',revision=revision+1,updated_at=? WHERE operation_id=? AND state='succeeded'", (self._clock(), stage.operation_id))
-                conn.execute("UPDATE kernel_receipts SET state='refused',outcome=?,result_ref='' WHERE operation_id=?", (drift, stage.operation_id))
-                conn.execute("UPDATE kernel_projection_stages SET state='DISCARDED',updated_at=? WHERE stage_id=?", (self._clock(), stage.stage_id))
+                # The provider returned, and the schedule's terms changed while it
+                # was doing so. The output never crosses the publication boundary
+                # — but the CHILD's terminal receipt is not the place to say so.
+                #
+                # Round 2: this used to UPDATE an already-`succeeded` invocation
+                # operation and its receipt to `refused`/<drift> — exactly the
+                # mutation this story's acceptance criterion (and
+                # `ExecutorPlane.receipt`'s `receipt_immutable`) forbids. The child
+                # receipt is the honest record of what the PROVIDER did; the
+                # schedule going stale is a fact about the DELEGATION. So the fence
+                # moves entirely to the projection: the stage is DISCARDED with the
+                # reason, the delegation is revoked below, no domain state is
+                # written, and late publication is prevented by the same
+                # transaction as before — nothing is rewritten.
+                conn.execute(
+                    "UPDATE kernel_projection_stages SET state='DISCARDED',final_result_json=?,updated_at=? WHERE stage_id=?",
+                    (_canonical({"discarded": drift}), self._clock(), stage.stage_id),
+                )
                 revocation = (workbench_id, drift)
             else:
                 result = conn.execute("UPDATE kernel_projection_stages SET state='FINALIZING',updated_at=? WHERE stage_id=? AND state='STAGED'", (self._clock(), stage.stage_id)).rowcount
@@ -252,6 +296,3 @@ class ProjectionStager:
     @staticmethod
     def _row(row: Any) -> ProjectionStage:
         return ProjectionStage(str(row["stage_id"]), str(row["invocation_id"]), str(row["operation_id"]), str(row["kind"]), json.loads(str(row["projection_json"])), str(row["result_ref"]), str(row["state"]), float(row["created_at"]), float(row["updated_at"]))
-
-
-__all__ = ["ProjectionStage", "ProjectionStager"]

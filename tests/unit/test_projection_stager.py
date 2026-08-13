@@ -53,7 +53,7 @@ def test_projection_stage_precedes_success_receipt_and_finalizes_once(rig):
     db, broker, revision = rig
     stager = broker.projection_stager
     stager.register("test-result", _materializer(stager))
-    runner = InferenceRunner(broker, db, engine_factory=lambda _: object(), principal_provider=lambda: OWNER)
+    runner = InferenceRunner(broker, db, engine_factory=lambda _revision, **_kw: object(), principal_provider=lambda: OWNER)
     seen = []
 
     def encode(answer):
@@ -85,7 +85,7 @@ def test_projection_stage_precedes_success_receipt_and_finalizes_once(rig):
 def test_stage_payload_conflict_and_permit_are_fenced(rig):
     db, broker, revision = rig
     stager = broker.projection_stager
-    runner = InferenceRunner(broker, db, engine_factory=lambda _: object(), principal_provider=lambda: OWNER)
+    runner = InferenceRunner(broker, db, engine_factory=lambda _revision, **_kw: object(), principal_provider=lambda: OWNER)
     outcome = runner.invoke(_request(revision), Adapter(), publish=stager.publisher("projection_test", "fenced", lambda answer: {"answer": answer}))
     assert outcome.outcome == "succeeded"
     with pytest.raises(KernelRefused, match="projection_stage_payload_conflict"):
@@ -121,3 +121,120 @@ def test_absent_receipt_stays_invisible_until_liveness_terminalizes(rig):
     assert stager.get("raw_stage").state == "STAGED"
     with db._connection() as conn:
         assert conn.execute("SELECT COUNT(*) FROM materialized_projection").fetchone()[0] == 0
+
+
+# ==================================== ROUND 2: the terminal receipt is immutable
+
+
+def test_schedule_drift_discards_the_projection_without_touching_the_receipt(tmp_path):
+    """Terra blocker 8: the stager REWROTE a succeeded child receipt.
+
+    When a scheduled run's terms changed while the provider was answering, the
+    stager did this inside the materialization transaction::
+
+        UPDATE kernel_operations SET state='refused' ... WHERE state='succeeded'
+        UPDATE kernel_receipts  SET state='refused',outcome=<drift>,result_ref=''
+
+    That is a mutation of an already-terminal invocation receipt — the exact
+    thing this story's acceptance criterion forbids, and the thing
+    ``ExecutorPlane.receipt`` itself refuses by name (``receipt_immutable``). The
+    provider DID run and DID answer; the schedule going stale afterwards is a
+    fact about the delegation, not a reason to rewrite history.
+
+    The fence therefore lives entirely on the projection now. This reads the
+    child's receipt row BYTE FOR BYTE before and after the drifted finalization.
+    """
+    import json
+
+    from holdspeak.services.schedule_delegation import ScheduleDelegationService
+    from holdspeak.services.workbench_runner import WorkbenchRunner
+    from tests.unit.test_schedule_delegations import OWNER as SCHEDULE_OWNER
+    from tests.unit.test_schedule_delegations import SCHEDULER, _rig as _schedule_rig
+
+    import asyncio
+
+    db, service, workbench_id = _schedule_rig(tmp_path)
+    db.workbench_items.upsert(
+        item_id="byte-for-byte", workbench_id=workbench_id, title="byte for byte"
+    )
+    service.update_workbench(SCHEDULE_OWNER, workbench_id, schedule_enabled=True)
+    delegation_id = ScheduleDelegationService(db).live(workbench_id)["id"]
+
+    class _EditsTheRecipeMidCall:
+        def run_prompt(self, **_):
+            # A real durable edit while the provider call is in flight.
+            with db._connection() as conn:
+                conn.execute(
+                    "UPDATE recipes SET last_modified='edited-during-provider' WHERE id='r'"
+                )
+            return "the provider really did answer"
+
+    import holdspeak.intel.providers as providers
+
+    original = providers.build_meeting_intel_for_profile
+    providers.build_meeting_intel_for_profile = lambda **_: _EditsTheRecipeMidCall()
+    try:
+        broker = _configure(db)
+        # Capture the child's receipt the instant the RUNNER made it terminal.
+        snapshots: list[str] = []
+        persist = broker.inference_runner._persist_receipt
+
+        def capture(active, operation_id, outcome, result_ref):
+            receipt = persist(active, operation_id, outcome, result_ref)
+            operation = broker.store.operation(operation_id)
+            if operation and operation["name"] == "inference.invoke":
+                snapshots.append(json.dumps(dict(receipt), sort_keys=True))
+            return receipt
+
+        broker.inference_runner._persist_receipt = capture
+        result = asyncio.run(
+            WorkbenchRunner(db, broker).run_scheduled(
+                SCHEDULER, workbench_id, due_minute=424242
+            )
+        )
+    finally:
+        providers.build_meeting_intel_for_profile = original
+
+    with db._connection() as conn:
+        child_id = conn.execute(
+            "SELECT operation_id FROM kernel_operations"
+            " WHERE parent_operation_id=? AND name='inference.invoke'",
+            (result["parent_operation_id"],),
+        ).fetchone()[0]
+        stage = dict(
+            conn.execute(
+                "SELECT state,final_result_json FROM kernel_projection_stages"
+                " WHERE operation_id=?",
+                (child_id,),
+            ).fetchone()
+        )
+        delegation = dict(
+            conn.execute(
+                "SELECT state,revocation_reason FROM kernel_schedule_delegations WHERE id=?",
+                (delegation_id,),
+            ).fetchone()
+        )
+
+    assert snapshots, "the runner never terminalized an invocation child"
+    after = json.dumps(dict(broker.store.receipt(child_id)), sort_keys=True)
+    # BYTE FOR BYTE: not merely the same outcome — the same row.
+    assert after == snapshots[-1]
+    assert json.loads(after)["outcome"] == "succeeded"
+    assert broker.store.operation(child_id)["state"] == "succeeded"
+
+    # The projection is what carries the refusal, and nothing was published.
+    assert stage["state"] == "DISCARDED"
+    assert json.loads(stage["final_result_json"] or "{}") == {
+        "discarded": "delegation_stale_work"
+    }
+    item = db.workbench_items.get("byte-for-byte")
+    assert item.status != "done" and item.result in (None, "")
+    assert delegation == {
+        "state": "REVOKED", "revocation_reason": "delegation_stale_work"
+    }
+
+    # And a second finalization cannot resurrect it (no late publication).
+    assert broker.projection_stager.finalize(
+        broker.store.operation(child_id)["native_id"]
+    ) is None
+    assert json.dumps(dict(broker.store.receipt(child_id)), sort_keys=True) == after

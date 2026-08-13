@@ -134,7 +134,7 @@ def test_admitted_summary_stamps_journal_observer_provenance_and_degrades_honest
         def run_prompt(self, **_):
             return "Only the observed facts."
 
-    broker.inference_runner._engine_factory = lambda _: FakeIntel()
+    broker.inference_runner._engine_factory = lambda _revision, **_kw: FakeIntel()
     summarizer = rails_observer.build_profile_summarizer(
         profile.id, db=db, broker=broker, principal=principal,
     )
@@ -151,7 +151,7 @@ def test_admitted_summary_stamps_journal_observer_provenance_and_degrades_honest
         "service", "rails-observer", "rails-observer:journal-only",
     )
 
-    broker.inference_runner._engine_factory = lambda _: (_ for _ in ()).throw(RuntimeError("model down"))
+    broker.inference_runner._engine_factory = lambda _revision, **_kw: (_ for _ in ()).throw(RuntimeError("model down"))
     degraded = rails_observer.summarize_batch([_event("t2", "gate_refusal")], summarize_fn=summarizer)
     degraded_note = rails_observer.record_journal_entry(db, degraded, title="Rails journal")
     assert degraded == {"events": [_event("t2", "gate_refusal")], "summary": "", "degraded": True}

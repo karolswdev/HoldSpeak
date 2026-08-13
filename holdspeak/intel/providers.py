@@ -215,6 +215,16 @@ def build_configured_meeting_intel() -> "MeetingIntel":
     this for their default intel provider so they honour the configured endpoint
     (e.g. a self-hosted `.43` cloud base URL) instead of the bare `MeetingIntel()`
     module defaults — which would otherwise ignore the user's provider entirely.
+
+    HS-131-10 FINDING ``plugin-default-provider``: this is the legacy UNCONTEXTUAL
+    constructor. Its remaining direct callers — fourteen builtin
+    ``_cached_provider`` sites, `plugins/segment_probe.py`, and
+    `services/cadence_service.py` — have NO admitted child behind them, which is
+    why they are named blocking findings the census pins at their call sites.
+    It also stays the long-standing injectable construction seam. An ADMITTED
+    caller never reaches it directly: it goes through
+    :func:`configured_meeting_intel`, which refuses without the runner's dispatch
+    context before this body runs.
     """
     from ..config import Config
     from .engine import MeetingIntel
@@ -241,6 +251,30 @@ def build_configured_meeting_intel() -> "MeetingIntel":
     if model_path:
         kwargs["model_path"] = model_path
     return MeetingIntel(**kwargs)
+
+
+def configured_meeting_intel(*, context: Any, revision: Any = None) -> "MeetingIntel":
+    """The configured-placement engine for ONE admitted child (HS-131-10).
+
+    The allowlisted adapter factory every migrated branch uses. It refuses BY
+    NAME — before the legacy constructor above runs, so before any provider
+    object exists — without the dispatch context the runner minted for the
+    claimed child (or the ONE named legacy marker the census pins to its exact
+    finding scopes).
+
+    The construction itself is deliberately the module-level
+    ``build_configured_meeting_intel`` attribute, so the long-standing injectable
+    seam keeps working; the gate is what is new.
+
+    Round 2 — a REAL context must arrive with the exact immutable ``revision``
+    it was minted for. Validating a context against nothing proved only that some
+    child had been admitted somewhere, which is not authority to build THIS
+    deployment's engine.
+    """
+    from ..kernel.dispatch_context import bind_dispatch_context, require_bound_context
+
+    bound = require_bound_context(context, revision)
+    return bind_dispatch_context(build_configured_meeting_intel(), bound)
 
 
 def configured_local_meeting_model_path() -> str:
@@ -710,7 +744,7 @@ def effective_dictation_llm(
 def build_meeting_intel_for_profile(
     *, kind: str, base_url: Optional[str], model: Optional[str], profile_id: str,
     node: str = "", model_file: str = "", deployment_revision: Any = None,
-    warrant: Optional[dict[str, Any]] = None,
+    warrant: Optional[dict[str, Any]] = None, context: Any = None,
 ) -> "MeetingIntel":
     """Build a `MeetingIntel` for a specific RuntimeProfile (Phase 24).
 
@@ -721,6 +755,41 @@ def build_meeting_intel_for_profile(
 
     ``onDevice`` loads THIS profile's ``model_file`` — the exact local model that
     made the destination ready — never the global meeting model (HS-130-03).
+
+    HS-131-10: an allowlisted adapter factory. It refuses BY NAME — before any
+    provider object exists — without the runner's dispatch context for the exact
+    revision being built (or the ONE named legacy marker, carried today only by the
+    mesh receiver, which is itself a blocking finding).
+
+    Round 2 — ``deployment_revision=None`` with a REAL context now refuses. The
+    old gate passed ``None`` straight into the validator, which then compared
+    nothing at all, so any genuine context built any profile.
+    """
+    from ..kernel.dispatch_context import bind_dispatch_context, require_bound_context
+    from .engine import MeetingIntel
+
+    bound = require_bound_context(context, deployment_revision)
+    return bind_dispatch_context(
+        _profile_engine(
+            kind=kind, base_url=base_url, model=model, profile_id=profile_id,
+            node=node, model_file=model_file, deployment_revision=deployment_revision,
+            warrant=warrant, context=context,
+        ),
+        bound,
+    )
+
+
+def _profile_engine(
+    *, kind: str, base_url: Optional[str], model: Optional[str], profile_id: str,
+    node: str = "", model_file: str = "", deployment_revision: Any = None,
+    warrant: Optional[dict[str, Any]] = None, context: Any = None,
+) -> "MeetingIntel":
+    """Construct the profile-shaped engine (reached only with a validated context).
+
+    ``context`` is carried, not re-validated: the caller above already refused a
+    missing or mismatched one. It travels so the configured-placement fallbacks
+    below stay on the same admitted path instead of dropping to the legacy
+    uncontextual constructor.
     """
     from .engine import MeetingIntel
 
@@ -737,7 +806,9 @@ def build_meeting_intel_for_profile(
         # another's key (HS-130-02). Fall back to the configured local engine
         # rather than send a transcript out under a collided credential.
         if not str(profile_id or "").strip():
-            return build_configured_meeting_intel()
+            return configured_meeting_intel(
+                context=context, revision=deployment_revision
+            )
         env = profile_key_env(profile_id)
         return MeetingIntel(
             provider="cloud",
@@ -753,7 +824,7 @@ def build_meeting_intel_for_profile(
         if model_path:
             kwargs["model_path"] = model_path
         return MeetingIntel(**kwargs)
-    return build_configured_meeting_intel()
+    return configured_meeting_intel(context=context, revision=deployment_revision)
 
 
 def configured_egress_boundary(meeting_cfg: Any) -> str:

@@ -2,8 +2,8 @@
 
 - **Project:** holdspeak
 - **Phase:** 131
-- **Status:** in-progress
-- **Depends on:** HS-131-03, HS-131-04, HS-131-05, HS-131-06, HS-131-07, HS-131-08, HS-131-09
+- **Status:** blocked
+- **Depends on:** HS-131-03, HS-131-04, HS-131-05, HS-131-06, HS-131-07, HS-131-08, HS-131-09, HS-131-13, HS-131-14, HS-131-15, HS-131-16, HS-131-17
 - **Unblocks:** HS-131-11, HS-131-12
 - **Owner:** unassigned
 
@@ -96,3 +96,12 @@ another door appears.
 The allowlist may contain provider adapter implementations, but no product
 surface or domain service. A wrapper that only records around a direct call does
 not satisfy this story.
+
+On 2026-08-12 the owner chartered the complete five-story amendment wave and
+authorized this verified blocked checkpoint to ship. The exact eleven-family,
+48-site ledger is in
+[`assets/hs-131-10/findings-inventory.md`](./assets/hs-131-10/findings-inventory.md);
+the ruling and verification judgment are in
+[`OWNER-DECISION-PACKAGE-HS-131-10.md`](./OWNER-DECISION-PACKAGE-HS-131-10.md).
+HS-131-13 through HS-131-17 must delete or admit every finding before this story
+can return to `in-progress` and close. HS-131-11 and HS-131-12 remain held.

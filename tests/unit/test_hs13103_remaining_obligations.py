@@ -77,7 +77,7 @@ def _request(revision: Any, invocation_id: str) -> InvocationRequest:
 
 def _stage(rig: tuple[Database, Any, Any], invocation_id: str, kind: str, projection: dict[str, Any]) -> None:
     db, broker, revision = rig
-    outcome = InferenceRunner(broker, db, engine_factory=lambda _: object(), principal_provider=lambda: OWNER).invoke(
+    outcome = InferenceRunner(broker, db, engine_factory=lambda _revision, **_kw: object(), principal_provider=lambda: OWNER).invoke(
         _request(revision, invocation_id),
         Adapter(projection["output"]),
         publish=broker.projection_stager.publisher(invocation_id, kind, lambda _: projection),

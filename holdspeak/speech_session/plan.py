@@ -250,7 +250,10 @@ class LocalWhisperDeployment:
     and read no mutable configuration — it only carries the frozen revision.
     """
 
-    __slots__ = ("revision",)
+    # ``_dispatch_context`` is a slot so the admitted child's HS-131-10 context can
+    # ride the Whisper handle too: a slotted engine that cannot hold it would make
+    # the dispatch leg fall back to the runner's own copy instead of proving it.
+    __slots__ = ("revision", "_dispatch_context")
 
     def __init__(self, revision: Any) -> None:
         self.revision = revision

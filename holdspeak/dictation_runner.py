@@ -128,9 +128,37 @@ def _fenced(admission: Any, stage: str) -> bool:
     The carrier arrives EXPLICITLY as ``admission`` (Sol OQ5) — this module reads
     no ambient session state. A fenced run publishes nothing: no journal row, no
     final text, and no provider child (each child re-checks the same fence).
+
+    Fails CLOSED (HS-131-10 round 2). A session that HAS a fence but whose fence
+    cannot be read is not evidence that publication is allowed; the honest answer
+    to "may this cancelled-or-not session publish?" when we cannot tell is no. A
+    run with no admission at all — the legacy, unadmitted callers — has no fence
+    and is unaffected.
     """
     fence = getattr(admission, "fence", None)
-    return fence is not None and fence.discarded(stage)
+    if fence is None:
+        return False
+    try:
+        return bool(fence.discarded(stage))
+    except Exception:  # noqa: BLE001 - unreadable fence == not publishable
+        log.warning("dictation fence unreadable at %s; refusing to publish", stage)
+        return True
+
+
+def _publishable(text: str, admission: Any, stage: str) -> str:
+    """The ONE way this module hands un-pipelined text back to be typed.
+
+    Every fallback in both pipeline entry points returns through here, so the
+    fence is consulted on EVERY publication path rather than on the three someone
+    remembered. HS-131-10 round 2 found the gap the hard way: the explicit fence
+    checks guarded the happy path, while the pipeline-disabled return, the
+    unavailable-runtime return, and the bottom ``except Exception`` fallback all
+    returned the raw transcript unconditionally — so a cancelled session whose
+    setup merely RAISED still got its transcript typed. "No late publication"
+    has to hold on the error paths especially, because that is where a
+    cancellation lands.
+    """
+    return "" if _fenced(admission, stage) else text
 
 
 def _journal_passthrough(
@@ -224,6 +252,11 @@ def run_pipeline_corrections_only(
     dictation_cfg = getattr(config, "dictation", None)
     pipeline_cfg = getattr(dictation_cfg, "pipeline", None)
     if dictation_cfg is None or pipeline_cfg is None or not bool(getattr(pipeline_cfg, "enabled", False)):
+        # A fenced session records NO journal row and types NOTHING, even with the
+        # pipeline off: `_fenced`'s own contract is "no journal row, no final
+        # text", and a disabled pipeline is not an exemption from it.
+        if _fenced(admission, "dictation pipeline disabled"):
+            return ""
         if pipeline_cfg is not None:
             _journal_passthrough(
                 text,
@@ -263,7 +296,12 @@ def run_pipeline_corrections_only(
             admission=admission,
         )
         if result.runtime_status != "loaded":
-            return text
+            # A fenced session publishes NOTHING, including the raw text — the
+            # unavailable-runtime fallback is still a publication. (Found by the
+            # HS-131-10 round-2 focused run under an isolated HOME, where no
+            # dictation runtime loads: this return sat ABOVE the fence check, so a
+            # cancelled session got its transcript typed anyway.)
+            return _publishable(text, admission, "dictation pipeline runtime")
 
         activity: dict[str, Any] = {}
         target_profile = None
@@ -342,7 +380,11 @@ def run_pipeline_corrections_only(
         return run.final_text
     except Exception as exc:
         log.warning(f"Web dictation pipeline raised; falling back to processed text: {exc}")
-        return text
+        # The fallback is a PUBLICATION. If the session was fenced and the run
+        # then raised anywhere — a config read, project detection, the pipeline
+        # build, a stage — returning the transcript would type output for a
+        # cancelled session (HS-131-10 round 2, coordinator finding).
+        return _publishable(text, admission, "dictation pipeline fallback")
 
 
 def run_dictation_pipeline(
@@ -370,6 +412,9 @@ def run_dictation_pipeline(
         # A pipeline-off dictation records a passthrough row (no stages,
         # final = transcript) so the review surface reflects real activity.
         # Best-effort like every journal write; the typed text is untouched.
+        # ...unless the session is fenced, which publishes nothing at all.
+        if _fenced(admission, "dictation pipeline disabled"):
+            return ""
         if pipeline_cfg is not None:
             _journal_passthrough(
                 text,
@@ -420,7 +465,12 @@ def run_dictation_pipeline(
             admission=admission,
         )
         if result.runtime_status != "loaded":
-            return text
+            # A fenced session publishes NOTHING, including the raw text — the
+            # unavailable-runtime fallback is still a publication. (Found by the
+            # HS-131-10 round-2 focused run under an isolated HOME, where no
+            # dictation runtime loads: this return sat ABOVE the fence check, so a
+            # cancelled session got its transcript typed anyway.)
+            return _publishable(text, admission, "dictation pipeline runtime")
 
         target_override = (
             target_profile_override_for_agent(agent_reply_session)
@@ -485,4 +535,8 @@ def run_dictation_pipeline(
         return run.final_text
     except Exception as exc:
         log.warning(f"Web dictation pipeline raised; falling back to processed text: {exc}")
-        return text
+        # The fallback is a PUBLICATION. If the session was fenced and the run
+        # then raised anywhere — a config read, project detection, the pipeline
+        # build, a stage — returning the transcript would type output for a
+        # cancelled session (HS-131-10 round 2, coordinator finding).
+        return _publishable(text, admission, "dictation pipeline fallback")

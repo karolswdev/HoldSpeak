@@ -15,6 +15,7 @@ from urllib.parse import urlsplit
 import holdspeak.intel as _intel_pkg
 
 from ..kernel.external_egress import run_external_egress
+from ..kernel.provider_signals import ProviderCompatibilityRetry
 from ..logging_config import get_logger
 from .endpoint_health import default_health as _endpoint_health
 from .models import (
@@ -42,6 +43,52 @@ from .providers import (
 )
 
 log = get_logger("intel")
+
+#: Endpoint keys (`_cloud_endpoint_key()`) that answered `max_tokens` with a
+#: TypeError and therefore speak `max_completion_tokens` (HS-131-10).
+#:
+#: This is the same shape as `_endpoint_health`: a process-local memory of what
+#: an endpoint just told us about itself. It exists so the compatibility retry
+#: needs exactly ONE physical request per attempt — the first attempt learns the
+#: dialect and refuses by name, the SECOND admitted child speaks it immediately —
+#: instead of the old hidden second `.create` under one receipt.
+_COMPAT_MAX_COMPLETION_TOKENS: set[str] = set()
+
+
+def endpoint_speaks_max_completion_tokens(endpoint_key: str) -> bool:
+    """Whether this endpoint has already rejected ``max_tokens`` in this process."""
+    return str(endpoint_key) in _COMPAT_MAX_COMPLETION_TOKENS
+
+
+def forget_endpoint_dialects() -> None:
+    """Drop every learned dialect (tests; a new process starts empty anyway)."""
+    _COMPAT_MAX_COMPLETION_TOKENS.clear()
+
+
+def _token_budget_kwargs(endpoint_key: str, max_tokens: int) -> dict[str, object]:
+    """The token-budget parameter THIS endpoint accepts, as its own one entry."""
+    if endpoint_speaks_max_completion_tokens(endpoint_key):
+        return {"max_completion_tokens": max_tokens}
+    return {"max_tokens": max_tokens}
+
+
+def _compat_signal(exc: BaseException) -> BaseException:
+    """The typed signal an admitted caller turns into a second child."""
+    return ProviderCompatibilityRetry("max_completion_tokens", str(exc))
+
+
+def _compatibility_retry(endpoint_key: str, exc: BaseException) -> bool:
+    """True when the ONE named dialect fallback applies to this failure.
+
+    Records what the endpoint said, so the next admitted child gets it right on
+    its first request. Anything else is an honest provider failure.
+    """
+    if not isinstance(exc, TypeError) or "max_tokens" not in str(exc):
+        return False
+    if endpoint_speaks_max_completion_tokens(endpoint_key):
+        return False  # already speaking the dialect: this is a real failure
+    _COMPAT_MAX_COMPLETION_TOKENS.add(str(endpoint_key))
+    return True
 
 
 class MeetingIntel:
@@ -226,8 +273,8 @@ class MeetingIntel:
             "model": self.cloud_model,
             "messages": messages,
             "temperature": temperature,
-            "max_tokens": max_tokens,
             "extra_body": {"thinking": False},
+            **_token_budget_kwargs(endpoint_key, max_tokens),
         }
         if self.cloud_reasoning_effort:
             base_kwargs["reasoning_effort"] = self.cloud_reasoning_effort
@@ -236,17 +283,14 @@ class MeetingIntel:
 
         started = time.monotonic()
         try:
-            try:
-                response = self._remote_completion(self._openai_client.chat.completions.create, base_kwargs)
-            except TypeError as exc:
-                # Compatibility fallback for clients/endpoints that use max_completion_tokens.
-                if "max_tokens" not in str(exc):
-                    raise
-                fallback_kwargs = dict(base_kwargs)
-                fallback_kwargs.pop("max_tokens", None)
-                fallback_kwargs["max_completion_tokens"] = max_tokens
-                response = self._remote_completion(self._openai_client.chat.completions.create, fallback_kwargs)
+            # HS-131-10 (Sol Amendment 3): ONE physical request per admitted child.
+            # The `max_completion_tokens` fallback used to fire a second `.create`
+            # right here, inside the same child and under the same receipt. It is
+            # now a NAMED signal the runner turns into a second admitted child.
+            response = self._remote_completion(self._openai_client.chat.completions.create, base_kwargs)
         except Exception as exc:
+            if _compatibility_retry(endpoint_key, exc):
+                raise _compat_signal(exc) from exc
             _endpoint_health.record_failure(endpoint_key)
             raise MeetingIntelError(
                 _describe_cloud_exception(
@@ -301,13 +345,14 @@ class MeetingIntel:
             return
 
         assert self._openai_client is not None
+        endpoint_key = self._cloud_endpoint_key()
         base_kwargs: dict[str, object] = {
             "model": self.cloud_model,
             "messages": messages,
             "temperature": temperature,
-            "max_tokens": max_tokens,
             "extra_body": {"thinking": False},
             "stream": True,
+            **_token_budget_kwargs(endpoint_key, max_tokens),
         }
         if self.cloud_reasoning_effort:
             base_kwargs["reasoning_effort"] = self.cloud_reasoning_effort
@@ -315,16 +360,13 @@ class MeetingIntel:
             base_kwargs["store"] = True
 
         try:
-            try:
-                stream_iter = self._remote_completion(self._openai_client.chat.completions.create, base_kwargs)
-            except TypeError as exc:
-                if "max_tokens" not in str(exc):
-                    raise
-                fallback_kwargs = dict(base_kwargs)
-                fallback_kwargs.pop("max_tokens", None)
-                fallback_kwargs["max_completion_tokens"] = max_tokens
-                stream_iter = self._remote_completion(self._openai_client.chat.completions.create, fallback_kwargs)
+            # The streaming twin of the non-streaming leg: ONE physical stream
+            # open per admitted child; the dialect fallback is the runner's second
+            # child, never a hidden second open under this one's receipt.
+            stream_iter = self._remote_completion(self._openai_client.chat.completions.create, base_kwargs)
         except Exception as exc:
+            if _compatibility_retry(endpoint_key, exc):
+                raise _compat_signal(exc) from exc
             raise MeetingIntelError(
                 _describe_cloud_exception(
                     exc,
@@ -375,7 +417,9 @@ class MeetingIntel:
                 temperature=self.temperature if temperature is None else temperature,
                 max_tokens=self.max_tokens if max_tokens is None else max_tokens,
             )
-        except MeetingIntelError:
+        except (MeetingIntelError, ProviderCompatibilityRetry):
+            # The dialect signal is the runner's to act on: swallowing it here
+            # would put a second physical request back under one receipt.
             raise
         except Exception as exc:
             log.error(f"Persona run failed: {exc}", exc_info=True)
@@ -389,7 +433,7 @@ class MeetingIntel:
                 temperature=self.temperature,
                 max_tokens=self.max_tokens,
             )
-        except MeetingIntelError:
+        except (MeetingIntelError, ProviderCompatibilityRetry):
             raise
         except Exception as exc:
             log.error(f"Intel inference failed: {exc}", exc_info=True)
@@ -433,6 +477,8 @@ class MeetingIntel:
         if not stream:
             try:
                 return self._analyze_once(transcript)
+            except ProviderCompatibilityRetry:
+                raise
             except Exception as exc:
                 log.error(f"Intel analyze failed: {exc}", exc_info=True)
                 return IntelResult(
@@ -463,6 +509,8 @@ class MeetingIntel:
             ):
                 raw_parts.append(piece)
                 yield piece
+        except ProviderCompatibilityRetry:
+            raise
         except Exception as exc:
             log.error(f"Intel streaming failed: {exc}", exc_info=True)
             yield IntelResult(
@@ -541,6 +589,8 @@ class MeetingIntel:
             log.info(f"Generated meeting title: {title}")
             return title if title else None
 
+        except ProviderCompatibilityRetry:
+            raise
         except Exception as exc:
             log.error(f"Title generation failed: {exc}", exc_info=True)
             return None
@@ -590,6 +640,8 @@ class MeetingIntel:
             log.info(f"Generated bookmark label: {label}")
             return label if label else None
 
+        except ProviderCompatibilityRetry:
+            raise
         except Exception as exc:
             log.error(f"Bookmark label generation failed: {exc}", exc_info=True)
             return None
@@ -654,6 +706,8 @@ class MeetingIntel:
             log.info(f"Generated refined bookmark label: {label}")
             return label if label else None
 
+        except ProviderCompatibilityRetry:
+            raise
         except Exception as exc:
             log.error(f"Refined bookmark label generation failed: {exc}", exc_info=True)
             return None

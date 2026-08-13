@@ -123,7 +123,7 @@ def test_ask_runs_on_profile_and_names_honest_egress(env, monkeypatch) -> None:
     captured = {}
 
     def fake_for_profile(
-        *, kind, base_url, model, profile_id, node="", model_file="", deployment_revision=None, warrant=None,
+        *, kind, base_url, model, profile_id, node="", model_file="", deployment_revision=None, warrant=None, context=None,
     ):
         captured.update(kind=kind, base_url=base_url, model=model, profile_id=profile_id)
         intel = _FakeIntel()
@@ -158,7 +158,7 @@ def test_ask_target_id_selects_placement_and_advertised_model_runs(env, monkeypa
     captured = {}
 
     def fake_for_profile(
-        *, kind, base_url, model, profile_id, node="", model_file="", deployment_revision=None, warrant=None,
+        *, kind, base_url, model, profile_id, node="", model_file="", deployment_revision=None, warrant=None, context=None,
     ):
         captured.update(model=model, profile_id=profile_id)
         intel = _FakeIntel()

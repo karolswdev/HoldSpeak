@@ -71,9 +71,16 @@ class SpeechAdapter:
         self, engine: Any, payload: Mapping[str, Any], cancellation: threading.Event
     ) -> dict[str, Any]:
         from ..kernel.model import KernelRefused
+        from ..kernel.provider_signals import CONTROL_SIGNALS
 
         try:
             self.result = self._call(engine, payload, cancellation)
+        except CONTROL_SIGNALS:
+            # HS-131-10 round 2: typed KERNEL control, not backend content. The
+            # runner is what turns a dialect signal into a second admitted child;
+            # sanitizing it into a failure hides a physical attempt that the
+            # endpoint would have answered.
+            raise
         except (KernelRefused, SpeechSessionRefused):
             raise
         except BaseException as exc:  # sanitized: no backend text crosses this line

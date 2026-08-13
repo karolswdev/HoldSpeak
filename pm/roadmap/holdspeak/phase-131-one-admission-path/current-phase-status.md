@@ -1,8 +1,8 @@
 # Phase 131 — One Admission Path
 
-**Status:** IN PROGRESS (9/12).
+**Status:** IN PROGRESS (9/17).
 
-**Last updated:** 2026-08-10.
+**Last updated:** 2026-08-12.
 
 ## Goal
 
@@ -92,6 +92,25 @@ blocking charter amendment with an explicit owner story before HS-131-10 can
 close. This preserves the standing rule against pre-implementation measurement
 gates while keeping every known site bounded now.
 
+## Fence amendment wave
+
+HS-131-10 classified 145 executable/model-bearing sites with zero unregistered
+sites, but retained 48 pinned findings across eleven real or latent execution
+families. On 2026-08-12 the owner chartered the smallest five-story wave that
+covers the complete ledger:
+
+| Story | Families owned |
+|---|---|
+| HS-131-13 | Cadence, second Decisions route, dormant Delivery review, and retirement of `build_intel_for_target` |
+| HS-131-14 | Fourteen builtin plugin default providers plus `segment_probe`; retirement of uncontextual provider construction |
+| HS-131-15 | Dictation dry-run and CLI command; design beat chooses admitted session versus lexical-only |
+| HS-131-16 | Mesh receiver authority; design beat chooses verified envelope plus local claim versus node-side runner |
+| HS-131-17 | Dormant MIR, parallel live meeting engine, and bookmark auto-label |
+
+This amendment records work, not an Article-XI exception. HS-131-10 remains
+blocked until all five stories land and the same census returns zero findings.
+HS-131-11 and HS-131-12 remain held behind the fence.
+
 ## Exit criteria (evidence required)
 
 - [ ] One production inference runner owns admission, exact-revision execution,
@@ -132,9 +151,14 @@ gates while keeping every known site bounded now.
 | HS-131-07 | The remaining direct callers join the spine | done | [story-07](./story-07-service-callers.md) | [evidence-story-07](./evidence-story-07.md) |
 | HS-131-08 | Meetings are admitted per session | done | [story-08](./story-08-meeting-sessions.md) | [evidence-story-08](./evidence-story-08.md) |
 | HS-131-09 | Dictation and transcription are admitted per session | done | [story-09](./story-09-dictation-sessions.md) | [evidence-story-09](./evidence-story-09.md) |
-| HS-131-10 | The one-path fence | in-progress | [story-10](./story-10-one-path-fence.md) | — |
+| HS-131-10 | The one-path fence | blocked | [story-10](./story-10-one-path-fence.md) | — |
 | HS-131-11 | The entry-point contract | backlog | [story-11](./story-11-entry-point-docs.md) | — |
 | HS-131-12 | The walk | backlog | [story-12](./story-12-the-walk.md) | — |
+| HS-131-13 | Residual services take the admitted door | ready | [story-13](./story-13-residual-service-admission.md) | — |
+| HS-131-14 | Plugins receive admitted intelligence | backlog | [story-14](./story-14-plugin-provider-admission.md) | — |
+| HS-131-15 | Speech side doors become sessions or stay lexical | backlog | [story-15](./story-15-speech-side-door-admission.md) | — |
+| HS-131-16 | The mesh receiver proves authority locally | backlog | [story-16](./story-16-mesh-receiver-authority.md) | — |
+| HS-131-17 | Meetings lose the parallel engine | backlog | [story-17](./story-17-meeting-residual-admission.md) | — |
 
 ## Delivery order
 
@@ -146,8 +170,14 @@ gates while keeping every known site bounded now.
    HS-131-06 adds owner-created bounded delegation for schedules.
 4. **Remaining callers and sessions:** HS-131-07 migrates direct service paths;
    HS-131-08 and HS-131-09 establish session parents and lightweight children.
-5. **Lock and prove:** HS-131-10 closes the census, HS-131-11 updates the entry
-   points, and HS-131-12 performs the real-model walk and full-suite diff.
+5. **Fence checkpoint:** HS-131-10 installs the executable fence, records the
+   complete findings ledger, and remains blocked rather than granting an
+   exception.
+6. **Amend the residuals:** HS-131-13 through HS-131-17 delete or admit the five
+   chartered groups; then HS-131-10 reruns the census and closes at zero
+   findings.
+7. **Document and prove:** HS-131-11 updates the entry points and HS-131-12
+   performs the assembled real-model walk and full-suite diff.
 
 Stories ship one at a time through the Delivery Workbench gate. Implementation
 uses the standing Opus implementer, Terra adversarial verifier, Sol final
@@ -353,9 +383,24 @@ than the fork point: median 82.5→68.3ms, p95 85.1→70.5ms. Walk on .43
 green. Sol's five reservations + the runtime._dispose production hazard
 ride in the evidence; the two recorded unadmitted seams go to the
 HS-131-10 fence by name.
-Next: HS-131-10, the one-path fence.
-The roadmap still has nine inherited structural lint errors in old phases; they
-are named baseline and are not silently bundled into this product phase.
+HS-131-10 is now a verified BLOCKED checkpoint. Its executable AST fence
+classifies 145 sites with ZERO unregistered execution, all fifteen named product
+surfaces traverse the literal admission → claim → dispatch → immutable-terminal
+spine, and the cardinality/provenance suite covers seventeen actual children,
+opaque exact-bound contexts, retry children, cancellation cohorts, journal
+hygiene, and fail-closed late publication. Focused gate: 133 passed. The official
+isolated-HOME two-lane suite has zero deterministic new failure names against
+HS-131-09's pinned baseline and one repaired live-bus name. Fresh hostile counsel:
+RATIFY BLOCKED CHECKPOINT. The fence also proved eleven residual execution
+families across 48 pinned sites; the owner accepted the complete ledger on
+2026-08-12, chartered HS-131-13 through HS-131-17, and authorized this blocked
+checkpoint to ship. The ruling and reservations are in
+[OWNER-DECISION-PACKAGE-HS-131-10](./OWNER-DECISION-PACKAGE-HS-131-10.md).
+Next: HS-131-13, residual services take the admitted door. HS-131-11 and
+HS-131-12 remain held until all five amendments land and HS-131-10 closes at
+zero findings.
+The roadmap still has inherited structural lint errors in old phases; they are
+named baseline and are not silently bundled into this product phase.
 
 ## Active risks
 
@@ -371,6 +416,15 @@ are named baseline and are not silently bundled into this product phase.
 
 ## Decisions made (this phase)
 
+- 2026-08-12 — **The owner charters the complete five-story fence amendment
+  wave and authorizes the blocked checkpoint to ship.** HS-131-13 owns residual
+  services and retirement of `build_intel_for_target`; HS-131-14 owns plugin
+  provider injection; HS-131-15 owns the Speech admit-versus-lexical design;
+  HS-131-16 owns mesh receiver authority; HS-131-17 owns dormant MIR, the
+  parallel live meeting engine, and bookmark auto-label. This is a visible
+  phase-charter amendment under the pre-charter census rule, not an Article-XI
+  exception. HS-131-10 remains blocked until all 48 pinned findings reach zero;
+  HS-131-11 and HS-131-12 remain held.
 - 2026-08-09 — **Issue #450 AC3 is corrected to Article XI.** Every actual
   model invocation is admitted once and receives one terminal receipt. Nested
   invocations are children of the run or session that offered them; an outer

@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from types import SimpleNamespace
 
+import pytest
+
 import holdspeak.intel as intel_module
 from holdspeak.intel import MeetingIntel, resolve_intel_provider, get_cloud_intel_runtime_status
 
@@ -207,14 +209,35 @@ def test_meeting_intel_cloud_falls_back_to_max_completion_tokens(monkeypatch) ->
 
     monkeypatch.setattr(intel_module, "OpenAI", _FakeOpenAI)
     monkeypatch.setenv("OPENAI_API_KEY", "test-key")
+    from holdspeak.intel.engine import forget_endpoint_dialects
+    from holdspeak.kernel.provider_signals import ProviderCompatibilityRetry
 
-    intel = MeetingIntel(provider="cloud", cloud_model="gpt-5-mini")
-    result = intel.analyze("[00:00:00] Me: test", stream=False)
+    forget_endpoint_dialects()
+    try:
+        intel = MeetingIntel(provider="cloud", cloud_model="gpt-5-mini")
 
-    assert result.summary == "ok"
-    assert len(create_calls) == 2
-    assert "max_tokens" in create_calls[0]
-    assert "max_completion_tokens" in create_calls[1]
+        # HS-131-10 (Sol Amendment 3): the fallback used to send a SECOND
+        # `create` inside this one call — two requests to a model under one
+        # admitted child and one receipt. The engine now makes exactly ONE
+        # physical request and NAMES the dialect instead of hiding a retry.
+        with pytest.raises(ProviderCompatibilityRetry) as signal:
+            intel.analyze("[00:00:00] Me: test", stream=False)
+        assert signal.value.mode == "max_completion_tokens"
+        assert len(create_calls) == 1
+        assert "max_tokens" in create_calls[0]
+
+        # The endpoint's dialect is remembered, so the SECOND admitted child
+        # (the runner submits it; see test_one_path_cardinality.py) speaks it on
+        # its first and only request, and the compatibility behaviour is kept.
+        second = MeetingIntel(provider="cloud", cloud_model="gpt-5-mini")
+        result = second.analyze("[00:00:00] Me: test", stream=False)
+
+        assert result.summary == "ok"
+        assert len(create_calls) == 2
+        assert "max_completion_tokens" in create_calls[1]
+        assert "max_tokens" not in create_calls[1]
+    finally:
+        forget_endpoint_dialects()
 
 
 def test_meeting_intel_cloud_surfaces_timeout_errors(monkeypatch) -> None:

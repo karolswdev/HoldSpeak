@@ -62,7 +62,7 @@ def request(revision, *, origin=None, payload=None):
 )
 def test_each_terminal_outcome_has_one_immutable_receipt(rig, error, outcome):
     db, broker, revision = rig
-    runner = InferenceRunner(broker, db, engine_factory=lambda value: {"revision": value.id}, principal_provider=lambda: OWNER)
+    runner = InferenceRunner(broker, db, engine_factory=lambda value, **_kw: {"revision": value.id}, principal_provider=lambda: OWNER)
     result = runner.invoke(request(revision), Adapter(error=error))
     receipt = broker.store.receipt(result.operation_id)
     assert result.outcome == receipt["outcome"] == outcome
@@ -77,7 +77,7 @@ def test_service_contract_and_runner_refuse_nonfinite_payloads(rig, value):
     db, broker, revision = rig
     with pytest.raises(KernelRefused, match="inference_payload_not_canonicalizable"):
         ServiceContract.for_payload("ask", "v1", {"number": value})
-    runner = InferenceRunner(broker, db, engine_factory=lambda _: object(), principal_provider=lambda: OWNER)
+    runner = InferenceRunner(broker, db, engine_factory=lambda _revision, **_kw: object(), principal_provider=lambda: OWNER)
     with pytest.raises(KernelRefused, match="inference_payload_not_canonicalizable"):
         runner.invoke(InvocationRequest(
             deployment_revision=revision.id,
@@ -88,7 +88,7 @@ def test_service_contract_and_runner_refuse_nonfinite_payloads(rig, value):
 
 def test_hash_mismatch_and_stale_saved_revision_refuse_before_dispatch(rig):
     db, broker, revision = rig
-    runner = InferenceRunner(broker, db, engine_factory=lambda _: object(), principal_provider=lambda: OWNER)
+    runner = InferenceRunner(broker, db, engine_factory=lambda _revision, **_kw: object(), principal_provider=lambda: OWNER)
     with pytest.raises(KernelRefused, match="inference_payload_hash_mismatch"):
         runner.invoke(request(revision, origin=ServiceContract("ask", "v1", "sha256:" + "0" * 64)), Adapter())
     db.recipes.upsert(recipe_id="stale", name="Stale")
@@ -98,7 +98,7 @@ def test_hash_mismatch_and_stale_saved_revision_refuse_before_dispatch(rig):
 
 def test_saved_and_service_origins_remain_distinct(rig):
     db, broker, revision = rig
-    runner = InferenceRunner(broker, db, engine_factory=lambda _: object(), principal_provider=lambda: OWNER)
+    runner = InferenceRunner(broker, db, engine_factory=lambda _revision, **_kw: object(), principal_provider=lambda: OWNER)
     saved_recipe = db.recipes.upsert(recipe_id="one", name="One")
     saved = runner.invoke(
         request(revision, origin=SavedDefinition("recipe:one", saved_recipe.last_modified)), Adapter()
@@ -123,7 +123,7 @@ def test_fallback_is_two_invocations_not_one_logical_receipt(rig):
     parent = broker.decide(parent["operation_id"], "approve", parent["revision"], OWNER)
     parent_operation = broker.store.operation(parent["operation_id"])
     broker.claim(Principal(PrincipalKind.NODE, parent_operation["placement"].removeprefix("node:")), "fallback-parent")
-    runner = InferenceRunner(broker, db, engine_factory=lambda _: object(), principal_provider=lambda: OWNER)
+    runner = InferenceRunner(broker, db, engine_factory=lambda _revision, **_kw: object(), principal_provider=lambda: OWNER)
     first = runner.invoke(InvocationRequest(**{**request(revision).__dict__, "parent_operation_id": parent_operation["operation_id"], "attempt_ordinal": 1}), Adapter(error=RuntimeError()))
     second = runner.invoke(InvocationRequest(**{**request(revision).__dict__, "parent_operation_id": parent_operation["operation_id"], "attempt_ordinal": 2}), Adapter())
     assert {first.outcome, second.outcome} == {"failed", "succeeded"}
@@ -145,7 +145,7 @@ def test_remote_dispatch_keeps_a_linked_egress_effect(rig):
         connector_id = "reference-provider"
         egress_data_classes = ("instruction",)
 
-    runner = InferenceRunner(broker, db, engine_factory=lambda _: object(), principal_provider=lambda: OWNER)
+    runner = InferenceRunner(broker, db, engine_factory=lambda _revision, **_kw: object(), principal_provider=lambda: OWNER)
     invocation = runner.invoke(request(revision), Remote())
     events = broker.events(0, {}, OWNER)["events"]
     egress_admission = next(event for event in events if "egress:example.test" in event["refs"])
@@ -168,7 +168,7 @@ def test_cancellation_reaches_adapter_and_blocks_late_publication(rig):
             release.wait(2)
             return "late output"
 
-    runner = InferenceRunner(broker, db, engine_factory=lambda _: object(), principal_provider=lambda: OWNER)
+    runner = InferenceRunner(broker, db, engine_factory=lambda _revision, **_kw: object(), principal_provider=lambda: OWNER)
     result = []
     thread = threading.Thread(target=lambda: result.append(runner.invoke(
         InvocationRequest(**{**request(revision).__dict__, "invocation_id": "caller_cancel"}), Slow(), publish=lambda value: published.append(value) or "answer:late"
@@ -187,7 +187,7 @@ def test_cancellation_reaches_adapter_and_blocks_late_publication(rig):
 def test_pending_cancel_authenticates_before_registration(rig):
     db, broker, _ = rig
     runner = InferenceRunner(
-        broker, db, engine_factory=lambda _: object(),
+        broker, db, engine_factory=lambda _revision, **_kw: object(),
         principal_provider=lambda: (_ for _ in ()).throw(KernelRefused("principal_authentication_required")),
     )
     with pytest.raises(KernelRefused, match="principal_authentication_required"):
@@ -198,7 +198,7 @@ def test_pending_cancel_authenticates_before_registration(rig):
 def test_expired_deadline_refuses_before_provider_dispatch(rig):
     db, broker, revision = rig
     adapter = Adapter()
-    runner = InferenceRunner(broker, db, engine_factory=lambda _: object(), principal_provider=lambda: OWNER)
+    runner = InferenceRunner(broker, db, engine_factory=lambda _revision, **_kw: object(), principal_provider=lambda: OWNER)
     result = runner.invoke(InvocationRequest(
         **{**request(revision).__dict__, "deadline_at": time.time() - 1}
     ), adapter)
@@ -219,7 +219,7 @@ def test_deadline_cancels_a_blocked_dispatch_through_cancel_operation(rig):
             stopped.set()
             return "cancelled"
 
-    runner = InferenceRunner(broker, db, engine_factory=lambda _: object(), principal_provider=lambda: OWNER)
+    runner = InferenceRunner(broker, db, engine_factory=lambda _revision, **_kw: object(), principal_provider=lambda: OWNER)
     result = runner.invoke(InvocationRequest(
         **{**request(revision).__dict__, "invocation_id": "deadline_cancel", "deadline_at": time.time() + .1}
     ), Blocked())
@@ -242,7 +242,7 @@ def test_deadline_unknown_provider_closes_indeterminate_before_dispatch_returns(
         def cancel(self):
             return "unknown"
 
-    runner = InferenceRunner(broker, db, engine_factory=lambda _: object(), principal_provider=lambda: OWNER)
+    runner = InferenceRunner(broker, db, engine_factory=lambda _revision, **_kw: object(), principal_provider=lambda: OWNER)
     thread = threading.Thread(target=lambda: runner.invoke(InvocationRequest(
         **{**request(revision).__dict__, "invocation_id": "hung_deadline", "deadline_at": time.time() + .1}
     ), Hung()), daemon=True)
@@ -272,7 +272,7 @@ def test_unknown_cancel_disposition_closes_indeterminate(rig):
             release.set()
             return "unknown"
 
-    runner = InferenceRunner(broker, db, engine_factory=lambda _: object(), principal_provider=lambda: OWNER)
+    runner = InferenceRunner(broker, db, engine_factory=lambda _revision, **_kw: object(), principal_provider=lambda: OWNER)
     results = []
     thread = threading.Thread(target=lambda: results.append(runner.invoke(InvocationRequest(
         **{**request(revision).__dict__, "invocation_id": "unknown_cancel"}
@@ -297,7 +297,7 @@ def test_completed_cancel_disposition_allows_completed_result(rig):
             release.set()
             return "completed"
 
-    runner = InferenceRunner(broker, db, engine_factory=lambda _: object(), principal_provider=lambda: OWNER)
+    runner = InferenceRunner(broker, db, engine_factory=lambda _revision, **_kw: object(), principal_provider=lambda: OWNER)
     results = []
     thread = threading.Thread(target=lambda: results.append(runner.invoke(InvocationRequest(
         **{**request(revision).__dict__, "invocation_id": "completed_cancel"}
@@ -311,7 +311,7 @@ def test_completed_cancel_disposition_allows_completed_result(rig):
 
 def test_publish_errors_and_invalid_result_refs_close_failed(rig):
     db, broker, revision = rig
-    runner = InferenceRunner(broker, db, engine_factory=lambda _: object(), principal_provider=lambda: OWNER)
+    runner = InferenceRunner(broker, db, engine_factory=lambda _revision, **_kw: object(), principal_provider=lambda: OWNER)
     thrown = runner.invoke(request(revision), Adapter(), publish=lambda _: (_ for _ in ()).throw(RuntimeError("write failed")))
     invalid = runner.invoke(request(revision), Adapter(), publish=lambda _: "not a ref")
     assert thrown.outcome == invalid.outcome == "failed"
@@ -337,7 +337,7 @@ def test_claim_rechecks_revoked_parent_before_provider_dispatch(rig):
     broker.claim(parent_node, "parent")
     broker.store.revoke_warrant(parent_op["operation_id"])
     adapter = Adapter()
-    runner = InferenceRunner(broker, db, engine_factory=lambda _: object(), principal_provider=lambda: OWNER)
+    runner = InferenceRunner(broker, db, engine_factory=lambda _revision, **_kw: object(), principal_provider=lambda: OWNER)
     result = runner.invoke(InvocationRequest(
         **{**request(revision).__dict__, "parent_operation_id": parent_op["operation_id"]}
     ), adapter)
@@ -365,7 +365,7 @@ def test_agent_child_derives_live_owner_parent_authority(rig):
 
     db.profiles.upsert(profile_id="delegated-remote", name="Remote", kind="openAICompatible", base_url="https://example.test/v1", model="remote")
     remote_revision = capture_deployment_revision(db, resolve_inference_target(db, "delegated-remote"))
-    runner = InferenceRunner(broker, db, engine_factory=lambda _: object(), principal_provider=lambda: agent)
+    runner = InferenceRunner(broker, db, engine_factory=lambda _revision, **_kw: object(), principal_provider=lambda: agent)
     result = runner.invoke(InvocationRequest(**{
         **request(remote_revision).__dict__, "parent_operation_id": parent_operation["operation_id"]
     }), DelegatedRemote())
@@ -376,7 +376,7 @@ def test_agent_child_derives_live_owner_parent_authority(rig):
 def test_journal_has_no_prompt_output_or_audio_bodies(rig):
     db, broker, revision = rig
     prompt, output, audio = "PROMPT_BODY", "MODEL_OUTPUT", "AUDIO_FRAME"
-    runner = InferenceRunner(broker, db, engine_factory=lambda _: object(), principal_provider=lambda: OWNER)
+    runner = InferenceRunner(broker, db, engine_factory=lambda _revision, **_kw: object(), principal_provider=lambda: OWNER)
     result = runner.invoke(request(revision, payload={"prompt": prompt, "audio_frame": audio}), Adapter(output))
     assert result.outcome == "succeeded"
     journal = str(broker.events(0, {}, OWNER))
@@ -392,7 +392,7 @@ def test_canceller_wins_before_publisher_transition(rig):
         def dispatch(self, engine, payload, cancellation):
             dispatch_ready.set(); assert release.wait(2); return "late"
 
-    runner = InferenceRunner(broker, db, engine_factory=lambda _: object(), principal_provider=lambda: OWNER)
+    runner = InferenceRunner(broker, db, engine_factory=lambda _revision, **_kw: object(), principal_provider=lambda: OWNER)
     worker = threading.Thread(target=lambda: results.append(runner.invoke(
         InvocationRequest(**{**request(revision).__dict__, "invocation_id": "canceller_wins"}),
         Choreographed(), publish=lambda value: published.append(value) or "answer:late")))
@@ -409,7 +409,7 @@ def test_publisher_wins_before_cancel_request(rig):
         pass
     def publish(value):
         publishing.set(); assert release.wait(2); return "answer:published"
-    runner = InferenceRunner(broker, db, engine_factory=lambda _: object(), principal_provider=lambda: OWNER)
+    runner = InferenceRunner(broker, db, engine_factory=lambda _revision, **_kw: object(), principal_provider=lambda: OWNER)
     worker = threading.Thread(target=lambda: returned.append(runner.invoke(
         InvocationRequest(**{**request(revision).__dict__, "invocation_id": "publisher_wins"}), Immediate(), publish=publish)))
     worker.start(); assert publishing.wait(2)
@@ -427,7 +427,7 @@ def test_refused_cancellation_restores_running_and_publishes(rig):
     class Waiting(Adapter):
         def dispatch(self, engine, payload, cancellation):
             entered.set(); assert release.wait(2); return "normal"
-    runner = InferenceRunner(broker, db, engine_factory=lambda _: object(), principal_provider=lambda: current[0])
+    runner = InferenceRunner(broker, db, engine_factory=lambda _revision, **_kw: object(), principal_provider=lambda: current[0])
     worker = threading.Thread(target=lambda: results.append(runner.invoke(
         InvocationRequest(**{**request(revision).__dict__, "invocation_id": "refused_cancel"}), Waiting())))
     worker.start(); assert entered.wait(2)
@@ -442,7 +442,7 @@ def test_refused_cancellation_restores_running_and_publishes(rig):
 def test_pending_cancellation_uses_stored_authenticated_principal(rig):
     db, broker, revision = rig
     stored = Principal(PrincipalKind.OWNER, "stored-canceller")
-    runner = InferenceRunner(broker, db, engine_factory=lambda _: object(), principal_provider=lambda: stored)
+    runner = InferenceRunner(broker, db, engine_factory=lambda _revision, **_kw: object(), principal_provider=lambda: stored)
     assert runner.cancel("pending_stored_principal") == "pending"
     runner._principal_provider = lambda: OWNER
     result = runner.invoke(InvocationRequest(**{**request(revision).__dict__, "invocation_id": "pending_stored_principal"}), Adapter())
@@ -463,7 +463,7 @@ def test_terminal_receipts_gate_both_invoke_and_cancel_returns(rig):
     class Waiting(Adapter):
         def dispatch(self, engine, payload, cancellation):
             started.set(); assert release.wait(2); return "late"
-    runner = InferenceRunner(broker, db, engine_factory=lambda _: object(), principal_provider=lambda: OWNER)
+    runner = InferenceRunner(broker, db, engine_factory=lambda _revision, **_kw: object(), principal_provider=lambda: OWNER)
     invoke_thread = threading.Thread(target=lambda: finished.append(runner.invoke(
         InvocationRequest(**{**request(revision).__dict__, "invocation_id": "receipt_order"}), Waiting())))
     invoke_thread.start(); assert started.wait(2)
@@ -485,7 +485,7 @@ def test_cancel_submit_failure_restores_running_and_notifies_waiters(rig):
     class Waiting(Adapter):
         def dispatch(self, engine, payload, cancellation):
             entered.set(); assert release.wait(2); return "normal"
-    runner = InferenceRunner(broker, db, engine_factory=lambda _: object(), principal_provider=lambda: OWNER)
+    runner = InferenceRunner(broker, db, engine_factory=lambda _revision, **_kw: object(), principal_provider=lambda: OWNER)
     worker = threading.Thread(target=lambda: results.append(runner.invoke(
         InvocationRequest(**{**request(revision).__dict__, "invocation_id": "submit_raises"}), Waiting())))
     worker.start(); assert entered.wait(2)
@@ -505,7 +505,7 @@ def test_receipt_failure_after_acknowledgement_never_publishes_late_result(rig):
     class Waiting(Adapter):
         def dispatch(self, engine, payload, cancellation):
             entered.set(); assert release.wait(2); return "late"
-    runner = InferenceRunner(broker, db, engine_factory=lambda _: object(), principal_provider=lambda: OWNER)
+    runner = InferenceRunner(broker, db, engine_factory=lambda _revision, **_kw: object(), principal_provider=lambda: OWNER)
     def run():
         try: results.append(runner.invoke(InvocationRequest(**{**request(revision).__dict__, "invocation_id": "receipt_failure"}), Waiting(), publish=lambda _: (_ for _ in ()).throw(AssertionError("late result published"))))
         except ClosurePersistenceError as exc: errors.append(exc)
@@ -525,7 +525,7 @@ def test_hung_adapter_cancel_closes_indeterminate_with_bounded_timeout(rig):
             entered.set(); assert release.wait(2); return "late"
         def cancel(self):
             never.wait(); return "cancelled"
-    runner = InferenceRunner(broker, db, engine_factory=lambda _: object(), principal_provider=lambda: OWNER, cancel_timeout=.01)
+    runner = InferenceRunner(broker, db, engine_factory=lambda _revision, **_kw: object(), principal_provider=lambda: OWNER, cancel_timeout=.01)
     worker = threading.Thread(target=lambda: results.append(runner.invoke(
         InvocationRequest(**{**request(revision).__dict__, "invocation_id": "hung_cancel"}), HungCancel())))
     worker.start(); assert entered.wait(2)
@@ -547,7 +547,7 @@ def test_only_elected_performer_returns_after_durable_cancellation(rig):
         def cancel(self):
             cancel_entered.set(); assert release_cancel.wait(2); return "cancelled"
 
-    runner = InferenceRunner(broker, db, engine_factory=lambda _: object(), principal_provider=lambda: OWNER)
+    runner = InferenceRunner(broker, db, engine_factory=lambda _revision, **_kw: object(), principal_provider=lambda: OWNER)
     original_perform = runner._perform_cancel
     def delayed_public_perform(iid, active, principal):
         if threading.current_thread().name == "public-canceller":
@@ -581,7 +581,7 @@ def test_dispatch_failure_racing_acknowledged_cancel_has_one_winner(rig):
             dispatch_ready.set(); assert fail_dispatch.wait(2); raise RuntimeError("provider failed")
         def cancel(self):
             cancellation_acknowledged.set(); return "cancelled"
-    runner = InferenceRunner(broker, db, engine_factory=lambda _: object(), principal_provider=lambda: OWNER)
+    runner = InferenceRunner(broker, db, engine_factory=lambda _revision, **_kw: object(), principal_provider=lambda: OWNER)
     invoke_thread = threading.Thread(target=lambda: invoke_result.append(runner.invoke(
         InvocationRequest(**{**request(revision).__dict__, "invocation_id": "terminal_winner"}), Race())))
     invoke_thread.start(); assert dispatch_ready.wait(2)
@@ -613,7 +613,7 @@ def test_timeout_receipt_is_durable_before_waiting_canceller_observes_unknown(ri
             dispatch_ready.set(); assert release_dispatch.wait(2); return "late"
         def cancel(self):
             never.wait(); return "cancelled"
-    runner = InferenceRunner(broker, db, engine_factory=lambda _: object(), principal_provider=lambda: OWNER, cancel_timeout=.01)
+    runner = InferenceRunner(broker, db, engine_factory=lambda _revision, **_kw: object(), principal_provider=lambda: OWNER, cancel_timeout=.01)
     invoke_thread = threading.Thread(target=lambda: invocation.append(runner.invoke(
         InvocationRequest(**{**request(revision).__dict__, "invocation_id": "timeout_durable"}), Hung())))
     invoke_thread.start(); assert dispatch_ready.wait(2)
@@ -639,7 +639,7 @@ def test_failure_receipt_is_durable_before_concurrent_cancel_observes_terminal(r
             receipt_entered.set(); assert release_receipt.wait(2)
         return original_receipt(operation_id, outcome, result_ref, node)
     broker.receipt = gated_receipt
-    runner = InferenceRunner(broker, db, engine_factory=lambda _: object(), principal_provider=lambda: OWNER)
+    runner = InferenceRunner(broker, db, engine_factory=lambda _revision, **_kw: object(), principal_provider=lambda: OWNER)
     invoke_thread = threading.Thread(target=lambda: invoke_result.append(runner.invoke(
         InvocationRequest(**{**request(revision).__dict__, "invocation_id": "failure_durable"}), Adapter(error=RuntimeError()))))
     invoke_thread.start(); assert receipt_entered.wait(2)
@@ -654,7 +654,7 @@ def test_failure_receipt_is_durable_before_concurrent_cancel_observes_terminal(r
 
 def test_cancel_after_terminal_invocation_is_too_late_without_pending_marker(rig):
     db, broker, revision = rig
-    runner = InferenceRunner(broker, db, engine_factory=lambda _: object(), principal_provider=lambda: OWNER)
+    runner = InferenceRunner(broker, db, engine_factory=lambda _revision, **_kw: object(), principal_provider=lambda: OWNER)
     result = runner.invoke(InvocationRequest(**{**request(revision).__dict__, "invocation_id": "already_done"}), Adapter())
     assert result.outcome == "succeeded"
     assert runner.cancel("already_done") == "completed"
@@ -673,7 +673,7 @@ def test_failed_closure_retries_before_a_waiter_observes_durable_outcome(rig):
             third_attempt.set(); assert release_receipt.wait(2)
         return original_receipt(operation_id, outcome, result_ref, node)
     broker.receipt = flaky_receipt
-    runner = InferenceRunner(broker, db, engine_factory=lambda _: object(), principal_provider=lambda: OWNER)
+    runner = InferenceRunner(broker, db, engine_factory=lambda _revision, **_kw: object(), principal_provider=lambda: OWNER)
     invoke_thread = threading.Thread(target=lambda: invoke_result.append(runner.invoke(
         InvocationRequest(**{**request(revision).__dict__, "invocation_id": "retry_durable"}), Adapter(error=RuntimeError()))))
     invoke_thread.start(); assert third_attempt.wait(2)
@@ -698,7 +698,7 @@ def test_permanently_failed_closure_returns_same_error_to_waiter(rig):
             raise RuntimeError("persistent receipt failure")
         return original_receipt(operation_id, outcome, result_ref, node)
     broker.receipt = failing_receipt
-    runner = InferenceRunner(broker, db, engine_factory=lambda _: object(), principal_provider=lambda: OWNER)
+    runner = InferenceRunner(broker, db, engine_factory=lambda _revision, **_kw: object(), principal_provider=lambda: OWNER)
     def run():
         try: runner.invoke(InvocationRequest(**{**request(revision).__dict__, "invocation_id": "closure_error"}), Adapter(error=RuntimeError()))
         except ClosurePersistenceError as exc: invoke_errors.append(exc)
@@ -718,7 +718,7 @@ def test_closure_failure_during_engine_build_never_dispatches_provider(rig):
         if outcome == "cancelled": raise RuntimeError("persistent cancellation receipt failure")
         return original_receipt(operation_id, outcome, result_ref, node)
     broker.receipt = failing_receipt
-    def build_engine(value):
+    def build_engine(value, **_kw):
         engine_started.set(); assert release_engine.wait(2); return object()
     class NeverDispatch(Adapter):
         def dispatch(self, engine, payload, cancellation):
@@ -739,7 +739,7 @@ def test_dispatch_admission_is_atomic_against_pre_dispatch_cancel(rig):
     db, broker, revision = rig
     engine_started, release_engine = threading.Event(), threading.Event()
     dispatched, cancel_calls, results = [], [], []
-    def build_engine(value):
+    def build_engine(value, **_kw):
         engine_started.set(); assert release_engine.wait(2); return object()
     class Never(Adapter):
         def dispatch(self, engine, payload, cancellation):
@@ -767,7 +767,7 @@ def test_cancel_during_dispatch_is_cooperative_and_closes_after_return(rig):
             dispatch_started.set(); assert release_dispatch.wait(2); return "late"
         def cancel(self):
             cancel_calls.append(True); cancel_called.set(); return "cancelled"
-    runner = InferenceRunner(broker, db, engine_factory=lambda _: object(), principal_provider=lambda: OWNER)
+    runner = InferenceRunner(broker, db, engine_factory=lambda _revision, **_kw: object(), principal_provider=lambda: OWNER)
     worker = threading.Thread(target=lambda: invoke_result.append(runner.invoke(
         InvocationRequest(**{**request(revision).__dict__, "invocation_id": "cooperative_dispatch"}), Cooperative())))
     worker.start(); assert dispatch_started.wait(2)
@@ -793,10 +793,10 @@ def test_dispatching_wedge_cannot_close_cancelled_before_provider_call(rig):
         def dispatch(self, engine, payload, cancellation):
             adapter_called.append(True); return "late"
         def cancel(self): return "cancelled"
-    runner = InferenceRunner(broker, db, engine_factory=lambda _: object(), principal_provider=lambda: OWNER)
+    runner = InferenceRunner(broker, db, engine_factory=lambda _revision, **_kw: object(), principal_provider=lambda: OWNER)
     original_dispatch = runner._dispatch
-    def gated_dispatch(*args):
-        at_boundary.set(); assert release_boundary.wait(2); return original_dispatch(*args)
+    def gated_dispatch(*args, **kwargs):
+        at_boundary.set(); assert release_boundary.wait(2); return original_dispatch(*args, **kwargs)
     runner._dispatch = gated_dispatch
     worker = threading.Thread(target=lambda: invoke_result.append(runner.invoke(
         InvocationRequest(**{**request(revision).__dict__, "invocation_id": "dispatch_wedge"}), Provider())))
@@ -828,7 +828,7 @@ def test_dispatch_ack_receipt_retries_irreversibly_before_cancelled_closure(rig)
         def dispatch(self, engine, payload, cancellation):
             dispatch_started.set(); assert release_dispatch.wait(2); return "late"
         def cancel(self): return "cancelled"
-    runner = InferenceRunner(broker, db, engine_factory=lambda _: object(), principal_provider=lambda: OWNER)
+    runner = InferenceRunner(broker, db, engine_factory=lambda _revision, **_kw: object(), principal_provider=lambda: OWNER)
     worker = threading.Thread(target=lambda: invoke_result.append(runner.invoke(
         InvocationRequest(**{**request(revision).__dict__, "invocation_id": "dispatch_ack_retry"}), Provider(), publish=lambda value: published.append(value) or "answer:late")))
     worker.start(); assert dispatch_started.wait(2)
@@ -855,7 +855,7 @@ def test_dispatch_ack_persistent_receipt_failure_stays_irreversible(rig):
         def dispatch(self, engine, payload, cancellation):
             dispatch_started.set(); assert release_dispatch.wait(2); return "late"
         def cancel(self): return "cancelled"
-    runner = InferenceRunner(broker, db, engine_factory=lambda _: object(), principal_provider=lambda: OWNER, receipt_attempts=1)
+    runner = InferenceRunner(broker, db, engine_factory=lambda _revision, **_kw: object(), principal_provider=lambda: OWNER, receipt_attempts=1)
     def run():
         try: runner.invoke(InvocationRequest(**{**request(revision).__dict__, "invocation_id": "dispatch_ack_failed"}), Provider(), publish=lambda value: published.append(value) or "answer:late")
         except ClosurePersistenceError as exc: invoke_errors.append(exc)
@@ -873,7 +873,7 @@ def test_cancel_child_completed_is_refused_then_invocation_publishes(rig):
     engine_started, release_engine = threading.Event(), threading.Event()
     class Completed(Adapter):
         def cancel(self): return "completed"
-    runner = InferenceRunner(broker, db, engine_factory=lambda _: (engine_started.set(), release_engine.wait(2), object())[-1], principal_provider=lambda: OWNER)
+    runner = InferenceRunner(broker, db, engine_factory=lambda _revision, **_kw: (engine_started.set(), release_engine.wait(2), object())[-1], principal_provider=lambda: OWNER)
     results = []
     worker = threading.Thread(target=lambda: results.append(runner.invoke(
         InvocationRequest(**{**request(revision).__dict__, "invocation_id": "completed_child"}), Completed())))
@@ -893,7 +893,7 @@ def test_cancel_child_adapter_error_is_failed_before_running_recovers(rig):
         def dispatch(self, engine, payload, cancellation):
             entered.set(); assert release.wait(2); return "normal"
         def cancel(self): raise RuntimeError("provider cancel failed")
-    runner = InferenceRunner(broker, db, engine_factory=lambda _: object(), principal_provider=lambda: OWNER)
+    runner = InferenceRunner(broker, db, engine_factory=lambda _revision, **_kw: object(), principal_provider=lambda: OWNER)
     worker = threading.Thread(target=lambda: results.append(runner.invoke(
         InvocationRequest(**{**request(revision).__dict__, "invocation_id": "failed_child"}), Broken())))
     worker.start(); assert entered.wait(2)
@@ -912,7 +912,7 @@ def test_base_exception_cancel_error_closes_child_then_reraises(rig):
         def dispatch(self, engine, payload, cancellation):
             entered.set(); assert release.wait(2); return "normal"
         def cancel(self): raise AdapterAbort("abort")
-    runner = InferenceRunner(broker, db, engine_factory=lambda _: object(), principal_provider=lambda: OWNER)
+    runner = InferenceRunner(broker, db, engine_factory=lambda _revision, **_kw: object(), principal_provider=lambda: OWNER)
     worker = threading.Thread(target=lambda: results.append(runner.invoke(
         InvocationRequest(**{**request(revision).__dict__, "invocation_id": "base_exception_child"}), Aborting())))
     worker.start(); assert entered.wait(2)
@@ -931,7 +931,7 @@ def test_unknown_and_timeout_cancel_children_are_indeterminate(rig):
         def dispatch(self, engine, payload, cancellation):
             entered.set(); assert release.wait(2); return "late"
         def cancel(self): return "unknown"
-    runner = InferenceRunner(broker, db, engine_factory=lambda _: object(), principal_provider=lambda: OWNER)
+    runner = InferenceRunner(broker, db, engine_factory=lambda _revision, **_kw: object(), principal_provider=lambda: OWNER)
     worker = threading.Thread(target=lambda: results.append(runner.invoke(
         InvocationRequest(**{**request(revision).__dict__, "invocation_id": "unknown_child"}), Unknown())))
     worker.start(); assert entered.wait(2)
@@ -985,7 +985,7 @@ def test_each_cancel_child_disposition_waits_for_its_own_durable_receipt(
                 raise RuntimeError("cancel failed")
             return disposition
 
-    runner = InferenceRunner(broker, db, engine_factory=lambda _: object(), principal_provider=lambda: OWNER)
+    runner = InferenceRunner(broker, db, engine_factory=lambda _revision, **_kw: object(), principal_provider=lambda: OWNER)
     worker = threading.Thread(target=lambda: invocation.append(runner.invoke(
         InvocationRequest(**{**request(revision).__dict__, "invocation_id": f"durable_child_{disposition}"}), Controlled()
     )))
@@ -1044,7 +1044,7 @@ def test_cancel_child_receipt_transient_retries_once_adapter_call_and_shared_dis
                 raise RuntimeError("cancel failed")
             return disposition
 
-    runner = InferenceRunner(broker, db, engine_factory=lambda _: object(), principal_provider=lambda: OWNER)
+    runner = InferenceRunner(broker, db, engine_factory=lambda _revision, **_kw: object(), principal_provider=lambda: OWNER)
     invocation_id = f"transient_child_{disposition}"
     worker = threading.Thread(target=lambda: invocation.append(runner.invoke(
         InvocationRequest(**{**request(revision).__dict__, "invocation_id": invocation_id}), Controlled()
@@ -1102,7 +1102,7 @@ def test_cancel_child_receipt_exhaustion_retains_one_error_for_all_cancellers(
                 raise RuntimeError("cancel failed")
             return disposition
 
-    runner = InferenceRunner(broker, db, engine_factory=lambda _: object(), principal_provider=lambda: OWNER)
+    runner = InferenceRunner(broker, db, engine_factory=lambda _revision, **_kw: object(), principal_provider=lambda: OWNER)
     invocation_id = f"exhausted_child_{disposition}"
     def invoke():
         try:
@@ -1149,7 +1149,7 @@ def test_completed_dispatch_cancel_has_refused_child_one_receipt_and_publication
             cancel_calls.append(True)
             return "completed"
 
-    runner = InferenceRunner(broker, db, engine_factory=lambda _: object(), principal_provider=lambda: OWNER)
+    runner = InferenceRunner(broker, db, engine_factory=lambda _revision, **_kw: object(), principal_provider=lambda: OWNER)
     invocation_id = "completed_dispatch_detail"
     worker = threading.Thread(target=lambda: invocation.append(runner.invoke(
         InvocationRequest(**{**request(revision).__dict__, "invocation_id": invocation_id}),
@@ -1184,7 +1184,7 @@ def test_unknown_child_is_terminal_before_late_dispatch_release_and_never_publis
         def cancel(self):
             return "unknown"
 
-    runner = InferenceRunner(broker, db, engine_factory=lambda _: object(), principal_provider=lambda: OWNER)
+    runner = InferenceRunner(broker, db, engine_factory=lambda _revision, **_kw: object(), principal_provider=lambda: OWNER)
     invocation_id = "unknown_late_release"
     worker = threading.Thread(target=lambda: invocation.append(runner.invoke(
         InvocationRequest(**{**request(revision).__dict__, "invocation_id": invocation_id}),
@@ -1217,7 +1217,7 @@ def test_timeout_late_cancel_daemon_cannot_mutate_durable_closure_or_publish(rig
             assert release_cancel.wait(2)
             return "cancelled"
 
-    runner = InferenceRunner(broker, db, engine_factory=lambda _: object(), principal_provider=lambda: OWNER, cancel_timeout=.01)
+    runner = InferenceRunner(broker, db, engine_factory=lambda _revision, **_kw: object(), principal_provider=lambda: OWNER, cancel_timeout=.01)
     invocation_id = "timeout_late_daemon"
     worker = threading.Thread(target=lambda: invocation.append(runner.invoke(
         InvocationRequest(**{**request(revision).__dict__, "invocation_id": invocation_id}),
@@ -1267,7 +1267,7 @@ def test_dispatch_cancel_child_can_close_before_independently_gated_invocation_r
         def cancel(self):
             return "cancelled"
 
-    runner = InferenceRunner(broker, db, engine_factory=lambda _: object(), principal_provider=lambda: OWNER)
+    runner = InferenceRunner(broker, db, engine_factory=lambda _revision, **_kw: object(), principal_provider=lambda: OWNER)
     invocation_id = "independent_receipt_gates"
     worker = threading.Thread(target=lambda: invocation.append(runner.invoke(
         InvocationRequest(**{**request(revision).__dict__, "invocation_id": invocation_id}), Cooperative()

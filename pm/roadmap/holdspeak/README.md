@@ -8,15 +8,17 @@
 > from evidence, Terra waves with serialized shipping, walks, honest ledgers —
 > is canon at [`docs/internal/ORCHESTRATION.md`](../../../docs/internal/ORCHESTRATION.md).
 
-**Newest update (2026-08-09): Phase 131 — One Admission Path — CHARTERED (0/12).**
-Every actual model invocation will enter one authorized runner, execute an
-immutable deployment revision, and end in one terminal invocation receipt.
-Nested calls are admitted children, not work hidden inside an outer receipt.
-Meeting and dictation use one parent admission per session with live validity
-checks on every child. Recurring schedules use device-local bounded delegation
-for the exact work, target, and cadence until changed or disabled. The phase is
-[ready at HS-131-01](./phase-131-one-admission-path/current-phase-status.md);
-Swift is explicitly out of scope.
+**Newest update (2026-08-12): Phase 131 — One Admission Path — IN PROGRESS
+(9/17).** Nine migrations are done. HS-131-10's executable fence now classifies
+145 model-bearing sites with zero unregistered execution and proves all fifteen
+named surfaces through one literal admission, claim, exact-revision dispatch,
+and immutable-terminal spine. It also found eleven residual execution families
+across 48 pinned sites, so the owner chartered five explicit amendments rather
+than waive them: residual services, plugin providers, speech side doors, mesh
+receiver authority, and meeting residuals. HS-131-10 ships as a verified
+[blocked checkpoint](./phase-131-one-admission-path/OWNER-DECISION-PACKAGE-HS-131-10.md);
+HS-131-13 is next, while docs and the final real-model walk remain held until the
+finding count reaches zero. Swift remains explicitly out of scope.
 
 **Previous update (2026-08-08): Phase 129 — One Grammar — COMPLETE (11/11).**
 The exit walk passes all 38 surfaces with pinned-foot, stationary-head,

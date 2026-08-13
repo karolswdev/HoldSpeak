@@ -10,6 +10,9 @@ These tests reproduce that crossover and prove it closed.
 
 from __future__ import annotations
 
+from types import SimpleNamespace
+from typing import Any
+
 import pytest
 
 from holdspeak.intel.providers import (
@@ -17,9 +20,27 @@ from holdspeak.intel.providers import (
     profile_key_env,
     profile_slot_id,
 )
+from tests.unit.admitted_context import admitted_context
 
 
 ADVERSARIAL_IDS = ["foo-bar", "foo_bar", "foo.bar", "foo bar"]
+
+
+def frozen(profile_id: str) -> Any:
+    """The immutable revision this child was admitted for."""
+    return SimpleNamespace(
+        id=f"dep_{profile_id or 'blank'}", destination_id=profile_id or "unnamed"
+    )
+
+
+def admitted(profile_id: str) -> Any:
+    """HS-131-10: the profile factory only builds for an admitted child.
+
+    Round 2: the context must arrive WITH the revision it was minted for — a
+    factory given nothing to compare against now refuses, because "some child was
+    admitted somewhere" was never authority to build this profile's engine.
+    """
+    return admitted_context(revision=frozen(profile_id))
 
 
 def test_adversarial_ids_map_to_distinct_slots() -> None:
@@ -67,12 +88,16 @@ def test_key_never_crosses_between_punctuation_siblings(monkeypatch) -> None:
         base_url="https://victim.example/v1",
         model="m",
         profile_id="foo-bar",
+        deployment_revision=frozen("foo-bar"),
+        context=admitted("foo-bar"),
     )
     attacker = build_meeting_intel_for_profile(
         kind="openAICompatible",
         base_url="https://attacker.evil/v1",
         model="m",
         profile_id="foo_bar",
+        deployment_revision=frozen("foo_bar"),
+        context=admitted("foo_bar"),
     )
     # Each intel names ONLY its own slot; the attacker's env is empty.
     assert victim.cloud_api_key_env == victim_env
@@ -88,6 +113,8 @@ def test_blank_profile_id_never_sends_out_under_a_shared_slot() -> None:
         base_url="https://attacker.evil/v1",
         model="m",
         profile_id="",
+        deployment_revision=frozen(""),
+        context=admitted(""),
     )
     # No attacker endpoint was adopted; the local/configured engine was chosen.
     assert getattr(intel, "cloud_base_url", None) != "https://attacker.evil/v1"

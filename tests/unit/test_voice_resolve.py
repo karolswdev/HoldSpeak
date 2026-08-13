@@ -405,7 +405,7 @@ def test_service_retry_admits_one_child_per_attempt_with_ordinals(tmp_path):
             return "not json" if self.calls == 1 else '{"zone_ids":["zone-a"]}'
 
     fake_intel = FakeIntel()
-    broker.inference_runner._engine_factory = lambda _: fake_intel
+    broker.inference_runner._engine_factory = lambda _revision, **_kw: fake_intel
     observed_ordinals = []
     invoke = broker.inference_runner.invoke
     def record_attempt(request, *args, **kwargs):
@@ -450,7 +450,7 @@ def test_service_deadline_cancellation_returns_timeout_and_closes_parent(tmp_pat
             broker.parent_run_controller.cancel_by_operation_id(OWNER, parent_id)
             return '{"zone_ids":["zone-a"]}'
 
-    broker.inference_runner._engine_factory = lambda _: CancellingIntel()
+    broker.inference_runner._engine_factory = lambda _revision, **_kw: CancellingIntel()
     result = service.resolve_voice(OWNER, workbench_id, "find Alpha", "voice-cancel")
 
     assert result["error"] == "resolver_cancelled"

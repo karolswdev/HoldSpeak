@@ -98,15 +98,32 @@ class ProviderAdmission:
     # ------------------------------------------------------ the bound target
 
     def prepared(self, runtime: Any, capability: str) -> Any:
-        """The non-mesh dispatch target, resolved BEFORE the child is admitted.
+        """The non-mesh dispatch target when nothing has to be CONSTRUCTED.
 
-        Resolving here is what makes an unbindable backend a NAMED refusal with no
+        Checking here is what makes an unbindable backend a NAMED refusal with no
         operation behind it, instead of an anonymous dispatch failure recorded
-        after the kernel already admitted a child.
+        after the kernel already admitted a child. A runtime that already IS the
+        frozen target is returned as-is; a disagreement is only verified rebindable
+        here and is rebuilt later under the admitted child's dispatch context
+        (HS-131-10), because construction is an adapter factory.
         """
         if str(getattr(runtime, "backend", "")) == "mesh_relay":
             return None
-        return self.target(runtime, None, capability)
+        revision = self.plan.deployment(self.revision(capability))
+        if revision is None:
+            return runtime
+        from .revision_target import agrees, ensure_rebindable
+
+        if agrees(runtime, revision):
+            return runtime
+        ensure_rebindable(revision)
+        return None
+
+    def dispatch_through(self, runtime: Any, engine: Any, capability: str) -> Any:
+        """The object THIS admitted child dispatches through, given its engine."""
+        if str(getattr(runtime, "backend", "")) == "mesh_relay":
+            return _dispatch_target(runtime, engine)
+        return self.target(runtime, engine, capability)
 
     def target(self, runtime: Any, engine: Any, capability: str) -> Any:
         """The object THIS child dispatches through, bound to the frozen revision.
@@ -124,13 +141,28 @@ class ProviderAdmission:
         # a pipeline that rebuilt its runtime is re-checked against the frozen
         # revision, and holding the reference keeps the identity key sound.
         key = f"{revision_id}:{id(runtime)}"
+        from ..kernel.dispatch_context import dispatch_context_of, require_dispatch_context
+        from .revision_target import bound_target
+
+        revision = self.plan.deployment(revision_id)
         with self._lock:
             cached = self._targets.get(key)
         if cached is not None:
+            # A CONSTRUCTED target is not a free ride for the next caller: the
+            # cache is per session, so the child collecting it proves its own
+            # admission for this frozen revision before it may dispatch through
+            # something an earlier child built.
+            if cached[1] is not runtime:
+                require_dispatch_context(dispatch_context_of(engine), revision)
             return cached[1]
-        from .revision_target import bound_target
 
-        bound = bound_target(runtime, self.plan.deployment(revision_id))
+        # The context rides on the engine the RUNNER built for this claimed child;
+        # a rebind therefore proves admission instead of trusting its caller.
+        bound = bound_target(
+            runtime,
+            revision,
+            context=dispatch_context_of(engine),
+        )
         with self._lock:
             self._targets[key] = (runtime, bound)
         return bound
@@ -235,7 +267,11 @@ class ProviderAdmission:
         prepared = self.prepared(runtime, CAPABILITY_REWRITE)
 
         def call(engine: Any, payload: Mapping[str, Any], cancellation: threading.Event) -> str:
-            target = prepared if prepared is not None else _dispatch_target(runtime, engine)
+            target = (
+                prepared
+                if prepared is not None
+                else self.dispatch_through(runtime, engine, CAPABILITY_REWRITE)
+            )
             return str(
                 target.rewrite(
                     payload["prompt_material"],
@@ -272,7 +308,11 @@ class ProviderAdmission:
         prepared = self.prepared(runtime, CAPABILITY_PUNCTUATE)
 
         def call(engine: Any, payload: Mapping[str, Any], cancellation: threading.Event) -> str:
-            target = prepared if prepared is not None else _dispatch_target(runtime, engine)
+            target = (
+                prepared
+                if prepared is not None
+                else self.dispatch_through(runtime, engine, CAPABILITY_PUNCTUATE)
+            )
             return str(
                 target.rewrite(payload["prompt_material"], max_tokens=int(payload["max_tokens"]))
             )
@@ -315,7 +355,13 @@ class _ClassifyLeg:
         prepared = self._admission.prepared(self._runtime, CAPABILITY_INTENT_CLASSIFY)
 
         def call(engine: Any, payload: Mapping[str, Any], cancellation: threading.Event) -> Any:
-            target = prepared if prepared is not None else _dispatch_target(self._runtime, engine)
+            target = (
+                prepared
+                if prepared is not None
+                else self._admission.dispatch_through(
+                    self._runtime, engine, CAPABILITY_INTENT_CLASSIFY
+                )
+            )
             kwargs: dict[str, Any] = {
                 "max_tokens": int(payload["max_tokens"]),
                 "temperature": float(payload["temperature"]),

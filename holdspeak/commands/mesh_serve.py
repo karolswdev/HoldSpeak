@@ -120,12 +120,20 @@ class MeshServeWorker:
                 # must execute the admitted endpoint/model directly. Its secret
                 # stays local through the frozen destination id's secret slot.
                 from ..intel.providers import build_meeting_intel_for_profile
+                from ..kernel.dispatch_context import LEGACY_UNCONTEXTUAL
 
                 kind = "onDevice" if revision.model_path else "openAICompatible"
+                # HS-131-10 FINDING ``mesh-receiver``: this node accepts a
+                # hand-built job envelope — nonempty warrant fields do not
+                # authenticate — so there is no admitted child to issue a dispatch
+                # context. It carries the ONE named legacy marker until the owner
+                # charters mesh-receiver admission (warrant verification or a
+                # node-side runner). BLOCKING; do not copy this marker.
                 engine = build_meeting_intel_for_profile(
                     kind=kind, base_url=revision.endpoint, model=revision.model,
                     profile_id=revision.destination_id, node=revision.node,
                     model_file=revision.model_path or "",
+                    context=LEGACY_UNCONTEXTUAL,
                 )
             from ..intel.mesh_relay import MeshRelayIntel
 
