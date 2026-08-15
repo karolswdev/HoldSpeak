@@ -34,18 +34,32 @@ export function CadenceCore({ hero }: CoreProps) {
   const loops = asRows(loopsResource.data, ["loops"]);
   const nudges = asRows(history.data, ["nudges"]);
   const [replies, setReplies] = useState<Record<string, string>>({});
+  const [replyReceipt, setReplyReceipt] = useState("");
   const action = useAction();
   const act = async (id: string, verb: string) => {
     await action.run(async () => {
       await apiFetch(`/api/cadence/loops/${encodeURIComponent(id)}/${verb}`, {
         method: "POST",
-        json:
-          verb === "snooze"
-            ? { hours: 24 }
-            : verb === "reply"
-              ? { text: replies[id] ?? "" }
-              : {},
+        json: verb === "snooze" ? { hours: 24 } : {},
       });
+      await loopsResource.reload();
+      await history.reload();
+    });
+  };
+  // HS-132-11 — the answer goes to the waiting agent. A refusal rides the
+  // existing local error channel (named by the route); the send leaves an
+  // in-flow receipt, because the answered loop closes and leaves the list.
+  const sendReply = async (id: string) => {
+    const text = (replies[id] ?? "").trim();
+    if (!text) return;
+    setReplyReceipt("");
+    await action.run(async () => {
+      const result = await apiFetch<{ pane?: string }>(
+        `/api/cadence/loops/${encodeURIComponent(id)}/reply`,
+        { method: "POST", json: { text } },
+      );
+      setReplyReceipt(`Sent to ${result.pane || "the agent"}`);
+      setReplies((prev) => ({ ...prev, [id]: "" }));
       await loopsResource.reload();
       await history.reload();
     });
@@ -74,6 +88,11 @@ export function CadenceCore({ hero }: CoreProps) {
         </>,
       )}
       {action.message ? <SurfaceState error={action.message} /> : null}
+      {replyReceipt ? (
+        <p className="surface-receipt-line" data-tone="ok" role="status">
+          ✓ {replyReceipt}
+        </p>
+      ) : null}
       <SurfaceColumns
         main={
           <SurfaceSection label="Now">
@@ -110,7 +129,7 @@ export function CadenceCore({ hero }: CoreProps) {
                             <Button
                               dense
                               disabled={!replies[id]?.trim()}
-                              onClick={() => void act(id, "reply")}
+                              onClick={() => void sendReply(id)}
                             >
                               Send reply
                             </Button>

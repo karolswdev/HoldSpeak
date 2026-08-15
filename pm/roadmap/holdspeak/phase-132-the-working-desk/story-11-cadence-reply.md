@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 132
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** none
 - **Unblocks:** none
 - **Owner:** unassigned
@@ -37,7 +37,13 @@ cannot answer a waiting agent from the desk.
 
 - [ ] Send reply delivers and the two red tests pass in isolation and
   in-suite.
-- [ ] Empty, non-agent, and missing-pane replies refuse by name with 400.
+- [ ] Empty and non-agent replies refuse by name with 400; a missing pane
+  refuses by name with 409. (Amended at implementation, 2026-08-15: the
+  charter said 400 for all three, but the canonical contract test —
+  tests/integration/test_cadence_agent.py:109, from the original CAD-3-03
+  contract in 18c0539e — pins the missing pane at 409, which is also the
+  truer status for a conflict with live session state. The test won. Owner
+  may overrule at the sitting.)
 - [ ] The desk shows the delivery outcome.
 
 ## Test plan
