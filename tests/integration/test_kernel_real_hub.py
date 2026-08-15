@@ -72,6 +72,7 @@ def test_real_http_executor_receipt_and_sigkill_cursor_replay(tmp_path: Path) ->
         ),
         encoding="utf-8",
     )
+    os.chmod(node_store, 0o600)
     with socket.socket() as reservation:
         reservation.bind(("127.0.0.1", 0))
         port = reservation.getsockname()[1]

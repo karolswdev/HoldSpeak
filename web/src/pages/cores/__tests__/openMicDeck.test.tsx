@@ -40,6 +40,8 @@ vi.mock("../../../lib/api", () => {
   return {
     ApiError,
     apiFetch: mocks.apiFetch,
+    newDeliveryId: () =>
+      `speak:${Date.now()}-${Math.random().toString(36).slice(2)}`,
     readableError: (error: unknown) =>
       error instanceof Error ? error.message : "Request failed",
   };

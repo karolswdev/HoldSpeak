@@ -1,6 +1,6 @@
 # Phase 131 — One Admission Path
 
-**Status:** IN PROGRESS (16/17).
+**Status:** COMPLETE (17/17).
 
 **Last updated:** 2026-08-15.
 
@@ -42,7 +42,7 @@ one door through which intelligence acts.
   and React/Vite contract will specify that later work.
 - Phase 132's web ownership consolidation and Phase 133's product-language
   consolidation.
-- The 94 unrelated inherited Phase 118–128 failures assigned by HS-130-10.
+- The unrelated Phase 118–128 failures assigned by the HS-130-10 inherited ledger.
 - `capability_ref`, generated-contract machinery, or a general workflow-hosting
   expansion.
 - Changes to the Constitution. This phase implements Articles V and XI as
@@ -109,33 +109,33 @@ covers the complete ledger:
 
 This amendment records work, not an Article-XI exception. All five stories have
 landed, the same census returns zero findings, and HS-131-10 is closed.
-HS-131-11 is done; HS-131-12 is unblocked.
+HS-131-11 and HS-131-12 are done; all seventeen stories are closed.
 
 ## Exit criteria (evidence required)
 
-- [ ] One production inference runner owns admission, exact-revision execution,
+- [x] One production inference runner owns admission, exact-revision execution,
   child causation, cancellation, and terminal receipt closure.
-- [ ] Ask, Agent, Sequence, Workflow, Workbench, Rails, Decisions, Delivery,
+- [x] Ask, Agent, Sequence, Workflow, Workbench, Rails, Decisions, Delivery,
   Cadence, meeting intelligence/transcription, dictation, wake transcription,
   and every other product model caller in the pre-charter census reach that
   runner; the one-path fence exits 0.
-- [ ] Every actual model invocation creates exactly one admitted operation and
+- [x] Every actual model invocation creates exactly one admitted operation and
   one terminal receipt; multi-step Sequence and Workflow runs prove parent plus
   one child per model step.
-- [ ] A profile change after admission cannot change the endpoint, model,
+- [x] A profile change after admission cannot change the endpoint, model,
   boundary, or secret slot used by that invocation.
-- [ ] The deployment revision and its receipt reference remain resolvable after
+- [x] The deployment revision and its receipt reference remain resolvable after
   sync; all seven HS-130-10 sync-registry tests pass.
-- [ ] Cancellation prevents late model output from becoming a domain result and
+- [x] Cancellation prevents late model output from becoming a domain result and
   closes the invocation once as cancelled.
-- [ ] An enabled schedule proves bounded delegation; changed, disabled,
+- [x] An enabled schedule proves bounded delegation; changed, disabled,
   expired, or mismatched terms refuse by name without a model call.
-- [ ] Meeting, dictation, and configured wake each prove the correct admitted
+- [x] Meeting, dictation, and configured wake each prove the correct admitted
   session parent with causally linked invocation children, including shared
   local Whisper, without journaling audio or tokens.
-- [ ] Focused tests, the web suite, and the full backend suite are captured and
+- [x] Focused tests, the web suite, and the full backend suite are captured and
   read. Any inherited failures are diffed by test name against HS-130-10.
-- [ ] The real-model walk proves the contract against the live LAN endpoint and
+- [x] The real-model walk proves the contract against the live LAN endpoint and
   stores its output under the phase assets.
 
 ## Story status
@@ -153,7 +153,7 @@ HS-131-11 is done; HS-131-12 is unblocked.
 | HS-131-09 | Dictation and transcription are admitted per session | done | [story-09](./story-09-dictation-sessions.md) | [evidence-story-09](./evidence-story-09.md) |
 | HS-131-10 | The one-path fence | done | [story-10](./story-10-one-path-fence.md) | [evidence-story-10](./evidence-story-10.md) |
 | HS-131-11 | The entry-point contract | done | [story-11](./story-11-entry-point-docs.md) | [evidence-story-11](./evidence-story-11.md) |
-| HS-131-12 | The walk | backlog | [story-12](./story-12-the-walk.md) | — |
+| HS-131-12 | The walk | done | [story-12](./story-12-the-walk.md) | [evidence-story-12](./evidence-story-12.md) |
 | HS-131-13 | Residual services take the admitted door | done | [story-13](./story-13-residual-service-admission.md) | [evidence-story-13](./evidence-story-13.md) |
 | HS-131-14 | Plugins receive admitted intelligence | done | [story-14](./story-14-plugin-provider-admission.md) | [evidence-story-14](./evidence-story-14.md) |
 | HS-131-15 | Speech side doors become sessions or stay lexical | done | [story-15](./story-15-speech-side-door-admission.md) | [evidence-story-15](./evidence-story-15.md) |
@@ -179,10 +179,10 @@ HS-131-11 is done; HS-131-12 is unblocked.
 7. **Document and prove:** HS-131-11 updates the entry points and HS-131-12
    performs the assembled real-model walk and full-suite diff.
 
-Stories ship one at a time through the Delivery Workbench gate. Implementation
-uses the standing Opus implementer, Terra adversarial verifier, Sol final
-judgment pipeline. Terra runs focused tests; Sol reads the implementation,
-verification, and full-suite output before any done call.
+Stories ship one at a time through the Delivery Workbench gate. The owner closed
+further adversarial review in this phase: concrete ordinary-use regressions are
+repaired, theoretical hardening remains recorded, and Sol reads the real walk plus
+full-suite output before the final done call.
 
 ## Where we are
 
@@ -490,8 +490,18 @@ authority. Stale direct model arrows, the six-operation registry claim, mesh hub
 token instructions, and Swift-as-contract prose are gone. Current production
 symbols, operation names, routes, registry kinds, and mesh pairing commands were
 read against code; no production API/schema changed. The isolated docs, schema,
-API-surface, and rendered-Mermaid matrix is 52 passed. HS-131-12's real-model walk
-is the only story left.
+API-surface, and rendered-Mermaid matrix is 52 passed.
+HS-131-12 is done, closing Phase 131 at 17/17. The assembled real-model `.43`
+walk passes all ten legs; web passes 811 tests; focused Chromium live-bus proof
+passes 3; and the seven assigned sync checks plus the repaired real-hub custody
+path pass 8. Sol read the complete full-backend output: 71 failed, 5,543 passed,
+44 skipped, and 17 errors. Its normalized 88-name ledger shares 87 names with the
+102-name HS-130-10 baseline; the sole current-only name is the pre-Phase-131
+`test_mesh_node_lifecycle`, classified as the same absent-`.43`-worker UAT
+environment dependency as the already-baselined mesh dispatch test. The two
+concrete current regressions found by the first run are repaired and independently
+green. [backend-failure-diff](./assets/hs-131-12/backend-failure-diff.md) is the
+classification; [final-summary](./final-summary.md) is the immutable exit record.
 The roadmap still has inherited structural lint errors in old phases; they are
 named baseline and are not silently bundled into this product phase.
 
@@ -509,6 +519,13 @@ named baseline and are not silently bundled into this product phase.
 
 ## Decisions made (this phase)
 
+- 2026-08-15 — **Phase 131 closes at the functional bar.** The assembled `.43`
+  walk is 10/10, the one-path census remains at zero findings, web is 811/811,
+  and focused live-bus plus assigned sync/real-hub proofs are green. Sol read the
+  complete inherited-red backend output and normalized all 88 failing/error names
+  against HS-130-10: one current-only name is an older absent-worker live-UAT
+  dependency, while both concrete current regressions found by the first run are
+  repaired. No further adversarial or speculative hardening loop is opened.
 - 2026-08-15 — **The entry points describe the shipped boundary, not a parallel
   architecture.** `docs/ARCHITECTURE.md` is the canonical integrator contract;
   README, backend decomposition, security, and models link to it or state the same
@@ -649,8 +666,9 @@ named baseline and are not silently bundled into this product phase.
 
 ## Decisions deferred
 
-- The 94 unrelated inherited failures remain assigned to a separate remediation
-  phase. Trigger: the owner's scope ruling; default: do not absorb them here.
+- The unrelated HS-130-10 inherited-ledger failures remain assigned to a separate
+  remediation phase. Trigger: the owner's scope ruling; default: do not absorb
+  them here.
 - DecisionRecord-to-receipt lifecycle links remain Phase 133. Trigger: the
   language phase; default: preserve the Phase-130 rename and current behavior.
 - Workbench `capability_ref` remains Backlog Candidate AA. Trigger: a separately

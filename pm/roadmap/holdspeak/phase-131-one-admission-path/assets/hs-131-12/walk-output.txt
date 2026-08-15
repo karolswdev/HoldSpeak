@@ -1,0 +1,12 @@
+LIVE endpoint ready: http://192.168.1.43:8080/v1; model=Qwen3.6-35B-A3B-UD-Q5_K_XL.gguf; model_count=1
+  PASS  runner: runner revision/cancellation; rc=0; duration_ms=3924; operations=7; receipts=7; stdout_bytes=160; stderr_bytes=0; output=sha256:29a47d980b5f5aafb3e01dad35bd4e0b2f5480b6dd398347e836f7222cf371ea
+  PASS  ask-agent: Ask and saved Agent; rc=0; duration_ms=4098; operations=6; receipts=6; stdout_bytes=890; stderr_bytes=0; output=sha256:c4cf3363a838f10e916b0ad801c3629681f2a97e8e2846e80adb0ee0df1ca5b3
+  PASS  sequence-workflow: Sequence and Workflow; rc=0; duration_ms=5517; operations=14; receipts=14; stdout_bytes=552; stderr_bytes=0; output=sha256:0a21b8345f8906e0ec049982661057699e829f3bac95dee66a43a88c568bae81
+  PASS  workbench: Workbench item and memory; rc=0; duration_ms=9634; operations=16; receipts=16; stdout_bytes=635; stderr_bytes=0; output=sha256:4eed5ebf9723b3bd6a3579b4cbfc927a1b1f596aac10ad8201a0e01f4a3731a9
+  PASS  schedule: bounded scheduled Workbench; rc=0; duration_ms=8054; operations=16; receipts=16; stdout_bytes=1001; stderr_bytes=0; output=sha256:a97d5ca35b7e41a346f79fbded7edb4a49be85f4f93312b2575323d76f9d533a
+  PASS  services: finite service callers; rc=0; duration_ms=5007; operations=15; receipts=15; stdout_bytes=861; stderr_bytes=135; output=sha256:df4a50d580519e63055bbafccd96ac726b14a355090965e01a3c8745cad9ff20
+  PASS  meeting: meeting session and deferred intelligence; rc=0; duration_ms=10779; operations=13; receipts=13; stdout_bytes=784; stderr_bytes=68; output=sha256:578572c25e68a3412a098972cb4af66805eb4b9e8673afff22b1c469ca9add5e
+  PASS  dictation: dictation sessions; rc=0; duration_ms=3751; operations=6; receipts=5; stdout_bytes=754; stderr_bytes=0; output=sha256:ebee6e3b4762e03eb14893b9f4dda76c74e969b61899409a2e256c30011611f0
+  PASS  controlled-contracts: fallback, indeterminate, sessions, hygiene, sync, restart; rc=0; duration_ms=2826; operations=0; receipts=0; stdout_bytes=99; stderr_bytes=0; output=sha256:3e7f4557bfbdc599b3edbed2e2d7f12f6db7fdb56eaec880249ae99a5ed18128
+  PASS  one-path-fence: literal spine, context, cardinality, provenance, mutation fence; rc=0; duration_ms=68091; operations=0; receipts=0; stdout_bytes=191; stderr_bytes=0; output=sha256:aaa7e30a4b10f05798f4b1b2d24aa8381691b182cf67814c26ed709179967b9b
+SUMMARY: 10 passed, 0 failed

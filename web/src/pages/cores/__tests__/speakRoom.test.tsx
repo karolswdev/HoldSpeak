@@ -32,6 +32,8 @@ vi.mock("../../../lib/api", () => {
   return {
     ApiError,
     apiFetch: mocks.apiFetch,
+    newDeliveryId: () =>
+      `speak:${Date.now()}-${Math.random().toString(36).slice(2)}`,
     readableError: (error: unknown) =>
       error instanceof Error ? error.message : "Request failed",
   };
@@ -45,6 +47,7 @@ vi.mock("../../../lib/pendingVoice", () => ({
 
 vi.mock("../../../lib/speakToFill", () => ({
   cancelCapture: vi.fn(),
+  closeMicInterval: vi.fn().mockResolvedValue(undefined),
   speakToFillSupported: () => true,
   speakToFillUnsupportedReason: () => null,
   startCapture: mocks.startCapture,

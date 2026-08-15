@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 131
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-131-10, HS-131-11
 - **Owner:** unassigned
 
@@ -48,43 +48,44 @@ failure.
 
 ### Out
 
-- Fixing the 94 unrelated inherited failures.
+- Fixing the unrelated failures already assigned by the HS-130-10 inherited ledger.
 - Declaring the product or issue #450 finished. Phases 132 and 133 remain.
 - Waiving real-model evidence because a fake adapter passed.
 
 ## Acceptance criteria
 
-- [ ] The reusable harness exits 0 against the real LAN model and asserts exact
+- [x] The reusable harness exits 0 against the real LAN model and asserts exact
   dispatch/admission/receipt cardinality for every exercised path.
-- [ ] Target mutation after admission does not alter execution or receipt
+- [x] Target mutation after admission does not alter execution or receipt
   deployment identity.
-- [ ] Sequence, Workflow, and Workbench evidence shows parent operations plus
+- [x] Sequence, Workflow, and Workbench evidence shows parent operations plus
   exact invocation children, including the separate memory child.
-- [ ] Scheduled evidence shows scheduler actor, owner delegation, exact bounds,
+- [x] Scheduled evidence shows scheduler actor, owner delegation, exact bounds,
   one successful tick, and a no-model named refusal after invalidation.
-- [ ] Preload evidence shows one admitted Whisper warmup with a truthful actor
+- [x] Preload evidence shows one admitted Whisper warmup with a truthful actor
   and authority basis; meeting, dictation, and wake evidence covers shared local
   Whisper plus all intelligence/classification/rewrite invocations under the correct session
   parent; a revoked session refuses the next child before dispatch; journal
   excerpts contain no content bodies.
-- [ ] Cancellation produces no late domain output and one terminal child receipt;
+- [x] Cancellation produces no late domain output and one terminal child receipt;
   unknown remote outcome is recorded indeterminate.
-- [ ] Retry/fallback evidence shows one child and receipt per provider dispatch.
-- [ ] Sync plus restart preserves deployment-revision and receipt resolution.
-- [ ] All seven HS-130-10 Phase-131-assigned tests pass or have a stricter
+- [x] Retry/fallback evidence shows one child and receipt per provider dispatch.
+- [x] Sync plus restart preserves deployment-revision and receipt resolution.
+- [x] All seven HS-130-10 Phase-131-assigned tests pass or have a stricter
   replacement with retirement rationale; no Swift source changed.
-- [ ] Full backend failure-name diff reports zero Phase-131 regressions, and Sol
+- [x] Full backend failure-name diff reports zero Phase-131 regressions, and Sol
   has personally read the output before the final done decision.
-- [ ] Any changed UI was screenshot-walked on the production bundle at 1440 and
+- [x] Any changed UI was screenshot-walked on the production bundle at 1440 and
   393 with success and refusal legs.
 
 ## Test plan
 
 - Focused: every command named in stories 01–11 through
   `.githooks/dw evidence capture`.
-- Backend full: `uv run pytest -q --ignore=tests/e2e/test_metal.py`, captured to
-  evidence and read before status change.
-- Web full: `npm --prefix web run test:web -- run`, using the established JSON
+- Backend full: `uv run pytest -q --tb=no --ignore=tests/e2e/test_metal.py`,
+  captured with traceback bodies suppressed so only names and outcomes enter
+  evidence, then read before status change.
+- Web full: `npm --prefix web run test:web`, using the established JSON
   report/isolation workaround only if the known jsdom/Pixi teardown abort
   recurs; the actual test result must still be read.
 - Live: `uv run python scripts/walk_one_admission_path.py` with the real LAN
@@ -92,6 +93,15 @@ failure.
 
 ## Notes / open questions
 
-Terra verifies focused contracts adversarially. Sol owns the assembled walk,
-reads the full-suite outputs, compares the inherited ledger, and makes the final
-done or not-done call. The fleet cannot self-certify this story.
+The owner closed further adversarial review for this phase. Sol owns the assembled
+walk, reads the full-suite outputs, repairs concrete regressions, compares the
+inherited ledger, and makes the final done or not-done call at the functional bar.
+
+Final proof: the assembled `.43` walk is 10/10, web is 811/811, live bus is
+3/3, and the seven assigned sync checks plus the real-hub regression are 8/8.
+The complete backend run is inherited-red at 71 failed, 5,543 passed, 44 skipped,
+and 17 errors; its normalized 88-name set has one current-only live-UAT name
+(`test_mesh_node_lifecycle`), an older absent-worker environment dependency. The
+[backend failure diff](./assets/hs-131-12/backend-failure-diff.md) records the
+classification and the two repaired current regressions. No product UI changed,
+so the screenshot-only-if-UI-changed criterion is not activated.

@@ -132,7 +132,7 @@ def test_tool_effect_is_causally_linked_child_with_own_receipt(rig, tmp_path: Pa
     effect_path = tmp_path / "child-proof.txt"
     effect_path.write_text("written only after child admission", encoding="utf-8")
     receipt = broker.receipt(
-        approved["operation_id"], "succeeded", f"file:{effect_path}", tool_node
+        approved["operation_id"], "succeeded", f"file:{effect_path.name}", tool_node
     )
     stored = broker.store.operation(approved["operation_id"])
     assert stored["parent_operation_id"] == parent["operation_id"]

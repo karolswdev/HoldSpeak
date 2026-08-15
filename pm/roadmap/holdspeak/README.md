@@ -8,18 +8,18 @@
 > from evidence, Terra waves with serialized shipping, walks, honest ledgers —
 > is canon at [`docs/internal/ORCHESTRATION.md`](../../../docs/internal/ORCHESTRATION.md).
 
-**Newest update (2026-08-15): Phase 131 — One Admission Path — IN PROGRESS
-(16/17).** HS-131-11's entry-point contract is done. README, architecture,
-backend decomposition, security, and models now agree on one admitted
-`InferenceRunner` path and one immutable terminal receipt per physical attempt;
-they distinguish parent runs/sessions, exact deployment revisions, bounded
-scheduler delegation, local Whisper children, cancellation/fallback/indeterminate
-outcomes, and Python/web sync authority. Stale direct-model arrows, mesh hub-token
-instructions, and Swift-as-contract prose are gone; the documentation, API,
-schema, and rendered-Mermaid matrix passes 52 tests under a fresh isolated HOME.
-The one-path fence remains at 100 sites, zero findings, zero blocking families,
-and zero unregistered execution. HS-131-12's real-model walk is the only phase
-story left. PR #454 remains draft; Swift remains out of scope.
+**Newest update (2026-08-15): Phase 131 — One Admission Path — COMPLETE
+(17/17).** The executable census closes at 100 sites, zero findings, zero blocking
+families, and zero unregistered execution. The assembled real-model walk passes
+all ten legs on `.43`: immutable revision dispatch, Ask/Agent,
+Sequence/Workflow, Workbench work and memory, bounded scheduled work, finite
+services, meeting and dictation sessions, fallback/indeterminate/sync/restart,
+and the one-path fence. The web suite is green at 811 tests. The full inherited-
+red backend output was read and name-diffed against HS-130-10; bounded current
+regressions were repaired and the final ledger has zero Phase-131 regressions.
+[`final-summary.md`](./phase-131-one-admission-path/final-summary.md) is the exit
+record. PR #454 delivers the phase; Phase 132 remains separate follow-on work and
+Swift remains held.
 
 **Previous update (2026-08-08): Phase 129 — One Grammar — COMPLETE (11/11).**
 The exit walk passes all 38 surfaces with pinned-foot, stationary-head,
