@@ -356,6 +356,29 @@ class MeetingService:
             raise NotFound("meeting", meeting_id)
         return self.get_meeting(principal, meeting_id)
 
+    def rename_meeting(
+        self, principal: Principal, meeting_id: str, title: str
+    ) -> dict[str, Any]:
+        """Rename ONE archived meeting (HS-132-07).
+
+        ``update_meeting`` speaks to the live capture session when one is
+        bound, so it can never address a specific archived meeting. Rename
+        is the archive's own verb: it writes the named row and nothing else.
+        """
+        if not isinstance(title, str):
+            raise ValidationError("meeting title must be a string")
+        name = title.strip()
+        if not name:
+            raise ValidationError("meeting title must not be empty")
+        existing = self._db.meetings.get_meeting(meeting_id)
+        if existing is None:
+            raise NotFound("meeting", meeting_id)
+        if not self._db.meetings.update_meeting_metadata(
+            meeting_id, name, existing.tags
+        ):
+            raise NotFound("meeting", meeting_id)
+        return self.get_meeting(principal, meeting_id)
+
     def delete_meeting(self, principal: Principal, meeting_id: str) -> bool:
         if not self._db.meetings.delete_meeting(meeting_id):
             raise NotFound("meeting", meeting_id)

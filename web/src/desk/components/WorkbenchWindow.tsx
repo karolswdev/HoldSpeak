@@ -383,7 +383,11 @@ function ConfigPanel({
               {preset.label}
             </button>
           ))}
-          <span className="wb-schedule-toggle">
+          {/* HS-132-07 — a disabled control names why (AC 4). */}
+          <span
+            className="wb-schedule-toggle"
+            title={detail.schedule ? undefined : "No schedule picked"}
+          >
             <CheckGadget
               label="Schedule enabled"
               checked={detail.schedule_enabled}
@@ -499,7 +503,44 @@ function ConfigPanel({
   );
 }
 
+/* ── drop-target grammar (HS-132-07) ───────────────────────────────── */
+
+/** What this workbench will REALLY do with the payload under the cursor.
+ * The old overlay promised ADD ITEM for every drag while the handler took
+ * desk items only, so a dropped file silently minted a Meeting instead. */
+export interface DropIntent {
+  /** The honest verb, in label grammar. */
+  verb: string;
+  /** True when the workbench takes the payload; false names a refusal. */
+  accepted: boolean;
+}
+
+export function dropTypes(transfer: DataTransfer | null | undefined): string[] {
+  const types = transfer?.types;
+  return types ? Array.from(types as ArrayLike<string>) : [];
+}
+
+export function workbenchDropVerb(types: readonly string[]): DropIntent {
+  if (types.includes("application/x-desk-item"))
+    return { verb: "ADD ITEM", accepted: true };
+  // Files never stop here: the desk's glass layer imports them (HS-101 B7).
+  if (types.includes("Files"))
+    return { verb: "IMPORT AS MEETING", accepted: false };
+  return { verb: "NOT A WORKBENCH ITEM", accepted: false };
+}
+
+/** The chip the overlay wears before the release. */
+export function dropIntentLabel(intent: DropIntent): string {
+  return intent.verb === "NOT A WORKBENCH ITEM"
+    ? `NO DROP · ${intent.verb}`
+    : `DROP TARGET · ${intent.verb}`;
+}
+
 /* ── item card ─────────────────────────────────────────────────────── */
+
+/** HS-132-07 — the pause that ends a typing burst, matching the desk's
+ * other inline editors (`useDebouncedSave`). */
+export const BODY_SAVE_PAUSE_MS = 450;
 
 function WorkbenchItemCard({
   item,
@@ -550,6 +591,36 @@ function WorkbenchItemCard({
 
   const rerunItem = () => void updateItem({ status: "pending", result: null, result_egress: null, tokens_consumed: 0, completed_at: null }, "RE-RUN ITEM");
   const dismissItem = () => void updateItem({ status: "dismissed" }, "DISMISS ITEM");
+
+  // HS-132-07 — the body is a LOCAL draft. The old well bound the server
+  // value straight to the textarea and fired a PUT + full refetch on every
+  // keystroke, so a refetch landing mid-word overwrote what was typed. The
+  // draft owns the characters; the hub sees one PUT per pause (the same
+  // 450ms the desk's other editors use), and a refused save still names
+  // itself through the window's write-receipt channel.
+  const serverBody = item.body || "";
+  const [bodyDraft, setBodyDraft] = useState<string | null>(null);
+  const bodyTimer = useRef<number | null>(null);
+  useEffect(
+    () => () => {
+      if (bodyTimer.current) window.clearTimeout(bodyTimer.current);
+    },
+    [],
+  );
+  // Once the hub holds exactly what was typed, the draft dissolves and the
+  // server value drives the well again.
+  useEffect(() => {
+    if (bodyDraft !== null && bodyDraft === serverBody && bodyTimer.current === null)
+      setBodyDraft(null);
+  }, [bodyDraft, serverBody]);
+  const editBody = (next: string) => {
+    setBodyDraft(next);
+    if (bodyTimer.current) window.clearTimeout(bodyTimer.current);
+    bodyTimer.current = window.setTimeout(() => {
+      bodyTimer.current = null;
+      void updateItem({ body: next });
+    }, BODY_SAVE_PAUSE_MS);
+  };
 
   const [keeping, setKeeping] = useState(false);
   const handleKeep = async () => {
@@ -626,8 +697,8 @@ function WorkbenchItemCard({
           <div className="wb-card-body-edit">
             <PadGadget
               label="Item body"
-              value={item.body || ""}
-              onChange={(next) => void updateItem({ body: next })}
+              value={bodyDraft ?? serverBody}
+              onChange={editBody}
               placeholder="Add details…"
               rows={2}
               autoGrow
@@ -859,6 +930,8 @@ export function WorkbenchWindow({
   const [openRunId, setOpenRunId] = useState<string | null>(null);
   const [voiceProposal, setVoiceProposal] = useState<VoiceProposal | null>(null);
   const [dropHover, setDropHover] = useState(false);
+  // HS-132-07 — what the drag under the cursor will actually do here.
+  const [dropIntent, setDropIntent] = useState<DropIntent | null>(null);
   const [resolving, setResolving] = useState(false);
   const [resolverError, setResolverError] = useState<string | null>(null);
   const generationRef = useRef(0);
@@ -1002,6 +1075,12 @@ export function WorkbenchWindow({
   }, [detail, configOpen]);
 
   /* ── WebSocket subscription for live run feedback ─────────────── */
+  /* HS-132-03: these five subscriptions had no emitter — the conductor's
+     broadcast seam was wired to the hub and never called, so a running
+     workbench never moved until a reload. WorkbenchRunner now emits at the
+     real transitions (holdspeak/workbench_conductor.py emit_* helpers); the
+     payload contract is {workbench_id, run_id, item_id, index, total} with
+     item_count on run_start. */
 
   const bus = useRuntimeBus();
 
@@ -1023,11 +1102,13 @@ export function WorkbenchWindow({
       bus.subscribe("workbench.item_done", (frame) => {
         const ev = d(frame);
         if (ev?.workbench_id !== workbenchId) return;
+        setRunProgress({ index: ev.index || 0, total: ev.total || 0 });
         void load();
       }),
       bus.subscribe("workbench.item_failed", (frame) => {
         const ev = d(frame);
         if (ev?.workbench_id !== workbenchId) return;
+        setRunProgress({ index: ev.index || 0, total: ev.total || 0 });
         void load();
       }),
       bus.subscribe("workbench.run_complete", (frame) => {
@@ -1290,11 +1371,27 @@ export function WorkbenchWindow({
 
   /* ── drop-to-work handler ─────────────────────────────────────── */
 
+  /** Name the outcome BEFORE the release, from the payload types alone. */
+  const armDrop = (e: React.DragEvent) => {
+    setDropHover(true);
+    setDropIntent(workbenchDropVerb(dropTypes(e.dataTransfer)));
+  };
+
   const handleDrop = async (e: React.DragEvent) => {
-    e.preventDefault();
+    const intent = workbenchDropVerb(dropTypes(e.dataTransfer));
     setDropHover(false);
+    setDropIntent(null);
+    // A file is the desk's payload, not the workbench's: it rides through
+    // to the glass layer that imports it as a Meeting. Claiming it here
+    // (preventDefault) would swallow the drop.
+    if (intent.verb === "IMPORT AS MEETING") return;
+    e.preventDefault();
     const text = e.dataTransfer.getData("application/x-desk-item");
-    if (!text) return;
+    if (!text) {
+      // The refusal the overlay already promised, spoken once more on release.
+      failWrite("DROP TO WORK", intent.accepted ? "EMPTY PAYLOAD" : intent.verb);
+      return;
+    }
     let dropped: Array<{ kind: string; id: string; title: string; body?: string }>;
     try {
       dropped = JSON.parse(text);
@@ -1345,6 +1442,16 @@ export function WorkbenchWindow({
       ? "Running…"
       : "▸ Run";
 
+  // HS-132-07 — no bare disabled control: RUN names what is missing and
+  // where to supply it (the kit's disabledReason rule, Surface.tsx).
+  const runDisabledReason = running
+    ? "Run in progress"
+    : !detail
+      ? "Workbench still loading"
+      : !detail.recipe_id
+        ? "No agent bound · bind one in Configure"
+        : null;
+
   return (
     <DeskWindowFrame
       id={`workbench:${workbenchId}`}
@@ -1387,9 +1494,14 @@ export function WorkbenchWindow({
           type="button"
           className="desk-chip"
           data-tone={running ? "warn" : undefined}
-          disabled={running || !detail?.recipe_id}
+          disabled={!!runDisabledReason}
           onClick={() => void triggerRun()}
-          title="Run this workbench now"
+          title={runDisabledReason ?? "Run this workbench now"}
+          aria-label={
+            runDisabledReason
+              ? `Run: ${runDisabledReason}`
+              : "Run this workbench now"
+          }
         >
           {runButtonLabel}
         </button>
@@ -1403,14 +1515,19 @@ export function WorkbenchWindow({
     >
       <div
         className={`desk-surface-body wb-body${dropHover ? " wb-drop-hover" : ""}`}
-        onDragOver={(e) => { e.preventDefault(); setDropHover(true); }}
-        onDragEnter={(e) => { e.preventDefault(); setDropHover(true); }}
-        onDragLeave={() => setDropHover(false)}
+        onDragOver={(e) => { e.preventDefault(); armDrop(e); }}
+        onDragEnter={(e) => { e.preventDefault(); armDrop(e); }}
+        onDragLeave={() => { setDropHover(false); setDropIntent(null); }}
         onDrop={handleDrop}
       >
-        {dropHover ? (
+        {dropHover && dropIntent ? (
           <div className="wb-drop-zone">
-            <span className="desk-chip">DROP TARGET · ADD ITEM</span>
+            <span
+              className="desk-chip"
+              data-tone={dropIntent.accepted ? undefined : "warn"}
+            >
+              {dropIntentLabel(dropIntent)}
+            </span>
           </div>
         ) : null}
         {error ? <SurfaceState error={error} onRetry={() => void load()} /> : null}
@@ -1686,6 +1803,10 @@ export function WorkbenchWindow({
                   label="GO"
                   glyph=">"
                   disabled={!newTitle.trim()}
+                  // HS-132-07 — a disabled key names why (AC 4).
+                  title={
+                    newTitle.trim() ? "Add this item" : "No instruction typed"
+                  }
                   onClick={() => void addItem()}
                 />
               </div>
@@ -1700,12 +1821,20 @@ export function WorkbenchWindow({
               count={`${runs.length} RUNS`}
             >
               {runs.length === 0 ? (
+                // HS-132-07 — the empty ledger names the state it is in and
+                // offers the step that ends it: bind an agent, or run.
                 <SurfaceState
                   empty
-                  emptyLabel="No runs yet"
+                  emptyLabel={isConfigured ? "No runs yet" : "No agent bound"}
                   emptyGlyph="○"
-                  actionLabel="Run now"
-                  onAction={detail?.recipe_id && !running ? () => void triggerRun() : undefined}
+                  actionLabel={isConfigured ? "Run now" : "Bind an agent"}
+                  onAction={
+                    isConfigured
+                      ? running
+                        ? undefined
+                        : () => void triggerRun()
+                      : () => setConfigOpen(true)
+                  }
                 />
               ) : null}
               {runs.map((run) => {

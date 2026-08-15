@@ -13,6 +13,11 @@ import {
   writeFailureReason,
 } from "../useWriteReceipt";
 
+// Query helper scoped to the render root (testing-library renders into
+// document.body, so this equals baseElement.querySelector).
+const q = (sel: string): HTMLElement | null => document.body.querySelector(sel);
+const qa = (sel: string) => document.body.querySelectorAll(sel);
+
 function Harness({ run }: { run: () => Promise<unknown> }) {
   const { attempt, receipt } = useWriteReceipt();
   return (
@@ -47,7 +52,7 @@ describe("HS-132-06 write-receipt channel", () => {
     const user = userEvent.setup();
     render(<Harness run={async () => "ok"} />);
     await user.click(screen.getByText("GO"));
-    expect(document.querySelector(".write-receipt")).toBeNull();
+    expect(q(".write-receipt")).toBeNull();
   });
 
   it("seats a named receipt with retry when the write is refused", async () => {
@@ -64,7 +69,7 @@ describe("HS-132-06 write-receipt channel", () => {
     // Retry re-issues the exact same call; a landed retry clears the receipt.
     await user.click(screen.getByRole("button", { name: "Retry" }));
     expect(run).toHaveBeenCalledTimes(2);
-    expect(document.querySelector(".write-receipt")).toBeNull();
+    expect(q(".write-receipt")).toBeNull();
   });
 
   it("treats a refused Response as a failure without a throw", async () => {
@@ -81,13 +86,13 @@ describe("HS-132-06 write-receipt channel", () => {
     await user.click(screen.getByText("GO"));
     expect(screen.getByText("ADD ITEM FAILED · HUB UNREACHABLE")).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "OK" }));
-    expect(document.querySelector(".write-receipt")).toBeNull();
+    expect(q(".write-receipt")).toBeNull();
     expect(run).toHaveBeenCalledTimes(1);
   });
 
   it("carries module-channel failures to any mounted receipt line", async () => {
     render(<DeskHarness />);
-    expect(document.querySelector(".write-receipt")).toBeNull();
+    expect(q(".write-receipt")).toBeNull();
 
     const retry = vi.fn();
     act(() => {
@@ -100,6 +105,6 @@ describe("HS-132-06 write-receipt channel", () => {
     expect(retry).toHaveBeenCalledTimes(1);
 
     act(() => clearWriteFailure());
-    expect(document.querySelector(".write-receipt")).toBeNull();
+    expect(q(".write-receipt")).toBeNull();
   });
 });

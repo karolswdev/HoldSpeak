@@ -8,6 +8,7 @@ import type { Items } from "./api";
 import { qualifiedRef } from "./api";
 import type { WorldObject } from "./world";
 import { useDesk } from "./store";
+import { primitiveUpdateUrl } from "./store/dataSlice";
 import { productLabel } from "../lib/productLanguage";
 
 export interface InfoProperty {
@@ -102,6 +103,31 @@ export const INFO: Record<string, KindInfo> = {
 
 export function kindInfo(kind: string): KindInfo {
   return INFO[kind] || { footprint: () => null, properties: [] };
+}
+
+/* ── rename honesty (HS-132-07) ───────────────────────────────────────
+ * Identity edits commit through the EXISTING update paths (the rule at the
+ * top of this file). Get Info offered Rename for every kind anyway, so a
+ * meeting/artifact/chain rename typed itself into a dead end. Rename is now
+ * offered only where a real path takes it; every other kind keeps its name
+ * presented and names who owns it. */
+const RENAME_LOCKS: Record<string, string> = {
+  artifact: "Named by the run that minted it",
+  repository: "Named by its git remote",
+  roadmap: "Named by its roadmap file",
+  story: "Named by its story file",
+  coder: "Named by the live coder session",
+  game: "Named by the game",
+  layout: "Named by the desk layout",
+  intelligence: "Named by the desk",
+};
+
+/** Why this kind's name cannot be edited, or null when Rename is real. */
+export function renameLock(kind: string): string | null {
+  // Zones rename through renameZone, not the primitive update path.
+  if (kind === "directory") return null;
+  if (primitiveUpdateUrl(kind, "id")) return null;
+  return RENAME_LOCKS[kind] ?? "No rename path";
 }
 
 /** The zones an object is filed into (chips, openable). */

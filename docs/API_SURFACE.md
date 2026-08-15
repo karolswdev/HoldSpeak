@@ -9,7 +9,7 @@ and the clients that call it (extracted from the real call sites in
 `web/src` and `apple/`). "server only" means no in-repo client calls
 it today.
 
-Routes: 443 (plus static mounts). iOS-consumed: 88. Web-consumed: 339.
+Routes: 447 (plus static mounts). iOS-consumed: 89. Web-consumed: 343.
 
 ## device_audio_ws
 
@@ -123,6 +123,7 @@ Routes: 443 (plus static mounts). iOS-consumed: 88. Web-consumed: 339.
 | GET | `/api/cadence/loops/{loop_id}` | server only |
 | POST | `/api/cadence/loops/{loop_id}/close` | web |
 | POST | `/api/cadence/loops/{loop_id}/kill` | web |
+| POST | `/api/cadence/loops/{loop_id}/reply` | web |
 | POST | `/api/cadence/loops/{loop_id}/snooze` | web |
 | POST | `/api/cadence/run-now` | web |
 | GET | `/api/cadence/status` | web |
@@ -372,6 +373,7 @@ Routes: 443 (plus static mounts). iOS-consumed: 88. Web-consumed: 339.
 | GET | `/api/meetings/facets` | ios, web |
 | DELETE | `/api/meetings/{meeting_id}` | ios, web |
 | GET | `/api/meetings/{meeting_id}` | ios, web |
+| PUT | `/api/meetings/{meeting_id}` | ios, web |
 | POST | `/api/meetings/{meeting_id}/capture/recover` | web |
 | GET | `/api/meetings/{meeting_id}/export` | web |
 | GET | `/api/meetings/{meeting_id}/sync-conflicts` | web |
@@ -451,7 +453,9 @@ Routes: 443 (plus static mounts). iOS-consumed: 88. Web-consumed: 339.
 | Method | Path | Consumers |
 |---|---|---|
 | POST | `/api/brief/generate` | web |
+| POST | `/api/brief/items/{item_id}/shelf` | web |
 | GET | `/api/brief/latest` | web |
+| GET | `/api/brief/shelf` | web |
 
 ## web.routes.pages
 

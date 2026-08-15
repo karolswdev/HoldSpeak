@@ -14,6 +14,12 @@ import { WorkbenchWindow } from "../WorkbenchWindow";
 import { DeskChrome } from "../DeskChrome";
 import { EmptyDesk } from "../EmptyDesk";
 
+// Query helper scoped to the render root (testing-library renders into
+// document.body, so this equals baseElement.querySelector).
+const q = (sel: string): HTMLElement | null => document.body.querySelector(sel);
+const qa = (sel: string) => document.body.querySelectorAll(sel);
+
+
 vi.mock("../../../runtime/RuntimeBus", () => ({
   useRuntimeBus: () => ({
     state: "connected",
@@ -106,7 +112,7 @@ async function expand(title: string) {
 }
 
 function receiptText(): string {
-  return document.querySelector(".write-receipt-label")?.textContent || "";
+  return q(".write-receipt-label")?.textContent || "";
 }
 
 describe("HS-132-06 workbench write receipts", () => {
@@ -190,7 +196,7 @@ describe("HS-132-06 workbench write receipts", () => {
 
   it("names a refused DROP TO WORK and a malformed drop", async () => {
     await openWindow();
-    const body = document.querySelector(".wb-body") as HTMLElement;
+    const body = q(".wb-body") as HTMLElement;
 
     fireEvent.drop(body, {
       dataTransfer: {
@@ -233,7 +239,7 @@ describe("HS-132-06 workbench write receipts", () => {
     await waitFor(() =>
       expect(screen.getByLabelText("New item instruction")).toHaveValue(""),
     );
-    expect(document.querySelector(".write-receipt")).toBeNull();
+    expect(q(".write-receipt")).toBeNull();
   });
 });
 
@@ -258,7 +264,7 @@ describe("HS-132-06 desk-floor write receipts", () => {
     await user.click(screen.getByRole("button", { name: /Seed the desk/ }));
     await waitFor(() =>
       expect(
-        document.querySelector(".write-receipt-label")?.textContent,
+        q(".write-receipt-label")?.textContent,
       ).toBe("SEED DESK FAILED · HTTP 500"),
     );
     expect(screen.getByRole("button", { name: "Retry" })).toBeInTheDocument();
@@ -281,7 +287,7 @@ describe("HS-132-06 desk-floor write receipts", () => {
     await user.click(screen.getByRole("button", { name: /New Note/ }));
     await waitFor(() =>
       expect(
-        document.querySelector(".write-receipt-label")?.textContent,
+        q(".write-receipt-label")?.textContent,
       ).toBe("CREATE NOTE FAILED · HTTP 500"),
     );
   });
@@ -298,7 +304,7 @@ describe("HS-132-06 desk-floor write receipts", () => {
       ),
     );
     await useDesk.getState().createPrimitive("note");
-    expect(document.querySelector(".write-receipt")).toBeNull();
+    expect(q(".write-receipt")).toBeNull();
     expect(useDesk.getState().error).not.toContain("FAILED");
   });
 });
@@ -352,19 +358,19 @@ describe("HS-132-06 populated-floor write receipts", () => {
         <DeskChrome />
       </MemoryRouter>,
     );
-    expect(document.querySelector(".write-receipt")).toBeNull();
+    expect(q(".write-receipt")).toBeNull();
 
     await act(async () => {
       floorNewNote().onSelect();
     });
     await waitFor(() =>
-      expect(document.querySelector(".write-receipt-label")?.textContent).toBe(
+      expect(q(".write-receipt-label")?.textContent).toBe(
         "CREATE NOTE FAILED · HTTP 500",
       ),
     );
     // In flow inside the system bar — not a floating overlay.
     expect(
-      document.querySelector(".desk-menubar .desk-chrome-receipt .write-receipt"),
+      q(".desk-menubar .desk-chrome-receipt .write-receipt"),
     ).toBeTruthy();
 
     const posts = () =>
@@ -374,7 +380,7 @@ describe("HS-132-06 populated-floor write receipts", () => {
     const before = posts();
     await user.click(screen.getByRole("button", { name: "Retry" }));
     await waitFor(() => expect(posts()).toBe(before + 1));
-    expect(document.querySelector(".write-receipt-label")?.textContent).toBe(
+    expect(q(".write-receipt-label")?.textContent).toBe(
       "CREATE NOTE FAILED · HTTP 500",
     );
 
@@ -382,7 +388,7 @@ describe("HS-132-06 populated-floor write receipts", () => {
     refuse = false;
     await user.click(screen.getByRole("button", { name: "Retry" }));
     await waitFor(() =>
-      expect(document.querySelector(".write-receipt")).toBeNull(),
+      expect(q(".write-receipt")).toBeNull(),
     );
   });
 
@@ -403,11 +409,11 @@ describe("HS-132-06 populated-floor write receipts", () => {
       floorNewNote().onSelect();
     });
     await waitFor(() =>
-      expect(document.querySelectorAll(".write-receipt")).toHaveLength(1),
+      expect(qa(".write-receipt")).toHaveLength(1),
     );
     expect(
-      document.querySelector(".desk-menubar .desk-chrome-receipt"),
+      q(".desk-menubar .desk-chrome-receipt"),
     ).toBeNull();
-    expect(document.querySelector(".write-receipt-row .write-receipt")).toBeTruthy();
+    expect(q(".write-receipt-row .write-receipt")).toBeTruthy();
   });
 });

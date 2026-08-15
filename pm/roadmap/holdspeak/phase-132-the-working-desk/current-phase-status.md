@@ -121,7 +121,7 @@ one-line verdicts:
 | HS-132-04 | One utterance, one pipeline | done | [story-04](./story-04-one-pipeline-run.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-132-05 | The streaming mic is honest | done | [story-05](./story-05-streaming-mic-honesty.md) | [evidence-story-05](./evidence-story-05.md) |
 | HS-132-06 | Desk writes report their failures | done | [story-06](./story-06-write-receipts.md) | [evidence-story-06](./evidence-story-06.md) |
-| HS-132-07 | Workbench edits hold | in-progress | [story-07](./story-07-workbench-editing.md) | — |
+| HS-132-07 | Workbench edits hold | done | [story-07](./story-07-workbench-editing.md) | [evidence-story-07](./evidence-story-07.md) |
 | HS-132-08 | Intelligence tells the truth | done | [story-08](./story-08-intelligence-truth.md) | [evidence-story-08](./evidence-story-08.md) |
 | HS-132-09 | The receipt names what loaded | done | [story-09](./story-09-receipt-model-honesty.md) | [evidence-story-09](./evidence-story-09.md) |
 | HS-132-10 | One meetings placement dial | done | [story-10](./story-10-one-placement-dial.md) | [evidence-story-10](./evidence-story-10.md) |

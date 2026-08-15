@@ -166,11 +166,13 @@ export interface DeskState {
   markNew(id: string): void;
   openEditor(id: string, origin?: { x: number; y: number }): void;
   closeEditor(): void;
-  /** Autosaving field update through the real PUT routes. */
+  /** Autosaving field update through the real PUT routes. `verb` names the
+   * write in the receipt channel when the hub refuses (HS-132-07). */
   updatePrimitive(
     kind: string,
     id: string,
     patch: Record<string, unknown>,
+    verb?: string,
   ): Promise<void>;
   /** Tombstone a deletable primitive, then settle all local desk faces. */
   deletePrimitive(id: string, kind: string): Promise<void>;
