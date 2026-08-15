@@ -117,14 +117,14 @@ one-line verdicts:
 |---|---|---|---|---|
 | HS-132-01 | Stopping a meeting never stops the hub | done | [story-01](./story-01-meeting-stop-and-conflicts.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-132-02 | The live meeting is a living board | done | [story-02](./story-02-live-action-item-triage.md) | [evidence-story-02](./evidence-story-02.md) |
-| HS-132-03 | The desk hears intelligence live | in-progress | [story-03](./story-03-realtime-frames-land.md) | — |
+| HS-132-03 | The desk hears intelligence live | done | [story-03](./story-03-realtime-frames-land.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-132-04 | One utterance, one pipeline | done | [story-04](./story-04-one-pipeline-run.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-132-05 | The streaming mic is honest | in-progress | [story-05](./story-05-streaming-mic-honesty.md) | — |
 | HS-132-06 | Desk writes report their failures | done | [story-06](./story-06-write-receipts.md) | [evidence-story-06](./evidence-story-06.md) |
 | HS-132-07 | Workbench edits hold | in-progress | [story-07](./story-07-workbench-editing.md) | — |
 | HS-132-08 | Intelligence tells the truth | in-progress | [story-08](./story-08-intelligence-truth.md) | — |
 | HS-132-09 | The receipt names what loaded | done | [story-09](./story-09-receipt-model-honesty.md) | [evidence-story-09](./evidence-story-09.md) |
-| HS-132-10 | One meetings placement dial | backlog | [story-10](./story-10-one-placement-dial.md) | — |
+| HS-132-10 | One meetings placement dial | in-progress | [story-10](./story-10-one-placement-dial.md) | — |
 | HS-132-11 | Cadence answers land | done | [story-11](./story-11-cadence-reply.md) | [evidence-story-11](./evidence-story-11.md) |
 | HS-132-12 | The regression net comes back green | backlog | [story-12](./story-12-green-net.md) | — |
 | HS-132-13 | The roadmap tells the truth | done | [story-13](./story-13-roadmap-truth.md) | [evidence-story-13](./evidence-story-13.md) |

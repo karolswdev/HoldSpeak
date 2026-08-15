@@ -18,7 +18,12 @@ import { SurfaceFooter } from "../../desk/surface/SurfaceFooter";
 // gadget grammar, every text input gains its mic, the loose egress
 // prose becomes the ONE EgressChip, and the readiness foot is the
 // footer receipt bar. Wire calls unchanged.
-import { useEffect, useMemo, useState } from "react";
+// HS-132-03 — the desk hears intelligence live. Seven frames the hub had
+// been broadcasting to nobody land here: `intel_token` (progressive text,
+// Article XI.5 — display only, never journaled), `intel_complete`, the
+// `bookmark` confirmation, `capture_recovery`, `intent_controls_updated`,
+// `device_health`, and `plugin_jobs_processed`.
+import { useEffect, useMemo, useRef, useState } from "react";
 import { openPrimitive } from "../../desk/shell";
 import type {
   CoreProps,
@@ -79,6 +84,22 @@ export function LiveCore({ hero }: CoreProps) {
   const [previewResult, setPreviewResult] = useState<Record<string, unknown> | null>(null);
   const [retainedMeetingId, setRetainedMeetingId] = useState("");
   const [doorOpen, setDoorOpen] = useState(false);
+  // The live intelligence stream. `intelStream` is the window being written
+  // right now; `intelResult` is the last window that landed. Both live in
+  // component state and die with the surface — Article XI.5 forbids a token
+  // stream from being journaled, so no token here ever reaches an apiFetch.
+  const [intelStream, setIntelStream] = useState("");
+  const [intelResult, setIntelResult] = useState<Record<string, unknown> | null>(
+    null,
+  );
+  const [bookmarkReceipt, setBookmarkReceipt] = useState<{
+    text: string;
+    seq: number;
+  } | null>(null);
+  const [captureAlert, setCaptureAlert] = useState("");
+  const tokenBuffer = useRef("");
+  const bookmarkSeq = useRef(0);
+  const deviceReloadAt = useRef(0);
   useWindowWings(
     <SurfaceWings
       wings={[]}
@@ -130,6 +151,111 @@ export function LiveCore({ hero }: CoreProps) {
     [subscribe],
   );
 
+  // ── the intelligence stream ────────────────────────────────────────
+  // Tokens arrive faster than React should paint, so a burst is coalesced
+  // into ONE flush. The buffer is a ref: it never survives this component.
+  useEffect(() => {
+    let flush = 0;
+    const unsubscribe = subscribe("intel_token", (frame) => {
+      const data = frame.data as Record<string, unknown> | string | undefined;
+      const chunk =
+        typeof data === "string"
+          ? data
+          : String(data?.token ?? data?.text ?? data?.chunk ?? "");
+      if (!chunk) return;
+      tokenBuffer.current += chunk;
+      if (flush) return;
+      flush = window.setTimeout(() => {
+        flush = 0;
+        const pending = tokenBuffer.current;
+        tokenBuffer.current = "";
+        if (pending) setIntelStream((current) => current + pending);
+      }, 120);
+    });
+    return () => {
+      unsubscribe();
+      if (flush) window.clearTimeout(flush);
+    };
+  }, [subscribe]);
+
+  useEffect(
+    () =>
+      subscribe("intel_complete", (frame) => {
+        tokenBuffer.current = "";
+        setIntelStream("");
+        setIntelResult(
+          frame.data && typeof frame.data === "object"
+            ? (frame.data as Record<string, unknown>)
+            : null,
+        );
+      }),
+    [subscribe],
+  );
+
+  // ── the bookmark's confirmation ────────────────────────────────────
+  useEffect(
+    () =>
+      subscribe("bookmark", (frame) => {
+        const data = frame.data as Record<string, unknown> | undefined;
+        const label = String(data?.label ?? data?.name ?? "").trim();
+        const at = String(
+          data?.formatted_time ?? data?.timestamp ?? data?.time ?? "",
+        ).trim();
+        bookmarkSeq.current += 1;
+        setBookmarkReceipt({
+          seq: bookmarkSeq.current,
+          text: [label || "Bookmark dropped", at].filter(Boolean).join(" · "),
+        });
+      }),
+    [subscribe],
+  );
+  useEffect(() => {
+    if (!bookmarkReceipt) return;
+    const timer = window.setTimeout(() => setBookmarkReceipt(null), 6000);
+    return () => window.clearTimeout(timer);
+  }, [bookmarkReceipt]);
+
+  // ── capture told the truth about itself ────────────────────────────
+  useEffect(
+    () =>
+      subscribe("capture_recovery", (frame) => {
+        const data = frame.data as Record<string, unknown> | undefined;
+        setCaptureAlert(
+          String(data?.error ?? "Capture is degraded and may lose audio."),
+        );
+      }),
+    [subscribe],
+  );
+
+  // ── the dials other surfaces moved ─────────────────────────────────
+  const setIntentControls = intentControl.setData;
+  useEffect(
+    () =>
+      subscribe("intent_controls_updated", (frame) => {
+        if (frame.data && typeof frame.data === "object")
+          setIntentControls(frame.data as IntentControlResponse);
+      }),
+    [subscribe, setIntentControls],
+  );
+  const reloadPluginJobs = pluginJobs.reload;
+  useEffect(
+    () => subscribe("plugin_jobs_processed", () => void reloadPluginJobs()),
+    [subscribe, reloadPluginJobs],
+  );
+  // Battery/RSSI frames are chatty; one refetch per 5s is enough to keep
+  // the device list honest without hammering the hub.
+  const reloadDevices = devices.reload;
+  useEffect(
+    () =>
+      subscribe("device_health", () => {
+        const now = Date.now();
+        if (now - deviceReloadAt.current < 5000) return;
+        deviceReloadAt.current = now;
+        void reloadDevices();
+      }),
+    [subscribe, reloadDevices],
+  );
+
   const active = Boolean(
     state.active ?? state.meeting_active ?? state.status === "recording",
   );
@@ -144,6 +270,10 @@ export function LiveCore({ hero }: CoreProps) {
       const value = await apiFetch<Record<string, unknown>>(path, { method: "POST", json });
       if (path.endsWith("start")) {
         setRetainedMeetingId("");
+        setCaptureAlert("");
+        setIntelStream("");
+        setIntelResult(null);
+        tokenBuffer.current = "";
         setState((current) => ({
           ...current,
           ...((value.meeting as Record<string, unknown>) ?? {}),
@@ -226,6 +356,52 @@ export function LiveCore({ hero }: CoreProps) {
   const factsLine = active
     ? `Recording · ${duration}${segments.length ? ` · ${segments.length} segment${segments.length === 1 ? "" : "s"}` : ""}`
     : `${connection || "This device"} · ready`;
+
+  const intelSummary = String(intelResult?.summary ?? "");
+  const intelTopics = Array.isArray(intelResult?.topics)
+    ? (intelResult.topics as unknown[]).map(String).filter(Boolean)
+    : [];
+  const intelActionCount = Array.isArray(intelResult?.action_items)
+    ? (intelResult.action_items as unknown[]).length
+    : Number(intelResult?.action_item_count ?? 0);
+  const intelFace =
+    intelStream || intelResult ? (
+      <SurfaceSection
+        label="Intelligence"
+        actions={
+          <LampGadget
+            on
+            tone={intelStream ? "warn" : "ok"}
+            label={intelStream ? "ARRIVING" : "READY"}
+          />
+        }
+      >
+        {intelStream ? (
+          <p className="live-intel-stream" role="status" aria-live="polite">
+            {intelStream}
+          </p>
+        ) : null}
+        {intelResult ? (
+          <div className="live-intel-result">
+            {intelSummary ? <p>{intelSummary}</p> : null}
+            {intelTopics.length ? (
+              <div className="surface-actions">
+                {intelTopics.slice(0, 8).map((topic) => (
+                  <span className="surface-token" key={topic}>
+                    {topic}
+                  </span>
+                ))}
+              </div>
+            ) : null}
+            <SurfaceFacts
+              value={`${intelActionCount} action item${intelActionCount === 1 ? "" : "s"}${
+                intelResult.final ? " · final" : ""
+              }`}
+            />
+          </div>
+        ) : null}
+      </SurfaceSection>
+    ) : null;
 
   const routeFacts = previewResult
     ? (["route", "intent", "confidence"] as const)
@@ -388,6 +564,17 @@ export function LiveCore({ hero }: CoreProps) {
     <>
       {renderHeroSlot(hero, verbs, presentValue(state.title) || (active ? "Recording" : "Ready to record"))}
       {action.message ? <SurfaceState error={action.message} /> : null}
+      {captureAlert ? (
+        <SurfaceState
+          error={`Capture recovery · ${captureAlert}`}
+          onRetry={() => setCaptureAlert("")}
+        />
+      ) : null}
+      {bookmarkReceipt ? (
+        <p className="surface-receipt-line" data-tone="ok" role="status">
+          ✓ {bookmarkReceipt.text}
+        </p>
+      ) : null}
       {retainedMeetingId ? (
         <p className="surface-receipt-line" data-tone="ok" role="status">
           ✓ Meeting saved{" "}
@@ -405,6 +592,7 @@ export function LiveCore({ hero }: CoreProps) {
       ) : (
         <>
           <SurfaceFacts value={factsLine} />
+          {intelFace}
           <SurfaceSection
             label="Transcript"
             actions={

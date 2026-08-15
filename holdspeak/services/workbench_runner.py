@@ -61,14 +61,35 @@ class WorkbenchRunner:
                     winner = self._winner(parent)
             raise
 
-    def _record_terminal(self, run_id: str, parent: Any, receipt: dict[str, Any]) -> list[dict[str, str]]:
+    def _record_terminal(self, run_id: str, parent: Any, receipt: dict[str, Any], *, attempted: int = 0, completed: int = 0, failed: int = 0) -> list[dict[str, str]]:
         """Make the coordination row point at the one durable terminal receipt."""
         links = _children(self.db, self.broker, parent.operation_id)
         outcome = str(receipt.get("outcome") or "indeterminate")
         status = "completed" if outcome == "succeeded" else outcome
         with self.db._connection() as conn:
             conn.execute("UPDATE workbench_runs SET parent_receipt_id=?,child_links_json=?,status=? WHERE id=?", (str(receipt["receipt_id"]), json.dumps(links), status, run_id))
+        # HS-132-03: every terminal — succeeded, cancelled, expired, failed —
+        # funnels through here, so this is the one honest place the desk hears
+        # a run end. Adopted terminals carry no counts; the disposition is the
+        # truth they do carry.
+        self._emit_run_complete(run_id, outcome, attempted=attempted, completed=completed, failed=failed)
         return links
+
+    def _emit_run_complete(self, run_id: str, disposition: str, *, attempted: int, completed: int, failed: int) -> None:
+        """Tell every open surface this run reached its terminal."""
+        try:
+            from ..workbench_conductor import emit_run_complete
+            with self.db._connection() as conn:
+                row = conn.execute("SELECT workbench_id FROM workbench_runs WHERE id=?", (run_id,)).fetchone()
+                workbench_id = str(row["workbench_id"]) if row is not None else ""
+                pending = conn.execute("SELECT COUNT(*) AS n FROM workbench_items WHERE workbench_id=? AND status='pending'", (workbench_id,)).fetchone()
+            emit_run_complete(
+                workbench_id=workbench_id, run_id=run_id, disposition=disposition,
+                attempted=attempted, completed=completed, failed=failed,
+                pending_count=int(pending["n"]) if pending is not None else 0,
+            )
+        except Exception:
+            pass  # a deaf desk never fails a run
 
     def _replayed_result(self, parent_operation_id: str) -> dict[str, Any]:
         """Return the durable native attempt behind an idempotent parent."""
@@ -142,6 +163,9 @@ class WorkbenchRunner:
         # This is coordination metadata only; its receipt links are always retained.
         with self.db._connection() as conn:
             conn.execute("INSERT INTO workbench_runs(id,workbench_id,started_at,parent_operation_id,parent_receipt_id,child_links_json,status) VALUES(?,?,?,?,'','[]','running')",(run_id,workbench_id,datetime.now().isoformat(),parent.operation_id))
+        # HS-132-03: the run is real from here — say so on the one bus.
+        from ..workbench_conductor import emit_item_claimed, emit_item_done, emit_item_failed, emit_run_start
+        emit_run_start(workbench_id=workbench_id, run_id=run_id, item_count=len(items))
         if not items:
             receipt=self._close_or_adopt(parent,"succeeded",principal=principal)
             if receipt.get("outcome") != "succeeded":
@@ -175,6 +199,7 @@ class WorkbenchRunner:
                     ).rowcount
                 if claimed != 1:
                     return self._adopt_terminal(run_id, parent)
+                emit_item_claimed(workbench_id=workbench_id,run_id=run_id,item_id=item.id,title=item.title,index=ordinal,total=len(items))
                 parts=[x for x in (context,memory,_hydrate_item_grounding(self.db,item.grounding_json),f"[TASK]\n{item.title}",item.body) if x]
                 prompt="\n\n".join(parts); target,deployment=self._target(wb,recipe)
                 drift = self._scheduled_drift(delegation, recipe, deployment)
@@ -199,7 +224,9 @@ class WorkbenchRunner:
                     if outcome.outcome in {"cancelled", "indeterminate"} or self._winner(parent) is not None:
                         self._release_unpublished_claim(item.id)
                         return self._adopt_terminal(run_id,parent)
-                    failed+=1; self.db.workbench_items.upsert(item_id=item.id,workbench_id=workbench_id,title=item.title,body=item.body,priority=item.priority,status="failed",result=f"Error: {outcome.error or outcome.outcome}",completed_at=datetime.now().isoformat()); continue
+                    failed+=1; self.db.workbench_items.upsert(item_id=item.id,workbench_id=workbench_id,title=item.title,body=item.body,priority=item.priority,status="failed",result=f"Error: {outcome.error or outcome.outcome}",completed_at=datetime.now().isoformat())
+                    emit_item_failed(workbench_id=workbench_id,run_id=run_id,item_id=item.id,title=item.title,index=ordinal,total=len(items),error=str(outcome.error or outcome.outcome))
+                    continue
                 check=self.broker.projection_stager.finalize(iid)
                 if not check or not check.get("advanced"):
                     # A checkpoint that cannot advance lost the parent election.
@@ -207,6 +234,7 @@ class WorkbenchRunner:
                     self._release_unpublished_claim(item.id)
                     return self._adopt_terminal(run_id,parent)
                 complete+=1
+                emit_item_done(workbench_id=workbench_id,run_id=run_id,item_id=item.id,title=item.title,index=ordinal,total=len(items))
                 if not memory_enabled or self.broker.parent_run_controller.expire_if_due(parent.context,principal): continue
                 target,deployment=self._target(wb,recipe)
                 drift = self._scheduled_drift(delegation, recipe, deployment)
@@ -225,7 +253,7 @@ class WorkbenchRunner:
             if receipt.get("outcome") != "succeeded":
                 return self._adopt_terminal(run_id,parent)
             self.broker.projection_stager.finalize(parent.native_id)
-            links=self._record_terminal(run_id,parent,receipt)
+            links=self._record_terminal(run_id,parent,receipt,attempted=len(items),completed=complete,failed=failed)
             return {"run_id":run_id,"parent_operation_id":parent.operation_id,"receipt_id":receipt["receipt_id"],"children":links}
         except Exception:
             receipt=self._close_or_adopt(parent,"failed",principal=principal)

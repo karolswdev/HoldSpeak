@@ -291,6 +291,28 @@
 .ambient-queue a {
   color: var(--accent);
 }
+/* HS-132-03 — the queued jobs themselves, not just their count. */
+.ambient-queue-jobs {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: var(--space-1);
+}
+.ambient-queue-jobs li {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+.ambient-queue-jobs li span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ambient-queue-jobs li small {
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
 .ambient-qlippy {
   right: 20px;
   bottom: 20px;
