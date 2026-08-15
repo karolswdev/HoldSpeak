@@ -521,9 +521,23 @@ def _merge_decision_record_children(db: Any, table: str, records: list[dict[str,
 
 
 def _hub_model_name(_ctx: Any = None) -> str:
-    """The hub's own model, for its live manifest row: the cloud model id when
-    intel targets an endpoint, else the local GGUF's stem. Never a path — the
-    manifest advertises availability, not location.
+    """The model the DESKTOP would actually load, for its live manifest row.
+
+    A paired device reads this row to answer "what does 'run it on your desktop'
+    run", so it must equal what the delegated execution path loads — which is
+    exactly the ``paired_device`` deployment identity
+    (``configured_meeting_deployment``, itself resolved through the ONE meeting
+    placement policy, HS-130-05).
+
+    HS-132-09 retired this function as an independent describer. It used to read
+    ``intel_provider`` alone: ``"cloud"`` answered the cloud model id even when an
+    adopted destination or a missing key meant the run would land elsewhere, and
+    anything else answered the local GGUF stem even when an adopted
+    ``openAICompatible``/``meshNode`` destination had won the placement. Both
+    mismatch directions advertised a model the desktop would never load. It is
+    now one delegation plus the enabled gate, and it names NO destination other
+    than the hub itself — Ask and Recipe read their own resolved destination's
+    identity, never this row.
 
     The intel knobs live on ``Config.meeting``, not the top-level ``Config`` —
     reading them off the wrong level raised inside the ``except`` and the hub
@@ -532,18 +546,11 @@ def _hub_model_name(_ctx: Any = None) -> str:
     """
     try:
         from ..config import Config
+        from ..intel.providers import configured_meeting_deployment
 
-        meeting = Config.load().meeting
-        if not meeting.intel_enabled:
+        if not Config.load().meeting.intel_enabled:
             return ""
-        if meeting.intel_provider == "cloud":
-            from ..intel.providers import effective_intel_cloud
-
-            return str(effective_intel_cloud(meeting).model or "")
-        from pathlib import Path as _P
-
-        stem = _P(str(meeting.intel_realtime_model or "")).name
-        return stem[:-5] if stem.lower().endswith(".gguf") else stem
+        return str(configured_meeting_deployment().model or "")
     except Exception:
         return ""
 

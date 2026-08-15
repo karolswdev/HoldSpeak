@@ -362,7 +362,12 @@ def target_from_profile(profile: Any, db: Any = None) -> InferenceTarget:
             "local",
         )
         model_file = str(getattr(profile, "model_file", "") or "").strip()
-        model = model or model_file
+        # HS-132-09: an on-device deployment with no display name is NAMED by the
+        # stem of the file it loads — exactly how `this_machine_target` names its
+        # own local deployment. The raw path used to be the advertised model,
+        # while the engine that loads it reports the stem, so the receipt and the
+        # destination's advertised model disagreed about one artifact.
+        model = model or (Path(model_file).expanduser().stem if model_file else "")
         deploy_model_path = model_file or None
         if not model_file:
             state = "unavailable"

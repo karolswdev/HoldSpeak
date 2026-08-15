@@ -119,8 +119,13 @@ def test_named_on_device_runs_the_model_that_made_it_ready(
     assert executed_path == str(profile_model)
     assert executed_path != str(global_model)
     # readiness == execution == receipt, all naming the profile's own model.
-    assert target.model == str(profile_model)
-    assert receipt["model"] == str(profile_model)
+    # HS-132-09: an on-device destination with no display name is NAMED by the
+    # stem of the file it loads — the same name `this_machine` uses and the same
+    # name the loaded engine reports as `active_model`. The raw path used to be
+    # the advertised model, so the destination and its own receipt spelled one
+    # artifact two ways.
+    assert target.model == profile_model.stem
+    assert receipt["model"] == profile_model.stem
     assert receipt["target_id"] == "mac"
 
 

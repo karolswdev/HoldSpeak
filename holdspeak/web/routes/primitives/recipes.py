@@ -119,7 +119,9 @@ def build_recipes_router(ctx: WebContext) -> APIRouter:
                 grounding=body.get("grounding"),
                 inference_target_id=body.get("inference_target_id"),
                 broadcast=_broadcast,
-                default_model=__import__("holdspeak.web.routes.sync", fromlist=["_hub_model_name"])._hub_model_name(ctx),
+                # HS-132-09: no `default_model`. The transport used to inject the
+                # hub's configured-placement model name here, which the receipt
+                # then printed for a turn that ran somewhere else entirely.
             )
             return JSONResponse(result)
         except ValidationError as exc:

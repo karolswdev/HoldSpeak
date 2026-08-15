@@ -130,10 +130,27 @@ class MeetingIntel:
         self._llm: Optional[Any] = None
         self._openai_client = None
         self._active_provider: Optional[str] = None
+        self._active_model: str = ""
 
     @property
     def active_provider(self) -> Optional[str]:
         return self._active_provider
+
+    @property
+    def active_model(self) -> str:
+        """The model this engine ACTUALLY loaded — blank until it has (HS-132-09).
+
+        The canonical prompt adapter reads this to stamp the executed model onto
+        every receipt. ``MeetingIntel`` used to define neither ``active_model``
+        nor ``model``, so the adapter's report was ALWAYS ``''`` and every
+        consumer fell back to a describer that had never seen this engine: an
+        Ask on ``this_machine`` (pinned local) printed the hub's cloud model id.
+
+        It is a plain read of what ``_ensure_runtime_loaded`` recorded when the
+        provider actually loaded — never a lazy load of its own, so naming it
+        cannot execute anything.
+        """
+        return self._active_model
 
     def _resolved_model_path(self) -> Path:
         return Path(self.model_path).expanduser()
@@ -209,8 +226,12 @@ class MeetingIntel:
 
         if self._active_provider == "local":
             self._ensure_local_model_loaded()
+            # Recorded AFTER the load succeeds, from the path that was loaded:
+            # the receipt's executed-model is a report, not an intention.
+            self._active_model = self._resolved_model_path().stem
         else:
             self._ensure_openai_client_loaded()
+            self._active_model = str(self.cloud_model or "")
 
     def _ensure_model_loaded(self) -> None:
         """Backward-compatible alias for older tests/callers."""

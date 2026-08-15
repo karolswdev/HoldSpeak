@@ -814,13 +814,19 @@ def _profile_engine(
             cloud_api_key_env=env,
         )
     if kind == "onDevice":
-        kwargs: dict[str, Any] = {"provider": "local"}
-        # The profile's own model_file is the deployment; fall back to the
-        # configured local meeting model only when a profile names none.
-        model_path = str(model_file or "").strip() or configured_local_meeting_model_path()
-        if model_path:
-            kwargs["model_path"] = model_path
-        return MeetingIntel(**kwargs)
+        # HS-132-09: the profile's own model_file is the WHOLE deployment. The
+        # old fallback to `configured_local_meeting_model_path()` is the same
+        # shape HS-131-13 closed on the `this_machine` branch — a post-admission
+        # read of MUTABLE meeting config, which lets an admitted child load a
+        # model its frozen revision never named while the receipt keeps the
+        # revision's name. A blank `model_file` refuses BY NAME instead.
+        model_path = str(model_file or "").strip()
+        if not model_path:
+            from ..inference_targets import LOCAL_DEPLOYMENT_MODEL_UNKNOWN
+            from ..kernel.model import KernelRefused
+
+            raise KernelRefused(LOCAL_DEPLOYMENT_MODEL_UNKNOWN)
+        return MeetingIntel(provider="local", model_path=model_path)
     return configured_meeting_intel(context=context, revision=deployment_revision)
 
 

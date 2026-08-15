@@ -58,6 +58,11 @@ class MeshRelayIntel:
         self.node = str(node or "").strip()
         self.model_hint = str(model_hint or "")
         self.active_provider = "mesh"
+        # HS-132-09: the executed-model the canonical adapter reports. The node
+        # runs the model this relay was frozen against; naming it here keeps the
+        # mesh receipt from falling back to a hub-side describer that has never
+        # seen this destination.
+        self.active_model = self.model_hint
         self._deadline_seconds = max(1, int(deadline_seconds))
         self._liveness_window = max(1, int(liveness_window_seconds))
         self._poll_interval = max(0.05, float(poll_interval_seconds))
