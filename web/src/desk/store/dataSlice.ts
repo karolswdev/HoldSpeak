@@ -4,6 +4,10 @@
  * fileIntoDir, removeFromDir, fileIntoKnowledge, seedDesk, resetDesk,
  * registerRepository, answerCoder, speakToCoder, runCapability. */
 import { apiRequest, newDeliveryId } from "../../lib/api";
+import {
+  clearWriteFailure,
+  reportWriteFailure,
+} from "../hooks/useWriteReceipt";
 import { PRIMITIVES, type PrimitiveKind } from "../../lib/primitives";
 import {
   EMPTY_ITEMS,
@@ -52,6 +56,21 @@ function saveZoneWidths(widths: Record<string, number>) {
   } catch {
     /* storage may be unavailable; arranging just won't persist */
   }
+}
+
+/**
+ * HS-132-06 — one named refusal for a create the hub would not take. It
+ * reaches the desk write channel, which every desk surface renders in flow
+ * (the system bar backstops the floor), so the press is never swallowed.
+ */
+async function reportCreateFailure(
+  kind: string,
+  cause: unknown,
+  retry: () => void,
+  get: () => DeskState,
+) {
+  reportWriteFailure(`CREATE ${kind}`, cause, retry);
+  await get().refresh();
 }
 
 /** Meetings on the desk when a local recording started (NEW-beat diff). */
@@ -170,16 +189,25 @@ export const createDataSlice: SliceCreator<DataSlice> = (set, get) => ({
     } satisfies Record<string, [string, string, Record<string, unknown>]>;
     const [url, wireKey, body] = posts[kind];
     let createdId: string | null = null;
+    // HS-132-06 — a refused create is named, not swallowed; RETRY re-issues
+    // the exact same create.
+    const retry = () => void get().createPrimitive(kind, overrides);
     try {
       const res = await apiRequest(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...body, ...overrides }),
       });
+      if (!res.ok) {
+        await reportCreateFailure(kind, res, retry, get);
+        return;
+      }
       const data = await res.json().catch(() => ({}));
       createdId = data?.[wireKey]?.id || null;
-    } catch {
-      /* the refresh below reports reachability honestly */
+      clearWriteFailure();
+    } catch (cause) {
+      await reportCreateFailure(kind, cause, retry, get);
+      return;
     }
     if (createdId && kind !== "zone") {
       const positions = {
@@ -545,12 +573,20 @@ export const createDataSlice: SliceCreator<DataSlice> = (set, get) => ({
   },
 
   async seedDesk() {
+    // HS-132-06 — the seed's refusal reaches the desk's write channel, so
+    // the empty floor never swallows the press.
+    const retry = () => void get().seedDesk();
     try {
       const res = await apiRequest("/api/desk/seed", { method: "POST" });
-      if (!res.ok) return false;
-    } catch {
+      if (!res.ok) {
+        reportWriteFailure("SEED DESK", res, retry);
+        return false;
+      }
+    } catch (cause) {
+      reportWriteFailure("SEED DESK", cause, retry);
       return false;
     }
+    clearWriteFailure();
     await get().refresh();
     return true;
   },

@@ -19,6 +19,7 @@ import { DeskMenuBar } from "./DeskMenuBar";
 import { useLaunchers } from "./DeskWindow";
 import { useGate } from "../gate";
 import { useRuntimeBus } from "../../runtime/RuntimeBus";
+import { useDeskWriteReceipt } from "../hooks/useWriteReceipt";
 import { SYSTEM } from "../systemSprites";
 
 /** The mark menu's registry rows: the floor verbs, then the four
@@ -132,6 +133,10 @@ export function DeskChrome({
     y: 0,
   });
   const markRef = useRef<HTMLButtonElement | null>(null);
+  // HS-132-06 — the desk's backstop receipt line. A refused floor write
+  // (Create, Seed) names itself in the system bar beside the hub state it
+  // belongs with, and yields to any nearer receipt line on screen.
+  const { receipt: writeReceipt } = useDeskWriteReceipt({ fallback: true });
 
   const anyLive = Object.values(status).some((v) => v === "live");
   const hubState = error ? "degraded" : anyLive ? "live" : "connecting";
@@ -232,6 +237,10 @@ export function DeskChrome({
           onClick={() => useTrustWindow.getState().setOpen(true)}
         />
       </div>
+
+      {writeReceipt ? (
+        <div className="desk-chrome desk-chrome-receipt">{writeReceipt}</div>
+      ) : null}
 
       <div className="desk-chrome desk-chrome-tr">
         <MicLamp />
