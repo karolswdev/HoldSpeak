@@ -1,23 +1,37 @@
-# HANDOVER — Phase 131, HS-131-10 Zero-Finding Close
+# HANDOVER — Phase 131, HS-131-11 Entry-Point Docs
 
 **Date:** 2026-08-14
 **Branch:** `phase-131-one-admission-path`
-**Phase:** 14/17 stories done
-**Last completed story:** HS-131-17 — meeting residual admission
-**Next story:** HS-131-10 — close the one-path fence at zero findings
+**Phase:** 15/17 stories done
+**Last completed story:** HS-131-10 — one-path fence closed at zero
+**Next story:** HS-131-11 — entry-point contract
 **Draft PR:** #454 — keep draft until the whole phase is complete
 
 ## Start here
 
-HS-131-17 is done. The five-story amendment wave has removed every blocking
-family: the executable one-path census now reports 100 sites, zero findings,
-zero blocking families, and zero unregistered execution. Do not reopen the
-meeting MIR decision or the HS-131-16 hostile protocol-review loop.
+HS-131-10 is done. The five-story amendment wave and the unchanged closing fence
+prove 100 model-execution sites, zero findings, zero blocking families, and zero
+unregistered execution. All eleven original families left by deletion or
+admission; none became an adapter exception. Do not reopen the meeting MIR
+decision or the HS-131-16 hostile protocol-review loop.
 
-Next, return to the already-shipped blocked checkpoint HS-131-10 and close it
-against the now-green zero-finding fence. Then do HS-131-11 entry-point docs and
-HS-131-12's real hub/worker model walk. Swift remains held; web DeskOS is the
-spec. Draft PR #454 stays draft until all three are complete.
+Next, update the public/operator/developer entry points in HS-131-11 so one
+admission path is the documented contract. Then HS-131-12 performs the assembled
+real hub/worker model walk. Swift remains held; web DeskOS is the spec. Draft PR
+#454 stays draft until both stories are complete.
+
+## HS-131-10 closed contract
+
+- Final census: 100 sites; gateway 1, witness mints 2, gateway binding 1,
+  physical adapters 69, admitted seams 27, findings 0, unregistered 0.
+- Every original finding family left by deletion or admission. No command,
+  meeting-session product module, or other domain service entered the adapter
+  allowlist.
+- The literal-spine, exact-context, cardinality, provenance, journal-hygiene,
+  cancellation/recovery, late-publication, receipt-immutability, and mutation
+  suites pass **143 tests** under a fresh isolated HOME.
+- Evidence: [`evidence-story-10.md`](./phase-131-one-admission-path/evidence-story-10.md).
+  Final inventory: [`findings-inventory.md`](./phase-131-one-admission-path/assets/hs-131-10/findings-inventory.md).
 
 ## HS-131-17 shipped contract
 
@@ -139,17 +153,16 @@ local output. Neither belongs to Phase 131 shipping commits.
 
 ## Next sequence
 
-1. Read `story-10-one-path-fence.md`, its existing evidence, and the current
-   phase status.
-2. Move HS-131-10 from `blocked` to `in-progress` through Delivery Workbench.
-3. Rerun the executable census and focused cardinality/provenance proof under a
-   fresh isolated HOME; the blocking ledger must remain empty.
-4. Update HS-131-10's checkpoint claims from blocked to closed and ship it alone
-   through the stamped contract.
-5. Complete HS-131-11 entry-point docs, then HS-131-12 on the real mesh model.
-6. Triage current CI only at the ordinary-use functional bar; the stale live-bus
+1. Read `story-11-entry-point-docs.md` and its named documentation surfaces.
+2. Start HS-131-11 through Delivery Workbench and update the public install/usage,
+   operator, architecture, and plugin/extension entry points without inventing a
+   second contract vocabulary.
+3. Run doc-drift/link/command examples under the story's test plan and ship docs
+   alone through the stamped contract.
+4. Complete HS-131-12 on the real mesh model with the one-path fence still green.
+5. Triage current CI only at the ordinary-use functional bar; the stale live-bus
    selector is a bounded harness repair, not a new architecture review.
-7. Keep PR #454 draft until the phase is complete; watch CI, read conclusions,
+6. Keep PR #454 draft until the phase is complete; watch CI, read conclusions,
    classify, and merge as separate actions.
 
 ## Rails that still matter

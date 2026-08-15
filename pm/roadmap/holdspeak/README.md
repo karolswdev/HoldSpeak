@@ -9,17 +9,16 @@
 > is canon at [`docs/internal/ORCHESTRATION.md`](../../../docs/internal/ORCHESTRATION.md).
 
 **Newest update (2026-08-14): Phase 131 — One Admission Path — IN PROGRESS
-(14/17).** HS-131-17 closes the final meeting residuals. The dormant
-session-owned MIR branch and config-time parallel `MeetingIntel` are deleted;
-current routed intelligence remains under the separately admitted deferred job.
-Meeting startup now derives liveness from the frozen plan without constructing a
-provider, and every automatic bookmark model attempt reaches the existing
-admitted child seam with the exact revision and one terminal receipt. The
-one-path census is now 100 sites with zero findings, zero blocking families, and
-zero unregistered execution. Captured meeting/census proof is 166 passed; the
-isolated full unit lane is 4,676 passed with only three byte-identical inherited
-UI/copy guards. HS-131-10 can now close at zero before entry-point docs and the
-final real-model walk. PR #454 remains draft; Swift remains out of scope.
+(15/17).** HS-131-10 closes at zero without weakening the fence. The five
+owner-chartered amendments moved the original 145-site / 48-finding /
+eleven-family inventory to 100 model-execution sites, zero findings, zero
+blocking families, and zero unregistered execution. Every family left by
+deletion or admission; no product surface or command entered the physical adapter
+allowlist. The unchanged literal-spine, exact-context, cardinality, provenance,
+journal-hygiene, cancellation, recovery, and mutation suites pass 143 tests under
+a fresh isolated HOME. HS-131-11 entry-point docs and HS-131-12's real-model walk
+are now the only phase stories left. PR #454 remains draft; Swift remains out of
+scope.
 
 **Previous update (2026-08-08): Phase 129 — One Grammar — COMPLETE (11/11).**
 The exit walk passes all 38 surfaces with pinned-foot, stationary-head,

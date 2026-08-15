@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 131
-- **Status:** blocked
+- **Status:** done
 - **Depends on:** HS-131-03, HS-131-04, HS-131-05, HS-131-06, HS-131-07, HS-131-08, HS-131-09, HS-131-13, HS-131-14, HS-131-15, HS-131-16, HS-131-17
 - **Unblocks:** HS-131-11, HS-131-12
 - **Owner:** unassigned
@@ -58,26 +58,26 @@ another door appears.
 
 ## Acceptance criteria
 
-- [ ] The census reports one authorized runner/gateway interface plus the exact
+- [x] The census reports one authorized runner/gateway interface plus the exact
   finite physical adapter allowlist, including local Whisper preload and
   transcription, and
   exits nonzero when a synthetic product caller or unregistered adapter dispatch
   is introduced.
-- [ ] Every named product surface reaches the same literal admission, claim,
+- [x] Every named product surface reaches the same literal admission, claim,
   dispatch, and terminalization functions.
-- [ ] For success, refusal, failure, cancellation, retry/fallback, and
+- [x] For success, refusal, failure, cancellation, retry/fallback, and
   indeterminate recovery, provider dispatch count equals invocation admission
   count and terminal invocation receipt count; separate egress receipts remain
   linked and are counted independently.
-- [ ] A parent/session operation cannot substitute for an invocation child in
+- [x] A parent/session operation cannot substitute for an invocation child in
   the cardinality assertion.
-- [ ] Every invocation child has causation, deployment revision, and authority
+- [x] Every invocation child has causation, deployment revision, and authority
   basis; no caller-supplied placement or owner principal survives validation.
-- [ ] Journal-content guards reject prompts, tokens, transcript/dictation bodies,
+- [x] Journal-content guards reject prompts, tokens, transcript/dictation bodies,
   and audio.
-- [ ] Restart and cancellation proofs show no late domain result and immutable
+- [x] Restart and cancellation proofs show no late domain result and immutable
   terminal receipts.
-- [ ] The complete model-execution inventory and disposition ride in evidence;
+- [x] The complete model-execution inventory and disposition ride in evidence;
   any new genuine site has an explicit charter amendment and owner story before
   this fence can close.
 
@@ -103,5 +103,7 @@ authorized this verified blocked checkpoint to ship. The exact eleven-family,
 [`assets/hs-131-10/findings-inventory.md`](./assets/hs-131-10/findings-inventory.md);
 the ruling and verification judgment are in
 [`OWNER-DECISION-PACKAGE-HS-131-10.md`](./OWNER-DECISION-PACKAGE-HS-131-10.md).
-HS-131-13 through HS-131-17 must delete or admit every finding before this story
-can return to `in-progress` and close. HS-131-11 and HS-131-12 remain held.
+HS-131-13 through HS-131-17 have now deleted or admitted every finding. The
+closing rerun reports 100 sites, zero findings, zero blocking families, and zero
+unregistered execution; the same five suites pass 143 tests. HS-131-11 and
+HS-131-12 are unblocked.

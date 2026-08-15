@@ -1,6 +1,6 @@
 # Phase 131 — One Admission Path
 
-**Status:** IN PROGRESS (14/17).
+**Status:** IN PROGRESS (15/17).
 
 **Last updated:** 2026-08-14.
 
@@ -107,9 +107,9 @@ covers the complete ledger:
 | HS-131-16 | Mesh receiver authority; design beat chooses verified envelope plus local claim versus node-side runner |
 | HS-131-17 | Dormant MIR, parallel live meeting engine, and bookmark auto-label |
 
-This amendment records work, not an Article-XI exception. HS-131-10 remains
-blocked until all five stories land and the same census returns zero findings.
-HS-131-11 and HS-131-12 remain held behind the fence.
+This amendment records work, not an Article-XI exception. All five stories have
+landed, the same census returns zero findings, and HS-131-10 is closed.
+HS-131-11 and HS-131-12 are unblocked.
 
 ## Exit criteria (evidence required)
 
@@ -151,7 +151,7 @@ HS-131-11 and HS-131-12 remain held behind the fence.
 | HS-131-07 | The remaining direct callers join the spine | done | [story-07](./story-07-service-callers.md) | [evidence-story-07](./evidence-story-07.md) |
 | HS-131-08 | Meetings are admitted per session | done | [story-08](./story-08-meeting-sessions.md) | [evidence-story-08](./evidence-story-08.md) |
 | HS-131-09 | Dictation and transcription are admitted per session | done | [story-09](./story-09-dictation-sessions.md) | [evidence-story-09](./evidence-story-09.md) |
-| HS-131-10 | The one-path fence | blocked | [story-10](./story-10-one-path-fence.md) | — |
+| HS-131-10 | The one-path fence | done | [story-10](./story-10-one-path-fence.md) | [evidence-story-10](./evidence-story-10.md) |
 | HS-131-11 | The entry-point contract | backlog | [story-11](./story-11-entry-point-docs.md) | — |
 | HS-131-12 | The walk | backlog | [story-12](./story-12-the-walk.md) | — |
 | HS-131-13 | Residual services take the admitted door | done | [story-13](./story-13-residual-service-admission.md) | [evidence-story-13](./evidence-story-13.md) |
@@ -383,18 +383,19 @@ than the fork point: median 82.5→68.3ms, p95 85.1→70.5ms. Walk on .43
 green. Sol's five reservations + the runtime._dispose production hazard
 ride in the evidence; the two recorded unadmitted seams go to the
 HS-131-10 fence by name.
-HS-131-10 is now a verified BLOCKED checkpoint. Its executable AST fence
-classifies 145 sites with ZERO unregistered execution, all fifteen named product
-surfaces traverse the literal admission → claim → dispatch → immutable-terminal
-spine, and the cardinality/provenance suite covers seventeen actual children,
-opaque exact-bound contexts, retry children, cancellation cohorts, journal
-hygiene, and fail-closed late publication. Focused gate: 133 passed. The official
-isolated-HOME two-lane suite has zero deterministic new failure names against
-HS-131-09's pinned baseline and one repaired live-bus name. Fresh hostile counsel:
-RATIFY BLOCKED CHECKPOINT. The fence also proved eleven residual execution
-families across 48 pinned sites; the owner accepted the complete ledger on
-2026-08-12, chartered HS-131-13 through HS-131-17, and authorized this blocked
-checkpoint to ship. The ruling and reservations are in
+HS-131-10 is done — the blocked checkpoint closed without weakening its fence.
+The five amendment stories moved the original 145-site / 48-finding /
+eleven-family inventory to 100 sites, ZERO findings, ZERO blocking families, and
+zero unregistered execution. The authorized gateway remains one context mint;
+69 physical adapter sites and 27 admitted seams account for every other execution
+site. No product surface or command entered the adapter allowlist. The same five
+literal-spine, context, cardinality, provenance, and mutation suites now pass 143
+tests under a fresh isolated HOME; success, refusal, failure, retry/fallback,
+cancellation, indeterminate recovery, causation, exact revision, authority,
+receipt immutability, late-publication fencing, and journal hygiene remain green.
+The complete eleven-family final disposition is in
+[findings-inventory](./assets/hs-131-10/findings-inventory.md); the original ruling
+remains in
 [OWNER-DECISION-PACKAGE-HS-131-10](./OWNER-DECISION-PACKAGE-HS-131-10.md).
 HS-131-13 is done — the first fence amendment removes the residual service
 side doors. Cadence request-time drafting now opens one authenticated
@@ -499,6 +500,11 @@ named baseline and are not silently bundled into this product phase.
 
 ## Decisions made (this phase)
 
+- 2026-08-14 — **The one-path fence closes at zero without an exception.** The
+  exact five-suite rerun is 143 passed; the census is 100 sites, zero findings,
+  zero blocking families, and zero unregistered execution. All eleven original
+  families left by deletion or admission, never allowlist promotion. HS-131-11
+  and HS-131-12 are unblocked.
 - 2026-08-14 — **Delete dormant live-session MIR; keep separately admitted
   deferred routing.** HS-131-17 removes every private `mir_*` constructor input,
   plugin enumeration, and post-stop `process_meeting_state()` dispatch from

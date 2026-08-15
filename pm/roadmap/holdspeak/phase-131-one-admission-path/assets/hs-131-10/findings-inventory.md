@@ -1,150 +1,102 @@
-# HS-131-10 — model-execution inventory and blocking findings
+# HS-131-10 — model-execution inventory and final disposition
 
 **Generated from:** `tests/unit/test_one_path_census.py` over production
 `holdspeak/**/*.py` (tests excluded).
 
-**Census date:** 2026-08-13.
-**Disposition:** **BLOCKED; FIVE-STORY AMENDMENT WAVE IN PROGRESS.** These are
-findings, not adapter exceptions. The owner chartered HS-131-13 through HS-131-17
-to delete or admit every family. HS-131-13 through HS-131-15 are complete in the
-current tree; HS-131-10 cannot close until the remaining two amendments land and
-the census returns zero findings.
+**Census date:** 2026-08-14.
+**Disposition:** **CLOSED AT ZERO.** All five owner-chartered amendments,
+HS-131-13 through HS-131-17, landed. Every one of the original eleven finding
+families left by deletion or admission; no family became an adapter exception.
 
-## Current census result — after HS-131-15
+## Final census result — after HS-131-17
 
 | Bucket | Function scopes | Executable sites |
 |---|---:|---:|
 | `AUTHORIZED_GATEWAY` | 2 | 1 context mint |
 | `CLAIM_WITNESS_MINT` | 2 | 2 witness-issuer sites |
 | `GATEWAY_FACTORY_BINDING` | 1 | 1 default-factory binding |
-| `ADAPTER_ALLOWLIST` | 56 | 70 |
+| `ADAPTER_ALLOWLIST` | 55 | 69 |
 | `ADMITTED_SEAM_CALLERS` | 18 | 27 |
-| `NAMED_FINDINGS` | — | 4 |
+| `NAMED_FINDINGS` | — | **0** |
 | Unregistered | — | **0** |
-| **Total** | — | **105** |
+| **Total** | — | **100** |
 
-HS-131-15 preserved the 105-site total while replacing both speech findings
-with admitted seams: browser rehearsal/replay/template-preview and the
-authenticated CLI command each open a fresh bounded text-entry session whenever
-the frozen configuration selects provider work. Provider-free configurations
-remain lexical and parentless. No speech scope moved to an allowlist, and zero
-unregistered sites remain.
+The authorized gateway remains exactly `InferenceRunner._attempt` and
+`InferenceRunner._dispatch`; public `InferenceRunner.invoke` orchestrates the
+permitted attempt sequence and names no physical target. The one-shot issuer
+installation at `ExecutorPlane` module scope, witness issuance in
+`ExecutorPlane.claim`, and the default-factory reference in
+`InferenceRunner.__init__` remain classified separately, not as adapters.
 
-Across the amendment wave so far, the original checkpoint has moved from
-**145 to 105 executable sites**, **48 to 4 findings**, and **11 to 4 families**.
-
-The authorized gateway is exactly `InferenceRunner._attempt` and
-`InferenceRunner._dispatch`; public `InferenceRunner.invoke` only orchestrates
-the one permitted compatibility follow-up and names no physical target. The
-one-shot issuer installation at `ExecutorPlane` module scope, witness issuance
-in `ExecutorPlane.claim`, and default-factory reference in
-`InferenceRunner.__init__` are classified separately, not as adapters. Every
-allowlisted factory validates the opaque, runner-issued `DispatchContext`
-before construction; execution leaves are reachable only through the dispatch
-context carried by that admitted child. A context consumes the single-use
-witness from the successful claim and binds that exact child operation, its
-immutable deployment revision, destination, positive attempt ordinal, and
-child warrant basis. Missing, null, duck-typed, directly constructed, copied,
-wrong-operation, wrong-revision, wrong-destination, wrong-attempt, invented,
-and replayed contexts refuse by name before physical work.
+Every allowlisted factory validates the opaque, runner-issued `DispatchContext`
+before construction. Execution leaves are reachable only through the dispatch
+context carried by that admitted child. A context consumes the single-use witness
+from the successful claim and binds the exact child operation, immutable
+deployment revision, destination, positive attempt ordinal, and child warrant
+basis. Missing, null, duck-typed, directly constructed, copied, wrong-operation,
+wrong-revision, wrong-destination, wrong-attempt, invented, and replayed contexts
+refuse by name before physical work.
 
 The census recognizes existing-client SDK calls and first-class references such
 as `client.chat.completions.create`, including literal
 `getattr(receiver, "model_verb")` and SDK-chain getters regardless of the
 container that holds them, without classifying availability probes or unrelated
 repository/store `.create` methods. Physical cardinality is counted at the cloud
-SDK, llama.cpp, mesh enqueue, and Whisper backend edges—not at engine
+SDK, llama.cpp, mesh enqueue, and Whisper backend edges, not at engine
 construction.
 
-## Exact remaining blocking ledger — 4 families, 4 pinned sites
+## Complete eleven-family disposition
 
-### 1. `dormant-mir` — inventoried branch, 0 executable sites
+| Original family | Owner | Final disposition |
+|---|---|---|
+| `cadence` | HS-131-13 | **Admitted.** Request-time drafting opens an authenticated bounded parent and exact-revision child. |
+| `decisions-route` | HS-131-13 | **Deleted.** The duplicate route-side model seam is gone. |
+| `delivery-legacy-factory` | HS-131-13 | **Deleted.** Dormant Delivery review and its uncontextual target factory are gone. |
+| `plugin-default-provider` | HS-131-14 | **Deleted.** Builtins and `segment_probe` receive an admitted dispatch handle rather than constructing/caching providers. |
+| `legacy-uncontextual-factory` | HS-131-14 | **Deleted.** The public configured-provider factory is gone; its private body is dominated by exact context validation. |
+| `dictation-dry-run` | HS-131-15 | **Admitted when provider-backed; lexical otherwise.** Browser rehearsal/replay/template-preview mint no parent when no model work exists. |
+| `dictation-command` | HS-131-15 | **Admitted.** Authenticated CLI dry-run opens a fresh bounded text-entry session. |
+| `mesh-receiver` | HS-131-16 | **Admitted.** A hub-signed, node-bound, single-use offer verifies before worker-local `InferenceRunner` execution and its immutable local receipt. |
+| `dormant-mir` | HS-131-17 | **Deleted.** Private session MIR flags, plugin enumeration, and post-stop `process_meeting_state()` are gone; deferred routing remains separately admitted. |
+| `legacy-live-meeting-engine` | HS-131-17 | **Deleted.** Meeting startup reads frozen plan readiness and constructs no parallel `MeetingIntel`. |
+| `bookmark-auto-label` | HS-131-17 | **Admitted.** Automatic refinement reaches `_admitted_bookmark_label`; deterministic/no-context/refused/failed/cancelled paths dispatch nothing or preserve the timestamp label. |
 
-- `holdspeak/meeting_session/session.py` — the `mir_routing_enabled=True`
-  branch is dormant today but would route model work outside the admitted
-  meeting-child seam if enabled.
+## Amendment ledger movement
 
-A latent side door is still a side door; either delete it or admit every MIR
-attempt under the meeting session. Owned by HS-131-17.
+| Checkpoint | Sites | Pinned findings | Blocking families | Unregistered |
+|---|---:|---:|---:|---:|
+| HS-131-10 blocked checkpoint | 145 | 48 | 11 | 0 |
+| After HS-131-13 | 134 | 38 | 8 | 0 |
+| After HS-131-14 | 105 | 6 | 6 | 0 |
+| After HS-131-15 | 105 | 4 | 4 | 0 |
+| After HS-131-16 | 103 | 2 | 3 | 0 |
+| After HS-131-17 | **100** | **0** | **0** | **0** |
 
-### 2. `mesh-receiver` — 2 sites
+The count falls because executable sites were deleted or product callers moved
+onto already-censused admitted seams. No command, meeting-session product module,
+or other domain service was added to `ADAPTER_ALLOWLIST`. The final meeting
+entries on that list are only the six pre-existing admitted dispatch closures
+(live/deferred analysis, bookmark label, and auto-title), each marked as a leaf
+inside one claimed child.
 
-- `holdspeak/commands/mesh_serve.py:132` — `build_meeting_intel_for_profile`
-- `holdspeak/commands/mesh_serve.py:164` — `run_prompt`
+## Executable closure proof
 
-The receiver accepts a hand-built job envelope. Nonempty warrant-shaped fields
-do not authenticate the sender or prove a locally admitted child. The sole
-remaining executable `LEGACY_UNCONTEXTUAL` marker is mechanically pinned to
-`MeshServeWorker._engine_for_run`; it is not an adapter exception. Owned by
-HS-131-16.
+The retired names remain dangerous even though their findings are gone. The
+mutation matrix retypes direct/provider paths for all amendment families and
+requires exact `UNREGISTERED_MODEL_EXECUTION` failures. HS-131-17's mutation in
+particular restores both config-time `MeetingIntel` construction and the direct
+`generate_bookmark_label` call; both are rejected by name. The clean census then
+returns the 100/0/0 result above.
 
-### 3. `legacy-live-meeting-engine` — 1 site
+The companion one-path suites prove all named product surfaces traverse the
+literal admission → claim → dispatch → immutable-terminal spine; provider
+cardinality equals invocation-child and terminal-receipt cardinality across
+success, failure, retry/fallback, cancellation, and indeterminate recovery; each
+child carries causation, exact revision, and authenticated authority; and prompt,
+token, transcript, dictation, and audio material stays out of kernel rows.
 
-- `holdspeak/meeting_session/session.py:548` — `MeetingIntel`
+## Owner ruling satisfied
 
-`MeetingSession.start` constructs a current-config engine alongside the frozen
-admitted plan. That parallel object is both a silent-retargeting risk and the
-engine used by the bookmark finding below. Owned by HS-131-17.
-
-### 4. `bookmark-auto-label` — 1 site
-
-- `holdspeak/meeting_session/bookmarks.py:45` — `generate_bookmark_label`
-
-`add_bookmark(auto_label=True)` starts a background thread that calls the engine
-directly. The admitted `_admitted_bookmark_label` seam already exists; this
-caller bypasses it and leaves no child receipt. Owned by HS-131-17.
-
-## HS-131-15 disposition
-
-The third amendment is complete in the current tree:
-
-- **Admit only when providers exist:** browser rehearsal, replay, template
-  preview, and CLI dry-run open a fresh 90-second/12-child `dictation.session`
-  only when the frozen configuration selects provider work. Lexical
-  configurations mint no parent, child, watcher, or terminal receipt.
-- **CLI authority is authenticated:** `$HOLDSPEAK_TOKEN` is derived against the
-  hub's configured bearer through the central owner authenticator. Missing or
-  invalid credentials refuse before runtime construction.
-- **Construction obeys the frozen revision:** provider placement, artifact,
-  endpoint, model, secret slot, and egress proof come from the parent-bound plan;
-  admitted construction forces warm-on-start off.
-- **Fatal controls stay fatal:** liveness, revocation, revision, child-budget,
-  and provider failures escape ordinary raw-text degradation without a duplicate
-  model attempt.
-- **Publication is one durable election:** publication/effect callbacks claim an
-  exact SQLite parent slot across processes; cancellation, revocation, expiry,
-  new children, and raw parent transitions serialize or defer. A failed release
-  retries its exact token live without replaying the callback.
-- **Content stays out of the kernel:** parent metadata contains only hashes,
-  references, bounds, authority, and claim tokens; no audio, dictated text,
-  prompt, completion, token stream, rewritten body, credential, or raw provider
-  exception enters an operation, event, or receipt row.
-
-## HS-131-14 disposition
-
-The second amendment is complete in the current tree:
-
-- **Providers deleted from plugins:** all fourteen builtins and `segment_probe`
-  consume an admitted dispatch handle and no longer construct or cache engines.
-- **One physical completion per handle:** one lock elects exactly one claim;
-  released, cancelled, stale, cross-child, incompatible, replayed, or
-  over-cardinality handles refuse before physical work.
-- **Timeout is atomic:** host timeout revokes and classifies the same handle in
-  one election; a zero-claim timeout cannot dispatch late, while an in-flight
-  attempt is indeterminate and cannot publish.
-- **Failures and retries stay honest:** provider errors fail the admitted child;
-  compatibility retry receives a distinct `_r2` child, handle, context, and
-  receipt, and only the winner materializes.
-- **Uncontextual factory retired:** public `build_configured_meeting_intel` is
-  gone; private `_configured_engine` is reachable only after exact context and
-  revision validation.
-- **Pre-admission probe retired:** meeting startup remains lexical until
-  HS-131-17 admits MIR routing rather than creating intelligence early.
-
-## Owner ruling
-
-**RULING RECEIVED 2026-08-12:** charter all five amendment stories, with design
-beats for the delete-vs-admit choices in Speech, Mesh, and Meeting. The wave is
-HS-131-13 through HS-131-17. Until the remaining three land, HS-131-10 remains
-`blocked`; HS-131-11 and HS-131-12 remain held; none of these families may enter
-`ADAPTER_ALLOWLIST`.
+The 2026-08-12 ruling chartered HS-131-13 through HS-131-17 and prohibited any
+finding from entering `ADAPTER_ALLOWLIST`. That condition is now satisfied in
+full. HS-131-10 may close; HS-131-11 and HS-131-12 are unblocked.

@@ -1,10 +1,41 @@
-# HS-131-10 blocked-checkpoint verification
+# HS-131-10 checkpoint and closure verification
 
-**Date:** 2026-08-12
-**Disposition:** fence implementation ratified; story blocked on the chartered
-HS-131-13–17 amendment wave.
+**Checkpoint date:** 2026-08-12
+**Closure date:** 2026-08-14
+**Final disposition:** **CLOSED AT ZERO.** The ratified fence is unchanged; the
+chartered HS-131-13–17 wave deleted or admitted all eleven finding families.
 
-## Focused fence
+## Closing rerun
+
+The same five executable suites were rerun from commit `12ac0475` under a fresh
+scratch-resident isolated `HOME`:
+
+```text
+uv run pytest -q \
+  tests/unit/test_one_path_census.py \
+  tests/unit/test_one_path_context.py \
+  tests/unit/test_one_path_spine.py \
+  tests/unit/test_one_path_cardinality.py \
+  tests/unit/test_one_path_provenance.py
+```
+
+Result: **143 passed in 50.67s**. The census itself reports:
+
+```text
+100 sites
+  gateway=1, witness-mint=2, gateway-binding=1
+  allowlist=69, admitted-seam=27
+  finding=0, unregistered=0
+  blocking families=0
+```
+
+The complete final disposition is in
+[`findings-inventory.md`](./findings-inventory.md). HS-131-17's immediately prior
+isolated full unit lane also read **4,676 passed, 3 failed**; all three failures
+are unchanged inherited UI/copy guards on byte-identical paths, not fence or
+amendment regressions.
+
+## Original blocked-checkpoint focused fence
 
 Command, with `HOME`, `TMPDIR`, and `--basetemp` under the session scratchpad:
 
