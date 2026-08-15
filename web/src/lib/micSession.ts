@@ -328,6 +328,21 @@ export function endHold(): { chunks: Float32Array[]; rate: number } | null {
   return chunks.length ? { chunks, rate } : null;
 }
 
+/** HS-132-05 — take what the hold has captured SO FAR, without ending it.
+ *
+ *  The streaming mic ships the utterance in 600 ms slices. Ending and
+ *  re-beginning the hold for each slice suspended the AudioContext and
+ *  zeroed the meter ~1.6×/s, so the phase lamp read SUSPENDED all through
+ *  an active capture and frames could fall between the two calls. Draining
+ *  moves the buffer and touches nothing else: the hold stays held, the
+ *  device stays live, and the lamp keeps telling the truth. */
+export function drainHold(): { chunks: Float32Array[]; rate: number } | null {
+  if (!holdActive) return null;
+  const chunks = holdChunks;
+  holdChunks = [];
+  return chunks.length ? { chunks, rate: session?.rate ?? 16_000 } : null;
+}
+
 /** Abandon the hold, keeping the grant (the gesture was cancelled). */
 export function abortHold(): void {
   if (!holdActive) return;

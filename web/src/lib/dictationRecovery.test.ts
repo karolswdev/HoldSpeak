@@ -4,6 +4,8 @@ import {
   DICTATION_FAILURES,
   applicableActions,
   dictationFailure,
+  refusalCode,
+  streamFailure,
   type DictationFailure,
 } from "./dictationRecovery";
 
@@ -48,6 +50,15 @@ describe("dictation recovery contract", () => {
       transcription_failed: ["retry", "copy", "keep_as_note"],
       timeout: ["retry", "copy", "keep_as_note", "alternate_runs_on"],
       no_speech: ["retry", "copy", "keep_as_note"],
+      // HS-132-05 — the streaming mic's named server refusals
+      mic_interval_closed: ["retry", "copy", "keep_as_note"],
+      provider_failure: [
+        "retry",
+        "copy",
+        "keep_as_note",
+        "alternate_runs_on",
+      ],
+      audio_floor_held: ["retry", "copy", "keep_as_note"],
       unknown: ["retry", "copy", "keep_as_note"],
     };
     for (const [failure, actions] of Object.entries(expected)) {
@@ -74,7 +85,58 @@ describe("dictation recovery contract", () => {
     expect(alternates).toEqual([
       "delivery_conflict",
       "missing_model",
+      "provider_failure",
       "timeout",
     ]);
+  });
+});
+
+/* HS-132-05 — the streaming socket's refusals arrive NAMED (`reason`,
+   `failure_category`, `mic_interval: "closed"`). Before this the client read
+   only `error`, so every one of them landed as "unknown". */
+describe("named server refusals (HS-132-05)", () => {
+  it("maps the server's failure_category vocabulary", () => {
+    expect(
+      streamFailure({ failure_category: "speech_session_refused" }),
+    ).toBe("mic_interval_closed");
+    expect(
+      streamFailure({ failure_category: "speech_provider_failure" }),
+    ).toBe("provider_failure");
+    expect(streamFailure({ failure_category: "audio_floor_held" })).toBe(
+      "audio_floor_held",
+    );
+    expect(streamFailure({ failure_category: "audio_floor_lost" })).toBe(
+      "audio_floor_held",
+    );
+    expect(
+      streamFailure({ failure_category: "transcription_unavailable" }),
+    ).toBe("missing_model");
+    expect(
+      streamFailure({ failure_category: "transcription_failed" }),
+    ).toBe("transcription_failed");
+  });
+
+  it("honors the closed interval on its own (Sol Amendment 3)", () => {
+    expect(
+      streamFailure({
+        error: "The microphone session closed.",
+        reason: "speech_session_cancelled",
+        mic_interval: "closed",
+      }),
+    ).toBe("mic_interval_closed");
+  });
+
+  it("falls back to unknown only when the server named nothing", () => {
+    expect(streamFailure({ error: "Connection lost." })).toBe("unknown");
+  });
+
+  it("states the refusal by name, never as prose", () => {
+    expect(
+      refusalCode({ reason: "speech_child_budget_exhausted" }),
+    ).toBe("SPEECH CHILD BUDGET EXHAUSTED");
+    expect(refusalCode({ failure_category: "audio_floor_lost" })).toBe(
+      "AUDIO FLOOR LOST",
+    );
+    expect(refusalCode({ error: "Connection lost." })).toBeNull();
   });
 });

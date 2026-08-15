@@ -64,6 +64,14 @@
   font-size: var(--font-size-xs);
   line-height: 1.35;
 }
+/* HS-132-05 — the server's own name for the refusal, stated as WHAT before
+   the message that says what to do about it. */
+.desk-next .desk-mic-failure-code {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-2xs, var(--font-size-xs));
+  letter-spacing: 0.04em;
+  color: var(--danger);
+}
 .desk-next .desk-inline-editor-spacer {
   flex: 1;
 }

@@ -30,6 +30,7 @@ from .voice_support import (
     _claim_browser_audio_floor,
     _mic_interval_closed,
     _release_browser_audio_floor,
+    _renew_browser_audio_floor,
     _resolve_config,
     _resolve_server,
     _route_principal,
@@ -421,15 +422,27 @@ def build_voice_router(ctx: WebContext) -> APIRouter:
         """HS-119-01: streaming transcription for the click-to-toggle mic.
 
         The client sends raw 16 kHz mono 16-bit PCM chunks as binary frames.
-        The server transcribes each chunk and sends back JSON events:
-          {"type": "partial", "text": "..."}   — progressive Whisper result
-          {"type": "final",   "text": "..."}   — final text (pipeline-processed
+        The server ACCUMULATES them and sends back JSON events:
+          {"type": "final",   "text": "..."}   — the utterance's one
+                                                 transcription (pipeline-processed
                                                  only when this socket asked for
                                                  the pipeline)
-          {"type": "error",   "error": "..."}  — named failure
+          {"type": "error",   "error": "...",  — a NAMED failure: `reason`,
+           "reason": "...", "failure_category": "...",
+           "mic_interval": "closed"}             `failure_category`, and the
+                                                 closed-interval marker travel
+                                                 with it (HS-132-05).
 
         The client signals end-of-stream by sending a JSON text frame:
           {"type": "end"}
+
+        HS-132-05: there is ONE transcription pass per utterance. Each 600 ms
+        chunk used to take an independent full Whisper pass — serialized on the
+        very ``transcription_lock`` the hotkey needs, with the worst possible
+        context window for hallucination — and the "partial" it produced had no
+        consumer anywhere in the client. The chunks still arrive as they are
+        captured (bounded memory, and each one heartbeats the audio-floor
+        lease); only the final, whole utterance is transcribed.
 
         HS-132-04: the socket declares WHICH kind of utterance it is carrying,
         once, before the audio:
@@ -466,28 +479,41 @@ def build_voice_router(ctx: WebContext) -> APIRouter:
         await websocket.accept(subprotocol=selected)
 
         if ctx.on_transcribe is None:
-            await websocket.send_json({"type": "error", "error": "Transcription unavailable."})
+            await websocket.send_json(
+                {
+                    "type": "error",
+                    "error": "Transcription unavailable.",
+                    "reason": "transcription_unavailable",
+                    "failure_category": "transcription_unavailable",
+                }
+            )
             await websocket.close()
             return
 
         if not _claim_browser_audio_floor(ctx):
-            await websocket.send_json({"type": "error", "error": "Audio floor held by another source."})
+            await websocket.send_json(
+                {
+                    "type": "error",
+                    "error": "Audio floor held by another source.",
+                    "reason": "audio_floor_held",
+                    "failure_category": "audio_floor_held",
+                }
+            )
             await websocket.close()
             return
 
-        import io
-        import wave
         import numpy as np
 
-        # HS-131-09: ONE admitted interval for this socket's whole lifetime. Every
-        # partial and the final utterance are trusted children of it — never one
-        # session per streamed chunk, which would be admission per frame.
+        # HS-131-09: ONE admitted interval for this socket's whole lifetime. The
+        # utterance's transcription is a trusted child of it — never one session
+        # per streamed chunk, which would be admission per frame.
         try:
             interval = browser_mic_sessions().open(principal)
         except SpeechSessionRefused as exc:
             await websocket.send_json(
                 {"type": "error", "error": "The microphone session was not admitted.",
-                 "reason": exc.reason}
+                 "reason": exc.reason,
+                 "failure_category": "speech_session_refused"}
             )
             _release_browser_audio_floor(ctx)
             await websocket.close()
@@ -505,31 +531,37 @@ def build_voice_router(ctx: WebContext) -> APIRouter:
         # against), and every field mic opts out explicitly.
         run_pipeline = True
         declared = False
+        # HS-132-05: a refusal ENDS the utterance. Nothing may transcribe and
+        # deliver a final behind an error the client was already told about.
+        refused = False
         try:
             while True:
                 message = await websocket.receive()
                 if message.get("type") == "websocket.disconnect":
                     break
 
+                # HS-132-05: the floor claim is a LEASE and a dictation can run
+                # far longer than one. Every frame that lands IS the heartbeat,
+                # so the hotkey, the wake listener or a meeting can never seize
+                # the mic mid-utterance. A floor that was genuinely lost stops
+                # the capture BY NAME rather than letting this socket keep
+                # recording into a microphone somebody else owns.
+                if not _renew_browser_audio_floor(ctx):
+                    await websocket.send_json(
+                        {
+                            "type": "error",
+                            "error": "The microphone floor was taken by another source.",
+                            "mic_interval": MIC_INTERVAL_CLOSED,
+                            "reason": "audio_floor_lost",
+                            "failure_category": "audio_floor_lost",
+                        }
+                    )
+                    refused = True
+                    break
+
                 if "bytes" in message and message["bytes"]:
-                    chunk_bytes = message["bytes"]
-                    all_chunks.append(chunk_bytes)
-                    audio = np.frombuffer(chunk_bytes, dtype=np.int16).astype(np.float32) / 32768.0
-                    if len(audio) < 1600:
-                        continue
-                    try:
-                        partial_text = transcribe(audio)
-                        await websocket.send_json({"type": "partial", "text": partial_text or ""})
-                    except SpeechSessionRefused as exc:
-                        # The interval hit a fence mid-stream: named, closed, and
-                        # the client must click again (Sol Amendment 3).
-                        await websocket.send_json(
-                            {"type": "error", "error": "The microphone session closed.",
-                             "mic_interval": MIC_INTERVAL_CLOSED, "reason": exc.reason}
-                        )
-                        break
-                    except Exception as exc:
-                        log.debug(f"Streaming partial transcription failed: {exc}")
+                    # Accumulated, not transcribed: one utterance, one pass.
+                    all_chunks.append(message["bytes"])
 
                 elif "text" in message and message["text"]:
                     try:
@@ -547,6 +579,11 @@ def build_voice_router(ctx: WebContext) -> APIRouter:
                     if payload.get("type") == "end":
                         break
 
+            if refused:
+                # The client already has the named refusal; a final now would
+                # hand it words from a session that was told it was over.
+                return
+
             if all_chunks:
                 combined = b"".join(all_chunks)
                 audio = np.frombuffer(combined, dtype=np.int16).astype(np.float32) / 32768.0
@@ -555,12 +592,20 @@ def build_voice_router(ctx: WebContext) -> APIRouter:
                 except SpeechSessionRefused as exc:
                     await websocket.send_json(
                         {"type": "error", "error": "The microphone session closed.",
-                         "mic_interval": MIC_INTERVAL_CLOSED, "reason": exc.reason}
+                         "mic_interval": MIC_INTERVAL_CLOSED, "reason": exc.reason,
+                         "failure_category": "speech_session_refused"}
                     )
                     return
                 except Exception as exc:
                     log.error(f"Final transcription failed: {exc}")
-                    await websocket.send_json({"type": "error", "error": "Transcription failed."})
+                    await websocket.send_json(
+                        {
+                            "type": "error",
+                            "error": "Transcription failed.",
+                            "reason": "transcription_failed",
+                            "failure_category": "transcription_failed",
+                        }
+                    )
                     return
 
                 final_text = raw_text or ""
@@ -602,6 +647,7 @@ def build_voice_router(ctx: WebContext) -> APIRouter:
                                 "mic_interval": MIC_INTERVAL_CLOSED,
                                 "reason": interval.session.fence.reason()
                                 or "speech_session_not_live",
+                                "failure_category": "speech_session_refused",
                             }
                         )
                         return

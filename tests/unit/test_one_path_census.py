@@ -689,7 +689,12 @@ def test_every_model_execution_site_is_in_exactly_one_bucket() -> None:
     # reached (whose body held the `_chat_completion_text` open). The admitted
     # bookmark path adds NO site: `_admitted_bookmark_label` already existed and
     # its dispatch closure is already allowlisted.
-    assert len(sites) == 100
+    # HS-132-05 took one more site out, again by DELETION: the streaming
+    # dictation socket's PER-CHUNK `transcribe(...)` (a full Whisper pass every
+    # 600 ms, on the hotkey's own lock, producing a "partial" no client
+    # consumed). The socket's final, whole-utterance pass remains, so the
+    # `ws_dictation_stream` seam registration above still names a live site.
+    assert len(sites) == 99
     # THE headline: the blocking ledger is empty. Every model execution in
     # production is now the gateway, a reviewed adapter, or an admitted seam.
     assert counts["finding"] == 0

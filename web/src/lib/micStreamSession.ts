@@ -2,11 +2,13 @@ import { websocketUrl, websocketProtocols } from "./auth";
 import {
   beginHold,
   endHold,
+  drainHold,
   abortHold,
   micCaptureSupported,
   subscribeCaptureLevel,
 } from "./micSession";
-import { toWav16kMono } from "./speakToFill";
+import { toWav16kMono, wavFromPcm16 } from "./speakToFill";
+import { clearPendingVoice, savePendingVoice } from "./pendingVoice";
 
 /* HS-132-04 — a configured macro keyword fires ONCE, on the server's
    dictate-for-delivery leg (the same seam the pipeline runs on), exactly as
@@ -20,17 +22,44 @@ export type VoiceCommandFired = {
   error?: string;
 };
 
+/* HS-132-05 — a refusal arrives NAMED. The server sends `reason`,
+   `failure_category` and (Sol Amendment 3) `mic_interval: "closed"`; the
+   client carries all three to the failure registry instead of reading
+   `error` and calling everything unknown. */
+export type StreamRefusalEvent = {
+  type: "error";
+  error: string;
+  reason?: string;
+  failure_category?: string;
+  mic_interval?: string;
+};
+
+/* HS-132-05 — there is no "partial" event any more. Every 600 ms chunk used
+   to take its own full Whisper pass, on the same transcription lock the
+   hotkey needs, and the result had no consumer anywhere in the app. One
+   utterance is now one transcription pass; the chunks are still shipped as
+   they are captured (bounded memory, and each one heartbeats the server's
+   audio-floor lease). */
 export type StreamEvent =
-  | { type: "partial"; text: string }
   | { type: "final"; text: string; fired?: VoiceCommandFired }
-  | { type: "error"; error: string };
+  | StreamRefusalEvent;
 
 export type StreamSession = {
   stop(): Promise<string>;
   cancel(): void;
+  /** HS-132-05 — true once this session's audio is retained on this device
+   *  for Retry. Resolves after the retention write settles, so a surface
+   *  never claims retention it cannot prove. */
+  retained(): Promise<boolean>;
 };
 
 const CHUNK_INTERVAL_MS = 600;
+
+/** The retained buffer is capped where the pending-voice store is
+ *  (16 MB ≈ 8 minutes of 16 kHz mono 16-bit, the same cap
+ *  `/api/dictation/transcribe` enforces). Past that nothing is retained and
+ *  nothing says it was. */
+const RETAIN_MAX_BYTES = 16_000_000;
 
 export function micStreamSupported(): boolean {
   return micCaptureSupported() && typeof WebSocket !== "undefined";
@@ -44,7 +73,10 @@ export function micStreamSupported(): boolean {
    the delivery that follows sends `raw: true`. */
 export async function startStreamSession(
   onEvent: (event: StreamEvent) => void,
-  { pipeline = false }: { pipeline?: boolean } = {},
+  {
+    pipeline = false,
+    retainScope = "",
+  }: { pipeline?: boolean; retainScope?: string } = {},
 ): Promise<StreamSession> {
   await beginHold();
 
@@ -56,7 +88,60 @@ export async function startStreamSession(
   let chunkTimer = 0;
   let stopped = false;
   let finalText = "";
+  let finalSeen = false;
+  let refused = false;
   let wsOpen = false;
+
+  /* HS-132-05 — the retained capture. What goes on the wire is kept here so
+     a failed utterance really can be retried from this device (the
+     "Captured audio is retained locally." promise had no writer on this
+     path before). */
+  let retainedParts: Uint8Array[] = [];
+  let retainedBytes = 0;
+  let overflowed = false;
+  let retaining: Promise<boolean> = Promise.resolve(false);
+
+  const keep = (pcm: ArrayBuffer): void => {
+    if (!retainScope || overflowed) return;
+    if (retainedBytes + pcm.byteLength > RETAIN_MAX_BYTES) {
+      // Longer than the transcribe contract accepts: retaining it would be a
+      // Retry button that 413s. Say nothing rather than promise wrongly.
+      retainedParts = [];
+      retainedBytes = 0;
+      overflowed = true;
+      return;
+    }
+    retainedParts.push(new Uint8Array(pcm));
+    retainedBytes += pcm.byteLength;
+  };
+
+  const persist = async (): Promise<boolean> => {
+    if (!retainScope || overflowed || !retainedBytes) return false;
+    const merged = new Uint8Array(retainedBytes);
+    let at = 0;
+    retainedParts.forEach((part) => {
+      merged.set(part, at);
+      at += part.byteLength;
+    });
+    await savePendingVoice(
+      retainScope,
+      wavFromPcm16(new Int16Array(merged.buffer, 0, merged.byteLength >> 1)),
+    );
+    return true;
+  };
+
+  /** Everything captured so far, kept, without ending the hold. */
+  const drainInto = (captured: ReturnType<typeof drainHold>): ArrayBuffer | null => {
+    if (!captured?.chunks.length) return null;
+    const wav = toWav16kMono(captured.chunks, captured.rate);
+    const view = new Uint8Array(wav, 44);
+    const pcm = view.buffer.slice(
+      view.byteOffset,
+      view.byteOffset + view.byteLength,
+    );
+    keep(pcm);
+    return pcm;
+  };
 
   const pendingFinal = new Promise<string>((resolve) => {
     ws.addEventListener("message", (event) => {
@@ -64,8 +149,16 @@ export async function startStreamSession(
       try {
         const msg = JSON.parse(event.data) as StreamEvent;
         if (msg.type === "final") {
+          finalSeen = true;
           finalText = msg.text;
           resolve(msg.text);
+        }
+        if (msg.type === "error") {
+          // The utterance failed on the server: keep its audio before the
+          // socket tears the capture down, so Retry has something to retry.
+          refused = true;
+          drainInto(drainHold());
+          retaining = persist();
         }
         onEvent(msg);
       } catch {
@@ -77,13 +170,23 @@ export async function startStreamSession(
       if (!stopped) {
         stopped = true;
         window.clearInterval(chunkTimer);
+        // A socket that dropped mid-utterance is a failure too: retain first,
+        // abandon the hold second.
+        if (!refused) {
+          drainInto(drainHold());
+          retaining = persist();
+        }
         abortHold();
-        onEvent({ type: "error", error: "Connection lost." });
+        if (!refused) {
+          // A named refusal already told the user WHAT happened; a generic
+          // "connection lost" must never overwrite it.
+          onEvent({ type: "error", error: "Connection lost." });
+        }
       }
       resolve(finalText);
     });
     ws.addEventListener("error", () => {
-      if (!stopped) {
+      if (!stopped && !refused) {
         onEvent({ type: "error", error: "Connection error." });
       }
     });
@@ -91,15 +194,11 @@ export async function startStreamSession(
 
   const sendChunks = () => {
     if (stopped || !wsOpen) return;
-    const captured = endHold();
-    if (captured?.chunks.length) {
-      const wav = toWav16kMono(captured.chunks, captured.rate);
-      const pcmBytes = new Uint8Array(wav, 44);
-      ws.send(pcmBytes.buffer.slice(pcmBytes.byteOffset, pcmBytes.byteOffset + pcmBytes.byteLength));
-    }
-    if (!stopped) {
-      void beginHold();
-    }
+    // HS-132-05: DRAIN, never end-and-rebegin. The hold stays held for the
+    // whole capture — the phase lamp reads held and the level meter stays
+    // live instead of being zeroed ~1.6×/s.
+    const pcm = drainInto(drainHold());
+    if (pcm) ws.send(pcm);
   };
 
   ws.addEventListener("open", () => {
@@ -121,11 +220,13 @@ export async function startStreamSession(
       window.clearInterval(chunkTimer);
 
       const captured = endHold();
-      if (captured?.chunks.length && wsOpen) {
-        const wav = toWav16kMono(captured.chunks, captured.rate);
-        const pcmBytes = new Uint8Array(wav, 44);
-        ws.send(pcmBytes.buffer.slice(pcmBytes.byteOffset, pcmBytes.byteOffset + pcmBytes.byteLength));
-      }
+      const tail = drainInto(captured);
+      if (tail && wsOpen) ws.send(tail);
+
+      // Persisted at the final send: from here on the utterance is in the
+      // server's hands, and if it fails the audio is already on this device.
+      retaining = persist();
+      await retaining.catch(() => false);
 
       if (wsOpen) {
         ws.send(JSON.stringify({ type: "end" }));
@@ -137,6 +238,12 @@ export async function startStreamSession(
 
       const text = await pendingFinal;
       ws.close();
+      if (finalSeen && retainScope) {
+        // The server answered — empty final included ("no words"). There is
+        // nothing left to retry, so the retained copy goes.
+        retaining = Promise.resolve(false);
+        await clearPendingVoice(retainScope).catch(() => undefined);
+      }
       return text;
     },
     cancel() {
@@ -145,6 +252,9 @@ export async function startStreamSession(
       window.clearInterval(chunkTimer);
       abortHold();
       ws.close();
+    },
+    retained(): Promise<boolean> {
+      return retaining.catch(() => false);
     },
   };
 }

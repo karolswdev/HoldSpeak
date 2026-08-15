@@ -58,6 +58,35 @@ export async function cancelCapture(): Promise<void> {
   }
 }
 
+/* HS-132-05 — a 16 kHz mono 16-bit WAV around PCM that is ALREADY at rate.
+   The streaming mic retains exactly what it put on the wire (the same 16 kHz
+   PCM the socket carried), so a failed utterance is retried from the retained
+   buffer through the one `/api/dictation/transcribe` contract instead of
+   promising a Retry that had nothing behind it. */
+export function wavFromPcm16(pcm: Int16Array): ArrayBuffer {
+  const buffer = new ArrayBuffer(44 + pcm.length * 2);
+  const view = new DataView(buffer);
+  const word = (at: number, value: string) =>
+    [...value].forEach((character, index) =>
+      view.setUint8(at + index, character.charCodeAt(0)),
+    );
+  word(0, "RIFF");
+  view.setUint32(4, 36 + pcm.length * 2, true);
+  word(8, "WAVE");
+  word(12, "fmt ");
+  view.setUint32(16, 16, true);
+  view.setUint16(20, 1, true);
+  view.setUint16(22, 1, true);
+  view.setUint32(24, 16_000, true);
+  view.setUint32(28, 32_000, true);
+  view.setUint16(32, 2, true);
+  view.setUint16(34, 16, true);
+  word(36, "data");
+  view.setUint32(40, pcm.length * 2, true);
+  new Int16Array(buffer, 44).set(pcm);
+  return buffer;
+}
+
 export function toWav16kMono(
   chunks: Float32Array[],
   sourceRate: number,
@@ -81,27 +110,7 @@ export function toWav16kMono(
       joined[right] * (position - left);
     pcm[index] = Math.max(-32768, Math.min(32767, Math.round(sample * 32767)));
   }
-  const buffer = new ArrayBuffer(44 + pcm.length * 2);
-  const view = new DataView(buffer);
-  const word = (at: number, value: string) =>
-    [...value].forEach((character, index) =>
-      view.setUint8(at + index, character.charCodeAt(0)),
-    );
-  word(0, "RIFF");
-  view.setUint32(4, 36 + pcm.length * 2, true);
-  word(8, "WAVE");
-  word(12, "fmt ");
-  view.setUint32(16, 16, true);
-  view.setUint16(20, 1, true);
-  view.setUint16(22, 1, true);
-  view.setUint32(24, 16_000, true);
-  view.setUint32(28, 32_000, true);
-  view.setUint16(32, 2, true);
-  view.setUint16(34, 16, true);
-  word(36, "data");
-  view.setUint32(40, pcm.length * 2, true);
-  new Int16Array(buffer, 44).set(pcm);
-  return buffer;
+  return wavFromPcm16(pcm);
 }
 
 /* HS-131-09 — the open-mic interval is ONE admitted session on the server.
