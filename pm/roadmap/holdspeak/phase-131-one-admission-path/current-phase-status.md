@@ -1,8 +1,8 @@
 # Phase 131 — One Admission Path
 
-**Status:** IN PROGRESS (12/17).
+**Status:** IN PROGRESS (13/17).
 
-**Last updated:** 2026-08-13.
+**Last updated:** 2026-08-14.
 
 ## Goal
 
@@ -157,7 +157,7 @@ HS-131-11 and HS-131-12 remain held behind the fence.
 | HS-131-13 | Residual services take the admitted door | done | [story-13](./story-13-residual-service-admission.md) | [evidence-story-13](./evidence-story-13.md) |
 | HS-131-14 | Plugins receive admitted intelligence | done | [story-14](./story-14-plugin-provider-admission.md) | [evidence-story-14](./evidence-story-14.md) |
 | HS-131-15 | Speech side doors become sessions or stay lexical | done | [story-15](./story-15-speech-side-door-admission.md) | [evidence-story-15](./evidence-story-15.md) |
-| HS-131-16 | The mesh receiver proves authority locally | backlog | [story-16](./story-16-mesh-receiver-authority.md) | — |
+| HS-131-16 | The mesh receiver proves authority locally | done | [story-16](./story-16-mesh-receiver-authority.md) | [evidence-story-16](./evidence-story-16.md) |
 | HS-131-17 | Meetings lose the parallel engine | backlog | [story-17](./story-17-meeting-residual-admission.md) | — |
 
 ## Delivery order
@@ -449,9 +449,27 @@ Hostile verification returned SHIP-CANDIDATE; focused proof is 501 + 304 passing
 both mutations are caught, web typecheck and 45 tests pass. The inherited-red
 full gate found five current-diff regressions, all repaired and re-proved; the
 final three apparent Slack names were xdist lock-contamination and pass serially.
-Next: HS-131-16 proves mesh receiver authority locally. HS-131-11 and HS-131-12
-remain held until the remaining two amendments land and HS-131-10 closes at zero
-findings.
+HS-131-16 is done. Product pairing now provisions the node bearer plus public
+offer pin; the hub alone holds the Ed25519 private key. A destination-,
+generation-, revision-, operation-, ordinal-, and deadline-bound offer verifies
+and reserves once before the worker-local `InferenceRunner` constructs or calls a
+provider. Every physical attempt receives its own immutable worker receipt; a
+content-free MACed report is independently settled by the hub, and byte-identical
+transport retry never reruns the model. Stop, replay, expiry, revocation, and
+wrong-destination paths refuse before late output can settle.
+
+The owner stopped the academic review loop after the 151-path candidate was
+rejected and the reduced R2 work exposed one stale unpaired-node test. The final
+40-path candidate fixes that regression plus three schema-v59 assertions and the
+broker density guard, then freezes at manifest
+`24e25287380abcbad6527d5037f051afccbf155620059b38f11069f8085b1413` / complete
+diff `17cb83aaf53082bfccf1e963b942c7304e43fad8f76aca2038fea4e018b14450`.
+The evidence matrix is 864 passed, including separate-process loopback and the
+zero-finding mesh census; the full unit candidate lane is 4,643 passed. Three
+unchanged backend guards and two unchanged Speak test mocks remain inherited
+baseline, while 785 other web tests, tokens, architecture, typecheck, and build
+pass. Next: HS-131-17 removes the meeting residuals; HS-131-11 and HS-131-12 stay
+held until the final amendment lands and HS-131-10 closes at zero findings.
 The roadmap still has inherited structural lint errors in old phases; they are
 named baseline and are not silently bundled into this product phase.
 
@@ -469,6 +487,62 @@ named baseline and are not silently bundled into this product phase.
 
 ## Decisions made (this phase)
 
+- 2026-08-14 — **HS-131-16 ships at the owner's functional bar.** The exact
+  40-path candidate passes the 864-test evidence matrix and the 4,643-test unit
+  candidate lane. Pairing, authenticated offer verification, worker-local
+  admission/receipts, independent hub settlement, stop, replay, bounded report
+  retry, separate-process loopback, and the zero-finding mesh census are green.
+  Three backend guards and two Speak mock files are unchanged inherited baseline;
+  they do not widen this story or reverse the SHIP call.
+- 2026-08-14 — **The owner closes the HS-131-16 academic review loop.** After
+  R2 implemented a 36-path candidate and the true 42-file union reached 799
+  passes with one functional test-double red, the owner ruled that the project
+  had become too strict and academic instead of functional. No R3 hostile review
+  or protocol-hardening brief is authorized. Repair the stale unpaired-node test,
+  prove the ordinary production pairing/worker/two-receipt/census path, run the
+  real regression gates, and make the ship call. Remaining signer, microscopic
+  interleaving, future-schema, and taxonomy observations are ledger notes unless
+  normal product use reproduces damage.
+- 2026-08-14 — **HS-131-16 gets one second reduced repair; a third stops first.**
+  R1's 33-path candidate passed the attached 574-test matrix but failed bounded
+  hostile re-review. [REPAIR-HS-131-16-R2](./REPAIR-HS-131-16-R2.md) sustains only
+  ordinary-use defects and activates one surgical existing-runner deadline seam.
+  Its content-free authority expectation is hash-bound by the signed offer without
+  crossing the hub warrant; structured 4xx and malformed 2xx are terminal, while
+  bounded byte-identical 5xx delivery retry remains allowed because no
+  acknowledgement occurred. If R2 re-review fails, ORCHESTRATION's three-round
+  valve requires a fresh design/scope ruling before any R3 patch.
+- 2026-08-14 — **The first reduced HS-131-16 review fails once and repairs once.**
+  The 31-path candidate made the real boundary visible. Sol's hostile review and
+  Terra's static verification sustained ordinary failures in observation hygiene,
+  production pairing, wire custody, credential/settlement transactions, signed
+  semantic binding, stop/owner elections, deadline/liveness generation, strict
+  acknowledgement, empty-result consistency, terminal-report grammar, and proof.
+  They are consolidated in [REPAIR-HS-131-16-R1](./REPAIR-HS-131-16-R1.md), with
+  one fresh implementer and no piecemeal briefs. Generic observer/process/DB work
+  remains out; the user approved attaching the orchestrator session to the durable
+  worktree for the blocked executable Terra gate after repair.
+- 2026-08-14 — **HS-131-16 resets to a reduced clean-room implementation.** The
+  first isolated candidate is preserved at an independently reproduced 151-path,
+  2.03 MB fingerprint but is DO-NOT-SHIP: review history widened mesh authority
+  into profile/UI, Setup/Doctor, browser audio, meeting, generic database,
+  process-hardening, docs, and walk concerns. The binding
+  [acceptance map](./ACCEPTANCE-MAP-HS-131-16.md) retains the full authenticated
+  offer plus worker-local admission protocol while allowing only CORE, focused
+  PROOF, and before/after-demonstrated REGRESSION work. The rejected candidate is
+  reference material, never an implicit patch; owner may overrule this boundary
+  at the sitting.
+- 2026-08-13 — **The mesh receiver requires two independent proofs: an
+  asymmetrically authenticated hub offer and a worker-local admitted physical
+  attempt.** Sol ratified HS-131-16's design with six binding amendments. The
+  existing per-node token continues to authenticate worker HTTP/report traffic,
+  but cannot verify hub authority because symmetric verification would let the
+  worker forge offers; pairing therefore pins a per-node Ed25519 public key. A
+  private single-use `VerifiedMeshOffer`, atomic replay reservation, stable node
+  identity/generation, nonce/monotonic freshness, transactional hub elections,
+  bounded compatibility ordinal, and gapless stop handoff are implementation
+  floor. Hardware attestation and cross-machine atomicity remain recorded limits,
+  not excuses for accepting late output.
 - 2026-08-12 — **The owner charters the complete five-story fence amendment
   wave and authorizes the blocked checkpoint to ship.** HS-131-13 owns residual
   services and retirement of `build_intel_for_target`; HS-131-14 owns plugin

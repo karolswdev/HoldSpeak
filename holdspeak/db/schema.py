@@ -7,7 +7,7 @@ independently of the Database container.
 # Bump this when adding tables or columns; the Database container uses it to
 # decide whether to back up and re-apply. See core._ensure_schema for the
 # four-way upgrade contract.
-SCHEMA_VERSION = 58  # v58: durable parent publication election (HS-131-15)
+SCHEMA_VERSION = 59  # v59: mesh dispatch-offer relay proof + worker replay reservations (HS-131-16)
 
 # SQL Schema
 SCHEMA_SQL = """
@@ -1084,7 +1084,20 @@ CREATE TABLE IF NOT EXISTS mesh_relay_jobs (
     deadline_at TEXT NOT NULL,
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     claimed_at TEXT,
-    completed_at TEXT
+    completed_at TEXT,
+    -- v59 (HS-131-16): explicit hub-local relay proof. The stable destination
+    -- identity and the EXACT enqueue-time credential generation are captured
+    -- here, not recomputed from a name, so a rotated or re-paired credential
+    -- can never claim work addressed to its predecessor. The signed offer and
+    -- the content-free worker terminal report are stored beside them rather
+    -- than tunnelled through the legacy `task_kind` JSON field.
+    destination_node_id TEXT NOT NULL DEFAULT '',
+    destination_generation INTEGER NOT NULL DEFAULT 0,
+    claimed_by_node_id TEXT NOT NULL DEFAULT '',
+    claimed_generation INTEGER NOT NULL DEFAULT 0,
+    claim_nonce TEXT NOT NULL DEFAULT '',
+    dispatch_offer_json TEXT NOT NULL DEFAULT '',
+    worker_terminal_json TEXT NOT NULL DEFAULT ''
 );
 
 CREATE INDEX IF NOT EXISTS idx_mesh_relay_jobs_node_status
@@ -1094,7 +1107,36 @@ CREATE INDEX IF NOT EXISTS idx_mesh_relay_jobs_node_status
 -- born from the worker's own polling; the mesh has no other heartbeat.
 CREATE TABLE IF NOT EXISTS mesh_workers (
     node TEXT PRIMARY KEY,
-    last_seen TEXT NOT NULL DEFAULT (datetime('now'))
+    last_seen TEXT NOT NULL DEFAULT (datetime('now')),
+    -- v59 (HS-131-16): liveness belongs to the exact credential that polled, not
+    -- to a name. The claim leg stamps the authenticated `(node_id, generation)`
+    -- pair, so activity under one generation can never make its replacement — or
+    -- its predecessor — look alive.
+    node_id TEXT NOT NULL DEFAULT '',
+    credential_generation INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE INDEX IF NOT EXISTS idx_mesh_workers_identity
+    ON mesh_workers(node_id, credential_generation);
+
+-- Worker-local replay reservations (HS-131-16, design §4.1). The WORKER's own
+-- database, never the hub's: one row elects the single executor of one signed
+-- offer. `INSERT ... ON CONFLICT DO NOTHING` on the primary key is the whole
+-- election, so a replayed offer, a concurrent second worker, and a process
+-- restart all refuse `mesh_offer_replayed` BEFORE revision persistence, runner
+-- construction, or provider dispatch. Reservation residue left by a crash
+-- reconciles to `indeterminate` and is never rerun under the same authority.
+CREATE TABLE IF NOT EXISTS mesh_worker_reservations (
+    hub_key_id TEXT NOT NULL,
+    hub_operation_id TEXT NOT NULL,
+    first_ordinal INTEGER NOT NULL,
+    offer_id TEXT NOT NULL DEFAULT '',
+    job_id TEXT NOT NULL DEFAULT '',
+    state TEXT NOT NULL DEFAULT 'reserved', -- reserved | settled | indeterminate
+    terminal_outcome TEXT NOT NULL DEFAULT '',
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    settled_at TEXT,
+    PRIMARY KEY (hub_key_id, hub_operation_id, first_ordinal)
 );
 
 -- Directory (organization/synced): the canonical organization container; the

@@ -206,6 +206,66 @@ def test_expired_deadline_refuses_before_provider_dispatch(rig):
     assert adapter.cancelled is False
 
 
+def test_the_immediate_pre_dispatch_fence_stops_a_consumed_deadline(rig):
+    """HS-131-16 repair R2.4: a deadline is a fact about NOW.
+
+    The watchdog is a TIMER: it is armed with whatever was left when the
+    invocation began and then fires asynchronously. Between arming it and the
+    physical act come admission, approval, the claim, the revision read, and
+    engine construction — all real work, all real time. A budget consumed by
+    them left a live timer that had not fired yet and a dispatch that went ahead
+    anyway. The fence reads the clock at the last instant instead, and refuses
+    by name having reached no provider.
+    """
+    db, broker, revision = rig
+    # A real base instant: the broker admits against its own wall clock, and
+    # what this test moves is the RUNNER's clock, between arming the watchdog
+    # and the physical act.
+    now = {"t": time.time()}
+    dispatched: list = []
+
+    class Watching(Adapter):
+        def dispatch(self, engine, payload, cancellation):
+            dispatched.append(payload)
+            return "result"
+
+    def slow_engine(_revision, **_kw):
+        # Constructing the engine is real work. Here it eats the whole budget,
+        # while the watchdog armed for the ORIGINAL remainder has not fired.
+        now["t"] += 60
+        return object()
+
+    runner = InferenceRunner(
+        broker, db, engine_factory=slow_engine,
+        principal_provider=lambda: OWNER, clock=lambda: now["t"],
+    )
+    adapter = Watching()
+    result = runner.invoke(InvocationRequest(
+        **{**request(revision).__dict__,
+           "invocation_id": "pre_dispatch_fence",
+           "deadline_at": now["t"] + 30}
+    ), adapter)
+
+    assert dispatched == [], "no provider may be reached past the deadline"
+    assert adapter.cancelled is False
+    assert result.outcome == "refused"
+    assert result.error == "inference_deadline_exceeded"
+    receipt = broker.store.receipt(result.operation_id)
+    assert receipt["outcome"] == "refused"
+
+    # And with the budget intact, the very same wiring dispatches normally.
+    now["t"] = time.time()
+    ok = InferenceRunner(
+        broker, db, engine_factory=lambda _revision, **_kw: object(),
+        principal_provider=lambda: OWNER, clock=lambda: now["t"],
+    ).invoke(InvocationRequest(
+        **{**request(revision).__dict__,
+           "invocation_id": "pre_dispatch_fence_ok",
+           "deadline_at": now["t"] + 30}
+    ), adapter)
+    assert ok.outcome == "succeeded" and len(dispatched) == 1
+
+
 def test_deadline_cancels_a_blocked_dispatch_through_cancel_operation(rig):
     db, broker, revision = rig
     stopped = threading.Event()

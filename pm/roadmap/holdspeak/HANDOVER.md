@@ -1,259 +1,149 @@
-# HANDOVER — Phases 125-128 Complete
+# HANDOVER — Phase 131, HS-131-17 Entry Point
 
-**Date:** 2026-08-08
-**Author:** Opus 4.6 orchestrator session
-**PRs:** #443, #444, #445, #446 (all merged)
+**Date:** 2026-08-14
+**Branch:** `phase-131-one-admission-path`
+**Phase:** 13/17 stories done
+**Last completed story:** HS-131-16 — mesh receiver authority
+**Next story:** HS-131-17 — meeting residual admission
+**Draft PR:** #454 — keep draft until the whole phase is complete
 
-## What just shipped
+## Start here
 
-Four phases in one session. HoldSpeak went from a blind pipeline to a
-desk that follows through, speaks first, remembers its decisions, and
-shows all three on glass.
+HS-131-16 is done at the owner's functional bar. Do not reopen the hostile
+protocol-review loop or return to the rejected 151-path candidate. The shipped
+shape is the reduced 40-path implementation described in
+[`ACCEPTANCE-MAP-HS-131-16.md`](./phase-131-one-admission-path/ACCEPTANCE-MAP-HS-131-16.md),
+with captured proof in
+[`evidence-story-16.md`](./phase-131-one-admission-path/evidence-story-16.md).
 
-**Phase 125 — The Follow-Through (10/10, PR #443):** Meetings become
-living execution boards. `FollowThroughService` with `board()` (four
-lanes: Now/Waiting/Unassigned/Overdue), `commit_decision()` (bridges
-accepted decisions into accountable commitments with owners and due
-dates), `complete()` (write-through verbs: done/dismiss/snooze/
-delegate/reopen that atomically update action_items + cadence_loops +
-decision_commitments). Aftercare triage surfaces ownerless/undated/
-unreviewed actions. Provenance on every card via
-`resolve_provenance_segment()` and `get_moment()`. Schema v38→v39
-(`decision_commitments` table). 3 MCP tools, 1 MCP resource, 3 FastAPI
-endpoints. 50+ tests. **Critical prerequisite completed:** SQLiteObserver
-wired into ALL production composition roots (route factories, MCP
-dispatch, web_server.py WebContext) — Phase 124's observer was decorated
-but never injected in production.
+Next, work HS-131-17 from its story contract. It owns the remaining meeting-side
+parallel engine and bookmark auto-label residuals. After 17, rerun HS-131-10's
+fence at zero findings, then do HS-131-11 docs and HS-131-12's real hub/worker
+model walk. Swift remains held; web DeskOS is the spec.
 
-**Phase 126 — The Monday Brief (9/9, PR #444):** The desk speaks first.
-`MondayBriefService` with timezone-aware window computation (Friday→Monday
-span, daily 17:00 boundaries), same-day idempotent generation, and four
-deterministic collectors: `_collect_changes()` (reduces pipeline events by
-correlation into material state changes), `_collect_breakage()` (gathers
-errors + failed connectors), `_collect_waiting()` (overdue follow-through +
-high-priority loops + pending proposals), `_collect_decisions()` (pending
-approvals + decision reviews + approaching commitments). Honest composition:
-count-based headlines ("2 things need you"), empty = "Nothing material
-changed." — never invented content. Schema v39→v40 (`monday_briefs` +
-`monday_brief_items` tables). 2 MCP tools, 1 MCP resource, 2 FastAPI
-endpoints. 37 tests.
+## HS-131-16 shipped contract
 
-**Phase 127 — The Decision Receipt (10/10, PR #445):** Every consequential
-choice gets a permanent receipt. `DecisionReceiptService` with
-`create_from_meeting()` and `create_from_desk()` (identical receipt shape
-regardless of origin), append-only revision audit trail, bidirectional
-affected-work links, review queue (`due_for_review()`), supersession with
-retained evidence chains, ten-second FTS retrieval (`search()`), and
-local-first sync with LWW conflict resolution and tombstones. Schema
-v40→v42 (4 tables: `decision_receipts`, `decision_receipt_sources`,
-`decision_receipt_work`, `decision_receipt_revisions`). 5 MCP tools, 1 MCP
-resource, 3 FastAPI endpoints. 22 tests.
+Production pairing now provisions two distinct things:
 
-**Phase 128 — Desk Intelligence (10/10, PR #446):** One Intelligence pullout
-with three time-horizon views on the desk surface. `IntelligencePullout`
-registered in `PULLOUT_CONTENT` with segmented Brief/Follow-Through/Receipts
-header. `BriefView`: headline hero, FoldGadget groups, acknowledge/defer/
-speak. `FollowThroughView`: four-lane board with owner chips, relative due
-dates, source glyphs, inline verbs, in-place provenance expansion.
-`ReceiptsView`: search-first with WHY mode, structured receipt detail with
-provenance quote, affected-work chips, supersession chain, revision
-timeline. Intelligence dock icon with overdue/brief badge. `WhyControl`
-[WHY N] affordance on primitives. Cross-link drill paths with back
-navigation. Attention projections. Container responsive at 560/420px with
-mobile sheet mode. Receipt REST routes added. 5 walk tests + typecheck.
+- a per-node bearer token for worker HTTP authentication;
+- a public Ed25519 offer pin and key ID.
 
-## The numbers
+The hub retains the private signing key. A signed offer binds the destination,
+credential generation, relay and execution revisions, hub operation and warrant,
+attempt ordinal, nonce, payload digest, and bounded deadlines. The worker verifies
+and reserves that offer once before revision persistence, runner construction, or
+provider work.
 
-| Metric | Before | After |
-|--------|--------|-------|
-| Backend services | 33 | 36 (+ FollowThrough, MondayBrief, DecisionReceipt) |
-| MCP tools | 41 | 51 |
-| MCP resources | 16 | 19 |
-| FastAPI endpoints | ~80 | ~88 |
-| Schema version | 38 | 42 |
-| Observer in production | Decorated but NullObserver | SQLiteObserver in all roots |
-| Desk Intelligence surfaces | 0 | 3 views in 1 pullout |
-| Tests added this session | 0 | 100+ |
+Every physical attempt runs through the worker-local `InferenceRunner` under the
+node principal and ends in one immutable local receipt. The worker reports a
+content-free receipt cohort plus node MAC. The hub independently revalidates and
+settles it. Exact transport retry resends the same report and never reruns the
+model. Stop, replay, expiry, revocation, wrong-node, wrong-generation, and late
+publication paths refuse by name.
 
-## The architecture after this session
+## Exact final fingerprint
 
-```
-┌─────────────────────────────────────────────────────────┐
-│                   Desk Intelligence                      │
-│                                                         │
-│  ┌─────────────┐ ┌──────────────┐ ┌───────────────┐    │
-│  │  BRIEF      │ │ FOLLOW-      │ │  RECEIPTS     │    │
-│  │  today      │ │ THROUGH      │ │  archive      │    │
-│  │             │ │ open         │ │               │    │
-│  │ Changed     │ │ Now          │ │ Search (WHY)  │    │
-│  │ Broke       │ │ Waiting      │ │ Detail        │    │
-│  │ Waiting     │ │ Unassigned   │ │ Provenance    │    │
-│  │ Decisions   │ │ Overdue      │ │ Affected work │    │
-│  └──────┬──────┘ └──────┬───────┘ └──────┬────────┘    │
-│         │               │               │              │
-│         └───────────┬────┘───────────────┘              │
-│                     │                                   │
-│              Cross-link drill paths                     │
-│              Brief → Card → Receipt → Primitive         │
-│                                                         │
-├─────────────────────────────────────────────────────────┤
-│                   Backend Services                       │
-│                                                         │
-│  MondayBriefService ─── FollowThroughService             │
-│         │                       │                        │
-│         │               DecisionReceiptService            │
-│         │                       │                        │
-│         └───────────┬───────────┘                        │
-│                     │                                   │
-│              Pipeline Observer                          │
-│         (SQLiteObserver in ALL roots)                    │
-│                     │                                   │
-│              33 original services                       │
-│              (all @observed, all wired)                  │
-│                                                         │
-│  MCP: 51 tools, 19 resources                            │
-│  REST: ~88 endpoints                                    │
-│  Schema: v42                                            │
-└─────────────────────────────────────────────────────────┘
+Base entering the story:
+
+```text
+e4193f12de0832892fea5946f3fb6aef4073ec5f
 ```
 
-## What's on the desk for the next agent
+Final HS-131-16 source and tests:
 
-### The Terra Council's remaining pillar
+| Fact | Value |
+|---|---|
+| Changed paths | 40 (27 tracked, 13 new) |
+| Manifest SHA-256 | `24e25287380abcbad6527d5037f051afccbf155620059b38f11069f8085b1413` |
+| Complete diff SHA-256 | `17cb83aaf53082bfccf1e963b942c7304e43fad8f76aca2038fea4e018b14450` |
+| Complete diff size | 482,706 bytes / 10,779 lines |
+| `git diff --check` | clean |
 
-The session began with a four-persona Terra Council ideation. Three of
-the four pillars are built and dressed in glass:
+The rejected forensic reference remains untouched at:
 
-1. ✅ **The Follow-Through Desk** (Phase 125) — meetings → boards
-2. ✅ **The Monday Brief** (Phase 126) — desk speaks first
-3. ✅ **Decision Receipts** (Phase 127) — "Why Kafka?" in ten seconds
-4. ⬜ **The Causal Graph** (Phase 128 recipe exists) — typed evidence
-   edges linking every primitive to its cause
-
-The Causal Graph is the structural leap: promote `correlation_id` from
-an observability label into a durable, typed evidence graph with edges
-like `created-by`, `informed`, `superseded`, `blocked`, `violated`. Any
-primitive answers "why is this here?" by walking its complete causal
-chain. The recipe (from the Terra Council) has 10 stories — see the
-strategic briefing artifact and recipe artifact from this session.
-
-After the Causal Graph, the council's fifth pillar is **The Intent
-Compiler**: the LLM becomes a planner emitting inspectable, reversible
-Desk Plans — operations with preconditions, effects, and constitutional
-constraints. Article XI becomes the compiler's type system.
-
-### Concrete next steps
-
-1. **UI verification.** Phase 128's web components type-check and have
-   unit tests, but have NOT been visually verified in the browser. The
-   next session should run the desk (`holdspeak web`), open the
-   Intelligence pullout, and screenshot-walk all three views. The token
-   for the current running instance is in the config
-   (`Config.load().meeting.web_auth_token`).
-
-2. **Phase 128 visual polish.** The three views were built by Terra
-   agents reading the component library and matching patterns. A visual
-   review may find spacing, color, or interaction issues that only show
-   on glass. The standing feedback "screenshot-walk before claiming UI
-   done" applies.
-
-3. **The Causal Graph (Phase 129).** The recipe is grounded in the
-   codebase. Key files: `holdspeak/services/observer.py` (correlation
-   via contextvars), `holdspeak/services/event_query_service.py`
-   (by_correlation), `holdspeak/kernel/broker.py` (kernel causality),
-   `holdspeak/kernel/journal.py` (SHA-256 chain). The gap: no typed
-   edges, no polymorphic refs, no recursive "why" query.
-
-4. **Phase 120 evidence.** The untracked
-   `pm/roadmap/holdspeak/phase-120-the-reckoning/` directory has been
-   sitting uncommitted since before this session. It needs evidence
-   files created for its 11 done stories.
-
-5. **The two remaining run endpoints.** `chains.py` and `workflows.py`
-   still have direct-DB handlers (the 157→2 census from Phase 123).
-   Extract into `ChainRunService` and `WorkflowRunService` when the
-   Causal Graph is ready — then even inference calls are observable.
-
-### Session artifacts
-
-Three published artifacts from this session:
-
-1. **Terra Council Briefing** — four-persona strategic ideation on
-   where HoldSpeak goes after the observer pipeline. The convergence
-   on four pillars.
-
-2. **Phase Recipes** — four concrete, codebase-grounded phase recipes
-   (Follow-Through, Monday Brief, Decision Receipts, Causal Graph)
-   with named methods, tables, and stories.
-
-3. **Desk Intelligence UI Spec** — unified pullout design with ASCII
-   mockups for all three views, the WHY affordance, cross-link drill
-   paths, dock/palette integration, and responsive behavior.
-
-### Repo conventions that bite
-
-- **PMO commit gate:** `git config core.hooksPath .githooks` in every
-  fresh clone. The gate requires `.tmp/CONTRACT.md` with all boxes
-  flipped. Evidence files must ship with done-flipped stories.
-- **Bundle rule:** Multiple stories in one commit need
-  `.tmp/BUNDLE-OK.md` with a rationale.
-- **Test exclusion:** `tests/e2e/test_metal.py` hangs without a mic.
-  Use `-k "not metal"`.
-- **Terra agents:** Run ONLY focused tests for their changes. The
-  orchestrator runs the full suite. Standing rule in memory:
-  `feedback_terra_scoped_tests_only.md`.
-- **Web bundle is gitignored:** Edit `web/src/`, commit source only.
-- **The .43 box:** LAN LLM at `192.168.1.43:8080`. Sandboxed Bash
-  can't reach it.
-- **Screenshot-walk before claiming UI done:** Standing feedback.
-  Playwright shots at 1440 + 393 against the real hub.
-
-### The orchestration model
-
-This session ran as Opus 4.6 orchestrating Terra agents:
-
-- **Opus decides** what to build, writes the prompts, verifies results.
-- **Terra implements** — reads codebase, writes code, runs focused tests.
-- **Terra ships** — captures DW evidence, flips stories, generates
-  contracts, commits through the gate.
-- **Parallel pipeline:** implement story N while committing story N-1.
-  Fan out independent stories (e.g. four collectors in parallel).
-  Bundle tightly-coupled stories into one commit with rationale.
-
-The session shipped 39 stories across 4 phases with this model. The
-key to velocity: Terra agents briefed with exact file paths, method
-names, and patterns from the codebase — not abstract instructions.
-
-### The service inventory (updated)
-
-36 services under `holdspeak/services/`:
-
-```
-primitive_service.py          workbench_service.py
-recipe_service.py             meeting_service.py
-meeting_intel_service.py      meeting_aftercare_service.py
-dictation_service.py          coder_service.py
-profile_service.py            desk_service.py
-authority_service.py          credential_service.py
-settings_service.py           ask_service.py
-decision_lifecycle_service.py project_service.py
-projection_service.py         activity_ledger_service.py
-activity_rules_service.py     activity_meeting_candidate_service.py
-activity_enrichment_service.py plugin_job_service.py
-activity_nudge_service.py     cadence_service.py
-sync_service.py               actuator_service.py
-gate_service.py               setup_service.py
-mesh_service.py               memory_service.py
-invocation_service.py         mission_control_service.py
-delivery_service.py           follow_through_service.py    ← NEW
-monday_brief_service.py       decision_receipt_service.py  ← NEW
+```text
+.claude/worktrees/agent-a25f35455ad9f5871
 ```
 
----
+Its fingerprint remains 151 paths / 2,034,740 bytes, manifest
+`332b62e95a00c996db9af663cb9b12be7b3da32361e4294ee5faa7a3ca76ef32`,
+complete diff `62e21a998c76af027f80791e7023f2dd43efa0775b1f9afc6882ae7a627bbb51`.
+It is reference material only.
 
-*The desk follows through, speaks first, and remembers its decisions.
-The Causal Graph is the next structural leap — typed evidence edges
-that let any primitive answer "why is this here?" That's the seed.*
+## Verification read by the orchestrator
 
-*To the next orchestrator: you are Muad'Dib. The Terras are your
-Fedaykin. The spice is the pipeline. It must flow.*
+- Delivery Workbench evidence: **864 passed** in the final 46-file matrix.
+- That matrix includes authenticated offer/refusal coverage, production pairing,
+  worker admission and receipts, stop/report retry, separate-process hub/worker
+  loopback, cardinality, and the zero-finding one-path census.
+- Full unit candidate lane: **4,643 passed** with a 30-second per-test bound,
+  excluding exactly three inherited guard files.
+- The three inherited backend guard failures are unchanged from `e4193f12`:
+  old Intelligence left rails, old product-copy vocabulary, and one old
+  Follow-Through em dash. Every inspected input is byte-identical to the base.
+- Web: tokens, architecture guard, typecheck, and production build pass.
+  **785 tests pass** outside two unchanged Speak test files whose stale mocks
+  produce 15 inherited failures. No TypeScript source or test changed in 131-16.
+- The all-`tests/` isolated-HOME command also reaches browser e2e setup that has no
+  Playwright binary in that fresh HOME; that environmental error is not presented
+  as green and is not a mesh regression.
+
+The owner explicitly closed the academic review loop. Remaining hostile-signer,
+perfect distributed atomicity, microscopic scheduler, future-schema, and protocol
+taxonomy observations stay notes unless ordinary product use reproduces damage.
+
+## Why the candidate grew from 37 to 40 paths
+
+The full unit lane exposed three hard-coded schema-v58 assertions after the mesh
+worker ledger advanced the database to v59. Only those expected literals changed:
+
+```text
+tests/unit/test_decision_commitments.py
+tests/unit/test_decision_record_service.py
+tests/unit/test_monday_brief_service.py
+```
+
+The same lane found `mesh_local_runner.py` seven lines over the existing broker
+budget; its module prose was shortened without changing behavior. A scheduler-
+sensitive 8 ms test was narrowed to the transport timeout seam it actually claims.
+No third repair brief or product-scope expansion was opened.
+
+## Unrelated workspace state
+
+Preserve and do not bundle these pre-existing paths with future story commits:
+
+```text
+ D .tmp/BUNDLE-OK.md
+?? pm/roadmap/holdspeak/phase-120-the-reckoning/
+?? web/test-results/
+```
+
+The Phase 120 files are historical roadmap recovery work. The web test result is
+local output. Neither belongs to HS-131-16 or HS-131-17.
+
+## Next sequence
+
+1. Read `story-17-meeting-residual-admission.md` and the current phase status.
+2. Start HS-131-17 through Delivery Workbench.
+3. Delete or route the remaining meeting residuals through the admitted child
+   seam without widening into the final walk.
+4. Run focused proof under an isolated HOME; compare full-lane failures to the
+   inherited baseline above.
+5. Ship 17 through the stamped contract.
+6. Rerun and close HS-131-10 only when the executable census reaches zero.
+7. Complete HS-131-11 entry-point docs, then HS-131-12 on the real mesh model.
+8. Keep PR #454 draft until the phase is complete; watch CI, read conclusions,
+   classify, and merge as separate actions.
+
+## Rails that still matter
+
+- Constitution Articles V, VI, IX, and XI remain the acceptance floor.
+- Every Python verification uses a fresh isolated `HOME`; never migrate the
+  owner's real database during tests.
+- Read complete output before a done flip.
+- Never use `--no-verify`.
+- Stage exact story paths only; never `git add -A` in this shared checkout.
+- Keep credentials, prompts, completions, claim witnesses, dispatch contexts, and
+  verified capabilities out of proof metadata and logs.
+- Functional ordinary-use failures are bugs. Theoretical hardening is a ledger
+  note unless the shipped product can reproduce damage.

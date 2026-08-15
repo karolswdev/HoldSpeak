@@ -204,6 +204,14 @@ class InferenceRunner:
                 # Atomic dispatch admission: a durable pre-dispatch cancellation
                 # can no longer race this right after the condition is released.
                 active.state="DISPATCHING"; active.condition.notify_all()
+            # HS-131-16 repair R2.4: the IMMEDIATE pre-dispatch deadline fence.
+            # The watchdog above is a timer — it fires asynchronously, and a
+            # deadline that has already passed when the timer is armed leaves a
+            # window in which admission, claim, and engine construction have
+            # eaten the whole budget and this call still reaches the provider.
+            # A deadline is a fact about NOW, so it is read here, at the last
+            # instant before the physical act, and refuses by name.
+            if self._clock()>=request.deadline_at: raise KernelRefused("inference_deadline_exceeded")
             result=self._dispatch(adapter,engine,json.loads(material),active,op["operation_id"],principal,context=context)
             with active.condition:
                 while active.state=="CANCELLING" or active.closing or (active.state=="DISPATCHING" and active.cancel_performing and not active.disposition): active.condition.wait()

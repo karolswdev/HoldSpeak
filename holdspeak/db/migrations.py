@@ -919,6 +919,51 @@ def _migrate_columns(conn: sqlite3.Connection, stored: int) -> None:
                 "ALTER TABLE kernel_parent_runs ADD COLUMN publication_claimed_at REAL"
             )
 
+    # v59 (HS-131-16): the mesh relay queue stops tunnelling authority through
+    # the opaque `task_kind` field. The destination's stable node id and its
+    # EXACT enqueue-time credential generation, the claiming node and its
+    # generation, the claim nonce, the hub-signed dispatch offer, and the
+    # content-free worker terminal report each get their own column, so claim
+    # and settlement can revalidate them in one guarded transaction instead of
+    # trusting a caller-supplied name. Additive: existing rows default to the
+    # unbound values and simply cannot be claimed under the new protocol.
+    if stored < 59:
+        relay_columns = {
+            str(row["name"])
+            for row in conn.execute("PRAGMA table_info(mesh_relay_jobs)")
+        }
+        for column, definition in (
+            ("destination_node_id", "TEXT NOT NULL DEFAULT ''"),
+            ("destination_generation", "INTEGER NOT NULL DEFAULT 0"),
+            ("claimed_by_node_id", "TEXT NOT NULL DEFAULT ''"),
+            ("claimed_generation", "INTEGER NOT NULL DEFAULT 0"),
+            ("claim_nonce", "TEXT NOT NULL DEFAULT ''"),
+            ("dispatch_offer_json", "TEXT NOT NULL DEFAULT ''"),
+            ("worker_terminal_json", "TEXT NOT NULL DEFAULT ''"),
+        ):
+            if column not in relay_columns:
+                conn.execute(
+                    f"ALTER TABLE mesh_relay_jobs ADD COLUMN {column} {definition}"
+                )
+        # Liveness gains the identity that polled. Existing rows keep their
+        # last-seen time under the unbound pair, so a name-based reader is
+        # unchanged while the authenticated mesh path asks by exact identity.
+        worker_columns = {
+            str(row["name"]) for row in conn.execute("PRAGMA table_info(mesh_workers)")
+        }
+        for column, definition in (
+            ("node_id", "TEXT NOT NULL DEFAULT ''"),
+            ("credential_generation", "INTEGER NOT NULL DEFAULT 0"),
+        ):
+            if column not in worker_columns:
+                conn.execute(
+                    f"ALTER TABLE mesh_workers ADD COLUMN {column} {definition}"
+                )
+        conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_mesh_workers_identity"
+            " ON mesh_workers(node_id, credential_generation)"
+        )
+
     # Created after additive migrations: on an upgrade, SCHEMA_SQL saw the old
     # parent table before v58's columns existed. A publication callback may
     # terminalize its own parent only by clearing the exact claim in that same

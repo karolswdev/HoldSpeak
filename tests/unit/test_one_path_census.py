@@ -36,6 +36,7 @@ Every list edit requires a recorded phase decision.
 from __future__ import annotations
 
 import ast
+import hashlib
 from pathlib import Path
 from typing import Iterator, NamedTuple
 
@@ -526,8 +527,16 @@ NAMED_FINDINGS: dict[str, str] = {
     # `delivery-legacy-factory` (the dormant helper is deleted), and the five
     # `legacy-uncontextual-factory` sites that sat inside `build_intel_for_target`
     # (the factory itself is deleted). Nothing moved to an allowlist.
-    "holdspeak/commands/mesh_serve.py:132 build_meeting_intel_for_profile": "mesh-receiver",
-    "holdspeak/commands/mesh_serve.py:164 run_prompt": "mesh-receiver",
+    # HS-131-16 CLOSED `mesh-receiver` (2 sites) by ADMISSION, not by deletion of
+    # the feature and not by an allowlist entry. `MeshServeWorker` used to accept
+    # a hand-built envelope, construct an engine with `LEGACY_UNCONTEXTUAL`, and
+    # call `run_prompt` directly. It now verifies a hub-signed Ed25519 dispatch
+    # offer against a pinned public key, wins an atomic worker-local replay
+    # reservation, lets its own kernel derive the principal from that offer, and
+    # sends every physical attempt through the worker-local `InferenceRunner` —
+    # which mints a real `DispatchContext` and ends each attempt in an immutable
+    # receipt. No command scope entered `ADAPTER_ALLOWLIST`; the worker names no
+    # factory and no completion verb at all.
     # HS-131-14 CLOSED two families here, both by deletion rather than promotion.
     #
     # `plugin-default-provider` (30 sites): every builtin's `_cached_provider`
@@ -564,9 +573,13 @@ BLOCKING_FAMILIES: frozenset[str] = frozenset(NAMED_FINDINGS.values()) | frozens
 #: legacy finding scope left. This is what keeps `LEGACY_UNCONTEXTUAL` from becoming
 #: a general escape hatch: the family can only ever shrink, and HS-131-13 shrank it
 #: by deleting `build_intel_for_target` rather than by exempting it.
-LEGACY_MARKER_SCOPES: frozenset[tuple[str, str]] = frozenset({
-    ("holdspeak/commands/mesh_serve.py", "MeshServeWorker._engine_for_run"),
-})
+#: EMPTY since HS-131-16. The mesh receiver was the last scope that passed the
+#: marker, and it no longer builds an engine at all: it verifies a hub-signed
+#: dispatch offer, reserves it, and hands the work to a worker-local
+#: `InferenceRunner`, which issues a REAL context for every physical attempt. The
+#: name deliberately stays in the vocabulary with zero permitted scopes, so
+#: typing it again fails this fence instead of quietly reopening the family.
+LEGACY_MARKER_SCOPES: frozenset[tuple[str, str]] = frozenset()
 
 #: `F:` scopes that are NOT module-level public entry points: adapter methods and
 #: private construction bodies. Each is reached only from an allowlisted factory
@@ -655,10 +668,15 @@ def test_every_model_execution_site_is_in_exactly_one_bucket() -> None:
     for site in sites:
         counts[str(_bucket(site))] += 1
     assert sum(counts.values()) == len(sites)
-    # Measured after the HS-131-15 migration: both physical sites remain, but
-    # each is now dominated by its caller-owned text-entry admission.
-    assert len(sites) == 105
-    assert counts["finding"] == 4
+    # Measured after HS-131-16 removed the mesh receiver's two sites. They left
+    # by DELETION, not promotion: `MeshServeWorker` no longer names an engine
+    # factory or a completion verb anywhere in its body, so the census finds
+    # nothing there to bucket. The whole worker spine (offer verification,
+    # replay reservation, local authority, local runner) adds ZERO new sites,
+    # because it constructs no provider — it hands the frozen revision to the
+    # one admitted gateway and lets the gateway build.
+    assert len(sites) == 103
+    assert counts["finding"] == 2
     print(
         "one-path census:", len(sites), "sites",
         {**counts, "unregistered": 0},
@@ -906,7 +924,9 @@ def test_the_findings_ledger_is_the_complete_blocking_package() -> None:
     """
     assert BLOCKING_FAMILIES == {
         "dormant-mir",
-        "mesh-receiver",
+        # HS-131-16 removed `mesh-receiver` (2 sites) by ADMISSION: the worker
+        # proves hub authority cryptographically, reserves the offer atomically,
+        # and runs every physical attempt through its own `InferenceRunner`.
         # HS-131-14 removed `plugin-default-provider` (30 sites) and
         # `legacy-uncontextual-factory` (2 sites). Both left by DELETION: the
         # plugin fallbacks no longer exist and the uncontextual factory is a
@@ -915,11 +935,17 @@ def test_the_findings_ledger_is_the_complete_blocking_package() -> None:
         "legacy-live-meeting-engine",
         "bookmark-auto-label",
     }
-    # Three families still have pinned executable sites; `dormant-mir` is the one
+    # Two families still have pinned executable sites; `dormant-mir` is the one
     # inventoried branch with none. Asserting the split keeps a family from
     # vanishing into the site-less bucket instead of being fixed.
     assert set(NAMED_FINDINGS.values()) == BLOCKING_FAMILIES - {"dormant-mir"}
-    assert len(set(NAMED_FINDINGS.values())) == 3
+    assert len(set(NAMED_FINDINGS.values())) == 2
+    # The receiver family is GONE, not renamed and not waived.
+    assert "mesh-receiver" not in BLOCKING_FAMILIES
+    assert not any(
+        scope.startswith("holdspeak/commands/mesh_serve.py")
+        for scope, _ in ADAPTER_ALLOWLIST
+    ), "a command scope on the adapter allowlist is not an available remedy"
 
 
 def test_text_entry_build_pipeline_sites_are_admitted_seams_not_findings() -> None:
@@ -1471,3 +1497,65 @@ def build_intel_for_revision(revision):
         "UNREGISTERED_MODEL_EXECUTION holdspeak/services/impostor.py:3"
         " build_intel_for_revision MeetingIntel"
     ]
+
+
+# ------------------------------------------------- HS-131-16: the receiver fence
+
+
+def test_the_mesh_receiver_names_no_model_execution_at_all() -> None:
+    """The positive half of closing `mesh-receiver`: zero sites, not a waiver.
+
+    A family can leave :data:`NAMED_FINDINGS` by being deleted or admitted. This
+    one was ADMITTED, and the shape of that admission is visible right here: the
+    worker constructs nothing, so the census finds no factory and no completion
+    verb in its module. If a future edit reintroduces either, the mutation proof
+    below is what fails.
+    """
+    sites = [site for site in census() if site.path == "holdspeak/commands/mesh_serve.py"]
+    assert sites == [], f"the mesh receiver named model execution again: {sites}"
+
+    # And it reaches the model through the ONE gateway, structurally: the worker
+    # hands its injectable factory to the worker-local runner rather than calling
+    # it, and never imports the legacy marker again.
+    source = (REPO / "holdspeak/commands/mesh_serve.py").read_text(encoding="utf-8")
+    assert "LEGACY_UNCONTEXTUAL" not in source
+    assert "run_prompt" not in source
+    assert "build_meeting_intel_for_profile" not in source
+    runner_source = (REPO / "holdspeak/kernel/mesh_local_runner.py").read_text(encoding="utf-8")
+    assert "InferenceRunner(" in runner_source
+
+
+def test_a_direct_receiver_run_prompt_fails_the_fence() -> None:
+    """The mutation proof: restore the side door and the census must name it.
+
+    A disposable edit puts a direct ``engine.run_prompt(...)`` back into the
+    receiver. The fence has to fail BEFORE the source is restored — a green suite
+    that only ever saw the fixed tree proves nothing about the fence — and the
+    file must come back byte-identical, verified by digest.
+    """
+    target = REPO / "holdspeak/commands/mesh_serve.py"
+    original = target.read_bytes()
+    before = hashlib.sha256(original).hexdigest()
+    anchor = "    def claim_once(self) -> Optional[tuple[dict[str, Any], Any]]:"
+    mutation = (
+        "    def _mutation_direct_dispatch(self, engine: Any) -> str:\n"
+        '        return str(engine.run_prompt(system_prompt="", user_prompt=""))\n\n'
+    )
+    text = original.decode("utf-8")
+    assert anchor in text, "the mutation anchor moved; re-review this proof"
+    try:
+        target.write_text(text.replace(anchor, mutation + anchor, 1), encoding="utf-8")
+        sites = [site for site in census() if site.path == "holdspeak/commands/mesh_serve.py"]
+        assert len(sites) == 1, sites
+        site = sites[0]
+        assert site.target == "run_prompt"
+        assert site.scope == "MeshServeWorker._mutation_direct_dispatch"
+        # Unregistered: not a gateway, not an allowlist entry, not a seam, and
+        # NOT a finding — the family is gone, so there is nothing to fall into.
+        assert _bucket(site) is None
+        assert site.named().startswith("UNREGISTERED_MODEL_EXECUTION")
+        assert site.line_key not in NAMED_FINDINGS
+    finally:
+        target.write_bytes(original)
+    assert hashlib.sha256(target.read_bytes()).hexdigest() == before
+    assert [site for site in census() if site.path == "holdspeak/commands/mesh_serve.py"] == []

@@ -508,14 +508,21 @@ class MeetingWebServer:
             principal = derive_owner(token, self.auth_token)
             if principal is None:
                 principal = agent_credentials.derive(token)
+            credential = None
             if principal is None:
                 node_token = request.headers.get("x-holdspeak-node-token")
                 node_store = getattr(request.app.state, "node_token_store", None)
-                node_id = node_store.principal_identity(node_token) if node_store else None
-                if node_id:
-                    principal = Principal(PrincipalKind.NODE, node_id)
+                # HS-131-16: the whole authenticated snapshot, not only the opaque
+                # id. The mesh relay legs are authorized against the node's NAME
+                # and its exact credential generation, and neither may be read
+                # from the request body.
+                snapshot = node_store.identify(node_token) if node_store else None
+                if snapshot is not None and snapshot.node_id:
+                    principal = Principal(PrincipalKind.NODE, snapshot.node_id)
+                    credential = snapshot
             principal = principal or UNAUTHENTICATED
             request.state.principal = principal
+            request.state.node_credential = credential
 
             right = required_right(request.method, request.url.path)
             if right is not None and not principal.permits(right):
@@ -615,6 +622,11 @@ class MeetingWebServer:
         from .services.meeting_intel_service import MeetingIntelService
         from .services.meeting_service import MeetingService
 
+        from .delivery.node_link import NodeTokenStore as _MeshNodeTokenStore
+
+        def _mesh_token_store() -> Any:
+            return _MeshNodeTokenStore(None)
+
         obs = get_observer()
         meeting_service = MeetingService(get_database(), observer=obs)
         notify = lambda message_type, data: self.broadcast(message_type, data)
@@ -661,7 +673,15 @@ class MeetingWebServer:
             gate_service=GateService(get_database(), observer=obs),
             setup_service=SetupService(get_database(), observer=obs),
             delivery_service=DeliveryService(get_database(), observer=obs),
-            mesh_service=MeshService(get_database(), observer=obs),
+            # HS-131-16: the relay legs sign and revalidate dispatch offers, so
+            # the service needs the hub's pairing custody. A separate
+            # `NodeTokenStore` handle is deliberate and safe: the store keeps no
+            # cached state and re-reads under lock on every verb, so this handle
+            # and the node link's see the same rotation and revocation without a
+            # restart (Sol Amendment 3).
+            mesh_service=MeshService(
+                get_database(), observer=obs, token_store=_mesh_token_store()
+            ),
             memory_service=MemoryService(get_database(), observer=obs),
             mission_control_service=MissionControlService(get_database(), observer=obs),
             settings_service=SettingsService(

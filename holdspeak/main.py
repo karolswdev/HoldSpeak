@@ -396,8 +396,16 @@ Logs are written to: {LOG_FILE}
         help="Node name to serve as (default: this device's mesh name)",
     )
     mesh_serve_parser.add_argument(
-        "--token-env", default="HOLDSPEAK_HUB_TOKEN", dest="token_env",
-        help="Env var holding the hub token (never a flag; default HOLDSPEAK_HUB_TOKEN)",
+        # HS-131-16: a mesh worker authenticates as a NODE. The shared browser
+        # owner token cannot serve the mesh, so the ambient `HOLDSPEAK_HUB_TOKEN`
+        # posture is removed rather than kept as a fallback. When this variable
+        # is unset the node uses the token its imported pairing put in
+        # owner-only custody (`holdspeak node pair --from <file>`).
+        "--token-env", default="HOLDSPEAK_NODE_TOKEN", dest="token_env",
+        help=(
+            "Env var holding this node's pairing token (never a flag; "
+            "default HOLDSPEAK_NODE_TOKEN; falls back to imported pairing custody)"
+        ),
     )
     mesh_serve_parser.add_argument(
         "--once", action="store_true",

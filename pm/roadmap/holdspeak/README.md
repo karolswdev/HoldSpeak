@@ -8,25 +8,21 @@
 > from evidence, Terra waves with serialized shipping, walks, honest ledgers —
 > is canon at [`docs/internal/ORCHESTRATION.md`](../../../docs/internal/ORCHESTRATION.md).
 
-**Newest update (2026-08-13): Phase 131 — One Admission Path — IN PROGRESS
-(12/17).** HS-131-15 closes the speech fence amendment. Browser rehearsal,
-replay, template preview, and authenticated CLI dry-run open one fresh bounded
-`dictation.session` exactly when the frozen configuration selects provider work;
-provider-free configurations stay lexical and mint no parent or child. CLI
-authority comes only from `$HOLDSPEAK_TOKEN` checked against the hub bearer.
-Construction, child revisions, and egress proof are bound to the durable frozen
-plan; fatal controls never quietly degrade to raw text. A durable publication
-claim serializes final response/journal/effect handoff against cancellation,
-revocation, expiry, new children, and cross-process mutation, with exact-token
-live recovery after transient release failure. Hostile review returned
-SHIP-CANDIDATE; focused proof is 501 + 304 passing, both mutations are caught,
-web typecheck and 45 tests pass. The inherited-red full gate found five
-current-diff regressions, all repaired and re-proved; its final unrelated Slack
-names pass serially and are xdist lock-contamination. The fence remains 105 sites
-but falls from six to four findings/families, with zero unregistered execution
-and no speech scope added to the allowlist. HS-131-16 mesh receiver authority is
-next; docs and the final real-model walk remain held until zero findings. Swift
-remains explicitly out of scope.
+**Newest update (2026-08-14): Phase 131 — One Admission Path — IN PROGRESS
+(13/17).** HS-131-16 closes the mesh receiver side door. Production pairing now
+transfers a node bearer plus public offer pin while the hub retains the private
+Ed25519 key. Exact signed offers verify and reserve before the worker-local
+`InferenceRunner` constructs or calls a provider; each physical attempt receives
+its own immutable receipt, and the hub independently settles a content-free MACed
+report without rerunning the model on retry. Forgery, replay, expiry, wrong-node,
+wrong-generation, stop, and late-output paths refuse honestly. The rejected
+151-path candidate was reduced to a final 40-path implementation at the owner's
+functional bar. Evidence is 864 passed, including separate-process loopback and
+the zero-finding mesh census; the full unit candidate lane is 4,643 passed. Three
+unchanged backend guards and two unchanged Speak mock files remain inherited
+baseline; 785 other web tests, tokens, architecture, typecheck, and production
+build pass. HS-131-17 meeting residuals are next; docs and the final real-model
+walk remain held until the fence reaches zero. Swift remains out of scope.
 
 **Previous update (2026-08-08): Phase 129 — One Grammar — COMPLETE (11/11).**
 The exit walk passes all 38 surfaces with pinned-foot, stationary-head,

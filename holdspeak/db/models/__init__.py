@@ -987,6 +987,17 @@ class MeshRelayJob:
     created_at: str = ""
     claimed_at: Optional[str] = None
     completed_at: Optional[str] = None
+    # HS-131-16: the explicit relay proof. `destination_*` is bound at enqueue
+    # and is the ONLY thing a claim may be authorized against; `claimed_*`
+    # records who actually won it. `dispatch_offer` is the hub-signed offer this
+    # claim produced, kept so settlement can revalidate the exact signature it
+    # issued rather than trust the report that comes back.
+    destination_node_id: str = ""
+    destination_generation: int = 0
+    claimed_by_node_id: str = ""
+    claimed_generation: int = 0
+    claim_nonce: str = ""
+    dispatch_offer: Optional[dict[str, Any]] = None
 
     def to_dict(self) -> dict[str, Any]:
         return {

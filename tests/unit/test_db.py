@@ -1878,3 +1878,99 @@ class TestConnectionCache:
             thread.join(10)
         assert len(set(seen)) == 4
         assert all(db.recipes.get(f"thread-{index}") is not None for index in range(4))
+
+
+class TestMeshDispatchSchema:
+    """HS-131-16 (v59): the relay proof columns and the worker replay ledger.
+
+    Both are the minimum the dispatch-offer protocol needs, and no more: the
+    queue stops tunnelling authority through the opaque `task_kind` field, and
+    the worker gets one uniquely-keyed table that makes execution at-most-once.
+    """
+
+    def test_the_relay_queue_carries_explicit_dispatch_proof(self, tmp_path):
+        from holdspeak.db import Database
+
+        db = Database(tmp_path / "mesh.db")
+        with db._connection() as conn:
+            columns = {
+                str(row["name"]): str(row["type"])
+                for row in conn.execute("PRAGMA table_info(mesh_relay_jobs)")
+            }
+        assert columns["destination_node_id"] == "TEXT"
+        assert columns["destination_generation"] == "INTEGER"
+        assert columns["claimed_by_node_id"] == "TEXT"
+        assert columns["claimed_generation"] == "INTEGER"
+        assert columns["claim_nonce"] == "TEXT"
+        assert columns["dispatch_offer_json"] == "TEXT"
+        assert columns["worker_terminal_json"] == "TEXT"
+
+    def test_the_worker_reservation_key_makes_execution_at_most_once(self, tmp_path):
+        from holdspeak.db import Database
+
+        db = Database(tmp_path / "worker.db")
+        assert db.mesh_worker.reserve(
+            hub_key_id="k1", hub_operation_id="op1", first_ordinal=1
+        ) is True
+        # The SAME tuple loses the primary-key race; nothing is overwritten.
+        assert db.mesh_worker.reserve(
+            hub_key_id="k1", hub_operation_id="op1", first_ordinal=1, job_id="other"
+        ) is False
+        assert db.mesh_worker.get(
+            hub_key_id="k1", hub_operation_id="op1", first_ordinal=1
+        )["job_id"] == ""
+        # A different hub operation (a product retry) is a different reservation.
+        assert db.mesh_worker.reserve(
+            hub_key_id="k1", hub_operation_id="op2", first_ordinal=1
+        ) is True
+
+    def test_a_v58_database_upgrades_additively(self, tmp_path):
+        """The migration adds columns to a populated table without losing a row."""
+        import sqlite3
+
+        from holdspeak.db import Database
+        from holdspeak.db.schema import SCHEMA_VERSION
+
+        path = tmp_path / "legacy.db"
+        Database(path)
+        # Rewind to v58 and drop the v59 columns, exactly as an older build left it.
+        conn = sqlite3.connect(str(path))
+        conn.execute("ALTER TABLE mesh_relay_jobs RENAME TO mesh_relay_jobs_v58")
+        conn.execute(
+            "CREATE TABLE mesh_relay_jobs (id TEXT PRIMARY KEY, node TEXT NOT NULL,"
+            " task_kind TEXT NOT NULL DEFAULT 'llm', system_prompt TEXT NOT NULL DEFAULT '',"
+            " user_prompt TEXT NOT NULL DEFAULT '', temperature REAL, max_tokens INTEGER,"
+            " model_hint TEXT NOT NULL DEFAULT '', status TEXT NOT NULL DEFAULT 'queued',"
+            " result TEXT, error TEXT, deadline_at TEXT NOT NULL,"
+            " created_at TEXT NOT NULL DEFAULT (datetime('now')), claimed_at TEXT,"
+            " completed_at TEXT)"
+        )
+        conn.execute("DROP TABLE mesh_relay_jobs_v58")
+        conn.execute("DROP TABLE mesh_worker_reservations")
+        conn.execute(
+            "INSERT INTO mesh_relay_jobs (id, node, deadline_at, created_at)"
+            " VALUES ('relay_legacy', 'edge', '2099-01-01', '2026-01-01')"
+        )
+        # `version` is the PRIMARY KEY and the reader takes MAX(version), so the
+        # old stamp has to REPLACE the current one, not sit beside it.
+        conn.execute("DELETE FROM schema_version")
+        conn.execute("INSERT INTO schema_version (version) VALUES (58)")
+        conn.commit()
+        conn.close()
+
+        upgraded = Database(path)
+        with upgraded._connection() as conn:
+            row = conn.execute(
+                "SELECT * FROM mesh_relay_jobs WHERE id='relay_legacy'"
+            ).fetchone()
+            version = conn.execute("SELECT MAX(version) FROM schema_version").fetchone()[0]
+        assert version == SCHEMA_VERSION == 59
+        # The row survived, and its new binding columns are the UNBOUND defaults,
+        # which is what makes a legacy row unclaimable by the authenticated path.
+        assert row["node"] == "edge"
+        assert row["destination_node_id"] == ""
+        assert row["destination_generation"] == 0
+        assert row["dispatch_offer_json"] == ""
+        assert upgraded.mesh_worker.reserve(
+            hub_key_id="k", hub_operation_id="op", first_ordinal=1
+        ) is True

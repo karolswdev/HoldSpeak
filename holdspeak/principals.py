@@ -200,6 +200,11 @@ def required_right(method: str, path: str) -> Optional[PrincipalRight]:
         return PrincipalRight.READ
     if path.startswith("/api/delivery/node/") or path.startswith("/api/kernel/executor/"):
         return PrincipalRight.NODE_LINK
+    # HS-131-16: the mesh relay legs are a NODE protocol, not an owner API. The
+    # right is the narrow gate; `MeshService` additionally requires the principal
+    # to BE a node, so an owner token cannot claim, complete, or fail relay work.
+    if path.startswith("/api/mesh/relay/"):
+        return PrincipalRight.NODE_LINK
     if path == "/api/kernel/submit" and verb == "POST":
         return PrincipalRight.AGENT_SUBMIT
     if path == "/api/kernel/read" or path == "/api/kernel/events":

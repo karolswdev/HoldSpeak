@@ -37,5 +37,5 @@ def test_migrates_v38_database_to_decision_commitments(tmp_path: Path) -> None:
 
     assert {"id", "decision_id", "action_item_id", "owner", "due_at", "status"} <= columns
     assert meeting is not None
-    assert version == SCHEMA_VERSION == 58
+    assert version == SCHEMA_VERSION == 59
     reset_database()

@@ -930,9 +930,9 @@ def test_production_local_llama_leaf_is_one_completion_one_child_one_receipt(tmp
 
 def test_production_mesh_sender_leaf_is_one_enqueue_one_child_one_receipt(tmp_path):
     """The real `MeshRelayIntel`, stubbed at the relay queue (the mesh wire)."""
-    from datetime import datetime, timedelta
     from types import SimpleNamespace
 
+    from holdspeak.delivery.node_link import NodeTokenStore
     from holdspeak.intel.mesh_relay import MeshRelayIntel
     from holdspeak.kernel.prompt_adapter import CanonicalPromptAdapter
 
@@ -942,6 +942,8 @@ def test_production_mesh_sender_leaf_is_one_enqueue_one_child_one_receipt(tmp_pa
     )
     revision = capture_deployment_revision(db, resolve_inference_target(db, "mesh-leaf"))
     leaf = _Leaf()
+    token_store = NodeTokenStore(tmp_path / "mesh-nodes.json")
+    node_id, _token, pairing = token_store.pair("node-leaf")
 
     class _Relay:
         """The hub relay queue: `enqueue` is the moment the job leaves this hub."""
@@ -949,8 +951,18 @@ def test_production_mesh_sender_leaf_is_one_enqueue_one_child_one_receipt(tmp_pa
         def __init__(self) -> None:
             self.envelopes: list[dict[str, Any]] = []
 
-        def worker_last_seen(self, node: str) -> Any:
-            return datetime.now() - timedelta(seconds=1)
+        def node_live(
+            self,
+            destination_node_id: str,
+            destination_generation: int,
+            _window_seconds: int,
+            *,
+            now: Any = None,
+        ) -> bool:
+            return (
+                destination_node_id == node_id
+                and destination_generation == pairing.generation
+            )
 
         def enqueue(self, **kwargs: Any) -> Any:
             leaf.hit()
@@ -966,6 +978,7 @@ def test_production_mesh_sender_leaf_is_one_enqueue_one_child_one_receipt(tmp_pa
         return MeshRelayIntel(
             node="node-leaf", model_hint="mesh-model", relay=relay,
             deployment_revision=frozen, warrant=dict(warrant or {}),
+            token_store=token_store,
         )
 
     runner = _bare_runner(broker, db, engine_factory=factory)
@@ -979,8 +992,11 @@ def test_production_mesh_sender_leaf_is_one_enqueue_one_child_one_receipt(tmp_pa
     children = _assert_reconciled(
         db, parent_operation_id=None, counts=counts, leaf=leaf, expect_children=1,
     )
-    # The envelope that crossed the wire carries THIS child's frozen revision.
+    # The envelope that crossed the wire carries THIS child's frozen revision
+    # and is addressed to the exact paired credential generation.
     assert relay.envelopes[0]["envelope"]["deployment_revision"]["id"] == revision.id
+    assert relay.envelopes[0]["destination_node_id"] == node_id
+    assert relay.envelopes[0]["destination_generation"] == pairing.generation
     assert _receipt(db, children[0]["operation_id"])["outcome"] == "succeeded"
 
 
