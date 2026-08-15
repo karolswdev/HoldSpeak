@@ -1,10 +1,8 @@
 # HoldSpeak Security & Privacy Posture
 
 **Status:** living document.
-**Last updated:** 2026-08-02 (HS-112-04: the one dial's per-destination key
-rule, the browser mic's local-only transcription route held and continuous,
-the Speak room as a delivering caller of `/api/dictation/remote`, and the
-browser's leased seat at the audio floor).
+**Last updated:** 2026-08-15 (one inference admission path, per-attempt
+receipts, bounded schedule delegation, and per-session speech/meeting authority).
 
 This document is the threat model for HoldSpeak: what data it holds, where that
 data lives, what can leave the machine, and the decisions behind its at-rest
@@ -61,7 +59,52 @@ At the HTTP and WebSocket edge, credentials derive one of three authenticated
 principal kinds: owner, agent, or node. Routing is deny by default. The owner
 may approve or reject; an agent may propose allowed work and read only its
 scope; a node may claim executor work. Agent rights never include `decide`,
-posture changes, delegation, or ownership.
+posture changes, delegation, or ownership. Scheduled execution uses a fourth,
+internal-only `scheduler` principal; no credential or code path upgrades it to
+owner.
+
+## Inference authority and bounded schedules
+
+Every physical model attempt follows the canonical
+[one-path inference contract](ARCHITECTURE.md#inference-admission-one-path-one-receipt-per-attempt):
+`InferenceRunner` admits and claims one `inference.invoke@1` child, binds one
+immutable deployment revision and authority basis, then permits one reviewed
+adapter to dispatch. The terminal receipt is immutable. A parent run/session
+cannot hide child calls in its own receipt, retry/fallback gets a distinct child
+per physical attempt, cancellation rejects late publication, and execution that
+cannot be proved complete is `indeterminate`, never guessed successful.
+
+Scheduled Workbench work has narrower authority than a manual owner run.
+Deliberately enabling the schedule mints one live row in
+`kernel_schedule_delegations` that binds:
+
+- owner delegator kind and identity;
+- Workbench id/revision and schedule revision;
+- Agent (`recipe`) id/revision;
+- exact cadence;
+- exact deployment revision and terms digest; and
+- optional expiry.
+
+The due tick acts as the `scheduler` principal. Admission re-derives those terms
+inside the same write transaction that claims the due minute and persists the
+parent. Missing, revoked, expired, disabled, cadence-changed, stale-work,
+target-changed, or duplicate attempts refuse as `delegation_missing`,
+`delegation_revoked`, `delegation_expired`, `schedule_disabled`,
+`delegation_cadence_changed`, `delegation_stale_work`,
+`delegation_target_changed`, or `duplicate_tick` before provider dispatch. Each
+leaves a terminal refusal receipt with delegation provenance when available.
+Edits, disable, sync changes, Agent drift, and target drift also advance the
+publication fence so an already-running child cannot publish under old terms.
+
+One finite parent represents meeting, dictation, or configured-wake authority
+per live session (`meeting.session@1`, `dictation.session@1`, or
+`wake.session@1`), but every actual LLM or local Whisper call remains an
+invocation child that rechecks liveness,
+revocation, deadline, budget, and exact revision. Pre-session Whisper preload
+requires narrow authority for the exact model-config revision; it is not a silent
+warmup exception. Prompts, transcripts, dictated text, audio, completions,
+credentials, and token streams stay out of kernel operation, journal, and receipt
+fields.
 
 HoldSpeak is **local-first**. The design goal is that nothing leaves your
 machine unless you explicitly choose a feature that sends it. The sections below
@@ -252,7 +295,7 @@ adds implementation detail but is not a second product inventory.
 
 | Egress | Trigger | What leaves | Gate |
 |---|---|---|---|
-| **Cloud meeting intel** (`intel/providers.py` → OpenAI-compatible client) | `intel_provider` = `cloud`, or `auto` falling back, to the destination assigned as the meetings **Runs on** (`effective_intel_cloud`) | Transcript text (no audio, no embeddings, no activity) | Explicit provider choice. `provider="local"` (default) **never** egresses, locked by `tests/unit/test_intel_egress_invariant.py`; surfaced by `doctor` + `intel_egress` in the runtime status. |
+| **Configured remote model endpoint** (`kernel/inference_runner.py` → reviewed endpoint adapter) | An admitted attempt whose frozen **Runs on** revision names an off-machine OpenAI-compatible endpoint | The model input selected for that attempt (prompt, context, or transcript/dictated text as applicable) and endpoint/model request metadata; never raw audio or embeddings | You deliberately author and assign the destination. Each physical attempt gets its own admitted child and receipt; local destinations never take this crossing, and fallback is a separately frozen attempt. |
 | **Deferred-intel failure webhook** (`intel_queue.py`, the `urlopen` send) | User configures `intel_retry_failure_webhook_url` | Queue statistics only (counts, rates), **no transcript** | Opt-in (URL must be set). |
 | **Wake-model download** (`wake_word.py`, first enable) | `wake_word.enabled` flipped on with models absent | Nothing leaves: an inbound fetch of the detection models (~7 MB) from the openWakeWord GitHub releases, once, cached locally | Opt-in (the feature is off by default); stated in the settings copy. Detection itself runs locally and no audio ever egresses. |
 | **Send to Slack** (`slack_export.py` → the gated webhook connector) | User configures `meeting.slack_webhook_url` AND approves one specific send | The meeting digest or follow-up draft, exactly as previewed on the proposal (plain text; no transcript, no audio) | Double opt-in: the URL must be set (consent for exactly its host; the connector refuses any other host before egress) and every send is a separate per-action approval. The webhook URL is treated as a credential: never in proposals, broadcasts, or API responses. |
@@ -262,7 +305,7 @@ adds implementation detail but is not a second product inventory.
 | **Connector CLI enrichment** (`gh`, `jira` via subprocess) | User enables the connector pack | Entity IDs (PR/issue/ticket numbers) to the user's own CLI tools, which call their services | Opt-in + manifest permissions (`shell:exec`, `network:outbound`). |
 | **Mission-control receipts** (`missioncontrol_bridge.py` → `gh pr list`) | A rails repo is named in your project map (`~/.holdspeak/delivery_workbench.json`) and the desk conveyor is open | Nothing composed: a read of that repo's open pull requests through your own authenticated `gh` CLI (GitHub learns which repo asked) | The map is yours to author; the belt's routes are GET-only end to end (fitness-tested); `gh` missing or failing renders as a typed absence, never a retry loop. |
 | **PR receipts** (`delivery/pr_receipts.py` → `gh pr list`) | You click **Refresh** on the Pull requests section, or you set `pr_refresh_seconds` on a source's registry entry yourself | Nothing composed: one batched read of that registered repo's pull requests through your own authenticated `gh` (GitHub learns which repo asked). The optional **fetch** offered when a diff's commits are absent locally is a separate, explicit `git fetch` | Manual verb by default, never ambient; the cadence is per-source and hand-set. `gh` is grep-censused to this one module; a failing refresh degrades to a named stale row, keeping last-known-good. |
-| **Mesh relay** (`intel/mesh_relay.py` → the hub relay queue) | A run against a Runs on destination whose compatibility kind is `meshNode` | The prompt and the result, between the hub and the machine you named (both yours; the worker authenticates with the hub token) | You author the destination, and the node serves only while `holdspeak mesh serve` runs on it (stopping it reads offline within seconds). No key ever transits: the node resolves the run through its own config and env. |
+| **Mesh relay** (`intel/mesh_relay.py` → the hub relay queue) | An admitted run against a **Runs on** destination whose compatibility kind is `meshNode` | The prompt and result, between the hub and the machine you named; no provider key transits | You pair that node deliberately. Its per-node bearer authenticates worker HTTP, the pinned hub public Ed25519 key verifies the node/revision/operation/attempt/deadline-bound offer, and the hub private key never leaves hub custody. The worker reserves the offer before its local `InferenceRunner` can construct a provider; `holdspeak mesh serve` is the live consent. |
 | **Web runtime responses** | A client requests data | Whatever the API returns (transcripts, action items, etc.) | Loopback by default; token-gated off-loopback. |
 | **Device audio link** | A paired device streams audio | Audio in; status/LCD text out | PSK; same-LAN today. |
 | **Browser mic capture** (`lib/speakToFill` → `POST /api/dictation/transcribe`) | The owner holds a mic or the Speak room's TALK key in the browser, **or** an open-mic session segments an utterance (`lib/openMic` posts through the same encoder and route) | Nothing leaves the machine: the WAV is posted to the hub on the same origin the page was served from, the hub's own local Whisper transcribes it, and the audio is never persisted (16 MB cap) | No egress point, held or continuous. Off-loopback the origin is the hub itself, token-gated like every other route; the audio never reaches a third party. Segmentation is decided in the browser (`lib/vad`, energy plus hangover, no model and no network), so continuous listening posts one WAV per detected utterance rather than a stream. |

@@ -17,20 +17,35 @@ transcription, intel, persistence, and mutations in one 1,674-line file.
 ## The operation kernel
 
 `holdspeak/kernel/` is the named boundary for cooperating runtime code that
-performs consequential work. Its caller plane has exactly four calls:
+performs consequential work. Its caller plane still has exactly four calls:
 
 - `read(refs, view, consistency)` returns operation, canonical, process, and
   receipt projections within the caller's read scope.
 - `submit(request)` admits one typed operation and returns its handle.
-- `decide(operation_id, approve|reject, expected_revision)` records the owner's
-  decision against the admitted revision.
+- `decide(operation_id, approve|reject, expected_revision)` records an
+  authenticated decision against the admitted revision.
 - `events(after_cursor, filter)` replays journal facts after a durable cursor.
 
+The facade resolves the authenticated principal from the scoped runtime context
+and passes it to the broker; an operation payload cannot choose its actor.
 Operations are registered, versioned types under `submit`, never new syscalls.
-Trusted startup currently registers six: `tool.call@1`, `process.input@1`,
-`process.spawn@1`, `actuator.egress@1`, `inference.run@1`, and
-`inference.cancel@1`. Each type owns validation and native projections in its
-codec. The broker remains blind to driver-specific behavior.
+The authoritative startup registry is the `OperationSpec` tuple in
+`holdspeak/kernel/runtime.py`; this document deliberately does not duplicate the
+whole list. It includes effect operations, `inference.run@1`, the actual provider
+child `inference.invoke@1`, `inference.cancel@1`, and typed parent operations such
+as `sequence.run@1`, `workflow.run@1`, `workbench.run@1`,
+`meeting.session@1`, `meeting.deferred-intel-job@1`, `dictation.session@1`, and
+`wake.session@1`. Each type owns validation and native projections in its codec;
+the broker remains blind to driver-specific behavior.
+
+Model execution has a stricter rule inside that kernel: every physical provider
+attempt enters an `InferenceRunner` at its executing boundary, becomes one
+admitted/claimed `inference.invoke@1` child over one immutable deployment
+revision, and receives one immutable terminal receipt. Parent runs and sessions
+provide causation, liveness, and budgets but never stand in for child receipts.
+Retry and fallback attempts are separate children; cancellation fences late publication; uncertain execution is
+`indeterminate`. See the canonical
+[Inference admission contract](../ARCHITECTURE.md#inference-admission-one-path-one-receipt-per-attempt).
 
 Execution is a separate plane for authenticated nodes. `claim` atomically takes
 approved work and validates its one-use authority; `receipt` writes an immutable
@@ -94,9 +109,13 @@ package, so every existing import works)**:
 | Module | Concern |
 |---|---|
 | `models.py` | the pure data layer: Bookmark, TranscriptSegment, IntelSnapshot, MeetingSaveResult, MeetingState |
-| `session.py` | the core: lifecycle (start/stop), bookmarks, device attach, broadcasts (~795 lines) |
-| `transcribe_loop.py` | the background loop, the overlap window, chunk transcription |
-| `intel_analysis.py` | the live intel cadence and bookmark-label refinement |
+| `session.py` | the core lifecycle: start/stop, device attach, broadcasts; no provider engine state |
+| `intel_plan.py` | immutable per-capability deployment revisions and content-free plan summary |
+| `intel_admission.py` / `intel_child.py` | the live `meeting.session` parent and one admitted child per actual intel attempt |
+| `deferred_admission.py` | a separate bounded parent for queue retries after the live session closes |
+| `live_readiness.py` | explicit live readiness derived from frozen plan placement facts, with no construction |
+| `transcribe_admission.py` / `transcribe_loop.py` | shared-Whisper child admission, background loop, overlap window, and chunks |
+| `intel_analysis.py` / `bookmarks.py` | live cadence and receipt-gated bookmark refinement through the admitted seam |
 | `persistence.py` | `save()` |
 | `mutations.py` | action-item status/review/edit, title, tags |
 

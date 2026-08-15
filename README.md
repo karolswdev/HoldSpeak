@@ -30,6 +30,17 @@ states how many matches fit its prompt. The read-only Process window shows what
 the kernel journal says is running, waiting, unknown, or finished without
 controlling the work.
 
+**Every model attempt has one door and one receipt.** Ask, Agents, Sequences,
+Workflows, Workbenches, scheduled work, meetings, dictation, wake capture, local
+Whisper, endpoints, and mesh workers all enter the admitted `InferenceRunner`
+path at the executing boundary. A multi-step run or live session may be the
+parent, but each real provider attempt is its own child. It binds the exact frozen
+deployment revision and receives one immutable terminal receipt. Cancellation
+rejects late output; fallback and retry attempts get separate receipts; uncertain execution stays `indeterminate` instead of being
+reported as success. Prompts, transcripts, audio, completions, and token streams
+are not copied into the kernel journal. The complete integrator contract is
+[Inference admission: one path, one receipt per attempt](docs/ARCHITECTURE.md#inference-admission-one-path-one-receipt-per-attempt).
+
 > **Status: 0.x, early but real.** HoldSpeak is on PyPI (`pip install holdspeak`).
 > The features are mature; APIs, config, and defaults can still change while it is
 > pre-1.0. Upgrades are safe by default (your data is backed up first). Feedback
@@ -40,7 +51,7 @@ controlling the work.
 | Dictate | Meet |
 | --- | --- |
 | ![Pixel art microphone with hold-to-talk waves](https://raw.githubusercontent.com/karolswdev/HoldSpeak/main/docs/assets/pixellab/hold-to-talk-microphone.png) | ![Pixel art meeting notebook with action items](https://raw.githubusercontent.com/karolswdev/HoldSpeak/main/docs/assets/pixellab/meeting-intelligence-notebook.png) |
-| Hold the hotkey, speak, release: the text goes into the active app. Turn on the dictation pipeline and rough speech is routed by intent, enriched with your project's context, and rewritten for its target (Codex, Claude, the terminal, the browser, your editor). Every run lands in the dictation journal; one tap on a wrong result teaches the correction memory. Voice commands map a spoken keyword to a real action (open a URL, launch an app, run a command). Say the wake phrase and it listens hands-free, with the result previewed, never typed, until you confirm; an optional preview mode does the same for every dictation (the card shows the text first, Type it commits, Discard drops it). The spoken language setting pins any of Whisper's 99 languages, and the spoken-symbol dictionary types your own vocabulary ("double colon" becomes `::`). Activity pre-briefing offers what you touched recently as dictation context, source-cited. | Capture mic and system audio live with speaker labels, or import a recording or a transcript file you already have (vtt and srt keep their real timestamps and speaker names). 14 built-in plugins call your LLM to pull typed artifacts out of the transcript: decisions, action items, ADRs, risk registers, incident timelines. Meeting aftercare then shows what is open, decided, and changed since last time; an accepted action can become a filed issue, and the digest or follow-up draft can go to your team through Send to Slack, all on a propose, approve, execute flow that never acts without you. The archive is searchable and filterable by date, speaker, tag, and open actions. |
+| Hold the hotkey, speak, release: the text goes into the active app. Turn on the dictation pipeline and rough speech is routed by intent, enriched with your project's context, and rewritten for its target (Codex, Claude, the terminal, the browser, your editor). Every run lands in the dictation journal; one tap on a wrong result teaches the correction memory. Voice commands map a spoken keyword to a real action (open a URL, launch an app, run a command). Say the wake phrase and it listens hands-free, with the result previewed, never typed, until you confirm; an optional preview mode does the same for every dictation (the card shows the text first, Type it commits, Discard drops it). The spoken language setting pins any of Whisper's 99 languages, and the spoken-symbol dictionary types your own vocabulary ("double colon" becomes `::`). Activity pre-briefing offers what you touched recently as dictation context, source-cited. | Capture mic and system audio live with speaker labels, or import a recording or a transcript file you already have (vtt and srt keep their real timestamps and speaker names). 14 built-in plugins submit admitted model attempts to pull typed artifacts out of the transcript: decisions, action items, ADRs, risk registers, incident timelines. Meeting aftercare then shows what is open, decided, and changed since last time; an accepted action can become a filed issue, and the digest or follow-up draft can go to your team through Send to Slack, all on a propose, approve, execute flow that never acts without you. The archive is searchable and filterable by date, speaker, tag, and open actions. |
 
 This is what they look like in the product, not in pixel art. A saved meeting
 comes back as typed, reviewable artifacts:
@@ -318,9 +329,9 @@ Record a meeting live, or bring one you already have: import a recording
 (`.vtt`, `.srt`, `.txt`) from the archive page or with `holdspeak import
 call.wav`, and it becomes a real meeting, run through the same intelligence.
 The transcript is scored for intent (architecture, delivery, product,
-incident, comms), a sequence of plugins runs, and each one calls your LLM to
-produce a typed artifact. The results render read-only in the Meetings
-window on the Desk (deep link `/history`).
+incident, comms), a sequence of plugins runs, and each model attempt enters the
+admitted path before it can produce a typed artifact. The results render
+read-only in the Meetings window on the Desk (deep link `/history`).
 HoldSpeak ships 14 built-in plugins, all real and backed by an LLM.
 
 Plugins can also propose actions. An actuator proposes an external side

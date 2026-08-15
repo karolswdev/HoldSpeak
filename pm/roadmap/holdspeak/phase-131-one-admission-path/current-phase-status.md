@@ -1,8 +1,8 @@
 # Phase 131 — One Admission Path
 
-**Status:** IN PROGRESS (15/17).
+**Status:** IN PROGRESS (16/17).
 
-**Last updated:** 2026-08-14.
+**Last updated:** 2026-08-15.
 
 ## Goal
 
@@ -109,7 +109,7 @@ covers the complete ledger:
 
 This amendment records work, not an Article-XI exception. All five stories have
 landed, the same census returns zero findings, and HS-131-10 is closed.
-HS-131-11 and HS-131-12 are unblocked.
+HS-131-11 is done; HS-131-12 is unblocked.
 
 ## Exit criteria (evidence required)
 
@@ -152,7 +152,7 @@ HS-131-11 and HS-131-12 are unblocked.
 | HS-131-08 | Meetings are admitted per session | done | [story-08](./story-08-meeting-sessions.md) | [evidence-story-08](./evidence-story-08.md) |
 | HS-131-09 | Dictation and transcription are admitted per session | done | [story-09](./story-09-dictation-sessions.md) | [evidence-story-09](./evidence-story-09.md) |
 | HS-131-10 | The one-path fence | done | [story-10](./story-10-one-path-fence.md) | [evidence-story-10](./evidence-story-10.md) |
-| HS-131-11 | The entry-point contract | backlog | [story-11](./story-11-entry-point-docs.md) | — |
+| HS-131-11 | The entry-point contract | done | [story-11](./story-11-entry-point-docs.md) | [evidence-story-11](./evidence-story-11.md) |
 | HS-131-12 | The walk | backlog | [story-12](./story-12-the-walk.md) | — |
 | HS-131-13 | Residual services take the admitted door | done | [story-13](./story-13-residual-service-admission.md) | [evidence-story-13](./evidence-story-13.md) |
 | HS-131-14 | Plugins receive admitted intelligence | done | [story-14](./story-14-plugin-provider-admission.md) | [evidence-story-14](./evidence-story-14.md) |
@@ -481,8 +481,17 @@ intelligence remains under its separate admitted queue parent. The one-path cens
 is now 100 sites, ZERO findings, ZERO blocking families, and zero unregistered
 execution, with mutations proving both retired names fail if reintroduced.
 Captured proof is 166 passed; the isolated full unit lane is 4,676 passed with
-only the three unchanged inherited UI/copy guards. Next: rerun and close
-HS-131-10 at zero, then HS-131-11 docs and HS-131-12's real-model walk.
+only the three unchanged inherited UI/copy guards.
+HS-131-11 is done — all five entry points now state the one admitted
+`InferenceRunner` path, one immutable deployment revision and terminal receipt per
+physical attempt, honest parent/child and cancellation semantics, bounded
+scheduler delegation, per-session speech authority, and Python/web sync registry
+authority. Stale direct model arrows, the six-operation registry claim, mesh hub-
+token instructions, and Swift-as-contract prose are gone. Current production
+symbols, operation names, routes, registry kinds, and mesh pairing commands were
+read against code; no production API/schema changed. The isolated docs, schema,
+API-surface, and rendered-Mermaid matrix is 52 passed. HS-131-12's real-model walk
+is the only story left.
 The roadmap still has inherited structural lint errors in old phases; they are
 named baseline and are not silently bundled into this product phase.
 
@@ -500,6 +509,13 @@ named baseline and are not silently bundled into this product phase.
 
 ## Decisions made (this phase)
 
+- 2026-08-15 — **The entry points describe the shipped boundary, not a parallel
+  architecture.** `docs/ARCHITECTURE.md` is the canonical integrator contract;
+  README, backend decomposition, security, and models link to it or state the same
+  one-child-per-physical-attempt rule at their own level. Python/web
+  `SYNC_REGISTRY` remains contract authority; Swift is only a possible future
+  consumer. No production route/schema changed, and all 52 focused
+  documentation/API/Mermaid guards pass.
 - 2026-08-14 — **The one-path fence closes at zero without an exception.** The
   exact five-suite rerun is 143 passed; the census is 100 sites, zero findings,
   zero blocking families, and zero unregistered execution. All eleven original

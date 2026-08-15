@@ -8,17 +8,18 @@
 > from evidence, Terra waves with serialized shipping, walks, honest ledgers —
 > is canon at [`docs/internal/ORCHESTRATION.md`](../../../docs/internal/ORCHESTRATION.md).
 
-**Newest update (2026-08-14): Phase 131 — One Admission Path — IN PROGRESS
-(15/17).** HS-131-10 closes at zero without weakening the fence. The five
-owner-chartered amendments moved the original 145-site / 48-finding /
-eleven-family inventory to 100 model-execution sites, zero findings, zero
-blocking families, and zero unregistered execution. Every family left by
-deletion or admission; no product surface or command entered the physical adapter
-allowlist. The unchanged literal-spine, exact-context, cardinality, provenance,
-journal-hygiene, cancellation, recovery, and mutation suites pass 143 tests under
-a fresh isolated HOME. HS-131-11 entry-point docs and HS-131-12's real-model walk
-are now the only phase stories left. PR #454 remains draft; Swift remains out of
-scope.
+**Newest update (2026-08-15): Phase 131 — One Admission Path — IN PROGRESS
+(16/17).** HS-131-11's entry-point contract is done. README, architecture,
+backend decomposition, security, and models now agree on one admitted
+`InferenceRunner` path and one immutable terminal receipt per physical attempt;
+they distinguish parent runs/sessions, exact deployment revisions, bounded
+scheduler delegation, local Whisper children, cancellation/fallback/indeterminate
+outcomes, and Python/web sync authority. Stale direct-model arrows, mesh hub-token
+instructions, and Swift-as-contract prose are gone; the documentation, API,
+schema, and rendered-Mermaid matrix passes 52 tests under a fresh isolated HOME.
+The one-path fence remains at 100 sites, zero findings, zero blocking families,
+and zero unregistered execution. HS-131-12's real-model walk is the only phase
+story left. PR #454 remains draft; Swift remains out of scope.
 
 **Previous update (2026-08-08): Phase 129 — One Grammar — COMPLETE (11/11).**
 The exit walk passes all 38 surfaces with pinned-foot, stationary-head,

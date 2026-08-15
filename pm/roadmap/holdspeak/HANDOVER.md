@@ -1,24 +1,49 @@
-# HANDOVER — Phase 131, HS-131-11 Entry-Point Docs
+# HANDOVER — Phase 131, HS-131-12 Real-Model Walk
 
-**Date:** 2026-08-14
+**Date:** 2026-08-15
 **Branch:** `phase-131-one-admission-path`
-**Phase:** 15/17 stories done
-**Last completed story:** HS-131-10 — one-path fence closed at zero
-**Next story:** HS-131-11 — entry-point contract
+**Phase:** 16/17 stories done
+**Last completed story:** HS-131-11 — entry-point contract
+**Next story:** HS-131-12 — assembled real-model walk
 **Draft PR:** #454 — keep draft until the whole phase is complete
 
 ## Start here
 
-HS-131-10 is done. The five-story amendment wave and the unchanged closing fence
-prove 100 model-execution sites, zero findings, zero blocking families, and zero
-unregistered execution. All eleven original families left by deletion or
-admission; none became an adapter exception. Do not reopen the meeting MIR
-decision or the HS-131-16 hostile protocol-review loop.
+HS-131-11 is done. All five public/operator/developer entry points now agree with
+the zero-finding fence: one admitted `InferenceRunner` path, one immutable
+revision and terminal receipt per physical attempt, honest parent/session
+causation, bounded scheduler delegation, and no local-Whisper exemption. The
+isolated documentation/API/schema/render matrix is 52 passed.
 
-Next, update the public/operator/developer entry points in HS-131-11 so one
-admission path is the documented contract. Then HS-131-12 performs the assembled
-real hub/worker model walk. Swift remains held; web DeskOS is the spec. Draft PR
-#454 stays draft until both stories are complete.
+HS-131-12 is the only story left. Perform the assembled real hub/worker/model
+walk, then read the focused, web, and backend output at the owner's functional
+bar. Repair ordinary product regressions; do not reopen the meeting MIR decision,
+the HS-131-16 hostile protocol-review loop, or a speculative hardening sweep.
+Swift remains held; web DeskOS is the spec. Draft PR #454 stays draft until the
+walk and phase closure are complete.
+
+## HS-131-11 shipped contract
+
+- Canonical contract:
+  [`docs/ARCHITECTURE.md#inference-admission-one-path-one-receipt-per-attempt`](../../../docs/ARCHITECTURE.md#inference-admission-one-path-one-receipt-per-attempt).
+  README, backend decomposition, security, and models state the same boundary at
+  their own level.
+- Ask is `holdspeak.ask@1`; saved Agents are `recipe:<id>` at `last_modified`.
+  Every attempt freezes a `DeploymentRevision`; cancellation fences late output,
+  fallback/retry gets separate children, and uncertainty remains `indeterminate`.
+- Security names scheduler as actor, owner as delegator, exact delegation terms,
+  every current refusal code, session parents, shared Whisper/preload children,
+  and content-free kernel fields.
+- `SYNC_REGISTRY` is Python/web contract authority. Swift is neither authority nor
+  work in this phase. Mesh instructions use deliberate node pairing, the node
+  bearer, the public offer pin, and hub-only private-key custody.
+- Current symbols, operation names, routes, registry kinds, and commands were read
+  against production code. No production API/schema changed, so no generated
+  snapshot changed.
+- Evidence: **52 passed** under a fresh isolated HOME, including API surface,
+  primitive/sync contract, doc drift and links, architecture guards, and real
+  Mermaid rendering. See
+  [`evidence-story-11.md`](./phase-131-one-admission-path/evidence-story-11.md).
 
 ## HS-131-10 closed contract
 
@@ -153,15 +178,17 @@ local output. Neither belongs to Phase 131 shipping commits.
 
 ## Next sequence
 
-1. Read `story-11-entry-point-docs.md` and its named documentation surfaces.
-2. Start HS-131-11 through Delivery Workbench and update the public install/usage,
-   operator, architecture, and plugin/extension entry points without inventing a
-   second contract vocabulary.
-3. Run doc-drift/link/command examples under the story's test plan and ship docs
-   alone through the stamped contract.
-4. Complete HS-131-12 on the real mesh model with the one-path fence still green.
-5. Triage current CI only at the ordinary-use functional bar; the stale live-bus
-   selector is a bounded harness repair, not a new architecture review.
+1. Read `story-12-the-walk.md`, then start HS-131-12 through Delivery Workbench.
+2. Build `scripts/walk_one_admission_path.py` from the existing live-LAN pattern,
+   using only isolated database/HOME state and the real model on `.43`.
+3. Prove the assembled ordinary paths: Ask/Agent, Sequence/Workflow/Workbench,
+   one finite service, bounded schedule success/refusal, speech session children,
+   frozen target identity, cancellation, fallback cardinality, and sync/restart.
+4. Capture the focused Phase-131 matrix, web suite, and full backend suite. Read
+   every output before the final done decision; compare failures to the inherited
+   ledger and fix only current ordinary-use regressions.
+5. Triage the stale live-bus selector as a bounded harness repair if it still
+   blocks CI; do not turn the 66 integration failures into an academic sweep.
 6. Keep PR #454 draft until the phase is complete; watch CI, read conclusions,
    classify, and merge as separate actions.
 

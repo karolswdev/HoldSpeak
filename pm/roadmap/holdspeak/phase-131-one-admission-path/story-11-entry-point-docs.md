@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 131
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-131-10
 - **Unblocks:** HS-131-12
 - **Owner:** unassigned
@@ -49,20 +49,20 @@ hard to integrate against even when the code is correct.
 
 ## Acceptance criteria
 
-- [ ] All five entry points agree on one inference runner and one receipt per
+- [x] All five entry points agree on one inference runner and one receipt per
   actual provider dispatch.
-- [ ] Parent/child/session, deployment revision, cancellation, fallback, and
+- [x] Parent/child/session, deployment revision, cancellation, fallback, and
   indeterminate semantics match shipped code and tests.
-- [ ] Security documentation distinguishes scheduler actor from owner delegator
+- [x] Security documentation distinguishes scheduler actor from owner delegator
   and names exact delegation bounds and revocation behavior.
-- [ ] Meeting/dictation/wake docs state per-session authority, per-invocation
+- [x] Meeting/dictation/wake docs state per-session authority, per-invocation
   child receipts, and live revocation checks without implying audio or token
   journaling or exempting local Whisper.
-- [ ] Sync documentation names the Python/web registry as authority and contains
+- [x] Sync documentation names the Python/web registry as authority and contains
   no instruction to shape the contract around Swift.
-- [ ] Every command, route, schema, operation name, and claim is verified against
+- [x] Every command, route, schema, operation name, and claim is verified against
   current code; stale direct-call claims are removed.
-- [ ] Documentation and API-surface drift guards pass.
+- [x] Documentation and API-surface drift guards pass.
 
 ## Test plan
 
@@ -75,6 +75,16 @@ hard to integrate against even when the code is correct.
 
 ## Notes / open questions
 
-This dedicated docs story lands after the mechanical fence. Documentation must
-follow the proven execution boundary rather than describing the intended design
-before migration finishes.
+This dedicated docs story lands after the mechanical fence. Documentation follows
+the proven execution boundary rather than describing the intended design before
+migration finishes.
+
+The canonical contract now lives at
+`docs/ARCHITECTURE.md#inference-admission-one-path-one-receipt-per-attempt`; the
+other four entry points link to it or state the same boundary at their own level.
+The integrator read-through verified current runner/type/operation symbols, Ask
+and saved-Agent definition origins, schedule refusal names, sync routes and
+registry kinds, destination routes, and mesh pairing commands against production
+code. No production route or schema changed, so no API manifest or generated
+snapshot needed regeneration. The captured documentation/API/Mermaid matrix is
+52 passed.
