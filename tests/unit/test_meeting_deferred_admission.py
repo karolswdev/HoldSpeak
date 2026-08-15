@@ -228,13 +228,14 @@ def _session_rig(tmp_path: Path, monkeypatch, *, engine: Any = None):
     monkeypatch.setattr("holdspeak.intel.providers._configured_engine", lambda: engine)
     monkeypatch.setattr("holdspeak.meeting_session.session.MeetingRecorder", _FakeRecorder)
     monkeypatch.setattr("holdspeak.meeting_capture_journal.MeetingCaptureJournal", _FakeJournal)
+    # HS-131-17: the session imports no engine class and runs no provider
+    # preflight. Live readiness is read off the FROZEN placement, so the honest
+    # way to make the `this_machine` leg reachable is to give it a model file.
+    model = tmp_path / "local-meeting-intel.gguf"
+    model.write_bytes(b"gguf")
     monkeypatch.setattr(
-        "holdspeak.meeting_session.session.get_intel_runtime_status", lambda *a, **k: (True, None)
+        "holdspeak.intel.providers.configured_local_meeting_model_path", lambda: str(model)
     )
-    monkeypatch.setattr(
-        "holdspeak.meeting_session.session.resolve_intel_provider", lambda *a, **k: ("local", None)
-    )
-    monkeypatch.setattr("holdspeak.meeting_session.session.MeetingIntel", lambda **kwargs: engine)
     requests = _observe(broker, monkeypatch)
 
     from holdspeak.meeting_session import MeetingSession

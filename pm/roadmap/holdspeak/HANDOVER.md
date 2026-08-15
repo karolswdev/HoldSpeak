@@ -1,25 +1,41 @@
-# HANDOVER — Phase 131, HS-131-17 Entry Point
+# HANDOVER — Phase 131, HS-131-10 Zero-Finding Close
 
 **Date:** 2026-08-14
 **Branch:** `phase-131-one-admission-path`
-**Phase:** 13/17 stories done
-**Last completed story:** HS-131-16 — mesh receiver authority
-**Next story:** HS-131-17 — meeting residual admission
+**Phase:** 14/17 stories done
+**Last completed story:** HS-131-17 — meeting residual admission
+**Next story:** HS-131-10 — close the one-path fence at zero findings
 **Draft PR:** #454 — keep draft until the whole phase is complete
 
 ## Start here
 
-HS-131-16 is done at the owner's functional bar. Do not reopen the hostile
-protocol-review loop or return to the rejected 151-path candidate. The shipped
-shape is the reduced 40-path implementation described in
-[`ACCEPTANCE-MAP-HS-131-16.md`](./phase-131-one-admission-path/ACCEPTANCE-MAP-HS-131-16.md),
-with captured proof in
-[`evidence-story-16.md`](./phase-131-one-admission-path/evidence-story-16.md).
+HS-131-17 is done. The five-story amendment wave has removed every blocking
+family: the executable one-path census now reports 100 sites, zero findings,
+zero blocking families, and zero unregistered execution. Do not reopen the
+meeting MIR decision or the HS-131-16 hostile protocol-review loop.
 
-Next, work HS-131-17 from its story contract. It owns the remaining meeting-side
-parallel engine and bookmark auto-label residuals. After 17, rerun HS-131-10's
-fence at zero findings, then do HS-131-11 docs and HS-131-12's real hub/worker
-model walk. Swift remains held; web DeskOS is the spec.
+Next, return to the already-shipped blocked checkpoint HS-131-10 and close it
+against the now-green zero-finding fence. Then do HS-131-11 entry-point docs and
+HS-131-12's real hub/worker model walk. Swift remains held; web DeskOS is the
+spec. Draft PR #454 stays draft until all three are complete.
+
+## HS-131-17 shipped contract
+
+- The dormant session-owned MIR branch is deleted: no private `mir_*` constructor
+  inputs, live plugin enumeration, or post-stop `process_meeting_state()` call
+  remains. `MeetingConfig.intent_router_enabled`, plugins, persistence, manual
+  routing tools, and the separately admitted deferred queue remain.
+- `MeetingSession` owns no `MeetingIntel`. It keeps the frozen plan, admitted
+  parent, closed fence, and explicit live flag; startup reads frozen readiness and
+  constructs no provider.
+- Automatic bookmark refinement goes through `_admitted_bookmark_label`; each
+  actual model attempt is one exact-revision child with one terminal receipt.
+  Deterministic, refused, failed, cancelled, and late cases keep the timestamp
+  label.
+- Captured focused/integration proof: 166 passed. Full isolated unit lane: 4,676
+  passed, with only the three unchanged inherited UI/copy guards.
+- Evidence: [`evidence-story-17.md`](./phase-131-one-admission-path/evidence-story-17.md).
+  Design ruling: [`DESIGN-HS-131-17.md`](./phase-131-one-admission-path/DESIGN-HS-131-17.md).
 
 ## HS-131-16 shipped contract
 
@@ -119,20 +135,21 @@ Preserve and do not bundle these pre-existing paths with future story commits:
 ```
 
 The Phase 120 files are historical roadmap recovery work. The web test result is
-local output. Neither belongs to HS-131-16 or HS-131-17.
+local output. Neither belongs to Phase 131 shipping commits.
 
 ## Next sequence
 
-1. Read `story-17-meeting-residual-admission.md` and the current phase status.
-2. Start HS-131-17 through Delivery Workbench.
-3. Delete or route the remaining meeting residuals through the admitted child
-   seam without widening into the final walk.
-4. Run focused proof under an isolated HOME; compare full-lane failures to the
-   inherited baseline above.
-5. Ship 17 through the stamped contract.
-6. Rerun and close HS-131-10 only when the executable census reaches zero.
-7. Complete HS-131-11 entry-point docs, then HS-131-12 on the real mesh model.
-8. Keep PR #454 draft until the phase is complete; watch CI, read conclusions,
+1. Read `story-10-one-path-fence.md`, its existing evidence, and the current
+   phase status.
+2. Move HS-131-10 from `blocked` to `in-progress` through Delivery Workbench.
+3. Rerun the executable census and focused cardinality/provenance proof under a
+   fresh isolated HOME; the blocking ledger must remain empty.
+4. Update HS-131-10's checkpoint claims from blocked to closed and ship it alone
+   through the stamped contract.
+5. Complete HS-131-11 entry-point docs, then HS-131-12 on the real mesh model.
+6. Triage current CI only at the ordinary-use functional bar; the stale live-bus
+   selector is a bounded harness repair, not a new architecture review.
+7. Keep PR #454 draft until the phase is complete; watch CI, read conclusions,
    classify, and merge as separate actions.
 
 ## Rails that still matter

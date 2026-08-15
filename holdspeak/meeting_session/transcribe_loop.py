@@ -27,14 +27,12 @@ if TYPE_CHECKING:
 # Optional imports for intel (the same guarded pattern as session.py).
 try:
     from ..intel import (
-        MeetingIntel,
         IntelResult,
         ActionItem,
         get_intel_runtime_status,
         resolve_intel_provider,
     )
 except ImportError:
-    MeetingIntel = None  # type: ignore
     IntelResult = None  # type: ignore
     ActionItem = None  # type: ignore
     get_intel_runtime_status = None  # type: ignore
@@ -326,5 +324,5 @@ class TranscribeLoopMixin:
         # Trigger intel analysis periodically
         if new_segments:
             self._segments_since_intel += len(new_segments)
-            if self._intel is not None and self._segments_since_intel >= self.INTEL_SEGMENT_INTERVAL:
+            if self._intel_live and self._segments_since_intel >= self.INTEL_SEGMENT_INTERVAL:
                 self._maybe_run_intel()

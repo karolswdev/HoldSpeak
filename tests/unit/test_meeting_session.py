@@ -65,7 +65,7 @@ def test_stop_completes_without_deadlock_during_final_transcription_and_intel() 
         title="Already titled",
     )
     session._recorder = _FakeRecorder()
-    session._intel = object()
+    session._intel_live = True
     session._transcription_admission = lambda: _StubAdmission()  # type: ignore[method-assign]
 
     intel_calls: list[tuple[bool, str]] = []

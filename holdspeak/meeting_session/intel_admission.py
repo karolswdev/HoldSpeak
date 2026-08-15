@@ -34,7 +34,6 @@ from .intel_plan import (
     DISPLACED_BOOKMARK_LABELS,
     DISPLACED_FINAL_ANALYSIS,
     DISPLACED_LABELS,
-    DISPLACED_ROUTED_INTELLIGENCE,
     MeetingIntelRefused,
     PRINCIPAL_REQUIRED,
     SESSION_CAPABILITIES,
@@ -88,7 +87,7 @@ class IntelAdmissionMixin(TranscribeAdmissionMixin):
         self._intel_refusal = reason
         self._intel_plan = None
         self._intel_parent = None
-        self._intel = None
+        self._intel_live = False
         self.intel_enabled = False
         if self._state is not None:
             self._state.intel_status = "refused"
@@ -112,6 +111,7 @@ class IntelAdmissionMixin(TranscribeAdmissionMixin):
         self._intel_plan = None
         self._intel_parent = None
         self._intel_closed = False
+        self._intel_live = False
         if self._state is None:
             return False
         principal = self.intel_principal
@@ -141,7 +141,9 @@ class IntelAdmissionMixin(TranscribeAdmissionMixin):
                 deadline_at=deadline,
                 child_budget=budget,
                 provenance=str(self._state.provenance or "desktop"),
-                plugin_ids=self._intel_plugin_ids(),
+                # HS-131-17: a live session enumerates NO plugins. Routed plugin
+                # work belongs to the separately admitted deferred job, which
+                # freezes its own plan over the plugins it will actually run.
                 created_at=now,
             )
             parent = broker.parent_run_controller.start(
@@ -184,7 +186,7 @@ class IntelAdmissionMixin(TranscribeAdmissionMixin):
             return
         self._intel_plan = None
         self._intel_parent = None
-        self._intel = None
+        self._intel_live = False
 
     def _intel_declared_capabilities(self) -> tuple[str, ...]:
         # HS-131-09: a recorded session always transcribes; the intelligence
@@ -196,17 +198,6 @@ class IntelAdmissionMixin(TranscribeAdmissionMixin):
         if self.intel_deferred_enabled:
             declared.append(CAPABILITY_DEFERRED_ANALYSIS)
         return tuple(declared)
-
-    def _intel_plugin_ids(self) -> tuple[str, ...]:
-        host = getattr(self, "_mir_plugin_host", None)
-        if host is None:
-            return ()
-        try:
-            available = [str(item) for item in host.list_plugins()]
-        except Exception:
-            return ()
-        disabled = {str(item) for item in (getattr(self, "_mir_disabled_plugins", None) or [])}
-        return tuple(item for item in available if item not in disabled)
 
     def intel_session_operation_id(self) -> str:
         parent = self._intel_parent
@@ -342,7 +333,7 @@ class IntelAdmissionMixin(TranscribeAdmissionMixin):
         discarded = self._discard_intel_stages()
         self._finish_cancelled_intel_session()
         with self._lock:
-            self._intel = None
+            self._intel_live = False
         log.info(
             "live meeting intelligence cancelled at stop: disposition=%s discarded=%s",
             disposition or "cancelled",
@@ -356,8 +347,10 @@ class IntelAdmissionMixin(TranscribeAdmissionMixin):
             displaced.append(DISPLACED_BOOKMARK_LABELS)
         if not state.title:
             displaced.append(DISPLACED_AUTO_TITLE)
-        if self.mir_routing_enabled or self._mir_plugin_host is not None:
-            displaced.append(DISPLACED_ROUTED_INTELLIGENCE)
+        # HS-131-17: the live session no longer infers routed intelligence from
+        # private MIR fields — it has none. The deferred job reads the current
+        # `MeetingConfig.intent_router_enabled` under its own admitted parent and
+        # owns that decision end to end.
         # The slugs are the machine contract; the sentence is for the owner.
         self._intel_displaced_work = tuple(displaced)
         detail = (

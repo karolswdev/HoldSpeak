@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 131
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-131-02, HS-131-08
 - **Unblocks:** HS-131-10
 - **Owner:** unassigned
@@ -49,19 +49,19 @@ Constitution Articles VI.2 and XI.1–3.
 
 ## Acceptance criteria
 
-- [ ] A Sol-ruled design records the delete-versus-admit MIR decision and proves
+- [x] A Sol-ruled design records the delete-versus-admit MIR decision and proves
   every retained model-bearing transition under the frozen meeting plan.
-- [ ] Session start constructs no `MeetingIntel` or provider engine outside a
+- [x] Session start constructs no `MeetingIntel` or provider engine outside a
   claimed invocation dispatch context.
-- [ ] Bookmark auto-label reaches `_admitted_bookmark_label`; each model attempt
+- [x] Bookmark auto-label reaches `_admitted_bookmark_label`; each model attempt
   has the meeting session as causal parent, the exact revision, and one immutable
   terminal receipt.
-- [ ] MIR is unreachable and deleted, or every physical attempt is an admitted
+- [x] MIR is unreachable and deleted, or every physical attempt is an admitted
   session child with liveness, revocation, budget, cancellation, and late-output
   fencing.
-- [ ] Recording without an intelligence principal continues honestly with zero
+- [x] Recording without an intelligence principal continues honestly with zero
   engine construction and zero inference children.
-- [ ] The one-path census removes all three meeting findings with zero meeting
+- [x] The one-path census removes all three meeting findings with zero meeting
   scopes in `ADAPTER_ALLOWLIST` and zero unregistered execution.
 
 ## Test plan
@@ -80,6 +80,8 @@ Constitution Articles VI.2 and XI.1–3.
 
 ## Notes / open questions
 
-The design should prefer deleting dormant MIR unless a current product contract
-requires it. Liveness is a capability fact, not an engine object constructed
-outside admission.
+[DESIGN-HS-131-17](./DESIGN-HS-131-17.md) rules: delete the dormant
+session-owned MIR branch while preserving the separately admitted deferred routing
+product; delete the parallel live engine; route automatic bookmark refinement
+through the existing admitted child seam. Liveness is a capability fact, not an
+engine object constructed outside admission.

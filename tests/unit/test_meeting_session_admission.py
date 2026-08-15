@@ -13,6 +13,7 @@ runner, the projections, and the receipts are production code.
 from __future__ import annotations
 
 import json
+import threading
 from pathlib import Path
 from typing import Any, Iterator
 
@@ -108,12 +109,32 @@ class FakeJournal:
         return None
 
 
+def _local_model_is_present(tmp_path: Path, monkeypatch) -> Path:
+    """Make the `this_machine` leg REACHABLE, the way a real desk has it.
+
+    HS-131-17: start no longer preflights a provider runtime — readiness is a
+    property of the FROZEN placement (`_this_machine_readiness()` asks whether the
+    configured local meeting model actually exists). Pointing that at a real file
+    is the honest replacement for the old `get_intel_runtime_status -> (True, None)`
+    patch: it makes the plan's live-analysis leg ready without constructing a
+    single engine.
+    """
+    model = tmp_path / "local-meeting-intel.gguf"
+    model.write_bytes(b"gguf")
+    monkeypatch.setattr(
+        "holdspeak.intel.providers.configured_local_meeting_model_path",
+        lambda: str(model),
+    )
+    return model
+
+
 def _rig(tmp_path: Path, monkeypatch, *, principal: Any = OWNER, intel_enabled: bool = True):
     """Build a real database + broker + MeetingSession with a fake provider."""
     db = Database(tmp_path / "meeting.db")
     monkeypatch.setattr("holdspeak.db.get_database", lambda: db)
     broker = _configure(db)
     engine = FakeIntel()
+    _local_model_is_present(tmp_path, monkeypatch)
 
     # `build_intel_for_revision` resolves `this_machine` through the pinned local
     # branch, so the production revision -> engine path is exercised, not bypassed.
@@ -122,17 +143,15 @@ def _rig(tmp_path: Path, monkeypatch, *, principal: Any = OWNER, intel_enabled: 
     # `build_configured_meeting_intel`), so the provider double is injected at the
     # engine class — the last constructor on the real path — rather than at the
     # configured-default seam that path no longer touches.
+    # HS-131-17: the session module no longer imports `MeetingIntel`,
+    # `get_intel_runtime_status`, or `resolve_intel_provider` at all — start
+    # constructs nothing and preflights nothing — so the ONLY constructor left to
+    # double is the one the admitted child reaches through `InferenceRunner`.
+    # `_counted_engine` below re-patches this exact seam to COUNT constructions.
     monkeypatch.setattr("holdspeak.intel.engine.MeetingIntel", lambda **kwargs: engine)
     monkeypatch.setattr("holdspeak.intel.providers._configured_engine", lambda: engine)
     monkeypatch.setattr("holdspeak.meeting_session.session.MeetingRecorder", FakeRecorder)
     monkeypatch.setattr("holdspeak.meeting_capture_journal.MeetingCaptureJournal", FakeJournal)
-    monkeypatch.setattr(
-        "holdspeak.meeting_session.session.get_intel_runtime_status", lambda *a, **k: (True, None)
-    )
-    monkeypatch.setattr(
-        "holdspeak.meeting_session.session.resolve_intel_provider", lambda *a, **k: ("local", None)
-    )
-    monkeypatch.setattr("holdspeak.meeting_session.session.MeetingIntel", lambda **kwargs: engine)
 
     requests: list[Any] = []
     real_invoke = broker.inference_runner.invoke
@@ -251,9 +270,104 @@ def test_start_admits_one_authenticated_parent_over_a_frozen_plan(tmp_path, monk
     assert "transcript" not in json.dumps(snapshot).lower()
 
 
+def _counted_engine(monkeypatch, engine: Any) -> list[dict[str, Any]]:
+    """Count every ACTUAL engine construction at the one constructor left."""
+    built: list[dict[str, Any]] = []
+
+    def build(**kwargs: Any) -> Any:
+        built.append(kwargs)
+        return engine
+
+    monkeypatch.setattr("holdspeak.intel.engine.MeetingIntel", build)
+    return built
+
+
+# ------------------------------------------------ HS-131-17: the start sentinel
+
+
+def test_start_freezes_the_plan_and_constructs_zero_engines(tmp_path, monkeypatch):
+    """Start admits ONE parent over a frozen plan and builds no provider at all.
+
+    The session used to preflight the provider runtime and construct a long-lived
+    `MeetingIntel` beside the plan — a model loaded merely to announce that a
+    meeting is live. Readiness is now a property of the FROZEN placement, so start
+    reaches no constructor; the FIRST actual child builds the exact frozen
+    revision, exactly once.
+    """
+    db, broker, session, engine, requests = _rig(tmp_path, monkeypatch)
+    built = _counted_engine(monkeypatch, engine)
+
+    state = session.start()
+
+    # The plan and the parent exist...
+    assert session._intel_plan is not None
+    assert session._intel_parent is not None
+    assert len(_parent_rows(db)) == 1
+    # ...liveness is EXPLICIT state, not an object...
+    assert session._intel_live is True
+    assert not hasattr(session, "_intel")
+    assert state.intel_status == "live"
+    # ...and nothing was constructed or dispatched.
+    assert built == []
+    assert requests == []
+    assert engine.analyzed == []
+    assert _operations(db, name="inference.invoke") == []
+
+    # The FIRST actual child is what constructs, and it constructs exactly one
+    # engine, from the plan's frozen revision.
+    _add_segment(session, "The first window of real discussion", 0.0)
+    session._run_intel_analysis()
+
+    assert len(built) == 1
+    children = _operations(db, name="inference.invoke")
+    assert len(children) == 1
+    assert requests[0].deployment_revision == session._intel_plan.primary(
+        CAPABILITY_LIVE_ANALYSIS
+    )
+
+
+def test_an_unreachable_planned_leg_keeps_the_queued_status_and_never_goes_live(
+    tmp_path, monkeypatch
+):
+    """No preflight does NOT mean pretending. A leg that cannot run says so.
+
+    The old runtime preflight produced `queued` (or `error` when deferral is off)
+    with the reason on the meeting. That behavior is preserved from the plan's own
+    readiness facts — and, critically, still constructs nothing.
+    """
+    db, _broker, session, engine, requests = _rig(tmp_path, monkeypatch)
+    built = _counted_engine(monkeypatch, engine)
+    # The configured local model is gone: the frozen `this_machine` leg is not
+    # reachable, and no cloud fallback is frozen (the plan's provider is `local`).
+    monkeypatch.setattr(
+        "holdspeak.intel.providers.configured_local_meeting_model_path",
+        lambda: str(tmp_path / "absent-model.gguf"),
+    )
+
+    state = session.start()
+
+    assert session._intel_live is False
+    assert state.intel_status == "queued"
+    assert "absent-model.gguf" in str(state.intel_status_detail)
+    # The parent is still admitted (transcription rides on it) and the plan is
+    # still frozen — but no engine and no child exist.
+    assert session._intel_parent is not None
+    assert built == []
+    assert requests == []
+    assert _operations(db, name="inference.invoke") == []
+
+    # ...and the live cadence stays shut: a window admits nothing.
+    _add_segment(session, "A window nobody can analyze", 0.0)
+    session._run_intel_analysis()
+    assert requests == []
+    assert engine.analyzed == []
+
+
 def test_device_start_without_principal_refuses_intelligence_and_still_records(tmp_path, monkeypatch):
     db, broker, session, engine, requests = _rig(tmp_path, monkeypatch, principal=None)
+    built = _counted_engine(monkeypatch, engine)
     state = session.start()
+    assert built == []
 
     # Recording is unaffected.
     assert state.capture_status == "recording"
@@ -263,10 +377,11 @@ def test_device_start_without_principal_refuses_intelligence_and_still_records(t
     assert state.intel_status == "refused"
     assert PRINCIPAL_REQUIRED in str(state.intel_status_detail)
     assert session.intel_enabled is False
-    assert session._intel is None
+    assert session._intel_live is False
     assert session._intel_parent is None
 
-    # ZERO kernel operations exist.
+    # ZERO kernel operations exist — and, HS-131-17, zero engines and zero
+    # children: a recording-only session builds nothing at all.
     assert _parent_rows(db) == []
     assert _operations(db) == []
     assert requests == []
@@ -370,6 +485,198 @@ def test_bookmark_label_and_auto_title_run_as_session_children(tmp_path, monkeyp
     children = [row for row in _operations(db, name="inference.invoke") if row["parent_operation_id"] == parent_id]
     assert len(children) == 2
     assert all(broker.store.receipt(row["operation_id"])["outcome"] == "succeeded" for row in children)
+
+
+# -------------------------------------------- HS-131-17: automatic bookmarks
+
+
+def _children_of(db: Database, parent_id: str) -> list[dict[str, Any]]:
+    return [
+        row for row in _operations(db, name="inference.invoke")
+        if row["parent_operation_id"] == parent_id
+    ]
+
+
+def _capture_threads(monkeypatch) -> list[Any]:
+    """Record every thread started from here on, so a test can join it.
+
+    `add_bookmark` refines in the background exactly as it always did; the proof
+    is about WHAT that worker reaches, not about it being synchronous.
+    """
+    started: list[Any] = []
+    real = threading.Thread
+
+    class _Recorded(real):  # type: ignore[misc, valid-type]
+        def start(self) -> None:
+            started.append(self)
+            super().start()
+
+    monkeypatch.setattr(threading, "Thread", _Recorded)
+    return started
+
+
+def _join(threads: list[Any], timeout: float = 10.0) -> None:
+    for thread in list(threads):
+        thread.join(timeout=timeout)
+        assert not thread.is_alive(), "a bookmark refinement worker never finished"
+
+
+def test_automatic_bookmark_label_runs_as_one_admitted_child_with_context(tmp_path, monkeypatch):
+    """`add_bookmark` reaches the model ONLY through the admitted seam.
+
+    The deterministic timestamp label is written first, ONE trusted child does the
+    refinement (carrying the local context AND the latest earned meeting summary),
+    it earns one terminal receipt, and only then does the label change.
+    """
+    db, broker, session, engine, requests = _rig(tmp_path, monkeypatch)
+    session.start()
+    parent_id = session.intel_session_operation_id()
+    _add_segment(session, "We agreed to cut the travel budget", 0.0)
+    # An earned live window supplies the grounding summary the seam must pass.
+    session._run_intel_analysis()
+    assert session._state.intel is not None
+    engine.labels.clear()
+    before = {row["operation_id"] for row in _children_of(db, parent_id)}
+    built = _counted_engine(monkeypatch, engine)
+    workers = _capture_threads(monkeypatch)
+
+    bookmark = session.add_bookmark()
+    assert bookmark is not None
+    # The deterministic label exists BEFORE any model work.
+    assert bookmark.label.startswith("Bookmark @ ")
+    _join(workers)
+
+    # Exactly ONE new child, and it is the bookmark-label contract.
+    new_children = [
+        row for row in _children_of(db, parent_id) if row["operation_id"] not in before
+    ]
+    assert len(new_children) == 1
+    receipt = broker.store.receipt(new_children[0]["operation_id"])
+    assert receipt is not None and receipt["outcome"] == "succeeded"
+    label_requests = [
+        request for request in requests
+        if request.definition_origin.contract == "holdspeak.meeting-bookmark-label"
+    ]
+    assert len(label_requests) == 1
+    # One engine construction for that one child, from the frozen revision.
+    assert len(built) == 1
+    assert label_requests[0].deployment_revision == session._intel_plan.primary(
+        CAPABILITY_BOOKMARK_LABEL
+    )
+    # The seam carried BOTH the local context and the earned meeting summary.
+    assert len(engine.labels) == 1
+    assert "travel budget" in engine.labels[0]["context"]
+    assert engine.labels[0]["summary"] == session._state.intel.summary
+    # ...and the earned label replaced the deterministic one.
+    assert bookmark.label == "Budget decision"
+
+
+def test_a_bookmark_with_no_earned_summary_yet_passes_the_empty_summary(tmp_path, monkeypatch):
+    """"...or the empty summary when none exists" — never a fabricated one."""
+    _db, _broker, session, engine, _requests = _rig(tmp_path, monkeypatch)
+    session.start()
+    _add_segment(session, "Opening remarks about the budget", 0.0)
+    workers = _capture_threads(monkeypatch)
+
+    bookmark = session.add_bookmark()
+    _join(workers)
+
+    assert len(engine.labels) == 1
+    assert engine.labels[0]["summary"] == ""
+    assert bookmark.label == "Budget decision"
+
+
+@pytest.mark.parametrize(
+    "kwargs,segments,note",
+    [
+        ({"label": "Owner typed this"}, True, "an explicit label is the owner's"),
+        ({"auto_label": False}, True, "auto labeling was switched off"),
+        ({}, False, "no transcript context near the bookmark"),
+    ],
+    ids=["explicit-label", "auto-label-off", "no-context"],
+)
+def test_deterministic_bookmarks_admit_nothing(tmp_path, monkeypatch, kwargs, segments, note):
+    """The deterministic cases create NO child and reach no provider."""
+    db, _broker, session, engine, requests = _rig(tmp_path, monkeypatch)
+    session.start()
+    built = _counted_engine(monkeypatch, engine)
+    if segments:
+        _add_segment(session, "Some discussion worth bookmarking", 0.0)
+    workers = _capture_threads(monkeypatch)
+
+    bookmark = session.add_bookmark(**kwargs)
+    _join(workers)
+
+    assert bookmark is not None, note
+    expected = kwargs.get("label") or "Bookmark @ "
+    assert bookmark.label.startswith(expected), note
+    assert requests == [], note
+    assert built == [], note
+    assert engine.labels == [], note
+    assert _operations(db, name="inference.invoke") == [], note
+
+
+def test_a_bookmark_without_the_planned_capability_keeps_its_timestamp_label(tmp_path, monkeypatch):
+    """A capability absent from the FROZEN plan is a refusal, not a direct call."""
+    from dataclasses import replace
+
+    db, _broker, session, engine, requests = _rig(tmp_path, monkeypatch)
+    session.start()
+    _add_segment(session, "Something worth labeling", 0.0)
+    plan = session._intel_plan
+    session._intel_plan = replace(
+        plan,
+        capabilities={
+            name: value for name, value in plan.capabilities.items()
+            if name != CAPABILITY_BOOKMARK_LABEL
+        },
+    )
+    workers = _capture_threads(monkeypatch)
+
+    bookmark = session.add_bookmark()
+    _join(workers)
+
+    assert bookmark.label.startswith("Bookmark @ ")
+    assert engine.labels == []
+    assert requests == []
+    assert _operations(db, name="inference.invoke") == []
+
+
+def test_a_closed_session_cannot_publish_a_late_bookmark_label(tmp_path, monkeypatch):
+    """Stop wins: a label that lands after the handoff never reaches the bookmark."""
+    _db, _broker, session, engine, _requests = _rig(tmp_path, monkeypatch)
+    session.start()
+    _add_segment(session, "A late label candidate", 0.0)
+    bookmark = session.add_bookmark(label="Bookmark @ 00:00")
+
+    # The stop handoff already fired; the refinement worker is then a no-op.
+    session._intel_closed = True
+    session._generate_bookmark_label(bookmark, "A late label candidate", "")
+
+    assert bookmark.label == "Bookmark @ 00:00"
+    assert engine.labels == []
+
+
+def test_a_discarded_bookmark_projection_leaves_the_deterministic_label(tmp_path, monkeypatch):
+    """A child that publishes nothing must not silently blank the label."""
+    _db, _broker, session, engine, _requests = _rig(tmp_path, monkeypatch)
+    session.start()
+    _add_segment(session, "A window that will not publish", 0.0)
+    bookmark = session.add_bookmark(label="Bookmark @ 00:07")
+
+    monkeypatch.setattr(
+        session, "_admitted_bookmark_label", lambda **kwargs: (object(), None, None)
+    )
+    session._generate_bookmark_label(bookmark, "A window that will not publish", "")
+    assert bookmark.label == "Bookmark @ 00:07"
+
+    # ...and so does a provider failure inside the seam.
+    def explode(**kwargs: Any):
+        raise RuntimeError("provider is down")
+
+    monkeypatch.setattr(session, "_admitted_bookmark_label", explode)
+    session._generate_bookmark_label(bookmark, "A window that will not publish", "")
+    assert bookmark.label == "Bookmark @ 00:07"
 
 
 def test_capability_absent_from_the_plan_refuses_with_no_direct_dispatch(tmp_path, monkeypatch):
@@ -674,6 +981,23 @@ def test_a_one_entry_plan_fails_its_child_sanitized_and_still_returns_the_error_
     assert result is not None and SENTINEL in str(result.error)
 
 
+def test_provider_failure_closes_live_cadence_when_deferral_is_disabled(
+    tmp_path, monkeypatch
+):
+    """A terminal error is not a live provider and cannot schedule another window."""
+    _db, _broker, session, engine, _requests = _rig(tmp_path, monkeypatch)
+    session.intel_deferred_enabled = False
+    session.start()
+    monkeypatch.setattr(engine, "analyze", _error_window("provider unavailable"))
+    _add_segment(session, "A window that reaches a terminal provider error", 0.0)
+
+    session._run_intel_analysis()
+
+    assert session._intel_live is False
+    assert session._state.intel_status == "error"
+    assert "provider unavailable" in str(session._state.intel_status_detail)
+
+
 def test_error_results_on_every_frozen_entry_fail_both_children_and_defer(tmp_path, monkeypatch):
     """Exhausting the entries keeps the caller's existing error vocabulary."""
     db, broker, session, engine, requests, _entries = _auto_two_entry_session(tmp_path, monkeypatch)
@@ -727,8 +1051,10 @@ def test_no_transcript_material_reaches_the_kernel_journal(tmp_path, monkeypatch
     session._run_intel_analysis()
     assert SENTINEL not in str(session._state.intel_status_detail)
 
-    # (4) a REFUSED window under a cancelled parent
-    session._intel = engine
+    # (4) a REFUSED window under a cancelled parent. The failure above turned the
+    # explicit liveness state off (the deferral path); raise it again so the
+    # window is refused at ADMISSION rather than skipped before it.
+    session._intel_live = True
     broker.parent_run_controller.cancel(session._intel_parent.context, OWNER)
     _add_segment(session, f"Even more {SENTINEL}", 20.0)
     session._run_intel_analysis()

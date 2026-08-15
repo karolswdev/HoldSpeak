@@ -582,6 +582,35 @@ def test_no_audio_or_transcript_reaches_any_kernel_row(tmp_path, monkeypatch):
 # ------------------------------------------------- meeting transcription (A6)
 
 
+class _SilentMeetingRecorder:
+    """Recorder boundary for admission tests that never exercise audio capture."""
+
+    def __init__(self, **kwargs: Any) -> None:
+        self.kwargs = kwargs
+
+    def start(self) -> None:
+        return None
+
+
+class _SilentMeetingJournal:
+    """Capture journal boundary; these tests dispatch already-materialized audio."""
+
+    def __init__(self, meeting_id: str) -> None:
+        self.meeting_id = meeting_id
+
+    def append(self, source: str, audio: Any) -> None:
+        return None
+
+
+def _silence_meeting_capture(monkeypatch) -> None:
+    monkeypatch.setattr(
+        "holdspeak.meeting_session.session.MeetingRecorder", _SilentMeetingRecorder
+    )
+    monkeypatch.setattr(
+        "holdspeak.meeting_capture_journal.MeetingCaptureJournal", _SilentMeetingJournal
+    )
+
+
 def test_meeting_transcription_children_join_the_existing_meeting_session(
     tmp_path, monkeypatch
 ):
@@ -602,9 +631,10 @@ def test_meeting_transcription_children_join_the_existing_meeting_session(
     db = Database(tmp_path / "meeting.db")
     monkeypatch.setattr("holdspeak.db.get_database", lambda: db)
     _configure(db)
-    monkeypatch.setattr(
-        "holdspeak.meeting_session.session.get_intel_runtime_status", lambda *a, **k: (True, None)
-    )
+    # HS-131-17 removed the session's provider preflight entirely; this session
+    # runs with intelligence disabled anyway, so there is nothing left to stub.
+    # Capture is outside this test's boundary and must not open host audio on CI.
+    _silence_meeting_capture(monkeypatch)
 
     from holdspeak.meeting_session import MeetingSession
 
@@ -614,8 +644,7 @@ def test_meeting_transcription_children_join_the_existing_meeting_session(
         intel_enabled=False,
         principal=Principal(PrincipalKind.OWNER, "meeting-owner"),
     )
-    monkeypatch.setattr(session, "_start_recorder", lambda *a, **k: None, raising=False)
-    session._state = None
+    monkeypatch.setattr(session, "_transcribe_loop", lambda: None)
     state = session.start()
     assert state is not None
 
@@ -639,12 +668,14 @@ def test_meeting_interval_without_a_live_parent_drops_before_whisper(tmp_path, m
     db = Database(tmp_path / "meeting.db")
     monkeypatch.setattr("holdspeak.db.get_database", lambda: db)
     _configure(db)
+    _silence_meeting_capture(monkeypatch)
 
     from holdspeak.meeting_session import MeetingSession
 
     impl = FakeImpl()
     # No authenticated principal: nothing is admitted, so nothing transcribes.
     session = MeetingSession(_transcriber(impl), intel_enabled=False, principal=None)
+    monkeypatch.setattr(session, "_transcribe_loop", lambda: None)
     state = session.start()
     assert state is not None
 

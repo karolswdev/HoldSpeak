@@ -595,56 +595,12 @@ class MeetingIntel:
             log.error(f"Title generation failed: {exc}", exc_info=True)
             return None
 
-    def generate_bookmark_label(self, context: str, max_words: int = 5) -> Optional[str]:
-        """Generate a concise bookmark label from context.
-
-        Args:
-            context: Transcript text around the bookmark (±10 seconds).
-            max_words: Maximum words in generated label.
-
-        Returns:
-            Generated label string, or None if generation failed.
-        """
-        if not context.strip():
-            return None
-
-        try:
-            messages = [
-                {
-                    "role": "system",
-                    "content": (
-                        f"Generate a concise bookmark label (2-{max_words} words) that captures "
-                        "the key topic being discussed. Return ONLY the label text, nothing else. "
-                        "No quotes, no punctuation, no explanation. Examples: "
-                        "'Budget Discussion', 'Project Timeline', 'Next Steps', 'Key Decision'"
-                    ),
-                },
-                {
-                    "role": "user",
-                    "content": f"Label this moment:\n\n{context[:500]}",
-                },
-            ]
-
-            label = self._chat_completion_text(
-                messages,
-                temperature=0.3,
-                max_tokens=20,
-            ).strip()
-            # Clean up common LLM artifacts
-            label = label.strip('"\'')
-            label = label.rstrip('.')
-            # Remove "Label:" prefix if present
-            if label.lower().startswith("label:"):
-                label = label[6:].strip()
-
-            log.info(f"Generated bookmark label: {label}")
-            return label if label else None
-
-        except ProviderCompatibilityRetry:
-            raise
-        except Exception as exc:
-            log.error(f"Bookmark label generation failed: {exc}", exc_info=True)
-            return None
+    # HS-131-17: the context-only `generate_bookmark_label(context)` leaf is
+    # DELETED. Its only caller was the session's direct background thread, which
+    # now goes through the admitted `bookmark-label` child;
+    # `generate_bookmark_label_with_context` below is the ONE bookmark-label leaf
+    # both the live and the deferred admitted children dispatch. The retired name
+    # stays in the one-path census vocabulary, so typing it again fails the fence.
 
     def generate_bookmark_label_with_context(
         self,

@@ -9,20 +9,17 @@
 > is canon at [`docs/internal/ORCHESTRATION.md`](../../../docs/internal/ORCHESTRATION.md).
 
 **Newest update (2026-08-14): Phase 131 — One Admission Path — IN PROGRESS
-(13/17).** HS-131-16 closes the mesh receiver side door. Production pairing now
-transfers a node bearer plus public offer pin while the hub retains the private
-Ed25519 key. Exact signed offers verify and reserve before the worker-local
-`InferenceRunner` constructs or calls a provider; each physical attempt receives
-its own immutable receipt, and the hub independently settles a content-free MACed
-report without rerunning the model on retry. Forgery, replay, expiry, wrong-node,
-wrong-generation, stop, and late-output paths refuse honestly. The rejected
-151-path candidate was reduced to a final 40-path implementation at the owner's
-functional bar. Evidence is 864 passed, including separate-process loopback and
-the zero-finding mesh census; the full unit candidate lane is 4,643 passed. Three
-unchanged backend guards and two unchanged Speak mock files remain inherited
-baseline; 785 other web tests, tokens, architecture, typecheck, and production
-build pass. HS-131-17 meeting residuals are next; docs and the final real-model
-walk remain held until the fence reaches zero. Swift remains out of scope.
+(14/17).** HS-131-17 closes the final meeting residuals. The dormant
+session-owned MIR branch and config-time parallel `MeetingIntel` are deleted;
+current routed intelligence remains under the separately admitted deferred job.
+Meeting startup now derives liveness from the frozen plan without constructing a
+provider, and every automatic bookmark model attempt reaches the existing
+admitted child seam with the exact revision and one terminal receipt. The
+one-path census is now 100 sites with zero findings, zero blocking families, and
+zero unregistered execution. Captured meeting/census proof is 166 passed; the
+isolated full unit lane is 4,676 passed with only three byte-identical inherited
+UI/copy guards. HS-131-10 can now close at zero before entry-point docs and the
+final real-model walk. PR #454 remains draft; Swift remains out of scope.
 
 **Previous update (2026-08-08): Phase 129 — One Grammar — COMPLETE (11/11).**
 The exit walk passes all 38 surfaces with pinned-foot, stationary-head,

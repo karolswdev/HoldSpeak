@@ -1,6 +1,6 @@
 # Phase 131 — One Admission Path
 
-**Status:** IN PROGRESS (13/17).
+**Status:** IN PROGRESS (14/17).
 
 **Last updated:** 2026-08-14.
 
@@ -158,7 +158,7 @@ HS-131-11 and HS-131-12 remain held behind the fence.
 | HS-131-14 | Plugins receive admitted intelligence | done | [story-14](./story-14-plugin-provider-admission.md) | [evidence-story-14](./evidence-story-14.md) |
 | HS-131-15 | Speech side doors become sessions or stay lexical | done | [story-15](./story-15-speech-side-door-admission.md) | [evidence-story-15](./evidence-story-15.md) |
 | HS-131-16 | The mesh receiver proves authority locally | done | [story-16](./story-16-mesh-receiver-authority.md) | [evidence-story-16](./evidence-story-16.md) |
-| HS-131-17 | Meetings lose the parallel engine | backlog | [story-17](./story-17-meeting-residual-admission.md) | — |
+| HS-131-17 | Meetings lose the parallel engine | done | [story-17](./story-17-meeting-residual-admission.md) | [evidence-story-17](./evidence-story-17.md) |
 
 ## Delivery order
 
@@ -468,8 +468,20 @@ The evidence matrix is 864 passed, including separate-process loopback and the
 zero-finding mesh census; the full unit candidate lane is 4,643 passed. Three
 unchanged backend guards and two unchanged Speak test mocks remain inherited
 baseline, while 785 other web tests, tokens, architecture, typecheck, and build
-pass. Next: HS-131-17 removes the meeting residuals; HS-131-11 and HS-131-12 stay
-held until the final amendment lands and HS-131-10 closes at zero findings.
+pass.
+HS-131-17 is done — the final fence amendment deletes the dormant session-owned
+MIR branch and the parallel config-time `MeetingIntel`. `MeetingSession` now keeps
+only its frozen plan, admitted parent, closed fence, and explicit live flag;
+startup reads frozen placement readiness and constructs no provider. Automatic
+bookmark refinement goes through `_admitted_bookmark_label`, with one exact-
+revision child and terminal receipt per real attempt; deterministic, refused,
+failed, cancelled, and late cases keep the timestamp label. Deferred routed
+intelligence remains under its separate admitted queue parent. The one-path census
+is now 100 sites, ZERO findings, ZERO blocking families, and zero unregistered
+execution, with mutations proving both retired names fail if reintroduced.
+Captured proof is 166 passed; the isolated full unit lane is 4,676 passed with
+only the three unchanged inherited UI/copy guards. Next: rerun and close
+HS-131-10 at zero, then HS-131-11 docs and HS-131-12's real-model walk.
 The roadmap still has inherited structural lint errors in old phases; they are
 named baseline and are not silently bundled into this product phase.
 
@@ -487,6 +499,13 @@ named baseline and are not silently bundled into this product phase.
 
 ## Decisions made (this phase)
 
+- 2026-08-14 — **Delete dormant live-session MIR; keep separately admitted
+  deferred routing.** HS-131-17 removes every private `mir_*` constructor input,
+  plugin enumeration, and post-stop `process_meeting_state()` dispatch from
+  `MeetingSession`. It also deletes the config-time `MeetingIntel`; frozen plan
+  readiness drives explicit liveness, and automatic bookmarks use the existing
+  admitted child seam. The current deferred queue continues to decide routed
+  intelligence under its own authenticated parent.
 - 2026-08-14 — **HS-131-16 ships at the owner's functional bar.** The exact
   40-path candidate passes the 864-test evidence matrix and the 4,643-test unit
   candidate lane. Pairing, authenticated offer verification, worker-local

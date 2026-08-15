@@ -457,8 +457,7 @@ ADAPTER_ALLOWLIST: dict[tuple[str, str], str] = {
     ("holdspeak/intel/engine.py", "MeetingIntel._analyze_once"): "L: the analysis leaf an admitted meeting child dispatches",
     ("holdspeak/intel/engine.py", "MeetingIntel._analyze_stream"): "L: the streaming analysis leaf an admitted meeting child dispatches",
     ("holdspeak/intel/engine.py", "MeetingIntel.generate_title"): "L: the auto-title leaf an admitted child dispatches",
-    ("holdspeak/intel/engine.py", "MeetingIntel.generate_bookmark_label"): "L: the bookmark-label leaf (still reachable from the bookmark-auto-label finding)",
-    ("holdspeak/intel/engine.py", "MeetingIntel.generate_bookmark_label_with_context"): "L: the context-bearing bookmark-label leaf an admitted child dispatches",
+    ("holdspeak/intel/engine.py", "MeetingIntel.generate_bookmark_label_with_context"): "L: the ONE bookmark-label leaf; both the live and the deferred admitted children dispatch it",
     ("holdspeak/intel/mesh_relay.py", "MeshRelayIntel._chat_completion_text"): "L: the mesh envelope leaf; carries the frozen revision + warrant",
     ("holdspeak/kernel/prompt_adapter.py", "CanonicalPromptAdapter.dispatch"): "L: the canonical adapter the runner hands an engine to",
     ("holdspeak/plugins/dictation/runtime_llama_cpp.py", "LlamaCppRuntime.classify"): "L: local constrained-decoding classify leaf",
@@ -552,19 +551,35 @@ NAMED_FINDINGS: dict[str, str] = {
     # `_configured_engine`, dominated by the validating `configured_meeting_intel`
     # (asserted below), and the public name deleted. The name stays in the
     # vocabulary with zero permitted sites, so typing it again fails the fence.
-    "holdspeak/meeting_session/session.py:548 MeetingIntel": "legacy-live-meeting-engine",
-    "holdspeak/meeting_session/bookmarks.py:45 generate_bookmark_label": "bookmark-auto-label",
+    #
+    # HS-131-17 CLOSED the last two families, and the ledger is now EMPTY.
+    #
+    # `legacy-live-meeting-engine` (session.py `MeetingIntel(**kwargs)`): deleted.
+    # `MeetingSession.start()` no longer preflights a provider or constructs an
+    # engine beside its frozen plan. It reads the plan's own placement readiness,
+    # sets the explicit `_intel_live` state, and lets the FIRST actual child build
+    # the exact frozen revision inside `InferenceRunner`.
+    #
+    # `bookmark-auto-label` (bookmarks.py `generate_bookmark_label`): admitted.
+    # Automatic refinement goes through `_admitted_bookmark_label` — one trusted
+    # `inference.invoke@1` child, one terminal receipt — and the context-only
+    # engine leaf it used to call is deleted. Both names stay in the vocabulary
+    # with zero permitted sites, so retyping either fails this fence (proved by
+    # the two mutations at the end of this module).
 }
 
-#: The one family with no executable site to pin: a DORMANT branch
-#: (``mir_routing_enabled=True``) that would route through an unadmitted path if
-#: it were ever switched on. Inventoried, not censused.
-FINDINGS_WITHOUT_A_SITE: dict[str, str] = {
-    "holdspeak/meeting_session/session.py": "dormant-mir",
-}
+#: EMPTY since HS-131-17. `dormant-mir` was the one family with no executable
+#: site: a private `mir_routing_enabled=True` branch that would have routed
+#: through an unadmitted path if it were ever switched on. Production never
+#: switched it on — `WebRuntime._start_meeting` supplied no enable flag, plugin
+#: host, database, or tuning — so the story removed the branch itself, along with
+#: its constructor inputs, its plugin enumeration, and its post-close
+#: `process_meeting_state()` dispatch. Routed meeting intelligence remains a
+#: product path in the separately admitted deferred job.
+FINDINGS_WITHOUT_A_SITE: dict[str, str] = {}
 
-#: The complete blocking ledger. EVERY family blocks this story's close until the
-#: owner charters its amendment story (charter §Scope, Sol orchestrator disposition).
+#: The complete blocking ledger — EMPTY as of HS-131-17. Every family left by
+#: deletion or admission; none was ever promoted onto a list.
 BLOCKING_FAMILIES: frozenset[str] = frozenset(NAMED_FINDINGS.values()) | frozenset(
     FINDINGS_WITHOUT_A_SITE.values()
 )
@@ -668,15 +683,17 @@ def test_every_model_execution_site_is_in_exactly_one_bucket() -> None:
     for site in sites:
         counts[str(_bucket(site))] += 1
     assert sum(counts.values()) == len(sites)
-    # Measured after HS-131-16 removed the mesh receiver's two sites. They left
-    # by DELETION, not promotion: `MeshServeWorker` no longer names an engine
-    # factory or a completion verb anywhere in its body, so the census finds
-    # nothing there to bucket. The whole worker spine (offer verification,
-    # replay reservation, local authority, local runner) adds ZERO new sites,
-    # because it constructs no provider — it hands the frozen revision to the
-    # one admitted gateway and lets the gateway build.
-    assert len(sites) == 103
-    assert counts["finding"] == 2
+    # Measured after HS-131-17 removed the last three sites, all by DELETION:
+    # the live session's `MeetingIntel(**kwargs)` construction, its direct
+    # `generate_bookmark_label` call, and the context-only engine leaf that call
+    # reached (whose body held the `_chat_completion_text` open). The admitted
+    # bookmark path adds NO site: `_admitted_bookmark_label` already existed and
+    # its dispatch closure is already allowlisted.
+    assert len(sites) == 100
+    # THE headline: the blocking ledger is empty. Every model execution in
+    # production is now the gateway, a reviewed adapter, or an admitted seam.
+    assert counts["finding"] == 0
+    assert BLOCKING_FAMILIES == frozenset()
     print(
         "one-path census:", len(sites), "sites",
         {**counts, "unregistered": 0},
@@ -911,41 +928,59 @@ def test_no_public_factory_scope_can_escape_context_validation() -> None:
 
 
 def test_the_findings_ledger_is_the_complete_blocking_package() -> None:
-    """What is LEFT of the eleven-family package. All still blocking.
+    """The eleven-family package is CLOSED: nothing blocks, nothing was waived.
 
-    HS-131-15 closed two more (`dictation-dry-run`, `dictation-command`) by
-    admission through their callers' fresh text-entry sessions. HS-131-14 closed
-    two more (`plugin-default-provider`, `legacy-uncontextual-factory`), both by
-    deletion. HS-131-13 closed three families outright — `cadence` (migrated onto
-    the admitted spine), `decisions-route` and `delivery-legacy-factory` (both
-    deleted) — and emptied `legacy-uncontextual-factory` of every site that lived
-    in `build_intel_for_target`. A family may only leave this set by being deleted
-    or admitted; promoting one into `ADAPTER_ALLOWLIST` is not available.
+    Every family left by deletion or admission, never by promotion into a list.
+    HS-131-13 closed `cadence`, `decisions-route`, `delivery-legacy-factory`;
+    HS-131-14 closed `plugin-default-provider` and `legacy-uncontextual-factory`;
+    HS-131-15 closed `dictation-dry-run` and `dictation-command`; HS-131-16 closed
+    `mesh-receiver`; HS-131-17 closes the last three — `dormant-mir` (the branch
+    deleted), `legacy-live-meeting-engine` (the parallel live engine deleted), and
+    `bookmark-auto-label` (routed through the admitted child seam).
     """
-    assert BLOCKING_FAMILIES == {
-        "dormant-mir",
-        # HS-131-16 removed `mesh-receiver` (2 sites) by ADMISSION: the worker
-        # proves hub authority cryptographically, reserves the offer atomically,
-        # and runs every physical attempt through its own `InferenceRunner`.
-        # HS-131-14 removed `plugin-default-provider` (30 sites) and
-        # `legacy-uncontextual-factory` (2 sites). Both left by DELETION: the
-        # plugin fallbacks no longer exist and the uncontextual factory is a
-        # private, dominated body behind the validating entrance.
-        # NEW in HS-131-10's own census (not in the Sol ruling's package):
-        "legacy-live-meeting-engine",
-        "bookmark-auto-label",
+    assert BLOCKING_FAMILIES == frozenset()
+    assert NAMED_FINDINGS == {}
+    assert FINDINGS_WITHOUT_A_SITE == {}
+    # An empty ledger is only honest if the families did not simply move onto a
+    # list. The meeting session's OWN modules — the two that held the closing
+    # families — may not appear in the adapter allowlist at all, and neither may a
+    # command scope; those were the remedies a closing family might have taken.
+    forbidden = sorted(
+        f"{path}:{scope}" for path, scope in ADAPTER_ALLOWLIST
+        if path.startswith("holdspeak/commands/")
+        or path in {
+            "holdspeak/meeting_session/session.py",
+            "holdspeak/meeting_session/bookmarks.py",
+        }
+    )
+    assert forbidden == [], (
+        f"a meeting-session or command scope on the adapter allowlist: {forbidden} "
+        "— that is not an available remedy for a blocking family"
+    )
+    # The meeting entries that DO exist are exactly the admitted dispatch
+    # closures HS-131-08 built: one per capability, live and deferred, each an
+    # `L:` closure inside one claimed child. Nothing was added here to close a
+    # family, and nothing here is a factory.
+    meeting_entries = {
+        (path, scope): justification
+        for (path, scope), justification in ADAPTER_ALLOWLIST.items()
+        if path.startswith("holdspeak/meeting_session/")
     }
-    # Two families still have pinned executable sites; `dormant-mir` is the one
-    # inventoried branch with none. Asserting the split keeps a family from
-    # vanishing into the site-less bucket instead of being fixed.
-    assert set(NAMED_FINDINGS.values()) == BLOCKING_FAMILIES - {"dormant-mir"}
-    assert len(set(NAMED_FINDINGS.values())) == 2
-    # The receiver family is GONE, not renamed and not waived.
-    assert "mesh-receiver" not in BLOCKING_FAMILIES
-    assert not any(
-        scope.startswith("holdspeak/commands/mesh_serve.py")
-        for scope, _ in ADAPTER_ALLOWLIST
-    ), "a command scope on the adapter allowlist is not an available remedy"
+    assert set(meeting_entries) == {
+        ("holdspeak/meeting_session/intel_admission.py", "IntelAdmissionMixin._admitted_live_window.call"),
+        ("holdspeak/meeting_session/intel_admission.py", "IntelAdmissionMixin._admitted_bookmark_label.call"),
+        ("holdspeak/meeting_session/intel_admission.py", "IntelAdmissionMixin._admitted_auto_title.call"),
+        ("holdspeak/meeting_session/deferred_admission.py", "DeferredIntelJob.analyze.call"),
+        ("holdspeak/meeting_session/deferred_admission.py", "DeferredIntelJob.bookmark_label.call"),
+        ("holdspeak/meeting_session/deferred_admission.py", "DeferredIntelJob.auto_title.call"),
+    }
+    assert all(
+        justification.startswith("L:") and scope.endswith(".call")
+        for (_path, scope), justification in meeting_entries.items()
+    )
+    # ...and the retired names are still DANGEROUS, so reintroducing one fails.
+    for retired in ("MeetingIntel", "generate_bookmark_label", "build_configured_meeting_intel"):
+        assert retired in DANGEROUS
 
 
 def test_text_entry_build_pipeline_sites_are_admitted_seams_not_findings() -> None:
@@ -1238,6 +1273,30 @@ class RetypedPlugin:
         return self._cached_provider._chat_completion_text(messages, temperature=0.2, max_tokens=800), chat
 '''
 
+SYNTHETIC_REINTRODUCED_LIVE_MEETING_ENGINE = '''
+"""HS-131-17's own mutation: the parallel live meeting engine, retyped.
+
+`MeetingSession.start()` used to preflight the provider runtime and construct a
+long-lived `MeetingIntel` beside the already frozen plan, and `add_bookmark`
+then handed that object to a background thread which called the context-only
+`generate_bookmark_label` leaf directly. Both are deleted, and deleted code is
+not a fence: retyping either must come back as unregistered, by name.
+"""
+import threading
+
+
+class RetypedSession:
+    def start(self):
+        self._intel = MeetingIntel(provider="local")
+        return self._intel
+
+    def add_bookmark(self, bookmark, context):
+        threading.Thread(target=self._label, args=(bookmark, context)).start()
+
+    def _label(self, bookmark, context):
+        bookmark.label = self._intel.generate_bookmark_label(context)
+'''
+
 #: Each mutation's EXACT expected census output (Sol Amendment 5: a mutation
 #: proof must show the INTENDED guard fired, naming the intended site — "some
 #: assertion failed" is not a proof). Written literally so a change in the
@@ -1362,6 +1421,19 @@ MUTATIONS: tuple[tuple[str, str, list[str]], ...] = (
             " RetypedPlugin._call_intel _chat_completion_text",
             "UNREGISTERED_MODEL_EXECUTION holdspeak/plugins/builtin/synthetic_retyped_fallback.py:27"
             " RetypedPlugin._call_intel _chat_completion_text",
+        ],
+    ),
+    (
+        # HS-131-17: the deleted live meeting engine and the direct bookmark
+        # label, retyped in the module they were deleted from. Neither name has a
+        # finding to fall into any more, so both are simply unregistered.
+        "holdspeak/meeting_session/synthetic_live_engine.py",
+        SYNTHETIC_REINTRODUCED_LIVE_MEETING_ENGINE,
+        [
+            "UNREGISTERED_MODEL_EXECUTION holdspeak/meeting_session/synthetic_live_engine.py:15"
+            " RetypedSession.start MeetingIntel",
+            "UNREGISTERED_MODEL_EXECUTION holdspeak/meeting_session/synthetic_live_engine.py:22"
+            " RetypedSession._label generate_bookmark_label",
         ],
     ),
 )
@@ -1497,6 +1569,44 @@ def build_intel_for_revision(revision):
         "UNREGISTERED_MODEL_EXECUTION holdspeak/services/impostor.py:3"
         " build_intel_for_revision MeetingIntel"
     ]
+
+
+# ------------------------------------------- HS-131-17: the live meeting fence
+
+
+def test_the_live_meeting_session_names_no_model_execution_at_all() -> None:
+    """The positive half of closing the last two meeting families.
+
+    A live `MeetingSession` holds its frozen plan, its parent context, and an
+    explicit liveness flag — never an engine. So the two modules that used to
+    construct and call one hold no census site: `session.py` builds nothing at
+    start, and `bookmarks.py` reaches a label only through the admitted seam
+    (whose dispatch closure lives in `intel_admission.py` and is allowlisted).
+    """
+    for module in ("session.py", "bookmarks.py"):
+        relative = f"holdspeak/meeting_session/{module}"
+        sites = [site for site in census() if site.path == relative]
+        assert sites == [], f"{relative} named model execution again: {sites}"
+
+    # The dormant MIR branch is GONE, not merely disabled by default: no switch,
+    # no plugin host, and no import of the routing pipeline it used to call after
+    # the live parent had already closed.
+    session_tree = ast.parse(
+        (REPO / "holdspeak/meeting_session/session.py").read_text(encoding="utf-8")
+    )
+    names = {
+        node.id for node in ast.walk(session_tree) if isinstance(node, ast.Name)
+    } | {
+        node.attr for node in ast.walk(session_tree) if isinstance(node, ast.Attribute)
+    }
+    for retired in ("mir_routing_enabled", "_mir_plugin_host", "process_meeting_state"):
+        assert retired not in names, f"the dormant MIR branch came back: {retired}"
+    imported = {
+        node.module or "" for node in ast.walk(session_tree) if isinstance(node, ast.ImportFrom)
+    }
+    assert not any("plugins.pipeline" in module for module in imported)
+    bookmarks_source = (REPO / "holdspeak/meeting_session/bookmarks.py").read_text(encoding="utf-8")
+    assert "_admitted_bookmark_label" in bookmarks_source
 
 
 # ------------------------------------------------- HS-131-16: the receiver fence

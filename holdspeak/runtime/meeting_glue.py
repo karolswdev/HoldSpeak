@@ -228,16 +228,16 @@ class MeetingGlueMixin:
             )
         # HS-36-05 built the LLM-assisted per-segment intent probe here, from the
         # configured engine, BEFORE the session was admitted — a model call with no
-        # child, no receipt, and no frozen revision behind it. HS-131-14 deletes that
+        # child, no receipt, and no frozen revision behind it. HS-131-14 deleted that
         # construction outright: a probe exists only where an admitted dispatch handle
-        # does (`build_segment_probe(dispatch)`), and MIR's admitted routing pass is
-        # HS-131-17's to build. Until then this path is exactly what it already was on
-        # every probe failure — lexical scoring.
-        segment_probe = None
+        # does (`build_segment_probe(dispatch)`). HS-131-17 then deleted the dormant
+        # session-owned routing branch this placeholder was still feeding, so the
+        # session takes no probe argument at all. Routed meeting intelligence runs in
+        # the deferred job, under its own admitted parent.
         if getattr(self.config.meeting, "intent_segment_probe_enabled", False):
             log.info(
                 "segment intent probe requires an admitted routing child; "
-                "using lexical scoring"
+                "routed intelligence runs in the deferred job"
             )
 
         # HS-84-01: the session's cloud leg runs where the assigned RuntimeProfile
@@ -273,10 +273,6 @@ class MeetingGlueMixin:
                 diarization_enabled=self.config.meeting.diarization_enabled,
                 diarize_mic=self.config.meeting.diarize_mic,
                 cross_meeting_recognition=self.config.meeting.cross_meeting_recognition,
-                mir_disabled_plugins=list(
-                    getattr(self.config.meeting, "disabled_plugins", []) or []
-                ),
-                mir_segment_probe=segment_probe,
                 principal=principal,
             )
             state = session.start()

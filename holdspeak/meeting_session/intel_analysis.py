@@ -27,14 +27,12 @@ if TYPE_CHECKING:
 # Optional imports for intel (the same guarded pattern as session.py).
 try:
     from ..intel import (
-        MeetingIntel,
         IntelResult,
         ActionItem,
         get_intel_runtime_status,
         resolve_intel_provider,
     )
 except ImportError:
-    MeetingIntel = None  # type: ignore
     IntelResult = None  # type: ignore
     ActionItem = None  # type: ignore
     get_intel_runtime_status = None  # type: ignore
@@ -59,7 +57,7 @@ log = get_logger("meeting_session")
 class IntelAnalysisMixin:
     def _maybe_run_intel(self) -> None:
         """Run intel analysis in background if not already running."""
-        if self._intel is None:
+        if not self._intel_live:
             return
 
         # Check if intel thread is already running
@@ -82,8 +80,12 @@ class IntelAnalysisMixin:
         already running are not model work and admit nothing. Streamed tokens
         stay ephemeral; the snapshot lands only from the winning child receipt's
         staged projection, so a cancelled session cannot publish late output.
+
+        HS-131-17: liveness is the explicit ``_intel_live`` state, not the
+        presence of an engine object. The engine for this window is built inside
+        the admitted child, from the plan's exact frozen revision.
         """
-        if self._intel is None:
+        if not self._intel_live:
             return
 
         # Get current transcript
@@ -147,10 +149,12 @@ class IntelAnalysisMixin:
     def _defer_or_error_intel(self, error: Any) -> None:
         """The pre-existing deferred/error branch, shared by every failure path."""
         log.error(f"Intel analysis failed: {error}")
+        # A failed provider leg is not live, whether the owner permits deferred
+        # aftercare or asked for an immediate terminal error (HS-131-17).
+        with self._lock:
+            self._intel_live = False
         if self.intel_deferred_enabled:
             self._deferred_intel_reason = str(error)
-            with self._lock:
-                self._intel = None
             self._set_intel_status("queued", f"Deferred intel required: {error}")
         else:
             self._set_intel_status("error", str(error), completed_at=datetime.now())
@@ -216,8 +220,11 @@ class IntelAnalysisMixin:
         Called during final analysis to improve bookmark labels with:
         - High-level meeting summary for grounding
         - Local ±10s context around each bookmark
+
+        HS-131-17: the gate is the frozen plan's ``bookmark-label`` capability,
+        never an engine object. A plan without it refuses by name inside the seam.
         """
-        if self._intel is None or self._state is None:
+        if self._state is None or not self._bookmark_label_admissible():
             return
 
         bookmarks = self._state.bookmarks
