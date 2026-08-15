@@ -177,6 +177,16 @@ describe("ModelsModule (HS-112-01)", () => {
     }
   });
 
+  it("renders the meetings placement rule where the placement is set", async () => {
+    render(
+      <ModelsModule settings={settings} update={vi.fn()} onRefuse={vi.fn()} />,
+    );
+    await screen.findByDisplayValue("LAN llama");
+    expect(
+      screen.getByText("DESTINATION WINS · PROVIDER DECIDES WHEN NO DESTINATION"),
+    ).toBeInTheDocument();
+  });
+
   it("never touches a legacy endpoint field", async () => {
     const update = vi.fn();
     render(
@@ -187,5 +197,183 @@ describe("ModelsModule (HS-112-01)", () => {
     for (const path of paths) {
       expect(path).not.toMatch(/intel_cloud|openai_compatible/);
     }
+  });
+});
+
+/* ── HS-132-10 — ONE meetings placement dial ─────────────────────────────
+   The Provider cycle used to live in the Meetings prefs module as a SECOND,
+   independent placement dial with no precedence signal: with a destination
+   adopted, picking LOCAL there did nothing and said nothing. It is now
+   subordinate to the destination pointer, in the pointer's own home, and it
+   names its override state from the hub's provenance. */
+
+const placed = (placement: Record<string, unknown>, meeting = {}) => ({
+  ...settings,
+  meeting: { intel_profile_id: null, intel_provider: "local", ...meeting },
+  _placement: { meeting: placement },
+});
+
+const LOCAL = {
+  placement_source: "provider",
+  placement_reason: "",
+  provider_intent: "local",
+  provider_honored: true,
+  boundary: "local",
+  target_id: "",
+  target_name: "",
+  engine: "local",
+  model: "qwen3-4b",
+  node: "",
+  runnable: true,
+  runnable_reason: "",
+};
+
+describe("meetings placement dial (HS-132-10)", () => {
+  it("names the local placement and leaves the provider fallback live", async () => {
+    render(
+      <ModelsModule settings={placed(LOCAL)} update={vi.fn()} onRefuse={vi.fn()} />,
+    );
+    await screen.findByDisplayValue("LAN llama");
+    expect(
+      screen.getByText("RUNS ON · HUB DEFAULT · LOCAL · QWEN3-4B"),
+    ).toBeInTheDocument();
+    const provider = screen.getByLabelText("Meetings provider") as HTMLSelectElement;
+    expect(provider.disabled).toBe(false);
+    expect(provider.value).toBe("local");
+    expect(screen.queryByText(/PROVIDER SELECTION IGNORED/)).toBeNull();
+  });
+
+  it("names the cloud placement", async () => {
+    render(
+      <ModelsModule
+        settings={placed(
+          { ...LOCAL, provider_intent: "cloud", boundary: "cloud", engine: "cloud", model: "gpt-5-mini" },
+          { intel_provider: "cloud" },
+        )}
+        update={vi.fn()}
+        onRefuse={vi.fn()}
+      />,
+    );
+    await screen.findByDisplayValue("LAN llama");
+    expect(
+      screen.getByText("RUNS ON · HUB DEFAULT · CLOUD · GPT-5-MINI"),
+    ).toBeInTheDocument();
+    expect((screen.getByLabelText("Meetings provider") as HTMLSelectElement).value).toBe(
+      "cloud",
+    );
+  });
+
+  it("disables the provider fallback and names the override when a destination is adopted", async () => {
+    render(
+      <ModelsModule
+        settings={placed(
+          {
+            ...LOCAL,
+            placement_source: "destination",
+            provider_honored: false,
+            boundary: "private_network",
+            target_id: "p-43",
+            target_name: "LAN llama",
+            engine: "cloud",
+            model: "Qwen3.5-9B-Q6_K",
+          },
+          { intel_profile_id: "p-43" },
+        )}
+        update={vi.fn()}
+        onRefuse={vi.fn()}
+      />,
+    );
+    await screen.findByDisplayValue("LAN llama");
+    // The destination decides — and the subordinate dial SAYS SO instead of
+    // accepting a silent no-op click.
+    expect(
+      screen.getByText("PROVIDER SELECTION IGNORED · DESTINATION LAN LLAMA DECIDES"),
+    ).toBeInTheDocument();
+    expect(
+      (screen.getByLabelText("Meetings provider") as HTMLSelectElement).disabled,
+    ).toBe(true);
+    expect(
+      screen.getByText("RUNS ON · LAN LLAMA · PRIVATE_NETWORK · QWEN3.5-9B-Q6_K"),
+    ).toBeInTheDocument();
+  });
+
+  it("names a dropped destination pointer and keeps the provider live", async () => {
+    render(
+      <ModelsModule
+        settings={placed(
+          {
+            ...LOCAL,
+            placement_source: "provider-selection-ignored",
+            placement_reason: "assigned profile missing: gone",
+          },
+          { intel_profile_id: "gone" },
+        )}
+        update={vi.fn()}
+        onRefuse={vi.fn()}
+      />,
+    );
+    await screen.findByDisplayValue("LAN llama");
+    expect(
+      screen.getByText("DESTINATION SELECTION IGNORED · ASSIGNED PROFILE MISSING: GONE"),
+    ).toBeInTheDocument();
+    expect(
+      (screen.getByLabelText("Meetings provider") as HTMLSelectElement).disabled,
+    ).toBe(false);
+  });
+
+  it("names a placement that cannot run", async () => {
+    render(
+      <ModelsModule
+        settings={placed({
+          ...LOCAL,
+          runnable: false,
+          runnable_reason: "model file not found",
+        })}
+        update={vi.fn()}
+        onRefuse={vi.fn()}
+      />,
+    );
+    await screen.findByDisplayValue("LAN llama");
+    expect(
+      screen.getByText(/NOT RUNNABLE · MODEL FILE NOT FOUND/),
+    ).toBeInTheDocument();
+  });
+
+  it("marks exactly one row as the deciding control, in every state", async () => {
+    const { unmount } = render(
+      <ModelsModule settings={placed(LOCAL)} update={vi.fn()} onRefuse={vi.fn()} />,
+    );
+    await screen.findByDisplayValue("LAN llama");
+    expect(screen.getAllByText("DECIDES PLACEMENT")).toHaveLength(1);
+    expect(screen.getByText("NONE · PROVIDER DECIDES")).toBeInTheDocument();
+    unmount();
+
+    render(
+      <ModelsModule
+        settings={placed({
+          ...LOCAL,
+          placement_source: "destination",
+          provider_honored: false,
+          target_name: "LAN llama",
+        })}
+        update={vi.fn()}
+        onRefuse={vi.fn()}
+      />,
+    );
+    await screen.findByDisplayValue("LAN llama");
+    expect(screen.getAllByText("DECIDES PLACEMENT")).toHaveLength(1);
+    expect(screen.getByText("OVERRIDDEN")).toBeInTheDocument();
+  });
+
+  it("writes the provider fallback through the settings updater", async () => {
+    const update = vi.fn();
+    render(
+      <ModelsModule settings={placed(LOCAL)} update={update} onRefuse={vi.fn()} />,
+    );
+    await screen.findByDisplayValue("LAN llama");
+    fireEvent.change(screen.getByLabelText("Meetings provider"), {
+      target: { value: "cloud" },
+    });
+    expect(update).toHaveBeenCalledWith(["meeting", "intel_provider"], "cloud");
   });
 });

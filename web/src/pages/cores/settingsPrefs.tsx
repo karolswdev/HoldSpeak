@@ -72,6 +72,64 @@ export const EXPORT_FORMAT_OPTIONS = ["txt", "markdown", "json", "srt"].map(
 export const INTEL_PROVIDER_OPTIONS = ["local", "cloud"].map((value) => ({
   value,
 }));
+
+/* ── HS-132-10: the ONE meetings placement dial ──────────────────────────
+   Meetings placement had two independent faces (a Provider cycle here, a
+   RUNS ON destination pointer in Models) and no precedence signal, so
+   setting Provider = LOCAL under an adopted destination did nothing,
+   silently. The hub already decides with one rule; these read the
+   provenance it now ships (`_placement.meeting`) so the face states which
+   dial decided and what it loaded. Copy is label grammar, never prose. */
+
+export type MeetingPlacementWire = {
+  /** "destination" | "provider" | "provider-selection-ignored" */
+  placement_source?: string;
+  /** Why a set destination pointer was dropped (empty when none was). */
+  placement_reason?: string;
+  provider_intent?: string;
+  /** False exactly when an adopted destination decided instead. */
+  provider_honored?: boolean;
+  boundary?: string;
+  target_id?: string;
+  target_name?: string;
+  engine?: string;
+  model?: string;
+  node?: string;
+  runnable?: boolean;
+  runnable_reason?: string;
+};
+
+/** The precedence rule, rendered where the placement is set. */
+export const MEETING_PLACEMENT_RULE =
+  "DESTINATION WINS · PROVIDER DECIDES WHEN NO DESTINATION";
+
+export function meetingPlacement(
+  settings: Record<string, unknown> | undefined,
+): MeetingPlacementWire | null {
+  const block = (settings?._placement as
+    | { meeting?: MeetingPlacementWire }
+    | undefined)?.meeting;
+  return block && typeof block === "object" ? block : null;
+}
+
+/** WHERE meetings run right now, as one fact line. */
+export function placementLine(placement: MeetingPlacementWire): string {
+  const target = String(
+    placement.target_name || placement.node || "HUB DEFAULT",
+  ).toUpperCase();
+  const parts = ["RUNS ON", target, String(placement.boundary ?? "").toUpperCase()];
+  if (placement.model) parts.push(String(placement.model).toUpperCase());
+  return parts.filter(Boolean).join(" · ");
+}
+
+/** WHY the Provider dial did not decide. Empty string when it did. */
+export function providerIgnoredReason(placement: MeetingPlacementWire): string {
+  if (placement.provider_honored !== false) return "";
+  const target = String(
+    placement.target_name || placement.node || placement.target_id || "DESTINATION",
+  ).toUpperCase();
+  return `PROVIDER SELECTION IGNORED · DESTINATION ${target} DECIDES`;
+}
 export const MIR_PROFILE_OPTIONS = [
   "balanced",
   "architect",

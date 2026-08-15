@@ -124,7 +124,7 @@ one-line verdicts:
 | HS-132-07 | Workbench edits hold | in-progress | [story-07](./story-07-workbench-editing.md) | — |
 | HS-132-08 | Intelligence tells the truth | done | [story-08](./story-08-intelligence-truth.md) | [evidence-story-08](./evidence-story-08.md) |
 | HS-132-09 | The receipt names what loaded | done | [story-09](./story-09-receipt-model-honesty.md) | [evidence-story-09](./evidence-story-09.md) |
-| HS-132-10 | One meetings placement dial | in-progress | [story-10](./story-10-one-placement-dial.md) | — |
+| HS-132-10 | One meetings placement dial | done | [story-10](./story-10-one-placement-dial.md) | [evidence-story-10](./evidence-story-10.md) |
 | HS-132-11 | Cadence answers land | done | [story-11](./story-11-cadence-reply.md) | [evidence-story-11](./evidence-story-11.md) |
 | HS-132-12 | The regression net comes back green | backlog | [story-12](./story-12-green-net.md) | — |
 | HS-132-13 | The roadmap tells the truth | done | [story-13](./story-13-roadmap-truth.md) | [evidence-story-13](./evidence-story-13.md) |
