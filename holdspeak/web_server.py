@@ -634,7 +634,12 @@ class MeetingWebServer:
         meeting_aftercare_service = MeetingAftercareService(get_database(), notify=notify, observer=obs)
         meeting_service.bind_lifecycle(
             on_start=self.on_start,
-            on_stop=self.on_stop,
+            # HS-132-01: the meeting verb binds the no-fallback stop. The
+            # runtime-fallback `on_stop` sets `runtime_stop_event` when no
+            # meeting is live, so binding it here let a stop press with a stale
+            # orb exit the hub main loop and still answer success. Mirrors the
+            # partial-context composition in web/routes/meetings/live.py.
+            on_stop=self.on_meeting_stop or self.on_stop,
             on_bookmark=self.on_bookmark,
             on_update=self.on_update_meeting,
         )

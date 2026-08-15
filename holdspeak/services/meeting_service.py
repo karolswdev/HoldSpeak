@@ -27,7 +27,7 @@ from ..meeting_import import (
 )
 from ..meeting_session import MeetingState
 from ..principals import Principal
-from holdspeak.services.errors import NotFound, ValidationError
+from holdspeak.services.errors import ConflictError, NotFound, ValidationError
 
 
 def _accepts_principal(callback: Any) -> bool:

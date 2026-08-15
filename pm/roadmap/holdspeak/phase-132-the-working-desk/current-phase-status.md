@@ -113,22 +113,37 @@ one-line verdicts:
 
 ## Stories
 
-| # | Story | The ask it answers | Status |
-|---|---|---|---|
-| HS-132-01 | [Stopping a meeting never stops the hub](./story-01-meeting-stop-and-conflicts.md) | A stale Stop cannot kill my runtime; a resolved conflict answers 409, not 500 | backlog |
-| HS-132-02 | [The live meeting is a living board](./story-02-live-action-item-triage.md) | I can mark an action item done while the meeting is still running | backlog |
-| HS-132-03 | [The desk hears intelligence live](./story-03-realtime-frames-land.md) | Streams the hub already emits render on the desk; no orphan frames either way | backlog |
-| HS-132-04 | [One utterance, one pipeline](./story-04-one-pipeline-run.md) | Speaking in the Speak room is processed once, journaled once | backlog |
-| HS-132-05 | [The streaming mic is honest](./story-05-streaming-mic-honesty.md) | Long dictation keeps the floor; failures are named; no wasted Whisper passes | backlog |
-| HS-132-06 | [Desk writes report their failures](./story-06-write-receipts.md) | A failed create/drop/keep/dismiss names itself instead of doing nothing | backlog |
-| HS-132-07 | [Workbench edits hold](./story-07-workbench-editing.md) | Typing in an item keeps my characters; disabled and drop states say why | backlog |
-| HS-132-08 | [Intelligence tells the truth](./story-08-intelligence-truth.md) | No false ALL CLEAR; Brief triage persists; a recorded week shows in Changed | backlog |
-| HS-132-09 | [The receipt names what loaded](./story-09-receipt-model-honesty.md) | Ask/agent receipts and the hub manifest name the executed model, always | backlog |
-| HS-132-10 | [One meetings placement dial](./story-10-one-placement-dial.md) | Setting where meetings run is one control that shows what actually decides | backlog |
-| HS-132-11 | [Cadence answers land](./story-11-cadence-reply.md) | Send reply delivers to the waiting agent instead of 404 | backlog |
-| HS-132-12 | [The regression net comes back green](./story-12-green-net.md) | CI "Tests" is green on main and a new break is visible again | backlog |
-| HS-132-13 | [The roadmap tells the truth](./story-13-roadmap-truth.md) | Orientation tools report reality; Phase 120's record exists in git | backlog |
-| HS-132-14 | [The walk](./story-14-the-walk.md) | Screenshot walk at both widths + live `.43` receipt-honesty proof | backlog |
+| ID | Story | Status | Story file | Evidence |
+|---|---|---|---|---|
+| HS-132-01 | Stopping a meeting never stops the hub | done | [story-01](./story-01-meeting-stop-and-conflicts.md) | [evidence-story-01](./evidence-story-01.md) |
+| HS-132-02 | The live meeting is a living board | backlog | [story-02](./story-02-live-action-item-triage.md) | — |
+| HS-132-03 | The desk hears intelligence live | backlog | [story-03](./story-03-realtime-frames-land.md) | — |
+| HS-132-04 | One utterance, one pipeline | in-progress | [story-04](./story-04-one-pipeline-run.md) | — |
+| HS-132-05 | The streaming mic is honest | backlog | [story-05](./story-05-streaming-mic-honesty.md) | — |
+| HS-132-06 | Desk writes report their failures | in-progress | [story-06](./story-06-write-receipts.md) | — |
+| HS-132-07 | Workbench edits hold | backlog | [story-07](./story-07-workbench-editing.md) | — |
+| HS-132-08 | Intelligence tells the truth | backlog | [story-08](./story-08-intelligence-truth.md) | — |
+| HS-132-09 | The receipt names what loaded | backlog | [story-09](./story-09-receipt-model-honesty.md) | — |
+| HS-132-10 | One meetings placement dial | backlog | [story-10](./story-10-one-placement-dial.md) | — |
+| HS-132-11 | Cadence answers land | in-progress | [story-11](./story-11-cadence-reply.md) | — |
+| HS-132-12 | The regression net comes back green | backlog | [story-12](./story-12-green-net.md) | — |
+| HS-132-13 | The roadmap tells the truth | in-progress | [story-13](./story-13-roadmap-truth.md) | — |
+| HS-132-14 | The walk | backlog | [story-14](./story-14-the-walk.md) | — |
+
+The ask each story answers, in one line: 01 — a stale Stop cannot kill my
+runtime and a resolved conflict answers 409, not 500; 02 — I can mark an
+action item done while the meeting is still running; 03 — streams the hub
+already emits render on the desk, no orphan frames either way; 04 — speaking
+in the Speak room is processed once, journaled once; 05 — long dictation
+keeps the floor and failures are named; 06 — a failed create/drop/keep/
+dismiss names itself instead of doing nothing; 07 — typing in an item keeps
+my characters, disabled and drop states say why; 08 — no false ALL CLEAR,
+Brief triage persists, a recorded week shows in Changed; 09 — receipts and
+the manifest name the executed model, always; 10 — one placement control
+that shows what actually decides; 11 — Send reply delivers instead of 404;
+12 — CI "Tests" is green on main and a new break is visible again; 13 —
+orientation tools report reality and Phase 120's record exists in git;
+14 — the screenshot walk at both widths plus the live `.43` proof.
 
 ## Suggested order
 
