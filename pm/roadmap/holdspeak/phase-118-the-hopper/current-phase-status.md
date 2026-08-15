@@ -1,6 +1,10 @@
 # Phase 118 — The Hopper
 
-**Status:** backlog (0/10).
+**Status:** in-progress (9/10). (Record corrected 2026-08-15 by HS-132-13:
+the header said backlog (0/10) while the story table and the shipping
+commits — 6522739b wave one 6/10, ab3acb44 wave two 8/10, 28cda81a story 05
+9/10, all on main — show nine stories done. HS-118-10, the walk, remains
+open and is a standing owner-sitting IOU.)
 
 **Last updated:** 2026-08-05 (chartered, revised after Terra review).
 

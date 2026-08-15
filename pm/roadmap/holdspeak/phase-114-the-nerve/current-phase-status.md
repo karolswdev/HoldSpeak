@@ -1,6 +1,13 @@
 # Phase 114 - The Nerve
 
-**Status:** DRAFT. Seven stories that wire the intelligence
+**Status:** not started (0/7). (Record corrected 2026-08-15 by HS-132-13:
+six stories were marked in-progress but zero HS-114 commits ever existed —
+only a scaffold saved in 068f36ff. The Phase-132 audit found the phase's
+named gaps largely closed elsewhere (per-destination probe route,
+inferenceEgress readout, honest this_machine readiness via HS-130-03, seed
+presets via Phase 112); a surface-by-surface re-audit of its findings is
+the precondition for closing or deleting this phase — see the audit's
+unknowns.) Originally: Seven stories that wire the intelligence
 architecture to the user's hands. HoldSpeak has 14 distinct AI
 surfaces; on a fresh install, zero of them work. This phase makes
 intelligence reachable from a fresh desk, puts Ask AI behind a
@@ -77,10 +84,10 @@ DRAFT — awaiting owner charter.
 
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
-| HS-114-01 | The seeded nerve | in-progress | [story-01-the-seeded-nerve](./story-01-the-seeded-nerve.md) | — |
-| HS-114-02 | Ask AI is a first-class citizen | in-progress | [story-02-ask-first-class](./story-02-ask-first-class.md) | — |
-| HS-114-03 | Per-destination probe | in-progress | [story-03-per-destination-probe](./story-03-per-destination-probe.md) | — |
-| HS-114-04 | Egress on every inference path | in-progress | [story-04-egress-everywhere](./story-04-egress-everywhere.md) | — |
-| HS-114-05 | Editor transforms: propose, don't replace | in-progress | [story-05-editor-proposals](./story-05-editor-proposals.md) | — |
-| HS-114-06 | The honest target | in-progress | [story-06-the-honest-target](./story-06-the-honest-target.md) | — |
+| HS-114-01 | The seeded nerve | backlog | [story-01-the-seeded-nerve](./story-01-the-seeded-nerve.md) | — |
+| HS-114-02 | Ask AI is a first-class citizen | backlog | [story-02-ask-first-class](./story-02-ask-first-class.md) | — |
+| HS-114-03 | Per-destination probe | backlog | [story-03-per-destination-probe](./story-03-per-destination-probe.md) | — |
+| HS-114-04 | Egress on every inference path | backlog | [story-04-egress-everywhere](./story-04-egress-everywhere.md) | — |
+| HS-114-05 | Editor transforms: propose, don't replace | backlog | [story-05-editor-proposals](./story-05-editor-proposals.md) | — |
+| HS-114-06 | The honest target | backlog | [story-06-the-honest-target](./story-06-the-honest-target.md) | — |
 | HS-114-07 | The walk | backlog | [story-07-the-walk](./story-07-the-walk.md) | — |

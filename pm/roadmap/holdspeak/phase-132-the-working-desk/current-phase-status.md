@@ -127,7 +127,7 @@ one-line verdicts:
 | HS-132-10 | One meetings placement dial | backlog | [story-10](./story-10-one-placement-dial.md) | — |
 | HS-132-11 | Cadence answers land | done | [story-11](./story-11-cadence-reply.md) | [evidence-story-11](./evidence-story-11.md) |
 | HS-132-12 | The regression net comes back green | backlog | [story-12](./story-12-green-net.md) | — |
-| HS-132-13 | The roadmap tells the truth | in-progress | [story-13](./story-13-roadmap-truth.md) | — |
+| HS-132-13 | The roadmap tells the truth | done | [story-13](./story-13-roadmap-truth.md) | [evidence-story-13](./evidence-story-13.md) |
 | HS-132-14 | The walk | backlog | [story-14](./story-14-the-walk.md) | — |
 
 The ask each story answers, in one line: 01 — a stale Stop cannot kill my
