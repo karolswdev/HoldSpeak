@@ -86,6 +86,21 @@ export function InstrumentStrip({
           onMicState(next);
         }}
         onLevel={onLevel}
+        /* HS-132-04 — a configured keyword FIRED on the hub: the command
+           consumed the utterance, so nothing is dictated as prose (the
+           hotkey path's contract). The one receipt channel names what ran. */
+        onCommand={(fired) => {
+          setLandedMs(null);
+          if (fired.ok) {
+            setPhase("landed");
+            setRefusal("");
+            announce(`COMMAND · ${fired.preview}`);
+          } else {
+            setPhase("refused");
+            setRefusal("command_failed");
+            announce(`⚠ COMMAND FAILED · ${fired.preview}`, "warn");
+          }
+        }}
         onFailure={(category) => {
           setPhase("refused");
           setRefusal(category);

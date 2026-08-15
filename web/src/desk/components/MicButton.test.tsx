@@ -128,6 +128,115 @@ describe("MicButton retained audio", () => {
     fireEvent.click(retry);
 
     await waitFor(() => expect(onText).toHaveBeenCalledWith("Recovered words"));
-    expect(mocks.retryPendingTranscription).toHaveBeenCalledWith("desk-ask");
+    // HS-132-04: retained audio is retried as the kind of utterance it was —
+    // a field fill stays verbatim and unjournaled.
+    expect(mocks.retryPendingTranscription).toHaveBeenCalledWith("desk-ask", {
+      pipeline: false,
+    });
+  });
+});
+
+/* HS-132-04 — one utterance, one pipeline.
+   A field mic is the user typing with their voice: it transcribes VERBATIM,
+   with no intent routing, enrichment, rewriting or journal row. Only the
+   Speak room's transport key (the dictate-for-delivery surface) asks for the
+   pipeline, and that is the utterance's ONE pass. */
+describe("MicButton pipeline declaration (HS-132-04)", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    support.supported = true;
+    support.reason = null;
+    mocks.loadPendingVoice.mockResolvedValue(null);
+    mocks.startStreamSession.mockResolvedValue({
+      stop: vi.fn().mockResolvedValue("a note tag"),
+      cancel: vi.fn(),
+    });
+  });
+
+  it("a desk field mic asks for NO pipeline", async () => {
+    render(<MicButton onText={vi.fn()} />);
+    fireEvent.click(screen.getByRole("button", { name: "Speak" }));
+
+    await waitFor(() => expect(mocks.startStreamSession).toHaveBeenCalled());
+    expect(mocks.startStreamSession.mock.calls[0][1]).toEqual({
+      pipeline: false,
+    });
+  });
+
+  it("the Speak room's transport key keeps the pipeline", async () => {
+    render(<MicButton variant="transport" onText={vi.fn()} />);
+    fireEvent.click(screen.getByRole("button", { name: "Speak" }));
+
+    await waitFor(() => expect(mocks.startStreamSession).toHaveBeenCalled());
+    expect(mocks.startStreamSession.mock.calls[0][1]).toEqual({
+      pipeline: true,
+    });
+  });
+
+  it("an explicit pipeline prop overrides the surface default", async () => {
+    render(<MicButton variant="transport" pipeline={false} onText={vi.fn()} />);
+    fireEvent.click(screen.getByRole("button", { name: "Speak" }));
+
+    await waitFor(() => expect(mocks.startStreamSession).toHaveBeenCalled());
+    expect(mocks.startStreamSession.mock.calls[0][1]).toEqual({
+      pipeline: false,
+    });
+  });
+
+  /* A configured macro keyword fired on the server (the same contract the
+     hotkey path has: the command consumed the utterance and NOTHING is typed
+     as prose). */
+  it("delivers no prose when a command consumed the utterance", async () => {
+    const fired = {
+      keyword: "standup",
+      kind: "type_text",
+      preview: "types: ## Standup",
+      ok: true,
+      error: "",
+    };
+    mocks.startStreamSession.mockImplementation(
+      async (onEvent: (event: unknown) => void) => ({
+        stop: vi.fn().mockImplementation(async () => {
+          onEvent({ type: "final", text: "", fired });
+          return "";
+        }),
+        cancel: vi.fn(),
+      }),
+    );
+    const onText = vi.fn();
+    const onCommand = vi.fn();
+    const onFailure = vi.fn();
+    render(
+      <MicButton
+        variant="transport"
+        onText={onText}
+        onCommand={onCommand}
+        onFailure={onFailure}
+      />,
+    );
+    const mic = screen.getByRole("button", { name: "Speak" });
+
+    fireEvent.click(mic);
+    await waitFor(() => expect(mic.className).toContain("is-listening"));
+    fireEvent.click(mic);
+
+    await waitFor(() => expect(onCommand).toHaveBeenCalledTimes(1));
+    expect(onCommand).toHaveBeenCalledWith(fired);
+    expect(onText).not.toHaveBeenCalled();
+    // a command that RAN is not a "no speech" failure
+    expect(onFailure).not.toHaveBeenCalled();
+    await waitFor(() => expect(mic.className).toContain("is-idle"));
+  });
+
+  it("delivers the transcription verbatim to the field", async () => {
+    const onText = vi.fn();
+    render(<MicButton onText={onText} />);
+    const mic = screen.getByRole("button", { name: "Speak" });
+
+    fireEvent.click(mic);
+    await waitFor(() => expect(mic.className).toContain("is-listening"));
+    fireEvent.click(mic);
+
+    await waitFor(() => expect(onText).toHaveBeenCalledWith("a note tag"));
   });
 });

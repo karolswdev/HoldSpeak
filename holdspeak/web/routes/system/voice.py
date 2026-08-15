@@ -38,6 +38,39 @@ from .voice_support import (
 log = get_logger("web.routes.system")
 
 
+def _macros_enabled(config_snapshot: Any) -> bool:
+    """True when this configuration has voice macros turned on.
+
+    Off by default, and checking first keeps the streaming final byte-identical
+    (no election, no dispatch) for every desk that never configured a macro.
+    """
+    macros = getattr(getattr(config_snapshot, "dictation", None), "macros", None)
+    return macros is not None and bool(getattr(macros, "enabled", False))
+
+
+def _dispatch_stream_macro(ctx: WebContext, text: str, config_snapshot: Any) -> Any:
+    """Fire a configured macro for a streamed dictate-for-delivery utterance.
+
+    The same bounded, guarded connector the hotkey path and the remote relay
+    use. A ``type_text`` macro free-types into the focused app through the
+    relay hook, exactly as ``/api/dictation/remote`` does; with no relay hook
+    the connector's own refusal is recorded and the utterance dictates as prose
+    (a macro failure must never block plain dictation).
+    """
+    from ....dictation_runner import dispatch_voice_command
+
+    def _type(typed: str) -> None:
+        if ctx.on_remote_dictation is None:
+            raise RuntimeError("voice_macro_direct_gesture_required")
+        ctx.on_remote_dictation(typed, target="focused")
+
+    try:
+        return dispatch_voice_command(text, config=config_snapshot, type_writer=_type)
+    except Exception as exc:  # a macro failure never blocks plain dictation
+        log.error(f"Streaming voice-command dispatch failed: {exc}")
+        return None
+
+
 def build_voice_router(ctx: WebContext) -> APIRouter:
     router = APIRouter()
 
@@ -390,11 +423,23 @@ def build_voice_router(ctx: WebContext) -> APIRouter:
         The client sends raw 16 kHz mono 16-bit PCM chunks as binary frames.
         The server transcribes each chunk and sends back JSON events:
           {"type": "partial", "text": "..."}   — progressive Whisper result
-          {"type": "final",   "text": "..."}   — pipeline-processed final text
+          {"type": "final",   "text": "..."}   — final text (pipeline-processed
+                                                 only when this socket asked for
+                                                 the pipeline)
           {"type": "error",   "error": "..."}  — named failure
 
         The client signals end-of-stream by sending a JSON text frame:
           {"type": "end"}
+
+        HS-132-04: the socket declares WHICH kind of utterance it is carrying,
+        once, before the audio:
+          {"type": "start", "pipeline": false}
+        A speak-to-fill (every desk field mic) is the user typing with their
+        voice — it transcribes VERBATIM: no intent routing, no enrichment, no
+        rewriting, no journal row. Only a dictate-for-delivery surface (the
+        Speak room's TALK key) asks for the pipeline, and it runs exactly once
+        here — the delivery that follows sends ``raw: true``. Absent start
+        frame -> the pipeline runs, byte-identical to before.
         """
         from .... import web_auth
         from ....principals import derive_owner, agent_credentials, UNAUTHENTICATED, PrincipalRight
@@ -455,6 +500,11 @@ def build_voice_router(ctx: WebContext) -> APIRouter:
             )
 
         all_chunks: list[bytes] = []
+        # HS-132-04: the pipeline is opt-OUT on the wire (an older client that
+        # never sends a start frame keeps the pipelined final it was written
+        # against), and every field mic opts out explicitly.
+        run_pipeline = True
+        declared = False
         try:
             while True:
                 message = await websocket.receive()
@@ -486,6 +536,14 @@ def build_voice_router(ctx: WebContext) -> APIRouter:
                         payload = json.loads(message["text"])
                     except Exception:
                         continue
+                    if payload.get("type") == "start":
+                        # Declared once, before the audio: a later frame cannot
+                        # turn a speak-to-fill back into a pipelined, journaled
+                        # utterance after the words were already captured.
+                        if not declared:
+                            declared = True
+                            run_pipeline = bool(payload.get("pipeline", True))
+                        continue
                     if payload.get("type") == "end":
                         break
 
@@ -506,6 +564,64 @@ def build_voice_router(ctx: WebContext) -> APIRouter:
                     return
 
                 final_text = raw_text or ""
+                if not run_pipeline:
+                    # A speak-to-fill: the words the user said, unchanged, into
+                    # the field. Nothing is classified, enriched, rewritten or
+                    # journaled — there is no second author on this utterance.
+                    await websocket.send_json({"type": "final", "text": final_text})
+                    return
+
+                config_snapshot = getattr(ctx, "_config", None) or _resolve_config(ctx)
+
+                # HS-132-04: a configured, enabled macro keyword FIRES here —
+                # once, on the dictate-for-delivery leg, at the same seam the
+                # pipeline runs. The hotkey path dispatches before its pipeline
+                # and types nothing on a match (runtime/dictation_capture.py:117-173)
+                # and the remote relay does the same (routes/dictation/pipeline.py:724-764);
+                # this is that contract for the browser's streaming leg. The
+                # delivery that follows carries ``raw: true``, which never
+                # dispatches, so a keyword fires exactly once for one utterance.
+                # A speak-to-fill NEVER dispatches: typing with your voice is not
+                # a command. Macros off (the default) -> this block is inert.
+                fired = None
+                if _macros_enabled(config_snapshot):
+                    def _fire() -> Any:
+                        return _dispatch_stream_macro(ctx, final_text, config_snapshot)
+
+                    # Inside the SAME cancellation election the hotkey path uses:
+                    # a macro is a real connector effect, and a session cancelled
+                    # while Whisper was working must not fire one.
+                    elected, fired = interval.session.fence.publish(
+                        "browser stream voice-command dispatch", _fire
+                    )
+                    if not elected:
+                        await websocket.send_json(
+                            {
+                                "type": "error",
+                                "error": "The microphone session closed.",
+                                "mic_interval": MIC_INTERVAL_CLOSED,
+                                "reason": interval.session.fence.reason()
+                                or "speech_session_not_live",
+                            }
+                        )
+                        return
+                if fired is not None and fired.handled:
+                    # The command consumed the utterance: no pipeline pass, no
+                    # journal row, and nothing typed as prose.
+                    await websocket.send_json(
+                        {
+                            "type": "final",
+                            "text": "",
+                            "fired": {
+                                "keyword": fired.keyword,
+                                "kind": fired.kind,
+                                "preview": fired.preview,
+                                "ok": fired.ok,
+                                "error": fired.error,
+                            },
+                        }
+                    )
+                    return
                 try:
                     from ....dictation_runner import process_transcript
                     # HS-131-09: the final pass's classify/rewrite are children of
@@ -515,7 +631,7 @@ def build_voice_router(ctx: WebContext) -> APIRouter:
                         raw_text=final_text,
                         source="browser",
                         context=None,
-                        config=getattr(ctx, "_config", None) or _resolve_config(ctx),
+                        config=config_snapshot,
                         server=_resolve_server(ctx),
                         admission=interval.session.provider(),
                     )

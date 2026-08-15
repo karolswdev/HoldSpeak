@@ -158,10 +158,13 @@ export async function transcribeWav(
 
 export async function retryPendingTranscription(
   scope: string,
+  { pipeline = false }: { pipeline?: boolean } = {},
 ): Promise<string | null> {
   const audio = await loadPendingVoice(scope);
   if (!audio) return null;
-  const text = await transcribeWav(audio);
+  // HS-132-04: retained audio is retried as the SAME kind of utterance it
+  // was captured as — a field fill stays verbatim and unjournaled.
+  const text = await transcribeWav(audio, { pipeline });
   await clearPendingVoice(scope);
   return text;
 }

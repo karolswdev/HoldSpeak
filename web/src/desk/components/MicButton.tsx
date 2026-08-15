@@ -19,6 +19,7 @@ import {
   startStreamSession,
   type StreamSession,
   type StreamEvent,
+  type VoiceCommandFired,
 } from "../../lib/micStreamSession";
 import { loadPendingVoice } from "../../lib/pendingVoice";
 import { SYSTEM } from "../systemSprites";
@@ -46,6 +47,8 @@ export function MicButton({
   hasSelection = false,
   onProposalConfirm,
   onPartial,
+  pipeline,
+  onCommand,
 }: {
   onText: (text: string) => void;
   label?: string;
@@ -59,7 +62,18 @@ export function MicButton({
   onState?: (state: MicState) => void;
   onLevel?: (level: number) => void;
   onPartial?: (text: string) => void;
+  /* HS-132-04 — a field mic is the user TYPING WITH THEIR VOICE: it
+     transcribes verbatim, with no intent routing, enrichment, rewriting or
+     journal row. Only a dictate-for-delivery surface (the Speak room's
+     TALK transport key) asks for the pipeline, and that is the one pass
+     the utterance gets — the delivery that follows sends `raw: true`. */
+  pipeline?: boolean;
+  /* HS-132-04 — a configured macro keyword CONSUMED the utterance on the
+     server (it fired, once). Nothing is dictated as prose; a surface that
+     shows receipts can name the command that ran. */
+  onCommand?: (fired: VoiceCommandFired) => void;
 }) {
+  const pipelined = pipeline ?? variant === "transport";
   const [state, setState] = useState<MicState>("idle");
   const [failure, setFailure] = useState<DictationFailure | null>(null);
   const [audioRetained, setAudioRetained] = useState(false);
@@ -68,6 +82,7 @@ export function MicButton({
   const [receipt, setReceipt] = useState<{ text: string; scope: string } | null>(null);
   const [level, setLevel] = useState(0);
   const sessionRef = useRef<StreamSession | null>(null);
+  const firedRef = useRef<VoiceCommandFired | null>(null);
   const startingRef = useRef(false);
   const onStateRef = useRef(onState);
   onStateRef.current = onState;
@@ -204,7 +219,9 @@ export function MicButton({
     setFailure(null);
     try {
       if (draftScope) {
-        const recovered = await retryPendingTranscription(draftScope);
+        const recovered = await retryPendingTranscription(draftScope, {
+          pipeline: pipelined,
+        });
         if (recovered !== null) {
           setAudioRetained(false);
           if (recovered) {
@@ -219,8 +236,12 @@ export function MicButton({
         }
       }
 
+      firedRef.current = null;
       const onEvent = (event: StreamEvent) => {
-        if (event.type === "partial") {
+        if (event.type === "final" && event.fired) {
+          // a macro fired on the server: this utterance is spent as a command.
+          firedRef.current = event.fired;
+        } else if (event.type === "partial") {
           onPartialRef.current?.(event.text);
         } else if (event.type === "error") {
           const category = dictationFailure(new Error(event.error));
@@ -231,7 +252,9 @@ export function MicButton({
         }
       };
 
-      const session = await startStreamSession(onEvent);
+      const session = await startStreamSession(onEvent, {
+        pipeline: pipelined,
+      });
       sessionRef.current = session;
       go("listening");
     } catch (error) {
@@ -251,6 +274,18 @@ export function MicButton({
     go("busy");
     try {
       const text = await session.stop();
+      const fired = firedRef.current;
+      firedRef.current = null;
+      if (fired) {
+        // The hotkey path types NOTHING when a command consumes the utterance
+        // (runtime/dictation_capture.py:117-173). Neither does this: no prose,
+        // no delivery, and no "no speech" verdict on a command that ran.
+        onCommand?.(fired);
+        setAudioRetained(false);
+        setFailure(null);
+        go("idle");
+        return;
+      }
       if (text) {
         await routeTranscript(text);
         setAudioRetained(false);

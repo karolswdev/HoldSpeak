@@ -8,9 +8,21 @@ import {
 } from "./micSession";
 import { toWav16kMono } from "./speakToFill";
 
+/* HS-132-04 — a configured macro keyword fires ONCE, on the server's
+   dictate-for-delivery leg (the same seam the pipeline runs on), exactly as
+   the hotkey path and the remote relay do. The command CONSUMED the
+   utterance: the final carries no text and nothing is delivered as prose. */
+export type VoiceCommandFired = {
+  keyword: string;
+  kind: string;
+  preview: string;
+  ok: boolean;
+  error?: string;
+};
+
 export type StreamEvent =
   | { type: "partial"; text: string }
-  | { type: "final"; text: string }
+  | { type: "final"; text: string; fired?: VoiceCommandFired }
   | { type: "error"; error: string };
 
 export type StreamSession = {
@@ -24,8 +36,15 @@ export function micStreamSupported(): boolean {
   return micCaptureSupported() && typeof WebSocket !== "undefined";
 }
 
+/* HS-132-04 — the socket declares what kind of utterance it carries.
+   `pipeline: false` (a speak-to-fill: any desk field mic) transcribes
+   VERBATIM — no intent routing, no enrichment, no rewriting, no journal
+   row. `pipeline: true` is the dictate-for-delivery surface (the Speak
+   room's TALK key), and it is the ONE pipeline pass that utterance gets:
+   the delivery that follows sends `raw: true`. */
 export async function startStreamSession(
   onEvent: (event: StreamEvent) => void,
+  { pipeline = false }: { pipeline?: boolean } = {},
 ): Promise<StreamSession> {
   await beginHold();
 
@@ -89,6 +108,9 @@ export async function startStreamSession(
       ws.close();
       return;
     }
+    // Declared before the first frame, so the server never has to guess
+    // whether this utterance is prose for a field or one for delivery.
+    ws.send(JSON.stringify({ type: "start", pipeline }));
     chunkTimer = window.setInterval(sendChunks, CHUNK_INTERVAL_MS);
   });
 

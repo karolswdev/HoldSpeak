@@ -137,8 +137,18 @@ export function useSpeakDeck(announce: (text: string, tone?: "ok" | "warn") => v
 
   /* THE FLAGSHIP ACT — release TALK and the words land where you aimed
      them, through the same route, pipeline, journal, kernel warrant and
-     idempotency claim as the global hotkey. One id per utterance. */
-  const deliver = async (text: string) => {
+     idempotency claim as the global hotkey. One id per utterance.
+
+     HS-132-04 — ONE utterance, ONE pipeline. Spoken text arrives here
+     already carrying a pipeline receipt (the TALK key's streaming final and
+     the open mic's transcription both ran the DIR pass), so it is delivered
+     `raw: true`: verbatim, no second pass, no second journal row. Text the
+     user TYPED into the well carries no receipt and takes the pipeline here,
+     exactly once. */
+  const deliver = async (
+    text: string,
+    { pipelined = false }: { pipelined?: boolean } = {},
+  ) => {
     const spoken = text.trim();
     if (!spoken) return;
     const since = releasedAt.current ?? performance.now();
@@ -155,6 +165,8 @@ export function useSpeakDeck(announce: (text: string, tone?: "ok" | "warn") => v
           text: spoken,
           target_mode: aim === "agent" ? "agent" : "focused",
           delivery_id: newDeliveryId(),
+          // already piped once -> delivered exactly as it reads.
+          ...(pipelined ? { raw: true } : {}),
           // an aimed AGENT send refuses rather than free-typing into
           // whatever happens to be focused.
           ...(aim === "agent" ? { require_agent: true } : {}),
@@ -194,7 +206,7 @@ export function useSpeakDeck(announce: (text: string, tone?: "ok" | "warn") => v
     setUtterance(text);
     if (aim === "field" || !text.trim()) return;
     if (rehearse) void run(text);
-    else void deliver(text);
+    else void deliver(text, { pipelined: true });
   };
 
   /* An ambient utterance travels the SAME road as a released TALK — the
