@@ -27,7 +27,25 @@ from ..meeting_import import (
 )
 from ..meeting_session import MeetingState
 from ..principals import Principal
-from holdspeak.services.errors import ConflictError, NotFound, ValidationError
+from holdspeak.services.errors import ConflictError, NotFound, ServiceError, ValidationError
+
+
+class ActionItemTriageUnavailable(ServiceError):
+    """No live session and no saved row can serve this item's triage (HS-132-02).
+
+    Raised only when this server has no live-session handler bound at all *and*
+    the persisted store does not know the item — i.e. there is no path that
+    could ever serve the verb here. When a live handler is bound and simply does
+    not own the item, the persisted miss stays an honest ``NotFound``.
+    """
+
+    def __init__(self, item_id: str) -> None:
+        super().__init__(
+            "triage_unavailable",
+            "Live action-item triage is not wired on this server, "
+            "and no saved action item matches.",
+            context={"id": item_id},
+        )
 
 
 def _accepts_principal(callback: Any) -> bool:
@@ -57,6 +75,12 @@ class MeetingService:
         self._on_stop: Callable[[], Any] | None = None
         self._on_bookmark: Callable[[str], Any] | None = None
         self._on_update: Callable[..., Any] | None = None
+        # HS-132-02: the live-session action-item triage seam. Bound at an
+        # application edge exactly like the lifecycle callbacks above; unbound
+        # means "this server has no live session to ask".
+        self._on_live_update_action_item: Callable[[str, str], Any] | None = None
+        self._on_live_review_action_item: Callable[[str, str], Any] | None = None
+        self._on_live_edit_action_item: Callable[..., Any] | None = None
         self._observer = observer or NullObserver()
 
     def bind_lifecycle(
@@ -72,6 +96,23 @@ class MeetingService:
         self._on_stop = on_stop
         self._on_bookmark = on_bookmark
         self._on_update = on_update
+
+    def bind_live_triage(
+        self,
+        *,
+        on_update: Callable[[str, str], Any] | None = None,
+        on_review: Callable[[str, str], Any] | None = None,
+        on_edit: Callable[..., Any] | None = None,
+    ) -> None:
+        """Bind the runtime's live-session action-item mutations (HS-132-02).
+
+        A meeting that is still running holds its action items in the session,
+        not the archive, so the triage verbs ask the live session first and fall
+        through to the persisted rows when no live session owns the item.
+        """
+        self._on_live_update_action_item = on_update
+        self._on_live_review_action_item = on_review
+        self._on_live_edit_action_item = on_edit
 
     def validate_import(self, principal: Principal, filename: str) -> None:
         try:
@@ -474,25 +515,51 @@ class MeetingService:
         status = patch.get("status")
         if status not in ("done", "pending", "dismissed"):
             raise ValidationError(f"Invalid status: {status}")
+        live = self._live_triage(self._on_live_update_action_item, item_id, status)
+        if live is not None:
+            return {"success": True, "action_item": live}
         if not self._db.meetings.update_action_item_status(item_id, status):
-            raise NotFound("action item", item_id)
+            raise self._unserved_action_item(item_id, self._on_live_update_action_item)
         return self._updated_action_item(item_id)
 
     def review_action_item(self, principal: Principal, item_id: str, patch: dict[str, Any]) -> dict[str, Any]:
         state = str(patch.get("review_state") or "").strip().lower()
         if state not in ("pending", "accepted"):
             raise ValidationError(f"Invalid review_state: {state}")
+        live = self._live_triage(self._on_live_review_action_item, item_id, state)
+        if live is not None:
+            return {"success": True, "action_item": live}
         if not self._db.meetings.update_action_item_review_state(item_id, state):
-            raise NotFound("action item", item_id)
+            raise self._unserved_action_item(item_id, self._on_live_review_action_item)
         return self._updated_action_item(item_id)
 
     def edit_action_item(self, principal: Principal, item_id: str, patch: dict[str, Any]) -> dict[str, Any]:
         task = str(patch.get("task") or "").strip()
         if not task:
             raise ValidationError("Action item task cannot be empty. The saved task is unchanged. Enter a task and retry.")
-        if not self._db.meetings.edit_action_item(item_id, task=task, owner=patch.get("owner"), due=patch.get("due")):
-            raise NotFound("action item", item_id)
+        owner, due = patch.get("owner"), patch.get("due")
+        live = self._live_triage(self._on_live_edit_action_item, item_id, task=task, owner=owner, due=due)
+        if live is not None:
+            return {"success": True, "action_item": live}
+        if not self._db.meetings.edit_action_item(item_id, task=task, owner=owner, due=due):
+            raise self._unserved_action_item(item_id, self._on_live_edit_action_item)
         return self._updated_action_item(item_id)
+
+    def _live_triage(self, callback: Callable[..., Any] | None, item_id: str, *args: Any, **kwargs: Any) -> dict[str, Any] | None:
+        """Ask the live session first; ``None`` means "no live session owns it".
+
+        Callback failures are never swallowed — a live session that raises is a
+        real failure, not a reason to quietly rewrite the archive instead.
+        """
+        if callback is None:
+            return None
+        return self._callback_payload(callback(item_id, *args, **kwargs))
+
+    @staticmethod
+    def _unserved_action_item(item_id: str, callback: Callable[..., Any] | None) -> ServiceError:
+        if callback is None:
+            return ActionItemTriageUnavailable(item_id)
+        return NotFound("action item", item_id)
 
     def _updated_action_item(self, item_id: str) -> dict[str, Any]:
         item = self._db.meetings.get_action_item(item_id)

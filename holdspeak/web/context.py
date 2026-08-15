@@ -36,6 +36,9 @@ class WebContext:
     on_start: Optional[Callable[..., Any]] = None
     on_stop: Optional[Callable[[], Any]] = None
     on_meeting_stop: Optional[Callable[[], Any]] = None
+    # HS-132-02: the live meeting's action-item triage. Read by the action-item
+    # routes, which bind them into `MeetingService.bind_live_triage` so the three
+    # PATCH verbs ask the running session before the archive.
     on_update_action_item: Optional[Callable[[str, str], Any]] = None
     on_update_action_item_review: Optional[Callable[[str, str], Any]] = None
     on_edit_action_item: Optional[Callable[..., Any]] = None
