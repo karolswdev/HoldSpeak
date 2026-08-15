@@ -76,7 +76,36 @@ def test_capability_false_when_resolution_raises(monkeypatch) -> None:
 # --- PluginHost capability gate --------------------------------------------
 
 
-def test_host_with_capability_runs_llm_plugin() -> None:
+def test_host_with_capability_and_an_admitted_handle_runs_llm_plugin() -> None:
+    """HS-131-14: the capability gate now has TWO halves.
+
+    `enabled_capabilities` says the deployment CAN do model work; the admitted
+    dispatch handle says THIS run may. A plugin that declares `llm` and is handed
+    no handle refuses by name rather than resolving a provider of its own — see
+    the test below.
+    """
+    from tests.unit.plugin_dispatch_rig import admitted_dispatch
+
+    host = PluginHost(default_timeout_seconds=0.5, enabled_capabilities={"llm"})
+    host.register(_LlmPlugin())
+    dispatch, _engine, _context = admitted_dispatch("{}")
+
+    result = host.execute(
+        "trivial_llm",
+        context={},
+        meeting_id="m-1",
+        window_id="w-1",
+        transcript_hash="abc",
+        dispatch=dispatch,
+    )
+
+    assert result.status == "success"
+    assert result.output == {"ok": True}
+
+
+def test_host_with_capability_but_no_admitted_handle_refuses_by_name() -> None:
+    from holdspeak.plugins.intelligence import PLUGIN_DISPATCH_REQUIRED
+
     host = PluginHost(default_timeout_seconds=0.5, enabled_capabilities={"llm"})
     host.register(_LlmPlugin())
 
@@ -88,8 +117,8 @@ def test_host_with_capability_runs_llm_plugin() -> None:
         transcript_hash="abc",
     )
 
-    assert result.status == "success"
-    assert result.output == {"ok": True}
+    assert result.status == "error"
+    assert PLUGIN_DISPATCH_REQUIRED in str(result.error)
 
 
 def test_host_without_capability_blocks_llm_plugin() -> None:

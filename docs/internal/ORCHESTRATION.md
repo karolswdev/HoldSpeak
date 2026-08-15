@@ -56,6 +56,33 @@ before invention: when audits show a correct pattern already exists
 and kills the impostors rather than inventing a new system. The
 charter commits through the gate like any other work.
 
+### 2b. The design beat (learned from HS-131-02, the fourteen-round runner)
+
+A concurrency-critical or invariant-carrying foundation — a runner, a
+lifecycle, a state machine other stories will ride — gets a **design
+review before implementation**, not just a charter review. The
+orchestrator (or a Terra) writes a one-page spec: the states, the
+transitions, the invariants ("durable-before-observable", "single
+terminal winner", "no dispatch after durable cancellation"), and the
+sanctioned exceptions. Sol rules on the spec. Terras implement against
+the ruled design. HS-131-02 skipped this and paid fourteen counsel
+rounds discovering the design one adversarial probe at a time; the
+same defects against a pre-ruled spec would have been implementation
+bugs caught in one or two rounds.
+
+Two escalation valves, both learned the hard way:
+
+- **Three rounds on one story → stop patching, review the design.**
+  When a counsel loop reveals a defect *class* (races, authority,
+  ordering) rather than isolated defects, the next brief mandates the
+  structural fix and the full test matrix for the class — not the
+  instance Sol happened to probe.
+- **Five rounds → surface the cost to the owner.** Name the remaining
+  bar ("survives the nastiest adversarial probe" vs "survives
+  realistic failure modes") and let the owner rule where it sits. The
+  orchestrator does not silently spend a day of rounds on a bar the
+  owner never chose.
+
 ### 3. Implementation waves
 
 Terras implement in **parallel waves with serialized shipping**:
@@ -79,6 +106,13 @@ Terras implement in **parallel waves with serialized shipping**:
   was already fixed by the keystone — no edit needed", "this move is
   more than placement — backlogging it", or "the walk could not
   exercise X" has done its job better than one that forces a change.
+- **Claims carry proof.** A report that names delivered tests pastes
+  `pytest --collect-only` output showing them; a report that names a
+  green suite pastes the run tail. Long-context agents drift into
+  report inflation — HS-131-02 caught the same agent twice claiming
+  tests that did not exist. When an agent's tool-use count balloons
+  across rounds, retire it and brief a fresh one; the settled design
+  travels in the brief, not in the tired context.
 
 ### 4. Verification between landings
 
@@ -148,6 +182,21 @@ loudly, with the diff attached, is the house practice made honest.
 - **Background discipline.** Long runs (suites, CI) go under monitors
   with failure-covering filters; the orchestrator keeps working and
   is woken by events, never polls.
+- **Quiet-tree rule.** Full-suite runs count only when no Terra is
+  editing the tree; a suite that overlapped an implementation round is
+  killed and re-run, never interpreted. (HS-131-02 discarded six
+  mixed-tree runs; every one would have lied.) Baselines run in a
+  worktree pinned at the pre-phase commit with its own synced venv —
+  `uv run` under an isolated HOME silently falls back to a bare system
+  Python unless the worktree ran `uv sync --extra test` first.
+- **Counsel agents read scoped.** A reviewer briefed onto a long
+  ledger greps for the section heading and reads from there; whole-
+  history reads overflow the reviewer's context mid-verdict.
+- **The suite has a fast lane.** Focused files for story iteration;
+  the full suite in parallel (`pytest -n auto` via pytest-xdist) for
+  gates. A serial 25-minute suite between every landing taxes exactly
+  the discipline this document demands, so the machinery keeps it
+  cheap instead of the orchestrator skipping it.
 - **Memory.** Session state, gotchas, and standing rules land in the
   orchestrator's memory as they are learned, so the next session's
   Muad'Dib starts where this one stood.

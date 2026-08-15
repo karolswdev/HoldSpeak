@@ -9,7 +9,7 @@ from __future__ import annotations
 from copy import deepcopy
 from typing import Any, Optional
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 
 from ....logging_config import get_logger
@@ -19,9 +19,11 @@ from ._helpers import (
     _read_blocks_document,
     _resolve_blocks_target,
     _resolve_project_context,
+    _run_cancellable_entry,
     _run_dictation_dry_run_text,
     _starter_template,
     _unique_block_id,
+    session_terminal_of,
 )
 
 log = get_logger("web.routes.dictation")
@@ -135,6 +137,7 @@ def build_blocks_router(
 
     @router.post("/api/dictation/blocks/from-template")
     async def api_dictation_blocks_create_from_template(
+        request: Request,
         payload: dict[str, Any],
         scope: str = "global",
         project_root: Optional[str] = None,
@@ -210,17 +213,50 @@ def build_blocks_router(
             "document": document,
         }
         if run_dry_run:
-            try:
-                dry_run = _run_dictation_dry_run_text(
+            # HS-131-15: the PREVIEW is admitted (its own fresh session, off the
+            # event loop so a mesh-routed rewrite cannot deadlock the relay
+            # poller). The block write above is a separate, already-COMPLETED
+            # effect: a preview refusal below reports both truths — the block that
+            # exists and the preview that did not run — so a retry neither
+            # duplicates the block nor implies it was rolled back.
+            def _work(config_snapshot: Any, admitted: Any) -> dict[str, Any]:
+                return _run_dictation_dry_run_text(
                     str(template["sample_utterance"]),
                     project_root,
                     suggestions=project_doc_suggestions,
+                    config_snapshot=config_snapshot,
+                    admission=None if admitted is None else admitted.provider,
+                    fence=None if admitted is None else admitted.fence,
+                    terminal_entry=admitted,
                 )
-            except ValueError as exc:
-                return JSONResponse({"error": str(exc)}, status_code=400)
+
+            from ....speech_session import AIM_TEMPLATE_PREVIEW, SpeechSessionRefused
+
+            try:
+                dry_run = await _run_cancellable_entry(
+                    request, AIM_TEMPLATE_PREVIEW, _work
+                )
+            except SpeechSessionRefused as exc:
+                response_payload["dry_run"] = None
+                response_payload["dry_run_error"] = {
+                    "created": True,
+                    "created_block_id": block["id"],
+                    "failure_category": "template_preview_refused",
+                    "refusal": str(getattr(exc, "reason", "") or "speech_session_refused"),
+                    **session_terminal_of(exc),
+                }
+                return JSONResponse(response_payload, status_code=201)
             except Exception as exc:
                 log.error(f"Template dry-run failed: {exc}")
-                return JSONResponse({"error": str(exc)}, status_code=500)
+                response_payload["dry_run"] = None
+                response_payload["dry_run_error"] = {
+                    "created": True,
+                    "created_block_id": block["id"],
+                    "failure_category": "template_preview_failed",
+                    "error": str(exc),
+                    **session_terminal_of(exc),
+                }
+                return JSONResponse(response_payload, status_code=201)
             dry_run["created_block_id"] = block["id"]
             dry_run["template_id"] = template["id"]
             dry_run["template_title"] = template["title"]

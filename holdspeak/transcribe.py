@@ -2,6 +2,14 @@
 
 `Transcriber` loads a Whisper model and converts microphone audio (mono,
 float32, 16 kHz) into text.
+
+HS-131-09: local Whisper is a model invocation like any other. Every nonempty
+dispatch requires a live admitted session (a
+:class:`~holdspeak.speech_session.transcription.TranscriptionAdmission`) and runs
+as ONE ``holdspeak.whisper-transcribe@1`` child with a terminal receipt; the MLX
+model load is its own ``holdspeak.whisper-preload@1`` SIBLING child, completed
+before it. Audio is dispatch-only: the kernel sees its SHA-256 and safe counts,
+never the samples. Empty/invalid audio creates no child at all.
 """
 
 from __future__ import annotations
@@ -12,7 +20,7 @@ import platform
 import sys
 import threading
 from pathlib import Path
-from typing import Optional, Protocol
+from typing import Any, Optional, Protocol
 
 import numpy as np
 
@@ -43,6 +51,8 @@ class _TranscriberImpl(Protocol):
     compute_type: str
 
     def transcribe(self, audio_array: np.ndarray) -> str: ...
+
+    def ensure_loaded(self, admission: object) -> None: ...
 
 
 def _is_darwin_arm64() -> bool:
@@ -171,58 +181,82 @@ class _MlxTranscriber:
         log.debug(f"Model candidates for '{model_name}': {candidates}")
         if not candidates:
             raise TranscriberError("model_name must be non-empty")
-
-        last_error: Optional[BaseException] = None
-        for repo in candidates:
-            log.info(f"Attempting to load model from: {repo}")
-            try:
-                # On the pinned MLX thread (the same one every transcribe uses).
-                self._mlx_thread.submit(self._preload_model, repo).result()
-            except Exception as exc:
-                log.warning(f"Failed to load from {repo}: {exc}")
-                last_error = exc
-                continue
-            else:
-                log.info(f"Successfully loaded model from: {repo}")
-                self._path_or_hf_repo = repo
-                break
-
-        if self._path_or_hf_repo is None:
-            suffix = f" Last error: {last_error}" if last_error else ""
-            log.error(f"All model candidates failed for '{model_name}'{suffix}")
-            raise TranscriberError(
-                f"Failed to load Whisper model '{model_name}' via mlx-whisper.{suffix}"
-            ) from last_error
+        # HS-131-09: constructing this loads NOTHING. Loading MLX weights is a
+        # model invocation, so it happens in `ensure_loaded` under an admitted
+        # preload child — never as an unreceipted constructor side effect.
+        self._candidates = tuple(candidates)
 
         self.device = "mlx"
         self.compute_type = "float16"
-        log.info(f"Transcriber ready: model={self._path_or_hf_repo}, device={self.device}")
+        log.info(f"Transcriber constructed (unloaded): candidates={self._candidates}")
 
-    def _preload_model(self, path_or_hf_repo: str) -> None:
-        log.debug(f"_preload_model called with: {path_or_hf_repo}")
+    @property
+    def loaded(self) -> bool:
+        return self._path_or_hf_repo is not None
 
-        # Prefer preloading without decoding, if the internal hook exists.
-        try:
-            log.debug("Trying ModelHolder.get_model approach...")
+    def ensure_loaded(self, admission: Any) -> None:
+        """Load the weights through admitted SIBLING preload children.
+
+        Sol Amendment 7: each explicit ``ModelHolder.get_model`` attempt and each
+        silent-audio fallback dispatch is its OWN
+        ``holdspeak.whisper-preload@1`` child with a terminal receipt, completed
+        before the ordinary transcription child. No lock is taken here (the
+        caller's transcription lock is already held), so a preload can never
+        deadlock against the invocation it precedes.
+        """
+        if self._path_or_hf_repo is not None:
+            return
+        attempt, last = 0, ""
+        for repo in self._candidates:
+            material = {
+                "model_repo": repo,
+                "engine": "mlx",
+                "model": self.model_name,
+                "language": self.language or "auto",
+            }
+            for stage, run in (
+                ("model-holder", lambda repo=repo: self._model_holder_get(repo)),
+                ("silent-audio", lambda repo=repo: self._silent_audio_load(repo)),
+            ):
+                attempt += 1
+                outcome, _ = admission.preload_child(
+                    stage=stage, material=material, run=run, attempt_ordinal=attempt
+                )
+                if outcome.outcome == "succeeded":
+                    log.info(f"MLX model loaded from {repo} via {stage}")
+                    self._path_or_hf_repo = repo
+                    return
+                last = f"{stage}:{outcome.outcome}"
+                log.warning(f"MLX preload {stage} for {repo} ended {outcome.outcome}")
+        raise TranscriberError(
+            f"Failed to load Whisper model '{self.model_name}' via mlx-whisper "
+            f"(last preload {last or 'not attempted'})."
+        )
+
+    def _model_holder_get(self, path_or_hf_repo: str) -> str:
+        """The explicit no-decode load hook, on the pinned MLX thread."""
+        def _run() -> str:
             from mlx_whisper.transcribe import ModelHolder  # type: ignore
 
             ModelHolder.get_model(path_or_hf_repo, self._mx.float16)
-            log.debug("ModelHolder.get_model succeeded")
-            return
-        except Exception as e:
-            log.debug(f"ModelHolder approach failed: {e}, trying fallback...")
+            return "model-holder"
 
-        # Fallback: run a tiny, silent transcription to force weight download/load.
-        log.debug("Using silent transcription fallback to load model...")
-        silent = np.zeros(1600, dtype=np.float32)  # ~0.1s at 16 kHz
-        warm_kwargs = {"language": self.language} if self.language else {"language": "en"}
-        self._mlx_whisper.transcribe(  # type: ignore[union-attr]
-            silent,
-            path_or_hf_repo=path_or_hf_repo,
-            verbose=None,
-            **warm_kwargs,
-        )
-        log.debug("Fallback transcription completed - model loaded")
+        return str(self._mlx_thread.submit(_run).result())
+
+    def _silent_audio_load(self, path_or_hf_repo: str) -> str:
+        """The fallback: one tiny silent transcription forces the weight load."""
+        def _run() -> str:
+            silent = np.zeros(1600, dtype=np.float32)  # ~0.1s at 16 kHz
+            warm_kwargs = {"language": self.language} if self.language else {"language": "en"}
+            self._mlx_whisper.transcribe(  # type: ignore[union-attr]
+                silent,
+                path_or_hf_repo=path_or_hf_repo,
+                verbose=None,
+                **warm_kwargs,
+            )
+            return "silent-audio"
+
+        return str(self._mlx_thread.submit(_run).result())
 
     def transcribe(self, audio_array: np.ndarray) -> str:
         """Transcribe an in-memory audio array.
@@ -249,6 +283,8 @@ class _MlxTranscriber:
 
         if audio.size == 0:
             return ""
+        if self._path_or_hf_repo is None:
+            raise TranscriberError("the MLX model is not loaded; preload was never admitted")
 
         audio = np.ascontiguousarray(audio, dtype=np.float32)
         log.debug(f"Transcribing {len(audio)} samples ({len(audio)/16000:.2f}s)")
@@ -311,6 +347,16 @@ class _FasterWhisperTranscriber:
             )
         except Exception as exc:
             raise TranscriberError(f"Failed to load faster-whisper model '{model_name}': {exc}") from exc
+
+    @property
+    def loaded(self) -> bool:
+        return True
+
+    def ensure_loaded(self, admission: Any) -> None:
+        """faster-whisper loads its weights in its own constructor: nothing to
+        dispatch here. Only the MLX boundary has the separable explicit load
+        Sol Amendment 7 ruled on."""
+        return None
 
     def transcribe(self, audio_array: np.ndarray) -> str:
         audio = np.asarray(audio_array)
@@ -383,7 +429,84 @@ class Transcriber:
         self.device = self._impl.device
         self.compute_type = self._impl.compute_type
 
-    def transcribe(self, audio_array: np.ndarray) -> str:
+    def warm(self, admission: Any) -> None:
+        """Load the local weights through admitted preload children."""
+        self._impl.ensure_loaded(admission)
+
+    @property
+    def loaded(self) -> bool:
+        return bool(getattr(self._impl, "loaded", True))
+
+    def transcribe(
+        self,
+        audio_array: np.ndarray,
+        *,
+        admission: Any = None,
+        capability: str = "whisper-transcribe",
+    ) -> str:
+        """Transcribe under ONE admitted invocation child (HS-131-09).
+
+        ``admission`` is the live session's
+        :class:`~holdspeak.speech_session.transcription.TranscriptionAdmission`
+        (a ``dictation.session``, ``wake.session``, or the existing
+        ``meeting.session``). Empty or invalid audio creates no child at all;
+        nonempty audio with no live admission is a named refusal raised BEFORE
+        any MLX/faster-whisper call.
+        """
+        from .speech_session.plan import (
+            TRANSCRIPTION_CONTEXT_REQUIRED,
+            SpeechSessionRefused,
+        )
+        from .speech_session.transcription import audio_sha256
+
+        audio = np.asarray(audio_array)
+        if audio.ndim == 2:
+            if audio.shape[1] != 1:
+                raise ValueError("audio_array must be mono (shape (n,) or (n, 1))")
+            audio = audio[:, 0]
+        elif audio.ndim != 1:
+            raise ValueError("audio_array must be mono (shape (n,) or (n, 1))")
+        if audio.size == 0:
+            # Mechanical: no model runs, so no child and no receipt exist.
+            return ""
+        if admission is None:
+            raise SpeechSessionRefused(TRANSCRIPTION_CONTEXT_REQUIRED, capability)
+
+        audio = np.ascontiguousarray(audio, dtype=np.float32)
+        digest = audio_sha256(audio)
+        # The preload children are SIBLINGS completed BEFORE the transcribe child.
+        self._impl.ensure_loaded(admission)
+        errors: list[BaseException] = []
+
+        def _dispatch() -> str:
+            try:
+                return self._timed_transcribe(audio)
+            except BaseException as exc:  # noqa: BLE001 - re-raised for the child
+                errors.append(exc)
+                raise
+
+        outcome, text = admission.transcribe_child(
+            material={
+                "audio_sha256": digest,
+                "sample_count": int(audio.size),
+                "sample_rate": 16000,
+                "backend": self.backend,
+                "model": self.model_name,
+                "device": self.device,
+                "compute_type": self.compute_type,
+                "language": self.language or "auto",
+                "timeout_seconds": float(self.timeout_seconds),
+            },
+            run=_dispatch,
+            seed=digest,
+        )
+        if outcome.outcome != "succeeded":
+            if errors:
+                raise errors[0]
+            raise TranscriberError(f"Transcription was not admitted: {outcome.outcome}")
+        return str(text or "")
+
+    def _timed_transcribe(self, audio_array: np.ndarray) -> str:
         if self.timeout_seconds <= 0:
             return self._impl.transcribe(audio_array)
 

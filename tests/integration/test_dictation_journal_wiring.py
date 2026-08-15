@@ -24,6 +24,7 @@ from holdspeak.config import (
     LLMRuntimeConfig,
 )
 from holdspeak.db import Database
+from holdspeak.kernel.runtime import _configure
 from holdspeak.plugins.dictation.journal import DictationJournalRecorder
 from holdspeak.web.routes.dictation._helpers import _run_dictation_dry_run_text
 
@@ -70,15 +71,21 @@ def _config(*, journal_enabled: bool) -> Config:
 def _run(tmp_path, monkeypatch, *, journal_enabled: bool):
     monkeypatch.setenv("HOME", str(tmp_path))
     root = _seed_project(tmp_path)
-    monkeypatch.setattr(Config, "load", classmethod(lambda cls, *a, **k: _config(journal_enabled=journal_enabled)))
+    config = _config(journal_enabled=journal_enabled)
+    monkeypatch.setattr(Config, "load", classmethod(lambda cls, *a, **k: config))
 
     db = Database(tmp_path / "journal.db")
+    monkeypatch.setattr("holdspeak.db.get_database", lambda: db)
+    _configure(db)
     recorder = DictationJournalRecorder(repository=db.dictation_journal)
     result = _run_dictation_dry_run_text(
         "deploy this branch to production",
         str(root),
         None,
         suggestions={},
+        config_snapshot=config,
+        admission=None,
+        fence=None,
         journal=recorder,
     )
     return db, result

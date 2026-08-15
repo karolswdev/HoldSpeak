@@ -37,17 +37,36 @@ _EXIT_OK = 0
 _EXIT_USAGE = 2
 
 
-def run_dictation_command(args, *, stream: TextIO | None = None) -> int:
+def run_dictation_command(
+    args,
+    *,
+    stream: TextIO | None = None,
+    principal: Any = None,
+    config_snapshot: Any = None,
+) -> int:
     """Top-level dispatch for `holdspeak dictation <action> ...`.
 
     `stream` is a test seam so the unit tests can capture output
     without relying on `capsys` interleavings.
+
+    `principal` (HS-131-15) is derived at the TOP level, in `main.py`, from the
+    hub-issued owner credential this process holds. It is never derived here and
+    never synthesized: `dry-run` refuses by name when it needs a provider and this
+    is `None`. Every other subcommand ignores it — listing blocks reaches no model.
+
+    `config_snapshot` is the SAME configuration that credential was checked
+    against. `dry-run` freezes its plan and assembles its pipeline from it rather
+    than re-reading, so authority and execution cannot be decided against two
+    different configurations. The block/runtime subcommands reach no model and
+    keep their own local reads.
     """
     out = stream if stream is not None else sys.stdout
     action = getattr(args, "dictation_action", None)
 
     if action == "dry-run":
-        return _cmd_dry_run(args, out)
+        return _cmd_dry_run(
+            args, out, principal=principal, config_snapshot=config_snapshot
+        )
     if action == "blocks-ls":
         return _cmd_blocks_ls(args, out)
     if action == "blocks-show":
@@ -65,71 +84,208 @@ def run_dictation_command(args, *, stream: TextIO | None = None) -> int:
 # dry-run
 # ---------------------------------------------------------------------------
 
-def _cmd_dry_run(args, out: TextIO) -> int:
+def _cmd_dry_run(
+    args, out: TextIO, *, principal: Any = None, config_snapshot: Any = None
+) -> int:
+    """Run the full configured pipeline over one synthetic utterance (DIR-F-010).
+
+    HS-131-15 admits this command like any other provider-bearing entrance:
+
+    * **Authenticated or lexical, never in between.** A configuration that
+      selects a provider-backed stage needs the hub-issued owner credential
+      derived in `main.py`; missing it is a NAMED refusal before any runtime is
+      constructed. A configuration that selects none stays lexical, constructs no
+      runtime, mints no inference child, and needs no credential.
+    * **Egress is disclosed from the frozen plan, before construction** — not from
+      whatever the settings say afterwards, and not after a model has been warmed.
+    * **The result body is buffered** and printed only if it wins the session's
+      publication election, so `Ctrl-C` (or an expiry, or a revocation) cannot be
+      followed by a late wall of stage output for work that was cancelled.
+    """
     from ..plugins.dictation.assembly import build_pipeline
     from ..plugins.dictation.contracts import Utterance
     from ..plugins.dictation.project_root import detect_project_for_cwd
+    from ..speech_session import (
+        AIM_CLI_DRY_RUN,
+        CLI_CREDENTIAL_ENV,
+        CLI_CREDENTIAL_REQUIRED,
+        SpeechEntry,
+        SpeechProviderFailure,
+        SpeechSessionRefused,
+        admit_text_entry_session,
+        pipeline_provider_capabilities,
+    )
 
-    cfg = Config.load()
+    # ONE snapshot: the credential was checked against it, the plan is frozen from
+    # it, and the pipeline is assembled from it, so a config edit mid-run cannot
+    # retarget either — and authority is never decided against a configuration
+    # different from the one that runs. `main.py` supplies it; the fallback load
+    # is for a direct in-process caller that has no snapshot of its own.
+    cfg = Config.load() if config_snapshot is None else config_snapshot
     text: str = args.text
 
     project = detect_project_for_cwd()
     project_root = Path(project["root"]) if project else None
+    capabilities = pipeline_provider_capabilities(cfg)
 
-    result = build_pipeline(cfg.dictation, project_root=project_root)
-    if result.runtime_status != "loaded":
-        print(
-            f"warning: LLM runtime unavailable ({result.runtime_detail}); "
-            "running with intent-router skipped.",
-            file=out,
-        )
-
-    if project is not None:
-        print(f"project: {project['name']} ({project['anchor']} @ {project['root']})", file=out)
-    else:
-        print("project: (none detected)", file=out)
-    print(f"resolved blocks: {len(result.blocks.blocks)} from "
-          f"{result.blocks.source_path or '(no blocks file)'}", file=out)
-    print(f"runtime: {result.runtime_status} ({result.runtime_detail})", file=out)
-    print(f"input: {text!r}", file=out)
-    print("---", file=out)
-
-    utt = Utterance(
-        raw_text=text,
-        audio_duration_s=0.0,
-        transcribed_at=datetime.now(),
-        project=project,
-    )
-    run = result.pipeline.run(utt)
-
-    if run.short_circuited and not run.stage_results:
-        print("(pipeline disabled — no stages executed)", file=out)
-        return _EXIT_OK
-
-    for sr in run.stage_results:
-        print(f"[{sr.stage_id}] elapsed_ms={sr.elapsed_ms:.2f}", file=out)
-        if sr.intent is not None:
-            tag = sr.intent
+    entry = None
+    if capabilities:
+        if principal is None:
+            print(f"refused: {CLI_CREDENTIAL_REQUIRED}", file=out)
             print(
-                f"  intent: matched={tag.matched} block_id={tag.block_id} "
-                f"confidence={tag.confidence:.2f}",
+                f"  this pipeline reaches a model ({', '.join(capabilities)}); "
+                f"export ${CLI_CREDENTIAL_ENV} with the hub's owner token to run it.",
                 file=out,
             )
-        if sr.warnings:
-            for w in sr.warnings:
-                print(f"  warning: {w}", file=out)
-        if sr.metadata:
-            print(f"  metadata: {sr.metadata}", file=out)
-        print(f"  text: {sr.text!r}", file=out)
+            return _EXIT_USAGE
+        try:
+            entry = SpeechEntry(
+                admit_text_entry_session(
+                    principal=principal,
+                    insertion_aim=AIM_CLI_DRY_RUN,
+                    config_snapshot=cfg,
+                )
+            )
+        except SpeechSessionRefused as exc:
+            print(f"refused: {exc.reason}", file=out)
+            return _EXIT_USAGE
 
-    print("---", file=out)
-    print(f"final_text: {run.final_text!r}", file=out)
-    print(f"total_elapsed_ms: {run.total_elapsed_ms:.2f}", file=out)
-    if run.warnings:
-        print("pipeline warnings:", file=out)
-        for w in run.warnings:
-            print(f"  - {w}", file=out)
-    return _EXIT_OK
+    outcome = "succeeded"
+    try:
+        if entry is not None:
+            # Live admission + every required capability, BEFORE construction.
+            entry.validate()
+            # Article III.2: say where this work goes before anything is built or
+            # warmed, and say it from the frozen plan.
+            print(
+                f"egress: {entry.plan.egress_boundary()} "
+                f"(plan {entry.plan.sha256[:19]}, session {entry.session.operation_id})",
+                file=out,
+            )
+        result = build_pipeline(
+            cfg.dictation,
+            project_root=project_root,
+            admission=None if entry is None else entry.provider,
+            lexical=entry is None,
+        )
+
+        body: list[str] = []
+        if entry is None:
+            body.append(
+                "note: no provider-backed stage is configured "
+                f"({result.runtime_detail}); provider stages are skipped."
+            )
+        elif result.runtime_status != "loaded":
+            body.append(
+                f"warning: LLM runtime unavailable ({result.runtime_detail}); "
+                "running with intent-router skipped."
+            )
+
+        if project is not None:
+            body.append(
+                f"project: {project['name']} ({project['anchor']} @ {project['root']})"
+            )
+        else:
+            body.append("project: (none detected)")
+        body.append(
+            f"resolved blocks: {len(result.blocks.blocks)} from "
+            f"{result.blocks.source_path or '(no blocks file)'}"
+        )
+        body.append(f"runtime: {result.runtime_status} ({result.runtime_detail})")
+        body.append(f"input: {text!r}")
+        body.append("---")
+
+        utt = Utterance(
+            raw_text=text,
+            audio_duration_s=0.0,
+            transcribed_at=datetime.now(),
+            project=project,
+        )
+        run = result.pipeline.run(utt)
+
+        if run.short_circuited and not run.stage_results:
+            body.append("(pipeline disabled — no stages executed)")
+        else:
+            for sr in run.stage_results:
+                body.append(f"[{sr.stage_id}] elapsed_ms={sr.elapsed_ms:.2f}")
+                if sr.intent is not None:
+                    tag = sr.intent
+                    body.append(
+                        f"  intent: matched={tag.matched} block_id={tag.block_id} "
+                        f"confidence={tag.confidence:.2f}"
+                    )
+                if sr.warnings:
+                    for w in sr.warnings:
+                        body.append(f"  warning: {w}")
+                if sr.metadata:
+                    body.append(f"  metadata: {sr.metadata}")
+                body.append(f"  text: {sr.text!r}")
+
+            body.append("---")
+            body.append(f"final_text: {run.final_text!r}")
+            body.append(f"total_elapsed_ms: {run.total_elapsed_ms:.2f}")
+            if run.warnings:
+                body.append("pipeline warnings:")
+                for w in run.warnings:
+                    body.append(f"  - {w}")
+
+        # ONE bounded write, not a print-per-line loop. A loop holds the election
+        # open across dozens of syscalls and — worse — a `Ctrl-C` landing
+        # mid-loop leaves a truncated tail on the terminal for a run that was
+        # then cancelled. Rendering to a single string first means the election
+        # guards an atomic act: either the whole body lands or none of it does.
+        rendered = "".join(f"{line}\n" for line in body)
+
+        def _emit() -> None:
+            out.write(rendered)
+            if entry is not None:
+                # Settle success before releasing the SAME election that made the
+                # model-derived stdout visible. Otherwise Ctrl-C/revocation could
+                # cancel the parent in the gap after a complete body was printed.
+                entry.close("succeeded")
+
+        if entry is None:
+            # Nothing model-derived to elect: no provider ran.
+            _emit()
+            return _EXIT_OK
+        published, _value = entry.fence.publish("cli dry-run stdout", _emit)
+        if not published:
+            outcome = "cancelled"
+            print("cancelled: this dry-run session is no longer live", file=out)
+            return _EXIT_USAGE
+        return _EXIT_OK
+    except KeyboardInterrupt:
+        # Interrupt CANCELS. Nothing buffered is printed, and the parent closes
+        # cancelled rather than succeeding over work the owner stopped.
+        outcome = "cancelled"
+        raise
+    except SpeechSessionRefused as exc:
+        outcome = "refused"
+        print(f"refused: {exc.reason}", file=out)
+        return _EXIT_USAGE
+    except SpeechProviderFailure as exc:
+        outcome = "failed"
+        print(f"failed: {exc.contract}:{exc.reason}", file=out)
+        return _EXIT_USAGE
+    except BaseException:
+        outcome = "failed"
+        raise
+    finally:
+        if entry is not None:
+            if outcome == "cancelled":
+                entry.cancel()
+            else:
+                entry.close(outcome)
+            if entry.indeterminate:
+                # Say it on the terminal too. The stage output above (if it was
+                # published) is real; what is unknown is whether this run's
+                # parent receipt was written, and the owner should not have to
+                # read a log file to find that out.
+                print(
+                    "warning: this run's session receipt could not be recorded; "
+                    "its terminal state is indeterminate.",
+                    file=out,
+                )
 
 
 # ---------------------------------------------------------------------------

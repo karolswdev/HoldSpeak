@@ -183,7 +183,20 @@ class MeetingGlueMixin:
                 last_error="",
             )
 
-    def _start_meeting(self, *, devices: Optional[list[str]] = None) -> dict[str, object]:
+    def _start_meeting(
+        self,
+        *,
+        devices: Optional[list[str]] = None,
+        principal: Optional[object] = None,
+    ) -> dict[str, object]:
+        """Start capture. ``principal`` is the AUTHENTICATED caller (HS-131-08).
+
+        Live meeting intelligence is admitted under exactly this principal. A
+        start with no authenticated principal (a device/auto start, or an
+        unauthenticated caller) still records: intelligence is refused with a
+        named status instead. An OWNER principal is never synthesized here — the
+        narrow ``meeting-capture`` service-principal issuer does not exist yet.
+        """
         if self._active_meeting_session() is not None:
             raise RuntimeError("Meeting already active")
 
@@ -213,19 +226,19 @@ class MeetingGlueMixin:
             raise RuntimeError(
                 f"Cannot start meeting: audio floor held by {self.voice_session.active_owner!r}"
             )
-        # HS-36-05: build the LLM-assisted per-segment intent probe only when the
-        # config knob is on. Defensive: any failure to construct it (missing optional
-        # deps, unconfigured endpoint) leaves it None and routing falls back to the
-        # lexical path — meeting start must never break on this.
-        segment_probe = None
+        # HS-36-05 built the LLM-assisted per-segment intent probe here, from the
+        # configured engine, BEFORE the session was admitted — a model call with no
+        # child, no receipt, and no frozen revision behind it. HS-131-14 deleted that
+        # construction outright: a probe exists only where an admitted dispatch handle
+        # does (`build_segment_probe(dispatch)`). HS-131-17 then deleted the dormant
+        # session-owned routing branch this placeholder was still feeding, so the
+        # session takes no probe argument at all. Routed meeting intelligence runs in
+        # the deferred job, under its own admitted parent.
         if getattr(self.config.meeting, "intent_segment_probe_enabled", False):
-            try:
-                from ..plugins.segment_probe import build_segment_probe
-
-                segment_probe = build_segment_probe()
-            except Exception:
-                log.warning("segment intent probe unavailable; using lexical scoring", exc_info=True)
-                segment_probe = None
+            log.info(
+                "segment intent probe requires an admitted routing child; "
+                "routed intelligence runs in the deferred job"
+            )
 
         # HS-84-01: the session's cloud leg runs where the assigned RuntimeProfile
         # says (dangling/none ⇒ the legacy intel_cloud_* shape, byte-identical).
@@ -260,10 +273,7 @@ class MeetingGlueMixin:
                 diarization_enabled=self.config.meeting.diarization_enabled,
                 diarize_mic=self.config.meeting.diarize_mic,
                 cross_meeting_recognition=self.config.meeting.cross_meeting_recognition,
-                mir_disabled_plugins=list(
-                    getattr(self.config.meeting, "disabled_plugins", []) or []
-                ),
-                mir_segment_probe=segment_probe,
+                principal=principal,
             )
             state = session.start()
             if self.config.meeting.intel_enabled and effective_cloud.reason:

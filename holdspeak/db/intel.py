@@ -7,14 +7,28 @@ intel_jobs, intel_job_attempts, and meeting intel-status updates.
 from __future__ import annotations
 
 import hashlib
+import json
 from datetime import datetime
-from typing import Optional, Any
+from typing import Optional, Any, Sequence
 
 from ..logging_config import get_logger
 from .base import BaseRepository
 from .models import IntelJob, IntelQueueSummary, IntelJobAttempt
 
 log = get_logger("db.intel")
+
+def _displaced_work(row: Any) -> tuple[str, ...]:
+    """The structured displaced-work slugs on one intel_jobs row (HS-131-08)."""
+    if "displaced_work" not in set(row.keys()):
+        return ()
+    try:
+        parsed = json.loads(str(row["displaced_work"] or "[]"))
+    except ValueError:
+        return ()
+    if not isinstance(parsed, list):
+        return ()
+    return tuple(str(item) for item in parsed if str(item).strip())
+
 
 MANUAL_INTEL_RETRY_REASON = "Retry remaining requested."
 ROUTED_INTEL_RETRY_REASON = "Retry remaining routed intelligence requested."
@@ -31,24 +45,36 @@ class IntelRepository(BaseRepository):
         *,
         transcript_hash: str,
         reason: Optional[str] = None,
+        displaced_work: Sequence[str] = (),
     ) -> None:
-        """Queue or refresh deferred intelligence processing for a meeting."""
+        """Queue or refresh deferred intelligence processing for a meeting.
+
+        ``displaced_work`` (HS-131-08) is the STRUCTURED list of work a stop
+        handoff displaced onto this job — the queue reads it instead of parsing
+        the owner-facing status sentence. An ordinary enqueue passes nothing.
+        """
         now = datetime.now().isoformat()
+        work = json.dumps(
+            [str(item) for item in displaced_work if str(item).strip()],
+            separators=(",", ":"),
+        )
         with self._connection() as conn:
             conn.execute(
                 """
                 INSERT INTO intel_jobs (
-                    meeting_id, status, transcript_hash, requested_at, updated_at, attempts, last_error
+                    meeting_id, status, transcript_hash, requested_at, updated_at,
+                    attempts, last_error, displaced_work
                 )
-                VALUES (?, 'queued', ?, ?, ?, 0, ?)
+                VALUES (?, 'queued', ?, ?, ?, 0, ?, ?)
                 ON CONFLICT(meeting_id) DO UPDATE SET
                     status = 'queued',
                     transcript_hash = excluded.transcript_hash,
                     requested_at = excluded.requested_at,
                     updated_at = excluded.updated_at,
-                    last_error = excluded.last_error
+                    last_error = excluded.last_error,
+                    displaced_work = excluded.displaced_work
                 """,
-                (meeting_id, transcript_hash, now, now, reason),
+                (meeting_id, transcript_hash, now, now, reason, work),
             )
 
             conn.execute(
@@ -133,6 +159,7 @@ class IntelRepository(BaseRepository):
                 # worker can resume the exact incomplete stage. The persisted
                 # running row still clears last_error as before.
                 last_error=row["last_error"],
+                displaced_work=_displaced_work(row),
             )
 
     def retry_intel_job(
@@ -203,6 +230,7 @@ class IntelRepository(BaseRepository):
             intel_status_detail=(
                 row["intel_status_detail"] if "intel_status_detail" in keys else None
             ),
+            displaced_work=_displaced_work(row),
         )
 
     def get_intel_job(self, meeting_id: str) -> Optional[IntelJob]:

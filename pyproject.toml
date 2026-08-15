@@ -63,6 +63,9 @@ test = [
     "pytest-cov>=4.0",
     "pytest-mock>=3.12",
     "pytest-timeout>=2.2",
+    # Suite fast lane: full-suite gate runs use `-n auto`; serial stays the
+    # fallback for any test proven parallel-unsafe.
+    "pytest-xdist>=3.5",
     "httpx>=0.26",
     # Phase 108: the live runtime-bus browser gate runs in hosted CI.
     "playwright>=1.40.0",
@@ -112,6 +115,9 @@ dev = [
     "pytest-cov>=4.0",
     "pytest-mock>=3.12",
     "pytest-timeout>=2.2",
+    # Suite fast lane: full-suite gate runs use `-n auto`; serial stays the
+    # fallback for any test proven parallel-unsafe.
+    "pytest-xdist>=3.5",
     "httpx>=0.26",
     "jsonschema>=4.21",  # HS-72-01: primitive-contract schema validation
     "ruff>=0.1.0",

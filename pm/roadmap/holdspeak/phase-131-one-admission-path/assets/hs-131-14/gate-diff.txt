@@ -1,0 +1,24 @@
+HS-131-14 final quiet-gate comparison
+baseline=90 (HS-131-13)
+current=91
+shared=90
+new=1
+repaired=0
+
+NEW RELATIVE TO THE IMMEDIATELY PREVIOUS RUN
+- tests/uat/test_mesh_dispatch.py::test_run_dispatched_onto_the_worker_returns_badged
+
+CLASSIFICATION
+- inherited real-model nondeterminism, not a current-diff regression
+- exact name is present in HS-131-01, HS-131-02, HS-131-05, and HS-131-06 ledgers
+- final gate failure: the real .43 model returned successful mesh output but omitted PYLON-CANARY-7
+- isolated current tree: failed twice with the same successful-but-canary-omitting response
+- detached untouched HS-131-13 control tree at 190b1bed: passed once, then failed with the same missing-canary response
+- production files changed by HS-131-14 do not alter the mesh prompt or mesh receiver path; HS-131-16 owns that separately pinned path
+
+CURRENT-DIFF REGRESSION FOUND AND REPAIRED BEFORE THE FINAL GATE
+- tests/unit/test_fault_plane.py::test_named_plugin_fault_fails_exactly_that_key_then_exact_retry
+- cause: its local host test double did not accept the new per-invocation dispatch keyword
+- repair: update the test double to accept the dispatch contract
+- focused reproof: 1 passed, then 274 passed, then captured 811 passed
+- absent from the final 91-name ledger

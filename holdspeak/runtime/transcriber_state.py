@@ -64,6 +64,10 @@ class TranscriberStateMixin:
             )
 
     def _ensure_transcriber_loaded(self) -> Transcriber:
+        # HS-131-09: constructing a Transcriber loads no weights. The MLX load is
+        # a model invocation, so it happens through admitted preload children —
+        # either the authorized pre-session warm below, or the first admitted
+        # session's `transcribe()` (which runs its preload siblings first).
         # HS-63-06: the check-and-construct is serialized — see the
         # _transcriber_init_lock comment in web_runtime.__init__ for the
         # process-fatal MLX consequence of letting two instances exist.
@@ -89,7 +93,35 @@ class TranscriberStateMixin:
         def _warm() -> None:
             with self.transcription_lock:
                 try:
-                    self._ensure_transcriber_loaded()
+                    transcriber = self._ensure_transcriber_loaded()
+                except Exception as exc:
+                    self._set_transcription_status("error", error=f"{type(exc).__name__}: {exc}")
+                    with self.state_lock:
+                        self.runtime_status["last_error"] = f"Transcription warmup failed: {exc}"
+                    log.error(f"Transcription warmup failed: {exc}", exc_info=True)
+                    return
+                # HS-131-09 (Sol Amendment 4): a PRE-session warm has no session
+                # to parent it, so it runs only under the owner's explicit
+                # `model.local_model_preload_authority`. Blank/absent DEFERS the
+                # load to the first admitted session — it never dispatches MLX
+                # on authority inferred from this process.
+                from ..speech_session import SpeechSessionRefused, preload_service_admission
+
+                try:
+                    admission = preload_service_admission(config_snapshot=self.config)
+                except SpeechSessionRefused as exc:
+                    # The refusal carries the revision the owner must set in
+                    # `model.local_model_preload_authority` to authorize a warm for
+                    # THIS model configuration; it is a hash, never secret material.
+                    log.info(
+                        "local model preload deferred to the first admitted session: "
+                        "%s (set model.local_model_preload_authority=%s to authorize)",
+                        exc.reason,
+                        getattr(exc, "detail", "") or "<unknown>",
+                    )
+                    return
+                try:
+                    transcriber.warm(admission)
                 except Exception as exc:
                     self._set_transcription_status("error", error=f"{type(exc).__name__}: {exc}")
                     with self.state_lock:

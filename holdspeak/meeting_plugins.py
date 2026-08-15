@@ -101,12 +101,21 @@ def run_meeting_plugin_chain(
     window_suffix: str = FULL_WINDOW_SUFFIX,
     host: Any = None,
     record_window: bool = True,
+    admission: Any = None,
 ) -> dict[str, Any]:
     """Route + execute the plugin chain for a SAVED meeting and persist the lot.
 
     Returns an honest summary: the route, per-plugin statuses, and the artifact
     count. Never raises for plugin failures (the host isolates those into
     per-run `error` records); raises only on a truly empty meeting.
+
+    ``admission`` (HS-131-08) is a
+    :class:`~holdspeak.meeting_session.deferred_admission.DeferredIntelJob`. When
+    supplied, each EXECUTED plugin runs as one trusted child of that job parent
+    and its run record + synthesized artifacts are staged projections written
+    only from the winning receipt. Route order, the exact
+    ``build_idempotency_key`` dedup, injected faults, and every persisted field
+    are unchanged; deduped/skipped/faulted plugins still issue no child.
     """
     from .plugins.router import DEFAULT_INTENT_THRESHOLD, preview_route_from_transcript
     from .plugins.synthesis import synthesize_meeting_artifacts
@@ -263,46 +272,83 @@ def run_meeting_plugin_chain(
         "profile": route_payload.get("profile"),
         "threshold": route_payload.get("threshold"),
     }
-    results = host.execute_chain(
-        remaining_chain,
-        context=context,
-        meeting_id=meeting_id,
-        window_id=window_id,
-        transcript_hash=transcript_hash,
-        defer_heavy=False,
-    )
-    for result in results:
-        record = result.to_dict()
-        db.plugins.record_plugin_run(
+    def _run_chain(chain: list[str], dispatch: Any = None) -> list[Any]:
+        return host.execute_chain(
+            chain,
+            context=context,
             meeting_id=meeting_id,
             window_id=window_id,
-            plugin_id=str(record.get("plugin_id") or ""),
-            plugin_version=str(record.get("plugin_version") or "unknown"),
-            status=str(record.get("status") or "unknown"),
-            idempotency_key=str(record.get("idempotency_key") or "") or None,
-            duration_ms=float(record.get("duration_ms") or 0.0),
-            output=record.get("output") if isinstance(record.get("output"), dict) else None,
-            error=str(record.get("error")) if record.get("error") else None,
-            deduped=bool(record.get("deduped")),
+            transcript_hash=transcript_hash,
+            defer_heavy=False,
+            dispatch=dispatch,
         )
 
-    runs = db.plugins.list_plugin_runs(meeting_id, limit=5000)
-    artifacts = synthesize_meeting_artifacts(
-        meeting_id=meeting_id, plugin_runs=runs, max_artifacts=500
-    )
-    for artifact in artifacts:
-        db.plugins.record_artifact(
-            artifact_id=artifact.artifact_id,
-            meeting_id=artifact.meeting_id,
-            artifact_type=artifact.artifact_type,
-            title=artifact.title,
-            body_markdown=artifact.body_markdown,
-            structured_json=artifact.structured_json,
-            confidence=artifact.confidence,
-            status=artifact.status,
-            plugin_id=artifact.plugin_id,
-            plugin_version=artifact.plugin_version,
-            sources=[source.to_dict() for source in artifact.sources],
+    def _execute(chain: list[str], engine: Any = None, cancellation: Any = None) -> list[Any]:
+        # HS-131-08 / HS-131-14: under an admitted plugin child, `engine` is the
+        # engine built from the deployment revision that child NAMES, and
+        # `cancellation` is that child's signal. The host issues ONE dispatch
+        # handle over the pair and hands it to exactly this run — no host state,
+        # no plugin state, nothing a later child could borrow. An UNADMITTED
+        # caller passes neither, and every `llm` plugin refuses by name rather
+        # than resolving a provider of its own.
+        if engine is None:
+            return _run_chain(chain)
+        issuer = getattr(host, "issued_dispatch", None)
+        if issuer is None:
+            # An admitted child names ONE deployment revision. A host that cannot
+            # be handed that engine would silently build its own, so it refuses.
+            from .plugins.host import PluginEngineNotInjectable
+
+            raise PluginEngineNotInjectable(type(host).__name__)
+        with issuer(engine, cancellation) as dispatch:
+            return _run_chain(chain, dispatch)
+
+    if admission is None:
+        results = _execute(remaining_chain)
+        for result in results:
+            record = result.to_dict()
+            db.plugins.record_plugin_run(
+                meeting_id=meeting_id,
+                window_id=window_id,
+                plugin_id=str(record.get("plugin_id") or ""),
+                plugin_version=str(record.get("plugin_version") or "unknown"),
+                status=str(record.get("status") or "unknown"),
+                idempotency_key=str(record.get("idempotency_key") or "") or None,
+                duration_ms=float(record.get("duration_ms") or 0.0),
+                output=record.get("output") if isinstance(record.get("output"), dict) else None,
+                error=str(record.get("error")) if record.get("error") else None,
+                deduped=bool(record.get("deduped")),
+            )
+
+        runs = db.plugins.list_plugin_runs(meeting_id, limit=5000)
+        artifacts = synthesize_meeting_artifacts(
+            meeting_id=meeting_id, plugin_runs=runs, max_artifacts=500
+        )
+        for artifact in artifacts:
+            db.plugins.record_artifact(
+                artifact_id=artifact.artifact_id,
+                meeting_id=artifact.meeting_id,
+                artifact_type=artifact.artifact_type,
+                title=artifact.title,
+                body_markdown=artifact.body_markdown,
+                structured_json=artifact.structured_json,
+                confidence=artifact.confidence,
+                status=artifact.status,
+                plugin_id=artifact.plugin_id,
+                plugin_version=artifact.plugin_version,
+                sources=[source.to_dict() for source in artifact.sources],
+            )
+        artifacts_saved = len(artifacts)
+    else:
+        results, artifacts_saved = _run_admitted_chain(
+            db,
+            admission,
+            remaining_chain,
+            execute=_execute,
+            meeting_id=meeting_id,
+            window_id=window_id,
+            transcript_hash=transcript_hash,
+            planned_keys=planned_keys,
         )
 
     summary = {
@@ -320,10 +366,90 @@ def run_meeting_plugin_chain(
             **{plugin_id: "error" for plugin_id in injected_faults},
             **{str(r.plugin_id): str(r.status) for r in results},
         },
-        "artifacts_saved": len(artifacts),
+        "artifacts_saved": artifacts_saved,
     }
     log.info(
         "meeting_plugins: %s ran %d plugin(s), %d artifact(s) synthesized",
-        meeting_id, len(results), len(artifacts),
+        meeting_id, len(results), artifacts_saved,
     )
     return summary
+
+
+def _run_admitted_chain(
+    db: Any,
+    admission: Any,
+    remaining_chain: list[str],
+    *,
+    execute: Any,
+    meeting_id: str,
+    window_id: str,
+    transcript_hash: str,
+    planned_keys: dict[str, str],
+) -> tuple[list[Any], int]:
+    """Run the remaining chain IN ORDER, one trusted child per executed plugin.
+
+    A REFUSED plugin (capability absent from the job's frozen plan, an expired or
+    cancelled job parent) issues no provider request, so — exactly like an
+    injected plugin fault — it persists the same ``error`` run record any other
+    unresolved plugin persists, keyed by its exact planned idempotency key. The
+    job stays honestly partial and an exact-key retry can still execute it later.
+
+    A plugin whose child ran but never published (cancelled, expired,
+    indeterminate) writes NOTHING at all: its output is fenced by the parent
+    election, and only its unresolved status reaches the summary.
+    """
+    from .plugins.host import PluginRunResult
+
+    results: list[Any] = []
+    artifacts_saved = 0
+    for plugin_id in remaining_chain:
+        key = planned_keys.get(plugin_id) or ""
+        try:
+            _, projection, produced = admission.plugin(
+                plugin_id,
+                window_id=window_id,
+                idempotency_key=key,
+                transcript_hash=transcript_hash,
+                # The engine the child's frozen revision built is threaded in with
+                # that child's cancellation signal, and the whole plugin execution
+                # happens INSIDE the child's dispatch — inside its cancellation
+                # seam, never beside it.
+                execute=lambda engine, cancellation, plugin_id=plugin_id: (
+                    (execute([plugin_id], engine, cancellation) or [None])[0].to_dict()
+                ),
+            )
+        except Exception as exc:
+            reason = str(getattr(exc, "reason", "") or f"{type(exc).__name__}: {exc}")
+            results.append(PluginRunResult(
+                plugin_id=plugin_id, plugin_version="unknown", status="error",
+                idempotency_key=key, duration_ms=0.0, error=reason,
+            ))
+            db.plugins.record_plugin_run(
+                meeting_id=meeting_id, window_id=window_id, plugin_id=plugin_id,
+                plugin_version="unknown", status="error", idempotency_key=key or None,
+                duration_ms=0.0, output=None, error=reason, deduped=False,
+            )
+            log.warning("meeting_plugins: %s refused for %s: %s", plugin_id, meeting_id, reason)
+            continue
+        if projection is None:
+            # Cancelled/expired/indeterminate: nothing was written and nothing may
+            # be claimed. The plugin stays unresolved, exactly like a timeout.
+            results.append(PluginRunResult(
+                plugin_id=plugin_id, plugin_version="unknown", status="error",
+                idempotency_key=key, duration_ms=0.0,
+                error="Routed plugin did not publish under the deferred job.",
+            ))
+            continue
+        record = dict(produced or {})
+        results.append(PluginRunResult(
+            plugin_id=str(record.get("plugin_id") or plugin_id),
+            plugin_version=str(record.get("plugin_version") or "unknown"),
+            status=str(record.get("status") or "unknown"),
+            idempotency_key=str(record.get("idempotency_key") or key),
+            duration_ms=float(record.get("duration_ms") or 0.0),
+            output=record.get("output") if isinstance(record.get("output"), dict) else None,
+            error=str(record.get("error")) if record.get("error") else None,
+            deduped=bool(record.get("deduped")),
+        ))
+        artifacts_saved = int(dict(projection).get("artifacts_saved") or artifacts_saved)
+    return results, artifacts_saved

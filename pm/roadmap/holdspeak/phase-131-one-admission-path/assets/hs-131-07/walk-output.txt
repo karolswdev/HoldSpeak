@@ -1,0 +1,8 @@
+Resolver attempt 1: response has wrong shape
+Resolver attempt 2: response has wrong shape
+Resolver attempt 3: response has wrong shape
+leg1 rails op=op_9590c30e69564962b22877889c5c3e0a summary='{\n  "line": "t1"\n}' note=note_79371551e986
+leg2 decision parent=op_41d73d9e873049c58a441e254cb952b3 child=op_2fca167378a840b4926cf93e9c57da1e revision=dep_c133aacd2731dad110e52f75815ece80983123174fc17c70dabdb2c43d068959 artifact drafted
+leg3 voice parent=op_ef3ef35b633048019488c98d714904ff attempts=3 children=3 refs=[]
+leg4 delivery parent=op_95278852ae46469bb7c7145a601c1b57 artifact=artifact_1bef2917b14c revision=dep_c133aacd2731dad110e52f75815ece80983123174fc17c70dabdb2c43d068959 review='{\n  "line": ", "\n}'
+WALK OK: all four census callers ran admitted invocations on real metal — rails with honest observer provenance, decision and delivery under real domain parents with linked child receipts and drafted artifacts, voice with one admitted child per attempt. Mesh envelope unit-proven.

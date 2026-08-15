@@ -18,17 +18,6 @@ def _kernel_service() -> Any:
     return _service()
 
 
-async def _generate_with_model(db: Any, target: Any, prompt: str) -> tuple[str, Any]:
-    from ...inference_targets import build_intel_for_target
-    intel = build_intel_for_target(target, db)
-    output = await __import__("asyncio").to_thread(
-        intel.run_prompt,
-        system_prompt="Draft one concise artifact from the accepted decision. Preserve the decision's meaning. Return Markdown only and do not invent approval.",
-        user_prompt=prompt, max_tokens=1200,
-    )
-    return str(output or "").strip(), intel
-
-
 def _principal(request: Request) -> Any:
     return getattr(request.state, "principal", UNAUTHENTICATED)
 
@@ -45,7 +34,10 @@ def _error(exc: ServiceError) -> JSONResponse:
 def build_decisions_router(ctx: Any) -> APIRouter:
     del ctx
     router=APIRouter(prefix="/api/decisions",tags=["decisions"])
-    def service() -> DecisionLifecycleService: return DecisionLifecycleService(_database(), kernel=_kernel_service(), model_generator=_generate_with_model, observer=get_observer())
+    # HS-131-13: the route holds no engine and no `run_prompt` callable. Drafting
+    # is the admitted Decision promotion child inside the service (HS-131-07);
+    # a second route-side model seam would be a second, unadmitted Decision path.
+    def service() -> DecisionLifecycleService: return DecisionLifecycleService(_database(), kernel=_kernel_service(), observer=get_observer())
     @router.get("")
     async def list_decisions(request: Request,project_id: Optional[str]=None,project_key: Optional[str]=None,meeting_id: Optional[str]=None,lifecycle: Optional[str]=None,limit: int=200,offset: int=0) -> Any:
         try: return JSONResponse(service().list_decisions(_principal(request),project_id=project_id,project_key=project_key,meeting_id=meeting_id,lifecycle=lifecycle,limit=limit,offset=offset))

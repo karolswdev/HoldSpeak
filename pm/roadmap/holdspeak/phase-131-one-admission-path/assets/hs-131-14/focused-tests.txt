@@ -1,0 +1,25 @@
+HS-131-14 focused verification
+
+Independent hostile verifier:
+159 passed in 1.73s
+177 passed in 79.61s
+164 passed in 2.27s
+Verdict: RATIFY
+
+Orchestrator primary-tree hostile matrix:
+159 passed in 1.74s
+
+Orchestrator primary-tree broad plugin/one-path sweep:
+566 passed in 79.56s
+
+Gate-regression repair:
+1 passed in 0.43s
+274 passed in 36.02s
+
+Delivery Workbench captured final focused suite:
+811 passed in 106.10s
+
+Executable census:
+one-path census: 105 sites
+{'gateway': 1, 'witness-mint': 2, 'gateway-binding': 1, 'allowlist': 70, 'seam': 25, 'finding': 6, 'unregistered': 0}
+gateway_scopes=2 allowlist_scopes=56 seam_scopes=16 finding_families=6

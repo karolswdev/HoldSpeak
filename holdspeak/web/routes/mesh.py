@@ -20,12 +20,31 @@ def _principal(request: Request) -> Any:
     return getattr(request.state, "principal", UNAUTHENTICATED)
 
 
+def _credential(request: Request) -> Any:
+    """The authenticated node snapshot the edge derived, or ``None``.
+
+    HS-131-16: the relay legs need the node's NAME and credential generation as
+    well as its opaque id, and none of those may come from the request body. The
+    edge middleware puts the snapshot here when — and only when — a node token
+    authenticated the request.
+    """
+    return getattr(request.state, "node_credential", None)
+
+
 def _error(exc: ServiceError) -> JSONResponse:
+    """Refusal by NAME (Article V.3): the machine class rides with the message.
+
+    HS-131-16 gave this edge a fixed refusal vocabulary — forged offer, stale
+    nonce, wrong node, replayed reservation, conflicting report — and a worker
+    has to be able to act on WHICH rule refused, not parse prose. ``code`` is
+    that class; ``error`` stays the human sentence.
+    """
+    body = {"error": exc.detail, "code": exc.code}
     if isinstance(exc, ValidationError):
-        return JSONResponse({"error": exc.detail}, status_code=400)
+        return JSONResponse(body, status_code=400)
     if isinstance(exc, ConflictError):
-        return JSONResponse({"error": exc.detail}, status_code=409)
-    return JSONResponse({"error": exc.detail}, status_code=int(exc.context.get("status") or 400))
+        return JSONResponse(body, status_code=409)
+    return JSONResponse(body, status_code=int(exc.context.get("status") or 400))
 
 
 def build_mesh_router(ctx: WebContext) -> APIRouter:
@@ -57,7 +76,9 @@ def build_mesh_router(ctx: WebContext) -> APIRouter:
     @router.post("/api/mesh/relay/claim")
     async def api_mesh_relay_claim(request: Request, payload: dict[str, Any]) -> Any:
         try:
-            return JSONResponse(service.claim_relay(_principal(request), payload or {}))
+            return JSONResponse(service.claim_relay(
+                _principal(request), payload or {}, credential=_credential(request)
+            ))
         except ServiceError as exc:
             return _error(exc)
         except Exception as exc:
@@ -66,7 +87,9 @@ def build_mesh_router(ctx: WebContext) -> APIRouter:
     @router.post("/api/mesh/relay/{job_id}/complete")
     async def api_mesh_relay_complete(job_id: str, request: Request, payload: dict[str, Any]) -> Any:
         try:
-            return JSONResponse(service.complete_relay(_principal(request), job_id, payload or {}))
+            return JSONResponse(service.complete_relay(
+                _principal(request), job_id, payload or {}, credential=_credential(request)
+            ))
         except ServiceError as exc:
             return _error(exc)
         except Exception as exc:
@@ -75,7 +98,9 @@ def build_mesh_router(ctx: WebContext) -> APIRouter:
     @router.post("/api/mesh/relay/{job_id}/fail")
     async def api_mesh_relay_fail(job_id: str, request: Request, payload: dict[str, Any]) -> Any:
         try:
-            return JSONResponse(service.fail_relay(_principal(request), job_id, payload or {}))
+            return JSONResponse(service.fail_relay(
+                _principal(request), job_id, payload or {}, credential=_credential(request)
+            ))
         except ServiceError as exc:
             return _error(exc)
         except Exception as exc:

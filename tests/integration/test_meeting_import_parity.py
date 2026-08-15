@@ -57,10 +57,14 @@ def client(db):
 
 
 class FakeTranscriber:
+    """HS-131-09: every import window is dispatched under the live session's
+    transcription admission, so a stand-in accepts what the real ``Transcriber``
+    now requires (it dispatches no model, so it ignores it)."""
+
     def __init__(self, texts):
         self.texts = list(texts)
 
-    def transcribe(self, audio):
+    def transcribe(self, audio, **_admission):
         return self.texts.pop(0) if self.texts else ""
 
 

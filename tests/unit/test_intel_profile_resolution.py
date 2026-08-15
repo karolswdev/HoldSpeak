@@ -18,12 +18,28 @@ import holdspeak.intel as intel_module
 from holdspeak.db.models import ProfileRecord
 from holdspeak.intel.providers import (
     EffectiveEndpoint,
-    build_configured_meeting_intel,
+    configured_meeting_intel,
     effective_intel_cloud,
     profile_key_env,
     resolve_llm_capability,
 )
 
+from tests.unit.admitted_context import admitted_context
+
+
+
+def _configured_intel():
+    """The ONE configured-construction entrance (HS-131-14).
+
+    The old public uncontextual factory is gone: the body is private and reachable
+    only through ``configured_meeting_intel``, which refuses without the dispatch
+    context an admitted child carries. The placement assertions below are unchanged
+    — what changed is that reaching the constructor now requires admission.
+    """
+    revision = SimpleNamespace(id="dep_configured", destination_id="configured")
+    return configured_meeting_intel(
+        context=admitted_context(revision=revision), revision=revision
+    )
 
 def _meeting_cfg(**overrides):
     base = dict(
@@ -141,25 +157,25 @@ def test_cfg_without_the_field_at_all_is_hub_default() -> None:
 # ── the constructors honor the seam ──────────────────────────────────────
 
 
-def test_build_configured_unset_runs_on_the_hub_default(monkeypatch) -> None:
+def test_configured_intel_unset_runs_on_the_hub_default(monkeypatch) -> None:
     cfg = SimpleNamespace(meeting=_meeting_cfg())
     monkeypatch.setattr("holdspeak.config.Config.load", classmethod(lambda cls, path=None: cfg))
 
-    intel = build_configured_meeting_intel()
+    intel = _configured_intel()
     assert intel.provider == "cloud"
     assert intel.cloud_model == "gpt-5-mini"
     assert intel.cloud_api_key_env == "OPENAI_API_KEY"
     assert intel.cloud_base_url is None
 
 
-def test_build_configured_adopts_the_assigned_profile(monkeypatch) -> None:
+def test_configured_intel_adopts_the_assigned_profile(monkeypatch) -> None:
     cfg = SimpleNamespace(meeting=_meeting_cfg(intel_profile_id="p-43"))
     monkeypatch.setattr("holdspeak.config.Config.load", classmethod(lambda cls, path=None: cfg))
     monkeypatch.setattr(
         "holdspeak.intel.providers._lookup_profile_record", lambda pid: _profile()
     )
 
-    intel = build_configured_meeting_intel()
+    intel = _configured_intel()
     assert intel.cloud_base_url == "http://192.168.1.43:8080/v1"
     assert intel.cloud_model == "Qwen3.5-9B-Q6_K"
 

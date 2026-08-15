@@ -7,7 +7,7 @@ independently of the Database container.
 # Bump this when adding tables or columns; the Database container uses it to
 # decide whether to back up and re-apply. See core._ensure_schema for the
 # four-way upgrade contract.
-SCHEMA_VERSION = 43  # v43: decision_receipt* tables renamed to decision_record* (HS-130-08)
+SCHEMA_VERSION = 59  # v59: mesh dispatch-offer relay proof + worker replay reservations (HS-131-16)
 
 # SQL Schema
 SCHEMA_SQL = """
@@ -122,7 +122,10 @@ CREATE TABLE IF NOT EXISTS intel_snapshots (
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
--- Deferred intel jobs for meetings that need later processing
+-- Deferred intel jobs for meetings that need later processing.
+-- `displaced_work` (HS-131-08) is the STRUCTURED list of work stop() displaced
+-- onto this job (a JSON array of slugs); empty for an ordinary deferred job,
+-- which runs base analysis and routed plugins only.
 CREATE TABLE IF NOT EXISTS intel_jobs (
     meeting_id TEXT PRIMARY KEY REFERENCES meetings(id) ON DELETE CASCADE,
     status TEXT NOT NULL DEFAULT 'queued',
@@ -130,7 +133,8 @@ CREATE TABLE IF NOT EXISTS intel_jobs (
     requested_at TEXT NOT NULL DEFAULT (datetime('now')),
     updated_at TEXT NOT NULL DEFAULT (datetime('now')),
     attempts INTEGER NOT NULL DEFAULT 0,
-    last_error TEXT
+    last_error TEXT,
+    displaced_work TEXT NOT NULL DEFAULT '[]'
 );
 
 -- Deferred-intel attempt history (retry and terminal outcomes)
@@ -1080,7 +1084,20 @@ CREATE TABLE IF NOT EXISTS mesh_relay_jobs (
     deadline_at TEXT NOT NULL,
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     claimed_at TEXT,
-    completed_at TEXT
+    completed_at TEXT,
+    -- v59 (HS-131-16): explicit hub-local relay proof. The stable destination
+    -- identity and the EXACT enqueue-time credential generation are captured
+    -- here, not recomputed from a name, so a rotated or re-paired credential
+    -- can never claim work addressed to its predecessor. The signed offer and
+    -- the content-free worker terminal report are stored beside them rather
+    -- than tunnelled through the legacy `task_kind` JSON field.
+    destination_node_id TEXT NOT NULL DEFAULT '',
+    destination_generation INTEGER NOT NULL DEFAULT 0,
+    claimed_by_node_id TEXT NOT NULL DEFAULT '',
+    claimed_generation INTEGER NOT NULL DEFAULT 0,
+    claim_nonce TEXT NOT NULL DEFAULT '',
+    dispatch_offer_json TEXT NOT NULL DEFAULT '',
+    worker_terminal_json TEXT NOT NULL DEFAULT ''
 );
 
 CREATE INDEX IF NOT EXISTS idx_mesh_relay_jobs_node_status
@@ -1090,7 +1107,36 @@ CREATE INDEX IF NOT EXISTS idx_mesh_relay_jobs_node_status
 -- born from the worker's own polling; the mesh has no other heartbeat.
 CREATE TABLE IF NOT EXISTS mesh_workers (
     node TEXT PRIMARY KEY,
-    last_seen TEXT NOT NULL DEFAULT (datetime('now'))
+    last_seen TEXT NOT NULL DEFAULT (datetime('now')),
+    -- v59 (HS-131-16): liveness belongs to the exact credential that polled, not
+    -- to a name. The claim leg stamps the authenticated `(node_id, generation)`
+    -- pair, so activity under one generation can never make its replacement — or
+    -- its predecessor — look alive.
+    node_id TEXT NOT NULL DEFAULT '',
+    credential_generation INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE INDEX IF NOT EXISTS idx_mesh_workers_identity
+    ON mesh_workers(node_id, credential_generation);
+
+-- Worker-local replay reservations (HS-131-16, design §4.1). The WORKER's own
+-- database, never the hub's: one row elects the single executor of one signed
+-- offer. `INSERT ... ON CONFLICT DO NOTHING` on the primary key is the whole
+-- election, so a replayed offer, a concurrent second worker, and a process
+-- restart all refuse `mesh_offer_replayed` BEFORE revision persistence, runner
+-- construction, or provider dispatch. Reservation residue left by a crash
+-- reconciles to `indeterminate` and is never rerun under the same authority.
+CREATE TABLE IF NOT EXISTS mesh_worker_reservations (
+    hub_key_id TEXT NOT NULL,
+    hub_operation_id TEXT NOT NULL,
+    first_ordinal INTEGER NOT NULL,
+    offer_id TEXT NOT NULL DEFAULT '',
+    job_id TEXT NOT NULL DEFAULT '',
+    state TEXT NOT NULL DEFAULT 'reserved', -- reserved | settled | indeterminate
+    terminal_outcome TEXT NOT NULL DEFAULT '',
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    settled_at TEXT,
+    PRIMARY KEY (hub_key_id, hub_operation_id, first_ordinal)
 );
 
 -- Directory (organization/synced): the canonical organization container; the
@@ -1166,6 +1212,7 @@ CREATE TABLE IF NOT EXISTS workbenches (
     resolver_profile_id TEXT,
     schedule TEXT,
     schedule_enabled INTEGER NOT NULL DEFAULT 0,
+    schedule_revision INTEGER NOT NULL DEFAULT 1,
     item_order_json TEXT NOT NULL DEFAULT '[]',
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     last_modified TEXT NOT NULL DEFAULT (datetime('now')),
@@ -1206,13 +1253,38 @@ CREATE TABLE IF NOT EXISTS workbench_runs (
     constitutional_context_revision INTEGER NOT NULL DEFAULT 0,
     constitutional_context_hash TEXT NOT NULL DEFAULT '',
     skills_injected_json TEXT NOT NULL DEFAULT '[]',
+    parent_operation_id TEXT NOT NULL DEFAULT '',
+    parent_receipt_id TEXT NOT NULL DEFAULT '',
+    child_links_json TEXT NOT NULL DEFAULT '[]',
     status TEXT NOT NULL DEFAULT 'running'
-        CHECK (status IN ('running', 'completed', 'failed'))
+        CHECK (status IN ('running', 'completed', 'failed', 'cancelled', 'indeterminate'))
 );
 CREATE INDEX IF NOT EXISTS idx_workbenches_modified ON workbenches(last_modified DESC);
 CREATE INDEX IF NOT EXISTS idx_workbench_items_workbench ON workbench_items(workbench_id, priority ASC);
 CREATE INDEX IF NOT EXISTS idx_workbench_items_status ON workbench_items(workbench_id, status);
 CREATE INDEX IF NOT EXISTS idx_workbench_runs_workbench ON workbench_runs(workbench_id, started_at DESC);
+
+-- Device-local owner authority for scheduled Workbench inference. Never sync.
+CREATE TABLE IF NOT EXISTS kernel_schedule_delegations (
+    id TEXT PRIMARY KEY, workbench_id TEXT NOT NULL,
+    delegator_kind TEXT NOT NULL, delegator_identity TEXT NOT NULL,
+    recipe_id TEXT NOT NULL, recipe_revision TEXT NOT NULL,
+    workbench_revision TEXT NOT NULL, schedule_revision TEXT NOT NULL,
+    cadence TEXT NOT NULL, deployment_revision_id TEXT NOT NULL,
+    terms_sha256 TEXT NOT NULL, expires_at REAL,
+    state TEXT NOT NULL CHECK (state IN ('LIVE','REVOKED','EXPIRED')),
+    revoked_at REAL, revocation_reason TEXT NOT NULL DEFAULT '',
+    created_at REAL NOT NULL, updated_at REAL NOT NULL
+);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_schedule_delegation_one_live
+ON kernel_schedule_delegations(workbench_id) WHERE state='LIVE';
+CREATE INDEX IF NOT EXISTS idx_schedule_delegations_workbench_state
+ON kernel_schedule_delegations(workbench_id, state);
+CREATE TABLE IF NOT EXISTS kernel_schedule_ticks (
+    workbench_id TEXT NOT NULL, due_minute INTEGER NOT NULL,
+    delegation_id TEXT NOT NULL, created_at REAL NOT NULL,
+    PRIMARY KEY(workbench_id, due_minute)
+);
 
 -- Skills (HS-116-06): reusable procedural knowledge agents learn and apply.
 CREATE TABLE IF NOT EXISTS skills (
@@ -1514,9 +1586,11 @@ CREATE TABLE IF NOT EXISTS kernel_operations (
     envelope_sha256 TEXT NOT NULL,
     policy_version TEXT NOT NULL,
     authority_basis TEXT NOT NULL,
+    delegator_kind TEXT NOT NULL DEFAULT '',
+    delegator_identity TEXT NOT NULL DEFAULT '',
     state TEXT NOT NULL CHECK (state IN (
         'admitting','awaiting_decision','awaiting_execution','claimed',
-        'succeeded','failed','refused','indeterminate'
+        'succeeded','failed','refused','cancelled','indeterminate'
     )),
     revision INTEGER NOT NULL DEFAULT 1,
     native_id TEXT NOT NULL,
@@ -1535,7 +1609,7 @@ ON kernel_operations(state, created_at);
 CREATE TABLE IF NOT EXISTS kernel_receipts (
     receipt_id TEXT PRIMARY KEY,
     operation_id TEXT NOT NULL UNIQUE REFERENCES kernel_operations(operation_id),
-    state TEXT NOT NULL CHECK (state IN ('succeeded','failed','refused','indeterminate')),
+    state TEXT NOT NULL CHECK (state IN ('succeeded','failed','refused','cancelled','indeterminate')),
     outcome TEXT NOT NULL,
     result_ref TEXT NOT NULL DEFAULT '',
     created_at REAL NOT NULL
@@ -1561,6 +1635,52 @@ CREATE TABLE IF NOT EXISTS kernel_journal (
 );
 CREATE INDEX IF NOT EXISTS idx_kernel_journal_operation
 ON kernel_journal(operation_id, hub_sequence);
+
+-- HS-131-03: runner results stage before their terminal receipt and materialize
+-- only after that receipt is durable. Domain tables carry the corresponding
+-- projection_stage_id unique key in their registered materializers.
+CREATE TABLE IF NOT EXISTS kernel_projection_stages (
+    stage_id TEXT PRIMARY KEY,
+    invocation_id TEXT NOT NULL,
+    operation_id TEXT NOT NULL REFERENCES kernel_operations(operation_id),
+    kind TEXT NOT NULL,
+    projection_json TEXT NOT NULL,
+    projection_sha256 TEXT NOT NULL,
+    result_ref TEXT NOT NULL UNIQUE,
+    state TEXT NOT NULL CHECK (state IN ('STAGED','FINALIZING','PUBLISHED','DISCARDED')),
+    final_result_json TEXT NOT NULL DEFAULT '',
+    created_at REAL NOT NULL,
+    updated_at REAL NOT NULL,
+    UNIQUE(invocation_id, kind)
+);
+CREATE INDEX IF NOT EXISTS idx_kernel_projection_stages_recovery
+ON kernel_projection_stages(state, updated_at);
+
+-- HS-131-03: Ask has no caller-owned write window. The response itself is a
+-- receipt-gated native projection and may be replayed after a lost response.
+CREATE TABLE IF NOT EXISTS ask_results (
+    projection_stage_id TEXT PRIMARY KEY REFERENCES kernel_projection_stages(stage_id),
+    invocation_id TEXT NOT NULL UNIQUE,
+    operation_id TEXT NOT NULL UNIQUE REFERENCES kernel_operations(operation_id),
+    receipt_id TEXT NOT NULL UNIQUE REFERENCES kernel_receipts(receipt_id),
+    payload_json TEXT NOT NULL,
+    created_at REAL NOT NULL
+);
+CREATE TABLE IF NOT EXISTS recipe_results (
+    projection_stage_id TEXT PRIMARY KEY REFERENCES kernel_projection_stages(stage_id),
+    invocation_id TEXT NOT NULL UNIQUE,
+    operation_id TEXT NOT NULL UNIQUE REFERENCES kernel_operations(operation_id),
+    receipt_id TEXT NOT NULL UNIQUE REFERENCES kernel_receipts(receipt_id),
+    artifact_id TEXT NOT NULL UNIQUE REFERENCES artifacts(id)
+);
+CREATE TABLE IF NOT EXISTS recipe_chat_results (
+    projection_stage_id TEXT PRIMARY KEY REFERENCES kernel_projection_stages(stage_id),
+    invocation_id TEXT NOT NULL UNIQUE,
+    operation_id TEXT NOT NULL UNIQUE REFERENCES kernel_operations(operation_id),
+    receipt_id TEXT NOT NULL UNIQUE REFERENCES kernel_receipts(receipt_id),
+    payload_json TEXT NOT NULL,
+    created_at REAL NOT NULL
+);
 
 -- Phase 124: pipeline observer events. Append-only structured event log
 -- for every public service method call.
@@ -1616,4 +1736,62 @@ CREATE TABLE IF NOT EXISTS monday_brief_items (
     priority INTEGER NOT NULL DEFAULT 0
 );
 CREATE INDEX IF NOT EXISTS idx_monday_brief_items_brief ON monday_brief_items(brief_id);
+
+-- Immutable admitted deployment specifications. ``secret_slot`` identifies a
+-- device-local credential lookup location; credentials never enter this table.
+CREATE TABLE IF NOT EXISTS deployment_revisions (
+    id TEXT PRIMARY KEY,
+    destination_id TEXT NOT NULL,
+    kind TEXT NOT NULL,
+    engine TEXT NOT NULL,
+    model TEXT NOT NULL,
+    node TEXT NOT NULL DEFAULT '',
+    boundary TEXT NOT NULL,
+    endpoint TEXT NOT NULL DEFAULT '',
+    model_path TEXT,
+    secret_slot TEXT NOT NULL DEFAULT ''
+);
+
+-- HS-131-04: the graph/sequence controller is durable independently of its
+-- admitted children.  The JSON fields are canonical snapshots, never a
+-- transport capability or provider secret.
+CREATE TABLE IF NOT EXISTS kernel_parent_runs (
+    operation_id TEXT PRIMARY KEY REFERENCES kernel_operations(operation_id),
+    native_id TEXT NOT NULL UNIQUE,
+    kind TEXT NOT NULL CHECK (kind IN ('sequence','workflow','workbench','decision.promotion-draft','delivery.pr-review-draft','voice_reference_resolve','meeting.session','meeting.deferred-intel-job','dictation.session','wake.session','cadence.next-action-draft')),
+    definition_ref TEXT NOT NULL,
+    definition_revision TEXT NOT NULL,
+    input_json TEXT NOT NULL,
+    deadline_at REAL NOT NULL,
+    execution_epoch INTEGER NOT NULL DEFAULT 1,
+    planned_node TEXT NOT NULL DEFAULT '',
+    active_child_invocation_id TEXT NOT NULL DEFAULT '',
+    child_budget INTEGER NOT NULL,
+    children_json TEXT NOT NULL DEFAULT '[]',
+    state TEXT NOT NULL CHECK (state IN ('OPEN','CANCELLING','SUCCEEDED','FAILED','CANCELLED','REFUSED','INDETERMINATE')),
+    lease_process_id TEXT NOT NULL DEFAULT '',
+    lease_heartbeat_at REAL,
+    publication_claim_id TEXT NOT NULL DEFAULT '',
+    publication_claimed_at REAL,
+    created_at REAL NOT NULL,
+    updated_at REAL NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_kernel_parent_runs_state ON kernel_parent_runs(state, updated_at);
+
+-- A receipt-gated, durable domain checkpoint for each admitted model child.
+-- ``advanced`` says whether the child won the parent tuple CAS; stale stages are
+-- retained as truthful receipt-linked facts but never become graph input.
+CREATE TABLE IF NOT EXISTS kernel_parent_checkpoints (
+    stage_id TEXT PRIMARY KEY REFERENCES kernel_projection_stages(stage_id),
+    parent_operation_id TEXT NOT NULL REFERENCES kernel_parent_runs(operation_id),
+    child_invocation_id TEXT NOT NULL,
+    execution_epoch INTEGER NOT NULL,
+    planned_node TEXT NOT NULL,
+    checkpoint_json TEXT NOT NULL,
+    advanced INTEGER NOT NULL CHECK (advanced IN (0,1)),
+    created_at REAL NOT NULL,
+    UNIQUE(parent_operation_id, child_invocation_id)
+);
+CREATE INDEX IF NOT EXISTS idx_kernel_parent_checkpoints_parent
+ON kernel_parent_checkpoints(parent_operation_id, execution_epoch);
 """

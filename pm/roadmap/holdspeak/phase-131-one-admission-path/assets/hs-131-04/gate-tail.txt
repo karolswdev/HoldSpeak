@@ -1,0 +1,30 @@
+║                                                            ║
+║     playwright install                                     ║
+║                                                            ║
+║ <3 Playwright Team                                         ║
+╚════════════════════════════════════════════════════════════╝
+ERROR tests/e2e/test_live_bus.py::test_every_live_page_opens_exactly_one_runtime_socket
+ERROR tests/e2e/test_live_bus.py::test_a_real_broadcast_reaches_the_presence_card_via_the_bus
+ERROR tests/e2e/test_live_bus.py::test_the_bus_reconnects_after_a_server_restart
+ERROR tests/e2e/test_workbench_walk.py::TestWorkbenchWalk::test_desk_with_workbench_objects[desktop]
+ERROR tests/e2e/test_workbench_walk.py::TestWorkbenchWalk::test_desk_with_workbench_objects[mobile]
+ERROR tests/e2e/test_workbench_walk.py::TestWorkbenchWalk::test_workbenches_home[desktop]
+ERROR tests/e2e/test_workbench_walk.py::TestWorkbenchWalk::test_workbenches_home[mobile]
+ERROR tests/e2e/test_workbench_walk.py::TestWorkbenchWalk::test_template_picker[desktop]
+ERROR tests/e2e/test_workbench_walk.py::TestWorkbenchWalk::test_template_picker[mobile]
+ERROR tests/e2e/test_workbench_walk.py::TestWorkbenchWalk::test_workbench_window_configured[desktop]
+ERROR tests/e2e/test_workbench_walk.py::TestWorkbenchWalk::test_workbench_window_configured[mobile]
+ERROR tests/e2e/test_workbench_walk.py::TestWorkbenchWalk::test_config_panel_expanded[desktop]
+ERROR tests/e2e/test_workbench_walk.py::TestWorkbenchWalk::test_config_panel_expanded[mobile]
+ERROR tests/e2e/test_workbench_walk.py::TestWorkbenchWalk::test_constitutional_context_editor[desktop]
+ERROR tests/e2e/test_workbench_walk.py::TestWorkbenchWalk::test_constitutional_context_editor[mobile]
+ERROR tests/e2e/test_workbench_walk.py::TestWorkbenchWalk::test_composer_with_body[desktop]
+ERROR tests/e2e/test_workbench_walk.py::TestWorkbenchWalk::test_composer_with_body[mobile]
+FAILED tests/uat/test_induction_integration_43.py::test_meeting_recipe_yields_a_real_open_action
+FAILED tests/integration/test_web_companion_slack.py::test_source_identity_returns_the_receipt_to_the_desk_subject
+FAILED tests/integration/test_web_companion_slack.py::test_a_proposed_send_never_posts
+FAILED tests/integration/test_web_companion_slack.py::test_approval_posts_the_preview_byte_equal
+FAILED tests/integration/test_web_companion_slack.py::test_yolo_executes_configured_slack_without_a_prompt_and_returns_receipt
+FAILED tests/integration/test_web_companion_slack.py::test_url_removed_between_propose_and_approve_fails_honestly
+FAILED tests/integration/test_web_companion_slack.py::test_the_wire_events_ride_for_qlippy
+7 failed, 238 passed, 35 skipped, 16 deselected, 17 errors in 741.05s (0:12:21)

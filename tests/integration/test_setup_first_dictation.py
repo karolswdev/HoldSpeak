@@ -39,7 +39,9 @@ def _config() -> SimpleNamespace:
 class _FakeTranscriber:
     model_name = "base"
 
-    def transcribe(self, _audio) -> str:
+    def transcribe(self, _audio, **_admission) -> str:
+        # HS-131-09: the real `Transcriber.transcribe` takes the live session's
+        # `admission=`; a stand-in that reaches no model only has to accept it.
         return "hello world"
 
 
@@ -60,13 +62,29 @@ def _runtime(monkeypatch, tmp_path, typed: list):
     return rt, db
 
 
+def _admitted_hold(rt):
+    """The live ``dictation.session`` a hold press admits (HS-131-09).
+
+    The real hotkey path admits this parent at the accepted press and hands it to
+    ``_transcribe_and_type``; the transcription and any pipeline stage run as its
+    children. The milestone is a property of a dictation that was ADMITTED, so
+    the test drives the same seam the runtime does instead of the old
+    contextless call.
+    """
+    from holdspeak.speech_session import admit_hold_session
+
+    return admit_hold_session(config_snapshot=rt.config)
+
+
 def test_successful_dictation_sets_the_first_dictation_milestone(monkeypatch, tmp_path):
     typed: list[str] = []
     rt, db = _runtime(monkeypatch, tmp_path, typed)
 
     assert db.milestones.is_set(FIRST_DICTATION_SUCCESS) is False  # fresh
 
-    rt._transcribe_and_type(np.zeros(16000, dtype=np.float32))
+    session = _admitted_hold(rt)
+    rt._transcribe_and_type(np.zeros(16000, dtype=np.float32), session=session)
+    session.close("succeeded")
 
     assert typed, "nothing reached the injection seam"
     assert "hello world" in typed[0].lower()
@@ -76,9 +94,13 @@ def test_successful_dictation_sets_the_first_dictation_milestone(monkeypatch, tm
 def test_no_speech_does_not_set_the_milestone(monkeypatch, tmp_path):
     typed: list[str] = []
     rt, db = _runtime(monkeypatch, tmp_path, typed)
-    rt.transcriber = SimpleNamespace(model_name="base", transcribe=lambda _a: "")
+    rt.transcriber = SimpleNamespace(
+        model_name="base", transcribe=lambda _a, **_admission: ""
+    )
 
-    rt._transcribe_and_type(np.zeros(16000, dtype=np.float32))
+    session = _admitted_hold(rt)
+    rt._transcribe_and_type(np.zeros(16000, dtype=np.float32), session=session)
+    session.close("succeeded")
 
     assert typed == []
     assert db.milestones.is_set(FIRST_DICTATION_SUCCESS) is False

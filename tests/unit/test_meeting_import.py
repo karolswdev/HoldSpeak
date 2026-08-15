@@ -35,7 +35,8 @@ class FakeTranscriber:
         self.texts = list(texts)
         self.received: list[np.ndarray] = []
 
-    def transcribe(self, audio):
+    def transcribe(self, audio, **kwargs):
+        # HS-131-09: each window carries the import session's admission.
         self.received.append(np.asarray(audio))
         return self.texts.pop(0) if self.texts else ""
 

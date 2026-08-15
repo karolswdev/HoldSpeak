@@ -17,9 +17,9 @@ There are two model roles, configured independently:
 | **Transcription** (Whisper) | speech → text | `model.name`, `model.backend` |
 | **LLM** | dictation block-classification + KB enrichment, and meeting intel | `dictation.runtime.*`, `meeting.intel_*` |
 
-This document is about the **LLM** role. (Transcription uses Whisper sizes,
-`tiny` / `base` / `small` and up, via MLX-Whisper or faster-whisper; see the
-[README](../README.md).)
+Most setup below is about the **LLM** role. Transcription uses Whisper sizes,
+`tiny` / `base` / `small` and up, via MLX-Whisper or faster-whisper; its model
+calls still follow the same admitted execution contract described below.
 
 ---
 
@@ -96,6 +96,33 @@ only truth.
 
 ---
 
+## What a destination means at execution
+
+A **Runs on** choice is mutable configuration only until work is admitted. Before
+an actual model attempt, HoldSpeak captures the resolved destination as an
+immutable `DeploymentRevision`: engine kind, endpoint/model identity, boundary,
+secret slot reference, and mesh node where applicable. The `InferenceRunner` at
+the executing boundary admits one `inference.invoke@1` child against that exact
+revision. The reviewed adapter constructs and dispatches only after the child is
+claimed. Editing a destination or picker after admission cannot retarget that
+attempt.
+
+Every physical attempt gets its own immutable terminal receipt. An `auto` local
+to endpoint fallback is two frozen revisions and, when both are attempted, two
+children and two receipts; it is never an invisible provider switch inside one
+receipt. Cancellation suppresses late output, and uncertain execution remains
+`indeterminate`. Destination keys are joined only inside the selected adapter;
+credentials, prompts, completions, and token streams are absent from deployment
+revisions and kernel rows.
+
+No backend is exempt. In-process GGUF/MLX work, endpoint calls, mesh workers,
+and shared Whisper transcription/preload all enter an `InferenceRunner` at their
+executing boundary. Meeting, dictation, and configured wake sessions are finite
+parents, while each
+actual LLM or Whisper call is a causally linked child with a live authority and
+revision check. See the canonical
+[one-path inference contract](ARCHITECTURE.md#inference-admission-one-path-one-receipt-per-attempt).
+
 ## Runs on destinations
 
 The three backends above answer *how* an LLM runs. A **Runs on destination**
@@ -112,11 +139,14 @@ persistence contracts retain the `profile` compatibility name.
   at the point of use.
 
 A destination carries only its definition: name, kind, endpoint, model, and
-usable context window. It never carries the API key. The definition syncs across
-your surfaces (desktop hub, iPad, iPhone, web) so the same named destination is
-available everywhere; a surface that cannot host a kind (a this-device GGUF in
-a browser) shows it as unavailable rather than pretending. The key stays with
-each surface and is joined only at request time. See
+usable context window. It never carries the API key. The Python/web sync contract
+is derived from `SYNC_REGISTRY` in `holdspeak/services/sync_service.py`; its
+`profile` and `deployment_revision` kinds, pull buckets, and JSON schemas are the
+authority. Web fields are checked against those schemas. No Swift enum or native
+fixture defines this contract, and the inference-admission change adds no Swift
+compatibility work.
+A future native client may consume the finished Python/web shape. The key stays
+local and is joined only at dispatch time. See
 [Security & privacy](SECURITY.md#5-secrets-handling).
 
 Destinations also drive the desktop hub's pipelines. **Settings, Models** holds
@@ -129,30 +159,45 @@ when a destination needs a key on this machine.
 ### The mesh edge: run on another node
 
 A Runs on destination can name a node instead of an endpoint: pick the **Mesh
-node** kind and type the node's name. A run against that destination relays through
-the hub to the node's worker, which executes it on the node's own provider
-and keys. The model and the key never move; the request does. Any machine
-becomes an edge with one command:
+node** kind and type the node's name. A run against that destination relays
+through the hub to the node's worker, which executes it on the node's own
+provider and keys. The model and provider key never move; the request does.
+
+Pair the node deliberately. On the hub:
 
 ```bash
-HOLDSPEAK_HUB_TOKEN=<the hub token> holdspeak mesh serve --hub http://<hub>:8765
+holdspeak node token create --name edge >/dev/null
+holdspeak node token export --name edge --out ./holdspeak-pairing-edge.json
 ```
 
-Running the command is the consent; Ctrl-C stops it and the node reads
-offline within seconds. On iPhone and iPad the same consent is one switch,
-Settings → "Serve my models to the mesh": while the app is open, runs
-against a destination naming that device execute on its own model.
-Availability is honest: a node is live only while
-its worker polls, so pickers and the models list show its state, a run
-against an offline node refuses immediately and names the node, and
-`holdspeak doctor` lists every edge with its age under "Mesh edges". The
-serving machine needs a real provider of its own (a local model or an
-endpoint) in its config; the hub-side destination only names where the run
-goes. Relay runs are chat, Agent, meeting-intelligence, and dictation
-rewrites; the prompt travels only between the hub and the executing node.
+Move that owner-only pairing file to the serving machine through a channel you
+trust, then on that machine:
 
-Manage Runs on destinations on the Web compatibility route `/profiles`, or in
-native Settings; assign a Agent in the Agent editor.
+```bash
+holdspeak node pair --from ./holdspeak-pairing-edge.json
+holdspeak mesh serve --hub http://<hub>:8765
+```
+
+The transfer contains this node's bearer credential plus the hub's public
+Ed25519 offer pin; the hub's private signing key never leaves the hub. The worker
+authenticates as a node, not with `HOLDSPEAK_HUB_TOKEN`. For every claimed job it
+verifies and reserves the signed, node/revision/operation/attempt/deadline-bound
+offer
+before its local `InferenceRunner` constructs or calls a provider. The worker's
+physical attempt gets its own immutable local receipt; the hub independently
+settles the content-free report. Retrying report delivery never reruns the model.
+
+Running `mesh serve` is the consent; Ctrl-C stops it and the node reads offline
+within seconds. A node is live only while its worker polls, so pickers and the
+models list show its state, a run against an offline node refuses immediately and
+names the node, and `holdspeak doctor` lists every edge with its age under "Mesh
+edges". The serving machine needs a real provider of its own (a local model or an
+endpoint) in its config; the hub-side destination only names where the run goes.
+Relay runs are chat, Agent, meeting intelligence, and dictation rewrites; the
+prompt travels only between the hub and the paired executing node.
+
+Manage Runs on destinations in **Settings, Models** or on the Web compatibility
+route `/profiles`; assign an Agent in the Agent editor.
 
 ## Current suggestions (a moving target)
 

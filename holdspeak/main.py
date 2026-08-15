@@ -396,8 +396,16 @@ Logs are written to: {LOG_FILE}
         help="Node name to serve as (default: this device's mesh name)",
     )
     mesh_serve_parser.add_argument(
-        "--token-env", default="HOLDSPEAK_HUB_TOKEN", dest="token_env",
-        help="Env var holding the hub token (never a flag; default HOLDSPEAK_HUB_TOKEN)",
+        # HS-131-16: a mesh worker authenticates as a NODE. The shared browser
+        # owner token cannot serve the mesh, so the ambient `HOLDSPEAK_HUB_TOKEN`
+        # posture is removed rather than kept as a fallback. When this variable
+        # is unset the node uses the token its imported pairing put in
+        # owner-only custody (`holdspeak node pair --from <file>`).
+        "--token-env", default="HOLDSPEAK_NODE_TOKEN", dest="token_env",
+        help=(
+            "Env var holding this node's pairing token (never a flag; "
+            "default HOLDSPEAK_NODE_TOKEN; falls back to imported pairing custody)"
+        ),
     )
     mesh_serve_parser.add_argument(
         "--once", action="store_true",
@@ -471,7 +479,28 @@ Logs are written to: {LOG_FILE}
 
     # Handle dictation subcommand (DIR-01 CLI surface)
     if args.command == "dictation":
-        raise SystemExit(run_dictation_command(_normalize_dictation_args(args)))
+        # HS-131-15: authority is derived HERE, at the top level, from the
+        # hub-issued owner credential this process holds — through the same
+        # centralized authenticator the web edge uses. The command never mints an
+        # owner, never reads UID/TTY/loopback/process location, and takes no
+        # `--principal`. `None` means "no valid credential"; a provider-bearing
+        # dry-run then refuses by name before it constructs anything, while a
+        # configuration that reaches no model stays lexical.
+        from .speech_session import cli_owner_principal
+
+        # ONE snapshot for the whole command: the credential is checked against
+        # it, the plan is frozen from it, and the pipeline is assembled from it.
+        # Loading twice would mean authenticating against one configuration and
+        # running against another — a window where an edit between the two reads
+        # changes where the model runs after the authority decision was made.
+        dictation_config = Config.load()
+        raise SystemExit(
+            run_dictation_command(
+                _normalize_dictation_args(args),
+                principal=cli_owner_principal(dictation_config),
+                config_snapshot=dictation_config,
+            )
+        )
 
     # Handle agent-hook subcommand
     if args.command == "agent-hook":
@@ -714,23 +743,39 @@ def _run_meeting_mode(args):
 
     results = []
 
-    # Transcribe mic audio
-    if mic_chunks:
-        print(f"Transcribing {len(mic_chunks)} mic chunks...")
-        mic_audio = concatenate_chunks(mic_chunks)
-        if len(mic_audio) > 1600:  # At least 0.1s
-            mic_text = transcriber.transcribe(mic_audio)
-            if mic_text:
-                results.append((mic_label, mic_text))
+    # HS-131-09: the CLI meeting transcribes with the same local Whisper as every
+    # other path, so it runs under one finite admitted session too.
+    from .speech_session import admit_speech_session, hold_gesture_principal
 
-    # Transcribe system audio
-    if system_chunks:
-        print(f"Transcribing {len(system_chunks)} system audio chunks...")
-        system_audio = concatenate_chunks(system_chunks)
-        if len(system_audio) > 1600:
-            system_text = transcriber.transcribe(system_audio)
-            if system_text:
-                results.append((remote_label, system_text))
+    speech_session = admit_speech_session(
+        kind="dictation.session",
+        principal=hold_gesture_principal(),
+        insertion_aim="cli-meeting",
+        config_snapshot=config,
+        deadline_seconds=1800.0,
+        child_budget=8,
+    )
+    admission = speech_session.transcription()
+    try:
+        # Transcribe mic audio
+        if mic_chunks:
+            print(f"Transcribing {len(mic_chunks)} mic chunks...")
+            mic_audio = concatenate_chunks(mic_chunks)
+            if len(mic_audio) > 1600:  # At least 0.1s
+                mic_text = transcriber.transcribe(mic_audio, admission=admission)
+                if mic_text:
+                    results.append((mic_label, mic_text))
+
+        # Transcribe system audio
+        if system_chunks:
+            print(f"Transcribing {len(system_chunks)} system audio chunks...")
+            system_audio = concatenate_chunks(system_chunks)
+            if len(system_audio) > 1600:
+                system_text = transcriber.transcribe(system_audio, admission=admission)
+                if system_text:
+                    results.append((remote_label, system_text))
+    finally:
+        speech_session.close("succeeded")
 
     # Display results
     print()

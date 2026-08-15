@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import platform
 import statistics
 import subprocess
@@ -19,6 +20,7 @@ from holdspeak.config import Config
 from holdspeak.desktop_typing import type_text_from_owner_gesture
 from holdspeak.dictation_runner import run_dictation_pipeline
 from holdspeak.intel.providers import effective_dictation_llm
+from holdspeak.speech_session import admit_hold_session, seal_hold_release
 from holdspeak.text_processor import TextProcessor
 from holdspeak.transcribe import Transcriber
 from holdspeak.typer import TextTyper
@@ -70,35 +72,45 @@ class _SeamSink:
 
 
 class _DriverSink:
-    name = "desktop_type_text_kernel_to_texttyper_driver"
+    """The admitted delivery seam, measured to the privileged-executor hand-off.
 
-    class _Keyboard:
-        def __init__(self) -> None:
-            self.events: list[tuple[str, str]] = []
+    HS-131-09B: `TextTyper` is a warrant-only proxy that owns no keyboard or
+    clipboard primitive (it delegates to the privileged child's executor), so the
+    old pynput chord count could never land and this mode always raised. The
+    landing point is now the seam the kernel hands the CLAIMED WARRANT to: the
+    window still runs release -> admitted delivery, and it excludes only the OS
+    keystroke injection, identically on both sides of the A/B.
+    """
 
-        def press(self, key: Any) -> None:
-            self.events.append(("press", str(key)))
-
-        def release(self, key: Any) -> None:
-            self.events.append(("release", str(key)))
+    name = "desktop_type_text_kernel_to_privileged_executor_seam"
 
     class _LandingTyper:
         def __init__(self, sink: Any) -> None:
             self.sink = sink
 
-        def type_text(self, text: str, **kwargs: Any) -> None:
-            self.sink.driver.type_text(text, **kwargs)
+        def type_text(
+            self,
+            text: str,
+            *,
+            warrant: Any = None,
+            request: Any = None,
+            operation_id: str = "",
+            executor: Any = None,
+            **kwargs: Any,
+        ) -> dict[str, Any]:
+            if not isinstance(warrant, dict) or not operation_id or executor is None:
+                raise RuntimeError("the landing seam was reached without a claimed warrant")
+            self.sink.landed.append(str(text))
             self.sink.landed_at = time.perf_counter()
+            return {"state": "succeeded", "outcome": "succeeded"}
 
     def __init__(self) -> None:
-        self.driver = TextTyper()
-        self.keyboard = self._Keyboard()
-        self.driver._keyboard = self.keyboard
         self.typer = self._LandingTyper(self)
+        self.landed: list[str] = []
         self.landed_at: float | None = None
 
     def type(self, text: str) -> None:
-        self.keyboard.events.clear()
+        self.landed.clear()
         self.landed_at = None
         type_text_from_owner_gesture(
             text,
@@ -110,8 +122,8 @@ class _DriverSink:
         )
 
     def verify(self, text: str) -> None:
-        if not text.strip() or len(self.keyboard.events) != 4:
-            raise RuntimeError("TextTyper did not execute one paste chord")
+        if not text.strip() or self.landed != [text]:
+            raise RuntimeError("the admitted delivery did not reach the driver seam")
 
     def close(self) -> None:
         return None
@@ -180,12 +192,22 @@ def _capture(audio: np.ndarray) -> tuple[np.ndarray, float]:
 
 
 def _percentiles(rows: list[dict[str, float]]) -> dict[str, dict[str, float]]:
+    """min / median / p95 / max per metric.
+
+    HS-131-09: the owner's threshold is `max(25 ms, 5%)` on BOTH the median and
+    the p95, so p95 is reported here. The estimator is NEAREST-RANK (the
+    documented choice on both sides of the A/B): index `ceil(0.95 * n) - 1` of
+    the sorted samples, which for n=20 is the 19th value. With 20 runs the p95 is
+    tail-sensitive — a recorded limitation, not a reason to weaken the threshold.
+    """
     result: dict[str, dict[str, float]] = {}
     for key in rows[0]:
         values = sorted(row[key] for row in rows)
+        index = max(0, math.ceil(0.95 * len(values)) - 1)
         result[key] = {
             "min": round(values[0], 3),
             "median": round(statistics.median(values), 3),
+            "p95": round(values[index], 3),
             "max": round(values[-1], 3),
         }
     return result
@@ -246,11 +268,22 @@ def main() -> int:
         for index in range(total_iterations):
             if hasattr(sink, "prepare"):
                 sink.prepare()
+            # HS-131-09: the hold is admitted at PRESS — off the release-to-landed
+            # hot path — and SEALED on release. The seal is one parent-state
+            # transition and is deliberately measured inside the window below
+            # (Sol Amendment 2 + the latency ruling).
+            speech_session = admit_hold_session(config_snapshot=config)
             release_started = time.perf_counter()
             captured, capture_stop_ms = _capture(audio)
 
             started = time.perf_counter()
-            transcript = transcriber.transcribe(captured)
+            seal_hold_release(speech_session)
+            seal_ms = _ms(started)
+
+            started = time.perf_counter()
+            transcript = transcriber.transcribe(
+                captured, admission=speech_session.transcription()
+            )
             transcribe_ms = _ms(started)
 
             started = time.perf_counter()
@@ -278,8 +311,10 @@ def main() -> int:
                 release_to_landed_ms = round((landed_at - release_started) * 1000.0, 3)
             sink.verify(final_text)
 
+            speech_session.close("succeeded")
             row = {
                 "capture_stop_ms": capture_stop_ms,
+                "session_seal_ms": seal_ms,
                 "transcribe_ms": transcribe_ms,
                 "punctuation_ms": punctuation_ms,
                 "pipeline_ms": pipeline_ms,
@@ -298,7 +333,7 @@ def main() -> int:
         sink.close()
 
     result = {
-        "schema": "holdspeak.dictation-latency/v1",
+        "schema": "holdspeak.dictation-latency/v2",
         "audio": str(args.audio.resolve().relative_to(_REPO)),
         "audio_duration_ms": audio_duration_ms,
         "machine": {
@@ -322,6 +357,7 @@ def main() -> int:
         "runs": args.runs,
         "samples_ms": rows,
         "summary_ms": _percentiles(rows),
+        "p95_estimator": "nearest-rank",
         "transcript_sha256": [
             "sha256:" + __import__("hashlib").sha256(text.encode()).hexdigest()
             for text in transcripts

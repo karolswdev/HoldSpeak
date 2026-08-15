@@ -390,9 +390,18 @@ def test_openai_compatible_runtime_rejects_malformed_json_response():
         rt.classify("classify this", _schema())
 
 
-def test_openai_compatible_runtime_retries_when_response_format_rejected():
+def test_openai_compatible_runtime_names_a_rejected_response_format():
+    """HS-131-09B: the compatibility leg is a SEPARATE admitted child.
+
+    This method used to retry internally, hiding a second real request to a model
+    inside one call. It now raises the endpoint's own rejection by shape; the
+    admitted layer (`speech_session/provider.py`) runs the `response_format=False`
+    leg as its own child with its own receipt — proven in
+    `tests/unit/test_dictation_pipeline_admission.py`.
+    """
     from holdspeak.plugins.dictation.runtime_openai_compatible import (
         OpenAICompatibleRuntime,
+        _response_format_unsupported,
     )
 
     completions = _ResponseFormatRejectingCompletions(
@@ -416,11 +425,17 @@ def test_openai_compatible_runtime_retries_when_response_format_rejected():
         client_factory=_Client,
     )
 
-    result = rt.classify("classify this", _schema())
+    with pytest.raises(Exception) as raised:
+        rt.classify("classify this", _schema())
 
+    assert _response_format_unsupported(raised.value)
+    assert len(completions.calls) == 1
+    assert "response_format" in completions.calls[0]
+
+    # The second leg is a real, separate request — and it succeeds.
+    result = rt.classify("classify this", _schema(), response_format=False)
     assert result["block_id"] == "ai_prompt_buildout"
     assert len(completions.calls) == 2
-    assert "response_format" in completions.calls[0]
     assert "response_format" not in completions.calls[1]
 
 

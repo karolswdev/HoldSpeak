@@ -14,6 +14,11 @@ from ....logging_config import get_logger
 log=get_logger("web.routes.activity")
 def _svc()->ActivityMeetingCandidateService:return ActivityMeetingCandidateService(get_database(), observer=get_observer())
 def _principal(r:Request):return getattr(r.state,"principal",UNAUTHENTICATED)
+def _start_with_principal(on_start:Any,principal:Any)->Any:
+ # HS-131-08: capture start carries the authenticated caller, because live
+ # meeting intelligence is admitted under exactly that principal.
+ from ....services.meeting_service import _accepts_principal
+ return on_start(principal=principal) if _accepts_principal(on_start) else on_start()
 def _err(e:Exception)->JSONResponse:return JSONResponse({"error":"activity meeting candidate not found" if isinstance(e,NotFound) else str(e)},status_code=404 if isinstance(e,NotFound) else 400)
 def build_candidates_router(ctx:WebContext)->APIRouter:
  router=APIRouter()
@@ -41,7 +46,7 @@ def build_candidates_router(ctx:WebContext)->APIRouter:
   if ctx.on_start is None:return JSONResponse({"success":False,"error":"Meeting start control not supported"},status_code=501)
   try:
    candidate=_svc().candidate_for_start(_principal(request),candidate_id)
-   meeting=_meeting_callback_payload(ctx.on_start()); warning=None
+   meeting=_meeting_callback_payload(_start_with_principal(ctx.on_start,_principal(request))); warning=None
    if ctx.on_update_meeting is not None and str(candidate["title"] or "").strip():
     try:
      updated=_meeting_callback_payload(ctx.on_update_meeting(title=candidate["title"],tags=None))

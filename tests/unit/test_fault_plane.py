@@ -16,7 +16,9 @@ from holdspeak.db import Database, reset_database
 from holdspeak.faults import FAULT_ENV, FAULT_POINTS, PLUGIN_FAULT_PREFIX
 from holdspeak.meeting_capture_journal import MeetingCaptureJournal
 from holdspeak.meeting_recorder import AudioChunk
-from holdspeak.meeting_session import MeetingSession, MeetingState, TranscriptSegment
+from holdspeak.meeting_session import MeetingSession
+from holdspeak.meeting_session import MeetingState, TranscriptSegment
+from holdspeak.principals import Principal, PrincipalKind
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
@@ -121,8 +123,14 @@ class _Recorder:
 
 
 class _Transcriber:
-    def transcribe(self, _audio):
+    def transcribe(self, _audio, **kwargs):
         return "words that must survive"
+
+
+# HS-131-09: transcription is a child of the admitted `meeting.session`, so a
+# session that admits nothing transcribes nothing. The fault plane still probes
+# the real failure path — under an authenticated principal.
+_OWNER = Principal(PrincipalKind.OWNER, "fault-plane-owner")
 
 
 @pytest.fixture
@@ -141,7 +149,7 @@ def test_meeting_transcribe_fault_drops_segment_and_keeps_meeting(
 ):
     db = session_env
     # Control first: the identical run without the env produces a segment.
-    session = MeetingSession(transcriber=_Transcriber())
+    session = MeetingSession(transcriber=_Transcriber(), principal=_OWNER)
     state = session.start()
     final = session.stop()
     assert [s.text for s in final.segments] == ["words that must survive"]
@@ -150,7 +158,7 @@ def test_meeting_transcribe_fault_drops_segment_and_keeps_meeting(
     # Treatment: transcription fails mid-meeting; the segment is dropped, the
     # meeting still finalizes with no exception and no false transcript.
     monkeypatch.setenv(FAULT_ENV, "meeting.transcribe")
-    session = MeetingSession(transcriber=_Transcriber())
+    session = MeetingSession(transcriber=_Transcriber(), principal=_OWNER)
     state = session.start()
     final = session.stop()
     assert final.segments == []
@@ -165,6 +173,7 @@ def test_checkpoint_write_fault_marks_capture_recoverable(session_env, monkeypat
 
     session = MeetingSession(
         transcriber=_Transcriber(),
+        principal=_OWNER,
         on_broadcast=lambda kind, data: events.append((kind, data)),
     )
     state = session.start()
@@ -291,9 +300,9 @@ def test_named_plugin_fault_fails_exactly_that_key_then_exact_retry(
 
         def execute_chain(
             self, plugin_chain, *, context, meeting_id, window_id,
-            transcript_hash, defer_heavy,
+            transcript_hash, defer_heavy, dispatch=None,
         ):
-            _ = context, defer_heavy
+            _ = context, defer_heavy, dispatch
             self.calls.append(list(plugin_chain))
             return [
                 PluginRunResult(

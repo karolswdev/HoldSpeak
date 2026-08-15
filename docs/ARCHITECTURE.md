@@ -42,6 +42,73 @@ stays the hub; the iPad is an authoring port. Its piece of the
 [device path](#the-device-path) is the typed client layer, and the LAN
 crossing it opens is listed in the [trust boundary](#the-trust-boundary).
 
+## Inference admission: one path, one receipt per attempt
+
+This section is the canonical integration contract for model work. Every actual
+provider attempt enters `InferenceRunner.invoke()` at its executing boundary and
+becomes one `inference.invoke@1` operation. The runner admits and claims that
+child before a physical adapter can construct or call a provider. The child
+names one immutable `DeploymentRevision`, captured before admission, and ends in
+exactly one immutable terminal receipt. The reviewed adapters accept a
+single-use, runner-issued `DispatchContext` bound to that child operation,
+revision, destination, attempt ordinal, and authority; no route, service, plugin,
+command, local Whisper backend, or mesh worker is an alternate entrance.
+
+A parent run or session is causation and a finite budget, not a substitute for
+the invocation receipt. Sequence, Workflow, Workbench, Cadence drafting,
+Decision promotion, Delivery review, voice resolution, live meetings, deferred
+meeting intelligence, dictation, and configured wake captures use typed parents.
+Each model-bearing step below them is still its own `inference.invoke@1` child.
+An outer parent receipt says how the run or session ended; each child receipt says
+how that physical attempt ended.
+
+Ad hoc Ask and saved Agents make the definition distinction explicit:
+
+- Ask uses the truthful service contract `holdspeak.ask@1`. The `1` is the
+  service-contract schema revision; Ask does not pretend to be a saved Agent.
+- Agent run and chat use `recipe:<id>` plus that saved Agent's `last_modified`
+  definition revision. Editing the Agent invalidates the old definition revision.
+- Both freeze the destination as a `DeploymentRevision` before dispatch. A mutable
+  **Runs on** edit after admission cannot retarget an in-flight child.
+
+Provider output is staged behind the same terminal election. The receipt carries
+the immutable operation outcome and a result reference, not the prompt or domain
+body; the referenced projection becomes visible only if that child wins
+publication. Cancellation advances the execution fence and rejects late output.
+A compatibility fallback or retry is another physical attempt, therefore another
+child and another receipt with a higher attempt ordinal. If execution may have
+started but no terminal fact can be proved, the outcome is `indeterminate`; the
+runtime never guesses success or blindly retries uncertain work.
+
+Meetings, dictation, and configured wake use one authenticated parent per live
+session: `meeting.session@1`, `dictation.session@1`, or `wake.session@1`. Every
+actual LLM or shared local Whisper call is a causally linked child that rechecks
+parent liveness, revocation, deadline, budget, and exact revision. Pre-session
+Whisper preload/warmup is not exempt: it requires a narrow preload authority that
+names the exact model-config revision and receives its own child receipt. Prompt,
+transcript, dictated text, audio, completion, and token-stream material stays in
+the dispatch path; kernel operation, journal, and receipt fields carry only
+content-free refs, hashes, authority, placement, and outcomes.
+
+Scheduled Workbench execution is not owner impersonation. Deliberately enabling a
+schedule mints one bounded delegation over the exact Workbench, Agent, and
+schedule revisions, effective deployment revision, cadence, and expiry. The owner
+is recorded as delegator; the due tick acts as the rights-limited `scheduler`
+principal. The tick refuses before a model call if terms are missing; the
+schedule is disabled, revoked, or expired; cadence, target, Agent, or Workbench
+has drifted; or the due minute is a duplicate. It reports
+`delegation_missing`, `schedule_disabled`, `delegation_revoked`,
+`delegation_expired`, `delegation_cadence_changed`,
+`delegation_target_changed`, `delegation_stale_work`, or `duplicate_tick` and
+leaves a terminal refusal receipt.
+
+Finally, sync follows code authority in one direction. `SYNC_REGISTRY` in
+`holdspeak/services/sync_service.py` defines the Python/web kind, bucket, schema,
+and merge contract; `/api/sync/*`, the JSON schemas, and required web fields are
+tested against it. Swift is not a contract authority, and this contract adds no
+Swift work or Swift-shaped compatibility requirement. A native client
+may consume the finished Python/web contract later; it does not define it.
+
 ## The components
 
 How the major pieces connect. Boxes are subsystems, not classes; the module
@@ -62,6 +129,7 @@ flowchart TB
     MS["Meeting session<br/>(meeting_session/)"]
     PH["Plugin host + router<br/>(plugins/host.py, router.py)"]
     RUN["Capability runs<br/>(web/routes/primitives/)"]
+    IR["One admitted inference runner<br/>(kernel/inference_runner.py)"]
     AX["Actuator executor<br/>(plugins/actuator_executor.py)"]
     SRV["Web server + API<br/>(web_server.py, web/routes/*)"]
   end
@@ -80,7 +148,7 @@ flowchart TB
   end
 
   DB[("SQLite<br/>(db/*)")]
-  LLM(["LLM backend<br/>(local GGUF / MLX / OpenAI-compatible)"])
+  MODEL(["Model adapters<br/>(Whisper / GGUF / MLX / endpoint / mesh)"])
 
   HK --> VS
   WW --> VS
@@ -88,10 +156,12 @@ flowchart TB
   VS --> TR
   TR --> DR
   TR --> MS
+  TR -. "transcribe attempt" .-> IR
   DR --> TY
-  DR -. "optional rewrite" .-> LLM
+  DR -. "optional rewrite" .-> IR
   MS --> PH
-  PH -. "intel" .-> LLM
+  PH -. "intel" .-> IR
+  IR --> MODEL
   PH --> AX
   AX --> CN
   CN -. "approved egress" .-> EXT(["GitHub / Slack / webhooks"])
@@ -100,7 +170,7 @@ flowchart TB
   SRV -. "live frames" .-> BUS
   BUS --> DESK
   BUS --> UI
-  RUN -. "prompt" .-> LLM
+  RUN -. "prompt" .-> IR
   RUN --> DB
   runtime <--> DB
   SRV -. "WebSocket" .-> DEV
@@ -127,7 +197,7 @@ flowchart TD
   VC -- yes --> FIRE["Fire the bounded connector<br/>open URL, launch app, run command, type a snippet"]
   VC -- no --> PIPE{"Dictation pipeline enabled?"}
   PIPE -- "off, the default" --> FORK
-  PIPE -- "on" --> STAGES["Stages, in order:<br/>intent-router, project-rewriter, kb-enricher<br/>(project-rewriter calls your LLM)"]
+  PIPE -- "on" --> STAGES["Stages, in order:<br/>intent-router, project-rewriter, kb-enricher<br/>(model stages use admitted invocation children)"]
   STAGES --> FORK{"Preview first?"}
   FORK -- "no, the default for hotkey and device" --> TYPE["Type into the focused app<br/>(typer.py)"]
   FORK -- "wake word (its default), or the opt-in<br/>dictation.preview_before_type" --> PREVIEW["Preview card, nothing typed yet<br/>(one-shot server token)"]
@@ -255,8 +325,9 @@ Back up on demand with `holdspeak backup` and put a snapshot back with
 ## The meeting pipeline
 
 How captured or imported audio becomes a transcript, typed artifacts, and an
-aftercare digest. The intelligence work calls the LLM you configured; the
-actions out are proposals you approve, never automatic.
+aftercare digest. Each intelligence attempt enters the admitted runner before it
+reaches the model you configured; actions out are proposals you approve, never
+automatic.
 
 ```mermaid
 flowchart TD
@@ -265,9 +336,10 @@ flowchart TD
   TRW["Windowed transcribe<br/>(meeting_session/transcribe_loop.py)"] --> ROUTE
   ROUTE["Intent routing, opt-in<br/>(plugins/router.py)"] --> HOST
   HOST["Plugin host runs the chain<br/>(plugins/host.py)"]
-  HOST -. "intel" .-> LLM(["LLM backend"])
+  HOST -. "intel attempt" .-> IR["Admitted invocation child<br/>(InferenceRunner)"]
+  IR --> LLM(["LLM backend"])
   HOST --> ART["Typed artifacts:<br/>decisions, action items, ADRs, risk registers, and more"]
-  RUNB["A agent / chain / workflow run<br/>(web/routes/primitives/)"] -- "run-born artifact,<br/>lineage names the capability" --> ART
+  RUNB["An Agent / chain / workflow run<br/>(web/routes/primitives/)"] -- "run-born artifact,<br/>lineage names the capability" --> ART
   GRAPH["A Workbench graph, authored on the iPad canvas<br/>or the web desk, synced as graph_json"] -- "linear subset runs;<br/>control flow refused with a warning<br/>(web/routes/workflow_graph.py)" --> RUNB
   ART --> AFT["Aftercare digest:<br/>open, decided, changed since last time<br/>(meeting_aftercare.py)"]
   AFT --> ISSUE["An accepted action becomes<br/>a GitHub issue proposal"]
@@ -537,7 +609,8 @@ flowchart LR
     LL["LLM, when local<br/>(GGUF / MLX)"]
   end
   RT -->|"loopback by default; token required off-loopback"| WEB(["Browser and API clients"])
-  RT -->|"only when intel provider is cloud or auto; transcript text"| CLOUD(["Cloud LLM endpoint"])
+  RT -->|"admitted attempt when Runs on names an off-machine endpoint; selected model input"| CLOUD(["Remote model endpoint"])
+  RT -->|"paired node; admitted signed offer; prompt and result"| NODE(["Mesh worker you named"])
   RT -->|"approved proposal only; to the configured host"| SK(["Slack webhook"])
   RT -->|"approved proposal only; to the one configured endpoint"| WHK(["Companion webhook<br/>(Discord, Zapier, any URL you set)"])
   RT -->|"approved proposal only; via your own gh"| GH(["GitHub issue create"])

@@ -1,6 +1,6 @@
 // Shared types and utilities used across dictation sub-components.
 import { createContext, useContext } from "react";
-import { ApiError } from "../../../lib/api";
+import { ApiError, newDeliveryId } from "../../../lib/api";
 import type { MicPhase } from "../../../lib/micSession";
 
 export function readableValue(value: unknown): string {
@@ -101,11 +101,4 @@ export function refusalCode(reason: unknown): string {
   return "";
 }
 
-/** One stable id per utterance — the delivery claim's whole point. */
-export function newDeliveryId(): string {
-  const entropy =
-    typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
-      ? crypto.randomUUID()
-      : Math.random().toString(36).slice(2);
-  return `speak:${Date.now()}-${entropy}`;
-}
+export { newDeliveryId };

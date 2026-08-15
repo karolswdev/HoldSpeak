@@ -27,6 +27,7 @@ from fastapi.testclient import TestClient
 
 from holdspeak.db import Database
 from holdspeak.desktop_typing import DesktopTypeRefused
+from holdspeak.principals import Principal, PrincipalKind
 from holdspeak.web.context import WebContext
 from holdspeak.web.routes.dictation.pipeline import build_pipeline_router
 
@@ -58,10 +59,26 @@ def _ctx(**kw) -> WebContext:
     return WebContext(get_state=lambda: {}, **kw)
 
 
+class _SpeakClient(TestClient):
+    def post(self, url, *args, **kwargs):
+        payload = kwargs.get("json")
+        if url == "/api/dictation/remote" and isinstance(payload, dict):
+            payload = dict(payload)
+            payload.setdefault("delivery_id", f"speak:test-{uuid.uuid4()}")
+            kwargs["json"] = payload
+        return super().post(url, *args, **kwargs)
+
+
 def _client(ctx: WebContext) -> TestClient:
     app = FastAPI()
+
+    @app.middleware("http")
+    async def authenticated(request, call_next):
+        request.state.principal = Principal(PrincipalKind.OWNER, "speak-room-test")
+        return await call_next(request)
+
     app.include_router(build_pipeline_router(ctx, project_doc_suggestions={}))
-    return TestClient(app)
+    return _SpeakClient(app)
 
 
 def _room_payload(**overrides) -> dict:
@@ -336,8 +353,10 @@ def test_rehearsal_still_journals_as_a_dry_run(monkeypatch):
     assert seen["journal_source"] == "dry_run"
 
 
-def test_journal_source_reaches_the_recorder(tmp_path):
-    """The helper actually threads the lane down to `journal.record`."""
+def test_journal_source_reaches_the_recorder(tmp_path, monkeypatch):
+    """The lexical helper threads the lane without minting a speech parent."""
+    from holdspeak.config import Config
+    from holdspeak.kernel.runtime import _configure
     from holdspeak.web.routes.dictation._helpers import _run_dictation_dry_run_text
 
     recorded: list = []
@@ -349,13 +368,27 @@ def test_journal_source_reaches_the_recorder(tmp_path):
             recorded.append(source)
             return None
 
+    database = Database(tmp_path / "journal-source.db")
+    monkeypatch.setattr("holdspeak.db.get_database", lambda: database)
+    _configure(database)
+    config = Config()
+    config.dictation.pipeline.enabled = False
     _run_dictation_dry_run_text(
         "spoken words",
         None,
         None,
         suggestions={},
+        config_snapshot=config,
+        admission=None,
+        fence=None,
         journal=_Recorder(),
         journal_source="dictation",
     )
 
     assert recorded == ["dictation"]
+    with database._connection() as connection:
+        parents = connection.execute(
+            "SELECT COUNT(*) AS count FROM kernel_operations "
+            "WHERE name='dictation.session'"
+        ).fetchone()
+    assert parents["count"] == 0

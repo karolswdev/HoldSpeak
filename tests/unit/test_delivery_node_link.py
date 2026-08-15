@@ -117,7 +117,12 @@ class TestNodeTokens:
     def test_web_token_never_authenticates_as_node(self, store):
         store.create("studio-mac")
         # Even a store poisoned with the browser token must refuse it.
-        store._nodes["studio-mac"]["token"] = WEB_TOKEN
+        # HS-131-16: custody keeps no in-memory copy any more — every verb
+        # re-reads under an exclusive lock (Sol Amendment 3), so the poison goes
+        # into the document itself, through the same locked read-modify-write
+        # the CLI's create/rotate/revoke use.
+        with store._mutate() as nodes:
+            nodes["studio-mac"]["token"] = WEB_TOKEN
         with pytest.raises(NodeLinkError) as err:
             store.verify("studio-mac", WEB_TOKEN, web_token=WEB_TOKEN)
         assert err.value.reason == "node_token_required"
@@ -136,6 +141,238 @@ class TestNodeTokens:
         node_id, token = store.create("studio-mac")
         reloaded = NodeTokenStore(tmp_path / "node_auth_tokens.json")
         assert reloaded.verify("studio-mac", token) == node_id
+
+    def test_a_v1_custody_document_migrates_without_losing_a_pairing(self, tmp_path):
+        """HS-131-16 (repair R4): a v1 store is carried forward, never erased.
+
+        v2 added a credential generation and the per-node hub offer keypair.
+        Reading a v1 document as "empty" would have been silent data loss: the
+        very next create or rotate replaces the file, and every unrelated pairing
+        on that machine disappears with it.
+        """
+        path = tmp_path / "node_auth_tokens.json"
+        path.write_text(json.dumps({
+            "node_tokens_schema": 1,
+            "nodes": {
+                "studio-mac": {
+                    "node_id": "node_studio", "token": "studio-token",
+                    "revoked": False, "created_at": "2026-01-01T00:00:00Z",
+                },
+                "attic-mac": {
+                    "node_id": "node_attic", "token": "",
+                    "revoked": True, "created_at": "2026-01-02T00:00:00Z",
+                },
+            },
+        }))
+        path.chmod(0o600)  # a real v1 store was owner-only too
+        store = NodeTokenStore(path)
+
+        # Both v1 pairings survive, with their identity and state intact.
+        snapshot = store.authenticate("studio-mac", "studio-token")
+        assert snapshot.node_id == "node_studio" and snapshot.generation == 1
+        with pytest.raises(NodeLinkError) as revoked:
+            store.authenticate("attic-mac", "anything")
+        assert revoked.value.reason == "node_revoked"
+        # A v1 pairing has no offer key, so a dispatch offer refuses BY NAME
+        # until it is re-paired — it is not silently signed with nothing.
+        with pytest.raises(NodeLinkError):
+            store.signing_snapshot("studio-mac")
+
+        # An unrelated write must not drop either of them.
+        store.create("new-node")
+        reloaded = NodeTokenStore(path)
+        assert {row["name"] for row in reloaded.status_rows()} == {
+            "studio-mac", "attic-mac", "new-node"
+        }
+        assert reloaded.verify("studio-mac", "studio-token") == "node_studio"
+        document = json.loads(path.read_text())
+        assert document["node_tokens_schema"] == 2
+        assert document["nodes"]["studio-mac"]["generation"] == 1
+        # A migrated pairing gains an offer key only by RE-PAIRING: rotation
+        # moves the token and the generation, never the hub's signing key.
+        store.rotate("studio-mac")
+        assert NodeTokenStore(path).pairing("studio-mac").generation == 2
+        with pytest.raises(NodeLinkError):
+            store.signing_snapshot("studio-mac")
+        store.revoke("studio-mac")
+        store.create("studio-mac")
+        assert store.signing_snapshot("studio-mac").offer_private_key
+
+    def test_an_unreadable_custody_schema_refuses_instead_of_erasing(self, tmp_path):
+        """The one thing custody may never do is quietly become empty."""
+        path = tmp_path / "node_auth_tokens.json"
+        path.write_text(json.dumps({
+            "node_tokens_schema": 99,
+            "nodes": {"studio-mac": {"node_id": "node_studio", "token": "t"}},
+        }))
+        path.chmod(0o600)
+        store = NodeTokenStore(path)
+        with pytest.raises(NodeLinkError) as excinfo:
+            store.status_rows()
+        assert excinfo.value.reason == "node_custody_schema_unknown"
+        with pytest.raises(NodeLinkError):
+            store.create("new-node")
+        # The document is exactly as it was: nothing was rewritten.
+        assert json.loads(path.read_text())["node_tokens_schema"] == 99
+
+    @pytest.mark.parametrize(
+        "document",
+        [
+            # Repair R2.6: the ORDER was the defect. `nodes` was read before the
+            # schema, so an unknown schema whose `nodes` is not an object fell
+            # out as an empty store — the exact silent-erasure path the schema
+            # check existed to prevent.
+            {"node_tokens_schema": 99, "nodes": []},
+            {"node_tokens_schema": 99, "nodes": "everything"},
+            {"node_tokens_schema": 99},
+            # A schema this build DOES know, with nodes that are not an object.
+            {"node_tokens_schema": 2, "nodes": ["studio-mac"]},
+            {"node_tokens_schema": 2, "nodes": None},
+            # Known schema, object nodes, but an entry that is not a pairing.
+            {"node_tokens_schema": 2, "nodes": {"studio-mac": "a-string"}},
+            {"node_tokens_schema": 2, "nodes": {"studio-mac": ["node_x"]}},
+            {"node_tokens_schema": 1, "nodes": {"studio-mac": 7}},
+            # Object entries whose FIELDS are the wrong types.
+            {"node_tokens_schema": 2,
+             "nodes": {"studio-mac": {"node_id": 7, "token": "t"}}},
+            {"node_tokens_schema": 2,
+             "nodes": {"studio-mac": {"node_id": "n", "token": ["t"]}}},
+            {"node_tokens_schema": 2,
+             "nodes": {"studio-mac": {"node_id": "n", "token": "t", "generation": 0}}},
+            {"node_tokens_schema": 2,
+             "nodes": {"studio-mac": {"node_id": "n", "token": "t", "revoked": "yes"}}},
+            # And a document that is not an object at all.
+            ["studio-mac"],
+            "everything",
+        ],
+    )
+    def test_every_unreadable_custody_shape_refuses_without_a_write(
+        self, tmp_path, document
+    ):
+        """Repair R2.6: schema FIRST, then nodes, then each entry.
+
+        Every one of these used to be — or could become — an empty store, and an
+        empty store is what the next `create`, `rotate`, or `pair` WRITES. One
+        fixed refusal, and the original bytes are untouched.
+        """
+        path = tmp_path / "node_auth_tokens.json"
+        path.write_text(json.dumps(document))
+        path.chmod(0o600)
+        original = path.read_bytes()
+        store = NodeTokenStore(path)
+
+        for verb in (
+            lambda: store.status_rows(),
+            lambda: store.create("new-node"),
+            lambda: store.rotate("studio-mac"),
+            lambda: store.pair("another"),
+            lambda: store.pairing("studio-mac"),
+            lambda: store.identify("t"),
+        ):
+            with pytest.raises(ValueError):
+                verb()
+        assert path.read_bytes() == original, "custody must not be rewritten"
+
+    def test_a_v1_migration_is_lossless_for_every_node_or_it_refuses(self, tmp_path):
+        """Repair R2.6: v1 carries forward WHOLE, or not at all.
+
+        A malformed entry used to be dropped on the way in, and the next write
+        made that permanent. Now the whole document refuses instead — the good
+        pairings beside it are not sacrificed to read the bad one.
+        """
+        path = tmp_path / "node_auth_tokens.json"
+        path.write_text(json.dumps({
+            "node_tokens_schema": 1,
+            "nodes": {
+                "studio-mac": {"node_id": "node_studio", "token": "studio-token"},
+                "attic-mac": "not-a-pairing",
+            },
+        }))
+        path.chmod(0o600)
+        original = path.read_bytes()
+        store = NodeTokenStore(path)
+
+        with pytest.raises(NodeLinkError) as excinfo:
+            store.create("new-node")
+        assert excinfo.value.reason == "node_custody_schema_unknown"
+        assert path.read_bytes() == original
+
+        # Repair the malformed entry and the migration is lossless for BOTH.
+        path.write_text(json.dumps({
+            "node_tokens_schema": 1,
+            "nodes": {
+                "studio-mac": {"node_id": "node_studio", "token": "studio-token"},
+                "attic-mac": {"node_id": "node_attic", "token": "attic-token"},
+            },
+        }))
+        path.chmod(0o600)
+        store.create("new-node")
+        reloaded = json.loads(path.read_text())
+        assert reloaded["node_tokens_schema"] == 2
+        assert set(reloaded["nodes"]) == {"studio-mac", "attic-mac", "new-node"}
+        for name, node_id in (("studio-mac", "node_studio"), ("attic-mac", "node_attic")):
+            assert reloaded["nodes"][name]["node_id"] == node_id
+            assert reloaded["nodes"][name]["generation"] == 1
+
+    def test_the_pairing_export_reads_one_locked_document(self, tmp_path):
+        """Repair R2.9: identity, pin, and token come out TOGETHER.
+
+        Building an export from `pairing()` followed by `bearer_token()` is two
+        independent locked reads. A rotate landing between them produced a
+        transfer file pairing generation 1's identity and pin with generation 2's
+        token — a document that authenticates as nothing and refuses at the first
+        claim. One read under one lock cannot straddle the change.
+        """
+        import threading
+
+        path = tmp_path / "node_auth_tokens.json"
+        store = NodeTokenStore(path)
+        _node_id, first_token, first = store.pair("edge")
+        assert first.generation == 1
+
+        snapshot, token = store.export_pairing("edge")
+        assert (snapshot.generation, token) == (1, first_token)
+        assert snapshot.offer_public_key and not snapshot.token
+
+        # The barrier race: one rotation, released the instant a burst of
+        # exports begins. There are exactly two coherent documents here —
+        # (generation 1, the first token) and (generation 2, the rotated one) —
+        # and every export must be one of them, whole.
+        barrier = threading.Barrier(2, timeout=30)
+        rotated: list[str] = []
+
+        def rotate() -> None:
+            barrier.wait()
+            rotated.append(store.rotate("edge"))
+
+        thread = threading.Thread(target=rotate, daemon=True)
+        thread.start()
+        barrier.wait()
+        exports = [store.export_pairing("edge") for _ in range(40)]
+        thread.join(timeout=30)
+        assert rotated, "the rotation must complete"
+
+        exports.append(store.export_pairing("edge"))
+        coherent = {(1, first_token), (2, rotated[0])}
+        seen = {(snap.generation, tok) for snap, tok in exports}
+        assert seen <= coherent, seen - coherent
+        # The last one is after the rotation, and it authenticates.
+        final_snapshot, final_token = exports[-1]
+        assert (final_snapshot.generation, final_token) == (2, rotated[0])
+        assert store.authenticate("edge", final_token).generation == 2
+
+    def test_the_export_refuses_cleanly_when_there_is_no_pairing(self, tmp_path):
+        """A revoked or absent pairing exports nothing, by name."""
+        store = NodeTokenStore(tmp_path / "node_auth_tokens.json")
+        with pytest.raises(NodeLinkError) as absent:
+            store.export_pairing("edge")
+        assert absent.value.reason == "unknown_node"
+
+        store.pair("edge")
+        store.revoke("edge")
+        with pytest.raises(NodeLinkError) as revoked:
+            store.export_pairing("edge")
+        assert revoked.value.reason == "unknown_node"
 
 
 # ── liveness ─────────────────────────────────────────────────────────

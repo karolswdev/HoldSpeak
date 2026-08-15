@@ -231,6 +231,19 @@ export function useSpeakDeck(announce: (text: string, tone?: "ok" | "warn") => v
           setOpenMic(false);
           refuse(reason.refusal);
         },
+        // HS-131-09 (Sol Amendment 3): the server's admitted interval ended
+        // (inactivity, the 30-minute ceiling, the budget, a cancel, or a
+        // revocation). The mic is already down; the latch follows so continuing
+        // takes a fresh, authenticated click.
+        onIntervalClosed: (reason) => {
+          setOpenMic(false);
+          const category = dictationFailure(reason);
+          setFailure(category);
+          setError(DICTATION_FAILURES[category].message);
+          setPhase("refused");
+          setRefusal(category);
+          announce("OPEN MIC CLOSED. CLICK TO SPEAK AGAIN", "warn");
+        },
       });
       setOpenMic(true);
       announce("OPEN MIC LISTENING");

@@ -1,0 +1,2 @@
+FAILED tests/unit/test_web_vocabulary_guard.py::test_web_copy_has_no_dash_in_prose
+77 failed, 4792 passed, 43 skipped, 16 deselected, 17 errors in 1453.92s (0:24:13)

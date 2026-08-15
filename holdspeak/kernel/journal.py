@@ -7,95 +7,62 @@ import json
 import secrets
 import time
 import uuid
+import threading
 from typing import Any, Mapping
 
-from .model import KernelRefused, forbidden_content
+from .journal_txn import append_record, json_encode as _json, record_hash as _hash
+from .model import KernelRefused
 
-_HEAD_LIMIT = 120
-_EVENT_FIELDS = (
-    "stream", "stream_sequence", "event_id", "operation_id", "process_id",
-    "correlation_id", "causation_id", "event_type", "event_version", "refs",
-    "privacy_class", "head", "timestamp", "previous_sha256",
+# Receipt readers must see the executing scheduler separately from the owner
+# who delegated it; every receipt read path returns this same joined shape.
+_RECEIPT_SQL = (
+    "SELECT r.*, o.principal_kind AS actor_kind, o.principal_identity AS actor_identity,"
+    " o.delegator_kind, o.delegator_identity, o.authority_basis, o.target_ref"
+    " FROM kernel_receipts r JOIN kernel_operations o ON o.operation_id=r.operation_id"
+    " WHERE r.operation_id=?"
 )
 
 
-def _json(value: Any) -> str:
-    return json.dumps(value, separators=(",", ":"), sort_keys=True)
-
-
-def _hash(record: Mapping[str, Any]) -> str:
-    material = {field: record[field] for field in _EVENT_FIELDS}
-    return "sha256:" + hashlib.sha256(_json(material).encode()).hexdigest()
-
-
 class JournalStore:
+    _publication_wait_seconds = 5.0
+    _publication_poll_seconds = 0.01
+
     def __init__(self, connection: Any, *, clock: Any = time.time) -> None:
         self._connection = connection
         self._clock = clock
+        self._append_lock = threading.Lock()
     def _secret(self) -> str:
+        """Read the warrant secret, minting it exactly once per database.
+
+        Two callers can reach a fresh database at the same moment (a route thread
+        and a background worker both building the broker). The mint is therefore
+        idempotent and the value is re-read afterwards, so the loser of the race
+        adopts the winner's secret instead of raising on the UNIQUE constraint or
+        returning a secret the database does not hold.
+        """
         with self._connection() as conn:
             row = conn.execute("SELECT value FROM kernel_meta WHERE key='warrant_secret'").fetchone()
             if row is not None:
                 return str(row[0])
-            value = secrets.token_hex(32)
-            conn.execute("INSERT INTO kernel_meta(key,value) VALUES('warrant_secret',?)", (value,))
-            return value
+            conn.execute(
+                "INSERT OR IGNORE INTO kernel_meta(key,value) VALUES('warrant_secret',?)",
+                (secrets.token_hex(32),),
+            )
+            stored = conn.execute(
+                "SELECT value FROM kernel_meta WHERE key='warrant_secret'"
+            ).fetchone()
+            return str(stored[0])
 
     def append(
         self, event_type: str, operation_id: str, *, refs: tuple[str, ...] = (),
         head: str = "", privacy_class: str = "private", stream: str = "operations",
         process_id: str = "", correlation_id: str = "", causation_id: str = "",
     ) -> dict[str, Any]:
-        metadata = {"refs": refs, "head": head}
-        if forbidden_content(metadata):
-            raise KernelRefused("journal_content_forbidden")
-        with self._connection() as conn:
-            if not correlation_id or not causation_id:
-                operation = conn.execute(
-                    "SELECT correlation_id,parent_operation_id FROM kernel_operations WHERE operation_id=?",
-                    (operation_id,),
-                ).fetchone()
-                if operation is not None:
-                    correlation_id = correlation_id or str(operation["correlation_id"] or "")
-                    causation_id = causation_id or str(operation["parent_operation_id"] or "")
-            previous = conn.execute(
-                "SELECT stream_sequence, record_sha256 FROM kernel_journal WHERE stream=? ORDER BY stream_sequence DESC LIMIT 1",
-                (stream,),
-            ).fetchone()
-            sequence = int(previous[0]) + 1 if previous is not None else 1
-            record = {
-                "stream": stream,
-                "stream_sequence": sequence,
-                "event_id": "evt_" + uuid.uuid4().hex,
-                "operation_id": operation_id,
-                "process_id": process_id,
-                "correlation_id": correlation_id,
-                "causation_id": causation_id,
-                "event_type": event_type,
-                "event_version": 1,
-                "refs": list(refs),
-                "privacy_class": privacy_class,
-                "head": str(head)[:_HEAD_LIMIT],
-                "timestamp": self._clock(),
-                "previous_sha256": str(previous[1]) if previous is not None else "sha256:genesis",
-            }
-            record_hash = _hash(record)
-            cursor = conn.execute(
-                """INSERT INTO kernel_journal(
-                    stream,stream_sequence,event_id,operation_id,process_id,correlation_id,
-                    causation_id,event_type,event_version,refs_json,privacy_class,head,
-                    timestamp,previous_sha256,record_sha256
-                ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
-                (
-                    record["stream"], sequence, record["event_id"], operation_id,
-                    process_id, correlation_id, causation_id, event_type, 1,
-                    _json(record["refs"]), privacy_class, record["head"],
-                    record["timestamp"], record["previous_sha256"], record_hash,
-                ),
-            )
-            record["cursor"] = int(cursor.lastrowid)
-            record["record_sha256"] = record_hash
-            return record
+        return append_record(
+            self._connection, self._append_lock, self._clock, event_type, operation_id,
+            refs=refs, head=head, privacy_class=privacy_class, stream=stream,
+            process_id=process_id, correlation_id=correlation_id, causation_id=causation_id,
+        )
 
     def verify(self, stream: str = "operations") -> dict[str, Any]:
         with self._connection() as conn:
@@ -168,8 +135,8 @@ class JournalStore:
                     operation_id,request_id,idempotency_key,name,version,principal_kind,
                     principal_identity,target_ref,placement,envelope_sha256,policy_version,
                     authority_basis,state,revision,native_id,parent_operation_id,
-                    correlation_id,created_at,updated_at
-                ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                    correlation_id,delegator_kind,delegator_identity,created_at,updated_at
+                ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
                 (
                     values["operation_id"], values["request_id"], values["idempotency_key"],
                     values["name"], values["version"], values["principal_kind"],
@@ -177,6 +144,7 @@ class JournalStore:
                     values["envelope_sha256"], values["policy_version"],
                     values["authority_basis"], values["state"], 1, values["native_id"],
                     values.get("parent_operation_id", ""), values.get("correlation_id", ""),
+                    values.get("delegator_kind", ""), values.get("delegator_identity", ""),
                     self._clock(), self._clock(),
                 ),
             )
@@ -207,23 +175,9 @@ class JournalStore:
         return [self._operation(row) for row in rows]
 
     def transition(self, operation_id: str, expected_revision: int, state: str, **changes: Any) -> dict[str, Any]:
-        assignments = ["state=?", "revision=revision+1", "updated_at=?"]
-        values: list[Any] = [state, self._clock()]
-        allowed = {"decision", "warrant_json", "warrant_revoked", "claimed_by"}
-        for key, value in changes.items():
-            if key not in allowed:
-                raise KernelRefused("operation_mutation_not_allowed", key)
-            assignments.append(f"{key}=?")
-            values.append(_json(value) if key == "warrant_json" else value)
-        values.extend((operation_id, expected_revision))
-        with self._connection() as conn:
-            result = conn.execute(
-                f"UPDATE kernel_operations SET {','.join(assignments)} WHERE operation_id=? AND revision=?",
-                values,
-            )
-            if result.rowcount != 1:
-                raise KernelRefused("operation_revision_conflict", operation_id=operation_id)
-        return self.operation(operation_id) or {}
+        from .publication_transition import transition
+
+        return transition(self, operation_id, expected_revision, state, **changes)
     def claim_candidate(
         self, executor: str, native_id: str = ""
     ) -> dict[str, Any] | None:
@@ -248,19 +202,62 @@ class JournalStore:
                 return None
         return self.operation(str(row["operation_id"]))
     def revoke_warrant(self, operation_id: str) -> dict[str, Any]:
-        with self._connection() as conn:
-            conn.execute(
-                "UPDATE kernel_operations SET warrant_revoked=1,revision=revision+1,updated_at=? WHERE operation_id=?",
-                (self._clock(), operation_id),
-            )
+        wait_until = time.monotonic() + 5.0
+        while True:
+            with self._connection() as conn:
+                conn.execute("BEGIN IMMEDIATE")
+                parent = conn.execute(
+                    "SELECT publication_claim_id FROM kernel_parent_runs "
+                    "WHERE operation_id=?",
+                    (operation_id,),
+                ).fetchone()
+                if parent is None or not str(parent["publication_claim_id"] or ""):
+                    conn.execute(
+                        "UPDATE kernel_operations SET warrant_revoked=1,"
+                        "revision=revision+1,updated_at=? WHERE operation_id=?",
+                        (self._clock(), operation_id),
+                    )
+                    break
+            if time.monotonic() >= wait_until:
+                raise KernelRefused(
+                    "parent_publication_in_progress", operation_id=operation_id
+                )
+            time.sleep(0.01)
         return self.operation(operation_id) or {}
+
+    def transition_and_receipt(
+        self, operation_id: str, expected_revision: int, state: str, outcome: str,
+        result_ref: str = "",
+    ) -> tuple[dict[str, Any], dict[str, Any]]:
+        """Durably couple a claimed operation's terminal state and receipt."""
+        receipt_id = "rcpt_" + uuid.uuid4().hex
+        with self._connection() as conn:
+            existing = conn.execute(_RECEIPT_SQL, (operation_id,)).fetchone()
+            if existing is not None:
+                return self._operation(conn.execute(
+                    "SELECT * FROM kernel_operations WHERE operation_id=?", (operation_id,)
+                ).fetchone()), dict(existing)
+            result = conn.execute(
+                "UPDATE kernel_operations SET state=?,revision=revision+1,updated_at=? "
+                "WHERE operation_id=? AND revision=?",
+                (state, self._clock(), operation_id, expected_revision),
+            )
+            if result.rowcount != 1:
+                raise KernelRefused("operation_revision_conflict", operation_id=operation_id)
+            conn.execute(
+                "INSERT INTO kernel_receipts(receipt_id,operation_id,state,outcome,result_ref,created_at) VALUES(?,?,?,?,?,?)",
+                (receipt_id, operation_id, state, outcome, result_ref, self._clock()),
+            )
+            operation = conn.execute(
+                "SELECT * FROM kernel_operations WHERE operation_id=?", (operation_id,)
+            ).fetchone()
+            receipt = conn.execute(_RECEIPT_SQL, (operation_id,)).fetchone()
+        return self._operation(operation), dict(receipt)
 
     def add_receipt(self, operation_id: str, state: str, outcome: str, result_ref: str = "") -> dict[str, Any]:
         receipt_id = "rcpt_" + uuid.uuid4().hex
         with self._connection() as conn:
-            existing = conn.execute(
-                "SELECT * FROM kernel_receipts WHERE operation_id=?", (operation_id,)
-            ).fetchone()
+            existing = conn.execute(_RECEIPT_SQL, (operation_id,)).fetchone()
             if existing is not None:
                 return dict(existing)
             conn.execute(
@@ -270,9 +267,7 @@ class JournalStore:
         return self.receipt(operation_id) or {}
     def receipt(self, operation_id: str) -> dict[str, Any] | None:
         with self._connection() as conn:
-            row = conn.execute(
-                "SELECT * FROM kernel_receipts WHERE operation_id=?", (operation_id,)
-            ).fetchone()
+            row = conn.execute(_RECEIPT_SQL, (operation_id,)).fetchone()
         return dict(row) if row is not None else None
     def sign_warrant(self, payload: Mapping[str, Any]) -> dict[str, Any]:
         warrant = dict(payload)

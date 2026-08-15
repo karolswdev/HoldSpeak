@@ -10,7 +10,11 @@ from typing import TYPE_CHECKING, Optional
 
 from ..logging_config import get_logger
 from .base import BaseRepository
-from .connection import make_connection_factory, connection as _raw_connection
+from .connection import (
+    ConnectionCache,
+    make_connection_factory,
+    connection as _raw_connection,  # noqa: F401  re-exported for callers
+)
 
 # Import every repository module so __init_subclass__ fires and the registry
 # fills before Database.__init__ iterates it.
@@ -131,14 +135,28 @@ class Database:
 
     def __init__(self, db_path: Optional[Path] = None):
         self.db_path = db_path or DEFAULT_DB_PATH
-        self._conn_factory = make_connection_factory(self.db_path)
+        # One warm connection per thread, owned by this instance alone (HS-131-09).
+        self._conn_cache = ConnectionCache(self.db_path)
+        self._conn_factory = make_connection_factory(self.db_path, self._conn_cache)
         self._ensure_schema()
         for table_name, repo_cls in BaseRepository._registry.items():
             setattr(self, table_name, repo_cls(self._conn_factory, self))
 
     def _connection(self):
         """Context manager for database connections."""
-        return _raw_connection(self.db_path)
+        return self._conn_cache.connection()
+
+    def close(self) -> None:
+        """Release this instance's cached connections. Safe to call twice."""
+        cache = getattr(self, "_conn_cache", None)
+        if cache is not None:
+            cache.close()
+
+    def __del__(self) -> None:  # pragma: no cover - GC timing
+        try:
+            self.close()
+        except Exception:
+            pass
 
     def _ensure_schema(self) -> None:
         """Bring the database to the current schema version, safely by default."""
@@ -193,5 +211,10 @@ def get_observer() -> Any:
 def reset_database() -> None:
     """Reset the database singleton (for testing)."""
     global _db, _observer
+    if _db is not None:
+        try:
+            _db.close()
+        except Exception:
+            pass
     _db = None
     _observer = None

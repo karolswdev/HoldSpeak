@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://holdspeak.dev/contracts/v0/decision-record-revision.schema.json",
+  "title": "decision_record_revision",
+  "x-sync-kind": "decision_record_revision",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "id": {},
+    "record_id": {},
+    "field_name": {},
+    "old_value": {},
+    "new_value": {},
+    "created_at": {}
+  },
+  "required": [
+    "id",
+    "record_id",
+    "created_at"
+  ]
+}

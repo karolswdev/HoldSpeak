@@ -1,4 +1,4 @@
-import { apiFetch } from "./api";
+import { ApiError, apiFetch } from "./api";
 import {
   abortHold,
   beginHold,
@@ -102,6 +102,38 @@ export function toWav16kMono(
   view.setUint32(40, pcm.length * 2, true);
   new Int16Array(buffer, 44).set(pcm);
   return buffer;
+}
+
+/* HS-131-09 — the open-mic interval is ONE admitted session on the server.
+   The client opens it before the first frame, closes it when the mic goes down,
+   and honors exactly one terminal status: `mic_interval: "closed"` means the
+   server's authority for this interval ended (inactivity, the 30-minute ceiling,
+   the child budget, a cancel, or a revocation). The interval is dropped and a
+   fresh click is required — it is never silently continued under a new parent. */
+
+export const MIC_INTERVAL_CLOSED = "closed";
+
+export async function openMicInterval(): Promise<void> {
+  await apiFetch("/api/dictation/mic/open", { method: "POST" });
+}
+
+export async function closeMicInterval(): Promise<void> {
+  try {
+    await apiFetch("/api/dictation/mic/close", { method: "POST" });
+  } catch {
+    // Best-effort: the server closes the interval on its own fences too.
+  }
+}
+
+/** True when the server told us THIS interval is over. */
+export function micIntervalClosed(error: unknown): boolean {
+  if (!(error instanceof ApiError)) return false;
+  const payload = error.payload as { mic_interval?: unknown } | null;
+  return (
+    !!payload &&
+    typeof payload === "object" &&
+    payload.mic_interval === MIC_INTERVAL_CLOSED
+  );
 }
 
 export async function transcribeWav(

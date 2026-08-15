@@ -9,7 +9,15 @@ no-probe path stays byte-identical to lexical-only scoring.
 
 from __future__ import annotations
 
+import pytest
+
 from holdspeak.plugins.contracts import IntentWindow
+from holdspeak.plugins.intelligence import (
+    PLUGIN_DISPATCH_FORGED,
+    PLUGIN_DISPATCH_RELEASED,
+    PluginDispatchRefused,
+    PluginDispatchRevoked,
+)
 from holdspeak.plugins.router import select_active_intents
 from holdspeak.plugins.scoring import score_window
 from holdspeak.plugins.segment_probe import (
@@ -17,6 +25,7 @@ from holdspeak.plugins.segment_probe import (
     parse_probe_scores,
     probe_intents,
 )
+from tests.unit.plugin_dispatch_rig import admitted_dispatch
 
 
 def _window(transcript: str) -> IntentWindow:
@@ -79,13 +88,45 @@ class TestProbeIntents:
 
         assert probe_intents(_NATURAL_INCIDENT, chat_fn=boom) == {}
 
-    def test_build_segment_probe_over_fake_intel(self):
-        class FakeIntel:
-            def _chat_completion_text(self, messages, *, temperature, max_tokens):
-                return '{"comms": 0.8}'
-
-        probe = build_segment_probe(FakeIntel())
+    def test_build_segment_probe_over_an_admitted_handle(self):
+        probe = build_segment_probe(admitted_dispatch('{"comms": 0.8}')[0])
+        assert probe is not None
         assert probe(_NATURAL_INCIDENT) == {"comms": 0.8}
+
+    def test_no_admitted_handle_means_no_probe_at_all(self):
+        """HS-131-14: the probe used to build the configured engine itself.
+
+        With no handle there is nothing to degrade from — `None` is returned and
+        the caller keeps the lexical path it already falls back to on failure.
+        """
+        assert build_segment_probe() is None
+        assert build_segment_probe(None) is None
+
+    def test_a_forged_handle_refuses_before_any_probe_exists(self):
+        class LookAlike:
+            def chat(self, *_args, **_kwargs):  # pragma: no cover - must never run
+                raise AssertionError("a look-alike must not be dispatched on")
+
+        with pytest.raises(PluginDispatchRefused) as refusal:
+            build_segment_probe(LookAlike())
+        assert refusal.value.reason == PLUGIN_DISPATCH_FORGED
+
+    def test_a_probe_outliving_its_child_refuses_instead_of_degrading(self):
+        """Revocation is not a "probe failure": it is withdrawn authority.
+
+        A parse miss or a dead endpoint degrades to lexical (`{}`), which is why
+        `probe_intents` swallows `Exception`. A RELEASED handle is different in
+        kind — the child that authorized this routing pass is over — so the
+        refusal is deliberately un-absorbable and no leaf is reached.
+        """
+        dispatch, engine, _context = admitted_dispatch('{"comms": 0.8}')
+        probe = build_segment_probe(dispatch)
+        assert probe is not None
+        dispatch.release()
+        with pytest.raises(PluginDispatchRevoked) as refusal:
+            probe(_NATURAL_INCIDENT)
+        assert refusal.value.reason == PLUGIN_DISPATCH_RELEASED
+        assert engine.calls == []
 
 
 class TestProbeAugmentedScoring:

@@ -15,6 +15,7 @@ from .milestones import MilestoneRepository, FIRST_DICTATION_SUCCESS  # noqa: F4
 from .dictation_delivery import DictationDeliveryRepository  # noqa: F401
 from .cadence import CadenceRepository  # noqa: F401
 from .mesh_relay import MeshRelayRepository  # noqa: F401
+from .mesh_worker import MeshWorkerRepository  # noqa: F401
 from .invocations import CapabilityInvocationRepository  # noqa: F401
 from .projections import DeskProjection, ProjectionRepository  # noqa: F401
 from .decisions import (  # noqa: F401

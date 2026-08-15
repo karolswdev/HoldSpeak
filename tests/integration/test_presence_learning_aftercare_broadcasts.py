@@ -289,7 +289,17 @@ def test_process_next_intel_job_notifies_on_meeting_ready(db, monkeypatch):
     monkeypatch.setattr(
         intel_queue_module, "get_intel_runtime_status", lambda *a, **k: (True, "ok")
     )
-    monkeypatch.setattr(intel_queue_module, "MeetingIntel", _FakeIntel)
+    # HS-131-08: the deferred base analysis runs as an admitted child whose
+    # engine is built from the job plan's frozen deployment revision, so the fake
+    # belongs on that one admitted engine seam.
+    # HS-131-13: that seam is now the engine CLASS. The `this_machine` branch
+    # constructs `MeetingIntel(provider="local", model_path=<frozen>)` directly
+    # instead of re-reading the configured default, so a double installed only on
+    # `build_configured_meeting_intel` no longer intercepts the admitted child.
+    monkeypatch.setattr("holdspeak.intel.engine.MeetingIntel", _FakeIntel)
+    monkeypatch.setattr(
+        "holdspeak.intel.providers._configured_engine", lambda: _FakeIntel()
+    )
     _queued_meeting(db, "m-intel")
 
     ready: list[str] = []
@@ -302,7 +312,17 @@ def test_exploding_on_meeting_ready_never_breaks_the_job(db, monkeypatch):
     monkeypatch.setattr(
         intel_queue_module, "get_intel_runtime_status", lambda *a, **k: (True, "ok")
     )
-    monkeypatch.setattr(intel_queue_module, "MeetingIntel", _FakeIntel)
+    # HS-131-08: the deferred base analysis runs as an admitted child whose
+    # engine is built from the job plan's frozen deployment revision, so the fake
+    # belongs on that one admitted engine seam.
+    # HS-131-13: that seam is now the engine CLASS. The `this_machine` branch
+    # constructs `MeetingIntel(provider="local", model_path=<frozen>)` directly
+    # instead of re-reading the configured default, so a double installed only on
+    # `build_configured_meeting_intel` no longer intercepts the admitted child.
+    monkeypatch.setattr("holdspeak.intel.engine.MeetingIntel", _FakeIntel)
+    monkeypatch.setattr(
+        "holdspeak.intel.providers._configured_engine", lambda: _FakeIntel()
+    )
     _queued_meeting(db, "m-boom")
 
     def _boom(_meeting_id):

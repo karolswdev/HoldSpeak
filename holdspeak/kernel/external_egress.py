@@ -192,8 +192,8 @@ class ExternalEgressCodec:
         )
 
     def authorize(self, request: OperationRequest, admission: Admission, principal: Any, operation_id: str) -> Admission:
-        if principal.kind is not PrincipalKind.OWNER:
-            raise KernelRefused("external_egress_owner_authority_required")
+        if principal.kind is not PrincipalKind.OWNER and not request.parent_operation_id:
+            raise KernelRefused("external_egress_owner_or_live_parent_authority_required")
         return admission
 
     def admit(self, request: OperationRequest, admission: Admission, principal: Any, operation_id: str) -> None:
@@ -242,6 +242,7 @@ def run_external_egress(
     kwargs: Mapping[str, Any] | None = None,
     declared_permissions: Sequence[str] = ("network:outbound",),
     allowed_destinations: Sequence[str] | None = None,
+    parent_operation_id: str = "",
     principal: Principal = LOCAL_OWNER,
     broker: Any = None,
 ) -> Any:
@@ -268,6 +269,7 @@ def run_external_egress(
             "operation": {"name": "external.egress", "version": 1},
             "subject_refs": [f"connector:{plan.connector_id}"],
             "target": {"ref": f"egress-operation:{plan.native_id}"},
+            "parent_operation_id": parent_operation_id,
             "arguments": {"egress_id": plan.native_id},
             "placement": "node:local",
         },

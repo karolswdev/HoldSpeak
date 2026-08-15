@@ -22,7 +22,13 @@ import {
   renewAudioFloor,
 } from "./audioFloor";
 import { startOpenMic, stopOpenMic } from "./micSession";
-import { toWav16kMono, transcribeWav } from "./speakToFill";
+import {
+  closeMicInterval,
+  micIntervalClosed,
+  openMicInterval,
+  toWav16kMono,
+  transcribeWav,
+} from "./speakToFill";
 import type { VadTuning } from "./vad";
 
 let heartbeat: ReturnType<typeof setInterval> | null = null;
@@ -38,11 +44,22 @@ export async function openMicListen(
     onRefusal: (error: unknown) => void;
     /** The floor was taken away mid-session — the mic is already dropped. */
     onFloorLost?: (error: FloorHeldError) => void;
+    /** The server's admitted interval ended — the mic is already dropped and a
+     *  fresh click is required (HS-131-09, Sol Amendment 3). */
+    onIntervalClosed?: (error: unknown) => void;
   },
   tuning?: Partial<VadTuning>,
 ): Promise<void> {
   // The floor first: a refused claim never opens the device at all.
   await claimAudioFloor();
+  try {
+    // Then the authority: one admitted server-side interval covers every
+    // utterance of this click-to-toggle session.
+    await openMicInterval();
+  } catch (error) {
+    void releaseAudioFloor();
+    throw error;
+  }
   try {
     await startOpenMic(async (segment) => {
       try {
@@ -50,6 +67,13 @@ export async function openMicListen(
         const text = (await transcribeWav(audio)).trim();
         if (text) handlers.onText(text);
       } catch (error) {
+        if (micIntervalClosed(error)) {
+          // One visible interval never crosses authority epochs: it goes down.
+          openMicDrop();
+          if (handlers.onIntervalClosed) handlers.onIntervalClosed(error);
+          else handlers.onRefusal(error);
+          return;
+        }
         handlers.onRefusal(error);
       }
     }, tuning);
@@ -73,5 +97,6 @@ export async function openMicListen(
 export function openMicDrop(): void {
   stopHeartbeat();
   stopOpenMic();
+  void closeMicInterval();
   void releaseAudioFloor();
 }

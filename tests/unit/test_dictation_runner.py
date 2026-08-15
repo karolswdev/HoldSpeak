@@ -13,7 +13,7 @@ from __future__ import annotations
 from datetime import datetime
 from types import SimpleNamespace
 
-import holdspeak.runtime.dictation_capture as dictation_capture
+import holdspeak.runtime.dictation_processing as dictation_processing
 import holdspeak.web_runtime as web_runtime
 from holdspeak.dictation_runner import run_dictation_pipeline
 
@@ -147,16 +147,28 @@ def test_web_runtime_method_delegates(monkeypatch) -> None:
     (HS-118-08 refactor) which receives config/server as kwargs."""
     captured: dict = {}
 
-    async def _spy(raw_text, source, context=None, *, config=None, server=None, agent_reply_session=None):
+    async def _spy(
+        raw_text,
+        source,
+        context=None,
+        *,
+        config=None,
+        server=None,
+        agent_reply_session=None,
+        admission=None,
+    ):
         captured.update(
             raw_text=raw_text,
             source=source,
             config=config,
             server=server,
+            # HS-131-09: the session's provider admission travels EXPLICITLY with
+            # the transcript (Sol OQ5); no ambient session field exists to read.
+            admission=admission,
         )
         return "SENTINEL"
 
-    monkeypatch.setattr(dictation_capture, "process_transcript", _spy)
+    monkeypatch.setattr(dictation_processing, "process_transcript", _spy)
     fake_self = SimpleNamespace(config="CFG", server="SRV")
     out = web_runtime.WebRuntime._maybe_run_dictation_pipeline(
         fake_self,
@@ -170,6 +182,7 @@ def test_web_runtime_method_delegates(monkeypatch) -> None:
     assert captured["config"] == "CFG"
     assert captured["server"] == "SRV"
     assert captured["source"] == "hotkey"
+    assert captured["admission"] is None  # this caller has no live session
 
 
 class _JournalSpy:

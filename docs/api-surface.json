@@ -456,6 +456,14 @@
       ]
     },
     {
+      "path": "/api/ask/{invocation_id}/cancel",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.primitives.ask",
+      "consumers": []
+    },
+    {
       "path": "/api/authority/control-mode",
       "methods": [
         "PUT"
@@ -688,6 +696,14 @@
       "consumers": [
         "web"
       ]
+    },
+    {
+      "path": "/api/chains/runs/{parent_operation_id}/cancel",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.primitives.chains",
+      "consumers": []
     },
     {
       "path": "/api/chains/{chain_id}",
@@ -1944,6 +1960,26 @@
       "module": "web.routes.dictation.pipeline",
       "consumers": [
         "ios",
+        "web"
+      ]
+    },
+    {
+      "path": "/api/dictation/mic/close",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.system.voice",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/dictation/mic/open",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.system.voice",
+      "consumers": [
         "web"
       ]
     },
@@ -3412,6 +3448,14 @@
       ]
     },
     {
+      "path": "/api/recipes/{recipe_id}/invocations/{invocation_id}/cancel",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.primitives.recipes",
+      "consumers": []
+    },
+    {
       "path": "/api/recipes/{recipe_id}/keep",
       "methods": [
         "POST"
@@ -3991,6 +4035,14 @@
       ]
     },
     {
+      "path": "/api/workbenches/{workbench_id}/runs/{parent_operation_id}/cancel",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.primitives.workbenches",
+      "consumers": []
+    },
+    {
       "path": "/api/workbenches/{workbench_id}/voice/resolve",
       "methods": [
         "POST"
@@ -4019,6 +4071,14 @@
       "consumers": [
         "web"
       ]
+    },
+    {
+      "path": "/api/workflows/runs/{parent_operation_id}/cancel",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.primitives.workflows",
+      "consumers": []
     },
     {
       "path": "/api/workflows/{workflow_id}",

@@ -1,94 +1,28 @@
-"""HS-38-04 — live in-meeting actuator proposals + broadcast.
+"""HS-38-04 — actuator proposals surface from the routing pipeline.
 
-When an actuator proposes during a (finalizing) meeting, the proposal is surfaced
-**live**: the MIR pipeline calls `on_proposal`, the `MeetingSession` turns that into
-an `actuator_proposed` broadcast, and the dashboard shows it in a pending-actions
-panel (approve/reject reuses the Phase-37 decision endpoint — no execution here).
+The MIR pipeline calls `on_proposal` with each persisted proposal, and
+`record_actuator_proposal` returns that record.
 
-These tests pin the two backend contracts:
-  1. the broadcast payload is **read-only** — id + lifecycle + preview only, never
-     the egress `payload`/`result`/`error`;
-  2. the pipeline invokes `on_proposal` with the persisted proposal for each
-     `proposed` run (and `record_actuator_proposal` returns that record).
+HS-131-17 deleted the session-side half of this file. `MeetingSession` used to
+carry an `_emit_actuator_proposal` callback for the dormant post-stop routing
+branch it ran itself; both the branch and the callback are gone, so the two tests
+that only exercised that callback went with them. The live proposal broadcast
+that reaches the dashboard today comes from the aftercare/actuator services
+(`tests/integration/test_actuator_presence_broadcasts.py`), which are untouched.
 """
 
 from __future__ import annotations
 
-import types
 from datetime import datetime
 
 from holdspeak.db import Database
-from holdspeak.meeting_session import MeetingSession, MeetingState, TranscriptSegment
+from holdspeak.meeting_session import MeetingState, TranscriptSegment
 from holdspeak.plugins.contracts import PluginRun
 from holdspeak.plugins.host import PluginHost
 from holdspeak.plugins.persistence import record_actuator_proposal
 
 
-class _FakeTranscriber:
-    def transcribe(self, audio) -> str:  # pragma: no cover - unused
-        _ = audio
-        return ""
-
-
-# ──────────────────── 1. The broadcast is read-only ───────────────────
-
-
-def test_emit_actuator_proposal_broadcasts_read_only_view() -> None:
-    events: list[tuple[str, object]] = []
-    session = MeetingSession(
-        transcriber=_FakeTranscriber(),
-        on_broadcast=lambda mt, data: events.append((mt, data)),
-    )
-
-    record = types.SimpleNamespace(
-        id="p1",
-        meeting_id="m1",
-        plugin_id="github_issue_actuator",
-        status="proposed",
-        target="github",
-        action="create_issue",
-        preview="Open a GitHub issue in acme/app",
-        reversible=False,
-        created_at=datetime(2026, 6, 4, 12, 0, 0),
-        # The egress source-of-truth + execution fields — must NOT be broadcast.
-        payload={"repo": "acme/app", "title": "secret"},
-        result={"url": "x"},
-        error=None,
-    )
-
-    session._emit_actuator_proposal(record)
-
-    assert len(events) == 1
-    message_type, data = events[0]
-    assert message_type == "actuator_proposed"
-    assert data == {
-        "id": "p1",
-        "meeting_id": "m1",
-        "plugin_id": "github_issue_actuator",
-        "status": "proposed",
-        "target": "github",
-        "action": "create_issue",
-        "preview": "Open a GitHub issue in acme/app",
-        "reversible": False,
-        "created_at": "2026-06-04T12:00:00",  # serialized for json.dumps on the wire
-    }
-    # The egress payload (and result/error) never reach a live client.
-    assert "payload" not in data
-    assert "result" not in data
-    assert "error" not in data
-
-
-def test_emit_without_observer_is_silent() -> None:
-    session = MeetingSession(transcriber=_FakeTranscriber())  # no on_broadcast
-    record = types.SimpleNamespace(
-        id="p1", meeting_id="m1", plugin_id="a", status="proposed",
-        target="webhook", action="post_message", preview="x", reversible=False,
-        created_at=None,
-    )
-    session._emit_actuator_proposal(record)  # no observer → no-op, no raise
-
-
-# ──────────────── 2. record_actuator_proposal returns the record ───────
+# ──────────────── 1. record_actuator_proposal returns the record ───────
 
 
 def _db(tmp_path) -> Database:
@@ -134,7 +68,7 @@ def test_record_actuator_proposal_returns_persisted_record(tmp_path) -> None:
     assert db.actuators.get_proposal(record.id).id == record.id
 
 
-# ──────────── 3. The pipeline invokes on_proposal per proposed run ─────
+# ──────────── 2. The pipeline invokes on_proposal per proposed run ─────
 
 
 def _meeting_with_segments() -> MeetingState:

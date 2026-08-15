@@ -58,8 +58,13 @@ def _stub_engine(monkeypatch, *, fail: bool = False):
                 raise MeetingIntelError("endpoint down")
             return "out"
 
+    # HS-131-13: an admitted `this_machine` child constructs `MeetingIntel` from
+    # its FROZEN revision rather than re-reading the configured default, so the
+    # stub goes on the engine class too — both failure and success frames still
+    # come from this one `_Stub`.
+    monkeypatch.setattr("holdspeak.intel.engine.MeetingIntel", lambda **_kw: _Stub())
     monkeypatch.setattr(
-        providers, "build_configured_meeting_intel", lambda: _Stub()
+        providers, "_configured_engine", lambda: _Stub()
     )
 
 
@@ -91,7 +96,7 @@ def test_agent_run_error_frame_on_502(rig, monkeypatch) -> None:
 
     run = _run_frames(frames)
     assert [f["state"] for f in run] == ["running", "error"]
-    assert run[1]["error"] == "endpoint down"
+    assert run[1]["error"] == "failed"
 
 
 def test_chain_and_workflow_bracket_the_whole_run(rig, monkeypatch) -> None:

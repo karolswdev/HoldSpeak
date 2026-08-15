@@ -22,7 +22,6 @@ _PUBLIC = {
     # providers
     "resolve_intel_provider",
     "resolve_llm_capability",
-    "build_configured_meeting_intel",
     "get_intel_runtime_status",
     "get_local_intel_runtime_status",
     "get_cloud_intel_runtime_status",

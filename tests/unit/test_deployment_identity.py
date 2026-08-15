@@ -15,12 +15,26 @@ import pytest
 
 import holdspeak.db as hsdb
 from holdspeak.db import Database, reset_database
+from holdspeak.deployment_revisions import capture_deployment_revision
 from holdspeak.inference_targets import (
-    build_intel_for_target,
+    build_intel_for_revision,
     paired_device_target,
     resolve_inference_target,
     this_machine_target,
 )
+from tests.unit.admitted_context import admitted_context
+
+
+def _admitted_engine(db, target):
+    """Build the engine the way an ADMITTED child does (HS-131-13).
+
+    `build_intel_for_target` is gone; the one construction path freezes the
+    deployment first and then presents the dispatch context the runner minted for
+    that exact revision. Readiness/execution/receipt agreement is therefore now
+    asserted against the SAME frozen identity the receipt names.
+    """
+    revision = capture_deployment_revision(db, target)
+    return build_intel_for_revision(revision, context=admitted_context(revision=revision))
 
 
 def _fake_meeting(model_path: str, *, provider: str = "local") -> SimpleNamespace:
@@ -56,7 +70,7 @@ def test_this_machine_readiness_execution_receipt_name_one_model(
     assert target.ready is True
 
     readiness_path = target.deployment.model_path
-    engine = build_intel_for_target(target, db)
+    engine = _admitted_engine(db, target)
     executed_path = getattr(engine, "model_path", None)
     receipt = target.placement_receipt(provider="local")
 
@@ -97,7 +111,7 @@ def test_named_on_device_runs_the_model_that_made_it_ready(
     assert target.ready is True
     assert target.deployment.model_path == str(profile_model)
 
-    engine = build_intel_for_target(target, db)
+    engine = _admitted_engine(db, target)
     executed_path = getattr(engine, "model_path", None)
     receipt = target.placement_receipt(provider="local")
 

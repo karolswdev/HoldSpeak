@@ -21,13 +21,21 @@ pytest.importorskip("fastapi")
 
 from fastapi.testclient import TestClient
 
+from holdspeak.db import Database
 from holdspeak.device_audio import DeviceDescriptor, DeviceRegistry
+from holdspeak.kernel.runtime import _configure
 from holdspeak.meeting_recorder import AudioChunk
 from holdspeak.meeting_session import (
     MeetingSession,
     MeetingState,
 )
+from holdspeak.principals import Principal, PrincipalKind
 from holdspeak.web_server import MeetingWebServer, WebRuntimeCallbacks
+
+#: The authenticated identity an owner-started desktop meeting runs under. These
+#: tests model exactly that start, so they carry it instead of relying on a
+#: principal the session is (correctly) never allowed to synthesize.
+OWNER = Principal(PrincipalKind.OWNER, "meeting-owner")
 
 
 class _FakeTranscriber:
@@ -36,10 +44,28 @@ class _FakeTranscriber:
     def __init__(self) -> None:
         self.calls: List[np.ndarray] = []
 
-    def transcribe(self, audio: np.ndarray) -> str:
+    def transcribe(self, audio: np.ndarray, **_admission) -> str:
+        # HS-131-09: the loop dispatches `transcribe(audio, admission=...)`; this
+        # stand-in reaches no model, so it only has to accept it.
         self.calls.append(audio)
         # Return a stable transcript so the test can assert text content.
         return f"transcript({audio.size})"
+
+
+def _admit_meeting_session(session, tmp_path, monkeypatch) -> None:
+    """Admit the real ``meeting.session`` parent this session's transcription needs.
+
+    HS-131-09: a meeting transcription interval is one admitted child of the live
+    ``meeting.session``, and a start with no authenticated principal transcribes
+    NOTHING (refusal by design, not an unadmitted fallback). These tests set
+    ``_state`` directly instead of calling ``start()``, so they admit the same
+    parent ``start()`` admits — against an isolated database, so nothing here
+    touches the owner's real kernel journal.
+    """
+    db = Database(tmp_path / "device-meeting.db")
+    monkeypatch.setattr("holdspeak.db.get_database", lambda *_a, **_k: db)
+    _configure(db)
+    assert session._admit_intel_session() is True, session._transcription_refusal
 
 
 class _FakeRemoteSource:
@@ -170,11 +196,12 @@ class TestDeviceMeetingSession:
         assert payload["rssi_dbm"] == -59
         assert payload["last_health_at"] == 42
 
-    def test_device_chunks_become_labeled_segments(self) -> None:
+    def test_device_chunks_become_labeled_segments(self, tmp_path, monkeypatch) -> None:
         transcriber = _FakeTranscriber()
-        session = MeetingSession(transcriber=transcriber)
+        session = MeetingSession(transcriber=transcriber, principal=OWNER)
         session._state = MeetingState(id="m1", started_at=datetime.now())
         session._recorder = _StubMeetingRecorder()  # type: ignore[assignment]
+        _admit_meeting_session(session, tmp_path, monkeypatch)
 
         # Attach a device.
         descriptor = DeviceDescriptor(
@@ -203,11 +230,12 @@ class TestDeviceMeetingSession:
         assert seg.speaker == "Karol"
         assert seg.text == f"transcript({int(1.5 * 16_000)})"
 
-    def test_local_mic_segment_keeps_device_id_none(self) -> None:
+    def test_local_mic_segment_keeps_device_id_none(self, tmp_path, monkeypatch) -> None:
         transcriber = _FakeTranscriber()
-        session = MeetingSession(transcriber=transcriber, mic_label="Me")
+        session = MeetingSession(transcriber=transcriber, mic_label="Me", principal=OWNER)
         session._state = MeetingState(id="m1", started_at=datetime.now())
         session._recorder = _StubMeetingRecorder()  # type: ignore[assignment]
+        _admit_meeting_session(session, tmp_path, monkeypatch)
 
         mic_chunks = [
             AudioChunk(

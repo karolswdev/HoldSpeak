@@ -68,38 +68,61 @@ def _parse(raw: str) -> Optional[dict]:
     return obj if isinstance(obj, dict) else None
 
 
+def next_action_prompt(loop: OpenLoop) -> tuple[str, str]:
+    """The exact `(system_prompt, user_prompt)` one drafted next action is asked for.
+
+    Public because HS-131-13 split the two halves of this feature: SHAPING the
+    request stays here, in the cadence domain, while DISPATCHING it belongs to the
+    admitted child the Cadence service opens. The service composes no prompt of
+    its own — it asks for this pair and hands it to the runner's canonical payload.
+    """
+    return _SYSTEM, _build_prompt(loop)
+
+
+def next_action_from_output(loop: OpenLoop, raw: str) -> NextBestAction:
+    """Validate ONE model output into an action; fail closed to the deterministic one.
+
+    The whole fail-closed contract of CAD-7 lives here: unparseable output, an
+    off-contract `kind`, and a missing title all return the deterministic action
+    with ``generated_by == "deterministic"``, so a caller can always tell whether
+    the model actually drafted anything.
+    """
+    fallback = generate_next_action(loop)
+    obj = _parse(raw)
+    if not obj:
+        return fallback
+    kind = str(obj.get("kind", "")).strip()
+    title = str(obj.get("title", "")).strip()
+    body = str(obj.get("body_markdown", "")).strip()
+    if kind not in _ALLOWED_KINDS or not title:
+        return fallback  # off-contract → fail closed
+    return NextBestAction(
+        loop_id=loop.id or "",
+        kind=kind,
+        title=title[:200],
+        body_markdown=body,
+        confidence=0.8,
+        reversible=fallback.reversible,  # the safety flag stays deterministic
+        generated_by="llm",
+    )
+
+
 def generate_llm_next_action(
     loop: OpenLoop, *, llm: Optional[Callable[[str, str], str]] = None
 ) -> NextBestAction:
     """A drafted next action, or the deterministic one if the LLM path fails (closed).
 
-    `llm` is a callable (system_prompt, user_prompt) -> text. Inject the intel engine's
-    `run_prompt` (or a test double); pass None to force the deterministic baseline.
+    `llm` is a callable (system_prompt, user_prompt) -> text. Pass a test double, or
+    None to force the deterministic baseline. Production no longer injects a
+    provider callable here: the admitted Cadence child owns the dispatch and calls
+    :func:`next_action_prompt` / :func:`next_action_from_output` directly.
     """
-    fallback = generate_next_action(loop)
     if llm is None:
-        return fallback
+        return generate_next_action(loop)
     try:
-        raw = llm(_SYSTEM, _build_prompt(loop))
-        obj = _parse(raw)
-        if not obj:
-            return fallback
-        kind = str(obj.get("kind", "")).strip()
-        title = str(obj.get("title", "")).strip()
-        body = str(obj.get("body_markdown", "")).strip()
-        if kind not in _ALLOWED_KINDS or not title:
-            return fallback  # off-contract → fail closed
-        return NextBestAction(
-            loop_id=loop.id or "",
-            kind=kind,
-            title=title[:200],
-            body_markdown=body,
-            confidence=0.8,
-            reversible=fallback.reversible,  # the safety flag stays deterministic
-            generated_by="llm",
-        )
+        return next_action_from_output(loop, llm(*next_action_prompt(loop)))
     except Exception:
-        return fallback  # any failure → the deterministic action
+        return generate_next_action(loop)  # any failure → the deterministic action
 
 
 def next_action_for(loop: OpenLoop, *, llm: Optional[Callable[[str, str], str]] = None) -> NextBestAction:

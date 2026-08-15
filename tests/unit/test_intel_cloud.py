@@ -2,9 +2,28 @@ from __future__ import annotations
 
 from types import SimpleNamespace
 
+import pytest
+
 import holdspeak.intel as intel_module
 from holdspeak.intel import MeetingIntel, resolve_intel_provider, get_cloud_intel_runtime_status
 
+from holdspeak.intel.providers import configured_meeting_intel
+from tests.unit.admitted_context import admitted_context
+
+
+
+def _configured_intel():
+    """The ONE configured-construction entrance (HS-131-14).
+
+    The old public uncontextual factory is gone: the body is private and reachable
+    only through ``configured_meeting_intel``, which refuses without the dispatch
+    context an admitted child carries. The placement assertions below are unchanged
+    — what changed is that reaching the constructor now requires admission.
+    """
+    revision = SimpleNamespace(id="dep_configured", destination_id="configured")
+    return configured_meeting_intel(
+        context=admitted_context(revision=revision), revision=revision
+    )
 
 def test_resolve_provider_auto_falls_back_to_cloud(monkeypatch) -> None:
     monkeypatch.setattr(intel_module, "Llama", None)
@@ -36,12 +55,11 @@ def test_get_cloud_runtime_status_requires_api_key(monkeypatch) -> None:
     assert "OPENAI_API_KEY" in reason
 
 
-def test_build_configured_meeting_intel_reads_the_assigned_target(monkeypatch) -> None:
+def test_configured_meeting_intel_reads_the_assigned_target(monkeypatch) -> None:
     # Plugins must honour the user's assigned InferenceTarget, not
     # MeetingIntel() bare module defaults (HS-27-02, retargeted HS-112-01:
     # the endpoint lives ONLY in the profiles table).
     from holdspeak.db.models import ProfileRecord
-    from holdspeak.intel import build_configured_meeting_intel
 
     cfg = SimpleNamespace(
         meeting=SimpleNamespace(
@@ -64,7 +82,7 @@ def test_build_configured_meeting_intel_reads_the_assigned_target(monkeypatch) -
         ),
     )
 
-    intel = build_configured_meeting_intel()
+    intel = _configured_intel()
     assert intel.provider == "cloud"
     assert intel.cloud_base_url == "http://192.168.1.43:8080/v1"
     assert intel.cloud_model == "Qwen3.5-9B-UD-Q6_K_XL.gguf"
@@ -207,14 +225,35 @@ def test_meeting_intel_cloud_falls_back_to_max_completion_tokens(monkeypatch) ->
 
     monkeypatch.setattr(intel_module, "OpenAI", _FakeOpenAI)
     monkeypatch.setenv("OPENAI_API_KEY", "test-key")
+    from holdspeak.intel.engine import forget_endpoint_dialects
+    from holdspeak.kernel.provider_signals import ProviderCompatibilityRetry
 
-    intel = MeetingIntel(provider="cloud", cloud_model="gpt-5-mini")
-    result = intel.analyze("[00:00:00] Me: test", stream=False)
+    forget_endpoint_dialects()
+    try:
+        intel = MeetingIntel(provider="cloud", cloud_model="gpt-5-mini")
 
-    assert result.summary == "ok"
-    assert len(create_calls) == 2
-    assert "max_tokens" in create_calls[0]
-    assert "max_completion_tokens" in create_calls[1]
+        # HS-131-10 (Sol Amendment 3): the fallback used to send a SECOND
+        # `create` inside this one call — two requests to a model under one
+        # admitted child and one receipt. The engine now makes exactly ONE
+        # physical request and NAMES the dialect instead of hiding a retry.
+        with pytest.raises(ProviderCompatibilityRetry) as signal:
+            intel.analyze("[00:00:00] Me: test", stream=False)
+        assert signal.value.mode == "max_completion_tokens"
+        assert len(create_calls) == 1
+        assert "max_tokens" in create_calls[0]
+
+        # The endpoint's dialect is remembered, so the SECOND admitted child
+        # (the runner submits it; see test_one_path_cardinality.py) speaks it on
+        # its first and only request, and the compatibility behaviour is kept.
+        second = MeetingIntel(provider="cloud", cloud_model="gpt-5-mini")
+        result = second.analyze("[00:00:00] Me: test", stream=False)
+
+        assert result.summary == "ok"
+        assert len(create_calls) == 2
+        assert "max_completion_tokens" in create_calls[1]
+        assert "max_tokens" not in create_calls[1]
+    finally:
+        forget_endpoint_dialects()
 
 
 def test_meeting_intel_cloud_surfaces_timeout_errors(monkeypatch) -> None:

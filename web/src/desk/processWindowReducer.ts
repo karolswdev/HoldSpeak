@@ -74,6 +74,7 @@ const TERMINAL_STATES = new Set([
   "failed",
   "succeeded",
   "refused",
+  "cancelled",
   "indeterminate",
   "complete",
   "completed",
@@ -132,7 +133,7 @@ export function mergeProcessEvents(
     const previousHead = text(previous?.head);
     const genericReceipt =
       event.event_type === "operation.receipt" &&
-      ["succeeded", "failed", "refused", "indeterminate"].includes(incomingHead);
+      ["succeeded", "failed", "refused", "cancelled", "indeterminate"].includes(incomingHead);
     // A terminal receipt follows operation.refused. Keep the named refusal
     // reason rather than replacing it with the generic receipt outcome.
     const nextHead = genericReceipt && previousHead ? previousHead : incomingHead || previousHead;

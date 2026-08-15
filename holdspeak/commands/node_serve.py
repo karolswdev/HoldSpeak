@@ -381,7 +381,16 @@ def run_node_serve_command(args: Any) -> int:
 def run_node_token_command(args: Any) -> int:
     """Pairing custody on the hub machine: create prints the token
     ONCE to stdout (that is the distribution moment); list never
-    shows token material."""
+    shows token material.
+
+    HS-131-16 adds ``export``: the one deliberate act that moves a pairing to the
+    machine that will serve it. It writes an owner-only document carrying the
+    bearer token, the stable node id, the credential generation, the key id, and
+    the offer PUBLIC key — never the hub's offer private key, which is what keeps
+    a worker unable to mint the authority it verifies.
+    """
+    from ..delivery.node_credentials import NodeCustodyError, write_pairing_transfer
+
     store_path = getattr(args, "store_path", None)
     store = NodeTokenStore(Path(store_path) if store_path else None)
     action = str(getattr(args, "token_action", "") or "")
@@ -390,12 +399,18 @@ def run_node_token_command(args: Any) -> int:
         if action == "create":
             node_id, token = store.create(name)
             print(token)
-            log.info("paired node %s (%s); export the printed token as $%s",
-                     name, node_id, DEFAULT_TOKEN_ENV)
+            log.info(
+                "paired node %s (%s); move it to that machine with "
+                "`holdspeak node token export --name %s`",
+                name, node_id, name,
+            )
             return 0
         if action == "rotate":
             print(store.rotate(name))
-            log.info("rotated node token for %s; the old token is dead", name)
+            log.info(
+                "rotated node token for %s; the old token is dead — re-export "
+                "the pairing so that node can serve again", name,
+            )
             return 0
         if action == "revoke":
             store.revoke(name)
@@ -406,11 +421,67 @@ def run_node_token_command(args: Any) -> int:
                 state = "revoked" if row["revoked"] else "paired"
                 print(f"{row['name']}\t{row['node_id']}\t{state}\t{row['created_at']}")
             return 0
-    except NodeLinkError as exc:
-        log.error("%s", exc)
+        if action == "export":
+            # Repair R2.9: ONE locked read hands back the identity, the pin, and
+            # the token together. Reading them separately let a rotate land in
+            # between and export generation 1's pin beside generation 2's token.
+            try:
+                snapshot, token = store.export_pairing(name)
+            except NodeLinkError as exc:
+                if exc.reason != "unknown_node":
+                    raise
+                log.error("no active pairing for '%s'", name)
+                return 1
+            destination = Path(
+                getattr(args, "out", None) or (Path.cwd() / f"holdspeak-pairing-{name}.json")
+            )
+            write_pairing_transfer(destination, snapshot, token)
+            print(str(destination))
+            log.info(
+                "exported the pairing for %s (owner-only); import it on that "
+                "machine with `holdspeak node pair --from <file>`", name,
+            )
+            return 0
+    except (NodeLinkError, NodeCustodyError) as exc:
+        log.error("%s", getattr(exc, "reason", None) or exc)
         return 1
-    print("usage: holdspeak node token {create|rotate|revoke|list} [--name NAME]")
+    print(
+        "usage: holdspeak node token {create|rotate|revoke|list|export}"
+        " [--name NAME] [--out PATH]"
+    )
     return 2
+
+
+def run_node_pair_command(args: Any) -> int:
+    """Import one exported pairing into THIS machine's private custody.
+
+    The worker half of the deliberate transfer. Everything it writes is what a
+    node needs to authenticate itself and to verify the hub's Ed25519 dispatch
+    offers, and nothing it writes can produce one.
+    """
+    from ..delivery.node_credentials import (
+        NodeCustodyError,
+        read_pairing_transfer,
+        save_hub_pin,
+    )
+
+    source = getattr(args, "source", None)
+    if not source:
+        log.error("a pairing file is required (--from)")
+        return 2
+    try:
+        pin = read_pairing_transfer(Path(source))
+        save_hub_pin(pin, path=getattr(args, "pin_path", None))
+    except NodeCustodyError as exc:
+        log.error("that pairing cannot be imported: %s", exc.reason)
+        return 1
+    log.info(
+        "paired this machine as node %s (%s, generation %d); "
+        "`holdspeak mesh serve` can now claim its work",
+        pin.node_name, pin.node_id, pin.generation,
+    )
+    print(pin.node_name)
+    return 0
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -438,9 +509,24 @@ def build_parser() -> argparse.ArgumentParser:
     serve.add_argument("--once", action="store_true", help="hello + one heartbeat, then exit")
 
     token = sub.add_parser("token", help="Manage node pairings on the hub")
-    token.add_argument("token_action", choices=["create", "rotate", "revoke", "list"])
+    token.add_argument(
+        "token_action", choices=["create", "rotate", "revoke", "list", "export"]
+    )
     token.add_argument("--name", default="", help="Node name")
+    token.add_argument(
+        "--out", default=None,
+        help="Where `export` writes the owner-only pairing file",
+    )
     token.add_argument("--store-path", default=None, help=argparse.SUPPRESS)
+
+    pair = sub.add_parser(
+        "pair", help="Import an exported pairing into this machine's custody"
+    )
+    pair.add_argument(
+        "--from", dest="source", default="",
+        help="The pairing file `holdspeak node token export` wrote on the hub",
+    )
+    pair.add_argument("--pin-path", default=None, help=argparse.SUPPRESS)
     return parser
 
 
@@ -450,7 +536,9 @@ def main(argv: Optional[list[str]] = None) -> int:
         return run_node_serve_command(args)
     if args.node_command == "token":
         return run_node_token_command(args)
-    print("usage: holdspeak node {serve|token} …")
+    if args.node_command == "pair":
+        return run_node_pair_command(args)
+    print("usage: holdspeak node {serve|token|pair} …")
     return 2
 
 

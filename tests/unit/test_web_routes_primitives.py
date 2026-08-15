@@ -32,16 +32,27 @@ def client(tmp_path, monkeypatch) -> TestClient:
     reset_database()
 
 
-def _assert_run_receipt(body: dict, definition_ref: str, input_text: str) -> None:
-    assert body["invocation_id"] == body["correlation_id"]
+def _assert_admitted_parent_run(body: dict, child_count: int) -> None:
+    """HS-131-04 parent summary: each actual model call remains a child receipt."""
+    assert body["parent_operation_id"].startswith("op_")
+    assert body["parent_native_id"]
     assert body["result_ref"] == f"artifact:{body['artifact_id']}"
-    invocation = body["invocation"]
-    assert invocation["id"] == body["invocation_id"]
-    assert invocation["definition_ref"] == definition_ref
-    assert invocation["input_snapshot"]["input"] == input_text
-    assert invocation["state"] == "succeeded"
-    assert len(invocation["attempts"]) == 1
-    assert invocation["attempts"][0]["state"] == "succeeded"
+    assert len(body["children"]) == child_count
+    assert all(child["operation_id"].startswith("op_") for child in body["children"])
+    assert all(child["invocation_id"] for child in body["children"])
+    assert all(child["outcome"] == "succeeded" for child in body["children"])
+
+
+def _assert_admitted_run(body: dict, recipe_id: str, input_text: str) -> None:
+    # The runner receipt is now broker-owned, rather than projected in the
+    # legacy invocation/correlation response shape. The returned projection
+    # still names the executed recipe, exact destination, input provenance,
+    # and durable artifact.
+    assert body["artifact_id"]
+    assert body["recipe_id"] == recipe_id
+    assert body["actual_placement"]["target_id"] == "this_machine"
+    assert body["sources"] == [{"source_type": "recipe", "source_ref": recipe_id}]
+    assert input_text in body["name"]
 
 
 # ── Notes ──────────────────────────────────────────────────────────────────
@@ -115,8 +126,11 @@ def test_run_agent_invokes_engine(client: TestClient, monkeypatch) -> None:
             captured["user_prompt"] = user_prompt
             return "ANSWER"
 
+    # HS-131-13: the admitted `this_machine` child builds `MeetingIntel` from
+    # its FROZEN revision, so the same double goes on the engine class too.
+    monkeypatch.setattr("holdspeak.intel.engine.MeetingIntel", lambda **_kw: _FakeIntel())
     monkeypatch.setattr(
-        "holdspeak.intel.providers.build_configured_meeting_intel",
+        "holdspeak.intel.providers._configured_engine",
         lambda: _FakeIntel(),
     )
     resp = client.post(f"/api/recipes/{aid}/run", json={"input": "hello"})
@@ -126,12 +140,10 @@ def test_run_agent_invokes_engine(client: TestClient, monkeypatch) -> None:
     artifact_id = body.pop("artifact_id")
     assert artifact_id
     body["artifact_id"] = artifact_id
-    _assert_run_receipt(body, f"persona:{aid}", "hello")
+    _assert_admitted_run(body, aid, "hello")
     assert body["recipe_id"] == aid and body["output"] == "ANSWER"
     assert body["provider"] == "local" and body["profile_id"] is None
-    assert [row["source_type"] for row in body["sources"]] == [
-        "recipe", "invocation", "attempt"
-    ]
+    assert body["sources"] == [{"source_type": "recipe", "source_ref": aid}]
     # The persona's system prompt + rendered template reached the engine.
     assert captured["system_prompt"] == "SYS"
     assert captured["user_prompt"] == "Q: hello"
@@ -149,8 +161,11 @@ def test_run_agent_includes_input_source(client: TestClient, monkeypatch) -> Non
         def run_prompt(self, **kwargs):
             return "OUT"
 
+    # HS-131-13: the admitted `this_machine` child builds `MeetingIntel` from
+    # its FROZEN revision, so the same double goes on the engine class too.
+    monkeypatch.setattr("holdspeak.intel.engine.MeetingIntel", lambda **_kw: _FakeIntel())
     monkeypatch.setattr(
-        "holdspeak.intel.providers.build_configured_meeting_intel", lambda: _FakeIntel()
+        "holdspeak.intel.providers._configured_engine", lambda: _FakeIntel()
     )
     resp = client.post(
         f"/api/recipes/{aid}/run", json={"input": "x", "source_ref": "meeting_7"}
@@ -209,8 +224,11 @@ def test_run_agent_input_source_accepts_ipad_card_alias(
         def run_prompt(self, **kwargs):
             return "OUT"
 
+    # HS-131-13: the admitted `this_machine` child builds `MeetingIntel` from
+    # its FROZEN revision, so the same double goes on the engine class too.
+    monkeypatch.setattr("holdspeak.intel.engine.MeetingIntel", lambda **_kw: _FakeIntel())
     monkeypatch.setattr(
-        "holdspeak.intel.providers.build_configured_meeting_intel", lambda: _FakeIntel()
+        "holdspeak.intel.providers._configured_engine", lambda: _FakeIntel()
     )
     resp = client.post(
         f"/api/recipes/{aid}/run",
@@ -239,8 +257,11 @@ def test_run_agent_engine_error_is_502(client: TestClient, monkeypatch) -> None:
         def run_prompt(self, **kwargs):
             raise MeetingIntelError("no model")
 
+    # HS-131-13: the admitted `this_machine` child builds `MeetingIntel` from
+    # its FROZEN revision, so the same double goes on the engine class too.
+    monkeypatch.setattr("holdspeak.intel.engine.MeetingIntel", lambda **_kw: _Boom())
     monkeypatch.setattr(
-        "holdspeak.intel.providers.build_configured_meeting_intel", lambda: _Boom()
+        "holdspeak.intel.providers._configured_engine", lambda: _Boom()
     )
     resp = client.post(f"/api/recipes/{aid}/run", json={"input": "x"})
     assert resp.status_code == 502
@@ -330,8 +351,11 @@ def test_run_chain_threads_steps(client: TestClient, monkeypatch) -> None:
             calls.append((system_prompt, user_prompt))
             return f"out({user_prompt})"
 
+    # HS-131-13: the admitted `this_machine` child builds `MeetingIntel` from
+    # its FROZEN revision, so the same double goes on the engine class too.
+    monkeypatch.setattr("holdspeak.intel.engine.MeetingIntel", lambda **_kw: _FakeIntel())
     monkeypatch.setattr(
-        "holdspeak.intel.providers.build_configured_meeting_intel", lambda: _FakeIntel()
+        "holdspeak.intel.providers._configured_engine", lambda: _FakeIntel()
     )
 
     resp = client.post(f"/api/chains/{cid}/run", json={"input": "hello"})
@@ -356,7 +380,7 @@ def test_run_chain_threads_steps(client: TestClient, monkeypatch) -> None:
         {"source_type": "recipe", "source_ref": a1},
         {"source_type": "recipe", "source_ref": a2},
     ]
-    _assert_run_receipt(body, f"sequence:{cid}", "hello")
+    _assert_admitted_parent_run(body, 2)
 
 
 def test_run_chain_unknown_chain_is_404(client: TestClient) -> None:
@@ -370,14 +394,14 @@ def test_run_chain_missing_persona_is_unavailable(client: TestClient) -> None:
     resp = client.post(f"/api/chains/{cid}/run", json={"input": "x"})
     assert resp.status_code == 409
     assert "ghost_agent" in resp.json()["error"]
-    assert resp.json()["invocation"]["state"] == "unavailable"
+    assert resp.json()["error"]
 
 
 def test_run_chain_empty_steps_is_unavailable(client: TestClient) -> None:
     cid = client.post("/api/chains", json={"name": "Empty", "steps": []}).json()["chain"]["id"]
     resp = client.post(f"/api/chains/{cid}/run", json={"input": "x"})
     assert resp.status_code == 409
-    assert resp.json()["invocation"]["input_snapshot"]["input"] == "x"
+    assert resp.json()["parent_operation_id"].startswith("op_")
 
 
 def test_run_chain_engine_error_is_502(client: TestClient, monkeypatch) -> None:
@@ -392,8 +416,11 @@ def test_run_chain_engine_error_is_502(client: TestClient, monkeypatch) -> None:
         def run_prompt(self, **kwargs):
             raise MeetingIntelError("no model")
 
+    # HS-131-13: the admitted `this_machine` child builds `MeetingIntel` from
+    # its FROZEN revision, so the same double goes on the engine class too.
+    monkeypatch.setattr("holdspeak.intel.engine.MeetingIntel", lambda **_kw: _Boom())
     monkeypatch.setattr(
-        "holdspeak.intel.providers.build_configured_meeting_intel", lambda: _Boom()
+        "holdspeak.intel.providers._configured_engine", lambda: _Boom()
     )
     resp = client.post(f"/api/chains/{cid}/run", json={"input": "x"})
     assert resp.status_code == 502
@@ -447,8 +474,11 @@ def _stub_intel(monkeypatch, output="WF-OUT", provider="local"):
             return output
 
     fake = _FakeIntel()
+    # HS-131-13: the admitted `this_machine` child builds `MeetingIntel` from
+    # its FROZEN revision, so the same double goes on the engine class too.
+    monkeypatch.setattr("holdspeak.intel.engine.MeetingIntel", lambda **_kw: fake)
     monkeypatch.setattr(
-        "holdspeak.intel.providers.build_configured_meeting_intel", lambda: fake
+        "holdspeak.intel.providers._configured_engine", lambda: fake
     )
     return fake
 
@@ -465,12 +495,10 @@ def test_run_workflow_prompt(client: TestClient, monkeypatch) -> None:
     # HS-74-01: the run persists as a run-born artifact; the id is minted.
     assert body.pop("artifact_id")
     body["artifact_id"] = body["result_ref"].split(":", 1)[1]
-    _assert_run_receipt(body, f"workflow:{wid}", "the thing")
+    _assert_admitted_parent_run(body, 1)
     assert body["workflow_id"] == wid and body["output"] == "WF-OUT"
     assert body["provider"] == "local"
-    assert [row["source_type"] for row in body["sources"]] == [
-        "workflow", "invocation", "attempt"
-    ]
+    assert [row["source_type"] for row in body["sources"]] == ["workflow"]
     # Workflow runs with an empty system prompt + the rendered prompt.
     assert fake.captured == {"system_prompt": "", "user_prompt": "Do: the thing"}
 
@@ -533,8 +561,11 @@ def test_run_workflow_linear_graph_runs_in_order(client: TestClient, monkeypatch
             calls.append(user_prompt)
             return f"out{len(calls)}"
 
+    # HS-131-13: the admitted `this_machine` child builds `MeetingIntel` from
+    # its FROZEN revision, so the same double goes on the engine class too.
+    monkeypatch.setattr("holdspeak.intel.engine.MeetingIntel", lambda **_kw: _FakeIntel())
     monkeypatch.setattr(
-        "holdspeak.intel.providers.build_configured_meeting_intel", lambda: _FakeIntel()
+        "holdspeak.intel.providers._configured_engine", lambda: _FakeIntel()
     )
 
     resp = client.post(f"/api/workflows/{wid}/run", json={"input": "the meeting"})
@@ -554,10 +585,8 @@ def test_run_workflow_linear_graph_runs_in_order(client: TestClient, monkeypatch
     assert [s["kind"] for s in body["steps"]] == ["summarize", "rewrite"]
     assert body["output"] == "out2"
     assert body["provider"] == "local"
-    assert [row["source_type"] for row in body["sources"]] == [
-        "workflow", "invocation", "attempt"
-    ]
-    _assert_run_receipt(body, f"workflow:{wid}", "the meeting")
+    assert [row["source_type"] for row in body["sources"]] == ["workflow"]
+    _assert_admitted_parent_run(body, 2)
     assert "warning" not in body
 
 
@@ -575,8 +604,7 @@ def test_run_workflow_branching_graph_is_refused_before_run(client: TestClient, 
     assert "control-flow" in body["error"]
     assert "not lowered to a prompt" in body["error"]
     assert fake.captured == {}
-    assert body["invocation"]["state"] == "unavailable"
-    assert body["invocation"]["input_snapshot"]["input"] == "x"
+    assert body["error"]
 
 
 def test_run_workflow_branching_graph_no_prompt_is_unavailable(client: TestClient, monkeypatch) -> None:
@@ -620,8 +648,11 @@ def test_run_workflow_web_authored_graph_runs(client: TestClient, monkeypatch) -
         def run_prompt(self, *, system_prompt, user_prompt, temperature=None, max_tokens=None):
             return "risk: the demo\nnothing else"
 
+    # HS-131-13: the admitted `this_machine` child builds `MeetingIntel` from
+    # its FROZEN revision, so the same double goes on the engine class too.
+    monkeypatch.setattr("holdspeak.intel.engine.MeetingIntel", lambda **_kw: _FakeIntel())
     monkeypatch.setattr(
-        "holdspeak.intel.providers.build_configured_meeting_intel", lambda: _FakeIntel()
+        "holdspeak.intel.providers._configured_engine", lambda: _FakeIntel()
     )
 
     resp = client.post(f"/api/workflows/{wid}/run", json={"input": "the meeting"})
@@ -651,8 +682,11 @@ def test_run_workflow_engine_error_is_502(client: TestClient, monkeypatch) -> No
         def run_prompt(self, **kwargs):
             raise MeetingIntelError("no model")
 
+    # HS-131-13: the admitted `this_machine` child builds `MeetingIntel` from
+    # its FROZEN revision, so the same double goes on the engine class too.
+    monkeypatch.setattr("holdspeak.intel.engine.MeetingIntel", lambda **_kw: _Boom())
     monkeypatch.setattr(
-        "holdspeak.intel.providers.build_configured_meeting_intel", lambda: _Boom()
+        "holdspeak.intel.providers._configured_engine", lambda: _Boom()
     )
     resp = client.post(f"/api/workflows/{wid}/run", json={"input": "x"})
     assert resp.status_code == 502
@@ -823,13 +857,18 @@ def test_run_agent_resolves_assigned_profile(client: TestClient, monkeypatch) ->
         def run_prompt(self, **kwargs):
             return "OUT"
 
-    def _for_profile(*, kind, base_url, model, profile_id, node="", model_file=""):
+    def _for_profile(
+        *, kind, base_url, model, profile_id, node="", model_file="", deployment_revision=None, warrant=None, context=None,
+    ):
         seen.update(kind=kind, base_url=base_url, profile_id=profile_id)
         return _FakeIntel()
 
     monkeypatch.setattr("holdspeak.intel.providers.build_meeting_intel_for_profile", _for_profile)
+    # HS-131-13: the admitted `this_machine` child builds `MeetingIntel` from
+    # its FROZEN revision, so the same double goes on the engine class too.
+    monkeypatch.setattr("holdspeak.intel.engine.MeetingIntel", lambda **_kw: (_ for _ in ()).throw(AssertionError("default builder must NOT be used when a profile is assigned")))
     monkeypatch.setattr(
-        "holdspeak.intel.providers.build_configured_meeting_intel",
+        "holdspeak.intel.providers._configured_engine",
         lambda: (_ for _ in ()).throw(AssertionError("default builder must NOT be used when a profile is assigned")),
     )
     resp = client.post(f"/api/recipes/{aid}/run", json={"input": "hi"})
@@ -844,12 +883,15 @@ def test_run_agent_refuses_when_destination_missing(client: TestClient, monkeypa
         "name": "Ghost", "system_prompt": "S", "user_template": "{input}", "profile_id": "gone",
     }).json()["recipe"]["id"]
 
+    # HS-131-13: the admitted `this_machine` child builds `MeetingIntel` from
+    # its FROZEN revision, so the same double goes on the engine class too.
+    monkeypatch.setattr("holdspeak.intel.engine.MeetingIntel", lambda **_kw: (_ for _ in ()).throw(AssertionError("missing destination must not build an engine")))
     monkeypatch.setattr(
-        "holdspeak.intel.providers.build_configured_meeting_intel",
+        "holdspeak.intel.providers._configured_engine",
         lambda: (_ for _ in ()).throw(AssertionError("missing destination must not build an engine")),
     )
     resp = client.post(f"/api/recipes/{aid}/run", json={"input": "hi"})
     assert resp.status_code == 409, resp.text
     assert resp.json()["code"] == "inference_target_unavailable"
     assert resp.json()["alternate_target_id"] == "this_machine"
-    assert resp.json()["invocation"]["state"] == "unavailable"
+    assert resp.json()["inference_target"]["readiness"]["state"] == "unavailable"

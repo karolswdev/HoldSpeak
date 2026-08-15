@@ -1,7 +1,7 @@
 """The Ask AI atom's hub routes (HSM-16-04, the web parity of HSM-16-09).
 
-/api/ask runs an instruction over lasso'd context and persists NOTHING —
-keep/bin is the human's judgment. /api/ask/keep mints the kept artifact
+/api/ask runs an instruction through the kernel and receipt-gates its native
+projection; keep/bin is the human's judgment. /api/ask/keep mints the kept artifact
 wearing the SAME provenance wire shape the iPad's kept Ask wears
 (DeskRecords.swift `provenanceJSON` / `provenanceSources`), locked here
 byte-for-byte so 16-06's cross-surface proof has one shape to trust.
@@ -16,6 +16,7 @@ import holdspeak.db as hsdb
 from holdspeak.db import Database, reset_database
 from holdspeak.web.context import WebContext
 from holdspeak.web.routes import build_primitives_router
+from holdspeak.principals import Principal, PrincipalKind
 
 
 @pytest.fixture
@@ -29,6 +30,10 @@ def env(tmp_path, monkeypatch):
         "holdspeak.inference_targets._this_machine_readiness", lambda: ("ready", "")
     )
     app = FastAPI()
+    @app.middleware("http")
+    async def authenticated(request, call_next):
+        request.state.principal = Principal(PrincipalKind.OWNER, "owner")
+        return await call_next(request)
     app.include_router(build_primitives_router(WebContext(get_state=lambda: {})))
     yield db, TestClient(app)
     reset_database()
@@ -52,7 +57,7 @@ def test_ask_requires_prompt(env) -> None:
     assert client.post("/api/ask", json={"prompt": "  "}).status_code == 400
 
 
-def test_ask_grounds_in_the_canonical_store_and_persists_nothing(env, monkeypatch) -> None:
+def test_ask_grounds_and_receipt_gates_its_projection(env, monkeypatch) -> None:
     """The Phase-53 lesson, asserted: the lasso'd cards' CONTENT reaches the
     model — grounding is loaded from the hub's store, never a client claim."""
     db, client = env
@@ -65,8 +70,11 @@ def test_ask_grounds_in_the_canonical_store_and_persists_nothing(env, monkeypatc
     )
 
     fake = _FakeIntel()
+    # HS-131-13: an admitted `this_machine` child builds `MeetingIntel` from its
+    # FROZEN revision, so the same double is installed on the engine class too.
+    monkeypatch.setattr("holdspeak.intel.engine.MeetingIntel", lambda **_kw: fake)
     monkeypatch.setattr(
-        "holdspeak.intel.providers.build_configured_meeting_intel", lambda: fake
+        "holdspeak.intel.providers._configured_engine", lambda: fake
     )
     monkeypatch.setattr(
         "holdspeak.web.routes.sync._hub_model_name", lambda ctx: "HubModel-9B"
@@ -102,8 +110,10 @@ def test_ask_grounds_in_the_canonical_store_and_persists_nothing(env, monkeypatc
     # Titles resolve from the store (the note's real title, not a client hint).
     assert body["context_titles"] == ["Mesh sync owner", "Q3 summary", "Offline card"]
 
-    # The run route persists NOTHING — keep/bin is the human's judgment.
+    # Ask's native projection is not a kept Artifact; Keep remains the human judgment.
     assert len(db.plugins.list_run_artifacts()) == before
+    with db._connection() as conn:
+        assert conn.execute("SELECT COUNT(*) FROM ask_results").fetchone()[0] == 1
 
 
 def test_ask_runs_on_profile_and_names_honest_egress(env, monkeypatch) -> None:
@@ -115,7 +125,9 @@ def test_ask_runs_on_profile_and_names_honest_egress(env, monkeypatch) -> None:
 
     captured = {}
 
-    def fake_for_profile(*, kind, base_url, model, profile_id, node="", model_file=""):
+    def fake_for_profile(
+        *, kind, base_url, model, profile_id, node="", model_file="", deployment_revision=None, warrant=None, context=None,
+    ):
         captured.update(kind=kind, base_url=base_url, model=model, profile_id=profile_id)
         intel = _FakeIntel()
         intel.active_provider = "cloud"
@@ -148,7 +160,9 @@ def test_ask_target_id_selects_placement_and_advertised_model_runs(env, monkeypa
 
     captured = {}
 
-    def fake_for_profile(*, kind, base_url, model, profile_id, node="", model_file=""):
+    def fake_for_profile(
+        *, kind, base_url, model, profile_id, node="", model_file="", deployment_revision=None, warrant=None, context=None,
+    ):
         captured.update(model=model, profile_id=profile_id)
         intel = _FakeIntel()
         intel.active_provider = "cloud"
@@ -205,8 +219,11 @@ def test_ask_model_alone_never_hops_to_the_profile_that_runs_it(env, monkeypatch
 def test_ask_model_override_matching_the_hubs_own_model_runs_the_default_engine(env, monkeypatch) -> None:
     _, client = env
     fake = _FakeIntel()
+    # HS-131-13: an admitted `this_machine` child builds `MeetingIntel` from its
+    # FROZEN revision, so the same double is installed on the engine class too.
+    monkeypatch.setattr("holdspeak.intel.engine.MeetingIntel", lambda **_kw: fake)
     monkeypatch.setattr(
-        "holdspeak.intel.providers.build_configured_meeting_intel", lambda: fake
+        "holdspeak.intel.providers._configured_engine", lambda: fake
     )
     monkeypatch.setattr(
         "holdspeak.web.routes.sync._hub_model_name", lambda ctx: "HubModel-9B"
@@ -271,8 +288,11 @@ def test_ask_grounding_hydrates_references_from_the_hub_store(env, monkeypatch) 
     )
 
     fake = _FakeIntel()
+    # HS-131-13: an admitted `this_machine` child builds `MeetingIntel` from its
+    # FROZEN revision, so the same double is installed on the engine class too.
+    monkeypatch.setattr("holdspeak.intel.engine.MeetingIntel", lambda **_kw: fake)
     monkeypatch.setattr(
-        "holdspeak.intel.providers.build_configured_meeting_intel", lambda: fake
+        "holdspeak.intel.providers._configured_engine", lambda: fake
     )
     monkeypatch.setattr(
         "holdspeak.web.routes.sync._hub_model_name", lambda ctx: "HubModel-9B"
@@ -319,8 +339,11 @@ def test_ask_grounding_full_expand_hydrates_the_transcript_and_marks_a_cut(env, 
     _seed_meeting(db, "m_env2", "Deep dive", segments=segs)
 
     fake = _FakeIntel()
+    # HS-131-13: an admitted `this_machine` child builds `MeetingIntel` from its
+    # FROZEN revision, so the same double is installed on the engine class too.
+    monkeypatch.setattr("holdspeak.intel.engine.MeetingIntel", lambda **_kw: fake)
     monkeypatch.setattr(
-        "holdspeak.intel.providers.build_configured_meeting_intel", lambda: fake
+        "holdspeak.intel.providers._configured_engine", lambda: fake
     )
     monkeypatch.setattr(
         "holdspeak.web.routes.sync._hub_model_name", lambda ctx: "HubModel-9B"
@@ -411,12 +434,15 @@ def test_ask_surfaces_engine_error_as_502(env, monkeypatch) -> None:
         def run_prompt(self, **kwargs):
             raise MeetingIntelError("no model")
 
+    # HS-131-13: an admitted `this_machine` child builds `MeetingIntel` from its
+    # FROZEN revision, so the same double is installed on the engine class too.
+    monkeypatch.setattr("holdspeak.intel.engine.MeetingIntel", lambda **_kw: _Boom())
     monkeypatch.setattr(
-        "holdspeak.intel.providers.build_configured_meeting_intel", lambda: _Boom()
+        "holdspeak.intel.providers._configured_engine", lambda: _Boom()
     )
     resp = client.post("/api/ask", json={"prompt": "Go"})
     assert resp.status_code == 502
-    assert "no model" in resp.json()["error"]
+    assert resp.json()["machine_code"] == "failed"
 
 
 def test_ask_keep_mints_the_ipad_wire_shape(env) -> None:

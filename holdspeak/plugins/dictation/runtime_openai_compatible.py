@@ -96,7 +96,16 @@ class OpenAICompatibleRuntime:
         *,
         max_tokens: int = 128,
         temperature: float = 0.0,
+        response_format: bool = True,
     ) -> dict[str, Any]:
+        """One classify request to this endpoint.
+
+        HS-131-09: ``response_format`` names WHICH leg this call is. The
+        compatibility retry (an endpoint that rejects ``response_format``) used to
+        happen invisibly inside this method; it is a second real request to a
+        model, so the admitted layer now runs it as its own child with its own
+        receipt and calls back in here with ``response_format=False``.
+        """
         self.load()
         assert self._client is not None
         # HS-103-04: fail fast, honestly, without attempting the network call
@@ -121,42 +130,27 @@ class OpenAICompatibleRuntime:
             },
         ]
         started = time.monotonic()
+        extra: dict[str, Any] = (
+            {"response_format": {"type": "json_object"}} if response_format else {}
+        )
         try:
-            try:
-                response = self._client.chat.completions.create(
-                    model=self.model,
-                    messages=messages,
-                    temperature=temperature,
-                    max_tokens=max_tokens,
-                    response_format={"type": "json_object"},
-                    extra_body={"thinking": False},
-                )
-            except Exception as exc:
-                if not _response_format_unsupported(exc):
-                    log.error("OpenAI-compatible dictation classify failed: %s", exc, exc_info=True)
-                    raise RuntimeError(f"OpenAI-compatible classify failed: {exc}") from exc
-                # Some OpenAI-compatible servers reject response_format as a
-                # bad-request error rather than a Python TypeError.
-                try:
-                    response = self._client.chat.completions.create(
-                        model=self.model,
-                        messages=messages,
-                        temperature=temperature,
-                        max_tokens=max_tokens,
-                        extra_body={"thinking": False},
-                    )
-                except Exception as retry_exc:
-                    log.error(
-                        "OpenAI-compatible dictation classify retry failed: %s",
-                        retry_exc,
-                        exc_info=True,
-                    )
-                    raise RuntimeError(
-                        f"OpenAI-compatible classify failed: {retry_exc}"
-                    ) from retry_exc
-        except Exception:
+            response = self._client.chat.completions.create(
+                model=self.model,
+                messages=messages,
+                temperature=temperature,
+                max_tokens=max_tokens,
+                extra_body={"thinking": False},
+                **extra,
+            )
+        except Exception as exc:
             _endpoint_health.record_failure(endpoint_key)
-            raise
+            if _response_format_unsupported(exc) and response_format:
+                # Named, not swallowed: the admitted layer reads this shape and
+                # runs the no-response_format leg as a SEPARATE child.
+                log.info("OpenAI-compatible endpoint rejected response_format")
+                raise
+            log.error("OpenAI-compatible dictation classify failed: %s", exc, exc_info=True)
+            raise RuntimeError(f"OpenAI-compatible classify failed: {exc}") from exc
         _endpoint_health.record_success(
             endpoint_key, latency_ms=(time.monotonic() - started) * 1000
         )
@@ -198,6 +192,11 @@ class OpenAICompatibleRuntime:
             log.error("OpenAI-compatible dictation rewrite failed: %s", exc, exc_info=True)
             raise RuntimeError(f"OpenAI-compatible rewrite failed: {exc}") from exc
         return _extract_message_text(response)
+
+
+# HS-131-09: the marker the admitted layer reads to know this backend has TWO
+# real legs (with and without `response_format`) and must give each its own child.
+OpenAICompatibleRuntime.classify.accepts_response_format = True  # type: ignore[attr-defined]
 
 
 def _validate_base_url(value: str) -> None:

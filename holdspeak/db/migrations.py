@@ -635,6 +635,365 @@ def _migrate_columns(conn: sqlite3.Connection, stored: int) -> None:
         "ON directories(name_normalized) WHERE deleted = 0"
     )
 
+    # v45 (HS-131-02): `cancelled` is a distinct kernel terminal fact. SQLite
+    # cannot alter CHECK constraints, so carry immutable operations and receipts
+    # through matching tables without rewriting any row values.
+    if stored < 45:
+        kernel_sql = conn.execute(
+            "SELECT sql FROM sqlite_master WHERE type='table' AND name='kernel_operations'"
+        ).fetchone()
+        if kernel_sql and "'cancelled'" not in str(kernel_sql[0]):
+            conn.execute("PRAGMA foreign_keys = OFF")
+            conn.executescript(
+                """
+                DROP INDEX IF EXISTS idx_kernel_operations_state;
+                CREATE TABLE kernel_operations_v45 (
+                    operation_id TEXT PRIMARY KEY,
+                    request_id TEXT NOT NULL,
+                    idempotency_key TEXT NOT NULL,
+                    name TEXT NOT NULL,
+                    version INTEGER NOT NULL,
+                    principal_kind TEXT NOT NULL,
+                    principal_identity TEXT NOT NULL,
+                    target_ref TEXT NOT NULL,
+                    placement TEXT NOT NULL,
+                    envelope_sha256 TEXT NOT NULL,
+                    policy_version TEXT NOT NULL,
+                    authority_basis TEXT NOT NULL,
+                    state TEXT NOT NULL CHECK (state IN (
+                        'admitting','awaiting_decision','awaiting_execution','claimed',
+                        'succeeded','failed','refused','cancelled','indeterminate'
+                    )),
+                    revision INTEGER NOT NULL DEFAULT 1,
+                    native_id TEXT NOT NULL,
+                    parent_operation_id TEXT NOT NULL DEFAULT '',
+                    correlation_id TEXT NOT NULL DEFAULT '',
+                    decision TEXT,
+                    warrant_json TEXT NOT NULL DEFAULT '{}',
+                    warrant_revoked INTEGER NOT NULL DEFAULT 0,
+                    claimed_by TEXT,
+                    created_at REAL NOT NULL,
+                    updated_at REAL NOT NULL,
+                    UNIQUE(principal_identity, idempotency_key)
+                );
+                CREATE TABLE kernel_receipts_v45 (
+                    receipt_id TEXT PRIMARY KEY,
+                    operation_id TEXT NOT NULL UNIQUE REFERENCES kernel_operations_v45(operation_id),
+                    state TEXT NOT NULL CHECK (state IN (
+                        'succeeded','failed','refused','cancelled','indeterminate'
+                    )),
+                    outcome TEXT NOT NULL,
+                    result_ref TEXT NOT NULL DEFAULT '',
+                    created_at REAL NOT NULL
+                );
+                INSERT INTO kernel_operations_v45 SELECT * FROM kernel_operations;
+                INSERT INTO kernel_receipts_v45 SELECT * FROM kernel_receipts;
+                DROP TABLE kernel_receipts;
+                DROP TABLE kernel_operations;
+                ALTER TABLE kernel_operations_v45 RENAME TO kernel_operations;
+                ALTER TABLE kernel_receipts_v45 RENAME TO kernel_receipts;
+                CREATE INDEX idx_kernel_operations_state
+                    ON kernel_operations(state, created_at);
+                """
+            )
+            conn.execute("PRAGMA foreign_keys = ON")
+            violations = conn.execute("PRAGMA foreign_key_check").fetchall()
+            if violations:
+                raise RuntimeError("kernel_v45_foreign_key_check_failed")
+    # v46 (HS-131-03): durable runner projection staging.  This is additive so
+    # stage references can be introduced one domain materializer at a time.
+    if stored < 46:
+        conn.executescript(
+            """
+            CREATE TABLE IF NOT EXISTS kernel_projection_stages (
+                stage_id TEXT PRIMARY KEY,
+                invocation_id TEXT NOT NULL,
+                operation_id TEXT NOT NULL REFERENCES kernel_operations(operation_id),
+                kind TEXT NOT NULL,
+                projection_json TEXT NOT NULL,
+                projection_sha256 TEXT NOT NULL,
+                result_ref TEXT NOT NULL UNIQUE,
+                state TEXT NOT NULL CHECK (state IN ('STAGED','FINALIZING','PUBLISHED','DISCARDED')),
+                final_result_json TEXT NOT NULL DEFAULT '',
+                created_at REAL NOT NULL,
+                updated_at REAL NOT NULL,
+                UNIQUE(invocation_id, kind)
+            );
+            CREATE INDEX IF NOT EXISTS idx_kernel_projection_stages_recovery
+            ON kernel_projection_stages(state, updated_at);
+            CREATE TABLE IF NOT EXISTS ask_results (
+                projection_stage_id TEXT PRIMARY KEY REFERENCES kernel_projection_stages(stage_id),
+                invocation_id TEXT NOT NULL UNIQUE,
+                operation_id TEXT NOT NULL UNIQUE REFERENCES kernel_operations(operation_id),
+                receipt_id TEXT NOT NULL UNIQUE REFERENCES kernel_receipts(receipt_id),
+                payload_json TEXT NOT NULL,
+                created_at REAL NOT NULL
+            );
+            CREATE TABLE IF NOT EXISTS recipe_results (
+                projection_stage_id TEXT PRIMARY KEY REFERENCES kernel_projection_stages(stage_id),
+                invocation_id TEXT NOT NULL UNIQUE,
+                operation_id TEXT NOT NULL UNIQUE REFERENCES kernel_operations(operation_id),
+                receipt_id TEXT NOT NULL UNIQUE REFERENCES kernel_receipts(receipt_id),
+                artifact_id TEXT NOT NULL UNIQUE REFERENCES artifacts(id)
+            );
+            CREATE TABLE IF NOT EXISTS recipe_chat_results (
+                projection_stage_id TEXT PRIMARY KEY REFERENCES kernel_projection_stages(stage_id),
+                invocation_id TEXT NOT NULL UNIQUE,
+                operation_id TEXT NOT NULL UNIQUE REFERENCES kernel_operations(operation_id),
+                receipt_id TEXT NOT NULL UNIQUE REFERENCES kernel_receipts(receipt_id),
+                payload_json TEXT NOT NULL,
+                created_at REAL NOT NULL
+            );
+            """
+        )
+
+    # v47 (HS-131-04): durable native-parent controller state.  This must
+    # precede v48 because the checkpoint table has a parent-run foreign key.
+    if stored < 47:
+        conn.execute("""CREATE TABLE IF NOT EXISTS kernel_parent_runs (
+            operation_id TEXT PRIMARY KEY REFERENCES kernel_operations(operation_id),
+            native_id TEXT NOT NULL UNIQUE,
+            kind TEXT NOT NULL CHECK (kind IN ('sequence','workflow')),
+            definition_ref TEXT NOT NULL, definition_revision TEXT NOT NULL,
+            input_json TEXT NOT NULL, deadline_at REAL NOT NULL,
+            execution_epoch INTEGER NOT NULL DEFAULT 1, planned_node TEXT NOT NULL DEFAULT '',
+            active_child_invocation_id TEXT NOT NULL DEFAULT '', child_budget INTEGER NOT NULL,
+            children_json TEXT NOT NULL DEFAULT '[]',
+            state TEXT NOT NULL CHECK (state IN ('OPEN','CANCELLING','SUCCEEDED','FAILED','CANCELLED','REFUSED','INDETERMINATE')),
+            created_at REAL NOT NULL, updated_at REAL NOT NULL
+        )""")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_kernel_parent_runs_state ON kernel_parent_runs(state, updated_at)")
+
+    # v48 (HS-131-04): child output must be a durable receipt-gated checkpoint
+    # before it can advance a Sequence/Workflow parent tuple.
+    if stored < 48:
+        conn.executescript(
+            """
+            CREATE TABLE IF NOT EXISTS kernel_parent_checkpoints (
+                stage_id TEXT PRIMARY KEY REFERENCES kernel_projection_stages(stage_id),
+                parent_operation_id TEXT NOT NULL REFERENCES kernel_parent_runs(operation_id),
+                child_invocation_id TEXT NOT NULL,
+                execution_epoch INTEGER NOT NULL,
+                planned_node TEXT NOT NULL,
+                checkpoint_json TEXT NOT NULL,
+                advanced INTEGER NOT NULL CHECK (advanced IN (0,1)),
+                created_at REAL NOT NULL,
+                UNIQUE(parent_operation_id, child_invocation_id)
+            );
+            CREATE INDEX IF NOT EXISTS idx_kernel_parent_checkpoints_parent
+            ON kernel_parent_checkpoints(parent_operation_id, execution_epoch);
+            """
+        )
+
+    # v49 (HS-131-04): a parent is abandoned only when its local execution
+    # lease goes stale; warrant expiry is not a substitute for this evidence.
+    if stored < 49:
+        parent_columns = {row[1] for row in conn.execute("PRAGMA table_info(kernel_parent_runs)").fetchall()}
+        if "lease_process_id" not in parent_columns:
+            conn.execute("ALTER TABLE kernel_parent_runs ADD COLUMN lease_process_id TEXT NOT NULL DEFAULT ''")
+        if "lease_heartbeat_at" not in parent_columns:
+            conn.execute("ALTER TABLE kernel_parent_runs ADD COLUMN lease_heartbeat_at REAL")
+
+    # v50 (HS-131-05): every native Workbench attempt retains resolvable
+    # admitted parent/child receipt links, including cancelled attempts.
+    if stored < 50:
+        # SQLite cannot widen the parent-kind CHECK in place. Rebuild the tiny
+        # controller table while retaining every durable parent fact.
+        parent_sql = str(conn.execute("SELECT sql FROM sqlite_master WHERE type='table' AND name='kernel_parent_runs'").fetchone()[0])
+        if "'workbench'" not in parent_sql:
+            conn.execute("ALTER TABLE kernel_parent_runs RENAME TO kernel_parent_runs_v49")
+            conn.execute("CREATE TABLE kernel_parent_runs (operation_id TEXT PRIMARY KEY REFERENCES kernel_operations(operation_id),native_id TEXT NOT NULL UNIQUE,kind TEXT NOT NULL CHECK (kind IN ('sequence','workflow','workbench')),definition_ref TEXT NOT NULL,definition_revision TEXT NOT NULL,input_json TEXT NOT NULL,deadline_at REAL NOT NULL,execution_epoch INTEGER NOT NULL DEFAULT 1,planned_node TEXT NOT NULL DEFAULT '',active_child_invocation_id TEXT NOT NULL DEFAULT '',child_budget INTEGER NOT NULL,children_json TEXT NOT NULL DEFAULT '[]',state TEXT NOT NULL CHECK (state IN ('OPEN','CANCELLING','SUCCEEDED','FAILED','CANCELLED','REFUSED','INDETERMINATE')),lease_process_id TEXT NOT NULL DEFAULT '',lease_heartbeat_at REAL,created_at REAL NOT NULL,updated_at REAL NOT NULL)")
+            conn.execute("INSERT INTO kernel_parent_runs SELECT * FROM kernel_parent_runs_v49")
+            conn.execute("DROP TABLE kernel_parent_runs_v49")
+            conn.execute("CREATE INDEX IF NOT EXISTS idx_kernel_parent_runs_state ON kernel_parent_runs(state, updated_at)")
+        columns = {row[1] for row in conn.execute("PRAGMA table_info(workbench_runs)").fetchall()}
+        if "parent_operation_id" not in columns:
+            conn.execute("ALTER TABLE workbench_runs ADD COLUMN parent_operation_id TEXT NOT NULL DEFAULT ''")
+        if "parent_receipt_id" not in columns:
+            conn.execute("ALTER TABLE workbench_runs ADD COLUMN parent_receipt_id TEXT NOT NULL DEFAULT ''")
+        if "child_links_json" not in columns:
+            conn.execute("ALTER TABLE workbench_runs ADD COLUMN child_links_json TEXT NOT NULL DEFAULT '[]'")
+
+    # v51 (HS-131-05): cancellation and reconciliation winners are visible in
+    # Workbench coordination history, rather than being misreported as running.
+    if stored < 51:
+        workbench_sql = str(conn.execute("SELECT sql FROM sqlite_master WHERE type='table' AND name='workbench_runs'").fetchone()[0])
+        if "'cancelled'" not in workbench_sql:
+            conn.execute("ALTER TABLE workbench_runs RENAME TO workbench_runs_v50")
+            conn.execute("CREATE TABLE workbench_runs (id TEXT PRIMARY KEY,workbench_id TEXT NOT NULL,started_at TEXT NOT NULL,completed_at TEXT,items_attempted INTEGER NOT NULL DEFAULT 0,items_completed INTEGER NOT NULL DEFAULT 0,items_failed INTEGER NOT NULL DEFAULT 0,mint_failures INTEGER NOT NULL DEFAULT 0,total_tokens INTEGER NOT NULL DEFAULT 0,egress_boundary TEXT NOT NULL DEFAULT '',model TEXT NOT NULL DEFAULT '',constitutional_context_revision INTEGER NOT NULL DEFAULT 0,constitutional_context_hash TEXT NOT NULL DEFAULT '',skills_injected_json TEXT NOT NULL DEFAULT '[]',parent_operation_id TEXT NOT NULL DEFAULT '',parent_receipt_id TEXT NOT NULL DEFAULT '',child_links_json TEXT NOT NULL DEFAULT '[]',status TEXT NOT NULL DEFAULT 'running' CHECK (status IN ('running','completed','failed','cancelled','indeterminate')))")
+            conn.execute("INSERT INTO workbench_runs SELECT * FROM workbench_runs_v50")
+            conn.execute("DROP TABLE workbench_runs_v50")
+            conn.execute("CREATE INDEX IF NOT EXISTS idx_workbench_runs_workbench ON workbench_runs(workbench_id, started_at DESC)")
+
+    # v52 (HS-131-06): local schedule revision and delegation tables are
+    # additive. Existing enabled schedules intentionally receive no authority.
+    if stored < 52:
+        columns = {row[1] for row in conn.execute("PRAGMA table_info(workbenches)").fetchall()}
+        if "schedule_revision" not in columns:
+            conn.execute("ALTER TABLE workbenches ADD COLUMN schedule_revision INTEGER NOT NULL DEFAULT 1")
+        operation_columns = {row[1] for row in conn.execute("PRAGMA table_info(kernel_operations)").fetchall()}
+        if "delegator_kind" not in operation_columns:
+            conn.execute("ALTER TABLE kernel_operations ADD COLUMN delegator_kind TEXT NOT NULL DEFAULT ''")
+        if "delegator_identity" not in operation_columns:
+            conn.execute("ALTER TABLE kernel_operations ADD COLUMN delegator_identity TEXT NOT NULL DEFAULT ''")
+
+    # v53 (HS-131-07): these service migrations retain their real domain
+    # parents, so their durable controller rows must accept the new kinds.
+    if stored < 53:
+        parent_sql = str(conn.execute("SELECT sql FROM sqlite_master WHERE type='table' AND name='kernel_parent_runs'").fetchone()[0])
+        if "'voice_reference_resolve'" not in parent_sql:
+            conn.execute("ALTER TABLE kernel_parent_runs RENAME TO kernel_parent_runs_v52")
+            conn.execute("CREATE TABLE kernel_parent_runs (operation_id TEXT PRIMARY KEY REFERENCES kernel_operations(operation_id),native_id TEXT NOT NULL UNIQUE,kind TEXT NOT NULL CHECK (kind IN ('sequence','workflow','workbench','decision.promotion-draft','delivery.pr-review-draft','voice_reference_resolve')),definition_ref TEXT NOT NULL,definition_revision TEXT NOT NULL,input_json TEXT NOT NULL,deadline_at REAL NOT NULL,execution_epoch INTEGER NOT NULL DEFAULT 1,planned_node TEXT NOT NULL DEFAULT '',active_child_invocation_id TEXT NOT NULL DEFAULT '',child_budget INTEGER NOT NULL,children_json TEXT NOT NULL DEFAULT '[]',state TEXT NOT NULL CHECK (state IN ('OPEN','CANCELLING','SUCCEEDED','FAILED','CANCELLED','REFUSED','INDETERMINATE')),lease_process_id TEXT NOT NULL DEFAULT '',lease_heartbeat_at REAL,created_at REAL NOT NULL,updated_at REAL NOT NULL)")
+            conn.execute("INSERT INTO kernel_parent_runs SELECT * FROM kernel_parent_runs_v52")
+            conn.execute("DROP TABLE kernel_parent_runs_v52")
+            conn.execute("CREATE INDEX IF NOT EXISTS idx_kernel_parent_runs_state ON kernel_parent_runs(state, updated_at)")
+
+    # v54 (HS-131-08): live meeting intelligence and its post-close deferred
+    # queue job are two DISTINCT admitted parents, so the durable controller
+    # table must accept both kinds. A closed live session is never revived.
+    if stored < 54:
+        parent_sql = str(conn.execute("SELECT sql FROM sqlite_master WHERE type='table' AND name='kernel_parent_runs'").fetchone()[0])
+        if "'meeting.session'" not in parent_sql:
+            conn.execute("ALTER TABLE kernel_parent_runs RENAME TO kernel_parent_runs_v53")
+            conn.execute("CREATE TABLE kernel_parent_runs (operation_id TEXT PRIMARY KEY REFERENCES kernel_operations(operation_id),native_id TEXT NOT NULL UNIQUE,kind TEXT NOT NULL CHECK (kind IN ('sequence','workflow','workbench','decision.promotion-draft','delivery.pr-review-draft','voice_reference_resolve','meeting.session','meeting.deferred-intel-job')),definition_ref TEXT NOT NULL,definition_revision TEXT NOT NULL,input_json TEXT NOT NULL,deadline_at REAL NOT NULL,execution_epoch INTEGER NOT NULL DEFAULT 1,planned_node TEXT NOT NULL DEFAULT '',active_child_invocation_id TEXT NOT NULL DEFAULT '',child_budget INTEGER NOT NULL,children_json TEXT NOT NULL DEFAULT '[]',state TEXT NOT NULL CHECK (state IN ('OPEN','CANCELLING','SUCCEEDED','FAILED','CANCELLED','REFUSED','INDETERMINATE')),lease_process_id TEXT NOT NULL DEFAULT '',lease_heartbeat_at REAL,created_at REAL NOT NULL,updated_at REAL NOT NULL)")
+            conn.execute("INSERT INTO kernel_parent_runs SELECT * FROM kernel_parent_runs_v53")
+            conn.execute("DROP TABLE kernel_parent_runs_v53")
+            conn.execute("CREATE INDEX IF NOT EXISTS idx_kernel_parent_runs_state ON kernel_parent_runs(state, updated_at)")
+
+
+    # v55 (HS-131-08): the deferred job carries the STRUCTURED list of work the
+    # stop handoff displaced onto it, so the queue runs exactly that work instead
+    # of parsing an owner-facing status sentence.
+    if stored < 55:
+        job_columns = {
+            str(row["name"])
+            for row in conn.execute("PRAGMA table_info(intel_jobs)")
+        }
+        if "displaced_work" not in job_columns:
+            conn.execute(
+                "ALTER TABLE intel_jobs ADD COLUMN displaced_work TEXT NOT NULL DEFAULT '[]'"
+            )
+
+    # v56 (HS-131-09): a desktop hold and a configured wake capture are each ONE
+    # finite admitted parent, so the durable controller table must accept both
+    # kinds. Neither is ever revived: a continuation is a new authenticated
+    # session, never an epoch reset.
+    if stored < 56:
+        parent_sql = str(conn.execute("SELECT sql FROM sqlite_master WHERE type='table' AND name='kernel_parent_runs'").fetchone()[0])
+        if "'dictation.session'" not in parent_sql:
+            conn.execute("ALTER TABLE kernel_parent_runs RENAME TO kernel_parent_runs_v55")
+            conn.execute("CREATE TABLE kernel_parent_runs (operation_id TEXT PRIMARY KEY REFERENCES kernel_operations(operation_id),native_id TEXT NOT NULL UNIQUE,kind TEXT NOT NULL CHECK (kind IN ('sequence','workflow','workbench','decision.promotion-draft','delivery.pr-review-draft','voice_reference_resolve','meeting.session','meeting.deferred-intel-job','dictation.session','wake.session')),definition_ref TEXT NOT NULL,definition_revision TEXT NOT NULL,input_json TEXT NOT NULL,deadline_at REAL NOT NULL,execution_epoch INTEGER NOT NULL DEFAULT 1,planned_node TEXT NOT NULL DEFAULT '',active_child_invocation_id TEXT NOT NULL DEFAULT '',child_budget INTEGER NOT NULL,children_json TEXT NOT NULL DEFAULT '[]',state TEXT NOT NULL CHECK (state IN ('OPEN','CANCELLING','SUCCEEDED','FAILED','CANCELLED','REFUSED','INDETERMINATE')),lease_process_id TEXT NOT NULL DEFAULT '',lease_heartbeat_at REAL,created_at REAL NOT NULL,updated_at REAL NOT NULL)")
+            conn.execute("INSERT INTO kernel_parent_runs SELECT * FROM kernel_parent_runs_v55")
+            conn.execute("DROP TABLE kernel_parent_runs_v55")
+            conn.execute("CREATE INDEX IF NOT EXISTS idx_kernel_parent_runs_state ON kernel_parent_runs(state, updated_at)")
+
+    # v57 (HS-131-13): request-time Cadence next-action drafting is its own
+    # authenticated domain parent — never the owner's and never the scheduler's —
+    # so the durable controller table has to accept that kind. Additive only: the
+    # CHECK gains one value and every existing row copies across unchanged.
+    if stored < 57:
+        parent_sql = str(conn.execute("SELECT sql FROM sqlite_master WHERE type='table' AND name='kernel_parent_runs'").fetchone()[0])
+        if "'cadence.next-action-draft'" not in parent_sql:
+            conn.execute("ALTER TABLE kernel_parent_runs RENAME TO kernel_parent_runs_v56")
+            conn.execute("CREATE TABLE kernel_parent_runs (operation_id TEXT PRIMARY KEY REFERENCES kernel_operations(operation_id),native_id TEXT NOT NULL UNIQUE,kind TEXT NOT NULL CHECK (kind IN ('sequence','workflow','workbench','decision.promotion-draft','delivery.pr-review-draft','voice_reference_resolve','meeting.session','meeting.deferred-intel-job','dictation.session','wake.session','cadence.next-action-draft')),definition_ref TEXT NOT NULL,definition_revision TEXT NOT NULL,input_json TEXT NOT NULL,deadline_at REAL NOT NULL,execution_epoch INTEGER NOT NULL DEFAULT 1,planned_node TEXT NOT NULL DEFAULT '',active_child_invocation_id TEXT NOT NULL DEFAULT '',child_budget INTEGER NOT NULL,children_json TEXT NOT NULL DEFAULT '[]',state TEXT NOT NULL CHECK (state IN ('OPEN','CANCELLING','SUCCEEDED','FAILED','CANCELLED','REFUSED','INDETERMINATE')),lease_process_id TEXT NOT NULL DEFAULT '',lease_heartbeat_at REAL,created_at REAL NOT NULL,updated_at REAL NOT NULL)")
+            conn.execute("INSERT INTO kernel_parent_runs SELECT * FROM kernel_parent_runs_v56")
+            conn.execute("DROP TABLE kernel_parent_runs_v56")
+            conn.execute("CREATE INDEX IF NOT EXISTS idx_kernel_parent_runs_state ON kernel_parent_runs(state, updated_at)")
+
+    # v58 (HS-131-15): the in-process publication lock becomes a durable CAS
+    # claim too. Cancellation, terminalization, and warrant revocation from a
+    # second process therefore serialize with the exact liveness read that lets
+    # a speech result publish or an effect handoff begin.
+    if stored < 58:
+        parent_columns = {
+            str(row["name"])
+            for row in conn.execute("PRAGMA table_info(kernel_parent_runs)")
+        }
+        if "publication_claim_id" not in parent_columns:
+            conn.execute(
+                "ALTER TABLE kernel_parent_runs "
+                "ADD COLUMN publication_claim_id TEXT NOT NULL DEFAULT ''"
+            )
+        if "publication_claimed_at" not in parent_columns:
+            conn.execute(
+                "ALTER TABLE kernel_parent_runs ADD COLUMN publication_claimed_at REAL"
+            )
+
+    # v59 (HS-131-16): the mesh relay queue stops tunnelling authority through
+    # the opaque `task_kind` field. The destination's stable node id and its
+    # EXACT enqueue-time credential generation, the claiming node and its
+    # generation, the claim nonce, the hub-signed dispatch offer, and the
+    # content-free worker terminal report each get their own column, so claim
+    # and settlement can revalidate them in one guarded transaction instead of
+    # trusting a caller-supplied name. Additive: existing rows default to the
+    # unbound values and simply cannot be claimed under the new protocol.
+    if stored < 59:
+        relay_columns = {
+            str(row["name"])
+            for row in conn.execute("PRAGMA table_info(mesh_relay_jobs)")
+        }
+        for column, definition in (
+            ("destination_node_id", "TEXT NOT NULL DEFAULT ''"),
+            ("destination_generation", "INTEGER NOT NULL DEFAULT 0"),
+            ("claimed_by_node_id", "TEXT NOT NULL DEFAULT ''"),
+            ("claimed_generation", "INTEGER NOT NULL DEFAULT 0"),
+            ("claim_nonce", "TEXT NOT NULL DEFAULT ''"),
+            ("dispatch_offer_json", "TEXT NOT NULL DEFAULT ''"),
+            ("worker_terminal_json", "TEXT NOT NULL DEFAULT ''"),
+        ):
+            if column not in relay_columns:
+                conn.execute(
+                    f"ALTER TABLE mesh_relay_jobs ADD COLUMN {column} {definition}"
+                )
+        # Liveness gains the identity that polled. Existing rows keep their
+        # last-seen time under the unbound pair, so a name-based reader is
+        # unchanged while the authenticated mesh path asks by exact identity.
+        worker_columns = {
+            str(row["name"]) for row in conn.execute("PRAGMA table_info(mesh_workers)")
+        }
+        for column, definition in (
+            ("node_id", "TEXT NOT NULL DEFAULT ''"),
+            ("credential_generation", "INTEGER NOT NULL DEFAULT 0"),
+        ):
+            if column not in worker_columns:
+                conn.execute(
+                    f"ALTER TABLE mesh_workers ADD COLUMN {column} {definition}"
+                )
+        conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_mesh_workers_identity"
+            " ON mesh_workers(node_id, credential_generation)"
+        )
+
+    # Created after additive migrations: on an upgrade, SCHEMA_SQL saw the old
+    # parent table before v58's columns existed. A publication callback may
+    # terminalize its own parent only by clearing the exact claim in that same
+    # update; every ordinary state transition and warrant revocation must wait.
+    conn.executescript(
+        """
+        CREATE TRIGGER IF NOT EXISTS kernel_parent_publication_blocks_transition
+        BEFORE UPDATE OF state ON kernel_parent_runs
+        WHEN OLD.publication_claim_id != ''
+          AND NEW.state != OLD.state
+          AND NEW.publication_claim_id = OLD.publication_claim_id
+        BEGIN
+            SELECT RAISE(ABORT, 'kernel_parent_publication_in_progress');
+        END;
+
+        CREATE TRIGGER IF NOT EXISTS kernel_parent_publication_blocks_warrant_revocation
+        BEFORE UPDATE OF warrant_revoked ON kernel_operations
+        WHEN OLD.warrant_revoked = 0
+          AND NEW.warrant_revoked = 1
+          AND EXISTS (
+              SELECT 1 FROM kernel_parent_runs p
+              WHERE p.operation_id = OLD.operation_id
+                AND p.publication_claim_id != ''
+          )
+        BEGIN
+            SELECT RAISE(ABORT, 'kernel_parent_publication_in_progress');
+        END;
+        """
+    )
+
 
 def _apply_seeds_and_backfills(conn: sqlite3.Connection) -> None:
     """Seed data and index rebuilds that run after all migrations."""

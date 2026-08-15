@@ -26,21 +26,18 @@ if TYPE_CHECKING:
     from ..audio import AudioSource
     from ..device_audio import DeviceDescriptor
 
-# Optional imports for intel
+# Optional imports for intel result shapes. HS-131-17: the session no longer
+# imports, constructs, stores, or clears a `MeetingIntel` engine — the ONLY
+# engine a live meeting ever gets is the one `InferenceRunner` builds from the
+# frozen plan revision inside a claimed `inference.invoke@1` child.
 try:
     from ..intel import (
-        MeetingIntel,
         IntelResult,
         ActionItem,
-        get_intel_runtime_status,
-        resolve_intel_provider,
     )
 except ImportError:
-    MeetingIntel = None  # type: ignore
     IntelResult = None  # type: ignore
     ActionItem = None  # type: ignore
-    get_intel_runtime_status = None  # type: ignore
-    resolve_intel_provider = None  # type: ignore
 
 try:
     from ..speaker_intel import SpeakerDiarizer
@@ -59,7 +56,9 @@ from .models import (
     _iso_or_none,
 )
 
+from .intel_admission import IntelAdmissionMixin
 from .intel_analysis import IntelAnalysisMixin
+from .live_readiness import LiveReadinessMixin
 from .mutations import MeetingMutationsMixin
 from .persistence import PersistenceMixin
 from .transcribe_loop import TranscribeLoopMixin
@@ -68,7 +67,9 @@ from .bookmarks import BookmarkViewsMixin
 
 class MeetingSession(
     TranscribeLoopMixin,
+    IntelAdmissionMixin,
     IntelAnalysisMixin,
+    LiveReadinessMixin,
     PersistenceMixin,
     MeetingMutationsMixin,
     BookmarkViewsMixin,
@@ -112,17 +113,7 @@ class MeetingSession(
         diarization_enabled: bool = False,
         diarize_mic: bool = False,
         cross_meeting_recognition: bool = True,
-        mir_routing_enabled: bool = False,
-        mir_profile: str = "balanced",
-        mir_plugin_host: Optional[Any] = None,
-        mir_db: Optional[Any] = None,
-        mir_window_seconds: float = 90.0,
-        mir_step_seconds: float = 30.0,
-        mir_score_threshold: float = 0.6,
-        mir_hysteresis: float = 0.05,
-        mir_synthesize: bool = False,
-        mir_disabled_plugins: Optional[list[str]] = None,
-        mir_segment_probe: Optional[Any] = None,
+        principal: Optional[Any] = None,
     ) -> None:
         """Initialize meeting session.
 
@@ -165,7 +156,7 @@ class MeetingSession(
         self.on_intel = on_intel
         self.on_settings_applied = on_settings_applied
         self.on_broadcast = on_broadcast
-        self.intel_enabled = intel_enabled and MeetingIntel is not None
+        self.intel_enabled = bool(intel_enabled)
         self.intel_model_path = intel_model_path
         self.intel_provider = intel_provider
         self.cloud_model = cloud_model
@@ -174,32 +165,41 @@ class MeetingSession(
         self.cloud_reasoning_effort = cloud_reasoning_effort
         self.cloud_store = cloud_store
         self.intel_deferred_enabled = intel_deferred_enabled
+        # HS-131-08: the authenticated principal live meeting intelligence is
+        # admitted under. ``None`` (device/auto start with no issued principal)
+        # keeps recording available and refuses intelligence by name — an OWNER
+        # principal is NEVER synthesized here.
+        self.intel_principal = principal
+        self._intel_plan: Optional[Any] = None
+        self._intel_parent: Optional[Any] = None
+        self._intel_refusal: str = ""
+        # HS-131-17: the EXPLICIT liveness state that replaced "an engine object
+        # exists". True only when intelligence is enabled AND admission froze a
+        # plan carrying `live-analysis`; false again on refusal, provider
+        # failure/deferral, the stop handoff, and cleanup. Capability questions are
+        # answered by `plan.has(...)`, never by the presence of an engine.
+        self._intel_live: bool = False
+        # HS-131-09: why a transcription interval would be dropped, if it is. The
+        # parent covers transcription too, so a session that admitted nothing
+        # transcribes nothing — never an unadmitted Whisper call.
+        self._transcription_refusal: str = ""
+        # Once the live parent is closed it is never revived: a later dispatch
+        # attempt is refused by name, not silently re-admitted (HS-131-08).
+        self._intel_closed: bool = False
+        # The structured work the stop handoff displaced onto the deferred job.
+        self._intel_displaced_work: tuple[str, ...] = ()
         self.diarization_enabled = diarization_enabled and SpeakerDiarizer is not None
         self.diarize_mic = diarize_mic and SpeakerDiarizer is not None
         self.cross_meeting_recognition = cross_meeting_recognition
-        # MIR-01 routing pipeline (HS-2-06). Off by default; when enabled,
-        # `stop()` runs windowing + scoring + dispatch + persistence over the
-        # finalized meeting state. Production wiring of `mir_plugin_host` /
-        # `mir_db` happens in HS-2-09 (config + feature flags).
-        self.mir_routing_enabled = bool(mir_routing_enabled)
-        self.mir_profile = str(mir_profile or "balanced")
-        self._mir_plugin_host = mir_plugin_host
-        self._mir_db = mir_db
-        self._mir_last_result: Optional[Any] = None
-        # HS-2-09: pipeline tuning knobs (sourced from MeetingConfig at
-        # construction time by the caller; defaults match the in-code
-        # defaults of build_intent_windows / DEFAULT_INTENT_THRESHOLD).
-        self._mir_window_seconds = float(mir_window_seconds)
-        self._mir_step_seconds = float(mir_step_seconds)
-        self._mir_score_threshold = float(mir_score_threshold)
-        self._mir_hysteresis = float(mir_hysteresis)
-        self._mir_synthesize = bool(mir_synthesize)
-        # HS-35-03: per-project plugin enable/disable, threaded into dispatch.
-        self._mir_disabled_plugins = list(mir_disabled_plugins or [])
-        # HS-36-05: optional LLM-assisted per-segment intent probe. When supplied,
-        # each routing window's lexical scores are augmented so brief/paraphrased
-        # intents aren't diluted away. None = lexical-only (unchanged behavior).
-        self._mir_segment_probe = mir_segment_probe
+        # HS-131-17: the session-owned MIR execution branch is DELETED. It was
+        # dormant in production (`WebRuntime._start_meeting` never supplied its
+        # enable flag, plugin host, database, or tuning), and routed meeting
+        # intelligence is a live product path elsewhere: the deferred queue job
+        # reads `MeetingConfig.intent_router_enabled`, admits its own
+        # `meeting.deferred-intel-job` parent, and gives each routed plugin
+        # attempt its own child. Config, plugins, manual/preview route tools, and
+        # MIR persistence are untouched; only this duplicate automatic pipeline
+        # (and its unadmitted post-close dispatch) is gone.
 
         self._state: Optional[MeetingState] = None
         self._recorder: Optional[MeetingRecorder] = None
@@ -217,8 +217,8 @@ class MeetingSession(
         self._overlap_tail_seconds: float = 1.5
         self._stream_tails: dict[str, "np.ndarray"] = {}
 
-        # Intel components
-        self._intel: Optional["MeetingIntel"] = None
+        # Intel components. There is no engine field: the live session holds its
+        # frozen plan, its parent context, and `_intel_live` — nothing else.
         self._intel_thread: Optional[threading.Thread] = None
         self._segments_since_intel = 0
         self._current_analysis_id: Optional[str] = None  # For handling interruptions
@@ -243,37 +243,6 @@ class MeetingSession(
             callback(message_type, data)
         except Exception as exc:
             log.debug(f"on_broadcast callback raised for {message_type!r}: {exc}")
-
-    def _emit_actuator_proposal(self, proposal: Any) -> None:
-        """Broadcast a newly-persisted actuator proposal (HS-38-04).
-
-        Wired into the finalization-time MIR pipeline as `on_proposal`; the
-        dashboard shows it in a live "pending actions" panel and can approve/
-        reject on the spot (the existing decision endpoint — no execution here).
-
-        The broadcast payload is deliberately **read-only**: id + lifecycle +
-        the human-readable preview only. The machine `payload` (the egress
-        source-of-truth) is **never** put on the wire — a live client must not
-        receive anything that could itself trigger an effect on receipt.
-        """
-        try:
-            created = getattr(proposal, "created_at", None)
-            data = {
-                "id": getattr(proposal, "id", ""),
-                "meeting_id": getattr(proposal, "meeting_id", ""),
-                "plugin_id": getattr(proposal, "plugin_id", ""),
-                "status": getattr(proposal, "status", "proposed"),
-                "target": getattr(proposal, "target", ""),
-                "action": getattr(proposal, "action", ""),
-                "preview": getattr(proposal, "preview", ""),
-                "reversible": bool(getattr(proposal, "reversible", False)),
-                # ISO string — the broadcast bottoms out on json.dumps.
-                "created_at": created.isoformat() if hasattr(created, "isoformat") else created,
-            }
-        except Exception as exc:  # never let a bad record break finalization
-            log.debug(f"could not build actuator_proposed payload: {exc}")
-            return
-        self._emit_broadcast("actuator_proposed", data)
 
     @property
     def is_active(self) -> bool:
@@ -394,9 +363,22 @@ class MeetingSession(
         *,
         requested_at: Optional[datetime] = None,
         completed_at: Optional[datetime] = None,
+        after_handoff: bool = False,
     ) -> None:
-        """Update meeting intel status while already holding the session lock."""
+        """Update meeting intel status while already holding the session lock.
+
+        HS-131-08 (D4): once ``stop()`` raised the intelligence closed flag, only
+        the handoff itself (``after_handoff=True``) may stamp intel state. A
+        lingering live-analysis thread that comes back later is discarded, so no
+        late `ready`/`error` can overwrite the honest `queued` handoff.
+        """
         if self._state is None:
+            return
+        if getattr(self, "_intel_closed", False) and not after_handoff:
+            log.info(
+                "Discarding late intel status '%s': the stop handoff already fired",
+                status,
+            )
             return
 
         self._state.intel_status = status
@@ -413,6 +395,7 @@ class MeetingSession(
         *,
         requested_at: Optional[datetime] = None,
         completed_at: Optional[datetime] = None,
+        after_handoff: bool = False,
     ) -> None:
         """Update meeting intel status and broadcast it to the web dashboard."""
         with self._lock:
@@ -421,6 +404,7 @@ class MeetingSession(
                 detail,
                 requested_at=requested_at,
                 completed_at=completed_at,
+                after_handoff=after_handoff,
             )
             state = self._state
 
@@ -450,92 +434,25 @@ class MeetingSession(
                 provenance="desktop",
             )
 
-            if self.intel_enabled:
+            # HS-131-08: admit the ONE authenticated `meeting.session` parent over
+            # a frozen MeetingIntelPlan@1 before any Intel engine exists. A
+            # refusal here disables intelligence with a named status and leaves
+            # recording untouched.
+            self._admit_intel_session()
+
+            if self._intel_refusal:
+                pass  # _admit_intel_session already set the honest named status
+            elif self.intel_enabled:
                 self._state.intel_requested_at = datetime.now()
-                self._state.intel_status = "initializing"
-                self._state.intel_status_detail = "Checking meeting intelligence runtime."
+                # HS-131-17: readiness is a PLAN question, not a provider one. The
+                # frozen placement already recorded whether the planned leg is
+                # reachable, so start never loads a model merely to announce that a
+                # meeting is live. The first ACTUAL child builds the exact frozen
+                # revision through `InferenceRunner`.
+                self._open_live_intelligence()
             else:
                 self._state.intel_status = "disabled"
                 self._state.intel_status_detail = "Meeting intelligence disabled in config."
-
-            # Initialize intel if enabled
-            if self.intel_enabled and MeetingIntel is not None:
-                runtime_ok = True
-                runtime_error: Optional[str] = None
-                runtime_provider: Optional[str] = None
-                if get_intel_runtime_status is not None:
-                    runtime_kwargs = {
-                        "provider": self.intel_provider,
-                        "cloud_model": self.cloud_model,
-                        "cloud_api_key_env": self.cloud_api_key_env,
-                        "cloud_base_url": self.cloud_base_url,
-                    }
-                    if self.intel_model_path:
-                        runtime_ok, runtime_error = get_intel_runtime_status(self.intel_model_path, **runtime_kwargs)
-                    else:
-                        runtime_ok, runtime_error = get_intel_runtime_status(**runtime_kwargs)
-                    if runtime_ok and resolve_intel_provider is not None:
-                        if self.intel_model_path:
-                            runtime_provider, _ = resolve_intel_provider(
-                                self.intel_provider,
-                                model_path=self.intel_model_path,
-                                cloud_model=self.cloud_model,
-                                cloud_api_key_env=self.cloud_api_key_env,
-                                cloud_base_url=self.cloud_base_url,
-                            )
-                        else:
-                            runtime_provider, _ = resolve_intel_provider(
-                                self.intel_provider,
-                                cloud_model=self.cloud_model,
-                                cloud_api_key_env=self.cloud_api_key_env,
-                                cloud_base_url=self.cloud_base_url,
-                            )
-
-                if runtime_ok:
-                    try:
-                        kwargs = {}
-                        if self.intel_model_path:
-                            kwargs["model_path"] = self.intel_model_path
-                        kwargs["provider"] = self.intel_provider
-                        kwargs["cloud_model"] = self.cloud_model
-                        kwargs["cloud_api_key_env"] = self.cloud_api_key_env
-                        kwargs["cloud_base_url"] = self.cloud_base_url
-                        kwargs["cloud_reasoning_effort"] = self.cloud_reasoning_effort
-                        kwargs["cloud_store"] = self.cloud_store
-                        self._intel = MeetingIntel(**kwargs)
-                        self._segments_since_intel = 0
-                        self._state.intel_status = "live"
-                        if runtime_provider == "cloud":
-                            self._state.intel_status_detail = "Cloud meeting intelligence active."
-                        elif runtime_provider == "local":
-                            self._state.intel_status_detail = "Local meeting intelligence active."
-                        else:
-                            self._state.intel_status_detail = "Meeting intelligence active."
-                        self._deferred_intel_reason = None
-                        log.info("Meeting intel initialized")
-                    except Exception as e:
-                        log.error(f"Failed to initialize intel: {e}")
-                        self._intel = None
-                        self._deferred_intel_reason = str(e)
-                        if self.intel_deferred_enabled:
-                            self._state.intel_status = "queued"
-                            self._state.intel_status_detail = f"Queued for later processing: {e}"
-                        else:
-                            self._state.intel_status = "error"
-                            self._state.intel_status_detail = str(e)
-                else:
-                    self._intel = None
-                    self._deferred_intel_reason = runtime_error
-                    if self.intel_deferred_enabled:
-                        self._state.intel_status = "queued"
-                        self._state.intel_status_detail = (
-                            f"Queued for later processing: {runtime_error}"
-                            if runtime_error
-                            else "Queued for later processing."
-                        )
-                    else:
-                        self._state.intel_status = "error"
-                        self._state.intel_status_detail = runtime_error or "Meeting intelligence unavailable."
 
             # Initialize speaker diarization if enabled (for system audio or mic)
             if (self.diarization_enabled or self.diarize_mic) and SpeakerDiarizer is not None:
@@ -671,32 +588,17 @@ class MeetingSession(
 
         with self._lock:
             state = self._state
-            intel = self._intel
             diarizer = self._diarizer
 
         assert state is not None
 
-        # Run final intel analysis outside the lock. The analysis path calls
-        # back into methods like get_formatted_transcript(), which also use
-        # self._lock.
-        if intel is not None and state.segments:
-            try:
-                self._run_intel_analysis(final=True)
-            except Exception as e:
-                log.error(f"Final intel analysis failed: {e}")
-
-        # Auto-generate title if not manually set.
-        if intel is not None and not state.title and state.segments:
-            try:
-                transcript = "\n".join(str(s) for s in state.segments)
-                title = intel.generate_title(transcript)
-                if title:
-                    with self._lock:
-                        if self._state is not None and not self._state.title:
-                            self._state.title = title
-                    log.info(f"Auto-generated meeting title: {title}")
-            except Exception as e:
-                log.error(f"Auto-title generation failed: {e}")
+        # HS-131-08 (Sol Amendment 2): stop CANCELS the live intelligence parent
+        # first and then DURABLY enqueues the displaced final work before this
+        # method returns. No final provider dispatch happens here any more —
+        # final analysis, bookmark refinement, auto-title, and routed plugin work
+        # all belong to a separately admitted `meeting.deferred-intel-job`.
+        # Nothing may report readiness while that job is still outstanding.
+        self._handoff_intel_at_stop(state)
 
         # Save speaker embeddings outside the lock because it performs DB I/O.
         if diarizer is not None:
@@ -706,37 +608,11 @@ class MeetingSession(
             except Exception as e:
                 log.error(f"Failed to save speaker embeddings: {e}")
 
-        # MIR-01 routing pass over the finalized meeting state (HS-2-06).
-        # Off by default; runs only when the session was constructed with
-        # `mir_routing_enabled=True` and a plugin host. Per-stage failures
-        # degrade gracefully (MIR-F-012); nothing here can raise into the
-        # caller and nothing holds `self._lock`.
-        if self.mir_routing_enabled and self._mir_plugin_host is not None and state.segments:
-            try:
-                from ..plugins.pipeline import process_meeting_state as _mir_process
-
-                self._mir_last_result = _mir_process(
-                    state,
-                    self._mir_plugin_host,
-                    profile=self.mir_profile,
-                    threshold=self._mir_score_threshold,
-                    hysteresis=self._mir_hysteresis,
-                    window_seconds=self._mir_window_seconds,
-                    step_seconds=self._mir_step_seconds,
-                    db=self._mir_db,
-                    synthesize=self._mir_synthesize,
-                    disabled_plugins=self._mir_disabled_plugins,
-                    segment_probe=self._mir_segment_probe,
-                    on_proposal=self._emit_actuator_proposal,
-                )
-                log.info(
-                    "MIR routing finalized: "
-                    f"windows={len(self._mir_last_result.windows)}, "
-                    f"runs={len(self._mir_last_result.runs)}, "
-                    f"errors={len(self._mir_last_result.errors)}"
-                )
-            except Exception as e:
-                log.error(f"MIR routing finalization failed: {e}")
+        # HS-131-17: the post-stop `process_meeting_state()` routing pass is
+        # DELETED. It ran after the live parent had closed, so it could only ever
+        # be an unadmitted dispatch, and nothing in production switched it on.
+        # Routed meeting intelligence now happens exactly once, in the deferred
+        # job, under its own admitted parent and one child per plugin attempt.
 
         # HS-93-06 fault plane: die between the last durable checkpoint and the
         # finalize transaction. Everything above already checkpointed; nothing
@@ -752,7 +628,7 @@ class MeetingSession(
                 self._diarizer = None
 
             # Clean up intel/runtime references
-            self._intel = None
+            self._intel_live = False
             self._intel_thread = None
             self._transcribe_thread = None
             self._current_analysis_id = None
@@ -792,6 +668,11 @@ class MeetingSession(
                 final_state.capture_status = "recoverable"
                 final_state.capture_failure = f"Final Meeting checkpoint failed: {exc}"
             log.error(final_state.capture_failure)
+
+        # HS-131-08: the live parent was already cancelled and closed by the
+        # handoff above. This close is the no-parent / never-admitted case only;
+        # it can never turn a cancelled parent into a success.
+        self._close_intel_session("succeeded")
 
         log.info(f"Meeting stopped: {final_state.id}, duration={final_state.format_duration()}")
         return final_state

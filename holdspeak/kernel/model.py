@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from typing import Any, Mapping, Optional
 
 
-FINAL_STATES = frozenset({"succeeded", "failed", "refused", "indeterminate"})
+FINAL_STATES = frozenset({"succeeded", "failed", "refused", "cancelled", "indeterminate"})
 FORBIDDEN_CONTENT_KEYS = frozenset(
     {"audio", "audio_frame", "audio_frames", "pcm", "token", "tokens", "token_stream"}
 )

@@ -210,7 +210,11 @@ class CountingRuntime:
         *,
         max_tokens: int = 128,
         temperature: float = 0.0,
+        **extra: Any,
     ) -> dict[str, Any]:
+        # HS-131-09: `extra` carries the backend-specific leg the admitted layer
+        # selected (today: OpenAI-compatible `response_format`). It is forwarded
+        # verbatim so a compatibility leg cannot be silently dropped here.
         # DIR-R-003: short-circuit if a prior cold-start breach
         # disabled the runtime for this session.
         if self._disabled:
@@ -225,6 +229,7 @@ class CountingRuntime:
                 schema,
                 max_tokens=max_tokens,
                 temperature=temperature,
+                **extra,
             )
         except Exception:
             _bump("classify_failures")

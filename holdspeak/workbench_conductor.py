@@ -418,265 +418,17 @@ def _mark_mint_attempted(db: Any, item_id: str) -> None:
         log.debug(f"Failed to mark mint_attempted for {item_id}: {exc}")
 
 
-async def run_workbench(workbench_id: str) -> dict:
-    """Execute one workbench run: process all pending items, produce a receipt.
-
-    Each run is a FRESH session — no chat history from previous runs.
-    The prompt stack:
-      constitutional context (injected by engine.run_prompt)
-      → recipe system prompt + skills
-      → recipe standing context (manual_context + KB)
-      → item grounding (hydrated meetings/artifacts)
-      → item body (the task itself)
-    """
+async def run_workbench(workbench_id: str, principal: Any | None = None, *, memory_enabled: bool = True) -> dict:
+    """Compatibility seam for authenticated manual Workbench execution."""
+    if principal is None:
+        from .services.errors import ServiceError
+        raise ServiceError("scheduler_principal_required", "An explicit principal is required", context={"status": 403})
+    from .kernel.runtime import _service
+    from .services.workbench_runner import WorkbenchRunner
     from .db import get_database
-    from .inference_targets import resolve_placement, build_intel_for_target
-    from .intel.models import MeetingIntelError
-
-    db = get_database()
-    wb = db.workbenches.get(workbench_id)
-    if not wb:
-        return {"error": f"workbench {workbench_id} not found"}
-
-    # Wake gate: skip if no pending items
-    items = db.workbench_items.list_for_workbench(workbench_id, status="pending")
-    if not items:
-        log.info(f"Workbench {wb.name}: no pending items, skipping")
-        return {"skipped": True, "reason": "no pending items"}
-
-    # Resolve the recipe
-    recipe = db.recipes.get(wb.recipe_id) if wb.recipe_id else None
-    if not recipe:
-        return {"error": f"workbench {wb.name}: no recipe assigned"}
-
-    # Resolve and CHECK the target through the ONE placement authority
-    # (HS-130-01). Precedence: invocation override → Workbench override →
-    # Agent default (recipe.profile_id, previously never consulted — the bug)
-    # → named global default. Invocation override has no caller in this
-    # signature yet; the seam is left clean as ``None``.
-    placement = resolve_placement(
-        db,
-        invocation=None,
-        workbench=wb.profile_id,
-        agent=recipe.profile_id,
+    return await WorkbenchRunner(get_database(), _service()).run(
+        principal, workbench_id, memory_enabled=memory_enabled
     )
-    target = placement.target
-    if not target.ready:
-        reason = getattr(target, "readiness_reason", "") or "target unavailable"
-        log.warning(f"Workbench {wb.name}: target not ready — {reason}")
-        return {"error": f"target not ready: {reason}"}
-
-    # Start the run receipt
-    run_id = _new_id("wbrun")
-    db.workbench_runs.create(run_id=run_id, workbench_id=workbench_id)
-
-    # Build the intel engine
-    try:
-        intel = build_intel_for_target(target, db)
-    except Exception as exc:
-        log.error(f"Workbench {wb.name}: failed to build intel: {exc}")
-        db.workbench_runs.complete(run_id, status="failed",
-                                   egress_boundary=getattr(target, "boundary", ""))
-        return {"error": str(exc)}
-
-    # Get constitutional context receipt for stamping
-    ctx_receipt = constitutional_receipt()
-
-    # Assemble the system prompt: recipe prompt + skills
-    system_prompt = inject_skills(
-        db, recipe.system_prompt or f"You are {recipe.name}, a helpful assistant.", recipe.id,
-    )
-
-    # Assemble the recipe's standing context (manual_context + KB)
-    recipe_context = _assemble_recipe_context(db, recipe)
-
-    # Record which skills were injected
-    skills_used: list[str] = []
-    try:
-        skill_records = db.skills.list_for_recipe(recipe.id, active_only=True)
-        skills_used = [s.id for s in skill_records]
-        if skills_used:
-            log.info(f"Workbench {wb.name}: {len(skills_used)} skills injected")
-    except Exception:
-        pass
-
-    # Recall agent memory
-    from .workbench_memory import recall_for_prompt, append_memory
-    memory_block = recall_for_prompt(workbench_id)
-    if memory_block:
-        log.info(f"Workbench {wb.name}: {memory_block.count(chr(10))} memory entries recalled")
-
-    # Emit run start
-    _emit("workbench.run_start", {
-        "workbench_id": workbench_id,
-        "run_id": run_id,
-        "item_count": len(items),
-    })
-
-    # Process items in priority order
-    attempted = 0
-    completed = 0
-    failed = 0
-    mint_failures = 0
-
-    for item in items:
-        attempted += 1
-        now = _now_iso()
-
-        # Claim the item
-        db.workbench_items.upsert(
-            item_id=item.id, workbench_id=workbench_id,
-            title=item.title, body=item.body, priority=item.priority,
-            status="claimed", claimed_at=now,
-        )
-        _emit("workbench.item_claimed", {
-            "workbench_id": workbench_id,
-            "item_id": item.id,
-            "title": item.title,
-            "index": attempted,
-            "total": len(items),
-        })
-
-        # Build the user prompt with real grounding
-        user_parts: list[str] = []
-
-        # Recipe standing context
-        if recipe_context:
-            user_parts.append(recipe_context)
-
-        # Agent memory — recalled observations from prior runs
-        if memory_block:
-            user_parts.append(memory_block)
-
-        # Item grounding — hydrated from the canonical store
-        item_grounding = _hydrate_item_grounding(db, item.grounding_json)
-        if item_grounding:
-            user_parts.append(item_grounding)
-
-        # The item itself
-        user_parts.append(f"[TASK]\n{item.title}")
-        if item.body:
-            user_parts.append(item.body)
-
-        user_prompt = "\n\n".join(user_parts)
-
-        try:
-            output = await asyncio.to_thread(
-                intel.run_prompt,
-                system_prompt=system_prompt,
-                user_prompt=user_prompt,
-            )
-            done_now = _now_iso()
-            db.workbench_items.upsert(
-                item_id=item.id, workbench_id=workbench_id,
-                title=item.title, body=item.body, priority=item.priority,
-                status="done", result=output,
-                result_egress={"boundary": target.boundary, "model": target.model},
-                completed_at=done_now, claimed_at=now,
-            )
-            completed += 1
-            log.info(f"Workbench {wb.name}: item '{item.title}' done")
-
-            # ── Auto-mint: kernel-admitted artifact minting (HS-118-06) ──
-            mint_artifact_id = _auto_mint_artifact(
-                db=db,
-                item=item,
-                recipe=recipe,
-                workbench=wb,
-                run_id=run_id,
-                target=target,
-                output=output,
-            )
-            if mint_artifact_id:
-                _emit("workbench.item_minted", {
-                    "workbench_id": workbench_id,
-                    "item_id": item.id,
-                    "artifact_id": mint_artifact_id,
-                    "artifact_title": f"{recipe.name or recipe.id}: {item.title}",
-                })
-            else:
-                # Issue 8: record mint failure count
-                mint_failures += 1
-                # Mark mint_attempted so the UI shows Retry instead of Keep
-                _mark_mint_attempted(db, item.id)
-
-            # Terminal writeback — ask the agent what to remember
-            try:
-                wb_prompt = (
-                    "Based on the task and your output, what ONE thing should future "
-                    "runs on this workbench remember? Reply with a single sentence. "
-                    "If nothing is worth remembering, reply exactly 'nothing'."
-                )
-                writeback = await asyncio.to_thread(
-                    intel.run_prompt,
-                    system_prompt="You are a concise assistant. Reply in one sentence only.",
-                    user_prompt=f"Task: {item.title}\n\nYour output:\n{(output or '')[:500]}\n\n{wb_prompt}",
-                )
-                writeback_text = (writeback or "").strip()
-                if writeback_text.lower() not in ("nothing", "nothing.", ""):
-                    append_memory(
-                        workbench_id, run_id, "observation", writeback_text,
-                        item_title=item.title,
-                        provenance={"egress": target.boundary, "model": target.model},
-                    )
-            except Exception as wb_exc:
-                log.debug(f"Writeback failed for '{item.title}': {wb_exc}")
-
-            _emit("workbench.item_done", {
-                "workbench_id": workbench_id,
-                "item_id": item.id,
-                "title": item.title,
-                "result_preview": (output or "")[:200],
-            })
-        except (MeetingIntelError, Exception) as exc:
-            log.warning(f"Workbench {wb.name}: item '{item.title}' failed: {exc}")
-            db.workbench_items.upsert(
-                item_id=item.id, workbench_id=workbench_id,
-                title=item.title, body=item.body, priority=item.priority,
-                status="failed", result=f"Error: {exc}",
-                result_egress={"boundary": target.boundary, "error": str(exc)},
-                completed_at=_now_iso(), claimed_at=now,
-            )
-            failed += 1
-            _emit("workbench.item_failed", {
-                "workbench_id": workbench_id,
-                "item_id": item.id,
-                "title": item.title,
-                "error": str(exc),
-            })
-
-    # Complete the run receipt (Issue 8: includes mint_failures)
-    run_record = db.workbench_runs.complete(
-        run_id,
-        items_attempted=attempted,
-        items_completed=completed,
-        items_failed=failed,
-        mint_failures=mint_failures,
-        total_tokens=0,  # honest: we can't track tokens through run_prompt yet
-        egress_boundary=target.boundary,
-        model=target.model,
-        constitutional_context_revision=ctx_receipt["revision"],
-        constitutional_context_hash=ctx_receipt["content_hash"],
-        skills_injected=skills_used,
-        status="completed" if failed == 0 else "failed",
-    )
-
-    log.info(
-        f"Workbench {wb.name}: run complete — "
-        f"{completed}/{attempted} items done, {failed} failed, "
-        f"egress={target.boundary}, model={target.model}"
-    )
-    _emit("workbench.run_complete", {
-        "workbench_id": workbench_id,
-        "run_id": run_id,
-        "completed": completed,
-        "failed": failed,
-        "attempted": attempted,
-        "model": target.model,
-        "egress_boundary": target.boundary,
-        "workbench_name": wb.name,
-    })
-    return run_record.to_dict() if run_record else {"completed": True}
 
 
 class WorkbenchConductor:
@@ -731,8 +483,14 @@ class WorkbenchConductor:
 
             log.info(f"Conductor: workbench '{wb.name}' is due, starting run")
             try:
+                from .kernel.runtime import _service
+                from .services.workbench_runner import WorkbenchRunner
+                from .principals import Principal, PrincipalKind
                 loop = asyncio.new_event_loop()
-                loop.run_until_complete(run_workbench(wb.id))
+                loop.run_until_complete(WorkbenchRunner(db, _service()).run_scheduled(
+                    Principal(PrincipalKind.SCHEDULER, "local-workbench-conductor"), wb.id,
+                    due_minute=int(now_minute),
+                ))
                 loop.close()
             except Exception as exc:
                 log.error(f"Conductor: workbench '{wb.name}' run failed: {exc}", exc_info=True)

@@ -21,13 +21,13 @@ from __future__ import annotations
 
 import json
 import re
-from typing import Any, Callable, Optional
+from typing import Any, Optional
 
 from ...logging_config import get_logger
+from ..intelligence import PLUGIN_INTEL_SIGNALS, IntelligenceConsumer
 
 log = get_logger("plugins.risk_heatmap")
 
-IntelChat = Callable[[list[dict[str, str]]], str]
 
 _JSON_FENCE_RE = re.compile(r"```(?:json)?\s*\n(.*?)```", re.DOTALL | re.IGNORECASE)
 
@@ -149,7 +149,7 @@ def _build_user_prompt(
     )
 
 
-class RiskHeatmapPlugin:
+class RiskHeatmapPlugin(IntelligenceConsumer):
     """LLM-backed plugin building a risk register per window."""
 
     id: str = "risk_heatmap"
@@ -158,22 +158,9 @@ class RiskHeatmapPlugin:
     execution_mode: str = "deferred"
     required_capabilities: list[str] = ["llm"]
 
-    def __init__(self, *, intel_call: Optional[IntelChat] = None) -> None:
-        self._intel_call_override = intel_call
-        self._cached_provider: Any = None
-
-    def _call_intel(self, messages: list[dict[str, str]]) -> str:
-        if self._intel_call_override is not None:
-            return self._intel_call_override(messages)
-        if self._cached_provider is None:
-            from ...intel import build_configured_meeting_intel  # lazy import: optional deps
-
-            self._cached_provider = build_configured_meeting_intel()
-        return self._cached_provider._chat_completion_text(
-            messages,
-            temperature=0.2,
-            max_tokens=1000,
-        )
+    #: This plugin's decoding envelope; the host supplies the engine.
+    intel_temperature: float = 0.2
+    intel_max_tokens: int = 1000
 
     def run(self, context: dict[str, Any]) -> dict[str, Any]:
         transcript = str(context.get("transcript") or "").strip()
@@ -205,7 +192,11 @@ class RiskHeatmapPlugin:
         ]
 
         try:
-            raw = self._call_intel(messages)
+            raw = self._call_intel(messages, context)
+        except PLUGIN_INTEL_SIGNALS:
+            # A revoked handle, a provider failure, or a dialect signal is the
+            # admitted CHILD's outcome — never a plugin summary string.
+            raise
         except Exception as exc:
             log.info("risk_heatmap: intel call failed: %s", exc)
             return _failure(f"risk_heatmap: intel call failed: {exc}")

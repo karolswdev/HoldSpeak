@@ -608,6 +608,14 @@ def test_ipad_synced_graph_workflow_runs_on_the_hub(env, monkeypatch) -> None:
     assert push.status_code == 200
     assert push.json()["received"]["workflows"] == 1
 
+    created = client.post("/api/inference-targets", json={
+        "id": "sync-ready", "name": "Sync ready", "kind": "openAICompatible",
+        "base_url": "http://127.0.0.1:9999/v1", "model": "sync-test", "requires_key": False,
+    })
+    assert created.status_code == 201, created.text
+    deployment_revision = __import__("holdspeak.deployment_revisions", fromlist=["capture_deployment_revision"]).capture_deployment_revision(
+        db, __import__("holdspeak.inference_targets", fromlist=["resolve_inference_target"]).resolve_inference_target(db, "sync-ready")
+    )
     calls = []
 
     class _FakeIntel:
@@ -617,11 +625,13 @@ def test_ipad_synced_graph_workflow_runs_on_the_hub(env, monkeypatch) -> None:
             calls.append(user_prompt)
             return f"risk: finding {len(calls)}\nnoise line"
 
-    monkeypatch.setattr(
-        "holdspeak.intel.providers.build_configured_meeting_intel", lambda: _FakeIntel()
-    )
+    constructed = []
+    def _build_fake(**kwargs):
+        constructed.append(kwargs)
+        return _FakeIntel()
+    monkeypatch.setattr("holdspeak.intel.providers.build_meeting_intel_for_profile", _build_fake)
 
-    resp = client.post("/api/workflows/wf-golden/run", json={"input": "the standup"})
+    resp = client.post("/api/workflows/wf-golden/run", json={"input": "the standup", "inference_target_id": "sync-ready"})
     assert resp.status_code == 200, resp.text
     body = resp.json()
 
@@ -642,8 +652,10 @@ def test_ipad_synced_graph_workflow_runs_on_the_hub(env, monkeypatch) -> None:
 
     # The run persisted as a run-born artifact with the workflow as its lineage.
     assert body["artifact_id"]
-    assert [row["source_type"] for row in body["sources"]] == [
-        "workflow", "invocation", "attempt"
-    ]
-    assert body["invocation"]["definition_ref"] == "workflow:wf-golden"
-    assert body["invocation"]["result_ref"] == f"artifact:{body['artifact_id']}"
+    assert [row["source_type"] for row in body["sources"]] == ["workflow"]
+    assert body["operation"] == "workflow.run"
+    assert body["result_ref"] == f"artifact:{body['artifact_id']}"
+    assert len(body["children"]) == 2
+    assert all(child["outcome"] == "succeeded" for child in body["children"])
+    assert constructed and constructed[0]["profile_id"] == "sync-ready"
+    assert deployment_revision.id in [row.id for row in db.deployment_revisions.list()]

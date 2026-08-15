@@ -64,21 +64,34 @@ def test_failed_run_keeps_input_and_grounding_for_retry(rig, monkeypatch) -> Non
     monkeypatch.setattr(
         "holdspeak.inference_targets._this_machine_readiness", lambda: ("ready", "")
     )
+    # HS-131-13: an admitted `this_machine` child builds `MeetingIntel` from its
+    # FROZEN revision, so the same double is installed on the engine class too.
+    monkeypatch.setattr("holdspeak.intel.engine.MeetingIntel", lambda **_kw: Broken())
     monkeypatch.setattr(
-        "holdspeak.intel.providers.build_configured_meeting_intel", lambda: Broken()
+        "holdspeak.intel.providers._configured_engine", lambda: Broken()
     )
-    response = client.post(
-        f"/api/recipes/{recipe.id}/run",
-        json={"input": "keep this wording", "grounding_refs": ["note:n1"]},
-    )
+    request = {"input": "keep this wording", "grounding_refs": ["note:n1"]}
+    response = client.post(f"/api/recipes/{recipe.id}/run", json=request)
     assert response.status_code == 502
-    receipt = response.json()["invocation"]
-    assert receipt["state"] == "failed"
-    assert receipt["input_snapshot"]["input"] == "keep this wording"
-    assert receipt["grounding_refs"] == ["note:n1"]
-    assert receipt["attempts"][0]["error"] == "model offline"
-    read = client.get(f"/api/invocations/{receipt['id']}").json()["invocation"]
-    assert read == receipt
+    failed = response.json()
+    assert "model offline" in failed["error"]
+
+    # Admission now owns the durable receipt instead of the retired capability
+    # invocation projection. Retrying the unchanged user request reaches a new
+    # admitted run once the destination recovers.
+    class Recovered:
+        active_provider = "local"
+
+        def run_prompt(self, **kwargs):
+            return "retried"
+
+    monkeypatch.setattr("holdspeak.intel.engine.MeetingIntel", lambda **_kw: Recovered())
+    monkeypatch.setattr(
+        "holdspeak.intel.providers._configured_engine", lambda: Recovered()
+    )
+    retried = client.post(f"/api/recipes/{recipe.id}/run", json=request)
+    assert retried.status_code == 200
+    assert retried.json()["output"] == "retried"
 
 
 def test_capability_readiness_refuses_unsupported_graph_before_engine(rig, monkeypatch) -> None:
@@ -103,8 +116,21 @@ def test_capability_readiness_refuses_unsupported_graph_before_engine(rig, monke
         called = True
         raise AssertionError("engine must not be constructed")
 
-    monkeypatch.setattr("holdspeak.intel.providers.build_configured_meeting_intel", engine)
+    # Both construction seams must stay untouched: the refusal happens before any
+    # engine exists, so either one firing is the defect this test names.
+    monkeypatch.setattr("holdspeak.intel.engine.MeetingIntel", lambda **_kw: engine())
+    monkeypatch.setattr("holdspeak.intel.providers._configured_engine", engine)
     response = client.post("/api/workflows/branchy/run", json={"input": "retained"})
     assert response.status_code == 409
-    assert response.json()["invocation"]["state"] == "unavailable"
+    refused = response.json()
+    # HS-131-04 replaces the legacy invocation envelope with an admitted native
+    # parent. Unsupported control flow is typed, receipt-closed as refused, and
+    # admits no child or provider construction.
+    assert refused["support"] == "unsupported_graph"
+    parent_id = refused["parent_operation_id"]
+    with db._connection() as conn:
+        parent = conn.execute("SELECT state FROM kernel_operations WHERE operation_id=?", (parent_id,)).fetchone()
+        receipt = conn.execute("SELECT outcome FROM kernel_receipts WHERE operation_id=?", (parent_id,)).fetchone()
+        children = conn.execute("SELECT count(*) FROM kernel_operations WHERE parent_operation_id=?", (parent_id,)).fetchone()[0]
+    assert parent[0] == "refused" and receipt[0] == "refused" and children == 0
     assert called is False

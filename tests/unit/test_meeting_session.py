@@ -14,9 +14,25 @@ from holdspeak.meeting_session import MeetingSession, MeetingState, TranscriptSe
 
 
 class _FakeTranscriber:
-    def transcribe(self, audio) -> str:
+    def transcribe(self, audio, **kwargs) -> str:
         _ = audio
         return "final transcript"
+
+
+class _StubAdmission:
+    """The admitted-transcription seam, reduced to running the dispatch.
+
+    HS-131-09 makes every interval a child of the live ``meeting.session``; the
+    real parent, child, and the drop-without-one are proven in
+    ``test_dictation_session_admission.py``. These sessions never call
+    ``start()``, so they never admitted a parent — the concern here is locking.
+    """
+
+    class _Outcome:
+        outcome = "succeeded"
+
+    def transcribe_child(self, *, material, run, seed, **kwargs):
+        return self._Outcome(), run()
 
 
 class _FakeRecorder:
@@ -34,7 +50,14 @@ class _FakeRecorder:
 
 
 def test_stop_completes_without_deadlock_during_final_transcription_and_intel() -> None:
-    """stop() should not hold the session lock across finalization work."""
+    """stop() should not hold the session lock across finalization work.
+
+    HS-131-08 (Sol Amendment 2): the final analysis is no longer dispatched from
+    inside ``stop()``. Stop cancels the live intelligence parent and hands the
+    displaced final work to an admitted deferred job, so this session — which
+    never admitted a parent — must perform NO provider work here at all. The
+    deadlock proof is unchanged: final transcription still runs outside the lock.
+    """
     session = MeetingSession(transcriber=_FakeTranscriber())
     session._state = MeetingState(
         id="meeting-1",
@@ -42,7 +65,8 @@ def test_stop_completes_without_deadlock_during_final_transcription_and_intel() 
         title="Already titled",
     )
     session._recorder = _FakeRecorder()
-    session._intel = object()  # Non-None enables the final intel path.
+    session._intel_live = True
+    session._transcription_admission = lambda: _StubAdmission()  # type: ignore[method-assign]
 
     intel_calls: list[tuple[bool, str]] = []
 
@@ -70,7 +94,8 @@ def test_stop_completes_without_deadlock_during_final_transcription_and_intel() 
     assert isinstance(state, MeetingState)
     assert state.ended_at is not None
     assert [segment.text for segment in state.segments] == ["final transcript"]
-    assert intel_calls == [(True, "[00:00:00] Me: final transcript")]
+    # No unadmitted post-close provider dispatch survives inside stop().
+    assert intel_calls == []
 
 
 def test_meeting_session_is_web_free_and_emits_via_on_broadcast() -> None:
@@ -226,7 +251,14 @@ def test_save_enqueues_deferred_intel_job_when_meeting_status_is_queued(tmp_path
         def save_meeting(self, state: MeetingState) -> None:
             self.saved.append(state.id)
 
-        def enqueue_intel_job(self, meeting_id: str, *, transcript_hash: str, reason: str | None = None) -> None:
+        def enqueue_intel_job(
+            self,
+            meeting_id: str,
+            *,
+            transcript_hash: str,
+            reason: str | None = None,
+            displaced_work: tuple[str, ...] = (),
+        ) -> None:
             self.enqueued.append((meeting_id, transcript_hash, reason))
 
     fake_db = _FakeDatabase()

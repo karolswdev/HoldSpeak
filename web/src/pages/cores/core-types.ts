@@ -255,6 +255,7 @@ export interface WorkbenchRunsResponse {
 
 /** DictationCore endpoints */
 export interface DictationReadinessResponse {
+  egress_boundary?: string;
   config?: Record<string, unknown>;
   target?: Record<string, unknown>;
   depth?: Record<string, unknown>;
@@ -313,6 +314,7 @@ export interface ActivityNudgesResponse {
 
 export interface DictationDryRunResponse {
   delivered?: boolean;
+  egress_boundary?: string;
   [key: string]: unknown;
 }
 

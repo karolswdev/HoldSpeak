@@ -12,10 +12,15 @@ that share the same ``_run_dictation_dry_run_text`` helper.
 
 from __future__ import annotations
 
+import asyncio
+import threading
+import uuid
+
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
+from holdspeak.principals import Principal, PrincipalKind
 from holdspeak.web.context import WebContext
 from holdspeak.web.routes.dictation.pipeline import build_pipeline_router
 
@@ -44,10 +49,36 @@ def _ctx(**kw) -> WebContext:
     return WebContext(get_state=lambda: {}, **kw)
 
 
-def _client(ctx: WebContext) -> TestClient:
+class _RemoteClient(TestClient):
+    """Model the production clients: every committed send owns a stable claim."""
+
+    def post(self, url, *args, **kwargs):
+        payload = kwargs.get("json")
+        if url == "/api/dictation/remote" and isinstance(payload, dict):
+            payload = dict(payload)
+            payload.setdefault("delivery_id", f"test:remote-{uuid.uuid4()}")
+            kwargs["json"] = payload
+        return super().post(url, *args, **kwargs)
+
+
+def _client(ctx: WebContext, *, with_delivery_ids: bool = True) -> TestClient:
     app = FastAPI()
+
+    @app.middleware("http")
+    async def authenticated(request, call_next):
+        request.state.principal = Principal(PrincipalKind.OWNER, "remote-dictation-test")
+        return await call_next(request)
+
     app.include_router(build_pipeline_router(ctx, project_doc_suggestions={}))
-    return TestClient(app)
+    return (_RemoteClient if with_delivery_ids else TestClient)(app)
+
+
+def test_committed_remote_delivery_requires_a_client_stable_claim():
+    r = _client(_ctx(), with_delivery_ids=False).post(
+        "/api/dictation/remote", json={"text": "ship it once"}
+    )
+    assert r.status_code == 400
+    assert r.json()["error_code"] == "delivery_id_required"
 
 
 def test_processes_through_pipeline_and_delivers():
@@ -295,13 +326,14 @@ def test_rejects_non_object_target():
     assert r.status_code == 400
 
 
-def test_delivery_failure_surfaces_502_not_autonomous_retry():
+def test_delivery_failure_stays_pending_and_never_autonomously_retries():
     def boom(_text: str):
         raise RuntimeError("no dictation target focused")
 
     ctx = _ctx(on_remote_dictation=boom)
     r = _client(ctx).post("/api/dictation/remote", json={"text": "hi"})
-    assert r.status_code == 502
+    assert r.status_code == 425
+    assert r.json()["error_code"] == "delivery_pending"
     assert r.json()["delivered"] is False
 
 
@@ -525,3 +557,232 @@ def test_no_pin_keeps_remote_dictation_byte_identical():
     assert r.status_code == 200
     assert r.json()["final_text"] == "[corrected] plain words"
     assert delivered == ["[corrected] plain words"]
+
+
+def test_pre_delivery_fence_refusal_cannot_close_the_speech_parent_succeeded(
+    tmp_path, monkeypatch
+):
+    """A gate loser is a refused parent, not a clean return from `with entry`."""
+    from holdspeak.db import Database
+    from holdspeak.kernel.runtime import _configure
+
+    database = Database(tmp_path / "pre-delivery-fence.db")
+    database.profiles.upsert(
+        profile_id="pre-delivery-provider",
+        name="pre-delivery-provider",
+        kind="openAICompatible",
+        base_url="https://pre-delivery.invalid/v1",
+        model="pre-delivery-model",
+    )
+    monkeypatch.setattr("holdspeak.db.get_database", lambda: database)
+    _configure(database)
+    from holdspeak.config import Config
+
+    config = Config()
+    config.dictation.pipeline.enabled = True
+    config.dictation.pipeline.stages = ["intent-router"]
+    config.dictation.runtime.profile_id = "pre-delivery-provider"
+    monkeypatch.setattr(Config, "load", classmethod(lambda _cls: config))
+    delivered: list[str] = []
+
+    def cancel_before_handoff(text, *args, **kwargs):
+        kwargs["fence"].cancel()
+        return {"final_text": f"[corrected] {text}"}
+
+    monkeypatch.setattr(PIPELINE, cancel_before_handoff)
+    response = _client(
+        _ctx(
+            on_remote_dictation=lambda text: delivered.append(text),
+            dictation_deliveries=database.dictation_deliveries,
+        )
+    ).post("/api/dictation/remote", json={"text": "cancel before delivery"})
+
+    assert response.status_code == 422
+    assert response.json()["refusal"] == "speech_session_not_live"
+    assert delivered == []
+    with database._connection() as connection:
+        parent = connection.execute(
+            "SELECT operation_id FROM kernel_operations "
+            "WHERE name='dictation.session'"
+        ).fetchone()
+        receipt = connection.execute(
+            "SELECT outcome FROM kernel_receipts WHERE operation_id=?",
+            (parent["operation_id"],),
+        ).fetchone()
+    assert receipt["outcome"] == "refused"
+
+
+def test_remote_effect_handoff_settles_success_before_cancellation_can_win(
+    tmp_path, monkeypatch
+):
+    """Effect-first owns delivery and the speech parent in one election."""
+    from holdspeak.db import Database
+    from holdspeak.kernel.runtime import _configure
+    import holdspeak.web.routes.dictation.pipeline as pipeline_routes
+
+    database = Database(tmp_path / "remote-handoff-race.db")
+    database.profiles.upsert(
+        profile_id="remote-handoff-provider",
+        name="remote-handoff-provider",
+        kind="openAICompatible",
+        base_url="https://remote-handoff.invalid/v1",
+        model="remote-handoff-model",
+    )
+    monkeypatch.setattr("holdspeak.db.get_database", lambda: database)
+    _configure(database)
+    from holdspeak.config import Config
+
+    config = Config()
+    config.dictation.pipeline.enabled = True
+    config.dictation.pipeline.stages = ["intent-router"]
+    config.dictation.runtime.profile_id = "remote-handoff-provider"
+    monkeypatch.setattr(Config, "load", classmethod(lambda _cls: config))
+
+    captured: dict[str, object] = {}
+    entry_ready = threading.Event()
+    delivery_entered = threading.Event()
+    release_delivery = threading.Event()
+    cancellation_started = threading.Event()
+    cancellation_done = threading.Event()
+    typed: list[str] = []
+    response: list[object] = []
+    original_open = pipeline_routes._open_text_entry
+
+    def capture_entry(*args, **kwargs):
+        snapshot, entry = original_open(*args, **kwargs)
+        captured["entry"] = entry
+        entry_ready.set()
+        return snapshot, entry
+
+    def blocking_delivery(text: str) -> None:
+        delivery_entered.set()
+        assert release_delivery.wait(5), "test never released delivery"
+        typed.append(text)
+
+    monkeypatch.setattr(pipeline_routes, "_open_text_entry", capture_entry)
+    client = _client(
+        _ctx(
+            on_remote_dictation=blocking_delivery,
+            dictation_deliveries=database.dictation_deliveries,
+        )
+    )
+    request_thread = threading.Thread(
+        target=lambda: response.append(
+            client.post("/api/dictation/remote", json={"text": "one handoff"})
+        )
+    )
+    request_thread.start()
+    assert entry_ready.wait(5), "speech entry was never captured"
+    assert delivery_entered.wait(5), "delivery never won the election"
+
+    def cancel() -> None:
+        cancellation_started.set()
+        captured["entry"].cancel()
+        cancellation_done.set()
+
+    cancel_thread = threading.Thread(target=cancel)
+    cancel_thread.start()
+    assert cancellation_started.wait(5)
+    assert not cancellation_done.wait(0.05), "cancellation crossed an active handoff"
+    release_delivery.set()
+    request_thread.join(5)
+    cancel_thread.join(5)
+
+    assert response and response[0].status_code == 200
+    assert typed == ["[corrected] one handoff"]
+    assert cancellation_done.is_set()
+    with database._connection() as connection:
+        receipt = connection.execute(
+            "SELECT r.outcome FROM kernel_receipts r "
+            "JOIN kernel_operations o ON o.operation_id=r.operation_id "
+            "WHERE o.name='dictation.session' ORDER BY o.created_at DESC LIMIT 1"
+        ).fetchone()
+    assert receipt["outcome"] == "succeeded"
+
+
+def test_accepted_delivery_survives_request_cancellation_to_terminal_claim(
+    tmp_path, monkeypatch
+):
+    """Transport cancellation cannot abandon accepted idempotent work as pending."""
+    from holdspeak.db import Database
+    from holdspeak.kernel.runtime import _configure
+    from holdspeak.principals import Principal, PrincipalKind
+
+    database = Database(tmp_path / "committed-disconnect.db")
+    monkeypatch.setattr("holdspeak.db.get_database", lambda: database)
+    _configure(database)
+    started = threading.Event()
+    release = threading.Event()
+    delivered = threading.Event()
+    typed: list[str] = []
+
+    def slow_pipeline(text, *args, **kwargs):
+        started.set()
+        assert release.wait(5), "test never released committed processing"
+        return {"final_text": f"[corrected] {text}"}
+
+    def deliver(text: str) -> None:
+        typed.append(text)
+        delivered.set()
+
+    monkeypatch.setattr(PIPELINE, slow_pipeline)
+    router = build_pipeline_router(
+        _ctx(
+            on_remote_dictation=deliver,
+            dictation_deliveries=database.dictation_deliveries,
+        ),
+        project_doc_suggestions={},
+    )
+    endpoint = next(
+        route.endpoint
+        for route in router.routes
+        if getattr(route, "path", "") == "/api/dictation/remote"
+    )
+    request = type(
+        "Request",
+        (),
+        {
+            "state": type(
+                "State",
+                (),
+                {
+                    "principal": Principal(
+                        PrincipalKind.OWNER, "committed-disconnect-test"
+                    )
+                },
+            )()
+        },
+    )()
+
+    async def scenario() -> None:
+        task = asyncio.create_task(
+            endpoint(
+                request,
+                {
+                    "text": "finish after disconnect",
+                    "delivery_id": "disconnect:accepted-1",
+                },
+            )
+        )
+        assert await asyncio.to_thread(started.wait, 5), "processing never started"
+        task.cancel()
+        with pytest.raises(asyncio.CancelledError):
+            await task
+        release.set()
+        assert await asyncio.to_thread(delivered.wait, 5), "delivery never completed"
+        for _ in range(100):
+            claim = database.dictation_deliveries.get("disconnect:accepted-1")
+            if claim is not None and claim["status"] != "pending":
+                break
+            await asyncio.sleep(0.01)
+
+    try:
+        asyncio.run(scenario())
+    finally:
+        release.set()
+
+    assert typed == ["[corrected] finish after disconnect"]
+    claim = database.dictation_deliveries.get("disconnect:accepted-1")
+    assert claim is not None
+    assert claim["status"] == "succeeded"
+    assert claim["response"]["delivered"] is True

@@ -1,0 +1,8 @@
+revision=dep_c133aacd2731dad110e52f75815ece80983123174fc17c70dabdb2c43d068959 endpoint=http://192.168.1.43:8080/v1 model=Qwen3.6-35B-A3B-UD-Q5_K_XL.gguf
+post-mutation engine endpoint=http://192.168.1.43:8080/v1
+leg1 outcome=succeeded result_ref=walk-result:74ff
+leg1 egress child=op_4596c07aa8584239b125759b62bb1b30 receipt=succeeded
+leg2 cancel disposition=cancelled
+leg2 outcome=cancelled
+leg2 cancel child=op_47c638a2298542bfb0c4991220ecfab5 state=succeeded
+WALK OK: revision immutable on metal; one invocation/one receipt/one egress child; cancellation closed once, late output suppressed.

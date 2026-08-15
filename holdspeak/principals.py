@@ -19,6 +19,11 @@ class PrincipalKind(str, Enum):
     OWNER = "owner"
     AGENT = "agent"
     NODE = "node"
+    # Internal-only scheduler identity. It has no edge rights and is admitted
+    # solely by ParentRunController.start_delegated_schedule.
+    SCHEDULER = "scheduler"
+    # Narrow runtime identity for an explicitly-issued ambient service.
+    SERVICE = "service"
     NONE = "none"
 
 
@@ -46,6 +51,8 @@ _RIGHTS: dict[PrincipalKind, frozenset[PrincipalRight]] = {
         }
     ),
     PrincipalKind.NODE: frozenset({PrincipalRight.NODE_LINK}),
+    PrincipalKind.SCHEDULER: frozenset(),
+    PrincipalKind.SERVICE: frozenset(),
     PrincipalKind.NONE: frozenset(),
 }
 
@@ -54,6 +61,8 @@ _RIGHTS: dict[PrincipalKind, frozenset[PrincipalRight]] = {
 class Principal:
     kind: PrincipalKind
     identity: str
+    allowed_operations: frozenset[tuple[str, int]] = frozenset()
+    authority_basis: str = ""
 
     @property
     def name(self) -> str:
@@ -190,6 +199,11 @@ def required_right(method: str, path: str) -> Optional[PrincipalRight]:
     ) and verb == "GET":
         return PrincipalRight.READ
     if path.startswith("/api/delivery/node/") or path.startswith("/api/kernel/executor/"):
+        return PrincipalRight.NODE_LINK
+    # HS-131-16: the mesh relay legs are a NODE protocol, not an owner API. The
+    # right is the narrow gate; `MeshService` additionally requires the principal
+    # to BE a node, so an owner token cannot claim, complete, or fail relay work.
+    if path.startswith("/api/mesh/relay/"):
         return PrincipalRight.NODE_LINK
     if path == "/api/kernel/submit" and verb == "POST":
         return PrincipalRight.AGENT_SUBMIT

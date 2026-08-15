@@ -5,6 +5,7 @@ import { apiFetch } from "../../../lib/api";
 import { openSurfaceOr } from "../../../desk/shell";
 import { useResource } from "../../pageSupport";
 import type { DictationReadinessResponse } from "../core-types";
+import { egressScopeLamp } from "../../../desk/inferenceEgress";
 import { presentValue } from "../../../desk/surface/format";
 import { SurfaceFooter } from "../../../desk/surface/SurfaceFooter";
 import {
@@ -188,6 +189,7 @@ export function ReadinessFooter({
   const warnings = Array.isArray(resource.data.warnings)
     ? resource.data.warnings
     : [];
+  const egress = egressScopeLamp(resource.data.egress_boundary);
   const live = config.pipeline_enabled === true && warnings.length === 0;
   const state = live
     ? [
@@ -202,9 +204,9 @@ export function ReadinessFooter({
     <SurfaceFooter
       egress={
         <LampGadget
-          label={live ? "PIPELINE LIVE" : state}
-          on={live}
-          tone={live ? "ok" : "warn"}
+          label={egress.label}
+          on={egress.tone === "ok"}
+          tone={egress.tone}
         />
       }
       receipt={receiptSlot || <span className="surface-footer-readiness" role="status">{state}</span>}

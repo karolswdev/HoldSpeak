@@ -27,14 +27,12 @@ if TYPE_CHECKING:
 # Optional imports for intel (the same guarded pattern as session.py).
 try:
     from ..intel import (
-        MeetingIntel,
         IntelResult,
         ActionItem,
         get_intel_runtime_status,
         resolve_intel_provider,
     )
 except ImportError:
-    MeetingIntel = None  # type: ignore
     IntelResult = None  # type: ignore
     ActionItem = None  # type: ignore
     get_intel_runtime_status = None  # type: ignore
@@ -95,6 +93,9 @@ class PersistenceMixin:
                     state.id,
                     transcript_hash=state.transcript_hash(),
                     reason=state.intel_status_detail,
+                    # HS-131-08: a save that follows the stop handoff must not
+                    # erase the structured work that handoff displaced.
+                    displaced_work=getattr(self, "_intel_displaced_work", ()) or (),
                 )
                 intel_job_enqueued = True
             log.info(f"Meeting saved to database: {state.id}")

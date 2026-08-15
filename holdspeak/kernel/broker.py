@@ -8,6 +8,7 @@ from typing import Any, Mapping, Sequence
 from ..operation_policy import POLICY_VERSION
 from ..principals import PrincipalKind, PrincipalRight
 from .admission import parse_request, refusal_values
+from .causation import causality, live_owner_parent
 from .executor import ExecutorPlane
 from .journal import JournalStore
 from .model import KernelRefused, OperationRequest, OperationSpec
@@ -94,7 +95,7 @@ class Broker(ExecutorPlane):
             "placement": admission.placement,
             "envelope_sha256": admission.payload_hash,
             "policy_version": POLICY_VERSION,
-            "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+            "authority_basis": getattr(principal, "authority_basis", "") or "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
             "state": "admitting",
             "native_id": admission.native_id,
             "parent_operation_id": parent_id,
@@ -135,17 +136,36 @@ class Broker(ExecutorPlane):
             receipt = self._terminal(operation, "refused", str(reason))
             return self._handle(operation, receipt)
 
+    def submit_trusted_child(self, raw: Any, principal: Any, context: Any, *, planned_node: str) -> dict[str, Any]:
+        """Admit a controller-issued child through its atomic typed concern."""
+        from .trusted_child import submit
+
+        return submit(self, raw, principal, context, planned_node=planned_node)
+
     def decide(
         self, operation_id: str, decision: str, expected_revision: int,
         principal: Any, *, reason: str = "",
     ) -> dict[str, Any]:
-        if principal.kind is not PrincipalKind.OWNER or not principal.permits(PrincipalRight.DECIDE):
-            raise KernelRefused("owner_principal_required_to_decide", operation_id=operation_id)
-        if decision not in {"approve", "reject"}:
-            raise KernelRefused("decision_unknown", operation_id=operation_id)
         operation = self.store.operation(operation_id)
         if operation is None:
             raise KernelRefused("operation_unknown", operation_id=operation_id)
+        delegated = self._live_owner_parent(operation, principal)
+        scheduler_child = False
+        if principal.kind is PrincipalKind.SCHEDULER and operation.get("parent_operation_id"):
+            with self.store._connection() as conn:
+                parent = conn.execute("SELECT o.principal_kind,p.state,p.input_json FROM kernel_operations o JOIN kernel_parent_runs p ON p.operation_id=o.operation_id WHERE o.operation_id=?", (operation["parent_operation_id"],)).fetchone()
+            scheduler_child = bool(parent and parent["principal_kind"] == "scheduler" and parent["state"] == "OPEN" and "delegation_id" in str(parent["input_json"]))
+        service_owns = principal.kind is PrincipalKind.SERVICE and operation["principal_identity"] == principal.identity and (operation["name"], operation["version"]) in principal.allowed_operations
+        if ((principal.kind is not PrincipalKind.OWNER or not principal.permits(PrincipalRight.DECIDE))
+            and not delegated and not scheduler_child and not service_owns
+            and not (principal.kind is PrincipalKind.SCHEDULER and getattr(self, "_delegated_schedule_admission", False))):
+            reason = (
+                "owner_or_live_parent_authority_required"
+                if operation["parent_operation_id"] else "owner_principal_required_to_decide"
+            )
+            raise KernelRefused(reason, operation_id=operation_id)
+        if decision not in {"approve", "reject"}:
+            raise KernelRefused("decision_unknown", operation_id=operation_id)
         if operation["state"] != "awaiting_decision":
             raise KernelRefused("operation_already_decided", operation_id=operation_id)
         if operation["revision"] != expected_revision:
@@ -174,12 +194,19 @@ class Broker(ExecutorPlane):
                 "operation_id": operation_id,
                 "envelope_sha256": operation["envelope_sha256"],
                 "target_ref": operation["target_ref"],
+                # Generic signed binding for the admitted target.
+                "target_binding": operation["target_ref"],
                 "placement": operation["placement"],
                 "policy_version": operation["policy_version"],
                 "issued_at": now,
                 "expires_at": now + claim_ttl,
                 "execution_expires_at": now + execution_ttl,
                 "uses": 1,
+                "continuation_identities": list(
+                    getattr(spec.codec, "continuation_identities", lambda _native: ())(
+                        operation["native_id"]
+                    )
+                ),
             }
         )
         operation = self.store.transition(
@@ -200,6 +227,17 @@ class Broker(ExecutorPlane):
 
         return reap_expired(self)
 
+    def reap_and_recover_projections(self) -> dict[str, Any]:
+        """Run the required liveness-before-projection-recovery ordering."""
+        parent_recovered = getattr(getattr(self, "parent_run_controller", None), "reconcile_abandoned", lambda: 0)()
+        reaped = self.reap_expired()
+        stager = getattr(self, "projection_stager", None)
+        if stager is None:
+            return {"parents": parent_recovered, "reaped": reaped, "projections": None}
+        # recover() runs a second, harmless reap immediately before its scan so
+        # callers cannot accidentally reverse the durable ordering.
+        return {"parents": parent_recovered, "reaped": reaped, "projections": stager.recover()}
+
     def events(self, after_cursor: int, filters: Mapping[str, Any], principal: Any) -> dict[str, Any]:
         if principal.kind is PrincipalKind.NONE:
             raise KernelRefused("principal_authentication_required")
@@ -218,10 +256,15 @@ class Broker(ExecutorPlane):
             raise KernelRefused("principal_authentication_required")
         layers.append("authenticated_principal")
         required = PrincipalRight(spec.required_capability)
-        if principal.kind is PrincipalKind.AGENT and not principal.permits(required):
+        if principal.kind is PrincipalKind.SERVICE:
+            if (request.name, request.version) not in principal.allowed_operations: raise KernelRefused("service_operation_not_authorized")
+        elif principal.kind is PrincipalKind.AGENT and not principal.permits(required):
             raise KernelRefused("declared_capability_required")
-        if principal.kind not in {PrincipalKind.OWNER, PrincipalKind.AGENT}:
-            raise KernelRefused("declared_capability_required")
+        # Scheduler authority is never generic: the controller sets this
+        # one-shot private guard only while opening a validated delegated parent.
+        elif principal.kind not in {PrincipalKind.OWNER, PrincipalKind.AGENT} and not (
+            principal.kind is PrincipalKind.SCHEDULER and ((getattr(self, "_delegated_schedule_admission", False) and request.name == "workbench.run") or getattr(self, "_trusted_scheduler_child", False))
+        ): raise KernelRefused("declared_capability_required")
         layers.append("declared_capability")
         admission = spec.codec.validate(request)
         layers.append("hard_prerequisites")
@@ -236,25 +279,18 @@ class Broker(ExecutorPlane):
     def _causality(
         self, request: OperationRequest, principal: Any, operation_id: str,
     ) -> tuple[str, str]:
-        parent_id = request.parent_operation_id
-        if not parent_id:
-            return "", operation_id
-        parent = self.store.operation(parent_id)
-        if parent is None:
-            raise KernelRefused("parent_operation_unknown")
-        if parent["state"] != "claimed":
-            raise KernelRefused("parent_operation_not_running")
-        if (
-            parent["principal_kind"] != "owner"
-            and parent["principal_identity"] != principal.identity
-        ):
-            raise KernelRefused("parent_operation_scope_required")
-        return parent_id, str(parent["correlation_id"] or parent_id)
+        return causality(self.store, self._clock, request, principal, operation_id)
+
+    def _live_owner_parent(self, operation: Mapping[str, Any], principal: Any) -> bool:
+        return live_owner_parent(self.store, self._clock, operation, principal)
 
     def _refuse_attempt(
         self, raw: Any, principal: Any, operation_id: str, reason: str, *, unique: bool = False,
+        provenance: Mapping[str, str] | None = None,
     ) -> dict[str, Any]:
         values = refusal_values(raw, principal, operation_id, reason)
+        allowed = {"delegator_kind", "delegator_identity", "authority_basis", "target_ref"}
+        values.update({k: str(v) for k, v in (provenance or {}).items() if k in allowed})
         if unique:
             values["idempotency_key"] = operation_id
         operation = self.store.create_operation(values)

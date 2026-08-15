@@ -7,11 +7,19 @@ import signal
 import socket
 import subprocess
 import sys
+import threading
 import time
 import urllib.error
 import urllib.request
 from pathlib import Path
 from typing import Any
+
+from holdspeak.db import Database
+from holdspeak.deployment_revisions import capture_deployment_revision
+from holdspeak.inference_targets import resolve_inference_target
+from holdspeak.kernel.inference_runner import InferenceRunner, InvocationRequest, ServiceContract
+from holdspeak.kernel.runtime import _configure
+from holdspeak.principals import Principal, PrincipalKind
 
 _REPO = Path(__file__).resolve().parents[2]
 _OWNER_TOKEN = "kernel-proof-owner"
@@ -64,6 +72,7 @@ def test_real_http_executor_receipt_and_sigkill_cursor_replay(tmp_path: Path) ->
         ),
         encoding="utf-8",
     )
+    os.chmod(node_store, 0o600)
     with socket.socket() as reservation:
         reservation.bind(("127.0.0.1", 0))
         port = reservation.getsockname()[1]
@@ -231,3 +240,53 @@ def test_real_http_executor_receipt_and_sigkill_cursor_replay(tmp_path: Path) ->
         if process.poll() is None:
             os.kill(process.pid, signal.SIGKILL)
             process.wait(timeout=10)
+
+
+def test_synthetic_admitted_reference_invocation_and_cancelled_stream(tmp_path: Path) -> None:
+    database = Database(tmp_path / "runner-hub.db")
+    database.profiles.upsert(
+        profile_id="reference", name="Reference", kind="onDevice", model_file="/reference.gguf",
+    )
+    revision = capture_deployment_revision(database, resolve_inference_target(database, "reference"))
+    broker = _configure(database)
+    owner = Principal(PrincipalKind.OWNER, "integration-owner")
+    runner = InferenceRunner(
+        broker, database, engine_factory=lambda value, **_kw: {"revision": value.id},
+        principal_provider=lambda: owner,
+    )
+
+    class Reference:
+        def dispatch(self, engine, payload, cancellation):
+            return "reference-result"
+
+        def cancel(self):
+            return "cancelled"
+
+    payload = {"request": "private"}
+    invocation = InvocationRequest(
+        deployment_revision=revision.id,
+        definition_origin=ServiceContract.for_payload("ask", "v1", payload),
+        deadline_at=time.time() + 10, payload=payload,
+    )
+    succeeded = runner.invoke(invocation, Reference())
+    assert succeeded.outcome == "succeeded"
+
+    started, release = threading.Event(), threading.Event()
+
+    class Streaming(Reference):
+        def dispatch(self, engine, payload, cancellation):
+            started.set()
+            release.wait(2)
+            return "late-stream"
+
+    cancelled = []
+    streaming = InvocationRequest(**{**invocation.__dict__, "invocation_id": "integration_cancel"})
+    thread = threading.Thread(
+        target=lambda: cancelled.append(runner.invoke(streaming, Streaming()))
+    )
+    thread.start()
+    assert started.wait(2)
+    assert runner.cancel("integration_cancel") == "cancelled"
+    release.set()
+    thread.join(2)
+    assert cancelled[0].outcome == "cancelled"

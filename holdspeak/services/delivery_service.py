@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Any
 
 from ..db.core import Database
-from .errors import NotFound, ValidationError
+from .errors import NotFound
 
 
 @observe_service
@@ -117,29 +117,11 @@ class DeliveryService:
         service.bind_kernel(kernel_service())
         return service
 
-    def prepare_pr_review(
-        self,
-        *,
-        invocation_id: str,
-        requested_target_id: str,
-        operation_id: str,
-        broker: Any,
-    ) -> tuple[Any, Any, Any]:
-        """Create the durable review lifecycle and resolve its target."""
-        if not invocation_id:
-            raise ValidationError("invocation id is required")
-        from ..inference_targets import build_intel_for_target, resolve_inference_target
-        from .support import RunLifecycle
-
-        lifecycle = RunLifecycle(
-            self._db,
-            invocation_id,
-            "program:pr-review-v1",
-            operation_id=operation_id,
-            broker=broker,
-        )
-        target = resolve_inference_target(self._db, requested_target_id)
-        return lifecycle, target, build_intel_for_target(target, self._db)
+    # HS-131-13 deleted `prepare_pr_review`. It had no caller: the PR review route
+    # was migrated to the admitted Delivery parent, frozen revision, staged
+    # projection, and terminal receipt in HS-131-07, and this dormant helper still
+    # resolved a MUTABLE target and constructed an engine with no admitted child
+    # behind it. Dormant is not exempt from Article XI.2.
 
     def persist_pr_review_artifact(
         self, *, name: str, user_input: str, output: str, sources: list[dict[str, Any]]

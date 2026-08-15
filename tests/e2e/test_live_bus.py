@@ -156,8 +156,8 @@ def test_a_real_broadcast_reaches_the_presence_card_via_the_bus(browser):
             },
         )
         page.wait_for_function(
-            "() => document.querySelector('.presence-card strong')"
-            " && document.querySelector('.presence-card strong').textContent.includes('Transcribing')",
+            "() => document.querySelector('.presence-card .gadget-lamp')"
+            " && document.querySelector('.presence-card .gadget-lamp').textContent.includes('Transcribing')",
             timeout=8000,
         )
         page.close()
@@ -199,8 +199,8 @@ def test_the_bus_reconnects_after_a_server_restart(browser):
                 {"state": "recording", "label": "Recording", "window": {"visible": True}},
             )
             page.wait_for_function(
-                "() => document.querySelector('.presence-card strong')"
-                " && document.querySelector('.presence-card strong').textContent.includes('Recording')",
+                "() => document.querySelector('.presence-card .gadget-lamp')"
+                " && document.querySelector('.presence-card .gadget-lamp').textContent.includes('Recording')",
                 timeout=8000,
             )
         finally:

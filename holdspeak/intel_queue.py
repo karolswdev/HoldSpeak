@@ -186,10 +186,34 @@ def process_next_intel_job(
             job.meeting_id,
             transcript_hash=current_hash,
             reason="Transcript changed; refreshing queued intelligence job.",
+            # A refresh must NOT forget what stop displaced onto this job.
+            displaced_work=job.displaced_work,
         )
         log.info(f"Deferred intel job refreshed for meeting {job.meeting_id}")
         return True
 
+    # HS-131-08: the claimed job admits ONE short-lived
+    # `meeting.deferred-intel-job` parent under the narrow queue-worker service
+    # principal, over a FRESHLY frozen plan. It never joins or revives the closed
+    # live `meeting.session` parent, and each retry (a new attempt) is a new
+    # parent — never a reopened epoch.
+    routing_enabled = bool(getattr(meeting_cfg, "intent_router_enabled", False))
+    plugin_host = _routed_plugin_host(routing_enabled)
+    admission = _admit_deferred_job(
+        db, job, meeting_cfg=meeting_cfg, plugin_host=plugin_host, meeting=meeting
+    )
+    if admission is None:
+        _retry_or_fail_job(
+            db,
+            job,
+            "Deferred intel failed: meeting_deferred_intel_job_not_admitted",
+            max_attempts=retry_max_attempts,
+            base_delay_seconds=retry_base_seconds,
+            max_delay_seconds=retry_max_seconds,
+        )
+        return True
+
+    job_outcome = "failed"
     try:
         from .db.intel import ROUTED_INTEL_RETRY_REASON
 
@@ -203,40 +227,25 @@ def process_next_intel_job(
             from .faults import trip as _fault_trip
 
             _fault_trip("intel.model_unavailable")
-            if effective.node:
-                from .intel.mesh_relay import MeshRelayIntel
-
-                intel = MeshRelayIntel(
-                    node=effective.node, model_hint=effective.model
-                )
-            else:
-                kwargs = {
-                    "provider": provider,
-                    "cloud_model": effective.model,
-                    "cloud_api_key_env": effective.api_key_env,
-                    "cloud_base_url": effective.base_url,
-                    "cloud_reasoning_effort": getattr(
-                        meeting_cfg, "intel_cloud_reasoning_effort", None
-                    ),
-                    "cloud_store": bool(
-                        getattr(meeting_cfg, "intel_cloud_store", False)
-                    ),
-                    "temperature": float(getattr(meeting_cfg, "intel_temperature", 0.2)),
-                }
-                if model_path:
-                    kwargs["model_path"] = model_path
-                intel = MeetingIntel(**kwargs)
             transcript = "\n".join(str(segment) for segment in meeting.segments)
-            result = intel.analyze(transcript, stream=False)
-            if result.error:
+            # The engine is built ONLY from the plan's frozen deployment revision
+            # (`build_intel_for_revision`); this seam no longer constructs a
+            # provider or resolves placement of its own.
+            _, projection, result = admission.analyze(transcript)
+            if projection is None or result is None or getattr(result, "error", None):
+                detail = str(
+                    getattr(result, "error", "")
+                    or "the deferred analysis child did not publish"
+                )
                 _retry_or_fail_job(
                     db,
                     job,
-                    f"Deferred intel failed: {result.error}",
+                    f"Deferred intel failed: {detail}",
                     max_attempts=retry_max_attempts,
                     base_delay_seconds=retry_base_seconds,
                     max_delay_seconds=retry_max_seconds,
                 )
+                job_outcome = "failed"
                 return True
 
             meeting.intel = IntelSnapshot(
@@ -259,18 +268,46 @@ def process_next_intel_job(
         )
         meeting.intel_completed_at = None
         db.meetings.save_meeting(meeting)
+        # HS-131-08 (D3): the work stop() displaced onto this job — bookmark
+        # labels and the auto title — runs HERE as admitted children, after the
+        # base analysis is durable and BEFORE anything reports Ready. Their
+        # outputs land through receipt-gated materializers, so the meeting is
+        # re-read afterwards instead of being overwritten from a stale copy.
+        displaced_detail = _run_displaced_work(db, meeting, admission, job)
+        if displaced_detail:
+            _retry_or_fail_job(
+                db,
+                job,
+                f"Deferred intel failed: {displaced_detail}",
+                max_attempts=retry_max_attempts,
+                base_delay_seconds=retry_base_seconds,
+                max_delay_seconds=retry_max_seconds,
+            )
+            job_outcome = "failed"
+            return True
+        if job.displaced_work:
+            meeting = db.meetings.get_meeting(job.meeting_id) or meeting
+            meeting.intel_status = "running"
+            meeting.intel_completed_at = None
         # HS-80-02 — the archive gets its artifacts: after a successful base
         # analyze, run the routed plugin chain over the saved transcript (the
         # Phase-67 F-05 fix). Gated on the same knob that gates live routing.
         # Any unresolved plugin keeps the base analysis/artifacts and leaves an
         # owner-recoverable partial job; only the complete chain becomes Ready.
         artifact_count = 0
-        if bool(getattr(meeting_cfg, "intent_router_enabled", False)):
+        if routing_enabled:
             try:
                 from .meeting_plugins import run_meeting_plugin_chain
 
+                # Routed plugins run ONLY under this job's parent context: each
+                # executed plugin is one trusted child, and its run record and
+                # artifacts are staged projections gated on that child's receipt.
                 chain_summary = run_meeting_plugin_chain(
-                    db, meeting, profile=effective_routing_profile(meeting_cfg)
+                    db,
+                    meeting,
+                    profile=effective_routing_profile(meeting_cfg),
+                    host=plugin_host,
+                    admission=admission,
                 )
                 artifact_count = len(
                     db.plugins.list_artifacts(job.meeting_id, limit=2000)
@@ -304,6 +341,10 @@ def process_next_intel_job(
                         job.meeting_id,
                         failed_work,
                     )
+                    # Partial is not a kernel outcome: the job as a bounded unit
+                    # did not complete, so its parent closes `failed` while the
+                    # queue keeps its own `partial` vocabulary for the owner.
+                    job_outcome = "failed"
                     return True
             except Exception as exc:
                 log.warning(
@@ -340,6 +381,7 @@ def process_next_intel_job(
             retry_at=None,
         )
         db.intel.complete_intel_job(job.meeting_id)
+        job_outcome = "succeeded"
         log.info(f"Deferred intel completed for meeting {job.meeting_id}")
         # HS-56-04: observational hand-off for hosts with a broadcast channel
         # (the presence mascot's aftercare card). Never breaks the job.
@@ -358,8 +400,138 @@ def process_next_intel_job(
             max_delay_seconds=retry_max_seconds,
         )
         log.error(f"Deferred intel failed for meeting {job.meeting_id}: {exc}")
+    finally:
+        # One honest terminal receipt per job parent. A retry admits a NEW
+        # parent; this one is never reopened.
+        admission.close(job_outcome)
 
     return True
+
+
+def _routed_plugin_host(routing_enabled: bool):
+    """Build the routed plugin host BEFORE the plan freezes, or none at all.
+
+    The frozen plan must name a deployment revision for every plugin capability
+    the job may reach, so the registry that decides those capabilities has to
+    exist before admission. With routing off there is no plugin capability and
+    no host.
+    """
+    if not routing_enabled:
+        return None
+    try:
+        from .meeting_plugins import _build_host
+
+        return _build_host()
+    except Exception as exc:
+        log.warning(f"Deferred routed plugin host unavailable: {exc}")
+        return None
+
+
+def _routed_plugin_ids(host) -> tuple[str, ...]:
+    if host is None:
+        return ()
+    try:
+        return tuple(str(item) for item in host.list_plugins())
+    except Exception:
+        return ()
+
+
+def _displaced_child_count(job, meeting) -> int:
+    """How many displaced dispatches this job may need (one per label + a title)."""
+    from .meeting_session.intel_plan import DISPLACED_AUTO_TITLE, DISPLACED_BOOKMARK_LABELS
+
+    displaced = tuple(job.displaced_work or ())
+    count = 0
+    if DISPLACED_BOOKMARK_LABELS in displaced:
+        count += len(getattr(meeting, "bookmarks", None) or [])
+    if DISPLACED_AUTO_TITLE in displaced:
+        count += 1
+    return count
+
+
+def _run_displaced_work(db, meeting, admission, job) -> str:
+    """Run the work stop displaced onto this job, as admitted children (HS-131-08).
+
+    Every earned output lands through its own receipt-gated materializer (the
+    meeting title, the bookmark labels), so a cancelled or expired job parent
+    leaves the meeting untouched. Returns "" when all displaced work settled, or
+    the honest failure detail — the meeting must not reach Ready otherwise.
+    """
+    from .meeting_session.intel_plan import (
+        DISPLACED_AUTO_TITLE,
+        DISPLACED_BOOKMARK_LABELS,
+        MeetingIntelRefused,
+    )
+
+    displaced = tuple(job.displaced_work or ())
+    if not displaced:
+        return ""
+    summary = str(getattr(getattr(meeting, "intel", None), "summary", "") or "")
+    try:
+        if DISPLACED_BOOKMARK_LABELS in displaced:
+            for bookmark in getattr(meeting, "bookmarks", None) or []:
+                local_context = meeting.get_context_around(bookmark.timestamp, window=10.0)
+                if not local_context:
+                    continue  # no transcript near this bookmark: no model work
+                _, projection, _ = admission.bookmark_label(
+                    local_context=local_context,
+                    meeting_summary=summary,
+                    timestamp=float(bookmark.timestamp),
+                )
+                if projection is None:
+                    return "displaced bookmark labels did not publish"
+        if DISPLACED_AUTO_TITLE in displaced and not str(
+            getattr(meeting, "title", "") or ""
+        ).strip():
+            _, projection, _ = admission.auto_title(
+                "\n".join(str(segment) for segment in meeting.segments)
+            )
+            if projection is None:
+                return "the displaced auto title did not publish"
+    except MeetingIntelRefused as exc:
+        return f"displaced work refused: {exc.reason}"
+    return ""
+
+
+def _admit_deferred_job(db, job, *, meeting_cfg, plugin_host, meeting=None):
+    """Admit ONE `meeting.deferred-intel-job` parent for this claimed attempt."""
+    from .meeting_session.deferred_admission import DeferredIntelJob
+    from .meeting_session.intel_plan import MeetingIntelRefused
+
+    try:
+        return DeferredIntelJob.admit(
+            db,
+            meeting_id=job.meeting_id,
+            attempt=int(job.attempts),
+            transcript_hash=str(job.transcript_hash or ""),
+            # A manual or scheduled requeue moves `requested_at`, so it names a
+            # distinct attempt even when the attempt ordinal repeats.
+            attempt_key=(
+                job.requested_at.isoformat() if job.requested_at is not None else ""
+            ),
+            plugin_ids=_routed_plugin_ids(plugin_host),
+            meeting_config=meeting_cfg,
+            # The structured work stop displaced onto this job: its capabilities
+            # are frozen in the plan and its dispatches are paid for by the budget.
+            displaced_work=tuple(job.displaced_work or ()),
+            displaced_children=(
+                0 if meeting is None else _displaced_child_count(job, meeting)
+            ),
+        )
+    except MeetingIntelRefused as exc:
+        log.error(
+            "Deferred intel job refused admission for meeting %s: %s",
+            job.meeting_id,
+            exc.reason,
+        )
+        return None
+    except Exception as exc:
+        log.error(
+            "Deferred intel job admission failed for meeting %s: %s",
+            job.meeting_id,
+            type(exc).__name__,
+        )
+        return None
 
 
 def drain_intel_queue(

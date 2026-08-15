@@ -61,9 +61,18 @@ class _LoopSpy:
 @pytest.fixture
 def spy(monkeypatch) -> _LoopSpy:
     s = _LoopSpy()
-    monkeypatch.setattr(
-        "holdspeak.intel.providers.build_configured_meeting_intel", lambda: s
-    )
+    # Admitted Sequence/Workflow dispatch constructs from the immutable
+    # deployment revision in InferenceRunner, not the retired configured-engine
+    # route helper. Keep the production admission/runner path and replace only
+    # its provider-construction boundary.
+    from holdspeak.kernel.inference_runner import InferenceRunner
+    monkeypatch.setitem(InferenceRunner.__init__.__kwdefaults__, "engine_factory", lambda revision, **_kw: s)
+    # Ask and legacy Recipe surfaces still construct their provider through this
+    # long-standing seam; Sequence/Workflow is deliberately covered above.
+    # HS-131-13: an admitted `this_machine` child builds `MeetingIntel` from its
+    # FROZEN revision, so the same double is installed on the engine class too.
+    monkeypatch.setattr("holdspeak.intel.engine.MeetingIntel", lambda **_kw: s)
+    monkeypatch.setattr("holdspeak.intel.providers._configured_engine", lambda: s)
     return s
 
 
@@ -111,12 +120,22 @@ def test_chain_runs_the_engine_off_the_loop(env, spy) -> None:
 
 def test_workflow_runs_the_engine_off_the_loop(env, spy) -> None:
     _, client = env
-    rid = client.post(
-        "/api/recipes",
-        json={"id": "recipe_wf", "name": "WF", "system_prompt": "Answer."},
-    ).json()["recipe"]["id"]
+    # The admitted Workflow runner executes its frozen graph, not the retired
+    # ``recipe_ids`` convenience payload.
+    graph = {
+        "entry": "entry",
+        "nodes": [
+            {"id": "entry", "kind": {"entry": {}}},
+            {"id": "model", "kind": {"summarize": {}}},
+            {"id": "out", "kind": {"output": {}}},
+        ],
+        "exec_edges": [
+            {"from": {"node": "entry", "name": "then"}, "to": "model"},
+            {"from": {"node": "model", "name": "then"}, "to": "out"},
+        ],
+    }
     wid = client.post(
-        "/api/workflows", json={"id": "wf_loop", "name": "Loop", "recipe_ids": [rid]}
+        "/api/workflows", json={"id": "wf_loop", "name": "Loop", "graph_json": graph}
     ).json()["workflow"]["id"]
 
     assert client.post(f"/api/workflows/{wid}/run", json={"input": "hi"}).status_code == 200

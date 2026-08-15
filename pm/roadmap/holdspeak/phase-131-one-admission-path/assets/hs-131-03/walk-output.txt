@@ -1,0 +1,6 @@
+leg1 ask keys=['actual_placement', 'context_ids', 'context_titles', 'egress', 'inference_target', 'invocation_id', 'lens', 'model', 'operation_id', 'output', 'profile_id', 'provider', 'receipt_id', 'result_ref']
+leg1 invoke=op_f43e7e2348d346e19d79e140ca019193 receipt=succeeded ask_results=1
+leg2 run keys=['actual_placement', 'artifact_id', 'created_at', 'inference_target', 'invocation_id', 'name', 'operation_id', 'output', 'profile_id', 'provider', 'receipt_id', 'recipe_id', 'result_ref', 'sources']
+leg2 invocations=10 recipe_results=1
+leg3 post-mutation raised ServiceError: Destination 'LAN .43 (mutated)' refused the run: Cloud server error (502) at http://127.0.0.1:9/v1: Proxy upstream unreachable: connect ECONNREFUSED 127.0.0.1:9
+WALK OK: Ask and a saved Agent both dispatch through the admitted door with staged projections finalized after receipts; mutation cannot retarget.

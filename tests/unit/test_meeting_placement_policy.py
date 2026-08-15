@@ -3,7 +3,7 @@
 Meeting intelligence had two owners with no stated precedence: the
 ``intel_provider`` intent (local/auto/cloud) and the ``intel_profile_id``
 destination pointer. With ``intel_provider`` defaulting to ``"local"``,
-``build_configured_meeting_intel`` passed ``provider="local"`` and the resolved
+the configured construction passed ``provider="local"`` and the resolved
 destination was ignored — selecting a Meetings destination did NOTHING (a
 silent no-op), while a ``meshNode`` pointer silently won and egressed.
 
@@ -33,10 +33,26 @@ from holdspeak.intel.providers import (
     PLACEMENT_DESTINATION,
     PLACEMENT_PROVIDER,
     PLACEMENT_PROVIDER_OVERRIDDEN,
-    build_configured_meeting_intel,
+    configured_meeting_intel,
     resolve_meeting_placement,
 )
 
+from tests.unit.admitted_context import admitted_context
+
+
+
+def _configured_intel():
+    """The ONE configured-construction entrance (HS-131-14).
+
+    The old public uncontextual factory is gone: the body is private and reachable
+    only through ``configured_meeting_intel``, which refuses without the dispatch
+    context an admitted child carries. The placement assertions below are unchanged
+    — what changed is that reaching the constructor now requires admission.
+    """
+    revision = SimpleNamespace(id="dep_configured", destination_id="configured")
+    return configured_meeting_intel(
+        context=admitted_context(revision=revision), revision=revision
+    )
 
 def _meeting_cfg(**overrides):
     base = dict(
@@ -89,14 +105,14 @@ def test_local_provider_plus_selected_destination_used_to_be_a_no_op() -> None:
     assert placement.profile_id == "p-43"
 
 
-def test_build_configured_honors_the_selected_destination_under_local(monkeypatch) -> None:
-    """End-to-end: build_configured_meeting_intel places the run on the
+def test_configured_intel_honors_the_selected_destination_under_local(monkeypatch) -> None:
+    """End-to-end: the configured entrance places the run on the
     selected endpoint even though intel_provider='local' (the old no-op)."""
     cfg = SimpleNamespace(meeting=_meeting_cfg(intel_provider="local", intel_profile_id="p-43"))
     monkeypatch.setattr("holdspeak.config.Config.load", classmethod(lambda cls, path=None: cfg))
     monkeypatch.setattr(providers, "_lookup_profile_record", lambda pid: _lan_profile())
 
-    intel = build_configured_meeting_intel()
+    intel = _configured_intel()
     assert intel.provider == "cloud"  # NOT "local" — the destination took effect
     assert intel.cloud_base_url == "http://192.168.1.43:8080/v1"
     assert intel.cloud_model == "Qwen3.5-9B-Q6_K"
@@ -151,7 +167,7 @@ def test_mesh_destination_is_never_local(monkeypatch) -> None:
     assert "local only" not in description.lower()
 
 
-def test_build_configured_mesh_destination_relays(monkeypatch) -> None:
+def test_configured_intel_mesh_destination_relays(monkeypatch) -> None:
     cfg = SimpleNamespace(meeting=_meeting_cfg(intel_provider="local", intel_profile_id="p-phone"))
     monkeypatch.setattr("holdspeak.config.Config.load", classmethod(lambda cls, path=None: cfg))
     monkeypatch.setattr(
@@ -161,7 +177,7 @@ def test_build_configured_mesh_destination_relays(monkeypatch) -> None:
             id="p-phone", kind="meshNode", base_url=None, node="walk-edge", model="qwen3.5-4b"
         ),
     )
-    intel = build_configured_meeting_intel()
+    intel = _configured_intel()
     assert getattr(intel, "active_provider", "") == "mesh" or intel.__class__.__name__ == "MeshRelayIntel"
 
 

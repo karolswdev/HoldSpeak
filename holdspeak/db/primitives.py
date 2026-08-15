@@ -27,6 +27,7 @@ from datetime import datetime, timezone
 from typing import Any, Optional
 
 from ..logging_config import get_logger
+from ..deployment_revisions import DeploymentRevision
 from .base import BaseRepository
 from .relationships import qualified_ref
 from .models import (
@@ -1450,3 +1451,44 @@ def _backfill_directory_name_normalized(conn: sqlite3.Connection) -> None:
             "UPDATE directories SET name = ?, name_normalized = ? WHERE id = ?",
             (candidate, candidate_norm, row["id"]),
         )
+
+
+class DeploymentRevisionRepository(BaseRepository):
+    """Content-addressed deployment specifications; credentials never enter rows."""
+
+    table = "deployment_revisions"
+
+    def upsert(self, revision: DeploymentRevision) -> DeploymentRevision:
+        with self._connection() as conn:
+            conn.execute(
+                """INSERT OR IGNORE INTO deployment_revisions
+                   (id, destination_id, kind, engine, model, node, boundary,
+                    endpoint, model_path, secret_slot)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                (revision.id, revision.destination_id, revision.kind, revision.engine,
+                 revision.model, revision.node, revision.boundary, revision.endpoint,
+                 revision.model_path, revision.secret_slot),
+            )
+        return revision
+
+    def get(self, revision_id: str) -> Optional[DeploymentRevision]:
+        with self._connection() as conn:
+            row = conn.execute(
+                "SELECT * FROM deployment_revisions WHERE id = ?", (str(revision_id),)
+            ).fetchone()
+        if row is None:
+            return None
+        return DeploymentRevision(
+            id=row["id"], destination_id=row["destination_id"], kind=row["kind"],
+            engine=row["engine"], model=row["model"], node=row["node"],
+            boundary=row["boundary"], endpoint=row["endpoint"],
+            model_path=row["model_path"], secret_slot=row["secret_slot"],
+        )
+
+    def list(self, *, limit: int = 500) -> list[DeploymentRevision]:
+        bounded = max(1, min(int(limit), 2000))
+        with self._connection() as conn:
+            rows = conn.execute(
+                "SELECT * FROM deployment_revisions ORDER BY id LIMIT ?", (bounded,)
+            ).fetchall()
+        return [self.get(row["id"]) for row in rows if self.get(row["id"]) is not None]

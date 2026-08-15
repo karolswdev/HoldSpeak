@@ -89,6 +89,14 @@ def test_codec_derives_placement_model_egress_and_rejects_assertions(rig) -> Non
     assert refused["receipt"]["outcome"] == "inference_placement_not_client_settable"
 
 
+def test_only_owner_can_declare_continuation_identities(rig) -> None:
+    _, broker = rig
+    request = _run_request("continuation")
+    request["arguments"]["continuation_identities"] = ["agent:bound"]
+    refused = broker.submit(request, Principal(PrincipalKind.AGENT, "agent:unbound"))
+    assert refused["receipt"]["outcome"] == "continuation_identities_owner_required"
+
+
 def test_token_stream_is_refused_before_any_native_invocation(rig) -> None:
     database, broker = rig
     request = _run_request("tokens")
@@ -124,7 +132,7 @@ def test_tool_effect_is_causally_linked_child_with_own_receipt(rig, tmp_path: Pa
     effect_path = tmp_path / "child-proof.txt"
     effect_path.write_text("written only after child admission", encoding="utf-8")
     receipt = broker.receipt(
-        approved["operation_id"], "succeeded", f"file:{effect_path}", tool_node
+        approved["operation_id"], "succeeded", f"file:{effect_path.name}", tool_node
     )
     stored = broker.store.operation(approved["operation_id"])
     assert stored["parent_operation_id"] == parent["operation_id"]
@@ -172,6 +180,27 @@ def test_cancellation_is_a_child_operation_with_receipt(rig) -> None:
     assert invocation.state == "cancelled"
     assert receipt["outcome"] == "succeeded"
     assert broker.store.operation(approved["operation_id"])["parent_operation_id"] == parent["operation_id"]
+
+
+def test_reaper_terminalizes_claimed_inference_cancel_child(rig) -> None:
+    _, broker = rig
+    parent, node, _ = _running(rig, "reap-cancel")
+    signal_id = "cancel_reap_" + uuid.uuid4().hex
+    signal = broker.submit(
+        {"request_schema": 1, "request_id": signal_id, "idempotency_key": signal_id,
+         "operation": {"name": "inference.cancel", "version": 1},
+         "parent_operation_id": parent["operation_id"], "target": {},
+         "arguments": {"invocation_id": parent["native_id"], "signal_id": signal_id, "reason": "owner_cancelled"}},
+        OWNER,
+    )
+    approved = broker.decide(signal["operation_id"], "approve", signal["revision"], OWNER)
+    assert broker.claim(node, signal_id)["operations"]
+    broker._clock = lambda: time.time() + 3601
+    assert {
+        "operation_id": approved["operation_id"], "state": "indeterminate", "outcome": "execution_liveness_expired",
+    } in broker.reap_expired()["reaped"]
+    receipt = broker.store.receipt(approved["operation_id"])
+    assert receipt["state"] == "indeterminate" and receipt["outcome"] == "execution_liveness_expired"
 
 
 def test_three_drivers_reach_literal_same_spine_functions(rig, monkeypatch) -> None:

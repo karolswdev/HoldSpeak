@@ -61,6 +61,10 @@ class IntelJob:
     meeting_title: Optional[str] = None
     started_at: Optional[datetime] = None
     intel_status_detail: Optional[str] = None
+    # HS-131-08: the structured work stop() displaced onto this job (slugs from
+    # `holdspeak.meeting_session.intel_plan.DISPLACED_*`). Empty for an ordinary
+    # deferred job, which runs base analysis and routed plugins only.
+    displaced_work: tuple[str, ...] = ()
 
 
 @dataclass
@@ -975,6 +979,7 @@ class MeshRelayJob:
     temperature: Optional[float] = None
     max_tokens: Optional[int] = None
     model_hint: str = ""
+    envelope: Optional[dict[str, Any]] = None
     status: str = "queued"  # queued | running | completed | failed
     result: Optional[str] = None
     error: Optional[str] = None
@@ -982,6 +987,17 @@ class MeshRelayJob:
     created_at: str = ""
     claimed_at: Optional[str] = None
     completed_at: Optional[str] = None
+    # HS-131-16: the explicit relay proof. `destination_*` is bound at enqueue
+    # and is the ONLY thing a claim may be authorized against; `claimed_*`
+    # records who actually won it. `dispatch_offer` is the hub-signed offer this
+    # claim produced, kept so settlement can revalidate the exact signature it
+    # issued rather than trust the report that comes back.
+    destination_node_id: str = ""
+    destination_generation: int = 0
+    claimed_by_node_id: str = ""
+    claimed_generation: int = 0
+    claim_nonce: str = ""
+    dispatch_offer: Optional[dict[str, Any]] = None
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -993,6 +1009,7 @@ class MeshRelayJob:
             "temperature": self.temperature,
             "max_tokens": self.max_tokens,
             "model_hint": self.model_hint,
+            "envelope": self.envelope,
             "status": self.status,
             "result": self.result,
             "error": self.error,
@@ -1063,6 +1080,7 @@ class WorkbenchRecord:
     schedule: Optional[str] = None
     resolver_profile_id: Optional[str] = None
     schedule_enabled: bool = False
+    schedule_revision: int = 1
     item_order_json: str = "[]"
     created_at: str = ""
     last_modified: str = ""
@@ -1077,6 +1095,7 @@ class WorkbenchRecord:
             "resolver_profile_id": self.resolver_profile_id,
             "schedule": self.schedule,
             "schedule_enabled": self.schedule_enabled,
+            "schedule_revision": self.schedule_revision,
             "item_order": json.loads(self.item_order_json) if self.item_order_json else [],
             "created_at": self.created_at,
             "last_modified": self.last_modified,
@@ -1142,6 +1161,7 @@ class WorkbenchRunRecord:
     items_attempted: int = 0
     items_completed: int = 0
     items_failed: int = 0
+    mint_failures: int = 0
     total_tokens: int = 0
     egress_boundary: str = ""
     model: str = ""
@@ -1159,6 +1179,7 @@ class WorkbenchRunRecord:
             "items_attempted": self.items_attempted,
             "items_completed": self.items_completed,
             "items_failed": self.items_failed,
+            "mint_failures": self.mint_failures,
             "total_tokens": self.total_tokens,
             "egress_boundary": self.egress_boundary,
             "model": self.model,

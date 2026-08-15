@@ -1,0 +1,4 @@
+leg1 hold parent=op_4904d33cd0894db88f096184b21cbf42 classify=honest-failure x2 (server line-JSON grammar) rewrite='{\n  "line": "The walk proves the session' sealed_to=1786433331
+leg2 browser handle=mic_3a53470e10da4582ab026ce55d92a0de child=succeeded close=mic_3a53470e10da4582ab026ce55d92a0de post-close fence='speech_provider_fenced'
+leg3 cancelled session fence='speech_provider_fenced' succeeded_children=0
+WALK OK: hold and browser dictation sessions admitted over frozen lan43 plans; real classify/rewrite children on metal with exact frozen revisions and terminal receipts; the release seal lowered the deadline; close and cancel fence provider dispatch by name. Whisper-on-MLX and the latency bound are proven by the committed A/B artifacts.

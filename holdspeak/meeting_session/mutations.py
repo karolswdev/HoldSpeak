@@ -26,14 +26,12 @@ if TYPE_CHECKING:
 # Optional imports for intel (the same guarded pattern as session.py).
 try:
     from ..intel import (
-        MeetingIntel,
         IntelResult,
         ActionItem,
         get_intel_runtime_status,
         resolve_intel_provider,
     )
 except ImportError:
-    MeetingIntel = None  # type: ignore
     IntelResult = None  # type: ignore
     ActionItem = None  # type: ignore
     get_intel_runtime_status = None  # type: ignore

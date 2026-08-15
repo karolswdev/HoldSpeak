@@ -3,7 +3,7 @@
  * createPrimitive, updatePrimitive, deletePrimitive, renameZone,
  * fileIntoDir, removeFromDir, fileIntoKnowledge, seedDesk, resetDesk,
  * registerRepository, answerCoder, speakToCoder, runCapability. */
-import { apiRequest } from "../../lib/api";
+import { apiRequest, newDeliveryId } from "../../lib/api";
 import { PRIMITIVES, type PrimitiveKind } from "../../lib/primitives";
 import {
   EMPTY_ITEMS,
@@ -445,7 +445,11 @@ export const createDataSlice: SliceCreator<DataSlice> = (set, get) => ({
       const res = await apiRequest("/api/dictation/remote", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ text, target_mode: "agent" }),
+        body: JSON.stringify({
+          text,
+          target_mode: "agent",
+          delivery_id: newDeliveryId(),
+        }),
       });
       return res.ok;
     } catch {

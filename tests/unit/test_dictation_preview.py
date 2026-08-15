@@ -47,7 +47,9 @@ class _Rig:
 
     # ── the mixin's collaborators, stubbed honestly ──
     def _ensure_transcriber_loaded(self):
-        return SimpleNamespace(transcribe=lambda audio: "hello world")
+        # HS-131-09: the transcriber now takes the live session's admission
+        # (None here — this rig exercises the preview fork, not admission).
+        return SimpleNamespace(transcribe=lambda audio, **kwargs: "hello world")
 
     def _set_runtime_activity(self, state: str, **kwargs) -> None:
         self.activity.append(kwargs.get("last_event", state))

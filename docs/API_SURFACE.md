@@ -9,7 +9,7 @@ and the clients that call it (extracted from the real call sites in
 `web/src` and `apple/`). "server only" means no in-repo client calls
 it today.
 
-Routes: 436 (plus static mounts). iOS-consumed: 88. Web-consumed: 337.
+Routes: 443 (plus static mounts). iOS-consumed: 88. Web-consumed: 339.
 
 ## device_audio_ws
 
@@ -483,6 +483,7 @@ Routes: 436 (plus static mounts). iOS-consumed: 88. Web-consumed: 337.
 |---|---|---|
 | POST | `/api/ask` | ios, web |
 | POST | `/api/ask/keep` | web |
+| POST | `/api/ask/{invocation_id}/cancel` | server only |
 | POST | `/api/grounding/resolve` | web |
 | GET | `/api/models` | web |
 
@@ -492,6 +493,7 @@ Routes: 436 (plus static mounts). iOS-consumed: 88. Web-consumed: 337.
 |---|---|---|
 | GET | `/api/chains` | web |
 | POST | `/api/chains` | web |
+| POST | `/api/chains/runs/{parent_operation_id}/cancel` | server only |
 | DELETE | `/api/chains/{chain_id}` | web |
 | GET | `/api/chains/{chain_id}` | web |
 | PUT | `/api/chains/{chain_id}` | web |
@@ -579,6 +581,7 @@ Routes: 436 (plus static mounts). iOS-consumed: 88. Web-consumed: 337.
 | GET | `/api/recipes/{recipe_id}` | web |
 | PUT | `/api/recipes/{recipe_id}` | web |
 | POST | `/api/recipes/{recipe_id}/chat` | web |
+| POST | `/api/recipes/{recipe_id}/invocations/{invocation_id}/cancel` | server only |
 | POST | `/api/recipes/{recipe_id}/keep` | web |
 | POST | `/api/recipes/{recipe_id}/run` | ios, web |
 
@@ -606,6 +609,7 @@ Routes: 436 (plus static mounts). iOS-consumed: 88. Web-consumed: 337.
 | POST | `/api/workbenches/{workbench_id}/memory/{index}/promote` | web |
 | POST | `/api/workbenches/{workbench_id}/run` | web |
 | GET | `/api/workbenches/{workbench_id}/runs` | web |
+| POST | `/api/workbenches/{workbench_id}/runs/{parent_operation_id}/cancel` | server only |
 | POST | `/api/workbenches/{workbench_id}/voice/resolve` | web |
 
 ## web.routes.primitives.workflows
@@ -614,6 +618,7 @@ Routes: 436 (plus static mounts). iOS-consumed: 88. Web-consumed: 337.
 |---|---|---|
 | GET | `/api/workflows` | web |
 | POST | `/api/workflows` | web |
+| POST | `/api/workflows/runs/{parent_operation_id}/cancel` | server only |
 | DELETE | `/api/workflows/{workflow_id}` | web |
 | GET | `/api/workflows/{workflow_id}` | web |
 | PUT | `/api/workflows/{workflow_id}` | web |
@@ -795,6 +800,8 @@ Routes: 436 (plus static mounts). iOS-consumed: 88. Web-consumed: 337.
 | Method | Path | Consumers |
 |---|---|---|
 | POST | `/api/commands/test` | ios, web |
+| POST | `/api/dictation/mic/close` | web |
+| POST | `/api/dictation/mic/open` | web |
 | POST | `/api/dictation/preview/discard` | web |
 | POST | `/api/dictation/preview/type` | web |
 | POST | `/api/dictation/transcribe` | web |

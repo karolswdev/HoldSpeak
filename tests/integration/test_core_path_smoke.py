@@ -40,6 +40,9 @@ from pathlib import Path
 import numpy as np
 import pytest
 
+from holdspeak.config import Config
+from holdspeak.db import Database
+from holdspeak.speech_session import admit_hold_session
 from holdspeak.text_processor import TextProcessor
 from holdspeak.transcribe import Transcriber, TranscriberError, _resolve_backend
 
@@ -79,16 +82,33 @@ class _CapturingTyper:
         self.typed.append(text)
 
 
-def test_core_path_audio_to_injected_text() -> None:
+def test_core_path_audio_to_injected_text(tmp_path, monkeypatch) -> None:
     """Real audio -> real transcript -> injection seam, asserting on the text."""
     _require_backend()
     assert _FIXTURE.exists(), f"missing fixture: {_FIXTURE}"
 
     audio = _load_wav_16k_mono(_FIXTURE)
 
+    # HS-131-09: real Whisper is a real model invocation, so the core path now
+    # runs under the same admitted `dictation.session` a hold press admits — the
+    # model load and the transcription are its children. Nothing about the
+    # transcription itself is faked; only the database the kernel journals into is
+    # isolated, so the smoke test never writes to the owner's real one.
+    db = Database(tmp_path / "core-path.db")
+    monkeypatch.setattr("holdspeak.db.get_database", lambda *_a, **_k: db)
+    config = Config()
+    # The frozen plan must name the deployment this test actually dispatches.
+    config.model.name = _SMOKE_MODEL
+    session = admit_hold_session(config_snapshot=config)
+
     # The transformation `WebRuntime._transcribe_and_type` runs to get the text
     # it hands the typer: transcribe -> process -> type_text(seam).
-    transcript = Transcriber(model_name=_SMOKE_MODEL).transcribe(audio)
+    try:
+        transcript = Transcriber(model_name=_SMOKE_MODEL).transcribe(
+            audio, admission=session.transcription()
+        )
+    finally:
+        session.close("succeeded")
     processed = TextProcessor().process(transcript)
 
     typer = _CapturingTyper()

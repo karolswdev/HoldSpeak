@@ -16,6 +16,7 @@ import pytest
 from holdspeak import rails_observer
 from holdspeak.config import Config, RailsObserverConfig
 from holdspeak.db.core import Database, reset_database
+from holdspeak.principals import Principal, PrincipalKind
 
 
 def _event(ts: str, event: str, story: str = "", **detail):
@@ -115,6 +116,47 @@ def test_degraded_journal_body_is_honest() -> None:
     )
     assert "summary unavailable" in body
     assert "gate_pass" in body  # events recorded verbatim
+
+
+def test_admitted_summary_stamps_journal_observer_provenance_and_degrades_honestly(db) -> None:
+    profile = db.profiles.upsert(
+        profile_id="rails", name="Rails", kind="openAICompatible",
+        base_url="http://rails", model="rails-model",
+    )
+    principal = Principal(
+        PrincipalKind.SERVICE, "rails-observer",
+        frozenset({("inference.invoke", 1)}), "rails-observer:journal-only",
+    )
+    from holdspeak.kernel.runtime import _configure
+    broker = _configure(db)
+
+    class FakeIntel:
+        def run_prompt(self, **_):
+            return "Only the observed facts."
+
+    broker.inference_runner._engine_factory = lambda _revision, **_kw: FakeIntel()
+    summarizer = rails_observer.build_profile_summarizer(
+        profile.id, db=db, broker=broker, principal=principal,
+    )
+    batch = rails_observer.summarize_batch([_event("t1", "gate_pass")], summarize_fn=summarizer)
+    note = rails_observer.record_journal_entry(db, batch, title="Rails journal")
+    with db._connection() as conn:
+        operation_id = conn.execute(
+            "SELECT operation_id FROM kernel_operations WHERE native_id LIKE 'rails_%'"
+        ).fetchone()[0]
+    receipt = broker.store.receipt(operation_id)
+    assert batch == {"events": [_event("t1", "gate_pass")], "summary": "Only the observed facts.", "degraded": False}
+    assert "Only the observed facts." in note.body_markdown
+    assert (receipt["actor_kind"], receipt["actor_identity"], receipt["authority_basis"]) == (
+        "service", "rails-observer", "rails-observer:journal-only",
+    )
+
+    broker.inference_runner._engine_factory = lambda _revision, **_kw: (_ for _ in ()).throw(RuntimeError("model down"))
+    degraded = rails_observer.summarize_batch([_event("t2", "gate_refusal")], summarize_fn=summarizer)
+    degraded_note = rails_observer.record_journal_entry(db, degraded, title="Rails journal")
+    assert degraded == {"events": [_event("t2", "gate_refusal")], "summary": "", "degraded": True}
+    assert "Only the observed facts." not in degraded_note.body_markdown
+    assert "summary unavailable" in degraded_note.body_markdown
 
 
 # --- the journal write (a real note) ---------------------------------------

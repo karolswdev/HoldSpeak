@@ -36,18 +36,30 @@ The nodes wire projection labels those rows honestly.
 from __future__ import annotations
 
 import hmac
-import json
-import os
 import secrets
 import time
 import uuid
+from contextlib import contextmanager
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Callable, Optional
+from typing import TYPE_CHECKING, Any, Callable, Iterator, Optional
+
+if TYPE_CHECKING:  # pragma: no cover - typing only
+    from .node_credentials import NodeCredentialSnapshot
 
 NODE_PROTOCOL = 1
-NODE_TOKENS_SCHEMA = 1
+#: v2 adds the credential generation and the per-node hub offer keypair
+#: (HS-131-16). A v1 document is MIGRATED, losslessly: every existing pairing
+#: keeps its node id, token, and revocation state and gains generation 1 with no
+#: offer key, so those nodes still authenticate while a signed dispatch offer
+#: refuses BY NAME until they are re-paired (pairing mints the keypair; rotation
+#: deliberately does not, because the hub's signing key is the hub's). A
+#: document of any other schema refuses rather than being read as empty — the one
+#: thing custody may never do is silently become `{}` and erase the pairings a
+#: subsequent write would then drop (repair R4).
+NODE_TOKENS_SCHEMA = 2
+NODE_TOKENS_SCHEMA_V1 = 1
 DEFAULT_TOKEN_STORE_PATH = Path.home() / ".holdspeak" / "node_auth_tokens.json"
 
 HEARTBEAT_SECONDS = 5.0
@@ -111,43 +123,155 @@ def _utc_now_iso() -> str:
 
 
 class NodeTokenStore:
-    """Per-node pairing tokens, outside repository content (§12.1).
+    """Per-node pairing tokens and hub offer keys, outside repository content (§12.1).
 
     ``node_id`` is stable across restarts AND across rotation; it
     changes only on re-pair (revoke + create) — §3's identity table.
+
+    HS-131-16 makes this custody process-coherent and asymmetric (design §1,
+    Sol Amendments 1 and 3):
+
+    * Every authentication, lookup, and lifecycle verb performs a FRESH read.
+      Nothing is cached in the instance, so a rotate or revoke performed by the
+      CLI is visible to a running hub immediately, without a restart.
+    * Writers hold an exclusive cross-process lock across read-modify-write and
+      replace the document atomically, so two concurrent verbs cannot lose one
+      another's edit and a reader never observes a torn file.
+    * A pairing carries a monotonic ``generation`` (bumped by create AND rotate)
+      and a per-node Ed25519 offer keypair. The queue binds the generation at
+      enqueue, so a rotated or re-paired credential cannot inherit old work.
+      Only the PUBLIC half of the offer key ever leaves this file; the private
+      half signs dispatch offers inside the hub's own claim transaction and
+      never crosses a process boundary.
     """
 
     def __init__(self, path: Optional[Path] = None) -> None:
         self._path = Path(path) if path else DEFAULT_TOKEN_STORE_PATH
-        self._nodes: dict[str, dict[str, Any]] = {}
-        self._load()
 
     # persistence ------------------------------------------------------
 
-    def _load(self) -> None:
-        try:
-            raw = json.loads(self._path.read_text(encoding="utf-8"))
-        except (OSError, ValueError):
-            return
-        if isinstance(raw, dict) and raw.get("node_tokens_schema") == NODE_TOKENS_SCHEMA:
-            nodes = raw.get("nodes")
-            if isinstance(nodes, dict):
-                self._nodes = {
-                    str(name): dict(entry)
-                    for name, entry in nodes.items()
-                    if isinstance(entry, dict)
-                }
+    def _refuse_custody(self) -> "NodeLinkError":
+        """The ONE fixed custody refusal (repair R2.6).
 
-    def _save(self) -> None:
-        doc = {"node_tokens_schema": NODE_TOKENS_SCHEMA, "nodes": self._nodes}
-        self._path.parent.mkdir(parents=True, exist_ok=True)
-        self._path.write_text(
-            json.dumps(doc, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+        Unknown schema, a schema this build knows whose ``nodes`` is not an
+        object, and a malformed node entry are the same failure with three
+        surfaces: this document is not something this build can interpret. Every
+        one of them raises — none of them returns ``{}`` — because ``{}`` is what
+        the next ``create``, ``rotate``, or ``pair`` would WRITE, silently
+        erasing every unrelated pairing on this machine.
+        """
+        return NodeLinkError(
+            "node_custody_schema_unknown",
+            "this machine's node pairing custody is a shape this build cannot read",
         )
-        try:
-            os.chmod(self._path, 0o600)
-        except OSError:
-            pass
+
+    def _read(self) -> dict[str, dict[str, Any]]:
+        """The fresh, metadata-checked read every verb starts from.
+
+        Order is the repair (R2.6): the SCHEMA decides whether this document may
+        be interpreted at all, and it is checked BEFORE ``nodes`` is looked at.
+        The old order let an unknown schema whose ``nodes`` was not an object
+        fall out as an empty store — the exact silent-erasure path the schema
+        check existed to prevent.
+        """
+        from .node_credentials import read_private_document
+
+        document = read_private_document(self._path)
+        if document is None:
+            # No custody document at all: this machine has simply never paired.
+            return {}
+        if not isinstance(document, dict) or not document:
+            raise self._refuse_custody()
+        schema = document.get("node_tokens_schema")
+        if schema not in (NODE_TOKENS_SCHEMA, NODE_TOKENS_SCHEMA_V1):
+            raise self._refuse_custody()
+        nodes = document.get("nodes")
+        if not isinstance(nodes, dict):
+            raise self._refuse_custody()
+        entries: dict[str, dict[str, Any]] = {}
+        for name, entry in nodes.items():
+            if not isinstance(name, str) or not name.strip() or not isinstance(entry, dict):
+                # A non-dictionary node was silently DROPPED before, which the
+                # next write then made permanent. It refuses instead.
+                raise self._refuse_custody()
+            entries[str(name)] = self._validated_entry(entry)
+        if schema == NODE_TOKENS_SCHEMA_V1:
+            return {name: self._migrated_v1(entry) for name, entry in entries.items()}
+        return entries
+
+    def _validated_entry(self, entry: dict[str, Any]) -> dict[str, Any]:
+        """One pairing record, whole and well-typed, or the fixed refusal.
+
+        Lossless is the contract: what comes back is the entry as written, plus
+        nothing and minus nothing. Only the shape is judged.
+        """
+        checked = dict(entry)
+        if not isinstance(checked.get("node_id", ""), str):
+            raise self._refuse_custody()
+        if not isinstance(checked.get("token", ""), str):
+            raise self._refuse_custody()
+        if "revoked" in checked and not isinstance(checked["revoked"], bool):
+            raise self._refuse_custody()
+        generation = checked.get("generation")
+        if generation is not None and (
+            not isinstance(generation, int)
+            or isinstance(generation, bool)
+            or generation < 1
+        ):
+            raise self._refuse_custody()
+        for name in ("key_id", "offer_public_key", "offer_private_key"):
+            if name in checked and not isinstance(checked[name], str):
+                raise self._refuse_custody()
+        return checked
+
+    @staticmethod
+    def _migrated_v1(entry: dict[str, Any]) -> dict[str, Any]:
+        """One v1 pairing, carried forward whole.
+
+        Identity, token, and revocation survive exactly. What v1 could not have —
+        a credential generation and a hub offer keypair — is filled with
+        generation 1 and no key material, so the node still authenticates and a
+        dispatch offer for it refuses by name until it is rotated. Migration is
+        lossless for EVERY node or it does not happen: a malformed entry has
+        already refused above, without a write.
+        """
+        migrated = dict(entry)
+        migrated.setdefault("generation", 1)
+        migrated.setdefault("key_id", "")
+        migrated.setdefault("offer_public_key", "")
+        migrated.setdefault("offer_private_key", "")
+        return migrated
+
+    @contextmanager
+    def custody_lock(self) -> Iterator[None]:
+        """Hold this store's exclusive cross-process lock.
+
+        The claim and first-settlement transactions take it so that revalidating
+        a credential snapshot and committing against it are ONE decision: a
+        rotate, revoke, or re-pair either lands before the transaction opens or
+        waits for it to finish, and the loser refuses by name (repair R4).
+        """
+        from .node_credentials import exclusive_custody_lock
+
+        with exclusive_custody_lock(self._path):
+            yield
+
+    def _write(self, nodes: dict[str, dict[str, Any]]) -> None:
+        from .node_credentials import write_private_document
+
+        write_private_document(
+            self._path, {"node_tokens_schema": NODE_TOKENS_SCHEMA, "nodes": nodes}
+        )
+
+    @contextmanager
+    def _mutate(self) -> Iterator[dict[str, dict[str, Any]]]:
+        """Exclusive read-modify-write. The lock spans the whole edit."""
+        from .node_credentials import exclusive_custody_lock
+
+        with exclusive_custody_lock(self._path):
+            nodes = self._read()
+            yield nodes
+            self._write(nodes)
 
     # lifecycle --------------------------------------------------------
 
@@ -155,54 +279,85 @@ class NodeTokenStore:
         """Pair a node: returns ``(node_id, token)``. Re-pairing a
         revoked name mints a NEW node_id (§3); an active name refuses
         (rotate instead — pairing is deliberate)."""
+        return self.pair(name)[0:2]
+
+    def pair(self, name: str) -> tuple[str, str, "NodeCredentialSnapshot"]:
+        """``create`` with the worker's pin: ``(node_id, token, snapshot)``.
+
+        The snapshot is the PUBLIC view — node id, generation, key id, and the
+        offer public key — which is exactly what a worker pins and nothing more.
+        """
+        from .node_credentials import NodeCredentialSnapshot, mint_offer_keypair
+
         name = self._clean_name(name)
-        entry = self._nodes.get(name)
-        if entry is not None and not entry.get("revoked"):
-            raise NodeLinkError(
-                "already_paired", f"node '{name}' is already paired; rotate instead"
-            )
-        token = secrets.token_urlsafe(24)
-        node_id = "node_" + uuid.uuid4().hex[:16]
-        self._nodes[name] = {
-            "node_id": node_id,
-            "token": token,
-            "revoked": False,
-            "created_at": _utc_now_iso(),
-        }
-        self._save()
-        return node_id, token
+        with self._mutate() as nodes:
+            entry = nodes.get(name)
+            if entry is not None and not entry.get("revoked"):
+                raise NodeLinkError(
+                    "already_paired", f"node '{name}' is already paired; rotate instead"
+                )
+            key_id, private_key, public_key = mint_offer_keypair()
+            token = secrets.token_urlsafe(24)
+            node_id = "node_" + uuid.uuid4().hex[:16]
+            generation = int(entry.get("generation") or 0) + 1 if entry else 1
+            nodes[name] = {
+                "node_id": node_id,
+                "token": token,
+                "generation": generation,
+                "key_id": key_id,
+                "offer_private_key": private_key,
+                "offer_public_key": public_key,
+                "revoked": False,
+                "created_at": _utc_now_iso(),
+            }
+        return node_id, token, NodeCredentialSnapshot(
+            name=name,
+            node_id=node_id,
+            generation=generation,
+            key_id=key_id,
+            offer_public_key=public_key,
+        )
 
     def rotate(self, name: str) -> str:
-        """New token, same node identity. The old token is dead the
-        moment this returns — no repository edit involved."""
+        """New token and a new generation, same node identity and offer key.
+
+        The old token is dead the moment this returns — no repository edit
+        involved. The generation moves so queued work addressed to the previous
+        credential cannot be claimed under the replacement (Sol Amendment 3);
+        the hub's signing key is the HUB's, not the node's, so it is unchanged
+        and a worker's pin stays valid.
+        """
         name = self._clean_name(name)
-        entry = self._nodes.get(name)
-        if entry is None or entry.get("revoked"):
-            raise NodeLinkError("unknown_node", f"no active pairing for '{name}'")
-        entry["token"] = secrets.token_urlsafe(24)
-        entry["rotated_at"] = _utc_now_iso()
-        self._save()
-        return str(entry["token"])
+        with self._mutate() as nodes:
+            entry = nodes.get(name)
+            if entry is None or entry.get("revoked"):
+                raise NodeLinkError("unknown_node", f"no active pairing for '{name}'")
+            entry["token"] = secrets.token_urlsafe(24)
+            entry["generation"] = int(entry.get("generation") or 1) + 1
+            entry["rotated_at"] = _utc_now_iso()
+            token = str(entry["token"])
+        return token
 
     def revoke(self, name: str) -> None:
         """Kill the pairing by name. The record stays (revoked) so a
         revoked node's hello/heartbeat refuses BY NAME, not as an
-        anonymous unknown."""
+        anonymous unknown. The private offer key goes with it."""
         name = self._clean_name(name)
-        entry = self._nodes.get(name)
-        if entry is None:
-            raise NodeLinkError("unknown_node", f"no pairing for '{name}'")
-        entry["revoked"] = True
-        entry["token"] = ""
-        entry["revoked_at"] = _utc_now_iso()
-        self._save()
+        with self._mutate() as nodes:
+            entry = nodes.get(name)
+            if entry is None:
+                raise NodeLinkError("unknown_node", f"no pairing for '{name}'")
+            entry["revoked"] = True
+            entry["token"] = ""
+            entry["offer_private_key"] = ""
+            entry["revoked_at"] = _utc_now_iso()
 
     def ensure(self, name: str) -> tuple[str, str]:
         """(node_id, token) — creating the pairing on first use. A
         revoked name is NOT resurrected: revocation holds until an
         explicit re-pair."""
         name = self._clean_name(name)
-        entry = self._nodes.get(name)
+        entry = self._read().get(name)
         if entry is None:
             return self.create(name)
         if entry.get("revoked"):
@@ -212,11 +367,25 @@ class NodeTokenStore:
     def verify(
         self, name: str, token: Optional[str], *, web_token: Optional[str] = None
     ) -> str:
-        """Authenticate one node request; returns the ``node_id``.
+        """Authenticate one node request; returns the ``node_id``."""
+        return self.authenticate(name, token, web_token=web_token).node_id
+
+    def authenticate(
+        self, name: str, token: Optional[str], *, web_token: Optional[str] = None
+    ) -> "NodeCredentialSnapshot":
+        """Authenticate one node request into ONE fresh credential snapshot.
 
         Order matters: the web-token equality check runs FIRST so a
         browser credential can never authenticate as a node even if
-        someone copied it into the store (§12.1 distinctness)."""
+        someone copied it into the store (§12.1 distinctness).
+
+        The returned snapshot carries the node id, the exact credential
+        generation, and the offer key id — the same values the claim
+        transaction revalidates at its commit boundary — and never the private
+        signing key.
+        """
+        from .node_credentials import NodeCredentialSnapshot
+
         name = self._clean_name(name)
         provided = str(token or "")
         if not provided:
@@ -228,7 +397,7 @@ class NodeTokenStore:
                 "node_token_required",
                 "the browser token cannot authenticate as a node",
             )
-        entry = self._nodes.get(name)
+        entry = self._read().get(name)
         if entry is None:
             raise NodeLinkError("unknown_node", f"no pairing for '{name}'")
         if entry.get("revoked"):
@@ -238,31 +407,152 @@ class NodeTokenStore:
             provided.encode("utf-8"), expected.encode("utf-8")
         ):
             raise NodeLinkError("token_rejected", f"token rejected for '{name}'")
-        return str(entry["node_id"])
+        return NodeCredentialSnapshot(
+            name=name,
+            node_id=str(entry.get("node_id") or ""),
+            generation=int(entry.get("generation") or 1),
+            key_id=str(entry.get("key_id") or ""),
+            offer_public_key=str(entry.get("offer_public_key") or ""),
+            token=expected,
+        )
+
+    def pairing(self, name: str) -> Optional["NodeCredentialSnapshot"]:
+        """The PUBLIC view of one active pairing, or ``None`` when there is none.
+
+        What the relay enqueue needs to bind a job to a stable destination: the
+        node id and the credential generation that is live right now. Carries no
+        token and no key material.
+        """
+        from .node_credentials import NodeCredentialSnapshot
+
+        entry = self._read().get(str(name or "").strip())
+        if entry is None or entry.get("revoked"):
+            return None
+        return NodeCredentialSnapshot(
+            name=str(name).strip(),
+            node_id=str(entry.get("node_id") or ""),
+            generation=int(entry.get("generation") or 1),
+            key_id=str(entry.get("key_id") or ""),
+            offer_public_key=str(entry.get("offer_public_key") or ""),
+        )
+
+    def bearer_token(self, name: str) -> str:
+        """One active pairing's bearer token, for the deliberate export only.
+
+        Distribution is an ACT: `holdspeak node token export` is the single
+        caller, it writes owner-only custody, and it carries no key material.
+        Nothing in the request path uses this — authentication compares tokens,
+        it never fetches one.
+        """
+        name = self._clean_name(name)
+        entry = self._read().get(name)
+        if entry is None or entry.get("revoked"):
+            raise NodeLinkError("unknown_node", f"no active pairing for '{name}'")
+        token = str(entry.get("token") or "")
+        if not token:
+            raise NodeLinkError("unknown_node", f"node '{name}' has no token")
+        return token
+
+    def export_pairing(self, name: str) -> tuple["NodeCredentialSnapshot", str]:
+        """The public snapshot AND its bearer token, from ONE locked document.
+
+        Repair R2.9. Building an export out of :meth:`pairing` followed by
+        :meth:`bearer_token` is two independent locked reads, and a rotate or
+        re-pair that lands between them produces a transfer file that pairs
+        generation 1's identity and pin with generation 2's token — a document
+        that authenticates as nothing and refuses at the first claim. One read
+        under one lock cannot straddle the change: the export is either entirely
+        before it or entirely after it.
+        """
+        from .node_credentials import NodeCredentialSnapshot, exclusive_custody_lock
+
+        name = self._clean_name(name)
+        with exclusive_custody_lock(self._path):
+            entry = self._read().get(name)
+            if entry is None or entry.get("revoked"):
+                raise NodeLinkError("unknown_node", f"no active pairing for '{name}'")
+            token = str(entry.get("token") or "")
+            if not token:
+                raise NodeLinkError("unknown_node", f"node '{name}' has no token")
+            snapshot = NodeCredentialSnapshot(
+                name=name,
+                node_id=str(entry.get("node_id") or ""),
+                generation=int(entry.get("generation") or 1),
+                key_id=str(entry.get("key_id") or ""),
+                offer_public_key=str(entry.get("offer_public_key") or ""),
+            )
+        return snapshot, token
+
+    def signing_snapshot(self, name: str) -> "NodeCredentialSnapshot":
+        """The hub-only view that includes the offer PRIVATE key.
+
+        Read fresh inside the claim transaction and never handed to a caller
+        that is merely authenticating a request.
+        """
+        from .node_credentials import NodeCredentialSnapshot
+
+        name = self._clean_name(name)
+        entry = self._read().get(name)
+        if entry is None or entry.get("revoked"):
+            raise NodeLinkError("unknown_node", f"no active pairing for '{name}'")
+        private_key = str(entry.get("offer_private_key") or "")
+        if not private_key:
+            raise NodeLinkError("unknown_node", f"node '{name}' has no offer key")
+        return NodeCredentialSnapshot(
+            name=name,
+            node_id=str(entry.get("node_id") or ""),
+            generation=int(entry.get("generation") or 1),
+            key_id=str(entry.get("key_id") or ""),
+            offer_public_key=str(entry.get("offer_public_key") or ""),
+            token=str(entry.get("token") or ""),
+            offer_private_key=private_key,
+        )
 
     def principal_identity(self, token: Optional[str]) -> Optional[str]:
         """Derive a node identity from a credential without caller labels."""
+        snapshot = self.identify(token)
+        return snapshot.node_id if snapshot is not None else None
+
+    def identify(self, token: Optional[str]) -> Optional["NodeCredentialSnapshot"]:
+        """The whole authenticated identity behind one credential, or ``None``.
+
+        The edge needs the NAME and GENERATION, not only the opaque id: a mesh
+        claim is authorized against the queue row's destination node id AND its
+        enqueue-time generation, and neither may come from the request body.
+        """
+        from .node_credentials import NodeCredentialSnapshot
+
         provided = str(token or "")
         if not provided:
             return None
-        for entry in self._nodes.values():
+        for name, entry in self._read().items():
             if entry.get("revoked"):
                 continue
             expected = str(entry.get("token") or "")
             if expected and hmac.compare_digest(provided.encode(), expected.encode()):
-                return str(entry.get("node_id") or "") or None
+                return NodeCredentialSnapshot(
+                    name=str(name),
+                    node_id=str(entry.get("node_id") or ""),
+                    generation=int(entry.get("generation") or 1),
+                    key_id=str(entry.get("key_id") or ""),
+                    offer_public_key=str(entry.get("offer_public_key") or ""),
+                    token=expected,
+                )
         return None
 
     def status_rows(self) -> list[dict[str, Any]]:
         """Pairing inventory for the CLI: names and states, NEVER
-        token material."""
+        token or key material."""
+        nodes = self._read()
         rows = []
-        for name in sorted(self._nodes):
-            entry = self._nodes[name]
+        for name in sorted(nodes):
+            entry = nodes[name]
             rows.append(
                 {
                     "name": name,
                     "node_id": str(entry.get("node_id") or ""),
+                    "generation": int(entry.get("generation") or 1),
+                    "key_id": str(entry.get("key_id") or ""),
                     "revoked": bool(entry.get("revoked")),
                     "created_at": str(entry.get("created_at") or ""),
                 }

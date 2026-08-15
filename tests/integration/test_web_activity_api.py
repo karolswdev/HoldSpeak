@@ -14,6 +14,7 @@ from fastapi.testclient import TestClient
 # so Database.__init__ / get_database see the override.
 from holdspeak.db import core as db_module
 from holdspeak.db import Database, reset_database
+from holdspeak.principals import PrincipalKind
 from holdspeak.web_server import MeetingWebServer, WebRuntimeCallbacks
 
 pytestmark = [pytest.mark.requires_meeting]
@@ -295,7 +296,12 @@ def test_activity_meeting_candidate_manual_start_marks_started(
     assert payload["meeting"]["title"] == "Customer sync meeting"
     assert payload["candidate"]["status"] == "started"
     assert payload["candidate"]["started_meeting_id"] == "meeting-1"
-    on_start.assert_called_once_with()
+    # HS-131-08: capture start now carries the authenticated route principal,
+    # because live meeting intelligence is admitted under exactly that principal.
+    on_start.assert_called_once()
+    assert list(on_start.call_args.args) == []
+    started_principal = on_start.call_args.kwargs["principal"]
+    assert started_principal.kind is PrincipalKind.OWNER
     on_update_meeting.assert_called_once_with(title="Customer sync meeting", tags=None)
     assert broadcast_events[0][0] == "meeting_started"
     assert broadcast_events[0][1]["activity_meeting_candidate_id"] == candidate.id

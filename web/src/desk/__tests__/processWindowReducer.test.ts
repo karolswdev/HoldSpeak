@@ -71,6 +71,7 @@ describe("process window journal fold", () => {
       event("op_unknown", 4, "operation.admitted"),
       event("op_ended", 5, "operation.receipt", { head: "succeeded" }),
       event("op_failed", 6, "operation.receipt", { head: "executor_failed" }),
+      event("op_cancelled", 7, "operation.receipt", { head: "cancelled" }),
     ];
     const objects = [
       object("op_needs", "awaiting_decision", "waiting"),
@@ -79,6 +80,7 @@ describe("process window journal fold", () => {
       object("op_unknown", "claimed", "unknown"),
       object("op_ended", "succeeded", "ended"),
       object("op_failed", "failed", "failed"),
+      object("op_cancelled", "cancelled", "cancelled"),
     ];
     const sections = foldProcessWindow(events, objects);
 
@@ -94,7 +96,7 @@ describe("process window journal fold", () => {
     expect(flatten(rows(sections, "waiting"))).toEqual(["op_waiting"]);
     expect(flatten(rows(sections, "unknown"))).toEqual(["op_unknown"]);
     expect(new Set(flatten(rows(sections, "recently-ended")))).toEqual(
-      new Set(["op_ended", "op_failed"]),
+      new Set(["op_ended", "op_failed", "op_cancelled"]),
     );
   });
 

@@ -27,6 +27,7 @@ from holdspeak.config import (
     LLMRuntimeConfig,
 )
 from holdspeak.db import Database, reset_database
+from holdspeak.kernel.runtime import _configure
 from holdspeak.plugins.dictation.corrections import best_match_in
 from holdspeak.plugins.dictation.journal import DictationJournalRecorder
 from holdspeak.web.routes.dictation._helpers import _run_dictation_dry_run_text
@@ -183,21 +184,27 @@ def test_dry_run_returns_journal_id(persistent_db: Database, tmp_path, monkeypat
     (root / ".holdspeak").mkdir(parents=True)
     (root / ".holdspeak" / "blocks.yaml").write_text(_BLOCKS, encoding="utf-8")
     (root / "pyproject.toml").write_text('[project]\nname="proj"\n', encoding="utf-8")
-    monkeypatch.setattr(
-        Config,
-        "load",
-        classmethod(
-            lambda cls, *a, **k: Config(
-                dictation=DictationConfig(
-                    pipeline=DictationPipelineConfig(enabled=True, stages=["kb-enricher"]),
-                    runtime=LLMRuntimeConfig(),
-                )
-            )
-        ),
+    config = Config(
+        dictation=DictationConfig(
+            pipeline=DictationPipelineConfig(enabled=True, stages=["kb-enricher"]),
+            runtime=LLMRuntimeConfig(),
+        )
     )
+    monkeypatch.setattr(
+        Config, "load", classmethod(lambda cls, *a, **k: config)
+    )
+    monkeypatch.setattr("holdspeak.db.get_database", lambda: persistent_db)
+    _configure(persistent_db)
     recorder = DictationJournalRecorder(repository=persistent_db.dictation_journal)
     result = _run_dictation_dry_run_text(
-        "jot this down", str(root), None, suggestions={}, journal=recorder
+        "jot this down",
+        str(root),
+        None,
+        suggestions={},
+        config_snapshot=config,
+        admission=None,
+        fence=None,
+        journal=recorder,
     )
     assert result["journal_id"] is not None
     assert persistent_db.dictation_journal.get(result["journal_id"]) is not None
@@ -209,7 +216,14 @@ def test_moment_affordance_present_and_focus_safe(persistent_db: Database) -> No
     client = _client(persistent_db)
     body = client.get("/dictation").text
     assert '<div id="root"></div>' in body
-    source = (Path(__file__).resolve().parents[2] / "web/src/pages/cores/DictationCore.tsx").read_text()
+    # The in-moment affordance lives with the result panel the core renders
+    # (it moved out of DictationCore.tsx when the core was split); the surface is
+    # both files, so both are read.
+    root = Path(__file__).resolve().parents[2] / "web/src/pages/cores"
+    source = "\n".join(
+        [(root / "DictationCore.tsx").read_text()]
+        + [part.read_text() for part in sorted((root / "dictation").glob("*.ts*"))]
+    )
     assert "Correct this result" in source
     assert "Teach correction" in source
     assert "/api/dictation/corrections" in source

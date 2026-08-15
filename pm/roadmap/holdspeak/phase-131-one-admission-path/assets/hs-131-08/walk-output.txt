@@ -1,0 +1,6 @@
+Error stopping recorder: cannot unpack non-iterable NoneType object
+leg1 parent=op_864ca5fe9a7a4678aaca7b404b66f658 plan=sha256:e40146ec9 live-analysis=['dep_c133aacd2731dad110e52f75815ece80983123174fc17c70dabdb2c43d068959']
+leg2 windows=2 children=2 succeeded=2 snapshot=model output did not parse (endpoint forces line-JSON)
+leg3 stop -> parent=CANCELLED job=queued (honest, not ready-early)
+leg4 job parent=op_f8fcacaff5214f66a20df7d952de0645 children=2 outcomes=['succeeded', 'succeeded'] meeting intel_status=ready
+WALK OK: one admitted meeting.session parent over a frozen lan43 plan; two real live-window children with succeeded receipts; stop mid-stream cancelled the live parent and durably enqueued the displaced work with honest queued status; the deferred job ran as its own admitted parent under the queue service principal on real metal.

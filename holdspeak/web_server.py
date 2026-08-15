@@ -153,7 +153,12 @@ class WebRuntimeCallbacks:
     on_preview_type: Optional[Callable[[str], Optional[str]]] = None
     on_preview_discard: Optional[Callable[[str], bool]] = None
     # HS-78-01: speak-to-fill — browser audio in, the runtime's transcript out.
-    on_transcribe: Optional[Callable[[Any], str]] = None
+    # HS-131-09: `(audio, *, principal, mic_handle)` — the route supplies the
+    # authenticated identity and the opaque interval handle.
+    on_transcribe: Optional[Callable[..., str]] = None
+    # HS-131-09: the admitted variant — returns a handle carrying the text, the
+    # live provider admission, and the parent's close.
+    on_transcribe_admitted: Optional[Callable[..., Any]] = None
     on_dictation_config_changed: Optional[Callable[[], None]] = None
     # HSM-13-04: deliver a companion-dictated answer (already pipeline-processed by the
     # route) into the waiting coder session via the SAME tmux/type path local dictation
@@ -251,6 +256,7 @@ class MeetingWebServer:
         self.on_preview_type = callbacks.on_preview_type
         self.on_preview_discard = callbacks.on_preview_discard
         self.on_transcribe = callbacks.on_transcribe
+        self.on_transcribe_admitted = callbacks.on_transcribe_admitted
         self.on_dictation_config_changed = callbacks.on_dictation_config_changed
         self.on_remote_dictation = callbacks.on_remote_dictation
         # HS-112-06: the shared audio-floor arbiter (None on a bare server).
@@ -502,14 +508,21 @@ class MeetingWebServer:
             principal = derive_owner(token, self.auth_token)
             if principal is None:
                 principal = agent_credentials.derive(token)
+            credential = None
             if principal is None:
                 node_token = request.headers.get("x-holdspeak-node-token")
                 node_store = getattr(request.app.state, "node_token_store", None)
-                node_id = node_store.principal_identity(node_token) if node_store else None
-                if node_id:
-                    principal = Principal(PrincipalKind.NODE, node_id)
+                # HS-131-16: the whole authenticated snapshot, not only the opaque
+                # id. The mesh relay legs are authorized against the node's NAME
+                # and its exact credential generation, and neither may be read
+                # from the request body.
+                snapshot = node_store.identify(node_token) if node_store else None
+                if snapshot is not None and snapshot.node_id:
+                    principal = Principal(PrincipalKind.NODE, snapshot.node_id)
+                    credential = snapshot
             principal = principal or UNAUTHENTICATED
             request.state.principal = principal
+            request.state.node_credential = credential
 
             right = required_right(request.method, request.url.path)
             if right is not None and not principal.permits(right):
@@ -609,6 +622,11 @@ class MeetingWebServer:
         from .services.meeting_intel_service import MeetingIntelService
         from .services.meeting_service import MeetingService
 
+        from .delivery.node_link import NodeTokenStore as _MeshNodeTokenStore
+
+        def _mesh_token_store() -> Any:
+            return _MeshNodeTokenStore(None)
+
         obs = get_observer()
         meeting_service = MeetingService(get_database(), observer=obs)
         notify = lambda message_type, data: self.broadcast(message_type, data)
@@ -655,7 +673,15 @@ class MeetingWebServer:
             gate_service=GateService(get_database(), observer=obs),
             setup_service=SetupService(get_database(), observer=obs),
             delivery_service=DeliveryService(get_database(), observer=obs),
-            mesh_service=MeshService(get_database(), observer=obs),
+            # HS-131-16: the relay legs sign and revalidate dispatch offers, so
+            # the service needs the hub's pairing custody. A separate
+            # `NodeTokenStore` handle is deliberate and safe: the store keeps no
+            # cached state and re-reads under lock on every verb, so this handle
+            # and the node link's see the same rotation and revocation without a
+            # restart (Sol Amendment 3).
+            mesh_service=MeshService(
+                get_database(), observer=obs, token_store=_mesh_token_store()
+            ),
             memory_service=MemoryService(get_database(), observer=obs),
             mission_control_service=MissionControlService(get_database(), observer=obs),
             settings_service=SettingsService(
@@ -683,6 +709,7 @@ class MeetingWebServer:
             on_preview_type=self.on_preview_type,
             on_preview_discard=self.on_preview_discard,
             on_transcribe=self.on_transcribe,
+            on_transcribe_admitted=self.on_transcribe_admitted,
             current_formatted_duration=self._current_formatted_duration,
             corrections=self.dictation_corrections,
             telemetry=self.dictation_telemetry,
@@ -803,7 +830,7 @@ class MeetingWebServer:
             self._duration_task = asyncio.create_task(self._duration_loop())
             self._coder_frames_task = asyncio.create_task(self._coder_frames_loop())
             self._rails_observer_task = asyncio.create_task(self._rails_observer_loop())
-            await asyncio.to_thread(_kernel_service().reap_expired)
+            await asyncio.to_thread(_kernel_service().reap_and_recover_projections)
             self._kernel_liveness_task = asyncio.create_task(
                 self._kernel_liveness_loop()
             )
@@ -896,7 +923,7 @@ class MeetingWebServer:
         while True:
             await asyncio.sleep(1.0)
             try:
-                await asyncio.to_thread(_kernel_service().reap_expired)
+                await asyncio.to_thread(_kernel_service().reap_and_recover_projections)
             except asyncio.CancelledError:
                 raise
             except Exception as exc:
@@ -954,8 +981,11 @@ class MeetingWebServer:
         from . import rails_observer
         from .config import Config
         from .missioncontrol_bridge import events_payload, load_project_map
-        from .principals import derive_owner
+        from .principals import Principal, PrincipalKind, derive_owner
 
+        # An ambient observer is not an owner. Its single kernel capability is
+        # admission of the receipt-gated journal summary invocation.
+        observer_principal = Principal(PrincipalKind.SERVICE, "rails-observer", frozenset({("inference.invoke", 1)}), "rails-observer:journal-only")
         seen: set[str] = set()
         primed = False
         while True:
@@ -989,7 +1019,9 @@ class MeetingWebServer:
                     continue
                 if not fresh:
                     continue
-                summarizer = rails_observer.build_profile_summarizer(cfg.profile_id)
+                from .db import get_database
+                from .kernel.runtime import _service
+                summarizer = rails_observer.build_profile_summarizer(cfg.profile_id, db=get_database(), broker=_service(), principal=observer_principal)
                 batch = await asyncio.to_thread(
                     rails_observer.summarize_batch, fresh, summarize_fn=summarizer
                 )

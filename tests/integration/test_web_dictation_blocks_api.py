@@ -22,7 +22,9 @@ from holdspeak.web_server import MeetingWebServer, WebRuntimeCallbacks
 
 
 class _StubRuntime:
-    backend = "stub"
+    # Backend intentionally unobservable: this seam exercises route behavior,
+    # not a competing concrete loader.
+    backend = ""
 
     def load(self) -> None:
         pass
@@ -117,7 +119,15 @@ def test_dictation_page_route_serves_html() -> None:
     assert response.status_code == 200
     assert "text/html" in response.headers["content-type"]
     assert '<div id="root"></div>' in response.text
-    js = (Path(__file__).resolve().parents[2] / "web/src/pages/cores/DictationCore.tsx").read_text()
+    core_root = Path(__file__).resolve().parents[2] / "web/src/pages/cores"
+    js = "\n".join(
+        path.read_text()
+        for path in (
+            core_root / "DictationCore.tsx",
+            *sorted((core_root / "dictation").glob("*.tsx")),
+            *sorted((core_root / "dictation").glob("*.ts")),
+        )
+    )
     for endpoint in (
         "/api/dictation/blocks",
         "/api/dictation/readiness",

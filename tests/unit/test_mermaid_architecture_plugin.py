@@ -1,7 +1,8 @@
 """Unit tests for `MermaidArchitecturePlugin` (HS-16-01).
 
-The LLM is injected via the `intel_call` constructor argument, so these
-tests do not load any real local model or call any cloud endpoint.
+The model is reached only through the admitted dispatch handle the host puts in
+the run context (HS-131-14), so these tests hold a real issued context over a stub
+engine and load no local model and call no cloud endpoint.
 """
 
 from __future__ import annotations
@@ -16,6 +17,8 @@ from holdspeak.plugins.builtin import (
 )
 from holdspeak.plugins.builtin.mermaid_architecture import _extract_mermaid_block
 from holdspeak.plugins.host import PluginHost
+from holdspeak.plugins.intelligence import PluginProviderFailure
+from tests.unit.plugin_dispatch_rig import intel_plugin
 
 
 _GOOD_FLOWCHART_RESPONSE = (
@@ -43,8 +46,8 @@ _GOOD_SEQUENCE_RESPONSE = (
 
 
 def test_run_success_path_returns_full_shape() -> None:
-    plugin = MermaidArchitecturePlugin(
-        intel_call=lambda messages: _GOOD_FLOWCHART_RESPONSE
+    plugin = intel_plugin(
+        MermaidArchitecturePlugin(), lambda messages, **_kw: _GOOD_FLOWCHART_RESPONSE
     )
 
     out = plugin.run(
@@ -75,8 +78,8 @@ def test_run_success_path_returns_full_shape() -> None:
 
 
 def test_run_recognises_sequence_diagram() -> None:
-    plugin = MermaidArchitecturePlugin(
-        intel_call=lambda messages: _GOOD_SEQUENCE_RESPONSE
+    plugin = intel_plugin(
+        MermaidArchitecturePlugin(), lambda messages, **_kw: _GOOD_SEQUENCE_RESPONSE
     )
 
     out = plugin.run({"transcript": "client asks auth for a token"})
@@ -88,8 +91,9 @@ def test_run_recognises_sequence_diagram() -> None:
 
 
 def test_run_no_fenced_block_returns_failure_shape() -> None:
-    plugin = MermaidArchitecturePlugin(
-        intel_call=lambda messages: "Sorry, I can't produce a diagram for this."
+    plugin = intel_plugin(
+        MermaidArchitecturePlugin(),
+        lambda messages, **_kw: "Sorry, I can't produce a diagram for this.",
     )
 
     out = plugin.run(
@@ -101,27 +105,32 @@ def test_run_no_fenced_block_returns_failure_shape() -> None:
     assert out["active_intents"] == ["architecture"]
 
 
-def test_run_provider_raises_returns_failure_shape() -> None:
-    def _raise(_messages: list[dict[str, str]]) -> str:
+def test_run_provider_failure_reaches_the_admitted_child() -> None:
+    """HS-131-14: the provider's failure is the CHILD's outcome, not a summary.
+
+    It also carries no provider text: the plugin used to paste the endpoint's
+    message into an artifact-bound summary.
+    """
+    def _raise(_messages, **_kw) -> str:
         raise MeetingIntelError("LLM exploded")
 
-    plugin = MermaidArchitecturePlugin(intel_call=_raise)
+    plugin = intel_plugin(MermaidArchitecturePlugin(), _raise)
 
-    out = plugin.run({"transcript": "hello", "active_intents": ["architecture"]})
+    with pytest.raises(PluginProviderFailure) as failure:
+        plugin.run({"transcript": "hello", "active_intents": ["architecture"]})
 
-    assert "mermaid" not in out
-    assert out["confidence_hint"] == 0.0
-    assert "LLM exploded" in out["summary"]
+    assert failure.value.reason == "MeetingIntelError"
+    assert "LLM exploded" not in str(failure.value)
 
 
 def test_run_empty_transcript_returns_failure_shape_without_calling_llm() -> None:
     calls: list[list[dict[str, str]]] = []
 
-    def _record(messages: list[dict[str, str]]) -> str:
+    def _record(messages, **_kw) -> str:
         calls.append(messages)
         return _GOOD_FLOWCHART_RESPONSE
 
-    plugin = MermaidArchitecturePlugin(intel_call=_record)
+    plugin = intel_plugin(MermaidArchitecturePlugin(), _record)
     out = plugin.run({"transcript": "   ", "active_intents": []})
 
     assert "mermaid" not in out

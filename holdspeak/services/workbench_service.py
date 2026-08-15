@@ -41,19 +41,52 @@ class WorkbenchService:
         if not name.strip():
             raise ValidationError("Workbench name is required")
         body = {"name": name, **fields}
-        wb = self._db.workbenches.upsert(
-            workbench_id=str(body.pop("id", "") or _new_id("workbench")),
-            **self._wb_fields(body),
-        )
+        fields = self._wb_fields(body)
+        if fields["schedule_enabled"] and principal.kind is not PrincipalKind.OWNER:
+            raise ServiceError("owner_principal_required", "Only the owner can enable a schedule", context={"status": 403})
+        workbench_id = str(body.pop("id", "") or _new_id("workbench"))
+        if not fields["schedule_enabled"]:
+            wb = self._db.workbenches.upsert(workbench_id=workbench_id, **fields)
+            return self._wb_payload(wb)
+        # The owner's single enable gesture commits its configuration, captured
+        # deployment revision, and local delegation as one crash-consistent unit.
+        from .schedule_delegation import ScheduleDelegationService
+        with self._db._connection() as conn:
+            conn.execute("BEGIN IMMEDIATE")
+            wb = self._db.workbenches.upsert_in_transaction(conn, workbench_id=workbench_id, **fields)
+            ScheduleDelegationService(self._db).enable_from_owner_in_transaction(principal, wb, conn)
         return self._wb_payload(wb)
 
     def update_workbench(
         self, principal: Principal, workbench_id: str, **fields: Any
     ) -> dict[str, Any]:
         existing = self._require_workbench(workbench_id)
-        wb = self._db.workbenches.upsert(
-            workbench_id=workbench_id, **self._wb_fields(fields, existing)
-        )
+        proposed = self._wb_fields(fields, existing)
+        bound_changed = any(proposed[key] != getattr(existing, key) for key in ("schedule", "schedule_enabled", "recipe_id", "profile_id"))
+        enabling = not existing.schedule_enabled and proposed["schedule_enabled"]
+        if enabling and principal.kind is not PrincipalKind.OWNER:
+            raise ServiceError("owner_principal_required", "Only the owner can enable a schedule", context={"status": 403})
+        if bound_changed:
+            proposed["schedule_revision"] = existing.schedule_revision + 1
+        else:
+            proposed["schedule_revision"] = existing.schedule_revision
+        if not bound_changed:
+            wb = self._db.workbenches.upsert(workbench_id=workbench_id, **proposed)
+            return self._wb_payload(wb)
+        # Bound configuration and the authority it invalidates share one lock.
+        # A provider is only signalled after the epoch fence has committed.
+        from .schedule_delegation import ScheduleDelegationService
+        service = ScheduleDelegationService(self._db)
+        with self._db._connection() as conn:
+            conn.execute("BEGIN IMMEDIATE")
+            wb = self._db.workbenches.upsert_in_transaction(conn, workbench_id=workbench_id, **proposed)
+            fenced = service.revoke_in_transaction(
+                conn, workbench_id,
+                "schedule_disabled" if not wb.schedule_enabled else "bound_terms_changed",
+            )
+            if enabling:
+                service.enable_from_owner_in_transaction(principal, wb, conn)
+        service.complete_fenced(fenced)
         return self._wb_payload(wb)
 
     def delete_workbench(self, principal: Principal, workbench_id: str) -> bool:
@@ -159,10 +192,15 @@ class WorkbenchService:
             raise ServiceError("artifact_persist_failed", "Mint failed")
         return {"artifact_id": artifact_id, "created": True}
 
-    async def run(self, principal: Principal, workbench_id: str) -> dict[str, Any]:
+    async def run(self, principal: Principal, workbench_id: str, *, memory_enabled: bool = True) -> dict[str, Any]:
         self._require_workbench(workbench_id)
         from holdspeak.workbench_conductor import run_workbench
-        return await run_workbench(workbench_id)
+        return await run_workbench(workbench_id, principal, memory_enabled=memory_enabled)
+
+    def cancel_run(self, principal: Principal, parent_operation_id: str) -> str:
+        """Cancel exactly the authenticated parent, never a Workbench lookup."""
+        from holdspeak.kernel.runtime import _service
+        return _service().parent_run_controller.cancel_by_operation_id(principal, parent_operation_id)
 
     def list_runs(self, principal: Principal, workbench_id: str) -> list[dict[str, Any]]:
         return [r.to_dict() for r in self._db.workbench_runs.list_for_workbench(workbench_id)]
@@ -190,7 +228,8 @@ class WorkbenchService:
         wb = self._db.workbenches.upsert(
             workbench_id=_new_id("workbench"), name=template["name"], recipe_id=recipe.id,
             profile_id=profile_id or None, schedule=wb_config.get("schedule"),
-            schedule_enabled=bool(wb_config.get("schedule")),
+            # Instantiating a template is not recurring-inference approval.
+            schedule_enabled=False,
         )
         for starter in template.get("starter_items", []):
             self._db.workbench_items.upsert(
@@ -298,8 +337,8 @@ class WorkbenchService:
         wb = self._require_workbench(workbench_id)
         if not wb.resolver_profile_id:
             raise ServiceError("resolver_not_configured", "No resolver profile set on this workbench", context={"error": "resolver_not_configured", "detail": "No resolver profile set on this workbench"})
-        from holdspeak.inference_targets import resolve_inference_target
-        target = resolve_inference_target(self._db, wb.resolver_profile_id)
+        from holdspeak.inference_targets import resolve_placement
+        target = resolve_placement(self._db, invocation=wb.resolver_profile_id).target
         if not target.ready:
             raise ServiceError("resolver_unavailable", target.readiness_reason, context={"error": "resolver_unavailable", "detail": target.readiness_reason})
         from holdspeak.voice_resolver import ZoneCatalogEntry, resolve_voice_references
@@ -311,54 +350,45 @@ class WorkbenchService:
         if not zones:
             return {"refs": [], "egress": egress, "request_id": request_id}
 
-        operation_id = ""
-        kernel_principal = principal or Principal(PrincipalKind.OWNER, "voice_resolver")
+        if principal is None or principal.kind is PrincipalKind.NONE:
+            raise ServiceError("resolver_principal_required", "Authenticated principal required", context={"error": "resolver_principal_required"})
+        from holdspeak.deployment_revisions import capture_deployment_revision
+        from holdspeak.kernel.inference_runner import InvocationRequest, ServiceContract
+        from holdspeak.kernel.model import KernelRefused
+        from holdspeak.kernel.prompt_adapter import CanonicalPromptAdapter
+        from holdspeak.kernel.runtime import _as_principal, _service
+        broker = _service() if getattr(self, "_kernel", None) is None else self._kernel
+        revision = capture_deployment_revision(self._db, target)
         try:
-            from holdspeak.kernel.runtime import _as_principal, receipt as kernel_receipt, submit as kernel_submit
-            with _as_principal(kernel_principal):
-                handle = kernel_submit({
-                    "request_schema": 1, "request_id": request_id or f"vr_{workbench_id}",
-                    "idempotency_key": f"voice_resolve:{workbench_id}:{hashlib.sha256(text.encode()).hexdigest()[:16]}",
-                    "operation": {"name": "voice_reference_resolve", "version": 1}, "target": {},
-                    "arguments": {"workbench_id": workbench_id, "profile_id": wb.resolver_profile_id,
-                                  "transcript_hash": hashlib.sha256(text.encode()).hexdigest()},
-                })
-            if handle.get("state") == "refused":
-                raise ServiceError("resolver_refused", handle.get("receipt", {}).get("outcome", "unknown"), context={"error": "resolver_refused", "detail": handle.get("receipt", {}).get("outcome", "unknown")})
-            operation_id = handle.get("operation_id", "")
-        except ServiceError:
-            raise
-        except Exception:
-            pass
-
-        from holdspeak.intel.providers import build_meeting_intel_for_profile
-
+            parent = broker.parent_run_controller.start(principal, kind="voice_reference_resolve", definition_ref=f"workbench:{workbench_id}", definition_revision=str(getattr(wb, "last_modified", "1")), input_snapshot={"workbench_id": workbench_id, "profile_id": wb.resolver_profile_id, "transcript_hash": hashlib.sha256(text.encode()).hexdigest()}, deadline_at=time.time() + 30, child_budget=3, idempotency_key=request_id or None)
+        except KernelRefused as exc:
+            raise ServiceError("resolver_refused", exc.reason, context={"error": "resolver_refused", "detail": exc.reason}) from exc
+        attempts = 0
         def run_prompt_fn(*, prompt: str, profile_id: str, max_tokens: int, timeout: float) -> str:
-            prof = self._db.profiles.get(profile_id)
-            if prof is None:
-                raise RuntimeError(f"Resolver profile not found: {profile_id}")
-            engine = build_meeting_intel_for_profile(
-                kind=prof.kind, base_url=prof.base_url or None, model=prof.model or None,
-                profile_id=profile_id, node=getattr(prof, "node", "") or "",
-                model_file=str(getattr(prof, "model_file", "") or ""),
-            )
-            engine.cloud_timeout_seconds = timeout
-            engine.max_tokens = max_tokens
-            engine.temperature = 0.1
-            return engine.run_prompt(system_prompt="", user_prompt=prompt, temperature=0.1, max_tokens=max_tokens)
-
-        result = resolve_voice_references(
-            zones=zones, transcript=text, run_prompt_fn=run_prompt_fn,
-            profile_id=wb.resolver_profile_id, request_id=request_id,
-        )
-        if operation_id:
-            try:
-                from holdspeak.kernel.runtime import _as_principal, receipt as kernel_receipt
-                outcome = "succeeded" if result.terminal_state == "success" else result.terminal_state
-                with _as_principal(kernel_principal):
-                    kernel_receipt(operation_id, outcome, f"workbench:{workbench_id}")
-            except Exception:
-                pass
+            nonlocal attempts
+            parent_receipt = broker.store.receipt(parent.operation_id)
+            if parent_receipt is not None and parent_receipt["outcome"] in {"cancelled", "indeterminate"}:
+                raise TimeoutError("voice_resolver_parent_deadline_cancelled")
+            attempts += 1
+            payload = {"system_prompt": "", "user_prompt": prompt, "temperature": 0.1, "max_tokens": max_tokens, "transcript_hash": hashlib.sha256(text.encode()).hexdigest(), "catalog_hash": hashlib.sha256("|".join(f"{z.id}:{z.name}" for z in zones).encode()).hexdigest(), "selected_target": profile_id, "timeout": timeout, "retry_index": attempts}
+            request = InvocationRequest(revision.id, ServiceContract.for_payload("holdspeak.voice-reference-resolve", "1", payload), time.time() + timeout, payload, "voice_" + uuid.uuid4().hex, parent.operation_id, attempts)
+            with _as_principal(principal):
+                outcome = broker.inference_runner.invoke(request, CanonicalPromptAdapter(), parent_context=parent.context, publish=broker.projection_stager.publisher(request.invocation_id, "voice-resolver-attempt", lambda output: {"output": str(dict(output).get("output") or "")}))
+            if outcome.outcome == "succeeded":
+                projection = broker.projection_stager.finalize(request.invocation_id)
+                if projection is None: raise RuntimeError("voice_resolution_projection_not_published")
+                return str(projection["output"])
+            if outcome.outcome == "cancelled":
+                raise TimeoutError("voice_resolver_deadline_cancelled")
+            raise RuntimeError(f"voice_resolver_{outcome.outcome}")
+        result = resolve_voice_references(zones=zones, transcript=text, run_prompt_fn=run_prompt_fn, profile_id=wb.resolver_profile_id, request_id=request_id)
+        outcome = "succeeded" if result.terminal_state == "success" else ("cancelled" if result.terminal_state == "timeout" else "failed")
+        parent_receipt = broker.store.receipt(parent.operation_id)
+        if parent_receipt is None:
+            parent_receipt = broker.parent_run_controller.close(parent.context, outcome, f"workbench:{workbench_id}", principal=principal)
+        if parent_receipt["outcome"] in {"cancelled", "indeterminate"}:
+            return {"refs": [], "error": "resolver_cancelled", "egress": egress,
+                    "request_id": request_id, "attempts": result.attempts}
         if result.terminal_state == "timeout":
             return {"refs": [], "error": "resolver_timeout", "egress": egress,
                     "request_id": request_id, "attempts": result.attempts}
@@ -403,5 +433,6 @@ class WorkbenchService:
             "resolver_profile_id": pick("resolver_profile_id", existing.resolver_profile_id if existing else None) or None,
             "schedule": pick("schedule", existing.schedule if existing else None) or None,
             "schedule_enabled": bool(pick("schedule_enabled", existing.schedule_enabled if existing else False)),
+            "schedule_revision": int(pick("schedule_revision", existing.schedule_revision if existing else 1)),
             "item_order": list(pick("item_order", [])),
         }
