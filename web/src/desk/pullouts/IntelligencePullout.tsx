@@ -25,10 +25,10 @@ function initialView(): IntelligenceView {
 
 function IntelligenceHeader({
   activeView,
-  setActiveView,
+  selectView,
 }: {
   activeView: IntelligenceView;
-  setActiveView: (view: IntelligenceView) => void;
+  selectView: (view: IntelligenceView) => void;
 }) {
   return (
     <div className="intelligence-segments" role="group" aria-label="Intelligence view">
@@ -38,7 +38,7 @@ function IntelligenceHeader({
           type="button"
           className={`intelligence-segment${activeView === view.id ? " is-active" : ""}`}
           aria-pressed={activeView === view.id}
-          onClick={() => setActiveView(view.id)}
+          onClick={() => selectView(view.id)}
         >
           {view.label}
         </button>
@@ -47,11 +47,43 @@ function IntelligenceHeader({
   );
 }
 
+/**
+ * HS-132-08 — a drill filter is never invisible.
+ *
+ * Following the dock's "N overdue" chip narrows the board; the token names
+ * that narrowing and dismisses it. Nothing else may hide lanes silently.
+ */
+function FilterTokens({
+  navigation,
+  clearOverdueOnly,
+}: {
+  navigation: IntelligenceNavigation;
+  clearOverdueOnly: () => void;
+}) {
+  if (!navigation.overdueOnly) return null;
+  return (
+    <div className="intelligence-filters" aria-label="Active filters">
+      <button
+        type="button"
+        className="desk-chip"
+        data-tone="fail"
+        aria-label="Clear filter OVERDUE ONLY"
+        onClick={clearOverdueOnly}
+      >
+        FILTER · OVERDUE ONLY ✕
+      </button>
+    </div>
+  );
+}
+
 /** Desk-wide intelligence shell. Its three views gain their material in HS-128-02–04. */
 export function IntelligencePullout({ object }: PulloutContentProps) {
-  const [activeView, setActiveView] = useState<IntelligenceView>(initialView);
-  const [navigation, setNavigation] = useState<IntelligenceNavigation>({ view: initialView() });
+  // HS-132-08 — one navigation state. `activeView` used to live beside it, so
+  // a segment click moved the view while a dispatched drill filter stayed on,
+  // hiding lanes nothing named.
+  const [navigation, setNavigation] = useState<IntelligenceNavigation>(() => ({ view: initialView() }));
   const [history, setHistory] = useState<IntelligenceNavigation[]>([]);
+  const activeView = navigation.view;
   const navigationRef = useRef(navigation);
   navigationRef.current = navigation;
 
@@ -75,7 +107,6 @@ export function IntelligencePullout({ object }: PulloutContentProps) {
       if (!sameDestination)
         setHistory((history) => [...history, current]);
       setNavigation(request);
-      setActiveView(request.view);
     };
     window.addEventListener(INTELLIGENCE_NAVIGATE, navigate);
     return () => window.removeEventListener(INTELLIGENCE_NAVIGATE, navigate);
@@ -88,19 +119,23 @@ export function IntelligencePullout({ object }: PulloutContentProps) {
     if (!previous) return;
     setHistory((current) => current.slice(0, -1));
     setNavigation(previous);
-    setActiveView(previous.view);
   };
+  // A segment click is navigation, not a modifier: it lands on the bare view
+  // and takes every drill filter with it.
+  const selectView = (view: IntelligenceView) => setNavigation({ view });
+  const clearOverdueOnly = () =>
+    setNavigation((current) => ({ ...current, overdueOnly: undefined }));
   const header = (
     <div className="intelligence-header">
       {history.length ? <button type="button" className="receipt-back" onClick={goBack}>← BACK</button> : null}
-      <IntelligenceHeader activeView={activeView} setActiveView={setActiveView} />
+      <IntelligenceHeader activeView={activeView} selectView={selectView} />
+      <FilterTokens navigation={navigation} clearOverdueOnly={clearOverdueOnly} />
     </div>
   );
 
   if (activeView === "brief") return <BriefView header={header} onOpenFollowThrough={(followThroughId) => {
     setHistory((current) => [...current, navigation]);
     setNavigation({ view: "follow-through", followThroughId });
-    setActiveView("follow-through");
   }} />;
 
   if (activeView === "follow-through") {
@@ -109,10 +144,9 @@ export function IntelligencePullout({ object }: PulloutContentProps) {
         <div className="desk-pullout-body desk-surface-body intelligence-pullout">
           {header}
           <section className="intelligence-view" aria-live="polite">
-            <FollowThroughView overdueOnly={navigation.overdueOnly} focusCardId={navigation.followThroughId} onOpenReceipts={(receiptId) => {
+            <FollowThroughView overdueOnly={navigation.overdueOnly} focusCardId={navigation.followThroughId} onClearFilter={clearOverdueOnly} onOpenReceipts={(receiptId) => {
               setHistory((current) => [...current, navigation]);
               setNavigation({ view: "receipts", receiptId });
-              setActiveView("receipts");
             }} />
           </section>
         </div>

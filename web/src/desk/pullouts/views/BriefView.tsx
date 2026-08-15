@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { Button } from "../../../components/signal/Signal";
 import { apiFetch, readableError } from "../../../lib/api";
+import { useWriteReceipt } from "../../hooks/useWriteReceipt";
 import { refreshIntelligenceAttention } from "../../intelligenceAttention";
 import { openSurfaceOr } from "../../shell";
 import { FoldGadget } from "../../surface/gadgets";
@@ -18,14 +19,16 @@ interface BriefItem {
 
 type BriefSection = "changed" | "broke" | "waiting" | "decisions";
 
+type ShelfState = "acknowledged" | "deferred";
+
 type MondayBrief = {
   id: string;
   headline: string;
   sections: Partial<Record<BriefSection, BriefItem[]>>;
   is_empty: boolean;
+  /** HS-132-08 — durable triage, read back with the brief itself. */
+  shelf?: Record<string, ShelfState>;
 };
-
-type ShelfState = "acknowledged" | "deferred";
 
 const GROUPS: ReadonlyArray<{ id: BriefSection; label: string }> = [
   { id: "changed", label: "Changed" },
@@ -46,8 +49,10 @@ export function BriefView({ header, onOpenFollowThrough }: { header: ReactNode; 
   const [error, setError] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [shelf, setShelf] = useState<Record<string, ShelfState>>({});
+  const [shelving, setShelving] = useState(false);
   const [narrow, setNarrow] = useState(false);
   const [openGroup, setOpenGroup] = useState<BriefSection | null>("changed");
+  const { attempt, receipt } = useWriteReceipt();
 
   useEffect(() => {
     const media = window.matchMedia("(max-width: 420px)");
@@ -61,7 +66,9 @@ export function BriefView({ header, onOpenFollowThrough }: { header: ReactNode; 
     setLoading(true);
     setError("");
     try {
-      setBrief(await apiFetch<MondayBrief | null>("/api/brief/latest"));
+      const latest = await apiFetch<MondayBrief | null>("/api/brief/latest");
+      setBrief(latest);
+      setShelf(latest?.shelf ?? {});
     } catch (requestError) {
       setError(readableError(requestError));
     } finally {
@@ -77,7 +84,9 @@ export function BriefView({ header, onOpenFollowThrough }: { header: ReactNode; 
     setGenerating(true);
     setError("");
     try {
-      setBrief(await apiFetch<MondayBrief>("/api/brief/generate", { method: "POST" }));
+      const generated = await apiFetch<MondayBrief>("/api/brief/generate", { method: "POST" });
+      setBrief(generated);
+      setShelf(generated?.shelf ?? {});
     } catch (requestError) {
       setError(readableError(requestError));
     } finally {
@@ -88,9 +97,30 @@ export function BriefView({ header, onOpenFollowThrough }: { header: ReactNode; 
   const selected = GROUPS.flatMap(({ id }) => brief?.sections[id] ?? []).find(
     (item) => item.id === selectedId,
   );
-  const setShelfState = (state: ShelfState) => {
-    if (!selectedId) return;
-    setShelf((current) => ({ ...current, [selectedId]: state }));
+  // HS-132-08 — triage is a write, not React state: it rides the durable
+  // shelf so Acknowledge/Defer survive reload and the pullout closing, and it
+  // reports a refusal through the one write-receipt channel.
+  const setShelfState = async (state: ShelfState) => {
+    const itemId = selectedId;
+    if (!itemId) return;
+    const next: ShelfState | null = shelf[itemId] === state ? null : state;
+    setShelving(true);
+    const result = await attempt(
+      next === null ? "clear triage" : next,
+      () =>
+        apiFetch(`/api/brief/items/${encodeURIComponent(itemId)}/shelf`, {
+          method: "POST",
+          json: { state: next },
+        }),
+    );
+    setShelving(false);
+    if (!result.ok) return;
+    setShelf((current) => {
+      const updated = { ...current };
+      if (next === null) delete updated[itemId];
+      else updated[itemId] = next;
+      return updated;
+    });
     refreshIntelligenceAttention();
   };
 
@@ -179,13 +209,27 @@ export function BriefView({ header, onOpenFollowThrough }: { header: ReactNode; 
         </section>
       </div>
       <SurfaceFooter
-        receipt={selected ? `SELECTED · ${sourceLabel(selected.source_ref ?? selected.id)}` : undefined}
+        receipt={
+          receipt ??
+          (selected ? `SELECTED · ${sourceLabel(selected.source_ref ?? selected.id)}` : undefined)
+        }
         verbs={
           <>
-            <Button dense disabled={!selected} onClick={() => setShelfState("acknowledged")}>
+            <Button
+              dense
+              disabled={!selected || shelving}
+              aria-pressed={selectedId ? shelf[selectedId] === "acknowledged" : undefined}
+              onClick={() => void setShelfState("acknowledged")}
+            >
               Acknowledge
             </Button>
-            <Button dense variant="ghost" disabled={!selected} onClick={() => setShelfState("deferred")}>
+            <Button
+              dense
+              variant="ghost"
+              disabled={!selected || shelving}
+              aria-pressed={selectedId ? shelf[selectedId] === "deferred" : undefined}
+              onClick={() => void setShelfState("deferred")}
+            >
               Defer
             </Button>
             <Button

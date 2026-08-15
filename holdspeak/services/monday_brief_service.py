@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import datetime
 import uuid
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any
 
 from holdspeak.services.follow_through_service import FollowThroughService
@@ -23,6 +23,10 @@ _CHANGE_METHOD_MARKERS = (
 )
 _CLOSE_HOUR = 17
 _RETRY_WINDOW_SECONDS = 5 * 60
+# HS-132-08: a recorded meeting is the most material thing a week contains, so
+# it leads Changed ahead of the observer's method-level receipts (priority 0).
+_MEETING_PRIORITY = 50
+SHELF_STATES = ("acknowledged", "deferred")
 
 
 @dataclass
@@ -44,6 +48,8 @@ class MondayBrief:
     sections: dict[str, list[BriefItem]]
     generated_at: str
     is_empty: bool = False
+    # item_id -> "acknowledged" | "deferred". An absent key is untouched work.
+    shelf: dict[str, str] = field(default_factory=dict)
 
 
 @observe_service
@@ -100,6 +106,9 @@ class MondayBriefService:
 
             sections = {
                 "changed": self._collect_changes(
+                    period_start.isoformat(), period_end.isoformat()
+                )
+                + self._collect_meetings(
                     period_start.isoformat(), period_end.isoformat()
                 ),
                 "broke": self._collect_breakage(
@@ -234,6 +243,49 @@ class MondayBriefService:
                         if first["correlation_id"]
                         else f"pipeline-event:{first['event_id']}"
                     ),
+                )
+            )
+        return items
+
+    def _collect_meetings(self, window_start: str, window_end: str) -> list[BriefItem]:
+        """Gather meetings recorded inside the window.
+
+        HS-132-08: the observer's method markers (create/update/delete/…) never
+        match the meeting lifecycle, so a week full of recorded meetings used to
+        read "Nothing material changed." Meetings are collected from their own
+        durable rows rather than from pipeline receipts, which is the honest
+        source: a meeting exists whether or not an observed method ran.
+        """
+        with self._db._connection() as conn:
+            rows = conn.execute(
+                """SELECT m.id, m.title, m.started_at, m.ended_at, m.duration_seconds,
+                          (SELECT COUNT(*) FROM action_items a
+                            WHERE a.meeting_id = m.id) AS action_count
+                   FROM meetings AS m
+                   WHERE COALESCE(m.ended_at, m.started_at) BETWEEN ? AND ?
+                     AND m.capture_status NOT IN ('recording', 'provisional')
+                   ORDER BY COALESCE(m.ended_at, m.started_at) ASC, m.id ASC""",
+                (window_start, window_end),
+            ).fetchall()
+
+        items: list[BriefItem] = []
+        for row in rows:
+            title = str(row["title"] or "").strip() or "Untitled meeting"
+            parts: list[str] = []
+            duration = row["duration_seconds"]
+            if duration:
+                parts.append(f"{max(1, round(float(duration) / 60))} min")
+            actions = int(row["action_count"] or 0)
+            if actions:
+                parts.append(f"{actions} action item{'' if actions == 1 else 's'}")
+            items.append(
+                BriefItem(
+                    id=f"brief-item-{uuid.uuid4().hex}",
+                    section="changed",
+                    text=f"Meeting recorded: {title}",
+                    detail=" · ".join(parts) or None,
+                    source_ref=f"meeting:{row['id']}",
+                    priority=_MEETING_PRIORITY,
                 )
             )
         return items
@@ -484,6 +536,60 @@ class MondayBriefService:
             ).fetchone()
             return self._load_brief(conn, row) if row is not None else None
 
+    # ── brief-item triage shelf (HS-132-08) ──────────────────────────────
+
+    def shelve(self, principal: Any, item_id: str, state: str | None) -> dict[str, Any]:
+        """Record (or clear) one owner triage verb against one brief item.
+
+        *state* is ``acknowledged``, ``deferred``, or None to return the item to
+        untouched. An unknown item or state is refused by name.
+        """
+        del principal
+        if state is not None and state not in SHELF_STATES:
+            raise ValueError(f"Unknown shelf state: {state}")
+        with self._db._connection() as conn:
+            row = conn.execute(
+                "SELECT brief_id FROM monday_brief_items WHERE id = ?", (item_id,)
+            ).fetchone()
+            if row is None:
+                raise LookupError(f"Unknown brief item: {item_id}")
+            if state is None:
+                conn.execute(
+                    "DELETE FROM monday_brief_item_shelf WHERE item_id = ?", (item_id,)
+                )
+            else:
+                conn.execute(
+                    """INSERT INTO monday_brief_item_shelf
+                       (item_id, brief_id, state, updated_at)
+                       VALUES (?, ?, ?, datetime('now'))
+                       ON CONFLICT(item_id) DO UPDATE SET
+                           state = excluded.state,
+                           updated_at = excluded.updated_at""",
+                    (item_id, str(row["brief_id"]), state),
+                )
+        return {"item_id": item_id, "state": state}
+
+    def shelf(self, principal: Any, brief_id: str | None = None) -> dict[str, str]:
+        """Read the triage shelf for one brief, defaulting to the latest one."""
+        del principal
+        with self._db._connection() as conn:
+            if brief_id is None:
+                latest = conn.execute(
+                    "SELECT id FROM monday_briefs ORDER BY generated_at DESC, id DESC LIMIT 1"
+                ).fetchone()
+                if latest is None:
+                    return {}
+                brief_id = str(latest["id"])
+            return self._load_shelf(conn, brief_id)
+
+    @staticmethod
+    def _load_shelf(conn: Any, brief_id: str) -> dict[str, str]:
+        rows = conn.execute(
+            "SELECT item_id, state FROM monday_brief_item_shelf WHERE brief_id = ?",
+            (brief_id,),
+        ).fetchall()
+        return {str(row["item_id"]): str(row["state"]) for row in rows}
+
     @staticmethod
     def _load_brief(conn: Any, row: Any) -> MondayBrief:
         sections: dict[str, list[BriefItem]] = {section: [] for section in _SECTIONS}
@@ -512,4 +618,5 @@ class MondayBriefService:
             sections=sections,
             generated_at=str(row["generated_at"]),
             is_empty=not any(sections.values()),
+            shelf=MondayBriefService._load_shelf(conn, str(row["id"])),
         )

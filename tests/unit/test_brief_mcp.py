@@ -38,7 +38,8 @@ def test_monday_brief_tool_returns_persisted_brief_structure(mcp_db: Database) -
 
     assert latest == generated
     assert set(latest) == {
-        "id", "period_start", "period_end", "headline", "sections", "generated_at", "is_empty"
+        "id", "period_start", "period_end", "headline", "sections", "generated_at",
+        "is_empty", "shelf",
     }
     assert set(latest["sections"]) == {"changed", "broke", "waiting", "decisions"}
 

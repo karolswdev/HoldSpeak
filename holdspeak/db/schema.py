@@ -7,7 +7,7 @@ independently of the Database container.
 # Bump this when adding tables or columns; the Database container uses it to
 # decide whether to back up and re-apply. See core._ensure_schema for the
 # four-way upgrade contract.
-SCHEMA_VERSION = 59  # v59: mesh dispatch-offer relay proof + worker replay reservations (HS-131-16)
+SCHEMA_VERSION = 60  # v60: Monday Brief item triage shelf (HS-132-08)
 
 # SQL Schema
 SCHEMA_SQL = """
@@ -1736,6 +1736,17 @@ CREATE TABLE IF NOT EXISTS monday_brief_items (
     priority INTEGER NOT NULL DEFAULT 0
 );
 CREATE INDEX IF NOT EXISTS idx_monday_brief_items_brief ON monday_brief_items(brief_id);
+
+-- HS-132-08: the brief-item triage shelf. Acknowledge/Defer are owner verbs
+-- over a brief item, so they outlive the pullout that pressed them. One row
+-- per item; the row's absence is the untouched state.
+CREATE TABLE IF NOT EXISTS monday_brief_item_shelf (
+    item_id TEXT PRIMARY KEY REFERENCES monday_brief_items(id) ON DELETE CASCADE,
+    brief_id TEXT NOT NULL,
+    state TEXT NOT NULL,
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_monday_brief_shelf_brief ON monday_brief_item_shelf(brief_id);
 
 -- Immutable admitted deployment specifications. ``secret_slot`` identifies a
 -- device-local credential lookup location; credentials never enter this table.

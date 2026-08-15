@@ -83,10 +83,12 @@ export function FollowThroughView({
   overdueOnly = false,
   focusCardId,
   onOpenReceipts,
+  onClearFilter,
 }: {
   overdueOnly?: boolean;
   focusCardId?: string;
   onOpenReceipts?: (receiptId: string) => void;
+  onClearFilter?: () => void;
 }) {
   const [board, setBoard] = useState<FollowThroughBoard | null>(null);
   const [loading, setLoading] = useState(true);
@@ -157,9 +159,23 @@ export function FollowThroughView({
   if (!board) return null;
 
   const visibleLanes = overdueOnly ? LANES.filter((lane) => lane.id === "overdue") : LANES;
-  const total = visibleLanes.reduce((count, lane) => count + board[lane.id].length, 0);
-  if (!total) {
-    return <SurfaceState empty emptyLabel="ALL CLEAR — no follow-through yet" />;
+  // HS-132-08 — the board's emptiness is a fact about the BOARD, never about
+  // the current filter. Counting only the visible lanes let a dispatched
+  // overdue filter print a clear board while real commitments stood open.
+  const boardTotal = LANES.reduce((count, lane) => count + board[lane.id].length, 0);
+  const visibleTotal = visibleLanes.reduce((count, lane) => count + board[lane.id].length, 0);
+  if (!boardTotal) {
+    return <SurfaceState empty emptyLabel="No follow-through yet" />;
+  }
+  if (!visibleTotal) {
+    return (
+      <SurfaceState
+        empty
+        emptyLabel="No overdue follow-through. Other lanes hold work."
+        onAction={onClearFilter}
+        actionLabel="Show all lanes"
+      />
+    );
   }
 
   return (

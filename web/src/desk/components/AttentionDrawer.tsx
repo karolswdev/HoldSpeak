@@ -7,7 +7,11 @@ import {
   humanizeWireValue,
 } from "../../lib/productLanguage";
 import { useProjections } from "../projections";
-import { useIntelligenceAttention } from "../intelligenceAttention";
+import {
+  dismissAftercare,
+  useAftercare,
+  useIntelligenceAttention,
+} from "../intelligenceAttention";
 import { openIntelligence } from "../intelligenceNavigation";
 import { CycleGadget, FoldGadget, StringGadget } from "../surface/gadgets";
 import { SurfaceCode, SurfaceState } from "../surface/Surface";
@@ -35,6 +39,8 @@ export function AttentionDrawer() {
   );
   const needs = Number(store.counts.needs_attention || 0);
   const intelligence = useIntelligenceAttention();
+  // HS-132-08 — a finished meeting is desk attention, not mascot business.
+  const aftercare = useAftercare();
   const openSource = (row: (typeof store.projections)[number]) => {
     if (row.detail_url.startsWith("/history")) {
       openSurfaceWhenReady("review-meetings", row.subject_ref);
@@ -128,6 +134,24 @@ export function AttentionDrawer() {
             </label>
             <button type="submit" className="desk-chip quiet">Filter</button>
           </form>
+          {aftercare ? (
+            <section className="desk-attention-intelligence" aria-label="Meeting aftercare">
+              <h3>Aftercare</h3>
+              <button
+                type="button"
+                className="desk-chip"
+                onClick={() => {
+                  openSurfaceWhenReady("review-meetings", `meeting:${aftercare.meetingId}`);
+                  dismissAftercare();
+                }}
+              >
+                {aftercare.title} · {aftercare.openTotal} open
+              </button>
+              <button type="button" className="desk-chip quiet" onClick={() => dismissAftercare()}>
+                Dismiss
+              </button>
+            </section>
+          ) : null}
           {intelligence.briefReady || intelligence.overdue || intelligence.review ? (
             <section className="desk-attention-intelligence" aria-label="Intelligence attention">
               <h3>Intelligence</h3>
