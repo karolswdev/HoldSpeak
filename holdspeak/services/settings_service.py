@@ -375,11 +375,9 @@ class SettingsService:
         meeting_data["mir_enabled"] = bool(
             meeting_data.get("mir_enabled", current.meeting.mir_enabled)
         )
-        # HS-130-05: the ONE routing profile. Accept the converged
-        # `routing_profile` key; fall back to the legacy `mir_profile` key so an
-        # older client still writes the effective value. Persist to
-        # `routing_profile` (the field the runtime + doctor read via
-        # `effective_routing_profile`), never the legacy owners.
+        # HS-130-05 / HS-134-08: the ONE routing profile. Accept
+        # `routing_profile`; tolerate a stale `mir_profile` key from an
+        # older client (drop after reading).
         routing_profile = (
             str(
                 meeting_data.get(

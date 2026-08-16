@@ -18,7 +18,7 @@ config:
     intel_cloud_base_url: http://192.168.1.43:8080/v1
     intel_cloud_model: Qwythos-9B-Claude-Mythos-5-1M-Q6_K.gguf
     intent_router_enabled: true
-    mir_profile: balanced
+    routing_profile: balanced
     allow_actuators: true
     allowed_actuators: [github_issue, webhook_post, slack]
     webhook_allowed_hosts: [uat.example.invalid]

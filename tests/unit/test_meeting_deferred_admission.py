@@ -182,7 +182,7 @@ class FakeHost:
 class _Cfg:
     class meeting:  # noqa: N801 - config shape
         intent_router_enabled = True
-        mir_profile = "balanced"
+        routing_profile = "balanced"
 
 
 class _Route:

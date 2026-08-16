@@ -405,7 +405,7 @@ def test_mir_routing_check_pass_when_router_disabled() -> None:
 def test_mir_routing_check_pass_when_enabled_with_valid_profile() -> None:
     config = Config()
     config.meeting.intent_router_enabled = True
-    config.meeting.plugin_profile = "architect"
+    config.meeting.routing_profile = "architect"
     result = doctor._check_mir_routing(config)
     assert result.status == "PASS"
     assert "enabled" in result.detail
@@ -415,7 +415,7 @@ def test_mir_routing_check_pass_when_enabled_with_valid_profile() -> None:
 def test_mir_routing_check_warn_for_unknown_profile() -> None:
     config = Config()
     config.meeting.intent_router_enabled = True
-    config.meeting.plugin_profile = "no-such-profile"
+    config.meeting.routing_profile = "no-such-profile"
     result = doctor._check_mir_routing(config)
     assert result.status == "WARN"
     assert "no-such-profile" in result.detail
@@ -427,7 +427,7 @@ def test_mir_routing_check_never_returns_fail() -> None:
     for enabled, profile in [(False, "balanced"), (True, "balanced"), (True, "garbage")]:
         config = Config()
         config.meeting.intent_router_enabled = enabled
-        config.meeting.plugin_profile = profile
+        config.meeting.routing_profile = profile
         result = doctor._check_mir_routing(config)
         assert result.status in {"PASS", "WARN"}
 

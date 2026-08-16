@@ -13,9 +13,9 @@ These lock the convergence:
   (mesh OR openAICompatible) WINS over the local/auto/cloud intent, so a
   selected Meetings destination now takes effect — and every describer states
   its real boundary, so the placement is surfaced, never silent.
-* ``mir_profile`` / ``plugin_profile`` converge to one ``routing_profile``
-  accessor; the legacy values migrate once (idempotent); doctor and the runtime
-  read the SAME value.
+* ``routing_profile`` is the ONE routing profile field (HS-134-08 deleted the
+  legacy ``mir_profile`` / ``plugin_profile`` pair); doctor and the runtime
+  read the SAME value via ``effective_routing_profile``.
 """
 
 from __future__ import annotations
@@ -25,7 +25,6 @@ from types import SimpleNamespace
 import pytest
 
 import holdspeak.intel as intel_module
-from holdspeak.config.core import migrate_routing_profile
 from holdspeak.config.meeting import MeetingConfig, effective_routing_profile
 from holdspeak.db.models import ProfileRecord
 from holdspeak.intel import providers
@@ -191,78 +190,44 @@ def test_configured_egress_boundary_matches_selected_destination(monkeypatch) ->
     assert providers.configured_egress_boundary(cfg) == "private_network"
 
 
-# ── 3. routing_profile convergence + one-shot idempotent migration ───────────
+# ── 3. routing_profile is the ONE field (HS-134-08) ─────────────────────────
 
 
-def test_effective_routing_profile_prefers_mir_over_plugin() -> None:
-    # routing_profile default; mir wins over plugin (matches historical runtime).
-    cfg = MeetingConfig(mir_profile="architect", plugin_profile="delivery")
+def test_effective_routing_profile_reads_routing_profile() -> None:
+    cfg = MeetingConfig(routing_profile="architect")
     assert effective_routing_profile(cfg) == "architect"
     assert cfg.effective_routing_profile() == "architect"
-    # an explicitly-set routing_profile wins over both legacy owners.
-    cfg2 = MeetingConfig(routing_profile="incident", mir_profile="architect")
-    assert effective_routing_profile(cfg2) == "incident"
 
 
-def test_legacy_only_plugin_profile_is_read() -> None:
-    cfg = MeetingConfig(plugin_profile="product")
-    assert effective_routing_profile(cfg) == "product"
+def test_effective_routing_profile_defaults_to_balanced() -> None:
+    cfg = MeetingConfig()
+    assert effective_routing_profile(cfg) == "balanced"
 
 
-def _config_with(tmp_path, **meeting_overrides):
-    from holdspeak.config import Config
-
-    cfg = Config()
-    for k, v in meeting_overrides.items():
-        setattr(cfg.meeting, k, v)
-    return cfg
+def test_effective_routing_profile_on_config_shaped_object() -> None:
+    obj = SimpleNamespace(routing_profile="incident")
+    assert effective_routing_profile(obj) == "incident"
 
 
-def test_migration_folds_legacy_once_and_is_idempotent(tmp_path) -> None:
-    path = tmp_path / "config.json"
-    cfg = _config_with(tmp_path, mir_profile="architect", plugin_profile="delivery")
-
-    # First run adopts mir (preferred) and consumes both legacy owners.
-    assert migrate_routing_profile(cfg, path) is True
-    assert cfg.meeting.routing_profile == "architect"
-    assert cfg.meeting.mir_profile == "balanced"
-    assert cfg.meeting.plugin_profile == "balanced"
-
-    # Second run is a no-op — the migration is one-shot.
-    assert migrate_routing_profile(cfg, path) is False
-    assert cfg.meeting.routing_profile == "architect"
-
-
-def test_migration_prefers_plugin_when_only_it_is_set(tmp_path) -> None:
-    cfg = _config_with(tmp_path, plugin_profile="incident")
-    assert migrate_routing_profile(cfg, tmp_path / "c.json") is True
-    assert cfg.meeting.routing_profile == "incident"
-
-
-def test_migration_noop_on_fresh_config(tmp_path) -> None:
-    cfg = _config_with(tmp_path)
-    assert migrate_routing_profile(cfg, tmp_path / "c.json") is False
-    assert cfg.meeting.routing_profile == "balanced"
-
-
-def test_migration_does_not_override_an_explicit_routing_profile(tmp_path) -> None:
-    cfg = _config_with(tmp_path, routing_profile="product", mir_profile="architect")
-    assert migrate_routing_profile(cfg, tmp_path / "c.json") is False
-    assert cfg.meeting.routing_profile == "product"
-
-
-def test_config_load_runs_the_migration_once(tmp_path, monkeypatch) -> None:
+def test_legacy_keys_load_clean_from_config_file(tmp_path) -> None:
+    """HS-134-08: a config file with the deleted mir_profile / plugin_profile
+    keys loads without error -- _coerce drops unknown keys silently."""
+    import json
     from holdspeak.config import Config
 
     path = tmp_path / "config.json"
-    seed = Config()
-    seed.meeting.mir_profile = "architect"
-    seed.save(path)
-
-    # An explicit path load skips migration (test/tool load) but the accessor
-    # still reads the effective value...
+    path.write_text(json.dumps({
+        "meeting": {
+            "mir_profile": "architect",
+            "plugin_profile": "delivery",
+            "routing_profile": "product",
+        }
+    }))
     loaded = Config.load(path)
-    assert effective_routing_profile(loaded.meeting) == "architect"
+    # The unknown keys are dropped; routing_profile survives.
+    assert loaded.meeting.routing_profile == "product"
+    assert not hasattr(loaded.meeting, "mir_profile")
+    assert not hasattr(loaded.meeting, "plugin_profile")
 
 
 # ── 4. doctor and the runtime name the SAME value ────────────────────────────

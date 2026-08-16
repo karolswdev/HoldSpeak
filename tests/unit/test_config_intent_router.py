@@ -14,7 +14,7 @@ def test_intent_router_defaults_are_conservative() -> None:
     assert config.intent_step_seconds == 30
     assert config.intent_score_threshold == 0.6
     assert config.intent_hysteresis_windows == 1
-    assert config.plugin_profile == "balanced"
+    assert config.routing_profile == "balanced"
 
 
 def test_intent_hysteresis_helper_converts_windows_to_float() -> None:
@@ -52,13 +52,13 @@ def test_intent_hysteresis_windows_must_be_non_negative() -> None:
         MeetingConfig(intent_hysteresis_windows=-1)
 
 
-def test_plugin_profile_must_be_non_empty_string() -> None:
-    MeetingConfig(plugin_profile="balanced")
-    MeetingConfig(plugin_profile="architect")
-    with pytest.raises(ValueError, match="plugin_profile must be a non-empty string"):
-        MeetingConfig(plugin_profile="")
+def test_routing_profile_must_be_non_empty_string() -> None:
+    MeetingConfig(routing_profile="balanced")
+    MeetingConfig(routing_profile="architect")
+    with pytest.raises(ValueError, match="routing_profile must be a non-empty string"):
+        MeetingConfig(routing_profile="")
     with pytest.raises(ValueError):
-        MeetingConfig(plugin_profile="   ")
+        MeetingConfig(routing_profile="   ")
 
 
 def test_intent_router_fields_round_trip_via_to_dict() -> None:
@@ -70,7 +70,7 @@ def test_intent_router_fields_round_trip_via_to_dict() -> None:
         intent_step_seconds=20,
         intent_score_threshold=0.55,
         intent_hysteresis_windows=2,
-        plugin_profile="architect",
+        routing_profile="architect",
     )
     payload = asdict(config)
     assert payload["intent_router_enabled"] is True
@@ -78,4 +78,4 @@ def test_intent_router_fields_round_trip_via_to_dict() -> None:
     assert payload["intent_step_seconds"] == 20
     assert payload["intent_score_threshold"] == 0.55
     assert payload["intent_hysteresis_windows"] == 2
-    assert payload["plugin_profile"] == "architect"
+    assert payload["routing_profile"] == "architect"

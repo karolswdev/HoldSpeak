@@ -229,7 +229,7 @@ def test_deferred_intel_runs_the_chain_when_router_enabled(env, monkeypatch, tmp
     class _Cfg:
         class meeting:  # noqa: N801 - config shape
             intent_router_enabled = True
-            mir_profile = "architect"
+            routing_profile = "architect"
 
     monkeypatch.setattr("holdspeak.config.Config.load", classmethod(lambda cls: _Cfg))
 
@@ -276,7 +276,7 @@ def test_deferred_intel_retains_base_analysis_when_routed_work_fails(
     class _Cfg:
         class meeting:  # noqa: N801 - config shape
             intent_router_enabled = True
-            mir_profile = "architect"
+            routing_profile = "architect"
 
     class _Analyze:
         error = None
@@ -364,7 +364,7 @@ def test_deferred_intel_skips_the_chain_when_router_disabled(env, monkeypatch) -
     class _Cfg:
         class meeting:  # noqa: N801
             intent_router_enabled = False
-            mir_profile = "balanced"
+            routing_profile = "balanced"
 
     monkeypatch.setattr("holdspeak.config.Config.load", classmethod(lambda cls: _Cfg))
 

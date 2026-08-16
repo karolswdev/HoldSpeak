@@ -180,7 +180,7 @@ class WebRuntime(
         self.pending_plugin_runs: list[dict[str, object]] = []
         self.preview_window_seq = 0
         self.mir_enabled = bool(getattr(self.config.meeting, "mir_enabled", False))
-        self.mir_profile = normalize_profile(effective_routing_profile(self.config.meeting))
+        self.routing_profile = normalize_profile(effective_routing_profile(self.config.meeting))
         self.mir_override_intents: list[str] = []
         self.last_route_preview: Optional[dict[str, object]] = None
         self.runtime_url: Optional[str] = None

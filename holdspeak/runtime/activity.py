@@ -103,7 +103,7 @@ class RuntimeActivityMixin:
             runtime_snapshot = dict(self.runtime_status)
             mir_snapshot = {
                 "enabled": bool(self.mir_enabled),
-                "profile": str(self.mir_profile),
+                "profile": str(self.routing_profile),
                 "available_profiles": available_profiles(),
                 "supported_intents": list(SUPPORTED_INTENTS),
                 "override_intents": list(self.mir_override_intents),

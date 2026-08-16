@@ -1,6 +1,6 @@
 # Phase 134 — One Owner
 
-**Status:** in-progress (6/10).
+**Status:** in-progress (7/10).
 
 **Last updated:** 2026-08-16.
 
@@ -95,7 +95,7 @@ docs and walk stories. Anchors live in the audit; stories cite them.
 | HS-134-05 | Get Info hands off | done | [story-05](./story-05-get-info-handoff.md) | [evidence-story-05](./evidence-story-05.md) |
 | HS-134-06 | Skills belong to the Agent | done | [story-06](./story-06-agent-owns-skills.md) | [evidence-story-06](./evidence-story-06.md) |
 | HS-134-07 | Sync understands inherit | backlog | [story-07](./story-07-sync-null-inherit.md) | [evidence-story-07](./evidence-story-07.md) |
-| HS-134-08 | The routing profile stands alone | backlog | [story-08](./story-08-routing-profile-cleanup.md) | [evidence-story-08](./evidence-story-08.md) |
+| HS-134-08 | The routing profile stands alone | done | [story-08](./story-08-routing-profile-cleanup.md) | [evidence-story-08](./evidence-story-08.md) |
 | HS-134-09 | The docs speak destination | backlog | [story-09](./story-09-destination-docs.md) | [evidence-story-09](./evidence-story-09.md) |
 | HS-134-10 | The walk | backlog | [story-10](./story-10-the-walk.md) | [evidence-story-10](./evidence-story-10.md) |
 
@@ -219,3 +219,13 @@ Recipe chat, Workbench run, Sequence, Workflow, Cadence get_loop
 MCP tools (ask.run, sequence.run, workflow.run, cadence.get_loop) pass
 service dicts through unchanged -- the block arrives in tool results.
 113 focused tests green (14 new provenance + 99 existing guards).
+HS-134-08 shipped: `mir_profile` and `plugin_profile` deleted from
+MeetingConfig (fields, validation, __post_init__); `effective_routing_profile`
+reads only `routing_profile`; `migrate_routing_profile` deleted (`_coerce`
+handles the tolerant-load guard for legacy config files); runtime instance
+var `self.mir_profile` renamed to `self.routing_profile` in web_runtime,
+activity, routing_glue; intel_queue call sites verified (already used
+`effective_routing_profile` exclusively); settings_service retains a
+tolerant `mir_profile` read-fallback for stale API clients (deliberate
+leniency, not dual vocabulary); UAT decks updated. 356 unit + 96
+integration focused tests green.

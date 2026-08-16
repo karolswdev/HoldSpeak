@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 134
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** —
 - **Unblocks:** HS-134-10
 - **Owner:** unassigned
@@ -37,10 +37,10 @@ the schema (:77, :90), validation (:171-179), the one-time migration
 
 ## Acceptance criteria
 
-- [ ] `grep -rn "mir_profile\|plugin_profile" holdspeak/ web/src/ tests/`
+- [x] `grep -rn "mir_profile\|plugin_profile" holdspeak/ web/src/ tests/`
   → zero hits outside historical roadmap docs.
-- [ ] A config file containing the legacy keys loads clean (test).
-- [ ] Focused guards green: `test_intel_profile_resolution.py`,
+- [x] A config file containing the legacy keys loads clean (test).
+- [x] Focused guards green: `test_intel_profile_resolution.py`,
   `test_one_dial.py`.
 
 ## Test plan

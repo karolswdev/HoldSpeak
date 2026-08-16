@@ -42,7 +42,7 @@ def _config(
             web_auto_open=auto_open,
             web_auth_token="test-web-token",
             mir_enabled=True,
-            mir_profile="balanced",
+            routing_profile="balanced",
         ),
         dictation=SimpleNamespace(
             pipeline=SimpleNamespace(

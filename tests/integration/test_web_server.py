@@ -1425,7 +1425,7 @@ class TestMirHistoryApiEndpoints:
             "Config",
             SimpleNamespace(
                 load=lambda: SimpleNamespace(
-                    meeting=SimpleNamespace(mir_profile="balanced"),
+                    meeting=SimpleNamespace(routing_profile="balanced"),
                 )
             ),
         )

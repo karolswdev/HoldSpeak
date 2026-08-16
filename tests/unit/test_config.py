@@ -171,14 +171,15 @@ class TestMeetingConfig:
         assert config.intel_cloud_base_url is None
         assert config.web_auto_open is False
         assert config.mir_enabled is True
-        assert config.mir_profile == "balanced"
+        assert config.routing_profile == "balanced"
         # HS-2-09 (spec §9.9) — MIR-01 routing pipeline knobs.
         assert config.intent_router_enabled is False
         assert config.intent_window_seconds == 90
         assert config.intent_step_seconds == 30
         assert config.intent_score_threshold == 0.6
         assert config.intent_hysteresis_windows == 1
-        assert config.plugin_profile == "balanced"
+        # HS-134-08: plugin_profile deleted; routing_profile is the ONE field.
+        assert config.routing_profile == "balanced"
 
     def test_custom_audio_device(self):
         """MeetingConfig accepts custom audio device."""
