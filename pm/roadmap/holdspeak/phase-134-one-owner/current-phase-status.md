@@ -133,6 +133,31 @@ Parallel waves: {01, 02, 05, 06} then {03, 04, 08} then {07, 09} then 10.
    adds one on the settingsWriters pattern).
 5. Workbench skill mutation has no guard (story 06 adds one).
 
+## Ledger
+
+- **Wave-one gate (2026-08-16): 1 real failure, fixed.** The committed
+  API-surface manifest still carried the retired `/api/profiles` GET
+  routes; regenerated (HS-134-02 rider). Also caught earlier by the
+  HS-134-02 worker's wider sweep: the one-dial seam guard asserted the
+  pre-keystone resolver (re-pointed in `eaeca3c8`). Process note: the
+  keystone's focused set missed both guards — the wave gate exists for
+  exactly this class and did its job.
+- **P0 product bug surfaced (NOT this phase's doing): the owner's real
+  DB (schema 59) fails the 59→60 migration** with
+  `sqlite3.OperationalError: no such column: node_id` during
+  `run_migrations` executescript. The current main build would hit
+  this on the owner's next real hub start. Likely the Phase-132 v60
+  schema meeting an older mesh-table shape. DB verified UNHARMED
+  (logical dump identical to the pre-attempt backup
+  `holdspeak.db.20260816-162131.bak`; mtime untouched; integrity ok).
+  Needs a migration fix before the owner runs the hub on current main
+  — flagged for the sitting and the next slice.
+- **Process gotcha (orchestrator error, remediated):**
+  `scripts/gen_api_surface.py` boots the real `MeetingWebServer`,
+  which opens the REAL database via `Path.home()` — it must always run
+  under an isolated HOME. It was run bare once; the schema-guard
+  backup fired and no data was written.
+
 ## Exit criteria (evidence required)
 
 - [ ] Recipe run and chat resolve through `resolve_placement`; a
