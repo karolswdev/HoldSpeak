@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from copy import deepcopy
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import MagicMock, AsyncMock
@@ -247,8 +247,29 @@ def mock_callbacks():
 
 
 @pytest.fixture
-def web_server(mock_callbacks):
-    """Create MeetingWebServer instance."""
+def isolated_db(tmp_path):
+    """HS-132-12: the REAL database the composed app consults.
+
+    `MeetingWebServer._create_app` composes every service against
+    `get_database()` at construction time (`web_server.py:631-648`), so a
+    `monkeypatch.setattr(holdspeak.db, "get_database", ...)` executed inside a
+    test body arrives far too late — the live routes keep answering from the
+    handle captured at composition. Route tests below therefore SEED this
+    database instead of faking one; the seam is the `get_database` singleton,
+    swapped to a per-test file before the server is built.
+    """
+    from holdspeak.db import get_database, reset_database
+
+    reset_database()
+    db = get_database(tmp_path / "holdspeak-web-server-test.db")
+    yield db
+    reset_database()
+
+
+@pytest.fixture
+def web_server(mock_callbacks, isolated_db):
+    """Create MeetingWebServer instance composed against `isolated_db`."""
+    _ = isolated_db  # must be resolved BEFORE the app composes its services
     server = MeetingWebServer(
                  WebRuntimeCallbacks(
                      on_bookmark=mock_callbacks["on_bookmark"],
@@ -348,10 +369,16 @@ class TestDashboardEndpoint:
 
     def test_dashboard_bootstrap_prefers_runtime_status_payload(self, test_client):
         """The runtime-status payload is still preferred at bootstrap.
-        The factory function lives in the bundled chunk (HS-10-06)."""
+        The factory function lives in the bundled chunk (HS-10-06).
+
+        HS-132-12: the two bootstrap resources are typed now — the untyped
+        `JsonRecord` placeholder became `RuntimeStatusResponse` /
+        `MeetingStateResponse`. Same two reads, same preference; the
+        assertion follows the typed call rather than the erased one.
+        """
         js = self._bundled_runtime_js(test_client)
-        assert 'useResource<JsonRecord>("/api/runtime/status"' in js
-        assert 'useResource<JsonRecord>("/api/state"' in js
+        assert 'useResource<RuntimeStatusResponse>("/api/runtime/status"' in js
+        assert 'useResource<MeetingStateResponse>("/api/state"' in js
 
 
 @pytest.mark.integration
@@ -1139,59 +1166,39 @@ class TestMirHistoryApiEndpoints:
     plugins = property(lambda self: self)
     """Tests for persisted MIR timeline and plugin-run meeting APIs."""
 
-    def test_meeting_intent_timeline_endpoint(self, monkeypatch, test_client):
+    def test_meeting_intent_timeline_endpoint(self, isolated_db, test_client):
         now = datetime(2026, 3, 29, 18, 0, 0)
-
-        class FakeDb:
-            plugins = property(lambda self: self)
-            meetings = property(lambda self: self)
-            def get_meeting(self, meeting_id):
-                if meeting_id != "m-001":
-                    return None
-                return SimpleNamespace(id="m-001")
-
-            def list_intent_windows(self, meeting_id, *, limit=200):
-                _ = meeting_id, limit
-                return [
-                    SimpleNamespace(
-                        meeting_id="m-001",
-                        window_id="m-001:w0001",
-                        start_seconds=0.0,
-                        end_seconds=90.0,
-                        transcript_hash="h-1",
-                        transcript_excerpt="Architecture and scope planning",
-                        profile="balanced",
-                        threshold=0.6,
-                        active_intents=["architecture", "delivery"],
-                        intent_scores={"architecture": 0.81, "delivery": 0.72},
-                        override_intents=[],
-                        tags=["architecture"],
-                        metadata={"source": "route_preview"},
-                        created_at=now,
-                        updated_at=now,
-                    ),
-                    SimpleNamespace(
-                        meeting_id="m-001",
-                        window_id="m-001:w0002",
-                        start_seconds=30.0,
-                        end_seconds=120.0,
-                        transcript_hash="h-2",
-                        transcript_excerpt="Incident mitigation and handoff",
-                        profile="incident_response",
-                        threshold=0.5,
-                        active_intents=["incident"],
-                        intent_scores={"incident": 0.93},
-                        override_intents=["incident"],
-                        tags=["incident"],
-                        metadata={"source": "route_preview"},
-                        created_at=now,
-                        updated_at=now,
-                    ),
-                ]
-
-        import holdspeak.db as db_module
-
-        monkeypatch.setattr(db_module, "get_database", lambda: FakeDb())
+        isolated_db.meetings.save_meeting(MeetingState(id="m-001", started_at=now))
+        isolated_db.plugins.record_intent_window(
+            meeting_id="m-001",
+            window_id="m-001:w0001",
+            start_seconds=0.0,
+            end_seconds=90.0,
+            transcript_hash="h-1",
+            transcript_excerpt="Architecture and scope planning",
+            profile="balanced",
+            threshold=0.6,
+            active_intents=["architecture", "delivery"],
+            intent_scores={"architecture": 0.81, "delivery": 0.72},
+            override_intents=[],
+            tags=["architecture"],
+            metadata={"source": "route_preview"},
+        )
+        isolated_db.plugins.record_intent_window(
+            meeting_id="m-001",
+            window_id="m-001:w0002",
+            start_seconds=30.0,
+            end_seconds=120.0,
+            transcript_hash="h-2",
+            transcript_excerpt="Incident mitigation and handoff",
+            profile="incident_response",
+            threshold=0.5,
+            active_intents=["incident"],
+            intent_scores={"incident": 0.93},
+            override_intents=["incident"],
+            tags=["incident"],
+            metadata={"source": "route_preview"},
+        )
 
         response = test_client.get("/api/meetings/m-001/intent-timeline?limit=25")
         assert response.status_code == 200
@@ -1206,58 +1213,31 @@ class TestMirHistoryApiEndpoints:
         missing = test_client.get("/api/meetings/missing/intent-timeline")
         assert missing.status_code == 404
 
-    def test_meeting_plugin_runs_endpoint(self, monkeypatch, test_client):
+    def test_meeting_plugin_runs_endpoint(self, isolated_db, test_client):
         now = datetime(2026, 3, 29, 18, 0, 0)
-
-        class FakeDb:
-            plugins = property(lambda self: self)
-            meetings = property(lambda self: self)
-            def get_meeting(self, meeting_id):
-                if meeting_id != "m-001":
-                    return None
-                return SimpleNamespace(id="m-001")
-
-            def list_plugin_runs(self, meeting_id, *, window_id=None, limit=500):
-                _ = meeting_id, limit
-                all_runs = [
-                    SimpleNamespace(
-                        id=11,
-                        meeting_id="m-001",
-                        window_id="m-001:w0002",
-                        plugin_id="incident_timeline",
-                        plugin_version="preview",
-                        status="planned",
-                        idempotency_key="idem-2",
-                        duration_ms=0.0,
-                        output={"source": "route_preview"},
-                        error=None,
-                        deduped=False,
-                        created_at=now,
-                        updated_at=now,
-                    ),
-                    SimpleNamespace(
-                        id=10,
-                        meeting_id="m-001",
-                        window_id="m-001:w0001",
-                        plugin_id="requirements_extractor",
-                        plugin_version="1.0.0",
-                        status="success",
-                        idempotency_key="idem-1",
-                        duration_ms=44.2,
-                        output={"requirements": 4},
-                        error=None,
-                        deduped=False,
-                        created_at=now,
-                        updated_at=now,
-                    ),
-                ]
-                if window_id:
-                    return [run for run in all_runs if run.window_id == window_id]
-                return all_runs
-
-        import holdspeak.db as db_module
-
-        monkeypatch.setattr(db_module, "get_database", lambda: FakeDb())
+        isolated_db.meetings.save_meeting(MeetingState(id="m-001", started_at=now))
+        # Recorded oldest-first: `list_plugin_runs` answers newest-first
+        # (ORDER BY created_at DESC, id DESC).
+        isolated_db.plugins.record_plugin_run(
+            meeting_id="m-001",
+            window_id="m-001:w0001",
+            plugin_id="requirements_extractor",
+            plugin_version="1.0.0",
+            status="success",
+            idempotency_key="idem-1",
+            duration_ms=44.2,
+            output={"requirements": 4},
+        )
+        isolated_db.plugins.record_plugin_run(
+            meeting_id="m-001",
+            window_id="m-001:w0002",
+            plugin_id="incident_timeline",
+            plugin_version="preview",
+            status="planned",
+            idempotency_key="idem-2",
+            duration_ms=0.0,
+            output={"source": "route_preview"},
+        )
 
         response = test_client.get("/api/meetings/m-001/plugin-runs?limit=50")
         assert response.status_code == 200
@@ -1277,44 +1257,25 @@ class TestMirHistoryApiEndpoints:
         missing = test_client.get("/api/meetings/missing/plugin-runs")
         assert missing.status_code == 404
 
-    def test_meeting_artifacts_endpoint(self, monkeypatch, test_client):
+    def test_meeting_artifacts_endpoint(self, isolated_db, test_client):
         now = datetime(2026, 3, 29, 18, 0, 0)
-
-        class FakeDb:
-            plugins = property(lambda self: self)
-            meetings = property(lambda self: self)
-            def get_meeting(self, meeting_id):
-                if meeting_id != "m-001":
-                    return None
-                return SimpleNamespace(id="m-001")
-
-            def list_artifacts(self, meeting_id, *, limit=200):
-                _ = meeting_id, limit
-                return [
-                    SimpleNamespace(
-                        id="art-001",
-                        meeting_id="m-001",
-                        artifact_type="requirements",
-                        title="Requirements Extractor",
-                        body_markdown="### Requirements\n\nDefine API acceptance criteria.",
-                        structured_json={"plugin_run_ids": ["10"], "window_ids": ["m-001:w0001"]},
-                        confidence=0.82,
-                        status="draft",
-                        plugin_id="requirements_extractor",
-                        plugin_version="1.0.0",
-                        sources=[
-                            {"source_type": "intent_window", "source_ref": "m-001:w0001"},
-                            {"source_type": "plugin_run", "source_ref": "10"},
-                        ],
-                        created_at=now,
-                        updated_at=now,
-                        origin="meeting",
-                    )
-                ]
-
-        import holdspeak.db as db_module
-
-        monkeypatch.setattr(db_module, "get_database", lambda: FakeDb())
+        isolated_db.meetings.save_meeting(MeetingState(id="m-001", started_at=now))
+        isolated_db.plugins.record_artifact(
+            artifact_id="art-001",
+            meeting_id="m-001",
+            artifact_type="requirements",
+            title="Requirements Extractor",
+            body_markdown="### Requirements\n\nDefine API acceptance criteria.",
+            structured_json={"plugin_run_ids": ["10"], "window_ids": ["m-001:w0001"]},
+            confidence=0.82,
+            status="draft",
+            plugin_id="requirements_extractor",
+            plugin_version="1.0.0",
+            sources=[
+                {"source_type": "intent_window", "source_ref": "m-001:w0001"},
+                {"source_type": "plugin_run", "source_ref": "10"},
+            ],
+        )
 
         response = test_client.get("/api/meetings/m-001/artifacts?limit=25")
         assert response.status_code == 200
@@ -1332,7 +1293,7 @@ class TestMirHistoryApiEndpoints:
         missing = test_client.get("/api/meetings/missing/artifacts")
         assert missing.status_code == 404
 
-    def test_meeting_export_endpoint_renders_handoff_formats(self, monkeypatch, test_client):
+    def test_meeting_export_endpoint_renders_handoff_formats(self, isolated_db, test_client):
         now = datetime(2026, 3, 29, 18, 0, 0)
         meeting = MeetingState(
             id="m-export",
@@ -1364,35 +1325,20 @@ class TestMirHistoryApiEndpoints:
             ),
         )
 
-        class FakeDb:
-            plugins = property(lambda self: self)
-            meetings = property(lambda self: self)
-            def get_meeting(self, meeting_id):
-                return meeting if meeting_id == "m-export" else None
-
-            def list_artifacts(self, meeting_id, *, limit=200):
-                _ = meeting_id, limit
-                return [
-                    SimpleNamespace(
-                        id="art-001",
-                        meeting_id="m-export",
-                        artifact_type="requirements",
-                        title="API Requirements",
-                        body_markdown="### Requirements\n\nDefine API acceptance criteria.",
-                        structured_json={"items": 1},
-                        confidence=0.82,
-                        status="needs_review",
-                        plugin_id="requirements_extractor",
-                        plugin_version="1.0.0",
-                        sources=[{"source_type": "intent_window", "source_ref": "w-1"}],
-                        created_at=now,
-                        updated_at=now,
-                    )
-                ]
-
-        import holdspeak.db as db_module
-
-        monkeypatch.setattr(db_module, "get_database", lambda: FakeDb())
+        isolated_db.meetings.save_meeting(meeting)
+        isolated_db.plugins.record_artifact(
+            artifact_id="art-001",
+            meeting_id="m-export",
+            artifact_type="requirements",
+            title="API Requirements",
+            body_markdown="### Requirements\n\nDefine API acceptance criteria.",
+            structured_json={"items": 1},
+            confidence=0.82,
+            status="needs_review",
+            plugin_id="requirements_extractor",
+            plugin_version="1.0.0",
+            sources=[{"source_type": "intent_window", "source_ref": "w-1"}],
+        )
 
         markdown = test_client.get("/api/meetings/m-export/export?format=markdown")
         assert markdown.status_code == 200
@@ -1416,30 +1362,11 @@ class TestMirHistoryApiEndpoints:
         missing = test_client.get("/api/meetings/missing/export")
         assert missing.status_code == 404
 
-    def test_legacy_meeting_without_mir_history_rows_remains_loadable(self, monkeypatch, test_client):
-        class FakeDb:
-            plugins = property(lambda self: self)
-            meetings = property(lambda self: self)
-            def get_meeting(self, meeting_id):
-                if meeting_id != "m-legacy":
-                    return None
-                return SimpleNamespace(id="m-legacy")
-
-            def list_intent_windows(self, meeting_id, *, limit=200):
-                _ = meeting_id, limit
-                return []
-
-            def list_plugin_runs(self, meeting_id, *, window_id=None, limit=500):
-                _ = meeting_id, window_id, limit
-                return []
-
-            def list_artifacts(self, meeting_id, *, limit=200):
-                _ = meeting_id, limit
-                return []
-
-        import holdspeak.db as db_module
-
-        monkeypatch.setattr(db_module, "get_database", lambda: FakeDb())
+    def test_legacy_meeting_without_mir_history_rows_remains_loadable(self, isolated_db, test_client):
+        # A pre-MIR meeting: the row exists, none of the history tables do.
+        isolated_db.meetings.save_meeting(
+            MeetingState(id="m-legacy", started_at=datetime(2026, 3, 29, 18, 0, 0))
+        )
 
         timeline = test_client.get("/api/meetings/m-legacy/intent-timeline")
         assert timeline.status_code == 200
@@ -1460,65 +1387,39 @@ class TestMirHistoryApiEndpoints:
         assert artifacts_payload["meeting_id"] == "m-legacy"
         assert artifacts_payload["artifacts"] == []
 
-    def test_cli_reroute_persistence_is_visible_in_timeline_api(self, monkeypatch, test_client):
+    def test_cli_reroute_persistence_is_visible_in_timeline_api(
+        self, monkeypatch, isolated_db, test_client
+    ):
+        # The CLI and the hub now share ONE database — the reroute writes the
+        # intent window that the timeline route reads back, with no seam faked
+        # between them.
         now = datetime(2026, 3, 29, 19, 30, 0)
-        windows_by_id: dict[str, dict[str, object]] = {}
-        meeting = SimpleNamespace(
-            id="m-reroute",
-            title="Reroute Demo",
-            tags=["incident"],
-            segments=[
-                SimpleNamespace(speaker="Me", text="We have an active incident bridge.", end_time=9.0),
-                SimpleNamespace(speaker="Remote", text="Draft stakeholder comms and runbook changes.", end_time=18.0),
-            ],
-            duration=18.0,
-            transcript_hash=lambda: "reroute-hash",
+        isolated_db.meetings.save_meeting(
+            MeetingState(
+                id="m-reroute",
+                started_at=now,
+                ended_at=datetime(2026, 3, 29, 19, 30, 18),
+                title="Reroute Demo",
+                tags=["incident"],
+                segments=[
+                    TranscriptSegment(
+                        text="We have an active incident bridge.",
+                        speaker="Me",
+                        start_time=0.0,
+                        end_time=9.0,
+                    ),
+                    TranscriptSegment(
+                        text="Draft stakeholder comms and runbook changes.",
+                        speaker="Remote",
+                        start_time=9.0,
+                        end_time=18.0,
+                    ),
+                ],
+            )
         )
 
-        class FakeDb:
-            plugins = property(lambda self: self)
-            meetings = property(lambda self: self)
-            def get_meeting(self, meeting_id):
-                if meeting_id != "m-reroute":
-                    return None
-                return meeting
-
-            def record_intent_window(self, **kwargs):
-                windows_by_id[str(kwargs["window_id"])] = dict(kwargs)
-
-            def list_intent_windows(self, meeting_id, *, limit=200):
-                _ = limit
-                if meeting_id != "m-reroute":
-                    return []
-                output = []
-                for row in windows_by_id.values():
-                    output.append(
-                        SimpleNamespace(
-                            meeting_id=str(row["meeting_id"]),
-                            window_id=str(row["window_id"]),
-                            start_seconds=float(row.get("start_seconds") or 0.0),
-                            end_seconds=float(row.get("end_seconds") or 0.0),
-                            transcript_hash=str(row.get("transcript_hash") or ""),
-                            transcript_excerpt=str(row.get("transcript_excerpt") or ""),
-                            profile=str(row.get("profile") or "balanced"),
-                            threshold=float(row.get("threshold") or 0.6),
-                            active_intents=list(row.get("active_intents") or []),
-                            intent_scores=dict(row.get("intent_scores") or {}),
-                            override_intents=list(row.get("override_intents") or []),
-                            tags=list(row.get("tags") or []),
-                            metadata=dict(row.get("metadata") or {}),
-                            created_at=now,
-                            updated_at=now,
-                        )
-                    )
-                return output
-
-        fake_db = FakeDb()
-        import holdspeak.db as db_module
         import holdspeak.commands.intel as intel_command
 
-        monkeypatch.setattr(db_module, "get_database", lambda: fake_db)
-        monkeypatch.setattr(intel_command, "get_database", lambda: fake_db)
         monkeypatch.setattr(
             intel_command,
             "Config",
@@ -1799,15 +1700,22 @@ class TestHistoryUiSmoke:
         """HS-10-08: /history rebuilt on AppLayout. Visible labels +
         DOM markers must remain in the served HTML; the JS handler
         identifiers + API endpoint strings now live in the bundled
-        hoisted chunk referenced from the HTML."""
-        import re
+        hoisted chunk referenced from the HTML.
 
+        HS-132-12: HS-117-09 decomposed the `HistoryCore.tsx` monolith into
+        `cores/history/*`. The control plane is unchanged — it is just spread
+        across the sub-modules, so the smoke check reads the whole surface.
+        """
         response = test_client.get("/history")
         assert response.status_code == 200
         assert "text/html" in response.headers["content-type"]
 
         assert '<div id="root"></div>' in response.text
-        js = (Path(__file__).resolve().parents[2] / "web/src/pages/cores/HistoryCore.tsx").read_text()
+        history_root = Path(__file__).resolve().parents[2] / "web/src/pages/cores"
+        sources = [history_root / "HistoryCore.tsx", *sorted((history_root / "history").iterdir())]
+        js = "\n".join(
+            path.read_text() for path in sources if path.suffix in {".ts", ".tsx"}
+        )
         for marker in ("meetings", "actions", "speakers", "projects", "queues", "MeetingDetail", "ImportSection"):
             assert marker in js
         for endpoint in (
@@ -2024,63 +1932,55 @@ class TestSettingsApiEndpoints:
 class TestSpeakerApiEndpoints:
     """Tests for speaker management endpoints."""
 
-    def test_speaker_endpoints(self, monkeypatch, test_client):
-        class FakeDb:
-            meetings = property(lambda self: self)
-            def __init__(self):
-                self._speakers = {
-                    "spk-1": SimpleNamespace(id="spk-1", name="Alice", avatar="👩", sample_count=4),
-                    "spk-2": SimpleNamespace(id="spk-2", name="Bob", avatar="🧑", sample_count=2),
-                }
+    def test_speaker_endpoints(self, isolated_db, test_client):
+        import numpy as np
 
-            def get_all_speakers(self):
-                return list(self._speakers.values())
+        from holdspeak.speaker_intel import SpeakerEmbedding
 
-            def get_speaker_stats(self, speaker_id):
-                return {
-                    "total_segments": 7 if speaker_id == "spk-1" else 3,
-                    "total_speaking_time": 61.0 if speaker_id == "spk-1" else 21.0,
-                    "meeting_count": 2 if speaker_id == "spk-1" else 1,
-                    "first_seen": datetime(2025, 1, 10, 9, 0, 0),
-                    "last_seen": datetime(2025, 1, 11, 10, 30, 0),
-                }
+        def _embedding(seed: int):
+            return np.full(256, float(seed), dtype=np.float32)
 
-            def get_speaker(self, speaker_id):
-                return self._speakers.get(speaker_id)
-
-            def get_speaker_segments(self, speaker_id, limit=500):
-                _ = limit
-                if speaker_id not in self._speakers:
-                    return []
-                return [
-                    {
-                        "meeting_id": "m-001",
-                        "meeting_title": "Weekly sync",
-                        "meeting_date": datetime(2025, 1, 11, 10, 30, 0),
-                        "meeting_duration": 1200.0,
-                        "segments": [
-                            {"text": "Action item follow-up", "speaker": "Alice", "start_time": 42.0, "end_time": 48.0, "is_bookmarked": False}
-                        ],
-                    }
-                ]
-
-            def update_speaker_name(self, speaker_id, name):
-                speaker = self._speakers.get(speaker_id)
-                if speaker is None:
-                    return False
-                speaker.name = name
-                return True
-
-            def update_speaker_avatar(self, speaker_id, avatar):
-                speaker = self._speakers.get(speaker_id)
-                if speaker is None:
-                    return False
-                speaker.avatar = avatar
-                return True
-
-        fake_db = FakeDb()
-        import holdspeak.db as db_module
-        monkeypatch.setattr(db_module, "get_database", lambda: fake_db)
+        isolated_db.meetings.save_speaker(
+            SpeakerEmbedding(id="spk-1", name="Alice", embedding=_embedding(1), sample_count=4, avatar="👩")
+        )
+        isolated_db.meetings.save_speaker(
+            SpeakerEmbedding(id="spk-2", name="Bob", embedding=_embedding(2), sample_count=2, avatar="🧑")
+        )
+        # spk-1 speaks in TWO meetings so `meeting_count` is a real aggregate;
+        # m-001 is the more recent, so it leads the grouped detail payload.
+        isolated_db.meetings.save_meeting(
+            MeetingState(
+                id="m-000",
+                started_at=datetime(2025, 1, 10, 9, 0, 0),
+                ended_at=datetime(2025, 1, 10, 9, 20, 0),
+                title="Kickoff",
+                segments=[
+                    TranscriptSegment(
+                        text="Kickoff notes", speaker="Alice", start_time=0.0, end_time=10.0, speaker_id="spk-1"
+                    )
+                ],
+            )
+        )
+        isolated_db.meetings.save_meeting(
+            MeetingState(
+                id="m-001",
+                started_at=datetime(2025, 1, 11, 10, 30, 0),
+                ended_at=datetime(2025, 1, 11, 10, 50, 0),
+                title="Weekly sync",
+                segments=[
+                    TranscriptSegment(
+                        text="Action item follow-up",
+                        speaker="Alice",
+                        start_time=42.0,
+                        end_time=48.0,
+                        speaker_id="spk-1",
+                    ),
+                    TranscriptSegment(
+                        text="Agreed", speaker="Bob", start_time=48.0, end_time=52.0, speaker_id="spk-2"
+                    ),
+                ],
+            )
+        )
 
         list_response = test_client.get("/api/speakers")
         assert list_response.status_code == 200
@@ -2117,72 +2017,32 @@ class TestSpeakerApiEndpoints:
 class TestGlobalActionItemsApiEndpoints:
     """Tests for global action-item list, status, review, and edit endpoints."""
 
-    def test_action_item_endpoints_include_review_and_edit(self, monkeypatch, test_client):
+    def test_action_item_endpoints_include_review_and_edit(self, isolated_db, test_client):
         now = datetime(2025, 1, 12, 9, 0, 0)
-
-        class FakeDb:
-            meetings = property(lambda self: self)
-            def __init__(self):
-                self._items = {
-                    "a-1": SimpleNamespace(
-                        id="a-1",
-                        task="Initial task",
-                        owner="Me",
-                        due=None,
-                        status="pending",
-                        review_state="pending",
-                        source_timestamp=125.5,
-                        meeting_id="m-001",
-                        meeting_title="Weekly sync",
-                        meeting_date=now,
-                        created_at=now,
-                        completed_at=None,
-                        reviewed_at=None,
-                    )
-                }
-
-            def list_action_items(self, include_completed=False, owner=None, meeting_id=None):
-                items = list(self._items.values())
-                if not include_completed:
-                    items = [item for item in items if item.status == "pending"]
-                if owner:
-                    items = [item for item in items if item.owner == owner]
-                if meeting_id:
-                    items = [item for item in items if item.meeting_id == meeting_id]
-                return items
-
-            def get_action_item(self, item_id):
-                return self._items.get(item_id)
-
-            def update_action_item_status(self, item_id, status):
-                item = self._items.get(item_id)
-                if item is None:
-                    return False
-                item.status = status
-                item.completed_at = now if status in {"done", "dismissed"} else None
-                return True
-
-            def update_action_item_review_state(self, item_id, review_state):
-                item = self._items.get(item_id)
-                if item is None:
-                    return False
-                item.review_state = review_state
-                item.reviewed_at = now if review_state == "accepted" else None
-                return True
-
-            def edit_action_item(self, item_id, *, task, owner, due):
-                item = self._items.get(item_id)
-                if item is None:
-                    return False
-                item.task = task
-                item.owner = owner or None
-                item.due = due or None
-                item.review_state = "accepted"
-                item.reviewed_at = now
-                return True
-
-        import holdspeak.db as db_module
-        monkeypatch.setattr(db_module, "get_database", lambda: FakeDb())
+        isolated_db.meetings.save_meeting(
+            MeetingState(
+                id="m-001",
+                started_at=now,
+                ended_at=datetime(2025, 1, 12, 9, 30, 0),
+                title="Weekly sync",
+                intel=IntelSnapshot(
+                    timestamp=10.0,
+                    topics=[],
+                    action_items=[
+                        {
+                            "id": "a-1",
+                            "task": "Initial task",
+                            "owner": "Me",
+                            "due": None,
+                            "status": "pending",
+                            "review_state": "pending",
+                            "source_timestamp": 125.5,
+                        }
+                    ],
+                    summary="Weekly sync",
+                ),
+            )
+        )
 
         list_response = test_client.get("/api/all-action-items?include_completed=true")
         assert list_response.status_code == 200
@@ -2268,73 +2128,72 @@ class TestIntelQueueApiEndpoints:
     intel = property(lambda self: self)
     """Tests for deferred intel queue endpoints."""
 
-    def test_intel_jobs_list_retry_and_process(self, monkeypatch, test_client):
-        class FakeDb:
-            intel = property(lambda self: self)
-            meetings = property(lambda self: self)
-            def list_intel_jobs(self, *, status="all", limit=20):
-                _ = status, limit
-                return [
-                    SimpleNamespace(
-                        meeting_id="m-001",
-                        status="queued",
-                        transcript_hash="abc123",
-                        requested_at=datetime(2025, 1, 11, 10, 30, 0),
-                        updated_at=datetime(2025, 1, 11, 10, 31, 0),
-                        attempts=2,
-                        last_error="transient issue",
-                        meeting_title="Weekly sync",
-                        started_at=datetime(2025, 1, 11, 10, 0, 0),
-                        intel_status_detail="Queued for retry",
-                    )
-                ]
-
-            def get_intel_queue_summary(self):
-                return SimpleNamespace(
-                    total_jobs=3,
-                    queued_jobs=2,
-                    running_jobs=0,
-                    failed_jobs=1,
-                    queued_due_jobs=1,
-                    scheduled_retry_jobs=1,
-                    next_retry_at=datetime(2025, 1, 11, 10, 45, 0),
+    def test_intel_jobs_list_retry_and_process(self, monkeypatch, isolated_db, test_client):
+        # Three REAL queue rows: one due now, one scheduled into the future,
+        # one failed. The status filter, the aggregate summary and the retry
+        # verb are all answered by the queue the hub actually reads.
+        def _meeting(meeting_id: str, minute: int, title: str) -> None:
+            isolated_db.meetings.save_meeting(
+                MeetingState(
+                    id=meeting_id,
+                    started_at=datetime(2025, 1, 11, 10, minute, 0),
+                    ended_at=datetime(2025, 1, 11, 10, minute + 20, 0),
+                    title=title,
+                    segments=[
+                        TranscriptSegment(
+                            text=f"{title} transcript", speaker="Me", start_time=0.0, end_time=6.0
+                        )
+                    ],
                 )
+            )
 
-            def list_intel_job_attempts(self, meeting_id, *, limit=5):
-                _ = meeting_id, limit
-                return [
-                    SimpleNamespace(
-                        attempt=2,
-                        outcome="scheduled_retry",
-                        error="transient issue",
-                        retry_at=datetime(2025, 1, 11, 10, 35, 0),
-                        created_at=datetime(2025, 1, 11, 10, 31, 0),
-                    )
-                ]
+        _meeting("m-001", 0, "Weekly sync")
+        _meeting("m-002", 5, "Design review")
+        _meeting("m-003", 10, "Retro")
 
-            def requeue_intel_job(self, meeting_id, *, reason=None):
-                _ = reason
-                return meeting_id == "m-001"
+        isolated_db.intel.enqueue_intel_job("m-001", transcript_hash="abc123", reason="transient issue")
+        isolated_db.intel.record_intel_job_attempt(
+            "m-001",
+            attempt=2,
+            outcome="scheduled_retry",
+            error="transient issue",
+            retry_at=datetime(2025, 1, 11, 10, 35, 0),
+        )
 
-            def request_intel_retry(self, meeting_id, *, reason=None):
-                _ = reason
-                return "queued" if meeting_id == "m-001" else "missing"
+        isolated_db.intel.enqueue_intel_job("m-002", transcript_hash="def456")
+        isolated_db.intel.retry_intel_job(
+            "m-002",
+            "transient issue",
+            retry_at=datetime.now() + timedelta(hours=1),
+            attempt=1,
+            max_attempts=3,
+        )
 
-        import holdspeak.db as db_module
-        monkeypatch.setattr(db_module, "get_database", lambda: FakeDb())
+        isolated_db.intel.enqueue_intel_job("m-003", transcript_hash="ghi789")
+        isolated_db.intel.fail_intel_job("m-003", "permanent failure")
 
-        import holdspeak.intel_queue as intel_queue_module
-        monkeypatch.setattr(intel_queue_module, "drain_intel_queue", lambda *args, **kwargs: 3)
+        # The drain seam is bound INTO the service at import
+        # (`meeting_intel_service.py:9`), so that is the name to replace —
+        # patching `holdspeak.intel_queue` never reached the caller.
+        import holdspeak.services.meeting_intel_service as intel_service_module
+
+        monkeypatch.setattr(intel_service_module, "drain_intel_queue", lambda *args, **kwargs: 3)
 
         jobs_response = test_client.get("/api/intel/jobs?status=queued&limit=5")
         assert jobs_response.status_code == 200
         jobs_data = jobs_response.json()
-        assert len(jobs_data["jobs"]) == 1
-        assert jobs_data["jobs"][0]["meeting_id"] == "m-001"
-        assert jobs_data["jobs"][0]["status"] == "queued"
-        assert jobs_data["jobs"][0]["retry_scheduled"] is False
-        assert "retries_remaining" in jobs_data["jobs"][0]
-        assert len(jobs_data["jobs"][0]["retry_history"]) == 1
+        # The status filter is real: the failed job never appears.
+        assert {job["meeting_id"] for job in jobs_data["jobs"]} == {"m-001", "m-002"}
+        assert all(job["status"] == "queued" for job in jobs_data["jobs"])
+        due = next(job for job in jobs_data["jobs"] if job["meeting_id"] == "m-001")
+        assert due["status"] == "queued"
+        assert due["retry_scheduled"] is False
+        assert "retries_remaining" in due
+        assert len(due["retry_history"]) == 1
+        assert due["retry_history"][0]["outcome"] == "scheduled_retry"
+        scheduled = next(job for job in jobs_data["jobs"] if job["meeting_id"] == "m-002")
+        assert scheduled["retry_scheduled"] is True
+        assert scheduled["next_retry_at"] is not None
 
         summary_response = test_client.get("/api/intel/summary")
         assert summary_response.status_code == 200

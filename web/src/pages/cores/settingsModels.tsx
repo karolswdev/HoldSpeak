@@ -24,6 +24,13 @@ import {
   StepperGadget,
   StringGadget,
 } from "../../desk/surface/gadgets";
+import {
+  INTEL_PROVIDER_OPTIONS,
+  MEETING_PLACEMENT_RULE,
+  meetingPlacement,
+  placementLine,
+  providerIgnoredReason,
+} from "./settingsPrefs";
 
 type Target = {
   id: string;
@@ -277,8 +284,8 @@ export function ModelsModule({
     })),
   ];
 
-  const pointerRow = (label: string, path: string[]) => (
-    <GadgetRow key={path.join(".")} label={label}>
+  const pointerRow = (label: string, path: string[], fact?: string) => (
+    <GadgetRow key={path.join(".")} label={label} fact={fact}>
       <CycleGadget
         label={`${label} runs on`}
         value={String(val(path) ?? "")}
@@ -286,6 +293,74 @@ export function ModelsModule({
         onChange={(next) => update(path, next || null)}
       />
     </GadgetRow>
+  );
+
+  /* HS-132-10 — the ONE meetings placement dial. The destination pointer
+     decides; the provider intent is its fallback, subordinate in the sheet
+     and DISABLED with its override named the moment a destination is
+     adopted. The hub's own provenance (`_placement.meeting`) supplies the
+     effective placement and the reason, so no interaction is a silent
+     no-op. */
+  const placement = meetingPlacement(settings);
+  const providerIgnored = placement ? providerIgnoredReason(placement) : "";
+  const droppedDestination = String(placement?.placement_reason ?? "");
+  // Exactly ONE of the two rows says DECIDES PLACEMENT, and it is the one the
+  // hub actually obeyed.
+  const destinationDecides = placement?.placement_source === "destination";
+  const meetingsBlock = (
+    <>
+      {pointerRow(
+        "Meetings",
+        ["meeting", "intel_profile_id"],
+        destinationDecides ? "DECIDES PLACEMENT" : "NONE · PROVIDER DECIDES",
+      )}
+      {droppedDestination ? (
+        <div className="prefs-egress-line">
+          <LampGadget
+            on
+            tone="fail"
+            label={`DESTINATION SELECTION IGNORED · ${droppedDestination.toUpperCase()}`}
+          />
+        </div>
+      ) : null}
+      <div className="gadget-indent">
+        <GadgetRow
+          label="Meetings provider"
+          fact={destinationDecides ? "OVERRIDDEN" : "DECIDES PLACEMENT"}
+        >
+          <CycleGadget
+            label="Meetings provider"
+            value={String(val(["meeting", "intel_provider"]) ?? "local")}
+            options={INTEL_PROVIDER_OPTIONS}
+            disabled={Boolean(providerIgnored)}
+            onChange={(next) => update(["meeting", "intel_provider"], next)}
+          />
+        </GadgetRow>
+      </div>
+      {providerIgnored ? (
+        <div className="prefs-egress-line">
+          <LampGadget on tone="fail" label={providerIgnored} />
+        </div>
+      ) : null}
+      <div className="prefs-egress-line">
+        <span className="gadget-fact">{MEETING_PLACEMENT_RULE}</span>
+      </div>
+      {placement ? (
+        <div className="prefs-egress-line">
+          <LampGadget
+            on
+            tone={placement.runnable === false ? "fail" : "ok"}
+            label={
+              placement.runnable === false
+                ? `${placementLine(placement)} · NOT RUNNABLE · ${String(
+                    placement.runnable_reason ?? "",
+                  ).toUpperCase()}`
+                : placementLine(placement)
+            }
+          />
+        </div>
+      ) : null}
+    </>
   );
 
   const lampTone = (row: Target): "ok" | "warn" | "fail" =>
@@ -411,7 +486,7 @@ export function ModelsModule({
       </GadgetGroup>
       <GadgetGroup label="Runs on">
         {pointerRow("Dictation", ["dictation", "runtime", "profile_id"])}
-        {pointerRow("Meetings", ["meeting", "intel_profile_id"])}
+        {meetingsBlock}
         {pointerRow("Rails", ["rails_observer", "profile_id"])}
       </GadgetGroup>
       <GadgetGroup label="Hub default engine">

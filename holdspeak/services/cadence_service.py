@@ -10,7 +10,7 @@ from typing import Any
 
 from ..intel.providers import endpoint_egress
 from ..principals import Principal
-from .errors import NotFound
+from .errors import ConflictError, NotFound, ValidationError
 
 _LOCAL_EGRESS = endpoint_egress(cloud=False, label="Local only")
 #: One loop detail is a foreground read; its drafted action never outlives it.
@@ -109,6 +109,60 @@ class CadenceService:
         self._required_loop(loop_id)
         self._db.cadence.set_status(loop_id, status)
         return self._loop_dict(self._required_loop(loop_id))
+
+    def reply(self, principal: Principal, loop_id: str, payload: dict[str, Any]) -> dict[str, Any]:
+        """Deliver the owner's typed answer into a waiting agent's pane, then close.
+
+        Never autonomous (CAD-3-03, kept through the Phase-123 service move): the
+        text is the owner's, given here and now. The loop must be an
+        ``agent_question``, and its session must still resolve to a live pane —
+        otherwise nothing is delivered and the loop stays open. The side effect
+        rides the one owner-gesture ``process.input`` path and lives HERE, never in
+        the side-effect-free ``holdspeak.cadence`` package.
+        """
+        loop = self._required_loop(loop_id)
+        if loop.source_type != "agent_question":
+            raise ValidationError("not an agent loop", code="cadence_reply_not_agent_loop")
+        text = str(payload.get("text") or "").strip()
+        if not text:
+            raise ValidationError("reply text is required", code="cadence_reply_empty")
+        session = self._awaiting_agent_session(str(loop.source_id or ""))
+        pane = str(getattr(session, "tmux_pane", "") or "").strip()
+        if not pane:
+            raise ConflictError("no terminal pane for this agent session",
+                                code="cadence_reply_no_pane")
+        from ..delivery.direct_gesture_input import (
+            ProcessInputRefused,
+            submit_process_input_from_owner_gesture,
+        )
+        try:
+            result = submit_process_input_from_owner_gesture(
+                pane=pane,
+                text=text,
+                session_key=str(getattr(session, "session_id", "") or f"pane:{pane}"),
+                agent=str(getattr(session, "agent", "") or ""),
+                principal=principal,
+            )
+        except ProcessInputRefused as exc:
+            raise ConflictError(f"delivery refused: {exc.reason}",
+                                code="cadence_reply_refused") from exc
+        # The answer handles the question; the loop closes and the send is counted.
+        self._db.cadence.set_status(loop_id, "closed")
+        self._db.cadence.bump_nudge(loop_id)
+        return {"delivered": True, "pane": pane,
+                "operation_id": result.get("operation_id"),
+                "command_id": result.get("command_id"),
+                "egress": _LOCAL_EGRESS}
+
+    @staticmethod
+    def _awaiting_agent_session(session_id: str) -> Any:
+        """The still-awaiting capture for one session id, or ``None``."""
+        from .. import agent_context
+        try:
+            sessions = agent_context.list_recent_awaiting_agent_sessions()
+        except Exception:
+            return None
+        return next((s for s in sessions if getattr(s, "session_id", None) == session_id), None)
 
     def run_now(self, principal: Principal) -> dict[str, Any]:
         from ..cadence.service import CadenceService as TickService

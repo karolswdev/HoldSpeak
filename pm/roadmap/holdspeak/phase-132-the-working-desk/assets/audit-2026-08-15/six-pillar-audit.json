@@ -1,0 +1,939 @@
+{
+  "summary": "Audit what HoldSpeak functionally does on main today, across six pillars",
+  "agentCount": 6,
+  "logs": [],
+  "result": [
+    {
+      "pillar": "MODEL ROUTING HONESTY",
+      "verdict": "Four of the five #450 defects are genuinely fixed on current main, each with a named regression test, and the executable one-path census (tests/unit/test_one_path_census.py) now has an EMPTY blocking-findings ledger and passes. Defect 4 (two placement owners) is only half fixed: the backend has one authority with explicit precedence, but the web UI still exposes two independent dials with no override signal, and one describer still reads intel_provider directly instead of the placement authority. That surviving second owner produces a NEW, empirically verified instance of the exact pillar defect: Ask and Recipe-chat runs on this_machine execute the local GGUF while the receipt, the Ask footer bar, and the hub's advertised model manifest all print the CLOUD model id. HoldSpeak still checks one model, runs another, and reports a third.",
+      "works": [
+        "Defect 1 FIXED: this_machine readiness now checks the meeting-intel model the run actually loads, not the dictation backend. holdspeak/inference_targets.py:224-237 calls configured_local_meeting_model_path() (holdspeak/intel/providers.py:277-290), the same path execution pins at holdspeak/inference_targets.py:697-700 -> 641-646. Locked by tests/unit/test_deployment_identity.py:59.",
+        "Defect 2 FIXED: the onDevice branch loads THIS profile's model_file (holdspeak/intel/providers.py:816-823), the same artifact readiness attested at holdspeak/inference_targets.py:364-372. Locked by tests/unit/test_deployment_identity.py:84, the explicit 'reports A, runs B, attests A' regression.",
+        "Defect 3 FIXED: Ask refuses instead of silently retargeting. holdspeak/services/ask_service.py:107-109 raises model_not_advertised naming the destination and its id; list_models emits one row PER DESTINATION with id (not model name) as the selector, holdspeak/services/ask_service.py:58-79. Locked by tests/unit/test_ask_no_retarget.py (6 tests, all pass).",
+        "Defect 5 FIXED: Ask (holdspeak/services/ask_service.py:121-132), Workbench (holdspeak/services/workbench_runner.py:31-33,189,221; holdspeak/services/workbench_service.py:355-376) and Recipe (holdspeak/services/recipe_service.py:70,105,119) all capture an immutable deployment revision and invoke through the SAME kernel InferenceRunner. No bypass path survives.",
+        "Defect 4 backend half FIXED: resolve_meeting_placement (holdspeak/intel/providers.py:653-713) is one authority with stated precedence (adopted destination wins over provider intent), consumed by construction (:233), readiness describers (:324), egress boundary (:845) and llm capability (:191). Locked by tests/unit/test_meeting_placement_policy.py (15 tests, pass).",
+        "The one-path census fence (tests/unit/test_one_path_census.py:521-570) has NAMED_FINDINGS = {} and FINDINGS_WITHOUT_A_SITE = {}; the fence plus placement-policy plus effect-fence suites run green (59 passed, isolated HOME).",
+        "The frozen meeting intel plan does record placement provenance: holdspeak/meeting_session/intel_plan.py:196-198 stamps placement_source, placement_reason and provider_intent into plan metadata.",
+        "target_from_profile and this_machine_target both build a single DeploymentIdentity (holdspeak/inference_targets.py:95-117, 443-470) that readiness, execution and placement_receipt (holdspeak/inference_targets.py:182-221) all read from."
+      ],
+      "broken": [
+        {
+          "title": "Ask receipt names the CLOUD model while the run executes the local GGUF (this_machine)",
+          "severity": "major",
+          "evidence": "holdspeak/kernel/prompt_adapter.py:20 reports model as getattr(engine,'active_model','') or getattr(engine,'model',''); MeetingIntel defines NEITHER (holdspeak/intel/engine.py:115-136 assigns model_path/cloud_model and exposes only active_provider), so the adapter always returns ''. holdspeak/services/ask_service.py:105 then sets advertised = self._hub_model() for a this_machine target (prof is None), holdspeak/services/ask_service.py:123 puts it in payload['selected_model'], and holdspeak/services/ask_service.py:149 falls back to it for the receipt. holdspeak/services/sync_service.py:539-542 returns the CLOUD model id whenever meeting.intel_provider == 'cloud'. Execution meanwhile is pinned local: holdspeak/inference_targets.py:697-700 -> 641-646 builds MeetingIntel(provider='local', model_path=revision.model_path). Reproduced live with isolated HOME: intel_provider='cloud', intel_realtime_model=/tmp/local-A.gguf -> this_machine ready=True, deployment.model_path='/tmp/local-A.gguf', executed engine provider/model_path = local /tmp/local-A.gguf, but advertised/receipt model = 'gpt-5-mini'; placement_receipt printed {'target_id':'this_machine','engine':'local','model':'gpt-5-mini'}.",
+          "impact": "The Ask receipt bar prints the wrong model name to the user: web/src/desk/components/AskPanel.tsx:253-278 renders placement.model in the footer ('RAN ON ... MODEL'). Readiness checked local-A, the run loaded local-A, the receipt says gpt-5-mini. This is the exact #450 class, unfixed."
+        },
+        {
+          "title": "Same wrong-model receipt in Recipe chat",
+          "severity": "major",
+          "evidence": "holdspeak/web/routes/primitives/recipes.py:122 passes default_model=_hub_model_name(ctx) into RecipeService.chat; holdspeak/services/recipe_service.py:102 sets payload['selected_model']=default_model or target.model and holdspeak/services/recipe_service.py:129 stamps actual_placement model=d.get('model') or payload['selected_model'] -- and d['model'] is always '' per prompt_adapter.py:20 above. RecipeService.run is NOT affected (recipe_service.py:126 falls back to target.model, which is the deployment's own name).",
+          "impact": "Agent chat receipts on the hub-default destination name a model the turn never loaded, and the wrongness is inconsistent between the run and chat verbs of the same agent."
+        },
+        {
+          "title": "Ask's new no-retarget refusal compares against the wrong advertised model",
+          "severity": "major",
+          "evidence": "holdspeak/services/ask_service.py:105-109: advertised comes from _hub_model_name() for this_machine, then an explicit model override is refused when override != advertised with the message \"it runs {offer!r}\". With intel_provider='cloud' the offer is the cloud model id while the destination actually loads the local GGUF (verified above).",
+          "impact": "A user who names the model that this_machine genuinely runs (e.g. 'local-A') is refused with 'model not available on This device; it runs gpt-5-mini'. The HS-130-06 honesty fix inherits the upstream lie and turns it into a hard 400."
+        },
+        {
+          "title": "The hub advertises a model name to paired devices that its this_machine deployment does not load",
+          "severity": "major",
+          "evidence": "holdspeak/services/sync_service.py:721-731 appends a live virtual manifest row named from self._hub_model_name(), which reads meeting.intel_provider directly (holdspeak/services/sync_service.py:523-548) and never consults resolve_meeting_placement. With intel_provider='cloud' it advertises the cloud model id; with intel_provider='local' plus an adopted openAICompatible intel_profile_id (which WINS for meetings per holdspeak/intel/providers.py:681-692) it advertises the local GGUF stem while meetings run on the endpoint.",
+          "impact": "A paired companion asking 'what would run it on your desktop' is told a name that is not what the desktop loads, in both directions of the mismatch."
+        },
+        {
+          "title": "Defect 4 survives in the UI: two placement dials, no precedence and no override signal",
+          "severity": "major",
+          "evidence": "web/src/pages/cores/SettingsCore.tsx:636 renders a Provider cycle over ['meeting','intel_provider'] (options local/cloud, web/src/pages/cores/settingsPrefs.tsx:72); web/src/pages/cores/settingsModels.tsx:414 renders a separate 'Runs on > Meetings' pointer over ['meeting','intel_profile_id'], selectable from every destination (settingsModels.tsx:269-289). The backend precedence (adopted destination beats provider intent) is real -- holdspeak/intel/providers.py:681-692, asserted by tests/unit/test_meeting_placement_policy.py:108 -- and it computes both a source and a reason (holdspeak/intel/providers.py:606-608, 697). Grep of web/src finds NO consumer of placement_source, placement_reason or provider-selection-ignored, and grep of holdspeak/ shows PLACEMENT_PROVIDER_OVERRIDDEN referenced only at providers.py:608,697 plus one test.",
+          "impact": "A user sets Provider = LOCAL in Settings > Meetings and it silently does nothing because a destination pointer set in a DIFFERENT module wins. The UI shows LOCAL with no override lamp and no reason, so the control lies about what decides placement."
+        }
+      ],
+      "candidates": [
+        {
+          "title": "The receipt names what loaded, not what a service guessed",
+          "why": "Root-causes four of the five findings above. Give MeetingIntel a real active_model property (set at load time from model_path stem / cloud_model) so prompt_adapter.py:20 stops returning '', and make Ask/Recipe-chat derive selected_model from target.deployment.model instead of _hub_model_name(). Highest user value: the printed model name becomes true for every destination.",
+          "size": "M"
+        },
+        {
+          "title": "Delete _hub_model_name as a placement describer",
+          "why": "sync_service.py:523-548 is the last second owner of the placement question outside resolve_meeting_placement. Route it through configured_meeting_deployment() so the hub's advertised manifest, Ask's advertised model, and the actual deployment can never disagree.",
+          "size": "S"
+        },
+        {
+          "title": "One meetings placement dial in the UI",
+          "why": "Retire the Provider cycle as a user-facing control (or move it under the Runs on pointer and disable it when a destination is adopted), and surface placement_source/placement_reason from the API so 'PROVIDER SELECTION IGNORED' is visible where the user set it. Ends the silent no-op the owner already paid to fix in the backend.",
+          "size": "M"
+        },
+        {
+          "title": "Executable receipt-honesty fence across every destination kind",
+          "why": "Existing tests stub _hub_model_name to 'HubModel-9B' (tests/unit/test_web_routes_ask.py:80 and 7 more, test_web_routes_recipe_chat.py:91), which is why this class regressed unnoticed. A parametrized test that runs the REAL body and asserts readiness-model == executed-model == receipt-model for this_machine / onDevice / openAICompatible / meshNode / hub-default-cloud would make the next instance fail the build.",
+          "size": "M"
+        },
+        {
+          "title": "Close the onDevice blank-model_file fallback",
+          "why": "holdspeak/intel/providers.py:820 still falls back to the global meeting model when a profile names no model_file. Today unreachable through a ready target (inference_targets.py:367-369 marks it unavailable), but it is the same shape as the defect just fixed; refuse by name instead, as HS-131-13 did for the local branch.",
+          "size": "S"
+        }
+      ],
+      "unknown": [
+        "Whether the wrong model name is visible in the shipped hub on real metal -- verified only in code and by a Python reproduction of the exact ask_service/prompt_adapter logic, not by a live Ask turn against .43 (sandbox cannot reach the LAN LLM).",
+        "Whether mesh_node and paired_device receipts carry the same wrong-model divergence: MeshRelayIntel and the paired delegation path were not exercised, and MeshRelayIntel may or may not expose active_model.",
+        "Whether the meeting-intel receipt (as opposed to Ask/Recipe) prints a correct model name end to end -- intel_plan.py freezes honest metadata, but the meeting receipt rendering path was not traced.",
+        "Whether any settings API response already carries placement source/reason to the web client under a different key than the ones grepped (placement_source, placement_reason, effective_target_id, provider-selection-ignored)."
+      ]
+    },
+    {
+      "pillar": "DICTATION — speak, and text appears where you work",
+      "verdict": "The desktop hold-to-talk path is the healthy one: press→admit→record→release→seal→Whisper→text_processor→voice-macro dispatch→DIR pipeline→preview-or-type is fully wired, with a cancellation fence on every publication path, and 732/750 dictation-selected Python tests pass. The browser path built in Phase 118/119 is where it frays: MicButton's click-to-toggle streams over a WebSocket that runs a full independent Whisper pass on every 600 ms chunk whose \"partial\" result no component in web/src consumes, holds the server audio floor on a 30 s lease it never renews, collapses every named server refusal into a generic \"Dictation did not finish\", and in the Speak room hands its already-pipelined text into /api/dictation/remote, which runs the whole DIR pipeline a second time on the same utterance (the route's own comment calls re-running it \"a lie\" and offers a raw:true flag the caller never sets). Separately, 16 dictation integration tests are RED on main because they grep web/src/pages/cores/DictationCore.tsx for markup that moved into pages/cores/dictation/*, so the pillar's UI regression fence is down and the repo's documented `uv run pytest` command fails. The DIR-01 plan's own evidence harnesses (measure_dictation_latency.py, both demo scripts) now crash inside build_pipeline because they carry no admission.",
+      "works": [
+        "Desktop hold-to-talk is complete end to end: press admits one dictation.session, a refusal tears the capture down, release retires the generation, seals the deadline, and discards unadmitted audio (holdspeak/runtime/dictation_capture.py:474-584).",
+        "The hotkey tail is intact: Whisper child under an admission, text_processor, voice-macro dispatch inside the same cancellation election, DIR pipeline, then desktop type through the kernel warrant (holdspeak/runtime/dictation_capture.py:103-316).",
+        "Wake word is fully wired: openWakeWord listener with self-healing audio-floor respect, armed capture window, hard iteration cap, and a stop that reaches an in-flight capture and cancels it (holdspeak/runtime/wake_glue.py:100-325).",
+        "Preview-before-type is real on both hold and wake: server-minted one-shot token, broadcast, type/discard routes, and a React consumer (holdspeak/runtime/dictation_previews.py:23-106, web/src/components/AmbientLayer.tsx:18-44).",
+        "The cancellation fence holds on every publication path including the error paths: pipeline-disabled, runtime-unavailable, and the bottom except-clause all return through _publishable/_elected_publication (holdspeak/dictation_runner.py:190-205, 298-318, 441-454).",
+        "Speech control signals (SpeechSessionRefused / SpeechProviderFailure) are never degraded to raw text; the pipeline executor and both runner entry points re-raise them (holdspeak/plugins/dictation/pipeline.py:109-114, holdspeak/dictation_runner.py:441-448).",
+        "Browser open mic (Speak room) is coherent: VAD segmentation, floor claim with a real heartbeat, and honest handling of a server-closed interval (web/src/lib/openMic.ts:41-102).",
+        "The DIR pipeline executor itself is solid: ordered stages, per-stage error isolation with short-circuit to the input text, ring buffer for introspection, on_run hook that cannot break a run (holdspeak/plugins/dictation/pipeline.py:83-171).",
+        "The CLI dry-run is properly guarded: named credential refusal before construction, egress disclosed from the frozen plan, buffered body published under the session election (holdspeak/commands/dictation.py:129-230).",
+        "/api/dictation/remote is the most mature delivery surface: client-stable idempotency claim, named terminal refusals, aimed-agent refusal instead of free-typing, pre-delivery fence (holdspeak/web/routes/dictation/pipeline.py:417-880).",
+        "Test evidence: 101 focused pipeline/router/runner unit tests green, 166 admission/CLI/wake unit tests green, 24 dictation integration tests green, 62 web dictation vitest tests green (all run with an isolated HOME)."
+      ],
+      "broken": [
+        {
+          "title": "16 dictation integration tests are RED on main; the pillar's UI regression fence is down",
+          "severity": "critical",
+          "evidence": "`HOME=$(mktemp -d) uv run pytest -q tests/integration -k dictat` → `16 failed, 144 passed, 1 skipped`. All failures read a file that is now a 137-line shell: tests/integration/test_web_dictation_cockpit.py:8 (`_page()` reads web/src/pages/cores/DictationCore.tsx), failing at test_web_dictation_cockpit.py:23. The asserted markup moved into the split files, e.g. 'Search the journal' now lives at web/src/pages/cores/dictation/Journal.tsx:214 while tests/integration/test_web_dictation_journal.py:141 still greps DictationCore.tsx. Same pattern in test_web_dictation_correction_ritual.py:64/70/83/92, test_web_dictation_corrections_api.py, test_web_dictation_learning_digest.py, test_web_dictation_settings_api.py, test_web_dictation_trust_signals.py, test_web_project_kb_api.py.",
+          "impact": "The documented test command (`uv run pytest -q`, CLAUDE.md) fails on a clean main. Every invariant those guards existed to protect — no tab wall, focus-safe React-owned lists, journal search + Clear-all confirmation, the correction ritual wiring, the project-KB and runtime sections, device-local project scope — is now unenforced, so the next Speak refactor can silently delete any of them.",
+          "severity_note": "critical"
+        },
+        {
+          "title": "Speak-room dictation runs the DIR pipeline twice on the same utterance",
+          "severity": "major",
+          "evidence": "web/src/pages/cores/dictation/InstrumentStrip.tsx:75 wires `onText={onReleased}`; web/src/pages/cores/dictation/useSpeakDeck.ts:193-198 routes onReleased→deliver; useSpeakDeck.ts:152 POSTs /api/dictation/remote with no `raw` flag. The text it sends has ALREADY been pipelined: the WS final pass calls process_transcript at holdspeak/web/routes/system/voice.py:512-521, and the open-mic leg calls transcribeWav with the default `pipeline=true` (web/src/lib/speakToFill.ts:141, web/src/lib/openMic.ts:68). /api/dictation/remote then runs the full pipeline again via _run_dictation_dry_run_text (holdspeak/web/routes/dictation/pipeline.py:806-826). The route's own comment at holdspeak/web/routes/dictation/pipeline.py:706-711 states a previewed final_text 'has already been through the pipeline; running it again would make the receipt a lie (the rewrite is not idempotent)' and provides `raw: true` for exactly this case.",
+          "impact": "Every sentence spoken in the Speak room pays two full classify+rewrite round trips, and the second rewrite operates on the first rewrite's output — so the delivered text is a rewrite of a rewrite. Two journal rows are written per utterance (source 'browser' then 'dictation'), doubling the perceived latency and corrupting the journal's one-row-per-utterance story."
+        },
+        {
+          "title": "The streaming mic claims the server audio floor for 30 s and never renews it",
+          "severity": "major",
+          "evidence": "holdspeak/web/routes/system/voice.py:428 calls _claim_browser_audio_floor, which acquires with `lease_seconds=30.0` (holdspeak/web/routes/system/voice_support.py:75). VoiceTypingSession._expire_locked frees any leased claim once the lease lapses (holdspeak/voice_typing.py:57-67). Nothing in the ws_dictation_stream handler (holdspeak/web/routes/system/voice.py:386-560) calls session.renew. Contrast the HTTP open-mic path, which heartbeats every FLOOR_RENEW_MS = 10 s (web/src/lib/openMic.ts:85-93, web/src/lib/audioFloor.ts:14-17).",
+          "impact": "Hold the click-to-toggle mic open for more than 30 seconds and the server silently believes nobody owns the microphone. The global hotkey, the wake listener, or a meeting can then claim the floor and start capturing while the browser stream is still recording and sending chunks — two capture owners on one microphone, which is precisely the condition the one-floor arbiter exists to prevent."
+        },
+        {
+          "title": "Every 600 ms chunk gets a full Whisper pass whose result is thrown away",
+          "severity": "major",
+          "evidence": "web/src/lib/micStreamSession.ts:21 sets CHUNK_INTERVAL_MS = 600 and micStreamSession.ts:73-84 ships each chunk. holdspeak/web/routes/system/voice.py:468-478 transcribes each chunk independently and emits it as a `partial`; holdspeak/web/routes/system/voice.py:494-496 then re-transcribes the whole concatenated audio for the final. Client-side the only consumer is `onPartialRef.current?.(event.text)` at web/src/desk/components/MicButton.tsx:224, and grep across web/src shows `onPartial` appears ONLY inside MicButton.tsx (lines 48, 61, 76, 77, 224) — no caller ever passes it. Each transcribe takes the runtime's transcription_lock (holdspeak/runtime/dictation_capture.py:389).",
+          "impact": "A 30-second utterance triggers ~50 wasted Whisper invocations plus one real one, all serialized on the same lock the hotkey path needs. The user sees no progressive text at all, contradicting MicButton.tsx:3-4 ('streaming transcription fills the target field with progressive Whisper corrections') and the WS docstring's 'progressive Whisper result' (holdspeak/web/routes/system/voice.py:392). Isolated 600 ms fragments are also the worst case for Whisper hallucination, so the partials would be wrong even if something rendered them."
+        },
+        {
+          "title": "Named WebSocket failures collapse to 'Dictation did not finish', and interval-closed is unhandled on the streaming mic",
+          "severity": "major",
+          "evidence": "The server sends structured refusals: holdspeak/web/routes/system/voice.py:474-480 and 527-545 include `reason`, `failure_category`, and `mic_interval: closed`. The client type has none of those fields (web/src/lib/micStreamSession.ts:11-14), MicButton reads only `event.error` (web/src/desk/components/MicButton.tsx:225-231), and dictationFailure maps a plain Error to 'unknown' (web/src/lib/dictationRecovery.ts:115-135 → DICTATION_FAILURES.unknown at :81-87). micIntervalClosed (web/src/lib/speakToFill.ts:129) is called only from web/src/lib/openMic.ts:70, never on the WS path. Worse, after an error the server returns without a `final`, so pendingFinal resolves to \"\" on close (micStreamSession.ts:56-65, 116) and MicButton.stopSession overwrites the real failure with 'no_speech' (MicButton.tsx:259-263).",
+          "impact": "A refused session, an exhausted child budget, a held audio floor, a revoked authority, and a genuinely silent recording are all presented to the user as either 'Dictation did not finish' or 'No words were detected'. The Sol Amendment 3 contract ('the interval closed, click again') is implemented server-side and ignored client-side for the mic that every desk text field uses."
+        },
+        {
+          "title": "Retained-audio recovery is unreachable in production for every browser mic",
+          "severity": "major",
+          "evidence": "savePendingVoice has exactly one non-test caller: web/src/lib/speakToFill.ts:181, inside stopAndTranscribe. Grep across web/src shows stopAndTranscribe, startCapture and cancelCapture have NO non-test callers — MicButton uses startStreamSession exclusively (web/src/desk/components/MicButton.tsx:234) and FirstWords likewise (web/src/desk/components/FirstWords.tsx:107). So the `draftScope` prop never persists audio, and loadPendingVoice (MicButton.tsx:96) / retryPendingTranscription (MicButton.tsx:207) can never find any. The 'Captured audio is retained locally.' copy at MicButton.tsx:324 and the 'Retry retained audio' label at MicButton.tsx:295 are therefore dead UI.",
+          "impact": "When transcription fails, the captured audio is gone — the user must speak the whole thing again. The recovery affordance the failure copy promises never appears. The tests that cover it (web/src/desk/components/MicButton.test.tsx:108-140) pass only because they mock loadPendingVoice to return a buffer, so the suite reports a feature that production can never enter."
+        },
+        {
+          "title": "build_pipeline without an admission raises, breaking the DIR-01 evidence harnesses",
+          "severity": "major",
+          "evidence": "holdspeak/plugins/dictation/assembly.py:297-302 raises SpeechSessionRefused(SESSION_NOT_ADMITTED) whenever there is no admission and no runtime_factory test seam. Proven: `build_pipeline(DictationConfig())` → `RAISED SpeechSessionRefused speech_session_not_admitted`. Callers with no admission: scripts/dictation_enrichment_demo.py:158, scripts/journal_e2e_demo.py:132, and scripts/measure_dictation_latency.py:294 (via run_dictation_pipeline, whose except-clause re-raises fatal speech signals at holdspeak/dictation_runner.py:619-626).",
+          "impact": "The latency-measurement harness the DIR-01 plan names as its reference evidence (docs/internal/PLAN_PHASE_DICTATION_INTENT_ROUTING.md §9, DIR-R-001/003) and both enrichment demos crash on the first line of work. Nobody can regenerate the phase's own performance evidence on this main."
+        },
+        {
+          "title": "Live path skips the whole pipeline when the LLM runtime is unavailable, contradicting DIR-F-011 and the CLI",
+          "severity": "minor",
+          "evidence": "holdspeak/dictation_runner.py:349-355 (and the duplicate at :541-547) return the raw text as soon as `result.runtime_status != \"loaded\"`, BEFORE pipeline.run is ever called. But assembly is built for graceful degradation: holdspeak/plugins/dictation/assembly.py:8-13 documents 'the pipeline still ships, but with llm_enabled=False so the intent-router stage is skipped', and assembly.py:113-126 still appends the non-LLM KbEnricher. The CLI does it the documented way: holdspeak/commands/dictation.py:176-179 prints 'running with intent-router skipped' and then runs the pipeline at :199.",
+          "impact": "With the runtime down, kb-enricher (which DIR-R-004 requires to be pure template substitution and never touch the LLM) silently never runs on the live typing path. `holdspeak dictation dry-run` shows the user enrichment output that their actual dictation will never produce — the introspection surface lies about the live path."
+        },
+        {
+          "title": "Real audio duration and transcription timestamp are dropped between capture and pipeline",
+          "severity": "minor",
+          "evidence": "holdspeak/runtime/dictation_capture.py:183 and holdspeak/runtime/wake_glue.py:382 compute `audio_duration_s=len(audio)/16000.0` and pass a real `transcribed_at`. holdspeak/runtime/dictation_processing.py:51-60 accepts both parameters and never forwards them to process_transcript. holdspeak/dictation_runner.py:264-274 hardcodes `audio_duration_s=0.0` and `transcribed_at=datetime.now()`. Proven at runtime: passing audio_duration_s=12.5 and transcribed_at=2020-01-01, the pipeline saw `0.0` and the current wall clock.",
+          "impact": "Utterance.audio_duration_s — a DIR-01 §6.4 contract field (holdspeak/plugins/dictation/contracts.py:27) — is 0.0 for every live utterance on every path. Any user-authored transducer stage that keys on utterance length (a plausible 'long dictation gets a different treatment' rule) is silently broken, and the journal/telemetry can never report how long anyone actually spoke."
+        },
+        {
+          "title": "run_dictation_pipeline is dead production code duplicating the live entry point",
+          "severity": "minor",
+          "evidence": "holdspeak/web_runtime.py:32 is the only occurrence of run_dictation_pipeline in that file — it is imported and never called (grep for run_dictation_pipeline across holdspeak/ returns only dictation_runner.py definitions plus that import). The single non-test caller is scripts/measure_dictation_latency.py:294, itself broken. The function body (holdspeak/dictation_runner.py:457-632, ~176 lines) is a near-verbatim duplicate of the live run_pipeline_corrections_only (holdspeak/dictation_runner.py:277-454) with skip_target_detection hardwired False. tests/unit/test_dictation_runner.py:47-246 drives the dead copy in 6 tests.",
+          "impact": "Two hand-maintained copies of the dictation pipeline orchestration exist; a fix applied to one silently misses the other. Six unit tests report coverage of 'the dictation pipeline' while exercising code no user can reach."
+        },
+        {
+          "title": "max_total_latency_ms is documented as a hard pipeline ceiling but nothing enforces it",
+          "severity": "minor",
+          "evidence": "docs/internal/PLAN_PHASE_DICTATION_INTENT_ROUTING.md:364 declares `max_total_latency_ms: int = 600  # hard ceiling; if exceeded, short-circuit next time`, mirrored at holdspeak/config/meeting.py:369. DictationPipeline.run (holdspeak/plugins/dictation/pipeline.py:83-171) never reads a budget, never tracks a prior overrun, and never short-circuits on time. Grep for max_total_latency_ms in holdspeak/ shows it used only for the ×5 cold-start cap (assembly.py:236) and the rewriter's extra-pass budget (assembly.py:122).",
+          "impact": "A slow model makes every dictation slow forever; the promised self-protection ('short-circuit next time') does not exist. Raising the setting in Settings changes cold-start tolerance and rewrite passes but not the thing its name and doc describe."
+        },
+        {
+          "title": "The streaming mic suspends the AudioContext and zeroes the level meter every 600 ms",
+          "severity": "minor",
+          "evidence": "web/src/lib/micStreamSession.ts:75-83 calls endHold() then beginHold() on every chunk tick. web/src/lib/micSession.ts:315-329 endHold() calls idle() whenever the open mic is off; idle() (web/src/lib/micSession.ts:175-188) disables the tracks, calls context.suspend(), emits level 0, and sets phase 'suspended'. beginHold only restores phase 'held' after awaiting ensureSession (micSession.ts:298-312).",
+          "impact": "During an active streaming dictation the mic phase lamp reads SUSPENDED roughly 1.6 times a second and the level meter drops to zero on each tick — the lamp that micSession.ts:9 calls 'the lamp that never lies' reports 'nothing is captured' while audio is being captured. The repeated AudioContext suspend/resume is also unnecessary churn on the capture graph."
+        },
+        {
+          "title": "The documented no-pipeline speak-to-fill seam is unreachable; every field mic now runs the DIR pipeline",
+          "severity": "minor",
+          "evidence": "holdspeak/runtime/dictation_capture.py:345-356 documents transcribe_audio as 'the NO-PIPELINE seam ... a speak-to-fill is the user typing with their voice, not a dictation run ... No journaling'. But the WS route unconditionally runs process_transcript on the final (holdspeak/web/routes/system/voice.py:508-521), and every MicButton on the desk uses that route (AskPanel.tsx:453, NoteEditor.tsx:165, KbEditor.tsx:154, DeskComposer.tsx:53, RecipeEditor.tsx:132, SessionPullout.tsx:459/618, WorkbenchWindow.tsx:1554, gadgets.tsx:264/322, PersonaChat.tsx:333, CoderPullout.tsx:100, ProjectMemoryCore.tsx:267/648). The escape hatch exists — web/src/lib/speakToFill.ts:139-157 accepts `{pipeline:false}` — and no caller in web/src passes it.",
+          "impact": "Dictating a recipe title or a note tag runs intent classification, KB enrichment and project rewriting over it and writes a journal row, so the field can receive text the user did not say. The intended distinction between 'fill this field with my voice' and 'dictate for delivery' no longer exists on the web."
+        }
+      ],
+      "candidates": [
+        {
+          "title": "Repair the dictation UI guard suite against the split Speak core",
+          "why": "16 tests are red on main and the repo's documented test command fails. Until these point at web/src/pages/cores/dictation/* instead of the emptied DictationCore.tsx, every other dictation change ships without a regression fence and 'the suite is green' is not a statement anyone can make.",
+          "size": "S"
+        },
+        {
+          "title": "One utterance, one pipeline run: make the Speak room deliver with raw:true",
+          "why": "Today every spoken sentence in the Speak room is classified and rewritten twice, delivered as a rewrite of a rewrite, and journaled twice. The route already documents the fix (raw:true for text that carries a pipeline receipt) — the caller just never sets it. Highest user-visible latency and correctness win in the pillar.",
+          "size": "M"
+        },
+        {
+          "title": "Make the streaming mic's partials real or delete them",
+          "why": "The server pays a full Whisper pass every 600 ms, on the same lock the hotkey needs, for text nothing renders — while the button's own comment promises progressive fill. Either wire onPartial through to the target field with cumulative context, or drop per-chunk transcription entirely and cut the cost to one pass per utterance.",
+          "size": "M"
+        },
+        {
+          "title": "Give the WebSocket dictation stream a floor heartbeat",
+          "why": "Past 30 seconds the server thinks the microphone is free while the browser is still capturing, so the hotkey, wake listener, or a meeting can take the floor mid-utterance. The HTTP open-mic leg already has the heartbeat pattern to copy; this is the one-owner invariant the whole arbiter exists to hold.",
+          "size": "S"
+        },
+        {
+          "title": "Carry named refusals through the streaming mic to the user",
+          "why": "Every server-side refusal — floor held, session not admitted, budget exhausted, interval closed — arrives as 'Dictation did not finish' or, worse, 'No words were detected', because the client event type drops reason/failure_category/mic_interval and the empty-final path overwrites the failure. Users cannot act on a failure they cannot name.",
+          "size": "M"
+        },
+        {
+          "title": "Restore retained-audio recovery on the streaming path",
+          "why": "The failure copy promises 'Captured audio is retained locally' and offers Retry, but nothing on the live path ever saves the audio — a failed capture means speaking it all again. Either persist the streamed chunks before the final send, or remove the promise from the UI.",
+          "size": "M"
+        },
+        {
+          "title": "Collapse the two dictation runner entry points into one",
+          "why": "run_dictation_pipeline is 176 lines of unreachable duplicate of the live run_pipeline_corrections_only, kept alive by six unit tests and a broken script. Two hand-maintained copies of the same orchestration is exactly how a fence gets closed on one path and left open on the other — the failure mode HS-131-10 already found once.",
+          "size": "S"
+        },
+        {
+          "title": "Honor DIR-F-011 on the live path: run the non-LLM stages when the runtime is down",
+          "why": "The live path returns raw text the moment the runtime is unavailable, so kb-enricher never runs — while the CLI dry-run runs it and shows the user output their real dictation will never produce. The assembly layer is already built for this degradation; only the two early returns in dictation_runner block it.",
+          "size": "S"
+        },
+        {
+          "title": "Separate speak-to-fill from dictate-for-delivery on the web",
+          "why": "Dictating a note tag currently runs intent routing, KB enrichment and project rewriting and writes a journal row, so the field can receive words the user never said. The no-pipeline seam is documented and the client flag exists; nothing chooses between them.",
+          "size": "M"
+        },
+        {
+          "title": "Thread real audio duration and transcription time into the Utterance",
+          "why": "Utterance.audio_duration_s is a DIR-01 §6.4 contract field that is 0.0 for every live utterance because two call frames drop it. Any stage or telemetry keyed on how long someone spoke is silently wrong, and the drop is invisible — the parameters are accepted and discarded.",
+          "size": "S"
+        },
+        {
+          "title": "Enforce max_total_latency_ms, or rename it to what it actually does",
+          "why": "The setting's name, its doc comment, and the plan all describe a hard pipeline ceiling with a short-circuit; the executor never reads it. A user raising it to fix slow dictation is changing cold-start tolerance and rewrite passes, not the ceiling they think they are moving.",
+          "size": "S"
+        },
+        {
+          "title": "Repair the DIR-01 evidence harnesses under the admission regime",
+          "why": "measure_dictation_latency.py and both enrichment demos crash inside build_pipeline because they carry no admission, so the phase's own latency and enrichment evidence cannot be regenerated on this main. They need the same text-entry admission the CLI dry-run already uses.",
+          "size": "S"
+        }
+      ],
+      "unknown": [
+        "Whether the AudioContext suspend/resume churn every 600 ms actually drops audio samples in a real browser — the enable/disable happens in one synchronous tick so it may be harmless, but suspend() and resume() are async and their interleaving is unverified. Needs a real browser with a mic.",
+        "Whether desktop typing lands at all on the owner's machine. type_text_from_owner_gesture refuses with desktop_focus_unresolved when focused_signature() returns empty (holdspeak/desktop_typing.py:131-133), and focused_signature returns '' on Wayland or when the hint probe fails (holdspeak/desktop_focus.py:44-58). Needs metal (macOS with Accessibility granted, and .43 with DISPLAY=:0).",
+        "Actual intent-router / project-rewriter latency and output quality. The sandbox cannot reach the LAN LLM at 192.168.1.43, so no control-vs-treatment run was possible; DIR-R-001 remains unmeasured on this main.",
+        "Whether ~/.config/holdspeak/blocks.yaml exists on the owner's machine. With no blocks file the intent-router short-circuits on an empty block set (holdspeak/plugins/dictation/builtin/intent_router.py:151-160) and kb-enricher no-ops, so enabling the pipeline would appear to do nothing. Needs the owner's real home.",
+        "tests/integration/test_web_server.py::TestSpeakerApiEndpoints::test_speaker_endpoints also fails on main (assert 0 == 2 at test_web_server.py:2088), but it is a speaker-API DB assertion outside this pillar — I did not trace whether it is a real regression or an isolation artifact.",
+        "Whether the double-pipeline run in the Speak room is currently visible to the owner: the DIR pipeline is OFF by default (holdspeak/config/meeting.py:367), so the second run is cheap until someone enables it. I could not read the owner's live config."
+      ]
+    },
+    {
+      "pillar": "MEETINGS + PRESENCE + REALTIME",
+      "verdict": "The persistence half of this pillar is healthy: meeting capture, session admission, aftercare, follow-through, Monday Brief and decision receipts pass 413 scoped unit tests, and the Phase-125 observer is genuinely wired into production. The realtime half is not. Of the 15 frame types the hub broadcasts, 6 have zero consumers anywhere in web/src (including intel_token and intel_complete, i.e. the whole live-intelligence stream), and 7 frame types the web subscribes to are emitted by nobody. Three genuine route-level defects survive on main: a NameError that turns every meeting sync-conflict branch into an unrecoverable 500, a lifecycle mis-binding that lets \"stop meeting\" shut down the whole hub, and a Phase-123 refactor that left live in-meeting action-item triage returning 404 with its runtime callbacks orphaned. The regression net that should have caught these is off: CI \"Tests\" has been red on main for at least 8 consecutive merges, 65 integration failures on the Phase-131 merge commit, roughly 50 of them in this pillar.",
+      "works": [
+        "Meeting session lifecycle, admission, deferred admission, state, glue kwargs, capture durability, chunking, overlap, placement policy: 190 + 223 scoped unit tests pass under isolated HOME (tests/unit/test_meeting_*.py, test_pipeline_observer.py, test_sqlite_observer.py)",
+        "Segment production and broadcast is intact end to end: holdspeak/meeting_session/transcribe_loop.py:266-277 fires on_segment and _emit_broadcast('segment'), holdspeak/runtime/meeting_glue.py:89 broadcasts it, web/src/pages/cores/LiveCore.tsx:104-118 appends it live",
+        "The pipeline observer is really in production: holdspeak/db/core.py:199-208 returns a live SQLiteObserver and every meeting/intel/aftercare/follow-through/brief/decision service is constructed with observer=obs (holdspeak/web_server.py:630-676)",
+        "FollowThroughService lane projection, snooze suppression, provenance and decision linkage pass in full; web/src/desk/intelligenceAttention.ts:23 fetches /api/follow-through/board and that route exists",
+        "Monday Brief generation, window keying, persistence and MCP exposure pass (tests/unit/test_monday_brief_service.py, test_brief_collectors.py, test_brief_mcp.py); web/src/desk/pullouts/views/BriefView.tsx:64,80 hits /api/brief/latest and /api/brief/generate, both mounted",
+        "Decision receipts: DecisionRecordService source binding is consistent with its consumer -- records are minted with source_type='meeting', source_id=decision.id (holdspeak/services/decision_record_service.py:86-87) and web/src/desk/pullouts/views/FollowThroughView.tsx:148 reads /api/decision-records/source/meeting/{decision_id}",
+        "Full web-to-server API path cross-check found no dead client calls: all 256 /api/* paths referenced in web/src resolve against the 375 mounted routes",
+        "WebSocket auth and transport plumbing is sound: holdspeak/web/routes/system/ws.py:20-90 (owner-right gate, browser subprotocol token, ping/pong) and web/src/runtime/RuntimeBus.tsx (single socket, backoff reconnect, typed dispatch); 12 web unit tests pass for RuntimeBus/meetings/AmbientLayer",
+        "Presence gating, onboarding, mascot gate, desktop presence and settings pass: tests/integration/test_presence_*.py and tests/unit/test_presence_*.py, test_web_presence_indicator.py all green"
+      ],
+      "broken": [
+        {
+          "title": "ConflictError is never imported in MeetingService: every meeting sync-conflict branch raises NameError and returns 500",
+          "severity": "critical",
+          "evidence": "holdspeak/services/meeting_service.py:30 imports only NotFound and ValidationError, but ConflictError is raised at meeting_service.py:402, :407, :412, :416, :420. Runtime proof in test output: \"ERROR holdspeak.web.routes.meetings:crud.py:161 Failed to resolve Meeting sync conflict: name 'ConflictError' is not defined\". Failing test, reproduced in isolation: tests/integration/test_meeting_conflict_recovery.py:103 (assert 500 == 409). Every sibling service imports it correctly (holdspeak/services/authority_service.py:10, gate_service.py:10, meeting_intel_service.py:12).",
+          "impact": "The conflict-recovery card mounted at web/src/desk/pullouts/MeetingPullout.tsx:100 tells the user \"Conflict recovery failed; both versions remain. Retry the resolution.\" on an already-resolved or unreadable conflict, forever. The honest 409 \"already resolved, reload the Meeting\" and the 400 \"incoming version is unreadable\" messages can never reach the desk; the user retries a dead action."
+        },
+        {
+          "title": "POST /api/meeting/stop is bound to the runtime-fallback stop, so stopping when no meeting is live kills the hub process",
+          "severity": "major",
+          "evidence": "holdspeak/web_server.py:635-640 composes the production MeetingService with on_stop=self.on_stop, while holdspeak/web/routes/meetings/live.py:43 shows the intended binding is ctx.on_meeting_stop or ctx.on_stop. holdspeak/runtime/meeting_glue.py:492-496 defines _on_stop as _stop_active_meeting(allow_runtime_fallback=True) and _on_meeting_stop as allow_runtime_fallback=False; meeting_glue.py:353-359 sets self.runtime_stop_event when the fallback is allowed and no session exists, and holdspeak/web_runtime.py:596 is the main loop 'while not self.runtime_stop_event.wait(0.2)'. Failing test, reproduced in isolation: tests/integration/test_web_server.py::TestRuntimeControlEndpoints::test_meeting_stop_prefers_on_meeting_stop_callback (on_meeting_stop called 0 times).",
+          "impact": "Pressing the desk Record orb to stop (web/src/desk/store/recordingSlice.ts:59-64) or the /live Stop button when the client's recording state is stale, e.g. after a socket drop, an external stop from the CLI, or a crash-recovered session, returns success and terminates the whole HoldSpeak hub instead of refusing with 'No active meeting'."
+        },
+        {
+          "title": "Live in-meeting action-item triage is unreachable: the PATCH routes 404 and the runtime callbacks that would serve them are orphaned",
+          "severity": "major",
+          "evidence": "holdspeak/web/routes/meetings/action_items.py:25-35 routes PATCH /api/action-items/{id}, /review and /edit into MeetingService, whose implementations at holdspeak/services/meeting_service.py:473-495 only touch self._db.meetings and raise NotFound for anything not persisted. Direct probe returned 404 {\"success\":false,\"error\":\"Action item not found\"}. Meanwhile on_update_action_item / on_update_action_item_review / on_edit_action_item are still plumbed from holdspeak/web_runtime.py:472-474 through holdspeak/web_server.py:143-145,249-251,658-660 into holdspeak/web/context.py:39-41 and read by nobody; their live implementations at holdspeak/runtime/meeting_glue.py:517-533 delegate to MeetingSession mutations (holdspeak/meeting_session/mutations.py) that no HTTP path can now reach. 9 failing tests in tests/integration/test_intel_streaming.py::TestActionItemPatchEndpoint, all fail in isolation.",
+          "impact": "Action items surfaced by live intelligence during a meeting cannot be marked done, dismissed, reviewed or edited until the meeting is stopped and saved: every attempt returns 404 'Action item not found'. The Phase-125 promise that a meeting becomes a living execution board does not hold while the meeting is still live."
+        },
+        {
+          "title": "The entire live-intelligence stream is broadcast to nobody: intel_token and intel_complete have zero subscribers in web/src",
+          "severity": "major",
+          "evidence": "Emitters: holdspeak/meeting_session/intel_admission.py:456 (_emit_broadcast('intel_token')), holdspeak/meeting_session/intel_analysis.py:197 and holdspeak/runtime/meeting_glue.py:114 (intel_complete). Consumers: grep of web/src for \"intel_token\" and \"intel_complete\" across .ts/.tsx returns 0 hits outside tests. web/src/pages/cores/LiveCore.tsx:104-118 subscribes to '*' but only handles segment, meeting_started, meeting_updated, duration, stopped, runtime_activity, intel_status. web/src/components/AmbientLayer.tsx:153-160 subscribes to '*' but filters to actuator_proposed / aftercare_ready / learning_event. Same zero-consumer result for bookmark (emitted holdspeak/web/routes/meetings/live.py:67), intent_controls_updated, device_health, and actuator_result (emitted holdspeak/services/meeting_aftercare_service.py:109,111,140).",
+          "impact": "Meeting intelligence streams token by token over the socket and the desk renders none of it. There is no generation theatre, no live summary, no live action items -- the user sees intel only after a manual refetch of the meeting detail. Bookmarks the user drops mid-meeting produce no live confirmation, and an executed or rejected aftercare action never updates any open surface."
+        },
+        {
+          "title": "Queue HUD listens for plugin_jobs / plugin_job, which nothing emits; the hub emits runtime_queue, which nothing consumes",
+          "severity": "major",
+          "evidence": "web/src/components/AmbientLayer.tsx:85-86 does useRuntimeFrame('plugin_jobs') and useRuntimeFrame('plugin_job') and returns null when both are absent (AmbientLayer.tsx:89). No Python file broadcasts either name (the only literal 'plugin_job' in holdspeak/ is a projection source_kind at holdspeak/db/projections.py:486). The hub instead broadcasts 'runtime_queue' at holdspeak/runtime/plugin_queue.py:59-70, and grep of web/src for runtime_queue returns 0 hits.",
+          "impact": "The Delivery/queue HUD never renders. Deferred meeting-intelligence jobs that are pending, running or failed are invisible on the desk; the user gets no signal that post-meeting intelligence is queued or has failed."
+        },
+        {
+          "title": "Workbench realtime frames are dead on both ends: five subscriptions, zero emitters",
+          "severity": "major",
+          "evidence": "web/src/desk/components/WorkbenchWindow.tsx:990-1016 subscribes to workbench.run_start, workbench.item_claimed, workbench.item_done, workbench.item_failed, workbench.run_complete. holdspeak/workbench_conductor.py:33-39 defines _emit(event_type, data) and holdspeak/web_server.py:845-846 wires set_broadcast into it, but a repo-wide grep shows _emit is never called from any module, and no Python string literal 'workbench.run_start' (or its siblings) exists.",
+          "impact": "A running workbench never updates live in the desk window: items do not move to claimed/done/failed and the run never shows as complete without a manual reload. The broadcast wiring at web_server.py:846 is inert."
+        },
+        {
+          "title": "CI 'Tests' has been red on main for at least 8 consecutive merges; ~50 of the 65 integration failures are in this pillar",
+          "severity": "major",
+          "evidence": "gh run list --branch main: the Tests workflow conclusion is 'failure' for the last 8 runs including the Phase-131 merge (run 31901470460, jobs: Integration Tests (macOS) => failure, Unit Tests => failure). That run's failing roster contains 65 integration tests and 3 unit tests. Reproduced locally with isolated HOME and a fresh `npm run build` of web/: 63 failures over the pillar-scoped selection, the same names. Pillar members include the 9 TestActionItemPatchEndpoint failures, test_meeting_conflict_recovery.py, test_meeting_stop_prefers_on_meeting_stop_callback, 6 TestMirHistoryApiEndpoints, TestSpeakerApiEndpoints, TestIntelQueueApiEndpoints, TestGlobalActionItemsApiEndpoints, and all of test_web_companion_slack/webhook/github.",
+          "impact": "There is no working regression net on this pillar. Every one of the three route-level defects above was caught by an existing named test that has simply been failing unnoticed; anything else that breaks in meetings, presence or realtime will ship silently too."
+        },
+        {
+          "title": "A recorded meeting never appears in the Monday Brief's Changed section",
+          "severity": "minor",
+          "evidence": "holdspeak/services/monday_brief_service.py:15-24 defines _CHANGE_METHOD_MARKERS = create, update, delete, transition, run, commit, complete, and _collect_changes at monday_brief_service.py:198 skips any pipeline event whose method name contains none of them. The meeting lifecycle methods are start_capture (holdspeak/services/meeting_service.py:261), stop_capture (:275), bookmark (:282), import_meeting (:82) and recover_capture (:383) -- none matches a marker. _collect_changes is the only collector that fills the 'changed' section (monday_brief_service.py:489).",
+          "impact": "A week in which the user recorded ten meetings produces zero 'Changed' rows in the brief; the desk can say 'Nothing material changed.' after a week of heavy meeting use. Only meeting failures surface, via the separate error-based 'broke' collector."
+        },
+        {
+          "title": "The realtime path to decide a meeting aftercare proposal exists only behind the off-by-default mascot",
+          "severity": "minor",
+          "evidence": "aftercare_ready is emitted at holdspeak/meeting_session/persistence.py:117 and holdspeak/services/meeting_intel_service.py:36. Its only subscriber is the Qlippy block in web/src/components/AmbientLayer.tsx:153-166, which is gated on settings.presence.enabled && presence.mascot (AmbientLayer.tsx:130-142). The proposal-decision POST lives at AmbientLayer.tsx:195 and at web/src/pages/cores/history/useMeetingData.tsx:104 (a page the user must navigate to); the parity guard test still asserts it is in HistoryCore.tsx, which lost it in Phase 117. Failing test: tests/integration/test_actuator_presence_broadcasts.py:213, fails in isolation.",
+          "impact": "With the mascot off (the default) a meeting that just ended raises no live signal anywhere on the desk; the aftercare proposals it minted are only discoverable by opening the meeting in History."
+        },
+        {
+          "title": "Composed services capture get_database() at app construction, so ~21 integration tests exercise a stale DB handle and only fail in-suite",
+          "severity": "minor",
+          "evidence": "holdspeak/web_server.py:631-648 builds MeetingService/MeetingIntelService/MeetingAftercareService and every other service against get_database() at _create_app time. Tests that monkeypatch holdspeak.db.get_database afterwards therefore hit the old handle: tests/integration/test_web_server.py::TestMirHistoryApiEndpoints (6 x 404), TestSpeakerApiEndpoints (assert 0 == 2), TestIntelQueueApiEndpoints (assert 0 == 1), TestGlobalActionItemsApiEndpoints (IndexError). Companion tests are the same shape via fixture ordering: tests/integration/test_web_companion_slack.py::test_the_wire_events_ride_for_qlippy passes alone (verified) but fails in the module because the client fixture is built before the db fixture resets the singleton.",
+          "impact": "The 21 tests that nominally guard meeting insights, speakers, the intel queue, global action items and the desk actuator send path prove nothing today; they are red in CI for a harness reason and mask whatever real behaviour they were written to protect."
+        },
+        {
+          "title": "Stale Phase-131 guard tests left red: a removed model seam and a pinned schema version",
+          "severity": "minor",
+          "evidence": "tests/integration/test_decision_records.py:440 and :491 patch holdspeak.web.routes.decisions._generate_with_model, which no longer exists -- holdspeak/web/routes/decisions.py:37-40 documents that HS-131-07 deliberately moved the admitted promotion child into DecisionLifecycleService, so the route-side seam was removed on purpose. tests/integration/test_decision_records.py:241 asserts schema version == 32; the DB now reports 59.",
+          "impact": "Two of the three tests that assert 'model promotion admits before generation and leaves a receipt' no longer execute their assertion at all, so the Phase-131 admission invariant on the decision-receipt path is unguarded."
+        }
+      ],
+      "unknown": [
+        "Whether live meeting capture actually transcribes on real hardware -- tests/e2e/test_metal.py was excluded per instruction and no mic is available in this sandbox",
+        "Whether the WebSocket bus stays connected in practice against a running hub (reconnect backoff, ping/pong, subprotocol negotiation) -- only unit-level RuntimeBus tests were run, no live socket",
+        "Whether meeting intelligence produces usable output against the LAN LLM at 192.168.1.43 -- the sandbox cannot reach it, so intel_provider cloud/endpoint legs are code-verified only",
+        "Whether the desk visually degrades acceptably with the dead frames (intel_token, intel_complete, runtime_queue, workbench.*) -- needs a screenshot walk against a live hub at 1440 and 393",
+        "Whether stopping a non-live meeting really terminates the hub process end to end -- the binding, the fallback branch and the main loop were each verified in code, but the shutdown was not executed against a running runtime",
+        "Whether device/iPad presence legs (holdspeak/device_audio_ws.py, device_status.py) still function -- the HSM track is dormant per standing direction and was not exercised",
+        "Whether the 65 CI integration failures are wholly accounted for by the causes identified here; ~14 of them (web_dictation_*, history_*) are UI-source-grep tests outside this pillar and were not individually triaged"
+      ],
+      "candidates": [
+        {
+          "title": "Import ConflictError in MeetingService and prove every sync-conflict branch returns its honest status",
+          "why": "One missing import turns five deliberate, user-facing conflict messages into an unrecoverable 500 that tells the user to retry an action that can never succeed. Smallest possible fix, highest ratio of user harm removed, and it re-greens a named test.",
+          "size": "S"
+        },
+        {
+          "title": "Bind the meeting stop route to on_meeting_stop so stopping a meeting can never shut down the hub",
+          "why": "A stale desk orb can currently terminate the user's whole runtime with a success response. The distinction already exists in the runtime (allow_runtime_fallback) and in the fallback route; only the production composition ignores it.",
+          "size": "S"
+        },
+        {
+          "title": "Restore live in-meeting action-item triage: route the PATCH verbs to the active session before falling through to the DB",
+          "why": "Phase 125's core promise is that a meeting becomes a living execution board. Today nothing in a live meeting can be marked done, dismissed, reviewed or edited, and the runtime callbacks that would do it are already written and orphaned.",
+          "size": "M"
+        },
+        {
+          "title": "Make the desk consume the live-intelligence stream: subscribe to intel_token, intel_complete and bookmark",
+          "why": "The hub already streams meeting intelligence token by token; the desk simply does not listen. This turns an existing, working backend capability into a visible product feature with no new backend work.",
+          "size": "M"
+        },
+        {
+          "title": "Reconcile the frame vocabulary once: one registry of frame types, emitters and consumers, with a test that fails on an orphan on either side",
+          "why": "Six emitted types have no consumer and seven consumed types have no emitter, across meetings, plugins and workbench. A single shared vocabulary plus a guard test prevents the next phase from shipping another dead subscription.",
+          "size": "M"
+        },
+        {
+          "title": "Get CI Tests green on main and keep it green",
+          "why": "Every route-level defect found in this audit was already covered by a named test that has been failing unnoticed for at least eight merges. Until the net is green, nothing else in this pillar can be trusted to stay fixed.",
+          "size": "L"
+        },
+        {
+          "title": "Fix the composition/singleton test-isolation hazard so integration tests exercise the DB they seed",
+          "why": "Twenty-one tests covering meeting insights, speakers, the intel queue, global action items and the desk actuator send path currently prove nothing. Fixing the seam recovers real coverage rather than deleting it.",
+          "size": "M"
+        },
+        {
+          "title": "Give the Monday Brief a meetings collector so a recorded week is visible in Changed",
+          "why": "The brief's whole claim is that the desk speaks first about what changed. A week of meetings currently produces the headline 'Nothing material changed.'",
+          "size": "S"
+        },
+        {
+          "title": "Surface aftercare_ready and pending meeting proposals on the desk without the mascot",
+          "why": "When a meeting ends, the desk is silent unless an off-by-default mascot is enabled. The proposals exist, the endpoints exist, and the frame is already broadcast.",
+          "size": "M"
+        }
+      ]
+    },
+    {
+      "pillar": "WEB DESK USER FLOWS (web/src — Hopper, Workbench, Intelligence, Ask, Speak, Settings, filed objects, foot slot)",
+      "verdict": "The web desk is structurally sound and far more complete than \"stub-riddled\": 811 unit tests across 116 files pass, typecheck is clean, the architecture guard and both token gates pass, every /api path the UI calls has a matching FastAPI route, the pullout registry is exhaustive by type, and all 15 demoted deep-link routes resolve to a registered surface (two via aliases). The flows break not at the wiring but at the feedback and state layer. The dominant defect class is the silent write: create, add-item, drop, seed, keep, retry-mint, dismiss and rerun all swallow failures in bare catch blocks with no global error surface, so a failed action is indistinguishable from a no-op. On top of that sit four reproducible dead ends I confirmed by running code: the Workbench item body textarea writes through to the server on every keystroke with no local buffer (typed characters revert and are lost), the Intelligence segment tabs never clear a dispatched overdue-only filter (the board reads \"ALL CLEAR\" while items exist), Brief Acknowledge/Defer mutate React state only with no persistence path at all, and Get Info offers a Rename button on meetings/artifacts/chains/workbenches that silently does nothing.",
+      "works": [
+        "Web unit suite: 116 files / 811 tests passed, exit 0, 20.9s (vitest 4.1.9). The brief's `--reporter=basic` no longer exists in vitest 4 and aborts at startup with ERR_LOAD_URL; `--reporter=dot` was used instead.",
+        "`npx tsc --noEmit` clean (exit 0); `web/scripts/guard-architecture.mjs` passes across 396 source files; `generate-tokens.cjs --check` and `validate-tokens.cjs` both clean.",
+        "Hopper type leg end-to-end: inlet input -> `@` autocomplete over zones with ArrowUp/Down/Enter/Tab/Escape/Backspace handling -> grounding chip tray with per-chip remove -> GO/Enter POSTs the item (web/src/desk/components/WorkbenchWindow.tsx:1498-1673, InletAutocomplete.tsx).",
+        "Hopper voice leg: click-to-toggle MicButton, transcript inserted into the inlet synchronously before any async work, fast client-side drawer-name resolution, then an optional LLM resolver with typed error states (resolver_timeout / resolver_unavailable / resolver_not_configured) each carrying a retry (WorkbenchWindow.tsx:1524-1541, 1554-1571).",
+        "Hopper drop leg for desk items: dropping a meeting/artifact/note chip onto a Workbench mints grounded items (WorkbenchWindow.tsx:1272-1297).",
+        "Workbench voice command grammar is real, not a stub: add-item, run, clear-done, set-schedule, set-agent, dismiss all map to the same mutations the config UI performs (WorkbenchWindow.tsx:1183-1268).",
+        "Intelligence pullout shell: three segments, view persisted to localStorage, BACK history with a same-destination guard so the dock re-open does not mint a phantom step, and Brief -> Follow-through -> Receipts drill-through (IntelligencePullout.tsx:52-135).",
+        "Every endpoint the Intelligence views call exists server-side: /api/brief/latest and /api/brief/generate (holdspeak/web/routes/monday_brief.py:18-27), /api/follow-through/board and /complete (follow_through.py:25-58), /api/decision-records plus /search, /review, /source/{t}/{id}, /work/{t}/{ref}, /{id} (decision_records.py:20-59).",
+        "Follow-Through board: five verbs (done/dismiss/snooze/delegate/reopen) POST through one endpoint with per-card busy state, error surfacing and retry, plus provenance quotes and an explicit SOURCE MOMENT UNAVAILABLE state (FollowThroughView.tsx:119-153, 230-237).",
+        "Receipts view: debounced search, WHY-ONLY governing filter, detail with rationale/alternatives/owner/review, provenance quote, affected-work chips that open the linked primitive, supersession chain navigation and a revision timeline (DecisionsView.tsx:82-296).",
+        "Ask: routing -> printed with a dedicated error turn, keep -> real artifact with an explicit \"Save failed. Your ask is retained. Retry.\" message, and a receipt line naming the target and model actually used (AskPanel.tsx:185-291).",
+        "Speak/dictation: refusals are named on the register by code rather than swallowed; the open-mic latch stays visible, disabled and titled with the reason when the browser cannot capture (InstrumentStrip.tsx:89-108, useSpeakDeck.ts:131-261).",
+        "Files dropped anywhere on the desk import as meetings through /api/meetings/import, with by-name refusals for unsupported suffixes (GlassDropLayer.tsx:39-83, glassDrop.ts:36-43).",
+        "Routing inventory holds: 3 immersive routes + 15 demoted deep links, and every demoted surface key resolves — including `configure-runs-on` and `read-runtime-docs`, which land via SURFACE_ALIASES onto Settings' models/guide scopes (routes.tsx:41-76, SurfaceWindows.tsx:268-305).",
+        "Pullout registry is compile-time exhaustive over PrimitiveKind with a `satisfies` gate and a FallbackPullout for kinds with no detail view (desk/pullouts/registry.ts:24-41).",
+        "Foot slot (Phase 129): SurfaceFooter portals into the frame-owned foot when a FootSlotContext is present and degrades to its own footer otherwise (surface/SurfaceFooter.tsx:22-27, SurfaceWindows.tsx:352-370).",
+        "Settings saves on change with a 700ms debounce and surfaces failures on a refusal line (pages/cores/SettingsCore.tsx:160-192, 219-237).",
+        "SurfaceState refuses to render a dead empty-state button: the action only appears when both onAction and actionLabel are present (surface/Surface.tsx:207-212)."
+      ],
+      "broken": [
+        {
+          "title": "Workbench item body writes through on every keystroke — typed characters revert and are lost",
+          "severity": "critical",
+          "evidence": "web/src/desk/components/WorkbenchWindow.tsx:613-620 binds `value={item.body || \"\"}` (server state) with `onChange={(next) => void updateItem({ body: next })}`; updateItem (WorkbenchWindow.tsx:536-540) does an async PUT then a full `onReload()` refetch. There is no local draft, unlike every other editor which routes through desk/pullouts/editors/useDebouncedSave.ts or a local draft (cf. DecisionPullout.tsx:84-89). I proved the behaviour with a throwaway vitest against the real PadGadget wired exactly this way: after `fireEvent.change(pad, {value: \"a\"})` the DOM value is immediately `\"\"` again, and a second keystroke before the round trip lands produces writes `[\"a\", \"b\"]` instead of `[\"a\", \"ab\"]` — the first character is gone. Test passed (1/1), then deleted.",
+          "impact": "Expanding a Workbench item and typing details is effectively unusable: characters appear to not register, then arrive one at a time as each round trip lands, and anything typed at normal speed is silently dropped. It also fires one PUT plus one full workbench refetch per keystroke."
+        },
+        {
+          "title": "Intelligence segment tabs never clear a dispatched overdue-only filter — board falsely reads ALL CLEAR",
+          "severity": "major",
+          "evidence": "The segment buttons call only `setActiveView(view.id)` and never touch `navigation` (web/src/desk/pullouts/IntelligencePullout.tsx:36-45), while the follow-through branch renders `<FollowThroughView overdueOnly={navigation.overdueOnly} ...>` (IntelligencePullout.tsx:112). FollowThroughView then hides every lane but Overdue (views/FollowThroughView.tsx:159) and falls to `ALL CLEAR — no follow-through yet` when the visible total is zero (FollowThroughView.tsx:161-163). The filter is reachable from two live affordances: the attention drawer's `N overdue` chip (desk/components/AttentionDrawer.tsx:135) and a registry verb (desk/verbRegistry.ts:329). I confirmed with a throwaway vitest: after dispatching INTELLIGENCE_NAVIGATE {view:'follow-through', overdueOnly:true} with a board whose Now lane holds one card and Overdue is empty, then clicking Brief and clicking Follow-through, the card is still absent and the view still reads ALL CLEAR. Test passed (1/1), then deleted.",
+          "impact": "A user who clicks the 'N overdue' chip and later returns to Follow-through through the segment tabs sees an empty board announcing ALL CLEAR while real Now/Waiting/Unassigned commitments exist. Nothing on screen names the active filter and no control clears it."
+        },
+        {
+          "title": "Every Workbench and desk write verb swallows its failure — no error surface anywhere",
+          "severity": "major",
+          "evidence": "WorkbenchWindow's `error` state is derived solely from the GET (WorkbenchWindow.tsx:817 `const error = detailHook.error ?? \"\"`), and there is no setError call in the file. Meanwhile addItem catches and discards (WorkbenchWindow.tsx:1153-1155, comment 'refresh will show honest state' but it never calls load()), handleDrop catches and discards (:1294-1296), updateItem/rerun/dismiss (:536-540), handleKeep (:546-555), handleRetryMint (:561-568), and the voice add-item/dismiss paths (:1189-1192, :1256-1263) all do the same. desk/store/dataSlice.ts:174-183 `createPrimitive` uses raw `apiRequest` and never checks `res.ok`, so a 4xx/5xx create yields createdId=null and a silent refresh. `seedDesk` returns false on failure (dataSlice.ts:547-556) but EmptyDesk discards the return value in `.finally()` (desk/components/EmptyDesk.tsx:44-54). lib/api.ts has no global toast/receipt channel — apiFetch only throws.",
+          "impact": "When the hub is unreachable, unauthorized, or rejects a payload, Create > New Note, Hopper GO, drop-to-work, Keep, Retry mint, Dismiss, Re-run and Seed the desk all appear to do nothing at all. The user cannot tell a broken backend from a no-op and gets no retry affordance."
+        },
+        {
+          "title": "Brief Acknowledge / Defer are local-only — no persistence exists",
+          "severity": "major",
+          "evidence": "web/src/desk/pullouts/views/BriefView.tsx:91-95 `setShelfState` only calls `setShelf(...)` on a `useState<Record<string, ShelfState>>` (BriefView.tsx:48) plus `refreshIntelligenceAttention()`. That refresh (desk/intelligenceAttention.ts:13-15, 20-31) merely re-reads /api/brief/latest, /api/follow-through/board and /api/decision-records/review — none of which know about the shelf. The backend brief router exposes only GET /latest and POST /generate (holdspeak/web/routes/monday_brief.py:18-27); there is no acknowledge/defer endpoint, and no localStorage write for `shelf` exists anywhere in web/src.",
+          "impact": "The two primary verbs on the Monday Brief footer (BriefView.tsx:185-190) render an 'acknowledged'/'deferred' badge that vanishes on the next reload, view switch, or pullout close. Triaging the brief accomplishes nothing durable."
+        },
+        {
+          "title": "Get Info offers Rename on kinds that have no update path — silent no-op",
+          "severity": "major",
+          "evidence": "The Info card is universal (opened by the `object.info` verb for any selection, desk/verbRegistry.ts:362-371) and always renders a Rename button (desk/components/InfoWindow.tsx:33-46). Commit routes through `updatePrimitive` (InfoWindow.tsx:24-32), including an explicit meeting branch at :29-30. But desk/store/dataSlice.ts:217-227 defines URLs only for note, decision, kb, recipe, directory, workflow, project, then `if (!url) return;` — meeting, artifact, chain, coder, workbench, roadmap, repository and story fall through silently. The backend has no meeting-rename route either: holdspeak/web/routes/meetings/crud.py exposes only GET/DELETE/export/capture-recover for /api/meetings/{meeting_id}.",
+          "impact": "Right-click a meeting (or artifact, chain, workbench) -> Get Info -> click the title -> type a new name -> Enter: the field closes, the old title returns, and nothing explains why. The affordance is advertised for every primitive and works for roughly half."
+        },
+        {
+          "title": "Workbench drop overlay promises ADD ITEM for payloads it cannot accept",
+          "severity": "minor",
+          "evidence": "web/src/desk/components/WorkbenchWindow.tsx:1381-1382 sets `dropHover` on any dragover/dragenter without inspecting `dataTransfer.types`, and :1386-1390 renders 'DROP TARGET · ADD ITEM'. handleDrop then reads only `application/x-desk-item` and returns early for anything else (:1275-1276). Files still bubble to the document-level GlassDropLayer (desk/components/GlassDropLayer.tsx:39-73), which imports them as a Meeting.",
+          "impact": "Dragging a file over an open Workbench shows 'ADD ITEM' but the drop mints a Meeting instead. Dragging plain text or an external link shows the same promise and does nothing at all, with no refusal message — the opposite of the named-refusal rule the file drop layer follows (glassDrop.ts:36-43)."
+        },
+        {
+          "title": "Workbench RUN is a bare disabled button when no agent is assigned",
+          "severity": "minor",
+          "evidence": "web/src/desk/components/WorkbenchWindow.tsx:1360-1371 renders the run chip with `disabled={running || !detail?.recipe_id}` and a static `title=\"Run this workbench now\"` — no reason text. The desk's own kit provides the alternative: Surface.tsx:962 documents 'stays presented and names why (never a bare disabled input)' and Surface.tsx:998-1004 implements `disabledReason` with a title and aria-label. The runs wing's empty state likewise drops its action when there is no recipe (WorkbenchWindow.tsx:1667-1672), leaving 'No runs yet' with no next step.",
+          "impact": "A freshly created Workbench shows a greyed RUN whose tooltip says it will run the workbench. Nothing tells the user an agent must be assigned first."
+        },
+        {
+          "title": "Receipt provenance [GO] can be dead when the segment row is missing",
+          "severity": "minor",
+          "evidence": "web/src/desk/pullouts/views/DecisionsView.tsx:258-262 shows [GO] when either the segment source carries a meeting_id OR a separate meeting source exists, but always passes `provenance` first when it exists. `openSource` (DecisionsView.tsx:131-134) computes `meeting_id ?? (source_type === 'meeting' ? source_ref : '')`, so a segment source without meeting_id yields '' and the click is a no-op. meeting_id is only attached when the segment row is still present (holdspeak/services/decision_record_service.py:515-524 — `if target is not None`).",
+          "impact": "On a receipt whose originating segment row has been deleted but whose meeting source survives, the [GO] button renders and clicking it does nothing."
+        },
+        {
+          "title": "Brief 'Speak' opens the dictation surface labelled with a raw wire ref",
+          "severity": "minor",
+          "evidence": "web/src/desk/pullouts/views/BriefView.tsx:195 calls `openSurfaceOr(\"dictate\", \"/dictation\", selected.source_ref)`. SurfaceWindowHost derives the human label via `objectByRef(items, scope)?.title` (desk/components/SurfaceWindows.tsx:357-361), which returns null for a non-primitive ref such as `follow-through:card-1`, so DictationCore falls back to the raw scope string (pages/cores/DictationCore.tsx:112-115 renders `About {scopeLabel || scope}`). Nothing else consumes the scope — no grounding is attached.",
+          "impact": "Selecting a brief item and pressing Speak opens Speak showing 'About follow-through:card-1' — a raw identifier as UI copy — and the dictation is not actually grounded in that item."
+        },
+        {
+          "title": "web/test-results/ is an untracked leftover from a failed Playwright run with zero artifacts",
+          "severity": "minor",
+          "evidence": "`web/test-results/` (untracked per `git status --short`) contains exactly one file, `.last-run.json`, dated Aug 10, holding `{\"status\": \"failed\", \"failedTests\": []}`. No per-test directories, traces, screenshots or videos exist, and there is no playwright.config.* anywhere outside node_modules. web/uat/_runs holds only one stale walk directory (hs-95-01-walk, Aug 2).",
+          "impact": "The browser-walk leg of the web pillar has no current evidence: the last recorded run failed at the harness level (config or webServer), left nothing diagnosable, and the artifacts directory is not even gitignored, so it will keep showing up as untracked noise."
+        }
+      ],
+      "candidates": [
+        {
+          "title": "Every desk write verb reports its own failure",
+          "why": "Highest-leverage single fix for the pillar: one shared write-receipt channel (the pattern already exists as useUndoReceipt / useCopyReceipt) replacing the ~13 bare catch blocks across WorkbenchWindow, dataSlice.createPrimitive/seedDesk and the item card. Turns the entire class of 'the desk silently did nothing' into named, retryable refusals and satisfies the standing rule that a refusal names why.",
+          "size": "M"
+        },
+        {
+          "title": "Workbench item body edits through a local draft",
+          "why": "Fixes an outright unusable text field. The repo already owns the right primitive (desk/pullouts/editors/useDebouncedSave.ts); wiring the item body through it stops the per-keystroke PUT+refetch storm and the character loss.",
+          "size": "S"
+        },
+        {
+          "title": "Intelligence segments own the navigation state",
+          "why": "Removes a dead end where the desk actively lies ('ALL CLEAR' with live commitments). Make the segment click reset navigation to a bare {view} and render a visible, dismissible filter token whenever a drill filter is active.",
+          "size": "S"
+        },
+        {
+          "title": "The Monday Brief remembers what you acknowledged",
+          "why": "Acknowledge/Defer are the brief's only verbs and they currently do nothing durable. Needs a small brief-item shelf state on the backend plus the read in useIntelligenceAttention so the dock badge reflects triage. This is what makes the brief a daily habit instead of a poster.",
+          "size": "M"
+        },
+        {
+          "title": "Get Info's Rename is honest for every kind",
+          "why": "Either extend the update path (meeting/artifact/chain/workbench rename, incl. the missing backend route) or hide the affordance where no path exists. Right now Info advertises a universal contract it honours for about half the primitives.",
+          "size": "M"
+        },
+        {
+          "title": "Drop targets state what they accept before release",
+          "why": "Applies the glassDrop named-refusal discipline to the Workbench: inspect dataTransfer.types on dragover, show the honest verb ('ADD ITEM' / 'IMPORT AS MEETING' / a refusal), and stop promising ADD ITEM to files and text.",
+          "size": "M"
+        },
+        {
+          "title": "Restore a committed browser walk for the desk flows",
+          "why": "There is no Playwright config in the repo and the only artifact is a failed .last-run.json with no detail, so every UI claim in this pillar rests on unit tests and code reading. A checked-in walk over Hopper/Intelligence/Ask at 1440 and 393 would have caught the sticky-filter and keystroke bugs.",
+          "size": "S"
+        }
+      ],
+      "unknown": [
+        "No live browser walk was run — no hub is up in this sandbox and there is no playwright.config.* in the repo; every UI claim above rests on unit tests, two throwaway vitest probes, and code reading.",
+        "web/test-results/.last-run.json records status 'failed' with an empty failedTests array and zero artifacts, so the cause of that Aug 10 Playwright failure is not recoverable from the tree.",
+        "Whether the resolver/LLM legs of the Hopper (@-ref smart resolution, voice intent classification above the 0.5 confidence gate) behave correctly on real inference — the LAN endpoint at 192.168.1.43 is unreachable from the sandbox.",
+        "Whether the POST/PATCH paths actually succeed against a live hub on schema v43 — only route existence was verified, not runtime behaviour.",
+        "The mic/audio legs (MicButton stream session, open-mic latch, VAD segmenting) cannot be exercised without a microphone; tests/e2e/test_metal.py was excluded per instruction.",
+        "Whether the FollowThroughView delegate/snooze verbs round-trip correctly server-side (FollowThroughService behaviour was not exercised).",
+        "Visual/layout state of the foot slot and sheet at narrow widths (Phase 129 container queries) — needs real rendering at 1440 and 393."
+      ]
+    },
+    {
+      "pillar": "TEST-SUITE REALITY — full backend pytest suite on main @ 89259d4f (post Phase 130 + 131)",
+      "verdict": "Full suite (HOME=$(mktemp -d) uv run pytest -q --ignore=tests/e2e/test_metal.py) finished in 30:03: 5542 passed, 71 failed, 17 errors, 45 skipped (5675 collected). That is 88 red names, and 87 of them are byte-identical to the names the HS-130-10 ledger pinned before Phase 130; the single current-only name is a live-.43 UAT test. So the inherited ~96 is now 88: Phase 130+131 cleared 15 names (all 7 sync-contract tests they owned, plus api-surface, db-snapshot, decision-commitments migration and 4 dictation page tests) and added zero new product failures. The material finding is what the 88 are: only 5 red names are product defects (2 real code bugs, 3 shipped canon violations), ~49 are stale tests orphaned by the Phase 117 UI decomposition and the service-composition migration, 17 are e2e harness/env preconditions, 3 need live metal, 10 are ambiguous egress-policy drift. This is not 88 broken features; it is mostly a gate that has gone blind to the routes and surfaces it claims to cover.",
+      "works": [
+        "5542 tests pass; the suite collects and completes deterministically in 30:03 with no crash and no collection error"
+      ],
+      "broken": [
+        {
+          "title": "Cadence Send-reply button posts to a route that does not exist (404)",
+          "severity": "major",
+          "evidence": "holdspeak/web/routes/cadence.py:60-79 defines /loops/{loop_id}, /snooze, /kill, /close and no /loops/{loop_id}/reply; web/src/pages/cores/CadenceCore.tsx:45,113 posts POST /api/cadence/loops/{id}/reply. Output: tests/integration/test_cadence_agent.py:94 assert (404 == 200); test_reply_rejects_empty_and_non_agent_and_missing_pane assert 404 == 400.",
+          "impact": "On the Cadence surface an agent question shows a reply pad and a Send reply button; clicking it 404s. The owner cannot answer a waiting agent from the desk."
+        },
+        {
+          "title": "Meeting sync-conflict resolve raises NameError and returns 500 instead of 409",
+          "severity": "major",
+          "evidence": "holdspeak/services/meeting_service.py:30 imports only NotFound, ValidationError, yet lines 402/407/412/416/420 raise ConflictError. Output: tests/integration/test_meeting_conflict_recovery.py:103 assert 500 == 409, with captured log ERROR holdspeak.web.routes.meetings:crud.py:161 Failed to resolve Meeting sync conflict: name 'ConflictError' is not defined.",
+          "impact": "Resolving an already-resolved (or unreadable-incoming) meeting sync conflict returns a 500 with the message 'Conflict recovery failed; both versions remain: name ConflictError is not defined. Retry the resolution.' The owner sees a server error and a nonsense reason instead of a clean 409 'already resolved; reload the Meeting'."
+        },
+        {
+          "title": "Backend gate is blind to the dictation, history, settings and live surfaces: 28 tests assert literals in monolith .tsx files that no longer hold the code",
+          "severity": "major",
+          "evidence": "tests/integration/test_web_dictation_journal.py:137 reads web/src/pages/cores/DictationCore.tsx and asserts 'Search the journal'; the string now lives at web/src/pages/cores/dictation/Journal.tsx:214. Same pattern: test_web_dictation_cockpit.py:8, test_web_history_import_ui.py:8 and test_history_slack_surfaces.py:125,140,153 read HistoryCore.tsx while the code is in web/src/pages/cores/history/*.tsx; test_web_server.py:1810,2031 (TestHistoryUiSmoke, TestDashboardEndpoint) do the same against HistoryCore/LiveCore. 28 of the 71 failures are this one root cause.",
+          "impact": "These tests can neither fail on a real regression nor pass on working code; every dictation/history UI guarantee they encode is unenforced, and their permanent red masks any genuine failure in the same files."
+        },
+        {
+          "title": "21 route tests still monkeypatch holdspeak.db.get_database and never reach the composed services, so live routes answer 404/empty",
+          "severity": "major",
+          "evidence": "tests/integration/test_web_server.py:2189 (TestSpeakerApiEndpoints, IndexError on empty list after monkeypatch.setattr(db_module, 'get_database', FakeDb)), :2332 (TestIntelQueue assert 0 == 1), :1197 (TestMirHistoryApiEndpoints assert 404 == 200) though holdspeak/web/routes/meetings/insights.py:29,37 define those routes; tests/integration/test_intel_streaming.py:350 assert 404 == 200 for PATCH /api/action-items/{id} though holdspeak/web/routes/meetings/action_items.py:25 defines it; tests/integration/test_rails_observer_live.py:124 assert 0 == 1 with log WARNING holdspeak/web/routes/missioncontrol.py:245 'rails journal read failed (MissionControlService is not composed)'.",
+          "impact": "Action items, MIR history, speakers, intel queue and rails journal have no working regression coverage: the routes exist in the app but the tests exercise a fake DB the app no longer consults, so real breakage in those APIs would ship unnoticed."
+        },
+        {
+          "title": "Egress receipts attribute a yolo auto-execution to a per-action decision the owner never made",
+          "severity": "major",
+          "evidence": "tests/integration/test_web_companion_github.py:197 assert 'per_action_decision' == 'control_posture' (status was already 'executed'), and :212 assert 'authorization_required' == 'refused' for an unregistered repo in yolo; same drift in tests/integration/test_web_companion_webhook.py. Policy source: holdspeak/operation_policy.py:298-308 chooses outcome authorization_required and authority_basis per_action_decision when posture_allowed is false.",
+          "impact": "In yolo control mode the GitHub/webhook companion still files the issue but the stored policy_snapshot names the authority as a per-action decision rather than the standing control posture, and an unregistered destination gets an authorization prompt instead of the contracted hard refusal. Either the policy regressed or the tests are stale; from the run alone the receipt vocabulary and the tests disagree about why an egress ran."
+        },
+        {
+          "title": "Companion actuator propose/execute flow fails end-to-end in the slack suite (6 tests)",
+          "severity": "major",
+          "evidence": "tests/integration/test_web_companion_slack.py:205 assert 400 == 200 for POST /api/desk/actuators/slack/propose with source_ref 'note:n1'; :253 holdspeak/plugins/actuator_executor.py:100 KeyError 'unknown proposal: e5759d7f...' for a proposal the HTTP route had just returned; test_url_removed_between_propose_and_approve_fails_honestly KeyError 'proposal'; test_approval_posts_the_preview_byte_equal assert [] == ['proposed','approved','executed']; test_the_wire_events_ride_for_qlippy assert 'actuator_result' in ['actuator_proposed'].",
+          "impact": "Slack egress propose-approve-execute has no passing coverage: a proposal created through the API is invisible to the executor in the same test process and the execution event never rides the wire. Whether the seam is a two-database test harness artifact or a real composition split is not determinable from the output alone."
+        },
+        {
+          "title": "Three shipped canon violations that the repo's own guards ban",
+          "severity": "minor",
+          "evidence": "tests/unit/test_interior_canon_guard.py flags web/src/desk/pullouts/intelligence.css:205 'border-left: 1px solid var(--border)' and :245 'border-left: 2px solid var(--accent)' (left rails banned, HS-101 rule 6); tests/unit/test_product_copy.py flags holdspeak/web/routes/system/voice.py:187 'The dictation pipeline is unavailable in this runtime.' and web/src/desk/pullouts/editors/KbEditor.tsx:131 'Knowledge base name'; tests/unit/test_web_vocabulary_guard.py flags web/src/desk/pullouts/views/FollowThroughView.tsx:162 'ALL CLEAR — no follow-through yet'. All four file:line sites verified present in the working tree.",
+          "impact": "The Intelligence pullout draws banned left rails instead of the aerogel inset, the KB editor uses a retired product noun, one error string states a fact-free failure, and one empty state ships an em dash in prose against the POSITIONING voice rules."
+        },
+        {
+          "title": "The 14-test workbench walk errors instead of skipping when no hub is listening",
+          "severity": "minor",
+          "evidence": "tests/e2e/test_workbench_walk.py:19 HUB_URL = os.environ.get('HOLDSPEAK_HUB_URL', 'http://localhost:8778'). Re-run with PLAYWRIGHT_BROWSERS_PATH set: 'Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:8778/', 2 errors in 1.43s. These 14 errors are the largest single block in the ledger.",
+          "impact": "14 of the 17 suite errors are an unmet external precondition, not code. They inflate the inherited-red ledger permanently and train everyone to ignore the error column."
+        },
+        {
+          "title": "3 of the 17 errors are an artifact of the isolated-HOME protocol, not real failures",
+          "severity": "minor",
+          "evidence": "tests/e2e/test_live_bus.py errors with 'BrowserType.launch: Executable doesn't exist at <tmp-home>/Library/Caches/ms-playwright'. Re-run as HOME=$(mktemp -d) PLAYWRIGHT_BROWSERS_PATH=/Users/karol/Library/Caches/ms-playwright uv run pytest -q tests/e2e/test_live_bus.py: 3 passed in 25.03s.",
+          "impact": "The mandated isolated-HOME run hides the Playwright browser cache, so the live runtime bus reports red when it is in fact green. Any isolated-HOME run must export PLAYWRIGHT_BROWSERS_PATH or the ledger over-counts by 3."
+        }
+      ],
+      "candidates": [
+        {
+          "title": "Wire the Cadence reply route so Send reply actually delivers",
+          "why": "One missing POST /api/cadence/loops/{id}/reply leaves a shipped button dead; smallest fix with a directly visible desk outcome (2 red tests go green)",
+          "size": "S"
+        },
+        {
+          "title": "Import ConflictError in meeting_service so a resolved conflict answers 409, not 500",
+          "why": "A one-line missing import turns an honest 'already resolved, reload' into a server error with a NameError quoted at the user",
+          "size": "S"
+        },
+        {
+          "title": "Re-point the 28 monolith-source assertions at the decomposed core modules (or delete them)",
+          "why": "Largest single cluster; today the dictation/history/settings/live surfaces have zero enforceable UI coverage and permanent red hides real regressions",
+          "size": "M"
+        },
+        {
+          "title": "Rebuild the 21 monkeypatch-era route tests on composed services",
+          "why": "Action items, MIR history, speakers, intel queue and rails journal ship with no working regression coverage; these are the APIs the desk depends on most",
+          "size": "L"
+        },
+        {
+          "title": "Settle the egress vocabulary: does a yolo receipt say control_posture or per_action_decision",
+          "why": "Receipt truth is a constitutional claim; the policy and the companion tests currently disagree about why an action ran and whether an unregistered destination is refused",
+          "size": "M"
+        },
+        {
+          "title": "Repair the slack propose/approve/execute seam so the actuator suite proves the flow",
+          "why": "Slack is the flagship egress path and it has six red tests including one where the executor cannot find a proposal the API just created",
+          "size": "M"
+        },
+        {
+          "title": "Make the workbench walk and the .43 UAT tests skip on unmet preconditions",
+          "why": "17 of 17 suite errors are environment, not code; converting them to honest skips removes the noise that makes the ledger unreadable",
+          "size": "S"
+        },
+        {
+          "title": "Green the three canon guards (left rails, copy drift, em dash)",
+          "why": "Real violations at four named file:line sites in shipped source; cheapest way to restore trust in the guard tier",
+          "size": "S"
+        }
+      ],
+      "unknown": [
+        "Whether the egress-policy drift (control_posture vs per_action_decision, refused vs authorization_required) is a product regression or an intentional rename that Phase 130 left the tests behind on: not determinable from the run; needs an owner ruling against operation_policy.py:271-338.",
+        "Whether the slack propose 400 / executor KeyError is a real composition split or a two-database test-harness artifact: the test's db fixture and the server's database were not proven to be the same instance.",
+        "tests/uat/test_induction_integration_43.py (2) and tests/uat/test_mesh_dispatch.py (1) fail with RecipeVerifyError because the .43 uat-worker was not live within 40s; the sandbox cannot reach the LAN so their product state is unverified.",
+        "Whether the 14 test_workbench_walk tests pass against a real running hub: verified only that they error with ERR_CONNECTION_REFUSED when nothing listens on :8778.",
+        "Whether the ~49 stale tests conceal real product breakage in the routes/surfaces they no longer exercise: proving that needs new tests against the composed app, not this run."
+      ]
+    },
+    {
+      "pillar": "PARKED VALUE HARVEST — unshipped backlog candidates, phase 111-131 held/IOU/deferred items, issue #450 residue, Constitution promises",
+      "verdict": "The parking lot is large but mostly honest. Issue #450's Wave 0 is fully discharged by Phases 130+131, and roughly half the \"parked\" backlog rows turn out to have shipped under other phase IDs (Phase 113 stories 12-15, most of Phase 114 \"The Nerve\", all of Phase 121's kit). What genuinely remains unbuilt clusters in three places: #450 Wave 2 product-language consolidation (two daily briefs, two obligations surfaces, Decision/Receipt model split) which is real user-visible duplication today; #450 Wave 1 web-ownership leftovers (Get Info and Workbench still write decisions they do not own), which is exactly Phase 132's charter; and never-started backlog candidates W (JIRA Desk Sync — plan filed, zero code), L-remainder (Notion/Docs connectors), AA (Workbench manipulation verbs) and AB (merge actuator). The single largest parked block is Candidate Z, the inherited backend ledger: still 88 normalized failing test names covering user-facing surfaces, owned by no phase.",
+      "works": [
+        "Issue #450 Wave 0 is complete — all eight bullets map to shipped stories: readiness/execution/receipt unification (HS-130-03), Ask retargeting removal (HS-130-06), meeting placement policy (HS-130-05), egress derivation (HS-130-04), secret slots (HS-130-02), workbench double-create + voice set-agent (HS-130-09), kernel admission for Ask/Workbench (HS-131-03/05), immutable deployment revision (HS-131-01)",
+        "The precedence resolver is real and is the one placement authority with provenance — holdspeak/inference_targets.py:533-568 returns effective_target_id plus source, null-inherits at every tier, one named global fallback and no accidental 'pointer or this_machine'",
+        "mir_profile/plugin_profile consolidation is DONE — holdspeak/config/meeting.py:73 defines routing_profile as the one owner; :71-90 mark both legacy fields as load-only with a one-time migration; runtime reads effective_routing_profile (holdspeak/web_runtime.py:183, holdspeak/intel_queue.py:308)",
+        "The DecisionReceipt→Decision rename shipped — holdspeak/services/decision_record_service.py and decision_lifecycle_service.py exist; no decision_receipt_service.py remains",
+        "/api/profiles is now read-only for writes — holdspeak/web/routes/primitives/profiles.py:93-95 returns _profiles_read_only(); /api/inference-targets is the one write path (:143-201)",
+        "Phase 121's kit shipped despite a 'chartered 0/12' header — web/src/desk/hooks/useUndoReceipt.ts, useCopyReceipt, web/src/desk/surface/LedgerFilter.tsx and SurfaceFooter.tsx are all present and consumed across pullouts",
+        "Phase 113's 'unshipped' stories 13/14/15 are substantially absorbed — object.delete verb exists (web/src/desk/verbRegistry.ts:483), deletePrimitive exists (web/src/desk/store/dataSlice.ts:287), Cmd+N (:171), Cmd+I Ask (:525), Cmd+/ shortcuts sheet (:618)",
+        "Phase 113 story 12 (composing editor) is absorbed — web/src/desk/components/DeskEditor.tsx:207 binds Mod-b to markdown bold and :279-282 renders a real role=\"toolbar\" formatting toolbar",
+        "Phase 114's named gaps are largely closed elsewhere — per-destination probe route exists (holdspeak/web/routes/primitives/profiles.py:133) and the web calls it (web/src/pages/cores/settingsModels.tsx:221); web/src/desk/inferenceEgress.ts provides the egress readout; HS-130-03 fixed the dishonest this_machine readiness",
+        "Candidate M (dictation preview-before-commit) is SHIPPED, not parked — phase-75-preview-before-type/current-phase-status.md:3 records CLOSED 5/5 with the arm/Type-it/Discard walk",
+        "A deleted destination refuses by name rather than silently rerouting — holdspeak/inference_targets.py:499-503 builds an unavailable target reading \"Destination 'X' does not exist on this device\"",
+        "Phase 131's one-path fence exits 0 with zero unregistered model-execution sites, per phase-131-one-admission-path/current-phase-status.md:100-104 and final-summary.md evidence index"
+      ],
+      "broken": [
+        {
+          "title": "Two daily briefs answer the same question with different data",
+          "severity": "major",
+          "evidence": "holdspeak/cadence/brief.py:37 build_brief() + holdspeak/web/routes/cadence.py:40-42 GET /api/cadence/brief; holdspeak/services/monday_brief_service.py:1-14 + holdspeak/web/routes/monday_brief.py:18 APIRouter(prefix=\"/api/brief\"). Issue #450 Wave 2 item 'Merge Morning Push and Monday Brief into Daily Brief' is unchecked.",
+          "impact": "The user asks 'what matters today?' and gets two different answers from two surfaces — the Cadence loops push (ranked open loops + next action) and the Brief view (changed/broke/waiting/decisions). Neither names the other; there is no one Daily Brief."
+        },
+        {
+          "title": "Cadence still presents a second obligations work list beside Follow-through",
+          "severity": "major",
+          "evidence": "web/src/pages/cores/CadenceCore.tsx:32-148 renders /api/cadence/loops as an actionable work list with per-loop verbs (kill loop, reply); holdspeak/services/follow_through_service.py already merges meeting actions and Cadence loops into one board. Issue #450 Wave 2 item 'Make Follow-through the only obligations surface' is unchecked.",
+          "impact": "Open obligations live in two places. A user who clears Follow-through can still be shown the same work in Cadence, and there is no single board that is authoritative for 'what is still open for me'."
+        },
+        {
+          "title": "Attaching a skill inside a Workbench mutates the Agent's binding globally",
+          "severity": "major",
+          "evidence": "web/src/desk/components/WorkbenchWindow.tsx:1066-1081 — attachSkill() calls updateSkillBinding(skillId, [...skill.recipe_ids, detail.recipe_id]) which PUTs the Skill's recipe_ids; the Workbench renders these as its own configuration at :396-471. Issue #450 Wave 1 item 'Move Agent skill binding out of Workbench mutation' is unchecked.",
+          "impact": "A change the user makes inside one Workbench silently changes that Agent everywhere it runs. The control looks local and is not; there is no Workbench-scoped skill override field."
+        },
+        {
+          "title": "Get Info still competes with Agent Edit for the placement decision",
+          "severity": "minor",
+          "evidence": "web/src/desk/infoContract.ts:92-96 writes updatePrimitive(\"recipe\", id, { profile_id: value || null }) under the label \"Default runs on\" (:83); web/src/desk/pullouts/editors/RecipeEditor.tsx:104 renders the same field with the same label. Issue #450 acceptance criterion 'Get Info does not compete with dedicated editors' is unchecked.",
+          "impact": "Two surfaces write the same durable field. A user can change where an Agent runs from an inspector that is supposed to summarize, and the two editors can disagree about what is shown until refresh."
+        },
+        {
+          "title": "The dual Profile / InferenceTarget client contract is still exposed and still joined in the browser",
+          "severity": "minor",
+          "evidence": "holdspeak/web/routes/primitives/profiles.py:58-93 (GET/POST/GET-one/PUT/DELETE /api/profiles) and :126-201 (/api/inference-targets) both served; web/src/pages/cores/settingsModels.tsx:108 and :115 fetch both to assemble one editable row. Issue #450 Wave 1 item 'Replace Profile plus InferenceTarget client joins with one target spec and status API' is unchecked.",
+          "impact": "Integrators face two names for one resource, and the Models settings row is a client-side join of two endpoints — the shape #450 asked to collapse into one spec+status resource."
+        },
+        {
+          "title": "Deleting a destination leaves dangling pointers with no repair path",
+          "severity": "minor",
+          "evidence": "holdspeak/services/profile_service.py:68-73 — delete_profile() removes the row only, with no sweep of recipe.profile_id, workbench.profile_id, meeting.intel_profile_id, or dictation.runtime.profile_id. Issue #450 Wave 1 item 'Repair Workbench sync and destination deletion handling' is unchecked.",
+          "impact": "After deleting a destination, every Agent/Workbench/meeting pointing at it fails at run time with 'Destination X does not exist on this device' (holdspeak/inference_targets.py:499-503). The refusal is honest but the user must hunt every referencing object by hand."
+        },
+        {
+          "title": "The inherited backend ledger is still red and owned by no phase (Backlog Candidate Z)",
+          "severity": "major",
+          "evidence": "pm/roadmap/holdspeak/phase-131-one-admission-path/assets/hs-131-12/backend-failure-diff.md:24 records '71 failed, 5543 passed, 44 skipped, 17 errors'; :31-36 give 88 normalized current names vs the 102-name HS-130-10 baseline. The names include user-facing surfaces — pm/roadmap/holdspeak/phase-130-one-truth/assets/hs-130-10/inherited-fails.txt:21-31 lists actuator presence broadcasts, cadence agent reply-into-pane, decision records, dictation journal replay, dictation moment-of-truth, and history Slack export.",
+          "impact": "Six-plus shipped user features have no passing regression proof. Anyone reading CI cannot distinguish a new break from the inherited 88, so the next real regression in dictation replay, Slack export, or Qlippy approval will land unnoticed."
+        },
+        {
+          "title": "Five phase status headers contradict their own story tables and git history",
+          "severity": "minor",
+          "evidence": "phase-113-the-forge/current-phase-status.md:3 says DRAFT and :111-125 mark all 15 stories backlog, yet 23 HS-113 commits exist for stories 01-11; phase-114-the-nerve/current-phase-status.md:3 says DRAFT with :80-86 six stories 'in-progress' and zero HS-114 commits ever; phase-118-the-hopper/current-phase-status.md:3 says 'backlog (0/10)' while :197-205 mark nine stories done; phase-121-the-fluency/current-phase-status.md:3 says 'chartered (0/12)' while its kit primitives ship in web/src/desk/hooks/useUndoReceipt.ts; phase-124-the-observer/current-phase-status.md:3 says 'chartered (0/10)' while commit 416f0828 is 'Phase 124 The Observer: every service call recorded (10/10)' merged as PR #442.",
+          "impact": "Roadmap orientation (dw next / dw context / the README current-phase line) reports work as unstarted that shipped months ago, and reports Phase 114 as in-progress when it was never begun. Any harvest or planning pass reading these files draws the wrong conclusion."
+        },
+        {
+          "title": "Article IX.2 screenshot proof is outstanding for the Phase 130/131 surfaces",
+          "severity": "minor",
+          "evidence": "pm/roadmap/holdspeak/phase-130-one-truth/final-summary.md:58-61 — 'Screenshot-walk deferred — this job has no browser/built bundle'; phase-130 current-phase-status.md:255-262 confirms the 1440+393 Playwright walk was handed over rather than run. Phase 131's closing walk (final-summary.md exit criteria) is the live LAN model, not a viewport walk. Constitution Article IX.2 requires 'production screenshot walks at real sizes'.",
+          "impact": "The Settings/Models, placement-label, and Decision-rename surfaces changed by 130 have never been seen at 1440 or 393. Layout or label regressions from the rename would ship unobserved."
+        }
+      ],
+      "candidates": [
+        {
+          "title": "One Daily Brief — merge Cadence Morning Push and Monday Brief",
+          "why": "Directly removes a duplicate answer to the product's most-asked question; #450 Wave 2 names it explicitly; both entities and both routes exist today (holdspeak/cadence/brief.py, holdspeak/services/monday_brief_service.py). Cadence keeps scheduling and delivery; it stops owning a second Brief entity.",
+          "size": "M"
+        },
+        {
+          "title": "Follow-through is the only obligations board — demote Cadence to scheduler/scorer",
+          "why": "Second duplicate surface for 'what is still open for me'; follow_through_service.py already merges both sources, so this is a surface consolidation with the data model already correct. High daily-use payoff, #450 Wave 2.",
+          "size": "M"
+        },
+        {
+          "title": "Burn down the inherited backend ledger (Backlog Candidate Z)",
+          "why": "88 failing test names, several on real user features (dictation journal replay, history Slack export, Qlippy/actuator broadcasts, cadence reply-into-pane, decision records). Sol's adopted conditions already exist: an owner, an exit condition of zero-or-individually-ruled, and no baseline expansion. Nothing else on this list restores trust in CI.",
+          "size": "L"
+        },
+        {
+          "title": "One owner per decision in the web — Workbench skill override + Get Info hand-off",
+          "why": "Two verified controls still write decisions they do not own (WorkbenchWindow.tsx:1066-1081 mutates Agent skills globally; infoContract.ts:92-96 writes Agent placement). This is the announced Phase 132 slice and the two remaining unchecked #450 Wave 1 web items.",
+          "size": "M"
+        },
+        {
+          "title": "Decision links to immutable Receipts — finish the Phase-130 rename with the model",
+          "why": "Phase 130 shipped the word only and explicitly deferred model convergence (phase-130 current-phase-status.md:185). Until Decision create/accept/change/supersede mint real kernel receipts, 'Receipt always means immutable evidence' (#450 acceptance) is only half true.",
+          "size": "M"
+        },
+        {
+          "title": "JIRA Desk Sync — pull JQL reports as Desk primitives (Backlog Candidate W)",
+          "why": "Full RFC already written (docs/internal/PLAN_PHASE_JIRA_DESK_SYNC.md) and zero lines implemented — no desk_sync connector kind exists in holdspeak/connector_packs/. Reuses connector_sdk, PermissionGate, NoteRepository and the existing diorama; invents one sidecar table. The highest-value net-new external-data feature still on the shelf.",
+          "size": "L"
+        },
+        {
+          "title": "First-run / onboarding — the desk that teaches itself at zero",
+          "why": "Held from Phase 121 as 'Blank desk may be intentional. Needs owner first-run philosophy' (phase-121 current-phase-status.md:98-112). Phase 119 made the seed honest at zero, which sharpened the gap: an empty honest desk with no guided first move.",
+          "size": "M"
+        },
+        {
+          "title": "Workbench manipulation verbs (Backlog Candidate AA)",
+          "why": "Eight named notches recorded at HS-105-07: drawer-window drag-reorder (unlocks Clean up + Snapshot), cross-window drag re-filing, record orb as a drop target, multi-object drops, window-head menus on the verb registry, pull-down workspaces, in-place icon editor, per-object Receipts. Each is small, physical, and daily-felt; per-object Receipts is now cheap because the kernel journal exists.",
+          "size": "L"
+        },
+        {
+          "title": "Notion and Google Docs export connectors (Backlog Candidate L remainder)",
+          "why": "Owner scoped candidate L down to Slack for Phase 61; 'Notion/Docs stay parked' (BACKLOG.md:57). No notion or docs pack exists in holdspeak/connector_packs/. 'Meeting notes land in Notion' is the most-requested shape of this category and the gated-connector spine is proven.",
+          "size": "M"
+        },
+        {
+          "title": "The merge actuator (Backlog Candidate AB)",
+          "why": "PR follow-through still reads without acting — no merge actuator exists in holdspeak/. Bound to PR + head SHA + merge method with stale-head refusal on the proven Phase-37/61 executor spine; PR receipts already exist. Small, and it closes the one program the kernel phase shipped half of.",
+          "size": "S"
+        },
+        {
+          "title": "Destination deletion repair — name the referencing objects and offer reassignment",
+          "why": "profile_service.py:68-73 deletes the row and nothing else; every Agent/Workbench/meeting pointing at it breaks at run time. The refusal is already honest, so this is only the pre-delete impact list plus a bulk reassign — small work, removes a silent trap.",
+          "size": "S"
+        },
+        {
+          "title": "One target spec and status API — retire the /api/profiles client alias",
+          "why": "Both route families are still served and the browser joins them (settingsModels.tsx:108,115). The write path already collapsed to /api/inference-targets, so this is the last mile: one editable spec plus derived status, profile compatibility only at versioned boundaries.",
+          "size": "M"
+        },
+        {
+          "title": "The owner sitting harvest — screenshot walks and the standing IOUs",
+          "why": "Article IX.2 is unmet for Phase 130's surfaces (screenshot-walk deferred with the harness handed over), and four older IOUs are still open: the Phase-111 printed-Ask-turn shot, the Phase-112 sitting and FOCUSED APP default ruling, Phase 118's story-10 walk, and Phase 119's live-mic proofs. One sitting closes most of them.",
+          "size": "S"
+        },
+        {
+          "title": "Roadmap status truth sweep",
+          "why": "Five phase headers (113, 114, 118, 121, 124) contradict their own story tables and git history, so every orientation tool reports the wrong state. Pure hygiene, but it is the input to every future harvest — including this one.",
+          "size": "S"
+        },
+        {
+          "title": "Coder session context gauge and observed-archives adapter (Backlog Candidate AB)",
+          "why": "Both were scoped by the Phase-104 council with their cuts already decided (gauge labeled reported/estimated/unavailable paired with a real compact verb; archive scanner materializing nothing until correlated with a live pane). Blocked only on the capability ledger declaring context reporting per adapter.",
+          "size": "M"
+        },
+        {
+          "title": "Push notifications, per-object deep links, and palette frecency",
+          "why": "Three held Phase-121 items with named blockers rather than unknowns: browser/OS push awaits an owner notification policy, deep links await identity/durability decisions, frecency awaits a privacy/persistence/decay policy. Each is a small feature behind one ruling.",
+          "size": "M"
+        }
+      ],
+      "unknown": [
+        "Whether Phase 114 'The Nerve' is truly fully absorbed. Zero commits ever carried an HS-114 ID, yet spot checks show its named gaps closed elsewhere (probe route, inferenceEgress.ts, honest this_machine readiness via HS-130-03, seed presets via Phase 112). A surface-by-surface re-audit of its 19 findings is needed before the phase folder can be closed or deleted.",
+        "Whether the 88 red backend test names are genuine user-visible regressions or accumulated harness drift. I read the recorded diff, I did not run the suite. A full isolated-HOME run (excluding tests/e2e/test_metal.py) is required to classify them.",
+        "Whether Phase 121's held items (frecency, per-object deep links, browser push, F20 escape consolidation, lazy window mounting) are still absent from web/src — not verified in code this pass.",
+        "Whether the Phase-111 Settings holds are still open: audio-device-list endpoint, per-section defaults source, delivery keys under /api/settings, palette deep-settings, meeting content search, multi-select. LedgerFilter and HistoryCore suggest meeting search may have landed; the rest is unchecked.",
+        "Whether Phase 129's three backlogged verb-home moves (Decision pullout footer Edit, Workbench triple-home, Repo split) are still open — they read as Phase 132 scope but were never re-filed into a phase or the backlog.",
+        "Whether Phase 113's story 12-15 residuals are fully closed. Spot checks pass (toolbar, Cmd+B, object.delete, Cmd+N, Cmd+I, Cmd+/), but the InlineEditor decision-fields gap named in story-13 was not verified.",
+        "Everything in Backlog Candidates X, Y, and the Desk-OS owner leg — control-posture family matrix, grant surfaces, the five-day dogfood, physical iPhone/iPad VoiceOver and mic walks, the second machine over Tailscale, UAT Campaign 13. These need the owner's body and hardware; no agent can advance them.",
+        "The Phase-106 send-latency discrepancy (772.55 ms measured under load vs an 84.76 ms unloaded measurement against a 250 ms budget) — still one clean measurement short, per BACKLOG.md:833-839.",
+        "Whether the Delivery rail regression from Phase 129 is fixed: the registered dw at the mapped clone lacked 'capabilities --json' and needed a refresh or re-registration."
+      ]
+    }
+  ],
+  "workflowProgress": [
+    {
+      "type": "workflow_phase",
+      "index": 1,
+      "title": "Audit"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 1,
+      "label": "audit:routing-honesty",
+      "phaseIndex": 1,
+      "phaseTitle": "Audit",
+      "agentId": "a5cefec4c47944f7d",
+      "model": "claude-opus-5[1m]",
+      "state": "done",
+      "startedAt": 1786827276914,
+      "queuedAt": 1786827276897,
+      "attempt": 1,
+      "lastToolName": "StructuredOutput",
+      "lastToolSummary": "MODEL ROUTING HONESTY",
+      "promptPreview": "Repo: /Users/karol/dev/tools/HoldSpeak (branch main, post Phase-131 merge 89259d4f).\nGotchas you MUST respect:\n- Local pytest can hit the owner's REAL database via Path.home(). If you run any pytest, run with an isolated HOME: HOME=$(mktemp -d) uv run pytest ...\n- NEVER run tests/e2e/test_metal.py (hangs without a mic). Exclude it.\n- The sandbox cannot reach the LAN LLM at 192.168.1.43 — do not at…",
+      "lastProgressAt": 1786827735768,
+      "tokens": 108318,
+      "toolCalls": 56,
+      "durationMs": 458852,
+      "resultPreview": "{\"pillar\":\"MODEL ROUTING HONESTY\",\"verdict\":\"Four of the five #450 defects are genuinely fixed on current main, each with a named regression test, and the executable one-path census (tests/unit/test_one_path_census.py) now has an EMPTY blocking-findings ledger and passes. Defect 4 (two placement owners) is only half fixed: the backend has one authority with explicit precedence, but the web UI stil…"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 2,
+      "label": "audit:dictation",
+      "phaseIndex": 1,
+      "phaseTitle": "Audit",
+      "agentId": "a3c572c8525448153",
+      "model": "claude-opus-5[1m]",
+      "state": "done",
+      "startedAt": 1786827276915,
+      "queuedAt": 1786827276897,
+      "attempt": 1,
+      "lastToolName": "StructuredOutput",
+      "lastToolSummary": "DICTATION — speak, and text appears where you work",
+      "promptPreview": "Repo: /Users/karol/dev/tools/HoldSpeak (branch main, post Phase-131 merge 89259d4f).\nGotchas you MUST respect:\n- Local pytest can hit the owner's REAL database via Path.home(). If you run any pytest, run with an isolated HOME: HOME=$(mktemp -d) uv run pytest ...\n- NEVER run tests/e2e/test_metal.py (hangs without a mic). Exclude it.\n- The sandbox cannot reach the LAN LLM at 192.168.1.43 — do not at…",
+      "lastProgressAt": 1786828331906,
+      "tokens": 208571,
+      "toolCalls": 99,
+      "durationMs": 1053913,
+      "resultPreview": "{\"pillar\":\"DICTATION — speak, and text appears where you work\",\"verdict\":\"The desktop hold-to-talk path is the healthy one: press→admit→record→release→seal→Whisper→text_processor→voice-macro dispatch→DIR pipeline→preview-or-type is fully wired, with a cancellation fence on every publication path, and 732/750 dictation-selected Python tests pass. The browser path built in Phase 118/119 is where it …"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 3,
+      "label": "audit:meetings-presence",
+      "phaseIndex": 1,
+      "phaseTitle": "Audit",
+      "agentId": "ac80e03eb3f7d353f",
+      "model": "claude-opus-5[1m]",
+      "state": "done",
+      "startedAt": 1786827276915,
+      "queuedAt": 1786827276897,
+      "attempt": 1,
+      "lastToolName": "StructuredOutput",
+      "lastToolSummary": "MEETINGS + PRESENCE + REALTIME",
+      "promptPreview": "Repo: /Users/karol/dev/tools/HoldSpeak (branch main, post Phase-131 merge 89259d4f).\nGotchas you MUST respect:\n- Local pytest can hit the owner's REAL database via Path.home(). If you run any pytest, run with an isolated HOME: HOME=$(mktemp -d) uv run pytest ...\n- NEVER run tests/e2e/test_metal.py (hangs without a mic). Exclude it.\n- The sandbox cannot reach the LAN LLM at 192.168.1.43 — do not at…",
+      "lastProgressAt": 1786829000139,
+      "tokens": 195600,
+      "toolCalls": 142,
+      "durationMs": 1722145,
+      "resultPreview": "{\"pillar\":\"MEETINGS + PRESENCE + REALTIME\",\"verdict\":\"The persistence half of this pillar is healthy: meeting capture, session admission, aftercare, follow-through, Monday Brief and decision receipts pass 413 scoped unit tests, and the Phase-125 observer is genuinely wired into production. The realtime half is not. Of the 15 frame types the hub broadcasts, 6 have zero consumers anywhere in web/src…"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 4,
+      "label": "audit:desk-web-flows",
+      "phaseIndex": 1,
+      "phaseTitle": "Audit",
+      "agentId": "a5c9af7dec52e0e2f",
+      "model": "claude-opus-5[1m]",
+      "state": "done",
+      "startedAt": 1786827276915,
+      "queuedAt": 1786827276897,
+      "attempt": 1,
+      "lastToolName": "StructuredOutput",
+      "lastToolSummary": "WEB DESK USER FLOWS (web/src — Hopper, Workbench, Intellige…",
+      "promptPreview": "Repo: /Users/karol/dev/tools/HoldSpeak (branch main, post Phase-131 merge 89259d4f).\nGotchas you MUST respect:\n- Local pytest can hit the owner's REAL database via Path.home(). If you run any pytest, run with an isolated HOME: HOME=$(mktemp -d) uv run pytest ...\n- NEVER run tests/e2e/test_metal.py (hangs without a mic). Exclude it.\n- The sandbox cannot reach the LAN LLM at 192.168.1.43 — do not at…",
+      "lastProgressAt": 1786828181903,
+      "tokens": 161766,
+      "toolCalls": 130,
+      "durationMs": 903908,
+      "resultPreview": "{\"pillar\":\"WEB DESK USER FLOWS (web/src — Hopper, Workbench, Intelligence, Ask, Speak, Settings, filed objects, foot slot)\",\"verdict\":\"The web desk is structurally sound and far more complete than \\\"stub-riddled\\\": 811 unit tests across 116 files pass, typecheck is clean, the architecture guard and both token gates pass, every /api path the UI calls has a matching FastAPI route, the pullout regist…"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 5,
+      "label": "audit:test-reality",
+      "phaseIndex": 1,
+      "phaseTitle": "Audit",
+      "agentId": "afedc50c6b347018d",
+      "model": "claude-opus-5[1m]",
+      "state": "done",
+      "startedAt": 1786827276916,
+      "queuedAt": 1786827276897,
+      "attempt": 1,
+      "lastToolName": "StructuredOutput",
+      "lastToolSummary": "TEST-SUITE REALITY — full backend pytest suite on main @ 89…",
+      "promptPreview": "Repo: /Users/karol/dev/tools/HoldSpeak (branch main, post Phase-131 merge 89259d4f).\nGotchas you MUST respect:\n- Local pytest can hit the owner's REAL database via Path.home(). If you run any pytest, run with an isolated HOME: HOME=$(mktemp -d) uv run pytest ...\n- NEVER run tests/e2e/test_metal.py (hangs without a mic). Exclude it.\n- The sandbox cannot reach the LAN LLM at 192.168.1.43 — do not at…",
+      "lastProgressAt": 1786829571978,
+      "tokens": 119875,
+      "toolCalls": 76,
+      "durationMs": 2293984,
+      "resultPreview": "{\"pillar\":\"TEST-SUITE REALITY — full backend pytest suite on main @ 89259d4f (post Phase 130 + 131)\",\"verdict\":\"Full suite (HOME=$(mktemp -d) uv run pytest -q --ignore=tests/e2e/test_metal.py) finished in 30:03: 5542 passed, 71 failed, 17 errors, 45 skipped (5675 collected). That is 88 red names, and 87 of them are byte-identical to the names the HS-130-10 ledger pinned before Phase 130; the singl…"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 6,
+      "label": "audit:iou-harvest",
+      "phaseIndex": 1,
+      "phaseTitle": "Audit",
+      "agentId": "afdff51d3a324b7b5",
+      "model": "claude-opus-5[1m]",
+      "state": "done",
+      "startedAt": 1786827276916,
+      "queuedAt": 1786827276898,
+      "attempt": 1,
+      "lastToolName": "StructuredOutput",
+      "lastToolSummary": "PARKED VALUE HARVEST — unshipped backlog candidates, phase …",
+      "promptPreview": "Repo: /Users/karol/dev/tools/HoldSpeak (branch main, post Phase-131 merge 89259d4f).\nGotchas you MUST respect:\n- Local pytest can hit the owner's REAL database via Path.home(). If you run any pytest, run with an isolated HOME: HOME=$(mktemp -d) uv run pytest ...\n- NEVER run tests/e2e/test_metal.py (hangs without a mic). Exclude it.\n- The sandbox cannot reach the LAN LLM at 192.168.1.43 — do not at…",
+      "lastProgressAt": 1786827820431,
+      "tokens": 134856,
+      "toolCalls": 48,
+      "durationMs": 542436,
+      "resultPreview": "{\"pillar\":\"PARKED VALUE HARVEST — unshipped backlog candidates, phase 111-131 held/IOU/deferred items, issue #450 residue, Constitution promises\",\"verdict\":\"The parking lot is large but mostly honest. Issue #450's Wave 0 is fully discharged by Phases 130+131, and roughly half the \\\"parked\\\" backlog rows turn out to have shipped under other phase IDs (Phase 113 stories 12-15, most of Phase 114 \\\"Th…"
+    }
+  ],
+  "totalTokens": 928986,
+  "totalToolCalls": 551
+}

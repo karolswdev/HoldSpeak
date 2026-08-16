@@ -24,10 +24,20 @@ def env(tmp_path, monkeypatch):
     reset_database()
     db = Database(tmp_path / "holdspeak.db")
     monkeypatch.setattr(hsdb, "get_database", lambda *a, **k: db)
-    # The route tests inject an engine; local model-file readiness is outside
-    # the behavior they cover.
+    # HS-132-09: the hub's local deployment is a REAL file, so `this_machine`
+    # readiness, the model it advertises, and the model the receipt names all
+    # come from ONE configured artifact. Every test below used to stub
+    # `web.routes.sync._hub_model_name` to the constant "HubModel-9B" instead —
+    # a describer of the CONFIGURED MEETING placement, which is a different
+    # question from "what does this destination load". That stub is why the
+    # issue-#450 receipt lie survived here: with the answer nailed to a
+    # constant, no assertion could ever notice that the advertised model and
+    # the destination disagreed.
+    hub_model = tmp_path / "HubModel-9B.gguf"
+    hub_model.touch()
     monkeypatch.setattr(
-        "holdspeak.inference_targets._this_machine_readiness", lambda: ("ready", "")
+        "holdspeak.intel.providers.configured_local_meeting_model_path",
+        lambda: str(hub_model),
     )
     app = FastAPI()
     @app.middleware("http")
@@ -75,9 +85,6 @@ def test_ask_grounds_and_receipt_gates_its_projection(env, monkeypatch) -> None:
     monkeypatch.setattr("holdspeak.intel.engine.MeetingIntel", lambda **_kw: fake)
     monkeypatch.setattr(
         "holdspeak.intel.providers._configured_engine", lambda: fake
-    )
-    monkeypatch.setattr(
-        "holdspeak.web.routes.sync._hub_model_name", lambda ctx: "HubModel-9B"
     )
 
     before = len(db.plugins.list_run_artifacts())
@@ -171,9 +178,6 @@ def test_ask_target_id_selects_placement_and_advertised_model_runs(env, monkeypa
     monkeypatch.setattr(
         "holdspeak.intel.providers.build_meeting_intel_for_profile", fake_for_profile
     )
-    monkeypatch.setattr(
-        "holdspeak.web.routes.sync._hub_model_name", lambda ctx: "HubModel-9B"
-    )
 
     resp = client.post("/api/ask", json={
         "prompt": "Go", "inference_target_id": pid, "model": "Qwen3.5-9B-Q6_K"})
@@ -204,9 +208,6 @@ def test_ask_model_alone_never_hops_to_the_profile_that_runs_it(env, monkeypatch
     monkeypatch.setattr(
         "holdspeak.intel.providers.build_meeting_intel_for_profile", fake_for_profile
     )
-    monkeypatch.setattr(
-        "holdspeak.web.routes.sync._hub_model_name", lambda ctx: "HubModel-9B"
-    )
 
     resp = client.post("/api/ask", json={"prompt": "Go", "model": "Qwen3.5-9B-Q6_K"})
     assert resp.status_code == 400
@@ -225,9 +226,6 @@ def test_ask_model_override_matching_the_hubs_own_model_runs_the_default_engine(
     monkeypatch.setattr(
         "holdspeak.intel.providers._configured_engine", lambda: fake
     )
-    monkeypatch.setattr(
-        "holdspeak.web.routes.sync._hub_model_name", lambda ctx: "HubModel-9B"
-    )
     resp = client.post("/api/ask", json={"prompt": "Go", "model": "HubModel-9B"})
     assert resp.status_code == 200
     body = resp.json()
@@ -245,9 +243,6 @@ def test_ask_model_override_refuses_a_model_the_target_does_not_advertise(env, m
         "name": "LAN box", "kind": "openAICompatible",
         "base_url": "http://192.168.1.43:8080/v1", "model": "Qwen3.5-9B-Q6_K",
     })
-    monkeypatch.setattr(
-        "holdspeak.web.routes.sync._hub_model_name", lambda ctx: "HubModel-9B"
-    )
     resp = client.post("/api/ask", json={"prompt": "Go", "model": "iphone-gemma4-2B"})
     assert resp.status_code == 400
     body = resp.json()
@@ -293,9 +288,6 @@ def test_ask_grounding_hydrates_references_from_the_hub_store(env, monkeypatch) 
     monkeypatch.setattr("holdspeak.intel.engine.MeetingIntel", lambda **_kw: fake)
     monkeypatch.setattr(
         "holdspeak.intel.providers._configured_engine", lambda: fake
-    )
-    monkeypatch.setattr(
-        "holdspeak.web.routes.sync._hub_model_name", lambda ctx: "HubModel-9B"
     )
 
     resp = client.post("/api/ask", json={
@@ -344,9 +336,6 @@ def test_ask_grounding_full_expand_hydrates_the_transcript_and_marks_a_cut(env, 
     monkeypatch.setattr("holdspeak.intel.engine.MeetingIntel", lambda **_kw: fake)
     monkeypatch.setattr(
         "holdspeak.intel.providers._configured_engine", lambda: fake
-    )
-    monkeypatch.setattr(
-        "holdspeak.web.routes.sync._hub_model_name", lambda ctx: "HubModel-9B"
     )
 
     resp = client.post("/api/ask", json={
@@ -407,9 +396,6 @@ def test_models_route_lists_every_destination_without_deduping(env, monkeypatch)
         "name": "Twin", "kind": "openAICompatible",
         "base_url": "http://192.168.1.44:8080/v1", "model": "Qwen3.5-9B-Q6_K",
     }).json()["inference_target"]["id"]  # SAME model name — both must survive
-    monkeypatch.setattr(
-        "holdspeak.web.routes.sync._hub_model_name", lambda ctx: "HubModel-9B"
-    )
 
     resp = client.get("/api/models")
     assert resp.status_code == 200

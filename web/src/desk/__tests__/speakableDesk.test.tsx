@@ -100,8 +100,10 @@ describe("HS-129-07 speakable desk", () => {
     fireEvent.click(screen.getByRole("button", { name: "Speak Tags" }));
     expect(screen.getByRole("textbox", { name: "Tags" })).toHaveValue("spoken");
 
-    fireEvent.click(screen.getByRole("button", { name: "Speak Knowledge base name" }));
-    expect(screen.getByRole("textbox", { name: "Knowledge base name" })).toHaveValue("spoken");
+    // HS-132-12: the canon noun is "Knowledge" — "Knowledge base" is retired
+    // (product-copy `legacy-product-nouns`).
+    fireEvent.click(screen.getByRole("button", { name: "Speak Knowledge name" }));
+    expect(screen.getByRole("textbox", { name: "Knowledge name" })).toHaveValue("spoken");
     fireEvent.click(screen.getAllByRole("button", { name: "Speak" })[1]);
     expect(screen.getAllByTestId("desk-editor")[1]).toHaveTextContent("reference spoken");
   });

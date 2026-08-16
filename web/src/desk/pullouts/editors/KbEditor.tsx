@@ -128,7 +128,7 @@ export function KbEditor({ object: o, onClose }: InlineEditorContentProps) {
   return (
     <>
       <StringGadget
-        label="Knowledge base name"
+        label="Knowledge name"
         value={f.name}
         placeholder="Name"
         onChange={(value) => set("name", "name", value)}

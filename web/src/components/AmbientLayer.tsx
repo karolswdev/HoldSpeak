@@ -2,6 +2,12 @@ import { useEffect, useMemo, useState } from "react";
 import { apiFetch, readableError, type JsonRecord } from "../lib/api";
 import { useRuntimeBus, useRuntimeFrame } from "../runtime/RuntimeBus";
 import { useProjections } from "../desk/projections";
+import {
+  dismissAftercare,
+  publishAftercare,
+  useAftercare,
+} from "../desk/intelligenceAttention";
+import { openSurfaceWhenReady } from "../desk/shell";
 import { humanizeWireValue } from "../lib/productLanguage";
 import { Button } from "./signal/Signal";
 import { LampGadget } from "../desk/surface/gadgets";
@@ -81,16 +87,21 @@ function PreviewCard() {
   );
 }
 
+// HS-132-03 — the HUD listens to the frame the hub actually sends.
+// `plugin_jobs` / `plugin_job` were never broadcast by anything: the HUD
+// had waited on them since it was written and had therefore never once
+// rendered. `runtime_queue` (holdspeak/runtime/plugin_queue.py) carries the
+// real deferred-intel queue — its jobs and its queued/running/failed counts.
 function QueueHud() {
-  const summaryFrame = useRuntimeFrame<JsonRecord>("plugin_jobs");
-  const jobFrame = useRuntimeFrame<JsonRecord>("plugin_job");
+  const queue = useRuntimeFrame<JsonRecord>("runtime_queue");
   const [open, setOpen] = useState(false);
-  const summary = summaryFrame ?? jobFrame;
-  if (!summary) return null;
-  const pending = Number(summary.pending ?? summary.queued ?? 0);
-  const failed = Number(summary.failed ?? 0);
-  const running = Number(summary.running ?? 0);
-  if (!pending && !failed && !running) return null;
+  if (!queue) return null;
+  const jobs = Array.isArray(queue.jobs) ? (queue.jobs as JsonRecord[]) : [];
+  const pending = Number(queue.queued ?? 0);
+  const failed = Number(queue.failed ?? 0);
+  const running = Number(queue.running ?? 0);
+  const retries = Number(queue.scheduled_retries ?? 0);
+  if (!pending && !failed && !running && !retries) return null;
   return (
     <aside className="ambient-queue">
       <Button
@@ -113,13 +124,71 @@ function QueueHud() {
       </Button>
       {open ? (
         <div>
-          <strong>Delivery queue</strong>
+          <strong>Intelligence queue</strong>
           <p>
             {pending} pending · {running} running · {failed} failed
+            {retries ? ` · ${retries} retrying` : ""}
           </p>
+          {jobs.length ? (
+            <ul className="ambient-queue-jobs">
+              {jobs.slice(0, 6).map((job, index) => (
+                <li key={String(job.id ?? index)}>
+                  <span>{String(job.label ?? job.meeting_id ?? "Job")}</span>
+                  <small>{String(job.status ?? "")}</small>
+                </li>
+              ))}
+            </ul>
+          ) : null}
           <a href="/history">Open queue</a>
         </div>
       ) : null}
+    </aside>
+  );
+}
+
+/**
+ * HS-132-08 — the finished meeting speaks without the mascot.
+ *
+ * `aftercare_ready` used to reach exactly one subscriber: the Qlippy block
+ * below, gated on presence + mascot (off by default), so a meeting that had
+ * just ended raised no live signal anywhere on the desk. This band is
+ * ungated, sits in flow above the dictation preview, and reaches the
+ * meeting's pending proposals in one click. The mascot path is untouched.
+ */
+function AftercareNote() {
+  const { subscribe } = useRuntimeBus();
+  const signal = useAftercare();
+  useEffect(
+    () => subscribe("aftercare_ready", (frame) => void publishAftercare(frame.data)),
+    [subscribe],
+  );
+  if (!signal) return null;
+  return (
+    <aside
+      className="ambient-preview ambient-aftercare"
+      aria-label="Meeting aftercare"
+      style={{ bottom: "104px" }}
+    >
+      <span className="signal-eyebrow">Meeting ready</span>
+      <strong>{signal.title}</strong>
+      <p>
+        {signal.openTotal} open · {signal.decidedTotal} decided
+      </p>
+      <div className="button-row">
+        <Button
+          dense
+          variant="primary"
+          onClick={() => {
+            openSurfaceWhenReady("review-meetings", `meeting:${signal.meetingId}`);
+            dismissAftercare();
+          }}
+        >
+          Open proposals
+        </Button>
+        <Button dense variant="ghost" onClick={() => dismissAftercare()}>
+          Dismiss
+        </Button>
+      </div>
     </aside>
   );
 }
@@ -346,6 +415,7 @@ export function AmbientLayer() {
     <>
       <QueueHud />
       <PreviewCard />
+      <AftercareNote />
       <Qlippy />
       <Waveform />
       <GenerationTheater />

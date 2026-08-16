@@ -21,6 +21,11 @@ from ...context import WebContext
 
 log = get_logger("web.routes.meetings")
 
+# The runtime's named refusal when a stop press finds no meeting running
+# (`runtime/meeting_glue.py::_stop_active_meeting`). Matched on the message
+# rather than the type so this transport adapter need not import the runtime.
+_NO_ACTIVE_MEETING = "No active meeting"
+
 
 def _service(ctx: WebContext) -> MeetingService:
     """Get the composition-bound service, retaining partial-context support."""
@@ -76,8 +81,13 @@ def build_live_router(ctx: WebContext) -> APIRouter:
             ctx.broadcast("stopped", stopped)
             return JSONResponse({"success": True})
         except Exception as exc:
+            # HS-132-02: HS-132-01 made the meeting verb refuse by name when no
+            # meeting is live, but the refusal rode a 500 — a server fault for
+            # what is a client asking to stop nothing. It is a conflict with the
+            # current state, so it answers 409 and keeps the named reason.
+            status = 409 if _NO_ACTIVE_MEETING in str(exc) else 500
             log.error("on_stop failed: %s", exc)
-            return JSONResponse({"success": False, "error": str(exc)}, status_code=500)
+            return JSONResponse({"success": False, "error": str(exc)}, status_code=status)
 
     @router.post("/api/meeting/start")
     async def api_meeting_start(

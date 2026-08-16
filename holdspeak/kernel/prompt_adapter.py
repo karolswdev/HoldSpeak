@@ -17,6 +17,12 @@ class CanonicalPromptAdapter:
             temperature=payload.get("temperature"),
             max_tokens=payload.get("max_tokens"),
         )), "provider": str(getattr(engine, "active_provider", "")),
+            # HS-132-09: `active_model` is the ENGINE's report of what it loaded,
+            # and every provider this adapter is handed now defines it
+            # (`MeetingIntel` did not, so this read was always `''` and each
+            # consumer fell back to a hub-side describer that had never seen the
+            # engine). A blank report still falls back to the admitted
+            # deployment's frozen model downstream — never to a live config read.
             "model": str(getattr(engine, "active_model", "") or getattr(engine, "model", ""))}
 
     def cancel(self) -> str:

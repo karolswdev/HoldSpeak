@@ -170,6 +170,25 @@ describe("the open mic on the Speak deck (HS-112-06)", () => {
     expect(mocks.startOpenMic).toHaveBeenCalledTimes(1);
   });
 
+  /* HS-132-04 — the ambient leg runs the pipeline ONCE, in transcription; the
+     delivery that follows is raw, so the words that land are the words the
+     single pass produced (never a rewrite of a rewrite, never a second
+     journal row). */
+  it("pipes an ambient utterance once and delivers that output raw", async () => {
+    await latchOpen();
+
+    await utterance("ship it friday");
+
+    await waitFor(() =>
+      expect(callsTo("/api/dictation/remote")).toHaveLength(1),
+    );
+    expect(mocks.transcribeWav).toHaveBeenCalledTimes(1);
+    expect(mocks.transcribeWav.mock.calls[0][1]).toEqual({ pipeline: true });
+    const [call] = callsTo("/api/dictation/remote");
+    expect(call.json.raw).toBe(true);
+    expect(call.json.text).toBe("ship it friday");
+  });
+
   it("obeys the deck's aim like a released TALK does", async () => {
     await latchOpen();
     fireEvent.change(screen.getByRole("combobox", { name: "Aim" }), {

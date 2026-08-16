@@ -57,6 +57,26 @@ disagrees with one of these, canon wins:
 - All tests: `uv run pytest -q`
 - Doctor only: `uv run pytest -q tests/ -k doctor`
 - A single phase's planned tests: see the relevant story file's "Test plan" section.
+- Full suite the way CI sees it (isolated HOME, so local state and the
+  owner's real DB stay out of it):
+  `HOME_REAL=$HOME; HOME=$(mktemp -d) PLAYWRIGHT_BROWSERS_PATH=$HOME_REAL/Library/Caches/ms-playwright npm_config_cache=$HOME_REAL/.npm uv run pytest -q --ignore=tests/e2e/test_metal.py`
+  `npm_config_cache` keeps the mermaid-docs renderer on the warm npm cache;
+  without it every fresh-HOME run re-downloads mermaid-cli + Chromium into
+  the throwaway HOME (gigabytes per run, and an interrupted download
+  corrupts the npx lock).
+  `PLAYWRIGHT_BROWSERS_PATH` is not optional: the isolated HOME hides the
+  browser cache, and the three `tests/e2e/test_live_bus.py` tests error on
+  "Executable doesn't exist" without it (green with it).
+- Fast lane: add `-n auto` (pytest-xdist) to any of the above — the full
+  suite drops from ~30-45 min serial to ~5-13 min parallel on the owner's
+  machine. Prefer it for every full run. UAT conductor tests boot real
+  product processes; each xdist worker scans its own port range
+  (uat/conductor/runs.py), so parallel runs cannot cross-boot onto one
+  port.
+- The suite cannot wedge: pyproject sets a 300s per-test timeout
+  (pytest-timeout, thread method), so a hanging test dies with a stack
+  trace naming it instead of stalling the run at 98% forever. A test that
+  legitimately needs longer declares `@pytest.mark.timeout(...)`.
 
 The `Tests ran` rule (PMO contract §3) requires you to actually run
 the relevant tests via these commands and read the output before

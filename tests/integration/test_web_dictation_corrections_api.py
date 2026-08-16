@@ -195,5 +195,11 @@ def test_dictation_page_includes_memory_tab(test_client: TestClient) -> None:
     source = (Path(__file__).resolve().parents[2] / "web/src/pages/cores/DictationCore.tsx").read_text()
     # HS-100-07: correction memory lives behind the Speak door.
     assert "<Memory />" in source
-    assert "/api/dictation/corrections" in source
-    assert "/api/dictation/learning-digest" in source
+    # HS-132-12: HS-117-08 moved the section's wire calls into
+    # cores/dictation/Memory.tsx; the door still stacks it.
+    memory = (
+        Path(__file__).resolve().parents[2]
+        / "web/src/pages/cores/dictation/Memory.tsx"
+    ).read_text()
+    assert "/api/dictation/corrections" in memory
+    assert "/api/dictation/learning-digest" in memory

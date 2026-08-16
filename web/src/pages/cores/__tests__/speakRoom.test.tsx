@@ -248,6 +248,98 @@ describe("Speak REHEARSE stays explicit", () => {
   });
 });
 
+/* HS-132-04 — ONE utterance, ONE pipeline.
+   The TALK key's streaming final already ran the DIR pass, so the delivery
+   that follows sends `raw: true`: the hub types those exact words instead of
+   rewriting a rewrite (two journal rows, double latency, a receipt that
+   lies). Text the user TYPED into the well carries no receipt and still takes
+   its one pass on the way out. */
+describe("Speak delivers one pipeline pass (HS-132-04)", () => {
+  it("delivers a spoken utterance raw — it was already piped once", async () => {
+    mockRoutes({
+      "/api/dictation/remote": () =>
+        Promise.resolve({
+          success: true,
+          delivered: true,
+          final_text: "ship it friday",
+        }),
+    });
+    const talk = await openDeck();
+
+    await clickToggle(talk);
+
+    await waitFor(() =>
+      expect(callsTo("/api/dictation/remote")).toHaveLength(1),
+    );
+    const [call] = callsTo("/api/dictation/remote");
+    expect(call.json.raw).toBe(true);
+    expect(call.json.text).toBe("ship it friday");
+  });
+
+  it("names a fired command in the receipt bar and delivers no prose", async () => {
+    // The hub fired a configured macro on the streaming leg: the command
+    // consumed the utterance (runtime/dictation_capture.py's contract), so
+    // the keyword is never typed as prose.
+    mocks.startStreamSession.mockImplementation(
+      async (onEvent: (event: unknown) => void) => ({
+        stop: vi.fn().mockImplementation(async () => {
+          onEvent({
+            type: "final",
+            text: "",
+            fired: {
+              keyword: "standup",
+              kind: "type_text",
+              preview: "types: ## Standup",
+              ok: true,
+              error: "",
+            },
+          });
+          return "";
+        }),
+        cancel: vi.fn(),
+      }),
+    );
+    const talk = await openDeck();
+
+    await clickToggle(talk);
+
+    expect(await screen.findByText("COMMAND · types: ## Standup")).toBeVisible();
+    const register = screen.getByLabelText("Dictation state");
+    const landed = Array.from(
+      register.querySelectorAll(".speak-register-token"),
+    ).find((token) => token.textContent === "Landed");
+    expect(landed).toHaveAttribute("data-active");
+    // nothing was dictated: no delivery, no rehearsal, and the well is clean
+    expect(callsTo("/api/dictation/remote")).toHaveLength(0);
+    expect(callsTo("/api/dictation/dry-run")).toHaveLength(0);
+    expect(screen.getByLabelText("Utterance")).toHaveValue("");
+  });
+
+  it("pipes text the user TYPED into the well exactly once, on delivery", async () => {
+    mockRoutes({
+      "/api/dictation/remote": () =>
+        Promise.resolve({
+          success: true,
+          delivered: true,
+          final_text: "[corrected] typed words",
+        }),
+    });
+    await openDeck();
+    fireEvent.change(await screen.findByLabelText("Utterance"), {
+      target: { value: "typed words" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Deliver" }));
+
+    await waitFor(() =>
+      expect(callsTo("/api/dictation/remote")).toHaveLength(1),
+    );
+    const [call] = callsTo("/api/dictation/remote");
+    expect(call.json.text).toBe("typed words");
+    expect(call.json.raw).toBeUndefined();
+  });
+});
+
+
 describe("Speak refusals land in-flow", () => {
   it("names an unresolved desktop focus in the receipt bar and the register", async () => {
     mockRoutes({

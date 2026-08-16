@@ -274,7 +274,7 @@ def configured_meeting_intel(*, context: Any, revision: Any = None) -> "MeetingI
     return bind_dispatch_context(_configured_engine(), bound)
 
 
-def configured_local_meeting_model_path() -> str:
+def configured_local_meeting_model_path(*, meeting: Any = None) -> str:
     """The concrete local GGUF the in-process meeting-intel engine loads (HS-130-03).
 
     This is the SINGLE artifact the ``this_device`` execution branch actually
@@ -282,10 +282,15 @@ def configured_local_meeting_model_path() -> str:
     hands ``MeetingIntel`` this path). ``this_machine`` readiness must therefore
     check THIS file and the receipt must name it — not the dictation-runtime
     model, which is a different subsystem.
-    """
-    from ..config import Config
 
-    meeting = Config.load().meeting
+    HS-132-10: ``meeting`` may name an already-loaded meeting config (the
+    settings writer describing the document it just persisted). Omitted, the
+    on-disk config is loaded exactly as before.
+    """
+    if meeting is None:
+        from ..config import Config
+
+        meeting = Config.load().meeting
     raw = str(getattr(meeting, "intel_realtime_model", "") or "").strip()
     return raw or DEFAULT_INTEL_MODEL_PATH
 
@@ -307,16 +312,22 @@ class ConfiguredMeetingDeployment:
     reason: Optional[str]
 
 
-def configured_meeting_deployment() -> ConfiguredMeetingDeployment:
+def configured_meeting_deployment(*, meeting: Any = None) -> ConfiguredMeetingDeployment:
     """Resolve the deployment ``build_configured_meeting_intel`` would load.
 
     Honors the meeting placement policy (``intel_provider`` / ``intel_profile_id``)
     exactly as ``build_configured_meeting_intel`` does — this READS that policy to
     describe runnability; it does not own or change it (that is HS-130-05).
-    """
-    from ..config import Config
 
-    meeting = Config.load().meeting
+    HS-132-10: ``meeting`` may name an already-loaded meeting config so a caller
+    that HOLDS the document (the settings writer describing the placement it just
+    persisted) describes THAT document instead of re-reading the disk. Omitted,
+    the on-disk config is loaded exactly as before.
+    """
+    if meeting is None:
+        from ..config import Config
+
+        meeting = Config.load().meeting
     # HS-130-05: describe what the ONE placement decision (and therefore
     # ``build_configured_meeting_intel``) will load, not ``intel_provider``
     # alone — an adopted openAICompatible destination reports its cloud
@@ -330,7 +341,7 @@ def configured_meeting_deployment() -> ConfiguredMeetingDeployment:
             node=str(placement.node), runnable=True, reason=None,
         )
     provider = placement.provider
-    model_path = configured_local_meeting_model_path()
+    model_path = configured_local_meeting_model_path(meeting=meeting)
     active, reason = resolve_intel_provider(
         provider,
         model_path=model_path,
@@ -814,13 +825,19 @@ def _profile_engine(
             cloud_api_key_env=env,
         )
     if kind == "onDevice":
-        kwargs: dict[str, Any] = {"provider": "local"}
-        # The profile's own model_file is the deployment; fall back to the
-        # configured local meeting model only when a profile names none.
-        model_path = str(model_file or "").strip() or configured_local_meeting_model_path()
-        if model_path:
-            kwargs["model_path"] = model_path
-        return MeetingIntel(**kwargs)
+        # HS-132-09: the profile's own model_file is the WHOLE deployment. The
+        # old fallback to `configured_local_meeting_model_path()` is the same
+        # shape HS-131-13 closed on the `this_machine` branch — a post-admission
+        # read of MUTABLE meeting config, which lets an admitted child load a
+        # model its frozen revision never named while the receipt keeps the
+        # revision's name. A blank `model_file` refuses BY NAME instead.
+        model_path = str(model_file or "").strip()
+        if not model_path:
+            from ..inference_targets import LOCAL_DEPLOYMENT_MODEL_UNKNOWN
+            from ..kernel.model import KernelRefused
+
+            raise KernelRefused(LOCAL_DEPLOYMENT_MODEL_UNKNOWN)
+        return MeetingIntel(provider="local", model_path=model_path)
     return configured_meeting_intel(context=context, revision=deployment_revision)
 
 

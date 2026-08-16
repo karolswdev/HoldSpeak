@@ -62,11 +62,26 @@ def _render(cmd: list[str], block: str) -> subprocess.CompletedProcess:
         src = Path(d) / "diagram.mmd"
         out = Path(d) / "diagram.svg"
         src.write_text(block, encoding="utf-8")
-        return subprocess.run(
-            [*cmd, "-i", str(src), "-o", str(out)],
-            capture_output=True,
-            text=True,
-        )
+        try:
+            return subprocess.run(
+                [*cmd, "-i", str(src), "-o", str(out)],
+                capture_output=True,
+                text=True,
+                # HS-132-12: a hung npx (cold cache, network, compromised
+                # lock) once wedged the whole suite at 98% for 75 minutes.
+                # A render that cannot finish in a minute is an environment
+                # problem, never a diagram problem.
+                timeout=60,
+            )
+        except subprocess.TimeoutExpired as exc:
+            return subprocess.CompletedProcess(
+                exc.cmd, returncode=124, stdout="", stderr="npm error render timed out after 60s"
+            )
+
+
+def _is_npm_infra_error(text: str) -> bool:
+    """npm/npx cache and install failures are environment, not diagrams."""
+    return "npm error" in text or "npm ERR!" in text
 
 
 def test_docs_have_at_least_one_mermaid_block() -> None:
@@ -86,12 +101,25 @@ def test_every_mermaid_block_renders() -> None:
         pytest.skip(f"mermaid renderer unavailable in this env: {probe.stderr[-300:]}")
 
     failures: list[str] = []
+    env_failures: list[str] = []
     for path, idx, block in _blocks():
         result = _render(cmd, block)
         if result.returncode != 0:
             rel = path.relative_to(_REPO)
             err = (result.stderr or result.stdout).strip().splitlines()
             tail = " ".join(err[-3:]) if err else "unknown error"
-            failures.append(f"{rel} block #{idx}: {tail}")
+            entry = f"{rel} block #{idx}: {tail}"
+            if _is_npm_infra_error(tail):
+                env_failures.append(entry)
+            else:
+                failures.append(entry)
 
     assert not failures, "Mermaid blocks that do not render:\n  " + "\n  ".join(failures)
+    if env_failures:
+        # Every failure was npm infrastructure (cache lock, interrupted
+        # install, timeout) — the diagrams were never judged. Skip by name;
+        # a warm npm cache (npm_config_cache passthrough, see CLAUDE.md)
+        # makes this leg real again.
+        pytest.skip(
+            "mermaid renderer's npm cache unavailable: " + env_failures[0]
+        )

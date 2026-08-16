@@ -964,6 +964,23 @@ def _migrate_columns(conn: sqlite3.Connection, stored: int) -> None:
             " ON mesh_workers(node_id, credential_generation)"
         )
 
+    # v60 (HS-132-08): brief-item triage outlives the pullout that pressed it.
+    # SCHEMA_SQL creates the shelf for fresh databases; retain the explicit leg
+    # so a v59 archive gains it on upgrade.
+    if stored < 60:
+        conn.executescript(
+            """
+            CREATE TABLE IF NOT EXISTS monday_brief_item_shelf (
+                item_id TEXT PRIMARY KEY REFERENCES monday_brief_items(id) ON DELETE CASCADE,
+                brief_id TEXT NOT NULL,
+                state TEXT NOT NULL,
+                updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+            );
+            CREATE INDEX IF NOT EXISTS idx_monday_brief_shelf_brief
+                ON monday_brief_item_shelf(brief_id);
+            """
+        )
+
     # Created after additive migrations: on an upgrade, SCHEMA_SQL saw the old
     # parent table before v58's columns existed. A publication callback may
     # terminalize its own parent only by clearing the exact claim in that same

@@ -36,7 +36,6 @@ import { activateLauncher } from "../../desk/components/DeskWindow";
 import {
   CADENCE_PRESSURE_OPTIONS,
   EXPORT_FORMAT_OPTIONS,
-  INTEL_PROVIDER_OPTIONS,
   LANGUAGE_OPTIONS,
   DeskModule,
   MIR_PROFILE_OPTIONS,
@@ -47,7 +46,10 @@ import {
   TRANSCRIBE_BACKEND_OPTIONS,
   WAKE_ACTION_OPTIONS,
   WHISPER_MODEL_OPTIONS,
+  meetingPlacement,
   moduleForKey,
+  placementLine,
+  providerIgnoredReason,
   type DeepHit,
 } from "./settingsPrefs";
 
@@ -253,8 +255,14 @@ function SettingsFace({ hero, scope }: CoreProps) {
     const walk = (node: Record<string, unknown>, path: string[]) => {
       for (const [key, item] of Object.entries(node)) {
         const nextPath = [...path, key];
+        // HS-132-10: the meetings placement keys live in Models with the
+        // dial itself, so a filter hit lands on the control, not on the
+        // room it used to live in.
+        const placementKey =
+          nextPath[0] === "meeting" &&
+          (nextPath[1] === "intel_provider" || nextPath[1] === "intel_profile_id");
         const owner =
-          nextPath[0] === "dictation" && nextPath[1] === "runtime"
+          (nextPath[0] === "dictation" && nextPath[1] === "runtime") || placementKey
             ? "models"
             : moduleForKey(nextPath[0]);
         if (item !== null && typeof item === "object" && !Array.isArray(item)) {
@@ -393,6 +401,12 @@ function SettingsFace({ hero, scope }: CoreProps) {
       />
     </GadgetRow>
   );
+
+  /* HS-132-10 — the hub's meetings-placement provenance. Meetings states
+     where its intelligence runs and which dial decided; the dial itself
+     lives in Models (one control, one home). */
+  const placement = meetingPlacement(resource.data);
+  const providerIgnored = placement ? providerIgnoredReason(placement) : "";
 
   /* ── the generic walker: survives ONLY inside System (§3.2) ── */
   const walkerRows = (node: Record<string, unknown>, path: string[]): ReactNode[] =>
@@ -633,13 +647,28 @@ function SettingsFace({ hero, scope }: CoreProps) {
             </GadgetGroup>
             <GadgetGroup label="Intelligence">
               {check(["meeting", "intel_enabled"], "Enabled")}
-              {cyc(["meeting", "intel_provider"], "Provider", INTEL_PROVIDER_OPTIONS)}
               {str(["meeting", "intel_realtime_model"], "Realtime model")}
               {str(["meeting", "intel_summary_model"], "Summary model")}
               {check(["meeting", "intel_cloud_store"], "Cloud store")}
-              {/* HS-112-01: the endpoint dial lives in Models. */}
+              {/* HS-112-01: the endpoint dial lives in Models. HS-132-10: so
+                  does the Provider intent — it was a SECOND placement dial
+                  here with no precedence signal, so picking LOCAL under an
+                  adopted destination did nothing. One dial, one home; this
+                  states where meetings run and points at it. */}
               <div className="prefs-elsewhere">
-                <span className="prefs-elsewhere-fact">RUNS ON LIVES IN MODELS</span>
+                <span className="prefs-elsewhere-fact">
+                  PLACEMENT LIVES IN MODELS
+                </span>
+                {placement ? (
+                  <span className="prefs-elsewhere-fact">
+                    {placementLine(placement)}
+                  </span>
+                ) : null}
+                {providerIgnored ? (
+                  <span className="prefs-elsewhere-fact" role="status">
+                    {providerIgnored}
+                  </span>
+                ) : null}
                 <Button dense onClick={() => openModule("models")}>
                   Open Models
                 </Button>

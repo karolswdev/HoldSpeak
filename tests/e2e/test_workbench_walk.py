@@ -9,7 +9,9 @@ Run against the real hub:
 from __future__ import annotations
 
 import os
+import socket
 from pathlib import Path
+from urllib.parse import urlparse
 
 import pytest
 
@@ -17,6 +19,31 @@ pytest.importorskip("playwright.sync_api", reason="walk needs Playwright + a bro
 
 ASSETS_DIR = Path(__file__).resolve().parents[2] / "pm/roadmap/holdspeak/phase-116-the-workbench/assets/hs-116-15"
 HUB_URL = os.environ.get("HOLDSPEAK_HUB_URL", "http://localhost:8778")
+
+
+def _hub_is_listening(url: str, timeout: float = 1.5) -> bool:
+    """HS-132-12 — a fast TCP preflight on the hub's own address.
+
+    Without it every test in this module ERRORs on Chromium's
+    ERR_CONNECTION_REFUSED, which reads as 14 broken tests instead of one
+    absent precondition. The probe is a bare connect: cheap, no HTTP
+    round-trip, and true exactly when something is serving the hub port.
+    """
+    parsed = urlparse(url)
+    host = parsed.hostname or "localhost"
+    port = parsed.port or (443 if parsed.scheme == "https" else 80)
+    try:
+        with socket.create_connection((host, port), timeout=timeout):
+            return True
+    except OSError:
+        return False
+
+
+# The walk photographs a RUNNING hub; it cannot stand one up. With nothing
+# listening it self-skips by name, and a live hub (`holdspeak web`, or
+# HOLDSPEAK_HUB_URL pointed at one) runs the whole walk unchanged.
+if not _hub_is_listening(HUB_URL):
+    pytest.skip(f"no hub listening at {HUB_URL}", allow_module_level=True)
 VIEWPORTS = [
     {"name": "desktop", "width": 1440, "height": 900},
     {"name": "mobile", "width": 393, "height": 852},

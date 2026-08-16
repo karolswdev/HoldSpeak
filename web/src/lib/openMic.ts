@@ -64,7 +64,10 @@ export async function openMicListen(
     await startOpenMic(async (segment) => {
       try {
         const audio = toWav16kMono(segment.chunks, segment.rate);
-        const text = (await transcribeWav(audio)).trim();
+        // HS-132-04: the open mic is a dictate-for-delivery leg, so this is
+        // the utterance's ONE pipeline pass; the delivery that follows sends
+        // `raw: true` rather than rewriting a rewrite.
+        const text = (await transcribeWav(audio, { pipeline: true })).trim();
         if (text) handlers.onText(text);
       } catch (error) {
         if (micIntervalClosed(error)) {

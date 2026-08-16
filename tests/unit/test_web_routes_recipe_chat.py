@@ -28,9 +28,17 @@ def env(tmp_path, monkeypatch):
     reset_database()
     db = Database(tmp_path / "holdspeak.db")
     monkeypatch.setattr(hsdb, "get_database", lambda *a, **k: db)
-    # This suite injects its engine; model-file readiness belongs to target tests.
+    # HS-132-09: the hub's local deployment is a REAL file, so readiness, the
+    # advertised model, and the model this turn's receipt names all come from
+    # ONE configured artifact. The suite used to stub
+    # `web.routes.sync._hub_model_name` to a constant, which the chat route then
+    # injected as `default_model` — the receipt printed the hub's configured
+    # MEETING placement no matter where the turn actually ran.
+    hub_model = tmp_path / "HubModel-9B.gguf"
+    hub_model.touch()
     monkeypatch.setattr(
-        "holdspeak.inference_targets._this_machine_readiness", lambda: ("ready", "")
+        "holdspeak.intel.providers.configured_local_meeting_model_path",
+        lambda: str(hub_model),
     )
     app = FastAPI()
     app.include_router(build_primitives_router(WebContext(get_state=lambda: {})))
@@ -88,7 +96,6 @@ def test_chat_assembles_the_turn_and_persists_nothing(env, monkeypatch) -> None:
     # FROZEN revision, so the same double is installed on the engine class too.
     monkeypatch.setattr("holdspeak.intel.engine.MeetingIntel", lambda **_kw: fake)
     monkeypatch.setattr("holdspeak.intel.providers._configured_engine", lambda: fake)
-    monkeypatch.setattr("holdspeak.web.routes.sync._hub_model_name", lambda ctx: "HubModel-9B")
 
     history = [{"role": "you", "text": f"turn {i}"} for i in range(10)] + [
         {"role": "agent", "text": "an earlier answer"},
@@ -135,7 +142,6 @@ def test_chat_kb_honesty_marker_when_nothing_hydrates(env, monkeypatch) -> None:
     # FROZEN revision, so the same double is installed on the engine class too.
     monkeypatch.setattr("holdspeak.intel.engine.MeetingIntel", lambda **_kw: fake)
     monkeypatch.setattr("holdspeak.intel.providers._configured_engine", lambda: fake)
-    monkeypatch.setattr("holdspeak.web.routes.sync._hub_model_name", lambda ctx: "HubModel-9B")
     assert client.post("/api/recipes/recipe_scout/chat", json={"question": "hi"}).status_code == 200
     assert "[KB: Ghost shelf — no hydrated members]" in fake.captured["user_prompt"]
 

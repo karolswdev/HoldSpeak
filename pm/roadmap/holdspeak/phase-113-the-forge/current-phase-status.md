@@ -1,6 +1,11 @@
 # Phase 113 - The Forge
 
-**Status:** DRAFT. Fifteen stories that turn the Desk into an
+**Status:** 11/15 shipped. (Record corrected 2026-08-15 by HS-132-13: this
+header said DRAFT and the table said all-backlog while stories 01-11 shipped
+2026-08-03/04 via PRs #437-#440 with per-story commits — see each story's
+evidence file. Stories 12-15 were saved in-flight in 068f36ff and the
+Phase-132 audit found them substantially absorbed by later phases; re-audit
+before resuming them.) Originally: Fifteen stories that turn the Desk into an
 Architect's operating system — Workbench 2.0+ on steroids. Three
 tracks: **build** (shared kit, real editor, AI, voice, git
 drawers, DW primitives, decisions), **polish** (kill the animated
@@ -108,17 +113,17 @@ promise today:
 
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
-| HS-113-01 | The shared kit | backlog | [story-01-the-shared-kit](./story-01-the-shared-kit.md) | — |
-| HS-113-02 | The real editor | backlog | [story-02-the-real-editor](./story-02-the-real-editor.md) | — |
-| HS-113-03 | List convergence | backlog | [story-03-list-convergence](./story-03-list-convergence.md) | — |
-| HS-113-04 | AI in the editor | backlog | [story-04-ai-in-the-editor](./story-04-ai-in-the-editor.md) | — |
-| HS-113-05 | Voice Intent Router | backlog | [story-05-voice-intent-router](./story-05-voice-intent-router.md) | — |
-| HS-113-06 | Git-backed drawers | backlog | [story-06-git-backed-drawers](./story-06-git-backed-drawers.md) | — |
-| HS-113-07 | DW on the Desk | backlog | [story-07-dw-on-the-desk](./story-07-dw-on-the-desk.md) | — |
-| HS-113-08 | Decision primitive | backlog | [story-08-decision-primitive](./story-08-decision-primitive.md) | — |
-| HS-113-09 | The static desk | backlog | [story-09-the-static-desk](./story-09-the-static-desk.md) | — |
-| HS-113-10 | The compositor | backlog | [story-10-the-compositor](./story-10-the-compositor.md) | — |
-| HS-113-11 | The refit | backlog | [story-11-the-refit](./story-11-the-refit.md) | — |
+| HS-113-01 | The shared kit | done | [story-01-the-shared-kit](./story-01-the-shared-kit.md) | [evidence-story-01](./evidence-story-01.md) |
+| HS-113-02 | The real editor | done | [story-02-the-real-editor](./story-02-the-real-editor.md) | [evidence-story-02](./evidence-story-02.md) |
+| HS-113-03 | List convergence | done | [story-03-list-convergence](./story-03-list-convergence.md) | [evidence-story-03](./evidence-story-03.md) |
+| HS-113-04 | AI in the editor | done | [story-04-ai-in-the-editor](./story-04-ai-in-the-editor.md) | [evidence-story-04](./evidence-story-04.md) |
+| HS-113-05 | Voice Intent Router | done | [story-05-voice-intent-router](./story-05-voice-intent-router.md) | [evidence-story-05](./evidence-story-05.md) |
+| HS-113-06 | Git-backed drawers | done | [story-06-git-backed-drawers](./story-06-git-backed-drawers.md) | [evidence-story-06](./evidence-story-06.md) |
+| HS-113-07 | DW on the Desk | done | [story-07-dw-on-the-desk](./story-07-dw-on-the-desk.md) | [evidence-story-07](./evidence-story-07.md) |
+| HS-113-08 | Decision primitive | done | [story-08-decision-primitive](./story-08-decision-primitive.md) | [evidence-story-08](./evidence-story-08.md) |
+| HS-113-09 | The static desk | done | [story-09-the-static-desk](./story-09-the-static-desk.md) | [evidence-story-09](./evidence-story-09.md) |
+| HS-113-10 | The compositor | done | [story-10-the-compositor](./story-10-the-compositor.md) | [evidence-story-10](./evidence-story-10.md) |
+| HS-113-11 | The refit | done | [story-11-the-refit](./story-11-the-refit.md) | [evidence-story-11](./evidence-story-11.md) |
 | HS-113-12 | The composing desk | backlog | [story-12-the-composing-desk](./story-12-the-composing-desk.md) | — |
 | HS-113-13 | The creation flow | backlog | [story-13-the-creation-flow](./story-13-the-creation-flow.md) | — |
 | HS-113-14 | Object lifecycle | backlog | [story-14-object-lifecycle](./story-14-object-lifecycle.md) | — |

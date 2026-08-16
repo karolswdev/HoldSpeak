@@ -25,6 +25,7 @@ import {
 import { usePrimitiveDetail } from "../hooks/usePrimitiveDetail";
 import { useUndoReceipt } from "../hooks/useUndoReceipt";
 import { useCopyReceipt } from "../hooks/useCopyReceipt";
+import { useWriteReceipt, type WriteAttempt } from "../hooks/useWriteReceipt";
 import { boundaryEgressLamp } from "../inferenceEgress";
 import { keepReply } from "../chat";
 import {
@@ -382,7 +383,11 @@ function ConfigPanel({
               {preset.label}
             </button>
           ))}
-          <span className="wb-schedule-toggle">
+          {/* HS-132-07 — a disabled control names why (AC 4). */}
+          <span
+            className="wb-schedule-toggle"
+            title={detail.schedule ? undefined : "No schedule picked"}
+          >
             <CheckGadget
               label="Schedule enabled"
               checked={detail.schedule_enabled}
@@ -498,7 +503,44 @@ function ConfigPanel({
   );
 }
 
+/* ── drop-target grammar (HS-132-07) ───────────────────────────────── */
+
+/** What this workbench will REALLY do with the payload under the cursor.
+ * The old overlay promised ADD ITEM for every drag while the handler took
+ * desk items only, so a dropped file silently minted a Meeting instead. */
+export interface DropIntent {
+  /** The honest verb, in label grammar. */
+  verb: string;
+  /** True when the workbench takes the payload; false names a refusal. */
+  accepted: boolean;
+}
+
+export function dropTypes(transfer: DataTransfer | null | undefined): string[] {
+  const types = transfer?.types;
+  return types ? Array.from(types as ArrayLike<string>) : [];
+}
+
+export function workbenchDropVerb(types: readonly string[]): DropIntent {
+  if (types.includes("application/x-desk-item"))
+    return { verb: "ADD ITEM", accepted: true };
+  // Files never stop here: the desk's glass layer imports them (HS-101 B7).
+  if (types.includes("Files"))
+    return { verb: "IMPORT AS MEETING", accepted: false };
+  return { verb: "NOT A WORKBENCH ITEM", accepted: false };
+}
+
+/** The chip the overlay wears before the release. */
+export function dropIntentLabel(intent: DropIntent): string {
+  return intent.verb === "NOT A WORKBENCH ITEM"
+    ? `NO DROP · ${intent.verb}`
+    : `DROP TARGET · ${intent.verb}`;
+}
+
 /* ── item card ─────────────────────────────────────────────────────── */
+
+/** HS-132-07 — the pause that ends a typing burst, matching the desk's
+ * other inline editors (`useDebouncedSave`). */
+export const BODY_SAVE_PAUSE_MS = 450;
 
 function WorkbenchItemCard({
   item,
@@ -510,6 +552,7 @@ function WorkbenchItemCard({
   onReload,
   onRemove,
   onCopy,
+  write,
 }: {
   item: WorkbenchItem;
   expanded: boolean;
@@ -520,6 +563,8 @@ function WorkbenchItemCard({
   onReload: () => void;
   onRemove: (item: WorkbenchItem) => void;
   onCopy: (text: string) => void;
+  /** HS-132-06 — the window's write-receipt channel (the card has no foot). */
+  write: WriteAttempt;
 }) {
   const chip = STATUS_CHIPS[item.status] || STATUS_CHIPS.pending;
   const egressLamp = item.result_egress?.boundary
@@ -533,24 +578,62 @@ function WorkbenchItemCard({
     typeof item.grounding === "object" &&
     Object.keys(item.grounding).length > 0;
 
-  const updateItem = async (fields: Record<string, unknown>) => {
-    try {
-      await updateWorkbenchItem(workbenchId, item.id, fields);
-      onReload();
-    } catch { /* */ }
+  const updateItem = async (
+    fields: Record<string, unknown>,
+    verb = "SAVE ITEM",
+  ) => {
+    const result = await write(verb, () =>
+      updateWorkbenchItem(workbenchId, item.id, fields),
+    );
+    if (result.ok) onReload();
+    return result.ok;
   };
 
-  const rerunItem = () => void updateItem({ status: "pending", result: null, result_egress: null, tokens_consumed: 0, completed_at: null });
-  const dismissItem = () => void updateItem({ status: "dismissed" });
+  const rerunItem = () => void updateItem({ status: "pending", result: null, result_egress: null, tokens_consumed: 0, completed_at: null }, "RE-RUN ITEM");
+  const dismissItem = () => void updateItem({ status: "dismissed" }, "DISMISS ITEM");
+
+  // HS-132-07 — the body is a LOCAL draft. The old well bound the server
+  // value straight to the textarea and fired a PUT + full refetch on every
+  // keystroke, so a refetch landing mid-word overwrote what was typed. The
+  // draft owns the characters; the hub sees one PUT per pause (the same
+  // 450ms the desk's other editors use), and a refused save still names
+  // itself through the window's write-receipt channel.
+  const serverBody = item.body || "";
+  const [bodyDraft, setBodyDraft] = useState<string | null>(null);
+  const bodyTimer = useRef<number | null>(null);
+  useEffect(
+    () => () => {
+      if (bodyTimer.current) window.clearTimeout(bodyTimer.current);
+    },
+    [],
+  );
+  // Once the hub holds exactly what was typed, the draft dissolves and the
+  // server value drives the well again.
+  useEffect(() => {
+    if (bodyDraft !== null && bodyDraft === serverBody && bodyTimer.current === null)
+      setBodyDraft(null);
+  }, [bodyDraft, serverBody]);
+  const editBody = (next: string) => {
+    setBodyDraft(next);
+    if (bodyTimer.current) window.clearTimeout(bodyTimer.current);
+    bodyTimer.current = window.setTimeout(() => {
+      bodyTimer.current = null;
+      void updateItem({ body: next });
+    }, BODY_SAVE_PAUSE_MS);
+  };
 
   const [keeping, setKeeping] = useState(false);
   const handleKeep = async () => {
     if (!recipeId || !item.result) return;
     setKeeping(true);
-    try {
-      const artifactId = await keepReply(recipeId, item.title, item.result);
-      if (artifactId) void useDesk.getState().refresh();
-    } catch { /* */ }
+    // keepReply reports its own refusal as null (it never throws), so the
+    // null is raised here to reach the one channel.
+    const result = await write("KEEP", async () => {
+      const artifactId = await keepReply(recipeId, item.title, item.result!);
+      if (!artifactId) throw new Error("keep refused");
+      return artifactId;
+    });
+    if (result.ok) void useDesk.getState().refresh();
     setKeeping(false);
   };
 
@@ -560,10 +643,12 @@ function WorkbenchItemCard({
   const [minting, setMinting] = useState(false);
   const handleRetryMint = async () => {
     setMinting(true);
-    try {
+    const result = await write("RETRY MINT", async () => {
       const artifactId = await retryMint(workbenchId, item.id);
-      if (artifactId) onReload();
-    } catch { /* */ }
+      if (!artifactId) throw new Error("mint refused");
+      return artifactId;
+    });
+    if (result.ok) onReload();
     setMinting(false);
   };
 
@@ -612,8 +697,8 @@ function WorkbenchItemCard({
           <div className="wb-card-body-edit">
             <PadGadget
               label="Item body"
-              value={item.body || ""}
-              onChange={(next) => void updateItem({ body: next })}
+              value={bodyDraft ?? serverBody}
+              onChange={editBody}
               placeholder="Add details…"
               rows={2}
               autoGrow
@@ -823,6 +908,13 @@ export function WorkbenchWindow({
   const loadSkills = skillsHook.refresh;
   const { remove, receipt: undoReceipt } = useUndoReceipt();
   const { copy, receipt: copyReceipt } = useCopyReceipt();
+  // HS-132-06 — every write verb in this window reports here; the receipt
+  // seats in the footer's receipt slot, never over the work.
+  const {
+    attempt: write,
+    fail: failWrite,
+    receipt: writeReceipt,
+  } = useWriteReceipt();
 
   const [expanded, setExpanded] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
@@ -838,6 +930,8 @@ export function WorkbenchWindow({
   const [openRunId, setOpenRunId] = useState<string | null>(null);
   const [voiceProposal, setVoiceProposal] = useState<VoiceProposal | null>(null);
   const [dropHover, setDropHover] = useState(false);
+  // HS-132-07 — what the drag under the cursor will actually do here.
+  const [dropIntent, setDropIntent] = useState<DropIntent | null>(null);
   const [resolving, setResolving] = useState(false);
   const [resolverError, setResolverError] = useState<string | null>(null);
   const generationRef = useRef(0);
@@ -981,6 +1075,12 @@ export function WorkbenchWindow({
   }, [detail, configOpen]);
 
   /* ── WebSocket subscription for live run feedback ─────────────── */
+  /* HS-132-03: these five subscriptions had no emitter — the conductor's
+     broadcast seam was wired to the hub and never called, so a running
+     workbench never moved until a reload. WorkbenchRunner now emits at the
+     real transitions (holdspeak/workbench_conductor.py emit_* helpers); the
+     payload contract is {workbench_id, run_id, item_id, index, total} with
+     item_count on run_start. */
 
   const bus = useRuntimeBus();
 
@@ -1002,11 +1102,13 @@ export function WorkbenchWindow({
       bus.subscribe("workbench.item_done", (frame) => {
         const ev = d(frame);
         if (ev?.workbench_id !== workbenchId) return;
+        setRunProgress({ index: ev.index || 0, total: ev.total || 0 });
         void load();
       }),
       bus.subscribe("workbench.item_failed", (frame) => {
         const ev = d(frame);
         if (ev?.workbench_id !== workbenchId) return;
+        setRunProgress({ index: ev.index || 0, total: ev.total || 0 });
         void load();
       }),
       bus.subscribe("workbench.run_complete", (frame) => {
@@ -1034,15 +1136,14 @@ export function WorkbenchWindow({
   /* ── mutations ──────────────────────────────────────────────────── */
 
   const updateField = async (fields: Record<string, unknown>) => {
-    try {
-      await updateWorkbenchField(workbenchId, fields);
-      setSaved(true);
-      setTimeout(() => setSaved(false), 2000);
-      load();
-      void useDesk.getState().refresh();
-    } catch {
-      /* honest failure on next refresh */
-    }
+    const result = await write("SAVE WORKBENCH", () =>
+      updateWorkbenchField(workbenchId, fields),
+    );
+    if (!result.ok) return;
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2000);
+    load();
+    void useDesk.getState().refresh();
   };
 
   const updateName = (name: string) => void updateField({ name });
@@ -1067,12 +1168,10 @@ export function WorkbenchWindow({
     recipeIds: string[],
     extraFields?: Record<string, unknown>,
   ) => {
-    try {
-      await updateSkill(skillId, { recipe_ids: recipeIds, ...extraFields });
-      loadSkills();
-    } catch {
-      /* */
-    }
+    const result = await write("BIND SKILL", () =>
+      updateSkill(skillId, { recipe_ids: recipeIds, ...extraFields }),
+    );
+    if (result.ok) loadSkills();
   };
 
   const attachSkill = (skillId: string) => {
@@ -1091,17 +1190,17 @@ export function WorkbenchWindow({
   };
 
   const approveSkill = async (skillId: string) => {
-    try {
-      await updateSkill(skillId, { status: "active" });
-      loadSkills();
-    } catch { /* */ }
+    const result = await write("APPROVE SKILL", () =>
+      updateSkill(skillId, { status: "active" }),
+    );
+    if (result.ok) loadSkills();
   };
 
   const dismissSkill = async (skillId: string) => {
-    try {
-      await updateSkill(skillId, { status: "dismissed" });
-      loadSkills();
-    } catch { /* */ }
+    const result = await write("DISMISS SKILL", () =>
+      updateSkill(skillId, { status: "dismissed" }),
+    );
+    if (result.ok) loadSkills();
   };
 
   /* ── item actions ──────────────────────────────────────────────── */
@@ -1109,7 +1208,11 @@ export function WorkbenchWindow({
   const handleRemove = (item: WorkbenchItem) => {
     remove(
       item.title,
-      () => deleteWorkbenchItem(workbenchId, item.id).then(() => load()),
+      () =>
+        void write("REMOVE ITEM", async () => {
+          await deleteWorkbenchItem(workbenchId, item.id);
+          load();
+        }),
       () => load(),
     );
   };
@@ -1139,7 +1242,9 @@ export function WorkbenchWindow({
       }
       payload.grounding = g;
     }
-    try {
+    // The inlet keeps the typed instruction until the hub takes it, so a
+    // refused add can be re-issued by RETRY (which replays this whole body).
+    await write("ADD ITEM", async () => {
       await addWorkbenchItem(workbenchId, payload);
       setNewTitle("");
       setResolverError(null);
@@ -1150,9 +1255,7 @@ export function WorkbenchWindow({
       setCursorPos(0);
       typedAtPosRef.current = null;
       load();
-    } catch {
-      /* refresh will show honest state */
-    }
+    });
   };
 
   const triggerRun = async () => {
@@ -1167,15 +1270,15 @@ export function WorkbenchWindow({
       setRunProgress(null);
     }, 60_000);
     runTimeoutRef.current = timeout;
-    try {
-      await triggerWorkbenchRun(workbenchId);
+    const result = await write("RUN", () => triggerWorkbenchRun(workbenchId));
+    if (result.ok) {
       load();
       loadRuns();
-    } catch {
-      clearRunTimeout();
-      setRunning(false);
-      setRunProgress(null);
+      return;
     }
+    clearRunTimeout();
+    setRunning(false);
+    setRunProgress(null);
   };
 
   /* ── voice command handler ─────────────────────────────────────── */
@@ -1186,10 +1289,10 @@ export function WorkbenchWindow({
       case "add-item": {
         const title = String(p.title || "").trim();
         if (!title) return;
-        try {
+        await write("ADD ITEM", async () => {
           await addWorkbenchItem(workbenchId, { title, priority: p.priority || 3 });
           load();
-        } catch { /* */ }
+        });
         break;
       }
       case "run":
@@ -1201,14 +1304,13 @@ export function WorkbenchWindow({
         );
         remove(
           `${doneItems.length} done items`,
-          async () => {
-            for (const item of doneItems) {
-              try {
+          () =>
+            void write("CLEAR DONE", async () => {
+              for (const item of doneItems) {
                 await deleteWorkbenchItem(workbenchId, item.id);
-              } catch { /* */ }
-            }
-            load();
-          },
+              }
+              load();
+            }),
           () => load(),
         );
         break;
@@ -1254,12 +1356,12 @@ export function WorkbenchWindow({
             String(i.title || "").toLowerCase().includes(q),
           );
         if (item) {
-          try {
+          await write("DISMISS ITEM", async () => {
             await updateWorkbenchItem(workbenchId, item.id, {
               status: "dismissed",
             });
             load();
-          } catch { /* honest failure on next load */ }
+          });
         }
         break;
       }
@@ -1269,15 +1371,37 @@ export function WorkbenchWindow({
 
   /* ── drop-to-work handler ─────────────────────────────────────── */
 
+  /** Name the outcome BEFORE the release, from the payload types alone. */
+  const armDrop = (e: React.DragEvent) => {
+    setDropHover(true);
+    setDropIntent(workbenchDropVerb(dropTypes(e.dataTransfer)));
+  };
+
   const handleDrop = async (e: React.DragEvent) => {
-    e.preventDefault();
+    const intent = workbenchDropVerb(dropTypes(e.dataTransfer));
     setDropHover(false);
+    setDropIntent(null);
+    // A file is the desk's payload, not the workbench's: it rides through
+    // to the glass layer that imports it as a Meeting. Claiming it here
+    // (preventDefault) would swallow the drop.
+    if (intent.verb === "IMPORT AS MEETING") return;
+    e.preventDefault();
     const text = e.dataTransfer.getData("application/x-desk-item");
-    if (!text) return;
+    if (!text) {
+      // The refusal the overlay already promised, spoken once more on release.
+      failWrite("DROP TO WORK", intent.accepted ? "EMPTY PAYLOAD" : intent.verb);
+      return;
+    }
+    let dropped: Array<{ kind: string; id: string; title: string; body?: string }>;
     try {
-      const items: Array<{ kind: string; id: string; title: string; body?: string }> =
-        JSON.parse(text);
-      for (const item of items) {
+      dropped = JSON.parse(text);
+    } catch {
+      // Not a write failure — the payload never got that far. Named, not silent.
+      failWrite("DROP TO WORK", "BAD PAYLOAD");
+      return;
+    }
+    await write("DROP TO WORK", async () => {
+      for (const item of dropped) {
         const payload: Record<string, unknown> = {
           title: item.title || `${item.kind}: ${item.id}`,
           body: item.body || "",
@@ -1291,9 +1415,7 @@ export function WorkbenchWindow({
         await addWorkbenchItem(workbenchId, payload);
       }
       load();
-    } catch {
-      /* invalid drop data — ignore */
-    }
+    });
   };
 
   /* ── render ─────────────────────────────────────────────────────── */
@@ -1319,6 +1441,16 @@ export function WorkbenchWindow({
     : running
       ? "Running…"
       : "▸ Run";
+
+  // HS-132-07 — no bare disabled control: RUN names what is missing and
+  // where to supply it (the kit's disabledReason rule, Surface.tsx).
+  const runDisabledReason = running
+    ? "Run in progress"
+    : !detail
+      ? "Workbench still loading"
+      : !detail.recipe_id
+        ? "No agent bound · bind one in Configure"
+        : null;
 
   return (
     <DeskWindowFrame
@@ -1362,9 +1494,14 @@ export function WorkbenchWindow({
           type="button"
           className="desk-chip"
           data-tone={running ? "warn" : undefined}
-          disabled={running || !detail?.recipe_id}
+          disabled={!!runDisabledReason}
           onClick={() => void triggerRun()}
-          title="Run this workbench now"
+          title={runDisabledReason ?? "Run this workbench now"}
+          aria-label={
+            runDisabledReason
+              ? `Run: ${runDisabledReason}`
+              : "Run this workbench now"
+          }
         >
           {runButtonLabel}
         </button>
@@ -1378,14 +1515,19 @@ export function WorkbenchWindow({
     >
       <div
         className={`desk-surface-body wb-body${dropHover ? " wb-drop-hover" : ""}`}
-        onDragOver={(e) => { e.preventDefault(); setDropHover(true); }}
-        onDragEnter={(e) => { e.preventDefault(); setDropHover(true); }}
-        onDragLeave={() => setDropHover(false)}
+        onDragOver={(e) => { e.preventDefault(); armDrop(e); }}
+        onDragEnter={(e) => { e.preventDefault(); armDrop(e); }}
+        onDragLeave={() => { setDropHover(false); setDropIntent(null); }}
         onDrop={handleDrop}
       >
-        {dropHover ? (
+        {dropHover && dropIntent ? (
           <div className="wb-drop-zone">
-            <span className="desk-chip">DROP TARGET · ADD ITEM</span>
+            <span
+              className="desk-chip"
+              data-tone={dropIntent.accepted ? undefined : "warn"}
+            >
+              {dropIntentLabel(dropIntent)}
+            </span>
           </div>
         ) : null}
         {error ? <SurfaceState error={error} onRetry={() => void load()} /> : null}
@@ -1458,6 +1600,7 @@ export function WorkbenchWindow({
                   onReload={load}
                   onRemove={handleRemove}
                   onCopy={(text) => void copy(text)}
+                  write={write}
                 />
               ))}
             </div>
@@ -1660,6 +1803,10 @@ export function WorkbenchWindow({
                   label="GO"
                   glyph=">"
                   disabled={!newTitle.trim()}
+                  // HS-132-07 — a disabled key names why (AC 4).
+                  title={
+                    newTitle.trim() ? "Add this item" : "No instruction typed"
+                  }
                   onClick={() => void addItem()}
                 />
               </div>
@@ -1674,12 +1821,20 @@ export function WorkbenchWindow({
               count={`${runs.length} RUNS`}
             >
               {runs.length === 0 ? (
+                // HS-132-07 — the empty ledger names the state it is in and
+                // offers the step that ends it: bind an agent, or run.
                 <SurfaceState
                   empty
-                  emptyLabel="No runs yet"
+                  emptyLabel={isConfigured ? "No runs yet" : "No agent bound"}
                   emptyGlyph="○"
-                  actionLabel="Run now"
-                  onAction={detail?.recipe_id && !running ? () => void triggerRun() : undefined}
+                  actionLabel={isConfigured ? "Run now" : "Bind an agent"}
+                  onAction={
+                    isConfigured
+                      ? running
+                        ? undefined
+                        : () => void triggerRun()
+                      : () => setConfigOpen(true)
+                  }
                 />
               ) : null}
               {runs.map((run) => {
@@ -1740,10 +1895,10 @@ export function WorkbenchWindow({
                     label="Clear"
                     confirmLabel="Clear all?"
                     onConfirm={async () => {
-                      try {
+                      await write("CLEAR MEMORY", async () => {
                         await clearWorkbenchMemory(workbenchId);
                         loadMemory();
-                      } catch { /* */ }
+                      });
                     }}
                   />
                 ) : null
@@ -1782,10 +1937,10 @@ export function WorkbenchWindow({
                           type="button"
                           className="desk-chip"
                           onClick={async () => {
-                            try {
+                            await write("PROMOTE TO SKILL", async () => {
                               await promoteMemoryToSkill(workbenchId, i);
                               loadSkills();
-                            } catch { /* */ }
+                            });
                           }}
                         >
                           Promote to skill
@@ -1802,6 +1957,8 @@ export function WorkbenchWindow({
 
       <SurfaceFooter
         receipt={
+          // HS-132-06 — a refused write outranks the quieter receipts.
+          writeReceipt ||
           undoReceipt ||
           copyReceipt || (
             <span className="wb-footer-status">

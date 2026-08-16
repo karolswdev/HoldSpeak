@@ -495,7 +495,10 @@ ADMITTED_SEAM_CALLERS: dict[tuple[str, str], str] = {
     ("holdspeak/runtime/dictation_capture.py", "DictationCaptureMixin.transcribe_audio_admitted"): "Transcriber.transcribe under the session's admitted transcription child",
     ("holdspeak/runtime/wake_glue.py", "WakeWordGlueMixin._transcribe_wake_admitted"): "Transcriber.transcribe under the wake session's admitted child",
     ("holdspeak/web/routes/system/voice.py", "build_voice_router.api_transcribe"): "the route refuses without the admitted seam, then calls Transcriber.transcribe",
-    ("holdspeak/web/routes/system/voice.py", "build_voice_router.ws_dictation_stream"): "the stream refuses without the admitted seam, then calls Transcriber.transcribe",
+    # HS-132-12 MOVED this seam, it did not change it: the streaming socket is
+    # now its own concern module (`voice_stream.py`), composed by
+    # `build_voice_router`. Same body, same admitting seam, new documented home.
+    ("holdspeak/web/routes/system/voice_stream.py", "build_voice_stream_router.ws_dictation_stream"): "the stream refuses without the admitted seam, then calls Transcriber.transcribe",
     ("holdspeak/plugins/dictation/builtin/intent_router.py", "IntentRouter.run"): "AdmittedDictationRuntime.classify",
     ("holdspeak/plugins/dictation/builtin/project_rewriter.py", "ProjectRewriter.run"): "AdmittedDictationRuntime.rewrite",
     ("holdspeak/project_doc_suggestions.py", "suggest_project_doc_update"): "AdmittedDictationRuntime.rewrite",
@@ -689,7 +692,12 @@ def test_every_model_execution_site_is_in_exactly_one_bucket() -> None:
     # reached (whose body held the `_chat_completion_text` open). The admitted
     # bookmark path adds NO site: `_admitted_bookmark_label` already existed and
     # its dispatch closure is already allowlisted.
-    assert len(sites) == 100
+    # HS-132-05 took one more site out, again by DELETION: the streaming
+    # dictation socket's PER-CHUNK `transcribe(...)` (a full Whisper pass every
+    # 600 ms, on the hotkey's own lock, producing a "partial" no client
+    # consumed). The socket's final, whole-utterance pass remains, so the
+    # `ws_dictation_stream` seam registration above still names a live site.
+    assert len(sites) == 99
     # THE headline: the blocking ledger is empty. Every model execution in
     # production is now the gateway, a reviewed adapter, or an admitted seam.
     assert counts["finding"] == 0

@@ -67,12 +67,41 @@ def _mic_interval_closed(reason: str, detail: str) -> JSONResponse:
     )
 
 
+"""Seconds the browser mic's floor claim survives without a heartbeat.
+
+HS-132-05: the claim is LEASED, and one dictation can easily outlive one
+lease. The streaming socket renews on every chunk it receives, so the claim
+and the heartbeat read the SAME number here and can never drift apart.
+"""
+BROWSER_FLOOR_LEASE_SECONDS = 30.0
+
+
 def _claim_browser_audio_floor(ctx: WebContext) -> bool:
     """Claim the audio floor for the browser mic, returning True if granted."""
     session = getattr(ctx, "voice_session", None)
     if session is None:
         return True  # no arbiter -- nothing to contend with
-    return session.acquire(_BROWSER_MIC_OWNER, lease_seconds=30.0)
+    return session.acquire(
+        _BROWSER_MIC_OWNER, lease_seconds=BROWSER_FLOOR_LEASE_SECONDS
+    )
+
+
+def _renew_browser_audio_floor(ctx: WebContext) -> bool:
+    """Heartbeat the browser mic's leased claim (HS-132-05).
+
+    ``False`` is the honest signal that the floor is no longer ours — the
+    lease lapsed or another owner holds it — and the caller must stop
+    capturing rather than record into a microphone somebody else owns. The
+    HTTP open-mic leg heartbeats from the client (``web/src/lib/audioFloor.ts``);
+    a streaming socket has a better clock: the chunks themselves.
+    """
+    session = getattr(ctx, "voice_session", None)
+    if session is None:
+        return True  # no arbiter -- nothing to contend with
+    renew = getattr(session, "renew", None)
+    if renew is None:
+        return True
+    return bool(renew(_BROWSER_MIC_OWNER, BROWSER_FLOOR_LEASE_SECONDS))
 
 
 def _release_browser_audio_floor(ctx: WebContext) -> None:

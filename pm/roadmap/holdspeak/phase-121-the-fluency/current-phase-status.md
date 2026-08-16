@@ -1,6 +1,12 @@
 # Phase 121 — The Fluency
 
-**Status:** chartered (0/12).
+**Status:** chartered (0/12). (Record note 2026-08-15, HS-132-13: no
+HS-121 commits exist — the phase never executed as chartered — but several
+chartered deliverables later shipped through other phases (undo/copy
+receipt hooks, LedgerFilter, SurfaceFooter canonized by Phase 129).
+Re-scope against production before execution; the held items (frecency,
+deep links, browser push, first-run philosophy) are harvested in the
+Phase-132 audit.)
 
 **Last updated:** 2026-08-06.
 

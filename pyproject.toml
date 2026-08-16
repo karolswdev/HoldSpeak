@@ -130,6 +130,12 @@ python_files = ["test_*.py"]
 python_functions = ["test_*"]
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
+# HS-132-12: the suite must never wedge. A hanging test dies at 5 minutes
+# with a stack trace naming it instead of stalling the run forever (a
+# 2026-08-15 run sat 75+ minutes at 98% on sleeping workers). Individual
+# tests that legitimately run longer declare @pytest.mark.timeout(...).
+timeout = 300
+timeout_method = "thread"
 markers = [
     "slow: marks tests as slow-running",
     "requires_model: requires ML model to be loaded",

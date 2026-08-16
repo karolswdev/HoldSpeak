@@ -552,7 +552,27 @@
       ]
     },
     {
+      "path": "/api/brief/items/{item_id}/shelf",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.monday_brief",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/brief/latest",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.monday_brief",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/brief/shelf",
       "methods": [
         "GET"
       ],
@@ -639,6 +659,16 @@
     },
     {
       "path": "/api/cadence/loops/{loop_id}/kill",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.cadence",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/cadence/loops/{loop_id}/reply",
       "methods": [
         "POST"
       ],
@@ -2730,6 +2760,17 @@
       ]
     },
     {
+      "path": "/api/meetings/{meeting_id}",
+      "methods": [
+        "PUT"
+      ],
+      "module": "web.routes.meetings.crud",
+      "consumers": [
+        "ios",
+        "web"
+      ]
+    },
+    {
       "path": "/api/meetings/{meeting_id}/aftercare",
       "methods": [
         "GET"
@@ -4315,7 +4356,7 @@
       "methods": [
         "WS"
       ],
-      "module": "web.routes.system.voice",
+      "module": "web.routes.system.voice_stream",
       "consumers": [
         "web"
       ]

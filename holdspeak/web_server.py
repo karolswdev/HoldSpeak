@@ -632,11 +632,48 @@ class MeetingWebServer:
         notify = lambda message_type, data: self.broadcast(message_type, data)
         meeting_intel_service = MeetingIntelService(get_database(), notify=notify, observer=obs)
         meeting_aftercare_service = MeetingAftercareService(get_database(), notify=notify, observer=obs)
+
+        def _update_meeting(*, title: Optional[str], tags: Optional[list[str]]) -> Any:
+            """The title/tags fallback, mirrored from web/routes/meetings/live.py.
+
+            HS-132-12: `live.py::_service` composes an update callback that
+            falls back to `on_set_title`/`on_set_tags` when no
+            `on_update_meeting` is wired — but that branch only runs for a
+            PARTIAL context. Since the eager composition landed here (Phase
+            123, f12731c7) the hub always hands the route a bound service, so
+            the fallback became unreachable and a runtime wired with only
+            title/tags callbacks answered 500 on PATCH /api/meeting. One
+            update path, composed the same way in both places.
+            """
+            if self.on_update_meeting is not None:
+                return self.on_update_meeting(title=title, tags=tags)
+            if title is not None and self.on_set_title is not None:
+                self.on_set_title(title)
+            if tags is not None and self.on_set_tags is not None:
+                self.on_set_tags(tags)
+            return self.get_state() or {}
+
         meeting_service.bind_lifecycle(
             on_start=self.on_start,
-            on_stop=self.on_stop,
+            # HS-132-01: the meeting verb binds the no-fallback stop. The
+            # runtime-fallback `on_stop` sets `runtime_stop_event` when no
+            # meeting is live, so binding it here let a stop press with a stale
+            # orb exit the hub main loop and still answer success. Mirrors the
+            # partial-context composition in web/routes/meetings/live.py.
+            on_stop=self.on_meeting_stop or self.on_stop,
             on_bookmark=self.on_bookmark,
-            on_update=self.on_update_meeting,
+            # Bound only when a runtime actually owns the live meeting's
+            # metadata; otherwise the archive path in
+            # `MeetingService.update_meeting` stays in charge, unchanged.
+            on_update=(
+                _update_meeting
+                if (
+                    self.on_update_meeting is not None
+                    or self.on_set_title is not None
+                    or self.on_set_tags is not None
+                )
+                else None
+            ),
         )
         web_ctx = WebContext(
             get_state=self.get_state,

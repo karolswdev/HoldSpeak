@@ -484,6 +484,15 @@ def test_hub_model_name_reads_the_real_config(monkeypatch) -> None:
     monkeypatch.setattr(Config, "load", classmethod(lambda cls, path=None: cfg(
         intel_enabled=True, intel_provider="cloud", intel_profile_id="p-bar",
     )))
+    # HS-132: the cloud leg is gated on the physical import head and the
+    # key env (a runner without the `meeting` extra has no openai package;
+    # keyless cloud falls back to the local deployment by design, HS-130
+    # posture). Double the import head at the lowest seam — the same move
+    # the receipt-honesty fence makes — and pin the key, so this asserts
+    # the SAME branch on a bare CI runner and a fully-provisioned machine.
+    import holdspeak.intel as _intel_pkg
+    monkeypatch.setattr(_intel_pkg, "OpenAI", object(), raising=False)
+    monkeypatch.setenv("OPENAI_API_KEY", "test-key-for-branch-determinism")
     assert _hub_model_name(None) == "Bar-Cloud"
 
     monkeypatch.setattr(Config, "load", classmethod(lambda cls, path=None: cfg(

@@ -40,6 +40,12 @@ class AskService:
         if getattr(broker, "database", db) is not db:
             from ..kernel.runtime import _configure
             broker = _configure(db)
+        # `hub_model` is RETIRED as a model describer (HS-132-09): it answered the
+        # configured meeting placement, which is a different question from "what
+        # does the destination this Ask resolved to load". It is still accepted so
+        # the transport wiring keeps constructing this service unchanged, and it is
+        # consulted NOWHERE — every model name below comes from the resolved
+        # destination's own deployment identity.
         self._db, self._hub_model, self._broadcast, self._rails_hydrator, self._broker = db, hub_model or (lambda: ""), broadcast, rails_hydrator, broker
         from ..kernel.ask_projection import register
         register(self._broker.projection_stager)
@@ -59,13 +65,23 @@ class AskService:
         # HS-130-06: one row PER DESTINATION, never deduped by model name. Id
         # (not name) is the selector, so two destinations serving one model name
         # both appear and are addressable — Ask can never "first-match" hop.
-        from ..inference_targets import THIS_MACHINE_ID
+        # HS-132-09: the `this_machine` row names the model THIS destination
+        # loads (its deployment identity), never the hub-wide describer. The
+        # describer answers the CONFIGURED meeting placement — a cloud model id
+        # whenever `intel_provider="cloud"` — while `this_machine` execution is
+        # pinned local, so the row advertised a model the destination would
+        # never load, and the no-retarget refusal below quoted it back.
+        from ..inference_targets import THIS_MACHINE_ID, target_from_profile, this_machine_target
         rows: list[dict[str, Any]] = []
-        hub_model = self._hub_model()
+        hub_model = self._destination_model(this_machine_target())
         if hub_model:
             rows.append({"id": THIS_MACHINE_ID, "name": hub_model, "source": "hub", "profile_id": None})
         for profile in self._db.profiles.list():
-            name = str(profile.model or "")
+            # Every row names its destination's deployment identity for the same
+            # reason the hub row does — and an on-device destination that names
+            # only a `model_file` used to be dropped from the picker entirely
+            # while remaining addressable and ready (HS-132-09).
+            name = self._destination_model(target_from_profile(profile, self._db))
             if profile.deleted or not name: continue
             row: dict[str, Any] = {"id": profile.id, "name": name, "source": "profile", "profile_id": profile.id}
             node = str(getattr(profile, "node", "") or "")
@@ -77,6 +93,16 @@ class AskService:
                            last_seen_seconds=None if age is None else int(age))
             rows.append(row)
         return rows
+
+    @staticmethod
+    def _destination_model(target: Any) -> str:
+        """The model a destination advertises: its OWN deployment identity.
+
+        One function so the picker row, the no-retarget refusal, and the
+        payload's `selected_model` can never disagree about one destination.
+        """
+        deployment = getattr(target, "deployment", None)
+        return str((getattr(deployment, "model", "") if deployment is not None else "") or target.model or "")
 
     def resolve_grounding(self, principal: Principal, refs: list[str]) -> dict[str, Any]:
         refs = [str(ref).strip() for ref in refs if str(ref).strip()]
@@ -102,7 +128,11 @@ class AskService:
         target, requested = placement.target, placement.effective_target_id
         ran_profile_id = target.profile_id
         prof = self._db.profiles.get(ran_profile_id) if ran_profile_id else None
-        advertised = ((prof.model or "") if prof is not None else self._hub_model()) or target.model
+        # The model this destination will ACTUALLY load, from the deployment
+        # identity readiness checked and execution loads (HS-130-03/HS-132-09) —
+        # so the refusal below names the true model and `selected_model` cannot
+        # hand the receipt a name no engine on this path will ever report.
+        advertised = self._destination_model(target)
         override = str(model or "").strip() or None
         if override and override != advertised:
             offer = advertised or "no model"

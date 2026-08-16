@@ -1,10 +1,21 @@
 # Orchestration — the Muad'Dib method
 
 How multi-agent phases run in this repository. The orchestrator is
-Muad'Dib; the implementation agents are the Fedaykin (Terras); the spice
+Muad'Dib; the implementation agents are the Fedaykin — every one a
+`claude-opus-4-6[1m]` session ("Opus workers" hereafter); the spice
 is the pipeline. Written after Phase 129 (One Grammar: two bug
-screenshots → four audits → eleven stories → thirteen Terras → merged,
+screenshots → four audits → eleven stories → thirteen workers → merged,
 in one day), which is used throughout as the worked example.
+
+## The model rule (owner ruling, 2026-08-15)
+
+**All research, audit, implementation, test-writing, verification, and
+counsel work delegated to agents runs on `claude-opus-4-6[1m]`. Never
+on the orchestrator's own model. No exceptions.** The orchestrator's
+model decides, briefs, and makes the done call; `claude-opus-4-6[1m]`
+does the delegated work. The repo's `.claude/agents/opus-worker.md`
+definition pins this; any orchestration harness (Workflow, Agent) must
+route through it or an equivalent explicit Opus override.
 
 ## The stance
 
@@ -13,13 +24,13 @@ product code** during phase execution. Its hands touch: roadmap files
 (authored directly, never delegated), memory, verification harnesses,
 and surgical corrections when a defect sits exactly at a seam it has
 already diagnosed (Phase 129's collector `stale`/`incompatible` fix).
-Everything else is a brief handed to a Terra.
+Everything else is a brief handed to an Opus worker.
 
 Three duties the orchestrator can never delegate:
 
-1. **The done call.** A Terra's "done" is a claim; the orchestrator
+1. **The done call.** A worker's "done" is a claim; the orchestrator
    verifies on glass (screenshots against the live product) and by
-   running the FULL suites — Terras run only focused tests.
+   running the FULL suites — workers run only focused tests.
 2. **Scope honesty.** When reality breaks a chartered criterion, the
    orchestrator amends it VISIBLY (story file + phase decision log +
    "owner may overrule at the sitting") — never waives it silently.
@@ -32,8 +43,9 @@ Three duties the orchestrator can never delegate:
 ### 1. Audit before charter
 
 A vague mandate ("make it a proper product") never goes straight to
-stories. Fan out **parallel read-only audit agents, one per plane**,
-each with a tight mission and a required report format:
+stories. Fan out **parallel read-only audit agents, one per plane**
+(all `claude-opus-4-6[1m]`), each with a tight mission and a required
+report format:
 
 - structural census (code-level, exhaustive tables, file:line for
   every claim);
@@ -61,14 +73,14 @@ charter commits through the gate like any other work.
 A concurrency-critical or invariant-carrying foundation — a runner, a
 lifecycle, a state machine other stories will ride — gets a **design
 review before implementation**, not just a charter review. The
-orchestrator (or a Terra) writes a one-page spec: the states, the
+orchestrator (or a worker) writes a one-page spec: the states, the
 transitions, the invariants ("durable-before-observable", "single
 terminal winner", "no dispatch after durable cancellation"), and the
-sanctioned exceptions. Sol rules on the spec. Terras implement against
-the ruled design. HS-131-02 skipped this and paid fourteen counsel
-rounds discovering the design one adversarial probe at a time; the
-same defects against a pre-ruled spec would have been implementation
-bugs caught in one or two rounds.
+sanctioned exceptions. The Opus counsel rules on the spec. Workers
+implement against the ruled design. HS-131-02 skipped this and paid
+fourteen counsel rounds discovering the design one adversarial probe
+at a time; the same defects against a pre-ruled spec would have been
+implementation bugs caught in one or two rounds.
 
 Two escalation valves, both learned the hard way:
 
@@ -76,7 +88,7 @@ Two escalation valves, both learned the hard way:
   When a counsel loop reveals a defect *class* (races, authority,
   ordering) rather than isolated defects, the next brief mandates the
   structural fix and the full test matrix for the class — not the
-  instance Sol happened to probe.
+  instance the counsel happened to probe.
 - **Five rounds → surface the cost to the owner.** Name the remaining
   bar ("survives the nastiest adversarial probe" vs "survives
   realistic failure modes") and let the owner rule where it sits. The
@@ -85,15 +97,15 @@ Two escalation valves, both learned the hard way:
 
 ### 3. Implementation waves
 
-Terras implement in **parallel waves with serialized shipping**:
+Opus workers implement in **parallel waves with serialized shipping**:
 
-- **The brief is the craft.** Each Terra gets: the story file, the
-  settled design (decided at charter — Terras implement, they do not
+- **The brief is the craft.** Each worker gets: the story file, the
+  settled design (decided at charter — workers implement, they do not
   redesign), exact file paths and line anchors, the drift warning
   ("verify anchors — N commits landed since the audit"), the list of
-  files OTHER Terras own right now (do-not-touch), the focused-tests-
+  files OTHER workers own right now (do-not-touch), the focused-tests-
   only rule, and the hold-for-SHIP protocol.
-- **One commit lane.** All Terras share one working tree and branch.
+- **One commit lane.** All workers share one working tree and branch.
   They implement freely in parallel but ship one at a time, on an
   explicit SHIP message from the orchestrator. Staging is by explicit
   path only — `git add -A` is forbidden, always.
@@ -102,7 +114,7 @@ Terras implement in **parallel waves with serialized shipping**:
   another story's file. A single-file overlap that rides into the
   earlier commit is documented in the later commit's body, not
   panicked over.
-- **Honest reporting is rewarded.** A Terra that reports "this item
+- **Honest reporting is rewarded.** A worker that reports "this item
   was already fixed by the keystone — no edit needed", "this move is
   more than placement — backlogging it", or "the walk could not
   exercise X" has done its job better than one that forces a change.
@@ -118,7 +130,7 @@ Terras implement in **parallel waves with serialized shipping**:
 
 After each keystone lands, the orchestrator: rebuilds, walks the real
 product with measured assertions (bounding boxes, scroll ownership,
-console errors), and runs the full suites the Terras were forbidden
+console errors), and runs the full suites the workers were forbidden
 to run. New failures are triaged **against the pre-phase baseline**
 (same tests, pre-phase commit, same environment — a worktree with a
 properly pinned toolchain): reproduce-on-main = inherited debt for
@@ -133,32 +145,35 @@ check chain captured through `dw evidence capture`, and a reusable
 harness checked into `scripts/`. The walk story cannot be closed by
 unit tests alone and cannot be waived.
 
-### 6. The Sol counsel
+### 6. The counsel
 
-Before the close is called, the orchestrator **takes the phase to Sol
-and asks for Sol's opinion — always**. Sol is the sounding board and
+Before the close is called, the orchestrator **takes the phase to the
+Opus counsel — a fresh `claude-opus-4-6[1m]` session — and asks for
+its opinion — always**. The counsel is the sounding board and
 acceptance partner, a different mind with standing in this repo's
-history: the Phase 106 council pass where Sol returned *"do not ratify
-yet"* with file-level evidence — and was right — is the precedent this
-section canonizes.
+history: the Phase 106 council pass where the counsel (Sol, in that
+era) returned *"do not ratify yet"* with file-level evidence — and was
+right — is the precedent this section canonizes.
 
-- **What Sol reviews:** the final summary, the evidence pack, every
-  judgment call the orchestrator made alone (amendments, ledgers,
-  deferred items), and the merge verdict. Sol is briefed with pointers
-  to the actual artifacts, never a summary of a summary.
-- **What Sol is asked:** not "approve this" but *"what did I miss, what
-  would you not ratify, and why — with evidence."* Sol's dissent is a
-  finding, not an obstacle; a Sol concern gets the same treatment as a
-  failing test: reproduce, classify, fix or ledger.
-- **What Sol's verdict is:** counsel, recorded alongside the evidence
-  for the owner's sitting. The orchestrator may proceed over a Sol
-  concern only by naming it and the reason — never by omitting it. The
-  owner sees both opinions, always.
-- Sol is also the mid-phase sounding board for judgment-heavy calls —
-  a chartered criterion about to be amended, a scope question, a
-  deletion that feels too easy. When the orchestrator is about to
+- **What the counsel reviews:** the final summary, the evidence pack,
+  every judgment call the orchestrator made alone (amendments,
+  ledgers, deferred items), and the merge verdict. The counsel is
+  briefed with pointers to the actual artifacts, never a summary of a
+  summary.
+- **What the counsel is asked:** not "approve this" but *"what did I
+  miss, what would you not ratify, and why — with evidence."* The
+  counsel's dissent is a finding, not an obstacle; a counsel concern
+  gets the same treatment as a failing test: reproduce, classify, fix
+  or ledger.
+- **What the counsel's verdict is:** counsel, recorded alongside the
+  evidence for the owner's sitting. The orchestrator may proceed over
+  a counsel concern only by naming it and the reason — never by
+  omitting it. The owner sees both opinions, always.
+- The counsel is also the mid-phase sounding board for judgment-heavy
+  calls — a chartered criterion about to be amended, a scope question,
+  a deletion that feels too easy. When the orchestrator is about to
   decide something alone that the owner will only see later, that is
-  the moment to ask Sol first.
+  the moment to ask the counsel first.
 
 ### 7. The close
 
@@ -177,12 +192,12 @@ loudly, with the diff attached, is the house practice made honest.
   commits ship without the evidence file (the gate pairs evidence
   with FLIPS); the flip commit carries it.
 - **Serialized SHIP.** The orchestrator is the commit-lane semaphore.
-  A Terra holding for SHIP does not stage, capture evidence, flip, or
+  A worker holding for SHIP does not stage, capture evidence, flip, or
   contract.
 - **Background discipline.** Long runs (suites, CI) go under monitors
   with failure-covering filters; the orchestrator keeps working and
   is woken by events, never polls.
-- **Quiet-tree rule.** Full-suite runs count only when no Terra is
+- **Quiet-tree rule.** Full-suite runs count only when no worker is
   editing the tree; a suite that overlapped an implementation round is
   killed and re-run, never interpreted. (HS-131-02 discarded six
   mixed-tree runs; every one would have lied.) Baselines run in a
@@ -205,10 +220,10 @@ loudly, with the diff attached, is the house practice made honest.
 
 Status reports that lead with the outcome; a scoreboard, not a log;
 judgment calls surfaced as decisions with the evidence attached and
-the overrule explicitly offered; Sol's acceptance opinion recorded
-next to the orchestrator's — two minds on every close, disagreements
-included; and a sitting exhibit at the end — the before-pictures they
-sent, next to the afters.
+the overrule explicitly offered; the Opus counsel's acceptance opinion
+recorded next to the orchestrator's — two minds on every close,
+disagreements included; and a sitting exhibit at the end — the
+before-pictures they sent, next to the afters.
 
-*The Terras are the Fedaykin. The spice is the pipeline. It must
+*The Opus workers are the Fedaykin. The spice is the pipeline. It must
 flow — through the gate, every time.*

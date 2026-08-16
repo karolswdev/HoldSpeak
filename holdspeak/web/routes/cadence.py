@@ -9,13 +9,17 @@ from fastapi import APIRouter, Body, HTTPException, Request
 
 from ...db import get_observer
 from ...principals import UNAUTHENTICATED
-from ...services.errors import NotFound, ServiceError
+from ...services.errors import ConflictError, NotFound, ServiceError
 from ..context import WebContext
 
 
 def _raise(exc: ServiceError) -> None:
     if isinstance(exc, NotFound):
         raise HTTPException(status_code=404, detail="loop not found") from exc
+    if isinstance(exc, ConflictError):
+        # The loop is answerable in principle; the world is not ready for it
+        # (no live pane, delivery refused). Distinct from a malformed request.
+        raise HTTPException(status_code=409, detail=exc.detail) from exc
     raise HTTPException(status_code=400, detail=exc.detail) from exc
 
 
@@ -77,6 +81,14 @@ def build_cadence_router(ctx: WebContext) -> APIRouter:
     @router.post("/loops/{loop_id}/close")
     async def close(request: Request, loop_id: str) -> dict[str, Any]:
         return service.set_status(principal(request), loop_id, "closed")
+
+    @router.post("/loops/{loop_id}/reply")
+    async def reply(request: Request, loop_id: str, body: dict = Body(default={})) -> dict[str, Any]:
+        """Answer a waiting agent from the desk. Refuses by name; never guesses text."""
+        try:
+            return await asyncio.to_thread(service.reply, principal(request), loop_id, body)
+        except ServiceError as exc:
+            _raise(exc)
 
     @router.post("/run-now")
     async def run_now(request: Request) -> dict[str, Any]:

@@ -924,11 +924,45 @@ def test_a_cancelled_hold_discards_text_before_preview_and_delivery(
 
     host._transcribe_and_type(np.full(16000, AUDIO_SENTINEL, dtype=np.float32), session=session)
 
-    # The model really ran and its child is honest...
+    # The model really ran, once...
     assert impl.calls == [16000]
     children = _operations(db, name="inference.invoke")
     assert len(children) == 1
-    assert (_receipt(db, children[0]["operation_id"]) or {}).get("outcome") == "succeeded"
+
+    # ...and its child carries the terminal the CANCEL SIGNAL actually earned.
+    #
+    # HS-132-12: this pair is a race the kernel deliberately leaves unordered.
+    # Cancelling the parent hands the in-flight child to a daemon thread
+    # (`kernel/parent_terminal.py` — "do not let a provider's in-flight dispatch
+    # hold the cancelling request hostage") and then closes the parent itself.
+    # Whichever commits first decides the child: the signal reaching the adapter
+    # cancels the dispatch; the parent closing first leaves the signal refused
+    # `parent_operation_not_live` and the child closes on its own success. Both
+    # are honest, so the test pins BOTH sides and the correlation between them
+    # rather than one thread's win — pinning `succeeded` alone made this test
+    # flake under `pytest -n auto`, where the daemon thread often gets there
+    # first. The signal is asynchronous by design, so wait for its terminal
+    # receipt instead of racing it.
+    deadline = time.time() + 10.0
+    signal_receipt: dict[str, Any] = {}
+    while time.time() < deadline:
+        signals = _operations(db, name="inference.cancel")
+        if signals:
+            signal_receipt = _receipt(db, signals[0]["operation_id"]) or {}
+            if signal_receipt.get("outcome"):
+                break
+        time.sleep(0.01)
+    assert signal_receipt.get("outcome"), "the cancel signal never reached a receipt"
+    child_outcome = (_receipt(db, children[0]["operation_id"]) or {}).get("outcome")
+    if signal_receipt["outcome"] == "succeeded":
+        # Admitted: the signal names this child's invocation and cancelled it.
+        assert str(signal_receipt.get("result_ref") or "").startswith("invocation:")
+        assert child_outcome == "cancelled"
+    else:
+        # Refused: the parent closed first, so nothing ever touched the adapter.
+        assert signal_receipt["outcome"] == "parent_operation_not_live"
+        assert child_outcome == "succeeded"
+
     # ...and NOTHING landed: no preview, no typing, no delivery admission.
     assert typed == []
     assert host.dictation_previews == {}

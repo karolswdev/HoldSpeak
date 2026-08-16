@@ -5,6 +5,7 @@ import { DeskStartActions } from "./DeskStartActions";
 import { useDesk } from "../store";
 import { egressBadge } from "../setup";
 import { SYSTEM } from "../systemSprites";
+import { useDeskWriteReceipt } from "../hooks/useWriteReceipt";
 
 // HS-100-10 — the arrival (thesis §2): the two modes as start verbs and
 // ONE trust line. No headline prose, no checklist wall (Article VII).
@@ -17,6 +18,9 @@ export function EmptyDesk({
   const [seeding, setSeeding] = useState(false);
   const setup = useDesk((s) => s.setup);
   const badge = egressBadge(setup);
+  // HS-132-06 — the empty floor's own receipt line: a refused New Note or
+  // Seed names itself here, in flow under the start verbs.
+  const { receipt: writeReceipt } = useDeskWriteReceipt();
   return (
     <div
       className={`desk-empty${arrivalRequired && !continued ? " is-first-value" : ""}`}
@@ -56,6 +60,9 @@ export function EmptyDesk({
         <span aria-hidden="true">▤</span>{" "}
         {seeding ? "Seeding…" : "Seed the desk"}
       </button>
+      {writeReceipt ? (
+        <div className="write-receipt-row">{writeReceipt}</div>
+      ) : null}
       <p className={`desk-empty-trust is-${badge.scope}`} title={badge.title}>
         <span className="desk-empty-trust-dot" aria-hidden="true" />
         {badge.scope === "local"

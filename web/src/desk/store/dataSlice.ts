@@ -4,6 +4,10 @@
  * fileIntoDir, removeFromDir, fileIntoKnowledge, seedDesk, resetDesk,
  * registerRepository, answerCoder, speakToCoder, runCapability. */
 import { apiRequest, newDeliveryId } from "../../lib/api";
+import {
+  clearWriteFailure,
+  reportWriteFailure,
+} from "../hooks/useWriteReceipt";
 import { PRIMITIVES, type PrimitiveKind } from "../../lib/primitives";
 import {
   EMPTY_ITEMS,
@@ -52,6 +56,47 @@ function saveZoneWidths(widths: Record<string, number>) {
   } catch {
     /* storage may be unavailable; arranging just won't persist */
   }
+}
+
+/**
+ * HS-132-06 — one named refusal for a create the hub would not take. It
+ * reaches the desk write channel, which every desk surface renders in flow
+ * (the system bar backstops the floor), so the press is never swallowed.
+ */
+async function reportCreateFailure(
+  kind: string,
+  cause: unknown,
+  retry: () => void,
+  get: () => DeskState,
+) {
+  reportWriteFailure(`CREATE ${kind}`, cause, retry);
+  await get().refresh();
+}
+
+/** HS-132-07 — the ONE table of real update paths.
+ *
+ * Get Info offered Rename for every kind while this map covered seven, so
+ * meeting/chain/workbench renames fell through `if (!url) return;` and did
+ * nothing. The map is the honesty gate now: a kind is listed here only when
+ * a hub route really takes the write, and the Info card asks this table
+ * before it offers the affordance (`renameLock`).
+ */
+export function primitiveUpdateUrl(kind: string, id: string): string | null {
+  const urls = {
+    note: `/api/notes/${encodeURIComponent(id)}`,
+    decision: `/api/decisions/${encodeURIComponent(id)}`,
+    kb: `/api/kbs/${encodeURIComponent(id)}`,
+    recipe: `/api/recipes/${encodeURIComponent(id)}`,
+    directory: `/api/directories/${encodeURIComponent(id)}`,
+    workflow: `/api/workflows/${encodeURIComponent(id)}`,
+    project: `/api/projects/${encodeURIComponent(id)}`,
+    // HS-132-07 — routes that existed on the hub but not in this map.
+    chain: `/api/chains/${encodeURIComponent(id)}`,
+    workbench: `/api/workbenches/${encodeURIComponent(id)}`,
+    // HS-132-07 — the rename route this story added to the hub.
+    meeting: `/api/meetings/${encodeURIComponent(id)}`,
+  } satisfies Partial<Record<PrimitiveKind, string>>;
+  return (urls as Partial<Record<string, string>>)[kind] ?? null;
 }
 
 /** Meetings on the desk when a local recording started (NEW-beat diff). */
@@ -170,16 +215,25 @@ export const createDataSlice: SliceCreator<DataSlice> = (set, get) => ({
     } satisfies Record<string, [string, string, Record<string, unknown>]>;
     const [url, wireKey, body] = posts[kind];
     let createdId: string | null = null;
+    // HS-132-06 — a refused create is named, not swallowed; RETRY re-issues
+    // the exact same create.
+    const retry = () => void get().createPrimitive(kind, overrides);
     try {
       const res = await apiRequest(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...body, ...overrides }),
       });
+      if (!res.ok) {
+        await reportCreateFailure(kind, res, retry, get);
+        return;
+      }
       const data = await res.json().catch(() => ({}));
       createdId = data?.[wireKey]?.id || null;
-    } catch {
-      /* the refresh below reports reachability honestly */
+      clearWriteFailure();
+    } catch (cause) {
+      await reportCreateFailure(kind, cause, retry, get);
+      return;
     }
     if (createdId && kind !== "zone") {
       const positions = {
@@ -213,18 +267,15 @@ export const createDataSlice: SliceCreator<DataSlice> = (set, get) => ({
     }
   },
 
-  async updatePrimitive(kind, id, patch) {
-    const urls = {
-      note: `/api/notes/${encodeURIComponent(id)}`,
-      decision: `/api/decisions/${encodeURIComponent(id)}`,
-      kb: `/api/kbs/${encodeURIComponent(id)}`,
-      recipe: `/api/recipes/${encodeURIComponent(id)}`,
-      directory: `/api/directories/${encodeURIComponent(id)}`,
-      workflow: `/api/workflows/${encodeURIComponent(id)}`,
-      project: `/api/projects/${encodeURIComponent(id)}`,
-    } satisfies Partial<Record<PrimitiveKind, string>>;
-    const url = (urls as Partial<Record<string, string>>)[kind];
-    if (!url) return;
+  async updatePrimitive(kind, id, patch, verb = "SAVE") {
+    const url = primitiveUpdateUrl(kind, id);
+    if (!url) {
+      // HS-132-07 — a kind with no update path is never offered an edit
+      // (see `renameLock` in infoContract). Reaching here anyway is a wiring
+      // fault, and it is named instead of swallowed.
+      reportWriteFailure(verb, `NO UPDATE PATH FOR ${kind.toUpperCase()}`);
+      return;
+    }
     const camel: Record<string, string> = {
       title: "title",
       name: "name",
@@ -273,14 +324,28 @@ export const createDataSlice: SliceCreator<DataSlice> = (set, get) => ({
         ),
       });
     }
+    // HS-132-07 — the optimistic patch above is a PROMISE about the hub. A
+    // refused write names itself in the desk's one receipt channel and the
+    // desk re-reads, so the surface never keeps a name the hub rejected.
+    const refused = async (cause: unknown) => {
+      reportWriteFailure(verb, cause, () =>
+        void get().updatePrimitive(kind, id, patch, verb),
+      );
+      await get().refresh();
+    };
     try {
-      await apiRequest(url, {
+      const res = await apiRequest(url, {
         method: kind === "project" ? "PATCH" : "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(patch),
       });
-    } catch {
-      /* saves are on-change; the next one retries -- the hub dot reports */
+      if (!res.ok) {
+        await refused(res);
+        return;
+      }
+      clearWriteFailure();
+    } catch (cause) {
+      await refused(cause);
     }
   },
 
@@ -545,12 +610,20 @@ export const createDataSlice: SliceCreator<DataSlice> = (set, get) => ({
   },
 
   async seedDesk() {
+    // HS-132-06 — the seed's refusal reaches the desk's write channel, so
+    // the empty floor never swallows the press.
+    const retry = () => void get().seedDesk();
     try {
       const res = await apiRequest("/api/desk/seed", { method: "POST" });
-      if (!res.ok) return false;
-    } catch {
+      if (!res.ok) {
+        reportWriteFailure("SEED DESK", res, retry);
+        return false;
+      }
+    } catch (cause) {
+      reportWriteFailure("SEED DESK", cause, retry);
       return false;
     }
+    clearWriteFailure();
     await get().refresh();
     return true;
   },

@@ -9,6 +9,10 @@ export type DictationFailure =
   | "transcription_failed"
   | "timeout"
   | "no_speech"
+  /* HS-132-05 — the streaming mic's server refusals, kept by NAME. */
+  | "mic_interval_closed"
+  | "provider_failure"
+  | "audio_floor_held"
   | "unknown";
 
 export interface DictationFailureContract {
@@ -78,6 +82,30 @@ export const DICTATION_FAILURES: Record<
     setup: false,
     alternateRunsOn: false,
   },
+  /* HS-132-05 (Sol Amendment 3): the interval closed — inactivity, the
+     ceiling, the child budget, a cancel, or a revocation. The client drops
+     the interval; a fresh click starts a new one. */
+  mic_interval_closed: {
+    message:
+      "The microphone session closed. Your draft remains editable. Click the mic again to continue.",
+    retry: true,
+    setup: false,
+    alternateRunsOn: false,
+  },
+  provider_failure: {
+    message:
+      "The speech provider failed. Your draft remains editable. Retry, or run it somewhere else.",
+    retry: true,
+    setup: false,
+    alternateRunsOn: true,
+  },
+  audio_floor_held: {
+    message:
+      "Another source holds the microphone. Your draft remains editable. Retry once it is free.",
+    retry: true,
+    setup: false,
+    alternateRunsOn: false,
+  },
   unknown: {
     message:
       "Dictation did not finish. Your draft remains editable. Retry the capture.",
@@ -110,6 +138,46 @@ export function applicableActions(
   if (contract.alternateRunsOn) actions.push("alternate_runs_on");
   if (contract.setup) actions.push("setup");
   return actions;
+}
+
+/* HS-132-05 — the streaming socket's refusal, exactly as the server named it.
+   `/ws/dictation/stream` sends `reason`, `failure_category` and (Sol
+   Amendment 3) `mic_interval: "closed"`; before this the client read only
+   `error` and every refusal collapsed to "unknown". */
+export type StreamRefusal = {
+  error?: string;
+  reason?: string;
+  failure_category?: string;
+  mic_interval?: string;
+};
+
+/** The server's failure_category vocabulary (holdspeak/web/routes/system/voice.py). */
+const SERVER_FAILURE_CATEGORIES: Record<string, DictationFailure> = {
+  speech_session_refused: "mic_interval_closed",
+  speech_provider_failure: "provider_failure",
+  audio_floor_held: "audio_floor_held",
+  audio_floor_lost: "audio_floor_held",
+  transcription_unavailable: "missing_model",
+  transcription_failed: "transcription_failed",
+};
+
+/** Map ONE server refusal to its named failure. Never "unknown" when the
+ *  server said what happened. */
+export function streamFailure(refusal: StreamRefusal): DictationFailure {
+  const named = refusal.failure_category
+    ? SERVER_FAILURE_CATEGORIES[refusal.failure_category]
+    : undefined;
+  if (named) return named;
+  // The interval is over whatever else the server said about it.
+  if (refusal.mic_interval === "closed") return "mic_interval_closed";
+  return dictationFailure(new Error(refusal.error ?? ""));
+}
+
+/** The refusal's NAME, for the surface that shows it (never prose). */
+export function refusalCode(refusal: StreamRefusal): string | null {
+  const raw = (refusal.reason || refusal.failure_category || "").trim();
+  if (!raw) return null;
+  return raw.replace(/[_\s]+/g, " ").trim().toUpperCase();
 }
 
 export function dictationFailure(error: unknown): DictationFailure {

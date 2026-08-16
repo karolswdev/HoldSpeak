@@ -19,13 +19,17 @@ import {
   startStreamSession,
   type StreamSession,
   type StreamEvent,
+  type VoiceCommandFired,
 } from "../../lib/micStreamSession";
 import { loadPendingVoice } from "../../lib/pendingVoice";
 import { SYSTEM } from "../systemSprites";
 import {
   DICTATION_FAILURES,
   dictationFailure,
+  refusalCode,
+  streamFailure,
   type DictationFailure,
+  type StreamRefusal,
 } from "../../lib/dictationRecovery";
 import { VoiceProposalStrip } from "../voice/ProposalStrip";
 import type { VoiceGrammar, VoiceProposal } from "../voice/grammar";
@@ -45,7 +49,8 @@ export function MicButton({
   surfaceKind,
   hasSelection = false,
   onProposalConfirm,
-  onPartial,
+  pipeline,
+  onCommand,
 }: {
   onText: (text: string) => void;
   label?: string;
@@ -58,23 +63,37 @@ export function MicButton({
   variant?: "transport";
   onState?: (state: MicState) => void;
   onLevel?: (level: number) => void;
-  onPartial?: (text: string) => void;
+  /* HS-132-04 — a field mic is the user TYPING WITH THEIR VOICE: it
+     transcribes verbatim, with no intent routing, enrichment, rewriting or
+     journal row. Only a dictate-for-delivery surface (the Speak room's
+     TALK transport key) asks for the pipeline, and that is the one pass
+     the utterance gets — the delivery that follows sends `raw: true`. */
+  pipeline?: boolean;
+  /* HS-132-04 — a configured macro keyword CONSUMED the utterance on the
+     server (it fired, once). Nothing is dictated as prose; a surface that
+     shows receipts can name the command that ran. */
+  onCommand?: (fired: VoiceCommandFired) => void;
 }) {
+  const pipelined = pipeline ?? variant === "transport";
   const [state, setState] = useState<MicState>("idle");
   const [failure, setFailure] = useState<DictationFailure | null>(null);
+  /* HS-132-05 — the server's own name for the refusal, shown as WHAT. */
+  const [failureCode, setFailureCode] = useState<string | null>(null);
   const [audioRetained, setAudioRetained] = useState(false);
   const [proposal, setProposal] = useState<VoiceProposal | null>(null);
   const [classifying, setClassifying] = useState(false);
   const [receipt, setReceipt] = useState<{ text: string; scope: string } | null>(null);
   const [level, setLevel] = useState(0);
   const sessionRef = useRef<StreamSession | null>(null);
+  const firedRef = useRef<VoiceCommandFired | null>(null);
+  /* HS-132-05 — the session's OWN refusal. Once the server named a failure,
+     the empty final that follows is a consequence of it, never "no words". */
+  const refusedRef = useRef<StreamRefusal | null>(null);
   const startingRef = useRef(false);
   const onStateRef = useRef(onState);
   onStateRef.current = onState;
   const onLevelRef = useRef(onLevel);
   onLevelRef.current = onLevel;
-  const onPartialRef = useRef(onPartial);
-  onPartialRef.current = onPartial;
 
   const go = useCallback((next: MicState) => {
     setState(next);
@@ -198,47 +217,72 @@ export function MicButton({
     setReceipt(null);
   };
 
+  /* HS-132-05 — the retained capture is real on the streaming path: the
+     session persists what it sent before the final, so a failed utterance
+     has audio behind the Retry the copy promises. */
+  const markRetained = async (session: StreamSession | null) => {
+    if (!draftScope || !session?.retained) return;
+    try {
+      if (await session.retained()) setAudioRetained(true);
+    } catch {
+      /* nothing claims retention it cannot prove */
+    }
+  };
+
+  const fail = (category: DictationFailure, code: string | null) => {
+    setFailure(category);
+    setFailureCode(code);
+    onFailure?.(category);
+    go("failed");
+  };
+
   const startSession = async () => {
     if (startingRef.current) return;
     startingRef.current = true;
     setFailure(null);
+    setFailureCode(null);
     try {
       if (draftScope) {
-        const recovered = await retryPendingTranscription(draftScope);
+        const recovered = await retryPendingTranscription(draftScope, {
+          pipeline: pipelined,
+        });
         if (recovered !== null) {
           setAudioRetained(false);
           if (recovered) {
             await routeTranscript(recovered);
             go("idle");
           } else {
-            setFailure("no_speech");
-            onFailure?.("no_speech");
-            go("failed");
+            fail("no_speech", null);
           }
           return;
         }
       }
 
+      firedRef.current = null;
+      refusedRef.current = null;
       const onEvent = (event: StreamEvent) => {
-        if (event.type === "partial") {
-          onPartialRef.current?.(event.text);
+        if (event.type === "final" && event.fired) {
+          // a macro fired on the server: this utterance is spent as a command.
+          firedRef.current = event.fired;
         } else if (event.type === "error") {
-          const category = dictationFailure(new Error(event.error));
-          setFailure(category);
-          onFailure?.(category);
-          go("failed");
+          // HS-132-05: the refusal arrives NAMED — reason, failure_category,
+          // and the closed-interval marker — and it is shown by that name.
+          refusedRef.current = event;
+          fail(streamFailure(event), refusalCode(event));
+          const session = sessionRef.current;
           sessionRef.current = null;
+          void markRetained(session).then(() => session?.cancel());
         }
       };
 
-      const session = await startStreamSession(onEvent);
+      const session = await startStreamSession(onEvent, {
+        pipeline: pipelined,
+        retainScope: draftScope,
+      });
       sessionRef.current = session;
       go("listening");
     } catch (error) {
-      const category = dictationFailure(error);
-      setFailure(category);
-      onFailure?.(category);
-      go("failed");
+      fail(dictationFailure(error), null);
     } finally {
       startingRef.current = false;
     }
@@ -251,22 +295,36 @@ export function MicButton({
     go("busy");
     try {
       const text = await session.stop();
+      const fired = firedRef.current;
+      firedRef.current = null;
+      if (fired) {
+        // The hotkey path types NOTHING when a command consumes the utterance
+        // (runtime/dictation_capture.py:117-173). Neither does this: no prose,
+        // no delivery, and no "no speech" verdict on a command that ran.
+        onCommand?.(fired);
+        setAudioRetained(false);
+        setFailure(null);
+        setFailureCode(null);
+        go("idle");
+        return;
+      }
       if (text) {
         await routeTranscript(text);
         setAudioRetained(false);
         setFailure(null);
+        setFailureCode(null);
         go("idle");
+      } else if (refusedRef.current) {
+        // HS-132-05: the server already said what went wrong. An errored
+        // session ends on its own failure — never on "No words were detected".
+        await markRetained(session);
       } else {
         setAudioRetained(false);
-        setFailure("no_speech");
-        onFailure?.("no_speech");
-        go("failed");
+        fail("no_speech", null);
       }
     } catch (error) {
-      const category = dictationFailure(error);
-      setFailure(category);
-      onFailure?.(category);
-      go("failed");
+      fail(dictationFailure(error), null);
+      await markRetained(session);
     }
   };
 
@@ -289,7 +347,13 @@ export function MicButton({
             ? `desk-mic gadget-transport-key is-${state}`
             : `desk-mic is-${state}`
         }
-        title={failure ? DICTATION_FAILURES[failure].message : label}
+        title={
+          failure
+            ? failureCode
+              ? `${failureCode} · ${DICTATION_FAILURES[failure].message}`
+              : DICTATION_FAILURES[failure].message
+            : label
+        }
         aria-label={
           audioRetained
             ? "Retry retained audio"
@@ -321,6 +385,10 @@ export function MicButton({
       ) : null}
       {failure && !transport ? (
         <span className="desk-mic-failure" role="status">
+          {failureCode ? (
+            <b className="desk-mic-failure-code">{failureCode}</b>
+          ) : null}
+          {failureCode ? " " : ""}
           {audioRetained ? "Captured audio is retained locally. " : ""}
           {DICTATION_FAILURES[failure].message}
         </span>

@@ -1110,6 +1110,27 @@ button.surface-edit-in-place:hover {
 .live-bookmark-composer .gadget-string input {
   width: auto;
 }
+/* HS-132-03 — meeting intelligence arriving. The stream is the window
+   being written right now (it is replaced, never appended to, once the
+   window lands); the result is the window that landed. */
+.live-intel-stream {
+  margin: 0;
+  padding: var(--space-3);
+  border: 1px solid var(--border-quiet, var(--border));
+  background: var(--surface-sunken, transparent);
+  color: var(--text-muted);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  max-height: 12em;
+  overflow-y: auto;
+}
+.live-intel-result {
+  display: grid;
+  gap: var(--space-2);
+}
+.live-intel-result p {
+  margin: 0;
+}
 .surface-stream-entry > .surface-aerogel,
 .surface-stream-entry > .surface-preview {
   grid-column: 2;

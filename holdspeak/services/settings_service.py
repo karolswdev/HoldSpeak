@@ -49,11 +49,71 @@ def settings_revision(config: Config) -> str:
     return hashlib.sha256(canonical.encode("utf-8")).hexdigest()[:16]
 
 
+# HS-132-10: the read-only provenance block. The settings document is where a
+# person SETS meetings placement, so the document states which dial actually
+# decided and what that decision loaded. It is derived, never persisted: the
+# writer strips it back off on the way in (see `_update`).
+PLACEMENT_KEY = "_placement"
+
+
+def meeting_placement_summary(config: Config) -> dict[str, Any]:
+    """Describe the ONE meetings placement decision for the surface that sets it.
+
+    Reuses the placement authority (``resolve_meeting_placement``) and the
+    deployment describer (``configured_meeting_deployment``) — this shapes their
+    answer for the wire, it never re-decides. ``provider_honored`` is false
+    exactly when an adopted destination decided, which is the state the web
+    Provider dial used to hide (a silent no-op, issue #450 defect 4).
+    """
+    from holdspeak.intel.providers import (
+        PLACEMENT_DESTINATION,
+        configured_meeting_deployment,
+        resolve_meeting_placement,
+    )
+
+    meeting = getattr(config, "meeting", None)
+    try:
+        placement = resolve_meeting_placement(meeting)
+        deployment = configured_meeting_deployment(meeting=meeting)
+    except Exception as exc:  # never let a describer break the settings read
+        return {
+            "placement_source": "",
+            "placement_reason": f"placement unavailable ({exc.__class__.__name__})",
+            "provider_intent": str(getattr(meeting, "intel_provider", "") or ""),
+            "provider_honored": True,
+            "boundary": "",
+            "target_id": "",
+            "target_name": "",
+            "engine": "",
+            "model": "",
+            "node": "",
+            "runnable": False,
+            "runnable_reason": f"placement unavailable ({exc.__class__.__name__})",
+        }
+    return {
+        "placement_source": str(placement.source or ""),
+        "placement_reason": str(placement.reason or ""),
+        "provider_intent": str(getattr(meeting, "intel_provider", "") or ""),
+        "provider_honored": placement.source != PLACEMENT_DESTINATION,
+        "boundary": str(placement.boundary or ""),
+        "target_id": str(placement.profile_id or ""),
+        "target_name": str(placement.profile_name or ""),
+        "engine": str(deployment.engine or ""),
+        "model": str(deployment.model or ""),
+        "node": str(deployment.node or ""),
+        "runnable": bool(deployment.runnable),
+        "runnable_reason": str(deployment.reason or ""),
+    }
+
+
 def redacted_settings(config: Config) -> dict[str, Any]:
     from holdspeak.config import LEGACY_ENDPOINT_FIELDS
 
     payload = deepcopy(config.to_dict())
     payload[REVISION_KEY] = settings_revision(config)
+    # The provenance rides both the read and the write's echo, so a surface that
+    # changes the dial sees the new placement without a reload.
+    payload[PLACEMENT_KEY] = {"meeting": meeting_placement_summary(config)}
     for path, fields in LEGACY_ENDPOINT_FIELDS.items():
         node: Any = payload
         for part in path.split("."):
@@ -548,9 +608,10 @@ class SettingsService:
         # WFS-CFG-004: validate the dictation slice (preserves
         # current values when payload omits them; merged already
         # carries `current.to_dict()["dictation"]` as the base).
-        # Drops the read-only `_runtime_status` enrichment if the
-        # client echoed it back.
+        # Drops the read-only `_runtime_status` / `_placement` enrichment if
+        # the client echoed it back (both are derived, never persisted).
         merged.pop("_runtime_status", None)
+        merged.pop(PLACEMENT_KEY, None)
         dictation_data = merged.get("dictation", {}) or {}
         pipeline_data = dictation_data.get("pipeline", {}) or {}
         runtime_data = dictation_data.get("runtime", {}) or {}

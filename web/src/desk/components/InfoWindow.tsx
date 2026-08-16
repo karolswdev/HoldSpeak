@@ -10,7 +10,7 @@ import { spriteStateCssClass } from "../../lib/spriteStates";
 import { spriteVariantKey } from "../../lib/spriteVariants";
 import { useDesk } from "../store";
 import { objectByRef, type WorldObject } from "../world";
-import { filedZones, kindInfo, kindLabel } from "../infoContract";
+import { filedZones, kindInfo, kindLabel, renameLock } from "../infoContract";
 import { lineage } from "../lineage";
 import { humanTime } from "../surface/format";
 import { FoldGadget, StringGadget } from "../surface/gadgets";
@@ -27,9 +27,19 @@ function IdentityName({ o }: { o: WorldObject }) {
     if (!name || name === o.title) return;
     if (o.kind === "directory") void renameZone(o.id, name);
     else if (o.kind === "note" || o.kind === "meeting")
-      void updatePrimitive(o.kind, o.id, { title: name });
-    else void updatePrimitive(o.kind, o.id, { name });
+      void updatePrimitive(o.kind, o.id, { title: name }, "RENAME");
+    else void updatePrimitive(o.kind, o.id, { name }, "RENAME");
   };
+  // HS-132-07 — Rename appears only where a real path takes it. A kind
+  // without one keeps its name presented and names who owns it, instead of
+  // offering an edit that ends in silence.
+  const lock = renameLock(o.kind);
+  if (lock)
+    return (
+      <span className="info-name-fixed quiet" title={lock} aria-label={`Name: ${lock}`}>
+        {o.title}
+      </span>
+    );
   if (!editing)
     return (
       <button

@@ -257,6 +257,111 @@ def test_no_pending_decisions_leaves_empty_decisions_section(tmp_path):
     assert brief.sections["decisions"] == []
 
 
+# Meeting collectors (HS-132-08) ----------------------------------------------
+
+
+def _meeting(
+    conn,
+    meeting_id: str,
+    *,
+    title: str | None = "Weekly sync",
+    started_at: str = "2026-08-01T10:00:00",
+    ended_at: str | None = "2026-08-01T11:00:00",
+    duration_seconds: float | None = 3600.0,
+    capture_status: str = "finalized",
+) -> None:
+    conn.execute(
+        """INSERT INTO meetings
+           (id, started_at, ended_at, title, duration_seconds, capture_status)
+           VALUES (?, ?, ?, ?, ?, ?)""",
+        (meeting_id, started_at, ended_at, title, duration_seconds, capture_status),
+    )
+
+
+def test_recorded_meeting_appears_under_changed(tmp_path):
+    service = _service(tmp_path)
+    with service._db._connection() as conn:
+        _meeting(conn, "meeting-recorded")
+
+    items = service._collect_meetings(*_breakage_window())
+
+    assert [(item.section, item.text, item.source_ref) for item in items] == [
+        ("changed", "Meeting recorded: Weekly sync", "meeting:meeting-recorded")
+    ]
+    assert items[0].detail == "60 min"
+
+
+def test_meeting_detail_counts_action_items(tmp_path):
+    service = _service(tmp_path)
+    with service._db._connection() as conn:
+        _meeting(conn, "meeting-actions", title="Planning")
+        for ordinal in range(2):
+            conn.execute(
+                """INSERT INTO action_items
+                   (id, meeting_id, task, status, review_state, created_at)
+                   VALUES (?, 'meeting-actions', ?, 'open', 'accepted', datetime('now'))""",
+                (f"action-{ordinal}", f"Task {ordinal}"),
+            )
+
+    items = service._collect_meetings(*_breakage_window())
+
+    assert items[0].detail == "60 min · 2 action items"
+
+
+def test_meeting_outside_the_window_is_excluded(tmp_path):
+    service = _service(tmp_path)
+    with service._db._connection() as conn:
+        _meeting(
+            conn,
+            "meeting-yesterday",
+            started_at="2026-07-31T10:00:00",
+            ended_at="2026-07-31T11:00:00",
+        )
+
+    assert service._collect_meetings(*_breakage_window()) == []
+
+
+def test_meeting_still_capturing_is_not_recorded(tmp_path):
+    service = _service(tmp_path)
+    with service._db._connection() as conn:
+        _meeting(conn, "meeting-live", ended_at=None, capture_status="recording")
+
+    assert service._collect_meetings(*_breakage_window()) == []
+
+
+def test_untitled_meeting_is_named_honestly(tmp_path):
+    service = _service(tmp_path)
+    with service._db._connection() as conn:
+        _meeting(conn, "meeting-untitled", title=None, duration_seconds=None)
+
+    items = service._collect_meetings(*_breakage_window())
+
+    assert items[0].text == "Meeting recorded: Untitled meeting"
+    assert items[0].detail is None
+
+
+def test_a_recorded_week_no_longer_reads_nothing_material_changed(tmp_path):
+    """The audit's defect: only observer method markers reached Changed."""
+    service = _service(tmp_path)
+    with service._db._connection() as conn:
+        _meeting(
+            conn,
+            "meeting-monday",
+            title="Launch review",
+            started_at="2026-08-03T09:00:00",
+            ended_at="2026-08-03T09:45:00",
+            duration_seconds=2700.0,
+        )
+
+    brief = service.generate(None, now=datetime(2026, 8, 3, 17, 30))
+
+    assert brief.is_empty is False
+    assert brief.headline == "1 thing changed."
+    assert [item.source_ref for item in brief.sections["changed"]] == [
+        "meeting:meeting-monday"
+    ]
+
+
 def test_breakage_failed_connector_run_appears(tmp_path):
     service = _service(tmp_path)
     with service._db._connection() as conn:

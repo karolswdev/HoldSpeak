@@ -10,6 +10,7 @@ import type {
   AuthorityPolicyResponse,
 } from "../core-types";
 import { apiFetch, readableError } from "../../../lib/api";
+import { useRuntimeBus } from "../../../runtime/RuntimeBus";
 import { asRows } from "../../pageSupport";
 import type { Receipt, NeedsRow } from "./helpers";
 import type { ReactNode } from "react";
@@ -94,6 +95,31 @@ export function useMeetingData(
         .catch(() => setAuthority({})),
     ]).catch((reason) => setError(readableError(reason)));
   }, [id, meeting]);
+  // HS-132-03 — `actuator_result` was broadcast to nobody. A proposal
+  // decided or executed anywhere else (the ambient card, a device, mission
+  // control) now lands on THIS open meeting without a refetch.
+  const { subscribe } = useRuntimeBus();
+  useEffect(
+    () =>
+      subscribe("actuator_result", (frame) => {
+        const event = frame.data as Record<string, unknown> | undefined;
+        if (!event?.id || String(event.meeting_id ?? "") !== id) return;
+        setProposals((current) => {
+          const rows = Array.isArray(current.proposals)
+            ? (current.proposals as Record<string, unknown>[])
+            : [];
+          if (!rows.some((row) => String(row.id) === String(event.id)))
+            return current;
+          return {
+            ...current,
+            proposals: rows.map((row) =>
+              String(row.id) === String(event.id) ? { ...row, ...event } : row,
+            ),
+          };
+        });
+      }),
+    [subscribe, id],
+  );
   const decide = async (
     proposal: Record<string, unknown>,
     decision: "approved" | "rejected",

@@ -30,13 +30,84 @@ def set_broadcast(fn: Any) -> None:
     _broadcast = fn
 
 
-def _emit(event_type: str, data: dict) -> None:
-    """Emit a workbench event through the hub's broadcast system."""
+def _emit_broadcast(event_type: str, data: dict) -> None:
+    """Emit a workbench event through the hub's broadcast system.
+
+    Never raises: a desk that cannot hear a run is a worse desk, not a
+    broken run.
+    """
     if _broadcast:
         try:
             _broadcast(event_type, data)
         except Exception as exc:
             log.debug(f"Broadcast emit failed: {exc}")
+
+
+# ── the five live workbench frames (HS-132-03) ───────────────────────────
+#
+# WorkbenchWindow and the desk sprite have subscribed to these since
+# HS-116-07; nothing ever sent them. WorkbenchRunner calls the helpers below
+# at the real transitions, so a running workbench updates without a reload.
+# Every payload carries workbench_id — that is how a window decides the
+# frame is about itself.
+
+
+def emit_run_start(*, workbench_id: str, run_id: str, item_count: int) -> None:
+    _emit_broadcast(
+        "workbench.run_start",
+        {"workbench_id": workbench_id, "run_id": run_id,
+         "item_count": int(item_count), "at": _now_iso()},
+    )
+
+
+def emit_item_claimed(
+    *, workbench_id: str, run_id: str, item_id: str, title: str,
+    index: int, total: int,
+) -> None:
+    _emit_broadcast(
+        "workbench.item_claimed",
+        {"workbench_id": workbench_id, "run_id": run_id, "item_id": item_id,
+         "title": title, "index": int(index), "total": int(total),
+         "at": _now_iso()},
+    )
+
+
+def emit_item_done(
+    *, workbench_id: str, run_id: str, item_id: str, title: str,
+    index: int, total: int,
+) -> None:
+    _emit_broadcast(
+        "workbench.item_done",
+        {"workbench_id": workbench_id, "run_id": run_id, "item_id": item_id,
+         "title": title, "index": int(index), "total": int(total),
+         "at": _now_iso()},
+    )
+
+
+def emit_item_failed(
+    *, workbench_id: str, run_id: str, item_id: str, title: str,
+    index: int, total: int, error: str,
+) -> None:
+    _emit_broadcast(
+        "workbench.item_failed",
+        {"workbench_id": workbench_id, "run_id": run_id, "item_id": item_id,
+         "title": title, "index": int(index), "total": int(total),
+         "error": str(error), "at": _now_iso()},
+    )
+
+
+def emit_run_complete(
+    *, workbench_id: str, run_id: str, disposition: str,
+    attempted: int = 0, completed: int = 0, failed: int = 0,
+    pending_count: int = 0,
+) -> None:
+    _emit_broadcast(
+        "workbench.run_complete",
+        {"workbench_id": workbench_id, "run_id": run_id,
+         "disposition": str(disposition), "attempted": int(attempted),
+         "completed": int(completed), "failed": int(failed),
+         "pending_count": int(pending_count), "at": _now_iso()},
+    )
 
 
 def _now_iso() -> str:

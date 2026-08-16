@@ -19,6 +19,15 @@ from .inference_outcomes import map_inference_outcome
 def _new_id(prefix: str) -> str: return f"{prefix}_{uuid.uuid4().hex[:12]}"
 Broadcast = Callable[..., None]
 
+def _deployment_model(target: Any) -> str:
+    """The model the resolved destination will actually load (HS-132-09).
+
+    ONE reading of the deployment identity for run AND chat, so the same agent
+    on the same target can never print two different model names.
+    """
+    deployment = getattr(target, "deployment", None)
+    return str((getattr(deployment, "model", "") if deployment is not None else "") or target.model or "")
+
 @observe_service
 class RecipeService:
     def __init__(self, db: Database, *, observer: PipelineObserver | None = None, broker: Any = None) -> None:
@@ -73,7 +82,12 @@ class RecipeService:
         result=self._broker.projection_stager.finalize(iid)
         if result is None: raise ServiceError("projection_not_published","Recipe result is awaiting receipt reconciliation",context={"invocation_id":iid,"operation_id":outcome.operation_id,"status":409})
         self._broadcast(broadcast,"ready",kind="recipe",ref=recipe_id,name=recipe.name or recipe_id); return result
-    async def chat(self, principal: Principal, recipe_id: str, *, question: str, history: list[Any]|None=None, grounding: Any=None, inference_target_id: str|None=None, egress_context: Any=None, broadcast: Broadcast|None=None, default_model: str="") -> dict[str,Any]:
+    async def chat(self, principal: Principal, recipe_id: str, *, question: str, history: list[Any]|None=None, grounding: Any=None, inference_target_id: str|None=None, egress_context: Any=None, broadcast: Broadcast|None=None) -> dict[str,Any]:
+        # HS-132-09: `default_model` is GONE. The route filled it with the hub's
+        # configured-placement describer, so a chat turn on `this_machine` (pinned
+        # local) printed the hub's cloud model id, and the same agent's `run` —
+        # which never took the argument — printed a different name for one target.
+        # The model now comes from the admitted deployment's own identity.
         from .support import inject_skills
         question=str(question or "").strip()
         if not question: raise ValidationError("question is required")
@@ -99,7 +113,7 @@ class RecipeService:
         convo="\n".join(("User: " if str(x.get("role"))=="you" else f"{name}: ")+str(x.get("text") or "") for x in window)
         if convo: blocks.append("[CONVERSATION SO FAR]\n"+convo)
         blocks.append(f"[USER]\n{question[:6000]}\n\nReply as {name}.")
-        payload={"system_prompt":inject_skills(self._db,(recipe.system_prompt or "").strip() or f"You are {name}, a helpful assistant.",recipe_id),"user_prompt":"\n\n".join(blocks),"history":window,"recipe_id":recipe_id,"recipe_revision":str(recipe.last_modified),"deployment_revision":revision.id,"context_ids":context_ids,"context_titles":context_titles,"grounding":grounding_echo,"selected_model":default_model or target.model}
+        payload={"system_prompt":inject_skills(self._db,(recipe.system_prompt or "").strip() or f"You are {name}, a helpful assistant.",recipe_id),"user_prompt":"\n\n".join(blocks),"history":window,"recipe_id":recipe_id,"recipe_revision":str(recipe.last_modified),"deployment_revision":revision.id,"context_ids":context_ids,"context_titles":context_titles,"grounding":grounding_echo,"selected_model":_deployment_model(target)}
         iid="recipe_chat_"+uuid.uuid4().hex; self._broadcast(broadcast,"running",kind="recipe",ref=recipe_id,name=name)
         try:
             outcome=await asyncio.to_thread(self._invoke,principal,InvocationRequest(revision.id,SavedDefinition(f"recipe:{recipe_id}",str(recipe.last_modified)),time.time()+60,payload,iid),CanonicalPromptAdapter(),publish=self._broker.projection_stager.publisher(iid,"recipe-chat-result",lambda result:self._chat_projection(result,recipe,target,payload)))
@@ -123,7 +137,7 @@ class RecipeService:
         if broadcast: broadcast(state,**frame)
     def _run_projection(self,result: Any,recipe: Any,target: Any,sources: list[dict[str,str]],user: str)->dict[str,Any]:
         d=dict(result) if isinstance(result,dict) else {"output":str(result)}; output=str(d["output"]); aid="artifact_"+uuid.uuid4().hex[:12]
-        return {"recipe_id":recipe.id,"name":f"{recipe.name or recipe.id}: {user}" if user else (recipe.name or recipe.id),"output":output,"provider":str(d.get("provider") or target.engine),"profile_id":target.profile_id,"inference_target":target.to_dict(),"actual_placement":target.placement_receipt(provider=str(d.get("provider") or target.engine),model=str(d.get("model") or target.model)),"sources":sources,"artifact_id":aid,"created_at":datetime.now().isoformat()}
+        return {"recipe_id":recipe.id,"name":f"{recipe.name or recipe.id}: {user}" if user else (recipe.name or recipe.id),"output":output,"provider":str(d.get("provider") or target.engine),"profile_id":target.profile_id,"inference_target":target.to_dict(),"actual_placement":target.placement_receipt(provider=str(d.get("provider") or target.engine),model=str(d.get("model") or _deployment_model(target))),"sources":sources,"artifact_id":aid,"created_at":datetime.now().isoformat()}
     def _chat_projection(self,result: Any,recipe: Any,target: Any,payload: dict[str,Any])->dict[str,Any]:
         d=dict(result) if isinstance(result,dict) else {"output":str(result)}
         out={"recipe_id":recipe.id,"output":str(d["output"]),"provider":str(d.get("provider") or target.engine),"profile_id":target.profile_id,"inference_target":target.to_dict(),"actual_placement":target.placement_receipt(provider=str(d.get("provider") or target.engine),model=str(d.get("model") or payload["selected_model"])),"egress":{"scope":"local"},"model":str(d.get("model") or payload["selected_model"]),"context_ids":payload["context_ids"],"context_titles":payload["context_titles"]}

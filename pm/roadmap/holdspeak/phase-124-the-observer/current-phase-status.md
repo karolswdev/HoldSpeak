@@ -1,6 +1,9 @@
 # Phase 124 — The Observer
 
-**Status:** chartered (0/10).
+**Status:** done (10/10, PR #442, merged 4898465e). (Record corrected
+2026-08-15 by HS-132-13: the header said chartered (0/10) while commit
+416f0828 shipped the whole phase; per-story evidence is reconstructed as
+commit pointers — see the evidence files.)
 
 **Last updated:** 2026-08-06.
 
@@ -83,18 +86,18 @@ Tests and future CLI ──┘        │
 
 ## Story status
 
-| ID | Title | Status | Trace |
-|----|-------|--------|-------|
-| HS-124-01 | PipelineObserver protocol and event schema | backlog | — |
-| HS-124-02 | The `pipeline_events` table | backlog | — |
-| HS-124-03 | The `@observed` decorator | backlog | — |
-| HS-124-04 | SQLiteObserver — the day-one backend | backlog | — |
-| HS-124-05 | Wire observer to all 33 services | backlog | — |
-| HS-124-06 | Event query service | backlog | — |
-| HS-124-07 | MCP resource: pipeline events | backlog | — |
-| HS-124-08 | Desk doctor: observer health check | backlog | — |
-| HS-124-09 | Docs story | backlog | — |
-| HS-124-10 | The walk | backlog | — |
+| ID | Story | Status | Story file | Evidence |
+|----|-------|--------|------------|----------|
+| HS-124-01 | PipelineObserver protocol and event schema | done | [story-01](./story-01-pipeline-observer-protocol.md) | [evidence-story-01](./evidence-story-01.md) |
+| HS-124-02 | The `pipeline_events` table | done | [story-02](./story-02-pipeline-events-table.md) | [evidence-story-02](./evidence-story-02.md) |
+| HS-124-03 | The `@observed` decorator | done | [story-03](./story-03-observed-decorator.md) | [evidence-story-03](./evidence-story-03.md) |
+| HS-124-04 | SQLiteObserver — the day-one backend | done | [story-04](./story-04-sqlite-observer.md) | [evidence-story-04](./evidence-story-04.md) |
+| HS-124-05 | Wire observer to all 33 services | done | [story-05](./story-05-wire-observer-to-services.md) | [evidence-story-05](./evidence-story-05.md) |
+| HS-124-06 | Event query service | done | [story-06](./story-06-event-query-service.md) | [evidence-story-06](./evidence-story-06.md) |
+| HS-124-07 | MCP resource: pipeline events | done | [story-07](./story-07-mcp-resource-pipeline-events.md) | [evidence-story-07](./evidence-story-07.md) |
+| HS-124-08 | Desk doctor: observer health check | done | [story-08](./story-08-desk-doctor-observer.md) | [evidence-story-08](./evidence-story-08.md) |
+| HS-124-09 | Docs story | done | [story-09](./story-09-docs.md) | [evidence-story-09](./evidence-story-09.md) |
+| HS-124-10 | The walk | done | [story-10](./story-10-the-walk.md) | [evidence-story-10](./evidence-story-10.md) |
 
 ## Where we are
 

@@ -105,6 +105,33 @@ def build_crud_router(ctx: WebContext) -> APIRouter:
                 {"error": str(e)}, status_code=500
             )
 
+    @router.put("/api/meetings/{meeting_id}")
+    async def api_rename_meeting(meeting_id: str, request: Request) -> Any:
+        """Rename one archived meeting (HS-132-07).
+
+        Get Info offered Rename for every primitive while meetings had no
+        route to take it, so the edit died in the client. This is that route:
+        it writes the title of the named meeting (never the live session's).
+        """
+        try:
+            body = await request.json()
+        except Exception:
+            return JSONResponse({"error": "expected a JSON object"}, status_code=400)
+        if not isinstance(body, dict) or "title" not in body:
+            return JSONResponse({"error": "expected a title"}, status_code=400)
+        try:
+            meeting = _service(ctx).rename_meeting(
+                _principal(request), meeting_id, body.get("title")
+            )
+            return JSONResponse({"meeting": meeting})
+        except NotFound:
+            return JSONResponse({"error": "Meeting not found"}, status_code=404)
+        except ValidationError as exc:
+            return JSONResponse({"error": str(exc)}, status_code=400)
+        except Exception as e:
+            log.error(f"Failed to rename meeting: {e}")
+            return JSONResponse({"error": str(e)}, status_code=500)
+
     @router.delete("/api/meetings/{meeting_id}")
     async def api_delete_meeting(meeting_id: str, request: Request) -> Any:
         """Delete a meeting (HS-55-02: e.g. a failed import's honest row)."""
