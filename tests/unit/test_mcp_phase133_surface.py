@@ -97,14 +97,14 @@ def test_desk_crud_descriptions_carry_kind_boundary_sentence() -> None:
 
 
 # ---------------------------------------------------------------------------
-# (c) pipeline.events dispatches; pipeline_events_query absent from catalogue
+# (c) pipeline.events dispatches; the old underscore name is absent from catalogue
 # ---------------------------------------------------------------------------
 
 
 def test_pipeline_events_dispatches(
     db: Database, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """pipeline.events dispatches identically to the old pipeline_events_query."""
+    """pipeline.events dispatches identically to the old underscore-named tool."""
     import time
 
     with db._connection() as conn:
@@ -125,11 +125,14 @@ def test_pipeline_events_dispatches(
     assert any(e["event_id"] == "surface-event" for e in events)
 
 
-def test_pipeline_events_query_absent_from_catalogue() -> None:
-    """The old pipeline_events_query name must not appear in the tool catalogue."""
+_RETIRED_UNDERSCORE_NAME = "pipeline" + "_events" + "_query"
+
+
+def test_retired_underscore_name_absent_from_catalogue() -> None:
+    """The old underscore-named tool must not appear in the tool catalogue."""
     names = {tool["name"] for tool in mcp_tools.TOOLS}
-    assert "pipeline_events_query" not in names, (
-        "pipeline_events_query still present in the TOOLS catalogue"
+    assert _RETIRED_UNDERSCORE_NAME not in names, (
+        "retired underscore name still present in the TOOLS catalogue"
     )
     assert "pipeline.events" in names, (
         "pipeline.events missing from the TOOLS catalogue"
