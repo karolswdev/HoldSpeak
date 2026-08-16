@@ -84,6 +84,10 @@ available. Dictation, Meetings, Studio, and Settings are focused workrooms.
 
 ## Extend: build on it
 
+- **[MCP sidecar](./MCP_SIDECAR.md)**: the desk's programmable surface over
+  stdio. 82 tools across eight families, 24 resources, wired automatically
+  in Claude Code via the repo's `.mcp.json`. The reference for families,
+  model-invoking tools, trust model, resources, and deliberate absences.
 - **[The Desk](./WEB_DESK.md)**: work with Meetings, Notes, Knowledge,
   Agents, Sequences, Workflows, Artifacts, and Coder sessions; place durable
   items in Zones and inspect their results and Receipts.

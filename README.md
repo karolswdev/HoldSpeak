@@ -412,6 +412,30 @@ so you can speak the reply back into the coding session. Buy the hardware from t
 [Amazon listing](https://www.amazon.com/dp/B0FQNNVV36); firmware and bridge setup
 are in the [AIPI-Lite Developer Workflow](https://github.com/karolswdev/HoldSpeak/blob/main/docs/AIPI_LITE_DEV_WORKFLOW.md).
 
+## MCP sidecar
+
+The MCP sidecar (`holdspeak-mcp`) is the desk's programmable surface over
+stdio. It exposes 82 tools across eight families (desk, ask, settings,
+coder, cadence, sequence, workflow, memory, plugin_job) and 24 resources,
+so any MCP client can read and drive the desk without the web UI.
+
+Claude Code discovers the sidecar automatically: the repo ships a
+`.mcp.json` that wires it. For other MCP clients, the entry point is one
+command:
+
+```bash
+uv run holdspeak-mcp
+```
+
+Four tools invoke inference through the admitted path; their results carry
+the receipt (model, provider, egress, placement). The sidecar names the
+verbs it deliberately excludes (live-runtime delivery paths it does not
+own) so an MCP client discovers the boundary at tool-listing time.
+
+See [MCP sidecar](https://github.com/karolswdev/HoldSpeak/blob/main/docs/MCP_SIDECAR.md) for the full
+reference: families, model-invoking tools, trust model, resources, and
+deliberate absences.
+
 ## Where to go next
 
 | I want to… | Read this |
@@ -434,6 +458,7 @@ are in the [AIPI-Lite Developer Workflow](https://github.com/karolswdev/HoldSpea
 | Put Coder sessions on the Desk | [Claude/Codex automation hooks](https://github.com/karolswdev/HoldSpeak/blob/main/docs/AGENT_HOOK_INSTALL.md) |
 | Install Claude / Codex automation hooks | [Claude/Codex automation hooks](https://github.com/karolswdev/HoldSpeak/blob/main/docs/AGENT_HOOK_INSTALL.md) |
 | Hold an agent's risky calls for my approval | [The Gate](https://github.com/karolswdev/HoldSpeak/blob/main/docs/USER_GUIDE.md#the-gate-a-steered-agent-asks-first) |
+| Drive the desk from Claude Code or another MCP client | [MCP sidecar](https://github.com/karolswdev/HoldSpeak/blob/main/docs/MCP_SIDECAR.md) |
 | Understand what's stored and what can leave my machine | [Security & Privacy](https://github.com/karolswdev/HoldSpeak/blob/main/docs/SECURITY.md) |
 
 ## Configuration

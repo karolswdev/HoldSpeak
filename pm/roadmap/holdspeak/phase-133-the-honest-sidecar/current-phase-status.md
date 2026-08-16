@@ -1,6 +1,6 @@
 # Phase 133 — The Honest Sidecar
 
-**Status:** in-progress (9/11).
+**Status:** in-progress (10/11).
 
 **Last updated:** 2026-08-16.
 
@@ -123,7 +123,7 @@ against the spec verbatim; deviations are findings, not preferences.
 | HS-133-07 | Plugin jobs over the wire | done | [story-07](./story-07-plugin-jobs.md) | [evidence-story-07](./evidence-story-07.md) |
 | HS-133-08 | The honest handshake | done | [story-08](./story-08-honest-handshake.md) | [evidence-story-08](./evidence-story-08.md) |
 | HS-133-09 | Surface honesty | done | [story-09](./story-09-surface-honesty.md) | [evidence-story-09](./evidence-story-09.md) | resources paginated ([:100]), kind-gap sentences on all five desk.* descriptions, pipeline.events rename complete |
-| HS-133-10 | The sidecar has a manual | backlog | [story-10](./story-10-sidecar-docs.md) | [evidence-story-10](./evidence-story-10.md) |
+| HS-133-10 | The sidecar has a manual | done | [story-10](./story-10-sidecar-docs.md) | [evidence-story-10](./evidence-story-10.md) |
 | HS-133-11 | The walk | backlog | [story-11](./story-11-the-walk.md) | [evidence-story-11](./evidence-story-11.md) |
 
 The ask each story answers, in one line: 01 — thirty tools can land in
@@ -212,3 +212,5 @@ HS-133-02 done: ask.models, ask.resolve_grounding, ask.run, ask.cancel, ask.keep
 HS-133-08 done: auth.py rewritten to spec's corrected form -- DEFAULT_HOLDSPEAK_URL, url field, and HOLDSPEAK_URL env read removed; docstring now states process-boundary-as-trust-boundary honestly; holdspeak-mcp console script added to pyproject.toml; .mcp.json created at repo root (holdspeak-only per counsel Q1); live handshake returns 82 tools; 3 auth tests green.
 
 HS-133-09 done: three honesty debts paid -- list_workbenches/list_recipes/list_profiles resource reads truncated to [:100] at the resource layer, dictation/journal passes limit=100 explicitly; kind-gap sentences appended to all five desk.* CRUD descriptions (long form for list/get, short for create/update/delete); pipeline_events_query renamed to pipeline.events everywhere including test function names; 7 new surface tests green alongside 3 existing test files (14 total).
+
+HS-133-10 done: docs/MCP_SIDECAR.md created with eight families, four model-invoking tools and their receipts, the egress note on settings.update, the trust model, four deliberate absences with reasons, and the full resource list (14 static + 10 templates, first-page-at-100 bound). README.md gains the MCP sidecar section (what it is, .mcp.json auto-discovery, one-line manual wiring) and the Where-to-go-next row. docs/README.md wired under Extend. All 19 doc drift guard tests green (link check, voice rules, roadmap vocabulary).
