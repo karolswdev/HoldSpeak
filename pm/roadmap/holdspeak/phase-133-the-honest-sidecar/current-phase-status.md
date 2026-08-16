@@ -1,6 +1,6 @@
 # Phase 133 — The Honest Sidecar
 
-**Status:** in-progress (8/11).
+**Status:** in-progress (9/11).
 
 **Last updated:** 2026-08-16.
 
@@ -122,7 +122,7 @@ against the spec verbatim; deviations are findings, not preferences.
 | HS-133-06 | Sequences and Workflows run admitted | done | [story-06](./story-06-sequence-workflow-run.md) | [evidence-story-06](./evidence-story-06.md) |
 | HS-133-07 | Plugin jobs over the wire | done | [story-07](./story-07-plugin-jobs.md) | [evidence-story-07](./evidence-story-07.md) |
 | HS-133-08 | The honest handshake | done | [story-08](./story-08-honest-handshake.md) | [evidence-story-08](./evidence-story-08.md) |
-| HS-133-09 | Surface honesty | backlog | [story-09](./story-09-surface-honesty.md) | [evidence-story-09](./evidence-story-09.md) |
+| HS-133-09 | Surface honesty | done | [story-09](./story-09-surface-honesty.md) | [evidence-story-09](./evidence-story-09.md) | resources paginated ([:100]), kind-gap sentences on all five desk.* descriptions, pipeline.events rename complete |
 | HS-133-10 | The sidecar has a manual | backlog | [story-10](./story-10-sidecar-docs.md) | [evidence-story-10](./evidence-story-10.md) |
 | HS-133-11 | The walk | backlog | [story-11](./story-11-the-walk.md) | [evidence-story-11](./evidence-story-11.md) |
 
@@ -145,6 +145,16 @@ serialized SHIP (disjoint family modules). 08 and 09 any time after 01
 (08 is independent; 09 touches `tools.py`/`resources.py`, serialized
 against the keystone). 10 after the families land. 11 last, cannot be
 waived.
+
+## Ledger
+
+- **Flake observation (2026-08-16, wave-A gate):**
+  `tests/unit/test_device_recording_tick.py::test_sender_exception_does_not_kill_thread`
+  failed once on xdist worker gw2 in the full parallel run
+  (1 failed / 5781 passed), then passed 3/3 serial reruns in isolation.
+  Thread-timing sensitivity under load; test untouched by this phase.
+  Recorded, not chased — flagged for the inherited-ledger slice
+  (BACKLOG Candidate Z) if it recurs.
 
 ## Held owner questions
 
@@ -200,3 +210,5 @@ HS-133-06 done: sequence.run, sequence.cancel, workflow.run, workflow.cancel dis
 HS-133-02 done: ask.models, ask.resolve_grounding, ask.run, ask.cancel, ask.keep dispatching to AskService(db, broadcast=None, rails_hydrator=None, observer) with spec-verbatim schemas; ask.run async via _run(); missing question and unknown invocation_id on cancel return isError:true; no circular import from tools.py (uses ValueError not ToolError); REQUIRED_TOOLS extended; 18 tests green.
 
 HS-133-08 done: auth.py rewritten to spec's corrected form -- DEFAULT_HOLDSPEAK_URL, url field, and HOLDSPEAK_URL env read removed; docstring now states process-boundary-as-trust-boundary honestly; holdspeak-mcp console script added to pyproject.toml; .mcp.json created at repo root (holdspeak-only per counsel Q1); live handshake returns 82 tools; 3 auth tests green.
+
+HS-133-09 done: three honesty debts paid -- list_workbenches/list_recipes/list_profiles resource reads truncated to [:100] at the resource layer, dictation/journal passes limit=100 explicitly; kind-gap sentences appended to all five desk.* CRUD descriptions (long form for list/get, short for create/update/delete); pipeline_events_query renamed to pipeline.events everywhere including test function names; 7 new surface tests green alongside 3 existing test files (14 total).

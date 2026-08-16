@@ -33,7 +33,7 @@ class ToolError(ValueError):
 TOOLS: list[dict[str, Any]] = [
     {
         "name": "desk.list",
-        "description": "List HoldSpeak desk primitives of one kind.",
+        "description": "List HoldSpeak desk primitives of one kind. The desk schema advertises 17 primitive kinds; this tool operates on the 6 authorable kinds: notes, decisions, kbs, directories, workflows, and chains. The remaining 11 kinds (meeting, artifact, project, repository, recipe, coder, game, roadmap, story, workbench, layout) are managed through their own dedicated tools or are read-only.",
         "inputSchema": {
             "type": "object",
             "properties": {"kind": {"type": "string", "enum": list(PRIMITIVE_KINDS)}},
@@ -43,7 +43,7 @@ TOOLS: list[dict[str, Any]] = [
     },
     {
         "name": "desk.get",
-        "description": "Get one HoldSpeak desk primitive by kind and id.",
+        "description": "Get one HoldSpeak desk primitive by kind and id. The desk schema advertises 17 primitive kinds; this tool operates on the 6 authorable kinds: notes, decisions, kbs, directories, workflows, and chains. The remaining 11 kinds (meeting, artifact, project, repository, recipe, coder, game, roadmap, story, workbench, layout) are managed through their own dedicated tools or are read-only.",
         "inputSchema": {
             "type": "object",
             "properties": {
@@ -56,7 +56,7 @@ TOOLS: list[dict[str, Any]] = [
     },
     {
         "name": "desk.create",
-        "description": "Create a desk primitive. Pass fields appropriate to its kind in data.",
+        "description": "Create a desk primitive. Pass fields appropriate to its kind in data. Authorable kinds: notes, decisions, kbs, directories, workflows, chains.",
         "inputSchema": {
             "type": "object",
             "properties": {
@@ -69,7 +69,7 @@ TOOLS: list[dict[str, Any]] = [
     },
     {
         "name": "desk.update",
-        "description": "Update a desk primitive. Only supplied fields in data change.",
+        "description": "Update a desk primitive. Only supplied fields in data change. Authorable kinds: notes, decisions, kbs, directories, workflows, chains.",
         "inputSchema": {
             "type": "object",
             "properties": {
@@ -83,7 +83,7 @@ TOOLS: list[dict[str, Any]] = [
     },
     {
         "name": "desk.delete",
-        "description": "Delete one desk primitive by kind and id.",
+        "description": "Delete one desk primitive by kind and id. Authorable kinds: notes, decisions, kbs, directories, workflows, chains.",
         "inputSchema": {
             "type": "object",
             "properties": {
@@ -299,7 +299,7 @@ TOOLS.extend([
         ["decision_id"],
     ),
     _mcp_tool(
-        "pipeline_events_query",
+        "pipeline.events",
         "Query observed pipeline events with optional filters.",
         {
             "service": {"type": "string"},
@@ -564,7 +564,7 @@ def dispatch(name: str, arguments: dict[str, Any] | None, principal: Principal) 
         )
     if name == "decision.supersede":
         return primitives.supersede_decision(principal, str(args.get("decision_id") or ""))
-    if name == "pipeline_events_query":
+    if name == "pipeline.events":
         allowed = ("service", "method", "principal_kind", "since", "until", "correlation_id", "errors_only", "limit")
         filters = {key: args[key] for key in allowed if key in args}
         return events.recent(principal, **filters)

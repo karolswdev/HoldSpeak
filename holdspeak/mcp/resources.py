@@ -322,13 +322,15 @@ def read_resource(uri: str, principal: Principal) -> dict[str, list[dict[str, st
     if uri == "holdspeak://desk/snapshot":
         return _contents(uri, _JSON_MIME, DeskService(get_database()).snapshot(principal))
     if uri == "holdspeak://workbenches":
-        return _contents(uri, _JSON_MIME, WorkbenchService(get_database()).list_workbenches(principal))
+        return _contents(uri, _JSON_MIME, WorkbenchService(get_database()).list_workbenches(principal)[:100])
     if uri == "holdspeak://recipes":
-        return _contents(uri, _JSON_MIME, RecipeService(get_database()).list_recipes(principal))
+        return _contents(uri, _JSON_MIME, RecipeService(get_database()).list_recipes(principal)[:100])
     if uri == "holdspeak://profiles":
-        return _contents(uri, _JSON_MIME, ProfileService(get_database()).list_profiles(principal))
+        result = ProfileService(get_database()).list_profiles(principal)
+        result["profiles"] = result["profiles"][:100]
+        return _contents(uri, _JSON_MIME, result)
     if uri == "holdspeak://dictation/journal":
-        return _contents(uri, _JSON_MIME, DictationService(get_database()).list_journal(principal))
+        return _contents(uri, _JSON_MIME, DictationService(get_database()).list_journal(principal, limit=100))
     if uri == "holdspeak://follow-through/board":
         board = FollowThroughService(get_database()).board(principal)
         return _contents(uri, _JSON_MIME, {
