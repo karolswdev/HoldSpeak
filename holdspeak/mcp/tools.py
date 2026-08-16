@@ -7,6 +7,7 @@ from dataclasses import asdict
 from typing import Any
 
 from holdspeak.db import get_database, get_observer
+from holdspeak.mcp.families import FAMILIES
 from holdspeak.principals import Principal
 from holdspeak.services.decision_record_service import DecisionRecordService
 from holdspeak.services.desk_service import DeskService
@@ -352,6 +353,10 @@ TOOLS.extend([
     ),
 ])
 
+# Aggregate tools from per-family modules.
+for _family in FAMILIES:
+    TOOLS.extend(_family.TOOLS)
+
 # The UI owns local surface state. These IDs deliberately never mutate the
 # database when sent by an external MCP client.
 _UI_ONLY_VERBS = {
@@ -416,6 +421,14 @@ def dispatch(name: str, arguments: dict[str, Any] | None, principal: Principal) 
     args = arguments or {}
     if not isinstance(args, dict):
         raise ToolError("arguments must be an object")
+
+    # Route to per-family modules first; LookupError means "not mine".
+    for family in FAMILIES:
+        try:
+            return family.dispatch(name, args, principal)
+        except LookupError:
+            continue
+
     db = get_database()
     obs = get_observer()
     primitives = PrimitiveService(db, observer=obs)

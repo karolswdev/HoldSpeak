@@ -1,6 +1,6 @@
 # Phase 133 — The Honest Sidecar
 
-**Status:** in-progress (0/11).
+**Status:** in-progress (1/11).
 
 **Last updated:** 2026-08-16.
 
@@ -114,7 +114,7 @@ against the spec verbatim; deviations are findings, not preferences.
 
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
-| HS-133-01 | One registry, many families | backlog | [story-01](./story-01-family-registry.md) | [evidence-story-01](./evidence-story-01.md) |
+| HS-133-01 | One registry, many families | done | [story-01](./story-01-family-registry.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-133-02 | Ask over the wire | backlog | [story-02](./story-02-ask-over-the-wire.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-133-03 | Settings over the wire | backlog | [story-03](./story-03-settings-over-the-wire.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-133-04 | Coder and Memory read out | backlog | [story-04](./story-04-coder-memory-read.md) | [evidence-story-04](./evidence-story-04.md) |
@@ -185,5 +185,4 @@ waived.
 
 ## Where we are
 
-Chartered 2026-08-16 on the ruled surface spec. Implementation not yet
-begun.
+HS-133-01 done: the family registry keystone is in place -- seven skeleton family modules under `holdspeak/mcp/families/`, aggregated by `tools.py`, with synthetic-family registry and dispatch tests green alongside all existing MCP tests.
