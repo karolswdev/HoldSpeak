@@ -17,6 +17,9 @@ REQUIRED_TOOLS = {
     "plugin_job.list", "plugin_job.summary", "plugin_job.retry", "plugin_job.cancel",
     "coder.list", "coder.get", "coder.audit", "memory.search",
     "settings.get", "settings.update",
+    "cadence.status", "cadence.loops", "cadence.get_loop", "cadence.brief",
+    "cadence.closeout", "cadence.history", "cadence.audit", "cadence.snooze",
+    "cadence.set_status", "cadence.run_now", "cadence.apply_closeout",
 }
 
 

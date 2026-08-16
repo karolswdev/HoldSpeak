@@ -9,6 +9,8 @@ from typing import Any
 
 from holdspeak.db import get_database
 from holdspeak.principals import Principal
+from holdspeak.config import Config
+from holdspeak.services.cadence_service import CadenceService
 from holdspeak.services.decision_record_service import DecisionRecordService
 from holdspeak.services.desk_service import DeskService
 from holdspeak.services.dictation_service import DictationService
@@ -198,6 +200,12 @@ _STATIC_RESOURCES = [
         "description": "Aggregate statistics for observed pipeline events.",
         "mimeType": _JSON_MIME,
     },
+    {
+        "uri": "holdspeak://cadence/status",
+        "name": "Cadence engine status",
+        "description": "Cadence engine status: enabled, pressure, loop counts, policy count.",
+        "mimeType": _JSON_MIME,
+    },
 ]
 
 _RESOURCE_TEMPLATES = [
@@ -336,6 +344,8 @@ def read_resource(uri: str, principal: Principal) -> dict[str, list[dict[str, st
         return _contents(uri, _JSON_MIME, EventQueryService(get_database()).recent(principal))
     if uri == "pipeline://events/stats":
         return _contents(uri, _JSON_MIME, EventQueryService(get_database()).stats(principal))
+    if uri == "holdspeak://cadence/status":
+        return _contents(uri, _JSON_MIME, CadenceService(get_database(), Config.load().cadence).status(principal))
 
     if match := _PRIMITIVE_DETAIL_PATTERN.fullmatch(uri):
         kind = _PRIMITIVE_KIND_ALIASES.get(match.group(1))
