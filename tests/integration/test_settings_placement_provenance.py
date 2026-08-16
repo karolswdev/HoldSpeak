@@ -104,6 +104,10 @@ def test_adopted_destination_reports_the_provider_selection_as_ignored(
     client: TestClient, settings_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     monkeypatch.setattr(providers, "_lookup_profile_record", lambda pid: _lan_profile())
+    # HS-132: keyless cloud falls back to local by design (HS-130 posture),
+    # so pin the key env — otherwise this asserts different branches on a
+    # keyless CI runner vs a developer machine exporting a real key.
+    monkeypatch.setenv("OPENAI_API_KEY", "test-key-for-branch-determinism")
     settings = _put(
         client,
         {"meeting": {"intel_provider": "local", "intel_profile_id": "p-43"}},

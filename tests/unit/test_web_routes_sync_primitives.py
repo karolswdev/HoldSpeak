@@ -484,6 +484,11 @@ def test_hub_model_name_reads_the_real_config(monkeypatch) -> None:
     monkeypatch.setattr(Config, "load", classmethod(lambda cls, path=None: cfg(
         intel_enabled=True, intel_provider="cloud", intel_profile_id="p-bar",
     )))
+    # HS-132: the cloud leg is gated on the key env (keyless cloud falls
+    # back to the local deployment by design, HS-130 posture). Pin the key
+    # so this asserts the same branch on a keyless CI runner and on a
+    # developer machine that exports a real key.
+    monkeypatch.setenv("OPENAI_API_KEY", "test-key-for-branch-determinism")
     assert _hub_model_name(None) == "Bar-Cloud"
 
     monkeypatch.setattr(Config, "load", classmethod(lambda cls, path=None: cfg(
