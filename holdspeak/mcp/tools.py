@@ -422,12 +422,12 @@ def dispatch(name: str, arguments: dict[str, Any] | None, principal: Principal) 
     if not isinstance(args, dict):
         raise ToolError("arguments must be an object")
 
-    # Route to per-family modules first; LookupError means "not mine".
+    # Route to the owning family by name membership; errors inside an owned
+    # dispatch (including LookupError subclasses like KeyError) surface to
+    # the caller instead of reading as "not mine".
     for family in FAMILIES:
-        try:
+        if any(tool["name"] == name for tool in family.TOOLS):
             return family.dispatch(name, args, principal)
-        except LookupError:
-            continue
 
     db = get_database()
     obs = get_observer()

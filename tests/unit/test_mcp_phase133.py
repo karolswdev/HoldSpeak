@@ -86,6 +86,39 @@ def test_synthetic_family_tool_dispatches_through_family(monkeypatch: pytest.Mon
     assert payload["pong"] is True
 
 
+def test_owned_dispatch_key_error_surfaces_not_unknown_tool(monkeypatch: pytest.MonkeyPatch) -> None:
+    """A KeyError inside an owned family dispatch surfaces as the real error.
+
+    Ownership is decided by name membership, so a LookupError subclass raised
+    by the service must never read as "not mine" and fall through to the
+    legacy chain's Unknown-tool error.
+    """
+    synth = _make_synthetic_family("synth.boom")
+
+    def _exploding_dispatch(name: str, arguments: dict[str, Any], principal: Any) -> Any:
+        if name == "synth.boom":
+            raise KeyError("boom")
+        raise LookupError(name)
+
+    synth.dispatch = _exploding_dispatch
+    original_families = list(mcp_tools.FAMILIES)
+    monkeypatch.setattr(mcp_tools, "FAMILIES", original_families + [synth])
+    monkeypatch.setattr(server, "resolve_auth", lambda: SimpleNamespace(principal=OWNER))
+
+    response = handle_message({
+        "jsonrpc": "2.0",
+        "id": 4,
+        "method": "tools/call",
+        "params": {"name": "synth.boom", "arguments": {}},
+    })
+    assert response is not None
+    result = response["result"]
+    assert result["isError"] is True
+    message = result["content"][0]["text"]
+    assert "boom" in message
+    assert "Unknown tool" not in message
+
+
 def test_required_tools_still_present_in_catalogue() -> None:
     """The existing REQUIRED_TOOLS set is still fully covered by tools/list."""
     response = handle_message({"jsonrpc": "2.0", "id": 3, "method": "tools/list"})
