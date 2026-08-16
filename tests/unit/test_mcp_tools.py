@@ -20,6 +20,7 @@ REQUIRED_TOOLS = {
     "cadence.status", "cadence.loops", "cadence.get_loop", "cadence.brief",
     "cadence.closeout", "cadence.history", "cadence.audit", "cadence.snooze",
     "cadence.set_status", "cadence.run_now", "cadence.apply_closeout",
+    "sequence.run", "sequence.cancel", "workflow.run", "workflow.cancel",
 }
 
 

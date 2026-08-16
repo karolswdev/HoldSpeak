@@ -1,6 +1,6 @@
 # Phase 133 — The Honest Sidecar
 
-**Status:** in-progress (5/11).
+**Status:** in-progress (6/11).
 
 **Last updated:** 2026-08-16.
 
@@ -119,7 +119,7 @@ against the spec verbatim; deviations are findings, not preferences.
 | HS-133-03 | Settings over the wire | done | [story-03](./story-03-settings-over-the-wire.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-133-04 | Coder and Memory read out | done | [story-04](./story-04-coder-memory-read.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-133-05 | Cadence over the wire | done | [story-05](./story-05-cadence-over-the-wire.md) | [evidence-story-05](./evidence-story-05.md) |
-| HS-133-06 | Sequences and Workflows run admitted | backlog | [story-06](./story-06-sequence-workflow-run.md) | [evidence-story-06](./evidence-story-06.md) |
+| HS-133-06 | Sequences and Workflows run admitted | done | [story-06](./story-06-sequence-workflow-run.md) | [evidence-story-06](./evidence-story-06.md) |
 | HS-133-07 | Plugin jobs over the wire | done | [story-07](./story-07-plugin-jobs.md) | [evidence-story-07](./evidence-story-07.md) |
 | HS-133-08 | The honest handshake | backlog | [story-08](./story-08-honest-handshake.md) | [evidence-story-08](./evidence-story-08.md) |
 | HS-133-09 | Surface honesty | backlog | [story-09](./story-09-surface-honesty.md) | [evidence-story-09](./evidence-story-09.md) |
@@ -194,3 +194,5 @@ HS-133-04 done: coder.list, coder.get, coder.audit, memory.search dispatching to
 HS-133-03 done: settings.get and settings.update dispatching to SettingsService(on_settings_applied=None) with spec-verbatim schemas including the counsel-mandated egress warning; secrets redacted on read and stripped on write; validation errors and stale-revision conflicts surface as isError:true; REQUIRED_TOOLS extended; 8 tests green.
 
 HS-133-05 done: all eleven cadence tools (status, loops, get_loop, brief, closeout, history, audit, snooze, set_status, run_now, apply_closeout) dispatching to CadenceService with spec-verbatim schemas; get_loop async via _run(); set_status rejects outside enum; snooze on unknown loop returns isError:true; holdspeak://cadence/status resource registered and tested through resources/read; REQUIRED_TOOLS extended; 26 tests green.
+
+HS-133-06 done: sequence.run, sequence.cancel, workflow.run, workflow.cancel dispatching to SequenceWorkflowService(db, broker) with broker from _configure(db); runs async via _run(); cancels route through broker.parent_run_controller.cancel_by_operation_id; unknown chain_id/workflow_id/parent_operation_id return isError:true; REQUIRED_TOOLS extended; 12 tests green.
