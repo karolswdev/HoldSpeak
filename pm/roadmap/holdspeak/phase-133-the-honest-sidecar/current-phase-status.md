@@ -1,6 +1,6 @@
 # Phase 133 — The Honest Sidecar
 
-**Status:** in-progress (1/11).
+**Status:** in-progress (2/11).
 
 **Last updated:** 2026-08-16.
 
@@ -120,7 +120,7 @@ against the spec verbatim; deviations are findings, not preferences.
 | HS-133-04 | Coder and Memory read out | backlog | [story-04](./story-04-coder-memory-read.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-133-05 | Cadence over the wire | backlog | [story-05](./story-05-cadence-over-the-wire.md) | [evidence-story-05](./evidence-story-05.md) |
 | HS-133-06 | Sequences and Workflows run admitted | backlog | [story-06](./story-06-sequence-workflow-run.md) | [evidence-story-06](./evidence-story-06.md) |
-| HS-133-07 | Plugin jobs over the wire | backlog | [story-07](./story-07-plugin-jobs.md) | [evidence-story-07](./evidence-story-07.md) |
+| HS-133-07 | Plugin jobs over the wire | done | [story-07](./story-07-plugin-jobs.md) | [evidence-story-07](./evidence-story-07.md) |
 | HS-133-08 | The honest handshake | backlog | [story-08](./story-08-honest-handshake.md) | [evidence-story-08](./evidence-story-08.md) |
 | HS-133-09 | Surface honesty | backlog | [story-09](./story-09-surface-honesty.md) | [evidence-story-09](./evidence-story-09.md) |
 | HS-133-10 | The sidecar has a manual | backlog | [story-10](./story-10-sidecar-docs.md) | [evidence-story-10](./evidence-story-10.md) |
@@ -186,3 +186,5 @@ waived.
 ## Where we are
 
 HS-133-01 done: the family registry keystone is in place -- seven skeleton family modules under `holdspeak/mcp/families/`, aggregated by `tools.py`, with synthetic-family registry and dispatch tests green alongside all existing MCP tests.
+
+HS-133-07 done: plugin_job.list, plugin_job.summary, plugin_job.retry, plugin_job.cancel dispatching to PluginJobService with closed schemas; retry/cancel refuse running jobs as isError:true; REQUIRED_TOOLS extended.

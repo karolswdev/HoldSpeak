@@ -14,6 +14,7 @@ REQUIRED_TOOLS = {
     "workbench.list_runs", "recipe.list", "recipe.get", "recipe.run", "recipe.chat",
     "zone.file", "zone.unfile", "zone.list_members", "kb.add_member",
     "kb.remove_member", "kb.list_members",
+    "plugin_job.list", "plugin_job.summary", "plugin_job.retry", "plugin_job.cancel",
 }
 
 
