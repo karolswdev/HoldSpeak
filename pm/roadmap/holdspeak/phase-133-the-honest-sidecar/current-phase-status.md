@@ -1,6 +1,6 @@
 # Phase 133 — The Honest Sidecar
 
-**Status:** in-progress (6/11).
+**Status:** in-progress (7/11).
 
 **Last updated:** 2026-08-16.
 
@@ -115,7 +115,7 @@ against the spec verbatim; deviations are findings, not preferences.
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
 | HS-133-01 | One registry, many families | done | [story-01](./story-01-family-registry.md) | [evidence-story-01](./evidence-story-01.md) |
-| HS-133-02 | Ask over the wire | backlog | [story-02](./story-02-ask-over-the-wire.md) | [evidence-story-02](./evidence-story-02.md) |
+| HS-133-02 | Ask over the wire | done | [story-02](./story-02-ask-over-the-wire.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-133-03 | Settings over the wire | done | [story-03](./story-03-settings-over-the-wire.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-133-04 | Coder and Memory read out | done | [story-04](./story-04-coder-memory-read.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-133-05 | Cadence over the wire | done | [story-05](./story-05-cadence-over-the-wire.md) | [evidence-story-05](./evidence-story-05.md) |
@@ -196,3 +196,5 @@ HS-133-03 done: settings.get and settings.update dispatching to SettingsService(
 HS-133-05 done: all eleven cadence tools (status, loops, get_loop, brief, closeout, history, audit, snooze, set_status, run_now, apply_closeout) dispatching to CadenceService with spec-verbatim schemas; get_loop async via _run(); set_status rejects outside enum; snooze on unknown loop returns isError:true; holdspeak://cadence/status resource registered and tested through resources/read; REQUIRED_TOOLS extended; 26 tests green.
 
 HS-133-06 done: sequence.run, sequence.cancel, workflow.run, workflow.cancel dispatching to SequenceWorkflowService(db, broker) with broker from _configure(db); runs async via _run(); cancels route through broker.parent_run_controller.cancel_by_operation_id; unknown chain_id/workflow_id/parent_operation_id return isError:true; REQUIRED_TOOLS extended; 12 tests green.
+
+HS-133-02 done: ask.models, ask.resolve_grounding, ask.run, ask.cancel, ask.keep dispatching to AskService(db, broadcast=None, rails_hydrator=None, observer) with spec-verbatim schemas; ask.run async via _run(); missing question and unknown invocation_id on cancel return isError:true; no circular import from tools.py (uses ValueError not ToolError); REQUIRED_TOOLS extended; 18 tests green.
