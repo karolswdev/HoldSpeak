@@ -1,6 +1,6 @@
 # Phase 134 — One Owner
 
-**Status:** in-progress (8/10).
+**Status:** in-progress (9/10).
 
 **Last updated:** 2026-08-16.
 
@@ -94,7 +94,7 @@ docs and walk stories. Anchors live in the audit; stories cite them.
 | HS-134-04 | Every answer names its decider | done | [story-04](./story-04-provenance-everywhere.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-134-05 | Get Info hands off | done | [story-05](./story-05-get-info-handoff.md) | [evidence-story-05](./evidence-story-05.md) |
 | HS-134-06 | Skills belong to the Agent | done | [story-06](./story-06-agent-owns-skills.md) | [evidence-story-06](./evidence-story-06.md) |
-| HS-134-07 | Sync understands inherit | backlog | [story-07](./story-07-sync-null-inherit.md) | [evidence-story-07](./evidence-story-07.md) |
+| HS-134-07 | Sync understands inherit | done | [story-07](./story-07-sync-null-inherit.md) | [evidence-story-07](./evidence-story-07.md) |
 | HS-134-08 | The routing profile stands alone | done | [story-08](./story-08-routing-profile-cleanup.md) | [evidence-story-08](./evidence-story-08.md) |
 | HS-134-09 | The docs speak destination | done | [story-09](./story-09-destination-docs.md) | [evidence-story-09](./evidence-story-09.md) |
 | HS-134-10 | The walk | backlog | [story-10](./story-10-the-walk.md) | [evidence-story-10](./evidence-story-10.md) |
@@ -238,3 +238,14 @@ README MCP sidecar section updated (ten families, destination added to list).
 Two deliberate carve-outs: `intel_profile_id` kept (still a real config field),
 `HOLDSPEAK_PROFILE_<ID>_KEY` kept (still the live env var name in code).
 19 doc drift guard tests green; all relative links resolve.
+HS-134-07 shipped: `_merge_primitive_spec` in sync_service.py fixed a real
+bug where fields absent from the push payload clobbered existing receiving
+values with NULL (the downstream upsert treated missing kwargs identically
+to explicit None via `kwargs.get()` defaults). Now: present-with-null =
+explicit inherit (writes NULL), absent-from-payload = no opinion (preserves
+existing value via `existing.to_dict()` carry-forward). Bounded-delegation
+revocation proven to fire on both null-to-value and value-to-null
+`profile_id` transitions; proven NOT to fire on absent-field pushes (which
+preserve the existing value). No path materializes `this_machine` or any
+other default into the stored placement field during sync. 69 focused tests
+green (11 new + 58 existing guards across 7 test files).
