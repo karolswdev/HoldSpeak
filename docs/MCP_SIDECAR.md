@@ -38,7 +38,7 @@ The 82 tools are organized into families. Each tool follows the
 `domain.verb` naming convention. Tool descriptions are the per-tool
 reference; this page covers the families and the cross-cutting rules.
 
-### desk (52 tools)
+### desk (47 tools)
 
 The original surface. CRUD for desk primitives (meetings, notes, artifacts,
 projects, decision records, zones, workbenches, recipes, agents, sequences,
@@ -63,9 +63,17 @@ answer as a desk artifact (not model-invoking).
 `settings.get` returns the current configuration with secrets redacted
 and a `_revision` field for optimistic concurrency. `settings.update`
 applies a partial patch. Secrets cannot be written through this tool.
-Changing `intel_provider`, `intel_profile_id`, or profile assignments
+Changing `intel_provider`, `intel_profile_id`, or destination assignments
 may change the product's egress boundary; the response's `_placement`
 block shows the effective placement after the write.
+
+### destination (5 tools)
+
+CRUD for inference destinations. `destination.list` returns all
+destinations with current mesh-node liveness. `destination.get`,
+`destination.create`, `destination.update`, and `destination.delete`
+manage individual destinations. Secrets cannot be read or written
+through these tools.
 
 ### coder (3 tools)
 
@@ -123,10 +131,15 @@ Every model-invoking result carries a receipt: `model`, `provider`,
 ran and where, so the caller can verify the egress boundary after the
 fact.
 
+**Placement provenance.** Each model-invoking result also carries
+`placement.effective_target_id` and `placement.source`. The source names
+which precedence tier decided the run's destination: `invocation`,
+`workbench`, `agent`, or `global`.
+
 ## The egress note on settings.update
 
 `settings.update` can change the product's egress boundary by reassigning
-which inference profile a feature uses. The tool description carries this
+which inference destination a feature uses. The tool description carries this
 warning, and the response includes a `_placement` block showing the
 effective placement after the write. This is a constitutional requirement
 (Article III.2: egress disclosed at the point of decision).
@@ -170,11 +183,11 @@ results are bounded to the first 100 items per read.
 | `holdspeak://desk/schema` | Primitive kinds, product nouns, synchronization classes |
 | `holdspeak://desk/verbs` | Registered desk verbs, scopes, key bindings |
 | `holdspeak://desk/constitution` | The project's constitutional context |
-| `holdspeak://desk/inference-targets` | Available inference profiles |
+| `holdspeak://desk/inference-targets` | Available inference destinations |
 | `holdspeak://desk/snapshot` | Current desk state (objects, layout) |
 | `holdspeak://workbenches` | Workbench list and summaries |
 | `holdspeak://recipes` | Agent recipe list |
-| `holdspeak://profiles` | Redacted inference profile list |
+| `holdspeak://destinations` | Redacted inference destination list |
 | `holdspeak://dictation/journal` | Stored dictation entries |
 | `holdspeak://follow-through/board` | Follow-through execution lanes |
 | `holdspeak://briefs/latest` | Latest Monday Brief (or null) |
@@ -190,7 +203,7 @@ results are bounded to the first 100 items per read.
 | `holdspeak://workbenches/{id}` | One workbench with its items and run summary |
 | `holdspeak://workbenches/{id}/runs` | Run history for one workbench |
 | `holdspeak://recipes/{id}` | One agent recipe |
-| `holdspeak://profiles/{id}` | One inference profile (redacted) |
+| `holdspeak://destinations/{id}` | One inference destination (redacted) |
 | `holdspeak://zones/{id}/members` | Members of one desk zone |
 | `holdspeak://meetings/{id}` | One archived meeting |
 | `holdspeak://decision-records/{id}` | One decision record with evidence and revision trail |

@@ -1,6 +1,6 @@
 # Phase 134 — One Owner
 
-**Status:** in-progress (7/10).
+**Status:** in-progress (8/10).
 
 **Last updated:** 2026-08-16.
 
@@ -96,7 +96,7 @@ docs and walk stories. Anchors live in the audit; stories cite them.
 | HS-134-06 | Skills belong to the Agent | done | [story-06](./story-06-agent-owns-skills.md) | [evidence-story-06](./evidence-story-06.md) |
 | HS-134-07 | Sync understands inherit | backlog | [story-07](./story-07-sync-null-inherit.md) | [evidence-story-07](./evidence-story-07.md) |
 | HS-134-08 | The routing profile stands alone | done | [story-08](./story-08-routing-profile-cleanup.md) | [evidence-story-08](./evidence-story-08.md) |
-| HS-134-09 | The docs speak destination | backlog | [story-09](./story-09-destination-docs.md) | [evidence-story-09](./evidence-story-09.md) |
+| HS-134-09 | The docs speak destination | done | [story-09](./story-09-destination-docs.md) | [evidence-story-09](./evidence-story-09.md) |
 | HS-134-10 | The walk | backlog | [story-10](./story-10-the-walk.md) | [evidence-story-10](./evidence-story-10.md) |
 
 The ask each story answers, in one line: 01 — a Workbench override
@@ -229,3 +229,12 @@ activity, routing_glue; intel_queue call sites verified (already used
 tolerant `mir_profile` read-fallback for stale API clients (deliberate
 leniency, not dual vocabulary); UAT decks updated. 356 unit + 96
 integration focused tests green.
+HS-134-09 shipped: docs/MCP_SIDECAR.md speaks destination throughout:
+destination (5 tools) family section added, desk count corrected (52 to 47),
+resource URIs updated (holdspeak://destinations, holdspeak://destinations/{id}),
+stale "profile" vocabulary swept to "destination" in descriptions, placement
+provenance note added (effective_target_id + source with four tiers).
+README MCP sidecar section updated (ten families, destination added to list).
+Two deliberate carve-outs: `intel_profile_id` kept (still a real config field),
+`HOLDSPEAK_PROFILE_<ID>_KEY` kept (still the live env var name in code).
+19 doc drift guard tests green; all relative links resolve.

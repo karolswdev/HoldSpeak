@@ -415,8 +415,8 @@ are in the [AIPI-Lite Developer Workflow](https://github.com/karolswdev/HoldSpea
 ## MCP sidecar
 
 The MCP sidecar (`holdspeak-mcp`) is the desk's programmable surface over
-stdio. It exposes 82 tools across eight families (desk, ask, settings,
-coder, cadence, sequence, workflow, memory, plugin_job) and 24 resources,
+stdio. It exposes 82 tools across ten families (desk, ask, settings,
+destination, coder, cadence, sequence, workflow, memory, plugin_job) and 24 resources,
 so any MCP client can read and drive the desk without the web UI.
 
 Claude Code discovers the sidecar automatically: the repo ships a
