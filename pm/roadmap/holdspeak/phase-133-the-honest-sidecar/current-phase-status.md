@@ -1,6 +1,6 @@
 # Phase 133 — The Honest Sidecar
 
-**Status:** in-progress (10/11).
+**Status:** complete (11/11). Owner sitting pending.
 
 **Last updated:** 2026-08-16.
 
@@ -122,9 +122,9 @@ against the spec verbatim; deviations are findings, not preferences.
 | HS-133-06 | Sequences and Workflows run admitted | done | [story-06](./story-06-sequence-workflow-run.md) | [evidence-story-06](./evidence-story-06.md) |
 | HS-133-07 | Plugin jobs over the wire | done | [story-07](./story-07-plugin-jobs.md) | [evidence-story-07](./evidence-story-07.md) |
 | HS-133-08 | The honest handshake | done | [story-08](./story-08-honest-handshake.md) | [evidence-story-08](./evidence-story-08.md) |
-| HS-133-09 | Surface honesty | done | [story-09](./story-09-surface-honesty.md) | [evidence-story-09](./evidence-story-09.md) | resources paginated ([:100]), kind-gap sentences on all five desk.* descriptions, pipeline.events rename complete |
+| HS-133-09 | Surface honesty | done | [story-09](./story-09-surface-honesty.md) | [evidence-story-09](./evidence-story-09.md) |
 | HS-133-10 | The sidecar has a manual | done | [story-10](./story-10-sidecar-docs.md) | [evidence-story-10](./evidence-story-10.md) |
-| HS-133-11 | The walk | backlog | [story-11](./story-11-the-walk.md) | [evidence-story-11](./evidence-story-11.md) |
+| HS-133-11 | The walk | done | [story-11](./story-11-the-walk.md) | [evidence-story-11](./evidence-story-11.md) |
 
 The ask each story answers, in one line: 01 — thirty tools can land in
 parallel without six workers fighting over one file; 02 — an MCP client
@@ -155,6 +155,20 @@ waived.
   Thread-timing sensitivity under load; test untouched by this phase.
   Recorded, not chased — flagged for the inherited-ledger slice
   (BACKLOG Candidate Z) if it recurs.
+- **Flake observation (2026-08-16, final gate):**
+  `tests/unit/test_mesh_receiver_authority.py::test_an_expiry_on_another_connection_wins_the_settlement`
+  failed once in the final full parallel run (1 failed / 5799 passed),
+  then passed 3/3 serial reruns (102 tests each). A different name than
+  the wave-A flake; both are timing-sensitive tests under xdist load,
+  both untouched by this phase. Same disposition: recorded for
+  Candidate Z.
+- **Live-walk seam fixes (orchestrator, during HS-133-11):** the
+  harness's `.43` profile needed `kind: "private_endpoint"` (omitting
+  kind defaults to on-device, profile_service.py:157), and the live leg
+  boots the sidecar with `--extra meeting` because the hub's
+  OpenAI-compatible provider is an optional extra — without it the
+  destination refuses with a named reason (honest Article VI behavior,
+  observed live before the fix).
 
 ## Held owner questions
 
@@ -169,26 +183,26 @@ waived.
 
 ## Exit criteria (evidence required)
 
-- [ ] `holdspeak/mcp/families/` exists; every new family exports TOOLS +
+- [x] `holdspeak/mcp/families/` exists; every new family exports TOOLS +
   dispatch; `tools.py` aggregates; the catalogue test covers all 82.
-- [ ] All 30 new tools dispatch to the spec's anchored service methods
+- [x] All 30 new tools dispatch to the spec's anchored service methods
   with the spec's schemas; `uv run pytest -q tests/unit/test_mcp_phase133.py
   tests/unit/test_mcp_tools.py` green.
-- [ ] The four model-invoking tools reach `InferenceRunner.invoke()`
+- [x] The four model-invoking tools reach `InferenceRunner.invoke()`
   through the spec's Invariant-1 chains; no new provider-reaching path
   exists outside them.
-- [ ] `holdspeak://cadence/status` reads through `resources/read` with a
+- [x] `holdspeak://cadence/status` reads through `resources/read` with a
   test.
-- [ ] `auth.py` carries the truthful docstring; `HOLDSPEAK_URL`/`url` are
+- [x] `auth.py` carries the truthful docstring; `HOLDSPEAK_URL`/`url` are
   gone; nothing imports them.
-- [ ] `uvx --from . holdspeak-mcp` (or `uv run holdspeak-mcp`) starts the
+- [x] `uvx --from . holdspeak-mcp` (or `uv run holdspeak-mcp`) starts the
   stdio server; `.mcp.json` exists at repo root, holdspeak-only.
-- [ ] Unbounded resources truncate at the ruled limits; `desk.*`
+- [x] Unbounded resources truncate at the ruled limits; `desk.*`
   descriptions name the 6-vs-17 kind boundary; `pipeline.events` replaces
   `pipeline_events_query` everywhere including test function names.
-- [ ] Docs entry points teach the sidecar: what it is, how to wire it,
+- [x] Docs entry points teach the sidecar: what it is, how to wire it,
   the tool families, what the sidecar honestly cannot do.
-- [ ] The walk: committed harness in `scripts/`, fresh-HOME boot, full
+- [x] The walk: committed harness in `scripts/`, fresh-HOME boot, full
   handshake, every family exercised with real JSON-RPC captured, live
   `.43` proof of `ask.run` receipt honesty, all through
   `dw evidence capture`.
@@ -212,5 +226,20 @@ HS-133-02 done: ask.models, ask.resolve_grounding, ask.run, ask.cancel, ask.keep
 HS-133-08 done: auth.py rewritten to spec's corrected form -- DEFAULT_HOLDSPEAK_URL, url field, and HOLDSPEAK_URL env read removed; docstring now states process-boundary-as-trust-boundary honestly; holdspeak-mcp console script added to pyproject.toml; .mcp.json created at repo root (holdspeak-only per counsel Q1); live handshake returns 82 tools; 3 auth tests green.
 
 HS-133-09 done: three honesty debts paid -- list_workbenches/list_recipes/list_profiles resource reads truncated to [:100] at the resource layer, dictation/journal passes limit=100 explicitly; kind-gap sentences appended to all five desk.* CRUD descriptions (long form for list/get, short for create/update/delete); pipeline_events_query renamed to pipeline.events everywhere including test function names; 7 new surface tests green alongside 3 existing test files (14 total).
+
+HS-133-11 done — the phase is COMPLETE (11/11): `scripts/mcp_walk.py`
+boots the real `uv run holdspeak-mcp` subprocess over stdio on a fresh
+HOME and walks the whole surface — 26 assertions green: 82-tool
+catalogue with every schema closed, 14+10 resources including
+`holdspeak://cadence/status` read through `resources/read`, one-plus
+tool per family exercised with safe writes (settings.update round-trip)
+and expected refusals (snooze/cancel/retry on unknowns), full JSON-RPC
+transcripts in the phase assets. The live `.43` leg ran real inference
+against `192.168.1.43:8080` and the receipt named exactly the model the
+endpoint loaded (`Qwen3.6-35B-A3B-UD-Q5_K_XL.gguf`) — control-vs-
+treatment captured. Final full suite: 5799 passed, zero regressions
+(two distinct single-run timing flakes recorded in the Ledger, each
+3/3 green serially). Two orchestrator seam fixes during the walk ride
+the Ledger.
 
 HS-133-10 done: docs/MCP_SIDECAR.md created with eight families, four model-invoking tools and their receipts, the egress note on settings.update, the trust model, four deliberate absences with reasons, and the full resource list (14 static + 10 templates, first-page-at-100 bound). README.md gains the MCP sidecar section (what it is, .mcp.json auto-discovery, one-line manual wiring) and the Where-to-go-next row. docs/README.md wired under Extend. All 19 doc drift guard tests green (link check, voice rules, roadmap vocabulary).
