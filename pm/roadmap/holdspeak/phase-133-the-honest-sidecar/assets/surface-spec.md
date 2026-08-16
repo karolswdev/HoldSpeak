@@ -1070,6 +1070,13 @@ Every new tool gets:
 New tests go in a new file: `tests/unit/test_mcp_phase133.py`, following
 the existing fixture pattern (tmp_path db, monkeypatch service classes).
 
+AMENDED at wave open (orchestrator, 2026-08-16, recorded in the phase
+status): registry tests live in `test_mcp_phase133.py` (landed with
+HS-133-01); each family story's tests live in
+`tests/unit/test_mcp_phase133_<family>.py` so parallel workers never
+share a test file. The REQUIRED_TOOLS extension happens serially at each
+story's SHIP, never during parallel implementation.
+
 Counsel conditions folded into the test law:
 
 4. The `REQUIRED_TOOLS` catalogue set in `tests/unit/test_mcp_tools.py:11-17`
