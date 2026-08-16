@@ -1,6 +1,6 @@
 # Phase 134 — One Owner
 
-**Status:** in-progress (5/10).
+**Status:** in-progress (6/10).
 
 **Last updated:** 2026-08-16.
 
@@ -91,7 +91,7 @@ docs and walk stories. Anchors live in the audit; stories cite them.
 | HS-134-01 | Recipe execution takes the precedence door | done | [story-01](./story-01-recipe-precedence.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-134-02 | One target spec, one API | done | [story-02](./story-02-one-target-spec.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-134-03 | MCP speaks destination | done | [story-03](./story-03-mcp-destination.md) | [evidence-story-03](./evidence-story-03.md) |
-| HS-134-04 | Every answer names its decider | backlog | [story-04](./story-04-provenance-everywhere.md) | [evidence-story-04](./evidence-story-04.md) |
+| HS-134-04 | Every answer names its decider | done | [story-04](./story-04-provenance-everywhere.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-134-05 | Get Info hands off | done | [story-05](./story-05-get-info-handoff.md) | [evidence-story-05](./evidence-story-05.md) |
 | HS-134-06 | Skills belong to the Agent | done | [story-06](./story-06-agent-owns-skills.md) | [evidence-story-06](./evidence-story-06.md) |
 | HS-134-07 | Sync understands inherit | backlog | [story-07](./story-07-sync-null-inherit.md) | [evidence-story-07](./evidence-story-07.md) |
@@ -211,3 +211,11 @@ test and walk harness updated in the same commit. 98 focused tests green;
 walk harness 24/24 (82 tools, 14 static resources, 10 templates). One
 residual grep hit in sync_service.py (profile.schema.json) is internal
 storage, explicitly out of scope.
+HS-134-04 shipped: every placement-resolving execution response carries
+`{"placement": {"effective_target_id": ..., "source": ...}}` from the REAL
+PlacementResolution used for that run. Covered surfaces: Ask, Recipe run,
+Recipe chat, Workbench run, Sequence, Workflow, Cadence get_loop
+(LLM-drafted path only; deterministic omits placement since no model ran).
+MCP tools (ask.run, sequence.run, workflow.run, cadence.get_loop) pass
+service dicts through unchanged -- the block arrives in tool results.
+113 focused tests green (14 new provenance + 99 existing guards).

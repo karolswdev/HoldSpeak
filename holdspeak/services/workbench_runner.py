@@ -28,9 +28,10 @@ class WorkbenchRunner:
 
     def _target(self, wb: Any, recipe: Any):
         from ..inference_targets import resolve_placement
-        target=resolve_placement(self.db,invocation=None,workbench=wb.profile_id,agent=recipe.profile_id).target
+        resolution=resolve_placement(self.db,invocation=None,workbench=wb.profile_id,agent=recipe.profile_id)
+        target=resolution.target
         if not target.ready: raise ServiceError("target_unavailable",target.readiness_reason,context={"status":409})
-        return target,capture_deployment_revision(self.db,target)
+        return target,capture_deployment_revision(self.db,target),resolution.placement_dict()
 
     def _invoke(self, principal: Principal, request: InvocationRequest, context: Any, planned: str, publish: Any):
         from ..kernel.model import KernelRefused
@@ -201,7 +202,7 @@ class WorkbenchRunner:
                     return self._adopt_terminal(run_id, parent)
                 emit_item_claimed(workbench_id=workbench_id,run_id=run_id,item_id=item.id,title=item.title,index=ordinal,total=len(items))
                 parts=[x for x in (context,memory,_hydrate_item_grounding(self.db,item.grounding_json),f"[TASK]\n{item.title}",item.body) if x]
-                prompt="\n\n".join(parts); target,deployment=self._target(wb,recipe)
+                prompt="\n\n".join(parts); target,deployment,placement_block=self._target(wb,recipe)
                 drift = self._scheduled_drift(delegation, recipe, deployment)
                 if drift:
                     from .schedule_delegation import ScheduleDelegationService
@@ -236,7 +237,7 @@ class WorkbenchRunner:
                 complete+=1
                 emit_item_done(workbench_id=workbench_id,run_id=run_id,item_id=item.id,title=item.title,index=ordinal,total=len(items))
                 if not memory_enabled or self.broker.parent_run_controller.expire_if_due(parent.context,principal): continue
-                target,deployment=self._target(wb,recipe)
+                target,deployment,_=self._target(wb,recipe)
                 drift = self._scheduled_drift(delegation, recipe, deployment)
                 if drift:
                     from .schedule_delegation import ScheduleDelegationService
@@ -254,7 +255,7 @@ class WorkbenchRunner:
                 return self._adopt_terminal(run_id,parent)
             self.broker.projection_stager.finalize(parent.native_id)
             links=self._record_terminal(run_id,parent,receipt,attempted=len(items),completed=complete,failed=failed)
-            return {"run_id":run_id,"parent_operation_id":parent.operation_id,"receipt_id":receipt["receipt_id"],"children":links}
+            return {"run_id":run_id,"parent_operation_id":parent.operation_id,"receipt_id":receipt["receipt_id"],"children":links,"placement":placement_block}
         except Exception:
             receipt=self._close_or_adopt(parent,"failed",principal=principal)
             self._record_terminal(run_id,parent,receipt)

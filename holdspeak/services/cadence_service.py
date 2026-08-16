@@ -178,10 +178,12 @@ class CadenceService:
         loop = self._db.cadence.get_loop(loop_id)
         if loop is None: raise NotFound("loop", loop_id)
         result = self._loop_dict(loop, with_next_action=False)
-        action = await self._next_action(principal, loop)
+        action, placement_block = await self._next_action(principal, loop)
         result["next_action"] = {"kind": action.kind, "title": action.title,
                                  "body_markdown": action.body_markdown, "reversible": action.reversible,
                                  "confidence": action.confidence, "generated_by": action.generated_by}
+        if placement_block is not None:
+            result["placement"] = placement_block
         return result
 
     async def _next_action(self, principal: Principal, loop: Any) -> Any:
@@ -192,6 +194,9 @@ class CadenceService:
         failed, or off-contract draft is not an error the caller sees — it is a
         `generated_by="deterministic"` action, and the kernel already holds the
         receipt that says what happened.
+
+        Returns ``(action, placement_dict | None)`` — the placement block is
+        non-None only when an LLM draft was really admitted.
         """
         from ..cadence.next_action import generate_next_action
         if getattr(self._config, "use_llm", False):
@@ -200,8 +205,8 @@ class CadenceService:
             except Exception:
                 drafted = None
             if drafted is not None:
-                return drafted
-        return await asyncio.to_thread(generate_next_action, loop)
+                return drafted  # already (action, placement_block)
+        return await asyncio.to_thread(generate_next_action, loop), None
 
     async def _drafted_next_action(self, principal: Principal, loop: Any) -> Any:
         """ONE admitted Cadence child, or ``None``. Never a manufactured principal.
@@ -218,9 +223,11 @@ class CadenceService:
         from ..kernel.runtime import _service
 
         broker = self._kernel or _service()
-        target = resolve_placement(self._db).target
+        resolution = resolve_placement(self._db)
+        target = resolution.target
         if not target.ready:
             return None
+        placement_block = resolution.placement_dict()
         revision = capture_deployment_revision(self._db, target)
         loop_revision = str(loop.updated_at or loop.created_at or "unversioned")
         parent = broker.parent_run_controller.start(
@@ -229,7 +236,10 @@ class CadenceService:
             input_snapshot={"loop_id": loop.id, "source_type": loop.source_type, "loop_revision": loop_revision},
             deadline_at=time.time() + _DRAFT_DEADLINE_SECONDS, child_budget=1)
         try:
-            return await self._draft_child(broker, parent, principal, loop, revision, loop_revision)
+            action = await self._draft_child(broker, parent, principal, loop, revision, loop_revision)
+            if action is None:
+                return None
+            return action, placement_block
         except asyncio.CancelledError:
             # The REQUEST went away (client disconnect, shutdown, timeout) while the
             # provider still runs in its worker thread — cancelling this coroutine

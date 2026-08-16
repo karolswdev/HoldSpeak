@@ -30,10 +30,11 @@ class SequenceWorkflowService:
     def _target(self, requested: Any, *, capability_default: Any = None):
         from ..inference_targets import resolve_placement
         # Phase-130 precedence is resolved independently at each eligible child.
-        target = resolve_placement(self.db, invocation=str(requested or "") or None, agent=str(capability_default or "") or None).target
+        resolution = resolve_placement(self.db, invocation=str(requested or "") or None, agent=str(capability_default or "") or None)
+        target = resolution.target
         if not target.ready:
             raise ServiceError("target_unavailable", target.readiness_reason, context={"status": 409, "inference_target": target.to_dict()})
-        return target, capture_deployment_revision(self.db, target)
+        return target, capture_deployment_revision(self.db, target), resolution.placement_dict()
 
     def _invoke(self, principal: Principal, request: InvocationRequest, context: Any, planned: str, publish: Any):
         from ..kernel.model import KernelRefused
@@ -125,7 +126,7 @@ class SequenceWorkflowService:
                 if recipe is None: raise ServiceError("recipe_unavailable", f"Agent {recipe_id} is unavailable; the Sequence was not run. Repair the Sequence and run it again.", context={"status":409})
                 prompt = _render_user_prompt(recipe.user_template, body.get("variables") if isinstance(body.get("variables"),dict) else {}, current)
                 if not prompt.strip(): raise ServiceError("empty_input", f"Nothing to run for {recipe.name or recipe.id}; input is retained for Retry.", context={"status":400,"recipe_id":recipe.id})
-                target, deployment = self._target(body.get("inference_target_id") or body.get("requested_placement"), capability_default=recipe.profile_id)
+                target, deployment, placement_block = self._target(body.get("inference_target_id") or body.get("requested_placement"), capability_default=recipe.profile_id)
                 payload={"sequence_ref":chain_id,"sequence_revision":str(chain.last_modified),"step_ordinal":ordinal,"recipe_id":recipe.id,"recipe_revision":str(recipe.last_modified),"system_prompt":recipe.system_prompt,"user_prompt":prompt,"deployment_revision":deployment.id,"temperature":float(body["temperature"]) if body.get("temperature") is not None else None,"max_tokens":int(body["max_tokens"]) if body.get("max_tokens") is not None else None,"attempt_ordinal":1}
                 iid="sequence_child_"+uuid.uuid4().hex
                 projection=lambda result, iid=iid, recipe=recipe, ordinal=ordinal, prompt=prompt, deployment=deployment, epoch=parent.context.epoch: {"parent_operation_id":parent.operation_id,"execution_epoch":epoch,"planned_node":f"step:{ordinal}","step_ordinal":ordinal,"recipe_id":recipe.id,"recipe_revision":str(recipe.last_modified),"output":str(result.get("output") if isinstance(result,dict) else result),"deployment_revision":deployment.id,"rendered_input_sha256":_sha(prompt),"provider":str(result.get("provider") if isinstance(result,dict) else "")}
@@ -139,7 +140,7 @@ class SequenceWorkflowService:
             result=self._finish(parent,principal,"sequence",chain_id,str(chain.last_modified),current,sources,records,target)
             if result.get("terminal_disposition"):
                 return result
-            result.update({"chain_id":chain_id,"output":current,"provider":records[-1]["provider"],"steps":records,"sources":sources,"inference_target":target.to_dict(),"actual_placement":target.placement_receipt(provider=records[-1]["provider"])})
+            result.update({"chain_id":chain_id,"output":current,"provider":records[-1]["provider"],"steps":records,"sources":sources,"inference_target":target.to_dict(),"actual_placement":target.placement_receipt(provider=records[-1]["provider"]),"placement":placement_block})
             return result
         except Exception as exc: self._fail(parent,principal,exc); raise
 
@@ -176,7 +177,7 @@ class SequenceWorkflowService:
                     continue
                 prompt=_render_user_prompt(str(workflow.prompt),body.get("variables") if isinstance(body.get("variables"),dict) else {},current) if node.kind=="prompt" else build_node_prompt(node,current)
                 if not prompt.strip(): continue
-                target,deployment=self._target(body.get("inference_target_id") or body.get("requested_placement"))
+                target,deployment,placement_block=self._target(body.get("inference_target_id") or body.get("requested_placement"))
                 revision = _node_revision(node)
                 payload={"workflow_ref":workflow_id,"workflow_revision":str(workflow.last_modified),"node_id":node.id,"node_revision":revision,"rendered_input":current,"system_prompt":"","user_prompt":prompt,"deployment_revision":deployment.id,"temperature":float(body["temperature"]) if body.get("temperature") is not None else None,"max_tokens":int(body["max_tokens"]) if body.get("max_tokens") is not None else None,"attempt_ordinal":1}
                 iid="workflow_child_"+uuid.uuid4().hex; contract="holdspeak.workflow-prompt@1" if node.kind=="prompt" else "holdspeak.workflow-node@1"
@@ -204,6 +205,6 @@ class SequenceWorkflowService:
             result=self._finish(parent,principal,"workflow",workflow_id,str(workflow.last_modified),current,sources,records,target)
             if result.get("terminal_disposition"):
                 return result
-            result.update({"workflow_id":workflow_id,"output":current,"provider":next((x["provider"] for x in reversed(records) if x["provider"]),None),"steps":records,"sources":sources,"inference_target":target.to_dict() if target else None,"actual_placement":target.placement_receipt(provider=next((x["provider"] for x in reversed(records) if x["provider"]),None)) if target else None})
+            result.update({"workflow_id":workflow_id,"output":current,"provider":next((x["provider"] for x in reversed(records) if x["provider"]),None),"steps":records,"sources":sources,"inference_target":target.to_dict() if target else None,"actual_placement":target.placement_receipt(provider=next((x["provider"] for x in reversed(records) if x["provider"]),None)) if target else None,"placement":placement_block})
             return result
         except Exception as exc: self._fail(parent,principal,exc); raise
