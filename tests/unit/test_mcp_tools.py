@@ -16,6 +16,7 @@ REQUIRED_TOOLS = {
     "kb.remove_member", "kb.list_members",
     "plugin_job.list", "plugin_job.summary", "plugin_job.retry", "plugin_job.cancel",
     "coder.list", "coder.get", "coder.audit", "memory.search",
+    "settings.get", "settings.update",
 }
 
 
