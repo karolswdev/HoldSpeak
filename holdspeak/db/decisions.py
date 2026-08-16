@@ -494,7 +494,7 @@ class DecisionRepository(BaseRepository):
         if decision.lifecycle == "superseded":
             successor = decision.superseded_by or "unknown"
             raise DecisionPromotionRefused(
-                clean_id, f"superseded by {successor} — promote that one"
+                clean_id, f"superseded by {successor}; promote that one"
             )
         if decision.lifecycle != "accepted":
             raise DecisionPromotionRefused(

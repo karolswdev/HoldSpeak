@@ -29,6 +29,10 @@ def _error(exc: ServiceError) -> JSONResponse:
         else: payload={"error":exc.code}
         return JSONResponse(payload,status_code=404)
     payload.setdefault("error",exc.code if exc.code != "validation_error" else exc.detail)
+    # HS-132-12: a refusal names WHAT — carry the service detail (e.g. which
+    # successor to promote) instead of answering with the bare code.
+    if exc.detail and exc.detail != payload.get("error"):
+        payload.setdefault("detail", exc.detail)
     return JSONResponse(payload,status_code=int(payload.pop("status",400 if exc.code == "validation_error" else 409)))
 
 def build_decisions_router(ctx: Any) -> APIRouter:

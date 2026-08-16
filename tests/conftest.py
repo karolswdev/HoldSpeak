@@ -313,7 +313,22 @@ def pytest_addoption(parser):
 
 
 def pytest_configure(config):
-    """Register custom markers."""
+    """Register custom markers; isolate HOME per xdist worker."""
+    # HS-132-12: under pytest-xdist every worker inherited ONE $HOME, so any
+    # two tests touching the default Path.home() state (the holdspeak DB,
+    # npm/npx locks, model dirs) could collide across workers — the whole
+    # genus of "green solo, red parallel" flakes (UNIQUE constraint,
+    # RecipeVerifyError, npx lock corruption). Each worker gets its own
+    # subdirectory of the run's HOME instead. Serial runs are unchanged, and
+    # absolute-path passthroughs (PLAYWRIGHT_BROWSERS_PATH, npm_config_cache)
+    # are unaffected.
+    import os
+
+    worker = os.environ.get("PYTEST_XDIST_WORKER")
+    if worker:
+        per_worker = Path(os.environ["HOME"]) / f"xdist-{worker}"
+        per_worker.mkdir(parents=True, exist_ok=True)
+        os.environ["HOME"] = str(per_worker)
     config.addinivalue_line("markers", "slow: marks tests as slow-running")
     config.addinivalue_line(
         "markers", "requires_model: requires ML model to be loaded"

@@ -53,7 +53,12 @@ export function HistoryCore({ hero, scope }: CoreProps) {
   >(null);
   const [requestedMeetingError, setRequestedMeetingError] = useState("");
   const [queueStatus, setQueueStatus] = useState("pending");
+  // HS-132-12: archive search rides the backend contract (transcript-aware,
+  // beyond the newest page). The ledger query mirrors into the fetch after a
+  // pause; while a server search is active the client title filter yields.
+  const [query, setBackendQuery] = useState("");
   const meetingParams = new URLSearchParams({ limit: "100" });
+  if (query) meetingParams.set("search", query);
   if (dateFrom) meetingParams.set("date_from", dateFrom);
   if (dateTo) meetingParams.set("date_to", dateTo);
   if (speaker) meetingParams.set("speaker", speaker);
@@ -77,7 +82,7 @@ export function HistoryCore({ hero, scope }: CoreProps) {
     [meetings.data],
   );
   const {
-    query,
+    query: liveQuery,
     setQuery,
     tokens,
     removeToken,
@@ -88,8 +93,14 @@ export function HistoryCore({ hero, scope }: CoreProps) {
   } = useLedgerFilter(meetingRows, {
     key: "meetings",
     match: (meeting, search) =>
-      String(meeting.title ?? "").toLowerCase().includes(search.toLowerCase()),
+      query.length > 0
+        ? true
+        : String(meeting.title ?? "").toLowerCase().includes(search.toLowerCase()),
   });
+  useEffect(() => {
+    const settle = setTimeout(() => setBackendQuery(liveQuery.trim()), 350);
+    return () => clearTimeout(settle);
+  }, [liveQuery]);
   const requestedMeeting = useMemo(
     () =>
       requestedMeetingId
@@ -198,7 +209,7 @@ export function HistoryCore({ hero, scope }: CoreProps) {
       facets={facets}
       selected={selected}
       setSelected={setSelected}
-      query={query}
+      query={liveQuery}
       setQuery={setQuery}
       filterTokens={tokens}
       removeFilterToken={removeToken}

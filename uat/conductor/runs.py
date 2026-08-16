@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import datetime as _dt
 import secrets
+import os
 import socket
 import threading
 from dataclasses import dataclass, field, asdict
@@ -210,7 +211,15 @@ class RunManager:
             link_caches = run.boot_link_caches
         run.boot_link_caches = link_caches
         run.product_host = "0.0.0.0" if lan else "127.0.0.1"
-        run.product_port = _find_free_port(port or self.base_product_port)
+        # HS-132-12: under pytest-xdist several workers boot products
+        # concurrently; probing the same preferred port is a TOCTOU (both
+        # see 8788 free, both boot, requests interleave — RecipeVerifyError
+        # flakes, green solo / red parallel). Each worker scans its own
+        # disjoint range instead. Outside pytest the convention is
+        # unchanged (8788+).
+        worker = os.environ.get("PYTEST_XDIST_WORKER", "")
+        offset = int(worker[2:]) * 20 if worker[2:].isdigit() else 0
+        run.product_port = _find_free_port(port or (self.base_product_port + offset))
 
         home_dir = paths.run_home(run.id)
         home_mod.assemble_home(home_dir, link_caches=link_caches)

@@ -83,7 +83,12 @@ def _set_control_mode(settings_path, mode):
 
 
 @pytest.fixture
-def server():
+def server(db):
+    # HS-132-12: the hub composes its services against `get_database()` at app
+    # construction, so the temp-database swap must land BEFORE the server is
+    # built. Without this the routes write the real user database while the
+    # test reads the temp one.
+    _ = db
     return MeetingWebServer(
         WebRuntimeCallbacks(on_bookmark=lambda *_a, **_k: None, on_stop=lambda *_a, **_k: None, get_state=lambda: None),
         host="127.0.0.1",

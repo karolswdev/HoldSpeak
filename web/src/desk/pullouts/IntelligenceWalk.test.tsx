@@ -126,7 +126,9 @@ describe("HS-128-10 Desk Intelligence walk", () => {
     fireEvent.click(screen.getByRole("button", { name: "Decisions" }));
 
     const search = await screen.findByRole("searchbox", { name: "Search decisions" });
-    expect(screen.getByText(receipt.decision_text)).toBeInTheDocument();
+    // The searchbox renders while the ledger is still loading, so await the
+    // loaded row instead of asserting it synchronously (HS-132-12 deflake).
+    expect(await screen.findByText(receipt.decision_text)).toBeInTheDocument();
     fireEvent.change(search, { target: { value: "Intelligence" } });
 
     await waitFor(() =>

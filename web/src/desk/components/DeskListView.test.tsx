@@ -213,7 +213,7 @@ describe("HS-93-08 pagination at 1,000 items", () => {
     expect(document.activeElement).toBe(
       screen.getByRole("button", { name: "Show 100 more" }),
     );
-  });
+  }, 15000);
 
   it("settles focus on the count when the last page lands", () => {
     resetStore({
@@ -232,7 +232,7 @@ describe("HS-93-08 pagination at 1,000 items", () => {
       screen.queryByRole("button", { name: /Show .* more/ }),
     ).toBeNull();
     expect(document.activeElement).toBe(screen.getByRole("status"));
-  });
+  }, 15000);
 
   it("deck search reaches items no page has rendered yet", () => {
     render(

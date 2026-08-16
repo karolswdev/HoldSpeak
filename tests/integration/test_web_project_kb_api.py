@@ -608,15 +608,21 @@ def test_dictation_page_includes_project_kb_section() -> None:
     response = client.get("/dictation")
     assert response.status_code == 200
     assert '<div id="root"></div>' in response.text
-    js = (Path(__file__).resolve().parents[2] / "web/src/pages/cores/DictationCore.tsx").read_text()
+    # HS-132-12: HS-117-08 moved the Knowledge and Hooks door sections out
+    # of the DictationCore monolith into cores/dictation/.
+    repo = Path(__file__).resolve().parents[2]
+    shell = (repo / "web/src/pages/cores/DictationCore.tsx").read_text()
+    assert "<Knowledge />" in shell and "<Hooks />" in shell
+    js = (repo / "web/src/pages/cores/dictation/Knowledge.tsx").read_text()
     assert "Project scope" in js
     # HS-102-06: Knowledge is a real facts list + Instructions binds
     # .hs/instructions.md edited in place (the ?? fallbacks retired).
     assert "function Knowledge" in js and "saveInstructions" in js
-    assert "Automation hooks" in js
     assert "/api/dictation/project-kb" in js
     assert "/api/dictation/project-hs" in js
-    assert "/api/dictation/agent-hooks" in js
+    hooks = (repo / "web/src/pages/cores/dictation/DictationSections.tsx").read_text()
+    assert "Automation hooks" in hooks
+    assert "/api/dictation/agent-hooks" in hooks
 
 
 def test_round_trip_put_then_get(test_client: TestClient, project_root_dir: Path) -> None:

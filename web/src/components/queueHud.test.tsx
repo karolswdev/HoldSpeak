@@ -76,7 +76,7 @@ describe("the queue HUD consumes runtime_queue", () => {
     const toggle = screen.getByRole("button", { expanded: false });
     expect(toggle).toHaveTextContent("1 running");
     fireEvent.click(toggle);
-    expect(screen.getByText("Intel queue")).toBeInTheDocument();
+    expect(screen.getByText("Intelligence queue")).toBeInTheDocument();
     expect(screen.getByText(/2 pending · 1 running · 1 failed/)).toBeInTheDocument();
     expect(screen.getByText("Roadmap sync")).toBeInTheDocument();
     expect(screen.getByText("Standup")).toBeInTheDocument();

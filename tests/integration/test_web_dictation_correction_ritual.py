@@ -19,11 +19,30 @@ from holdspeak.config import Config
 from holdspeak.db import Database, reset_database
 from holdspeak.web_server import MeetingWebServer, WebRuntimeCallbacks
 
-_SOURCE = Path(__file__).resolve().parents[2] / "web/src/pages/cores/DictationCore.tsx"
+_REPO = Path(__file__).resolve().parents[2]
+_DECK_DIR = _REPO / "web/src/pages/cores/dictation"
+# HS-132-12: HS-117-08 decomposed the cockpit — the ritual itself lives in
+# dictation/ResultPanel.tsx and the wire it posts to in dictation/useSpeakDeck.ts.
+_RITUAL = _DECK_DIR / "ResultPanel.tsx"
+_DECK_WIRE = _DECK_DIR / "useSpeakDeck.ts"
+
+
+def _ritual_source() -> str:
+    return _RITUAL.read_text()
+
+
+def _wire_source() -> str:
+    return _DECK_WIRE.read_text()
 
 
 def _dictation_script() -> str:
-    return _SOURCE.read_text()
+    """The whole Dictation program: the shell plus every sub-component."""
+    parts = [(_REPO / "web/src/pages/cores/DictationCore.tsx").read_text()]
+    for source in sorted(_DECK_DIR.glob("*.ts*")):
+        if source.name.endswith(".test.tsx"):
+            continue
+        parts.append(source.read_text())
+    return "\n".join(parts)
 
 
 @pytest.fixture
@@ -57,18 +76,19 @@ def _client(database: Database) -> TestClient:
 # ── the ritual ships + is wired into both surfaces ───────────────────────────
 
 def test_ritual_component_is_shipped() -> None:
-    js = _dictation_script()
+    ritual = _ritual_source()
     # HS-111-01 renamed the affirm verb Right → OK; the one-tap ritual,
     # the disclose path, and the teach POST are unchanged.
     for marker in ("Marked OK", "Wrong", "Correct this result", "Teach correction"):
-        assert marker in js, marker
-    assert "/api/dictation/journal/" in js and "/correct" in js
+        assert marker in ritual, marker
+    wire = _wire_source()
+    assert "/api/dictation/journal/" in wire and "/correct" in wire
 
 
 def test_ritual_is_wired_into_dry_run_result() -> None:
-    js = _dictation_script()
-    assert 'setVerdict("right")' in js and 'setVerdict("wrong")' in js
-    assert "journal_id" in js
+    ritual = _ritual_source()
+    assert 'setVerdict("right")' in ritual and 'setVerdict("wrong")' in ritual
+    assert "journal_id" in _wire_source()
 
 
 def test_ritual_is_focus_safe() -> None:
@@ -79,18 +99,18 @@ def test_ritual_is_focus_safe() -> None:
 def test_ritual_uses_shared_react_controls() -> None:
     # HS-111-08: the Disclosure species retired; FoldGadget is the ONE
     # disclosure the shared kit provides.
-    source = _dictation_script()
-    assert "<Button" in source and "<FoldGadget" in source
-    assert "dangerouslySetInnerHTML" not in source
+    ritual = _ritual_source()
+    assert "<Button" in ritual and "<FoldGadget" in ritual
+    assert "dangerouslySetInnerHTML" not in _dictation_script()
 
 
 def test_dry_run_moment_host_present(persistent_db: Database, settings_path: Path) -> None:
     Config().save(path=settings_path)
     response = _client(persistent_db).get("/dictation")
     assert '<div id="root"></div>' in response.text
-    source = (Path(__file__).resolve().parents[2] / "web/src/pages/cores/DictationCore.tsx").read_text()
-    assert "Pipeline result" in source and "/api/dictation/dry-run" in source
-    assert "autofocus" not in source.lower()
+    assert "Pipeline result" in _ritual_source()
+    assert "/api/dictation/dry-run" in _wire_source()
+    assert "autofocus" not in _dictation_script().lower()
 
 
 # ── the path the ritual posts to still teaches (one decision, real write) ────

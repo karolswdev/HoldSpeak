@@ -810,6 +810,11 @@ Routes: 447 (plus static mounts). iOS-consumed: 89. Web-consumed: 343.
 | POST | `/api/dictation/preview/type` | web |
 | POST | `/api/dictation/transcribe` | web |
 | POST | `/api/dictation/wake/type` | web |
+
+## web.routes.system.voice_stream
+
+| Method | Path | Consumers |
+|---|---|---|
 | WS | `/ws/dictation/stream` | web |
 
 ## web.routes.system.ws

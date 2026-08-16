@@ -1,8 +1,8 @@
 # Phase 132 — The Working Desk
 
-**Status:** chartered (0/14).
+**Status:** in-progress (13/14).
 
-**Last updated:** 2026-08-15.
+**Last updated:** 2026-08-16.
 
 ## Owner mandate
 
@@ -126,7 +126,7 @@ one-line verdicts:
 | HS-132-09 | The receipt names what loaded | done | [story-09](./story-09-receipt-model-honesty.md) | [evidence-story-09](./evidence-story-09.md) |
 | HS-132-10 | One meetings placement dial | done | [story-10](./story-10-one-placement-dial.md) | [evidence-story-10](./evidence-story-10.md) |
 | HS-132-11 | Cadence answers land | done | [story-11](./story-11-cadence-reply.md) | [evidence-story-11](./evidence-story-11.md) |
-| HS-132-12 | The regression net comes back green | backlog | [story-12](./story-12-green-net.md) | — |
+| HS-132-12 | The regression net comes back green | done | [story-12](./story-12-green-net.md) | [evidence-story-12](./evidence-story-12.md) |
 | HS-132-13 | The roadmap tells the truth | done | [story-13](./story-13-roadmap-truth.md) | [evidence-story-13](./evidence-story-13.md) |
 | HS-132-14 | The walk | backlog | [story-14](./story-14-the-walk.md) | — |
 
@@ -202,5 +202,12 @@ time; 14 last, cannot be waived.
 
 ## Where we are
 
-Chartered from the 2026-08-15 six-pillar functional-reality audit. No stories
-started.
+13/14 done in one day (2026-08-15/16). All twelve product stories shipped
+through the gate; HS-132-12 closed with the full backend suite at
+5703 passed / 0 failed / 0 errors / 47 named skips (~3.5 min parallel) and
+the web suite 917/917 — plus five extra product fixes found by the net
+burn-down, the 75-minute suite wedge root-caused (mermaid npx into fresh
+HOMEs) and made impossible (300s per-test timeout law), per-xdist-worker
+HOME isolation, and the owner's disk crisis traced and cleared. Held owner
+question #1 (egress vocabulary) closed as no-drift. Only HS-132-14 — the
+walk — remains.

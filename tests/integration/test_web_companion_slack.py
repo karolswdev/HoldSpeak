@@ -85,7 +85,14 @@ class _BroadcastSpy:
 
 
 @pytest.fixture
-def server():
+def server(db):
+    # HS-132-12: the hub composes its services against `get_database()` at app
+    # construction (`web_server.py:_create_app`). The `db` fixture swaps the
+    # singleton to the temp file, so it MUST be resolved before the server is
+    # built — otherwise the routes write to the real user database while the
+    # test reads the temp one, and the executor cannot find the proposal the
+    # API just created. One database, one truth.
+    _ = db
     return MeetingWebServer(
         WebRuntimeCallbacks(
             on_bookmark=lambda *_a, **_k: None,

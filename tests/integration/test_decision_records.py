@@ -4,6 +4,7 @@ from __future__ import annotations
 from pathlib import Path
 from unittest.mock import MagicMock
 
+import pytest
 from fastapi.testclient import TestClient
 
 import holdspeak.db as hsdb
@@ -238,7 +239,14 @@ def test_v32_migration_adds_decision_moment_columns(tmp_path: Path) -> None:
         columns = {row[1] for row in conn.execute("PRAGMA table_info(decisions)")}
         version = conn.execute("SELECT MAX(version) FROM schema_version").fetchone()[0]
     assert {"source_timestamp", "provenance_label"}.issubset(columns)
-    assert version == 32
+    # HS-132-12: the pin was a stale literal (32) that the schema outgrew.
+    # The invariant is that opening a pre-v32 file migrates it forward to
+    # THIS build's schema — pin the constant, not a frozen number, and keep
+    # the floor that proves the v32 decision-moment migration ran.
+    from holdspeak.db.schema import SCHEMA_VERSION
+
+    assert SCHEMA_VERSION >= 32
+    assert version == SCHEMA_VERSION
 
 
 def test_decision_routes_require_read_authority_and_owner_lifecycle_principal(
@@ -404,6 +412,16 @@ def test_promote_route_is_idempotent_and_queryable_both_ways(
 def test_model_promotion_admits_before_generation_and_leaves_receipt(
     tmp_path: Path, monkeypatch
 ) -> None:
+    """HS-132-12: rebuilt against the seam HS-131-07 actually shipped.
+
+    The guard used to patch ``decisions._generate_with_model`` — a
+    route-side model callable HS-131-07 deliberately deleted so drafting
+    could only happen as the admitted promotion child inside
+    ``DecisionLifecycleService`` (see decisions.py's HS-131-13 note). The
+    invariant is unchanged and is asserted here at the real seam: the
+    model provider is never entered until the kernel has admitted and
+    approved the promotion operation, and the run leaves a receipt.
+    """
     import holdspeak.web.routes.decisions as route_module
     from holdspeak.kernel.runtime import _configure
 
@@ -412,6 +430,16 @@ def test_model_promotion_admits_before_generation_and_leaves_receipt(
     _artifact(db, "artifact-1", "meeting-1", "Use the bounded inference spine")
     decision = db.decisions.list()[0]
     db.decisions.accept(decision.id, actor="owner-session")
+    # A ready target: "this_machine" needs a local gguf on disk, so the
+    # promotion aims at a configured endpoint profile instead (the same
+    # rig the service-level promotion tests use).
+    profile = db.profiles.upsert(
+        profile_id="promotion",
+        name="Promotion",
+        kind="openAICompatible",
+        base_url="http://promotion",
+        model="promotion-model",
+    )
     broker = _configure(db)
     events: list[str] = []
     original_submit = broker.submit
@@ -428,41 +456,51 @@ def test_model_promotion_admits_before_generation_and_leaves_receipt(
     class FakeIntel:
         active_provider = "fake"
 
-    async def fake_generate(_db, _target, _prompt):
-        # Generation can only be entered after the operation was admitted and approved.
-        assert events == ["submit", "decide"]
-        events.append("generate")
-        return "# Draft ADR\n\nGenerated for owner review.", FakeIntel()
+        def run_prompt(self, **_kwargs):
+            # Generation can only be entered after the promotion operation
+            # was admitted (submitted) and approved (decided).
+            assert events[:2] == ["submit", "decide"], events
+            events.append("generate")
+            return "# Draft ADR\n\nGenerated for owner review."
 
     monkeypatch.setattr(broker, "submit", tracked_submit)
     monkeypatch.setattr(broker, "decide", tracked_decide)
     monkeypatch.setattr(route_module, "_kernel_service", lambda: broker)
-    monkeypatch.setattr(route_module, "_generate_with_model", fake_generate)
+    # The ONE model seam left: the kernel's inference runner builds the
+    # engine for the admitted child. There is no route-side alternative.
+    monkeypatch.setattr(
+        broker.inference_runner, "_engine_factory", lambda _revision, **_kw: FakeIntel()
+    )
     owner = _promotion_client(db, monkeypatch)
 
     response = owner.post(
         f"/api/decisions/{decision.id}/promote/adr/draft-with-model",
-        json={"inference_target_id": "this_machine"},
+        json={"inference_target_id": profile.id},
     )
     assert response.status_code == 200, response.text
     payload = response.json()
-    assert events == ["submit", "decide", "generate"]
+    assert events[:2] == ["submit", "decide"]
+    assert events[-1] == "generate"
     assert payload["artifact"]["status"] == "draft"
     assert payload["artifact"]["body_markdown"].startswith("# Draft ADR")
-    assert payload["inference_target"]["id"] == "this_machine"
-    operation = broker.store.operation(payload["operation_id"])
-    receipt = broker.store.receipt(payload["operation_id"])
-    assert operation["name"] == "inference.run"
-    assert receipt["outcome"] == "succeeded"
-    assert receipt["result_ref"] == f"artifact:{payload['artifact']['id']}"
+    assert payload["inference_target"]["id"] == profile.id
+    # The promotion's own (parent) operation carries the run's receipt …
+    parent = broker.store.operation(payload["operation_id"])
+    parent_receipt = broker.store.receipt(payload["operation_id"])
+    assert parent["name"] == "decision.promotion-draft"
+    assert parent_receipt["outcome"] == "succeeded"
+    # The receipt points at the artifact the admitted run actually produced.
+    assert parent_receipt["result_ref"] == payload["artifact"]["id"]
+    # … and the model call rode as its admitted inference child.
+    child_id = payload["invocation"]["operation_id"]
+    child = broker.store.operation(child_id)
+    assert child["name"] == "inference.invoke"
+    assert child["parent_operation_id"] == payload["operation_id"]
+    assert broker.store.receipt(child_id)["outcome"] == "succeeded"
 
 
-def test_superseded_promotion_route_names_successor_without_model_call(
-    tmp_path: Path, monkeypatch
-) -> None:
-    import holdspeak.web.routes.decisions as route_module
-
-    db = Database(tmp_path / "refused-model-promotion.db")
+def _superseded_promotion_rig(db: Database):
+    """One superseded decision and its named successor."""
     _meeting(db, "meeting-1", "2026-07-01T10:00:00")
     db.plugins.record_artifact(
         artifact_id="artifact-1",
@@ -481,21 +519,67 @@ def test_superseded_promotion_route_names_successor_without_model_call(
     old, successor = rows["Old direction"], rows["Successor direction"]
     db.decisions.accept(old.id, actor="owner-session")
     db.decisions.supersede(old.id, successor.id, actor="owner-session")
+    return old, successor
+
+
+def test_superseded_promotion_route_refuses_without_a_model_call(
+    tmp_path: Path, monkeypatch
+) -> None:
+    """HS-132-12: rebuilt against the seam HS-131-07 shipped.
+
+    The old guard patched ``decisions._generate_with_model``, the
+    route-side model callable HS-131-07 deleted. The only model path left
+    is the kernel's inference runner, so the fence is planted there: a
+    superseded decision is refused before anything is admitted, and the
+    provider is never reached.
+    """
+    import holdspeak.web.routes.decisions as route_module
+    from holdspeak.kernel.runtime import _configure
+
+    db = Database(tmp_path / "refused-model-promotion.db")
+    old, _successor = _superseded_promotion_rig(db)
+    broker = _configure(db)
     calls = 0
 
-    async def forbidden_generation(*args, **kwargs):
+    def forbidden_generation(*args, **kwargs):
         nonlocal calls
         calls += 1
         raise AssertionError("model called without admission")
 
-    monkeypatch.setattr(route_module, "_generate_with_model", forbidden_generation)
+    monkeypatch.setattr(broker.inference_runner, "invoke", forbidden_generation)
+    monkeypatch.setattr(route_module, "_kernel_service", lambda: broker)
     owner = _promotion_client(db, monkeypatch)
     response = owner.post(
         f"/api/decisions/{old.id}/promote/adr/draft-with-model",
         json={"inference_target_id": "this_machine"},
     )
     assert response.status_code == 409
-    assert response.json()["detail"] == (
-        f"superseded by {successor.id} — promote that one"
-    )
+    body = response.json()
+    assert body["error"] == "decision_promotion_refused"
+    assert body["decision_id"] == old.id
     assert calls == 0
+    # Nothing was admitted: no promotion operation was ever opened.
+    with db._connection() as conn:
+        assert conn.execute(
+            "SELECT COUNT(*) FROM kernel_parent_runs WHERE kind='decision.promotion-draft'"
+        ).fetchone()[0] == 0
+    # The successor IS named at the source of the refusal …
+    from holdspeak.db.decisions import DecisionPromotionRefused
+
+    with pytest.raises(DecisionPromotionRefused) as raised:
+        db.decisions.assert_promotable(old.id)
+    assert raised.value.detail == f"superseded by {_successor.id}; promote that one"
+
+
+def test_superseded_promotion_route_names_successor(
+    tmp_path: Path, monkeypatch
+) -> None:
+    db = Database(tmp_path / "refused-names-successor.db")
+    old, successor = _superseded_promotion_rig(db)
+    owner = _promotion_client(db, monkeypatch)
+    response = owner.post(
+        f"/api/decisions/{old.id}/promote/adr/draft-with-model",
+        json={"inference_target_id": "this_machine"},
+    )
+    assert response.status_code == 409
+    assert successor.id in response.text

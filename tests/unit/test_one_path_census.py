@@ -495,7 +495,10 @@ ADMITTED_SEAM_CALLERS: dict[tuple[str, str], str] = {
     ("holdspeak/runtime/dictation_capture.py", "DictationCaptureMixin.transcribe_audio_admitted"): "Transcriber.transcribe under the session's admitted transcription child",
     ("holdspeak/runtime/wake_glue.py", "WakeWordGlueMixin._transcribe_wake_admitted"): "Transcriber.transcribe under the wake session's admitted child",
     ("holdspeak/web/routes/system/voice.py", "build_voice_router.api_transcribe"): "the route refuses without the admitted seam, then calls Transcriber.transcribe",
-    ("holdspeak/web/routes/system/voice.py", "build_voice_router.ws_dictation_stream"): "the stream refuses without the admitted seam, then calls Transcriber.transcribe",
+    # HS-132-12 MOVED this seam, it did not change it: the streaming socket is
+    # now its own concern module (`voice_stream.py`), composed by
+    # `build_voice_router`. Same body, same admitting seam, new documented home.
+    ("holdspeak/web/routes/system/voice_stream.py", "build_voice_stream_router.ws_dictation_stream"): "the stream refuses without the admitted seam, then calls Transcriber.transcribe",
     ("holdspeak/plugins/dictation/builtin/intent_router.py", "IntentRouter.run"): "AdmittedDictationRuntime.classify",
     ("holdspeak/plugins/dictation/builtin/project_rewriter.py", "ProjectRewriter.run"): "AdmittedDictationRuntime.rewrite",
     ("holdspeak/project_doc_suggestions.py", "suggest_project_doc_update"): "AdmittedDictationRuntime.rewrite",

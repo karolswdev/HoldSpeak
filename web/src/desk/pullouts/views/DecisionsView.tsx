@@ -269,7 +269,7 @@ function ReceiptDetail({
           </button>
         )) : <p className="quiet">No affected work linked.</p>}
       </section>
-      <section className="receipt-chain" aria-label="Supersession chain">
+      <section className="receipt-chain" aria-label="Supersession history">
         <h4>SUPERSESSION</h4>
         <div>
           {receipt.predecessor_id ? <button type="button" onClick={() => onOpenReceipt(receipt.predecessor_id!)}>← D-{shortId(receipt.predecessor_id)}</button> : <span>← ORIGIN</span>}

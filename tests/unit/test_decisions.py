@@ -277,7 +277,7 @@ def test_supersession_marks_promoted_artifact_and_names_successor(tmp_path) -> N
     assert db.plugins.get_artifact(promoted.artifact_id).status == "rejected"
     with pytest.raises(
         DecisionPromotionRefused,
-        match=f"superseded by {successor.id} — promote that one",
+        match=f"superseded by {successor.id}; promote that one",
     ):
         db.decisions.promote(old.id, "note", actor="owner-session")
 

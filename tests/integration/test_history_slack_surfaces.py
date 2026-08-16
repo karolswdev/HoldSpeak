@@ -120,25 +120,33 @@ def test_aftercare_flag_is_true_and_never_the_url(client, db, settings_path, see
 # ── the page locks ───────────────────────────────────────────────────────────
 
 
+# HS-132-12: HS-117-09 decomposed HistoryCore — the aftercare gadget rows
+# live in history/AftercareGadgets.tsx, the proposal rows and their wire
+# calls in history/useMeetingData.tsx, and the empty-queue token in
+# history/NeedsYouTable.tsx.
+_HISTORY = _REPO / "web/src/pages/cores/history"
+
+
+def _flat(path: Path) -> str:
+    return " ".join(path.read_text().split())
+
+
 def test_history_buttons_are_gated_on_the_flag():
-    page = " ".join(
-        (_REPO / "web/src/pages/cores/HistoryCore.tsx").read_text().split()
-    )
+    page = _flat(_HISTORY / "AftercareGadgets.tsx")
+    data = _flat(_HISTORY / "useMeetingData.tsx")
     # HS-111-03: the two prose Slack buttons became AFTERCARE gadget
     # rows (DIGEST → SLACK / FOLLOW-UP → SLACK, verb SEND); the wiring
     # and the capability gate are unchanged.
     assert "DIGEST → SLACK" in page and "FOLLOW-UP → SLACK" in page
     assert "aftercare.slack_configured" in page
     assert 'proposeSlack("digest")' in page and 'proposeSlack("followup")' in page
-    assert 'apiFetch<JsonRecord>("/api/authority/policy")' in page
+    assert '"/api/authority/policy"' in data
     # The BASIS row tokens the central control mode (posture, not prose).
     assert 'controlModeLabel(String(authority.control_mode ?? "neutral"))' in page
 
 
 def test_proposal_rows_render_the_central_policy_and_refusal_truth():
-    page = " ".join(
-        (_REPO / "web/src/pages/cores/HistoryCore.tsx").read_text().split()
-    )
+    page = _flat(_HISTORY / "useMeetingData.tsx")
     assert "row.policy_snapshot" in page and "row.operation" in page
     assert 'policy.outcome === "refused"' in page
     assert 'row.status === "proposed" && !refused' in page
@@ -146,11 +154,11 @@ def test_proposal_rows_render_the_central_policy_and_refusal_truth():
     assert "operation.destination" in page
     assert "policy.authority_basis" in page
     # HS-111-03: an empty needs-you face says so honestly, as a token.
-    assert "QUEUE 0" in page
+    assert "QUEUE 0" in _flat(_HISTORY / "NeedsYouTable.tsx")
 
 
 def test_history_app_wires_the_export_route():
-    js = (_REPO / "web/src/pages/cores/HistoryCore.tsx").read_text()
+    js = (_HISTORY / "useMeetingData.tsx").read_text()
     assert "proposeSlack" in js
     assert "/export/slack" in js
     # HS-100-08: proposals live ON the outcomes face — no tab to flip to;
@@ -167,7 +175,10 @@ def test_settings_field_ships_the_honest_copy():
     assert 'slack_webhook_url: "Slack webhook"' in page
     assert "<SecretRow" in page and "configured={Boolean(state.configured)}" in page
     assert "values stay on this hub" in page
-    assert 'apiFetch<{ settings?: JsonRecord }>' in page and '"/api/settings"' in page
+    # HS-132-12: the JsonRecord alias was inlined; the typed settings read
+    # against /api/settings is the invariant, not the alias name.
+    assert 'apiFetch<{ settings?: Record<string, unknown> }>' in page
+    assert '"/api/settings"' in page
     gadgets = (_REPO / "web/src/desk/surface/gadgets.tsx").read_text()
     # The chip renders the configured fact, never the credential value.
     assert '{configured ? "SET" : "—"}' in gadgets

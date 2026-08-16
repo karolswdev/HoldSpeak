@@ -444,11 +444,17 @@ def test_dictation_page_includes_runtime_section() -> None:
     source = (Path(__file__).resolve().parents[2] / "web/src/pages/cores/DictationCore.tsx").read_text()
     # HS-100-07: runtime configuration lives behind the Speak door.
     assert "<Runtime />" in source
+    # HS-132-12: HS-117-08 moved the Runtime face into
+    # cores/dictation/DictationSections.tsx.
+    sections = (
+        Path(__file__).resolve().parents[2]
+        / "web/src/pages/cores/dictation/DictationSections.tsx"
+    ).read_text()
     # HS-112-01: the runtime face is a handover to the Prefs models module
     # (the one dial) — it never embeds or re-derives an endpoint editor.
-    assert 'label="Dictation runtime"' in source
-    assert "RUNS ON LIVES IN MODELS" in source
-    assert "RuntimeDestination" not in source
+    assert 'label="Dictation runtime"' in sections
+    assert "RUNS ON LIVES IN MODELS" in sections
+    assert "RuntimeDestination" not in sections
 
 
 def test_dictation_page_includes_copilot_depth_controls() -> None:

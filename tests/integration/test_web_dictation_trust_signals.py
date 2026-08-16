@@ -197,8 +197,29 @@ def test_correct_response_secret_filtered_teaches_nothing(
 def test_trust_chip_css_is_global(persistent_db: Database, settings_path: Path) -> None:
     """Trust feedback is React-owned and lands in the ONE footer receipt
     bar (HS-111-02): the toast-banner species (InlineMessage/StatusPill)
-    must never come back to this program."""
-    source = (Path(__file__).resolve().parents[2] / "web/src/pages/cores/DictationCore.tsx").read_text()
-    assert "speak-receipt" in source and "ReceiptContext" in source
-    assert "InlineMessage" not in source and "StatusPill" not in source
-    assert "dangerouslySetInnerHTML" not in source
+    must never come back to this program.
+
+    HS-132-12: HS-129-05 replaced Speak's own `speak-receipt` bar with the
+    frame-owned SurfaceFooter receipt slot, and HS-117-08 moved the footer
+    into cores/dictation/Readiness.tsx. The channel is still ONE, and the
+    banner species is still barred from the whole deck.
+    """
+    repo = Path(__file__).resolve().parents[2]
+    shell = (repo / "web/src/pages/cores/DictationCore.tsx").read_text()
+    footer = (repo / "web/src/pages/cores/dictation/Readiness.tsx").read_text()
+    deck_dir = repo / "web/src/pages/cores/dictation"
+    deck = "\n".join(
+        [shell]
+        + [
+            source.read_text()
+            for source in sorted(deck_dir.glob("*.ts*"))
+            if not source.name.endswith(".test.tsx")
+        ]
+    )
+    # The ONE channel: every sub-component announces through the context,
+    # and the announcement lands in the frame's single receipt slot.
+    assert "ReceiptContext" in shell
+    assert "ReceiptContext" in (repo / "web/src/pages/cores/dictation/shared.ts").read_text()
+    assert "SurfaceFooter" in footer and "receipt={receiptSlot" in footer
+    assert "InlineMessage" not in deck and "StatusPill" not in deck
+    assert "dangerouslySetInnerHTML" not in deck

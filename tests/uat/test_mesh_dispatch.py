@@ -6,6 +6,17 @@ ask ONTO it through the hub's own /api/ask, and verifies the run returned badged
 worker's model had to surface. It needs the mesh-node deck (intel-wired) + a live
 `.43`, so it self-skips without the LAN — CI has none, per the HANDOVER. Run live
 with `.43` up to prove the real edge round-trip.
+
+HS-132-12: it also needs a worker that can actually serve. Since HS-131-16 a
+mesh worker authenticates as a paired NODE — `run_mesh_serve_command` exits 1
+before it polls anything when `load_hub_pin()` finds no imported pairing, and
+the shared-owner `HOLDSPEAK_HUB_TOKEN` posture was removed rather than demoted
+to a fallback. The conductor's node harness (`uat/conductor/induction/nodes.py`)
+still spawns `mesh serve --token-env HOLDSPEAK_HUB_TOKEN` and never pairs, so
+the worker dies on start, the hub never sees it, and every probe here times out
+at `mesh_node_live` after 40s. That is a stale harness, not an absent
+environment; the gate below names it and lifts itself the moment the harness
+learns to pair.
 """
 
 from __future__ import annotations
@@ -14,9 +25,14 @@ import httpx
 import pytest
 
 from uat.conductor.db import Database
+from uat.conductor.induction import nodes as node_harness
 from uat.conductor.runs import RunManager
 
 LAN_ENDPOINT = "http://192.168.1.43:8080/v1/models"
+
+#: The seam a paired-node harness has to grow: importing the hub's exported
+#: pairing into the worker's HOME before `mesh serve` starts.
+NODE_PAIRING_SEAM = "pair"
 
 
 def _lan_up() -> bool:
@@ -26,7 +42,24 @@ def _lan_up() -> bool:
         return False
 
 
-pytestmark = pytest.mark.skipif(not _lan_up(), reason=".43 LAN endpoint unreachable")
+def _harness_can_pair_a_node() -> bool:
+    return hasattr(node_harness.NodeManager, NODE_PAIRING_SEAM) or hasattr(
+        node_harness.MeshNode, NODE_PAIRING_SEAM
+    )
+
+
+pytestmark = [
+    pytest.mark.skipif(not _lan_up(), reason=".43 LAN endpoint unreachable"),
+    pytest.mark.skipif(
+        not _harness_can_pair_a_node(),
+        reason=(
+            "the UAT node harness cannot pair a mesh worker: since HS-131-16 "
+            "`mesh serve` requires an imported node pairing (hub pin + node "
+            "token) and refuses the owner token, but nodes.py still spawns it "
+            "with --token-env HOLDSPEAK_HUB_TOKEN and never pairs"
+        ),
+    ),
+]
 
 
 @pytest.fixture

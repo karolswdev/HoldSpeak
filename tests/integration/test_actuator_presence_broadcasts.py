@@ -207,8 +207,13 @@ def test_executor_on_result_fires_on_executed_and_failed(db):
 def test_qlippy_events_mirror_the_dashboard_decision_exactly():
     repo = Path(__file__).resolve().parents[2]
     events = (repo / "web/src/components/AmbientLayer.tsx").read_text()
-    history = (repo / "web/src/pages/cores/HistoryCore.tsx").read_text()
+    # HS-132-12: the history-side decision POST moved out of the
+    # `HistoryCore.tsx` monolith in the Phase-117 decomposition (HS-117-09).
+    # It now lives in the meeting-data hook; the invariant is unchanged — the
+    # ambient Qlippy card and the history detail send the SAME decision body.
+    history = (repo / "web/src/pages/cores/history/useMeetingData.tsx").read_text()
     assert "/proposals/${encodeURIComponent(String(card.id))}/decision" in events
     assert "json: { decision }" in events
+    assert "/proposals/${encodeURIComponent(String(proposal.id))}/decision" in history
     assert "json: { decision }" in history
     assert "card.payload" not in events
