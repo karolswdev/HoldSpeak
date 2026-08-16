@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "holdspeak": {
+      "command": "uv",
+      "args": ["run", "holdspeak-mcp"],
+      "cwd": "."
+    }
+  }
+}

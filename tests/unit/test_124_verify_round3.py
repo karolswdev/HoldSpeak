@@ -38,18 +38,18 @@ def _insert_event(db: Database, event_id: str = "verify-event") -> None:
         )
 
 
-def test_pipeline_events_query_without_filters_returns_recent_events(
+def test_pipeline_events_without_filters_returns_recent_events(
     db: Database, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     _insert_event(db)
     monkeypatch.setattr(mcp_tools, "get_database", lambda: db)
 
-    events = mcp_tools.dispatch("pipeline_events_query", {}, OWNER)
+    events = mcp_tools.dispatch("pipeline.events", {}, OWNER)
 
     assert [event["event_id"] for event in events] == ["verify-event"]
 
 
-def test_pipeline_events_query_passes_every_filter(
+def test_pipeline_events_passes_every_filter(
     db: Database, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     _insert_event(db)
@@ -57,7 +57,7 @@ def test_pipeline_events_query_passes_every_filter(
     now = time.time()
 
     events = mcp_tools.dispatch(
-        "pipeline_events_query",
+        "pipeline.events",
         {
             "service": "verify-service",
             "method": "verify-method",

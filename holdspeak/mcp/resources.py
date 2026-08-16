@@ -9,6 +9,8 @@ from typing import Any
 
 from holdspeak.db import get_database
 from holdspeak.principals import Principal
+from holdspeak.config import Config
+from holdspeak.services.cadence_service import CadenceService
 from holdspeak.services.decision_record_service import DecisionRecordService
 from holdspeak.services.desk_service import DeskService
 from holdspeak.services.dictation_service import DictationService
@@ -198,6 +200,12 @@ _STATIC_RESOURCES = [
         "description": "Aggregate statistics for observed pipeline events.",
         "mimeType": _JSON_MIME,
     },
+    {
+        "uri": "holdspeak://cadence/status",
+        "name": "Cadence engine status",
+        "description": "Cadence engine status: enabled, pressure, loop counts, policy count.",
+        "mimeType": _JSON_MIME,
+    },
 ]
 
 _RESOURCE_TEMPLATES = [
@@ -314,13 +322,15 @@ def read_resource(uri: str, principal: Principal) -> dict[str, list[dict[str, st
     if uri == "holdspeak://desk/snapshot":
         return _contents(uri, _JSON_MIME, DeskService(get_database()).snapshot(principal))
     if uri == "holdspeak://workbenches":
-        return _contents(uri, _JSON_MIME, WorkbenchService(get_database()).list_workbenches(principal))
+        return _contents(uri, _JSON_MIME, WorkbenchService(get_database()).list_workbenches(principal)[:100])
     if uri == "holdspeak://recipes":
-        return _contents(uri, _JSON_MIME, RecipeService(get_database()).list_recipes(principal))
+        return _contents(uri, _JSON_MIME, RecipeService(get_database()).list_recipes(principal)[:100])
     if uri == "holdspeak://profiles":
-        return _contents(uri, _JSON_MIME, ProfileService(get_database()).list_profiles(principal))
+        result = ProfileService(get_database()).list_profiles(principal)
+        result["profiles"] = result["profiles"][:100]
+        return _contents(uri, _JSON_MIME, result)
     if uri == "holdspeak://dictation/journal":
-        return _contents(uri, _JSON_MIME, DictationService(get_database()).list_journal(principal))
+        return _contents(uri, _JSON_MIME, DictationService(get_database()).list_journal(principal, limit=100))
     if uri == "holdspeak://follow-through/board":
         board = FollowThroughService(get_database()).board(principal)
         return _contents(uri, _JSON_MIME, {
@@ -336,6 +346,8 @@ def read_resource(uri: str, principal: Principal) -> dict[str, list[dict[str, st
         return _contents(uri, _JSON_MIME, EventQueryService(get_database()).recent(principal))
     if uri == "pipeline://events/stats":
         return _contents(uri, _JSON_MIME, EventQueryService(get_database()).stats(principal))
+    if uri == "holdspeak://cadence/status":
+        return _contents(uri, _JSON_MIME, CadenceService(get_database(), Config.load().cadence).status(principal))
 
     if match := _PRIMITIVE_DETAIL_PATTERN.fullmatch(uri):
         kind = _PRIMITIVE_KIND_ALIASES.get(match.group(1))

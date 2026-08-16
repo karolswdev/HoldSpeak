@@ -1,0 +1,2230 @@
+[
+  {
+    "request": {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "method": "initialize",
+      "params": {
+        "protocolVersion": "2024-11-05",
+        "capabilities": {},
+        "clientInfo": {
+          "name": "mcp-walk",
+          "version": "0.1.0"
+        }
+      }
+    },
+    "response": {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "result": {
+        "protocolVersion": "2024-11-05",
+        "capabilities": {
+          "tools": {
+            "listChanged": false
+          },
+          "resources": {
+            "listChanged": false,
+            "subscribe": false
+          }
+        },
+        "serverInfo": {
+          "name": "holdspeak-mcp",
+          "version": "0.4.0"
+        }
+      }
+    }
+  },
+  {
+    "notification": {
+      "jsonrpc": "2.0",
+      "method": "notifications/initialized"
+    }
+  },
+  {
+    "request": {
+      "jsonrpc": "2.0",
+      "id": 2,
+      "method": "tools/list"
+    },
+    "response": {
+      "jsonrpc": "2.0",
+      "id": 2,
+      "result": {
+        "tools": [
+          {
+            "name": "desk.list",
+            "description": "List HoldSpeak desk primitives of one kind. The desk schema advertises 17 primitive kinds; this tool operates on the 6 authorable kinds: notes, decisions, kbs, directories, workflows, and chains. The remaining 11 kinds (meeting, artifact, project, repository, recipe, coder, game, roadmap, story, workbench, layout) are managed through their own dedicated tools or are read-only.",
+            "inputSchema": {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "type": "string",
+                  "enum": [
+                    "notes",
+                    "decisions",
+                    "kbs",
+                    "directories",
+                    "workflows",
+                    "chains"
+                  ]
+                }
+              },
+              "required": [
+                "kind"
+              ],
+              "additionalProperties": false
+            }
+          },
+          {
+            "name": "desk.get",
+            "description": "Get one HoldSpeak desk primitive by kind and id. The desk schema advertises 17 primitive kinds; this tool operates on the 6 authorable kinds: notes, decisions, kbs, directories, workflows, and chains. The remaining 11 kinds (meeting, artifact, project, repository, recipe, coder, game, roadmap, story, workbench, layout) are managed through their own dedicated tools or are read-only.",
+            "inputSchema": {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "type": "string",
+                  "enum": [
+                    "notes",
+                    "decisions",
+                    "kbs",
+                    "directories",
+                    "workflows",
+                    "chains"
+                  ]
+                },
+                "id": {
+                  "type": "string",
+                  "description": "Primitive identifier."
+                }
+              },
+              "required": [
+                "kind",
+                "id"
+              ],
+              "additionalProperties": false
+            }
+          },
+          {
+            "name": "desk.create",
+            "description": "Create a desk primitive. Pass fields appropriate to its kind in data. Authorable kinds: notes, decisions, kbs, directories, workflows, chains.",
+            "inputSchema": {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "type": "string",
+                  "enum": [
+                    "notes",
+                    "decisions",
+                    "kbs",
+                    "directories",
+                    "workflows",
+                    "chains"
+                  ]
+                },
+                "data": {
+                  "type": "object",
+                  "description": "Primitive fields, including optional id."
+                }
+              },
+              "required": [
+                "kind"
+              ],
+              "additionalProperties": false
+            }
+          },
+          {
+            "name": "desk.update",
+            "description": "Update a desk primitive. Only supplied fields in data change. Authorable kinds: notes, decisions, kbs, directories, workflows, chains.",
+            "inputSchema": {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "type": "string",
+                  "enum": [
+                    "notes",
+                    "decisions",
+                    "kbs",
+                    "directories",
+                    "workflows",
+                    "chains"
+                  ]
+                },
+                "id": {
+                  "type": "string"
+                },
+                "data": {
+                  "type": "object"
+                }
+              },
+              "required": [
+                "kind",
+                "id",
+                "data"
+              ],
+              "additionalProperties": false
+            }
+          },
+          {
+            "name": "desk.delete",
+            "description": "Delete one desk primitive by kind and id. Authorable kinds: notes, decisions, kbs, directories, workflows, chains.",
+            "inputSchema": {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "type": "string",
+                  "enum": [
+                    "notes",
+                    "decisions",
+                    "kbs",
+                    "directories",
+                    "workflows",
+                    "chains"
+                  ]
+                },
+                "id": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "kind",
+                "id"
+              ],
+              "additionalProperties": false
+            }
+          },
+          {
+            "name": "desk.verb",
+            "description": "Dispatch an allowlisted server-side desk verb. Local presentation verbs return ui_only.",
+            "inputSchema": {
+              "type": "object",
+              "properties": {
+                "verb_id": {
+                  "type": "string",
+                  "description": "The desk verb identifier."
+                },
+                "arguments": {
+                  "type": "object",
+                  "description": "Arguments for the server-side verb."
+                }
+              },
+              "required": [
+                "verb_id"
+              ],
+              "additionalProperties": false
+            }
+          },
+          {
+            "name": "workbench.run",
+            "description": "Trigger a HoldSpeak Workbench run.",
+            "inputSchema": {
+              "type": "object",
+              "properties": {
+                "workbench_id": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "workbench_id"
+              ],
+              "additionalProperties": false
+            }
+          },
+          {
+            "name": "workbench.add_item",
+            "description": "Add a work item to a HoldSpeak Workbench.",
+            "inputSchema": {
+              "type": "object",
+              "properties": {
+                "workbench_id": {
+                  "type": "string"
+                },
+                "title": {
+                  "type": "string"
+                },
+                "data": {
+                  "type": "object",
+                  "description": "Optional item fields."
+                }
+              },
+              "required": [
+                "workbench_id",
+                "title"
+              ],
+              "additionalProperties": false
+            }
+          },
+          {
+            "name": "meeting.list",
+            "description": "List or search archived meetings with optional archive filters.",
+            "inputSchema": {
+              "type": "object",
+              "properties": {
+                "query": {
+                  "type": "string"
+                },
+                "from_date": {
+                  "type": "string"
+                },
+                "to_date": {
+                  "type": "string"
+                },
+                "speaker": {
+                  "type": "string"
+                },
+                "tag": {
+                  "type": "string"
+                },
+                "has_open_actions": {
+                  "type": "boolean"
+                },
+                "limit": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 500
+                },
+                "cursor": {
+                  "type": [
+                    "string",
+                    "integer"
+                  ]
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          {
+            "name": "meeting.get",
+            "description": "Get the complete stored detail for one meeting.",
+            "inputSchema": {
+              "type": "object",
+              "properties": {
+                "meeting_id": {
+                  "type": "string"
+                },
+                "include": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "meeting_id"
+              ],
+              "additionalProperties": false
+            }
+          },
+          {
+            "name": "workbench.list",
+            "description": "List Workbenches.",
+            "inputSchema": {
+              "type": "object",
+              "properties": {},
+              "required": [],
+              "additionalProperties": false
+            }
+          },
+          {
+            "name": "workbench.get",
+            "description": "Get a Workbench.",
+            "inputSchema": {
+              "type": "object",
+              "properties": {
+                "workbench_id": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "workbench_id"
+              ],
+              "additionalProperties": false
+            }
+          },
+          {
+            "name": "workbench.create",
+            "description": "Create a Workbench. Use fields for optional Workbench configuration.",
+            "inputSchema": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "description": "Non-empty Workbench name."
+                },
+                "fields": {
+                  "type": "object",
+                  "description": "Optional Workbench fields such as id, recipe_id, profile_id, schedule, or context."
+                }
+              },
+              "required": [
+                "name"
+              ],
+              "additionalProperties": false
+            }
+          },
+          {
+            "name": "workbench.update",
+            "description": "Update supplied Workbench fields.",
+            "inputSchema": {
+              "type": "object",
+              "properties": {
+                "workbench_id": {
+                  "type": "string"
+                },
+                "fields": {
+                  "type": "object"
+                }
+              },
+              "required": [
+                "workbench_id",
+                "fields"
+              ],
+              "additionalProperties": false
+            }
+          },
+          {
+            "name": "workbench.delete",
+            "description": "Delete a Workbench.",
+            "inputSchema": {
+              "type": "object",
+              "properties": {
+                "workbench_id": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "workbench_id"
+              ],
+              "additionalProperties": false
+            }
+          },
+          {
+            "name": "workbench.update_item",
+            "description": "Update supplied fields of a Workbench item.",
+            "inputSchema": {
+              "type": "object",
+              "properties": {
+                "workbench_id": {
+                  "type": "string"
+                },
+                "item_id": {
+                  "type": "string"
+                },
+                "fields": {
+                  "type": "object",
+                  "description": "Item patch fields."
+                }
+              },
+              "required": [
+                "workbench_id",
+                "item_id",
+                "fields"
+              ],
+              "additionalProperties": false
+            }
+          },
+          {
+            "name": "workbench.delete_item",
+            "description": "Delete a Workbench item.",
+            "inputSchema": {
+              "type": "object",
+              "properties": {
+                "workbench_id": {
+                  "type": "string"
+                },
+                "item_id": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "workbench_id",
+                "item_id"
+              ],
+              "additionalProperties": false
+            }
+          },
+          {
+            "name": "workbench.list_runs",
+            "description": "List Workbench runs.",
+            "inputSchema": {
+              "type": "object",
+              "properties": {
+                "workbench_id": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "workbench_id"
+              ],
+              "additionalProperties": false
+            }
+          },
+          {
+            "name": "recipe.list",
+            "description": "List Agent recipes.",
+            "inputSchema": {
+              "type": "object",
+              "properties": {},
+              "required": [],
+              "additionalProperties": false
+            }
+          },
+          {
+            "name": "recipe.get",
+            "description": "Get an Agent recipe.",
+            "inputSchema": {
+              "type": "object",
+              "properties": {
+                "recipe_id": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "recipe_id"
+              ],
+              "additionalProperties": false
+            }
+          },
+          {
+            "name": "recipe.run",
+            "description": "Run an Agent recipe and return its lifecycle-backed result and minted artifact reference.",
+            "inputSchema": {
+              "type": "object",
+              "properties": {
+                "recipe_id": {
+                  "type": "string"
+                },
+                "input": {
+                  "type": "string"
+                },
+                "options": {
+                  "type": "object",
+                  "description": "Optional documented run fields."
+                }
+              },
+              "required": [
+                "recipe_id"
+              ],
+              "additionalProperties": false
+            }
+          },
+          {
+            "name": "recipe.chat",
+            "description": "Ask an Agent recipe a question.",
+            "inputSchema": {
+              "type": "object",
+              "properties": {
+                "recipe_id": {
+                  "type": "string"
+                },
+                "question": {
+                  "type": "string"
+                },
+                "options": {
+                  "type": "object",
+                  "description": "Optional chat fields."
+                }
+              },
+              "required": [
+                "recipe_id",
+                "question"
+              ],
+              "additionalProperties": false
+            }
+          },
+          {
+            "name": "zone.file",
+            "description": "File a primitive in a Zone.",
+            "inputSchema": {
+              "type": "object",
+              "properties": {
+                "directory_id": {
+                  "type": "string"
+                },
+                "primitive_id": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "directory_id",
+                "primitive_id"
+              ],
+              "additionalProperties": false
+            }
+          },
+          {
+            "name": "zone.unfile",
+            "description": "Remove a primitive from a Zone.",
+            "inputSchema": {
+              "type": "object",
+              "properties": {
+                "directory_id": {
+                  "type": "string"
+                },
+                "primitive_id": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "directory_id",
+                "primitive_id"
+              ],
+              "additionalProperties": false
+            }
+          },
+          {
+            "name": "zone.list_members",
+            "description": "List Zone members.",
+            "inputSchema": {
+              "type": "object",
+              "properties": {
+                "directory_id": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "directory_id"
+              ],
+              "additionalProperties": false
+            }
+          },
+          {
+            "name": "kb.add_member",
+            "description": "Add a resource reference to a knowledge base.",
+            "inputSchema": {
+              "type": "object",
+              "properties": {
+                "kb_id": {
+                  "type": "string"
+                },
+                "ref": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "kb_id",
+                "ref"
+              ],
+              "additionalProperties": false
+            }
+          },
+          {
+            "name": "kb.remove_member",
+            "description": "Remove a resource reference from a knowledge base.",
+            "inputSchema": {
+              "type": "object",
+              "properties": {
+                "kb_id": {
+                  "type": "string"
+                },
+                "ref": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "kb_id",
+                "ref"
+              ],
+              "additionalProperties": false
+            }
+          },
+          {
+            "name": "kb.list_members",
+            "description": "List knowledge-base members.",
+            "inputSchema": {
+              "type": "object",
+              "properties": {
+                "kb_id": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "kb_id"
+              ],
+              "additionalProperties": false
+            }
+          },
+          {
+            "name": "meeting.start_capture",
+            "description": "Start a meeting capture through the configured HoldSpeak capture controller.",
+            "inputSchema": {
+              "type": "object",
+              "properties": {
+                "config": {
+                  "type": "object",
+                  "description": "Optional capture configuration, including devices."
+                }
+              },
+              "required": [],
+              "additionalProperties": false
+            }
+          },
+          {
+            "name": "meeting.stop_capture",
+            "description": "Stop the active meeting capture, optionally identifying the meeting to stop.",
+            "inputSchema": {
+              "type": "object",
+              "properties": {
+                "meeting_id": {
+                  "type": "string",
+                  "description": "Optional meeting identifier."
+                }
+              },
+              "required": [],
+              "additionalProperties": false
+            }
+          },
+          {
+            "name": "meeting.delete",
+            "description": "Delete a stored meeting when it should no longer be retained.",
+            "inputSchema": {
+              "type": "object",
+              "properties": {
+                "meeting_id": {
+                  "type": "string",
+                  "description": "Meeting identifier to delete."
+                }
+              },
+              "required": [
+                "meeting_id"
+              ],
+              "additionalProperties": false
+            }
+          },
+          {
+            "name": "meeting.export",
+            "description": "Export a stored meeting as Markdown or JSON for sharing or archival.",
+            "inputSchema": {
+              "type": "object",
+              "properties": {
+                "meeting_id": {
+                  "type": "string",
+                  "description": "Meeting identifier to export."
+                },
+                "format": {
+                  "type": "string",
+                  "enum": [
+                    "markdown",
+                    "json"
+                  ],
+                  "description": "Export format."
+                }
+              },
+              "required": [
+                "meeting_id",
+                "format"
+              ],
+              "additionalProperties": false
+            }
+          },
+          {
+            "name": "profile.list",
+            "description": "List inference destinations and current mesh-node liveness.",
+            "inputSchema": {
+              "type": "object",
+              "properties": {},
+              "required": [],
+              "additionalProperties": false
+            }
+          },
+          {
+            "name": "profile.get",
+            "description": "Get one inference destination when its non-secret configuration is needed.",
+            "inputSchema": {
+              "type": "object",
+              "properties": {
+                "profile_id": {
+                  "type": "string",
+                  "description": "Inference destination identifier."
+                }
+              },
+              "required": [
+                "profile_id"
+              ],
+              "additionalProperties": false
+            }
+          },
+          {
+            "name": "profile.create",
+            "description": "Create an inference destination using non-secret profile fields.",
+            "inputSchema": {
+              "type": "object",
+              "properties": {
+                "fields": {
+                  "type": "object",
+                  "description": "Profile fields; a non-empty name is required by the service."
+                }
+              },
+              "required": [
+                "fields"
+              ],
+              "additionalProperties": false
+            }
+          },
+          {
+            "name": "profile.update",
+            "description": "Update the supplied non-secret fields of an inference destination.",
+            "inputSchema": {
+              "type": "object",
+              "properties": {
+                "profile_id": {
+                  "type": "string",
+                  "description": "Inference destination identifier."
+                },
+                "fields": {
+                  "type": "object",
+                  "description": "Profile fields to change."
+                }
+              },
+              "required": [
+                "profile_id",
+                "fields"
+              ],
+              "additionalProperties": false
+            }
+          },
+          {
+            "name": "profile.delete",
+            "description": "Delete an inference destination that is no longer available.",
+            "inputSchema": {
+              "type": "object",
+              "properties": {
+                "profile_id": {
+                  "type": "string",
+                  "description": "Inference destination identifier."
+                }
+              },
+              "required": [
+                "profile_id"
+              ],
+              "additionalProperties": false
+            }
+          },
+          {
+            "name": "dictation.list",
+            "description": "Read the retained dictation journal, optionally paged and filtered by source.",
+            "inputSchema": {
+              "type": "object",
+              "properties": {
+                "limit": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 500,
+                  "description": "Maximum entries to return."
+                },
+                "cursor": {
+                  "type": "integer",
+                  "description": "Return entries older than this journal entry id."
+                },
+                "source": {
+                  "type": "string",
+                  "enum": [
+                    "dictation",
+                    "dry_run",
+                    "browser",
+                    "hotkey"
+                  ],
+                  "description": "Optional dictation source filter."
+                }
+              },
+              "required": [],
+              "additionalProperties": false
+            }
+          },
+          {
+            "name": "dictation.get",
+            "description": "Get one retained dictation journal entry by its numeric id.",
+            "inputSchema": {
+              "type": "object",
+              "properties": {
+                "entry_id": {
+                  "type": "integer",
+                  "description": "Numeric dictation journal entry id."
+                }
+              },
+              "required": [
+                "entry_id"
+              ],
+              "additionalProperties": false
+            }
+          },
+          {
+            "name": "desk.snapshot",
+            "description": "Read one coherent snapshot of the durable HoldSpeak desk.",
+            "inputSchema": {
+              "type": "object",
+              "properties": {},
+              "required": [],
+              "additionalProperties": false
+            }
+          },
+          {
+            "name": "decision_record.list",
+            "description": "List durable decision records, newest first.",
+            "inputSchema": {
+              "type": "object",
+              "properties": {
+                "limit": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 500
+                },
+                "offset": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              },
+              "required": [],
+              "additionalProperties": false
+            }
+          },
+          {
+            "name": "decision_record.get",
+            "description": "Get one decision record with sources, work, and revisions.",
+            "inputSchema": {
+              "type": "object",
+              "properties": {
+                "record_id": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "record_id"
+              ],
+              "additionalProperties": false
+            }
+          },
+          {
+            "name": "decision_record.create_from_meeting",
+            "description": "Mint a durable record from a meeting decision.",
+            "inputSchema": {
+              "type": "object",
+              "properties": {
+                "decision_id": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "decision_id"
+              ],
+              "additionalProperties": false
+            }
+          },
+          {
+            "name": "decision_record.create_from_desk",
+            "description": "Mint a durable record from an authored desk decision.",
+            "inputSchema": {
+              "type": "object",
+              "properties": {
+                "decision_id": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "decision_id"
+              ],
+              "additionalProperties": false
+            }
+          },
+          {
+            "name": "decision_record.search",
+            "description": "Search decision records and their affected-work labels.",
+            "inputSchema": {
+              "type": "object",
+              "properties": {
+                "query": {
+                  "type": "string"
+                },
+                "limit": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 500
+                }
+              },
+              "required": [
+                "query"
+              ],
+              "additionalProperties": false
+            }
+          },
+          {
+            "name": "decision.supersede",
+            "description": "Supersede a decision when a successor decision replaces it.",
+            "inputSchema": {
+              "type": "object",
+              "properties": {
+                "decision_id": {
+                  "type": "string",
+                  "description": "Decision to supersede."
+                }
+              },
+              "required": [
+                "decision_id"
+              ],
+              "additionalProperties": false
+            }
+          },
+          {
+            "name": "pipeline.events",
+            "description": "Query observed pipeline events with optional filters.",
+            "inputSchema": {
+              "type": "object",
+              "properties": {
+                "service": {
+                  "type": "string"
+                },
+                "method": {
+                  "type": "string"
+                },
+                "principal_kind": {
+                  "type": "string"
+                },
+                "since": {
+                  "type": "number",
+                  "description": "Inclusive epoch timestamp."
+                },
+                "until": {
+                  "type": "number",
+                  "description": "Inclusive epoch timestamp."
+                },
+                "correlation_id": {
+                  "type": "string"
+                },
+                "errors_only": {
+                  "type": "boolean",
+                  "default": false
+                },
+                "limit": {
+                  "type": "integer",
+                  "default": 50
+                }
+              },
+              "required": [],
+              "additionalProperties": false
+            }
+          },
+          {
+            "name": "follow_through.board",
+            "description": "Read the Follow-Through board, optionally filtered by project, owner, or lane.",
+            "inputSchema": {
+              "type": "object",
+              "properties": {
+                "project_id": {
+                  "type": "string",
+                  "description": "Optional project identifier."
+                },
+                "owner": {
+                  "type": "string",
+                  "description": "Optional accountable owner."
+                },
+                "state": {
+                  "type": "string",
+                  "enum": [
+                    "now",
+                    "waiting",
+                    "unassigned",
+                    "overdue"
+                  ],
+                  "description": "Optional board lane."
+                }
+              },
+              "required": [],
+              "additionalProperties": false
+            }
+          },
+          {
+            "name": "follow_through.complete",
+            "description": "Apply a completion verb to a Follow-Through action card.",
+            "inputSchema": {
+              "type": "object",
+              "properties": {
+                "card_id": {
+                  "type": "string",
+                  "description": "Action card identifier."
+                },
+                "verb": {
+                  "type": "string",
+                  "enum": [
+                    "done",
+                    "dismiss",
+                    "snooze",
+                    "delegate",
+                    "reopen"
+                  ],
+                  "description": "Write-through board verb."
+                },
+                "payload": {
+                  "type": "object",
+                  "description": "Verb data: until for snooze, to for delegate."
+                }
+              },
+              "required": [
+                "card_id",
+                "verb"
+              ],
+              "additionalProperties": false
+            }
+          },
+          {
+            "name": "follow_through.commit_decision",
+            "description": "Create an accountable commitment from an accepted decision.",
+            "inputSchema": {
+              "type": "object",
+              "properties": {
+                "decision_id": {
+                  "type": "string",
+                  "description": "Accepted decision identifier."
+                },
+                "owner": {
+                  "type": "string",
+                  "description": "Optional accountable owner."
+                },
+                "due_at": {
+                  "type": "string",
+                  "description": "Optional ISO-8601 due date."
+                }
+              },
+              "required": [
+                "decision_id"
+              ],
+              "additionalProperties": false
+            }
+          },
+          {
+            "name": "monday_brief.get",
+            "description": "Read the latest persisted Monday Brief; set generate to true when no brief exists and one should be composed.",
+            "inputSchema": {
+              "type": "object",
+              "properties": {
+                "generate": {
+                  "type": "boolean",
+                  "default": false,
+                  "description": "Generate the current brief when no persisted brief exists."
+                }
+              },
+              "required": [],
+              "additionalProperties": false
+            }
+          },
+          {
+            "name": "monday_brief.generate",
+            "description": "Generate the current Monday Brief from durable sources. Repeated calls return the day's existing brief.",
+            "inputSchema": {
+              "type": "object",
+              "properties": {},
+              "required": [],
+              "additionalProperties": false
+            }
+          },
+          {
+            "name": "ask.models",
+            "description": "List available inference destinations for Ask. Each row names the model the destination loads.",
+            "inputSchema": {
+              "type": "object",
+              "properties": {},
+              "additionalProperties": false
+            }
+          },
+          {
+            "name": "ask.resolve_grounding",
+            "description": "Resolve grounding references and return their hydrated titles and character counts without running inference.",
+            "inputSchema": {
+              "type": "object",
+              "properties": {
+                "refs": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "maxItems": 20,
+                  "description": "Qualified grounding references (e.g. 'note:abc', 'meeting:xyz')."
+                }
+              },
+              "required": [
+                "refs"
+              ],
+              "additionalProperties": false
+            }
+          },
+          {
+            "name": "ask.run",
+            "description": "Ask the desk a question. MODEL-INVOKING: rides the admitted RunLifecycle path. The result carries the receipt (model, provider, egress, actual_placement) so the caller knows what ran and where.",
+            "inputSchema": {
+              "type": "object",
+              "properties": {
+                "question": {
+                  "type": "string",
+                  "description": "The prompt to ask."
+                },
+                "lens": {
+                  "type": "string",
+                  "description": "Label for this Ask turn (default 'Ask')."
+                },
+                "inference_target_id": {
+                  "type": "string",
+                  "description": "Inference destination id. Omit for the hub default."
+                },
+                "context": {
+                  "type": "array",
+                  "items": {
+                    "type": "object"
+                  },
+                  "description": "Material context entries [{id, kind, title}]."
+                },
+                "grounding": {
+                  "type": "object",
+                  "description": "Grounding payload: meeting_ids, artifact_ids, refs, expand."
+                },
+                "max_tokens": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "temperature": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 2
+                }
+              },
+              "required": [
+                "question"
+              ],
+              "additionalProperties": false
+            }
+          },
+          {
+            "name": "ask.cancel",
+            "description": "Cancel an in-flight Ask invocation by its invocation_id.",
+            "inputSchema": {
+              "type": "object",
+              "properties": {
+                "invocation_id": {
+                  "type": "string",
+                  "description": "The invocation_id returned by ask.run."
+                }
+              },
+              "required": [
+                "invocation_id"
+              ],
+              "additionalProperties": false
+            }
+          },
+          {
+            "name": "ask.keep",
+            "description": "Persist an Ask answer as a desk artifact. Not model-invoking.",
+            "inputSchema": {
+              "type": "object",
+              "properties": {
+                "output": {
+                  "type": "string",
+                  "description": "The answer text to persist."
+                },
+                "sources": {
+                  "type": "array",
+                  "items": {
+                    "type": "object"
+                  },
+                  "description": "Source entries [{id, kind, title, ref}]."
+                },
+                "lens": {
+                  "type": "string"
+                },
+                "prompt": {
+                  "type": "string"
+                },
+                "grounding": {
+                  "type": "object"
+                }
+              },
+              "required": [
+                "output"
+              ],
+              "additionalProperties": false
+            }
+          },
+          {
+            "name": "settings.get",
+            "description": "Read the current HoldSpeak settings. Secrets are redacted; _revision enables optimistic concurrency.",
+            "inputSchema": {
+              "type": "object",
+              "properties": {},
+              "additionalProperties": false
+            }
+          },
+          {
+            "name": "settings.update",
+            "description": "Update HoldSpeak settings with a partial patch. Secrets cannot be written through this tool. Echo _revision from settings.get for optimistic concurrency; omit it for last-writer-wins. EGRESS: changing intel_provider, intel_profile_id, or other profile assignments may change the product's egress boundary (local/cloud); the response's _placement block shows the effective placement after the write. Settings are persisted immediately; a running HoldSpeak web server picks up the new values on its next settings read (no live-reload signal is sent from the MCP sidecar).",
+            "inputSchema": {
+              "type": "object",
+              "properties": {
+                "patch": {
+                  "type": "object",
+                  "description": "Partial settings object. Only supplied keys are changed."
+                }
+              },
+              "required": [
+                "patch"
+              ],
+              "additionalProperties": false
+            }
+          },
+          {
+            "name": "coder.list",
+            "description": "List coder sessions. Steering verbs are out-of-scope for the MCP sidecar.",
+            "inputSchema": {
+              "type": "object",
+              "properties": {
+                "agent": {
+                  "type": "string",
+                  "description": "Filter by agent name."
+                },
+                "include_ended": {
+                  "type": "boolean",
+                  "description": "Include ended sessions (default true)."
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          {
+            "name": "coder.get",
+            "description": "Get one coder session by agent:session_id.",
+            "inputSchema": {
+              "type": "object",
+              "properties": {
+                "session_id": {
+                  "type": "string",
+                  "description": "Session id in agent:session_id format."
+                }
+              },
+              "required": [
+                "session_id"
+              ],
+              "additionalProperties": false
+            }
+          },
+          {
+            "name": "coder.audit",
+            "description": "Read the bounded steering audit trail for coder sessions.",
+            "inputSchema": {
+              "type": "object",
+              "properties": {
+                "session_key": {
+                  "type": "string",
+                  "description": "Filter by session key."
+                },
+                "limit": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 500,
+                  "description": "Maximum entries (default 50)."
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          {
+            "name": "cadence.status",
+            "description": "Read Cadence engine status: enabled, pressure, loop counts, policy count.",
+            "inputSchema": {
+              "type": "object",
+              "properties": {},
+              "additionalProperties": false
+            }
+          },
+          {
+            "name": "cadence.loops",
+            "description": "List cadence loops. Omit include_terminal to exclude killed/closed loops.",
+            "inputSchema": {
+              "type": "object",
+              "properties": {
+                "include_terminal": {
+                  "type": "boolean",
+                  "description": "Include killed/closed loops (default false)."
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          {
+            "name": "cadence.get_loop",
+            "description": "Get one cadence loop with its next action. MAY INVOKE MODEL when cadence intelligence is enabled; rides the admitted inference path.",
+            "inputSchema": {
+              "type": "object",
+              "properties": {
+                "loop_id": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "loop_id"
+              ],
+              "additionalProperties": false
+            }
+          },
+          {
+            "name": "cadence.brief",
+            "description": "Read the deterministic Cadence morning brief.",
+            "inputSchema": {
+              "type": "object",
+              "properties": {},
+              "additionalProperties": false
+            }
+          },
+          {
+            "name": "cadence.closeout",
+            "description": "Read the current Cadence closeout recommendations.",
+            "inputSchema": {
+              "type": "object",
+              "properties": {},
+              "additionalProperties": false
+            }
+          },
+          {
+            "name": "cadence.history",
+            "description": "Read the Cadence nudge history.",
+            "inputSchema": {
+              "type": "object",
+              "properties": {
+                "limit": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 500,
+                  "description": "Maximum nudges to return (default 50)."
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          {
+            "name": "cadence.audit",
+            "description": "Export the full Cadence audit trail.",
+            "inputSchema": {
+              "type": "object",
+              "properties": {},
+              "additionalProperties": false
+            }
+          },
+          {
+            "name": "cadence.snooze",
+            "description": "Snooze a cadence loop until a given time or for a number of hours.",
+            "inputSchema": {
+              "type": "object",
+              "properties": {
+                "loop_id": {
+                  "type": "string"
+                },
+                "until": {
+                  "type": "string",
+                  "description": "ISO-8601 snooze-until timestamp."
+                },
+                "hours": {
+                  "type": "number",
+                  "minimum": 0.1,
+                  "description": "Hours to snooze (default 24, used when until is omitted)."
+                }
+              },
+              "required": [
+                "loop_id"
+              ],
+              "additionalProperties": false
+            }
+          },
+          {
+            "name": "cadence.set_status",
+            "description": "Set the status of a cadence loop. The reply verb is intentionally absent from the sidecar: it requires the live agent-context pane delivery path.",
+            "inputSchema": {
+              "type": "object",
+              "properties": {
+                "loop_id": {
+                  "type": "string"
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "open",
+                    "closed",
+                    "killed"
+                  ],
+                  "description": "New loop status."
+                }
+              },
+              "required": [
+                "loop_id",
+                "status"
+              ],
+              "additionalProperties": false
+            }
+          },
+          {
+            "name": "cadence.run_now",
+            "description": "Run a Cadence engine tick immediately. Local-only: projects loops, computes due nudges, returns them. May surface nudges ahead of schedule.",
+            "inputSchema": {
+              "type": "object",
+              "properties": {},
+              "additionalProperties": false
+            }
+          },
+          {
+            "name": "cadence.apply_closeout",
+            "description": "Apply closeout decisions to cadence loops. Each decision names a loop_id and an action; returns applied/skipped counts.",
+            "inputSchema": {
+              "type": "object",
+              "properties": {
+                "decisions": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "loop_id": {
+                        "type": "string"
+                      },
+                      "action": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "loop_id",
+                      "action"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "maxItems": 100,
+                  "description": "Closeout decisions to apply."
+                }
+              },
+              "required": [
+                "decisions"
+              ],
+              "additionalProperties": false
+            }
+          },
+          {
+            "name": "sequence.run",
+            "description": "Run a Sequence (chain) through the admitted inference path. MODEL-INVOKING. The result carries the receipt, steps, and artifact reference.",
+            "inputSchema": {
+              "type": "object",
+              "properties": {
+                "chain_id": {
+                  "type": "string",
+                  "description": "Sequence identifier."
+                },
+                "input": {
+                  "type": "string",
+                  "description": "Input text for the first step."
+                },
+                "variables": {
+                  "type": "object",
+                  "description": "Template variables for prompt rendering."
+                },
+                "inference_target_id": {
+                  "type": "string",
+                  "description": "Override inference destination."
+                },
+                "temperature": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 2
+                },
+                "max_tokens": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "request_id": {
+                  "type": "string",
+                  "description": "Idempotency key for replay."
+                }
+              },
+              "required": [
+                "chain_id"
+              ],
+              "additionalProperties": false
+            }
+          },
+          {
+            "name": "sequence.cancel",
+            "description": "Cancel an in-flight Sequence run by its parent operation id.",
+            "inputSchema": {
+              "type": "object",
+              "properties": {
+                "parent_operation_id": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "parent_operation_id"
+              ],
+              "additionalProperties": false
+            }
+          },
+          {
+            "name": "workflow.run",
+            "description": "Run a Workflow through the admitted inference path. MODEL-INVOKING. Returns the receipt, node steps, and artifact reference.",
+            "inputSchema": {
+              "type": "object",
+              "properties": {
+                "workflow_id": {
+                  "type": "string",
+                  "description": "Workflow identifier."
+                },
+                "input": {
+                  "type": "string",
+                  "description": "Input text for the workflow."
+                },
+                "variables": {
+                  "type": "object",
+                  "description": "Template variables for prompt rendering."
+                },
+                "inference_target_id": {
+                  "type": "string",
+                  "description": "Override inference destination."
+                },
+                "temperature": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 2
+                },
+                "max_tokens": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "request_id": {
+                  "type": "string",
+                  "description": "Idempotency key for replay."
+                }
+              },
+              "required": [
+                "workflow_id"
+              ],
+              "additionalProperties": false
+            }
+          },
+          {
+            "name": "workflow.cancel",
+            "description": "Cancel an in-flight Workflow run by its parent operation id.",
+            "inputSchema": {
+              "type": "object",
+              "properties": {
+                "parent_operation_id": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "parent_operation_id"
+              ],
+              "additionalProperties": false
+            }
+          },
+          {
+            "name": "memory.search",
+            "description": "Search the long-horizon memory store. Results are filtered by the principal's read permission.",
+            "inputSchema": {
+              "type": "object",
+              "properties": {
+                "query": {
+                  "type": "string",
+                  "description": "Search query."
+                },
+                "kind": {
+                  "type": "string",
+                  "description": "Optional kind filter."
+                },
+                "project_id": {
+                  "type": "string",
+                  "description": "Optional project filter."
+                },
+                "time_from": {
+                  "type": "string",
+                  "description": "Optional ISO-8601 start bound."
+                },
+                "time_to": {
+                  "type": "string",
+                  "description": "Optional ISO-8601 end bound."
+                },
+                "limit": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 500,
+                  "description": "Maximum results (default 50)."
+                },
+                "offset": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "Pagination offset (default 0)."
+                }
+              },
+              "required": [
+                "query"
+              ],
+              "additionalProperties": false
+            }
+          },
+          {
+            "name": "plugin_job.list",
+            "description": "List deferred plugin jobs by status. Queue processing is unavailable from the MCP sidecar.",
+            "inputSchema": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "all",
+                    "queued",
+                    "running",
+                    "failed",
+                    "completed"
+                  ],
+                  "description": "Job status filter (default 'all')."
+                },
+                "meeting_id": {
+                  "type": "string",
+                  "description": "Optional meeting filter."
+                },
+                "limit": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 500,
+                  "description": "Maximum jobs (default 200)."
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          {
+            "name": "plugin_job.summary",
+            "description": "Read aggregate plugin job statistics: total, queued, running, failed counts and next retry time.",
+            "inputSchema": {
+              "type": "object",
+              "properties": {},
+              "additionalProperties": false
+            }
+          },
+          {
+            "name": "plugin_job.retry",
+            "description": "Re-queue a failed or completed plugin job for immediate retry. Refuses running jobs.",
+            "inputSchema": {
+              "type": "object",
+              "properties": {
+                "job_id": {
+                  "type": "integer",
+                  "description": "Numeric job identifier."
+                }
+              },
+              "required": [
+                "job_id"
+              ],
+              "additionalProperties": false
+            }
+          },
+          {
+            "name": "plugin_job.cancel",
+            "description": "Mark a non-running plugin job as completed (cancels it). Refuses running jobs.",
+            "inputSchema": {
+              "type": "object",
+              "properties": {
+                "job_id": {
+                  "type": "integer",
+                  "description": "Numeric job identifier."
+                }
+              },
+              "required": [
+                "job_id"
+              ],
+              "additionalProperties": false
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "request": {
+      "jsonrpc": "2.0",
+      "id": 3,
+      "method": "resources/list"
+    },
+    "response": {
+      "jsonrpc": "2.0",
+      "id": 3,
+      "result": {
+        "resources": [
+          {
+            "uri": "holdspeak://desk/schema",
+            "name": "Desk primitive schema",
+            "description": "Primitive kinds, product nouns, and synchronization classes.",
+            "mimeType": "application/json"
+          },
+          {
+            "uri": "holdspeak://desk/verbs",
+            "name": "Desk verb catalog",
+            "description": "Registered Desk verbs, scopes, key bindings, and MCP designation.",
+            "mimeType": "application/json"
+          },
+          {
+            "uri": "holdspeak://desk/constitution",
+            "name": "HoldSpeak Constitution",
+            "description": "The project\u2019s constitutional context.",
+            "mimeType": "text/markdown"
+          },
+          {
+            "uri": "holdspeak://desk/inference-targets",
+            "name": "Inference targets",
+            "description": "Available local and configured inference profiles.",
+            "mimeType": "application/json"
+          },
+          {
+            "uri": "holdspeak://desk/snapshot",
+            "name": "Desk snapshot",
+            "description": "Canonical current Desk state, including its stored objects and layout.",
+            "mimeType": "application/json"
+          },
+          {
+            "uri": "holdspeak://workbenches",
+            "name": "Workbenches",
+            "description": "Canonical list of available workbenches and their current summaries.",
+            "mimeType": "application/json"
+          },
+          {
+            "uri": "holdspeak://recipes",
+            "name": "Recipes",
+            "description": "Canonical list of agent recipes available on the Desk.",
+            "mimeType": "application/json"
+          },
+          {
+            "uri": "holdspeak://profiles",
+            "name": "Profiles",
+            "description": "Canonical redacted list of configured inference profiles.",
+            "mimeType": "application/json"
+          },
+          {
+            "uri": "holdspeak://dictation/journal",
+            "name": "Dictation journal",
+            "description": "Canonical journal of stored dictation entries.",
+            "mimeType": "application/json"
+          },
+          {
+            "uri": "holdspeak://follow-through/board",
+            "name": "Follow-Through board",
+            "description": "Canonical current Follow-Through execution lanes and card provenance.",
+            "mimeType": "application/json"
+          },
+          {
+            "uri": "holdspeak://briefs/latest",
+            "name": "Latest Monday Brief",
+            "description": "Latest persisted Monday Brief, or null when none has been generated.",
+            "mimeType": "application/json"
+          },
+          {
+            "uri": "pipeline://events/recent",
+            "name": "Recent pipeline events",
+            "description": "Most recent observed pipeline events.",
+            "mimeType": "application/json"
+          },
+          {
+            "uri": "pipeline://events/stats",
+            "name": "Pipeline event statistics",
+            "description": "Aggregate statistics for observed pipeline events.",
+            "mimeType": "application/json"
+          },
+          {
+            "uri": "holdspeak://cadence/status",
+            "name": "Cadence engine status",
+            "description": "Cadence engine status: enabled, pressure, loop counts, policy count.",
+            "mimeType": "application/json"
+          }
+        ],
+        "resourceTemplates": [
+          {
+            "uriTemplate": "holdspeak://primitives/{kind}/{id}",
+            "name": "Primitive detail",
+            "description": "One stored desk primitive by kind and identifier.",
+            "mimeType": "application/json"
+          },
+          {
+            "uriTemplate": "holdspeak://workbenches/{id}",
+            "name": "Workbench detail",
+            "description": "One workbench, including its item and run summary.",
+            "mimeType": "application/json"
+          },
+          {
+            "uriTemplate": "holdspeak://workbenches/{id}/runs",
+            "name": "Workbench runs",
+            "description": "Canonical run history for one workbench.",
+            "mimeType": "application/json"
+          },
+          {
+            "uriTemplate": "holdspeak://recipes/{id}",
+            "name": "Recipe detail",
+            "description": "Canonical stored definition for one agent recipe.",
+            "mimeType": "application/json"
+          },
+          {
+            "uriTemplate": "holdspeak://profiles/{id}",
+            "name": "Profile detail",
+            "description": "Canonical redacted configuration for one inference profile.",
+            "mimeType": "application/json"
+          },
+          {
+            "uriTemplate": "holdspeak://zones/{id}/members",
+            "name": "Zone members",
+            "description": "Canonical directory members for one Desk zone.",
+            "mimeType": "application/json"
+          },
+          {
+            "uriTemplate": "holdspeak://meetings/{id}",
+            "name": "Meeting detail",
+            "description": "One archived meeting and its stored detail.",
+            "mimeType": "application/json"
+          },
+          {
+            "uriTemplate": "holdspeak://decision-records/{id}",
+            "name": "Decision record detail",
+            "description": "One durable decision record with its evidence and revision trail.",
+            "mimeType": "application/json"
+          },
+          {
+            "uriTemplate": "pipeline://events/recent/{service}",
+            "name": "Recent pipeline events by service",
+            "description": "Most recent observed pipeline events for one service.",
+            "mimeType": "application/json"
+          },
+          {
+            "uriTemplate": "pipeline://events/correlation/{id}",
+            "name": "Pipeline events by correlation",
+            "description": "All observed pipeline events in one correlation chain.",
+            "mimeType": "application/json"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "request": {
+      "jsonrpc": "2.0",
+      "id": 4,
+      "method": "tools/call",
+      "params": {
+        "name": "desk.list",
+        "arguments": {
+          "kind": "notes"
+        }
+      }
+    },
+    "response": {
+      "jsonrpc": "2.0",
+      "id": 4,
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "[]"
+          }
+        ],
+        "isError": false
+      }
+    }
+  },
+  {
+    "request": {
+      "jsonrpc": "2.0",
+      "id": 5,
+      "method": "tools/call",
+      "params": {
+        "name": "ask.models"
+      }
+    },
+    "response": {
+      "jsonrpc": "2.0",
+      "id": 5,
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "[{\"id\": \"this_machine\", \"name\": \"Qwen3.5-9B-Instruct-Q6_K\", \"profile_id\": null, \"source\": \"hub\"}]"
+          }
+        ],
+        "isError": false
+      }
+    }
+  },
+  {
+    "request": {
+      "jsonrpc": "2.0",
+      "id": 6,
+      "method": "tools/call",
+      "params": {
+        "name": "settings.get"
+      }
+    },
+    "response": {
+      "jsonrpc": "2.0",
+      "id": 6,
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"_placement\": {\"meeting\": {\"boundary\": \"local\", \"engine\": \"local\", \"model\": \"Qwen3.5-9B-Instruct-Q6_K\", \"node\": \"\", \"placement_reason\": \"\", \"placement_source\": \"provider\", \"provider_honored\": true, \"provider_intent\": \"local\", \"runnable\": false, \"runnable_reason\": \"llama-cpp-python is not available\", \"target_id\": \"\", \"target_name\": \"\"}}, \"_revision\": \"9af5fdcdf7cce084\", \"_secrets\": {\"companion_webhook_url\": {\"configured\": false}, \"device_psk\": {\"configured\": false}, \"failure_webhook_credential\": {\"configured\": false}, \"failure_webhook_url\": {\"configured\": false}, \"slack_webhook_url\": {\"configured\": false}, \"telegram_bot_token\": {\"configured\": false}, \"telegram_pairing_code\": {\"configured\": false}, \"web_token\": {\"configured\": false}}, \"cadence\": {\"enabled\": false, \"max_nudges_per_day\": 12, \"pressure\": \"normal\", \"quiet_hours_end\": 8, \"quiet_hours_start\": 22, \"tick_interval_seconds\": 300, \"use_llm\": false}, \"cadence_telegram\": {\"allowed_chat_ids\": [], \"enabled\": false}, \"config_version\": 1, \"control_mode\": \"neutral\", \"device\": {}, \"dictation\": {\"macros\": {\"enabled\": false, \"items\": []}, \"pipeline\": {\"corrections_enabled\": false, \"enabled\": false, \"journal_enabled\": true, \"journal_retention\": 500, \"max_total_latency_ms\": 600, \"rewrite_passes\": 1, \"stages\": [\"intent-router\", \"kb-enricher\"], \"target_detect_llm_below\": 0.8, \"target_detect_llm_enabled\": false, \"target_profile_override\": \"auto\"}, \"preview_before_type\": false, \"runtime\": {\"backend\": \"auto\", \"eviction_idle_seconds\": 0, \"llama_cpp_model_path\": \"~/Models/gguf/Qwen3.5-4B-Instruct-Q4_K_M.gguf\", \"mlx_model\": \"~/Models/mlx/Qwen3.5-8B-MLX-4bit\", \"n_ctx\": 2048, \"n_gpu_layers\": -1, \"n_threads\": null, \"openai_compatible_timeout_seconds\": 8.0, \"profile_id\": null, \"warm_on_start\": false}, \"spoken_symbols\": []}, \"hotkey\": {\"display\": \"\\u2325R\", \"key\": \"alt_r\"}, \"meeting\": {\"allow_actuators\": false, \"allowed_actuators\": [], \"auto_export\": false, \"companion_github_repo\": \"\", \"cross_meeting_recognition\": true, \"diarization_enabled\": false, \"diarize_mic\": false, \"disabled_plugins\": [], \"export_format\": \"markdown\", \"intel_cloud_reasoning_effort\": null, \"intel_cloud_store\": false, \"intel_deferred_enabled\": true, \"intel_enabled\": true, \"intel_profile_id\": null, \"intel_provider\": \"local\", \"intel_queue_poll_seconds\": 120, \"intel_realtime_model\": \"~/Models/gguf/Qwen3.5-9B-Instruct-Q6_K.gguf\", \"intel_retry_base_seconds\": 30, \"intel_retry_failure_alert_percent\": 50.0, \"intel_retry_failure_hysteresis_minutes\": 5.0, \"intel_retry_failure_webhook_header_name\": null, \"intel_retry_max_attempts\": 6, \"intel_retry_max_seconds\": 900, \"intel_summary_model\": null, \"intel_temperature\": 0.2, \"intent_hysteresis_windows\": 1, \"intent_router_enabled\": false, \"intent_score_threshold\": 0.6, \"intent_segment_probe_enabled\": false, \"intent_step_seconds\": 30, \"intent_window_seconds\": 90, \"mic_device\": null, \"mic_label\": \"Me\", \"mir_enabled\": true, \"mir_profile\": \"balanced\", \"plugin_profile\": \"balanced\", \"remote_label\": \"Remote\", \"routing_profile\": \"balanced\", \"similarity_threshold\": 0.75, \"system_audio_device\": null, \"web_auto_open\": false, \"webhook_allowed_hosts\": []}, \"mesh\": {\"device_name\": \"\"}, \"model\": {\"backend\": \"auto\", \"language\": \"auto\", \"local_model_preload_authority\": \"\", \"name\": \"base\", \"transcribe_timeout_seconds\": 120.0, \"warm_on_start\": true}, \"presence\": {\"enabled\": false, \"mascot\": false}, \"rails_observer\": {\"enabled\": false, \"poll_seconds\": 30, \"profile_id\": null, \"tail\": 20}, \"ui\": {\"history_lines\": 10, \"show_audio_meter\": true, \"theme\": \"dark\"}, \"wake_word\": {\"action\": \"preview\", \"armed_window_seconds\": 8.0, \"enabled\": false, \"model\": \"hey_jarvis\", \"threshold\": 0.5}}"
+          }
+        ],
+        "isError": false
+      }
+    }
+  },
+  {
+    "request": {
+      "jsonrpc": "2.0",
+      "id": 7,
+      "method": "tools/call",
+      "params": {
+        "name": "settings.update",
+        "arguments": {
+          "patch": {
+            "wake_word": {
+              "threshold": 0.42
+            }
+          }
+        }
+      }
+    },
+    "response": {
+      "jsonrpc": "2.0",
+      "id": 7,
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"settings\": {\"_placement\": {\"meeting\": {\"boundary\": \"local\", \"engine\": \"local\", \"model\": \"Qwen3.5-9B-Instruct-Q6_K\", \"node\": \"\", \"placement_reason\": \"\", \"placement_source\": \"provider\", \"provider_honored\": true, \"provider_intent\": \"local\", \"runnable\": false, \"runnable_reason\": \"llama-cpp-python is not available\", \"target_id\": \"\", \"target_name\": \"\"}}, \"_revision\": \"8c16ca19b614e33c\", \"_secrets\": {\"companion_webhook_url\": {\"configured\": false}, \"device_psk\": {\"configured\": false}, \"failure_webhook_credential\": {\"configured\": false}, \"failure_webhook_url\": {\"configured\": false}, \"slack_webhook_url\": {\"configured\": false}, \"telegram_bot_token\": {\"configured\": false}, \"telegram_pairing_code\": {\"configured\": false}, \"web_token\": {\"configured\": false}}, \"cadence\": {\"enabled\": false, \"max_nudges_per_day\": 12, \"pressure\": \"normal\", \"quiet_hours_end\": 8, \"quiet_hours_start\": 22, \"tick_interval_seconds\": 300, \"use_llm\": false}, \"cadence_telegram\": {\"allowed_chat_ids\": [], \"enabled\": false}, \"config_version\": 1, \"control_mode\": \"neutral\", \"device\": {}, \"dictation\": {\"macros\": {\"enabled\": false, \"items\": []}, \"pipeline\": {\"corrections_enabled\": false, \"enabled\": false, \"journal_enabled\": true, \"journal_retention\": 500, \"max_total_latency_ms\": 600, \"rewrite_passes\": 1, \"stages\": [\"intent-router\", \"kb-enricher\"], \"target_detect_llm_below\": 0.8, \"target_detect_llm_enabled\": false, \"target_profile_override\": \"auto\"}, \"preview_before_type\": false, \"runtime\": {\"backend\": \"auto\", \"eviction_idle_seconds\": 0, \"llama_cpp_model_path\": \"~/Models/gguf/Qwen3.5-4B-Instruct-Q4_K_M.gguf\", \"mlx_model\": \"~/Models/mlx/Qwen3.5-8B-MLX-4bit\", \"n_ctx\": 2048, \"n_gpu_layers\": -1, \"n_threads\": null, \"openai_compatible_timeout_seconds\": 8.0, \"profile_id\": null, \"warm_on_start\": false}, \"spoken_symbols\": []}, \"hotkey\": {\"display\": \"\\u2325R\", \"key\": \"alt_r\"}, \"meeting\": {\"allow_actuators\": false, \"allowed_actuators\": [], \"auto_export\": false, \"companion_github_repo\": \"\", \"cross_meeting_recognition\": true, \"diarization_enabled\": false, \"diarize_mic\": false, \"disabled_plugins\": [], \"export_format\": \"markdown\", \"intel_cloud_reasoning_effort\": null, \"intel_cloud_store\": false, \"intel_deferred_enabled\": true, \"intel_enabled\": true, \"intel_profile_id\": null, \"intel_provider\": \"local\", \"intel_queue_poll_seconds\": 120, \"intel_realtime_model\": \"~/Models/gguf/Qwen3.5-9B-Instruct-Q6_K.gguf\", \"intel_retry_base_seconds\": 30, \"intel_retry_failure_alert_percent\": 50.0, \"intel_retry_failure_hysteresis_minutes\": 5.0, \"intel_retry_failure_webhook_header_name\": null, \"intel_retry_max_attempts\": 6, \"intel_retry_max_seconds\": 900, \"intel_summary_model\": null, \"intel_temperature\": 0.2, \"intent_hysteresis_windows\": 1, \"intent_router_enabled\": false, \"intent_score_threshold\": 0.6, \"intent_segment_probe_enabled\": false, \"intent_step_seconds\": 30, \"intent_window_seconds\": 90, \"mic_device\": null, \"mic_label\": \"Me\", \"mir_enabled\": true, \"mir_profile\": \"balanced\", \"plugin_profile\": \"balanced\", \"remote_label\": \"Remote\", \"routing_profile\": \"balanced\", \"similarity_threshold\": 0.75, \"system_audio_device\": null, \"web_auto_open\": false, \"webhook_allowed_hosts\": []}, \"mesh\": {\"device_name\": \"\"}, \"model\": {\"backend\": \"auto\", \"language\": \"auto\", \"local_model_preload_authority\": \"\", \"name\": \"base\", \"transcribe_timeout_seconds\": 120.0, \"warm_on_start\": true}, \"presence\": {\"enabled\": false, \"mascot\": false}, \"rails_observer\": {\"enabled\": false, \"poll_seconds\": 30, \"profile_id\": null, \"tail\": 20}, \"ui\": {\"history_lines\": 10, \"show_audio_meter\": true, \"theme\": \"dark\"}, \"wake_word\": {\"action\": \"preview\", \"armed_window_seconds\": 8.0, \"enabled\": false, \"model\": \"hey_jarvis\", \"threshold\": 0.42}}, \"success\": true}"
+          }
+        ],
+        "isError": false
+      }
+    }
+  },
+  {
+    "request": {
+      "jsonrpc": "2.0",
+      "id": 8,
+      "method": "tools/call",
+      "params": {
+        "name": "settings.get"
+      }
+    },
+    "response": {
+      "jsonrpc": "2.0",
+      "id": 8,
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"_placement\": {\"meeting\": {\"boundary\": \"local\", \"engine\": \"local\", \"model\": \"Qwen3.5-9B-Instruct-Q6_K\", \"node\": \"\", \"placement_reason\": \"\", \"placement_source\": \"provider\", \"provider_honored\": true, \"provider_intent\": \"local\", \"runnable\": false, \"runnable_reason\": \"llama-cpp-python is not available\", \"target_id\": \"\", \"target_name\": \"\"}}, \"_revision\": \"8c16ca19b614e33c\", \"_secrets\": {\"companion_webhook_url\": {\"configured\": false}, \"device_psk\": {\"configured\": false}, \"failure_webhook_credential\": {\"configured\": false}, \"failure_webhook_url\": {\"configured\": false}, \"slack_webhook_url\": {\"configured\": false}, \"telegram_bot_token\": {\"configured\": false}, \"telegram_pairing_code\": {\"configured\": false}, \"web_token\": {\"configured\": false}}, \"cadence\": {\"enabled\": false, \"max_nudges_per_day\": 12, \"pressure\": \"normal\", \"quiet_hours_end\": 8, \"quiet_hours_start\": 22, \"tick_interval_seconds\": 300, \"use_llm\": false}, \"cadence_telegram\": {\"allowed_chat_ids\": [], \"enabled\": false}, \"config_version\": 1, \"control_mode\": \"neutral\", \"device\": {}, \"dictation\": {\"macros\": {\"enabled\": false, \"items\": []}, \"pipeline\": {\"corrections_enabled\": false, \"enabled\": false, \"journal_enabled\": true, \"journal_retention\": 500, \"max_total_latency_ms\": 600, \"rewrite_passes\": 1, \"stages\": [\"intent-router\", \"kb-enricher\"], \"target_detect_llm_below\": 0.8, \"target_detect_llm_enabled\": false, \"target_profile_override\": \"auto\"}, \"preview_before_type\": false, \"runtime\": {\"backend\": \"auto\", \"eviction_idle_seconds\": 0, \"llama_cpp_model_path\": \"~/Models/gguf/Qwen3.5-4B-Instruct-Q4_K_M.gguf\", \"mlx_model\": \"~/Models/mlx/Qwen3.5-8B-MLX-4bit\", \"n_ctx\": 2048, \"n_gpu_layers\": -1, \"n_threads\": null, \"openai_compatible_timeout_seconds\": 8.0, \"profile_id\": null, \"warm_on_start\": false}, \"spoken_symbols\": []}, \"hotkey\": {\"display\": \"\\u2325R\", \"key\": \"alt_r\"}, \"meeting\": {\"allow_actuators\": false, \"allowed_actuators\": [], \"auto_export\": false, \"companion_github_repo\": \"\", \"cross_meeting_recognition\": true, \"diarization_enabled\": false, \"diarize_mic\": false, \"disabled_plugins\": [], \"export_format\": \"markdown\", \"intel_cloud_reasoning_effort\": null, \"intel_cloud_store\": false, \"intel_deferred_enabled\": true, \"intel_enabled\": true, \"intel_profile_id\": null, \"intel_provider\": \"local\", \"intel_queue_poll_seconds\": 120, \"intel_realtime_model\": \"~/Models/gguf/Qwen3.5-9B-Instruct-Q6_K.gguf\", \"intel_retry_base_seconds\": 30, \"intel_retry_failure_alert_percent\": 50.0, \"intel_retry_failure_hysteresis_minutes\": 5.0, \"intel_retry_failure_webhook_header_name\": null, \"intel_retry_max_attempts\": 6, \"intel_retry_max_seconds\": 900, \"intel_summary_model\": null, \"intel_temperature\": 0.2, \"intent_hysteresis_windows\": 1, \"intent_router_enabled\": false, \"intent_score_threshold\": 0.6, \"intent_segment_probe_enabled\": false, \"intent_step_seconds\": 30, \"intent_window_seconds\": 90, \"mic_device\": null, \"mic_label\": \"Me\", \"mir_enabled\": true, \"mir_profile\": \"balanced\", \"plugin_profile\": \"balanced\", \"remote_label\": \"Remote\", \"routing_profile\": \"balanced\", \"similarity_threshold\": 0.75, \"system_audio_device\": null, \"web_auto_open\": false, \"webhook_allowed_hosts\": []}, \"mesh\": {\"device_name\": \"\"}, \"model\": {\"backend\": \"auto\", \"language\": \"auto\", \"local_model_preload_authority\": \"\", \"name\": \"base\", \"transcribe_timeout_seconds\": 120.0, \"warm_on_start\": true}, \"presence\": {\"enabled\": false, \"mascot\": false}, \"rails_observer\": {\"enabled\": false, \"poll_seconds\": 30, \"profile_id\": null, \"tail\": 20}, \"ui\": {\"history_lines\": 10, \"show_audio_meter\": true, \"theme\": \"dark\"}, \"wake_word\": {\"action\": \"preview\", \"armed_window_seconds\": 8.0, \"enabled\": false, \"model\": \"hey_jarvis\", \"threshold\": 0.42}}"
+          }
+        ],
+        "isError": false
+      }
+    }
+  },
+  {
+    "request": {
+      "jsonrpc": "2.0",
+      "id": 9,
+      "method": "tools/call",
+      "params": {
+        "name": "coder.list"
+      }
+    },
+    "response": {
+      "jsonrpc": "2.0",
+      "id": 9,
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "[]"
+          }
+        ],
+        "isError": false
+      }
+    }
+  },
+  {
+    "request": {
+      "jsonrpc": "2.0",
+      "id": 10,
+      "method": "tools/call",
+      "params": {
+        "name": "memory.search",
+        "arguments": {
+          "query": "test"
+        }
+      }
+    },
+    "response": {
+      "jsonrpc": "2.0",
+      "id": 10,
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"hits\": [], \"page\": {\"count\": 0, \"limit\": 50, \"offset\": 0, \"total\": 0}, \"ranking\": {\"interleave\": \"kind_rank_tiers_then_normalized_score_recency_kind\", \"method\": \"per_kind_bm25_interleave\", \"normalization\": \"min_max_within_kind\"}}"
+          }
+        ],
+        "isError": false
+      }
+    }
+  },
+  {
+    "request": {
+      "jsonrpc": "2.0",
+      "id": 11,
+      "method": "tools/call",
+      "params": {
+        "name": "cadence.status"
+      }
+    },
+    "response": {
+      "jsonrpc": "2.0",
+      "id": 11,
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"counts\": {}, \"egress\": {\"label\": \"Local only\", \"scope\": \"local\"}, \"enabled\": false, \"max_nudges_per_day\": 12, \"policies\": 0, \"pressure\": \"normal\", \"quiet_hours\": {\"end\": 8, \"start\": 22}, \"tick_interval_seconds\": 300}"
+          }
+        ],
+        "isError": false
+      }
+    }
+  },
+  {
+    "request": {
+      "jsonrpc": "2.0",
+      "id": 12,
+      "method": "resources/read",
+      "params": {
+        "uri": "holdspeak://cadence/status"
+      }
+    },
+    "response": {
+      "jsonrpc": "2.0",
+      "id": 12,
+      "result": {
+        "contents": [
+          {
+            "uri": "holdspeak://cadence/status",
+            "mimeType": "application/json",
+            "text": "{\"counts\": {}, \"egress\": {\"label\": \"Local only\", \"scope\": \"local\"}, \"enabled\": false, \"max_nudges_per_day\": 12, \"policies\": 0, \"pressure\": \"normal\", \"quiet_hours\": {\"end\": 8, \"start\": 22}, \"tick_interval_seconds\": 300}"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "request": {
+      "jsonrpc": "2.0",
+      "id": 13,
+      "method": "tools/call",
+      "params": {
+        "name": "cadence.snooze",
+        "arguments": {
+          "loop_id": "nonexistent-loop-id-00000",
+          "until": "2099-01-01T00:00:00Z"
+        }
+      }
+    },
+    "response": {
+      "jsonrpc": "2.0",
+      "id": 13,
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"error\": \"Unknown loop: nonexistent-loop-id-00000\"}"
+          }
+        ],
+        "isError": true
+      }
+    }
+  },
+  {
+    "request": {
+      "jsonrpc": "2.0",
+      "id": 14,
+      "method": "tools/call",
+      "params": {
+        "name": "sequence.cancel",
+        "arguments": {
+          "parent_operation_id": "nonexistent-parent-op-00000"
+        }
+      }
+    },
+    "response": {
+      "jsonrpc": "2.0",
+      "id": 14,
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"error\": \"parent_operation_unknown\"}"
+          }
+        ],
+        "isError": true
+      }
+    }
+  },
+  {
+    "request": {
+      "jsonrpc": "2.0",
+      "id": 15,
+      "method": "tools/call",
+      "params": {
+        "name": "plugin_job.summary"
+      }
+    },
+    "response": {
+      "jsonrpc": "2.0",
+      "id": 15,
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"failed_jobs\": 0, \"next_retry_at\": null, \"queued_due_jobs\": 0, \"queued_jobs\": 0, \"running_jobs\": 0, \"scheduled_retry_jobs\": 0, \"total_jobs\": 0}"
+          }
+        ],
+        "isError": false
+      }
+    }
+  },
+  {
+    "request": {
+      "jsonrpc": "2.0",
+      "id": 16,
+      "method": "tools/call",
+      "params": {
+        "name": "plugin_job.retry",
+        "arguments": {
+          "job_id": 999999999
+        }
+      }
+    },
+    "response": {
+      "jsonrpc": "2.0",
+      "id": 16,
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"error\": \"Unknown plugin job: 999999999\"}"
+          }
+        ],
+        "isError": true
+      }
+    }
+  },
+  {
+    "request": {
+      "jsonrpc": "2.0",
+      "id": 17,
+      "method": "ping"
+    },
+    "response": {
+      "jsonrpc": "2.0",
+      "id": 17,
+      "result": {}
+    }
+  }
+]

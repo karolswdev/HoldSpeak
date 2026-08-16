@@ -6,27 +6,27 @@ from dataclasses import dataclass
 
 from holdspeak.principals import Principal, PrincipalKind
 
-DEFAULT_HOLDSPEAK_URL = "http://127.0.0.1:8765"
-
 
 @dataclass(frozen=True)
 class MCPAuth:
-    """Connection configuration available to MCP tools.
+    """Process-boundary principal for the MCP stdio sidecar.
 
-    The sidecar operates on the local HoldSpeak store, so its bearer is never
-    emitted over stdio or included in a tool result.  A supplied bearer marks
-    the caller as the owner authenticated by the hub; loopback use without a
-    bearer retains the local owner convenience principal.
+    The sidecar runs as a child of the same user process that owns the
+    HoldSpeak database.  No network authentication is performed: the
+    process boundary IS the trust boundary, and the principal is always
+    PrincipalKind.OWNER.
+
+    When HOLDSPEAK_TOKEN is set, the identity label is 'mcp-token' (so
+    observer events can distinguish token-bearing clients); otherwise it
+    is 'local-mcp'.  Both are OWNER -- the token does not gate access.
     """
 
-    url: str
     principal: Principal
 
 
 def resolve_auth(environ: dict[str, str] | None = None) -> MCPAuth:
-    """Resolve sidecar connection settings without exposing the bearer token."""
+    """Resolve the sidecar principal from the process environment."""
     env = os.environ if environ is None else environ
-    url = str(env.get("HOLDSPEAK_URL") or DEFAULT_HOLDSPEAK_URL).rstrip("/")
     token = str(env.get("HOLDSPEAK_TOKEN") or "").strip()
     identity = "mcp-token" if token else "local-mcp"
-    return MCPAuth(url=url, principal=Principal(PrincipalKind.OWNER, identity))
+    return MCPAuth(principal=Principal(PrincipalKind.OWNER, identity))
