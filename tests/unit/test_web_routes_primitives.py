@@ -780,8 +780,8 @@ def test_directory_reads_include_member_ids(client: TestClient) -> None:
 
 
 def test_profile_crud_roundtrip(client: TestClient) -> None:
-    """Phase 24 / HS-112-01 — targets CRUD over the one write path; the
-    profiles alias stays a read-only view (shape only; no key field)."""
+    """HS-134-02 — targets CRUD over the one write path; the /api/profiles
+    GET routes are retired (the target contract is the only read shape)."""
     created = client.post("/api/inference-targets", json={
         "name": "Claude", "kind": "openAICompatible",
         "base_url": "https://api.anthropic.com/v1", "model": "claude-3.5-sonnet",
@@ -792,9 +792,13 @@ def test_profile_crud_roundtrip(client: TestClient) -> None:
     pid = target["id"]
     assert "api_key" not in target and "apiKey" not in target
 
-    assert client.get("/api/profiles").json()["profiles"][0]["id"] == pid
-    got = client.get(f"/api/profiles/{pid}").json()["profile"]
-    assert got["kind"] == "openAICompatible" and got["context_limit"] == 200000
+    # HS-134-02: read through the one target API.
+    listed = client.get("/api/inference-targets").json()
+    assert any(t["id"] == pid for t in listed["targets"])
+    got = client.get(f"/api/inference-targets/{pid}").json()["inference_target"]
+    assert got["kind"] == "external_service" and got["context_limit"] == 200000
+    # endpoint/node now ride the target contract (HS-134-02).
+    assert got["endpoint"] == "https://api.anthropic.com/v1"
 
     assert client.put(f"/api/profiles/{pid}", json={"name": "X"}).status_code == 405
     upd = client.put(f"/api/inference-targets/{pid}", json={"name": "Claude 3.7", "context_limit": 128000})
@@ -804,7 +808,7 @@ def test_profile_crud_roundtrip(client: TestClient) -> None:
 
     assert client.delete(f"/api/profiles/{pid}").status_code == 405
     assert client.delete(f"/api/inference-targets/{pid}").status_code == 200
-    assert client.get(f"/api/profiles/{pid}").status_code == 404
+    assert client.get(f"/api/inference-targets/{pid}").status_code == 404
 
 
 def test_inference_target_probe_discovers_models_for_that_target(client: TestClient, monkeypatch) -> None:

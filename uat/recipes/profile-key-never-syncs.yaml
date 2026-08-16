@@ -16,4 +16,4 @@ probe:
   # profile_exists forces the create to run (so the absence isn't vacuous —
   # the secret is absent DESPITE a profile that was given one).
   - profile_exists: uat-leaky-profile
-  - absent_in_response: {path: /api/profiles, text: UAT-SECRET-KEY-DO-NOT-LEAK}
+  - absent_in_response: {path: /api/inference-targets, text: UAT-SECRET-KEY-DO-NOT-LEAK}

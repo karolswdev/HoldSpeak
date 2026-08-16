@@ -14,7 +14,7 @@ from ....services.profile_service import ProfileService
 from ....services.errors import NotFound, ServiceError, ValidationError
 from ...context import WebContext
 from ...runtime_support import error_500
-from ._shared import _json_body, _new_id
+from ._shared import _json_body
 
 log = get_logger("web.routes.primitives")
 
@@ -34,20 +34,6 @@ def build_profiles_router(ctx: WebContext) -> APIRouter:
             )
         return None
 
-    def _profile_fields(body: dict[str, Any], existing=None) -> dict[str, Any]:
-        def pick(key: str, default: Any) -> Any:
-            return body[key] if key in body else default
-        return {
-            "name": str(pick("name", existing.name if existing else "")),
-            "kind": str(pick("kind", existing.kind if existing else "onDevice")),
-            "model_file": str(pick("model_file", existing.model_file if existing else "")),
-            "base_url": str(pick("base_url", existing.base_url if existing else "")),
-            "model": str(pick("model", existing.model if existing else "")),
-            "node": str(pick("node", existing.node if existing else "")),
-            "context_limit": int(pick("context_limit", existing.context_limit if existing else 16384)),
-            "requires_key": bool(pick("requires_key", existing.requires_key if existing else False)),
-        }
-
     def _svc() -> ProfileService:
         from ....db import get_database, get_observer
         return ProfileService(get_database(), observer=get_observer())
@@ -55,14 +41,8 @@ def build_profiles_router(ctx: WebContext) -> APIRouter:
     def _principal(request: Request) -> Any:
         return getattr(request.state, "principal", None)
 
-    @router.get("/api/profiles")
-    async def api_list_profiles(request: Request) -> Any:
-        try:
-            return JSONResponse(_svc().list_profiles(_principal(request)))
-        except Exception as exc:
-            return error_500(exc, log, "Failed to list profiles")
-
-    # HS-112-01: `/api/profiles` is a READ-ONLY alias over the same rows.
+    # HS-134-02: GET /api/profiles retired — the target contract is the only
+    # read shape; writes were already rejected (HS-112-01).
     # `/api/inference-targets` is the one write path.
     def _profiles_read_only() -> JSONResponse:
         return JSONResponse(
@@ -77,15 +57,6 @@ def build_profiles_router(ctx: WebContext) -> APIRouter:
     async def api_create_profile(request: Request) -> Any:
         return _profiles_read_only()
 
-    @router.get("/api/profiles/{profile_id}")
-    async def api_get_profile(profile_id: str, request: Request) -> Any:
-        try:
-            return JSONResponse({"profile": _svc().get_profile(_principal(request), profile_id)})
-        except NotFound:
-            return JSONResponse({"error": f"Unknown profile: {profile_id}"}, status_code=404)
-        except Exception as exc:
-            return error_500(exc, log, "Failed to get profile")
-
     @router.put("/api/profiles/{profile_id}")
     async def api_update_profile(profile_id: str, request: Request) -> Any:
         return _profiles_read_only()
@@ -93,35 +64,6 @@ def build_profiles_router(ctx: WebContext) -> APIRouter:
     @router.delete("/api/profiles/{profile_id}")
     async def api_delete_profile(profile_id: str) -> Any:
         return _profiles_read_only()
-
-    # HS-92-07: InferenceTarget is an additive API/view over the version-1
-    # ProfileRecord.  The old endpoints and sync primitive stay byte-compatible;
-    # both names read and write the same rows, so old and new clients converge.
-    def _target_fields(body: dict[str, Any], existing=None) -> dict[str, Any]:
-        kind_aliases = {
-            "this_device": "onDevice",
-            "paired_device": "desktop",
-            "private_endpoint": "openAICompatible",
-            "external_service": "openAICompatible",
-            "mesh_node": "meshNode",
-            # Profile-kind values are tolerated during the alias window.
-            "onDevice": "onDevice",
-            "desktop": "desktop",
-            "openAICompatible": "openAICompatible",
-            "meshNode": "meshNode",
-        }
-        raw_kind = str(body.get("kind", existing.kind if existing else "this_device"))
-        adapted = dict(body)
-        adapted["kind"] = kind_aliases.get(raw_kind, raw_kind)
-        if "endpoint" in body and "base_url" not in body:
-            adapted["base_url"] = body["endpoint"]
-        if "contextLimit" in body and "context_limit" not in body:
-            adapted["context_limit"] = body["contextLimit"]
-        if "requiresKey" in body and "requires_key" not in body:
-            adapted["requires_key"] = body["requiresKey"]
-        if isinstance(body.get("engine"), dict) and "model" not in body:
-            adapted["model"] = body["engine"].get("model", "")
-        return _profile_fields(adapted, existing)
 
     @router.get("/api/inference-targets")
     async def api_list_inference_targets(request: Request) -> Any:

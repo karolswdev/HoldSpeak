@@ -39,6 +39,7 @@ def test_profile_key_never_syncs_is_a_real_attack(real_manager):
     # Non-vacuous: profile_exists forced the create; the secret is absent DESPITE it.
     assert result.probe["ok"], result.probe
     assert result.already_satisfied is False
-    blob = str(real_manager.product_client(run.id).get_json("/api/profiles"))
+    # HS-134-02: /api/profiles read routes retired; read through the target contract.
+    blob = str(real_manager.product_client(run.id).get_json("/api/inference-targets"))
     assert "UAT-SECRET-KEY-DO-NOT-LEAK" not in blob
-    assert any(p["id"] == "uat-leaky-profile" for p in real_manager.product_client(run.id).get_json("/api/profiles")["profiles"])
+    assert any(t["id"] == "uat-leaky-profile" for t in real_manager.product_client(run.id).get_json("/api/inference-targets")["targets"])

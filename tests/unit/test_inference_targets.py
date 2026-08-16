@@ -179,7 +179,9 @@ def test_unknown_target_is_named_and_never_retargeted(rig) -> None:
     assert "gone" in target.readiness_reason
 
 
-def test_inference_target_api_round_trips_through_profile_alias(rig) -> None:
+def test_inference_target_api_round_trips_through_target_contract(rig) -> None:
+    """HS-134-02: the target contract is the only read shape; profile_alias
+    is deleted, endpoint/node ride the target response directly."""
     _, client = rig
     created = client.post(
         "/api/inference-targets",
@@ -195,14 +197,17 @@ def test_inference_target_api_round_trips_through_profile_alias(rig) -> None:
     assert created.status_code == 201, created.text
     target = created.json()["inference_target"]
     assert target["kind"] == "private_endpoint"
-    assert target["profile_alias"] == {"resource": "profile", "version": 1, "id": "lan"}
+    # profile_alias retired (HS-134-02); endpoint/node surfaced instead.
+    assert "profile_alias" not in target
+    assert target["endpoint"] == "http://10.0.0.8:8000/v1"
+    assert target["node"] == ""
 
-    legacy = client.get("/api/profiles/lan").json()["profile"]
-    assert legacy["kind"] == "openAICompatible"
-    assert legacy["base_url"] == "http://10.0.0.8:8000/v1"
-    assert legacy["context_limit"] == 32768
+    # The target contract carries endpoint/node — no /api/profiles read needed.
+    got = client.get("/api/inference-targets/lan").json()["inference_target"]
+    assert got["endpoint"] == "http://10.0.0.8:8000/v1"
+    assert got["context_limit"] == 32768
 
-    # HS-112-01: the alias is READ-ONLY — the write path is the target API.
+    # Writes still go through the target API.
     refused = client.put("/api/profiles/lan", json={"model": "Qwen-2"})
     assert refused.status_code == 405
     updated = client.put("/api/inference-targets/lan", json={"model": "Qwen-2"})
@@ -211,8 +216,9 @@ def test_inference_target_api_round_trips_through_profile_alias(rig) -> None:
         client.get("/api/inference-targets/lan").json()["inference_target"]["model"]
         == "Qwen-2"
     )
-    alias = client.get("/api/inference-targets").json()["profile_alias"]
-    assert alias["removal"] == "not_before_inference_target_v3"
+    # profile_alias block retired from list response too.
+    listed = client.get("/api/inference-targets").json()
+    assert "profile_alias" not in listed
 
 
 def test_target_api_rejects_secret_fields(rig) -> None:

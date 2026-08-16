@@ -73,16 +73,11 @@ class ProfileService:
         return True
 
     def list_inference_targets(self, principal: Principal) -> dict[str, Any]:
-        from ..inference_targets import PROFILE_ALIAS_VERSION, TARGET_CONTRACT_VERSION, list_inference_targets
+        from ..inference_targets import TARGET_CONTRACT_VERSION, list_inference_targets
 
         return {
             "version": TARGET_CONTRACT_VERSION,
             "targets": [target.to_dict() for target in list_inference_targets(self._db)],
-            "profile_alias": {
-                "version": PROFILE_ALIAS_VERSION,
-                "status": "supported",
-                "removal": "not_before_inference_target_v3",
-            },
         }
 
     def probe_inference_target(

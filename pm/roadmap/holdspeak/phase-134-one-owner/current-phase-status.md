@@ -1,6 +1,6 @@
 # Phase 134 — One Owner
 
-**Status:** in-progress (3/10).
+**Status:** in-progress (4/10).
 
 **Last updated:** 2026-08-16.
 
@@ -89,7 +89,7 @@ docs and walk stories. Anchors live in the audit; stories cite them.
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
 | HS-134-01 | Recipe execution takes the precedence door | done | [story-01](./story-01-recipe-precedence.md) | [evidence-story-01](./evidence-story-01.md) |
-| HS-134-02 | One target spec, one API | backlog | [story-02](./story-02-one-target-spec.md) | [evidence-story-02](./evidence-story-02.md) |
+| HS-134-02 | One target spec, one API | done | [story-02](./story-02-one-target-spec.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-134-03 | MCP speaks destination | backlog | [story-03](./story-03-mcp-destination.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-134-04 | Every answer names its decider | backlog | [story-04](./story-04-provenance-everywhere.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-134-05 | Get Info hands off | done | [story-05](./story-05-get-info-handoff.md) | [evidence-story-05](./evidence-story-05.md) |
@@ -174,3 +174,8 @@ HS-134-06 shipped: WorkbenchWindow skill mutations deleted (updateSkill,
 attachSkill, detachSkill, approveSkill, dismissSkill); skills render
 read-only as INHERITED with "Edit in Agent" hand-off; source-level guard
 test enforces zero mutation paths. 32 focused tests green (7 new guard).
+HS-134-02 shipped: /api/profiles GET routes deleted; duplicated
+_target_fields deleted (one definition in profile_service.py); PROFILE_ALIAS_VERSION
+and profile_alias blocks retired; endpoint/node surfaced on the target contract;
+web client migrated to /api/inference-targets; 90 focused tests green across
+7 test files (unit + integration + UAT).

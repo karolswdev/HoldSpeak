@@ -173,8 +173,9 @@ class ProbeEvaluator:
     _check_zone_exists = _check_directory_exists
 
     def _check_profile_exists(self, arg):
+        # HS-134-02: /api/profiles read routes retired; read through the target contract.
         wanted = str(arg)
-        present = wanted in self._list_ids("/api/profiles", "profiles")
+        present = wanted in self._list_ids("/api/inference-targets", "targets")
         return (present, f"profile {wanted!r} {'present' if present else 'absent'}")
 
     # --- meetings ---------------------------------------------------------
