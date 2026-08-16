@@ -331,7 +331,7 @@ def _run_protocol(proc: subprocess.Popen, *, live_43: str | None = None) -> None
 
 
 def _run_live_43(proc: subprocess.Popen, endpoint: str) -> None:
-    """The live .43 leg: create a profile, ask.run against it, verify receipt."""
+    """The live .43 leg: create a destination, ask.run against it, verify receipt."""
     import urllib.request
 
     print(f"\n--- live .43 leg (endpoint={endpoint}) ---")
@@ -359,10 +359,10 @@ def _run_live_43(proc: subprocess.Popen, endpoint: str) -> None:
     control_models = _tool_content(control_resp) if not _is_error(control_resp) else []
     print(f"  control ask.models: {json.dumps(control_models)[:200]}")
 
-    # Create a profile pointing at the .43 endpoint
+    # Create a destination pointing at the .43 endpoint
     # kind private_endpoint -> openAICompatible; omitting kind defaults to
     # this_device, which demands an on-device model file (profile_service.py:157).
-    profile_resp = _call_tool(proc, "profile.create", {
+    profile_resp = _call_tool(proc, "destination.create", {
         "fields": {
             "name": "walk-43-live",
             "kind": "private_endpoint",

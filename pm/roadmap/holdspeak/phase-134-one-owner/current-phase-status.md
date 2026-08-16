@@ -1,6 +1,6 @@
 # Phase 134 — One Owner
 
-**Status:** in-progress (4/10).
+**Status:** in-progress (5/10).
 
 **Last updated:** 2026-08-16.
 
@@ -90,7 +90,7 @@ docs and walk stories. Anchors live in the audit; stories cite them.
 |---|---|---|---|---|
 | HS-134-01 | Recipe execution takes the precedence door | done | [story-01](./story-01-recipe-precedence.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-134-02 | One target spec, one API | done | [story-02](./story-02-one-target-spec.md) | [evidence-story-02](./evidence-story-02.md) |
-| HS-134-03 | MCP speaks destination | backlog | [story-03](./story-03-mcp-destination.md) | [evidence-story-03](./evidence-story-03.md) |
+| HS-134-03 | MCP speaks destination | done | [story-03](./story-03-mcp-destination.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-134-04 | Every answer names its decider | backlog | [story-04](./story-04-provenance-everywhere.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-134-05 | Get Info hands off | done | [story-05](./story-05-get-info-handoff.md) | [evidence-story-05](./evidence-story-05.md) |
 | HS-134-06 | Skills belong to the Agent | done | [story-06](./story-06-agent-owns-skills.md) | [evidence-story-06](./evidence-story-06.md) |
@@ -204,3 +204,10 @@ _target_fields deleted (one definition in profile_service.py); PROFILE_ALIAS_VER
 and profile_alias blocks retired; endpoint/node surfaced on the target contract;
 web client migrated to /api/inference-targets; 90 focused tests green across
 7 test files (unit + integration + UAT).
+HS-134-03 shipped: profile.list/get/create/update/delete renamed to
+destination.* (same schemas, same dispatch); holdspeak://profiles resource
+renamed to holdspeak://destinations (static + template); phase-133 surface
+test and walk harness updated in the same commit. 98 focused tests green;
+walk harness 24/24 (82 tools, 14 static resources, 10 templates). One
+residual grep hit in sync_service.py (profile.schema.json) is internal
+storage, explicitly out of scope.
