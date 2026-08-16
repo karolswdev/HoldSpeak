@@ -65,12 +65,12 @@ class RecipeService:
     def delete_recipe(self, principal: Principal, recipe_id: str) -> bool:
         if not self._db.recipes.delete(recipe_id): raise NotFound("Agent",recipe_id)
         return True
-    async def run(self, principal: Principal, recipe_id: str, *, input: str="", variables: dict[str,Any]|None=None, inference_target_id: str|None=None, requested_placement: str|None=None, max_tokens: Any=None, temperature: Any=None, source_ref: str|None=None, source_type: Any=None, deadline_at: Any=None, broadcast: Broadcast|None=None, **extra: Any) -> dict[str,Any]:
+    async def run(self, principal: Principal, recipe_id: str, *, input: str="", variables: dict[str,Any]|None=None, inference_target_id: str|None=None, requested_placement: str|None=None, workbench_id: str|None=None, max_tokens: Any=None, temperature: Any=None, source_ref: str|None=None, source_type: Any=None, deadline_at: Any=None, broadcast: Broadcast|None=None, **extra: Any) -> dict[str,Any]:
         from .support import _render_user_prompt, canonical_source_type, inject_skills
         recipe=self._recipe(recipe_id); variables=variables if isinstance(variables,dict) else {}
         user=_render_user_prompt(recipe.user_template,variables,str(input or ""))
         if not user.strip(): raise ServiceError("empty_input","nothing to run: provide `input` or a Agent input template")
-        target, revision=self._target(recipe,inference_target_id or requested_placement or recipe.profile_id or "this_machine")
+        target, revision=self._target(recipe,invocation=inference_target_id or requested_placement or None,workbench=workbench_id)
         sources=[{"source_type":"recipe","source_ref":recipe_id}]
         if str(source_ref or "").strip(): sources.append({"source_type":canonical_source_type(source_type) if source_type else "input","source_ref":str(source_ref)})
         payload={"system_prompt":inject_skills(self._db,recipe.system_prompt,recipe_id),"user_prompt":user,"variables":variables,"recipe_id":recipe_id,"recipe_revision":str(recipe.last_modified),"deployment_revision":revision.id,"temperature":float(temperature) if temperature is not None else None,"max_tokens":int(max_tokens) if max_tokens is not None else None}
@@ -82,7 +82,7 @@ class RecipeService:
         result=self._broker.projection_stager.finalize(iid)
         if result is None: raise ServiceError("projection_not_published","Recipe result is awaiting receipt reconciliation",context={"invocation_id":iid,"operation_id":outcome.operation_id,"status":409})
         self._broadcast(broadcast,"ready",kind="recipe",ref=recipe_id,name=recipe.name or recipe_id); return result
-    async def chat(self, principal: Principal, recipe_id: str, *, question: str, history: list[Any]|None=None, grounding: Any=None, inference_target_id: str|None=None, egress_context: Any=None, broadcast: Broadcast|None=None) -> dict[str,Any]:
+    async def chat(self, principal: Principal, recipe_id: str, *, question: str, history: list[Any]|None=None, grounding: Any=None, inference_target_id: str|None=None, workbench_id: str|None=None, egress_context: Any=None, broadcast: Broadcast|None=None) -> dict[str,Any]:
         # HS-132-09: `default_model` is GONE. The route filled it with the hub's
         # configured-placement describer, so a chat turn on `this_machine` (pinned
         # local) printed the hub's cloud model id, and the same agent's `run` —
@@ -91,7 +91,7 @@ class RecipeService:
         from .support import inject_skills
         question=str(question or "").strip()
         if not question: raise ValidationError("question is required")
-        recipe=self._recipe(recipe_id); target,revision=self._target(recipe,inference_target_id or recipe.profile_id or "this_machine")
+        recipe=self._recipe(recipe_id); target,revision=self._target(recipe,invocation=inference_target_id,workbench=workbench_id)
         from .support import _GROUNDING_EXPANDS, _GROUNDING_MAX_REFS, _hydrate_grounding
         name=recipe.name or recipe_id; blocks=[]; context=[]
         if (recipe.manual_context or "").strip(): context.append(recipe.manual_context)
@@ -126,9 +126,9 @@ class RecipeService:
         r=self._db.recipes.get(recipe_id)
         if r is None: raise NotFound("Agent",recipe_id)
         return r
-    def _target(self, recipe: Any, requested: str):
-        from ..inference_targets import resolve_inference_target, target_refusal
-        target=resolve_inference_target(self._db,requested)
+    def _target(self, recipe: Any, *, invocation: str | None = None, workbench: str | None = None):
+        from ..inference_targets import resolve_placement, target_refusal
+        target=resolve_placement(self._db,invocation=invocation,workbench=workbench,agent=recipe.profile_id).target
         if not target.ready: raise ServiceError("target_unavailable",target.readiness_reason,context={**target_refusal(target),"status":409})
         return target,capture_deployment_revision(self._db,target)
     _outcome_error = staticmethod(map_inference_outcome)

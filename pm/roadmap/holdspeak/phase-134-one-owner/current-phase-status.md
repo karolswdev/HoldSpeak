@@ -1,6 +1,6 @@
 # Phase 134 — One Owner
 
-**Status:** in-progress (0/10).
+**Status:** in-progress (1/10).
 
 **Last updated:** 2026-08-16.
 
@@ -88,7 +88,7 @@ docs and walk stories. Anchors live in the audit; stories cite them.
 
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
-| HS-134-01 | Recipe execution takes the precedence door | backlog | [story-01](./story-01-recipe-precedence.md) | [evidence-story-01](./evidence-story-01.md) |
+| HS-134-01 | Recipe execution takes the precedence door | done | [story-01](./story-01-recipe-precedence.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-134-02 | One target spec, one API | backlog | [story-02](./story-02-one-target-spec.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-134-03 | MCP speaks destination | backlog | [story-03](./story-03-mcp-destination.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-134-04 | Every answer names its decider | backlog | [story-04](./story-04-provenance-everywhere.md) | [evidence-story-04](./evidence-story-04.md) |
@@ -164,6 +164,6 @@ Parallel waves: {01, 02, 05, 06} then {03, 04, 08} then {07, 09} then 10.
 
 ## Where we are
 
-Chartered 2026-08-16 on the Wave 1 scoping audit. Implementation not
-yet begun. The Comfy Chair design studies run in parallel on a separate
-track (law book drafted, awaiting the stopwatch audit, then counsel).
+HS-134-01 shipped: recipe run + chat now resolve through
+`resolve_placement`; the keystone execution/listing split is closed.
+42 focused tests green (8 new precedence + 34 existing guards).

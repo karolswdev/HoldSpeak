@@ -105,6 +105,7 @@ def test_placement_dict_is_the_wire_shape(db) -> None:
 _GUARDED_FILES = (
     "holdspeak/workbench_conductor.py",
     "holdspeak/services/workbench_service.py",
+    "holdspeak/services/recipe_service.py",
 )
 _INLINE_FALLBACK = re.compile(r'or\s+["\']this_machine["\']')
 

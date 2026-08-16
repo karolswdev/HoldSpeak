@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 134
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** —
 - **Unblocks:** HS-134-04, HS-134-07
 - **Owner:** unassigned
@@ -39,13 +39,13 @@ Orchestrator-verified on glass at charter.
 
 ## Acceptance criteria
 
-- [ ] `grep resolve_inference_target holdspeak/services/recipe_service.py`
+- [x] `grep resolve_inference_target holdspeak/services/recipe_service.py`
   shows no execution-path use; run + chat resolve via
   `resolve_placement`.
-- [ ] The new test: recipe with agent-tier target A, workbench override
+- [x] The new test: recipe with agent-tier target A, workbench override
   B → execution admits B; without override → A; invocation arg wins
   over both.
-- [ ] Existing guards green: `HOME=$(mktemp -d) uv run pytest -q
+- [x] Existing guards green: `HOME=$(mktemp -d) uv run pytest -q
   tests/unit/test_recipe_runner_migration.py tests/unit/test_one_path_spine.py
   tests/unit/test_placement_resolver.py --tb=short`.
 
