@@ -1,6 +1,6 @@
 # Phase 132 — The Working Desk
 
-**Status:** in-progress (13/14).
+**Status:** complete (14/14). Owner sitting pending.
 
 **Last updated:** 2026-08-16.
 
@@ -202,12 +202,10 @@ time; 14 last, cannot be waived.
 
 ## Where we are
 
-13/14 done in one day (2026-08-15/16). All twelve product stories shipped
-through the gate; HS-132-12 closed with the full backend suite at
-5703 passed / 0 failed / 0 errors / 47 named skips (~3.5 min parallel) and
-the web suite 917/917 — plus five extra product fixes found by the net
-burn-down, the 75-minute suite wedge root-caused (mermaid npx into fresh
-HOMEs) and made impossible (300s per-test timeout law), per-xdist-worker
-HOME isolation, and the owner's disk crisis traced and cleared. Held owner
-question #1 (egress vocabulary) closed as no-drift. Only HS-132-14 — the
-walk — remains.
+COMPLETE (14/14), one session (2026-08-15/16). All twelve product stories,
+the green net (backend 5703/0/0, web 917/917, wedge-proof suite), and the
+walk (115 assertions, 50 shots both widths, zero console errors, live .43
+receipt-honesty proof, Phase-130 IX.2 IOU discharged). Eight extra product
+fixes forced into the open by the burn-down and the walk. See
+[final-summary](./final-summary.md); held questions and the ledger ride
+there for the sitting.

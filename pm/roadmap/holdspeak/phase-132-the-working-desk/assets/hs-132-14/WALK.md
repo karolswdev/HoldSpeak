@@ -3,7 +3,14 @@
 Run 2026-08-15, macOS 15 / Chromium (Playwright), against a real hub booted
 by the harness on an isolated `HOME`, at 1440x900 and 393x852.
 
-**Result: 115 assertions passed, 0 failed, 50 screenshots, 3 findings.**
+**Result (final capture): 115 assertions passed, 0 failed, 50 screenshots, 1 finding.**
+
+> Reconciliation (close counsel, reservation 1): the first pass returned
+> three findings; all three were FIXED in the HS-132-14 commit (overdue
+> lane for pending items + kept regression test; bookmark receipt prints
+> m:ss; Ask footer ellipsizes via the kit receipt-line class) and the walk
+> re-ran green. The one finding below that survives the final capture is
+> the 393px Desk-menu write receipt.
 Zero console errors on every walked path, both widths.
 
 ## The harness
@@ -217,7 +224,7 @@ footer's right edge (visible as overlapping glyphs). Shot:
 `ask-panel-ran-on-lan43-footer-1440.png`, bottom-right. The receipt is
 correct; the footer does not reserve room for it.
 
-### Non-findings, recorded so they are not re-investigated
+### Finding (ledgered for the sitting)s, recorded so they are not re-investigated
 
 - `actual_placement.engine` reads `"cloud"` for a private LAN endpoint while
   `inference_target.engine` reads `"openai_compatible"` and the boundary is

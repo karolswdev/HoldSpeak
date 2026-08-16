@@ -137,3 +137,17 @@ SKIPPED [1] tests/uat/test_mesh_dispatch.py:85: the UAT node harness cannot pair
   left rails (one shipped instance at intelligence.css
   .follow-through-provenance); MissionControlConveyor's dead DOM-bus
   listener; onDevice display-name vs file-stem canonical-name ruling.
+
+## Close-counsel annotation (reservation 2)
+
+The FIRST capture above (exit 1, index-tree 28bb443d) is honest evidence
+of the suite's state at that moment: its output was ANSI-truncated by the
+capture tool before the summary line, so the failing name is not
+recoverable from the capture itself. The surrounding session record shows
+that run belonged to the pre-HOME-isolation era of parallel flakes (worker
+crashes and cross-worker DB collisions that moved between files run to
+run). The SECOND capture, same index-tree, is the definitive one:
+5703 passed / 0 failed / 0 errors / 47 named skips, exit 0. The counsel is
+right that the first capture alone leaves a reader guessing; this note is
+the explanation, and the first capture stays because deleting a red run
+from evidence is not this repo's practice.
