@@ -198,9 +198,14 @@ export function LiveCore({ hero }: CoreProps) {
       subscribe("bookmark", (frame) => {
         const data = frame.data as Record<string, unknown> | undefined;
         const label = String(data?.label ?? data?.name ?? "").trim();
-        const at = String(
-          data?.formatted_time ?? data?.timestamp ?? data?.time ?? "",
-        ).trim();
+        // HS-132-14 walk finding: nothing server-side emits formatted_time,
+        // so a raw float ("6.22566…") reached the receipt. Seconds render
+        // as m:ss; a preformatted string passes through untouched.
+        const raw = data?.formatted_time ?? data?.timestamp ?? data?.time ?? "";
+        const secs = typeof raw === "number" ? raw : Number(raw);
+        const at = Number.isFinite(secs)
+          ? `${Math.floor(secs / 60)}:${String(Math.floor(secs % 60)).padStart(2, "0")}`
+          : String(raw).trim();
         bookmarkSeq.current += 1;
         setBookmarkReceipt({
           seq: bookmarkSeq.current,

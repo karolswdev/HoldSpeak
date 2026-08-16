@@ -1,0 +1,47 @@
+{
+  "error": "model file not found: ~/Models/gguf/Qwen3.5-9B-Instruct-Q6_K.gguf",
+  "code": "inference_target_unavailable",
+  "inference_target": {
+    "version": 1,
+    "id": "this_machine",
+    "profile_id": null,
+    "name": "This device",
+    "kind": "this_device",
+    "boundary": "same_device",
+    "owner": "you",
+    "transport": "in_process",
+    "data_scope": {
+      "sent": [
+        "instruction",
+        "selected_context",
+        "grounding"
+      ],
+      "returned": [
+        "generated_output"
+      ]
+    },
+    "engine": "configured_local_engine",
+    "model": "Qwen3.5-9B-Instruct-Q6_K",
+    "context_limit": 16384,
+    "readiness": {
+      "state": "unavailable",
+      "available": false,
+      "reason": "model file not found: ~/Models/gguf/Qwen3.5-9B-Instruct-Q6_K.gguf",
+      "recovery": {
+        "reason": "model file not found: ~/Models/gguf/Qwen3.5-9B-Instruct-Q6_K.gguf",
+        "action": "choose_alternate_target",
+        "alternate_target_id": "this_machine"
+      }
+    },
+    "secret": {
+      "required": false,
+      "present": false
+    },
+    "profile_alias": {
+      "resource": "profile",
+      "version": 1,
+      "id": null
+    }
+  },
+  "alternate_target_id": "this_machine"
+}

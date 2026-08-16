@@ -128,7 +128,7 @@ one-line verdicts:
 | HS-132-11 | Cadence answers land | done | [story-11](./story-11-cadence-reply.md) | [evidence-story-11](./evidence-story-11.md) |
 | HS-132-12 | The regression net comes back green | done | [story-12](./story-12-green-net.md) | [evidence-story-12](./evidence-story-12.md) |
 | HS-132-13 | The roadmap tells the truth | done | [story-13](./story-13-roadmap-truth.md) | [evidence-story-13](./evidence-story-13.md) |
-| HS-132-14 | The walk | backlog | [story-14](./story-14-the-walk.md) | — |
+| HS-132-14 | The walk | done | [story-14](./story-14-the-walk.md) | [evidence-story-14](./evidence-story-14.md) |
 
 The ask each story answers, in one line: 01 — a stale Stop cannot kill my
 runtime and a resolved conflict answers 409, not 500; 02 — I can mark an

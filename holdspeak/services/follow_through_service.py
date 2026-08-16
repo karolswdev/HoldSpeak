@@ -444,7 +444,12 @@ class FollowThroughService:
             due_date = date.fromisoformat(due_text)
         except ValueError:
             return "waiting"
-        if due_date < today and status.lower() == "open":
+        # HS-132-14 walk finding: pipeline-persisted action items carry
+        # "pending" (db/meetings.py constrains to pending/done/dismissed);
+        # only commit_decision writes "open". Both vocabularies mean live
+        # work — gating overdue on "open" alone silently under-reported the
+        # lane, the drill, and the dock badge for every meeting-born item.
+        if due_date < today and status.lower() in ("open", "pending"):
             return "overdue"
         if due_date <= today + timedelta(days=2):
             return "now"

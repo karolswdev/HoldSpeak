@@ -325,6 +325,24 @@ def test_pending_review_action_with_past_due_is_unassigned_not_overdue(db: Datab
     assert board.overdue == []
 
 
+def test_pipeline_pending_action_with_past_due_is_overdue(db: Database) -> None:
+    # HS-132-14 walk finding: pipeline-persisted items carry "pending"
+    # (db/meetings.py constrains to pending/done/dismissed; only
+    # commit_decision writes "open"), so gating overdue on "open" alone
+    # meant a meeting-born commitment could NEVER reach the Overdue lane.
+    _insert_action(
+        db,
+        "pipeline-overdue",
+        due=(date.today() - timedelta(days=6)).isoformat(),
+        status="pending",
+        review_state="accepted",
+    )
+
+    board = FollowThroughService(db).board(OWNER)
+
+    assert _card_ids(board.overdue) == ["pipeline-overdue"]
+
+
 def test_accepted_review_action_with_past_due_is_overdue(db: Database) -> None:
     _insert_action(
         db,

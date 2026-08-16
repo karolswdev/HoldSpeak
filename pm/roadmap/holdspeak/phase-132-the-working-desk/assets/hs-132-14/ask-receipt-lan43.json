@@ -1,0 +1,71 @@
+{
+  "actual_placement": {
+    "boundary": "private_network",
+    "data_classes": [
+      "instruction",
+      "selected_context",
+      "grounding",
+      "generated_output"
+    ],
+    "engine": "cloud",
+    "fallback_reason": null,
+    "model": "Qwen3.6-35B-A3B-UD-Q5_K_XL.gguf",
+    "owner": "you",
+    "target_id": "walk-lan43",
+    "target_kind": "private_endpoint",
+    "target_name": "Homelab .43",
+    "transport": "https"
+  },
+  "context_ids": [],
+  "context_titles": [],
+  "egress": {
+    "host": "192.168.1.43",
+    "scope": "private_network"
+  },
+  "inference_target": {
+    "boundary": "private_network",
+    "context_limit": 32768,
+    "data_scope": {
+      "returned": [
+        "generated_output"
+      ],
+      "sent": [
+        "instruction",
+        "selected_context",
+        "grounding"
+      ]
+    },
+    "engine": "openai_compatible",
+    "id": "walk-lan43",
+    "kind": "private_endpoint",
+    "model": "Qwen3.6-35B-A3B-UD-Q5_K_XL.gguf",
+    "name": "Homelab .43",
+    "owner": "you",
+    "profile_alias": {
+      "id": "walk-lan43",
+      "resource": "profile",
+      "version": 1
+    },
+    "profile_id": "walk-lan43",
+    "readiness": {
+      "available": true,
+      "reason": "",
+      "state": "ready"
+    },
+    "secret": {
+      "present": false,
+      "required": false
+    },
+    "transport": "https",
+    "version": 1
+  },
+  "lens": "Ask",
+  "model": "Qwen3.6-35B-A3B-UD-Q5_K_XL.gguf",
+  "output": "{\n  \"line\": \"HOLDSPEAK WALK OK\"\n}",
+  "profile_id": "walk-lan43",
+  "provider": "cloud",
+  "invocation_id": "ask_2c70d7a2b0c34d6dabd7b3941074a540",
+  "operation_id": "op_ef528d082fa24d23b0df67453cf509a6",
+  "receipt_id": "rcpt_0c475a65d6f449fcbf3eef759dcbdd62",
+  "result_ref": "projection-stage:pstg_dd58659fc1fa4fe3bd1d61ea88020acc"
+}
