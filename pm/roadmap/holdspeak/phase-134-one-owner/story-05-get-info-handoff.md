@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 134
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** —
 - **Unblocks:** HS-134-10
 - **Owner:** unassigned
@@ -33,12 +33,12 @@ exists against dual-editor writes (audit risk 4).
 
 ## Acceptance criteria
 
-- [ ] `grep -n profile_id web/src/desk/infoContract.ts` shows no write
+- [x] `grep -n profile_id web/src/desk/infoContract.ts` shows no write
   path; the Info window shows summary + hand-off (screenshot in
   evidence).
-- [ ] The writer-guard test exists and fails if a second writer
+- [x] The writer-guard test exists and fails if a second writer
   appears.
-- [ ] Focused vitest green.
+- [x] Focused vitest green.
 
 ## Test plan
 

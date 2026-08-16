@@ -1,6 +1,6 @@
 # Phase 134 — One Owner
 
-**Status:** in-progress (1/10).
+**Status:** in-progress (2/10).
 
 **Last updated:** 2026-08-16.
 
@@ -92,7 +92,7 @@ docs and walk stories. Anchors live in the audit; stories cite them.
 | HS-134-02 | One target spec, one API | backlog | [story-02](./story-02-one-target-spec.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-134-03 | MCP speaks destination | backlog | [story-03](./story-03-mcp-destination.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-134-04 | Every answer names its decider | backlog | [story-04](./story-04-provenance-everywhere.md) | [evidence-story-04](./evidence-story-04.md) |
-| HS-134-05 | Get Info hands off | backlog | [story-05](./story-05-get-info-handoff.md) | [evidence-story-05](./evidence-story-05.md) |
+| HS-134-05 | Get Info hands off | done | [story-05](./story-05-get-info-handoff.md) | [evidence-story-05](./evidence-story-05.md) |
 | HS-134-06 | Skills belong to the Agent | backlog | [story-06](./story-06-agent-owns-skills.md) | [evidence-story-06](./evidence-story-06.md) |
 | HS-134-07 | Sync understands inherit | backlog | [story-07](./story-07-sync-null-inherit.md) | [evidence-story-07](./evidence-story-07.md) |
 | HS-134-08 | The routing profile stands alone | backlog | [story-08](./story-08-routing-profile-cleanup.md) | [evidence-story-08](./evidence-story-08.md) |
@@ -167,3 +167,6 @@ Parallel waves: {01, 02, 05, 06} then {03, 04, 08} then {07, 09} then 10.
 HS-134-01 shipped: recipe run + chat now resolve through
 `resolve_placement`; the keystone execution/listing split is closed.
 42 focused tests green (8 new precedence + 34 existing guards).
+HS-134-05 shipped: Get Info no longer writes profile_id; placement shows
+as a read-only summary with "Edit in Agent" hand-off to RecipeEditor;
+writer-guard test enforces single-writer rule. 13 focused tests green.

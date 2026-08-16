@@ -24,10 +24,23 @@ export interface InfoProperty {
   set(o: WorldObject, value: string): Promise<void>;
 }
 
+/** HS-134-05 — a read-only summary row in Get Info: display + optional
+ * hand-off to the canonical editor. No write path — summaries observe. */
+export interface InfoSummary {
+  key: string;
+  label: string;
+  /** The current display value. */
+  value(o: WorldObject): string;
+  /** Optional hand-off to the canonical editor for this field. */
+  handoff?: { verb: string; action(o: WorldObject): void };
+}
+
 export interface KindInfo {
   /** The kind's honest footprint line, or null (no measure declared). */
   footprint(o: WorldObject, items: Items): string | null;
   properties: InfoProperty[];
+  /** Read-only summary rows — no write path; display + optional hand-off. */
+  summaries?: InfoSummary[];
 }
 
 function chars(body: unknown): string | null {
@@ -73,28 +86,25 @@ export const INFO: Record<string, KindInfo> = {
   },
   recipe: {
     footprint: () => null,
-    properties: [
+    // HS-134-05: profile_id write removed from Get Info — Agent Edit owns
+    // that decision. The placement displays as a read-only summary with an
+    // "Edit in Agent" hand-off to RecipeEditor (the canonical writer).
+    properties: [],
+    summaries: [
       {
-        // Default runs on: the ONE property with a real update path today
-        // (the recipe PUT's profile_id, the same field the composer writes).
-        // HS-130-01: unset = INHERIT (empty resolves through the global
-        // default), reconciled with RecipeEditor — same label vocabulary,
-        // same empty-value meaning, same token (null).
-        key: "runs_on",
-        label: "Default runs on",
-        type: "choice",
-        choices: (_o, _items) => [
-          { id: "", label: "Inherit default" },
-          ...useDesk.getState().profiles.map((p) => ({
-            id: String(p.id),
-            label: String(p.name || p.id),
-          })),
-        ],
-        value: (o) => String("profileId" in o.ref ? o.ref.profileId || "" : ""),
-        set: async (o, value) => {
-          await useDesk
+        key: "placement",
+        label: "Placement",
+        value: (o) => {
+          const pid = "profileId" in o.ref ? o.ref.profileId : null;
+          if (!pid) return "INHERITED";
+          const profile = useDesk
             .getState()
-            .updatePrimitive("recipe", o.id, { profile_id: value || null });
+            .profiles.find((p) => String(p.id) === String(pid));
+          return profile ? String(profile.name || profile.id) : String(pid);
+        },
+        handoff: {
+          verb: "Edit in Agent",
+          action: (o) => useDesk.getState().openEditor(o.id),
         },
       },
     ],
@@ -102,7 +112,7 @@ export const INFO: Record<string, KindInfo> = {
 };
 
 export function kindInfo(kind: string): KindInfo {
-  return INFO[kind] || { footprint: () => null, properties: [] };
+  return INFO[kind] || { footprint: () => null, properties: [], summaries: [] };
 }
 
 /* ── rename honesty (HS-132-07) ───────────────────────────────────────
