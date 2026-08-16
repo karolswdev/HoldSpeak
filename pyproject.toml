@@ -208,6 +208,7 @@ Documentation = "https://github.com/karolswdev/HoldSpeak/tree/main/docs"
 
 [project.scripts]
 holdspeak = "holdspeak.main:main"
+holdspeak-mcp = "holdspeak.mcp.server:main"
 
 [build-system]
 requires = ["hatchling"]

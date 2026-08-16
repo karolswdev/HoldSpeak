@@ -1,6 +1,6 @@
 # Phase 133 — The Honest Sidecar
 
-**Status:** in-progress (7/11).
+**Status:** in-progress (8/11).
 
 **Last updated:** 2026-08-16.
 
@@ -121,7 +121,7 @@ against the spec verbatim; deviations are findings, not preferences.
 | HS-133-05 | Cadence over the wire | done | [story-05](./story-05-cadence-over-the-wire.md) | [evidence-story-05](./evidence-story-05.md) |
 | HS-133-06 | Sequences and Workflows run admitted | done | [story-06](./story-06-sequence-workflow-run.md) | [evidence-story-06](./evidence-story-06.md) |
 | HS-133-07 | Plugin jobs over the wire | done | [story-07](./story-07-plugin-jobs.md) | [evidence-story-07](./evidence-story-07.md) |
-| HS-133-08 | The honest handshake | backlog | [story-08](./story-08-honest-handshake.md) | [evidence-story-08](./evidence-story-08.md) |
+| HS-133-08 | The honest handshake | done | [story-08](./story-08-honest-handshake.md) | [evidence-story-08](./evidence-story-08.md) |
 | HS-133-09 | Surface honesty | backlog | [story-09](./story-09-surface-honesty.md) | [evidence-story-09](./evidence-story-09.md) |
 | HS-133-10 | The sidecar has a manual | backlog | [story-10](./story-10-sidecar-docs.md) | [evidence-story-10](./evidence-story-10.md) |
 | HS-133-11 | The walk | backlog | [story-11](./story-11-the-walk.md) | [evidence-story-11](./evidence-story-11.md) |
@@ -198,3 +198,5 @@ HS-133-05 done: all eleven cadence tools (status, loops, get_loop, brief, closeo
 HS-133-06 done: sequence.run, sequence.cancel, workflow.run, workflow.cancel dispatching to SequenceWorkflowService(db, broker) with broker from _configure(db); runs async via _run(); cancels route through broker.parent_run_controller.cancel_by_operation_id; unknown chain_id/workflow_id/parent_operation_id return isError:true; REQUIRED_TOOLS extended; 12 tests green.
 
 HS-133-02 done: ask.models, ask.resolve_grounding, ask.run, ask.cancel, ask.keep dispatching to AskService(db, broadcast=None, rails_hydrator=None, observer) with spec-verbatim schemas; ask.run async via _run(); missing question and unknown invocation_id on cancel return isError:true; no circular import from tools.py (uses ValueError not ToolError); REQUIRED_TOOLS extended; 18 tests green.
+
+HS-133-08 done: auth.py rewritten to spec's corrected form -- DEFAULT_HOLDSPEAK_URL, url field, and HOLDSPEAK_URL env read removed; docstring now states process-boundary-as-trust-boundary honestly; holdspeak-mcp console script added to pyproject.toml; .mcp.json created at repo root (holdspeak-only per counsel Q1); live handshake returns 82 tools; 3 auth tests green.
