@@ -104,9 +104,13 @@ def test_adopted_destination_reports_the_provider_selection_as_ignored(
     client: TestClient, settings_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     monkeypatch.setattr(providers, "_lookup_profile_record", lambda pid: _lan_profile())
-    # HS-132: keyless cloud falls back to local by design (HS-130 posture),
-    # so pin the key env — otherwise this asserts different branches on a
-    # keyless CI runner vs a developer machine exporting a real key.
+    # HS-132: the cloud leg needs the openai import head (absent on a
+    # runner without the `meeting` extra) and, on the default endpoint, a
+    # key; keyless/headless cloud falls back to local by design (HS-130
+    # posture). Double the import head at the lowest seam (the fence's
+    # move) and pin the key so every environment asserts the same branch.
+    import holdspeak.intel as _intel_pkg
+    monkeypatch.setattr(_intel_pkg, "OpenAI", object(), raising=False)
     monkeypatch.setenv("OPENAI_API_KEY", "test-key-for-branch-determinism")
     settings = _put(
         client,
