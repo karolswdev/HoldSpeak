@@ -98,7 +98,6 @@ function AutomationRow({
   return (
     <div className="wb-automation">
       <button type="button" className="wb-automation-head" onClick={() => setOpen(!open)} aria-expanded={open}>
-        <span className="wb-automation-provider">{providerLabel(automation.provider)}</span>
         <span className="egress-badge is-cloud" title={providerLabel(automation.provider)}>{providerLabel(automation.provider)}</span>
         <span className="wb-automation-title">{automation.name}</span>
         <span className="desk-chip" data-tone={statusTone(automation.status)}>{automation.status.toUpperCase()}</span>

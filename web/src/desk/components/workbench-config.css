@@ -203,13 +203,6 @@
   text-align: left;
 }
 .desk-next .wb-automation-head:hover { background: var(--accent-tint); }
-.desk-next .wb-automation-provider {
-  color: var(--text-faint);
-  font-family: var(--font-mono);
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: .04em;
-}
 .desk-next .wb-automation-title {
   flex: 1;
   overflow: hidden;
