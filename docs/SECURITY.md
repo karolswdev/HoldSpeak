@@ -96,6 +96,24 @@ leaves a terminal refusal receipt with delegation provenance when available.
 Edits, disable, sync changes, Agent drift, and target drift also advance the
 publication fence so an already-running child cannot publish under old terms.
 
+Scheduled recording follows the same bounded-delegation model. Enabling a
+schedule records approval for its exact terms: time, cadence, and duration. A
+terms edit (cron expression, duration, or timezone) writes a new delegation
+receipt, re-approving the changed terms. The due tick fires as the `scheduler`
+principal (the same internal-only principal as Workbench schedules), kernel-
+admitted with a receipt per fire. The arming countdown (Article IV.3, mic owner
+visible) is the fire's observable surface: a visible countdown on the capture
+hero names the schedule and the seconds remaining. Cancellation during the
+countdown is honored; a cancel after the countdown has elapsed is not.
+
+Honest failure receipts cover every non-success path (Article VI.1): a held
+microphone floor produces a `mic_floor_held` refusal naming the current holder;
+a hub that was down at fire time produces a `missed` receipt on restart, bounded
+to one receipt per missed window regardless of downtime length; an interrupted
+arming resolves as `missed_interrupted_arming`. No fire path produces a silent
+skip. Capture itself is the existing `_start_meeting` path with no new egress
+point (Article III.1): audio stays local.
+
 One finite parent represents meeting, dictation, or configured-wake authority
 per live session (`meeting.session@1`, `dictation.session@1`, or
 `wake.session@1`), but every actual LLM or local Whisper call remains an

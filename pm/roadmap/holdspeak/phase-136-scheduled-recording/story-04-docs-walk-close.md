@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 136
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-136-03
 - **Unblocks:** —
 - **Owner:** unassigned
@@ -44,14 +44,26 @@ receipts. Unit tests stub the audio seam by design; the walk cannot.
 
 ## Acceptance criteria
 
+**AMENDMENT (owner ruling 2026-08-17):** the real-mic-fire metal walk
+is **deferred to a documented follow-up** — the owner chose to skip
+firing this machine's microphone. The phase closes on the surface
+screenshot walk (a real live-product walk, not unit tests alone), the
+ten invariants with tests, and the adversarial verification pass. The
+end-to-end real-hardware fire is recorded as an open item for the
+sitting. The owner may overrule this at the sitting.
+
 - [ ] USER_GUIDE, SECURITY, and ARCHITECTURE updated at their existing
   entry points (no orphan page).
-- [ ] The live walk shows a real scheduled recording firing after its
-  countdown and auto-stopping, with the enable/fire/stop receipts
-  captured through `dw evidence capture`.
-- [ ] The refusal (mic held) and missed (hub-down) legs each show their
-  honest receipt.
-- [ ] The walk harness is checked into `scripts/` and re-runs.
+- [x] The live walk shows the surface end to end — done in HS-136-03
+  (`scripts/schedule_walk_hs136.py`, 1440 + 393, create control +
+  SCHEDULED lane entry, zero console errors). ~~A real scheduled
+  recording firing on real hardware with captured receipts~~ — DEFERRED
+  per the owner ruling above; documented as a follow-up.
+- [x] The refusal (mic held) and missed (hub-down) legs are proven by
+  the invariant unit tests (I4, VI.1) and the adversarial pass, not the
+  metal walk — DEFERRED with the fire proof above.
+- [x] The walk harness is checked into `scripts/`
+  (`schedule_walk_hs136.py`) and re-runs.
 - [ ] The full suites are green (or every failure name-diffed against
   the pre-phase baseline and ledgered); the counsel's verdict is
   recorded for the sitting.

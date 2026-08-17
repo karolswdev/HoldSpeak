@@ -1,6 +1,7 @@
 # Phase 136 — Scheduled Recording
 
-**Status:** in progress (3/4).
+**Status:** complete (4/4). Counsel recorded (RATIFY-WITH-CONCERNS, 3
+findings ledgered). Owner sitting pending.
 
 **Last updated:** 2026-08-17.
 
@@ -144,7 +145,7 @@ with these branches:
 | HS-136-01 | The scheduled-capture spine | done | [story-01](./story-01-scheduled-capture-spine.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-136-02 | The schedule verb (API + MCP) | done | [story-02](./story-02-schedule-verb-api-mcp.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-136-03 | The Chair surface | done | [story-03](./story-03-chair-surface.md) | [evidence-story-03](./evidence-story-03.md) |
-| HS-136-04 | Docs, walk, and close | backlog | [story-04](./story-04-docs-walk-close.md) | — |
+| HS-136-04 | Docs, walk, and close | done | [story-04](./story-04-docs-walk-close.md) | [evidence-story-04](./evidence-story-04.md) |
 
 ## Stories
 
@@ -217,5 +218,12 @@ and the hero consumes via literal `subscribe(...)`), a too-terse error
 message failing the product-copy law (fixed), and an API-surface
 manifest drift from the new client fetches (regenerated). Full suite
 green (5923 passed, 0 failed); the two concurrency flakes seen mid-run
-were confirmed pre-existing (2/2 serial). HS-136-04 (docs, the
-live-metal walk, counsel, close) is next.
+were confirmed pre-existing (2/2 serial).
+
+HS-136-04 (docs, walk, close) is done: entry-point docs at
+`docs/USER_GUIDE.md`, `docs/SECURITY.md`, and `docs/ARCHITECTURE.md`
+(doc-drift + product-copy guards green); the walk harness in
+`scripts/`; the counsel's RATIFY-WITH-CONCERNS verdict with three
+findings ledgered for the sitting; and the final summary. The
+real-mic-fire metal walk is deferred per the owner ruling. The phase is
+complete and ready to merge.

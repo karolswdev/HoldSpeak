@@ -349,6 +349,25 @@ flowchart TD
   APV -. "approved only" .-> EXT(["GitHub, Slack"])
 ```
 
+### The scheduled recording conductor
+
+The hub can start a recording on its own at a scheduled time. The scheduled
+recording conductor (`scheduled_recording_conductor.py`) is a daemon thread
+modeled on the Workbench Conductor: it ticks every 60 seconds, checking
+enabled schedules for due fires. A due schedule enters a 10-second arming
+countdown (broadcast on the bus, cancellable), then fires through the existing
+`_start_meeting` seam under a `SCHEDULER` principal (it does not reimplement
+capture). Auto-stop runs at the set duration.
+
+Durability uses persisted deadlines. The `deadline_at` and `armed_at` timestamps
+are written before any observable side-effect, so a hub restart can reconcile
+interrupted states: a recording whose deadline passed during downtime is stopped
+with a receipt, an interrupted arming resolves as missed, and a fire whose
+scheduled time passed while the hub was down produces a bounded missed receipt
+(one per missed window, never a burst of catch-up fires). One-shot schedules
+disable after their terminal outcome; recurring schedules advance `next_fire_at`
+strictly forward.
+
 ## Project memory and the process read model
 
 Meeting plugins still produce ordinary typed artifacts. When the shared
