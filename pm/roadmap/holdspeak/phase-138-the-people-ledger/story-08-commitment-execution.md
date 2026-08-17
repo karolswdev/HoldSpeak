@@ -1,9 +1,9 @@
 # HS-138-08 — Commitments become evidenced work
 
 - **Project:** holdspeak
-- **Phase:** 135
+- **Phase:** 138
 - **Status:** done
-- **Depends on:** 135-03, 135-04, 135-07
+- **Depends on:** 138-03, 138-04, 138-07
 - **Unblocks:** durable relationship follow-through and project-grounded delegation
 - **Owner:** primary adjudicator
 

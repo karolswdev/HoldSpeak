@@ -178,6 +178,13 @@ product stores.
   commitment lens and notes-only 1:1 agenda inside the Desk; they are visual evidence,
   not exhaustive certification.
 
+## Counsel ledger (revival, 2026-08-17)
+
+- **(L1)** MCP `_BOUNDARY` constant at `holdspeak/mcp/families/people.py:44-47` uses prose instead of the POSITIONING-canon compact egress format -- should be a terse badge-style disclosure.
+- **(L2)** `follow_through_service.py:215` silently returns empty people cards when the sidecar is broken -- no user signal that cards are missing.
+- **(L3)** No sanctioned dev-only keystore seam: `store.py:465-466` hardcodes `NativeKeyStore` so the populated People state cannot be walked headlessly. Charter a follow-up for a dev-only seam that is provably unreachable in production.
+- **(L4)** People module source cites no Constitution articles in comments.
+
 ## Where we are
 
 Implementation is integrated and the People MCP service slice is done with focused

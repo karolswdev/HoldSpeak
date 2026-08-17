@@ -1,10 +1,10 @@
 # HS-138-05 — The privacy proof
 
 - **Project:** holdspeak
-- **Phase:** 135
+- **Phase:** 138
 - **Status:** ready
-- **Depends on:** 135-01, 135-02, 135-03
-- **Unblocks:** 135-06
+- **Depends on:** 138-01, 138-02, 138-03
+- **Unblocks:** 138-06
 - **Owner:** primary adjudicator
 
 ## Problem

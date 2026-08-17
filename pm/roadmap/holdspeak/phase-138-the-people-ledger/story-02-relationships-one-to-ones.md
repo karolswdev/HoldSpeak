@@ -1,10 +1,10 @@
 # HS-138-02 — Relationships and one-to-ones
 
 - **Project:** holdspeak
-- **Phase:** 135
+- **Phase:** 138
 - **Status:** ready
-- **Depends on:** 135-01
-- **Unblocks:** 135-03, 135-04
+- **Depends on:** 138-01
+- **Unblocks:** 138-03, 138-04
 - **Owner:** delegated Terra worker; primary adjudicates
 
 ## Problem

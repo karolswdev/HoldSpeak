@@ -1,9 +1,9 @@
 # HS-138-07 — People through the MCP service boundary
 
 - **Project:** holdspeak
-- **Phase:** 135
+- **Phase:** 138
 - **Status:** done
-- **Depends on:** 135-01, 135-02, 135-03
+- **Depends on:** 138-01, 138-02, 138-03
 - **Unblocks:** a trusted programmable People workflow
 - **Owner:** primary adjudicator
 

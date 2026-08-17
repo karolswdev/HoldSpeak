@@ -1,10 +1,10 @@
 # HS-138-03 — Commitments join Follow-through
 
 - **Project:** holdspeak
-- **Phase:** 135
+- **Phase:** 138
 - **Status:** ready
-- **Depends on:** 135-01, 135-02
-- **Unblocks:** 135-04, 135-05
+- **Depends on:** 138-01, 138-02
+- **Unblocks:** 138-04, 138-05
 - **Owner:** delegated Terra worker; primary adjudicates
 
 ## Problem

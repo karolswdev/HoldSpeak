@@ -48,7 +48,7 @@ describe("PeopleCore encrypted local plane", () => {
       "/api/projects": () => json({ projects: [{ id: "p1", name: "Platform", description: "Platform work" }] }),
     });
     render(<PeopleCore scope="people:r1" />);
-    await screen.findByText("This device only");
+    await screen.findByText("Local storage");
     expect(screen.getByText("Encrypted")).toBeTruthy();
     expect(screen.getByText("Notes only")).toBeTruthy();
     await waitFor(() => expect(screen.getByRole("tab", { name: "1:1s" })).toBeTruthy());
@@ -71,6 +71,8 @@ describe("PeopleCore encrypted local plane", () => {
     render(<PeopleCore scope="people:r1" />);
     fireEvent.click(await screen.findByRole("button", { name: /Discuss the next architecture step/ }));
     expect(await screen.findByRole("button", { name: "Send to Workbench" })).toBeTruthy();
+    expect(screen.getByText("Workbench model")).toBeTruthy();
+    expect(screen.getByTitle("Workbench model")).toHaveClass("egress-badge", "is-cloud");
     expect(screen.getByRole("button", { name: "Mark satisfied" })).toBeTruthy();
     fireEvent.click(screen.getByRole("tab", { name: "History" }));
     expect(screen.getByText("Accepted")).toBeTruthy();

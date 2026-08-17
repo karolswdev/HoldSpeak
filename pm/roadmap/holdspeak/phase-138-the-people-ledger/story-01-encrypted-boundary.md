@@ -1,10 +1,10 @@
 # HS-138-01 — The encrypted boundary
 
 - **Project:** holdspeak
-- **Phase:** 135
+- **Phase:** 138
 - **Status:** in-progress
 - **Depends on:** none
-- **Unblocks:** 135-02, 135-03, 135-04, 135-05
+- **Unblocks:** 138-02, 138-03, 138-04, 138-05
 - **Owner:** delegated Terra worker; primary adjudicates
 
 ## Problem

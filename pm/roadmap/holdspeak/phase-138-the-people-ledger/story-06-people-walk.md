@@ -1,9 +1,9 @@
 # HS-138-06 — The People walk
 
 - **Project:** holdspeak
-- **Phase:** 135
+- **Phase:** 138
 - **Status:** ready
-- **Depends on:** 135-01, 135-02, 135-03, 135-04, 135-05
+- **Depends on:** 138-01, 138-02, 138-03, 138-04, 138-05
 - **Unblocks:** phase close
 - **Owner:** primary adjudicator
 
