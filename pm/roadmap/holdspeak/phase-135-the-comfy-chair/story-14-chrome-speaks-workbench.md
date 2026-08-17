@@ -20,14 +20,19 @@ NINE sprites (`web/src/desk/systemSprites.ts`). The owner's bar:
 hygiene. It was beautiful. It was delightful." And: "we have PixelLab
 MCP — let's use it."
 
-The method is proven (orchestrator, 2026-08-17): a fixed 8-color
-palette mold ([assets/icon-palette.png](./assets/icon-palette.png) —
-3 slates + ink + white + 2 embers + ground) forced through PixelLab's
+The method is proven and the style is OWNER-RATIFIED (2026-08-17,
+verbatim: "The bell bright is nice, that's the kind of style I want
+man! AMIGA OS FOREVER" — the first gloomy mold was REJECTED: "Too
+gloomy. This is not an RPG"). The mold is the BRIGHT palette
+([assets/icon-palette.png](./assets/icon-palette.png) — silver-white,
+light silver, mid slate, ink, pure white, 2 embers, workbench
+blue-grey) forced through PixelLab's
 palette constraint, one prompt template carrying the laws (hard
 single-color outline, no anti-aliasing, top-left light, two shades
-per surface, 32×32 for crisp 2x in 16px slots). Accepted castings in
-the session forge: broadcast mic + its listening state (img2img
-coherence proven), cadence metronome, palette-cast bell.
+per surface, 32×32 for crisp 2x in 16px slots). Ratified reference casting: bright-bell.png in the session forge
+(scratchpad icon-forge/); bright-mic and bright-metronome are strong
+candidates pending the contact sheet. Everything casts BRIGHT —
+silver-forward, cheerful, crisp; dark fills are forbidden.
 
 ## Scope
 

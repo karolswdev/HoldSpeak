@@ -145,6 +145,16 @@ after 05; 07-10 in parallel after 05 (disjoint lane files); 11 after
   hygiene. It was beautiful."). Cadence's deeper UX illegibility goes
   to the setup-flows audit → the arc's next leg, not this story.
 
+## Ledger
+
+- **Wave-one gate (2026-08-17):** 5832 passed, one single-run xdist
+  flake (`test_meeting_session.py::test_stop_completes_without_deadlock_during_final_transcription_and_intel`),
+  3/3 green serially — fourth distinct timing flake of the arc, all
+  ledgered for BACKLOG Candidate Z.
+- **Icon style RATIFIED bright** (owner, verbatim: "AMIGA OS
+  FOREVER"); the first dark mold rejected ("Too gloomy. This is not
+  an RPG"). The bright palette is the assets/icon-palette.png.
+
 ## Held owner questions
 
 1. Lane hiding/collapse (deferred by counsel Q2 ruling — future story;
