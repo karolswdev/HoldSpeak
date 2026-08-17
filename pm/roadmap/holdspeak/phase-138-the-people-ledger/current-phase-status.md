@@ -1,6 +1,6 @@
 # Phase 138 — The People Ledger
 
-**Status:** active (5/8).
+**Status:** active (6/8).
 
 **Last updated:** 2026-08-17.
 
@@ -95,7 +95,7 @@ product stores.
 | HS-138-02 | Relationships and one-to-ones | done | [story-02](./story-02-relationships-one-to-ones.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-138-03 | Commitments join Follow-through | done | [story-03](./story-03-commitments-follow-through.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-138-04 | People belongs on the Desk | ready | [story-04](./story-04-people-desk.md) | — |
-| HS-138-05 | The privacy proof | ready | [story-05](./story-05-privacy-proof.md) | — |
+| HS-138-05 | The privacy proof | done | [story-05](./story-05-privacy-proof.md) | [evidence-story-05](./evidence-story-05.md) |
 | HS-138-06 | The People walk | ready | [story-06](./story-06-people-walk.md) | — |
 | HS-138-07 | People through the MCP service boundary | done | [story-07](./story-07-people-mcp.md) | [evidence-story-07](./evidence-story-07.md) |
 | HS-138-08 | Commitments become evidenced work | done | [story-08](./story-08-commitment-execution.md) | [evidence-story-08](./evidence-story-08.md) |
@@ -193,7 +193,7 @@ HS-138-02, and HS-138-03 are done on gate-captured evidence (01: 47 tests —
 crypto, custody, policy, store, no-leaks; 02: 20 tests — service lifecycle,
 roll-forward successor links, archive hiding, owner auth, keyless readiness;
 03: 34 tests — projection, source-dispatch, full ordinary follow-through
-regression, no-leaks). Real-Keychain manual legs are deferred to the HS-138-06
-walk by design. Remaining: the 05 evidence flip, the story-04 badge-copy
+regression, no-leaks; 05: 50 tests — the full sentinel/refusal/custody matrices, plus the full gate: 6000/0 isolated-HOME parallel suite on the identical pre-merge tree, log suite-459-run2). Real-Keychain manual legs are deferred to the HS-138-06
+walk by design. Remaining: the story-04 badge-copy
 amendment (counsel ruled "This device only" false for the Send-to-Workbench
 path), and the owner-attended production walk (06).
