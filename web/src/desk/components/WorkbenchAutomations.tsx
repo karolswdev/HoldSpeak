@@ -99,6 +99,7 @@ function AutomationRow({
     <div className="wb-automation">
       <button type="button" className="wb-automation-head" onClick={() => setOpen(!open)} aria-expanded={open}>
         <span className="wb-automation-provider">{providerLabel(automation.provider)}</span>
+        <span className="egress-badge is-cloud" title={providerLabel(automation.provider)}>{providerLabel(automation.provider)}</span>
         <span className="wb-automation-title">{automation.name}</span>
         <span className="desk-chip" data-tone={statusTone(automation.status)}>{automation.status.toUpperCase()}</span>
         <span aria-hidden="true">{open ? "▴" : "▾"}</span>
@@ -106,7 +107,7 @@ function AutomationRow({
       <p className="wb-automation-summary">WHEN {automation.event_kind} · ADD ITEM ONLY</p>
       {open ? (
         <div className="wb-automation-detail">
-          <p className="wb-automation-safety">A test never adds work or advances the baseline. Enable creates a silent baseline; later matching events add one grounded item.</p>
+          <p className="wb-automation-safety">TEST NEVER ADDS WORK · ENABLE = SILENT BASELINE · LATER MATCHES ADD ONE GROUNDED ITEM</p>
           <div className="wb-automation-verbs">
             <button
               type="button"
@@ -173,14 +174,14 @@ export function WorkbenchAutomations({ workbenchId, write, onChanged }: { workbe
 
   return (
     <>
-      <p className="wb-automation-intro">Observed events can place grounded work here. Enabled sources refresh every 35 minutes by default; they never run the whole Workbench or write to GitHub and Jira.</p>
+      <p className="wb-automation-safety">OBSERVED EVENTS PLACE GROUNDED ITEMS · REFRESH EVERY 35 MIN · READ-ONLY · NEVER RUNS THE WHOLE WORKBENCH</p>
       <div className="wb-automation-repository">
         <StringGadget
           label="GitHub repository"
           value={repository}
           onChange={setRepository}
           placeholder="OWNER/REPOSITORY"
-          mic={false}
+          mic={true}
         />
       </div>
       <div className="wb-automation-presets" aria-label="Automation presets">

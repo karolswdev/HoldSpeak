@@ -51,3 +51,17 @@ delivery retry controls, identity-stable GitHub reviewer predicates, active
 provider cancellation when ordinary work arrives mid-inference, additional
 intrinsic opportunity providers, and richer temporal signals such as Jira
 `due_soon`.
+
+## Counsel-mandated ledger items (PR #461 ratify-with-concerns)
+
+**Jira preset is a visible dead switch.** The UI shows a "Jira - Assigned to
+me" preset (WorkbenchAutomations.tsx PRESETS), but no Jira snapshot adapter
+exists (watch_sources.py:106 raises `connector_snapshot_adapter_unavailable`
+for any non-`gh` connector). Either ship a Jira query adapter or remove the
+preset from the UI before the Jira surface becomes user-reachable.
+
+**Reconcile behavioral coverage gap.** No test opens a pre-existing database
+that lacks the new reaction/resourceful tables and proves `reconcile` adds them
+without error. This matches the repo-wide gap noted at the Phase 137 close
+(the One Schema reconcile proves column-level drift but not table-creation on
+a legacy DB).

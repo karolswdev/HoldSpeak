@@ -74,9 +74,8 @@ export function WorkbenchResourceful({
 
   return (
     <div className="wb-resourceful">
-      <p className="wb-automation-intro">
-        When ordinary work runs out, use local HoldSpeak data to complete one
-        bounded improvement at a time.
+      <p className="wb-automation-safety">
+        WHEN IDLE · ONE BOUNDED IMPROVEMENT FROM LOCAL DATA
       </p>
       <div className="wb-resourceful-contract" role="status">
         <span className="desk-chip">{settings.idle_after_minutes} MIN IDLE</span>

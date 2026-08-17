@@ -5,7 +5,7 @@ from datetime import datetime, timedelta, timezone
 
 from holdspeak.db.core import Database
 from holdspeak.principals import Principal, PrincipalKind
-from holdspeak.services.resourceful_service import ResourcefulService
+from holdspeak.services.resourceful_service import ResourcefulService, _night_key
 
 
 OWNER = Principal(PrincipalKind.OWNER, "resourceful-owner")
@@ -139,3 +139,36 @@ def test_execution_exception_fails_admitted_item_instead_of_stranding_busy(tmp_p
     assert asyncio.run(
         service.tick(OWNER, now=start + timedelta(hours=1))
     )[0]["status"] == "cooldown"
+
+
+def test_night_key_returns_none_during_day_and_key_during_night() -> None:
+    # Default night window: 22:00 - 07:00 (start > end, wraps midnight)
+    afternoon = datetime(2026, 8, 17, 14, 0, tzinfo=timezone.utc)
+    assert _night_key(afternoon, 22, 7) is None
+
+    late_night = datetime(2026, 8, 17, 23, 30, tzinfo=timezone.utc)
+    assert _night_key(late_night, 22, 7) == "2026-08-17"
+
+    early_morning = datetime(2026, 8, 17, 3, 0, tzinfo=timezone.utc)
+    assert _night_key(early_morning, 22, 7) == "2026-08-16"
+
+    # Non-wrapping window: 01:00 - 05:00
+    assert _night_key(datetime(2026, 8, 17, 3, 0, tzinfo=timezone.utc), 1, 5) == "2026-08-17"
+    assert _night_key(datetime(2026, 8, 17, 10, 0, tzinfo=timezone.utc), 1, 5) is None
+
+
+def test_daytime_tick_with_night_only_returns_awaiting_night(tmp_path) -> None:
+    db, directory = _rig(tmp_path)
+    _idea(db, directory, "idea-1", "Daytime idea", "2026-01-01T00:00:00+00:00")
+
+    service = ResourcefulService(db, item_runner=lambda *a: {})
+    service.configure_policy(OWNER, "wb-resourceful", enabled=True, night_only=True)
+
+    # Start the idle epoch at a nighttime hour so it registers
+    night_start = datetime(2026, 8, 16, 23, 0, tzinfo=timezone.utc)
+    asyncio.run(service.tick(OWNER, now=night_start))
+
+    # Tick at 14:00 (daytime) - should be gated by night_only
+    daytime = datetime(2026, 8, 17, 14, 0, tzinfo=timezone.utc)
+    result = asyncio.run(service.tick(OWNER, now=daytime))[0]
+    assert result["status"] == "awaiting_night"

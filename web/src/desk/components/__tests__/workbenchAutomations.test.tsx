@@ -135,7 +135,7 @@ describe("Workbench STARTS WHEN automations", () => {
       .find((button) => !button.hasAttribute("disabled"));
     expect(automationButton).toBeDefined();
     await user.click(automationButton!);
-    expect(screen.getByText(/A test never adds work or advances the baseline/i)).toBeInTheDocument();
+    expect(screen.getByText(/TEST NEVER ADDS WORK/)).toBeInTheDocument();
     expect(screen.queryByText(/auto-run/i)).not.toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Test match" }));

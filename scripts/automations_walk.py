@@ -178,9 +178,9 @@ def leg_automations_populated(shooter: Shooter, hub: Hub) -> None:
     presets = page.locator('[aria-label="Automation presets"]')
     check("automation presets visible", presets.count() > 0)
 
-    # Check the intro text is visible.
-    intro = page.locator(".wb-automation-intro")
-    check("automation intro text visible", intro.count() > 0)
+    # Check the safety disclosure text is visible.
+    safety_intro = page.locator(".wb-automation-safety")
+    check("automation safety disclosure visible", safety_intro.count() > 0)
 
     # Check the repository input.
     repo_area = page.locator(".wb-automation-repository")
