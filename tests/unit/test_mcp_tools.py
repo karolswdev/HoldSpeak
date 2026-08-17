@@ -26,6 +26,9 @@ REQUIRED_TOOLS = {
     "people.grounding.get", "people.note.create",
     "people.relationship.create", "people.one_on_one.create", "people.agenda.add",
     "people.request.create", "people.request.accept", "people.commitment.transition",
+    "watch.list", "watch.create", "watch.set_enabled", "watch.refresh", "watch.preview",
+    "event.list", "reaction.presets", "reaction.list", "reaction.create", "reaction.set_enabled",
+    "reaction.process",
 }
 
 

@@ -195,10 +195,45 @@ class WorkbenchService:
             raise ServiceError("artifact_persist_failed", "Mint failed")
         return {"artifact_id": artifact_id, "created": True}
 
-    async def run(self, principal: Principal, workbench_id: str, *, memory_enabled: bool = True) -> dict[str, Any]:
+    async def run(self, principal: Principal, workbench_id: str, *, memory_enabled: bool = True,
+                  request_id: str | None = None,
+                  source_event: dict[str, str] | None = None) -> dict[str, Any]:
         self._require_workbench(workbench_id)
         from holdspeak.workbench_conductor import run_workbench
+        if request_id or source_event:
+            from holdspeak.kernel.runtime import _service
+            from holdspeak.services.workbench_runner import WorkbenchRunner
+            return await WorkbenchRunner(self._db, _service()).run(
+                principal, workbench_id, memory_enabled=memory_enabled,
+                request_id=request_id, source_event=source_event,
+            )
         return await run_workbench(workbench_id, principal, memory_enabled=memory_enabled)
+
+    async def run_item(
+        self,
+        principal: Principal,
+        workbench_id: str,
+        item_id: str,
+        *,
+        memory_enabled: bool = True,
+        request_id: str | None = None,
+        source_event: dict[str, str] | None = None,
+        deadline_seconds: float = 600,
+    ) -> dict[str, Any]:
+        """Admit exactly one causal Workbench item, never the pending batch."""
+        self._require_item(workbench_id, item_id)
+        from holdspeak.kernel.runtime import _service
+        from holdspeak.services.workbench_runner import WorkbenchRunner
+
+        return await WorkbenchRunner(self._db, _service()).run(
+            principal,
+            workbench_id,
+            memory_enabled=memory_enabled,
+            request_id=request_id,
+            source_event=source_event,
+            deadline_seconds=deadline_seconds,
+            item_ids=[item_id],
+        )
 
     def cancel_run(self, principal: Principal, parent_operation_id: str) -> str:
         """Cancel exactly the authenticated parent, never a Workbench lookup."""

@@ -100,6 +100,7 @@ def test_github_pack_manifest_shape():
     [
         # Allowed: pr view / issue view in canonical form.
         (("gh", "pr", "view", "1", "--repo", "o/r"), True),
+        (("gh", "pr", "list", "--repo", "o/r"), True),
         (("/usr/local/bin/gh", "pr", "view", "42", "--repo", "anthropic/holdspeak"), True),
         (("gh", "issue", "view", "12", "--repo", "o/r"), True),
         # Rejected: mutating verbs.
@@ -137,6 +138,7 @@ def test_jira_pack_manifest_shape():
     [
         # Allowed: only `jira issue view`.
         (("jira", "issue", "view", "HS-101", "--plain"), True),
+        (("jira", "issue", "list", "--jql", "assignee=currentUser()"), True),
         (("/usr/local/bin/jira", "issue", "view", "HS-101"), True),
         # Rejected: mutating verbs.
         (("jira", "issue", "create", "--summary", "x"), False),

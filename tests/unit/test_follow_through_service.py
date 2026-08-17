@@ -178,6 +178,9 @@ def test_commit_decision_creates_action_and_commitment(db: Database) -> None:
     decision_id = _insert_accepted_decision(db)
 
     commitment = FollowThroughService(db).commit_decision(OWNER, decision_id)
+    event = db.automations.list_events(event_type="decision.committed")[0]
+    assert event["subject_ref"] == f"decision:{decision_id}"
+    assert f'action_item:{commitment["action_item_id"]}' in event["refs"]
 
     assert commitment["decision_id"] == decision_id
     assert commitment["status"] == "open"
