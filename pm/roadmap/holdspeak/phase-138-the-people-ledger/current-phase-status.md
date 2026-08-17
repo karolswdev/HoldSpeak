@@ -1,6 +1,6 @@
 # Phase 138 — The People Ledger
 
-**Status:** active (6/8).
+**Status:** active (7/8).
 
 **Last updated:** 2026-08-17.
 
@@ -96,7 +96,7 @@ product stores.
 | HS-138-01 | The encrypted boundary | done | [story-01](./story-01-encrypted-boundary.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-138-02 | Relationships and one-to-ones | done | [story-02](./story-02-relationships-one-to-ones.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-138-03 | Commitments join Follow-through | done | [story-03](./story-03-commitments-follow-through.md) | [evidence-story-03](./evidence-story-03.md) |
-| HS-138-04 | People belongs on the Desk | ready | [story-04](./story-04-people-desk.md) | — |
+| HS-138-04 | People belongs on the Desk | done | [story-04](./story-04-people-desk.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-138-05 | The privacy proof | done | [story-05](./story-05-privacy-proof.md) | [evidence-story-05](./evidence-story-05.md) |
 | HS-138-06 | The People walk | ready | [story-06](./story-06-people-walk.md) | — |
 | HS-138-07 | People through the MCP service boundary | done | [story-07](./story-07-people-mcp.md) | [evidence-story-07](./evidence-story-07.md) |
