@@ -1,6 +1,6 @@
 # Phase 135 — The Comfy Chair
 
-**Status:** in-progress (4/14).
+**Status:** in-progress (4/15).
 
 **Last updated:** 2026-08-17.
 
@@ -114,6 +114,7 @@ docs + the walk.
 | HS-135-12 | The desk clicks | backlog | [story-12](./story-12-sound-palette.md) | [evidence-story-12](./evidence-story-12.md) |
 | HS-135-13 | Docs and the walk | backlog | [story-13](./story-13-docs-and-walk.md) | [evidence-story-13](./evidence-story-13.md) |
 | HS-135-14 | The chrome speaks Workbench | backlog | [story-14](./story-14-chrome-speaks-workbench.md) | [evidence-story-14](./evidence-story-14.md) |
+| HS-135-15 | Creation operates | backlog | [story-15](./story-15-creation-operates.md) | [evidence-story-15](./evidence-story-15.md) |
 
 The ask each story answers, in one line: 01 — the owner's real desk
 opens on current main; 02 — no system text bleeds past a window and
@@ -137,6 +138,14 @@ after 05; 07-10 in parallel after 05 (disjoint lane files); 11 after
 
 ## Amendments
 
+- **2026-08-17, owner-directed (visible amendment 2):** story 15 added
+  on the setup-flows joy audit (57 shots): agent creation is a DEAD
+  END (editor never opens — the flow does not operate), Run enabled
+  with nothing to run, and a lying empty state. The smallest
+  operate-breakers only; the full setup-joy redesign (cadence
+  comprehensibility, progressive disclosure, workflow run affordance,
+  the Agent/Agents naming collision) charters as the arc's next leg on
+  the audit evidence.
 - **2026-08-17, owner-directed (visible amendment):** story 14 added
   mid-phase — the system icon family regenerated to Workbench-2.0
   hygiene through a fixed 8-color palette mold via PixelLab
