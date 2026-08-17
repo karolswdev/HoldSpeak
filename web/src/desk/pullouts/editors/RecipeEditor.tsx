@@ -8,7 +8,7 @@ import type { Persona } from "../../../lib/primitives";
 import { useDebouncedSave } from "./useDebouncedSave";
 import type { InlineEditorContentProps } from "./types";
 
-export function RecipeEditor({ object: o }: InlineEditorContentProps) {
+export function RecipeEditor({ object: o, autoFocusName }: InlineEditorContentProps) {
   const items = useDesk((s) => s.items);
   const profiles = useDesk((s) => s.profiles);
   const save = useDebouncedSave("recipe", o.id);
@@ -51,6 +51,7 @@ export function RecipeEditor({ object: o }: InlineEditorContentProps) {
           label="Name"
           value={f.name}
           placeholder="Name"
+          autoFocus={autoFocusName}
           onChange={(value) => set("name", "name", value)}
         />
       </div>

@@ -171,6 +171,31 @@ describe("gadget kit", () => {
     expect(lamp).toHaveAttribute("data-tone", "ok");
   });
 
+  // HS-135-02 L6 — lamp overflow regression: truncation + title affordance.
+  it("LampGadget carries a title tooltip with the full label text", () => {
+    const longMsg =
+      "DESTINATION SELECTION IGNORED · OPENAICOMPATIBLE-KIND DECIDES";
+    render(<LampGadget label={longMsg} on tone="fail" />);
+    const lamp = screen.getByText(longMsg);
+    expect(lamp).toHaveAttribute("title", longMsg);
+  });
+
+  it("LampGadget default (inline) truncates via CSS class contract", () => {
+    render(<LampGadget label="Short" on tone="ok" />);
+    const lamp = screen.getByText("Short");
+    expect(lamp.className).toBe("gadget-lamp");
+    // the CSS contract: gadget-lamp has overflow:hidden + text-overflow:ellipsis
+    // the class is the DOM proof; the CSS raw-text assertion below covers the rules.
+  });
+
+  it("LampGadget block variant adds is-block for wrap behavior", () => {
+    const longMsg = "PROVIDER SELECTION IGNORED · DESTINATION HUB DECIDES";
+    render(<LampGadget label={longMsg} on tone="fail" block />);
+    const lamp = screen.getByText(longMsg);
+    expect(lamp.className).toContain("is-block");
+    expect(lamp).toHaveAttribute("title", longMsg);
+  });
+
   it("TransportKey: held = pressed (inverted video is the CSS contract)", () => {
     const onClick = vi.fn();
     const { rerender } = render(
@@ -279,5 +304,131 @@ describe("gadget kit", () => {
     expect(details).not.toBeNull();
     fireEvent(details!, new Event("toggle"));
     expect(onToggle).toHaveBeenCalled();
+  });
+});
+
+// HS-135-02 L6 — lamp CSS contract: the raw stylesheet proves overflow
+// handling exists on the base class and the block variant.
+// HS-135-03 L9 — sizing-token CSS contract: raw-CSS proof that repeated
+// control-height and icon-size px sites migrated to the seven tokens.
+import gadgetsCss from "./gadgets.css?raw";
+import chromeMenusCss from "../components/chrome-menus.css?raw";
+import surfaceCss from "./surface.css?raw";
+import tokensCss from "../../styles/tokens.css?raw";
+
+describe("HS-135-02 lamp overflow CSS contract", () => {
+  it("gadget-lamp base truncates: overflow hidden + text-overflow ellipsis + max-width", () => {
+    // The gadget-lamp block in the raw CSS must contain the overflow rules.
+    const lampBlock = gadgetsCss.slice(
+      gadgetsCss.indexOf(".gadget-lamp {"),
+      gadgetsCss.indexOf("}", gadgetsCss.indexOf(".gadget-lamp {")) + 1,
+    );
+    expect(lampBlock).toContain("overflow: hidden");
+    expect(lampBlock).toContain("text-overflow: ellipsis");
+    expect(lampBlock).toContain("max-width: 100%");
+    expect(lampBlock).toContain("white-space: nowrap");
+  });
+
+  it("gadget-lamp.is-block wraps instead of truncating", () => {
+    expect(gadgetsCss).toContain(".gadget-lamp.is-block");
+    const blockStart = gadgetsCss.indexOf(".gadget-lamp.is-block");
+    const blockRule = gadgetsCss.slice(
+      blockStart,
+      gadgetsCss.indexOf("}", blockStart) + 1,
+    );
+    expect(blockRule).toContain("white-space: normal");
+    expect(blockRule).toContain("word-break: break-word");
+    expect(blockRule).toContain("text-overflow: clip");
+  });
+});
+
+// HS-135-03 L9 — sizing-token existence: the seven tokens land in the
+// generated CSS, and the three rejected duplicates do NOT appear as
+// custom-property declarations.
+describe("HS-135-03 sizing tokens in tokens.css", () => {
+  const seven = [
+    ["--size-touch", "40px"],
+    ["--size-key", "48px"],
+    ["--size-chip", "27px"],
+    ["--size-btn", "28px"],
+    ["--size-icon-sm", "16px"],
+    ["--size-icon-md", "20px"],
+    ["--size-icon-lg", "32px"],
+  ] as const;
+
+  it.each(seven)("%s is declared with value %s", (name, value) => {
+    const re = new RegExp(`${name}:\\s*${value.replace("px", "px")}`);
+    expect(tokensCss).toMatch(re);
+  });
+
+  it("rejected --size-control is NOT a declaration", () => {
+    expect(tokensCss).not.toMatch(/^\s*--size-control:/m);
+  });
+  it("rejected --size-dock-h is NOT a declaration", () => {
+    expect(tokensCss).not.toMatch(/^\s*--size-dock-h:/m);
+  });
+  it("rejected --size-menubar-h is NOT a declaration", () => {
+    expect(tokensCss).not.toMatch(/^\s*--size-menubar-h:/m);
+  });
+});
+
+// HS-135-03 L9 — sizing-token migration: the CSS contract proves that
+// representative components use the tokens, not raw px.
+describe("HS-135-03 sizing-token migration", () => {
+  // Helper: extract a CSS rule block by its selector substring.
+  function ruleBlock(css: string, selector: string): string {
+    const start = css.indexOf(selector);
+    if (start === -1) return "";
+    return css.slice(start, css.indexOf("}", start) + 1);
+  }
+
+  it("TransportKey 48px uses --size-key", () => {
+    const block = ruleBlock(gadgetsCss, ".gadget-transport-key,");
+    expect(block).toContain("width: var(--size-key)");
+    expect(block).toContain("height: var(--size-key)");
+  });
+
+  it("TransportKey [data-compact] 28px uses --size-btn", () => {
+    const block = ruleBlock(gadgetsCss, "[data-compact] {");
+    expect(block).toContain("height: var(--size-btn)");
+  });
+
+  it("desk-chip 27px uses --size-chip", () => {
+    const block = ruleBlock(chromeMenusCss, ".desk-next .desk-chip {");
+    expect(block).toContain("height: var(--size-chip)");
+  });
+
+  it("menu-list items 28px use --size-btn", () => {
+    const block = ruleBlock(chromeMenusCss, ".desk-next .desk-menu-list a,");
+    expect(block).toContain("height: var(--size-btn)");
+  });
+
+  it("surface-record-glyph 40px uses --size-touch", () => {
+    const block = ruleBlock(surfaceCss, ".surface-record-glyph {");
+    expect(block).toContain("width: var(--size-touch)");
+    expect(block).toContain("height: var(--size-touch)");
+  });
+
+  it("gadget-check-well 16px uses --size-icon-sm", () => {
+    const block = ruleBlock(gadgetsCss, ".gadget-check-well {");
+    expect(block).toContain("width: var(--size-icon-sm)");
+    expect(block).toContain("height: var(--size-icon-sm)");
+  });
+
+  it("in-well mic (gadget-string) 20px uses --size-icon-md", () => {
+    const block = ruleBlock(gadgetsCss, ".gadget-string .desk-mic,");
+    expect(block).toContain("width: var(--size-icon-md)");
+    expect(block).toContain("height: var(--size-icon-md)");
+  });
+
+  it("surface-setting-icon 16px uses --size-icon-sm", () => {
+    const block = ruleBlock(surfaceCss, ".surface-setting-icon {");
+    expect(block).toContain("width: var(--size-icon-sm)");
+    expect(block).toContain("height: var(--size-icon-sm)");
+  });
+
+  it("surface-row-glyph 20px uses --size-icon-md", () => {
+    const block = ruleBlock(surfaceCss, ".surface-row-glyph {");
+    expect(block).toContain("width: var(--size-icon-md)");
   });
 });

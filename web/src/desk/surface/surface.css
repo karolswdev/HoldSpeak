@@ -120,7 +120,7 @@
 }
 .surface-row-glyph {
   flex-shrink: 0;
-  width: 20px;
+  width: var(--size-icon-md);
   text-align: center;
   color: var(--text-muted);
 }
@@ -438,8 +438,8 @@
 }
 .surface-record-glyph {
   flex: none;
-  width: 40px;
-  height: 40px;
+  width: var(--size-touch);
+  height: var(--size-touch);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -855,8 +855,8 @@ button.surface-edit-in-place:hover {
 /* HS-111-01: bare glyphs, no background squares */
 .surface-setting-icon {
   flex: none;
-  width: 16px;
-  height: 16px;
+  width: var(--size-icon-sm);
+  height: var(--size-icon-sm);
   display: grid;
   place-items: center;
   border-radius: 0;
@@ -2378,8 +2378,8 @@ button.surface-edit-in-place:hover {
 }
 .surface-edit-mic .desk-mic,
 .desk-next .surface-edit-mic .desk-mic {
-  width: 20px;
-  height: 20px;
+  width: var(--size-icon-md);
+  height: var(--size-icon-md);
   border-radius: 0;
   border: 1px solid var(--border);
   background: var(--surface-2);

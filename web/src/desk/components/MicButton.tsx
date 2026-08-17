@@ -34,6 +34,7 @@ import {
 import { VoiceProposalStrip } from "../voice/ProposalStrip";
 import type { VoiceGrammar, VoiceProposal } from "../voice/grammar";
 import { routeVoiceIntent } from "../voice/intentRouter";
+import { play as sfx } from "../../lib/sfx";
 
 export type MicState = "idle" | "listening" | "busy" | "failed";
 
@@ -164,7 +165,7 @@ export function MicButton({
         aria-label={`${label} (unavailable: ${reason})`}
         onClick={(e) => e.stopPropagation()}
       >
-        <MicFace transport={transport} busy={false} />
+        <MicFace transport={transport} state="idle" />
       </button>
     );
   }
@@ -233,6 +234,7 @@ export function MicButton({
     setFailure(category);
     setFailureCode(code);
     onFailure?.(category);
+    sfx("error");
     go("failed");
   };
 
@@ -330,8 +332,10 @@ export function MicButton({
 
   const toggle = () => {
     if (state === "listening") {
+      sfx("key-up");
       void stopSession();
     } else if (state === "idle" || state === "failed") {
+      sfx("key-down");
       void startSession();
     }
   };
@@ -370,7 +374,7 @@ export function MicButton({
           toggle();
         }}
       >
-        <MicFace transport={transport} busy={state === "busy"} />
+        <MicFace transport={transport} state={state} />
       </button>
       {listening && !transport ? (
         <span
@@ -404,25 +408,30 @@ export function MicButton({
   );
 }
 
-function MicFace({ transport, busy }: { transport: boolean; busy: boolean }) {
+/** HS-135-14 — the mic face renders a state-specific sprite:
+ *  idle/failed → micGlyph (silver), listening → micListening (amber),
+ *  busy → micRecording (orange). */
+function MicFace({ transport, state }: { transport: boolean; state: MicState }) {
+  const src =
+    state === "listening"
+      ? SYSTEM.micListening
+      : state === "busy"
+        ? SYSTEM.micRecording
+        : SYSTEM.micGlyph;
   return (
     <>
       <span
         className={transport ? "gadget-transport-glyph" : undefined}
         aria-hidden="true"
       >
-        {busy ? (
-          "…"
-        ) : (
-          <img
-            src={SYSTEM.micGlyph}
-            alt=""
-            width={16}
-            height={16}
-            className="desk-chrome-sprite"
-            draggable={false}
-          />
-        )}
+        <img
+          src={src}
+          alt=""
+          width={16}
+          height={16}
+          className="desk-chrome-sprite"
+          draggable={false}
+        />
       </span>
       {transport ? <span className="gadget-transport-word">Talk</span> : null}
     </>

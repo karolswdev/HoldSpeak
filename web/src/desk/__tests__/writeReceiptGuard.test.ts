@@ -99,6 +99,7 @@ const KNOWN_SWALLOWS: Record<string, number> = {
   "/src/desk/steering.ts": 3, // steering submit/ack/clear
   "/src/desk/store/dataSlice.ts": 5, // update/delete/file/remove/knowledge
   "/src/desk/store/recordingSlice.ts": 1, // recording stop POST
+  "/src/desk/store/scheduledRecordingSlice.ts": 1, // HS-136-03: delete schedule
 };
 
 describe("HS-132-06 swallowed-write guard", () => {

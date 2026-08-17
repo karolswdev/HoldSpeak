@@ -41,6 +41,7 @@ from .projects import build_projects_router
 from .roadmaps import build_roadmaps_router
 from .repositories import build_repositories_router
 from .decision_records import build_decision_records_router
+from .scheduled_recordings import build_scheduled_recordings_router
 from .setup import build_setup_router
 from .sync import build_sync_router
 from .system import build_system_router
@@ -77,6 +78,7 @@ __all__ = [
     "build_repositories_router",
     "build_decision_records_router",
     "build_constitutional_router",
+    "build_scheduled_recordings_router",
     "build_setup_router",
     "build_sync_router",
     "build_system_router",

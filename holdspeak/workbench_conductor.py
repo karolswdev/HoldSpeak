@@ -115,46 +115,9 @@ def _now_iso() -> str:
 
 
 def _cron_is_due(cron_expr: str) -> bool:
-    """Simple cron check: minute hour dom month dow.
-
-    Weekday mapping: cron uses 0=Sunday, 1=Monday, ..., 6=Saturday.
-    Python's weekday() uses 0=Monday, ..., 6=Sunday.
-    We convert Python's weekday to cron convention before matching.
-    """
-    try:
-        parts = cron_expr.strip().split()
-        if len(parts) != 5:
-            return False
-        now = datetime.now()
-        # Convert Python weekday (0=Mon) to cron weekday (0=Sun)
-        cron_dow = (now.weekday() + 1) % 7
-        fields = [
-            (parts[0], now.minute),
-            (parts[1], now.hour),
-            (parts[2], now.day),
-            (parts[3], now.month),
-            (parts[4], cron_dow),
-        ]
-        for pattern, value in fields:
-            if pattern == "*":
-                continue
-            if pattern.startswith("*/"):
-                step = int(pattern[2:])
-                if step <= 0 or value % step != 0:
-                    return False
-                continue
-            allowed = set()
-            for part in pattern.split(","):
-                if "-" in part:
-                    lo, hi = part.split("-", 1)
-                    allowed.update(range(int(lo), int(hi) + 1))
-                else:
-                    allowed.add(int(part))
-            if value not in allowed:
-                return False
-        return True
-    except (ValueError, IndexError):
-        return False
+    """Delegate to the shared cron module (HS-136-01 factoring)."""
+    from .cron import cron_is_due
+    return cron_is_due(cron_expr)
 
 
 def _hydrate_item_grounding(db: Any, grounding_json: str) -> str:

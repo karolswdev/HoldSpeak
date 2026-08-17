@@ -50,16 +50,17 @@ def test_database_check_current_is_pass(db_path: Path) -> None:
     Database(db_path)
     check = doctor._check_database()
     assert check.status == "PASS"
-    assert f"version {SCHEMA_VERSION}" in check.detail
+    assert "Schema OK" in check.detail
+    assert "tables" in check.detail
 
 
-def test_database_check_newer_is_fail(db_path: Path) -> None:
+def test_database_check_newer_stamp_is_still_pass(db_path: Path) -> None:
+    """Post-HS-137-01: a newer-stamped DB is not refused; doctor reports OK."""
     Database(db_path)
     _stamp(db_path, SCHEMA_VERSION + 1)
     check = doctor._check_database()
-    assert check.status == "FAIL"
-    assert "newer than this build" in check.detail
-    assert check.fix
+    assert check.status == "PASS"
+    assert "Schema OK" in check.detail
 
 
 def test_database_check_unreadable_is_warn(db_path: Path) -> None:

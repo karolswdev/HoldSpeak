@@ -1,3 +1,4 @@
+import { play as sfx } from "../lib/sfx";
 /** The immutable-target terminal on the Desk (HS-94-08 / §5, §7, §8).
  *
  * The Phase-93 session pull-out watched a pane by a client-resolved
@@ -320,6 +321,7 @@ export const useDeliveryTerminal = create<TerminalState>((set, get) => ({
     });
     if (!sameTarget(get().openTarget, target)) return out.ok;
     if (out.ok) {
+      sfx("land");
       set({
         sendState: "sent",
         sendDetail: out.receiptId
@@ -329,6 +331,7 @@ export const useDeliveryTerminal = create<TerminalState>((set, get) => ({
       });
       return true;
     }
+    sfx("error");
     set({ sendState: "refused", sendDetail: out.error });
     return false;
   },
@@ -340,6 +343,7 @@ export const useDeliveryTerminal = create<TerminalState>((set, get) => ({
     const out = await submitCommand(target, "terminal.keys", { keys: seq });
     if (!sameTarget(get().openTarget, target)) return out.ok;
     if (out.ok) {
+      sfx("land");
       set({
         sendState: "sent",
         sendDetail: out.receiptId
@@ -349,6 +353,7 @@ export const useDeliveryTerminal = create<TerminalState>((set, get) => ({
       });
       return true;
     }
+    sfx("error");
     set({ sendState: "refused", sendDetail: out.error });
     return false;
   },

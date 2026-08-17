@@ -4,6 +4,7 @@ import { qualifiedRef } from "../api";
 import { useDesk } from "../store";
 import { FoldGadget } from "../surface/gadgets";
 import { SurfaceCode, SurfaceState } from "../surface/Surface";
+import { play as sfx } from "../../lib/sfx";
 
 interface DeskFilingStripProps {
   objectRef: string;
@@ -88,9 +89,11 @@ export function DeskFilingStrip({
             : {}),
         },
       );
+      sfx("file");
       await refreshRelationships();
       await useDesk.getState().refresh();
     } catch (error) {
+      sfx("error");
       setRelationshipError(String(error));
     }
   };

@@ -19,6 +19,7 @@ from holdspeak.services.monday_brief_service import MondayBriefService
 from holdspeak.services.primitive_service import PrimitiveService
 from holdspeak.services.profile_service import ProfileService
 from holdspeak.services.recipe_service import RecipeService
+from holdspeak.services.scheduled_recording_service import ScheduledRecordingService
 from holdspeak.services.workbench_service import WorkbenchService
 
 PRIMITIVE_KINDS = ("notes", "decisions", "kbs", "directories", "workflows", "chains")
@@ -351,6 +352,50 @@ TOOLS.extend([
         "Generate the current Monday Brief from durable sources. Repeated calls return the day's existing brief.",
         {},
     ),
+    _mcp_tool(
+        "scheduled_recording.list",
+        "List all scheduled recordings with their current state, cron, and next-fire time.",
+        {},
+    ),
+    _mcp_tool(
+        "scheduled_recording.create",
+        "Create a scheduled recording. Validates the cron expression and duration. Enabling writes a bounded-delegation receipt.",
+        {
+            "title": {"type": "string", "description": "Human-readable schedule name."},
+            "cron_expr": {"type": "string", "description": "5-field cron expression (minute hour dom month dow)."},
+            "tz": {"type": "string", "description": "IANA timezone name (default UTC)."},
+            "one_shot": {"type": "boolean", "description": "Disable after first fire (default false)."},
+            "duration_minutes": {"type": "integer", "minimum": 1, "description": "Auto-stop after this many minutes (default 60)."},
+            "enabled": {"type": "boolean", "description": "Start scheduling immediately (default false)."},
+        },
+        ["cron_expr"],
+    ),
+    _mcp_tool(
+        "scheduled_recording.update",
+        "Update a scheduled recording. Only supplied fields change. Re-validates cron and duration if provided.",
+        {
+            "schedule_id": {"type": "string", "description": "Schedule identifier."},
+            "title": {"type": "string"},
+            "cron_expr": {"type": "string", "description": "5-field cron expression."},
+            "tz": {"type": "string"},
+            "one_shot": {"type": "boolean"},
+            "duration_minutes": {"type": "integer", "minimum": 1},
+            "enabled": {"type": "boolean"},
+        },
+        ["schedule_id"],
+    ),
+    _mcp_tool(
+        "scheduled_recording.delete",
+        "Delete a scheduled recording. Refuses if the schedule is armed or recording.",
+        {"schedule_id": {"type": "string", "description": "Schedule identifier."}},
+        ["schedule_id"],
+    ),
+    _mcp_tool(
+        "scheduled_recording.cancel_armed",
+        "Cancel an armed (counting-down) scheduled recording before it fires.",
+        {"schedule_id": {"type": "string", "description": "Schedule identifier."}},
+        ["schedule_id"],
+    ),
 ])
 
 # Aggregate tools from per-family modules.
@@ -602,6 +647,45 @@ def dispatch(name: str, arguments: dict[str, Any] | None, principal: Principal) 
         return asdict(brief) if brief is not None else None
     if name == "monday_brief.generate":
         return asdict(monday_brief.generate(principal))
+
+    # HS-136-02: scheduled recording CRUD + cancel-armed
+    if name.startswith("scheduled_recording."):
+        sr_service = ScheduledRecordingService(db)
+        if name == "scheduled_recording.list":
+            return sr_service.list_schedules(principal)
+        if name == "scheduled_recording.create":
+            kwargs: dict[str, Any] = {"cron_expr": str(args.get("cron_expr") or "")}
+            if "title" in args:
+                kwargs["title"] = str(args["title"])
+            if "tz" in args:
+                kwargs["tz"] = str(args["tz"])
+            if "one_shot" in args:
+                kwargs["one_shot"] = bool(args["one_shot"])
+            if "duration_minutes" in args:
+                kwargs["duration_minutes"] = int(args["duration_minutes"])
+            if "enabled" in args:
+                kwargs["enabled"] = bool(args["enabled"])
+            return sr_service.create_schedule(principal, **kwargs)
+        if name == "scheduled_recording.update":
+            schedule_id = str(args.get("schedule_id") or "")
+            kwargs = {}
+            if "title" in args:
+                kwargs["title"] = str(args["title"])
+            if "cron_expr" in args:
+                kwargs["cron_expr"] = str(args["cron_expr"])
+            if "tz" in args:
+                kwargs["tz"] = str(args["tz"])
+            if "one_shot" in args:
+                kwargs["one_shot"] = bool(args["one_shot"])
+            if "duration_minutes" in args:
+                kwargs["duration_minutes"] = int(args["duration_minutes"])
+            if "enabled" in args:
+                kwargs["enabled"] = bool(args["enabled"])
+            return sr_service.update_schedule(principal, schedule_id, **kwargs)
+        if name == "scheduled_recording.delete":
+            return sr_service.delete_schedule(principal, str(args.get("schedule_id") or ""))
+        if name == "scheduled_recording.cancel_armed":
+            return sr_service.cancel_armed(principal, str(args.get("schedule_id") or ""))
     raise ToolError(f"Unknown tool: {name}")
 
 

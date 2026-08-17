@@ -532,6 +532,106 @@
       ]
     },
     {
+      "path": "/api/automations/events",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.automations",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/automations/presets",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.automations",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/automations/reactions",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.automations",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/automations/reactions",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.automations",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/automations/reactions/process",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.automations",
+      "consumers": []
+    },
+    {
+      "path": "/api/automations/reactions/{reaction_id}/enabled",
+      "methods": [
+        "PUT"
+      ],
+      "module": "web.routes.automations",
+      "consumers": []
+    },
+    {
+      "path": "/api/automations/watches",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.automations",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/automations/watches",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.automations",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/automations/watches/{watch_id}/baseline",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.automations",
+      "consumers": []
+    },
+    {
+      "path": "/api/automations/watches/{watch_id}/enabled",
+      "methods": [
+        "PUT"
+      ],
+      "module": "web.routes.automations",
+      "consumers": []
+    },
+    {
+      "path": "/api/automations/watches/{watch_id}/test",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.automations",
+      "consumers": []
+    },
+    {
       "path": "/api/bookmark",
       "methods": [
         "POST"
@@ -3631,6 +3731,66 @@
       ]
     },
     {
+      "path": "/api/scheduled-recordings",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.scheduled_recordings",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/scheduled-recordings",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.scheduled_recordings",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/scheduled-recordings/{schedule_id}",
+      "methods": [
+        "DELETE"
+      ],
+      "module": "web.routes.scheduled_recordings",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/scheduled-recordings/{schedule_id}",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.scheduled_recordings",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/scheduled-recordings/{schedule_id}",
+      "methods": [
+        "PATCH"
+      ],
+      "module": "web.routes.scheduled_recordings",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/scheduled-recordings/{schedule_id}/cancel",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.scheduled_recordings",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/sessions/{session_key}/receipt",
       "methods": [
         "GET"
@@ -3964,6 +4124,56 @@
       ]
     },
     {
+      "path": "/api/workbenches/{workbench_id}/automations",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.automations",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/workbenches/{workbench_id}/automations",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.automations",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/workbenches/{workbench_id}/automations/{automation_id}",
+      "methods": [
+        "PATCH"
+      ],
+      "module": "web.routes.automations",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/workbenches/{workbench_id}/automations/{automation_id}/history",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.automations",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/workbenches/{workbench_id}/automations/{automation_id}/test",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.automations",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/workbenches/{workbench_id}/items",
       "methods": [
         "POST"
@@ -4029,6 +4239,36 @@
         "POST"
       ],
       "module": "web.routes.primitives.workbenches",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/workbenches/{workbench_id}/resourceful",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.automations",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/workbenches/{workbench_id}/resourceful",
+      "methods": [
+        "PUT"
+      ],
+      "module": "web.routes.automations",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/workbenches/{workbench_id}/resourceful/history",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.automations",
       "consumers": [
         "web"
       ]

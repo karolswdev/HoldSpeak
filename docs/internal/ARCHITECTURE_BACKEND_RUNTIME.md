@@ -183,8 +183,8 @@ concern modules stay ≤ 600; `system/settings.py` carries a named 800.
 
 ## Named watch items
 
-- `holdspeak/db/core.py` (~1,266): the schema DDL + migration matrix,
-  pinned by the schema snapshot test — a different budget conversation;
-  if it keeps growing it earns its own phase.
+- `holdspeak/db/schema.py`: the canonical schema DDL (`SCHEMA_SQL`),
+  pinned by the schema snapshot test. `holdspeak/db/reconcile.py` applies
+  it declaratively on every open (additive-only, no version gate).
 - The old item, `web/routes/meetings.py`, was resolved by Phase 72's
   split into the meetings package.

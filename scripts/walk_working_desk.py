@@ -209,6 +209,15 @@ def _populate(db: Any, principal: Any) -> None:
             indent=2,
         )
     )
+    # --- a generated brief: populates the Brief lane (HS-135-07) ----------
+    try:
+        from holdspeak.services.monday_brief_service import MondayBriefService
+
+        brief = MondayBriefService(db).generate(principal)
+        print(f"POPULATED brief={brief.id} headline={brief.headline!r}", flush=True)
+    except Exception as exc:  # noqa: BLE001
+        print(f"BRIEF_FAILED {exc!r}", flush=True)
+
     print(f"POPULATED records={first['id']}->{second['id']} sessions={sessions}",
           flush=True)
 

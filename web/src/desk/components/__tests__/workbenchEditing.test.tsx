@@ -279,7 +279,7 @@ describe("HS-132-07 no bare disabled control", () => {
     await openWindow(detail({ recipe_id: null }));
     const run = screen.getByRole("button", { name: /^Run:/ });
     expect(run).toBeDisabled();
-    expect(run).toHaveAttribute("title", "No agent bound · bind one in Configure");
+    expect(run).toHaveAttribute("title", "Bind an agent first");
 
     await userEvent.setup().click(screen.getByRole("tab", { name: "Runs" }));
     expect(screen.getByText("No agent bound")).toBeInTheDocument();

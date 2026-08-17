@@ -15,7 +15,7 @@ const ROUTINES = [
   {
     id: "failed_work" as const,
     label: "Prepare recovery plans",
-    detail: "Diagnose failed work without retrying its external effects.",
+    detail: "Diagnose incomplete work and draft a recovery plan.",
   },
 ];
 

@@ -297,8 +297,8 @@
 .desk-next .desk-wing {
   border: 1px solid var(--border);
   border-radius: var(--radius-xs);
-  background: none;
-  color: var(--text-faint);
+  background: var(--wash-1);
+  color: var(--text-muted);
   font-family: var(--font-mono);
   font-size: 10px;
   font-weight: 600;
@@ -317,7 +317,7 @@
 }
 .desk-next .desk-wing:hover {
   color: var(--text);
-  background: var(--wash-1);
+  background: var(--wash-2);
 }
 .desk-next .desk-wing.is-on {
   background: var(--desk-window-well);

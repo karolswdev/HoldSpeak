@@ -361,6 +361,12 @@ _MIGRATED_CALLS: dict[tuple[str, str, str, int], str] = {
         1,
     ): "mandatory authenticated owner read",
     (
+        "holdspeak/services/watch_sources.py",
+        "GitHubWatchSource.snapshot",
+        "run_read_subprocess",
+        1,
+    ): "mandatory authenticated owner read",
+    (
         "holdspeak/missioncontrol_bridge.py",
         "_default_runner",
         "run",
