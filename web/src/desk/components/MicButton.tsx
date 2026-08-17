@@ -34,6 +34,7 @@ import {
 import { VoiceProposalStrip } from "../voice/ProposalStrip";
 import type { VoiceGrammar, VoiceProposal } from "../voice/grammar";
 import { routeVoiceIntent } from "../voice/intentRouter";
+import { play as sfx } from "../../lib/sfx";
 
 export type MicState = "idle" | "listening" | "busy" | "failed";
 
@@ -233,6 +234,7 @@ export function MicButton({
     setFailure(category);
     setFailureCode(code);
     onFailure?.(category);
+    sfx("error");
     go("failed");
   };
 
@@ -330,8 +332,10 @@ export function MicButton({
 
   const toggle = () => {
     if (state === "listening") {
+      sfx("key-up");
       void stopSession();
     } else if (state === "idle" || state === "failed") {
+      sfx("key-down");
       void startSession();
     }
   };

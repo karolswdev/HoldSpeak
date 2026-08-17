@@ -1219,5 +1219,46 @@
         "doc": "HS-110-01: no float shadow — bevel-depth only"
       }
     ]
+  },
+  "sound": {
+    "$doc": "HS-135-12 L4: canonical sound names (documentation only — NO --sfx-* CSS properties per counsel ruling A.L4 condition 1). Runtime is sfx.ts with a typed enum; per-sound concurrent pool cap 3; mono 22050Hz 16-bit WAV (OGG preferred); sub-120ms; total well under 100KB.",
+    "names": [
+      {
+        "name": "key-down",
+        "trigger": "TransportKey pressed (MIC open, TALK start)",
+        "character": "relay click — a dry snap, one cycle, no ring",
+        "max_duration_ms": 80
+      },
+      {
+        "name": "key-up",
+        "trigger": "TransportKey released (MIC close, TALK stop)",
+        "character": "solenoid release — slightly softer than key-down",
+        "max_duration_ms": 60
+      },
+      {
+        "name": "latch",
+        "trigger": "window open/close, recording started, meeting capture begins",
+        "character": "card latch engaging — a mechanical click with a tiny settle",
+        "max_duration_ms": 120
+      },
+      {
+        "name": "land",
+        "trigger": "delivery landed, artifact received, result arrived",
+        "character": "object landing on desk — a soft thud with no bounce",
+        "max_duration_ms": 100
+      },
+      {
+        "name": "file",
+        "trigger": "item filed into zone, relationship toggled",
+        "character": "filing-cabinet drawer click — crisp, thin",
+        "max_duration_ms": 60
+      },
+      {
+        "name": "error",
+        "trigger": "admission refused, operation failed",
+        "character": "a stuck key — the same relay as key-down but doubled (click-click)",
+        "max_duration_ms": 120
+      }
+    ]
   }
 }

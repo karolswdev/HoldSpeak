@@ -29,6 +29,7 @@ import {
   type CycleOption,
 } from "../../desk/surface/gadgets";
 import { HotkeyCapture } from "./settingsBespoke";
+import { toggleSfx } from "../../lib/sfx";
 import { ModelsModule } from "./settingsModels";
 import { RuntimeDocsCore } from "./RuntimeDocsCore";
 import { useCoreWings } from "./core-hooks";
@@ -431,6 +432,16 @@ function SettingsFace({ hero, scope }: CoreProps) {
       case "appearance":
         return (
           <GadgetGroup>
+            <GadgetRow label="DESK SOUNDS" highlight={hl(["ui", "desk_sounds"])}>
+              <CheckGadget
+                label="DESK SOUNDS"
+                checked={Boolean(val(["ui", "desk_sounds"]) ?? true)}
+                onChange={(next) => {
+                  update(["ui", "desk_sounds"], next);
+                  toggleSfx(next);
+                }}
+              />
+            </GadgetRow>
             {check(["ui", "show_audio_meter"], "Show audio meter")}
             {num(["ui", "history_lines"], "History lines", {
               unit: "lines",

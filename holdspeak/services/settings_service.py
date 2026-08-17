@@ -332,6 +332,9 @@ class SettingsService:
         ui_data["show_audio_meter"] = bool(
             ui_data.get("show_audio_meter", current.ui.show_audio_meter)
         )
+        ui_data["desk_sounds"] = bool(
+            ui_data.get("desk_sounds", current.ui.desk_sounds)
+        )
 
         # --- Optional string / bool fields in MeetingConfig ---
         meeting_data["mic_device"] = (

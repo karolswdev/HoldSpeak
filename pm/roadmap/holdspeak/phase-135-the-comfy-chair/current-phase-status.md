@@ -1,6 +1,6 @@
 # Phase 135 — The Comfy Chair
 
-**Status:** in-progress (5/15).
+**Status:** in-progress (6/15).
 
 **Last updated:** 2026-08-17.
 
@@ -111,7 +111,7 @@ docs + the walk.
 | HS-135-09 | The Meetings lane | backlog | [story-09](./story-09-meetings-lane.md) | [evidence-story-09](./evidence-story-09.md) |
 | HS-135-10 | The Agents lane | backlog | [story-10](./story-10-agents-lane.md) | [evidence-story-10](./evidence-story-10.md) |
 | HS-135-11 | The capture hero | backlog | [story-11](./story-11-capture-hero.md) | [evidence-story-11](./evidence-story-11.md) |
-| HS-135-12 | The desk clicks | backlog | [story-12](./story-12-sound-palette.md) | [evidence-story-12](./evidence-story-12.md) |
+| HS-135-12 | The desk clicks | done | [story-12](./story-12-sound-palette.md) | [evidence-story-12](./evidence-story-12.md) |
 | HS-135-13 | Docs and the walk | backlog | [story-13](./story-13-docs-and-walk.md) | [evidence-story-13](./evidence-story-13.md) |
 | HS-135-14 | The chrome speaks Workbench | backlog | [story-14](./story-14-chrome-speaks-workbench.md) | [evidence-story-14](./evidence-story-14.md) |
 | HS-135-15 | Creation operates | backlog | [story-15](./story-15-creation-operates.md) | [evidence-story-15](./evidence-story-15.md) |
@@ -236,3 +236,22 @@ opener does the same at compositorSlice.ts:184-188) -- no code change
 needed, 5 tests prove the existing behavior. laneContract.ts renamed
 from lane.ts to avoid macOS APFS case-insensitive collision with
 Lane.tsx. 17 vitest green (12 Chair + 5 window-seam).
+HS-135-12 shipped: the desk clicks. Six synthesized mechanical sounds
+(key-down 35ms, key-up 25ms, latch 75ms, land 60ms, file 15ms, error
+115ms) generated via Python stdlib (wave/struct/math) with filtered
+noise bursts + sine ticks, sharp attack/fast decay envelopes, peak 0.25
+(quiet). OGG/Opus via ffmpeg + WAV fallback; 16.4KB total (both formats).
+sfx.ts: typed SfxName enum, lazy AudioContext, buffer cache, pool cap 3
+(oldest dropped), global enable via localStorage + sfx-off CSS class,
+prefers-reduced-motion mutes. Wiring: MicButton (key-down/up + error),
+windowFactory (latch on open/close), deliveryTerminal + steering (land
+on success, error on refusal), DeskFilingStrip (file on toggle, error on
+failure). Settings: desk_sounds bool in UIConfig (default true), validated
+in settings_service.py, DESK SOUNDS CheckGadget in Appearance module
+wired to toggleSfx(). design-tokens.json: "sound" documentation section
+(names only, no --sfx-* CSS properties per counsel A.L4). Two honest
+caveats: OGG encoded as Opus not Vorbis (local ffmpeg lacks libvorbis;
+Opus is a better codec with broad support); the very first sound play
+per session misses (buffer loads async) but all six preload in parallel
+after the first user gesture. 10 sfx tests + 1003 full vitest + 39
+settings tests green.

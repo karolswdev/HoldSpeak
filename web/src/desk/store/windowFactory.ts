@@ -3,6 +3,7 @@
  * state array. Pullouts stay hand-written (custom close with optional id,
  * dispatch routing). */
 import type { DeskState, PanelRect } from "./types";
+import { play as sfx } from "../../lib/sfx";
 
 /** Configuration for one window type. */
 export interface WindowTypeConfig<K extends string> {
@@ -90,6 +91,7 @@ export function makeOpenWindow<K extends string>(
       set({ [config.field]: next } as unknown as Partial<DeskState>);
       if (config.persistKey) persistWindows(config.persistKey, next, config.key);
       if (config.onOpen) config.onOpen(value, get, set);
+      sfx("latch");
     }
     get().focusPanel(panelId);
   };
@@ -105,9 +107,9 @@ export function makeCloseWindow<K extends string>(
     set: (partial: Partial<DeskState>) => void,
     get: () => DeskState,
   ): void {
-    const next = (get()[config.field] as unknown as WindowEntry<K>[]).filter(
-      (w) => w[config.key] !== value,
-    );
+    const prev = get()[config.field] as unknown as WindowEntry<K>[];
+    const next = prev.filter((w) => w[config.key] !== value);
+    if (next.length < prev.length) sfx("latch");
     set({ [config.field]: next } as unknown as Partial<DeskState>);
     if (config.persistKey) persistWindows(config.persistKey, next, config.key);
   };
