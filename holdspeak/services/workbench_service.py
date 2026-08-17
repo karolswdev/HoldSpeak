@@ -100,6 +100,9 @@ class WorkbenchService:
 
     # ── Items ────────────────────────────────────────────────────────────
 
+    def get_item(self, principal: Principal, workbench_id: str, item_id: str) -> dict[str, Any]:
+        return self._require_item(workbench_id, item_id).to_dict()
+
     def add_item(
         self, principal: Principal, workbench_id: str, *, title: str, **fields: Any
     ) -> dict[str, Any]:

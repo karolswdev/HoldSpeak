@@ -72,6 +72,54 @@ def test_relationship_kinds_and_encrypted_grounding_notes(service: PeopleService
         assert all(note["source"] == "manual" for note in detail["notes"])
 
 
+def test_commitment_execution_link_satisfaction_and_history(service: PeopleService) -> None:
+    relationship = service.create_relationship(OWNER, {"display_name": "Execution history"})
+    request = service.create_request(OWNER, relationship["id"], {"body": "Prepare the architecture discussion"})
+    commitment = service.accept_request(OWNER, request["id"])
+
+    linked = service.attach_execution(
+        OWNER,
+        commitment["id"],
+        workbench_id="wb_architecture",
+        item_id="wbi_discussion",
+    )
+    satisfied = service.satisfy_commitment(
+        OWNER,
+        commitment["id"],
+        rationale="Design brief reviewed",
+        evidence=[{"kind": "workbench_item", "item_id": "wbi_discussion", "status": "done"}],
+    )
+    summary = service.history_summary(OWNER, relationship["id"])
+
+    assert linked["execution_links"][0]["item_id"] == "wbi_discussion"
+    assert [event["event"] for event in satisfied["history"]] == ["accepted", "delegated", "satisfied"]
+    assert satisfied["history"][-1]["rationale"] == "Design brief reviewed"
+    assert summary == {
+        "accepted": 1,
+        "open": 0,
+        "satisfied": 1,
+        "dismissed": 0,
+        "reopened": 0,
+        "with_evidence": 1,
+        "commitments": [satisfied],
+    }
+
+    service.transition(OWNER, f"people:{commitment['id']}", "reopen")
+    reopened = service.history_summary(OWNER, relationship["id"])
+    assert reopened["open"] == 1
+    assert reopened["reopened"] == 1
+
+
+def test_relationship_project_links_are_stable_context_refs(service: PeopleService) -> None:
+    relationship = service.create_relationship(OWNER, {"display_name": "Project collaborator"})
+    linked = service.link_project(OWNER, relationship["id"], "proj-platform")
+    duplicate = service.link_project(OWNER, relationship["id"], "proj-platform")
+    assert linked["project_refs"] == ["proj-platform"]
+    assert duplicate["project_refs"] == ["proj-platform"]
+    assert service.get_relationship(OWNER, relationship["id"])["project_refs"] == ["proj-platform"]
+    assert service.unlink_project(OWNER, relationship["id"], "proj-platform")["project_refs"] == []
+
+
 def test_roll_forward_closes_source_and_only_links_same_session(service: PeopleService) -> None:
     relationship = service.create_relationship(OWNER, {"display_name": "Roll sentinel"})
     session = service.create_one_on_one(OWNER, relationship["id"], {})

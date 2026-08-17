@@ -3159,6 +3159,46 @@
       ]
     },
     {
+      "path": "/api/people/commitments/{commitment_id}/execution",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.people",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/people/commitments/{commitment_id}/satisfy",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.people",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/people/commitments/{commitment_id}/workbench",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.people",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/people/history",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.people",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/people/one-on-ones/{session_id}/agenda",
       "methods": [
         "POST"
@@ -3250,6 +3290,26 @@
     },
     {
       "path": "/api/people/relationships/{relationship_id}/one-on-ones",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.people",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/people/relationships/{relationship_id}/projects/{project_id}",
+      "methods": [
+        "DELETE"
+      ],
+      "module": "web.routes.people",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/people/relationships/{relationship_id}/projects/{project_id}",
       "methods": [
         "POST"
       ],

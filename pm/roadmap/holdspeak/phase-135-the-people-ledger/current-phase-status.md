@@ -1,6 +1,6 @@
 # Phase 135 — The People Ledger
 
-**Status:** active (1/7).
+**Status:** active (2/8).
 
 **Last updated:** 2026-08-16.
 
@@ -63,11 +63,13 @@ product stores.
 - Default-deny People MCP tools/resources for shared-intent continuity, manual
   grounding, and explicit commitments, with no store setup, archive, capture,
   model invocation, inferred assessment, search, or export.
+- In-place commitment execution: explicit Workbench item creation, linked Project
+  grounding, hydrated result/status, human-confirmed satisfaction, and history.
 
 ### Out
 
 - Audio, recording, transcription, speaker or calendar identity linkage.
-- AI/model invocation or inferred assessment, sentiment, ranking, scoring, employment decisions, activity or
+- Automatic People inference or inferred assessment, sentiment, ranking, scoring, employment decisions, activity or
   productivity surveillance, and cross-person comparison.
 - Growth plans, feedback/review packets, opportunity allocation, team maps.
 - Sync, participant sharing, export, backup/recovery, connectors, generic MCP,
@@ -96,6 +98,7 @@ product stores.
 | HSEGHS001HS104-135-05 | The privacy proof | ready | [story-05](./story-05-privacy-proof.md) | — |
 | HSEGHS001HS104-135-06 | The People walk | ready | [story-06](./story-06-people-walk.md) | — |
 | HSEGHS001HS104-135-07 | People through the MCP service boundary | done | [story-07](./story-07-people-mcp.md) | [evidence-story-07](./evidence-story-07.md) |
+| HSEGHS001HS104-135-08 | Commitments become evidenced work | done | [story-08](./story-08-commitment-execution.md) | [evidence-story-08](./evidence-story-08.md) |
 
 ## Risk register
 
@@ -178,7 +181,8 @@ product stores.
 ## Where we are
 
 Implementation is integrated and the People MCP service slice is done with focused
-evidence. Draft-PR handoff now includes organizational relationship kinds, encrypted
-grounding notes, an agent-ready shared-only grounding bundle, and the reviewed
-PixelLab sprite. The phase remains active because
+evidence. The current increment adds Project-linked, Workbench-executed commitment
+follow-through with explicit satisfaction history. Draft-PR handoff includes
+organizational relationship kinds, encrypted grounding notes, an agent-ready
+shared-only grounding bundle, and the reviewed PixelLab sprite. The phase remains active because
 the full production walk and maintainer verification caveat are intentionally open.

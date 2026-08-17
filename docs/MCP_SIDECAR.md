@@ -134,7 +134,7 @@ project, time, and pagination filters.
 The encrypted People ledger is an opt-in MCP capability. `people.readiness`
 is content-free and works while access is disabled. With
 `HOLDSPEAK_MCP_PEOPLE_ACCESS=read`, the sidecar can list relationships and
-read one relationship's `shared_intent` 1:1s, agenda items, grounding notes,
+read one relationship's `shared_intent` 1:1s, agenda items, grounding notes, linked Project refs,
 requests, and commitments. `people.grounding.get` returns those accepted manual
 sources as a structured evidence bundle; it does not invoke a model or infer an
 assessment. `write` additionally admits relationship and grounding-note creation, notes-only

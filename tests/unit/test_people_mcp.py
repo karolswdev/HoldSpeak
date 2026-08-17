@@ -103,6 +103,7 @@ def test_people_mcp_read_projection_omits_every_leader_private_field(
     people_service.create_note(OWNER, relationship["id"], {
         "topic": "Shared context", "body": "Shared grounding note", "visibility": "shared_intent",
     })
+    people_service.link_project(OWNER, relationship["id"], "proj-platform")
     monkeypatch.setenv(people_family.ACCESS_ENV, "read")
 
     failed, detail = _call("people.relationship.get", {"relationship_id": relationship["id"]})
@@ -123,6 +124,7 @@ def test_people_mcp_read_projection_omits_every_leader_private_field(
     assert len(detail["requests"]) == 1
     assert len(detail["commitments"]) == 1
     assert len(detail["notes"]) == 1
+    assert detail["project_refs"] == ["proj-platform"]
 
     failed, grounding = _call("people.grounding.get", {"relationship_id": relationship["id"]})
     assert failed is False
@@ -133,6 +135,7 @@ def test_people_mcp_read_projection_omits_every_leader_private_field(
         "visibility": "shared_intent_only",
     }
     assert grounding["grounding"]["notes"][0]["body"] == "Shared grounding note"
+    assert grounding["relationship"]["project_refs"] == ["proj-platform"]
 
 
 def test_people_mcp_write_flow_uses_domain_service_and_encrypted_authority(

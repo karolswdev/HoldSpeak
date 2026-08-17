@@ -7,6 +7,9 @@ from fastapi import APIRouter, Body, HTTPException, Request
 
 from ...principals import UNAUTHENTICATED
 from ...services.people_service import PeopleServiceError
+from ...services.errors import NotFound
+from ...services.workbench_service import WorkbenchService
+from ...services.project_service import ProjectService
 from ..context import WebContext
 
 
@@ -32,6 +35,14 @@ def build_people_router(ctx: WebContext) -> APIRouter:
 
     def principal(request: Request) -> Any:
         return getattr(request.state, "principal", UNAUTHENTICATED)
+
+    def workbenches() -> WorkbenchService:
+        from ...db import get_database, get_observer
+        return WorkbenchService(get_database(), observer=get_observer())
+
+    def projects() -> ProjectService:
+        from ...db import get_database, get_observer
+        return ProjectService(get_database(), observer=get_observer())
 
     @router.get("/readiness")
     async def readiness(request: Request) -> dict[str, str]:
@@ -72,6 +83,24 @@ def build_people_router(ctx: WebContext) -> APIRouter:
     async def archive_relationship(request: Request, relationship_id: str) -> dict[str, Any]:
         try:
             return {"relationship": service.archive_relationship(principal(request), relationship_id)}
+        except PeopleServiceError as exc:
+            raise _failure(exc) from exc
+
+    @router.post("/relationships/{relationship_id}/projects/{project_id}")
+    async def link_project(request: Request, relationship_id: str, project_id: str) -> dict[str, Any]:
+        try:
+            owner = principal(request)
+            projects().get_project(owner, project_id)
+            return {"relationship": service.link_project(owner, relationship_id, project_id)}
+        except PeopleServiceError as exc:
+            raise _failure(exc) from exc
+        except NotFound as exc:
+            raise HTTPException(status_code=404, detail="people_project_not_found") from exc
+
+    @router.delete("/relationships/{relationship_id}/projects/{project_id}")
+    async def unlink_project(request: Request, relationship_id: str, project_id: str) -> dict[str, Any]:
+        try:
+            return {"relationship": service.unlink_project(principal(request), relationship_id, project_id)}
         except PeopleServiceError as exc:
             raise _failure(exc) from exc
 
@@ -121,6 +150,138 @@ def build_people_router(ctx: WebContext) -> APIRouter:
     async def accept_request(request: Request, request_id: str, body: dict[str, Any] = Body(default={})) -> dict[str, Any]:
         try:
             return {"commitment": service.accept_request(principal(request), request_id, body)}
+        except PeopleServiceError as exc:
+            raise _failure(exc) from exc
+
+    @router.get("/history")
+    async def history(request: Request, relationship_id: str | None = None) -> dict[str, Any]:
+        try:
+            return {"history": service.history_summary(principal(request), relationship_id)}
+        except PeopleServiceError as exc:
+            raise _failure(exc) from exc
+
+    @router.get("/commitments/{commitment_id}/execution")
+    async def commitment_execution(request: Request, commitment_id: str) -> dict[str, Any]:
+        try:
+            commitment = service.get_commitment(principal(request), commitment_id)
+            items = []
+            wb = workbenches()
+            for link in commitment.get("execution_links") or []:
+                if not isinstance(link, dict) or link.get("kind") != "workbench_item":
+                    continue
+                try:
+                    item = wb.get_item(principal(request), str(link.get("workbench_id") or ""), str(link.get("item_id") or ""))
+                except NotFound:
+                    item = {**link, "status": "missing", "result": None, "result_artifact_id": None}
+                items.append(item)
+            return {"commitment": commitment, "items": items}
+        except PeopleServiceError as exc:
+            raise _failure(exc) from exc
+
+    @router.post("/commitments/{commitment_id}/workbench", status_code=201)
+    async def send_commitment_to_workbench(
+        request: Request,
+        commitment_id: str,
+        body: dict[str, Any] = Body(default={}),
+    ) -> dict[str, Any]:
+        try:
+            owner = principal(request)
+            commitment = service.get_commitment(owner, commitment_id)
+            workbench_id = str(body.get("workbench_id") or "").strip()
+            if not workbench_id:
+                raise PeopleServiceError("people_workbench_required")
+            wb = workbenches()
+            wb.get_workbench(owner, workbench_id)
+            for link in commitment.get("execution_links") or []:
+                if isinstance(link, dict) and link.get("workbench_id") == workbench_id:
+                    try:
+                        existing = wb.get_item(owner, workbench_id, str(link.get("item_id") or ""))
+                        return {"commitment": commitment, "item": existing, "created": False}
+                    except NotFound:
+                        pass
+            text = str(commitment.get("body") or "").strip()
+            relationship = service.get_relationship(owner, str(commitment.get("relationship_id") or ""))
+            project_grounding: list[dict[str, Any]] = []
+            project_service = projects()
+            for project_id in relationship.get("project_refs") or []:
+                try:
+                    project = project_service.get_project(owner, str(project_id))
+                    resources = project_service.list_resources(owner, str(project_id))
+                except NotFound:
+                    continue
+                project_grounding.append({
+                    "id": project.get("id"),
+                    "name": project.get("name"),
+                    "description": project.get("description"),
+                    "keywords": project.get("keywords"),
+                    "context": project.get("context"),
+                    "resources": [resource.get("resource_ref") for resource in resources],
+                })
+            item = wb.add_item(
+                owner,
+                workbench_id,
+                title=text,
+                body=(
+                    "Complete this relationship follow-through item. Return a concrete deliverable "
+                    "and a concise completion summary.\n\nCommitment:\n" + text
+                ),
+                grounding={"people_commitment": text, "projects": project_grounding},
+                context={
+                    "source": "people_commitment",
+                    "people_commitment_id": commitment_id,
+                    "relationship_id": commitment.get("relationship_id"),
+                    "project_ids": [project.get("id") for project in project_grounding],
+                },
+            )
+            try:
+                linked = service.attach_execution(
+                    owner,
+                    commitment_id,
+                    workbench_id=workbench_id,
+                    item_id=str(item["id"]),
+                )
+            except Exception:
+                wb.delete_item(owner, workbench_id, str(item["id"]))
+                raise
+            return {"commitment": linked, "item": item, "created": True}
+        except PeopleServiceError as exc:
+            raise _failure(exc) from exc
+        except NotFound as exc:
+            raise HTTPException(status_code=404, detail="people_workbench_not_found") from exc
+
+    @router.post("/commitments/{commitment_id}/satisfy")
+    async def satisfy_commitment(
+        request: Request,
+        commitment_id: str,
+        body: dict[str, Any] = Body(default={}),
+    ) -> dict[str, Any]:
+        try:
+            owner = principal(request)
+            commitment = service.get_commitment(owner, commitment_id)
+            wb = workbenches()
+            evidence: list[dict[str, Any]] = []
+            for link in commitment.get("execution_links") or []:
+                if not isinstance(link, dict) or link.get("kind") != "workbench_item":
+                    continue
+                try:
+                    item = wb.get_item(owner, str(link.get("workbench_id") or ""), str(link.get("item_id") or ""))
+                except NotFound:
+                    continue
+                evidence.append({
+                    "kind": "workbench_item",
+                    "workbench_id": item["workbench_id"],
+                    "item_id": item["id"],
+                    "status": item["status"],
+                    "artifact_id": item.get("result_artifact_id"),
+                    "completed_at": item.get("completed_at"),
+                })
+            result = service.satisfy_commitment(
+                owner,
+                commitment_id,
+                rationale=str(body.get("rationale") or ""),
+                evidence=evidence,
+            )
+            return {"commitment": result}
         except PeopleServiceError as exc:
             raise _failure(exc) from exc
 

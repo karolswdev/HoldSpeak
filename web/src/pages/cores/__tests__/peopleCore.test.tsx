@@ -43,8 +43,9 @@ describe("PeopleCore encrypted local plane", () => {
     stub({
       "/api/people/readiness": () => json({ readiness: "ready", store: "encrypted", sync: "local_only", capture: "notes_only" }),
       "/api/people/relationships": () => json({ relationships: [{ id: "r1", display_name: "Avery", relationship_kind: "direct_report", manager_commitment_count: 1 }] }),
-      "/api/people/relationships/r1": () => json({ relationship: { id: "r1", display_name: "Avery", relationship_kind: "peer", commitments: [], notes: [{ id: "n1", topic: "Collaboration", body: "Prefers written context", visibility: "shared_intent" }] } }),
+      "/api/people/relationships/r1": () => json({ relationship: { id: "r1", display_name: "Avery", relationship_kind: "peer", project_refs: ["p1"], commitments: [], notes: [{ id: "n1", topic: "Collaboration", body: "Prefers written context", visibility: "shared_intent" }] } }),
       "/api/people/relationships/r1/one-on-ones": () => json({ one_on_ones: [] }),
+      "/api/projects": () => json({ projects: [{ id: "p1", name: "Platform", description: "Platform work" }] }),
     });
     render(<PeopleCore scope="people:r1" />);
     await screen.findByText("This device only");
@@ -52,8 +53,27 @@ describe("PeopleCore encrypted local plane", () => {
     expect(screen.getByText("Notes only")).toBeTruthy();
     await waitFor(() => expect(screen.getByRole("tab", { name: "1:1s" })).toBeTruthy());
     fireEvent.click(screen.getByRole("tab", { name: "Context" }));
+    expect(await screen.findByRole("button", { name: /Platform/ })).toBeTruthy();
     expect(screen.getByText("Prefers written context")).toBeTruthy();
     expect(screen.getByLabelText("Grounding note")).toBeTruthy();
     expect(screen.queryByRole("button", { name: /^Speak / })).toBeNull();
+  });
+
+  it("opens a commitment execution inspector and relationship history", async () => {
+    stub({
+      "/api/people/readiness": () => json({ readiness: "ready", store: "encrypted" }),
+      "/api/people/relationships": () => json({ relationships: [{ id: "r1", display_name: "Avery", relationship_kind: "peer" }] }),
+      "/api/people/relationships/r1": () => json({ relationship: { id: "r1", display_name: "Avery", relationship_kind: "peer", commitments: [{ id: "c1", body: "Discuss the next architecture step", state: "open", history: [{ event: "accepted", state: "open", at: "2026-08-17T03:00:00Z", source: "people" }] }] } }),
+      "/api/people/relationships/r1/one-on-ones": () => json({ one_on_ones: [] }),
+      "/api/workbenches": () => json({ workbenches: [{ id: "wb1", name: "Architecture" }] }),
+      "/api/people/commitments/c1/execution": () => json({ items: [] }),
+    });
+    render(<PeopleCore scope="people:r1" />);
+    fireEvent.click(await screen.findByRole("button", { name: /Discuss the next architecture step/ }));
+    expect(await screen.findByRole("button", { name: "Send to Workbench" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Mark satisfied" })).toBeTruthy();
+    fireEvent.click(screen.getByRole("tab", { name: "History" }));
+    expect(screen.getByText("Accepted")).toBeTruthy();
+    expect(screen.getByText("Discuss the next architecture step")).toBeTruthy();
   });
 });

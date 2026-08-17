@@ -8,7 +8,7 @@
 > from evidence, Terra waves with serialized shipping, walks, honest ledgers —
 > is canon at [`docs/internal/ORCHESTRATION.md`](../../../docs/internal/ORCHESTRATION.md).
 
-**Newest update (2026-08-16): Phase 135 — The People Ledger — ACTIVE (1/7).**
+**Newest update (2026-08-16): Phase 135 — The People Ledger — ACTIVE (2/8).**
 The draft delivery now carries an encrypted relationship ledger for direct reports,
 peers, and extended organizational relationships; notes-only 1:1 continuity;
 durable grounding notes; explicit manager commitments in Follow-through; a real

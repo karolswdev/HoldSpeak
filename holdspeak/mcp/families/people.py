@@ -291,7 +291,7 @@ def _shared_relationship(detail: dict[str, Any]) -> dict[str, Any]:
         key: detail.get(key)
         for key in (
             "id", "display_name", "relationship_kind", "role_context", "timezone",
-            "cadence", "state", "created_at", "updated_at",
+            "cadence", "project_refs", "state", "created_at", "updated_at",
         )
     }
     sessions = []
@@ -329,7 +329,7 @@ def _grounding_bundle(detail: dict[str, Any]) -> dict[str, Any]:
     return {
         "relationship": {
             key: detail.get(key)
-            for key in ("id", "display_name", "relationship_kind", "role_context", "timezone", "cadence")
+            for key in ("id", "display_name", "relationship_kind", "role_context", "timezone", "cadence", "project_refs")
         },
         "grounding": {
             "notes": list(detail.get("notes") or []),

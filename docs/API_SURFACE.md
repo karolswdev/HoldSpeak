@@ -9,7 +9,7 @@ and the clients that call it (extracted from the real call sites in
 `web/src` and `apple/`). "server only" means no in-repo client calls
 it today.
 
-Routes: 458 (plus static mounts). iOS-consumed: 89. Web-consumed: 353.
+Routes: 464 (plus static mounts). iOS-consumed: 89. Web-consumed: 359.
 
 ## device_audio_ws
 
@@ -485,6 +485,10 @@ Routes: 458 (plus static mounts). iOS-consumed: 89. Web-consumed: 353.
 
 | Method | Path | Consumers |
 |---|---|---|
+| GET | `/api/people/commitments/{commitment_id}/execution` | web |
+| POST | `/api/people/commitments/{commitment_id}/satisfy` | web |
+| POST | `/api/people/commitments/{commitment_id}/workbench` | web |
+| GET | `/api/people/history` | web |
 | POST | `/api/people/one-on-ones/{session_id}/agenda` | web |
 | GET | `/api/people/readiness` | web |
 | GET | `/api/people/relationships` | web |
@@ -495,6 +499,8 @@ Routes: 458 (plus static mounts). iOS-consumed: 89. Web-consumed: 353.
 | POST | `/api/people/relationships/{relationship_id}/notes` | web |
 | GET | `/api/people/relationships/{relationship_id}/one-on-ones` | web |
 | POST | `/api/people/relationships/{relationship_id}/one-on-ones` | web |
+| DELETE | `/api/people/relationships/{relationship_id}/projects/{project_id}` | web |
+| POST | `/api/people/relationships/{relationship_id}/projects/{project_id}` | web |
 | POST | `/api/people/relationships/{relationship_id}/requests` | web |
 | POST | `/api/people/requests/{request_id}/accept` | web |
 | POST | `/api/people/setup` | web |

@@ -114,6 +114,30 @@ class PeopleService:
             raise PeopleServiceError("people_relationship_not_found")
         return self._relationship_view(self._archive(relationship_id))
 
+    def link_project(self, principal: Any, relationship_id: str, project_id: str) -> dict[str, Any]:
+        relationship = self._require_relationship(principal, relationship_id)
+        clean_project_id = str(project_id or "").strip()
+        if not clean_project_id:
+            raise PeopleServiceError("people_project_required")
+        refs = [str(value) for value in relationship.get("project_refs") or [] if str(value).strip()]
+        if clean_project_id not in refs:
+            refs.append(clean_project_id)
+        value = dict(relationship)
+        value.update({"project_refs": refs, "updated_at": _now()})
+        return self._relationship_view(self._replace(relationship_id, value))
+
+    def unlink_project(self, principal: Any, relationship_id: str, project_id: str) -> dict[str, Any]:
+        relationship = self._require_relationship(principal, relationship_id)
+        value = dict(relationship)
+        value.update({
+            "project_refs": [
+                str(ref) for ref in relationship.get("project_refs") or []
+                if str(ref) != str(project_id)
+            ],
+            "updated_at": _now(),
+        })
+        return self._relationship_view(self._replace(relationship_id, value))
+
     def list_one_on_ones(self, principal: Any, relationship_id: str) -> list[dict[str, Any]]:
         self._require_relationship(principal, relationship_id)
         sessions = [self._entry_view(item) for item in self._list("one_on_one", relationship_id=relationship_id)]
@@ -178,6 +202,8 @@ class PeopleService:
             "relationship_id": str(request.get("relationship_id") or ""),
             "request_id": request_id, "body": body, "visibility": str(request.get("visibility") or "leader_private"),
             "direction": "leader_owes", "state": _OPEN_COMMITMENT, "lifecycle": _OPEN_COMMITMENT,
+            "execution_links": [],
+            "history": [{"event": "accepted", "state": _OPEN_COMMITMENT, "at": _now(), "source": "people"}],
             "created_at": _now(), "updated_at": _now(),
         }
         try:
@@ -212,6 +238,82 @@ class PeopleService:
             raise PeopleServiceError("people_commitment_not_found")
         self._require_relationship(principal, str(commitment.get("relationship_id") or ""))
         return self._record_view(commitment)
+
+    def attach_execution(
+        self,
+        principal: Any,
+        commitment_id: str,
+        *,
+        workbench_id: str,
+        item_id: str,
+    ) -> dict[str, Any]:
+        """Link durable execution work without creating a second commitment authority."""
+        self._require_ready_owner(principal)
+        commitment = self._get(commitment_id, "commitment")
+        if commitment is None:
+            raise PeopleServiceError("people_commitment_not_found")
+        self._require_relationship(principal, str(commitment.get("relationship_id") or ""))
+        links = [dict(link) for link in commitment.get("execution_links") or [] if isinstance(link, dict)]
+        for link in links:
+            if link.get("workbench_id") == workbench_id and link.get("item_id") == item_id:
+                return self._record_view(commitment)
+        now = _now()
+        links.append({"kind": "workbench_item", "workbench_id": workbench_id, "item_id": item_id, "linked_at": now})
+        history = self._history(commitment)
+        history.append({"event": "delegated", "state": str(commitment.get("state") or "open"), "at": now, "source": "workbench", "workbench_id": workbench_id, "item_id": item_id})
+        value = dict(commitment)
+        value.update({"execution_links": links, "history": history, "updated_at": now})
+        return self._record_view(self._replace(commitment_id, value))
+
+    def satisfy_commitment(
+        self,
+        principal: Any,
+        commitment_id: str,
+        *,
+        rationale: str = "",
+        evidence: list[dict[str, Any]] | None = None,
+    ) -> dict[str, Any]:
+        self._require_ready_owner(principal)
+        commitment = self._get(commitment_id, "commitment")
+        if commitment is None:
+            raise PeopleServiceError("people_commitment_not_found")
+        self._require_relationship(principal, str(commitment.get("relationship_id") or ""))
+        return self._transition_commitment(
+            commitment,
+            "done",
+            event="satisfied",
+            source="people",
+            rationale=str(rationale or "").strip()[:2000],
+            evidence=evidence or [],
+        )
+
+    def history_summary(self, principal: Any, relationship_id: str | None = None) -> dict[str, Any]:
+        """Compute relationship follow-through history from the encrypted authority."""
+        self._require_ready_owner(principal)
+        if relationship_id is not None:
+            self._require_relationship(principal, relationship_id)
+        rows = [
+            self._record_view(item)
+            for item in self._list("commitment", **({"relationship_id": relationship_id} if relationship_id else {}))
+        ]
+        satisfied = sum(1 for item in rows if item.get("state") == "done")
+        dismissed = sum(1 for item in rows if item.get("state") == "dismissed")
+        reopened = sum(
+            1 for item in rows
+            if any(event.get("event") == "reopened" for event in item.get("history") or [] if isinstance(event, dict))
+        )
+        return {
+            "accepted": len(rows),
+            "open": sum(1 for item in rows if item.get("state") == "open"),
+            "satisfied": satisfied,
+            "dismissed": dismissed,
+            "reopened": reopened,
+            "with_evidence": sum(
+                1 for item in rows
+                if any(event.get("evidence") for event in item.get("history") or [] if isinstance(event, dict))
+            ),
+            "commitments": rows,
+        }
 
     def add_agenda_item(self, principal: Any, session_id: str, payload: dict[str, Any]) -> dict[str, Any]:
         self._require_ready_owner(principal)
@@ -276,8 +378,35 @@ class PeopleService:
         if commitment is None:
             raise PeopleServiceError("people_commitment_not_found")
         state = {"done": "done", "dismiss": "dismissed", "reopen": _OPEN_COMMITMENT}[verb]
-        self._transition(commitment_id, state)
+        event = {"done": "satisfied", "dismiss": "dismissed", "reopen": "reopened"}[verb]
+        self._transition_commitment(commitment, state, event=event, source="follow_through")
         return {"card_id": card_id, "verb": verb}
+
+    def _transition_commitment(
+        self,
+        commitment: dict[str, Any],
+        state: str,
+        *,
+        event: str,
+        source: str,
+        rationale: str = "",
+        evidence: list[dict[str, Any]] | None = None,
+    ) -> dict[str, Any]:
+        now = _now()
+        history = self._history(commitment)
+        entry: dict[str, Any] = {"event": event, "state": state, "at": now, "source": source}
+        if rationale:
+            entry["rationale"] = rationale
+        if evidence:
+            entry["evidence"] = evidence
+        history.append(entry)
+        value = dict(commitment)
+        value.update({"state": state, "lifecycle": state, "history": history, "updated_at": now})
+        return self._record_view(self._replace(str(commitment["id"]), value))
+
+    @staticmethod
+    def _history(commitment: dict[str, Any]) -> list[dict[str, Any]]:
+        return [dict(item) for item in commitment.get("history") or [] if isinstance(item, dict)]
 
     # -- Store isolation and validation -------------------------------------------
 
@@ -378,7 +507,7 @@ class PeopleService:
 
     @staticmethod
     def _relationship_view(record: dict[str, Any]) -> dict[str, Any]:
-        return {key: record.get(key) for key in ("id", "display_name", "relationship_kind", "role_context", "timezone", "cadence", "state", "created_at", "updated_at")}
+        return {key: record.get(key) for key in ("id", "display_name", "relationship_kind", "role_context", "timezone", "cadence", "project_refs", "state", "created_at", "updated_at")}
 
     @staticmethod
     def _entry_view(record: dict[str, Any]) -> dict[str, Any]:
@@ -390,4 +519,4 @@ class PeopleService:
 
     @staticmethod
     def _record_view(record: dict[str, Any]) -> dict[str, Any]:
-        return {key: record.get(key) for key in ("id", "relationship_id", "request_id", "topic", "body", "visibility", "direction", "state", "commitment_id", "source", "created_at", "updated_at", "accepted_at")}
+        return {key: record.get(key) for key in ("id", "relationship_id", "request_id", "topic", "body", "visibility", "direction", "state", "commitment_id", "source", "execution_links", "history", "created_at", "updated_at", "accepted_at")}

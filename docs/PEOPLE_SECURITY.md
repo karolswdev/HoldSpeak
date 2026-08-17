@@ -44,7 +44,7 @@ repository's default `.mcp.json` leaves People access off.
 ## Deliberately unavailable
 
 The first People delivery has no sync, sharing, export, backup/recovery, connector,
-generic primitive MCP access, global search, Ask/Memory grounding, recording, inference, scheduled brief,
+generic primitive MCP access, global search, Ask/Memory grounding, recording, People-owned inference, scheduled brief,
 nudge, scoring, ranking, or employment recommendation path. `shared_intent` records
 an access intention; it does not mean another participant can view the item. The
 opt-in MCP adapter is the only shipped disclosure of that class in this delivery.
@@ -72,12 +72,22 @@ People content must not enter:
 - generic FTS, Memory/Ask, sync inbox/outbox, or primitive serialization;
 - Cadence loops, evidence, next actions, nudges, audits, or Daily Brief storage;
 - kernel operation/receipt text, logs, exception details, or broadcasts;
-- meeting exports, files, Slack/webhook/GitHub connectors, or remote/local models.
+- meeting exports, files, Slack/webhook/GitHub connectors, or automatic remote/local
+  model grounding. An explicitly created Workbench item follows normal Workbench
+  placement and egress policy when the owner later runs it.
 
 Authorized `shared_intent` MCP responses are the explicit exception: they exist only
 in the sidecar's response memory/stdout and must never be observed into the plaintext
 main database, logs, receipts, resources outside the People family, or background
 stores. Leader-private content remains categorically excluded.
+
+An explicit `Send to Workbench` owner gesture is a separate, intentional projection:
+the selected commitment wording and linked Project grounding become an ordinary
+Workbench item in the main database so an existing agent workflow can execute it.
+The UI names the destination; there is no background or automatic projection.
+Workbench results remain Workbench data, while People stores only stable execution
+references and satisfaction evidence. This is the sole People-to-main-workflow
+content path in this delivery.
 
 Manual grounding notes are encrypted People records, not model-created profiles.
 `people.grounding.get` can assemble the shared-intent notes, open requests,
