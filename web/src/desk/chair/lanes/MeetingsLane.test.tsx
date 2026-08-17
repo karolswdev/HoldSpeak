@@ -4,19 +4,26 @@
 
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { MeetingsLane, intelBadge } from "./MeetingsLane";
+import { MeetingsLane, intelBadge, nextFireLabel } from "./MeetingsLane";
 import type { Meeting } from "../../../lib/primitives";
+import type { ScheduledRecording } from "../../store";
 
 // ---------------------------------------------------------------------------
-// store mock: items.meeting + recording state
+// store mock: items.meeting + recording state + scheduledRecordings
 // ---------------------------------------------------------------------------
+
+const mockLoadSchedules = vi.fn().mockResolvedValue(undefined);
 
 let storeState: {
   recording: "idle" | "busy" | "recording";
   items: { meeting: Meeting[] };
+  scheduledRecordings: ScheduledRecording[];
+  loadSchedules: typeof mockLoadSchedules;
 } = {
   recording: "idle",
   items: { meeting: [] },
+  scheduledRecordings: [],
+  loadSchedules: mockLoadSchedules,
 };
 
 vi.mock("../../store", () => {
@@ -82,6 +89,25 @@ function resetStore(overrides: Partial<typeof storeState> = {}) {
   storeState = {
     recording: "idle",
     items: { meeting: [] },
+    scheduledRecordings: [],
+    loadSchedules: mockLoadSchedules,
+    ...overrides,
+  };
+}
+
+function makeSchedule(overrides: Partial<ScheduledRecording> = {}): ScheduledRecording {
+  return {
+    id: `sched-${Math.random().toString(36).slice(2, 8)}`,
+    title: "Daily standup",
+    cron_expr: "0 9 * * 1-5",
+    tz: "UTC",
+    one_shot: false,
+    duration_minutes: 60,
+    enabled: true,
+    state: "idle",
+    next_fire_at: new Date(Date.now() + 3600_000).toISOString(),
+    last_outcome: null,
+    created_at: "2026-08-10T10:00:00Z",
     ...overrides,
   };
 }
@@ -314,6 +340,95 @@ describe("MeetingsLane", () => {
       resetStore({ items: { meeting: [] } });
       const { container } = renderLane();
       expect(container.innerHTML).toBe("");
+    });
+  });
+
+  // -- scheduled recordings (HS-136-03) -------------------------------------
+
+  describe("scheduled recordings (HS-136-03)", () => {
+    it("renders scheduled recordings with SCHEDULED badge", () => {
+      const sched = makeSchedule({ id: "s1", title: "Daily standup" });
+      resetStore({ scheduledRecordings: [sched] });
+      renderLane();
+      expect(screen.getByText("Daily standup")).toBeInTheDocument();
+      expect(screen.getByText("SCHEDULED")).toBeInTheDocument();
+    });
+
+    it("shows the schedule glyph", () => {
+      const sched = makeSchedule({ id: "s1" });
+      resetStore({ scheduledRecordings: [sched] });
+      const { container } = renderLane();
+      const glyphs = container.querySelectorAll(".surface-row-glyph");
+      expect(glyphs).toHaveLength(1);
+      expect(glyphs[0].textContent).toContain("⏱"); // ⏱
+    });
+
+    it("scheduled entries sort after live, before archived", () => {
+      const sched = makeSchedule({ id: "s1", title: "Scheduled one" });
+      resetStore({
+        recording: "recording",
+        items: { meeting: [finishedMeeting, liveMeeting] },
+        scheduledRecordings: [sched],
+      });
+      renderLane();
+      const listItems = screen.getAllByRole("listitem");
+      const titles = listItems
+        .map(
+          (li) =>
+            within(li).queryByText(/Design sync|Scheduled one|Sprint review/)
+              ?.textContent,
+        )
+        .filter(Boolean);
+      // Live first, then scheduled, then archived.
+      expect(titles[0]).toBe("Design sync");
+      expect(titles[1]).toBe("Scheduled one");
+      expect(titles[2]).toBe("Sprint review");
+    });
+
+    it("does not show disabled schedules", () => {
+      const sched = makeSchedule({ id: "s1", title: "Disabled one", enabled: false });
+      resetStore({ scheduledRecordings: [sched] });
+      const { container } = renderLane();
+      expect(container.innerHTML).toBe("");
+    });
+
+    it("shows the lane when ONLY schedules exist (no meetings)", () => {
+      const sched = makeSchedule({ id: "s1", title: "Solo schedule" });
+      resetStore({ scheduledRecordings: [sched] });
+      renderLane();
+      expect(screen.getByText("Solo schedule")).toBeInTheDocument();
+    });
+
+    it("shows next-fire time in the detail", () => {
+      const sched = makeSchedule({
+        id: "s1",
+        title: "Timed",
+        next_fire_at: new Date(Date.now() + 7200_000).toISOString(),
+      });
+      resetStore({ scheduledRecordings: [sched] });
+      renderLane();
+      expect(screen.getByText(/Next:/)).toBeInTheDocument();
+    });
+  });
+
+  // -- nextFireLabel unit tests (HS-136-03) ---------------------------------
+
+  describe("nextFireLabel", () => {
+    it("returns empty string for null", () => {
+      expect(nextFireLabel(null)).toBe("");
+    });
+
+    it("returns relative for < 24h", () => {
+      const future = new Date(Date.now() + 3_600_000).toISOString();
+      const label = nextFireLabel(future);
+      expect(label).toMatch(/in \d+h \d+m|in \d+m/);
+    });
+
+    it("returns absolute for > 24h", () => {
+      const future = new Date(Date.now() + 100_000_000).toISOString();
+      const label = nextFireLabel(future);
+      // Should have month and date.
+      expect(label).toMatch(/[A-Z]{3} \d{2}/);
     });
   });
 

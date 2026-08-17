@@ -269,6 +269,65 @@ class TestScheduledRecordingDelegation:
         assert sched["delegation_receipt_id"].startswith("sr_rcpt_")
 
 
+class TestScheduledRecordingTimestampSerialization:
+    """HS-136-03: timestamp fields are ISO-8601 strings, not raw epoch floats."""
+
+    def test_created_at_is_iso_string(self, client: TestClient) -> None:
+        resp = client.post("/api/scheduled-recordings", json={
+            "title": "ISO check",
+            "cron_expr": "0 9 * * 1",
+        })
+        assert resp.status_code == 201
+        sched = resp.json()["schedule"]
+        created = sched["created_at"]
+        assert isinstance(created, str), f"created_at should be a string, got {type(created)}"
+        # Must parse as a valid datetime (not a 1970 date from epoch-seconds)
+        from datetime import datetime
+        dt = datetime.fromisoformat(created.replace("Z", "+00:00"))
+        assert dt.year >= 2026, f"created_at parsed to {dt} (expected recent date)"
+
+    def test_next_fire_at_is_iso_with_correct_hour(self, client: TestClient) -> None:
+        """A weekday-9am cron serializes to an ISO string whose hour is 09."""
+        resp = client.post("/api/scheduled-recordings", json={
+            "title": "9am weekdays",
+            "cron_expr": "0 9 * * 1-5",
+            "enabled": True,
+        })
+        assert resp.status_code == 201
+        sched = resp.json()["schedule"]
+        nf = sched["next_fire_at"]
+        assert isinstance(nf, str), f"next_fire_at should be a string, got {type(nf)}"
+        from datetime import datetime
+        dt = datetime.fromisoformat(nf.replace("Z", "+00:00"))
+        assert dt.hour == 9, f"next_fire_at hour should be 9, got {dt.hour} (from {nf})"
+        assert dt.minute == 0, f"next_fire_at minute should be 0, got {dt.minute}"
+        assert dt.year >= 2026, f"next_fire_at parsed to {dt} (expected future date)"
+
+    def test_all_timestamp_fields_are_strings_or_none(self, client: TestClient) -> None:
+        """Every timestamp field in the serialized dict is a string or None."""
+        resp = client.post("/api/scheduled-recordings", json={
+            "title": "Timestamp audit",
+            "cron_expr": "0 9 * * 1",
+            "enabled": True,
+        })
+        sched = resp.json()["schedule"]
+        timestamp_fields = ["created_at", "next_fire_at", "last_fired_at", "armed_at", "deadline_at"]
+        for field in timestamp_fields:
+            val = sched.get(field)
+            assert val is None or isinstance(val, str), (
+                f"{field} should be str or None, got {type(val).__name__}: {val!r}"
+            )
+
+    def test_disabled_schedule_has_null_next_fire_at(self, client: TestClient) -> None:
+        resp = client.post("/api/scheduled-recordings", json={
+            "title": "Disabled",
+            "cron_expr": "0 9 * * 1",
+            "enabled": False,
+        })
+        sched = resp.json()["schedule"]
+        assert sched["next_fire_at"] is None
+
+
 class TestScheduledRecordingCancelArmed:
     """Cancel-armed returns 409 when not armed (no live conductor)."""
 

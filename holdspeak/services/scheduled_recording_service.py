@@ -59,8 +59,28 @@ def _validate_duration(duration_minutes: int) -> None:
         )
 
 
+def _epoch_to_iso(epoch: Optional[float]) -> Optional[str]:
+    """Convert an epoch-seconds float to an ISO-8601 UTC string.
+
+    The DB stores all timestamps as epoch-seconds floats; the HTTP/MCP wire
+    contract declares them as ISO-8601 strings (matching meetings' startedAt
+    etc.). This adapter bridges the gap so the client's ``new Date(iso)``
+    parses correctly instead of reading epoch-seconds as epoch-milliseconds.
+    """
+    if epoch is None:
+        return None
+    from datetime import datetime, timezone
+    return datetime.fromtimestamp(epoch, tz=timezone.utc).isoformat(
+        timespec="seconds"
+    ).replace("+00:00", "Z")
+
+
 def _schedule_dict(rec: ScheduledRecording) -> dict[str, Any]:
-    return asdict(rec)
+    d = asdict(rec)
+    # Convert all epoch-seconds float fields to ISO-8601 strings (HS-136-03).
+    for key in ("created_at", "next_fire_at", "last_fired_at", "armed_at", "deadline_at"):
+        d[key] = _epoch_to_iso(d.get(key))
+    return d
 
 
 def _write_receipt(

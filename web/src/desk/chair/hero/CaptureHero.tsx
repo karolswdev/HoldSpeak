@@ -20,6 +20,7 @@
 import "./hero.css";
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useDesk } from "../../store";
+import { useRuntimeBus } from "../../../runtime/RuntimeBus";
 import { Button } from "../../../components/signal/Signal";
 import { SYSTEM } from "../../systemSprites";
 import { play as sfx } from "../../../lib/sfx";
@@ -40,6 +41,8 @@ export function matchesRecordCommand(transcript: string): boolean {
   return VOICE_RECORD_COMMANDS.some((cmd) => normalized === cmd);
 }
 
+// ---- scheduled recording broadcast event handling ---------------------------
+
 // ---- the hero ---------------------------------------------------------------
 
 export interface CaptureHeroProps {
@@ -50,7 +53,9 @@ export interface CaptureHeroProps {
 export function CaptureHero({ onAskAI }: CaptureHeroProps) {
   const recording = useDesk((s) => s.recording);
   const startedAt = useDesk((s) => s.recordingStartedAt);
+  const arming = useDesk((s) => s.scheduledArming);
   const [elapsed, setElapsed] = useState("");
+  const [countdown, setCountdown] = useState<number | null>(null);
 
   // Elapsed timer: identical logic to RecordOrb for consistency.
   useEffect(() => {
@@ -64,6 +69,43 @@ export function CaptureHero({ onAskAI }: CaptureHeroProps) {
     }, 1000);
     return () => window.clearInterval(t);
   }, [recording, startedAt]);
+
+  // ---- scheduled recording broadcast subscription --------------------------
+  // Each subscribe call uses a string literal so the frame-registry scanner
+  // recognizes these as live consumers (holdspeak/realtime_frames.py).
+  const { subscribe } = useRuntimeBus();
+  useEffect(() => {
+    const handler = (frame: { type: string; data: unknown }) => {
+      useDesk.getState().applyScheduledRecordingEvent(
+        frame.type,
+        frame.data as Record<string, unknown>,
+      );
+    };
+    const unsubs = [
+      subscribe("scheduled_recording.arming", handler),
+      subscribe("scheduled_recording.cancelled", handler),
+      subscribe("scheduled_recording.missed", handler),
+      subscribe("scheduled_recording.refused", handler),
+      subscribe("scheduled_recording.started", handler),
+      subscribe("scheduled_recording.stopped", handler),
+    ];
+    return () => unsubs.forEach((u) => u());
+  }, [subscribe]);
+
+  // ---- arming countdown timer (hub-authoritative, display only) -----------
+  useEffect(() => {
+    if (!arming || arming.outcome) {
+      setCountdown(null);
+      return;
+    }
+    const tick = () => {
+      const remaining = Math.max(0, Math.ceil((arming.fireAt - Date.now()) / 1000));
+      setCountdown(remaining);
+    };
+    tick();
+    const t = window.setInterval(tick, 250);
+    return () => window.clearInterval(t);
+  }, [arming]);
 
   const isRecording = recording === "recording";
   const isBusy = recording === "busy";
@@ -130,6 +172,45 @@ export function CaptureHero({ onAskAI }: CaptureHeroProps) {
         </div>
       ) : null}
 
+      {/* HS-136-03: arming countdown -- shows when the conductor is counting
+           down to a scheduled recording fire. */}
+      {arming && !arming.outcome && countdown !== null ? (
+        <div className="capture-hero-arming" data-testid="capture-hero-arming">
+          <span className="capture-hero-arming-label">
+            Recording in {countdown}s
+          </span>
+          <Button
+            variant="danger"
+            dense
+            onClick={() => void useDesk.getState().cancelArmedSchedule(arming.scheduleId)}
+            data-testid="capture-hero-cancel-armed"
+          >
+            Cancel
+          </Button>
+        </div>
+      ) : null}
+
+      {/* HS-136-03: arming outcome -- shows the terminal state honestly. */}
+      {arming?.outcome ? (
+        <div
+          className="capture-hero-arming-outcome"
+          data-testid="capture-hero-arming-outcome"
+          data-outcome={arming.outcome}
+        >
+          <span className="capture-hero-arming-label">
+            {arming.outcome === "started"
+              ? `${arming.title || "Scheduled recording"} started`
+              : arming.outcome === "cancelled"
+                ? "Scheduled recording cancelled"
+                : arming.outcome === "refused"
+                  ? `Recording refused${arming.outcomeReason ? `: ${arming.outcomeReason}` : ""}`
+                  : arming.outcome === "missed"
+                    ? "Scheduled recording missed"
+                    : null}
+          </span>
+        </div>
+      ) : null}
+
       {/* The hero instrument key: TransportKey species at hero scale. */}
       <button
         type="button"
@@ -164,6 +245,16 @@ export function CaptureHero({ onAskAI }: CaptureHeroProps) {
         data-testid="capture-hero-ask"
       >
         Ask AI
+      </Button>
+
+      {/* HS-136-03: Schedule verb -- opens the in-world create window. */}
+      <Button
+        variant="ghost"
+        onClick={() => useDesk.getState().openScheduleCreate()}
+        aria-label="Schedule recording"
+        data-testid="capture-hero-schedule"
+      >
+        Schedule
       </Button>
 
       {/* The hero mic: invisible MicButton for voice command capture.

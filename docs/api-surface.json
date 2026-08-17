@@ -3636,7 +3636,9 @@
         "GET"
       ],
       "module": "web.routes.scheduled_recordings",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/scheduled-recordings",
@@ -3644,7 +3646,9 @@
         "POST"
       ],
       "module": "web.routes.scheduled_recordings",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/scheduled-recordings/{schedule_id}",
@@ -3682,7 +3686,9 @@
         "POST"
       ],
       "module": "web.routes.scheduled_recordings",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/sessions/{session_key}/receipt",

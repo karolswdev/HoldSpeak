@@ -1,6 +1,6 @@
 # Phase 136 — Scheduled Recording
 
-**Status:** in progress (2/4).
+**Status:** in progress (3/4).
 
 **Last updated:** 2026-08-17.
 
@@ -143,7 +143,7 @@ with these branches:
 | --- | --- | --- | --- | --- |
 | HS-136-01 | The scheduled-capture spine | done | [story-01](./story-01-scheduled-capture-spine.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-136-02 | The schedule verb (API + MCP) | done | [story-02](./story-02-schedule-verb-api-mcp.md) | [evidence-story-02](./evidence-story-02.md) |
-| HS-136-03 | The Chair surface | backlog | [story-03](./story-03-chair-surface.md) | — |
+| HS-136-03 | The Chair surface | done | [story-03](./story-03-chair-surface.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-136-04 | Docs, walk, and close | backlog | [story-04](./story-04-docs-walk-close.md) | — |
 
 ## Stories
@@ -199,4 +199,23 @@ bar two resolved items: the API-surface manifest regenerated for the
 new routes (`docs/api-surface.json` + `API_SURFACE.md`, 5/5 surface
 tests green), and one confirmed pre-existing flake
 (`test_inference_runner::test_deadline_unknown_provider...`, 3/3 serial
-green → Candidate Z). HS-136-03 (the Chair surface) is next.
+green → Candidate Z).
+
+HS-136-03 (the Chair surface) is done and shipped: an in-world
+DeskWindow create control (no modal; title with a speak-to-fill mic;
+one control for one-shot or recurring; duration default 60), SCHEDULED
+entries in the Meetings lane with a relative next-fire time, and the
+tap-to-cancel arming countdown on the capture hero with honest
+started/cancelled/refused/missed states. The live screenshot walk
+(1440 + 393, `scripts/schedule_walk_hs136.py`, shots in `assets/walk/`)
+is the done call and it earned its place — it caught four defects
+vitest could not: a seconds-vs-milliseconds serialization bug rendering
+next-fire as "Jan 1970" (fixed — all five epoch fields now serialize
+ISO), the six `scheduled_recording.*` frames registered but unseen by
+the frame-wiring scanner (fixed — the conductor emits via `broadcast`
+and the hero consumes via literal `subscribe(...)`), a too-terse error
+message failing the product-copy law (fixed), and an API-surface
+manifest drift from the new client fetches (regenerated). Full suite
+green (5923 passed, 0 failed); the two concurrency flakes seen mid-run
+were confirmed pre-existing (2/2 serial). HS-136-04 (docs, the
+live-metal walk, counsel, close) is next.

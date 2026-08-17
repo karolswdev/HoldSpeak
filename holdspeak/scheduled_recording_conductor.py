@@ -47,7 +47,7 @@ def set_broadcast(fn: Any) -> None:
     _broadcast = fn
 
 
-def _emit(event_type: str, data: dict) -> None:
+def broadcast(event_type: str, data: dict) -> None:
     if _broadcast:
         try:
             _broadcast(event_type, data)
@@ -261,7 +261,7 @@ class ScheduledRecordingConductor:
                         deadline_at=None,
                         armed_at=None,
                     )
-                    _emit("scheduled_recording.stopped", {
+                    broadcast("scheduled_recording.stopped", {
                         "schedule_id": sched.id, "title": sched.title,
                         "receipt_id": receipt_id, "reason": "deadline_passed_on_restart",
                         "at": _now_iso(),
@@ -300,7 +300,7 @@ class ScheduledRecordingConductor:
                     last_receipt_id=receipt_id,
                     armed_at=None,
                 )
-                _emit("scheduled_recording.missed", {
+                broadcast("scheduled_recording.missed", {
                     "schedule_id": sched.id, "title": sched.title,
                     "receipt_id": receipt_id, "reason": "interrupted_arming",
                     "at": _now_iso(),
@@ -326,7 +326,7 @@ class ScheduledRecordingConductor:
                         last_outcome="missed",
                         last_receipt_id=receipt_id,
                     )
-                    _emit("scheduled_recording.missed", {
+                    broadcast("scheduled_recording.missed", {
                         "schedule_id": sched.id, "title": sched.title,
                         "missed_at": sched.next_fire_at, "receipt_id": receipt_id,
                         "at": _now_iso(),
@@ -381,7 +381,7 @@ class ScheduledRecordingConductor:
             armed_at=now,
         )
 
-        _emit("scheduled_recording.arming", {
+        broadcast("scheduled_recording.arming", {
             "schedule_id": sched.id, "title": sched.title,
             "countdown_seconds": self._countdown_seconds,
             "fire_at": now + self._countdown_seconds,
@@ -431,7 +431,7 @@ class ScheduledRecordingConductor:
                 last_fired_at=self._clock(),
                 armed_at=None,
             )
-            _emit("scheduled_recording.cancelled", {
+            broadcast("scheduled_recording.cancelled", {
                 "schedule_id": schedule_id, "title": sched.title,
                 "receipt_id": receipt_id, "at": _now_iso(),
             })
@@ -459,7 +459,7 @@ class ScheduledRecordingConductor:
                         last_fired_at=self._clock(),
                         armed_at=None,
                     )
-                    _emit("scheduled_recording.refused", {
+                    broadcast("scheduled_recording.refused", {
                         "schedule_id": schedule_id, "title": sched.title,
                         "reason": f"mic floor held by {floor_owner!r}",
                         "receipt_id": receipt_id, "at": _now_iso(),
@@ -519,14 +519,14 @@ class ScheduledRecordingConductor:
                 last_receipt_id=error_receipt,
                 deadline_at=None,
             )
-            _emit("scheduled_recording.refused", {
+            broadcast("scheduled_recording.refused", {
                 "schedule_id": schedule_id, "title": sched.title,
                 "reason": str(exc), "receipt_id": error_receipt, "at": _now_iso(),
             })
             self._advance_after_terminal(db, sched, "start_failed", error_receipt)
             return
 
-        _emit("scheduled_recording.started", {
+        broadcast("scheduled_recording.started", {
             "schedule_id": schedule_id, "title": sched.title,
             "duration_minutes": sched.duration_minutes,
             "deadline_at": deadline,
@@ -578,7 +578,7 @@ class ScheduledRecordingConductor:
             last_receipt_id=receipt_id,
             deadline_at=None,
         )
-        _emit("scheduled_recording.stopped", {
+        broadcast("scheduled_recording.stopped", {
             "schedule_id": schedule_id, "title": sched.title,
             "receipt_id": receipt_id, "outcome": outcome, "at": _now_iso(),
         })

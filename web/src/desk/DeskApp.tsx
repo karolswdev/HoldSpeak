@@ -25,6 +25,7 @@ import { RoadmapWindow } from "./components/RoadmapWindow";
 import { RepoWindow } from "./components/RepoWindow";
 import { WorkbenchWindow } from "./components/WorkbenchWindow";
 import { NewWorkbenchChooser } from "./components/NewWorkbenchChooser";
+import { ScheduleCreateWindow } from "./components/ScheduleCreateWindow";
 import { AttentionDrawer } from "./components/AttentionDrawer";
 import { GlassDropLayer } from "./components/GlassDropLayer";
 import { DeskToolInspector } from "./components/DeskToolInspector";
@@ -105,6 +106,7 @@ export default function DeskApp() {
         <WorkbenchWindow key={wb.id} workbenchId={wb.id} origin={wb.origin} />
       ))}
       <NewWorkbenchChooser />
+      <ScheduleCreateWindow />
       <PanePicker />
       <SessionPullout />
       <AttentionDrawer />
