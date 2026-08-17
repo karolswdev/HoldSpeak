@@ -3,7 +3,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { useIntelligenceAttention } from "../../intelligenceAttention";
 import { openIntelligence } from "../../intelligenceNavigation";
-import { DOCK_SPRITES } from "../../systemSprites";
+import { DOCK_SPRITES, SYSTEM } from "../../systemSprites";
 import { useDesk } from "../../store";
 import { useChairState } from "../../chairState";
 import { useShortcutSheet } from "../../chromeState";
@@ -143,9 +143,8 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
           </button>
         );
       })}
-      {/* HS-135-06: Floor/Chair toggle -- a dock button with a grid
-          glyph that swaps the landing surface in place. No floor sprite
-          exists yet; uses a glyph character (icon story HS-135-13). */}
+      {/* HS-135-06 + HS-135-14: Floor/Chair toggle — the floor-grid
+          sprite replaces the ▦ glyph character. */}
       <button
         key="chair-floor-toggle"
         type="button"
@@ -158,7 +157,7 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
         onClick={toggleSurface}
         data-testid="chair-floor-toggle"
       >
-        <span aria-hidden="true">{"▦"}</span>
+        <img src={SYSTEM.floorGrid} alt="" width={32} height={32} className="desk-dock-sprite" draggable={false} />
         <span className="desk-dock-label">
           {chairSurface === "chair" ? "Floor" : "Chair"}
         </span>

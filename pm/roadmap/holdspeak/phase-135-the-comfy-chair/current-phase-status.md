@@ -113,7 +113,7 @@ docs + the walk.
 | HS-135-11 | The capture hero | done | [story-11](./story-11-capture-hero.md) | [evidence-story-11](./evidence-story-11.md) |
 | HS-135-12 | The desk clicks | done | [story-12](./story-12-sound-palette.md) | [evidence-story-12](./evidence-story-12.md) |
 | HS-135-13 | Docs and the walk | backlog | [story-13](./story-13-docs-and-walk.md) | [evidence-story-13](./evidence-story-13.md) |
-| HS-135-14 | The chrome speaks Workbench | backlog | [story-14](./story-14-chrome-speaks-workbench.md) | [evidence-story-14](./evidence-story-14.md) |
+| HS-135-14 | The chrome speaks Workbench | done | [story-14](./story-14-chrome-speaks-workbench.md) | [evidence-story-14](./evidence-story-14.md) |
 | HS-135-15 | Creation operates | done | [story-15](./story-15-creation-operates.md) | [evidence-story-15](./evidence-story-15.md) |
 
 The ask each story answers, in one line: 01 — the owner's real desk
