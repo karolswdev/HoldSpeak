@@ -2,7 +2,7 @@
 
 **Status:** active (2/8).
 
-**Last updated:** 2026-08-16.
+**Last updated:** 2026-08-17.
 
 ## Owner mandate
 
@@ -91,7 +91,7 @@ product stores.
 
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
-| HS-138-01 | The encrypted boundary | in-progress | [story-01](./story-01-encrypted-boundary.md) | — |
+| HS-138-01 | The encrypted boundary | done | [story-01](./story-01-encrypted-boundary.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-138-02 | Relationships and one-to-ones | ready | [story-02](./story-02-relationships-one-to-ones.md) | — |
 | HS-138-03 | Commitments join Follow-through | ready | [story-03](./story-03-commitments-follow-through.md) | — |
 | HS-138-04 | People belongs on the Desk | ready | [story-04](./story-04-people-desk.md) | — |
@@ -187,9 +187,11 @@ product stores.
 
 ## Where we are
 
-Implementation is integrated and the People MCP service slice is done with focused
-evidence. The current increment adds Project-linked, Workbench-executed commitment
-follow-through with explicit satisfaction history. Draft-PR handoff includes
-organizational relationship kinds, encrypted grounding notes, an agent-ready
-shared-only grounding bundle, and the reviewed PixelLab sprite. The phase remains active because
-the full production walk and maintainer verification caveat are intentionally open.
+The close-out is underway on branch `phase-138-close` (2026-08-17, after the
+revival merge landed the implementation on main via PR #459). HS-138-01 is done:
+the encrypted boundary's full test plan ran through the gate (47 tests — crypto,
+key custody, policy, store, no-leaks sweep — all green; evidence-story-01). The
+real-Keychain manual leg is deferred to the HS-138-06 walk by design. Remaining:
+02/03/05 evidence flips from their shipped test plans, the story-04 badge-copy
+amendment (counsel ruled "This device only" false for the Send-to-Workbench
+path), and the owner-attended production walk (06).
