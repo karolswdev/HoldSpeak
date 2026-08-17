@@ -3631,6 +3631,60 @@
       ]
     },
     {
+      "path": "/api/scheduled-recordings",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.scheduled_recordings",
+      "consumers": []
+    },
+    {
+      "path": "/api/scheduled-recordings",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.scheduled_recordings",
+      "consumers": []
+    },
+    {
+      "path": "/api/scheduled-recordings/{schedule_id}",
+      "methods": [
+        "DELETE"
+      ],
+      "module": "web.routes.scheduled_recordings",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/scheduled-recordings/{schedule_id}",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.scheduled_recordings",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/scheduled-recordings/{schedule_id}",
+      "methods": [
+        "PATCH"
+      ],
+      "module": "web.routes.scheduled_recordings",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/scheduled-recordings/{schedule_id}/cancel",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.scheduled_recordings",
+      "consumers": []
+    },
+    {
       "path": "/api/sessions/{session_key}/receipt",
       "methods": [
         "GET"

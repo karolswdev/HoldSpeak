@@ -613,6 +613,7 @@ class MeetingWebServer:
             build_roadmaps_router,
             build_repositories_router,
             build_decision_records_router,
+            build_scheduled_recordings_router,
             build_setup_router,
             build_sync_router,
             build_system_router,
@@ -845,6 +846,7 @@ class MeetingWebServer:
         app.include_router(build_primitives_router(web_ctx))
         app.include_router(build_projections_router(web_ctx))
         app.include_router(build_constitutional_router())
+        app.include_router(build_scheduled_recordings_router(web_ctx))
         app.include_router(build_setup_router(web_ctx))
         app.include_router(build_sync_router(web_ctx))
 

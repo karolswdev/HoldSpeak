@@ -1,6 +1,6 @@
 # Phase 136 — Scheduled Recording
 
-**Status:** in progress (1/4).
+**Status:** in progress (2/4).
 
 **Last updated:** 2026-08-17.
 
@@ -142,7 +142,7 @@ with these branches:
 | ID | Story | Status | Story file | Evidence |
 | --- | --- | --- | --- | --- |
 | HS-136-01 | The scheduled-capture spine | done | [story-01](./story-01-scheduled-capture-spine.md) | [evidence-story-01](./evidence-story-01.md) |
-| HS-136-02 | The schedule verb (API + MCP) | backlog | [story-02](./story-02-schedule-verb-api-mcp.md) | — |
+| HS-136-02 | The schedule verb (API + MCP) | done | [story-02](./story-02-schedule-verb-api-mcp.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-136-03 | The Chair surface | backlog | [story-03](./story-03-chair-surface.md) | — |
 | HS-136-04 | Docs, walk, and close | backlog | [story-04](./story-04-docs-walk-close.md) | — |
 
@@ -186,5 +186,17 @@ call: the full suite is green (5879 passed, 0 failed, isolated HOME,
 every real-bite axis held (restart durability, the manual-capture
 collision gate, the additive schema upgrade), with its findings
 (honest auto-stop receipt, a corrected concurrency comment, a
-start-failure test) folded in. HS-136-02 (the schedule verb — API +
-MCP) is next.
+start-failure test) folded in.
+
+HS-136-02 (the schedule verb) is done and shipped: one shared service
+core (`holdspeak/services/scheduled_recording_service.py`) feeding both
+the HTTP routes (`/api/scheduled-recordings` — list/create/get/update/
+delete/cancel-armed) and the five `scheduled_recording.*` MCP tools, so
+an agent drives scheduling exactly as the UI will. Typed refusals
+(invalid_cron / invalid_duration / not_found / not_armed → 4xx, never a
+500); a receipt on create / enable / cancel / delete. Full suite green
+bar two resolved items: the API-surface manifest regenerated for the
+new routes (`docs/api-surface.json` + `API_SURFACE.md`, 5/5 surface
+tests green), and one confirmed pre-existing flake
+(`test_inference_runner::test_deadline_unknown_provider...`, 3/3 serial
+green → Candidate Z). HS-136-03 (the Chair surface) is next.

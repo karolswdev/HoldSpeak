@@ -9,7 +9,7 @@ and the clients that call it (extracted from the real call sites in
 `web/src` and `apple/`). "server only" means no in-repo client calls
 it today.
 
-Routes: 445 (plus static mounts). iOS-consumed: 89. Web-consumed: 340.
+Routes: 451 (plus static mounts). iOS-consumed: 89. Web-consumed: 343.
 
 ## device_audio_ws
 
@@ -679,6 +679,17 @@ Routes: 445 (plus static mounts). iOS-consumed: 89. Web-consumed: 340.
 | GET | `/api/roadmaps/{slug}` | web |
 | GET | `/api/roadmaps/{slug}/health` | web |
 | GET | `/api/roadmaps/{slug}/next` | web |
+
+## web.routes.scheduled_recordings
+
+| Method | Path | Consumers |
+|---|---|---|
+| GET | `/api/scheduled-recordings` | server only |
+| POST | `/api/scheduled-recordings` | server only |
+| DELETE | `/api/scheduled-recordings/{schedule_id}` | web |
+| GET | `/api/scheduled-recordings/{schedule_id}` | web |
+| PATCH | `/api/scheduled-recordings/{schedule_id}` | web |
+| POST | `/api/scheduled-recordings/{schedule_id}/cancel` | server only |
 
 ## web.routes.setup
 
