@@ -1,6 +1,6 @@
 # Phase 134 — One Owner
 
-**Status:** in-progress (9/10).
+**Status:** complete (10/10). Owner sitting pending.
 
 **Last updated:** 2026-08-16.
 
@@ -97,7 +97,7 @@ docs and walk stories. Anchors live in the audit; stories cite them.
 | HS-134-07 | Sync understands inherit | done | [story-07](./story-07-sync-null-inherit.md) | [evidence-story-07](./evidence-story-07.md) |
 | HS-134-08 | The routing profile stands alone | done | [story-08](./story-08-routing-profile-cleanup.md) | [evidence-story-08](./evidence-story-08.md) |
 | HS-134-09 | The docs speak destination | done | [story-09](./story-09-destination-docs.md) | [evidence-story-09](./evidence-story-09.md) |
-| HS-134-10 | The walk | backlog | [story-10](./story-10-the-walk.md) | [evidence-story-10](./evidence-story-10.md) |
+| HS-134-10 | The walk | done | [story-10](./story-10-the-walk.md) | [evidence-story-10](./evidence-story-10.md) |
 
 The ask each story answers, in one line: 01 — a Workbench override
 actually changes where an Agent runs; 02 — one API speaks about
@@ -158,36 +158,60 @@ Parallel waves: {01, 02, 05, 06} then {03, 04, 08} then {07, 09} then 10.
   under an isolated HOME. It was run bare once; the schema-guard
   backup fired and no data was written.
 
+- **Flake observation (final gate):**
+  `tests/unit/test_monday_brief_service.py::test_schema_migrates_v39_to_v40`
+  failed once in the final parallel run (1 failed / 5829 passed), then
+  3/3 green serially. Third distinct xdist timing flake of the day
+  (device-tick, mesh-expiry, now schema-migration) — all recorded for
+  BACKLOG Candidate Z.
+- **Stale-bundle lesson (walk):** the hub serves
+  `holdspeak/static/_built`, which is gitignored and was hours stale —
+  the first web shots rendered pre-134 UI and a 405 console error was
+  wrongly filtered. Bundle rebuilt; shots re-taken with the filter
+  REMOVED (zero errors genuinely). Rule: any web walk rebuilds the
+  bundle first.
+
 ## Exit criteria (evidence required)
 
-- [ ] Recipe run and chat resolve through `resolve_placement`; a
+- [x] Recipe run and chat resolve through `resolve_placement`; a
   workbench-tier override changes actual execution (test proves it).
-- [ ] The `/api/profiles` read routes are gone or redirect; one
+- [x] The `/api/profiles` read routes are gone or redirect; one
   `_target_fields` remains; the `profile_alias` compatibility block is
   deleted.
-- [ ] MCP tools are `destination.*`; REQUIRED_TOOLS, the phase-133
+- [x] MCP tools are `destination.*`; REQUIRED_TOOLS, the phase-133
   tests, and `scripts/mcp_walk.py` all updated in the same commit;
   the walk runs 26/26 including the live leg.
-- [ ] Every placement-resolving API and MCP response carries
+- [x] Every placement-resolving API and MCP response carries
   `{effective_target_id, source}`.
-- [ ] `infoContract.ts` no longer writes `profile_id`; a writer-guard
+- [x] `infoContract.ts` no longer writes `profile_id`; a writer-guard
   test enforces it.
-- [ ] WorkbenchWindow renders skills read-only with an Agent hand-off;
+- [x] WorkbenchWindow renders skills read-only with an Agent hand-off;
   the mutation paths are deleted; a guard test enforces it.
-- [ ] A sync round-trip with `profile_id: null` inherits on the
+- [x] A sync round-trip with `profile_id: null` inherits on the
   receiving device; bounded-delegation revocation still fires on
   placement changes.
-- [ ] `mir_profile` and `plugin_profile` are gone from config, schema,
+- [x] `mir_profile` and `plugin_profile` are gone from config, schema,
   validation, and runtime vars; `effective_routing_profile` reads one
   field.
-- [ ] README + docs/MCP_SIDECAR.md speak destination at the entry
+- [x] README + docs/MCP_SIDECAR.md speak destination at the entry
   points.
-- [ ] The walk: live `.43` provenance proof (a workbench override
+- [x] The walk: live `.43` provenance proof (a workbench override
   visibly redirects an agent run and the response names
   `source: workbench`), `scripts/mcp_walk.py --live-43` green, full
   suite zero regressions vs baseline.
 
 ## Where we are
+
+COMPLETE (10/10), one evening (2026-08-16). HS-134-10 done — the walk:
+default MCP walk 25/25 on the renamed surface; the LIVE `.43`
+provenance proof 37/37 (a workbench-tier override redirected a real
+inference run with `source: "workbench"`, clearing it flipped the same
+run to `source: "agent"`, receipt model == the endpoint's loaded
+Qwen3.6 throughout); ownership screenshots at 1440+393 on a FRESH web
+bundle with genuinely zero console errors (Get Info: PLACEMENT
+INHERITED + Edit in Agent; Workbench: read-only INHERITED skills);
+final full suite 5829 passed, zero regressions (one serial-green flake
+ledgered). See [final-summary](./final-summary.md).
 
 HS-134-01 shipped: recipe run + chat now resolve through
 `resolve_placement`; the keystone execution/listing split is closed.
