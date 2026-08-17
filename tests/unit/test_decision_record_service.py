@@ -7,11 +7,10 @@ from datetime import date, timedelta
 
 import pytest
 
-from holdspeak.db.core import Database, read_schema_version
+from holdspeak.db.core import Database
 from holdspeak.principals import Principal, PrincipalKind
 from holdspeak.services.decision_lifecycle_service import DecisionLifecycleService
 from holdspeak.services.errors import ConflictError
-from holdspeak.db.schema import SCHEMA_VERSION
 from holdspeak.services.decision_record_service import DecisionRecordService
 
 
@@ -402,135 +401,6 @@ def test_search_finds_kafka_in_decision_text_and_linked_work(tmp_path):
     assert {record["id"] for record in matches} == {kafka["id"], work_link["id"]}
 
 
-def test_schema_migrates_v40_to_v43(tmp_path):
-    path = tmp_path / "v40.db"
-    Database(path)
-    with Database(path)._connection() as conn:
-        conn.execute(
-            """INSERT INTO notes (id, title, created_at, updated_at, last_modified)
-               VALUES ('pre-v41-note', 'Keep me', '2026-08-07T00:00:00+00:00',
-                       '2026-08-07T00:00:00+00:00', '2026-08-07T00:00:00+00:00')"""
-        )
-        conn.execute("DROP TABLE decision_record_revisions")
-        conn.execute("DROP TABLE decision_record_work")
-        conn.execute("DROP TABLE decision_record_sources")
-        conn.execute("DROP TABLE decision_records")
-        conn.execute("DELETE FROM schema_version")
-        conn.execute("INSERT INTO schema_version (version) VALUES (40)")
-
-    migrated = Database(path)
-
-    assert SCHEMA_VERSION == 61
-    assert read_schema_version(path) == 61
-    with migrated._connection() as conn:
-        assert "deleted" in {row[1] for row in conn.execute("PRAGMA table_info(decision_records)")}
-    with migrated._connection() as conn:
-        tables = {
-            row[0]
-            for row in conn.execute(
-                """SELECT name FROM sqlite_master WHERE type = 'table'
-                   AND name LIKE 'decision_record%'"""
-            ).fetchall()
-        }
-        indexes = {
-            row[0]
-            for row in conn.execute(
-                """SELECT name FROM sqlite_master WHERE type = 'index'
-                   AND name LIKE 'idx_decision_record_%'"""
-            ).fetchall()
-        }
-    assert tables == {
-        "decision_records", "decision_record_sources", "decision_record_work",
-        "decision_record_revisions",
-    }
-    assert indexes == {
-        "idx_decision_record_sources", "idx_decision_record_work",
-        "idx_decision_record_revisions",
-    }
-    with migrated._connection() as conn:
-        assert conn.execute(
-            "SELECT title FROM notes WHERE id = 'pre-v41-note'"
-        ).fetchone()[0] == "Keep me"
-
-
-def test_v43_renames_legacy_decision_receipt_tables_once(tmp_path):
-    """HS-130-08: a v42 database carrying the old ``decision_receipt*`` tables is
-    renamed to ``decision_record*`` in place — rows carried, column ``receipt_id``
-    becomes ``record_id`` — and the migration is idempotent."""
-    path = tmp_path / "v42.db"
-    Database(path)
-    with Database(path)._connection() as conn:
-        # Recreate the legacy (pre-HS-130-08) shape and seed one full record.
-        conn.execute("DROP TABLE decision_record_revisions")
-        conn.execute("DROP TABLE decision_record_work")
-        conn.execute("DROP TABLE decision_record_sources")
-        conn.execute("DROP TABLE decision_records")
-        conn.executescript(
-            """
-            CREATE TABLE decision_receipts (
-                id TEXT PRIMARY KEY, decision_text TEXT NOT NULL, rationale TEXT,
-                alternatives TEXT, owner TEXT, review_date TEXT,
-                lifecycle TEXT NOT NULL DEFAULT 'active', source_type TEXT NOT NULL,
-                source_id TEXT NOT NULL, created_at TEXT NOT NULL, updated_at TEXT NOT NULL,
-                deleted INTEGER NOT NULL DEFAULT 0
-            );
-            CREATE TABLE decision_receipt_sources (
-                id TEXT PRIMARY KEY,
-                receipt_id TEXT NOT NULL REFERENCES decision_receipts(id),
-                source_type TEXT NOT NULL, source_ref TEXT NOT NULL, created_at TEXT NOT NULL
-            );
-            CREATE INDEX idx_receipt_sources_receipt ON decision_receipt_sources(receipt_id);
-            CREATE TABLE decision_receipt_work (
-                id TEXT PRIMARY KEY,
-                receipt_id TEXT NOT NULL REFERENCES decision_receipts(id),
-                work_type TEXT NOT NULL, work_ref TEXT NOT NULL, created_at TEXT NOT NULL
-            );
-            CREATE INDEX idx_receipt_work_receipt ON decision_receipt_work(receipt_id);
-            CREATE TABLE decision_receipt_revisions (
-                id TEXT PRIMARY KEY,
-                receipt_id TEXT NOT NULL REFERENCES decision_receipts(id),
-                field_name TEXT NOT NULL, old_value TEXT, new_value TEXT, created_at TEXT NOT NULL
-            );
-            CREATE INDEX idx_receipt_revisions_receipt ON decision_receipt_revisions(receipt_id);
-            """
-        )
-        conn.execute(
-            """INSERT INTO decision_receipts
-               (id, decision_text, source_type, source_id, created_at, updated_at)
-               VALUES ('receipt-legacy', 'Adopt the record.', 'desk', 'd-1',
-                       '2026-08-07T00:00:00+00:00', '2026-08-07T00:00:00+00:00')"""
-        )
-        conn.execute(
-            """INSERT INTO decision_receipt_work (id, receipt_id, work_type, work_ref, created_at)
-               VALUES ('work-legacy', 'receipt-legacy', 'story', 'HS-1', '2026-08-07T00:00:00+00:00')"""
-        )
-        conn.execute("DELETE FROM schema_version")
-        conn.execute("INSERT INTO schema_version (version) VALUES (42)")
-
-    migrated = Database(path)
-    assert read_schema_version(path) == 61
-    with migrated._connection() as conn:
-        legacy = conn.execute(
-            "SELECT name FROM sqlite_master WHERE type='table' AND name='decision_receipts'"
-        ).fetchone()
-        assert legacy is None, "legacy decision_receipts table must be gone"
-        row = conn.execute(
-            "SELECT decision_text FROM decision_records WHERE id = 'receipt-legacy'"
-        ).fetchone()
-        assert row[0] == "Adopt the record."
-        child_cols = {r[1] for r in conn.execute("PRAGMA table_info(decision_record_work)")}
-        assert "record_id" in child_cols and "receipt_id" not in child_cols
-        child = conn.execute(
-            "SELECT record_id FROM decision_record_work WHERE id = 'work-legacy'"
-        ).fetchone()
-        assert child[0] == "receipt-legacy"
-
-    # Idempotent: re-opening runs no rename again and leaves the data intact.
-    reopened = Database(path)
-    with reopened._connection() as conn:
-        assert conn.execute(
-            "SELECT decision_text FROM decision_records WHERE id = 'receipt-legacy'"
-        ).fetchone()[0] == "Adopt the record."
 
 
 # --- admitted promotion fence (HS-131-07) -----------------------------------

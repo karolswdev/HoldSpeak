@@ -330,14 +330,18 @@ def _project_artifact_row(
                 "project_key",
             )
         )
-        if current == projected and not bool(existing["deleted"]):
+        # Respect soft-deletes: never resurrect a user's deletion (HS-137-01).
+        if bool(existing["deleted"]):
+            counts["unchanged"] += 1
+            continue
+        if current == projected:
             counts["unchanged"] += 1
             continue
         conn.execute(
             """UPDATE decisions SET text=?,rationale=?,decided_at=?,date_basis=?,
                        source_timestamp=?,provenance_label=?,source_artifact_id=?,
                        source_meeting_id=?,source_state=?,project_key=?,updated_at=?,
-                       last_modified=?,deleted=0
+                       last_modified=?
                    WHERE id=?""",
             (*projected, now_iso, now_iso, decision_id),
         )

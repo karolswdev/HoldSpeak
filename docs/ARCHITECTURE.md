@@ -303,24 +303,43 @@ is rolled back. The schema carries a `user_version`, and the store reads it
 before it touches anything: a database newer than the build is refused (it
 throws rather than rewrite your data), an older one is backed up to a
 timestamped sibling and then migrated forward, and a current one is a no-op.
-That mirrors the desktop store's safe-by-default posture on the mobile side,
-the same four-way schema matrix described below. A readiness section in the
+The iPad keeps its own version-gated four-way matrix on the Swift side; the
+desktop store has since moved to the declarative reconcile described below,
+though both share the same safe-by-default posture. A readiness section in the
 iPad's Settings surfaces the matrix as a health readout: a probe on the same
 open path reports the stamped schema version, the integrity check, the count
 of backup siblings, and a refused newer database named with both versions,
 beside the hub's own doctor sections read from the setup-status route.
 
-The desktop schema matrix:
+The desktop schema reconciliation (`holdspeak/db/reconcile.py`):
 
-- **Newer than this build:** refuse to touch it, and let `doctor` report the
-  mismatch, so a newer build never gets a downgrade rewrite from an older one.
-- **Older than this build:** back up first, then apply the migration, so the
-  pre-migration database is always recoverable.
-- **Already current:** no-op.
-- **Missing:** create a fresh database.
+On every open, `reconcile_schema` brings the database to the canonical shape
+defined in `holdspeak/db/schema.py` (`SCHEMA_SQL`). It applies the DDL
+(creating any missing table, index, or trigger), introspects each table
+against an in-memory reference built from `SCHEMA_SQL`, and `ALTER TABLE
+ADD COLUMN`s anything the live file is missing. If the shape actually
+changed on an existing populated database, it backs the file up first
+(timestamped sibling, same as the manual `holdspeak backup` path), then
+runs the idempotent data backfills. A fresh creation skips the backup
+(nothing to protect yet). It is additive-only: it never DROPs a table or
+column and never DELETEs a row. Orphan tables left by older builds are
+left untouched.
+
+There is no version gate. A database stamped with a version newer than
+the running build opens without error; the reconcile simply adds anything
+the live file is missing and moves on. The `schema_version` table remains
+as an informational stamp (written on every open); nothing branches on it.
+
+Accepted caveats: (1) SQLite cannot widen a CHECK constraint on an
+existing column, so the reconcile does not attempt it. The live database
+already carries the final CHECK values; only a very old backup restored
+from before the constraint existed would differ. (2) The historical
+table renames (e.g. `agents` to `recipes`) are not replayed; a database
+from before those renames would orphan the old-named tables, not lose
+them.
 
 Back up on demand with `holdspeak backup` and put a snapshot back with
-`holdspeak restore`. The matrix lives in `holdspeak/db/core.py`.
+`holdspeak restore`.
 
 ## The meeting pipeline
 

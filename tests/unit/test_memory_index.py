@@ -115,35 +115,6 @@ def test_ranking_is_deterministic_normalized_and_interleaved(tmp_path: Path) -> 
     assert [hit.rank for hit in first] == list(range(1, len(first) + 1))
 
 
-def test_v31_migration_backfills_existing_rows(tmp_path: Path) -> None:
-    path = tmp_path / "migration.db"
-    db = Database(path)
-    _decision(db, "d1", "migration keyword")
-    _artifact(db, "a1", "Migration keyword", "artifact", "2025-01-01")
-    _note(db, "n1", "Migration keyword", "note", "2026-01-01")
-    with db._connection() as conn:
-        conn.executescript(
-            """DROP TABLE decisions_memory_fts;
-               DROP TABLE artifacts_memory_fts;
-               DROP TABLE notes_memory_fts;
-               DELETE FROM schema_version;
-               INSERT INTO schema_version(version) VALUES (30);"""
-        )
-
-    migrated = Database(path)
-    assert {hit.source_ref for hit in migrated.memory.search("migration").hits} == {
-        "decision:d1",
-        "artifact:a1",
-        "note:n1",
-    }
-    assert migrated.memory.rebuild() == {
-        "decisions": 1,
-        "artifacts": 1,
-        "notes": 1,
-        "total": 3,
-    }
-
-
 def test_project_kind_time_filters_and_idempotent_rebuild(tmp_path: Path) -> None:
     db = Database(tmp_path / "filters.db")
     db.projects.create_project(project_id="p1", name="One")

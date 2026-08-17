@@ -4,17 +4,18 @@ Extracted from core.py (HS-117-10) so the schema definition is navigable
 independently of the Database container.
 """
 
-# Bump this when adding tables or columns; the Database container uses it to
-# decide whether to back up and re-apply. See core._ensure_schema for the
-# four-way upgrade contract.
-SCHEMA_VERSION = 61  # v61: Scheduled recordings (HS-136-01)
+# Informational stamp only. Nothing gates on it: `reconcile_schema` detects
+# missing tables and columns by comparing the live database against this
+# SCHEMA_SQL shape directly, so you do NOT need to bump this to have a shape
+# change take effect. Just edit SCHEMA_SQL; the reconcile applies it on open.
+SCHEMA_VERSION = 61  # informational; last meaningful shape: scheduled_recordings
 
 # SQL Schema
 SCHEMA_SQL = """
 -- Enable foreign keys
 PRAGMA foreign_keys = ON;
 
--- Schema version for migrations
+-- Informational schema stamp (nothing gates on it; the reconcile is shape-based)
 CREATE TABLE IF NOT EXISTS schema_version (
     version INTEGER PRIMARY KEY,
     applied_at TEXT NOT NULL DEFAULT (datetime('now'))
@@ -310,11 +311,12 @@ CREATE TABLE IF NOT EXISTS artifacts (
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
--- NOTE: The unique index on (source_run_id, source_item_id) is created
--- in _migrate_columns (migrations.py) to handle both fresh and upgrade paths
--- safely. Fresh CREATE TABLE includes the columns, but an upgraded DB's
--- CREATE TABLE IF NOT EXISTS is a no-op and the index would fail on
--- columns that don't yet exist when executescript runs.
+-- NOTE (HS-137-01): the unique index was previously in migrations.py to handle
+-- both fresh and upgrade paths; reconcile_schema now ensures columns exist first,
+-- so the index is safe here.
+CREATE UNIQUE INDEX IF NOT EXISTS idx_artifacts_source_run_item
+ON artifacts(source_run_id, source_item_id)
+WHERE source_run_id IS NOT NULL AND source_item_id IS NOT NULL;
 
 -- Artifact lineage references (window/plugin run)
 CREATE TABLE IF NOT EXISTS artifact_sources (
@@ -1788,6 +1790,32 @@ CREATE TABLE IF NOT EXISTS kernel_parent_runs (
     updated_at REAL NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_kernel_parent_runs_state ON kernel_parent_runs(state, updated_at);
+
+-- Publication-guard triggers (HS-137-01: moved from migrations.py).
+-- A publication callback may terminalize its own parent only by clearing
+-- the exact claim in that same update; every ordinary state transition
+-- and warrant revocation must wait.
+CREATE TRIGGER IF NOT EXISTS kernel_parent_publication_blocks_transition
+BEFORE UPDATE OF state ON kernel_parent_runs
+WHEN OLD.publication_claim_id != ''
+  AND NEW.state != OLD.state
+  AND NEW.publication_claim_id = OLD.publication_claim_id
+BEGIN
+    SELECT RAISE(ABORT, 'kernel_parent_publication_in_progress');
+END;
+
+CREATE TRIGGER IF NOT EXISTS kernel_parent_publication_blocks_warrant_revocation
+BEFORE UPDATE OF warrant_revoked ON kernel_operations
+WHEN OLD.warrant_revoked = 0
+  AND NEW.warrant_revoked = 1
+  AND EXISTS (
+      SELECT 1 FROM kernel_parent_runs p
+      WHERE p.operation_id = OLD.operation_id
+        AND p.publication_claim_id != ''
+  )
+BEGIN
+    SELECT RAISE(ABORT, 'kernel_parent_publication_in_progress');
+END;
 
 -- A receipt-gated, durable domain checkpoint for each admitted model child.
 -- ``advanced`` says whether the child won the parent tuple CAS; stale stages are

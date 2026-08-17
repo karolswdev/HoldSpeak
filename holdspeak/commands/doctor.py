@@ -60,13 +60,16 @@ def _check_runtime() -> DoctorCheck:
 
 
 def _check_database() -> DoctorCheck:
-    """Report the database's schema version against this build.
+    """Report database readability and schema shape.
 
-    Read-only: it probes the stored version without opening the database for
-    use, so a newer-than-known database is reported plainly rather than refused.
-    A missing database is normal before first run, not a problem.
+    Read-only: probes that the file is a readable SQLite database with
+    known HoldSpeak tables.  A missing database is normal before first
+    run, not a problem.  No version comparison -- the reconcile
+    (HS-137-01) brings any DB to the canonical shape on open.
     """
-    from ..db import DEFAULT_DB_PATH, SCHEMA_VERSION, read_schema_version
+    import sqlite3 as _sqlite3
+
+    from ..db import DEFAULT_DB_PATH
 
     db_path = DEFAULT_DB_PATH.expanduser()
 
@@ -77,42 +80,37 @@ def _check_database() -> DoctorCheck:
             detail=f"No database yet at {db_path}; it is created on first use.",
         )
 
-    stored = read_schema_version(db_path)
-
-    if stored is None:
+    try:
+        conn = _sqlite3.connect(str(db_path))
+        try:
+            tables = [
+                row[0]
+                for row in conn.execute(
+                    "SELECT name FROM sqlite_master WHERE type='table' ORDER BY name"
+                )
+            ]
+        finally:
+            conn.close()
+    except _sqlite3.DatabaseError as exc:
         return DoctorCheck(
             name="Database",
             status="WARN",
-            detail=f"A file is present at {db_path} but its schema version cannot be read.",
+            detail=f"A file is present at {db_path} but it is not a readable SQLite database ({exc}).",
             fix="If this is not a HoldSpeak database, move it aside and let HoldSpeak create a fresh one.",
         )
 
-    if stored == SCHEMA_VERSION:
-        return DoctorCheck(
-            name="Database",
-            status="PASS",
-            detail=f"Schema version {stored} (current) at {db_path}.",
-        )
-
-    if stored < SCHEMA_VERSION:
+    if not tables:
         return DoctorCheck(
             name="Database",
             status="WARN",
-            detail=(
-                f"Schema version {stored} is older than this build ({SCHEMA_VERSION}). "
-                f"HoldSpeak backs the database up and upgrades it on the next start."
-            ),
-            fix="Run `holdspeak backup` first if you want your own copy before the upgrade.",
+            detail=f"Database at {db_path} has no tables.",
+            fix="HoldSpeak will reconcile the schema on next start.",
         )
 
     return DoctorCheck(
         name="Database",
-        status="FAIL",
-        detail=(
-            f"Schema version {stored} is newer than this build ({SCHEMA_VERSION}). "
-            f"The database was written by a newer HoldSpeak; this build refuses to open it."
-        ),
-        fix="Upgrade HoldSpeak, or `holdspeak restore` a backup taken with this version.",
+        status="PASS",
+        detail=f"Schema OK at {db_path} ({len(tables)} tables).",
     )
 
 
