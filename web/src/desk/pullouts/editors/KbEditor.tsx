@@ -14,7 +14,7 @@ import type { KB } from "../../../lib/primitives";
 import { useDebouncedSave } from "./useDebouncedSave";
 import type { InlineEditorContentProps } from "./types";
 
-export function KbEditor({ object: o, onClose }: InlineEditorContentProps) {
+export function KbEditor({ object: o, onClose, autoFocusName }: InlineEditorContentProps) {
   const items = useDesk((s) => s.items);
   const save = useDebouncedSave("kb", o.id);
   const [editorView, setEditorView] = useState<EditorView | null>(null);
@@ -131,12 +131,13 @@ export function KbEditor({ object: o, onClose }: InlineEditorContentProps) {
         label="Knowledge name"
         value={f.name}
         placeholder="Name"
+        autoFocus={autoFocusName}
         onChange={(value) => set("name", "name", value)}
       />
       <DeskEditor
         value={f.body}
         placeholder="Write"
-        autoFocus
+        autoFocus={!autoFocusName}
         onEscape={onClose}
         onChange={(value) => set("body", "body_markdown", value)}
         onViewChange={setEditorView}

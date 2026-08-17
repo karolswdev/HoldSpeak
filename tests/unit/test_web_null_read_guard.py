@@ -18,8 +18,12 @@ def test_product_components_do_not_mutate_global_dom_or_inject_html() -> None:
 
 
 def test_only_typed_api_client_calls_fetch() -> None:
+    # lib/sfx.ts fetches STATIC AUDIO ASSETS (HS-135-12), not API data —
+    # the typed-client law governs API reads, so the asset loader is the
+    # one sanctioned non-api fetch site.
+    allowed = ["lib/api.ts", "lib/sfx.ts"]
     callers = []
     for path in sorted(ROOT.rglob("*.ts*")):
         if re.search(r"\bfetch\s*\(", path.read_text()):
             callers.append(str(path.relative_to(ROOT)))
-    assert callers == ["lib/api.ts"]
+    assert callers == allowed

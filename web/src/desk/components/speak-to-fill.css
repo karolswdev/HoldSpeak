@@ -75,9 +75,20 @@
 .desk-next .desk-inline-editor-spacer {
   flex: 1;
 }
+/* HS-135-14: the editor foot mic — seated in a flex row with the
+   same --size-icon-md sizing as in-field mics (no more orphaned
+   square floating below Tags). */
 .desk-next .desk-inline-editor-foot {
+  display: flex;
   align-items: center;
   gap: 8px;
+  padding-top: 4px;
+}
+.desk-next .desk-inline-editor-foot .desk-mic {
+  width: var(--size-icon-md);
+  height: var(--size-icon-md);
+  border-radius: 0;
+  font-size: 10px;
 }
 .desk-next .desk-zone-rename-row {
   display: flex;

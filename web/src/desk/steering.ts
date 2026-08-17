@@ -9,6 +9,7 @@
 
 import { create } from "zustand";
 import { apiRequest } from "../lib/api";
+import { play as sfx } from "../lib/sfx";
 
 export interface SteeringOperation {
   effect_class?: string;
@@ -431,6 +432,7 @@ export const useSteering = create<SteeringState>((set, get) => ({
       const body = await res.json().catch(() => ({}));
       if (get().openKey !== key) return false;
       if (res.ok && body.status === "delivered") {
+        sfx("land");
         set({ steerState: "sent", steerDetail: receiptDetail(body) });
         return true;
       }
@@ -451,6 +453,7 @@ export const useSteering = create<SteeringState>((set, get) => ({
         "pane_mismatch",
         "pane_gone",
       ].includes(body.status);
+      sfx("error");
       set({
         steerState: "refused",
         steerDetail: body.detail || refusal,
@@ -521,6 +524,7 @@ export const useSteering = create<SteeringState>((set, get) => ({
       const body = await res.json().catch(() => ({}));
       if (get().openKey !== key) return false;
       if (res.ok && body.status === "delivered") {
+        sfx("land");
         set({ keyState: "sent", keyDetail: receiptDetail(body) });
         return true;
       }
@@ -537,6 +541,7 @@ export const useSteering = create<SteeringState>((set, get) => ({
         "pane_mismatch",
         "pane_gone",
       ].includes(body.status);
+      sfx("error");
       set({
         keyState: "refused",
         keyDetail: body.detail || body.status || `HTTP ${res.status}`,

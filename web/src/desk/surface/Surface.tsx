@@ -19,6 +19,7 @@ import { CheckGadget, StringGadget } from "./gadgets";
 import type { PaneGeometry } from "./XtermPane";
 import { humanTime, presentValue } from "./format";
 import { useRovingRows } from "./roving";
+import { SPARSE_THRESHOLD } from "./sparse";
 import "./surface.css";
 
 /** The one verb bar, sticky at the surface top. Primary verbs live
@@ -263,13 +264,26 @@ export function SurfaceSplit({
 }
 
 /** A quiet strip of labeled figures. Items whose value presents empty
- * are omitted (rule 4), never rendered as zeros-theater. */
+ * are omitted (rule 4), never rendered as zeros-theater.
+ * HS-135-04 L10 — below SPARSE_THRESHOLD zero-value tiles also
+ * collapse (a strip of zeros over 3 items is noise). */
 export function MetricStrip({
   items,
+  itemCount,
 }: {
   items: Array<{ label: string; value: unknown }>;
+  /** HS-135-04 L10 — the total item count the surface holds.  Below
+   *  SPARSE_THRESHOLD zero-valued metric tiles are hidden. */
+  itemCount?: number;
 }) {
-  const kept = items.filter((item) => presentValue(item.value) !== "");
+  const sparse = itemCount !== undefined && itemCount < SPARSE_THRESHOLD;
+  const kept = items.filter((item) => {
+    const text = presentValue(item.value);
+    if (text === "") return false;
+    // L10: below threshold, collapse zero-value tiles.
+    if (sparse && (text === "0" || Number(text) === 0)) return false;
+    return true;
+  });
   if (!kept.length) return null;
   return (
     <div className="surface-metrics">

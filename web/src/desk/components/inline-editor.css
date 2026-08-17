@@ -79,6 +79,9 @@
 .desk-next .desk-inline-editor-foot {
   display: flex;
   justify-content: flex-end;
+  /* Reserve the window's resize-grip corner (16px grip at right:4px)
+     so Save never occludes the resize affordance. */
+  padding-right: calc(var(--size-icon-sm) + 12px);
 }
 .desk-next .desk-inline-editor-row {
   display: flex;

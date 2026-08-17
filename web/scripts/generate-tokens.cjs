@@ -87,10 +87,16 @@ function emitPrimitives(tokens) {
 }
 
 function emitGroups(groups, tokens) {
-  return groups.map((entry) => {
+  return groups.flatMap((entry) => {
+    // HS-135-03: skip doc-only entries (keys starting with $)
+    if (!entry.name) {
+      const docKey = Object.keys(entry).find((k) => k.startsWith("$"));
+      if (docKey) return [`  /* ${entry[docKey]} */`];
+      return [];
+    }
     const value = resolveReference(entry.value, tokens);
     const doc = entry.doc ? ` /* ${entry.doc} */` : "";
-    return `  ${entry.name}: ${value};${doc}`;
+    return [`  ${entry.name}: ${value};${doc}`];
   });
 }
 
@@ -141,7 +147,7 @@ function generate(tokens) {
   out.push("");
   out.push("@media (prefers-reduced-motion: reduce) {");
   out.push("  :root {");
-  for (const { name } of tokens.semantic.groups.filter(({ name }) => name.startsWith("--duration-"))) {
+  for (const { name } of tokens.semantic.groups.filter(({ name }) => name && name.startsWith("--duration-"))) {
     out.push(`    ${name}: 0ms;`);
   }
   out.push("  }");

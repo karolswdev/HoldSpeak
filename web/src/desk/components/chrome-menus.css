@@ -59,7 +59,7 @@
   align-items: center;
   gap: 8px;
   padding: 0 10px;
-  height: 28px;
+  height: var(--size-btn);
   border: 0;
   border-radius: 0;
   background: none;
@@ -98,7 +98,7 @@
   background: var(--border);
 }
 .desk-next .desk-menu-glyph {
-  width: 16px;
+  width: var(--size-icon-sm);
   flex: none;
   text-align: center;
   color: var(--text-muted);
@@ -175,7 +175,7 @@
 .desk-next .desk-chip {
   /* Materials round 3.2 — ONE chip geometry: every chip is the same
      height with the same padding; variants change COLOR only. */
-  height: 27px;
+  height: var(--size-chip);
   padding: 0 12px;
   display: inline-flex;
   align-items: center;
@@ -321,7 +321,7 @@
 /* HS-111-10 mic sweep: the deck's query well is StringGadget; only
    the height is coerced to the deck rhythm. */
 .desk-next .desk-tool-search .gadget-string {
-  min-height: 28px;
+  min-height: var(--size-btn);
 }
 /* HS-111-07: the command deck — 26px mono ledger rows in section
    bands (VERBS / PROGRAMS / OBJECTS / SETTINGS / MEETINGS); the
@@ -357,7 +357,7 @@
   cursor: pointer;
 }
 .desk-next .desk-deck-glyph {
-  width: 16px;
+  width: var(--size-icon-sm);
   flex: none;
   text-align: center;
   color: var(--text-muted);
