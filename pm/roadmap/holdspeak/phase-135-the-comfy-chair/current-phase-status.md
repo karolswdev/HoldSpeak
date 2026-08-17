@@ -1,6 +1,6 @@
 # Phase 135 — The Comfy Chair
 
-**Status:** in-progress (2/13).
+**Status:** in-progress (3/13).
 
 **Last updated:** 2026-08-17.
 
@@ -100,7 +100,7 @@ docs + the walk.
 
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
-| HS-135-01 | The hub opens its own desk | backlog | [story-01](./story-01-migration-fix.md) | [evidence-story-01](./evidence-story-01.md) |
+| HS-135-01 | The hub opens its own desk | done | [story-01](./story-01-migration-fix.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-135-02 | Lamps wrap, wings look pressable | done | [story-02](./story-02-lamp-wing-laws.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-135-03 | The sizing tokens land | backlog | [story-03](./story-03-sizing-tokens.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-135-04 | Sparse surfaces shed chrome | done | [story-04](./story-04-sparse-surfaces.md) | [evidence-story-04](./evidence-story-04.md) |
@@ -174,6 +174,12 @@ after 05; 07-10 in parallel after 05 (disjoint lane files); 11 after
 
 ## Where we are
 
+HS-135-01 shipped: the 59-to-60 migration P0 fixed. Root cause: SCHEMA_SQL
+carried CREATE INDEX idx_mesh_workers_identity referencing node_id before
+_migrate_columns added the column. Pre-schema column guard in
+_migrate_renames ensures mesh_workers has node_id and credential_generation
+before SCHEMA_SQL runs. Orchestrator independently verified the real backup
+copy migrates clean (schema 60, 4 meetings and 44 kernel_operations intact).
 HS-135-02 shipped: L6 lamp overflow fixed (gadget-lamp truncates with
 title tooltip; .is-block variant wraps block system messages; two
 settings-models lamps converted to block). L7 wing affordance fixed

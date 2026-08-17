@@ -102,6 +102,29 @@ def _migrate_renames(conn: sqlite3.Connection, stored: int) -> None:
                 """
             )
 
+    # HS-135-01: mesh_workers gained node_id and credential_generation in v59
+    # (HS-131-16), but SCHEMA_SQL carries CREATE INDEX idx_mesh_workers_identity
+    # referencing those columns. A DB that reached v59 without them (the owner's
+    # real DB — the column additions live in _migrate_columns which runs AFTER
+    # SCHEMA_SQL) will fail with OperationalError: no such column: node_id.
+    # Fix: ensure the columns exist BEFORE conn.executescript(SCHEMA_SQL).
+    # Unconditional and idempotent — a fresh DB or a properly-migrated one
+    # already has them, so the guards are no-ops.
+    has_mesh_workers = conn.execute(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name='mesh_workers'"
+    ).fetchone()
+    if has_mesh_workers:
+        cols = {r[1] for r in conn.execute("PRAGMA table_info(mesh_workers)").fetchall()}
+        if "node_id" not in cols:
+            conn.execute(
+                "ALTER TABLE mesh_workers ADD COLUMN node_id TEXT NOT NULL DEFAULT ''"
+            )
+        if "credential_generation" not in cols:
+            conn.execute(
+                "ALTER TABLE mesh_workers "
+                "ADD COLUMN credential_generation INTEGER NOT NULL DEFAULT 0"
+            )
+
 
 # ── Post-schema additive migrations ─────────────────────────────────────
 
