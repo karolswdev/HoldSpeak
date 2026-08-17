@@ -73,3 +73,71 @@ export interface MemoryEntry {
   item_title: string;
   provenance: { egress?: string; model?: string };
 }
+
+/* ── Workbench automations / Reactions ──────────────────────────────── */
+
+/** A durable, Workbench-native event trigger. V1 always adds grounded work;
+ * it does not run the entire pending Workbench from an unrelated event. */
+export interface WorkbenchAutomation {
+  id: string;
+  name: string;
+  provider: "github" | "jira" | "custom";
+  event_kind: string;
+  enabled: boolean;
+  status: "active" | "paused" | "attention" | "unavailable";
+  adapter_status?: "ready" | "unavailable" | "not_configured";
+  last_error?: string | null;
+  last_good_at?: string | null;
+  created_at?: string;
+}
+
+/** One event delivery (or refusal) carrying the durable receipt from V1. */
+export interface AutomationHistoryEntry {
+  id: string;
+  occurred_at: string;
+  outcome: "added" | "skipped" | "refused" | "failed";
+  event_kind: string;
+  subject: string;
+  receipt_id?: string | null;
+  detail?: string | null;
+}
+
+/** Non-mutating evidence from an event-trigger test. */
+export interface AutomationTestResult {
+  entity_count: number;
+  changes: number;
+  would_add: number;
+}
+
+/** Intrinsic negative-space automation; no connector or polling source needed. */
+export interface ResourcefulPolicy {
+  workbench_id: string;
+  enabled: boolean;
+  idle_after_minutes: number;
+  cooldown_hours: number;
+  nightly_target: number;
+  night_only: boolean;
+  night_start_hour: number;
+  night_end_hour: number;
+  routines: Array<"loose_ideas" | "failed_work">;
+  idle_since?: string | null;
+  last_checked_at?: string | null;
+  last_fired_at?: string | null;
+  nightly_count: number;
+  last_outcome?: string;
+  last_error?: string | null;
+}
+
+export interface ResourcefulDispatch {
+  workbench_id: string;
+  candidate_key: string;
+  routine: string;
+  source_ref: string;
+  event_id: string;
+  item_id: string;
+  operation_id?: string | null;
+  receipt_id?: string | null;
+  outcome: string;
+  created_at: string;
+  completed_at?: string | null;
+}

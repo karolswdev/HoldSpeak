@@ -8,7 +8,7 @@ independently of the Database container.
 # missing tables and columns by comparing the live database against this
 # SCHEMA_SQL shape directly, so you do NOT need to bump this to have a shape
 # change take effect. Just edit SCHEMA_SQL; the reconcile applies it on open.
-SCHEMA_VERSION = 61  # informational; last meaningful shape: scheduled_recordings
+SCHEMA_VERSION = 63  # informational; owner's real DB is stamped 63
 
 # SQL Schema
 SCHEMA_SQL = """
@@ -1266,6 +1266,52 @@ CREATE INDEX IF NOT EXISTS idx_workbench_items_workbench ON workbench_items(work
 CREATE INDEX IF NOT EXISTS idx_workbench_items_status ON workbench_items(workbench_id, status);
 CREATE INDEX IF NOT EXISTS idx_workbench_runs_workbench ON workbench_runs(workbench_id, started_at DESC);
 
+-- Intrinsic resourcefulness (v63). A policy observes one Workbench's negative
+-- space and admits at most one causally scoped maintenance item per dispatch.
+-- Candidate revisions are durable so restart/retry can never rediscover the
+-- exact same opportunity as novel work.
+CREATE TABLE IF NOT EXISTS resourceful_policies (
+    workbench_id TEXT PRIMARY KEY REFERENCES workbenches(id) ON DELETE CASCADE,
+    enabled INTEGER NOT NULL DEFAULT 0,
+    idle_after_minutes INTEGER NOT NULL DEFAULT 30,
+    cooldown_hours INTEGER NOT NULL DEFAULT 6,
+    nightly_target INTEGER NOT NULL DEFAULT 2,
+    night_only INTEGER NOT NULL DEFAULT 1,
+    night_start_hour INTEGER NOT NULL DEFAULT 22,
+    night_end_hour INTEGER NOT NULL DEFAULT 7,
+    routines_json TEXT NOT NULL DEFAULT '["loose_ideas","failed_work"]',
+    idle_since TEXT,
+    idle_epoch INTEGER NOT NULL DEFAULT 0,
+    last_checked_at TEXT,
+    last_fired_at TEXT,
+    night_key TEXT NOT NULL DEFAULT '',
+    nightly_count INTEGER NOT NULL DEFAULT 0,
+    last_outcome TEXT NOT NULL DEFAULT '',
+    last_error TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE TABLE IF NOT EXISTS resourceful_dispatches (
+    workbench_id TEXT NOT NULL REFERENCES resourceful_policies(workbench_id) ON DELETE CASCADE,
+    candidate_key TEXT NOT NULL,
+    routine TEXT NOT NULL,
+    source_ref TEXT NOT NULL,
+    event_id TEXT NOT NULL REFERENCES service_events(id) ON DELETE CASCADE,
+    item_id TEXT NOT NULL REFERENCES workbench_items(id),
+    operation_id TEXT,
+    receipt_id TEXT,
+    outcome TEXT NOT NULL DEFAULT 'admitted',
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    completed_at TEXT,
+    PRIMARY KEY (workbench_id, candidate_key)
+);
+
+CREATE INDEX IF NOT EXISTS idx_resourceful_policies_enabled
+    ON resourceful_policies(enabled, updated_at);
+CREATE INDEX IF NOT EXISTS idx_resourceful_dispatches_workbench
+    ON resourceful_dispatches(workbench_id, created_at DESC);
+
 -- Device-local owner authority for scheduled Workbench inference. Never sync.
 CREATE TABLE IF NOT EXISTS kernel_schedule_delegations (
     id TEXT PRIMARY KEY, workbench_id TEXT NOT NULL,
@@ -1749,6 +1795,73 @@ CREATE TABLE IF NOT EXISTS monday_brief_item_shelf (
     updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 CREATE INDEX IF NOT EXISTS idx_monday_brief_shelf_brief ON monday_brief_item_shelf(brief_id);
+
+-- v61: services publish typed domain facts into a shared event ledger;
+-- Reactions project matching events into one configured Workbench.
+CREATE TABLE IF NOT EXISTS connector_watches (
+    id TEXT PRIMARY KEY,
+    connector_id TEXT NOT NULL,
+    query_kind TEXT NOT NULL,
+    name TEXT NOT NULL DEFAULT '',
+    query_json TEXT NOT NULL DEFAULT '{}',
+    snapshot_json TEXT,
+    enabled INTEGER NOT NULL DEFAULT 1,
+    last_success_at TEXT,
+    last_error TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_connector_watches_connector
+    ON connector_watches(connector_id, enabled);
+
+CREATE TABLE IF NOT EXISTS service_events (
+    id TEXT PRIMARY KEY,
+    event_type TEXT NOT NULL,
+    event_version INTEGER NOT NULL DEFAULT 1,
+    producer TEXT NOT NULL,
+    subject_ref TEXT NOT NULL,
+    source_revision TEXT NOT NULL DEFAULT '',
+    facts_json TEXT NOT NULL DEFAULT '{}',
+    refs_json TEXT NOT NULL DEFAULT '[]',
+    principal_kind TEXT NOT NULL,
+    principal_identity TEXT NOT NULL DEFAULT '',
+    correlation_id TEXT NOT NULL DEFAULT '',
+    causation_id TEXT NOT NULL DEFAULT '',
+    privacy_class TEXT NOT NULL DEFAULT 'private',
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_service_events_type
+    ON service_events(event_type, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_service_events_correlation
+    ON service_events(correlation_id, created_at DESC);
+
+CREATE TABLE IF NOT EXISTS connector_reactions (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL DEFAULT '',
+    watch_id TEXT REFERENCES connector_watches(id) ON DELETE CASCADE,
+    event_pattern TEXT NOT NULL,
+    workbench_id TEXT NOT NULL REFERENCES workbenches(id),
+    title_template TEXT NOT NULL DEFAULT '{event_type}: {entity_title}',
+    auto_run INTEGER NOT NULL DEFAULT 0,
+    enabled INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_connector_reactions_match
+    ON connector_reactions(watch_id, event_pattern, enabled);
+
+-- A projection row says only that one event was materialized into one item and,
+-- optionally, one kernel operation. Execution outcome belongs to the immutable
+-- kernel receipt, never to a second mutable delivery state machine.
+CREATE TABLE IF NOT EXISTS reaction_event_projections (
+    reaction_id TEXT NOT NULL REFERENCES connector_reactions(id) ON DELETE CASCADE,
+    event_id TEXT NOT NULL REFERENCES service_events(id) ON DELETE CASCADE,
+    item_id TEXT NOT NULL REFERENCES workbench_items(id),
+    operation_id TEXT,
+    receipt_id TEXT,
+    projected_at TEXT NOT NULL DEFAULT (datetime('now')),
+    PRIMARY KEY (reaction_id, event_id)
+);
 
 -- Immutable admitted deployment specifications. ``secret_slot`` identifies a
 -- device-local credential lookup location; credentials never enter this table.

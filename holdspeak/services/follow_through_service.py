@@ -6,7 +6,13 @@ from dataclasses import dataclass
 from datetime import date, datetime, timedelta
 from typing import Any
 
-from holdspeak.services.observer import NullObserver, PipelineObserver, observe_service
+from holdspeak.services.observer import (
+    NullObserver,
+    PipelineObserver,
+    current_correlation_id,
+    observe_service,
+)
+from holdspeak.services.service_event_ledger import ServiceEventLedger
 
 
 @dataclass(frozen=True)
@@ -161,7 +167,6 @@ class FollowThroughService:
         due_at: str | None = None,
     ) -> dict[str, Any]:
         """Create an accountable action from an accepted decision."""
-        del principal  # The caller's authority is enforced by the transport.
         now = datetime.now().isoformat()
         action_item_id = f"action-{uuid.uuid4().hex}"
         commitment_id = f"commitment-{uuid.uuid4().hex}"
@@ -189,6 +194,23 @@ class FollowThroughService:
                     due_at,
                     now,
                 ),
+            )
+            ServiceEventLedger(self._db).append_in_transaction(
+                conn, principal,
+                event_type="decision.committed",
+                producer=type(self).__name__,
+                subject_ref=f'decision:{decision["id"]}',
+                source_revision=commitment_id,
+                facts={
+                    "entity_title": str(decision["text"]),
+                    "commitment_id": commitment_id,
+                    "action_item_id": action_item_id,
+                    "owner": owner,
+                    "due_at": due_at,
+                },
+                refs=[f'decision:{decision["id"]}', f"action_item:{action_item_id}"],
+                correlation_id=current_correlation_id(),
+                causation_id=f'decision:{decision["id"]}',
             )
             conn.execute(
                 """INSERT INTO decision_commitments

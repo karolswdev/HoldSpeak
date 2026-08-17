@@ -120,6 +120,26 @@ def test_manual_attempt_creates_one_authenticated_workbench_parent(runner_rig):
         assert conn.execute("SELECT count(*) FROM workbench_runs").fetchone()[0] == 1
 
 
+def test_item_scoped_run_never_sweeps_other_pending_work(tmp_path, monkeypatch):
+    db, broker, workbench, items, state = _setup_runner(tmp_path, monkeypatch, item_count=2)
+    from holdspeak.services.workbench_runner import WorkbenchRunner
+
+    result = asyncio.run(WorkbenchRunner(db, broker).run(
+        OWNER, workbench.id, memory_enabled=False, item_ids=[items[1].id],
+    ))
+
+    assert result["receipt_id"]
+    assert db.workbench_items.get(items[0].id).status == "pending"
+    assert db.workbench_items.get(items[1].id).status == "done"
+    assert len(state["calls"]) == 1
+    with db._connection() as conn:
+        row = conn.execute(
+            "SELECT input_json FROM kernel_parent_runs WHERE operation_id=?",
+            (result["parent_operation_id"],),
+        ).fetchone()
+    assert '"item_scope":"explicit"' in row["input_json"]
+
+
 def test_replay_returns_the_original_terminal_attempt_and_receipt(runner_rig):
     db, broker, workbench, _, state = runner_rig
     from holdspeak.services.workbench_runner import WorkbenchRunner
@@ -139,6 +159,31 @@ def test_replay_returns_the_original_terminal_attempt_and_receipt(runner_rig):
     assert replay["terminal_disposition"] == "completed"
     assert replay["children"] == first["children"]
     assert (after_runs, after_children, len(state["calls"])) == (before_runs, before_children, 2)
+
+
+def test_reaction_source_event_is_bound_into_kernel_parent_input(runner_rig):
+    db, broker, workbench, _, _ = runner_rig
+    from holdspeak.services.workbench_runner import WorkbenchRunner
+
+    source_event = {
+        "event_id": "sevt_review_requested",
+        "correlation_id": "corr_connector_refresh",
+        "causation_id": "sevt_review_requested",
+    }
+    result = asyncio.run(
+        WorkbenchRunner(db, broker).run(
+            OWNER, workbench.id, memory_enabled=False,
+            request_id="reaction:r1:sevt_review_requested",
+            source_event=source_event,
+        )
+    )
+    with db._connection() as conn:
+        row = conn.execute(
+            "SELECT input_json FROM kernel_parent_runs WHERE operation_id=?",
+            (result["parent_operation_id"],),
+        ).fetchone()
+    assert row is not None
+    assert json.loads(row["input_json"])["source_event"] == source_event
 
 
 def test_each_item_provider_call_has_one_admitted_child_and_receipt(tmp_path, monkeypatch):

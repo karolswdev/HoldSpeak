@@ -139,7 +139,7 @@ class WorkbenchRunner:
         links = self._record_terminal(run_id, parent, receipt)
         return {"run_id": run_id, "parent_operation_id": parent.operation_id, "receipt_id": receipt["receipt_id"], "terminal_disposition": receipt.get("outcome"), "children": links}
 
-    async def run(self, principal: Principal, workbench_id: str, *, memory_enabled: bool=True, request_id: str|None=None, deadline_seconds: float=60, delegation: dict[str, Any] | None = None, due_minute: int | None = None) -> dict[str,Any]:
+    async def run(self, principal: Principal, workbench_id: str, *, memory_enabled: bool=True, request_id: str|None=None, deadline_seconds: float=60, delegation: dict[str, Any] | None = None, due_minute: int | None = None, source_event: dict[str, str] | None = None, item_ids: list[str] | None = None) -> dict[str,Any]:
         wb=self.db.workbenches.get(workbench_id)
         if wb is None: raise ServiceError("not_found","Unknown Workbench",context={"status":404})
         recipe=self.db.recipes.get(wb.recipe_id) if wb.recipe_id else None
@@ -150,8 +150,15 @@ class WorkbenchRunner:
             if existing is not None and self.broker.store.receipt(str(existing["operation_id"])) is not None:
                 return self._replayed_result(str(existing["operation_id"]))
         items=self.db.workbench_items.list_for_workbench(workbench_id,status="pending")
+        if item_ids is not None:
+            requested=list(dict.fromkeys(str(item_id) for item_id in item_ids if item_id))
+            by_id={item.id:item for item in items}
+            missing=[item_id for item_id in requested if item_id not in by_id]
+            if missing:
+                raise ServiceError("item_not_pending","A scoped Workbench item is missing or no longer pending",context={"status":409,"item_ids":missing})
+            items=[by_id[item_id] for item_id in requested]
         run_id="wbrun_"+uuid.uuid4().hex[:12]; deadline=time.time()+deadline_seconds
-        snapshot={"workbench_id":workbench_id,"items":[x.id for x in items],"recipe_id":recipe.id,"recipe_revision":str(recipe.last_modified),"memory_enabled":memory_enabled,"request_id":request_id or ""}
+        snapshot={"workbench_id":workbench_id,"items":[x.id for x in items],"item_scope":"explicit" if item_ids is not None else "pending_batch","recipe_id":recipe.id,"recipe_revision":str(recipe.last_modified),"memory_enabled":memory_enabled,"request_id":request_id or "","source_event":dict(source_event or {})}
         if delegation is not None:
             snapshot.update({"delegation_id": delegation["id"], "terms_sha256": delegation["terms_sha256"],
                              "delegator_kind": delegation["delegator_kind"], "delegator_identity": delegation["delegator_identity"],

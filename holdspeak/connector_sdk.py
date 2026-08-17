@@ -9,8 +9,8 @@ A connector pack is anything that:
 
   - Declares a `ConnectorManifest` describing what it is, what it
     can produce, and what permissions it needs.
-  - Implements (some subset of) the four SDK Protocols:
-    `Discover`, `Preview`, `Enrich`, `Clear`.
+  - Implements (some subset of) the SDK Protocols:
+    `Discover`, `Preview`, `Enrich`, `Clear`, `Snapshot`.
   - Plays nicely with the existing tables (`activity_records`,
     `activity_annotations`, `activity_meeting_candidates`) and the
     shared dry-run harness from HS-9-13.
@@ -44,6 +44,7 @@ KNOWN_CAPABILITIES: frozenset[str] = frozenset(
         "annotations",  # produces activity_annotations rows
         "candidates",   # produces activity_meeting_candidates rows
         "commands",     # exposes a planned-command preview (dry-run)
+        "snapshots",    # emits typed entity snapshots for Watches to diff
     }
 )
 
@@ -760,3 +761,16 @@ class Clear(Protocol):
     """
 
     def clear(self, db: Any, *, capability: str) -> int: ...
+
+
+@runtime_checkable
+class Snapshot(Protocol):
+    """Return typed source entities for a configured Watch query.
+
+    The connector observes; HoldSpeak persists the baseline and computes
+    semantic changes. Implementations return data and never emit effects.
+    """
+
+    def snapshot(
+        self, *, query_kind: str, query: Mapping[str, Any]
+    ) -> Iterable[Mapping[str, Any]]: ...

@@ -703,6 +703,11 @@ import type {
   WorkbenchRun,
   Skill,
   MemoryEntry,
+  WorkbenchAutomation,
+  AutomationHistoryEntry,
+  AutomationTestResult,
+  ResourcefulPolicy,
+  ResourcefulDispatch,
 } from "./detail-types";
 
 export async function fetchWorkbenchDetail(id: string): Promise<WorkbenchDetail> {
@@ -816,6 +821,139 @@ export async function retryMint(
     { method: "POST" },
   );
   return data?.artifact_id ? String(data.artifact_id) : null;
+}
+
+/* ── Workbench automations (Reactions) ─────────────────────────────── */
+
+export async function fetchWorkbenchAutomations(
+  workbenchId: string,
+): Promise<WorkbenchAutomation[]> {
+  const data = await apiFetch<{ automations?: Record<string, unknown>[] }>(
+    `/api/workbenches/${encodeURIComponent(workbenchId)}/automations`,
+  );
+  return Array.isArray(data.automations) ? data.automations.map(automationFromWire) : [];
+}
+
+/** The service's rich Watch + Reaction document becomes the compact row the
+ * Workbench needs. Keeping this mapper tolerant also lets a later facade send
+ * that compact shape directly. */
+function automationFromWire(value: Record<string, unknown>): WorkbenchAutomation {
+  const reaction = value.reaction && typeof value.reaction === "object"
+    ? value.reaction as Record<string, unknown>
+    : value;
+  const watch = value.watch && typeof value.watch === "object"
+    ? value.watch as Record<string, unknown>
+    : null;
+  const connector = String(watch?.connector_id || value.provider || "custom");
+  const provider = connector === "gh" || connector === "github"
+    ? "github"
+    : connector === "jira" ? "jira" : "custom";
+  const enabled = Boolean(reaction.enabled);
+  const lastError = watch?.last_error ? String(watch.last_error) : null;
+  const adapterStatus = provider === "jira" ? "unavailable" : "ready";
+  return {
+    id: String(reaction.id || value.id || ""),
+    name: String(reaction.name || value.name || "Automation"),
+    provider,
+    event_kind: String(reaction.event_pattern || value.event_kind || "event"),
+    enabled,
+    status: lastError ? "attention" : enabled ? "active" : "paused",
+    adapter_status: adapterStatus,
+    last_error: lastError,
+    last_good_at: watch?.last_success_at ? String(watch.last_success_at) : value.last_good_at ? String(value.last_good_at) : null,
+  };
+}
+
+export async function createWorkbenchAutomation(
+  workbenchId: string,
+  presetId: "github-review-requested" | "jira-assigned-to-me",
+  repository: string,
+): Promise<WorkbenchAutomation> {
+  const data = await apiFetch<{ automation: Record<string, unknown> }>(
+    `/api/workbenches/${encodeURIComponent(workbenchId)}/automations`,
+    { method: "POST", json: { preset_id: presetId, repository } },
+  );
+  return automationFromWire(data.automation);
+}
+
+/** Enabling is the owner gesture that establishes an initial silent baseline. */
+export async function setWorkbenchAutomationEnabled(
+  workbenchId: string,
+  automationId: string,
+  enabled: boolean,
+): Promise<WorkbenchAutomation> {
+  const data = await apiFetch<{ automation: Record<string, unknown> }>(
+    `/api/workbenches/${encodeURIComponent(workbenchId)}/automations/${encodeURIComponent(automationId)}`,
+    { method: "PATCH", json: { enabled } },
+  );
+  return automationFromWire(data.automation);
+}
+
+/** A test exercises matching without adding an item or advancing the baseline. */
+export async function testWorkbenchAutomation(
+  workbenchId: string,
+  automationId: string,
+): Promise<AutomationTestResult> {
+  const data = await apiFetch<Record<string, unknown>>(
+    `/api/workbenches/${encodeURIComponent(workbenchId)}/automations/${encodeURIComponent(automationId)}/test`,
+    { method: "POST" },
+  );
+  const changes = Array.isArray(data.changes) ? data.changes.length : Number(data.changes || 0);
+  return {
+    entity_count: Number(data.entity_count || 0),
+    changes,
+    would_add: Number(data.would_project || data.would_add || 0),
+  };
+}
+
+export async function fetchWorkbenchAutomationHistory(
+  workbenchId: string,
+  automationId: string,
+): Promise<AutomationHistoryEntry[]> {
+  const data = await apiFetch<{ history?: Record<string, unknown>[] }>(
+    `/api/workbenches/${encodeURIComponent(workbenchId)}/automations/${encodeURIComponent(automationId)}/history`,
+  );
+  return Array.isArray(data.history) ? data.history.map((entry) => ({
+    id: String(entry.id || entry.event_id || ""),
+    occurred_at: String(entry.occurred_at || entry.projected_at || entry.event_created_at || ""),
+    outcome: entry.item_id ? "added" : "skipped",
+    event_kind: String(entry.event_kind || entry.event_type || "event"),
+    subject: String(entry.subject || entry.subject_ref || ""),
+    receipt_id: entry.receipt_id ? String(entry.receipt_id) : null,
+    detail: entry.detail ? String(entry.detail) : null,
+  })) : [];
+}
+
+export async function fetchResourcefulPolicy(
+  workbenchId: string,
+): Promise<ResourcefulPolicy> {
+  const data = await apiFetch<{ policy: ResourcefulPolicy }>(
+    `/api/workbenches/${encodeURIComponent(workbenchId)}/resourceful`,
+  );
+  return data.policy;
+}
+
+export async function updateResourcefulPolicy(
+  workbenchId: string,
+  policy: Pick<ResourcefulPolicy,
+    "enabled" | "idle_after_minutes" | "cooldown_hours" | "nightly_target" |
+    "night_only" | "night_start_hour" | "night_end_hour" | "routines"
+  >,
+): Promise<ResourcefulPolicy> {
+  const data = await apiFetch<{ policy: ResourcefulPolicy }>(
+    `/api/workbenches/${encodeURIComponent(workbenchId)}/resourceful`,
+    { method: "PUT", json: policy },
+  );
+  return data.policy;
+}
+
+export async function fetchResourcefulHistory(
+  workbenchId: string,
+): Promise<ResourcefulDispatch[]> {
+  const data = await apiFetch<{ history?: ResourcefulDispatch[] }>(
+    `/api/workbenches/${encodeURIComponent(workbenchId)}/resourceful/history`,
+  );
+  return Array.isArray(data.history) ? data.history : [];
 }
 
 /** HS-118-05: resolve voice references via the workbench's resolver profile. */
