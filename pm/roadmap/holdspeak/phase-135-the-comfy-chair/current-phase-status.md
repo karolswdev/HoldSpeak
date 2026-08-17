@@ -160,6 +160,12 @@ after 05; 07-10 in parallel after 05 (disjoint lane files); 11 after
   flake (`test_meeting_session.py::test_stop_completes_without_deadlock_during_final_transcription_and_intel`),
   3/3 green serially — fourth distinct timing flake of the arc, all
   ledgered for BACKLOG Candidate Z.
+- **Wave-three gate (2026-08-17): 5831 passed, one real failure fixed,
+  one flake.** Real: the null-read canon guard caught sfx.ts calling
+  fetch — sanctioned as the one static-asset fetch site with the
+  reason documented in the guard (HS-135-12 rider). Flake: the
+  workbench deadline-expiry fence failed once, 3/3 green serially —
+  FIFTH distinct xdist timing flake of the arc (Candidate Z).
 - **Empty-Chair void observed (orchestrator, first live portrait,
   2026-08-17):** on a barren desk the Chair renders two floating empty
   states in a black expanse — honest but hostile as a first-run
