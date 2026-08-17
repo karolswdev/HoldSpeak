@@ -94,6 +94,7 @@ export function CatalogRail({
               total={filterTotal}
               matchCount={meetingRows.length}
               isActive={filterActive}
+              itemCount={filterTotal}
             />
             <Button
               dense

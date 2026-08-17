@@ -1,6 +1,6 @@
 # Phase 135 — The Comfy Chair
 
-**Status:** in-progress (0/13).
+**Status:** in-progress (1/13).
 
 **Last updated:** 2026-08-17.
 
@@ -103,7 +103,7 @@ docs + the walk.
 | HS-135-01 | The hub opens its own desk | backlog | [story-01](./story-01-migration-fix.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-135-02 | Lamps wrap, wings look pressable | backlog | [story-02](./story-02-lamp-wing-laws.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-135-03 | The sizing tokens land | backlog | [story-03](./story-03-sizing-tokens.md) | [evidence-story-03](./evidence-story-03.md) |
-| HS-135-04 | Sparse surfaces shed chrome | backlog | [story-04](./story-04-sparse-surfaces.md) | [evidence-story-04](./evidence-story-04.md) |
+| HS-135-04 | Sparse surfaces shed chrome | done | [story-04](./story-04-sparse-surfaces.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-135-05 | The Chair shell | backlog | [story-05](./story-05-chair-shell.md) | [evidence-story-05](./evidence-story-05.md) |
 | HS-135-06 | The Chair is home | backlog | [story-06](./story-06-chair-is-home.md) | [evidence-story-06](./evidence-story-06.md) |
 | HS-135-07 | The Brief lane | backlog | [story-07](./story-07-brief-lane.md) | [evidence-story-07](./evidence-story-07.md) |
@@ -174,5 +174,6 @@ after 05; 07-10 in parallel after 05 (disjoint lane files); 11 after
 
 ## Where we are
 
-Chartered 2026-08-17 on the ruled law book, immediately after Phase
-134 merged (`2f371607`). Implementation not yet begun.
+HS-135-04 shipped: SPARSE_THRESHOLD=5 constant, LedgerFilterBar hides
+below threshold, MetricStrip collapses zero-value tiles below threshold,
+CatalogRail wired. 39 tests green, 71 total across all surface suites.
