@@ -1,6 +1,6 @@
 # Phase 135 — The Comfy Chair
 
-**Status:** in-progress (4/15).
+**Status:** in-progress (5/15).
 
 **Last updated:** 2026-08-17.
 
@@ -104,7 +104,7 @@ docs + the walk.
 | HS-135-02 | Lamps wrap, wings look pressable | done | [story-02](./story-02-lamp-wing-laws.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-135-03 | The sizing tokens land | done | [story-03](./story-03-sizing-tokens.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-135-04 | Sparse surfaces shed chrome | done | [story-04](./story-04-sparse-surfaces.md) | [evidence-story-04](./evidence-story-04.md) |
-| HS-135-05 | The Chair shell | backlog | [story-05](./story-05-chair-shell.md) | [evidence-story-05](./evidence-story-05.md) |
+| HS-135-05 | The Chair shell | done | [story-05](./story-05-chair-shell.md) | [evidence-story-05](./evidence-story-05.md) |
 | HS-135-06 | The Chair is home | backlog | [story-06](./story-06-chair-is-home.md) | [evidence-story-06](./evidence-story-06.md) |
 | HS-135-07 | The Brief lane | backlog | [story-07](./story-07-brief-lane.md) | [evidence-story-07](./evidence-story-07.md) |
 | HS-135-08 | The Follow-Through lane | backlog | [story-08](./story-08-follow-through-lane.md) | [evidence-story-08](./evidence-story-08.md) |
@@ -224,3 +224,15 @@ sites migrated across surface.css (7), gadgets.css (9), chrome-menus.css
 (5). Pixel-identity-preserving. 46 vitest + 8 interior canon tests
 green.
 HS-135-04 shipped earlier: sparse-surface chrome shedding.
+HS-135-05 shipped: the Chair shell exists. Chair.tsx renders hero slot +
+four fixed lanes (Brief, Follow-Through, Meetings, Agents) via the lane
+composition contract (ChairLane: maxItems prop default 12, Surface
+primitives only, onOpenInWindow on header + rows, optional footer verb).
+300ms all-blank fallback renders one SurfaceState (counsel condition 2).
+Ember-only: chair.css uses no --accent-cool or --accent-gradient.
+Single-instance-per-surface: the window-opening seam already implemented
+the rule (windowFactory.ts:86-94 deduplicates + focusPanel; pullout
+opener does the same at compositorSlice.ts:184-188) -- no code change
+needed, 5 tests prove the existing behavior. laneContract.ts renamed
+from lane.ts to avoid macOS APFS case-insensitive collision with
+Lane.tsx. 17 vitest green (12 Chair + 5 window-seam).

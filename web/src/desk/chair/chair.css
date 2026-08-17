@@ -1,0 +1,64 @@
+/* HS-135-05 -- the Chair surface stylesheet.
+   Signal Workbench material; L1 depth grammar; tokens only.
+   Ember-only on the Chair: no cool or gradient accents here
+   (the gradient is hero-only, story 11). */
+
+.chair {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  padding: var(--space-4);
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+/* The capture hero slot (story 11 fills it with mic/record). */
+.chair-hero {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 80px;
+}
+
+/* The four lane slots. */
+.chair-lanes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+/* Individual lane wrapper. */
+.chair-lane {
+  display: flex;
+  flex-direction: column;
+}
+
+/* The lane header verb (count badge, clickable to open full surface). */
+.chair-lane-header-verb {
+  all: unset;
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  padding: 0 var(--space-2);
+}
+.chair-lane-header-verb:hover {
+  color: var(--accent);
+}
+
+/* The lane footer ("N more -- Open SURFACE"). */
+.chair-lane-footer {
+  all: unset;
+  cursor: pointer;
+  display: block;
+  font-family: var(--font-mono);
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  padding: var(--space-2) 0;
+  text-align: center;
+}
+.chair-lane-footer:hover {
+  color: var(--accent);
+}
