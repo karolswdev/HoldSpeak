@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 135
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-135-05
 - **Unblocks:** HS-135-13
 - **Owner:** unassigned
@@ -31,9 +31,9 @@ act — and the forward door for Wave 2's manual commitments.
 
 ## Acceptance criteria
 
-- [ ] Seeded overdue/now items render truthfully ordered; verbs
+- [x] Seeded overdue/now items render truthfully ordered; verbs
   persist effects; empty state honest (tests).
-- [ ] The hidden slot exists (prop-level test) and renders nothing.
+- [x] The hidden slot exists (prop-level test) and renders nothing.
 
 ## Test plan
 

@@ -1,6 +1,6 @@
 # Phase 135 — The Comfy Chair
 
-**Status:** in-progress (6/15).
+**Status:** in-progress (7/15).
 
 **Last updated:** 2026-08-17.
 
@@ -107,7 +107,7 @@ docs + the walk.
 | HS-135-05 | The Chair shell | done | [story-05](./story-05-chair-shell.md) | [evidence-story-05](./evidence-story-05.md) |
 | HS-135-06 | The Chair is home | backlog | [story-06](./story-06-chair-is-home.md) | [evidence-story-06](./evidence-story-06.md) |
 | HS-135-07 | The Brief lane | backlog | [story-07](./story-07-brief-lane.md) | [evidence-story-07](./evidence-story-07.md) |
-| HS-135-08 | The Follow-Through lane | backlog | [story-08](./story-08-follow-through-lane.md) | [evidence-story-08](./evidence-story-08.md) |
+| HS-135-08 | The Follow-Through lane | done | [story-08](./story-08-follow-through-lane.md) | [evidence-story-08](./evidence-story-08.md) |
 | HS-135-09 | The Meetings lane | backlog | [story-09](./story-09-meetings-lane.md) | [evidence-story-09](./evidence-story-09.md) |
 | HS-135-10 | The Agents lane | backlog | [story-10](./story-10-agents-lane.md) | [evidence-story-10](./evidence-story-10.md) |
 | HS-135-11 | The capture hero | backlog | [story-11](./story-11-capture-hero.md) | [evidence-story-11](./evidence-story-11.md) |
@@ -255,3 +255,20 @@ Opus is a better codec with broad support); the very first sound play
 per session misses (buffer loads async) but all six preload in parallel
 after the first user gesture. 10 sfx tests + 1003 full vitest + 39
 settings tests green.
+HS-135-08 shipped: the Follow-Through lane. FollowThroughLane.tsx
+composes directly with SurfaceSection/SurfaceRows/SurfaceRow (not
+ChairLane) -- a contract-preserving composition choice: ChairLane's
+LaneItem places meta inside the onOpen button wrapper, which nests
+interactive elements when verbs are buttons; composing with Surface
+primitives directly uses the SurfaceRow verbs slot (outside the button
+wrapper) for the complete/dismiss actions. Data from
+/api/follow-through/board (no new endpoints); order OVERDUE then NOW
+then WAITING to the maxItems bound; each item shows owner initials + due
+age; complete (done) and dismiss verbs reuse the existing
+/api/follow-through/complete action. Header-click opens Intelligence on
+the Follow-Through wing via openIntelligence({ view: "follow-through" }).
+The counsel-mandated newCommitmentVerb prop exists (typed ReactNode|null,
+default null) and renders nothing when null (Article VI: hidden = absent,
+not disabled). Registry entry added to lanes/index.ts keyed as
+"follow-through" (matching LaneId). 10 lane tests + 12 Chair tests
+green (22/22).
