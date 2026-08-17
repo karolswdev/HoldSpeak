@@ -250,8 +250,8 @@ def test_schema_migrates_v39_to_v40(tmp_path):
 
     migrated = Database(path)
 
-    assert SCHEMA_VERSION == 60
-    assert read_schema_version(path) == 60
+    assert SCHEMA_VERSION == 61
+    assert read_schema_version(path) == 61
     with migrated._connection() as conn:
         # HS-132-08 — the v60 leg carries the triage shelf onto a v39 archive.
         assert (

@@ -1964,7 +1964,7 @@ class TestMeshDispatchSchema:
                 "SELECT * FROM mesh_relay_jobs WHERE id='relay_legacy'"
             ).fetchone()
             version = conn.execute("SELECT MAX(version) FROM schema_version").fetchone()[0]
-        assert version == SCHEMA_VERSION == 60
+        assert version == SCHEMA_VERSION == 61
         # The row survived, and its new binding columns are the UNBOUND defaults,
         # which is what makes a legacy row unclaimable by the authenticated path.
         assert row["node"] == "edge"

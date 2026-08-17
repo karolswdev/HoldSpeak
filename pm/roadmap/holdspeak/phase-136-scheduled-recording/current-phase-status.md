@@ -1,6 +1,6 @@
 # Phase 136 — Scheduled Recording
 
-**Status:** chartered (0/4).
+**Status:** in progress (1/4).
 
 **Last updated:** 2026-08-17.
 
@@ -102,6 +102,25 @@ with these branches:
   re-approves.
 - **I6 — auto-stop.** A recording started by a schedule stops at
   `duration_minutes`, even with no client attached.
+- **I7 — restart durability.** An in-flight recording's auto-stop
+  deadline is durable (persisted before the recording is observable);
+  a hub restart mid-recording still stops it at its duration. On boot
+  the conductor reconciles — a recording past its deadline is stopped
+  and receipted; an interrupted arming resolves to missed/cancelled;
+  never a phantom armed/recording row. No restart yields a runaway
+  unattended capture.
+- **I8 — clock honesty.** Cron evaluation is timezone-explicit; a
+  one-shot already in the past does not fire retroactively (it fires
+  once as missed). DST is handled as standard cron semantics (the
+  fall-back repeated hour can fire a short schedule twice; accepted per
+  owner ruling, noted in `holdspeak/cron.py`, not mitigated).
+- **I9 — no cross-path race.** Scheduled fires are serialized against
+  each other by the fire lock; a manual capture racing a scheduled fire
+  is gated by the mic floor (I4) with graceful refusal — the two paths
+  never both start for one instant.
+- **I10 — bounded catch-up.** After downtime, catch-up looks back a
+  bounded window: a week down yields one missed receipt per schedule
+  and a strictly-future next fire, never a burst.
 
 ## Canon this phase is measured against
 
@@ -118,11 +137,21 @@ with these branches:
 - **III.1** nothing leaves the machine by default → capture stays
   local; no new egress.
 
+## Story status
+
+| ID | Story | Status | Story file | Evidence |
+| --- | --- | --- | --- | --- |
+| HS-136-01 | The scheduled-capture spine | done | [story-01](./story-01-scheduled-capture-spine.md) | [evidence-story-01](./evidence-story-01.md) |
+| HS-136-02 | The schedule verb (API + MCP) | backlog | [story-02](./story-02-schedule-verb-api-mcp.md) | — |
+| HS-136-03 | The Chair surface | backlog | [story-03](./story-03-chair-surface.md) | — |
+| HS-136-04 | Docs, walk, and close | backlog | [story-04](./story-04-docs-walk-close.md) | — |
+
 ## Stories
 
 1. **HS-136-01 — The scheduled-capture spine.** DB rows + the hub
    conductor (arm → countdown → start → auto-stop), the SCHEDULER
-   principal through `_start_meeting`, all six invariants with tests.
+   principal through `_start_meeting`, all ten invariants (I1–I10) with
+   tests.
 2. **HS-136-02 — The schedule verb (API + MCP).** CRUD + cancel-armed
    routes and MCP tools (the owner's "drive it independently with MCP"
    value), bounded-delegation receipt on enable.
@@ -146,4 +175,16 @@ with these branches:
 
 ## Where we are
 
-Chartered. HS-136-01 is next.
+HS-136-01 (the spine) is done and shipped: the `scheduled_recordings`
+table (schema 61), a shared `holdspeak/cron.py`, and
+`holdspeak/scheduled_recording_conductor.py` (the 60s tick, the
+arm→countdown→start→auto-stop state machine, boot reconciliation, the
+fire lock, bounded catch-up, tz-aware cron), wired into `WebRuntime`.
+All ten invariants (I1–I10) plus the missed path carry tests. The done
+call: the full suite is green (5879 passed, 0 failed, isolated HOME,
+`-n auto`), and the spine survived an adversarial verification pass —
+every real-bite axis held (restart durability, the manual-capture
+collision gate, the additive schema upgrade), with its findings
+(honest auto-stop receipt, a corrected concurrency comment, a
+start-failure test) folded in. HS-136-02 (the schedule verb — API +
+MCP) is next.

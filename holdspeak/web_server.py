@@ -884,6 +884,30 @@ class MeetingWebServer:
                 start_conductor()
             except Exception as e:
                 log.error(f"workbench conductor startup failed: {e}")
+            try:
+                from .scheduled_recording_conductor import (
+                    start_scheduled_recording_conductor,
+                    set_broadcast as sr_set_broadcast,
+                )
+                sr_set_broadcast(lambda t, d: self.broadcast(t, d))
+                start_scheduled_recording_conductor(
+                    voice_floor_fn=lambda: self.voice_session.active_owner
+                    if hasattr(self, "voice_session")
+                    else None,
+                    start_meeting_fn=lambda principal, title: (
+                        setattr(callbacks, "pending_title", title) or  # type: ignore[func-returns-value]
+                        callbacks._start_meeting(principal=principal)
+                    )
+                    if hasattr(callbacks, "_start_meeting")
+                    else None,
+                    stop_meeting_fn=lambda: callbacks._stop_active_meeting(
+                        allow_runtime_fallback=False
+                    )
+                    if hasattr(callbacks, "_stop_active_meeting")
+                    else None,
+                )
+            except Exception as e:
+                log.error(f"scheduled recording conductor startup failed: {e}")
             self._started.set()
             log.debug("Meeting web server startup complete")
 
