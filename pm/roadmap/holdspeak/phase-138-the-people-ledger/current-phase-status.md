@@ -57,7 +57,9 @@ product stores.
 - Authenticated loopback API with content-free error codes.
 - In-memory Follow-through projection and source-dispatched lifecycle mutations.
 - Desk People surface with responsive roster, relationship detail, and terse trust
-  facts: `Encrypted`, `This device only`, `Notes only`.
+  facts: `Encrypted`, `Local storage`, `Notes only` *(amended 2026-08-17 —
+  counsel ruled `This device only` false for the Send-to-Workbench egress
+  path; that verb now carries a `Workbench model` badge; owner may overrule)*.
 - Security/threat-model documentation, leak tests, focused/full regression gates,
   and a live desktop+narrow walk.
 - Default-deny People MCP tools/resources for shared-intent continuity, manual

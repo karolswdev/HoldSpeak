@@ -25,8 +25,14 @@ the product ontology.
 
 - [ ] People opens as one Desk region. Unconfigured/locked/key-unavailable/corrupt
   never render roster/create/search/mic or stale cached People text.
-- [ ] Ready state displays exactly factual `Encrypted`, `This device only`, `Notes
-  only`; `shared_intent` copy does not imply participant access.
+- [ ] Ready state displays exactly factual `Encrypted`, `Local storage`, `Notes
+  only`; `shared_intent` copy does not imply participant access; the
+  Send-to-Workbench verb carries a point-of-decision `Workbench model` egress
+  badge. *(AMENDED 2026-08-17 at the revival counsel's ruling: the chartered
+  `This device only` claim is false for the deliberate Send-to-Workbench path,
+  which routes decrypted commitment text to the workbench's configured model.
+  Storage and sync remain device-only and the Info lens still says so. Owner
+  may overrule at the sitting.)*
 - [ ] Inline create/edit, agenda visibility/roll-forward, request acceptance, and
   commitment handoff work without a modal or route transition.
 - [ ] Desktop split and narrow back-navigation have no horizontal overflow; controls
