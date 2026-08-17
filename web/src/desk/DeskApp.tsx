@@ -3,8 +3,12 @@
 // React + Vite in the one Web tree. Full-bleed: the world owns the viewport;
 // chrome is the floating
 // minimal cluster (DeskChrome); a fresh desk shows the guiding empty state.
+// HS-135-06: the Chair is HOME at `/`. The spatial floor stays intact
+// behind a dock button (counsel ruling B.Q1).
 import { useEffect } from "react";
 import { defaultViewFor, useDesk } from "./store";
+import { useChairState } from "./chairState";
+import { ChairHome } from "./chair";
 import { Atmosphere } from "./gl/Atmosphere";
 import { WorldStage } from "./gl/WorldStage";
 import { DeskListView } from "./components/DeskListView";
@@ -41,6 +45,10 @@ export default function DeskApp() {
   const viewMode = useDesk((s) => s.viewMode);
   const { refresh } = useDesk.getState();
 
+  // HS-135-06: Chair is HOME; the floor stays one dock-button away.
+  const surface = useChairState((s) => s.surface);
+  const showFloor = surface === "floor";
+
   useEffect(() => {
     void refresh().then(() => {
       const open = new URLSearchParams(window.location.search).get("open");
@@ -54,16 +62,21 @@ export default function DeskApp() {
 
   return (
     <div className="desk-next" id="desk-next">
-      <Atmosphere />
-      <GlassDropLayer />
+      {/* GL layers render only when the spatial floor is active. */}
+      {showFloor && <Atmosphere />}
+      {showFloor && <GlassDropLayer />}
       <DeskChrome showDailyStarts={!empty} />
-      {empty ? (
-        <EmptyDesk arrivalRequired={setup?.arrival_required === true} />
-      ) : defaultViewFor(viewMode, total, window.innerWidth <= 720) ===
-        "list" ? (
-        <DeskListView />
+      {showFloor ? (
+        empty ? (
+          <EmptyDesk arrivalRequired={setup?.arrival_required === true} />
+        ) : defaultViewFor(viewMode, total, window.innerWidth <= 720) ===
+          "list" ? (
+          <DeskListView />
+        ) : (
+          <WorldStage />
+        )
       ) : (
-        <WorldStage />
+        <ChairHome />
       )}
       {chatPersonaId && <PersonaChat personaId={chatPersonaId} />}
       <DeskToolInspector />

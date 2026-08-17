@@ -1,6 +1,6 @@
 # Phase 135 — The Comfy Chair
 
-**Status:** in-progress (7/15).
+**Status:** in-progress (8/15).
 
 **Last updated:** 2026-08-17.
 
@@ -105,7 +105,7 @@ docs + the walk.
 | HS-135-03 | The sizing tokens land | done | [story-03](./story-03-sizing-tokens.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-135-04 | Sparse surfaces shed chrome | done | [story-04](./story-04-sparse-surfaces.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-135-05 | The Chair shell | done | [story-05](./story-05-chair-shell.md) | [evidence-story-05](./evidence-story-05.md) |
-| HS-135-06 | The Chair is home | backlog | [story-06](./story-06-chair-is-home.md) | [evidence-story-06](./evidence-story-06.md) |
+| HS-135-06 | The Chair is home | done | [story-06](./story-06-chair-is-home.md) | [evidence-story-06](./evidence-story-06.md) |
 | HS-135-07 | The Brief lane | backlog | [story-07](./story-07-brief-lane.md) | [evidence-story-07](./evidence-story-07.md) |
 | HS-135-08 | The Follow-Through lane | done | [story-08](./story-08-follow-through-lane.md) | [evidence-story-08](./evidence-story-08.md) |
 | HS-135-09 | The Meetings lane | backlog | [story-09](./story-09-meetings-lane.md) | [evidence-story-09](./evidence-story-09.md) |
@@ -272,3 +272,17 @@ default null) and renders nothing when null (Article VI: hidden = absent,
 not disabled). Registry entry added to lanes/index.ts keyed as
 "follow-through" (matching LaneId). 10 lane tests + 12 Chair tests
 green (22/22).
+HS-135-06 shipped: the Chair is home. ChairHome.tsx maps LANE_ORDER over
+the LANE_COMPONENTS registry generically to build the Chair's lanes prop
+(HS-135-08's FollowThroughLane renders automatically). DeskApp.tsx renders
+ChairHome as the landing surface at `/` instead of the spatial floor; the
+GL floor (Atmosphere, GlassDropLayer, WorldStage/DeskListView/EmptyDesk)
+stays fully intact behind a dock button. chairState.ts (Zustand,
+chromeState pattern) holds the chair/floor toggle; the Dock reads it and
+renders a Floor/Chair toggle button with glyph character U+25A6 (no floor
+sprite exists -- casting order for icon story HS-135-14). Swap is instant
+and stateful; windows/dock/menubar/Expose/Switcher render unconditionally
+above both surfaces. Routes unchanged (the swap is internal DeskApp state,
+not a route). TypeScript clean, 5 test files / 45 tests green (ChairHome
+5, Chair 12, shell 15, routes 3, systemSprites 2 + broader desk sweep
+72/72).

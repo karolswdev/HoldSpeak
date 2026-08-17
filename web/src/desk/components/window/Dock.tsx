@@ -5,6 +5,7 @@ import { useIntelligenceAttention } from "../../intelligenceAttention";
 import { openIntelligence } from "../../intelligenceNavigation";
 import { DOCK_SPRITES } from "../../systemSprites";
 import { useDesk } from "../../store";
+import { useChairState } from "../../chairState";
 import { useShortcutSheet } from "../../chromeState";
 import { useKeymap } from "../../keymap";
 import { DeskMenuItem, DeskMenuList } from "../DeskMenu";
@@ -43,6 +44,9 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
   // verb can draw it.
   useKeymap();
   const sheetOpen = useShortcutSheet((s) => s.open);
+  // HS-135-06: the Chair/Floor dock toggle (counsel ruling B.Q1).
+  const chairSurface = useChairState((s) => s.surface);
+  const toggleSurface = useChairState((s) => s.toggle);
   const intelligenceAttention = useIntelligenceAttention();
   const intelligenceBadge = intelligenceAttention.overdue
     ? String(intelligenceAttention.overdue)
@@ -139,6 +143,26 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
           </button>
         );
       })}
+      {/* HS-135-06: Floor/Chair toggle -- a dock button with a grid
+          glyph that swaps the landing surface in place. No floor sprite
+          exists yet; uses a glyph character (icon story HS-135-13). */}
+      <button
+        key="chair-floor-toggle"
+        type="button"
+        className={
+          "desk-dock-launch" +
+          (chairSurface === "floor" ? " is-run" : "")
+        }
+        aria-label={chairSurface === "chair" ? "Floor" : "Chair"}
+        aria-pressed={chairSurface === "floor"}
+        onClick={toggleSurface}
+        data-testid="chair-floor-toggle"
+      >
+        <span aria-hidden="true">{"▦"}</span>
+        <span className="desk-dock-label">
+          {chairSurface === "chair" ? "Floor" : "Chair"}
+        </span>
+      </button>
       {shown.map((launcher) => {
         const actionable = ACTIONABLE_LAUNCHERS.has(launcher.id);
         return (
