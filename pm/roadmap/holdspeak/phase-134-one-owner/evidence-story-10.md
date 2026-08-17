@@ -358,3 +358,16 @@ Transcript written to pm/roadmap/holdspeak/phase-134-one-owner/assets/mcp-walk-l
 MCP walk: 37 assertions, 37 passed, 0 failed
 ============================================================
 ```
+
+### Captured run — 2026-08-17T00:07:11Z
+
+- **Command:** `bash -c HOME_REAL=$HOME; HOME=$(mktemp -d) PLAYWRIGHT_BROWSERS_PATH=$HOME_REAL/Library/Caches/ms-playwright npm_config_cache=$HOME_REAL/.npm uv run pytest -q -n auto --ignore=tests/e2e/test_metal.py 2>&1 | tail -3`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** aa525d2cdd96524adde3f98d47dff1d83961e128
+
+```text
+SKIPPED [1] tests/integration/test_runtime_llama_cpp.py:38: llama-cpp-python and /var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.Tqv12RAaby/xdist-gw2/Models/gguf/Qwen3.5-4B-Instruct-Q4_K_M.gguf are required for this integration test
+SKIPPED [1] tests/integration/test_runtime_mlx.py:38: mlx-lm + outlines + /var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.Tqv12RAaby/xdist-gw2/Models/mlx/Qwen3.5-8B-MLX-4bit are required for this integration test
+5830 passed, 47 skipped in 227.39s (0:03:47)
+```

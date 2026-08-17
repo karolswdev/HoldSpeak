@@ -180,7 +180,8 @@ Parallel waves: {01, 02, 05, 06} then {03, 04, 08} then {07, 09} then 10.
   deleted.
 - [x] MCP tools are `destination.*`; REQUIRED_TOOLS, the phase-133
   tests, and `scripts/mcp_walk.py` all updated in the same commit;
-  the walk runs 26/26 including the live leg.
+  the walk runs green including the live leg (25/25 default, 37/37
+  live).
 - [x] Every placement-resolving API and MCP response carries
   `{effective_target_id, source}`.
 - [x] `infoContract.ts` no longer writes `profile_id`; a writer-guard
