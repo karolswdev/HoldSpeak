@@ -471,8 +471,15 @@ the ⌘K shelf's z-defect fixed; the owner's 101 sitting remains open in
 parallel. Phase 101 itself stands at 3/4 (canon ratified and built,
 PR #359; sweep 4122/0).
 
-**Current phase:** [**Phase 135 — The Comfy Chair**](./phase-135-the-comfy-chair/current-phase-status.md)
-— **COMPLETE (14/14, 2026-08-16, one session; owner sitting pending)**. The owner closed the consolidation era and
+**Current phase:** [**Phase 136 — Scheduled Recording**](./phase-136-scheduled-recording/current-phase-status.md)
+— **chartered (0/4, 2026-08-17)**. A focused standalone build off the
+Dashboard Door reflection: the Chair can schedule a recording (one-shot
+or recurring) that the hub starts on its own — via a visible
+tap-to-cancel countdown that keeps the mic owner visible (Article
+IV.3) — and auto-stops by duration. The Dashboard Door and the Narrow
+Shell (the arc's sketched Phase 136) stay deferred; the Narrow Shell
+renumbers when chartered. Previous: [**Phase 135 — The Comfy Chair**](./phase-135-the-comfy-chair/current-phase-status.md)
+— **COMPLETE (15/15, 2026-08-16/17; PR #460 merged, owner sitting pending)**. The owner closed the consolidation era and
 pointed the machine back at the functional side. Chartered from a six-pillar
 functional-reality audit (six Opus auditors, file:line evidence archived in the
 phase assets): every daily verb works when touched, every signal the hub
