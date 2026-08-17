@@ -33,11 +33,17 @@ interface RecipesResponse {
 // imports (desk/ must not import from pages/)
 // ---------------------------------------------------------------------------
 
-/** Extract the flat session array from the coders/status response. */
+/** Extract the flat session array from the coders/status response.
+ *  The wire shape is `agent.sessions.items` (an object with count +
+ *  selected_index + items array), not a bare array.  Handle both for
+ *  forward-compat. */
 function extractSessions(
   res: CodersStatusResponse,
 ): Array<Record<string, unknown>> {
-  const raw = res.agent?.sessions;
+  const sessions = res.agent?.sessions;
+  const raw = Array.isArray(sessions)
+    ? sessions
+    : (sessions as Record<string, unknown> | undefined)?.items;
   if (!Array.isArray(raw)) return [];
   return raw.filter(
     (row): row is Record<string, unknown> =>

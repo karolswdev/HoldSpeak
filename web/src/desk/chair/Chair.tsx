@@ -6,7 +6,6 @@
 // accent-gradient is hero-only, story 11).
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { SurfaceState } from "../surface/Surface";
 import { LANE_ORDER, type LaneId } from "./laneContract";
 import "./chair.css";
 
@@ -74,7 +73,9 @@ export function Chair({ hero, lanes }: ChairProps) {
             })
           : showFallback
             ? (
-              <SurfaceState empty emptyLabel="Nothing yet" />
+              <div className="chair-empty-invitation">
+                <span className="chair-empty-invitation-text">Speak. The desk will file it.</span>
+              </div>
             )
             : null}
       </div>

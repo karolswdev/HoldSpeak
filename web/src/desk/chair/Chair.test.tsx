@@ -159,7 +159,7 @@ describe("Chair 300ms all-blank fallback", () => {
   it("shows nothing before 300ms when all lanes are blank", () => {
     render(<Chair lanes={{}} />);
     // Before the timer fires, no fallback state.
-    expect(screen.queryByText("Nothing yet")).not.toBeInTheDocument();
+    expect(screen.queryByText("Speak. The desk will file it.")).not.toBeInTheDocument();
   });
 
   it("shows exactly ONE SurfaceState after 300ms when all lanes are blank", () => {
@@ -167,7 +167,7 @@ describe("Chair 300ms all-blank fallback", () => {
     act(() => {
       vi.advanceTimersByTime(300);
     });
-    expect(screen.getByText("Nothing yet")).toBeInTheDocument();
+    expect(screen.getByText("Speak. The desk will file it.")).toBeInTheDocument();
   });
 
   it("does NOT show fallback when at least one lane has content", () => {
@@ -189,7 +189,7 @@ describe("Chair 300ms all-blank fallback", () => {
     act(() => {
       vi.advanceTimersByTime(500);
     });
-    expect(screen.queryByText("Nothing yet")).not.toBeInTheDocument();
+    expect(screen.queryByText("Speak. The desk will file it.")).not.toBeInTheDocument();
   });
 
   it("clears the fallback when a lane arrives after the timer fired", () => {
@@ -198,7 +198,7 @@ describe("Chair 300ms all-blank fallback", () => {
     act(() => {
       vi.advanceTimersByTime(300);
     });
-    expect(screen.getByText("Nothing yet")).toBeInTheDocument();
+    expect(screen.getByText("Speak. The desk will file it.")).toBeInTheDocument();
 
     // A lane arrives -- the fallback should clear.
     rerender(
@@ -215,7 +215,7 @@ describe("Chair 300ms all-blank fallback", () => {
         }}
       />,
     );
-    expect(screen.queryByText("Nothing yet")).not.toBeInTheDocument();
+    expect(screen.queryByText("Speak. The desk will file it.")).not.toBeInTheDocument();
   });
 });
 
@@ -231,5 +231,94 @@ describe("Chair ember-only (no accent-cool/gradient in chair.css)", () => {
     const stripped = css.replace(/\/\*[\s\S]*?\*\//g, "");
     expect(stripped).not.toMatch(/--accent-cool/);
     expect(stripped).not.toMatch(/--accent-gradient/);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// HS-135-13: void polish -- the hero holds the room, lanes grid, empty collapse
+// ---------------------------------------------------------------------------
+
+describe("Chair void polish (HS-135-13)", () => {
+  const cssPath = path.resolve(__dirname, "chair.css");
+  const css = fs.readFileSync(cssPath, "utf-8");
+  const stripped = css.replace(/\/\*[\s\S]*?\*\//g, "");
+
+  it("chair.css contains the empty-state hero treatment selector", () => {
+    // The :has()-based selector that scales the hero when no lane has data.
+    // A lane is populated when it contains .surface-section (real data rows).
+    expect(stripped).toMatch(/\.chair:not\(:has\(\.chair-lane \.surface-section\)\)/);
+    // The hero gets flex: 1 in the sparse state.
+    expect(stripped).toMatch(/\.chair-hero[\s\S]*?flex:\s*1/);
+  });
+
+  it("chair.css contains the hero key scale-up in the sparse state", () => {
+    // The hero key gets larger when lanes are quiet.
+    expect(stripped).toMatch(/\.capture-hero-key[\s\S]*?calc\(var\(--size-key\)/);
+  });
+
+  it("chair.css hides empty lane wrappers with :empty", () => {
+    expect(stripped).toMatch(/\.chair-lane:empty\s*\{[^}]*display:\s*none/);
+  });
+
+  it("chair.css uses CSS grid for lane layout", () => {
+    expect(stripped).toMatch(/\.chair-lanes\s*\{[^}]*display:\s*grid/);
+    expect(stripped).toMatch(/grid-template-columns:\s*1fr\s*1fr/);
+  });
+
+  it("chair.css fills the working area height", () => {
+    expect(stripped).toMatch(
+      /\.chair\s*\{[^}]*min-height:\s*calc\(100vh\s*-\s*var\(--desk-snap-top\)/,
+    );
+  });
+
+  it("empty lane wrappers render as empty divs (enabling :empty CSS)", () => {
+    // When a lane's ReactNode is a component that returns null, the wrapper
+    // div is empty. This test confirms the wrapper renders without children
+    // when the lane content returns null.
+    const NullLane = () => null;
+    const { container } = render(
+      <Chair
+        hero={<div data-testid="hero-content">MIC</div>}
+        lanes={{ brief: <NullLane /> }}
+      />,
+    );
+    const briefLane = container.querySelector('[data-lane="brief"]');
+    expect(briefLane).not.toBeNull();
+    // The wrapper has no child ELEMENTS (NullLane rendered null).
+    expect(briefLane!.childElementCount).toBe(0);
+  });
+
+  it("populated lanes have content for the grid layout", () => {
+    const onOpen = vi.fn();
+    const { container } = render(
+      <Chair
+        hero={<div>MIC</div>}
+        lanes={{
+          brief: (
+            <ChairLane
+              title="BRIEF"
+              items={makeItems(3)}
+              onOpenInWindow={onOpen}
+              surfaceId="intelligence"
+            />
+          ),
+          meetings: (
+            <ChairLane
+              title="MEETINGS"
+              items={makeItems(2)}
+              onOpenInWindow={onOpen}
+              surfaceId="meetings"
+            />
+          ),
+        }}
+      />,
+    );
+    const lanes = container.querySelectorAll(".chair-lane:not(:empty)");
+    // jsdom doesn't support :empty pseudo-class fully, so check child count.
+    const populatedLanes = container.querySelectorAll("[data-lane]");
+    const withContent = Array.from(populatedLanes).filter(
+      (el) => el.childElementCount > 0,
+    );
+    expect(withContent.length).toBe(2);
   });
 });

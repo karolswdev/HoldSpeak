@@ -1,6 +1,6 @@
 # Phase 135 — The Comfy Chair
 
-**Status:** in-progress (13/15).
+**Status:** complete (15/15). Owner sitting pending.
 
 **Last updated:** 2026-08-17.
 
@@ -112,7 +112,7 @@ docs + the walk.
 | HS-135-10 | The Agents lane | done | [story-10](./story-10-agents-lane.md) | [evidence-story-10](./evidence-story-10.md) |
 | HS-135-11 | The capture hero | done | [story-11](./story-11-capture-hero.md) | [evidence-story-11](./evidence-story-11.md) |
 | HS-135-12 | The desk clicks | done | [story-12](./story-12-sound-palette.md) | [evidence-story-12](./evidence-story-12.md) |
-| HS-135-13 | Docs and the walk | backlog | [story-13](./story-13-docs-and-walk.md) | [evidence-story-13](./evidence-story-13.md) |
+| HS-135-13 | Docs and the walk | done | [story-13](./story-13-docs-and-walk.md) | [evidence-story-13](./evidence-story-13.md) |
 | HS-135-14 | The chrome speaks Workbench | done | [story-14](./story-14-chrome-speaks-workbench.md) | [evidence-story-14](./evidence-story-14.md) |
 | HS-135-15 | Creation operates | done | [story-15](./story-15-creation-operates.md) | [evidence-story-15](./evidence-story-15.md) |
 
@@ -160,6 +160,19 @@ after 05; 07-10 in parallel after 05 (disjoint lane files); 11 after
   flake (`test_meeting_session.py::test_stop_completes_without_deadlock_during_final_transcription_and_intel`),
   3/3 green serially — fourth distinct timing flake of the arc, all
   ledgered for BACKLOG Candidate Z.
+- **Final gate (2026-08-17): 5832 passed, zero flakes; the single
+  failure was the voice-rules guard catching the orchestrator's own em
+  dashes in the new Chair copy (fixed: "Speak. The desk will file
+  it."). The guard guards everyone.**
+- **The walk's fix-it round (owner-in-the-loop):** two real product
+  bugs killed (InlineEditor was never mounted on the Chair surface —
+  creation only worked on the Floor; ChairHome rendered lanes without
+  their required callback, the minified "s is not a function"), the
+  imperative-focus fix landing name-field focus on glass, the Collapse
+  occlusion, the fixture gaps (all four lanes walked populated), and
+  four owner riders live-refined from screenshots (Brief count
+  separators, BLOCKED/Answer gap, the empty-Chair invitation, the
+  workbench inlet rebuilt as one aligned row with a real EgressChip).
 - **Wave-three gate (2026-08-17): 5831 passed, one real failure fixed,
   one flake.** Real: the null-read canon guard caught sfx.ts calling
   fetch — sanctioned as the one static-asset fetch site with the
@@ -188,30 +201,30 @@ after 05; 07-10 in parallel after 05 (disjoint lane files); 11 after
 
 ## Exit criteria (evidence required)
 
-- [ ] The owner's real DB (schema 59 backup copy) migrates 59→60 clean
+- [x] The owner's real DB (schema 59 backup copy) migrates 59→60 clean
   in a test using a COPY — never the live file — and the hub boots on
   it.
-- [ ] gadget-lamp text wraps/truncates per L6 (regression test);
+- [x] gadget-lamp text wraps/truncates per L6 (regression test);
   inactive wings carry the L7 treatment (visual + test).
-- [ ] The seven L9 tokens exist in design-tokens.json + generated CSS;
+- [x] The seven L9 tokens exist in design-tokens.json + generated CSS;
   the named highest-traffic raw-px sites migrated.
-- [ ] Surfaces under the sparse threshold hide filter chrome and show
+- [x] Surfaces under the sparse threshold hide filter chrome and show
   verbs + empty well (L10, tests).
-- [ ] The Chair renders with four fixed lanes, curated-dozen bounds,
+- [x] The Chair renders with four fixed lanes, curated-dozen bounds,
   capture hero slot, and single-instance window opening (tests +
   shots).
-- [ ] `/` lands on the Chair at ≥960px; the Floor dock button swaps to
+- [x] `/` lands on the Chair at ≥960px; the Floor dock button swaps to
   the spatial floor and back; the floor is unchanged.
-- [ ] Each lane: truthful data from its existing surface, header
+- [x] Each lane: truthful data from its existing surface, header
   opens the window, one-verb actions work; Follow-Through carries the
   hidden New-commitment slot.
-- [ ] Capture hero: tap starts recording (state visible in hero);
+- [x] Capture hero: tap starts recording (state visible in hero);
   spoken "start meeting" starts recording; Ask AI reachable in one
   tap from the Chair.
-- [ ] sfx.ts: six sounds, pool cap 3, global Settings toggle,
+- [x] sfx.ts: six sounds, pool cap 3, global Settings toggle,
   prefers-reduced-motion mutes; sounds on the hero + window
   open/close/land per L4.
-- [ ] Docs entry points teach the Chair; the walk: screenshot walk at
+- [x] Docs entry points teach the Chair; the walk: screenshot walk at
   1440 + 960 across Chair + lanes + floor-swap, five-jobs stopwatch
   re-run with numbers vs baseline, zero console errors, full suite
   zero regressions.

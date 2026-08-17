@@ -77,6 +77,17 @@ Click selects, double-click opens.
 </p>
 <p align="center"><em>The front door: the world your voice work lives in. The orb records, the rail asks, the tray files.</em></p>
 
+**The Chair is home.** The browser opens on the Chair: four fixed lanes
+(Brief, Follow-Through, Meetings, Agents) showing what needs you at a
+glance, and a capture hero at the center. Tap the hero to record a meeting
+(one tap, same verb as the dock orb). Say "start meeting" into its mic and
+recording starts by voice. Ask AI is one tap away from the hero. Each lane
+header opens its full surface in a window; every action opens a window, never
+a page transition. The **Floor** button in the dock swaps to the spatial
+floor (the object world below) and back. A toggle in Settings, Appearance
+controls **Desk Sounds**, the six mechanical click sounds the Chair plays on
+key presses, window opens, and landings.
+
 The Desk is where the loops close. Press the orb and the hub records a
 meeting; when it ends, the meeting lands on the stage as an object. Rope a
 few objects together with the lasso and **Ask AI** about exactly that pile:

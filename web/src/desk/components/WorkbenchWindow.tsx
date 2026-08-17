@@ -53,7 +53,6 @@ import {
   LedMeter,
   PadGadget,
   StringGadget,
-  TransportKey,
 } from "../surface/gadgets";
 import {
   ConfirmVerb,
@@ -1702,17 +1701,17 @@ export function WorkbenchWindow({
                 >
                   P{newPriority}
                 </button>
-                <TransportKey
-                  compact
-                  label="GO"
-                  glyph=">"
+                <button
+                  type="button"
+                  className="desk-chip is-primary"
                   disabled={!newTitle.trim()}
-                  // HS-132-07 — a disabled key names why (AC 4).
                   title={
                     newTitle.trim() ? "Add this item" : "No instruction typed"
                   }
                   onClick={() => void addItem()}
-                />
+                >
+                  Add
+                </button>
               </div>
             </div>
           </>

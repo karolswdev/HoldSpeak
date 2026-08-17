@@ -31,6 +31,8 @@ import { DeskToolInspector } from "./components/DeskToolInspector";
 import { Dock, Expose, SnapGhost, Switcher } from "./components/DeskWindow";
 import { SurfaceWindows } from "./components/SurfaceWindows";
 import { TrustWindow } from "./components/TrustWindow";
+import { InlineEditor } from "./components/InlineEditor";
+import { objectByRef } from "./world";
 import { useProjections } from "./projections";
 import "./desk.css";
 
@@ -43,6 +45,7 @@ export default function DeskApp() {
   const workbenchWindows = useDesk((s) => s.workbenchWindows);
   const setup = useDesk((s) => s.setup);
   const viewMode = useDesk((s) => s.viewMode);
+  const editingId = useDesk((s) => s.editingId);
   const { refresh } = useDesk.getState();
 
   // HS-135-06: Chair is HOME; the floor stays one dock-button away.
@@ -78,6 +81,14 @@ export default function DeskApp() {
       ) : (
         <ChairHome />
       )}
+      {/* HS-135-13 fix: the InlineEditor must render on the Chair too,
+          not only the Floor (DeskListView/WorldStage own their own copy).
+          Without this, "New Agent" from a Workbench on the Chair sets
+          editingId but nothing renders the editor. */}
+      {!showFloor && editingId && (() => {
+        const o = objectByRef(items, editingId);
+        return o ? <InlineEditor key={o.id} o={o} u={{ x: 0.5, y: 0.4 }} /> : null;
+      })()}
       {chatPersonaId && <PersonaChat personaId={chatPersonaId} />}
       <DeskToolInspector />
       <MissionControlConveyor />
