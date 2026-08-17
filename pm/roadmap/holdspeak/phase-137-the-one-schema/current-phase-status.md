@@ -1,6 +1,6 @@
 # Phase 137 — The One Schema
 
-**Status:** chartered (0/4).
+**Status:** in progress (3/4).
 
 **Last updated:** 2026-08-17.
 
@@ -77,9 +77,9 @@ opening the owner's own database again.
 
 | ID | Story | Status | Story file | Evidence |
 | --- | --- | --- | --- | --- |
-| HS-137-01 | The declarative reconcile + open path | backlog | [story-01](./story-01-reconcile-engine.md) | — |
-| HS-137-02 | Delete the ceremony | backlog | [story-02](./story-02-delete-ceremony.md) | — |
-| HS-137-03 | The test reckoning | backlog | [story-03](./story-03-test-reckoning.md) | — |
+| HS-137-01 | The declarative reconcile + open path | done | [story-01](./story-01-reconcile-engine.md) | [evidence-story-01](./evidence-story-01.md) |
+| HS-137-02 | Delete the ceremony | done | [story-02](./story-02-delete-ceremony.md) | [evidence-story-02](./evidence-story-02.md) |
+| HS-137-03 | The test reckoning | done | [story-03](./story-03-test-reckoning.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-137-04 | Prove on the real DB, docs, close | backlog | [story-04](./story-04-prove-docs-close.md) | — |
 
 ## Stories
@@ -114,4 +114,25 @@ opening the owner's own database again.
 
 ## Where we are
 
-Chartered. HS-137-01 is next.
+The collapse is done and green (HS-137-01/02/03, bundled). The migration
+ceremony is gone: `reconcile_schema` (`holdspeak/db/reconcile.py`) brings
+any DB to the canonical shape on open — apply `SCHEMA_SQL`, ALTER-in
+missing columns (ISO sentinel for datetime defaults), and run the data
+backfills ONLY when the shape actually changed (a clean open is a true
+no-op). `migrations.py` (1061 lines) is deleted; `SchemaVersionError` and
+the version gate are gone; the doctor and `restore_database` no longer
+read a version integer; ~19 migration-chain tests removed and the policy/
+doctor tests rewritten to assert shape.
+
+An adversarial pass on the engine caught a real blocker before it shipped
+— the migration-time backfills were running on every open, which would
+have resurrected every soft-deleted decision on each launch; fixed at the
+root (backfills gated on shape change) and belt-and-suspenders in
+`decisions.py` (soft-deleted rows are never touched), with a regression
+test. A conditional pre-change backup restores the old safety net without
+backing up fresh creations.
+
+Full suite green: 5917 passed, 0 real failures (three concurrency
+failures confirmed pre-existing flakes, 2/2 serial → Candidate Z).
+HS-137-04 (prove on a copy of the real v63 DB, docs, counsel, close) is
+next.

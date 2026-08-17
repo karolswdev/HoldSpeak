@@ -47,12 +47,11 @@ from .scheduled_recordings import (  # noqa: F401
 )
 from .schema import SCHEMA_VERSION, SCHEMA_SQL  # noqa: F401
 from .core import *  # noqa: F401,F403
+from .reconcile import reconcile_schema  # noqa: F401
 from .core import (  # noqa: F401  explicit: names import * may skip
     Database,
     DEFAULT_DB_PATH,
-    SchemaVersionError,
     backup_database,
     get_observer,
     restore_database,
-    read_schema_version,
 )

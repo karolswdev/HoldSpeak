@@ -32,15 +32,11 @@ from . import (  # noqa: F401
 )
 
 from .schema import SCHEMA_VERSION, SCHEMA_SQL  # noqa: F401  re-exported
-from .migrations import run_migrations
+from .reconcile import reconcile_schema
 
 log = get_logger("db")
 
 DEFAULT_DB_PATH = Path.home() / ".local" / "share" / "holdspeak" / "holdspeak.db"
-
-
-class SchemaVersionError(RuntimeError):
-    """The stored database is newer than this build of HoldSpeak understands."""
 
 
 def read_schema_version(db_path: Path) -> Optional[int]:
@@ -98,11 +94,17 @@ def restore_database(backup_path: Path, db_path: Path) -> Optional[Path]:
     probe = sqlite3.connect(str(backup_path))
     try:
         try:
-            probe.execute("SELECT MAX(version) FROM schema_version").fetchone()
+            row = probe.execute(
+                "SELECT 1 FROM sqlite_master WHERE type='table' AND name='meetings'"
+            ).fetchone()
         except sqlite3.DatabaseError as exc:
             raise ValueError(
                 f"{backup_path} is not a readable HoldSpeak database backup ({exc})."
             ) from exc
+        if not row:
+            raise ValueError(
+                f"{backup_path} is not a HoldSpeak database (missing 'meetings' table)."
+            )
     finally:
         probe.close()
     safety: Optional[Path] = None
@@ -160,29 +162,15 @@ class Database:
             pass
 
     def _ensure_schema(self) -> None:
-        """Bring the database to the current schema version, safely by default."""
-        stored = read_schema_version(self.db_path)
-        if stored is None or stored == 0:
-            with self._connection() as conn:
-                run_migrations(conn, 0, SCHEMA_VERSION)
-            return
-        if stored == SCHEMA_VERSION:
-            return
-        if stored > SCHEMA_VERSION:
-            raise SchemaVersionError(
-                f"The database at {self.db_path} is schema version {stored}, but "
-                f"this build of HoldSpeak only understands version {SCHEMA_VERSION}. "
-                f"It was almost certainly written by a newer HoldSpeak. Upgrade "
-                f"HoldSpeak (or restore a backup from this version). The database "
-                f"was left untouched."
-            )
-        backup = backup_database(self.db_path)
-        log.warning(
-            f"Database at {self.db_path} is schema version {stored}; this build is "
-            f"{SCHEMA_VERSION}. Backed up to {backup} before applying the schema."
-        )
+        """Bring the database to the canonical schema shape unconditionally.
+
+        Uses the declarative reconcile (HS-137-01): no version gate, no
+        ``SchemaVersionError``.  Idempotent and additive-only.  Backs up
+        the DB file before any shape change; data backfills run only when
+        the shape actually changed.
+        """
         with self._connection() as conn:
-            run_migrations(conn, stored, SCHEMA_VERSION)
+            reconcile_schema(conn, db_path=self.db_path)
 
 
 _db: Optional[Database] = None

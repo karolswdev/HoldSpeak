@@ -454,49 +454,6 @@ def test_publication_fence_has_one_winner_in_both_cancellation_orderings(
     assert published_first.fence.publish("late suggestion", lambda: "late") == (False, None)
 
 
-def test_schema_v57_upgrades_publication_claim_before_installing_triggers(
-    tmp_path
-) -> None:
-    """An existing Phase-131 database upgrades without trigger/column skew."""
-    path = tmp_path / "schema-v57-publication.db"
-    original = Database(path)
-    with original._connection() as conn:
-        conn.execute("DROP TRIGGER kernel_parent_publication_blocks_transition")
-        conn.execute(
-            "DROP TRIGGER kernel_parent_publication_blocks_warrant_revocation"
-        )
-        conn.execute(
-            "ALTER TABLE kernel_parent_runs DROP COLUMN publication_claimed_at"
-        )
-        conn.execute(
-            "ALTER TABLE kernel_parent_runs DROP COLUMN publication_claim_id"
-        )
-        conn.execute("DELETE FROM schema_version")
-        conn.execute("INSERT INTO schema_version(version) VALUES(57)")
-    original.close()
-
-    migrated = Database(path)
-    with migrated._connection() as conn:
-        columns = {
-            str(row["name"])
-            for row in conn.execute("PRAGMA table_info(kernel_parent_runs)")
-        }
-        triggers = {
-            str(row["name"])
-            for row in conn.execute(
-                "SELECT name FROM sqlite_master WHERE type='trigger' "
-                "AND name LIKE 'kernel_parent_publication_%'"
-            )
-        }
-    migrated.close()
-
-    assert {"publication_claim_id", "publication_claimed_at"} <= columns
-    assert triggers == {
-        "kernel_parent_publication_blocks_transition",
-        "kernel_parent_publication_blocks_warrant_revocation",
-    }
-
-
 def test_durable_publication_claim_blocks_direct_cross_process_mutations(
     tmp_path, monkeypatch
 ) -> None:

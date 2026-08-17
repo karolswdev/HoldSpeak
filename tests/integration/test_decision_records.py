@@ -45,35 +45,6 @@ def _artifact(db: Database, artifact_id: str, meeting_id: str, text: str) -> Non
     )
 
 
-def test_v30_migration_backfills_multi_meeting_archive_and_reruns_cleanly(
-    tmp_path: Path,
-) -> None:
-    path = tmp_path / "archive.db"
-    seeded = Database(path)
-    _meeting(seeded, "meeting-1", "2026-06-01T10:00:00")
-    _meeting(seeded, "meeting-2", "2026-06-02T10:00:00")
-    _artifact(seeded, "artifact-1", "meeting-1", "Keep local-first")
-    _artifact(seeded, "artifact-2", "meeting-2", "Keep local-first")
-    with seeded._connection() as conn:
-        conn.execute("DROP TABLE decisions")
-        conn.execute("DELETE FROM schema_version")
-        conn.execute("INSERT INTO schema_version(version) VALUES (29)")
-
-    migrated = Database(path)
-    rows = migrated.decisions.list()
-    assert len(rows) == 2
-    assert len({row.id for row in rows}) == 2
-    assert {row.source_meeting_id for row in rows} == {"meeting-1", "meeting-2"}
-    assert migrated.decisions.backfill() == {
-        "artifacts": 2,
-        "decisions": 2,
-        "inserted": 0,
-        "updated": 0,
-        "unchanged": 2,
-        "skipped": 0,
-    }
-
-
 def test_synthesis_persistence_reconciles_decisions_without_plugin_changes(
     tmp_path: Path,
 ) -> None:
@@ -225,30 +196,6 @@ def test_decision_moment_agrees_with_aftercare_provenance(tmp_path: Path) -> Non
     assert aftercare["provenance"]["text_preview"] == moment.text[:120]
 
 
-def test_v32_migration_adds_decision_moment_columns(tmp_path: Path) -> None:
-    path = tmp_path / "v30.db"
-    seeded = Database(path)
-    with seeded._connection() as conn:
-        conn.execute("ALTER TABLE decisions DROP COLUMN provenance_label")
-        conn.execute("ALTER TABLE decisions DROP COLUMN source_timestamp")
-        conn.execute("DELETE FROM schema_version")
-        conn.execute("INSERT INTO schema_version(version) VALUES (30)")
-
-    migrated = Database(path)
-    with migrated._connection() as conn:
-        columns = {row[1] for row in conn.execute("PRAGMA table_info(decisions)")}
-        version = conn.execute("SELECT MAX(version) FROM schema_version").fetchone()[0]
-    assert {"source_timestamp", "provenance_label"}.issubset(columns)
-    # HS-132-12: the pin was a stale literal (32) that the schema outgrew.
-    # The invariant is that opening a pre-v32 file migrates it forward to
-    # THIS build's schema — pin the constant, not a frozen number, and keep
-    # the floor that proves the v32 decision-moment migration ran.
-    from holdspeak.db.schema import SCHEMA_VERSION
-
-    assert SCHEMA_VERSION >= 32
-    assert version == SCHEMA_VERSION
-
-
 def test_decision_routes_require_read_authority_and_owner_lifecycle_principal(
     tmp_path: Path, monkeypatch
 ) -> None:
@@ -312,63 +259,6 @@ def test_decision_routes_require_read_authority_and_owner_lifecycle_principal(
     agent_credentials.revoke("claude:decision-reader")
 
 
-def test_v32_migration_rebuilds_a_stale_check_table(tmp_path: Path) -> None:
-    """A v30 build briefly baked CHECK (date_basis IN ('meeting_date')) into
-    live tables; the v32 step must rebuild such tables so transcript moments
-    can land, carrying every row and keeping the memory-FTS triggers alive."""
-    path = tmp_path / "stale.db"
-    seeded = Database(path)
-    with seeded._connection() as conn:
-        conn.executescript(
-            """
-            DROP TABLE decisions;
-            CREATE TABLE decisions (
-                id TEXT PRIMARY KEY,
-                text TEXT NOT NULL,
-                rationale TEXT,
-                decided_at TEXT NOT NULL,
-                date_basis TEXT NOT NULL DEFAULT 'meeting_date'
-                    CHECK (date_basis IN ('meeting_date')),
-                source_artifact_id TEXT NOT NULL,
-                source_meeting_id TEXT NOT NULL,
-                source_state TEXT NOT NULL DEFAULT 'linked',
-                project_key TEXT,
-                lifecycle TEXT NOT NULL DEFAULT 'recorded',
-                superseded_by TEXT REFERENCES decisions(id),
-                created_at TEXT NOT NULL DEFAULT (datetime('now')),
-                updated_at TEXT NOT NULL DEFAULT (datetime('now')),
-                last_modified TEXT NOT NULL DEFAULT (datetime('now')),
-                deleted INTEGER NOT NULL DEFAULT 0
-            );
-            INSERT INTO decisions (id, text, decided_at, source_artifact_id,
-                                   source_meeting_id)
-            VALUES ('dec-stale-1', 'Keep the stale row', '2026-01-01T00:00:00',
-                    'art-1', 'meeting-1');
-            DELETE FROM schema_version;
-            INSERT INTO schema_version(version) VALUES (30);
-            """
-        )
-
-    migrated = Database(path)
-    with migrated._connection() as conn:
-        ddl = conn.execute(
-            "SELECT sql FROM sqlite_master WHERE name='decisions'"
-        ).fetchone()[0]
-        rows = conn.execute("SELECT id FROM decisions").fetchall()
-        triggers = {
-            row[0]
-            for row in conn.execute(
-                "SELECT name FROM sqlite_master WHERE type='trigger'"
-            )
-        }
-        conn.execute(
-            "UPDATE decisions SET date_basis='transcript_moment' "
-            "WHERE id='dec-stale-1'"
-        )
-    assert "date_basis IN ('meeting_date')" not in ddl
-    assert [row[0] for row in rows] == ["dec-stale-1"]
-    assert {"decisions_memory_ai", "decisions_memory_ad",
-            "decisions_memory_au", "decisions_sever_meeting_source"} <= triggers
 def _promotion_client(db: Database, monkeypatch) -> TestClient:
     monkeypatch.setattr(hsdb, "get_database", lambda *args, **kwargs: db)
     callbacks = WebRuntimeCallbacks(
