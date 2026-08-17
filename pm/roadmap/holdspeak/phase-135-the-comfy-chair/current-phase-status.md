@@ -1,6 +1,6 @@
 # Phase 135 — The Comfy Chair
 
-**Status:** in-progress (3/13).
+**Status:** in-progress (4/13).
 
 **Last updated:** 2026-08-17.
 
@@ -102,7 +102,7 @@ docs + the walk.
 |---|---|---|---|---|
 | HS-135-01 | The hub opens its own desk | done | [story-01](./story-01-migration-fix.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-135-02 | Lamps wrap, wings look pressable | done | [story-02](./story-02-lamp-wing-laws.md) | [evidence-story-02](./evidence-story-02.md) |
-| HS-135-03 | The sizing tokens land | backlog | [story-03](./story-03-sizing-tokens.md) | [evidence-story-03](./evidence-story-03.md) |
+| HS-135-03 | The sizing tokens land | done | [story-03](./story-03-sizing-tokens.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-135-04 | Sparse surfaces shed chrome | done | [story-04](./story-04-sparse-surfaces.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-135-05 | The Chair shell | backlog | [story-05](./story-05-chair-shell.md) | [evidence-story-05](./evidence-story-05.md) |
 | HS-135-06 | The Chair is home | backlog | [story-06](./story-06-chair-is-home.md) | [evidence-story-06](./evidence-story-06.md) |
@@ -185,4 +185,12 @@ title tooltip; .is-block variant wraps block system messages; two
 settings-models lamps converted to block). L7 wing affordance fixed
 (inactive wings: --text-muted + --wash-1; hover escalates to --wash-2;
 active untouched). 27 tests green across gadgets + wings suites.
+HS-135-03 shipped: L9 sizing tokens landed. Seven tokens in
+design-tokens.json semantic layer (--size-touch 40px, --size-key 48px,
+--size-chip 27px, --size-btn 28px, --size-icon-sm 16px, --size-icon-md
+20px, --size-icon-lg 32px); three rejected duplicates documented in
+drift note. Generator updated to handle doc-only entries. 21 raw-px
+sites migrated across surface.css (7), gadgets.css (9), chrome-menus.css
+(5). Pixel-identity-preserving. 46 vitest + 8 interior canon tests
+green.
 HS-135-04 shipped earlier: sparse-surface chrome shedding.

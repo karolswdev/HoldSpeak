@@ -177,6 +177,14 @@
   --space-6: 2rem;
   --space-7: 3rem;
   --space-8: 4rem;
+  /* HS-135-03 L9: the seven sizing tokens (counsel-pruned). REJECTED duplicates: --size-control (use --desk-control-h 36px), --size-dock-h (use --desk-snap-bottom 52px), --size-menubar-h (use --desk-snap-top 54px minus margin). */
+  --size-touch: 40px; /* HS-135-03 L9: minimum touch-target / row-glyph tile */
+  --size-key: 48px; /* HS-135-03 L9: TransportKey square */
+  --size-chip: 27px; /* HS-135-03 L9: desk-chip height */
+  --size-btn: 28px; /* HS-135-03 L9: button / menu-item min-height */
+  --size-icon-sm: 16px; /* HS-135-03 L9: small icon (glyphs, check wells) */
+  --size-icon-md: 20px; /* HS-135-03 L9: medium icon (in-well mic, row glyphs) */
+  --size-icon-lg: 32px; /* HS-135-03 L9: large icon */
   --radius-xs: 2px; /* HS-110-01: Workbench corners — sharp, not Apple-round */
   --radius-sm: 2px;
   --radius-md: 2px;

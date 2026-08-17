@@ -587,6 +587,44 @@
         "value": "4rem"
       },
       {
+        "$doc-sizing": "HS-135-03 L9: the seven sizing tokens (counsel-pruned). REJECTED duplicates: --size-control (use --desk-control-h 36px), --size-dock-h (use --desk-snap-bottom 52px), --size-menubar-h (use --desk-snap-top 54px minus margin)."
+      },
+      {
+        "name": "--size-touch",
+        "value": "40px",
+        "doc": "HS-135-03 L9: minimum touch-target / row-glyph tile"
+      },
+      {
+        "name": "--size-key",
+        "value": "48px",
+        "doc": "HS-135-03 L9: TransportKey square"
+      },
+      {
+        "name": "--size-chip",
+        "value": "27px",
+        "doc": "HS-135-03 L9: desk-chip height"
+      },
+      {
+        "name": "--size-btn",
+        "value": "28px",
+        "doc": "HS-135-03 L9: button / menu-item min-height"
+      },
+      {
+        "name": "--size-icon-sm",
+        "value": "16px",
+        "doc": "HS-135-03 L9: small icon (glyphs, check wells)"
+      },
+      {
+        "name": "--size-icon-md",
+        "value": "20px",
+        "doc": "HS-135-03 L9: medium icon (in-well mic, row glyphs)"
+      },
+      {
+        "name": "--size-icon-lg",
+        "value": "32px",
+        "doc": "HS-135-03 L9: large icon"
+      },
+      {
         "name": "--radius-xs",
         "value": "2px",
         "doc": "HS-110-01: Workbench corners — sharp, not Apple-round"
