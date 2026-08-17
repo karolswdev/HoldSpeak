@@ -41,6 +41,10 @@ from .primitives import (  # noqa: F401
     DirectoryRepository,
     DirectoryMembershipRepository,
 )
+from .scheduled_recordings import (  # noqa: F401
+    ScheduledRecording,
+    ScheduledRecordingRepository,
+)
 from .schema import SCHEMA_VERSION, SCHEMA_SQL  # noqa: F401
 from .core import *  # noqa: F401,F403
 from .core import (  # noqa: F401  explicit: names import * may skip

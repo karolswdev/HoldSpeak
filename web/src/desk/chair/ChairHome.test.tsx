@@ -7,6 +7,18 @@ import { ChairHome } from "./ChairHome";
 import { useChairState } from "../chairState";
 
 // ---------------------------------------------------------------------------
+// HS-136-03: CaptureHero now uses useRuntimeBus; mock it for this test.
+// ---------------------------------------------------------------------------
+
+vi.mock("../../runtime/RuntimeBus", () => ({
+  useRuntimeBus: () => ({
+    state: "connected",
+    lastFrame: null,
+    subscribe: vi.fn(() => () => {}),
+  }),
+}));
+
+// ---------------------------------------------------------------------------
 // helpers
 // ---------------------------------------------------------------------------
 

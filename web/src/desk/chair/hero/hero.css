@@ -82,3 +82,34 @@
   color: var(--text);
   min-width: 3ch;
 }
+
+/* HS-136-03: arming countdown (the conductor's visible fire window). */
+.capture-hero-arming {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.capture-hero-arming-label {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-xs);
+  font-variant-numeric: tabular-nums;
+  color: var(--kind-warning, var(--text));
+  white-space: nowrap;
+}
+
+/* HS-136-03: arming outcome (terminal state: started/cancelled/refused/missed). */
+.capture-hero-arming-outcome {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.capture-hero-arming-outcome .capture-hero-arming-label {
+  color: var(--text-muted);
+}
+.capture-hero-arming-outcome[data-outcome="refused"] .capture-hero-arming-label,
+.capture-hero-arming-outcome[data-outcome="missed"] .capture-hero-arming-label {
+  color: var(--kind-error, var(--text));
+}
+.capture-hero-arming-outcome[data-outcome="started"] .capture-hero-arming-label {
+  color: var(--kind-success, var(--text));
+}

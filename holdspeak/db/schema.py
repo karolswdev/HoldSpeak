@@ -7,7 +7,7 @@ independently of the Database container.
 # Bump this when adding tables or columns; the Database container uses it to
 # decide whether to back up and re-apply. See core._ensure_schema for the
 # four-way upgrade contract.
-SCHEMA_VERSION = 60  # v60: Monday Brief item triage shelf (HS-132-08)
+SCHEMA_VERSION = 61  # v61: Scheduled recordings (HS-136-01)
 
 # SQL Schema
 SCHEMA_SQL = """
@@ -1805,4 +1805,28 @@ CREATE TABLE IF NOT EXISTS kernel_parent_checkpoints (
 );
 CREATE INDEX IF NOT EXISTS idx_kernel_parent_checkpoints_parent
 ON kernel_parent_checkpoints(parent_operation_id, execution_epoch);
+
+-- v61 (HS-136-01): Scheduled recordings — owner-set cron-driven capture.
+CREATE TABLE IF NOT EXISTS scheduled_recordings (
+    id TEXT PRIMARY KEY,
+    title TEXT NOT NULL DEFAULT '',
+    cron_expr TEXT NOT NULL,
+    tz TEXT NOT NULL DEFAULT 'UTC',
+    one_shot INTEGER NOT NULL DEFAULT 0 CHECK (one_shot IN (0,1)),
+    duration_minutes INTEGER NOT NULL DEFAULT 60,
+    enabled INTEGER NOT NULL DEFAULT 0 CHECK (enabled IN (0,1)),
+    revision INTEGER NOT NULL DEFAULT 1,
+    created_at REAL NOT NULL,
+    last_fired_at REAL,
+    next_fire_at REAL,
+    armed_at REAL,
+    deadline_at REAL,
+    state TEXT NOT NULL DEFAULT 'idle'
+        CHECK (state IN ('idle','arming','recording','stopped','cancelled','refused','missed')),
+    last_outcome TEXT NOT NULL DEFAULT '',
+    last_receipt_id TEXT NOT NULL DEFAULT '',
+    delegation_receipt_id TEXT NOT NULL DEFAULT ''
+);
+CREATE INDEX IF NOT EXISTS idx_scheduled_recordings_enabled
+ON scheduled_recordings(enabled, next_fire_at) WHERE enabled=1;
 """

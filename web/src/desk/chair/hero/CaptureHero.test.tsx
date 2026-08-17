@@ -17,13 +17,27 @@ import { CaptureHero, matchesRecordCommand, VOICE_RECORD_COMMANDS } from "./Capt
 
 const mockStartRecording = vi.fn().mockResolvedValue(undefined);
 const mockStopRecording = vi.fn().mockResolvedValue(undefined);
+const mockCancelArmedSchedule = vi.fn().mockResolvedValue(true);
+const mockOpenScheduleCreate = vi.fn();
+const mockApplyScheduledRecordingEvent = vi.fn();
 
 let storeState = {
   recording: "idle" as "idle" | "busy" | "recording",
   recordingExternal: false,
   recordingStartedAt: null as number | null,
+  scheduledArming: null as {
+    scheduleId: string;
+    title: string;
+    countdownSeconds: number;
+    fireAt: number;
+    outcome: string | null;
+    outcomeReason?: string;
+  } | null,
   startRecording: mockStartRecording,
   stopRecording: mockStopRecording,
+  cancelArmedSchedule: mockCancelArmedSchedule,
+  openScheduleCreate: mockOpenScheduleCreate,
+  applyScheduledRecordingEvent: mockApplyScheduledRecordingEvent,
 };
 
 vi.mock("../../store", () => {
@@ -32,6 +46,18 @@ vi.mock("../../store", () => {
   useDesk.getState = () => storeState;
   return { useDesk };
 });
+
+// ---------------------------------------------------------------------------
+// RuntimeBus mock: subscribe is a no-op that returns an unsub function
+// ---------------------------------------------------------------------------
+
+vi.mock("../../../runtime/RuntimeBus", () => ({
+  useRuntimeBus: () => ({
+    state: "connected",
+    lastFrame: null,
+    subscribe: vi.fn(() => () => {}),
+  }),
+}));
 
 // ---------------------------------------------------------------------------
 // sfx mock
@@ -89,8 +115,12 @@ function resetStore(overrides: Partial<typeof storeState> = {}) {
     recording: "idle",
     recordingExternal: false,
     recordingStartedAt: null,
+    scheduledArming: null,
     startRecording: mockStartRecording,
     stopRecording: mockStopRecording,
+    cancelArmedSchedule: mockCancelArmedSchedule,
+    openScheduleCreate: mockOpenScheduleCreate,
+    applyScheduledRecordingEvent: mockApplyScheduledRecordingEvent,
     ...overrides,
   };
 }
@@ -272,7 +302,161 @@ describe("CaptureHero", () => {
     });
   });
 
-  // ---- 5. gradient-only-here style test ----
+  // ---- 5. Schedule button (HS-136-03) ----
+
+  describe("Schedule verb (HS-136-03)", () => {
+    it("renders a Schedule button", () => {
+      const onAskAI = vi.fn();
+      render(<CaptureHero onAskAI={onAskAI} />);
+      expect(screen.getByTestId("capture-hero-schedule")).toBeInTheDocument();
+      expect(screen.getByTestId("capture-hero-schedule")).toHaveTextContent("Schedule");
+    });
+
+    it("calls openScheduleCreate when the Schedule button is clicked", () => {
+      const onAskAI = vi.fn();
+      render(<CaptureHero onAskAI={onAskAI} />);
+      fireEvent.click(screen.getByTestId("capture-hero-schedule"));
+      expect(mockOpenScheduleCreate).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  // ---- 6. Arming countdown (HS-136-03) ----
+
+  describe("arming countdown (HS-136-03)", () => {
+    it("renders the countdown when arming is active", () => {
+      resetStore({
+        scheduledArming: {
+          scheduleId: "s1",
+          title: "Daily standup",
+          countdownSeconds: 10,
+          fireAt: Date.now() + 5000,
+          outcome: null,
+        },
+      });
+      const onAskAI = vi.fn();
+      render(<CaptureHero onAskAI={onAskAI} />);
+      expect(screen.getByTestId("capture-hero-arming")).toBeInTheDocument();
+      expect(screen.getByText(/Recording in \d+s/)).toBeInTheDocument();
+    });
+
+    it("renders a cancel button during countdown", () => {
+      resetStore({
+        scheduledArming: {
+          scheduleId: "s1",
+          title: "Daily standup",
+          countdownSeconds: 10,
+          fireAt: Date.now() + 5000,
+          outcome: null,
+        },
+      });
+      const onAskAI = vi.fn();
+      render(<CaptureHero onAskAI={onAskAI} />);
+      expect(screen.getByTestId("capture-hero-cancel-armed")).toBeInTheDocument();
+    });
+
+    it("cancel button calls cancelArmedSchedule", () => {
+      resetStore({
+        scheduledArming: {
+          scheduleId: "s1",
+          title: "Daily standup",
+          countdownSeconds: 10,
+          fireAt: Date.now() + 5000,
+          outcome: null,
+        },
+      });
+      const onAskAI = vi.fn();
+      render(<CaptureHero onAskAI={onAskAI} />);
+      fireEvent.click(screen.getByTestId("capture-hero-cancel-armed"));
+      expect(mockCancelArmedSchedule).toHaveBeenCalledWith("s1");
+    });
+
+    it("does not render countdown when arming has an outcome", () => {
+      resetStore({
+        scheduledArming: {
+          scheduleId: "s1",
+          title: "Daily standup",
+          countdownSeconds: 10,
+          fireAt: Date.now() + 5000,
+          outcome: "started",
+        },
+      });
+      const onAskAI = vi.fn();
+      render(<CaptureHero onAskAI={onAskAI} />);
+      expect(screen.queryByTestId("capture-hero-arming")).not.toBeInTheDocument();
+    });
+
+    it("renders outcome honestly: started", () => {
+      resetStore({
+        scheduledArming: {
+          scheduleId: "s1",
+          title: "Daily standup",
+          countdownSeconds: 10,
+          fireAt: Date.now(),
+          outcome: "started",
+        },
+      });
+      const onAskAI = vi.fn();
+      render(<CaptureHero onAskAI={onAskAI} />);
+      expect(screen.getByTestId("capture-hero-arming-outcome")).toBeInTheDocument();
+      expect(screen.getByText(/Daily standup started/)).toBeInTheDocument();
+    });
+
+    it("renders outcome honestly: cancelled", () => {
+      resetStore({
+        scheduledArming: {
+          scheduleId: "s1",
+          title: "Daily standup",
+          countdownSeconds: 10,
+          fireAt: Date.now(),
+          outcome: "cancelled",
+        },
+      });
+      const onAskAI = vi.fn();
+      render(<CaptureHero onAskAI={onAskAI} />);
+      expect(screen.getByText(/Scheduled recording cancelled/)).toBeInTheDocument();
+    });
+
+    it("renders outcome honestly: refused with reason", () => {
+      resetStore({
+        scheduledArming: {
+          scheduleId: "s1",
+          title: "Daily standup",
+          countdownSeconds: 10,
+          fireAt: Date.now(),
+          outcome: "refused",
+          outcomeReason: "mic floor held",
+        },
+      });
+      const onAskAI = vi.fn();
+      render(<CaptureHero onAskAI={onAskAI} />);
+      expect(screen.getByText(/Recording refused.*mic floor held/)).toBeInTheDocument();
+    });
+
+    it("renders outcome honestly: missed", () => {
+      resetStore({
+        scheduledArming: {
+          scheduleId: "s1",
+          title: "Daily standup",
+          countdownSeconds: 10,
+          fireAt: Date.now(),
+          outcome: "missed",
+        },
+      });
+      const onAskAI = vi.fn();
+      render(<CaptureHero onAskAI={onAskAI} />);
+      expect(screen.getByText(/Scheduled recording missed/)).toBeInTheDocument();
+    });
+
+    it("does not render arming when arming is null", () => {
+      resetStore({ scheduledArming: null });
+      const onAskAI = vi.fn();
+      render(<CaptureHero onAskAI={onAskAI} />);
+      expect(screen.queryByTestId("capture-hero-arming")).not.toBeInTheDocument();
+      expect(screen.queryByTestId("capture-hero-arming-outcome")).not.toBeInTheDocument();
+    });
+  });
+
+  // ---- 7. gradient-only-here style test ----
 
   describe("accent-gradient boundary (counsel ruling E.4)", () => {
     it("hero.css uses --accent-gradient", () => {

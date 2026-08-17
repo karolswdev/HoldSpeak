@@ -58,6 +58,12 @@ RUNTIME_FRAME_TYPES: tuple[str, ...] = (
     "plugin_jobs_processed",    # the deferred plugin queue was drained
     "runtime_activity",         # the one activity line
     "runtime_queue",            # the deferred intel queue's real truth
+    "scheduled_recording.arming",    # countdown before a scheduled capture fires
+    "scheduled_recording.cancelled", # a scheduled capture was cancelled mid-countdown
+    "scheduled_recording.missed",    # a scheduled capture's fire time was missed
+    "scheduled_recording.refused",   # a scheduled capture was refused (mic floor held)
+    "scheduled_recording.started",   # a scheduled capture started recording
+    "scheduled_recording.stopped",   # a scheduled capture stopped (auto-stop or manual)
     "segment",                  # one finalized transcript segment
     "stopped",                  # the meeting stopped
     "wake_armed",               # the wake word armed its capture window
