@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { SPARSE_THRESHOLD } from "./sparse";
 import "./surface-footer.css";
 
 export interface LedgerFilterToken {
@@ -84,6 +85,7 @@ export function LedgerFilterBar({
   total,
   matchCount,
   isActive,
+  itemCount,
 }: {
   query: string;
   onQueryChange: (query: string) => void;
@@ -93,7 +95,13 @@ export function LedgerFilterBar({
   total: number;
   matchCount: number;
   isActive: boolean;
+  /** HS-135-04 L10 — the total item count the surface holds.  Below
+   *  SPARSE_THRESHOLD the filter bar does not render (a filter over
+   *  3 items is noise). */
+  itemCount?: number;
 }) {
+  // L10: sparse surfaces shed filter chrome.
+  if (itemCount !== undefined && itemCount < SPARSE_THRESHOLD) return null;
   return (
     <div className="ledger-filter">
       <div className="ledger-filter-rail">

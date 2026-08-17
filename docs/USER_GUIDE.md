@@ -409,6 +409,45 @@ After a meeting, open:
 
 Use History to search meetings, review action items, edit accepted actions, inspect generated artifacts, and export local handoff files.
 
+## Schedule A Recording
+
+You can set the hub to start a recording on its own at a time you choose.
+A scheduled recording uses the hub's real microphone through the same capture
+path a manual recording uses; no browser needs to be open.
+
+### Create a schedule
+
+Use any of three paths:
+
+1. **The Chair.** On the capture hero, choose **Schedule**. A DeskWindow opens
+   where you name the recording, pick a time (one-shot or recurring cron), and
+   set a duration (default 60 minutes).
+2. **HTTP.** `POST /api/scheduled-recordings` with `title`, `cron_expr`,
+   `duration_minutes`, and `enabled`.
+3. **MCP.** The `scheduled_recording.*` tools expose the same CRUD.
+
+A one-shot schedule fires once and disables itself. A recurring schedule
+advances to its next fire time after every terminal outcome.
+
+### What happens at fire time
+
+When the schedule is due, the hub enters an arming countdown visible on the
+capture hero: "Recording starts in Ns." During the countdown you can cancel
+(tap the cancel control, or `POST /api/scheduled-recordings/{id}/cancel`).
+If nobody cancels, capture starts under the hub's real microphone. The
+recording auto-stops at the set duration.
+
+If the microphone floor is already held (another recording, a dictation, the
+wake listener), the schedule refuses with a named receipt instead of fighting
+for the mic. If the hub was down at the scheduled time, it detects the missed
+fire on restart and leaves a missed receipt. Neither case is a silent skip.
+
+### Where scheduled recordings appear
+
+Scheduled recordings show in the Meetings lane with a SCHEDULED badge and
+their next fire time. After a recording completes, its meeting entry is the
+same as any other captured meeting: transcript, artifacts, aftercare.
+
 ## Meeting Intelligence
 
 Meeting intelligence can run locally or through a configured OpenAI-compatible endpoint.

@@ -25,7 +25,7 @@ import {
 import { useAction } from "./core-hooks";
 import { CoreResourceGuard, renderHeroSlot } from "./core-layout";
 import { deSnake, humanTime, presentValue } from "../../desk/surface/format";
-import { spriteUrl } from "../../desk/sprites";
+import { SYSTEM } from "../../desk/systemSprites";
 
 export function CadenceCore({ hero }: CoreProps) {
   const status = useResource<CadenceStatusResponse>("/api/cadence/status", {});
@@ -81,6 +81,7 @@ export function CadenceCore({ hero }: CoreProps) {
         hero,
         verbs,
         <>
+          <img src={SYSTEM.cadenceMetronome} alt="" width={16} height={16} className="desk-chrome-sprite" style={{ verticalAlign: "middle", marginRight: 4, imageRendering: "pixelated" }} draggable={false} />
           {status.data.enabled ? "On" : "Off"}
           {presentValue(status.data.pressure)
             ? ` · ${presentValue(status.data.pressure)}`
@@ -100,7 +101,7 @@ export function CadenceCore({ hero }: CoreProps) {
               resource={loopsResource}
               empty={!loops.length}
               emptyLabel="No open loops"
-              emptyImage={spriteUrl("note", "cadence-empty")}
+              emptyImage={SYSTEM.emptyLoops}
               actionLabel="Run now"
               onAction={() => void run()}
             >
@@ -184,7 +185,7 @@ export function CadenceCore({ hero }: CoreProps) {
               resource={history}
               empty={!nudges.length}
               emptyLabel="No nudges yet"
-              emptyImage={spriteUrl("note", "cadence-nudges")}
+              emptyImage={SYSTEM.emptyNudges}
             >
               <SurfaceRows>
                 {nudges.map((row, index) => (

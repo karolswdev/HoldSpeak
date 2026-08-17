@@ -355,7 +355,7 @@ Privacy-supporting behavior includes:
 - transcript and artifacts remain in the local database by default;
 - speaker embeddings are local persistent biometric-like data;
 - user-visible meeting archive and deletion controls;
-- schema backup before supported migrations and refusal to open a newer unsupported schema.
+- schema backup before shape-changing reconciliation (additive-only; a newer database opens without error).
 
 The storage statement must be platform-qualified. Apple clients can use persistent recording/model file stores and the app sandbox; desktop and Apple retention are not identical. Documentation that says “audio is never persisted” should name the platform and code path.
 
@@ -625,7 +625,7 @@ Data can outlive its primary record through:
 
 - sync inbox JSON receipt/audit files;
 - deferred queues and retry records;
-- database migration backups;
+- database reconciliation backups;
 - logs;
 - Apple audio/model stores;
 - browser extension queues;

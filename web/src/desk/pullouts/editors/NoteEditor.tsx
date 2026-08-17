@@ -14,7 +14,7 @@ import type { Note } from "../../../lib/primitives";
 import { useDebouncedSave } from "./useDebouncedSave";
 import type { InlineEditorContentProps } from "./types";
 
-export function NoteEditor({ object: o, onClose }: InlineEditorContentProps) {
+export function NoteEditor({ object: o, onClose, autoFocusName }: InlineEditorContentProps) {
   const items = useDesk((s) => s.items);
   const save = useDebouncedSave("note", o.id);
   const [editorView, setEditorView] = useState<EditorView | null>(null);
@@ -136,12 +136,13 @@ export function NoteEditor({ object: o, onClose }: InlineEditorContentProps) {
         label="Title"
         value={f.title}
         placeholder="Title"
+        autoFocus={autoFocusName}
         onChange={(value) => set("title", "title", value)}
       />
       <DeskEditor
         value={f.body}
         placeholder="Write"
-        autoFocus
+        autoFocus={!autoFocusName}
         onEscape={onClose}
         onChange={(value) => set("body", "body_markdown", value)}
         onViewChange={setEditorView}

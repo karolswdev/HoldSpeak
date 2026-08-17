@@ -66,7 +66,7 @@ def test_workbench_resource_read_truncates_to_100(
 # ---------------------------------------------------------------------------
 
 _LONG_FORM_SENTENCE = (
-    "The desk schema advertises 17 primitive kinds; this tool operates on the "
+    "The desk schema advertises 18 primitive kinds; this tool operates on the "
     "6 authorable kinds: notes, decisions, kbs, directories, workflows, and chains."
 )
 _SHORT_FORM_SENTENCE = (

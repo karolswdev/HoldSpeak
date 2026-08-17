@@ -66,7 +66,7 @@ workflows), the pipeline observer, follow-through lanes, inference
 invocations, and the Monday Brief. Five of the `desk.*` tools
 (`desk.list`, `desk.get`, `desk.create`, `desk.update`, `desk.delete`)
 operate on the primitive kind system: 6 surface kinds are stored as typed
-rows; the remaining 12—including the singleton People surface—are computed,
+rows; the remaining 12 (including the singleton People surface) are computed,
 composite, or managed by a dedicated capability. Each description names
 which kinds it handles.
 

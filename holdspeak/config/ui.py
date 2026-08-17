@@ -22,6 +22,7 @@ class UIConfig:
     show_audio_meter: bool = True
     history_lines: int = 10
     theme: str = "dark"  # dark, light, dracula, monokai
+    desk_sounds: bool = True  # HS-135-12: mechanical sound palette, ON by default
 
 
 # HS-52-02: voice command macros. A user maps a spoken keyword to a deterministic

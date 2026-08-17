@@ -59,6 +59,32 @@ export function defaultViewFor(
   return compact && objectCount > COMPACT_LIST_THRESHOLD ? "list" : "spatial";
 }
 
+/** HS-136-03: a scheduled recording from the API. */
+export interface ScheduledRecording {
+  id: string;
+  title: string;
+  cron_expr: string;
+  tz: string;
+  one_shot: boolean;
+  duration_minutes: number;
+  enabled: boolean;
+  state: string;
+  next_fire_at: string | null;
+  last_outcome: string | null;
+  created_at: string;
+}
+
+/** HS-136-03: arming countdown state broadcast by the conductor. */
+export interface ScheduledArmingState {
+  scheduleId: string;
+  title: string;
+  countdownSeconds: number;
+  fireAt: number;
+  /** The terminal event that ended arming (null while counting down). */
+  outcome: "started" | "cancelled" | "refused" | "missed" | null;
+  outcomeReason?: string;
+}
+
 /** The full desk state interface -- the union of every slice. */
 export interface DeskState {
   items: Items;
@@ -136,6 +162,12 @@ export interface DeskState {
   recording: "idle" | "recording" | "busy";
   recordingExternal: boolean;
   recordingStartedAt: number | null;
+  /** HS-136-03: scheduled recording state visible on the Chair. */
+  scheduledRecordings: ScheduledRecording[];
+  /** HS-136-03: arming countdown state (hub-authoritative). */
+  scheduledArming: ScheduledArmingState | null;
+  /** HS-136-03: the schedule-create window (DeskWindow, no modal). */
+  scheduleCreateWindow: { origin: { x: number; y: number } | null } | null;
   /** Zone tray widths in px (resized zones only). */
   zoneWidths: Record<string, number>;
   /** Desk-window geometry per panel id (moved/resized panels only). */
@@ -271,6 +303,26 @@ export interface DeskState {
   minimizePanel(id: string): void;
   restorePanel(id: string): void;
   toggleMaximizePanel(id: string): void;
+  /** HS-136-03: fetch scheduled recordings from the API. */
+  loadSchedules(): Promise<void>;
+  /** HS-136-03: create a scheduled recording via POST. */
+  createSchedule(input: {
+    title: string;
+    cron_expr: string;
+    tz: string;
+    one_shot: boolean;
+    duration_minutes: number;
+    enabled: boolean;
+  }): Promise<boolean>;
+  /** HS-136-03: delete a scheduled recording. */
+  deleteSchedule(id: string): Promise<void>;
+  /** HS-136-03: cancel an armed scheduled recording. */
+  cancelArmedSchedule(id: string): Promise<boolean>;
+  /** HS-136-03: apply a scheduled_recording broadcast event. */
+  applyScheduledRecordingEvent(type: string, data: Record<string, unknown>): void;
+  /** HS-136-03: open/close the schedule-create window. */
+  openScheduleCreate(origin?: { x: number; y: number }): void;
+  closeScheduleCreate(): void;
   /** Forget every arranged rect and lifecycle mark (the reset verb). */
   resetLayout(): void;
   /** HS-112-03 -- apply the packaged architect's-desk seed (idempotent;

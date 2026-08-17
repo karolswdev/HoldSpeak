@@ -61,10 +61,10 @@
   position: relative;
 }
 .desk-next .wb-config-collapse {
-  position: sticky;
-  top: 0;
-  z-index: var(--desk-z-local);
-  margin: 6px var(--desk-window-pad-x) 0;
+  display: flex;
+  justify-content: flex-end;
+  padding: 6px var(--desk-window-pad-x);
+  border-bottom: 1px solid var(--border-subtle);
   font-size: 10px;
 }
 .desk-next .wb-config-current-agent {
@@ -286,7 +286,7 @@
   gap: 6px;
 }
 
-/* ── composer ── */
+/* ── composer (legacy) ── */
 .desk-next .wb-composer {
   border-top: 1px solid var(--border);
   flex-shrink: 0;
@@ -307,6 +307,52 @@
   outline: none;
 }
 .desk-next .wb-composer-input::placeholder {
+  color: var(--text-faint);
+}
+
+/* ── inlet (HS-118-03/04, cleaned HS-135-13) ── */
+.desk-next .wb-inlet {
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.desk-next .wb-inlet-egress {
+  display: flex;
+  align-items: center;
+  padding: 4px var(--desk-window-pad-x);
+  justify-content: flex-end;
+}
+.desk-next .wb-inlet-tray {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 4px var(--desk-window-pad-x);
+}
+.desk-next .wb-inlet-chip-remove {
+  border: none;
+  background: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 0 2px;
+  font-size: 12px;
+  line-height: 1;
+}
+.desk-next .wb-inlet-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px var(--desk-window-pad-x);
+}
+.desk-next .wb-inlet-input {
+  flex: 1;
+  font-family: var(--font-mono);
+  font-size: var(--desk-surface-body-size);
+  background: transparent;
+  border: none;
+  color: var(--text);
+  outline: none;
+  min-width: 0;
+}
+.desk-next .wb-inlet-input::placeholder {
   color: var(--text-faint);
 }
 .desk-next .wb-priority-cycle {

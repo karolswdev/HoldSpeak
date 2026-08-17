@@ -3,9 +3,9 @@
 The People ledger is an organizational relationship authority, not a direct-report
 dashboard. Its first vocabulary is deliberately small and extensible:
 
-- `direct_report` — an explicit reporting relationship;
-- `peer` — a regular collaborator at a similar organizational level;
-- `extended` — a stakeholder, partner, skip-level, or other farther relationship.
+- `direct_report`: an explicit reporting relationship.
+- `peer`: a regular collaborator at a similar organizational level.
+- `extended`: a stakeholder, partner, skip-level, or other farther relationship.
 
 Every kind uses the same continuity loop: encrypted context, notes-only 1:1s,
 requests, explicit commitments, and Follow-through. The UI never ranks people or

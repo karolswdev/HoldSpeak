@@ -15,7 +15,7 @@ different custody contract from HoldSpeak's normal, plaintext local database.
 - **Native key custody.** The random 256-bit key is stored only in macOS Keychain or
   Linux Secret Service. A production provider is accepted only when its backend is
   explicitly allow-listed. Missing, locked, mismatched, or unavailable credentials
-  produce a named locked/unavailable state—never a weaker fallback.
+  produce a named locked/unavailable state (never a weaker fallback).
 - **Private sidecar.** The People directory is owner-only. Random IDs, fixed enums,
   timestamps, nonce, key ID, and ciphertext are the only SQLite-visible record
   fields. Names, relationship topology, note text, dates, visibility, and source

@@ -5,8 +5,7 @@ from __future__ import annotations
 import datetime
 from zoneinfo import ZoneInfo
 
-from holdspeak.db.core import Database, read_schema_version
-from holdspeak.db.schema import SCHEMA_VERSION
+from holdspeak.db.core import Database
 from holdspeak.services.monday_brief_service import BriefItem, MondayBriefService
 
 
@@ -237,48 +236,6 @@ def test_collect_changes_returns_no_items_for_an_empty_window(tmp_path):
         )
         == []
     )
-
-
-def test_schema_migrates_v39_to_v40(tmp_path):
-    path = tmp_path / "v39.db"
-    Database(path)
-    with Database(path)._connection() as conn:
-        conn.execute("DROP TABLE monday_brief_items")
-        conn.execute("DROP TABLE monday_briefs")
-        conn.execute("DELETE FROM schema_version")
-        conn.execute("INSERT INTO schema_version (version) VALUES (39)")
-
-    migrated = Database(path)
-
-    assert SCHEMA_VERSION == 60
-    assert read_schema_version(path) == 60
-    with migrated._connection() as conn:
-        # HS-132-08 — the v60 leg carries the triage shelf onto a v39 archive.
-        assert (
-            conn.execute(
-                "SELECT name FROM sqlite_master WHERE type = 'table'"
-                " AND name = 'monday_brief_item_shelf'"
-            ).fetchone()
-            is not None
-        )
-        assert (
-            conn.execute(
-                "SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'monday_briefs'"
-            ).fetchone()
-            is not None
-        )
-        assert (
-            conn.execute(
-                "SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'monday_brief_items'"
-            ).fetchone()
-            is not None
-        )
-        assert (
-            conn.execute(
-                "SELECT name FROM sqlite_master WHERE type = 'index' AND name = 'idx_monday_brief_items_brief'"
-            ).fetchone()
-            is not None
-        )
 
 
 def _brief_item(section, item_id, *, priority=0):
