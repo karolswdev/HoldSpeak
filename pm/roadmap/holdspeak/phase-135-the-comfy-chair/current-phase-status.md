@@ -160,6 +160,11 @@ after 05; 07-10 in parallel after 05 (disjoint lane files); 11 after
   flake (`test_meeting_session.py::test_stop_completes_without_deadlock_during_final_transcription_and_intel`),
   3/3 green serially — fourth distinct timing flake of the arc, all
   ledgered for BACKLOG Candidate Z.
+- **Owner nit, fixed post-close (rider):** the note editor's Save
+  button occluded the window resize grip — the footer now reserves the
+  grip corner (padding-right on --size-icon-sm), fenced by
+  editorFootGrip.test.ts. Same occlusion class as the Collapse bug;
+  both dead.
 - **Final gate (2026-08-17): 5832 passed, zero flakes; the single
   failure was the voice-rules guard catching the orchestrator's own em
   dashes in the new Chair copy (fixed: "Speak. The desk will file
