@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 135
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-135-05
 - **Unblocks:** HS-135-13
 - **Owner:** unassigned
@@ -33,9 +33,9 @@ Lane one of the Chair: the Brief's headline truths, at a glance.
 
 ## Acceptance criteria
 
-- [ ] Seeded state renders the real headline + counts; empty state is
+- [x] Seeded state renders the real headline + counts; empty state is
   honest; never false-clear (tests).
-- [ ] Header opens Intelligence/Brief window; item verbs persist their
+- [x] Header opens Intelligence/Brief window; item verbs persist their
   effects (reload test).
 
 ## Test plan

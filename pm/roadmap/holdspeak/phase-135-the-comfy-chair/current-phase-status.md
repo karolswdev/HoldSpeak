@@ -1,6 +1,6 @@
 # Phase 135 — The Comfy Chair
 
-**Status:** in-progress (9/15).
+**Status:** in-progress (10/15).
 
 **Last updated:** 2026-08-17.
 
@@ -106,7 +106,7 @@ docs + the walk.
 | HS-135-04 | Sparse surfaces shed chrome | done | [story-04](./story-04-sparse-surfaces.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-135-05 | The Chair shell | done | [story-05](./story-05-chair-shell.md) | [evidence-story-05](./evidence-story-05.md) |
 | HS-135-06 | The Chair is home | done | [story-06](./story-06-chair-is-home.md) | [evidence-story-06](./evidence-story-06.md) |
-| HS-135-07 | The Brief lane | backlog | [story-07](./story-07-brief-lane.md) | [evidence-story-07](./evidence-story-07.md) |
+| HS-135-07 | The Brief lane | done | [story-07](./story-07-brief-lane.md) | [evidence-story-07](./evidence-story-07.md) |
 | HS-135-08 | The Follow-Through lane | done | [story-08](./story-08-follow-through-lane.md) | [evidence-story-08](./evidence-story-08.md) |
 | HS-135-09 | The Meetings lane | backlog | [story-09](./story-09-meetings-lane.md) | [evidence-story-09](./evidence-story-09.md) |
 | HS-135-10 | The Agents lane | backlog | [story-10](./story-10-agents-lane.md) | [evidence-story-10](./evidence-story-10.md) |
@@ -304,3 +304,20 @@ rest; sunken bevel (inverted) when active/recording. hero.css is
 tokens-only. ChairHome.tsx wired: hero={<CaptureHero onAskAI={openAsk}/>}.
 Gradient boundary grep test enforces E.4 across all desk CSS. 4 test
 files / 54 tests green (20 hero + 12 Chair + 5 ChairHome + 17 MicButton).
+HS-135-07 shipped: the Brief lane. BriefLane.tsx composes directly with
+SurfaceSection/SurfaceRows/SurfaceRow (same contract-preserving pattern
+as FollowThroughLane -- SurfaceRow's verbs slot outside the button
+wrapper for Acknowledge/Defer actions). Data from /api/brief/latest (no
+new endpoints); headline shows untriaged count via the Phase-132
+untriagedBriefItems() collector ("N things waiting" / "Everything
+triaged"); Changed/Broke/Waiting/Decisions counts in padded format;
+items flattened across sections to the maxItems bound. Per-item
+Acknowledge/Defer verbs reuse the existing shelf API
+(/api/brief/items/{id}/shelf). Header-click opens Intelligence on the
+Brief wing via openIntelligence({ view: "brief" }). The no-false-ALL-
+CLEAR law holds: the lane never returns null while the brief has items
+(is_empty = false), even when all items are triaged -- tested at the
+lane level mirroring the Phase-132 fence. Registry entry added to
+lanes/index.ts keyed as "brief" (matching LaneId). 4 test files / 45
+tests green (15 BriefLane + 10 FollowThroughLane + 8 IntelligenceTruth
++ 12 Chair).
