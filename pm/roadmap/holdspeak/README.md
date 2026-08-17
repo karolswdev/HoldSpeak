@@ -471,8 +471,14 @@ the ⌘K shelf's z-defect fixed; the owner's 101 sitting remains open in
 parallel. Phase 101 itself stands at 3/4 (canon ratified and built,
 PR #359; sweep 4122/0).
 
-**Current phase:** [**Phase 136 — Scheduled Recording**](./phase-136-scheduled-recording/current-phase-status.md)
-— **COMPLETE (4/4, 2026-08-17; counsel RATIFY-WITH-CONCERNS, owner sitting pending)**. A focused standalone build off the
+**Current phase:** [**Phase 137 — The One Schema**](./phase-137-the-one-schema/current-phase-status.md)
+— **chartered (0/4, 2026-08-17)**. Owner mandate: kill the schema-migration
+ceremony (a 1060-line chain + version pins + a gate that refuses the owner's
+own DB) and replace it with one declarative, self-reconciling schema — no
+versions, additive-only, edit the schema and it self-applies on open. Triggered
+by the v63 fork (the owner's real DB drifted ahead of `main` after running an
+unmerged branch). Previous: [**Phase 136 — Scheduled Recording**](./phase-136-scheduled-recording/current-phase-status.md)
+— **COMPLETE (4/4, 2026-08-17; PR #462 merged; counsel RATIFY-WITH-CONCERNS; owner sitting pending)**. A focused standalone build off the
 Dashboard Door reflection: the Chair can schedule a recording (one-shot
 or recurring) that the hub starts on its own — via a visible
 tap-to-cancel countdown that keeps the mic owner visible (Article
