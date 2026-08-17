@@ -1,6 +1,6 @@
 # Phase 135 — The Comfy Chair
 
-**Status:** in-progress (4/13).
+**Status:** in-progress (4/14).
 
 **Last updated:** 2026-08-17.
 
@@ -113,6 +113,7 @@ docs + the walk.
 | HS-135-11 | The capture hero | backlog | [story-11](./story-11-capture-hero.md) | [evidence-story-11](./evidence-story-11.md) |
 | HS-135-12 | The desk clicks | backlog | [story-12](./story-12-sound-palette.md) | [evidence-story-12](./evidence-story-12.md) |
 | HS-135-13 | Docs and the walk | backlog | [story-13](./story-13-docs-and-walk.md) | [evidence-story-13](./evidence-story-13.md) |
+| HS-135-14 | The chrome speaks Workbench | backlog | [story-14](./story-14-chrome-speaks-workbench.md) | [evidence-story-14](./evidence-story-14.md) |
 
 The ask each story answers, in one line: 01 — the owner's real desk
 opens on current main; 02 — no system text bleeds past a window and
@@ -133,6 +134,16 @@ numbers.
 after 05; 07-10 in parallel after 05 (disjoint lane files); 11 after
 05; 12 any time; 13 last, cannot be waived. Waves: {01,02,03,04} →
 {05,12} → {06,07,08,09,10,11} → 13.
+
+## Amendments
+
+- **2026-08-17, owner-directed (visible amendment):** story 14 added
+  mid-phase — the system icon family regenerated to Workbench-2.0
+  hygiene through a fixed 8-color palette mold via PixelLab
+  (assets/icon-palette.png), plus the note-editor mic alignment fix.
+  Mandated by the owner with screenshots in hand ("that level of
+  hygiene. It was beautiful."). Cadence's deeper UX illegibility goes
+  to the setup-flows audit → the arc's next leg, not this story.
 
 ## Held owner questions
 
