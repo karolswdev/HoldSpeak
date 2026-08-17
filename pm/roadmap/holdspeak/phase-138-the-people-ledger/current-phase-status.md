@@ -92,7 +92,7 @@ product stores.
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
 | HS-138-01 | The encrypted boundary | done | [story-01](./story-01-encrypted-boundary.md) | [evidence-story-01](./evidence-story-01.md) |
-| HS-138-02 | Relationships and one-to-ones | ready | [story-02](./story-02-relationships-one-to-ones.md) | — |
+| HS-138-02 | Relationships and one-to-ones | done | [story-02](./story-02-relationships-one-to-ones.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-138-03 | Commitments join Follow-through | ready | [story-03](./story-03-commitments-follow-through.md) | — |
 | HS-138-04 | People belongs on the Desk | ready | [story-04](./story-04-people-desk.md) | — |
 | HS-138-05 | The privacy proof | ready | [story-05](./story-05-privacy-proof.md) | — |
@@ -188,10 +188,11 @@ product stores.
 ## Where we are
 
 The close-out is underway on branch `phase-138-close` (2026-08-17, after the
-revival merge landed the implementation on main via PR #459). HS-138-01 is done:
-the encrypted boundary's full test plan ran through the gate (47 tests — crypto,
-key custody, policy, store, no-leaks sweep — all green; evidence-story-01). The
-real-Keychain manual leg is deferred to the HS-138-06 walk by design. Remaining:
-02/03/05 evidence flips from their shipped test plans, the story-04 badge-copy
-amendment (counsel ruled "This device only" false for the Send-to-Workbench
-path), and the owner-attended production walk (06).
+revival merge landed the implementation on main via PR #459). HS-138-01 and
+HS-138-02 are done on gate-captured evidence (01: 47 tests — crypto, custody,
+policy, store, no-leaks; 02: 20 tests — service lifecycle, roll-forward
+successor links, archive hiding, owner auth, keyless readiness). Real-Keychain
+manual legs are deferred to the HS-138-06 walk by design. Remaining: 03/05
+evidence flips, the story-04 badge-copy amendment (counsel ruled "This device
+only" false for the Send-to-Workbench path), and the owner-attended production
+walk (06).
