@@ -4,17 +4,18 @@ Extracted from core.py (HS-117-10) so the schema definition is navigable
 independently of the Database container.
 """
 
-# Bump this when adding tables or columns; the Database container uses it to
-# decide whether to back up and re-apply. See core._ensure_schema for the
-# four-way upgrade contract.
-SCHEMA_VERSION = 61  # v61: Scheduled recordings (HS-136-01)
+# Informational stamp only. Nothing gates on it: `reconcile_schema` detects
+# missing tables and columns by comparing the live database against this
+# SCHEMA_SQL shape directly, so you do NOT need to bump this to have a shape
+# change take effect. Just edit SCHEMA_SQL; the reconcile applies it on open.
+SCHEMA_VERSION = 61  # informational; last meaningful shape: scheduled_recordings
 
 # SQL Schema
 SCHEMA_SQL = """
 -- Enable foreign keys
 PRAGMA foreign_keys = ON;
 
--- Schema version for migrations
+-- Informational schema stamp (nothing gates on it; the reconcile is shape-based)
 CREATE TABLE IF NOT EXISTS schema_version (
     version INTEGER PRIMARY KEY,
     applied_at TEXT NOT NULL DEFAULT (datetime('now'))

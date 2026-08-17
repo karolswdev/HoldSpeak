@@ -16,7 +16,7 @@ HoldSpeak has one version, and one source of truth for it.
   reads it from the installed package metadata, so the running code and the
   package always agree. `holdspeak doctor` prints it on the Runtime line.
 - The database carries a `SCHEMA_VERSION`. It is stamped into the database file
-  when the schema is created.
+  on every open as an informational record; nothing gates on it.
 - The config file (`~/.config/holdspeak/config.json`) carries a `config_version`.
 
 You do not manage any of these by hand. They exist so HoldSpeak can tell whether
@@ -25,20 +25,23 @@ act safely on the answer.
 
 ## What happens to your database on upgrade
 
-When HoldSpeak starts, it compares the database's stored schema version against
-the version this build understands, and takes one of four paths:
+When HoldSpeak starts, it reconciles the database to the canonical schema shape
+defined in the build. The reconcile is declarative: it creates any missing
+tables, indexes, and triggers, adds any missing columns, and runs idempotent
+data backfills only when the shape actually changed. It is additive-only (it
+never drops a table, drops a column, or deletes a row).
 
-- **No database yet.** A fresh database is created at the current version. This is
-  the normal first-run path and it is unchanged.
-- **Same version.** Nothing happens. This is the common case on every start.
-- **Older database.** HoldSpeak backs the database up first, then applies the
-  current schema. The backup is a timestamped copy next to your database, and the
-  location is written to the log. No upgrade changes your data without leaving a
-  recoverable copy first.
-- **Newer database.** HoldSpeak refuses to open it and leaves it untouched. A
-  database written by a newer HoldSpeak can have a shape this build does not
-  understand, so the safe thing is to stop rather than guess. Upgrade HoldSpeak,
-  or restore a backup taken with this version.
+- **No database yet.** A fresh database is created at the current schema. This
+  is the normal first-run path.
+- **Existing database, same shape.** Nothing happens. This is the common case
+  on every start.
+- **Existing database, missing tables or columns.** HoldSpeak backs the
+  database up first (a timestamped copy next to your database, logged), then
+  adds what is missing and runs the backfills. No upgrade changes your data
+  without leaving a recoverable copy first.
+- **Database stamped newer than this build.** HoldSpeak opens it without
+  error. The reconcile adds anything the live file is missing and moves on;
+  it never removes anything a newer build wrote.
 
 The same logic governs the config file. An older or unversioned config is read
 forward without dropping your settings. A config newer than this build is still
@@ -55,7 +58,7 @@ holdspeak backup
 ```
 
 This writes a timestamped snapshot next to your database and prints the path.
-The automatic backup on the older-database path above uses the same mechanism, so
+The automatic backup on a shape-changing reconcile uses the same mechanism, so
 even if you forget, an upgrade still protects you. Taking your own copy first is
 the belt-and-suspenders move before a version jump.
 
@@ -74,10 +77,10 @@ were in is still saved.
 
 `holdspeak doctor` reports the state it actually found, so you are never guessing:
 
-- **Database.** Current version reads as a pass. An older database reads as a
-  warning that says HoldSpeak will back it up and upgrade it on the next start. A
-  newer database reads as a failure that says this build refuses to open it. A
-  file that is not a readable HoldSpeak database reads as a warning.
+- **Database.** The stamped schema version reads as a pass. A database whose
+  shape differs from the build reads as a warning (the reconcile will bring it
+  forward on the next start and back it up first). A file that is not a
+  readable HoldSpeak database reads as a warning.
 - **Config.** A config newer than this build reads as a warning that some settings
   may be ignored. Otherwise it passes and shows the config version.
 
@@ -93,8 +96,9 @@ For whoever cuts a release:
    prints the new number. The drift test (`tests/unit/test_version_ssot.py`)
    enforces this, so step 4 also covers it.
 3. If the on-disk database or config shape changed, bump `SCHEMA_VERSION`
-   (`holdspeak/db/core.py`) or `CONFIG_VERSION` (`holdspeak/config.py`) and make
-   sure the forward path is handled. Most releases change neither.
+   (`holdspeak/db/schema.py`) or `CONFIG_VERSION` (`holdspeak/config.py`). The
+   schema reconcile handles forward changes automatically (additive-only); the
+   version bump is an informational stamp. Most releases change neither.
 4. Run the suite and read the output:
    `uv run pytest -q --ignore=tests/e2e/test_metal.py`.
 5. Verify the clean install: a fresh virtual environment, `uv pip install -e .`,

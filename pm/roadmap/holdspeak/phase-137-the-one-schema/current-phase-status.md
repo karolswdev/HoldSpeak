@@ -1,6 +1,7 @@
 # Phase 137 — The One Schema
 
-**Status:** in progress (3/4).
+**Status:** complete (4/4). Counsel RATIFY-WITH-CONCERNS (2 fixed, 3
+ledgered). Owner sitting pending.
 
 **Last updated:** 2026-08-17.
 
@@ -80,7 +81,7 @@ opening the owner's own database again.
 | HS-137-01 | The declarative reconcile + open path | done | [story-01](./story-01-reconcile-engine.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-137-02 | Delete the ceremony | done | [story-02](./story-02-delete-ceremony.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-137-03 | The test reckoning | done | [story-03](./story-03-test-reckoning.md) | [evidence-story-03](./evidence-story-03.md) |
-| HS-137-04 | Prove on the real DB, docs, close | backlog | [story-04](./story-04-prove-docs-close.md) | — |
+| HS-137-04 | Prove on the real DB, docs, close | done | [story-04](./story-04-prove-docs-close.md) | [evidence-story-04](./evidence-story-04.md) |
 
 ## Stories
 
