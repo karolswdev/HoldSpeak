@@ -61,7 +61,11 @@ refined against the owner's live screenshots the same evening:
 | Check on agents | 2 actions | **1 — blocked visible on landing** | IMPROVED |
 
 Both chartered targets met (Record holds at 1 + voice; Ask beats the
-baseline).
+baseline). Method caveat (counsel concern, acknowledged): the baseline
+was a Playwright-instrumented run; the Chair's numbers are structural
+action counts from the walk (a hero tap IS one action) — defensible
+but less instrumented than the baseline. A fully instrumented re-run
+rides the next leg's walk.
 
 ## Judgment calls the orchestrator made alone (for review)
 

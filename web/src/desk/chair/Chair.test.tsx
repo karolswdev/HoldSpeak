@@ -144,33 +144,17 @@ describe("Chair lane contract", () => {
 });
 
 // ---------------------------------------------------------------------------
-// 300ms all-blank fallback (counsel condition 2)
+// The all-blank invitation (counsel condition 2, mechanism revised at the
+// acceptance review: always rendered, CSS-gated by the :has() empty rule)
 // ---------------------------------------------------------------------------
 
-describe("Chair 300ms all-blank fallback", () => {
-  beforeEach(() => {
-    vi.useFakeTimers();
-  });
-
-  afterEach(() => {
-    vi.useRealTimers();
-  });
-
-  it("shows nothing before 300ms when all lanes are blank", () => {
+describe("Chair all-blank invitation", () => {
+  it("renders the invitation node always (CSS owns visibility)", () => {
     render(<Chair lanes={{}} />);
-    // Before the timer fires, no fallback state.
-    expect(screen.queryByText("Speak. The desk will file it.")).not.toBeInTheDocument();
-  });
-
-  it("shows exactly ONE SurfaceState after 300ms when all lanes are blank", () => {
-    render(<Chair lanes={{}} />);
-    act(() => {
-      vi.advanceTimersByTime(300);
-    });
     expect(screen.getByText("Speak. The desk will file it.")).toBeInTheDocument();
   });
 
-  it("does NOT show fallback when at least one lane has content", () => {
+  it("keeps the invitation node in the DOM when lanes have content (hidden by CSS)", () => {
     const onOpen = vi.fn();
     render(
       <Chair
@@ -186,39 +170,20 @@ describe("Chair 300ms all-blank fallback", () => {
         }}
       />,
     );
-    act(() => {
-      vi.advanceTimersByTime(500);
-    });
-    expect(screen.queryByText("Speak. The desk will file it.")).not.toBeInTheDocument();
+    expect(screen.getByText("Speak. The desk will file it.")).toBeInTheDocument();
   });
 
-  it("clears the fallback when a lane arrives after the timer fired", () => {
-    const onOpen = vi.fn();
-    const { rerender } = render(<Chair lanes={{}} />);
-    act(() => {
-      vi.advanceTimersByTime(300);
-    });
-    expect(screen.getByText("Speak. The desk will file it.")).toBeInTheDocument();
-
-    // A lane arrives -- the fallback should clear.
-    rerender(
-      <Chair
-        lanes={{
-          brief: (
-            <ChairLane
-              title="BRIEF"
-              items={makeItems(1)}
-              onOpenInWindow={onOpen}
-              surfaceId="intelligence"
-            />
-          ),
-        }}
-      />,
+  it("chair.css gates the invitation and hero scaling on the :has() empty rule", () => {
+    const css = fs.readFileSync(path.resolve(__dirname, "chair.css"), "utf-8");
+    expect(css).toContain(".chair-empty-invitation { display: none; }");
+    expect(css).toContain(
+      ".chair:not(:has(.chair-lane .surface-section)) .chair-empty-invitation",
     );
-    expect(screen.queryByText("Speak. The desk will file it.")).not.toBeInTheDocument();
+    expect(css).toContain(
+      ".chair:not(:has(.chair-lane .surface-section)) .chair-hero",
+    );
   });
 });
-
 // ---------------------------------------------------------------------------
 // ember-only: no accent-cool/gradient in chair.css (style grep test)
 // ---------------------------------------------------------------------------

@@ -160,6 +160,15 @@ after 05; 07-10 in parallel after 05 (disjoint lane files); 11 after
   flake (`test_meeting_session.py::test_stop_completes_without_deadlock_during_final_transcription_and_intel`),
   3/3 green serially — fourth distinct timing flake of the arc, all
   ledgered for BACKLOG Candidate Z.
+- **Acceptance-counsel concerns, all three discharged (rider):** (a)
+  the empty invitation was unreachable dead code through ChairHome —
+  now always rendered, CSS-gated via the :has() empty rule (the JS
+  timer fallback retired; ruled intent held: one calm state, no
+  spinners); (b) the Meetings "Filters" disclosure survived the sparse
+  threshold — the counsel ruled it IS filter chrome; now gated, test
+  re-pointed; (c) the stopwatch method caveat recorded in the final
+  summary (structural counts vs instrumented baseline; instrumented
+  re-run rides the next leg).
 - **Owner nit, fixed post-close (rider):** the note editor's Save
   button occluded the window resize grip — the footer now reserves the
   grip corner (padding-right on --size-icon-sm), fenced by

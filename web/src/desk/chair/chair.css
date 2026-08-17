@@ -29,6 +29,15 @@
    Lanes with only SurfaceState[data-kind="empty"] or that returned null
    (:empty) are quiet. The :has() selector is supported in all target
    browsers (Chrome 105+, Firefox 121+, Safari 15.4+). */
+.chair-empty-invitation { display: none; }
+.chair:not(:has(.chair-lane .surface-section)) .chair-empty-invitation {
+  display: block;
+  text-align: center;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  margin-top: var(--space-3);
+}
+
 .chair:not(:has(.chair-lane .surface-section)) .chair-hero {
   flex: 1;
 }

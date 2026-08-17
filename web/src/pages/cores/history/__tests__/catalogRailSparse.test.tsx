@@ -50,8 +50,9 @@ describe("CatalogRail sparse behavior (L10)", () => {
     expect(screen.getByText("Meeting 0")).toBeInTheDocument();
     // Filter bar does not render.
     expect(screen.queryByPlaceholderText("Filter...")).toBeNull();
-    // But the Filters button is still there (it is a verb, not filter chrome).
-    expect(screen.getByText("Filters")).toBeInTheDocument();
+    // The acceptance counsel ruled the Filters disclosure IS filter
+    // chrome under L10 -- below the threshold it hides with the bar.
+    expect(screen.queryByText("Filters")).not.toBeInTheDocument();
   });
 
   it("shows filter bar when meetings >= SPARSE_THRESHOLD", () => {

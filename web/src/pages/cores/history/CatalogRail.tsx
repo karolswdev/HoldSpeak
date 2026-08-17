@@ -15,6 +15,7 @@ import {
   StringGadget,
 } from "../../../desk/surface/gadgets";
 import { spriteUrl } from "../../../desk/sprites";
+import { SPARSE_THRESHOLD } from "../../../desk/surface/sparse";
 import { asRows, rowId } from "../../pageSupport";
 import { stateToken, durationToken, ledgerDate } from "./helpers";
 import { StateTokenSpan } from "./StateTokenSpan";
@@ -96,14 +97,16 @@ export function CatalogRail({
               isActive={filterActive}
               itemCount={filterTotal}
             />
-            <Button
-              dense
-              variant="ghost"
-              aria-expanded={filtersOpen}
-              onClick={() => setFiltersOpen((open) => !open)}
-            >
-              Filters
-            </Button>
+            {filterTotal >= SPARSE_THRESHOLD ? (
+              <Button
+                dense
+                variant="ghost"
+                aria-expanded={filtersOpen}
+                onClick={() => setFiltersOpen((open) => !open)}
+              >
+                Filters
+              </Button>
+            ) : null}
           </>
         }
       >
