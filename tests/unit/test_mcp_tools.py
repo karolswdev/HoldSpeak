@@ -22,6 +22,9 @@ REQUIRED_TOOLS = {
     "cadence.closeout", "cadence.history", "cadence.audit", "cadence.snooze",
     "cadence.set_status", "cadence.run_now", "cadence.apply_closeout",
     "sequence.run", "sequence.cancel", "workflow.run", "workflow.cancel",
+    "watch.list", "watch.create", "watch.set_enabled", "watch.refresh", "watch.preview",
+    "event.list", "reaction.presets", "reaction.list", "reaction.create", "reaction.set_enabled",
+    "reaction.process",
 }
 
 

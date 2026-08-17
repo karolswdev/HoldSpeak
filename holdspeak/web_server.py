@@ -584,6 +584,7 @@ class MeetingWebServer:
         from .db import get_database, get_observer
         from .web.routes import (
             build_activity_router,
+            build_automations_router,
             build_authority_router,
             build_cadence_router,
             build_core_router,
@@ -621,6 +622,7 @@ class MeetingWebServer:
         from .services.meeting_aftercare_service import MeetingAftercareService
         from .services.meeting_intel_service import MeetingIntelService
         from .services.meeting_service import MeetingService
+        from .services.reaction_service import ReactionService
 
         from .delivery.node_link import NodeTokenStore as _MeshNodeTokenStore
 
@@ -721,6 +723,7 @@ class MeetingWebServer:
             ),
             memory_service=MemoryService(get_database(), observer=obs),
             mission_control_service=MissionControlService(get_database(), observer=obs),
+            reaction_service=ReactionService(get_database(), observer=obs),
             settings_service=SettingsService(
                 get_database(), on_settings_applied=self.on_settings_applied, observer=obs
             ),
@@ -768,6 +771,7 @@ class MeetingWebServer:
         app.include_router(build_authority_router(web_ctx))
         app.include_router(build_cadence_router(web_ctx))
         app.include_router(build_follow_through_router(web_ctx))
+        app.include_router(build_automations_router(web_ctx))
         app.include_router(build_decision_records_router(web_ctx))
         app.include_router(build_decisions_router(web_ctx))
         app.include_router(build_memory_router(web_ctx))

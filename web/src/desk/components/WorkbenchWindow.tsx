@@ -6,12 +6,18 @@ import type {
   WorkbenchDetail,
   WorkbenchItem,
   Skill,
+  WorkbenchAutomation,
+  ResourcefulPolicy,
 } from "../detail-types";
 import {
   fetchWorkbenchDetail,
   fetchWorkbenchRuns,
   fetchWorkbenchMemory,
   fetchSkills,
+  fetchWorkbenchAutomations,
+  fetchResourcefulPolicy,
+  updateResourcefulPolicy,
+  setWorkbenchAutomationEnabled,
   updateWorkbenchField,
   addWorkbenchItem,
   updateWorkbenchItem,
@@ -80,6 +86,8 @@ import {
   zoneToRef,
   removeAtSpan,
 } from "./InletAutocomplete";
+import { WorkbenchAutomations } from "./WorkbenchAutomations";
+import { WorkbenchResourceful } from "./WorkbenchResourceful";
 
 /* ── schedule presets ───────────────────────────────────────────────── */
 
@@ -118,6 +126,7 @@ function ConfigStrip({
   lamp,
   schedule,
   scheduleEnabled,
+  startSummary,
   skillCount,
   onClick,
 }: {
@@ -126,6 +135,7 @@ function ConfigStrip({
   lamp: { label: string; tone: string };
   schedule: string | null;
   scheduleEnabled: boolean;
+  startSummary: string | null;
   skillCount: number;
   onClick: () => void;
 }) {
@@ -164,7 +174,7 @@ function ConfigStrip({
         ·
       </span>
       <span className="wb-config-strip-schedule">
-        {scheduleEnabled ? "⏱" : "⏸"} {humanSchedule(schedule)}
+        {startSummary || `${scheduleEnabled ? "⏱" : "⏸"} ${humanSchedule(schedule)}`}
       </span>
       {skillCount > 0 ? (
         <span className="desk-chip wb-config-strip-skills">
@@ -189,6 +199,12 @@ function ConfigPanel({
   onUpdateResolverProfile,
   onUpdateSchedule,
   onToggleSchedule,
+  workbenchId,
+  write,
+  automations,
+  resourcefulPolicy,
+  onAutomationsChanged,
+  onResourcefulChanged,
   onCollapse,
 }: {
   detail: WorkbenchDetail;
@@ -201,9 +217,63 @@ function ConfigPanel({
   onUpdateResolverProfile: (id: string | null) => void;
   onUpdateSchedule: (cron: string | null) => void;
   onToggleSchedule: (enabled: boolean) => void;
+  workbenchId: string;
+  write: WriteAttempt;
+  automations: WorkbenchAutomation[];
+  resourcefulPolicy: ResourcefulPolicy | null;
+  onAutomationsChanged: () => void;
+  onResourcefulChanged: () => void;
   onCollapse: () => void;
 }) {
   const [agentSearch, setAgentSearch] = useState("");
+  const activeAutomationCount = automations.filter((automation) => automation.enabled).length;
+  const [startMode, setStartMode] = useState<"manual" | "schedule" | "event" | "idle">(
+    resourcefulPolicy?.enabled
+      ? "idle"
+      : activeAutomationCount
+        ? "event"
+        : detail.schedule_enabled && detail.schedule ? "schedule" : "manual",
+  );
+  const [startModeTouched, setStartModeTouched] = useState(false);
+
+  useEffect(() => {
+    if (startModeTouched) return;
+    if (resourcefulPolicy?.enabled) setStartMode("idle");
+    else if (activeAutomationCount && !detail.schedule_enabled) setStartMode("event");
+  }, [activeAutomationCount, detail.schedule_enabled, resourcefulPolicy?.enabled, startModeTouched]);
+
+  const selectStartMode = (mode: "manual" | "schedule" | "event" | "idle") => {
+    setStartModeTouched(true);
+    setStartMode(mode);
+    if (mode !== "schedule" && detail.schedule_enabled) onToggleSchedule(false);
+    if (mode !== "event" && activeAutomationCount > 0) {
+      void write("PAUSE EVENT STARTS", async () => {
+        await Promise.all(
+          automations
+            .filter((automation) => automation.enabled)
+            .map((automation) => setWorkbenchAutomationEnabled(
+              workbenchId, automation.id, false,
+            )),
+        );
+        onAutomationsChanged();
+      });
+    }
+    if (mode !== "idle" && resourcefulPolicy?.enabled) {
+      void write("PAUSE RESOURCEFULNESS", async () => {
+        await updateResourcefulPolicy(workbenchId, {
+          enabled: false,
+          idle_after_minutes: resourcefulPolicy.idle_after_minutes,
+          cooldown_hours: resourcefulPolicy.cooldown_hours,
+          nightly_target: resourcefulPolicy.nightly_target,
+          night_only: resourcefulPolicy.night_only,
+          night_start_hour: resourcefulPolicy.night_start_hour,
+          night_end_hour: resourcefulPolicy.night_end_hour,
+          routines: resourcefulPolicy.routines,
+        });
+        onResourcefulChanged();
+      });
+    }
+  };
 
   const recipe = recipes.find((r) => r.id === detail.recipe_id);
   const target = inferenceTargets.find((t) => t.id === detail.profile_id);
@@ -344,36 +414,82 @@ function ConfigPanel({
         </div>
       </SurfaceSection>
 
-      {/* ── schedule ────────────────────────────────────────────────── */}
-      <SurfaceSection label="SCHEDULE">
-        <div className="wb-schedule-row">
-          {SCHEDULE_PRESETS.map((preset) => (
-            <button
-              key={preset.label}
-              type="button"
-              className="desk-chip"
-              aria-pressed={
-                (preset.cron === null && !detail.schedule) ||
-                preset.cron === detail.schedule
-              }
-              onClick={() => onUpdateSchedule(preset.cron)}
-            >
-              {preset.label}
-            </button>
-          ))}
-          {/* HS-132-07 — a disabled control names why (AC 4). */}
-          <span
-            className="wb-schedule-toggle"
-            title={detail.schedule ? undefined : "No schedule picked"}
+      {/* ── start condition ───────────────────────────────────────── */}
+      <SurfaceSection label="STARTS WHEN">
+        <div className="wb-start-mode" role="radiogroup" aria-label="Workbench start condition">
+          <button
+            type="button"
+            role="radio"
+            aria-checked={startMode === "manual"}
+            className="desk-chip"
+            onClick={() => selectStartMode("manual")}
           >
-            <CheckGadget
-              label="Schedule enabled"
-              checked={detail.schedule_enabled}
-              onChange={onToggleSchedule}
-              disabled={!detail.schedule}
-            />
-          </span>
+            Manual
+          </button>
+          <button
+            type="button"
+            role="radio"
+            aria-checked={startMode === "schedule"}
+            className="desk-chip"
+            onClick={() => selectStartMode("schedule")}
+          >
+            Schedule
+          </button>
+          <button
+            type="button"
+            role="radio"
+            aria-checked={startMode === "event"}
+            className="desk-chip"
+            onClick={() => selectStartMode("event")}
+          >
+            Event
+          </button>
+          <button
+            type="button"
+            role="radio"
+            aria-checked={startMode === "idle"}
+            className="desk-chip"
+            onClick={() => selectStartMode("idle")}
+          >
+            Idle
+          </button>
         </div>
+        {startMode === "manual" ? (
+          <p className="wb-start-mode-copy">Starts only when you press Run.</p>
+        ) : null}
+        {startMode === "schedule" ? (
+          <div className="wb-schedule-row">
+            {SCHEDULE_PRESETS.filter((preset) => preset.cron !== null).map((preset) => (
+              <button
+                key={preset.label}
+                type="button"
+                className="desk-chip"
+                aria-pressed={preset.cron === detail.schedule}
+                onClick={() => onUpdateSchedule(preset.cron)}
+              >
+                {preset.label}
+              </button>
+            ))}
+            {/* HS-132-07 — a disabled control names why (AC 4). */}
+            <span className="wb-schedule-toggle" title={detail.schedule ? undefined : "Pick a schedule first"}>
+              <CheckGadget
+                label="Schedule enabled"
+                checked={detail.schedule_enabled}
+                onChange={onToggleSchedule}
+                disabled={!detail.schedule}
+              />
+            </span>
+          </div>
+        ) : null}
+        {startMode === "event" ? <WorkbenchAutomations workbenchId={workbenchId} write={write} onChanged={onAutomationsChanged} /> : null}
+        {startMode === "idle" ? (
+          <WorkbenchResourceful
+            workbenchId={workbenchId}
+            policy={resourcefulPolicy}
+            write={write}
+            onChanged={onResourcefulChanged}
+          />
+        ) : null}
       </SurfaceSection>
 
       {/* ── skills (read-only, inherited from the bound agent) ─────── */}
@@ -829,11 +945,15 @@ export function WorkbenchWindow({
   const runsHook = usePrimitiveDetail("workbench-runs", workbenchId, fetchWorkbenchRuns);
   const memoryHook = usePrimitiveDetail("workbench-memory", workbenchId, fetchWorkbenchMemory);
   const skillsHook = usePrimitiveDetail<Skill[]>("skills", workbenchId, fetchSkills);
+  const automationsHook = usePrimitiveDetail<WorkbenchAutomation[]>("workbench-automations", workbenchId, fetchWorkbenchAutomations);
+  const resourcefulHook = usePrimitiveDetail<ResourcefulPolicy>("workbench-resourceful", workbenchId, fetchResourcefulPolicy);
 
   const detail = detailHook.data;
   const runs = runsHook.data ?? [];
   const memoryEntries = memoryHook.data ?? [];
   const skills = skillsHook.data ?? [];
+  const automations = automationsHook.data ?? [];
+  const resourcefulPolicy = resourcefulHook.data;
   const error = detailHook.error ?? "";
 
   // Convenience aliases for the old load/loadX callbacks used by WS handlers and mutations.
@@ -841,6 +961,8 @@ export function WorkbenchWindow({
   const loadRuns = runsHook.refresh;
   const loadMemory = memoryHook.refresh;
   const loadSkills = skillsHook.refresh;
+  const loadAutomations = automationsHook.refresh;
+  const loadResourceful = resourcefulHook.refresh;
   const { remove, receipt: undoReceipt } = useUndoReceipt();
   const { copy, receipt: copyReceipt } = useCopyReceipt();
   // HS-132-06 — every write verb in this window reports here; the receipt
@@ -1324,6 +1446,11 @@ export function WorkbenchWindow({
   const boundSkillCount = detail?.recipe_id
     ? skills.filter((s) => s.recipe_ids.includes(detail.recipe_id!)).length
     : 0;
+  const startSummary = resourcefulPolicy?.enabled
+    ? `☾ Resourceful · ${resourcefulPolicy.nightly_target}/night · ${resourcefulPolicy.cooldown_hours}h`
+    : automations.length
+      ? `⚡ ${automations[0].name}${automations.length > 1 ? ` +${automations.length - 1}` : ""}`
+      : null;
 
   const WINGS: WingSpec[] = [
     { id: "items", label: "Items" },
@@ -1438,6 +1565,7 @@ export function WorkbenchWindow({
             lamp={lamp}
             schedule={detail.schedule}
             scheduleEnabled={detail.schedule_enabled}
+            startSummary={startSummary}
             skillCount={boundSkillCount}
             onClick={() => setConfigOpen(true)}
           />
@@ -1455,6 +1583,12 @@ export function WorkbenchWindow({
             onUpdateResolverProfile={updateResolverProfile}
             onUpdateSchedule={updateSchedule}
             onToggleSchedule={toggleSchedule}
+            workbenchId={workbenchId}
+            write={write}
+            automations={automations}
+            resourcefulPolicy={resourcefulPolicy}
+            onAutomationsChanged={loadAutomations}
+            onResourcefulChanged={loadResourceful}
             onCollapse={() => setConfigOpen(false)}
           />
         ) : null}

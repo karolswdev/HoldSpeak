@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from typing import Any, Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class _BookmarkRequest(BaseModel):
@@ -184,3 +184,54 @@ class _ActivityCliEnrichmentRunRequest(BaseModel):
     limit: Optional[int] = None
     timeout_seconds: Optional[float] = None
     max_bytes: Optional[int] = None
+
+
+# Typed service-event Watches and Reactions.  These remain deliberately
+# connector-agnostic: a Watch refresh receives an already-normalized snapshot,
+# while the application service owns comparison, event emission, and any
+# causally-linked Workbench projection.
+class _WatchCreateRequest(BaseModel):
+    connector_id: str
+    query_kind: str
+    name: str = ""
+    query: dict[str, Any] = Field(default_factory=dict)
+    enabled: bool = True
+    watch_id: Optional[str] = None
+
+
+class _WatchEnabledRequest(BaseModel):
+    enabled: bool
+
+
+class _ReactionCreateRequest(BaseModel):
+    event_pattern: str
+    workbench_id: str
+    name: str = ""
+    watch_id: Optional[str] = None
+    title_template: str = "{event_type}: {entity_title}"
+    enabled: bool = False
+    reaction_id: Optional[str] = None
+
+
+class _ReactionEnabledRequest(BaseModel):
+    enabled: bool
+
+
+class _ReactionProcessRequest(BaseModel):
+    limit: int = Field(default=100, ge=1, le=500)
+
+
+class _WorkbenchAutomationCreateRequest(BaseModel):
+    preset_id: str
+    repository: Optional[str] = None
+
+
+class _ResourcefulPolicyRequest(BaseModel):
+    enabled: bool
+    idle_after_minutes: int = Field(ge=1, le=1440)
+    cooldown_hours: int = Field(ge=1, le=168)
+    nightly_target: int = Field(ge=1, le=8)
+    night_only: bool
+    night_start_hour: int = Field(ge=0, le=23)
+    night_end_hour: int = Field(ge=0, le=23)
+    routines: list[str]

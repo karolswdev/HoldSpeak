@@ -28,6 +28,7 @@ from . import (  # noqa: F401
     milestones as _m16, onboarding as _m17, plugins as _m18,
     primitives as _m19, projects as _m20, projections as _m21,
     relationships as _m22, steering as _m23, workbenches as _m24,
+    automations as _m25, resourceful as _m26,
 )
 
 from .schema import SCHEMA_VERSION, SCHEMA_SQL  # noqa: F401  re-exported

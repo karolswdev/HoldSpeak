@@ -566,6 +566,40 @@ class WorkbenchConductor:
             except Exception as exc:
                 log.error(f"Conductor: workbench '{wb.name}' run failed: {exc}", exc_info=True)
 
+        # Connector Watches and intrinsic events share this heartbeat, while
+        # their durable attempt/projection state stays in SQLite.
+        try:
+            from .db import get_observer
+            from .principals import Principal, PrincipalKind
+            from .services.reaction_service import ReactionService
+
+            owner = Principal(PrincipalKind.OWNER, "local-automation-conductor")
+            reactions = ReactionService(db, observer=get_observer())
+            watch_outcomes = asyncio.run(reactions.refresh_due_watches(owner))
+            for outcome in watch_outcomes:
+                if outcome.get("status") in {"refreshed", "failed"}:
+                    log.info("Watch conductor: %s", outcome)
+            projection_outcomes = asyncio.run(reactions.process_pending(owner, limit=500))
+            for outcome in projection_outcomes:
+                if outcome.get("status") == "projection_failed":
+                    log.warning("Reaction conductor: %s", outcome)
+        except Exception as exc:
+            log.error("Reaction conductor tick failed: %s", exc, exc_info=True)
+
+        # Negative-space automation has a separate failure boundary: a broken
+        # connector or Reaction must never prevent the idle policy heartbeat.
+        try:
+            from .principals import Principal, PrincipalKind
+            from .services.resourceful_service import ResourcefulService
+
+            owner = Principal(PrincipalKind.OWNER, "local-automation-conductor")
+            resourceful_outcomes = asyncio.run(ResourcefulService(db).tick(owner))
+            for outcome in resourceful_outcomes:
+                if outcome.get("status") in {"completed", "failed"}:
+                    log.info("Resourceful conductor: %s", outcome)
+        except Exception as exc:
+            log.error("Resourceful conductor tick failed: %s", exc, exc_info=True)
+
 
 def start_conductor() -> WorkbenchConductor:
     global _conductor

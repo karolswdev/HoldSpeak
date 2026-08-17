@@ -118,6 +118,120 @@
   margin-left: auto;
 }
 
+/* ── intrinsic resourcefulness ── */
+.desk-next .wb-resourceful {
+  padding-bottom: 8px;
+}
+.desk-next .wb-resourceful-contract,
+.desk-next .wb-resourceful-routines,
+.desk-next .wb-automation-verbs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 6px var(--desk-surface-row-pad-x);
+}
+.desk-next .wb-resourceful-routines {
+  flex-direction: column;
+}
+.desk-next .wb-resourceful-routine {
+  display: grid;
+  gap: 2px;
+}
+.desk-next .wb-resourceful-routine small,
+.desk-next .wb-resourceful-status {
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: var(--desk-surface-detail-size);
+}
+.desk-next .wb-resourceful-routine small {
+  padding-left: 24px;
+}
+.desk-next .wb-resourceful-status {
+  padding: 2px var(--desk-surface-row-pad-x);
+}
+
+/* ── start condition / event automations ──────────────────────────── */
+.desk-next .wb-start-mode,
+.desk-next .wb-automation-presets,
+.desk-next .wb-automation-verbs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 6px var(--desk-surface-row-pad-x);
+}
+.desk-next .wb-start-mode [aria-checked="true"] {
+  color: var(--accent-ink, var(--text));
+  background: var(--accent-tint);
+  border-color: var(--accent);
+}
+.desk-next .wb-start-mode-copy,
+.desk-next .wb-automation-intro,
+.desk-next .wb-automation-safety,
+.desk-next .wb-automation-last,
+.desk-next .wb-automation-requirement,
+.desk-next .wb-automation-adapter {
+  margin: 0;
+  padding: 4px var(--desk-surface-row-pad-x);
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: var(--desk-surface-detail-size);
+  line-height: 1.45;
+}
+.desk-next .wb-automation-safety,
+.desk-next .wb-automation-requirement { color: var(--text-faint); }
+.desk-next .wb-automation-test {
+  margin: 0;
+  padding: 4px var(--desk-surface-row-pad-x);
+  color: var(--ok);
+  font-family: var(--font-mono);
+  font-size: var(--desk-surface-detail-size);
+}
+.desk-next .wb-automation-repository { padding: 4px var(--desk-surface-row-pad-x); }
+.desk-next .wb-automations-list { border-top: 1px solid var(--border-subtle); }
+.desk-next .wb-automation { border-bottom: 1px solid var(--border-subtle); }
+.desk-next .wb-automation-head {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  width: 100%;
+  padding: 7px var(--desk-surface-row-pad-x);
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+}
+.desk-next .wb-automation-head:hover { background: var(--accent-tint); }
+.desk-next .wb-automation-provider {
+  color: var(--text-faint);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .04em;
+}
+.desk-next .wb-automation-title {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--font-mono);
+  font-size: var(--desk-surface-body-size);
+}
+.desk-next .wb-automation-summary {
+  margin: -2px 0 3px;
+  padding: 0 var(--desk-surface-row-pad-x) 6px;
+  color: var(--text-faint);
+  font-family: var(--font-mono);
+  font-size: 10px;
+}
+.desk-next .wb-automation-detail {
+  background: var(--desk-window-well);
+  border-top: 1px solid var(--border-subtle);
+  padding-bottom: 6px;
+}
+.desk-next .wb-automation-history-detail { padding: 4px var(--desk-surface-row-pad-x); }
+
 /* ── workspace path ── */
 .desk-next .wb-workspace-path {
   padding: 8px var(--desk-surface-row-pad-x);
@@ -572,4 +686,3 @@
     margin-left: 0;
   }
 }
-

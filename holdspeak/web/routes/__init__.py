@@ -11,6 +11,7 @@ module.
 """
 
 from .activity import build_activity_router
+from .automations import build_automations_router
 from .authority import build_authority_router
 from .cadence import build_cadence_router
 from .decisions import build_decisions_router
@@ -46,6 +47,7 @@ from .system import build_system_router
 
 __all__ = [
     "build_activity_router",
+    "build_automations_router",
     "build_authority_router",
     "build_cadence_router",
     "build_decisions_router",

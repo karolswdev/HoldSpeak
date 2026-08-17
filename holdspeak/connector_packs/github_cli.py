@@ -9,8 +9,9 @@ the user. Anything not on this list is rejected before exec.
 
 `is_command_allowed(command)` is the validator. Pack-aware
 runtimes call it before shelling out; the existing
-`activity_github.run_github_cli_enrichment` already only ever
-builds `gh pr view` / `gh issue view` plans, but having the
+`activity_github.run_github_cli_enrichment` currently builds
+`gh pr view` / `gh issue view` plans; `gh pr list` is reserved for the typed
+Watch snapshot adapter. Having the
 allowlist as a separate, testable policy guards against future
 drift.
 """
@@ -32,6 +33,7 @@ from ..principals import Principal
 ALLOWED_SUBCOMMANDS: frozenset[tuple[str, str]] = frozenset(
     {
         ("pr", "view"),
+        ("pr", "list"),
         ("issue", "view"),
     }
 )
@@ -96,8 +98,8 @@ MANIFEST: ConnectorManifest = validate_manifest(
         "kind": "cli_enrichment",
         "capabilities": ["annotations", "commands"],
         "description": (
-            "Read-only `gh pr view` / `gh issue view` calls for "
-            "imported PR/issue activity. Disabled by default. "
+            "Read-only `gh pr view`, `gh pr list`, and `gh issue view` calls for "
+            "imported PR/issue activity and typed Watch snapshots. Disabled by default. "
             "No writes; no token management; no hidden network "
             "execution."
         ),

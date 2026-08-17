@@ -20,10 +20,12 @@ from ..principals import Principal
 # Allowed `jira` subcommand prefixes — read-only verbs only.
 # `jira issue view KEY --plain` is the canonical enrichment
 # call; `--plain` is just an output flag and not enforced here
-# (the pack's caller supplies the args).
+# (the pack's caller supplies the args). `issue list` is reserved for the typed
+# Watch snapshot adapter.
 ALLOWED_SUBCOMMANDS: frozenset[tuple[str, str]] = frozenset(
     {
         ("issue", "view"),
+        ("issue", "list"),
     }
 )
 
@@ -72,8 +74,8 @@ MANIFEST: ConnectorManifest = validate_manifest(
         "kind": "cli_enrichment",
         "capabilities": ["annotations", "commands"],
         "description": (
-            "Read-only `jira issue view KEY --plain` calls for "
-            "imported ticket activity. Disabled by default. No "
+            "Read-only `jira issue view` and `jira issue list` calls for "
+            "imported ticket activity and typed Watch snapshots. Disabled by default. No "
             "writes, no transitions, no hidden network execution."
         ),
         "requires_cli": "jira",

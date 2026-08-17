@@ -83,6 +83,10 @@ class WebContext:
     mesh_service: Optional[Any] = None
     memory_service: Optional[Any] = None
     mission_control_service: Optional[Any] = None
+    # Reactions are the application-level projection from typed service events
+    # into Workbenches.  The web surface receives the composed service rather
+    # than opening a separate persistence seam.
+    reaction_service: Optional[Any] = None
 
     # HS-26-03: intent-control + dictation-pipeline callbacks for the dictation
     # routes. The dictation handlers' many private helpers (project detection,

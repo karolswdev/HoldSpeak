@@ -13,6 +13,7 @@ from holdspeak.connector_sdk import (
     Discover,
     Enrich,
     Preview,
+    Snapshot,
     validate_manifest,
 )
 
@@ -185,7 +186,7 @@ def test_known_constants_match_phase_9_shape():
     """Sanity: the kinds + capabilities here cover what phase 9
     actually shipped, so phase-11 connector packs slot in cleanly."""
     assert {"cli_enrichment", "candidate_inference", "extension_events"} <= KNOWN_KINDS
-    assert {"annotations", "candidates", "commands", "records"} <= KNOWN_CAPABILITIES
+    assert {"annotations", "candidates", "commands", "records", "snapshots"} <= KNOWN_CAPABILITIES
 
 
 def test_sdk_protocols_are_runtime_checkable():
@@ -205,11 +206,15 @@ def test_sdk_protocols_are_runtime_checkable():
         def discover(self, db, *, limit=25):  # noqa: ARG002
             return []
 
+        def snapshot(self, *, query_kind, query):  # noqa: ARG002
+            return []
+
     instance = FakeConnector()
     assert isinstance(instance, Preview)
     assert isinstance(instance, Enrich)
     assert isinstance(instance, Clear)
     assert isinstance(instance, Discover)
+    assert isinstance(instance, Snapshot)
 
 
 def test_partial_implementations_are_partial_isinstance():
@@ -223,3 +228,4 @@ def test_partial_implementations_are_partial_isinstance():
     assert isinstance(instance, Preview)
     assert not isinstance(instance, Enrich)
     assert not isinstance(instance, Clear)
+    assert not isinstance(instance, Snapshot)

@@ -15,6 +15,11 @@ from typing import Any, Protocol, runtime_checkable
 _correlation_id: contextvars.ContextVar[str] = contextvars.ContextVar("_correlation_id")
 
 
+def current_correlation_id() -> str:
+    """Correlation shared by an observed service call and its domain events."""
+    return str(_correlation_id.get(""))
+
+
 @dataclass(frozen=True)
 class PipelineEvent:
     event_id: str

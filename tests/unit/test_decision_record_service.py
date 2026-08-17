@@ -420,8 +420,8 @@ def test_schema_migrates_v40_to_v43(tmp_path):
 
     migrated = Database(path)
 
-    assert SCHEMA_VERSION == 60
-    assert read_schema_version(path) == 60
+    assert SCHEMA_VERSION == 63
+    assert read_schema_version(path) == 63
     with migrated._connection() as conn:
         assert "deleted" in {row[1] for row in conn.execute("PRAGMA table_info(decision_records)")}
     with migrated._connection() as conn:
@@ -508,7 +508,7 @@ def test_v43_renames_legacy_decision_receipt_tables_once(tmp_path):
         conn.execute("INSERT INTO schema_version (version) VALUES (42)")
 
     migrated = Database(path)
-    assert read_schema_version(path) == 60
+    assert read_schema_version(path) == 63
     with migrated._connection() as conn:
         legacy = conn.execute(
             "SELECT name FROM sqlite_master WHERE type='table' AND name='decision_receipts'"
