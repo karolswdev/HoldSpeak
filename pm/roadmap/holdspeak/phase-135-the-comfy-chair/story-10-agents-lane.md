@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 135
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-135-05
 - **Unblocks:** HS-135-13
 - **Owner:** unassigned
@@ -30,9 +30,9 @@ with the Answer verb one tap away — the steering deck's front porch.
 
 ## Acceptance criteria
 
-- [ ] Seeded blocked session renders first with Answer; the verb
+- [x] Seeded blocked session renders first with Answer; the verb
   opens the session window (test).
-- [ ] Counts truthful; empty state honest ("No sessions" with the
+- [x] Counts truthful; empty state honest ("No sessions" with the
   verbs that exist).
 
 ## Test plan

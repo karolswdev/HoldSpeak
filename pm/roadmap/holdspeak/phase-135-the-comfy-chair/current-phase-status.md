@@ -1,6 +1,6 @@
 # Phase 135 — The Comfy Chair
 
-**Status:** in-progress (11/15).
+**Status:** in-progress (12/15).
 
 **Last updated:** 2026-08-17.
 
@@ -109,7 +109,7 @@ docs + the walk.
 | HS-135-07 | The Brief lane | done | [story-07](./story-07-brief-lane.md) | [evidence-story-07](./evidence-story-07.md) |
 | HS-135-08 | The Follow-Through lane | done | [story-08](./story-08-follow-through-lane.md) | [evidence-story-08](./evidence-story-08.md) |
 | HS-135-09 | The Meetings lane | done | [story-09](./story-09-meetings-lane.md) | [evidence-story-09](./evidence-story-09.md) |
-| HS-135-10 | The Agents lane | backlog | [story-10](./story-10-agents-lane.md) | [evidence-story-10](./evidence-story-10.md) |
+| HS-135-10 | The Agents lane | done | [story-10](./story-10-agents-lane.md) | [evidence-story-10](./evidence-story-10.md) |
 | HS-135-11 | The capture hero | done | [story-11](./story-11-capture-hero.md) | [evidence-story-11](./evidence-story-11.md) |
 | HS-135-12 | The desk clicks | done | [story-12](./story-12-sound-palette.md) | [evidence-story-12](./evidence-story-12.md) |
 | HS-135-13 | Docs and the walk | backlog | [story-13](./story-13-docs-and-walk.md) | [evidence-story-13](./evidence-story-13.md) |
@@ -335,3 +335,22 @@ item-click opens meeting detail via onOpenInWindow(meetingId). Empty
 state returns null (the Chair's 300ms fallback owns the all-blank case).
 Registry entry added to lanes/index.ts keyed as "meetings" (matching
 LaneId). 2 test files / 41 tests green (29 MeetingsLane + 12 Chair).
+HS-135-10 shipped: the Agents lane. AgentsLane.tsx composes through
+ChairLane with the lane composition contract. Data from /api/coders/status
+(sessions) and /api/recipes (crew) -- no new endpoints, same as
+CompanionCore. Sessions rendered blocked-first (the ordering contract
+pinned by CompanionCore:68-73); each session carries a state badge
+(LampGadget: BLOCKED/warn for blocked, RUN/ok for running). Blocked
+sessions show the Answer verb (Button, primary variant) that calls
+openCoderSession(key) via the existing desk/shell.ts:89 path. Header title
+shows compound counts: AGENTS . CREW N . BLOCKED N; the ChairLane badge
+shows total session count. Header-click opens the Agents window via
+openSurface("surface-companion") (SurfaceWindows.tsx:144). Empty state:
+SurfaceState with "No sessions" (honest). Agent receipts: the companion
+surface does not cheaply expose recent receipts at the lane level -- the
+DeliveryListSection and PrReceiptsSection live on the Delivery wing of
+CompanionCore, not the roster wing the lane composes from; shipping
+counts + sessions only (honest). Registry entry added to lanes/index.ts
+keyed as "agents" (matching LaneId) -- completes the four-lane registry.
+4 test files / 32 tests green (8 AgentsLane + 10 FollowThroughLane + 12
+Chair + 2 CompanionCore agents).
