@@ -288,7 +288,17 @@ function ConfigPanel({
             />
           ))}
         </SurfaceRows>
-        {filteredRecipes.length === 0 ? (
+        {filteredRecipes.length === 0 && recipes.length === 0 ? (
+          <SurfaceState
+            empty
+            emptyLabel="No agents yet"
+            emptyGlyph="+"
+            actionLabel="New Agent"
+            onAction={() =>
+              void useDesk.getState().createPrimitive("recipe")
+            }
+          />
+        ) : filteredRecipes.length === 0 ? (
           <SurfaceState empty emptyLabel="No agents match" />
         ) : null}
       </SurfaceSection>
@@ -1337,14 +1347,14 @@ export function WorkbenchWindow({
       ? "Running…"
       : "▸ Run";
 
-  // HS-132-07 — no bare disabled control: RUN names what is missing and
-  // where to supply it (the kit's disabledReason rule, Surface.tsx).
+  // HS-132-07 / HS-135-15 — the ghosted grammar: RUN names what is
+  // missing as a visible reason label, not just a tooltip.
   const runDisabledReason = running
     ? "Run in progress"
     : !detail
       ? "Workbench still loading"
       : !detail.recipe_id
-        ? "No agent bound · bind one in Configure"
+        ? "Bind an agent first"
         : null;
 
   return (
@@ -1399,6 +1409,9 @@ export function WorkbenchWindow({
           }
         >
           {runButtonLabel}
+          {runDisabledReason && !running ? (
+            <small className="quiet"> · {runDisabledReason}</small>
+          ) : null}
         </button>
       }
       minW={480}

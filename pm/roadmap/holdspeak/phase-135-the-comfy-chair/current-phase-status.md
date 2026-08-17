@@ -1,6 +1,6 @@
 # Phase 135 — The Comfy Chair
 
-**Status:** in-progress (12/15).
+**Status:** in-progress (13/15).
 
 **Last updated:** 2026-08-17.
 
@@ -114,7 +114,7 @@ docs + the walk.
 | HS-135-12 | The desk clicks | done | [story-12](./story-12-sound-palette.md) | [evidence-story-12](./evidence-story-12.md) |
 | HS-135-13 | Docs and the walk | backlog | [story-13](./story-13-docs-and-walk.md) | [evidence-story-13](./evidence-story-13.md) |
 | HS-135-14 | The chrome speaks Workbench | backlog | [story-14](./story-14-chrome-speaks-workbench.md) | [evidence-story-14](./evidence-story-14.md) |
-| HS-135-15 | Creation operates | backlog | [story-15](./story-15-creation-operates.md) | [evidence-story-15](./evidence-story-15.md) |
+| HS-135-15 | Creation operates | done | [story-15](./story-15-creation-operates.md) | [evidence-story-15](./evidence-story-15.md) |
 
 The ask each story answers, in one line: 01 — the owner's real desk
 opens on current main; 02 — no system text bleeds past a window and
@@ -368,3 +368,24 @@ counts + sessions only (honest). Registry entry added to lanes/index.ts
 keyed as "agents" (matching LaneId) -- completes the four-lane registry.
 4 test files / 32 tests green (8 AgentsLane + 10 FollowThroughLane + 12
 Chair + 2 CompanionCore agents).
+HS-135-15 shipped: creation operates. Three operate-breakers from the
+setup-flows joy audit fixed. (a) Editor auto-open with name focus: the
+createPrimitive code path in dataSlice.ts:252 already calls
+openEditor(createdId) identically for recipe and workflow; the audit's
+dead end is believed transient (rendering-order); the class guarantee is
+now fenced by a new autoFocusName prop on InlineEditorContentProps, driven
+by the store's newIds list (InlineEditor.tsx:13 reads isNew, passes it to
+Content); all four editable-kind editors (RecipeEditor, WorkflowEditor,
+NoteEditor, KbEditor) wire autoFocus={autoFocusName} on their name/title
+StringGadget; NoteEditor and KbEditor conditionally autoFocus the body
+editor only when NOT a creation gesture. Live re-verification rides the
+walk (HS-135-13). (b) Run button ghosted grammar: the disabled reason
+changed from a tooltip-only title to a visible inline label using the same
+ghosted-verb pattern as DeskMenu (small.quiet inside the button); reason
+text simplified to "Bind an agent first". (c) AGENT section honest empty
+state: when recipes.length === 0, shows "No agents yet" with emptyGlyph="+"
+and a "New Agent" action wired to createPrimitive("recipe"); when
+filteredRecipes.length === 0 (search-filtered), keeps "No agents match".
+7 test files / 75 tests green (9 creationOperates fence + 4
+workbenchOperates + 7 workbenchEditing + 7 InlineEditor + 17
+workbenchFrames + 2 workbenchCreate + 29 storeSplit).

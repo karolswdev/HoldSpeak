@@ -13,7 +13,7 @@ import type { Workflow } from "../../../lib/primitives";
 import { useDebouncedSave } from "./useDebouncedSave";
 import type { InlineEditorContentProps } from "./types";
 
-export function WorkflowEditor({ object: o }: InlineEditorContentProps) {
+export function WorkflowEditor({ object: o, autoFocusName }: InlineEditorContentProps) {
   const items = useDesk((s) => s.items);
   const save = useDebouncedSave("workflow", o.id);
 
@@ -49,6 +49,7 @@ export function WorkflowEditor({ object: o }: InlineEditorContentProps) {
         label="Workflow name"
         value={f.name}
         placeholder="Name"
+        autoFocus={autoFocusName}
         onChange={(value) => {
           setF((prev) => ({ ...prev, name: value }));
           if (steps) {

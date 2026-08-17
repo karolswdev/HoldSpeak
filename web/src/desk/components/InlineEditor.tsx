@@ -10,6 +10,7 @@ import { DeskWindowFrame } from "./DeskWindow";
 export function InlineEditor({ o, u }: { o: WorldObject; u: UnitPos }) {
   const pulloutOpen = useDesk((s) => s.pullouts.some((p) => p.id === o.id));
   const editorOrigin = useDesk((s) => s.editorOrigin);
+  const isNew = useDesk((s) => s.newIds.includes(o.id));
   const { closeEditor } = useDesk.getState();
   const Content = INLINE_EDITOR_CONTENT[o.kind];
   const label = EDITOR_LABELS[o.kind] || o.kind;
@@ -35,7 +36,7 @@ export function InlineEditor({ o, u }: { o: WorldObject; u: UnitPos }) {
       onClose={closeEditor}
     >
       <div className="desk-pullout-body desk-surface-body desk-editor-body">
-        <Content object={o} onClose={closeEditor} />
+        <Content object={o} onClose={closeEditor} autoFocusName={isNew} />
       </div>
       <SurfaceFooter
         verbs={
