@@ -160,6 +160,14 @@ after 05; 07-10 in parallel after 05 (disjoint lane files); 11 after
   flake (`test_meeting_session.py::test_stop_completes_without_deadlock_during_final_transcription_and_intel`),
   3/3 green serially — fourth distinct timing flake of the arc, all
   ledgered for BACKLOG Candidate Z.
+- **Empty-Chair void observed (orchestrator, first live portrait,
+  2026-08-17):** on a barren desk the Chair renders two floating empty
+  states in a black expanse — honest but hostile as a first-run
+  landing. The door needs its empty-state composition designed (the
+  hero holds the room when lanes are silent). Assigned to the walk
+  story's polish scope; escalates to the next leg if it wants more
+  than layout. The hero's MIC key also still wears the old lightbulb
+  sprite — HS-135-14's casting order.
 - **Icon style RATIFIED bright** (owner, verbatim: "AMIGA OS
   FOREVER"); the first dark mold rejected ("Too gloomy. This is not
   an RPG"). The bright palette is the assets/icon-palette.png.
