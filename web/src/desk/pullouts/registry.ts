@@ -38,6 +38,7 @@ export const PULLOUT_CONTENT: Record<PrimitiveKind, PulloutContent> = {
   story: FallbackPullout,
   workbench: FallbackPullout,
   intelligence: IntelligencePullout,
+  people: FallbackPullout,
   game: FallbackPullout,
   layout: FallbackPullout,
 } satisfies Record<PrimitiveKind, PulloutContent>;

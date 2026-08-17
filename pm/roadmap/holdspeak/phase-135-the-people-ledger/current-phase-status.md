@@ -1,0 +1,160 @@
+# Phase 135 — The People Ledger
+
+**Status:** active (0/6).
+
+**Last updated:** 2026-08-16.
+
+## Owner mandate
+
+Implement the first honest delivery slice of issue #458: a People capability for
+technical leaders that preserves 1:1 continuity and makes explicit manager
+commitments visible in the existing Follow-through surface. The owner explicitly
+requested Terra delegates for this phase; that instruction overrides the repository's
+historical default-model rule for this run. The primary agent remains final
+adjudicator and integrator.
+
+## Goal
+
+Ship an encrypted, local-only People relationship and 1:1 foundation whose
+explicit manager commitments appear in Follow-through without entering plaintext
+product stores.
+
+## Settled design
+
+- People content lives in a separate encrypted envelope store. AES-256-GCM encrypts
+  every sensitive payload before SQLite receives it; the random 256-bit key is held
+  only by an allow-listed native OS credential store. No plaintext or environment
+  fallback exists in production.
+- The normal HoldSpeak database, FTS, Memory/Ask, sync, backups, exports, logs,
+  receipts, connectors, meetings, and Cadence never receive People content.
+- PR1 is manual and notes-only: relationships, 1:1 agenda/prep, requests, and an
+  explicit request-to-manager-commitment transition. A request is never inferred to
+  be a promise.
+- Follow-through hydrates People commitments synchronously from the encrypted
+  authority and renders them in memory. It persists no People card or bridge row.
+  Done/dismiss/reopen dispatch back to People; Cadence, snooze, delegation, and
+  background processing are explicitly unsupported.
+- People is one singleton Desk surface, not a page and not one desktop object per
+  human. Readiness is a hard gate: unconfigured, locked, unavailable, and corrupt
+  are named states that never degrade to an empty roster or plaintext scratchpad.
+- `shared_intent` is future access intent, not a claim that another participant can
+  view data today. PR1 remains this-device-only.
+
+## Scope
+
+### In
+
+- Native-key-backed encrypted People sidecar and fail-closed readiness contract.
+- Manual relationships, notes-only 1:1 sessions, agenda/private prep, requests,
+  explicit manager commitments, immutable/superseding accepted records.
+- Authenticated loopback API with content-free error codes.
+- In-memory Follow-through projection and source-dispatched lifecycle mutations.
+- Desk People surface with responsive roster, relationship detail, and terse trust
+  facts: `Encrypted`, `This device only`, `Notes only`.
+- Security/threat-model documentation, leak tests, focused/full regression gates,
+  and a live desktop+narrow walk.
+
+### Out
+
+- Audio, recording, transcription, speaker or calendar identity linkage.
+- AI/inference, sentiment, ranking, scoring, employment decisions, activity or
+  productivity surveillance, and cross-person comparison.
+- Growth plans, feedback/review packets, opportunity allocation, team maps.
+- Sync, sharing, export, backup/recovery, connectors, MCP, global Search/Ask/Memory.
+- Cadence collection, Daily Brief projection, scheduled nudges, notifications,
+  snooze, and delegation for People commitments.
+
+## Constitutional grounding
+
+- **Articles I–II:** People exists as a Desk primitive/surface with an honest API and
+  encrypted authority; no standalone feature page or duplicate task board.
+- **Articles III and IX:** confidential third-party material remains local and the
+  real encrypted bytes, restart path, and production Desk must be proven.
+- **Articles V–VI and XI:** trust-boundary failures are named and content-free;
+  consequential setup/visibility operations do not leak content into receipts.
+- **Article VII:** editing is in-world, with no modal or prose-heavy alternate UI.
+
+## Stories
+
+| ID | Story | Status | Story file | Evidence |
+|---|---|---|---|---|
+| HSEGHS001HS104-135-01 | The encrypted boundary | in-progress | [story-01](./story-01-encrypted-boundary.md) | — |
+| HSEGHS001HS104-135-02 | Relationships and one-to-ones | ready | [story-02](./story-02-relationships-one-to-ones.md) | — |
+| HSEGHS001HS104-135-03 | Commitments join Follow-through | ready | [story-03](./story-03-commitments-follow-through.md) | — |
+| HSEGHS001HS104-135-04 | People belongs on the Desk | ready | [story-04](./story-04-people-desk.md) | — |
+| HSEGHS001HS104-135-05 | The privacy proof | ready | [story-05](./story-05-privacy-proof.md) | — |
+| HSEGHS001HS104-135-06 | The People walk | ready | [story-06](./story-06-people-walk.md) | — |
+
+## Risk register
+
+| Risk | Guard | Stop signal |
+|---|---|---|
+| Confidential text escapes to the main DB or a derivative | sentinel byte/table/log/sync/FTS sweep | any sentinel outside encrypted People responses/memory |
+| Credential backend silently weakens | explicit native-backend allow-list; memory adapter only in tests | file/plaintext/env backend accepted in production |
+| Follow-through creates a second lifecycle authority | projection interface + source-dispatched mutations | People content/status written to `action_items` or Cadence |
+| Locked state exposes stale DOM/process data | readiness transition clears DTOs and drafts | name/body remains after 423/409/503 |
+| Scope drifts into employment surveillance | policy refusal matrix and no model/network calls | ranking, inference, capture, sync, export, or connector path exists |
+
+## Exit criteria (evidence required)
+
+- [ ] Correct key decrypts after restart; missing/wrong/locked key fails closed with
+  a stable content-free reason; nonce/AAD substitution fails authentication.
+- [ ] Fixture names, agenda, prep, request, and commitment bodies are absent from
+  `holdspeak.db`, People DB/WAL/SHM raw bytes, logs, FTS, sync, Cadence, receipts,
+  backups, exports, and error/broadcast payloads.
+- [ ] Manual relationship → 1:1 → request → explicit commitment persists only in
+  the encrypted store; request and commitment lifecycles cannot collapse.
+- [ ] One open People commitment renders once in Follow-through in memory;
+  done/dismiss/reopen round-trip to the encrypted authority; unsupported verbs
+  refuse without mutation; normal action items regress zero behavior.
+- [ ] People opens inside Desk at desktop and narrow widths; trust/readiness states
+  are factual, no modal/page/score/risk UI appears, and lock clears visible data.
+- [ ] Focused backend/web tests, full parallel suite, production web build, and real
+  live walk pass; inherited schema-59→60 baseline failure remains separately ledgered.
+
+## Decisions deferred
+
+- Encrypted People Cadence/Daily Brief overlay — requires a read-time encrypted
+  projection; the current persistent Cadence schema is categorically unsafe.
+- Key recovery, encrypted backup, rotation UI, and multi-device E2EE — each needs a
+  separate destructive/recovery design and live proof.
+- Capture consent/boundaries and any source-cited local drafting — design only after
+  the encrypted manual loop is proven and issue #450's inference spine is settled.
+
+## Ledger
+
+- Baseline focused test run was accidentally serial and touched the owner's existing
+  schema-59 database before failing at the already-ledgered 59→60 `node_id`
+  migration defect. Automatic safety backups were created; no destructive action was
+  taken. All phase test commands use xdist's isolated worker homes.
+- **Owner verification ruling (2026-08-16):** publication is a draft and testing is
+  best-attempt. The primary acceptance method for the handoff is static analysis and
+  logical decomposition of each process flow, backed by focused automated checks and
+  targeted native/browser proofs. Maintainers must not read this PR as an exhaustive
+  end-to-end or full-suite certification; the remaining production walk and broad
+  regression responsibility is explicit in the draft PR.
+- Integrated evidence before that ruling: 86 focused backend/API/kernel/privacy tests
+  green; full web check green (typecheck, architecture/token gates, 934 Vitest tests,
+  production build); real macOS Keychain setup/restart/raw-byte proof green; API
+  surface and UAT ledgers regenerated. A broad xdist attempt reached 1,426 passes,
+  37 skips before stopping on a missing isolated-worker Playwright executable and
+  the then-stale UAT ledger (the ledger was subsequently regenerated and its guard
+  passed). No exhaustive rerun is claimed.
+- Final static counsel found and remediation closed two pre-PR blockers: generic
+  Follow-through observation would have copied decrypted People cards into plaintext
+  `pipeline_events` (the board observation is now wholly redacted, with a real
+  SQLiteObserver sentinel regression), and archived relationships could still be
+  fetched/accepted (detail now hides them and the encrypted acceptance transaction
+  validates the active relationship). The live synthetic walk also caught accepted
+  requests retaining their open UI state; the encrypted request payload now moves to
+  `accepted` in the same transaction.
+- Real assembled-hub screenshots were captured with a disposable encrypted store at
+  1440×1000 and 393×852 under `docs/evidence/people-pr1/`. They demonstrate the Now
+  commitment lens and notes-only 1:1 agenda inside the Desk; they are visual evidence,
+  not exhaustive certification.
+
+## Where we are
+
+Implementation is integrated and in final read-only Terra counsel. Draft-PR handoff
+follows after static flow adjudication; the phase remains active because the full
+production walk and maintainer verification caveat are intentionally open.

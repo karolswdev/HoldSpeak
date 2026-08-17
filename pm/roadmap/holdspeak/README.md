@@ -794,6 +794,7 @@ canon, canon wins.
 | 109 | The Long Memory: decisions become records and cited artifacts; projects remember; kernel processes become visible. | done | [phase-109-the-long-memory](./phase-109-the-long-memory/) |
 | 110 | The Cohesion: the material model pivot — macOS Ventura replaced with Signal Workbench (opaque surfaces, beveled depth, 2px corners, mono chrome, solid bars). | done | [phase-110-the-cohesion](./phase-110-the-cohesion/) |
 | 111 | The Refinement: every program on the desk gets its interior rethought for Signal Workbench — Settings, Speak, Meetings, Agents, Ask, Delivery, system chrome, interactive controls, sprites. | in-progress | [phase-111-the-refinement](./phase-111-the-refinement/) |
+| 135 | Ship an encrypted, local-only People relationship and 1:1 foundation whose explicit manager commitments appear in Follow-through without entering plaintext product stores. | active | [phase-135-the-people-ledger](./phase-135-the-people-ledger/) |
 
 (Status values: `planning`, `in-progress`, `done`, `paused`, `cancelled`.)
 

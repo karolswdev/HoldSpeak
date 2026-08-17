@@ -9,7 +9,7 @@ and the clients that call it (extracted from the real call sites in
 `web/src` and `apple/`). "server only" means no in-repo client calls
 it today.
 
-Routes: 445 (plus static mounts). iOS-consumed: 89. Web-consumed: 340.
+Routes: 456 (plus static mounts). iOS-consumed: 89. Web-consumed: 351.
 
 ## device_audio_ws
 
@@ -480,6 +480,22 @@ Routes: 445 (plus static mounts). iOS-consumed: 89. Web-consumed: 340.
 | GET | `/studio` | server only |
 | GET | `/welcome` | server only |
 | GET | `/workbench` | server only |
+
+## web.routes.people
+
+| Method | Path | Consumers |
+|---|---|---|
+| POST | `/api/people/one-on-ones/{session_id}/agenda` | web |
+| GET | `/api/people/readiness` | web |
+| GET | `/api/people/relationships` | web |
+| POST | `/api/people/relationships` | web |
+| GET | `/api/people/relationships/{relationship_id}` | web |
+| POST | `/api/people/relationships/{relationship_id}/archive` | web |
+| GET | `/api/people/relationships/{relationship_id}/one-on-ones` | web |
+| POST | `/api/people/relationships/{relationship_id}/one-on-ones` | web |
+| POST | `/api/people/relationships/{relationship_id}/requests` | web |
+| POST | `/api/people/requests/{request_id}/accept` | web |
+| POST | `/api/people/setup` | web |
 
 ## web.routes.primitives.ask
 

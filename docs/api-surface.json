@@ -3159,6 +3159,116 @@
       ]
     },
     {
+      "path": "/api/people/one-on-ones/{session_id}/agenda",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.people",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/people/readiness",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.people",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/people/relationships",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.people",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/people/relationships",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.people",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/people/relationships/{relationship_id}",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.people",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/people/relationships/{relationship_id}/archive",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.people",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/people/relationships/{relationship_id}/one-on-ones",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.people",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/people/relationships/{relationship_id}/one-on-ones",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.people",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/people/relationships/{relationship_id}/requests",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.people",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/people/requests/{request_id}/accept",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.people",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/people/setup",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.people",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/plugin-jobs",
       "methods": [
         "GET"

@@ -1,0 +1,11 @@
+.people-fact { font-size: var(--desk-surface-label-size); color: var(--text-muted); white-space: nowrap; }
+.people-fact + .people-fact::before { content: " · "; }
+.people-new, .people-agenda-add { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.people-new .gadget-string, .people-agenda-add .gadget-pad { flex: 1; min-width: 0; }
+.people-detail-head { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
+.people-lenses { display: flex; gap: 2px; border-bottom: 1px solid var(--border); margin-bottom: var(--desk-surface-section-gap); }
+.people-lenses button { border: 0; background: transparent; padding: 6px 8px; color: var(--text-muted); }
+.people-lenses button[aria-selected="true"] { color: var(--text); border-bottom: 2px solid var(--text); }
+.people-info { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 7px 12px; margin: 0; }
+.people-info dt { color: var(--text-muted); }.people-info dd { margin: 0; }
+@container surface (max-width: 559.9px) { .people-new, .people-agenda-add { align-items: stretch; flex-wrap: wrap; } .people-new .gadget-string, .people-agenda-add .gadget-pad { flex-basis: 100%; } }

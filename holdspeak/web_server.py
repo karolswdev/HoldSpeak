@@ -597,6 +597,7 @@ class MeetingWebServer:
             build_delivery_factory_router,
             build_dictation_router,
             build_follow_through_router,
+            build_people_router,
             build_desk_actuators_router,
             build_desk_seed_router,
             build_meeting_import_router,
@@ -621,6 +622,8 @@ class MeetingWebServer:
         from .services.meeting_aftercare_service import MeetingAftercareService
         from .services.meeting_intel_service import MeetingIntelService
         from .services.meeting_service import MeetingService
+        from .services.people_service import PeopleService, UnavailablePeopleStore
+        from .people import production_people_store
 
         from .delivery.node_link import NodeTokenStore as _MeshNodeTokenStore
 
@@ -675,6 +678,14 @@ class MeetingWebServer:
                 else None
             ),
         )
+        # The encrypted People sidecar is deliberately composed outside the
+        # normal database.  Key custody failures remain a named readiness state;
+        # there is never a plaintext fallback.
+        try:
+            people_service = PeopleService(production_people_store())
+        except Exception:
+            people_service = PeopleService(UnavailablePeopleStore())
+
         web_ctx = WebContext(
             get_state=self.get_state,
             meeting_service=meeting_service,
@@ -705,7 +716,8 @@ class MeetingWebServer:
                 get_database(), on_settings_applied=self.on_settings_applied, observer=obs
             ),
             cadence_service=CadenceService(get_database(), Config.load().cadence, observer=obs),
-            follow_through_service=FollowThroughService(get_database(), observer=obs),
+            follow_through_service=FollowThroughService(get_database(), observer=obs, people_projection=people_service),
+            people_service=people_service,
             sync_service=SyncService(get_database(), observer=obs),
             gate_service=GateService(get_database(), observer=obs),
             setup_service=SetupService(get_database(), observer=obs),
@@ -768,6 +780,7 @@ class MeetingWebServer:
         app.include_router(build_authority_router(web_ctx))
         app.include_router(build_cadence_router(web_ctx))
         app.include_router(build_follow_through_router(web_ctx))
+        app.include_router(build_people_router(web_ctx))
         app.include_router(build_decision_records_router(web_ctx))
         app.include_router(build_decisions_router(web_ctx))
         app.include_router(build_memory_router(web_ctx))
