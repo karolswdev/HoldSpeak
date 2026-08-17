@@ -219,6 +219,19 @@ const SURFACES: SurfaceRow[] = [
       })),
     ),
   },
+  {
+    key: "open-people",
+    id: "surface-people",
+    title: "People",
+    glyph: "♧",
+    eyebrow: "Follow-through",
+    minW: 560,
+    Core: lazy(() =>
+      import("../../pages/cores/PeopleCore").then((m) => ({
+        default: m.PeopleCore,
+      })),
+    ),
+  },
 ];
 
 /** HS-103-01 — which surface windows were open survives a reload, the

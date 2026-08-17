@@ -8,7 +8,15 @@
 > from evidence, Terra waves with serialized shipping, walks, honest ledgers —
 > is canon at [`docs/internal/ORCHESTRATION.md`](../../../docs/internal/ORCHESTRATION.md).
 
-**Newest update (2026-08-15): Phase 131 — One Admission Path — COMPLETE
+**Newest update (2026-08-17): Phase 138 — The People Ledger — ACTIVE.**
+The draft delivery now carries an encrypted relationship ledger for direct reports,
+peers, and extended organizational relationships; notes-only 1:1 continuity;
+durable grounding notes; explicit manager commitments in Follow-through; a real
+PixelLab sprite; and a default-off, shared-intent-only MCP capability. Testing is a
+best-attempt static/logical handoff, not an exhaustive certification. See the
+[current phase record](./phase-138-the-people-ledger/current-phase-status.md).
+
+**Previous update (2026-08-15): Phase 131 — One Admission Path — COMPLETE
 (17/17).** The executable census closes at 100 sites, zero findings, zero blocking
 families, and zero unregistered execution. The assembled real-model walk passes
 all ten legs on `.43`: immutable revision dispatch, Ask/Agent,
@@ -471,7 +479,10 @@ the ⌘K shelf's z-defect fixed; the owner's 101 sitting remains open in
 parallel. Phase 101 itself stands at 3/4 (canon ratified and built,
 PR #359; sweep 4122/0).
 
-**Current phase:** [**Phase 137 — The One Schema**](./phase-137-the-one-schema/current-phase-status.md)
+**Current phase:** [**Phase 138 — The People Ledger**](./phase-138-the-people-ledger/current-phase-status.md)
+— **IN PROGRESS**. Encrypted relationship ledger for direct reports,
+peers, and extended organizational relationships; grounding notes; manager
+commitments in Follow-through; MCP capability. Previous: [**Phase 137 — The One Schema**](./phase-137-the-one-schema/current-phase-status.md)
 — **COMPLETE (4/4, 2026-08-17; counsel RATIFY-WITH-CONCERNS; owner sitting pending)**. Owner mandate: kill the schema-migration
 ceremony (a 1060-line chain + version pins + a gate that refuses the owner's
 own DB) and replace it with one declarative, self-reconciling schema — no
@@ -807,6 +818,7 @@ canon, canon wins.
 | 109 | The Long Memory: decisions become records and cited artifacts; projects remember; kernel processes become visible. | done | [phase-109-the-long-memory](./phase-109-the-long-memory/) |
 | 110 | The Cohesion: the material model pivot — macOS Ventura replaced with Signal Workbench (opaque surfaces, beveled depth, 2px corners, mono chrome, solid bars). | done | [phase-110-the-cohesion](./phase-110-the-cohesion/) |
 | 111 | The Refinement: every program on the desk gets its interior rethought for Signal Workbench — Settings, Speak, Meetings, Agents, Ask, Delivery, system chrome, interactive controls, sprites. | in-progress | [phase-111-the-refinement](./phase-111-the-refinement/) |
+| 138 | Ship an encrypted, local-only People relationship and 1:1 foundation whose explicit manager commitments appear in Follow-through without entering plaintext product stores. | active | [phase-138-the-people-ledger](./phase-138-the-people-ledger/) |
 
 (Status values: `planning`, `in-progress`, `done`, `paused`, `cancelled`.)
 

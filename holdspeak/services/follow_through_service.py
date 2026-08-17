@@ -1,18 +1,51 @@
 """Unified read model for work that must follow a meeting."""
 from __future__ import annotations
 
+import json
 import uuid
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import date, datetime, timedelta
-from typing import Any
+from typing import Any, Protocol
 
 from holdspeak.services.observer import (
     NullObserver,
+    PipelineEvent,
     PipelineObserver,
     current_correlation_id,
     observe_service,
 )
 from holdspeak.services.service_event_ledger import ServiceEventLedger
+
+
+class _FollowThroughObserver:
+    """Keep decrypted People cards out of generic durable observation.
+
+    The board is a mixed read model. Once it can contain an encrypted People
+    projection, serializing its result would copy confidential text into the
+    plaintext ``pipeline_events`` table. Observation retains timing/outcome but
+    replaces the entire board result—not merely matching or truncating text.
+    """
+
+    def __init__(self, delegate: PipelineObserver) -> None:
+        self._delegate = delegate
+
+    def on_event(self, event: PipelineEvent) -> None:
+        if event.service == "FollowThroughService" and event.method == "board":
+            event = replace(event, result_summary='{"board":"redacted"}')
+        elif event.service == "FollowThroughService" and event.method == "complete":
+            try:
+                arguments = json.loads(event.args_summary)
+            except (TypeError, json.JSONDecodeError):
+                arguments = {}
+            if str(arguments.get("card_id") or "").startswith("people:"):
+                event = replace(
+                    event,
+                    args_summary='{"people_transition":"redacted"}',
+                    result_summary='{"people_transition":"redacted"}',
+                    error="people_transition_failed" if event.error else None,
+                    error_code="people_transition_failed" if event.error else None,
+                )
+        self._delegate.on_event(event)
 
 
 @dataclass(frozen=True)
@@ -40,6 +73,9 @@ class FollowThroughCard:
     source: str
     lane: str
     provenance: CardProvenance | None
+    # A source-owned deep link.  Only People currently needs it: it is an
+    # in-memory opaque record reference, never persisted on a Cadence/action row.
+    target_ref: str | None = None
 
 
 @dataclass(frozen=True)
@@ -50,6 +86,20 @@ class FollowThroughBoard:
     overdue: list[FollowThroughCard]
 
 
+class PeopleCommitmentProjection(Protocol):
+    """Read/mutate the encrypted People authority without retaining a copy here.
+
+    The projection is deliberately a tiny capability rather than a repository.  The
+    normal HoldSpeak database, its action items, and Cadence must never receive a
+    People commitment.  An implementation decrypts only while producing this
+    request's cards and owns the corresponding encrypted lifecycle transition.
+    """
+
+    def list_cards(self, principal: Any, *, owner: str | None = None) -> list[FollowThroughCard]: ...
+
+    def transition(self, principal: Any, card_id: str, verb: str) -> dict[str, Any]: ...
+
+
 _TERMINAL_STATES = {"done", "dismissed", "closed", "killed"}
 _LANES = ("now", "waiting", "unassigned", "overdue")
 
@@ -58,9 +108,16 @@ _LANES = ("now", "waiting", "unassigned", "overdue")
 class FollowThroughService:
     """Project action items and their cadence signals into execution lanes."""
 
-    def __init__(self, db: Any, *, observer: PipelineObserver | None = None) -> None:
+    def __init__(
+        self,
+        db: Any,
+        *,
+        observer: PipelineObserver | None = None,
+        people_projection: PeopleCommitmentProjection | None = None,
+    ) -> None:
         self._db = db
-        self._observer = observer or NullObserver()
+        self._observer = _FollowThroughObserver(observer or NullObserver())
+        self._people_projection = people_projection
 
     def board(
         self,
@@ -152,6 +209,25 @@ class FollowThroughService:
                 ),
             )
             lanes[card.lane].append(card)
+
+        # People cards are a synchronous, in-memory overlay.  They intentionally
+        # do not enter action_items, cadence_*, the audit export, or any cache.
+        # A project filter has no honest People mapping in PR1, so it excludes the
+        # overlay rather than implying a relationship/project association.
+        if self._people_projection is not None and project_id is None:
+            try:
+                people_cards = self._people_projection.list_cards(principal, owner=owner)
+            except Exception:
+                # Never turn a locked encrypted sidecar into a false empty roster
+                # or break ordinary Follow-through.  The specific store reason is
+                # deliberately not returned because it can become an oracle.
+                people_cards = []
+            for card in people_cards:
+                if card.source != "people_commitment":
+                    raise ValueError("invalid people follow-through projection")
+                if card.lane not in lanes:
+                    raise ValueError("invalid people follow-through lane")
+                lanes[card.lane].append(card)
 
         if state is not None:
             for lane in _LANES:
@@ -252,10 +328,18 @@ class FollowThroughService:
         sourced from it, and every associated decision commitment are changed in
         one SQLite transaction so board reads cannot observe a partial result.
         """
-        del principal  # The caller's authority is enforced by the transport.
         normalized_verb = str(verb).strip().lower()
         if normalized_verb not in {"done", "dismiss", "snooze", "delegate", "reopen"}:
             raise ValueError(f"Unknown follow-through verb: {verb}")
+        if str(card_id).startswith("people:"):
+            if self._people_projection is None:
+                # Do not disclose whether a guessed opaque People id exists.
+                raise ValueError("people_commitment_unavailable")
+            if normalized_verb in {"snooze", "delegate"}:
+                raise ValueError("people_commitment_verb_unsupported")
+            return self._people_projection.transition(principal, str(card_id), normalized_verb)
+
+        del principal  # The caller's authority is enforced by the transport.
         data = payload or {}
         now = datetime.now().isoformat()
 

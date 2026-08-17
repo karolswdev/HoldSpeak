@@ -1,0 +1,24 @@
+.people-fact { font-size: var(--desk-surface-label-size); color: var(--text-muted); white-space: nowrap; }
+.people-fact + .people-fact::before { content: " · "; }
+.people-new, .people-agenda-add, .people-context-add, .people-project-link { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.people-new .gadget-string, .people-agenda-add .gadget-pad, .people-context-add .gadget-pad { flex: 1; min-width: 0; }
+.people-context-add { align-items: end; flex-wrap: wrap; }
+.people-context-add .gadget-pad { flex-basis: 100%; }
+.people-project-link > :first-child { flex: 1; min-width: 0; }
+.people-detail-head { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
+.people-lenses { display: flex; gap: 2px; border-bottom: 1px solid var(--border); margin-bottom: var(--desk-surface-section-gap); }
+.people-lenses button { border: 0; background: transparent; padding: 6px 8px; color: var(--text-muted); }
+.people-lenses button[aria-selected="true"] { color: var(--text); border-bottom: 2px solid var(--text); }
+.people-info { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 7px 12px; margin: 0; }
+.people-info dt { color: var(--text-muted); }.people-info dd { margin: 0; }
+.people-commitment-inspector { margin-top: 10px; padding: 10px; border: 1px solid var(--border); background: var(--surface-sunken, transparent); }
+.people-inspector-head, .people-delegate, .people-satisfy { display: flex; align-items: center; gap: 8px; }
+.people-inspector-head { justify-content: space-between; margin-bottom: 8px; }
+.people-commitment-body { margin-bottom: 10px; line-height: 1.4; }
+.people-delegate, .people-satisfy { margin-top: 10px; }
+.people-delegate > :first-child, .people-satisfy > :first-child { flex: 1; min-width: 0; }
+.people-history-facts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin: 0; }
+.people-history-facts div { padding: 8px; border: 1px solid var(--border); }
+.people-history-facts dt { color: var(--text-muted); font-size: var(--desk-surface-label-size); }
+.people-history-facts dd { margin: 3px 0 0; font-size: 18px; }
+@container surface (max-width: 559.9px) { .people-new, .people-agenda-add, .people-context-add, .people-project-link, .people-delegate, .people-satisfy { align-items: stretch; flex-wrap: wrap; } .people-new .gadget-string, .people-agenda-add .gadget-pad, .people-context-add .gadget-pad, .people-project-link > :first-child, .people-delegate > :first-child, .people-satisfy > :first-child { flex-basis: 100%; } .people-history-facts { grid-template-columns: repeat(2, minmax(0, 1fr)); } }

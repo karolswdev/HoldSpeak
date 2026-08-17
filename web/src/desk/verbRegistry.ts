@@ -313,6 +313,16 @@ export const VERBS: Verb[] = [
     run: () => openIntelligence({ view: "brief" }),
   },
   {
+    id: "desk.open-people",
+    label: "Open People",
+    menu: "desk",
+    scope: "floor",
+    group: "view",
+    keywords: ["relationships", "1:1", "one on one", "management"],
+    ghost: never,
+    run: () => openSurfaceOr("open-people", "/", undefined),
+  },
+  {
     id: "desk.intelligence-brief",
     label: "Show today's brief",
     scope: "floor",

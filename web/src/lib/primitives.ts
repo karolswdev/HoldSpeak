@@ -43,7 +43,8 @@ export type PrimitiveKind =
   | "story"
   | "repository"
   | "workbench"
-  | "intelligence";
+  | "intelligence"
+  | "people";
 
 /** How a primitive kind opens on the Desk (HS-117-16). */
 export type SurfaceDeclaration =
@@ -345,6 +346,14 @@ export interface Intelligence {
   name: string;
 }
 
+/** The singleton People Desk application. Relationships stay inside its
+ * protected local data plane; they are never person tiles on the Desk. */
+export interface PeopleDesk {
+  kind: "people";
+  id: "people";
+  name: string;
+}
+
 export type Primitive = (
   | Meeting
   | Artifact
@@ -364,6 +373,7 @@ export type Primitive = (
   | Story
   | Workbench
   | Intelligence
+  | PeopleDesk
 ) & { spriteState?: string | null };
 
 /**
@@ -544,6 +554,16 @@ export const PRIMITIVES = {
     authorable: false,
     surface: { type: "pullout" },
   },
+  people: {
+    kind: "people",
+    label: "People",
+    plural: "People",
+    syncClass: "local",
+    blurb: "Management relationships and 1:1 follow-through.",
+    icon: "M8 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6M2 21v-2a5 5 0 0 1 10 0v2M16 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6M13 21v-2a5 5 0 0 1 9-3.87",
+    authorable: false,
+    surface: { type: "surface", surfaceKey: "open-people" },
+  },
   layout: {
     kind: "layout",
     label: "Layout",
@@ -576,6 +596,7 @@ export type PrimitiveMap = {
   story: Story;
   workbench: Workbench;
   intelligence: Intelligence;
+  people: PeopleDesk;
 };
 
 /** Look up the surface declaration for a kind (HS-117-16). */
@@ -600,7 +621,7 @@ export const DESK_GROUPS = [
   { label: "Organization", kinds: ["directory", "kb", "project", "repository"] },
   { label: "Live", kinds: ["coder"] },
   { label: "Delivery", kinds: ["roadmap", "story"] },
-  { label: "Local", kinds: ["game", "layout", "intelligence"] },
+  { label: "Local", kinds: ["game", "layout", "intelligence", "people"] },
 ] as const satisfies readonly { readonly label: string; readonly kinds: readonly PrimitiveKind[] }[];
 
 /** Compile-time proof that every PrimitiveKind appears in exactly one

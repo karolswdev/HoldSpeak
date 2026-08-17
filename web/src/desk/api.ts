@@ -17,6 +17,7 @@ import type {
   Meeting,
   Note,
   Persona,
+  PeopleDesk,
   Primitive,
   PrimitiveKind,
   PrimitiveMap,
@@ -143,6 +144,9 @@ export const EMPTY_ITEMS = {
   workbench: [],
   intelligence: [
     { kind: "intelligence", id: "desk", name: "Intelligence" } satisfies Intelligence,
+  ],
+  people: [
+    { kind: "people", id: "people", name: "People" } satisfies PeopleDesk,
   ],
   game: [],
   layout: [],
@@ -477,7 +481,7 @@ export const fromCoderStatus = (data: unknown): Coder[] =>
 /** The subset of PrimitiveKind that has a wire endpoint and a fromWire mapper. */
 type WireKind = Exclude<
   PrimitiveKind,
-  "game" | "layout" | "story" | "intelligence"
+  "game" | "layout" | "story" | "intelligence" | "people"
 >;
 
 /** Compile-time completeness guard: adding a new WireKind without a mapper

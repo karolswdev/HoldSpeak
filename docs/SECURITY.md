@@ -166,26 +166,41 @@ beaconing** anywhere in the codebase.
 
 ### Encryption-at-rest decision
 
-**Decision: document the stance; do not implement app-level encryption now.**
+**Decision: the normal HoldSpeak data plane remains plaintext; confidential People
+records use a separate encrypted data plane.**
 
 Rationale:
 - HoldSpeak is single-user and local. The realistic protection for at-rest data
   on a personal machine is **full-disk encryption** (FileVault on macOS, LUKS on
   Linux), which covers every file uniformly (including the DB, config, and any
   temp snapshots) without HoldSpeak holding a key it cannot safely manage.
-- App-level encryption would require a key-management story (where does the key
-  live on a headless homelab box?) that, done poorly, adds risk without adding
-  protection.
+- Whole-application encryption would require a larger key-management and migration
+  story (including headless installs) that, done poorly, adds risk without adding
+  protection. HoldSpeak therefore does not imply that local-only normal data is
+  encrypted.
+
+The People capability is the narrow exception triggered by third-party relationship
+material. Its records are written to a dedicated sidecar only after sensitive JSON
+payloads are encrypted with AES-256-GCM. The random data-encryption key is retrieved
+from an allow-listed native OS credential store (macOS Keychain or Linux Secret
+Service); there is no production plaintext, file, config, or environment fallback.
+If that credential store is absent, locked, or mismatched, People fails closed.
+People content is excluded from the normal database, its safety backups, global
+FTS/Search/Ask/Memory, sync, exports/connectors, Cadence, generic MCP surfaces, and
+content-bearing logs. A default-off People MCP adapter can disclose relationship
+metadata and `shared_intent` records over stdio only after the owner explicitly
+starts the sidecar with read or write capability; leader-private content is always
+excluded. See [People security boundary](PEOPLE_SECURITY.md).
 
 **Residual risk:** if the machine is compromised at the file level and full-disk
 encryption is off, transcripts, voice embeddings, and the activity ledger are
 readable. We accept this for the local-first, single-user model and **recommend
 users enable full-disk encryption**.
 
-**Revisit trigger:** flip this decision if HoldSpeak gains multi-user installs,
-a shared/server deployment, or stores third-party data under a contractual
-confidentiality obligation. At that point, app-level encryption of the DB (e.g.
-SQLCipher) becomes warranted and should be its own story.
+**Revisit trigger:** whole-application encryption remains warranted if HoldSpeak
+gains multi-user installs or a shared/server deployment. New classes of third-party
+confidential data must either enter an equivalently reviewed encrypted boundary or
+remain unsupported; they must not silently reuse the plaintext plane.
 
 ---
 

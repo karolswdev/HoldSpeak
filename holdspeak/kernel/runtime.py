@@ -12,6 +12,7 @@ from .actuator import ActuatorCodec
 from .broker import Broker
 from .desktop_type_text import DesktopTypeTextCodec
 from .external_egress import ExternalEgressCodec
+from .people_store_setup import PeopleStoreSetupCodec
 from .inference import InferenceInvokeCodec, InferenceRunCodec
 from .inference_cancel import InferenceCancelCodec
 from .journal import JournalStore
@@ -21,7 +22,6 @@ from .process_input import ProcessInputCodec
 from .process_spawn import ProcessSpawnCodec
 from .subprocess_exec import SubprocessExecCodec
 from .tool_call import ToolCallCodec
-from .voice_resolve import VoiceResolveCodec
 from .workbench_mint import WorkbenchMintCodec
 from .workbench_triage import WorkbenchTriageCodec
 
@@ -64,6 +64,7 @@ def _build(database: Any, *, clock: Any = None) -> Broker:
     process_spawn = ProcessSpawnCodec(launch_service, database.delivery_receipts)
     subprocess_exec = SubprocessExecCodec()
     external_egress = ExternalEgressCodec()
+    people_store_setup = PeopleStoreSetupCodec()
     actuator = ActuatorCodec(database.actuators, _mode)
     inference = InferenceRunCodec(database, **({"clock": clock} if clock else {}))
     invocation = InferenceInvokeCodec(database, store, **({"clock": clock} if clock else {}))
@@ -94,6 +95,7 @@ def _build(database: Any, *, clock: Any = None) -> Broker:
         OperationSpec(process_spawn.name, process_spawn.version, process_spawn, "agent.submit", "propose"),
         OperationSpec(subprocess_exec.name, subprocess_exec.version, subprocess_exec, "agent.submit", "propose"),
         OperationSpec(external_egress.name, external_egress.version, external_egress, "agent.submit", "propose"),
+        OperationSpec(people_store_setup.name, people_store_setup.version, people_store_setup, "agent.submit", "propose"),
         OperationSpec(actuator.name, actuator.version, actuator, "agent.submit", "propose"),
         OperationSpec(inference.name, inference.version, inference, "agent.submit", "propose"),
         OperationSpec(invocation.name, invocation.version, invocation, "agent.submit", "propose"),

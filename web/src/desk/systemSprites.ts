@@ -11,6 +11,7 @@ export const SYSTEM = {
   dockMeetings: `${BASE}dock-meetings.png`,
   dockAgents: `${BASE}dock-agents.png`,
   dockSettings: `${BASE}dock-settings.png`,
+  dockPeople: `${BASE}dock-people.png`,
   // HS-111-09 — the gadget sprites and backdrop tile are RETIRED: the
   // SVG VerbGlyph gadgets and the CSS crosshatch won on the desk (see
   // ICON-DISCIPLINE §HS-110-02, amended). Registered sprites RENDER —
@@ -36,4 +37,5 @@ export const DOCK_SPRITES: Record<string, string> = {
   "surface-meetings": SYSTEM.dockMeetings,
   "surface-companion": SYSTEM.dockAgents,
   "surface-settings": SYSTEM.dockSettings,
+  "surface-people": SYSTEM.dockPeople,
 };

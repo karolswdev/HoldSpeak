@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Button } from "../../../components/signal/Signal";
 import { apiFetch, readableError } from "../../../lib/api";
 import { refreshIntelligenceAttention } from "../../intelligenceAttention";
+import { openSurfaceOr } from "../../shell";
 import {
   SurfaceLedger,
   SurfaceLedgerRow,
@@ -28,6 +29,8 @@ type FollowThroughCard = {
   due: string | null;
   source: string;
   decision_id?: string | null;
+  /** Opaque People relationship ref supplied only by the Follow-through API. */
+  target_ref?: string | null;
   provenance: Provenance | null;
 };
 
@@ -68,6 +71,7 @@ function isOverdue(due: string | null): boolean {
 }
 
 function sourceFor(card: FollowThroughCard): { glyph: string; label: string } {
+  if (card.source === "people_commitment") return { glyph: "♧", label: "people" };
   if (card.source === "decision") return { glyph: "◇", label: "decision" };
   return { glyph: "⌁", label: "meeting" };
 }
@@ -142,6 +146,10 @@ export function FollowThroughView({
   };
 
   const openDecision = (card: FollowThroughCard) => {
+    if (card.source === "people_commitment") {
+      openSurfaceOr("open-people", "/", card.target_ref ?? undefined);
+      return;
+    }
     if (!card.decision_id) {
       setError("No decision recorded for this follow-through.");
       return;
@@ -196,6 +204,7 @@ export function FollowThroughView({
                   const open = openCardId === card.id;
                   const source = sourceFor(card);
                   const overdue = isOverdue(card.due);
+                  const peopleCommitment = card.source === "people_commitment";
                   return (
                     <SurfaceLedgerRow
                       key={card.id}
@@ -217,8 +226,8 @@ export function FollowThroughView({
                           <button
                             type="button"
                             className="follow-through-source"
-                            title="Open governing decision"
-                            aria-label={`Open decision for ${card.text}`}
+                            title={peopleCommitment ? "Open People" : "Open governing decision"}
+                            aria-label={`${peopleCommitment ? "Open People" : "Open decision"} for ${card.text}`}
                             onClick={(event) => {
                               event.stopPropagation();
                               openDecision(card);
@@ -233,8 +242,8 @@ export function FollowThroughView({
                         <div className="follow-through-verbs" aria-label={`Verbs for ${card.text}`}>
                           <Button dense variant="ghost" disabled={busyCardId === card.id} onClick={() => void complete(card.id, "done")} aria-label="Mark done">✓</Button>
                           <Button dense variant="ghost" disabled={busyCardId === card.id} onClick={() => void complete(card.id, "dismiss")} aria-label="Dismiss">↷</Button>
-                          <Button dense variant="ghost" disabled={busyCardId === card.id} onClick={() => void complete(card.id, "snooze", { until: tomorrow() })} aria-label="Snooze until tomorrow">◷</Button>
-                          <Button dense variant="ghost" disabled={busyCardId === card.id} onClick={() => setDelegatingCardId(delegatingCardId === card.id ? null : card.id)} aria-label="Delegate">⇢</Button>
+                          {!peopleCommitment ? <Button dense variant="ghost" disabled={busyCardId === card.id} onClick={() => void complete(card.id, "snooze", { until: tomorrow() })} aria-label="Snooze until tomorrow">◷</Button> : null}
+                          {!peopleCommitment ? <Button dense variant="ghost" disabled={busyCardId === card.id} onClick={() => setDelegatingCardId(delegatingCardId === card.id ? null : card.id)} aria-label="Delegate">⇢</Button> : null}
                           <Button dense variant="ghost" disabled={busyCardId === card.id} onClick={() => void complete(card.id, "reopen")} aria-label="Reopen">↺</Button>
                         </div>
                         {delegatingCardId === card.id ? (

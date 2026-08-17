@@ -130,6 +130,7 @@ const RENAME_LOCKS: Record<string, string> = {
   game: "Named by the game",
   layout: "Named by the desk layout",
   intelligence: "Named by the desk",
+  people: "Named by the People surface",
 };
 
 /** Why this kind's name cannot be edited, or null when Rename is real. */

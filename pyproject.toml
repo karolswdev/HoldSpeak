@@ -51,6 +51,13 @@ dependencies = [
     "PyYAML>=6.0",
     # Meeting import accepts multipart uploads (POST /api/meetings/import).
     "python-multipart>=0.0.9",
+    # The People sidecar encrypts confidential relationship material before it
+    # reaches SQLite.  `cryptography` ships maintained native wheels for our
+    # supported macOS/Linux targets.
+    "cryptography>=42.0",
+    # Production People keys live only in an allow-listed native credential
+    # backend (macOS Keychain or Linux Secret Service).
+    "keyring>=25.0",
 ]
 
 [project.optional-dependencies]

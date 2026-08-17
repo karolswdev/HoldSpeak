@@ -132,6 +132,16 @@ export interface CadenceHistoryResponse {
   [key: string]: unknown;
 }
 
+/** PeopleCore's protected local-data-plane readiness contract. */
+export interface PeopleReadinessResponse {
+  /** Preferred PR1 wire name; `state` is accepted while hubs converge. */
+  readiness?: "unconfigured" | "locked" | "key_unavailable" | "corrupt" | "unavailable" | "ready";
+  state?: "unconfigured" | "locked" | "key_unavailable" | "corrupt" | "unavailable" | "ready";
+  store?: "encrypted" | "absent";
+  sync?: "local_only";
+  capture?: "notes_only";
+}
+
 /** CommandsCore / SettingsCore — the settings blob */
 export interface SettingsResponse {
   config_version?: number;

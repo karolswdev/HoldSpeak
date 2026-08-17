@@ -21,6 +21,7 @@ const WORLD_ONLY_EXCLUDE = [
   "game",
   "layout",
   "intelligence",
+  "people",
 ] as const;
 
 /** The exhaustive iteration order — every PrimitiveKind is listed, but
