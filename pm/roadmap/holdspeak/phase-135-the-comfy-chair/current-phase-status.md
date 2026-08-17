@@ -1,6 +1,6 @@
 # Phase 135 — The Comfy Chair
 
-**Status:** in-progress (8/15).
+**Status:** in-progress (9/15).
 
 **Last updated:** 2026-08-17.
 
@@ -110,7 +110,7 @@ docs + the walk.
 | HS-135-08 | The Follow-Through lane | done | [story-08](./story-08-follow-through-lane.md) | [evidence-story-08](./evidence-story-08.md) |
 | HS-135-09 | The Meetings lane | backlog | [story-09](./story-09-meetings-lane.md) | [evidence-story-09](./evidence-story-09.md) |
 | HS-135-10 | The Agents lane | backlog | [story-10](./story-10-agents-lane.md) | [evidence-story-10](./evidence-story-10.md) |
-| HS-135-11 | The capture hero | backlog | [story-11](./story-11-capture-hero.md) | [evidence-story-11](./evidence-story-11.md) |
+| HS-135-11 | The capture hero | done | [story-11](./story-11-capture-hero.md) | [evidence-story-11](./evidence-story-11.md) |
 | HS-135-12 | The desk clicks | done | [story-12](./story-12-sound-palette.md) | [evidence-story-12](./evidence-story-12.md) |
 | HS-135-13 | Docs and the walk | backlog | [story-13](./story-13-docs-and-walk.md) | [evidence-story-13](./evidence-story-13.md) |
 | HS-135-14 | The chrome speaks Workbench | backlog | [story-14](./story-14-chrome-speaks-workbench.md) | [evidence-story-14](./evidence-story-14.md) |
@@ -286,3 +286,21 @@ above both surfaces. Routes unchanged (the swap is internal DeskApp state,
 not a route). TypeScript clean, 5 test files / 45 tests green (ChairHome
 5, Chair 12, shell 15, routes 3, systemSprites 2 + broader desk sweep
 72/72).
+HS-135-11 shipped: the capture hero. CaptureHero.tsx fills the Chair's
+hero slot: a TransportKey-species instrument key at hero scale with the
+accent gradient (counsel ruling E.4 -- gradient permitted here and on
+the Record Orb only). TAP starts a real meeting recording via the shared
+store's startRecording() (the exact verb the dock RecordOrb uses);
+recording state (elapsed timer + stop verb) renders IN the hero from the
+same store slices the dock orb reads (consistency is structural). Voice
+trigger: an inline MicButton captures transcription; when the text
+matches the named command set (["start meeting", "start recording",
+"record meeting"], case-insensitive, trimmed, exact match) recording
+starts -- near-misses do not trigger. Ask AI: a Button (ghost variant)
+calls useDesk.getState().openAsk() via the ChairHome wiring. Honest
+labels: "Record a meeting" at idle, "Stop recording" when recording
+(Article VI). L1 pressed grammar: raised bevel with accent-gradient at
+rest; sunken bevel (inverted) when active/recording. hero.css is
+tokens-only. ChairHome.tsx wired: hero={<CaptureHero onAskAI={openAsk}/>}.
+Gradient boundary grep test enforces E.4 across all desk CSS. 4 test
+files / 54 tests green (20 hero + 12 Chair + 5 ChairHome + 17 MicButton).

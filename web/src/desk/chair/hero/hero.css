@@ -1,0 +1,84 @@
+/* HS-135-11 -- the capture hero stylesheet.
+   The accent gradient is permitted HERE (and on the Record Orb) ONLY
+   (counsel ruling E.4 gradient boundary). Tokens only; L1 depth grammar. */
+
+/* The hero container: centered row with the mic/record instrument
+   and the Ask AI verb. */
+.capture-hero {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+}
+
+/* The hero instrument key: TransportKey at hero scale with the
+   accent gradient as its resting background. L1 pressed grammar:
+   raised at rest, sunken when active/recording. */
+.capture-hero-key {
+  flex: none;
+  width: var(--size-key);
+  height: var(--size-key);
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  padding: 0;
+  border: 1px solid var(--accent);
+  border-radius: 0;
+  background: var(--accent-gradient);
+  box-shadow: inset 1px 1px 0 var(--bevel-light), inset -1px -1px 0 var(--bevel-dark);
+  color: var(--text-on-accent);
+  font: 650 9px / 1 var(--font-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  animation: none;
+}
+.capture-hero-key:hover:not(:disabled) {
+  filter: brightness(1.1);
+}
+.capture-hero-key:focus-visible {
+  outline: none;
+  box-shadow: inset 1px 1px 0 var(--bevel-light), inset -1px -1px 0 var(--bevel-dark),
+    0 0 0 2px var(--accent-glow);
+}
+/* Active/recording: bevel inverts to sunken (L1 pressed grammar). */
+.capture-hero-key[data-active] {
+  background: var(--accent);
+  box-shadow: inset 1px 1px 0 var(--bevel-dark), inset -1px -1px 0 var(--bevel-light);
+  animation: none;
+}
+.capture-hero-key:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* The hero glyph (mic sprite). */
+.capture-hero-glyph {
+  font-size: 16px;
+  line-height: 1;
+}
+
+/* The hero word label. */
+.capture-hero-word {
+  font-size: 9px;
+  font-weight: 650;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  line-height: 1;
+}
+
+/* Recording state rendered IN the hero: elapsed + stop verb. */
+.capture-hero-recording {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.capture-hero-elapsed {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-xs);
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+  min-width: 3ch;
+}
