@@ -1,6 +1,6 @@
 # Phase 138 — The People Ledger
 
-**Status:** active (2/8).
+**Status:** active (5/8).
 
 **Last updated:** 2026-08-17.
 
@@ -93,7 +93,7 @@ product stores.
 |---|---|---|---|---|
 | HS-138-01 | The encrypted boundary | done | [story-01](./story-01-encrypted-boundary.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-138-02 | Relationships and one-to-ones | done | [story-02](./story-02-relationships-one-to-ones.md) | [evidence-story-02](./evidence-story-02.md) |
-| HS-138-03 | Commitments join Follow-through | ready | [story-03](./story-03-commitments-follow-through.md) | — |
+| HS-138-03 | Commitments join Follow-through | done | [story-03](./story-03-commitments-follow-through.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-138-04 | People belongs on the Desk | ready | [story-04](./story-04-people-desk.md) | — |
 | HS-138-05 | The privacy proof | ready | [story-05](./story-05-privacy-proof.md) | — |
 | HS-138-06 | The People walk | ready | [story-06](./story-06-people-walk.md) | — |
@@ -188,11 +188,12 @@ product stores.
 ## Where we are
 
 The close-out is underway on branch `phase-138-close` (2026-08-17, after the
-revival merge landed the implementation on main via PR #459). HS-138-01 and
-HS-138-02 are done on gate-captured evidence (01: 47 tests — crypto, custody,
-policy, store, no-leaks; 02: 20 tests — service lifecycle, roll-forward
-successor links, archive hiding, owner auth, keyless readiness). Real-Keychain
-manual legs are deferred to the HS-138-06 walk by design. Remaining: 03/05
-evidence flips, the story-04 badge-copy amendment (counsel ruled "This device
-only" false for the Send-to-Workbench path), and the owner-attended production
-walk (06).
+revival merge landed the implementation on main via PR #459). HS-138-01,
+HS-138-02, and HS-138-03 are done on gate-captured evidence (01: 47 tests —
+crypto, custody, policy, store, no-leaks; 02: 20 tests — service lifecycle,
+roll-forward successor links, archive hiding, owner auth, keyless readiness;
+03: 34 tests — projection, source-dispatch, full ordinary follow-through
+regression, no-leaks). Real-Keychain manual legs are deferred to the HS-138-06
+walk by design. Remaining: the 05 evidence flip, the story-04 badge-copy
+amendment (counsel ruled "This device only" false for the Send-to-Workbench
+path), and the owner-attended production walk (06).
