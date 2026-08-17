@@ -1,6 +1,6 @@
 # Phase 135 — The Comfy Chair
 
-**Status:** in-progress (10/15).
+**Status:** in-progress (11/15).
 
 **Last updated:** 2026-08-17.
 
@@ -108,7 +108,7 @@ docs + the walk.
 | HS-135-06 | The Chair is home | done | [story-06](./story-06-chair-is-home.md) | [evidence-story-06](./evidence-story-06.md) |
 | HS-135-07 | The Brief lane | done | [story-07](./story-07-brief-lane.md) | [evidence-story-07](./evidence-story-07.md) |
 | HS-135-08 | The Follow-Through lane | done | [story-08](./story-08-follow-through-lane.md) | [evidence-story-08](./evidence-story-08.md) |
-| HS-135-09 | The Meetings lane | backlog | [story-09](./story-09-meetings-lane.md) | [evidence-story-09](./evidence-story-09.md) |
+| HS-135-09 | The Meetings lane | done | [story-09](./story-09-meetings-lane.md) | [evidence-story-09](./evidence-story-09.md) |
 | HS-135-10 | The Agents lane | backlog | [story-10](./story-10-agents-lane.md) | [evidence-story-10](./evidence-story-10.md) |
 | HS-135-11 | The capture hero | done | [story-11](./story-11-capture-hero.md) | [evidence-story-11](./evidence-story-11.md) |
 | HS-135-12 | The desk clicks | done | [story-12](./story-12-sound-palette.md) | [evidence-story-12](./evidence-story-12.md) |
@@ -321,3 +321,17 @@ lane level mirroring the Phase-132 fence. Registry entry added to
 lanes/index.ts keyed as "brief" (matching LaneId). 4 test files / 45
 tests green (15 BriefLane + 10 FollowThroughLane + 8 IntelligenceTruth
 + 12 Chair).
+HS-135-09 shipped: the Meetings lane. MeetingsLane.tsx composes through
+ChairLane (no custom verbs needed -- the sparse law forbids filter chrome
+on the lane). Data from useDesk(s => s.items.meeting) (already loaded by
+the dataSlice, no new endpoints); sorted by startedAt descending. Live
+meeting detection: when the store's recording state is "recording" and a
+meeting has no endedAt, it pins first with a "REC" badge and live glyph.
+Finished meetings show truthful intel badges mapped from intelStatus
+(SAVED/RUNNING/QUEUED/FAILED/PARTIAL/SKIPPED/OFF). Detail string shows
+date (MMM DD), segment count, and action-item count. Header-click opens
+the Meetings surface window via onOpenInWindow("review-meetings");
+item-click opens meeting detail via onOpenInWindow(meetingId). Empty
+state returns null (the Chair's 300ms fallback owns the all-blank case).
+Registry entry added to lanes/index.ts keyed as "meetings" (matching
+LaneId). 2 test files / 41 tests green (29 MeetingsLane + 12 Chair).

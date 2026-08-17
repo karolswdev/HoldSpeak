@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 135
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-135-05
 - **Unblocks:** HS-135-13
 - **Owner:** unassigned
@@ -32,9 +32,9 @@ one glance and one click away.
 
 ## Acceptance criteria
 
-- [ ] Seeded meetings render with truthful badges; a live meeting
+- [x] Seeded meetings render with truthful badges; a live meeting
   pins first with live state (test with the frame fixture).
-- [ ] Header and item clicks open the right windows, single-instance.
+- [x] Header and item clicks open the right windows, single-instance.
 
 ## Test plan
 
