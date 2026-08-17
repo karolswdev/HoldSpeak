@@ -29,9 +29,10 @@ light silver, mid slate, ink, pure white, 2 embers, workbench
 blue-grey) forced through PixelLab's
 palette constraint, one prompt template carrying the laws (hard
 single-color outline, no anti-aliasing, top-left light, two shades
-per surface, 32×32 for crisp 2x in 16px slots). Ratified reference casting: bright-bell.png in the session forge
-(scratchpad icon-forge/); bright-mic and bright-metronome are strong
-candidates pending the contact sheet. Everything casts BRIGHT —
+per surface, 32×32 for crisp 2x in 16px slots). Owner-approved castings (2026-08-17): bright-bell.png (the ratified
+reference), bright-mic.png, and bright-metronome.png — all three in
+the session forge (scratchpad icon-forge/) and adopted as the family
+seeds; the full contact sheet still rides to the owner before wiring. Everything casts BRIGHT —
 silver-forward, cheerful, crisp; dark fills are forbidden.
 
 ## Scope
