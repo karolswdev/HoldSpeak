@@ -3219,6 +3219,26 @@
       ]
     },
     {
+      "path": "/api/people/relationships/{relationship_id}/notes",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.people",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/people/relationships/{relationship_id}/notes",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.people",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/people/relationships/{relationship_id}/one-on-ones",
       "methods": [
         "GET"

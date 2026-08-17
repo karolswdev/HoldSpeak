@@ -168,8 +168,11 @@ from an allow-listed native OS credential store (macOS Keychain or Linux Secret
 Service); there is no production plaintext, file, config, or environment fallback.
 If that credential store is absent, locked, or mismatched, People fails closed.
 People content is excluded from the normal database, its safety backups, global
-FTS/Search/Ask/Memory, sync, exports/connectors, Cadence, MCP, and content-bearing
-logs. See [People security boundary](PEOPLE_SECURITY.md).
+FTS/Search/Ask/Memory, sync, exports/connectors, Cadence, generic MCP surfaces, and
+content-bearing logs. A default-off People MCP adapter can disclose relationship
+metadata and `shared_intent` records over stdio only after the owner explicitly
+starts the sidecar with read or write capability; leader-private content is always
+excluded. See [People security boundary](PEOPLE_SECURITY.md).
 
 **Residual risk:** if the machine is compromised at the file level and full-disk
 encryption is off, transcripts, voice embeddings, and the activity ledger are

@@ -5,6 +5,7 @@ import type { CoreProps } from "./core-types";
 import { Button } from "../../components/signal/Signal";
 import { ApiError, apiFetch, readableError } from "../../lib/api";
 import { openSurfaceOr } from "../../desk/shell";
+import { spriteUrl } from "../../desk/sprites";
 import { CycleGadget, PadGadget, StringGadget } from "../../desk/surface/gadgets";
 import {
   ConfirmVerb,
@@ -20,7 +21,8 @@ import "./people.css";
 
 type ReadinessState = "unconfigured" | "locked" | "key_unavailable" | "corrupt" | "unavailable" | "ready";
 type Visibility = "shared_intent" | "leader_private";
-type Lens = "now" | "one-on-ones" | "info";
+type RelationshipKind = "direct_report" | "peer" | "extended";
+type Lens = "now" | "one-on-ones" | "context" | "info";
 
 type Readiness = {
   readiness?: ReadinessState;
@@ -33,6 +35,7 @@ type Relationship = {
   id: string;
   display_name: string;
   relationship_kind?: string;
+  role_context?: string | null;
   cadence?: string | null;
   next_one_on_one?: string | null;
   manager_commitment_count?: number;
@@ -40,10 +43,12 @@ type Relationship = {
 };
 type AgendaItem = { id: string; body: string; visibility: Visibility; state: string; rolled_from_id?: string | null };
 type Session = { id: string; occurred_at?: string; title?: string; agenda?: AgendaItem[] };
+type GroundingNote = { id: string; topic?: string; body: string; visibility: Visibility; source?: string };
 type RelationshipDetail = Relationship & {
   commitments?: Array<{ id: string; body: string; due?: string | null }>;
   requests?: Array<{ id: string; body: string; state: string }>;
   sessions?: Session[];
+  notes?: GroundingNote[];
 };
 
 function stateOf(value: Readiness): ReadinessState {
@@ -96,6 +101,7 @@ export function PeopleCore({ hero, scope }: CoreProps) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [detail, setDetail] = useState<RelationshipDetail | null>(null);
   const [newName, setNewName] = useState("");
+  const [newKind, setNewKind] = useState<RelationshipKind>("direct_report");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const requestedRelationshipId = scope?.startsWith("people:")
@@ -156,7 +162,7 @@ export function PeopleCore({ hero, scope }: CoreProps) {
     const display_name = newName.trim(); if (!display_name) return;
     setBusy(true); setError("");
     try {
-      const created = await apiFetch<{ relationship: Relationship }>("/api/people/relationships", { method: "POST", json: { display_name, relationship_kind: "direct_report" } });
+      const created = await apiFetch<{ relationship: Relationship }>("/api/people/relationships", { method: "POST", json: { display_name, relationship_kind: newKind } });
       setNewName(""); await load(); await select(created.relationship.id);
     } catch (cause) { protectedFailure(cause); } finally { setBusy(false); }
   };
@@ -182,22 +188,23 @@ export function PeopleCore({ hero, scope }: CoreProps) {
     {error ? <SurfaceState error={error} onRetry={() => void load()} /> : null}
     <SurfaceSplit
       detailOpen={Boolean(selected)}
-      main={<Roster relationships={relationships} selectedId={selectedId} newName={newName} setNewName={setNewName} busy={busy} onCreate={() => void createRelationship()} onSelect={(id) => void select(id)} />}
+      main={<Roster relationships={relationships} selectedId={selectedId} newName={newName} setNewName={setNewName} newKind={newKind} setNewKind={setNewKind} busy={busy} onCreate={() => void createRelationship()} onSelect={(id) => void select(id)} />}
       detail={selected ? <RelationshipPane relationship={selected} onRefresh={() => void select(selected.id)} onProtectedFailure={protectedFailure} onArchived={() => { clearProtected(); void load(); }} onBack={() => { setSelectedId(null); setDetail(null); }} /> : undefined}
     />
   </>;
 }
 
-function Roster({ relationships, selectedId, newName, setNewName, busy, onCreate, onSelect }: {
-  relationships: Relationship[]; selectedId: string | null; newName: string; setNewName(value: string): void; busy: boolean; onCreate(): void; onSelect(id: string): void;
+function Roster({ relationships, selectedId, newName, setNewName, newKind, setNewKind, busy, onCreate, onSelect }: {
+  relationships: Relationship[]; selectedId: string | null; newName: string; setNewName(value: string): void; newKind: RelationshipKind; setNewKind(value: RelationshipKind): void; busy: boolean; onCreate(): void; onSelect(id: string): void;
 }) {
   const ordered = useMemo(() => [...relationships].sort((a, b) => (Number(b.manager_commitment_count ?? 0) - Number(a.manager_commitment_count ?? 0)) || a.display_name.localeCompare(b.display_name)), [relationships]);
   return <SurfaceSection label="Relationships">
     <div className="people-new">
       <StringGadget mic={false} label="New relationship" value={newName} onChange={setNewName} placeholder="Name" inputProps={{ id: "people-new-relationship" }} onKeyDown={(event) => { if (event.key === "Enter") onCreate(); }} />
+      <CycleGadget label="Relationship" value={newKind} onChange={(value) => setNewKind(value as RelationshipKind)} options={[{ value: "direct_report", label: "Direct report" }, { value: "peer", label: "Peer" }, { value: "extended", label: "Extended" }]} />
       <Button dense disabled={!newName.trim() || busy} loading={busy} onClick={onCreate}>Add</Button>
     </div>
-    {!ordered.length ? <SurfaceState empty emptyLabel="No relationships" /> : <SurfaceRows>{ordered.map((relationship) => <SurfaceRow key={relationship.id} selected={selectedId === relationship.id} title={relationship.display_name} detail={`${relationship.relationship_kind === "direct_report" ? "Direct report" : relationship.relationship_kind ?? "Relationship"}${relationship.next_one_on_one ? ` · ${relationship.next_one_on_one}` : ""}`} meta={relationship.manager_commitment_count ? `You owe ${relationship.manager_commitment_count}` : undefined} onOpen={() => onSelect(relationship.id)} />)}</SurfaceRows>}
+    {!ordered.length ? <SurfaceState empty emptyLabel="No relationships" emptyImage={spriteUrl("people", "people")} /> : <SurfaceRows>{ordered.map((relationship) => <SurfaceRow key={relationship.id} selected={selectedId === relationship.id} title={relationship.display_name} detail={`${relationshipLabel(relationship.relationship_kind)}${relationship.next_one_on_one ? ` · ${relationship.next_one_on_one}` : ""}`} meta={relationship.manager_commitment_count ? `You owe ${relationship.manager_commitment_count}` : undefined} onOpen={() => onSelect(relationship.id)} />)}</SurfaceRows>}
   </SurfaceSection>;
 }
 
@@ -206,12 +213,26 @@ function RelationshipPane({ relationship, onRefresh, onProtectedFailure, onArchi
   return <div className="people-detail">
     <div className="people-detail-head"><Button dense variant="ghost" onClick={onBack}>Back</Button><strong>{relationship.display_name}</strong></div>
     <div className="people-lenses" role="tablist" aria-label={`${relationship.display_name} lenses`}>
-      {([['now', 'Now'], ['one-on-ones', '1:1s'], ['info', 'Info']] as const).map(([id, label]) => <button key={id} type="button" role="tab" aria-selected={lens === id} onClick={() => setLens(id)}>{label}</button>)}
+      {([['now', 'Now'], ['one-on-ones', '1:1s'], ['context', 'Context'], ['info', 'Info']] as const).map(([id, label]) => <button key={id} type="button" role="tab" aria-selected={lens === id} onClick={() => setLens(id)}>{label}</button>)}
     </div>
     {lens === "now" ? <NowLens relationship={relationship} onRefresh={onRefresh} onProtectedFailure={onProtectedFailure} /> : null}
     {lens === "one-on-ones" ? <OneOnOnes relationship={relationship} onRefresh={onRefresh} onProtectedFailure={onProtectedFailure} /> : null}
+    {lens === "context" ? <ContextLens relationship={relationship} onRefresh={onRefresh} onProtectedFailure={onProtectedFailure} /> : null}
     {lens === "info" ? <InfoLens relationship={relationship} onArchived={onArchived} onProtectedFailure={onProtectedFailure} /> : null}
   </div>;
+}
+
+function ContextLens({ relationship, onRefresh, onProtectedFailure }: { relationship: RelationshipDetail; onRefresh(): void; onProtectedFailure(cause: unknown): void }) {
+  const [topic, setTopic] = useState(""); const [body, setBody] = useState(""); const [visibility, setVisibility] = useState<Visibility>("leader_private"); const [busy, setBusy] = useState(false);
+  const add = async () => { if (!body.trim()) return; setBusy(true); try { await apiFetch(`/api/people/relationships/${encodeURIComponent(relationship.id)}/notes`, { method: "POST", json: { topic: topic.trim(), body: body.trim(), visibility } }); setTopic(""); setBody(""); onRefresh(); } catch (cause) { onProtectedFailure(cause); } finally { setBusy(false); } };
+  return <SurfaceSection label="Grounding notes"><div className="people-context-add"><StringGadget mic={false} label="Topic" value={topic} onChange={setTopic} placeholder="Topic (optional)" /><PadGadget mic={false} label="Grounding note" value={body} onChange={setBody} placeholder="Context worth remembering" rows={3} /><CycleGadget label="Visibility" value={visibility} onChange={(value) => setVisibility(value as Visibility)} options={[{ value: "leader_private", label: "Leader private" }, { value: "shared_intent", label: "Shared" }]} /><Button dense disabled={!body.trim() || busy} onClick={() => void add()}>Add note</Button></div>{!(relationship.notes ?? []).length ? <SurfaceState empty emptyLabel="No grounding notes" /> : <SurfaceRows>{(relationship.notes ?? []).map((note) => <SurfaceRow key={note.id} title={note.topic || note.body} detail={note.topic ? note.body : undefined} meta={note.visibility === "leader_private" ? "Leader private" : "Shared"} />)}</SurfaceRows>}</SurfaceSection>;
+}
+
+function relationshipLabel(kind?: string): string {
+  if (kind === "direct_report") return "Direct report";
+  if (kind === "peer") return "Peer";
+  if (kind === "extended") return "Extended relationship";
+  return "Relationship";
 }
 
 function NowLens({ relationship, onRefresh, onProtectedFailure }: { relationship: RelationshipDetail; onRefresh(): void; onProtectedFailure(cause: unknown): void }) {
@@ -234,5 +255,5 @@ function OneOnOnes({ relationship, onRefresh, onProtectedFailure }: { relationsh
 
 function InfoLens({ relationship, onProtectedFailure, onArchived }: { relationship: RelationshipDetail; onProtectedFailure(cause: unknown): void; onArchived(): void }) {
   const archive = async () => { try { await apiFetch(`/api/people/relationships/${encodeURIComponent(relationship.id)}/archive`, { method: "POST", json: {} }); onArchived(); } catch (cause) { onProtectedFailure(cause); } };
-  return <SurfaceSection label="Info"><dl className="people-info"><div><dt>Relationship</dt><dd>{relationship.relationship_kind === "direct_report" ? "Direct report" : relationship.relationship_kind ?? "Relationship"}</dd></div><div><dt>Cadence</dt><dd>{relationship.cadence ?? "Not set"}</dd></div><div><dt>Storage</dt><dd>Encrypted</dd></div><div><dt>Sync</dt><dd>This device only</dd></div><div><dt>Capture</dt><dd>Notes only</dd></div></dl><ConfirmVerb label="Archive" confirmLabel="Archive?" onConfirm={() => void archive()} /></SurfaceSection>;
+  return <SurfaceSection label="Info"><dl className="people-info"><div><dt>Relationship</dt><dd>{relationshipLabel(relationship.relationship_kind)}</dd></div><div><dt>Role context</dt><dd>{relationship.role_context ?? "Not set"}</dd></div><div><dt>Cadence</dt><dd>{relationship.cadence ?? "Not set"}</dd></div><div><dt>Storage</dt><dd>Encrypted</dd></div><div><dt>Sync</dt><dd>This device only</dd></div><div><dt>Capture</dt><dd>Notes only</dd></div></dl><ConfirmVerb label="Archive" confirmLabel="Archive?" onConfirm={() => void archive()} /></SurfaceSection>;
 }

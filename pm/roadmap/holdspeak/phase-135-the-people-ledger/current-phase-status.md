@@ -1,6 +1,6 @@
 # Phase 135 — The People Ledger
 
-**Status:** active (0/6).
+**Status:** active (1/7).
 
 **Last updated:** 2026-08-16.
 
@@ -15,7 +15,7 @@ adjudicator and integrator.
 
 ## Goal
 
-Ship an encrypted, local-only People relationship and 1:1 foundation whose
+Ship an encrypted, local-only organizational relationship and 1:1 foundation whose
 explicit manager commitments appear in Follow-through without entering plaintext
 product stores.
 
@@ -27,7 +27,8 @@ product stores.
   fallback exists in production.
 - The normal HoldSpeak database, FTS, Memory/Ask, sync, backups, exports, logs,
   receipts, connectors, meetings, and Cadence never receive People content.
-- PR1 is manual and notes-only: relationships, 1:1 agenda/prep, requests, and an
+- PR1 is manual and notes-only: direct-report, peer, and extended relationships;
+  1:1 agenda/prep; durable grounding notes; requests; and an
   explicit request-to-manager-commitment transition. A request is never inferred to
   be a promise.
 - Follow-through hydrates People commitments synchronously from the encrypted
@@ -39,13 +40,19 @@ product stores.
   are named states that never degrade to an empty roster or plaintext scratchpad.
 - `shared_intent` is future access intent, not a claim that another participant can
   view data today. PR1 remains this-device-only.
+- MCP is a separate explicit disclosure capability: off by default, enabled at
+  sidecar start as read or write, and limited to relationship metadata plus
+  `shared_intent` records. A source-preserving grounding bundle makes that accepted
+  context useful to agentic clients without invoking a model. Leader-private material
+  is never serialized to MCP.
 
 ## Scope
 
 ### In
 
 - Native-key-backed encrypted People sidecar and fail-closed readiness contract.
-- Manual relationships, notes-only 1:1 sessions, agenda/private prep, requests,
+- Manual direct-report, peer, and extended relationships; notes-only 1:1 sessions;
+  agenda/private prep; encrypted grounding notes; requests;
   explicit manager commitments, immutable/superseding accepted records.
 - Authenticated loopback API with content-free error codes.
 - In-memory Follow-through projection and source-dispatched lifecycle mutations.
@@ -53,14 +60,18 @@ product stores.
   facts: `Encrypted`, `This device only`, `Notes only`.
 - Security/threat-model documentation, leak tests, focused/full regression gates,
   and a live desktop+narrow walk.
+- Default-deny People MCP tools/resources for shared-intent continuity, manual
+  grounding, and explicit commitments, with no store setup, archive, capture,
+  model invocation, inferred assessment, search, or export.
 
 ### Out
 
 - Audio, recording, transcription, speaker or calendar identity linkage.
-- AI/inference, sentiment, ranking, scoring, employment decisions, activity or
+- AI/model invocation or inferred assessment, sentiment, ranking, scoring, employment decisions, activity or
   productivity surveillance, and cross-person comparison.
 - Growth plans, feedback/review packets, opportunity allocation, team maps.
-- Sync, sharing, export, backup/recovery, connectors, MCP, global Search/Ask/Memory.
+- Sync, participant sharing, export, backup/recovery, connectors, generic MCP,
+  global Search/Ask/Memory, and all leader-private MCP disclosure.
 - Cadence collection, Daily Brief projection, scheduled nudges, notifications,
   snooze, and delegation for People commitments.
 
@@ -84,6 +95,7 @@ product stores.
 | HSEGHS001HS104-135-04 | People belongs on the Desk | ready | [story-04](./story-04-people-desk.md) | — |
 | HSEGHS001HS104-135-05 | The privacy proof | ready | [story-05](./story-05-privacy-proof.md) | — |
 | HSEGHS001HS104-135-06 | The People walk | ready | [story-06](./story-06-people-walk.md) | — |
+| HSEGHS001HS104-135-07 | People through the MCP service boundary | done | [story-07](./story-07-people-mcp.md) | [evidence-story-07](./evidence-story-07.md) |
 
 ## Risk register
 
@@ -94,6 +106,7 @@ product stores.
 | Follow-through creates a second lifecycle authority | projection interface + source-dispatched mutations | People content/status written to `action_items` or Cadence |
 | Locked state exposes stale DOM/process data | readiness transition clears DTOs and drafts | name/body remains after 423/409/503 |
 | Scope drifts into employment surveillance | policy refusal matrix and no model/network calls | ranking, inference, capture, sync, export, or connector path exists |
+| MCP turns local encryption into implicit disclosure | default-off process capability; shared-intent projection; private-ID refusal | private content serialized or People opened without explicit mode |
 
 ## Exit criteria (evidence required)
 
@@ -111,6 +124,8 @@ product stores.
   are factual, no modal/page/score/risk UI appears, and lock clears visible data.
 - [ ] Focused backend/web tests, full parallel suite, production web build, and real
   live walk pass; inherited schema-59→60 baseline failure remains separately ledgered.
+- [ ] Default MCP cannot open People; read/write modes expose only their named
+  capability; leader-private sentinels never cross tool/resource serialization.
 
 ## Decisions deferred
 
@@ -120,6 +135,13 @@ product stores.
   separate destructive/recovery design and live proof.
 - Capture consent/boundaries and any source-cited local drafting — design only after
   the encrypted manual loop is proven and issue #450's inference spine is settled.
+- Broader People MCP administration, recovery, private-note access, search, or
+  model execution over grounding — each remains prohibited rather than implied by owner authority.
+- Deliberate relationship-to-meeting-participant association — the People IDs and
+  MCP/API boundaries are ready for a future reviewed linker, but PR1 does not infer
+  identity from voice, attendance, speaking time, calendar, or behavioral signals.
+  The proposed contract and maintainer prompt live in
+  [`docs/PEOPLE_INTEGRATION.md`](../../../../docs/PEOPLE_INTEGRATION.md).
 
 ## Ledger
 
@@ -155,6 +177,8 @@ product stores.
 
 ## Where we are
 
-Implementation is integrated and in final read-only Terra counsel. Draft-PR handoff
-follows after static flow adjudication; the phase remains active because the full
-production walk and maintainer verification caveat are intentionally open.
+Implementation is integrated and the People MCP service slice is done with focused
+evidence. Draft-PR handoff now includes organizational relationship kinds, encrypted
+grounding notes, an agent-ready shared-only grounding bundle, and the reviewed
+PixelLab sprite. The phase remains active because
+the full production walk and maintainer verification caveat are intentionally open.

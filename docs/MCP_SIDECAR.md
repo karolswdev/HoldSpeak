@@ -1,7 +1,7 @@
 # MCP sidecar
 
 The MCP sidecar is the desk's programmable surface over stdio. It exposes
-82 tools and 24 resources through the Model Context Protocol, so any MCP
+93 tools and 27 resources through the Model Context Protocol, so any MCP
 client (Claude Code, Cursor, a custom script) can read and drive the desk
 without touching the web UI.
 
@@ -32,9 +32,29 @@ To wire it into another MCP client, point it at `uv run holdspeak-mcp`
 (or `uvx --from holdspeak holdspeak-mcp` for a PyPI install). The server
 speaks stdio JSON-RPC.
 
+People is an additional confidential-data boundary and remains disabled in
+MCP by default. To allow relationship metadata and `shared_intent` records to
+cross into a trusted MCP client, launch the sidecar with read or write access:
+
+```json
+{
+  "mcpServers": {
+    "holdspeak": {
+      "command": "uv",
+      "args": ["run", "holdspeak-mcp"],
+      "cwd": ".",
+      "env": {"HOLDSPEAK_MCP_PEOPLE_ACCESS": "read"}
+    }
+  }
+}
+```
+
+Use `write` only when the client should also create shared records and move
+shared commitments. The default repository `.mcp.json` sets neither mode.
+
 ## Tool families
 
-The 82 tools are organized into families. Each tool follows the
+The 93 tools are organized into domain families. Each tool follows the
 `domain.verb` naming convention. Tool descriptions are the per-tool
 reference; this page covers the families and the cross-cutting rules.
 
@@ -46,7 +66,8 @@ workflows), the pipeline observer, follow-through lanes, inference
 invocations, and the Monday Brief. Five of the `desk.*` tools
 (`desk.list`, `desk.get`, `desk.create`, `desk.update`, `desk.delete`)
 operate on the primitive kind system: 6 surface kinds are stored as typed
-rows; the remaining 11 are computed or composite. Each description names
+rows; the remaining 12—including the singleton People surface—are computed,
+composite, or managed by a dedicated capability. Each description names
 which kinds it handles.
 
 ### ask (5 tools)
@@ -108,6 +129,25 @@ id.
 `memory.search` queries the long-horizon memory store with optional kind,
 project, time, and pagination filters.
 
+### people (11 tools)
+
+The encrypted People ledger is an opt-in MCP capability. `people.readiness`
+is content-free and works while access is disabled. With
+`HOLDSPEAK_MCP_PEOPLE_ACCESS=read`, the sidecar can list relationships and
+read one relationship's `shared_intent` 1:1s, agenda items, grounding notes,
+requests, and commitments. `people.grounding.get` returns those accepted manual
+sources as a structured evidence bundle; it does not invoke a model or infer an
+assessment. `write` additionally admits relationship and grounding-note creation, notes-only
+1:1 and agenda creation, request creation/explicit acceptance, and
+done/dismiss/reopen for shared commitments.
+
+MCP never initializes or recovers the encrypted store and never returns
+leader-private sessions, private prep, agenda, grounding notes, requests, or commitments. It
+also offers no People archive/delete, capture/transcript, inference, scoring,
+search, sync, export, connector, or employment-decision tool. Tool results are
+transient stdio disclosure to the explicitly trusted parent client; they are
+not written to HoldSpeak's plaintext database, observer, FTS, or Cadence.
+
 ### plugin_job (4 tools)
 
 `plugin_job.list` and `plugin_job.summary` read deferred plugin job state.
@@ -156,6 +196,11 @@ identity label, not an authorization credential. No network listener is
 opened; the sidecar communicates only over stdin/stdout with its parent
 process.
 
+That OWNER boundary alone is not sufficient for People. People calls also
+require the process-start capability `HOLDSPEAK_MCP_PEOPLE_ACCESS=read|write`.
+Enabling it is an explicit disclosure decision: the trusted parent MCP client
+can retain or forward returned relationship metadata and shared-intent text.
+
 ## Deliberate absences
 
 Four verbs are intentionally excluded. An always-failing tool is worse
@@ -173,7 +218,7 @@ client discovers it at tool-listing time, not at call time.
 
 ## Resources
 
-The sidecar exposes 14 static resources and 10 resource templates. List
+The sidecar exposes 16 static resources and 11 resource templates. List
 results are bounded to the first 100 items per read.
 
 ### Static resources
@@ -194,6 +239,8 @@ results are bounded to the first 100 items per read.
 | `pipeline://events/recent` | Recent pipeline events |
 | `pipeline://events/stats` | Pipeline event statistics |
 | `holdspeak://cadence/status` | Cadence engine status (enabled, pressure, loop counts) |
+| `holdspeak://people/readiness` | Content-free People MCP access/store readiness |
+| `holdspeak://people/relationships` | Active relationship metadata when People MCP read access is enabled |
 
 ### Resource templates
 
@@ -209,3 +256,4 @@ results are bounded to the first 100 items per read.
 | `holdspeak://decision-records/{id}` | One decision record with evidence and revision trail |
 | `pipeline://events/recent/{service}` | Recent pipeline events for one service |
 | `pipeline://events/correlation/{id}` | Pipeline events in one correlation chain |
+| `holdspeak://people/relationships/{id}` | One relationship with shared-intent records only |

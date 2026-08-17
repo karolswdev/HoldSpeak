@@ -33,7 +33,7 @@ class ToolError(ValueError):
 TOOLS: list[dict[str, Any]] = [
     {
         "name": "desk.list",
-        "description": "List HoldSpeak desk primitives of one kind. The desk schema advertises 17 primitive kinds; this tool operates on the 6 authorable kinds: notes, decisions, kbs, directories, workflows, and chains. The remaining 11 kinds (meeting, artifact, project, repository, recipe, coder, game, roadmap, story, workbench, layout) are managed through their own dedicated tools or are read-only.",
+        "description": "List HoldSpeak desk primitives of one kind. The desk schema advertises 18 primitive kinds; this tool operates on the 6 authorable kinds: notes, decisions, kbs, directories, workflows, and chains. The remaining 12 kinds (meeting, artifact, project, repository, recipe, coder, game, roadmap, story, workbench, layout, people) are managed through dedicated tools or are read-only.",
         "inputSchema": {
             "type": "object",
             "properties": {"kind": {"type": "string", "enum": list(PRIMITIVE_KINDS)}},
@@ -43,7 +43,7 @@ TOOLS: list[dict[str, Any]] = [
     },
     {
         "name": "desk.get",
-        "description": "Get one HoldSpeak desk primitive by kind and id. The desk schema advertises 17 primitive kinds; this tool operates on the 6 authorable kinds: notes, decisions, kbs, directories, workflows, and chains. The remaining 11 kinds (meeting, artifact, project, repository, recipe, coder, game, roadmap, story, workbench, layout) are managed through their own dedicated tools or are read-only.",
+        "description": "Get one HoldSpeak desk primitive by kind and id. The desk schema advertises 18 primitive kinds; this tool operates on the 6 authorable kinds: notes, decisions, kbs, directories, workflows, and chains. The remaining 12 kinds (meeting, artifact, project, repository, recipe, coder, game, roadmap, story, workbench, layout, people) are managed through dedicated tools or are read-only.",
         "inputSchema": {
             "type": "object",
             "properties": {

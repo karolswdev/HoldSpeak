@@ -19,6 +19,8 @@ class PeopleOperation(StrEnum):
     EXPORT = "export"
     EGRESS = "egress"
     SEARCH_PERSIST = "search_persist"
+    MCP_READ = "mcp_read"
+    MCP_WRITE = "mcp_write"
 
 
 class PeopleUse(StrEnum):
@@ -40,13 +42,19 @@ class PeopleUse(StrEnum):
 class PeoplePolicy:
     """PR1 allows only this-device owner reads/writes of encrypted records."""
 
-    _ALLOWED = frozenset({PeopleOperation.READ, PeopleOperation.WRITE})
+    _LOCAL_ALLOWED = frozenset({PeopleOperation.READ, PeopleOperation.WRITE})
+    _MCP_ALLOWED = frozenset({PeopleOperation.MCP_READ, PeopleOperation.MCP_WRITE})
 
     @classmethod
     def allows(cls, visibility: Visibility, operation: PeopleOperation) -> bool:
-        # Both values are deliberately accepted today: shared_intent records are
-        # still local intent, never a claim of participant access.
-        return isinstance(visibility, Visibility) and operation in cls._ALLOWED
+        if not isinstance(visibility, Visibility):
+            return False
+        if operation in cls._LOCAL_ALLOWED:
+            return True
+        # The separately capability-gated MCP adapter is the one deliberate PR1
+        # disclosure path.  The policy still refuses leader-private material even
+        # when the parent process was granted People MCP access.
+        return visibility is Visibility.SHARED_INTENT and operation in cls._MCP_ALLOWED
 
     @classmethod
     def refusal(cls, visibility: Visibility, operation: PeopleOperation) -> str | None:

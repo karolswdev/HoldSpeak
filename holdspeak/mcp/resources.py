@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any
 
 from holdspeak.db import get_database
+from holdspeak.mcp.families import people as people_family
 from holdspeak.principals import Principal
 from holdspeak.config import Config
 from holdspeak.services.cadence_service import CadenceService
@@ -48,6 +49,7 @@ _PRIMITIVE_SCHEMA = [
     {"kind": "story", "product_noun": "Story", "sync_class": "local"},
     {"kind": "workbench", "product_noun": "Workbench", "sync_class": "capability"},
     {"kind": "layout", "product_noun": "Layout", "sync_class": "local"},
+    {"kind": "people", "product_noun": "People", "sync_class": "local"},
 ]
 
 # Mirrors web/src/desk/verbRegistry.ts, including verbs derived from DESK_TOOLS.
@@ -206,6 +208,18 @@ _STATIC_RESOURCES = [
         "description": "Cadence engine status: enabled, pressure, loop counts, policy count.",
         "mimeType": _JSON_MIME,
     },
+    {
+        "uri": "holdspeak://people/readiness",
+        "name": "People MCP readiness",
+        "description": "Content-free People capability and encrypted-store readiness.",
+        "mimeType": _JSON_MIME,
+    },
+    {
+        "uri": "holdspeak://people/relationships",
+        "name": "People relationships",
+        "description": "Active relationship metadata; explicit People MCP read capability required.",
+        "mimeType": _JSON_MIME,
+    },
 ]
 
 _RESOURCE_TEMPLATES = [
@@ -269,6 +283,12 @@ _RESOURCE_TEMPLATES = [
         "description": "All observed pipeline events in one correlation chain.",
         "mimeType": _JSON_MIME,
     },
+    {
+        "uriTemplate": "holdspeak://people/relationships/{id}",
+        "name": "People relationship detail",
+        "description": "One relationship with shared-intent records only; leader-private material is excluded.",
+        "mimeType": _JSON_MIME,
+    },
 ]
 
 _PRIMITIVE_KIND_ALIASES = {
@@ -289,6 +309,7 @@ _MEETING_DETAIL_PATTERN = re.compile(r"^holdspeak://meetings/([^/]+)$")
 _DECISION_RECORD_PATTERN = re.compile(r"^holdspeak://decision-records/([^/]+)$")
 _PIPELINE_RECENT_SERVICE_PATTERN = re.compile(r"^pipeline://events/recent/([^/]+)$")
 _PIPELINE_CORRELATION_PATTERN = re.compile(r"^pipeline://events/correlation/([^/]+)$")
+_PEOPLE_RELATIONSHIP_PATTERN = re.compile(r"^holdspeak://people/relationships/([^/]+)$")
 
 
 class ResourceError(ValueError):
@@ -348,6 +369,10 @@ def read_resource(uri: str, principal: Principal) -> dict[str, list[dict[str, st
         return _contents(uri, _JSON_MIME, EventQueryService(get_database()).stats(principal))
     if uri == "holdspeak://cadence/status":
         return _contents(uri, _JSON_MIME, CadenceService(get_database(), Config.load().cadence).status(principal))
+    if uri == "holdspeak://people/readiness":
+        return _contents(uri, _JSON_MIME, people_family.readiness(principal))
+    if uri == "holdspeak://people/relationships":
+        return _contents(uri, _JSON_MIME, people_family.list_relationships(principal))
 
     if match := _PRIMITIVE_DETAIL_PATTERN.fullmatch(uri):
         kind = _PRIMITIVE_KIND_ALIASES.get(match.group(1))
@@ -381,5 +406,8 @@ def read_resource(uri: str, principal: Principal) -> dict[str, list[dict[str, st
         return _contents(uri, _JSON_MIME, value)
     if match := _PIPELINE_CORRELATION_PATTERN.fullmatch(uri):
         value = EventQueryService(get_database()).by_correlation(principal, correlation_id=match.group(1))
+        return _contents(uri, _JSON_MIME, value)
+    if match := _PEOPLE_RELATIONSHIP_PATTERN.fullmatch(uri):
+        value = people_family.get_relationship(principal, match.group(1))
         return _contents(uri, _JSON_MIME, value)
     raise ResourceError(f"Unknown resource: {uri}")

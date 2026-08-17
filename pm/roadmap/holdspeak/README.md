@@ -8,7 +8,15 @@
 > from evidence, Terra waves with serialized shipping, walks, honest ledgers —
 > is canon at [`docs/internal/ORCHESTRATION.md`](../../../docs/internal/ORCHESTRATION.md).
 
-**Newest update (2026-08-15): Phase 131 — One Admission Path — COMPLETE
+**Newest update (2026-08-16): Phase 135 — The People Ledger — ACTIVE (1/7).**
+The draft delivery now carries an encrypted relationship ledger for direct reports,
+peers, and extended organizational relationships; notes-only 1:1 continuity;
+durable grounding notes; explicit manager commitments in Follow-through; a real
+PixelLab sprite; and a default-off, shared-intent-only MCP capability. Testing is a
+best-attempt static/logical handoff, not an exhaustive certification. See the
+[current phase record](./phase-135-the-people-ledger/current-phase-status.md).
+
+**Previous update (2026-08-15): Phase 131 — One Admission Path — COMPLETE
 (17/17).** The executable census closes at 100 sites, zero findings, zero blocking
 families, and zero unregistered execution. The assembled real-model walk passes
 all ten legs on `.43`: immutable revision dispatch, Ask/Agent,
@@ -471,7 +479,7 @@ the ⌘K shelf's z-defect fixed; the owner's 101 sitting remains open in
 parallel. Phase 101 itself stands at 3/4 (canon ratified and built,
 PR #359; sweep 4122/0).
 
-**Current phase:** [**Phase 134 — One Owner**](./phase-134-one-owner/current-phase-status.md)
+**Current phase:** [**Phase 135 — The People Ledger**](./phase-135-the-people-ledger/current-phase-status.md)
 — **COMPLETE (14/14, 2026-08-16, one session; owner sitting pending)**. The owner closed the consolidation era and
 pointed the machine back at the functional side. Chartered from a six-pillar
 functional-reality audit (six Opus auditors, file:line evidence archived in the

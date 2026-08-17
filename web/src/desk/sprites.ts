@@ -23,6 +23,7 @@ const automatons = numbered("automaton", 14);
 export const VARIANTS: Record<string, string[]> = {
   meeting: numbered("cassette", 16),
   note: numbered("note", 12),
+  people: ["people-ledger"],
   // ADRs are material records; reuse the note family until a dedicated plate lands.
   decision: numbered("note", 12),
   kb: numbered("tome", 13),

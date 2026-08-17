@@ -51,6 +51,27 @@ def test_manual_relationship_one_on_one_request_and_explicit_commitment(service:
     assert [card.id for card in service.list_cards(OWNER)] == [f"people:{commitment['id']}"]
 
 
+def test_relationship_kinds_and_encrypted_grounding_notes(service: PeopleService) -> None:
+    for kind in ("direct_report", "peer", "extended"):
+        relationship = service.create_relationship(OWNER, {
+            "display_name": f"{kind} relationship",
+            "relationship_kind": kind,
+        })
+        shared = service.create_note(OWNER, relationship["id"], {
+            "topic": "Working context",
+            "body": f"Shared {kind} context",
+            "visibility": "shared_intent",
+        })
+        private = service.create_note(OWNER, relationship["id"], {
+            "body": f"Private {kind} context",
+            "visibility": "leader_private",
+        })
+        detail = service.get_relationship(OWNER, relationship["id"])
+        assert detail["relationship_kind"] == kind
+        assert [note["id"] for note in detail["notes"]] == [shared["id"], private["id"]]
+        assert all(note["source"] == "manual" for note in detail["notes"])
+
+
 def test_roll_forward_closes_source_and_only_links_same_session(service: PeopleService) -> None:
     relationship = service.create_relationship(OWNER, {"display_name": "Roll sentinel"})
     session = service.create_one_on_one(OWNER, relationship["id"], {})

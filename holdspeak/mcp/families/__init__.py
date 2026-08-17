@@ -20,9 +20,10 @@ from holdspeak.mcp.families import (
     cadence,
     coder,
     memory,
+    people,
     plugin_job,
     sequence,
     settings,
 )
 
-FAMILIES = [ask, settings, coder, cadence, sequence, memory, plugin_job]
+FAMILIES = [ask, settings, coder, cadence, sequence, memory, people, plugin_job]

@@ -37,12 +37,19 @@ def test_setup_and_manual_people_routes(tmp_path: Path) -> None:
     created = client.post("/api/people/relationships", json={"display_name": "Route Sentinel"})
     assert created.status_code == 201
     relationship_id = created.json()["relationship"]["id"]
+    note = client.post(
+        f"/api/people/relationships/{relationship_id}/notes",
+        json={"topic": "Grounding", "body": "Durable context", "visibility": "leader_private"},
+    )
+    assert note.status_code == 201
+    assert client.get(f"/api/people/relationships/{relationship_id}/notes").json()["notes"][0]["body"] == "Durable context"
     request = client.post(f"/api/people/relationships/{relationship_id}/requests", json={"body": "A private request"})
     assert request.status_code == 201
     accepted = client.post(f"/api/people/requests/{request.json()['request']['id']}/accept", json={})
     assert accepted.status_code == 200
     detail = client.get(f"/api/people/relationships/{relationship_id}").json()["relationship"]
     assert detail["commitments"][0]["body"] == "A private request"
+    assert detail["notes"][0]["topic"] == "Grounding"
 
 
 def test_people_routes_require_authenticated_owner(tmp_path: Path) -> None:

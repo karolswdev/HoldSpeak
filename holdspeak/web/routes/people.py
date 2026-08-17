@@ -103,6 +103,20 @@ def build_people_router(ctx: WebContext) -> APIRouter:
         except PeopleServiceError as exc:
             raise _failure(exc) from exc
 
+    @router.get("/relationships/{relationship_id}/notes")
+    async def notes(request: Request, relationship_id: str) -> dict[str, list[dict[str, Any]]]:
+        try:
+            return {"notes": service.list_notes(principal(request), relationship_id)}
+        except PeopleServiceError as exc:
+            raise _failure(exc) from exc
+
+    @router.post("/relationships/{relationship_id}/notes", status_code=201)
+    async def create_note(request: Request, relationship_id: str, body: dict[str, Any] = Body(default={})) -> dict[str, Any]:
+        try:
+            return {"note": service.create_note(principal(request), relationship_id, body)}
+        except PeopleServiceError as exc:
+            raise _failure(exc) from exc
+
     @router.post("/requests/{request_id}/accept")
     async def accept_request(request: Request, request_id: str, body: dict[str, Any] = Body(default={})) -> dict[str, Any]:
         try:

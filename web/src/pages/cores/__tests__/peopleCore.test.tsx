@@ -43,7 +43,7 @@ describe("PeopleCore encrypted local plane", () => {
     stub({
       "/api/people/readiness": () => json({ readiness: "ready", store: "encrypted", sync: "local_only", capture: "notes_only" }),
       "/api/people/relationships": () => json({ relationships: [{ id: "r1", display_name: "Avery", relationship_kind: "direct_report", manager_commitment_count: 1 }] }),
-      "/api/people/relationships/r1": () => json({ relationship: { id: "r1", display_name: "Avery", relationship_kind: "direct_report", commitments: [] } }),
+      "/api/people/relationships/r1": () => json({ relationship: { id: "r1", display_name: "Avery", relationship_kind: "peer", commitments: [], notes: [{ id: "n1", topic: "Collaboration", body: "Prefers written context", visibility: "shared_intent" }] } }),
       "/api/people/relationships/r1/one-on-ones": () => json({ one_on_ones: [] }),
     });
     render(<PeopleCore scope="people:r1" />);
@@ -51,6 +51,9 @@ describe("PeopleCore encrypted local plane", () => {
     expect(screen.getByText("Encrypted")).toBeTruthy();
     expect(screen.getByText("Notes only")).toBeTruthy();
     await waitFor(() => expect(screen.getByRole("tab", { name: "1:1s" })).toBeTruthy());
+    fireEvent.click(screen.getByRole("tab", { name: "Context" }));
+    expect(screen.getByText("Prefers written context")).toBeTruthy();
+    expect(screen.getByLabelText("Grounding note")).toBeTruthy();
     expect(screen.queryByRole("button", { name: /^Speak / })).toBeNull();
   });
 });

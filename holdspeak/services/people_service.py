@@ -22,9 +22,9 @@ class PeopleUnavailable(PeopleServiceError):
 
 
 _VISIBILITIES = frozenset({"shared_intent", "leader_private"})
-_RELATIONSHIP_KINDS = frozenset({"direct_report"})
+_RELATIONSHIP_KINDS = frozenset({"direct_report", "peer", "extended"})
 _ENTRY_KINDS = frozenset({"one_on_one"})
-_RECORD_KINDS = frozenset({"request", "commitment"})
+_RECORD_KINDS = frozenset({"request", "commitment", "grounding_note"})
 _OPEN_COMMITMENT = "open"
 
 
@@ -103,7 +103,8 @@ class PeopleService:
         sessions = self.list_one_on_ones(principal, relationship_id)
         requests = [self._record_view(item) for item in self._list("request", relationship_id=relationship_id)]
         commitments = [self._record_view(item) for item in self._list("commitment", relationship_id=relationship_id)]
-        view.update({"sessions": sessions, "requests": requests, "commitments": commitments})
+        notes = [self._record_view(item) for item in self._list("grounding_note", relationship_id=relationship_id)]
+        view.update({"sessions": sessions, "requests": requests, "commitments": commitments, "notes": notes})
         return view
 
     def archive_relationship(self, principal: Any, relationship_id: str) -> dict[str, Any]:
@@ -141,6 +142,30 @@ class PeopleService:
         })
         return self._record_view(record)
 
+    def list_notes(self, principal: Any, relationship_id: str) -> list[dict[str, Any]]:
+        """Return durable manual context notes for one active relationship."""
+        self._require_relationship(principal, relationship_id)
+        return [
+            self._record_view(item)
+            for item in self._list("grounding_note", relationship_id=relationship_id)
+        ]
+
+    def create_note(self, principal: Any, relationship_id: str, payload: dict[str, Any]) -> dict[str, Any]:
+        """Create explicit grounding material without running or scheduling a model."""
+        self._require_relationship(principal, relationship_id)
+        record = self._create("grounding_note", {
+            "relationship_id": relationship_id,
+            "topic": self._text(payload, "topic", limit=240),
+            "body": self._text(payload, "body", required=True, limit=20_000),
+            "visibility": self._visibility(payload),
+            "source": "manual",
+            "state": "active",
+            "lifecycle": "active",
+            "created_at": _now(),
+            "updated_at": _now(),
+        })
+        return self._record_view(record)
+
     def accept_request(self, principal: Any, request_id: str, payload: dict[str, Any] | None = None) -> dict[str, Any]:
         """Explicitly mint one manager commitment; a request alone is never a card."""
         self._require_ready_owner(principal)
@@ -168,6 +193,24 @@ class PeopleService:
             # The store performs the idempotent check and both encrypted writes in
             # one immediate transaction; content never crosses this error edge.
             raise PeopleUnavailable("people_store_write_failed") from exc
+        return self._record_view(commitment)
+
+    def get_request(self, principal: Any, request_id: str) -> dict[str, Any]:
+        """Read one request through the domain boundary for scoped adapters."""
+        self._require_ready_owner(principal)
+        request = self._get(request_id, "request")
+        if request is None:
+            raise PeopleServiceError("people_request_not_found")
+        self._require_relationship(principal, str(request.get("relationship_id") or ""))
+        return self._record_view(request)
+
+    def get_commitment(self, principal: Any, commitment_id: str) -> dict[str, Any]:
+        """Read one commitment through the domain boundary for scoped adapters."""
+        self._require_ready_owner(principal)
+        commitment = self._get(commitment_id, "commitment")
+        if commitment is None:
+            raise PeopleServiceError("people_commitment_not_found")
+        self._require_relationship(principal, str(commitment.get("relationship_id") or ""))
         return self._record_view(commitment)
 
     def add_agenda_item(self, principal: Any, session_id: str, payload: dict[str, Any]) -> dict[str, Any]:
@@ -347,4 +390,4 @@ class PeopleService:
 
     @staticmethod
     def _record_view(record: dict[str, Any]) -> dict[str, Any]:
-        return {key: record.get(key) for key in ("id", "relationship_id", "request_id", "body", "visibility", "direction", "state", "commitment_id", "created_at", "updated_at", "accepted_at")}
+        return {key: record.get(key) for key in ("id", "relationship_id", "request_id", "topic", "body", "visibility", "direction", "state", "commitment_id", "source", "created_at", "updated_at", "accepted_at")}

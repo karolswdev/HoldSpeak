@@ -7,8 +7,11 @@ from holdspeak.people.policy import PeopleOperation, PeoplePolicy, PeopleUse, Vi
 
 @pytest.mark.parametrize("visibility", list(Visibility))
 @pytest.mark.parametrize("operation", list(PeopleOperation))
-def test_pr1_allows_only_local_owner_read_and_write(visibility: Visibility, operation: PeopleOperation) -> None:
-    expected = operation in {PeopleOperation.READ, PeopleOperation.WRITE}
+def test_pr1_allows_local_owner_io_and_shared_intent_mcp_only(visibility: Visibility, operation: PeopleOperation) -> None:
+    expected = operation in {PeopleOperation.READ, PeopleOperation.WRITE} or (
+        visibility is Visibility.SHARED_INTENT
+        and operation in {PeopleOperation.MCP_READ, PeopleOperation.MCP_WRITE}
+    )
     assert PeoplePolicy.allows(visibility, operation) is expected
     assert PeoplePolicy.refusal(visibility, operation) == (None if expected else "people_operation_unsupported")
 
