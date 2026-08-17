@@ -1,6 +1,6 @@
 # Phase 135 — The Comfy Chair
 
-**Status:** in-progress (1/13).
+**Status:** in-progress (2/13).
 
 **Last updated:** 2026-08-17.
 
@@ -101,7 +101,7 @@ docs + the walk.
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
 | HS-135-01 | The hub opens its own desk | backlog | [story-01](./story-01-migration-fix.md) | [evidence-story-01](./evidence-story-01.md) |
-| HS-135-02 | Lamps wrap, wings look pressable | backlog | [story-02](./story-02-lamp-wing-laws.md) | [evidence-story-02](./evidence-story-02.md) |
+| HS-135-02 | Lamps wrap, wings look pressable | done | [story-02](./story-02-lamp-wing-laws.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-135-03 | The sizing tokens land | backlog | [story-03](./story-03-sizing-tokens.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-135-04 | Sparse surfaces shed chrome | done | [story-04](./story-04-sparse-surfaces.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-135-05 | The Chair shell | backlog | [story-05](./story-05-chair-shell.md) | [evidence-story-05](./evidence-story-05.md) |
@@ -174,6 +174,9 @@ after 05; 07-10 in parallel after 05 (disjoint lane files); 11 after
 
 ## Where we are
 
-HS-135-04 shipped: SPARSE_THRESHOLD=5 constant, LedgerFilterBar hides
-below threshold, MetricStrip collapses zero-value tiles below threshold,
-CatalogRail wired. 39 tests green, 71 total across all surface suites.
+HS-135-02 shipped: L6 lamp overflow fixed (gadget-lamp truncates with
+title tooltip; .is-block variant wraps block system messages; two
+settings-models lamps converted to block). L7 wing affordance fixed
+(inactive wings: --text-muted + --wash-1; hover escalates to --wash-2;
+active untouched). 27 tests green across gadgets + wings suites.
+HS-135-04 shipped earlier: sparse-surface chrome shedding.

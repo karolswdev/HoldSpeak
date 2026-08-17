@@ -302,6 +302,7 @@ export function ModelsModule({
           <LampGadget
             on
             tone="fail"
+            block
             label={`DESTINATION SELECTION IGNORED · ${droppedDestination.toUpperCase()}`}
           />
         </div>
@@ -322,7 +323,7 @@ export function ModelsModule({
       </div>
       {providerIgnored ? (
         <div className="prefs-egress-line">
-          <LampGadget on tone="fail" label={providerIgnored} />
+          <LampGadget on tone="fail" block label={providerIgnored} />
         </div>
       ) : null}
       <div className="prefs-egress-line">

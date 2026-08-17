@@ -171,6 +171,31 @@ describe("gadget kit", () => {
     expect(lamp).toHaveAttribute("data-tone", "ok");
   });
 
+  // HS-135-02 L6 — lamp overflow regression: truncation + title affordance.
+  it("LampGadget carries a title tooltip with the full label text", () => {
+    const longMsg =
+      "DESTINATION SELECTION IGNORED · OPENAICOMPATIBLE-KIND DECIDES";
+    render(<LampGadget label={longMsg} on tone="fail" />);
+    const lamp = screen.getByText(longMsg);
+    expect(lamp).toHaveAttribute("title", longMsg);
+  });
+
+  it("LampGadget default (inline) truncates via CSS class contract", () => {
+    render(<LampGadget label="Short" on tone="ok" />);
+    const lamp = screen.getByText("Short");
+    expect(lamp.className).toBe("gadget-lamp");
+    // the CSS contract: gadget-lamp has overflow:hidden + text-overflow:ellipsis
+    // the class is the DOM proof; the CSS raw-text assertion below covers the rules.
+  });
+
+  it("LampGadget block variant adds is-block for wrap behavior", () => {
+    const longMsg = "PROVIDER SELECTION IGNORED · DESTINATION HUB DECIDES";
+    render(<LampGadget label={longMsg} on tone="fail" block />);
+    const lamp = screen.getByText(longMsg);
+    expect(lamp.className).toContain("is-block");
+    expect(lamp).toHaveAttribute("title", longMsg);
+  });
+
   it("TransportKey: held = pressed (inverted video is the CSS contract)", () => {
     const onClick = vi.fn();
     const { rerender } = render(
@@ -279,5 +304,35 @@ describe("gadget kit", () => {
     expect(details).not.toBeNull();
     fireEvent(details!, new Event("toggle"));
     expect(onToggle).toHaveBeenCalled();
+  });
+});
+
+// HS-135-02 L6 — lamp CSS contract: the raw stylesheet proves overflow
+// handling exists on the base class and the block variant.
+import gadgetsCss from "./gadgets.css?raw";
+
+describe("HS-135-02 lamp overflow CSS contract", () => {
+  it("gadget-lamp base truncates: overflow hidden + text-overflow ellipsis + max-width", () => {
+    // The gadget-lamp block in the raw CSS must contain the overflow rules.
+    const lampBlock = gadgetsCss.slice(
+      gadgetsCss.indexOf(".gadget-lamp {"),
+      gadgetsCss.indexOf("}", gadgetsCss.indexOf(".gadget-lamp {")) + 1,
+    );
+    expect(lampBlock).toContain("overflow: hidden");
+    expect(lampBlock).toContain("text-overflow: ellipsis");
+    expect(lampBlock).toContain("max-width: 100%");
+    expect(lampBlock).toContain("white-space: nowrap");
+  });
+
+  it("gadget-lamp.is-block wraps instead of truncating", () => {
+    expect(gadgetsCss).toContain(".gadget-lamp.is-block");
+    const blockStart = gadgetsCss.indexOf(".gadget-lamp.is-block");
+    const blockRule = gadgetsCss.slice(
+      blockStart,
+      gadgetsCss.indexOf("}", blockStart) + 1,
+    );
+    expect(blockRule).toContain("white-space: normal");
+    expect(blockRule).toContain("word-break: break-word");
+    expect(blockRule).toContain("text-overflow: clip");
   });
 });

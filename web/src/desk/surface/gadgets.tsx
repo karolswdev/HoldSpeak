@@ -616,15 +616,23 @@ export function LampGadget({
   label,
   on,
   tone = "ok",
+  block = false,
 }: {
   label: string;
   on: boolean;
   /** HS-111-08 — `fail` joined the roster (the readiness column's
    * honest red); the lamp is never color-only by construction. */
   tone?: "ok" | "warn" | "fail";
+  /** HS-135-02 L6 — block system messages wrap instead of truncating. */
+  block?: boolean;
 }) {
   return (
-    <span className="gadget-lamp" data-on={on} data-tone={tone}>
+    <span
+      className={`gadget-lamp${block ? " is-block" : ""}`}
+      data-on={on}
+      data-tone={tone}
+      title={label}
+    >
       <span className="gadget-lamp-dot" aria-hidden="true" />
       {label}
     </span>

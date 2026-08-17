@@ -639,6 +639,15 @@
   text-transform: uppercase;
   color: var(--text);
   white-space: nowrap;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* HS-135-02 L6: block system messages wrap instead of truncating. */
+.gadget-lamp.is-block {
+  white-space: normal;
+  word-break: break-word;
+  text-overflow: clip;
 }
 .gadget-lamp-dot {
   flex: none;
