@@ -3235,37 +3235,15 @@
     {
       "path": "/api/profiles",
       "methods": [
-        "GET"
-      ],
-      "module": "web.routes.primitives.profiles",
-      "consumers": [
-        "web"
-      ]
-    },
-    {
-      "path": "/api/profiles",
-      "methods": [
         "POST"
       ],
       "module": "web.routes.primitives.profiles",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/profiles/{profile_id}",
       "methods": [
         "DELETE"
-      ],
-      "module": "web.routes.primitives.profiles",
-      "consumers": [
-        "web"
-      ]
-    },
-    {
-      "path": "/api/profiles/{profile_id}",
-      "methods": [
-        "GET"
       ],
       "module": "web.routes.primitives.profiles",
       "consumers": [

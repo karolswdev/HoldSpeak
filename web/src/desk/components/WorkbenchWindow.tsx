@@ -17,7 +17,6 @@ import {
   updateWorkbenchItem,
   deleteWorkbenchItem,
   triggerWorkbenchRun,
-  updateSkill,
   clearWorkbenchMemory,
   promoteMemoryToSkill,
   retryMint,
@@ -190,10 +189,6 @@ function ConfigPanel({
   onUpdateResolverProfile,
   onUpdateSchedule,
   onToggleSchedule,
-  onAttachSkill,
-  onDetachSkill,
-  onApproveSkill,
-  onDismissSkill,
   onCollapse,
 }: {
   detail: WorkbenchDetail;
@@ -206,14 +201,9 @@ function ConfigPanel({
   onUpdateResolverProfile: (id: string | null) => void;
   onUpdateSchedule: (cron: string | null) => void;
   onToggleSchedule: (enabled: boolean) => void;
-  onAttachSkill: (skillId: string) => void;
-  onDetachSkill: (skillId: string) => void;
-  onApproveSkill: (skillId: string) => void;
-  onDismissSkill: (skillId: string) => void;
   onCollapse: () => void;
 }) {
   const [agentSearch, setAgentSearch] = useState("");
-  const [showSkillPicker, setShowSkillPicker] = useState(false);
 
   const recipe = recipes.find((r) => r.id === detail.recipe_id);
   const target = inferenceTargets.find((t) => t.id === detail.profile_id);
@@ -232,18 +222,6 @@ function ConfigPanel({
     () =>
       detail.recipe_id
         ? skills.filter((s) => s.recipe_ids.includes(detail.recipe_id!))
-        : [],
-    [skills, detail.recipe_id],
-  );
-
-  const unboundSkills = useMemo(
-    () =>
-      detail.recipe_id
-        ? skills.filter(
-            (s) =>
-              s.status === "active" &&
-              !s.recipe_ids.includes(detail.recipe_id!),
-          )
         : [],
     [skills, detail.recipe_id],
   );
@@ -398,13 +376,13 @@ function ConfigPanel({
         </div>
       </SurfaceSection>
 
-      {/* ── skills ──────────────────────────────────────────────────── */}
+      {/* ── skills (read-only, inherited from the bound agent) ─────── */}
       <SurfaceSection
         label="SKILLS"
         actions={
           boundSkills.length > 0 ? (
             <span className="wb-config-skill-count">
-              {boundSkills.length}
+              INHERITED {boundSkills.length}
             </span>
           ) : null
         }
@@ -423,75 +401,32 @@ function ConfigPanel({
                     </span>
                   ) : null
                 }
-                verbs={
-                  <>
-                    {s.status === "draft" ? (
-                      <>
-                        <button
-                          type="button"
-                          className="desk-chip"
-                          onClick={() => onApproveSkill(s.id)}
-                        >
-                          Approve
-                        </button>
-                        <button
-                          type="button"
-                          className="desk-chip quiet"
-                          onClick={() => onDismissSkill(s.id)}
-                        >
-                          Dismiss
-                        </button>
-                      </>
-                    ) : (
-                      <button
-                        type="button"
-                        className="desk-chip quiet"
-                        onClick={() => onDetachSkill(s.id)}
-                      >
-                        Remove
-                      </button>
-                    )}
-                  </>
-                }
               />
             ))}
           </SurfaceRows>
+        ) : detail.recipe_id ? (
+          <SurfaceState
+            empty
+            emptyLabel="Agent has no skills yet"
+            emptyGlyph="◇"
+          />
         ) : (
-          <SurfaceState empty emptyLabel="No skills attached" emptyGlyph="◇" />
+          <SurfaceState
+            empty
+            emptyLabel="Skills appear when an agent is bound"
+            emptyGlyph="◇"
+          />
         )}
         {detail.recipe_id ? (
-          showSkillPicker ? (
-            <div className="wb-skill-picker">
-              <SurfaceRows>
-                {unboundSkills.map((s) => (
-                  <SurfaceRow
-                    key={s.id}
-                    title={s.title}
-                    detail={s.body.slice(0, 60) || undefined}
-                    onOpen={() => onAttachSkill(s.id)}
-                  />
-                ))}
-              </SurfaceRows>
-              {unboundSkills.length === 0 ? (
-                <SurfaceState empty emptyLabel="All skills attached" />
-              ) : null}
-              <button
-                type="button"
-                className="desk-chip quiet"
-                onClick={() => setShowSkillPicker(false)}
-              >
-                Done
-              </button>
-            </div>
-          ) : (
-            <button
-              type="button"
-              className="gadget-table-add"
-              onClick={() => setShowSkillPicker(true)}
-            >
-              + ATTACH SKILL
-            </button>
-          )
+          <button
+            type="button"
+            className="desk-chip quiet"
+            onClick={() =>
+              useDesk.getState().openPullout("recipe:" + detail.recipe_id)
+            }
+          >
+            Edit in Agent
+          </button>
         ) : null}
       </SurfaceSection>
 
@@ -1163,46 +1098,6 @@ export function WorkbenchWindow({
   const toggleSchedule = (enabled: boolean) =>
     void updateField({ schedule_enabled: enabled });
 
-  const updateSkillBinding = async (
-    skillId: string,
-    recipeIds: string[],
-    extraFields?: Record<string, unknown>,
-  ) => {
-    const result = await write("BIND SKILL", () =>
-      updateSkill(skillId, { recipe_ids: recipeIds, ...extraFields }),
-    );
-    if (result.ok) loadSkills();
-  };
-
-  const attachSkill = (skillId: string) => {
-    const skill = skills.find((s) => s.id === skillId);
-    if (!skill || !detail?.recipe_id) return;
-    void updateSkillBinding(skillId, [...skill.recipe_ids, detail.recipe_id]);
-  };
-
-  const detachSkill = (skillId: string) => {
-    const skill = skills.find((s) => s.id === skillId);
-    if (!skill || !detail?.recipe_id) return;
-    void updateSkillBinding(
-      skillId,
-      skill.recipe_ids.filter((id) => id !== detail.recipe_id),
-    );
-  };
-
-  const approveSkill = async (skillId: string) => {
-    const result = await write("APPROVE SKILL", () =>
-      updateSkill(skillId, { status: "active" }),
-    );
-    if (result.ok) loadSkills();
-  };
-
-  const dismissSkill = async (skillId: string) => {
-    const result = await write("DISMISS SKILL", () =>
-      updateSkill(skillId, { status: "dismissed" }),
-    );
-    if (result.ok) loadSkills();
-  };
-
   /* ── item actions ──────────────────────────────────────────────── */
 
   const handleRemove = (item: WorkbenchItem) => {
@@ -1560,10 +1455,6 @@ export function WorkbenchWindow({
             onUpdateResolverProfile={updateResolverProfile}
             onUpdateSchedule={updateSchedule}
             onToggleSchedule={toggleSchedule}
-            onAttachSkill={attachSkill}
-            onDetachSkill={detachSkill}
-            onApproveSkill={approveSkill}
-            onDismissSkill={dismissSkill}
             onCollapse={() => setConfigOpen(false)}
           />
         ) : null}

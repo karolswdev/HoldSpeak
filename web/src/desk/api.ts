@@ -99,6 +99,9 @@ export interface InferenceTarget {
     recovery?: { action: string; alternate_target_id: string };
   };
   secret: { required: boolean; present: boolean };
+  /** HS-134-02: surfaced so /api/profiles reads can retire. */
+  endpoint?: string;
+  node?: string;
 }
 
 export interface LoadResult {
@@ -591,17 +594,7 @@ export async function loadAll(): Promise<LoadResult> {
         status.workbench = "live";
       })
       .catch((e) => fail("workbench", "Workbenches", e)),
-    apiFetch<Record<string, unknown>>("/api/profiles")
-      .then((d) => {
-        profiles = wireArray(d, "profiles")
-          .filter((p) => !wireBool(p, "deleted"))
-          .map((p) => (p && typeof p === "object" ? p : {}) as Record<string, unknown>);
-        status.profile = "live";
-      })
-      .catch(() => {
-        profiles = [];
-        status.profile = "unreachable";
-      }),
+    // HS-134-02: profiles derived from inference targets (read routes retired).
     apiFetch<Record<string, unknown>>("/api/projects")
       .then((d) => {
         const raw = wireArray(d, "projects").filter((p) => !wireBool(p, "is_archived"));
@@ -641,6 +634,8 @@ export async function loadAll(): Promise<LoadResult> {
             context_limit: 16_384,
             readiness: { state: "ready", available: true, reason: "" },
             secret: { required: false, present: false },
+            endpoint: "",
+            node: "",
           },
         ];
       }),
@@ -673,6 +668,29 @@ export async function loadAll(): Promise<LoadResult> {
         items.coder = []; /* companion off = honest empty lane */
       }),
   ]);
+
+  // HS-134-02: derive profiles from inference targets (read routes retired).
+  // Consumers (RecipeEditor, Pullout, PersonaChat) need {id, name, kind, base_url, node}.
+  const REVERSE_KIND: Record<string, string> = {
+    private_endpoint: "openAICompatible",
+    external_service: "openAICompatible",
+    this_device: "onDevice",
+    paired_device: "desktop",
+    mesh_node: "meshNode",
+  };
+  profiles = inferenceTargets
+    .filter((t) => t.profile_id != null)
+    .map((t) => ({
+      id: t.id,
+      name: t.name,
+      kind: REVERSE_KIND[t.kind] ?? t.kind,
+      base_url: t.endpoint ?? "",
+      node: t.node ?? "",
+      model: t.model,
+      context_limit: t.context_limit,
+      requires_key: t.secret?.required ?? false,
+    }));
+  status.profile = inferenceTargets.length > 0 ? "live" : (status.profile || "unreachable");
 
   return { items, profiles, projects, inferenceTargets, models, status, error };
 }

@@ -861,7 +861,7 @@ class _Cfg:
         intel_deferred_enabled = True
         disabled_plugins: list[str] = []
         intent_router_enabled = True
-        mir_profile = "balanced"
+        routing_profile = "balanced"
 
 
 class _Route:

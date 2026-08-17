@@ -228,30 +228,30 @@ TOOLS.extend([
         },
         ["meeting_id", "format"],
     ),
-    _mcp_tool("profile.list", "List inference destinations and current mesh-node liveness.", {}),
+    _mcp_tool("destination.list", "List inference destinations and current mesh-node liveness.", {}),
     _mcp_tool(
-        "profile.get",
+        "destination.get",
         "Get one inference destination when its non-secret configuration is needed.",
         {"profile_id": {"type": "string", "description": "Inference destination identifier."}},
         ["profile_id"],
     ),
     _mcp_tool(
-        "profile.create",
-        "Create an inference destination using non-secret profile fields.",
-        {"fields": {"type": "object", "description": "Profile fields; a non-empty name is required by the service."}},
+        "destination.create",
+        "Create an inference destination using non-secret destination fields.",
+        {"fields": {"type": "object", "description": "Destination fields; a non-empty name is required by the service."}},
         ["fields"],
     ),
     _mcp_tool(
-        "profile.update",
+        "destination.update",
         "Update the supplied non-secret fields of an inference destination.",
         {
             "profile_id": {"type": "string", "description": "Inference destination identifier."},
-            "fields": {"type": "object", "description": "Profile fields to change."},
+            "fields": {"type": "object", "description": "Destination fields to change."},
         },
         ["profile_id", "fields"],
     ),
     _mcp_tool(
-        "profile.delete",
+        "destination.delete",
         "Delete an inference destination that is no longer available.",
         {"profile_id": {"type": "string", "description": "Inference destination identifier."}},
         ["profile_id"],
@@ -525,15 +525,15 @@ def dispatch(name: str, arguments: dict[str, Any] | None, principal: Principal) 
         return {"deleted": True, "id": meeting_id}
     if name == "meeting.export":
         return meetings.export_meeting(principal, str(args.get("meeting_id") or ""), str(args.get("format") or ""))
-    if name == "profile.list":
+    if name == "destination.list":
         return profiles.list_profiles(principal)
-    if name == "profile.get":
+    if name == "destination.get":
         return profiles.get_profile(principal, str(args.get("profile_id") or ""))
-    if name == "profile.create":
+    if name == "destination.create":
         return profiles.create_profile(principal, _data(args.get("fields")))
-    if name == "profile.update":
+    if name == "destination.update":
         return profiles.update_profile(principal, str(args.get("profile_id") or ""), _data(args.get("fields")))
-    if name == "profile.delete":
+    if name == "destination.delete":
         profile_id = str(args.get("profile_id") or "")
         profiles.delete_profile(principal, profile_id)
         return {"deleted": True, "id": profile_id}

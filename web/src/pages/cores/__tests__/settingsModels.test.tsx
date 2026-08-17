@@ -28,6 +28,8 @@ const apiFetch = vi.fn(async (url: string, init?: { method?: string }) => {
           context_limit: 16384,
           readiness: { state: "ready", reason: "" },
           secret: { required: false, present: false },
+          endpoint: "http://192.168.1.43:8080/v1",
+          node: "",
         },
         {
           id: "p-key",
@@ -41,6 +43,8 @@ const apiFetch = vi.fn(async (url: string, init?: { method?: string }) => {
             reason: "Destination 'Paid API' needs a key",
           },
           secret: { required: true, present: false },
+          endpoint: "https://api.example.com/v1",
+          node: "",
         },
       ],
     };
@@ -53,23 +57,7 @@ const apiFetch = vi.fn(async (url: string, init?: { method?: string }) => {
       error: null,
     };
   }
-  if (url === "/api/profiles")
-    return {
-      profiles: [
-        {
-          id: "p-43",
-          kind: "openAICompatible",
-          base_url: "http://192.168.1.43:8080/v1",
-          node: "",
-        },
-        {
-          id: "p-key",
-          kind: "openAICompatible",
-          base_url: "https://api.example.com/v1",
-          node: "",
-        },
-      ],
-    };
+  // HS-134-02: /api/profiles read routes retired.
   return {};
 });
 

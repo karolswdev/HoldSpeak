@@ -565,24 +565,32 @@ def test_profile_never_sync_holds_across_every_read_surface(env) -> None:
     })
     assert created.status_code == 201, created.text
 
-    # Every READ surface a downstream surface consumes: the sync pull + both CRUD reads.
+    # Every READ surface a downstream surface consumes: the sync pull + target contract reads.
+    # HS-134-02: /api/profiles read routes retired; reads go through /api/inference-targets.
     pulled = client.get("/api/sync/pull").json()
-    listed = client.get("/api/profiles").json()["profiles"]
-    got_x = client.get("/api/profiles/prof_x").json()["profile"]
-    got_y = client.get("/api/profiles/prof_y").json()["profile"]
+    targets = client.get("/api/inference-targets").json()["targets"]
+    listed_x = next(t for t in targets if t["id"] == "prof_x")
+    listed_y = next(t for t in targets if t["id"] == "prof_y")
+    got_x = client.get("/api/inference-targets/prof_x").json()["inference_target"]
+    got_y = client.get("/api/inference-targets/prof_y").json()["inference_target"]
 
-    # 1) The shape is exactly the agreed cross-surface field set — no more, no less, no key.
-    for served in (got_x, got_y, *listed):
-        assert set(served.keys()) == _PROFILE_SHAPE_KEYS, set(served.keys()) ^ _PROFILE_SHAPE_KEYS
+    # 1) The target contract shape includes the canonical fields — no key.
+    _TARGET_SHAPE_KEYS = {
+        "version", "id", "profile_id", "name", "kind", "boundary", "owner",
+        "transport", "data_scope", "engine", "model", "context_limit",
+        "readiness", "secret", "endpoint", "node",
+    }
+    for served in (got_x, got_y, listed_x, listed_y):
+        assert set(served.keys()) == _TARGET_SHAPE_KEYS, set(served.keys()) ^ _TARGET_SHAPE_KEYS
 
     # 2) No key material survives on ANY read surface, from EITHER ingress.
-    surfaces_blob = json.dumps([pulled, listed, got_x, got_y])
+    surfaces_blob = json.dumps([pulled, targets, got_x, got_y])
     for needle in ("api_key", "apiKey", "FROM-SYNC-MUST-VANISH", "FROM-REST-MUST-VANISH"):
         assert needle not in surfaces_blob, f"{needle!r} leaked onto a read surface"
 
     # 3) The shape itself round-tripped intact (parity is real, not achieved by dropping data).
-    assert got_x["base_url"] == "https://api.anthropic.com/v1" and got_x["context_limit"] == 200000
-    assert got_y["model"] == "anthropic/claude-sonnet-4" and got_y["requires_key"] is True
+    assert got_x["endpoint"] == "https://api.anthropic.com/v1" and got_x["context_limit"] == 200000
+    assert got_y["model"] == "anthropic/claude-sonnet-4" and got_y["secret"]["required"] is True
 
 
 # ── HSM-22-04: the travelling graph — SYNCED in, RUN on the hub ──────────────

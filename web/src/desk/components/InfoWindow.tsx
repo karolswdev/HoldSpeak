@@ -229,6 +229,34 @@ export function InfoWindow({
             </div>
           </section>
         ) : null}
+        {(info.summaries?.length ?? 0) > 0 ? (
+          <section>
+            <h3>Summary</h3>
+            <div className="info-kv">
+              {info.summaries!.map((s) => [
+                <b key={`${s.key}-label`}>{s.label}</b>,
+                <span key={`${s.key}-value`}>
+                  {s.value(o)}
+                  {s.handoff ? (
+                    <>
+                      {" "}
+                      <button
+                        type="button"
+                        className="desk-chip quiet"
+                        onClick={() => {
+                          s.handoff!.action(o);
+                          closeInfoWindow(refId);
+                        }}
+                      >
+                        {s.handoff.verb}
+                      </button>
+                    </>
+                  ) : null}
+                </span>,
+              ])}
+            </div>
+          </section>
+        ) : null}
       </div>
     </DeskWindowFrame>
   );

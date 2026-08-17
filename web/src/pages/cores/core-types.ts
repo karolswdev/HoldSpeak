@@ -443,7 +443,4 @@ export interface InferenceTargetsResponse {
   [key: string]: unknown;
 }
 
-export interface ProfilesResponse {
-  profiles?: Record<string, unknown>[];
-  [key: string]: unknown;
-}
+// HS-134-02: ProfilesResponse retired — /api/profiles read routes deleted.

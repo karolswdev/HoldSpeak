@@ -118,15 +118,6 @@
   margin-left: auto;
 }
 
-/* ── skill picker ── */
-.desk-next .wb-skill-picker {
-  border-top: 1px solid var(--border-subtle);
-  padding-top: 4px;
-}
-.desk-next .wb-skill-picker .desk-chip {
-  margin: 6px var(--desk-surface-row-pad-x);
-}
-
 /* ── workspace path ── */
 .desk-next .wb-workspace-path {
   padding: 8px var(--desk-surface-row-pad-x);

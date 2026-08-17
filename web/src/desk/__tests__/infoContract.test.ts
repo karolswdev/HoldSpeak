@@ -1,7 +1,7 @@
 /** HS-105-04 — the Info-contract guard: one derived surface, honest
  * measures, properties only where a REAL update path exists. */
 import { describe, expect, it, vi } from "vitest";
-import { INFO, kindInfo, filedZones } from "../infoContract";
+import { INFO, kindInfo, filedZones, type InfoSummary } from "../infoContract";
 import { EMPTY_ITEMS, type Items } from "../api";
 import type { Directory } from "../../lib/primitives";
 import type { WorldObject } from "../world";
@@ -32,40 +32,59 @@ describe("the Info contract (HS-105-04)", () => {
   });
 
   it("declares properties only where a real update path backs them", () => {
-    // Today's whole honest vocabulary: the recipe's runs_on (the recipe
-    // PUT's profile_id). Growing this list requires a real field first.
+    // HS-134-05: recipe placement is now a read-only summary with hand-off;
+    // no kind exposes a writable property today.
     const declared = Object.entries(INFO).flatMap(([kind, info]) =>
       info.properties.map((p) => `${kind}.${p.key}`),
     );
-    expect(declared).toEqual(["recipe.runs_on"]);
+    expect(declared).toEqual([]);
   });
 
-  it("recipe placement uses the HS-130-01 label + one empty-value meaning", () => {
-    const runsOn = INFO.recipe.properties.find((p) => p.key === "runs_on");
-    expect(runsOn).toBeDefined();
-    // One scoped label vocabulary — the Agent-default scope reads
-    // "Default runs on" (matching RecipeEditor's field label).
-    expect(runsOn!.label).toBe("Default runs on");
-    // Unset = INHERIT, never "This device". The empty choice reads the same
-    // in InfoWindow as in RecipeEditor.
-    const empty = runsOn!.choices(
-      { kind: "recipe", id: "r1", ref: {} } as unknown as WorldObject,
-      EMPTY_ITEMS,
-    )[0];
-    expect(empty).toEqual({ id: "", label: "Inherit default" });
+  it("recipe has NO writable properties — HS-134-05 removed the write path", () => {
+    expect(INFO.recipe.properties).toEqual([]);
   });
 
-  it("recipe placement writes null for unset — the SAME token RecipeEditor writes", async () => {
-    const runsOn = INFO.recipe.properties.find((p) => p.key === "runs_on")!;
-    const updatePrimitive = vi.fn().mockResolvedValue(undefined);
-    useDesk.setState({ updatePrimitive } as never);
-    await runsOn.set(
-      { kind: "recipe", id: "r1", ref: {} } as unknown as WorldObject,
-      "",
+  it("recipe placement summary shows INHERITED when profileId is unset", () => {
+    const placement = INFO.recipe.summaries?.find(
+      (s: InfoSummary) => s.key === "placement",
     );
-    expect(updatePrimitive).toHaveBeenCalledWith("recipe", "r1", {
-      profile_id: null,
-    });
+    expect(placement).toBeDefined();
+    expect(placement!.label).toBe("Placement");
+    // Absent profileId renders as INHERITED, not blank.
+    expect(
+      placement!.value(obj("recipe", {})),
+    ).toBe("INHERITED");
+    expect(
+      placement!.value(obj("recipe", { profileId: null })),
+    ).toBe("INHERITED");
+    expect(
+      placement!.value(obj("recipe", { profileId: "" })),
+    ).toBe("INHERITED");
+  });
+
+  it("recipe placement summary shows the profile name when set", () => {
+    useDesk.setState({
+      profiles: [{ id: "p1", name: "Cloud GPT-4" }],
+    } as never);
+    const placement = INFO.recipe.summaries?.find(
+      (s: InfoSummary) => s.key === "placement",
+    );
+    expect(
+      placement!.value(obj("recipe", { profileId: "p1" })),
+    ).toBe("Cloud GPT-4");
+  });
+
+  it("recipe placement hand-off opens the editor", () => {
+    const openEditor = vi.fn();
+    useDesk.setState({ openEditor } as never);
+    const placement = INFO.recipe.summaries?.find(
+      (s: InfoSummary) => s.key === "placement",
+    );
+    expect(placement!.handoff).toBeDefined();
+    expect(placement!.handoff!.verb).toBe("Edit in Agent");
+    const recipe = obj("recipe", {});
+    placement!.handoff!.action(recipe);
+    expect(openEditor).toHaveBeenCalledWith("x1");
   });
 
   it("filedZones matches by bare id and qualified ref", () => {

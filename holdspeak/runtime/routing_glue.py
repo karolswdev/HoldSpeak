@@ -42,7 +42,7 @@ class RoutingGlueMixin:
         with self.state_lock:
             return {
                 "enabled": bool(self.mir_enabled),
-                "profile": str(self.mir_profile),
+                "profile": str(self.routing_profile),
                 "available_profiles": available_profiles(),
                 "supported_intents": list(SUPPORTED_INTENTS),
                 "override_intents": list(self.mir_override_intents),
@@ -320,7 +320,7 @@ class RoutingGlueMixin:
 
     def _on_set_intent_profile(self, profile: str) -> dict[str, object]:
         with self.state_lock:
-            self.mir_profile = normalize_profile(profile)
+            self.routing_profile = normalize_profile(profile)
         return self._mir_controls_payload()
 
     def _on_set_intent_override(self, intents: Optional[list[str]]) -> dict[str, object]:

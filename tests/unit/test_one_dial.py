@@ -257,7 +257,7 @@ def test_intel_queue_signatures_carry_no_endpoint_triple() -> None:
         assert not {"cloud_model", "cloud_api_key_env", "cloud_base_url"} & params, fn
 
 
-# ── /api/profiles is a read-only alias ─────────────────────────────────
+# ── /api/profiles read routes retired (HS-134-02) ─────────────────────
 
 
 @pytest.fixture
@@ -271,13 +271,16 @@ def client(db, monkeypatch) -> TestClient:
     return TestClient(app)
 
 
-def test_profiles_api_reads_but_refuses_writes(client, db) -> None:
+def test_profiles_api_reads_retired_writes_still_refused(client, db) -> None:
+    """HS-134-02: GET /api/profiles retired; reads go through
+    /api/inference-targets; writes still rejected with 405."""
     db.profiles.upsert(
         profile_id="p-1", name="A", kind="openAICompatible",
         base_url="http://h:1/v1", model="m",
     )
-    assert client.get("/api/profiles").status_code == 200
-    assert client.get("/api/profiles/p-1").status_code == 200
+    # HS-134-02: read through the target contract.
+    targets = client.get("/api/inference-targets").json()["targets"]
+    assert any(t["id"] == "p-1" for t in targets)
 
     for resp in (
         client.post("/api/profiles", json={"name": "B"}),
@@ -348,7 +351,9 @@ def test_feature_legs_resolve_through_the_one_resolver() -> None:
         # HS-131-04: Sequence and Workflow now share the admitted service;
         # _target resolves placement for every eligible child.
         "holdspeak/services/sequence_workflow_service.py": "resolve_placement",
-        "holdspeak/services/recipe_service.py": "resolve_inference_target",
+        # HS-134-01: Recipe execution migrated to the HS-130-01 placement
+        # authority; workbench-tier overrides now reach execution.
+        "holdspeak/services/recipe_service.py": "resolve_placement",
         "holdspeak/plugins/dictation/assembly.py": "effective_dictation_llm",
         "holdspeak/runtime/meeting_glue.py": "effective_intel_cloud",
         "holdspeak/intel_queue.py": "effective_intel_cloud",

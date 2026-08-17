@@ -165,9 +165,9 @@ _STATIC_RESOURCES = [
         "mimeType": _JSON_MIME,
     },
     {
-        "uri": "holdspeak://profiles",
-        "name": "Profiles",
-        "description": "Canonical redacted list of configured inference profiles.",
+        "uri": "holdspeak://destinations",
+        "name": "Destinations",
+        "description": "Canonical redacted list of configured inference destinations.",
         "mimeType": _JSON_MIME,
     },
     {
@@ -234,9 +234,9 @@ _RESOURCE_TEMPLATES = [
         "mimeType": _JSON_MIME,
     },
     {
-        "uriTemplate": "holdspeak://profiles/{id}",
-        "name": "Profile detail",
-        "description": "Canonical redacted configuration for one inference profile.",
+        "uriTemplate": "holdspeak://destinations/{id}",
+        "name": "Destination detail",
+        "description": "Canonical redacted configuration for one inference destination.",
         "mimeType": _JSON_MIME,
     },
     {
@@ -283,7 +283,7 @@ _PRIMITIVE_DETAIL_PATTERN = re.compile(r"^holdspeak://primitives/([^/]+)/([^/]+)
 _WORKBENCH_DETAIL_PATTERN = re.compile(r"^holdspeak://workbenches/([^/]+)$")
 _WORKBENCH_RUNS_PATTERN = re.compile(r"^holdspeak://workbenches/([^/]+)/runs$")
 _RECIPE_DETAIL_PATTERN = re.compile(r"^holdspeak://recipes/([^/]+)$")
-_PROFILE_DETAIL_PATTERN = re.compile(r"^holdspeak://profiles/([^/]+)$")
+_DESTINATION_DETAIL_PATTERN = re.compile(r"^holdspeak://destinations/([^/]+)$")
 _ZONE_MEMBERS_PATTERN = re.compile(r"^holdspeak://zones/([^/]+)/members$")
 _MEETING_DETAIL_PATTERN = re.compile(r"^holdspeak://meetings/([^/]+)$")
 _DECISION_RECORD_PATTERN = re.compile(r"^holdspeak://decision-records/([^/]+)$")
@@ -325,7 +325,7 @@ def read_resource(uri: str, principal: Principal) -> dict[str, list[dict[str, st
         return _contents(uri, _JSON_MIME, WorkbenchService(get_database()).list_workbenches(principal)[:100])
     if uri == "holdspeak://recipes":
         return _contents(uri, _JSON_MIME, RecipeService(get_database()).list_recipes(principal)[:100])
-    if uri == "holdspeak://profiles":
+    if uri == "holdspeak://destinations":
         result = ProfileService(get_database()).list_profiles(principal)
         result["profiles"] = result["profiles"][:100]
         return _contents(uri, _JSON_MIME, result)
@@ -364,7 +364,7 @@ def read_resource(uri: str, principal: Principal) -> dict[str, list[dict[str, st
     if match := _RECIPE_DETAIL_PATTERN.fullmatch(uri):
         value = RecipeService(get_database()).get_recipe(principal, match.group(1))
         return _contents(uri, _JSON_MIME, value)
-    if match := _PROFILE_DETAIL_PATTERN.fullmatch(uri):
+    if match := _DESTINATION_DETAIL_PATTERN.fullmatch(uri):
         value = ProfileService(get_database()).get_profile(principal, match.group(1))
         return _contents(uri, _JSON_MIME, value)
     if match := _ZONE_MEMBERS_PATTERN.fullmatch(uri):

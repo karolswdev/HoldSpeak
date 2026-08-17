@@ -133,19 +133,21 @@ def test_ask_against_live_mesh_node_proceeds(env, monkeypatch) -> None:
     assert body["egress"] == {"scope": "mesh", "host": "walk-edge"}
 
 
-# ── the profiles list: liveness rides the envelope ───────────────────────
+# ── the target list: liveness reflected in readiness (HS-134-02) ────────
 
 
-def test_profiles_list_carries_the_liveness_sidecar(env) -> None:
+def test_inference_targets_list_reflects_mesh_liveness(env) -> None:
+    """HS-134-02: /api/profiles read routes retired; mesh liveness is now
+    surfaced through the target contract's readiness state."""
     db, client = env
     _mesh_profile(db)
     db.mesh_relay.touch_worker("walk-edge")
 
-    data = client.get("/api/profiles").json()
-    assert data["mesh_liveness"]["walk-edge"]["live"] is True
-    # the synced shape stays pure — no liveness key on the profile object
-    served = next(p for p in data["profiles"] if p["id"] == "p-phone")
-    assert "live" not in served and "mesh_liveness" not in served
+    data = client.get("/api/inference-targets").json()
+    target = next(t for t in data["targets"] if t["id"] == "p-phone")
+    # A live mesh node target reports ready.
+    assert target["readiness"]["state"] == "ready"
+    assert target["node"] == "walk-edge"
 
 
 # ── doctor ───────────────────────────────────────────────────────────────

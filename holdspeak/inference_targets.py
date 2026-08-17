@@ -19,7 +19,6 @@ from urllib.parse import urlparse
 
 
 TARGET_CONTRACT_VERSION = 1
-PROFILE_ALIAS_VERSION = 1
 THIS_MACHINE_ID = "this_machine"
 PAIRED_DEVICE_ID = "paired_device"
 # HS-131-08 (Sol Amendment 1): the hub-default cloud leg, as a NAMEABLE
@@ -172,11 +171,10 @@ class InferenceTarget:
             "readiness": readiness,
             # Presence is safe to expose; the secret itself never enters the DTO.
             "secret": {"required": self.requires_key, "present": self.key_present},
-            "profile_alias": {
-                "resource": "profile",
-                "version": PROFILE_ALIAS_VERSION,
-                "id": self.profile_id,
-            },
+            # HS-134-02: endpoint/node surfaced so the target contract is
+            # self-sufficient (the /api/profiles read routes are retired).
+            "endpoint": self.deployment.endpoint if self.deployment else "",
+            "node": self.deployment.node if self.deployment else "",
         }
 
     def placement_receipt(

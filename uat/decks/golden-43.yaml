@@ -19,7 +19,7 @@ config:
     intel_cloud_base_url: http://192.168.1.43:8080/v1
     intel_cloud_model: Qwen3.6-35B-A3B-UD-Q5_K_XL.gguf
     intent_router_enabled: true
-    mir_profile: balanced
+    routing_profile: balanced
     allow_actuators: false
   dictation:
     pipeline:

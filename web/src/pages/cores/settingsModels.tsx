@@ -11,7 +11,6 @@ import { apiFetch, readableError } from "../../lib/api";
 import type {
   SettingsResponse,
   InferenceTargetsResponse,
-  ProfilesResponse,
 } from "./core-types";
 import { ConfirmVerb } from "../../desk/surface/Surface";
 import {
@@ -80,8 +79,9 @@ function fromWire(row: Record<string, unknown>): Target {
     kind: WIRE_KIND[kind] ?? kind,
     model: String(row.model ?? ""),
     profile_id: row.profile_id == null ? null : String(row.profile_id),
-    base_url: "",
-    node: "",
+    // HS-134-02: endpoint/node now ride the target contract directly.
+    base_url: String(row.endpoint ?? ""),
+    node: String(row.node ?? ""),
     context_limit: Number(row.context_limit ?? 16384),
     requires_key: Boolean(secret.required),
     key_present: Boolean(secret.present),
@@ -111,31 +111,14 @@ export function ModelsModule({
 
   const reload = useCallback(async () => {
     try {
+      // HS-134-02: one fetch — the target contract carries endpoint/node.
       const wire = await apiFetch<InferenceTargetsResponse>(
         "/api/inference-targets",
       );
-      const rows = (wire.targets ?? [])
-        .filter((row) => row.profile_id != null)
-        .map(fromWire);
-      // The endpoint/node columns live on the profile shape.
-      const legacy = await apiFetch<ProfilesResponse>(
-        "/api/profiles",
-      );
-      const byId = new Map(
-        (legacy.profiles ?? []).map((row) => [String(row.id), row]),
-      );
       setTargets(
-        rows.map((row) => {
-          const profile = byId.get(row.id);
-          return profile
-            ? {
-                ...row,
-                base_url: String(profile.base_url ?? ""),
-                node: String(profile.node ?? ""),
-                kind: String(profile.kind ?? row.kind),
-              }
-            : row;
-        }),
+        (wire.targets ?? [])
+          .filter((row) => row.profile_id != null)
+          .map(fromWire),
       );
     } catch (error) {
       onRefuse(readableError(error));

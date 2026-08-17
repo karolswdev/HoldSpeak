@@ -158,7 +158,7 @@ class AskService:
                 self._invoke,
                 principal,
                 InvocationRequest(revision.id, ServiceContract.for_payload(ASK_SERVICE_CONTRACT, ASK_SERVICE_SCHEMA_VERSION, payload), time.time() + 60, payload, invocation_id),
-                publish=self._broker.projection_stager.publisher(invocation_id, "ask-result", lambda output: self._ask_projection(output, payload, target, ran_profile_id)),
+                publish=self._broker.projection_stager.publisher(invocation_id, "ask-result", lambda output: self._ask_projection(output, payload, target, ran_profile_id, placement.placement_dict())),
             )
         except KernelRefused as exc:
             self._emit("error", kind="ask", ref="ask", name=lens, error=exc.reason)
@@ -172,7 +172,7 @@ class AskService:
         self._emit("ready", kind="ask", ref="ask", name=lens)
         return dict(result)
 
-    def _ask_projection(self, output: Any, payload: dict[str, Any], target: Any, profile_id: str | None) -> dict[str, Any]:
+    def _ask_projection(self, output: Any, payload: dict[str, Any], target: Any, profile_id: str | None, placement_block: dict[str, Any] | None = None) -> dict[str, Any]:
         dispatched = dict(output) if isinstance(output, dict) else {"output": str(output)}
         answer = str(dispatched["output"])
         provider = str(dispatched.get("provider") or target.deployment.engine)
@@ -190,6 +190,7 @@ class AskService:
                                   "actual_placement": target.placement_receipt(provider=provider, model=selected_model),
                                   "egress": egress, "model": selected_model,
                                   "context_ids": list(payload["context_ids"]), "context_titles": list(payload["context_titles"])}
+        if placement_block is not None: result["placement"] = placement_block
         if payload["grounding"] is not None: result["grounding"] = payload["grounding"]
         source_text = str(payload["source_text"])
         if source_text.strip(): result["grounding_claims"] = score_claims(answer, source_text)

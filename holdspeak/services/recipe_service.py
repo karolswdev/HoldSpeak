@@ -65,24 +65,24 @@ class RecipeService:
     def delete_recipe(self, principal: Principal, recipe_id: str) -> bool:
         if not self._db.recipes.delete(recipe_id): raise NotFound("Agent",recipe_id)
         return True
-    async def run(self, principal: Principal, recipe_id: str, *, input: str="", variables: dict[str,Any]|None=None, inference_target_id: str|None=None, requested_placement: str|None=None, max_tokens: Any=None, temperature: Any=None, source_ref: str|None=None, source_type: Any=None, deadline_at: Any=None, broadcast: Broadcast|None=None, **extra: Any) -> dict[str,Any]:
+    async def run(self, principal: Principal, recipe_id: str, *, input: str="", variables: dict[str,Any]|None=None, inference_target_id: str|None=None, requested_placement: str|None=None, workbench_id: str|None=None, max_tokens: Any=None, temperature: Any=None, source_ref: str|None=None, source_type: Any=None, deadline_at: Any=None, broadcast: Broadcast|None=None, **extra: Any) -> dict[str,Any]:
         from .support import _render_user_prompt, canonical_source_type, inject_skills
         recipe=self._recipe(recipe_id); variables=variables if isinstance(variables,dict) else {}
         user=_render_user_prompt(recipe.user_template,variables,str(input or ""))
         if not user.strip(): raise ServiceError("empty_input","nothing to run: provide `input` or a Agent input template")
-        target, revision=self._target(recipe,inference_target_id or requested_placement or recipe.profile_id or "this_machine")
+        target, revision, placement_block=self._target(recipe,invocation=inference_target_id or requested_placement or None,workbench=workbench_id)
         sources=[{"source_type":"recipe","source_ref":recipe_id}]
         if str(source_ref or "").strip(): sources.append({"source_type":canonical_source_type(source_type) if source_type else "input","source_ref":str(source_ref)})
         payload={"system_prompt":inject_skills(self._db,recipe.system_prompt,recipe_id),"user_prompt":user,"variables":variables,"recipe_id":recipe_id,"recipe_revision":str(recipe.last_modified),"deployment_revision":revision.id,"temperature":float(temperature) if temperature is not None else None,"max_tokens":int(max_tokens) if max_tokens is not None else None}
         iid="recipe_run_"+uuid.uuid4().hex; self._broadcast(broadcast,"running",kind="recipe",ref=recipe_id,name=recipe.name or recipe_id)
         try:
-            outcome=await asyncio.to_thread(self._invoke,principal,InvocationRequest(revision.id,SavedDefinition(f"recipe:{recipe_id}",str(recipe.last_modified)),float(deadline_at or time.time()+60),payload,iid),CanonicalPromptAdapter(),publish=self._broker.projection_stager.publisher(iid,"recipe-run",lambda result:self._run_projection(result,recipe,target,sources,user)))
+            outcome=await asyncio.to_thread(self._invoke,principal,InvocationRequest(revision.id,SavedDefinition(f"recipe:{recipe_id}",str(recipe.last_modified)),float(deadline_at or time.time()+60),payload,iid),CanonicalPromptAdapter(),publish=self._broker.projection_stager.publisher(iid,"recipe-run",lambda result:self._run_projection(result,recipe,target,sources,user,placement_block)))
         except KernelRefused as exc: raise self._outcome_error(None,exc)
         if outcome.outcome!="succeeded": self._broadcast(broadcast,"error",kind="recipe",ref=recipe_id,name=recipe.name or recipe_id,error=outcome.outcome); raise self._outcome_error(outcome,None,target=target)
         result=self._broker.projection_stager.finalize(iid)
         if result is None: raise ServiceError("projection_not_published","Recipe result is awaiting receipt reconciliation",context={"invocation_id":iid,"operation_id":outcome.operation_id,"status":409})
         self._broadcast(broadcast,"ready",kind="recipe",ref=recipe_id,name=recipe.name or recipe_id); return result
-    async def chat(self, principal: Principal, recipe_id: str, *, question: str, history: list[Any]|None=None, grounding: Any=None, inference_target_id: str|None=None, egress_context: Any=None, broadcast: Broadcast|None=None) -> dict[str,Any]:
+    async def chat(self, principal: Principal, recipe_id: str, *, question: str, history: list[Any]|None=None, grounding: Any=None, inference_target_id: str|None=None, workbench_id: str|None=None, egress_context: Any=None, broadcast: Broadcast|None=None) -> dict[str,Any]:
         # HS-132-09: `default_model` is GONE. The route filled it with the hub's
         # configured-placement describer, so a chat turn on `this_machine` (pinned
         # local) printed the hub's cloud model id, and the same agent's `run` —
@@ -91,7 +91,7 @@ class RecipeService:
         from .support import inject_skills
         question=str(question or "").strip()
         if not question: raise ValidationError("question is required")
-        recipe=self._recipe(recipe_id); target,revision=self._target(recipe,inference_target_id or recipe.profile_id or "this_machine")
+        recipe=self._recipe(recipe_id); target,revision,placement_block=self._target(recipe,invocation=inference_target_id,workbench=workbench_id)
         from .support import _GROUNDING_EXPANDS, _GROUNDING_MAX_REFS, _hydrate_grounding
         name=recipe.name or recipe_id; blocks=[]; context=[]
         if (recipe.manual_context or "").strip(): context.append(recipe.manual_context)
@@ -116,7 +116,7 @@ class RecipeService:
         payload={"system_prompt":inject_skills(self._db,(recipe.system_prompt or "").strip() or f"You are {name}, a helpful assistant.",recipe_id),"user_prompt":"\n\n".join(blocks),"history":window,"recipe_id":recipe_id,"recipe_revision":str(recipe.last_modified),"deployment_revision":revision.id,"context_ids":context_ids,"context_titles":context_titles,"grounding":grounding_echo,"selected_model":_deployment_model(target)}
         iid="recipe_chat_"+uuid.uuid4().hex; self._broadcast(broadcast,"running",kind="recipe",ref=recipe_id,name=name)
         try:
-            outcome=await asyncio.to_thread(self._invoke,principal,InvocationRequest(revision.id,SavedDefinition(f"recipe:{recipe_id}",str(recipe.last_modified)),time.time()+60,payload,iid),CanonicalPromptAdapter(),publish=self._broker.projection_stager.publisher(iid,"recipe-chat-result",lambda result:self._chat_projection(result,recipe,target,payload)))
+            outcome=await asyncio.to_thread(self._invoke,principal,InvocationRequest(revision.id,SavedDefinition(f"recipe:{recipe_id}",str(recipe.last_modified)),time.time()+60,payload,iid),CanonicalPromptAdapter(),publish=self._broker.projection_stager.publisher(iid,"recipe-chat-result",lambda result:self._chat_projection(result,recipe,target,payload,placement_block)))
         except KernelRefused as exc: raise self._outcome_error(None,exc)
         if outcome.outcome!="succeeded": raise self._outcome_error(outcome,None,target=target)
         result=self._broker.projection_stager.finalize(iid)
@@ -126,22 +126,26 @@ class RecipeService:
         r=self._db.recipes.get(recipe_id)
         if r is None: raise NotFound("Agent",recipe_id)
         return r
-    def _target(self, recipe: Any, requested: str):
-        from ..inference_targets import resolve_inference_target, target_refusal
-        target=resolve_inference_target(self._db,requested)
+    def _target(self, recipe: Any, *, invocation: str | None = None, workbench: str | None = None):
+        from ..inference_targets import resolve_placement, target_refusal
+        resolution=resolve_placement(self._db,invocation=invocation,workbench=workbench,agent=recipe.profile_id)
+        target=resolution.target
         if not target.ready: raise ServiceError("target_unavailable",target.readiness_reason,context={**target_refusal(target),"status":409})
-        return target,capture_deployment_revision(self._db,target)
+        return target,capture_deployment_revision(self._db,target),resolution.placement_dict()
     _outcome_error = staticmethod(map_inference_outcome)
     @staticmethod
     def _broadcast(broadcast: Broadcast|None,state: str,**frame: Any)->None:
         if broadcast: broadcast(state,**frame)
-    def _run_projection(self,result: Any,recipe: Any,target: Any,sources: list[dict[str,str]],user: str)->dict[str,Any]:
+    def _run_projection(self,result: Any,recipe: Any,target: Any,sources: list[dict[str,str]],user: str,placement_block: dict[str,Any]|None=None)->dict[str,Any]:
         d=dict(result) if isinstance(result,dict) else {"output":str(result)}; output=str(d["output"]); aid="artifact_"+uuid.uuid4().hex[:12]
-        return {"recipe_id":recipe.id,"name":f"{recipe.name or recipe.id}: {user}" if user else (recipe.name or recipe.id),"output":output,"provider":str(d.get("provider") or target.engine),"profile_id":target.profile_id,"inference_target":target.to_dict(),"actual_placement":target.placement_receipt(provider=str(d.get("provider") or target.engine),model=str(d.get("model") or _deployment_model(target))),"sources":sources,"artifact_id":aid,"created_at":datetime.now().isoformat()}
-    def _chat_projection(self,result: Any,recipe: Any,target: Any,payload: dict[str,Any])->dict[str,Any]:
+        row={"recipe_id":recipe.id,"name":f"{recipe.name or recipe.id}: {user}" if user else (recipe.name or recipe.id),"output":output,"provider":str(d.get("provider") or target.engine),"profile_id":target.profile_id,"inference_target":target.to_dict(),"actual_placement":target.placement_receipt(provider=str(d.get("provider") or target.engine),model=str(d.get("model") or _deployment_model(target))),"sources":sources,"artifact_id":aid,"created_at":datetime.now().isoformat()}
+        if placement_block is not None: row["placement"]=placement_block
+        return row
+    def _chat_projection(self,result: Any,recipe: Any,target: Any,payload: dict[str,Any],placement_block: dict[str,Any]|None=None)->dict[str,Any]:
         d=dict(result) if isinstance(result,dict) else {"output":str(result)}
         out={"recipe_id":recipe.id,"output":str(d["output"]),"provider":str(d.get("provider") or target.engine),"profile_id":target.profile_id,"inference_target":target.to_dict(),"actual_placement":target.placement_receipt(provider=str(d.get("provider") or target.engine),model=str(d.get("model") or payload["selected_model"])),"egress":{"scope":"local"},"model":str(d.get("model") or payload["selected_model"]),"context_ids":payload["context_ids"],"context_titles":payload["context_titles"]}
         if payload["grounding"] is not None: out["grounding"]=payload["grounding"]
+        if placement_block is not None: out["placement"]=placement_block
         return out
     def cancel(self, principal: Principal, invocation_id: str) -> dict[str, str]:
         from ..kernel.runtime import _as_principal

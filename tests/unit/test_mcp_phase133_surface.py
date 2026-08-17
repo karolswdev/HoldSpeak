@@ -29,20 +29,20 @@ def db(tmp_path: Path):
 
 
 # ---------------------------------------------------------------------------
-# (a) Pagination: >100 profiles truncated to exactly 100 by the resource read
+# (a) Pagination: >100 destinations truncated to exactly 100 by the resource read
 # ---------------------------------------------------------------------------
 
 
-def test_profile_resource_read_truncates_to_100(
+def test_destination_resource_read_truncates_to_100(
     db: Database, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """Seed 101 profiles; the holdspeak://profiles resource must return exactly 100."""
+    """Seed 101 profiles; the holdspeak://destinations resource must return exactly 100."""
     for i in range(101):
         db.profiles.upsert(profile_id=f"profile-{i:04d}", name=f"Profile {i}")
 
     monkeypatch.setattr(mcp_resources, "get_database", lambda: db)
 
-    result = mcp_resources.read_resource("holdspeak://profiles", OWNER)
+    result = mcp_resources.read_resource("holdspeak://destinations", OWNER)
     payload = json.loads(result["contents"][0]["text"])
     assert len(payload["profiles"]) == 100
 

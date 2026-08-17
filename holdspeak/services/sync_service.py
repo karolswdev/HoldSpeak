@@ -590,9 +590,15 @@ def _merge_primitive_spec(db: Any, spec: SyncKindSpec, records: list[dict[str, A
         }
         if value.get("created_at"):
             kwargs["created_at"] = str(value["created_at"])
+        # Distinguish "field present with null" (explicit inherit — must land
+        # as null on the receiving side) from "field absent from payload" (no
+        # opinion — preserve the receiving value).  HS-134-07.
+        existing_dict = existing.to_dict() if existing is not None else {}
         for value_key, upsert_key in field_map.items():
             if value_key in value:
                 kwargs[upsert_key] = value[value_key]
+            elif value_key in existing_dict:
+                kwargs[upsert_key] = existing_dict[value_key]
         prior_bound = None
         if spec.bucket == "workbenches" and existing is not None:
             prior_bound = (existing.schedule, existing.schedule_enabled, existing.recipe_id, existing.profile_id)

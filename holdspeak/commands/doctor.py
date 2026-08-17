@@ -1097,7 +1097,7 @@ def _check_mir_routing(config: Config) -> DoctorCheck:
     """MIR-O-001 / spec §9.10: report MIR-01 routing-pipeline config posture.
 
     Never returns `FAIL` — the pipeline is opt-in (mirrors DIR-DOC-003).
-    Validates the configured `plugin_profile` against the pre-defined
+    Validates the configured ``routing_profile`` against the pre-defined
     profile set so a typo surfaces here rather than at meeting stop.
     """
     cfg = config.meeting
@@ -1119,10 +1119,8 @@ def _check_mir_routing(config: Config) -> DoctorCheck:
         )
 
     profiles = list(available_profiles())
-    # HS-130-05: doctor reports the ONE routing profile the runtime reads
-    # (`effective_routing_profile`), converging the old `plugin_profile` /
-    # `mir_profile` split so doctor and the runtime can never name different
-    # values.
+    # HS-130-05 / HS-134-08: doctor reports the ONE routing profile the
+    # runtime reads (`effective_routing_profile`).
     from ..config.meeting import effective_routing_profile
 
     routing_profile = effective_routing_profile(cfg)
