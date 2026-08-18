@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 138
-- **Status:** in-progress
+- **Status:** done
 - **Depends on:** none
 - **Unblocks:** 138-02, 138-03, 138-04, 138-05
 - **Owner:** delegated Terra worker; primary adjudicates

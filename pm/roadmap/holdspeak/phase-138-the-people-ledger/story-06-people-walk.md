@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 138
-- **Status:** ready
+- **Status:** done
 - **Depends on:** 138-01, 138-02, 138-03, 138-04, 138-05
 - **Unblocks:** phase close
 - **Owner:** primary adjudicator

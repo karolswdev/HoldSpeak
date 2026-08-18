@@ -1,8 +1,8 @@
 # Phase 138 — The People Ledger
 
-**Status:** active (2/8).
+**Status:** complete (8/8, 2026-08-17).
 
-**Last updated:** 2026-08-16.
+**Last updated:** 2026-08-17.
 
 ## Owner mandate
 
@@ -57,7 +57,9 @@ product stores.
 - Authenticated loopback API with content-free error codes.
 - In-memory Follow-through projection and source-dispatched lifecycle mutations.
 - Desk People surface with responsive roster, relationship detail, and terse trust
-  facts: `Encrypted`, `This device only`, `Notes only`.
+  facts: `Encrypted`, `Local storage`, `Notes only` *(amended 2026-08-17 —
+  counsel ruled `This device only` false for the Send-to-Workbench egress
+  path; that verb now carries a `Workbench model` badge; owner may overrule)*.
 - Security/threat-model documentation, leak tests, focused/full regression gates,
   and a live desktop+narrow walk.
 - Default-deny People MCP tools/resources for shared-intent continuity, manual
@@ -91,12 +93,12 @@ product stores.
 
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
-| HS-138-01 | The encrypted boundary | in-progress | [story-01](./story-01-encrypted-boundary.md) | — |
-| HS-138-02 | Relationships and one-to-ones | ready | [story-02](./story-02-relationships-one-to-ones.md) | — |
-| HS-138-03 | Commitments join Follow-through | ready | [story-03](./story-03-commitments-follow-through.md) | — |
-| HS-138-04 | People belongs on the Desk | ready | [story-04](./story-04-people-desk.md) | — |
-| HS-138-05 | The privacy proof | ready | [story-05](./story-05-privacy-proof.md) | — |
-| HS-138-06 | The People walk | ready | [story-06](./story-06-people-walk.md) | — |
+| HS-138-01 | The encrypted boundary | done | [story-01](./story-01-encrypted-boundary.md) | [evidence-story-01](./evidence-story-01.md) |
+| HS-138-02 | Relationships and one-to-ones | done | [story-02](./story-02-relationships-one-to-ones.md) | [evidence-story-02](./evidence-story-02.md) |
+| HS-138-03 | Commitments join Follow-through | done | [story-03](./story-03-commitments-follow-through.md) | [evidence-story-03](./evidence-story-03.md) |
+| HS-138-04 | People belongs on the Desk | done | [story-04](./story-04-people-desk.md) | [evidence-story-04](./evidence-story-04.md) |
+| HS-138-05 | The privacy proof | done | [story-05](./story-05-privacy-proof.md) | [evidence-story-05](./evidence-story-05.md) |
+| HS-138-06 | The People walk | done | [story-06](./story-06-people-walk.md) | [evidence-story-06](./evidence-story-06.md) |
 | HS-138-07 | People through the MCP service boundary | done | [story-07](./story-07-people-mcp.md) | [evidence-story-07](./evidence-story-07.md) |
 | HS-138-08 | Commitments become evidenced work | done | [story-08](./story-08-commitment-execution.md) | [evidence-story-08](./evidence-story-08.md) |
 
@@ -185,11 +187,34 @@ product stores.
 - **(L3)** No sanctioned dev-only keystore seam: `store.py:465-466` hardcodes `NativeKeyStore` so the populated People state cannot be walked headlessly. Charter a follow-up for a dev-only seam that is provably unreachable in production.
 - **(L4)** People module source cites no Constitution articles in comments.
 
+## Close counsel (fresh pass, 2026-08-17)
+
+Verdict **RATIFY-WITH-CONCERNS**, no blockers. S1 (should-fix, FIXED before
+the flip): the walk's send-to-workbench check was a false positive — the
+global desk-chrome badge satisfied an OR-assertion and the shot was
+byte-identical to the Now lens; the harness now clicks the You-owe row
+scoped to its SurfaceSection and AND-asserts the specific `Workbench model`
+badge (55/0, distinct inspector shot). Ledgered: (CL1) walk-scoped keychain
+= real Security framework via `security` CLI under the isolated HOME, owner's
+login keychain untouched — ruled as satisfying the native-backend bar; (CL2)
+productLanguage.ts:116 still exports `local_only: "This device only"` used by
+other features — confusion risk if reused for People copy; (CL3) Info-lens
+`Sync: This device only` is TRUE and intentionally retained (sync ≠ the
+Send-to-Workbench path); (CL4) the revival counsel's L1–L4 remain open;
+(CL5, orchestrator's eye) the commitment inspector's workbench CycleGadget
+overlaps the Send-to-Workbench button label at narrow column widths —
+cosmetic.
+
 ## Where we are
 
-Implementation is integrated and the People MCP service slice is done with focused
-evidence. The current increment adds Project-linked, Workbench-executed commitment
-follow-through with explicit satisfaction history. Draft-PR handoff includes
-organizational relationship kinds, encrypted grounding notes, an agent-ready
-shared-only grounding bundle, and the reviewed PixelLab sprite. The phase remains active because
-the full production walk and maintainer verification caveat are intentionally open.
+COMPLETE 8/8 (2026-08-17). The implementation shipped to main in the PR #459
+revival; the close-out branch `phase-138-close` flipped every story on
+gate-captured evidence (258 focused tests across the flips), amended the
+story-04 trust facts visibly, and proved HS-138-06 with an attended
+production walk: 55 PASS / 0 FAIL / 11 shots — real Security-framework key
+custody, restart decrypt, missing-key fail-closed + recovery, zero plaintext
+sentinels in raw bytes, loopback-only network, both widths, zero console
+errors. Fresh close counsel: RATIFY-WITH-CONCERNS, no blockers; S1 fixed
+before the flip, the rest ledgered above. Held for the owner's sitting: the
+badge-copy amendment (overrule offered), the walk-scoped-keychain design
+choice, and the open ledger items.
