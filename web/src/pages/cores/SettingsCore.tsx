@@ -4,7 +4,7 @@
 // window body; the footer status bar carries the receipt and the
 // refusals; every control is a gadget from the surface kit. The pane
 // roster is a code constant — the wire never mints a pane again.
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import type {
   CoreProps,
   SecretState,
@@ -34,22 +34,20 @@ import { toggleSfx } from "../../lib/sfx";
 import { ModelsModule } from "./settingsModels";
 import { RuntimeDocsCore } from "./RuntimeDocsCore";
 import { useCoreWings } from "./core-hooks";
-import { activateLauncher } from "../../desk/components/DeskWindow";
+// HS-139-05: activateLauncher removed (Delivery tile absorbed).
 import {
   CADENCE_PRESSURE_OPTIONS,
-  EXPORT_FORMAT_OPTIONS,
   LANGUAGE_OPTIONS,
   DeskModule,
   MIR_PROFILE_OPTIONS,
+  MODULE_ALIASES,
   PREF_MODULES,
   PrefsFace,
   PrefStatusBar,
   WAKE_ACTION_OPTIONS,
   meetingPlacement,
-  moduleForKey,
   placementLine,
   providerIgnoredReason,
-  type DeepHit,
 } from "./settingsPrefs";
 
 const SECRET_LABELS: Record<string, string> = {
@@ -128,13 +126,14 @@ function SettingsFace({ hero, scope }: CoreProps) {
     scope && scope.startsWith("integration:")
       ? scope.slice("integration:".length)
       : null;
-  const scopedModule = PREF_MODULES.some((module) => module.id === scope)
-    ? (scope ?? null)
+  // HS-139-05: resolve aliases from the retired 14-tile roster to the new 7.
+  const resolvedScope = scope ? (MODULE_ALIASES[scope] ?? scope) : scope;
+  const scopedModule = PREF_MODULES.some((module) => module.id === resolvedScope)
+    ? (resolvedScope ?? null)
     : null;
   const resource = useResource<SettingsResponse>("/api/settings", {});
   const authority = useResource<AuthorityPolicyResponse>("/api/authority/policy", {});
   // null = the drawer face; a module id = that module owns the body.
-  // HS-112-01: the retired Runs-on room's deep links land on Models.
   const [moduleId, setModuleId] = useState<string | null>(
     integrationSubject ? "integrations" : scopedModule,
   );
@@ -243,47 +242,16 @@ function SettingsFace({ hero, scope }: CoreProps) {
 
   // A scope names the focused module. Integration links retain their
   // subject alias while the palette can address every module directly.
+  // HS-139-05: aliases from the retired 14-tile roster land here too.
   useEffect(() => {
     if (integrationSubject) setModuleId("integrations");
     else if (scopedModule) setModuleId(scopedModule);
   }, [integrationSubject, scopedModule]);
 
-  /* ── the deep setting index for the drawer filter ── */
-  const deepIndex = useMemo<DeepHit[]>(() => {
-    const hits: DeepHit[] = [];
-    const walk = (node: Record<string, unknown>, path: string[]) => {
-      for (const [key, item] of Object.entries(node)) {
-        const nextPath = [...path, key];
-        // HS-132-10: the meetings placement keys live in Models with the
-        // dial itself, so a filter hit lands on the control, not on the
-        // room it used to live in.
-        const placementKey =
-          nextPath[0] === "meeting" &&
-          (nextPath[1] === "intel_provider" || nextPath[1] === "intel_profile_id");
-        const owner =
-          (nextPath[0] === "dictation" && nextPath[1] === "runtime") || placementKey
-            ? "models"
-            : moduleForKey(nextPath[0]);
-        if (item !== null && typeof item === "object" && !Array.isArray(item)) {
-          walk(item as Record<string, unknown>, nextPath);
-        } else {
-          hits.push({ module: owner, label: title(key), path: nextPath });
-        }
-      }
-    };
-    for (const key of Object.keys(resource.data)) {
-      if (key.startsWith("_") || key === "config_version" || key === "control_mode")
-        continue;
-      const value = resource.data[key];
-      if (value && typeof value === "object" && !Array.isArray(value))
-        walk(value as Record<string, unknown>, [key]);
-    }
-    return hits;
-  }, [resource.data]);
-
-  const openModule = (id: string, highlightPath?: string) => {
+  // HS-139-05: deep-index and filter removed — 7 tiles all visible at once.
+  const openModule = (id: string) => {
     setModuleId(id);
-    setHighlight(highlightPath ?? "");
+    setHighlight("");
   };
 
   /* ── gadget bindings (plain function helpers — never components
@@ -423,56 +391,12 @@ function SettingsFace({ hero, scope }: CoreProps) {
       return str(nextPath, title(key));
     });
 
-  /* ── the authored modules (audit §3.2): the wire never decides ── */
+  /* ── the authored modules (HS-139-05: seven tiles) ── */
   const renderModule = (id: string): ReactNode => {
     const data = resource.data;
     switch (id) {
-      case "appearance":
-        return (
-          <GadgetGroup>
-            <GadgetRow label="DESK SOUNDS" highlight={hl(["ui", "desk_sounds"])}>
-              <CheckGadget
-                label="DESK SOUNDS"
-                checked={Boolean(val(["ui", "desk_sounds"]) ?? true)}
-                onChange={(next) => {
-                  update(["ui", "desk_sounds"], next);
-                  toggleSfx(next);
-                }}
-              />
-            </GadgetRow>
-            {/* HS-139-01: show_audio_meter, history_lines, theme deleted
-                (dead settings — no runtime consumer, the desk is dark) */}
-          </GadgetGroup>
-        );
-      case "hotkey":
-        return (
-          <HotkeyCapture
-            value={(data.hotkey ?? {}) as Record<string, unknown>}
-            onCommit={(next) =>
-              update(["hotkey"], { ...(data.hotkey as Record<string, unknown>), ...next })
-            }
-            onRefuse={setRefusal}
-          />
-        );
-      case "transcription":
-        return (
-          <>
-            <GadgetGroup>
-              {cyc(["model", "language"], "Language", LANGUAGE_OPTIONS)}
-            </GadgetGroup>
-            {/* HS-139-04: operator knobs fold behind RAW. */}
-            <FoldGadget title="RAW" token="1">
-              <GadgetGroup>
-                {num(["model", "transcribe_timeout_seconds"], "Transcribe timeout", {
-                  unit: "s",
-                  min: 5,
-                  step: 5,
-                })}
-              </GadgetGroup>
-            </FoldGadget>
-          </>
-        );
-      case "voice-typing": {
+      /* ── Voice: hotkey + language + voice typing + wake word ── */
+      case "voice": {
         const symbols = (val(["dictation", "spoken_symbols"]) ?? []) as Array<{
           spoken?: string;
           symbol?: string;
@@ -490,6 +414,16 @@ function SettingsFace({ hero, scope }: CoreProps) {
           []) as unknown[];
         return (
           <>
+            <HotkeyCapture
+              value={(data.hotkey ?? {}) as Record<string, unknown>}
+              onCommit={(next) =>
+                update(["hotkey"], { ...(data.hotkey as Record<string, unknown>), ...next })
+              }
+              onRefuse={setRefusal}
+            />
+            <GadgetGroup label="Transcription">
+              {cyc(["model", "language"], "Language", LANGUAGE_OPTIONS)}
+            </GadgetGroup>
             <GadgetGroup label="Typing">
               {check(["dictation", "preview_before_type"], "Preview before type")}
               {check(
@@ -551,8 +485,24 @@ function SettingsFace({ hero, scope }: CoreProps) {
                 />
               </GadgetRow>
             </GadgetGroup>
-            {/* HS-139-04: pipeline operator knobs fold behind RAW. */}
-            <FoldGadget title="RAW" token="6">
+            <GadgetGroup label="Wake word">
+              {check(["wake_word", "enabled"], "Enabled", "models download once")}
+              {cyc(
+                ["wake_word", "action"],
+                "Action",
+                WAKE_ACTION_OPTIONS,
+                "type lands in the focused app",
+              )}
+            </GadgetGroup>
+            {/* HS-139-04/05: all voice RAW wells merged. */}
+            <FoldGadget title="RAW" token="10">
+              <GadgetGroup label="Transcription">
+                {num(["model", "transcribe_timeout_seconds"], "Transcribe timeout", {
+                  unit: "s",
+                  min: 5,
+                  step: 5,
+                })}
+              </GadgetGroup>
               <GadgetGroup label="Pipeline">
                 {csv(["dictation", "pipeline", "stages"], "Stages")}
                 {num(
@@ -578,25 +528,7 @@ function SettingsFace({ hero, scope }: CoreProps) {
                   { min: 0, max: 1, step: 0.05 },
                 )}
               </GadgetGroup>
-            </FoldGadget>
-          </>
-        );
-      }
-      case "wake-word":
-        return (
-          <>
-            <GadgetGroup>
-              {check(["wake_word", "enabled"], "Enabled", "models download once")}
-              {cyc(
-                ["wake_word", "action"],
-                "Action",
-                WAKE_ACTION_OPTIONS,
-                "type lands in the focused app",
-              )}
-            </GadgetGroup>
-            {/* HS-139-04: wake-word operator knobs fold behind RAW. */}
-            <FoldGadget title="RAW" token="3">
-              <GadgetGroup>
+              <GadgetGroup label="Wake word">
                 {str(["wake_word", "model"], "Model", {
                   placeholder: "hey_jarvis",
                 })}
@@ -614,13 +546,30 @@ function SettingsFace({ hero, scope }: CoreProps) {
             </FoldGadget>
           </>
         );
-      case "presence":
+      }
+      /* ── Sounds & Presence: desk sounds + presence + mascot ── */
+      case "sounds":
         return (
-          <GadgetGroup>
-            {check(["presence", "enabled"], "Presence")}
-            {check(["presence", "mascot"], "Mascot")}
-          </GadgetGroup>
+          <>
+            <GadgetGroup label="Sounds">
+              <GadgetRow label="DESK SOUNDS" highlight={hl(["ui", "desk_sounds"])}>
+                <CheckGadget
+                  label="DESK SOUNDS"
+                  checked={Boolean(val(["ui", "desk_sounds"]) ?? true)}
+                  onChange={(next) => {
+                    update(["ui", "desk_sounds"], next);
+                    toggleSfx(next);
+                  }}
+                />
+              </GadgetRow>
+            </GadgetGroup>
+            <GadgetGroup label="Presence">
+              {check(["presence", "enabled"], "Presence")}
+              {check(["presence", "mascot"], "Mascot")}
+            </GadgetGroup>
+          </>
         );
+      /* ── Meetings: pointer tile + actuators + RAW ── */
       case "meetings":
         return (
           <>
@@ -728,7 +677,8 @@ function SettingsFace({ hero, scope }: CoreProps) {
             </FoldGadget>
           </>
         );
-      case "cadence":
+      /* ── Rhythm: cadence user-facing + Telegram + RAW ── */
+      case "rhythm":
         return (
           <>
             <GadgetGroup label="Cadence">
@@ -766,36 +716,7 @@ function SettingsFace({ hero, scope }: CoreProps) {
             </FoldGadget>
           </>
         );
-      case "devices": {
-        const device = (data.device ?? {}) as Record<string, unknown>;
-        const deviceCount = Object.keys(device).length;
-        return (
-          <>
-            <GadgetGroup label="Mesh">
-              {str(["mesh", "device_name"], "Device name")}
-            </GadgetGroup>
-            {/* HS-139-04: device walker knobs fold behind RAW. */}
-            {deviceCount ? (
-              <FoldGadget title="RAW" token={String(deviceCount)}>
-                <GadgetGroup label="Device">
-                  {walkerRows(device, ["device"])}
-                </GadgetGroup>
-              </FoldGadget>
-            ) : null}
-          </>
-        );
-      }
-      case "delivery":
-        // No delivery keys live under /api/settings today: the module
-        // states the fact and hands over to the Delivery program.
-        return (
-          <div className="prefs-elsewhere">
-            <span className="prefs-elsewhere-fact">CONFIG LIVES IN DELIVERY</span>
-            <Button dense onClick={() => activateLauncher("delivery-board")}>
-              Open Delivery
-            </Button>
-          </div>
-        );
+      /* ── Models: destinations, runs-on, engine, rails ── */
       case "models":
         return (
           <ModelsModule
@@ -804,8 +725,7 @@ function SettingsFace({ hero, scope }: CoreProps) {
             onRefuse={setRefusal}
           />
         );
-      case "desk":
-        return <DeskModule />;
+      /* ── Integrations: credentials + RAW ── */
       case "integrations": {
         const RAW_SECRETS = new Set(["failure_webhook_url", "failure_webhook_credential"]);
         const keepSecrets = Object.entries(secrets).filter(([id]) => !RAW_SECRETS.has(id));
@@ -845,29 +765,26 @@ function SettingsFace({ hero, scope }: CoreProps) {
           </>
         );
       }
+      /* ── System: device name + desk reset + devices RAW ── */
       case "system": {
-        const claimed = new Set(PREF_MODULES.flatMap((module) => module.keys));
-        const systemKeys = Object.keys(data).filter(
-          (key) =>
-            !key.startsWith("_") &&
-            key !== "config_version" &&
-            key !== "control_mode" &&
-            !claimed.has(key) &&
-            data[key] &&
-            typeof data[key] === "object" &&
-            !Array.isArray(data[key]),
+        const device = (data.device ?? {}) as Record<string, unknown>;
+        const deviceCount = Object.keys(device).length;
+        return (
+          <>
+            <GadgetGroup label="Mesh">
+              {str(["mesh", "device_name"], "Device name")}
+            </GadgetGroup>
+            <DeskModule />
+            {/* HS-139-04/05: device walker knobs fold behind RAW. */}
+            {deviceCount ? (
+              <FoldGadget title="RAW" token={String(deviceCount)}>
+                <GadgetGroup label="Device">
+                  {walkerRows(device, ["device"])}
+                </GadgetGroup>
+              </FoldGadget>
+            ) : null}
+          </>
         );
-        if (!systemKeys.length)
-          return (
-            <div className="prefs-elsewhere">
-              <span className="prefs-elsewhere-fact">NO UNMAPPED KEYS</span>
-            </div>
-          );
-        return systemKeys.map((key) => (
-          <GadgetGroup key={key} label={title(key)}>
-            {walkerRows(data[key] as Record<string, unknown>, [key])}
-          </GadgetGroup>
-        ));
       }
       default:
         return null;
@@ -893,7 +810,6 @@ function SettingsFace({ hero, scope }: CoreProps) {
           </div>
         ) : (
           <PrefsFace
-            hits={deepIndex}
             onOpen={openModule}
             posture={String(authority.data.control_mode ?? "neutral")}
             postureBusy={authorityBusy || authority.loading}

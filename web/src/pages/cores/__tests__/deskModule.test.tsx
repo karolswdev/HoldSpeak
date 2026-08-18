@@ -16,8 +16,10 @@ describe("DeskModule (HS-112-03)", () => {
     useDesk.setState({ resetDesk });
   });
 
-  it("is a registered pref module", () => {
-    expect(PREF_MODULES.some((m) => m.id === "desk")).toBe(true);
+  it("is absorbed into the system tile (HS-139-05)", () => {
+    // "desk" was a standalone tile; HS-139-05 merged it into "system".
+    expect(PREF_MODULES.some((m) => m.id === "system")).toBe(true);
+    expect(PREF_MODULES.some((m) => m.id === "desk")).toBe(false);
   });
 
   it("states what resets and what survives, as labels", () => {

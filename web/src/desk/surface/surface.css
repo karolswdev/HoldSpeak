@@ -2390,3 +2390,40 @@ button.surface-edit-in-place:hover {
 .desk-next .surface-edit-mic .desk-mic-failure {
   display: none;
 }
+
+/* ── HS-139-05: responsive destination cards ────────────────────────── */
+/* JS-toggled via ResizeObserver: the component renders either the table
+   or a card-per-destination layout, so only card styles are needed. */
+.dest-cards-narrow { display: flex; flex-direction: column; gap: 8px; }
+.dest-card {
+  border: 1px solid var(--border);
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.dest-card-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 24px;
+}
+.dest-card-label {
+  flex: none;
+  width: 60px;
+  font: 600 10px / 1 var(--font-mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.dest-card-row > :not(.dest-card-label) {
+  flex: 1;
+  min-width: 0;
+}
+.dest-card-verbs {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+  padding-top: 4px;
+  border-top: 1px solid var(--border);
+}

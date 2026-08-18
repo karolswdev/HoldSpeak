@@ -1,6 +1,6 @@
 # Phase 139 — The Settings Reckoning
 
-**Status:** active (4/8).
+**Status:** active (5/8).
 
 **Last updated:** 2026-08-18.
 
@@ -48,7 +48,7 @@ session's scratchpad; the walk story re-shoots everything after.
 | HS-139-02 | Defaults are law | done | [story-02](./story-02-defaults-are-law.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-139-03 | Config goes home | done | [story-03](./story-03-config-goes-home.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-139-04 | The RAW wells | done | [story-04](./story-04-the-raw-wells.md) | [evidence-story-04](./evidence-story-04.md) |
-| HS-139-05 | Seven tiles | ready | [story-05](./story-05-seven-tiles.md) | — |
+| HS-139-05 | Seven tiles | done | [story-05](./story-05-seven-tiles.md) | [evidence-story-05](./evidence-story-05.md) |
 | HS-139-06 | The docs sweep | ready | [story-06](./story-06-the-docs-sweep.md) | — |
 | HS-139-07 | The walk | ready | [story-07](./story-07-the-walk.md) | — |
 | HS-139-08 | Open throttle | ready | [story-08](./story-08-open-throttle.md) | — |
@@ -78,11 +78,12 @@ session's scratchpad; the walk story re-shoots everything after.
 
 ## Where we are
 
-HS-139-01 done, HS-139-02 done, HS-139-03 done, HS-139-04 done. All
-31 FOLD-TO-RAW operator knobs now fold behind one RAW well per module
-(FoldGadget, closed by default, unfold state not persisted). Module
-faces above the wells contain only KEEP-disposition controls.
-Transcription: 1 RAW knob; Voice Typing: 6; Wake Word: 3; Meetings:
-20; Cadence: 3; Devices: dynamic walker; Models: 4; Integrations: 2
-RAW secrets. Every folded knob still reads/writes its config path.
-128 backend + 17 vitest green.
+HS-139-01 through HS-139-05 done. The face collapsed from 14 tiles to
+7: Voice, Sounds & Presence, Meetings, Rhythm, Models, Integrations,
+System. FILTER dropped (7 tiles all visible at once; earned nothing).
+Delivery tile absorbed (alias lands on Models). Desk tile merged into
+System. Destinations table switches to a card-per-destination layout
+below 520px (ResizeObserver), every field readable at 393px. Module
+aliases preserve all deep links from the retired 14-tile roster.
+On-glass controls (excluding RAW): 36. 23 vitest pass (5 face-roster
++ 14 models + 4 desk).

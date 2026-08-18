@@ -5,7 +5,7 @@
 // engine, and the rails observer's knobs. Everything composes from the
 // settings gadget kit; errors land in the Prefs footer receipt, never
 // over the UI.
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Button } from "../../components/signal/Signal";
 import { apiFetch, readableError } from "../../lib/api";
 import type {
@@ -369,113 +369,245 @@ export function ModelsModule({
     | undefined;
   const backend = String(runtime?.backend ?? "auto");
 
+  /* ── HS-139-05: narrow width detection for card layout ── */
+  const destRef = useRef<HTMLDivElement>(null);
+  const [narrow, setNarrow] = useState(false);
+  useLayoutEffect(() => {
+    const el = destRef.current;
+    if (!el || typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        setNarrow(entry.contentRect.width < 520);
+      }
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  /* ── HS-139-05: destination card for narrow widths ── */
+  const destinationCard = (row: Target, index: number) => {
+    const result = probeResults[row.id];
+    const state = probeLabel(row);
+    return (
+      <div key={row.id} className="dest-card" data-testid={`dest-card-${row.id}`}>
+        <div className="dest-card-row">
+          <span className="dest-card-label">NAME</span>
+          <StringGadget
+            label={`Target ${row.id} name`}
+            value={row.name}
+            onChange={(next) => patch(row.id, { name: next })}
+          />
+        </div>
+        <div className="dest-card-row">
+          <span className="dest-card-label">KIND</span>
+          <CycleGadget
+            label={`Target ${row.id} kind`}
+            value={row.kind}
+            options={KIND_OPTIONS}
+            onChange={(next) => patch(row.id, { kind: next })}
+          />
+        </div>
+        <div className="dest-card-row">
+          <span className="dest-card-label">{row.kind === "meshNode" ? "NODE" : "ENDPOINT"}</span>
+          {row.kind === "meshNode" ? (
+            <StringGadget
+              label={`Target ${row.id} node`}
+              value={row.node}
+              placeholder="node"
+              onChange={(next) => patch(row.id, { node: next })}
+            />
+          ) : (
+            <StringGadget
+              label={`Target ${row.id} endpoint`}
+              value={row.base_url}
+              placeholder="http://…/v1"
+              onChange={(next) => patch(row.id, { base_url: next })}
+            />
+          )}
+        </div>
+        <div className="dest-card-row">
+          <span className="dest-card-label">MODEL</span>
+          {result?.models.length ? (
+            <CycleGadget
+              label={`Target ${row.id} model`}
+              value={row.model}
+              options={result.models.map((model) => ({ value: model }))}
+              onChange={(next) => patch(row.id, { model: next })}
+            />
+          ) : (
+            <StringGadget
+              label={`Target ${row.id} model`}
+              value={row.model}
+              onChange={(next) => patch(row.id, { model: next })}
+            />
+          )}
+        </div>
+        <div className="dest-card-row">
+          <span className="dest-card-label">KEY</span>
+          <span className="gadget-key-cell">
+            <CheckGadget
+              label={`Target ${row.id} requires key`}
+              checked={row.requires_key}
+              onChange={(checked) => patch(row.id, { requires_key: checked })}
+            />
+            {row.requires_key ? (
+              <LampGadget
+                on={row.key_present}
+                tone={row.key_present ? "ok" : "warn"}
+                label={row.key_present ? "SET" : "UNSET"}
+              />
+            ) : null}
+          </span>
+        </div>
+        <div className="dest-card-row">
+          <span className="dest-card-label">STATE</span>
+          <LampGadget
+            on={state ? state.on : row.readiness_state === "ready"}
+            tone={state ? state.tone : lampTone(row)}
+            label={state ? state.label : row.readiness_state.toUpperCase()}
+          />
+        </div>
+        <div className="dest-card-verbs">
+          <Button
+            dense
+            variant="ghost"
+            loading={probingIds.has(row.id)}
+            onClick={() => void probeTarget(row.id)}
+          >
+            TEST
+          </Button>
+          <ConfirmVerb
+            label="×"
+            confirmLabel="FORGET?"
+            ariaLabel={`Delete destination ${index + 1}`}
+            onConfirm={() => void remove(index)}
+          />
+        </div>
+      </div>
+    );
+  };
+
   return (
     <>
       <GadgetGroup label="Destinations">
+        {/* HS-139-05: table at wide, cards at narrow (393px legibility). */}
         <GadgetRow wide label="Destinations" fact={`${targets.length}`}>
-          <GadgetTable
-            head={["NAME", "KIND", "ENDPOINT", "MODEL", "KEY", "STATE"]}
-            deleteLabel="FORGET?"
-            rowKey={(index) => targets[index]?.id ?? String(index)}
-            onAdd={() => void add()}
-            addLabel="+ DESTINATION"
-            verbs={(index) => {
-              const row = targets[index];
-              if (!row) return null;
-              return (
-                <>
-                  <Button
-                    dense
-                    variant="ghost"
-                    loading={probingIds.has(row.id)}
-                    onClick={() => void probeTarget(row.id)}
-                  >
-                    TEST
-                  </Button>
-                  <ConfirmVerb
-                    label="×"
-                    confirmLabel="FORGET?"
-                    ariaLabel={`Delete destination ${index + 1}`}
-                    onConfirm={() => void remove(index)}
-                  />
-                </>
-              );
-            }}
-            rows={targets.map((row) => {
-              const result = probeResults[row.id];
-              const state = probeLabel(row);
-              return [
-              <StringGadget
-                key="name"
-                label={`Target ${row.id} name`}
-                value={row.name}
-                onChange={(next) => patch(row.id, { name: next })}
-              />,
-              <CycleGadget
-                key="kind"
-                label={`Target ${row.id} kind`}
-                value={row.kind}
-                options={KIND_OPTIONS}
-                onChange={(next) => patch(row.id, { kind: next })}
-              />,
-              row.kind === "meshNode" ? (
+          <div ref={destRef}>
+          {narrow ? (
+            /* Narrow layout: card per destination. */
+            <div className="dest-cards-narrow">
+              {targets.map((row, index) => destinationCard(row, index))}
+              <button type="button" className="gadget-table-add" onClick={() => void add()}>
+                + DESTINATION
+              </button>
+            </div>
+          ) : (
+            /* Wide layout: the table. */
+            <GadgetTable
+              head={["NAME", "KIND", "ENDPOINT", "MODEL", "KEY", "STATE"]}
+              deleteLabel="FORGET?"
+              rowKey={(index) => targets[index]?.id ?? String(index)}
+              onAdd={() => void add()}
+              addLabel="+ DESTINATION"
+              verbs={(index) => {
+                const row = targets[index];
+                if (!row) return null;
+                return (
+                  <>
+                    <Button
+                      dense
+                      variant="ghost"
+                      loading={probingIds.has(row.id)}
+                      onClick={() => void probeTarget(row.id)}
+                    >
+                      TEST
+                    </Button>
+                    <ConfirmVerb
+                      label="×"
+                      confirmLabel="FORGET?"
+                      ariaLabel={`Delete destination ${index + 1}`}
+                      onConfirm={() => void remove(index)}
+                    />
+                  </>
+                );
+              }}
+              rows={targets.map((row) => {
+                const result = probeResults[row.id];
+                const state = probeLabel(row);
+                return [
                 <StringGadget
-                  key="node"
-                  label={`Target ${row.id} node`}
-                  value={row.node}
-                  placeholder="node"
-                  onChange={(next) => patch(row.id, { node: next })}
-                />
-              ) : (
-                <StringGadget
-                  key="endpoint"
-                  label={`Target ${row.id} endpoint`}
-                  value={row.base_url}
-                  placeholder="http://…/v1"
-                  onChange={(next) => patch(row.id, { base_url: next })}
-                />
-              ),
-              result?.models.length ? (
+                  key="name"
+                  label={`Target ${row.id} name`}
+                  value={row.name}
+                  onChange={(next) => patch(row.id, { name: next })}
+                />,
                 <CycleGadget
-                  key="model"
-                  label={`Target ${row.id} model`}
-                  value={row.model}
-                  options={result.models.map((model) => ({ value: model }))}
-                  onChange={(next) => patch(row.id, { model: next })}
-                />
-              ) : (
-                <StringGadget
-                  key="model"
-                  label={`Target ${row.id} model`}
-                  value={row.model}
-                  onChange={(next) => patch(row.id, { model: next })}
-                />
-              ),
-              <span key="key" className="gadget-key-cell">
-                <CheckGadget
-                  label={`Target ${row.id} requires key`}
-                  checked={row.requires_key}
-                  onChange={(checked) =>
-                    patch(row.id, { requires_key: checked })
-                  }
-                />
-                {row.requires_key ? (
-                  <LampGadget
-                    on={row.key_present}
-                    tone={row.key_present ? "ok" : "warn"}
-                    label={row.key_present ? "SET" : "UNSET"}
+                  key="kind"
+                  label={`Target ${row.id} kind`}
+                  value={row.kind}
+                  options={KIND_OPTIONS}
+                  onChange={(next) => patch(row.id, { kind: next })}
+                />,
+                row.kind === "meshNode" ? (
+                  <StringGadget
+                    key="node"
+                    label={`Target ${row.id} node`}
+                    value={row.node}
+                    placeholder="node"
+                    onChange={(next) => patch(row.id, { node: next })}
                   />
-                ) : null}
-              </span>,
-              <LampGadget
-                key="state"
-                on={state ? state.on : row.readiness_state === "ready"}
-                tone={state ? state.tone : lampTone(row)}
-                label={state ? state.label : row.readiness_state.toUpperCase()}
-              />,
-            ];
-            })}
-          />
+                ) : (
+                  <StringGadget
+                    key="endpoint"
+                    label={`Target ${row.id} endpoint`}
+                    value={row.base_url}
+                    placeholder="http://…/v1"
+                    onChange={(next) => patch(row.id, { base_url: next })}
+                  />
+                ),
+                result?.models.length ? (
+                  <CycleGadget
+                    key="model"
+                    label={`Target ${row.id} model`}
+                    value={row.model}
+                    options={result.models.map((model) => ({ value: model }))}
+                    onChange={(next) => patch(row.id, { model: next })}
+                  />
+                ) : (
+                  <StringGadget
+                    key="model"
+                    label={`Target ${row.id} model`}
+                    value={row.model}
+                    onChange={(next) => patch(row.id, { model: next })}
+                  />
+                ),
+                <span key="key" className="gadget-key-cell">
+                  <CheckGadget
+                    label={`Target ${row.id} requires key`}
+                    checked={row.requires_key}
+                    onChange={(checked) =>
+                      patch(row.id, { requires_key: checked })
+                    }
+                  />
+                  {row.requires_key ? (
+                    <LampGadget
+                      on={row.key_present}
+                      tone={row.key_present ? "ok" : "warn"}
+                      label={row.key_present ? "SET" : "UNSET"}
+                    />
+                  ) : null}
+                </span>,
+                <LampGadget
+                  key="state"
+                  on={state ? state.on : row.readiness_state === "ready"}
+                  tone={state ? state.tone : lampTone(row)}
+                  label={state ? state.label : row.readiness_state.toUpperCase()}
+                />,
+              ];
+              })}
+            />
+          )}
+          </div>
         </GadgetRow>
       </GadgetGroup>
       <GadgetGroup label="Runs on">

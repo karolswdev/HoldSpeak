@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 139
-- **Status:** ready
+- **Status:** done
 - **Depends on:** 139-01, 139-02, 139-03, 139-04
 - **Unblocks:** 139-06, 139-07
 - **Owner:** delegated Opus worker; orchestrator adjudicates
