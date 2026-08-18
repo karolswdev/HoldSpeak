@@ -479,8 +479,8 @@ the ⌘K shelf's z-defect fixed; the owner's 101 sitting remains open in
 parallel. Phase 101 itself stands at 3/4 (canon ratified and built,
 PR #359; sweep 4122/0).
 
-**Current phase:** [**Phase 138 — The People Ledger**](./phase-138-the-people-ledger/current-phase-status.md)
-— **IN PROGRESS**. Encrypted relationship ledger for direct reports,
+**Current phase:** [**Phase 138 — The People Ledger**](./phase-138-the-people-ledger/current-phase-status.md) — **COMPLETE (8/8, 2026-08-17; fresh close counsel RATIFY-WITH-CONCERNS; owner sitting pending)**
+— Encrypted relationship ledger for direct reports,
 peers, and extended organizational relationships; grounding notes; manager
 commitments in Follow-through; MCP capability. Previous: [**Phase 137 — The One Schema**](./phase-137-the-one-schema/current-phase-status.md)
 — **COMPLETE (4/4, 2026-08-17; counsel RATIFY-WITH-CONCERNS; owner sitting pending)**. Owner mandate: kill the schema-migration

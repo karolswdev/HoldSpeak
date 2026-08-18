@@ -101,6 +101,42 @@ def api(
         return status, raw
 
 
+# ----------------------------------------------------------------- walk keychain
+
+
+def _kc_env(home: str) -> dict[str, str]:
+    """Env for keyring subprocesses: they must see the WALK home, never the
+    owner's real HOME, or every Keychain op lands in the real login keychain."""
+    return {**os.environ, "HOME": home}
+
+
+def create_walk_keychain(home: str) -> None:
+    """Create + unlock a walk-scoped login keychain inside the isolated HOME.
+
+    macOS resolves the login keychain from $HOME, so a fresh HOME has none and
+    the first keyring write dies with a "Keychain Not Found" dialog. Creating a
+    real keychain file here keeps the walk on the genuine Security framework
+    (same daemon, same unlock semantics) while the owner's login keychain stays
+    untouched; the file dies with the temp HOME.
+    """
+    kc_dir = Path(home) / "Library" / "Keychains"
+    kc_dir.mkdir(parents=True, exist_ok=True)
+    kc = str(kc_dir / "login.keychain-db")
+    env = _kc_env(home)
+    ok = True
+    for args in (
+        ["security", "create-keychain", "-p", "walk", kc],
+        ["security", "default-keychain", "-s", kc],
+        ["security", "unlock-keychain", "-p", "walk", kc],
+        ["security", "set-keychain-settings", kc],
+    ):
+        result = subprocess.run(args, env=env, capture_output=True, text=True, timeout=30)
+        if result.returncode != 0:
+            ok = False
+            finding(f"walk keychain step failed: {' '.join(args[:2])}: {result.stderr.strip()}")
+    check("walk keychain created + unlocked (isolated HOME)", ok, kc)
+
+
 # ----------------------------------------------------------------- network proof
 
 
@@ -448,22 +484,36 @@ def leg_send_to_workbench(shooter: Shooter, hub: Hub, ids: dict) -> None:
         sentinel_el.click()
         page.wait_for_timeout(2000)
 
-        # Look for the "Send to Workbench" or egress badge
-        workbench_btn = page.get_by_text("Send to Workbench", exact=False)
-        egress_badge = page.locator('[data-testid*="egress"], .egress-badge')
+        # Open the commitment inspector: click the You-owe commitment row.
+        # Scope to the You-owe SurfaceSection — the same sentinel text also
+        # renders in the Chair's Follow-Through lane BEHIND the People window,
+        # and an unscoped get_by_text clicks that card instead (counsel S1).
+        you_owe = page.locator("section.surface-section", has_text="You owe")
+        commitment_row = you_owe.locator(
+            "button.surface-row-open", has_text=SENTINEL_REQUEST[:20]).first
+        if commitment_row.count():
+            commitment_row.click()
+            page.wait_for_timeout(1500)
+
+        # The SPECIFIC point-of-decision badge, not any .egress-badge on the
+        # page (the desk chrome carries a global badge that must not satisfy
+        # this check — counsel S1).
+        workbench_btn = page.get_by_role("button", name="Send to Workbench")
+        egress_badge = page.locator('span.egress-badge.is-cloud[title="Workbench model"]')
 
         has_send = workbench_btn.count() > 0
         has_badge = egress_badge.count() > 0
 
-        if has_send or has_badge:
-            check("Send-to-Workbench with egress badge", True,
+        if has_send and has_badge:
+            check("Send-to-Workbench button + Workbench-model egress badge", True,
                   f"button={has_send} badge={has_badge}")
             shooter.shot("people-detail", "send-to-workbench",
-                         "Send-to-Workbench action with egress badge")
+                         "Commitment inspector: Send-to-Workbench with Workbench-model egress badge")
         else:
-            finding("Send-to-Workbench button or egress badge not found in detail view")
+            check("Send-to-Workbench button + Workbench-model egress badge", False,
+                  f"button={has_send} badge={has_badge}")
             shooter.shot("people-detail", "no-workbench-btn",
-                         "Detail view without visible Send-to-Workbench")
+                         "Detail view without visible Send-to-Workbench inspector")
     else:
         finding("sentinel name not clickable for workbench check")
     shooter.assert_clean("send-to-workbench check")
@@ -539,7 +589,7 @@ def leg_missing_key(home: str) -> None:
         result = subprocess.run(
             [sys.executable, "-c",
              f"import keyring; v = keyring.get_password('HoldSpeak People', '{key_id}'); print(v or '')"],
-            capture_output=True, text=True, timeout=120,
+            capture_output=True, text=True, timeout=120, env=_kc_env(home),
         )
         key_value = result.stdout.strip()
     except Exception as exc:
@@ -563,7 +613,7 @@ def leg_missing_key(home: str) -> None:
         subprocess.run(
             [sys.executable, "-c",
              f"import keyring; keyring.delete_password('HoldSpeak People', '{key_id}')"],
-            capture_output=True, text=True, timeout=120,
+            capture_output=True, text=True, timeout=120, env=_kc_env(home),
         )
         check("keychain entry deleted", True)
     except Exception as exc:
@@ -578,7 +628,7 @@ def leg_missing_key(home: str) -> None:
     except RuntimeError:
         # Hub might fail to start or be in a degraded state
         check("SKIP: hub boot with missing key", False, "hub failed to start")
-        _restore_key(key_id, key_value)
+        _restore_key(key_id, key_value, home)
         return
 
     status, resp = api(hub_missing, "GET", "/api/people/readiness")
@@ -605,7 +655,7 @@ def leg_missing_key(home: str) -> None:
     hub_missing.stop()
 
     # Step 5: Restore the Keychain entry
-    _restore_key(key_id, key_value)
+    _restore_key(key_id, key_value, home)
 
     # Step 6: Boot again and assert recovery
     port = _free_port()
@@ -624,7 +674,7 @@ def leg_missing_key(home: str) -> None:
     hub_restored.stop()
 
 
-def _restore_key(key_id: str, key_value: str) -> None:
+def _restore_key(key_id: str, key_value: str, home: str) -> None:
     """Restore the Keychain entry."""
     print("\n" + "=" * 60, flush=True)
     print("  KEYCHAIN WRITE -- macOS MAY prompt", flush=True)
@@ -635,7 +685,7 @@ def _restore_key(key_id: str, key_value: str) -> None:
         subprocess.run(
             [sys.executable, "-c",
              f"import keyring; keyring.set_password('HoldSpeak People', '{key_id}', '{key_value}')"],
-            capture_output=True, text=True, timeout=120,
+            capture_output=True, text=True, timeout=120, env=_kc_env(home),
         )
         check("keychain entry restored", True)
     except Exception as exc:
@@ -666,7 +716,7 @@ def cleanup(home: str) -> None:
                 subprocess.run(
                     [sys.executable, "-c",
                      f"import keyring; keyring.delete_password('HoldSpeak People', '{key_id}')"],
-                    capture_output=True, text=True, timeout=120,
+                    capture_output=True, text=True, timeout=120, env=_kc_env(home),
                 )
                 check("walk Keychain entry deleted", True, f"key_id={key_id}")
         except Exception as exc:
@@ -777,6 +827,8 @@ def walk_attended() -> int:
     port = _free_port()
     home = tempfile.mkdtemp(prefix="people-walk-138-attended-")
     print(f"  HOME={home}  port={port}", flush=True)
+
+    create_walk_keychain(home)
 
     hub = Hub(port, TOKEN, home).start()
 

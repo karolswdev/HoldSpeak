@@ -1,6 +1,6 @@
 # Phase 138 — The People Ledger
 
-**Status:** active (7/8).
+**Status:** complete (8/8, 2026-08-17).
 
 **Last updated:** 2026-08-17.
 
@@ -98,7 +98,7 @@ product stores.
 | HS-138-03 | Commitments join Follow-through | done | [story-03](./story-03-commitments-follow-through.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-138-04 | People belongs on the Desk | done | [story-04](./story-04-people-desk.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-138-05 | The privacy proof | done | [story-05](./story-05-privacy-proof.md) | [evidence-story-05](./evidence-story-05.md) |
-| HS-138-06 | The People walk | ready | [story-06](./story-06-people-walk.md) | — |
+| HS-138-06 | The People walk | done | [story-06](./story-06-people-walk.md) | [evidence-story-06](./evidence-story-06.md) |
 | HS-138-07 | People through the MCP service boundary | done | [story-07](./story-07-people-mcp.md) | [evidence-story-07](./evidence-story-07.md) |
 | HS-138-08 | Commitments become evidenced work | done | [story-08](./story-08-commitment-execution.md) | [evidence-story-08](./evidence-story-08.md) |
 
@@ -187,15 +187,34 @@ product stores.
 - **(L3)** No sanctioned dev-only keystore seam: `store.py:465-466` hardcodes `NativeKeyStore` so the populated People state cannot be walked headlessly. Charter a follow-up for a dev-only seam that is provably unreachable in production.
 - **(L4)** People module source cites no Constitution articles in comments.
 
+## Close counsel (fresh pass, 2026-08-17)
+
+Verdict **RATIFY-WITH-CONCERNS**, no blockers. S1 (should-fix, FIXED before
+the flip): the walk's send-to-workbench check was a false positive — the
+global desk-chrome badge satisfied an OR-assertion and the shot was
+byte-identical to the Now lens; the harness now clicks the You-owe row
+scoped to its SurfaceSection and AND-asserts the specific `Workbench model`
+badge (55/0, distinct inspector shot). Ledgered: (CL1) walk-scoped keychain
+= real Security framework via `security` CLI under the isolated HOME, owner's
+login keychain untouched — ruled as satisfying the native-backend bar; (CL2)
+productLanguage.ts:116 still exports `local_only: "This device only"` used by
+other features — confusion risk if reused for People copy; (CL3) Info-lens
+`Sync: This device only` is TRUE and intentionally retained (sync ≠ the
+Send-to-Workbench path); (CL4) the revival counsel's L1–L4 remain open;
+(CL5, orchestrator's eye) the commitment inspector's workbench CycleGadget
+overlaps the Send-to-Workbench button label at narrow column widths —
+cosmetic.
+
 ## Where we are
 
-The close-out is underway on branch `phase-138-close` (2026-08-17, after the
-revival merge landed the implementation on main via PR #459). HS-138-01,
-HS-138-02, and HS-138-03 are done on gate-captured evidence (01: 47 tests —
-crypto, custody, policy, store, no-leaks; 02: 20 tests — service lifecycle,
-roll-forward successor links, archive hiding, owner auth, keyless readiness;
-03: 34 tests — projection, source-dispatch, full ordinary follow-through
-regression, no-leaks; 05: 50 tests — the full sentinel/refusal/custody matrices, plus the full gate: 6000/0 isolated-HOME parallel suite on the identical pre-merge tree, log suite-459-run2). Real-Keychain manual legs are deferred to the HS-138-06
-walk by design. Remaining: the story-04 badge-copy
-amendment (counsel ruled "This device only" false for the Send-to-Workbench
-path), and the owner-attended production walk (06).
+COMPLETE 8/8 (2026-08-17). The implementation shipped to main in the PR #459
+revival; the close-out branch `phase-138-close` flipped every story on
+gate-captured evidence (258 focused tests across the flips), amended the
+story-04 trust facts visibly, and proved HS-138-06 with an attended
+production walk: 55 PASS / 0 FAIL / 11 shots — real Security-framework key
+custody, restart decrypt, missing-key fail-closed + recovery, zero plaintext
+sentinels in raw bytes, loopback-only network, both widths, zero console
+errors. Fresh close counsel: RATIFY-WITH-CONCERNS, no blockers; S1 fixed
+before the flip, the rest ledgered above. Held for the owner's sitting: the
+badge-copy amendment (overrule offered), the walk-scoped-keychain design
+choice, and the open ledger items.
