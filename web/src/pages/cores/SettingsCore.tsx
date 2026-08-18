@@ -19,6 +19,7 @@ import {
   CheckGadget,
   CycleGadget,
   EgressChip,
+  FoldGadget,
   GadgetGroup,
   GadgetRow,
   GadgetTable,
@@ -455,20 +456,21 @@ function SettingsFace({ hero, scope }: CoreProps) {
         );
       case "transcription":
         return (
-          <GadgetGroup>
-            {/* HS-139-02: Model size removed (DEFAULT — seed's choice;
-                Models module has the full model configuration) */}
-            {/* HS-139-01: Backend removed (duplicate of Models > Hub
-                Default Engine; the Models module keeps it) */}
-            {cyc(["model", "language"], "Language", LANGUAGE_OPTIONS)}
-            {/* HS-139-01: Warm on start removed (duplicate of Models >
-                Hub Default Engine > Warm on start) */}
-            {num(["model", "transcribe_timeout_seconds"], "Transcribe timeout", {
-              unit: "s",
-              min: 5,
-              step: 5,
-            })}
-          </GadgetGroup>
+          <>
+            <GadgetGroup>
+              {cyc(["model", "language"], "Language", LANGUAGE_OPTIONS)}
+            </GadgetGroup>
+            {/* HS-139-04: operator knobs fold behind RAW. */}
+            <FoldGadget title="RAW" token="1">
+              <GadgetGroup>
+                {num(["model", "transcribe_timeout_seconds"], "Transcribe timeout", {
+                  unit: "s",
+                  min: 5,
+                  step: 5,
+                })}
+              </GadgetGroup>
+            </FoldGadget>
+          </>
         );
       case "voice-typing": {
         const symbols = (val(["dictation", "spoken_symbols"]) ?? []) as Array<{
@@ -488,37 +490,6 @@ function SettingsFace({ hero, scope }: CoreProps) {
           []) as unknown[];
         return (
           <>
-            <GadgetGroup label="Pipeline">
-              {/* HS-139-02: pipeline.enabled removed (DEFAULT — pinned
-                  true; toggling it off breaks core functionality) */}
-              {csv(["dictation", "pipeline", "stages"], "Stages")}
-              {num(
-                ["dictation", "pipeline", "max_total_latency_ms"],
-                "Latency budget",
-                { unit: "ms", min: 0, step: 250 },
-              )}
-              {str(
-                ["dictation", "pipeline", "target_profile_override"],
-                "Target profile override",
-              )}
-              {num(["dictation", "pipeline", "rewrite_passes"], "Rewrite passes", {
-                min: 0,
-                max: 5,
-              })}
-              {/* HS-139-02: corrections_enabled removed (DEFAULT —
-                  pinned true; correction memory is a pillar feature) */}
-              {check(
-                ["dictation", "pipeline", "target_detect_llm_enabled"],
-                "LLM target detect",
-              )}
-              {prop(
-                ["dictation", "pipeline", "target_detect_llm_below"],
-                "Detect below",
-                { min: 0, max: 1, step: 0.05 },
-              )}
-              {/* HS-139-02: journal_enabled + journal_retention removed
-                  (DEFAULT — pinned true/500; the journal is a pillar) */}
-            </GadgetGroup>
             <GadgetGroup label="Typing">
               {check(["dictation", "preview_before_type"], "Preview before type")}
               {check(
@@ -580,36 +551,68 @@ function SettingsFace({ hero, scope }: CoreProps) {
                 />
               </GadgetRow>
             </GadgetGroup>
+            {/* HS-139-04: pipeline operator knobs fold behind RAW. */}
+            <FoldGadget title="RAW" token="6">
+              <GadgetGroup label="Pipeline">
+                {csv(["dictation", "pipeline", "stages"], "Stages")}
+                {num(
+                  ["dictation", "pipeline", "max_total_latency_ms"],
+                  "Latency budget",
+                  { unit: "ms", min: 0, step: 250 },
+                )}
+                {str(
+                  ["dictation", "pipeline", "target_profile_override"],
+                  "Target profile override",
+                )}
+                {num(["dictation", "pipeline", "rewrite_passes"], "Rewrite passes", {
+                  min: 0,
+                  max: 5,
+                })}
+                {check(
+                  ["dictation", "pipeline", "target_detect_llm_enabled"],
+                  "LLM target detect",
+                )}
+                {prop(
+                  ["dictation", "pipeline", "target_detect_llm_below"],
+                  "Detect below",
+                  { min: 0, max: 1, step: 0.05 },
+                )}
+              </GadgetGroup>
+            </FoldGadget>
           </>
         );
       }
       case "wake-word":
         return (
-          <GadgetGroup>
-            {/* The honest truths ride as fact tokens (no-prose canon):
-                enabling fetches detection models once; the `type` action
-                lands unpreviewed in whatever app holds focus. */}
-            {check(["wake_word", "enabled"], "Enabled", "models download once")}
-            {str(["wake_word", "model"], "Model", {
-              placeholder: "hey_jarvis",
-            })}
-            {prop(["wake_word", "threshold"], "Threshold", {
-              min: 0,
-              max: 1,
-              step: 0.05,
-            })}
-            {num(["wake_word", "armed_window_seconds"], "Armed window", {
-              unit: "s",
-              min: 1,
-              step: 1,
-            })}
-            {cyc(
-              ["wake_word", "action"],
-              "Action",
-              WAKE_ACTION_OPTIONS,
-              "type lands in the focused app",
-            )}
-          </GadgetGroup>
+          <>
+            <GadgetGroup>
+              {check(["wake_word", "enabled"], "Enabled", "models download once")}
+              {cyc(
+                ["wake_word", "action"],
+                "Action",
+                WAKE_ACTION_OPTIONS,
+                "type lands in the focused app",
+              )}
+            </GadgetGroup>
+            {/* HS-139-04: wake-word operator knobs fold behind RAW. */}
+            <FoldGadget title="RAW" token="3">
+              <GadgetGroup>
+                {str(["wake_word", "model"], "Model", {
+                  placeholder: "hey_jarvis",
+                })}
+                {prop(["wake_word", "threshold"], "Threshold", {
+                  min: 0,
+                  max: 1,
+                  step: 0.05,
+                })}
+                {num(["wake_word", "armed_window_seconds"], "Armed window", {
+                  unit: "s",
+                  min: 1,
+                  step: 1,
+                })}
+              </GadgetGroup>
+            </FoldGadget>
+          </>
         );
       case "presence":
         return (
@@ -621,43 +624,17 @@ function SettingsFace({ hero, scope }: CoreProps) {
       case "meetings":
         return (
           <>
-            <GadgetGroup label="Capture">
-              {/* HS-139-03: mic_device + system_audio_device moved to
-                  the Meetings surface (edit-in-world law). */}
+            <GadgetGroup label="Capture + export">
               <div className="prefs-elsewhere">
                 <span className="prefs-elsewhere-fact">
-                  CAPTURE CONFIG LIVES ON MEETINGS
+                  CONFIG LIVES ON MEETINGS
                 </span>
               </div>
-              {check(["meeting", "diarization_enabled"], "Diarization")}
-              {check(["meeting", "diarize_mic"], "Diarize mic")}
-              {prop(["meeting", "similarity_threshold"], "Similarity", {
-                min: 0,
-                max: 1,
-                step: 0.05,
-              })}
             </GadgetGroup>
-            <GadgetGroup label="Export">
-              {/* HS-139-03: auto_export + export_format moved to
-                  the Meetings surface (edit-in-world law). */}
-              <div className="prefs-elsewhere">
-                <span className="prefs-elsewhere-fact">
-                  EXPORT CONFIG LIVES ON MEETINGS
-                </span>
-              </div>
+            <GadgetGroup label="Actuators">
+              {check(["meeting", "allow_actuators"], "Allow actuators")}
             </GadgetGroup>
             <GadgetGroup label="Intelligence">
-              {/* HS-139-02: intel_enabled removed (DEFAULT — pinned
-                  true; turning it off defeats the product) */}
-              {/* HS-139-03: intel_realtime_model moved to Models module
-                  (the one-dial law: model paths live with models). */}
-              {str(["meeting", "intel_summary_model"], "Summary model")}
-              {check(["meeting", "intel_cloud_store"], "Cloud store")}
-              {/* HS-112-01: the endpoint dial lives in Models. HS-132-10: so
-                  does the Provider intent — it was a SECOND placement dial
-                  here with no precedence signal, so picking LOCAL under an
-                  adopted destination did nothing. One dial, one home; this
-                  states where meetings run and points at it. */}
               <div className="prefs-elsewhere">
                 <span className="prefs-elsewhere-fact">
                   PLACEMENT LIVES IN MODELS
@@ -677,79 +654,78 @@ function SettingsFace({ hero, scope }: CoreProps) {
                 </Button>
               </div>
             </GadgetGroup>
-            <GadgetGroup label="Deferred queue">
-              {/* HS-139-02: intel_deferred_enabled removed (DEFAULT —
-                  pinned true; the queue is the safety net for model
-                  unavailability) */}
-              {/* HS-139-01: intel_queue_poll_seconds deleted (dead — never
-                  threaded to IntelQueue; queue uses hardcoded 120s) */}
-              {num(["meeting", "intel_retry_base_seconds"], "Retry base", {
-                unit: "s",
-                min: 1,
-                step: 5,
-              })}
-              {num(["meeting", "intel_retry_max_seconds"], "Retry max", {
-                unit: "s",
-                min: 1,
-                step: 60,
-              })}
-              {num(["meeting", "intel_retry_max_attempts"], "Retry attempts", {
-                min: 0,
-              })}
-              {/* HS-139-01: intel_retry_failure_alert_percent and
-                  intel_retry_failure_hysteresis_minutes deleted (dead —
-                  never threaded to IntelQueue; queue uses hardcoded
-                  constants) */}
-              {str(
-                ["meeting", "intel_retry_failure_webhook_header_name"],
-                "Webhook header",
-              )}
-            </GadgetGroup>
-            <GadgetGroup label="Routing">
-              {/* HS-139-02: mir_enabled removed (DEFAULT — pinned true;
-                  MIR is a core feature) */}
-              {/* HS-130-05: one routing profile. The old `MIR profile` +
-                  `Plugin profile` pickers were two owners of one setting;
-                  they converged into `meeting.routing_profile`. */}
-              {cyc(
-                ["meeting", "routing_profile"],
-                "Routing profile",
-                MIR_PROFILE_OPTIONS,
-              )}
-              {check(["meeting", "intent_router_enabled"], "Intent router")}
-              {num(["meeting", "intent_window_seconds"], "Intent window", {
-                unit: "s",
-                min: 10,
-                step: 10,
-              })}
-              {num(["meeting", "intent_step_seconds"], "Intent step", {
-                unit: "s",
-                min: 5,
-                step: 5,
-              })}
-              {prop(["meeting", "intent_score_threshold"], "Score threshold", {
-                min: 0,
-                max: 1,
-                step: 0.05,
-              })}
-              {num(
-                ["meeting", "intent_hysteresis_windows"],
-                "Hysteresis windows",
-                { min: 0, max: 10 },
-              )}
-              {check(
-                ["meeting", "intent_segment_probe_enabled"],
-                "Segment probe",
-              )}
-              {csv(["meeting", "disabled_plugins"], "Disabled plugins")}
-            </GadgetGroup>
-            <GadgetGroup label="Actuators">
-              {check(["meeting", "allow_actuators"], "Allow actuators")}
-              {csv(["meeting", "allowed_actuators"], "Allowed actuators")}
-              {csv(["meeting", "webhook_allowed_hosts"], "Webhook hosts")}
-              {/* HS-139-03: companion_github_repo moved to Delivery
-                  board (the integration it configures). */}
-            </GadgetGroup>
+            {/* HS-139-04: all operator knobs fold behind one RAW well. */}
+            <FoldGadget title="RAW" token="20">
+              <GadgetGroup label="Capture">
+                {check(["meeting", "diarization_enabled"], "Diarization")}
+                {check(["meeting", "diarize_mic"], "Diarize mic")}
+                {prop(["meeting", "similarity_threshold"], "Similarity", {
+                  min: 0,
+                  max: 1,
+                  step: 0.05,
+                })}
+              </GadgetGroup>
+              <GadgetGroup label="Intelligence">
+                {str(["meeting", "intel_summary_model"], "Summary model")}
+                {check(["meeting", "intel_cloud_store"], "Cloud store")}
+              </GadgetGroup>
+              <GadgetGroup label="Deferred queue">
+                {num(["meeting", "intel_retry_base_seconds"], "Retry base", {
+                  unit: "s",
+                  min: 1,
+                  step: 5,
+                })}
+                {num(["meeting", "intel_retry_max_seconds"], "Retry max", {
+                  unit: "s",
+                  min: 1,
+                  step: 60,
+                })}
+                {num(["meeting", "intel_retry_max_attempts"], "Retry attempts", {
+                  min: 0,
+                })}
+                {str(
+                  ["meeting", "intel_retry_failure_webhook_header_name"],
+                  "Webhook header",
+                )}
+              </GadgetGroup>
+              <GadgetGroup label="Routing">
+                {cyc(
+                  ["meeting", "routing_profile"],
+                  "Routing profile",
+                  MIR_PROFILE_OPTIONS,
+                )}
+                {check(["meeting", "intent_router_enabled"], "Intent router")}
+                {num(["meeting", "intent_window_seconds"], "Intent window", {
+                  unit: "s",
+                  min: 10,
+                  step: 10,
+                })}
+                {num(["meeting", "intent_step_seconds"], "Intent step", {
+                  unit: "s",
+                  min: 5,
+                  step: 5,
+                })}
+                {prop(["meeting", "intent_score_threshold"], "Score threshold", {
+                  min: 0,
+                  max: 1,
+                  step: 0.05,
+                })}
+                {num(
+                  ["meeting", "intent_hysteresis_windows"],
+                  "Hysteresis windows",
+                  { min: 0, max: 10 },
+                )}
+                {check(
+                  ["meeting", "intent_segment_probe_enabled"],
+                  "Segment probe",
+                )}
+                {csv(["meeting", "disabled_plugins"], "Disabled plugins")}
+              </GadgetGroup>
+              <GadgetGroup label="Actuators">
+                {csv(["meeting", "allowed_actuators"], "Allowed actuators")}
+                {csv(["meeting", "webhook_allowed_hosts"], "Webhook hosts")}
+              </GadgetGroup>
+            </FoldGadget>
           </>
         );
       case "cadence":
@@ -758,12 +734,6 @@ function SettingsFace({ hero, scope }: CoreProps) {
             <GadgetGroup label="Cadence">
               {check(["cadence", "enabled"], "Enabled")}
               {cyc(["cadence", "pressure"], "Pressure", CADENCE_PRESSURE_OPTIONS)}
-              {check(["cadence", "use_llm"], "Use LLM")}
-              {num(["cadence", "tick_interval_seconds"], "Tick interval", {
-                unit: "s",
-                min: 30,
-                step: 30,
-              })}
               {num(["cadence", "quiet_hours_start"], "Quiet from", {
                 unit: "h",
                 min: 0,
@@ -781,21 +751,36 @@ function SettingsFace({ hero, scope }: CoreProps) {
             </GadgetGroup>
             <GadgetGroup label="Telegram">
               {check(["cadence_telegram", "enabled"], "Enabled")}
-              {csv(["cadence_telegram", "allowed_chat_ids"], "Allowed chats")}
             </GadgetGroup>
+            {/* HS-139-04: operator knobs fold behind RAW. */}
+            <FoldGadget title="RAW" token="3">
+              <GadgetGroup>
+                {check(["cadence", "use_llm"], "Use LLM")}
+                {num(["cadence", "tick_interval_seconds"], "Tick interval", {
+                  unit: "s",
+                  min: 30,
+                  step: 30,
+                })}
+                {csv(["cadence_telegram", "allowed_chat_ids"], "Allowed chats")}
+              </GadgetGroup>
+            </FoldGadget>
           </>
         );
       case "devices": {
         const device = (data.device ?? {}) as Record<string, unknown>;
+        const deviceCount = Object.keys(device).length;
         return (
           <>
             <GadgetGroup label="Mesh">
               {str(["mesh", "device_name"], "Device name")}
             </GadgetGroup>
-            {Object.keys(device).length ? (
-              <GadgetGroup label="Device">
-                {walkerRows(device, ["device"])}
-              </GadgetGroup>
+            {/* HS-139-04: device walker knobs fold behind RAW. */}
+            {deviceCount ? (
+              <FoldGadget title="RAW" token={String(deviceCount)}>
+                <GadgetGroup label="Device">
+                  {walkerRows(device, ["device"])}
+                </GadgetGroup>
+              </FoldGadget>
             ) : null}
           </>
         );
@@ -821,31 +806,45 @@ function SettingsFace({ hero, scope }: CoreProps) {
         );
       case "desk":
         return <DeskModule />;
-      case "integrations":
-        return (
-          <GadgetGroup label="Credentials">
-            <div className="prefs-egress-line">
-              <EgressChip />
-              {/* the credential truth, as a fact token */}
-              <span className="gadget-fact">values stay on this hub</span>
-            </div>
-            {Object.entries(secrets).map(([secretId, state]) => (
-              <SecretRow
-                key={secretId}
-                label={SECRET_LABELS[secretId] ?? title(secretId)}
-                configured={Boolean(state.configured)}
-                destination={state.destination}
-                busy={secretBusy === secretId}
-                rotatable={ROTATABLE_SECRETS.has(secretId)}
-                onReplace={(value) =>
-                  void changeSecret(secretId, "replace", value)
-                }
-                onRotate={() => void changeSecret(secretId, "rotate")}
-                onDelete={() => void changeSecret(secretId, "delete")}
-              />
-            ))}
-          </GadgetGroup>
+      case "integrations": {
+        const RAW_SECRETS = new Set(["failure_webhook_url", "failure_webhook_credential"]);
+        const keepSecrets = Object.entries(secrets).filter(([id]) => !RAW_SECRETS.has(id));
+        const rawSecrets = Object.entries(secrets).filter(([id]) => RAW_SECRETS.has(id));
+        const secretRow = ([secretId, state]: [string, SecretState]) => (
+          <SecretRow
+            key={secretId}
+            label={SECRET_LABELS[secretId] ?? title(secretId)}
+            configured={Boolean(state.configured)}
+            destination={state.destination}
+            busy={secretBusy === secretId}
+            rotatable={ROTATABLE_SECRETS.has(secretId)}
+            onReplace={(value) =>
+              void changeSecret(secretId, "replace", value)
+            }
+            onRotate={() => void changeSecret(secretId, "rotate")}
+            onDelete={() => void changeSecret(secretId, "delete")}
+          />
         );
+        return (
+          <>
+            <GadgetGroup label="Credentials">
+              <div className="prefs-egress-line">
+                <EgressChip />
+                <span className="gadget-fact">values stay on this hub</span>
+              </div>
+              {keepSecrets.map(secretRow)}
+            </GadgetGroup>
+            {/* HS-139-04: operator-wiring secrets fold behind RAW. */}
+            {rawSecrets.length ? (
+              <FoldGadget title="RAW" token={String(rawSecrets.length)}>
+                <GadgetGroup>
+                  {rawSecrets.map(secretRow)}
+                </GadgetGroup>
+              </FoldGadget>
+            ) : null}
+          </>
+        );
+      }
       case "system": {
         const claimed = new Set(PREF_MODULES.flatMap((module) => module.keys));
         const systemKeys = Object.keys(data).filter(

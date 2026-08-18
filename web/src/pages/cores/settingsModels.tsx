@@ -16,6 +16,7 @@ import { ConfirmVerb } from "../../desk/surface/Surface";
 import {
   CheckGadget,
   CycleGadget,
+  FoldGadget,
   GadgetGroup,
   GadgetRow,
   GadgetTable,
@@ -515,32 +516,12 @@ export function ModelsModule({
             }
           />
         </GadgetRow>
-        <GadgetRow label="Context window" fact="tokens">
-          <StepperGadget
-            label="Context window"
-            value={Number(runtime?.n_ctx ?? 2048)}
-            min={0}
-            step={256}
-            onChange={(next) => update(["dictation", "runtime", "n_ctx"], next)}
-          />
-        </GadgetRow>
         <GadgetRow label="Warm on start">
           <CheckGadget
             label="Warm on start"
             checked={Boolean(runtime?.warm_on_start)}
             onChange={(checked) =>
               update(["dictation", "runtime", "warm_on_start"], checked)
-            }
-          />
-        </GadgetRow>
-        <GadgetRow label="Idle eviction" fact="s">
-          <StepperGadget
-            label="Idle eviction seconds"
-            value={Number(runtime?.eviction_idle_seconds ?? 0)}
-            min={0}
-            step={30}
-            onChange={(next) =>
-              update(["dictation", "runtime", "eviction_idle_seconds"], next)
             }
           />
         </GadgetRow>
@@ -553,25 +534,52 @@ export function ModelsModule({
             onChange={(checked) => update(["rails_observer", "enabled"], checked)}
           />
         </GadgetRow>
-        <GadgetRow label="Poll" fact="s">
-          <StepperGadget
-            label="Observer poll seconds"
-            value={Number(val(["rails_observer", "poll_seconds"]) ?? 30)}
-            min={5}
-            step={5}
-            onChange={(next) => update(["rails_observer", "poll_seconds"], next)}
-          />
-        </GadgetRow>
-        <GadgetRow label="Tail" fact="events">
-          <StepperGadget
-            label="Observer tail"
-            value={Number(val(["rails_observer", "tail"]) ?? 20)}
-            min={1}
-            step={5}
-            onChange={(next) => update(["rails_observer", "tail"], next)}
-          />
-        </GadgetRow>
       </GadgetGroup>
+      {/* HS-139-04: operator tuning knobs fold behind RAW. */}
+      <FoldGadget title="RAW" token="4">
+        <GadgetGroup label="Hub engine">
+          <GadgetRow label="Context window" fact="tokens">
+            <StepperGadget
+              label="Context window"
+              value={Number(runtime?.n_ctx ?? 2048)}
+              min={0}
+              step={256}
+              onChange={(next) => update(["dictation", "runtime", "n_ctx"], next)}
+            />
+          </GadgetRow>
+          <GadgetRow label="Idle eviction" fact="s">
+            <StepperGadget
+              label="Idle eviction seconds"
+              value={Number(runtime?.eviction_idle_seconds ?? 0)}
+              min={0}
+              step={30}
+              onChange={(next) =>
+                update(["dictation", "runtime", "eviction_idle_seconds"], next)
+              }
+            />
+          </GadgetRow>
+        </GadgetGroup>
+        <GadgetGroup label="Rails observer">
+          <GadgetRow label="Poll" fact="s">
+            <StepperGadget
+              label="Observer poll seconds"
+              value={Number(val(["rails_observer", "poll_seconds"]) ?? 30)}
+              min={5}
+              step={5}
+              onChange={(next) => update(["rails_observer", "poll_seconds"], next)}
+            />
+          </GadgetRow>
+          <GadgetRow label="Tail" fact="events">
+            <StepperGadget
+              label="Observer tail"
+              value={Number(val(["rails_observer", "tail"]) ?? 20)}
+              min={1}
+              step={5}
+              onChange={(next) => update(["rails_observer", "tail"], next)}
+            />
+          </GadgetRow>
+        </GadgetGroup>
+      </FoldGadget>
     </>
   );
 }
