@@ -104,7 +104,7 @@ In `/dictation -> Runtime`, set:
 | Backend | `openai_compatible` |
 | Base URL | `http://127.0.0.1:8000/v1` |
 | Model | `qwen2.5-7b-instruct` |
-| API key env | `OPENAI_API_KEY` |
+| API key | Set inline in **Settings, Models**; optional headless fallback `HOLDSPEAK_PROFILE_<ID>_KEY` |
 | Timeout seconds | `8` |
 
 Config file shape:
@@ -130,8 +130,9 @@ once as a destination under **Settings, Models** and pick it as the dictation
 **Runs on**; assigning it also selects the `openai_compatible` backend. See
 [MODELS.md](./MODELS.md).
 
-HoldSpeak reads the API key from `HOLDSPEAK_PROFILE_<ID>_KEY` for that
-destination. Do not put API keys in `.hs/` files.
+Set the destination key inline in **Settings, Models**. For a headless hub,
+`HOLDSPEAK_PROFILE_<ID>_KEY` remains the fallback. Do not put API keys in
+`.hs/` files.
 
 > **Extended thinking disabled by default.** HoldSpeak sets `thinking: false` on
 > every call to an OpenAI-compatible endpoint. This prevents extended-thinking
@@ -422,7 +423,7 @@ confidence threshold.](assets/cockpit/copilot-depth.png)
 | Control (Runtime → Copilot depth) | Knob (`dictation.pipeline`) | Default | What it does |
 | --- | --- | --- | --- |
 | **Rewrite passes** (segmented 1-5) | `rewrite_passes` | `1` | Project-rewriter passes (draft → critique → refine). `1` is single-pass. Extra passes are skipped if they would breach `max_total_latency_ms`. |
-| **Learn from my corrections** (toggle) | `corrections_enabled` | `false` | Consult the **correction memory** when routing: a correction you made earlier nudges a similar later utterance. |
+| **Learn from my corrections** | `corrections_enabled` | `true` | Always on (pinned since HS-139-02). Consult the **correction memory** when routing: a correction you made earlier nudges a similar later utterance. |
 | **Infer the target when unsure** (toggle) | `target_detect_llm_enabled` | `false` | When window/app detection is unsure, ask the LLM to infer the **output target** from your words. A manual override always wins. |
 | **Ask the model below confidence** (slider) | `target_detect_llm_below` | `0.8` | The heuristic-confidence threshold below which the LLM fallback fires. |
 
@@ -452,7 +453,8 @@ timings.](assets/cockpit/memory-panel.png)
 
 The **What the copilot has learned** panel lists every persistent correction
 (kind · gist · → corrected value · when) with a remove (`×`) on each, an **add**
-form, a **Forget all** button, and the `corrections_enabled` toggle in context.
+form and a **Forget all** button. Correction memory is always on (pinned
+since HS-139-02).
 
 **Model-assisted target detection.** On Wayland/terminal setups where the active
 window can't be read, the heuristic returns low confidence; with the fallback on,
@@ -489,10 +491,8 @@ under `dictation.pipeline`:
 {
   "dictation": {
     "pipeline": {
-      "enabled": true,
       "stages": ["intent-router", "kb-enricher", "project-rewriter"],
       "rewrite_passes": 2,
-      "corrections_enabled": true,
       "target_detect_llm_enabled": true,
       "target_detect_llm_below": 0.8
     }
@@ -729,15 +729,13 @@ wipe*, not from being off:
   are checked with the same secret-shape filter the correction memory uses; a
   field that looks like it carries a key/token is redacted, so a secret never
   lands in the journal.
-- **Retention-capped.** The journal keeps the most recent *N* entries
-  (`dictation.journal_retention`, default 500) and prunes older ones on every
-  write.
+- **Retention-capped.** The journal keeps the most recent 500 entries
+  (pinned since HS-139-02) and prunes older ones on every write.
 - **Curatable.** Delete any single entry, or **Clear journal** to wipe it all,
   from the tab.
-- **Toggle.** The journal is **on by default** (local). Turn it off with
-  `dictation.journal_enabled = false`; when off, **no** rows are written and
-  your typed output is byte-identical to journaling-off. (Journaling is a pure
-  side-channel: it never changes what gets typed or how fast.)
+- **Always on.** The journal is always enabled (pinned since HS-139-02);
+  journaling is a pure side-channel that never changes what gets typed or
+  how fast.
 
 ### What is recorded
 
@@ -832,10 +830,8 @@ The learning is real, local, and bounded. Be clear-eyed about what it is:
   threshold. The "learned from N similar" count everywhere in the UI is that same
   measure, run over your journal. There is no hidden training and no embedding
   model, which is also why the count is honest and easy to reason about.
-- **It is off by default for routing.** A correction is stored the moment you
-  make it, but it only nudges routing once you turn on **Use corrections when
-  routing** (`dictation.corrections_enabled`) in the Memory tab. Until then the UI
-  says a fix *would* nudge N utterances, not that it does.
+- **Always on for routing.** Correction memory is always enabled (pinned
+  since HS-139-02). A correction nudges routing from the moment you make it.
 - **It is local.** Corrections and the journal live on your machine, gist-only
   and secret-filtered, like everything else in this loop. A secret-shaped
   correction teaches nothing, and the confirmation says so.
@@ -848,15 +844,13 @@ For daily coding-agent dictation, use:
 {
   "dictation": {
     "pipeline": {
-      "enabled": true,
       "stages": ["intent-router", "kb-enricher"],
       "max_total_latency_ms": 600,
       "target_profile_override": "auto"
     },
     "runtime": {
       "backend": "openai_compatible",
-      "openai_compatible_timeout_seconds": 8,
-      "warm_on_start": false
+      "openai_compatible_timeout_seconds": 8
     }
   }
 }

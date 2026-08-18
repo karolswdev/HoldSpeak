@@ -5,7 +5,7 @@
 // engine, and the rails observer's knobs. Everything composes from the
 // settings gadget kit; errors land in the Prefs footer receipt, never
 // over the UI.
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Button } from "../../components/signal/Signal";
 import { apiFetch, readableError } from "../../lib/api";
 import type {
@@ -16,19 +16,17 @@ import { ConfirmVerb } from "../../desk/surface/Surface";
 import {
   CheckGadget,
   CycleGadget,
+  FoldGadget,
   GadgetGroup,
   GadgetRow,
-  GadgetTable,
   LampGadget,
   StepperGadget,
   StringGadget,
 } from "../../desk/surface/gadgets";
+import { useRovingRows } from "../../desk/surface/roving";
 import {
   INTEL_PROVIDER_OPTIONS,
-  MEETING_PLACEMENT_RULE,
   meetingPlacement,
-  placementLine,
-  providerIgnoredReason,
 } from "./settingsPrefs";
 
 type Target = {
@@ -69,6 +67,18 @@ const WIRE_KIND: Record<string, string> = {
   mesh_node: "meshNode",
 };
 
+/** Keep transport state out of the owner's destination ledger. */
+function readinessLabel(state: string): string {
+  switch (state) {
+    case "needs_key":
+      return "KEY NEEDED";
+    case "unsupported":
+      return "NOT AVAILABLE";
+    default:
+      return state.replace(/[_-]+/g, " ").toUpperCase();
+  }
+}
+
 function fromWire(row: Record<string, unknown>): Target {
   const readiness = (row.readiness ?? {}) as Record<string, unknown>;
   const secret = (row.secret ?? {}) as Record<string, unknown>;
@@ -104,6 +114,9 @@ export function ModelsModule({
   const [targets, setTargets] = useState<Target[]>([]);
   const [probeResults, setProbeResults] = useState<Record<string, ProbeResult>>({});
   const [probingIds, setProbingIds] = useState<Set<string>>(() => new Set());
+  const [keyDrafts, setKeyDrafts] = useState<Record<string, string>>({});
+  const [keyEditingId, setKeyEditingId] = useState<string | null>(null);
+  const [savingKeyIds, setSavingKeyIds] = useState<Set<string>>(() => new Set());
   const [hubDefault, setHubDefault] = useState<{ engine: string; model: string; available: boolean }>({
     engine: "", model: "", available: false,
   });
@@ -204,6 +217,51 @@ export function ModelsModule({
     }
   };
 
+  const setKey = async (row: Target) => {
+    const value = keyDrafts[row.id] ?? "";
+    if (!value) return;
+    setSavingKeyIds((ids) => new Set(ids).add(row.id));
+    try {
+      await apiFetch(`/api/inference-targets/${encodeURIComponent(row.id)}/secret`, {
+        method: "PUT",
+        json: { value },
+      });
+      setKeyDrafts((drafts) => ({ ...drafts, [row.id]: "" }));
+      setKeyEditingId(null);
+      onRefuse("");
+      await reload();
+    } catch (error) {
+      onRefuse(readableError(error));
+    } finally {
+      setSavingKeyIds((ids) => {
+        const next = new Set(ids);
+        next.delete(row.id);
+        return next;
+      });
+    }
+  };
+
+  const clearKey = async (row: Target) => {
+    setSavingKeyIds((ids) => new Set(ids).add(row.id));
+    try {
+      await apiFetch(`/api/inference-targets/${encodeURIComponent(row.id)}/secret`, {
+        method: "DELETE",
+      });
+      setKeyDrafts((drafts) => ({ ...drafts, [row.id]: "" }));
+      setKeyEditingId(null);
+      onRefuse("");
+      await reload();
+    } catch (error) {
+      onRefuse(readableError(error));
+    } finally {
+      setSavingKeyIds((ids) => {
+        const next = new Set(ids);
+        next.delete(row.id);
+        return next;
+      });
+    }
+  };
+
   const probeTarget = async (id: string) => {
     setProbingIds((ids) => new Set(ids).add(id));
     try {
@@ -278,72 +336,75 @@ export function ModelsModule({
     </GadgetRow>
   );
 
-  /* HS-132-10 — the ONE meetings placement dial. The destination pointer
-     decides; the provider intent is its fallback, subordinate in the sheet
-     and DISABLED with its override named the moment a destination is
-     adopted. The hub's own provenance (`_placement.meeting`) supplies the
-     effective placement and the reason, so no interaction is a silent
-     no-op. */
+  /* One Meetings choice, one plain consequence. The hub provenance still
+     decides whether the fallback is live; its implementation explanation
+     stays off the owner's glass. */
   const placement = meetingPlacement(settings);
-  const providerIgnored = placement ? providerIgnoredReason(placement) : "";
   const droppedDestination = String(placement?.placement_reason ?? "");
-  // Exactly ONE of the two rows says DECIDES PLACEMENT, and it is the one the
-  // hub actually obeyed.
   const destinationDecides = placement?.placement_source === "destination";
+  const meetingTarget = String(placement?.target_name || placement?.node || "").trim();
+  const meetingSummary = meetingTarget
+    ? `Meetings uses ${meetingTarget}`
+    : placement?.boundary === "cloud"
+      ? "Meetings uses the cloud"
+      : "Meetings uses this device";
+  const plainReason = (reason: unknown) => {
+    const text = String(reason ?? "").replace(/[_-]+/g, " ").replace(/\s+/g, " ").trim();
+    if (/no language model/i.test(text)) return "Choose a local model in Intelligence";
+    return text ? text[0].toUpperCase() + text.slice(1) : "Check the selected model";
+  };
+  const meetingsNotice = placement?.runnable === false
+    ? droppedDestination
+      ? "Meetings can’t use the selected destination. Choose a local model in Intelligence."
+      : `Meetings can’t run: ${plainReason(placement.runnable_reason)}`
+    : droppedDestination
+      ? "Selected destination isn’t compatible"
+      : "";
   const meetingsBlock = (
     <>
-      {pointerRow(
-        "Meetings",
-        ["meeting", "intel_profile_id"],
-        destinationDecides ? "DECIDES PLACEMENT" : "NONE · PROVIDER DECIDES",
-      )}
-      {droppedDestination ? (
-        <div className="prefs-egress-line">
-          <LampGadget
-            on
-            tone="fail"
-            block
-            label={`DESTINATION SELECTION IGNORED · ${droppedDestination.toUpperCase()}`}
-          />
+      <GadgetRow
+        label={
+          <>
+            <span>Meetings</span>
+            <span className="models-meeting-summary">{meetingSummary}</span>
+          </>
+        }
+      >
+        <CycleGadget
+          label="Meetings runs on"
+          value={String(val(["meeting", "intel_profile_id"]) ?? "")}
+          options={pointerOptions}
+          onChange={(next) => update(["meeting", "intel_profile_id"], next || null)}
+        />
+      </GadgetRow>
+      {meetingsNotice ? (
+        <div
+          className="models-meeting-notice"
+          data-tone={placement?.runnable === false ? "danger" : undefined}
+        >
+          {meetingsNotice}
         </div>
       ) : null}
-      <div className="gadget-indent">
-        <GadgetRow
-          label="Meetings provider"
-          fact={destinationDecides ? "OVERRIDDEN" : "DECIDES PLACEMENT"}
-        >
+      <FoldGadget title="Meeting routing options" className="models-meeting-routing">
+        <GadgetRow label="If no destination">
           <CycleGadget
             label="Meetings provider"
             value={String(val(["meeting", "intel_provider"]) ?? "local")}
             options={INTEL_PROVIDER_OPTIONS}
-            disabled={Boolean(providerIgnored)}
+            disabled={Boolean(destinationDecides)}
             onChange={(next) => update(["meeting", "intel_provider"], next)}
           />
         </GadgetRow>
-      </div>
-      {providerIgnored ? (
-        <div className="prefs-egress-line">
-          <LampGadget on tone="fail" block label={providerIgnored} />
-        </div>
-      ) : null}
-      <div className="prefs-egress-line">
-        <span className="gadget-fact">{MEETING_PLACEMENT_RULE}</span>
-      </div>
-      {placement ? (
-        <div className="prefs-egress-line">
-          <LampGadget
-            on
-            tone={placement.runnable === false ? "fail" : "ok"}
-            label={
-              placement.runnable === false
-                ? `${placementLine(placement)} · NOT RUNNABLE · ${String(
-                    placement.runnable_reason ?? "",
-                  ).toUpperCase()}`
-                : placementLine(placement)
-            }
+        {/* HS-139-03: intel_realtime_model moved from Settings > Meetings. */}
+        <GadgetRow label="Realtime model">
+          <StringGadget
+            label="Realtime model"
+            value={String(val(["meeting", "intel_realtime_model"]) ?? "")}
+            placeholder="path to local model"
+            onChange={(next) => update(["meeting", "intel_realtime_model"], next || null)}
           />
-        </div>
-      ) : null}
+        </GadgetRow>
+      </FoldGadget>
     </>
   );
 
@@ -359,210 +420,418 @@ export function ModelsModule({
     | undefined;
   const backend = String(runtime?.backend ?? "auto");
 
-  return (
-    <>
-      <GadgetGroup label="Destinations">
-        <GadgetRow wide label="Destinations" fact={`${targets.length}`}>
-          <GadgetTable
-            head={["NAME", "KIND", "ENDPOINT", "MODEL", "KEY", "STATE"]}
-            deleteLabel="FORGET?"
-            rowKey={(index) => targets[index]?.id ?? String(index)}
-            onAdd={() => void add()}
-            addLabel="+ DESTINATION"
-            verbs={(index) => {
-              const row = targets[index];
-              if (!row) return null;
-              return (
-                <>
-                  <Button
-                    dense
-                    variant="ghost"
-                    loading={probingIds.has(row.id)}
-                    onClick={() => void probeTarget(row.id)}
-                  >
-                    TEST
-                  </Button>
-                  <ConfirmVerb
-                    label="×"
-                    confirmLabel="FORGET?"
-                    ariaLabel={`Delete destination ${index + 1}`}
-                    onConfirm={() => void remove(index)}
-                  />
-                </>
-              );
-            }}
-            rows={targets.map((row) => {
-              const result = probeResults[row.id];
-              const state = probeLabel(row);
-              return [
+  /* The matrix needs a genuinely useful editorial width. Below it, a row
+     cannot keep a name, endpoint, model and health honest, so it becomes a
+     compact disclosure instead of pretending that six clipped cells are a
+     table. This observes the surface container, never the viewport. */
+  const destRef = useRef<HTMLDivElement>(null);
+  const matrixRef = useRef<HTMLDivElement>(null);
+  const [narrow, setNarrow] = useState(false);
+  const [expandedTargetId, setExpandedTargetId] = useState<string | null>(null);
+  useLayoutEffect(() => {
+    const el = destRef.current;
+    if (!el || typeof ResizeObserver === "undefined") return;
+    // ResizeObserver follows this initial measurement in a live window. The
+    // guard keeps unmeasured/jsdom nodes from masquerading as a zero-width
+    // phone sheet.
+    const initialWidth = el.getBoundingClientRect().width;
+    if (initialWidth > 0) setNarrow(initialWidth < 840);
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        setNarrow(entry.contentRect.width < 840);
+      }
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+  useRovingRows(matrixRef, {
+    selector:
+      ".models-destination-row button, .models-destination-row input, .models-destination-row select",
+    rowSelector: ".models-destination-row",
+  });
+
+  const endpointField = (row: Target) =>
+    row.kind === "meshNode" ? (
+      <StringGadget
+        label={`Target ${row.id} node`}
+        value={row.node}
+        placeholder="node"
+        onChange={(next) => patch(row.id, { node: next })}
+      />
+    ) : (
+      <StringGadget
+        label={`Target ${row.id} endpoint`}
+        value={row.base_url}
+        placeholder="http://…/v1"
+        onChange={(next) => patch(row.id, { base_url: next })}
+      />
+    );
+
+  const modelField = (row: Target) => {
+    const result = probeResults[row.id];
+    return result?.models.length ? (
+      <CycleGadget
+        label={`Target ${row.id} model`}
+        value={row.model}
+        options={result.models.map((model) => ({ value: model }))}
+        onChange={(next) => patch(row.id, { model: next })}
+      />
+    ) : (
+      <StringGadget
+        label={`Target ${row.id} model`}
+        value={row.model}
+        onChange={(next) => patch(row.id, { model: next })}
+      />
+    );
+  };
+
+  const healthField = (row: Target) => {
+    const state = probeLabel(row);
+    return (
+      <span className="models-destination-health">
+        <span className="gadget-key-cell">
+          <CheckGadget
+            label={`Target ${row.id} requires key`}
+            checked={row.requires_key}
+            onChange={(checked) => patch(row.id, { requires_key: checked })}
+          />
+          {row.requires_key ? (
+            <button
+              type="button"
+              className="models-key-affordance"
+              aria-label={`${row.name || "Destination"} key ${row.key_present ? "set" : "needed"}`}
+              onClick={() => setKeyEditingId(row.id)}
+            >
+              <LampGadget
+                on={row.key_present}
+                tone={row.key_present ? "ok" : "warn"}
+                label={row.key_present ? "KEY SET" : "KEY NEEDED"}
+              />
+            </button>
+          ) : null}
+        </span>
+        {state || !row.requires_key ? (
+          <LampGadget
+            on={state ? state.on : row.readiness_state === "ready"}
+            tone={state ? state.tone : lampTone(row)}
+            label={state ? state.label : readinessLabel(row.readiness_state)}
+          />
+        ) : null}
+      </span>
+    );
+  };
+
+  const keyEditor = (row: Target) => (
+    <div className="models-key-editor" data-testid={`target-key-editor-${row.id}`}>
+      <label>
+        <span>API KEY</span>
+        <input
+          type="password"
+          autoComplete="new-password"
+          aria-label={`Destination ${row.id} API key`}
+          value={keyDrafts[row.id] ?? ""}
+          onChange={(event) => setKeyDrafts((drafts) => ({ ...drafts, [row.id]: event.target.value }))}
+        />
+      </label>
+      <Button
+        dense
+        variant="ghost"
+        loading={savingKeyIds.has(row.id)}
+        disabled={!(keyDrafts[row.id] ?? "")}
+        onClick={() => void setKey(row)}
+      >
+        {row.key_present ? "REPLACE" : "SET KEY"}
+      </Button>
+      {row.key_present ? (
+        <Button dense variant="ghost" disabled={savingKeyIds.has(row.id)} onClick={() => void clearKey(row)}>
+          REMOVE
+        </Button>
+      ) : null}
+    </div>
+  );
+
+  /* Narrow does not expose five long forms at once. A destination is a
+     readable summary until the owner explicitly opens the one to edit. */
+  const destinationCard = (row: Target, index: number) => {
+    const state = probeLabel(row);
+    const expanded = expandedTargetId === row.id;
+    return (
+      <article
+        key={row.id}
+        className="dest-card"
+        data-expanded={expanded || undefined}
+        data-testid={`dest-card-${row.id}`}
+      >
+        <button
+          type="button"
+          className="dest-card-summary"
+          aria-expanded={expanded}
+          aria-controls={`destination-${row.id}`}
+          onClick={() => setExpandedTargetId(expanded ? null : row.id)}
+        >
+          <span className="dest-card-index">{String(index + 1).padStart(2, "0")}</span>
+          <span className="dest-card-name">{row.name || "NEW DESTINATION"}</span>
+          <LampGadget
+            on={state ? state.on : row.readiness_state === "ready"}
+            tone={state ? state.tone : lampTone(row)}
+            label={state ? state.label : readinessLabel(row.readiness_state)}
+          />
+          <span className="dest-card-disclosure" aria-hidden="true">⌄</span>
+        </button>
+        {expanded ? (
+          <div className="dest-card-detail" id={`destination-${row.id}`}>
+            <div className="dest-card-field" data-field="name">
+              <span>NAME</span>
               <StringGadget
-                key="name"
                 label={`Target ${row.id} name`}
                 value={row.name}
                 onChange={(next) => patch(row.id, { name: next })}
-              />,
+              />
+            </div>
+            <div className="dest-card-field" data-field="kind">
+              <span>KIND</span>
               <CycleGadget
-                key="kind"
                 label={`Target ${row.id} kind`}
                 value={row.kind}
                 options={KIND_OPTIONS}
                 onChange={(next) => patch(row.id, { kind: next })}
-              />,
-              row.kind === "meshNode" ? (
-                <StringGadget
-                  key="node"
-                  label={`Target ${row.id} node`}
-                  value={row.node}
-                  placeholder="node"
-                  onChange={(next) => patch(row.id, { node: next })}
-                />
-              ) : (
-                <StringGadget
-                  key="endpoint"
-                  label={`Target ${row.id} endpoint`}
-                  value={row.base_url}
-                  placeholder="http://…/v1"
-                  onChange={(next) => patch(row.id, { base_url: next })}
-                />
-              ),
-              result?.models.length ? (
-                <CycleGadget
-                  key="model"
-                  label={`Target ${row.id} model`}
-                  value={row.model}
-                  options={result.models.map((model) => ({ value: model }))}
-                  onChange={(next) => patch(row.id, { model: next })}
-                />
-              ) : (
-                <StringGadget
-                  key="model"
-                  label={`Target ${row.id} model`}
-                  value={row.model}
-                  onChange={(next) => patch(row.id, { model: next })}
-                />
-              ),
-              <span key="key" className="gadget-key-cell">
-                <CheckGadget
-                  label={`Target ${row.id} requires key`}
-                  checked={row.requires_key}
-                  onChange={(checked) =>
-                    patch(row.id, { requires_key: checked })
-                  }
-                />
-                {row.requires_key ? (
-                  <LampGadget
-                    on={row.key_present}
-                    tone={row.key_present ? "ok" : "warn"}
-                    label={row.key_present ? "SET" : "UNSET"}
-                  />
-                ) : null}
-              </span>,
-              <LampGadget
-                key="state"
-                on={state ? state.on : row.readiness_state === "ready"}
-                tone={state ? state.tone : lampTone(row)}
-                label={state ? state.label : row.readiness_state.toUpperCase()}
-              />,
-            ];
-            })}
-          />
-        </GadgetRow>
+              />
+            </div>
+            <div className="dest-card-field" data-field="endpoint">
+              <span>{row.kind === "meshNode" ? "NODE" : "ENDPOINT"}</span>
+              {endpointField(row)}
+            </div>
+            <div className="dest-card-field" data-field="model">
+              <span>MODEL</span>
+              {modelField(row)}
+            </div>
+            <div className="dest-card-field" data-field="health">
+              <span>HEALTH</span>
+              {healthField(row)}
+            </div>
+            {row.requires_key ? keyEditor(row) : null}
+            <div className="dest-card-verbs">
+              <Button
+                dense
+                variant="ghost"
+                loading={probingIds.has(row.id)}
+                onClick={() => void probeTarget(row.id)}
+              >
+                TEST
+              </Button>
+              <ConfirmVerb
+                label="×"
+                confirmLabel="FORGET?"
+                ariaLabel={`Delete destination ${index + 1}`}
+                onConfirm={() => void remove(index)}
+              />
+            </div>
+          </div>
+        ) : null}
+      </article>
+    );
+  };
+
+  const destinationMatrix = (
+    <div
+      ref={matrixRef}
+      className="models-destination-matrix"
+      data-testid="models-destination-matrix"
+      aria-label="Destinations"
+    >
+      <div className="models-destination-head" aria-hidden="true">
+        <span>NAME</span>
+        <span>KIND</span>
+        <span>ENDPOINT</span>
+        <span>MODEL</span>
+        <span>HEALTH</span>
+        <span>ACTIONS</span>
+      </div>
+      {targets.map((row, index) => (
+        <div key={row.id}>
+        <div className="models-destination-row">
+          <span className="models-destination-cell" data-column="name">
+            <StringGadget
+              label={`Target ${row.id} name`}
+              value={row.name}
+              onChange={(next) => patch(row.id, { name: next })}
+            />
+          </span>
+          <span className="models-destination-cell" data-column="kind">
+            <CycleGadget
+              label={`Target ${row.id} kind`}
+              value={row.kind}
+              options={KIND_OPTIONS}
+              onChange={(next) => patch(row.id, { kind: next })}
+            />
+          </span>
+          <span className="models-destination-cell" data-column="endpoint">
+            {endpointField(row)}
+          </span>
+          <span className="models-destination-cell" data-column="model">
+            {modelField(row)}
+          </span>
+          <span className="models-destination-cell" data-column="health">
+            {healthField(row)}
+          </span>
+          <span className="models-destination-actions">
+            <Button
+              dense
+              variant="ghost"
+              loading={probingIds.has(row.id)}
+              onClick={() => void probeTarget(row.id)}
+            >
+              TEST
+            </Button>
+            <ConfirmVerb
+              label="×"
+              confirmLabel="FORGET?"
+              ariaLabel={`Delete destination ${index + 1}`}
+              onConfirm={() => void remove(index)}
+            />
+          </span>
+        </div>
+        {keyEditingId === row.id && row.requires_key ? (
+          <div className="models-destination-key-row">{keyEditor(row)}</div>
+        ) : null}
+        </div>
+      ))}
+      <button type="button" className="gadget-table-add" onClick={() => void add()}>
+        + DESTINATION
+      </button>
+    </div>
+  );
+
+  return (
+    <>
+      <GadgetGroup label="Destinations">
+        <div
+          ref={destRef}
+          className="models-destinations"
+          data-layout={narrow ? "cards" : "matrix"}
+        >
+          {narrow ? (
+            <div className="dest-cards-narrow">
+              {targets.map((row, index) => destinationCard(row, index))}
+              <button type="button" className="gadget-table-add" onClick={() => void add()}>
+                + DESTINATION
+              </button>
+            </div>
+          ) : (
+            destinationMatrix
+          )}
+        </div>
       </GadgetGroup>
-      <GadgetGroup label="Runs on">
-        {pointerRow("Dictation", ["dictation", "runtime", "profile_id"])}
-        {meetingsBlock}
-        {pointerRow("Rails", ["rails_observer", "profile_id"])}
-      </GadgetGroup>
-      <GadgetGroup label="Hub default engine">
-        <GadgetRow label="Backend">
-          <CycleGadget
-            label="Local backend"
-            value={backend}
-            options={[
-              { value: "auto", label: "AUTO" },
-              { value: "mlx", label: "MLX" },
-              { value: "llama_cpp", label: "LLAMA.CPP" },
-            ]}
-            onChange={(next) => update(["dictation", "runtime", "backend"], next)}
-          />
-        </GadgetRow>
-        <GadgetRow label="MLX model">
-          <StringGadget
-            label="MLX model"
-            value={String(runtime?.mlx_model ?? "")}
-            placeholder="~/Models/mlx/…"
-            onChange={(next) =>
-              update(["dictation", "runtime", "mlx_model"], next)
-            }
-          />
-        </GadgetRow>
-        <GadgetRow label="llama.cpp model">
-          <StringGadget
-            label="llama.cpp model file"
-            value={String(runtime?.llama_cpp_model_path ?? "")}
-            placeholder="~/Models/gguf/…"
-            onChange={(next) =>
-              update(["dictation", "runtime", "llama_cpp_model_path"], next)
-            }
-          />
-        </GadgetRow>
-        <GadgetRow label="Context window" fact="tokens">
-          <StepperGadget
-            label="Context window"
-            value={Number(runtime?.n_ctx ?? 2048)}
-            min={0}
-            step={256}
-            onChange={(next) => update(["dictation", "runtime", "n_ctx"], next)}
-          />
-        </GadgetRow>
-        <GadgetRow label="Warm on start">
-          <CheckGadget
-            label="Warm on start"
-            checked={Boolean(runtime?.warm_on_start)}
-            onChange={(checked) =>
-              update(["dictation", "runtime", "warm_on_start"], checked)
-            }
-          />
-        </GadgetRow>
-        <GadgetRow label="Idle eviction" fact="s">
-          <StepperGadget
-            label="Idle eviction seconds"
-            value={Number(runtime?.eviction_idle_seconds ?? 0)}
-            min={0}
-            step={30}
-            onChange={(next) =>
-              update(["dictation", "runtime", "eviction_idle_seconds"], next)
-            }
-          />
-        </GadgetRow>
-      </GadgetGroup>
-      <GadgetGroup label="Rails observer">
-        <GadgetRow label="Enabled">
-          <CheckGadget
-            label="Rails observer"
-            checked={Boolean(val(["rails_observer", "enabled"]))}
-            onChange={(checked) => update(["rails_observer", "enabled"], checked)}
-          />
-        </GadgetRow>
-        <GadgetRow label="Poll" fact="s">
-          <StepperGadget
-            label="Observer poll seconds"
-            value={Number(val(["rails_observer", "poll_seconds"]) ?? 30)}
-            min={5}
-            step={5}
-            onChange={(next) => update(["rails_observer", "poll_seconds"], next)}
-          />
-        </GadgetRow>
-        <GadgetRow label="Tail" fact="events">
-          <StepperGadget
-            label="Observer tail"
-            value={Number(val(["rails_observer", "tail"]) ?? 20)}
-            min={1}
-            step={5}
-            onChange={(next) => update(["rails_observer", "tail"], next)}
-          />
-        </GadgetRow>
-      </GadgetGroup>
+      <div className="models-dashboard">
+        <div className="models-dashboard-panel models-dashboard-runs">
+          <GadgetGroup label="Runs on">
+            {pointerRow("Dictation", ["dictation", "runtime", "profile_id"])}
+            {meetingsBlock}
+            {pointerRow("Rails", ["rails_observer", "profile_id"])}
+          </GadgetGroup>
+        </div>
+        <div className="models-dashboard-panel models-dashboard-engine">
+          <GadgetGroup label="Hub default engine">
+            <GadgetRow label="Backend">
+              <CycleGadget
+                label="Local backend"
+                value={backend}
+                options={[
+                  { value: "auto", label: "AUTO" },
+                  { value: "mlx", label: "MLX" },
+                  { value: "llama_cpp", label: "LLAMA.CPP" },
+                ]}
+                onChange={(next) => update(["dictation", "runtime", "backend"], next)}
+              />
+            </GadgetRow>
+            <GadgetRow label="MLX model">
+              <StringGadget
+                label="MLX model"
+                value={String(runtime?.mlx_model ?? "")}
+                placeholder="~/Models/mlx/…"
+                onChange={(next) =>
+                  update(["dictation", "runtime", "mlx_model"], next)
+                }
+              />
+            </GadgetRow>
+            <GadgetRow label="llama.cpp model">
+              <StringGadget
+                label="llama.cpp model file"
+                value={String(runtime?.llama_cpp_model_path ?? "")}
+                placeholder="~/Models/gguf/…"
+                onChange={(next) =>
+                  update(["dictation", "runtime", "llama_cpp_model_path"], next)
+                }
+              />
+            </GadgetRow>
+            <GadgetRow label="Warm on start">
+              <CheckGadget
+                label="Warm on start"
+                checked={Boolean(runtime?.warm_on_start)}
+                onChange={(checked) =>
+                  update(["dictation", "runtime", "warm_on_start"], checked)
+                }
+              />
+            </GadgetRow>
+          </GadgetGroup>
+        </div>
+        <div className="models-dashboard-panel models-dashboard-rails">
+          <GadgetGroup label="Rails observer">
+            <GadgetRow label="Enabled">
+              <CheckGadget
+                label="Rails observer"
+                checked={Boolean(val(["rails_observer", "enabled"]))}
+                onChange={(checked) => update(["rails_observer", "enabled"], checked)}
+              />
+            </GadgetRow>
+          </GadgetGroup>
+        </div>
+      </div>
+      {/* HS-139-04: operator tuning knobs fold behind RAW. */}
+      <FoldGadget title="RAW" token="4">
+        <GadgetGroup label="Hub engine">
+          <GadgetRow label="Context window" fact="tokens">
+            <StepperGadget
+              label="Context window"
+              value={Number(runtime?.n_ctx ?? 2048)}
+              min={0}
+              step={256}
+              onChange={(next) => update(["dictation", "runtime", "n_ctx"], next)}
+            />
+          </GadgetRow>
+          <GadgetRow label="Idle eviction" fact="s">
+            <StepperGadget
+              label="Idle eviction seconds"
+              value={Number(runtime?.eviction_idle_seconds ?? 0)}
+              min={0}
+              step={30}
+              onChange={(next) =>
+                update(["dictation", "runtime", "eviction_idle_seconds"], next)
+              }
+            />
+          </GadgetRow>
+        </GadgetGroup>
+        <GadgetGroup label="Rails observer">
+          <GadgetRow label="Poll" fact="s">
+            <StepperGadget
+              label="Observer poll seconds"
+              value={Number(val(["rails_observer", "poll_seconds"]) ?? 30)}
+              min={5}
+              step={5}
+              onChange={(next) => update(["rails_observer", "poll_seconds"], next)}
+            />
+          </GadgetRow>
+          <GadgetRow label="Tail" fact="events">
+            <StepperGadget
+              label="Observer tail"
+              value={Number(val(["rails_observer", "tail"]) ?? 20)}
+              min={1}
+              step={5}
+              onChange={(next) => update(["rails_observer", "tail"], next)}
+            />
+          </GadgetRow>
+        </GadgetGroup>
+      </FoldGadget>
     </>
   );
 }

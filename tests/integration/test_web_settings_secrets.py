@@ -123,11 +123,12 @@ def test_partial_update_preserves_every_unrelated_top_level_section(
     config.save(settings_path)
     before = config.to_dict()
 
-    response = client.put("/api/settings", json={"ui": {"theme": "light"}})
+    # HS-139-01: use a living field (desk_sounds) instead of the deleted theme.
+    response = client.put("/api/settings", json={"ui": {"desk_sounds": False}})
     assert response.status_code == 200, response.text
     after = Config.load(settings_path).to_dict()
 
-    assert after["ui"]["theme"] == "light"
+    assert after["ui"]["desk_sounds"] is False
     for section in (
         "config_version",
         "mesh",

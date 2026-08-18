@@ -578,13 +578,13 @@ class WebRuntime(
             print(f"Voice typing hotkey is active: hold {self.config.hotkey.display}, speak, release.")
         else:
             print("Voice typing hotkey unavailable; grant Accessibility/Input Monitoring permission and restart.")
-        if not self.no_open and self.config.meeting.web_auto_open:
+        # HS-139-02: web_auto_open hardcoded to True (was a dead dial
+        # nobody toggled). The only gate is --no-open.
+        if not self.no_open:
             webbrowser.open(owner_url)
             print("Opened web dashboard in your default browser.")
-        elif self.no_open:
-            print("Headless mode active (`--no-open`): browser auto-open disabled.")
         else:
-            print("Browser auto-open is disabled in config (`meeting.web_auto_open=false`).")
+            print("Headless mode active (`--no-open`): browser auto-open disabled.")
         print("Press Ctrl+C to stop.")
 
         if self.register_signal_handlers:

@@ -135,6 +135,9 @@ class WebContext:
     # HS-123-03: settings policy and persistence are composed once here; routes
     # receive the already-bound application service.
     settings_service: Optional[Any] = None
+    # Write-only, local custody for destination keys. Profile CRUD remains
+    # secret-free; only this explicit owner operation may touch a key value.
+    profile_key_service: Optional[Any] = None
     on_wake_type: Optional[Callable[[str], Optional[str]]] = None
     on_preview_type: Optional[Callable[[str], Optional[str]]] = None
     on_preview_discard: Optional[Callable[[str], bool]] = None

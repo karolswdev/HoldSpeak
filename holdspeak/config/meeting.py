@@ -37,12 +37,14 @@ class MeetingConfig:
     intel_temperature: float = 0.2
     intel_summary_model: Optional[str] = None  # Falls back to realtime if None
     intel_deferred_enabled: bool = True  # Queue intel when no suitable local model is available
-    intel_queue_poll_seconds: int = 120  # Background retry interval for deferred intel jobs
+    # HS-139-01: intel_queue_poll_seconds deleted — dead setting (never
+    # threaded to IntelQueue; queue uses hardcoded 120.0 default).
     intel_retry_base_seconds: int = 30  # Initial deferred-intel retry delay
     intel_retry_max_seconds: int = 900  # Maximum deferred-intel retry delay
     intel_retry_max_attempts: int = 6  # Attempts before marking deferred intel as failed
-    intel_retry_failure_alert_percent: float = 50.0  # UI alert threshold for failed/total queue ratio
-    intel_retry_failure_hysteresis_minutes: float = 5.0  # Failure rate must stay above threshold for this duration
+    # HS-139-01: intel_retry_failure_alert_percent and
+    # intel_retry_failure_hysteresis_minutes deleted — dead settings
+    # (never threaded to IntelQueue; queue uses hardcoded constants).
     intel_retry_failure_webhook_url: Optional[str] = None  # Optional POST endpoint for sustained failure alerts
     intel_retry_failure_webhook_header_name: Optional[str] = None  # Optional custom header name for alert webhooks
     intel_retry_failure_webhook_header_value: Optional[str] = None  # Optional custom header value for alert webhooks
@@ -59,7 +61,8 @@ class MeetingConfig:
     intel_profile_id: Optional[str] = None
 
     # Web dashboard
-    web_auto_open: bool = False  # Auto-open browser on meeting start
+    # HS-139-02: web_auto_open deleted — default true, nobody toggles
+    # this. Hardcoded at the single consumer (web_runtime.py:581).
     # Owner web-runtime credential (HS-25-02, hardened HS-106-02). Generated
     # lazily and required for owner authority on every bind, including loopback.
     # The auto-open URL bootstraps it without a visible login step.
@@ -96,17 +99,18 @@ class MeetingConfig:
 
     # HS-37-04: actuator execution policy (the governance gate). Actuators
     # PROPOSE by default; *executing* an approved proposal needs BOTH the master
-    # switch on AND the actuator id on the per-project allow-list. Default-safe:
-    # allow_actuators=False and an empty allow-list mean no external side effect
-    # ever runs, even for an approved proposal. (Approval is always additionally
-    # required -- see the proposal lifecycle.)
-    allow_actuators: bool = False
-    allowed_actuators: list[str] = field(default_factory=list)
+    # switch on AND the actuator id on the per-project allow-list.
+    # HS-139-08: permissive defaults (owner ruling: ledger-not-gate).
+    # allow_actuators=True with a wildcard allow-list so actuators run by
+    # default. Approval is always additionally required (the proposal lifecycle).
+    allow_actuators: bool = True
+    allowed_actuators: list[str] = field(default_factory=lambda: ["*"])
     # HS-38-03: the webhook write connector's host allow-list (the resolved
     # granularity for the HS-38-01 deferral). A webhook actuator may POST only to
     # a host on this list; a proposal whose target host is not a member is refused
-    # before egress. Default-empty => nothing posts, even with actuators enabled.
-    webhook_allowed_hosts: list[str] = field(default_factory=list)
+    # before egress.
+    # HS-139-08: permissive default — wildcard means any host is allowed.
+    webhook_allowed_hosts: list[str] = field(default_factory=lambda: ["*"])
     # HS-61-01: the Send-to-Slack incoming-webhook URL. Default-empty = the
     # feature is invisible (no aftercare buttons, the export route refuses).
     # Setting it is the consent for that URL's host: the Slack connector's
@@ -337,7 +341,10 @@ def validate_spoken_symbols(raw: object) -> list[dict]:
 class DictationPipelineConfig:
     """DIR-01 dictation pipeline config (spec $9.4). OFF by default."""
 
-    enabled: bool = False
+    # HS-139-02: pinned to True (was False). The pipeline is core
+    # functionality; toggling it off breaks dictation. Removed from the
+    # settings surface and service-writable set.
+    enabled: bool = True
     stages: list[str] = field(default_factory=lambda: ["intent-router", "kb-enricher"])
     max_total_latency_ms: int = 600
     target_profile_override: str = "auto"
@@ -348,7 +355,9 @@ class DictationPipelineConfig:
     rewrite_passes: int = 1
     # HS-39-02: consult the session correction store when routing. OFF by
     # default -- with it off (or the store empty) routing is byte-identical.
-    corrections_enabled: bool = False
+    # HS-139-02: pinned to True (was False). Correction memory is a
+    # pillar feature. Removed from the settings surface.
+    corrections_enabled: bool = True
     # HS-39-03: model-assisted target detection. When ON, a heuristic result
     # below `target_detect_llm_below` confidence is re-classified by the LLM
     # runtime (enum-constrained, degrades to the heuristic on any failure).

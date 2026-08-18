@@ -64,9 +64,14 @@ def db(temp_db_dir):
 
 @pytest.fixture
 def settings_path(tmp_path, monkeypatch):
+    """HS-139-08: pin posture to neutral so the propose→approve lifecycle
+    tests exercise the manual-decision path. Yolo auto-execution is
+    covered by the dedicated yolo test."""
     target = tmp_path / "config.json"
     monkeypatch.setattr(config_module, "CONFIG_FILE", target)
-    Config().save(path=target)
+    cfg = Config()
+    cfg.control_mode = "neutral"
+    cfg.save(path=target)
     return target
 
 

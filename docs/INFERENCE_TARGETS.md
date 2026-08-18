@@ -9,8 +9,10 @@ refuse with an explicit alternate target; they never silently retarget.
 `/api/profiles` and the synced `profile` primitive remain supported version-1
 aliases over the same stored rows. Their earliest possible removal is
 InferenceTarget v3, after a separately published migration window. API keys and
-tokens are accepted by neither contract; the hub joins its per-destination
-secret locally at execution time.
+tokens are accepted by neither contract. **Settings, Models** uses a dedicated
+owner-only secret write/delete subresource for a destination key; target CRUD,
+sync, and reads receive only the non-secret shape. The hub joins its local
+per-destination secret at execution time, and reads report presence only.
 
 Before a run, each surface names the target and the data classes it may receive.
 Afterward, the attempt receipt names the actual target, destination kind,

@@ -5,6 +5,8 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { ModelsModule } from "../settingsModels";
+import surfaceCss from "../../../desk/surface/surface.css?raw";
+import gadgetsCss from "../../../desk/surface/gadgets.css?raw";
 
 const apiFetch = vi.fn(async (url: string, init?: { method?: string }) => {
   if (url === "/api/inference-targets" && !init?.method) {
@@ -46,6 +48,18 @@ const apiFetch = vi.fn(async (url: string, init?: { method?: string }) => {
           endpoint: "https://api.example.com/v1",
           node: "",
         },
+        {
+          id: "p-unavailable",
+          profile_id: "p-unavailable",
+          name: "Unavailable endpoint",
+          kind: "private_endpoint",
+          model: "",
+          context_limit: 16384,
+          readiness: { state: "unsupported", reason: "No valid endpoint" },
+          secret: { required: false, present: false },
+          endpoint: "",
+          node: "",
+        },
       ],
     };
   }
@@ -82,8 +96,10 @@ describe("ModelsModule (HS-112-01)", () => {
       screen.getByDisplayValue("http://192.168.1.43:8080/v1"),
     ).toBeInTheDocument();
     // The unset key on a keyed destination shows honestly.
-    expect(screen.getByText("UNSET")).toBeInTheDocument();
-    expect(screen.getByText("NEEDS_KEY")).toBeInTheDocument();
+    expect(screen.getAllByText("KEY NEEDED").length).toBeGreaterThan(0);
+    expect(screen.getByText("NOT AVAILABLE")).toBeInTheDocument();
+    expect(screen.queryByText("NEEDS_KEY")).toBeNull();
+    expect(screen.queryByText("UNSUPPORTED")).toBeNull();
     // The built-in this_machine row never renders as an editable target.
     expect(screen.queryByDisplayValue("This device")).toBeNull();
   });
@@ -143,6 +159,24 @@ describe("ModelsModule (HS-112-01)", () => {
     );
   });
 
+  it("writes a masked destination key through the secret subresource and clears it", async () => {
+    render(
+      <ModelsModule settings={settings} update={vi.fn()} onRefuse={vi.fn()} />,
+    );
+    await screen.findByDisplayValue("LAN llama");
+    fireEvent.click(screen.getByRole("button", { name: "Paid API key needed" }));
+    const key = screen.getByLabelText("Destination p-key API key") as HTMLInputElement;
+    expect(key.type).toBe("password");
+    fireEvent.change(key, { target: { value: "not-a-real-key" } });
+    fireEvent.click(screen.getByRole("button", { name: "SET KEY" }));
+    await waitFor(() => expect(apiFetch).toHaveBeenCalledWith(
+      "/api/inference-targets/p-key/secret",
+      { method: "PUT", json: { value: "not-a-real-key" } },
+    ));
+    await waitFor(() => expect(screen.queryByTestId("target-key-editor-p-key")).toBeNull());
+    expect(screen.queryByDisplayValue("not-a-real-key")).toBeNull();
+  });
+
   it("edits a target through the one write path (/api/inference-targets)", async () => {
     vi.useFakeTimers();
     try {
@@ -157,7 +191,8 @@ describe("ModelsModule (HS-112-01)", () => {
       });
       await vi.advanceTimersByTimeAsync(800);
       const put = apiFetch.mock.calls.find(
-        (call) => (call[1] as { method?: string } | undefined)?.method === "PUT",
+        (call) => call[0] === "/api/inference-targets/p-43"
+          && (call[1] as { method?: string } | undefined)?.method === "PUT",
       );
       expect(put?.[0]).toBe("/api/inference-targets/p-43");
     } finally {
@@ -165,14 +200,12 @@ describe("ModelsModule (HS-112-01)", () => {
     }
   });
 
-  it("renders the meetings placement rule where the placement is set", async () => {
+  it("states the meetings consequence in owner language", async () => {
     render(
       <ModelsModule settings={settings} update={vi.fn()} onRefuse={vi.fn()} />,
     );
     await screen.findByDisplayValue("LAN llama");
-    expect(
-      screen.getByText("DESTINATION WINS · PROVIDER DECIDES WHEN NO DESTINATION"),
-    ).toBeInTheDocument();
+    expect(screen.getByText("Meetings uses this device")).toBeInTheDocument();
   });
 
   it("never touches a legacy endpoint field", async () => {
@@ -188,12 +221,67 @@ describe("ModelsModule (HS-112-01)", () => {
   });
 });
 
-/* ── HS-132-10 — ONE meetings placement dial ─────────────────────────────
-   The Provider cycle used to live in the Meetings prefs module as a SECOND,
-   independent placement dial with no precedence signal: with a destination
-   adopted, picking LOCAL there did nothing and said nothing. It is now
-   subordinate to the destination pointer, in the pointer's own home, and it
-   names its override state from the hub's provenance. */
+describe("Models destination workbench (HS-139 beauty pass)", () => {
+  it("uses the full-width matrix at desktop widths, with the dashboard hooks", async () => {
+    const { container } = render(
+      <ModelsModule settings={settings} update={vi.fn()} onRefuse={vi.fn()} />,
+    );
+    await screen.findByDisplayValue("LAN llama");
+
+    expect(container.querySelector(".models-destinations")).toHaveAttribute(
+      "data-layout",
+      "matrix",
+    );
+    expect(container.querySelector(".models-destination-matrix")).toBeInTheDocument();
+    expect(container.querySelector(".dest-card")).toBeNull();
+    expect(container.querySelector(".models-dashboard-runs")).toBeInTheDocument();
+    expect(container.querySelector(".models-dashboard-engine")).toBeInTheDocument();
+    expect(container.querySelector(".models-dashboard-rails")).toBeInTheDocument();
+  });
+
+  it("uses collapsed target summaries below the readable matrix width", async () => {
+    const rect = vi
+      .spyOn(HTMLElement.prototype, "getBoundingClientRect")
+      .mockReturnValue({ width: 620 } as DOMRect);
+    try {
+      const { container } = render(
+        <ModelsModule settings={settings} update={vi.fn()} onRefuse={vi.fn()} />,
+      );
+      const card = await screen.findByTestId("dest-card-p-43");
+
+      expect(container.querySelector(".models-destinations")).toHaveAttribute(
+        "data-layout",
+        "cards",
+      );
+      expect(container.querySelector(".models-destination-matrix")).toBeNull();
+      expect(card).not.toHaveAttribute("data-expanded");
+      expect(screen.queryByLabelText("Target p-43 endpoint")).toBeNull();
+
+      fireEvent.click(screen.getByRole("button", { name: /LAN llama/i }));
+      expect(card).toHaveAttribute("data-expanded");
+      expect(screen.getByLabelText("Target p-43 endpoint")).toBeInTheDocument();
+      expect(card.querySelector(".dest-card-verbs")).toBeInTheDocument();
+      fireEvent.click(screen.getByRole("button", { name: /Paid API/i }));
+      expect(screen.getByTestId("target-key-editor-p-key")).toBeInTheDocument();
+    } finally {
+      rect.mockRestore();
+    }
+  });
+
+  it("pins the wide host, proportioned ledger, and container-driven collapse", () => {
+    expect(surfaceCss).toContain(".desk-settings-window");
+    expect(surfaceCss).toContain("width: calc(100vw - 48px);");
+    expect(surfaceCss).toContain("minmax(210px, 35fr)");
+    expect(surfaceCss).toContain("grid-template-columns: minmax(0, 58fr) minmax(0, 42fr);");
+    expect(surfaceCss).toContain("@container surface (max-width: 839.9px)");
+    expect(surfaceCss).toContain("flex-direction: row;");
+    expect(surfaceCss).toContain("white-space: nowrap;");
+    expect(gadgetsCss).toContain("place-items: center;");
+    expect(gadgetsCss).toContain(".gadget-string .desk-mic > span");
+  });
+});
+
+/* ── HS-132-10 — one Meetings placement choice ─────────────────────────── */
 
 const placed = (placement: Record<string, unknown>, meeting = {}) => ({
   ...settings,
@@ -216,15 +304,33 @@ const LOCAL = {
   runnable_reason: "",
 };
 
+function openMeetingRouting() {
+  const routing = screen.getByText("Meeting routing options").closest("details") as HTMLDetailsElement | null;
+  expect(routing).not.toBeNull();
+  if (!routing?.open) fireEvent.click(routing.querySelector("summary")!);
+  return routing!;
+}
+
 describe("meetings placement dial (HS-132-10)", () => {
-  it("names the local placement and leaves the provider fallback live", async () => {
+  it("keeps secondary routing closed until the owner asks for it", async () => {
     render(
       <ModelsModule settings={placed(LOCAL)} update={vi.fn()} onRefuse={vi.fn()} />,
     );
     await screen.findByDisplayValue("LAN llama");
-    expect(
-      screen.getByText("RUNS ON · HUB DEFAULT · LOCAL · QWEN3-4B"),
-    ).toBeInTheDocument();
+    expect(screen.getByText("Meetings uses this device")).toBeInTheDocument();
+    const routing = screen.getByText("Meeting routing options").closest("details");
+    expect(routing).not.toHaveAttribute("open");
+    openMeetingRouting();
+    expect(routing).toHaveAttribute("open");
+    expect(screen.getByText("If no destination")).toBeInTheDocument();
+  });
+
+  it("leaves the provider fallback live when routing options are open", async () => {
+    render(
+      <ModelsModule settings={placed(LOCAL)} update={vi.fn()} onRefuse={vi.fn()} />,
+    );
+    await screen.findByDisplayValue("LAN llama");
+    openMeetingRouting();
     const provider = screen.getByLabelText("Meetings provider") as HTMLSelectElement;
     expect(provider.disabled).toBe(false);
     expect(provider.value).toBe("local");
@@ -243,15 +349,14 @@ describe("meetings placement dial (HS-132-10)", () => {
       />,
     );
     await screen.findByDisplayValue("LAN llama");
-    expect(
-      screen.getByText("RUNS ON · HUB DEFAULT · CLOUD · GPT-5-MINI"),
-    ).toBeInTheDocument();
+    expect(screen.getByText("Meetings uses the cloud")).toBeInTheDocument();
+    openMeetingRouting();
     expect((screen.getByLabelText("Meetings provider") as HTMLSelectElement).value).toBe(
       "cloud",
     );
   });
 
-  it("disables the provider fallback and names the override when a destination is adopted", async () => {
+  it("uses a selected destination without leaking precedence jargon", async () => {
     render(
       <ModelsModule
         settings={placed(
@@ -272,17 +377,19 @@ describe("meetings placement dial (HS-132-10)", () => {
       />,
     );
     await screen.findByDisplayValue("LAN llama");
-    // The destination decides — and the subordinate dial SAYS SO instead of
-    // accepting a silent no-op click.
-    expect(
-      screen.getByText("PROVIDER SELECTION IGNORED · DESTINATION LAN LLAMA DECIDES"),
-    ).toBeInTheDocument();
+    expect(screen.getByText("Meetings uses LAN llama")).toBeInTheDocument();
+    openMeetingRouting();
     expect(
       (screen.getByLabelText("Meetings provider") as HTMLSelectElement).disabled,
     ).toBe(true);
-    expect(
-      screen.getByText("RUNS ON · LAN LLAMA · PRIVATE_NETWORK · QWEN3.5-9B-Q6_K"),
-    ).toBeInTheDocument();
+    for (const jargon of [
+      /DESTINATION SELECTION IGNORED/i,
+      /PROVIDER SELECTION IGNORED/i,
+      /DECIDES PLACEMENT/i,
+      /DESTINATION WINS/i,
+      /PRIVATE_NETWORK/i,
+      /ASSIGNED PROFILE IS OPEN.?AI COMPATIBLE KIND/i,
+    ]) expect(screen.queryByText(jargon)).toBeNull();
   });
 
   it("names a dropped destination pointer and keeps the provider live", async () => {
@@ -301,9 +408,9 @@ describe("meetings placement dial (HS-132-10)", () => {
       />,
     );
     await screen.findByDisplayValue("LAN llama");
-    expect(
-      screen.getByText("DESTINATION SELECTION IGNORED · ASSIGNED PROFILE MISSING: GONE"),
-    ).toBeInTheDocument();
+    expect(screen.getByText("Selected destination isn’t compatible")).toBeInTheDocument();
+    expect(screen.queryByText(/assigned profile missing/i)).toBeNull();
+    openMeetingRouting();
     expect(
       (screen.getByLabelText("Meetings provider") as HTMLSelectElement).disabled,
     ).toBe(false);
@@ -322,18 +429,36 @@ describe("meetings placement dial (HS-132-10)", () => {
       />,
     );
     await screen.findByDisplayValue("LAN llama");
-    expect(
-      screen.getByText(/NOT RUNNABLE · MODEL FILE NOT FOUND/),
-    ).toBeInTheDocument();
+    expect(screen.getByText("Meetings can’t run: Model file not found")).toBeInTheDocument();
   });
 
-  it("marks exactly one row as the deciding control, in every state", async () => {
+  it("gives an incompatible selected destination one concise next step", async () => {
+    render(
+      <ModelsModule
+        settings={placed({
+          ...LOCAL,
+          runnable: false,
+          placement_reason: "selected profile incompatible",
+          runnable_reason: "no language model on this hub",
+        })}
+        update={vi.fn()}
+        onRefuse={vi.fn()}
+      />,
+    );
+    await screen.findByDisplayValue("LAN llama");
+    expect(
+      screen.getByText("Meetings can’t use the selected destination. Choose a local model in Intelligence."),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/selected profile incompatible/i)).toBeNull();
+  });
+
+  it("keeps the fallback live only while Meetings uses this device", async () => {
     const { unmount } = render(
       <ModelsModule settings={placed(LOCAL)} update={vi.fn()} onRefuse={vi.fn()} />,
     );
     await screen.findByDisplayValue("LAN llama");
-    expect(screen.getAllByText("DECIDES PLACEMENT")).toHaveLength(1);
-    expect(screen.getByText("NONE · PROVIDER DECIDES")).toBeInTheDocument();
+    openMeetingRouting();
+    expect((screen.getByLabelText("Meetings provider") as HTMLSelectElement).disabled).toBe(false);
     unmount();
 
     render(
@@ -349,8 +474,8 @@ describe("meetings placement dial (HS-132-10)", () => {
       />,
     );
     await screen.findByDisplayValue("LAN llama");
-    expect(screen.getAllByText("DECIDES PLACEMENT")).toHaveLength(1);
-    expect(screen.getByText("OVERRIDDEN")).toBeInTheDocument();
+    openMeetingRouting();
+    expect((screen.getByLabelText("Meetings provider") as HTMLSelectElement).disabled).toBe(true);
   });
 
   it("writes the provider fallback through the settings updater", async () => {
@@ -359,6 +484,7 @@ describe("meetings placement dial (HS-132-10)", () => {
       <ModelsModule settings={placed(LOCAL)} update={update} onRefuse={vi.fn()} />,
     );
     await screen.findByDisplayValue("LAN llama");
+    openMeetingRouting();
     fireEvent.change(screen.getByLabelText("Meetings provider"), {
       target: { value: "cloud" },
     });

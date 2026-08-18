@@ -23,7 +23,7 @@ def _config() -> SimpleNamespace:
             intel_cloud_model="gpt-5-mini", intel_cloud_api_key_env="OPENAI_API_KEY",
             intel_cloud_base_url=None, intel_cloud_reasoning_effort=None, intel_cloud_store=False,
             intel_deferred_enabled=True, diarization_enabled=False, diarize_mic=False,
-            cross_meeting_recognition=True, web_auto_open=False, web_auth_token="t",
+            cross_meeting_recognition=True, web_auth_token="t",
             mir_enabled=True, routing_profile="balanced",
         ),
         dictation=SimpleNamespace(

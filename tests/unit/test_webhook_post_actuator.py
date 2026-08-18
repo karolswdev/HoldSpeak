@@ -253,7 +253,8 @@ def test_transport_error_marks_failed(tmp_path) -> None:
 
 
 def test_config_webhook_hosts_default_empty_and_normalized() -> None:
-    assert MeetingConfig().webhook_allowed_hosts == []
+    # HS-139-08: permissive default (was empty).
+    assert MeetingConfig().webhook_allowed_hosts == ["*"]
     cfg = MeetingConfig(webhook_allowed_hosts=[" A.test ", "a.test", "", "B.test"])
     assert cfg.webhook_allowed_hosts == ["a.test", "b.test"]  # lowercased, deduped
 

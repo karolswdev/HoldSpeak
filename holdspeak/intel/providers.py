@@ -44,10 +44,12 @@ def _resolve_cloud_api_key(api_key_env: Optional[str]) -> Optional[str]:
     env_name = (api_key_env or DEFAULT_INTEL_CLOUD_API_KEY_ENV).strip()
     if not env_name:
         env_name = DEFAULT_INTEL_CLOUD_API_KEY_ENV
-    value = os.environ.get(env_name)
-    if value:
-        return value.strip() or None
-    return None
+    from ..profile_key_store import ProfileKeyStoreError, resolve_profile_key
+
+    try:
+        return resolve_profile_key(env_name)
+    except ProfileKeyStoreError:
+        return None
 
 
 def _is_self_hosted_base_url(base_url: Optional[str]) -> bool:

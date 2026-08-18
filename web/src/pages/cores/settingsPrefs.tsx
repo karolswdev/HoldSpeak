@@ -3,43 +3,60 @@ import { SurfaceFooter } from "../../desk/surface/SurfaceFooter";
 // pref modules, authored — never wire-derived. The module registry is a
 // CODE CONSTANT: a new wire key never mints a pane again (unmapped keys
 // land in System, the one place the generic walker survives).
-import { useMemo, useState, type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { CONTROL_MODES, controlModeLabel } from "../../lib/productLanguage";
 import {
   CycleGadget,
   EgressChip,
   GadgetGroup,
-  StringGadget,
 } from "../../desk/surface/gadgets";
 import { ConfirmVerb } from "../../desk/surface/Surface";
 import { useDesk } from "../../desk/store";
 
-/* ── the roster (audit §3.2) ── */
+/* ── the roster (HS-139-05: seven tiles, named by what the owner DOES) ── */
 
 export type PrefModule = {
   id: string;
   label: string;
   glyph: string;
+  /** Bright pixel sprite filename under /desk/sprites/settings/. */
+  sprite: string;
   /** Top-level /api/settings keys this module owns. */
   keys: string[];
 };
 
 export const PREF_MODULES: PrefModule[] = [
-  { id: "appearance", label: "Appearance", glyph: "ui", keys: ["ui"] },
-  { id: "hotkey", label: "Hotkey", glyph: "hotkey", keys: ["hotkey"] },
-  { id: "transcription", label: "Transcription", glyph: "model", keys: ["model"] },
-  { id: "voice-typing", label: "Voice Typing", glyph: "dictation", keys: ["dictation"] },
-  { id: "wake-word", label: "Wake Word", glyph: "wake_word", keys: ["wake_word"] },
-  { id: "presence", label: "Presence", glyph: "presence", keys: ["presence"] },
-  { id: "meetings", label: "Meetings", glyph: "meeting", keys: ["meeting"] },
-  { id: "cadence", label: "Cadence", glyph: "cadence", keys: ["cadence", "cadence_telegram"] },
-  { id: "devices", label: "Devices", glyph: "device", keys: ["device", "mesh"] },
-  { id: "delivery", label: "Delivery", glyph: "delivery", keys: [] },
-  { id: "models", label: "Models", glyph: "models", keys: ["rails_observer"] },
-  { id: "desk", label: "Desk", glyph: "desk", keys: [] },
-  { id: "integrations", label: "Integrations", glyph: "secret", keys: [] },
-  { id: "system", label: "System", glyph: "system", keys: [] },
+  // HS-139-05: collapsed from 14 tiles to 7.
+  // Voice merges Hotkey + Transcription + Voice Typing + Wake Word.
+  { id: "voice", label: "Voice", glyph: "dictation", sprite: "voice", keys: ["hotkey", "model", "dictation", "wake_word"] },
+  // Sounds & Presence merges Appearance (desk sounds only) + Presence.
+  { id: "sounds", label: "Sounds & Presence", glyph: "presence", sprite: "sounds", keys: ["ui", "presence"] },
+  // Meetings: pointer tile + actuators + RAW well.
+  { id: "meetings", label: "Meetings", glyph: "meeting", sprite: "meetings", keys: ["meeting"] },
+  // Rhythm: cadence user-facing + Telegram + RAW.
+  { id: "rhythm", label: "Rhythm", glyph: "cadence", sprite: "rhythm", keys: ["cadence", "cadence_telegram"] },
+  // Models: destinations, runs-on, engine, paths, rails observer.
+  { id: "models", label: "Models", glyph: "models", sprite: "models", keys: ["rails_observer"] },
+  // Integrations: credentials + RAW.
+  { id: "integrations", label: "Integrations", glyph: "secret", sprite: "integrations", keys: [] },
+  // System: device name, desk reset, devices RAW.
+  { id: "system", label: "System", glyph: "system", sprite: "system", keys: ["device", "mesh"] },
 ];
+
+/** Stable id aliases: deep links and scope params from retired modules
+ *  still land on their successor tile (no broken palette links). */
+export const MODULE_ALIASES: Record<string, string> = {
+  appearance: "sounds",
+  hotkey: "voice",
+  transcription: "voice",
+  "voice-typing": "voice",
+  "wake-word": "voice",
+  presence: "sounds",
+  cadence: "rhythm",
+  devices: "system",
+  delivery: "models",
+  desk: "system",
+};
 
 /** Which module owns a top-level settings key (System catches the rest). */
 export function moduleForKey(key: string): string {
@@ -51,9 +68,8 @@ export function moduleForKey(key: string): string {
 /* ── enum option sets, derived from the hub's own config canon
       (holdspeak/config.py, holdspeak/languages.py) ── */
 
-export const THEME_OPTIONS = ["dark", "light", "dracula", "monokai"].map(
-  (value) => ({ value }),
-);
+// HS-139-01: THEME_OPTIONS deleted (dead — the theme setting has no
+// runtime consumer; the desk is dark by law).
 export const WHISPER_MODEL_OPTIONS = [
   "tiny",
   "base",
@@ -61,11 +77,8 @@ export const WHISPER_MODEL_OPTIONS = [
   "medium",
   "large",
 ].map((value) => ({ value }));
-export const TRANSCRIBE_BACKEND_OPTIONS = [
-  "auto",
-  "mlx",
-  "faster-whisper",
-].map((value) => ({ value }));
+// HS-139-01: TRANSCRIBE_BACKEND_OPTIONS deleted (duplicate; the Models
+// module's Hub Default Engine keeps the backend cycle).
 export const EXPORT_FORMAT_OPTIONS = ["txt", "markdown", "json", "srt"].map(
   (value) => ({ value }),
 );
@@ -184,7 +197,29 @@ export const LANGUAGE_OPTIONS = [
   })),
 ];
 
-/* ── the module glyphs (24px, the desk's stroke discipline) ── */
+/* ── HS-139-07: the tile sprites (bright mold, 32x32 retina) ──
+   The seven tile icons are PixelLab-generated pixel sprites in the
+   owner-ratified bright mold (Phase 135 icon-palette.png: silver-white
+   forward, ink outline, ember + blue-grey accents). They live under
+   web/public/desk/sprites/settings/ and render at 32px displayed
+   (64px physical on retina) with image-rendering: pixelated. */
+
+const SETTINGS_SPRITE_BASE = `${import.meta.env.BASE_URL || "/_built/"}desk/sprites/settings/`;
+
+export function SettingSprite({ name }: { name: string }) {
+  return (
+    <img
+      src={`${SETTINGS_SPRITE_BASE}${name}.png`}
+      alt=""
+      aria-hidden="true"
+      className="prefs-tile-sprite"
+      width={32}
+      height={32}
+    />
+  );
+}
+
+/* ── legacy SVG glyph (kept for non-tile uses: posture shield etc.) ── */
 
 export function SettingGlyph({ name }: { name: string }) {
   const paths: Record<string, string> = {
@@ -287,78 +322,33 @@ export function DeskModule() {
 export type DeepHit = { module: string; label: string; path: string[] };
 
 export function PrefsFace({
-  hits,
   onOpen,
   posture,
   postureBusy,
   onPosture,
   precedence,
 }: {
-  /** The deep setting index (module id + presented label + wire path). */
-  hits: DeepHit[];
-  onOpen(moduleId: string, highlight?: string): void;
+  onOpen(moduleId: string): void;
   posture: string;
   postureBusy?: boolean;
   onPosture(mode: string): void;
   /** The precedence chain as data (etched fact line, never a paragraph). */
   precedence: string[];
 }) {
-  const [filter, setFilter] = useState("");
-  const query = filter.trim().toLowerCase();
-  const modules = useMemo(
-    () =>
-      query
-        ? PREF_MODULES.filter((module) =>
-            module.label.toLowerCase().includes(query),
-          )
-        : PREF_MODULES,
-    [query],
-  );
-  const deep = useMemo(() => {
-    if (!query) return [];
-    return hits
-      .filter((hit) => hit.label.toLowerCase().includes(query))
-      .slice(0, 12);
-  }, [hits, query]);
-  const moduleLabel = (id: string) =>
-    PREF_MODULES.find((module) => module.id === id)?.label ?? id;
-  const openTop = () => {
-    if (deep.length) onOpen(deep[0].module, deep[0].path.join("."));
-    else if (modules.length) onOpen(modules[0].id);
-  };
+  // HS-139-05: FILTER dropped — 7 tiles all visible at once, the filter
+  // earns nothing in a room this small.
+  // HS-139-07: precedence chain folded into the POSTURE title attribute
+  // (defect 3 — raw operator lore demoted from the face).
+  const precedenceText = (precedence.length
+    ? precedence
+    : ["hard invariants", "grants", "mode", "feature default"]
+  )
+    .join(" → ")
+    .toUpperCase();
   return (
     <div className="prefs-face">
-      <div className="prefs-filter">
-        <StringGadget
-          label="Filter settings"
-          value={filter}
-          placeholder="FILTER"
-          onChange={setFilter}
-          onKeyDown={(event) => {
-            if (event.key === "Enter") openTop();
-          }}
-        />
-      </div>
-      {deep.length ? (
-        <ul className="prefs-hits">
-          {deep.map((hit) => (
-            <li key={hit.path.join(".")}>
-              <button
-                type="button"
-                onClick={() => onOpen(hit.module, hit.path.join("."))}
-              >
-                <span className="prefs-hit-module">
-                  {moduleLabel(hit.module)}
-                </span>
-                <span aria-hidden="true"> » </span>
-                {hit.label}
-              </button>
-            </li>
-          ))}
-        </ul>
-      ) : null}
       <div className="prefs-grid" role="list">
-        {modules.map((module) => (
+        {PREF_MODULES.map((module) => (
           <button
             key={module.id}
             type="button"
@@ -367,14 +357,14 @@ export function PrefsFace({
             onClick={() => onOpen(module.id)}
           >
             <span className="prefs-tile-glyph">
-              <SettingGlyph name={module.glyph} />
+              <SettingSprite name={module.sprite} />
             </span>
             <span className="prefs-tile-label">{module.label}</span>
           </button>
         ))}
       </div>
       <div className="prefs-rule" aria-hidden="true" />
-      <div className="prefs-posture">
+      <div className="prefs-posture" title={precedenceText}>
         <span className="prefs-posture-label">POSTURE</span>
         <CycleGadget
           label="Control posture"
@@ -387,14 +377,6 @@ export function PrefsFace({
           onChange={onPosture}
         />
         <span className="gadget-fact">{controlModeLabel(posture)}</span>
-      </div>
-      <div className="prefs-precedence">
-        {(precedence.length
-          ? precedence
-          : ["hard invariants", "grants", "mode", "feature default"]
-        )
-          .join(" → ")
-          .toUpperCase()}
       </div>
     </div>
   );
@@ -432,15 +414,10 @@ export function PrefStatusBar({
   else if (receipt.writtenAt)
     center = (
       <span className="prefs-receipt" role="status">
-        USING · WRITTEN {receipt.writtenAt}
+        WRITTEN {receipt.writtenAt}
       </span>
     );
-  else
-    center = (
-      <span className="prefs-receipt" role="status">
-        USING
-      </span>
-    );
+  else center = null; /* HS-139-07: no dangling "USING" when idle */
   return (
     <SurfaceFooter verbs={<>
       {onBack ? (

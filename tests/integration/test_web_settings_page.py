@@ -68,19 +68,18 @@ def test_desk_menu_opens_settings_in_world() -> None:
 
 
 def test_settings_is_sectioned_searchable_and_progressive() -> None:
-    """HS-111-01: 'sectioned + searchable' became 'modular + filtered' —
-    the same guarantee. An authored module registry owns every top-level
-    settings key (unmapped keys fall through to System, so every key stays
-    reachable) and the drawer filter finds deep settings by label."""
+    """HS-111-01 / HS-139-05: the room collapsed to 7 tiles named by what
+    the owner DOES. Every top-level settings key is owned by a module
+    (unmapped keys fall through to System). The filter was dropped — 7 tiles
+    all visible at once — but highlight survives for deep-link focusing."""
     prefs = (_REPO / "web" / "src" / "pages" / "cores" / "settingsPrefs.tsx").read_text()
     assert "export const PREF_MODULES" in prefs
-    for key in ("ui", "hotkey", "model", "dictation", "presence", "meeting"):
+    # The seven tiles own the key-space (keys appear in their `keys` arrays).
+    for key in ("hotkey", "model", "dictation", "wake_word", "ui", "presence", "meeting"):
         assert f'"{key}"' in prefs, key
     assert 'return "system"' in prefs  # every unmapped key stays reachable
-    # The filter replaces "Find a setting": module hits + deep-setting hits.
-    assert 'label="Filter settings"' in prefs
-    assert "hit.label.toLowerCase().includes(query)" in prefs
+    # HS-139-05: FILTER dropped — 7 tiles all visible at once.
+    assert "moduleForKey" in prefs  # key ownership still wired
     page = (_REPO / "web" / "src" / "pages" / "cores" / "SettingsCore.tsx").read_text()
-    assert "deepIndex" in page and "moduleForKey" in page
-    assert "highlight" in page  # the filter lands on the exact row
-    assert '>("/api/settings"' in page
+    assert "highlight" in page  # deep-link focusing survived
+    assert '"/api/settings"' in page

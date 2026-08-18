@@ -32,9 +32,10 @@ To wire it into another MCP client, point it at `uv run holdspeak-mcp`
 (or `uvx --from holdspeak holdspeak-mcp` for a PyPI install). The server
 speaks stdio JSON-RPC.
 
-People is an additional confidential-data boundary and remains disabled in
-MCP by default. To allow relationship metadata and `shared_intent` records to
-cross into a trusted MCP client, launch the sidecar with read or write access:
+People is an additional confidential-data boundary. The local owner process
+has `write` access by default; the People family still returns only
+`shared_intent` material. To reduce that process-start capability to read-only,
+launch the sidecar with:
 
 ```json
 {
@@ -49,8 +50,9 @@ cross into a trusted MCP client, launch the sidecar with read or write access:
 }
 ```
 
-Use `write` only when the client should also create shared records and move
-shared commitments. The default repository `.mcp.json` sets neither mode.
+Set `HOLDSPEAK_MCP_PEOPLE_ACCESS=off` to disable the family entirely. The
+repository `.mcp.json` sets no override, so it uses the local-owner `write`
+default.
 
 ## Tool families
 
@@ -131,14 +133,15 @@ project, time, and pagination filters.
 
 ### people (11 tools)
 
-The encrypted People ledger is an opt-in MCP capability. `people.readiness`
-is content-free and works while access is disabled. With
-`HOLDSPEAK_MCP_PEOPLE_ACCESS=read`, the sidecar can list relationships and
-read one relationship's `shared_intent` 1:1s, agenda items, grounding notes, linked Project refs,
-requests, and commitments. `people.grounding.get` returns those accepted manual
-sources as a structured evidence bundle; it does not invoke a model or infer an
-assessment. `write` additionally admits relationship and grounding-note creation, notes-only
-1:1 and agenda creation, request creation/explicit acceptance, and
+The encrypted People ledger defaults to `write` for the local owner process.
+`people.readiness` is content-free and also works while access is explicitly
+disabled. Set `HOLDSPEAK_MCP_PEOPLE_ACCESS=read` to restrict the sidecar to
+listing relationships and reading one relationship's `shared_intent` 1:1s,
+agenda items, grounding notes, linked Project refs, requests, and commitments.
+`people.grounding.get` returns those accepted manual sources as a structured
+evidence bundle; it does not invoke a model or infer an assessment. The default
+`write` capability additionally admits relationship and grounding-note creation,
+notes-only 1:1 and agenda creation, request creation/explicit acceptance, and
 done/dismiss/reopen for shared commitments.
 
 MCP never initializes or recovers the encrypted store and never returns
@@ -196,10 +199,10 @@ identity label, not an authorization credential. No network listener is
 opened; the sidecar communicates only over stdin/stdout with its parent
 process.
 
-That OWNER boundary alone is not sufficient for People. People calls also
-require the process-start capability `HOLDSPEAK_MCP_PEOPLE_ACCESS=read|write`.
-Enabling it is an explicit disclosure decision: the trusted parent MCP client
-can retain or forward returned relationship metadata and shared-intent text.
+People is a further disclosure boundary within that owner process. It defaults
+to `write`; set `HOLDSPEAK_MCP_PEOPLE_ACCESS=read` or `=off` before start to
+reduce or disable it. A trusted parent MCP client can retain or forward the
+returned relationship metadata and shared-intent text.
 
 ## Deliberate absences
 

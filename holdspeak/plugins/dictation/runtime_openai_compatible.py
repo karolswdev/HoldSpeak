@@ -66,7 +66,11 @@ class OpenAICompatibleRuntime:
                 ) from exc
             factory = OpenAI
 
-        api_key = os.environ.get(self.api_key_env, "").strip() if self.api_key_env else ""
+        from ...profile_key_store import ProfileKeyStoreError, resolve_profile_key
+        try:
+            api_key = resolve_profile_key(self.api_key_env) if self.api_key_env else ""
+        except ProfileKeyStoreError:
+            api_key = ""
         kwargs: dict[str, Any] = {
             "api_key": api_key or "not-needed",
             "base_url": self.base_url,

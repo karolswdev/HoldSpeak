@@ -4,7 +4,7 @@
 // window body; the footer status bar carries the receipt and the
 // refusals; every control is a gadget from the surface kit. The pane
 // roster is a code constant — the wire never mints a pane again.
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import type {
   CoreProps,
   SecretState,
@@ -19,6 +19,7 @@ import {
   CheckGadget,
   CycleGadget,
   EgressChip,
+  FoldGadget,
   GadgetGroup,
   GadgetRow,
   GadgetTable,
@@ -33,25 +34,20 @@ import { toggleSfx } from "../../lib/sfx";
 import { ModelsModule } from "./settingsModels";
 import { RuntimeDocsCore } from "./RuntimeDocsCore";
 import { useCoreWings } from "./core-hooks";
-import { activateLauncher } from "../../desk/components/DeskWindow";
+// HS-139-05: activateLauncher removed (Delivery tile absorbed).
 import {
   CADENCE_PRESSURE_OPTIONS,
-  EXPORT_FORMAT_OPTIONS,
   LANGUAGE_OPTIONS,
   DeskModule,
   MIR_PROFILE_OPTIONS,
+  MODULE_ALIASES,
   PREF_MODULES,
   PrefsFace,
   PrefStatusBar,
-  THEME_OPTIONS,
-  TRANSCRIBE_BACKEND_OPTIONS,
   WAKE_ACTION_OPTIONS,
-  WHISPER_MODEL_OPTIONS,
   meetingPlacement,
-  moduleForKey,
   placementLine,
   providerIgnoredReason,
-  type DeepHit,
 } from "./settingsPrefs";
 
 const SECRET_LABELS: Record<string, string> = {
@@ -130,13 +126,14 @@ function SettingsFace({ hero, scope }: CoreProps) {
     scope && scope.startsWith("integration:")
       ? scope.slice("integration:".length)
       : null;
-  const scopedModule = PREF_MODULES.some((module) => module.id === scope)
-    ? (scope ?? null)
+  // HS-139-05: resolve aliases from the retired 14-tile roster to the new 7.
+  const resolvedScope = scope ? (MODULE_ALIASES[scope] ?? scope) : scope;
+  const scopedModule = PREF_MODULES.some((module) => module.id === resolvedScope)
+    ? (resolvedScope ?? null)
     : null;
   const resource = useResource<SettingsResponse>("/api/settings", {});
   const authority = useResource<AuthorityPolicyResponse>("/api/authority/policy", {});
   // null = the drawer face; a module id = that module owns the body.
-  // HS-112-01: the retired Runs-on room's deep links land on Models.
   const [moduleId, setModuleId] = useState<string | null>(
     integrationSubject ? "integrations" : scopedModule,
   );
@@ -245,47 +242,16 @@ function SettingsFace({ hero, scope }: CoreProps) {
 
   // A scope names the focused module. Integration links retain their
   // subject alias while the palette can address every module directly.
+  // HS-139-05: aliases from the retired 14-tile roster land here too.
   useEffect(() => {
     if (integrationSubject) setModuleId("integrations");
     else if (scopedModule) setModuleId(scopedModule);
   }, [integrationSubject, scopedModule]);
 
-  /* ── the deep setting index for the drawer filter ── */
-  const deepIndex = useMemo<DeepHit[]>(() => {
-    const hits: DeepHit[] = [];
-    const walk = (node: Record<string, unknown>, path: string[]) => {
-      for (const [key, item] of Object.entries(node)) {
-        const nextPath = [...path, key];
-        // HS-132-10: the meetings placement keys live in Models with the
-        // dial itself, so a filter hit lands on the control, not on the
-        // room it used to live in.
-        const placementKey =
-          nextPath[0] === "meeting" &&
-          (nextPath[1] === "intel_provider" || nextPath[1] === "intel_profile_id");
-        const owner =
-          (nextPath[0] === "dictation" && nextPath[1] === "runtime") || placementKey
-            ? "models"
-            : moduleForKey(nextPath[0]);
-        if (item !== null && typeof item === "object" && !Array.isArray(item)) {
-          walk(item as Record<string, unknown>, nextPath);
-        } else {
-          hits.push({ module: owner, label: title(key), path: nextPath });
-        }
-      }
-    };
-    for (const key of Object.keys(resource.data)) {
-      if (key.startsWith("_") || key === "config_version" || key === "control_mode")
-        continue;
-      const value = resource.data[key];
-      if (value && typeof value === "object" && !Array.isArray(value))
-        walk(value as Record<string, unknown>, [key]);
-    }
-    return hits;
-  }, [resource.data]);
-
-  const openModule = (id: string, highlightPath?: string) => {
+  // HS-139-05: deep-index and filter removed — 7 tiles all visible at once.
+  const openModule = (id: string) => {
     setModuleId(id);
-    setHighlight(highlightPath ?? "");
+    setHighlight("");
   };
 
   /* ── gadget bindings (plain function helpers — never components
@@ -425,56 +391,12 @@ function SettingsFace({ hero, scope }: CoreProps) {
       return str(nextPath, title(key));
     });
 
-  /* ── the authored modules (audit §3.2): the wire never decides ── */
+  /* ── the authored modules (HS-139-05: seven tiles) ── */
   const renderModule = (id: string): ReactNode => {
     const data = resource.data;
     switch (id) {
-      case "appearance":
-        return (
-          <GadgetGroup>
-            <GadgetRow label="DESK SOUNDS" highlight={hl(["ui", "desk_sounds"])}>
-              <CheckGadget
-                label="DESK SOUNDS"
-                checked={Boolean(val(["ui", "desk_sounds"]) ?? true)}
-                onChange={(next) => {
-                  update(["ui", "desk_sounds"], next);
-                  toggleSfx(next);
-                }}
-              />
-            </GadgetRow>
-            {check(["ui", "show_audio_meter"], "Show audio meter")}
-            {num(["ui", "history_lines"], "History lines", {
-              unit: "lines",
-              min: 1,
-            })}
-            {cyc(["ui", "theme"], "Theme", THEME_OPTIONS)}
-          </GadgetGroup>
-        );
-      case "hotkey":
-        return (
-          <HotkeyCapture
-            value={(data.hotkey ?? {}) as Record<string, unknown>}
-            onCommit={(next) =>
-              update(["hotkey"], { ...(data.hotkey as Record<string, unknown>), ...next })
-            }
-            onRefuse={setRefusal}
-          />
-        );
-      case "transcription":
-        return (
-          <GadgetGroup>
-            {cyc(["model", "name"], "Model size", WHISPER_MODEL_OPTIONS)}
-            {cyc(["model", "backend"], "Backend", TRANSCRIBE_BACKEND_OPTIONS)}
-            {cyc(["model", "language"], "Language", LANGUAGE_OPTIONS)}
-            {check(["model", "warm_on_start"], "Warm on start")}
-            {num(["model", "transcribe_timeout_seconds"], "Transcribe timeout", {
-              unit: "s",
-              min: 5,
-              step: 5,
-            })}
-          </GadgetGroup>
-        );
-      case "voice-typing": {
+      /* ── Voice: hotkey + language + voice typing + wake word ── */
+      case "voice": {
         const symbols = (val(["dictation", "spoken_symbols"]) ?? []) as Array<{
           spoken?: string;
           symbol?: string;
@@ -492,41 +414,15 @@ function SettingsFace({ hero, scope }: CoreProps) {
           []) as unknown[];
         return (
           <>
-            <GadgetGroup label="Pipeline">
-              {check(["dictation", "pipeline", "enabled"], "Enabled")}
-              {csv(["dictation", "pipeline", "stages"], "Stages")}
-              {num(
-                ["dictation", "pipeline", "max_total_latency_ms"],
-                "Latency budget",
-                { unit: "ms", min: 0, step: 250 },
-              )}
-              {str(
-                ["dictation", "pipeline", "target_profile_override"],
-                "Target profile override",
-              )}
-              {num(["dictation", "pipeline", "rewrite_passes"], "Rewrite passes", {
-                min: 0,
-                max: 5,
-              })}
-              {check(
-                ["dictation", "pipeline", "corrections_enabled"],
-                "Corrections",
-              )}
-              {check(
-                ["dictation", "pipeline", "target_detect_llm_enabled"],
-                "LLM target detect",
-              )}
-              {prop(
-                ["dictation", "pipeline", "target_detect_llm_below"],
-                "Detect below",
-                { min: 0, max: 1, step: 0.05 },
-              )}
-              {check(["dictation", "pipeline", "journal_enabled"], "Journal")}
-              {num(
-                ["dictation", "pipeline", "journal_retention"],
-                "Journal retention",
-                { unit: "entries", min: 0, step: 50 },
-              )}
+            <HotkeyCapture
+              value={(data.hotkey ?? {}) as Record<string, unknown>}
+              onCommit={(next) =>
+                update(["hotkey"], { ...(data.hotkey as Record<string, unknown>), ...next })
+              }
+              onRefuse={setRefusal}
+            />
+            <GadgetGroup label="Transcription">
+              {cyc(["model", "language"], "Language", LANGUAGE_OPTIONS)}
             </GadgetGroup>
             <GadgetGroup label="Typing">
               {check(["dictation", "preview_before_type"], "Preview before type")}
@@ -589,83 +485,105 @@ function SettingsFace({ hero, scope }: CoreProps) {
                 />
               </GadgetRow>
             </GadgetGroup>
+            <GadgetGroup label="Wake word">
+              {check(["wake_word", "enabled"], "Enabled", "models download once")}
+              {cyc(
+                ["wake_word", "action"],
+                "Action",
+                WAKE_ACTION_OPTIONS,
+                "type lands in the focused app",
+              )}
+            </GadgetGroup>
+            {/* HS-139-04/05: all voice RAW wells merged. */}
+            <FoldGadget title="RAW" token="10">
+              <GadgetGroup label="Transcription">
+                {num(["model", "transcribe_timeout_seconds"], "Transcribe timeout", {
+                  unit: "s",
+                  min: 5,
+                  step: 5,
+                })}
+              </GadgetGroup>
+              <GadgetGroup label="Pipeline">
+                {csv(["dictation", "pipeline", "stages"], "Stages")}
+                {num(
+                  ["dictation", "pipeline", "max_total_latency_ms"],
+                  "Latency budget",
+                  { unit: "ms", min: 0, step: 250 },
+                )}
+                {str(
+                  ["dictation", "pipeline", "target_profile_override"],
+                  "Target profile override",
+                )}
+                {num(["dictation", "pipeline", "rewrite_passes"], "Rewrite passes", {
+                  min: 0,
+                  max: 5,
+                })}
+                {check(
+                  ["dictation", "pipeline", "target_detect_llm_enabled"],
+                  "LLM target detect",
+                )}
+                {prop(
+                  ["dictation", "pipeline", "target_detect_llm_below"],
+                  "Detect below",
+                  { min: 0, max: 1, step: 0.05 },
+                )}
+              </GadgetGroup>
+              <GadgetGroup label="Wake word">
+                {str(["wake_word", "model"], "Model", {
+                  placeholder: "hey_jarvis",
+                })}
+                {prop(["wake_word", "threshold"], "Threshold", {
+                  min: 0,
+                  max: 1,
+                  step: 0.05,
+                })}
+                {num(["wake_word", "armed_window_seconds"], "Armed window", {
+                  unit: "s",
+                  min: 1,
+                  step: 1,
+                })}
+              </GadgetGroup>
+            </FoldGadget>
           </>
         );
       }
-      case "wake-word":
+      /* ── Sounds & Presence: desk sounds + presence + mascot ── */
+      case "sounds":
         return (
-          <GadgetGroup>
-            {/* The honest truths ride as fact tokens (no-prose canon):
-                enabling fetches detection models once; the `type` action
-                lands unpreviewed in whatever app holds focus. */}
-            {check(["wake_word", "enabled"], "Enabled", "models download once")}
-            {str(["wake_word", "model"], "Model", {
-              placeholder: "hey_jarvis",
-            })}
-            {prop(["wake_word", "threshold"], "Threshold", {
-              min: 0,
-              max: 1,
-              step: 0.05,
-            })}
-            {num(["wake_word", "armed_window_seconds"], "Armed window", {
-              unit: "s",
-              min: 1,
-              step: 1,
-            })}
-            {cyc(
-              ["wake_word", "action"],
-              "Action",
-              WAKE_ACTION_OPTIONS,
-              "type lands in the focused app",
-            )}
-          </GadgetGroup>
+          <>
+            <GadgetGroup label="Sounds">
+              <GadgetRow label="DESK SOUNDS" highlight={hl(["ui", "desk_sounds"])}>
+                <CheckGadget
+                  label="DESK SOUNDS"
+                  checked={Boolean(val(["ui", "desk_sounds"]) ?? true)}
+                  onChange={(next) => {
+                    update(["ui", "desk_sounds"], next);
+                    toggleSfx(next);
+                  }}
+                />
+              </GadgetRow>
+            </GadgetGroup>
+            <GadgetGroup label="Presence">
+              {check(["presence", "enabled"], "Presence")}
+              {check(["presence", "mascot"], "Mascot")}
+            </GadgetGroup>
+          </>
         );
-      case "presence":
-        return (
-          <GadgetGroup>
-            {check(["presence", "enabled"], "Presence")}
-            {check(["presence", "mascot"], "Mascot")}
-          </GadgetGroup>
-        );
+      /* ── Meetings: pointer tile + actuators + RAW ── */
       case "meetings":
         return (
           <>
-            <GadgetGroup label="Capture">
-              {str(["meeting", "mic_device"], "Mic device", {
-                fact: "device name",
-              })}
-              {str(["meeting", "system_audio_device"], "System audio device", {
-                fact: "device name",
-              })}
-              {str(["meeting", "mic_label"], "Mic label")}
-              {str(["meeting", "remote_label"], "Remote label")}
-              {check(["meeting", "diarization_enabled"], "Diarization")}
-              {check(["meeting", "diarize_mic"], "Diarize mic")}
-              {check(
-                ["meeting", "cross_meeting_recognition"],
-                "Cross-meeting recognition",
-              )}
-              {prop(["meeting", "similarity_threshold"], "Similarity", {
-                min: 0,
-                max: 1,
-                step: 0.05,
-              })}
+            <GadgetGroup label="Capture + export">
+              <div className="prefs-elsewhere">
+                <span className="prefs-elsewhere-fact">
+                  CONFIG LIVES ON MEETINGS
+                </span>
+              </div>
             </GadgetGroup>
-            <GadgetGroup label="Export">
-              {check(["meeting", "auto_export"], "Auto export")}
-              {cyc(["meeting", "export_format"], "Format", EXPORT_FORMAT_OPTIONS)}
-              {check(["meeting", "web_auto_open"], "Open on web")}
+            <GadgetGroup label="Actuators">
+              {check(["meeting", "allow_actuators"], "Allow actuators")}
             </GadgetGroup>
             <GadgetGroup label="Intelligence">
-              {check(["meeting", "intel_enabled"], "Enabled")}
-              {str(["meeting", "intel_realtime_model"], "Realtime model")}
-              {str(["meeting", "intel_summary_model"], "Summary model")}
-              {check(["meeting", "intel_cloud_store"], "Cloud store")}
-              {/* HS-112-01: the endpoint dial lives in Models. HS-132-10: so
-                  does the Provider intent — it was a SECOND placement dial
-                  here with no precedence signal, so picking LOCAL under an
-                  adopted destination did nothing. One dial, one home; this
-                  states where meetings run and points at it. */}
               <div className="prefs-elsewhere">
                 <span className="prefs-elsewhere-fact">
                   PLACEMENT LIVES IN MODELS
@@ -685,100 +603,87 @@ function SettingsFace({ hero, scope }: CoreProps) {
                 </Button>
               </div>
             </GadgetGroup>
-            <GadgetGroup label="Deferred queue">
-              {check(["meeting", "intel_deferred_enabled"], "Enabled")}
-              {num(["meeting", "intel_queue_poll_seconds"], "Poll", {
-                unit: "s",
-                min: 10,
-                step: 10,
-              })}
-              {num(["meeting", "intel_retry_base_seconds"], "Retry base", {
-                unit: "s",
-                min: 1,
-                step: 5,
-              })}
-              {num(["meeting", "intel_retry_max_seconds"], "Retry max", {
-                unit: "s",
-                min: 1,
-                step: 60,
-              })}
-              {num(["meeting", "intel_retry_max_attempts"], "Retry attempts", {
-                min: 0,
-              })}
-              {num(
-                ["meeting", "intel_retry_failure_alert_percent"],
-                "Failure alert",
-                { unit: "%", min: 0, max: 100, step: 5 },
-              )}
-              {num(
-                ["meeting", "intel_retry_failure_hysteresis_minutes"],
-                "Alert hysteresis",
-                { unit: "min", min: 0 },
-              )}
-              {str(
-                ["meeting", "intel_retry_failure_webhook_header_name"],
-                "Webhook header",
-              )}
-            </GadgetGroup>
-            <GadgetGroup label="Routing">
-              {check(["meeting", "mir_enabled"], "Multi-intent routing")}
-              {/* HS-130-05: one routing profile. The old `MIR profile` +
-                  `Plugin profile` pickers were two owners of one setting;
-                  they converged into `meeting.routing_profile`. */}
-              {cyc(
-                ["meeting", "routing_profile"],
-                "Routing profile",
-                MIR_PROFILE_OPTIONS,
-              )}
-              {check(["meeting", "intent_router_enabled"], "Intent router")}
-              {num(["meeting", "intent_window_seconds"], "Intent window", {
-                unit: "s",
-                min: 10,
-                step: 10,
-              })}
-              {num(["meeting", "intent_step_seconds"], "Intent step", {
-                unit: "s",
-                min: 5,
-                step: 5,
-              })}
-              {prop(["meeting", "intent_score_threshold"], "Score threshold", {
-                min: 0,
-                max: 1,
-                step: 0.05,
-              })}
-              {num(
-                ["meeting", "intent_hysteresis_windows"],
-                "Hysteresis windows",
-                { min: 0, max: 10 },
-              )}
-              {check(
-                ["meeting", "intent_segment_probe_enabled"],
-                "Segment probe",
-              )}
-              {csv(["meeting", "disabled_plugins"], "Disabled plugins")}
-            </GadgetGroup>
-            <GadgetGroup label="Actuators">
-              {check(["meeting", "allow_actuators"], "Allow actuators")}
-              {csv(["meeting", "allowed_actuators"], "Allowed actuators")}
-              {csv(["meeting", "webhook_allowed_hosts"], "Webhook hosts")}
-              {str(["meeting", "companion_github_repo"], "GitHub repo", {
-                placeholder: "owner/repo",
-              })}
-            </GadgetGroup>
+            {/* HS-139-04: all operator knobs fold behind one RAW well. */}
+            <FoldGadget title="RAW" token="20">
+              <GadgetGroup label="Capture">
+                {check(["meeting", "diarization_enabled"], "Diarization")}
+                {check(["meeting", "diarize_mic"], "Diarize mic")}
+                {prop(["meeting", "similarity_threshold"], "Similarity", {
+                  min: 0,
+                  max: 1,
+                  step: 0.05,
+                })}
+              </GadgetGroup>
+              <GadgetGroup label="Intelligence">
+                {str(["meeting", "intel_summary_model"], "Summary model")}
+                {check(["meeting", "intel_cloud_store"], "Cloud store")}
+              </GadgetGroup>
+              <GadgetGroup label="Deferred queue">
+                {num(["meeting", "intel_retry_base_seconds"], "Retry base", {
+                  unit: "s",
+                  min: 1,
+                  step: 5,
+                })}
+                {num(["meeting", "intel_retry_max_seconds"], "Retry max", {
+                  unit: "s",
+                  min: 1,
+                  step: 60,
+                })}
+                {num(["meeting", "intel_retry_max_attempts"], "Retry attempts", {
+                  min: 0,
+                })}
+                {str(
+                  ["meeting", "intel_retry_failure_webhook_header_name"],
+                  "Webhook header",
+                )}
+              </GadgetGroup>
+              <GadgetGroup label="Routing">
+                {cyc(
+                  ["meeting", "routing_profile"],
+                  "Routing profile",
+                  MIR_PROFILE_OPTIONS,
+                )}
+                {check(["meeting", "intent_router_enabled"], "Intent router")}
+                {num(["meeting", "intent_window_seconds"], "Intent window", {
+                  unit: "s",
+                  min: 10,
+                  step: 10,
+                })}
+                {num(["meeting", "intent_step_seconds"], "Intent step", {
+                  unit: "s",
+                  min: 5,
+                  step: 5,
+                })}
+                {prop(["meeting", "intent_score_threshold"], "Score threshold", {
+                  min: 0,
+                  max: 1,
+                  step: 0.05,
+                })}
+                {num(
+                  ["meeting", "intent_hysteresis_windows"],
+                  "Hysteresis windows",
+                  { min: 0, max: 10 },
+                )}
+                {check(
+                  ["meeting", "intent_segment_probe_enabled"],
+                  "Segment probe",
+                )}
+                {csv(["meeting", "disabled_plugins"], "Disabled plugins")}
+              </GadgetGroup>
+              <GadgetGroup label="Actuators">
+                {csv(["meeting", "allowed_actuators"], "Allowed actuators")}
+                {csv(["meeting", "webhook_allowed_hosts"], "Webhook hosts")}
+              </GadgetGroup>
+            </FoldGadget>
           </>
         );
-      case "cadence":
+      /* ── Rhythm: cadence user-facing + Telegram + RAW ── */
+      case "rhythm":
         return (
           <>
             <GadgetGroup label="Cadence">
               {check(["cadence", "enabled"], "Enabled")}
               {cyc(["cadence", "pressure"], "Pressure", CADENCE_PRESSURE_OPTIONS)}
-              {check(["cadence", "use_llm"], "Use LLM")}
-              {num(["cadence", "tick_interval_seconds"], "Tick interval", {
-                unit: "s",
-                min: 30,
-                step: 30,
-              })}
               {num(["cadence", "quiet_hours_start"], "Quiet from", {
                 unit: "h",
                 min: 0,
@@ -796,36 +701,22 @@ function SettingsFace({ hero, scope }: CoreProps) {
             </GadgetGroup>
             <GadgetGroup label="Telegram">
               {check(["cadence_telegram", "enabled"], "Enabled")}
-              {csv(["cadence_telegram", "allowed_chat_ids"], "Allowed chats")}
             </GadgetGroup>
-          </>
-        );
-      case "devices": {
-        const device = (data.device ?? {}) as Record<string, unknown>;
-        return (
-          <>
-            <GadgetGroup label="Mesh">
-              {str(["mesh", "device_name"], "Device name")}
-            </GadgetGroup>
-            {Object.keys(device).length ? (
-              <GadgetGroup label="Device">
-                {walkerRows(device, ["device"])}
+            {/* HS-139-04: operator knobs fold behind RAW. */}
+            <FoldGadget title="RAW" token="3">
+              <GadgetGroup>
+                {check(["cadence", "use_llm"], "Use LLM")}
+                {num(["cadence", "tick_interval_seconds"], "Tick interval", {
+                  unit: "s",
+                  min: 30,
+                  step: 30,
+                })}
+                {csv(["cadence_telegram", "allowed_chat_ids"], "Allowed chats")}
               </GadgetGroup>
-            ) : null}
+            </FoldGadget>
           </>
         );
-      }
-      case "delivery":
-        // No delivery keys live under /api/settings today: the module
-        // states the fact and hands over to the Delivery program.
-        return (
-          <div className="prefs-elsewhere">
-            <span className="prefs-elsewhere-fact">CONFIG LIVES IN DELIVERY</span>
-            <Button dense onClick={() => activateLauncher("delivery-board")}>
-              Open Delivery
-            </Button>
-          </div>
-        );
+      /* ── Models: destinations, runs-on, engine, rails ── */
       case "models":
         return (
           <ModelsModule
@@ -834,56 +725,66 @@ function SettingsFace({ hero, scope }: CoreProps) {
             onRefuse={setRefusal}
           />
         );
-      case "desk":
-        return <DeskModule />;
-      case "integrations":
+      /* ── Integrations: credentials + RAW ── */
+      case "integrations": {
+        const RAW_SECRETS = new Set(["failure_webhook_url", "failure_webhook_credential"]);
+        const keepSecrets = Object.entries(secrets).filter(([id]) => !RAW_SECRETS.has(id));
+        const rawSecrets = Object.entries(secrets).filter(([id]) => RAW_SECRETS.has(id));
+        const secretRow = ([secretId, state]: [string, SecretState]) => (
+          <SecretRow
+            key={secretId}
+            label={SECRET_LABELS[secretId] ?? title(secretId)}
+            configured={Boolean(state.configured)}
+            destination={state.destination}
+            busy={secretBusy === secretId}
+            rotatable={ROTATABLE_SECRETS.has(secretId)}
+            onReplace={(value) =>
+              void changeSecret(secretId, "replace", value)
+            }
+            onRotate={() => void changeSecret(secretId, "rotate")}
+            onDelete={() => void changeSecret(secretId, "delete")}
+          />
+        );
         return (
-          <GadgetGroup label="Credentials">
-            <div className="prefs-egress-line">
-              <EgressChip />
-              {/* the credential truth, as a fact token */}
-              <span className="gadget-fact">values stay on this hub</span>
-            </div>
-            {Object.entries(secrets).map(([secretId, state]) => (
-              <SecretRow
-                key={secretId}
-                label={SECRET_LABELS[secretId] ?? title(secretId)}
-                configured={Boolean(state.configured)}
-                destination={state.destination}
-                busy={secretBusy === secretId}
-                rotatable={ROTATABLE_SECRETS.has(secretId)}
-                onReplace={(value) =>
-                  void changeSecret(secretId, "replace", value)
-                }
-                onRotate={() => void changeSecret(secretId, "rotate")}
-                onDelete={() => void changeSecret(secretId, "delete")}
-              />
-            ))}
-          </GadgetGroup>
+          <>
+            <GadgetGroup label="Credentials">
+              <div className="prefs-egress-line">
+                <EgressChip />
+                <span className="gadget-fact">values stay on this hub</span>
+              </div>
+              {keepSecrets.map(secretRow)}
+            </GadgetGroup>
+            {/* HS-139-04: operator-wiring secrets fold behind RAW. */}
+            {rawSecrets.length ? (
+              <FoldGadget title="RAW" token={String(rawSecrets.length)}>
+                <GadgetGroup>
+                  {rawSecrets.map(secretRow)}
+                </GadgetGroup>
+              </FoldGadget>
+            ) : null}
+          </>
         );
+      }
+      /* ── System: device name + desk reset + devices RAW ── */
       case "system": {
-        const claimed = new Set(PREF_MODULES.flatMap((module) => module.keys));
-        const systemKeys = Object.keys(data).filter(
-          (key) =>
-            !key.startsWith("_") &&
-            key !== "config_version" &&
-            key !== "control_mode" &&
-            !claimed.has(key) &&
-            data[key] &&
-            typeof data[key] === "object" &&
-            !Array.isArray(data[key]),
+        const device = (data.device ?? {}) as Record<string, unknown>;
+        const deviceCount = Object.keys(device).length;
+        return (
+          <>
+            <GadgetGroup label="Mesh">
+              {str(["mesh", "device_name"], "Device name")}
+            </GadgetGroup>
+            <DeskModule />
+            {/* HS-139-04/05: device walker knobs fold behind RAW. */}
+            {deviceCount ? (
+              <FoldGadget title="RAW" token={String(deviceCount)}>
+                <GadgetGroup label="Device">
+                  {walkerRows(device, ["device"])}
+                </GadgetGroup>
+              </FoldGadget>
+            ) : null}
+          </>
         );
-        if (!systemKeys.length)
-          return (
-            <div className="prefs-elsewhere">
-              <span className="prefs-elsewhere-fact">NO UNMAPPED KEYS</span>
-            </div>
-          );
-        return systemKeys.map((key) => (
-          <GadgetGroup key={key} label={title(key)}>
-            {walkerRows(data[key] as Record<string, unknown>, [key])}
-          </GadgetGroup>
-        ));
       }
       default:
         return null;
@@ -909,7 +810,6 @@ function SettingsFace({ hero, scope }: CoreProps) {
           </div>
         ) : (
           <PrefsFace
-            hits={deepIndex}
             onOpen={openModule}
             posture={String(authority.data.control_mode ?? "neutral")}
             postureBusy={authorityBusy || authority.loading}

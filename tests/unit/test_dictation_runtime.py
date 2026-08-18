@@ -835,11 +835,12 @@ def test_both_backends_produce_outputs_in_schema_value_set():
 # ---------------------------------------------------------------------------
 
 
-def test_default_dictation_pipeline_disabled():
+def test_default_dictation_pipeline_enabled():
+    """HS-139-02: pipeline.enabled flipped to True (was False)."""
     from holdspeak.config import DictationConfig
 
     cfg = DictationConfig()
-    assert cfg.pipeline.enabled is False
+    assert cfg.pipeline.enabled is True
     assert cfg.runtime.backend == "auto"
 
 

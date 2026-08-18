@@ -186,7 +186,8 @@ class Config:
     config_version: int = CONFIG_VERSION
     # HS-92-08: one policy preset for FUTURE operations. It never weakens hard
     # auth/secret/destination/payload/pane/audit/config/schema invariants.
-    control_mode: str = "neutral"
+    # HS-139-08: YOLO by default (owner ruling: ledger-not-gate).
+    control_mode: str = "yolo"
     hotkey: HotkeyConfig = field(default_factory=HotkeyConfig)
     model: ModelConfig = field(default_factory=ModelConfig)
     ui: UIConfig = field(default_factory=UIConfig)
@@ -237,10 +238,10 @@ class Config:
             config = cls(
                 config_version=config_version,
                 control_mode=(
-                    str(data.get("control_mode", "neutral")).strip().lower()
-                    if str(data.get("control_mode", "neutral")).strip().lower()
+                    str(data.get("control_mode", "yolo")).strip().lower()
+                    if str(data.get("control_mode", "yolo")).strip().lower()
                     in {"safe", "neutral", "yolo"}
-                    else "neutral"
+                    else "yolo"
                 ),
                 hotkey=_coerce(HotkeyConfig, data.get("hotkey", {}) or {}, section="hotkey"),
                 model=_coerce(ModelConfig, data.get("model", {}) or {}, section="model"),

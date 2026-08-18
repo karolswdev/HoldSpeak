@@ -43,8 +43,9 @@ def test_policy_and_control_mode_are_one_future_operation_contract(rig) -> None:
     _, client = rig
     policy = client.get("/api/authority/policy")
     assert policy.status_code == 200
-    assert policy.json()["control_mode"] == "neutral"
-    assert policy.json()["control_mode_label"] == "Normal"
+    # HS-139-08: fresh install defaults to yolo.
+    assert policy.json()["control_mode"] == "yolo"
+    assert policy.json()["control_mode_label"] == "YOLO"
     assert policy.json()["policy_version"] == "operation-policy/v2"
     assert policy.json()["unsupported_family_behavior"] == "refused"
     assert policy.json()["applies_to"] == "future_operations_only"

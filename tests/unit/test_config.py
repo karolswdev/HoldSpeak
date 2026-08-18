@@ -23,10 +23,11 @@ def test_control_mode_round_trips_and_invalid_values_fail_to_neutral(tmp_path) -
     config.save(path)
     assert Config.load(path).control_mode == "yolo"
 
+    # HS-139-08: invalid values fall to yolo (was neutral).
     raw = json.loads(path.read_text())
     raw["control_mode"] = "unbounded"
     path.write_text(json.dumps(raw))
-    assert Config.load(path).control_mode == "neutral"
+    assert Config.load(path).control_mode == "yolo"
 
 
 # ============================================================
@@ -114,28 +115,13 @@ class TestUIConfig:
     """Tests for UIConfig dataclass."""
 
     def test_default_values(self):
-        """UIConfig has correct default values."""
+        """UIConfig has correct default values (HS-139-01: dead fields removed)."""
         config = UIConfig()
-        assert config.show_audio_meter is True
-        assert config.history_lines == 10
-        assert config.theme == "dark"
-
-    def test_custom_values(self):
-        """UIConfig accepts custom values."""
-        config = UIConfig(
-            show_audio_meter=False,
-            history_lines=20,
-            theme="monokai",
-        )
-        assert config.show_audio_meter is False
-        assert config.history_lines == 20
-        assert config.theme == "monokai"
-
-    @pytest.mark.parametrize("theme", ["dark", "light", "dracula", "monokai"])
-    def test_valid_themes(self, theme):
-        """All documented themes can be set."""
-        config = UIConfig(theme=theme)
-        assert config.theme == theme
+        assert config.desk_sounds is True
+        # HS-139-01: show_audio_meter, history_lines, theme no longer exist.
+        assert not hasattr(config, "show_audio_meter")
+        assert not hasattr(config, "history_lines")
+        assert not hasattr(config, "theme")
 
 
 # ============================================================
@@ -161,15 +147,19 @@ class TestMeetingConfig:
         assert config.intel_retry_base_seconds == 30
         assert config.intel_retry_max_seconds == 900
         assert config.intel_retry_max_attempts == 6
-        assert config.intel_retry_failure_alert_percent == 50.0
-        assert config.intel_retry_failure_hysteresis_minutes == 5.0
+        # HS-139-01: intel_retry_failure_alert_percent and
+        # intel_retry_failure_hysteresis_minutes deleted (dead).
+        assert not hasattr(config, "intel_retry_failure_alert_percent")
+        assert not hasattr(config, "intel_retry_failure_hysteresis_minutes")
+        assert not hasattr(config, "intel_queue_poll_seconds")
         assert config.intel_retry_failure_webhook_url is None
         assert config.intel_retry_failure_webhook_header_name is None
         assert config.intel_retry_failure_webhook_header_value is None
         assert config.intel_cloud_model == "gpt-5-mini"
         assert config.intel_cloud_api_key_env == "OPENAI_API_KEY"
         assert config.intel_cloud_base_url is None
-        assert config.web_auto_open is False
+        # HS-139-02: web_auto_open deleted (hardcoded true at consumer).
+        assert not hasattr(config, "web_auto_open")
         assert config.mir_enabled is True
         assert config.routing_profile == "balanced"
         # HS-2-09 (spec §9.9) — MIR-01 routing pipeline knobs.
@@ -225,10 +215,8 @@ class TestConfig:
         assert default_config.model.warm_on_start is True
 
     def test_default_ui_values(self, default_config):
-        """Default config has correct UI defaults."""
-        assert default_config.ui.show_audio_meter is True
-        assert default_config.ui.history_lines == 10
-        assert default_config.ui.theme == "dark"
+        """Default config has correct UI defaults (HS-139-01: dead fields removed)."""
+        assert default_config.ui.desk_sounds is True
 
     def test_to_dict_returns_dict(self, default_config):
         """to_dict returns a dictionary representation."""
@@ -245,7 +233,7 @@ class TestConfig:
         assert result["hotkey"]["key"] == "alt_r"
         assert result["model"]["name"] == "base"
         assert result["model"]["warm_on_start"] is True
-        assert result["ui"]["theme"] == "dark"
+        assert result["ui"]["desk_sounds"] is True
         assert result["meeting"]["mic_label"] == "Me"
 
 
@@ -290,7 +278,7 @@ class TestConfigSave:
         config = Config(
             hotkey=HotkeyConfig(key="f5", display="F5"),
             model=ModelConfig(name="large"),
-            ui=UIConfig(theme="monokai", history_lines=25),
+            ui=UIConfig(desk_sounds=False),
             meeting=MeetingConfig(mic_label="Speaker", auto_export=True),
         )
         path = tmp_path / "custom.json"
@@ -302,7 +290,7 @@ class TestConfigSave:
         assert data["hotkey"]["key"] == "f5"
         assert data["model"]["name"] == "large"
         assert data["model"]["warm_on_start"] is True
-        assert data["ui"]["theme"] == "monokai"
+        assert data["ui"]["desk_sounds"] is False
         assert data["meeting"]["mic_label"] == "Speaker"
 
 
@@ -334,7 +322,7 @@ class TestConfigLoad:
         data = {
             "hotkey": {"key": "ctrl_l", "display": "\u2303L"},
             "model": {"name": "small", "warm_on_start": False},
-            "ui": {"show_audio_meter": False, "history_lines": 15, "theme": "light"},
+            "ui": {"desk_sounds": False},
             "meeting": {"mic_label": "Host"},
         }
         with open(path, "w") as f:
@@ -344,7 +332,7 @@ class TestConfigLoad:
         assert config.hotkey.key == "ctrl_l"
         assert config.model.name == "small"
         assert config.model.warm_on_start is False
-        assert config.ui.show_audio_meter is False
+        assert config.ui.desk_sounds is False
         assert config.meeting.mic_label == "Host"
 
     def test_load_partial_config_uses_defaults(self, tmp_path):
@@ -359,7 +347,7 @@ class TestConfigLoad:
         assert config.hotkey.key == "f12"
         # Other sections should have defaults
         assert config.model.name == "base"
-        assert config.ui.theme == "dark"
+        assert config.ui.desk_sounds is True
         assert config.meeting.mic_label == "Me"
 
     def test_load_empty_json_uses_defaults(self, tmp_path):
@@ -459,6 +447,58 @@ class TestConfigLoad:
             "web_enabled" in r.message and "meeting" in r.message for r in caplog.records
         ), caplog.text
 
+    def test_load_pre_reckoning_config_survives(self, tmp_path, caplog):
+        """HS-139-01: a config.json containing the six deleted keys loads
+        cleanly — no crash, no resurrection of dead fields, sibling values
+        survive, and a warning names each dropped key."""
+        path = tmp_path / "pre_reckoning.json"
+        data = {
+            "ui": {
+                "show_audio_meter": False,
+                "history_lines": 25,
+                "theme": "monokai",
+                "desk_sounds": False,
+            },
+            "meeting": {
+                "intel_queue_poll_seconds": 60,
+                "intel_retry_failure_alert_percent": 75.0,
+                "intel_retry_failure_hysteresis_minutes": 10.0,
+                "mic_label": "Host",
+                "intel_provider": "cloud",
+            },
+            "model": {"name": "small"},
+        }
+        with open(path, "w") as f:
+            json.dump(data, f)
+
+        with caplog.at_level("WARNING", logger="holdspeak.config"):
+            config = Config.load(path)
+
+        # Dead fields are NOT resurrected.
+        assert not hasattr(config.ui, "show_audio_meter")
+        assert not hasattr(config.ui, "history_lines")
+        assert not hasattr(config.ui, "theme")
+        assert not hasattr(config.meeting, "intel_queue_poll_seconds")
+        assert not hasattr(config.meeting, "intel_retry_failure_alert_percent")
+        assert not hasattr(config.meeting, "intel_retry_failure_hysteresis_minutes")
+        # Sibling values survive.
+        assert config.ui.desk_sounds is False
+        assert config.meeting.mic_label == "Host"
+        assert config.meeting.intel_provider == "cloud"
+        assert config.model.name == "small"
+        # _coerce warned about each dead key.
+        for dead_key in (
+            "show_audio_meter",
+            "history_lines",
+            "theme",
+            "intel_queue_poll_seconds",
+            "intel_retry_failure_alert_percent",
+            "intel_retry_failure_hysteresis_minutes",
+        ):
+            assert any(
+                dead_key in r.message for r in caplog.records
+            ), f"expected warning for {dead_key!r}, got: {caplog.text}"
+
 
 # ============================================================
 # Round-trip Tests
@@ -479,9 +519,7 @@ class TestConfigRoundTrip:
         assert loaded.hotkey.display == original.hotkey.display
         assert loaded.model.name == original.model.name
         assert loaded.model.warm_on_start == original.model.warm_on_start
-        assert loaded.ui.show_audio_meter == original.ui.show_audio_meter
-        assert loaded.ui.history_lines == original.ui.history_lines
-        assert loaded.ui.theme == original.ui.theme
+        assert loaded.ui.desk_sounds == original.ui.desk_sounds
 
     def test_round_trip_preserves_custom_values(self, tmp_path):
         """Round-trip save/load preserves custom values."""
@@ -489,31 +527,23 @@ class TestConfigRoundTrip:
         original = Config(
             hotkey=HotkeyConfig(key="caps_lock", display="\u21ea"),
             model=ModelConfig(name="medium"),
-            ui=UIConfig(show_audio_meter=False, history_lines=50, theme="dracula"),
+            ui=UIConfig(desk_sounds=False),
             meeting=MeetingConfig(
                 system_audio_device="BlackHole 2ch",
-                mic_label="Host",
-                remote_label="Participants",
                 auto_export=True,
                 export_format="srt",
-                intel_enabled=False,
-                web_auto_open=True,
             ),
         )
         original.save(path)
         loaded = Config.load(path)
 
         assert loaded.hotkey.key == "caps_lock"
-        assert loaded.model.name == "medium"
+        assert loaded.model.name == "medium"  # field persists on disk; API strips writes
         assert loaded.model.warm_on_start is True
-        assert loaded.ui.theme == "dracula"
-        assert loaded.ui.history_lines == 50
+        assert loaded.ui.desk_sounds is False
         assert loaded.meeting.system_audio_device == "BlackHole 2ch"
-        assert loaded.meeting.mic_label == "Host"
         assert loaded.meeting.auto_export is True
         assert loaded.meeting.export_format == "srt"
-        assert loaded.meeting.intel_enabled is False
-        assert loaded.meeting.web_auto_open is True
 
     def test_round_trip_preserves_all_meeting_fields(self, tmp_path):
         """Round-trip preserves all MeetingConfig fields."""
@@ -521,36 +551,31 @@ class TestConfigRoundTrip:
         original = Config(
             meeting=MeetingConfig(
                 system_audio_device="Test Device",
-                mic_label="Me",
-                remote_label="Them",
                 auto_export=True,
                 export_format="json",
-                intel_enabled=True,
                 intel_provider="auto",
                 intel_realtime_model="/path/to/model.gguf",
                 intel_summary_model="/path/to/summary.gguf",
                 intel_cloud_model="gpt-5.4",
                 intel_cloud_api_key_env="ALT_OPENAI_KEY",
                 intel_cloud_base_url="https://api.example.com/v1",
-                web_auto_open=True,
             )
         )
         original.save(path)
         loaded = Config.load(path)
 
         assert loaded.meeting.system_audio_device == "Test Device"
-        assert loaded.meeting.mic_label == "Me"
-        assert loaded.meeting.remote_label == "Them"
+        assert loaded.meeting.mic_label == "Me"  # HS-139-02: pinned default
+        assert loaded.meeting.remote_label == "Remote"  # pinned default
         assert loaded.meeting.auto_export is True
         assert loaded.meeting.export_format == "json"
-        assert loaded.meeting.intel_enabled is True
+        assert loaded.meeting.intel_enabled is True  # pinned default
         assert loaded.meeting.intel_provider == "auto"
         assert loaded.meeting.intel_realtime_model == "/path/to/model.gguf"
         assert loaded.meeting.intel_summary_model == "/path/to/summary.gguf"
         assert loaded.meeting.intel_cloud_model == "gpt-5.4"
         assert loaded.meeting.intel_cloud_api_key_env == "ALT_OPENAI_KEY"
         assert loaded.meeting.intel_cloud_base_url == "https://api.example.com/v1"
-        assert loaded.meeting.web_auto_open is True
 
 
 # ============================================================
@@ -687,10 +712,11 @@ class TestDictationPipelineValidation:
             DictationPipelineConfig(rewrite_passes=6)
         assert "rewrite_passes" in str(exc.value)
 
-    def test_corrections_enabled_defaults_off(self):
+    def test_corrections_enabled_defaults_on(self):
+        """HS-139-02: corrections_enabled pinned to True."""
         from holdspeak.config import DictationPipelineConfig
 
-        assert DictationPipelineConfig().corrections_enabled is False
+        assert DictationPipelineConfig().corrections_enabled is True
 
     def test_corrections_enabled_round_trips(self):
         from holdspeak.config import DictationPipelineConfig

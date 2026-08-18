@@ -57,14 +57,18 @@ def tmp_blocks(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
 
 
 class _ConfigStub:
-    """Stand-in for `Config.load()` returning a default config.
+    """Stand-in for `Config.load()` returning a lexical-only config.
 
-    Used so the CLI doesn't read the real user config file.
+    Used so the CLI doesn't read the real user config file. Pipeline is
+    explicitly disabled so the lexical dry-run path is exercised without
+    requiring credentials (HS-139-02 flipped the default to True).
     """
 
     @classmethod
     def load(cls) -> Config:
-        return Config()
+        cfg = Config()
+        cfg.dictation.pipeline.enabled = False
+        return cfg
 
 
 # ---------------------------------------------------------------------------

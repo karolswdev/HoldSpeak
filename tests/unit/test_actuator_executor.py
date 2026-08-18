@@ -330,11 +330,12 @@ def test_unknown_proposal_raises(tmp_path) -> None:
 
 
 def test_config_actuator_policy_defaults_safe() -> None:
+    # HS-139-08: permissive defaults (owner ruling: ledger-not-gate).
     from holdspeak.config import MeetingConfig
 
     cfg = MeetingConfig()
-    assert cfg.allow_actuators is False
-    assert cfg.allowed_actuators == []
+    assert cfg.allow_actuators is True
+    assert cfg.allowed_actuators == ["*"]
 
 
 def test_config_allowed_actuators_normalized() -> None:

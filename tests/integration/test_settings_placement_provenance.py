@@ -205,7 +205,7 @@ def test_the_provenance_block_is_never_persisted(
 ) -> None:
     """A client echoing the whole document back must not write the describer."""
     body = client.get("/api/settings").json()
-    body["ui"]["theme"] = "light"
+    body["ui"]["desk_sounds"] = False
     response = client.put("/api/settings", json=body)
     assert response.status_code == 200, response.text
     assert "_placement" not in Config.load().to_dict()

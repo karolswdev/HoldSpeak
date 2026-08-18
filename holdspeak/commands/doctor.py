@@ -23,6 +23,7 @@ from ..audio_devices import check_blackhole_setup, get_default_input_device
 from ..config import CONFIG_FILE, Config
 from ..hotkey import HotkeyListener
 from ..intel import get_intel_runtime_status, intel_egress_posture
+from ..profile_key_store import ProfileKeyStoreError, resolve_profile_key
 from ..transcribe import TranscriberError, _resolve_backend
 from ..typer import TextTyper
 
@@ -35,6 +36,14 @@ class DoctorCheck:
     status: str  # PASS | WARN | FAIL
     detail: str
     fix: str | None = None
+
+
+def _doctor_profile_key_present(slot: str) -> bool:
+    """Fail closed while leaving doctor able to name a missing key."""
+    try:
+        return bool(resolve_profile_key(slot))
+    except ProfileKeyStoreError:
+        return False
 
 
 def _is_wayland_session() -> bool:
@@ -394,11 +403,15 @@ def _check_meeting_intel_runtime(config: Config) -> DoctorCheck:
 
     fix = None
     if meeting.intel_provider == "cloud":
-        fix = f"Set {effective.api_key_env} and verify cloud model '{effective.model}'."
+        fix = (
+            "Set the key in Settings → Models → [destination], then verify "
+            f"cloud model '{effective.model}'. For a headless/service hub, set {effective.api_key_env}."
+        )
     elif meeting.intel_provider == "auto":
         fix = (
             f"Provide a local model at '{meeting.intel_realtime_model}' "
-            f"or set {effective.api_key_env} for cloud fallback."
+            "or set the key in Settings → Models → [destination] for cloud fallback. "
+            f"For a headless/service hub, set {effective.api_key_env}."
         )
     else:
         fix = f"Set a valid local model path (currently '{meeting.intel_realtime_model}')."
@@ -565,13 +578,19 @@ def _check_meeting_intel_cloud_preflight(
 
     effective = effective_intel_cloud(meeting)
     api_key_env = (effective.api_key_env or "OPENAI_API_KEY").strip() or "OPENAI_API_KEY"
-    api_key = (os.environ.get(api_key_env) or "").strip()
+    try:
+        api_key = resolve_profile_key(api_key_env) or ""
+    except ProfileKeyStoreError:
+        api_key = ""
     if not api_key:
         return DoctorCheck(
             name="Cloud intel preflight",
             status="WARN",
             detail=f"Missing API key in ${api_key_env}",
-            fix=f"Set {api_key_env} in your shell or service environment before running cloud intel.",
+            fix=(
+                "Set the key in Settings → Models → [destination] before running cloud intel. "
+                f"For a headless/service hub, set {api_key_env}."
+            ),
         )
 
     base_url = _normalize_cloud_base_url(effective.base_url)
@@ -779,15 +798,16 @@ def _check_runtime_profiles(config: Config) -> DoctorCheck:
             if (
                 record is not None
                 and bool(getattr(record, "requires_key", False))
-                and not os.environ.get(effective.api_key_env)
+                and not _doctor_profile_key_present(effective.api_key_env)
             ):
                 warns.append(
                     f"{label}: profile '{effective.profile_name}' requires a key"
                     f" but ${effective.api_key_env} is unset"
                 )
                 fixes.append(
-                    f"export {profile_key_env(effective.profile_id)}=<key> on this hub"
-                    " (keys never sync; each device holds its own)"
+                    "Set the key in Settings → Models → [destination]. "
+                    f"For a headless/service hub, export {profile_key_env(effective.profile_id)}=<key> "
+                    "(keys never sync; each device holds its own)"
                 )
         elif effective.reason:
             warns.append(f"{label}: {effective.reason}")

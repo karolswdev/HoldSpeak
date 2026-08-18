@@ -109,7 +109,8 @@ def test_config_save_load_round_trip(tmp_path: Path) -> None:
     assert macros.items[1].action.kind == "shell"
     assert macros.items[1].action.payload == "git push origin HEAD"
     # The rest of the config is untouched.
-    assert reloaded.dictation.pipeline.enabled is False
+    # HS-139-02: pipeline.enabled default flipped to True.
+    assert reloaded.dictation.pipeline.enabled is True
 
 
 def test_load_is_config_version_safe_with_macros(tmp_path: Path) -> None:

@@ -17,6 +17,7 @@ from types import SimpleNamespace
 import pytest
 
 from holdspeak.commands.dictation import _cmd_dry_run
+from holdspeak.config import Config
 
 
 _BLOCKS_YAML = dedent(
@@ -58,10 +59,15 @@ def test_cli_dry_run_populates_project_from_cwd(
     root = _seed_project(tmp_path)
     monkeypatch.chdir(root)
 
+    # HS-139-02: pipeline.enabled default flipped to True; these tests exercise
+    # project detection (lexical path), so explicitly disable to avoid credential
+    # refusal.
+    cfg = Config()
+    cfg.dictation.pipeline.enabled = False
     args = SimpleNamespace(text="hello world")
     out = io.StringIO()
 
-    rc = _cmd_dry_run(args, out)
+    rc = _cmd_dry_run(args, out, config_snapshot=cfg)
 
     assert rc == 0
     output = out.getvalue()
@@ -80,10 +86,12 @@ def test_cli_dry_run_reports_no_project_outside_tree(
     bare.mkdir()
     monkeypatch.chdir(bare)
 
+    cfg = Config()
+    cfg.dictation.pipeline.enabled = False  # HS-139-02: see above
     args = SimpleNamespace(text="hello world")
     out = io.StringIO()
 
-    rc = _cmd_dry_run(args, out)
+    rc = _cmd_dry_run(args, out, config_snapshot=cfg)
 
     assert rc == 0
     assert "project: (none detected)" in out.getvalue()

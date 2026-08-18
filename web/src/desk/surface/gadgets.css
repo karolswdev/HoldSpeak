@@ -311,6 +311,8 @@
 /* The docked in-well mic: square, beveled, 20×20. */
 .gadget-string .desk-mic,
 .desk-next .gadget-string .desk-mic {
+  display: grid;
+  place-items: center;
   flex: none;
   align-self: center;
   width: var(--size-icon-md);
@@ -321,6 +323,20 @@
   background: var(--surface-2);
   box-shadow: inset 1px 1px 0 var(--bevel-light), inset -1px -1px 0 var(--bevel-dark);
   font-size: 10px;
+  line-height: 0;
+  padding: 0;
+}
+.gadget-string .desk-mic > span,
+.desk-next .gadget-string .desk-mic > span {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  line-height: 0;
+}
+.gadget-string .desk-mic .desk-chrome-sprite,
+.desk-next .gadget-string .desk-mic .desk-chrome-sprite {
+  display: block;
 }
 .gadget-string .desk-mic-failure,
 .desk-next .gadget-string .desk-mic-failure {

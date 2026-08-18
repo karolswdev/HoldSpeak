@@ -18,10 +18,12 @@ class HotkeyConfig:
 
 @dataclass
 class UIConfig:
-    """UI configuration."""
-    show_audio_meter: bool = True
-    history_lines: int = 10
-    theme: str = "dark"  # dark, light, dracula, monokai
+    """UI configuration.
+
+    HS-139-01: show_audio_meter, history_lines, theme deleted — dead
+    settings (no runtime consumer; the desk is dark by law). Legacy
+    config.json keys are dropped by _coerce on load.
+    """
     desk_sounds: bool = True  # HS-135-12: mechanical sound palette, ON by default
 
 

@@ -136,13 +136,16 @@ def test_milestone_mark_is_idempotent(tmp_path) -> None:
 
 
 def test_trust_default_is_local_only(isolated_config, monkeypatch) -> None:
+    """HS-139-08: open throttle — actuators default ON, but with no cloud
+    endpoints configured the egress posture is still local-only."""
     _stub_checks(monkeypatch, _checks(("Mic", "PASS")))
     trust = setup_status.build_setup_status(config=Config())["trust"]
     assert trust["web_bind"] == "127.0.0.1"
     assert trust["auth_token_set"] is False
     assert trust["transcript_egress"] == "none"
     assert trust["configured_endpoints"] == []
-    assert trust["actuators_enabled"] is False
+    # HS-139-08: allow_actuators defaults True (owner ruling: ledger-not-gate).
+    assert trust["actuators_enabled"] is True
 
 
 def test_trust_reflects_cloud_endpoint_and_actuators(isolated_config, monkeypatch) -> None:

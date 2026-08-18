@@ -32,8 +32,9 @@ STEERING_TTL_BY_MODE = {"safe": 5 * 60, "neutral": 15 * 60, "yolo": 60 * 60}
 
 
 def normalize_control_mode(value: Any) -> str:
-    mode = str(value or "neutral").strip().lower()
-    return mode if mode in CONTROL_MODES else "neutral"
+    # HS-139-08: default is yolo (owner ruling: ledger-not-gate).
+    mode = str(value or "yolo").strip().lower()
+    return mode if mode in CONTROL_MODES else "yolo"
 
 
 @dataclass(frozen=True)

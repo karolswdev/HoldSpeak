@@ -64,10 +64,16 @@ describe("the subtree-writer allowlist (HS-130-07)", () => {
       .map((f) => f.name)
       .sort();
     // SettingsCore is the canonical full-document writer; CommandsCore writes
-    // ONLY the macro `items`. No third writer is permitted.
+    // ONLY the macro `items`. HS-139-03 moved object-level config home:
+    // MeetingsConfig owns the meeting capture/export subtree and DeliveryBoard
+    // owns the companion-repo key — each is the ONE writer of its subtree and
+    // those rows no longer render in SettingsCore. No other writer is
+    // permitted.
     expect(writers).toEqual([
+      "desk/components/DeliveryBoard.tsx",
       "pages/cores/CommandsCore.tsx",
       "pages/cores/SettingsCore.tsx",
+      "pages/cores/history/MeetingsConfig.tsx",
     ]);
   });
 

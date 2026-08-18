@@ -256,13 +256,20 @@ class SettingsService:
         hotkey_data["key"] = hotkey_key
         hotkey_data["display"] = KEY_DISPLAY.get(hotkey_key, hotkey_key)
 
-        model_name = str(model_data.get("name", current.model.name))
-        if model_name not in {"tiny", "base", "small", "medium", "large"}:
-            return {"success": False, "error": f"Invalid model name: {model_name}"}
-        model_data["name"] = model_name
-        model_data["warm_on_start"] = bool(
-            model_data.get("warm_on_start", current.model.warm_on_start)
-        )
+        # HS-139-02: strip defaulted keys — these dials are removed from
+        # the settings surface and the service-writable set. A stale
+        # client echoing them back gets the value silently dropped so
+        # the pinned default governs.
+        _DEFAULTED_MODEL = {"name", "warm_on_start"}
+        _DEFAULTED_MEETING = {
+            "mic_label", "remote_label", "cross_meeting_recognition",
+            "web_auto_open", "intel_enabled", "intel_deferred_enabled",
+            "mir_enabled",
+        }
+        for _dk in _DEFAULTED_MODEL:
+            model_data.pop(_dk, None)
+        for _dk in _DEFAULTED_MEETING:
+            meeting_data.pop(_dk, None)
         # HS-59: validate the transcription language at the boundary so a
         # typo fails the settings write, not a dictation later. Store the
         # normalized code ("auto" for detection).
@@ -316,22 +323,11 @@ class SettingsService:
         wake_data["model"] = wake_model
         wake_data["enabled"] = bool(wake_data.get("enabled", current_wake.enabled))
 
-        # --- UIConfig validation ---
-        theme = str(ui_data.get("theme", current.ui.theme)).strip().lower()
-        if theme not in {"dark", "light", "dracula", "monokai"}:
-            return {"success": False, "error": f"Invalid theme: {theme}"}
-        ui_data["theme"] = theme
-
-        history_lines = int(ui_data.get("history_lines", current.ui.history_lines))
-        if not (1 <= history_lines <= 100):
-            return {
-                "success": False,
-                "error": "history_lines must be between 1 and 100",
-            }
-        ui_data["history_lines"] = history_lines
-        ui_data["show_audio_meter"] = bool(
-            ui_data.get("show_audio_meter", current.ui.show_audio_meter)
-        )
+        # --- UIConfig validation (HS-139-01: theme/history_lines/show_audio_meter
+        # deleted — dead settings with no runtime consumer) ---
+        # Strip any legacy keys a stale client might echo back.
+        for _dead_ui in ("theme", "history_lines", "show_audio_meter"):
+            ui_data.pop(_dead_ui, None)
         ui_data["desk_sounds"] = bool(
             ui_data.get("desk_sounds", current.ui.desk_sounds)
         )
@@ -375,9 +371,7 @@ class SettingsService:
 
         from holdspeak.plugins.router import available_profiles
 
-        meeting_data["mir_enabled"] = bool(
-            meeting_data.get("mir_enabled", current.meeting.mir_enabled)
-        )
+        # HS-139-02: mir_enabled stripped above (pinned true).
         # HS-130-05 / HS-134-08: the ONE routing profile. Accept
         # `routing_profile`; tolerate a stale `mir_profile` key from an
         # older client (drop after reading).
@@ -398,17 +392,9 @@ class SettingsService:
         meeting_data["routing_profile"] = routing_profile
         meeting_data.pop("mir_profile", None)
 
-        poll_seconds = int(
-            meeting_data.get(
-                "intel_queue_poll_seconds", current.meeting.intel_queue_poll_seconds
-            )
-        )
-        if poll_seconds < 5:
-            return {
-                "success": False,
-                "error": "intel_queue_poll_seconds must be at least 5",
-            }
-        meeting_data["intel_queue_poll_seconds"] = poll_seconds
+        # HS-139-01: intel_queue_poll_seconds deleted (dead — never threaded
+        # to IntelQueue). Strip a stale client echo.
+        meeting_data.pop("intel_queue_poll_seconds", None)
 
         retry_base_seconds = int(
             meeting_data.get(
@@ -446,33 +432,11 @@ class SettingsService:
             }
         meeting_data["intel_retry_max_attempts"] = retry_max_attempts
 
-        failure_alert_percent = float(
-            meeting_data.get(
-                "intel_retry_failure_alert_percent",
-                current.meeting.intel_retry_failure_alert_percent,
-            )
-        )
-        if not (0.0 <= failure_alert_percent <= 100.0):
-            return {
-                "success": False,
-                "error": "intel_retry_failure_alert_percent must be between 0 and 100",
-            }
-        meeting_data["intel_retry_failure_alert_percent"] = failure_alert_percent
-
-        failure_hysteresis_minutes = float(
-            meeting_data.get(
-                "intel_retry_failure_hysteresis_minutes",
-                current.meeting.intel_retry_failure_hysteresis_minutes,
-            )
-        )
-        if failure_hysteresis_minutes < 0.0:
-            return {
-                "success": False,
-                "error": "intel_retry_failure_hysteresis_minutes must be >= 0",
-            }
-        meeting_data["intel_retry_failure_hysteresis_minutes"] = (
-            failure_hysteresis_minutes
-        )
+        # HS-139-01: intel_retry_failure_alert_percent and
+        # intel_retry_failure_hysteresis_minutes deleted (dead — never
+        # threaded to IntelQueue). Strip stale client echoes.
+        meeting_data.pop("intel_retry_failure_alert_percent", None)
+        meeting_data.pop("intel_retry_failure_hysteresis_minutes", None)
 
         webhook_url = str(
             meeting_data.get(
@@ -617,9 +581,9 @@ class SettingsService:
         pipeline_data = dictation_data.get("pipeline", {}) or {}
         runtime_data = dictation_data.get("runtime", {}) or {}
 
-        pipeline_data["enabled"] = bool(
-            pipeline_data.get("enabled", current.dictation.pipeline.enabled)
-        )
+        # HS-139-02: strip defaulted pipeline keys — pinned, not writable.
+        for _dpk in ("enabled", "corrections_enabled", "journal_enabled", "journal_retention"):
+            pipeline_data.pop(_dpk, None)
         raw_stages = pipeline_data.get("stages", current.dictation.pipeline.stages)
         if not isinstance(raw_stages, list) or not all(
             isinstance(stage, str) for stage in raw_stages
@@ -709,11 +673,7 @@ class SettingsService:
                 "error": "dictation.pipeline.target_detect_llm_below must be a number",
             }
         pipeline_data["target_detect_llm_below"] = target_detect_below
-        pipeline_data["corrections_enabled"] = bool(
-            pipeline_data.get(
-                "corrections_enabled", current.dictation.pipeline.corrections_enabled
-            )
-        )
+        # HS-139-02: corrections_enabled stripped above (pinned true).
         pipeline_data["target_detect_llm_enabled"] = bool(
             pipeline_data.get(
                 "target_detect_llm_enabled",
