@@ -12,8 +12,9 @@ import { SurfaceFooter } from "../surface/SurfaceFooter";
 // consequence line; the footer receipt bar carries the freshness fact the
 // wire already held. The delivery wires are untouched.
 import "./delivery.css";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "../../components/signal/Signal";
+import { apiFetch } from "../../lib/api";
 import { ReceiptLine } from "./ReceiptLine";
 import {
   activeAttempts,
@@ -42,6 +43,7 @@ import {
   StringGadget,
   TransportKey,
 } from "../surface/gadgets";
+import { withRevision } from "../../lib/settingsWrite";
 import {
   DeskWindowFrame,
   announceLauncher,
@@ -253,6 +255,67 @@ function LaunchComposer({ sources }: { sources: DeliverySource[] }) {
   );
 }
 
+/** HS-139-03: companion GitHub repo config, moved from Settings > Meetings.
+ *  Writes through /api/settings with revision concurrency. */
+function CompanionRepoConfig() {
+  const [data, setData] = useState<Record<string, unknown> | null>(null);
+  const revisionRef = useRef<string | undefined>(undefined);
+  const saveTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+
+  useEffect(() => {
+    void apiFetch<Record<string, unknown>>("/api/settings").then((result) => {
+      setData(result);
+      revisionRef.current = result._revision as string | undefined;
+    });
+    return () => clearTimeout(saveTimer.current);
+  }, []);
+
+  if (!data) return null;
+
+  const meeting = (data.meeting ?? {}) as Record<string, unknown>;
+
+  const save = async (patch: Record<string, unknown>) => {
+    try {
+      const result = await apiFetch<{ settings?: Record<string, unknown> }>(
+        "/api/settings",
+        {
+          method: "PUT",
+          json: withRevision(patch, { _revision: revisionRef.current }),
+        },
+      );
+      const next = result.settings ?? patch;
+      setData(next as Record<string, unknown>);
+      revisionRef.current = (next as Record<string, unknown>)._revision as
+        | string
+        | undefined;
+    } catch {
+      /* Delivery board has no receipt bar; silent fail is acceptable. */
+    }
+  };
+
+  const update = (value: unknown) => {
+    const nextMeeting = { ...meeting, companion_github_repo: value };
+    const nextData = { ...data, meeting: nextMeeting };
+    setData(nextData);
+    revisionRef.current = nextData._revision as string | undefined;
+    clearTimeout(saveTimer.current);
+    saveTimer.current = setTimeout(() => void save(nextData), 700);
+  };
+
+  return (
+    <GadgetGroup label="Integration">
+      <GadgetRow label="Companion repo" fact="owner/repo">
+        <StringGadget
+          label="GitHub repo"
+          value={String(meeting.companion_github_repo ?? "")}
+          placeholder="owner/repo"
+          onChange={(next) => update(next || null)}
+        />
+      </GadgetRow>
+    </GadgetGroup>
+  );
+}
+
 export function DeliveryBoard() {
   const sources = useDelivery((s) => s.sources);
   const attempts = useDelivery((s) => s.attempts);
@@ -452,6 +515,7 @@ export function DeliveryBoard() {
         </section>
       ) : null}
 
+      <CompanionRepoConfig />
       <LaunchComposer sources={sources} />
       </div>
 

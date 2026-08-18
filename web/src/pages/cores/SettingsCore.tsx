@@ -622,18 +622,15 @@ function SettingsFace({ hero, scope }: CoreProps) {
         return (
           <>
             <GadgetGroup label="Capture">
-              {str(["meeting", "mic_device"], "Mic device", {
-                fact: "device name",
-              })}
-              {str(["meeting", "system_audio_device"], "System audio device", {
-                fact: "device name",
-              })}
-              {/* HS-139-02: mic_label + remote_label removed (DEFAULT —
-                  pinned "Me"/"Remote"; nobody changes these) */}
+              {/* HS-139-03: mic_device + system_audio_device moved to
+                  the Meetings surface (edit-in-world law). */}
+              <div className="prefs-elsewhere">
+                <span className="prefs-elsewhere-fact">
+                  CAPTURE CONFIG LIVES ON MEETINGS
+                </span>
+              </div>
               {check(["meeting", "diarization_enabled"], "Diarization")}
               {check(["meeting", "diarize_mic"], "Diarize mic")}
-              {/* HS-139-02: cross_meeting_recognition removed (DEFAULT —
-                  pinned true; nobody disables this) */}
               {prop(["meeting", "similarity_threshold"], "Similarity", {
                 min: 0,
                 max: 1,
@@ -641,15 +638,19 @@ function SettingsFace({ hero, scope }: CoreProps) {
               })}
             </GadgetGroup>
             <GadgetGroup label="Export">
-              {check(["meeting", "auto_export"], "Auto export")}
-              {cyc(["meeting", "export_format"], "Format", EXPORT_FORMAT_OPTIONS)}
-              {/* HS-139-02: web_auto_open deleted (DEFAULT — hardcoded
-                  true at the one consumer) */}
+              {/* HS-139-03: auto_export + export_format moved to
+                  the Meetings surface (edit-in-world law). */}
+              <div className="prefs-elsewhere">
+                <span className="prefs-elsewhere-fact">
+                  EXPORT CONFIG LIVES ON MEETINGS
+                </span>
+              </div>
             </GadgetGroup>
             <GadgetGroup label="Intelligence">
               {/* HS-139-02: intel_enabled removed (DEFAULT — pinned
                   true; turning it off defeats the product) */}
-              {str(["meeting", "intel_realtime_model"], "Realtime model")}
+              {/* HS-139-03: intel_realtime_model moved to Models module
+                  (the one-dial law: model paths live with models). */}
               {str(["meeting", "intel_summary_model"], "Summary model")}
               {check(["meeting", "intel_cloud_store"], "Cloud store")}
               {/* HS-112-01: the endpoint dial lives in Models. HS-132-10: so
@@ -746,9 +747,8 @@ function SettingsFace({ hero, scope }: CoreProps) {
               {check(["meeting", "allow_actuators"], "Allow actuators")}
               {csv(["meeting", "allowed_actuators"], "Allowed actuators")}
               {csv(["meeting", "webhook_allowed_hosts"], "Webhook hosts")}
-              {str(["meeting", "companion_github_repo"], "GitHub repo", {
-                placeholder: "owner/repo",
-              })}
+              {/* HS-139-03: companion_github_repo moved to Delivery
+                  board (the integration it configures). */}
             </GadgetGroup>
           </>
         );

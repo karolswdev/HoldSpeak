@@ -17,6 +17,7 @@ import { humanTime, presentValue } from "../../../desk/surface/format";
 import { asRows, rowId } from "../../pageSupport";
 import { DOOR_SECTIONS, displayState } from "./helpers";
 import { apiFetch } from "../../../lib/api";
+import { MeetingsConfig } from "./MeetingsConfig";
 
 export function DoorSection({
   actions,
@@ -137,6 +138,8 @@ export function DoorSection({
           )}
         </SurfaceSection>
       ))}
+      {/* HS-139-03: capture + export config lives on its object. */}
+      <MeetingsConfig />
     </div>
   );
 }

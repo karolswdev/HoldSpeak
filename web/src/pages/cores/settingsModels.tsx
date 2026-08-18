@@ -326,6 +326,15 @@ export function ModelsModule({
           <LampGadget on tone="fail" block label={providerIgnored} />
         </div>
       ) : null}
+      {/* HS-139-03: intel_realtime_model moved from Settings > Meetings. */}
+      <GadgetRow label="Realtime model">
+        <StringGadget
+          label="Realtime model"
+          value={String(val(["meeting", "intel_realtime_model"]) ?? "")}
+          placeholder="path to local model"
+          onChange={(next) => update(["meeting", "intel_realtime_model"], next || null)}
+        />
+      </GadgetRow>
       <div className="prefs-egress-line">
         <span className="gadget-fact">{MEETING_PLACEMENT_RULE}</span>
       </div>

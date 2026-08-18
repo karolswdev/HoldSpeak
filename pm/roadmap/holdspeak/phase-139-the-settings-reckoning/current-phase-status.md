@@ -1,8 +1,8 @@
 # Phase 139 — The Settings Reckoning
 
-**Status:** active (2/7).
+**Status:** active (3/7).
 
-**Last updated:** 2026-08-17.
+**Last updated:** 2026-08-18.
 
 ## Owner mandate
 
@@ -46,7 +46,7 @@ session's scratchpad; the walk story re-shoots everything after.
 |---|---|---|---|---|
 | HS-139-01 | Kill the liars | done | [story-01](./story-01-kill-the-liars.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-139-02 | Defaults are law | done | [story-02](./story-02-defaults-are-law.md) | [evidence-story-02](./evidence-story-02.md) |
-| HS-139-03 | Config goes home | ready | [story-03](./story-03-config-goes-home.md) | — |
+| HS-139-03 | Config goes home | done | [story-03](./story-03-config-goes-home.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-139-04 | The RAW wells | ready | [story-04](./story-04-the-raw-wells.md) | — |
 | HS-139-05 | Seven tiles | ready | [story-05](./story-05-seven-tiles.md) | — |
 | HS-139-06 | The docs sweep | ready | [story-06](./story-06-the-docs-sweep.md) | — |
@@ -70,9 +70,11 @@ session's scratchpad; the walk story re-shoots everything after.
 
 ## Where we are
 
-HS-139-01 done, HS-139-02 done. Thirteen dials removed from the settings
-surface (six dead fields deleted, two duplicates killed, twelve defaults
-pinned). One field (web_auto_open) deleted entirely with the value
-hardcoded at its single consumer. settings.update silently strips writes
-to all removed keys. 86 settings tests green (includes the write-refusal
-test proving every defaulted key is non-writable).
+HS-139-01 done, HS-139-02 done, HS-139-03 done. Six FOLD-TO-OBJECT
+controls moved from the Settings panel to their objects: mic device,
+system audio device, auto-export, and export format to the Meetings
+surface (DoorSection > MeetingsConfig); intel realtime model to the
+Models module; companion GitHub repo to the Delivery board. Each
+renders exactly once on its object's surface, writes still round-trip
+through /api/settings with revision concurrency. 128 settings tests +
+17 vitest green.
