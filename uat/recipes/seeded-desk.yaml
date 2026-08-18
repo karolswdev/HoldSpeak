@@ -9,7 +9,9 @@ seeds:
   - dogfood-desk
 probe:
   - notes_min_count: 3
-  - egress_scope_is: local
+  # HS-139-08: actuators default on → egress scope is "mixed" (honest
+  # badge: the system CAN egress if a destination is configured).
+  - egress_scope_is: mixed
   - note_exists: uat-seed-note-decisions
   - note_exists: uat-seed-note-glossary
   - kb_exists: uat-seed-kb-project

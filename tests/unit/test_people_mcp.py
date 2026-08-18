@@ -41,9 +41,20 @@ def _call(name: str, arguments: dict[str, Any] | None = None) -> tuple[bool, Any
     return result["isError"], json.loads(result["content"][0]["text"])
 
 
-def test_people_mcp_is_default_deny_and_readiness_does_not_open_store(
+def test_people_mcp_default_is_write_and_readiness_does_not_open_store_when_off(
     people_service: PeopleService, monkeypatch: pytest.MonkeyPatch
 ) -> None:
+    """HS-139-08: the default is now "write" (owner ruling: ledger-not-gate).
+    The invariants that still hold:
+    - Readiness never opens the store when access is off.
+    - Leader-private material is never serialized.
+    - Explicit env can still set off/read.
+    """
+    # Verify the default is "write" (no env var set).
+    assert people_family.access_mode() == "write"
+
+    # Explicit env override to "off" — the store must NOT be composed.
+    monkeypatch.setenv(people_family.ACCESS_ENV, "off")
     monkeypatch.setattr(
         people_family,
         "build_people_service",
@@ -62,6 +73,10 @@ def test_people_mcp_is_default_deny_and_readiness_does_not_open_store(
     failed, error = _call("people.relationship.list")
     assert failed is True
     assert error == {"error": "people_mcp_access_disabled"}
+
+    # Explicit env override to "read" — reads work, writes refused.
+    monkeypatch.setenv(people_family.ACCESS_ENV, "read")
+    assert people_family.access_mode() == "read"
 
 
 def test_people_mcp_read_projection_omits_every_leader_private_field(

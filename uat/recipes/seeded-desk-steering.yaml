@@ -15,7 +15,8 @@ includes:
   - agent-pane-armed
 probe:
   - notes_min_count: 3
-  - egress_scope_is: local
+  # HS-139-08: actuators default on → egress scope is "mixed".
+  - egress_scope_is: mixed
   - note_exists: uat-seed-note-decisions
   - note_exists: uat-seed-note-glossary
   - kb_exists: uat-seed-kb-project

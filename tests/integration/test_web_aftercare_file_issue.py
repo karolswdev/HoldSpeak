@@ -23,6 +23,8 @@ from fastapi.testclient import TestClient
 
 pytestmark = [pytest.mark.requires_meeting]
 
+import holdspeak.config as config_module
+from holdspeak.config import Config
 from holdspeak.db import Database, get_database, reset_database
 from holdspeak.meeting_session import IntelSnapshot, MeetingState
 from holdspeak.plugins.actuator_executor import (
@@ -81,7 +83,19 @@ def seeded(db: Database):
 
 
 @pytest.fixture
-def client() -> TestClient:
+def settings_path(tmp_path, monkeypatch):
+    """HS-139-08: pin posture to neutral so the propose→approve lifecycle
+    tests exercise the manual-decision path."""
+    target = tmp_path / "config.json"
+    monkeypatch.setattr(config_module, "CONFIG_FILE", target)
+    cfg = Config()
+    cfg.control_mode = "neutral"
+    cfg.save(path=target)
+    return target
+
+
+@pytest.fixture
+def client(settings_path) -> TestClient:
     server = MeetingWebServer(
         WebRuntimeCallbacks(
             on_bookmark=lambda *_a, **_k: None,
