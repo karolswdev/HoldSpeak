@@ -390,5 +390,5 @@ def test_readiness_includes_depth_telemetry_block(
     assert depth["runs"] == 0          # no runs accumulated yet
     assert depth["stages"] == {}       # empty buffer → nulls, not an error
     assert depth["guidance"] == []
-    assert depth["corrections"] == {"enabled": False, "size": 0, "recent": []}
+    assert depth["corrections"] == {"enabled": True, "size": 0, "recent": []}
     assert depth["budget_ms"] == 600   # DictationPipelineConfig default budget

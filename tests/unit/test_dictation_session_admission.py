@@ -691,8 +691,10 @@ def test_meeting_interval_without_a_live_parent_drops_before_whisper(tmp_path, m
 def test_the_plan_freezes_ordered_per_capability_revisions(tmp_path, monkeypatch):
     db, _broker, _host, _impl = _build_host(tmp_path, monkeypatch)
     config = Config()
-    # Pipeline OFF (the default): no provider-backed stage is planned, so a stage
-    # dispatch would refuse by name instead of silently reaching a model.
+    # Pipeline explicitly OFF (HS-139-02 flipped the default to True): no
+    # provider-backed stage is planned, so a stage dispatch would refuse by
+    # name instead of silently reaching a model.
+    config.dictation.pipeline.enabled = False
     plain = admit_hold_session(config_snapshot=config).plan
     assert set(plain.capabilities) == {CAPABILITY_WHISPER_TRANSCRIBE, CAPABILITY_WHISPER_PRELOAD}
 

@@ -191,7 +191,8 @@ def _enabled_dictation_config(model_path: Path) -> Config:
 
 
 def test_dictation_runtime_check_pass_when_pipeline_disabled() -> None:
-    cfg = Config()  # default: pipeline.enabled = False
+    cfg = Config()
+    cfg.dictation.pipeline.enabled = False  # explicitly disabled (HS-139-02 flipped default to True)
     result = doctor._check_dictation_runtime(cfg)
     assert result.status == "PASS"
     assert "disabled" in result.detail
@@ -258,7 +259,8 @@ def test_dictation_runtime_check_pass_for_openai_compatible(monkeypatch) -> None
 
 
 def test_project_context_check_pass_when_pipeline_disabled() -> None:
-    cfg = Config()  # default: dictation pipeline disabled
+    cfg = Config()
+    cfg.dictation.pipeline.enabled = False  # explicitly disabled (HS-139-02 flipped default to True)
     result = doctor._check_dictation_project_context(cfg)
     assert result.status == "PASS"
     assert "disabled" in result.detail
@@ -327,6 +329,7 @@ def test_runtime_counters_check_reports_snapshot_when_enabled(monkeypatch) -> No
 
 def test_dictation_compile_check_pass_when_pipeline_disabled() -> None:
     cfg = Config()
+    cfg.dictation.pipeline.enabled = False  # explicitly disabled (HS-139-02 flipped default to True)
     result = doctor._check_dictation_constraint_compile(cfg)
     assert result.status == "PASS"
     assert "disabled" in result.detail

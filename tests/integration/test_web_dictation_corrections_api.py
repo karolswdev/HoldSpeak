@@ -44,7 +44,7 @@ def test_corrections_empty_by_default(test_client: TestClient, settings_path: Pa
     resp = test_client.get("/api/dictation/corrections")
     assert resp.status_code == 200
     body = resp.json()
-    assert body["enabled"] is False  # opt-in; default config has it off
+    assert body["enabled"] is True  # HS-139-02: corrections_enabled pinned to True
     assert body["size"] == 0
     assert body["items"] == []
     assert "intent" in body["kinds"] and "target" in body["kinds"]

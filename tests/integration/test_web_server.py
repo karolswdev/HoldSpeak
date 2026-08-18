@@ -661,10 +661,11 @@ class TestCompanionStatusEndpoint:
         assert response.status_code == 200
         payload = response.json()
         assert payload["ready_for_agent_reply"] is False
+        # HS-139-02: pipeline.enabled default flipped to True, so
+        # "dictation_pipeline_disabled" is no longer a default-config blocker.
         assert set(payload["blockers"]) == {
             "no_device_connected",
             "no_agent_waiting",
-            "dictation_pipeline_disabled",
             "text_injection_unavailable",
         }
         assert payload["runtime"]["text_injection_enabled"] is False

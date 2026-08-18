@@ -105,8 +105,8 @@ def test_digest_marks_corrected_dictations(persistent_db: Database, settings_pat
 
 def test_digest_reports_corrections_enabled_posture(persistent_db: Database, settings_path: Path) -> None:
     body = _persistent_client(persistent_db).get("/api/dictation/learning-digest").json()
-    # Off by default; the flag is honest about whether corrections actually route.
-    assert body["enabled"] is False
+    # HS-139-02: corrections_enabled pinned to True (was False).
+    assert body["enabled"] is True
 
 
 # ── page content ──────────────────────────────────────────────────────────
