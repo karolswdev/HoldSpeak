@@ -1,6 +1,6 @@
 # Phase 139 — The Settings Reckoning
 
-**Status:** active (7/8).
+**Status:** active (8/8).
 
 **Last updated:** 2026-08-18.
 
@@ -50,7 +50,7 @@ session's scratchpad; the walk story re-shoots everything after.
 | HS-139-04 | The RAW wells | done | [story-04](./story-04-the-raw-wells.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-139-05 | Seven tiles | done | [story-05](./story-05-seven-tiles.md) | [evidence-story-05](./evidence-story-05.md) |
 | HS-139-06 | The docs sweep | done | [story-06](./story-06-the-docs-sweep.md) | [evidence-story-06](./evidence-story-06.md) |
-| HS-139-07 | The walk | ready | [story-07](./story-07-the-walk.md) | — |
+| HS-139-07 | The walk | done | [story-07](./story-07-the-walk.md) | [evidence-story-07](./evidence-story-07.md) |
 | HS-139-08 | Open throttle | done | [story-08](./story-08-open-throttle.md) | [evidence-story-08](./evidence-story-08.md) |
 
 ## Risk register
@@ -78,12 +78,14 @@ session's scratchpad; the walk story re-shoots everything after.
 
 ## Where we are
 
-HS-139-01 through HS-139-06 done, HS-139-08 done. Seven tiles shipped
-(Voice, Sounds & Presence, Meetings, Rhythm, Models, Integrations,
-System). Open throttle shipped: POSTURE=YOLO, actuators on with
-wildcard allowlists, People MCP defaults write, all boundary suites
-green (40/40). Docs sweep done: SECURITY.md states the YOLO default
-honestly and names the hard boundary; every killed/pinned field
-swept from entry-point docs; 34 doc-drift + product-copy + API surface
-guards green. On-glass controls (excluding RAW): 36. 51 backend +
-23 vitest pass. HS-139-07 (the walk) in progress.
+All 8 stories done. Seven tiles shipped (Voice, Sounds & Presence,
+Meetings, Rhythm, Models, Integrations, System). Open throttle shipped:
+POSTURE=YOLO, actuators on with wildcard allowlists, People MCP
+defaults write, all boundary suites green. Docs sweep done: SECURITY.md
+states the YOLO default honestly and names the hard boundary. The walk:
+76 passed, 0 failed, 0 findings, 29 shots at 1440x900 and 393x900.
+Measured bars: face = 7 tiles (bar <=8), on-glass controls = 29
+(bar <=40), zero horizontal scroll, RAW wells closed on open. Three
+tasks on glass: (a) hotkey changed + API round-trip, (b) destination
+added at 393px cards mode + API verified, (c) RAW knob changed + API
+round-trip. Zero console errors everywhere.

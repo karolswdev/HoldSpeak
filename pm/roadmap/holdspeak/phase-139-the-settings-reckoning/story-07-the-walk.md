@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 139
-- **Status:** ready
+- **Status:** done
 - **Depends on:** 139-01, 139-02, 139-03, 139-04, 139-05, 139-06
 - **Unblocks:** phase close
 - **Owner:** orchestrator adjudicates
