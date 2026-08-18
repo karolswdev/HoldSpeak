@@ -1,6 +1,6 @@
 # Phase 139 — The Settings Reckoning
 
-**Status:** active (4/7).
+**Status:** active (4/8).
 
 **Last updated:** 2026-08-18.
 
@@ -51,6 +51,7 @@ session's scratchpad; the walk story re-shoots everything after.
 | HS-139-05 | Seven tiles | ready | [story-05](./story-05-seven-tiles.md) | — |
 | HS-139-06 | The docs sweep | ready | [story-06](./story-06-the-docs-sweep.md) | — |
 | HS-139-07 | The walk | ready | [story-07](./story-07-the-walk.md) | — |
+| HS-139-08 | Open throttle | ready | [story-08](./story-08-open-throttle.md) | — |
 
 ## Risk register
 
@@ -64,6 +65,13 @@ session's scratchpad; the walk story re-shoots everything after.
 
 ## Decision log
 
+- 2026-08-17 — AMENDED: HS-139-08 "Open throttle" added by owner ruling
+  ("loosen security to the floor" — completes ledger-not-gate): permissive
+  defaults everywhere (POSTURE=YOLO, actuators on, MCP families on); hard
+  boundary stays (custody, People refusal matrix, egress badges, receipts).
+- 2026-08-17 — Census correction (HS-139-03 worker): FOLD-TO-OBJECT is six
+  rows, not seven — the census summary's count was off by one; all six
+  moved home. Story text notes the discrepancy.
 - 2026-08-17 — Chartered from the census; owner blessed the headline cut
   (101→33, 14→7 tiles, dead dials die, knobs fold to RAW, meetings
   config moves home). Row-level overrule remains open at the sitting.
