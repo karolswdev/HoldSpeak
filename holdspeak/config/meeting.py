@@ -99,17 +99,18 @@ class MeetingConfig:
 
     # HS-37-04: actuator execution policy (the governance gate). Actuators
     # PROPOSE by default; *executing* an approved proposal needs BOTH the master
-    # switch on AND the actuator id on the per-project allow-list. Default-safe:
-    # allow_actuators=False and an empty allow-list mean no external side effect
-    # ever runs, even for an approved proposal. (Approval is always additionally
-    # required -- see the proposal lifecycle.)
-    allow_actuators: bool = False
-    allowed_actuators: list[str] = field(default_factory=list)
+    # switch on AND the actuator id on the per-project allow-list.
+    # HS-139-08: permissive defaults (owner ruling: ledger-not-gate).
+    # allow_actuators=True with a wildcard allow-list so actuators run by
+    # default. Approval is always additionally required (the proposal lifecycle).
+    allow_actuators: bool = True
+    allowed_actuators: list[str] = field(default_factory=lambda: ["*"])
     # HS-38-03: the webhook write connector's host allow-list (the resolved
     # granularity for the HS-38-01 deferral). A webhook actuator may POST only to
     # a host on this list; a proposal whose target host is not a member is refused
-    # before egress. Default-empty => nothing posts, even with actuators enabled.
-    webhook_allowed_hosts: list[str] = field(default_factory=list)
+    # before egress.
+    # HS-139-08: permissive default — wildcard means any host is allowed.
+    webhook_allowed_hosts: list[str] = field(default_factory=lambda: ["*"])
     # HS-61-01: the Send-to-Slack incoming-webhook URL. Default-empty = the
     # feature is invisible (no aftercare buttons, the export route refuses).
     # Setting it is the consent for that URL's host: the Slack connector's

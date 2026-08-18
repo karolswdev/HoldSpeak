@@ -456,7 +456,7 @@ CREATE TABLE IF NOT EXISTS authority_grants (
     revoked_at TEXT,
     revoke_reason TEXT,
     binding_hash TEXT NOT NULL,
-    control_mode TEXT NOT NULL DEFAULT 'neutral'
+    control_mode TEXT NOT NULL DEFAULT 'yolo'
         CHECK (control_mode IN ('safe','neutral','yolo'))
 );
 CREATE INDEX IF NOT EXISTS idx_authority_grants_active

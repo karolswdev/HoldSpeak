@@ -23,10 +23,11 @@ def test_control_mode_round_trips_and_invalid_values_fail_to_neutral(tmp_path) -
     config.save(path)
     assert Config.load(path).control_mode == "yolo"
 
+    # HS-139-08: invalid values fall to yolo (was neutral).
     raw = json.loads(path.read_text())
     raw["control_mode"] = "unbounded"
     path.write_text(json.dumps(raw))
-    assert Config.load(path).control_mode == "neutral"
+    assert Config.load(path).control_mode == "yolo"
 
 
 # ============================================================

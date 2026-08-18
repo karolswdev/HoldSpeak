@@ -1,9 +1,10 @@
-"""People family -- explicit, shared-intent-only MCP capability.
+"""People family -- shared-intent-only MCP capability.
 
 People content lives in a separately encrypted sidecar.  MCP is a disclosure
-boundary, not merely another in-process caller, so this family is disabled by
-default and never exposes leader-private material.  The owner opts in when
-starting the sidecar with ``HOLDSPEAK_MCP_PEOPLE_ACCESS=read`` or ``write``.
+boundary, not merely another in-process caller, so this family never exposes
+leader-private material.  HS-139-08: enabled by default (was off) per the
+ledger-not-gate ruling; the owner can restrict via
+``HOLDSPEAK_MCP_PEOPLE_ACCESS=read`` or ``=off``.
 """
 from __future__ import annotations
 
@@ -146,9 +147,14 @@ TOOLS: list[dict[str, Any]] = [
 
 
 def access_mode(environ: Mapping[str, str] | None = None) -> str:
-    """Return the process-boundary capability, refusing unknown values."""
+    """Return the process-boundary capability, refusing unknown values.
+
+    HS-139-08: default is "write" (was "off"). The owner ruling (ledger-not-gate)
+    opens the MCP People capability for the local owner process. The env var
+    overrides when set explicitly.
+    """
     env = os.environ if environ is None else environ
-    value = str(env.get(ACCESS_ENV) or "off").strip().lower()
+    value = str(env.get(ACCESS_ENV) or "write").strip().lower()
     if value not in _ACCESS_MODES:
         raise PeopleServiceError("people_mcp_access_invalid")
     return value
