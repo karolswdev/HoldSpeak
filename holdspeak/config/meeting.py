@@ -61,7 +61,8 @@ class MeetingConfig:
     intel_profile_id: Optional[str] = None
 
     # Web dashboard
-    web_auto_open: bool = False  # Auto-open browser on meeting start
+    # HS-139-02: web_auto_open deleted — default true, nobody toggles
+    # this. Hardcoded at the single consumer (web_runtime.py:581).
     # Owner web-runtime credential (HS-25-02, hardened HS-106-02). Generated
     # lazily and required for owner authority on every bind, including loopback.
     # The auto-open URL bootstraps it without a visible login step.
@@ -339,7 +340,10 @@ def validate_spoken_symbols(raw: object) -> list[dict]:
 class DictationPipelineConfig:
     """DIR-01 dictation pipeline config (spec $9.4). OFF by default."""
 
-    enabled: bool = False
+    # HS-139-02: pinned to True (was False). The pipeline is core
+    # functionality; toggling it off breaks dictation. Removed from the
+    # settings surface and service-writable set.
+    enabled: bool = True
     stages: list[str] = field(default_factory=lambda: ["intent-router", "kb-enricher"])
     max_total_latency_ms: int = 600
     target_profile_override: str = "auto"
@@ -350,7 +354,9 @@ class DictationPipelineConfig:
     rewrite_passes: int = 1
     # HS-39-02: consult the session correction store when routing. OFF by
     # default -- with it off (or the store empty) routing is byte-identical.
-    corrections_enabled: bool = False
+    # HS-139-02: pinned to True (was False). Correction memory is a
+    # pillar feature. Removed from the settings surface.
+    corrections_enabled: bool = True
     # HS-39-03: model-assisted target detection. When ON, a heuristic result
     # below `target_detect_llm_below` confidence is re-classified by the LLM
     # runtime (enum-constrained, degrades to the heuristic on any failure).

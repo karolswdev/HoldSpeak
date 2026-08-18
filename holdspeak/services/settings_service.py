@@ -256,13 +256,20 @@ class SettingsService:
         hotkey_data["key"] = hotkey_key
         hotkey_data["display"] = KEY_DISPLAY.get(hotkey_key, hotkey_key)
 
-        model_name = str(model_data.get("name", current.model.name))
-        if model_name not in {"tiny", "base", "small", "medium", "large"}:
-            return {"success": False, "error": f"Invalid model name: {model_name}"}
-        model_data["name"] = model_name
-        model_data["warm_on_start"] = bool(
-            model_data.get("warm_on_start", current.model.warm_on_start)
-        )
+        # HS-139-02: strip defaulted keys — these dials are removed from
+        # the settings surface and the service-writable set. A stale
+        # client echoing them back gets the value silently dropped so
+        # the pinned default governs.
+        _DEFAULTED_MODEL = {"name", "warm_on_start"}
+        _DEFAULTED_MEETING = {
+            "mic_label", "remote_label", "cross_meeting_recognition",
+            "web_auto_open", "intel_enabled", "intel_deferred_enabled",
+            "mir_enabled",
+        }
+        for _dk in _DEFAULTED_MODEL:
+            model_data.pop(_dk, None)
+        for _dk in _DEFAULTED_MEETING:
+            meeting_data.pop(_dk, None)
         # HS-59: validate the transcription language at the boundary so a
         # typo fails the settings write, not a dictation later. Store the
         # normalized code ("auto" for detection).
@@ -364,9 +371,7 @@ class SettingsService:
 
         from holdspeak.plugins.router import available_profiles
 
-        meeting_data["mir_enabled"] = bool(
-            meeting_data.get("mir_enabled", current.meeting.mir_enabled)
-        )
+        # HS-139-02: mir_enabled stripped above (pinned true).
         # HS-130-05 / HS-134-08: the ONE routing profile. Accept
         # `routing_profile`; tolerate a stale `mir_profile` key from an
         # older client (drop after reading).
@@ -576,9 +581,9 @@ class SettingsService:
         pipeline_data = dictation_data.get("pipeline", {}) or {}
         runtime_data = dictation_data.get("runtime", {}) or {}
 
-        pipeline_data["enabled"] = bool(
-            pipeline_data.get("enabled", current.dictation.pipeline.enabled)
-        )
+        # HS-139-02: strip defaulted pipeline keys — pinned, not writable.
+        for _dpk in ("enabled", "corrections_enabled", "journal_enabled", "journal_retention"):
+            pipeline_data.pop(_dpk, None)
         raw_stages = pipeline_data.get("stages", current.dictation.pipeline.stages)
         if not isinstance(raw_stages, list) or not all(
             isinstance(stage, str) for stage in raw_stages
@@ -668,11 +673,7 @@ class SettingsService:
                 "error": "dictation.pipeline.target_detect_llm_below must be a number",
             }
         pipeline_data["target_detect_llm_below"] = target_detect_below
-        pipeline_data["corrections_enabled"] = bool(
-            pipeline_data.get(
-                "corrections_enabled", current.dictation.pipeline.corrections_enabled
-            )
-        )
+        # HS-139-02: corrections_enabled stripped above (pinned true).
         pipeline_data["target_detect_llm_enabled"] = bool(
             pipeline_data.get(
                 "target_detect_llm_enabled",

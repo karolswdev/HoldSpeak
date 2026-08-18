@@ -44,7 +44,6 @@ import {
   PrefsFace,
   PrefStatusBar,
   WAKE_ACTION_OPTIONS,
-  WHISPER_MODEL_OPTIONS,
   meetingPlacement,
   moduleForKey,
   placementLine,
@@ -457,7 +456,8 @@ function SettingsFace({ hero, scope }: CoreProps) {
       case "transcription":
         return (
           <GadgetGroup>
-            {cyc(["model", "name"], "Model size", WHISPER_MODEL_OPTIONS)}
+            {/* HS-139-02: Model size removed (DEFAULT — seed's choice;
+                Models module has the full model configuration) */}
             {/* HS-139-01: Backend removed (duplicate of Models > Hub
                 Default Engine; the Models module keeps it) */}
             {cyc(["model", "language"], "Language", LANGUAGE_OPTIONS)}
@@ -489,7 +489,8 @@ function SettingsFace({ hero, scope }: CoreProps) {
         return (
           <>
             <GadgetGroup label="Pipeline">
-              {check(["dictation", "pipeline", "enabled"], "Enabled")}
+              {/* HS-139-02: pipeline.enabled removed (DEFAULT — pinned
+                  true; toggling it off breaks core functionality) */}
               {csv(["dictation", "pipeline", "stages"], "Stages")}
               {num(
                 ["dictation", "pipeline", "max_total_latency_ms"],
@@ -504,10 +505,8 @@ function SettingsFace({ hero, scope }: CoreProps) {
                 min: 0,
                 max: 5,
               })}
-              {check(
-                ["dictation", "pipeline", "corrections_enabled"],
-                "Corrections",
-              )}
+              {/* HS-139-02: corrections_enabled removed (DEFAULT —
+                  pinned true; correction memory is a pillar feature) */}
               {check(
                 ["dictation", "pipeline", "target_detect_llm_enabled"],
                 "LLM target detect",
@@ -517,12 +516,8 @@ function SettingsFace({ hero, scope }: CoreProps) {
                 "Detect below",
                 { min: 0, max: 1, step: 0.05 },
               )}
-              {check(["dictation", "pipeline", "journal_enabled"], "Journal")}
-              {num(
-                ["dictation", "pipeline", "journal_retention"],
-                "Journal retention",
-                { unit: "entries", min: 0, step: 50 },
-              )}
+              {/* HS-139-02: journal_enabled + journal_retention removed
+                  (DEFAULT — pinned true/500; the journal is a pillar) */}
             </GadgetGroup>
             <GadgetGroup label="Typing">
               {check(["dictation", "preview_before_type"], "Preview before type")}
@@ -633,14 +628,12 @@ function SettingsFace({ hero, scope }: CoreProps) {
               {str(["meeting", "system_audio_device"], "System audio device", {
                 fact: "device name",
               })}
-              {str(["meeting", "mic_label"], "Mic label")}
-              {str(["meeting", "remote_label"], "Remote label")}
+              {/* HS-139-02: mic_label + remote_label removed (DEFAULT —
+                  pinned "Me"/"Remote"; nobody changes these) */}
               {check(["meeting", "diarization_enabled"], "Diarization")}
               {check(["meeting", "diarize_mic"], "Diarize mic")}
-              {check(
-                ["meeting", "cross_meeting_recognition"],
-                "Cross-meeting recognition",
-              )}
+              {/* HS-139-02: cross_meeting_recognition removed (DEFAULT —
+                  pinned true; nobody disables this) */}
               {prop(["meeting", "similarity_threshold"], "Similarity", {
                 min: 0,
                 max: 1,
@@ -650,10 +643,12 @@ function SettingsFace({ hero, scope }: CoreProps) {
             <GadgetGroup label="Export">
               {check(["meeting", "auto_export"], "Auto export")}
               {cyc(["meeting", "export_format"], "Format", EXPORT_FORMAT_OPTIONS)}
-              {check(["meeting", "web_auto_open"], "Open on web")}
+              {/* HS-139-02: web_auto_open deleted (DEFAULT — hardcoded
+                  true at the one consumer) */}
             </GadgetGroup>
             <GadgetGroup label="Intelligence">
-              {check(["meeting", "intel_enabled"], "Enabled")}
+              {/* HS-139-02: intel_enabled removed (DEFAULT — pinned
+                  true; turning it off defeats the product) */}
               {str(["meeting", "intel_realtime_model"], "Realtime model")}
               {str(["meeting", "intel_summary_model"], "Summary model")}
               {check(["meeting", "intel_cloud_store"], "Cloud store")}
@@ -682,7 +677,9 @@ function SettingsFace({ hero, scope }: CoreProps) {
               </div>
             </GadgetGroup>
             <GadgetGroup label="Deferred queue">
-              {check(["meeting", "intel_deferred_enabled"], "Enabled")}
+              {/* HS-139-02: intel_deferred_enabled removed (DEFAULT —
+                  pinned true; the queue is the safety net for model
+                  unavailability) */}
               {/* HS-139-01: intel_queue_poll_seconds deleted (dead — never
                   threaded to IntelQueue; queue uses hardcoded 120s) */}
               {num(["meeting", "intel_retry_base_seconds"], "Retry base", {
@@ -708,7 +705,8 @@ function SettingsFace({ hero, scope }: CoreProps) {
               )}
             </GadgetGroup>
             <GadgetGroup label="Routing">
-              {check(["meeting", "mir_enabled"], "Multi-intent routing")}
+              {/* HS-139-02: mir_enabled removed (DEFAULT — pinned true;
+                  MIR is a core feature) */}
               {/* HS-130-05: one routing profile. The old `MIR profile` +
                   `Plugin profile` pickers were two owners of one setting;
                   they converged into `meeting.routing_profile`. */}

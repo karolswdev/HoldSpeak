@@ -295,9 +295,9 @@ class TestSettingsPipelineDepthKnobs:
         pipeline = test_client.get("/api/settings").json()["dictation"]["pipeline"]
         for key in self.KNOB_KEYS:
             assert key in pipeline, f"GET /api/settings missing dictation.pipeline.{key}"
-        # Defaults (off-by-default invariant).
+        # Defaults (HS-139-02: corrections_enabled pinned to True).
         assert pipeline["rewrite_passes"] == 1
-        assert pipeline["corrections_enabled"] is False
+        assert pipeline["corrections_enabled"] is True
         assert pipeline["target_detect_llm_enabled"] is False
         assert pipeline["target_detect_llm_below"] == 0.8
 
@@ -471,14 +471,13 @@ def test_dictation_page_includes_copilot_depth_controls() -> None:
     settings = (Path(__file__).resolve().parents[2] / "web/src/pages/cores/SettingsCore.tsx").read_text()
     # HS-111-01: the Voice Typing module authors a control for every
     # Phase-39 depth knob (the generic walker survives only in System).
+    # HS-139-02: corrections_enabled, journal_enabled, journal_retention
+    # removed from the surface (DEFAULT — pinned values).
     for knob in (
         '["dictation", "pipeline", "max_total_latency_ms"]',
         '["dictation", "pipeline", "rewrite_passes"]',
-        '["dictation", "pipeline", "corrections_enabled"]',
         '["dictation", "pipeline", "target_detect_llm_enabled"]',
         '["dictation", "pipeline", "target_detect_llm_below"]',
-        '["dictation", "pipeline", "journal_enabled"]',
-        '["dictation", "pipeline", "journal_retention"]',
     ):
         assert knob in settings, knob
 

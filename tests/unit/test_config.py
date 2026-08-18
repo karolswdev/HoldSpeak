@@ -157,7 +157,8 @@ class TestMeetingConfig:
         assert config.intel_cloud_model == "gpt-5-mini"
         assert config.intel_cloud_api_key_env == "OPENAI_API_KEY"
         assert config.intel_cloud_base_url is None
-        assert config.web_auto_open is False
+        # HS-139-02: web_auto_open deleted (hardcoded true at consumer).
+        assert not hasattr(config, "web_auto_open")
         assert config.mir_enabled is True
         assert config.routing_profile == "balanced"
         # HS-2-09 (spec §9.9) — MIR-01 routing pipeline knobs.
@@ -528,27 +529,20 @@ class TestConfigRoundTrip:
             ui=UIConfig(desk_sounds=False),
             meeting=MeetingConfig(
                 system_audio_device="BlackHole 2ch",
-                mic_label="Host",
-                remote_label="Participants",
                 auto_export=True,
                 export_format="srt",
-                intel_enabled=False,
-                web_auto_open=True,
             ),
         )
         original.save(path)
         loaded = Config.load(path)
 
         assert loaded.hotkey.key == "caps_lock"
-        assert loaded.model.name == "medium"
+        assert loaded.model.name == "medium"  # field persists on disk; API strips writes
         assert loaded.model.warm_on_start is True
         assert loaded.ui.desk_sounds is False
         assert loaded.meeting.system_audio_device == "BlackHole 2ch"
-        assert loaded.meeting.mic_label == "Host"
         assert loaded.meeting.auto_export is True
         assert loaded.meeting.export_format == "srt"
-        assert loaded.meeting.intel_enabled is False
-        assert loaded.meeting.web_auto_open is True
 
     def test_round_trip_preserves_all_meeting_fields(self, tmp_path):
         """Round-trip preserves all MeetingConfig fields."""
@@ -556,36 +550,31 @@ class TestConfigRoundTrip:
         original = Config(
             meeting=MeetingConfig(
                 system_audio_device="Test Device",
-                mic_label="Me",
-                remote_label="Them",
                 auto_export=True,
                 export_format="json",
-                intel_enabled=True,
                 intel_provider="auto",
                 intel_realtime_model="/path/to/model.gguf",
                 intel_summary_model="/path/to/summary.gguf",
                 intel_cloud_model="gpt-5.4",
                 intel_cloud_api_key_env="ALT_OPENAI_KEY",
                 intel_cloud_base_url="https://api.example.com/v1",
-                web_auto_open=True,
             )
         )
         original.save(path)
         loaded = Config.load(path)
 
         assert loaded.meeting.system_audio_device == "Test Device"
-        assert loaded.meeting.mic_label == "Me"
-        assert loaded.meeting.remote_label == "Them"
+        assert loaded.meeting.mic_label == "Me"  # HS-139-02: pinned default
+        assert loaded.meeting.remote_label == "Remote"  # pinned default
         assert loaded.meeting.auto_export is True
         assert loaded.meeting.export_format == "json"
-        assert loaded.meeting.intel_enabled is True
+        assert loaded.meeting.intel_enabled is True  # pinned default
         assert loaded.meeting.intel_provider == "auto"
         assert loaded.meeting.intel_realtime_model == "/path/to/model.gguf"
         assert loaded.meeting.intel_summary_model == "/path/to/summary.gguf"
         assert loaded.meeting.intel_cloud_model == "gpt-5.4"
         assert loaded.meeting.intel_cloud_api_key_env == "ALT_OPENAI_KEY"
         assert loaded.meeting.intel_cloud_base_url == "https://api.example.com/v1"
-        assert loaded.meeting.web_auto_open is True
 
 
 # ============================================================
@@ -722,10 +711,11 @@ class TestDictationPipelineValidation:
             DictationPipelineConfig(rewrite_passes=6)
         assert "rewrite_passes" in str(exc.value)
 
-    def test_corrections_enabled_defaults_off(self):
+    def test_corrections_enabled_defaults_on(self):
+        """HS-139-02: corrections_enabled pinned to True."""
         from holdspeak.config import DictationPipelineConfig
 
-        assert DictationPipelineConfig().corrections_enabled is False
+        assert DictationPipelineConfig().corrections_enabled is True
 
     def test_corrections_enabled_round_trips(self):
         from holdspeak.config import DictationPipelineConfig

@@ -71,9 +71,11 @@ def test_stale_revision_is_rejected_with_409(
     # Both surfaces read the same revision.
     rev0 = client.get("/api/settings").json()["_revision"]
     # Surface A writes a different subtree — the document moves forward.
+    # HS-139-02: use a living field (latency budget) instead of the
+    # defaulted pipeline.enabled.
     a = client.put(
         "/api/settings",
-        json={"_revision": rev0, "dictation": {"pipeline": {"enabled": True}}},
+        json={"_revision": rev0, "dictation": {"pipeline": {"max_total_latency_ms": 900}}},
     )
     assert a.status_code == 200, a.text
     # Surface B, still holding rev0, writes yet another subtree. Its stale copy
@@ -96,7 +98,7 @@ def test_no_write_loss_after_reconcile(
     rev0 = client.get("/api/settings").json()["_revision"]
     a = client.put(
         "/api/settings",
-        json={"_revision": rev0, "dictation": {"pipeline": {"enabled": True}}},
+        json={"_revision": rev0, "dictation": {"pipeline": {"max_total_latency_ms": 900}}},
     )
     assert a.status_code == 200
     rev1 = a.json()["settings"]["_revision"]
@@ -107,7 +109,7 @@ def test_no_write_loss_after_reconcile(
     assert b.status_code == 200, b.text
     # Neither write was lost.
     persisted = Config.load(path=settings_path)
-    assert persisted.dictation.pipeline.enabled is True
+    assert persisted.dictation.pipeline.max_total_latency_ms == 900
     assert persisted.ui.desk_sounds is False
 
 

@@ -39,7 +39,7 @@ def _config(
             diarization_enabled=False,
             diarize_mic=False,
             cross_meeting_recognition=True,
-            web_auto_open=auto_open,
+            # HS-139-02: web_auto_open deleted (hardcoded true at consumer).
             web_auth_token="test-web-token",
             mir_enabled=True,
             routing_profile="balanced",

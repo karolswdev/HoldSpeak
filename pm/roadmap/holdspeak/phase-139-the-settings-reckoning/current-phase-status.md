@@ -1,6 +1,6 @@
 # Phase 139 — The Settings Reckoning
 
-**Status:** active (1/7).
+**Status:** active (2/7).
 
 **Last updated:** 2026-08-17.
 
@@ -45,7 +45,7 @@ session's scratchpad; the walk story re-shoots everything after.
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
 | HS-139-01 | Kill the liars | done | [story-01](./story-01-kill-the-liars.md) | [evidence-story-01](./evidence-story-01.md) |
-| HS-139-02 | Defaults are law | ready | [story-02](./story-02-defaults-are-law.md) | — |
+| HS-139-02 | Defaults are law | done | [story-02](./story-02-defaults-are-law.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-139-03 | Config goes home | ready | [story-03](./story-03-config-goes-home.md) | — |
 | HS-139-04 | The RAW wells | ready | [story-04](./story-04-the-raw-wells.md) | — |
 | HS-139-05 | Seven tiles | ready | [story-05](./story-05-seven-tiles.md) | — |
@@ -70,11 +70,9 @@ session's scratchpad; the walk story re-shoots everything after.
 
 ## Where we are
 
-HS-139-01 (Kill the liars) done: six dead fields deleted from config
-dataclasses, settings service validation, and web controls
-(ui.show_audio_meter, ui.history_lines, ui.theme,
-meeting.intel_queue_poll_seconds, meeting.intel_retry_failure_alert_percent,
-meeting.intel_retry_failure_hysteresis_minutes). Transcription module's
-duplicate Backend and Warm-on-start controls removed (Models module keeps
-them). Pre-reckoning config.json tolerant-load test proves no crash, no
-resurrection. 85 settings tests green.
+HS-139-01 done, HS-139-02 done. Thirteen dials removed from the settings
+surface (six dead fields deleted, two duplicates killed, twelve defaults
+pinned). One field (web_auto_open) deleted entirely with the value
+hardcoded at its single consumer. settings.update silently strips writes
+to all removed keys. 86 settings tests green (includes the write-refusal
+test proving every defaulted key is non-writable).

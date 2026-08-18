@@ -1831,9 +1831,10 @@ class TestSettingsApiEndpoints:
         on_settings_applied.reset_mock()
 
         payload = {
+            # HS-139-02: model.name and warm_on_start are now defaulted
+            # (stripped by the service), so test with living fields.
             "model": {
-                "name": "small",
-                "warm_on_start": False,
+                "language": "pl",
             },
             "meeting": {
                 "intel_provider": "cloud",
@@ -1845,8 +1846,9 @@ class TestSettingsApiEndpoints:
         assert put_response.status_code == 200
         data = put_response.json()
         assert data["success"] is True
-        assert data["settings"]["model"]["name"] == "small"
-        assert data["settings"]["model"]["warm_on_start"] is False
+        assert data["settings"]["model"]["language"] == "pl"
+        # HS-139-02: model.name stays at pinned default.
+        assert data["settings"]["model"]["name"] == "base"
         assert data["settings"]["meeting"]["intel_provider"] == "cloud"
         # HS-112-01: endpoint identity is the pointer; the dead legacy
         # fields never ride the settings wire.
@@ -1861,14 +1863,58 @@ class TestSettingsApiEndpoints:
         on_settings_applied.assert_called_once()
 
         persisted = Config.load(path=tmp_path / "config.json")
-        assert persisted.model.name == "small"
-        assert persisted.model.warm_on_start is False
+        assert persisted.model.language == "pl"
+        assert persisted.model.name == "base"  # pinned
         assert persisted.meeting.intel_provider == "cloud"
         assert persisted.meeting.intel_profile_id == "p-lan"
         # HS-139-01: intel_queue_poll_seconds deleted (dead).
         assert not hasattr(persisted.meeting, "intel_queue_poll_seconds")
         assert persisted.meeting.intel_retry_failure_webhook_header_name == "Authorization"
         assert persisted.meeting.intel_retry_failure_webhook_header_value == "Bearer test-token"
+
+    def test_settings_put_ignores_defaulted_keys(self, tmp_path, monkeypatch, test_client):
+        """HS-139-02: settings.update silently strips defaulted keys —
+        they are no longer writable via the settings surface."""
+        import holdspeak.config as config_module
+        from holdspeak.config import Config
+
+        monkeypatch.setattr(config_module, "CONFIG_FILE", tmp_path / "config.json")
+        # Write a payload containing every defaulted key with a non-default value.
+        resp = test_client.put("/api/settings", json={
+            "model": {"name": "large", "warm_on_start": False},
+            "meeting": {
+                "mic_label": "Speaker",
+                "remote_label": "Audience",
+                "cross_meeting_recognition": False,
+                "web_auto_open": False,
+                "intel_enabled": False,
+                "intel_deferred_enabled": False,
+                "mir_enabled": False,
+            },
+            "dictation": {"pipeline": {
+                "enabled": False,
+                "corrections_enabled": False,
+                "journal_enabled": False,
+                "journal_retention": 50,
+            }},
+        })
+        assert resp.status_code == 200, resp.text
+        persisted = Config.load(tmp_path / "config.json")
+        # Every defaulted key keeps its pinned default — the write was stripped.
+        assert persisted.model.name == "base"  # pinned
+        assert persisted.model.warm_on_start is True  # pinned
+        assert persisted.meeting.mic_label == "Me"  # pinned
+        assert persisted.meeting.remote_label == "Remote"  # pinned
+        assert persisted.meeting.cross_meeting_recognition is True  # pinned
+        assert persisted.meeting.intel_enabled is True  # pinned
+        assert persisted.meeting.intel_deferred_enabled is True  # pinned
+        assert persisted.meeting.mir_enabled is True  # pinned
+        assert persisted.dictation.pipeline.enabled is True  # pinned
+        assert persisted.dictation.pipeline.corrections_enabled is True  # pinned
+        assert persisted.dictation.pipeline.journal_enabled is True  # pinned
+        assert persisted.dictation.pipeline.journal_retention == 500  # pinned
+        # web_auto_open is deleted entirely (no field on MeetingConfig).
+        assert not hasattr(persisted.meeting, "web_auto_open")
 
     def test_settings_put_strips_legacy_cloud_base_url(self, tmp_path, monkeypatch, test_client):
         # HS-112-01: the dead legacy endpoint fields are never API-writable —
