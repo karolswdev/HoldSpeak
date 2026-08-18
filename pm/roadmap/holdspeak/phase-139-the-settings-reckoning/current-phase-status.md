@@ -1,6 +1,6 @@
 # Phase 139 — The Settings Reckoning
 
-**Status:** active (8/8).
+**Status:** complete (8/8; PR #465 merged 2026-08-18).
 
 **Last updated:** 2026-08-18.
 
@@ -65,6 +65,9 @@ session's scratchpad; the walk story re-shoots everything after.
 
 ## Decision log
 
+- 2026-08-18 — PR #465 merged. The owner accepted the Settings/Models work;
+  Phase 140 supersedes the previously named Dashboard Door with The First
+  Sentence complexity cut.
 - 2026-08-18 — PRE-MERGE SOBER-EYE REPAIR: a fresh Terra cold review
   withheld the owner sitting on two should-fixes. The Companion repository
   control on Delivery now names a rejected/stale settings write and reloads
@@ -111,7 +114,7 @@ act() warnings in settingsModels vitest.
 
 ## Where we are
 
-All 8 stories done and staged for the owner's sitting. Seven tiles shipped (Voice, Sounds & Presence,
+All 8 stories are complete and merged. Seven tiles shipped (Voice, Sounds & Presence,
 Meetings, Rhythm, Models, Integrations, System). Open throttle shipped:
 POSTURE=YOLO, actuators on with wildcard allowlists, People MCP
 defaults write, all boundary suites green. Docs sweep done: SECURITY.md

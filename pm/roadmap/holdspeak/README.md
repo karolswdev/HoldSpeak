@@ -8,14 +8,14 @@
 > from evidence, Terra waves with serialized shipping, walks, honest ledgers —
 > is canon at [`docs/internal/ORCHESTRATION.md`](../../../docs/internal/ORCHESTRATION.md).
 
-**Newest update (2026-08-18): Phase 139 — The Settings Reckoning — STAGED
-(8/8; owner sitting pending).** The Settings face is seven job-named tiles with 29 on-glass controls;
-the walk passed 76 checks with zero findings and 29 shots at 1440×900 and
-393×900. Fresh installs now default to YOLO, actuators enabled with wildcard
-allowlists, and local-owner People MCP write access. Encryption/key custody,
-the People refusal matrix, egress disclosure, and the receipt/refusal ledger
-remain hard boundaries. See the
-[current phase record](./phase-139-the-settings-reckoning/current-phase-status.md).
+**Newest update (2026-08-18): Phase 140 — The First Sentence — ACTIVE
+(0/5).** The owner ordered a complexity cut. The proposed Dashboard Door is
+cancelled: no TODO kanban, calendar aggregation, or new control center. A fresh
+HoldSpeak will open on one obvious job—dictate one sentence—then reveal the
+normal Chair after a useful result or an explicit Continue later. The phase
+reuses existing capture, editable result, Copy, Keep as Note, retained-audio
+recovery, and content-free first-value receipts; it creates no new subsystem.
+See the [current phase record](./phase-140-the-first-sentence/current-phase-status.md).
 
 **Previous update (2026-08-15): Phase 131 — One Admission Path — COMPLETE
 (17/17).** The executable census closes at 100 sites, zero findings, zero blocking
@@ -480,14 +480,15 @@ the ⌘K shelf's z-defect fixed; the owner's 101 sitting remains open in
 parallel. Phase 101 itself stands at 3/4 (canon ratified and built,
 PR #359; sweep 4122/0).
 
-**Current phase:** [**Phase 139 — The Settings Reckoning**](./phase-139-the-settings-reckoning/current-phase-status.md)
-— **ACTIVE (8/8, 2026-08-18; owner sitting pending)**. Chartered from a 101-control census of the
-Settings surface: 5 dead dials died, defaults became law, 6 controls moved
-home to their objects, 31 operator knobs folded behind RAW wells, and the face
-collapsed to 7 job-named tiles. The open posture is YOLO with actuators enabled
-and local-owner People MCP write access; its custody, refusal, egress, and
-receipt hard boundaries remain unchanged.
-Previous: [**Phase 138 — The People Ledger**](./phase-138-the-people-ledger/current-phase-status.md) — **COMPLETE (8/8, 2026-08-17; fresh close counsel RATIFY-WITH-CONCERNS; owner sitting pending)**
+**Current phase:** [**Phase 140 — The First Sentence**](./phase-140-the-first-sentence/current-phase-status.md)
+— **ACTIVE (0/5, 2026-08-18)**. The Dashboard Door is cancelled. A fresh owner
+gets one obvious action on the Chair—dictate one sentence—then edits, copies,
+or keeps it before the normal product is disclosed. No new subsystem, model,
+task board, calendar, schema, API, or MCP surface.
+Previous: [**Phase 139 — The Settings Reckoning**](./phase-139-the-settings-reckoning/current-phase-status.md)
+— **COMPLETE (8/8, PR #465 merged 2026-08-18)**. Settings collapsed to seven
+job-named tiles; the Models workbench and inline destination-key custody landed
+in the merge follow-up. Previous: [**Phase 138 — The People Ledger**](./phase-138-the-people-ledger/current-phase-status.md) — **COMPLETE (8/8, 2026-08-17; fresh close counsel RATIFY-WITH-CONCERNS; owner sitting pending)**
 — Encrypted relationship ledger for direct reports,
 peers, and extended organizational relationships; grounding notes; manager
 commitments in Follow-through; MCP capability. Previous: [**Phase 137 — The One Schema**](./phase-137-the-one-schema/current-phase-status.md)
@@ -827,7 +828,8 @@ canon, canon wins.
 | 110 | The Cohesion: the material model pivot — macOS Ventura replaced with Signal Workbench (opaque surfaces, beveled depth, 2px corners, mono chrome, solid bars). | done | [phase-110-the-cohesion](./phase-110-the-cohesion/) |
 | 111 | The Refinement: every program on the desk gets its interior rethought for Signal Workbench — Settings, Speak, Meetings, Agents, Ask, Delivery, system chrome, interactive controls, sprites. | in-progress | [phase-111-the-refinement](./phase-111-the-refinement/) |
 | 138 | Ship an encrypted, local-only People relationship and 1:1 foundation whose explicit manager commitments appear in Follow-through without entering plaintext product stores. | done | [phase-138-the-people-ledger](./phase-138-the-people-ledger/) |
-| 139 | The Settings Reckoning: cut the Settings face to seven job-named tiles, pin core defaults, move object settings home, and fold operator wiring behind RAW. | active (8/8; owner sitting pending) | [phase-139-the-settings-reckoning](./phase-139-the-settings-reckoning/) |
+| 139 | The Settings Reckoning: cut the Settings face to seven job-named tiles, pin core defaults, move object settings home, and fold operator wiring behind RAW. | done | [phase-139-the-settings-reckoning](./phase-139-the-settings-reckoning/) |
+| 140 | The First Sentence: one obvious first-value act on the Chair, a useful editable result, in-place recovery, then progressive disclosure of the full product. | in-progress (0/5) | [phase-140-the-first-sentence](./phase-140-the-first-sentence/) |
 
 (Status values: `planning`, `in-progress`, `done`, `paused`, `cancelled`.)
 
