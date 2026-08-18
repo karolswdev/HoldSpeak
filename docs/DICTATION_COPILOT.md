@@ -4,10 +4,11 @@ Transcription gets your words onto the screen; the dictation pipeline gets
 your *intent* there. It turns rough, rambling speech into a precise,
 **project-grounded** task for a Coder session, using a model you run.
 This page shows it working end to end against a real local LLM, then tells
-you how to turn it on and run the same demo yourself.
+you how to configure and run the same demo yourself.
 
-> Everything here is **opt-in and off by default**. With the dictation pipeline
-> disabled, HoldSpeak types your transcript exactly as before. See
+> The dictation pipeline is on by default. Configure its model-backed features
+> for the work you want it to do; any unavailable stage fails open to your plain
+> transcript. See
 > [Dictation Pipeline Guide](./DICTATION_PIPELINE_GUIDE.md) for the full setup
 > and [Models](./MODELS.md) for the bring-your-own-model contract.
 
@@ -76,7 +77,7 @@ and KB, not from the model's imagination.
 ## How it works
 
 After Whisper transcribes and `TextProcessor` cleans punctuation, the utterance
-flows through an **opt-in, ordered pipeline** before it's typed. Each stage
+flows through an ordered pipeline before it's typed. Each stage
 fails open: if it errors or the LLM is unreachable, your plain transcript is
 what gets typed.
 
@@ -125,7 +126,7 @@ so the task still landed in the right block.
 
 ## What each feature did
 
-| # | Feature | What happened above | Turn it on with |
+| # | Feature | What happened above | Configure with |
 |---|---------|---------------------|-----------------|
 | ① | **Multi-pass rewriting** | Drafted, then critiqued + tightened in a second pass (latency-budget-gated). | `rewrite_passes: 2` |
 | ② | **Correction memory** | A correction you made last session (`this kind of utterance → agent_task_buildout`) nudged routing. The LLM classifier actually *failed* on this turn; the correction **rescued** it. **Persists across restarts** (DB-backed); curate it in `/dictation → Memory`. | Always on (pinned since HS-139-02). |
@@ -136,22 +137,22 @@ The output is always **fail-open**: any stage that errors or an LLM that's
 unreachable degrades to your plain transcript. The pipeline never makes your
 text un-typeable.
 
-## Turn it on
+## Configure it
 
-**Do it all in the web UI, no file editing.** Open the cockpit and flip the
-toggles:
+**Do it all in the web UI, no file editing.** The pipeline is already on; open
+the cockpit to configure its runtime and depth:
 
 ```
-/dictation -> Runtime         # pick a backend + endpoint, enable the pipeline
-/dictation -> Runtime -> Copilot depth   # rewrite passes, corrections, model-assist
+/dictation -> Runtime         # pick a runtime and model destination
+/dictation -> Runtime -> Copilot depth   # rewrite passes and model-assist
 /dictation -> Memory          # see + curate what the copilot has learned
 ```
 
-![The Copilot depth card: segmented rewrite passes, correction-memory and
-model-assist toggles, and a confidence threshold.](assets/cockpit/copilot-depth.png)
+![The Copilot depth card: segmented rewrite passes, pinned correction memory,
+model-assist settings, and a confidence threshold.](assets/cockpit/copilot-depth.png)
 
-Every feature above (① through ④) is a slider or toggle in **Runtime → Copilot depth**;
-the round-trip persists through the settings API. See the
+The configurable depth options above live in **Runtime → Copilot depth**; the
+round-trip persists through the settings API. See the
 [Dictation Pipeline Setup guide](./DICTATION_PIPELINE_GUIDE.md) for the full
 walk-through.
 

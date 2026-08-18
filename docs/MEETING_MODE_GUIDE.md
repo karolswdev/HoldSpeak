@@ -687,7 +687,7 @@ Health check endpoint.
 - `GET /api/meetings/{meeting_id}/artifacts` - synthesized artifacts with lineage sources
 - `GET /api/meetings/{meeting_id}/aftercare` - read-only aftercare digest (open items by owner, decisions, the since-last-meeting diff)
 - `GET /api/meetings/{meeting_id}/followup-draft` - locally-assembled follow-up draft (preview + copy; nothing sent)
-- `POST /api/meetings/{meeting_id}/aftercare/file-issue` - file an accepted action as a GitHub-issue actuator proposal (records a proposal only; off by default, human-approved, audited)
+- `POST /api/meetings/{meeting_id}/aftercare/file-issue` - file an accepted action as a GitHub-issue actuator proposal (under default YOLO, an eligible configured action executes with a receipt; Secure and Normal retain approval; audited)
 - `POST /api/meetings/{meeting_id}/export/slack` - propose sending the digest or follow-up draft to the configured Slack webhook (`what`: `digest` or `followup`; records a proposal whose preview is the exact message; refuses when no URL is configured)
 - `GET /api/all-action-items`
 - `PATCH /api/all-action-items/{item_id}` - update persisted action item status

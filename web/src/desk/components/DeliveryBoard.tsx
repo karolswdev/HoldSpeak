@@ -12,9 +12,9 @@ import { SurfaceFooter } from "../surface/SurfaceFooter";
 // consequence line; the footer receipt bar carries the freshness fact the
 // wire already held. The delivery wires are untouched.
 import "./delivery.css";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "../../components/signal/Signal";
-import { apiFetch } from "../../lib/api";
+import { apiFetch, readableError } from "../../lib/api";
 import { ReceiptLine } from "./ReceiptLine";
 import {
   activeAttempts,
@@ -259,22 +259,27 @@ function LaunchComposer({ sources }: { sources: DeliverySource[] }) {
  *  Writes through /api/settings with revision concurrency. */
 function CompanionRepoConfig() {
   const [data, setData] = useState<Record<string, unknown> | null>(null);
+  const [refusal, setRefusal] = useState("");
   const revisionRef = useRef<string | undefined>(undefined);
   const saveTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
 
-  useEffect(() => {
-    void apiFetch<Record<string, unknown>>("/api/settings").then((result) => {
-      setData(result);
-      revisionRef.current = result._revision as string | undefined;
-    });
-    return () => clearTimeout(saveTimer.current);
+  const load = useCallback(async () => {
+    const result = await apiFetch<Record<string, unknown>>("/api/settings");
+    setData(result);
+    revisionRef.current = result._revision as string | undefined;
   }, []);
+
+  useEffect(() => {
+    void load().catch((reason) => setRefusal(readableError(reason)));
+    return () => clearTimeout(saveTimer.current);
+  }, [load]);
 
   if (!data) return null;
 
   const meeting = (data.meeting ?? {}) as Record<string, unknown>;
 
   const save = async (patch: Record<string, unknown>) => {
+    setRefusal("");
     try {
       const result = await apiFetch<{ settings?: Record<string, unknown> }>(
         "/api/settings",
@@ -288,8 +293,16 @@ function CompanionRepoConfig() {
       revisionRef.current = (next as Record<string, unknown>)._revision as
         | string
         | undefined;
-    } catch {
-      /* Delivery board has no receipt bar; silent fail is acceptable. */
+    } catch (reason) {
+      // A rejected revision means the optimistic field is no longer an honest
+      // view of the companion destination. Name the refusal, then reload the
+      // server's current settings instead of leaving the rejected draft up.
+      setRefusal(readableError(reason));
+      try {
+        await load();
+      } catch {
+        // The write refusal remains visible if reconciliation is unavailable.
+      }
     }
   };
 
@@ -297,6 +310,7 @@ function CompanionRepoConfig() {
     const nextMeeting = { ...meeting, companion_github_repo: value };
     const nextData = { ...data, meeting: nextMeeting };
     setData(nextData);
+    setRefusal("");
     revisionRef.current = nextData._revision as string | undefined;
     clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(() => void save(nextData), 700);
@@ -312,6 +326,13 @@ function CompanionRepoConfig() {
           onChange={(next) => update(next || null)}
         />
       </GadgetRow>
+      {refusal ? (
+        <div className="prefs-egress-line">
+          <span className="gadget-fact" data-tone="danger" role="alert">
+            ⚠ REFUSED · {refusal}
+          </span>
+        </div>
+      ) : null}
     </GadgetGroup>
   );
 }

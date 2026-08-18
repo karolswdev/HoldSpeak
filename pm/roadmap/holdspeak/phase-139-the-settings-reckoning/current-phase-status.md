@@ -65,6 +65,20 @@ session's scratchpad; the walk story re-shoots everything after.
 
 ## Decision log
 
+- 2026-08-18 — PRE-MERGE SOBER-EYE REPAIR: a fresh Terra cold review
+  withheld the owner sitting on two should-fixes. The Companion repository
+  control on Delivery now names a rejected/stale settings write and reloads
+  server truth instead of leaving an optimistic lie on glass; its focused
+  stale-revision test passes 1/1. Entry-point docs now state the actual fresh
+  posture (YOLO, actuators on, People MCP write), the pinned-on dictation
+  pipeline, and the surviving custody/refusal/egress/receipt boundaries.
+  Roadmap status is staged/active 8/8 pending the owner's nod, and the UAT
+  phase ledger was regenerated (2/2 guard tests). Full Python gate: 6012
+  passed / 48 skipped; three xdist-HOME Chromium setup errors passed 3/3
+  serially under the real HOME. Full web gate: 1153 passed; five inherited
+  reds remain in untouched files (container-query allowlist, BriefLane
+  swallowed-write guard, and three stale `GO`-button expectations). The
+  production web build passes. Owner sitting remains the merge trigger.
 - 2026-08-17 — AMENDED: HS-139-08 "Open throttle" added by owner ruling
   ("loosen security to the floor" — completes ledger-not-gate): permissive
   defaults everywhere (POSTURE=YOLO, actuators on, MCP families on); hard
@@ -97,7 +111,7 @@ act() warnings in settingsModels vitest.
 
 ## Where we are
 
-All 8 stories done. Seven tiles shipped (Voice, Sounds & Presence,
+All 8 stories done and staged for the owner's sitting. Seven tiles shipped (Voice, Sounds & Presence,
 Meetings, Rhythm, Models, Integrations, System). Open throttle shipped:
 POSTURE=YOLO, actuators on with wildcard allowlists, People MCP
 defaults write, all boundary suites green. Docs sweep done: SECURITY.md

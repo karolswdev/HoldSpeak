@@ -74,3 +74,15 @@ tests/unit/test_api_surface.py::test_extractors_see_the_real_call_sites PASSED
 
 ============================== 34 passed in 2.35s ==============================
 ```
+
+### Captured run — 2026-08-18T15:33:24Z
+
+- **Command:** `uv run pytest -q tests/unit/test_doc_drift_guard.py tests/unit/test_product_copy.py tests/unit/test_api_surface.py tests/unit/test_open_posture.py tests/uat/test_build_ledger.py`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 7e30f710235e3e517c41a3fb990b132852eb3aca
+
+```text
+...........................................                              [100%]
+43 passed in 2.59s
+```

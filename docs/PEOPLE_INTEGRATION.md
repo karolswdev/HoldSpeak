@@ -17,9 +17,10 @@ derives relationship health.
   scope used to open a relationship from another surface.
 - **HTTP service:** authenticated People endpoints own relationships, 1:1s, agenda,
   grounding notes, requests, and commitments. Callers do not write the sidecar.
-- **MCP:** default-off `read`/`write` capability. It exposes only `shared_intent`
-  material and includes `people.grounding.get`, a manual-source bundle with no
-  implicit model call.
+- **MCP:** local-owner `write` capability by default; set
+  `HOLDSPEAK_MCP_PEOPLE_ACCESS=read` or `=off` at process start to reduce or
+  disable it. It exposes only `shared_intent` material and includes
+  `people.grounding.get`, a manual-source bundle with no implicit model call.
 - **Follow-through:** open commitments are hydrated in memory and deep-link back to
   People. No People content enters `action_items` or Cadence.
 - **Commitment execution:** clicking a commitment opens its inspector. An explicit

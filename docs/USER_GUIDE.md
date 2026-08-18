@@ -557,9 +557,10 @@ and the iPad shows it:
   confidence scores and the transcript sources each was grounded in, browse the
   archive narrowed server-side by speaker, tag, or text (the same facets as
   `/history`), and read its aftercare: what is open, decided, and changed.
-- **Approve, separately.** Proposing an action and approving it stay two steps,
-  the same human gate the desktop keeps. The iPad reads the proposals queued for
-  review and decides them one at a time; nothing runs without that approval.
+- **Review when you want it.** Secure and Normal keep proposing and approving as
+  two steps. Fresh installs use YOLO, so an eligible action to a configured
+  destination executes with its receipt instead; the iPad still exposes any
+  proposal that requires review.
 - **See what is grounded.** Activity pre-briefing nudges, source-cited, come
   through to the iPad so you can pick a record to ground the next dictation in.
 

@@ -81,3 +81,21 @@ This ensures that you're testing the behavior the user would see in the browser.
    Start at  20:03:49
    Duration  1.24s (transform 334ms, setup 136ms, import 569ms, tests 511ms, environment 591ms)
 ```
+
+### Captured run — 2026-08-18T15:33:22Z
+
+- **Command:** `bash -c cd web && PATH=/Users/karol/.nvm/versions/node/v22.21.0/bin:/usr/bin:/bin npx vitest run src/desk/components/DeliveryBoard.test.tsx --maxWorkers=1`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 7e30f710235e3e517c41a3fb990b132852eb3aca
+
+```text
+
+ RUN  v4.1.9 /Users/karol/dev/tools/HoldSpeak/web
+
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  09:33:22
+   Duration  1.71s (transform 256ms, setup 62ms, import 444ms, tests 828ms, environment 292ms)
+```

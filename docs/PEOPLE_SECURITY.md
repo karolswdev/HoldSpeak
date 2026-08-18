@@ -26,20 +26,21 @@ different custody contract from HoldSpeak's normal, plaintext local database.
 
 ## MCP disclosure capability
 
-People does not enter generic MCP primitives, Follow-through resources, search, or
-the default sidecar catalogue flow. Direct People tools and resources are disabled
-unless the owner starts the stdio sidecar with
-`HOLDSPEAK_MCP_PEOPLE_ACCESS=read|write`. This is a process-start disclosure
-decision: returned content leaves HoldSpeak process memory over stdio and the parent
-MCP client may retain or forward it.
+People does not enter generic MCP primitives, Follow-through resources, or
+search. Direct People tools and resources default to `write` for the local
+owner process. Set `HOLDSPEAK_MCP_PEOPLE_ACCESS=read` to reduce that access or
+`=off` to disable it before the stdio sidecar starts. This is a disclosure
+boundary: returned content leaves HoldSpeak process memory over stdio and the
+parent MCP client may retain or forward it.
 
-Even when enabled, the adapter exposes relationship metadata plus only records whose
+The adapter exposes relationship metadata plus only records whose
 encrypted visibility is `shared_intent`. Leader-private 1:1s, private prep, agenda,
 grounding notes, requests, and commitments are filtered before serialization; guessed private record
-IDs named-refuse. Write mode can create shared-intent records and transition shared
+IDs named-refuse. The default write mode can create shared-intent records and transition shared
 commitments, but cannot initialize/recover the store, archive/delete relationships,
 or invoke capture, inference, scoring, search, sync, export, or connectors. The
-repository's default `.mcp.json` leaves People access off.
+repository's default `.mcp.json` sets no override and therefore uses the local-owner
+write default.
 
 ## Deliberately unavailable
 
@@ -47,7 +48,7 @@ The first People delivery has no sync, sharing, export, backup/recovery, connect
 generic primitive MCP access, global search, Ask/Memory grounding, recording, People-owned inference, scheduled brief,
 nudge, scoring, ranking, or employment recommendation path. `shared_intent` records
 an access intention; it does not mean another participant can view the item. The
-opt-in MCP adapter is the only shipped disclosure of that class in this delivery.
+MCP adapter is the only shipped disclosure of that class in this delivery.
 
 The policy boundary refuses individual scoring/ranking; performance, pay,
 promotion, discipline, or termination recommendations; productivity/activity or

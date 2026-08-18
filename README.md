@@ -51,7 +51,7 @@ are not copied into the kernel journal. The complete integrator contract is
 | Dictate | Meet |
 | --- | --- |
 | ![Pixel art microphone with hold-to-talk waves](https://raw.githubusercontent.com/karolswdev/HoldSpeak/main/docs/assets/pixellab/hold-to-talk-microphone.png) | ![Pixel art meeting notebook with action items](https://raw.githubusercontent.com/karolswdev/HoldSpeak/main/docs/assets/pixellab/meeting-intelligence-notebook.png) |
-| Hold the hotkey, speak, release: the text goes into the active app. Turn on the dictation pipeline and rough speech is routed by intent, enriched with your project's context, and rewritten for its target (Codex, Claude, the terminal, the browser, your editor). Every run lands in the dictation journal; one tap on a wrong result teaches the correction memory. Voice commands map a spoken keyword to a real action (open a URL, launch an app, run a command). Say the wake phrase and it listens hands-free, with the result previewed, never typed, until you confirm; an optional preview mode does the same for every dictation (the card shows the text first, Type it commits, Discard drops it). The spoken language setting pins any of Whisper's 99 languages, and the spoken-symbol dictionary types your own vocabulary ("double colon" becomes `::`). Activity pre-briefing offers what you touched recently as dictation context, source-cited. | Capture mic and system audio live with speaker labels, or import a recording or a transcript file you already have (vtt and srt keep their real timestamps and speaker names). 14 built-in plugins submit admitted model attempts to pull typed artifacts out of the transcript: decisions, action items, ADRs, risk registers, incident timelines. Meeting aftercare then shows what is open, decided, and changed since last time; an accepted action can become a filed issue, and the digest or follow-up draft can go to your team through Send to Slack, all on a propose, approve, execute flow that never acts without you. The archive is searchable and filterable by date, speaker, tag, and open actions. |
+| Hold the hotkey, speak, release: the text goes into the active app. The dictation pipeline is on: configure a model-backed rewrite to route rough speech by intent, enrich it with your project's context, and shape it for its target (Codex, Claude, the terminal, the browser, your editor). Every run lands in the dictation journal; one tap on a wrong result teaches the correction memory. Voice commands map a spoken keyword to a real action (open a URL, launch an app, run a command). Say the wake phrase and it listens hands-free, with the result previewed, never typed, until you confirm; an optional preview mode does the same for every dictation (the card shows the text first, Type it commits, Discard drops it). The spoken language setting pins any of Whisper's 99 languages, and the spoken-symbol dictionary types your own vocabulary ("double colon" becomes `::`). Activity pre-briefing offers what you touched recently as dictation context, source-cited. | Capture mic and system audio live with speaker labels, or import a recording or a transcript file you already have (vtt and srt keep their real timestamps and speaker names). 14 built-in plugins submit admitted model attempts to pull typed artifacts out of the transcript: decisions, action items, ADRs, risk registers, incident timelines. Meeting aftercare then shows what is open, decided, and changed since last time; an accepted action can become a filed issue, and the digest or follow-up draft can go to your team through Send to Slack. Fresh installs use YOLO: eligible configured actions execute with a receipt. Secure and Normal retain per-action approval. The archive is searchable and filterable by date, speaker, tag, and open actions. |
 
 This is what they look like in the product, not in pixel art. A saved meeting
 comes back as typed, reviewable artifacts:
@@ -149,9 +149,11 @@ of reach by design.
   zero; replay an old utterance through the updated pipeline and watch the
   routing change. See [the learning loop](https://github.com/karolswdev/HoldSpeak/blob/main/docs/DICTATION_PIPELINE_GUIDE.md#12-dictation-journal-corrections--replay).
 - **Meetings end with their loops closed.** A meeting produces artifacts,
-  an aftercare digest, and approval-gated actions where most tools stop at
-  a transcript. Actuators are off by default, audited, and only ever run
-  exactly what you previewed. See
+  an aftercare digest, and receipted actions where most tools stop at a
+  transcript. Fresh installs use YOLO with actuators enabled and a wildcard
+  allowlist: eligible actions to configured destinations execute immediately.
+  Secure and Normal retain per-action approval. Every execution remains bound
+  to its configured destination and recorded as a receipt. See
   [meeting intelligence](https://github.com/karolswdev/HoldSpeak/blob/main/docs/MEETING_MODE_GUIDE.md).
 - **Honest by construction.** `holdspeak doctor` reports what is actually
   broken. The import panel says which timestamps are approximate. The learning
@@ -345,18 +347,19 @@ admitted path before it can produce a typed artifact. The results render
 read-only in the Meetings window on the Desk (deep link `/history`).
 HoldSpeak ships 14 built-in plugins, all real and backed by an LLM.
 
-Plugins can also propose actions. An actuator proposes an external side
-effect, like filing a ticket or posting an update, that only runs after you
-approve it for that specific action. Actuators are off by default. Write your
-own with the [Plugin Authoring guide](https://github.com/karolswdev/HoldSpeak/blob/main/docs/PLUGIN_AUTHORING.md); for endpoints and routing, see
+Plugins can also propose actions. An actuator can produce an external side
+effect, like filing a ticket or posting an update. Fresh installs use YOLO with
+actuators enabled: eligible configured destinations execute immediately and
+write a receipt; Secure and Normal retain per-action approval. Write your own
+with the [Plugin Authoring guide](https://github.com/karolswdev/HoldSpeak/blob/main/docs/PLUGIN_AUTHORING.md); for endpoints and routing, see
 the [Meeting Mode Guide](https://github.com/karolswdev/HoldSpeak/blob/main/docs/MEETING_MODE_GUIDE.md).
 
 Then close the loop. Meeting aftercare shows what is still open (by owner),
 what was decided, and what changed since the last meeting. Jump to the
-transcript moment that justifies any result, file an accepted action as a
-human-approved issue through that same actuator flow, or draft a copyable
-follow-up. It is read-only and local: nothing is sent, and nothing runs,
-without your approval. See the
+transcript moment that justifies any result, file an accepted action as an
+issue, or draft a copyable follow-up. Under the default YOLO posture, eligible
+configured sends execute with a receipt; Secure and Normal keep the approval
+step. See the
 [Meeting Mode Guide](https://github.com/karolswdev/HoldSpeak/blob/main/docs/MEETING_MODE_GUIDE.md#meeting-aftercare-close-the-loop).
 
 ## Companions

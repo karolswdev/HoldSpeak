@@ -43,8 +43,9 @@ def _tool(
 
 
 _BOUNDARY = (
-    "PEOPLE DISCLOSURE: requires explicit HOLDSPEAK_MCP_PEOPLE_ACCESS; "
-    "only shared-intent material crosses MCP. Leader-private prep is never returned. "
+    "PEOPLE DISCLOSURE: local-owner access defaults to write; set "
+    "HOLDSPEAK_MCP_PEOPLE_ACCESS=read or =off to restrict it. "
+    "Only shared-intent material crosses MCP. Leader-private prep is never returned. "
 )
 
 TOOLS: list[dict[str, Any]] = [
