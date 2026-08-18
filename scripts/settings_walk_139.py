@@ -249,10 +249,11 @@ def leg_face(shooter: Shooter, hub: Hub) -> None:
     posture_label = page.locator(".prefs-posture-label")  # type: ignore[attr-defined]
     check("POSTURE label present", posture_label.count() > 0)
 
-    precedence = page.locator(".prefs-precedence")  # type: ignore[attr-defined]
-    check("precedence chain present", precedence.count() > 0)
+    # HS-139-07: precedence chain folded into posture title attr.
+    posture_title = page.locator(".prefs-posture").get_attribute("title")  # type: ignore[attr-defined]
+    check("precedence folded into posture title", bool(posture_title))
 
-    shooter.shot("settings-face", "overview", "seven tiles + POSTURE + precedence")
+    shooter.shot("settings-face", "overview", "seven tiles + POSTURE (precedence in title)")
     shooter.assert_clean("settings face")
 
 

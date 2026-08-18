@@ -50,9 +50,10 @@ describe("HS-139-05 face roster", () => {
     }
   });
 
-  it("every module has a glyph and at least one key claim (except integrations)", () => {
+  it("every module has a glyph, sprite, and at least one key claim (except integrations)", () => {
     for (const m of PREF_MODULES) {
       expect(m.glyph, `${m.id} has no glyph`).toBeTruthy();
+      expect(m.sprite, `${m.id} has no sprite`).toBeTruthy();
       if (m.id !== "integrations" && m.id !== "system") {
         // system now claims device+mesh via keys
         expect(m.keys.length, `${m.id} has no keys`).toBeGreaterThan(0);

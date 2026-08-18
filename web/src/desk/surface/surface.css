@@ -2085,10 +2085,14 @@ button.surface-edit-in-place:hover {
   font-size: 10px;
   letter-spacing: 0.06em;
 }
+/* HS-139-07: composed 4+3 grid with bright pixel-sprite tiles. Tiles are
+   Workbench-beveled at rest, ember-glow hover, pressed = bevel inversion.
+   Sprites render at 32px displayed (retina 64px physical), pixelated. */
 .prefs-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
-  gap: 6px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  padding: 6px 0;
 }
 @container surface (max-width: 419px) {
   .prefs-grid {
@@ -2100,38 +2104,48 @@ button.surface-edit-in-place:hover {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 7px;
+  gap: 8px;
   min-width: 64px;
-  height: 72px;
-  padding: 6px 4px;
-  border: 1px solid transparent;
-  border-radius: 0;
-  background: transparent;
+  height: 88px;
+  padding: 8px 4px;
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  background: var(--surface-2);
+  box-shadow: inset 1px 1px 0 var(--bevel-light), inset -1px -1px 0 var(--bevel-dark);
   color: var(--text);
   cursor: pointer;
+  transition: box-shadow var(--duration-micro) var(--ease-quart),
+              background var(--duration-micro) var(--ease-quart);
 }
 .prefs-tile:hover {
-  background: var(--desk-window-well);
+  background: var(--surface-3);
+  box-shadow: inset 1px 1px 0 var(--bevel-light), inset -1px -1px 0 var(--bevel-dark),
+              0 0 0 1px var(--accent-tint), 0 2px 8px var(--accent-glow);
 }
-.prefs-tile:focus-visible,
+.prefs-tile:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+  background: var(--surface-3);
+}
 .prefs-tile:active {
   outline: none;
   border-color: var(--border);
-  background: var(--surface-2);
-  box-shadow: inset 1px 1px 0 var(--bevel-light), inset -1px -1px 0 var(--bevel-dark);
+  background: var(--surface-1);
+  box-shadow: inset 1px 1px 0 var(--bevel-dark), inset -1px -1px 0 var(--bevel-light);
+  transform: translateY(1px);
 }
 .prefs-tile-glyph {
-  width: 24px;
-  height: 24px;
-  color: var(--text-muted);
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
-.prefs-tile:hover .prefs-tile-glyph,
-.prefs-tile:focus-visible .prefs-tile-glyph {
-  color: var(--text);
-}
-.prefs-tile-glyph svg {
-  width: 24px;
-  height: 24px;
+/* HS-139-07: bright pixel sprites — retina, pixelated rendering. */
+.prefs-tile-sprite {
+  width: 32px;
+  height: 32px;
+  image-rendering: pixelated;
 }
 .prefs-tile-label {
   font-family: var(--font-mono);
@@ -2166,14 +2180,9 @@ button.surface-edit-in-place:hover {
   letter-spacing: var(--letter-spacing-label-wide);
   color: var(--text-muted);
 }
-.prefs-precedence {
-  padding: 0 6px;
-  font-family: var(--font-mono);
-  font-size: 10px;
-  letter-spacing: var(--letter-spacing-label-compact);
-  color: var(--text-faint);
-  overflow-wrap: anywhere;
-}
+/* HS-139-07: .prefs-precedence removed from the face — the chain is now
+   a title attribute on the POSTURE line. CSS kept as a no-op comment
+   for the walk script's selector stability. */
 /* A module owns the whole body. */
 .prefs-module {
   display: flex;
