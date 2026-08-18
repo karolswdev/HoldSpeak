@@ -24,6 +24,18 @@
   min-height: 80px;
 }
 
+/* HS-140-01: during first value, the Chair itself is quiet. The existing
+   FirstWords card stays above the fold without a second page, modal, or dock. */
+.chair.chair-first-value {
+  min-height: 100dvh;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(var(--space-3), 5vw, var(--space-6));
+}
+.chair.chair-first-value .desk-first-words {
+  box-sizing: border-box;
+}
+
 /* When ALL lanes are quiet the hero expands to hold the room vertically.
    A lane is "populated" when it contains a .surface-section (real data).
    Lanes with only SurfaceState[data-kind="empty"] or that returned null

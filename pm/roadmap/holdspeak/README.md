@@ -9,7 +9,11 @@
 > is canon at [`docs/internal/ORCHESTRATION.md`](../../../docs/internal/ORCHESTRATION.md).
 
 **Newest update (2026-08-18): Phase 140 — The First Sentence — ACTIVE
-(0/6).** The owner ordered a complexity cut. The proposed Dashboard Door is
+(1/6).** HS-140-01 is done: a fresh owner now reaches one quiet first-value
+Chair with no full-product first-paint, stale advanced window, healthy Setup,
+or model-routing escape. The focused web suite passes 24/24, production build
+passes, and the fresh-HOME visual check is clean at 1440×900 and 393×900.
+The owner ordered a complexity cut. The proposed Dashboard Door is
 cancelled: no TODO kanban, calendar aggregation, or new control center. A fresh
 HoldSpeak will open on one obvious job—dictate one sentence—then reveal the
 normal Chair after a useful result or an explicit Continue later. The phase
@@ -483,7 +487,7 @@ parallel. Phase 101 itself stands at 3/4 (canon ratified and built,
 PR #359; sweep 4122/0).
 
 **Current phase:** [**Phase 140 — The First Sentence**](./phase-140-the-first-sentence/current-phase-status.md)
-— **ACTIVE (0/6, 2026-08-18)**. The Dashboard Door is cancelled. A fresh owner
+— **ACTIVE (1/6, 2026-08-18)**. The Dashboard Door is cancelled. A fresh owner
 gets one obvious action on the Chair—dictate one sentence—then edits, copies,
 or keeps it before a furnished normal product is disclosed: six useful drawers
 and editable Everyday context that stays out of AI requests until the owner
@@ -833,7 +837,7 @@ canon, canon wins.
 | 111 | The Refinement: every program on the desk gets its interior rethought for Signal Workbench — Settings, Speak, Meetings, Agents, Ask, Delivery, system chrome, interactive controls, sprites. | in-progress | [phase-111-the-refinement](./phase-111-the-refinement/) |
 | 138 | Ship an encrypted, local-only People relationship and 1:1 foundation whose explicit manager commitments appear in Follow-through without entering plaintext product stores. | done | [phase-138-the-people-ledger](./phase-138-the-people-ledger/) |
 | 139 | The Settings Reckoning: cut the Settings face to seven job-named tiles, pin core defaults, move object settings home, and fold operator wiring behind RAW. | done | [phase-139-the-settings-reckoning](./phase-139-the-settings-reckoning/) |
-| 140 | The First Sentence: one obvious first-value act on the Chair, a useful editable result, in-place recovery, then a furnished six-drawer reveal with explicitly attachable Everyday context. | in-progress (0/6) | [phase-140-the-first-sentence](./phase-140-the-first-sentence/) |
+| 140 | The First Sentence: one obvious first-value act on the Chair, a useful editable result, in-place recovery, then a furnished six-drawer reveal with explicitly attachable Everyday context. | in-progress (1/6) | [phase-140-the-first-sentence](./phase-140-the-first-sentence/) |
 
 (Status values: `planning`, `in-progress`, `done`, `paused`, `cancelled`.)
 

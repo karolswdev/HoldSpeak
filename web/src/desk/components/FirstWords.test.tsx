@@ -116,6 +116,19 @@ describe("FirstWords", () => {
     expect(screen.getByRole("button", { name: "Setup" })).toBeInTheDocument();
   });
 
+  it("keeps idle first value free of setup administration", () => {
+    render(
+      <MemoryRouter>
+        <FirstWords />
+      </MemoryRouter>,
+    );
+
+    expect(screen.queryByRole("button", { name: "Setup" })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Configure rewrite destination" }),
+    ).not.toBeInTheDocument();
+  });
+
   it("transcribes one capture exactly once when toggle is repeated", async () => {
     const stopFn = vi.fn().mockResolvedValue("A sentence that stays editable.");
     mocks.startStreamSession.mockResolvedValue({ stop: stopFn, cancel: vi.fn() });
@@ -132,6 +145,10 @@ describe("FirstWords", () => {
 
     await screen.findByDisplayValue("A sentence that stays editable.");
     expect(stopFn).toHaveBeenCalledOnce();
+    expect(
+      screen.queryByRole("button", { name: "Configure rewrite destination" }),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Setup" })).not.toBeInTheDocument();
   });
 
   it("persists Continue later independently of first success", async () => {

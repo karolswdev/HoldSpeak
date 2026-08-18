@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 140
-- **Status:** ready
+- **Status:** done
 - **Depends on:** none
 - **Unblocks:** 140-02, 140-03, 140-04
 - **Owner:** delegated Terra worker; orchestrator adjudicates
@@ -26,16 +26,16 @@ use presents the whole product before presenting one useful act.
 
 ## Acceptance criteria
 
-- [ ] Fresh HOME at `/` renders one Chair first-value composition without a
+- [x] Fresh HOME at `/` renders one Chair first-value composition without a
   detour to the Floor or `/welcome`.
-- [ ] “Dictate one sentence” and its speak control are visible without scroll
+- [x] “Dictate one sentence” and its speak control are visible without scroll
   at 1440×900 and 393×900.
-- [ ] No lane, Ask, Floor, launcher, or record orb competes on glass while
+- [x] No lane, Ask, Floor, launcher, or record orb competes on glass while
   `arrival_required` is true.
-- [ ] The implementation reuses `FirstWords`; there is one capture/receipt path.
-- [ ] Existing owners and fresh owners after dismissal/completion receive the
+- [x] The implementation reuses `FirstWords`; there is one capture/receipt path.
+- [x] Existing owners and fresh owners after dismissal/completion receive the
   normal Chair.
-- [ ] Reload preserves the server-owned first-value/normal-Chair choice.
+- [x] Reload preserves the server-owned first-value/normal-Chair choice.
 
 ## Test plan
 

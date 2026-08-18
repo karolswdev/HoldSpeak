@@ -1,0 +1,183 @@
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import type { ReactNode } from "react";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import DeskApp from "./DeskApp";
+
+const state = vi.hoisted(() => ({
+  setupResolved: true,
+  setupAvailable: true,
+  arrivalRequired: true,
+  refreshFails: false,
+  surface: "floor" as "chair" | "floor",
+  refresh: vi.fn(),
+}));
+
+const { marker } = vi.hoisted(() => ({
+  marker: (name: string) => () => <div data-testid={name} />,
+}));
+
+vi.mock("./store", () => {
+  const desk = {
+    items: {},
+    updatedAt: Date.now() as number | null,
+    loading: false,
+    chatPersonaId: null,
+    roadmapWindows: [],
+    repositoryWindows: [],
+    workbenchWindows: [],
+    setup: null as { arrival_required: boolean } | null,
+    error: "",
+    viewMode: "unset",
+    editingId: null,
+  };
+  state.refresh.mockImplementation(() =>
+    state.refreshFails
+      ? Promise.reject(new Error("Connection refused"))
+      : Promise.resolve(undefined),
+  );
+  const useDesk = (selector: any) => {
+    desk.updatedAt = state.setupResolved ? Date.now() : null;
+    desk.loading = !state.setupResolved;
+    desk.setup = state.setupAvailable
+      ? { arrival_required: state.arrivalRequired }
+      : null;
+    return selector(desk);
+  };
+  useDesk.getState = () => ({ ...desk, refresh: state.refresh, openPullout: vi.fn() });
+  return { useDesk, defaultViewFor: () => "spatial" };
+});
+
+vi.mock("./chairState", () => ({
+  useChairState: (selector: any) => selector({ surface: state.surface }),
+}));
+vi.mock("./chair", () => ({
+  ChairHome: ({ arrivalRequired }: { arrivalRequired?: boolean }) => (
+    <div data-testid={arrivalRequired ? "first-value-chair" : "normal-chair"} />
+  ),
+}));
+vi.mock("./gl/Atmosphere", () => ({ Atmosphere: marker("atmosphere") }));
+vi.mock("./gl/WorldStage", () => ({ WorldStage: marker("world-stage") }));
+vi.mock("./components/DeskListView", () => ({ DeskListView: marker("desk-list") }));
+vi.mock("./components/DeskChrome", () => ({ DeskChrome: marker("desk-chrome") }));
+vi.mock("./components/EmptyDesk", () => ({ EmptyDesk: marker("empty-desk") }));
+vi.mock("./components/RecordOrb", () => ({ RecordOrb: marker("record-orb") }));
+vi.mock("./components/PersonaChat", () => ({ PersonaChat: marker("persona-chat") }));
+vi.mock("./components/MissionControlConveyor", () => ({ MissionControlConveyor: marker("mission-control") }));
+vi.mock("./components/SessionPullout", () => ({
+  SessionPullout: marker("session-pullout"),
+  PanePicker: marker("pane-picker"),
+}));
+vi.mock("./components/DeliveryBoard", () => ({ DeliveryBoard: marker("delivery-board") }));
+vi.mock("./components/DeliveryDossierWindow", () => ({ DeliveryDossierWindow: marker("delivery-dossier") }));
+vi.mock("./components/DeliveryTerminalWindow", () => ({ DeliveryTerminalWindow: marker("delivery-terminal") }));
+vi.mock("./components/RoadmapWindow", () => ({ RoadmapWindow: marker("roadmap-window") }));
+vi.mock("./components/RepoWindow", () => ({ RepoWindow: marker("repo-window") }));
+vi.mock("./components/WorkbenchWindow", () => ({ WorkbenchWindow: marker("workbench-window") }));
+vi.mock("./components/NewWorkbenchChooser", () => ({ NewWorkbenchChooser: marker("workbench-chooser") }));
+vi.mock("./components/ScheduleCreateWindow", () => ({ ScheduleCreateWindow: marker("schedule-create") }));
+vi.mock("./components/AttentionDrawer", () => ({ AttentionDrawer: marker("attention-drawer") }));
+vi.mock("./components/GlassDropLayer", () => ({ GlassDropLayer: marker("glass-drop") }));
+vi.mock("./components/DeskToolInspector", () => ({ DeskToolInspector: marker("tool-inspector") }));
+vi.mock("./components/DeskWindow", () => ({
+  Dock: ({ center }: { center?: ReactNode }) => <div data-testid="dock">{center}</div>,
+  Expose: marker("expose"),
+  SnapGhost: marker("snap-ghost"),
+  Switcher: marker("switcher"),
+}));
+vi.mock("./components/SurfaceWindows", () => ({
+  SurfaceWindows: ({ firstValueRecoveryOnly }: { firstValueRecoveryOnly?: boolean }) => (
+    <div
+      data-testid="surface-windows"
+      data-recovery-only={String(Boolean(firstValueRecoveryOnly))}
+    />
+  ),
+}));
+vi.mock("./components/TrustWindow", () => ({ TrustWindow: marker("trust-window") }));
+vi.mock("./components/InlineEditor", () => ({ InlineEditor: marker("inline-editor") }));
+vi.mock("./world", () => ({ objectByRef: () => null }));
+vi.mock("./projections", () => ({
+  useProjections: { getState: () => ({ refresh: vi.fn().mockResolvedValue(undefined) }) },
+}));
+
+describe("DeskApp arrival state", () => {
+  afterEach(() => {
+    state.setupResolved = true;
+    state.setupAvailable = true;
+    state.arrivalRequired = true;
+    state.refreshFails = false;
+    state.surface = "floor";
+    state.refresh.mockClear();
+  });
+
+  it("makes first value the only Chair composition and suppresses Desk chrome", () => {
+    render(<DeskApp />);
+
+    expect(screen.getByTestId("first-value-chair")).toBeInTheDocument();
+    expect(screen.getByTestId("surface-windows")).toBeInTheDocument();
+    expect(screen.getByTestId("surface-windows")).toHaveAttribute(
+      "data-recovery-only",
+      "true",
+    );
+    expect(screen.queryByTestId("desk-chrome")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("world-stage")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("dock")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("record-orb")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("mission-control")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("pane-picker")).not.toBeInTheDocument();
+  });
+
+  it("keeps the initial unresolved setup state neutral until the server answers", () => {
+    state.setupResolved = false;
+    render(<DeskApp />);
+
+    expect(screen.getByLabelText("Preparing HoldSpeak")).toBeInTheDocument();
+    expect(screen.queryByTestId("first-value-chair")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("normal-chair")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("desk-chrome")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("dock")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("surface-windows")).not.toBeInTheDocument();
+  });
+
+  it("keeps a failed initial refresh quiet and gives the owner a retry", async () => {
+    state.setupResolved = false;
+    state.refreshFails = true;
+    render(<DeskApp />);
+
+    expect(
+      await screen.findByRole("alert"),
+    ).toHaveTextContent("HoldSpeak could not prepare your Desk: Connection refused");
+    expect(screen.getByRole("button", { name: "Retry" })).toBeInTheDocument();
+    expect(screen.queryByTestId("desk-chrome")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("normal-chair")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("dock")).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+    await waitFor(() => expect(state.refresh).toHaveBeenCalledTimes(2));
+  });
+
+  it("keeps a resolved but missing setup snapshot quiet and retryable", () => {
+    state.setupAvailable = false;
+    render(<DeskApp />);
+
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "HoldSpeak could not prepare your Desk: HoldSpeak could not read setup status.",
+    );
+    expect(screen.getByRole("button", { name: "Retry" })).toBeInTheDocument();
+    expect(screen.queryByTestId("first-value-chair")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("normal-chair")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("desk-chrome")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("dock")).not.toBeInTheDocument();
+  });
+
+  it("keeps the normal Chair and chrome when the server no longer requires arrival", () => {
+    state.arrivalRequired = false;
+    state.surface = "chair";
+    render(<DeskApp />);
+
+    expect(screen.getByTestId("normal-chair")).toBeInTheDocument();
+    expect(screen.getByTestId("desk-chrome")).toBeInTheDocument();
+    expect(screen.getByTestId("dock")).toBeInTheDocument();
+    expect(screen.getByTestId("mission-control")).toBeInTheDocument();
+    expect(screen.getByTestId("pane-picker")).toBeInTheDocument();
+  });
+});

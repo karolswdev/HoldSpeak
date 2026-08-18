@@ -261,7 +261,7 @@ export function FirstWords({
         >
           Keep as Note
         </Button>
-        {!failureContract || failureContract.setup ? (
+        {failureContract?.setup ? (
           <button
             type="button"
             className="btn btn--secondary"
@@ -274,18 +274,6 @@ export function FirstWords({
           </button>
         ) : null}
       </div>
-      {state === "success" ? (
-        <div className="desk-first-success">
-          <strong>Dictation is ready on this machine.</strong>
-          <button
-            type="button"
-            className="btn btn--ghost"
-            onClick={() => openSurfaceOr("configure-runs-on", "/profiles")}
-          >
-            Configure rewrite destination
-          </button>
-        </div>
-      ) : null}
       <div className="button-row">
         <Button
           variant="ghost"

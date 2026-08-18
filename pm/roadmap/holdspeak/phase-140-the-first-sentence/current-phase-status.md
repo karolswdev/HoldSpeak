@@ -1,6 +1,6 @@
 # Phase 140 — The First Sentence
 
-**Status:** active (0/6).
+**Status:** active (1/6).
 
 **Last updated:** 2026-08-18.
 
@@ -28,19 +28,20 @@ the first-value machinery exists, but the front door hides it.
 
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
-| HS-140-01 | One obvious door | ready | [story-01](./story-01-one-obvious-door.md) | — |
-| HS-140-02 | The sentence becomes useful | backlog | [story-02](./story-02-the-sentence-becomes-useful.md) | — |
+| HS-140-01 | One obvious door | done | [story-01](./story-01-one-obvious-door.md) | [evidence-01](./evidence-story-01.md) |
+| HS-140-02 | The sentence becomes useful | ready | [story-02](./story-02-the-sentence-becomes-useful.md) | — |
 | HS-140-03 | Recovery stays here | backlog | [story-03](./story-03-recovery-stays-here.md) | — |
-| HS-140-04 | A desk worth opening | backlog | [story-04](./story-04-a-desk-worth-opening.md) | — |
+| HS-140-04 | A desk worth opening | ready | [story-04](./story-04-a-desk-worth-opening.md) | — |
 | HS-140-05 | The quiet return | backlog | [story-05](./story-05-the-quiet-return.md) | — |
 | HS-140-06 | The cold walk | backlog | [story-06](./story-06-the-cold-walk.md) | — |
 
 ## Where we are
 
-The phase is chartered. No implementation story has begun. HS-140-01 is the
-only ready story and must land first: move the existing `FirstWords`
-composition to the Chair's fresh-owner state and suppress competing first-run
-chrome without deleting advanced capability.
+HS-140-01 is done: unresolved setup stays in a quiet retryable state; a fresh
+owner reaches the existing `FirstWords` composition on the Chair; every other
+Desk surface is suppressed except explicit Setup recovery; server state alone
+controls the return. The fresh-HOME visual pass is clean at 1440×900 and
+393×900. HS-140-02 and the independent furnished-default HS-140-04 are ready.
 
 ## Risk register
 
@@ -56,6 +57,11 @@ chrome without deleting advanced capability.
 
 ## Decision log
 
+- 2026-08-18 — HS-140-01 done after three hostile counsel passes closed the
+  initial-render leak, advanced-action escapes, local continuation race,
+  persisted stale windows, and setup-status failure fallthrough. Terra final
+  verdict: RATIFY. Focused web 24/24 and production build pass; fresh-HOME
+  screenshots pass both widths with zero console errors or horizontal overflow.
 - 2026-08-18 — Chartered by owner order: “okay, cut it.” Dashboard Door is
   cancelled in favor of The First Sentence.
 - 2026-08-18 — The owner's YOLO/open-throttle ruling is not reopened. This
