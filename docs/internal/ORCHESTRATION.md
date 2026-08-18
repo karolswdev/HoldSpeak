@@ -5,7 +5,11 @@ Muad'Dib; the implementation agents are the Fedaykin — every one a
 `claude-opus-4-6[1m]` session ("Opus workers" hereafter); the spice
 is the pipeline. Written after Phase 129 (One Grammar: two bug
 screenshots → four audits → eleven stories → thirteen workers → merged,
-in one day), which is used throughout as the worked example.
+in one day), which is used throughout as the worked example. Revised
+2026-08-17 after the reckoning: the day the owner ruled the engine
+great and the product unusable, and the method learned to gate on
+usability, seat a sober eye, ask the Tuesday question, and put the
+owner's nod before every merge.
 
 ## The model rule (owner ruling, 2026-08-15)
 
@@ -16,6 +20,12 @@ model decides, briefs, and makes the done call; `claude-opus-4-6[1m]`
 does the delegated work. The repo's `.claude/agents/opus-worker.md`
 definition pins this; any orchestration harness (Workflow, Agent) must
 route through it or an equivalent explicit Opus override.
+
+One carve-out exists and only the owner can invoke it: the owner may
+explicitly order a specific task onto a different model (the 2026-08-17
+sober-eye audit ran on a fresh Fable at the owner's word). The order is
+per-task, never a precedent; the default rule resumes the moment the
+task ends.
 
 ## The stance
 
@@ -37,6 +47,43 @@ Three duties the orchestrator can never delegate:
 3. **The ledger.** Debt discovered mid-phase is counted, triaged
    against the pre-phase baseline, logged into evidence, and assigned
    a home. Silence about a red suite is the one unforgivable sin.
+
+## The use loop and the bar (learned 2026-08-17, the reckoning)
+
+For 139 phases this method verified correctness magnificently and
+usability not at all — because correctness could FAIL a gate and
+usability could not. The build loop outran the use loop: every day
+ended with a merged PR; no gate ever asked whether the owner could do
+the job. The sober-eye audit then measured the truth: zero of the five
+owner jobs passed cold. Three standing corrections:
+
+- **The usability bar is a gate, not a hope.** A scripted cold-run
+  (fresh HOME, real hub, no lore) that can FAIL: first capture to
+  visible transcript ≤3 min; every hero action visible feedback
+  ≤500 ms; capture never silently lost; Ask answers or onboards; a
+  created object findable on the home surface in ≤60 s. Every UI
+  phase's walk story runs it. A failed bar is a failed suite.
+- **The Tuesday question at every charter.** Before any worker rides,
+  the orchestrator asks the owner: *"will you use this on a
+  Tuesday?"* — and pushes back on a no instead of building it
+  beautifully. The orchestrator that never says "don't build this"
+  is part of the disease.
+- **Success is a job passing cold, not a phase merging.** Status
+  reports lead with jobs and mornings, not merge counts.
+
+## The sober eye (institution, learned 2026-08-17)
+
+Distinct from the counsel. The counsel has standing and history; the
+sober eye's entire value is that it has NEITHER. On a cadence (every
+few phases, and always before a "this is usable now" claim), a
+fresh-context reviewer with zero project lore cold-starts the real
+product and attempts the owner's jobs WITHOUT reading internal docs
+first — then reads the promise (README, POSITIONING) last and scores
+the gap. It reports: the minute-one narrative, a per-job scorecard,
+the ranked pain list, the noun count at first contact. One such audit
+found in an hour what phase counsels missed for months, because
+counsels review law-compliance and the sober eye reviews
+human-compliance. Its report is charter evidence, not commentary.
 
 ## Phase shape: audit → charter → waves → walk
 
@@ -136,6 +183,18 @@ to run. New failures are triaged **against the pre-phase baseline**
 properly pinned toolchain): reproduce-on-main = inherited debt for
 the ledger; new = the phase's to fix before anything flips.
 
+When a deliberate behavior change (a default flip, a posture change)
+produces fallout, the fix brief carries the **a/b/c classification
+duty** with the doctrine stated: (a) the test asserts the OLD posture
+→ update the test to the new law, keeping still-valid states tested
+by pinning them explicitly; (b) a REAL regression the change exposed
+→ fix the code and say so loudly; (c) unrelated flake → prove
+serial-green twice and name it. The classification table is the
+deliverable; papering a (b) with a test edit is the sin the table
+exists to catch. (Phases 139's two fallout rounds: 43 failures, all
+honestly classified, zero real regressions — because the frame was in
+the brief.)
+
 ### 5. The walk
 
 The exit story re-runs the audit methodology against the finished
@@ -144,6 +203,30 @@ assertions, before/after pairs against the audit shots, the full
 check chain captured through `dw evidence capture`, and a reusable
 harness checked into `scripts/`. The walk story cannot be closed by
 unit tests alone and cannot be waived.
+
+Walk discipline hardened by the 138/139 closes:
+
+- **The owner sees shots before merge — standing law.** On every
+  reworked room: before/after pairs, both widths, to the owner; a
+  flinch is a redo, the nod is the merge trigger. And the **beauty
+  pass follows the functional pass**: structural pressure (counts,
+  folds, bars) produces correct rooms, not lovely ones; the owner's
+  Workbench 2.0 directive ("show the inspo, never a POS") gets its
+  own craft round before the shots go up.
+- **Assertion honesty.** A walk check that ORs generic selectors
+  passes on the wrong element (the 138 walk's `.egress-badge` matched
+  the desk chrome, not the badge under test — caught only by counsel).
+  AND-assert the SPECIFIC element; scope clicks and locators to the
+  owning container (the same text can render on a surface BEHIND the
+  window); two "different" shots that are byte-identical are a
+  false-positive tell. Keep the false-positive → honest-fail →
+  strict-pass capture chain in the evidence as provenance.
+- **Walks never touch the owner's real machine state.** Isolated HOME
+  for data — and for anything HOME does not isolate (the macOS login
+  keychain resolves from $HOME: create a walk-scoped keychain inside
+  the fake HOME), every subprocess env-scoped to the walk HOME, or
+  the drill you are simulating lands on the owner's REAL credentials.
+  Cleanup deletes what the walk created and prints it.
 
 ### 6. The counsel
 
@@ -174,6 +257,13 @@ right — is the precedent this section canonizes.
   a deletion that feels too easy. When the orchestrator is about to
   decide something alone that the owner will only see later, that is
   the moment to ask the counsel first.
+- **Every counsel brief carries the human-compliance question**
+  alongside the constitutional one: not only "does this obey the
+  laws" but *"could the owner — tired, on a Tuesday — do the thing on
+  this screen?"* A hundred counsel passes reviewed badges, prose
+  rules, and material law while dead hero buttons and silent failures
+  sailed through, because nobody asked. The sober eye audits it
+  wholesale; the counsel asks it on every pass.
 
 ### 7. The close
 
