@@ -160,7 +160,7 @@ are handled. Three modes exist: **YOLO**, **neutral**, and **safe**.
 | **Meeting intelligence** | same DB (`intel_snapshots`, `topics`, `action_items`, `artifacts`) | Medium-High | LLM-derived topics/actions/summaries + plugin artifacts. |
 | **Activity ledger** | same DB (`activity_records`, `activity_annotations`, `activity_meeting_candidates`) | Medium | Browser-history-derived URLs/titles/entity IDs (GitHub/Jira/etc.). |
 | **Raw meeting audio** | Apple Documents, `meeting-audio/<meeting-id>.wav`, plus a PCM journal while capture is recoverable | High | The flagship app checkpoints the take on device and finalizes it to a replayable WAV. Recovery manifests and partial PCM are removed after successful finalization; the WAV remains until its app data is removed. |
-| **Config** | `~/.config/holdspeak/config.json` | Medium | Includes the **device PSK** and **web auth token** (secrets); the cloud API key is referenced by *env-var name*, not stored. |
+| **Config** | `~/.config/holdspeak/config.json` | Medium | Includes the **device PSK** and **web auth token** (secrets). Destination key values are held separately in owner-only local secret custody, not in config or the database. |
 | **Web recovery drafts** | Browser `localStorage`, under versioned `hs.draft.v1.*` keys | High | Editable First Words, Dictation, Ask, Agent, capability, Coder session reply, and steering drafts. Written synchronously in this browser's storage; cleared after a confirmed retaining action where the surface has one. |
 | **Web pending voice capture** | Browser IndexedDB, `holdspeak-voice-recovery` | High | One bounded WAV per voice-to-fill scope, retained only when transcription has not confirmed text. A retry reuses this local audio; successful transcription deletes it. No capture enters first-value measurement. Open-mic segments do not use this store: they are held in memory, posted, and dropped. |
 | **Native paired-dictation recovery draft** | Apple `UserDefaults`, `hs.dictate.recovery.v1` | High | The editable words, named destination, raw/processed flag, and opaque delivery id. Cleared only after the desktop confirms delivery. |
@@ -375,11 +375,13 @@ machine except via the connector CLIs above (entity IDs only).
 
 ## 5. Secrets handling
 
-- **Cloud API key**: read from an environment variable; **never written to
-  config or the DB**. Since HS-112-01 the variable is per destination
-  (`HOLDSPEAK_PROFILE_<ID>_KEY`); `OPENAI_API_KEY` remains only the hub's
-  fallback when a feature has no destination assigned. A destination never
-  borrows another one's key.
+- **Cloud API key**: Set, replace, or remove it inline in **Settings, Models**.
+  The value travels only through an owner-only secret write/delete subresource,
+  never destination CRUD, sync, DTOs, the database, read responses, logs, or
+  receipts. The hub stores it locally in owner-only `0600` custody; reads report
+  presence only. `HOLDSPEAK_PROFILE_<ID>_KEY` remains a headless fallback. A UI
+  deletion writes a tombstone that suppresses that fallback for the destination.
+  A destination never borrows another one's key.
 - **Device PSK**: generated lazily, stored in `config.json`
   (`device_audio.ensure_device_psk`); constant-time comparison; empty PSK fails
   closed.
@@ -390,15 +392,10 @@ machine except via the connector CLIs above (entity IDs only).
   a credential everywhere else: shown only in the Settings window, never on a
   proposal record, a broadcast, or any other API response (the connector
   joins it to the POST in memory at execution time).
-- **Runs on destination keys**: a Runs on destination stores only its
-  definition: name, kind, endpoint, model, and context window. The API retains
-  the `profile` compatibility name. The API key is **never** part of the
-  destination and **never syncs**. Each surface holds its own key for a shared destination: the device Keychain on
-  iPad and iPhone, the hub's environment secret on the desktop
-  (`HOLDSPEAK_PROFILE_<id>_KEY`). The key is joined to the request only at run
-  time, never written to the synced shape, a ChangeSet, or any API response. A
-  regression test asserts a key supplied to any ingress (a sync push or a REST
-  body) never reappears on a read surface (the sync pull or `/api/profiles`).
+- **Runs on destination keys**: a destination stores only its definition:
+  name, kind, endpoint, model, and context window. Its key is local to the hub,
+  never part of target CRUD or sync, and joined only at run time. The Settings
+  read surface reports only whether a key is set; it never returns the value.
 - Bridge/firmware secrets (AIPI-Lite) live in gitignored `bridge.env` /
   `secrets.yaml`; `.example` templates are checked in.
 

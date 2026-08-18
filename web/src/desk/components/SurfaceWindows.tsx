@@ -360,7 +360,11 @@ export function SurfaceWindowHost({
       open
       unmountOnMinimize
       onClose={() => useSurfaceWindows.getState().closeSurfaceWindow(row.key)}
-      className="desk-surface-window"
+      className={
+        row.key === "configure-settings"
+          ? "desk-surface-window desk-settings-window"
+          : "desk-surface-window"
+      }
     >
       <FootSlotContext.Provider value={foot}>
         <div className="desk-surface-body">

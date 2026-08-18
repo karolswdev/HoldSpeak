@@ -104,10 +104,11 @@ identity.
    `THIS DEVICE`, `PAIRED`, `MESH`), its base URL, its model, and its context
    window. A lamp reports readiness, and the key column reads `SET` or
    `UNSET`.
-2. If the destination needs a key, put it in the environment as
-   `HOLDSPEAK_PROFILE_<ID>_KEY`. The key is never stored in the destination
-   and never syncs; the hub joins it to the request at run time. A destination
-   never borrows another one's key.
+2. If the destination needs a key, set or replace it inline in **Settings,
+   Models**. The hub keeps the value locally and the key never syncs; Settings
+   shows only `SET` or `UNSET`. `HOLDSPEAK_PROFILE_<ID>_KEY` remains the
+   headless fallback. Removing the inline key suppresses that fallback for this
+   destination. A destination never borrows another one's key.
 3. Press **PROBE** to test the dictation leg against the selected
    destination.
 4. Under **Runs on**, point each feature at a destination: dictation,
@@ -119,8 +120,8 @@ The old config fields (`meeting.intel_cloud_*`, `dictation.runtime.openai_compat
 no longer configure anything. An upgrade reads a configured legacy endpoint
 once, turns it into a destination named `legacy-intel` or `legacy-dictation`,
 and points the matching feature at it. After that the destination is the truth.
-The legacy key environment variable deliberately does not carry over: give the
-new destination its own `HOLDSPEAK_PROFILE_<ID>_KEY`.
+Environment provisioning remains available for headless use: give the new
+destination its own `HOLDSPEAK_PROFILE_<ID>_KEY` when you need that fallback.
 
 See [Models (bring your own)](MODELS.md) for what to run, and
 [Inference destinations](INFERENCE_TARGETS.md) for the API contract.

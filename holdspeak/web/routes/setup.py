@@ -124,12 +124,17 @@ def build_setup_router(ctx: WebContext) -> APIRouter:
             return JSONResponse({"ok": False, "models": [], "detail": "Expected a JSON object."}, status_code=400)
         try:
             from ...intel.providers import profile_key_env
+            from ...profile_key_store import ProfileKeyStoreError, resolve_profile_key
             from ...setup_runtime import discover_endpoint_models
             profile_id = str(body.get("profile_id") or "").strip()
-            key = os.environ.get(profile_key_env(profile_id), "") if profile_id else ""
+            try:
+                key = resolve_profile_key(profile_key_env(profile_id)) if profile_id else ""
+            except ProfileKeyStoreError:
+                key = ""
+            fallback_key = os.environ.get("OPENAI_API_KEY") or None
             result = discover_endpoint_models(
                 str(body.get("base_url") or ""),
-                api_key=key or os.environ.get("OPENAI_API_KEY") or None,
+                api_key=key if profile_id else fallback_key,
             )
             return JSONResponse(result, status_code=200 if result.get("ok") else 422)
         except Exception as exc:

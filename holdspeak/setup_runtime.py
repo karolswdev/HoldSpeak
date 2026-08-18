@@ -222,7 +222,11 @@ def probe_runtime(
             return {"ok": False, "status": "unconfigured", "backend": resolved,
                     "detail": "No base URL set for the OpenAI-compatible endpoint."}
         key_env = str(effective.api_key_env or "OPENAI_API_KEY").strip()
-        api_key = (os.environ.get(key_env) or "").strip()
+        from .profile_key_store import ProfileKeyStoreError, resolve_profile_key
+        try:
+            api_key = resolve_profile_key(key_env) or ""
+        except ProfileKeyStoreError:
+            api_key = ""
         headers = {"Accept": "application/json"}
         if api_key:
             headers["Authorization"] = f"Bearer {api_key}"

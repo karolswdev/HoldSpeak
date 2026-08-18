@@ -137,8 +137,9 @@ of reach by design.
   OpenAI-compatible service.
   Author them once under **Settings, Models** as reusable destinations, then
   assign one per feature with the Runs on pickers, and one per Agent where you
-  author it. The destination definition syncs across your surfaces while
-  the API key stays on each one. A destination can name another of your machines: run
+  author it. The destination definition syncs across your surfaces while its
+  key stays local: set, replace, or remove it inline in **Settings, Models**.
+  A destination can name another of your machines: run
   `holdspeak mesh serve` there and every run against that destination executes on
   that node, with its own model and keys.
   See [Security & privacy](https://github.com/karolswdev/HoldSpeak/blob/main/docs/SECURITY.md) and [Models](https://github.com/karolswdev/HoldSpeak/blob/main/docs/MODELS.md).
@@ -288,9 +289,9 @@ before you confirm.
 **2. Set the dial.** Open **Settings, Models**. Add a destination (an
 endpoint, this device, a paired device, or a mesh node) with its name, URL,
 and model, then use the **Runs on** pickers to say where dictation, meeting
-intelligence, and the rails observer run. A destination's key never lives in
-the destination: the hub reads it from `HOLDSPEAK_PROFILE_<ID>_KEY` at run
-time. **Probe** tests the dictation leg against the destination you picked.
+intelligence, and the rails observer run. Set, replace, or remove a
+destination key inline there; `HOLDSPEAK_PROFILE_<ID>_KEY` remains a headless
+fallback. **Probe** tests the dictation leg against the destination you picked.
 This is the only place endpoint and model identity is edited.
 
 **3. Hold the key.** Hold the global hotkey in any app (Right Option on

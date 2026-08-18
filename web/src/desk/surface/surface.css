@@ -2400,39 +2400,292 @@ button.surface-edit-in-place:hover {
   display: none;
 }
 
-/* ── HS-139-05: responsive destination cards ────────────────────────── */
-/* JS-toggled via ResizeObserver: the component renders either the table
-   or a card-per-destination layout, so only card styles are needed. */
-.dest-cards-narrow { display: flex; flex-direction: column; gap: 8px; }
-.dest-card {
-  border: 1px solid var(--border);
-  padding: 6px;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
+/* ── HS-139 beauty pass — Models is a workbench, not a utility strip. ──
+   Settings earns a purpose-sized default at desktop widths. The desk still
+   owns resize/maximize and sheets own narrow screens; this only replaces the
+   inherited 46vw seed for the one configuration room with a real matrix. */
+.desk-next .desk-surface-window.desk-settings-window {
+  width: calc(100vw - 48px);
+  min-width: 820px;
 }
-.dest-card-row {
-  display: flex;
+/* The sheet contract is already selected by the window host at narrow
+   viewports. Keep that host-owned shape authoritative without reintroducing
+   a viewport query into a surface stylesheet. */
+.desk-next .desk-surface-window.desk-settings-window.is-sheet {
+  width: auto;
+  min-width: 0;
+}
+
+/* One full-width destination ledger: names and endpoints get the breathing
+   room they carry, while the compact health/action tail stays legible. */
+.models-destinations {
+  min-width: 0;
+}
+.models-destination-matrix {
+  width: 100%;
+}
+.models-destination-head,
+.models-destination-row {
+  display: grid;
+  grid-template-columns:
+    minmax(108px, 15fr)
+    minmax(96px, 13fr)
+    minmax(210px, 35fr)
+    minmax(150px, 22fr)
+    minmax(120px, 15fr)
+    100px;
+  gap: 8px;
   align-items: center;
-  gap: 6px;
-  min-height: 24px;
 }
-.dest-card-label {
-  flex: none;
-  width: 60px;
+.models-destination-head {
+  min-height: 24px;
+  padding: 0 4px;
+  border-bottom: 1px solid var(--border);
+  box-shadow: 0 1px 0 var(--etch-light);
+}
+.models-destination-head span,
+.dest-card-field > span,
+.dest-card-index {
   font: 600 10px / 1 var(--font-mono);
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--text-muted);
 }
-.dest-card-row > :not(.dest-card-label) {
-  flex: 1;
+.models-destination-row {
+  min-height: 42px;
+  padding: 4px;
+  border-bottom: 1px solid var(--etch-dark);
+}
+.models-destination-row:hover,
+.models-destination-row:focus-within {
+  background: var(--desk-window-well);
+}
+.models-destination-cell,
+.models-destination-actions {
   min-width: 0;
 }
+.models-destination-cell > .gadget-string,
+.models-destination-cell > .gadget-cycle {
+  width: 100%;
+}
+.models-destination-health {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: 6px;
+  min-width: 0;
+  white-space: nowrap;
+}
+.models-destination-health .gadget-key-cell {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+}
+.models-key-affordance {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+.models-key-affordance:focus-visible {
+  outline: 1px solid var(--accent);
+  outline-offset: 2px;
+}
+.models-destination-key-row {
+  padding: 6px 4px 8px;
+  border-bottom: 1px solid var(--etch-dark);
+  background: var(--desk-window-well);
+}
+.models-key-editor {
+  display: flex;
+  align-items: end;
+  gap: 6px;
+  min-width: 0;
+}
+.models-key-editor > label {
+  display: grid;
+  min-width: 180px;
+  max-width: 320px;
+  gap: 3px;
+}
+.models-key-editor > label > span {
+  font: 600 10px / 1 var(--font-mono);
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+}
+.models-key-editor input {
+  min-width: 0;
+  height: 24px;
+  padding: 2px 6px;
+  border: 1px solid var(--border);
+  background: var(--surface-1);
+  color: var(--text);
+  font: 400 11px / 1 var(--font-mono);
+}
+.models-destination-actions,
 .dest-card-verbs {
   display: flex;
+  align-items: center;
   justify-content: flex-end;
   gap: 6px;
+}
+.models-destination-matrix .gadget-table-add {
+  width: 100%;
+  margin-top: 6px;
+}
+
+/* The lower controls form a 58/42 dashboard, rather than another vertical
+   stack of cards. The runtime truth stays together, engine and Rails occupy
+   the quieter right rail. */
+.models-dashboard {
+  display: grid;
+  grid-template-columns: minmax(0, 58fr) minmax(0, 42fr);
+  grid-template-rows: auto auto;
+  gap: 12px 18px;
+  align-items: start;
+}
+.models-dashboard-runs {
+  grid-row: span 2;
+}
+.models-dashboard-panel .gadget-group {
+  margin: 0;
+}
+.models-dashboard-panel .gadget-row {
+  grid-template-columns: minmax(98px, 0.8fr) minmax(0, 1.2fr);
+}
+.models-dashboard-panel .prefs-egress-line {
+  justify-content: flex-start;
+  padding-left: 6px;
+}
+.models-meeting-summary {
+  font: 400 10px / 1.2 var(--font-mono);
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--text-muted);
+}
+.models-meeting-notice {
+  padding: 2px 6px 4px;
+  font: 500 10px / 1.25 var(--font-mono);
+  color: var(--text-muted);
+}
+.models-meeting-notice[data-tone="danger"] {
+  color: var(--danger);
+}
+
+/* At the matrix's honest readability threshold, each target collapses to a
+   calm summary. Opening one exposes the same real controls and action bar;
+   the other targets remain names plus readiness, not five forms in a trench. */
+.dest-cards-narrow {
+  display: flex;
+  flex-direction: column;
+}
+.dest-card {
+  border-top: 1px solid var(--border);
+}
+.dest-card:last-of-type {
+  border-bottom: 1px solid var(--border);
+}
+.dest-card-summary {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr) max-content 16px;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 38px;
+  padding: 6px 4px;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+}
+.dest-card-summary:hover,
+.dest-card-summary:focus-visible,
+.dest-card[data-expanded] .dest-card-summary {
+  background: var(--desk-window-well);
+  outline: none;
+}
+.dest-card-summary:focus-visible {
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+.dest-card-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font: 500 12px / 1.2 var(--font-mono);
+}
+.dest-card-disclosure {
+  color: var(--text-muted);
+  transition: transform var(--duration-micro) var(--ease-quart);
+}
+.dest-card[data-expanded] .dest-card-disclosure {
+  transform: rotate(180deg);
+}
+.dest-card-detail {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 8px;
+  padding: 8px 4px 10px 36px;
+  background: var(--desk-window-well);
+}
+.dest-card-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.dest-card-field[data-field="name"],
+.dest-card-field[data-field="endpoint"],
+.dest-card-field[data-field="health"],
+.dest-card-verbs {
+  grid-column: 1 / -1;
+}
+.dest-card-detail > .models-key-editor {
+  grid-column: 1 / -1;
+}
+.dest-card-field > .gadget-string,
+.dest-card-field > .gadget-cycle {
+  width: 100%;
+}
+.dest-card-verbs {
   padding-top: 4px;
   border-top: 1px solid var(--border);
+}
+.dest-cards-narrow > .gadget-table-add {
+  width: 100%;
+  margin-top: 8px;
+}
+
+@container surface (max-width: 839.9px) {
+  .models-dashboard {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: none;
+    gap: 12px;
+  }
+  .models-dashboard-runs {
+    grid-row: auto;
+  }
+}
+@container surface (max-width: 559.9px) {
+  .dest-card-detail {
+    grid-template-columns: minmax(0, 1fr);
+    padding-left: 4px;
+  }
+  .models-dashboard-panel .gadget-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .models-key-editor {
+    align-items: stretch;
+    flex-wrap: wrap;
+  }
+  .models-key-editor > label {
+    flex-basis: 100%;
+    max-width: none;
+  }
 }

@@ -185,7 +185,8 @@ at any local or LAN [OpenAI-compatible / GGUF / MLX endpoint](./MODELS.md)):
 The endpoint and model are not config fields any more (HS-112-01). Author the
 endpoint once as a destination under **Settings, Models** and pick it as the
 dictation **Runs on**; assigning it also selects the `openai_compatible`
-backend. Its key lives in the environment as `HOLDSPEAK_PROFILE_<ID>_KEY`.
+backend. Set or replace its key inline in **Settings, Models**; the environment
+variable `HOLDSPEAK_PROFILE_<ID>_KEY` remains a headless fallback.
 
 </details>
 

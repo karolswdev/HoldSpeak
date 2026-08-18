@@ -3,7 +3,6 @@ from __future__ import annotations
 from holdspeak.services.observer import NullObserver, PipelineObserver, observe_service
 
 from datetime import datetime
-import os
 from pathlib import Path
 import time
 from typing import Any
@@ -84,6 +83,7 @@ class ProfileService:
         self, principal: Principal, target_id: str, payload: dict[str, Any] | None = None
     ) -> dict[str, Any]:
         from ..intel.providers import profile_key_env
+        from ..profile_key_store import ProfileKeyStoreError, resolve_profile_key
         from ..setup_runtime import discover_endpoint_models
 
         profile = self._db.profiles.get(target_id)
@@ -91,7 +91,11 @@ class ProfileService:
             raise NotFound("destination", target_id)
         if profile.kind == "openAICompatible":
             started = time.perf_counter()
-            discovered = discover_endpoint_models(profile.base_url, api_key=os.environ.get(profile_key_env(profile.id)))
+            try:
+                api_key = resolve_profile_key(profile_key_env(profile.id))
+            except ProfileKeyStoreError:
+                api_key = None
+            discovered = discover_endpoint_models(profile.base_url, api_key=api_key)
             reachable = bool(discovered.get("ok"))
             return {"reachable": reachable, "latency_ms": int((time.perf_counter() - started) * 1000), "models": list(discovered.get("models") or []), "error": None if reachable else str(discovered.get("detail") or "Unreachable")}
         if profile.kind == "onDevice":

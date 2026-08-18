@@ -127,6 +127,41 @@ def build_profiles_router(ctx: WebContext) -> APIRouter:
         except Exception as exc:
             return error_500(exc, log, "Failed to update inference target")
 
+    @router.put("/api/inference-targets/{target_id}/secret")
+    async def api_set_inference_target_secret(target_id: str, request: Request) -> Any:
+        body = await _json_body(request)
+        if body is None:
+            return JSONResponse({"error": "Expected a JSON object"}, status_code=400)
+        service = ctx.profile_key_service
+        if service is None:
+            return JSONResponse({"error": "Profile key service is unavailable"}, status_code=503)
+        try:
+            return JSONResponse(service.set(_principal(request), target_id, body))
+        except NotFound:
+            return JSONResponse({"error": "Unknown destination"}, status_code=404)
+        except ServiceError as exc:
+            return JSONResponse({"error": exc.detail}, status_code=int(exc.context.get("status") or 400))
+        except ValidationError as exc:
+            return JSONResponse({"error": str(exc)}, status_code=400)
+        except Exception as exc:
+            return error_500(exc, log, "Failed to update destination key")
+
+    @router.delete("/api/inference-targets/{target_id}/secret")
+    async def api_delete_inference_target_secret(target_id: str, request: Request) -> Any:
+        service = ctx.profile_key_service
+        if service is None:
+            return JSONResponse({"error": "Profile key service is unavailable"}, status_code=503)
+        try:
+            return JSONResponse(service.delete(_principal(request), target_id))
+        except NotFound:
+            return JSONResponse({"error": "Unknown destination"}, status_code=404)
+        except ServiceError as exc:
+            return JSONResponse({"error": exc.detail}, status_code=int(exc.context.get("status") or 400))
+        except ValidationError as exc:
+            return JSONResponse({"error": str(exc)}, status_code=400)
+        except Exception as exc:
+            return error_500(exc, log, "Failed to delete destination key")
+
     @router.delete("/api/inference-targets/{target_id}")
     async def api_delete_inference_target(target_id: str, request: Request) -> Any:
         try:

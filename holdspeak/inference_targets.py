@@ -80,7 +80,12 @@ def _profile_key_present(profile_id: str) -> bool:
         env = profile_key_env(profile_id)
     except ValueError:
         return False
-    return bool(os.environ.get(env, "").strip())
+    from .profile_key_store import ProfileKeyStoreError, resolve_profile_key
+
+    try:
+        return bool(resolve_profile_key(env))
+    except ProfileKeyStoreError:
+        return False
 
 
 def _recovery(reason: str, *, alternate: str = THIS_MACHINE_ID) -> dict[str, str]:

@@ -581,6 +581,7 @@ class MeetingWebServer:
         from .services.projection_service import ProjectionService
         from .services.settings_service import SettingsService
         from .services.setup_service import SetupService
+        from .services.profile_key_service import ProfileKeyService
         from .db import get_database, get_observer
         from .web.routes import (
             build_activity_router,
@@ -740,6 +741,7 @@ class MeetingWebServer:
             settings_service=SettingsService(
                 get_database(), on_settings_applied=self.on_settings_applied, observer=obs
             ),
+            profile_key_service=ProfileKeyService(get_database()),
             on_get_intent_controls=self.on_get_intent_controls,
             on_set_intent_profile=self.on_set_intent_profile,
             on_set_intent_override=self.on_set_intent_override,

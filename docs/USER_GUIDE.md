@@ -261,9 +261,9 @@ Use `openai_compatible` when the model is served somewhere else:
 
 The one path: author the endpoint once as a destination under **Settings,
 Models**, then pick it as the dictation **Runs on**. Assigning a destination is
-itself the "run it there" instruction, so the dictation backend follows. The
-key lives in the environment as `HOLDSPEAK_PROFILE_<ID>_KEY`, never in the
-destination.
+itself the "run it there" instruction, so the dictation backend follows. Set
+or replace its key inline in **Settings, Models**; the environment variable
+`HOLDSPEAK_PROFILE_<ID>_KEY` remains a headless fallback.
 
 The old `dictation.runtime.openai_compatible_*` fields no longer configure
 anything (HS-112-01). An upgrade reads a configured legacy endpoint once,
@@ -272,7 +272,7 @@ at it; the legacy key env deliberately does not carry over.
 `dictation.runtime.openai_compatible_timeout_seconds` is not part of the
 destination and still applies.
 
-Known-good endpoint families include llama.cpp server, LM Studio, Ollama's OpenAI bridge, vLLM, LiteLLM, and hosted OpenAI-compatible APIs. HoldSpeak reads the destination's API key from `HOLDSPEAK_PROFILE_<ID>_KEY`. It does not store the key in the destination, in the config, or in the project context files. If the endpoint is unavailable, times out, or returns malformed output, HoldSpeak preserves the original transcript and surfaces the failure in dry-run/readiness output.
+Known-good endpoint families include llama.cpp server, LM Studio, Ollama's OpenAI bridge, vLLM, LiteLLM, and hosted OpenAI-compatible APIs. HoldSpeak uses the key you set inline for that destination, or its `HOLDSPEAK_PROFILE_<ID>_KEY` headless fallback. It does not put the key in the destination definition, config, or project context files. If the endpoint is unavailable, times out, or returns malformed output, HoldSpeak preserves the original transcript and surfaces the failure in dry-run/readiness output.
 
 ## Project Context
 
@@ -886,7 +886,8 @@ Sensitive files:
 
 - Do not place secrets in `.hs/`.
 - Use `.hs/ignore` to document paths and topics that should not be injected.
-- Prefer environment variables for API keys.
+- Set destination keys inline in **Settings, Models**; use environment variables
+  when provisioning a headless hub.
 
 ## Troubleshooting
 

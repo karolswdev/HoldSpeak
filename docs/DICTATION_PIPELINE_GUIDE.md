@@ -104,7 +104,7 @@ In `/dictation -> Runtime`, set:
 | Backend | `openai_compatible` |
 | Base URL | `http://127.0.0.1:8000/v1` |
 | Model | `qwen2.5-7b-instruct` |
-| API key env | `OPENAI_API_KEY` |
+| API key | Set inline in **Settings, Models**; optional headless fallback `HOLDSPEAK_PROFILE_<ID>_KEY` |
 | Timeout seconds | `8` |
 
 Config file shape:
@@ -130,8 +130,9 @@ once as a destination under **Settings, Models** and pick it as the dictation
 **Runs on**; assigning it also selects the `openai_compatible` backend. See
 [MODELS.md](./MODELS.md).
 
-HoldSpeak reads the API key from `HOLDSPEAK_PROFILE_<ID>_KEY` for that
-destination. Do not put API keys in `.hs/` files.
+Set the destination key inline in **Settings, Models**. For a headless hub,
+`HOLDSPEAK_PROFILE_<ID>_KEY` remains the fallback. Do not put API keys in
+`.hs/` files.
 
 > **Extended thinking disabled by default.** HoldSpeak sets `thinking: false` on
 > every call to an OpenAI-compatible endpoint. This prevents extended-thinking

@@ -204,7 +204,7 @@ a copy-as-Markdown card at `/history`:
 
 HoldSpeak supports three intelligence modes:
 - `local`: requires a local GGUF model
-- `cloud`: uses your configured OpenAI-compatible endpoint + API key env var
+- `cloud`: uses your configured OpenAI-compatible endpoint and destination key
 - `auto`: local-first, then cloud fallback
 
 ### Where your transcripts go (egress posture)
@@ -294,7 +294,7 @@ For local-first capture plus remote intel on your LAN:
 3. Deferred intel is always on (`intel_deferred_enabled` pinned to `true`
    since HS-139-02), so meetings continue when the homelab is temporarily
    unavailable.
-4. Export your API key environment variable and run `holdspeak doctor` to preflight reachability and model availability; its Runs on line names the destination each pipeline resolves to.
+4. Set the destination key inline in **Settings, Models** and run `holdspeak doctor` to preflight reachability and model availability. `HOLDSPEAK_PROFILE_<ID>_KEY` remains a headless fallback; the Runs on line names the destination each pipeline resolves to.
 
 ### What It Extracts
 
@@ -615,7 +615,7 @@ disk but are dead (HS-112-01) and the reference table says so per row.
 | `intel_retry_failure_webhook_header_name` | string | null | Optional custom header name added to failure-alert webhooks |
 | `intel_retry_failure_webhook_header_value` | string | null | Optional custom header value (set together with header name) |
 | `intel_cloud_model` | string | "gpt-5-mini" | **Dead (HS-112-01).** Read once by the legacy migration, then ignored. The model comes from the meetings Runs on destination. |
-| `intel_cloud_api_key_env` | string | "OPENAI_API_KEY" | **Dead (HS-112-01).** The destination's key is `HOLDSPEAK_PROFILE_<ID>_KEY`; this default only names the hub's fallback env when no destination is assigned. |
+| `intel_cloud_api_key_env` | string | "OPENAI_API_KEY" | **Dead (HS-112-01).** Set the destination key inline in **Settings, Models**; `HOLDSPEAK_PROFILE_<ID>_KEY` remains the per-destination headless fallback. |
 | `intel_cloud_base_url` | string | null | **Dead (HS-112-01).** Read once by the legacy migration, then ignored. The URL comes from the meetings Runs on destination. |
 | `intel_cloud_reasoning_effort` | string | null | **Dead (HS-112-01).** Read only by the one-time legacy migration. |
 | `intel_cloud_store` | bool | false | **Dead (HS-112-01).** Read only by the one-time legacy migration. |
@@ -780,7 +780,10 @@ Send `"ping"` text message, receive `"pong"` response.
 
 1. Run `holdspeak doctor` and check the `Cloud intel preflight` line.
 2. If it reports DNS/connection failures, verify the homelab hostname/IP, LAN routing, and firewall.
-3. If it reports auth failures (HTTP 401/403), check that `HOLDSPEAK_PROFILE_<ID>_KEY` is exported for the destination the meetings Runs on picker names.
+3. If it reports auth failures (HTTP 401/403), check the destination key in
+   **Settings, Models**. For a headless hub, check the
+   `HOLDSPEAK_PROFILE_<ID>_KEY` fallback for the destination the meetings Runs
+   on picker names.
 4. If it reports model mismatch, set that destination's model to one of the model IDs exposed by `/models`.
 5. Verify that destination's base URL starts with `http://` or `https://` and includes the right API prefix (commonly `/v1`). PROBE in Settings, Models tests reachability.
 

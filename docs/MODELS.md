@@ -78,9 +78,12 @@ endpoint owns model loading; HoldSpeak needs no local weights.
   choose where it runs:
   - **Dictation, meetings, rails:** the **Runs on** pickers in the same module.
   - **Agents:** the **Runs on** picker where you author the Agent.
-- **Keys:** a destination never stores its key. Export it as
-  `HOLDSPEAK_PROFILE_<ID>_KEY` and the hub joins it at run time. A keyless
-  self-hosted endpoint needs no key at all.
+- **Keys:** set, replace, or remove a destination key inline in **Settings,
+  Models**. The hub keeps that value in owner-only local custody and joins it
+  only at run time; Settings reads show only whether it is set.
+  `HOLDSPEAK_PROFILE_<ID>_KEY` remains a headless fallback. Removing an inline
+  key suppresses that fallback for the destination. A keyless self-hosted
+  endpoint needs no key at all.
 
 There is no hand-edited alternative. `dictation.runtime.openai_compatible_*`
 and `meeting.intel_cloud_*` are dead fields: an upgrade reads a configured
@@ -152,9 +155,9 @@ local and is joined only at dispatch time. See
 Destinations also drive the desktop hub's pipelines. **Settings, Models** holds
 a **Runs on** picker for dictation, meetings, and rails, so one destination can
 serve Agents, Meetings, and dictation. `holdspeak doctor` reports
-which destination each pipeline resolves to, warns when an assigned destination is
-missing, and names the exact `HOLDSPEAK_PROFILE_<ID>_KEY` variable to export
-when a destination needs a key on this machine.
+which destination each pipeline resolves to and warns when an assigned
+destination is missing or has no key. Set the key inline in **Settings,
+Models**, or use `HOLDSPEAK_PROFILE_<ID>_KEY` for headless fallback.
 
 ### The mesh edge: run on another node
 
