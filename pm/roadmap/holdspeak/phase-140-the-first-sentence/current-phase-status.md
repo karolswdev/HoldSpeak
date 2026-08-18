@@ -1,6 +1,6 @@
 # Phase 140 — The First Sentence
 
-**Status:** active (0/5).
+**Status:** active (0/6).
 
 **Last updated:** 2026-08-18.
 
@@ -13,9 +13,9 @@ first useful act is clear.
 
 ## Goal
 
-Make a fresh HoldSpeak open on one obvious job—dictate one sentence—and carry
-that sentence through edit, Copy, or Keep as Note without exposing the
-system's internal vocabulary.
+Make a fresh HoldSpeak open on one obvious job—dictate one sentence—carry that
+sentence through edit, Copy, or Keep as Note, then reveal a robust furnished
+default without exposing the system's internal vocabulary.
 
 ## Evidence base
 
@@ -31,8 +31,9 @@ the first-value machinery exists, but the front door hides it.
 | HS-140-01 | One obvious door | ready | [story-01](./story-01-one-obvious-door.md) | — |
 | HS-140-02 | The sentence becomes useful | backlog | [story-02](./story-02-the-sentence-becomes-useful.md) | — |
 | HS-140-03 | Recovery stays here | backlog | [story-03](./story-03-recovery-stays-here.md) | — |
-| HS-140-04 | The quiet return | backlog | [story-04](./story-04-the-quiet-return.md) | — |
-| HS-140-05 | The cold walk | backlog | [story-05](./story-05-the-cold-walk.md) | — |
+| HS-140-04 | A desk worth opening | backlog | [story-04](./story-04-a-desk-worth-opening.md) | — |
+| HS-140-05 | The quiet return | backlog | [story-05](./story-05-the-quiet-return.md) | — |
+| HS-140-06 | The cold walk | backlog | [story-06](./story-06-the-cold-walk.md) | — |
 
 ## Where we are
 
@@ -50,6 +51,8 @@ chrome without deleting advanced capability.
 | Receipt claims success too early | success remains bound to a non-empty transcript | milestone changes on mic open or capture start |
 | Recovery becomes a scavenger hunt | errors stay in place; Setup appears only for an exact fix | generic configuration copy or multiple recovery destinations |
 | Local happy path secretly needs cloud | exercise fresh HOME with no API key | first sentence requires Models administration or a cloud key |
+| Starter content becomes fake biography or demo clutter | prompts/examples only; blank facts remain unknown | seed asserts a name, employer, preference, or relationship the owner never supplied |
+| Re-seeding destroys customization | ordinary mode creates never-seen IDs only and does not resurrect tombstones; Reset is explicit force-restore | ordinary seed changes or resurrects an existing starter object |
 
 ## Decision log
 
@@ -59,3 +62,6 @@ chrome without deleting advanced capability.
   phase removes cognitive competition, not capability or authority.
 - 2026-08-18 — GitHub CI is not a phase gate by owner ruling. Local focused
   suites, production build, and the fresh-HOME walk are the verification path.
+- 2026-08-18 — Owner amendment: progressive disclosure must reveal a “very,
+  very, very robust default setup” with useful drawers and editable prefilled
+  context that can attach to AIs. HS-140-04 added; phase expanded 5→6 stories.

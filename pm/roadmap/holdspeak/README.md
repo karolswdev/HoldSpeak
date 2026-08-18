@@ -9,12 +9,14 @@
 > is canon at [`docs/internal/ORCHESTRATION.md`](../../../docs/internal/ORCHESTRATION.md).
 
 **Newest update (2026-08-18): Phase 140 — The First Sentence — ACTIVE
-(0/5).** The owner ordered a complexity cut. The proposed Dashboard Door is
+(0/6).** The owner ordered a complexity cut. The proposed Dashboard Door is
 cancelled: no TODO kanban, calendar aggregation, or new control center. A fresh
 HoldSpeak will open on one obvious job—dictate one sentence—then reveal the
 normal Chair after a useful result or an explicit Continue later. The phase
 reuses existing capture, editable result, Copy, Keep as Note, retained-audio
-recovery, and content-free first-value receipts; it creates no new subsystem.
+recovery, and content-free first-value receipts. The reveal is furnished with
+six useful drawers and editable, explicitly attachable Everyday context—never
+fake personal facts or a pretend configured AI.
 See the [current phase record](./phase-140-the-first-sentence/current-phase-status.md).
 
 **Previous update (2026-08-15): Phase 131 — One Admission Path — COMPLETE
@@ -481,10 +483,12 @@ parallel. Phase 101 itself stands at 3/4 (canon ratified and built,
 PR #359; sweep 4122/0).
 
 **Current phase:** [**Phase 140 — The First Sentence**](./phase-140-the-first-sentence/current-phase-status.md)
-— **ACTIVE (0/5, 2026-08-18)**. The Dashboard Door is cancelled. A fresh owner
+— **ACTIVE (0/6, 2026-08-18)**. The Dashboard Door is cancelled. A fresh owner
 gets one obvious action on the Chair—dictate one sentence—then edits, copies,
-or keeps it before the normal product is disclosed. No new subsystem, model,
-task board, calendar, schema, API, or MCP surface.
+or keeps it before a furnished normal product is disclosed: six useful drawers
+and editable Everyday context that stays out of AI requests until the owner
+explicitly attaches it. Existing paired-device Desk sync remains unchanged.
+No new subsystem, model, task board, calendar, schema, API, or MCP surface.
 Previous: [**Phase 139 — The Settings Reckoning**](./phase-139-the-settings-reckoning/current-phase-status.md)
 — **COMPLETE (8/8, PR #465 merged 2026-08-18)**. Settings collapsed to seven
 job-named tiles; the Models workbench and inline destination-key custody landed
@@ -829,7 +833,7 @@ canon, canon wins.
 | 111 | The Refinement: every program on the desk gets its interior rethought for Signal Workbench — Settings, Speak, Meetings, Agents, Ask, Delivery, system chrome, interactive controls, sprites. | in-progress | [phase-111-the-refinement](./phase-111-the-refinement/) |
 | 138 | Ship an encrypted, local-only People relationship and 1:1 foundation whose explicit manager commitments appear in Follow-through without entering plaintext product stores. | done | [phase-138-the-people-ledger](./phase-138-the-people-ledger/) |
 | 139 | The Settings Reckoning: cut the Settings face to seven job-named tiles, pin core defaults, move object settings home, and fold operator wiring behind RAW. | done | [phase-139-the-settings-reckoning](./phase-139-the-settings-reckoning/) |
-| 140 | The First Sentence: one obvious first-value act on the Chair, a useful editable result, in-place recovery, then progressive disclosure of the full product. | in-progress (0/5) | [phase-140-the-first-sentence](./phase-140-the-first-sentence/) |
+| 140 | The First Sentence: one obvious first-value act on the Chair, a useful editable result, in-place recovery, then a furnished six-drawer reveal with explicitly attachable Everyday context. | in-progress (0/6) | [phase-140-the-first-sentence](./phase-140-the-first-sentence/) |
 
 (Status values: `planning`, `in-progress`, `done`, `paused`, `cancelled`.)
 

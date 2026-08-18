@@ -4,7 +4,7 @@
 - **Phase:** 140
 - **Status:** backlog
 - **Depends on:** 140-01
-- **Unblocks:** 140-04, 140-05
+- **Unblocks:** 140-05, 140-06
 - **Owner:** delegated Terra worker; orchestrator adjudicates
 
 ## Problem
@@ -33,7 +33,8 @@ Desk must prove that the sentence went somewhere findable.
   producing exactly one note.
 - [ ] After Keep, the Desk store refreshes and the created note opens through
   the existing pullout/window seam; it remains findable after reload.
-- [ ] Capture start/release and empty results do not complete the milestone.
+- [ ] Capture start/release and empty results do not complete first value;
+  onboarding completion may wait for the furnished-default hand-off in 140-05.
 - [ ] First-value records contain no transcript, phrase, audio, clipboard
   value, or note body.
 - [ ] First-value event requests reject content-bearing keys rather than merely

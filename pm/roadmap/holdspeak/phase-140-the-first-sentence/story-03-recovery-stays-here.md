@@ -4,7 +4,7 @@
 - **Phase:** 140
 - **Status:** backlog
 - **Depends on:** 140-02
-- **Unblocks:** 140-04, 140-05
+- **Unblocks:** 140-05, 140-06
 - **Owner:** delegated Terra worker; orchestrator adjudicates
 
 ## Problem
