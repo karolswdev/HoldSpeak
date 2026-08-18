@@ -128,7 +128,7 @@ so the task still landed in the right block.
 | # | Feature | What happened above | Turn it on with |
 |---|---------|---------------------|-----------------|
 | ① | **Multi-pass rewriting** | Drafted, then critiqued + tightened in a second pass (latency-budget-gated). | `rewrite_passes: 2` |
-| ② | **Correction memory** | A correction you made last session (`this kind of utterance → agent_task_buildout`) nudged routing. The LLM classifier actually *failed* on this turn; the correction **rescued** it. **Persists across restarts** (DB-backed); curate it in `/dictation → Memory`. | `corrections_enabled: true` |
+| ② | **Correction memory** | A correction you made last session (`this kind of utterance → agent_task_buildout`) nudged routing. The LLM classifier actually *failed* on this turn; the correction **rescued** it. **Persists across restarts** (DB-backed); curate it in `/dictation → Memory`. | Always on (pinned since HS-139-02). |
 | ③ | **Model-assisted target** | No window signal was available (the Wayland/terminal reality). The heuristic gave `unknown@0.00`; below the threshold, the LLM **inferred** `claude_code` from your words. A manual override always wins. | `target_detect_llm_enabled: true` |
 | ④ | **KB injection** | The matched block injected the project's stack / invariants / definition-of-done before the rewrite. | add a block with an `inject` template |
 
@@ -169,10 +169,8 @@ at any local or LAN [OpenAI-compatible / GGUF / MLX endpoint](./MODELS.md)):
 {
   "dictation": {
     "pipeline": {
-      "enabled": true,
       "stages": ["intent-router", "kb-enricher", "project-rewriter"],
       "rewrite_passes": 2,
-      "corrections_enabled": true,
       "target_detect_llm_enabled": true,
       "target_detect_llm_below": 0.8
     },

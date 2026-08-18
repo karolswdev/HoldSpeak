@@ -84,7 +84,7 @@ glance, and a capture hero at the center. Tap the hero to record a meeting
 recording starts by voice. Ask AI is one tap away from the hero. Each lane
 header opens its full surface in a window; every action opens a window, never
 a page transition. The **Floor** button in the dock swaps to the spatial
-floor (the object world below) and back. A toggle in Settings, Appearance
+floor (the object world below) and back. A toggle in Settings, Sounds & Presence
 controls **Desk Sounds**, the six mechanical click sounds the Chair plays on
 key presses, window opens, and landings.
 

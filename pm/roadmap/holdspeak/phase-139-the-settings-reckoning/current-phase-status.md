@@ -1,6 +1,6 @@
 # Phase 139 — The Settings Reckoning
 
-**Status:** active (6/8).
+**Status:** active (7/8).
 
 **Last updated:** 2026-08-18.
 
@@ -49,7 +49,7 @@ session's scratchpad; the walk story re-shoots everything after.
 | HS-139-03 | Config goes home | done | [story-03](./story-03-config-goes-home.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-139-04 | The RAW wells | done | [story-04](./story-04-the-raw-wells.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-139-05 | Seven tiles | done | [story-05](./story-05-seven-tiles.md) | [evidence-story-05](./evidence-story-05.md) |
-| HS-139-06 | The docs sweep | ready | [story-06](./story-06-the-docs-sweep.md) | — |
+| HS-139-06 | The docs sweep | done | [story-06](./story-06-the-docs-sweep.md) | [evidence-story-06](./evidence-story-06.md) |
 | HS-139-07 | The walk | ready | [story-07](./story-07-the-walk.md) | — |
 | HS-139-08 | Open throttle | done | [story-08](./story-08-open-throttle.md) | [evidence-story-08](./evidence-story-08.md) |
 
@@ -78,9 +78,12 @@ session's scratchpad; the walk story re-shoots everything after.
 
 ## Where we are
 
-HS-139-01 through HS-139-05 done, HS-139-08 done. Seven tiles shipped
+HS-139-01 through HS-139-06 done, HS-139-08 done. Seven tiles shipped
 (Voice, Sounds & Presence, Meetings, Rhythm, Models, Integrations,
 System). Open throttle shipped: POSTURE=YOLO, actuators on with
 wildcard allowlists, People MCP defaults write, all boundary suites
-green (40/40). On-glass controls (excluding RAW): 36. 51 backend +
-23 vitest pass.
+green (40/40). Docs sweep done: SECURITY.md states the YOLO default
+honestly and names the hard boundary; every killed/pinned field
+swept from entry-point docs; 34 doc-drift + product-copy + API surface
+guards green. On-glass controls (excluding RAW): 36. 51 backend +
+23 vitest pass. HS-139-07 (the walk) in progress.

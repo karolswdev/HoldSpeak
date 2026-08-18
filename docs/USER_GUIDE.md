@@ -465,13 +465,13 @@ Cloud or homelab behavior:
 - The one path: author the endpoint once as a destination under **Settings, Models**, then pick it as the meetings **Runs on**. The `intel_cloud_*` fields are dead (HS-112-01).
 - Use `holdspeak doctor` from the same shell environment to verify endpoint, model, TLS, DNS, and authentication; its Runs on line names the destination each pipeline resolves to.
 
-The provider switch itself still lives in config:
+The provider switch itself still lives in config (deferred intel is
+always on, pinned since HS-139-02):
 
 ```json
 {
   "meeting": {
-    "intel_provider": "cloud",
-    "intel_deferred_enabled": true
+    "intel_provider": "cloud"
   }
 }
 ```

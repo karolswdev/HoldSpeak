@@ -1,8 +1,8 @@
 # HoldSpeak Security & Privacy Posture
 
 **Status:** living document.
-**Last updated:** 2026-08-15 (one inference admission path, per-attempt
-receipts, bounded schedule delegation, and per-session speech/meeting authority).
+**Last updated:** 2026-08-18 (HS-139-08 open throttle: YOLO default posture,
+actuators on, People MCP default write; hard boundary unchanged).
 
 This document is the threat model for HoldSpeak: what data it holds, where that
 data lives, what can leave the machine, and the decisions behind its at-rest
@@ -128,6 +128,27 @@ HoldSpeak is **local-first**. The design goal is that nothing leaves your
 machine unless you explicitly choose a feature that sends it. The sections below
 make that promise auditable rather than aspirational.
 
+### Control posture (HS-139-08)
+
+The control posture (`control_mode` in config) governs how actuator proposals
+are handled. Three modes exist: **YOLO**, **neutral**, and **safe**.
+
+**YOLO is the default** (owner ruling: ledger-not-gate). Under YOLO:
+- Actuator proposals to a registered, configured destination auto-execute at
+  propose time. Every execution writes an immutable receipt.
+- The propose-approve lifecycle is still intact as a code path and activates
+  under neutral or safe postures.
+- Actuators are on by default (`allow_actuators: true`) with a wildcard
+  allowlist.
+
+**The hard boundary that does NOT loosen regardless of posture:**
+- Encryption at rest and key custody (People sidecar, Keychain allowlist).
+- The People policy hard-refusal matrix (scoring, surveillance, employment
+  inference).
+- Egress badges and disclosure surfaces (information, not friction).
+- The receipt/refusal ledger itself -- every execution writes its receipt.
+- Sync/export/connector refusals for People content.
+
 ---
 
 ## 1. Data classes
@@ -187,10 +208,12 @@ Service); there is no production plaintext, file, config, or environment fallbac
 If that credential store is absent, locked, or mismatched, People fails closed.
 People content is excluded from the normal database, its safety backups, global
 FTS/Search/Ask/Memory, sync, exports/connectors, Cadence, generic MCP surfaces, and
-content-bearing logs. A default-off People MCP adapter can disclose relationship
-metadata and `shared_intent` records over stdio only after the owner explicitly
-starts the sidecar with read or write capability; leader-private content is always
-excluded. See [People security boundary](PEOPLE_SECURITY.md).
+content-bearing logs. The People MCP adapter defaults to write capability for the local owner
+process (HS-139-08: ledger-not-gate). Leader-private content is always excluded
+from MCP projections. The owner can set `HOLDSPEAK_MCP_PEOPLE_ACCESS=off` or
+`=read` to restrict; the hard boundary (encryption at rest, key custody,
+policy refusal matrix) does not loosen regardless of the access mode.
+See [People security boundary](PEOPLE_SECURITY.md).
 
 **Residual risk:** if the machine is compromised at the file level and full-disk
 encryption is off, transcripts, voice embeddings, and the activity ledger are
@@ -331,10 +354,10 @@ adds implementation detail but is not a second product inventory.
 | **Configured remote model endpoint** (`kernel/inference_runner.py` → reviewed endpoint adapter) | An admitted attempt whose frozen **Runs on** revision names an off-machine OpenAI-compatible endpoint | The model input selected for that attempt (prompt, context, or transcript/dictated text as applicable) and endpoint/model request metadata; never raw audio or embeddings | You deliberately author and assign the destination. Each physical attempt gets its own admitted child and receipt; local destinations never take this crossing, and fallback is a separately frozen attempt. |
 | **Deferred-intel failure webhook** (`intel_queue.py`, the `urlopen` send) | User configures `intel_retry_failure_webhook_url` | Queue statistics only (counts, rates), **no transcript** | Opt-in (URL must be set). |
 | **Wake-model download** (`wake_word.py`, first enable) | `wake_word.enabled` flipped on with models absent | Nothing leaves: an inbound fetch of the detection models (~7 MB) from the openWakeWord GitHub releases, once, cached locally | Opt-in (the feature is off by default); stated in the settings copy. Detection itself runs locally and no audio ever egresses. |
-| **Send to Slack** (`slack_export.py` → the gated webhook connector) | User configures `meeting.slack_webhook_url` AND approves one specific send | The meeting digest or follow-up draft, exactly as previewed on the proposal (plain text; no transcript, no audio) | Double opt-in: the URL must be set (consent for exactly its host; the connector refuses any other host before egress) and every send is a separate per-action approval. The webhook URL is treated as a credential: never in proposals, broadcasts, or API responses. |
-| **Desk Slack relay** (`web/routes/desk_actuators.py` → the same gated webhook connector) | A desk or companion card proposes a Slack send AND you approve it | The proposed text, exactly as previewed (plain text) | The same double opt-in as Send to Slack: `meeting.slack_webhook_url` must be set and every send is a separate approval; the URL never rides a payload. |
-| **Desk webhook connector** (`web/routes/desk_actuators.py` → `actuator_shared.execute_webhook_proposal`) | `meeting.companion_webhook_url` is configured AND you approve one specific send | The proposed text, exactly as previewed, to that one configured endpoint (Discord, Zapier, n8n, or any URL you set) | Double opt-in: the URL must be set (consent for exactly its host) and every send is a separate per-action approval. The URL is a credential: never in proposals, broadcasts, or API responses. |
-| **Desk GitHub issue** (`web/routes/desk_actuators.py` → `gh issue create`) | The GitHub connector is enabled AND you approve one specific proposal | The issue title and body, exactly as previewed, through your own `gh` CLI | Opt-in + per-action approval; runs your authenticated `gh`, never a stored token of ours. Distinct from the read-only enrichment row below. |
+| **Send to Slack** (`slack_export.py` → the gated webhook connector) | User configures `meeting.slack_webhook_url`; under YOLO posture (the default) the send auto-executes at propose time; under neutral/safe posture, per-action approval is required | The meeting digest or follow-up draft, exactly as previewed on the proposal (plain text; no transcript, no audio) | The URL must be set (consent for exactly its host; the connector refuses any other host before egress). Under YOLO, execution is immediate with a receipt; under neutral/safe, every send is a separate approval. The webhook URL is treated as a credential: never in proposals, broadcasts, or API responses. |
+| **Desk Slack relay** (`web/routes/desk_actuators.py` → the same gated webhook connector) | A desk or companion card proposes a Slack send; under YOLO the registered destination auto-executes; under neutral/safe, per-action approval | The proposed text, exactly as previewed (plain text) | Same gate as Send to Slack: `meeting.slack_webhook_url` must be set; the URL never rides a payload. |
+| **Desk webhook connector** (`web/routes/desk_actuators.py` → `actuator_shared.execute_webhook_proposal`) | `meeting.companion_webhook_url` is configured; under YOLO the registered destination auto-executes; under neutral/safe, per-action approval | The proposed text, exactly as previewed, to that one configured endpoint (Discord, Zapier, n8n, or any URL you set) | The URL must be set (consent for exactly its host). Every execution writes a receipt. The URL is a credential: never in proposals, broadcasts, or API responses. |
+| **Desk GitHub issue** (`web/routes/desk_actuators.py` → `gh issue create`) | The GitHub connector is enabled; under YOLO a registered repo auto-executes; under neutral/safe, per-action approval | The issue title and body, exactly as previewed, through your own `gh` CLI | Runs your authenticated `gh`, never a stored token of ours. Unregistered repos are refused even under YOLO. Distinct from the read-only enrichment row below. |
 | **Connector CLI enrichment** (`gh`, `jira` via subprocess) | User enables the connector pack | Entity IDs (PR/issue/ticket numbers) to the user's own CLI tools, which call their services | Opt-in + manifest permissions (`shell:exec`, `network:outbound`). |
 | **Mission-control receipts** (`missioncontrol_bridge.py` → `gh pr list`) | A rails repo is named in your project map (`~/.holdspeak/delivery_workbench.json`) and the desk conveyor is open | Nothing composed: a read of that repo's open pull requests through your own authenticated `gh` CLI (GitHub learns which repo asked) | The map is yours to author; the belt's routes are GET-only end to end (fitness-tested); `gh` missing or failing renders as a typed absence, never a retry loop. |
 | **PR receipts** (`delivery/pr_receipts.py` → `gh pr list`) | You click **Refresh** on the Pull requests section, or you set `pr_refresh_seconds` on a source's registry entry yourself | Nothing composed: one batched read of that registered repo's pull requests through your own authenticated `gh` (GitHub learns which repo asked). The optional **fetch** offered when a diff's commits are absent locally is a separate, explicit `git fetch` | Manual verb by default, never ambient; the cadence is per-source and hand-set. `gh` is grep-censused to this one module; a failing refresh degrades to a named stale row, keeping last-known-good. |

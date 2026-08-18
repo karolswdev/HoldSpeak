@@ -234,11 +234,9 @@ MIR classifies each meeting segment against multiple intent categories simultane
 
 **Enabling MIR**
 
-MIR is on by default. To disable it:
-
-```json
-{ "meeting": { "mir_enabled": false } }
-```
+MIR is always on (pinned to `true` since HS-139-02; no longer a user
+toggle). The `mir_enabled` field remains in the config dataclass but is
+not exposed on the Settings surface.
 
 **Intent Routing Presets**
 
@@ -293,7 +291,9 @@ For local-first capture plus remote intel on your LAN:
 2. Author it as a destination under **Settings, Models** (with the endpoint's
    `http://host:port/v1` URL) and pick it as the meetings **Runs on**. There
    is no hand-edited alternative; `intel_cloud_base_url` is dead.
-3. Keep `intel_deferred_enabled: true` so meetings continue when the homelab is temporarily unavailable.
+3. Deferred intel is always on (`intel_deferred_enabled` pinned to `true`
+   since HS-139-02), so meetings continue when the homelab is temporarily
+   unavailable.
 4. Export your API key environment variable and run `holdspeak doctor` to preflight reachability and model availability; its Runs on line names the destination each pipeline resolves to.
 
 ### What It Extracts
@@ -394,14 +394,15 @@ Nothing leaves your machine at this step.
 
 *The filed proposal lands in the existing Proposed actions section, awaiting your approval. Execution is a separate, audited step.*
 
-This stays safe by default:
+The execution posture depends on your control mode (HS-139-08):
 
-- **Off by default.** Execution requires `allow_actuators` to be on plus a
-  per-project allow-list plus a host-injected connector. With actuators off, an
-  approved proposal still does not run.
-- **Human-approved, per action.** You approve or reject each proposal yourself in
-  the Proposed actions section. Approval only records the decision; it does not
-  send anything.
+- **On by default (YOLO posture).** `allow_actuators` defaults to `true` with a
+  wildcard allow-list. Under YOLO, proposals to a registered destination
+  auto-execute at creation and produce a receipt. You can switch to neutral or
+  safe posture in Settings > System to restore manual approval.
+- **Human-approved under neutral/safe.** Under neutral or safe posture, you
+  approve or reject each proposal yourself in the Proposed actions section.
+  Approval only records the decision; execution is a separate step.
 - **Audited, and what executes is what you saw.** Every state change is recorded,
   and a payload-parity check aborts execution if the stored payload no longer
   matches what was approved.
@@ -552,27 +553,23 @@ Configuration file: `~/.config/holdspeak/config.json`
 
 ### Meeting Settings
 
-Every key the `meeting` config block still holds, with its default. The
-`intel_cloud_*` keys are listed because they persist on disk; they are dead
-(HS-112-01) and the reference table below says so per row.
+User-configurable keys the `meeting` config block still holds, with
+defaults. Keys pinned by HS-139-02 (always-on values removed from the
+Settings surface) and killed by HS-139-01 (no runtime consumer) are
+omitted; the `intel_cloud_*` keys are listed because they persist on
+disk but are dead (HS-112-01) and the reference table says so per row.
 
 ```json
 {
   "meeting": {
     "system_audio_device": null,
-    "mic_label": "Me",
-    "remote_label": "Remote",
     "auto_export": false,
     "export_format": "markdown",
-    "intel_enabled": true,
     "intel_provider": "local",
     "intel_realtime_model": "~/Models/gguf/Qwen3.5-9B-Instruct-Q6_K.gguf",
-    "intel_queue_poll_seconds": 120,
     "intel_retry_base_seconds": 30,
     "intel_retry_max_seconds": 900,
     "intel_retry_max_attempts": 6,
-    "intel_retry_failure_alert_percent": 50.0,
-    "intel_retry_failure_hysteresis_minutes": 5.0,
     "intel_retry_failure_webhook_url": null,
     "intel_retry_failure_webhook_header_name": null,
     "intel_retry_failure_webhook_header_value": null,
@@ -582,34 +579,38 @@ Every key the `meeting` config block still holds, with its default. The
     "intel_cloud_reasoning_effort": null,
     "intel_cloud_store": false,
     "intel_summary_model": null,
-    "intel_deferred_enabled": true,
-    "web_auto_open": false,
+    "allow_actuators": true,
+    "allowed_actuators": ["*"],
+    "webhook_allowed_hosts": ["*"],
     "diarization_enabled": false,
     "diarize_mic": false,
-    "cross_meeting_recognition": true,
     "similarity_threshold": 0.75
   }
 }
 ```
+
+> **Pinned defaults (HS-139-02):** The following fields still exist in the config
+> dataclass but are pinned to their values and no longer appear on the Settings
+> surface: `intel_enabled` (true), `intel_deferred_enabled` (true),
+> `mir_enabled` (true), `mic_label` ("Me"), `remote_label` ("Remote"),
+> `cross_meeting_recognition` (true), `web_auto_open` (true).
+>
+> **Killed (HS-139-01):** `intel_queue_poll_seconds`,
+> `intel_retry_failure_alert_percent`, `intel_retry_failure_hysteresis_minutes`
+> had no runtime consumer and were removed entirely.
 
 ### Option Details
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `system_audio_device` | string | null | System audio device name (e.g., "BlackHole 2ch"). Auto-detected if null. |
-| `mic_label` | string | "Me" | Label for your microphone audio in transcript |
-| `remote_label` | string | "Remote" | Label for system audio in transcript |
 | `auto_export` | bool | false | Automatically export when meeting ends |
 | `export_format` | string | "markdown" | Export format: txt, markdown, json, srt |
-| `intel_enabled` | bool | true | Enable AI intelligence extraction |
 | `intel_provider` | string | "local" | Intel mode: `local` (in-process GGUF), `cloud` (any OpenAI-compatible endpoint), or `auto` (local-first, endpoint fallback) |
 | `intel_realtime_model` | string | (suggested GGUF path) | Path to a GGUF model for real-time intel; bring your own |
-| `intel_queue_poll_seconds` | int | 120 | Interval for deferred-intel background worker polling |
 | `intel_retry_base_seconds` | int | 30 | Initial deferred-intel retry delay after a failed run |
 | `intel_retry_max_seconds` | int | 900 | Maximum deferred-intel retry delay cap |
 | `intel_retry_max_attempts` | int | 6 | Deferred-intel attempts before terminal `failed` status |
-| `intel_retry_failure_alert_percent` | float | 50.0 | `/history` alert threshold when failed-jobs ratio exceeds this percent |
-| `intel_retry_failure_hysteresis_minutes` | float | 5.0 | Time the failure rate must remain above threshold before alerting |
 | `intel_retry_failure_webhook_url` | string | null | Optional HTTP(S) webhook for sustained failure alerts |
 | `intel_retry_failure_webhook_header_name` | string | null | Optional custom header name added to failure-alert webhooks |
 | `intel_retry_failure_webhook_header_value` | string | null | Optional custom header value (set together with header name) |
@@ -619,12 +620,22 @@ Every key the `meeting` config block still holds, with its default. The
 | `intel_cloud_reasoning_effort` | string | null | **Dead (HS-112-01).** Read only by the one-time legacy migration. |
 | `intel_cloud_store` | bool | false | **Dead (HS-112-01).** Read only by the one-time legacy migration. |
 | `intel_summary_model` | string | null | Path to larger model for end-of-meeting summary. Falls back to realtime model if null. |
-| `intel_deferred_enabled` | bool | true | Queue meeting intel for later if no compatible local model is currently available |
-| `web_auto_open` | bool | false | Auto-open browser when meeting starts |
+| `allow_actuators` | bool | true | Master switch for actuator execution (HS-139-08: on by default). |
+| `allowed_actuators` | list | `["*"]` | Per-actuator allow-list. `["*"]` = all actuators may execute. |
+| `webhook_allowed_hosts` | list | `["*"]` | Webhook host allow-list. `["*"]` = any host may be POSTed to. |
 | `diarization_enabled` | bool | false | Enable speaker diarization for system audio |
 | `diarize_mic` | bool | false | Enable diarization for microphone stream |
-| `cross_meeting_recognition` | bool | true | Persist speaker identities across meetings |
 | `similarity_threshold` | float | 0.75 | Matching threshold for speaker recognition (`0.0` to `1.0`) |
+
+> **Pinned defaults removed from this table (HS-139-02):** `mic_label` ("Me"),
+> `remote_label` ("Remote"), `intel_enabled` (true), `intel_deferred_enabled`
+> (true), `web_auto_open` (true), `cross_meeting_recognition` (true),
+> `mir_enabled` (true). These fields still exist in the config dataclass but
+> are no longer user-configurable from the Settings surface.
+>
+> **Killed fields removed (HS-139-01):** `intel_queue_poll_seconds`,
+> `intel_retry_failure_alert_percent`, `intel_retry_failure_hysteresis_minutes`
+> had no runtime consumer.
 
 ---
 
@@ -783,7 +794,8 @@ Send `"ping"` text message, receive `"pong"` response.
 
 1. Use smaller quantization (Q4 instead of Q6)
 2. Close other applications
-3. Disable intel if not needed: `intel_enabled: false`
+3. Intel is always on (pinned since HS-139-02); to reduce memory, use a
+   smaller quantization or assign a lighter model as your Runs on destination.
 
 ---
 
