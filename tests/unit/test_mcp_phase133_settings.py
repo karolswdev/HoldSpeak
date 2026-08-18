@@ -77,18 +77,18 @@ def test_settings_update_valid_patch_applies(monkeypatch: pytest.MonkeyPatch) ->
         def update_settings(self, principal: Any, patch: dict[str, Any]) -> dict[str, Any]:
             captured["principal"] = principal
             captured["patch"] = patch
-            return {"success": True, "settings": {"ui": {"theme": "dark"}, "_revision": "abc123"}}
+            return {"success": True, "settings": {"ui": {"desk_sounds": True}, "_revision": "abc123"}}
 
     monkeypatch.setattr(settings_family, "SettingsService", FakeSettingsService)
     monkeypatch.setattr(settings_family, "get_database", lambda: MagicMock())
     monkeypatch.setattr(settings_family, "get_observer", lambda: None)
 
-    result = _call("settings.update", {"patch": {"ui": {"theme": "dark"}}})
+    result = _call("settings.update", {"patch": {"ui": {"desk_sounds": False}}})
     assert result["isError"] is False
 
     payload = json.loads(result["content"][0]["text"])
     assert payload["success"] is True
-    assert captured["patch"] == {"ui": {"theme": "dark"}}
+    assert captured["patch"] == {"ui": {"desk_sounds": False}}
 
 
 # ---------- settings.update: secret-path write stripped -------------------
@@ -125,16 +125,16 @@ def test_settings_update_validation_error_is_error(monkeypatch: pytest.MonkeyPat
             pass
 
         def update_settings(self, principal: Any, patch: dict[str, Any]) -> dict[str, Any]:
-            raise ValidationError("Invalid theme: neon")
+            raise ValidationError("Invalid hotkey key: bogus")
 
     monkeypatch.setattr(settings_family, "SettingsService", FailingSettingsService)
     monkeypatch.setattr(settings_family, "get_database", lambda: MagicMock())
     monkeypatch.setattr(settings_family, "get_observer", lambda: None)
 
-    result = _call("settings.update", {"patch": {"ui": {"theme": "neon"}}})
+    result = _call("settings.update", {"patch": {"hotkey": {"key": "bogus"}}})
     assert result["isError"] is True
     error_text = result["content"][0]["text"]
-    assert "Invalid theme" in error_text or "neon" in error_text
+    assert "Invalid hotkey" in error_text or "bogus" in error_text
 
 
 # ---------- settings.update: stale revision -> isError:true ---------------
@@ -158,7 +158,7 @@ def test_settings_update_stale_revision_is_error(monkeypatch: pytest.MonkeyPatch
 
     result = _call(
         "settings.update",
-        {"patch": {"_revision": "stale-bogus", "ui": {"theme": "dark"}}},
+        {"patch": {"_revision": "stale-bogus", "ui": {"desk_sounds": False}}},
     )
     assert result["isError"] is True
     error_text = result["content"][0]["text"]

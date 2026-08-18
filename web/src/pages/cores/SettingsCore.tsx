@@ -43,8 +43,6 @@ import {
   PREF_MODULES,
   PrefsFace,
   PrefStatusBar,
-  THEME_OPTIONS,
-  TRANSCRIBE_BACKEND_OPTIONS,
   WAKE_ACTION_OPTIONS,
   WHISPER_MODEL_OPTIONS,
   meetingPlacement,
@@ -442,12 +440,8 @@ function SettingsFace({ hero, scope }: CoreProps) {
                 }}
               />
             </GadgetRow>
-            {check(["ui", "show_audio_meter"], "Show audio meter")}
-            {num(["ui", "history_lines"], "History lines", {
-              unit: "lines",
-              min: 1,
-            })}
-            {cyc(["ui", "theme"], "Theme", THEME_OPTIONS)}
+            {/* HS-139-01: show_audio_meter, history_lines, theme deleted
+                (dead settings — no runtime consumer, the desk is dark) */}
           </GadgetGroup>
         );
       case "hotkey":
@@ -464,9 +458,11 @@ function SettingsFace({ hero, scope }: CoreProps) {
         return (
           <GadgetGroup>
             {cyc(["model", "name"], "Model size", WHISPER_MODEL_OPTIONS)}
-            {cyc(["model", "backend"], "Backend", TRANSCRIBE_BACKEND_OPTIONS)}
+            {/* HS-139-01: Backend removed (duplicate of Models > Hub
+                Default Engine; the Models module keeps it) */}
             {cyc(["model", "language"], "Language", LANGUAGE_OPTIONS)}
-            {check(["model", "warm_on_start"], "Warm on start")}
+            {/* HS-139-01: Warm on start removed (duplicate of Models >
+                Hub Default Engine > Warm on start) */}
             {num(["model", "transcribe_timeout_seconds"], "Transcribe timeout", {
               unit: "s",
               min: 5,
@@ -687,11 +683,8 @@ function SettingsFace({ hero, scope }: CoreProps) {
             </GadgetGroup>
             <GadgetGroup label="Deferred queue">
               {check(["meeting", "intel_deferred_enabled"], "Enabled")}
-              {num(["meeting", "intel_queue_poll_seconds"], "Poll", {
-                unit: "s",
-                min: 10,
-                step: 10,
-              })}
+              {/* HS-139-01: intel_queue_poll_seconds deleted (dead — never
+                  threaded to IntelQueue; queue uses hardcoded 120s) */}
               {num(["meeting", "intel_retry_base_seconds"], "Retry base", {
                 unit: "s",
                 min: 1,
@@ -705,16 +698,10 @@ function SettingsFace({ hero, scope }: CoreProps) {
               {num(["meeting", "intel_retry_max_attempts"], "Retry attempts", {
                 min: 0,
               })}
-              {num(
-                ["meeting", "intel_retry_failure_alert_percent"],
-                "Failure alert",
-                { unit: "%", min: 0, max: 100, step: 5 },
-              )}
-              {num(
-                ["meeting", "intel_retry_failure_hysteresis_minutes"],
-                "Alert hysteresis",
-                { unit: "min", min: 0 },
-              )}
+              {/* HS-139-01: intel_retry_failure_alert_percent and
+                  intel_retry_failure_hysteresis_minutes deleted (dead —
+                  never threaded to IntelQueue; queue uses hardcoded
+                  constants) */}
               {str(
                 ["meeting", "intel_retry_failure_webhook_header_name"],
                 "Webhook header",

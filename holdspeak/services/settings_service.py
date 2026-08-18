@@ -316,22 +316,11 @@ class SettingsService:
         wake_data["model"] = wake_model
         wake_data["enabled"] = bool(wake_data.get("enabled", current_wake.enabled))
 
-        # --- UIConfig validation ---
-        theme = str(ui_data.get("theme", current.ui.theme)).strip().lower()
-        if theme not in {"dark", "light", "dracula", "monokai"}:
-            return {"success": False, "error": f"Invalid theme: {theme}"}
-        ui_data["theme"] = theme
-
-        history_lines = int(ui_data.get("history_lines", current.ui.history_lines))
-        if not (1 <= history_lines <= 100):
-            return {
-                "success": False,
-                "error": "history_lines must be between 1 and 100",
-            }
-        ui_data["history_lines"] = history_lines
-        ui_data["show_audio_meter"] = bool(
-            ui_data.get("show_audio_meter", current.ui.show_audio_meter)
-        )
+        # --- UIConfig validation (HS-139-01: theme/history_lines/show_audio_meter
+        # deleted — dead settings with no runtime consumer) ---
+        # Strip any legacy keys a stale client might echo back.
+        for _dead_ui in ("theme", "history_lines", "show_audio_meter"):
+            ui_data.pop(_dead_ui, None)
         ui_data["desk_sounds"] = bool(
             ui_data.get("desk_sounds", current.ui.desk_sounds)
         )
@@ -398,17 +387,9 @@ class SettingsService:
         meeting_data["routing_profile"] = routing_profile
         meeting_data.pop("mir_profile", None)
 
-        poll_seconds = int(
-            meeting_data.get(
-                "intel_queue_poll_seconds", current.meeting.intel_queue_poll_seconds
-            )
-        )
-        if poll_seconds < 5:
-            return {
-                "success": False,
-                "error": "intel_queue_poll_seconds must be at least 5",
-            }
-        meeting_data["intel_queue_poll_seconds"] = poll_seconds
+        # HS-139-01: intel_queue_poll_seconds deleted (dead — never threaded
+        # to IntelQueue). Strip a stale client echo.
+        meeting_data.pop("intel_queue_poll_seconds", None)
 
         retry_base_seconds = int(
             meeting_data.get(
@@ -446,33 +427,11 @@ class SettingsService:
             }
         meeting_data["intel_retry_max_attempts"] = retry_max_attempts
 
-        failure_alert_percent = float(
-            meeting_data.get(
-                "intel_retry_failure_alert_percent",
-                current.meeting.intel_retry_failure_alert_percent,
-            )
-        )
-        if not (0.0 <= failure_alert_percent <= 100.0):
-            return {
-                "success": False,
-                "error": "intel_retry_failure_alert_percent must be between 0 and 100",
-            }
-        meeting_data["intel_retry_failure_alert_percent"] = failure_alert_percent
-
-        failure_hysteresis_minutes = float(
-            meeting_data.get(
-                "intel_retry_failure_hysteresis_minutes",
-                current.meeting.intel_retry_failure_hysteresis_minutes,
-            )
-        )
-        if failure_hysteresis_minutes < 0.0:
-            return {
-                "success": False,
-                "error": "intel_retry_failure_hysteresis_minutes must be >= 0",
-            }
-        meeting_data["intel_retry_failure_hysteresis_minutes"] = (
-            failure_hysteresis_minutes
-        )
+        # HS-139-01: intel_retry_failure_alert_percent and
+        # intel_retry_failure_hysteresis_minutes deleted (dead — never
+        # threaded to IntelQueue). Strip stale client echoes.
+        meeting_data.pop("intel_retry_failure_alert_percent", None)
+        meeting_data.pop("intel_retry_failure_hysteresis_minutes", None)
 
         webhook_url = str(
             meeting_data.get(

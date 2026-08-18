@@ -37,12 +37,14 @@ class MeetingConfig:
     intel_temperature: float = 0.2
     intel_summary_model: Optional[str] = None  # Falls back to realtime if None
     intel_deferred_enabled: bool = True  # Queue intel when no suitable local model is available
-    intel_queue_poll_seconds: int = 120  # Background retry interval for deferred intel jobs
+    # HS-139-01: intel_queue_poll_seconds deleted — dead setting (never
+    # threaded to IntelQueue; queue uses hardcoded 120.0 default).
     intel_retry_base_seconds: int = 30  # Initial deferred-intel retry delay
     intel_retry_max_seconds: int = 900  # Maximum deferred-intel retry delay
     intel_retry_max_attempts: int = 6  # Attempts before marking deferred intel as failed
-    intel_retry_failure_alert_percent: float = 50.0  # UI alert threshold for failed/total queue ratio
-    intel_retry_failure_hysteresis_minutes: float = 5.0  # Failure rate must stay above threshold for this duration
+    # HS-139-01: intel_retry_failure_alert_percent and
+    # intel_retry_failure_hysteresis_minutes deleted — dead settings
+    # (never threaded to IntelQueue; queue uses hardcoded constants).
     intel_retry_failure_webhook_url: Optional[str] = None  # Optional POST endpoint for sustained failure alerts
     intel_retry_failure_webhook_header_name: Optional[str] = None  # Optional custom header name for alert webhooks
     intel_retry_failure_webhook_header_value: Optional[str] = None  # Optional custom header value for alert webhooks

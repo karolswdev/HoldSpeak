@@ -51,9 +51,8 @@ export function moduleForKey(key: string): string {
 /* ── enum option sets, derived from the hub's own config canon
       (holdspeak/config.py, holdspeak/languages.py) ── */
 
-export const THEME_OPTIONS = ["dark", "light", "dracula", "monokai"].map(
-  (value) => ({ value }),
-);
+// HS-139-01: THEME_OPTIONS deleted (dead — the theme setting has no
+// runtime consumer; the desk is dark by law).
 export const WHISPER_MODEL_OPTIONS = [
   "tiny",
   "base",
@@ -61,11 +60,8 @@ export const WHISPER_MODEL_OPTIONS = [
   "medium",
   "large",
 ].map((value) => ({ value }));
-export const TRANSCRIBE_BACKEND_OPTIONS = [
-  "auto",
-  "mlx",
-  "faster-whisper",
-].map((value) => ({ value }));
+// HS-139-01: TRANSCRIBE_BACKEND_OPTIONS deleted (duplicate; the Models
+// module's Hub Default Engine keeps the backend cycle).
 export const EXPORT_FORMAT_OPTIONS = ["txt", "markdown", "json", "srt"].map(
   (value) => ({ value }),
 );

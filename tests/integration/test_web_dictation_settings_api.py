@@ -567,8 +567,8 @@ class TestVoiceMacrosSettingsApi:
             }
         }
         assert test_client.put("/api/settings", json=seed).status_code == 200
-        # A PUT that touches only the UI theme, not macros.
-        assert test_client.put("/api/settings", json={"ui": {"theme": "light"}}).status_code == 200
+        # A PUT that touches only desk_sounds (a living UI field), not macros.
+        assert test_client.put("/api/settings", json={"ui": {"desk_sounds": False}}).status_code == 200
         persisted = Config.load(settings_path)
         assert persisted.dictation.macros.enabled is True
         assert persisted.dictation.macros.items[0].keyword == "docs"
@@ -640,7 +640,7 @@ class TestSettingsCompanionConnectors:
         assert test_client.put(
             "/api/settings", json={"meeting": {"companion_github_repo": "owner/repo"}}
         ).status_code == 200
-        assert test_client.put("/api/settings", json={"ui": {"theme": "light"}}).status_code == 200
+        assert test_client.put("/api/settings", json={"ui": {"desk_sounds": False}}).status_code == 200
         persisted = Config.load(settings_path)
         assert persisted.meeting.companion_webhook_url == "https://hooks.example.com/keep"
         assert persisted.meeting.companion_github_repo == "owner/repo"

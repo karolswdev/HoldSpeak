@@ -1,6 +1,6 @@
 # Phase 139 — The Settings Reckoning
 
-**Status:** active (0/7).
+**Status:** active (1/7).
 
 **Last updated:** 2026-08-17.
 
@@ -44,7 +44,7 @@ session's scratchpad; the walk story re-shoots everything after.
 
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
-| HS-139-01 | Kill the liars | ready | [story-01](./story-01-kill-the-liars.md) | — |
+| HS-139-01 | Kill the liars | done | [story-01](./story-01-kill-the-liars.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-139-02 | Defaults are law | ready | [story-02](./story-02-defaults-are-law.md) | — |
 | HS-139-03 | Config goes home | ready | [story-03](./story-03-config-goes-home.md) | — |
 | HS-139-04 | The RAW wells | ready | [story-04](./story-04-the-raw-wells.md) | — |
@@ -70,4 +70,11 @@ session's scratchpad; the walk story re-shoots everything after.
 
 ## Where we are
 
-Chartered 2026-08-17 on the census evidence. No story started yet.
+HS-139-01 (Kill the liars) done: six dead fields deleted from config
+dataclasses, settings service validation, and web controls
+(ui.show_audio_meter, ui.history_lines, ui.theme,
+meeting.intel_queue_poll_seconds, meeting.intel_retry_failure_alert_percent,
+meeting.intel_retry_failure_hysteresis_minutes). Transcription module's
+duplicate Backend and Warm-on-start controls removed (Models module keeps
+them). Pre-reckoning config.json tolerant-load test proves no crash, no
+resurrection. 85 settings tests green.

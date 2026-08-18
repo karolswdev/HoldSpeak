@@ -47,7 +47,8 @@ def test_get_carries_a_revision(client: TestClient, settings_path: Path) -> None
 
 def test_revision_changes_after_a_write(client: TestClient, settings_path: Path) -> None:
     first = client.get("/api/settings").json()["_revision"]
-    resp = client.put("/api/settings", json={"ui": {"theme": "light"}})
+    # HS-139-01: use a living field (desk_sounds) instead of the deleted theme.
+    resp = client.put("/api/settings", json={"ui": {"desk_sounds": False}})
     assert resp.status_code == 200, resp.text
     after = resp.json()["settings"]["_revision"]
     assert after != first
@@ -58,7 +59,7 @@ def test_revision_changes_after_a_write(client: TestClient, settings_path: Path)
 def test_matching_revision_is_accepted(client: TestClient, settings_path: Path) -> None:
     rev = client.get("/api/settings").json()["_revision"]
     resp = client.put(
-        "/api/settings", json={"_revision": rev, "ui": {"theme": "light"}}
+        "/api/settings", json={"_revision": rev, "ui": {"desk_sounds": False}}
     )
     assert resp.status_code == 200, resp.text
     assert resp.json()["success"] is True
@@ -79,7 +80,7 @@ def test_stale_revision_is_rejected_with_409(
     # of the pipeline subtree would clobber A's edit — so it is rejected.
     b = client.put(
         "/api/settings",
-        json={"_revision": rev0, "ui": {"theme": "light"}},
+        json={"_revision": rev0, "ui": {"desk_sounds": False}},
     )
     assert b.status_code == 409, b.text
     payload = b.json()
@@ -101,13 +102,13 @@ def test_no_write_loss_after_reconcile(
     rev1 = a.json()["settings"]["_revision"]
     # B reloads to rev1 and reapplies its edit — now it lands.
     b = client.put(
-        "/api/settings", json={"_revision": rev1, "ui": {"theme": "light"}}
+        "/api/settings", json={"_revision": rev1, "ui": {"desk_sounds": False}}
     )
     assert b.status_code == 200, b.text
     # Neither write was lost.
     persisted = Config.load(path=settings_path)
     assert persisted.dictation.pipeline.enabled is True
-    assert persisted.ui.theme == "light"
+    assert persisted.ui.desk_sounds is False
 
 
 def test_legacy_put_without_revision_still_applies(
@@ -115,6 +116,6 @@ def test_legacy_put_without_revision_still_applies(
 ) -> None:
     # The guard is opt-in per writer: a patch that omits `_revision` keeps the
     # historical last-writer-wins behavior (existing callers are not broken).
-    resp = client.put("/api/settings", json={"ui": {"theme": "light"}})
+    resp = client.put("/api/settings", json={"ui": {"desk_sounds": False}})
     assert resp.status_code == 200, resp.text
-    assert Config.load(path=settings_path).ui.theme == "light"
+    assert Config.load(path=settings_path).ui.desk_sounds is False

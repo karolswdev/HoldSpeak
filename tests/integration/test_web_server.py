@@ -1838,7 +1838,6 @@ class TestSettingsApiEndpoints:
             "meeting": {
                 "intel_provider": "cloud",
                 "intel_profile_id": "p-lan",
-                "intel_queue_poll_seconds": 30,
                 "similarity_threshold": 0.82,
             }
         }
@@ -1853,7 +1852,8 @@ class TestSettingsApiEndpoints:
         # fields never ride the settings wire.
         assert data["settings"]["meeting"]["intel_profile_id"] == "p-lan"
         assert "intel_cloud_base_url" not in data["settings"]["meeting"]
-        assert data["settings"]["meeting"]["intel_queue_poll_seconds"] == 30
+        # HS-139-01: intel_queue_poll_seconds deleted (dead field).
+        assert "intel_queue_poll_seconds" not in data["settings"]["meeting"]
         assert "intel_retry_failure_webhook_header_value" not in data["settings"]["meeting"]
         assert data["settings"]["_secrets"]["failure_webhook_url"]["configured"] is True
         assert data["settings"]["_secrets"]["failure_webhook_credential"]["configured"] is True
@@ -1865,7 +1865,8 @@ class TestSettingsApiEndpoints:
         assert persisted.model.warm_on_start is False
         assert persisted.meeting.intel_provider == "cloud"
         assert persisted.meeting.intel_profile_id == "p-lan"
-        assert persisted.meeting.intel_queue_poll_seconds == 30
+        # HS-139-01: intel_queue_poll_seconds deleted (dead).
+        assert not hasattr(persisted.meeting, "intel_queue_poll_seconds")
         assert persisted.meeting.intel_retry_failure_webhook_header_name == "Authorization"
         assert persisted.meeting.intel_retry_failure_webhook_header_value == "Bearer test-token"
 
