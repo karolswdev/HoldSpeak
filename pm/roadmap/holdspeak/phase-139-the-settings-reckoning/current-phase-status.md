@@ -76,6 +76,25 @@ session's scratchpad; the walk story re-shoots everything after.
   (101→33, 14→7 tiles, dead dials die, knobs fold to RAW, meetings
   config moves home). Row-level overrule remains open at the sitting.
 
+## Counsel verdict (close, 2026-08-18)
+
+**RATIFY-WITH-CONCERNS, no blockers.** Hard boundary verified clean:
+custody/crypto zero-diff, People refusal matrix untouched, egress
+badges untouched, yolo auto-execution and manual approve+execute share
+the same receipt writer (actuator_executor.py:249). Kills spot-checked
+clean against dynamic access; RAW folds unpersisted and round-trip
+proven. Should-fix items BOTH FIXED before merge: evidence-story-08
+recaptured with the yolo-receipt suites (104 tests); story-03 amended
+seven→six with the row-64 correction. Ledgered: (L1) People MCP
+_BOUNDARY string still claims env-var restriction though default is
+now write (people.py:46, 11 tool descriptions); (L2) actuators.py
+propose/issue_grant parameter defaults still "neutral" — harmless, all
+callers explicit, yolo refuses grants; (L3) soft-pin behavior: an
+existing config.json with pipeline enabled:false keeps it until the
+next settings write — intended; (L4) story-05 evidence double-capture
+(first failed on wrong cwd) — environmental; (L5) pre-existing React
+act() warnings in settingsModels vitest.
+
 ## Where we are
 
 All 8 stories done. Seven tiles shipped (Voice, Sounds & Presence,

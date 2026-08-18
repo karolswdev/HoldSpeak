@@ -17,3 +17,16 @@
 ...............................................                          [100%]
 47 passed in 0.59s
 ```
+
+### Captured run — 2026-08-18T03:51:05Z
+
+- **Command:** `uv run pytest -q tests/unit/test_open_posture.py tests/unit/test_people_policy.py tests/unit/test_people_no_leaks.py tests/unit/test_people_key_custody.py tests/unit/test_people_crypto.py tests/unit/test_web_routes_coders_steer.py tests/integration/test_web_companion_slack.py`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 4c8bd64bb35beaa140ea7ff9f3d194d972bfb801
+
+```text
+........................................................................ [ 69%]
+................................                                         [100%]
+104 passed in 13.94s
+```

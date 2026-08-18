@@ -9,8 +9,10 @@
 
 ## Problem
 
-Seven settings configure one specific object but live in the global
-panel (census FOLD-TO-OBJECT rows 31, 32, 39, 40, 43, 66): mic device,
+Six settings configure one specific object but live in the global
+panel (census FOLD-TO-OBJECT rows 31, 32, 39, 40, 43, 64 — the census
+summary's "7" was a count error, corrected in the decision log): mic
+device,
 system-audio device, auto-export, export format, intel realtime model,
 companion GitHub repo. Edit-in-world law: config lives on the thing.
 
@@ -29,7 +31,7 @@ companion GitHub repo. Edit-in-world law: config lives on the thing.
 
 ## Acceptance criteria
 
-- [ ] Each of the seven renders exactly once, on its object's surface,
+- [ ] Each of the six renders exactly once, on its object's surface,
   and nowhere in the Settings panel.
 - [ ] Writes still round-trip through /api/settings with revision
   concurrency; a stale write still refuses honestly.
