@@ -1,7 +1,6 @@
 # Proposal — From Thought to Work
 
-> **Status:** owner-directed design proposal; risk analysis complete; not yet
-> an implementation charter.
+> **Status:** ratified design and risk record; Phase 141 chartered from it.
 >
 > **Recorded:** 2026-08-18.
 >
@@ -13,6 +12,15 @@
 > door. This proposal must not restore the control-room complexity it removed.
 
 ## 1. Product thesis
+
+**Owner ruling, 2026-08-18 — power-user first, YOLO first.** Rich, useful
+defaults and the fast configured path are the ordinary experience. Progressive
+disclosure contains secondary setup and explanation; it does not hide or disable
+capability. Under the existing fresh-install YOLO posture, an eligible configured
+external proposal proceeds through the existing executor with a receipt and no
+new approval ceremony. Neutral/Safe keep their existing per-action decision
+behavior. This does not weaken context visibility, raw custody, parity checks,
+kernel admission, receipts, or manual reconciliation after an ambiguous effect.
 
 HoldSpeak is not merely speech-to-text and should not become a smarter filing
 cabinet. Its regular-user loop is:
@@ -91,8 +99,10 @@ The thought surface has four quiet regions:
    question is schema-required.
 3. **Context** — compact visible chips plus one Attach context control using the
    existing grounding picker.
-4. **Next shape** — initially folded; suggestions such as Note, Decision,
-   Follow-through, Brief, GitHub issue, or Slack draft appear only when useful.
+4. **Next shape** — initially folded. The completed working Note is already the
+   Note result; Phase 141 adds Decision as its only local shape and GitHub issue
+   only when its repository is configured. Brief, Follow-through, Slack, Jira,
+   and calendar are absent rather than teased.
 
 The working Note appears in Inbox immediately as **Unfinished** and is also
 reachable from one **Resume unfinished thoughts** path on the Chair. A persistent
@@ -270,10 +280,10 @@ model prompts, proposal payloads, receipts, or sync.
 | ID | Severity | Failure | Required guard | Stop signal / proof |
 |---|---|---|---|---|
 | R1 | P0 | AI overwrites or loses the owner's raw thought. | Server transaction persists an immutable raw snapshot and working Note before any AI request; browser cache is not authority. | Fault injection before/during/after the transaction/model call; original byte-equal after reload. |
-| R2 | P0 | Concurrent edits or retries silently clobber the working draft. | Working revision + expected-revision CAS; explicit conflict recovery. | Two clients edit same revision and both appear successful. |
-| R3 | P0 | Hidden or stale context leaks private material to a model/tool. | Default none; visible qualified refs; server hydration; attachment revision frozen per run/proposal. | Any prompt/receipt contains material from an unshown or deleted ref. |
+| R2 | P0 | Concurrent edits, sync, or retries silently clobber the working draft. | Working revision + expected-revision CAS on refinement, ordinary Note, and paired-device sync paths; explicit conflict recovery. | Two clients edit the same revision and both appear successful, or sync directly upserts a thought-owned Note. |
+| R3 | P0 | Hidden or stale context leaks private material to a model/tool. | Default none; visible qualified refs; server hydration; freeze the visible container plus exact resolved leaf refs and versions per run/proposal. | Any prompt/receipt contains material from an unshown/deleted ref, or collection membership changes an in-flight turn. |
 | R4 | P0 | Proposed text is mistaken for an approved local/external action. | Refinement preview; owner-authorized typed local write; existing `ActuatorProposal` as first external lifecycle. | A model response creates domain/external state without an owner/policy transition. |
-| R5 | P0 | Retry duplicates a GitHub/Slack/future Jira effect. | Stable proposal and execution idempotency keys; reconcile ambiguous outcomes; never rerun AI on execution retry. | Two remote objects for one accepted proposal. |
+| R5 | P0 | Retry duplicates a GitHub/Slack/future Jira effect. | Stable local proposal/execution keys; never rerun AI on execution retry; extend the existing actuator/kernel lifecycle with a durable indeterminate/manual-reconcile state that blocks ordinary retry/reapproval when a connector lacks remote idempotency or lookup. | Blind reissue after an ambiguous dispatch, direct decision-route bypass, or a false remote exactly-once claim. |
 | R6 | P0 | Model invents tool requirements, destinations, or successful capabilities. | The narrow availability/schema adapter over real domain/actuator contracts is the only execution truth; schema-required questions are labeled. | UI offers Jira/calendar creation before a real actuator or claims requirements absent from its typed adapter. |
 | R7 | P0 | New flow bypasses operation policy, posture, actuator parity, or kernel admission. | Thin adapters only; existing executor remains sole external-effect seam; kernel binding mandatory for this new flow even though legacy actuator execution can run without one. | Any external connector call originates from refinement UI/service directly or lacks the required linked operation. |
 | R8 | P1 | Refinement becomes an endless expensive chat. | One question; owner-visible stop; bounded turn/token budgets; compact/restartable history. | No reachable Good enough/Save action or unbounded automatic continuation. |
@@ -302,7 +312,7 @@ The design must be validated in narrow vertical slices:
    Expand other context kinds only after each resolver proves hydration,
    authority, deletion, and receipt truth.
 3. **Typed local write:** Note and Desk Decision only, via owner-authorized
-   service adapters and stable receipt. Kill or redesign if domain types are
+   service adapters and a stable caller-key-to-result mapping. Kill or redesign if domain types are
    flattened into generic JSON or a second proposal lifecycle appears.
 4. **One existing external driver:** GitHub issue or Slack proposal through the
    existing actuator/kernel path. Kill or redesign if execution requires a
@@ -331,25 +341,27 @@ The first tool-backed job is:
 > destination with an explicit repository, inspect the exact existing actuator
 > preview/payload, execute once through a kernel-linked actuator under the
 > current posture, and reopen both source thought and receipts. An ambiguous
-> response must reconcile without duplication. A required-field clarification
+> post-dispatch response must enter visible manual reconciliation without blind
+> reissue or a false remote exactly-once claim. A required-field clarification
 > is added only after a real typed GitHub schema adapter exists.
 
 Both jobs must pass at 1440×900 and 393×900 with zero console errors or
 horizontal overflow. The owner sees the finished glass before merge. GitHub CI
 is not watched or used as a gate by owner ruling.
 
-## 11. Held decisions before charter
+## 11. Charter decisions
 
-1. Owner-facing name: **Develop a thought**, **Shape a thought**, or another
-   phrase. The architecture must not depend on the label.
-2. Whether Phase 141 includes the existing GitHub/Slack external slice or closes
-   after typed local writes. Jira remains separate either way.
+1. Owner-facing name: **Develop a thought**.
+2. Phase 141 includes one existing GitHub issue external slice after typed local
+   writes. Jira and calendar writes remain separate.
+3. **Power-user first, YOLO first:** capable defaults, no tutorial gate, no
+   redundant confirmation. Neutral/Safe preserve their existing decision step.
 
 The custody decision is settled: the working Note appears in Inbox immediately
 as **Unfinished**, and the Chair also offers **Resume unfinished thoughts**.
 
-No product implementation begins until these held decisions are resolved in the
-charter or explicitly left for the owner sitting.
+These decisions are recorded in the Phase 141 charter and do not reopen during
+implementation without a new owner ruling.
 
 ## 12. Review record
 
