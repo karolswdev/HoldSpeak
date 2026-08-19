@@ -7,6 +7,7 @@ import { openSurfaceOr } from "../shell";
 import {
   DICTATION_FAILURES,
   dictationFailure,
+  streamFailure,
   type DictationFailure,
 } from "../../lib/dictationRecovery";
 import { useDurableDraft } from "../../lib/durableDraft";
@@ -31,7 +32,7 @@ import {
 type CaptureState =
   "idle" | "listening" | "transcribing" | "success" | "failed";
 const micUnsupportedMessage =
-  "Microphone capture is unavailable in this browser. No audio was recorded. Type below or open Setup.";
+  "Microphone capture is unavailable in this browser. No audio was recorded. Type below instead.";
 export function FirstWords({
   onDismiss,
   embedded = false,
@@ -48,12 +49,16 @@ export function FirstWords({
   const [state, setState] = useState<CaptureState>("idle");
   const [failure, setFailure] = useState<DictationFailure | null>(null);
   const [message, setMessage] = useState("");
+  const [recoveredAudioAvailable, setRecoveredAudioAvailable] = useState(false);
+  const [retentionPending, setRetentionPending] = useState(false);
   const [saving, setSaving] = useState(false);
   const [keptNoteId, setKeptNoteId] = useState("");
   const tracker = useRef<FirstValueTracker | null>(null);
   if (!tracker.current) tracker.current = new FirstValueTracker();
   const sessionRef = useRef<StreamSession | null>(null);
+  const streamFailureRef = useRef<DictationFailure | null>(null);
   const startingRef = useRef(false);
+  const captureStartedRef = useRef(false);
   const draftEdited = useRef(false);
   const actionRef = useRef<"keep" | "dismiss" | null>(null);
   const refreshDesk = useDesk((desk) => desk.refresh);
@@ -61,7 +66,10 @@ export function FirstWords({
   useEffect(() => {
     let mounted = true;
     void loadPendingVoice("first-words").then((audio) => {
-      if (!mounted || !audio) return;
+      // Do not let an asynchronous startup recovery replace a capture the
+      // owner began while IndexedDB was answering.
+      if (!mounted || !audio || captureStartedRef.current) return;
+      setRecoveredAudioAvailable(true);
       setFailure("transcription_failed");
       setState("failed");
       setMessage("Captured audio was recovered on this browser for Retry.");
@@ -88,6 +96,24 @@ export function FirstWords({
     void finishAttempt("failure", category).catch(() => undefined);
   };
 
+  const receiptForRetainedAudio = (session: StreamSession) => {
+    setRetentionPending(true);
+    void session
+      .retained()
+      .then((retained) => {
+        if (retained) {
+          setRecoveredAudioAvailable(true);
+          setMessage(
+            "Captured audio is retained on this browser. Retry to transcribe it without recording again.",
+          );
+        }
+      })
+      .catch(() => undefined)
+      .finally(() => {
+        setRetentionPending(false);
+      });
+  };
+
   const acceptTranscript = async (result: string) => {
     const clean = result.trim();
     if (!clean) {
@@ -95,6 +121,7 @@ export function FirstWords({
       return;
     }
     setText(clean);
+    setRecoveredAudioAvailable(false);
     setState("success");
     setFailure(null);
     void tracker.current?.event("transcript_received");
@@ -103,16 +130,35 @@ export function FirstWords({
   const begin = async () => {
     if (startingRef.current || state === "transcribing") return;
     startingRef.current = true;
+    captureStartedRef.current = true;
     setFailure(null);
     setMessage("");
+    streamFailureRef.current = null;
     try {
       await startAttempt();
       const recovered = await retryPendingTranscription("first-words");
       if (recovered !== null) {
+        setRecoveredAudioAvailable(false);
         await acceptTranscript(recovered);
         return;
       }
-      const session = await startStreamSession(() => {});
+      setRecoveredAudioAvailable(false);
+      const session = await startStreamSession(
+        (event) => {
+          if (event.type !== "error") return;
+          const category = streamFailure(event);
+          streamFailureRef.current = category;
+          setRetentionPending(true);
+          fail(category);
+          const active = sessionRef.current;
+          if (active) {
+            sessionRef.current = null;
+            receiptForRetainedAudio(active);
+            active.cancel();
+          }
+        },
+        { retainScope: "first-words" },
+      );
       sessionRef.current = session;
       setState("listening");
       void tracker.current?.event("capture_started");
@@ -131,10 +177,14 @@ export function FirstWords({
     void tracker.current?.event("capture_released");
     try {
       const result = await session.stop();
+      if (streamFailureRef.current) {
+        receiptForRetainedAudio(session);
+        return;
+      }
       await acceptTranscript(result);
     } catch (error) {
       fail(dictationFailure(error));
-      setMessage("Captured audio is retained on this browser for Retry.");
+      receiptForRetainedAudio(session);
     }
   };
 
@@ -215,6 +265,7 @@ export function FirstWords({
   };
 
   const supported = speakToFillSupported() || micStreamSupported();
+  const canRetryRetainedAudio = recoveredAudioAvailable && state === "failed";
   const failureContract = failure ? DICTATION_FAILURES[failure] : null;
   const Heading = embedded ? "h2" : "h1";
   return (
@@ -226,17 +277,20 @@ export function FirstWords({
         type="button"
         className={`desk-first-talk is-${state}`}
         disabled={
-          !supported ||
+          (!supported && !canRetryRetainedAudio) ||
           state === "transcribing" ||
+          retentionPending ||
           Boolean(failureContract && !failureContract.retry)
         }
         aria-label={
           state === "listening"
             ? "Stop listening"
+            : retentionPending
+              ? "Saving audio for Retry"
             : state === "failed" && failureContract?.retry
               ? "Click to retry dictation"
               : state === "failed"
-                ? "Dictation unavailable until setup is fixed"
+                ? "Voice typing unavailable"
                 : "Click to dictate"
         }
         onClick={(event) => {
@@ -248,17 +302,20 @@ export function FirstWords({
           ? "Listening… click to stop"
           : state === "transcribing"
             ? "Transcribing…"
+            : retentionPending
+              ? "Saving audio for Retry…"
             : state === "failed" && failureContract?.retry
               ? "Click to retry"
               : state === "failed"
-                ? "Open Setup to continue"
+                ? "Voice typing unavailable"
                 : "Click to speak"}
       </button>
-      {!supported ? <SurfaceState error={micUnsupportedMessage} /> : null}
+      {!supported && state !== "success" && !recoveredAudioAvailable ? (
+        <SurfaceState error={micUnsupportedMessage} />
+      ) : null}
       {failureContract ? (
         <SurfaceState
           error={failureContract.message}
-          onRetry={failureContract.retry ? toggle : undefined}
         />
       ) : recovered ? (
         <p className="surface-receipt-line" role="status">

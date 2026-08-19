@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 140
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** 140-02
 - **Unblocks:** 140-05, 140-06
 - **Owner:** delegated Terra worker; orchestrator adjudicates
@@ -27,14 +27,14 @@ appear only when it is the exact next action.
 
 ## Acceptance criteria
 
-- [ ] Permission denial names the browser/OS permission repair in place.
-- [ ] No speech offers Retry without claiming transcription failed.
-- [ ] `FirstWords` passes `retainScope: "first-words"`; retained audio survives
+- [x] Permission denial names the browser/OS permission repair in place.
+- [x] No speech offers Retry without claiming transcription failed.
+- [x] `FirstWords` passes `retainScope: "first-words"`; retained audio survives
   reload and Retry does not require re-recording.
-- [ ] Unavailable local transcription offers one honest Setup action through
+- [x] Unavailable local transcription offers one honest Setup action through
   the existing setup surface; no nonexistent deep-link is implied.
-- [ ] The textarea remains usable as typed fallback in every failure state.
-- [ ] Every action makes progress, shows a receipt, or names a refusal.
+- [x] The textarea remains usable as typed fallback in every failure state.
+- [x] Every action makes progress, shows a receipt, or names a refusal.
 
 ## Test plan
 

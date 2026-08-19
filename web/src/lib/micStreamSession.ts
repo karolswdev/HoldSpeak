@@ -183,6 +183,9 @@ export async function startStreamSession(
           onEvent({ type: "error", error: "Connection lost." });
         }
       }
+      // A server refusal can close while stop() is waiting for its final.
+      // Resolve that wait with the empty final so the caller can preserve the
+      // named refusal rather than hanging or inventing a second failure.
       resolve(finalText);
     });
     ws.addEventListener("error", () => {

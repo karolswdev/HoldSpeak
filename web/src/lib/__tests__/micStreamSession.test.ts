@@ -308,6 +308,37 @@ describe("retained audio is real on the streaming path (HS-132-05)", () => {
     expect(store.clearPendingVoice).not.toHaveBeenCalled();
   });
 
+  it("retains a first-words capture through a stop-time transcription refusal", async () => {
+    mic.endHold.mockReturnValue(CAPTURED);
+    mic.drainHold.mockReturnValue(CAPTURED);
+    const events: unknown[] = [];
+    const session = await startStreamSession((event) => events.push(event), {
+      retainScope: "first-words",
+    });
+    const ws = FakeWebSocket.instances[0];
+    ws.emit("open", {});
+
+    const stopped = session.stop();
+    ws.emit("message", {
+      data: JSON.stringify({
+        type: "error",
+        error: "Transcription failed.",
+        failure_category: "transcription_failed",
+      }),
+    });
+    ws.close();
+
+    expect(await stopped).toBe("");
+    expect(events).toContainEqual(
+      expect.objectContaining({ failure_category: "transcription_failed" }),
+    );
+    expect(store.savePendingVoice).toHaveBeenCalledWith(
+      "first-words",
+      expect.any(ArrayBuffer),
+    );
+    expect(await session.retained()).toBe(true);
+  });
+
   it("retains nothing past the store's 16 MB cap, and claims nothing", async () => {
     // ~8 minutes of 16 kHz mono 16-bit is where BOTH pendingVoice's store and
     // /api/dictation/transcribe stop accepting audio (16_000_000 bytes).

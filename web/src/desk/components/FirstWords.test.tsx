@@ -13,6 +13,10 @@ const mocks = vi.hoisted(() => ({
   retryPendingTranscription: vi.fn(),
   startStreamSession: vi.fn(),
   refresh: vi.fn(),
+  loadPendingVoice: vi.fn(),
+  openSurfaceOr: vi.fn(),
+  speakSupported: true,
+  streamSupported: true,
 }));
 
 vi.mock("../store", () => ({
@@ -38,7 +42,7 @@ vi.mock("../../lib/api", () => {
 });
 
 vi.mock("../../lib/speakToFill", () => ({
-  speakToFillSupported: () => true,
+  speakToFillSupported: () => mocks.speakSupported,
   startCapture: vi.fn(),
   stopAndTranscribe: vi.fn(),
   cancelCapture: vi.fn(),
@@ -46,9 +50,17 @@ vi.mock("../../lib/speakToFill", () => ({
 }));
 
 vi.mock("../../lib/micStreamSession", () => ({
-  micStreamSupported: () => true,
+  micStreamSupported: () => mocks.streamSupported,
   startStreamSession: mocks.startStreamSession,
   subscribeCaptureLevel: () => () => undefined,
+}));
+
+vi.mock("../../lib/pendingVoice", () => ({
+  loadPendingVoice: mocks.loadPendingVoice,
+}));
+
+vi.mock("../shell", () => ({
+  openSurfaceOr: mocks.openSurfaceOr,
 }));
 
 describe("FirstWords", () => {
@@ -64,8 +76,15 @@ describe("FirstWords", () => {
       return Promise.resolve({ success: true });
     });
     const stopFn = vi.fn().mockResolvedValue("A sentence that stays editable.");
-    mocks.startStreamSession.mockResolvedValue({ stop: stopFn, cancel: vi.fn() });
+    mocks.startStreamSession.mockResolvedValue({
+      stop: stopFn,
+      cancel: vi.fn(),
+      retained: vi.fn().mockResolvedValue(false),
+    });
     mocks.retryPendingTranscription.mockResolvedValue(null);
+    mocks.loadPendingVoice.mockResolvedValue(null);
+    mocks.speakSupported = true;
+    mocks.streamSupported = true;
     mocks.refresh.mockResolvedValue(undefined);
   });
 
@@ -107,7 +126,7 @@ describe("FirstWords", () => {
     expect(mocks.apiFetch.mock.calls.some(([path]) => String(path).includes("/finish"))).toBe(false);
   });
 
-  it("keeps recovery actions visible after permission denial", async () => {
+  it("names browser or OS microphone repair and offers one Retry after permission denial", async () => {
     mocks.startStreamSession.mockRejectedValue(
       new DOMException("denied", "NotAllowedError"),
     );
@@ -120,16 +139,186 @@ describe("FirstWords", () => {
       screen.getByRole("button", { name: "Click to dictate" }),
     );
     expect(
-      await screen.findByText(/Microphone access is off/),
+      await screen.findByText(/Microphone access is blocked/),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("button", {
-        name: "Dictation unavailable until setup is fixed",
-      }),
-    ).toBeDisabled();
+      screen.getByRole("button", { name: "Click to retry dictation" }),
+    ).toBeEnabled();
     expect(screen.getByRole("button", { name: "Copy" })).toBeDisabled();
     expect(screen.getByRole("button", { name: "Keep as Note" })).toBeDisabled();
+    expect(screen.queryByRole("button", { name: "Setup" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Try again" })).not.toBeInTheDocument();
+  });
+
+  it("offers the one honest Setup action when local transcription is unavailable", async () => {
+    let streamEvent!: (event: { type: "error"; error: string; failure_category: string }) => void;
+    mocks.startStreamSession.mockImplementation(async (onEvent) => {
+      streamEvent = onEvent;
+      return { stop: vi.fn(), cancel: vi.fn(), retained: vi.fn().mockResolvedValue(false) };
+    });
+    render(
+      <MemoryRouter>
+        <FirstWords />
+      </MemoryRouter>,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Click to dictate" }));
+    await waitFor(() => expect(streamEvent).toBeTypeOf("function"));
+    streamEvent({
+      type: "error",
+      error: "Local transcription unavailable.",
+      failure_category: "transcription_unavailable",
+    });
+
+    expect(await screen.findByText(/Local transcription is unavailable/)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Setup" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Voice typing unavailable" })).toBeDisabled();
+    expect(screen.queryByRole("button", { name: "Try again" })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Setup" }));
+    expect(mocks.openSurfaceOr).toHaveBeenCalledWith("configure-setup", "/setup");
+  });
+
+  it("keeps typed fallback and one Retry for no speech and a timeout", async () => {
+    const noSpeech = vi.fn().mockResolvedValue("");
+    mocks.startStreamSession.mockResolvedValue({
+      stop: noSpeech,
+      cancel: vi.fn(),
+      retained: vi.fn().mockResolvedValue(false),
+    });
+    const view = render(
+      <MemoryRouter>
+        <FirstWords />
+      </MemoryRouter>,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Click to dictate" }));
+    await screen.findByText("Listening… click to stop");
+    fireEvent.click(screen.getByRole("button", { name: "Stop listening" }));
+    expect(await screen.findByText(/No speech was detected/)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Click to retry dictation" })).toBeEnabled();
+    expect(screen.queryByRole("button", { name: "Try again" })).not.toBeInTheDocument();
+    fireEvent.change(screen.getByRole("textbox", { name: "Your dictated text" }), {
+      target: { value: "Typed instead." },
+    });
+    expect(screen.getByDisplayValue("Typed instead.")).toBeInTheDocument();
+
+    view.unmount();
+    const timeout = vi.fn().mockRejectedValue(new DOMException("slow", "TimeoutError"));
+    mocks.startStreamSession.mockResolvedValue({
+      stop: timeout,
+      cancel: vi.fn(),
+      retained: vi.fn().mockResolvedValue(false),
+    });
+    render(
+      <MemoryRouter>
+        <FirstWords />
+      </MemoryRouter>,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Click to dictate" }));
+    await screen.findByText("Listening… click to stop");
+    fireEvent.click(screen.getByRole("button", { name: "Stop listening" }));
+    expect(await screen.findByText(/Transcription timed out/)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Click to retry dictation" })).toBeEnabled();
+  });
+
+  it("retries retained stream audio after reload without recording again", async () => {
+    let streamEvent!: (event: { type: "error"; error: string; failure_category: string }) => void;
+    let finishRetention!: (retained: boolean) => void;
+    const retention = new Promise<boolean>((resolve) => {
+      finishRetention = resolve;
+    });
+    const cancel = vi.fn();
+    mocks.startStreamSession.mockImplementation(async (onEvent) => {
+      streamEvent = onEvent;
+      return {
+        stop: vi.fn().mockResolvedValue(""),
+        cancel,
+        retained: vi.fn().mockReturnValue(retention),
+      };
+    });
+    const first = render(
+      <MemoryRouter>
+        <FirstWords />
+      </MemoryRouter>,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Click to dictate" }));
+    await waitFor(() => expect(streamEvent).toBeTypeOf("function"));
+    streamEvent({
+      type: "error",
+      error: "Transcription failed.",
+      failure_category: "transcription_failed",
+    });
+    const savingAudio = await screen.findByRole("button", {
+      name: "Saving audio for Retry",
+    });
+    expect(savingAudio).toBeDisabled();
+    finishRetention(true);
+    expect(await screen.findByText(/Captured audio is retained/)).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Click to retry dictation" }),
+    ).toBeEnabled();
+    expect(cancel).toHaveBeenCalledOnce();
+    expect(mocks.startStreamSession).toHaveBeenCalledWith(
+      expect.any(Function),
+      { retainScope: "first-words" },
+    );
+
+    first.unmount();
+    mocks.retryPendingTranscription.mockResolvedValue("Recovered retained words.");
+    render(
+      <MemoryRouter>
+        <FirstWords />
+      </MemoryRouter>,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Click to dictate" }));
+    expect(await screen.findByDisplayValue("Recovered retained words.")).toBeInTheDocument();
+    expect(mocks.retryPendingTranscription).toHaveBeenLastCalledWith("first-words");
+    expect(mocks.startStreamSession).toHaveBeenCalledTimes(1);
+  });
+
+  it("retries recovered audio even when this browser cannot start a fresh capture", async () => {
+    mocks.speakSupported = false;
+    mocks.streamSupported = false;
+    mocks.loadPendingVoice.mockResolvedValue(new ArrayBuffer(8));
+    mocks.retryPendingTranscription.mockResolvedValue("Recovered without recording.");
+    render(
+      <MemoryRouter>
+        <FirstWords />
+      </MemoryRouter>,
+    );
+
+    expect(await screen.findByText(/Captured audio was recovered/)).toBeInTheDocument();
+    expect(
+      screen.queryByText(/Microphone capture is unavailable/),
+    ).not.toBeInTheDocument();
+    const retry = screen.getByRole("button", { name: "Click to retry dictation" });
+    expect(retry).toBeEnabled();
+    fireEvent.click(retry);
+    expect(await screen.findByDisplayValue("Recovered without recording.")).toBeInTheDocument();
+    expect(
+      screen.queryByText(/Microphone capture is unavailable/),
+    ).not.toBeInTheDocument();
+    expect(mocks.retryPendingTranscription).toHaveBeenCalledWith("first-words");
+    expect(mocks.startStreamSession).not.toHaveBeenCalled();
+  });
+
+  it("does not let late recovered-audio lookup replace a new capture", async () => {
+    let resolveRecovered!: (audio: ArrayBuffer | null) => void;
+    mocks.loadPendingVoice.mockReturnValue(
+      new Promise<ArrayBuffer | null>((resolve) => {
+        resolveRecovered = resolve;
+      }),
+    );
+    render(
+      <MemoryRouter>
+        <FirstWords />
+      </MemoryRouter>,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Click to dictate" }));
+    await screen.findByText("Listening… click to stop");
+    resolveRecovered(new ArrayBuffer(8));
+    await Promise.resolve();
+
+    expect(screen.getByText("Listening… click to stop")).toBeInTheDocument();
+    expect(screen.queryByText(/Captured audio was recovered/)).not.toBeInTheDocument();
   });
 
   it("keeps idle first value free of setup administration", () => {

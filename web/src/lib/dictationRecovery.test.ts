@@ -37,7 +37,7 @@ describe("dictation recovery contract", () => {
 
   it("maps every failure to its only-applicable actions", () => {
     const expected: Record<DictationFailure, string[]> = {
-      permission_denied: ["copy", "keep_as_note", "setup"],
+      permission_denied: ["retry", "copy", "keep_as_note"],
       missing_model: ["copy", "keep_as_note", "alternate_runs_on", "setup"],
       rejected_token: ["copy", "keep_as_note", "setup"],
       unreachable_hub: ["retry", "copy", "keep_as_note"],
@@ -75,6 +75,22 @@ describe("dictation recovery contract", () => {
     expect(applicableActions("rejected_token", { draftPresent: false })).toEqual(
       ["setup"],
     );
+  });
+
+  it("keeps first-value recovery copy factual with one exact next action", () => {
+    expect(DICTATION_FAILURES.permission_denied).toMatchObject({
+      retry: true,
+      setup: false,
+    });
+    expect(DICTATION_FAILURES.permission_denied.message).toMatch(/browser or operating system/i);
+    expect(DICTATION_FAILURES.no_speech).toMatchObject({ retry: true, setup: false });
+    expect(DICTATION_FAILURES.no_speech.message).toMatch(/No speech/i);
+    expect(DICTATION_FAILURES.missing_model).toMatchObject({ retry: false, setup: true });
+    expect(DICTATION_FAILURES.missing_model.message).toMatch(/Open Setup/i);
+    for (const failure of ["timeout", "transcription_failed"] as const) {
+      expect(DICTATION_FAILURES[failure]).toMatchObject({ retry: true, setup: false });
+      expect(DICTATION_FAILURES[failure].message).toMatch(/Retry/i);
+    }
   });
 
   it("offers an alternate Runs-on only for destination failures", () => {
