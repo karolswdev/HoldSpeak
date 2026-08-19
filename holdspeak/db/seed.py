@@ -7,10 +7,13 @@ runs both ways). The manifest ships inside the package
 same repositories the primitive routes wrap, so a seeded object is
 indistinguishable from a user-made one.
 
-Idempotency is the contract: every item carries a deterministic
-``hs-desk-*`` id, so re-applying upserts in place — never a duplicate desk.
-Nothing here runs at boot; the seed is an explicit act (CLI verb, route,
-or the reset).
+The ordinary-seed contract is additive and preservation-first: every item
+carries a deterministic ``hs-seed-*`` id, but an id seen before (live *or*
+tombstoned) is left alone. This lets the furnished pack be edited, moved, or
+deleted without a later ordinary seed changing it or bringing it back.
+``reset_desk`` is the deliberately destructive exception: it force-restores
+the packaged objects after its sweep. Nothing here runs at boot; the seed is
+an explicit act (CLI verb, route, or the reset).
 
 Reset TOMBSTONES, never purges: ``/api/sync/pull`` ships
 ``include_deleted=True`` so tombstones propagate last-write-wins to paired
@@ -32,12 +35,12 @@ if TYPE_CHECKING:  # pragma: no cover
 SEEDS_DIR = Path(__file__).resolve().parent.parent / "seeds"
 DEFAULT_SEED = "fresh-desk"
 
-# Manifest sections in dependency order (containers before members), each
+# Manifest sections in dependency order, each
 # mapped to the membership ref kind (`kind:id`, the filing wire contract).
 _SECTION_KINDS: dict[str, str] = {
     "directories": "zone",
-    "kbs": "knowledge",
     "notes": "note",
+    "kbs": "knowledge",
     "recipes": "persona",
     "chains": "sequence",
     "workflows": "workflow",
@@ -101,9 +104,18 @@ def load_manifest(name: str = DEFAULT_SEED) -> dict[str, Any]:
 
 
 def apply_seed(
-    db: "Database", name: str = DEFAULT_SEED, *, adopt: bool = True
+    db: "Database",
+    name: str = DEFAULT_SEED,
+    *,
+    adopt: bool = True,
+    force_restore: bool = False,
 ) -> SeedReport:
-    """Upsert the packaged seed into repositories (idempotent by id)."""
+    """Create only unseen packaged objects, or force-restore them for reset.
+
+    Ordinary use must never overwrite a person's starter text, filing,
+    membership, or later Agent attachment. A tombstone counts as "seen" so an
+    ordinary seed also never resurrects something they deleted.
+    """
     manifest = load_manifest(name)
     report = SeedReport(manifest=name)
 
@@ -115,6 +127,8 @@ def apply_seed(
                 f"(the idempotency contract): {item!r}"
             )
         profile_id = str(item["id"]).strip()
+        if not force_restore and db.profiles.get(profile_id, include_deleted=True):
+            continue
         db.profiles.upsert(
             profile_id=profile_id,
             name=str(item.get("name") or ""),
@@ -140,6 +154,8 @@ def apply_seed(
                 f"(the idempotency contract): {item!r}"
             )
         wb_id = str(item["id"]).strip()
+        if not force_restore and db.workbenches.get(wb_id, include_deleted=True):
+            continue
         db.workbenches.upsert(
             workbench_id=wb_id,
             name=str(item.get("name") or ""),
@@ -158,6 +174,13 @@ def apply_seed(
         if isinstance(item, dict) and item.get("id")
     }
 
+    # These are ids created by *this* application, not merely live ids. That
+    # distinction keeps a partial/repeated ordinary seed from changing an
+    # existing filing. A newly-created KB is safe to populate from every live
+    # packaged member, including notes made by an interrupted earlier apply;
+    # an existing/tombstoned KB remains untouched. On force restore the full
+    # packaged relationship set is deliberately re-established.
+    created_refs: set[str] = set()
     filings: list[tuple[str, str]] = []  # (qualified member ref, directory id)
     for section in _SECTION_KINDS:
         for item in manifest.get(section) or []:
@@ -166,8 +189,7 @@ def apply_seed(
                     f"{section} item missing deterministic id "
                     f"(the idempotency contract): {item!r}"
                 )
-            _apply_item(db, section, item)
-            report.applied[section] = report.applied.get(section, 0) + 1
+            item_id = str(item["id"]).strip()
             if section == "directories":
                 for mid in item.get("member_ids") or []:
                     ref = str(mid) if ":" in str(mid) else refs.get(str(mid), "")
@@ -175,12 +197,67 @@ def apply_seed(
                         raise SeedError(
                             f"zone {item['id']} files unknown member: {mid!r}"
                         )
-                    filings.append((ref, str(item["id"])))
+                    # Keep the declaration even if this directory was made in
+                    # an earlier interrupted apply. A retry may create the
+                    # member now, and only that newly-created member is filed.
+                    filings.append((ref, item_id))
+            if not force_restore and _seed_record_exists(db, section, item_id):
+                continue
+            member_ids = _member_refs(item.get("member_ids") or [], refs)
+            if section == "kbs" and not force_restore:
+                member_ids = [ref for ref in member_ids if _seed_ref_is_live(db, ref)]
+            _apply_item(db, section, item, member_ids=member_ids)
+            report.applied[section] = report.applied.get(section, 0) + 1
+            created_refs.add(refs[item_id])
 
     for ref, directory_id in filings:
+        if not force_restore and (
+            ref not in created_refs or not _seed_ref_is_live(db, f"zone:{directory_id}")
+        ):
+            continue
         db.directory_memberships.upsert(primitive_id=ref, directory_id=directory_id)
         report.filed += 1
     return report
+
+
+def _seed_record_exists(db: "Database", section: str, item_id: str) -> bool:
+    """Whether this exact seed id has ever existed, including a tombstone."""
+    repositories = {
+        "directories": db.directories,
+        "notes": db.notes,
+        "kbs": db.kbs,
+        "recipes": db.recipes,
+        "chains": db.chains,
+        "workflows": db.workflows,
+    }
+    return repositories[section].get(item_id, include_deleted=True) is not None
+
+
+def _member_refs(member_ids: list[Any], refs: dict[str, str]) -> list[str]:
+    """Resolve manifest shorthand to the qualified relationship wire form."""
+    resolved: list[str] = []
+    for member_id in member_ids:
+        raw = str(member_id)
+        ref = raw if ":" in raw else refs.get(raw, "")
+        if not ref:
+            raise SeedError(f"seed membership names unknown member: {member_id!r}")
+        resolved.append(ref)
+    return resolved
+
+
+def _seed_ref_is_live(db: "Database", ref: str) -> bool:
+    """Whether a qualified packaged relationship endpoint is live now."""
+    kind, _, item_id = str(ref).partition(":")
+    repositories = {
+        "zone": db.directories,
+        "note": db.notes,
+        "knowledge": db.kbs,
+        "persona": db.recipes,
+        "sequence": db.chains,
+        "workflow": db.workflows,
+    }
+    repository = repositories.get(kind)
+    return bool(item_id and repository and repository.get(item_id) is not None)
 
 
 def _adopt_profiles(profile_id: str) -> dict[str, str]:
@@ -198,7 +275,9 @@ def _adopt_profiles(profile_id: str) -> dict[str, str]:
     return adopted
 
 
-def _apply_item(db: "Database", section: str, item: dict[str, Any]) -> None:
+def _apply_item(
+    db: "Database", section: str, item: dict[str, Any], *, member_ids: list[str]
+) -> None:
     item_id = str(item["id"]).strip()
     if section == "directories":
         db.directories.upsert(
@@ -214,7 +293,11 @@ def _apply_item(db: "Database", section: str, item: dict[str, Any]) -> None:
             tags=[str(tag) for tag in item.get("tags") or []],
         )
     elif section == "kbs":
-        db.kbs.upsert(kb_id=item_id, name=str(item.get("name") or ""))
+        db.kbs.upsert(
+            kb_id=item_id,
+            name=str(item.get("name") or ""),
+            member_ids=member_ids,
+        )
     elif section == "recipes":
         db.recipes.upsert(
             recipe_id=item_id,
@@ -277,5 +360,5 @@ def reset_desk(db: "Database", name: str = DEFAULT_SEED) -> ResetReport:
             count += 1
     report.tombstoned["directories"] = count
 
-    report.seed = apply_seed(db, name)
+    report.seed = apply_seed(db, name, force_restore=True)
     return report

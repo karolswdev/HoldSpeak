@@ -90,10 +90,10 @@ export function RecipeEditor({ object: o, autoFocusName }: InlineEditorContentPr
             onChange={(value) => set("tools", "tools", value, true)}
           />
           <CycleGadget
-            label="Knowledge"
+            label="Context"
             value={f.kbId}
             options={[
-              { value: "", label: "No Knowledge" },
+              { value: "", label: "No context" },
               ...(items.kb || []).map((k) => ({
                 value: String(k.id),
                 label: String(k.name || k.id),

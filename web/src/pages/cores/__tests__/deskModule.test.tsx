@@ -25,7 +25,7 @@ describe("DeskModule (HS-112-03)", () => {
   it("states what resets and what survives, as labels", () => {
     render(<DeskModule />);
     expect(
-      screen.getByText(/RESETS · NOTES · KNOWLEDGE · AGENTS · WORKFLOWS · DRAWERS · LAYOUT/),
+      screen.getByText(/TOMBSTONES EXISTING DESK OBJECTS · RESTORES FURNISHED DEFAULTS/),
     ).toBeInTheDocument();
     expect(
       screen.getByText(/KEEPS · MEETINGS · JOURNAL · SETTINGS · RUNS-ON TARGETS/),
@@ -37,7 +37,7 @@ describe("DeskModule (HS-112-03)", () => {
     render(<DeskModule />);
     await user.click(screen.getByRole("button", { name: "RESET TO SEED" }));
     expect(resetDesk).not.toHaveBeenCalled(); // armed, not fired
-    await user.click(screen.getByRole("button", { name: "RESET DESK?" }));
+    await user.click(screen.getByRole("button", { name: "TOMBSTONE DESK & RESTORE DEFAULTS?" }));
     expect(resetDesk).toHaveBeenCalledTimes(1);
     expect(await screen.findByRole("status")).toHaveTextContent(
       "TOMBSTONED 7 · SEEDED 8",
@@ -49,7 +49,7 @@ describe("DeskModule (HS-112-03)", () => {
     const user = userEvent.setup();
     render(<DeskModule />);
     await user.click(screen.getByRole("button", { name: "RESET TO SEED" }));
-    await user.click(screen.getByRole("button", { name: "RESET DESK?" }));
+    await user.click(screen.getByRole("button", { name: "TOMBSTONE DESK & RESTORE DEFAULTS?" }));
     expect(await screen.findByRole("alert")).toHaveTextContent("RESET REFUSED");
   });
 });

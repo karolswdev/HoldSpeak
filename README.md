@@ -278,13 +278,15 @@ The dictation and meeting LLM is yours to choose. See
 
 Installed and running, setup is three moves, in this order.
 
-**1. Seed the desk.** A fresh install is an empty floor. Press **Seed the
-desk** on it, or run `holdspeak seed`, and six drawers appear (ADRs,
-Meetings, Rules, Decisions, Reference, Inbox) holding two starter notes: an
-ADR template and the working rules. The seed upserts by id, so running it
-twice leaves one desk. To go back to that state later, open **Settings,
-Desk** and arm **Reset to seed**; it names what it clears and what it keeps
-before you confirm.
+**1. Furnish the desk.** Press **Seed the desk** on an empty floor, or run
+`holdspeak seed`, and six drawers appear: Inbox, Personal, Work, Meetings,
+Decisions, and Reference. **Start here** explains the five editable prompts
+in **Everyday context**: About me, Current priorities, How I like help, People
+& vocabulary, and Meeting preferences. That context is not sent to AI unless
+you explicitly attach it. Ordinary seeding only creates starter objects it has
+never seen, so your edits and deletions stay yours. To deliberately clear the
+Desk and restore the furnished defaults, open **Settings, Desk** and confirm
+**Reset to seed**; it names what it tombstones and what it keeps.
 
 **2. Set the dial.** Open **Settings, Models**. Add a destination (an
 endpoint, this device, a paired device, or a mesh node) with its name, URL,

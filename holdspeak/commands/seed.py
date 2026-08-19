@@ -1,8 +1,8 @@
-"""`holdspeak seed` — apply the packaged architect's-desk seed (HS-112-03).
+"""`holdspeak seed` — apply the packaged furnished-desk seed.
 
-Idempotent by deterministic id: running it twice leaves one desk. It only
-ever adds/updates the seed's own `hs-desk-*` objects; nothing else on the
-desk is touched (reset lives in the app's Prefs, behind its own confirm).
+Preservation-first by deterministic id: ordinary seeding creates only starter
+objects that have never existed. Existing objects and tombstones are left
+alone; destructive force-restoration lives behind Reset to seed in Settings.
 """
 
 from __future__ import annotations
@@ -26,5 +26,5 @@ def run_seed_command(args) -> int:
     for field, profile_id in sorted(report.profiles_adopted.items()):
         print(f"  adopted {field}: {profile_id}")
     print(f"  filed: {report.filed}")
-    print("Re-running is safe: the seed upserts by id, never duplicates.")
+    print("Re-running is safe: existing starter objects and deletions stay yours.")
     return 0

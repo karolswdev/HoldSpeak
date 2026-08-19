@@ -8,8 +8,8 @@ Five minutes from install to speaking a sentence into another app: that is
 this guide's whole job. After you install and run `holdspeak doctor`, setup
 is three moves, in this order:
 
-1. **Seed the desk.** A fresh install is an empty floor. One press, or
-   `holdspeak seed`, puts six drawers and two starter notes on it.
+1. **Furnish the desk.** One press, or `holdspeak seed`, creates six useful
+   drawers, a Start here note, and five editable context prompts.
 2. **Set the dial.** Settings, Models is the one place endpoint and model
    identity is edited: a destination list, and a Runs on picker per feature.
 3. **Hold the key.** Hold the hotkey anywhere, speak, release, and the words
@@ -74,7 +74,7 @@ HoldSpeak web runtime is running at: http://127.0.0.1:PORT
   → Welcome! Say your first words on the Desk: open http://127.0.0.1:PORT/
 ```
 
-## 4. Move 1: seed the desk
+## 4. Move 1: furnish the desk
 
 A fresh install is an empty floor. Nothing is seeded at boot: you ask for it.
 
@@ -84,15 +84,21 @@ Press **Seed the desk** on the empty floor, or run:
 holdspeak seed
 ```
 
-Either way you get six drawers (ADRs, Meetings, Rules, Decisions, Reference,
-Inbox) and two starter notes filed into them: an **ADR template** and
-**Working rules**. The seed upserts by deterministic id, so running it twice
-leaves one desk, and it only ever touches its own objects.
+Either way you get six drawers: **Inbox, Personal, Work, Meetings, Decisions,**
+and **Reference**. **Start here** introduces five editable prompts collected in
+**Everyday context**: About me, Current priorities, How I like help, People &
+vocabulary, and Meeting preferences. They contain questions and examples, not
+invented facts about you.
+
+Everyday context is never sent to AI automatically. Attach it in Ask, or choose
+it as an Agent's Context, only when you want it used. Ordinary seeding creates
+only starter ids HoldSpeak has never seen, so re-running it preserves edits,
+moves, attachments, and deletions.
 
 To go back to that state later, open **Settings, Desk** and arm **Reset to
-seed**. It states what it clears (notes, knowledge, agents, workflows,
-drawers, layout) and what it keeps (meetings, journal, settings, Runs on
-targets) before you confirm, then reports `TOMBSTONED N · SEEDED M`. The
+seed**. It states that it tombstones existing Desk objects and restores the
+furnished defaults, while keeping meetings, journal, settings, and Runs on
+targets. After you confirm, it reports `TOMBSTONED N · SEEDED M`. The
 deletions are tombstones, so a paired device cannot resurrect the clutter.
 
 ## 5. Move 2: set the dial

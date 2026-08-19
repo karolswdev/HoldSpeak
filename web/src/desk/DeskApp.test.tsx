@@ -9,6 +9,7 @@ const state = vi.hoisted(() => ({
   arrivalRequired: true,
   refreshFails: false,
   surface: "floor" as "chair" | "floor",
+  askOpen: false,
   refresh: vi.fn(),
 }));
 
@@ -29,6 +30,7 @@ vi.mock("./store", () => {
     error: "",
     viewMode: "unset",
     editingId: null,
+    askOpen: false,
   };
   state.refresh.mockImplementation(() =>
     state.refreshFails
@@ -41,6 +43,7 @@ vi.mock("./store", () => {
     desk.setup = state.setupAvailable
       ? { arrival_required: state.arrivalRequired }
       : null;
+    desk.askOpen = state.askOpen;
     return selector(desk);
   };
   useDesk.getState = () => ({ ...desk, refresh: state.refresh, openPullout: vi.fn() });
@@ -76,6 +79,7 @@ vi.mock("./components/WorkbenchWindow", () => ({ WorkbenchWindow: marker("workbe
 vi.mock("./components/NewWorkbenchChooser", () => ({ NewWorkbenchChooser: marker("workbench-chooser") }));
 vi.mock("./components/ScheduleCreateWindow", () => ({ ScheduleCreateWindow: marker("schedule-create") }));
 vi.mock("./components/AttentionDrawer", () => ({ AttentionDrawer: marker("attention-drawer") }));
+vi.mock("./components/AskPanel", () => ({ AskPanel: marker("ask-panel") }));
 vi.mock("./components/GlassDropLayer", () => ({ GlassDropLayer: marker("glass-drop") }));
 vi.mock("./components/DeskToolInspector", () => ({ DeskToolInspector: marker("tool-inspector") }));
 vi.mock("./components/DeskWindow", () => ({
@@ -106,6 +110,7 @@ describe("DeskApp arrival state", () => {
     state.arrivalRequired = true;
     state.refreshFails = false;
     state.surface = "floor";
+    state.askOpen = false;
     state.refresh.mockClear();
   });
 
@@ -179,5 +184,14 @@ describe("DeskApp arrival state", () => {
     expect(screen.getByTestId("dock")).toBeInTheDocument();
     expect(screen.getByTestId("mission-control")).toBeInTheDocument();
     expect(screen.getByTestId("pane-picker")).toBeInTheDocument();
+  });
+
+  it("mounts the existing Ask panel when the normal Chair opens it", () => {
+    state.arrivalRequired = false;
+    state.surface = "chair";
+    state.askOpen = true;
+    render(<DeskApp />);
+
+    expect(screen.getByTestId("ask-panel")).toBeInTheDocument();
   });
 });

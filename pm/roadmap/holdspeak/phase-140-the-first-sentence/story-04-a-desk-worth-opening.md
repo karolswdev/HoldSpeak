@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 140
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** 140-01
 - **Unblocks:** 140-05, 140-06
 - **Owner:** delegated Terra worker; orchestrator adjudicates
@@ -32,26 +32,26 @@ Public Getting Started copy claiming six drawers and two starter notes is stale.
 
 ## Acceptance criteria
 
-- [ ] Fresh seed creates exactly the six named drawers, Start here, five
+- [x] Fresh seed creates exactly the six named drawers, Start here, five
   editable context notes, and Everyday context with deterministic `hs-seed-*`
   IDs; it creates no Agent, model profile, provider endpoint, or Workbench.
-- [ ] Everyday context contains the five context notes through the canonical KB
+- [x] Everyday context contains the five context notes through the canonical KB
   membership seam; Ask can explicitly pick it and an Agent can select it through
   the existing Context/`kb_id` field; both hydrate edited note contents.
-- [ ] Starter text asks useful questions and gives terse examples but asserts
+- [x] Starter text asks useful questions and gives terse examples but asserts
   no owner name, employer, role, relationship, preference, or current goal.
-- [ ] Start here states that context is not automatically included in an AI
+- [x] Start here states that context is not automatically included in an AI
   request and enters one only when attached; it states that ordinary Desk sync
   still follows existing device pairing; no Constitutional Context is populated.
-- [ ] Ordinary seed creates only starter IDs that have never existed: rerunning
+- [x] Ordinary seed creates only starter IDs that have never existed: rerunning
   it preserves changed text, names, membership, filing, and AI attachment, and
   does not resurrect a tombstoned starter object.
-- [ ] Explicit Reset to seed still tombstones clutter and deliberately restores
+- [x] Explicit Reset to seed still tombstones clutter and deliberately restores
   the packaged defaults through an explicit force-restore mode; its confirmation
   says existing Desk objects will be tombstoned and furnished defaults restored.
-- [ ] Existing owner-created objects and configured destinations are untouched
+- [x] Existing owner-created objects and configured destinations are untouched
   by ordinary seeding. Reset retains its explicitly destructive Desk sweep.
-- [ ] The seeded objects edit, rename, move, delete, sync, ground, and open
+- [x] The seeded objects edit, rename, move, delete, sync, ground, and open
   through existing primitive paths; no seed-only rendering branch exists.
 
 ## Test plan

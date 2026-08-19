@@ -27,6 +27,7 @@ import { WorkbenchWindow } from "./components/WorkbenchWindow";
 import { NewWorkbenchChooser } from "./components/NewWorkbenchChooser";
 import { ScheduleCreateWindow } from "./components/ScheduleCreateWindow";
 import { AttentionDrawer } from "./components/AttentionDrawer";
+import { AskPanel } from "./components/AskPanel";
 import { GlassDropLayer } from "./components/GlassDropLayer";
 import { DeskToolInspector } from "./components/DeskToolInspector";
 import { Dock, Expose, SnapGhost, Switcher } from "./components/DeskWindow";
@@ -48,6 +49,7 @@ export default function DeskApp() {
   const loading = useDesk((s) => s.loading);
   const viewMode = useDesk((s) => s.viewMode);
   const editingId = useDesk((s) => s.editingId);
+  const askOpen = useDesk((s) => s.askOpen);
   const error = useDesk((s) => s.error);
   const { refresh } = useDesk.getState();
   const [refreshFailure, setRefreshFailure] = useState<string | null>(null);
@@ -129,6 +131,9 @@ export default function DeskApp() {
       ) : (
         <ChairHome arrivalRequired={arrivalRequired} />
       )}
+      {/* Floor/List own their Ask panel. The Chair's primary Ask AI verb uses
+          the same store seam, so mount that existing panel here as well. */}
+      {!arrivalRequired && !showFloor && askOpen && <AskPanel />}
       {/* HS-135-13 fix: the InlineEditor must render on the Chair too,
           not only the Floor (DeskListView/WorldStage own their own copy).
           Without this, "New Agent" from a Workbench on the Chair sets
