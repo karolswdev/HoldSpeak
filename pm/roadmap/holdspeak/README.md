@@ -26,6 +26,12 @@ Delivery, and the 393px furnished face is collision-free. Copy/Keep custody,
 public first-run wording, local gates, and fresh counsel pass. The runner had no
 physical microphone, so the real-mic and physical permission/no-speech legs
 remain open rather than being replaced with synthetic proof.
+The owner has also directed the next spine: a durable thought-refinement loop
+that clarifies one question at a time, uses explicit context, and can freeze
+typed/tool-backed proposals before existing policy and receipt machinery acts.
+The audited design, connector truth, sequencing, and P0/P1 risk register are in
+[`proposals/thought-refinement-spine.md`](./proposals/thought-refinement-spine.md);
+it is deliberately not an implementation charter yet.
 The owner ordered a complexity cut. The proposed Dashboard Door is
 cancelled: no TODO kanban, calendar aggregation, or new control center. A fresh
 HoldSpeak will open on one obvious job—dictate one sentence—then reveal the

@@ -69,6 +69,13 @@ physical permission/no-speech legs remain open because this runner had no mic.
 
 ## Decision log
 
+- 2026-08-18 — The owner set the next product spine: rough speech enters a
+  continuing clarification loop, gains explicitly attached context, becomes a
+  richer editable synthesis, and may suggest typed/tool-backed outcomes. The
+  audited design and risk register are recorded in
+  [`proposals/thought-refinement-spine.md`](../proposals/thought-refinement-spine.md).
+  It is not yet an implementation charter. Current truth: GitHub issue and
+  Slack writes exist through actuators; Jira and calendar writes do not.
 - 2026-08-18 — HS-140-06 glass and local gates ratified; story remains active.
   Bare-HOME arrival, Continue/reload, the furnished reveal, responsive Floor,
   Copy/Keep custody, docs, and counsel pass. The owner calls it “a step in the
