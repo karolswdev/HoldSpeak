@@ -5,19 +5,24 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { ApiError } from "../../lib/api";
 import { useDesk } from "../store";
 import { NotePullout } from "./NotePullout";
-import { adoptThought, originalThought, thoughtForNote } from "../thoughts";
+import { adoptThought, completeThought, originalThought, resumeThought, thoughtForNote } from "../thoughts";
 
-vi.mock("../surface/SurfaceFooter", () => ({ SurfaceFooter: ({ verbs }: { verbs: unknown }) => <footer>{verbs as any}</footer> }));
+const { copySpy, flushThoughtEditor } = vi.hoisted(() => ({ copySpy: vi.fn(), flushThoughtEditor: vi.fn() }));
+
+vi.mock("../surface/SurfaceFooter", () => ({ SurfaceFooter: ({ receipt, verbs }: { receipt?: unknown; verbs: unknown }) => <footer>{receipt as any}{verbs as any}</footer> }));
 vi.mock("../components/DeskFilingStrip", () => ({ DeskFilingStrip: () => null }));
 vi.mock("../surface/Material", () => ({ Material: ({ children }: { children: unknown }) => <>{children}</> }));
 vi.mock("../surface/Surface", () => ({ SurfaceState: () => null }));
 vi.mock("./editors", () => ({ INLINE_EDITOR_CONTENT: {} }));
-vi.mock("./editors/ThoughtNoteEditor", () => ({ ThoughtNoteEditor: () => null }));
-vi.mock("../hooks/useCopyReceipt", () => ({ useCopyReceipt: () => ({ copy: vi.fn(), receipt: null }) }));
+vi.mock("./editors/ThoughtNoteEditor", async () => {
+  const React = await import("react");
+  return { ThoughtNoteEditor: React.forwardRef((_props, ref) => { React.useImperativeHandle(ref, () => ({ flush: flushThoughtEditor })); return null; }) };
+});
+vi.mock("../hooks/useCopyReceipt", () => ({ useCopyReceipt: () => ({ copy: copySpy, receipt: null }) }));
 vi.mock("../api", async (importOriginal) => ({ ...(await importOriginal<typeof import("../api")>()), qualifiedRef: () => "note:note-1" }));
 vi.mock("../shell", () => ({ openSurfaceOr: vi.fn() }));
 vi.mock("../thoughts", () => ({
-  thoughtForNote: vi.fn(), adoptThought: vi.fn(), originalThought: vi.fn(),
+  thoughtForNote: vi.fn(), adoptThought: vi.fn(), originalThought: vi.fn(), completeThought: vi.fn(), resumeThought: vi.fn(),
   sourceLabel: (kind: string) => kind,
 }));
 
@@ -37,6 +42,83 @@ const ownedThought = {
 afterEach(() => { cleanup(); vi.clearAllMocks(); sessionStorage.clear(); });
 
 describe("NotePullout adoption recovery", () => {
+  it("executes Good enough immediately and leaves the same completed Note read-only with a receipt", async () => {
+    vi.mocked(thoughtForNote).mockResolvedValue({ ownership: "thought", thought: ownedThought });
+    vi.mocked(completeThought).mockResolvedValue({ thought: { ...ownedThought, state: "completed", aggregate_revision: 2, lifecycle_revision: 2 }, receipt: {
+      id: "rcomp-1", kind: "thought_completed", thought_id: "thought-1", note_ref: "note:note-1", aggregate_revision: 2, lifecycle_revision: 2, created_at: "now",
+    } });
+    useDesk.setState({ editingId: null, refresh: vi.fn(), openEditor: vi.fn(), closeEditor: vi.fn() });
+    render(<NotePullout object={object} onClose={vi.fn()} />);
+    fireEvent.click(await screen.findByRole("button", { name: "Good enough" }));
+    await waitFor(() => expect(completeThought).toHaveBeenCalledTimes(1));
+    expect(screen.getByRole("button", { name: "Resume refining" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Save" })).not.toBeInTheDocument();
+    expect(screen.getByText("Done")).toBeInTheDocument();
+  });
+
+  it("renders and copies the authoritative accepted working Note rather than the stale pullout snapshot", async () => {
+    const acceptedB = { ...ownedThought, aggregate_revision: 3, working_revision: 3,
+      working_note: { ...ordinary.note, title: "Accepted B title", body_markdown: "Accepted B body" } };
+    vi.mocked(thoughtForNote).mockResolvedValue({ ownership: "thought", thought: acceptedB });
+    useDesk.setState({ editingId: null, refresh: vi.fn(), openEditor: vi.fn(), closeEditor: vi.fn() });
+    render(<NotePullout object={object} onClose={vi.fn()} />);
+    expect(await screen.findByText("Accepted B body")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Copy" }));
+    expect(copySpy).toHaveBeenCalledWith("Accepted B body");
+  });
+
+  it("resumes a completed Note through lifecycle CAS before opening its editor", async () => {
+    const completed = { ...ownedThought, state: "completed" as const, aggregate_revision: 2, lifecycle_revision: 2 };
+    vi.mocked(thoughtForNote).mockResolvedValue({ ownership: "thought", thought: completed });
+    vi.mocked(resumeThought).mockResolvedValue({ ...completed, state: "working", aggregate_revision: 3, lifecycle_revision: 3 });
+    const openEditor = vi.fn();
+    useDesk.setState({ editingId: null, refresh: vi.fn(), openEditor, closeEditor: vi.fn() });
+    render(<NotePullout object={object} onClose={vi.fn()} />);
+    fireEvent.click(await screen.findByRole("button", { name: "Resume refining" }));
+    await waitFor(() => expect(resumeThought).toHaveBeenCalledWith(completed));
+    expect(openEditor).toHaveBeenCalledWith("note-1");
+  });
+
+  it("clears a prior completion key on Resume so the next Good enough uses a new request", async () => {
+    const completed = { ...ownedThought, state: "completed" as const, aggregate_revision: 2, lifecycle_revision: 2 };
+    const resumed = { ...completed, state: "working" as const, aggregate_revision: 3, lifecycle_revision: 3 };
+    sessionStorage.setItem("hs.thought.complete.thought-1", "K");
+    vi.mocked(thoughtForNote).mockResolvedValue({ ownership: "thought", thought: completed });
+    vi.mocked(resumeThought).mockResolvedValue(resumed);
+    vi.mocked(completeThought).mockResolvedValue({ thought: { ...resumed, state: "completed", aggregate_revision: 4, lifecycle_revision: 4 }, receipt: {
+      id: "rcomp-new", kind: "thought_completed", thought_id: "thought-1", note_ref: "note:note-1", aggregate_revision: 4, lifecycle_revision: 4, created_at: "now",
+    } });
+    useDesk.setState({ editingId: null, refresh: vi.fn(), openEditor: vi.fn(), closeEditor: vi.fn() });
+    render(<NotePullout object={object} onClose={vi.fn()} />);
+    fireEvent.click(await screen.findByRole("button", { name: "Resume refining" }));
+    await waitFor(() => expect(sessionStorage.getItem("hs.thought.complete.thought-1")).toBeNull());
+    fireEvent.click(screen.getByRole("button", { name: "Good enough" }));
+    await waitFor(() => expect(completeThought).toHaveBeenCalledTimes(1));
+    expect(vi.mocked(completeThought).mock.calls[0][0].request_id).not.toBe("K");
+  });
+
+  it("clears a stale completion key and does not loop it after its named conflict", async () => {
+    sessionStorage.setItem("hs.thought.complete.thought-1", "K");
+    vi.mocked(thoughtForNote).mockResolvedValue({ ownership: "thought", thought: ownedThought });
+    vi.mocked(completeThought).mockRejectedValueOnce(new ApiError(409, "stale", { error: "completion_request_payload_mismatch" }));
+    useDesk.setState({ editingId: null, refresh: vi.fn(), openEditor: vi.fn(), closeEditor: vi.fn() });
+    render(<NotePullout object={object} onClose={vi.fn()} />);
+    fireEvent.click(await screen.findByRole("button", { name: "Good enough" }));
+    await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent("no longer current"));
+    expect(sessionStorage.getItem("hs.thought.complete.thought-1")).toBeNull();
+  });
+
+  it("does not call completion when the editor flush reports a retained save failure", async () => {
+    vi.mocked(thoughtForNote).mockResolvedValue({ ownership: "thought", thought: ownedThought });
+    flushThoughtEditor.mockRejectedValueOnce(new Error("thought save failed"));
+    useDesk.setState({ editingId: "note-1", refresh: vi.fn(), openEditor: vi.fn(), closeEditor: vi.fn() });
+    render(<NotePullout object={object} onClose={vi.fn()} />);
+    fireEvent.click(await screen.findByRole("button", { name: "Good enough" }));
+    await waitFor(() => expect(flushThoughtEditor).toHaveBeenCalledTimes(1));
+    expect(completeThought).not.toHaveBeenCalled();
+    expect(screen.queryByText("We couldn't confirm completion on this hub. Your thought is still here. Retry Good enough.")).not.toBeInTheDocument();
+  });
+
   it("keeps the request id and names a generic adoption failure without claiming a change", async () => {
     vi.mocked(thoughtForNote).mockResolvedValue(ordinary);
     vi.mocked(adoptThought).mockRejectedValue(new Error("offline"));
@@ -109,5 +191,11 @@ describe("NotePullout adoption recovery", () => {
     expect(css).toMatch(/\.thought-original-raw\s*\{[^}]*white-space:\s*pre-wrap;/s);
     expect(css).toMatch(/\.thought-original-raw\s*\{[^}]*overflow-wrap:\s*anywhere;/s);
     expect(css).toMatch(/\.thought-original-raw\s*\{[^}]*max-width:\s*100%;/s);
+  });
+
+  it("keeps one full-width completion primary at the 393px surface breakpoint", () => {
+    const css = readFileSync(resolve(process.cwd(), "src/desk/components/pullout.css"), "utf8");
+    expect(css).toMatch(/@container surface \(max-width: 420px\)[\s\S]*\.thought-completion-secondary\s*\{\s*display:\s*none;/);
+    expect(css).toMatch(/\.thought-completion-primary\s*\{[\s\S]*width:\s*100%;/);
   });
 });

@@ -131,9 +131,10 @@ def build_thoughts_router(ctx: WebContext) -> APIRouter:
         if body is None:
             return JSONResponse({"error": "expected a JSON object"}, status_code=400)
         try:
-            return JSONResponse({"thought": service().complete(principal(request), thought_id,
-                expected_aggregate_revision=body.get("expected_aggregate_revision"),
-                expected_lifecycle_revision=body.get("expected_lifecycle_revision"))})
+            thought, receipt = service().complete_with_receipt(principal(request), thought_id,
+                request_id=str(body.get("request_id") or ""), expected_aggregate_revision=body.get("expected_aggregate_revision"),
+                expected_lifecycle_revision=body.get("expected_lifecycle_revision"))
+            return JSONResponse({"thought": thought, "receipt": receipt})
         except ServiceError as exc:
             return _error(exc)
 

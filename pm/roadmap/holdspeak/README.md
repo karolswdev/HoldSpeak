@@ -9,12 +9,15 @@
 > is canon at [`docs/internal/ORCHESTRATION.md`](../../../docs/internal/ORCHESTRATION.md).
 
 **Newest update (2026-08-19): Phase 141 — From Thought to Work — ACTIVE
-(3/9).** Raw custody, bounded resume continuity, and the first owner-facing
-Develop bridge are done. The Chair now starts a local thought directly; every
+(4/9).** Raw custody, bounded resume continuity, the first owner-facing Develop
+bridge, and the no-model completion/reopen path are done. The Chair now starts a local thought directly; every
 ordinary Note—including Phase 140's first kept Note—can become the same
 revisioned working Note without cloning or losing its byte-equal Original.
-Inbox and Chair reopen unfinished work after reload. The next move is the
-one-action no-model completion path, before any AI question surface.
+Inbox and Chair reopen unfinished work after reload. **Good enough** now drains
+the last accepted edit and completes immediately under the default YOLO posture:
+no Save, confirmation, model, or setup. The same Note remains findable and can
+explicitly Resume refining. The next move is one useful owner-triggered AI
+question.
 
 Phase 140 — The First Sentence remains active at 5/6 with only its final
 physical-device legs open. HS-140-01 through HS-140-05 are done.
@@ -39,14 +42,14 @@ that clarifies one question at a time, uses explicit context, and can freeze
 typed/tool-backed proposals before existing policy and receipt machinery acts.
 The audited design, connector truth, sequencing, and P0/P1 risk register are in
 [`proposals/thought-refinement-spine.md`](./proposals/thought-refinement-spine.md);
-Phase 141 is active at 3/9. Its raw-custody/CAS keystone is done: one atomic
+Phase 141 is active at 4/9. Its raw-custody/CAS keystone is done: one atomic
 aggregate preserves the original, owns a revisioned working Note, and closes
 ordinary Note and paired-sync bypasses through a verifiable command ledger. The
-resumable-thought contract and Develop bridge are also done: owner-only bounded
+resumable-thought contract, Develop bridge, and immediate local completion are done: owner-only bounded
 load/list, mandatory cursors, a durable before-dispatch link for every physical
 Ask attempt, and local capture/adoption/re-entry without a model.
-Next come one-action completion, one owner-triggered question, visible context,
-typed local outcomes, and a real GitHub actuator proof.
+Next come one owner-triggered question, visible context, typed local outcomes,
+and a real GitHub actuator proof.
 Jira/calendar writes remain truthful follow-ons.
 The owner ordered a complexity cut. The proposed Dashboard Door is
 cancelled: no TODO kanban, calendar aggregation, or new control center. A fresh
@@ -879,7 +882,7 @@ canon, canon wins.
 | 138 | Ship an encrypted, local-only People relationship and 1:1 foundation whose explicit manager commitments appear in Follow-through without entering plaintext product stores. | done | [phase-138-the-people-ledger](./phase-138-the-people-ledger/) |
 | 139 | The Settings Reckoning: cut the Settings face to seven job-named tiles, pin core defaults, move object settings home, and fold operator wiring behind RAW. | done | [phase-139-the-settings-reckoning](./phase-139-the-settings-reckoning/) |
 | 140 | The First Sentence: one obvious first-value act on the Chair, a useful editable result, in-place recovery, then a furnished six-drawer reveal with explicitly attachable Everyday context. | in-progress (5/6) | [phase-140-the-first-sentence](./phase-140-the-first-sentence/) |
-| 141 | From Thought to Work: preserve rough speech, develop it through one owner-triggered grounded question at a time, then freeze typed local or GitHub-backed outcomes on the existing authority and receipt spine. | in-progress (3/9) | [phase-141-from-thought-to-work](./phase-141-from-thought-to-work/) |
+| 141 | From Thought to Work: preserve rough speech, develop it through one owner-triggered grounded question at a time, then freeze typed local or GitHub-backed outcomes on the existing authority and receipt spine. | in-progress (4/9) | [phase-141-from-thought-to-work](./phase-141-from-thought-to-work/) |
 
 (Status values: `planning`, `in-progress`, `done`, `paused`, `cancelled`.)
 

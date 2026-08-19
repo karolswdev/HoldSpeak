@@ -883,6 +883,20 @@ CREATE TABLE IF NOT EXISTS refinement_aggregate_commands (
     PRIMARY KEY (thought_id, aggregate_revision)
 );
 
+-- HS-141-06: a local Good-enough receipt is retry proof for one owner
+-- completion request. It is not sync state or a second lifecycle.
+CREATE TABLE IF NOT EXISTS refinement_completion_receipts (
+    receipt_id TEXT PRIMARY KEY,
+    thought_id TEXT NOT NULL REFERENCES refinement_thoughts(id),
+    request_id TEXT NOT NULL UNIQUE,
+    request_sha256 TEXT NOT NULL,
+    aggregate_revision INTEGER NOT NULL,
+    lifecycle_revision INTEGER NOT NULL,
+    working_note_id TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    UNIQUE (thought_id, aggregate_revision)
+);
+
 -- A peer can receive a sync tombstone before its live aggregate. Preserve the
 -- high-water fence so a delayed live bundle cannot resurrect custody.
 CREATE TABLE IF NOT EXISTS refinement_thought_sync_tombstones (

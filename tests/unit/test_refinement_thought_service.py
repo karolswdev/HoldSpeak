@@ -249,7 +249,7 @@ def test_new_peer_gets_exact_rev2_completed_history_and_tombstone_fence(tmp_path
     service = RefinementThoughtService(source)
     thought = service.create(OWNER, request_id="history", raw_text="raw", source={"kind": "typed"})
     service.update_working(OWNER, thought["id"], expected_aggregate_revision=1, expected_working_revision=1, title="rev two", body_markdown="edited")
-    service.complete(OWNER, thought["id"], expected_aggregate_revision=2, expected_lifecycle_revision=1)
+    service._complete_without_receipt(OWNER, thought["id"], expected_aggregate_revision=2, expected_lifecycle_revision=1)
     live = SyncService(source, hub_model_name=lambda: "").pull(None)
     SyncService(peer, hub_model_name=lambda: "").push(None, live)
     copied = peer.refinement_thoughts.get(thought["id"])
@@ -302,7 +302,7 @@ def test_lifecycle_command_cas_refuses_completed_edits_until_resume_and_dtos_car
     service = RefinementThoughtService(db)
     thought = _create(db)
     assert {"aggregate_revision", "lifecycle_revision", "working_revision", "attachment_revision"} <= thought.keys()
-    completed = service.complete(OWNER, thought["id"], expected_aggregate_revision=1, expected_lifecycle_revision=1)
+    completed = service._complete_without_receipt(OWNER, thought["id"], expected_aggregate_revision=1, expected_lifecycle_revision=1)
     assert completed["state"] == "completed" and completed["aggregate_revision"] == 2 and completed["lifecycle_revision"] == 2
     with pytest.raises(ConflictError) as blocked:
         service.update_working(OWNER, thought["id"], expected_aggregate_revision=2, expected_working_revision=1, body_markdown="must wait")
@@ -310,6 +310,28 @@ def test_lifecycle_command_cas_refuses_completed_edits_until_resume_and_dtos_car
     resumed = service.resume(OWNER, thought["id"], expected_aggregate_revision=2, expected_lifecycle_revision=2)
     assert resumed["state"] == "working" and resumed["aggregate_revision"] == 3 and resumed["lifecycle_revision"] == 3
     assert service.update_working(OWNER, thought["id"], expected_aggregate_revision=3, expected_working_revision=1, body_markdown="now edit")["working_revision"] == 2
+
+
+def test_good_enough_receipt_replays_only_on_originating_hub_and_sync_converges(tmp_path):
+    source, peer = Database(tmp_path / "completion-source.db"), Database(tmp_path / "completion-peer.db")
+    for database in (source, peer):
+        database.directories.upsert(directory_id=INBOX_DIRECTORY_ID, name="Inbox")
+    origin = RefinementThoughtService(source)
+    thought = origin.create(OWNER, request_id="completion-create", raw_text="raw", source={"kind": "typed"})
+    completed, receipt = origin.complete_with_receipt(OWNER, thought["id"], request_id="completion-request",
+        expected_aggregate_revision=1, expected_lifecycle_revision=1)
+    replay, replay_receipt = origin.complete_with_receipt(OWNER, thought["id"], request_id="completion-request",
+        expected_aggregate_revision=1, expected_lifecycle_revision=1)
+    assert replay == completed and replay_receipt == receipt
+    assert len(source.refinement_thoughts.commands(thought["id"])) == 2
+    SyncService(peer, hub_model_name=lambda: "").push(None, SyncService(source, hub_model_name=lambda: "").pull(None))
+    with pytest.raises(ConflictError) as remote:
+        RefinementThoughtService(peer).complete_with_receipt(OWNER, thought["id"], request_id="completion-request",
+            expected_aggregate_revision=1, expected_lifecycle_revision=1)
+    assert remote.value.code == "thought_already_completed"
+    with peer._connection() as conn:
+        assert conn.execute("SELECT COUNT(*) FROM refinement_completion_receipts").fetchone()[0] == 0
+    assert len(peer.refinement_thoughts.commands(thought["id"])) == 2
 
 
 def test_unfinished_page_is_bounded_private_and_cursor_signed(db):
@@ -394,7 +416,7 @@ def test_two_peer_same_content_completion_fast_forwards_aggregate_command_suffix
     service = RefinementThoughtService(source)
     thought = service.create(OWNER, request_id="same-content", raw_text="raw", source={"kind": "typed"})
     SyncService(peer, hub_model_name=lambda: "").push(None, SyncService(source, hub_model_name=lambda: "").pull(None))
-    service.complete(OWNER, thought["id"], expected_aggregate_revision=1, expected_lifecycle_revision=1)
+    service._complete_without_receipt(OWNER, thought["id"], expected_aggregate_revision=1, expected_lifecycle_revision=1)
     packet = SyncService(source, hub_model_name=lambda: "").pull(None)
     SyncService(peer, hub_model_name=lambda: "").push(None, packet)
     copied = peer.refinement_thoughts.get(thought["id"])

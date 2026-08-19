@@ -24,6 +24,16 @@ export interface Thought {
   filing_status: "filed" | "missing";
 }
 
+export interface ThoughtCompletionReceipt {
+  id: string;
+  kind: "thought_completed";
+  thought_id: string;
+  note_ref: string;
+  aggregate_revision: number;
+  lifecycle_revision: number;
+  created_at: string;
+}
+
 export type NoteThoughtStatus =
   | { ownership: "ordinary"; note: ThoughtNote; source_precondition: { content_sha256: string; last_modified: string } }
   | { ownership: "thought"; thought: Thought };
@@ -68,6 +78,28 @@ export async function saveThoughtWorking(thought: Thought, patch: Pick<ThoughtNo
   const response = await apiFetch<{ thought: Thought }>(`/api/thoughts/${encodeURIComponent(thought.id)}/working`, {
     method: "PATCH",
     json: { expected_aggregate_revision: thought.aggregate_revision, expected_working_revision: thought.working_revision, ...patch },
+  });
+  return response.thought;
+}
+
+export async function completeThought(input: { thought: Thought; request_id: string }): Promise<{ thought: Thought; receipt: ThoughtCompletionReceipt }> {
+  return apiFetch(`/api/thoughts/${encodeURIComponent(input.thought.id)}/complete`, {
+    method: "POST",
+    json: {
+      request_id: input.request_id,
+      expected_aggregate_revision: input.thought.aggregate_revision,
+      expected_lifecycle_revision: input.thought.lifecycle_revision,
+    },
+  });
+}
+
+export async function resumeThought(thought: Thought): Promise<Thought> {
+  const response = await apiFetch<{ thought: Thought }>(`/api/thoughts/${encodeURIComponent(thought.id)}/resume`, {
+    method: "POST",
+    json: {
+      expected_aggregate_revision: thought.aggregate_revision,
+      expected_lifecycle_revision: thought.lifecycle_revision,
+    },
   });
   return response.thought;
 }

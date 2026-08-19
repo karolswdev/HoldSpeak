@@ -28,8 +28,13 @@ class RefinementThoughtService:
 
     @staticmethod
     def _require_owner(principal: Principal | None) -> None:
-        if principal is None or principal.kind not in {PrincipalKind.OWNER, PrincipalKind.NODE}:
+        if principal is None or principal.kind is not PrincipalKind.OWNER:
             raise ValidationError("thought custody requires the authenticated owner", code="thought_owner_required")
+
+    @staticmethod
+    def _require_sync_node(principal: Principal | None) -> None:
+        if principal is None or principal.kind is not PrincipalKind.NODE:
+            raise ValidationError("thought aggregate install requires paired sync authority", code="thought_sync_authority_required")
 
     @staticmethod
     def _require_product_owner(principal: Principal | None) -> None:
@@ -309,10 +314,69 @@ class RefinementThoughtService:
         return self.update_working(principal, record["id"], expected_aggregate_revision=expected_aggregate_revision,
             expected_working_revision=expected_working_revision, title=fields.get("title"), body_markdown=fields.get("body_markdown"), tags=fields.get("tags"))
 
-    def complete(self, principal: Principal, thought_id: str, *, expected_aggregate_revision: int | None,
-                 expected_lifecycle_revision: int | None) -> dict[str, Any]:
+    def _complete_without_receipt(self, principal: Principal, thought_id: str, *, expected_aggregate_revision: int | None,
+                                  expected_lifecycle_revision: int | None) -> dict[str, Any]:
+        """Internal fixture/migration transition; public completion uses the receipt ledger."""
         return self._transition(principal,thought_id,expected_aggregate_revision=expected_aggregate_revision,
             expected_lifecycle_revision=expected_lifecycle_revision,command="complete",state="completed")
+
+    def complete_with_receipt(self, principal: Principal, thought_id: str, *, request_id: str,
+                              expected_aggregate_revision: int | None,
+                              expected_lifecycle_revision: int | None) -> tuple[dict[str, Any], dict[str, Any]]:
+        """Complete exactly once and keep a durable response-loss receipt."""
+        self._require_owner(principal)
+        request_id = str(request_id or "").strip()
+        if not request_id or not isinstance(expected_aggregate_revision, int) or not isinstance(expected_lifecycle_revision, int):
+            raise ValidationError("request_id and completion revisions are required", code="completion_request_required")
+        digest = hashlib.sha256(canonical_json({"thought_id": thought_id,
+            "expected_aggregate_revision": expected_aggregate_revision,
+            "expected_lifecycle_revision": expected_lifecycle_revision})).hexdigest()
+        with self._db._connection() as conn:
+            conn.execute("BEGIN IMMEDIATE")
+            prior = conn.execute("SELECT * FROM refinement_completion_receipts WHERE request_id=?", (request_id,)).fetchone()
+            row = conn.execute("SELECT * FROM refinement_thoughts WHERE id=?", (thought_id,)).fetchone()
+            if row is None: raise NotFound("thought", thought_id)
+            record = self._record(row)
+            if prior is not None:
+                if str(prior["request_sha256"]) != digest:
+                    raise ConflictError("completion request was already used for different thought state", code="completion_request_payload_mismatch")
+                if (record["state"] == "completed" and int(record["aggregate_revision"]) == int(prior["aggregate_revision"])
+                        and int(record["lifecycle_revision"]) == int(prior["lifecycle_revision"])):
+                    return self._dto_in_transaction(conn, record), self._completion_receipt(prior)
+                raise ConflictError("completion request was superseded by later work", code="completion_request_superseded",
+                    context={"current": self._dto_in_transaction(conn, record)})
+            if record["state"] == "completed":
+                # A remote completion has no local receipt: never manufacture
+                # one from the synchronized command ledger.
+                raise ConflictError("thought is already completed", code="thought_already_completed",
+                    context={"current": self._dto_in_transaction(conn, record)})
+            if record["state"] != "working" or record["aggregate_revision"] != expected_aggregate_revision or record["lifecycle_revision"] != expected_lifecycle_revision:
+                raise self._conflict(conn, record, expected_aggregate_revision, None, code="thought_revision_conflict")
+            now, next_life, next_agg = _now(), expected_lifecycle_revision + 1, expected_aggregate_revision + 1
+            cur = conn.execute("UPDATE refinement_thoughts SET state='completed',lifecycle_revision=?,aggregate_revision=?,resume_order=?,completed_at=?,updated_at=? WHERE id=? AND aggregate_revision=? AND lifecycle_revision=? AND state='working'",
+                (next_life, next_agg, RefinementThoughtRepository.next_resume_order(conn), now, now, thought_id, expected_aggregate_revision, expected_lifecycle_revision))
+            if not cur.rowcount:
+                fresh = self._record(conn.execute("SELECT * FROM refinement_thoughts WHERE id=?", (thought_id,)).fetchone())
+                raise self._conflict(conn, fresh, expected_aggregate_revision, None, code="thought_revision_conflict")
+            updated = self._record(conn.execute("SELECT * FROM refinement_thoughts WHERE id=?", (thought_id,)).fetchone())
+            life_hash = RefinementThoughtRepository.insert_lifecycle(conn, thought_id=thought_id, lifecycle_revision=next_life,
+                aggregate_revision=next_agg, prior_state="working", state="completed", command="complete", occurred_at=now)
+            work = conn.execute("SELECT content_sha256 FROM refinement_working_revisions WHERE thought_id=? AND revision=?", (thought_id, record["working_revision"])).fetchone()
+            RefinementThoughtRepository.insert_command(conn, updated, command_kind="complete", prior_working_revision=record["working_revision"],
+                prior_lifecycle_revision=expected_lifecycle_revision, prior_attachment_revision=record["attachment_revision"],
+                working_sha256=str(work["content_sha256"]), lifecycle_sha256=life_hash, accepted_at=now)
+            receipt_id = _id("rcomp")
+            conn.execute("INSERT INTO refinement_completion_receipts(receipt_id,thought_id,request_id,request_sha256,aggregate_revision,lifecycle_revision,working_note_id,created_at) VALUES(?,?,?,?,?,?,?,?)",
+                (receipt_id, thought_id, request_id, digest, next_agg, next_life, record["working_note_id"], now))
+            receipt = {"receipt_id": receipt_id, "thought_id": thought_id, "aggregate_revision": next_agg,
+                "lifecycle_revision": next_life, "working_note_id": record["working_note_id"], "created_at": now}
+            return self._dto_in_transaction(conn, updated), self._completion_receipt(receipt)
+
+    @staticmethod
+    def _completion_receipt(row: Any) -> dict[str, Any]:
+        return {"id": str(row["receipt_id"]), "kind": "thought_completed", "thought_id": str(row["thought_id"]),
+            "note_ref": f"note:{row['working_note_id']}", "aggregate_revision": int(row["aggregate_revision"]),
+            "lifecycle_revision": int(row["lifecycle_revision"]), "created_at": str(row["created_at"])}
 
     def resume(self, principal: Principal, thought_id: str, *, expected_aggregate_revision: int | None,
                expected_lifecycle_revision: int | None) -> dict[str, Any]:
@@ -360,7 +424,7 @@ class RefinementThoughtService:
 
     def install_sync_bundle(self, principal: Principal, *, value: dict[str, Any], raw_utf8: bytes) -> None:
         """Install a validated full aggregate ledger on a peer that has no row."""
-        self._require_owner(principal)
+        self._require_sync_node(principal)
         thought_id, working = str(value["id"]), dict(value["working_note"])
         note_id, now = str(working["id"]), str(value.get("last_modified") or _now())
         with self._db._connection() as conn:
@@ -379,7 +443,7 @@ class RefinementThoughtService:
 
     def apply_sync_bundle(self, principal: Principal, *, thought_id: str, value: dict[str, Any]) -> None:
         """Fast-forward a validated contiguous aggregate-command suffix."""
-        self._require_owner(principal)
+        self._require_sync_node(principal)
         with self._db._connection() as conn:
             conn.execute("BEGIN IMMEDIATE")
             row=conn.execute("SELECT * FROM refinement_thoughts WHERE id=?",(thought_id,)).fetchone()

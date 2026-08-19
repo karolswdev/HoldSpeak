@@ -1,8 +1,9 @@
 import { act, fireEvent, render, screen } from "@testing-library/react";
+import { createRef } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { ApiError } from "../../../lib/api";
 import { useDesk } from "../../store";
-import { ThoughtNoteEditor } from "./ThoughtNoteEditor";
+import { ThoughtNoteEditor, type ThoughtNoteEditorHandle } from "./ThoughtNoteEditor";
 import { saveThoughtWorking } from "../../thoughts";
 
 vi.mock("../../components/DeskEditor", () => ({
@@ -51,10 +52,47 @@ describe("ThoughtNoteEditor", () => {
     await act(async () => { first.resolve(afterA); await Promise.resolve(); await vi.advanceTimersByTimeAsync(1); });
 
     expect(saveThoughtWorking).toHaveBeenCalledTimes(2);
-    expect(saveThoughtWorking.mock.calls[1][0]).toMatchObject({ aggregate_revision: 2, working_revision: 2 });
-    expect(saveThoughtWorking.mock.calls[1][1]).toMatchObject({ title: "B" });
+    const calls = (saveThoughtWorking as unknown as { mock: { calls: unknown[][] } }).mock.calls;
+    expect(calls[1][0]).toMatchObject({ aggregate_revision: 2, working_revision: 2 });
+    expect(calls[1][1]).toMatchObject({ title: "B" });
     expect(screen.getByLabelText("Title")).toHaveValue("B");
     expect(onThought).toHaveBeenLastCalledWith(afterB);
+  });
+
+  it("fences synchronously and drains accepted A then B before Good enough can use cursors", async () => {
+    vi.useFakeTimers();
+    useDesk.setState({ refresh: vi.fn() });
+    const first = deferred<typeof base>();
+    const afterA = { ...base, aggregate_revision: 2, working_revision: 2, working_note: { ...base.working_note, title: "A" } };
+    const afterB = { ...afterA, aggregate_revision: 3, working_revision: 3, working_note: { ...afterA.working_note, title: "B" } };
+    vi.mocked(saveThoughtWorking).mockReturnValueOnce(first.promise).mockResolvedValueOnce(afterB);
+    const editor = createRef<ThoughtNoteEditorHandle>();
+    render(<ThoughtNoteEditor ref={editor} thought={base} onThought={vi.fn()} />);
+    fireEvent.change(screen.getByLabelText("Title"), { target: { value: "A" } });
+    await act(async () => { await vi.advanceTimersByTimeAsync(500); });
+    fireEvent.change(screen.getByLabelText("Title"), { target: { value: "B" } });
+    const flushed = editor.current!.flush();
+    // The synchronous fence rejects edits begun after Good enough.
+    fireEvent.change(screen.getByLabelText("Title"), { target: { value: "C" } });
+    await act(async () => { first.resolve(afterA); await Promise.resolve(); });
+    expect(saveThoughtWorking).toHaveBeenCalledTimes(2);
+    await expect(flushed).resolves.toMatchObject({ aggregate_revision: 3, working_revision: 3, working_note: { title: "B" } });
+    const calls = (saveThoughtWorking as unknown as { mock: { calls: unknown[][] } }).mock.calls;
+    expect(calls[1][0]).toMatchObject({ aggregate_revision: 2, working_revision: 2 });
+    expect(calls[1][1]).toMatchObject({ title: "B" });
+  });
+
+  it("keeps a generic save failure in the editor with Retry save and refuses completion flush", async () => {
+    vi.useFakeTimers();
+    useDesk.setState({ refresh: vi.fn() });
+    vi.mocked(saveThoughtWorking).mockRejectedValueOnce(new Error("offline"));
+    const editor = createRef<ThoughtNoteEditorHandle>();
+    render(<ThoughtNoteEditor ref={editor} thought={base} onThought={vi.fn()} />);
+    fireEvent.change(screen.getByLabelText("Title"), { target: { value: "Unsaved" } });
+    await act(async () => { await vi.advanceTimersByTimeAsync(500); });
+    expect(screen.getByRole("status")).toHaveTextContent("Retry save");
+    await expect(editor.current!.flush()).rejects.toThrow("thought save failed");
+    expect(saveThoughtWorking).toHaveBeenCalledTimes(1);
   });
 
   it("installs conflict current and never replays B queued behind A", async () => {

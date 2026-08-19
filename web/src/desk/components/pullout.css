@@ -447,3 +447,26 @@
 body:has(.desk-next .desk-pullout:not(.is-card)) .ambient-qlippy {
   right: 452px;
 }
+
+/* HS-141-06 — a narrow working Note has one unambiguous completion action. */
+.desk-next .thought-completion-verbs {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+}
+@container surface (max-width: 420px) {
+  .desk-next .surface-footer-verbs:has(.thought-completion-verbs) {
+    width: 100%;
+  }
+  .desk-next .thought-completion-verbs {
+    width: 100%;
+  }
+  .desk-next .thought-completion-secondary {
+    display: none;
+  }
+  .desk-next .thought-completion-primary {
+    flex: 1;
+    width: 100%;
+  }
+}

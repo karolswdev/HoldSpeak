@@ -73,9 +73,18 @@ def test_thought_product_reads_deny_node_principal(tmp_path, monkeypatch):
         return await call_next(request)
     node.include_router(build_primitives_router(WebContext(get_state=lambda: {})))
     client = TestClient(node)
+    assert client.post("/api/thoughts", json={"request_id": "node-create", "raw_text": "no"}).status_code == 422
+    assert client.post("/api/thoughts/adopt", json={"request_id": "node-adopt", "note_id": thought["working_note"]["id"], "expected_source_content_sha256": "x", "expected_source_last_modified": "x"}).status_code == 422
     assert client.get(f"/api/thoughts/{thought['id']}").status_code == 422
     assert client.get("/api/thoughts?limit=1").status_code == 422
     assert client.post(f"/api/thoughts/{thought['id']}/reconcile", json={"expected_aggregate_revision":1}).status_code == 422
+    # Product commands and generic owned-Note writes are owner-only. A paired
+    # sync principal may install a signed ledger, but never impersonate this UI.
+    assert client.patch(f"/api/thoughts/{thought['id']}/working", json={"expected_aggregate_revision": 1, "expected_working_revision": 1, "body_markdown": "no"}).status_code == 422
+    assert client.post(f"/api/thoughts/{thought['id']}/complete", json={"request_id": "node", "expected_aggregate_revision": 1, "expected_lifecycle_revision": 1}).status_code == 422
+    assert client.post(f"/api/thoughts/{thought['id']}/resume", json={"expected_aggregate_revision": 1, "expected_lifecycle_revision": 1}).status_code == 422
+    assert client.put(f"/api/notes/{thought['working_note']['id']}", json={"expected_aggregate_revision": 1, "expected_working_revision": 1, "body_markdown": "no"}).status_code == 422
+    assert client.request("DELETE", f"/api/notes/{thought['working_note']['id']}", json={"expected_aggregate_revision": 1, "expected_lifecycle_revision": 1}).status_code == 422
 
 
 def test_thought_list_is_paged_private_and_reconcile_requires_cursor(tmp_path, monkeypatch):
