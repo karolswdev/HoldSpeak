@@ -230,6 +230,15 @@ describe("Chair void polish (HS-135-13)", () => {
     expect(stripped).toMatch(/grid-template-columns:\s*1fr\s*1fr/);
   });
 
+  it("lets populated lanes shrink inside a 393px Chair", () => {
+    // `1fr` alone retains the widest row as its automatic minimum and made
+    // a real returned Chair widen the phone document to 464px.
+    expect(stripped).toMatch(
+      /\.chair-lanes\s*\{[^}]*grid-template-columns:\s*minmax\(0,\s*1fr\)/,
+    );
+    expect(stripped).toMatch(/\.chair-lane\s*\{[^}]*min-width:\s*0/);
+  });
+
   it("chair.css fills the working area height", () => {
     expect(stripped).toMatch(
       /\.chair\s*\{[^}]*min-height:\s*calc\(100vh\s*-\s*var\(--desk-snap-top\)/,

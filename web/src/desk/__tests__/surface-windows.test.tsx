@@ -2,13 +2,21 @@
 // window persists the open set (its own localStorage slot, `SurfaceWindows`
 // is the sole writer), and a fresh module load (the reload simulation)
 // rehydrates from it.
-import { beforeEach, describe, expect, it, vi } from "vitest";
-import { useSurfaceWindows } from "../components/SurfaceWindows";
+import { act, render, waitFor } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { __resetSurfaces, openSurface } from "../shell";
+import {
+  SurfaceWindows,
+  useSurfaceWindows,
+} from "../components/SurfaceWindows";
 
 beforeEach(() => {
   localStorage.clear();
   useSurfaceWindows.setState({ open: {} });
+  __resetSurfaces();
 });
+
+afterEach(__resetSurfaces);
 
 describe("surface window open set persists across reload", () => {
   it("opening writes the key+scope to hs.desk.open-windows", () => {
@@ -43,5 +51,25 @@ describe("surface window open set persists across reload", () => {
     vi.resetModules();
     const fresh = await import("../components/SurfaceWindows");
     expect(fresh.useSurfaceWindows.getState().open).toEqual({});
+  });
+
+  it("arrival clears stale windows and registers only explicit Setup recovery", async () => {
+    useSurfaceWindows.setState({ open: { "configure-settings": null } });
+    render(<SurfaceWindows firstValueRecoveryOnly />);
+
+    await waitFor(() =>
+      expect(useSurfaceWindows.getState().open).toEqual({}),
+    );
+    expect(
+      JSON.parse(localStorage.getItem("hs.desk.open-windows") || "null"),
+    ).toEqual({});
+    expect(openSurface("configure-settings")).toBe(false);
+
+    act(() => {
+      expect(openSurface("configure-setup")).toBe(true);
+    });
+    expect(useSurfaceWindows.getState().open).toEqual({
+      "configure-setup": null,
+    });
   });
 });

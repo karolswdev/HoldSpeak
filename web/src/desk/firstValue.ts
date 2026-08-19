@@ -14,6 +14,76 @@ export type FirstValueEvent =
 
 type Fetcher = typeof apiFetch;
 
+const KEEP_NOTE_ID_KEY = "hs.first-value.keep-note-id";
+const PENDING_NOTE_OPEN_KEY = "hs.first-value.pending-note-open";
+let memoryKeepNoteId = "";
+let memoryPendingNoteRef = "";
+
+function local(): Storage | null {
+  try {
+    return typeof window === "undefined" ? null : window.localStorage;
+  } catch {
+    return null;
+  }
+}
+
+function session(): Storage | null {
+  try {
+    return typeof window === "undefined" ? null : window.sessionStorage;
+  } catch {
+    return null;
+  }
+}
+
+/** One note claim survives an ambiguous response and a local relaunch. */
+export function firstValueKeepNoteId(): string {
+  const stored = local()?.getItem(KEEP_NOTE_ID_KEY) || memoryKeepNoteId;
+  if (stored) return stored;
+  const entropy =
+    typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
+      ? crypto.randomUUID().replaceAll("-", "")
+      : Math.random().toString(36).slice(2);
+  const noteId = `note_${entropy}`;
+  memoryKeepNoteId = noteId;
+  try {
+    local()?.setItem(KEEP_NOTE_ID_KEY, noteId);
+  } catch {
+    // The in-memory claim still protects retries in this live page.
+  }
+  return noteId;
+}
+
+export function clearFirstValueKeepNoteId(): void {
+  memoryKeepNoteId = "";
+  try {
+    local()?.removeItem(KEEP_NOTE_ID_KEY);
+  } catch {
+    // Nothing else is needed once the confirmed note has been staged.
+  }
+}
+
+/** Queue the normal-Desk handoff without leaking a pullout into arrival. */
+export function stageFirstValueNoteOpen(ref: string): void {
+  memoryPendingNoteRef = ref;
+  try {
+    session()?.setItem(PENDING_NOTE_OPEN_KEY, ref);
+  } catch {
+    // Memory keeps the current page's handoff intact.
+  }
+}
+
+/** Consume the one queued open only after the normal Desk is revealed. */
+export function takeFirstValueNoteOpen(): string | null {
+  const ref = session()?.getItem(PENDING_NOTE_OPEN_KEY) || memoryPendingNoteRef;
+  memoryPendingNoteRef = "";
+  try {
+    session()?.removeItem(PENDING_NOTE_OPEN_KEY);
+  } catch {
+    // The in-memory queue has already been consumed.
+  }
+  return ref || null;
+}
+
 /** Content-free journey instrumentation. Phrase text is not accepted anywhere. */
 export class FirstValueTracker {
   private attemptId = "";

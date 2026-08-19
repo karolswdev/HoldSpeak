@@ -10,6 +10,7 @@ import { Chair } from "./Chair";
 import { LANE_ORDER, type LaneId } from "./laneContract";
 import { LANE_COMPONENTS } from "./lanes";
 import { CaptureHero } from "./hero";
+import { FirstWords } from "../components/FirstWords";
 import { useDesk } from "../store";
 import { openSurface } from "../shell";
 
@@ -33,9 +34,21 @@ function buildLanes(
   return lanes;
 }
 
-export function ChairHome() {
+export function ChairHome({ arrivalRequired = false }: { arrivalRequired?: boolean }) {
   const onOpenInWindow = useCallback(chairOpenInWindow, []);
   const lanes = buildLanes(onOpenInWindow);
+
+  if (arrivalRequired) {
+    return (
+      <main className="chair chair-first-value" data-testid="chair-first-value">
+        <FirstWords
+          embedded
+          onDismiss={() => useDesk.getState().refresh()}
+        />
+      </main>
+    );
+  }
+
   return (
     <Chair
       hero={<CaptureHero onAskAI={() => useDesk.getState().openAsk()} />}

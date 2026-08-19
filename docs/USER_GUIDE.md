@@ -1,7 +1,14 @@
 # HoldSpeak User Guide
 
-HoldSpeak is one local copilot with two modes, and this guide is the
-day-to-day map of both:
+Start with one useful loop: open HoldSpeak, **Dictate one sentence**, edit it,
+then **Copy** or **Keep as Note**. The first completion furnishes the Desk
+automatically with Inbox, Personal, Work, Meetings, Decisions, and Reference;
+a Start here note; and editable prompts in **Everyday context**. Everyday
+context is used only when you explicitly attach it. No extra setup is required
+for this first value.
+
+HoldSpeak is one local copilot with two modes, and this guide is the day-to-day
+map of both:
 
 - **Dictate:** hold a hotkey, speak, and insert useful text into the active app. With the dictation pipeline on, HoldSpeak uses project context and recent Claude/Codex state to rewrite rough speech into better prompts, and the dictation journal records every run so corrections teach it.
 - **Meet:** record conversations (or import recordings and transcripts), transcribe them, and extract topics, actions, summaries, and reviewable artifacts, with meeting aftercare showing what is still open when it ends.
@@ -10,11 +17,11 @@ HoldSpeak is private by default. Audio capture, transcription, project context, 
 
 ## Start Here
 
-Use these guides depending on what you are setting up:
+Use these guides when you are ready for more than the first sentence:
 
 | Goal | Guide |
 | --- | --- |
-| Install HoldSpeak and get basic voice typing working | [Getting Started](GETTING_STARTED.md) |
+| Install HoldSpeak and take the first-sentence loop | [Getting Started](GETTING_STARTED.md) |
 | Configure the project-aware dictation pipeline | [Dictation Pipeline Setup](DICTATION_PIPELINE_GUIDE.md) |
 | Record and review meetings | [Meeting Mode Guide](MEETING_MODE_GUIDE.md) |
 | Configure local/LAN dictation models | `/docs/dictation-runtime` in the local web UI |
@@ -53,7 +60,7 @@ Install from this checkout:
 uv pip install -e .
 ```
 
-Run diagnostics:
+If first capture needs repair, run diagnostics:
 
 ```bash
 holdspeak doctor
@@ -65,7 +72,9 @@ Start the local web runtime:
 holdspeak
 ```
 
-By default, the web server binds to loopback only (`127.0.0.1`). The browser UI is the primary cockpit for meetings, history, dictation setup, runtime setup, and project context.
+By default, the web server binds to loopback only (`127.0.0.1`). The browser
+opens on the first-sentence surface before the broader Desk, meeting, and
+advanced dictation controls.
 
 ## Voice Typing
 
@@ -909,7 +918,7 @@ Common issues:
 | Claude/Codex context missing | Hooks not installed or not firing | Open `/dictation` -> Hooks |
 | Captured Coder session question looks stale | Last prompt did not clear it | Use Clear on the Coder session banner |
 
-## Recommended First Setup
+## Optional Coding-Copilot Setup
 
 1. Run `holdspeak doctor`.
 2. Start `holdspeak`.

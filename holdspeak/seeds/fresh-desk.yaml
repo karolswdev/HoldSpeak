@@ -1,61 +1,81 @@
-# HS-119-03 — the toolkit seed.
-#
-# Honest at zero, ready to configure. Five inference profiles (three
-# local tiers + two cloud placeholders), one starter workbench wired
-# to the local resolver, and two empty zones. No demo content, no
-# prefilled notes, no seeded flattery. Article VI.
-#
-# Deterministic `hs-seed-*` ids are the idempotency contract:
-# re-applying upserts in place — never a duplicate desk.
-
-profiles:
-  - id: hs-seed-local-4b-resolver
-    name: "Local 4B (resolver)"
-    kind: openAICompatible
-    base_url: ""
-    model: ""
-    context_limit: 8192
-    requires_key: false
-
-  - id: hs-seed-local-small
-    name: "Local small"
-    kind: openAICompatible
-    base_url: ""
-    model: ""
-    context_limit: 32768
-    requires_key: false
-
-  - id: hs-seed-local-medium
-    name: "Local medium"
-    kind: openAICompatible
-    base_url: ""
-    model: ""
-    context_limit: 131072
-    requires_key: false
-
-  - id: hs-seed-cloud-openai
-    name: "OpenAI"
-    kind: openAICompatible
-    base_url: "https://api.openai.com/v1"
-    model: ""
-    context_limit: 128000
-    requires_key: true
-
-  - id: hs-seed-cloud-anthropic
-    name: "Anthropic"
-    kind: openAICompatible
-    base_url: "https://api.anthropic.com/v1"
-    model: ""
-    context_limit: 200000
-    requires_key: true
-
-workbenches:
-  - id: hs-seed-workbench
-    name: Workbench
-    resolver_profile_id: hs-seed-local-4b-resolver
+# HS-140-04 — a furnished desk without invented personal data or AI readiness.
+# Ordinary seed creates only ids never seen before; Reset to seed is the one
+# explicit force-restore path for this packaged text and organization.
 
 directories:
   - id: hs-seed-inbox
     name: Inbox
+    member_ids: [hs-seed-start-here]
+  - id: hs-seed-personal
+    name: Personal
+    member_ids: [hs-seed-about-me, hs-seed-how-i-like-help]
   - id: hs-seed-work
     name: Work
+    member_ids: [hs-seed-current-priorities]
+  - id: hs-seed-meetings
+    name: Meetings
+    member_ids: [hs-seed-meeting-preferences]
+  - id: hs-seed-decisions
+    name: Decisions
+  - id: hs-seed-reference
+    name: Reference
+    member_ids: [hs-seed-people-vocabulary]
+
+notes:
+  - id: hs-seed-start-here
+    title: Start here
+    body_markdown: |
+      These drawers and notes are yours to edit, rename, move, or delete.
+
+      Everyday context is never automatically included in an AI request. Attach it in Ask, or select it for an Agent, only when you want it used.
+
+      Normal Desk sync continues to follow your existing device-pairing choices.
+  - id: hs-seed-about-me
+    title: About me
+    body_markdown: |
+      What would be useful to share when you explicitly attach this context?
+
+      - Name or form of address: [example: ]
+      - Work or life context: [example: ]
+  - id: hs-seed-current-priorities
+    title: Current priorities
+    body_markdown: |
+      What deserves attention right now?
+
+      - Priority: [example: ]
+      - Why it matters: [example: ]
+      - Next step: [example: ]
+  - id: hs-seed-how-i-like-help
+    title: How I like help
+    body_markdown: |
+      How should help be shaped when you explicitly attach this context?
+
+      - Tone: [example: direct, warm, concise]
+      - Useful format: [example: bullets, draft, checklist]
+      - Avoid: [example: ]
+  - id: hs-seed-people-vocabulary
+    title: People & vocabulary
+    body_markdown: |
+      Which names, terms, or abbreviations would be useful to explain?
+
+      - Name or team: [example: ]
+      - Term or abbreviation: [example: ]
+      - Meaning: [example: ]
+  - id: hs-seed-meeting-preferences
+    title: Meeting preferences
+    body_markdown: |
+      What would make a meeting record useful?
+
+      - Capture: [example: decisions, actions, open questions]
+      - Follow-up format: [example: ]
+      - People to include: [example: ]
+
+kbs:
+  - id: hs-seed-everyday-context
+    name: Everyday context
+    member_ids:
+      - hs-seed-about-me
+      - hs-seed-current-priorities
+      - hs-seed-how-i-like-help
+      - hs-seed-people-vocabulary
+      - hs-seed-meeting-preferences

@@ -2,11 +2,26 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { FirstWords } from "./FirstWords";
+import {
+  clearFirstValueKeepNoteId,
+  takeFirstValueNoteOpen,
+} from "../firstValue";
+import { readDurableDraft } from "../../lib/durableDraft";
 
 const mocks = vi.hoisted(() => ({
   apiFetch: vi.fn(),
   retryPendingTranscription: vi.fn(),
   startStreamSession: vi.fn(),
+  refresh: vi.fn(),
+  loadPendingVoice: vi.fn(),
+  openSurfaceOr: vi.fn(),
+  speakSupported: true,
+  streamSupported: true,
+}));
+
+vi.mock("../store", () => ({
+  useDesk: (selector: (state: { refresh: typeof mocks.refresh }) => unknown) =>
+    selector({ refresh: mocks.refresh }),
 }));
 
 vi.mock("../../lib/api", () => {
@@ -27,7 +42,7 @@ vi.mock("../../lib/api", () => {
 });
 
 vi.mock("../../lib/speakToFill", () => ({
-  speakToFillSupported: () => true,
+  speakToFillSupported: () => mocks.speakSupported,
   startCapture: vi.fn(),
   stopAndTranscribe: vi.fn(),
   cancelCapture: vi.fn(),
@@ -35,23 +50,42 @@ vi.mock("../../lib/speakToFill", () => ({
 }));
 
 vi.mock("../../lib/micStreamSession", () => ({
-  micStreamSupported: () => true,
+  micStreamSupported: () => mocks.streamSupported,
   startStreamSession: mocks.startStreamSession,
   subscribeCaptureLevel: () => () => undefined,
+}));
+
+vi.mock("../../lib/pendingVoice", () => ({
+  loadPendingVoice: mocks.loadPendingVoice,
+}));
+
+vi.mock("../shell", () => ({
+  openSurfaceOr: mocks.openSurfaceOr,
 }));
 
 describe("FirstWords", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     localStorage.clear();
+    sessionStorage.clear();
+    clearFirstValueKeepNoteId();
+    takeFirstValueNoteOpen();
     mocks.apiFetch.mockImplementation((path: string) => {
       if (path.endsWith("/start"))
         return Promise.resolve({ attempt: { id: "a1" } });
       return Promise.resolve({ success: true });
     });
     const stopFn = vi.fn().mockResolvedValue("A sentence that stays editable.");
-    mocks.startStreamSession.mockResolvedValue({ stop: stopFn, cancel: vi.fn() });
+    mocks.startStreamSession.mockResolvedValue({
+      stop: stopFn,
+      cancel: vi.fn(),
+      retained: vi.fn().mockResolvedValue(false),
+    });
     mocks.retryPendingTranscription.mockResolvedValue(null);
+    mocks.loadPendingVoice.mockResolvedValue(null);
+    mocks.speakSupported = true;
+    mocks.streamSupported = true;
+    mocks.refresh.mockResolvedValue(undefined);
   });
 
   it("captures one local step, retains editable text, and records no phrase", async () => {
@@ -74,24 +108,25 @@ describe("FirstWords", () => {
 
     await waitFor(() =>
       expect(mocks.apiFetch).toHaveBeenCalledWith(
-        "/api/setup/first-value/a1/finish",
+        "/api/setup/first-value/a1/event",
         expect.objectContaining({
           json: {
-            outcome: "success",
-            destination: "this_machine",
+            event_id: "a1:3:transcript_received",
+            kind: "transcript_received",
           },
         }),
       ),
     );
-    const finish = mocks.apiFetch.mock.calls.find(([path]) =>
-      String(path).includes("/finish"),
+    const telemetry = mocks.apiFetch.mock.calls.filter(([path]) =>
+      String(path).includes("/first-value/"),
     );
-    expect(JSON.stringify(finish?.[1])).not.toContain(
+    expect(JSON.stringify(telemetry)).not.toContain(
       "A sentence that stays editable",
     );
+    expect(mocks.apiFetch.mock.calls.some(([path]) => String(path).includes("/finish"))).toBe(false);
   });
 
-  it("keeps recovery actions visible after permission denial", async () => {
+  it("names browser or OS microphone repair and offers one Retry after permission denial", async () => {
     mocks.startStreamSession.mockRejectedValue(
       new DOMException("denied", "NotAllowedError"),
     );
@@ -104,16 +139,201 @@ describe("FirstWords", () => {
       screen.getByRole("button", { name: "Click to dictate" }),
     );
     expect(
-      await screen.findByText(/Microphone access is off/),
+      await screen.findByText(/Microphone access is blocked/),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("button", {
-        name: "Dictation unavailable until setup is fixed",
-      }),
-    ).toBeDisabled();
+      screen.getByRole("button", { name: "Click to retry dictation" }),
+    ).toBeEnabled();
     expect(screen.getByRole("button", { name: "Copy" })).toBeDisabled();
     expect(screen.getByRole("button", { name: "Keep as Note" })).toBeDisabled();
+    expect(screen.queryByRole("button", { name: "Setup" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Try again" })).not.toBeInTheDocument();
+  });
+
+  it("offers the one honest Setup action when local transcription is unavailable", async () => {
+    let streamEvent!: (event: { type: "error"; error: string; failure_category: string }) => void;
+    mocks.startStreamSession.mockImplementation(async (onEvent) => {
+      streamEvent = onEvent;
+      return { stop: vi.fn(), cancel: vi.fn(), retained: vi.fn().mockResolvedValue(false) };
+    });
+    render(
+      <MemoryRouter>
+        <FirstWords />
+      </MemoryRouter>,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Click to dictate" }));
+    await waitFor(() => expect(streamEvent).toBeTypeOf("function"));
+    streamEvent({
+      type: "error",
+      error: "Local transcription unavailable.",
+      failure_category: "transcription_unavailable",
+    });
+
+    expect(await screen.findByText(/Local transcription is unavailable/)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Setup" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Voice typing unavailable" })).toBeDisabled();
+    expect(screen.queryByRole("button", { name: "Try again" })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Setup" }));
+    expect(mocks.openSurfaceOr).toHaveBeenCalledWith("configure-setup", "/setup");
+  });
+
+  it("keeps typed fallback and one Retry for no speech and a timeout", async () => {
+    const noSpeech = vi.fn().mockResolvedValue("");
+    mocks.startStreamSession.mockResolvedValue({
+      stop: noSpeech,
+      cancel: vi.fn(),
+      retained: vi.fn().mockResolvedValue(false),
+    });
+    const view = render(
+      <MemoryRouter>
+        <FirstWords />
+      </MemoryRouter>,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Click to dictate" }));
+    await screen.findByText("Listening… click to stop");
+    fireEvent.click(screen.getByRole("button", { name: "Stop listening" }));
+    expect(await screen.findByText(/No speech was detected/)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Click to retry dictation" })).toBeEnabled();
+    expect(screen.queryByRole("button", { name: "Try again" })).not.toBeInTheDocument();
+    fireEvent.change(screen.getByRole("textbox", { name: "Your dictated text" }), {
+      target: { value: "Typed instead." },
+    });
+    expect(screen.getByDisplayValue("Typed instead.")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Save draft & continue" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Save draft & get help" })).toBeEnabled();
+
+    view.unmount();
+    const timeout = vi.fn().mockRejectedValue(new DOMException("slow", "TimeoutError"));
+    mocks.startStreamSession.mockResolvedValue({
+      stop: timeout,
+      cancel: vi.fn(),
+      retained: vi.fn().mockResolvedValue(false),
+    });
+    render(
+      <MemoryRouter>
+        <FirstWords />
+      </MemoryRouter>,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Click to dictate" }));
+    await screen.findByText("Listening… click to stop");
+    fireEvent.click(screen.getByRole("button", { name: "Stop listening" }));
+    expect(await screen.findByText(/Transcription timed out/)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Click to retry dictation" })).toBeEnabled();
+  });
+
+  it("retries retained stream audio after reload without recording again", async () => {
+    let streamEvent!: (event: { type: "error"; error: string; failure_category: string }) => void;
+    let finishRetention!: (retained: boolean) => void;
+    const retention = new Promise<boolean>((resolve) => {
+      finishRetention = resolve;
+    });
+    const cancel = vi.fn();
+    mocks.startStreamSession.mockImplementation(async (onEvent) => {
+      streamEvent = onEvent;
+      return {
+        stop: vi.fn().mockResolvedValue(""),
+        cancel,
+        retained: vi.fn().mockReturnValue(retention),
+      };
+    });
+    const first = render(
+      <MemoryRouter>
+        <FirstWords />
+      </MemoryRouter>,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Click to dictate" }));
+    await waitFor(() => expect(streamEvent).toBeTypeOf("function"));
+    streamEvent({
+      type: "error",
+      error: "Transcription failed.",
+      failure_category: "transcription_failed",
+    });
+    const savingAudio = await screen.findByRole("button", {
+      name: "Saving audio for Retry",
+    });
+    expect(savingAudio).toBeDisabled();
+    finishRetention(true);
+    expect(await screen.findByText(/Captured audio is retained/)).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Click to retry dictation" }),
+    ).toBeEnabled();
+    expect(cancel).toHaveBeenCalledOnce();
+    expect(mocks.startStreamSession).toHaveBeenCalledWith(
+      expect.any(Function),
+      { retainScope: "first-words" },
+    );
+
+    first.unmount();
+    mocks.retryPendingTranscription.mockResolvedValue("Recovered retained words.");
+    render(
+      <MemoryRouter>
+        <FirstWords />
+      </MemoryRouter>,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Click to dictate" }));
+    expect(await screen.findByDisplayValue("Recovered retained words.")).toBeInTheDocument();
+    expect(mocks.retryPendingTranscription).toHaveBeenLastCalledWith("first-words");
+    expect(mocks.startStreamSession).toHaveBeenCalledTimes(1);
+  });
+
+  it("retries recovered audio even when this browser cannot start a fresh capture", async () => {
+    mocks.speakSupported = false;
+    mocks.streamSupported = false;
+    mocks.loadPendingVoice.mockResolvedValue(new ArrayBuffer(8));
+    mocks.retryPendingTranscription.mockResolvedValue("Recovered without recording.");
+    render(
+      <MemoryRouter>
+        <FirstWords />
+      </MemoryRouter>,
+    );
+
+    expect(await screen.findByText(/Captured audio was recovered/)).toBeInTheDocument();
+    expect(
+      screen.queryByText(/Microphone capture is unavailable/),
+    ).not.toBeInTheDocument();
+    const retry = screen.getByRole("button", { name: "Click to retry dictation" });
+    expect(retry).toBeEnabled();
+    fireEvent.click(retry);
+    expect(await screen.findByDisplayValue("Recovered without recording.")).toBeInTheDocument();
+    expect(
+      screen.queryByText(/Microphone capture is unavailable/),
+    ).not.toBeInTheDocument();
+    expect(mocks.retryPendingTranscription).toHaveBeenCalledWith("first-words");
+    expect(mocks.startStreamSession).not.toHaveBeenCalled();
+  });
+
+  it("does not let late recovered-audio lookup replace a new capture", async () => {
+    let resolveRecovered!: (audio: ArrayBuffer | null) => void;
+    mocks.loadPendingVoice.mockReturnValue(
+      new Promise<ArrayBuffer | null>((resolve) => {
+        resolveRecovered = resolve;
+      }),
+    );
+    render(
+      <MemoryRouter>
+        <FirstWords />
+      </MemoryRouter>,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Click to dictate" }));
+    await screen.findByText("Listening… click to stop");
+    resolveRecovered(new ArrayBuffer(8));
+    await Promise.resolve();
+
+    expect(screen.getByText("Listening… click to stop")).toBeInTheDocument();
+    expect(screen.queryByText(/Captured audio was recovered/)).not.toBeInTheDocument();
+  });
+
+  it("keeps idle first value free of setup administration", () => {
+    render(
+      <MemoryRouter>
+        <FirstWords />
+      </MemoryRouter>,
+    );
+
+    expect(screen.queryByRole("button", { name: "Setup" })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Configure rewrite destination" }),
+    ).not.toBeInTheDocument();
   });
 
   it("transcribes one capture exactly once when toggle is repeated", async () => {
@@ -132,10 +352,14 @@ describe("FirstWords", () => {
 
     await screen.findByDisplayValue("A sentence that stays editable.");
     expect(stopFn).toHaveBeenCalledOnce();
+    expect(
+      screen.queryByRole("button", { name: "Configure rewrite destination" }),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Setup" })).not.toBeInTheDocument();
   });
 
   it("persists Continue later independently of first success", async () => {
-    const dismissed = vi.fn();
+    const dismissed = vi.fn(() => mocks.refresh());
     render(
       <MemoryRouter>
         <FirstWords onDismiss={dismissed} />
@@ -147,6 +371,105 @@ describe("FirstWords", () => {
       method: "PUT",
       json: { disposition: "dismissed" },
     });
+    const handoffPaths = mocks.apiFetch.mock.calls.map(([path]) => String(path));
+    expect(handoffPaths.indexOf("/api/desk/seed")).toBeLessThan(
+      handoffPaths.indexOf("/api/setup/onboarding"),
+    );
+    expect(mocks.refresh).toHaveBeenCalledTimes(2);
+  });
+
+  it("puts transcript Continue later in one staged note and retries a lost disposition without replaying it", async () => {
+    const notePosts: Array<Record<string, unknown>> = [];
+    let dispositionAttempts = 0;
+    mocks.apiFetch.mockImplementation((path: string, init?: { json?: Record<string, unknown> }) => {
+      if (path.endsWith("/start")) return Promise.resolve({ attempt: { id: "a1" } });
+      if (path === "/api/notes") {
+        notePosts.push(init?.json || {});
+        return Promise.resolve({ note: { id: notePosts[0].id } });
+      }
+      // Receipt reporting must not trap a furnished handoff if telemetry is
+      // temporarily unavailable.
+      if (path.endsWith("/finish")) return Promise.reject(new Error("receipt unavailable"));
+      if (path === "/api/setup/onboarding") {
+        dispositionAttempts += 1;
+        return dispositionAttempts === 1
+          ? Promise.reject(new Error("response lost"))
+          : Promise.resolve({ success: true });
+      }
+      return Promise.resolve({ success: true });
+    });
+    const dismissed = vi.fn(() => mocks.refresh());
+    render(<MemoryRouter><FirstWords onDismiss={dismissed} /></MemoryRouter>);
+
+    fireEvent.click(screen.getByRole("button", { name: "Click to dictate" }));
+    await screen.findByText("Listening… click to stop");
+    fireEvent.click(screen.getByRole("button", { name: "Stop listening" }));
+    await screen.findByDisplayValue("A sentence that stays editable.");
+    fireEvent.click(screen.getByRole("button", { name: "Save draft & continue" }));
+
+    expect(await screen.findByRole("button", { name: "Retry finishing your Desk" })).toBeEnabled();
+    expect(notePosts).toHaveLength(1);
+    expect(notePosts[0]).toMatchObject({
+      title: "First dictation",
+      body_markdown: "A sentence that stays editable.",
+      tags: ["dictation"],
+    });
+    expect(notePosts[0].id).toMatch(/^note_/);
+    expect(sessionStorage.getItem("hs.first-value.pending-note-open")).toBe(
+      `note:${notePosts[0].id}`,
+    );
+    expect(dismissed).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole("button", { name: "Retry finishing your Desk" }));
+    await waitFor(() => expect(dismissed).toHaveBeenCalledOnce());
+
+    expect(notePosts).toHaveLength(1);
+    expect(dispositionAttempts).toBe(2);
+    const paths = mocks.apiFetch.mock.calls.map(([path]) => String(path));
+    expect(paths.indexOf("/api/notes")).toBeLessThan(paths.indexOf("/api/desk/seed"));
+    expect(paths.indexOf("/api/desk/seed")).toBeLessThan(
+      paths.findIndex((path) => path.endsWith("/finish")),
+    );
+    expect(paths.findIndex((path) => path.endsWith("/finish"))).toBeLessThan(
+      paths.indexOf("/api/setup/onboarding"),
+    );
+    expect(mocks.refresh).toHaveBeenCalledTimes(3);
+    await waitFor(() => expect(readDurableDraft("first-words")).toBeNull());
+    expect(localStorage.getItem("hs.first-value.keep-note-id")).toBeNull();
+  });
+
+  it("labels unkept text custody and locks all competing actions for a running handoff", async () => {
+    let releaseSeed!: () => void;
+    mocks.apiFetch.mockImplementation((path: string) => {
+      if (path === "/api/desk/seed") {
+        return new Promise((resolve) => {
+          releaseSeed = () => resolve({ success: true });
+        });
+      }
+      return Promise.resolve({ success: true });
+    });
+    render(<MemoryRouter><FirstWords /></MemoryRouter>);
+    fireEvent.change(screen.getByRole("textbox", { name: "Your dictated text" }), {
+      target: { value: "Keep custody explicit." },
+    });
+    const continueButton = screen.getByRole("button", { name: "Save draft & continue" });
+    expect(continueButton).toBeEnabled();
+    fireEvent.click(continueButton);
+    await waitFor(() =>
+      expect(mocks.apiFetch).toHaveBeenCalledWith("/api/desk/seed", { method: "POST" }),
+    );
+
+    expect(screen.getByRole("button", { name: "Click to dictate" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Copy" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Keep as Note" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Continue later" })).toBeDisabled();
+    expect(screen.queryByRole("button", { name: "Retry finishing your Desk" })).not.toBeInTheDocument();
+
+    releaseSeed();
+    await waitFor(() => expect(mocks.apiFetch).toHaveBeenCalledWith(
+      "/api/setup/onboarding",
+      expect.anything(),
+    ));
   });
 
   it("recovers an editable local draft after remount without sending it to metrics", async () => {
@@ -172,5 +495,107 @@ describe("FirstWords", () => {
     expect(JSON.stringify(mocks.apiFetch.mock.calls)).not.toContain(
       "A draft retained through relaunch",
     );
+  });
+
+  it("copies the edited value and names a clipboard refusal", async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.assign(navigator, { clipboard: { writeText } });
+    render(
+      <MemoryRouter>
+        <FirstWords />
+      </MemoryRouter>,
+    );
+    const editor = screen.getByRole("textbox", { name: "Your dictated text" });
+    fireEvent.change(editor, { target: { value: "Edited copy value." } });
+    fireEvent.click(screen.getByRole("button", { name: "Copy" }));
+    await waitFor(() => expect(writeText).toHaveBeenCalledWith("Edited copy value."));
+    expect(screen.getByRole("status")).toHaveTextContent("Copied to your clipboard.");
+
+    writeText.mockRejectedValueOnce(new Error("blocked"));
+    fireEvent.click(screen.getByRole("button", { name: "Copy" }));
+    expect(await screen.findByRole("status")).toHaveTextContent(
+      "Clipboard access was blocked. Select your text and copy it manually.",
+    );
+  });
+
+  it("finishes a transcript-backed Copy only after seed and the final Desk refresh", async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.assign(navigator, { clipboard: { writeText } });
+    render(<MemoryRouter><FirstWords /></MemoryRouter>);
+    fireEvent.click(screen.getByRole("button", { name: "Click to dictate" }));
+    await screen.findByText("Listening… click to stop");
+    fireEvent.click(screen.getByRole("button", { name: "Stop listening" }));
+    await screen.findByDisplayValue("A sentence that stays editable.");
+    fireEvent.click(screen.getByRole("button", { name: "Copy" }));
+    await waitFor(() => expect(mocks.apiFetch).toHaveBeenCalledWith("/api/setup/onboarding", expect.anything()));
+    const paths = mocks.apiFetch.mock.calls.map(([path]) => String(path));
+    expect(paths.indexOf("/api/desk/seed")).toBeLessThan(paths.findIndex((path) => path.endsWith("/finish")));
+    expect(paths.findIndex((path) => path.endsWith("/finish"))).toBeLessThan(paths.indexOf("/api/setup/onboarding"));
+    expect(mocks.refresh).toHaveBeenCalledTimes(2);
+  });
+
+  it("retries typed Keep with one client note id without forging an onboarding exit", async () => {
+    const notePosts: Array<Record<string, unknown>> = [];
+    mocks.apiFetch.mockImplementation((path: string, init?: { json?: Record<string, unknown> }) => {
+      if (path === "/api/notes") {
+        notePosts.push(init?.json || {});
+        if (notePosts.length === 1) return Promise.reject(new Error("Response lost"));
+        return Promise.resolve({ note: { id: notePosts[1].id } });
+      }
+      return Promise.resolve({ success: true });
+    });
+    render(
+      <MemoryRouter>
+        <FirstWords />
+      </MemoryRouter>,
+    );
+    fireEvent.change(screen.getByRole("textbox", { name: "Your dictated text" }), {
+      target: { value: "Keep this edited value." },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Keep as Note" }));
+    expect(await screen.findByRole("status")).toHaveTextContent("Could not keep as a note");
+    fireEvent.click(screen.getByRole("button", { name: "Keep as Note" }));
+    await waitFor(() => expect(notePosts).toHaveLength(2));
+    expect(notePosts).toHaveLength(2);
+    expect(notePosts[0].id).toMatch(/^note_/);
+    expect(notePosts[1].id).toBe(notePosts[0].id);
+    expect(notePosts[1].body_markdown).toBe("Keep this edited value.");
+    expect(mocks.refresh).not.toHaveBeenCalled();
+    expect(screen.getByRole("status")).toHaveTextContent("Continue later when you are ready for your Desk.");
+  });
+
+  it("keeps the durable draft and stable id when refresh fails after a confirmed write", async () => {
+    const notePosts: Array<Record<string, unknown>> = [];
+    mocks.apiFetch.mockImplementation((path: string, init?: { json?: Record<string, unknown> }) => {
+      if (path === "/api/notes") {
+        notePosts.push(init?.json || {});
+        return Promise.resolve({ note: { id: notePosts.at(-1)?.id } });
+      }
+      return Promise.resolve({ success: true });
+    });
+    mocks.refresh
+      .mockRejectedValueOnce(new Error("Desk refresh failed"))
+      .mockResolvedValueOnce(undefined);
+    render(
+      <MemoryRouter>
+        <FirstWords />
+      </MemoryRouter>,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Click to dictate" }));
+    await screen.findByText("Listening… click to stop");
+    fireEvent.click(screen.getByRole("button", { name: "Stop listening" }));
+    await screen.findByDisplayValue("A sentence that stays editable.");
+    fireEvent.change(screen.getByRole("textbox", { name: "Your dictated text" }), {
+      target: { value: "Keep this through refresh failure." },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Keep as Note" }));
+    expect(await screen.findByRole("status")).toHaveTextContent(
+      "Your sentence and Desk changes are still here. Desk refresh failed Retry finishing your Desk.",
+    );
+    expect(readDurableDraft("first-words")?.text).toBe("Keep this through refresh failure.");
+    expect(localStorage.getItem("hs.first-value.keep-note-id")).toBe(notePosts[0].id);
+    fireEvent.click(screen.getByRole("button", { name: "Retry finishing your Desk" }));
+    await waitFor(() => expect(mocks.refresh).toHaveBeenCalledTimes(3));
+    expect(notePosts.map((post) => post.id)).toEqual([notePosts[0].id]);
   });
 });

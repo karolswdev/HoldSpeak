@@ -1,7 +1,7 @@
-"""HS-119-03 — the toolkit seed + reset-to-seed.
+"""HS-140-04 — the furnished desk seed + reset-to-seed.
 
 The packaged fresh-desk manifest applies through the repositories,
-idempotent by deterministic id; reset TOMBSTONES every desk primitive
+preservation-first by deterministic id; reset TOMBSTONES every desk primitive
 (rows retained, `deleted=1` — sync would resurrect a hard purge) and
 re-applies the seed. Meetings and the dictation journal survive by
 design. Routes are exercised over a real tmp-path Database, the same
@@ -17,26 +17,32 @@ from fastapi.testclient import TestClient
 
 import holdspeak.db as hsdb
 import holdspeak.db.seed as seed_module
-from holdspeak.config import Config
 from holdspeak.db import Database, reset_database
 from holdspeak.meeting_session import MeetingState
 from holdspeak.db.seed import DEFAULT_SEED, apply_seed, load_manifest, reset_desk
+from holdspeak.grounding import hydrate_grounding_blocks
 from holdspeak.principals import PrincipalRight, required_right
 from holdspeak.web.context import WebContext
 from holdspeak.web.routes import build_desk_seed_router, build_sync_router
 
 ZONES = {
     "hs-seed-inbox": "Inbox",
+    "hs-seed-personal": "Personal",
     "hs-seed-work": "Work",
+    "hs-seed-meetings": "Meetings",
+    "hs-seed-decisions": "Decisions",
+    "hs-seed-reference": "Reference",
 }
 
-PROFILE_IDS = [
-    "hs-seed-local-4b-resolver",
-    "hs-seed-local-small",
-    "hs-seed-local-medium",
-    "hs-seed-cloud-openai",
-    "hs-seed-cloud-anthropic",
-]
+START_HERE = "hs-seed-start-here"
+CONTEXT_NOTES = {
+    "hs-seed-about-me": "About me",
+    "hs-seed-current-priorities": "Current priorities",
+    "hs-seed-how-i-like-help": "How I like help",
+    "hs-seed-people-vocabulary": "People & vocabulary",
+    "hs-seed-meeting-preferences": "Meeting preferences",
+}
+EVERYDAY_CONTEXT = "hs-seed-everyday-context"
 
 
 @pytest.fixture
@@ -76,60 +82,105 @@ def _snapshot(db: Database) -> dict:
 def test_fresh_db_seeds_exactly_the_manifest(db) -> None:
     report = apply_seed(db)
     assert report.manifest == DEFAULT_SEED
-    assert report.applied == {"directories": 2}
-    assert report.profiles_seeded == 5
-    assert report.workbenches_seeded == 1
-    assert report.filed == 0
+    assert report.applied == {"directories": 6, "notes": 6, "kbs": 1}
+    assert report.profiles_seeded == report.workbenches_seeded == 0
+    assert report.filed == 6
 
     snap = _snapshot(db)
     assert dict((i, n) for i, n, _ in snap["directories"]) == ZONES
-    assert snap["notes"] == []
-    assert snap["kbs"] == snap["chains"] == snap["recipes"] == snap["workflows"] == []
-    assert snap["memberships"] == []
-
-    profiles = {p.id: p for p in db.profiles.list()}
-    assert set(profiles) == set(PROFILE_IDS)
-    assert profiles["hs-seed-cloud-openai"].requires_key is True
-    assert profiles["hs-seed-local-4b-resolver"].requires_key is False
-
-    workbenches = db.workbenches.list()
-    assert len(workbenches) == 1
-    wb = workbenches[0]
-    assert wb.id == "hs-seed-workbench"
-    assert wb.name == "Workbench"
-    assert wb.resolver_profile_id == "hs-seed-local-4b-resolver"
+    assert {n.id: n.title for n in db.notes.list()} == {
+        START_HERE: "Start here", **CONTEXT_NOTES,
+    }
+    kb = db.kbs.get(EVERYDAY_CONTEXT)
+    assert kb is not None and kb.name == "Everyday context"
+    assert set(kb.member_ids) == {f"note:{note_id}" for note_id in CONTEXT_NOTES}
+    assert {
+        row.resource_ref for row in db.knowledge_memberships.list_for_knowledge(EVERYDAY_CONTEXT)
+    } == set(kb.member_ids)
+    assert snap["recipes"] == snap["chains"] == snap["workflows"] == []
+    assert db.profiles.list() == db.workbenches.list() == []
 
 
-def test_no_demo_content_after_seeding(db) -> None:
+def test_starter_text_is_questions_not_invented_owner_facts(db) -> None:
     apply_seed(db)
-    snap = _snapshot(db)
-    assert snap["notes"] == []
-    assert snap["recipes"] == []
-    assert snap["workflows"] == []
-    assert snap["kbs"] == []
-    assert snap["chains"] == []
+    text = "\n".join(note.body_markdown for note in db.notes.list())
+    assert "never automatically included" in db.notes.get(START_HERE).body_markdown
+    assert "device-pairing" in db.notes.get(START_HERE).body_markdown
+    for invented_fact in ("Karol", "Acme", "I am ", "My name is", "I work at"):
+        assert invented_fact not in text
 
 
 def test_apply_twice_is_identical_no_duplicates(db) -> None:
     apply_seed(db)
     first = _snapshot(db)
     report = apply_seed(db)
-    assert report.applied == {"directories": 2}
-    assert report.profiles_seeded == 5
-    assert report.workbenches_seeded == 1
+    assert report.applied == {}
+    assert report.total == report.filed == 0
     assert _snapshot(db) == first
 
 
-def test_seed_adopts_profile_into_an_unset_existing_config(db) -> None:
-    Config().save(seed_module.CONFIG_FILE)
+def test_ordinary_seed_preserves_edits_tombstones_filing_and_agent_attachment(db) -> None:
+    apply_seed(db)
+    db.notes.upsert(note_id="hs-seed-about-me", title="My name", body_markdown="Edited by me")
+    db.kbs.upsert(kb_id=EVERYDAY_CONTEXT, name="My context", member_ids=[f"note:{START_HERE}"])
+    db.directory_memberships.upsert(
+        primitive_id="note:hs-seed-about-me", directory_id="hs-seed-reference"
+    )
+    db.recipes.upsert(recipe_id="my-agent", name="My agent", kb_id=EVERYDAY_CONTEXT)
+    assert db.notes.delete("hs-seed-meeting-preferences")
+
+    assert apply_seed(db).total == 0
+    edited = db.notes.get("hs-seed-about-me")
+    assert edited is not None and (edited.title, edited.body_markdown) == ("My name", "Edited by me")
+    assert db.notes.get("hs-seed-meeting-preferences") is None
+    assert db.notes.get("hs-seed-meeting-preferences", include_deleted=True).deleted is True
+    assert db.kbs.get(EVERYDAY_CONTEXT).name == "My context"
+    assert db.kbs.get(EVERYDAY_CONTEXT).member_ids == [f"note:{START_HERE}"]
+    assert db.directory_memberships.get("note:hs-seed-about-me").directory_id == "hs-seed-reference"
+    assert db.recipes.get("my-agent").kb_id == EVERYDAY_CONTEXT
+
+
+def test_retry_completes_new_relationships_without_mutating_partial_desk(db) -> None:
+    """An interrupted ordinary seed can safely finish its missing pieces."""
+    manifest = load_manifest()
+    for directory in manifest["directories"]:
+        db.directories.upsert(directory_id=directory["id"], name=directory["name"])
+    note_by_id = {note["id"]: note for note in manifest["notes"]}
+    for note_id in CONTEXT_NOTES:
+        if note_id == "hs-seed-current-priorities":
+            continue  # This is the object the retry must create and file.
+        note = note_by_id[note_id]
+        db.notes.upsert(
+            note_id=note_id,
+            title="My edited note" if note_id == "hs-seed-about-me" else note["title"],
+            body_markdown="My edited text" if note_id == "hs-seed-about-me" else note["body_markdown"],
+        )
+    db.directory_memberships.upsert(
+        primitive_id="note:hs-seed-about-me", directory_id="hs-seed-reference"
+    )
+    db.notes.upsert(note_id=START_HERE, title="Start here")
+    assert db.notes.delete(START_HERE)
+
     report = apply_seed(db)
-    assert report.profiles_adopted == {
-        "dictation.runtime.profile_id": "hs-seed-local-4b-resolver",
-        "meeting.intel_profile_id": "hs-seed-local-4b-resolver",
+
+    assert report.applied == {"notes": 1, "kbs": 1}
+    assert report.filed == 1
+    kb = db.kbs.get(EVERYDAY_CONTEXT)
+    assert kb is not None and set(kb.member_ids) == {
+        f"note:{note_id}" for note_id in CONTEXT_NOTES
     }
-    config = Config.load(seed_module.CONFIG_FILE)
-    assert config.dictation.runtime.profile_id == "hs-seed-local-4b-resolver"
-    assert config.meeting.intel_profile_id == "hs-seed-local-4b-resolver"
+    assert db.directory_memberships.get(
+        "note:hs-seed-current-priorities"
+    ).directory_id == "hs-seed-work"
+    about = db.notes.get("hs-seed-about-me")
+    assert about is not None and (about.title, about.body_markdown) == (
+        "My edited note", "My edited text",
+    )
+    assert db.directory_memberships.get(
+        "note:hs-seed-about-me"
+    ).directory_id == "hs-seed-reference"
+    assert db.notes.get(START_HERE) is None
+    assert db.notes.get(START_HERE, include_deleted=True).deleted is True
 
 
 def test_seed_route_applies_the_packaged_manifest(client, db) -> None:
@@ -137,29 +188,24 @@ def test_seed_route_applies_the_packaged_manifest(client, db) -> None:
     assert resp.status_code == 200
     body = resp.json()
     assert body["success"] is True
-    assert body["applied"] == {"directories": 2}
-    assert body["profiles_seeded"] == 5
-    assert body["workbenches_seeded"] == 1
-    assert body["filed"] == 0
-    assert body["total"] == 8
+    assert body["applied"] == {"directories": 6, "notes": 6, "kbs": 1}
+    assert body["profiles_seeded"] == body["workbenches_seeded"] == 0
+    assert body["filed"] == 6
+    assert body["total"] == 13
     assert {d.id for d in db.directories.list()} == set(ZONES)
 
 
-def test_starter_workbench_wired_to_resolver(db) -> None:
+def test_seeded_everyday_context_hydrates_edited_note_contents(db) -> None:
     apply_seed(db)
-    wb = db.workbenches.get("hs-seed-workbench")
-    assert wb is not None
-    assert wb.resolver_profile_id == "hs-seed-local-4b-resolver"
-
-
-def test_cloud_profiles_require_key(db) -> None:
-    apply_seed(db)
-    profiles = {p.id: p for p in db.profiles.list()}
-    assert profiles["hs-seed-cloud-openai"].requires_key is True
-    assert profiles["hs-seed-cloud-anthropic"].requires_key is True
-    assert profiles["hs-seed-local-4b-resolver"].requires_key is False
-    assert profiles["hs-seed-local-small"].requires_key is False
-    assert profiles["hs-seed-local-medium"].requires_key is False
+    db.notes.upsert(
+        note_id="hs-seed-about-me", title="About me", body_markdown="Edited context arrives."
+    )
+    blocks, _ids, titles, unknown = hydrate_grounding_blocks(
+        db, [], [], "summary", qualified_refs=[f"knowledge:{EVERYDAY_CONTEXT}"]
+    )
+    assert unknown == []
+    assert titles == ["Everyday context"]
+    assert "Edited context arrives." in blocks[0]
 
 
 # ── the reset ──────────────────────────────────────────────────────────────
@@ -198,8 +244,31 @@ def test_reset_tombstones_clutter_and_reseeds(db) -> None:
     assert membership is not None and membership.deleted is True
 
     assert {d.id for d in db.directories.list()} == set(ZONES)
-    assert {n.id for n in db.notes.list()} == set()
-    assert report.seed is not None and report.seed.total == 8
+    assert {n.id for n in db.notes.list()} == {START_HERE, *CONTEXT_NOTES}
+    assert report.seed is not None and report.seed.total == 13
+
+
+def test_reset_force_restores_edited_and_tombstoned_packaged_objects(db) -> None:
+    apply_seed(db)
+    db.notes.upsert(note_id="hs-seed-about-me", title="Changed", body_markdown="Changed")
+    assert db.notes.delete("hs-seed-meeting-preferences")
+    db.kbs.upsert(kb_id=EVERYDAY_CONTEXT, name="Changed context", member_ids=[])
+    db.directory_memberships.upsert(
+        primitive_id="note:hs-seed-about-me", directory_id="hs-seed-reference"
+    )
+
+    report = reset_desk(db)
+
+    assert report.seed is not None and report.seed.applied == {
+        "directories": 6, "notes": 6, "kbs": 1,
+    }
+    assert db.notes.get("hs-seed-about-me").title == "About me"
+    assert db.notes.get("hs-seed-meeting-preferences") is not None
+    assert db.kbs.get(EVERYDAY_CONTEXT).name == "Everyday context"
+    assert set(db.kbs.get(EVERYDAY_CONTEXT).member_ids) == {
+        f"note:{note_id}" for note_id in CONTEXT_NOTES
+    }
+    assert db.directory_memberships.get("note:hs-seed-about-me").directory_id == "hs-seed-personal"
 
 
 def test_reset_leaves_meetings_and_journal_alone(db) -> None:
@@ -226,11 +295,11 @@ def test_reset_route_names_the_counts(client, db) -> None:
     assert body["tombstoned_total"] == 8
     assert body["tombstoned"]["directories"] == 1
     assert body["tombstoned"]["workbenches"] == 1
-    assert body["seeded"] == {"directories": 2}
-    assert body["seeded_total"] == 8
-    assert body["profiles_seeded"] == 5
-    assert "dictation.runtime.profile_id" in body["profiles_adopted"]
-    assert body["filed"] == 0
+    assert body["seeded"] == {"directories": 6, "notes": 6, "kbs": 1}
+    assert body["seeded_total"] == 13
+    assert body["profiles_seeded"] == 0
+    assert body["profiles_adopted"] == {}
+    assert body["filed"] == 6
     assert body["manifest"] == DEFAULT_SEED
 
 

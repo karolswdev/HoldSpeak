@@ -29,7 +29,9 @@ vi.mock("../grounding", () => ({
   }),
   fetchGroundingResource: vi
     .fn()
-    .mockResolvedValue({ ref: "note:n1", kind: "Note", title: "Q3", tokens: 5 }),
+    .mockImplementation(async (ref: string, kind: string, id: string, title: string) => ({
+      ref, kind, id, title, tokens: 5,
+    })),
 }));
 
 describe("the file-drop decision (canon §6.4)", () => {
@@ -71,5 +73,34 @@ describe("the desk-object drop well (canon rule 4)", () => {
     await waitFor(() => expect(onChange).toHaveBeenCalled());
     const next = onChange.mock.calls.at(-1)?.[0];
     expect(next.resources?.[0]?.ref).toBe("note:n1");
+  });
+
+  it("keeps Everyday context as an explicit Knowledge choice", async () => {
+    const onChange = vi.fn();
+    const { container } = render(
+      <GroundingSection
+        meetings={[]}
+        resources={[{
+          ref: "knowledge:hs-seed-everyday-context",
+          kind: "Knowledge",
+          id: "hs-seed-everyday-context",
+          title: "Everyday context",
+        }]}
+        selection={{ meetings: [] }}
+        onChange={onChange}
+        limitTokens={1000}
+      />,
+    );
+    fireEvent(
+      container.querySelector("[data-glass-accept~='desk-object']") as Element,
+      new CustomEvent("desk:glass-drop", {
+        detail: { id: "hs-seed-everyday-context", kind: "knowledge" },
+      }),
+    );
+    await waitFor(() => expect(onChange).toHaveBeenCalled());
+    expect(onChange.mock.calls.at(-1)?.[0].resources?.[0]).toMatchObject({
+      ref: "knowledge:hs-seed-everyday-context",
+      title: "Everyday context",
+    });
   });
 });

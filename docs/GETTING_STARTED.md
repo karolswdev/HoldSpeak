@@ -4,19 +4,9 @@
   <img src="assets/pixellab/hold-to-talk-microphone.png" alt="Pixel art microphone with hold-to-talk waves" width="128">
 </p>
 
-Five minutes from install to speaking a sentence into another app: that is
-this guide's whole job. After you install and run `holdspeak doctor`, setup
-is three moves, in this order:
-
-1. **Seed the desk.** A fresh install is an empty floor. One press, or
-   `holdspeak seed`, puts six drawers and two starter notes on it.
-2. **Set the dial.** Settings, Models is the one place endpoint and model
-   identity is edited: a destination list, and a Runs on picker per feature.
-3. **Hold the key.** Hold the hotkey anywhere, speak, release, and the words
-   land in the app you were in. The Speak window is the same act with a face.
-
-Voice typing is the foundation everything else (the dictation pipeline,
-meetings) builds on, so get move 3 working before you turn anything else on.
+This guide starts with one useful loop: open HoldSpeak, **Dictate one sentence**,
+edit it, then **Copy** or **Keep as Note**. Your first completion furnishes the
+Desk automatically. No extra setup is required before that first value.
 
 ## 1. Install
 
@@ -39,7 +29,7 @@ If you want meeting intelligence or local llama.cpp meeting analysis:
 uv pip install -e '.[meeting]'
 ```
 
-## 2. Run Diagnostics
+## 2. Optional diagnostics
 
 Run:
 
@@ -47,6 +37,7 @@ Run:
 holdspeak doctor
 ```
 
+Use this when first capture needs repair; it is not a first-value prerequisite.
 Fix anything marked as failing before debugging higher-level features.
 The most important checks are microphone access, transcription backend,
 hotkey support, text insertion support, web runtime, and optional LLM
@@ -74,59 +65,20 @@ HoldSpeak web runtime is running at: http://127.0.0.1:PORT
   → Welcome! Say your first words on the Desk: open http://127.0.0.1:PORT/
 ```
 
-## 4. Move 1: seed the desk
+## 4. Your first sentence and furnished Desk
 
-A fresh install is an empty floor. Nothing is seeded at boot: you ask for it.
+Choose **Dictate one sentence**, edit the text, then choose **Copy** or
+**Keep as Note**. The first completion automatically furnishes six drawers:
+**Inbox, Personal, Work, Meetings, Decisions,** and **Reference**. It also adds
+a **Start here** note and five editable prompts collected in **Everyday
+context**: About me, Current priorities, How I like help, People & vocabulary,
+and Meeting preferences. They contain questions and examples, not invented facts
+about you.
 
-Press **Seed the desk** on the empty floor, or run:
+Everyday context is never sent to AI automatically. Attach it in Ask, or choose
+it as an Agent's Context, only when you want it used.
 
-```bash
-holdspeak seed
-```
-
-Either way you get six drawers (ADRs, Meetings, Rules, Decisions, Reference,
-Inbox) and two starter notes filed into them: an **ADR template** and
-**Working rules**. The seed upserts by deterministic id, so running it twice
-leaves one desk, and it only ever touches its own objects.
-
-To go back to that state later, open **Settings, Desk** and arm **Reset to
-seed**. It states what it clears (notes, knowledge, agents, workflows,
-drawers, layout) and what it keeps (meetings, journal, settings, Runs on
-targets) before you confirm, then reports `TOMBSTONED N · SEEDED M`. The
-deletions are tombstones, so a paired device cannot resurrect the clutter.
-
-## 5. Move 2: set the dial
-
-Open **Settings, Models**. This is the only face that edits endpoint and model
-identity.
-
-1. Under **Destinations**, add a target: a name, a kind (`ENDPOINT`,
-   `THIS DEVICE`, `PAIRED`, `MESH`), its base URL, its model, and its context
-   window. A lamp reports readiness, and the key column reads `SET` or
-   `UNSET`.
-2. If the destination needs a key, set or replace it inline in **Settings,
-   Models**. The hub keeps the value locally and the key never syncs; Settings
-   shows only `SET` or `UNSET`. `HOLDSPEAK_PROFILE_<ID>_KEY` remains the
-   headless fallback. Removing the inline key suppresses that fallback for this
-   destination. A destination never borrows another one's key.
-3. Press **PROBE** to test the dictation leg against the selected
-   destination.
-4. Under **Runs on**, point each feature at a destination: dictation,
-   meetings, and rails. Leaving one on `HUB DEFAULT` runs it on the hub's own
-   engine, which you configure in the same module (backend `AUTO` / `MLX` /
-   `LLAMA.CPP`, model, context window, warm on start, idle eviction).
-
-The old config fields (`meeting.intel_cloud_*`, `dictation.runtime.openai_compatible_*`)
-no longer configure anything. An upgrade reads a configured legacy endpoint
-once, turns it into a destination named `legacy-intel` or `legacy-dictation`,
-and points the matching feature at it. After that the destination is the truth.
-Environment provisioning remains available for headless use: give the new
-destination its own `HOLDSPEAK_PROFILE_<ID>_KEY` when you need that fallback.
-
-See [Models (bring your own)](MODELS.md) for what to run, and
-[Inference destinations](INFERENCE_TARGETS.md) for the API contract.
-
-## 6. The Desk, in passing
+## 5. The Desk, in passing
 
 A returning user lands on **the Desk** (there is no wizard): your
 meetings, notes, knowledge bases, and agents as objects in a spatial world.
@@ -134,8 +86,8 @@ Tap an object to open it in place, drag it onto a zone to file it, press the
 orb to record, and ask an agent from the rail: its answer lands on the desk
 as an artifact you can open, trace (`via` the agent that made it), and file.
 Every input takes speech: hold the mic, talk, release (the hub's own local
-Whisper transcribes; nothing leaves your machine's runtime). A fresh desk says what
-HoldSpeak is and offers your next action. If something later needs
+Whisper transcribes; the boundary badge names any configured egress). A fresh
+Desk offers your next action. If something later needs
 attention, the **Setup window** (deep link `/setup`) is the calm health
 surface, and the egress
 badge in the Desk's corner always shows what can leave your machine.
@@ -158,7 +110,7 @@ the matching window open:
 | `/settings` | Settings (sectioned and searchable) |
 | `/setup` | Setup and health: readiness plus the single next step |
 
-## 7. Move 3: hold the key
+## 6. Voice typing beyond your first sentence
 
 The flagship act, on the global hotkey:
 
@@ -239,7 +191,7 @@ so reach it over localhost or HTTPS.
 > headless launch you can force it on with `HOLDSPEAK_DESKTOP_PRESENCE=1 holdspeak`.
 > See [Desktop Presence](DICTATION_PIPELINE_GUIDE.md#11-desktop-presence-ambient-on-desktop-status).
 
-## 8. Use Punctuation Commands
+## 7. Use Punctuation Commands
 
 Say punctuation naturally:
 
@@ -268,7 +220,7 @@ becomes:
 Hello, can you review this?
 ```
 
-## 9. Use Clipboard Insertion
+## 8. Use Clipboard Insertion
 
 Say `clipboard` inside a dictated phrase when you want HoldSpeak to splice in
 the current clipboard text. The word `clipboard` is removed from the output and
@@ -283,7 +235,7 @@ Taking a look at this clipboard could you refactor it?
 If the clipboard contains a code block, that code is inserted into the same
 dictated request before HoldSpeak types or pastes it.
 
-## 10. Set Up A Project Root
+## 9. Set Up A Project Root
 
 Open:
 
@@ -303,10 +255,25 @@ Good project markers include:
 - `.holdspeak/`
 - `.hs/`
 
-## 11. Enable The Dictation Pipeline Later
+## 10. Repair or deploy later
 
-Do not enable the dictation LLM pipeline until basic typing is working.
-When ready, continue with:
+Automatic furnishing is the ordinary first-run path. If you need to repair a
+Desk, `holdspeak seed` creates only starter objects HoldSpeak has never seen,
+preserving edits, filing, attachments, and deletions. To deliberately restore
+the furnished defaults, use the destructive, confirmed **Settings, Desk →
+Reset to seed** action.
+
+For model-backed work or headless deployment, configure a destination and
+**Runs on** choice in **Settings, Models**. A
+`HOLDSPEAK_PROFILE_<ID>_KEY` environment variable remains the headless key
+fallback. See [Models (bring your own)](MODELS.md) and [Inference
+destinations](INFERENCE_TARGETS.md) for those optional contracts.
+
+## 11. Configure model-backed rewriting later
+
+The dictation pipeline is already part of HoldSpeak; model-backed rewriting is
+a later configuration, not a requirement for your first sentence. When ready,
+continue with:
 
 - [Dictation Pipeline Setup](DICTATION_PIPELINE_GUIDE.md)
 - [User Guide](USER_GUIDE.md)

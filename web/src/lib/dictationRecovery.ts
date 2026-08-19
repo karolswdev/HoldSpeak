@@ -29,14 +29,14 @@ export const DICTATION_FAILURES: Record<
 > = {
   permission_denied: {
     message:
-      "Microphone access is off. Your draft remains editable. Allow access, then retry.",
-    retry: false,
-    setup: true,
+      "Microphone access is blocked in your browser or operating system. Your draft remains editable. Allow microphone access there, then retry.",
+    retry: true,
+    setup: false,
     alternateRunsOn: false,
   },
   missing_model: {
     message:
-      "Local transcription is not ready. Your draft remains editable. Open Setup to choose a model.",
+      "Local transcription is unavailable. Your draft remains editable. Open Setup to see what this device needs.",
     retry: false,
     setup: true,
     alternateRunsOn: true,
@@ -64,20 +64,20 @@ export const DICTATION_FAILURES: Record<
   },
   transcription_failed: {
     message:
-      "Transcription did not finish. Your draft remains editable. Retry the capture.",
+      "Transcription did not finish. Your draft remains editable. Retry or type below.",
     retry: true,
     setup: false,
     alternateRunsOn: false,
   },
   timeout: {
     message:
-      "Transcription timed out. Your draft remains editable. Retry when the model is ready.",
+      "Transcription timed out. Your draft remains editable. Retry the capture.",
     retry: true,
     setup: false,
     alternateRunsOn: true,
   },
   no_speech: {
-    message: "No words were detected. Type below or hold to try again.",
+    message: "No speech was detected. Your draft remains editable. Retry or type below.",
     retry: true,
     setup: false,
     alternateRunsOn: false,

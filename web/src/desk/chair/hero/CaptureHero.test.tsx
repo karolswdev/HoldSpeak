@@ -10,6 +10,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import fs from "node:fs";
 import path from "node:path";
 import { CaptureHero, matchesRecordCommand, VOICE_RECORD_COMMANDS } from "./CaptureHero";
+import { reportWriteFailure } from "../../hooks/useWriteReceipt";
 
 // ---------------------------------------------------------------------------
 // store mock: the minimal shared recording store the hero + dock orb read
@@ -186,6 +187,31 @@ describe("CaptureHero", () => {
       const key = screen.getByTestId("capture-hero-key");
       expect(key).toHaveAttribute("aria-label", "Stop recording");
     });
+  });
+
+  it("names a refused start in the Desk receipt and retries the same verb", async () => {
+    mockStartRecording.mockImplementation(() => {
+      reportWriteFailure("START RECORDING", new TypeError("offline"), () => void mockStartRecording());
+      return Promise.resolve();
+    });
+    render(<CaptureHero onAskAI={vi.fn()} />);
+    fireEvent.click(screen.getByTestId("capture-hero-key"));
+    expect(await screen.findByText("START RECORDING FAILED · HUB UNREACHABLE")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+    expect(mockStartRecording).toHaveBeenCalledTimes(2);
+  });
+
+  it("names a refused stop in the Desk receipt and retries the same verb", async () => {
+    resetStore({ recording: "recording", recordingStartedAt: Date.now() });
+    mockStopRecording.mockImplementation(() => {
+      reportWriteFailure("STOP RECORDING", new TypeError("offline"), () => void mockStopRecording());
+      return Promise.resolve();
+    });
+    render(<CaptureHero onAskAI={vi.fn()} />);
+    fireEvent.click(screen.getByTestId("capture-hero-stop"));
+    expect(await screen.findByText("STOP RECORDING FAILED · HUB UNREACHABLE")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+    expect(mockStopRecording).toHaveBeenCalledTimes(2);
   });
 
   // ---- 2. state render + dock-orb consistency (shared store fixture) ----

@@ -210,7 +210,10 @@ export function buildScene(input: SceneInputs): WorldScene {
   const zoneList = worldZones(input.items, input.divedZone);
   const cols = Math.max(
     1,
-    Math.min(input.compact ? 2 : 4, zoneList.length || 1),
+    // Three 104px drawer cells fit a 393px Floor.  Six furnished drawers
+    // therefore occupy two rows, leaving the unfiled Everyday context card
+    // below them instead of colliding with the third drawer row.
+    Math.min(input.compact ? 3 : 4, zoneList.length || 1),
   );
   const wPct = Math.min(input.compact ? 42 : 30, 84 / cols);
   const zones: SceneZone[] = zoneList.map((z, i) => {

@@ -5,7 +5,7 @@
 // minimal cluster (DeskChrome); a fresh desk shows the guiding empty state.
 // HS-135-06: the Chair is HOME at `/`. The spatial floor stays intact
 // behind a dock button (counsel ruling B.Q1).
-import { useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { defaultViewFor, useDesk } from "./store";
 import { useChairState } from "./chairState";
 import { ChairHome } from "./chair";
@@ -27,14 +27,17 @@ import { WorkbenchWindow } from "./components/WorkbenchWindow";
 import { NewWorkbenchChooser } from "./components/NewWorkbenchChooser";
 import { ScheduleCreateWindow } from "./components/ScheduleCreateWindow";
 import { AttentionDrawer } from "./components/AttentionDrawer";
+import { AskPanel } from "./components/AskPanel";
 import { GlassDropLayer } from "./components/GlassDropLayer";
 import { DeskToolInspector } from "./components/DeskToolInspector";
 import { Dock, Expose, SnapGhost, Switcher } from "./components/DeskWindow";
 import { SurfaceWindows } from "./components/SurfaceWindows";
 import { TrustWindow } from "./components/TrustWindow";
 import { InlineEditor } from "./components/InlineEditor";
+import { Pullout } from "./components/Pullout";
 import { objectByRef } from "./world";
 import { useProjections } from "./projections";
+import { takeFirstValueNoteOpen } from "./firstValue";
 import "./desk.css";
 
 export default function DeskApp() {
@@ -45,31 +48,93 @@ export default function DeskApp() {
   const repositoryWindows = useDesk((s) => s.repositoryWindows);
   const workbenchWindows = useDesk((s) => s.workbenchWindows);
   const setup = useDesk((s) => s.setup);
+  const loading = useDesk((s) => s.loading);
   const viewMode = useDesk((s) => s.viewMode);
   const editingId = useDesk((s) => s.editingId);
+  const pullouts = useDesk((s) => s.pullouts);
+  const askOpen = useDesk((s) => s.askOpen);
+  const error = useDesk((s) => s.error);
   const { refresh } = useDesk.getState();
+  const [refreshFailure, setRefreshFailure] = useState<string | null>(null);
+
+  const refreshDesk = useCallback(async () => {
+    setRefreshFailure(null);
+    try {
+      await refresh();
+      const open = new URLSearchParams(window.location.search).get("open");
+      if (open) useDesk.getState().openPullout(open);
+    } catch (caught) {
+      setRefreshFailure(
+        caught instanceof Error && caught.message
+          ? caught.message
+          : "HoldSpeak could not load your Desk.",
+      );
+    }
+  }, [refresh]);
 
   // HS-135-06: Chair is HOME; the floor stays one dock-button away.
   const surface = useChairState((s) => s.surface);
-  const showFloor = surface === "floor";
+  // `updatedAt` changes only after the first combined desk/setup refresh has
+  // settled. Keep the room quiet while that server-owned arrival choice is
+  // unknown; later background refreshes preserve the normal Chair.
+  const setupFailure =
+    (refreshFailure
+      ? `Your Desk is still unchanged. ${refreshFailure} Retry to check it again.`
+      : null) ??
+    (updatedAt !== null && setup === null
+      ? error || "Your Desk is still unchanged. HoldSpeak could not read setup status. Retry to check it again."
+      : null);
+  const setupPending = !setupFailure && updatedAt === null && (loading || setup === null);
+  const arrivalRequired = setup?.arrival_required === true;
+  // HS-140-01: first value owns HOME. A stale Floor preference must not
+  // detour a fresh owner away from the one capture path.
+  const showFloor = surface === "floor" && !arrivalRequired;
+  const chairOpenCards = pullouts
+    .map((pullout) => ({ ...pullout, object: objectByRef(items, pullout.id) }))
+    .filter((pullout) => Boolean(pullout.object));
 
   useEffect(() => {
-    void refresh().then(() => {
-      const open = new URLSearchParams(window.location.search).get("open");
-      if (open) useDesk.getState().openPullout(open);
-    });
+    // HS-140-02 stages Keep's note while first value owns HOME. Only the
+    // server-authorized normal Desk reveal may consume and visibly open it.
+    if (arrivalRequired) return;
+    const ref = takeFirstValueNoteOpen();
+    if (ref) useDesk.getState().openPullout(ref);
+  }, [arrivalRequired]);
+
+  useEffect(() => {
+    void refreshDesk();
     void useProjections.getState().refresh(true);
-  }, []);
+  }, [refreshDesk]);
 
   const total = Object.values(items).reduce((n, l) => n + l.length, 0);
   const empty = updatedAt !== null && total === 0;
+
+  if (setupPending || setupFailure) {
+    return (
+      <div
+        className="desk-next desk-arrival-pending"
+        id="desk-next"
+        aria-busy="true"
+        aria-label="Preparing HoldSpeak"
+      >
+        {setupFailure ? (
+          <div role="alert">
+            <p>{setupFailure}</p>
+            <button type="button" onClick={() => void refreshDesk()}>
+              Retry
+            </button>
+          </div>
+        ) : null}
+      </div>
+    );
+  }
 
   return (
     <div className="desk-next" id="desk-next">
       {/* GL layers render only when the spatial floor is active. */}
       {showFloor && <Atmosphere />}
       {showFloor && <GlassDropLayer />}
-      <DeskChrome showDailyStarts={!empty} />
+      {!arrivalRequired && <DeskChrome showDailyStarts={!empty} />}
       {showFloor ? (
         empty ? (
           <EmptyDesk arrivalRequired={setup?.arrival_required === true} />
@@ -80,42 +145,55 @@ export default function DeskApp() {
           <WorldStage />
         )
       ) : (
-        <ChairHome />
+        <ChairHome arrivalRequired={arrivalRequired} />
       )}
+      {/* Floor/List own their Ask panel. The Chair's primary Ask AI verb uses
+          the same store seam, so mount that existing panel here as well. */}
+      {!arrivalRequired && !showFloor && askOpen && <AskPanel />}
       {/* HS-135-13 fix: the InlineEditor must render on the Chair too,
           not only the Floor (DeskListView/WorldStage own their own copy).
           Without this, "New Agent" from a Workbench on the Chair sets
           editingId but nothing renders the editor. */}
-      {!showFloor && editingId && (() => {
+      {!arrivalRequired && !showFloor && editingId && (() => {
         const o = objectByRef(items, editingId);
         return o ? <InlineEditor key={o.id} o={o} u={{ x: 0.5, y: 0.4 }} /> : null;
       })()}
-      {chatPersonaId && <PersonaChat personaId={chatPersonaId} />}
-      <DeskToolInspector />
-      <MissionControlConveyor />
-      <DeliveryBoard />
-      <DeliveryDossierWindow />
-      <DeliveryTerminalWindow />
-      {roadmapWindows.map((roadmap) => (
+      {/* Floor and List own their pullout mounts. The normal Chair needs the
+          same card seam for the first-value note staged before reveal. */}
+      {!arrivalRequired && !showFloor && chairOpenCards.map((pullout) => (
+        <Pullout key={pullout.id} o={pullout.object!} origin={pullout.origin} />
+      ))}
+      {!arrivalRequired && chatPersonaId && <PersonaChat personaId={chatPersonaId} />}
+      {!arrivalRequired && <DeskToolInspector />}
+      {!arrivalRequired && <MissionControlConveyor />}
+      {!arrivalRequired && <DeliveryBoard />}
+      {!arrivalRequired && <DeliveryDossierWindow />}
+      {!arrivalRequired && <DeliveryTerminalWindow />}
+      {!arrivalRequired && roadmapWindows.map((roadmap) => (
         <RoadmapWindow key={roadmap.slug} slug={roadmap.slug} origin={roadmap.origin} />
       ))}
-      {repositoryWindows.map((repository) => (
+      {!arrivalRequired && repositoryWindows.map((repository) => (
         <RepoWindow key={repository.id} repositoryId={repository.id} origin={repository.origin} />
       ))}
-      {workbenchWindows.map((wb) => (
+      {!arrivalRequired && workbenchWindows.map((wb) => (
         <WorkbenchWindow key={wb.id} workbenchId={wb.id} origin={wb.origin} />
       ))}
-      <NewWorkbenchChooser />
-      <ScheduleCreateWindow />
-      <PanePicker />
-      <SessionPullout />
-      <AttentionDrawer />
-      <SurfaceWindows />
-      <TrustWindow />
-      <Dock center={!empty ? <RecordOrb /> : null} />
-      <SnapGhost />
-      <Expose />
-      <Switcher />
+      {!arrivalRequired && <NewWorkbenchChooser />}
+      {!arrivalRequired && <ScheduleCreateWindow />}
+      {!arrivalRequired && <PanePicker />}
+      {!arrivalRequired && <SessionPullout />}
+      {!arrivalRequired && <AttentionDrawer />}
+      {/* Recovery remains direct and in-place: FirstWords opens Setup through
+          this existing surface registry without restoring the whole Desk. */}
+      <SurfaceWindows
+        key={arrivalRequired ? "first-value-recovery" : "desk"}
+        firstValueRecoveryOnly={arrivalRequired}
+      />
+      {!arrivalRequired && <TrustWindow />}
+      {!arrivalRequired && <Dock center={!empty ? <RecordOrb /> : null} />}
+      {!arrivalRequired && <SnapGhost />}
+      {!arrivalRequired && <Expose />}
+      {!arrivalRequired && <Switcher />}
     </div>
   );
 }

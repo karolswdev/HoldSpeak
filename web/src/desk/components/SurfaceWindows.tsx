@@ -259,6 +259,7 @@ interface SurfaceState {
   open: Record<string, string | null>;
   openSurfaceWindow(key: string, scope?: string): void;
   closeSurfaceWindow(key: string): void;
+  clearSurfaceWindows(): void;
 }
 
 export const useSurfaceWindows = create<SurfaceState>((set, get) => ({
@@ -272,6 +273,11 @@ export const useSurfaceWindows = create<SurfaceState>((set, get) => ({
     const { [key]: _dropped, ...rest } = get().open;
     set({ open: rest });
     saveOpenWindows(rest);
+  },
+  clearSurfaceWindows() {
+    const open = {};
+    set({ open });
+    saveOpenWindows(open);
   },
 }));
 
@@ -292,34 +298,60 @@ const SURFACE_ALIASES: Record<string, { target: string; scope?: string }> = {
   "read-runtime-docs": { target: "configure-settings", scope: "guide" },
 };
 
-export function SurfaceWindows() {
+const FIRST_VALUE_RECOVERY_SURFACES = SURFACES.filter(
+  (row) => row.key === "configure-setup",
+);
+
+export function SurfaceWindows({
+  firstValueRecoveryOnly = false,
+}: {
+  /** First value registers only its explicit Setup recovery and starts with
+      no persisted Desk windows competing on glass. */
+  firstValueRecoveryOnly?: boolean;
+} = {}) {
   const open = useSurfaceWindows((s) => s.open);
   const items = useDesk((s) => s.items);
+  const [ready, setReady] = useState(!firstValueRecoveryOnly);
+  const rows = firstValueRecoveryOnly
+    ? FIRST_VALUE_RECOVERY_SURFACES
+    : SURFACES;
 
   useEffect(() => {
-    const offs = SURFACES.map((row) =>
+    // The persisted open set belongs to the normal Desk. Hide it before this
+    // recovery-only mount becomes paintable; FirstWords can still open Setup
+    // after the registry below is ready.
+    if (firstValueRecoveryOnly) useSurfaceWindows.getState().clearSurfaceWindows();
+    setReady(true);
+  }, [firstValueRecoveryOnly]);
+
+  useEffect(() => {
+    const offs = rows.map((row) =>
       registerSurface(row.key, (scope) => {
         useSurfaceWindows.getState().openSurfaceWindow(row.key, scope);
         if (row.maximized && !useDesk.getState().panelMax.includes(row.id))
           useDesk.getState().toggleMaximizePanel(row.id);
       }),
     );
-    const aliasOffs = Object.entries(SURFACE_ALIASES).map(([key, alias]) =>
-      registerSurface(key, (scope) =>
-        useSurfaceWindows
-          .getState()
-          .openSurfaceWindow(alias.target, scope ?? alias.scope),
-      ),
-    );
+    const aliasOffs = Object.entries(SURFACE_ALIASES)
+      .filter(([, alias]) => rows.some((row) => row.key === alias.target))
+      .map(([key, alias]) =>
+        registerSurface(key, (scope) =>
+          useSurfaceWindows
+            .getState()
+            .openSurfaceWindow(alias.target, scope ?? alias.scope),
+        ),
+      );
     return () => {
       offs.forEach((off) => off());
       aliasOffs.forEach((off) => off());
     };
-  }, []);
+  }, [rows]);
+
+  if (!ready) return null;
 
   return (
     <>
-      {SURFACES.map((row) => {
+      {rows.map((row) => {
         const isOpen = row.key in open;
         if (!isOpen) return null;
         return (

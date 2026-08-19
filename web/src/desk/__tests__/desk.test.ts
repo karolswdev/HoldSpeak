@@ -12,7 +12,7 @@ import {
   loadAll,
 } from "../api";
 import { lineage } from "../lineage";
-import { objectByRef, objUnit, worldObjects } from "../world";
+import { allObjects, objectByRef, objUnit, worldObjects } from "../world";
 import { oh } from "../hash";
 import type { Items, TypedItems } from "../api";
 import type { Meeting, Note, Artifact, Persona } from "../../lib/primitives";
@@ -180,6 +180,33 @@ describe("world math", () => {
     // 2026-07-02); diving shows the member.
     expect(worldObjects(items, null).map((o) => o.id)).toEqual(["n1"]);
     expect(worldObjects(items, "z").map((o) => o.id)).toEqual(["m1"]);
+  });
+  it("keeps Delivery roadmaps resolvable but off the ordinary Floor", () => {
+    const withRoadmap = {
+      ...items,
+      roadmap: [
+        {
+          kind: "roadmap" as const,
+          id: "roadmap:holdspeak",
+          title: "HoldSpeak — Roadmap",
+          slug: "holdspeak",
+          name: "HoldSpeak — Roadmap",
+          phaseCount: 1,
+          currentPhase: 140,
+          currentPhaseTitle: "First sentence",
+          storiesDone: 0,
+          storiesTotal: 1,
+          health: "green",
+          issues: [],
+          nextStoryId: null,
+        },
+      ],
+    } as unknown as TypedItems;
+
+    expect(allObjects(withRoadmap).some((o) => o.kind === "roadmap")).toBe(true);
+    expect(objectByRef(withRoadmap, "roadmap:holdspeak")?.kind).toBe("roadmap");
+    expect(objectByRef(withRoadmap, "roadmap:roadmap:holdspeak")?.kind).toBe("roadmap");
+    expect(worldObjects(withRoadmap, null).some((o) => o.kind === "roadmap")).toBe(false);
   });
   it("looseHome is deterministic and clamped", () => {
     const o = {

@@ -4,22 +4,25 @@
   <img src="https://raw.githubusercontent.com/karolswdev/HoldSpeak/main/docs/assets/pixellab/holdspeak-mark.png" alt="HoldSpeak logo, a held key with rising soundwaves" width="120">
 </p>
 
-<p align="center"><strong>One local copilot, two modes: dictation that types anywhere and learns how you work, and meetings that end with decisions, actions, and follow-ups instead of a recording. Nothing leaves your machine.</strong></p>
+<p align="center"><strong>A local-first voice desk: dictate a thought, edit it, then copy it or keep it. HoldSpeak keeps work on this device unless you configure a destination; its boundary badge names any configured egress.</strong></p>
 
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://github.com/karolswdev/HoldSpeak/blob/main/LICENSE)
 [![Tests](https://github.com/karolswdev/HoldSpeak/actions/workflows/test.yml/badge.svg)](https://github.com/karolswdev/HoldSpeak/actions/workflows/test.yml)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/downloads/)
 [![Platform: macOS | Linux](https://img.shields.io/badge/platform-macOS%20%7C%20Linux-lightgrey.svg)](#platform-support)
 
-HoldSpeak is a local-first voice desk OS. Hold a key in any app, or press the
-mic on the Desk, speak, and release: the words land where you aimed them, in
-the app you were working in, in a coder session waiting on an answer, or in the
-field in front of you. Whisper transcribes on this machine. Every model call
-runs on a destination you name once under Settings, Models, and every
-model-backed feature (dictation, meeting intelligence, agents, the rails
-observer) picks from that one list. What you produce stays on the Desk as
-objects you file and reopen: meetings, notes, decisions, artifacts. The badge in
-the corner names what leaves this machine and where it goes.
+HoldSpeak starts with one short loop: launch `holdspeak`, choose **Dictate one
+sentence**, edit the text, then **Copy** it or **Keep as Note**. Your first
+completion furnishes the Desk automatically with Inbox, Personal, Work,
+Meetings, Decisions, and Reference; a Start here note; and editable prompts in
+**Everyday context**. Everyday context is used only when you explicitly attach
+it. No extra setup is required before this first value.
+
+After that, HoldSpeak can type into another app or keep work on the Desk as
+notes, meetings, decisions, and artifacts. Transcription runs on this machine.
+Optional model-backed features use a destination you configure under Settings,
+Models; the badge in the corner names what can leave this machine and where it
+goes.
 
 A meeting should change what happens next, not disappear into an archive.
 HoldSpeak keeps decisions as durable records with transcript moments, lets you
@@ -77,7 +80,7 @@ Click selects, double-click opens.
 </p>
 <p align="center"><em>The front door: the world your voice work lives in. The orb records, the rail asks, the tray files.</em></p>
 
-**The Chair is home.** The browser opens on the Chair: four fixed lanes
+**The Chair is home after first value.** The browser opens on the Chair: four fixed lanes
 (Brief, Follow-Through, Meetings, Agents) showing what needs you at a
 glance, and a capture hero at the center. Tap the hero to record a meeting
 (one tap, same verb as the dock orb). Say "start meeting" into its mic and
@@ -237,11 +240,10 @@ Windows build today, and Wayland limits global hotkeys to best effort.
 
 ## Quickstart
 
-Install from PyPI, check your setup, and launch the web runtime:
+Install from PyPI and launch the web runtime:
 
 ```bash
 pip install holdspeak
-holdspeak doctor   # check mic permissions and backends
 holdspeak          # launch the web runtime (the browser opens on the Desk)
 ```
 
@@ -257,10 +259,42 @@ curl -fsSL https://raw.githubusercontent.com/karolswdev/HoldSpeak/main/scripts/i
 # or from a clone (for development)
 git clone https://github.com/karolswdev/HoldSpeak.git && cd HoldSpeak
 uv pip install -e .
-holdspeak doctor && holdspeak
+holdspeak
 ```
 
-Install only the extras you need:
+### Your first sentence
+
+In the browser, choose **Dictate one sentence**, edit the text, then choose
+**Copy** or **Keep as Note**. That first completion furnishes your Desk
+automatically. It includes six drawers: Inbox, Personal, Work, Meetings,
+Decisions, and Reference; a Start here note; and five editable prompts in
+**Everyday context**: About me, Current priorities, How I like help, People &
+vocabulary, and Meeting preferences. The prompts contain questions and
+examples, not facts about you. Everyday context is never sent to AI
+automatically; attach it only when you want it used.
+
+If microphone permission or transcription needs attention, the first-sentence
+surface tells you the one recovery to take. `holdspeak doctor` is also available
+when you want diagnostics for microphone permissions and backends; it is not a
+first-value prerequisite.
+
+### Later: voice typing, repairs, and deployment
+
+For voice typing in another app, hold the global hotkey (Right Option on macOS,
+Right Alt on Linux), speak, and release. The Desk's **Speak** surface also has
+that action with an explicit Aim and a dry-run **Rehearse** control.
+
+Automatic furnishing is the ordinary first-run path. For repair, `holdspeak
+seed` creates only starter objects HoldSpeak has never seen, preserving your
+edits and deletions. To deliberately restore the default Desk, use the
+destructive, confirmed **Settings, Desk → Reset to seed** action. To add a
+model-backed feature or deploy headlessly, configure its destination and
+**Runs on** choice in **Settings, Models**; a
+`HOLDSPEAK_PROFILE_<ID>_KEY` environment variable remains the headless key
+fallback. See [Models (bring your own)](https://github.com/karolswdev/HoldSpeak/blob/main/docs/MODELS.md)
+and [Inference destinations](https://github.com/karolswdev/HoldSpeak/blob/main/docs/INFERENCE_TARGETS.md).
+
+Install only the extras you need for those later features:
 
 ```bash
 pip install 'holdspeak[meeting]'          # meeting mode and AI intelligence
@@ -270,49 +304,6 @@ pip install 'holdspeak[dictation-openai]' # the dictation pipeline via an OpenAI
 ```
 
 (From a clone, use the editable form instead, e.g. `uv pip install -e '.[meeting]'`.)
-
-The dictation and meeting LLM is yours to choose. See
-[`docs/MODELS.md`](https://github.com/karolswdev/HoldSpeak/blob/main/docs/MODELS.md) for the contract and current suggestions.
-
-### The three moves
-
-Installed and running, setup is three moves, in this order.
-
-**1. Seed the desk.** A fresh install is an empty floor. Press **Seed the
-desk** on it, or run `holdspeak seed`, and six drawers appear (ADRs,
-Meetings, Rules, Decisions, Reference, Inbox) holding two starter notes: an
-ADR template and the working rules. The seed upserts by id, so running it
-twice leaves one desk. To go back to that state later, open **Settings,
-Desk** and arm **Reset to seed**; it names what it clears and what it keeps
-before you confirm.
-
-**2. Set the dial.** Open **Settings, Models**. Add a destination (an
-endpoint, this device, a paired device, or a mesh node) with its name, URL,
-and model, then use the **Runs on** pickers to say where dictation, meeting
-intelligence, and the rails observer run. Set, replace, or remove a
-destination key inline there; `HOLDSPEAK_PROFILE_<ID>_KEY` remains a headless
-fallback. **Probe** tests the dictation leg against the destination you picked.
-This is the only place endpoint and model identity is edited.
-
-**3. Hold the key.** Hold the global hotkey in any app (Right Option on
-macOS, Right Alt on Linux), speak, release, and the text lands in that app.
-The same act has a face on the Desk: open **Speak**, set the **Aim** row to
-Focused app, Agent, or This field, and hold **TALK**. Aimed at Agent it
-delivers into a coder session that is waiting and refuses if none is, rather
-than typing into whatever happens to be in front. The receipt shows how many
-milliseconds passed between release and landing. **Rehearse** is the
-explicit dry run, never what a plain release does.
-
-Or stop holding anything. **Open mic** asks for the microphone once and keeps
-the grant: an on-device VAD finds where each utterance starts and stops, and
-every one it hears lands through the same Aim, the same pipeline, and the same
-delivery contract as a held release. Push-to-talk still wins the floor, so a
-hold silences the open mic mid-word and drops whatever it had in flight. The
-mic lamp in the Desk chrome reports the session in its own words (idle, open,
-speech, held) and disappears only when the device is actually released, which
-is what pressing Open mic again does. HoldSpeak arbitrates one microphone
-across the whole machine, so if a meeting already holds it the mic refuses by
-name (`FLOOR HELD MEETING`) instead of quietly recording next to it.
 
 ### Upgrading and your data
 
@@ -458,7 +449,7 @@ deliberate absences.
 | Browse all the docs | [Documentation index](https://github.com/karolswdev/HoldSpeak/blob/main/docs/README.md) |
 | Understand how it works, with diagrams | [Architecture](https://github.com/karolswdev/HoldSpeak/blob/main/docs/ARCHITECTURE.md) |
 | Get it running and verify my setup | [Getting Started](https://github.com/karolswdev/HoldSpeak/blob/main/docs/GETTING_STARTED.md) |
-| Seed the desk, set the dial, hold the key | [Getting Started, the three moves](https://github.com/karolswdev/HoldSpeak/blob/main/docs/GETTING_STARTED.md#4-move-1-seed-the-desk) |
+| Take the first-sentence loop or repair/deploy later | [Getting Started](https://github.com/karolswdev/HoldSpeak/blob/main/docs/GETTING_STARTED.md) |
 | Choose / configure a model | [Models (bring your own)](https://github.com/karolswdev/HoldSpeak/blob/main/docs/MODELS.md) |
 | Point every feature at one endpoint | [Inference destinations](https://github.com/karolswdev/HoldSpeak/blob/main/docs/INFERENCE_TARGETS.md) |
 | Live on the Desk (the web front door) | [The Desk](https://github.com/karolswdev/HoldSpeak/blob/main/docs/WEB_DESK.md) |

@@ -18,6 +18,16 @@ vi.mock("../../runtime/RuntimeBus", () => ({
   }),
 }));
 
+vi.mock("../components/FirstWords", () => ({
+  FirstWords: ({ onDismiss }: { onDismiss?: () => void }) => (
+    <section className="desk-first-words">
+      <h2>Dictate one sentence</h2>
+      <button type="button">Click to dictate</button>
+      <button type="button" onClick={onDismiss}>Continue later</button>
+    </section>
+  ),
+}));
+
 // ---------------------------------------------------------------------------
 // helpers
 // ---------------------------------------------------------------------------
@@ -43,6 +53,47 @@ describe("ChairHome landing surface", () => {
 
   it("default surface state is 'chair'", () => {
     expect(useChairState.getState().surface).toBe("chair");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// HS-140-01: first value is the Chair, not a second welcome surface.
+// ---------------------------------------------------------------------------
+
+describe("ChairHome first-value composition", () => {
+  beforeEach(resetChairState);
+
+  it("reuses FirstWords and removes the normal Chair competition", () => {
+    render(<ChairHome arrivalRequired />);
+
+    expect(screen.getByTestId("chair-first-value")).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Dictate one sentence" }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Click to dictate" })).toBeInTheDocument();
+    expect(screen.queryByTestId("chair")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("chair-hero")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("chair-lanes")).not.toBeInTheDocument();
+  });
+
+  it("keeps the existing Chair byte-for-byte path for a normal owner", () => {
+    render(<ChairHome arrivalRequired={false} />);
+
+    expect(screen.getByTestId("chair")).toBeInTheDocument();
+    expect(screen.getByTestId("chair-hero")).toBeInTheDocument();
+    expect(screen.getByTestId("chair-lanes")).toBeInTheDocument();
+    expect(
+      screen.queryByRole("heading", { name: "Dictate one sentence" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("waits for the refreshed server prop before revealing the normal Chair", () => {
+    render(<ChairHome arrivalRequired />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Continue later" }));
+
+    expect(screen.getByTestId("chair-first-value")).toBeInTheDocument();
+    expect(screen.queryByTestId("chair")).not.toBeInTheDocument();
   });
 });
 

@@ -265,6 +265,14 @@ class OnboardingRepository(BaseRepository):
                     "elapsed_ms": _elapsed_ms(row["started_at"], row["finished_at"]),
                     "event_count": observed["event_count"],
                 }
+            if clean_outcome == "success":
+                transcript = conn.execute(
+                    "SELECT 1 FROM first_value_events "
+                    "WHERE attempt_id = ? AND kind = 'transcript_received' LIMIT 1",
+                    (pid,),
+                ).fetchone()
+                if transcript is None:
+                    raise ValueError("success requires a received transcript")
             conn.execute(
                 """
                 UPDATE first_value_attempts

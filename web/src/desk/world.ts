@@ -103,7 +103,11 @@ export function worldObjects(
   items: Items,
   divedZone: string | null,
 ): WorldObject[] {
-  const out = allObjects(items);
+  // Repository roadmaps are an explicit Delivery capability, not owner work
+  // on the ordinary Floor.  Keep them in allObjects/objectByRef so their
+  // windows, API, and qualified deep links still resolve; only the spatial
+  // Floor projection omits them.
+  const out = allObjects(items).filter((o) => o.kind !== "roadmap");
   if (divedZone) {
     const dir = (items.directory || []).find((d) => d.id === divedZone);
     const members = new Set(dir?.memberIds || []);

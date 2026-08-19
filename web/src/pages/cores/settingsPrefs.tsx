@@ -288,7 +288,7 @@ export function DeskModule() {
     <GadgetGroup label="Reset to seed">
       <div className="prefs-egress-line">
         <span className="gadget-fact">
-          RESETS · NOTES · KNOWLEDGE · AGENTS · WORKFLOWS · DRAWERS · LAYOUT
+          TOMBSTONES EXISTING DESK OBJECTS · RESTORES FURNISHED DEFAULTS
         </span>
       </div>
       <div className="prefs-egress-line">
@@ -299,7 +299,7 @@ export function DeskModule() {
       <div className="prefs-egress-line">
         <ConfirmVerb
           label="RESET TO SEED"
-          confirmLabel="RESET DESK?"
+          confirmLabel="TOMBSTONE DESK & RESTORE DEFAULTS?"
           busy={busy}
           onConfirm={() => void fire()}
         />
