@@ -73,9 +73,10 @@ class AskService:
         # never load, and the no-retarget refusal below quoted it back.
         from ..inference_targets import THIS_MACHINE_ID, target_from_profile, this_machine_target
         rows: list[dict[str, Any]] = []
-        hub_model = self._destination_model(this_machine_target())
+        hub_target = this_machine_target()
+        hub_model = self._destination_model(hub_target)
         if hub_model:
-            rows.append({"id": THIS_MACHINE_ID, "name": hub_model, "source": "hub", "profile_id": None})
+            rows.append({"id": THIS_MACHINE_ID, "name": hub_model, "source": "hub", "profile_id": None, "ready": bool(hub_target.ready)})
         for profile in self._db.profiles.list():
             # Every row names its destination's deployment identity for the same
             # reason the hub row does — and an on-device destination that names
@@ -83,7 +84,8 @@ class AskService:
             # while remaining addressable and ready (HS-132-09).
             name = self._destination_model(target_from_profile(profile, self._db))
             if profile.deleted or not name: continue
-            row: dict[str, Any] = {"id": profile.id, "name": name, "source": "profile", "profile_id": profile.id}
+            target = target_from_profile(profile, self._db)
+            row: dict[str, Any] = {"id": profile.id, "name": name, "source": "profile", "profile_id": profile.id, "ready": bool(target.ready)}
             node = str(getattr(profile, "node", "") or "")
             if profile.kind == "meshNode" and node:
                 from ..intel.mesh_relay import DEFAULT_LIVENESS_WINDOW_SECONDS

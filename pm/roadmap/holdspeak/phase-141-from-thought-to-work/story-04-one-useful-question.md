@@ -1,6 +1,6 @@
 # HS-141-04 — One useful question
 
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** 141-02, 141-03, 141-06
 - **Unblocks:** 141-05, 141-07
 
@@ -22,14 +22,14 @@ after that exact result is durable and reconciled to the same request.
 
 ## Acceptance
 
-- [ ] Raw/working are durable before dispatch and frozen revisions are named.
-- [ ] One action produces at most one outstanding question/result.
-- [ ] Accept is an expected-revision working edit; Reject changes nothing.
-- [ ] Failure/refusal/timeout leaves Good enough and editing available.
-- [ ] Reload reconciles only a known persisted result; no automatic continuation.
-- [ ] An invocation/result lacking the exact durable correlation tuple cannot be
+- [x] Raw/working are durable before dispatch and frozen revisions are named.
+- [x] One action produces at most one outstanding question/result.
+- [x] Accept is an expected-revision working edit; Reject changes nothing.
+- [x] Failure/refusal/timeout leaves completion and editing available.
+- [x] Reload reconciles only a known persisted result; no automatic continuation.
+- [x] An invocation/result lacking the exact durable correlation tuple cannot be
   attached to a thought, even when its prose appears to match.
-- [ ] Model receipts retain honest placement/egress without thought text entering
+- [x] Model receipts retain honest placement/egress without thought text entering
   the kernel journal.
 
 ## Tests

@@ -8,6 +8,7 @@ from typing import Any, TextIO
 from .auth import resolve_auth
 from .resources import ResourceError, list_resources, read_resource
 from .tools import TOOLS, ToolError, dispatch
+from holdspeak.services.errors import ServiceError
 
 JSONRPC_VERSION = "2.0"
 MCP_PROTOCOL_VERSION = "2024-11-05"
@@ -17,12 +18,21 @@ def _response(request_id: Any, result: dict[str, Any]) -> dict[str, Any]:
     return {"jsonrpc": JSONRPC_VERSION, "id": request_id, "result": result}
 
 
-def _error(request_id: Any, code: int, message: str) -> dict[str, Any]:
-    return {
+def _error(
+    request_id: Any,
+    code: int,
+    message: str,
+    *,
+    data: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    response = {
         "jsonrpc": JSONRPC_VERSION,
         "id": request_id,
         "error": {"code": code, "message": message},
     }
+    if data is not None:
+        response["error"]["data"] = data
+    return response
 
 
 def _tool_result(value: Any, *, is_error: bool = False) -> dict[str, Any]:
@@ -65,6 +75,13 @@ def handle_message(request: dict[str, Any]) -> dict[str, Any] | None:
             return _error(request_id, -32602, "Invalid params: uri is required")
         try:
             return _response(request_id, read_resource(uri, resolve_auth().principal))
+        except ServiceError as exc:
+            return _error(
+                request_id,
+                -32002,
+                exc.detail,
+                data={"code": exc.code, **exc.context},
+            )
         except (ResourceError, ValueError, KeyError, TypeError) as exc:
             return _error(request_id, -32002, str(exc))
         except Exception as exc:  # Resources must not crash the stdio sidecar.
@@ -78,6 +95,14 @@ def handle_message(request: dict[str, Any]) -> dict[str, Any] | None:
             return _response(request_id, _tool_result({"error": "Tool arguments must be an object"}, is_error=True))
         try:
             value = dispatch(name, arguments, resolve_auth().principal)
+        except ServiceError as exc:
+            return _response(
+                request_id,
+                _tool_result(
+                    {"error": exc.detail, "code": exc.code, **exc.context},
+                    is_error=True,
+                ),
+            )
         except (ToolError, ValueError, KeyError, TypeError) as exc:
             return _response(request_id, _tool_result({"error": str(exc)}, is_error=True))
         except Exception as exc:  # Service errors are tool results, never sidecar crashes.
@@ -90,20 +115,30 @@ def handle_message(request: dict[str, Any]) -> dict[str, Any] | None:
 
 def serve(stdin: TextIO = sys.stdin, stdout: TextIO = sys.stdout) -> int:
     """Run the stdio server until the client closes its input pipe."""
-    for line in stdin:
-        try:
-            request = json.loads(line)
-            if not isinstance(request, dict):
-                raise ValueError("request must be an object")
-        except (json.JSONDecodeError, ValueError) as exc:
-            stdout.write(json.dumps(_error(None, -32700, f"Parse error: {exc}")) + "\n")
-            stdout.flush()
-            continue
-        response = handle_message(request)
-        if response is not None:
-            stdout.write(json.dumps(response, default=str) + "\n")
-            stdout.flush()
-    return 0
+    from .families import thought
+    from .refinement_runtime import SidecarRefinementRuntime
+
+    runtime = SidecarRefinementRuntime()
+    runtime.start()
+    thought.configure_runtime(runtime)
+    try:
+        for line in stdin:
+            try:
+                request = json.loads(line)
+                if not isinstance(request, dict):
+                    raise ValueError("request must be an object")
+            except (json.JSONDecodeError, ValueError) as exc:
+                stdout.write(json.dumps(_error(None, -32700, f"Parse error: {exc}")) + "\n")
+                stdout.flush()
+                continue
+            response = handle_message(request)
+            if response is not None:
+                stdout.write(json.dumps(response, default=str) + "\n")
+                stdout.flush()
+        return 0
+    finally:
+        thought.configure_runtime(None)
+        runtime.close()
 
 
 def main() -> int:

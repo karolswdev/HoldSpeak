@@ -1,7 +1,7 @@
 # MCP sidecar
 
 The MCP sidecar is the desk's programmable surface over stdio. It exposes
-93 tools and 27 resources through the Model Context Protocol, so any MCP
+115 tools and 30 resources through the Model Context Protocol, so any MCP
 client (Claude Code, Cursor, a custom script) can read and drive the desk
 without touching the web UI.
 
@@ -56,7 +56,7 @@ default.
 
 ## Tool families
 
-The 93 tools are organized into domain families. Each tool follows the
+The 115 tools are organized into domain families. Each tool follows the
 `domain.verb` naming convention. Tool descriptions are the per-tool
 reference; this page covers the families and the cross-cutting rules.
 
@@ -80,6 +80,28 @@ without running inference. `ask.run` submits a question through the
 admitted inference path and returns the answer with its receipt.
 `ask.cancel` cancels an in-flight invocation. `ask.keep` persists an
 answer as a desk artifact (not model-invoking).
+
+### thought (6 tools)
+
+Develop a durable Thought through one explicit model turn. `thought.refine`
+asks one useful question using server-loaded authoritative material;
+`thought.reconcile` reads/finalizes only known durable proof, and
+`thought.stop_refinement` durably suppresses an exact invocation before a
+best-effort physical cancellation. `thought.answer_review`,
+`thought.accept_review`, and `thought.reject_review` consume one receipt-gated
+review through expected-revision CAS. They never start the next model turn.
+
+The refine schema deliberately accepts no prompt, model, raw/working text,
+grounding, or context. MCP supplies identities and cursors; the shared Thought
+application service loads authoritative content exactly as the web surface
+does. The stdio sidecar keeps a coordinator loop alive for its whole process,
+but does not perform global startup recovery because the web runtime may own
+live work in the same database.
+
+Thought command failures are structured tool errors: `error` is the readable
+detail, `code` is the stable service code, and safe conflict context such as
+the current Thought projection is retained. Thought resource failures carry
+the same stable code in JSON-RPC `error.data`.
 
 ### settings (2 tools)
 
@@ -159,12 +181,13 @@ marks a job done. Both refuse running jobs.
 
 ## Model-invoking tools
 
-Four tools reach an inference provider. Each rides the admitted
+Five tools reach an inference provider. Each rides the admitted
 `InferenceRunner.invoke()` path; no tool opens a side door.
 
 | Tool | Admitted path |
 |---|---|
 | `ask.run` | `AskService.ask()` enters `InferenceRunner.invoke()` via `_as_principal` |
+| `thought.refine` | `RefinementApplicationService.refine()` reserves the exact Thought revision, then the sidecar-lifetime coordinator enters `AskService.ask()` |
 | `cadence.get_loop` | Conditional: when the loop's `use_llm` is true, enters the kernel through `_drafted_next_action` |
 | `sequence.run` | `SequenceWorkflowService.run_sequence()` enters `InferenceRunner.invoke()` via `_as_principal` |
 | `workflow.run` | `SequenceWorkflowService.run_workflow()` enters `InferenceRunner.invoke()` via `_as_principal` |
@@ -221,7 +244,7 @@ client discovers it at tool-listing time, not at call time.
 
 ## Resources
 
-The sidecar exposes 16 static resources and 11 resource templates. List
+The sidecar exposes 17 static resources and 13 resource templates. List
 results are bounded to the first 100 items per read.
 
 ### Static resources
@@ -244,6 +267,7 @@ results are bounded to the first 100 items per read.
 | `holdspeak://cadence/status` | Cadence engine status (enabled, pressure, loop counts) |
 | `holdspeak://people/readiness` | Content-free People MCP access/store readiness |
 | `holdspeak://people/relationships` | Active relationship metadata when People MCP read access is enabled |
+| `holdspeak://thoughts/unfinished` | Bounded owner Resume projection for unfinished Thoughts |
 
 ### Resource templates
 
@@ -260,3 +284,5 @@ results are bounded to the first 100 items per read.
 | `pipeline://events/recent/{service}` | Recent pipeline events for one service |
 | `pipeline://events/correlation/{id}` | Pipeline events in one correlation chain |
 | `holdspeak://people/relationships/{id}` | One relationship with shared-intent records only |
+| `holdspeak://thoughts/{thought_id}` | One canonical Thought with its working Note and public continuity |
+| `holdspeak://thoughts/{thought_id}/reviews/{review_result_id}` | One validated receipt-gated review card with frozen cursors and placement/egress receipt |

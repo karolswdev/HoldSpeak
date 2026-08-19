@@ -19,7 +19,11 @@ def _error(exc: ServiceError) -> JSONResponse:
         return JSONResponse(body, status_code=409)
     if isinstance(exc, NotFound):
         return JSONResponse(body, status_code=404)
-    return JSONResponse(body, status_code=422 if isinstance(exc, ValidationError) else 400)
+    status = exc.context.get("status") if isinstance(exc.context, dict) else None
+    fallback = 422 if isinstance(exc, ValidationError) else 400
+    return JSONResponse(
+        body, status_code=int(status) if isinstance(status, int) else fallback
+    )
 
 
 def build_thoughts_router(ctx: WebContext) -> APIRouter:
@@ -28,6 +32,16 @@ def build_thoughts_router(ctx: WebContext) -> APIRouter:
     def service() -> RefinementThoughtService:
         from ....db import get_database
         return RefinementThoughtService(get_database())
+
+    def application() -> Any:
+        if ctx.refinement_service is not None:
+            return ctx.refinement_service
+        from ....db import get_database
+        from ....services.refinement_application_service import RefinementApplicationService
+
+        return RefinementApplicationService(
+            get_database(), coordinator=ctx.refinement_coordinator
+        )
 
     def principal(request: Request) -> Any:
         return getattr(request.state, "principal", UNAUTHENTICATED)
@@ -118,10 +132,83 @@ def build_thoughts_router(ctx: WebContext) -> APIRouter:
         if body is None:
             return JSONResponse({"error": "expected a JSON object"}, status_code=400)
         try:
-            thought = service().reconcile(principal(request), thought_id,
+            return JSONResponse(
+                application().reconcile(
+                    principal(request),
+                    thought_id=thought_id,
+                    expected_aggregate_revision=body.get("expected_aggregate_revision"),
+                    invocation_id=body.get("invocation_id"),
+                )
+            )
+        except ServiceError as exc:
+            return _error(exc)
+
+    @router.post("/api/thoughts/{thought_id}/refine")
+    async def refine(thought_id: str, request: Request) -> Any:
+        body = await _json_body(request)
+        if body is None:
+            return JSONResponse({"error": "expected a JSON object"}, status_code=400)
+        try:
+            result = await application().refine(
+                principal(request),
+                thought_id=thought_id,
+                request_id=str(body.get("request_id") or ""),
                 expected_aggregate_revision=body.get("expected_aggregate_revision"),
-                invocation_id=body.get("invocation_id"))
-            return JSONResponse({"thought": thought})
+                expected_working_revision=body.get("expected_working_revision"),
+                expected_attachment_revision=body.get("expected_attachment_revision"),
+            )
+            return JSONResponse(result, status_code=202)
+        except ServiceError as exc:
+            return _error(exc)
+
+    @router.post("/api/thoughts/{thought_id}/refinements/{invocation_id}/stop")
+    async def stop_refinement(thought_id: str, invocation_id: str, request: Request) -> Any:
+        body = await _json_body(request)
+        if body is None:
+            return JSONResponse({"error": "expected a JSON object"}, status_code=400)
+        try:
+            result = await application().stop(
+                principal(request),
+                thought_id=thought_id,
+                invocation_id=invocation_id,
+                expected_aggregate_revision=body.get("expected_aggregate_revision"),
+            )
+            return JSONResponse(result)
+        except ServiceError as exc:
+            return _error(exc)
+
+    @router.get("/api/thoughts/{thought_id}/reviews/{review_result_id}")
+    async def review(thought_id: str, review_result_id: str, request: Request) -> Any:
+        try:
+            return JSONResponse(
+                application().review(
+                    principal(request),
+                    thought_id=thought_id,
+                    review_result_id=review_result_id,
+                )
+            )
+        except ServiceError as exc:
+            return _error(exc)
+
+    @router.post("/api/thoughts/{thought_id}/reviews/{review_result_id}/{action}")
+    async def review_action(thought_id: str, review_result_id: str, action: str, request: Request) -> Any:
+        body = await _json_body(request)
+        if body is None:
+            return JSONResponse({"error": "expected a JSON object"}, status_code=400)
+        try:
+            return JSONResponse(
+                application().act_on_review(
+                    principal(request),
+                    thought_id=thought_id,
+                    review_result_id=review_result_id,
+                    request_id=str(body.get("request_id") or ""),
+                    action=action,
+                    expected_aggregate_revision=body.get("expected_aggregate_revision"),
+                    expected_working_revision=body.get("expected_working_revision"),
+                    expected_attachment_revision=body.get("expected_attachment_revision"),
+                    answer=str(body.get("answer") or ""),
+                )
+            )
         except ServiceError as exc:
             return _error(exc)
 

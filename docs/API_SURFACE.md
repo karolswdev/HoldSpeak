@@ -9,7 +9,7 @@ and the clients that call it (extracted from the real call sites in
 `web/src` and `apple/`). "server only" means no in-repo client calls
 it today.
 
-Routes: 501 (plus static mounts). iOS-consumed: 89. Web-consumed: 391.
+Routes: 505 (plus static mounts). iOS-consumed: 89. Web-consumed: 395.
 
 ## device_audio_ws
 
@@ -649,7 +649,11 @@ Routes: 501 (plus static mounts). iOS-consumed: 89. Web-consumed: 391.
 | POST | `/api/thoughts/{thought_id}/complete` | web |
 | GET | `/api/thoughts/{thought_id}/original` | web |
 | POST | `/api/thoughts/{thought_id}/reconcile` | web |
+| POST | `/api/thoughts/{thought_id}/refine` | web |
+| POST | `/api/thoughts/{thought_id}/refinements/{invocation_id}/stop` | web |
 | POST | `/api/thoughts/{thought_id}/resume` | web |
+| GET | `/api/thoughts/{thought_id}/reviews/{review_result_id}` | web |
+| POST | `/api/thoughts/{thought_id}/reviews/{review_result_id}/{action}` | web |
 | PATCH | `/api/thoughts/{thought_id}/working` | web |
 
 ## web.routes.primitives.workbenches

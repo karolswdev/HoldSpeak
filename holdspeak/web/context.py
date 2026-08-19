@@ -90,6 +90,10 @@ class WebContext:
     # into Workbenches.  The web surface receives the composed service rather
     # than opening a separate persistence seam.
     reaction_service: Optional[Any] = None
+    # HS-141-04: the single application-owned one-question task lifecycle.
+    # Route factories must never create their own threads or event loops.
+    refinement_coordinator: Optional[Any] = None
+    refinement_service: Optional[Any] = None
 
     # HS-26-03: intent-control + dictation-pipeline callbacks for the dictation
     # routes. The dictation handlers' many private helpers (project detection,

@@ -8,6 +8,7 @@ from holdspeak.db import Database
 from holdspeak.web.context import WebContext
 from holdspeak.web.routes import build_primitives_router
 from holdspeak.principals import Principal, PrincipalKind
+from holdspeak.services.refinement_thought_service import RefinementThoughtService
 
 
 def test_thought_routes_keep_raw_out_of_normal_read_and_require_cas(tmp_path, monkeypatch):
@@ -129,3 +130,87 @@ def test_note_adoption_routes_are_owner_only_and_return_the_same_note(tmp_path, 
     assert thought["working_note"]["id"] == "n1"
     assert client.get("/api/thoughts/for-note/n1").json()["ownership"] == "thought"
     assert client.get(f"/api/thoughts/{thought['id']}/original").json()["thought"]["raw_text"] == "exact"
+
+
+def test_refinement_routes_are_thin_adapters_to_the_injected_coordinator(tmp_path, monkeypatch):
+    db = Database(tmp_path / "coordinated-routes.db")
+    db.directories.upsert(directory_id="hs-seed-inbox", name="Inbox")
+    monkeypatch.setattr(hsdb, "get_database", lambda *args, **kwargs: db)
+    thought = RefinementThoughtService(db).create(
+        Principal(PrincipalKind.OWNER, "test-owner"), request_id="route-refine-capture",
+        raw_text="rough", source={"kind": "typed"},
+    )
+
+    class CoordinatorSpy:
+        def __init__(self):
+            self.begin_calls = []
+            self.stop_calls = []
+
+        async def begin(self, principal, **kwargs):
+            self.begin_calls.append((principal, kwargs))
+            invocation = {
+                "id": "rinv-route", "request_id": kwargs["request_id"],
+                "thought_id": kwargs["thought_id"], "state": "reserved", "attempts": [],
+            }
+            return RefinementThoughtService(db).get(principal, kwargs["thought_id"]), invocation
+
+        async def stop(self, principal, **kwargs):
+            self.stop_calls.append((principal, kwargs))
+            return RefinementThoughtService(db).get(principal, kwargs["thought_id"]), "cancelled"
+
+    coordinator = CoordinatorSpy()
+    app = FastAPI()
+
+    @app.middleware("http")
+    async def owner(request, call_next):
+        request.state.principal = Principal(PrincipalKind.OWNER, "test-owner")
+        return await call_next(request)
+
+    app.include_router(build_primitives_router(WebContext(
+        get_state=lambda: {}, refinement_coordinator=coordinator
+    )))
+    client = TestClient(app)
+    started = client.post(f"/api/thoughts/{thought['id']}/refine", json={
+        "request_id": "route-refine", "expected_aggregate_revision": 1,
+        "expected_working_revision": 1, "expected_attachment_revision": 0,
+    })
+    assert started.status_code == 202
+    assert coordinator.begin_calls[0][1] == {
+        "thought_id": thought["id"], "request_id": "route-refine",
+        "expected_aggregate_revision": 1, "expected_working_revision": 1,
+        "expected_attachment_revision": 0,
+    }
+    stopped = client.post(
+        f"/api/thoughts/{thought['id']}/refinements/rinv-route/stop",
+        json={"expected_aggregate_revision": 1},
+    )
+    assert stopped.status_code == 200
+    assert coordinator.stop_calls[0][1] == {
+        "thought_id": thought["id"], "invocation_id": "rinv-route",
+        "expected_aggregate_revision": 1,
+    }
+
+
+def test_refine_without_application_coordinator_refuses_before_reservation(tmp_path, monkeypatch):
+    db = Database(tmp_path / "no-coordinator.db")
+    db.directories.upsert(directory_id="hs-seed-inbox", name="Inbox")
+    monkeypatch.setattr(hsdb, "get_database", lambda *args, **kwargs: db)
+    owner = Principal(PrincipalKind.OWNER, "test-owner")
+    thought = RefinementThoughtService(db).create(
+        owner, request_id="no-coordinator-capture", raw_text="rough", source={"kind": "typed"}
+    )
+    app = FastAPI()
+
+    @app.middleware("http")
+    async def owner_identity(request, call_next):
+        request.state.principal = owner
+        return await call_next(request)
+
+    app.include_router(build_primitives_router(WebContext(get_state=lambda: {})))
+    response = TestClient(app).post(f"/api/thoughts/{thought['id']}/refine", json={
+        "request_id": "must-not-reserve", "expected_aggregate_revision": 1,
+        "expected_working_revision": 1, "expected_attachment_revision": 0,
+    })
+    assert response.status_code == 503
+    with db._connection() as conn:
+        assert conn.execute("SELECT COUNT(*) FROM refinement_invocations").fetchone()[0] == 0

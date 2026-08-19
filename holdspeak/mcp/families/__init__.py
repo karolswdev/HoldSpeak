@@ -25,6 +25,7 @@ from holdspeak.mcp.families import (
     reactions,
     sequence,
     settings,
+    thought,
 )
 
-FAMILIES = [ask, settings, coder, cadence, sequence, memory, people, plugin_job, reactions]
+FAMILIES = [ask, settings, coder, cadence, sequence, memory, people, plugin_job, reactions, thought]

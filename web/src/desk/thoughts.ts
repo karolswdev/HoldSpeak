@@ -22,6 +22,7 @@ export interface Thought {
   attachment_revision: number;
   working_note: ThoughtNote;
   filing_status: "filed" | "missing";
+  continuity?: { state: string; invocation_id?: string; review_result_id?: string; code?: string };
 }
 
 export interface ThoughtCompletionReceipt {
@@ -102,6 +103,43 @@ export async function resumeThought(thought: Thought): Promise<Thought> {
     },
   });
   return response.thought;
+}
+
+export async function refineThought(thought: Thought, request_id: string): Promise<{ thought: Thought; continuity: NonNullable<Thought["continuity"]> }> {
+  return apiFetch(`/api/thoughts/${encodeURIComponent(thought.id)}/refine`, { method: "POST", json: { request_id, expected_aggregate_revision: thought.aggregate_revision, expected_working_revision: thought.working_revision, expected_attachment_revision: thought.attachment_revision } });
+}
+
+export async function stopRefinement(thought: Thought, invocation_id: string): Promise<Thought> {
+  const response = await apiFetch<{ thought: Thought }>(`/api/thoughts/${encodeURIComponent(thought.id)}/refinements/${encodeURIComponent(invocation_id)}/stop`, { method: "POST", json: { expected_aggregate_revision: thought.aggregate_revision } });
+  return response.thought;
+}
+
+export interface ThoughtReview {
+  id: string;
+  kind: "question" | "synthesis";
+  question?: string;
+  reason?: string;
+  title?: string;
+  body_markdown?: string;
+  tags?: string[];
+}
+
+export async function reconcileThought(thought: Thought, invocation_id?: string): Promise<Thought> {
+  const response = await apiFetch<{ thought: Thought }>(`/api/thoughts/${encodeURIComponent(thought.id)}/reconcile`, {
+    method: "POST", json: { expected_aggregate_revision: thought.aggregate_revision, invocation_id },
+  });
+  return response.thought;
+}
+
+export async function reviewThought(thought: Thought, reviewId: string): Promise<ThoughtReview> {
+  const response = await apiFetch<{ review: ThoughtReview }>(`/api/thoughts/${encodeURIComponent(thought.id)}/reviews/${encodeURIComponent(reviewId)}`);
+  return response.review;
+}
+
+export async function actOnReview(input: { thought: Thought; reviewId: string; action: "answer" | "accept" | "reject"; request_id: string; answer?: string }): Promise<{ thought: Thought }> {
+  return apiFetch(`/api/thoughts/${encodeURIComponent(input.thought.id)}/reviews/${encodeURIComponent(input.reviewId)}/${input.action}`, {
+    method: "POST", json: { request_id: input.request_id, answer: input.answer || "", expected_aggregate_revision: input.thought.aggregate_revision, expected_working_revision: input.thought.working_revision, expected_attachment_revision: input.thought.attachment_revision },
+  });
 }
 
 export async function unfinishedThoughts(cursor?: string): Promise<{ items: UnfinishedThought[]; next_cursor: string | null }> {

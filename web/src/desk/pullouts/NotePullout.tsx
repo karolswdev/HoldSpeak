@@ -11,8 +11,8 @@ import { INLINE_EDITOR_CONTENT } from "./editors";
 import { ThoughtNoteEditor, type ThoughtNoteEditorHandle } from "./editors/ThoughtNoteEditor";
 import { useCopyReceipt } from "../hooks/useCopyReceipt";
 import type { PulloutContentProps } from "./types";
-import { adoptThought, completeThought, originalThought, resumeThought, sourceLabel, thoughtForNote, type NoteThoughtStatus, type Thought, type ThoughtCompletionReceipt, type ThoughtNote } from "../thoughts";
-import { ApiError } from "../../lib/api";
+import { actOnReview, adoptThought, completeThought, originalThought, reconcileThought, refineThought, resumeThought, reviewThought, sourceLabel, stopRefinement, thoughtForNote, type NoteThoughtStatus, type Thought, type ThoughtCompletionReceipt, type ThoughtNote, type ThoughtReview } from "../thoughts";
+import { apiFetch, ApiError } from "../../lib/api";
 
 export function NotePullout({ object: o }: PulloutContentProps) {
   const editing = useDesk((s) => s.editingId === o.id);
@@ -28,9 +28,15 @@ export function NotePullout({ object: o }: PulloutContentProps) {
   const [finishing, setFinishing] = useState(false);
   const [completionReceipt, setCompletionReceipt] = useState<ThoughtCompletionReceipt | null>(null);
   const [message, setMessage] = useState("");
+  const [modelReady, setModelReady] = useState(false);
+  const [review, setReview] = useState<ThoughtReview | null>(null);
+  const [answer, setAnswer] = useState("");
+  const [refining, setRefining] = useState(false);
+  const [more, setMore] = useState(false);
   const [ownershipLookup, setOwnershipLookup] = useState<"pending" | "ready" | "error">("pending");
   const originalReveal = useRef<HTMLElement | null>(null);
   const thoughtEditor = useRef<ThoughtNoteEditorHandle | null>(null);
+  const latestThought = useRef<Thought | null>(null);
   const loadOwnership = async () => {
     setOwnershipLookup("pending"); setStatus(null); setOriginal(null); setMessage("");
     try { setStatus(await thoughtForNote(o.id)); setOwnershipLookup("ready"); }
@@ -43,6 +49,33 @@ export function NotePullout({ object: o }: PulloutContentProps) {
     return () => { live = false; };
   }, [o.id]);
   const thought = status?.ownership === "thought" ? status.thought : null;
+  useEffect(() => { latestThought.current = thought; }, [thought]);
+  useEffect(() => {
+    let live = true;
+    // Refinement is deliberately pinned to the global local destination; a
+    // ready paired/profile model must never make this control appear.
+    void apiFetch<{ models?: Array<{ id?: string; ready?: boolean }> }>("/api/models").then((value) => { if (live) setModelReady(Array.isArray(value.models) && value.models.some((model) => model.id === "this_machine" && model.ready === true)); }).catch(() => { if (live) setModelReady(false); });
+    return () => { live = false; };
+  }, []);
+  useEffect(() => {
+    const continuity = thought?.continuity;
+    if (!thought || !continuity?.invocation_id || !["reserved", "in_flight", "awaiting_projection"].includes(continuity.state)) return;
+    const timer = window.setInterval(() => {
+      const current = latestThought.current;
+      if (current?.id === thought.id) void reconcileThought(current, continuity.invocation_id).then((next) => setStatus({ ownership: "thought", thought: next })).catch(() => undefined);
+    }, 900);
+    return () => window.clearInterval(timer);
+  }, [thought?.id, thought?.aggregate_revision, thought?.continuity?.state, thought?.continuity?.invocation_id]);
+  useEffect(() => {
+    if (!thought?.continuity?.review_result_id || thought.continuity.state !== "review_ready") { setReview(null); return; }
+    void reviewThought(thought, thought.continuity.review_result_id).then(setReview).catch(() => setMessage("The refinement result could not be reviewed. Your working note is unchanged. Try again or finish instead."));
+  }, [thought?.id, thought?.continuity?.review_result_id, thought?.continuity?.state]);
+  useEffect(() => {
+    const continuity = thought?.continuity;
+    if (continuity?.state !== "named_failure" || !continuity.code) return;
+    if (/^(owner_|thought_)/.test(continuity.code)) return;
+    setMessage("Could not get a useful question. Your working note is unchanged. You can try again or finish instead.");
+  }, [thought?.id, thought?.continuity?.state, thought?.continuity?.code]);
   // The pullout object is a navigation snapshot. Once custody resolves, the
   // aggregate DTO is the only authoritative working Note for reading/copying.
   const body = String(thought?.working_note.body_markdown ?? (status?.ownership === "ordinary" ? status.note.body_markdown : ir.bodyMarkdown) ?? "");
@@ -134,6 +167,34 @@ export function NotePullout({ object: o }: PulloutContentProps) {
       }
     } finally { setFinishing(false); }
   };
+  const refine = async () => {
+    if (!thought || refining) return;
+    setRefining(true); setMessage("");
+    const key = `hs.thought.refine.${thought.id}`;
+    const requestId = sessionStorage.getItem(key) || crypto.randomUUID();
+    sessionStorage.setItem(key, requestId);
+    try { const next = await refineThought(thought, requestId); sessionStorage.removeItem(key); setStatus({ ownership: "thought", thought: next.thought }); }
+    catch { setMessage("Could not start refining. Your working note is unchanged."); }
+    finally { setRefining(false); }
+  };
+  const stop = async () => {
+    const invocationId = thought?.continuity?.invocation_id;
+    if (!thought || !invocationId || refining) return;
+    setRefining(true);
+    try { setStatus({ ownership: "thought", thought: await stopRefinement(thought, invocationId) }); setMessage("Stopped. Your working note is unchanged."); }
+    catch { setMessage("Could not stop this request yet. Your working note is unchanged. Try again, or finish instead."); }
+    finally { setRefining(false); }
+  };
+  const act = async (action: "answer" | "accept" | "reject") => {
+    if (!thought || !review || refining || (action === "answer" && !answer.trim())) return;
+    setRefining(true); setMessage("");
+    const key = `hs.thought.review.${review.id}.${action}`;
+    const requestId = sessionStorage.getItem(key) || crypto.randomUUID();
+    sessionStorage.setItem(key, requestId);
+    try { const result = await actOnReview({ thought, reviewId: review.id, action, request_id: requestId, answer }); sessionStorage.removeItem(key); setStatus({ ownership: "thought", thought: result.thought }); setReview(null); setAnswer(""); setMessage(action === "answer" ? "Answer added to your working note." : action === "accept" ? "Refinement accepted into your working note." : "Refinement dismissed."); }
+    catch { setMessage("That review changed elsewhere. Your latest working note is shown."); }
+    finally { setRefining(false); }
+  };
   const resume = async () => {
     if (!thought || finishing || thought.state !== "completed") return;
     setFinishing(true); setMessage("");
@@ -168,6 +229,13 @@ export function NotePullout({ object: o }: PulloutContentProps) {
         </button> : null}
         {original ? <section ref={originalReveal} className="surface-aerogel" aria-label="Original kept" aria-live="polite" tabIndex={-1}><strong>Original kept · {sourceLabel(original.source.kind)}</strong><pre className="thought-original-raw">{original.raw_text}</pre><button type="button" className="desk-chip quiet" onClick={() => setOriginal(null)}>Close original</button></section> : null}
         {message ? <p role="status" className="surface-receipt-line">{message}</p> : null}
+        {thought?.continuity && ["reserved", "in_flight", "awaiting_projection"].includes(thought.continuity.state) ? <p role="status" className="surface-receipt-line">Finding one useful question…</p> : null}
+        {review?.kind === "question" ? <section className="surface-aerogel" aria-label="Refinement question"><strong>{review.question}</strong>{review.reason ? <p>{review.reason}</p> : null}<label>Answer<textarea value={answer} onChange={(event) => setAnswer(event.target.value)} /></label></section> : null}
+        {review?.kind === "synthesis" ? <section className="surface-aerogel" aria-label="Refinement suggestion"><strong>{review.title}</strong><Material>{review.body_markdown || ""}</Material></section> : null}
+        {more && thought ? <section className="surface-aerogel thought-more-menu" aria-label="More thought actions">
+          {thought.continuity && ["reserved", "in_flight", "awaiting_projection"].includes(thought.continuity.state) ? <button type="button" className="desk-chip quiet" disabled={finishing} onClick={() => void complete()}>Finish instead</button> : <><button type="button" className="desk-chip quiet" onClick={() => void copy(body)}>Copy</button><button type="button" className="desk-chip quiet" onClick={() => openEditor(o.id)}>Edit working note</button>{review ? <button type="button" className="desk-chip quiet" disabled={refining} onClick={() => void act("reject")}>Reject</button> : null}{thought.state === "working" ? <button type="button" className="desk-chip quiet" disabled={finishing} onClick={() => void complete()}>Finish instead</button> : null}</>}
+          <button type="button" className="desk-chip quiet" onClick={() => setMore(false)}>Close more</button>
+        </section> : null}
         {editing && thought ? (
           <ThoughtNoteEditor ref={thoughtEditor} thought={thought} finishing={finishing} onThought={(next) => setStatus({ ownership: "thought", thought: next })} />
         ) : editing && Content ? (
@@ -195,16 +263,18 @@ export function NotePullout({ object: o }: PulloutContentProps) {
         )}
       </div>
       <SurfaceFooter receipt={editing ? null : completionReceipt ? <>Done</> : copyReceipt} verbs={editing && thought ? <div className="thought-completion-verbs">
-        <button type="button" className="desk-chip quiet thought-completion-secondary" onClick={closeEditor}>Cancel</button>
+        <button type="button" className="desk-chip quiet thought-completion-secondary thought-editor-cancel" onClick={closeEditor}>Cancel</button>
         <button type="button" className="desk-chip is-primary thought-completion-primary" disabled={finishing} onClick={() => void complete()}>{finishing ? "Finishing…" : "Good enough"}</button>
       </div> : thought ? <>
         {thought.state === "completed" ? <>
           <div className="thought-completion-verbs"><button type="button" className="desk-chip quiet thought-completion-secondary" onClick={() => void copy(body)}>Copy</button>
           <button type="button" className="desk-chip is-primary thought-completion-primary" disabled={finishing} onClick={() => void resume()}>{finishing ? "Resuming…" : "Resume refining"}</button></div>
-        </> : <>
+        </> : thought.continuity && ["reserved", "in_flight", "awaiting_projection"].includes(thought.continuity.state) ? <div className="thought-completion-verbs"><button type="button" className="desk-chip is-primary thought-completion-primary" disabled={refining} onClick={() => void stop()}>{refining ? "Stopping…" : "Stop"}</button><button type="button" className="desk-chip quiet thought-more" onClick={() => setMore(true)}>More</button><button type="button" className="desk-chip quiet thought-completion-secondary" disabled={finishing} onClick={() => void complete()}>{finishing ? "Finishing…" : "Finish instead"}</button></div> : review?.kind === "question" ? <div className="thought-completion-verbs"><button type="button" className="desk-chip is-primary thought-completion-primary" disabled={refining || !answer.trim()} onClick={() => void act("answer")}>Answer</button><button type="button" className="desk-chip quiet thought-review-direct" onClick={() => openEditor(o.id)}>Edit working note</button><button type="button" className="desk-chip quiet thought-review-direct" disabled={refining} onClick={() => void act("reject")}>Reject</button><button type="button" className="desk-chip quiet thought-completion-secondary" disabled={finishing} onClick={() => void complete()}>Finish instead</button><button type="button" className="desk-chip quiet thought-more" onClick={() => setMore(true)}>More</button></div> : review?.kind === "synthesis" ? <div className="thought-completion-verbs"><button type="button" className="desk-chip is-primary thought-completion-primary" disabled={refining} onClick={() => void act("accept")}>Accept</button><button type="button" className="desk-chip quiet thought-review-direct" onClick={() => openEditor(o.id)}>Edit working note</button><button type="button" className="desk-chip quiet thought-review-direct" disabled={refining} onClick={() => void act("reject")}>Reject</button><button type="button" className="desk-chip quiet thought-completion-secondary" disabled={finishing} onClick={() => void complete()}>Finish instead</button><button type="button" className="desk-chip quiet thought-more" onClick={() => setMore(true)}>More</button></div> : <>
           <div className="thought-completion-verbs"><button type="button" className="desk-chip quiet thought-completion-secondary" onClick={() => void copy(body)}>Copy</button>
           <button type="button" className="desk-chip quiet thought-completion-secondary" onClick={() => openEditor(o.id)}>Edit</button>
-          <button type="button" className="desk-chip is-primary thought-completion-primary" disabled={finishing} onClick={() => void complete()}>{finishing ? "Finishing…" : "Good enough"}</button></div>
+          <button type="button" className="desk-chip quiet thought-more" onClick={() => setMore(true)}>More</button>
+          {modelReady ? <button type="button" className="desk-chip is-primary thought-completion-primary" disabled={refining} onClick={() => void refine()}>{refining ? "Starting…" : "Keep refining"}</button> : null}
+          <button type="button" className={modelReady ? "desk-chip quiet thought-completion-secondary" : "desk-chip is-primary thought-completion-primary"} disabled={finishing} onClick={() => void complete()}>{finishing ? "Finishing…" : modelReady ? "Finish instead" : "Good enough"}</button></div>
         </>}
       </> : ownershipLookup === "error" ? <>
         <button type="button" className="desk-chip is-primary" onClick={() => void loadOwnership()}>Retry checking this note</button>

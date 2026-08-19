@@ -6,6 +6,7 @@ import hashlib
 import hmac
 import json
 import uuid
+from datetime import datetime, timedelta, timezone
 from typing import Any
 
 from ..db.core import Database
@@ -230,7 +231,7 @@ class RefinementThoughtService:
             if record["state"] != "working":
                 self._supersede_invocations(conn, record["id"], "thought_tombstoned" if record["state"] == "tombstoned" else "thought_completed")
                 return self._dto_in_transaction(conn, record)
-            inv = conn.execute("SELECT * FROM refinement_invocations WHERE thought_id=?" + (" AND id=?" if invocation_id else "") + " ORDER BY created_at DESC LIMIT 1", (thought_id, invocation_id) if invocation_id else (thought_id,)).fetchone()
+            inv = conn.execute("SELECT * FROM refinement_invocations WHERE thought_id=?" + (" AND id=?" if invocation_id else "") + " ORDER BY created_at DESC,rowid DESC LIMIT 1", (thought_id, invocation_id) if invocation_id else (thought_id,)).fetchone()
             if inv is None:
                 return self._dto_in_transaction(conn, record)
             self._reconcile_invocation_in_transaction(conn, dict(inv), record)
@@ -240,7 +241,21 @@ class RefinementThoughtService:
     def reserve_refinement(self, principal: Principal, thought_id: str, *, request_id: str,
                            expected_aggregate_revision: int, expected_working_revision: int,
                            expected_attachment_revision: int) -> dict[str, Any]:
-        """Future Story-04 entry point: persist logical/base-attempt identity only."""
+        invocation, _created = self.reserve_refinement_with_dispatch_claim(
+            principal, thought_id, request_id=request_id,
+            expected_aggregate_revision=expected_aggregate_revision,
+            expected_working_revision=expected_working_revision,
+            expected_attachment_revision=expected_attachment_revision,
+        )
+        return invocation
+
+    def reserve_refinement_with_dispatch_claim(
+        self, principal: Principal, thought_id: str, *, request_id: str,
+        expected_aggregate_revision: int, expected_working_revision: int,
+        expected_attachment_revision: int, dispatch_host_id: str | None = None,
+        dispatch_lease_epoch: int | None = None,
+    ) -> tuple[dict[str, Any], bool]:
+        """Persist identity and atomically grant dispatch only to its creator."""
         self._require_product_owner(principal)
         semantic = {"request_id": str(request_id), "thought_id": str(thought_id), "frozen_aggregate_revision": expected_aggregate_revision,
                     "frozen_working_revision": expected_working_revision, "frozen_attachment_revision": expected_attachment_revision, "purpose": "refinement"}
@@ -250,7 +265,7 @@ class RefinementThoughtService:
             existing = conn.execute("SELECT * FROM refinement_invocations WHERE request_id=?", (request_id,)).fetchone()
             if existing:
                 if str(existing["request_sha256"]) != digest: raise ConflictError("request was already used for different refinement", code="refinement_request_payload_mismatch")
-                return self._invocation_dto(conn, dict(existing))
+                return self._invocation_dto(conn, dict(existing)), False
             thought = conn.execute("SELECT * FROM refinement_thoughts WHERE id=?", (thought_id,)).fetchone()
             if thought is None: raise NotFound("thought", thought_id)
             record = self._record(thought)
@@ -262,9 +277,339 @@ class RefinementThoughtService:
             live = conn.execute("SELECT id FROM refinement_invocations WHERE thought_id=? AND state IN ('reserved','in_flight','awaiting_projection','review_ready')", (thought_id,)).fetchone()
             if live: raise ConflictError("a refinement is already live", code="refinement_already_live", context={"invocation_id": str(live["id"])})
             now, iid, ask = _now(), _id("rinv"), _id("ask")
-            conn.execute("INSERT INTO refinement_invocations(id,request_id,request_sha256,thought_id,frozen_aggregate_revision,frozen_working_revision,frozen_attachment_revision,state,created_at,updated_at) VALUES(?,?,?,?,?,?,?,'reserved',?,?)", (iid,request_id,digest,thought_id,expected_aggregate_revision,expected_working_revision,expected_attachment_revision,now,now))
+            if dispatch_host_id:
+                lease_now = datetime.now(timezone.utc).isoformat(timespec="microseconds").replace("+00:00", "Z")
+                host = conn.execute(
+                    "SELECT lease_epoch,expires_at FROM refinement_hosts WHERE host_id=?",
+                    (dispatch_host_id,),
+                ).fetchone()
+                if host is None or int(host["lease_epoch"]) != int(dispatch_lease_epoch or 0) or str(host["expires_at"]) <= lease_now:
+                    raise ConflictError("refinement execution host lease is not live", code="refinement_host_lease_expired")
+            conn.execute("INSERT INTO refinement_invocations(id,request_id,request_sha256,thought_id,frozen_aggregate_revision,frozen_working_revision,frozen_attachment_revision,state,dispatch_host_id,dispatch_lease_epoch,created_at,updated_at) VALUES(?,?,?,?,?,?,?,'reserved',?,?,?,?)", (iid,request_id,digest,thought_id,expected_aggregate_revision,expected_working_revision,expected_attachment_revision,dispatch_host_id,dispatch_lease_epoch,now,now))
             conn.execute("INSERT INTO refinement_invocation_attempts(invocation_id,attempt_ordinal,ask_invocation_id,state,created_at) VALUES(?,1,?,'reserved',?)", (iid,ask,now))
-            return self._invocation_dto(conn, dict(conn.execute("SELECT * FROM refinement_invocations WHERE id=?", (iid,)).fetchone()))
+            return self._invocation_dto(conn, dict(conn.execute("SELECT * FROM refinement_invocations WHERE id=?", (iid,)).fetchone())), True
+
+    def claim_refinement_host(self, host_id: str, host_kind: str, *, lease_seconds: float) -> int:
+        if host_kind not in {"web", "mcp", "test"}:
+            raise ValueError("invalid refinement host kind")
+        now_dt = datetime.now(timezone.utc)
+        now = now_dt.isoformat(timespec="microseconds").replace("+00:00", "Z")
+        expires = (now_dt + timedelta(seconds=lease_seconds)).isoformat(timespec="microseconds").replace("+00:00", "Z")
+        with self._db._connection() as conn:
+            conn.execute("BEGIN IMMEDIATE")
+            prior = conn.execute("SELECT lease_epoch FROM refinement_hosts WHERE host_id=?", (host_id,)).fetchone()
+            epoch = int(prior["lease_epoch"]) + 1 if prior else 1
+            conn.execute(
+                "INSERT INTO refinement_hosts(host_id,host_kind,lease_epoch,heartbeat_at,expires_at) VALUES(?,?,?,?,?) "
+                "ON CONFLICT(host_id) DO UPDATE SET host_kind=excluded.host_kind,lease_epoch=excluded.lease_epoch,heartbeat_at=excluded.heartbeat_at,expires_at=excluded.expires_at",
+                (host_id, host_kind, epoch, now, expires),
+            )
+            return epoch
+
+    def heartbeat_refinement_host(self, host_id: str, lease_epoch: int, *, lease_seconds: float) -> bool:
+        now_dt = datetime.now(timezone.utc)
+        now = now_dt.isoformat(timespec="microseconds").replace("+00:00", "Z")
+        expires = (now_dt + timedelta(seconds=lease_seconds)).isoformat(timespec="microseconds").replace("+00:00", "Z")
+        with self._db._connection() as conn:
+            cur = conn.execute(
+                "UPDATE refinement_hosts SET heartbeat_at=?,expires_at=? WHERE host_id=? AND lease_epoch=?",
+                (now, expires, host_id, lease_epoch),
+            )
+            return bool(cur.rowcount)
+
+    def release_refinement_host(self, host_id: str, lease_epoch: int) -> None:
+        now = datetime.now(timezone.utc).isoformat(timespec="microseconds").replace("+00:00", "Z")
+        with self._db._connection() as conn:
+            conn.execute(
+                "UPDATE refinement_hosts SET expires_at=? WHERE host_id=? AND lease_epoch=?",
+                (now, host_id, lease_epoch),
+            )
+
+    def pending_host_cancellations(self, host_id: str, lease_epoch: int) -> list[dict[str, str]]:
+        with self._db._connection() as conn:
+            rows = conn.execute(
+                "SELECT ri.id,ria.ask_invocation_id FROM refinement_invocations ri "
+                "JOIN refinement_invocation_attempts ria ON ria.invocation_id=ri.id "
+                "WHERE ri.dispatch_host_id=? AND ri.dispatch_lease_epoch=? "
+                "AND ri.cancel_requested_at IS NOT NULL AND ri.cancel_observed_at IS NULL "
+                "ORDER BY ria.attempt_ordinal DESC",
+                (host_id, lease_epoch),
+            ).fetchall()
+            seen: set[str] = set()
+            result = []
+            for row in rows:
+                invocation_id = str(row["id"])
+                if invocation_id in seen: continue
+                seen.add(invocation_id)
+                result.append({"invocation_id":invocation_id,"ask_invocation_id":str(row["ask_invocation_id"])})
+            return result
+
+    def observe_host_cancellation(self, host_id: str, lease_epoch: int, invocation_id: str, disposition: str) -> None:
+        with self._db._connection() as conn:
+            conn.execute(
+                "UPDATE refinement_invocations SET cancel_observed_at=?,cancel_disposition=? "
+                "WHERE id=? AND dispatch_host_id=? AND dispatch_lease_epoch=? AND cancel_requested_at IS NOT NULL",
+                (_now(), disposition, invocation_id, host_id, lease_epoch),
+            )
+
+    def terminalize_reserved(self, principal: Principal, invocation_id: str, *, code: str) -> dict[str, Any]:
+        """Coordinator-only named pre-admission terminalization; no kernel row."""
+        self._require_owner(principal)
+        with self._db._connection() as conn:
+            conn.execute("BEGIN IMMEDIATE")
+            inv = conn.execute("SELECT * FROM refinement_invocations WHERE id=?", (invocation_id,)).fetchone()
+            if inv is None: raise NotFound("refinement invocation", invocation_id)
+            if str(inv["state"]) != "reserved": return self._invocation_dto(conn, dict(inv))
+            now = _now()
+            conn.execute("UPDATE refinement_invocation_attempts SET state='refused',terminal_code=?,terminal_at=? WHERE invocation_id=? AND attempt_ordinal=1 AND state='reserved'", (code, now, invocation_id))
+            conn.execute("UPDATE refinement_invocations SET state='refused',terminal_code=?,updated_at=?,terminal_at=? WHERE id=? AND state='reserved'", (code, now, now, invocation_id))
+            return self._invocation_dto(conn, dict(conn.execute("SELECT * FROM refinement_invocations WHERE id=?", (invocation_id,)).fetchone()))
+
+    def recover_refinements_on_startup(self) -> list[str]:
+        """Reconcile abandoned app tasks without ever dispatching them again.
+
+        Kernel recovery/projection reaping runs before this method.  A logical
+        invocation with no native operation was never admitted and gets the
+        exact pre-dispatch shutdown outcome.  Anything with kernel identity is
+        reconciled from receipts only; a bound operation with no terminal proof
+        is indeterminate after process loss.
+        """
+        recovered: list[str] = []
+        with self._db._connection() as conn:
+            conn.execute("BEGIN IMMEDIATE")
+            lease_now = datetime.now(timezone.utc).isoformat(timespec="microseconds").replace("+00:00", "Z")
+            rows = conn.execute(
+                "SELECT * FROM refinement_invocations "
+                "WHERE state IN ('reserved','in_flight','awaiting_projection') "
+                "ORDER BY created_at,id"
+            ).fetchall()
+            for raw in rows:
+                inv = dict(raw)
+                invocation_id = str(inv["id"])
+                if inv.get("dispatch_host_id"):
+                    host = conn.execute(
+                        "SELECT lease_epoch,expires_at FROM refinement_hosts WHERE host_id=?",
+                        (inv["dispatch_host_id"],),
+                    ).fetchone()
+                    if host is not None and int(host["lease_epoch"]) == int(inv.get("dispatch_lease_epoch") or 0) and str(host["expires_at"]) > lease_now:
+                        # Another first-class host still owns execution. Missing
+                        # kernel proof is not abandonment while that lease lives.
+                        continue
+                attempts = conn.execute(
+                    "SELECT * FROM refinement_invocation_attempts "
+                    "WHERE invocation_id=? ORDER BY attempt_ordinal",
+                    (invocation_id,),
+                ).fetchall()
+                bound = False
+                for attempt in attempts:
+                    if attempt["kernel_operation_id"]:
+                        bound = True
+                        break
+                    native = conn.execute(
+                        "SELECT 1 FROM kernel_operations WHERE native_id=?",
+                        (attempt["ask_invocation_id"],),
+                    ).fetchone()
+                    if native is not None:
+                        bound = True
+                        break
+                now = _now()
+                if not bound:
+                    conn.execute(
+                        "UPDATE refinement_invocation_attempts SET "
+                        "state='refused',terminal_code='shutdown_before_dispatch',terminal_at=? "
+                        "WHERE invocation_id=? AND state='reserved'",
+                        (now, invocation_id),
+                    )
+                    conn.execute(
+                        "UPDATE refinement_invocations SET "
+                        "state='refused',terminal_code='shutdown_before_dispatch',updated_at=?,terminal_at=? "
+                        "WHERE id=?",
+                        (now, now, invocation_id),
+                    )
+                    recovered.append(invocation_id)
+                    continue
+                thought = conn.execute(
+                    "SELECT * FROM refinement_thoughts WHERE id=?",
+                    (inv["thought_id"],),
+                ).fetchone()
+                if thought is None:
+                    conn.execute(
+                        "UPDATE refinement_invocations SET state='unknown',"
+                        "terminal_code='thought_missing_during_recovery',updated_at=?,terminal_at=? "
+                        "WHERE id=?",
+                        (now, now, invocation_id),
+                    )
+                    recovered.append(invocation_id)
+                    continue
+                self._reconcile_invocation_in_transaction(
+                    conn, inv, self._record(thought)
+                )
+                fresh = conn.execute(
+                    "SELECT state FROM refinement_invocations WHERE id=?",
+                    (invocation_id,),
+                ).fetchone()
+                if fresh and str(fresh["state"]) in {"reserved", "in_flight"}:
+                    conn.execute(
+                        "UPDATE refinement_invocation_attempts SET "
+                        "state='indeterminate',terminal_code='restart_bound_outcome_unknown',terminal_at=? "
+                        "WHERE invocation_id=? AND kernel_operation_id IS NOT NULL "
+                        "AND state IN ('reserved','in_flight')",
+                        (now, invocation_id),
+                    )
+                    conn.execute(
+                        "UPDATE refinement_invocations SET state='indeterminate',"
+                        "terminal_code='restart_bound_outcome_unknown',updated_at=?,terminal_at=? "
+                        "WHERE id=?",
+                        (now, now, invocation_id),
+                    )
+                recovered.append(invocation_id)
+        return recovered
+
+    def settle_coordinator_failure(
+        self,
+        principal: Principal,
+        thought_id: str,
+        invocation_id: str,
+        *,
+        code: str,
+    ) -> dict[str, Any]:
+        """Reconcile kernel proof, then name a bound proof gap honestly."""
+        self._require_owner(principal)
+        thought = self.get(principal, thought_id)
+        result = self.reconcile(
+            principal,
+            thought_id,
+            expected_aggregate_revision=thought["aggregate_revision"],
+            invocation_id=invocation_id,
+        )
+        if result["continuity"]["state"] not in {
+            "reserved",
+            "in_flight",
+            "awaiting_projection",
+        }:
+            return result
+        with self._db._connection() as conn:
+            conn.execute("BEGIN IMMEDIATE")
+            inv = conn.execute(
+                "SELECT state FROM refinement_invocations WHERE id=? AND thought_id=?",
+                (invocation_id, thought_id),
+            ).fetchone()
+            bound = conn.execute(
+                "SELECT 1 FROM refinement_invocation_attempts "
+                "WHERE invocation_id=? AND kernel_operation_id IS NOT NULL LIMIT 1",
+                (invocation_id,),
+            ).fetchone()
+            if inv and bound and str(inv["state"]) in {
+                "reserved",
+                "in_flight",
+                "awaiting_projection",
+            }:
+                now = _now()
+                conn.execute(
+                    "UPDATE refinement_invocation_attempts SET state='indeterminate',"
+                    "terminal_code=?,terminal_at=? WHERE invocation_id=? "
+                    "AND state IN ('reserved','in_flight')",
+                    (code, now, invocation_id),
+                )
+                conn.execute(
+                    "UPDATE refinement_invocations SET state='indeterminate',"
+                    "terminal_code=?,updated_at=?,terminal_at=? WHERE id=?",
+                    (code, now, now, invocation_id),
+                )
+                record = self._record(
+                    conn.execute(
+                        "SELECT * FROM refinement_thoughts WHERE id=?", (thought_id,)
+                    ).fetchone()
+                )
+                return self._dto_in_transaction(conn, record)
+        return result
+
+    def stop_refinement(self, principal: Principal, thought_id: str, *, invocation_id: str, expected_aggregate_revision: int) -> tuple[dict[str, Any], str | None]:
+        thought, target = self.stop_refinement_with_owner(
+            principal, thought_id, invocation_id=invocation_id,
+            expected_aggregate_revision=expected_aggregate_revision,
+        )
+        return thought, target.get("ask_invocation_id")
+
+    def stop_refinement_with_owner(self, principal: Principal, thought_id: str, *, invocation_id: str, expected_aggregate_revision: int) -> tuple[dict[str, Any], dict[str, Any]]:
+        self._require_owner(principal)
+        with self._db._connection() as conn:
+            conn.execute("BEGIN IMMEDIATE")
+            thought = conn.execute("SELECT * FROM refinement_thoughts WHERE id=?", (thought_id,)).fetchone()
+            inv = conn.execute("SELECT * FROM refinement_invocations WHERE id=? AND thought_id=?", (invocation_id, thought_id)).fetchone()
+            if thought is None: raise NotFound("thought", thought_id)
+            record = self._record(thought)
+            if int(record["aggregate_revision"]) != expected_aggregate_revision: raise self._conflict(conn, record, expected_aggregate_revision, None)
+            if inv is None: raise NotFound("refinement invocation", invocation_id)
+            ask = conn.execute("SELECT ask_invocation_id FROM refinement_invocation_attempts WHERE invocation_id=? ORDER BY attempt_ordinal DESC LIMIT 1", (invocation_id,)).fetchone()
+            if str(inv["state"]) in {"reserved","in_flight","awaiting_projection","review_ready"}:
+                now, code = _now(), "owner_stopped" if str(inv["state"]) == "reserved" else "owner_stopped_after_dispatch"
+                conn.execute("UPDATE refinement_invocation_attempts SET state='cancelled',terminal_code=?,terminal_at=? WHERE invocation_id=? AND state IN ('reserved','in_flight')", (code, now, invocation_id))
+                conn.execute("UPDATE refinement_invocations SET state='cancelled',terminal_code=?,cancel_requested_at=COALESCE(cancel_requested_at,?),updated_at=?,terminal_at=? WHERE id=? AND state IN ('reserved','in_flight','awaiting_projection','review_ready')", (code, now, now, now, invocation_id))
+            host = conn.execute(
+                "SELECT lease_epoch,expires_at FROM refinement_hosts WHERE host_id=?",
+                (inv["dispatch_host_id"],),
+            ).fetchone() if inv["dispatch_host_id"] else None
+            lease_now = datetime.now(timezone.utc).isoformat(timespec="microseconds").replace("+00:00", "Z")
+            live = bool(host and int(host["lease_epoch"]) == int(inv["dispatch_lease_epoch"] or 0) and str(host["expires_at"]) > lease_now)
+            target = {
+                "ask_invocation_id": str(ask["ask_invocation_id"]) if ask else None,
+                "dispatch_host_id": str(inv["dispatch_host_id"] or ""),
+                "dispatch_lease_epoch": int(inv["dispatch_lease_epoch"] or 0),
+                "host_live": live,
+            }
+            return self._dto_in_transaction(conn, record), target
+
+    def review(self, principal: Principal, thought_id: str, review_result_id: str) -> dict[str, Any]:
+        self._require_owner(principal)
+        with self._db._connection() as conn:
+            row = conn.execute("SELECT rr.*,ri.thought_id,ri.state,ar.payload_json FROM refinement_review_results rr JOIN refinement_invocations ri ON ri.id=rr.invocation_id JOIN ask_results ar ON ar.projection_stage_id=rr.ask_result_stage_id WHERE rr.id=? AND ri.thought_id=?", (review_result_id, thought_id)).fetchone()
+            if row is None: raise NotFound("refinement review", review_result_id)
+            if str(row["state"]) != "review_ready": raise ConflictError("review is no longer current", code="refinement_review_superseded")
+            card = self._review_card(str(row["payload_json"]))
+            provenance = self._review_provenance(str(row["payload_json"]))
+            return {"review":{"id":review_result_id, **card, **provenance,"frozen_aggregate_revision":row["frozen_aggregate_revision"],"frozen_working_revision":row["frozen_working_revision"],"frozen_attachment_revision":row["frozen_attachment_revision"]}}
+
+    def review_action(self, principal: Principal, thought_id: str, review_result_id: str, *, request_id: str, action: str,
+                      expected_aggregate_revision: int, expected_working_revision: int, expected_attachment_revision: int, answer: str = "") -> tuple[dict[str, Any], dict[str, Any]]:
+        self._require_owner(principal)
+        if action not in {"answer","accept","reject"}: raise ValidationError("invalid review action")
+        if action == "answer" and len(answer) > 12000:
+            raise ValidationError("answer is too long", code="refinement_answer_too_long")
+        digest = hashlib.sha256(canonical_json({"request_id":request_id,"thought_id":thought_id,"review_result_id":review_result_id,"action":action,"aggregate":expected_aggregate_revision,"working":expected_working_revision,"attachment":expected_attachment_revision,"answer_sha256":hashlib.sha256(answer.encode()).hexdigest() if action == "answer" else ""})).hexdigest()
+        with self._db._connection() as conn:
+            conn.execute("BEGIN IMMEDIATE")
+            prior = conn.execute("SELECT * FROM refinement_review_actions WHERE request_id=?", (request_id,)).fetchone()
+            thoughtrow = conn.execute("SELECT * FROM refinement_thoughts WHERE id=?", (thought_id,)).fetchone()
+            if thoughtrow is None: raise NotFound("thought", thought_id)
+            record = self._record(thoughtrow)
+            if prior is not None:
+                if str(prior["request_sha256"]) != digest: raise ConflictError("review action request changed", code="refinement_review_action_payload_mismatch")
+                if (int(record["aggregate_revision"]),int(record["working_revision"]),int(record["lifecycle_revision"])) == (int(prior["post_aggregate_revision"]),int(prior["post_working_revision"]),int(prior["post_lifecycle_revision"])):
+                    return self._dto_in_transaction(conn, record), {"id":str(prior["action_id"]),"kind":str(prior["action_kind"])}
+                raise ConflictError("review action was superseded", code="refinement_review_action_superseded", context={"current":self._dto_in_transaction(conn,record)})
+            reviewrow = conn.execute("SELECT rr.*,ri.state,ar.payload_json FROM refinement_review_results rr JOIN refinement_invocations ri ON ri.id=rr.invocation_id JOIN ask_results ar ON ar.projection_stage_id=rr.ask_result_stage_id WHERE rr.id=? AND ri.thought_id=?", (review_result_id, thought_id)).fetchone()
+            if reviewrow is None or str(reviewrow["state"]) != "review_ready": raise ConflictError("review is no longer current", code="refinement_review_superseded")
+            review = self._review_card(str(reviewrow["payload_json"]))
+            if (int(record["aggregate_revision"]),int(record["working_revision"]),int(record["attachment_revision"])) != (expected_aggregate_revision,expected_working_revision,expected_attachment_revision): raise self._conflict(conn,record,expected_aggregate_revision,expected_working_revision)
+            if (int(reviewrow["frozen_aggregate_revision"]), int(reviewrow["frozen_working_revision"]), int(reviewrow["frozen_attachment_revision"])) != (expected_aggregate_revision, expected_working_revision, expected_attachment_revision):
+                raise ConflictError("review was based on an older working note", code="refinement_review_superseded", context={"current": self._dto_in_transaction(conn, record)})
+            if action == "answer" and review["kind"] != "question": raise ValidationError("review is not a question", code="refinement_review_kind_invalid")
+            if action == "accept" and review["kind"] != "synthesis": raise ValidationError("review is not a synthesis", code="refinement_review_kind_invalid")
+            now = _now(); aid = _id("ract")
+            cur = conn.execute("UPDATE refinement_invocations SET state='superseded',terminal_code=?,updated_at=?,terminal_at=? WHERE review_result_id=? AND state='review_ready'", ("owner_"+action+"ed",now,now,review_result_id))
+            if not cur.rowcount: raise ConflictError("review is no longer current", code="refinement_review_superseded")
+            updated = record
+            if action != "reject":
+                note = conn.execute("SELECT * FROM notes WHERE id=?", (record["working_note_id"],)).fetchone()
+                title, body, tags = str(note["title"]), str(note["body_markdown"]), json.loads(note["tags_json"])
+                if action == "answer": body = body + ("\n\n" if body else "") + "## Clarification\nQuestion: " + review["question"] + "\nAnswer: " + answer
+                else: title, body, tags = review["title"], review["body_markdown"], review["tags"]
+                conn.execute("UPDATE refinement_thoughts SET aggregate_revision=?,working_revision=?,updated_at=? WHERE id=?", (expected_aggregate_revision+1,expected_working_revision+1,now,thought_id))
+                self._db.notes._upsert_in_transaction(conn,note_id=record["working_note_id"],title=title,body_markdown=body,tags=tags,now=now)
+                wh=self._insert_revision(conn,thought_id,expected_working_revision+1,title,body,tags,now); updated=self._record(conn.execute("SELECT * FROM refinement_thoughts WHERE id=?",(thought_id,)).fetchone()); RefinementThoughtRepository.insert_command(conn,updated,command_kind="replace_working",prior_working_revision=expected_working_revision,prior_lifecycle_revision=record["lifecycle_revision"],prior_attachment_revision=record["attachment_revision"],working_sha256=wh,lifecycle_sha256=None,accepted_at=now)
+            conn.execute("INSERT INTO refinement_review_actions(action_id,request_id,request_sha256,thought_id,review_result_id,action_kind,aggregate_revision,working_revision,lifecycle_revision,attachment_revision,post_aggregate_revision,post_working_revision,post_lifecycle_revision,created_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)", (aid,request_id,digest,thought_id,review_result_id,action,expected_aggregate_revision,expected_working_revision,record["lifecycle_revision"],expected_attachment_revision,updated["aggregate_revision"],updated["working_revision"],updated["lifecycle_revision"],now))
+            return self._dto_in_transaction(conn,updated), {"id":aid,"kind":action}
 
     def update_working(self, principal: Principal, thought_id: str, *, expected_aggregate_revision: int | None,
                        expected_working_revision: int | None, title: str | None = None,
@@ -300,6 +645,7 @@ class RefinementThoughtService:
                 updated = self._record(conn.execute("SELECT * FROM refinement_thoughts WHERE id=?", (thought_id,)).fetchone())
                 RefinementThoughtRepository.insert_command(conn,updated,command_kind="replace_working",prior_working_revision=expected_working_revision,
                     prior_lifecycle_revision=record["lifecycle_revision"],prior_attachment_revision=record["attachment_revision"],working_sha256=working_hash,lifecycle_sha256=None,accepted_at=now)
+                self._supersede_invocations(conn, thought_id, "owner_edited")
                 return self._dto_in_transaction(conn, updated)
         if custody_lost:
             fresh = self._db.refinement_thoughts.get(thought_id)
@@ -359,6 +705,7 @@ class RefinementThoughtService:
                 fresh = self._record(conn.execute("SELECT * FROM refinement_thoughts WHERE id=?", (thought_id,)).fetchone())
                 raise self._conflict(conn, fresh, expected_aggregate_revision, None, code="thought_revision_conflict")
             updated = self._record(conn.execute("SELECT * FROM refinement_thoughts WHERE id=?", (thought_id,)).fetchone())
+            self._supersede_invocations(conn, thought_id, "thought_completed")
             life_hash = RefinementThoughtRepository.insert_lifecycle(conn, thought_id=thought_id, lifecycle_revision=next_life,
                 aggregate_revision=next_agg, prior_state="working", state="completed", command="complete", occurred_at=now)
             work = conn.execute("SELECT content_sha256 FROM refinement_working_revisions WHERE thought_id=? AND revision=?", (thought_id, record["working_revision"])).fetchone()
@@ -401,6 +748,7 @@ class RefinementThoughtService:
                 (state,next_life,next_agg,RefinementThoughtRepository.next_resume_order(conn),now if state=="completed" else None,now,thought_id,expected_aggregate_revision,expected_lifecycle_revision,record["state"]))
             if not cur.rowcount: raise self._conflict(conn,self._record(conn.execute("SELECT * FROM refinement_thoughts WHERE id=?",(thought_id,)).fetchone()),expected_aggregate_revision,None)
             updated=self._record(conn.execute("SELECT * FROM refinement_thoughts WHERE id=?",(thought_id,)).fetchone())
+            if state == "completed": self._supersede_invocations(conn, thought_id, "thought_completed")
             life_hash=RefinementThoughtRepository.insert_lifecycle(conn,thought_id=thought_id,lifecycle_revision=next_life,aggregate_revision=next_agg,prior_state=record["state"],state=state,command=command,occurred_at=now)
             work=conn.execute("SELECT content_sha256 FROM refinement_working_revisions WHERE thought_id=? AND revision=?",(thought_id,record["working_revision"])).fetchone()
             RefinementThoughtRepository.insert_command(conn,updated,command_kind=command,prior_working_revision=record["working_revision"],prior_lifecycle_revision=expected_lifecycle_revision,prior_attachment_revision=record["attachment_revision"],working_sha256=str(work["content_sha256"]),lifecycle_sha256=life_hash,accepted_at=now)
@@ -497,11 +845,13 @@ class RefinementThoughtService:
                     conn.execute("UPDATE refinement_invocation_attempts SET state='failed',terminal_at=? WHERE invocation_id=? AND attempt_ordinal=1", (_now(),invocation_id))
                     conn.execute("INSERT INTO refinement_invocation_attempts(invocation_id,attempt_ordinal,ask_invocation_id,state,created_at) VALUES(?,?,?,'reserved',?)", (invocation_id,attempt_ordinal,ask_invocation_id,_now()))
                     attempt = conn.execute("SELECT * FROM refinement_invocation_attempts WHERE invocation_id=? AND attempt_ordinal=?", (invocation_id,attempt_ordinal)).fetchone()
-                if attempt is None or str(attempt["ask_invocation_id"]) != ask_invocation_id or str(inv["state"]) not in {"reserved","in_flight"}:
+                if attempt is None or str(attempt["ask_invocation_id"]) != ask_invocation_id:
                     raise ValidationError("refinement attempt cannot dispatch", code="refinement_attempt_invalid")
                 thought = conn.execute("SELECT * FROM refinement_thoughts WHERE id=?", (inv["thought_id"],)).fetchone()
                 if thought is None or str(thought["state"]) != "working" or (int(thought["aggregate_revision"]),int(thought["working_revision"]),int(thought["attachment_revision"])) != (int(inv["frozen_aggregate_revision"]),int(inv["frozen_working_revision"]),int(inv["frozen_attachment_revision"])):
                     raise ValidationError("refinement source changed", code="refinement_result_stale")
+                if str(inv["state"]) not in {"reserved","in_flight"}:
+                    raise ValidationError("refinement attempt cannot dispatch", code="refinement_attempt_invalid")
                 now = _now()
                 if attempt["kernel_operation_id"] and str(attempt["kernel_operation_id"]) != operation_id: raise ValidationError("attempt operation changed", code="refinement_correlation_mismatch")
                 conn.execute("UPDATE refinement_invocation_attempts SET kernel_operation_id=?,state='in_flight',bound_at=? WHERE invocation_id=? AND attempt_ordinal=?", (operation_id,now,invocation_id,attempt_ordinal))
@@ -552,7 +902,7 @@ class RefinementThoughtService:
         preview = " ".join(str(note["body_markdown"] if note else "").split())[:160]
         return {"id":record["id"],"working_note_id":record["working_note_id"],"source_kind":record["raw_source_kind"],"title":str(note["title"] if note else ""),"body_preview":preview,"updated_at":record["updated_at"],"state":record["state"],"aggregate_revision":record["aggregate_revision"],"lifecycle_revision":record["lifecycle_revision"],"working_revision":record["working_revision"],"attachment_revision":record["attachment_revision"],"continuity_state":"unavailable_remote" if remote else self._continuity(conn,record["id"])["state"],"filing_status":"filed" if member and not member["deleted"] else "missing"}
     def _continuity(self, conn: Any, thought_id: str) -> dict[str, Any]:
-        row = conn.execute("SELECT id,state,review_result_id,terminal_code FROM refinement_invocations WHERE thought_id=? ORDER BY created_at DESC LIMIT 1", (thought_id,)).fetchone()
+        row = conn.execute("SELECT id,state,review_result_id,terminal_code FROM refinement_invocations WHERE thought_id=? ORDER BY created_at DESC,rowid DESC LIMIT 1", (thought_id,)).fetchone()
         if row is None: return {"state":"idle","code":""}
         state = str(row["state"]); return {"state": "named_failure" if state in {"failed","refused","cancelled","indeterminate","unknown","superseded"} else state, "invocation_id":str(row["id"]), "review_result_id":row["review_result_id"], "code":str(row["terminal_code"] or "")}
     @staticmethod
@@ -563,6 +913,12 @@ class RefinementThoughtService:
         attempts = conn.execute("SELECT attempt_ordinal,ask_invocation_id,state FROM refinement_invocation_attempts WHERE invocation_id=? ORDER BY attempt_ordinal", (inv["id"],)).fetchall()
         return {"id":inv["id"],"request_id":inv["request_id"],"thought_id":inv["thought_id"],"frozen_aggregate_revision":inv["frozen_aggregate_revision"],"frozen_working_revision":inv["frozen_working_revision"],"frozen_attachment_revision":inv["frozen_attachment_revision"],"state":inv["state"],"attempts":[{"attempt_ordinal":x["attempt_ordinal"],"ask_invocation_id":x["ask_invocation_id"],"state":x["state"]} for x in attempts]}
     def _reconcile_invocation_in_transaction(self, conn: Any, inv: dict[str, Any], thought: dict[str, Any]) -> None:
+        # Stop, Good enough, owner edit, Answer/Accept/Reject and an earlier
+        # terminal reconciliation are durable suppression fences.  Late kernel
+        # proof may remain auditable in native tables, but can never resurrect
+        # a review invitation after one of those owner decisions.
+        if str(inv["state"]) not in {"reserved", "in_flight", "awaiting_projection", "review_ready"}:
+            return
         if (int(thought["aggregate_revision"]),int(thought["working_revision"]),int(thought["attachment_revision"])) != (int(inv["frozen_aggregate_revision"]),int(inv["frozen_working_revision"]),int(inv["frozen_attachment_revision"])):
             conn.execute("UPDATE refinement_invocations SET state='stale',terminal_code='refinement_result_stale',updated_at=?,terminal_at=? WHERE id=?", (_now(),_now(),inv["id"])); return
         attempts = conn.execute("SELECT * FROM refinement_invocation_attempts WHERE invocation_id=? ORDER BY attempt_ordinal", (inv["id"],)).fetchall()
@@ -604,6 +960,15 @@ class RefinementThoughtService:
             raise ConflictError("multiple refinement result attempts matched", code="refinement_correlation_mismatch")
         if winners:
             attempt,row,digest=winners[0]; existing=conn.execute("SELECT * FROM refinement_review_results WHERE invocation_id=?",(inv["id"],)).fetchone(); rid=str(existing["id"]) if existing else _id("rresult")
+            # Never persist a review-ready invitation whose native payload is
+            # not the narrow card grammar.  A malformed model result is a
+            # named terminal outcome, not an actionable owner decision.
+            try:
+                self._review_card(str(row["payload_json"]))
+            except ValidationError:
+                conn.execute("UPDATE refinement_invocation_attempts SET state='failed',terminal_code='refinement_result_invalid',terminal_at=? WHERE invocation_id=? AND attempt_ordinal=?", (_now(), inv["id"], attempt["attempt_ordinal"]))
+                conn.execute("UPDATE refinement_invocations SET state='failed',terminal_code='refinement_result_invalid',updated_at=?,terminal_at=? WHERE id=?", (_now(), _now(), inv["id"]))
+                return
             if not existing:
                 conn.execute("INSERT INTO refinement_review_results(id,invocation_id,attempt_ordinal,ask_result_stage_id,ask_invocation_id,kernel_operation_id,receipt_id,result_ref,frozen_aggregate_revision,frozen_working_revision,frozen_attachment_revision,result_sha256,created_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)",(rid,inv["id"],attempt["attempt_ordinal"],row["projection_stage_id"],attempt["ask_invocation_id"],attempt["kernel_operation_id"],row["receipt_id"],row["result_ref"],inv["frozen_aggregate_revision"],inv["frozen_working_revision"],inv["frozen_attachment_revision"],digest,_now()))
             elif (str(existing["ask_result_stage_id"]),str(existing["ask_invocation_id"]),str(existing["kernel_operation_id"]),str(existing["receipt_id"]),str(existing["result_ref"]),str(existing["result_sha256"])) != (str(row["projection_stage_id"]),str(attempt["ask_invocation_id"]),str(attempt["kernel_operation_id"]),str(row["receipt_id"]),str(row["result_ref"]),digest):
@@ -626,6 +991,43 @@ class RefinementThoughtService:
                 conn.execute("UPDATE refinement_invocations SET state=?,terminal_code=?,updated_at=?,terminal_at=? WHERE id=?", (state,str(last["terminal_code"] or state),_now(),_now(),inv["id"]))
     def _dto(self,record:dict[str,Any],*,include_raw:bool=False,remote:bool=False)->dict[str,Any]:
         with self._db._connection() as conn: return self._dto_in_transaction(conn,record,include_raw=include_raw,remote=remote)
+    @staticmethod
+    def _review_card(payload_json: str) -> dict[str, Any]:
+        """The only model-shaped datum that may become an owner review card."""
+        try:
+            outer = json.loads(payload_json); card = json.loads(str(outer.get("output") or ""))
+        except (TypeError, ValueError, AttributeError) as exc:
+            raise ValidationError("refinement result is not a valid review", code="refinement_result_invalid") from exc
+        if not isinstance(card, dict): raise ValidationError("refinement result is not a valid review", code="refinement_result_invalid")
+        if card.get("kind") == "question" and set(card) <= {"kind","question","reason"} and isinstance(card.get("question"), str) and isinstance(card.get("reason", ""), str) and 0 < len(card["question"]) <= 1200 and len(str(card.get("reason") or "")) <= 1200:
+            return {"kind":"question", "question":card["question"], "reason":str(card.get("reason") or "")}
+        if card.get("kind") == "synthesis" and set(card) <= {"kind","title","body_markdown","tags"} and isinstance(card.get("title"),str) and isinstance(card.get("body_markdown"),str) and isinstance(card.get("tags"),list) and len(card["title"]) <= 500 and len(card["body_markdown"]) <= 12000 and len(card["tags"]) <= 24 and all(isinstance(x,str) and len(x) <= 80 for x in card["tags"]):
+            return {"kind":"synthesis","title":card["title"],"body_markdown":card["body_markdown"],"tags":card["tags"]}
+        raise ValidationError("refinement result is not a valid review", code="refinement_result_invalid")
+    @staticmethod
+    def _review_provenance(payload_json: str) -> dict[str, Any]:
+        """Expose bounded execution facts, never the native Ask payload."""
+        try:
+            payload = json.loads(payload_json)
+        except (TypeError, ValueError):
+            payload = {}
+        if not isinstance(payload, dict): payload = {}
+        raw_placement = payload.get("actual_placement")
+        placement: dict[str, Any] = {}
+        if isinstance(raw_placement, dict):
+            for key in ("target_id","target_name","target_kind","boundary","owner","transport","engine","model","fallback_reason"):
+                value = raw_placement.get(key)
+                if value is None or isinstance(value, (str, int, float, bool)):
+                    placement[key] = value if not isinstance(value, str) else value[:500]
+            classes = raw_placement.get("data_classes")
+            if isinstance(classes, list):
+                placement["data_classes"] = [str(value)[:120] for value in classes[:8]]
+        raw_egress = payload.get("egress")
+        egress: dict[str, str] = {}
+        if isinstance(raw_egress, dict):
+            for key in ("scope", "host"):
+                if isinstance(raw_egress.get(key), str): egress[key] = str(raw_egress[key])[:500]
+        return {"actual_placement": placement, "egress": egress}
     def _dto_in_transaction(self,conn:Any,record:dict[str,Any],*,include_raw:bool=False,remote:bool=False)->dict[str,Any]:
         note=conn.execute("SELECT * FROM notes WHERE id=?",(record["working_note_id"],)).fetchone(); member=conn.execute("SELECT * FROM directory_memberships WHERE primitive_id=?",(f"note:{record['working_note_id']}",)).fetchone()
         out={"id":record["id"],"raw_id":record["id"],"raw_sha256":record["raw_sha256"],"source":{"kind":record["raw_source_kind"]},"raw_captured_at":record["raw_captured_at"],"state":record["state"],"aggregate_revision":record["aggregate_revision"],"lifecycle_revision":record["lifecycle_revision"],"working_revision":record["working_revision"],"attachment_revision":record["attachment_revision"],"working_note":self._note(note),"filing_status":"filed" if member and not member["deleted"] else "missing","continuity":({"state":"unavailable_remote","code":"continuity_unavailable_remote"} if remote else self._continuity(conn,record["id"]))}

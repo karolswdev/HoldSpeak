@@ -1,8 +1,8 @@
 # Phase 141 — From Thought to Work
 
-**Status:** active (4/9); raw custody, resumable continuity, the owner-facing
-Develop bridge, and the immediate no-model completion/reopen path are done. One
-useful owner-triggered AI question is next.
+**Status:** active (5/9); raw custody, resumable continuity, the owner-facing
+Develop bridge, immediate no-model completion/reopen, and one receipt-gated
+owner-triggered AI question are done. Visible context attachment is next.
 
 **Last updated:** 2026-08-19.
 
@@ -51,7 +51,7 @@ Settled product decisions:
 | HS-141-01 | Raw before AI | done | Phase 140 landing |
 | HS-141-02 | The resumable thought | done | 141-01 |
 | HS-141-03 | Develop this thought | done | 141-02 |
-| HS-141-04 | One useful question | backlog | 141-02, 141-03, 141-06 |
+| HS-141-04 | One useful question | done | 141-02, 141-03, 141-06 |
 | HS-141-05 | Context you can see | backlog | 141-02, 141-04 |
 | HS-141-06 | Good enough means done | done | 141-02, 141-03 |
 | HS-141-07 | Typed outcomes, not magic | backlog | 141-04, 141-06 |
@@ -148,3 +148,13 @@ review; five rounds surface the rigor/cost choice to the owner.
   confined to validated paired-sync convergence. A fresh no-model walk survived
   hub/database reopen and a fresh browser context at both widths. Final design,
   implementation, and cold-owner counsel: RATIFY.
+- 2026-08-19 — HS-141-04 done. One explicit owner action now produces at most
+  one receipt-gated question or synthesis; Stop suppresses late output, Answer
+  and Accept write immediately under CAS, and no action silently starts another
+  model turn. A shared refinement application service gives HTTP and MCP the
+  same idempotency, cursors, receipts, named conflicts, and durable web/sidecar
+  execution ownership. Fresh 1440/393 browser walks used the real API, kernel,
+  projection, reconcile, and Note-write path with a labelled deterministic
+  provider simulation. Technical and cold-owner counsel: RATIFY. The owner
+  accepted the loop and deferred normalization of the overlapping completion/
+  continuation verbs to HS-141-09's subtraction pass.

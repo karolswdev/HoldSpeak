@@ -4344,7 +4344,47 @@
       ]
     },
     {
+      "path": "/api/thoughts/{thought_id}/refine",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.primitives.thoughts",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/thoughts/{thought_id}/refinements/{invocation_id}/stop",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.primitives.thoughts",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/thoughts/{thought_id}/resume",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.primitives.thoughts",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/thoughts/{thought_id}/reviews/{review_result_id}",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.primitives.thoughts",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/thoughts/{thought_id}/reviews/{review_result_id}/{action}",
       "methods": [
         "POST"
       ],

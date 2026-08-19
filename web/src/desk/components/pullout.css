@@ -455,6 +455,7 @@ body:has(.desk-next .desk-pullout:not(.is-card)) .ambient-qlippy {
   justify-content: flex-end;
   gap: 4px;
 }
+.desk-next .thought-more { display: none; }
 @container surface (max-width: 420px) {
   .desk-next .surface-footer-verbs:has(.thought-completion-verbs) {
     width: 100%;
@@ -465,8 +466,28 @@ body:has(.desk-next .desk-pullout:not(.is-card)) .ambient-qlippy {
   .desk-next .thought-completion-secondary {
     display: none;
   }
+  /* Editing has no safe implicit exit. Keep Cancel visible without making it
+     a second primary action at the narrow working-note surface. */
+  .desk-next .thought-editor-cancel {
+    display: inline-flex;
+  }
+  .desk-next .thought-review-direct {
+    display: none;
+  }
   .desk-next .thought-completion-primary {
     flex: 1;
     width: 100%;
   }
+}
+
+/* Floating pullout cards are not descendants of the `surface` container on
+   the live desk.  The viewport seam is therefore the authoritative 393px
+   rule for this card form. */
+@media (max-width: 500px) {
+  .desk-next .desk-pullout.is-card .thought-completion-secondary,
+  .desk-next .desk-pullout.is-card .thought-review-direct { display: none; }
+  .desk-next .desk-pullout.is-card .thought-editor-cancel { display: inline-flex; }
+  .desk-next .desk-pullout.is-card .thought-more { display: inline-flex; }
+  .desk-next .desk-pullout.is-card .thought-completion-verbs { width: 100%; }
+  .desk-next .desk-pullout.is-card .thought-completion-primary { flex: 1; width: auto; }
 }

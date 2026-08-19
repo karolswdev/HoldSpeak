@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import copy
+import json
 import pytest
 
 from holdspeak.db import Database
@@ -23,6 +24,31 @@ def db(tmp_path):
 
 def _create(db: Database):
     return RefinementThoughtService(db).create(OWNER, request_id="capture-1", raw_text="raw\nbytes", source={"kind": "typed"})
+
+
+def _install_review(db: Database, service: RefinementThoughtService, thought: dict, request_id: str, card_json: str):
+    reserved = service.reserve_refinement(
+        OWNER, thought["id"], request_id=request_id,
+        expected_aggregate_revision=thought["aggregate_revision"],
+        expected_working_revision=thought["working_revision"],
+        expected_attachment_revision=thought["attachment_revision"],
+    )
+    ask_id = reserved["attempts"][0]["ask_invocation_id"]
+    operation_id = f"op_{request_id}"
+    stage_id = f"pstg_{request_id}"
+    receipt_id = f"rcpt_{request_id}"
+    service.before_physical_dispatch(reserved["id"])(operation_id, ask_id, 1)
+    with db._connection() as conn:
+        conn.execute("INSERT INTO kernel_operations(operation_id,request_id,idempotency_key,name,version,principal_kind,principal_identity,target_ref,placement,envelope_sha256,policy_version,authority_basis,state,revision,native_id,parent_operation_id,correlation_id,delegator_kind,delegator_identity,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", (operation_id,"req",f"idem-{request_id}","inference.invoke",1,"owner","test-owner","invocation:"+ask_id,"node:test","sha256:x","v","test","succeeded",1,ask_id,"","","","",1.0,1.0))
+        conn.execute("INSERT INTO kernel_receipts(receipt_id,operation_id,state,outcome,result_ref,created_at) VALUES(?,?,?,?,?,?)", (receipt_id,operation_id,"succeeded","succeeded","projection-stage:"+stage_id,1.0))
+        conn.execute("INSERT INTO kernel_projection_stages(stage_id,invocation_id,operation_id,kind,projection_json,projection_sha256,result_ref,state,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?)", (stage_id,ask_id,operation_id,"ask-result","{}","sha256:x","projection-stage:"+stage_id,"PUBLISHED",1.0,1.0))
+        payload = json.dumps({"output": card_json, "actual_placement": {"target_id":"this_machine","model":"Scripted","data_classes":["instruction"]}, "egress":{"scope":"local"}})
+        conn.execute("INSERT INTO ask_results(projection_stage_id,invocation_id,operation_id,receipt_id,payload_json,created_at) VALUES(?,?,?,?,?,?)", (stage_id,ask_id,operation_id,receipt_id,payload,1.0))
+    current = service.reconcile(
+        OWNER, thought["id"], expected_aggregate_revision=thought["aggregate_revision"],
+        invocation_id=reserved["id"],
+    )
+    return reserved, current["continuity"]["review_result_id"]
 
 
 def test_create_is_idempotent_byte_exact_and_qualified_inbox(db):
@@ -365,7 +391,8 @@ def test_reservation_is_idempotent_one_live_and_attempt_hook_fences_stale_though
     with pytest.raises(ValidationError) as stale:
         service.before_physical_dispatch(reserved["id"])("op_test", reserved["attempts"][0]["ask_invocation_id"], 1)
     assert stale.value.code == "refinement_result_stale"
-    assert service.reconcile(OWNER, thought["id"], expected_aggregate_revision=2, invocation_id=reserved["id"])["continuity"]["state"] == "stale"
+    suppressed = service.reconcile(OWNER, thought["id"], expected_aggregate_revision=2, invocation_id=reserved["id"])["continuity"]
+    assert suppressed["state"] == "named_failure" and suppressed["code"] == "owner_edited"
     assert service.reserve_refinement(OWNER, thought["id"], request_id="refine-after-stale", expected_aggregate_revision=2, expected_working_revision=2, expected_attachment_revision=0)["state"] == "reserved"
 
 
@@ -380,12 +407,161 @@ def test_reconcile_links_only_receipt_gated_matching_attempt(db):
             VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", ("op_refine","req","idem","inference.invoke",1,"owner","test-owner","invocation:"+ask_id,"node:test","sha256:x","v","test","succeeded",1,ask_id,"","","","",1.0,1.0))
         conn.execute("INSERT INTO kernel_receipts(receipt_id,operation_id,state,outcome,result_ref,created_at) VALUES(?,?,?,?,?,?)", ("rcpt_refine","op_refine","succeeded","succeeded","projection-stage:pstg_refine",1.0))
         conn.execute("INSERT INTO kernel_projection_stages(stage_id,invocation_id,operation_id,kind,projection_json,projection_sha256,result_ref,state,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?)", ("pstg_refine",ask_id,"op_refine","ask-result","{}","sha256:x","projection-stage:pstg_refine","PUBLISHED",1.0,1.0))
-        conn.execute("INSERT INTO ask_results(projection_stage_id,invocation_id,operation_id,receipt_id,payload_json,created_at) VALUES(?,?,?,?,?,?)", ("pstg_refine",ask_id,"op_refine","rcpt_refine",'{"output":"answer"}',1.0))
+        conn.execute("INSERT INTO ask_results(projection_stage_id,invocation_id,operation_id,receipt_id,payload_json,created_at) VALUES(?,?,?,?,?,?)", ("pstg_refine",ask_id,"op_refine","rcpt_refine",'{"output":"{\\"kind\\":\\"question\\",\\"question\\":\\"What is the next constraint?\\",\\"reason\\":\\"Keeps the work concrete.\\"}"}',1.0))
     loaded = service.reconcile(OWNER, thought["id"], expected_aggregate_revision=1, invocation_id=reserved["id"])
     assert loaded["continuity"]["state"] == "review_ready"
     assert loaded["continuity"]["review_result_id"]
     assert service.reconcile(OWNER, thought["id"], expected_aggregate_revision=1, invocation_id=reserved["id"])["continuity"]["review_result_id"] == loaded["continuity"]["review_result_id"]
     assert db.notes.get(thought["working_note"]["id"]).body_markdown == "raw\nbytes"
+
+
+def test_review_card_grammar_rejects_unbounded_or_extra_model_fields(db):
+    service = RefinementThoughtService(db)
+    thought = _create(db)
+    reserved = service.reserve_refinement(OWNER, thought["id"], request_id="bad-card", expected_aggregate_revision=1, expected_working_revision=1, expected_attachment_revision=0)
+    ask_id = reserved["attempts"][0]["ask_invocation_id"]
+    service.before_physical_dispatch(reserved["id"])("op_bad_card", ask_id, 1)
+    with db._connection() as conn:
+        conn.execute("INSERT INTO kernel_operations(operation_id,request_id,idempotency_key,name,version,principal_kind,principal_identity,target_ref,placement,envelope_sha256,policy_version,authority_basis,state,revision,native_id,parent_operation_id,correlation_id,delegator_kind,delegator_identity,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", ("op_bad_card","req","idem","inference.invoke",1,"owner","test-owner","invocation:"+ask_id,"node:test","sha256:x","v","test","succeeded",1,ask_id,"","","","",1.0,1.0))
+        conn.execute("INSERT INTO kernel_receipts(receipt_id,operation_id,state,outcome,result_ref,created_at) VALUES(?,?,?,?,?,?)", ("rcpt_bad","op_bad_card","succeeded","succeeded","projection-stage:pstg_bad",1.0))
+        conn.execute("INSERT INTO kernel_projection_stages(stage_id,invocation_id,operation_id,kind,projection_json,projection_sha256,result_ref,state,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?)", ("pstg_bad",ask_id,"op_bad_card","ask-result","{}","sha256:x","projection-stage:pstg_bad","PUBLISHED",1.0,1.0))
+        conn.execute("INSERT INTO ask_results(projection_stage_id,invocation_id,operation_id,receipt_id,payload_json,created_at) VALUES(?,?,?,?,?,?)", ("pstg_bad",ask_id,"op_bad_card","rcpt_bad",'{"output":"{\\"kind\\":\\"question\\",\\"question\\":\\"q\\",\\"extra\\":\\"no\\"}"}',1.0))
+    assert service.reconcile(OWNER, thought["id"], expected_aggregate_revision=1, invocation_id=reserved["id"])["continuity"]["state"] == "named_failure"
+
+
+def test_question_review_exposes_bounded_receipt_and_answer_is_exact_idempotent_no_chain(db):
+    service = RefinementThoughtService(db)
+    thought = _create(db)
+    _, review_id = _install_review(
+        db, service, thought, "answer-card",
+        json.dumps({"kind":"question","question":"Who owns launch?","reason":"Name one owner."}),
+    )
+    review = service.review(OWNER, thought["id"], review_id)["review"]
+    assert review["question"] == "Who owns launch?"
+    assert review["actual_placement"]["target_id"] == "this_machine"
+    assert review["egress"] == {"scope": "local"}
+    assert "output" not in review and "payload_json" not in review
+
+    answered, receipt = service.review_action(
+        OWNER, thought["id"], review_id, request_id="answer-once", action="answer",
+        expected_aggregate_revision=1, expected_working_revision=1,
+        expected_attachment_revision=0, answer="Mina owns launch.",
+    )
+    assert answered["working_note"]["body_markdown"].endswith(
+        "## Clarification\nQuestion: Who owns launch?\nAnswer: Mina owns launch."
+    )
+    assert answered["aggregate_revision"] == 2 and answered["working_revision"] == 2
+    replay, replay_receipt = service.review_action(
+        OWNER, thought["id"], review_id, request_id="answer-once", action="answer",
+        expected_aggregate_revision=1, expected_working_revision=1,
+        expected_attachment_revision=0, answer="Mina owns launch.",
+    )
+    assert replay == answered and replay_receipt == receipt
+    with db._connection() as conn:
+        assert conn.execute("SELECT COUNT(*) FROM refinement_review_actions").fetchone()[0] == 1
+        assert conn.execute("SELECT COUNT(*) FROM refinement_invocations").fetchone()[0] == 1
+
+
+def test_reject_is_a_decision_without_note_mutation_and_review_cannot_be_reused(db):
+    service = RefinementThoughtService(db)
+    thought = _create(db)
+    _, review_id = _install_review(
+        db, service, thought, "reject-card",
+        json.dumps({"kind":"question","question":"Wrong question?","reason":"Maybe."}),
+    )
+    rejected, receipt = service.review_action(
+        OWNER, thought["id"], review_id, request_id="reject-once", action="reject",
+        expected_aggregate_revision=1, expected_working_revision=1,
+        expected_attachment_revision=0,
+    )
+    assert rejected["working_note"]["body_markdown"] == "raw\nbytes"
+    assert rejected["aggregate_revision"] == 1 and receipt["kind"] == "reject"
+    with pytest.raises(ConflictError) as reused:
+        service.review_action(
+            OWNER, thought["id"], review_id, request_id="different-action", action="answer",
+            expected_aggregate_revision=1, expected_working_revision=1,
+            expected_attachment_revision=0, answer="No",
+        )
+    assert reused.value.code == "refinement_review_superseded"
+
+
+def test_synthesis_fallback_accepts_exact_reviewed_note_without_second_turn(db):
+    service = RefinementThoughtService(db)
+    thought = _create(db)
+    _, review_id = _install_review(
+        db, service, thought, "synthesis-card",
+        json.dumps({"kind":"synthesis","title":"Launch plan","body_markdown":"Mina calls Friday.","tags":["launch"]}),
+    )
+    accepted, receipt = service.review_action(
+        OWNER, thought["id"], review_id, request_id="accept-synthesis", action="accept",
+        expected_aggregate_revision=1, expected_working_revision=1,
+        expected_attachment_revision=0,
+    )
+    assert accepted["working_note"]["title"] == "Launch plan"
+    assert accepted["working_note"]["body_markdown"] == "Mina calls Friday."
+    assert accepted["working_note"]["tags"] == ["launch"]
+    assert receipt["kind"] == "accept"
+    with db._connection() as conn:
+        assert conn.execute("SELECT COUNT(*) FROM refinement_invocations").fetchone()[0] == 1
+
+
+def test_good_enough_atomically_suppresses_live_refinement(db):
+    service = RefinementThoughtService(db)
+    thought = _create(db)
+    reserved = service.reserve_refinement(
+        OWNER, thought["id"], request_id="complete-live",
+        expected_aggregate_revision=1, expected_working_revision=1,
+        expected_attachment_revision=0,
+    )
+    completed, _ = service.complete_with_receipt(
+        OWNER, thought["id"], request_id="good-enough-live",
+        expected_aggregate_revision=1, expected_lifecycle_revision=1,
+    )
+    assert completed["state"] == "completed"
+    assert completed["continuity"]["code"] == "thought_completed"
+    with pytest.raises(ValidationError):
+        service.before_physical_dispatch(reserved["id"])(
+            "op_too_late", reserved["attempts"][0]["ask_invocation_id"], 1
+        )
+
+
+def test_stop_before_dispatch_fences_hook_and_late_bound_result_cannot_resurrect_review(db):
+    service = RefinementThoughtService(db)
+    thought = _create(db)
+    pre = service.reserve_refinement(
+        OWNER, thought["id"], request_id="stop-pre",
+        expected_aggregate_revision=1, expected_working_revision=1,
+        expected_attachment_revision=0,
+    )
+    stopped, ask_id = service.stop_refinement(
+        OWNER, thought["id"], invocation_id=pre["id"], expected_aggregate_revision=1
+    )
+    assert stopped["continuity"]["code"] == "owner_stopped"
+    assert ask_id == pre["attempts"][0]["ask_invocation_id"]
+    with pytest.raises(ValidationError):
+        service.before_physical_dispatch(pre["id"])("op_never", ask_id, 1)
+
+    live = service.reserve_refinement(
+        OWNER, thought["id"], request_id="stop-post",
+        expected_aggregate_revision=1, expected_working_revision=1,
+        expected_attachment_revision=0,
+    )
+    late_ask = live["attempts"][0]["ask_invocation_id"]
+    service.before_physical_dispatch(live["id"])("op_late", late_ask, 1)
+    service.stop_refinement(
+        OWNER, thought["id"], invocation_id=live["id"], expected_aggregate_revision=1
+    )
+    with db._connection() as conn:
+        conn.execute("INSERT INTO kernel_operations(operation_id,request_id,idempotency_key,name,version,principal_kind,principal_identity,target_ref,placement,envelope_sha256,policy_version,authority_basis,state,revision,native_id,parent_operation_id,correlation_id,delegator_kind,delegator_identity,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", ("op_late","req","idem-late","inference.invoke",1,"owner","test-owner","invocation:"+late_ask,"node:test","sha256:x","v","test","succeeded",1,late_ask,"","","","",1.0,1.0))
+        conn.execute("INSERT INTO kernel_receipts(receipt_id,operation_id,state,outcome,result_ref,created_at) VALUES(?,?,?,?,?,?)", ("rcpt_late","op_late","succeeded","succeeded","projection-stage:pstg_late",1.0))
+        conn.execute("INSERT INTO kernel_projection_stages(stage_id,invocation_id,operation_id,kind,projection_json,projection_sha256,result_ref,state,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?)", ("pstg_late",late_ask,"op_late","ask-result","{}","sha256:x","projection-stage:pstg_late","PUBLISHED",1.0,1.0))
+        conn.execute("INSERT INTO ask_results(projection_stage_id,invocation_id,operation_id,receipt_id,payload_json,created_at) VALUES(?,?,?,?,?,?)", ("pstg_late",late_ask,"op_late","rcpt_late",'{"output":"{\\"kind\\":\\"question\\",\\"question\\":\\"Too late?\\",\\"reason\\":\\"No.\\"}"}',1.0))
+    after = service.reconcile(
+        OWNER, thought["id"], expected_aggregate_revision=1, invocation_id=live["id"]
+    )
+    assert after["continuity"]["code"] == "owner_stopped_after_dispatch"
+    with db._connection() as conn:
+        assert conn.execute("SELECT COUNT(*) FROM refinement_review_results WHERE invocation_id=?", (live["id"],)).fetchone()[0] == 0
 
 
 def test_restart_after_retry_plan_before_child_admission_is_terminal_and_releasable(db):

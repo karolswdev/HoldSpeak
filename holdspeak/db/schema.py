@@ -1817,6 +1817,13 @@ CREATE TABLE IF NOT EXISTS ask_results (
 
 -- HS-141-02: hub-local refinement continuity. These rows deliberately point at
 -- local kernel/Ask proof and are not carried by paired primitive sync.
+CREATE TABLE IF NOT EXISTS refinement_hosts (
+    host_id TEXT PRIMARY KEY,
+    host_kind TEXT NOT NULL CHECK (host_kind IN ('web','mcp','test')),
+    lease_epoch INTEGER NOT NULL CHECK (lease_epoch >= 1),
+    heartbeat_at TEXT NOT NULL,
+    expires_at TEXT NOT NULL
+);
 CREATE TABLE IF NOT EXISTS refinement_invocations (
     id TEXT PRIMARY KEY,
     request_id TEXT NOT NULL UNIQUE,
@@ -1831,6 +1838,11 @@ CREATE TABLE IF NOT EXISTS refinement_invocations (
         'failed','refused','cancelled','indeterminate','unknown','stale','superseded'
     )),
     terminal_code TEXT NOT NULL DEFAULT '',
+    dispatch_host_id TEXT REFERENCES refinement_hosts(host_id),
+    dispatch_lease_epoch INTEGER,
+    cancel_requested_at TEXT,
+    cancel_observed_at TEXT,
+    cancel_disposition TEXT,
     created_at TEXT NOT NULL,
     updated_at TEXT NOT NULL,
     terminal_at TEXT
@@ -1889,6 +1901,24 @@ CREATE TABLE IF NOT EXISTS refinement_review_results (
     created_at TEXT NOT NULL,
     FOREIGN KEY (invocation_id,attempt_ordinal)
       REFERENCES refinement_invocation_attempts(invocation_id,attempt_ordinal)
+);
+
+-- HS-141-04: one durable owner decision may consume one receipt-gated review.
+CREATE TABLE IF NOT EXISTS refinement_review_actions (
+    action_id TEXT PRIMARY KEY,
+    request_id TEXT NOT NULL UNIQUE,
+    request_sha256 TEXT NOT NULL,
+    thought_id TEXT NOT NULL REFERENCES refinement_thoughts(id),
+    review_result_id TEXT NOT NULL UNIQUE REFERENCES refinement_review_results(id),
+    action_kind TEXT NOT NULL CHECK (action_kind IN ('answer','accept','reject')),
+    aggregate_revision INTEGER NOT NULL,
+    working_revision INTEGER NOT NULL,
+    lifecycle_revision INTEGER NOT NULL,
+    attachment_revision INTEGER NOT NULL,
+    post_aggregate_revision INTEGER NOT NULL,
+    post_working_revision INTEGER NOT NULL,
+    post_lifecycle_revision INTEGER NOT NULL,
+    created_at TEXT NOT NULL
 );
 CREATE TABLE IF NOT EXISTS recipe_results (
     projection_stage_id TEXT PRIMARY KEY REFERENCES kernel_projection_stages(stage_id),
