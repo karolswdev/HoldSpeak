@@ -9,6 +9,7 @@ from holdspeak.services.primitive_service import PrimitiveService
 from holdspeak.services.refinement_thought_service import INBOX_DIRECTORY_ID, RefinementThoughtService
 from holdspeak.services.sync_service import SyncService
 from holdspeak.principals import Principal, PrincipalKind
+from holdspeak.kernel.provider_signals import retry_invocation_id
 
 OWNER = Principal(PrincipalKind.OWNER, "test-owner")
 
@@ -208,6 +209,80 @@ def test_lifecycle_command_cas_refuses_completed_edits_until_resume_and_dtos_car
     resumed = service.resume(OWNER, thought["id"], expected_aggregate_revision=2, expected_lifecycle_revision=2)
     assert resumed["state"] == "working" and resumed["aggregate_revision"] == 3 and resumed["lifecycle_revision"] == 3
     assert service.update_working(OWNER, thought["id"], expected_aggregate_revision=3, expected_working_revision=1, body_markdown="now edit")["working_revision"] == 2
+
+
+def test_unfinished_page_is_bounded_private_and_cursor_signed(db):
+    service = RefinementThoughtService(db)
+    first = _create(db)
+    second = service.create(OWNER, request_id="capture-2", raw_text="another private raw", source={"kind": "typed"})
+    page = service.list_unfinished(OWNER, limit=1)
+    assert len(page["items"]) == 1 and page["next_cursor"]
+    item = page["items"][0]
+    assert {"aggregate_revision", "lifecycle_revision", "working_revision", "attachment_revision"} <= item.keys()
+    assert not ({"body_markdown", "raw_text", "raw_sha256", "source", "continuity"} & item.keys())
+    next_page = service.list_unfinished(OWNER, limit=1, cursor=page["next_cursor"])
+    assert {item["id"], next_page["items"][0]["id"]} == {first["id"], second["id"]}
+    assert page["items"][0]["id"] == second["id"]  # same-second timestamps still order by monotonic resume order
+    with pytest.raises(ValidationError) as invalid:
+        service.list_unfinished(OWNER, limit=1, cursor=page["next_cursor"] + "forged")
+    assert invalid.value.code == "thought_cursor_invalid"
+
+
+def test_reservation_is_idempotent_one_live_and_attempt_hook_fences_stale_thought(db):
+    service = RefinementThoughtService(db)
+    thought = _create(db)
+    reserved = service.reserve_refinement(OWNER, thought["id"], request_id="refine-1", expected_aggregate_revision=1, expected_working_revision=1, expected_attachment_revision=0)
+    assert reserved["attempts"] == [{"attempt_ordinal": 1, "ask_invocation_id": reserved["attempts"][0]["ask_invocation_id"], "state": "reserved"}]
+    assert service.reserve_refinement(OWNER, thought["id"], request_id="refine-1", expected_aggregate_revision=1, expected_working_revision=1, expected_attachment_revision=0)["id"] == reserved["id"]
+    with pytest.raises(ConflictError) as live:
+        service.reserve_refinement(OWNER, thought["id"], request_id="refine-2", expected_aggregate_revision=1, expected_working_revision=1, expected_attachment_revision=0)
+    assert live.value.code == "refinement_already_live"
+    service.update_working(OWNER, thought["id"], expected_aggregate_revision=1, expected_working_revision=1, body_markdown="changed")
+    with pytest.raises(ValidationError) as stale:
+        service.before_physical_dispatch(reserved["id"])("op_test", reserved["attempts"][0]["ask_invocation_id"], 1)
+    assert stale.value.code == "refinement_result_stale"
+    assert service.reconcile(OWNER, thought["id"], expected_aggregate_revision=2, invocation_id=reserved["id"])["continuity"]["state"] == "stale"
+    assert service.reserve_refinement(OWNER, thought["id"], request_id="refine-after-stale", expected_aggregate_revision=2, expected_working_revision=2, expected_attachment_revision=0)["state"] == "reserved"
+
+
+def test_reconcile_links_only_receipt_gated_matching_attempt(db):
+    service = RefinementThoughtService(db)
+    thought = _create(db)
+    reserved = service.reserve_refinement(OWNER, thought["id"], request_id="refine-success", expected_aggregate_revision=1, expected_working_revision=1, expected_attachment_revision=0)
+    ask_id = reserved["attempts"][0]["ask_invocation_id"]
+    service.before_physical_dispatch(reserved["id"])("op_refine", ask_id, 1)
+    with db._connection() as conn:
+        conn.execute("""INSERT INTO kernel_operations(operation_id,request_id,idempotency_key,name,version,principal_kind,principal_identity,target_ref,placement,envelope_sha256,policy_version,authority_basis,state,revision,native_id,parent_operation_id,correlation_id,delegator_kind,delegator_identity,created_at,updated_at)
+            VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", ("op_refine","req","idem","inference.invoke",1,"owner","test-owner","invocation:"+ask_id,"node:test","sha256:x","v","test","succeeded",1,ask_id,"","","","",1.0,1.0))
+        conn.execute("INSERT INTO kernel_receipts(receipt_id,operation_id,state,outcome,result_ref,created_at) VALUES(?,?,?,?,?,?)", ("rcpt_refine","op_refine","succeeded","succeeded","projection-stage:pstg_refine",1.0))
+        conn.execute("INSERT INTO kernel_projection_stages(stage_id,invocation_id,operation_id,kind,projection_json,projection_sha256,result_ref,state,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?)", ("pstg_refine",ask_id,"op_refine","ask-result","{}","sha256:x","projection-stage:pstg_refine","PUBLISHED",1.0,1.0))
+        conn.execute("INSERT INTO ask_results(projection_stage_id,invocation_id,operation_id,receipt_id,payload_json,created_at) VALUES(?,?,?,?,?,?)", ("pstg_refine",ask_id,"op_refine","rcpt_refine",'{"output":"answer"}',1.0))
+    loaded = service.reconcile(OWNER, thought["id"], expected_aggregate_revision=1, invocation_id=reserved["id"])
+    assert loaded["continuity"]["state"] == "review_ready"
+    assert loaded["continuity"]["review_result_id"]
+    assert service.reconcile(OWNER, thought["id"], expected_aggregate_revision=1, invocation_id=reserved["id"])["continuity"]["review_result_id"] == loaded["continuity"]["review_result_id"]
+    assert db.notes.get(thought["working_note"]["id"]).body_markdown == "raw\nbytes"
+
+
+def test_restart_after_retry_plan_before_child_admission_is_terminal_and_releasable(db):
+    service = RefinementThoughtService(db)
+    thought = _create(db)
+    reserved = service.reserve_refinement(OWNER, thought["id"], request_id="retry-crash", expected_aggregate_revision=1, expected_working_revision=1, expected_attachment_revision=0)
+    base_ask = reserved["attempts"][0]["ask_invocation_id"]
+    service.before_physical_dispatch(reserved["id"])("op_retry_base", base_ask, 1)
+    with db._connection() as conn:
+        conn.execute("""INSERT INTO kernel_operations(operation_id,request_id,idempotency_key,name,version,principal_kind,principal_identity,target_ref,placement,envelope_sha256,policy_version,authority_basis,state,revision,native_id,parent_operation_id,correlation_id,delegator_kind,delegator_identity,created_at,updated_at)
+            VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", ("op_retry_base","req","idem-retry","inference.invoke",1,"owner","test-owner","invocation:"+base_ask,"node:test","sha256:x","v","test","failed",1,base_ask,"","","","",1.0,1.0))
+        conn.execute("INSERT INTO kernel_receipts(receipt_id,operation_id,state,outcome,result_ref,created_at) VALUES(?,?,?,?,?,?)", ("rcpt_retry_base","op_retry_base","failed","failed","",1.0))
+    child_ask = retry_invocation_id(base_ask, 2)
+    service.before_compatibility_retry(reserved["id"])("op_retry_base", base_ask, child_ask, 2, "dialect")
+    path = db.db_path
+    db.close()
+    restarted = Database(path)
+    recovered = RefinementThoughtService(restarted).reconcile(OWNER, thought["id"], expected_aggregate_revision=1, invocation_id=reserved["id"])
+    assert recovered["continuity"]["state"] == "named_failure"
+    assert recovered["continuity"]["code"] == "retry_child_missing_after_plan"
+    assert RefinementThoughtService(restarted).reserve_refinement(OWNER, thought["id"], request_id="retry-after-crash", expected_aggregate_revision=1, expected_working_revision=1, expected_attachment_revision=0)["state"] == "reserved"
 
 
 def test_two_peer_same_content_completion_fast_forwards_aggregate_command_suffix(tmp_path):

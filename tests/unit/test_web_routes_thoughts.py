@@ -53,3 +53,46 @@ def test_thought_routes_deny_absent_and_agent_principals(tmp_path, monkeypatch):
         return await call_next(request)
     agent.include_router(build_primitives_router(WebContext(get_state=lambda: {})))
     assert TestClient(agent).post("/api/thoughts", json={"request_id": "x", "raw_text": "raw"}).status_code == 422
+
+
+def test_thought_product_reads_deny_node_principal(tmp_path, monkeypatch):
+    db = Database(tmp_path / "node-auth.db")
+    db.directories.upsert(directory_id="hs-seed-inbox", name="Inbox")
+    monkeypatch.setattr(hsdb, "get_database", lambda *args, **kwargs: db)
+    owner = FastAPI()
+    @owner.middleware("http")
+    async def owner_identity(request, call_next):
+        request.state.principal = Principal(PrincipalKind.OWNER, "owner")
+        return await call_next(request)
+    owner.include_router(build_primitives_router(WebContext(get_state=lambda: {})))
+    thought = TestClient(owner).post("/api/thoughts", json={"request_id":"node-read","raw_text":"raw"}).json()["thought"]
+    node = FastAPI()
+    @node.middleware("http")
+    async def node_identity(request, call_next):
+        request.state.principal = Principal(PrincipalKind.NODE, "peer")
+        return await call_next(request)
+    node.include_router(build_primitives_router(WebContext(get_state=lambda: {})))
+    client = TestClient(node)
+    assert client.get(f"/api/thoughts/{thought['id']}").status_code == 422
+    assert client.get("/api/thoughts?limit=1").status_code == 422
+    assert client.post(f"/api/thoughts/{thought['id']}/reconcile", json={"expected_aggregate_revision":1}).status_code == 422
+
+
+def test_thought_list_is_paged_private_and_reconcile_requires_cursor(tmp_path, monkeypatch):
+    db = Database(tmp_path / "page.db")
+    db.directories.upsert(directory_id="hs-seed-inbox", name="Inbox")
+    monkeypatch.setattr(hsdb, "get_database", lambda *args, **kwargs: db)
+    app = FastAPI()
+    @app.middleware("http")
+    async def owner(request, call_next):
+        request.state.principal = Principal(PrincipalKind.OWNER, "test-owner")
+        return await call_next(request)
+    app.include_router(build_primitives_router(WebContext(get_state=lambda: {})))
+    client = TestClient(app)
+    thought = client.post("/api/thoughts", json={"request_id": "page-1", "raw_text": "raw", "source": {"kind": "typed"}}).json()["thought"]
+    page = client.get("/api/thoughts?limit=1")
+    assert page.status_code == 200 and len(page.json()["items"]) == 1
+    item = page.json()["items"][0]
+    assert "body_markdown" not in item and "raw_text" not in item and "source" not in item
+    assert client.get("/api/thoughts?limit=51").status_code == 422
+    assert client.post(f"/api/thoughts/{thought['id']}/reconcile", json={}).status_code == 409

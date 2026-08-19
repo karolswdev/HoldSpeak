@@ -828,6 +828,7 @@ CREATE TABLE IF NOT EXISTS refinement_thoughts (
     lifecycle_revision INTEGER NOT NULL DEFAULT 1 CHECK (lifecycle_revision >= 1),
     attachment_revision INTEGER NOT NULL DEFAULT 0 CHECK (attachment_revision >= 0),
     aggregate_revision INTEGER NOT NULL DEFAULT 1 CHECK (aggregate_revision >= 1),
+    resume_order INTEGER NOT NULL DEFAULT 0,
     state TEXT NOT NULL CHECK (state IN ('working', 'completed', 'tombstoned')),
     created_at TEXT NOT NULL,
     updated_at TEXT NOT NULL,
@@ -835,7 +836,12 @@ CREATE TABLE IF NOT EXISTS refinement_thoughts (
     tombstoned_at TEXT
 );
 CREATE INDEX IF NOT EXISTS idx_refinement_thoughts_resume
-ON refinement_thoughts(state, updated_at DESC);
+ON refinement_thoughts(state, resume_order DESC, id DESC);
+CREATE TABLE IF NOT EXISTS refinement_resume_sequence (
+    id INTEGER PRIMARY KEY CHECK (id=1),
+    value INTEGER NOT NULL
+);
+INSERT OR IGNORE INTO refinement_resume_sequence(id,value) VALUES(1,0);
 
 CREATE TABLE IF NOT EXISTS refinement_working_revisions (
     thought_id TEXT NOT NULL REFERENCES refinement_thoughts(id),
@@ -1793,6 +1799,82 @@ CREATE TABLE IF NOT EXISTS ask_results (
     receipt_id TEXT NOT NULL UNIQUE REFERENCES kernel_receipts(receipt_id),
     payload_json TEXT NOT NULL,
     created_at REAL NOT NULL
+);
+
+-- HS-141-02: hub-local refinement continuity. These rows deliberately point at
+-- local kernel/Ask proof and are not carried by paired primitive sync.
+CREATE TABLE IF NOT EXISTS refinement_invocations (
+    id TEXT PRIMARY KEY,
+    request_id TEXT NOT NULL UNIQUE,
+    request_sha256 TEXT NOT NULL,
+    thought_id TEXT NOT NULL REFERENCES refinement_thoughts(id),
+    frozen_aggregate_revision INTEGER NOT NULL,
+    frozen_working_revision INTEGER NOT NULL,
+    frozen_attachment_revision INTEGER NOT NULL,
+    review_result_id TEXT UNIQUE,
+    state TEXT NOT NULL CHECK (state IN (
+        'reserved','in_flight','awaiting_projection','review_ready',
+        'failed','refused','cancelled','indeterminate','unknown','stale','superseded'
+    )),
+    terminal_code TEXT NOT NULL DEFAULT '',
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL,
+    terminal_at TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_refinement_invocations_resume
+ON refinement_invocations(thought_id,state,updated_at DESC);
+CREATE UNIQUE INDEX IF NOT EXISTS one_live_refinement_invocation
+ON refinement_invocations(thought_id)
+WHERE state IN ('reserved','in_flight','awaiting_projection','review_ready');
+
+CREATE TABLE IF NOT EXISTS refinement_invocation_attempts (
+    invocation_id TEXT NOT NULL REFERENCES refinement_invocations(id),
+    attempt_ordinal INTEGER NOT NULL CHECK (attempt_ordinal >= 1),
+    ask_invocation_id TEXT NOT NULL UNIQUE,
+    kernel_operation_id TEXT UNIQUE,
+    projection_stage_id TEXT UNIQUE REFERENCES kernel_projection_stages(stage_id),
+    ask_result_stage_id TEXT UNIQUE REFERENCES ask_results(projection_stage_id),
+    receipt_id TEXT UNIQUE REFERENCES kernel_receipts(receipt_id),
+    result_ref TEXT UNIQUE,
+    state TEXT NOT NULL CHECK (state IN (
+        'reserved','kernel_bound','in_flight','succeeded','failed','refused',
+        'cancelled','indeterminate','orphaned_before_dispatch_binding'
+    )),
+    terminal_code TEXT NOT NULL DEFAULT '',
+    created_at TEXT NOT NULL,
+    bound_at TEXT,
+    terminal_at TEXT,
+    PRIMARY KEY (invocation_id,attempt_ordinal),
+    UNIQUE (invocation_id,ask_invocation_id)
+);
+
+CREATE TABLE IF NOT EXISTS refinement_retry_plans (
+    invocation_id TEXT NOT NULL REFERENCES refinement_invocations(id),
+    parent_attempt_ordinal INTEGER NOT NULL,
+    child_attempt_ordinal INTEGER NOT NULL,
+    child_ask_invocation_id TEXT NOT NULL UNIQUE,
+    reason TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    PRIMARY KEY(invocation_id,parent_attempt_ordinal),
+    UNIQUE(invocation_id,child_attempt_ordinal)
+);
+
+CREATE TABLE IF NOT EXISTS refinement_review_results (
+    id TEXT PRIMARY KEY,
+    invocation_id TEXT NOT NULL UNIQUE REFERENCES refinement_invocations(id),
+    attempt_ordinal INTEGER NOT NULL,
+    ask_result_stage_id TEXT NOT NULL UNIQUE REFERENCES ask_results(projection_stage_id),
+    ask_invocation_id TEXT NOT NULL UNIQUE,
+    kernel_operation_id TEXT NOT NULL UNIQUE,
+    receipt_id TEXT NOT NULL UNIQUE REFERENCES kernel_receipts(receipt_id),
+    result_ref TEXT NOT NULL UNIQUE,
+    frozen_aggregate_revision INTEGER NOT NULL,
+    frozen_working_revision INTEGER NOT NULL,
+    frozen_attachment_revision INTEGER NOT NULL,
+    result_sha256 TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    FOREIGN KEY (invocation_id,attempt_ordinal)
+      REFERENCES refinement_invocation_attempts(invocation_id,attempt_ordinal)
 );
 CREATE TABLE IF NOT EXISTS recipe_results (
     projection_stage_id TEXT PRIMARY KEY REFERENCES kernel_projection_stages(stage_id),

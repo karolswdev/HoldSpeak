@@ -62,6 +62,21 @@ class RefinementThoughtRepository(BaseRepository):
         return [dict(row) for row in rows]
 
     @staticmethod
+    def next_resume_order(conn: Any) -> int:
+        row = conn.execute("SELECT value FROM refinement_resume_sequence WHERE id=1").fetchone()
+        value = int(row["value"]) + 1 if row else 1
+        conn.execute("INSERT INTO refinement_resume_sequence(id,value) VALUES(1,?) ON CONFLICT(id) DO UPDATE SET value=excluded.value", (value,))
+        return value
+
+    @staticmethod
+    def reconcile_resume_orders(conn: Any) -> int:
+        """Backfill pre-HS-141-02 rows once without timestamp tie ordering."""
+        rows = conn.execute("SELECT id FROM refinement_thoughts WHERE resume_order=0 ORDER BY created_at,id").fetchall()
+        for row in rows:
+            conn.execute("UPDATE refinement_thoughts SET resume_order=? WHERE id=?", (RefinementThoughtRepository.next_resume_order(conn), row["id"]))
+        return len(rows)
+
+    @staticmethod
     def lifecycle_bytes(*, thought_id: str, lifecycle_revision: int, aggregate_revision: int,
                         prior_state: str | None, state: str, command: str, occurred_at: str) -> bytes:
         return canonical_json({"aggregate_revision": aggregate_revision, "command": command,
@@ -155,9 +170,9 @@ class RefinementThoughtRepository(BaseRepository):
         working = conn.execute("SELECT content_sha256 FROM refinement_working_revisions WHERE thought_id=? AND revision=?", (thought_id, record["working_revision"])).fetchone()
         working_hash = str(working["content_sha256"]) if working else ""
         next_lifecycle, next_aggregate = int(record["lifecycle_revision"]) + 1, int(record["aggregate_revision"]) + 1
-        cur = conn.execute("""UPDATE refinement_thoughts SET state='tombstoned', lifecycle_revision=?, aggregate_revision=?,
+        cur = conn.execute("""UPDATE refinement_thoughts SET state='tombstoned', lifecycle_revision=?, aggregate_revision=?, resume_order=?,
                            tombstoned_at=COALESCE(tombstoned_at, ?), updated_at=? WHERE id=? AND aggregate_revision=? AND lifecycle_revision=?""",
-                           (next_lifecycle, next_aggregate, now, now, thought_id, record["aggregate_revision"], record["lifecycle_revision"]))
+                           (next_lifecycle, next_aggregate, RefinementThoughtRepository.next_resume_order(conn), now, now, thought_id, record["aggregate_revision"], record["lifecycle_revision"]))
         if not cur.rowcount:
             return False
         updated = dict(conn.execute("SELECT * FROM refinement_thoughts WHERE id=?", (thought_id,)).fetchone())

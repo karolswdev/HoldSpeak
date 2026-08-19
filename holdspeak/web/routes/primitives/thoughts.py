@@ -48,7 +48,14 @@ def build_thoughts_router(ctx: WebContext) -> APIRouter:
     @router.get("/api/thoughts")
     async def list_unfinished(request: Request) -> Any:
         try:
-            return JSONResponse({"thoughts": service().list_unfinished(principal(request))})
+            state = request.query_params.get("state", "unfinished")
+            if state != "unfinished":
+                raise ValidationError("only unfinished thoughts can be listed", code="thought_list_state_invalid")
+            raw_limit = request.query_params.get("limit", "20")
+            try: limit = int(raw_limit)
+            except ValueError: raise ValidationError("limit must be an integer", code="thought_list_limit_invalid")
+            page = service().list_unfinished(principal(request), limit=limit, cursor=request.query_params.get("cursor"))
+            return JSONResponse(page)
         except ServiceError as exc:
             return _error(exc)
 
@@ -77,6 +84,19 @@ def build_thoughts_router(ctx: WebContext) -> APIRouter:
                                                expected_working_revision=body.get("expected_working_revision"),
                                                title=body.get("title"), body_markdown=body.get("body_markdown"),
                                                tags=body.get("tags"))
+            return JSONResponse({"thought": thought})
+        except ServiceError as exc:
+            return _error(exc)
+
+    @router.post("/api/thoughts/{thought_id}/reconcile")
+    async def reconcile(thought_id: str, request: Request) -> Any:
+        body = await _json_body(request)
+        if body is None:
+            return JSONResponse({"error": "expected a JSON object"}, status_code=400)
+        try:
+            thought = service().reconcile(principal(request), thought_id,
+                expected_aggregate_revision=body.get("expected_aggregate_revision"),
+                invocation_id=body.get("invocation_id"))
             return JSONResponse({"thought": thought})
         except ServiceError as exc:
             return _error(exc)

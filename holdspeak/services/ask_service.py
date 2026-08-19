@@ -114,7 +114,7 @@ class AskService:
         return {"refs": refs, "titles": titles, "chars": sum(len(block) for block in blocks),
                 "blocks": [{"ref": ref, "title": title, "chars": len(block)} for ref, title, block in zip(refs, titles, blocks)]}
 
-    async def ask(self, principal: Principal, question: str, grounding: Any = None, *, lens: str = "Ask", context: list[dict[str, Any]] | None = None, model: str | None = None, inference_target_id: str | None = None, profile_id: str | None = None, max_tokens: Any = None, temperature: Any = None) -> dict[str, Any]:
+    async def ask(self, principal: Principal, question: str, grounding: Any = None, *, lens: str = "Ask", context: list[dict[str, Any]] | None = None, model: str | None = None, inference_target_id: str | None = None, profile_id: str | None = None, max_tokens: Any = None, temperature: Any = None, invocation_id: str | None = None, before_physical_dispatch: Any = None, before_compatibility_retry: Any = None) -> dict[str, Any]:
         prompt = str(question or "").strip()
         if not prompt: raise ValidationError("prompt is required")
         lens = str(lens or "Ask").strip() or "Ask"
@@ -151,13 +151,15 @@ class AskService:
         revision = capture_deployment_revision(self._db, target)
         source_text = material + ("\n\n" + envelope if envelope else "")
         payload: dict[str, Any] = {"schema_version": ASK_PAYLOAD_SCHEMA_VERSION, "system_prompt": _ASK_SYSTEM_PROMPT, "user_prompt": user_prompt, "lens": lens, "context_ids": context_ids, "context_titles": context_titles, "grounding": grounding_echo, "source_text": source_text, "temperature": float(temperature) if temperature is not None else None, "max_tokens": int(max_tokens) if max_tokens is not None else None, "deployment_revision": revision.id, "selected_model": advertised}
-        invocation_id = "ask_" + uuid.uuid4().hex
+        invocation_id = str(invocation_id or ("ask_" + uuid.uuid4().hex)).strip()
+        if not invocation_id or not invocation_id.replace("_", "").isalnum():
+            raise ValidationError("invocation id is invalid", code="ask_invocation_id_invalid")
         self._emit("running", kind="ask", ref="ask", name=lens)
         try:
             outcome = await asyncio.to_thread(
                 self._invoke,
                 principal,
-                InvocationRequest(revision.id, ServiceContract.for_payload(ASK_SERVICE_CONTRACT, ASK_SERVICE_SCHEMA_VERSION, payload), time.time() + 60, payload, invocation_id),
+                InvocationRequest(revision.id, ServiceContract.for_payload(ASK_SERVICE_CONTRACT, ASK_SERVICE_SCHEMA_VERSION, payload), time.time() + 60, payload, invocation_id, before_physical_dispatch=before_physical_dispatch, before_compatibility_retry=before_compatibility_retry),
                 publish=self._broker.projection_stager.publisher(invocation_id, "ask-result", lambda output: self._ask_projection(output, payload, target, ran_profile_id, placement.placement_dict())),
             )
         except KernelRefused as exc:

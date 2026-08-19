@@ -4306,6 +4306,14 @@
       "consumers": []
     },
     {
+      "path": "/api/thoughts/{thought_id}/reconcile",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.primitives.thoughts",
+      "consumers": []
+    },
+    {
       "path": "/api/thoughts/{thought_id}/resume",
       "methods": [
         "POST"

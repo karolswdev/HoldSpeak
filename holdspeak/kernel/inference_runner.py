@@ -36,7 +36,7 @@ class ServiceContract:
 DefinitionOrigin = SavedDefinition | ServiceContract
 @dataclass(frozen=True)
 class InvocationRequest:
-    deployment_revision: str; definition_origin: DefinitionOrigin; deadline_at: float; payload: Any; invocation_id: str=""; parent_operation_id: str=""; attempt_ordinal: int=1
+    deployment_revision: str; definition_origin: DefinitionOrigin; deadline_at: float; payload: Any; invocation_id: str=""; parent_operation_id: str=""; attempt_ordinal: int=1; before_physical_dispatch: Any=None; before_compatibility_retry: Any=None
 @dataclass(frozen=True)
 class InvocationOutcome:
     operation_id: str; invocation_id: str; outcome: str; result_ref: str; receipt: Mapping[str, Any]; error: str = ""
@@ -126,6 +126,11 @@ class InferenceRunner:
             outcome=self._attempt(first,adapter,publish=publish,parent_context=parent_context,planned_node=planned_node,signal=signal,sequence=sequence)
             if not signal or outcome.outcome!="failed" or sequence.cancelled: return outcome
             follow=compatibility_follow_up(first,outcome.invocation_id)
+            if first.before_compatibility_retry is not None:
+                # The retry plan is durable before the derived child becomes
+                # admissible. A callback refusal preserves the base receipt and
+                # prevents the second provider attempt.
+                first.before_compatibility_retry(outcome.operation_id, outcome.invocation_id, follow.invocation_id, follow.attempt_ordinal, str(signal[0].mode))
             # LAST check before the follow-up becomes real. Building the request is
             # not free, and a cancellation that lands while we build it must stop a
             # retry that has not been admitted yet — no submit, no claim, no child.
@@ -201,6 +206,11 @@ class InferenceRunner:
                 if active.state != "RUNNING":
                     if active.state=="CLOSURE_FAILED": self._terminal_disposition(active)
                     return self._finish(active,iid,"indeterminate" if active.disposition=="unknown" else "cancelled")
+                # A domain may bind its own durable attempt ledger here.  This is
+                # deliberately after one kernel child exists and before any
+                # provider call; retry attempts traverse the same _attempt path.
+                if request.before_physical_dispatch is not None:
+                    request.before_physical_dispatch(op["operation_id"], iid, request.attempt_ordinal)
                 # Atomic dispatch admission: a durable pre-dispatch cancellation
                 # can no longer race this right after the condition is released.
                 active.state="DISPATCHING"; active.condition.notify_all()

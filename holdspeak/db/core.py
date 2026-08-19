@@ -174,6 +174,7 @@ class Database:
             reconcile_schema(conn, db_path=self.db_path)
             from .refinement_thoughts import RefinementThoughtRepository
             RefinementThoughtRepository.reconcile_legacy_ledgers(conn)
+            RefinementThoughtRepository.reconcile_resume_orders(conn)
             RefinementThoughtRepository.reconcile_missing_working_notes(conn)
 
 

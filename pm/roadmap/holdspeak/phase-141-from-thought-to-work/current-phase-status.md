@@ -1,7 +1,7 @@
 # Phase 141 — From Thought to Work
 
-**Status:** active (1/9); the HS-141-01 durability keystone is done and downstream
-daily-custody work may begin.
+**Status:** active (2/9); raw custody and the bounded resumable-thought contract
+are done. The first owner-facing Develop bridge is next.
 
 **Last updated:** 2026-08-18.
 
@@ -48,7 +48,7 @@ Settled product decisions:
 | ID | Story | Status | Depends on |
 |---|---|---|---|
 | HS-141-01 | Raw before AI | done | Phase 140 landing |
-| HS-141-02 | The resumable thought | backlog | 141-01 |
+| HS-141-02 | The resumable thought | done | 141-01 |
 | HS-141-03 | Develop this thought | backlog | 141-02 |
 | HS-141-04 | One useful question | backlog | 141-02, 141-03, 141-06 |
 | HS-141-05 | Context you can see | backlog | 141-02, 141-04 |
@@ -126,3 +126,9 @@ review; five rounds surface the rigor/cost choice to the owner.
   raw custody immutable, versions content and lifecycle separately, closes
   ordinary CRUD and paired-sync bypasses, and makes tombstone replay both
   absolute and idempotent. Final adversarial counsel: RATIFY.
+- 2026-08-18 — HS-141-02 done. Owner-only bounded resume/load DTOs now carry
+  mandatory cursors without raw/context/result leakage. Logical refinement
+  requests durably bind every physical inference attempt—including dialect
+  follow-up—before dispatch, while deterministic recovery names stale,
+  superseded, failed, and orphaned states without rerun or Note mutation. Native
+  continuity proof remains hub-local. Final adversarial counsel: RATIFY.
