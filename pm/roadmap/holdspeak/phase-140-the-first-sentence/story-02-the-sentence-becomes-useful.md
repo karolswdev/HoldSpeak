@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 140
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** 140-01
 - **Unblocks:** 140-05, 140-06
 - **Owner:** delegated Terra worker; orchestrator adjudicates
@@ -27,17 +27,17 @@ Desk must prove that the sentence went somewhere findable.
 
 ## Acceptance criteria
 
-- [ ] A real non-empty transcript remains editable before finishing.
-- [ ] Copy writes the edited value and shows visible success/refusal.
-- [ ] Keep reuses one stable note ID across repeated clicks/response-loss retry,
+- [x] A real non-empty transcript remains editable before finishing.
+- [x] Copy writes the edited value and shows visible success/refusal.
+- [x] Keep reuses one stable note ID across repeated clicks/response-loss retry,
   producing exactly one note.
-- [ ] After Keep, the Desk store refreshes and the created note opens through
+- [x] After Keep, the Desk store refreshes and the created note opens through
   the existing pullout/window seam; it remains findable after reload.
-- [ ] Capture start/release and empty results do not complete first value;
+- [x] Capture start/release and empty results do not complete first value;
   onboarding completion may wait for the furnished-default hand-off in 140-05.
-- [ ] First-value records contain no transcript, phrase, audio, clipboard
+- [x] First-value records contain no transcript, phrase, audio, clipboard
   value, or note body.
-- [ ] First-value event requests reject content-bearing keys rather than merely
+- [x] First-value event requests reject content-bearing keys rather than merely
   ignoring them.
 
 ## Test plan

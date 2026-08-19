@@ -1,6 +1,6 @@
 # Phase 140 — The First Sentence
 
-**Status:** active (2/6).
+**Status:** active (3/6).
 
 **Last updated:** 2026-08-18.
 
@@ -29,7 +29,7 @@ the first-value machinery exists, but the front door hides it.
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
 | HS-140-01 | One obvious door | done | [story-01](./story-01-one-obvious-door.md) | [evidence-01](./evidence-story-01.md) |
-| HS-140-02 | The sentence becomes useful | ready | [story-02](./story-02-the-sentence-becomes-useful.md) | — |
+| HS-140-02 | The sentence becomes useful | done | [story-02](./story-02-the-sentence-becomes-useful.md) | [evidence-02](./evidence-story-02.md) |
 | HS-140-03 | Recovery stays here | backlog | [story-03](./story-03-recovery-stays-here.md) | — |
 | HS-140-04 | A desk worth opening | done | [story-04](./story-04-a-desk-worth-opening.md) | [evidence-04](./evidence-story-04.md) |
 | HS-140-05 | The quiet return | backlog | [story-05](./story-05-the-quiet-return.md) | — |
@@ -37,12 +37,13 @@ the first-value machinery exists, but the front door hides it.
 
 ## Where we are
 
-HS-140-01 and HS-140-04 are done. First value owns a quiet Chair until the
-server releases it. The packaged Desk now contains six useful drawers, six
-editable starter notes, and one explicitly attachable Everyday context
-collection without seeding an Agent, model, endpoint, or Workbench. Ordinary
-seeding preserves edits and tombstones; explicit Reset force-restores the pack.
-The real Ask and Agent attachment paths pass at 1440×900 and 393×900.
+HS-140-01, HS-140-02, and HS-140-04 are done. First value owns a quiet Chair;
+the edited sentence copies with a visible receipt or refusal and Keep uses one
+stable note id across response loss and relaunch. The note refreshes, stages,
+and opens on the normal Chair without leaking a pullout during arrival. A
+transcript alone no longer completes onboarding before the furnished handoff.
+The packaged Desk supplies six drawers and explicitly attachable Everyday
+context without fake personal facts or AI readiness.
 
 ## Risk register
 
@@ -58,6 +59,10 @@ The real Ask and Agent attachment paths pass at 1440×900 and 393×900.
 
 ## Decision log
 
+- 2026-08-18 — HS-140-02 done. Copy is truthful, Keep is idempotent through
+  ambiguous responses and refresh failures, the created note opens through the
+  normal-Chair pullout seam, and content-bearing event payloads refuse at both
+  route and service boundaries. Terra final verdicts: RATIFY.
 - 2026-08-18 — HS-140-04 done. The furnished pack, preservation-first seed,
   canonical context membership, explicit force Reset, Chair Ask repair, and
   both-width Floor/Ask/Agent walk pass. Terra seed and retry audit: RATIFY.

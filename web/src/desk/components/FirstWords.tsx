@@ -20,7 +20,13 @@ import {
   startStreamSession,
   type StreamSession,
 } from "../../lib/micStreamSession";
-import { FirstValueTracker } from "../firstValue";
+import { useDesk } from "../store";
+import {
+  clearFirstValueKeepNoteId,
+  firstValueKeepNoteId,
+  FirstValueTracker,
+  stageFirstValueNoteOpen,
+} from "../firstValue";
 
 type CaptureState =
   "idle" | "listening" | "transcribing" | "success" | "failed";
@@ -43,11 +49,14 @@ export function FirstWords({
   const [failure, setFailure] = useState<DictationFailure | null>(null);
   const [message, setMessage] = useState("");
   const [saving, setSaving] = useState(false);
+  const [keptNoteId, setKeptNoteId] = useState("");
   const tracker = useRef<FirstValueTracker | null>(null);
   if (!tracker.current) tracker.current = new FirstValueTracker();
   const sessionRef = useRef<StreamSession | null>(null);
   const startingRef = useRef(false);
   const draftEdited = useRef(false);
+  const actionRef = useRef<"keep" | "dismiss" | null>(null);
+  const refreshDesk = useDesk((desk) => desk.refresh);
 
   useEffect(() => {
     let mounted = true;
@@ -89,7 +98,6 @@ export function FirstWords({
     setState("success");
     setFailure(null);
     void tracker.current?.event("transcript_received");
-    await finishAttempt("success").catch(() => undefined);
   };
 
   const begin = async () => {
@@ -136,7 +144,12 @@ export function FirstWords({
   };
 
   const dismiss = async (disposition: "dismissed" | "needs_help") => {
+    if (actionRef.current) return;
+    actionRef.current = "dismiss";
     setSaving(true);
+    if (disposition === "dismissed") {
+      void tracker.current?.event("continue_later_selected");
+    }
     try {
       await apiFetch("/api/setup/onboarding", {
         method: "PUT",
@@ -146,28 +159,58 @@ export function FirstWords({
     } catch (error) {
       setMessage(readableError(error));
     } finally {
+      actionRef.current = null;
       setSaving(false);
     }
   };
 
   const keep = async () => {
-    if (!text.trim()) return;
+    if (!text.trim() || keptNoteId || actionRef.current) return;
+    actionRef.current = "keep";
     setSaving(true);
+    void tracker.current?.event("keep_selected");
+    const noteId = firstValueKeepNoteId();
+    let confirmed = false;
     try {
-      await apiFetch("/api/notes", {
+      const result = await apiFetch<{ note?: { id?: string } }>("/api/notes", {
         method: "POST",
         json: {
+          id: noteId,
           title: "First dictation",
           body_markdown: text,
           tags: ["dictation"],
         },
       });
+      confirmed = true;
+      const createdId = String(result.note?.id || noteId);
+      await refreshDesk();
+      stageFirstValueNoteOpen(`note:${createdId}`);
       clearPersisted();
-      setMessage("Kept as a note on your Desk.");
+      clearFirstValueKeepNoteId();
+      setKeptNoteId(createdId);
+      setMessage("Kept as a note. It will open when your Desk is ready.");
     } catch (error) {
-      setMessage(readableError(error));
+      setMessage(
+        confirmed
+          ? "Kept as a note, but the Desk could not refresh. Retry Keep as Note to open it."
+          : `Could not keep as a note. ${readableError(error)} Retry Keep as Note.`,
+      );
     } finally {
+      actionRef.current = null;
       setSaving(false);
+    }
+  };
+
+  const copy = async () => {
+    if (!text.trim() || actionRef.current) return;
+    // This is an intent metric, not a clipboard-content metric: refusals are
+    // still a real owner attempt and no phrase ever enters the event payload.
+    void tracker.current?.event("copy_selected");
+    try {
+      await navigator.clipboard.writeText(text);
+      setMessage("Copied to your clipboard.");
+    } catch {
+      setMessage("Clipboard access was blocked. Select your text and copy it manually.");
     }
   };
 
@@ -243,19 +286,17 @@ export function FirstWords({
       ) : null}
       <div className="button-row">
         <Button
-          disabled={!text.trim()}
+          disabled={!text.trim() || saving}
           onClick={() => {
-            void tracker.current?.event("copy_selected");
-            void navigator.clipboard.writeText(text);
+            void copy();
           }}
         >
           Copy
         </Button>
         <Button
-          disabled={!text.trim()}
+          disabled={!text.trim() || Boolean(keptNoteId)}
           loading={saving}
           onClick={() => {
-            void tracker.current?.event("keep_selected");
             void keep();
           }}
         >
@@ -278,8 +319,8 @@ export function FirstWords({
         <Button
           variant="ghost"
           loading={saving}
+          disabled={saving}
           onClick={() => {
-            void tracker.current?.event("continue_later_selected");
             void dismiss("dismissed");
           }}
         >

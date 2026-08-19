@@ -1,7 +1,30 @@
 import { describe, expect, it, vi } from "vitest";
-import { FirstValueTracker } from "./firstValue";
+import {
+  FirstValueTracker,
+  takeFirstValueNoteOpen,
+} from "./firstValue";
 
 describe("FirstValueTracker", () => {
+  it("keeps the one note id in local storage through an ambiguous response or relaunch", async () => {
+    localStorage.removeItem("hs.first-value.keep-note-id");
+    vi.resetModules();
+    const firstValueBeforeReload = await import("./firstValue");
+    const first = firstValueBeforeReload.firstValueKeepNoteId();
+    expect(localStorage.getItem("hs.first-value.keep-note-id")).toBe(first);
+    vi.resetModules();
+    const firstValueAfterReload = await import("./firstValue");
+    const afterReload = firstValueAfterReload.firstValueKeepNoteId();
+    expect(first).toMatch(/^note_/);
+    expect(afterReload).toBe(first);
+    firstValueAfterReload.clearFirstValueKeepNoteId();
+  });
+
+  it("consumes a staged first-value note only once", () => {
+    sessionStorage.setItem("hs.first-value.pending-note-open", "note:n1");
+    expect(takeFirstValueNoteOpen()).toBe("note:n1");
+    expect(takeFirstValueNoteOpen()).toBeNull();
+  });
+
   it("derives mechanics from bounded events and never posts fixed counters or phrase content", async () => {
     const fetcher = vi.fn(async (path: string, _init?: unknown) =>
       path.endsWith("/start")

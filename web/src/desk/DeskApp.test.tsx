@@ -2,6 +2,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import DeskApp from "./DeskApp";
+import { stageFirstValueNoteOpen } from "./firstValue";
 
 const state = vi.hoisted(() => ({
   setupResolved: true,
@@ -11,6 +12,8 @@ const state = vi.hoisted(() => ({
   surface: "floor" as "chair" | "floor",
   askOpen: false,
   refresh: vi.fn(),
+  openPullout: vi.fn(),
+  pullouts: [] as Array<{ id: string; origin: { x: number; y: number } | null }>,
 }));
 
 const { marker } = vi.hoisted(() => ({
@@ -31,6 +34,7 @@ vi.mock("./store", () => {
     viewMode: "unset",
     editingId: null,
     askOpen: false,
+    pullouts: [] as Array<{ id: string; origin: { x: number; y: number } | null }>,
   };
   state.refresh.mockImplementation(() =>
     state.refreshFails
@@ -44,9 +48,10 @@ vi.mock("./store", () => {
       ? { arrival_required: state.arrivalRequired }
       : null;
     desk.askOpen = state.askOpen;
+    desk.pullouts = state.pullouts;
     return selector(desk);
   };
-  useDesk.getState = () => ({ ...desk, refresh: state.refresh, openPullout: vi.fn() });
+  useDesk.getState = () => ({ ...desk, refresh: state.refresh, openPullout: state.openPullout });
   return { useDesk, defaultViewFor: () => "spatial" };
 });
 
@@ -98,7 +103,15 @@ vi.mock("./components/SurfaceWindows", () => ({
 }));
 vi.mock("./components/TrustWindow", () => ({ TrustWindow: marker("trust-window") }));
 vi.mock("./components/InlineEditor", () => ({ InlineEditor: marker("inline-editor") }));
-vi.mock("./world", () => ({ objectByRef: () => null }));
+vi.mock("./components/Pullout", () => ({
+  Pullout: ({ o }: { o: { title: string } }) => <div data-testid="chair-pullout">{o.title}</div>,
+}));
+vi.mock("./world", () => ({
+  objectByRef: (_items: unknown, id: string) =>
+    id === "note:kept-first-sentence"
+      ? { id, kind: "note", title: "First dictation", ref: { id, kind: "note" } }
+      : null,
+}));
 vi.mock("./projections", () => ({
   useProjections: { getState: () => ({ refresh: vi.fn().mockResolvedValue(undefined) }) },
 }));
@@ -112,6 +125,9 @@ describe("DeskApp arrival state", () => {
     state.surface = "floor";
     state.askOpen = false;
     state.refresh.mockClear();
+    state.openPullout.mockClear();
+    state.pullouts = [];
+    sessionStorage.clear();
   });
 
   it("makes first value the only Chair composition and suppresses Desk chrome", () => {
@@ -193,5 +209,26 @@ describe("DeskApp arrival state", () => {
     render(<DeskApp />);
 
     expect(screen.getByTestId("ask-panel")).toBeInTheDocument();
+  });
+
+  it("holds the kept-note pullout until the server reveals the normal Desk", () => {
+    stageFirstValueNoteOpen("note:kept-first-sentence");
+    const view = render(<DeskApp />);
+    expect(state.openPullout).not.toHaveBeenCalled();
+
+    state.arrivalRequired = false;
+    view.rerender(<DeskApp />);
+    expect(state.openPullout).toHaveBeenCalledWith("note:kept-first-sentence");
+  });
+
+  it("mounts staged pullouts on the normal Chair, never during arrival", () => {
+    state.pullouts = [{ id: "note:kept-first-sentence", origin: null }];
+    const arrival = render(<DeskApp />);
+    expect(screen.queryByTestId("chair-pullout")).not.toBeInTheDocument();
+
+    state.arrivalRequired = false;
+    state.surface = "chair";
+    arrival.rerender(<DeskApp />);
+    expect(screen.getByTestId("chair-pullout")).toHaveTextContent("First dictation");
   });
 });

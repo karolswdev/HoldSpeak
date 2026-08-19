@@ -4,7 +4,6 @@ from holdspeak.services.observer import NullObserver, PipelineObserver, observe_
 
 from typing import Any
 
-from ..db import FIRST_DICTATION_SUCCESS
 from ..db.core import Database
 from ..principals import Principal
 from .errors import NotFound, ValidationError
@@ -63,14 +62,14 @@ class SetupService:
             raise NotFound("first-value attempt", attempt_id) from exc
         except (TypeError, ValueError) as exc:
             raise ValidationError(str(exc)) from exc
-        if attempt.get("succeeded_at"):
-            self._db.milestones.mark(FIRST_DICTATION_SUCCESS)
-            self._db.onboarding.set_disposition("completed")
+        # HS-140-02 records transcript-backed local success only. Story 05
+        # owns the later seed-before-reveal milestone and onboarding exit.
         return {"success": True, "attempt": attempt}
 
     def record_event(
         self, principal: Principal, attempt_id: str, payload: dict[str, Any]
     ) -> dict[str, Any]:
+        self._reject_event_payload(payload)
         try:
             event = self._db.onboarding.record_event(
                 attempt_id,
@@ -85,5 +84,14 @@ class SetupService:
 
     @staticmethod
     def _reject_content(payload: dict[str, Any]) -> None:
-        if {"text", "phrase", "transcript", "content", "audio"}.intersection(payload):
+        if {
+            "text", "phrase", "transcript", "content", "audio",
+            "clipboard", "clipboard_value", "note_body", "body_markdown",
+        }.intersection(payload):
             raise ValidationError("First-value receipts never accept phrase content.")
+
+    @staticmethod
+    def _reject_event_payload(payload: dict[str, Any]) -> None:
+        allowed = {"event_id", "kind"}
+        if set(payload).difference(allowed):
+            raise ValidationError("First-value events accept only event_id and kind.")

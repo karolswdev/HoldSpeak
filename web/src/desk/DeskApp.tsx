@@ -34,8 +34,10 @@ import { Dock, Expose, SnapGhost, Switcher } from "./components/DeskWindow";
 import { SurfaceWindows } from "./components/SurfaceWindows";
 import { TrustWindow } from "./components/TrustWindow";
 import { InlineEditor } from "./components/InlineEditor";
+import { Pullout } from "./components/Pullout";
 import { objectByRef } from "./world";
 import { useProjections } from "./projections";
+import { takeFirstValueNoteOpen } from "./firstValue";
 import "./desk.css";
 
 export default function DeskApp() {
@@ -49,6 +51,7 @@ export default function DeskApp() {
   const loading = useDesk((s) => s.loading);
   const viewMode = useDesk((s) => s.viewMode);
   const editingId = useDesk((s) => s.editingId);
+  const pullouts = useDesk((s) => s.pullouts);
   const askOpen = useDesk((s) => s.askOpen);
   const error = useDesk((s) => s.error);
   const { refresh } = useDesk.getState();
@@ -84,6 +87,17 @@ export default function DeskApp() {
   // HS-140-01: first value owns HOME. A stale Floor preference must not
   // detour a fresh owner away from the one capture path.
   const showFloor = surface === "floor" && !arrivalRequired;
+  const chairOpenCards = pullouts
+    .map((pullout) => ({ ...pullout, object: objectByRef(items, pullout.id) }))
+    .filter((pullout) => Boolean(pullout.object));
+
+  useEffect(() => {
+    // HS-140-02 stages Keep's note while first value owns HOME. Only the
+    // server-authorized normal Desk reveal may consume and visibly open it.
+    if (arrivalRequired) return;
+    const ref = takeFirstValueNoteOpen();
+    if (ref) useDesk.getState().openPullout(ref);
+  }, [arrivalRequired]);
 
   useEffect(() => {
     void refreshDesk();
@@ -142,6 +156,11 @@ export default function DeskApp() {
         const o = objectByRef(items, editingId);
         return o ? <InlineEditor key={o.id} o={o} u={{ x: 0.5, y: 0.4 }} /> : null;
       })()}
+      {/* Floor and List own their pullout mounts. The normal Chair needs the
+          same card seam for the first-value note staged before reveal. */}
+      {!arrivalRequired && !showFloor && chairOpenCards.map((pullout) => (
+        <Pullout key={pullout.id} o={pullout.object!} origin={pullout.origin} />
+      ))}
       {!arrivalRequired && chatPersonaId && <PersonaChat personaId={chatPersonaId} />}
       {!arrivalRequired && <DeskToolInspector />}
       {!arrivalRequired && <MissionControlConveyor />}

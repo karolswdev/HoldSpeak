@@ -9,12 +9,12 @@
 > is canon at [`docs/internal/ORCHESTRATION.md`](../../../docs/internal/ORCHESTRATION.md).
 
 **Newest update (2026-08-18): Phase 140 — The First Sentence — ACTIVE
-(2/6).** HS-140-01 and HS-140-04 are done: a fresh owner reaches one quiet
-first-value Chair, and the later reveal now has a furnished six-drawer Desk,
-six editable starter notes, and explicitly attachable Everyday context. The
-pack invents no owner facts or fake AI readiness; ordinary seeding preserves
-edits and tombstones, while explicit Reset force-restores defaults. The real
-Floor, Ask attachment, and Agent Context paths pass at both target widths.
+(3/6).** HS-140-01, HS-140-02, and HS-140-04 are done. A fresh owner gets one
+quiet first-value Chair; the edited sentence copies truthfully or keeps under
+one retry-safe note id, then opens through the normal-Chair note seam. A
+transcript cannot prematurely complete onboarding. The later reveal has a
+furnished six-drawer Desk, six editable starter notes, and explicitly
+attachable Everyday context without invented owner facts or fake AI readiness.
 The owner ordered a complexity cut. The proposed Dashboard Door is
 cancelled: no TODO kanban, calendar aggregation, or new control center. A fresh
 HoldSpeak will open on one obvious job—dictate one sentence—then reveal the
@@ -839,7 +839,7 @@ canon, canon wins.
 | 111 | The Refinement: every program on the desk gets its interior rethought for Signal Workbench — Settings, Speak, Meetings, Agents, Ask, Delivery, system chrome, interactive controls, sprites. | in-progress | [phase-111-the-refinement](./phase-111-the-refinement/) |
 | 138 | Ship an encrypted, local-only People relationship and 1:1 foundation whose explicit manager commitments appear in Follow-through without entering plaintext product stores. | done | [phase-138-the-people-ledger](./phase-138-the-people-ledger/) |
 | 139 | The Settings Reckoning: cut the Settings face to seven job-named tiles, pin core defaults, move object settings home, and fold operator wiring behind RAW. | done | [phase-139-the-settings-reckoning](./phase-139-the-settings-reckoning/) |
-| 140 | The First Sentence: one obvious first-value act on the Chair, a useful editable result, in-place recovery, then a furnished six-drawer reveal with explicitly attachable Everyday context. | in-progress (2/6) | [phase-140-the-first-sentence](./phase-140-the-first-sentence/) |
+| 140 | The First Sentence: one obvious first-value act on the Chair, a useful editable result, in-place recovery, then a furnished six-drawer reveal with explicitly attachable Everyday context. | in-progress (3/6) | [phase-140-the-first-sentence](./phase-140-the-first-sentence/) |
 
 (Status values: `planning`, `in-progress`, `done`, `paused`, `cancelled`.)
 
