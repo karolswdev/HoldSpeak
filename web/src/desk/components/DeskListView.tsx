@@ -76,10 +76,15 @@ export function DeskListView() {
   const { openPullout, toggleSelected, diveInto, surface } = useDesk.getState();
 
   const zones = worldZones(items, divedZone);
-  // The root list shows EVERY object (filed ones carry their zone as the
-  // fact token) so nothing is stranded behind a spatial-only affordance.
+  // The root list shows every owner object (filed ones carry their zone as
+  // the fact token), but repository roadmaps belong to explicit Delivery,
+  // not the ordinary Floor. A dived zone keeps its existing world projection.
   const objects = useMemo(
-    () => (divedZone ? worldObjects(items, divedZone) : allObjects(items)),
+    () => (
+      divedZone
+        ? worldObjects(items, divedZone)
+        : allObjects(items).filter((object) => object.kind !== "roadmap")
+    ),
     [items, divedZone],
   );
   const zoneNames = useMemo(() => {

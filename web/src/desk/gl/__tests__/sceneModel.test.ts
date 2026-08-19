@@ -64,6 +64,46 @@ const someItems: Items = {
   ],
 };
 
+const furnishedItems: Items = {
+  ...EMPTY_ITEMS,
+  kb: [
+    {
+      kind: "kb",
+      id: "hs-seed-everyday-context",
+      name: "Everyday context",
+      memberIds: ["hs-seed-about-me"],
+    } as any,
+  ],
+  directory: ["Decisions", "Inbox", "Meetings", "Personal", "Reference", "Work"].map(
+    (name) => ({ kind: "directory", id: `hs-seed-${name.toLowerCase()}`, name, memberIds: [] }) as any,
+  ),
+  roadmap: [
+    {
+      kind: "roadmap",
+      id: "roadmap:holdspeak",
+      title: "HoldSpeak — Roadmap",
+      slug: "holdspeak",
+      name: "HoldSpeak — Roadmap",
+      phaseCount: 1,
+      currentPhase: 140,
+      currentPhaseTitle: "First sentence",
+      storiesDone: 0,
+      storiesTotal: 1,
+      health: "green",
+      issues: [],
+      nextStoryId: null,
+    },
+  ] as any,
+};
+
+function intersects(
+  a: { left: number; top: number; width: number; height: number },
+  b: { left: number; top: number; width: number; height: number },
+) {
+  return a.left < b.left + b.width && a.left + a.width > b.left &&
+    a.top < b.top + b.height && a.top + a.height > b.top;
+}
+
 describe("buildScene", () => {
   it("projects the same objects worldObjects yields, with objUnit homes", () => {
     const scene = buildScene(inputs({ items: someItems }));
@@ -144,6 +184,27 @@ describe("buildScene", () => {
     );
     expect(scene.zones[0].dropReady).toBe(true);
     expect(scene.zones[0].sprite).toContain("drawer_sel");
+  });
+
+  it("keeps the six furnished drawers and Everyday context apart at 393px", () => {
+    const originalWidth = window.innerWidth;
+    Object.defineProperty(window, "innerWidth", { configurable: true, value: 393 });
+    try {
+      const scene = buildScene(inputs({ items: furnishedItems, compact: true, worldWidth: 393 }));
+      const compactRect: WorldRect = { left: 0, top: 0, width: 393, height: 800 };
+
+      expect(scene.zones.map((z) => z.u)).toEqual([
+        { x: 1 / 6, y: 0.2 }, { x: 0.5, y: 0.2 }, { x: 5 / 6, y: 0.2 },
+        { x: 1 / 6, y: 0.32 }, { x: 0.5, y: 0.32 }, { x: 5 / 6, y: 0.32 },
+      ]);
+      expect(scene.objects.map((o) => o.id)).toEqual(["hs-seed-everyday-context"]);
+      const everyday = objectRect(scene.objects[0], compactRect);
+      for (const zone of scene.zones) {
+        expect(intersects(everyday, zoneRect(zone, compactRect))).toBe(false);
+      }
+    } finally {
+      Object.defineProperty(window, "innerWidth", { configurable: true, value: originalWidth });
+    }
   });
 });
 

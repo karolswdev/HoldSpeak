@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 140
-- **Status:** backlog
+- **Status:** active — glass and local gates pass; physical-device recovery legs remain
 - **Depends on:** 140-05
 - **Unblocks:** phase close
 - **Owner:** orchestrator owns walk and sitting; Terra counsel is read-only
@@ -26,22 +26,22 @@ owner judgment before merge.
 
 ## Acceptance criteria
 
-- [ ] Fresh HOME reaches one primary Dictate one sentence action with no setup
+- [x] Fresh HOME reaches one primary Dictate one sentence action with no setup
   prerequisite or competing product nouns above fold.
 - [ ] A real sentence completes dictate→edit→Copy and dictate→edit→Keep→find.
-- [ ] First reveal contains all six drawers, starter notes, and Everyday
+- [x] First reveal contains all six drawers, starter notes, and Everyday
   context; no separate Seed the desk action is required and no fake configured
   Agent/model appears.
-- [ ] Edit a context note, explicitly attach Everyday context in Ask and an
+- [x] Edit a context note, explicitly attach Everyday context in Ask and an
   Agent, and prove the hydration uses the edit without setup vocabulary.
 - [ ] Permission-denied, no-speech, unavailable-transcription, and seed-failure
   legs each show one truthful in-place recovery.
-- [ ] Continue later and completion survive hub/browser restart.
-- [ ] Both widths have zero horizontal overflow and zero console errors.
-- [ ] README, Getting Started, and User Guide lead with the simple loop and
+- [x] Continue later and completion survive hub/browser restart.
+- [x] Both widths have zero horizontal overflow and zero console errors.
+- [x] README, Getting Started, and User Guide lead with the simple loop and
   describe the furnished defaults without stale explicit-seed instructions.
-- [ ] Fresh Terra counsel has no blocker.
-- [ ] Owner sees final both-width screenshots before merge.
+- [x] Fresh Terra counsel has no blocker.
+- [x] Owner sees final both-width screenshots before merge.
 
 ## Test plan
 
@@ -53,3 +53,10 @@ owner judgment before merge.
 ## Notes
 
 GitHub Actions is explicitly not watched or used as a phase gate.
+
+The 2026-08-18 bare-HOME walk and owner sitting ratify the simplified arrival,
+furnished reveal, Copy/Keep custody, persistence, responsive glass, and public
+wording. This runner had no physical microphone, so the real-microphone sentence
+and the physical permission/no-speech recovery legs remain open rather than
+being replaced with synthetic evidence. See the
+[`story-06` walk assets](./assets/story-06/README.md).

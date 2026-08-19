@@ -184,6 +184,34 @@ describe("HS-111-07 the ledger face: same records", () => {
     renderList();
     expect(screen.getByRole("status")).toHaveTextContent("Showing 4 of 4");
   });
+
+  it("keeps repository roadmaps out of the ordinary root list", () => {
+    resetStore({
+      ...items,
+      roadmap: [
+        {
+          kind: "roadmap",
+          id: "roadmap:holdspeak",
+          title: "HoldSpeak — Roadmap",
+          slug: "holdspeak",
+          name: "HoldSpeak — Roadmap",
+          phaseCount: 1,
+          currentPhase: 140,
+          currentPhaseTitle: "First sentence",
+          storiesDone: 0,
+          storiesTotal: 1,
+          health: "green",
+          issues: [],
+          nextStoryId: null,
+        },
+      ] as any,
+    });
+
+    renderList();
+
+    expect(screen.queryByRole("button", { name: "HoldSpeak — Roadmap" })).toBeNull();
+    expect(screen.getByText("ITEMS 4 · ZONES 1 · ATTN 0")).toBeInTheDocument();
+  });
 });
 
 describe("HS-93-08 pagination at 1,000 items", () => {

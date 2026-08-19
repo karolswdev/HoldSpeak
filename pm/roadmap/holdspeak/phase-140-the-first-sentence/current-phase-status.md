@@ -33,7 +33,7 @@ the first-value machinery exists, but the front door hides it.
 | HS-140-03 | Recovery stays here | done | [story-03](./story-03-recovery-stays-here.md) | [evidence-03](./evidence-story-03.md) |
 | HS-140-04 | A desk worth opening | done | [story-04](./story-04-a-desk-worth-opening.md) | [evidence-04](./evidence-story-04.md) |
 | HS-140-05 | The quiet return | done | [story-05](./story-05-the-quiet-return.md) | [evidence-05](./evidence-story-05.md) |
-| HS-140-06 | The cold walk | backlog | [story-06](./story-06-the-cold-walk.md) | — |
+| HS-140-06 | The cold walk | active | [story-06](./story-06-the-cold-walk.md) | — |
 
 ## Where we are
 
@@ -50,7 +50,10 @@ audio that cannot be retried until its local write settles.
 Copy, Keep, Continue, and help now pass through one seed-before-reveal handoff;
 text deferred through an exit says so explicitly and receives stable Note
 custody. The bare-HOME normal Chair and six-drawer Floor survive reload at both
-widths without horizontal overflow.
+widths without horizontal overflow. The final glass cut removes repository
+roadmaps from the ordinary Floor/List while preserving Delivery, and the public
+docs now lead with Dictate → edit → Copy or Keep. Physical-microphone and
+physical permission/no-speech legs remain open because this runner had no mic.
 
 ## Risk register
 
@@ -66,6 +69,11 @@ widths without horizontal overflow.
 
 ## Decision log
 
+- 2026-08-18 — HS-140-06 glass and local gates ratified; story remains active.
+  Bare-HOME arrival, Continue/reload, the furnished reveal, responsive Floor,
+  Copy/Keep custody, docs, and counsel pass. The owner calls it “a step in the
+  right direction.” Physical-microphone and physical permission/no-speech legs
+  stay open; typed fallback is not misrepresented as microphone proof.
 - 2026-08-18 — HS-140-05 done. The server refuses every onboarding exit until
   ordinary furnishing succeeds; the client keeps the first-value composition
   mounted through seed and both refreshes, and one Retry resumes ambiguous
