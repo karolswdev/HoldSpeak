@@ -4264,6 +4264,64 @@
       ]
     },
     {
+      "path": "/api/thoughts",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.primitives.thoughts",
+      "consumers": []
+    },
+    {
+      "path": "/api/thoughts",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.primitives.thoughts",
+      "consumers": []
+    },
+    {
+      "path": "/api/thoughts/{thought_id}",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.primitives.thoughts",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/thoughts/{thought_id}/complete",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.primitives.thoughts",
+      "consumers": []
+    },
+    {
+      "path": "/api/thoughts/{thought_id}/original",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.primitives.thoughts",
+      "consumers": []
+    },
+    {
+      "path": "/api/thoughts/{thought_id}/resume",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.primitives.thoughts",
+      "consumers": []
+    },
+    {
+      "path": "/api/thoughts/{thought_id}/working",
+      "methods": [
+        "PATCH"
+      ],
+      "module": "web.routes.primitives.thoughts",
+      "consumers": []
+    },
+    {
       "path": "/api/workbench-templates",
       "methods": [
         "GET"

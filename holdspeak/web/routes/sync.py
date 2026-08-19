@@ -21,7 +21,7 @@ from ..context import WebContext
 
 
 def _error(exc: ServiceError) -> JSONResponse:
-    payload = {"success": False, "error": exc.detail, **exc.context}
+    payload = {"success": False, "error": exc.code, "detail": exc.detail, **exc.context}
     if isinstance(exc, ConflictError):
         return JSONResponse(payload, status_code=409)
     return JSONResponse(payload, status_code=422 if isinstance(exc, ValidationError) else 400)

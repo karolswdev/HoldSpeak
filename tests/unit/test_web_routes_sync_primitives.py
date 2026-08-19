@@ -15,6 +15,10 @@ import holdspeak.db as hsdb
 from holdspeak.db import Database, reset_database
 from holdspeak.web.context import WebContext
 from holdspeak.web.routes import build_sync_router
+from holdspeak.services.refinement_thought_service import RefinementThoughtService
+from holdspeak.principals import Principal, PrincipalKind
+
+OWNER = Principal(PrincipalKind.OWNER, "test-owner")
 
 
 @pytest.fixture
@@ -100,6 +104,64 @@ def test_push_tombstone_deletes(env) -> None:
     assert resp.status_code == 200
     assert db.notes.get("n1") is None  # tombstoned (hidden)
     assert db.notes.get("n1", include_deleted=True).deleted is True
+
+
+def test_thought_owned_note_sync_requires_aggregate_revision_and_filing_stays_organization(env) -> None:
+    db, client = env
+    db.directories.upsert(directory_id="hs-seed-inbox", name="Inbox")
+    thought = RefinementThoughtService(db).create(
+        OWNER, request_id="sync-thought", raw_text="raw", source={"kind": "typed"},
+    )
+    note_id = thought["working_note"]["id"]
+    denied = client.post("/api/sync/push", json={"notes": [{
+        "meta": {"id": note_id, "kind": "note", "last_modified": "2035-01-01T00:00:00Z", "deleted": False},
+        "value": {"title": "bypass", "body_markdown": "x", "tags": []},
+    }]})
+    assert denied.status_code == 409
+    assert denied.json()["error"] == "thought_sync_revision_required"
+
+    # Organization is independent: a live thought can be unfiled without
+    # terminalizing its custody aggregate.
+    unfile = client.post("/api/sync/push", json={"directory_memberships": [{
+        "meta": {"id": f"note:{note_id}", "kind": "directory_membership", "last_modified": "2035-01-02T00:00:00Z", "deleted": True},
+        "value": None,
+    }]})
+    assert unfile.status_code == 200
+    assert db.refinement_thoughts.get(thought["id"])["state"] == "working"
+    assert db.directory_memberships.get(f"note:{note_id}") is None
+
+    # Once the Note itself is terminal, neither a direct nor stale filing replay
+    # may resurrect organization around it.
+    assert RefinementThoughtService(db).tombstone_note(OWNER, note_id, expected_aggregate_revision=1, expected_lifecycle_revision=1)
+    replay = client.post("/api/sync/push", json={"directory_memberships": [{
+        "meta": {"id": f"note:{note_id}", "kind": "directory_membership", "last_modified": "2034-01-01T00:00:00Z", "deleted": False},
+        "value": {"directory_id": "hs-seed-inbox"},
+    }]})
+    assert replay.status_code == 409
+    assert replay.json()["error"] == "thought_tombstoned"
+
+
+def test_live_thought_bundle_leaves_membership_to_independent_organization_convergence(env) -> None:
+    db, client = env
+    db.directories.upsert(directory_id="hs-seed-inbox", name="Inbox")
+    thought = RefinementThoughtService(db).create(OWNER, request_id="bundle-file", raw_text="raw", source={"kind": "typed"})
+    note_id = thought["working_note"]["id"]
+    pulled = client.get("/api/sync/pull").json()
+    bundle = pulled["refinement_thoughts"]
+    note = pulled["notes"]
+    moved = [{
+        "meta": {"id": f"note:{note_id}", "kind": "directory_membership", "last_modified": "2036-01-02T00:00:00Z", "deleted": True},
+        "value": None,
+    }]
+    accepted = client.post("/api/sync/push", json={"refinement_thoughts": bundle, "notes": note, "directory_memberships": moved})
+    assert accepted.status_code == 200
+    assert accepted.json()["received"]["directory_memberships"] == 1  # live filing is independent of aggregate CAS
+    stale = client.post("/api/sync/push", json={"directory_memberships": [{
+        "meta": {"id": f"note:{note_id}", "kind": "directory_membership", "last_modified": "2035-01-01T00:00:00Z", "deleted": False},
+        "value": {"directory_id": "hs-seed-inbox"},
+    }]})
+    assert stale.status_code == 200
+    assert db.directory_memberships.get(f"note:{note_id}") is None
 
 
 def test_push_then_pull_round_trip(env) -> None:

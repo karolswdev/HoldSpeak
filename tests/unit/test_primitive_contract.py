@@ -41,6 +41,8 @@ from holdspeak.web.context import WebContext
 from holdspeak.web.routes import build_sync_router
 from holdspeak.web.routes.sync import SYNC_KINDS
 from holdspeak.services.sync_service import SYNC_BUCKETS, SYNC_REGISTRY, SYNC_SCHEMAS
+from holdspeak.services.refinement_thought_service import RefinementThoughtService
+from holdspeak.principals import Principal, PrincipalKind
 
 REPO = Path(__file__).parents[2]
 SCHEMA_DIR = REPO / "pm/roadmap/holdspeak-mobile/contracts/schemas"
@@ -50,6 +52,7 @@ PRIMITIVES_TS = REPO / "web/src/lib/primitives.ts"
 # sync kind -> (pull bucket, value schema $id)
 KIND_BUCKETS = {
     "note": "notes",
+    "refinement_thought": "refinement_thoughts",
     "kb": "kbs",
     "recipe": "recipes",
     "chain": "chains",
@@ -122,6 +125,8 @@ def pull_body(tmp_path, monkeypatch):
     # A tombstone so the envelope's deleted branch is exercised by real data.
     db.notes.upsert(note_id="n-gone", title="gone")
     db.notes.delete("n-gone")
+    db.directories.upsert(directory_id="hs-seed-inbox", name="Inbox")
+    RefinementThoughtService(db).create(Principal(PrincipalKind.OWNER, "test-owner"), request_id="contract-thought", raw_text="raw", source={"kind": "typed"})
 
     app = FastAPI()
     app.include_router(build_sync_router(WebContext(get_state=lambda: {})))

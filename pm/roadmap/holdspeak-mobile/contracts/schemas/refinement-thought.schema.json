@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://holdspeak.dev/contracts/v0/refinement-thought.schema.json",
+  "title": "Refinement thought",
+  "x-sync-kind": "refinement_thought",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "create_request_id", "create_payload_sha256", "raw_utf8_b64", "raw_sha256", "source", "raw_captured_at", "state", "attachment_revision", "working_revision", "lifecycle_revision", "aggregate_revision", "expected_aggregate_revision", "next_aggregate_revision", "working_note", "revisions", "lifecycle", "commands"],
+  "properties": {
+    "id": {"type": "string", "minLength": 1},
+    "create_request_id": {"type": "string", "minLength": 1},
+    "create_payload_sha256": {"type": "string", "minLength": 1},
+    "raw_utf8_b64": {"type": "string"},
+    "raw_sha256": {"type": "string"},
+    "source": {"type": "object"},
+    "raw_captured_at": {"type": "string"},
+    "state": {"enum": ["working", "completed", "tombstoned"]},
+    "attachment_revision": {"type": "integer", "minimum": 0},
+    "working_revision": {"type": "integer", "minimum": 1},
+    "lifecycle_revision": {"type": "integer", "minimum": 1},
+    "aggregate_revision": {"type": "integer", "minimum": 1},
+    "expected_aggregate_revision": {"type": "integer", "minimum": 0},
+    "next_aggregate_revision": {"type": "integer", "minimum": 1},
+    "working_note": {"type": ["object", "null"]},
+    "revisions": {"type": "array"},
+    "lifecycle": {"type": "array"},
+    "commands": {"type": "array"},
+    "created_at": {"type": "string"},
+    "last_modified": {"type": "string"},
+    "deleted": {"type": "boolean"}
+  }
+}

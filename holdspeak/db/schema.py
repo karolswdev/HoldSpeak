@@ -811,6 +811,86 @@ CREATE TABLE IF NOT EXISTS notes (
     deleted INTEGER NOT NULL DEFAULT 0
 );
 
+-- HS-141-01: one immutable raw capture plus one ordinary editable Note.  The
+-- aggregate owns lifecycle/revision; no status or ownership column is added to
+-- notes, so ordinary Note metadata never becomes a second state machine.
+CREATE TABLE IF NOT EXISTS refinement_thoughts (
+    id TEXT PRIMARY KEY,
+    create_request_id TEXT NOT NULL UNIQUE,
+    create_payload_sha256 TEXT NOT NULL,
+    raw_utf8 BLOB NOT NULL,
+    raw_sha256 TEXT NOT NULL,
+    raw_source_kind TEXT NOT NULL,
+    raw_source_ref TEXT,
+    raw_captured_at TEXT NOT NULL,
+    working_note_id TEXT NOT NULL UNIQUE REFERENCES notes(id),
+    working_revision INTEGER NOT NULL CHECK (working_revision >= 1),
+    lifecycle_revision INTEGER NOT NULL DEFAULT 1 CHECK (lifecycle_revision >= 1),
+    attachment_revision INTEGER NOT NULL DEFAULT 0 CHECK (attachment_revision >= 0),
+    aggregate_revision INTEGER NOT NULL DEFAULT 1 CHECK (aggregate_revision >= 1),
+    state TEXT NOT NULL CHECK (state IN ('working', 'completed', 'tombstoned')),
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL,
+    completed_at TEXT,
+    tombstoned_at TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_refinement_thoughts_resume
+ON refinement_thoughts(state, updated_at DESC);
+
+CREATE TABLE IF NOT EXISTS refinement_working_revisions (
+    thought_id TEXT NOT NULL REFERENCES refinement_thoughts(id),
+    revision INTEGER NOT NULL CHECK (revision >= 1),
+    title TEXT NOT NULL,
+    body_markdown TEXT NOT NULL,
+    tags_json TEXT NOT NULL,
+    content_sha256 TEXT NOT NULL,
+    accepted_at TEXT NOT NULL,
+    PRIMARY KEY (thought_id, revision)
+);
+
+CREATE TABLE IF NOT EXISTS refinement_lifecycle_revisions (
+    thought_id TEXT NOT NULL REFERENCES refinement_thoughts(id),
+    lifecycle_revision INTEGER NOT NULL,
+    aggregate_revision INTEGER NOT NULL,
+    prior_state TEXT,
+    state TEXT NOT NULL,
+    command TEXT NOT NULL,
+    occurred_at TEXT NOT NULL,
+    entry_sha256 TEXT NOT NULL,
+    PRIMARY KEY (thought_id, lifecycle_revision),
+    UNIQUE (thought_id, aggregate_revision)
+);
+
+CREATE TABLE IF NOT EXISTS refinement_aggregate_commands (
+    thought_id TEXT NOT NULL REFERENCES refinement_thoughts(id),
+    aggregate_revision INTEGER NOT NULL,
+    command_kind TEXT NOT NULL,
+    prior_working_revision INTEGER NOT NULL,
+    next_working_revision INTEGER NOT NULL,
+    prior_lifecycle_revision INTEGER NOT NULL,
+    next_lifecycle_revision INTEGER NOT NULL,
+    prior_attachment_revision INTEGER NOT NULL,
+    next_attachment_revision INTEGER NOT NULL,
+    canonical_sha256 TEXT NOT NULL,
+    lifecycle_sha256 TEXT,
+    accepted_at TEXT NOT NULL,
+    PRIMARY KEY (thought_id, aggregate_revision)
+);
+
+-- A peer can receive a sync tombstone before its live aggregate. Preserve the
+-- high-water fence so a delayed live bundle cannot resurrect custody.
+CREATE TABLE IF NOT EXISTS refinement_thought_sync_tombstones (
+    thought_id TEXT PRIMARY KEY,
+    expected_revision INTEGER NOT NULL DEFAULT 0,
+    aggregate_revision INTEGER NOT NULL DEFAULT 0,
+    lifecycle_revision INTEGER NOT NULL DEFAULT 0,
+    lifecycle_sha256 TEXT NOT NULL DEFAULT '',
+    terminal_working_note_id TEXT NOT NULL DEFAULT '',
+    terminal_fingerprint TEXT NOT NULL DEFAULT '',
+    last_modified TEXT NOT NULL,
+    tombstoned_at TEXT NOT NULL
+);
+
 -- HS-113-08: authored Architecture Decision Records. Deliberately separate
 -- from the HS-109 meeting-derived `decisions` memory projection.
 CREATE TABLE IF NOT EXISTS desk_decisions (

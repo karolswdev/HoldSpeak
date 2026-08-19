@@ -3,11 +3,15 @@ from __future__ import annotations
 from holdspeak.services.observer import NullObserver, PipelineObserver, observe_service
 
 import json
+import base64
+import hashlib
 from dataclasses import dataclass, replace
 from typing import Any, Callable
 
 from ..logging_config import get_logger
+from ..db.refinement_thoughts import RefinementThoughtRepository
 from ..principals import Principal
+from ..principals import PrincipalKind
 from .errors import ConflictError, ValidationError
 
 log = get_logger("services.sync")
@@ -30,6 +34,7 @@ SYNC_REGISTRY = (
     SyncKindSpec("meeting", "meetings", "meeting.schema.json"),
     SyncKindSpec("artifact", "artifacts", "artifact.schema.json"),
     SyncKindSpec("note", "notes", "note.schema.json", True),
+    SyncKindSpec("refinement_thought", "refinement_thoughts", "refinement-thought.schema.json"),
     SyncKindSpec("kb", "kbs", "kb.schema.json", True),
     SyncKindSpec("recipe", "recipes", "recipe.schema.json", True),
     SyncKindSpec("chain", "chains", "chain.schema.json", True),
@@ -628,6 +633,233 @@ def _merge_primitive_spec(db: Any, spec: SyncKindSpec, records: list[dict[str, A
     return merged
 
 
+def _thought_sync_record(db: Any, thought: dict[str, Any]) -> dict[str, Any]:
+    note = db.notes.get(thought["working_note_id"], include_deleted=True)
+    revisions = db.refinement_thoughts.revisions(thought["id"])
+    lifecycle = db.refinement_thoughts.lifecycle(thought["id"])
+    commands = db.refinement_thoughts.commands(thought["id"])
+    deleted = thought["state"] == "tombstoned"
+    meta = {"id": thought["id"], "kind": "refinement_thought", "last_modified": _iso(thought["updated_at"]),
+            "deleted": deleted, "expected_aggregate_revision": max(0, int(thought["aggregate_revision"]) - 1),
+            "next_aggregate_revision": int(thought["aggregate_revision"]), "lifecycle_revision": int(thought["lifecycle_revision"])}
+    return {
+        "meta": meta,
+        "value": {
+            "id": thought["id"], "create_request_id": thought["create_request_id"],
+            "create_payload_sha256": thought["create_payload_sha256"],
+            "raw_utf8_b64": thought["raw_utf8_b64"], "raw_sha256": thought["raw_sha256"],
+            "source": {"kind": thought["raw_source_kind"], "ref": thought["raw_source_ref"]},
+            "raw_captured_at": thought["raw_captured_at"], "state": thought["state"],
+            "created_at": thought["created_at"], "attachment_revision": thought["attachment_revision"],
+            "last_modified": _iso(thought["updated_at"]), "deleted": False,
+            "working_revision": thought["working_revision"], "lifecycle_revision": thought["lifecycle_revision"],
+            "aggregate_revision": thought["aggregate_revision"],
+            "expected_aggregate_revision": max(0, int(thought["aggregate_revision"]) - 1),
+            "next_aggregate_revision": thought["aggregate_revision"],
+            "working_note": note.to_dict() if note else None,
+            "revisions": revisions, "lifecycle": lifecycle, "commands": commands,
+        },
+    }
+
+
+def _merge_refinement_thought_bundles(db: Any, records: list[dict[str, Any]],
+                                      note_records: list[dict[str, Any]],
+                                      membership_records: list[dict[str, Any]]) -> tuple[int, set[str], set[str]]:
+    """Apply thought-owned Note changes through the aggregate-command ledger."""
+    return _merge_refinement_thought_ledger_bundles(db, records, note_records, membership_records)
+
+
+def _merge_refinement_thought_ledger_bundles(db: Any, records: list[dict[str, Any]],
+                                             note_records: list[dict[str, Any]],
+                                             membership_records: list[dict[str, Any]]) -> tuple[int, set[str], set[str]]:
+    """The sole aggregate sync law: validate an immutable command suffix, then install it atomically."""
+    from .refinement_thought_service import RefinementThoughtService
+
+    service = RefinementThoughtService(db)
+    principal = Principal(PrincipalKind.NODE, "paired-sync")
+    note_by_id = {str(rec["meta"]["id"]): rec for rec in note_records}
+    bundle_ids = {str(rec["meta"]["id"]) for rec in records}
+    exact_terminal_memberships: set[str] = set()
+    for rec in records:
+        value = rec.get("value")
+        if not isinstance(value, dict) or value.get("state") != "tombstoned" or not isinstance(value.get("working_note"), dict):
+            continue
+        thought_id = str((rec.get("meta") or {}).get("id") or value.get("id") or "")
+        with db._connection() as conn:
+            fence = conn.execute("SELECT terminal_fingerprint FROM refinement_thought_sync_tombstones WHERE thought_id=?", (thought_id,)).fetchone()
+        if fence and str(fence["terminal_fingerprint"]) == _terminal_fingerprint(value):
+            exact_terminal_memberships.add(f"note:{value['working_note']['id']}")
+    for note_id in note_by_id:
+        owned = db.refinement_thoughts.get_by_note(note_id)
+        if owned and owned["id"] not in bundle_ids:
+            raise ConflictError("thought-owned note sync requires its aggregate revision", code="thought_sync_revision_required")
+    for member in membership_records:
+        ref = str((member.get("meta") or {}).get("id") or "")
+        if ref.startswith("note:"):
+            if ref in exact_terminal_memberships:
+                continue
+            owned = db.refinement_thoughts.get_by_note(ref.split(":", 1)[1])
+            if owned and owned["state"] == "tombstoned":
+                raise ConflictError("tombstoned thought cannot be filed", code="thought_tombstoned")
+            with db._connection() as conn:
+                fenced = conn.execute("SELECT 1 FROM refinement_thought_sync_tombstones WHERE terminal_working_note_id=?", (ref.split(":", 1)[1],)).fetchone()
+            if fenced:
+                raise ConflictError("tombstoned thought cannot be filed", code="thought_tombstoned")
+    merged, consumed_notes, consumed_memberships = 0, set(), set()
+    for rec in records:
+        meta, value = dict(rec.get("meta") or {}), rec.get("value")
+        if not isinstance(value, dict):
+            raise ValidationError("thought sync requires aggregate value", code="thought_sync_invalid")
+        thought_id = str(meta.get("id") or value.get("id") or "")
+        if not thought_id or thought_id != str(value.get("id") or ""):
+            raise ValidationError("thought sync id is invalid", code="thought_sync_invalid")
+        try:
+            raw = base64.b64decode(str(value["raw_utf8_b64"]), validate=True)
+        except Exception as exc:
+            raise ValidationError("thought raw bytes are invalid", code="thought_raw_hash_mismatch") from exc
+        if hashlib.sha256(raw).hexdigest() != str(value["raw_sha256"]):
+            raise ValidationError("thought raw hash does not match payload", code="thought_raw_hash_mismatch")
+        _validate_thought_ledger_bundle(value)
+        incoming_aggregate = int(value["aggregate_revision"])
+        local = db.refinement_thoughts.get(thought_id)
+        if local is None:
+            with db._connection() as conn:
+                fence = conn.execute("SELECT aggregate_revision,terminal_fingerprint FROM refinement_thought_sync_tombstones WHERE thought_id=?", (thought_id,)).fetchone()
+            if fence:
+                if value["state"] == "tombstoned" and str(fence["terminal_fingerprint"]) == _terminal_fingerprint(value):
+                    merged += 1
+                    consumed_notes.add(str(value["working_note"]["id"])); consumed_memberships.add(f"note:{value['working_note']['id']}")
+                    continue
+                raise ConflictError("thought sync tombstone is terminal", code="thought_tombstoned")
+            if value["state"] == "tombstoned":
+                terminal = value["lifecycle"][-1]
+                with db._connection() as conn:
+                    conn.execute("BEGIN IMMEDIATE")
+                    conn.execute("""INSERT INTO refinement_thought_sync_tombstones
+                       (thought_id,expected_revision,aggregate_revision,lifecycle_revision,lifecycle_sha256,terminal_working_note_id,terminal_fingerprint,last_modified,tombstoned_at)
+                       VALUES (?,?,?,?,?,?,?,?,?)""",
+                       (thought_id,incoming_aggregate-1,incoming_aggregate,int(value["lifecycle_revision"]),str(terminal["entry_sha256"]),str(value["working_note"]["id"]),_terminal_fingerprint(value),str(meta.get("last_modified") or ""),str(meta.get("last_modified") or "")))
+                merged += 1
+                note_id = str(value["working_note"]["id"])
+                consumed_notes.add(note_id)
+                consumed_memberships.add(f"note:{note_id}")
+                continue
+            service.install_sync_bundle(principal, value=value, raw_utf8=raw)
+            local = db.refinement_thoughts.get(thought_id)
+        local_commands = db.refinement_thoughts.commands(thought_id)
+        incoming_commands = list(value["commands"])
+        common = min(len(local_commands), len(incoming_commands))
+        for idx in range(common):
+            if _command_identity(local_commands[idx]) != _command_identity(incoming_commands[idx]):
+                raise ConflictError("thought aggregate history diverged", code="thought_aggregate_conflict")
+        if int(local["aggregate_revision"]) > incoming_aggregate:
+            raise ConflictError("thought sync is stale", code="thought_revision_conflict")
+        if int(local["aggregate_revision"]) == incoming_aggregate:
+            if _aggregate_fingerprint(db, local) != _incoming_fingerprint(value):
+                raise ConflictError("thought aggregate diverged", code="thought_aggregate_conflict")
+        else:
+            service.apply_sync_bundle(principal, thought_id=thought_id, value=value)
+        note_id = str(value["working_note"]["id"])
+        consumed_notes.add(note_id)
+        if value["state"] == "tombstoned":
+            # A tombstone consumes/gates its qualified organization edge; live
+            # filing remains independently LWW-convergent.
+            consumed_memberships.add(f"note:{note_id}")
+            terminal = value["lifecycle"][-1]
+            with db._connection() as conn:
+                conn.execute("BEGIN IMMEDIATE")
+                conn.execute("""INSERT OR IGNORE INTO refinement_thought_sync_tombstones
+                    (thought_id,expected_revision,aggregate_revision,lifecycle_revision,lifecycle_sha256,terminal_working_note_id,terminal_fingerprint,last_modified,tombstoned_at)
+                    VALUES (?,?,?,?,?,?,?,?,?)""", (thought_id,incoming_aggregate-1,incoming_aggregate,int(value["lifecycle_revision"]),str(terminal["entry_sha256"]),note_id,_terminal_fingerprint(value),str(meta.get("last_modified") or ""),str(meta.get("last_modified") or "")))
+        merged += 1
+    return merged, consumed_notes, consumed_memberships
+
+
+def _command_identity(item: dict[str, Any]) -> tuple[Any, ...]:
+    return tuple(item.get(k) for k in ("aggregate_revision", "command_kind", "prior_working_revision", "next_working_revision", "prior_lifecycle_revision", "next_lifecycle_revision", "prior_attachment_revision", "next_attachment_revision", "canonical_sha256", "lifecycle_sha256", "accepted_at"))
+
+
+def _validate_thought_ledger_bundle(value: dict[str, Any]) -> None:
+    required = ("aggregate_revision", "lifecycle_revision", "working_revision", "attachment_revision", "commands", "lifecycle", "revisions", "working_note")
+    if any(key not in value for key in required):
+        raise ValidationError("thought sync bundle is missing cursors", code="thought_sync_revision_required")
+    aggregate, lifecycle, working = int(value["aggregate_revision"]), int(value["lifecycle_revision"]), int(value["working_revision"])
+    commands, lifecycles, revisions = list(value["commands"]), list(value["lifecycle"]), list(value["revisions"])
+    if [int(x.get("aggregate_revision") or 0) for x in commands] != list(range(1, aggregate + 1)):
+        raise ValidationError("thought aggregate command history is incomplete", code="thought_revision_history_invalid")
+    if [int(x.get("lifecycle_revision") or 0) for x in lifecycles] != list(range(1, lifecycle + 1)):
+        raise ValidationError("thought lifecycle history is incomplete", code="thought_revision_history_invalid")
+    if [int(x.get("revision") or 0) for x in revisions] != list(range(1, working + 1)):
+        raise ValidationError("thought revision history is incomplete", code="thought_revision_history_invalid")
+    work_hash = {int(x["revision"]): str(x["content_sha256"]) for x in revisions}
+    for item in revisions:
+        if work_hash[int(item["revision"])] != RefinementThoughtRepository.content_hash(str(item.get("title") or ""),str(item.get("body_markdown") or ""),list(item.get("tags") or [])):
+            raise ValidationError("thought revision hash does not match payload", code="thought_revision_hash_mismatch")
+    final = revisions[-1]
+    note = value["working_note"]
+    if RefinementThoughtRepository.content_hash(str(note.get("title") or ""),str(note.get("body_markdown") or ""),list(note.get("tags") or [])) != str(final["content_sha256"]):
+        raise ValidationError("working note does not equal its declared revision", code="thought_working_snapshot_invalid")
+    life_hash: dict[int, str] = {}
+    life_state: dict[int, str] = {}
+    life_entry: dict[int, dict[str, Any]] = {}
+    for entry in lifecycles:
+        expected = RefinementThoughtRepository.lifecycle_hash(thought_id=str(value["id"]), lifecycle_revision=int(entry["lifecycle_revision"]),aggregate_revision=int(entry["aggregate_revision"]),prior_state=entry.get("prior_state"),state=str(entry["state"]),command=str(entry["command"]),occurred_at=str(entry["occurred_at"]))
+        if str(entry.get("entry_sha256") or "") != expected:
+            raise ValidationError("thought lifecycle encoding/hash is invalid", code="thought_lifecycle_hash_mismatch")
+        revision = int(entry["lifecycle_revision"])
+        life_hash[revision], life_state[revision], life_entry[revision] = expected, str(entry["state"]), entry
+    prior_working = prior_lifecycle = prior_attachment = prior_aggregate = 0
+    prior_state: str | None = None
+    for command in commands:
+        aggregate_revision = int(command["aggregate_revision"])
+        next_working, next_lifecycle, next_attachment = (int(command["next_working_revision"]), int(command["next_lifecycle_revision"]), int(command["next_attachment_revision"]))
+        if aggregate_revision != prior_aggregate + 1 or (int(command["prior_working_revision"]), int(command["prior_lifecycle_revision"]), int(command["prior_attachment_revision"])) != (prior_working, prior_lifecycle, prior_attachment):
+            raise ValidationError("thought command cursor continuity is invalid", code="thought_revision_history_invalid")
+        kind = str(command.get("command_kind") or "")
+        lifecycle_changed = next_lifecycle == prior_lifecycle + 1
+        entry = life_entry.get(next_lifecycle) if lifecycle_changed else None
+        allowed = False
+        if kind == "create":
+            allowed = prior_aggregate == 0 and prior_state is None and (next_working, next_lifecycle, next_attachment) == (1, 1, 0) and entry is not None and entry.get("prior_state") is None and entry.get("state") == "working" and entry.get("command") == "create"
+        elif kind == "replace_working":
+            allowed = prior_state == "working" and (next_working, next_lifecycle, next_attachment) == (prior_working + 1, prior_lifecycle, prior_attachment) and entry is None
+        elif kind == "complete":
+            allowed = prior_state == "working" and (next_working, next_lifecycle, next_attachment) == (prior_working, prior_lifecycle + 1, prior_attachment) and entry is not None and entry.get("prior_state") == "working" and entry.get("state") == "completed" and entry.get("command") == "complete"
+        elif kind == "resume":
+            allowed = prior_state == "completed" and (next_working, next_lifecycle, next_attachment) == (prior_working, prior_lifecycle + 1, prior_attachment) and entry is not None and entry.get("prior_state") == "completed" and entry.get("state") == "working" and entry.get("command") == "resume"
+        elif kind == "tombstone":
+            allowed = prior_state in {"working", "completed"} and (next_working, next_lifecycle, next_attachment) == (prior_working, prior_lifecycle + 1, prior_attachment) and entry is not None and entry.get("prior_state") == prior_state and entry.get("state") == "tombstoned" and entry.get("command") == "tombstone"
+        if not allowed or next_working not in work_hash:
+            raise ValidationError("thought command transition is invalid", code="thought_revision_history_invalid")
+        lifecycle_hash = life_hash[next_lifecycle] if lifecycle_changed else None
+        if command.get("lifecycle_sha256") != lifecycle_hash:
+            raise ValidationError("thought command lifecycle hash is invalid", code="thought_lifecycle_hash_mismatch")
+        next_state = life_state[next_lifecycle] if lifecycle_changed else prior_state
+        snapshot={"id":str(value["id"]),"raw_sha256":str(value["raw_sha256"]),"state":next_state,"working_revision":next_working,"lifecycle_revision":next_lifecycle,"attachment_revision":next_attachment,"aggregate_revision":aggregate_revision}
+        expected=RefinementThoughtRepository.aggregate_hash(snapshot,working_sha256=work_hash[next_working],lifecycle_sha256=lifecycle_hash)
+        if str(command.get("canonical_sha256") or "") != expected:
+            raise ValidationError("thought aggregate command hash is invalid", code="thought_aggregate_conflict")
+        prior_working, prior_lifecycle, prior_attachment, prior_aggregate, prior_state = next_working, next_lifecycle, next_attachment, aggregate_revision, str(next_state)
+    if (prior_working, prior_lifecycle, prior_attachment, prior_aggregate, prior_state) != (working, lifecycle, int(value["attachment_revision"]), aggregate, str(value["state"])):
+        raise ValidationError("thought final aggregate cursor/state is inconsistent", code="thought_revision_history_invalid")
+
+
+def _aggregate_fingerprint(db: Any, thought: dict[str, Any]) -> tuple[Any, ...]:
+    note = db.notes.get(thought["working_note_id"], include_deleted=True)
+    return (thought["state"],thought["aggregate_revision"],thought["lifecycle_revision"],thought["working_revision"],thought["attachment_revision"],tuple(_command_identity(x) for x in db.refinement_thoughts.commands(thought["id"])),note.title if note else None,note.body_markdown if note else None,tuple(note.tags) if note else ())
+
+
+def _incoming_fingerprint(value: dict[str, Any]) -> tuple[Any, ...]:
+    note=value["working_note"]
+    return (value["state"],value["aggregate_revision"],value["lifecycle_revision"],value["working_revision"],value["attachment_revision"],tuple(_command_identity(x) for x in value["commands"]),note.get("title"),note.get("body_markdown"),tuple(note.get("tags") or []))
+
+
+def _terminal_fingerprint(value: dict[str, Any]) -> str:
+    """Stable identity for the only tombstone replay that is idempotent."""
+    material = {"aggregate": _incoming_fingerprint(value), "raw_sha256": value["raw_sha256"], "working_note_id": value["working_note"]["id"]}
+    return hashlib.sha256(json.dumps(material, sort_keys=True, separators=(",", ":"), default=list).encode("utf-8")).hexdigest()
+
+
 SYNC_REGISTRY = tuple(
     replace(spec, merger=_merge_primitive_spec if spec.bucket in _MERGEABLE else None)
     for spec in SYNC_REGISTRY
@@ -685,6 +917,10 @@ class SyncService:
         # tombstones propagate to the other surfaces, just like a real sync.
         notes = [_primitive_record(n, "note")
                  for n in db.notes.list(include_deleted=True, limit=bounded)]
+        refinement_thoughts = [
+            _thought_sync_record(db, thought)
+            for thought in getattr(db, "refinement_thoughts", _EmptySyncRepo()).list()
+        ]
         kbs = [_primitive_record(k, "kb")
                for k in db.kbs.list(include_deleted=True, limit=bounded)]
         recipes = [_primitive_record(a, "recipe")
@@ -774,6 +1010,7 @@ class SyncService:
 
         pulled = {
             "meetings": meetings, "artifacts": artifacts, "notes": notes,
+            "refinement_thoughts": refinement_thoughts,
             "kbs": kbs, "recipes": recipes, "chains": chains,
             "workflows": workflows, "profiles": profiles, "workbenches": workbenches,
             "directories": directories, "directory_memberships": directory_memberships,
@@ -948,6 +1185,21 @@ class SyncService:
                 raise ValidationError("malformed deployment revision") from exc
             revision_merged += 1
         received["deployment_revisions"] = revision_merged
+
+        thought_merged, consumed_notes, consumed_memberships = _merge_refinement_thought_bundles(
+            db, body.get("refinement_thoughts") or [], body.get("notes") or [],
+            body.get("directory_memberships") or [],
+        )
+        received["refinement_thoughts"] = thought_merged
+        if consumed_notes:
+            body = dict(body)
+            body["notes"] = [rec for rec in body.get("notes") or [] if str(rec["meta"]["id"]) not in consumed_notes]
+        if consumed_memberships:
+            body = dict(body)
+            body["directory_memberships"] = [
+                rec for rec in body.get("directory_memberships") or []
+                if str(rec["meta"]["id"]) not in consumed_memberships
+            ]
 
         # Primitive merge dispatch is registry-owned; adding an unrelated
         # bucket therefore cannot make an optional repository mandatory.

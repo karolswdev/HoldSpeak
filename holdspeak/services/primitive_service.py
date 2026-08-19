@@ -47,8 +47,11 @@ class PrimitiveService:
         body_markdown: str = "",
         tags: list[str] | None = None,
     ) -> dict[str, Any]:
+        target_id = note_id or _new_id("note")
+        if self._db.refinement_thoughts.get_by_note(target_id) is not None:
+            raise ConflictError("thought-owned notes require expected revision", code="thought_expected_revision_required")
         note = self._db.notes.upsert(
-            note_id=note_id or _new_id("note"),
+            note_id=target_id,
             title=title,
             body_markdown=body_markdown,
             tags=tags or [],
@@ -63,7 +66,17 @@ class PrimitiveService:
         title: str | None = None,
         body_markdown: str | None = None,
         tags: list[str] | None = None,
+        expected_aggregate_revision: int | None = None,
+        expected_working_revision: int | None = None,
     ) -> dict[str, Any]:
+        if self._db.refinement_thoughts.get_by_note(note_id) is not None:
+            from .refinement_thought_service import RefinementThoughtService
+            thought = RefinementThoughtService(self._db).update_note(
+                principal, note_id, expected_aggregate_revision=expected_aggregate_revision,
+                expected_working_revision=expected_working_revision, title=title,
+                body_markdown=body_markdown, tags=tags,
+            )
+            return self._owned_note_response(thought)
         existing = self._db.notes.get(note_id)
         if existing is None:
             raise NotFound("note", note_id)
@@ -75,11 +88,25 @@ class PrimitiveService:
         )
         return note.to_dict()
 
-    def delete_note(self, principal: Principal, note_id: str) -> bool:
+    def delete_note(self, principal: Principal, note_id: str, *, expected_aggregate_revision: int | None = None,
+                    expected_lifecycle_revision: int | None = None) -> bool:
+        if self._db.refinement_thoughts.get_by_note(note_id) is not None:
+            from .refinement_thought_service import RefinementThoughtService
+            return self._owned_note_response(RefinementThoughtService(self._db).tombstone_note(
+                principal, note_id, expected_aggregate_revision=expected_aggregate_revision,
+                expected_lifecycle_revision=expected_lifecycle_revision,
+            ))
         removed = self._db.notes.delete(note_id)
         if not removed:
             raise NotFound("note", note_id)
         return True
+
+    @staticmethod
+    def _owned_note_response(thought: dict[str, Any]) -> dict[str, Any]:
+        """A normal Note payload plus mandatory aggregate retry cursors."""
+        return dict(thought["working_note"] or {}) | {key: thought[key] for key in (
+            "state", "aggregate_revision", "lifecycle_revision", "working_revision", "attachment_revision",
+        )}
 
     # ── Decisions ────────────────────────────────────────────────────────
 
@@ -315,8 +342,11 @@ class PrimitiveService:
 
         if self._db.directories.get(directory_id) is None:
             raise NotFound("directory", directory_id)
+        primitive_ref = qualified_ref(primitive_id)
+        from .refinement_thought_service import RefinementThoughtService
+        RefinementThoughtService(self._db).assert_live_filing_allowed(primitive_ref)
         membership = self._db.directory_memberships.upsert(
-            primitive_id=qualified_ref(primitive_id),
+            primitive_id=primitive_ref,
             directory_id=directory_id,
         )
         return membership.to_dict()
@@ -327,6 +357,8 @@ class PrimitiveService:
         from ..db.relationships import qualified_ref
 
         ref = qualified_ref(primitive_id)
+        from .refinement_thought_service import RefinementThoughtService
+        RefinementThoughtService(self._db).assert_live_filing_allowed(ref)
         existing = self._db.directory_memberships.get(ref)
         if existing is None or existing.directory_id != directory_id:
             raise NotFound("membership", f"{primitive_id} in {directory_id}")

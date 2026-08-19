@@ -31,10 +31,12 @@ that clarifies one question at a time, uses explicit context, and can freeze
 typed/tool-backed proposals before existing policy and receipt machinery acts.
 The audited design, connector truth, sequencing, and P0/P1 risk register are in
 [`proposals/thought-refinement-spine.md`](./proposals/thought-refinement-spine.md);
-Phase 141 is now chartered from that ratified design: nine stories lead with the
-raw-custody/CAS keystone, then resumable thought, one owner-triggered question,
-visible context, one-action completion, typed local outcomes, and a real GitHub
-actuator proof. Jira/calendar writes remain truthful follow-ons.
+Phase 141 is active at 1/9. Its raw-custody/CAS keystone is done: one atomic
+aggregate preserves the original, owns a revisioned working Note, and closes
+ordinary Note and paired-sync bypasses through a verifiable command ledger.
+Next come resumable thought, one owner-triggered question, visible context,
+one-action completion, typed local outcomes, and a real GitHub actuator proof.
+Jira/calendar writes remain truthful follow-ons.
 The owner ordered a complexity cut. The proposed Dashboard Door is
 cancelled: no TODO kanban, calendar aggregation, or new control center. A fresh
 HoldSpeak will open on one obvious job—dictate one sentence—then reveal the
@@ -866,7 +868,7 @@ canon, canon wins.
 | 138 | Ship an encrypted, local-only People relationship and 1:1 foundation whose explicit manager commitments appear in Follow-through without entering plaintext product stores. | done | [phase-138-the-people-ledger](./phase-138-the-people-ledger/) |
 | 139 | The Settings Reckoning: cut the Settings face to seven job-named tiles, pin core defaults, move object settings home, and fold operator wiring behind RAW. | done | [phase-139-the-settings-reckoning](./phase-139-the-settings-reckoning/) |
 | 140 | The First Sentence: one obvious first-value act on the Chair, a useful editable result, in-place recovery, then a furnished six-drawer reveal with explicitly attachable Everyday context. | in-progress (5/6) | [phase-140-the-first-sentence](./phase-140-the-first-sentence/) |
-| 141 | From Thought to Work: preserve rough speech, develop it through one owner-triggered grounded question at a time, then freeze typed local or GitHub-backed outcomes on the existing authority and receipt spine. | planning (0/9) | [phase-141-from-thought-to-work](./phase-141-from-thought-to-work/) |
+| 141 | From Thought to Work: preserve rough speech, develop it through one owner-triggered grounded question at a time, then freeze typed local or GitHub-backed outcomes on the existing authority and receipt spine. | in-progress (1/9) | [phase-141-from-thought-to-work](./phase-141-from-thought-to-work/) |
 
 (Status values: `planning`, `in-progress`, `done`, `paused`, `cancelled`.)
 

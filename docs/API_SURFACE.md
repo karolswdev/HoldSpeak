@@ -9,7 +9,7 @@ and the clients that call it (extracted from the real call sites in
 `web/src` and `apple/`). "server only" means no in-repo client calls
 it today.
 
-Routes: 491 (plus static mounts). iOS-consumed: 89. Web-consumed: 381.
+Routes: 498 (plus static mounts). iOS-consumed: 89. Web-consumed: 382.
 
 ## device_audio_ws
 
@@ -636,6 +636,18 @@ Routes: 491 (plus static mounts). iOS-consumed: 89. Web-consumed: 381.
 | POST | `/api/recipes/{recipe_id}/invocations/{invocation_id}/cancel` | server only |
 | POST | `/api/recipes/{recipe_id}/keep` | web |
 | POST | `/api/recipes/{recipe_id}/run` | ios, web |
+
+## web.routes.primitives.thoughts
+
+| Method | Path | Consumers |
+|---|---|---|
+| GET | `/api/thoughts` | server only |
+| POST | `/api/thoughts` | server only |
+| GET | `/api/thoughts/{thought_id}` | web |
+| POST | `/api/thoughts/{thought_id}/complete` | server only |
+| GET | `/api/thoughts/{thought_id}/original` | server only |
+| POST | `/api/thoughts/{thought_id}/resume` | server only |
+| PATCH | `/api/thoughts/{thought_id}/working` | server only |
 
 ## web.routes.primitives.workbenches
 

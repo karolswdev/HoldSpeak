@@ -1,7 +1,7 @@
 # Phase 141 — From Thought to Work
 
-**Status:** chartered (0/9); implementation waits for Phase 140 landing and the
-HS-141-01 durability keystone.
+**Status:** active (1/9); the HS-141-01 durability keystone is done and downstream
+daily-custody work may begin.
 
 **Last updated:** 2026-08-18.
 
@@ -47,7 +47,7 @@ Settled product decisions:
 
 | ID | Story | Status | Depends on |
 |---|---|---|---|
-| HS-141-01 | Raw before AI | backlog | Phase 140 landing |
+| HS-141-01 | Raw before AI | done | Phase 140 landing |
 | HS-141-02 | The resumable thought | backlog | 141-01 |
 | HS-141-03 | Develop this thought | backlog | 141-02 |
 | HS-141-04 | One useful question | backlog | 141-02, 141-03, 141-06 |
@@ -121,3 +121,8 @@ review; five rounds surface the rigor/cost choice to the owner.
   forbids tutorial gates and redundant confirmations: rich defaults and fast
   configured outcomes are ordinary; progressive disclosure contains complexity,
   and the existing posture/policy/receipt spine contains effects.
+- 2026-08-18 — HS-141-01 done after the three-round invariant circuit breaker
+  triggered a fresh design review. The ratified aggregate-command ledger keeps
+  raw custody immutable, versions content and lifecycle separately, closes
+  ordinary CRUD and paired-sync bypasses, and makes tombstone replay both
+  absolute and idempotent. Final adversarial counsel: RATIFY.
