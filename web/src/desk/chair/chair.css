@@ -70,7 +70,9 @@
 /* ── The four lane slots. ────────────────────────────────────────── */
 .chair-lanes {
   display: grid;
-  grid-template-columns: 1fr;
+  /* A single `1fr` track has an automatic minimum: a populated lane can
+     otherwise widen the whole phone viewport to its longest row. */
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--space-5);
 }
 
@@ -91,6 +93,7 @@
 .chair-lane {
   display: flex;
   flex-direction: column;
+  min-width: 0;
 }
 
 /* ── Lane chrome ─────────────────────────────────────────────────── */

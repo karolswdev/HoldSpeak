@@ -24,6 +24,7 @@ import { useRuntimeBus } from "../../../runtime/RuntimeBus";
 import { Button } from "../../../components/signal/Signal";
 import { SYSTEM } from "../../systemSprites";
 import { play as sfx } from "../../../lib/sfx";
+import { useDeskWriteReceipt } from "../../hooks/useWriteReceipt";
 
 // ---- voice command match set ------------------------------------------------
 
@@ -56,6 +57,9 @@ export function CaptureHero({ onAskAI }: CaptureHeroProps) {
   const arming = useDesk((s) => s.scheduledArming);
   const [elapsed, setElapsed] = useState("");
   const [countdown, setCountdown] = useState<number | null>(null);
+  const { receipt } = useDeskWriteReceipt();
+  const startRecording = () => useDesk.getState().startRecording();
+  const stopRecording = () => useDesk.getState().stopRecording();
 
   // Elapsed timer: identical logic to RecordOrb for consistency.
   useEffect(() => {
@@ -121,7 +125,7 @@ export function CaptureHero({ onAskAI }: CaptureHeroProps) {
     (text: string) => {
       if (matchesRecordCommand(text) && recording === "idle") {
         sfx("latch");
-        void useDesk.getState().startRecording();
+        void startRecording();
       }
       // Non-matching transcriptions are ignored (the hero mic is for
       // commands, not dictation).
@@ -142,15 +146,16 @@ export function CaptureHero({ onAskAI }: CaptureHeroProps) {
     if (isBusy) return;
     if (isRecording) {
       sfx("key-up");
-      void useDesk.getState().stopRecording();
+      void stopRecording();
     } else if (recording === "idle") {
       sfx("latch");
-      void useDesk.getState().startRecording();
+      void startRecording();
     }
   };
 
   return (
     <div className="capture-hero" data-testid="capture-hero">
+      {receipt}
       {/* Recording state: elapsed + stop verb (rendered IN the hero). */}
       {isRecording ? (
         <div className="capture-hero-recording" data-testid="capture-hero-recording">
@@ -162,7 +167,7 @@ export function CaptureHero({ onAskAI }: CaptureHeroProps) {
             dense
             onClick={() => {
               sfx("key-up");
-              void useDesk.getState().stopRecording();
+              void stopRecording();
             }}
             aria-label="Stop recording"
             data-testid="capture-hero-stop"

@@ -128,6 +128,7 @@ describe("DeskApp arrival state", () => {
     state.openPullout.mockClear();
     state.pullouts = [];
     sessionStorage.clear();
+    window.history.replaceState({}, "", "/");
   });
 
   it("makes first value the only Chair composition and suppresses Desk chrome", () => {
@@ -166,7 +167,7 @@ describe("DeskApp arrival state", () => {
 
     expect(
       await screen.findByRole("alert"),
-    ).toHaveTextContent("HoldSpeak could not prepare your Desk: Connection refused");
+    ).toHaveTextContent("Your Desk is still unchanged. Connection refused Retry to check it again.");
     expect(screen.getByRole("button", { name: "Retry" })).toBeInTheDocument();
     expect(screen.queryByTestId("desk-chrome")).not.toBeInTheDocument();
     expect(screen.queryByTestId("normal-chair")).not.toBeInTheDocument();
@@ -181,7 +182,7 @@ describe("DeskApp arrival state", () => {
     render(<DeskApp />);
 
     expect(screen.getByRole("alert")).toHaveTextContent(
-      "HoldSpeak could not prepare your Desk: HoldSpeak could not read setup status.",
+      "Your Desk is still unchanged. HoldSpeak could not read setup status. Retry to check it again.",
     );
     expect(screen.getByRole("button", { name: "Retry" })).toBeInTheDocument();
     expect(screen.queryByTestId("first-value-chair")).not.toBeInTheDocument();
@@ -211,14 +212,34 @@ describe("DeskApp arrival state", () => {
     expect(screen.getByTestId("ask-panel")).toBeInTheDocument();
   });
 
-  it("holds the kept-note pullout until the server reveals the normal Desk", () => {
+  it("reveals one normal Chair and staged note once after the server flip while preserving a queued deep link", async () => {
+    window.history.replaceState({}, "", "/?open=note:queued-deep-link");
     stageFirstValueNoteOpen("note:kept-first-sentence");
     const view = render(<DeskApp />);
     expect(state.openPullout).not.toHaveBeenCalled();
 
     state.arrivalRequired = false;
+    state.surface = "chair";
     view.rerender(<DeskApp />);
-    expect(state.openPullout).toHaveBeenCalledWith("note:kept-first-sentence");
+    await waitFor(() =>
+      expect(state.openPullout).toHaveBeenCalledWith("note:kept-first-sentence"),
+    );
+    await waitFor(() =>
+      expect(state.openPullout).toHaveBeenCalledWith("note:queued-deep-link"),
+    );
+    view.rerender(<DeskApp />);
+    expect(screen.getAllByTestId("normal-chair")).toHaveLength(1);
+    expect(screen.getAllByTestId("desk-chrome")).toHaveLength(1);
+    expect(screen.queryByTestId("first-value-chair")).not.toBeInTheDocument();
+    expect(
+      state.openPullout.mock.calls.filter(([ref]) => ref === "note:kept-first-sentence"),
+    ).toHaveLength(1);
+    expect(
+      state.openPullout.mock.calls.filter(([ref]) => ref === "note:queued-deep-link"),
+    ).toHaveLength(1);
+    expect(new URLSearchParams(window.location.search).get("open")).toBe(
+      "note:queued-deep-link",
+    );
   });
 
   it("mounts staged pullouts on the normal Chair, never during arrival", () => {

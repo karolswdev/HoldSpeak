@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 140
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** 140-02, 140-03, 140-04
 - **Unblocks:** 140-06
 - **Owner:** delegated Terra worker; orchestrator adjudicates
@@ -28,20 +28,20 @@ replaying onboarding, or revealing controls that do nothing.
 
 ## Acceptance criteria
 
-- [ ] Continue later performs ordinary seed before persisting dismissal, then
+- [x] Continue later performs ordinary seed before persisting dismissal, then
   restores normal Chair and remains dismissed after reload.
-- [ ] Transcript arrival records `transcript_received` but does not complete
+- [x] Transcript arrival records `transcript_received` but does not complete
   onboarding or unmount before ordinary seed and the owner's finishing choice.
-- [ ] Completion persists only after ordinary seed succeeds; reload can never
+- [x] Completion persists only after ordinary seed succeeds; reload can never
   enter normal Chair with an unattempted default pack.
-- [ ] Ordinary seed respects live edits and tombstones from any earlier partial
+- [x] Ordinary seed respects live edits and tombstones from any earlier partial
   attempt; it does not force-restore defaults.
-- [ ] Furnishing failure stays in the current composition with one Retry and
+- [x] Furnishing failure stays in the current composition with one Retry and
   does not claim the normal product is ready.
-- [ ] A kept note is visible after the transition alongside the default pack.
-- [ ] Chair lanes, Floor, dock, and launchers return exactly once.
-- [ ] Every visible returned hero action opens its surface or shows refusal.
-- [ ] Existing deep links open and are not trapped behind first-value mode.
+- [x] A kept note is visible after the transition alongside the default pack.
+- [x] Chair lanes, Floor, dock, and launchers return exactly once.
+- [x] Every visible returned hero action opens its surface or shows refusal.
+- [x] Existing deep links open and are not trapped behind first-value mode.
 
 ## Test plan
 

@@ -771,5 +771,27 @@
   .desk-verbbar {
     display: none;
   }
+  /* Keep the bar's two truthful clusters in the phone width. The privacy
+     badge remains a labeled control (and retains its full title/aria label),
+     but no longer gives its prose an unshrinkable desktop minimum. */
+  .desk-next .desk-menubar .egress-badge {
+    min-width: 0;
+    max-width: 88px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
 }
 
+@media (max-width: 420px) {
+  /* The clock's date is redundant on the narrowest bar; its accessible name
+     still carries both date and time. This preserves the search and privacy
+     actions without making the fixed bar wider than the viewport. */
+  .desk-next .desk-clock > span:first-child {
+    display: none;
+  }
+  .desk-next .desk-clock {
+    gap: 0;
+    padding-inline: 4px;
+  }
+}

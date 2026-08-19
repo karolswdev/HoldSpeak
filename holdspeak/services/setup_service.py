@@ -30,7 +30,17 @@ class SetupService:
         self, principal: Principal, payload: dict[str, Any]
     ) -> dict[str, Any]:
         try:
-            state = self._db.onboarding.set_disposition(str(payload.get("disposition") or ""))
+            from ..db.onboarding import ONBOARDING_DISPOSITIONS
+            disposition = str(payload.get("disposition") or "").strip().lower()
+            if disposition not in ONBOARDING_DISPOSITIONS:
+                raise ValueError(f"invalid onboarding disposition: {payload.get('disposition')!r}")
+            # The ordinary seed is the durable gate for leaving first value.
+            # Keep it here as defence in depth: any caller that persists an
+            # onboarding exit cannot reveal an unfurnished Desk.
+            from ..db.seed import apply_seed
+
+            apply_seed(self._db)
+            state = self._db.onboarding.set_disposition(disposition)
         except ValueError as exc:
             raise ValidationError(str(exc)) from exc
         return {"success": True, "onboarding": state}

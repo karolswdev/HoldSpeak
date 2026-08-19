@@ -37,7 +37,7 @@ export function FirstWords({
   onDismiss,
   embedded = false,
 }: {
-  onDismiss?: () => void;
+  onDismiss?: () => void | Promise<void>;
   embedded?: boolean;
 }) {
   const {
@@ -53,6 +53,8 @@ export function FirstWords({
   const [retentionPending, setRetentionPending] = useState(false);
   const [saving, setSaving] = useState(false);
   const [keptNoteId, setKeptNoteId] = useState("");
+  const [handoffPending, setHandoffPending] = useState(false);
+  const [handoffRunning, setHandoffRunning] = useState(false);
   const tracker = useRef<FirstValueTracker | null>(null);
   if (!tracker.current) tracker.current = new FirstValueTracker();
   const sessionRef = useRef<StreamSession | null>(null);
@@ -60,7 +62,13 @@ export function FirstWords({
   const startingRef = useRef(false);
   const captureStartedRef = useRef(false);
   const draftEdited = useRef(false);
-  const actionRef = useRef<"keep" | "dismiss" | null>(null);
+  const actionRef = useRef<"keep" | "dismiss" | "copy" | null>(null);
+  const transcriptReceivedRef = useRef(false);
+  const handoffRef = useRef<{
+    disposition: "completed" | "dismissed" | "needs_help";
+    finishSuccess: boolean;
+    noteId?: string;
+  } | null>(null);
   const refreshDesk = useDesk((desk) => desk.refresh);
 
   useEffect(() => {
@@ -121,6 +129,7 @@ export function FirstWords({
       return;
     }
     setText(clean);
+    transcriptReceivedRef.current = true;
     setRecoveredAudioAvailable(false);
     setState("success");
     setFailure(null);
@@ -193,25 +202,79 @@ export function FirstWords({
     else if (state === "idle" || state === "failed") void begin();
   };
 
-  const dismiss = async (disposition: "dismissed" | "needs_help") => {
-    if (actionRef.current) return;
+  const completeHandoff = async () => {
+    const handoff = handoffRef.current;
+    if (!handoff || actionRef.current) return;
     actionRef.current = "dismiss";
+    setHandoffRunning(true);
     setSaving(true);
-    if (disposition === "dismissed") {
-      void tracker.current?.event("continue_later_selected");
-    }
     try {
+      await apiFetch("/api/desk/seed", { method: "POST" });
+      await refreshDesk();
+      if (handoff.finishSuccess) await finishAttempt("success").catch(() => undefined);
       await apiFetch("/api/setup/onboarding", {
         method: "PUT",
-        json: { disposition },
+        json: { disposition: handoff.disposition },
       });
-      onDismiss?.();
+      await (onDismiss ? onDismiss() : refreshDesk());
+      // Once a note has custody of the text, there must not be a hidden
+      // second copy in the local first-words draft.  Keep it through every
+      // failed handoff, then clear only after the final authoritative refresh.
+      if (handoff.disposition === "completed" || handoff.noteId) {
+        clearPersisted();
+      }
+      if (handoff.noteId) {
+        clearFirstValueKeepNoteId();
+      }
+      handoffRef.current = null;
+      setHandoffPending(false);
     } catch (error) {
-      setMessage(readableError(error));
+      setHandoffPending(true);
+      setMessage(
+        `Your sentence and Desk changes are still here. ${readableError(error)} Retry finishing your Desk.`,
+      );
     } finally {
       actionRef.current = null;
       setSaving(false);
+      setHandoffRunning(false);
     }
+  };
+
+  const beginHandoff = (
+    disposition: "completed" | "dismissed" | "needs_help",
+    { finishSuccess = false, noteId }: { finishSuccess?: boolean; noteId?: string } = {},
+  ) => {
+    if (actionRef.current || handoffRef.current) return;
+    handoffRef.current = { disposition, finishSuccess, noteId };
+    setHandoffRunning(true);
+    void completeHandoff();
+  };
+
+  const dismiss = async (disposition: "dismissed" | "needs_help") => {
+    if (disposition === "dismissed") void tracker.current?.event("continue_later_selected");
+    if (actionRef.current || handoffRef.current) return;
+    let noteId = keptNoteId;
+    if (text.trim() && !noteId) {
+      actionRef.current = "dismiss";
+      setSaving(true);
+      try {
+        noteId = firstValueKeepNoteId();
+        await apiFetch("/api/notes", {
+          method: "POST",
+          json: { id: noteId, title: "First dictation", body_markdown: text, tags: ["dictation"] },
+        });
+        stageFirstValueNoteOpen(`note:${noteId}`);
+        setKeptNoteId(noteId);
+      } catch (error) {
+        setMessage(`Your text is still here. ${readableError(error)} Retry Continue later.`);
+        actionRef.current = null;
+        setSaving(false);
+        return;
+      }
+      actionRef.current = null;
+      setSaving(false);
+    }
+    beginHandoff(disposition, { noteId: noteId || undefined, finishSuccess: transcriptReceivedRef.current });
   };
 
   const keep = async () => {
@@ -233,12 +296,20 @@ export function FirstWords({
       });
       confirmed = true;
       const createdId = String(result.note?.id || noteId);
-      await refreshDesk();
       stageFirstValueNoteOpen(`note:${createdId}`);
-      clearPersisted();
-      clearFirstValueKeepNoteId();
       setKeptNoteId(createdId);
-      setMessage("Kept as a note. It will open when your Desk is ready.");
+      if (!transcriptReceivedRef.current) {
+        setMessage("Kept as a note. Continue later when you are ready for your Desk.");
+        return;
+      }
+      handoffRef.current = {
+        disposition: "completed",
+        finishSuccess: transcriptReceivedRef.current,
+        noteId: createdId,
+      };
+      actionRef.current = null;
+      void completeHandoff();
+      return;
     } catch (error) {
       setMessage(
         confirmed
@@ -246,27 +317,37 @@ export function FirstWords({
           : `Could not keep as a note. ${readableError(error)} Retry Keep as Note.`,
       );
     } finally {
-      actionRef.current = null;
+      if (actionRef.current === "keep") actionRef.current = null;
       setSaving(false);
     }
   };
 
   const copy = async () => {
     if (!text.trim() || actionRef.current) return;
+    actionRef.current = "copy";
     // This is an intent metric, not a clipboard-content metric: refusals are
     // still a real owner attempt and no phrase ever enters the event payload.
     void tracker.current?.event("copy_selected");
     try {
       await navigator.clipboard.writeText(text);
-      setMessage("Copied to your clipboard.");
+      if (transcriptReceivedRef.current) {
+        handoffRef.current = { disposition: "completed", finishSuccess: true };
+        actionRef.current = null;
+        void completeHandoff();
+      } else {
+        setMessage("Copied to your clipboard.");
+      }
     } catch {
       setMessage("Clipboard access was blocked. Select your text and copy it manually.");
+    } finally {
+      if (actionRef.current === "copy") actionRef.current = null;
     }
   };
 
   const supported = speakToFillSupported() || micStreamSupported();
   const canRetryRetainedAudio = recoveredAudioAvailable && state === "failed";
   const failureContract = failure ? DICTATION_FAILURES[failure] : null;
+  const needsDraftCustody = Boolean(text.trim() && !keptNoteId);
   const Heading = embedded ? "h2" : "h1";
   return (
     <section className="desk-first-words" aria-labelledby="first-words-title">
@@ -279,6 +360,9 @@ export function FirstWords({
         disabled={
           (!supported && !canRetryRetainedAudio) ||
           state === "transcribing" ||
+          handoffRunning ||
+          saving ||
+          handoffPending ||
           retentionPending ||
           Boolean(failureContract && !failureContract.retry)
         }
@@ -341,9 +425,18 @@ export function FirstWords({
           {message}
         </p>
       ) : null}
+      {handoffPending ? (
+        <Button
+          onClick={() => void completeHandoff()}
+          loading={saving}
+          disabled={saving || handoffRunning}
+        >
+          Retry finishing your Desk
+        </Button>
+      ) : null}
       <div className="button-row">
         <Button
-          disabled={!text.trim() || saving}
+          disabled={!text.trim() || saving || handoffPending || handoffRunning}
           onClick={() => {
             void copy();
           }}
@@ -351,7 +444,7 @@ export function FirstWords({
           Copy
         </Button>
         <Button
-          disabled={!text.trim() || Boolean(keptNoteId)}
+          disabled={!text.trim() || Boolean(keptNoteId) || handoffPending || handoffRunning}
           loading={saving}
           onClick={() => {
             void keep();
@@ -359,7 +452,7 @@ export function FirstWords({
         >
           Keep as Note
         </Button>
-        {failureContract?.setup ? (
+        {failureContract?.setup && !handoffPending && !saving && !handoffRunning ? (
           <button
             type="button"
             className="btn btn--secondary"
@@ -376,20 +469,21 @@ export function FirstWords({
         <Button
           variant="ghost"
           loading={saving}
-          disabled={saving}
+          disabled={saving || handoffPending || handoffRunning}
           onClick={() => {
             void dismiss("dismissed");
           }}
         >
-          Continue later
+          {needsDraftCustody ? "Save draft & continue" : "Continue later"}
         </Button>
         {failure ? (
           <Button
             variant="ghost"
             loading={saving}
+            disabled={saving || handoffPending || handoffRunning}
             onClick={() => void dismiss("needs_help")}
           >
-            I need help
+            {needsDraftCustody ? "Save draft & get help" : "I need help"}
           </Button>
         ) : null}
       </div>

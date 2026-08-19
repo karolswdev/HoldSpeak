@@ -53,6 +53,30 @@ def test_continue_later_is_durable_without_faking_first_success(isolated) -> Non
     assert after["arrival_required"] is False
     assert after["onboarding"]["disposition"] == "dismissed"
     assert isolated.milestones.is_set(FIRST_DICTATION_SUCCESS) is False
+    assert {item.name for item in isolated.directories.list()} >= {
+        "Inbox", "Personal", "Work", "Meetings", "Decisions", "Reference",
+    }
+
+
+def test_disposition_never_persists_when_ordinary_seed_fails(
+    isolated, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    def broken_seed(_database):
+        raise RuntimeError("seed storage unavailable")
+
+    monkeypatch.setattr("holdspeak.db.seed.apply_seed", broken_seed)
+    with pytest.raises(RuntimeError, match="seed storage unavailable"):
+        SetupService(isolated).set_onboarding_disposition(
+            None, {"disposition": "dismissed"},
+        )
+    assert isolated.onboarding.disposition() is None
+
+
+def test_invalid_disposition_has_no_seed_side_effect(isolated) -> None:
+    with pytest.raises(ValidationError, match="invalid onboarding disposition"):
+        SetupService(isolated).set_onboarding_disposition(None, {"disposition": "nope"})
+    assert isolated.onboarding.disposition() is None
+    assert isolated.directories.list() == []
 
 
 def test_first_value_receipt_never_accepts_or_stores_phrase_content(isolated) -> None:

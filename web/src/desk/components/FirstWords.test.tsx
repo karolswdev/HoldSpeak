@@ -199,6 +199,8 @@ describe("FirstWords", () => {
       target: { value: "Typed instead." },
     });
     expect(screen.getByDisplayValue("Typed instead.")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Save draft & continue" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Save draft & get help" })).toBeEnabled();
 
     view.unmount();
     const timeout = vi.fn().mockRejectedValue(new DOMException("slow", "TimeoutError"));
@@ -357,7 +359,7 @@ describe("FirstWords", () => {
   });
 
   it("persists Continue later independently of first success", async () => {
-    const dismissed = vi.fn();
+    const dismissed = vi.fn(() => mocks.refresh());
     render(
       <MemoryRouter>
         <FirstWords onDismiss={dismissed} />
@@ -369,6 +371,105 @@ describe("FirstWords", () => {
       method: "PUT",
       json: { disposition: "dismissed" },
     });
+    const handoffPaths = mocks.apiFetch.mock.calls.map(([path]) => String(path));
+    expect(handoffPaths.indexOf("/api/desk/seed")).toBeLessThan(
+      handoffPaths.indexOf("/api/setup/onboarding"),
+    );
+    expect(mocks.refresh).toHaveBeenCalledTimes(2);
+  });
+
+  it("puts transcript Continue later in one staged note and retries a lost disposition without replaying it", async () => {
+    const notePosts: Array<Record<string, unknown>> = [];
+    let dispositionAttempts = 0;
+    mocks.apiFetch.mockImplementation((path: string, init?: { json?: Record<string, unknown> }) => {
+      if (path.endsWith("/start")) return Promise.resolve({ attempt: { id: "a1" } });
+      if (path === "/api/notes") {
+        notePosts.push(init?.json || {});
+        return Promise.resolve({ note: { id: notePosts[0].id } });
+      }
+      // Receipt reporting must not trap a furnished handoff if telemetry is
+      // temporarily unavailable.
+      if (path.endsWith("/finish")) return Promise.reject(new Error("receipt unavailable"));
+      if (path === "/api/setup/onboarding") {
+        dispositionAttempts += 1;
+        return dispositionAttempts === 1
+          ? Promise.reject(new Error("response lost"))
+          : Promise.resolve({ success: true });
+      }
+      return Promise.resolve({ success: true });
+    });
+    const dismissed = vi.fn(() => mocks.refresh());
+    render(<MemoryRouter><FirstWords onDismiss={dismissed} /></MemoryRouter>);
+
+    fireEvent.click(screen.getByRole("button", { name: "Click to dictate" }));
+    await screen.findByText("Listening… click to stop");
+    fireEvent.click(screen.getByRole("button", { name: "Stop listening" }));
+    await screen.findByDisplayValue("A sentence that stays editable.");
+    fireEvent.click(screen.getByRole("button", { name: "Save draft & continue" }));
+
+    expect(await screen.findByRole("button", { name: "Retry finishing your Desk" })).toBeEnabled();
+    expect(notePosts).toHaveLength(1);
+    expect(notePosts[0]).toMatchObject({
+      title: "First dictation",
+      body_markdown: "A sentence that stays editable.",
+      tags: ["dictation"],
+    });
+    expect(notePosts[0].id).toMatch(/^note_/);
+    expect(sessionStorage.getItem("hs.first-value.pending-note-open")).toBe(
+      `note:${notePosts[0].id}`,
+    );
+    expect(dismissed).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole("button", { name: "Retry finishing your Desk" }));
+    await waitFor(() => expect(dismissed).toHaveBeenCalledOnce());
+
+    expect(notePosts).toHaveLength(1);
+    expect(dispositionAttempts).toBe(2);
+    const paths = mocks.apiFetch.mock.calls.map(([path]) => String(path));
+    expect(paths.indexOf("/api/notes")).toBeLessThan(paths.indexOf("/api/desk/seed"));
+    expect(paths.indexOf("/api/desk/seed")).toBeLessThan(
+      paths.findIndex((path) => path.endsWith("/finish")),
+    );
+    expect(paths.findIndex((path) => path.endsWith("/finish"))).toBeLessThan(
+      paths.indexOf("/api/setup/onboarding"),
+    );
+    expect(mocks.refresh).toHaveBeenCalledTimes(3);
+    await waitFor(() => expect(readDurableDraft("first-words")).toBeNull());
+    expect(localStorage.getItem("hs.first-value.keep-note-id")).toBeNull();
+  });
+
+  it("labels unkept text custody and locks all competing actions for a running handoff", async () => {
+    let releaseSeed!: () => void;
+    mocks.apiFetch.mockImplementation((path: string) => {
+      if (path === "/api/desk/seed") {
+        return new Promise((resolve) => {
+          releaseSeed = () => resolve({ success: true });
+        });
+      }
+      return Promise.resolve({ success: true });
+    });
+    render(<MemoryRouter><FirstWords /></MemoryRouter>);
+    fireEvent.change(screen.getByRole("textbox", { name: "Your dictated text" }), {
+      target: { value: "Keep custody explicit." },
+    });
+    const continueButton = screen.getByRole("button", { name: "Save draft & continue" });
+    expect(continueButton).toBeEnabled();
+    fireEvent.click(continueButton);
+    await waitFor(() =>
+      expect(mocks.apiFetch).toHaveBeenCalledWith("/api/desk/seed", { method: "POST" }),
+    );
+
+    expect(screen.getByRole("button", { name: "Click to dictate" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Copy" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Keep as Note" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Continue later" })).toBeDisabled();
+    expect(screen.queryByRole("button", { name: "Retry finishing your Desk" })).not.toBeInTheDocument();
+
+    releaseSeed();
+    await waitFor(() => expect(mocks.apiFetch).toHaveBeenCalledWith(
+      "/api/setup/onboarding",
+      expect.anything(),
+    ));
   });
 
   it("recovers an editable local draft after remount without sending it to metrics", async () => {
@@ -417,7 +518,23 @@ describe("FirstWords", () => {
     );
   });
 
-  it("retries Keep with one client note id, refreshes, and stages its future open", async () => {
+  it("finishes a transcript-backed Copy only after seed and the final Desk refresh", async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.assign(navigator, { clipboard: { writeText } });
+    render(<MemoryRouter><FirstWords /></MemoryRouter>);
+    fireEvent.click(screen.getByRole("button", { name: "Click to dictate" }));
+    await screen.findByText("Listening… click to stop");
+    fireEvent.click(screen.getByRole("button", { name: "Stop listening" }));
+    await screen.findByDisplayValue("A sentence that stays editable.");
+    fireEvent.click(screen.getByRole("button", { name: "Copy" }));
+    await waitFor(() => expect(mocks.apiFetch).toHaveBeenCalledWith("/api/setup/onboarding", expect.anything()));
+    const paths = mocks.apiFetch.mock.calls.map(([path]) => String(path));
+    expect(paths.indexOf("/api/desk/seed")).toBeLessThan(paths.findIndex((path) => path.endsWith("/finish")));
+    expect(paths.findIndex((path) => path.endsWith("/finish"))).toBeLessThan(paths.indexOf("/api/setup/onboarding"));
+    expect(mocks.refresh).toHaveBeenCalledTimes(2);
+  });
+
+  it("retries typed Keep with one client note id without forging an onboarding exit", async () => {
     const notePosts: Array<Record<string, unknown>> = [];
     mocks.apiFetch.mockImplementation((path: string, init?: { json?: Record<string, unknown> }) => {
       if (path === "/api/notes") {
@@ -438,14 +555,13 @@ describe("FirstWords", () => {
     fireEvent.click(screen.getByRole("button", { name: "Keep as Note" }));
     expect(await screen.findByRole("status")).toHaveTextContent("Could not keep as a note");
     fireEvent.click(screen.getByRole("button", { name: "Keep as Note" }));
-    await waitFor(() => expect(mocks.refresh).toHaveBeenCalledOnce());
+    await waitFor(() => expect(notePosts).toHaveLength(2));
     expect(notePosts).toHaveLength(2);
     expect(notePosts[0].id).toMatch(/^note_/);
     expect(notePosts[1].id).toBe(notePosts[0].id);
     expect(notePosts[1].body_markdown).toBe("Keep this edited value.");
-    expect(screen.getByRole("status")).toHaveTextContent(
-      "Kept as a note. It will open when your Desk is ready.",
-    );
+    expect(mocks.refresh).not.toHaveBeenCalled();
+    expect(screen.getByRole("status")).toHaveTextContent("Continue later when you are ready for your Desk.");
   });
 
   it("keeps the durable draft and stable id when refresh fails after a confirmed write", async () => {
@@ -465,21 +581,21 @@ describe("FirstWords", () => {
         <FirstWords />
       </MemoryRouter>,
     );
+    fireEvent.click(screen.getByRole("button", { name: "Click to dictate" }));
+    await screen.findByText("Listening… click to stop");
+    fireEvent.click(screen.getByRole("button", { name: "Stop listening" }));
+    await screen.findByDisplayValue("A sentence that stays editable.");
     fireEvent.change(screen.getByRole("textbox", { name: "Your dictated text" }), {
       target: { value: "Keep this through refresh failure." },
     });
     fireEvent.click(screen.getByRole("button", { name: "Keep as Note" }));
     expect(await screen.findByRole("status")).toHaveTextContent(
-      "Kept as a note, but the Desk could not refresh. Retry Keep as Note to open it.",
+      "Your sentence and Desk changes are still here. Desk refresh failed Retry finishing your Desk.",
     );
     expect(readDurableDraft("first-words")?.text).toBe("Keep this through refresh failure.");
     expect(localStorage.getItem("hs.first-value.keep-note-id")).toBe(notePosts[0].id);
-    expect(takeFirstValueNoteOpen()).toBeNull();
-
-    fireEvent.click(screen.getByRole("button", { name: "Keep as Note" }));
-    await waitFor(() => expect(mocks.refresh).toHaveBeenCalledTimes(2));
-    expect(notePosts.map((post) => post.id)).toEqual([notePosts[0].id, notePosts[0].id]);
-    expect(takeFirstValueNoteOpen()).toBe(`note:${notePosts[0].id}`);
-    expect(takeFirstValueNoteOpen()).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Retry finishing your Desk" }));
+    await waitFor(() => expect(mocks.refresh).toHaveBeenCalledTimes(3));
+    expect(notePosts.map((post) => post.id)).toEqual([notePosts[0].id]);
   });
 });

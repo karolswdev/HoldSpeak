@@ -43,9 +43,7 @@ export function ChairHome({ arrivalRequired = false }: { arrivalRequired?: boole
       <main className="chair chair-first-value" data-testid="chair-first-value">
         <FirstWords
           embedded
-          onDismiss={() => {
-            void useDesk.getState().refresh();
-          }}
+          onDismiss={() => useDesk.getState().refresh()}
         />
       </main>
     );

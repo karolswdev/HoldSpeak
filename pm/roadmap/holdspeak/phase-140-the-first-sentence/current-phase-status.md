@@ -1,6 +1,6 @@
 # Phase 140 — The First Sentence
 
-**Status:** active (4/6).
+**Status:** active (5/6).
 
 **Last updated:** 2026-08-18.
 
@@ -32,12 +32,12 @@ the first-value machinery exists, but the front door hides it.
 | HS-140-02 | The sentence becomes useful | done | [story-02](./story-02-the-sentence-becomes-useful.md) | [evidence-02](./evidence-story-02.md) |
 | HS-140-03 | Recovery stays here | done | [story-03](./story-03-recovery-stays-here.md) | [evidence-03](./evidence-story-03.md) |
 | HS-140-04 | A desk worth opening | done | [story-04](./story-04-a-desk-worth-opening.md) | [evidence-04](./evidence-story-04.md) |
-| HS-140-05 | The quiet return | backlog | [story-05](./story-05-the-quiet-return.md) | — |
+| HS-140-05 | The quiet return | done | [story-05](./story-05-the-quiet-return.md) | [evidence-05](./evidence-story-05.md) |
 | HS-140-06 | The cold walk | backlog | [story-06](./story-06-the-cold-walk.md) | — |
 
 ## Where we are
 
-HS-140-01 through HS-140-04 are done. First value owns a quiet Chair;
+HS-140-01 through HS-140-05 are done. First value owns a quiet Chair;
 the edited sentence copies with a visible receipt or refusal and Keep uses one
 stable note id across response loss and relaunch. The note refreshes, stages,
 and opens on the normal Chair without leaking a pullout during arrival. A
@@ -47,6 +47,10 @@ context without fake personal facts or AI readiness.
 Capture failures now stay in that composition with plain browser/OS repair,
 one exact Retry or Setup action, editable typed fallback, and proven retained
 audio that cannot be retried until its local write settles.
+Copy, Keep, Continue, and help now pass through one seed-before-reveal handoff;
+text deferred through an exit says so explicitly and receives stable Note
+custody. The bare-HOME normal Chair and six-drawer Floor survive reload at both
+widths without horizontal overflow.
 
 ## Risk register
 
@@ -62,6 +66,13 @@ audio that cannot be retried until its local write settles.
 
 ## Decision log
 
+- 2026-08-18 — HS-140-05 done. The server refuses every onboarding exit until
+  ordinary furnishing succeeds; the client keeps the first-value composition
+  mounted through seed and both refreshes, and one Retry resumes ambiguous
+  failures without replaying Copy or Note creation. Bare-HOME Chair/Floor/Keep
+  evidence passes at both widths. Terra final verdicts: RATIFY. HS-140-06 owns
+  the cold-walk finding that the 393px Floor arrangement crowds Everyday
+  context against Reference and exposes three internal HoldSpeak roadmap items.
 - 2026-08-18 — HS-140-03 done. Named stream refusals survive socket close,
   retained audio is written under the `first-words` scope before Retry unlocks,
   and the genuine unavailable-transcription state passes at both widths with

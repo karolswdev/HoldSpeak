@@ -78,9 +78,11 @@ export default function DeskApp() {
   // settled. Keep the room quiet while that server-owned arrival choice is
   // unknown; later background refreshes preserve the normal Chair.
   const setupFailure =
-    refreshFailure ??
+    (refreshFailure
+      ? `Your Desk is still unchanged. ${refreshFailure} Retry to check it again.`
+      : null) ??
     (updatedAt !== null && setup === null
-      ? error || "HoldSpeak could not read setup status."
+      ? error || "Your Desk is still unchanged. HoldSpeak could not read setup status. Retry to check it again."
       : null);
   const setupPending = !setupFailure && updatedAt === null && (loading || setup === null);
   const arrivalRequired = setup?.arrival_required === true;
@@ -117,7 +119,7 @@ export default function DeskApp() {
       >
         {setupFailure ? (
           <div role="alert">
-            <p>HoldSpeak could not prepare your Desk: {setupFailure}</p>
+            <p>{setupFailure}</p>
             <button type="button" onClick={() => void refreshDesk()}>
               Retry
             </button>
