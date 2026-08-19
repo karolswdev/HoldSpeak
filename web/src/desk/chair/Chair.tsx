@@ -35,7 +35,7 @@ export function Chair({ hero, lanes }: ChairProps) {
 
       {/* Always rendered; visible only in the all-blank state (CSS). */}
       <div className="chair-empty-invitation">
-        <span className="chair-empty-invitation-text">Speak. The desk will file it.</span>
+        <span className="chair-empty-invitation-text">Start rough. Keep developing it.</span>
       </div>
 
       {/* The four ordered lane slots. */}

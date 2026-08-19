@@ -9,7 +9,7 @@ and the clients that call it (extracted from the real call sites in
 `web/src` and `apple/`). "server only" means no in-repo client calls
 it today.
 
-Routes: 499 (plus static mounts). iOS-consumed: 89. Web-consumed: 382.
+Routes: 501 (plus static mounts). iOS-consumed: 89. Web-consumed: 391.
 
 ## device_audio_ws
 
@@ -641,14 +641,16 @@ Routes: 499 (plus static mounts). iOS-consumed: 89. Web-consumed: 382.
 
 | Method | Path | Consumers |
 |---|---|---|
-| GET | `/api/thoughts` | server only |
-| POST | `/api/thoughts` | server only |
+| GET | `/api/thoughts` | web |
+| POST | `/api/thoughts` | web |
+| POST | `/api/thoughts/adopt` | web |
+| GET | `/api/thoughts/for-note/{note_id}` | web |
 | GET | `/api/thoughts/{thought_id}` | web |
-| POST | `/api/thoughts/{thought_id}/complete` | server only |
-| GET | `/api/thoughts/{thought_id}/original` | server only |
-| POST | `/api/thoughts/{thought_id}/reconcile` | server only |
-| POST | `/api/thoughts/{thought_id}/resume` | server only |
-| PATCH | `/api/thoughts/{thought_id}/working` | server only |
+| POST | `/api/thoughts/{thought_id}/complete` | web |
+| GET | `/api/thoughts/{thought_id}/original` | web |
+| POST | `/api/thoughts/{thought_id}/reconcile` | web |
+| POST | `/api/thoughts/{thought_id}/resume` | web |
+| PATCH | `/api/thoughts/{thought_id}/working` | web |
 
 ## web.routes.primitives.workbenches
 

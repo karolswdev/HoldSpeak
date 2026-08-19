@@ -50,12 +50,17 @@ class PrimitiveService:
         target_id = note_id or _new_id("note")
         if self._db.refinement_thoughts.get_by_note(target_id) is not None:
             raise ConflictError("thought-owned notes require expected revision", code="thought_expected_revision_required")
-        note = self._db.notes.upsert(
-            note_id=target_id,
-            title=title,
-            body_markdown=body_markdown,
-            tags=tags or [],
-        )
+        try:
+            note = self._db.notes.upsert(
+                note_id=target_id,
+                title=title,
+                body_markdown=body_markdown,
+                tags=tags or [],
+            )
+        except ValueError as exc:
+            if "thought-owned notes require expected revision" not in str(exc):
+                raise
+            raise ConflictError("thought-owned notes require expected revision", code="thought_expected_revision_required") from exc
         return note.to_dict()
 
     def update_note(
@@ -80,12 +85,17 @@ class PrimitiveService:
         existing = self._db.notes.get(note_id)
         if existing is None:
             raise NotFound("note", note_id)
-        note = self._db.notes.upsert(
-            note_id=note_id,
-            title=title if title is not None else existing.title,
-            body_markdown=body_markdown if body_markdown is not None else existing.body_markdown,
-            tags=tags if tags is not None else existing.tags,
-        )
+        try:
+            note = self._db.notes.upsert(
+                note_id=note_id,
+                title=title if title is not None else existing.title,
+                body_markdown=body_markdown if body_markdown is not None else existing.body_markdown,
+                tags=tags if tags is not None else existing.tags,
+            )
+        except ValueError as exc:
+            if "thought-owned notes require expected revision" not in str(exc):
+                raise
+            raise ConflictError("thought-owned notes require expected revision", code="thought_expected_revision_required") from exc
         return note.to_dict()
 
     def delete_note(self, principal: Principal, note_id: str, *, expected_aggregate_revision: int | None = None,
@@ -96,7 +106,12 @@ class PrimitiveService:
                 principal, note_id, expected_aggregate_revision=expected_aggregate_revision,
                 expected_lifecycle_revision=expected_lifecycle_revision,
             ))
-        removed = self._db.notes.delete(note_id)
+        try:
+            removed = self._db.notes.delete(note_id)
+        except ValueError as exc:
+            if "thought-owned notes require expected revision" not in str(exc):
+                raise
+            raise ConflictError("thought-owned notes require expected revision", code="thought_expected_revision_required") from exc
         if not removed:
             raise NotFound("note", note_id)
         return True

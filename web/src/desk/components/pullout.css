@@ -49,6 +49,13 @@
 .desk-next .desk-pullout .desk-pullout-body {
   min-height: 0;
 }
+/* HS-141-03 — custody text is byte-preserving in data, and must remain
+   newline-visible and reachable in the pullout without horizontal clipping. */
+.desk-next .thought-original-raw {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
 /* Materials spike — traffic lights (macos-web values): 12.8px discs
    with darker rings; grey on an unfocused window; glyphs reveal and
    the cluster swells on hover. */

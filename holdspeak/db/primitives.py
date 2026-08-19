@@ -99,6 +99,10 @@ class NoteRepository(BaseRepository):
             raise ValueError("note id is required")
         now = _now_iso()
         with self._connection() as conn:
+            # Ownership is checked under the same write lock as the mutation:
+            # an ordinary writer may not observe "unowned", wait for thought
+            # adoption, then overwrite the newly owned working Note.
+            conn.execute("BEGIN IMMEDIATE")
             owned = conn.execute("SELECT 1 FROM refinement_thoughts WHERE working_note_id = ?", (clean_id,)).fetchone()
             if owned:
                 raise ValueError("thought-owned notes require expected revision")
@@ -169,6 +173,7 @@ class NoteRepository(BaseRepository):
             return False
         now = _now_iso()
         with self._connection() as conn:
+            conn.execute("BEGIN IMMEDIATE")
             owned = conn.execute("SELECT 1 FROM refinement_thoughts WHERE working_note_id = ?", (clean_id,)).fetchone()
             if owned:
                 raise ValueError("thought-owned notes require expected revision")

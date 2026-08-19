@@ -1,9 +1,10 @@
 # Phase 141 — From Thought to Work
 
-**Status:** active (2/9); raw custody and the bounded resumable-thought contract
-are done. The first owner-facing Develop bridge is next.
+**Status:** active (3/9); raw custody, resumable-thought continuity, and the
+owner-facing Develop bridge are done. The local no-model completion path is
+next.
 
-**Last updated:** 2026-08-18.
+**Last updated:** 2026-08-19.
 
 ## Owner mandate
 
@@ -49,7 +50,7 @@ Settled product decisions:
 |---|---|---|---|
 | HS-141-01 | Raw before AI | done | Phase 140 landing |
 | HS-141-02 | The resumable thought | done | 141-01 |
-| HS-141-03 | Develop this thought | backlog | 141-02 |
+| HS-141-03 | Develop this thought | done | 141-02 |
 | HS-141-04 | One useful question | backlog | 141-02, 141-03, 141-06 |
 | HS-141-05 | Context you can see | backlog | 141-02, 141-04 |
 | HS-141-06 | Good enough means done | backlog | 141-02, 141-03 |
@@ -132,3 +133,10 @@ review; five rounds surface the rigor/cost choice to the owner.
   follow-up—before dispatch, while deterministic recovery names stale,
   superseded, failed, and orphaned states without rerun or Note mutation. Native
   continuity proof remains hub-local. Final adversarial counsel: RATIFY.
+- 2026-08-19 — HS-141-03 done. The ordinary Chair now enters local thought
+  development directly, every ordinary Note can be adopted in place under an
+  atomic source precondition, Original remains byte-equal, and Inbox/Resume
+  reopen the same working Note. Serialized editor saves, authority-epoch stale
+  response rejection, and sync provenance checks close the concurrency seams.
+  A genuine bare-hub 1440/393 walk passed with zero overflow or console errors;
+  final technical and owner-glass counsel: RATIFY.

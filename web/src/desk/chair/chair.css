@@ -96,6 +96,48 @@
   min-width: 0;
 }
 
+/* HS-141-03 — the daily entry is deliberately smaller than Speak. */
+.thought-entry {
+  display: grid;
+  width: min(100%, 640px);
+  min-width: 0;
+  gap: var(--space-2);
+}
+.thought-entry textarea {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  resize: vertical;
+}
+.thought-entry-primary { width: 100%; }
+.thought-entry-actions { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.thought-entry-more, .thought-resume { min-width: 0; }
+.thought-resume { display: grid; gap: var(--space-1); }
+.thought-resume-row {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  text-align: left;
+  padding: var(--space-2);
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+}
+.thought-resume-row span, .thought-resume-row time, .thought-resume-row em {
+  overflow: hidden;
+  color: var(--text-muted);
+  font-size: var(--font-size-xs);
+  font-style: normal;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+@media (max-width: 480px) {
+  .thought-entry-actions { display: grid; grid-template-columns: minmax(0, 1fr); }
+  .thought-entry-actions .btn--primary { width: 100%; }
+}
+
 /* ── Lane chrome ─────────────────────────────────────────────────── */
 
 /* The lane header verb (count badge, clickable to open full surface). */

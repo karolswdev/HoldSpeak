@@ -719,7 +719,7 @@ def _merge_refinement_thought_ledger_bundles(db: Any, records: list[dict[str, An
             raise ValidationError("thought raw bytes are invalid", code="thought_raw_hash_mismatch") from exc
         if hashlib.sha256(raw).hexdigest() != str(value["raw_sha256"]):
             raise ValidationError("thought raw hash does not match payload", code="thought_raw_hash_mismatch")
-        _validate_thought_ledger_bundle(value)
+        _validate_thought_ledger_bundle(value, raw_utf8=raw)
         incoming_aggregate = int(value["aggregate_revision"])
         local = db.refinement_thoughts.get(thought_id)
         if local is None:
@@ -779,7 +779,7 @@ def _command_identity(item: dict[str, Any]) -> tuple[Any, ...]:
     return tuple(item.get(k) for k in ("aggregate_revision", "command_kind", "prior_working_revision", "next_working_revision", "prior_lifecycle_revision", "next_lifecycle_revision", "prior_attachment_revision", "next_attachment_revision", "canonical_sha256", "lifecycle_sha256", "accepted_at"))
 
 
-def _validate_thought_ledger_bundle(value: dict[str, Any]) -> None:
+def _validate_thought_ledger_bundle(value: dict[str, Any], *, raw_utf8: bytes | None = None) -> None:
     required = ("aggregate_revision", "lifecycle_revision", "working_revision", "attachment_revision", "commands", "lifecycle", "revisions", "working_note")
     if any(key not in value for key in required):
         raise ValidationError("thought sync bundle is missing cursors", code="thought_sync_revision_required")
@@ -821,6 +821,20 @@ def _validate_thought_ledger_bundle(value: dict[str, Any]) -> None:
         allowed = False
         if kind == "create":
             allowed = prior_aggregate == 0 and prior_state is None and (next_working, next_lifecycle, next_attachment) == (1, 1, 0) and entry is not None and entry.get("prior_state") is None and entry.get("state") == "working" and entry.get("command") == "create"
+        elif kind == "adopt_note":
+            source = value.get("source")
+            revision_one = revisions[0] if revisions else None
+            source_ref = f"note:{note.get('id')}"
+            provenance = (
+                isinstance(source, dict) and source.get("kind") == "note" and source.get("ref") == source_ref
+                and isinstance(revision_one, dict) and isinstance(revision_one.get("body_markdown"), str)
+                and raw_utf8 is not None and raw_utf8 == revision_one["body_markdown"].encode("utf-8", "strict")
+            )
+            allowed = (prior_aggregate == 0 and prior_state is None and (next_working, next_lifecycle, next_attachment) == (1, 1, 0)
+                and entry is not None and entry.get("prior_state") is None and entry.get("state") == "working"
+                and entry.get("command") == "adopt_note" and provenance)
+            if not provenance:
+                raise ValidationError("thought adoption provenance is invalid", code="thought_adoption_provenance_invalid")
         elif kind == "replace_working":
             allowed = prior_state == "working" and (next_working, next_lifecycle, next_attachment) == (prior_working + 1, prior_lifecycle, prior_attachment) and entry is None
         elif kind == "complete":

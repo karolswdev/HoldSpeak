@@ -93,6 +93,15 @@ describe("HS-129-08 editor windows", () => {
     expect(container.querySelector(".desk-vignette")).toBeNull();
   });
 
+  it("lets a qualified Note pullout own the editor instead of opening a second window", () => {
+    const o = object("note");
+    useDesk.setState({ editingId: o.id, pullouts: [{ id: `note:${o.id}`, origin: null }] });
+    render(<InlineEditor o={o} u={{ x: 0.25, y: 0.25 }} />);
+
+    expect(screen.queryByRole("region", { name: `Edit ${o.title}` })).toBeNull();
+    expect(screen.queryByTestId("editor-note")).toBeNull();
+  });
+
   it("keeps the debounced editor write path", () => {
     vi.useFakeTimers();
     const updatePrimitive = vi.fn();

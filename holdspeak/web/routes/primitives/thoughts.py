@@ -59,6 +59,30 @@ def build_thoughts_router(ctx: WebContext) -> APIRouter:
         except ServiceError as exc:
             return _error(exc)
 
+    # Static Note lookup must precede `/{thought_id}` so a Note id can never be
+    # mistaken for a thought id by route matching.
+    @router.get("/api/thoughts/for-note/{note_id}")
+    async def for_note(note_id: str, request: Request) -> Any:
+        try:
+            return JSONResponse(service().for_note(principal(request), note_id))
+        except ServiceError as exc:
+            return _error(exc)
+
+    @router.post("/api/thoughts/adopt")
+    async def adopt(request: Request) -> Any:
+        body = await _json_body(request)
+        if body is None:
+            return JSONResponse({"error": "expected a JSON object"}, status_code=400)
+        try:
+            thought = service().adopt_note(
+                principal(request), request_id=str(body.get("request_id") or ""), note_id=str(body.get("note_id") or ""),
+                expected_source_content_sha256=str(body.get("expected_source_content_sha256") or ""),
+                expected_source_last_modified=str(body.get("expected_source_last_modified") or ""),
+            )
+            return JSONResponse({"thought": thought}, status_code=201)
+        except ServiceError as exc:
+            return _error(exc)
+
     @router.get("/api/thoughts/{thought_id}")
     async def get(thought_id: str, request: Request) -> Any:
         try:

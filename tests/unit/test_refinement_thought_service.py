@@ -53,6 +53,45 @@ def test_two_writers_generic_crud_and_direct_repo_cannot_bypass_cas(db):
     assert missing.value.code == "thought_expected_revision_required"
 
 
+def test_generic_note_mutations_racing_adoption_name_the_required_cursors(db, monkeypatch):
+    """The generic ownership read may go stale; the repository lock is final."""
+    service = RefinementThoughtService(db)
+    primitives = PrimitiveService(db)
+
+    def adopt_between_read_and_write(note_id: str) -> None:
+        source = service.for_note(OWNER, note_id)["source_precondition"]
+        service.adopt_note(OWNER, request_id=f"adopt-race-{note_id}", note_id=note_id,
+            expected_source_content_sha256=source["content_sha256"],
+            expected_source_last_modified=source["last_modified"])
+
+    db.notes.upsert(note_id="update-race", body_markdown="before")
+    real_upsert = db.notes.upsert
+    fired_update = False
+    def upsert_barrier(**kwargs):
+        nonlocal fired_update
+        if kwargs["note_id"] == "update-race" and not fired_update:
+            fired_update = True; adopt_between_read_and_write("update-race")
+        return real_upsert(**kwargs)
+    monkeypatch.setattr(db.notes, "upsert", upsert_barrier)
+    with pytest.raises(ConflictError) as update:
+        primitives.update_note(OWNER, "update-race", body_markdown="lost")
+    assert update.value.code == "thought_expected_revision_required"
+
+    db.notes.upsert = real_upsert
+    db.notes.upsert(note_id="delete-race", body_markdown="before")
+    real_delete = db.notes.delete
+    fired_delete = False
+    def delete_barrier(note_id):
+        nonlocal fired_delete
+        if note_id == "delete-race" and not fired_delete:
+            fired_delete = True; adopt_between_read_and_write("delete-race")
+        return real_delete(note_id)
+    monkeypatch.setattr(db.notes, "delete", delete_barrier)
+    with pytest.raises(ConflictError) as delete:
+        primitives.delete_note(OWNER, "delete-race")
+    assert delete.value.code == "thought_expected_revision_required"
+
+
 def test_create_refuses_existing_ordinary_initial_note_without_overwrite(db):
     db.notes.upsert(note_id="ordinary", title="Keep me", body_markdown="original")
     with pytest.raises(ConflictError) as exc:
@@ -63,6 +102,68 @@ def test_create_refuses_existing_ordinary_initial_note_without_overwrite(db):
     assert exc.value.code == "initial_note_id_in_use"
     assert db.notes.get("ordinary").body_markdown == "original"
     assert db.refinement_thoughts.list() == []
+
+
+def test_adopt_note_snapshots_existing_note_without_overwrite_and_is_idempotent(db):
+    db.notes.upsert(note_id="ordinary", title="Keep me", body_markdown="exact\nbody", tags=["kept"])
+    service = RefinementThoughtService(db)
+    source = service.for_note(OWNER, "ordinary")
+    adopted = service.adopt_note(OWNER, request_id="adopt-1", note_id="ordinary",
+        expected_source_content_sha256=source["source_precondition"]["content_sha256"],
+        expected_source_last_modified=source["source_precondition"]["last_modified"])
+    assert adopted["working_note"]["id"] == "ordinary"
+    assert service.get(OWNER, adopted["id"], include_raw=True)["raw_text"] == "exact\nbody"
+    assert db.notes.get("ordinary").to_dict()["body_markdown"] == "exact\nbody"
+    assert db.directory_memberships.get("note:ordinary").directory_id == INBOX_DIRECTORY_ID
+    assert db.refinement_thoughts.commands(adopted["id"])[0]["command_kind"] == "adopt_note"
+    retry = service.adopt_note(OWNER, request_id="adopt-1", note_id="ordinary",
+        expected_source_content_sha256=source["source_precondition"]["content_sha256"],
+        expected_source_last_modified=source["source_precondition"]["last_modified"])
+    assert retry["id"] == adopted["id"] and len(db.notes.list()) == 1
+
+
+def test_adopt_note_refuses_stale_source_and_page_snapshot_excludes_later_adoption(db):
+    service = RefinementThoughtService(db)
+    first = _create(db)
+    page = service.list_unfinished(OWNER, limit=1)
+    db.notes.upsert(note_id="ordinary", title="Original", body_markdown="one")
+    source = service.for_note(OWNER, "ordinary")
+    db.notes.upsert(note_id="ordinary", title="Changed", body_markdown="two")
+    with pytest.raises(ConflictError) as stale:
+        service.adopt_note(OWNER, request_id="adopt-stale", note_id="ordinary",
+            expected_source_content_sha256=source["source_precondition"]["content_sha256"],
+            expected_source_last_modified=source["source_precondition"]["last_modified"])
+    assert stale.value.code == "note_adoption_conflict"
+    fresh = service.for_note(OWNER, "ordinary")
+    adopted = service.adopt_note(OWNER, request_id="adopt-fresh", note_id="ordinary",
+        expected_source_content_sha256=fresh["source_precondition"]["content_sha256"],
+        expected_source_last_modified=fresh["source_precondition"]["last_modified"])
+    # The old high-water cursor cannot leak an item committed after its first page.
+    if page["next_cursor"]:
+        assert adopted["id"] not in {item["id"] for item in service.list_unfinished(OWNER, limit=1, cursor=page["next_cursor"])["items"]}
+    assert adopted["id"] in {item["id"] for item in service.list_unfinished(OWNER, limit=20)["items"]}
+
+
+def test_paired_sync_validates_adoption_provenance(tmp_path):
+    left, right = Database(tmp_path / "adopt-left.db"), Database(tmp_path / "adopt-right.db")
+    for database in (left, right):
+        database.directories.upsert(directory_id=INBOX_DIRECTORY_ID, name="Inbox")
+    left.notes.upsert(note_id="source", title="Source", body_markdown="kept bytes")
+    service = RefinementThoughtService(left)
+    source = service.for_note(OWNER, "source")
+    adopted = service.adopt_note(OWNER, request_id="adopt-sync", note_id="source",
+        expected_source_content_sha256=source["source_precondition"]["content_sha256"],
+        expected_source_last_modified=source["source_precondition"]["last_modified"])
+    packet = SyncService(left, hub_model_name=lambda: "").pull(None)
+    assert SyncService(right, hub_model_name=lambda: "").push(None, packet)["received"]["refinement_thoughts"] == 1
+    assert RefinementThoughtService(right).get(OWNER, adopted["id"], include_raw=True)["raw_text"] == "kept bytes"
+    forged = copy.deepcopy(packet)
+    forged["refinement_thoughts"][0]["value"]["source"]["ref"] = "note:other"
+    third = Database(tmp_path / "adopt-third.db")
+    third.directories.upsert(directory_id=INBOX_DIRECTORY_ID, name="Inbox")
+    with pytest.raises(ValidationError) as refused:
+        SyncService(third, hub_model_name=lambda: "").push(None, forged)
+    assert refused.value.code == "thought_adoption_provenance_invalid"
 
 
 def test_filing_is_not_custody_but_tombstone_blocks_refile(db):
@@ -219,6 +320,7 @@ def test_unfinished_page_is_bounded_private_and_cursor_signed(db):
     assert len(page["items"]) == 1 and page["next_cursor"]
     item = page["items"][0]
     assert {"aggregate_revision", "lifecycle_revision", "working_revision", "attachment_revision"} <= item.keys()
+    assert item["source_kind"] == "typed" and item["body_preview"] == "another private raw" and item["updated_at"]
     assert not ({"body_markdown", "raw_text", "raw_sha256", "source", "continuity"} & item.keys())
     next_page = service.list_unfinished(OWNER, limit=1, cursor=page["next_cursor"])
     assert {item["id"], next_page["items"][0]["id"]} == {first["id"], second["id"]}

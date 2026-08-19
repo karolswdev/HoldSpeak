@@ -4269,7 +4269,9 @@
         "GET"
       ],
       "module": "web.routes.primitives.thoughts",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/thoughts",
@@ -4277,7 +4279,29 @@
         "POST"
       ],
       "module": "web.routes.primitives.thoughts",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/thoughts/adopt",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.primitives.thoughts",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/thoughts/for-note/{note_id}",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.primitives.thoughts",
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/thoughts/{thought_id}",
@@ -4295,7 +4319,9 @@
         "POST"
       ],
       "module": "web.routes.primitives.thoughts",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/thoughts/{thought_id}/original",
@@ -4303,7 +4329,9 @@
         "GET"
       ],
       "module": "web.routes.primitives.thoughts",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/thoughts/{thought_id}/reconcile",
@@ -4311,7 +4339,9 @@
         "POST"
       ],
       "module": "web.routes.primitives.thoughts",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/thoughts/{thought_id}/resume",
@@ -4319,7 +4349,9 @@
         "POST"
       ],
       "module": "web.routes.primitives.thoughts",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/thoughts/{thought_id}/working",
@@ -4327,7 +4359,9 @@
         "PATCH"
       ],
       "module": "web.routes.primitives.thoughts",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/workbench-templates",

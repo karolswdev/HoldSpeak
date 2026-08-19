@@ -151,7 +151,7 @@ describe("Chair lane contract", () => {
 describe("Chair all-blank invitation", () => {
   it("renders the invitation node always (CSS owns visibility)", () => {
     render(<Chair lanes={{}} />);
-    expect(screen.getByText("Speak. The desk will file it.")).toBeInTheDocument();
+    expect(screen.getByText("Start rough. Keep developing it.")).toBeInTheDocument();
   });
 
   it("keeps the invitation node in the DOM when lanes have content (hidden by CSS)", () => {
@@ -170,7 +170,7 @@ describe("Chair all-blank invitation", () => {
         }}
       />,
     );
-    expect(screen.getByText("Speak. The desk will file it.")).toBeInTheDocument();
+    expect(screen.getByText("Start rough. Keep developing it.")).toBeInTheDocument();
   });
 
   it("chair.css gates the invitation and hero scaling on the :has() empty rule", () => {

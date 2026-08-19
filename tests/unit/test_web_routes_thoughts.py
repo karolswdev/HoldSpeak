@@ -96,3 +96,27 @@ def test_thought_list_is_paged_private_and_reconcile_requires_cursor(tmp_path, m
     assert "body_markdown" not in item and "raw_text" not in item and "source" not in item
     assert client.get("/api/thoughts?limit=51").status_code == 422
     assert client.post(f"/api/thoughts/{thought['id']}/reconcile", json={}).status_code == 409
+
+
+def test_note_adoption_routes_are_owner_only_and_return_the_same_note(tmp_path, monkeypatch):
+    db = Database(tmp_path / "adopt-routes.db")
+    db.directories.upsert(directory_id="hs-seed-inbox", name="Inbox")
+    db.notes.upsert(note_id="n1", title="Existing", body_markdown="exact", tags=["tag"])
+    monkeypatch.setattr(hsdb, "get_database", lambda *args, **kwargs: db)
+    app = FastAPI()
+    @app.middleware("http")
+    async def owner(request, call_next):
+        request.state.principal = Principal(PrincipalKind.OWNER, "test-owner")
+        return await call_next(request)
+    app.include_router(build_primitives_router(WebContext(get_state=lambda: {})))
+    client = TestClient(app)
+    source = client.get("/api/thoughts/for-note/n1")
+    assert source.status_code == 200 and source.json()["ownership"] == "ordinary"
+    precondition = source.json()["source_precondition"]
+    adopted = client.post("/api/thoughts/adopt", json={"request_id": "adopt-route", "note_id": "n1",
+        "expected_source_content_sha256": precondition["content_sha256"], "expected_source_last_modified": precondition["last_modified"]})
+    assert adopted.status_code == 201
+    thought = adopted.json()["thought"]
+    assert thought["working_note"]["id"] == "n1"
+    assert client.get("/api/thoughts/for-note/n1").json()["ownership"] == "thought"
+    assert client.get(f"/api/thoughts/{thought['id']}/original").json()["thought"]["raw_text"] == "exact"

@@ -5,6 +5,7 @@ import { act, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ChairHome } from "./ChairHome";
 import { useChairState } from "../chairState";
+import { useDesk } from "../store";
 
 // ---------------------------------------------------------------------------
 // HS-136-03: CaptureHero now uses useRuntimeBus; mock it for this test.
@@ -35,6 +36,7 @@ vi.mock("../components/FirstWords", () => ({
 /** Reset the Chair/Floor toggle to its default ("chair") between tests. */
 function resetChairState() {
   useChairState.setState({ surface: "chair" });
+  useDesk.setState({ editingId: null, pullouts: [] });
 }
 
 // ---------------------------------------------------------------------------
@@ -48,11 +50,26 @@ describe("ChairHome landing surface", () => {
     render(<ChairHome />);
     expect(screen.getByTestId("chair")).toBeInTheDocument();
     expect(screen.getByTestId("chair-hero")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Develop a thought" })).toBeInTheDocument();
     expect(screen.getByTestId("chair-lanes")).toBeInTheDocument();
   });
 
   it("default surface state is 'chair'", () => {
     expect(useChairState.getState().surface).toBe("chair");
+  });
+
+  it("removes the competing capture action while an editor owns the foreground", () => {
+    useDesk.setState({ editingId: "active-note" });
+    render(<ChairHome />);
+
+    expect(screen.queryByRole("button", { name: "Develop a thought" })).not.toBeInTheDocument();
+  });
+
+  it("removes the competing capture action while a pullout owns the foreground", () => {
+    useDesk.setState({ pullouts: [{ id: "note:active-note", origin: null }] });
+    render(<ChairHome />);
+
+    expect(screen.queryByRole("button", { name: "Develop a thought" })).not.toBeInTheDocument();
   });
 });
 
@@ -76,7 +93,7 @@ describe("ChairHome first-value composition", () => {
     expect(screen.queryByTestId("chair-lanes")).not.toBeInTheDocument();
   });
 
-  it("keeps the existing Chair byte-for-byte path for a normal owner", () => {
+  it("makes thought capture the normal-owner Chair entry", () => {
     render(<ChairHome arrivalRequired={false} />);
 
     expect(screen.getByTestId("chair")).toBeInTheDocument();
@@ -85,6 +102,7 @@ describe("ChairHome first-value composition", () => {
     expect(
       screen.queryByRole("heading", { name: "Dictate one sentence" }),
     ).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Develop a thought" })).toBeInTheDocument();
   });
 
   it("waits for the refreshed server prop before revealing the normal Chair", () => {

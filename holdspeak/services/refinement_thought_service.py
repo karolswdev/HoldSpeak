@@ -9,7 +9,7 @@ import uuid
 from typing import Any
 
 from ..db.core import Database
-from ..db.refinement_thoughts import RefinementThoughtRepository, _now
+from ..db.refinement_thoughts import RefinementThoughtRepository, _now, canonical_json
 from ..db.relationships import qualified_ref
 from ..principals import Principal, PrincipalKind
 from .errors import ConflictError, NotFound, ValidationError
@@ -86,6 +86,86 @@ class RefinementThoughtService:
             life_hash = RefinementThoughtRepository.insert_lifecycle(conn, thought_id=thought_id, lifecycle_revision=1, aggregate_revision=1,
                 prior_state=None, state="working", command="create", occurred_at=now)
             RefinementThoughtRepository.insert_command(conn, record, command_kind="create", prior_working_revision=0,
+                prior_lifecycle_revision=0, prior_attachment_revision=0, working_sha256=working_hash, lifecycle_sha256=life_hash, accepted_at=now)
+            conn.execute("""INSERT INTO directory_memberships (primitive_id,directory_id,created_at,last_modified,deleted)
+                VALUES (?,?,?,?,0) ON CONFLICT(primitive_id) DO UPDATE SET directory_id=excluded.directory_id,last_modified=excluded.last_modified,deleted=0""",
+                (f"note:{note_id}", INBOX_DIRECTORY_ID, now, now))
+            return self._dto_in_transaction(conn, record)
+
+    def for_note(self, principal: Principal, note_id: str) -> dict[str, Any]:
+        """Return a narrow owner-only ownership/precondition projection for one Note."""
+        self._require_product_owner(principal)
+        with self._db._connection() as conn:
+            note = conn.execute("SELECT * FROM notes WHERE id=?", (str(note_id),)).fetchone()
+            if note is None or note["deleted"]:
+                raise NotFound("note", str(note_id))
+            owned = conn.execute("SELECT * FROM refinement_thoughts WHERE working_note_id=?", (str(note_id),)).fetchone()
+            if owned is not None:
+                return {"ownership": "thought", "thought": self._dto_in_transaction(conn, self._record(owned))}
+            item = self._note(note)
+            assert item is not None
+            return {
+                "ownership": "ordinary",
+                "note": item,
+                "source_precondition": {
+                    "content_sha256": RefinementThoughtRepository.content_hash(item["title"], item["body_markdown"], item["tags"]),
+                    "last_modified": item["last_modified"],
+                },
+            }
+
+    def adopt_note(self, principal: Principal, *, request_id: str, note_id: str,
+                   expected_source_content_sha256: str, expected_source_last_modified: str) -> dict[str, Any]:
+        """Atomically make one existing Note the durable working thought.
+
+        The source Note is read and snapshot under the same IMMEDIATE transaction
+        that claims ownership.  It is deliberately never inserted, updated, or
+        deleted by adoption.
+        """
+        self._require_product_owner(principal)
+        request_id, note_id = str(request_id or "").strip(), str(note_id or "").strip()
+        content_digest, modified = str(expected_source_content_sha256 or "").strip(), str(expected_source_last_modified or "").strip()
+        if not request_id or not note_id or not content_digest or not modified:
+            raise ValidationError("request_id, note_id, and source precondition are required", code="note_adoption_precondition_required")
+        request_digest = hashlib.sha256(canonical_json({"kind": "adopt_note", "request_id": request_id, "note_id": note_id,
+            "expected_source_content_sha256": content_digest, "expected_source_last_modified": modified})).hexdigest()
+        with self._db._connection() as conn:
+            conn.execute("BEGIN IMMEDIATE")
+            prior = conn.execute("SELECT * FROM refinement_thoughts WHERE create_request_id=?", (request_id,)).fetchone()
+            if prior is not None:
+                record = self._record(prior)
+                if record["create_payload_sha256"] != request_digest:
+                    raise ConflictError("create request was already used for different content", code="idempotency_payload_mismatch")
+                return self._dto_in_transaction(conn, record)
+            if conn.execute("SELECT 1 FROM directories WHERE id=? AND deleted=0", (INBOX_DIRECTORY_ID,)).fetchone() is None:
+                raise ValidationError("Inbox is unavailable", code="inbox_unavailable")
+            note = conn.execute("SELECT * FROM notes WHERE id=?", (note_id,)).fetchone()
+            if note is None:
+                raise NotFound("note", note_id)
+            if note["deleted"]:
+                raise ConflictError("note was deleted", code="note_tombstoned")
+            claimed = conn.execute("SELECT * FROM refinement_thoughts WHERE working_note_id=?", (note_id,)).fetchone()
+            if claimed is not None:
+                raise ConflictError("note is already a thought", code="note_already_a_thought",
+                                    context={"thought": self._dto_in_transaction(conn, self._record(claimed))})
+            tags = json.loads(note["tags_json"])
+            actual = RefinementThoughtRepository.content_hash(str(note["title"]), str(note["body_markdown"]), tags)
+            if actual != content_digest or str(note["last_modified"] or "") != modified:
+                current = self._note(note)
+                assert current is not None
+                raise ConflictError("note changed before adoption", code="note_adoption_conflict", context={"note": current,
+                    "source_precondition": {"content_sha256": actual, "last_modified": current["last_modified"]}})
+            raw = str(note["body_markdown"]).encode("utf-8", "strict")
+            now, thought_id = _now(), _id("thought")
+            resume_order = RefinementThoughtRepository.next_resume_order(conn)
+            conn.execute("""INSERT INTO refinement_thoughts (id,create_request_id,create_payload_sha256,raw_utf8,raw_sha256,
+                raw_source_kind,raw_source_ref,raw_captured_at,working_note_id,working_revision,lifecycle_revision,attachment_revision,
+                aggregate_revision,resume_order,state,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,1,1,0,1,?,'working',?,?)""",
+                (thought_id, request_id, request_digest, raw, hashlib.sha256(raw).hexdigest(), "note", f"note:{note_id}", now, note_id, resume_order, now, now))
+            record = self._record(conn.execute("SELECT * FROM refinement_thoughts WHERE id=?", (thought_id,)).fetchone())
+            working_hash = self._insert_revision(conn, thought_id, 1, str(note["title"]), str(note["body_markdown"]), tags, now)
+            life_hash = RefinementThoughtRepository.insert_lifecycle(conn, thought_id=thought_id, lifecycle_revision=1, aggregate_revision=1,
+                prior_state=None, state="working", command="adopt_note", occurred_at=now)
+            RefinementThoughtRepository.insert_command(conn, record, command_kind="adopt_note", prior_working_revision=0,
                 prior_lifecycle_revision=0, prior_attachment_revision=0, working_sha256=working_hash, lifecycle_sha256=life_hash, accepted_at=now)
             conn.execute("""INSERT INTO directory_memberships (primitive_id,directory_id,created_at,last_modified,deleted)
                 VALUES (?,?,?,?,0) ON CONFLICT(primitive_id) DO UPDATE SET directory_id=excluded.directory_id,last_modified=excluded.last_modified,deleted=0""",
@@ -403,9 +483,10 @@ class RefinementThoughtService:
     def _high_water(conn: Any) -> str:
         row = conn.execute("SELECT COALESCE(MAX(resume_order),0) high FROM refinement_thoughts WHERE state='working'").fetchone(); return int(row["high"])
     def _list_item_in_transaction(self, conn: Any, record: dict[str, Any], *, remote: bool) -> dict[str, Any]:
-        note = conn.execute("SELECT title FROM notes WHERE id=?", (record["working_note_id"],)).fetchone()
+        note = conn.execute("SELECT title,body_markdown FROM notes WHERE id=?", (record["working_note_id"],)).fetchone()
         member = conn.execute("SELECT deleted FROM directory_memberships WHERE primitive_id=?", (f"note:{record['working_note_id']}",)).fetchone()
-        return {"id":record["id"],"working_note_id":record["working_note_id"],"title":str(note["title"] if note else ""),"updated_at":record["updated_at"],"state":record["state"],"aggregate_revision":record["aggregate_revision"],"lifecycle_revision":record["lifecycle_revision"],"working_revision":record["working_revision"],"attachment_revision":record["attachment_revision"],"continuity_state":"unavailable_remote" if remote else self._continuity(conn,record["id"])["state"],"filing_status":"filed" if member and not member["deleted"] else "missing"}
+        preview = " ".join(str(note["body_markdown"] if note else "").split())[:160]
+        return {"id":record["id"],"working_note_id":record["working_note_id"],"source_kind":record["raw_source_kind"],"title":str(note["title"] if note else ""),"body_preview":preview,"updated_at":record["updated_at"],"state":record["state"],"aggregate_revision":record["aggregate_revision"],"lifecycle_revision":record["lifecycle_revision"],"working_revision":record["working_revision"],"attachment_revision":record["attachment_revision"],"continuity_state":"unavailable_remote" if remote else self._continuity(conn,record["id"])["state"],"filing_status":"filed" if member and not member["deleted"] else "missing"}
     def _continuity(self, conn: Any, thought_id: str) -> dict[str, Any]:
         row = conn.execute("SELECT id,state,review_result_id,terminal_code FROM refinement_invocations WHERE thought_id=? ORDER BY created_at DESC LIMIT 1", (thought_id,)).fetchone()
         if row is None: return {"state":"idle","code":""}
