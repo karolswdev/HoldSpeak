@@ -331,6 +331,12 @@ _RESOURCE_TEMPLATES = [
         "description": "One validated receipt-gated review card with frozen cursors and egress receipt.",
         "mimeType": _JSON_MIME,
     },
+    {
+        "uriTemplate": "holdspeak://inference/acquisitions/{id}",
+        "name": "Model acquisition",
+        "description": "Owner-only durable download, verification, installation, and activation truth.",
+        "mimeType": _JSON_MIME,
+    },
 ]
 
 _PRIMITIVE_KIND_ALIASES = {
@@ -358,6 +364,9 @@ _THOUGHT_ORIGINAL_PATTERN = re.compile(r"^holdspeak://thoughts/([^/]+)/original$
 _THOUGHT_REVIEW_PATTERN = re.compile(
     r"^holdspeak://thoughts/([^/]+)/reviews/([^/]+)$"
 )
+_INFERENCE_ACQUISITION_PATTERN = re.compile(
+    r"^holdspeak://inference/acquisitions/([^/]+)$"
+)
 
 
 class ResourceError(ValueError):
@@ -369,7 +378,10 @@ def list_resources(principal: Principal | None = None) -> dict[str, list[dict[st
     resources = _STATIC_RESOURCES
     if principal is None or principal.kind is not PrincipalKind.OWNER:
         resources = [row for row in resources if row["uri"] != "holdspeak://inference/setup"]
-    return {"resources": resources, "resourceTemplates": _RESOURCE_TEMPLATES}
+        templates = [row for row in _RESOURCE_TEMPLATES if "inference/acquisitions" not in row["uriTemplate"]]
+    else:
+        templates = _RESOURCE_TEMPLATES
+    return {"resources": resources, "resourceTemplates": templates}
 
 
 def _contents(uri: str, mime_type: str, value: Any) -> dict[str, list[dict[str, str]]]:
@@ -400,6 +412,20 @@ def read_resource(uri: str, principal: Principal) -> dict[str, list[dict[str, st
             )
         value = InferenceSetupApplicationService(get_database()).get_inference_setup(principal)
         return _contents(uri, _JSON_MIME, {"setup": value})
+    if match := _INFERENCE_ACQUISITION_PATTERN.fullmatch(uri):
+        if principal.kind is not PrincipalKind.OWNER:
+            raise ServiceError(
+                "inference_setup_owner_required", "Owner access is required.",
+                context={"status": 403},
+            )
+        db = get_database()
+        setup = InferenceSetupApplicationService(db)
+        from holdspeak.services.inference_acquisition_service import InferenceAcquisitionApplicationService
+
+        value = InferenceAcquisitionApplicationService(
+            db, setup_service=setup, auto_recover=False,
+        ).get_acquisition(principal, match.group(1))
+        return _contents(uri, _JSON_MIME, value)
     if uri == "holdspeak://desk/snapshot":
         return _contents(uri, _JSON_MIME, DeskService(get_database()).snapshot(principal))
     if uri == "holdspeak://workbenches":

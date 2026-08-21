@@ -177,7 +177,7 @@ class InferenceRunner:
             if sequence is not None: pending=sequence.enter(iid) or pending
         if pending is not None: self._request_cancel(iid,pending)
         watchdog=threading.Timer(max(0,request.deadline_at-self._clock()),lambda:self._cancel_internal(iid,principal)); watchdog.daemon=True; watchdog.start()
-        context=None; bound_engine=None
+        context=None; bound_engine=None; local_runtime_lease=None; local_lease_indeterminate=False
         try:
             revision = self._revision(request.deployment_revision)
             # HS-131-10: the ONE mint, for the child THIS call just claimed, out of
@@ -186,6 +186,15 @@ class InferenceRunner:
             if str(child.get("operation_id") or "")!=op["operation_id"]: raise KernelRefused(CONTEXT_MISMATCH)
             warrant=child["warrant"]
             context=_issue_dispatch_context(witness=child.get("claim_witness"), revision=revision, attempt_ordinal=request.attempt_ordinal, warrant=warrant)
+            if revision.schema_version >= 2 and revision.boundary == "same_device":
+                from .local_runtime_lease import acquire_local_runtime_lease
+
+                local_runtime_lease = acquire_local_runtime_lease(
+                    self._database,
+                    operation_id=op["operation_id"],
+                    deployment_revision_id=revision.id,
+                    clock=self._clock,
+                )
             # ONE calling convention for every engine factory, injected or not.
             engine=self._engine_factory(revision, warrant=warrant, context=context)
             # Round 2: an engine already bound to ANOTHER child's context is
@@ -242,7 +251,9 @@ class InferenceRunner:
             receipt=self._persist_receipt(active,active.operation_id,outcome,result_ref if outcome=="succeeded" else "")
             with active.condition: active.state="PUBLISHED" if outcome=="succeeded" else "FAILED"; active.closing=False; active.condition.notify_all()
             return InvocationOutcome(active.operation_id,iid,outcome,result_ref if outcome=="succeeded" else "",receipt)
-        except ProviderIndeterminate: return self._finish(active,iid,"indeterminate")
+        except ProviderIndeterminate:
+            local_lease_indeterminate=True
+            return self._finish(active,iid,"indeterminate")
         except ProviderCompatibilityRetry as exc:
             # One physical attempt happened and failed on dialect; `invoke` admits the follow-up.
             if signal is not None: signal.append(exc)
@@ -256,6 +267,13 @@ class InferenceRunner:
         finally:
             watchdog.cancel()
             release_dispatch_context(bound_engine, context)
+            if local_runtime_lease is not None:
+                from .local_runtime_lease import release_local_runtime_lease
+
+                release_local_runtime_lease(
+                    self._database, local_runtime_lease,
+                    indeterminate=local_lease_indeterminate, clock=self._clock,
+                )
             if sequence is not None: sequence.leave(iid)
             with self._active_lock:
                 if active.state != "CLOSURE_FAILED": self._active.pop(iid,None)

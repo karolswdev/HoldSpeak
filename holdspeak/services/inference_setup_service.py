@@ -131,16 +131,26 @@ def _package_revision(distribution: str, fallback: str) -> str:
         return fallback
 
 
+def _version_at_least(observed: str, minimum: str) -> bool:
+    try:
+        return tuple(int(part) for part in observed.split(".")[:3]) >= tuple(
+            int(part) for part in minimum.split(".")[:3]
+        )
+    except (TypeError, ValueError):
+        return False
+
+
 def inspect_runtimes(*, apple_silicon: bool) -> list[dict[str, Any]]:
-    llama = _package_available("llama_cpp")
+    llama_revision = _package_revision("llama-cpp-python", "unavailable")
+    llama = _package_available("llama_cpp") and _version_at_least(llama_revision, "0.3.34")
     mlx = apple_silicon and _package_available("mlx_lm")
     return [
         {
             "id": "llama_cpp_prompt_v1",
-            "revision": _package_revision("llama-cpp-python", "unavailable"),
+            "revision": llama_revision,
             "formats": ["gguf"],
-            "availability": {"state": "available" if llama else "unavailable", "reason": None if llama else "llama.cpp support is not installed."},
-            "thought_support": {"state": "supported" if llama else "unavailable", "reason": "Current v1 GGUF Thought execution." if llama else "Thoughts cannot load GGUF without llama.cpp support."},
+            "availability": {"state": "available" if llama else "unavailable", "reason": None if llama else "Thoughts require llama-cpp-python 0.3.34 or newer for Qwen 3.5."},
+            "thought_support": {"state": "supported" if llama else "unavailable", "reason": "Current GGUF Thought execution." if llama else "Install a Qwen 3.5-capable llama.cpp runtime."},
         },
         {
             "id": "mlx_text_v1",
@@ -198,16 +208,21 @@ def _safe_target(target: InferenceTarget) -> dict[str, Any]:
     }
 
 
-def _safe_revision(target: InferenceTarget) -> dict[str, Any]:
+def _safe_revision(target: InferenceTarget, db: Any = None) -> dict[str, Any]:
     if target.deployment is None:
         return {
             "schema_version": 1, "id": None, "destination_id": _public_text(target.id, "unavailable"),
             "kind": target.kind, "engine": _public_text(target.engine, "unavailable"), "model": _public_text(target.model, "unavailable"),
             "boundary": target.boundary, "has_local_artifact": False, "requires_secret": False,
         }
-    revision = DeploymentRevision.from_identity(target.deployment)
+    revision = None
+    if db is not None:
+        from ..deployment_revisions import _artifact_revision_for_identity
+
+        revision = _artifact_revision_for_identity(db, target.deployment)
+    revision = revision or DeploymentRevision.from_identity(target.deployment)
     return {
-        "schema_version": 1,
+        "schema_version": revision.schema_version,
         "id": revision.id,
         "destination_id": _public_text(revision.destination_id, "unavailable"),
         "kind": revision.kind,
@@ -216,7 +231,41 @@ def _safe_revision(target: InferenceTarget) -> dict[str, Any]:
         "boundary": revision.boundary,
         "has_local_artifact": bool(revision.model_path),
         "requires_secret": bool(revision.secret_slot),
+        "artifact_id": revision.artifact_id or None,
+        "runtime_id": revision.runtime_id or None,
+        "context_ceiling": revision.context_ceiling or target.context_limit,
     }
+
+
+def _installed_artifacts(db: Any) -> list[dict[str, Any]]:
+    with db._connection() as conn:
+        rows = conn.execute(
+            """SELECT artifact_id,format,source_repository,source_revision,
+                      installed_bytes,state,verified_at
+                 FROM inference_model_artifacts
+                WHERE state='verified' ORDER BY verified_at DESC LIMIT 100"""
+        ).fetchall()
+    return [
+        {
+            "id": str(row["artifact_id"]), "format": str(row["format"]),
+            "source_repository": str(row["source_repository"]),
+            "source_revision": str(row["source_revision"]),
+            "installed_bytes": int(row["installed_bytes"]),
+            "state": str(row["state"]), "verified_at": str(row["verified_at"]),
+        }
+        for row in rows
+    ]
+
+
+def _acquisitions(db: Any) -> list[dict[str, Any]]:
+    from .inference_acquisition_service import InferenceAcquisitionApplicationService
+
+    with db._connection() as conn:
+        rows = conn.execute(
+            """SELECT * FROM inference_model_acquisitions
+                ORDER BY created_at DESC LIMIT 20"""
+        ).fetchall()
+    return [InferenceAcquisitionApplicationService._public(row) for row in rows]
 
 
 def _valid_gguf(path: Path) -> bool:
@@ -414,6 +463,8 @@ class InferenceSetupApplicationService:
 
     def get_inference_setup(self, principal: Principal) -> dict[str, Any]:
         self._require_owner(principal)
+        from .inference_acquisition_service import InferenceAcquisitionApplicationService
+
         now = self._clock()
         catalog = verify_catalog_envelope(self._catalog_envelope_json, now=now)
         config = self._config_provider()
@@ -437,7 +488,11 @@ class InferenceSetupApplicationService:
             "runtimes": runtimes,
             "current_routes": {
                 "authority": "config",
-                "thoughts": {"target_id": config.thoughts.inference_target_id, "inherits_this_device": config.thoughts.inference_target_id is None},
+                "thoughts": {
+                    "target_id": config.thoughts.inference_target_id,
+                    "inherits_this_device": config.thoughts.inference_target_id is None,
+                    "revision": InferenceAcquisitionApplicationService.route_revision(config),
+                },
                 "dictation": {"target_id": config.dictation.runtime.profile_id, "backend": config.dictation.runtime.backend},
                 "meetings": {"target_id": config.meeting.intel_profile_id, "provider": config.meeting.intel_provider},
             },
@@ -447,10 +502,12 @@ class InferenceSetupApplicationService:
                 "target": _safe_target(target),
                 "readiness": {"state": target.readiness_state, "available": target.ready, "reason": _safe_reason(target)},
                 "execution_support": execution_support,
-                "execution_revision": _safe_revision(target),
+                "execution_revision": _safe_revision(target, self._db),
             },
             "artifact_detection": artifact_detection,
             "detected_local_artifacts": artifacts,
+            "installed_model_artifacts": _installed_artifacts(self._db),
+            "acquisitions": _acquisitions(self._db),
             "preset_catalog": {
                 key: catalog[key]
                 for key in (

@@ -23,6 +23,17 @@ def _error(exc: ServiceError) -> JSONResponse:
     return JSONResponse({"success": False, "error": exc.detail}, status_code=int(exc.context.get("status") or 400))
 
 
+def _inference_error(exc: ServiceError) -> JSONResponse:
+    body: dict[str, Any] = {
+        "code": exc.code,
+        "message": exc.detail,
+        "recovery": exc.context.get("recovery"),
+    }
+    if "current" in exc.context:
+        body["current"] = exc.context["current"]
+    return JSONResponse(body, status_code=int(exc.context.get("status") or 400))
+
+
 def build_setup_router(ctx: WebContext) -> APIRouter:
     service = ctx.setup_service
     if service is None:
@@ -30,6 +41,7 @@ def build_setup_router(ctx: WebContext) -> APIRouter:
     inference_setup = ctx.inference_setup_service
     if inference_setup is None:
         raise RuntimeError("InferenceSetupApplicationService must be supplied at application composition")
+    inference_acquisition = ctx.inference_acquisition_service
     router = APIRouter()
 
     @router.get("/api/setup/status")
@@ -124,6 +136,48 @@ def build_setup_router(ctx: WebContext) -> APIRouter:
             return _error(exc)
         except Exception as exc:
             return error_500(exc, log, "Failed to read inference setup")
+
+    @router.post("/api/inference/acquisitions/download-and-use")
+    async def api_inference_download_and_use(request: Request) -> Any:
+        try:
+            if inference_acquisition is None:
+                raise ServiceError("inference_acquisition_unavailable", "Model downloads are unavailable on this hub.", context={"status": 503})
+            body = await request.json()
+            if not isinstance(body, dict):
+                raise ServiceError("inference_acquisition_request_invalid", "Expected a JSON object.", context={"status": 400})
+            return JSONResponse(
+                inference_acquisition.download_and_use(request.state.principal, body),
+                status_code=202,
+            )
+        except ServiceError as exc:
+            return _inference_error(exc)
+        except Exception as exc:
+            return error_500(exc, log, "Failed to start model acquisition")
+
+    @router.get("/api/inference/acquisitions/{job_id}")
+    async def api_inference_acquisition(job_id: str, request: Request) -> Any:
+        try:
+            if inference_acquisition is None:
+                raise ServiceError("inference_acquisition_unavailable", "Model downloads are unavailable on this hub.", context={"status": 503})
+            return inference_acquisition.get_acquisition(request.state.principal, job_id)
+        except ServiceError as exc:
+            return _inference_error(exc)
+        except Exception as exc:
+            return error_500(exc, log, "Failed to read model acquisition")
+
+    @router.post("/api/inference/acquisitions/{job_id}/cancel")
+    async def api_inference_cancel(job_id: str, request: Request) -> Any:
+        try:
+            if inference_acquisition is None:
+                raise ServiceError("inference_acquisition_unavailable", "Model downloads are unavailable on this hub.", context={"status": 503})
+            body = await request.json()
+            if not isinstance(body, dict):
+                raise ServiceError("inference_cancel_invalid", "Expected a JSON object.", context={"status": 400})
+            return inference_acquisition.cancel(request.state.principal, job_id, body)
+        except ServiceError as exc:
+            return _inference_error(exc)
+        except Exception as exc:
+            return error_500(exc, log, "Failed to cancel model acquisition")
 
     @router.post("/api/setup/discover-models")
     async def api_discover_models(request: Request) -> Any:

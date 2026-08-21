@@ -29,7 +29,11 @@ function setup(overrides: Partial<InferenceSetup> = {}): InferenceSetup {
   return {
     schema_version: 1,
     observed_at: "2026-08-21T18:00:00Z",
-    preset_catalog: { schema_version: 1, sha256: `sha256:${"c".repeat(64)}` },
+    preset_catalog: {
+      schema_version: 1, catalog_revision: 2,
+      generated_at: "2026-08-21T00:00:00Z", expires_at: "2036-08-01T00:00:00Z",
+      signing_key_id: "test", sha256: `sha256:${"c".repeat(64)}`,
+    },
     hardware: {
       capability: {
         system: "Linux",
@@ -54,7 +58,7 @@ function setup(overrides: Partial<InferenceSetup> = {}): InferenceSetup {
     runtimes: [],
     current_routes: {
       authority: "config",
-      thoughts: { target_id: null, inherits_this_device: true },
+      thoughts: { target_id: null, inherits_this_device: true, revision: "route-1" },
       dictation: { target_id: null, backend: "llama_cpp" },
       meetings: { target_id: null, provider: "local" },
     },
@@ -90,6 +94,9 @@ function setup(overrides: Partial<InferenceSetup> = {}): InferenceSetup {
         boundary: "same_device",
         has_local_artifact: false,
         requires_secret: false,
+        artifact_id: null,
+        runtime_id: null,
+        context_ceiling: 8192,
       },
     },
     artifact_detection: {
@@ -97,6 +104,8 @@ function setup(overrides: Partial<InferenceSetup> = {}): InferenceSetup {
       reason: "Model folders could not be inspected.",
     },
     detected_local_artifacts: [],
+    installed_model_artifacts: [],
+    acquisitions: [],
     presets: [
       hosted("deep-first", "deep"),
       hosted("balanced-second", "balanced"),
@@ -152,6 +161,7 @@ describe("InferenceCapabilityPanel", () => {
             thoughts: {
               target_id: "target-balanced-second",
               inherits_this_device: false,
+              revision: "route-2",
             },
             dictation: { target_id: null, backend: "llama_cpp" },
             meetings: { target_id: null, provider: "local" },
@@ -218,37 +228,44 @@ describe("InferenceCapabilityPanel", () => {
     expect(screen.queryByText("Available for Thoughts")).toBeNull();
   });
 
-  it("renders the closed local preset as information, without inventing installation authority", () => {
+  it("renders a signed local preset with one explicit download action", async () => {
     const local = {
       kind: "local_artifact_preset" as const,
       id: "local-q",
       experience: "quick" as const,
       label: "Local Q",
       runtime_id: "llama.cpp",
+      runtime_min_revision: "0.3.34",
       format: "gguf" as const,
       boundary: "same_device" as const,
+      context: { recommended_tokens: 8192 as const, ceiling_tokens: 8192 },
       source: {
         repository: "org/repo",
         revision: "a".repeat(40),
         manifest_sha256: `sha256:${"b".repeat(64)}`,
+        filename: "model.gguf",
+        file_sha256: `sha256:${"d".repeat(64)}`,
         download_bytes: 42,
+        installed_bytes: 42,
+        peak_free_bytes: 84,
         license: "Apache-2.0",
       },
       platforms: ["linux-x86_64"],
       applicability: { state: "applicable" as const, reason: null },
     };
+    const download = vi.fn(async () => undefined);
     render(
       <InferenceCapabilityPanel
         {...defaults}
         setup={setup({ presets: [local] })}
         onUseHosted={vi.fn(async () => true)}
+        onDownloadLocal={download}
       />,
     );
-    expect(screen.getByText("Local Q")).toBeInTheDocument();
-    expect(screen.getByText(/no action in this release/i)).toBeInTheDocument();
-    expect(
-      screen.queryByRole("button", { name: /download|install|use local/i }),
-    ).toBeNull();
+    expect(screen.getAllByText("Local Q")).toHaveLength(2);
+    expect(screen.getByText(/runs only on this device/i)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /download & use quick/i }));
+    await waitFor(() => expect(download).toHaveBeenCalledWith(local));
   });
 
   it("clears a secret only after confirmed success and retains it on failure", async () => {

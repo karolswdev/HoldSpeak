@@ -79,7 +79,7 @@ def test_projection_is_closed_redacted_and_preserves_v1_identity(tmp_path: Path)
     assert set(value) == {
         "schema_version", "observed_at", "hardware", "runtimes", "current_routes",
         "current_thought_deployment", "artifact_detection", "detected_local_artifacts", "preset_catalog",
-        "presets", "limitations",
+        "installed_model_artifacts", "acquisitions", "presets", "limitations",
     }
     assert value["schema_version"] == 1
     assert value["observed_at"] == "2026-08-21T12:30:00Z"
@@ -98,10 +98,10 @@ def test_projection_is_closed_redacted_and_preserves_v1_identity(tmp_path: Path)
     assert value["artifact_detection"] == {"state": "complete", "reason": None}
     assert value["preset_catalog"] == {
         "schema_version": 1,
-        "catalog_revision": 1,
-        "generated_at": "2026-08-01T00:00:00Z",
+        "catalog_revision": 2,
+        "generated_at": "2026-08-21T00:00:00Z",
         "expires_at": "2036-08-01T00:00:00Z",
-        "signing_key_id": "holdspeak_catalog_2026_01",
+        "signing_key_id": "holdspeak_catalog_2026_03",
         "sha256": PACKAGED_CATALOG_SHA256,
     }
     assert value["detected_local_artifacts"][0]["label"] == model.name
@@ -206,7 +206,7 @@ def test_catalog_expiry_is_rechecked_on_every_projection(tmp_path: Path):
         db, config_provider=Config, home_provider=lambda: tmp_path,
         clock=lambda: current[0],
     )
-    assert service.get_inference_setup(OWNER)["preset_catalog"]["catalog_revision"] == 1
+    assert service.get_inference_setup(OWNER)["preset_catalog"]["catalog_revision"] == 2
     current[0] = datetime(2037, 1, 1, tzinfo=timezone.utc)
     with pytest.raises(ValueError, match="validity period"):
         service.get_inference_setup(OWNER)
@@ -230,7 +230,7 @@ def test_owner_gate_and_safe_missing_path(tmp_path: Path):
 
 def test_catalog_is_closed_and_filters_unproven_local_entries(tmp_path: Path):
     packaged = packaged_presets()
-    assert len(validate_catalog(packaged)) == 3
+    assert len(validate_catalog(packaged)) == 4
     assert len(applicable_presets(platform_id="darwin_arm64", runtime_ids=set())) == 3
     forged = dict(packaged[0])
     forged["download_url"] = "https://mutable.invalid/latest"
@@ -239,11 +239,13 @@ def test_catalog_is_closed_and_filters_unproven_local_entries(tmp_path: Path):
 
     local = {
         "kind": "local_artifact_preset", "id": "local_test", "experience": "quick",
-        "label": "Local test", "runtime_id": "llama_cpp_prompt_v1", "format": "gguf",
-        "boundary": "same_device", "platforms": ["linux_x86_64"],
+        "label": "Local test", "runtime_id": "llama_cpp_prompt_v1", "runtime_min_revision": "0.3.34", "format": "gguf",
+        "boundary": "same_device", "context": {"recommended_tokens": 8192, "ceiling_tokens": 8192}, "platforms": ["linux_x86_64"],
         "source": {"repository": "example/model", "revision": "a" * 40,
+                   "filename": "model.gguf", "file_sha256": "sha256:" + "a" * 64,
                    "manifest_sha256": "sha256:" + "b" * 64,
-                   "download_bytes": 10, "license": "Apache-2.0"},
+                   "download_bytes": 10, "installed_bytes": 10,
+                   "peak_free_bytes": 20, "license": "Apache-2.0"},
         "applicability": {"state": "applicable", "reason": None},
     }
     assert applicable_presets(platform_id="darwin_arm64", runtime_ids={"llama_cpp_prompt_v1"}, entries=[local]) == []
@@ -332,11 +334,13 @@ def test_detected_ids_do_not_depend_on_absolute_home(tmp_path: Path):
 def test_local_preset_union_and_mlx_runtime_use_real_dependency(tmp_path: Path, monkeypatch):
     local = {
         "kind": "local_artifact_preset", "id": "local_test", "experience": "quick",
-        "label": "Local test", "runtime_id": "mlx_text_v1", "format": "mlx_safetensors",
-        "boundary": "same_device", "platforms": ["darwin_arm64"],
+        "label": "Local test", "runtime_id": "mlx_text_v1", "runtime_min_revision": "0.1.0", "format": "mlx_safetensors",
+        "boundary": "same_device", "context": {"recommended_tokens": 8192, "ceiling_tokens": 8192}, "platforms": ["darwin_arm64"],
         "source": {"repository": "example/model", "revision": "a" * 40,
+                   "filename": "model.gguf", "file_sha256": "sha256:" + "a" * 64,
                    "manifest_sha256": "sha256:" + "b" * 64,
-                   "download_bytes": 10, "license": "Apache-2.0"},
+                   "download_bytes": 10, "installed_bytes": 10,
+                   "peak_free_bytes": 20, "license": "Apache-2.0"},
         "applicability": {"state": "applicable", "reason": None},
     }
     monkeypatch.setattr("holdspeak.services.inference_setup_service.platform.system", lambda: "Darwin")

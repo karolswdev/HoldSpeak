@@ -2220,6 +2220,7 @@ CREATE TABLE IF NOT EXISTS reaction_event_projections (
 -- device-local credential lookup location; credentials never enter this table.
 CREATE TABLE IF NOT EXISTS deployment_revisions (
     id TEXT PRIMARY KEY,
+    schema_version INTEGER NOT NULL DEFAULT 1,
     destination_id TEXT NOT NULL,
     kind TEXT NOT NULL,
     engine TEXT NOT NULL,
@@ -2228,8 +2229,97 @@ CREATE TABLE IF NOT EXISTS deployment_revisions (
     boundary TEXT NOT NULL,
     endpoint TEXT NOT NULL DEFAULT '',
     model_path TEXT,
-    secret_slot TEXT NOT NULL DEFAULT ''
+    secret_slot TEXT NOT NULL DEFAULT '',
+    runtime_id TEXT NOT NULL DEFAULT '',
+    runtime_revision TEXT NOT NULL DEFAULT '',
+    artifact_id TEXT NOT NULL DEFAULT '',
+    manifest_sha256 TEXT NOT NULL DEFAULT '',
+    format TEXT NOT NULL DEFAULT '',
+    architecture TEXT NOT NULL DEFAULT '',
+    context_ceiling INTEGER NOT NULL DEFAULT 0,
+    capability_sha256 TEXT NOT NULL DEFAULT ''
 );
+
+-- HS-142-02: installed model bytes and acquisition jobs are hub-local. Public
+-- projections never expose either locator; immutable deployment v2 revisions
+-- refer to an artifact id and resolve the locator only inside this hub.
+CREATE TABLE IF NOT EXISTS inference_model_artifacts (
+    artifact_id TEXT PRIMARY KEY,
+    format TEXT NOT NULL CHECK (format IN ('gguf','mlx_safetensors')),
+    source_kind TEXT NOT NULL,
+    source_repository TEXT NOT NULL,
+    source_revision TEXT NOT NULL,
+    manifest_json TEXT NOT NULL,
+    manifest_sha256 TEXT NOT NULL,
+    installed_bytes INTEGER NOT NULL CHECK (installed_bytes > 0),
+    state TEXT NOT NULL CHECK (state IN ('verified','quarantined','removed')),
+    local_locator TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    verified_at TEXT NOT NULL
+);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_inference_artifact_manifest
+    ON inference_model_artifacts(manifest_sha256) WHERE state='verified';
+
+CREATE TABLE IF NOT EXISTS inference_model_acquisitions (
+    job_id TEXT PRIMARY KEY,
+    request_id TEXT NOT NULL UNIQUE,
+    request_sha256 TEXT NOT NULL,
+    preset_id TEXT NOT NULL,
+    catalog_revision INTEGER NOT NULL,
+    source_plan_json TEXT NOT NULL,
+    source_plan_sha256 TEXT NOT NULL,
+    source_claim_sha256 TEXT NOT NULL DEFAULT '',
+    state TEXT NOT NULL CHECK (state IN ('requested','resolving_source','downloading','verifying','installing','ready','cancelled','failed','indeterminate')),
+    verified_bytes INTEGER NOT NULL DEFAULT 0,
+    transport_bytes INTEGER NOT NULL DEFAULT 0,
+    bytes_total INTEGER NOT NULL,
+    artifact_id TEXT,
+    activation_state TEXT NOT NULL DEFAULT 'pending' CHECK (activation_state IN ('pending','in_use','failed','not_requested')),
+    expected_route_revision TEXT NOT NULL,
+    receipt_json TEXT,
+    error_code TEXT,
+    error_message TEXT,
+    resumable INTEGER NOT NULL DEFAULT 0,
+    revision INTEGER NOT NULL DEFAULT 1,
+    cancel_requested INTEGER NOT NULL DEFAULT 0,
+    cancel_request_id TEXT,
+    cancel_request_sha256 TEXT,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_inference_acquisition_state
+    ON inference_model_acquisitions(state, updated_at);
+
+CREATE TABLE IF NOT EXISTS inference_deployments (
+    deployment_id TEXT PRIMARY KEY,
+    destination_id TEXT NOT NULL,
+    runtime_id TEXT NOT NULL,
+    runtime_revision TEXT NOT NULL,
+    artifact_id TEXT NOT NULL REFERENCES inference_model_artifacts(artifact_id),
+    model_identity TEXT NOT NULL,
+    context_ceiling INTEGER NOT NULL,
+    recommended_context INTEGER NOT NULL,
+    capability_json TEXT NOT NULL,
+    capability_sha256 TEXT NOT NULL,
+    execution_revision_id TEXT NOT NULL REFERENCES deployment_revisions(id),
+    configuration_revision INTEGER NOT NULL,
+    active INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS inference_runtime_leases (
+    lease_id TEXT PRIMARY KEY,
+    operation_id TEXT NOT NULL UNIQUE,
+    deployment_revision_id TEXT NOT NULL,
+    state TEXT NOT NULL CHECK (state IN ('active','released','expired','indeterminate')),
+    process_id TEXT NOT NULL,
+    expires_at REAL NOT NULL,
+    created_at REAL NOT NULL,
+    updated_at REAL NOT NULL
+);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_inference_one_local_lease
+    ON inference_runtime_leases(state) WHERE state='active';
 
 -- HS-131-04: the graph/sequence controller is durable independently of its
 -- admitted children.  The JSON fields are canonical snapshots, never a

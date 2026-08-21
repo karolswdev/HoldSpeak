@@ -82,6 +82,8 @@ class WebContext:
     setup_service: Optional[Any] = None
     # HS-142-01: pure, owner-only Capability Truth projection.
     inference_setup_service: Optional[Any] = None
+    # HS-142-02: durable model acquisition/activation saga.
+    inference_acquisition_service: Optional[Any] = None
     # HS-123-12: delivery persistence/composition boundary for the delivery
     # route family. Individual delivery collaborators remain injectable seams.
     delivery_service: Optional[Any] = None

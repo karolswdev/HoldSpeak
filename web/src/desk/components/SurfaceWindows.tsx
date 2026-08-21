@@ -81,7 +81,7 @@ const SURFACES: SurfaceRow[] = [
     glyph: "⚙",
     eyebrow: "Configuration",
     minW: 560,
-    defaultH: 700,
+    defaultH: 760,
     Core: lazy(() =>
       import("../../pages/cores/SettingsCore").then((m) => ({
         default: m.SettingsCore,

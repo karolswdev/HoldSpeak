@@ -2547,6 +2547,36 @@
       ]
     },
     {
+      "path": "/api/inference/acquisitions/download-and-use",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.setup",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/inference/acquisitions/{job_id}",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.setup",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/inference/acquisitions/{job_id}/cancel",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.setup",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/inference/setup",
       "methods": [
         "GET"

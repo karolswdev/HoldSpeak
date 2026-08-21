@@ -1477,12 +1477,23 @@ class DeploymentRevisionRepository(BaseRepository):
         with self._connection() as conn:
             conn.execute(
                 """INSERT OR IGNORE INTO deployment_revisions
-                   (id, destination_id, kind, engine, model, node, boundary,
-                    endpoint, model_path, secret_slot)
-                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-                (revision.id, revision.destination_id, revision.kind, revision.engine,
-                 revision.model, revision.node, revision.boundary, revision.endpoint,
-                 revision.model_path, revision.secret_slot),
+                   (id, schema_version, destination_id, kind, engine, model,
+                    node, boundary, endpoint, model_path, secret_slot,
+                    runtime_id, runtime_revision, artifact_id, manifest_sha256,
+                    format, architecture, context_ceiling, capability_sha256)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                (
+                    revision.id, revision.schema_version,
+                    revision.destination_id, revision.kind, revision.engine,
+                    revision.model, revision.node, revision.boundary,
+                    revision.endpoint,
+                    revision.model_path if revision.schema_version == 1 else None,
+                    revision.secret_slot, revision.runtime_id,
+                    revision.runtime_revision, revision.artifact_id,
+                    revision.manifest_sha256, revision.format,
+                    revision.architecture, revision.context_ceiling,
+                    revision.capability_sha256,
+                ),
             )
         return revision
 
@@ -1498,6 +1509,12 @@ class DeploymentRevisionRepository(BaseRepository):
             engine=row["engine"], model=row["model"], node=row["node"],
             boundary=row["boundary"], endpoint=row["endpoint"],
             model_path=row["model_path"], secret_slot=row["secret_slot"],
+            schema_version=int(row["schema_version"]),
+            runtime_id=row["runtime_id"], runtime_revision=row["runtime_revision"],
+            artifact_id=row["artifact_id"], manifest_sha256=row["manifest_sha256"],
+            format=row["format"], architecture=row["architecture"],
+            context_ceiling=int(row["context_ceiling"]),
+            capability_sha256=row["capability_sha256"],
         )
 
     def list(self, *, limit: int = 500) -> list[DeploymentRevision]:

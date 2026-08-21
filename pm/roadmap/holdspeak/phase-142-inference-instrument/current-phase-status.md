@@ -4,19 +4,22 @@
 
 ## Goal
 
-Make AI capability, runtime, artifact, route, and readiness truth server-owned before adding acquisition or new execution paths.
+Make AI capability, runtime, artifact, route, readiness, acquisition, and local
+activation truth server-owned without adding a second inference path.
 
 ## Scope
 
-- **In:** the read-only Capability Truth slice ruled by
+- **In:** the Capability Truth and Artifact Acquisition slices ruled by
   [`proposals/inference-instrument.md`](../proposals/inference-instrument.md):
   one server-owned setup projection; bounded hardware/runtime/artifact
-  inspection; packaged verified preset metadata; current Config route and v1
-  Thought-deployment truth; owner-only HTTP/MCP parity; and Models consuming
-  those facts with one selected choice/action seat.
-- **Out:** downloads, activation, route migration, MLX Thought execution,
+  inspection; packaged verified preset metadata; durable verified GGUF
+  acquisition; content-addressed adoption; immutable v2 deployment capture;
+  narrow Thoughts-route activation; a minimal local runtime lease; owner-only
+  HTTP/MCP parity; and Models consuming those facts with one action seat.
+- **Out:** MLX Thought execution, capacity-aware resource sharing,
   recommendation labels, calibration, exact token admission, tool execution,
-  Workbench destination overrides, or any new inference path.
+  Workbench destination overrides, or any inference path outside the existing
+  InferenceRunner.
 
 ## Exit criteria (evidence required)
 
@@ -41,13 +44,14 @@ Make AI capability, runtime, artifact, route, and readiness truth server-owned b
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
 | HSEGHS001HS104-142-01 | Capability Truth | done | [story-01-capability-truth](./story-01-capability-truth.md) | [evidence-story-01](./evidence-story-01.md) |
-| HSEGHS001HS104-142-02 | Artifact Acquisition and Activation | backlog | [story-02-artifact-acquisition-and-activation](./story-02-artifact-acquisition-and-activation.md) | - |
+| HSEGHS001HS104-142-02 | Artifact Acquisition and Activation | done | [story-02-artifact-acquisition-and-activation](./story-02-artifact-acquisition-and-activation.md) | [evidence-story-02](./evidence-story-02.md) |
 
 ## Where we are
 
-Story 01 has delivered the complete read-only Capability Truth slice. The later
-executable Inference Instrument slices remain held behind their ruled authority
-prerequisites.
+Stories 01 and 02 have delivered truthful setup plus explicit, verified local
+GGUF acquisition and activation through the existing runner. The later MLX,
+capacity, exact-context, and tool-turn slices remain held behind their ruled
+authority prerequisites.
 
 ## Active risks
 
@@ -67,8 +71,6 @@ prerequisites.
 
 ## Decisions deferred
 
-- Acquisition/activation and the minimal local-execution lease - trigger after
-  Capability Truth closes - remains Slice 2.
 - MLX Thought execution - trigger after the shared runtime seam and lease -
   remains Slice 3.
 - Context recommendation/admission and tool capability foundation - trigger

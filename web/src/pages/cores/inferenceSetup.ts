@@ -66,7 +66,7 @@ export interface InferenceSetupDeployment {
     reason: string | null;
   };
   execution_revision: {
-    schema_version: 1;
+    schema_version: 1 | 2;
     id: string | null;
     destination_id: string;
     kind: string;
@@ -75,6 +75,9 @@ export interface InferenceSetupDeployment {
     boundary: string;
     has_local_artifact: boolean;
     requires_secret: boolean;
+    artifact_id: string | null;
+    runtime_id: string | null;
+    context_ceiling: number;
   } | null;
 }
 
@@ -117,13 +120,19 @@ export interface LocalInferencePreset {
   experience: "quick" | "balanced" | "deep";
   label: string;
   runtime_id: string;
+  runtime_min_revision: string;
   format: "gguf" | "mlx_safetensors";
   boundary: "same_device";
+  context: { recommended_tokens: 8192 | 16384 | 32768; ceiling_tokens: number };
   source: {
     repository: string;
     revision: string;
     manifest_sha256: string;
+    filename: string;
+    file_sha256: string;
     download_bytes: number;
+    installed_bytes: number;
+    peak_free_bytes: number;
     license: string;
   };
   platforms: string[];
@@ -145,12 +154,23 @@ export interface InferenceSetupLimitation {
 export interface InferenceSetup {
   schema_version: 1;
   observed_at: string;
-  preset_catalog: { schema_version: 1; sha256: string };
+  preset_catalog: {
+    schema_version: 1;
+    catalog_revision: number;
+    generated_at: string;
+    expires_at: string;
+    signing_key_id: string;
+    sha256: string;
+  };
   hardware: InferenceSetupHardware;
   runtimes: InferenceSetupRuntime[];
   current_routes: {
     authority: "config";
-    thoughts: { target_id: string | null; inherits_this_device: boolean };
+    thoughts: {
+      target_id: string | null;
+      inherits_this_device: boolean;
+      revision: string;
+    };
     dictation: { target_id: string | null; backend: string };
     meetings: { target_id: string | null; provider: string };
   };
@@ -160,8 +180,91 @@ export interface InferenceSetup {
     reason: string | null;
   };
   detected_local_artifacts: InferenceSetupArtifact[];
+  installed_model_artifacts: Array<{
+    id: string;
+    format: "gguf" | "mlx_safetensors";
+    source_repository: string;
+    source_revision: string;
+    installed_bytes: number;
+    state: "verified";
+    verified_at: string;
+  }>;
+  acquisitions: InferenceAcquisition[];
   presets: InferencePreset[];
   limitations: InferenceSetupLimitation[];
+}
+
+export interface InferenceAcquisition {
+  id: string;
+  preset_id: string;
+  state:
+    | "requested"
+    | "resolving_source"
+    | "downloading"
+    | "verifying"
+    | "installing"
+    | "ready"
+    | "cancelled"
+    | "failed"
+    | "indeterminate";
+  verified_bytes: number;
+  transport_bytes: number;
+  bytes_total: number;
+  artifact_id: string | null;
+  activation_state: "pending" | "in_use" | "failed" | "not_requested";
+  error: { code: string; message: string } | null;
+  resumable: boolean;
+  can_cancel: boolean;
+  revision: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export async function downloadAndUseLocalPreset(
+  setup: InferenceSetup,
+  preset: LocalInferencePreset,
+  requestId: string,
+): Promise<InferenceAcquisition> {
+  const result = await apiFetch<{
+    acquisition: InferenceAcquisition;
+    setup: InferenceSetup;
+  }>("/api/inference/acquisitions/download-and-use", {
+    method: "POST",
+    json: {
+      request_id: requestId,
+      preset_id: preset.id,
+      catalog_revision: setup.preset_catalog.catalog_revision,
+      context_choice: preset.context.recommended_tokens,
+      expected_route_revision: setup.current_routes.thoughts.revision,
+    },
+  });
+  return result.acquisition;
+}
+
+export async function getInferenceAcquisition(
+  id: string,
+): Promise<InferenceAcquisition> {
+  const result = await apiFetch<{ acquisition: InferenceAcquisition }>(
+    `/api/inference/acquisitions/${encodeURIComponent(id)}`,
+  );
+  return result.acquisition;
+}
+
+export async function cancelInferenceAcquisition(
+  acquisition: InferenceAcquisition,
+  requestId: string,
+): Promise<InferenceAcquisition> {
+  const result = await apiFetch<{ acquisition: InferenceAcquisition }>(
+    `/api/inference/acquisitions/${encodeURIComponent(acquisition.id)}/cancel`,
+    {
+      method: "POST",
+      json: {
+        request_id: requestId,
+        expected_revision: acquisition.revision,
+      },
+    },
+  );
+  return result.acquisition;
 }
 
 export async function getInferenceSetup(

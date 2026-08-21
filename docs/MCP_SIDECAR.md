@@ -81,6 +81,16 @@ admitted inference path and returns the answer with its receipt.
 `ask.cancel` cancels an in-flight invocation. `ask.keep` persists an
 answer as a desk artifact (not model-invoking).
 
+### inference (2 tools)
+
+Owner-only durable local-model setup. `inference.download_and_use` records one
+stable command, resolves a signed catalogue source, downloads bounded bytes,
+verifies the published digest, adopts the content-addressed artifact, and then
+attempts the narrow Thoughts-route activation. `inference.cancel_model_acquisition`
+cancels only before verification begins. Both use the same application service,
+receipts, and refusal codes as HTTP; model/agent principals receive no authority
+through these tools.
+
 ### thought (18 tools)
 
 Develop a durable Thought through one explicit model turn. `thought.refine`
@@ -278,7 +288,7 @@ client discovers it at tool-listing time, not at call time.
 
 ## Resources
 
-The sidecar exposes 17 static resources and 13 resource templates. List
+The sidecar exposes 18 static resources and 14 resource templates. List
 results are bounded to the first 100 items per read.
 
 ### Static resources
@@ -323,3 +333,4 @@ results are bounded to the first 100 items per read.
 | `holdspeak://thoughts/{thought_id}/reviews/{review_result_id}` | One validated receipt-gated review card with frozen cursors, Used-context metadata when present, and placement/egress receipt |
 | `holdspeak://thoughts/{thought_id}/workbench` | One coherent owner Workbench projection: Note authority, interview state, actions, context health, and placement truth |
 | `holdspeak://thoughts/{thought_id}/original` | The owner-only raw capture for a Thought; read lazily and never included in the Workbench projection |
+| `holdspeak://inference/acquisitions/{id}` | Owner-only durable download, verification, installation, and activation truth |

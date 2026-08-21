@@ -77,10 +77,10 @@ def test_models_setup_is_projected_truth_with_one_action_seat(tmp_path: Path, mo
             assert setup.get_by_text("This device", exact=True).first.is_visible()
             assert setup.get_by_text("Choose AI for each job", exact=True).is_visible()
             assert setup.get_by_text("Runs on", exact=True).count() == 0
-            assert setup.get_by_role("heading", name="Available to add", exact=True).is_visible()
+            assert setup.get_by_role("heading", name="Choose an experience", exact=True).is_visible()
             assert setup.get_by_text(projection["current_thought_deployment"]["target"]["name"], exact=True).first.is_visible()
             body = setup.inner_text()
-            for forbidden in ["Ready to configure", "Recommended", "DOWNLOAD", str(home), "/Users/"]:
+            for forbidden in ["Ready to configure", "Recommended", str(home), "/Users/"]:
                 assert forbidden not in body
             surface_body = page.locator(".desk-settings-window .desk-surface-body")
             if width == 393:
@@ -95,18 +95,19 @@ def test_models_setup_is_projected_truth_with_one_action_seat(tmp_path: Path, mo
             page.screenshot(path=f"/tmp/holdspeak-inference-setup-{width}.png", full_page=False)
 
             hosted = [row for row in projection["presets"] if row["kind"] == "hosted_profile_preset"]
-            radios = setup.get_by_role("radiogroup", name="Hosted AI choices").get_by_role("radio")
-            assert radios.count() == len(hosted)
-            if hosted:
+            catalog = projection["presets"]
+            radios = setup.get_by_role("radiogroup", name="AI choices").get_by_role("radio")
+            assert radios.count() == len(catalog)
+            if catalog:
                 expected = next(
                     (row for row in hosted if row["existing_profile"]["target_id"] == projection["current_routes"]["thoughts"]["target_id"]),
-                    hosted[0],
+                    catalog[0],
                 )
                 expected_radio = setup.locator(f'input[type="radio"][value="{expected["id"]}"]')
                 assert expected_radio.is_checked()
-                if len(hosted) > 1:
-                    expected_index = hosted.index(expected)
-                    next_row = hosted[(expected_index + 1) % len(hosted)]
+                if len(catalog) > 1:
+                    expected_index = catalog.index(expected)
+                    next_row = catalog[(expected_index + 1) % len(catalog)]
                     expected_radio.focus()
                     expected_radio.press("ArrowRight")
                     assert setup.locator(

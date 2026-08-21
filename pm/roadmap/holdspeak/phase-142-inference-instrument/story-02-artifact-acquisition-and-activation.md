@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 142
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HSEGHS001HS104-142-01
 - **Unblocks:** (optional)
 - **Owner:** HoldSpeak orchestration
@@ -26,16 +26,16 @@ deployment revision without bypassing the existing inference runner.
 
 ## Acceptance criteria
 
-- [ ] One explicit `Download & use` command durably records intent before
+- [x] One explicit `Download & use` command durably records intent before
   network activity and converges on one verified content-addressed artifact.
-- [ ] Restart, cancellation, response loss, route conflict, integrity failure,
+- [x] Restart, cancellation, response loss, route conflict, integrity failure,
   and disk failure reconcile to named truth without duplicate download or
   false activation.
-- [ ] Every newly activated local physical leaf is fenced by the minimal
+- [x] Every newly activated local physical leaf is fenced by the minimal
   serialized crash/cancel-safe runtime lease and the existing InferenceRunner.
-- [ ] HTTP, MCP, and Models consume the same application projection/receipts;
+- [x] HTTP, MCP, and Models consume the same application projection/receipts;
   no secret, locator, artifact bytes, or owner MCP authority reaches a model.
-- [ ] Real 1440/393 walks prove one action seat, byte progress, navigation and
+- [x] Real 1440/393 walks prove one action seat, byte progress, navigation and
   restart persistence, verification/install boundaries, and exact recovery.
 
 ## Test plan
@@ -51,5 +51,5 @@ deployment revision without bypassing the existing inference runner.
 
 Canonical details live in
 [`proposals/inference-instrument.md`](../proposals/inference-instrument.md).
-This story remains backlog until Story 01 is merged and its projection contract
-is the base of `main`.
+Story 01 is the merged projection base. Story 02 now has durable backend, web,
+and real-path two-viewport evidence in [`evidence-story-02.md`](evidence-story-02.md).
