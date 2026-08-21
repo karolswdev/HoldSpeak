@@ -18,6 +18,12 @@ import pytest
 pytest.importorskip("playwright.sync_api", reason="glass walk needs Playwright")
 pytest.importorskip("fastapi.testclient", reason="glass walk needs web dependencies")
 
+# This legacy walk enters through the removed Cancel/Keep refining card UI.
+# Default-context authority remains covered by the context application/MCP
+# suites, while the current owner surface and picker are exercised by
+# `test_hs141_thought_workbench_glass.py` at 1440 and 393.
+pytestmark = pytest.mark.skip(reason="superseded by the Thought Workbench real-path glass")
+
 ASSETS = Path(__file__).resolve().parents[2] / "pm/roadmap/holdspeak/phase-141-from-thought-to-work/assets/story-05a"
 TOKEN = "hs14105a-default-context-glass"
 EVERYDAY = "knowledge:hs-seed-everyday-context"

@@ -129,3 +129,24 @@ seat together.
 Backend/application authority and web/product implementation received final
 independent RATIFY rulings after the catalog, inspection, MCP discovery,
 Settings writer concurrency, 393 opening position, and desktop geometry audits.
+
+### CI compatibility rerun — 2026-08-21
+
+The three pre-Workbench glass modules were explicitly retired because their
+removed `Cancel` / `Keep refining` / `Finish instead` controls can no longer be
+reached. Their current real-path replacement and the retirement markers ran
+together:
+
+```text
+uv run pytest -q tests/e2e/test_hs14104_refinement_glass.py \
+  tests/e2e/test_hs14105_context_glass.py \
+  tests/e2e/test_hs14105a_default_context_glass.py \
+  tests/e2e/test_hs141_thought_workbench_glass.py -x
+ssssss..                                                                 [100%]
+2 passed, 6 skipped in 16.81s
+```
+
+The replacement still executes the real browser, Workbench, API, kernel,
+context picker, Stop/result race, composite answer, and restart paths at 1440
+and 393. Context application and MCP authority remain covered by their focused
+backend suites.
