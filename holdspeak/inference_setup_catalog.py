@@ -23,14 +23,38 @@ _EXPERIENCES = frozenset({"quick", "balanced", "deep"})
 
 
 PACKAGED_CATALOG_SCHEMA_VERSION = 1
-PACKAGED_CATALOG_MIN_REVISION = 1
-_PACKAGED_CATALOG_KEY_ID = "holdspeak_catalog_2026_01"
+PACKAGED_CATALOG_MIN_REVISION = 2
+_PACKAGED_CATALOG_KEY_ID = "holdspeak_catalog_2026_03"
 _PACKAGED_CATALOG_TRUST_ROOTS = {
     _PACKAGED_CATALOG_KEY_ID: bytes.fromhex(
-        "6ee091fd280a9b68554fa73c588125d47d3425c68a26ba236b4dad90f90a8f92"
+        "bbd7a874461c9038e03cba19a6c2749e0f4188c288bd480e48617d016e1d0299"
     )
 }
 _PACKAGED_PRESETS_SOURCE: tuple[dict[str, Any], ...] = (
+    {
+        "kind": "local_artifact_preset",
+        "id": "preset_local_qwen35_4b_gguf_q4km",
+        "experience": "quick",
+        "label": "Quick local Qwen",
+        "runtime_id": "llama_cpp_prompt_v1",
+        "runtime_min_revision": "0.3.34",
+        "format": "gguf",
+        "boundary": "same_device",
+        "context": {"recommended_tokens": 8192, "ceiling_tokens": 8192},
+        "source": {
+            "repository": "unsloth/Qwen3.5-4B-GGUF",
+            "revision": "e87f176479d0855a907a41277aca2f8ee7a09523",
+            "filename": "Qwen3.5-4B-Q4_K_M.gguf",
+            "file_sha256": "sha256:1d203c2196991da08bc5b191ab4727516f476f3167e3276f75a0c5257493aadb",
+            "manifest_sha256": "sha256:8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8",
+            "download_bytes": 2_740_937_888,
+            "installed_bytes": 2_740_937_888,
+            "peak_free_bytes": 5_750_000_000,
+            "license": "Apache-2.0",
+        },
+        "platforms": ["darwin_arm64", "linux_x86_64", "linux_aarch64"],
+        "applicability": {"state": "applicable", "reason": None},
+    },
     {
         "kind": "hosted_profile_preset",
         "id": "preset_openrouter_qwen3_8b",
@@ -132,13 +156,31 @@ def validate_catalog(entries: Iterable[dict[str, Any]]) -> tuple[dict[str, Any],
                 raise ValueError(f"preset[{ordinal}] context limit is invalid")
             _safe_text(profile["name"], f"preset[{ordinal}].existing_profile.name")
         elif kind == "local_artifact_preset":
-            _exact(raw, {"kind", "id", "experience", "label", "runtime_id", "format", "boundary", "source", "platforms", "applicability"}, f"preset[{ordinal}]")
+            _exact(raw, {"kind", "id", "experience", "label", "runtime_id", "runtime_min_revision", "format", "boundary", "context", "source", "platforms", "applicability"}, f"preset[{ordinal}]")
             if raw["format"] not in {"gguf", "mlx_safetensors"} or raw["boundary"] != "same_device":
                 raise ValueError(f"preset[{ordinal}] has invalid local format/boundary")
             _safe_text(raw["runtime_id"], f"preset[{ordinal}].runtime_id", limit=96)
+            if not isinstance(raw["runtime_min_revision"], str) or not re.fullmatch(r"[0-9]+\.[0-9]+\.[0-9]+", raw["runtime_min_revision"]):
+                raise ValueError(f"preset[{ordinal}].runtime_min_revision is invalid")
+            _exact(raw["context"], {"recommended_tokens", "ceiling_tokens"}, f"preset[{ordinal}].context")
+            if (
+                type(raw["context"]["recommended_tokens"]) is not int
+                or type(raw["context"]["ceiling_tokens"]) is not int
+                or raw["context"]["recommended_tokens"] not in {8192, 16384, 32768}
+                or raw["context"]["recommended_tokens"] > raw["context"]["ceiling_tokens"]
+            ):
+                raise ValueError(f"preset[{ordinal}].context is invalid")
             if not isinstance(raw["platforms"], list) or not raw["platforms"] or any(not isinstance(item, str) or not _ID.fullmatch(item) for item in raw["platforms"]):
                 raise ValueError(f"preset[{ordinal}].platforms is invalid")
-            _exact(raw["source"], {"repository", "revision", "manifest_sha256", "download_bytes", "license"}, f"preset[{ordinal}].source")
+            _exact(
+                raw["source"],
+                {
+                    "repository", "revision", "filename", "file_sha256",
+                    "manifest_sha256", "download_bytes", "installed_bytes",
+                    "peak_free_bytes", "license",
+                },
+                f"preset[{ordinal}].source",
+            )
             source = raw["source"]
             if not isinstance(source["repository"], str) or not _MODEL_ID.fullmatch(source["repository"]):
                 raise ValueError(f"preset[{ordinal}].source.repository is invalid")
@@ -146,8 +188,19 @@ def validate_catalog(entries: Iterable[dict[str, Any]]) -> tuple[dict[str, Any],
                 raise ValueError(f"preset[{ordinal}].source.revision is mutable")
             if not isinstance(source["manifest_sha256"], str) or not _SHA256.fullmatch(source["manifest_sha256"]):
                 raise ValueError(f"preset[{ordinal}].source.manifest is invalid")
-            if type(source["download_bytes"]) is not int or source["download_bytes"] <= 0:
-                raise ValueError(f"preset[{ordinal}].source.download_bytes is invalid")
+            if not isinstance(source["file_sha256"], str) or not _SHA256.fullmatch(source["file_sha256"]):
+                raise ValueError(f"preset[{ordinal}].source.file_sha256 is invalid")
+            if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.-]{0,159}", str(source["filename"])):
+                raise ValueError(f"preset[{ordinal}].source.filename is invalid")
+            if raw["format"] == "gguf" and not str(source["filename"]).endswith(".gguf"):
+                raise ValueError(f"preset[{ordinal}].source.filename is not GGUF")
+            for size_field in ("download_bytes", "installed_bytes", "peak_free_bytes"):
+                if type(source[size_field]) is not int or source[size_field] <= 0:
+                    raise ValueError(f"preset[{ordinal}].source.{size_field} is invalid")
+            if source["installed_bytes"] != source["download_bytes"]:
+                raise ValueError(f"preset[{ordinal}].source installed size is inconsistent")
+            if source["peak_free_bytes"] < source["download_bytes"] * 2:
+                raise ValueError(f"preset[{ordinal}].source peak storage is unsafe")
             _safe_text(source["license"], f"preset[{ordinal}].source.license", limit=64)
         else:
             raise ValueError(f"preset[{ordinal}].kind is invalid")
@@ -171,13 +224,13 @@ def validate_catalog(entries: Iterable[dict[str, Any]]) -> tuple[dict[str, Any],
 
 _PACKAGED_CATALOG_BODY = {
     "schema_version": 1,
-    "catalog_revision": 1,
-    "generated_at": "2026-08-01T00:00:00Z",
+    "catalog_revision": 2,
+    "generated_at": "2026-08-21T00:00:00Z",
     "expires_at": "2036-08-01T00:00:00Z",
     "signing_key_id": _PACKAGED_CATALOG_KEY_ID,
     "entries": _PACKAGED_PRESETS_SOURCE,
 }
-_PACKAGED_CATALOG_SIGNATURE = "c9dea494693c3d637deea2993a9b98555fd58d27c9d1c4898b4e667068dcafd082dddfdb7a9948295dac5e882ca0e8552cbd0797c0295b050278e514a7b0eb01"
+_PACKAGED_CATALOG_SIGNATURE = "fdaede8d7878745afa5a740b4b3814a14363c5d8dd99aa3867e349ff827237348ba52e423a6a3b850cf03e364f2eb4ac085d7cd81ec4961990114ddb3af37a01"
 _PACKAGED_CATALOG_JSON = json.dumps(
     {**_PACKAGED_CATALOG_BODY, "signature": _PACKAGED_CATALOG_SIGNATURE},
     sort_keys=True,

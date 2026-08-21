@@ -582,6 +582,7 @@ class MeetingWebServer:
         from .services.settings_service import SettingsService
         from .services.setup_service import SetupService
         from .services.inference_setup_service import InferenceSetupApplicationService
+        from .services.inference_acquisition_service import InferenceAcquisitionApplicationService
         from .services.profile_key_service import ProfileKeyService
         from .db import get_database, get_observer
         from .web.routes import (
@@ -698,6 +699,10 @@ class MeetingWebServer:
         except Exception:
             people_service = PeopleService(UnavailablePeopleStore())
 
+        inference_setup_service = InferenceSetupApplicationService(get_database())
+        inference_acquisition_service = InferenceAcquisitionApplicationService(
+            get_database(), setup_service=inference_setup_service
+        )
         web_ctx = WebContext(
             get_state=self.get_state,
             meeting_service=meeting_service,
@@ -733,7 +738,8 @@ class MeetingWebServer:
             sync_service=SyncService(get_database(), observer=obs),
             gate_service=GateService(get_database(), observer=obs),
             setup_service=SetupService(get_database(), observer=obs),
-            inference_setup_service=InferenceSetupApplicationService(get_database()),
+            inference_setup_service=inference_setup_service,
+            inference_acquisition_service=inference_acquisition_service,
             delivery_service=DeliveryService(get_database(), observer=obs),
             # HS-131-16: the relay legs sign and revalidate dispatch offers, so
             # the service needs the hub's pairing custody. A separate

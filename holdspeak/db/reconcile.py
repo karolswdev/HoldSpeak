@@ -92,6 +92,14 @@ def reconcile_schema(
     if columns_added:
         shape_changed = True
 
+    # HS-142-02: this index depends on a column added to an existing canonical
+    # table. Creating it in SCHEMA_SQL would make SQLite evaluate the index
+    # before the additive column reconcile and strand every Story-01 database.
+    conn.execute(
+        """CREATE INDEX IF NOT EXISTS idx_inference_acquisition_source
+              ON inference_model_acquisitions(source_claim_sha256, state, updated_at)"""
+    )
+
     # ── 4. Conditional backup + data backfills ─────────────────────────
     # Back up only when an EXISTING, populated database gains shape — never
     # on fresh creation (an empty new DB has nothing to protect).  A fresh

@@ -411,7 +411,7 @@ describe("Models destination workbench (HS-139 beauty pass)", () => {
     expect(screen.getByText("Choose AI for each job")).toBeInTheDocument();
     expect(screen.queryByText("Runs on")).toBeNull();
     expect(
-      screen.getByRole("heading", { name: "Available to add" }),
+      screen.getByRole("heading", { name: "Choose an experience" }),
     ).toBeInTheDocument();
     const connections = screen.getByText("AI connections").closest("details");
     expect(connections).not.toHaveAttribute("open");
@@ -458,7 +458,7 @@ describe("Models destination workbench (HS-139 beauty pass)", () => {
         onRefuse={vi.fn()}
       />,
     );
-    await screen.findByRole("heading", { name: "Available to add" });
+    await screen.findByRole("heading", { name: "Choose an experience" });
     const balanced = screen.getByRole("radio", { name: /Balanced Qwen/ });
     await waitFor(() =>
       expect(screen.getByRole("radio", { name: /Deep Qwen/ })).toBeChecked(),
@@ -558,7 +558,7 @@ describe("Models destination workbench (HS-139 beauty pass)", () => {
     render(
       <ModelsModule settings={settings} update={vi.fn()} onRefuse={vi.fn()} />,
     );
-    await screen.findByRole("heading", { name: "Available to add" });
+    await screen.findByRole("heading", { name: "Choose an experience" });
     fireEvent.click(screen.getByText("AI connections"));
     expect(
       screen.getByText("AI connections").closest("details"),

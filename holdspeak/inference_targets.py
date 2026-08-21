@@ -675,7 +675,12 @@ def _local_pinned_engine(
         # No frozen local model, no run. Reading the live config here is what the
         # HS-131-13 audit caught; refusing by name is the honest alternative.
         raise KernelRefused(LOCAL_DEPLOYMENT_MODEL_UNKNOWN)
-    return MeetingIntel(provider="local", model_path=path)
+    context_ceiling = int(getattr(revision, "context_ceiling", 0) or 0)
+    return MeetingIntel(
+        provider="local",
+        model_path=path,
+        n_ctx=context_ceiling if context_ceiling > 0 else 4096,
+    )
 
 
 def build_intel_for_revision(

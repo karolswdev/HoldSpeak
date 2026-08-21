@@ -23,6 +23,15 @@ class DeploymentRevision:
     endpoint: str
     model_path: str | None
     secret_slot: str
+    schema_version: int = 1
+    runtime_id: str = ""
+    runtime_revision: str = ""
+    artifact_id: str = ""
+    manifest_sha256: str = ""
+    format: str = ""
+    architecture: str = ""
+    context_ceiling: int = 0
+    capability_sha256: str = ""
 
     @classmethod
     def from_identity(cls, identity: DeploymentIdentity) -> "DeploymentRevision":
@@ -41,7 +50,64 @@ class DeploymentRevision:
         return cls(id="dep_" + hashlib.sha256(encoded.encode()).hexdigest(), **fields)
 
     def to_dict(self) -> dict[str, Any]:
-        return asdict(self)
+        value = asdict(self)
+        if self.schema_version == 1:
+            # Phase 131 v1 is an immutable public/sync contract. New v2 fields
+            # must not alter its serialized bytes or content identity.
+            for key in (
+                "schema_version", "runtime_id", "runtime_revision", "artifact_id",
+                "manifest_sha256", "format", "architecture", "context_ceiling",
+                "capability_sha256",
+            ):
+                value.pop(key, None)
+        else:
+            # V2 is locator-free by construction. Resolution may attach a
+            # private path in memory for the physical leaf; it never serializes.
+            value.pop("model_path", None)
+        return value
+
+    @classmethod
+    def from_artifact(
+        cls,
+        *,
+        destination_id: str,
+        engine: str,
+        model: str,
+        runtime_id: str,
+        runtime_revision: str,
+        artifact_id: str,
+        manifest_sha256: str,
+        format: str,
+        architecture: str,
+        context_ceiling: int,
+        capability_sha256: str,
+        resolved_model_path: str | None = None,
+    ) -> "DeploymentRevision":
+        identity = {
+            "schema_version": 2,
+            "destination_id": destination_id,
+            "kind": "this_device",
+            "engine": engine,
+            "model": model,
+            "node": "",
+            "boundary": "same_device",
+            "endpoint": "",
+            "secret_slot": "",
+            "runtime_id": runtime_id,
+            "runtime_revision": runtime_revision,
+            "artifact_id": artifact_id,
+            "manifest_sha256": manifest_sha256,
+            "format": format,
+            "architecture": architecture,
+            "context_ceiling": int(context_ceiling),
+            "capability_sha256": capability_sha256,
+        }
+        encoded = json.dumps(identity, sort_keys=True, separators=(",", ":"), ensure_ascii=True)
+        return cls(
+            id="dep2_" + hashlib.sha256(encoded.encode()).hexdigest(),
+            model_path=resolved_model_path,
+            **identity,
+        )
 
     def identity(self) -> DeploymentIdentity:
         return DeploymentIdentity(
@@ -64,18 +130,73 @@ def capture_deployment_revision(
     identity = target.deployment if isinstance(target, InferenceTarget) else target
     if identity is None:
         raise ValueError("resolved target has no deployment identity")
-    revision = DeploymentRevision.from_identity(identity)
+    revision = _artifact_revision_for_identity(db, identity, conn=conn)
+    if revision is None:
+        revision = DeploymentRevision.from_identity(identity)
     if conn is None:
         db.deployment_revisions.upsert(revision)
     else:
         conn.execute(
             """INSERT OR IGNORE INTO deployment_revisions
-               (id, destination_id, kind, engine, model, node, boundary, endpoint, model_path, secret_slot)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-            (revision.id, revision.destination_id, revision.kind, revision.engine, revision.model,
-             revision.node, revision.boundary, revision.endpoint, revision.model_path, revision.secret_slot),
+               (id, schema_version, destination_id, kind, engine, model, node,
+                boundary, endpoint, model_path, secret_slot, runtime_id,
+                runtime_revision, artifact_id, manifest_sha256, format,
+               architecture, context_ceiling, capability_sha256)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            (
+                revision.id, revision.schema_version, revision.destination_id,
+                revision.kind, revision.engine, revision.model, revision.node,
+                revision.boundary, revision.endpoint,
+                revision.model_path if revision.schema_version == 1 else None,
+                revision.secret_slot, revision.runtime_id,
+                revision.runtime_revision, revision.artifact_id,
+                revision.manifest_sha256, revision.format,
+                revision.architecture, revision.context_ceiling,
+                revision.capability_sha256,
+            ),
         )
     return revision
+
+
+def _artifact_revision_for_identity(
+    db: Any, identity: DeploymentIdentity, *, conn: Any | None = None,
+) -> DeploymentRevision | None:
+    """Return the active locator-free v2 revision for an owned artifact path."""
+    locator = str(identity.model_path or "").strip()
+    if not locator:
+        return None
+    owns_connection = conn is None
+    if owns_connection:
+        context = db._connection()
+        conn = context.__enter__()
+    try:
+        row = conn.execute(
+            """SELECT d.*, a.local_locator, a.manifest_sha256, a.format
+                 FROM inference_deployments d
+                 JOIN inference_model_artifacts a ON a.artifact_id=d.artifact_id
+                WHERE d.active=1 AND a.state='verified' AND a.local_locator=?
+                ORDER BY d.configuration_revision DESC LIMIT 1""",
+            (locator,),
+        ).fetchone()
+        if row is None:
+            return None
+        return DeploymentRevision.from_artifact(
+            destination_id=str(row["destination_id"]),
+            engine="configured_local_engine",
+            model=str(row["model_identity"]),
+            runtime_id=str(row["runtime_id"]),
+            runtime_revision=str(row["runtime_revision"]),
+            artifact_id=str(row["artifact_id"]),
+            manifest_sha256=str(row["manifest_sha256"]),
+            format=str(row["format"]),
+            architecture="qwen3.5",
+            context_ceiling=int(row["context_ceiling"]),
+            capability_sha256=str(row["capability_sha256"]),
+            resolved_model_path=locator,
+        )
+    finally:
+        if owns_connection:
+            context.__exit__(None, None, None)
 
 
 def resolve_workbench_deployment_revision(conn: Any, workbench_id: str) -> DeploymentRevision | None:
@@ -102,4 +223,25 @@ def resolve_workbench_deployment_revision(conn: Any, workbench_id: str) -> Deplo
 
 def resolve_deployment_revision(db: Any, revision_id: str) -> DeploymentRevision | None:
     """Resolve an admitted revision without consulting mutable profile state."""
-    return db.deployment_revisions.get(revision_id)
+    revision = db.deployment_revisions.get(revision_id)
+    if revision is None or revision.schema_version == 1:
+        return revision
+    with db._connection() as conn:
+        row = conn.execute(
+            """SELECT local_locator, manifest_sha256, format, state
+                 FROM inference_model_artifacts WHERE artifact_id=?""",
+            (revision.artifact_id,),
+        ).fetchone()
+    if (
+        row is None
+        or str(row["state"]) != "verified"
+        or str(row["manifest_sha256"]) != revision.manifest_sha256
+        or str(row["format"]) != revision.format
+    ):
+        return None
+    return DeploymentRevision(
+        **{
+            **asdict(revision),
+            "model_path": str(row["local_locator"]),
+        }
+    )

@@ -1,11 +1,18 @@
 import { useEffect, useId, useState } from "react";
 import { Button } from "../../components/signal/Signal";
-import type { HostedInferencePreset, InferenceSetup } from "./inferenceSetup";
+import type {
+  HostedInferencePreset,
+  InferenceAcquisition,
+  InferencePreset,
+  InferenceSetup,
+  LocalInferencePreset,
+} from "./inferenceSetup";
 
 type ExistingTarget = { id: string; key_present: boolean };
 
 function bytes(value: number | null): string {
   if (value == null || !Number.isFinite(value) || value < 0) return "Unknown";
+  if (value < 1024 ** 3) return `${Math.max(1, Math.round(value / 1024 ** 2))} MB`;
   return `${Math.round((value / 1024 ** 3) * 10) / 10} GB`;
 }
 
@@ -51,6 +58,8 @@ export function InferenceCapabilityPanel({
   status,
   onRetry,
   onUseHosted,
+  onDownloadLocal,
+  onCancelAcquisition,
 }: {
   setup: InferenceSetup | null;
   loading: boolean;
@@ -61,6 +70,8 @@ export function InferenceCapabilityPanel({
   status: string;
   onRetry(): void;
   onUseHosted(preset: HostedInferencePreset, key: string): Promise<boolean>;
+  onDownloadLocal?(preset: LocalInferencePreset): Promise<void>;
+  onCancelAcquisition?(acquisition: InferenceAcquisition): Promise<void>;
 }) {
   const groupName = useId();
   const [selectedId, setSelectedId] = useState("");
@@ -71,22 +82,22 @@ export function InferenceCapabilityPanel({
       setSelectedId("");
       return;
     }
-    const hosted = setup.presets.filter(
-      (preset): preset is HostedInferencePreset =>
-        preset.kind === "hosted_profile_preset",
-    );
-    if (!hosted.length) {
+    if (!setup.presets.length) {
       setSelectedId("");
       return;
     }
     const current = setup.current_routes.thoughts.target_id;
-    const currentPreset = hosted.find(
-      (preset) => preset.existing_profile.target_id === current,
+    const currentPreset = setup.presets.find(
+      (preset) =>
+        preset.kind === "hosted_profile_preset" &&
+        preset.existing_profile.target_id === current,
     );
     setSelectedId(
       (prior) =>
         currentPreset?.id ||
-        (hosted.some((preset) => preset.id === prior) ? prior : hosted[0].id),
+        (setup.presets.some((preset) => preset.id === prior)
+          ? prior
+          : setup.presets[0].id),
     );
   }, [setup]);
 
@@ -110,23 +121,27 @@ export function InferenceCapabilityPanel({
   }
 
   const deployment = setup.current_thought_deployment;
-  const hosted = setup.presets.filter(
-    (preset): preset is HostedInferencePreset =>
-      preset.kind === "hosted_profile_preset",
-  );
-  const local = setup.presets.filter(
-    (preset) => preset.kind === "local_artifact_preset",
-  );
-  const selected = hosted.find((preset) => preset.id === selectedId) || null;
+  const routeModel =
+    deployment.execution_revision?.schema_version === 2
+      ? deployment.execution_revision.model
+      : deployment.target.model;
+  const selected: InferencePreset | null =
+    setup.presets.find((preset) => preset.id === selectedId) || null;
+  const selectedHosted = selected?.kind === "hosted_profile_preset" ? selected : null;
+  const selectedLocal = selected?.kind === "local_artifact_preset" ? selected : null;
   const existing = selected
+    && selected.kind === "hosted_profile_preset"
     ? targets.find(
         (target) => target.id === selected.existing_profile.target_id,
       )
     : null;
   const current =
-    selected?.existing_profile.target_id ===
+    selectedHosted?.existing_profile.target_id ===
     setup.current_routes.thoughts.target_id;
-  const canUse = Boolean(selected && (existing?.key_present || key.trim()));
+  const canUse = Boolean(selectedHosted && (existing?.key_present || key.trim()));
+  const acquisition = selectedLocal
+    ? (setup.acquisitions ?? []).find((row) => row.preset_id === selectedLocal.id) || null
+    : null;
 
   return (
     <>
@@ -138,8 +153,8 @@ export function InferenceCapabilityPanel({
           <p className="models-setup-kicker">AI setup</p>
           <h2 id="models-capability-title">Choose your AI</h2>
           <p>
-            See what this hub can use now. Nothing here downloads or tests a
-            model.
+            Choose a private local model or a configured connection. A local
+            download starts only when you explicitly ask.
           </p>
         </div>
         <div
@@ -149,7 +164,7 @@ export function InferenceCapabilityPanel({
           <span>Thoughts &amp; notes</span>
           <strong>
             {deployment.target.name}
-            {deployment.target.model ? ` · ${deployment.target.model}` : ""}
+            {routeModel ? ` · ${routeModel}` : ""}
           </strong>
           <small>
             {deployment.execution_support.executable
@@ -208,22 +223,6 @@ export function InferenceCapabilityPanel({
             </p>
           </div>
         )}
-        {local.length ? (
-          <div className="models-local-catalog" aria-label="Local AI choices">
-            {local.map((preset) => (
-              <article key={preset.id}>
-                <span>{preset.experience}</span>
-                <strong>{preset.label}</strong>
-                <small>
-                  {preset.applicability.state === "applicable"
-                    ? "Available in the catalog · no action in this release"
-                    : preset.applicability.reason ||
-                      "Not available on this device"}
-                </small>
-              </article>
-            ))}
-          </div>
-        ) : null}
       </section>
 
       <section
@@ -231,8 +230,8 @@ export function InferenceCapabilityPanel({
         aria-labelledby="models-choices-title"
       >
         <header>
-          <p className="models-setup-kicker">Hosted choices</p>
-          <h3 id="models-choices-title">Available to add</h3>
+          <p className="models-setup-kicker">Thoughts &amp; notes</p>
+          <h3 id="models-choices-title">Choose an experience</h3>
           <p>
             These choices come from this hub’s verified catalog. Selecting one
             changes nothing.
@@ -241,10 +240,10 @@ export function InferenceCapabilityPanel({
         <div
           className="models-capability-radio"
           role="radiogroup"
-          aria-label="Hosted AI choices"
+          aria-label="AI choices"
         >
-          {hosted.length ? (
-            hosted.map((preset) => {
+          {setup.presets.length ? (
+            setup.presets.map((preset) => {
               const selectedCard = preset.id === selectedId;
               return (
                 <label
@@ -266,11 +265,28 @@ export function InferenceCapabilityPanel({
                     {preset.experience}
                   </span>
                   <strong>{preset.label}</strong>
-                  <span>
-                    Hosted · {context(preset.context.working_ceiling_tokens)}{" "}
-                    working ceiling
-                  </span>
-                  <small>Saved Note material may leave this hub.</small>
+                  {preset.kind === "hosted_profile_preset" ? (
+                    <>
+                      <span>
+                        Hosted · {context(preset.context.working_ceiling_tokens)}{" "}
+                        working ceiling
+                      </span>
+                      <small>Saved Note material may leave this hub.</small>
+                    </>
+                  ) : (
+                    <>
+                      <span>
+                        GGUF · {context(preset.context.recommended_tokens)} context
+                      </span>
+                      <small>Runs only on this device. Note text stays here.</small>
+                      <small>
+                        {bytes(preset.source.download_bytes)} download · {bytes(preset.source.installed_bytes)} installed · {bytes(preset.source.peak_free_bytes)} free required
+                      </small>
+                      <small>
+                        From Hugging Face · {preset.source.repository} · {preset.source.license}
+                      </small>
+                    </>
+                  )}
                 </label>
               );
             })
@@ -287,14 +303,26 @@ export function InferenceCapabilityPanel({
               <div>
                 <strong>{selected.label}</strong>
                 <span>
-                  {current
+                  {selectedLocal && acquisition
+                    ? acquisition.state === "downloading"
+                      ? `Downloading ${bytes(acquisition.transport_bytes)} of ${bytes(acquisition.bytes_total)}`
+                      : acquisition.state === "verifying"
+                        ? "Verifying the published checksum…"
+                        : acquisition.state === "installing"
+                          ? "Installing verified model bytes…"
+                          : acquisition.state === "ready" && acquisition.activation_state === "in_use"
+                            ? "Ready · in use for Thoughts"
+                            : acquisition.error?.message || acquisition.state
+                    : selectedLocal
+                      ? "Private local model · downloads only on your command"
+                    : current
                     ? "Currently used for Thoughts & notes"
                     : existing?.key_present
                       ? "Already configured on this hub"
                       : "Requires an OpenRouter key"}
                 </span>
               </div>
-              {!current && !targetsLoading && !existing?.key_present ? (
+              {selectedHosted && !current && !targetsLoading && !existing?.key_present ? (
                 <label>
                   <span>OpenRouter key</span>
                   <input
@@ -306,7 +334,37 @@ export function InferenceCapabilityPanel({
                   />
                 </label>
               ) : null}
-              {current ? (
+              {selectedLocal ? (
+                acquisition && ["requested", "resolving_source", "downloading"].includes(acquisition.state) ? (
+                  <>
+                    <progress
+                      max={acquisition.bytes_total}
+                      value={acquisition.transport_bytes}
+                      aria-label={`Downloading ${selectedLocal.label}`}
+                    />
+                    {acquisition.can_cancel ? (
+                      <Button onClick={() => void onCancelAcquisition?.(acquisition)}>
+                        CANCEL DOWNLOAD
+                      </Button>
+                    ) : null}
+                  </>
+                ) : acquisition && ["verifying", "installing"].includes(acquisition.state) ? (
+                  <span className="models-capability-action-status">
+                    {acquisition.state === "verifying" ? "VERIFYING…" : "INSTALLING…"}
+                  </span>
+                ) : acquisition?.state === "ready" && acquisition.activation_state === "in_use" ? (
+                  <span className="models-capability-action-status">IN USE FOR THOUGHTS</span>
+                ) : (
+                  <Button
+                    variant="primary"
+                    disabled={Boolean(busyPresetId)}
+                    loading={busyPresetId === selectedLocal.id}
+                    onClick={() => void onDownloadLocal?.(selectedLocal)}
+                  >
+                    {acquisition?.state === "failed" ? "TRY AGAIN" : `DOWNLOAD & USE ${selectedLocal.experience.toUpperCase()}`}
+                  </Button>
+                )
+              ) : current ? (
                 <span className="models-capability-action-status">
                   IN USE FOR THOUGHTS
                 </span>
@@ -320,12 +378,12 @@ export function InferenceCapabilityPanel({
                   loading={busyPresetId === selected.id}
                   disabled={Boolean(busyPresetId)}
                   onClick={async () => {
-                    if (await onUseHosted(selected, key.trim())) setKey("");
+                    if (selectedHosted && await onUseHosted(selectedHosted, key.trim())) setKey("");
                   }}
                 >
                   {existing?.key_present
-                    ? `USE ${selected.experience.toUpperCase()}`
-                    : `ADD & USE ${selected.experience.toUpperCase()}`}
+                    ? `USE ${selectedHosted?.experience.toUpperCase()}`
+                    : `ADD & USE ${selectedHosted?.experience.toUpperCase()}`}
                 </Button>
               ) : (
                 <span className="models-capability-action-status">

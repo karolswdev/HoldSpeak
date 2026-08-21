@@ -13,7 +13,7 @@ import {
   useState,
 } from "react";
 import { Button } from "../../components/signal/Signal";
-import { apiFetch, readableError } from "../../lib/api";
+import { ApiError, apiFetch, readableError } from "../../lib/api";
 import type { SettingsResponse, InferenceTargetsResponse } from "./core-types";
 import { ConfirmVerb } from "../../desk/surface/Surface";
 import {
@@ -31,8 +31,12 @@ import { INTEL_PROVIDER_OPTIONS, meetingPlacement } from "./settingsPrefs";
 import { InferenceCapabilityPanel } from "./InferenceCapabilityPanel";
 import {
   getInferenceSetup,
+  downloadAndUseLocalPreset,
+  cancelInferenceAcquisition,
   type HostedInferencePreset,
+  type InferenceAcquisition,
   type InferenceSetup,
+  type LocalInferencePreset,
 } from "./inferenceSetup";
 
 type Target = {
@@ -143,6 +147,9 @@ export function ModelsModule({
   const [inferenceSetupLoading, setInferenceSetupLoading] = useState(true);
   const [inferenceSetupError, setInferenceSetupError] = useState("");
   const saveTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+  const acquisitionRequestIds = useRef<Record<string, string>>({});
+  const cancelRequestIds = useRef<Record<string, string>>({});
+  const acquisitionStates = useRef<Record<string, InferenceAcquisition["state"]>>({});
   const connectionsRef = useRef<HTMLDivElement>(null);
   const applyChanges = (changes: Array<[string[], unknown]>) => {
     if (updateMany) updateMany(changes);
@@ -183,6 +190,29 @@ export function ModelsModule({
     const timers = saveTimers.current;
     return () => Object.values(timers).forEach(clearTimeout);
   }, [reload, reloadInferenceSetup]);
+
+  useEffect(() => {
+    for (const job of inferenceSetup?.acquisitions ?? []) {
+      const prior = acquisitionStates.current[job.id];
+      const wasActive = prior && [
+        "requested", "resolving_source", "downloading", "verifying", "installing",
+      ].includes(prior);
+      if (wasActive && job.state === "ready" && job.activation_state === "in_use") {
+        setPresetStatus("Ready · in use for Thoughts.");
+      } else if (wasActive && job.state === "failed") {
+        setPresetStatus(job.error?.message || "Model setup stopped. Try again.");
+      } else if (wasActive && job.state === "cancelled") {
+        setPresetStatus("Download cancelled. No model was activated.");
+      }
+      acquisitionStates.current[job.id] = job.state;
+    }
+    const active = (inferenceSetup?.acquisitions ?? []).some((job) =>
+      ["requested", "resolving_source", "downloading", "verifying", "installing"].includes(job.state),
+    );
+    if (!active) return;
+    const timer = window.setTimeout(() => void reloadInferenceSetup(), 700);
+    return () => window.clearTimeout(timer);
+  }, [inferenceSetup, reloadInferenceSetup]);
 
   const put = async (target: Target) => {
     try {
@@ -398,6 +428,49 @@ export function ModelsModule({
       return false;
     } finally {
       setPresetBusy(null);
+    }
+  };
+
+  const downloadLocalPreset = async (preset: LocalInferencePreset) => {
+    if (!inferenceSetup) return;
+    setPresetBusy(preset.id);
+    setPresetStatus("");
+    const requestId =
+      acquisitionRequestIds.current[preset.id] || crypto.randomUUID();
+    acquisitionRequestIds.current[preset.id] = requestId;
+    try {
+      await downloadAndUseLocalPreset(inferenceSetup, preset, requestId);
+      delete acquisitionRequestIds.current[preset.id];
+      setPresetStatus(`Downloading ${preset.label}. You can leave Models open or come back later.`);
+      onRefuse("");
+      await reloadInferenceSetup();
+    } catch (error) {
+      // A typed HTTP response proves whether the server admitted the command.
+      // A transport failure is ambiguous, so retain the exact id for replay.
+      if (error instanceof ApiError) delete acquisitionRequestIds.current[preset.id];
+      const detail = readableError(error);
+      setPresetStatus(detail);
+      onRefuse(detail);
+    } finally {
+      setPresetBusy(null);
+    }
+  };
+
+  const cancelLocalAcquisition = async (job: InferenceAcquisition) => {
+    const requestId =
+      cancelRequestIds.current[job.id] || crypto.randomUUID();
+    cancelRequestIds.current[job.id] = requestId;
+    try {
+      await cancelInferenceAcquisition(job, requestId);
+      delete cancelRequestIds.current[job.id];
+      setPresetStatus("Download cancelled. No model was activated.");
+      await reloadInferenceSetup();
+    } catch (error) {
+      if (error instanceof ApiError) delete cancelRequestIds.current[job.id];
+      const detail = readableError(error);
+      setPresetStatus(detail);
+      onRefuse(detail);
+      await reloadInferenceSetup();
     }
   };
 
@@ -876,6 +949,8 @@ export function ModelsModule({
         status={presetStatus}
         onRetry={() => void reloadInferenceSetup()}
         onUseHosted={useOpenRouterPreset}
+        onDownloadLocal={downloadLocalPreset}
+        onCancelAcquisition={cancelLocalAcquisition}
       />
 
       <div className="models-job-routing">
