@@ -5,13 +5,16 @@
 // engine, and the rails observer's knobs. Everything composes from the
 // settings gadget kit; errors land in the Prefs footer receipt, never
 // over the UI.
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 import { Button } from "../../components/signal/Signal";
 import { apiFetch, readableError } from "../../lib/api";
-import type {
-  SettingsResponse,
-  InferenceTargetsResponse,
-} from "./core-types";
+import type { SettingsResponse, InferenceTargetsResponse } from "./core-types";
 import { ConfirmVerb } from "../../desk/surface/Surface";
 import {
   CheckGadget,
@@ -24,10 +27,7 @@ import {
   StringGadget,
 } from "../../desk/surface/gadgets";
 import { useRovingRows } from "../../desk/surface/roving";
-import {
-  INTEL_PROVIDER_OPTIONS,
-  meetingPlacement,
-} from "./settingsPrefs";
+import { INTEL_PROVIDER_OPTIONS, meetingPlacement } from "./settingsPrefs";
 
 type Target = {
   id: string;
@@ -65,6 +65,43 @@ type RuntimeOptions = {
   mlx: Array<{ label: string; value: string }>;
   gguf: Array<{ label: string; value: string }>;
 };
+
+type OpenRouterPreset = {
+  targetId: string;
+  name: string;
+  model: string;
+  size: string;
+  description: string;
+  contextLimit: number;
+};
+
+const OPENROUTER_PRESETS: OpenRouterPreset[] = [
+  {
+    targetId: "preset_openrouter_qwen3_8b",
+    name: "OpenRouter · Quick Qwen",
+    model: "qwen/qwen3-8b",
+    size: "8B · QUICK",
+    description: "Fast interviews, light rewriting, and everyday notes.",
+    contextLimit: 131_072,
+  },
+  {
+    targetId: "preset_openrouter_qwen35_35b_a3b",
+    name: "OpenRouter · Balanced Qwen",
+    model: "qwen/qwen3.5-35b-a3b",
+    size: "35B / 3B ACTIVE · BALANCED",
+    description: "Stronger reasoning without paying for a dense large model.",
+    contextLimit: 262_144,
+  },
+  {
+    targetId: "preset_openrouter_qwen38_27b",
+    name: "OpenRouter · Deep Qwen",
+    model: "qwen/qwen3.8-27b",
+    size: "27B · DEEP",
+    description:
+      "Complex work, coding, research, and long-running thought development.",
+    contextLimit: 262_144,
+  },
+];
 
 const KIND_OPTIONS = [
   { value: "openAICompatible", label: "ENDPOINT" },
@@ -118,31 +155,63 @@ function fromWire(row: Record<string, unknown>): Target {
 export function ModelsModule({
   settings,
   update,
+  updateMany,
   onRefuse,
 }: {
   settings: SettingsResponse;
   /** The Prefs debounced settings writer (path → value). */
   update(path: string[], next: unknown): void;
+  /** Apply one coherent settings document write for coupled choices. */
+  updateMany?(changes: Array<[string[], unknown]>): void;
   /** The footer receipt bar; "" clears. */
   onRefuse(refusal: string): void;
 }) {
   const [targets, setTargets] = useState<Target[]>([]);
-  const [probeResults, setProbeResults] = useState<Record<string, ProbeResult>>({});
+  const [builtinTarget, setBuiltinTarget] = useState<Target | null>(null);
+  const [probeResults, setProbeResults] = useState<Record<string, ProbeResult>>(
+    {},
+  );
   const [probingIds, setProbingIds] = useState<Set<string>>(() => new Set());
   const [keyDrafts, setKeyDrafts] = useState<Record<string, string>>({});
   const [keyEditingId, setKeyEditingId] = useState<string | null>(null);
-  const [savingKeyIds, setSavingKeyIds] = useState<Set<string>>(() => new Set());
-  const [hubDefault, setHubDefault] = useState<{ engine: string; model: string; available: boolean }>({
-    engine: "", model: "", available: false,
+  const [savingKeyIds, setSavingKeyIds] = useState<Set<string>>(
+    () => new Set(),
+  );
+  const [hubDefault, setHubDefault] = useState<{
+    engine: string;
+    model: string;
+    available: boolean;
+  }>({
+    engine: "",
+    model: "",
+    available: false,
   });
   const [testingRuntime, setTestingRuntime] = useState(false);
-  const [runtimeTest, setRuntimeTest] = useState<RuntimeTestResult | null>(null);
-  const [runtimeOptions, setRuntimeOptions] = useState<RuntimeOptions | null>(null);
-  const [manualLocalSetup, setManualLocalSetup] = useState<boolean | null>(null);
+  const [runtimeTest, setRuntimeTest] = useState<RuntimeTestResult | null>(
+    null,
+  );
+  const [runtimeOptions, setRuntimeOptions] = useState<RuntimeOptions | null>(
+    null,
+  );
+  const [manualLocalSetup, setManualLocalSetup] = useState<boolean | null>(
+    null,
+  );
   const [connectionsOpen, setConnectionsOpen] = useState(false);
+  const [openRouterKey, setOpenRouterKey] = useState("");
+  const [presetBusy, setPresetBusy] = useState<string | null>(null);
+  const [presetStatus, setPresetStatus] = useState("");
   const saveTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
   const localSetupRef = useRef<HTMLDivElement>(null);
   const connectionsRef = useRef<HTMLDivElement>(null);
+  const hostedRef = useRef<HTMLDivElement>(null);
+  const thoughtTargetId = String(
+    (settings.thoughts as Record<string, unknown> | undefined)
+      ?.inference_target_id ?? "",
+  );
+  const applyChanges = (changes: Array<[string[], unknown]>) => {
+    if (updateMany) updateMany(changes);
+    else for (const [path, value] of changes) update(path, value);
+  };
 
   const reload = useCallback(async () => {
     try {
@@ -150,11 +219,9 @@ export function ModelsModule({
       const wire = await apiFetch<InferenceTargetsResponse>(
         "/api/inference-targets",
       );
-      setTargets(
-        (wire.targets ?? [])
-          .filter((row) => row.profile_id != null)
-          .map(fromWire),
-      );
+      const mapped = (wire.targets ?? []).map(fromWire);
+      setBuiltinTarget(mapped.find((row) => row.id === "this_machine") ?? null);
+      setTargets(mapped.filter((row) => row.profile_id != null));
     } catch (error) {
       onRefuse(readableError(error));
     }
@@ -164,26 +231,33 @@ export function ModelsModule({
     void reload();
     void apiFetch<{ engine: string; model: string; available: boolean }>(
       "/api/setup/hub-default-summary",
-    ).then(setHubDefault).catch(() => {});
-    void apiFetch<RuntimeOptions>("/api/setup/runtime-options").then(setRuntimeOptions).catch(() => {});
+    )
+      .then(setHubDefault)
+      .catch(() => {});
+    void apiFetch<RuntimeOptions>("/api/setup/runtime-options")
+      .then(setRuntimeOptions)
+      .catch(() => {});
     const timers = saveTimers.current;
     return () => Object.values(timers).forEach(clearTimeout);
   }, [reload]);
 
   const put = async (target: Target) => {
     try {
-      await apiFetch(`/api/inference-targets/${encodeURIComponent(target.id)}`, {
-        method: "PUT",
-        json: {
-          name: target.name,
-          kind: target.kind,
-          base_url: target.base_url,
-          model: target.model,
-          node: target.node,
-          context_limit: target.context_limit,
-          requires_key: target.requires_key,
+      await apiFetch(
+        `/api/inference-targets/${encodeURIComponent(target.id)}`,
+        {
+          method: "PUT",
+          json: {
+            name: target.name,
+            kind: target.kind,
+            base_url: target.base_url,
+            model: target.model,
+            node: target.node,
+            context_limit: target.context_limit,
+            requires_key: target.requires_key,
+          },
         },
-      });
+      );
       onRefuse("");
       await reload();
     } catch (error) {
@@ -230,9 +304,12 @@ export function ModelsModule({
     const target = targets[index];
     if (!target) return;
     try {
-      await apiFetch(`/api/inference-targets/${encodeURIComponent(target.id)}`, {
-        method: "DELETE",
-      });
+      await apiFetch(
+        `/api/inference-targets/${encodeURIComponent(target.id)}`,
+        {
+          method: "DELETE",
+        },
+      );
       onRefuse("");
       await reload();
     } catch (error) {
@@ -245,10 +322,13 @@ export function ModelsModule({
     if (!value) return;
     setSavingKeyIds((ids) => new Set(ids).add(row.id));
     try {
-      await apiFetch(`/api/inference-targets/${encodeURIComponent(row.id)}/secret`, {
-        method: "PUT",
-        json: { value },
-      });
+      await apiFetch(
+        `/api/inference-targets/${encodeURIComponent(row.id)}/secret`,
+        {
+          method: "PUT",
+          json: { value },
+        },
+      );
       setKeyDrafts((drafts) => ({ ...drafts, [row.id]: "" }));
       setKeyEditingId(null);
       onRefuse("");
@@ -267,9 +347,12 @@ export function ModelsModule({
   const clearKey = async (row: Target) => {
     setSavingKeyIds((ids) => new Set(ids).add(row.id));
     try {
-      await apiFetch(`/api/inference-targets/${encodeURIComponent(row.id)}/secret`, {
-        method: "DELETE",
-      });
+      await apiFetch(
+        `/api/inference-targets/${encodeURIComponent(row.id)}/secret`,
+        {
+          method: "DELETE",
+        },
+      );
       setKeyDrafts((drafts) => ({ ...drafts, [row.id]: "" }));
       setKeyEditingId(null);
       onRefuse("");
@@ -316,16 +399,33 @@ export function ModelsModule({
   const testRuntime = async () => {
     setTestingRuntime(true);
     try {
-      const listing = await apiFetch<{ models?: RunnableModel[] }>("/api/models");
-      const local = (listing.models ?? []).find((model) => model.id === "this_machine");
+      const listing = await apiFetch<{ models?: RunnableModel[] }>(
+        "/api/models",
+      );
+      const local = (listing.models ?? []).find(
+        (model) => model.id === "this_machine",
+      );
       const result: RuntimeTestResult = local?.ready
-        ? { ok: true, status: "ready", backend: null, detail: `${local.name} can answer on this device.` }
-        : { ok: false, status: "unavailable", backend: null, detail: "No working model was found. Check the model location, then try again." };
+        ? {
+            ok: true,
+            status: "ready",
+            backend: null,
+            detail: `${local.name} can answer Thoughts on this device.`,
+          }
+        : {
+            ok: false,
+            status: "unavailable",
+            backend: null,
+            detail:
+              "This device needs a GGUF chat model that llama.cpp can load.",
+          };
       setRuntimeTest(result);
       onRefuse("");
-      const summary = await apiFetch<{ engine: string; model: string; available: boolean }>(
-        "/api/setup/hub-default-summary",
-      );
+      const summary = await apiFetch<{
+        engine: string;
+        model: string;
+        available: boolean;
+      }>("/api/setup/hub-default-summary");
       setHubDefault(summary);
     } catch (error) {
       const detail = readableError(error);
@@ -335,7 +435,50 @@ export function ModelsModule({
     }
   };
 
-  const probeLabel = (row: Target): { on: boolean; tone: "ok" | "fail"; label: string } | null => {
+  const useOpenRouterPreset = async (preset: OpenRouterPreset) => {
+    const existing = targets.find((target) => target.id === preset.targetId);
+    if (!existing?.key_present && !openRouterKey.trim()) return;
+    setPresetBusy(preset.targetId);
+    setPresetStatus("");
+    try {
+      await apiFetch("/api/inference-targets", {
+        method: "POST",
+        json: {
+          id: preset.targetId,
+          name: preset.name,
+          kind: "openAICompatible",
+          base_url: "https://openrouter.ai/api/v1",
+          model: preset.model,
+          context_limit: preset.contextLimit,
+          requires_key: true,
+        },
+      });
+      if (openRouterKey.trim()) {
+        await apiFetch(
+          `/api/inference-targets/${encodeURIComponent(preset.targetId)}/secret`,
+          {
+            method: "PUT",
+            json: { value: openRouterKey.trim() },
+          },
+        );
+      }
+      applyChanges([[["thoughts", "inference_target_id"], preset.targetId]]);
+      setOpenRouterKey("");
+      setPresetStatus(`${preset.name} selected for Thoughts & notes.`);
+      onRefuse("");
+      await reload();
+    } catch (error) {
+      const detail = readableError(error);
+      setPresetStatus(detail);
+      onRefuse(detail);
+    } finally {
+      setPresetBusy(null);
+    }
+  };
+
+  const probeLabel = (
+    row: Target,
+  ): { on: boolean; tone: "ok" | "fail"; label: string } | null => {
     const result = probeResults[row.id];
     if (!result) return null;
     if (result.reachable) {
@@ -348,21 +491,28 @@ export function ModelsModule({
     return {
       on: false,
       tone: "fail",
-      label: result.error ? "OFFLINE. Settings are unchanged. Retry." : "OFFLINE",
+      label: result.error
+        ? "OFFLINE. Settings are unchanged. Retry."
+        : "OFFLINE",
     };
   };
 
   const val = (path: string[]): unknown =>
     path.reduce<unknown>(
       (acc, part) =>
-        acc && typeof acc === "object" ? (acc as Record<string, unknown>)[part] : undefined,
+        acc && typeof acc === "object"
+          ? (acc as Record<string, unknown>)[part]
+          : undefined,
       settings,
     );
 
   const pointerOptions = [
-    { value: "", label: hubDefault.available
-      ? `HUB DEFAULT · ${hubDefault.engine.toUpperCase()} · ${hubDefault.model.toUpperCase()}`
-      : "HUB DEFAULT · NO MODEL" },
+    {
+      value: "",
+      label: hubDefault.available
+        ? `THIS DEVICE · ${hubDefault.model.toUpperCase()}`
+        : "THIS DEVICE · SETUP NEEDED",
+    },
     ...targets.map((row) => ({
       value: row.id,
       label: (row.name || row.id).toUpperCase(),
@@ -387,24 +537,33 @@ export function ModelsModule({
   const placement = meetingPlacement(settings);
   const droppedDestination = String(placement?.placement_reason ?? "");
   const destinationDecides = placement?.placement_source === "destination";
-  const meetingTarget = String(placement?.target_name || placement?.node || "").trim();
+  const meetingTarget = String(
+    placement?.target_name || placement?.node || "",
+  ).trim();
   const meetingSummary = meetingTarget
     ? `Meetings uses ${meetingTarget}`
     : placement?.boundary === "cloud"
       ? "Meetings uses the cloud"
       : "Meetings uses this device";
   const plainReason = (reason: unknown) => {
-    const text = String(reason ?? "").replace(/[_-]+/g, " ").replace(/\s+/g, " ").trim();
-    if (/no language model/i.test(text)) return "Choose a local model in Intelligence";
-    return text ? text[0].toUpperCase() + text.slice(1) : "Check the selected model";
+    const text = String(reason ?? "")
+      .replace(/[_-]+/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+    if (/no language model/i.test(text))
+      return "Choose a local model in Intelligence";
+    return text
+      ? text[0].toUpperCase() + text.slice(1)
+      : "Check the selected model";
   };
-  const meetingsNotice = placement?.runnable === false
-    ? droppedDestination
-      ? "Meetings can’t use the selected destination. Choose a local model in Intelligence."
-      : `Meetings can’t run: ${plainReason(placement.runnable_reason)}`
-    : droppedDestination
-      ? "Selected destination isn’t compatible"
-      : "";
+  const meetingsNotice =
+    placement?.runnable === false
+      ? droppedDestination
+        ? "Meetings can’t use the selected destination. Choose a local model in Intelligence."
+        : `Meetings can’t run: ${plainReason(placement.runnable_reason)}`
+      : droppedDestination
+        ? "Selected destination isn’t compatible"
+        : "";
   const meetingsBlock = (
     <>
       <GadgetRow
@@ -419,7 +578,9 @@ export function ModelsModule({
           label="Meetings AI"
           value={String(val(["meeting", "intel_profile_id"]) ?? "")}
           options={pointerOptions}
-          onChange={(next) => update(["meeting", "intel_profile_id"], next || null)}
+          onChange={(next) =>
+            update(["meeting", "intel_profile_id"], next || null)
+          }
         />
       </GadgetRow>
       {meetingsNotice ? (
@@ -430,7 +591,10 @@ export function ModelsModule({
           {meetingsNotice}
         </div>
       ) : null}
-      <FoldGadget title="Meeting routing options" className="models-meeting-routing">
+      <FoldGadget
+        title="Meeting routing options"
+        className="models-meeting-routing"
+      >
         <GadgetRow label="If no destination">
           <CycleGadget
             label="Meetings provider"
@@ -446,7 +610,9 @@ export function ModelsModule({
             label="Realtime model"
             value={String(val(["meeting", "intel_realtime_model"]) ?? "")}
             placeholder="path to local model"
-            onChange={(next) => update(["meeting", "intel_realtime_model"], next || null)}
+            onChange={(next) =>
+              update(["meeting", "intel_realtime_model"], next || null)
+            }
           />
         </GadgetRow>
       </FoldGadget>
@@ -460,11 +626,8 @@ export function ModelsModule({
         ? "warn"
         : "fail";
 
-  const runtime = (settings.dictation as Record<string, unknown> | undefined)?.runtime as
-    | Record<string, unknown>
-    | undefined;
-  const backend = String(runtime?.backend ?? "auto");
-
+  const runtime = (settings.dictation as Record<string, unknown> | undefined)
+    ?.runtime as Record<string, unknown> | undefined;
   /* The matrix needs a genuinely useful editorial width. Below it, a row
      cannot keep a name, endpoint, model and health honest, so it becomes a
      compact disclosure instead of pretending that six clipped cells are a
@@ -567,7 +730,10 @@ export function ModelsModule({
   };
 
   const keyEditor = (row: Target) => (
-    <div className="models-key-editor" data-testid={`target-key-editor-${row.id}`}>
+    <div
+      className="models-key-editor"
+      data-testid={`target-key-editor-${row.id}`}
+    >
       <label>
         <span>API KEY</span>
         <input
@@ -575,7 +741,12 @@ export function ModelsModule({
           autoComplete="new-password"
           aria-label={`Destination ${row.id} API key`}
           value={keyDrafts[row.id] ?? ""}
-          onChange={(event) => setKeyDrafts((drafts) => ({ ...drafts, [row.id]: event.target.value }))}
+          onChange={(event) =>
+            setKeyDrafts((drafts) => ({
+              ...drafts,
+              [row.id]: event.target.value,
+            }))
+          }
         />
       </label>
       <Button
@@ -588,7 +759,12 @@ export function ModelsModule({
         {row.key_present ? "REPLACE" : "SET KEY"}
       </Button>
       {row.key_present ? (
-        <Button dense variant="ghost" disabled={savingKeyIds.has(row.id)} onClick={() => void clearKey(row)}>
+        <Button
+          dense
+          variant="ghost"
+          disabled={savingKeyIds.has(row.id)}
+          onClick={() => void clearKey(row)}
+        >
           REMOVE
         </Button>
       ) : null}
@@ -614,14 +790,20 @@ export function ModelsModule({
           aria-controls={`destination-${row.id}`}
           onClick={() => setExpandedTargetId(expanded ? null : row.id)}
         >
-          <span className="dest-card-index">{String(index + 1).padStart(2, "0")}</span>
-          <span className="dest-card-name">{row.name || "NEW DESTINATION"}</span>
+          <span className="dest-card-index">
+            {String(index + 1).padStart(2, "0")}
+          </span>
+          <span className="dest-card-name">
+            {row.name || "NEW DESTINATION"}
+          </span>
           <LampGadget
             on={state ? state.on : row.readiness_state === "ready"}
             tone={state ? state.tone : lampTone(row)}
             label={state ? state.label : readinessLabel(row.readiness_state)}
           />
-          <span className="dest-card-disclosure" aria-hidden="true">⌄</span>
+          <span className="dest-card-disclosure" aria-hidden="true">
+            ⌄
+          </span>
         </button>
         {expanded ? (
           <div className="dest-card-detail" id={`destination-${row.id}`}>
@@ -694,88 +876,93 @@ export function ModelsModule({
       </div>
       {targets.map((row, index) => (
         <div key={row.id}>
-        <div className="models-destination-row">
-          <span className="models-destination-cell" data-column="name">
-            <StringGadget
-              label={`Target ${row.id} name`}
-              value={row.name}
-              onChange={(next) => patch(row.id, { name: next })}
-            />
-          </span>
-          <span className="models-destination-cell" data-column="kind">
-            <CycleGadget
-              label={`Target ${row.id} kind`}
-              value={row.kind}
-              options={KIND_OPTIONS}
-              onChange={(next) => patch(row.id, { kind: next })}
-            />
-          </span>
-          <span className="models-destination-cell" data-column="endpoint">
-            {endpointField(row)}
-          </span>
-          <span className="models-destination-cell" data-column="model">
-            {modelField(row)}
-          </span>
-          <span className="models-destination-cell" data-column="health">
-            {healthField(row)}
-          </span>
-          <span className="models-destination-actions">
-            <Button
-              dense
-              variant="ghost"
-              loading={probingIds.has(row.id)}
-              onClick={() => void probeTarget(row.id)}
-            >
-              TEST
-            </Button>
-            <ConfirmVerb
-              label="×"
-              confirmLabel="FORGET?"
-              ariaLabel={`Delete destination ${index + 1}`}
-              onConfirm={() => void remove(index)}
-            />
-          </span>
-        </div>
-        {keyEditingId === row.id && row.requires_key ? (
-          <div className="models-destination-key-row">{keyEditor(row)}</div>
-        ) : null}
+          <div className="models-destination-row">
+            <span className="models-destination-cell" data-column="name">
+              <StringGadget
+                label={`Target ${row.id} name`}
+                value={row.name}
+                onChange={(next) => patch(row.id, { name: next })}
+              />
+            </span>
+            <span className="models-destination-cell" data-column="kind">
+              <CycleGadget
+                label={`Target ${row.id} kind`}
+                value={row.kind}
+                options={KIND_OPTIONS}
+                onChange={(next) => patch(row.id, { kind: next })}
+              />
+            </span>
+            <span className="models-destination-cell" data-column="endpoint">
+              {endpointField(row)}
+            </span>
+            <span className="models-destination-cell" data-column="model">
+              {modelField(row)}
+            </span>
+            <span className="models-destination-cell" data-column="health">
+              {healthField(row)}
+            </span>
+            <span className="models-destination-actions">
+              <Button
+                dense
+                variant="ghost"
+                loading={probingIds.has(row.id)}
+                onClick={() => void probeTarget(row.id)}
+              >
+                TEST
+              </Button>
+              <ConfirmVerb
+                label="×"
+                confirmLabel="FORGET?"
+                ariaLabel={`Delete destination ${index + 1}`}
+                onConfirm={() => void remove(index)}
+              />
+            </span>
+          </div>
+          {keyEditingId === row.id && row.requires_key ? (
+            <div className="models-destination-key-row">{keyEditor(row)}</div>
+          ) : null}
         </div>
       ))}
-      <button type="button" className="gadget-table-add" onClick={() => void add()}>
+      <button
+        type="button"
+        className="gadget-table-add"
+        onClick={() => void add()}
+      >
         + ADD AI CONNECTION
       </button>
     </div>
   );
 
-  const readyTargets = targets.filter((target) => target.readiness_state === "ready").length;
-  const attentionTargets = targets.filter((target) => target.readiness_state !== "ready").length;
-  const localSummary = hubDefault.available
-    ? `${hubDefault.model} · ${hubDefault.engine}`
-    : "No working local model yet";
-  const preferredLocalEngine = backend === "mlx" || backend === "llama_cpp"
-    ? backend
-    : runtimeOptions?.platform?.apple_silicon ? "mlx" : "llama_cpp";
-  const discoveredModels = [
-    ...(runtimeOptions?.mlx ?? []).map((model) => ({
-      value: `mlx:${model.value}`,
-      label: `APPLE MLX · ${model.label}`,
-      engine: "mlx" as const,
-      path: model.value,
-    })),
-    ...(runtimeOptions?.gguf ?? []).map((model) => ({
-      value: `llama_cpp:${model.value}`,
-      label: `GGUF · ${model.label}`,
-      engine: "llama_cpp" as const,
-      path: model.value,
-    })),
-  ];
-  const configuredLocalPath = preferredLocalEngine === "mlx"
-    ? String(runtime?.mlx_model ?? "")
-    : String(runtime?.llama_cpp_model_path ?? "");
-  const selectedDiscoveredModel = discoveredModels.find((model) => model.path === configuredLocalPath)?.value ?? "";
-  const showManualLocalPath = !discoveredModels.length
-    || manualLocalSetup === true
-    || (manualLocalSetup === null && Boolean(configuredLocalPath && !selectedDiscoveredModel));
+  const readyTargets = targets.filter(
+    (target) => target.readiness_state === "ready",
+  ).length;
+  const attentionTargets = targets.filter(
+    (target) => target.readiness_state !== "ready",
+  ).length;
+  const selectedThoughtTarget = thoughtTargetId
+    ? (targets.find((target) => target.id === thoughtTargetId) ?? null)
+    : builtinTarget;
+  const thoughtReady = selectedThoughtTarget?.readiness_state === "ready";
+  const thoughtSummary = selectedThoughtTarget
+    ? `${selectedThoughtTarget.name}${selectedThoughtTarget.model ? ` · ${selectedThoughtTarget.model}` : ""}`
+    : "Choose an AI for Thoughts & notes";
+  const discoveredModels = (runtimeOptions?.gguf ?? []).map((model) => ({
+    value: model.value,
+    label: `GGUF · ${model.label}`,
+    path: model.value,
+  }));
+  const configuredLocalPath = String(
+    (settings.meeting as Record<string, unknown> | undefined)
+      ?.intel_realtime_model ?? "",
+  );
+  const selectedDiscoveredModel =
+    discoveredModels.find((model) => model.path === configuredLocalPath)
+      ?.value ?? "";
+  const showManualLocalPath =
+    !discoveredModels.length ||
+    manualLocalSetup === true ||
+    (manualLocalSetup === null &&
+      Boolean(configuredLocalPath && !selectedDiscoveredModel));
   const chooseDiscoveredModel = (value: string) => {
     if (value === "__manual__") {
       setManualLocalSetup(true);
@@ -786,107 +973,263 @@ export function ModelsModule({
     if (!selected) return;
     setManualLocalSetup(false);
     setRuntimeTest(null);
-    update(["dictation", "runtime", "backend"], selected.engine);
-    update(
-      ["dictation", "runtime", selected.engine === "mlx" ? "mlx_model" : "llama_cpp_model_path"],
-      selected.path,
-    );
+    applyChanges([
+      [["meeting", "intel_realtime_model"], selected.path],
+      [["meeting", "intel_provider"], "local"],
+      [["thoughts", "inference_target_id"], null],
+      [["dictation", "runtime", "backend"], "llama_cpp"],
+      [["dictation", "runtime", "llama_cpp_model_path"], selected.path],
+    ]);
   };
 
   const focusLocalSetup = () => {
-    localSetupRef.current?.scrollIntoView({ block: "start", behavior: "smooth" });
-    requestAnimationFrame(() => localSetupRef.current?.querySelector<HTMLElement>(
-      '[aria-label="Model on this device"], [aria-label="Apple MLX model folder"], [aria-label="GGUF model file"]',
-    )?.focus());
+    localSetupRef.current?.scrollIntoView({
+      block: "start",
+      behavior: "smooth",
+    });
+    requestAnimationFrame(() =>
+      localSetupRef.current
+        ?.querySelector<HTMLElement>(
+          '[aria-label="Model on this device"], [aria-label="GGUF model file"]',
+        )
+        ?.focus(),
+    );
+  };
+
+  const focusHostedSetup = () => {
+    hostedRef.current?.scrollIntoView({ block: "start", behavior: "smooth" });
+    requestAnimationFrame(() =>
+      hostedRef.current?.querySelector<HTMLElement>("input")?.focus(),
+    );
   };
 
   const openConnections = () => {
     setConnectionsOpen(true);
     requestAnimationFrame(() => {
-      connectionsRef.current?.scrollIntoView({ block: "start", behavior: "smooth" });
-      connectionsRef.current?.closest("details")?.querySelector<HTMLElement>("summary")?.focus();
+      connectionsRef.current?.scrollIntoView({
+        block: "start",
+        behavior: "smooth",
+      });
+      connectionsRef.current
+        ?.closest("details")
+        ?.querySelector<HTMLElement>("summary")
+        ?.focus();
     });
   };
 
   return (
     <div className="models-setup">
-      <section className="models-setup-intro" aria-labelledby="models-setup-title">
+      <section
+        className="models-setup-intro"
+        aria-labelledby="models-setup-title"
+      >
         <div>
           <p className="models-setup-kicker">AI setup</p>
           <h2 id="models-setup-title">Choose your AI</h2>
-          <p>Start with this device. Choose a different connection for a job only when you need one.</p>
+          <p>
+            Start with this device. Choose a different connection for a job only
+            when you need one.
+          </p>
         </div>
-        <div className="models-setup-status" data-ready={hubDefault.available || undefined}>
+        <div
+          className="models-setup-status"
+          data-ready={thoughtReady || undefined}
+        >
           <LampGadget
-            on={hubDefault.available}
-            tone={hubDefault.available ? "ok" : "warn"}
-            label={hubDefault.available ? "READY" : "SETUP NEEDED"}
+            on={thoughtReady}
+            tone={thoughtReady ? "ok" : "warn"}
+            label={thoughtReady ? "READY" : "SETUP NEEDED"}
           />
-          <strong>{localSummary}</strong>
+          <strong>{thoughtSummary}</strong>
         </div>
         <div className="models-setup-actions">
-          <Button variant="primary" onClick={focusLocalSetup}>{hubDefault.available ? "REVIEW THIS DEVICE" : "SET UP THIS DEVICE"}</Button>
-          <Button variant="ghost" onClick={openConnections}>USE ANOTHER AI</Button>
+          <Button variant="primary" onClick={focusLocalSetup}>
+            {hubDefault.available ? "REVIEW THIS DEVICE" : "SET UP THIS DEVICE"}
+          </Button>
+          <Button variant="ghost" onClick={focusHostedSetup}>
+            USE HOSTED AI
+          </Button>
         </div>
       </section>
 
       <div ref={localSetupRef} className="models-local-setup">
         <GadgetGroup label="This device">
-          <p className="models-section-help">Private by default. Pick the model already stored on this Mac; HoldSpeak never downloads one silently.</p>
-          <GadgetRow label="How to run it" fact="Auto is recommended">
-            <CycleGadget
-              label="Local AI engine"
-              value={backend}
-              options={[
-                { value: "auto", label: "AUTO · RECOMMENDED" },
-                { value: "mlx", label: "APPLE MLX" },
-                { value: "llama_cpp", label: "GGUF · LLAMA.CPP" },
-              ]}
-              onChange={(next) => { setRuntimeTest(null); update(["dictation", "runtime", "backend"], next); }}
-            />
+          <p className="models-section-help">
+            Private by default. Thought interviews currently run local GGUF chat
+            models through llama.cpp; HoldSpeak never downloads one silently.
+          </p>
+          <GadgetRow label="How it runs" fact="Private · on this Mac">
+            <strong className="models-local-runtime">LLAMA.CPP · GGUF</strong>
           </GadgetRow>
-          {discoveredModels.length ? <GadgetRow label="Model on this device" fact={`${discoveredModels.length} found`}>
-            <CycleGadget
+          {discoveredModels.length ? (
+            <GadgetRow
               label="Model on this device"
-              value={showManualLocalPath ? "__manual__" : selectedDiscoveredModel}
-              options={[
-                { value: "", label: "CHOOSE A MODEL…", disabled: true },
-                ...discoveredModels.map(({ value, label }) => ({ value, label })),
-                { value: "__manual__", label: "OTHER MODEL LOCATION…" },
-              ]}
-              onChange={chooseDiscoveredModel}
-            />
-          </GadgetRow> : null}
-          {showManualLocalPath ? <GadgetRow
-            label={preferredLocalEngine === "mlx" ? "Apple MLX model" : "GGUF model"}
-            fact={preferredLocalEngine === "mlx" ? "folder" : ".gguf file"}
-          >
-            <StringGadget
-              label={preferredLocalEngine === "mlx" ? "Apple MLX model folder" : "GGUF model file"}
-              value={configuredLocalPath}
-              placeholder={preferredLocalEngine === "mlx" ? "~/Models/mlx/…" : "~/Models/gguf/…"}
-              mic={false}
-              onChange={(next) => {
-                setRuntimeTest(null);
-                update(
-                  ["dictation", "runtime", preferredLocalEngine === "mlx" ? "mlx_model" : "llama_cpp_model_path"],
-                  next,
-                );
-              }}
-            />
-          </GadgetRow> : null}
+              fact={`${discoveredModels.length} found`}
+            >
+              <CycleGadget
+                label="Model on this device"
+                value={
+                  showManualLocalPath ? "__manual__" : selectedDiscoveredModel
+                }
+                options={[
+                  { value: "", label: "CHOOSE A MODEL…", disabled: true },
+                  ...discoveredModels.map(({ value, label }) => ({
+                    value,
+                    label,
+                  })),
+                  { value: "__manual__", label: "OTHER MODEL LOCATION…" },
+                ]}
+                onChange={chooseDiscoveredModel}
+              />
+            </GadgetRow>
+          ) : null}
+          {showManualLocalPath ? (
+            <GadgetRow label="GGUF model" fact=".gguf file">
+              <StringGadget
+                label="GGUF model file"
+                value={configuredLocalPath}
+                placeholder="~/Models/gguf/…"
+                mic={false}
+                onChange={(next) => {
+                  setRuntimeTest(null);
+                  applyChanges([
+                    [["meeting", "intel_realtime_model"], next],
+                    [["meeting", "intel_provider"], "local"],
+                    [["thoughts", "inference_target_id"], null],
+                    [["dictation", "runtime", "backend"], "llama_cpp"],
+                    [["dictation", "runtime", "llama_cpp_model_path"], next],
+                  ]);
+                }}
+              />
+            </GadgetRow>
+          ) : null}
+          {(runtimeOptions?.mlx.length ?? 0) > 0 ? (
+            <p className="models-local-note">
+              {runtimeOptions?.mlx.length} Apple MLX{" "}
+              {runtimeOptions?.mlx.length === 1 ? "model is" : "models are"}{" "}
+              available for writing &amp; dictation, but not yet for Thought
+              interviews.
+            </p>
+          ) : null}
           <div className="models-local-check">
-            <Button dense loading={testingRuntime} onClick={() => void testRuntime()}>CHECK THIS AI</Button>
-            {runtimeTest ? <p role="status" data-ok={runtimeTest.ok || undefined}>{runtimeTest.ok ? "Ready" : "Not ready"} · {runtimeTest.detail}</p> : <p>Checks whether Thoughts can use it without sending a prompt.</p>}
+            <Button
+              dense
+              loading={testingRuntime}
+              onClick={() => void testRuntime()}
+            >
+              CHECK LOCAL AI
+            </Button>
+            {runtimeTest ? (
+              <p role="status" data-ok={runtimeTest.ok || undefined}>
+                {runtimeTest.ok ? "Ready" : "Not ready"} · {runtimeTest.detail}
+              </p>
+            ) : (
+              <p>
+                Checks whether Thoughts can use it without sending a prompt.
+              </p>
+            )}
           </div>
         </GadgetGroup>
       </div>
 
+      <section
+        ref={hostedRef}
+        className="models-hosted-setup"
+        aria-labelledby="models-hosted-title"
+      >
+        <div className="models-hosted-head">
+          <div>
+            <p className="models-setup-kicker">Hosted presets</p>
+            <h3 id="models-hosted-title">OpenRouter Qwen presets</h3>
+            <p>
+              Paste one OpenRouter key, then pick the speed and depth you want.
+              The key stays on this hub.
+            </p>
+          </div>
+          <label className="models-preset-key">
+            <span>OPENROUTER KEY</span>
+            <input
+              type="password"
+              autoComplete="new-password"
+              value={openRouterKey}
+              placeholder="sk-or-v1-…"
+              onChange={(event) => setOpenRouterKey(event.target.value)}
+            />
+          </label>
+          <Button variant="ghost" onClick={openConnections}>
+            DEFINE YOUR OWN PROVIDER
+          </Button>
+        </div>
+        <div className="models-preset-grid">
+          {OPENROUTER_PRESETS.map((preset) => {
+            const existing = targets.find(
+              (target) => target.id === preset.targetId,
+            );
+            const usable = Boolean(
+              existing?.key_present || openRouterKey.trim(),
+            );
+            const selected = thoughtTargetId === preset.targetId;
+            return (
+              <article
+                key={preset.targetId}
+                className="models-preset-card"
+                data-selected={selected || undefined}
+              >
+                <span className="models-preset-size">{preset.size}</span>
+                <h4>{preset.name.replace("OpenRouter · ", "")}</h4>
+                <p>{preset.description}</p>
+                <code>{preset.model}</code>
+                <Button
+                  variant={selected ? "ghost" : "primary"}
+                  loading={presetBusy === preset.targetId}
+                  disabled={selected || !usable || Boolean(presetBusy)}
+                  onClick={() => void useOpenRouterPreset(preset)}
+                >
+                  {selected
+                    ? "IN USE"
+                    : existing?.key_present
+                      ? "USE THIS AI"
+                      : "ADD & USE"}
+                </Button>
+              </article>
+            );
+          })}
+        </div>
+        {!openRouterKey.trim() &&
+        !OPENROUTER_PRESETS.some(
+          (preset) =>
+            targets.find((target) => target.id === preset.targetId)
+              ?.key_present,
+        ) ? (
+          <p className="models-preset-guidance">
+            Enter one key to enable these choices—or define any compatible
+            provider yourself.
+          </p>
+        ) : null}
+        {presetStatus ? (
+          <p className="models-preset-status" role="status">
+            {presetStatus}
+          </p>
+        ) : null}
+      </section>
+
       <div className="models-job-routing">
         <GadgetGroup label="Choose AI for each job">
-          <p className="models-section-help">Most people can leave these on This device. A connection here changes only that job.</p>
-          {pointerRow("Writing & dictation", ["dictation", "runtime", "profile_id"], "Polishes spoken text")}
-            {meetingsBlock}
+          <p className="models-section-help">
+            Most people can leave these on This device. A connection here
+            changes only that job.
+          </p>
+          {pointerRow(
+            "Thoughts & notes",
+            ["thoughts", "inference_target_id"],
+            "Interviews and refinement",
+          )}
+          {pointerRow(
+            "Writing & dictation",
+            ["dictation", "runtime", "profile_id"],
+            "Polishes spoken text",
+          )}
+          {meetingsBlock}
         </GadgetGroup>
       </div>
 
@@ -897,13 +1240,30 @@ export function ModelsModule({
         onToggle={setConnectionsOpen}
         className="models-connections"
       >
-        <p className="models-section-help">Private endpoints, paired devices, mesh nodes, and external services live here.</p>
+        <p className="models-section-help">
+          Define any OpenAI-compatible provider, private endpoint, paired
+          device, or mesh node here.
+        </p>
         <div ref={connectionsRef} className="models-connections-anchor">
-          <div ref={destRef} className="models-destinations" data-layout={narrow ? "cards" : "matrix"}>
-            {narrow ? <div className="dest-cards-narrow">
-              {targets.map((row, index) => destinationCard(row, index))}
-              <button type="button" className="gadget-table-add" onClick={() => void add()}>+ ADD AI CONNECTION</button>
-            </div> : destinationMatrix}
+          <div
+            ref={destRef}
+            className="models-destinations"
+            data-layout={narrow ? "cards" : "matrix"}
+          >
+            {narrow ? (
+              <div className="dest-cards-narrow">
+                {targets.map((row, index) => destinationCard(row, index))}
+                <button
+                  type="button"
+                  className="gadget-table-add"
+                  onClick={() => void add()}
+                >
+                  + ADD AI CONNECTION
+                </button>
+              </div>
+            ) : (
+              destinationMatrix
+            )}
           </div>
         </div>
       </FoldGadget>
@@ -914,7 +1274,9 @@ export function ModelsModule({
             <CheckGadget
               label="Keep local model warm"
               checked={Boolean(runtime?.warm_on_start)}
-              onChange={(checked) => update(["dictation", "runtime", "warm_on_start"], checked)}
+              onChange={(checked) =>
+                update(["dictation", "runtime", "warm_on_start"], checked)
+              }
             />
           </GadgetRow>
           <GadgetRow label="Context window" fact="tokens">
@@ -923,7 +1285,9 @@ export function ModelsModule({
               value={Number(runtime?.n_ctx ?? 2048)}
               min={0}
               step={256}
-              onChange={(next) => update(["dictation", "runtime", "n_ctx"], next)}
+              onChange={(next) =>
+                update(["dictation", "runtime", "n_ctx"], next)
+              }
             />
           </GadgetRow>
           <GadgetRow label="Idle eviction" fact="s">
@@ -939,12 +1303,17 @@ export function ModelsModule({
           </GadgetRow>
         </GadgetGroup>
         <GadgetGroup label="Background assistance">
-          {pointerRow("Background assistance", ["rails_observer", "profile_id"])}
+          {pointerRow("Background assistance", [
+            "rails_observer",
+            "profile_id",
+          ])}
           <GadgetRow label="Enabled">
             <CheckGadget
               label="Background assistance"
               checked={Boolean(val(["rails_observer", "enabled"]))}
-              onChange={(checked) => update(["rails_observer", "enabled"], checked)}
+              onChange={(checked) =>
+                update(["rails_observer", "enabled"], checked)
+              }
             />
           </GadgetRow>
           <GadgetRow label="Poll" fact="s">
@@ -953,7 +1322,9 @@ export function ModelsModule({
               value={Number(val(["rails_observer", "poll_seconds"]) ?? 30)}
               min={5}
               step={5}
-              onChange={(next) => update(["rails_observer", "poll_seconds"], next)}
+              onChange={(next) =>
+                update(["rails_observer", "poll_seconds"], next)
+              }
             />
           </GadgetRow>
           <GadgetRow label="Tail" fact="events">

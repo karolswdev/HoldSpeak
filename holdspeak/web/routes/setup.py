@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import os
-from pathlib import Path
 from typing import Any
 
 from fastapi import APIRouter, Request
@@ -42,16 +41,16 @@ def build_setup_router(ctx: WebContext) -> APIRouter:
     @router.get("/api/setup/hub-default-summary")
     async def api_hub_default_summary() -> Any:
         try:
-            from ...config import Config
-            runtime = Config.load().dictation.runtime
-            backend = str(runtime.backend or "auto").strip().lower()
-            candidates = {"mlx": str(runtime.mlx_model or "").strip(), "llama_cpp": str(runtime.llama_cpp_model_path or "").strip()}
-            selected = [backend] if backend in candidates else ["mlx", "llama_cpp"] if backend == "auto" else []
-            resolved = next(((engine, model_path) for engine in selected if (model_path := candidates[engine]) and Path(model_path).expanduser().exists()), None)
-            if resolved is None:
+            from ...inference_targets import this_machine_target
+
+            target = this_machine_target()
+            if not target.ready:
                 return {"engine": "", "model": "", "available": False}
-            engine, model_path = resolved
-            return {"engine": "llama.cpp" if engine == "llama_cpp" else engine, "model": Path(model_path).expanduser().stem, "available": True}
+            return {
+                "engine": "llama.cpp",
+                "model": target.model,
+                "available": True,
+            }
         except Exception as exc:
             return error_500(exc, log, "Failed to read hub default summary")
 

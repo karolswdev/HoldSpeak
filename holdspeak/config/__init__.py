@@ -59,4 +59,5 @@ from .integrations import (  # noqa: F401
     CadenceConfig,
     RailsObserverConfig,
     TelegramConfig,
+    ThoughtsConfig,
 )

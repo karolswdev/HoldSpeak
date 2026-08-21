@@ -20,7 +20,7 @@ from .meeting import (
 from .model import LLMRuntimeConfig, ModelConfig
 from .ui import HotkeyConfig, MacrosConfig, UIConfig
 from .device import DeviceConfig, MeshConfig, PresenceConfig, WakeWordConfig
-from .integrations import CadenceConfig, RailsObserverConfig, TelegramConfig
+from .integrations import CadenceConfig, RailsObserverConfig, TelegramConfig, ThoughtsConfig
 
 logger = logging.getLogger(__name__)
 
@@ -200,6 +200,7 @@ class Config:
     cadence: CadenceConfig = field(default_factory=CadenceConfig)
     cadence_telegram: TelegramConfig = field(default_factory=TelegramConfig)
     rails_observer: RailsObserverConfig = field(default_factory=RailsObserverConfig)
+    thoughts: ThoughtsConfig = field(default_factory=ThoughtsConfig)
 
     @classmethod
     def load(cls, path: Optional[Path] = None) -> "Config":
@@ -258,6 +259,9 @@ class Config:
                 ),
                 rails_observer=_coerce(
                     RailsObserverConfig, data.get("rails_observer", {}) or {}, section="rails_observer"
+                ),
+                thoughts=_coerce(
+                    ThoughtsConfig, data.get("thoughts", {}) or {}, section="thoughts"
                 ),
             )
             # HS-112-01: the one-time legacy-endpoint migration runs only on

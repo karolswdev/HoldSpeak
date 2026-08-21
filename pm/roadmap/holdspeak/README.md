@@ -19,7 +19,10 @@ no Save, confirmation, model, or setup. The same Note remains findable and can
 explicitly Resume refining. The dedicated Thought Workbench keeps a document-like
 Note beside a focused interview: **Ask AI** starts one durable turn, and explicit
 **Add & ask next** atomically enriches the Note and reserves exactly one more.
-When AI is unavailable, **Set up AI** opens Models directly. Context is explicit and visible:
+When AI is unavailable, **Set up AI** opens Models directly. Models now offers
+honest GGUF/llama.cpp local setup, three ready-to-fill OpenRouter Qwen presets,
+and a first-class custom-provider path; the selected **Thoughts & notes** target
+is the same target Workbench admits and executes. Context is explicit and visible:
 new Thoughts begin with none, pinned Everyday context attaches in one compact
 interaction, and only qualified refs cross HTTP/MCP before the server freezes
 exact versioned leaves. The same compact picker can explicitly promote the

@@ -219,8 +219,8 @@ class RefinementCoordinator:
         if not self._uses_default_ask:
             return {"target_id":"test","target_kind":"this_device","boundary":"same_device",
                     "engine":"scripted","model":"scripted","readiness":"ready","reason":""}
-        from ..inference_targets import resolve_placement
-        target = resolve_placement(self._database).target
+        from ..inference_targets import resolve_thought_placement
+        target = resolve_thought_placement(self._database).target
         return {"target_id":target.id,"target_kind":target.kind,"boundary":target.boundary,
                 "engine":target.engine,"model":target.model,"readiness":target.readiness_state,
                 "reason":target.readiness_reason}

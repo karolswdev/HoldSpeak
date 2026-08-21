@@ -211,3 +211,12 @@ review; five rounds surface the rigor/cost choice to the owner.
   discovery and the no-prompt readiness check reuse existing projections; no
   new model authority was added. Fresh 1440/393 glass passed. This is an
   HS-141-04 recovery/craft rider, so Phase progress remains **6/9**.
+- 2026-08-20 — The owner found that the local picker offered an MLX model that
+  could never power a Thought interview and asked for strong hosted defaults.
+  The screen now exposes only GGUF/llama.cpp as the current on-device Thought
+  path, names MLX as writing/dictation-only, and offers Quick, Balanced, and
+  Deep OpenRouter Qwen presets beside a first-class custom-provider action.
+  Workbench now resolves the selected **Thoughts & notes** destination through
+  projection, admission, readiness recheck, and execution. Public-API browser
+  glass at 1440/393 created and selected a preset without leaking its key.
+  Phase progress remains **6/9**.

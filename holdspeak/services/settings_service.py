@@ -231,6 +231,7 @@ class SettingsService:
             ModelConfig,
             PresenceConfig,
             RailsObserverConfig,
+            ThoughtsConfig,
             UIConfig,
             VoiceMacroError,
             WakeWordConfig,
@@ -808,6 +809,17 @@ class SettingsService:
                 "error": "rails_observer.poll_seconds must be >= 5 and rails_observer.tail >= 1",
             }
 
+        thoughts_data = merged.get("thoughts", {}) or {}
+        thoughts_data["inference_target_id"] = (
+            str(
+                thoughts_data.get(
+                    "inference_target_id", current.thoughts.inference_target_id or ""
+                )
+                or ""
+            ).strip()
+            or None
+        )
+
         updated = replace(
             current,
             hotkey=HotkeyConfig(**hotkey_data),
@@ -819,6 +831,7 @@ class SettingsService:
             presence=PresenceConfig(**presence_data),
             wake_word=WakeWordConfig(**wake_data),
             rails_observer=RailsObserverConfig(**rails_data),
+            thoughts=ThoughtsConfig(**thoughts_data),
         )
         updated.save()
 

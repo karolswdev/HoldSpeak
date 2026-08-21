@@ -12,6 +12,7 @@ import holdspeak.db as hsdb
 from holdspeak.db import Database, reset_database
 from holdspeak.inference_targets import (
     resolve_inference_target,
+    resolve_thought_placement,
     target_from_profile,
     this_machine_target,
 )
@@ -119,14 +120,11 @@ def test_hub_default_summary_names_only_an_available_local_model(
     tmp_path, monkeypatch
 ) -> None:
     model = tmp_path / "Qwen3.5-4B-Instruct-Q4_K_M.gguf"
-    runtime = SimpleNamespace(
-        backend="llama_cpp",
-        mlx_model=str(tmp_path / "missing-mlx"),
-        llama_cpp_model_path=str(model),
-    )
     monkeypatch.setattr(
         "holdspeak.config.Config.load",
-        lambda: SimpleNamespace(dictation=SimpleNamespace(runtime=runtime)),
+        lambda: SimpleNamespace(
+            meeting=SimpleNamespace(intel_realtime_model=str(model))
+        ),
     )
     app = FastAPI()
     app.include_router(
@@ -149,6 +147,39 @@ def test_hub_default_summary_names_only_an_available_local_model(
         "available": True,
     }
 
+
+def test_thought_placement_uses_its_selected_target_and_blank_means_this_device(
+    rig, monkeypatch, tmp_path
+) -> None:
+    db, _ = rig
+    db.profiles.upsert(
+        profile_id="openrouter-qwen",
+        name="OpenRouter Qwen",
+        kind="openAICompatible",
+        base_url="https://openrouter.ai/api/v1",
+        model="qwen/qwen3.8-27b",
+        requires_key=False,
+    )
+    monkeypatch.setattr(
+        "holdspeak.config.Config.load",
+        lambda: SimpleNamespace(
+            thoughts=SimpleNamespace(inference_target_id="openrouter-qwen")
+        ),
+    )
+    selected = resolve_thought_placement(db)
+    assert selected.target.id == "openrouter-qwen"
+    assert selected.target.model == "qwen/qwen3.8-27b"
+
+    local = tmp_path / "local.gguf"
+    local.touch()
+    monkeypatch.setattr(
+        "holdspeak.config.Config.load",
+        lambda: SimpleNamespace(
+            thoughts=SimpleNamespace(inference_target_id=None),
+            meeting=SimpleNamespace(intel_realtime_model=str(local)),
+        ),
+    )
+    assert resolve_thought_placement(db).target.id == "this_machine"
 
 def test_required_key_refuses_without_leaking_or_borrowing_another_key(
     rig, monkeypatch

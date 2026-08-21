@@ -606,13 +606,13 @@ class RefinementThoughtService:
         The caller has already entered BEGIN IMMEDIATE, so settings cannot race
         between this observation and persistence of the immutable claim.
         """
-        from ..inference_targets import resolve_placement
+        from ..inference_targets import resolve_thought_placement
         if not isinstance(claim, dict):
             raise ConflictError("the next turn is unavailable", code="refinement_continuation_unavailable")
         # This fence is used only for coordinator-owned default selection.
         # Re-run that selector itself: resolving the already-claimed id would
         # miss an A→B default change and make the comparison decorative.
-        target = resolve_placement(self._db).target
+        target = resolve_thought_placement(self._db).target
         current = {"target_id":target.id,"target_kind":target.kind,"boundary":target.boundary,
                    "engine":target.engine,"model":target.model,"readiness":target.readiness_state,
                    "reason":target.readiness_reason}

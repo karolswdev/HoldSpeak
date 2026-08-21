@@ -579,6 +579,20 @@ def resolve_placement(
     )
 
 
+def resolve_thought_placement(db: Any) -> PlacementResolution:
+    """Resolve the owner-configured Thought Workbench destination.
+
+    A blank pointer inherits the built-in this-device target. Keeping this
+    selector here makes setup, projection, reservation, and the final
+    transaction-bound admission recheck name the same target.
+    """
+    from .config import Config
+
+    config = Config.load()
+    pointer = getattr(getattr(config, "thoughts", None), "inference_target_id", None)
+    return resolve_placement(db, workbench=pointer)
+
+
 def target_refusal(target: InferenceTarget) -> dict[str, Any]:
     return {
         "error": target.readiness_reason

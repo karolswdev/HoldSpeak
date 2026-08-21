@@ -67,8 +67,8 @@ class RefinementApplicationService:
                             "readiness":claim["readiness"]}
                 target_ready = claim["readiness"] == "ready"
             else:
-                from ..inference_targets import resolve_placement
-                target = resolve_placement(self._database).target
+                from ..inference_targets import resolve_thought_placement
+                target = resolve_thought_placement(self._database).target
                 intended = {"target_id":target.id,"target_name":target.name,
                             "target_kind":target.kind,"boundary":target.boundary,
                             "readiness":target.readiness_state}
