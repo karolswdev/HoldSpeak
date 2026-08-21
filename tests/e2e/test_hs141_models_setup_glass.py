@@ -39,16 +39,37 @@ def test_models_setup_is_projected_truth_with_one_action_seat(tmp_path: Path, mo
     from playwright.sync_api import sync_playwright
     import holdspeak.config as config_module
     import holdspeak.db.core as db_core
+    import holdspeak.services.inference_acquisition_service as acquisition_module
+    import holdspeak.services.inference_setup_service as setup_module
     from holdspeak.db import reset_database
     from holdspeak.web_server import MeetingWebServer, WebRuntimeCallbacks
 
     home = tmp_path / "home"
     home.mkdir()
+    existing_model = home / "Models" / "gguf" / "Qwen3-4B-Existing-Q6_K.gguf"
+    existing_model.parent.mkdir(parents=True)
+    existing_model.write_bytes(b"GGUF" + b"glass-existing-model")
     browser_cache = Path(os.environ.get("PLAYWRIGHT_BROWSERS_PATH", Path.home() / "Library/Caches/ms-playwright"))
     monkeypatch.setenv("HOME", str(home))
     monkeypatch.setenv("PLAYWRIGHT_BROWSERS_PATH", str(browser_cache))
     monkeypatch.setattr(config_module, "CONFIG_FILE", home / ".holdspeak" / "config.json")
     monkeypatch.setattr(db_core, "DEFAULT_DB_PATH", tmp_path / "holdspeak.db")
+    original_package_revision = setup_module._package_revision
+    monkeypatch.setattr(
+        setup_module,
+        "_package_revision",
+        lambda distribution, fallback: "0.3.34"
+        if distribution == "llama-cpp-python"
+        else original_package_revision(distribution, fallback),
+    )
+    original_runtime_version = acquisition_module.importlib.metadata.version
+    monkeypatch.setattr(
+        acquisition_module.importlib.metadata,
+        "version",
+        lambda distribution: "0.3.34"
+        if distribution == "llama-cpp-python"
+        else original_runtime_version(distribution),
+    )
     reset_database()
 
     server = MeetingWebServer(
@@ -96,18 +117,20 @@ def test_models_setup_is_projected_truth_with_one_action_seat(tmp_path: Path, mo
 
             hosted = [row for row in projection["presets"] if row["kind"] == "hosted_profile_preset"]
             catalog = projection["presets"]
+            detected = projection["detected_local_artifacts"]
+            choices = [*detected, *catalog]
             radios = setup.get_by_role("radiogroup", name="AI choices").get_by_role("radio")
-            assert radios.count() == len(catalog)
-            if catalog:
+            assert radios.count() == len(choices)
+            if choices:
                 expected = next(
                     (row for row in hosted if row["existing_profile"]["target_id"] == projection["current_routes"]["thoughts"]["target_id"]),
-                    catalog[0],
+                    choices[0],
                 )
                 expected_radio = setup.locator(f'input[type="radio"][value="{expected["id"]}"]')
                 assert expected_radio.is_checked()
-                if len(catalog) > 1:
-                    expected_index = catalog.index(expected)
-                    next_row = catalog[(expected_index + 1) % len(catalog)]
+                if len(choices) > 1:
+                    expected_index = choices.index(expected)
+                    next_row = choices[(expected_index + 1) % len(choices)]
                     expected_radio.focus()
                     expected_radio.press("ArrowRight")
                     assert setup.locator(
@@ -139,6 +162,17 @@ def test_models_setup_is_projected_truth_with_one_action_seat(tmp_path: Path, mo
             connections = setup.get_by_text("AI connections", exact=True).locator("xpath=ancestor::details")
             assert connections.get_attribute("open") is None
 
+            assert detected and detected[0]["activation"]["action"] == "use_existing"
+            setup.locator(f'input[type="radio"][value="{detected[0]["id"]}"]').click()
+            setup.get_by_role("button", name="USE THIS MODEL", exact=True).click()
+            setup.get_by_text("Ready · in use for Thoughts", exact=True).wait_for(timeout=10000)
+            used = _api(page, "GET", "/api/inference/setup")["setup"]
+            acquisition = next(row for row in used["acquisitions"] if row["preset_id"] == detected[0]["id"])
+            assert acquisition["state"] == "ready"
+            assert acquisition["activation_state"] == "in_use"
+            assert str(home) not in str(used)
+            assert setup.locator(".models-capability-action button").count() == 0
+
             if hosted:
                 chosen = hosted[-1]
                 radio = setup.locator(f'input[type="radio"][value="{chosen["id"]}"]')
@@ -147,10 +181,11 @@ def test_models_setup_is_projected_truth_with_one_action_seat(tmp_path: Path, mo
                 key.fill("glass-only-openrouter-key")
                 action = setup.get_by_role("button", name=f"ADD & USE {chosen['experience'].upper()}", exact=True)
                 action.click()
-                setup.get_by_text(f"{chosen['label']} selected for Thoughts & notes.", exact=True).wait_for()
-                assert key.count() == 0 or key.input_value() == ""
+                page.wait_for_timeout(1200)
+                assert key.count() == 0 or key.input_value() == "", setup.inner_text()
                 config = _api(page, "GET", "/api/settings")
                 assert config["thoughts"]["inference_target_id"] == chosen["existing_profile"]["target_id"]
+                setup.get_by_text("IN USE FOR THOUGHTS", exact=True).wait_for(timeout=10000)
                 targets = _api(page, "GET", "/api/inference-targets")["targets"]
                 selected = next(row for row in targets if row["id"] == chosen["existing_profile"]["target_id"])
                 assert selected["model"] == chosen["existing_profile"]["model"]

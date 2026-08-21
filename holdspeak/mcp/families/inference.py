@@ -43,6 +43,20 @@ TOOLS = [
         },
         ["request_id", "job_id", "expected_revision"],
     ),
+    _tool(
+        "inference.use_existing_model",
+        "Verify and use one local GGUF projected by inference setup.",
+        {
+            "request_id": {"type": "string"},
+            "detected_artifact_id": {"type": "string"},
+            "context_choice": {"type": "integer", "enum": [8192]},
+            "expected_route_revision": {"type": "string"},
+        },
+        [
+            "request_id", "detected_artifact_id", "context_choice",
+            "expected_route_revision",
+        ],
+    ),
 ]
 
 
@@ -63,4 +77,6 @@ def dispatch(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
             "expected_revision": arguments["expected_revision"],
         }
         return _service().cancel(principal, str(arguments["job_id"]), body)
+    if name == "inference.use_existing_model":
+        return _service().use_existing(principal, dict(arguments))
     raise LookupError(name)

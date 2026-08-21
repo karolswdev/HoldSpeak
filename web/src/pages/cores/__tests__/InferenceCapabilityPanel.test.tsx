@@ -8,6 +8,7 @@ const hosted = (id: string, experience: "quick" | "balanced" | "deep") => ({
   id,
   experience,
   label: `${experience} choice`,
+  summary: `${experience} hosted choice.`,
   provider_adapter: "openai_compatible" as const,
   model_id: `provider/${id}`,
   boundary: "external_service" as const,
@@ -30,7 +31,7 @@ function setup(overrides: Partial<InferenceSetup> = {}): InferenceSetup {
     schema_version: 1,
     observed_at: "2026-08-21T18:00:00Z",
     preset_catalog: {
-      schema_version: 1, catalog_revision: 2,
+      schema_version: 1, catalog_revision: 3,
       generated_at: "2026-08-21T00:00:00Z", expires_at: "2036-08-01T00:00:00Z",
       signing_key_id: "test", sha256: `sha256:${"c".repeat(64)}`,
     },
@@ -234,6 +235,7 @@ describe("InferenceCapabilityPanel", () => {
       id: "local-q",
       experience: "quick" as const,
       label: "Local Q",
+      summary: "Fast intent routing and short Notes.",
       runtime_id: "llama.cpp",
       runtime_min_revision: "0.3.34",
       format: "gguf" as const,
@@ -266,6 +268,39 @@ describe("InferenceCapabilityPanel", () => {
     expect(screen.getByText(/runs only on this device/i)).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /download & use quick/i }));
     await waitFor(() => expect(download).toHaveBeenCalledWith(local));
+  });
+
+  it("selects a detected GGUF and offers one real verify-and-use action", async () => {
+    const useExisting = vi.fn(async () => undefined);
+    const artifact = {
+      id: "detected-local-qwen",
+      label: "Qwen3-4B-Q6_K.gguf",
+      format: "gguf" as const,
+      size_bytes: 2_400_000_000,
+      configured_for_thoughts: false,
+      thought_support: {
+        state: "candidate" as const,
+        reason: "Detected locally and ready to verify for Thoughts.",
+      },
+      activation: {
+        state: "available" as const,
+        action: "use_existing" as const,
+        context_tokens: 8192 as const,
+        reason: "HoldSpeak will verify this file before using it.",
+      },
+    };
+    render(
+      <InferenceCapabilityPanel
+        {...defaults}
+        setup={setup({ detected_local_artifacts: [artifact], presets: [] })}
+        onUseHosted={vi.fn(async () => true)}
+        onUseExisting={useExisting}
+      />,
+    );
+    expect(screen.getByRole("radio", { name: /Qwen3-4B-Q6_K/ })).toBeChecked();
+    expect(screen.getByRole("heading", { name: "Already on this device" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "USE THIS MODEL" }));
+    await waitFor(() => expect(useExisting).toHaveBeenCalledWith(artifact));
   });
 
   it("clears a secret only after confirmed success and retains it on failure", async () => {

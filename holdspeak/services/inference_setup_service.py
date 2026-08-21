@@ -302,7 +302,53 @@ def _valid_mlx(path: Path) -> bool:
         return False
 
 
-def inspect_local_artifacts(*, home: Path, current_target: InferenceTarget) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+def _artifact_size(path: Path) -> int:
+    try:
+        if path.is_file():
+            return int(path.stat().st_size)
+        total = 0
+        with os.scandir(path) as iterator:
+            for ordinal, child in enumerate(iterator):
+                if ordinal >= _MAX_DIRECTORY_ENTRIES:
+                    break
+                if child.is_file(follow_symlinks=False):
+                    total += int(child.stat(follow_symlinks=False).st_size)
+        return total
+    except OSError:
+        return 0
+
+
+def _detected_artifact_id(format_id: str, path: Path, _ordinal: int) -> str:
+    """Return a public, path-independent scan identity (never a locator).
+
+    The ordinal is deliberately ignored: adding another model must not make an
+    already-rendered choice resolve to a different file.  A bounded content
+    prefix makes the ID independent of the owner's home path and filesystem
+    timestamps; activation still performs full content verification before
+    registering anything executable.
+    """
+    try:
+        size = _artifact_size(path)
+        if path.is_file():
+            with path.open("rb") as handle:
+                prefix = handle.read(_MAX_MLX_CONFIG_BYTES)
+        else:
+            config = path / "config.json"
+            with config.open("rb") as handle:
+                prefix = handle.read(_MAX_MLX_CONFIG_BYTES)
+        scan_facts = str(size).encode("ascii") + b"\0" + prefix
+    except OSError:
+        scan_facts = b"unavailable"
+    digest = hashlib.sha256()
+    digest.update((format_id + "\0" + path.name + "\0").encode("utf-8"))
+    digest.update(scan_facts)
+    return "detected_" + digest.hexdigest()[:20]
+
+
+def _scan_local_artifact_candidates(
+    *, home: Path, current_target: InferenceTarget,
+) -> tuple[list[tuple[str, Path]], dict[str, Any]]:
+    """Boundedly inspect local model roots while retaining locators in-process."""
     configured_raw = str(getattr(current_target.deployment, "model_path", "") or "").strip()
     configured = Path(configured_raw).expanduser() if configured_raw else None
     found: list[tuple[str, Path]] = []
@@ -362,28 +408,11 @@ def inspect_local_artifacts(*, home: Path, current_target: InferenceTarget) -> t
     for format_id, path in found:
         key = str(path.absolute())
         unique[key] = (format_id, path)
-    rows: list[dict[str, Any]] = []
     configured_row = unique.pop(str(configured.absolute()), None) if configured is not None else None
     ordered = ([configured_row] if configured_row is not None else []) + sorted(
         unique.values(), key=lambda item: (item[1].name.casefold(), str(item[1]))
     )
-    for ordinal, (format_id, path) in enumerate(ordered[0:_MAX_DETECTED]):
-        is_configured = configured is not None and path.absolute() == configured.absolute()
-        if format_id == "mlx_safetensors":
-            support = {"state": "unsupported", "reason": "MLX is not executable by Thoughts yet."}
-        elif is_configured and current_target.ready:
-            support = {"state": "current_v1", "reason": "This is the configured v1 Thought model."}
-        else:
-            support = {"state": "candidate", "reason": "Detected locally but not verified as the current Thought deployment."}
-        rows.append({
-            "id": "detected_" + hashlib.sha256(
-                (format_id + "\0" + path.name + "\0" + str(ordinal)).encode("utf-8")
-            ).hexdigest()[:20],
-            "label": _public_text(path.name, "Local model"),
-            "format": format_id,
-            "configured_for_thoughts": is_configured,
-            "thought_support": support,
-        })
+    ordered = ordered[0:_MAX_DETECTED]
     capped = len(unique) > _MAX_DETECTED or traversal_capped
     if scanned == 0:
         detection = {"state": "unavailable", "reason": "Local model folders could not be inspected."}
@@ -391,7 +420,81 @@ def inspect_local_artifacts(*, home: Path, current_target: InferenceTarget) -> t
         detection = {"state": "partial", "reason": "Some local model facts could not be inspected." if failures else f"Only the first {_MAX_DETECTED} local models are shown."}
     else:
         detection = {"state": "complete", "reason": None}
+    return ordered, detection
+
+
+def inspect_local_artifacts(
+    *,
+    home: Path,
+    current_target: InferenceTarget,
+    gguf_executable: bool = True,
+) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    ordered, detection = _scan_local_artifact_candidates(
+        home=home, current_target=current_target,
+    )
+    configured_raw = str(getattr(current_target.deployment, "model_path", "") or "").strip()
+    configured = Path(configured_raw).expanduser() if configured_raw else None
+    rows: list[dict[str, Any]] = []
+    for ordinal, (format_id, path) in enumerate(ordered[0:_MAX_DETECTED]):
+        is_configured = configured is not None and path.absolute() == configured.absolute()
+        if format_id == "mlx_safetensors":
+            support = {"state": "unsupported", "reason": "MLX is not executable by Thoughts yet."}
+            activation = {
+                "state": "unsupported", "action": "none", "context_tokens": None,
+                "reason": "MLX Thought execution is not installed yet.",
+            }
+        elif is_configured and current_target.ready:
+            support = {"state": "current_v1", "reason": "This is the configured v1 Thought model."}
+            activation = {
+                "state": "current", "action": "none",
+                "context_tokens": min(max(int(current_target.context_limit or 8192), 1), 32768),
+                "reason": "Thoughts already use this model.",
+            }
+        elif gguf_executable:
+            support = {"state": "candidate", "reason": "Detected locally and ready to verify for Thoughts."}
+            activation = {
+                "state": "available", "action": "use_existing", "context_tokens": 8192,
+                "reason": "HoldSpeak will verify this file before using it.",
+            }
+        else:
+            support = {"state": "candidate", "reason": "Detected locally, but llama.cpp support is unavailable."}
+            activation = {
+                "state": "unavailable", "action": "none", "context_tokens": None,
+                "reason": "Install llama.cpp support before using this GGUF.",
+            }
+        rows.append({
+            "id": _detected_artifact_id(format_id, path, ordinal),
+            "label": _public_text(path.name, "Local model"),
+            "format": format_id,
+            "size_bytes": _artifact_size(path),
+            "configured_for_thoughts": is_configured,
+            "thought_support": support,
+            "activation": activation,
+        })
     return rows, detection
+
+
+def resolve_detected_local_artifact(
+    *, home: Path, current_target: InferenceTarget, artifact_id: str,
+) -> dict[str, Any] | None:
+    """Resolve one projected scan id to a private locator after fresh inspection."""
+    ordered, _detection = _scan_local_artifact_candidates(
+        home=home, current_target=current_target,
+    )
+    for ordinal, (format_id, path) in enumerate(ordered):
+        if _detected_artifact_id(format_id, path, ordinal) != artifact_id:
+            continue
+        try:
+            return {
+                "id": artifact_id,
+                "format": format_id,
+                "label": _public_text(path.name, "Local model"),
+                "path": path,
+                "size_bytes": _artifact_size(path),
+            }
+        except OSError:
+            return None
+    return None
 
 
 def _execution_support(
@@ -472,7 +575,15 @@ class InferenceSetupApplicationService:
         hardware = inspect_hardware(home=home, now=now)
         runtimes = inspect_runtimes(apple_silicon=hardware["capability"]["apple_silicon"])
         source, configured_target_id, target = _thought_target(self._db, config)
-        artifacts, artifact_detection = inspect_local_artifacts(home=home, current_target=target)
+        llama_ready = any(
+            row["id"] == "llama_cpp_prompt_v1"
+            and row["availability"]["state"] == "available"
+            and row["thought_support"]["state"] == "supported"
+            for row in runtimes
+        )
+        artifacts, artifact_detection = inspect_local_artifacts(
+            home=home, current_target=target, gguf_executable=llama_ready,
+        )
         execution_support = _execution_support(target, artifacts, runtimes)
         runtime_ids = {row["id"] for row in runtimes if row["availability"]["state"] == "available"}
         platform_id = f'{hardware["capability"]["system"]}_{hardware["capability"]["architecture"]}'

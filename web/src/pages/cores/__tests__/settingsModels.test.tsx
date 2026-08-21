@@ -461,7 +461,7 @@ describe("Models destination workbench (HS-139 beauty pass)", () => {
     await screen.findByRole("heading", { name: "Choose an experience" });
     const balanced = screen.getByRole("radio", { name: /Balanced Qwen/ });
     await waitFor(() =>
-      expect(screen.getByRole("radio", { name: /Deep Qwen/ })).toBeChecked(),
+      expect(screen.getByRole("radio", { name: /Pocket GGUF/ })).toBeChecked(),
     );
     fireEvent.click(balanced);
     expect(balanced).toBeChecked();
@@ -515,9 +515,7 @@ describe("Models destination workbench (HS-139 beauty pass)", () => {
         onRefuse={vi.fn()}
       />,
     );
-    await waitFor(() =>
-      expect(screen.getByRole("radio", { name: /Deep Qwen/ })).toBeChecked(),
-    );
+    fireEvent.click(await screen.findByRole("radio", { name: /Deep Qwen/ }));
     const key = screen.getByLabelText("OpenRouter key");
     fireEvent.change(key, { target: { value: "durability-sentinel" } });
     fireEvent.click(screen.getByRole("button", { name: "ADD & USE DEEP" }));
@@ -539,9 +537,7 @@ describe("Models destination workbench (HS-139 beauty pass)", () => {
         onRefuse={vi.fn()}
       />,
     );
-    await waitFor(() =>
-      expect(screen.getByRole("radio", { name: /Deep Qwen/ })).toBeChecked(),
-    );
+    fireEvent.click(await screen.findByRole("radio", { name: /Deep Qwen/ }));
     const key = screen.getByLabelText("OpenRouter key");
     fireEvent.change(key, { target: { value: "cas-refusal-sentinel" } });
     fireEvent.click(screen.getByRole("button", { name: "ADD & USE DEEP" }));

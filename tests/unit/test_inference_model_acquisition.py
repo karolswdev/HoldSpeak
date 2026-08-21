@@ -23,6 +23,7 @@ from holdspeak.principals import Principal, PrincipalKind
 from holdspeak.mcp import resources
 from holdspeak.mcp.families import inference as inference_mcp
 from holdspeak.services.inference_acquisition_service import InferenceAcquisitionApplicationService
+from holdspeak.services.inference_setup_service import InferenceSetupApplicationService
 from holdspeak.services.setup_service import SetupService
 from holdspeak.web.context import WebContext
 from holdspeak.web.routes.setup import build_setup_router
@@ -83,6 +84,7 @@ def _fixture(tmp_path: Path):
         "id": "preset_test_gguf",
         "experience": "quick",
         "label": "Quick test model",
+        "summary": "Fast local test model.",
         "runtime_id": "llama_cpp_prompt_v1",
         "runtime_min_revision": "0.3.16",
         "format": "gguf",
@@ -150,6 +152,81 @@ def test_download_verify_adopt_activate_and_replay(tmp_path: Path):
     assert resolved is not None
     assert resolved.model_path == config.meeting.intel_realtime_model
     assert "model_path" not in resolved.to_dict()
+
+
+def test_detected_gguf_can_be_verified_selected_and_replayed(tmp_path: Path, monkeypatch):
+    model = tmp_path / "Models" / "gguf" / "already-here.gguf"
+    model.parent.mkdir(parents=True)
+    model.write_bytes(b"GGUF" + b"existing-model-bytes")
+    config = Config()
+    db = Database(tmp_path / "holdspeak.db")
+    setup = InferenceSetupApplicationService(
+        db, config_provider=lambda: config, home_provider=lambda: tmp_path,
+    )
+    service = InferenceAcquisitionApplicationService(
+        db,
+        setup_service=setup,
+        model_root=tmp_path / "managed-models",
+        config_provider=lambda: config,
+        config_saver=lambda _config: None,
+        home_provider=lambda: tmp_path,
+        auto_recover=False,
+    )
+    service._submit = lambda _job_id: None
+    monkeypatch.setattr(
+        "holdspeak.services.inference_acquisition_service.importlib.metadata.version",
+        lambda _package: "0.3.34",
+    )
+    projected = setup.get_inference_setup(OWNER)
+    detected = next(row for row in projected["detected_local_artifacts"] if row["label"] == model.name)
+    assert detected["activation"]["action"] == "use_existing"
+    body = {
+        "request_id": "use-existing-one",
+        "detected_artifact_id": detected["id"],
+        "context_choice": 8192,
+        "expected_route_revision": projected["current_routes"]["thoughts"]["revision"],
+    }
+
+    started = service.use_existing(OWNER, body)["acquisition"]
+    service._run(started["id"])
+    complete = service.get_acquisition(OWNER, started["id"])["acquisition"]
+
+    assert complete["state"] == "ready"
+    assert complete["activation_state"] == "in_use"
+    assert complete["verified_bytes"] == model.stat().st_size
+    assert config.meeting.intel_realtime_model == str(model)
+    assert service.use_existing(OWNER, body)["acquisition"]["id"] == complete["id"]
+    monkeypatch.setattr(inference_mcp, "_service", lambda: service)
+    assert inference_mcp.dispatch("inference.use_existing_model", body, OWNER)["acquisition"]["id"] == complete["id"]
+    app = FastAPI()
+
+    @app.middleware("http")
+    async def existing_owner(request: Request, call_next):
+        request.state.principal = OWNER
+        return await call_next(request)
+
+    app.include_router(build_setup_router(WebContext(
+        get_state=lambda: {}, setup_service=SetupService(db),
+        inference_setup_service=setup, inference_acquisition_service=service,
+    )))
+    client = TestClient(app)
+    assert client.post("/api/inference/acquisitions/use-existing", json=body).status_code == 202
+    assert client.post(
+        "/api/inference/acquisitions/use-existing", json={**body, "invented": True},
+    ).status_code == 400
+    with db._connection() as conn:
+        artifact = conn.execute(
+            "SELECT source_kind,local_locator FROM inference_model_artifacts WHERE artifact_id=?",
+            (complete["artifact_id"],),
+        ).fetchone()
+    assert dict(artifact) == {
+        "source_kind": "existing_local_file",
+        "local_locator": str(model),
+    }
+
+    with pytest.raises(Exception) as changed:
+        service.use_existing(OWNER, {**body, "expected_route_revision": "changed"})
+    assert getattr(changed.value, "code", "") == "request_payload_mismatch"
 
 
 def test_changed_request_refuses_and_route_conflict_keeps_verified_artifact(tmp_path: Path):

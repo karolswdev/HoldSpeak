@@ -85,10 +85,17 @@ export interface InferenceSetupArtifact {
   id: string;
   label: string;
   format: "gguf" | "mlx_safetensors";
+  size_bytes: number;
   configured_for_thoughts: boolean;
   thought_support: {
     state: "current_v1" | "unsupported" | "candidate";
     reason: string | null;
+  };
+  activation: {
+    state: "available" | "current" | "unavailable" | "unsupported";
+    action: "use_existing" | "none";
+    context_tokens: 8192 | 16384 | 32768 | null;
+    reason: string;
   };
 }
 
@@ -97,6 +104,7 @@ export interface HostedInferencePreset {
   id: string;
   experience: "quick" | "balanced" | "deep";
   label: string;
+  summary: string;
   provider_adapter: "openai_compatible";
   model_id: string;
   boundary: "external_service";
@@ -119,6 +127,7 @@ export interface LocalInferencePreset {
   id: string;
   experience: "quick" | "balanced" | "deep";
   label: string;
+  summary: string;
   runtime_id: string;
   runtime_min_revision: string;
   format: "gguf" | "mlx_safetensors";
@@ -235,6 +244,26 @@ export async function downloadAndUseLocalPreset(
       preset_id: preset.id,
       catalog_revision: setup.preset_catalog.catalog_revision,
       context_choice: preset.context.recommended_tokens,
+      expected_route_revision: setup.current_routes.thoughts.revision,
+    },
+  });
+  return result.acquisition;
+}
+
+export async function useExistingLocalModel(
+  setup: InferenceSetup,
+  artifact: InferenceSetupArtifact,
+  requestId: string,
+): Promise<InferenceAcquisition> {
+  const result = await apiFetch<{
+    acquisition: InferenceAcquisition;
+    setup: InferenceSetup;
+  }>("/api/inference/acquisitions/use-existing", {
+    method: "POST",
+    json: {
+      request_id: requestId,
+      detected_artifact_id: artifact.id,
+      context_choice: artifact.activation.context_tokens,
       expected_route_revision: setup.current_routes.thoughts.revision,
     },
   });

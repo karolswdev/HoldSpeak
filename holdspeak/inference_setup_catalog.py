@@ -23,11 +23,11 @@ _EXPERIENCES = frozenset({"quick", "balanced", "deep"})
 
 
 PACKAGED_CATALOG_SCHEMA_VERSION = 1
-PACKAGED_CATALOG_MIN_REVISION = 2
-_PACKAGED_CATALOG_KEY_ID = "holdspeak_catalog_2026_03"
+PACKAGED_CATALOG_MIN_REVISION = 3
+_PACKAGED_CATALOG_KEY_ID = "holdspeak_catalog_2026_08"
 _PACKAGED_CATALOG_TRUST_ROOTS = {
     _PACKAGED_CATALOG_KEY_ID: bytes.fromhex(
-        "bbd7a874461c9038e03cba19a6c2749e0f4188c288bd480e48617d016e1d0299"
+        "c62c5c263520c00a76026bea4ca5636b61f1e4a00f0f867c6a776d13d5eb28ed"
     )
 }
 _PACKAGED_PRESETS_SOURCE: tuple[dict[str, Any], ...] = (
@@ -36,6 +36,7 @@ _PACKAGED_PRESETS_SOURCE: tuple[dict[str, Any], ...] = (
         "id": "preset_local_qwen35_4b_gguf_q4km",
         "experience": "quick",
         "label": "Quick local Qwen",
+        "summary": "Fast local Thought interviews and everyday writing.",
         "runtime_id": "llama_cpp_prompt_v1",
         "runtime_min_revision": "0.3.34",
         "format": "gguf",
@@ -56,10 +57,36 @@ _PACKAGED_PRESETS_SOURCE: tuple[dict[str, Any], ...] = (
         "applicability": {"state": "applicable", "reason": None},
     },
     {
+        "kind": "local_artifact_preset",
+        "id": "preset_local_qwen35_08b_gguf_q4km",
+        "experience": "quick",
+        "label": "Tiny local Qwen",
+        "summary": "A 0.8B local model for intent, routing, and lightweight work.",
+        "runtime_id": "llama_cpp_prompt_v1",
+        "runtime_min_revision": "0.3.34",
+        "format": "gguf",
+        "boundary": "same_device",
+        "context": {"recommended_tokens": 8192, "ceiling_tokens": 8192},
+        "source": {
+            "repository": "unsloth/Qwen3.5-0.8B-GGUF",
+            "revision": "6ab461498e2023f6e3c1baea90a8f0fe38ab64d0",
+            "filename": "Qwen3.5-0.8B-Q4_K_M.gguf",
+            "file_sha256": "sha256:bd258782e35f7f458f8aced1adc053e6e92e89bc735ba3be89d38a06121dc517",
+            "manifest_sha256": "sha256:ec6d18c20bccb7db96fd368b275ce3017d84046e8573b1ebc7854bed83ce348b",
+            "download_bytes": 532_517_120,
+            "installed_bytes": 532_517_120,
+            "peak_free_bytes": 1_200_000_000,
+            "license": "Apache-2.0",
+        },
+        "platforms": ["darwin_arm64", "linux_x86_64", "linux_aarch64"],
+        "applicability": {"state": "applicable", "reason": None},
+    },
+    {
         "kind": "hosted_profile_preset",
         "id": "preset_openrouter_qwen3_8b",
         "experience": "quick",
         "label": "OpenRouter · Quick Qwen",
+        "summary": "A small, fast Qwen for short Notes and everyday work.",
         "provider_adapter": "openai_compatible",
         "model_id": "qwen/qwen3-8b",
         "boundary": "external_service",
@@ -81,6 +108,7 @@ _PACKAGED_PRESETS_SOURCE: tuple[dict[str, Any], ...] = (
         "id": "preset_openrouter_qwen35_35b_a3b",
         "experience": "balanced",
         "label": "OpenRouter · Balanced Qwen",
+        "summary": "Strong general reasoning without using a giant model.",
         "provider_adapter": "openai_compatible",
         "model_id": "qwen/qwen3.5-35b-a3b",
         "boundary": "external_service",
@@ -102,6 +130,7 @@ _PACKAGED_PRESETS_SOURCE: tuple[dict[str, Any], ...] = (
         "id": "preset_openrouter_qwen38_27b",
         "experience": "deep",
         "label": "OpenRouter · Deep Qwen",
+        "summary": "Deeper cloud reasoning for harder synthesis.",
         "provider_adapter": "openai_compatible",
         "model_id": "qwen/qwen3.8-27b",
         "boundary": "external_service",
@@ -114,6 +143,72 @@ _PACKAGED_PRESETS_SOURCE: tuple[dict[str, Any], ...] = (
             "kind": "openAICompatible",
             "base_url": "https://openrouter.ai/api/v1",
             "model": "qwen/qwen3.8-27b",
+            "context_limit": 262_144,
+            "requires_key": True,
+        },
+    },
+    {
+        "kind": "hosted_profile_preset",
+        "id": "preset_openrouter_qwen37_flash",
+        "experience": "quick",
+        "label": "OpenRouter · Qwen Flash",
+        "summary": "The quickest economical Qwen choice for everyday work.",
+        "provider_adapter": "openai_compatible",
+        "model_id": "qwen/qwen3.7-flash",
+        "boundary": "external_service",
+        "secret_requirement": "profile_key",
+        "context": {"support": "bounded", "working_ceiling_tokens": 16_384},
+        "applicability": {"state": "applicable", "reason": None},
+        "existing_profile": {
+            "target_id": "preset_openrouter_qwen37_flash",
+            "name": "OpenRouter · Qwen Flash",
+            "kind": "openAICompatible",
+            "base_url": "https://openrouter.ai/api/v1",
+            "model": "qwen/qwen3.7-flash",
+            "context_limit": 1_000_000,
+            "requires_key": True,
+        },
+    },
+    {
+        "kind": "hosted_profile_preset",
+        "id": "preset_openrouter_gemma4_26b",
+        "experience": "balanced",
+        "label": "OpenRouter · Gemma 4",
+        "summary": "A capable Gemma 4 alternative for writing and synthesis.",
+        "provider_adapter": "openai_compatible",
+        "model_id": "google/gemma-4-26b-a4b-it",
+        "boundary": "external_service",
+        "secret_requirement": "profile_key",
+        "context": {"support": "bounded", "working_ceiling_tokens": 32_768},
+        "applicability": {"state": "applicable", "reason": None},
+        "existing_profile": {
+            "target_id": "preset_openrouter_gemma4_26b",
+            "name": "OpenRouter · Gemma 4",
+            "kind": "openAICompatible",
+            "base_url": "https://openrouter.ai/api/v1",
+            "model": "google/gemma-4-26b-a4b-it",
+            "context_limit": 262_144,
+            "requires_key": True,
+        },
+    },
+    {
+        "kind": "hosted_profile_preset",
+        "id": "preset_openrouter_qwen3_coder_next",
+        "experience": "deep",
+        "label": "OpenRouter · Coding Qwen",
+        "summary": "A coding-focused Qwen for technical plans and implementation.",
+        "provider_adapter": "openai_compatible",
+        "model_id": "qwen/qwen3-coder-next",
+        "boundary": "external_service",
+        "secret_requirement": "profile_key",
+        "context": {"support": "bounded", "working_ceiling_tokens": 32_768},
+        "applicability": {"state": "applicable", "reason": None},
+        "existing_profile": {
+            "target_id": "preset_openrouter_qwen3_coder_next",
+            "name": "OpenRouter · Coding Qwen",
+            "kind": "openAICompatible",
+            "base_url": "https://openrouter.ai/api/v1",
+            "model": "qwen/qwen3-coder-next",
             "context_limit": 262_144,
             "requires_key": True,
         },
@@ -143,7 +238,7 @@ def validate_catalog(entries: Iterable[dict[str, Any]]) -> tuple[dict[str, Any],
             raise ValueError(f"preset[{ordinal}] must be an object")
         kind = raw.get("kind")
         if kind == "hosted_profile_preset":
-            _exact(raw, {"kind", "id", "experience", "label", "provider_adapter", "model_id", "boundary", "secret_requirement", "context", "applicability", "existing_profile"}, f"preset[{ordinal}]")
+            _exact(raw, {"kind", "id", "experience", "label", "summary", "provider_adapter", "model_id", "boundary", "secret_requirement", "context", "applicability", "existing_profile"}, f"preset[{ordinal}]")
             if raw["provider_adapter"] != "openai_compatible" or raw["boundary"] != "external_service" or raw["secret_requirement"] != "profile_key":
                 raise ValueError(f"preset[{ordinal}] has unsupported hosted authority")
             if not isinstance(raw["model_id"], str) or not _MODEL_ID.fullmatch(raw["model_id"]):
@@ -156,7 +251,7 @@ def validate_catalog(entries: Iterable[dict[str, Any]]) -> tuple[dict[str, Any],
                 raise ValueError(f"preset[{ordinal}] context limit is invalid")
             _safe_text(profile["name"], f"preset[{ordinal}].existing_profile.name")
         elif kind == "local_artifact_preset":
-            _exact(raw, {"kind", "id", "experience", "label", "runtime_id", "runtime_min_revision", "format", "boundary", "context", "source", "platforms", "applicability"}, f"preset[{ordinal}]")
+            _exact(raw, {"kind", "id", "experience", "label", "summary", "runtime_id", "runtime_min_revision", "format", "boundary", "context", "source", "platforms", "applicability"}, f"preset[{ordinal}]")
             if raw["format"] not in {"gguf", "mlx_safetensors"} or raw["boundary"] != "same_device":
                 raise ValueError(f"preset[{ordinal}] has invalid local format/boundary")
             _safe_text(raw["runtime_id"], f"preset[{ordinal}].runtime_id", limit=96)
@@ -212,6 +307,7 @@ def validate_catalog(entries: Iterable[dict[str, Any]]) -> tuple[dict[str, Any],
         if raw.get("experience") not in _EXPERIENCES:
             raise ValueError(f"preset[{ordinal}].experience is invalid")
         _safe_text(raw.get("label"), f"preset[{ordinal}].label")
+        _safe_text(raw.get("summary"), f"preset[{ordinal}].summary", limit=200)
         _exact(raw["context"], {"support", "working_ceiling_tokens"}, f"preset[{ordinal}].context") if kind == "hosted_profile_preset" else None
         if kind == "hosted_profile_preset" and (raw["context"]["support"] != "bounded" or type(raw["context"]["working_ceiling_tokens"]) is not int or not 1 <= raw["context"]["working_ceiling_tokens"] <= raw["existing_profile"]["context_limit"]):
             raise ValueError(f"preset[{ordinal}].context is invalid")
@@ -224,13 +320,13 @@ def validate_catalog(entries: Iterable[dict[str, Any]]) -> tuple[dict[str, Any],
 
 _PACKAGED_CATALOG_BODY = {
     "schema_version": 1,
-    "catalog_revision": 2,
+    "catalog_revision": 3,
     "generated_at": "2026-08-21T00:00:00Z",
     "expires_at": "2036-08-01T00:00:00Z",
     "signing_key_id": _PACKAGED_CATALOG_KEY_ID,
     "entries": _PACKAGED_PRESETS_SOURCE,
 }
-_PACKAGED_CATALOG_SIGNATURE = "fdaede8d7878745afa5a740b4b3814a14363c5d8dd99aa3867e349ff827237348ba52e423a6a3b850cf03e364f2eb4ac085d7cd81ec4961990114ddb3af37a01"
+_PACKAGED_CATALOG_SIGNATURE = "2a182ff85896e5ac06c41a0a42ea2ab9d8a71000b272c586f1a8030ab4b983b3671e1b907ac16f945799de2d62c74ba969006fd831a22cccea2aed2f679b6707"
 _PACKAGED_CATALOG_JSON = json.dumps(
     {**_PACKAGED_CATALOG_BODY, "signature": _PACKAGED_CATALOG_SIGNATURE},
     sort_keys=True,

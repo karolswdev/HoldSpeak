@@ -74,6 +74,10 @@ def _safe_error(code: str) -> tuple[str, str]:
             "The model is downloaded and verified, but Thoughts changed AI while it downloaded.",
             "Choose Use for Thoughts when you are ready.",
         ),
+        "model_existing_invalid": (
+            "That local model changed or could not be verified.",
+            "Check the file, then refresh Models and try again.",
+        ),
     }
     return messages.get(code, ("Model setup stopped.", "Try again or choose another model."))
 
@@ -97,6 +101,7 @@ class InferenceAcquisitionApplicationService:
         catalog_provider: Callable[[], dict[str, Any]] | None = None,
         source_url_builder: Callable[[dict[str, Any]], str] | None = None,
         allowed_download_host: Callable[[str], bool] | None = None,
+        home_provider: Callable[[], Path] = Path.home,
         auto_recover: bool = True,
     ) -> None:
         self._db = db
@@ -114,6 +119,7 @@ class InferenceAcquisitionApplicationService:
             or host.endswith(".hf.co")
             or host.endswith(".huggingface.co")
         )
+        self._home_provider = home_provider
         self._executor = ThreadPoolExecutor(max_workers=2, thread_name_prefix="holdspeak-model")
         self._submitted: set[str] = set()
         self._submitted_lock = threading.Lock()
@@ -287,6 +293,177 @@ class InferenceAcquisitionApplicationService:
         acquisition = self._get(job_id)
         return {"acquisition": acquisition, "receipt": self._receipt(acquisition), "setup": self._setup.get_inference_setup(principal)}
 
+    def use_existing(self, principal: Principal, body: dict[str, Any]) -> dict[str, Any]:
+        """Verify and activate one freshly re-resolved detected GGUF."""
+        self._require_owner(principal)
+        allowed = {
+            "request_id", "detected_artifact_id", "context_choice",
+            "expected_route_revision",
+        }
+        if not isinstance(body, dict) or set(body) != allowed:
+            raise ServiceError(
+                "inference_existing_request_invalid",
+                "Use existing model has an invalid request shape.",
+                context={"status": 400},
+            )
+        request_id = str(body["request_id"] or "").strip()
+        detected_id = str(body["detected_artifact_id"] or "").strip()
+        expected_route = str(body["expected_route_revision"] or "")
+        if (
+            not request_id or len(request_id) > 128
+            or not detected_id.startswith("detected_")
+            or len(detected_id) > 96
+            or type(body["context_choice"]) is not int
+            or body["context_choice"] != 8192
+            or not expected_route
+        ):
+            raise ServiceError(
+                "inference_existing_request_invalid",
+                "Use existing model has invalid fields.", context={"status": 400},
+            )
+        payload = {
+            "request_id": request_id,
+            "detected_artifact_id": detected_id,
+            "context_choice": body["context_choice"],
+            "expected_route_revision": expected_route,
+        }
+        request_sha = _sha(payload)
+        with self._db._connection() as conn:
+            replay = conn.execute(
+                "SELECT job_id,request_sha256 FROM inference_model_acquisitions WHERE request_id=?",
+                (request_id,),
+            ).fetchone()
+        if replay is not None:
+            if str(replay["request_sha256"]) != request_sha:
+                raise ServiceError(
+                    "request_payload_mismatch",
+                    "That request id was already used for different model setup.",
+                    context={"status": 409},
+                )
+            acquisition = self._get(str(replay["job_id"]))
+            return {
+                "acquisition": acquisition,
+                "receipt": self._receipt(acquisition),
+                "setup": self._setup.get_inference_setup(principal),
+            }
+        config = self._config_provider()
+        if expected_route != _route_revision(config):
+            raise ServiceError(
+                "inference_route_stale",
+                "Thoughts changed AI. Check the current route and try again.",
+                context={"status": 409},
+            )
+        from .inference_setup_service import (
+            _this_machine_from_config,
+            resolve_detected_local_artifact,
+        )
+
+        candidate = resolve_detected_local_artifact(
+            home=self._home_provider(),
+            current_target=_this_machine_from_config(config),
+            artifact_id=detected_id,
+        )
+        if candidate is None:
+            raise ServiceError(
+                "inference_detected_artifact_stale",
+                "That detected model is no longer available. Refresh Models.",
+                context={"status": 409},
+            )
+        if candidate["format"] != "gguf":
+            raise ServiceError(
+                "inference_runtime_unsupported",
+                "MLX Thought execution is not installed yet.",
+                context={"status": 409},
+            )
+        path = Path(candidate["path"])
+        try:
+            stat = path.stat()
+        except OSError as exc:
+            raise ServiceError(
+                "inference_detected_artifact_stale",
+                "That detected model is no longer available. Refresh Models.",
+                context={"status": 409},
+            ) from exc
+        plan = {
+            "kind": "existing_local_file",
+            "filename": path.name,
+            "local_locator": str(path),
+            "size": int(stat.st_size),
+            "mtime_ns": int(stat.st_mtime_ns),
+            "runtime_id": "llama_cpp_prompt_v1",
+            # Existing GGUF activation uses the long-established pinned local
+            # engine seam; it does not require the newer acquisition-only
+            # runtime features used by packaged downloads.
+            "runtime_min_revision": "0.3.16",
+            "format": "gguf",
+            "architecture": "gguf",
+            "model_identity": str(candidate["label"]).removesuffix(".gguf"),
+            "context_ceiling": 8192,
+        }
+        plan_sha = _sha(plan)
+        source_claim_sha = _sha({
+            "kind": plan["kind"], "locator": plan["local_locator"],
+            "size": plan["size"], "mtime_ns": plan["mtime_ns"],
+        })
+        job_id = "acq_" + hashlib.sha256(request_id.encode("utf-8")).hexdigest()[:32]
+        created = _now()
+        with self._db._connection() as conn:
+            conn.execute("BEGIN IMMEDIATE")
+            replay = conn.execute(
+                "SELECT job_id,request_sha256 FROM inference_model_acquisitions WHERE request_id=?",
+                (request_id,),
+            ).fetchone()
+            if replay is not None:
+                if str(replay["request_sha256"]) != request_sha:
+                    conn.rollback()
+                    raise ServiceError(
+                        "request_payload_mismatch",
+                        "That request id was already used for different model setup.",
+                        context={"status": 409},
+                    )
+                conn.commit()
+                acquisition = self._get(str(replay["job_id"]))
+                return {
+                    "acquisition": acquisition,
+                    "receipt": self._receipt(acquisition),
+                    "setup": self._setup.get_inference_setup(principal),
+                }
+            active = conn.execute(
+                """SELECT job_id FROM inference_model_acquisitions
+                    WHERE source_claim_sha256=?
+                      AND state IN ('requested','resolving_source','downloading','verifying','installing')
+                    ORDER BY created_at ASC LIMIT 1""",
+                (source_claim_sha,),
+            ).fetchone()
+            if active is not None:
+                conn.commit()
+                acquisition = self._get(str(active["job_id"]))
+                return {
+                    "acquisition": acquisition,
+                    "receipt": self._receipt(acquisition),
+                    "setup": self._setup.get_inference_setup(principal),
+                }
+            conn.execute(
+                """INSERT INTO inference_model_acquisitions
+                   (job_id,request_id,request_sha256,preset_id,catalog_revision,
+                    source_plan_json,source_plan_sha256,source_claim_sha256,state,
+                    bytes_total,expected_route_revision,created_at,updated_at)
+                   VALUES (?,?,?,?,0,?,?,?,'requested',?,?,?,?)""",
+                (
+                    job_id, request_id, request_sha, detected_id,
+                    _canonical(plan), plan_sha, source_claim_sha, plan["size"],
+                    expected_route, created, created,
+                ),
+            )
+            conn.commit()
+        self._submit(job_id)
+        acquisition = self._get(job_id)
+        return {
+            "acquisition": acquisition,
+            "receipt": self._receipt(acquisition),
+            "setup": self._setup.get_inference_setup(principal),
+        }
+
     def get_acquisition(self, principal: Principal, job_id: str) -> dict[str, Any]:
         self._require_owner(principal)
         acquisition = self._get(job_id)
@@ -411,6 +588,9 @@ class InferenceAcquisitionApplicationService:
             if _sha(plan) != str(row["source_plan_sha256"]):
                 self._transition(job_id, "indeterminate", error_code="source_plan_integrity", error_message="The saved download plan is damaged.")
                 return
+            if plan.get("kind") == "existing_local_file":
+                self._run_existing(job_id, plan)
+                return
             self._transition(job_id, "resolving_source")
             if self._cancelled(job_id):
                 raise _Cancelled
@@ -473,6 +653,9 @@ class InferenceAcquisitionApplicationService:
                 shutil.rmtree(staging, ignore_errors=True)
             self._transition(job_id, "cancelled")
         except OSError as exc:
+            if plan.get("kind") == "existing_local_file":
+                self._fail(job_id, "model_existing_invalid")
+                return
             code = "model_download_disk" if getattr(exc, "errno", None) == 28 else "model_download_network"
             part = self._partial_file(job_id)
             resumable = bool(
@@ -482,7 +665,68 @@ class InferenceAcquisitionApplicationService:
             )
             self._fail(job_id, code, resumable=resumable)
         except Exception:
-            self._fail(job_id, "model_download_network")
+            self._fail(
+                job_id,
+                "model_existing_invalid"
+                if plan.get("kind") == "existing_local_file"
+                else "model_download_network",
+            )
+
+    def _run_existing(self, job_id: str, plan: dict[str, Any]) -> None:
+        self._transition(job_id, "resolving_source")
+        if self._cancelled(job_id):
+            raise _Cancelled
+        path = Path(str(plan["local_locator"]))
+        if path.is_symlink() or not path.is_file():
+            raise OSError("detected model is no longer a regular file")
+        stat = path.stat()
+        if (
+            int(stat.st_size) != int(plan["size"])
+            or int(stat.st_mtime_ns) != int(plan["mtime_ns"])
+        ):
+            raise OSError("detected model changed before verification")
+        self._transition(job_id, "verifying")
+        digest = self._hash_file(path)
+        with path.open("rb") as handle:
+            if handle.read(4) != b"GGUF":
+                raise OSError("detected model is not GGUF")
+        post = path.stat()
+        if (
+            int(post.st_size) != int(plan["size"])
+            or int(post.st_mtime_ns) != int(plan["mtime_ns"])
+        ):
+            raise OSError("detected model changed during verification")
+        sha = "sha256:" + digest
+        manifest = {
+            "files": [{"path": plan["filename"], "sha256": sha, "size": plan["size"]}],
+        }
+        manifest_sha = _sha(manifest)
+        execution_plan = {
+            **plan,
+            "sha256": sha,
+            "manifest_sha256": manifest_sha,
+            "repository": "Existing local model",
+            "revision": sha,
+        }
+        self._transition(job_id, "installing", verified_bytes=int(plan["size"]))
+        artifact_id = "artifact_" + manifest_sha.removeprefix("sha256:")
+        now = _now()
+        with self._db._connection() as conn:
+            conn.execute("BEGIN IMMEDIATE")
+            conn.execute(
+                """INSERT OR IGNORE INTO inference_model_artifacts
+                   (artifact_id,format,source_kind,source_repository,
+                    source_revision,manifest_json,manifest_sha256,
+                    installed_bytes,state,local_locator,created_at,verified_at)
+                   VALUES (?,?,?,?,?,?,?,?, 'verified',?,?,?)""",
+                (
+                    artifact_id, "gguf", "existing_local_file",
+                    "Existing local model", sha, _canonical(manifest),
+                    manifest_sha, plan["size"], str(path), now, now,
+                ),
+            )
+            conn.commit()
+        self._activate(job_id, artifact_id, path, execution_plan)
 
     def _download(self, job_id: str, plan: dict[str, Any], part: Path) -> None:
         url = self._source_url_builder(plan)
@@ -574,7 +818,8 @@ class InferenceAcquisitionApplicationService:
             model=str(plan["model_identity"]), runtime_id=str(plan["runtime_id"]),
             runtime_revision=runtime_revision, artifact_id=artifact_id,
             manifest_sha256=str(plan["manifest_sha256"]), format="gguf",
-            architecture="qwen3.5", context_ceiling=int(plan["context_ceiling"]),
+            architecture=str(plan.get("architecture") or "gguf"),
+            context_ceiling=int(plan["context_ceiling"]),
             capability_sha256=capability_sha,
         )
         config.meeting.intel_realtime_model = str(final_file)
@@ -583,7 +828,12 @@ class InferenceAcquisitionApplicationService:
         now = _now()
         deployment_id = "deployment_" + artifact_id.removeprefix("artifact_")[:24]
         receipt = {
-            "kind": "download_and_use", "artifact_id": artifact_id,
+            "kind": (
+                "use_existing_model"
+                if plan.get("kind") == "existing_local_file"
+                else "download_and_use"
+            ),
+            "artifact_id": artifact_id,
             "deployment_id": deployment_id, "deployment_revision_id": revision.id,
             "route": "thoughts", "activated_at": now,
         }

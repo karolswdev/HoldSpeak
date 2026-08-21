@@ -81,13 +81,16 @@ admitted inference path and returns the answer with its receipt.
 `ask.cancel` cancels an in-flight invocation. `ask.keep` persists an
 answer as a desk artifact (not model-invoking).
 
-### inference (2 tools)
+### inference (3 tools)
 
 Owner-only durable local-model setup. `inference.download_and_use` records one
 stable command, resolves a signed catalogue source, downloads bounded bytes,
 verifies the published digest, adopts the content-addressed artifact, and then
-attempts the narrow Thoughts-route activation. `inference.cancel_model_acquisition`
-cancels only before verification begins. Both use the same application service,
+attempts the narrow Thoughts-route activation. `inference.use_existing_model`
+freshly resolves a projected local GGUF, verifies its complete contents, adopts
+it without exposing its locator, and activates it through the same ledger.
+`inference.cancel_model_acquisition` cancels only before verification begins.
+All three use the same application service,
 receipts, and refusal codes as HTTP; model/agent principals receive no authority
 through these tools.
 
