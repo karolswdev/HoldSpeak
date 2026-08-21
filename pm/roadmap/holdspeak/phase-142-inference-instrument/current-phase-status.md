@@ -46,11 +46,14 @@ activation truth server-owned without adding a second inference path.
 | HSEGHS001HS104-142-01 | Capability Truth | done | [story-01-capability-truth](./story-01-capability-truth.md) | [evidence-story-01](./evidence-story-01.md) |
 | HSEGHS001HS104-142-02 | Artifact Acquisition and Activation | done | [story-02-artifact-acquisition-and-activation](./story-02-artifact-acquisition-and-activation.md) | [evidence-story-02](./evidence-story-02.md) |
 | HSEGHS001HS104-142-03 | One Model Chooser | done | [story-03-one-model-chooser](./story-03-one-model-chooser.md) | [evidence-story-03](./evidence-story-03.md) |
+| HSEGHS001HS104-142-04 | Hammer Evaluation Candidate | done | [story-04-hammer-evaluation-candidate](./story-04-hammer-evaluation-candidate.md) | [evidence-story-04](./evidence-story-04.md) |
+| HSEGHS001HS104-142-04 | Hammer Evaluation Candidate | in-progress | [story-04-hammer-evaluation-candidate](./story-04-hammer-evaluation-candidate.md) | - |
 
 ## Where we are
 
-Stories 01–03 have delivered truthful setup, verified local GGUF acquisition,
-and one compact chooser spanning detected, downloadable, and hosted models.
+Stories 01–04 have delivered truthful setup, verified local GGUF acquisition,
+one compact chooser spanning detected/downloadable/hosted models, and an honest
+evaluation-only Hammer tool-calling candidate.
 The later MLX, capacity, exact-context, and tool-turn slices remain held behind
 their ruled authority prerequisites.
 

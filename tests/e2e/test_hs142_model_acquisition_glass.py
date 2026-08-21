@@ -45,6 +45,7 @@ def _catalog(body: bytes) -> tuple[str, bytes]:
     ).hexdigest()
     entry = {
         "kind": "local_artifact_preset",
+        "activation": "download",
         "id": "preset_glass_local",
         "experience": "quick",
         "label": "Quick local glass AI",

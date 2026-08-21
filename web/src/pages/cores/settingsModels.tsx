@@ -474,8 +474,11 @@ export function ModelsModule({
       delete acquisitionRequestIds.current[artifact.id];
       setPresetStatus(`Verifying ${artifact.label}. You can leave Models open or come back later.`);
       onRefuse("");
-      await reconcileSettings?.();
       await reloadInferenceSetup();
+      // The acquisition command owns route activation. Reconcile Settings only
+      // after its fresh setup projection is available, so a subsequent hosted
+      // choice cannot save against the pre-activation Config revision.
+      await reconcileSettings?.();
     } catch (error) {
       if (error instanceof ApiError) delete acquisitionRequestIds.current[artifact.id];
       const detail = readableError(error);

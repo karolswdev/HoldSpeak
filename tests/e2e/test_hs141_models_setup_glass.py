@@ -162,6 +162,14 @@ def test_models_setup_is_projected_truth_with_one_action_seat(tmp_path: Path, mo
             connections = setup.get_by_text("AI connections", exact=True).locator("xpath=ancestor::details")
             assert connections.get_attribute("open") is None
 
+            hammer = next(row for row in catalog if row.get("id") == "candidate_local_hammer21_15b_gguf_q4km")
+            setup.locator(f'input[type="radio"][value="{hammer["id"]}"]').click()
+            assert setup.get_by_text("Experimental tool models", exact=True).is_visible()
+            assert setup.get_by_text("PRESENTED FOR EVALUATION · NOT ENABLED FOR TOOL EXECUTION", exact=True).is_visible()
+            assert setup.get_by_text("CC-BY-NC-4.0", exact=False).is_visible()
+            assert setup.locator(".models-capability-action button").count() == 0
+            page.screenshot(path=f"/tmp/holdspeak-inference-setup-hammer-{width}.png", full_page=False)
+
             assert detected and detected[0]["activation"]["action"] == "use_existing"
             setup.locator(f'input[type="radio"][value="{detected[0]["id"]}"]').click()
             setup.get_by_role("button", name="USE THIS MODEL", exact=True).click()

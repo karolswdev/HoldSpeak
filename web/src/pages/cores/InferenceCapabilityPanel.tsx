@@ -164,6 +164,12 @@ export function InferenceCapabilityPanel({
   const localPresets = setup.presets.filter(
     (preset): preset is LocalInferencePreset => preset.kind === "local_artifact_preset",
   );
+  const downloadableLocalPresets = localPresets.filter(
+    (preset) => preset.activation === "download",
+  );
+  const evaluationLocalPresets = localPresets.filter(
+    (preset) => preset.activation === "evaluation_only",
+  );
   const hostedPresets = setup.presets.filter(
     (preset): preset is HostedInferencePreset => preset.kind === "hosted_profile_preset",
   );
@@ -301,10 +307,10 @@ export function InferenceCapabilityPanel({
             </div>
           ) : null}
 
-          {localPresets.length ? (
+          {downloadableLocalPresets.length ? (
             <div className="models-choice-group" data-kind="download">
               <h4>Suggested local models</h4>
-              {localPresets.map((preset) => {
+              {downloadableLocalPresets.map((preset) => {
                 const selectedCard = preset.id === selectedId;
                 return (
                   <label
@@ -322,6 +328,33 @@ export function InferenceCapabilityPanel({
                     <span className="models-capability-experience">{preset.experience} · Download</span>
                     <strong>{preset.label}</strong>
                     <span>{preset.summary || `${preset.label} for private local work.`}</span>
+                  </label>
+                );
+              })}
+            </div>
+          ) : null}
+
+          {evaluationLocalPresets.length ? (
+            <div className="models-choice-group" data-kind="evaluation">
+              <h4>Experimental tool models</h4>
+              {evaluationLocalPresets.map((preset) => {
+                const selectedCard = preset.id === selectedId;
+                return (
+                  <label
+                    key={preset.id}
+                    className="models-capability-card models-capability-card-compact"
+                    data-selected={selectedCard || undefined}
+                  >
+                    <input
+                      type="radio"
+                      name={groupName}
+                      value={preset.id}
+                      checked={selectedCard}
+                      onChange={() => selectChoice(preset.id)}
+                    />
+                    <span className="models-capability-experience">Experimental · Tool calling</span>
+                    <strong>{preset.label}</strong>
+                    <span>{preset.summary}</span>
                   </label>
                 );
               })}
@@ -383,7 +416,9 @@ export function InferenceCapabilityPanel({
                     : selectedArtifact
                       ? artifactActivation(selectedArtifact).reason
                     : selectedLocal
-                      ? `${context(selectedLocal.context.recommended_tokens)} context · ${bytes(selectedLocal.source.download_bytes)} download · runs only on this device`
+                      ? selectedLocal.activation === "evaluation_only"
+                        ? `${bytes(selectedLocal.source.download_bytes)} · ${selectedLocal.source.license} · evaluation candidate for HoldSpeak’s future tool-turn runtime`
+                        : `${context(selectedLocal.context.recommended_tokens)} context · ${bytes(selectedLocal.source.download_bytes)} download · runs only on this device`
                     : current
                     ? "Currently used for Thoughts & notes"
                     : existing?.key_present
@@ -429,7 +464,11 @@ export function InferenceCapabilityPanel({
                   </span>
                 )
               ) : selectedLocal ? (
-                acquisition && ["requested", "resolving_source", "downloading"].includes(acquisition.state) ? (
+                selectedLocal.activation === "evaluation_only" ? (
+                  <span className="models-capability-action-status">
+                    PRESENTED FOR EVALUATION · NOT ENABLED FOR TOOL EXECUTION
+                  </span>
+                ) : acquisition && ["requested", "resolving_source", "downloading"].includes(acquisition.state) ? (
                   <>
                     <progress
                       max={acquisition.bytes_total}

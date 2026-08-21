@@ -23,11 +23,11 @@ _EXPERIENCES = frozenset({"quick", "balanced", "deep"})
 
 
 PACKAGED_CATALOG_SCHEMA_VERSION = 1
-PACKAGED_CATALOG_MIN_REVISION = 3
-_PACKAGED_CATALOG_KEY_ID = "holdspeak_catalog_2026_08"
+PACKAGED_CATALOG_MIN_REVISION = 4
+_PACKAGED_CATALOG_KEY_ID = "holdspeak_catalog_2026_08_02"
 _PACKAGED_CATALOG_TRUST_ROOTS = {
     _PACKAGED_CATALOG_KEY_ID: bytes.fromhex(
-        "c62c5c263520c00a76026bea4ca5636b61f1e4a00f0f867c6a776d13d5eb28ed"
+        "dc6956be38eb49dc0c0f4c1e993bfc911ccea50632f8e742231e5cade38d809c"
     )
 }
 _PACKAGED_PRESETS_SOURCE: tuple[dict[str, Any], ...] = (
@@ -41,6 +41,7 @@ _PACKAGED_PRESETS_SOURCE: tuple[dict[str, Any], ...] = (
         "runtime_min_revision": "0.3.34",
         "format": "gguf",
         "boundary": "same_device",
+        "activation": "download",
         "context": {"recommended_tokens": 8192, "ceiling_tokens": 8192},
         "source": {
             "repository": "unsloth/Qwen3.5-4B-GGUF",
@@ -66,6 +67,7 @@ _PACKAGED_PRESETS_SOURCE: tuple[dict[str, Any], ...] = (
         "runtime_min_revision": "0.3.34",
         "format": "gguf",
         "boundary": "same_device",
+        "activation": "download",
         "context": {"recommended_tokens": 8192, "ceiling_tokens": 8192},
         "source": {
             "repository": "unsloth/Qwen3.5-0.8B-GGUF",
@@ -77,6 +79,32 @@ _PACKAGED_PRESETS_SOURCE: tuple[dict[str, Any], ...] = (
             "installed_bytes": 532_517_120,
             "peak_free_bytes": 1_200_000_000,
             "license": "Apache-2.0",
+        },
+        "platforms": ["darwin_arm64", "linux_x86_64", "linux_aarch64"],
+        "applicability": {"state": "applicable", "reason": None},
+    },
+    {
+        "kind": "local_artifact_preset",
+        "id": "candidate_local_hammer21_15b_gguf_q4km",
+        "experience": "quick",
+        "label": "Hammer 2.1 · 1.5B",
+        "summary": "A small on-device specialist for structured tool calls.",
+        "runtime_id": "llama_cpp_prompt_v1",
+        "runtime_min_revision": "0.3.34",
+        "format": "gguf",
+        "boundary": "same_device",
+        "activation": "evaluation_only",
+        "context": {"recommended_tokens": 8192, "ceiling_tokens": 32768},
+        "source": {
+            "repository": "mradermacher/Hammer2.1-1.5b-GGUF",
+            "revision": "d3414318e22ced45ca3c43862269a75db5b5f2ed",
+            "filename": "Hammer2.1-1.5b.Q4_K_M.gguf",
+            "file_sha256": "sha256:567555510e0c72d69a5fe17a6d3a391456f4471eac97ecaf840e701161703555",
+            "manifest_sha256": "sha256:e29a4d1676c4d9ca8f28132d850d0fb61eabeaf73a67e78a71a8f045382e2840",
+            "download_bytes": 985_701_504,
+            "installed_bytes": 985_701_504,
+            "peak_free_bytes": 2_100_000_000,
+            "license": "CC-BY-NC-4.0",
         },
         "platforms": ["darwin_arm64", "linux_x86_64", "linux_aarch64"],
         "applicability": {"state": "applicable", "reason": None},
@@ -251,9 +279,11 @@ def validate_catalog(entries: Iterable[dict[str, Any]]) -> tuple[dict[str, Any],
                 raise ValueError(f"preset[{ordinal}] context limit is invalid")
             _safe_text(profile["name"], f"preset[{ordinal}].existing_profile.name")
         elif kind == "local_artifact_preset":
-            _exact(raw, {"kind", "id", "experience", "label", "summary", "runtime_id", "runtime_min_revision", "format", "boundary", "context", "source", "platforms", "applicability"}, f"preset[{ordinal}]")
+            _exact(raw, {"kind", "id", "experience", "label", "summary", "runtime_id", "runtime_min_revision", "format", "boundary", "activation", "context", "source", "platforms", "applicability"}, f"preset[{ordinal}]")
             if raw["format"] not in {"gguf", "mlx_safetensors"} or raw["boundary"] != "same_device":
                 raise ValueError(f"preset[{ordinal}] has invalid local format/boundary")
+            if raw["activation"] not in {"download", "evaluation_only"}:
+                raise ValueError(f"preset[{ordinal}].activation is invalid")
             _safe_text(raw["runtime_id"], f"preset[{ordinal}].runtime_id", limit=96)
             if not isinstance(raw["runtime_min_revision"], str) or not re.fullmatch(r"[0-9]+\.[0-9]+\.[0-9]+", raw["runtime_min_revision"]):
                 raise ValueError(f"preset[{ordinal}].runtime_min_revision is invalid")
@@ -320,13 +350,13 @@ def validate_catalog(entries: Iterable[dict[str, Any]]) -> tuple[dict[str, Any],
 
 _PACKAGED_CATALOG_BODY = {
     "schema_version": 1,
-    "catalog_revision": 3,
+    "catalog_revision": 4,
     "generated_at": "2026-08-21T00:00:00Z",
     "expires_at": "2036-08-01T00:00:00Z",
     "signing_key_id": _PACKAGED_CATALOG_KEY_ID,
     "entries": _PACKAGED_PRESETS_SOURCE,
 }
-_PACKAGED_CATALOG_SIGNATURE = "2a182ff85896e5ac06c41a0a42ea2ab9d8a71000b272c586f1a8030ab4b983b3671e1b907ac16f945799de2d62c74ba969006fd831a22cccea2aed2f679b6707"
+_PACKAGED_CATALOG_SIGNATURE = "e11fe6bb369cc7ead21771c655fd45ed29e5b9606bfe23ad4d90a9e93aa02983e16c69b219ca9c1f444b38c3a23e267cc896d468f255809d9c6352a7cf7c2109"
 _PACKAGED_CATALOG_JSON = json.dumps(
     {**_PACKAGED_CATALOG_BODY, "signature": _PACKAGED_CATALOG_SIGNATURE},
     sort_keys=True,
