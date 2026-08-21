@@ -27,6 +27,8 @@ export interface SurfaceRow {
   glyph: string;
   eyebrow: string;
   minW?: number;
+  /** Preferred first-open height; persisted owner arrangements still win. */
+  defaultH?: number;
   /** Open maximized (full stage) — the canvas-sized surfaces want it. */
   maximized?: boolean;
   Core: LazyExoticComponent<ComponentType<CoreProps & { scope?: string }>>;
@@ -79,6 +81,7 @@ const SURFACES: SurfaceRow[] = [
     glyph: "⚙",
     eyebrow: "Configuration",
     minW: 560,
+    defaultH: 700,
     Core: lazy(() =>
       import("../../pages/cores/SettingsCore").then((m) => ({
         default: m.SettingsCore,
@@ -388,6 +391,7 @@ export function SurfaceWindowHost({
       eyebrow={row.eyebrow}
       title={row.title}
       minW={row.minW}
+      defaultH={row.defaultH}
       wings={wings}
       open
       unmountOnMinimize

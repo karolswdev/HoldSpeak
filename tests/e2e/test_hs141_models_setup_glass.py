@@ -1,4 +1,4 @@
-"""Isolated-HOME two-width glass for the owner-facing AI setup room."""
+"""Story 142 isolated-HOME two-width glass for projected AI capability truth."""
 from __future__ import annotations
 
 import os
@@ -35,7 +35,7 @@ def _api(page: Any, method: str, path: str, body: dict[str, Any] | None = None) 
 @pytest.mark.e2e
 @pytest.mark.requires_meeting
 @pytest.mark.parametrize("width", [1440, 393])
-def test_models_setup_is_a_clear_owner_path(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: int) -> None:
+def test_models_setup_is_projected_truth_with_one_action_seat(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: int) -> None:
     from playwright.sync_api import sync_playwright
     import holdspeak.config as config_module
     import holdspeak.db.core as db_core
@@ -73,45 +73,103 @@ def test_models_setup_is_a_clear_owner_path(tmp_path: Path, monkeypatch: pytest.
             heading = page.get_by_role("heading", name="Choose your AI", exact=True)
             heading.wait_for(timeout=10000)
             setup = page.locator(".models-setup")
-            assert setup.get_by_text("This device", exact=True).is_visible()
+            projection = _api(page, "GET", "/api/inference/setup")["setup"]
+            assert setup.get_by_text("This device", exact=True).first.is_visible()
             assert setup.get_by_text("Choose AI for each job", exact=True).is_visible()
             assert setup.get_by_text("Runs on", exact=True).count() == 0
-            assert setup.get_by_role("button", name="SET UP THIS DEVICE", exact=True).is_visible()
-            assert setup.get_by_role("button", name="USE HOSTED AI", exact=True).is_visible()
-            assert setup.get_by_role("heading", name="OpenRouter Qwen presets", exact=True).is_visible()
-            for choice in ["Quick Qwen", "Balanced Qwen", "Deep Qwen"]:
-                assert setup.get_by_role("heading", name=choice, exact=True).is_visible()
+            assert setup.get_by_role("heading", name="Available to add", exact=True).is_visible()
+            assert setup.get_by_text(projection["current_thought_deployment"]["target"]["name"], exact=True).first.is_visible()
+            body = setup.inner_text()
+            for forbidden in ["Ready to configure", "Recommended", "DOWNLOAD", str(home), "/Users/"]:
+                assert forbidden not in body
+            surface_body = page.locator(".desk-settings-window .desk-surface-body")
+            if width == 393:
+                assert surface_body.evaluate("element => element.scrollTop") == 0
+                heading_box = heading.bounding_box()
+                body_box = surface_body.bounding_box()
+                assert heading_box and body_box
+                assert heading_box["y"] >= max(0, body_box["y"])
+                assert heading_box["y"] + heading_box["height"] <= min(
+                    900, body_box["y"] + body_box["height"]
+                )
+            page.screenshot(path=f"/tmp/holdspeak-inference-setup-{width}.png", full_page=False)
+
+            hosted = [row for row in projection["presets"] if row["kind"] == "hosted_profile_preset"]
+            radios = setup.get_by_role("radiogroup", name="Hosted AI choices").get_by_role("radio")
+            assert radios.count() == len(hosted)
+            if hosted:
+                expected = next(
+                    (row for row in hosted if row["existing_profile"]["target_id"] == projection["current_routes"]["thoughts"]["target_id"]),
+                    hosted[0],
+                )
+                expected_radio = setup.locator(f'input[type="radio"][value="{expected["id"]}"]')
+                assert expected_radio.is_checked()
+                if len(hosted) > 1:
+                    expected_index = hosted.index(expected)
+                    next_row = hosted[(expected_index + 1) % len(hosted)]
+                    expected_radio.focus()
+                    expected_radio.press("ArrowRight")
+                    assert setup.locator(
+                        f'input[type="radio"][value="{next_row["id"]}"]'
+                    ).is_checked()
+                    assert (
+                        _api(page, "GET", "/api/settings")["thoughts"][
+                            "inference_target_id"
+                        ]
+                        == projection["current_routes"]["thoughts"]["target_id"]
+                    )
+
+            detection = projection["artifact_detection"]["state"]
+            if not projection["detected_local_artifacts"]:
+                if detection == "complete":
+                    assert setup.get_by_text("No local AI detected", exact=True).is_visible()
+                else:
+                    assert setup.get_by_text(f"Local AI inspection {'incomplete' if detection == 'partial' else 'unavailable'}", exact=True).is_visible()
+
+            primary = setup.locator(".models-capability-action button")
+            assert primary.count() <= 1
+            if width == 1440:
+                seat_box = setup.locator(".models-capability-action").bounding_box()
+                body_box = surface_body.bounding_box()
+                selected_box = setup.locator(".models-capability-card[data-selected]").bounding_box()
+                assert seat_box and body_box and selected_box
+                assert selected_box["y"] >= body_box["y"]
+                assert seat_box["y"] + seat_box["height"] <= body_box["y"] + body_box["height"]
             connections = setup.get_by_text("AI connections", exact=True).locator("xpath=ancestor::details")
             assert connections.get_attribute("open") is None
-            page.screenshot(path=f"/tmp/holdspeak-choose-your-ai-{width}.png", full_page=False)
 
-            setup.get_by_placeholder("sk-or-v1-…").fill("glass-only-openrouter-key")
-            balanced = setup.get_by_role("heading", name="Balanced Qwen", exact=True).locator("xpath=ancestor::article")
-            balanced.get_by_role("button", name="ADD & USE", exact=True).click()
-            setup.get_by_text("OpenRouter · Balanced Qwen selected for Thoughts & notes.", exact=True).wait_for()
-            page.wait_for_timeout(900)
-            config = _api(page, "GET", "/api/settings")
-            assert config["thoughts"]["inference_target_id"] == "preset_openrouter_qwen35_35b_a3b"
-            targets = _api(page, "GET", "/api/inference-targets")["targets"]
-            selected = next(row for row in targets if row["id"] == "preset_openrouter_qwen35_35b_a3b")
-            assert selected["model"] == "qwen/qwen3.5-35b-a3b"
-            assert selected["secret"] == {"required": True, "present": True}
-            assert "glass-only-openrouter-key" not in str(targets)
-            balanced.scroll_into_view_if_needed()
-            assert balanced.get_by_role("button", name="IN USE", exact=True).is_visible()
-            page.screenshot(path=f"/tmp/holdspeak-choose-your-ai-preset-{width}.png", full_page=False)
+            if hosted:
+                chosen = hosted[-1]
+                radio = setup.locator(f'input[type="radio"][value="{chosen["id"]}"]')
+                radio.click()
+                key = setup.get_by_label("OpenRouter key")
+                key.fill("glass-only-openrouter-key")
+                action = setup.get_by_role("button", name=f"ADD & USE {chosen['experience'].upper()}", exact=True)
+                action.click()
+                setup.get_by_text(f"{chosen['label']} selected for Thoughts & notes.", exact=True).wait_for()
+                assert key.count() == 0 or key.input_value() == ""
+                config = _api(page, "GET", "/api/settings")
+                assert config["thoughts"]["inference_target_id"] == chosen["existing_profile"]["target_id"]
+                targets = _api(page, "GET", "/api/inference-targets")["targets"]
+                selected = next(row for row in targets if row["id"] == chosen["existing_profile"]["target_id"])
+                assert selected["model"] == chosen["existing_profile"]["model"]
+                assert selected["secret"] == {"required": True, "present": True}
+                assert "glass-only-openrouter-key" not in str(targets)
+                assert setup.get_by_text("IN USE FOR THOUGHTS", exact=True).is_visible()
+                assert setup.locator(".models-capability-action button").count() == 0
+                page.screenshot(path=f"/tmp/holdspeak-inference-setup-configured-{width}.png", full_page=False)
 
-            setup.get_by_role("button", name="DEFINE YOUR OWN PROVIDER", exact=True).click()
+            setup.get_by_text("AI connections", exact=True).click()
             assert connections.get_attribute("open") is not None
             assert setup.get_by_text("Define any OpenAI-compatible provider, private endpoint, paired device, or mesh node here.", exact=True).is_visible()
             assert page.evaluate("document.documentElement.scrollWidth <= innerWidth")
             if width == 393:
-                for label in ["SET UP THIS DEVICE", "USE HOSTED AI", "DEFINE YOUR OWN PROVIDER"]:
-                    box = setup.get_by_role("button", name=label, exact=True).bounding_box()
+                for index in range(radios.count()):
+                    box = radios.nth(index).locator("xpath=ancestor::label").bounding_box()
                     assert box and box["height"] >= 44
-                preset_box = balanced.get_by_role("button", name="IN USE", exact=True).bounding_box()
-                assert preset_box and preset_box["height"] >= 44
-            page.screenshot(path=f"/tmp/holdspeak-choose-your-ai-configured-{width}.png", full_page=False)
+                summary_box = setup.get_by_text("AI connections", exact=True).locator("xpath=ancestor::summary").bounding_box()
+                assert summary_box and summary_box["height"] >= 44
+            page.screenshot(path=f"/tmp/holdspeak-inference-setup-connections-{width}.png", full_page=False)
             assert errors == []
             assert console_errors == []
             browser.close()

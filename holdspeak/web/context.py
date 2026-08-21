@@ -80,6 +80,8 @@ class WebContext:
     # their route adapters own only HTTP parsing and serialization.
     gate_service: Optional[Any] = None
     setup_service: Optional[Any] = None
+    # HS-142-01: pure, owner-only Capability Truth projection.
+    inference_setup_service: Optional[Any] = None
     # HS-123-12: delivery persistence/composition boundary for the delivery
     # route family. Individual delivery collaborators remain injectable seams.
     delivery_service: Optional[Any] = None

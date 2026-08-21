@@ -93,6 +93,29 @@ export function mergeSettingsChanges(
   }
   return draft;
 }
+
+/** Install the next full-document base before a queued write can overlap it. */
+export function installSettingsChanges(
+  source: SettingsResponse,
+  changes: Array<[string[], unknown]>,
+  install: (draft: SettingsResponse) => void,
+): SettingsResponse {
+  const draft = mergeSettingsChanges(source, changes);
+  install(draft);
+  return draft;
+}
+
+/** Repaint authoritative settings plus only the exact writes still pending. */
+export function projectPendingSettingsChanges(
+  base: SettingsResponse,
+  groups: Array<Array<[string[], unknown]>>,
+): SettingsResponse {
+  return groups.reduce(
+    (draft, changes) => mergeSettingsChanges(draft, changes),
+    base,
+  );
+}
+
 /* HS-101 round 4 — the glass never wears wire keys: curated names
  * for the fields people actually meet, an acronym dictionary for the
  * rest. */
@@ -187,39 +210,119 @@ function SettingsFace({ hero, scope }: CoreProps) {
   // FRESHEST `_revision` (via a ref, not the possibly-stale debounced draft)
   // so its own back-to-back saves never self-conflict, while a genuinely
   // concurrent write from another surface is still rejected + reconciled.
-  const revisionRef = useRef<string | undefined>(undefined);
-  revisionRef.current = resource.data._revision;
-  const save = async (payload?: Record<string, unknown>) => {
+  type SettingsWriteJob = {
+    id: number;
+    changes: Array<[string[], unknown]>;
+  };
+  const authoritativeBaseRef = useRef<SettingsResponse>(resource.data);
+  const revisionRef = useRef<string | undefined>(resource.data._revision);
+  const saveQueue = useRef<Promise<void>>(Promise.resolve());
+  const pendingJobsRef = useRef<SettingsWriteJob[]>([]);
+  const debouncedChangesRef = useRef<Array<[string[], unknown]>>([]);
+  const nextJobIdRef = useRef(0);
+  const writerFencedRef = useRef(false);
+  const repaintPending = () => {
+    const visible = projectPendingSettingsChanges(
+      authoritativeBaseRef.current,
+      [
+        ...pendingJobsRef.current.map((pending) => pending.changes),
+        debouncedChangesRef.current,
+      ],
+    );
+    resource.setData(visible);
+  };
+  useEffect(() => {
+    if (pendingJobsRef.current.length || debouncedChangesRef.current.length)
+      return;
+    authoritativeBaseRef.current = resource.data;
+    revisionRef.current = resource.data._revision;
+  }, [resource.data]);
+  const readAuthoritativeBase = async () => {
+    const authoritative = await apiFetch<SettingsResponse>("/api/settings");
+    authoritativeBaseRef.current = authoritative;
+    revisionRef.current = authoritative._revision;
+    writerFencedRef.current = false;
+    return authoritative;
+  };
+  const removePendingJob = (id: number) => {
+    pendingJobsRef.current = pendingJobsRef.current.filter(
+      (pending) => pending.id !== id,
+    );
+  };
+  const performSave = async (job: SettingsWriteJob) => {
     setSaving(true);
     setRefusal("");
     try {
-      const body = payload ?? resource.data;
+      if (writerFencedRef.current) await readAuthoritativeBase();
+      const payload = mergeSettingsChanges(
+        authoritativeBaseRef.current,
+        job.changes,
+      );
       const result = await apiFetch<{ settings?: Record<string, unknown> }>(
         "/api/settings",
         {
           method: "PUT",
           json: revisionRef.current
-            ? { ...body, _revision: revisionRef.current }
-            : body,
+            ? { ...payload, _revision: revisionRef.current }
+            : payload,
         },
       );
-      resource.setData(result.settings ?? payload ?? resource.data);
+      const authoritative = result.settings ?? payload;
+      authoritativeBaseRef.current = authoritative as SettingsResponse;
+      revisionRef.current = authoritative._revision as string | undefined;
+      removePendingJob(job.id);
+      repaintPending();
       window.dispatchEvent(new Event("holdspeak:settings-updated"));
       setWrittenAt(new Date().toTimeString().slice(0, 8));
+      return true;
     } catch (error) {
       setRefusal(readableError(error));
+      writerFencedRef.current = true;
+      removePendingJob(job.id);
+      try {
+        await readAuthoritativeBase();
+      } catch {
+        // A later queued job must reconcile before it can write.
+      }
+      repaintPending();
+      return false;
     } finally {
       setSaving(false);
     }
   };
+  const save = (changes: Array<[string[], unknown]>): Promise<boolean> => {
+    const job = { id: ++nextJobIdRef.current, changes };
+    pendingJobsRef.current.push(job);
+    const next = saveQueue.current.then(
+      () => performSave(job),
+      () => performSave(job),
+    );
+    saveQueue.current = next.then(
+      () => undefined,
+      () => undefined,
+    );
+    return next;
+  };
   const updateMany = (changes: Array<[string[], unknown]>) => {
-    const draft = mergeSettingsChanges(resource.data, changes);
-    resource.setData(draft);
+    installSettingsChanges(resource.data, changes, resource.setData);
+    debouncedChangesRef.current.push(...changes);
     setRefusal("");
     clearTimeout(saveTimer.current);
-    saveTimer.current = setTimeout(() => void save(draft), 700);
+    saveTimer.current = setTimeout(() => {
+      const pending = debouncedChangesRef.current;
+      debouncedChangesRef.current = [];
+      if (pending.length) void save(pending);
+    }, 700);
   };
   const update = (path: string[], next: unknown) => updateMany([[path, next]]);
+  const commitMany = async (changes: Array<[string[], unknown]>) => {
+    installSettingsChanges(resource.data, changes, resource.setData);
+    setRefusal("");
+    clearTimeout(saveTimer.current);
+    const pending = [...debouncedChangesRef.current, ...changes];
+    debouncedChangesRef.current = [];
+    return save(pending);
+  };
 
   const changeSecret = async (
     secretId: string,
@@ -799,6 +902,7 @@ function SettingsFace({ hero, scope }: CoreProps) {
             settings={data}
             update={update}
             updateMany={updateMany}
+            commitMany={commitMany}
             onRefuse={setRefusal}
           />
         );

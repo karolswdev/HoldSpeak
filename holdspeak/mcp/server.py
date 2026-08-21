@@ -68,7 +68,7 @@ def handle_message(request: dict[str, Any]) -> dict[str, Any] | None:
     if method == "tools/list":
         return _response(request_id, {"tools": TOOLS})
     if method == "resources/list":
-        return _response(request_id, list_resources())
+        return _response(request_id, list_resources(resolve_auth().principal))
     if method == "resources/read":
         uri = params.get("uri")
         if not isinstance(uri, str):

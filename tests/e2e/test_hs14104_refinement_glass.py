@@ -16,6 +16,13 @@ import pytest
 pytest.importorskip("playwright.sync_api", reason="glass walk needs Playwright")
 pytest.importorskip("fastapi.testclient", reason="glass walk needs web dependencies")
 
+# This glass exercises the retired pre-Workbench refinement surface and its
+# removed Cancel/Keep refining/Finish instead controls. The replacement
+# `test_hs141_thought_workbench_glass.py` drives the same real browser, API,
+# kernel, Stop/result, answer/composite, and restart paths through the shipped
+# Thought Workbench at both widths.
+pytestmark = pytest.mark.skip(reason="superseded by the Thought Workbench real-path glass")
+
 ASSETS = Path(__file__).resolve().parents[2] / "pm/roadmap/holdspeak/phase-141-from-thought-to-work/assets/story-04"
 TOKEN = "hs14104-deterministic-glass"
 

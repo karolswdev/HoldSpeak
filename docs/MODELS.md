@@ -166,13 +166,22 @@ local and is joined only at dispatch time. See
 [Security & privacy](SECURITY.md#5-secrets-handling).
 
 Destinations also drive the desktop hub's pipelines. **Settings, Models** leads
-with **Choose your AI**, discovers models already stored under `~/Models`, and
-offers ready-to-fill OpenRouter presets for a quick Qwen3 8B, balanced Qwen3.5
-35B-A3B, and deeper Qwen3.8 27B. A preset is an ordinary executable destination,
-not a UI alias: one owner action creates or updates its OpenAI-compatible target,
-stores the supplied key in the target's owner-only secret slot, and selects it
-for **Thoughts & notes**. Model identifiers remain visible and editable because
-hosted catalogs move.
+with **Choose your AI** and renders the owner-only Capability Truth projection
+from `GET /api/inference/setup` (with the identical MCP resource
+`holdspeak://inference/setup`). That read reports bounded hardware/runtime
+facts, the current immutable Thought deployment, structurally inspected local
+artifacts, and a signed packaged preset catalog. It performs no download,
+network request, model load, probe, benchmark, or configuration write, and it
+never returns a local model path, endpoint, or secret.
+
+The first delivery offers server-owned OpenRouter entries for quick, balanced,
+and deep Qwen experiences. Selection is inert; one fixed action seat performs
+the existing destination creation, owner-only key storage, and confirmed
+**Thoughts & notes** route update. A detected local artifact is labelled
+separately as detected, configured, path-ready, and executable. In particular,
+MLX remains explicitly unavailable for Thought interviews until its later
+runtime slice lands, and a filename or memory estimate can never manufacture a
+Ready/Recommended claim.
 
 **Define your own provider** opens the same first-class **AI connections**
 ledger for any OpenAI-compatible endpoint, private server, paired device, or

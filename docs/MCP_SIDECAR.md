@@ -1,7 +1,7 @@
 # MCP sidecar
 
 The MCP sidecar is the desk's programmable surface over stdio. It exposes
-127 tools and 32 resources through the Model Context Protocol, so any MCP
+127 tools and 33 resources through the Model Context Protocol, so any MCP
 client (Claude Code, Cursor, a custom script) can read and drive the desk
 without touching the web UI.
 
@@ -289,6 +289,7 @@ results are bounded to the first 100 items per read.
 | `holdspeak://desk/verbs` | Registered desk verbs, scopes, key bindings |
 | `holdspeak://desk/constitution` | The project's constitutional context |
 | `holdspeak://desk/inference-targets` | Available inference destinations |
+| `holdspeak://inference/setup` | Owner-only, read-only capability truth for this hub's inference setup |
 | `holdspeak://desk/snapshot` | Current desk state (objects, layout) |
 | `holdspeak://workbenches` | Workbench list and summaries |
 | `holdspeak://recipes` | Agent recipe list |

@@ -26,6 +26,9 @@ from holdspeak.services.recipe_service import RecipeService
 from holdspeak.services.refinement_application_service import RefinementApplicationService
 from holdspeak.services.refinement_thought_service import RefinementThoughtService
 from holdspeak.services.workbench_service import WorkbenchService
+from holdspeak.services.inference_setup_service import InferenceSetupApplicationService
+from holdspeak.services.errors import ServiceError
+from holdspeak.principals import PrincipalKind
 
 _JSON_MIME = "application/json"
 _TEXT_MIME = "text/markdown"
@@ -149,6 +152,12 @@ _STATIC_RESOURCES = [
         "uri": "holdspeak://desk/inference-targets",
         "name": "Inference targets",
         "description": "Available local and configured inference profiles.",
+        "mimeType": _JSON_MIME,
+    },
+    {
+        "uri": "holdspeak://inference/setup",
+        "name": "Inference setup",
+        "description": "Owner-only read-only inference capability truth for this hub.",
         "mimeType": _JSON_MIME,
     },
     {
@@ -355,9 +364,12 @@ class ResourceError(ValueError):
     """A resource failure that is safe to surface through JSON-RPC."""
 
 
-def list_resources() -> dict[str, list[dict[str, Any]]]:
+def list_resources(principal: Principal | None = None) -> dict[str, list[dict[str, Any]]]:
     """Return the static resources and parameterized resource templates."""
-    return {"resources": _STATIC_RESOURCES, "resourceTemplates": _RESOURCE_TEMPLATES}
+    resources = _STATIC_RESOURCES
+    if principal is None or principal.kind is not PrincipalKind.OWNER:
+        resources = [row for row in resources if row["uri"] != "holdspeak://inference/setup"]
+    return {"resources": resources, "resourceTemplates": _RESOURCE_TEMPLATES}
 
 
 def _contents(uri: str, mime_type: str, value: Any) -> dict[str, list[dict[str, str]]]:
@@ -379,6 +391,15 @@ def read_resource(uri: str, principal: Principal) -> dict[str, list[dict[str, st
         return _contents(uri, _TEXT_MIME, text)
     if uri == "holdspeak://desk/inference-targets":
         return _contents(uri, _JSON_MIME, ProfileService(get_database()).list_inference_targets(principal))
+    if uri == "holdspeak://inference/setup":
+        if principal.kind is not PrincipalKind.OWNER:
+            raise ServiceError(
+                "inference_setup_owner_required",
+                "Owner access is required.",
+                context={"status": 403},
+            )
+        value = InferenceSetupApplicationService(get_database()).get_inference_setup(principal)
+        return _contents(uri, _JSON_MIME, {"setup": value})
     if uri == "holdspeak://desk/snapshot":
         return _contents(uri, _JSON_MIME, DeskService(get_database()).snapshot(principal))
     if uri == "holdspeak://workbenches":

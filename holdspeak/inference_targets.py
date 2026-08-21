@@ -240,14 +240,13 @@ def _this_machine_readiness() -> tuple[str, str]:
     return "unavailable", f"model file not found: {model_path}"
 
 
-def this_machine_target(
-    *, name: str = "This device", model: str = ""
+def this_machine_target_from_model_path(
+    configured_path: str | Path | None, *, name: str = "This device", model: str = ""
 ) -> InferenceTarget:
-    from .intel.providers import configured_local_meeting_model_path
-
-    configured_path = configured_local_meeting_model_path()
+    """Resolve the canonical this-device target from an already captured path."""
     model_path = str(configured_path or "").strip()
-    state, reason = _this_machine_readiness()
+    state = "ready" if model_path and Path(model_path).expanduser().exists() else "unavailable"
+    reason = "" if state == "ready" else f"model file not found: {configured_path}"
     deployment_model = model or (Path(model_path).expanduser().stem if model_path else "")
     deployment = DeploymentIdentity(
         destination_id=THIS_MACHINE_ID,
@@ -272,6 +271,16 @@ def this_machine_target(
         readiness_state=state,
         readiness_reason=reason,
         deployment=deployment,
+    )
+
+
+def this_machine_target(
+    *, name: str = "This device", model: str = ""
+) -> InferenceTarget:
+    from .intel.providers import configured_local_meeting_model_path
+
+    return this_machine_target_from_model_path(
+        configured_local_meeting_model_path(), name=name, model=model
     )
 
 

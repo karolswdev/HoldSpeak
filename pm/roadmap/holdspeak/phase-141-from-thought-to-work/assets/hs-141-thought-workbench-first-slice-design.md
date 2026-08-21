@@ -5,6 +5,11 @@ The amendment makes the real model action visibly **Ask AI**, restores a compact
 document-formatting rail, gives the Note 68% of the wide workspace, and
 beautifies the context picker without changing its authority or receipt laws.
 
+**Platform continuation:** the proposed
+[`Inference Instrument`](../../proposals/inference-instrument.md) preserves this
+Workbench contract while making local MLX/GGUF, hosted, private, paired, and
+mesh deployments equally selectable beneath the same frozen inference waist.
+
 ## Decision
 
 A working Thought opens in one dedicated **Thought Workbench**. It is a Desk

@@ -900,6 +900,7 @@ canon, canon wins.
 | 139 | The Settings Reckoning: cut the Settings face to seven job-named tiles, pin core defaults, move object settings home, and fold operator wiring behind RAW. | done | [phase-139-the-settings-reckoning](./phase-139-the-settings-reckoning/) |
 | 140 | The First Sentence: one obvious first-value act on the Chair, a useful editable result, in-place recovery, then a furnished six-drawer reveal with explicitly attachable Everyday context. | in-progress (5/6) | [phase-140-the-first-sentence](./phase-140-the-first-sentence/) |
 | 141 | From Thought to Work: preserve rough speech, develop it through one owner-triggered grounded question at a time, then freeze typed local or GitHub-backed outcomes on the existing authority and receipt spine. | in-progress (6/9) | [phase-141-from-thought-to-work](./phase-141-from-thought-to-work/) |
+| 142 | Make AI capability, runtime, artifact, route, and readiness truth server-owned before adding acquisition or new execution paths. | active | [phase-142-inference-instrument](./phase-142-inference-instrument/) |
 
 (Status values: `planning`, `in-progress`, `done`, `paused`, `cancelled`.)
 

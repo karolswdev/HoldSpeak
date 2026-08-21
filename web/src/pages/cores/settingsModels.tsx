@@ -28,6 +28,12 @@ import {
 } from "../../desk/surface/gadgets";
 import { useRovingRows } from "../../desk/surface/roving";
 import { INTEL_PROVIDER_OPTIONS, meetingPlacement } from "./settingsPrefs";
+import { InferenceCapabilityPanel } from "./InferenceCapabilityPanel";
+import {
+  getInferenceSetup,
+  type HostedInferencePreset,
+  type InferenceSetup,
+} from "./inferenceSetup";
 
 type Target = {
   id: string;
@@ -50,58 +56,6 @@ type ProbeResult = {
   models: string[];
   error: string | null;
 };
-
-type RuntimeTestResult = {
-  ok: boolean;
-  status: string;
-  backend: string | null;
-  detail: string;
-};
-
-type RunnableModel = { id: string; name: string; ready?: boolean };
-
-type RuntimeOptions = {
-  platform: { system: string; machine: string; apple_silicon: boolean };
-  mlx: Array<{ label: string; value: string }>;
-  gguf: Array<{ label: string; value: string }>;
-};
-
-type OpenRouterPreset = {
-  targetId: string;
-  name: string;
-  model: string;
-  size: string;
-  description: string;
-  contextLimit: number;
-};
-
-const OPENROUTER_PRESETS: OpenRouterPreset[] = [
-  {
-    targetId: "preset_openrouter_qwen3_8b",
-    name: "OpenRouter · Quick Qwen",
-    model: "qwen/qwen3-8b",
-    size: "8B · QUICK",
-    description: "Fast interviews, light rewriting, and everyday notes.",
-    contextLimit: 131_072,
-  },
-  {
-    targetId: "preset_openrouter_qwen35_35b_a3b",
-    name: "OpenRouter · Balanced Qwen",
-    model: "qwen/qwen3.5-35b-a3b",
-    size: "35B / 3B ACTIVE · BALANCED",
-    description: "Stronger reasoning without paying for a dense large model.",
-    contextLimit: 262_144,
-  },
-  {
-    targetId: "preset_openrouter_qwen38_27b",
-    name: "OpenRouter · Deep Qwen",
-    model: "qwen/qwen3.8-27b",
-    size: "27B · DEEP",
-    description:
-      "Complex work, coding, research, and long-running thought development.",
-    contextLimit: 262_144,
-  },
-];
 
 const KIND_OPTIONS = [
   { value: "openAICompatible", label: "ENDPOINT" },
@@ -156,6 +110,7 @@ export function ModelsModule({
   settings,
   update,
   updateMany,
+  commitMany,
   onRefuse,
 }: {
   settings: SettingsResponse;
@@ -163,11 +118,13 @@ export function ModelsModule({
   update(path: string[], next: unknown): void;
   /** Apply one coherent settings document write for coupled choices. */
   updateMany?(changes: Array<[string[], unknown]>): void;
+  /** Immediate coherent settings write for actions that must report durable success. */
+  commitMany?(changes: Array<[string[], unknown]>): Promise<boolean>;
   /** The footer receipt bar; "" clears. */
   onRefuse(refusal: string): void;
 }) {
   const [targets, setTargets] = useState<Target[]>([]);
-  const [builtinTarget, setBuiltinTarget] = useState<Target | null>(null);
+  const [targetsLoading, setTargetsLoading] = useState(true);
   const [probeResults, setProbeResults] = useState<Record<string, ProbeResult>>(
     {},
   );
@@ -177,69 +134,55 @@ export function ModelsModule({
   const [savingKeyIds, setSavingKeyIds] = useState<Set<string>>(
     () => new Set(),
   );
-  const [hubDefault, setHubDefault] = useState<{
-    engine: string;
-    model: string;
-    available: boolean;
-  }>({
-    engine: "",
-    model: "",
-    available: false,
-  });
-  const [testingRuntime, setTestingRuntime] = useState(false);
-  const [runtimeTest, setRuntimeTest] = useState<RuntimeTestResult | null>(
-    null,
-  );
-  const [runtimeOptions, setRuntimeOptions] = useState<RuntimeOptions | null>(
-    null,
-  );
-  const [manualLocalSetup, setManualLocalSetup] = useState<boolean | null>(
-    null,
-  );
   const [connectionsOpen, setConnectionsOpen] = useState(false);
-  const [openRouterKey, setOpenRouterKey] = useState("");
   const [presetBusy, setPresetBusy] = useState<string | null>(null);
   const [presetStatus, setPresetStatus] = useState("");
-  const saveTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
-  const localSetupRef = useRef<HTMLDivElement>(null);
-  const connectionsRef = useRef<HTMLDivElement>(null);
-  const hostedRef = useRef<HTMLDivElement>(null);
-  const thoughtTargetId = String(
-    (settings.thoughts as Record<string, unknown> | undefined)
-      ?.inference_target_id ?? "",
+  const [inferenceSetup, setInferenceSetup] = useState<InferenceSetup | null>(
+    null,
   );
+  const [inferenceSetupLoading, setInferenceSetupLoading] = useState(true);
+  const [inferenceSetupError, setInferenceSetupError] = useState("");
+  const saveTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+  const connectionsRef = useRef<HTMLDivElement>(null);
   const applyChanges = (changes: Array<[string[], unknown]>) => {
     if (updateMany) updateMany(changes);
     else for (const [path, value] of changes) update(path, value);
   };
 
+  const reloadInferenceSetup = useCallback(async () => {
+    setInferenceSetupLoading(true);
+    setInferenceSetupError("");
+    try {
+      setInferenceSetup(await getInferenceSetup());
+    } catch (error) {
+      setInferenceSetupError(readableError(error));
+    } finally {
+      setInferenceSetupLoading(false);
+    }
+  }, []);
+
   const reload = useCallback(async () => {
+    setTargetsLoading(true);
     try {
       // HS-134-02: one fetch — the target contract carries endpoint/node.
       const wire = await apiFetch<InferenceTargetsResponse>(
         "/api/inference-targets",
       );
       const mapped = (wire.targets ?? []).map(fromWire);
-      setBuiltinTarget(mapped.find((row) => row.id === "this_machine") ?? null);
       setTargets(mapped.filter((row) => row.profile_id != null));
     } catch (error) {
       onRefuse(readableError(error));
+    } finally {
+      setTargetsLoading(false);
     }
   }, [onRefuse]);
 
   useEffect(() => {
     void reload();
-    void apiFetch<{ engine: string; model: string; available: boolean }>(
-      "/api/setup/hub-default-summary",
-    )
-      .then(setHubDefault)
-      .catch(() => {});
-    void apiFetch<RuntimeOptions>("/api/setup/runtime-options")
-      .then(setRuntimeOptions)
-      .catch(() => {});
+    void reloadInferenceSetup();
     const timers = saveTimers.current;
     return () => Object.values(timers).forEach(clearTimeout);
-  }, [reload]);
+  }, [reload, reloadInferenceSetup]);
 
   const put = async (target: Target) => {
     try {
@@ -396,81 +339,63 @@ export function ModelsModule({
     }
   };
 
-  const testRuntime = async () => {
-    setTestingRuntime(true);
-    try {
-      const listing = await apiFetch<{ models?: RunnableModel[] }>(
-        "/api/models",
-      );
-      const local = (listing.models ?? []).find(
-        (model) => model.id === "this_machine",
-      );
-      const result: RuntimeTestResult = local?.ready
-        ? {
-            ok: true,
-            status: "ready",
-            backend: null,
-            detail: `${local.name} can answer Thoughts on this device.`,
-          }
-        : {
-            ok: false,
-            status: "unavailable",
-            backend: null,
-            detail:
-              "This device needs a GGUF chat model that llama.cpp can load.",
-          };
-      setRuntimeTest(result);
-      onRefuse("");
-      const summary = await apiFetch<{
-        engine: string;
-        model: string;
-        available: boolean;
-      }>("/api/setup/hub-default-summary");
-      setHubDefault(summary);
-    } catch (error) {
-      const detail = readableError(error);
-      setRuntimeTest({ ok: false, status: "error", backend: null, detail });
-    } finally {
-      setTestingRuntime(false);
-    }
-  };
-
-  const useOpenRouterPreset = async (preset: OpenRouterPreset) => {
-    const existing = targets.find((target) => target.id === preset.targetId);
-    if (!existing?.key_present && !openRouterKey.trim()) return;
-    setPresetBusy(preset.targetId);
+  const useOpenRouterPreset = async (
+    preset: HostedInferencePreset,
+    suppliedKey = "",
+  ) => {
+    const profile = preset.existing_profile;
+    const existing = targets.find((target) => target.id === profile.target_id);
+    const key = suppliedKey.trim();
+    if (!existing?.key_present && !key) return false;
+    setPresetBusy(preset.id);
     setPresetStatus("");
     try {
       await apiFetch("/api/inference-targets", {
         method: "POST",
         json: {
-          id: preset.targetId,
-          name: preset.name,
-          kind: "openAICompatible",
-          base_url: "https://openrouter.ai/api/v1",
-          model: preset.model,
-          context_limit: preset.contextLimit,
-          requires_key: true,
+          id: profile.target_id,
+          name: profile.name,
+          kind: profile.kind,
+          base_url: profile.base_url,
+          model: profile.model,
+          context_limit: profile.context_limit,
+          requires_key: profile.requires_key,
         },
       });
-      if (openRouterKey.trim()) {
+      if (key) {
         await apiFetch(
-          `/api/inference-targets/${encodeURIComponent(preset.targetId)}/secret`,
+          `/api/inference-targets/${encodeURIComponent(profile.target_id)}/secret`,
           {
             method: "PUT",
-            json: { value: openRouterKey.trim() },
+            json: { value: key },
           },
         );
       }
-      applyChanges([[["thoughts", "inference_target_id"], preset.targetId]]);
-      setOpenRouterKey("");
-      setPresetStatus(`${preset.name} selected for Thoughts & notes.`);
+      if (!commitMany) {
+        setPresetStatus(
+          "Could not confirm the Thoughts choice was saved. Your key is still here.",
+        );
+        return false;
+      }
+      const committed = await commitMany([
+        [["thoughts", "inference_target_id"], profile.target_id],
+      ]);
+      if (!committed) {
+        setPresetStatus(
+          "Could not save the Thoughts choice. Your key is still here.",
+        );
+        return false;
+      }
+      setPresetStatus(`${preset.label} selected for Thoughts & notes.`);
       onRefuse("");
       await reload();
+      await reloadInferenceSetup();
+      return true;
     } catch (error) {
       const detail = readableError(error);
       setPresetStatus(detail);
       onRefuse(detail);
+      return false;
     } finally {
       setPresetBusy(null);
     }
@@ -509,9 +434,9 @@ export function ModelsModule({
   const pointerOptions = [
     {
       value: "",
-      label: hubDefault.available
-        ? `THIS DEVICE · ${hubDefault.model.toUpperCase()}`
-        : "THIS DEVICE · SETUP NEEDED",
+      label: inferenceSetup?.current_routes.thoughts.inherits_this_device
+        ? `THIS DEVICE · ${inferenceSetup.current_thought_deployment.target.model.toUpperCase()}`
+        : "THIS DEVICE",
     },
     ...targets.map((row) => ({
       value: row.id,
@@ -939,279 +864,19 @@ export function ModelsModule({
   const attentionTargets = targets.filter(
     (target) => target.readiness_state !== "ready",
   ).length;
-  const selectedThoughtTarget = thoughtTargetId
-    ? (targets.find((target) => target.id === thoughtTargetId) ?? null)
-    : builtinTarget;
-  const thoughtReady = selectedThoughtTarget?.readiness_state === "ready";
-  const thoughtSummary = selectedThoughtTarget
-    ? `${selectedThoughtTarget.name}${selectedThoughtTarget.model ? ` · ${selectedThoughtTarget.model}` : ""}`
-    : "Choose an AI for Thoughts & notes";
-  const discoveredModels = (runtimeOptions?.gguf ?? []).map((model) => ({
-    value: model.value,
-    label: `GGUF · ${model.label}`,
-    path: model.value,
-  }));
-  const configuredLocalPath = String(
-    (settings.meeting as Record<string, unknown> | undefined)
-      ?.intel_realtime_model ?? "",
-  );
-  const selectedDiscoveredModel =
-    discoveredModels.find((model) => model.path === configuredLocalPath)
-      ?.value ?? "";
-  const showManualLocalPath =
-    !discoveredModels.length ||
-    manualLocalSetup === true ||
-    (manualLocalSetup === null &&
-      Boolean(configuredLocalPath && !selectedDiscoveredModel));
-  const chooseDiscoveredModel = (value: string) => {
-    if (value === "__manual__") {
-      setManualLocalSetup(true);
-      setRuntimeTest(null);
-      return;
-    }
-    const selected = discoveredModels.find((model) => model.value === value);
-    if (!selected) return;
-    setManualLocalSetup(false);
-    setRuntimeTest(null);
-    applyChanges([
-      [["meeting", "intel_realtime_model"], selected.path],
-      [["meeting", "intel_provider"], "local"],
-      [["thoughts", "inference_target_id"], null],
-      [["dictation", "runtime", "backend"], "llama_cpp"],
-      [["dictation", "runtime", "llama_cpp_model_path"], selected.path],
-    ]);
-  };
-
-  const focusLocalSetup = () => {
-    localSetupRef.current?.scrollIntoView({
-      block: "start",
-      behavior: "smooth",
-    });
-    requestAnimationFrame(() =>
-      localSetupRef.current
-        ?.querySelector<HTMLElement>(
-          '[aria-label="Model on this device"], [aria-label="GGUF model file"]',
-        )
-        ?.focus(),
-    );
-  };
-
-  const focusHostedSetup = () => {
-    hostedRef.current?.scrollIntoView({ block: "start", behavior: "smooth" });
-    requestAnimationFrame(() =>
-      hostedRef.current?.querySelector<HTMLElement>("input")?.focus(),
-    );
-  };
-
-  const openConnections = () => {
-    setConnectionsOpen(true);
-    requestAnimationFrame(() => {
-      connectionsRef.current?.scrollIntoView({
-        block: "start",
-        behavior: "smooth",
-      });
-      connectionsRef.current
-        ?.closest("details")
-        ?.querySelector<HTMLElement>("summary")
-        ?.focus();
-    });
-  };
-
   return (
     <div className="models-setup">
-      <section
-        className="models-setup-intro"
-        aria-labelledby="models-setup-title"
-      >
-        <div>
-          <p className="models-setup-kicker">AI setup</p>
-          <h2 id="models-setup-title">Choose your AI</h2>
-          <p>
-            Start with this device. Choose a different connection for a job only
-            when you need one.
-          </p>
-        </div>
-        <div
-          className="models-setup-status"
-          data-ready={thoughtReady || undefined}
-        >
-          <LampGadget
-            on={thoughtReady}
-            tone={thoughtReady ? "ok" : "warn"}
-            label={thoughtReady ? "READY" : "SETUP NEEDED"}
-          />
-          <strong>{thoughtSummary}</strong>
-        </div>
-        <div className="models-setup-actions">
-          <Button variant="primary" onClick={focusLocalSetup}>
-            {hubDefault.available ? "REVIEW THIS DEVICE" : "SET UP THIS DEVICE"}
-          </Button>
-          <Button variant="ghost" onClick={focusHostedSetup}>
-            USE HOSTED AI
-          </Button>
-        </div>
-      </section>
-
-      <div ref={localSetupRef} className="models-local-setup">
-        <GadgetGroup label="This device">
-          <p className="models-section-help">
-            Private by default. Thought interviews currently run local GGUF chat
-            models through llama.cpp; HoldSpeak never downloads one silently.
-          </p>
-          <GadgetRow label="How it runs" fact="Private · on this Mac">
-            <strong className="models-local-runtime">LLAMA.CPP · GGUF</strong>
-          </GadgetRow>
-          {discoveredModels.length ? (
-            <GadgetRow
-              label="Model on this device"
-              fact={`${discoveredModels.length} found`}
-            >
-              <CycleGadget
-                label="Model on this device"
-                value={
-                  showManualLocalPath ? "__manual__" : selectedDiscoveredModel
-                }
-                options={[
-                  { value: "", label: "CHOOSE A MODEL…", disabled: true },
-                  ...discoveredModels.map(({ value, label }) => ({
-                    value,
-                    label,
-                  })),
-                  { value: "__manual__", label: "OTHER MODEL LOCATION…" },
-                ]}
-                onChange={chooseDiscoveredModel}
-              />
-            </GadgetRow>
-          ) : null}
-          {showManualLocalPath ? (
-            <GadgetRow label="GGUF model" fact=".gguf file">
-              <StringGadget
-                label="GGUF model file"
-                value={configuredLocalPath}
-                placeholder="~/Models/gguf/…"
-                mic={false}
-                onChange={(next) => {
-                  setRuntimeTest(null);
-                  applyChanges([
-                    [["meeting", "intel_realtime_model"], next],
-                    [["meeting", "intel_provider"], "local"],
-                    [["thoughts", "inference_target_id"], null],
-                    [["dictation", "runtime", "backend"], "llama_cpp"],
-                    [["dictation", "runtime", "llama_cpp_model_path"], next],
-                  ]);
-                }}
-              />
-            </GadgetRow>
-          ) : null}
-          {(runtimeOptions?.mlx.length ?? 0) > 0 ? (
-            <p className="models-local-note">
-              {runtimeOptions?.mlx.length} Apple MLX{" "}
-              {runtimeOptions?.mlx.length === 1 ? "model is" : "models are"}{" "}
-              available for writing &amp; dictation, but not yet for Thought
-              interviews.
-            </p>
-          ) : null}
-          <div className="models-local-check">
-            <Button
-              dense
-              loading={testingRuntime}
-              onClick={() => void testRuntime()}
-            >
-              CHECK LOCAL AI
-            </Button>
-            {runtimeTest ? (
-              <p role="status" data-ok={runtimeTest.ok || undefined}>
-                {runtimeTest.ok ? "Ready" : "Not ready"} · {runtimeTest.detail}
-              </p>
-            ) : (
-              <p>
-                Checks whether Thoughts can use it without sending a prompt.
-              </p>
-            )}
-          </div>
-        </GadgetGroup>
-      </div>
-
-      <section
-        ref={hostedRef}
-        className="models-hosted-setup"
-        aria-labelledby="models-hosted-title"
-      >
-        <div className="models-hosted-head">
-          <div>
-            <p className="models-setup-kicker">Hosted presets</p>
-            <h3 id="models-hosted-title">OpenRouter Qwen presets</h3>
-            <p>
-              Paste one OpenRouter key, then pick the speed and depth you want.
-              The key stays on this hub.
-            </p>
-          </div>
-          <label className="models-preset-key">
-            <span>OPENROUTER KEY</span>
-            <input
-              type="password"
-              autoComplete="new-password"
-              value={openRouterKey}
-              placeholder="sk-or-v1-…"
-              onChange={(event) => setOpenRouterKey(event.target.value)}
-            />
-          </label>
-          <Button variant="ghost" onClick={openConnections}>
-            DEFINE YOUR OWN PROVIDER
-          </Button>
-        </div>
-        <div className="models-preset-grid">
-          {OPENROUTER_PRESETS.map((preset) => {
-            const existing = targets.find(
-              (target) => target.id === preset.targetId,
-            );
-            const usable = Boolean(
-              existing?.key_present || openRouterKey.trim(),
-            );
-            const selected = thoughtTargetId === preset.targetId;
-            return (
-              <article
-                key={preset.targetId}
-                className="models-preset-card"
-                data-selected={selected || undefined}
-              >
-                <span className="models-preset-size">{preset.size}</span>
-                <h4>{preset.name.replace("OpenRouter · ", "")}</h4>
-                <p>{preset.description}</p>
-                <code>{preset.model}</code>
-                <Button
-                  variant={selected ? "ghost" : "primary"}
-                  loading={presetBusy === preset.targetId}
-                  disabled={selected || !usable || Boolean(presetBusy)}
-                  onClick={() => void useOpenRouterPreset(preset)}
-                >
-                  {selected
-                    ? "IN USE"
-                    : existing?.key_present
-                      ? "USE THIS AI"
-                      : "ADD & USE"}
-                </Button>
-              </article>
-            );
-          })}
-        </div>
-        {!openRouterKey.trim() &&
-        !OPENROUTER_PRESETS.some(
-          (preset) =>
-            targets.find((target) => target.id === preset.targetId)
-              ?.key_present,
-        ) ? (
-          <p className="models-preset-guidance">
-            Enter one key to enable these choices—or define any compatible
-            provider yourself.
-          </p>
-        ) : null}
-        {presetStatus ? (
-          <p className="models-preset-status" role="status">
-            {presetStatus}
-          </p>
-        ) : null}
-      </section>
+      <InferenceCapabilityPanel
+        setup={inferenceSetup}
+        loading={inferenceSetupLoading}
+        error={inferenceSetupError}
+        targets={targets}
+        targetsLoading={targetsLoading}
+        busyPresetId={presetBusy}
+        status={presetStatus}
+        onRetry={() => void reloadInferenceSetup()}
+        onUseHosted={useOpenRouterPreset}
+      />
 
       <div className="models-job-routing">
         <GadgetGroup label="Choose AI for each job">

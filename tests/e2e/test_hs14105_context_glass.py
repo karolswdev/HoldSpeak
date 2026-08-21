@@ -19,6 +19,13 @@ import pytest
 pytest.importorskip("playwright.sync_api", reason="glass walk needs Playwright")
 pytest.importorskip("fastapi.testclient", reason="glass walk needs web dependencies")
 
+# This walk targets the retired pre-Workbench refinement card. The shipped
+# replacement `test_hs141_thought_workbench_glass.py` covers the live context
+# sheet, exact Workbench mutation fences, frozen-turn behavior, and both
+# responsive widths; context service/MCP invariants remain covered below the
+# browser seam by their dedicated suites.
+pytestmark = pytest.mark.skip(reason="superseded by the Thought Workbench real-path glass")
+
 ASSETS = Path(__file__).resolve().parents[2] / "pm/roadmap/holdspeak/phase-141-from-thought-to-work/assets/story-05"
 TOKEN = "hs14105-context-glass"
 MARKER_V1 = "ORCHID CLOCK belongs in the launch note"

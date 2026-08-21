@@ -27,6 +27,9 @@ def build_setup_router(ctx: WebContext) -> APIRouter:
     service = ctx.setup_service
     if service is None:
         raise RuntimeError("SetupService must be supplied at application composition")
+    inference_setup = ctx.inference_setup_service
+    if inference_setup is None:
+        raise RuntimeError("InferenceSetupApplicationService must be supplied at application composition")
     router = APIRouter()
 
     @router.get("/api/setup/status")
@@ -112,6 +115,15 @@ def build_setup_router(ctx: WebContext) -> APIRouter:
             return discover_local_models()
         except Exception as exc:
             return error_500(exc, log, "Failed to discover local runtime models")
+
+    @router.get("/api/inference/setup")
+    async def api_inference_setup(request: Request) -> Any:
+        try:
+            return {"setup": inference_setup.get_inference_setup(request.state.principal)}
+        except ServiceError as exc:
+            return _error(exc)
+        except Exception as exc:
+            return error_500(exc, log, "Failed to read inference setup")
 
     @router.post("/api/setup/discover-models")
     async def api_discover_models(request: Request) -> Any:
