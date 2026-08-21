@@ -150,3 +150,21 @@ The replacement still executes the real browser, Workbench, API, kernel,
 context picker, Stop/result race, composite answer, and restart paths at 1440
 and 393. Context application and MCP authority remain covered by their focused
 backend suites.
+
+### Post-merge integration contract repair — 2026-08-21
+
+The full macOS integration job found two test contracts that predated the
+production coordinator admission seam and current first-value recovery copy.
+Both were corrected and rerun directly:
+
+```text
+uv run pytest -q \
+  tests/integration/test_refinement_coordinator_kernel.py::test_real_kernel_turn_reaches_review_then_answer_does_not_auto_chain \
+  tests/integration/test_web_welcome_wizard.py::test_basic_value_precedes_optional_runs_on_setup -vv
+2 passed in 0.49s
+```
+
+The coordinator proof now binds the production Ask factory to its exact test
+broker instead of accidentally entering the scripted-claim seam. The welcome
+proof asserts that first-value custody precedes the failure-only Setup door,
+without resurrecting the retired Runs-on setup copy.
