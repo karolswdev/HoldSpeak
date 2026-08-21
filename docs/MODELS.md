@@ -61,8 +61,10 @@ memory-efficient than GGUF there.
 - **Point HoldSpeak at it:** `dictation.runtime.mlx_model`
   (a path, or a bare `mlx-community/…` repo id).
 
-> MLX is currently wired for the **dictation** runtime. Meeting intel runs on
-> GGUF (`local`) or any endpoint (`cloud`).
+> MLX is currently wired for **writing and dictation**, not Thought interviews.
+> On-device Thought interviews and meeting intel load a GGUF model through
+> llama.cpp. Settings therefore never presents an MLX folder as a working local
+> Thought AI.
 
 ### 3. Any OpenAI-compatible endpoint (`openai_compatible` / intel `cloud`)
 
@@ -76,8 +78,8 @@ endpoint owns model loading; HoldSpeak needs no local weights.
   connections** (the API resource is `/api/inference-targets`; `/api/profiles`
   is a read-only alias). Give it a name, base URL, model, and context window,
   then choose it for a job:
-  - **Writing & dictation, meetings, background assistance:** **Choose AI for
-    each job** in the same module.
+  - **Thoughts & notes, writing & dictation, meetings, background assistance:**
+    **Choose AI for each job** in the same module.
   - **Agents:** the **Runs on** picker where you author the Agent.
 - **Keys:** set, replace, or remove a destination key inline in **Settings,
   Models**. The hub keeps that value in owner-only local custody and joins it
@@ -165,9 +167,17 @@ local and is joined only at dispatch time. See
 
 Destinations also drive the desktop hub's pipelines. **Settings, Models** leads
 with **Choose your AI**, discovers models already stored under `~/Models`, and
-keeps reusable endpoints under **AI connections**. **Choose AI for each job**
-can route writing and dictation, meetings, and background assistance to one of
-those connections. `holdspeak doctor` reports
+offers ready-to-fill OpenRouter presets for a quick Qwen3 8B, balanced Qwen3.5
+35B-A3B, and deeper Qwen3.8 27B. A preset is an ordinary executable destination,
+not a UI alias: one owner action creates or updates its OpenAI-compatible target,
+stores the supplied key in the target's owner-only secret slot, and selects it
+for **Thoughts & notes**. Model identifiers remain visible and editable because
+hosted catalogs move.
+
+**Define your own provider** opens the same first-class **AI connections**
+ledger for any OpenAI-compatible endpoint, private server, paired device, or
+mesh node. **Choose AI for each job** can route Thoughts and notes, writing and
+dictation, meetings, and background assistance independently. `holdspeak doctor` reports
 which destination each pipeline resolves to and warns when an assigned
 destination is missing or has no key. Set the key inline in **Settings,
 Models**, or use `HOLDSPEAK_PROFILE_<ID>_KEY` for headless fallback.

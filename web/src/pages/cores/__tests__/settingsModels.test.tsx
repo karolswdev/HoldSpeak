@@ -2,7 +2,13 @@
 // list and the per-feature RUNS ON pickers. Writes go ONLY to
 // /api/inference-targets; the three pointers write through the Prefs
 // settings updater with the one sentinel (null = hub default).
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { ModelsModule } from "../settingsModels";
 import surfaceCss from "../../../desk/surface/surface.css?raw";
@@ -72,17 +78,23 @@ const apiFetch = vi.fn(async (url: string, init?: { method?: string }) => {
     };
   }
   if (url === "/api/setup/hub-default-summary") {
-    return { engine: "mlx", model: "Qwen local", available: true };
+    return { engine: "llama.cpp", model: "Pocket GGUF", available: true };
   }
   if (url === "/api/setup/runtime-options") {
     return {
       platform: { system: "darwin", machine: "arm64", apple_silicon: true },
-      mlx: [{ label: "Qwen local", value: "/Users/test/Models/mlx/Qwen-local" }],
-      gguf: [{ label: "Pocket GGUF", value: "/Users/test/Models/gguf/pocket.gguf" }],
+      mlx: [
+        { label: "Qwen local", value: "/Users/test/Models/mlx/Qwen-local" },
+      ],
+      gguf: [
+        { label: "Pocket GGUF", value: "/Users/test/Models/gguf/pocket.gguf" },
+      ],
     };
   }
   if (url === "/api/models") {
-    return { models: [{ id: "this_machine", name: "Qwen local", ready: true }] };
+    return {
+      models: [{ id: "this_machine", name: "Pocket GGUF", ready: true }],
+    };
   }
   // HS-134-02: /api/profiles read routes retired.
   return {};
@@ -90,13 +102,28 @@ const apiFetch = vi.fn(async (url: string, init?: { method?: string }) => {
 
 vi.mock("../../../lib/api", async (importOriginal) => {
   const mod = (await importOriginal()) as Record<string, unknown>;
-  return { ...mod, apiFetch: (...args: unknown[]) => apiFetch(...(args as [string])) };
+  return {
+    ...mod,
+    apiFetch: (...args: unknown[]) => apiFetch(...(args as [string])),
+  };
 });
 
 const settings = {
-  meeting: { intel_profile_id: null },
-  dictation: { runtime: { backend: "auto", profile_id: "p-43", n_ctx: 2048 } },
-  rails_observer: { enabled: false, profile_id: null, poll_seconds: 30, tail: 20 },
+  meeting: {
+    intel_profile_id: null,
+    intel_provider: "local",
+    intel_realtime_model: "/Users/test/Models/gguf/pocket.gguf",
+  },
+  thoughts: { inference_target_id: null },
+  dictation: {
+    runtime: { backend: "llama_cpp", profile_id: "p-43", n_ctx: 2048 },
+  },
+  rails_observer: {
+    enabled: false,
+    profile_id: null,
+    poll_seconds: 30,
+    tail: 20,
+  },
 };
 
 describe("ModelsModule (HS-112-01)", () => {
@@ -122,10 +149,15 @@ describe("ModelsModule (HS-112-01)", () => {
       <ModelsModule settings={settings} update={vi.fn()} onRefuse={vi.fn()} />,
     );
     await screen.findByDisplayValue("LAN llama");
-    for (const label of ["Writing & dictation AI", "Meetings AI", "Background assistance AI"]) {
+    for (const label of [
+      "Thoughts & notes AI",
+      "Writing & dictation AI",
+      "Meetings AI",
+      "Background assistance AI",
+    ]) {
       const picker = screen.getByLabelText(label) as HTMLSelectElement;
       const options = Array.from(picker.options).map((o) => o.textContent);
-      expect(options.some((o) => o?.startsWith("HUB DEFAULT"))).toBe(true);
+      expect(options.some((o) => o?.startsWith("THIS DEVICE"))).toBe(true);
       expect(options).toContain("LAN LLAMA");
       expect(options).toContain("PAID API");
     }
@@ -140,7 +172,10 @@ describe("ModelsModule (HS-112-01)", () => {
     fireEvent.change(screen.getByLabelText("Meetings AI"), {
       target: { value: "p-43" },
     });
-    expect(update).toHaveBeenCalledWith(["meeting", "intel_profile_id"], "p-43");
+    expect(update).toHaveBeenCalledWith(
+      ["meeting", "intel_profile_id"],
+      "p-43",
+    );
     fireEvent.change(screen.getByLabelText("Writing & dictation AI"), {
       target: { value: "" },
     });
@@ -160,16 +195,17 @@ describe("ModelsModule (HS-112-01)", () => {
     fireEvent.click(screen.getAllByRole("button", { name: "TEST" })[0]);
 
     expect(await screen.findByText("READY 12ms")).toBeInTheDocument();
-    const model = screen.getByLabelText("Target p-43 model") as HTMLSelectElement;
+    const model = screen.getByLabelText(
+      "Target p-43 model",
+    ) as HTMLSelectElement;
     expect(model.value).toBe("Qwen3.5-9B-Q6_K");
     expect(Array.from(model.options).map((option) => option.value)).toEqual([
       "Qwen3.5-9B-Q6_K",
       "Llama-3.2",
     ]);
-    expect(apiFetch).toHaveBeenCalledWith(
-      "/api/inference-targets/p-43/probe",
-      { method: "POST" },
-    );
+    expect(apiFetch).toHaveBeenCalledWith("/api/inference-targets/p-43/probe", {
+      method: "POST",
+    });
   });
 
   it("writes a masked destination key through the secret subresource and clears it", async () => {
@@ -177,16 +213,24 @@ describe("ModelsModule (HS-112-01)", () => {
       <ModelsModule settings={settings} update={vi.fn()} onRefuse={vi.fn()} />,
     );
     await screen.findByDisplayValue("LAN llama");
-    fireEvent.click(screen.getByRole("button", { name: "Paid API key needed" }));
-    const key = screen.getByLabelText("Destination p-key API key") as HTMLInputElement;
+    fireEvent.click(
+      screen.getByRole("button", { name: "Paid API key needed" }),
+    );
+    const key = screen.getByLabelText(
+      "Destination p-key API key",
+    ) as HTMLInputElement;
     expect(key.type).toBe("password");
     fireEvent.change(key, { target: { value: "not-a-real-key" } });
     fireEvent.click(screen.getByRole("button", { name: "SET KEY" }));
-    await waitFor(() => expect(apiFetch).toHaveBeenCalledWith(
-      "/api/inference-targets/p-key/secret",
-      { method: "PUT", json: { value: "not-a-real-key" } },
-    ));
-    await waitFor(() => expect(screen.queryByTestId("target-key-editor-p-key")).toBeNull());
+    await waitFor(() =>
+      expect(apiFetch).toHaveBeenCalledWith(
+        "/api/inference-targets/p-key/secret",
+        { method: "PUT", json: { value: "not-a-real-key" } },
+      ),
+    );
+    await waitFor(() =>
+      expect(screen.queryByTestId("target-key-editor-p-key")).toBeNull(),
+    );
     expect(screen.queryByDisplayValue("not-a-real-key")).toBeNull();
   });
 
@@ -194,7 +238,11 @@ describe("ModelsModule (HS-112-01)", () => {
     vi.useFakeTimers();
     try {
       render(
-        <ModelsModule settings={settings} update={vi.fn()} onRefuse={vi.fn()} />,
+        <ModelsModule
+          settings={settings}
+          update={vi.fn()}
+          onRefuse={vi.fn()}
+        />,
       );
       await vi.waitFor(() =>
         expect(screen.getByDisplayValue("LAN llama")).toBeInTheDocument(),
@@ -204,8 +252,9 @@ describe("ModelsModule (HS-112-01)", () => {
       });
       await vi.advanceTimersByTimeAsync(800);
       const put = apiFetch.mock.calls.find(
-        (call) => call[0] === "/api/inference-targets/p-43"
-          && (call[1] as { method?: string } | undefined)?.method === "PUT",
+        (call) =>
+          call[0] === "/api/inference-targets/p-43" &&
+          (call[1] as { method?: string } | undefined)?.method === "PUT",
       );
       expect(put?.[0]).toBe("/api/inference-targets/p-43");
     } finally {
@@ -227,7 +276,9 @@ describe("ModelsModule (HS-112-01)", () => {
       <ModelsModule settings={settings} update={update} onRefuse={vi.fn()} />,
     );
     await screen.findByDisplayValue("LAN llama");
-    const paths = update.mock.calls.map((call) => (call[0] as string[]).join("."));
+    const paths = update.mock.calls.map((call) =>
+      (call[0] as string[]).join("."),
+    );
     for (const path of paths) {
       expect(path).not.toMatch(/intel_cloud|openai_compatible/);
     }
@@ -241,14 +292,24 @@ describe("Models destination workbench (HS-139 beauty pass)", () => {
     );
     await screen.findByDisplayValue("LAN llama");
 
-    expect(screen.getByRole("heading", { name: "Choose your AI" })).toBeInTheDocument();
-    expect(screen.getByText("This device")).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Choose your AI" }),
+    ).toBeInTheDocument();
+    expect(screen.getAllByText("This device").length).toBeGreaterThan(0);
     expect(screen.getByText("Choose AI for each job")).toBeInTheDocument();
     expect(screen.queryByText("Runs on")).toBeNull();
+    expect(
+      screen.getByRole("heading", { name: "OpenRouter Qwen presets" }),
+    ).toBeInTheDocument();
     const connections = screen.getByText("AI connections").closest("details");
     expect(connections).not.toHaveAttribute("open");
-    expect(container.querySelector(".models-destinations")).toHaveAttribute("data-layout", "matrix");
-    expect(container.querySelector(".models-destination-matrix")).toBeInTheDocument();
+    expect(container.querySelector(".models-destinations")).toHaveAttribute(
+      "data-layout",
+      "matrix",
+    );
+    expect(
+      container.querySelector(".models-destination-matrix"),
+    ).toBeInTheDocument();
     expect(container.querySelector(".dest-card")).toBeNull();
     expect(container.querySelector(".models-setup-intro")).toBeInTheDocument();
     expect(container.querySelector(".models-local-setup")).toBeInTheDocument();
@@ -256,39 +317,124 @@ describe("Models destination workbench (HS-139 beauty pass)", () => {
   });
 
   it("tests the selected local AI and reports readiness in place", async () => {
-    render(<ModelsModule settings={settings} update={vi.fn()} onRefuse={vi.fn()} />);
+    render(
+      <ModelsModule settings={settings} update={vi.fn()} onRefuse={vi.fn()} />,
+    );
     await screen.findByDisplayValue("LAN llama");
-    fireEvent.click(screen.getByRole("button", { name: "CHECK THIS AI" }));
-    expect(await screen.findByText("Ready · Qwen local can answer on this device.")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "CHECK LOCAL AI" }));
+    expect(
+      await screen.findByText(
+        "Ready · Pocket GGUF can answer Thoughts on this device.",
+      ),
+    ).toBeInTheDocument();
     expect(apiFetch).toHaveBeenCalledWith("/api/models");
   });
 
   it("turns discovered local models into one owner choice", async () => {
     const update = vi.fn();
-    render(<ModelsModule settings={settings} update={update} onRefuse={vi.fn()} />);
-    const chooser = await screen.findByLabelText("Model on this device") as HTMLSelectElement;
-    expect(Array.from(chooser.options).map((option) => option.textContent)).toEqual([
+    const updateMany = vi.fn();
+    render(
+      <ModelsModule
+        settings={settings}
+        update={update}
+        updateMany={updateMany}
+        onRefuse={vi.fn()}
+      />,
+    );
+    const chooser = (await screen.findByLabelText(
+      "Model on this device",
+    )) as HTMLSelectElement;
+    expect(
+      Array.from(chooser.options).map((option) => option.textContent),
+    ).toEqual([
       "CHOOSE A MODEL…",
-      "APPLE MLX · Qwen local",
       "GGUF · Pocket GGUF",
       "OTHER MODEL LOCATION…",
     ]);
-    fireEvent.change(chooser, { target: { value: "mlx:/Users/test/Models/mlx/Qwen-local" } });
-    expect(update).toHaveBeenCalledWith(["dictation", "runtime", "backend"], "mlx");
-    expect(update).toHaveBeenCalledWith(
-      ["dictation", "runtime", "mlx_model"],
-      "/Users/test/Models/mlx/Qwen-local",
-    );
-    expect(screen.queryByLabelText("Apple MLX model folder")).toBeNull();
+    fireEvent.change(chooser, {
+      target: { value: "/Users/test/Models/gguf/pocket.gguf" },
+    });
+    expect(updateMany).toHaveBeenCalledWith([
+      [
+        ["meeting", "intel_realtime_model"],
+        "/Users/test/Models/gguf/pocket.gguf",
+      ],
+      [["meeting", "intel_provider"], "local"],
+      [["thoughts", "inference_target_id"], null],
+      [["dictation", "runtime", "backend"], "llama_cpp"],
+      [
+        ["dictation", "runtime", "llama_cpp_model_path"],
+        "/Users/test/Models/gguf/pocket.gguf",
+      ],
+    ]);
     expect(screen.queryByLabelText("GGUF model file")).toBeNull();
+    expect(
+      screen.getByText(/1 Apple MLX model is available for writing/),
+    ).toBeInTheDocument();
   });
 
   it("keeps a manual model-location escape hatch after discovery", async () => {
-    render(<ModelsModule settings={settings} update={vi.fn()} onRefuse={vi.fn()} />);
+    render(
+      <ModelsModule settings={settings} update={vi.fn()} onRefuse={vi.fn()} />,
+    );
     const chooser = await screen.findByLabelText("Model on this device");
     fireEvent.change(chooser, { target: { value: "__manual__" } });
-    expect(screen.getByLabelText("Apple MLX model folder")).toBeInTheDocument();
-    expect(screen.queryByLabelText("GGUF model file")).toBeNull();
+    expect(screen.getByLabelText("GGUF model file")).toBeInTheDocument();
+    expect(screen.queryByLabelText("Apple MLX model folder")).toBeNull();
+  });
+
+  it("creates and selects an executable OpenRouter preset in one owner action", async () => {
+    const updateMany = vi.fn();
+    render(
+      <ModelsModule
+        settings={settings}
+        update={vi.fn()}
+        updateMany={updateMany}
+        onRefuse={vi.fn()}
+      />,
+    );
+    const card = (
+      await screen.findByRole("heading", { name: "Balanced Qwen" })
+    ).closest("article")!;
+    fireEvent.change(screen.getByPlaceholderText("sk-or-v1-…"), {
+      target: { value: "not-a-real-openrouter-key" },
+    });
+    fireEvent.click(within(card).getByRole("button", { name: "ADD & USE" }));
+
+    await waitFor(() =>
+      expect(apiFetch).toHaveBeenCalledWith("/api/inference-targets", {
+        method: "POST",
+        json: {
+          id: "preset_openrouter_qwen35_35b_a3b",
+          name: "OpenRouter · Balanced Qwen",
+          kind: "openAICompatible",
+          base_url: "https://openrouter.ai/api/v1",
+          model: "qwen/qwen3.5-35b-a3b",
+          context_limit: 262144,
+          requires_key: true,
+        },
+      }),
+    );
+    expect(apiFetch).toHaveBeenCalledWith(
+      "/api/inference-targets/preset_openrouter_qwen35_35b_a3b/secret",
+      { method: "PUT", json: { value: "not-a-real-openrouter-key" } },
+    );
+    expect(updateMany).toHaveBeenCalledWith([
+      [["thoughts", "inference_target_id"], "preset_openrouter_qwen35_35b_a3b"],
+    ]);
+  });
+
+  it("keeps custom providers one deliberate action away", async () => {
+    render(
+      <ModelsModule settings={settings} update={vi.fn()} onRefuse={vi.fn()} />,
+    );
+    await screen.findByRole("heading", { name: "OpenRouter Qwen presets" });
+    fireEvent.click(
+      screen.getByRole("button", { name: "DEFINE YOUR OWN PROVIDER" }),
+    );
+    expect(
+      screen.getByText("AI connections").closest("details"),
+    ).toHaveAttribute("open");
   });
 
   it("uses collapsed target summaries below the readable matrix width", async () => {
@@ -297,7 +443,11 @@ describe("Models destination workbench (HS-139 beauty pass)", () => {
       .mockReturnValue({ width: 620 } as DOMRect);
     try {
       const { container } = render(
-        <ModelsModule settings={settings} update={vi.fn()} onRefuse={vi.fn()} />,
+        <ModelsModule
+          settings={settings}
+          update={vi.fn()}
+          onRefuse={vi.fn()}
+        />,
       );
       const card = await screen.findByTestId("dest-card-p-43");
 
@@ -324,7 +474,9 @@ describe("Models destination workbench (HS-139 beauty pass)", () => {
     expect(surfaceCss).toContain(".desk-settings-window");
     expect(surfaceCss).toContain("width: calc(100vw - 48px);");
     expect(surfaceCss).toContain("minmax(210px, 35fr)");
-    expect(surfaceCss).toContain("grid-template-columns: minmax(0, 58fr) minmax(0, 42fr);");
+    expect(surfaceCss).toContain(
+      "grid-template-columns: minmax(0, 58fr) minmax(0, 42fr);",
+    );
     expect(surfaceCss).toContain("@container surface (max-width: 839.9px)");
     expect(surfaceCss).toContain("flex-direction: row;");
     expect(surfaceCss).toContain("white-space: nowrap;");
@@ -357,20 +509,29 @@ const LOCAL = {
 };
 
 function openMeetingRouting() {
-  const routing = screen.getByText("Meeting routing options").closest("details") as HTMLDetailsElement | null;
+  const routing = screen
+    .getByText("Meeting routing options")
+    .closest("details") as HTMLDetailsElement | null;
   expect(routing).not.toBeNull();
-  if (!routing?.open) fireEvent.click(routing.querySelector("summary")!);
-  return routing!;
+  const detail = routing!;
+  if (!detail.open) fireEvent.click(detail.querySelector("summary")!);
+  return detail;
 }
 
 describe("meetings placement dial (HS-132-10)", () => {
   it("keeps secondary routing closed until the owner asks for it", async () => {
     render(
-      <ModelsModule settings={placed(LOCAL)} update={vi.fn()} onRefuse={vi.fn()} />,
+      <ModelsModule
+        settings={placed(LOCAL)}
+        update={vi.fn()}
+        onRefuse={vi.fn()}
+      />,
     );
     await screen.findByDisplayValue("LAN llama");
     expect(screen.getByText("Meetings uses this device")).toBeInTheDocument();
-    const routing = screen.getByText("Meeting routing options").closest("details");
+    const routing = screen
+      .getByText("Meeting routing options")
+      .closest("details");
     expect(routing).not.toHaveAttribute("open");
     openMeetingRouting();
     expect(routing).toHaveAttribute("open");
@@ -379,11 +540,17 @@ describe("meetings placement dial (HS-132-10)", () => {
 
   it("leaves the provider fallback live when routing options are open", async () => {
     render(
-      <ModelsModule settings={placed(LOCAL)} update={vi.fn()} onRefuse={vi.fn()} />,
+      <ModelsModule
+        settings={placed(LOCAL)}
+        update={vi.fn()}
+        onRefuse={vi.fn()}
+      />,
     );
     await screen.findByDisplayValue("LAN llama");
     openMeetingRouting();
-    const provider = screen.getByLabelText("Meetings provider") as HTMLSelectElement;
+    const provider = screen.getByLabelText(
+      "Meetings provider",
+    ) as HTMLSelectElement;
     expect(provider.disabled).toBe(false);
     expect(provider.value).toBe("local");
     expect(screen.queryByText(/PROVIDER SELECTION IGNORED/)).toBeNull();
@@ -393,7 +560,13 @@ describe("meetings placement dial (HS-132-10)", () => {
     render(
       <ModelsModule
         settings={placed(
-          { ...LOCAL, provider_intent: "cloud", boundary: "cloud", engine: "cloud", model: "gpt-5-mini" },
+          {
+            ...LOCAL,
+            provider_intent: "cloud",
+            boundary: "cloud",
+            engine: "cloud",
+            model: "gpt-5-mini",
+          },
           { intel_provider: "cloud" },
         )}
         update={vi.fn()}
@@ -403,9 +576,9 @@ describe("meetings placement dial (HS-132-10)", () => {
     await screen.findByDisplayValue("LAN llama");
     expect(screen.getByText("Meetings uses the cloud")).toBeInTheDocument();
     openMeetingRouting();
-    expect((screen.getByLabelText("Meetings provider") as HTMLSelectElement).value).toBe(
-      "cloud",
-    );
+    expect(
+      (screen.getByLabelText("Meetings provider") as HTMLSelectElement).value,
+    ).toBe("cloud");
   });
 
   it("uses a selected destination without leaking precedence jargon", async () => {
@@ -432,7 +605,8 @@ describe("meetings placement dial (HS-132-10)", () => {
     expect(screen.getByText("Meetings uses LAN llama")).toBeInTheDocument();
     openMeetingRouting();
     expect(
-      (screen.getByLabelText("Meetings provider") as HTMLSelectElement).disabled,
+      (screen.getByLabelText("Meetings provider") as HTMLSelectElement)
+        .disabled,
     ).toBe(true);
     for (const jargon of [
       /DESTINATION SELECTION IGNORED/i,
@@ -441,7 +615,8 @@ describe("meetings placement dial (HS-132-10)", () => {
       /DESTINATION WINS/i,
       /PRIVATE_NETWORK/i,
       /ASSIGNED PROFILE IS OPEN.?AI COMPATIBLE KIND/i,
-    ]) expect(screen.queryByText(jargon)).toBeNull();
+    ])
+      expect(screen.queryByText(jargon)).toBeNull();
   });
 
   it("names a dropped destination pointer and keeps the provider live", async () => {
@@ -460,11 +635,14 @@ describe("meetings placement dial (HS-132-10)", () => {
       />,
     );
     await screen.findByDisplayValue("LAN llama");
-    expect(screen.getByText("Selected destination isn’t compatible")).toBeInTheDocument();
+    expect(
+      screen.getByText("Selected destination isn’t compatible"),
+    ).toBeInTheDocument();
     expect(screen.queryByText(/assigned profile missing/i)).toBeNull();
     openMeetingRouting();
     expect(
-      (screen.getByLabelText("Meetings provider") as HTMLSelectElement).disabled,
+      (screen.getByLabelText("Meetings provider") as HTMLSelectElement)
+        .disabled,
     ).toBe(false);
   });
 
@@ -481,7 +659,9 @@ describe("meetings placement dial (HS-132-10)", () => {
       />,
     );
     await screen.findByDisplayValue("LAN llama");
-    expect(screen.getByText("Meetings can’t run: Model file not found")).toBeInTheDocument();
+    expect(
+      screen.getByText("Meetings can’t run: Model file not found"),
+    ).toBeInTheDocument();
   });
 
   it("gives an incompatible selected destination one concise next step", async () => {
@@ -499,18 +679,27 @@ describe("meetings placement dial (HS-132-10)", () => {
     );
     await screen.findByDisplayValue("LAN llama");
     expect(
-      screen.getByText("Meetings can’t use the selected destination. Choose a local model in Intelligence."),
+      screen.getByText(
+        "Meetings can’t use the selected destination. Choose a local model in Intelligence.",
+      ),
     ).toBeInTheDocument();
     expect(screen.queryByText(/selected profile incompatible/i)).toBeNull();
   });
 
   it("keeps the fallback live only while Meetings uses this device", async () => {
     const { unmount } = render(
-      <ModelsModule settings={placed(LOCAL)} update={vi.fn()} onRefuse={vi.fn()} />,
+      <ModelsModule
+        settings={placed(LOCAL)}
+        update={vi.fn()}
+        onRefuse={vi.fn()}
+      />,
     );
     await screen.findByDisplayValue("LAN llama");
     openMeetingRouting();
-    expect((screen.getByLabelText("Meetings provider") as HTMLSelectElement).disabled).toBe(false);
+    expect(
+      (screen.getByLabelText("Meetings provider") as HTMLSelectElement)
+        .disabled,
+    ).toBe(false);
     unmount();
 
     render(
@@ -527,13 +716,20 @@ describe("meetings placement dial (HS-132-10)", () => {
     );
     await screen.findByDisplayValue("LAN llama");
     openMeetingRouting();
-    expect((screen.getByLabelText("Meetings provider") as HTMLSelectElement).disabled).toBe(true);
+    expect(
+      (screen.getByLabelText("Meetings provider") as HTMLSelectElement)
+        .disabled,
+    ).toBe(true);
   });
 
   it("writes the provider fallback through the settings updater", async () => {
     const update = vi.fn();
     render(
-      <ModelsModule settings={placed(LOCAL)} update={update} onRefuse={vi.fn()} />,
+      <ModelsModule
+        settings={placed(LOCAL)}
+        update={update}
+        onRefuse={vi.fn()}
+      />,
     );
     await screen.findByDisplayValue("LAN llama");
     openMeetingRouting();

@@ -320,8 +320,8 @@ seed` creates only starter objects HoldSpeak has never seen, preserving your
 edits and deletions. To deliberately restore the default Desk, use the
 destructive, confirmed **Settings, Desk → Reset to seed** action. To add a
 model-backed feature or deploy headlessly, open **Settings, Models → Choose
-your AI**. Set up **This device**, or add an **AI connection** and choose it for
-the relevant job; a
+your AI**. Pick an OpenRouter Qwen preset, point **This device** at a GGUF chat
+model, or define any compatible provider and choose it for the relevant job; a
 `HOLDSPEAK_PROFILE_<ID>_KEY` environment variable remains the headless key
 fallback. See [Models (bring your own)](https://github.com/karolswdev/HoldSpeak/blob/main/docs/MODELS.md)
 and [Inference destinations](https://github.com/karolswdev/HoldSpeak/blob/main/docs/INFERENCE_TARGETS.md).

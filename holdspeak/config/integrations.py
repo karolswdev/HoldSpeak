@@ -9,6 +9,22 @@ from typing import Optional
 
 
 @dataclass
+class ThoughtsConfig:
+    """The AI destination used by Thought Workbench refinement turns.
+
+    ``None`` inherits the built-in this-device target. The pointer names an
+    InferenceTarget; credentials remain in the target's owner-only key slot.
+    """
+
+    inference_target_id: Optional[str] = None
+
+    def __post_init__(self) -> None:
+        self.inference_target_id = (
+            str(self.inference_target_id or "").strip() or None
+        )
+
+
+@dataclass
 class CadenceConfig:
     """The Cadence Engine (CAD-1) -- OFF BY DEFAULT.
 

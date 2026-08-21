@@ -29,5 +29,15 @@ from a fresh isolated home at 1440×900 and 393×900. It proves the guided
 **Choose your AI** hierarchy, local-first setup, progressively disclosed AI
 connections, touch geometry, and no-prompt readiness check.
 
+The recovery rider now also proves the actual execution selection. The local
+Thought path offers only GGUF files the current llama.cpp adapter can load;
+detected MLX models are named as writing/dictation-only instead of being falsely
+reported ready. The browser creates a Balanced Qwen OpenRouter preset through
+the public target and secret APIs, selects it for **Thoughts & notes**, verifies
+the secret never appears in reads, and keeps **Define your own provider** as the
+full custom escape hatch.
+
 - [Choose your AI — 1440](./hs-141-models-setup-1440.png)
 - [Choose your AI — 393](./hs-141-models-setup-393.png)
+- [OpenRouter presets — 1440](./hs-141-models-openrouter-presets-1440.png)
+- [OpenRouter presets — 393](./hs-141-models-openrouter-presets-393.png)

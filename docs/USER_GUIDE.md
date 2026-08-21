@@ -40,7 +40,7 @@ Use these guides when you are ready for more than the first sentence:
 | Meeting intelligence | Produces transcript, topics, summaries, actions, artifacts | Dashboard and `/history` |
 | iPad app | Drives both modes from another device over the hub's HTTP API: dictate into the desk, read a meeting back with its artifacts and sources, approve a proposal, browse the archive | [Companions](#companions) |
 | AIPI-Lite companion | Portable ESPHome device for meeting controls, status, and spoken replies to waiting Claude/Codex sessions | [AIPI-Lite Developer Workflow](AIPI_LITE_DEV_WORKFLOW.md), `/companion` |
-| Runtime setup | Configures local MLX, llama.cpp, or OpenAI-compatible endpoints | `/dictation` -> Runtime, `/docs/dictation-runtime` |
+| AI setup | Chooses a Thought AI from OpenRouter presets, local GGUF/llama.cpp, or a custom compatible provider; MLX remains available for writing and dictation | Settings → Models |
 
 ## Develop a thought
 

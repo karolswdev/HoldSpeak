@@ -116,7 +116,10 @@ const SETTINGS_WINGS = [
 export function SettingsCore({ hero, scope }: CoreProps) {
   // HS-100-10 — the Runtime guide is the Guide wing (the standalone
   // doc-window died; deep links land here via the registry alias).
-  const wings = useCoreWings(SETTINGS_WINGS, scope === "guide" ? "guide" : "settings");
+  const wings = useCoreWings(
+    SETTINGS_WINGS,
+    scope === "guide" ? "guide" : "settings",
+  );
   if (wings.view === "guide") return <RuntimeDocsCore />;
   return <SettingsFace hero={hero} scope={scope} />;
 }
@@ -128,11 +131,16 @@ function SettingsFace({ hero, scope }: CoreProps) {
       : null;
   // HS-139-05: resolve aliases from the retired 14-tile roster to the new 7.
   const resolvedScope = scope ? (MODULE_ALIASES[scope] ?? scope) : scope;
-  const scopedModule = PREF_MODULES.some((module) => module.id === resolvedScope)
+  const scopedModule = PREF_MODULES.some(
+    (module) => module.id === resolvedScope,
+  )
     ? (resolvedScope ?? null)
     : null;
   const resource = useResource<SettingsResponse>("/api/settings", {});
-  const authority = useResource<AuthorityPolicyResponse>("/api/authority/policy", {});
+  const authority = useResource<AuthorityPolicyResponse>(
+    "/api/authority/policy",
+    {},
+  );
   // null = the drawer face; a module id = that module owns the body.
   const [moduleId, setModuleId] = useState<string | null>(
     integrationSubject ? "integrations" : scopedModule,
@@ -180,18 +188,21 @@ function SettingsFace({ hero, scope }: CoreProps) {
       setSaving(false);
     }
   };
-  const update = (path: string[], next: unknown) => {
+  const updateMany = (changes: Array<[string[], unknown]>) => {
     const draft = clone(resource.data);
-    let cursor = draft;
-    path.forEach((part, index) => {
-      if (index === path.length - 1) cursor[part] = next;
-      else cursor = cursor[part] as Record<string, unknown>;
-    });
+    for (const [path, next] of changes) {
+      let cursor = draft;
+      path.forEach((part, index) => {
+        if (index === path.length - 1) cursor[part] = next;
+        else cursor = cursor[part] as Record<string, unknown>;
+      });
+    }
     resource.setData(draft);
     setRefusal("");
     clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(() => void save(draft), 700);
   };
+  const update = (path: string[], next: unknown) => updateMany([[path, next]]);
 
   const changeSecret = async (
     secretId: string,
@@ -228,10 +239,13 @@ function SettingsFace({ hero, scope }: CoreProps) {
     setAuthorityBusy(true);
     setRefusal("");
     try {
-      const result = await apiFetch<Record<string, unknown>>("/api/authority/control-mode", {
-        method: "PUT",
-        json: { control_mode: controlMode },
-      });
+      const result = await apiFetch<Record<string, unknown>>(
+        "/api/authority/control-mode",
+        {
+          method: "PUT",
+          json: { control_mode: controlMode },
+        },
+      );
       authority.setData({ ...authority.data, ...result });
       setWrittenAt(new Date().toTimeString().slice(0, 8));
     } catch (error) {
@@ -267,7 +281,12 @@ function SettingsFace({ hero, scope }: CoreProps) {
     );
   const hl = (path: string[]) => highlight === path.join(".");
   const check = (path: string[], label: string, fact?: string) => (
-    <GadgetRow key={path.join(".")} label={label} fact={fact} highlight={hl(path)}>
+    <GadgetRow
+      key={path.join(".")}
+      label={label}
+      fact={fact}
+      highlight={hl(path)}
+    >
       <CheckGadget
         label={label}
         checked={Boolean(val(path))}
@@ -353,10 +372,17 @@ function SettingsFace({ hero, scope }: CoreProps) {
     </GadgetRow>
   );
   const csv = (path: string[], label: string, fact = "comma-separated") => (
-    <GadgetRow key={path.join(".")} label={label} fact={fact} highlight={hl(path)}>
+    <GadgetRow
+      key={path.join(".")}
+      label={label}
+      fact={fact}
+      highlight={hl(path)}
+    >
       <StringGadget
         label={label}
-        value={Array.isArray(val(path)) ? (val(path) as unknown[]).join(", ") : ""}
+        value={
+          Array.isArray(val(path)) ? (val(path) as unknown[]).join(", ") : ""
+        }
         onChange={(next) =>
           update(
             path,
@@ -377,7 +403,10 @@ function SettingsFace({ hero, scope }: CoreProps) {
   const providerIgnored = placement ? providerIgnoredReason(placement) : "";
 
   /* ── the generic walker: survives ONLY inside System (§3.2) ── */
-  const walkerRows = (node: Record<string, unknown>, path: string[]): ReactNode[] =>
+  const walkerRows = (
+    node: Record<string, unknown>,
+    path: string[],
+  ): ReactNode[] =>
     Object.entries(node).map(([key, item]) => {
       const nextPath = [...path, key];
       if (item !== null && typeof item === "object" && !Array.isArray(item))
@@ -418,7 +447,10 @@ function SettingsFace({ hero, scope }: CoreProps) {
             <HotkeyCapture
               value={(data.hotkey ?? {}) as Record<string, unknown>}
               onCommit={(next) =>
-                update(["hotkey"], { ...(data.hotkey as Record<string, unknown>), ...next })
+                update(["hotkey"], {
+                  ...(data.hotkey as Record<string, unknown>),
+                  ...next,
+                })
               }
               onRefuse={setRefusal}
             />
@@ -426,7 +458,10 @@ function SettingsFace({ hero, scope }: CoreProps) {
               {cyc(["model", "language"], "Language", LANGUAGE_OPTIONS)}
             </GadgetGroup>
             <GadgetGroup label="Typing">
-              {check(["dictation", "preview_before_type"], "Preview before type")}
+              {check(
+                ["dictation", "preview_before_type"],
+                "Preview before type",
+              )}
               {check(
                 ["dictation", "macros", "enabled"],
                 "Voice commands",
@@ -434,11 +469,7 @@ function SettingsFace({ hero, scope }: CoreProps) {
               )}
             </GadgetGroup>
             <GadgetGroup label="Spoken symbols">
-              <GadgetRow
-                wide
-                label="Dictionary"
-                highlight={hl(symbolsPath)}
-              >
+              <GadgetRow wide label="Dictionary" highlight={hl(symbolsPath)}>
                 <GadgetTable
                   head={["SPOKEN", "SYMBOL", "ATTACH"]}
                   deleteLabel="FORGET?"
@@ -487,7 +518,11 @@ function SettingsFace({ hero, scope }: CoreProps) {
               </GadgetRow>
             </GadgetGroup>
             <GadgetGroup label="Wake word">
-              {check(["wake_word", "enabled"], "Enabled", "models download once")}
+              {check(
+                ["wake_word", "enabled"],
+                "Enabled",
+                "models download once",
+              )}
               {cyc(
                 ["wake_word", "action"],
                 "Action",
@@ -498,11 +533,15 @@ function SettingsFace({ hero, scope }: CoreProps) {
             {/* HS-139-04/05: all voice RAW wells merged. */}
             <FoldGadget title="RAW" token="10">
               <GadgetGroup label="Transcription">
-                {num(["model", "transcribe_timeout_seconds"], "Transcribe timeout", {
-                  unit: "s",
-                  min: 5,
-                  step: 5,
-                })}
+                {num(
+                  ["model", "transcribe_timeout_seconds"],
+                  "Transcribe timeout",
+                  {
+                    unit: "s",
+                    min: 5,
+                    step: 5,
+                  },
+                )}
               </GadgetGroup>
               <GadgetGroup label="Pipeline">
                 {csv(["dictation", "pipeline", "stages"], "Stages")}
@@ -515,10 +554,14 @@ function SettingsFace({ hero, scope }: CoreProps) {
                   ["dictation", "pipeline", "target_profile_override"],
                   "Target profile override",
                 )}
-                {num(["dictation", "pipeline", "rewrite_passes"], "Rewrite passes", {
-                  min: 0,
-                  max: 5,
-                })}
+                {num(
+                  ["dictation", "pipeline", "rewrite_passes"],
+                  "Rewrite passes",
+                  {
+                    min: 0,
+                    max: 5,
+                  },
+                )}
                 {check(
                   ["dictation", "pipeline", "target_detect_llm_enabled"],
                   "LLM target detect",
@@ -553,7 +596,10 @@ function SettingsFace({ hero, scope }: CoreProps) {
         return (
           <>
             <GadgetGroup label="Sounds">
-              <GadgetRow label="DESK SOUNDS" highlight={hl(["ui", "desk_sounds"])}>
+              <GadgetRow
+                label="DESK SOUNDS"
+                highlight={hl(["ui", "desk_sounds"])}
+              >
                 <CheckGadget
                   label="DESK SOUNDS"
                   checked={Boolean(val(["ui", "desk_sounds"]) ?? true)}
@@ -630,9 +676,13 @@ function SettingsFace({ hero, scope }: CoreProps) {
                   min: 1,
                   step: 60,
                 })}
-                {num(["meeting", "intel_retry_max_attempts"], "Retry attempts", {
-                  min: 0,
-                })}
+                {num(
+                  ["meeting", "intel_retry_max_attempts"],
+                  "Retry attempts",
+                  {
+                    min: 0,
+                  },
+                )}
                 {str(
                   ["meeting", "intel_retry_failure_webhook_header_name"],
                   "Webhook header",
@@ -655,11 +705,15 @@ function SettingsFace({ hero, scope }: CoreProps) {
                   min: 5,
                   step: 5,
                 })}
-                {prop(["meeting", "intent_score_threshold"], "Score threshold", {
-                  min: 0,
-                  max: 1,
-                  step: 0.05,
-                })}
+                {prop(
+                  ["meeting", "intent_score_threshold"],
+                  "Score threshold",
+                  {
+                    min: 0,
+                    max: 1,
+                    step: 0.05,
+                  },
+                )}
                 {num(
                   ["meeting", "intent_hysteresis_windows"],
                   "Hysteresis windows",
@@ -684,7 +738,11 @@ function SettingsFace({ hero, scope }: CoreProps) {
           <>
             <GadgetGroup label="Cadence">
               {check(["cadence", "enabled"], "Enabled")}
-              {cyc(["cadence", "pressure"], "Pressure", CADENCE_PRESSURE_OPTIONS)}
+              {cyc(
+                ["cadence", "pressure"],
+                "Pressure",
+                CADENCE_PRESSURE_OPTIONS,
+              )}
               {num(["cadence", "quiet_hours_start"], "Quiet from", {
                 unit: "h",
                 min: 0,
@@ -723,14 +781,22 @@ function SettingsFace({ hero, scope }: CoreProps) {
           <ModelsModule
             settings={data}
             update={update}
+            updateMany={updateMany}
             onRefuse={setRefusal}
           />
         );
       /* ── Integrations: credentials + RAW ── */
       case "integrations": {
-        const RAW_SECRETS = new Set(["failure_webhook_url", "failure_webhook_credential"]);
-        const keepSecrets = Object.entries(secrets).filter(([id]) => !RAW_SECRETS.has(id));
-        const rawSecrets = Object.entries(secrets).filter(([id]) => RAW_SECRETS.has(id));
+        const RAW_SECRETS = new Set([
+          "failure_webhook_url",
+          "failure_webhook_credential",
+        ]);
+        const keepSecrets = Object.entries(secrets).filter(
+          ([id]) => !RAW_SECRETS.has(id),
+        );
+        const rawSecrets = Object.entries(secrets).filter(([id]) =>
+          RAW_SECRETS.has(id),
+        );
         const secretRow = ([secretId, state]: [string, SecretState]) => (
           <SecretRow
             key={secretId}
@@ -739,9 +805,7 @@ function SettingsFace({ hero, scope }: CoreProps) {
             destination={state.destination}
             busy={secretBusy === secretId}
             rotatable={ROTATABLE_SECRETS.has(secretId)}
-            onReplace={(value) =>
-              void changeSecret(secretId, "replace", value)
-            }
+            onReplace={(value) => void changeSecret(secretId, "replace", value)}
             onRotate={() => void changeSecret(secretId, "rotate")}
             onDelete={() => void changeSecret(secretId, "delete")}
           />
@@ -758,9 +822,7 @@ function SettingsFace({ hero, scope }: CoreProps) {
             {/* HS-139-04: operator-wiring secrets fold behind RAW. */}
             {rawSecrets.length ? (
               <FoldGadget title="RAW" token={String(rawSecrets.length)}>
-                <GadgetGroup>
-                  {rawSecrets.map(secretRow)}
-                </GadgetGroup>
+                <GadgetGroup>{rawSecrets.map(secretRow)}</GadgetGroup>
               </FoldGadget>
             ) : null}
           </>

@@ -77,20 +77,41 @@ def test_models_setup_is_a_clear_owner_path(tmp_path: Path, monkeypatch: pytest.
             assert setup.get_by_text("Choose AI for each job", exact=True).is_visible()
             assert setup.get_by_text("Runs on", exact=True).count() == 0
             assert setup.get_by_role("button", name="SET UP THIS DEVICE", exact=True).is_visible()
-            assert setup.get_by_role("button", name="USE ANOTHER AI", exact=True).is_visible()
+            assert setup.get_by_role("button", name="USE HOSTED AI", exact=True).is_visible()
+            assert setup.get_by_role("heading", name="OpenRouter Qwen presets", exact=True).is_visible()
+            for choice in ["Quick Qwen", "Balanced Qwen", "Deep Qwen"]:
+                assert setup.get_by_role("heading", name=choice, exact=True).is_visible()
             connections = setup.get_by_text("AI connections", exact=True).locator("xpath=ancestor::details")
             assert connections.get_attribute("open") is None
             page.screenshot(path=f"/tmp/holdspeak-choose-your-ai-{width}.png", full_page=False)
 
-            setup.get_by_role("button", name="USE ANOTHER AI", exact=True).click()
+            setup.get_by_placeholder("sk-or-v1-…").fill("glass-only-openrouter-key")
+            balanced = setup.get_by_role("heading", name="Balanced Qwen", exact=True).locator("xpath=ancestor::article")
+            balanced.get_by_role("button", name="ADD & USE", exact=True).click()
+            setup.get_by_text("OpenRouter · Balanced Qwen selected for Thoughts & notes.", exact=True).wait_for()
+            page.wait_for_timeout(900)
+            config = _api(page, "GET", "/api/settings")
+            assert config["thoughts"]["inference_target_id"] == "preset_openrouter_qwen35_35b_a3b"
+            targets = _api(page, "GET", "/api/inference-targets")["targets"]
+            selected = next(row for row in targets if row["id"] == "preset_openrouter_qwen35_35b_a3b")
+            assert selected["model"] == "qwen/qwen3.5-35b-a3b"
+            assert selected["secret"] == {"required": True, "present": True}
+            assert "glass-only-openrouter-key" not in str(targets)
+            balanced.scroll_into_view_if_needed()
+            assert balanced.get_by_role("button", name="IN USE", exact=True).is_visible()
+            page.screenshot(path=f"/tmp/holdspeak-choose-your-ai-preset-{width}.png", full_page=False)
+
+            setup.get_by_role("button", name="DEFINE YOUR OWN PROVIDER", exact=True).click()
             assert connections.get_attribute("open") is not None
-            assert setup.get_by_text("Private endpoints, paired devices, mesh nodes, and external services live here.", exact=True).is_visible()
+            assert setup.get_by_text("Define any OpenAI-compatible provider, private endpoint, paired device, or mesh node here.", exact=True).is_visible()
             assert page.evaluate("document.documentElement.scrollWidth <= innerWidth")
             if width == 393:
-                for label in ["SET UP THIS DEVICE", "USE ANOTHER AI"]:
+                for label in ["SET UP THIS DEVICE", "USE HOSTED AI", "DEFINE YOUR OWN PROVIDER"]:
                     box = setup.get_by_role("button", name=label, exact=True).bounding_box()
                     assert box and box["height"] >= 44
-            page.screenshot(path=f"/tmp/holdspeak-choose-your-ai-connections-{width}.png", full_page=False)
+                preset_box = balanced.get_by_role("button", name="IN USE", exact=True).bounding_box()
+                assert preset_box and preset_box["height"] >= 44
+            page.screenshot(path=f"/tmp/holdspeak-choose-your-ai-configured-{width}.png", full_page=False)
             assert errors == []
             assert console_errors == []
             browser.close()
