@@ -10,6 +10,22 @@ sitting database, the 2026-07-04 dogfood run (the only complete
 end-to-end walk on file), and the owner-verdict trail across phases
 67–100.
 
+> **2026-08-19 addendum — the thought-development loop.** Phase 141 adds a
+> fifth concrete Desk job without changing the identity below: preserve a rough
+> thought, improve the same working Note one explicit question at a time, and
+> stop when it is useful. It is power-user and YOLO first—no tutorial or extra
+> confirmation—but never silently autonomous. Context begins empty; pinned
+> Everyday context is one Attach interaction away. Browser and MCP send
+> qualified refs only, the server freezes the visible selection and exact
+> versioned leaves, and no attach/update/answer/accept/reject action starts a
+> model turn. The hub-local default remains empty until the owner explicitly
+> promotes the complete attached set for future local create/adopt. That policy
+> never syncs, never mutates an existing Thought, and never invokes a model;
+> each born Thought receives its own ordinary frozen manifest or a named,
+> whole-set `not_applied` receipt. Per-Thought removal and stopping the future
+> default are separate scopes. This contract is evidenced in Phase 141 story
+> 05 and its 05A extension.
+
 ## 1. The identity, as ratified
 
 The one-liner (identical in canon and public README): *"One local
@@ -108,6 +124,7 @@ essentially unwitnessed).
 | 2 | meeting session + plugin host + aftercare + gated connectors (`meeting_session/`, `meeting_plugins`, `plugins/host`, `meeting_aftercare`, `gated_connector`) | `/api/meetings/*`, `/api/intel/*` | live-proven (artifact seam young) |
 | 3 | steering chokepoint + factory + relay (`coder_steering`, `coder_factory`, `tmux_transport`) | `/api/coders/*` | built + audited, glass-proven |
 | 4 | primitive store + grounding hydrator + projections (`db/*`, `grounding.py`, `primitives/_shared`) | `/api/notes|kbs|ask|grounding/*` | foundational; ask lightly walked |
+| 5 | Thought aggregate + refinement context/application services (`refinement_thoughts`, `refinement_context_service`, `refinement_application_service`) | `/api/thoughts/*`, `thought.*` MCP tools/resources | ratified + both-width glass-proven through explicit context |
 | cross | operation policy + authority + egress surfaces (`operation_policy`, `authority` routes) | `/api/authority/*`, badges | ratified + walk-tested |
 
 ## 4. The postures at the desk

@@ -126,6 +126,10 @@ const Z_BASE = DESK_Z.windowBase;
 export interface DeskWindowOptions {
   minW?: number;
   minH?: number;
+  /** Preferred first-open geometry. The placement engine still clamps it
+   * into the working band; persisted/user-arranged geometry always wins. */
+  defaultW?: number;
+  defaultH?: number;
   /** Pass false while the panel renders nothing (launcher-only mounts). */
   open?: boolean;
   /** Round 8 — a content-sized card: height stays CSS-driven (the
@@ -192,7 +196,7 @@ function useDeskWindow(id: string, opts: DeskWindowOptions = {}) {
     if (cur) return cur;
     const el = elRef.current;
     const r = el?.getBoundingClientRect();
-    if (!el || !r || !r.width) return { x: MARGIN, y: 64, w: 400, h: 480 };
+    if (!el || !r || !r.width) return { x: MARGIN, y: 64, w: opts.defaultW ?? 400, h: opts.defaultH ?? 480 };
     // The entrance spring translates the panel; strip the live transform so
     // a mid-animation measure still yields the settled rect.
     let tx = 0;
@@ -207,7 +211,7 @@ function useDeskWindow(id: string, opts: DeskWindowOptions = {}) {
     } catch {
       /* environments without DOMMatrix just measure as-is */
     }
-    return { x: r.left - tx, y: r.top - ty, w: r.width, h: r.height };
+    return { x: r.left - tx, y: r.top - ty, w: opts.defaultW ?? r.width, h: opts.defaultH ?? r.height };
   };
 
   // HS-97-02 — a window lands well. Opening places the window through
@@ -254,7 +258,7 @@ function useDeskWindow(id: string, opts: DeskWindowOptions = {}) {
       // full-band window is a choice (resize/maximize), not a default
       // (HS-97-09).
       const el = elRef.current;
-      if (el && !opts.fitContent) {
+      if (el && !opts.fitContent && opts.defaultH === undefined) {
         const mh = parseFloat(getComputedStyle(el).maxHeight);
         const cap = Math.max(
           minH,
@@ -554,6 +558,9 @@ export interface DeskWindowFrameProps {
   className?: string;
   minW?: number;
   minH?: number;
+  /** Preferred first-open size; ignored once the owner arranges the window. */
+  defaultW?: number;
+  defaultH?: number;
   /** Content-sized card: see DeskWindowOptions.fitContent. */
   fitContent?: boolean;
   /** The client point this window opened from: see DeskWindowOptions. */
@@ -585,6 +592,8 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
     className,
     minW,
     minH,
+    defaultW,
+    defaultH,
     fitContent,
     origin,
     open,
@@ -612,6 +621,8 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
   const win = useDeskWindow(id, {
     minW,
     minH,
+    defaultW,
+    defaultH,
     fitContent,
     origin,
     open: open && !minimized,

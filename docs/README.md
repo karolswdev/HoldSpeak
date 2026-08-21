@@ -85,7 +85,7 @@ available. Dictation, Meetings, Studio, and Settings are focused workrooms.
 ## Extend: build on it
 
 - **[MCP sidecar](./MCP_SIDECAR.md)**: the desk's programmable surface over
-  stdio. 115 tools and 30 resources, wired automatically
+  stdio. 127 tools and 32 resources, wired automatically
   in Claude Code via the repo's `.mcp.json`. The reference for families,
   model-invoking tools, trust model, resources, and the explicit opt-in,
   shared-intent-only People boundary.

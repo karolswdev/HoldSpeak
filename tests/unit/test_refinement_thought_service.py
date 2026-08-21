@@ -8,6 +8,7 @@ from holdspeak.db import Database
 from holdspeak.services.errors import ConflictError, ValidationError
 from holdspeak.services.primitive_service import PrimitiveService
 from holdspeak.services.refinement_thought_service import INBOX_DIRECTORY_ID, RefinementThoughtService
+from holdspeak.services.refinement_context_service import RefinementContextService
 from holdspeak.services.sync_service import SyncService
 from holdspeak.principals import Principal, PrincipalKind
 from holdspeak.kernel.provider_signals import retry_invocation_id
@@ -503,6 +504,36 @@ def test_synthesis_fallback_accepts_exact_reviewed_note_without_second_turn(db):
     assert receipt["kind"] == "accept"
     with db._connection() as conn:
         assert conn.execute("SELECT COUNT(*) FROM refinement_invocations").fetchone()[0] == 1
+
+
+def test_synthesis_accept_names_stale_attached_context_and_requires_update(db):
+    service = RefinementThoughtService(db)
+    thought = _create(db)
+    db.notes.upsert(note_id="accept-context", title="Release constraints",
+                    body_markdown="ORCHID CLOCK", last_modified="2026-08-19T12:00:00Z")
+    attached = RefinementContextService(db).attach_context(
+        OWNER, thought["id"], visible_ref="note:accept-context", request_id="attach-accept-context",
+        expected_aggregate_revision=thought["aggregate_revision"],
+        expected_working_revision=thought["working_revision"],
+        expected_attachment_revision=thought["attachment_revision"],
+    )["thought"]
+    _, review_id = _install_review(
+        db, service, attached, "stale-context-synthesis",
+        json.dumps({"kind": "synthesis", "title": "Plan", "body_markdown": "Do it.", "tags": []}),
+    )
+    db.notes.upsert(note_id="accept-context", title="Release constraints",
+                    body_markdown="changed", last_modified="2026-08-19T13:00:00Z")
+    with pytest.raises(ConflictError) as stale:
+        service.review_action(
+            OWNER, thought["id"], review_id, request_id="accept-stale-context", action="accept",
+            expected_aggregate_revision=attached["aggregate_revision"],
+            expected_working_revision=attached["working_revision"],
+            expected_attachment_revision=attached["attachment_revision"],
+        )
+    assert stale.value.code == "refinement_context_stale"
+    assert "Release constraints" in str(stale.value)
+    assert stale.value.context["names"] == ["Release constraints"]
+    assert stale.value.context["repair"] == "update_context"
 
 
 def test_good_enough_atomically_suppresses_live_refinement(db):

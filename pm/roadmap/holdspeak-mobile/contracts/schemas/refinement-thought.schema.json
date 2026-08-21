@@ -5,28 +5,123 @@
   "x-sync-kind": "refinement_thought",
   "type": "object",
   "additionalProperties": false,
-  "required": ["id", "create_request_id", "create_payload_sha256", "raw_utf8_b64", "raw_sha256", "source", "raw_captured_at", "state", "attachment_revision", "working_revision", "lifecycle_revision", "aggregate_revision", "expected_aggregate_revision", "next_aggregate_revision", "working_note", "revisions", "lifecycle", "commands"],
+  "required": ["id", "create_request_id", "create_payload_sha256", "raw_utf8_b64", "raw_sha256", "source", "raw_captured_at", "state", "attachment_revision", "attachment_sha256", "working_revision", "lifecycle_revision", "aggregate_revision", "expected_aggregate_revision", "next_aggregate_revision", "working_note", "revisions", "lifecycle", "commands", "attachments", "created_at", "last_modified", "deleted"],
   "properties": {
-    "id": {"type": "string", "minLength": 1},
-    "create_request_id": {"type": "string", "minLength": 1},
-    "create_payload_sha256": {"type": "string", "minLength": 1},
+    "id": {"$ref": "#/$defs/id"},
+    "create_request_id": {"$ref": "#/$defs/id"},
+    "create_payload_sha256": {"$ref": "#/$defs/sha256"},
     "raw_utf8_b64": {"type": "string"},
-    "raw_sha256": {"type": "string"},
-    "source": {"type": "object"},
+    "raw_sha256": {"$ref": "#/$defs/sha256"},
+    "source": {"$ref": "#/$defs/source"},
     "raw_captured_at": {"type": "string"},
     "state": {"enum": ["working", "completed", "tombstoned"]},
     "attachment_revision": {"type": "integer", "minimum": 0},
+    "attachment_sha256": {"$ref": "#/$defs/sha256"},
     "working_revision": {"type": "integer", "minimum": 1},
     "lifecycle_revision": {"type": "integer", "minimum": 1},
     "aggregate_revision": {"type": "integer", "minimum": 1},
     "expected_aggregate_revision": {"type": "integer", "minimum": 0},
     "next_aggregate_revision": {"type": "integer", "minimum": 1},
-    "working_note": {"type": ["object", "null"]},
-    "revisions": {"type": "array"},
-    "lifecycle": {"type": "array"},
-    "commands": {"type": "array"},
+    "working_note": {"$ref": "#/$defs/note"},
+    "revisions": {"type": "array", "items": {"$ref": "#/$defs/working_revision"}},
+    "lifecycle": {"type": "array", "items": {"$ref": "#/$defs/lifecycle_revision"}},
+    "commands": {"type": "array", "items": {"$ref": "#/$defs/command"}},
+    "attachments": {"type": "array", "items": {"$ref": "#/$defs/attachment_revision"}},
     "created_at": {"type": "string"},
     "last_modified": {"type": "string"},
     "deleted": {"type": "boolean"}
+  },
+  "$defs": {
+    "id": {"type": "string", "minLength": 1},
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "nullable_sha256": {"oneOf": [{"$ref": "#/$defs/sha256"}, {"type": "null"}]},
+    "source": {
+      "type": "object", "additionalProperties": false,
+      "required": ["kind", "ref"],
+      "properties": {"kind": {"type": "string", "minLength": 1}, "ref": {"type": ["string", "null"]}}
+    },
+    "note": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "title", "body_markdown", "tags", "created_at", "updated_at", "last_modified", "deleted"],
+      "properties": {
+        "id": {"$ref": "#/$defs/id"}, "title": {"type": "string"}, "body_markdown": {"type": "string"},
+        "tags": {"type": "array", "items": {"type": "string"}}, "created_at": {"type": "string"},
+        "updated_at": {"type": "string"}, "last_modified": {"type": "string"}, "deleted": {"type": "boolean"}
+      }
+    },
+    "working_revision": {
+      "type": "object", "additionalProperties": false,
+      "required": ["thought_id", "revision", "title", "body_markdown", "tags_json", "content_sha256", "accepted_at", "tags"],
+      "properties": {
+        "thought_id": {"$ref": "#/$defs/id"}, "revision": {"type": "integer", "minimum": 1},
+        "title": {"type": "string"}, "body_markdown": {"type": "string"}, "tags_json": {"type": "string"},
+        "content_sha256": {"$ref": "#/$defs/sha256"}, "accepted_at": {"type": "string"},
+        "tags": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "lifecycle_revision": {
+      "type": "object", "additionalProperties": false,
+      "required": ["thought_id", "lifecycle_revision", "aggregate_revision", "prior_state", "state", "command", "occurred_at", "entry_sha256"],
+      "properties": {
+        "thought_id": {"$ref": "#/$defs/id"}, "lifecycle_revision": {"type": "integer", "minimum": 1},
+        "aggregate_revision": {"type": "integer", "minimum": 1}, "prior_state": {"type": ["string", "null"]},
+        "state": {"enum": ["working", "completed", "tombstoned"]}, "command": {"type": "string", "minLength": 1},
+        "occurred_at": {"type": "string"}, "entry_sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "command": {
+      "type": "object", "additionalProperties": false,
+      "required": ["thought_id", "aggregate_revision", "command_kind", "prior_working_revision", "next_working_revision", "prior_lifecycle_revision", "next_lifecycle_revision", "prior_attachment_revision", "next_attachment_revision", "canonical_version", "attachment_sha256", "canonical_sha256", "lifecycle_sha256", "accepted_at"],
+      "properties": {
+        "thought_id": {"$ref": "#/$defs/id"}, "aggregate_revision": {"type": "integer", "minimum": 1},
+        "command_kind": {"enum": ["create", "adopt_note", "replace_working", "replace_attachments", "complete", "resume", "tombstone"]},
+        "prior_working_revision": {"type": "integer", "minimum": 0}, "next_working_revision": {"type": "integer", "minimum": 1},
+        "prior_lifecycle_revision": {"type": "integer", "minimum": 0}, "next_lifecycle_revision": {"type": "integer", "minimum": 1},
+        "prior_attachment_revision": {"type": "integer", "minimum": 0}, "next_attachment_revision": {"type": "integer", "minimum": 0},
+        "canonical_version": {"enum": [1, 2]}, "attachment_sha256": {"$ref": "#/$defs/nullable_sha256"},
+        "canonical_sha256": {"$ref": "#/$defs/sha256"}, "lifecycle_sha256": {"$ref": "#/$defs/nullable_sha256"},
+        "accepted_at": {"type": "string"}
+      },
+      "allOf": [
+        {"if": {"properties": {"canonical_version": {"const": 1}}},
+         "then": {"properties": {"attachment_sha256": {"type": "null"},
+           "prior_attachment_revision": {"const": 0}, "next_attachment_revision": {"const": 0},
+           "command_kind": {"not": {"const": "replace_attachments"}}}}},
+        {"if": {"properties": {"canonical_version": {"const": 2}}},
+         "then": {"properties": {"attachment_sha256": {"$ref": "#/$defs/sha256"}}}}
+      ]
+    },
+    "attachment_leaf": {
+      "type": "object", "additionalProperties": false,
+      "required": ["thought_id", "attachment_revision", "visible_ordinal", "leaf_ordinal", "leaf_ref", "leaf_title", "source_last_modified", "membership_last_modified", "leaf_content_sha256", "leaf_metadata_sha256"],
+      "properties": {
+        "thought_id": {"$ref": "#/$defs/id"}, "attachment_revision": {"type": "integer", "minimum": 1},
+        "visible_ordinal": {"type": "integer", "minimum": 0}, "leaf_ordinal": {"type": "integer", "minimum": 0},
+        "leaf_ref": {"type": "string", "pattern": "^note:.+$"}, "leaf_title": {"type": "string"},
+        "source_last_modified": {"type": "string"}, "membership_last_modified": {"type": "string"},
+        "leaf_content_sha256": {"$ref": "#/$defs/sha256"}, "leaf_metadata_sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "attachment_visible": {
+      "type": "object", "additionalProperties": false,
+      "required": ["thought_id", "attachment_revision", "ordinal", "visible_ref", "visible_kind", "visible_title", "source_last_modified", "visible_sha256", "leaves"],
+      "properties": {
+        "thought_id": {"$ref": "#/$defs/id"}, "attachment_revision": {"type": "integer", "minimum": 1},
+        "ordinal": {"type": "integer", "minimum": 0}, "visible_ref": {"type": "string", "pattern": "^(note|knowledge):.+$"},
+        "visible_kind": {"enum": ["note", "knowledge"]}, "visible_title": {"type": "string"},
+        "source_last_modified": {"type": "string"}, "visible_sha256": {"$ref": "#/$defs/sha256"},
+        "leaves": {"type": "array", "items": {"$ref": "#/$defs/attachment_leaf"}}
+      }
+    },
+    "attachment_revision": {
+      "type": "object", "additionalProperties": false,
+      "required": ["thought_id", "attachment_revision", "aggregate_revision", "attachment_sha256", "visible_count", "leaf_count", "created_at", "visible"],
+      "properties": {
+        "thought_id": {"$ref": "#/$defs/id"}, "attachment_revision": {"type": "integer", "minimum": 1},
+        "aggregate_revision": {"type": "integer", "minimum": 1}, "attachment_sha256": {"$ref": "#/$defs/sha256"},
+        "visible_count": {"type": "integer", "minimum": 0, "maximum": 8}, "leaf_count": {"type": "integer", "minimum": 0, "maximum": 16},
+        "created_at": {"type": "string"}, "visible": {"type": "array", "items": {"$ref": "#/$defs/attachment_visible"}}
+      }
+    }
   }
 }

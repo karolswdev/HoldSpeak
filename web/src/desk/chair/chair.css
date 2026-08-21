@@ -11,7 +11,11 @@
   gap: var(--space-5);
   padding: var(--space-4);
   max-width: 960px;
-  margin: 0 auto;
+  /* Seat the normal Chair inside the same working band used by windows.
+     Subtracting the chrome bands from height is not enough: without the
+     matching block offsets a populated hero starts underneath the fixed
+     system bar. */
+  margin: var(--desk-work-top) auto var(--desk-work-bottom);
   /* Fill the working area between chrome and dock. */
   min-height: calc(100vh - var(--desk-snap-top) - var(--desk-snap-bottom));
 }
@@ -30,6 +34,8 @@
   min-height: 100dvh;
   align-items: center;
   justify-content: center;
+  /* First value deliberately has no Desk chrome or dock. */
+  margin: 0 auto;
   padding: clamp(var(--space-3), 5vw, var(--space-6));
 }
 .chair.chair-first-value .desk-first-words {
@@ -41,8 +47,9 @@
    Lanes with only SurfaceState[data-kind="empty"] or that returned null
    (:empty) are quiet. The :has() selector is supported in all target
    browsers (Chrome 105+, Firefox 121+, Safari 15.4+). */
+.chair-active-work:empty { display: none; }
 .chair-empty-invitation { display: none; }
-.chair:not(:has(.chair-lane .surface-section)) .chair-empty-invitation {
+.chair:not(:has(.chair-lane .surface-section)):not(:has(.finish-thoughts)) .chair-empty-invitation {
   display: block;
   text-align: center;
   color: var(--text-muted);
@@ -50,19 +57,19 @@
   margin-top: var(--space-3);
 }
 
-.chair:not(:has(.chair-lane .surface-section)) .chair-hero {
+.chair:not(:has(.chair-lane .surface-section)):not(:has(.finish-thoughts)) .chair-hero {
   flex: 1;
 }
 /* Scale the hero key up for a larger presence in the sparse state. */
-.chair:not(:has(.chair-lane .surface-section)) .capture-hero-key {
+.chair:not(:has(.chair-lane .surface-section)):not(:has(.finish-thoughts)) .capture-hero-key {
   width: calc(var(--size-key) * 2);
   height: calc(var(--size-key) * 2);
   font-size: 11px;
 }
-.chair:not(:has(.chair-lane .surface-section)) .capture-hero-glyph {
+.chair:not(:has(.chair-lane .surface-section)):not(:has(.finish-thoughts)) .capture-hero-glyph {
   font-size: var(--size-icon-lg);
 }
-.chair:not(:has(.chair-lane .surface-section)) .capture-hero-glyph img {
+.chair:not(:has(.chair-lane .surface-section)):not(:has(.finish-thoughts)) .capture-hero-glyph img {
   width: var(--size-icon-lg);
   height: var(--size-icon-lg);
 }
@@ -111,31 +118,121 @@
 }
 .thought-entry-primary { width: 100%; }
 .thought-entry-actions { display: flex; flex-wrap: wrap; gap: var(--space-2); }
-.thought-entry-more, .thought-resume { min-width: 0; }
-.thought-resume { display: grid; gap: var(--space-1); }
-.thought-resume-row {
-  display: grid;
-  gap: 2px;
+.thought-entry-more { min-width: 0; }
+
+/* Unfinished work is a first-class Chair lane, not an accordion under capture. */
+.chair-active-work {
+  width: min(100%, 640px);
   min-width: 0;
-  overflow-wrap: anywhere;
-  text-align: left;
-  padding: var(--space-2);
+  margin-inline: auto;
+}
+.finish-thoughts {
+  min-width: 0;
+}
+.finish-thoughts-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: 0 var(--desk-surface-row-pad-x) var(--space-1);
+}
+.finish-thoughts-head h2 {
+  margin: 0;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.finish-thoughts-head > span {
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+}
+.finish-thoughts-list {
+  overflow: hidden;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--border);
+  background: var(--surface-1);
+  list-style: none;
+}
+.finish-thoughts-item + .finish-thoughts-item {
+  border-top: 1px solid var(--border);
+}
+.finish-thoughts-row {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-width: 0;
+  min-height: 52px;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--desk-surface-row-pad-x);
   border: 0;
   background: transparent;
   color: var(--text);
+  font: inherit;
+  text-align: left;
   cursor: pointer;
 }
-.thought-resume-row span, .thought-resume-row time, .thought-resume-row em {
+.finish-thoughts-row:hover,
+.finish-thoughts-row:focus-visible {
+  background: var(--wash-1);
+}
+.finish-thoughts-row:focus-visible {
+  outline: 1px solid var(--accent);
+  outline-offset: -2px;
+}
+.finish-thoughts-copy {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+  gap: 2px;
+}
+.finish-thoughts-copy strong,
+.finish-thoughts-preview,
+.finish-thoughts-meta {
   overflow: hidden;
-  color: var(--text-muted);
-  font-size: var(--font-size-xs);
-  font-style: normal;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+.finish-thoughts-copy strong {
+  font-size: var(--desk-surface-body-size);
+  font-weight: 600;
+}
+.finish-thoughts-preview,
+.finish-thoughts-meta {
+  color: var(--text-muted);
+  font-size: var(--desk-surface-detail-size);
+}
+.finish-thoughts-meta > span + span::before {
+  content: " · ";
+}
+.finish-thoughts-arrow {
+  flex: 0 0 auto;
+  color: var(--text-muted);
+  font-size: var(--font-size-lg);
+}
+.finish-thoughts-row:hover .finish-thoughts-arrow,
+.finish-thoughts-row:focus-visible .finish-thoughts-arrow {
+  color: var(--accent);
+}
+.finish-thoughts-more {
+  width: 100%;
+  margin-top: var(--space-1);
 }
 @media (max-width: 480px) {
   .thought-entry-actions { display: grid; grid-template-columns: minmax(0, 1fr); }
   .thought-entry-actions .btn--primary { width: 100%; }
+  .finish-thoughts-row { min-height: 56px; }
+  .finish-thoughts-copy strong {
+    display: -webkit-box;
+    white-space: normal;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
 }
 
 /* ── Lane chrome ─────────────────────────────────────────────────── */
@@ -198,9 +295,12 @@
 
 /* ── Empty-chair invitation (R3) ────────────────────────────────── */
 .desk-next .chair-empty-invitation {
-  display: flex;
+  display: none;
   justify-content: center;
   padding: var(--space-3) 0;
+}
+.desk-next .chair:not(:has(.chair-lane .surface-section)):not(:has(.finish-thoughts)) .chair-empty-invitation {
+  display: flex;
 }
 .desk-next .chair-empty-invitation-text {
   font-family: var(--font-mono);

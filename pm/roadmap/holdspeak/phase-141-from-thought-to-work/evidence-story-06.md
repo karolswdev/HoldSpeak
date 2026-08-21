@@ -1,10 +1,10 @@
-# Evidence — HS-141-06 Good enough means done
+# Evidence — HS-141-06 Finish Thought means done
 
 **Result:** done; design, implementation, and cold-owner counsel **RATIFY**.
 
 ## Shipped contract
 
-- **Good enough** is the immediate default-YOLO owner command. It adds no Save,
+- **Finish Thought** is the immediate default-YOLO owner command. It adds no Save,
   confirmation, approval, model, destination, or setup step.
 - The editor synchronously fences finishing, drains an in-flight save and every
   already accepted queued edit in order, then completes using the final returned
@@ -70,3 +70,11 @@ errors. GitHub Actions was not watched or used as a gate.
 The durable lifecycle and working-revision ledgers remain preserved, but this
 story does not invent an owner-facing history projection. It performs no model,
 context, proposal, or tool work. HS-141-04 is the first owner-triggered AI turn.
+
+## Thought Workbench amendment
+
+The original evidence below and its captures preserve the label that shipped in
+the earlier pullout. The current product removed that wording: **Finish
+Thought** is now the direct completion command in the Workbench's single fixed
+action seat. The lifecycle transition, idempotency, no-model behavior, and
+receipt law proven by this story are unchanged.

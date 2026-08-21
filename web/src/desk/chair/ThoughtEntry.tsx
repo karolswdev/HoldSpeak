@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useDurableDraft } from "../../lib/durableDraft";
 import { openSurfaceOr } from "../shell";
 import { useDesk } from "../store";
-import { createThought, sourceLabel, unfinishedThoughts, type UnfinishedThought } from "../thoughts";
+import { createThought } from "../thoughts";
 import { micStreamSupported, startStreamSession, type StreamSession } from "../../lib/micStreamSession";
 
 function requestId(key: string): string {
@@ -18,20 +18,9 @@ export function ThoughtEntry() {
   const [composing, setComposing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
-  const [unfinished, setUnfinished] = useState<UnfinishedThought[]>([]);
-  const [nextCursor, setNextCursor] = useState<string | null>(null);
-  const [resumeOpen, setResumeOpen] = useState(false);
   const [more, setMore] = useState(false);
   const [dictating, setDictating] = useState(false);
-  const loaded = useRef(false);
   const stream = useRef<StreamSession | null>(null);
-
-  const loadUnfinished = async (cursor?: string) => {
-    const page = await unfinishedThoughts(cursor);
-    setUnfinished((items) => cursor ? [...items, ...page.items] : page.items);
-    setNextCursor(page.next_cursor);
-  };
-  useEffect(() => { if (!loaded.current) { loaded.current = true; void loadUnfinished().catch(() => undefined); } }, []);
   useEffect(() => () => { stream.current?.cancel(); stream.current = null; }, []);
 
   const start = async () => {
@@ -39,11 +28,13 @@ export function ThoughtEntry() {
     setSaving(true); setMessage("");
     try {
       const raw = value.trim();
-      const thought = await createThought({ request_id: requestId("hs.thought.compose.request"), raw_text: value,
+      const created = await createThought({ request_id: requestId("hs.thought.compose.request"), raw_text: value,
         title: raw.split(/\r?\n/, 1)[0].slice(0, 80) || "Thought" });
+      const thought = created.thought;
+      sessionStorage.setItem(`hs.thought.default-context-receipt.${thought.id}`, JSON.stringify(created.default_context_receipt));
       // The new thought now owns the next surface. Collapse the compact
       // capture controls before opening it so narrow Chair never stacks both.
-      setComposing(false); setResumeOpen(false); setMore(false);
+      setComposing(false); setMore(false);
       clearPersisted(); sessionStorage.removeItem("hs.thought.compose.request");
       await useDesk.getState().refresh();
       useDesk.getState().openPullout(`note:${thought.working_note.id}`);
@@ -76,10 +67,8 @@ export function ThoughtEntry() {
   return <section className="thought-entry" data-testid="thought-entry">
     {!composing ? <>
       <button type="button" className="btn btn--primary thought-entry-primary" onClick={() => setComposing(true)}>Develop a thought</button>
-      {unfinished.length ? <button type="button" className="desk-chip quiet" onClick={() => setResumeOpen((open) => !open)}>Resume unfinished thoughts</button> : null}
       <button type="button" className="desk-chip quiet" onClick={() => setMore((open) => !open)}>More capture options</button>
       {more ? <div className="thought-entry-more"><button type="button" className="desk-chip quiet" onClick={() => openSurfaceOr("dictate", "/dictation")}>Open advanced capture</button></div> : null}
-      {resumeOpen ? <div className="thought-resume" role="list">{unfinished.map((thought) => <button role="listitem" aria-label={`${sourceLabel(thought.source_kind)} thought ${thought.title || "Untitled thought"}`} type="button" className="thought-resume-row" key={thought.id} onClick={() => { setResumeOpen(false); useDesk.getState().openPullout(`note:${thought.working_note_id}`); }}><strong>{sourceLabel(thought.source_kind)} thought · {thought.title || "Untitled thought"}</strong><span>{thought.body_preview || "No text yet"}</span><time dateTime={thought.updated_at}>Updated {new Date(thought.updated_at).toLocaleString()}</time>{thought.filing_status === "missing" ? <em>This thought isn't in a drawer yet. Open it to choose where it belongs.</em> : null}</button>)}{nextCursor ? <button type="button" className="desk-chip quiet" onClick={() => void loadUnfinished(nextCursor)}>Show more</button> : null}</div> : null}
     </> : <>
       <label htmlFor="thought-compose">What are you working through?</label>
       <textarea id="thought-compose" value={value} onChange={(event) => setDraft(event.target.value)} autoFocus rows={5} />

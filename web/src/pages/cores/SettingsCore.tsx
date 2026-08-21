@@ -172,6 +172,7 @@ function SettingsFace({ hero, scope }: CoreProps) {
         },
       );
       resource.setData(result.settings ?? payload ?? resource.data);
+      window.dispatchEvent(new Event("holdspeak:settings-updated"));
       setWrittenAt(new Date().toTimeString().slice(0, 8));
     } catch (error) {
       setRefusal(readableError(error));

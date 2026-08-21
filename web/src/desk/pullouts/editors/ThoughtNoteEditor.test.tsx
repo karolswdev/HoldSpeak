@@ -59,7 +59,7 @@ describe("ThoughtNoteEditor", () => {
     expect(onThought).toHaveBeenLastCalledWith(afterB);
   });
 
-  it("fences synchronously and drains accepted A then B before Good enough can use cursors", async () => {
+  it("fences synchronously and drains accepted A then B before Finish Thought can use cursors", async () => {
     vi.useFakeTimers();
     useDesk.setState({ refresh: vi.fn() });
     const first = deferred<typeof base>();
@@ -72,7 +72,7 @@ describe("ThoughtNoteEditor", () => {
     await act(async () => { await vi.advanceTimersByTimeAsync(500); });
     fireEvent.change(screen.getByLabelText("Title"), { target: { value: "B" } });
     const flushed = editor.current!.flush();
-    // The synchronous fence rejects edits begun after Good enough.
+    // The synchronous fence rejects edits begun after Finish Thought.
     fireEvent.change(screen.getByLabelText("Title"), { target: { value: "C" } });
     await act(async () => { first.resolve(afterA); await Promise.resolve(); });
     expect(saveThoughtWorking).toHaveBeenCalledTimes(2);
@@ -95,7 +95,7 @@ describe("ThoughtNoteEditor", () => {
     expect(saveThoughtWorking).toHaveBeenCalledTimes(1);
   });
 
-  it("installs conflict current and never replays B queued behind A", async () => {
+  it("installs conflict authority while retaining B and never replays it blindly", async () => {
     vi.useFakeTimers();
     useDesk.setState({ refresh: vi.fn() });
     const first = deferred<typeof base>();
@@ -110,10 +110,10 @@ describe("ThoughtNoteEditor", () => {
     fireEvent.change(screen.getByLabelText("Title"), { target: { value: "B" } });
     await act(async () => { first.reject(new ApiError(409, "conflict", { context: { current } })); await Promise.resolve(); await vi.runAllTimersAsync(); });
 
-    expect(screen.getByLabelText("Title")).toHaveValue("Current");
-    expect(screen.getByLabelText("Body")).toHaveValue("Current body");
-    expect(screen.getByLabelText("Tags")).toHaveValue("current");
-    expect(screen.getByRole("status")).toHaveTextContent("latest version is shown");
+    expect(screen.getByLabelText("Title")).toHaveValue("B");
+    expect(screen.getByLabelText("Body")).toHaveValue("Before body");
+    expect(screen.getByLabelText("Tags")).toHaveValue("before");
+    expect(screen.getByRole("status")).toHaveTextContent("unsaved edits are still here");
     expect(onThought).toHaveBeenCalledWith(current);
     expect(saveThoughtWorking).toHaveBeenCalledTimes(1);
   });
@@ -135,10 +135,11 @@ describe("ThoughtNoteEditor", () => {
     await act(async () => { view.rerender(<ThoughtNoteEditor thought={parentCurrent} onThought={onThought} />); });
     await act(async () => { first.resolve(staleA); await Promise.resolve(); await vi.runAllTimersAsync(); });
 
-    expect(screen.getByLabelText("Title")).toHaveValue("Parent");
-    expect(screen.getByLabelText("Body")).toHaveValue("Parent body");
-    expect(screen.getByLabelText("Tags")).toHaveValue("parent");
-    expect(onThought).not.toHaveBeenCalled();
+    expect(screen.getByLabelText("Title")).toHaveValue("A");
+    expect(screen.getByLabelText("Body")).toHaveValue("Before body");
+    expect(screen.getByLabelText("Tags")).toHaveValue("before");
+    expect(screen.getByRole("status")).toHaveTextContent("unsaved edits are still here");
+    expect(onThought).toHaveBeenCalledWith(parentCurrent);
     expect(saveThoughtWorking).toHaveBeenCalledTimes(1);
   });
 
@@ -159,11 +160,11 @@ describe("ThoughtNoteEditor", () => {
     await act(async () => { view.rerender(<ThoughtNoteEditor thought={parentCurrent} onThought={onThought} />); });
     await act(async () => { first.reject(new ApiError(409, "conflict", { current: olderConflict })); await Promise.resolve(); await vi.runAllTimersAsync(); });
 
-    expect(screen.getByLabelText("Title")).toHaveValue("Parent");
-    expect(screen.getByLabelText("Body")).toHaveValue("Parent body");
-    expect(screen.getByLabelText("Tags")).toHaveValue("parent");
-    expect(screen.queryByRole("status")).not.toBeInTheDocument();
-    expect(onThought).not.toHaveBeenCalled();
+    expect(screen.getByLabelText("Title")).toHaveValue("A");
+    expect(screen.getByLabelText("Body")).toHaveValue("Before body");
+    expect(screen.getByLabelText("Tags")).toHaveValue("before");
+    expect(screen.getByRole("status")).toHaveTextContent("unsaved edits are still here");
+    expect(onThought).toHaveBeenCalledWith(parentCurrent);
     expect(saveThoughtWorking).toHaveBeenCalledTimes(1);
   });
 });

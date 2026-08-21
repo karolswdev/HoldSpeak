@@ -827,7 +827,9 @@ CREATE TABLE IF NOT EXISTS refinement_thoughts (
     working_revision INTEGER NOT NULL CHECK (working_revision >= 1),
     lifecycle_revision INTEGER NOT NULL DEFAULT 1 CHECK (lifecycle_revision >= 1),
     attachment_revision INTEGER NOT NULL DEFAULT 0 CHECK (attachment_revision >= 0),
+    attachment_sha256 TEXT NOT NULL DEFAULT '',
     aggregate_revision INTEGER NOT NULL DEFAULT 1 CHECK (aggregate_revision >= 1),
+    continuity_revision INTEGER NOT NULL DEFAULT 0 CHECK (continuity_revision >= 0),
     resume_order INTEGER NOT NULL DEFAULT 0,
     state TEXT NOT NULL CHECK (state IN ('working', 'completed', 'tombstoned')),
     created_at TEXT NOT NULL,
@@ -877,11 +879,122 @@ CREATE TABLE IF NOT EXISTS refinement_aggregate_commands (
     next_lifecycle_revision INTEGER NOT NULL,
     prior_attachment_revision INTEGER NOT NULL,
     next_attachment_revision INTEGER NOT NULL,
+    canonical_version INTEGER NOT NULL DEFAULT 1 CHECK (canonical_version IN (1,2)),
+    attachment_sha256 TEXT,
     canonical_sha256 TEXT NOT NULL,
     lifecycle_sha256 TEXT,
     accepted_at TEXT NOT NULL,
     PRIMARY KEY (thought_id, aggregate_revision)
 );
+
+CREATE TABLE IF NOT EXISTS refinement_attachment_revisions (
+    thought_id TEXT NOT NULL REFERENCES refinement_thoughts(id),
+    attachment_revision INTEGER NOT NULL CHECK (attachment_revision >= 1),
+    aggregate_revision INTEGER NOT NULL,
+    attachment_sha256 TEXT NOT NULL,
+    visible_count INTEGER NOT NULL CHECK (visible_count >= 0),
+    leaf_count INTEGER NOT NULL CHECK (leaf_count >= 0),
+    created_at TEXT NOT NULL,
+    PRIMARY KEY (thought_id, attachment_revision),
+    UNIQUE (thought_id, aggregate_revision)
+);
+CREATE TABLE IF NOT EXISTS refinement_attachment_visible (
+    thought_id TEXT NOT NULL,
+    attachment_revision INTEGER NOT NULL,
+    ordinal INTEGER NOT NULL CHECK (ordinal >= 0),
+    visible_ref TEXT NOT NULL,
+    visible_kind TEXT NOT NULL CHECK (visible_kind IN ('note','knowledge')),
+    visible_title TEXT NOT NULL,
+    source_last_modified TEXT NOT NULL,
+    visible_sha256 TEXT NOT NULL,
+    PRIMARY KEY (thought_id, attachment_revision, ordinal),
+    UNIQUE (thought_id, attachment_revision, visible_ref),
+    FOREIGN KEY (thought_id, attachment_revision)
+      REFERENCES refinement_attachment_revisions(thought_id, attachment_revision)
+);
+CREATE TABLE IF NOT EXISTS refinement_attachment_leaves (
+    thought_id TEXT NOT NULL,
+    attachment_revision INTEGER NOT NULL,
+    visible_ordinal INTEGER NOT NULL CHECK (visible_ordinal >= 0),
+    leaf_ordinal INTEGER NOT NULL CHECK (leaf_ordinal >= 0),
+    leaf_ref TEXT NOT NULL,
+    leaf_title TEXT NOT NULL,
+    source_last_modified TEXT NOT NULL,
+    membership_last_modified TEXT NOT NULL,
+    leaf_content_sha256 TEXT NOT NULL,
+    leaf_metadata_sha256 TEXT NOT NULL DEFAULT '',
+    PRIMARY KEY (thought_id, attachment_revision, visible_ordinal, leaf_ordinal),
+    UNIQUE (thought_id, attachment_revision, visible_ordinal, leaf_ref),
+    FOREIGN KEY (thought_id, attachment_revision, visible_ordinal)
+      REFERENCES refinement_attachment_visible(thought_id, attachment_revision, ordinal)
+);
+CREATE TABLE IF NOT EXISTS refinement_context_actions (
+    action_id TEXT PRIMARY KEY,
+    request_id TEXT NOT NULL UNIQUE,
+    request_sha256 TEXT NOT NULL,
+    thought_id TEXT NOT NULL REFERENCES refinement_thoughts(id),
+    action_kind TEXT NOT NULL CHECK (action_kind IN ('attach','detach','refresh')),
+    visible_ref TEXT NOT NULL,
+    prior_aggregate_revision INTEGER NOT NULL,
+    prior_attachment_revision INTEGER NOT NULL,
+    post_aggregate_revision INTEGER NOT NULL,
+    post_attachment_revision INTEGER NOT NULL,
+    post_attachment_sha256 TEXT NOT NULL,
+    receipt_json TEXT NOT NULL DEFAULT '{}',
+    created_at TEXT NOT NULL
+);
+
+-- HS-141-05A: hub-local owner policy for the complete default AI-context SET.
+-- Policy and mutation receipts never sync; each locally born Thought separately
+-- records the exact policy head it observed and the attachment result.
+CREATE TABLE IF NOT EXISTS refinement_default_context_revisions (
+    revision INTEGER PRIMARY KEY CHECK (revision >= 0),
+    configuration_sha256 TEXT NOT NULL,
+    refs_json TEXT NOT NULL,
+    labels_json TEXT NOT NULL DEFAULT '[]',
+    created_at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS refinement_default_context_current (
+    id INTEGER PRIMARY KEY CHECK (id=1),
+    revision INTEGER NOT NULL REFERENCES refinement_default_context_revisions(revision),
+    configuration_sha256 TEXT NOT NULL,
+    refs_json TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS refinement_default_context_actions (
+    action_id TEXT PRIMARY KEY,
+    request_id TEXT NOT NULL UNIQUE,
+    request_sha256 TEXT NOT NULL,
+    prior_revision INTEGER NOT NULL,
+    post_revision INTEGER NOT NULL,
+    post_configuration_sha256 TEXT NOT NULL,
+    receipt_json TEXT NOT NULL,
+    created_at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS refinement_default_context_applications (
+    application_id TEXT PRIMARY KEY,
+    thought_id TEXT NOT NULL UNIQUE REFERENCES refinement_thoughts(id),
+    create_request_id TEXT NOT NULL UNIQUE,
+    default_revision INTEGER NOT NULL,
+    default_configuration_sha256 TEXT NOT NULL,
+    status TEXT NOT NULL CHECK (status IN ('empty','applied','not_applied')),
+    attachment_zero_sha256 TEXT NOT NULL,
+    attachment_revision INTEGER NOT NULL CHECK (attachment_revision >= 0),
+    attachment_sha256 TEXT NOT NULL,
+    error_code TEXT NOT NULL DEFAULT '',
+    failure_json TEXT NOT NULL DEFAULT 'null',
+    failure_sha256 TEXT NOT NULL DEFAULT '74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b',
+    receipt_json TEXT NOT NULL,
+    created_at TEXT NOT NULL
+);
+INSERT OR IGNORE INTO refinement_default_context_revisions
+    (revision,configuration_sha256,refs_json,labels_json,created_at)
+VALUES
+    (0,'4e04806a2695b3ac90e3ed39b69cb2ffa41f94f7af6cc55d262764c240c6a778','[]','[]',datetime('now'));
+INSERT OR IGNORE INTO refinement_default_context_current
+    (id,revision,configuration_sha256,refs_json,updated_at)
+VALUES
+    (1,0,'4e04806a2695b3ac90e3ed39b69cb2ffa41f94f7af6cc55d262764c240c6a778','[]',datetime('now'));
 
 -- HS-141-06: a local Good-enough receipt is retry proof for one owner
 -- completion request. It is not sync state or a second lifecycle.
@@ -892,6 +1005,8 @@ CREATE TABLE IF NOT EXISTS refinement_completion_receipts (
     request_sha256 TEXT NOT NULL,
     aggregate_revision INTEGER NOT NULL,
     lifecycle_revision INTEGER NOT NULL,
+    continuity_revision INTEGER NOT NULL DEFAULT 0,
+    committed_hub_id TEXT NOT NULL DEFAULT '',
     working_note_id TEXT NOT NULL,
     created_at TEXT NOT NULL,
     UNIQUE (thought_id, aggregate_revision)
@@ -1832,6 +1947,9 @@ CREATE TABLE IF NOT EXISTS refinement_invocations (
     frozen_aggregate_revision INTEGER NOT NULL,
     frozen_working_revision INTEGER NOT NULL,
     frozen_attachment_revision INTEGER NOT NULL,
+    frozen_attachment_sha256 TEXT NOT NULL DEFAULT '',
+    admission_json TEXT NOT NULL DEFAULT '{}',
+    admission_sha256 TEXT NOT NULL DEFAULT '',
     review_result_id TEXT UNIQUE,
     state TEXT NOT NULL CHECK (state IN (
         'reserved','in_flight','awaiting_projection','review_ready',
@@ -1918,6 +2036,35 @@ CREATE TABLE IF NOT EXISTS refinement_review_actions (
     post_aggregate_revision INTEGER NOT NULL,
     post_working_revision INTEGER NOT NULL,
     post_lifecycle_revision INTEGER NOT NULL,
+    post_continuity_revision INTEGER NOT NULL DEFAULT 0,
+    committed_hub_id TEXT NOT NULL DEFAULT '',
+    append_effect_json TEXT NOT NULL DEFAULT '',
+    append_effect_sha256 TEXT NOT NULL DEFAULT '',
+    created_at TEXT NOT NULL
+);
+
+-- Thought Workbench: hub-local ordering and the atomic answer+next-turn proof.
+-- Neither table is part of primitive sync.  The identity is provisioned while
+-- schema reconciliation runs, so the read-only Workbench projection never
+-- creates authority as a side effect.
+CREATE TABLE IF NOT EXISTS refinement_workspace_identity (
+    id INTEGER PRIMARY KEY CHECK (id=1),
+    hub_id TEXT NOT NULL UNIQUE
+);
+INSERT OR IGNORE INTO refinement_workspace_identity(id,hub_id)
+VALUES(1,'hub_' || lower(hex(randomblob(16))));
+
+CREATE TABLE IF NOT EXISTS refinement_answer_continue_commands (
+    command_id TEXT PRIMARY KEY,
+    request_sha256 TEXT NOT NULL,
+    thought_id TEXT NOT NULL REFERENCES refinement_thoughts(id),
+    review_result_id TEXT NOT NULL UNIQUE REFERENCES refinement_review_results(id),
+    action_id TEXT NOT NULL UNIQUE REFERENCES refinement_review_actions(action_id),
+    child_invocation_id TEXT NOT NULL UNIQUE REFERENCES refinement_invocations(id),
+    append_effect_json TEXT NOT NULL,
+    post_aggregate_revision INTEGER NOT NULL,
+    post_working_revision INTEGER NOT NULL,
+    post_continuity_revision INTEGER NOT NULL,
     created_at TEXT NOT NULL
 );
 CREATE TABLE IF NOT EXISTS recipe_results (

@@ -4294,6 +4294,26 @@
       ]
     },
     {
+      "path": "/api/thoughts/default-context",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.primitives.thoughts",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/thoughts/default-context",
+      "methods": [
+        "PUT"
+      ],
+      "module": "web.routes.primitives.thoughts",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/thoughts/for-note/{note_id}",
       "methods": [
         "GET"
@@ -4315,6 +4335,26 @@
     },
     {
       "path": "/api/thoughts/{thought_id}/complete",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.primitives.thoughts",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/thoughts/{thought_id}/context",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.primitives.thoughts",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/thoughts/{thought_id}/context/{action}",
       "methods": [
         "POST"
       ],
@@ -4384,9 +4424,29 @@
       ]
     },
     {
+      "path": "/api/thoughts/{thought_id}/reviews/{review_result_id}/answer-and-continue",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.primitives.thoughts",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/thoughts/{thought_id}/reviews/{review_result_id}/{action}",
       "methods": [
         "POST"
+      ],
+      "module": "web.routes.primitives.thoughts",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/thoughts/{thought_id}/workbench",
+      "methods": [
+        "GET"
       ],
       "module": "web.routes.primitives.thoughts",
       "consumers": [

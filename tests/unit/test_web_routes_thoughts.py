@@ -189,6 +189,19 @@ def test_refinement_routes_are_thin_adapters_to_the_injected_coordinator(tmp_pat
         "thought_id": thought["id"], "invocation_id": "rinv-route",
         "expected_aggregate_revision": 1,
     }
+    assert client.post(f"/api/thoughts/{thought['id']}/refine", json={
+        "request_id":"bad","expected_aggregate_revision":1,"expected_working_revision":1,
+        "expected_attachment_revision":0,"extra":"no",
+    }).status_code == 422
+    assert client.post(f"/api/thoughts/{thought['id']}/reconcile", json={
+        "expected_aggregate_revision":1,"extra":"no",
+    }).status_code == 422
+    assert client.post(f"/api/thoughts/{thought['id']}/refinements/rinv-route/stop", json={
+        "expected_aggregate_revision":1,"extra":"no",
+    }).status_code == 422
+    assert client.patch(f"/api/thoughts/{thought['id']}/working", json={
+        "expected_aggregate_revision":1,"expected_working_revision":1,"extra":"no",
+    }).status_code == 422
 
 
 def test_refine_without_application_coordinator_refuses_before_reservation(tmp_path, monkeypatch):
@@ -214,3 +227,36 @@ def test_refine_without_application_coordinator_refuses_before_reservation(tmp_p
     assert response.status_code == 503
     with db._connection() as conn:
         assert conn.execute("SELECT COUNT(*) FROM refinement_invocations").fetchone()[0] == 0
+
+
+def test_working_save_process_cursor_conflict_returns_fresh_workbench_without_draft(tmp_path, monkeypatch):
+    db = Database(tmp_path / "save-race-route.db")
+    db.directories.upsert(directory_id="hs-seed-inbox", name="Inbox")
+    monkeypatch.setattr(hsdb, "get_database", lambda *args, **kwargs: db)
+    owner = Principal(PrincipalKind.OWNER, "test-owner")
+    service = RefinementThoughtService(db)
+    thought = service.create(owner, request_id="save-race-route", raw_text="Original", source={"kind":"typed"})
+    app = FastAPI()
+    @app.middleware("http")
+    async def owner_identity(request, call_next):
+        request.state.principal = owner
+        return await call_next(request)
+    app.include_router(build_primitives_router(WebContext(get_state=lambda: {})))
+    client = TestClient(app)
+    stale = client.get(f"/api/thoughts/{thought['id']}/workbench").json()["workspace_cursor"]
+    invocation = service.reserve_refinement(owner, thought["id"], request_id="save-race-route-invocation",
+                                            expected_aggregate_revision=1, expected_working_revision=1,
+                                            expected_attachment_revision=0)
+    service.before_physical_dispatch(invocation["id"])(
+        "op-save-race-route", invocation["attempts"][0]["ask_invocation_id"], 1)
+    draft = "PRIVATE UNSAVED DRAFT"
+    response = client.patch(f"/api/thoughts/{thought['id']}/working", json={
+        "expected_aggregate_revision":1,"expected_working_revision":1,
+        "body_markdown":draft,"workspace_cursor":stale,
+    })
+    assert response.status_code == 409
+    payload = response.json()
+    assert set(payload) == {"error","workbench"}
+    assert payload["error"] == "workspace_cursor_conflict"
+    assert payload["workbench"]["workspace_cursor"]["continuity_revision"] > stale["continuity_revision"]
+    assert draft not in response.text

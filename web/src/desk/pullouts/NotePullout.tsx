@@ -11,10 +11,37 @@ import { INLINE_EDITOR_CONTENT } from "./editors";
 import { ThoughtNoteEditor, type ThoughtNoteEditorHandle } from "./editors/ThoughtNoteEditor";
 import { useCopyReceipt } from "../hooks/useCopyReceipt";
 import type { PulloutContentProps } from "./types";
-import { actOnReview, adoptThought, completeThought, originalThought, reconcileThought, refineThought, resumeThought, reviewThought, sourceLabel, stopRefinement, thoughtForNote, type NoteThoughtStatus, type Thought, type ThoughtCompletionReceipt, type ThoughtNote, type ThoughtReview } from "../thoughts";
+import { actOnReview, adoptThought, completeThought, detachThoughtContext, listThoughtContext, originalThought, reconcileThought, refineThought, refreshThoughtContext, resumeThought, reviewThought, sourceLabel, stopRefinement, thoughtForNote, type NoteThoughtStatus, type Thought, type ThoughtAttachment, type ThoughtCompletionReceipt, type ThoughtContextReceipt, type ThoughtDefaultApplicationReceipt, type ThoughtDefaultContext, type ThoughtDefaultContextReceipt, type ThoughtNote, type ThoughtReview, type ThoughtUsedContextReceipt } from "../thoughts";
 import { apiFetch, ApiError } from "../../lib/api";
+import { ThoughtContextPicker } from "./ThoughtContextPicker";
 
-export function NotePullout({ object: o }: PulloutContentProps) {
+function readableVersion(value: string): string {
+  if (!value || /^version\b/i.test(value)) return value;
+  const date = new Date(value);
+  return Number.isNaN(date.valueOf()) ? value : `version from ${date.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}`;
+}
+
+function ContextLeaves({ attachments }: { attachments: Array<Pick<ThoughtAttachment, "ref" | "leaves">> }) {
+  return <ul className="thought-context-leaves">{attachments.flatMap((attachment) =>
+    attachment.leaves.map((leaf) => <li key={`${attachment.ref}:${leaf.ref}`}><span>{leaf.title}</span><small>{readableVersion(leaf.version_label)}</small></li>),
+  )}</ul>;
+}
+
+function UsedContext({ receipt }: { receipt: ThoughtUsedContextReceipt }) {
+  return <details className="thought-used-context">
+    <summary>{receipt.summary || `Used ${receipt.visible_count} context item${receipt.visible_count === 1 ? "" : "s"} · ${receipt.leaf_count} notes`}</summary>
+    <ContextLeaves attachments={receipt.attachments || []} />
+  </details>;
+}
+
+export function NotePullout({
+  object: o,
+  initialStatus,
+  onThoughtOwned,
+}: PulloutContentProps & {
+  initialStatus?: NoteThoughtStatus;
+  onThoughtOwned?: (thought: Thought) => void;
+}) {
   const editing = useDesk((s) => s.editingId === o.id);
   const { openEditor, closeEditor } = useDesk.getState();
   if (o.ref.kind !== "note") return null;
@@ -22,7 +49,7 @@ export function NotePullout({ object: o }: PulloutContentProps) {
   const Content = INLINE_EDITOR_CONTENT[o.kind];
   const resourceRef = qualifiedRef(o.kind, o.id);
   const { copy, receipt: copyReceipt } = useCopyReceipt();
-  const [status, setStatus] = useState<NoteThoughtStatus | null>(null);
+  const [status, setStatus] = useState<NoteThoughtStatus | null>(initialStatus || null);
   const [original, setOriginal] = useState<Thought | null>(null);
   const [adopting, setAdopting] = useState(false);
   const [finishing, setFinishing] = useState(false);
@@ -33,23 +60,57 @@ export function NotePullout({ object: o }: PulloutContentProps) {
   const [answer, setAnswer] = useState("");
   const [refining, setRefining] = useState(false);
   const [more, setMore] = useState(false);
-  const [ownershipLookup, setOwnershipLookup] = useState<"pending" | "ready" | "error">("pending");
+  const [contextPicker, setContextPicker] = useState(false);
+  const [contextBusy, setContextBusy] = useState(false);
+  const [contextReceipt, setContextReceipt] = useState<ThoughtContextReceipt | null>(null);
+  const [policyReceipt, setPolicyReceipt] = useState<{ summary: string; detail?: string } | null>(null);
+  const [defaultApplicationReceipt, setDefaultApplicationReceipt] = useState<ThoughtDefaultApplicationReceipt | null>(null);
+  const [defaultRefs, setDefaultRefs] = useState<Set<string>>(new Set());
+  const [ownershipLookup, setOwnershipLookup] = useState<"pending" | "ready" | "error">(initialStatus ? "ready" : "pending");
   const originalReveal = useRef<HTMLElement | null>(null);
+  const contextRow = useRef<HTMLDivElement | null>(null);
   const thoughtEditor = useRef<ThoughtNoteEditorHandle | null>(null);
   const latestThought = useRef<Thought | null>(null);
   const loadOwnership = async () => {
-    setOwnershipLookup("pending"); setStatus(null); setOriginal(null); setMessage("");
+    setOwnershipLookup("pending"); setStatus(null); setOriginal(null); setMessage(""); setContextPicker(false); setContextReceipt(null); setPolicyReceipt(null); setDefaultApplicationReceipt(null);
     try { setStatus(await thoughtForNote(o.id)); setOwnershipLookup("ready"); }
     catch { setOwnershipLookup("error"); setMessage("Could not check thought ownership on this hub. This note is unchanged. Retry the check."); }
   };
   useEffect(() => {
+    if (initialStatus) {
+      setStatus(initialStatus);
+      setOwnershipLookup("ready");
+      return;
+    }
     let live = true;
-    setOwnershipLookup("pending"); setStatus(null); setOriginal(null); setMessage("");
+    setOwnershipLookup("pending"); setStatus(null); setOriginal(null); setMessage(""); setContextPicker(false); setContextReceipt(null); setPolicyReceipt(null); setDefaultApplicationReceipt(null);
     void thoughtForNote(o.id).then((next) => { if (live) { setStatus(next); setOwnershipLookup("ready"); } }).catch(() => { if (live) { setOwnershipLookup("error"); setMessage("Could not check thought ownership on this hub. This note is unchanged. Retry the check."); } });
     return () => { live = false; };
-  }, [o.id]);
+  }, [initialStatus, o.id]);
   const thought = status?.ownership === "thought" ? status.thought : null;
+  useEffect(() => { if (thought) onThoughtOwned?.(thought); }, [onThoughtOwned, thought]);
   useEffect(() => { latestThought.current = thought; }, [thought]);
+  useEffect(() => {
+    if (!thought || thought.state !== "working") return;
+    let live = true;
+    void listThoughtContext(thought.id).then((listing) => {
+      if (live) setDefaultRefs(new Set(listing.default_context.refs));
+    }).catch(() => undefined);
+    return () => { live = false; };
+  }, [thought?.id, thought?.attachment_revision]);
+  useEffect(() => {
+    if (!thought) return;
+    const key = `hs.thought.default-context-receipt.${thought.id}`;
+    const stored = sessionStorage.getItem(key);
+    if (!stored) return;
+    sessionStorage.removeItem(key);
+    try {
+      const receipt = JSON.parse(stored) as ThoughtDefaultApplicationReceipt;
+      setDefaultApplicationReceipt(receipt);
+      if (receipt.status === "applied") setDefaultRefs(new Set(receipt.attachments.map((item) => item.ref)));
+    }
+    catch { /* A broken transient receipt is not authority and is safe to omit. */ }
+  }, [thought?.id]);
   useEffect(() => {
     let live = true;
     // Refinement is deliberately pinned to the global local destination; a
@@ -79,6 +140,64 @@ export function NotePullout({ object: o }: PulloutContentProps) {
   // The pullout object is a navigation snapshot. Once custody resolves, the
   // aggregate DTO is the only authoritative working Note for reading/copying.
   const body = String(thought?.working_note.body_markdown ?? (status?.ownership === "ordinary" ? status.note.body_markdown : ir.bodyMarkdown) ?? "");
+  const attachments = thought?.attachments || [];
+  const staleAttachment = attachments.find((attachment) => attachment.state !== "current") || null;
+  const applyContextResult = (result: { thought: Thought; receipt: ThoughtContextReceipt }) => {
+    setStatus({ ownership: "thought", thought: result.thought });
+    setContextReceipt(result.receipt);
+    setPolicyReceipt(null);
+    setReview(null);
+  };
+  const applyDefaultResult = (result: { default_context: ThoughtDefaultContext; receipt: ThoughtDefaultContextReceipt }) => {
+    const names = result.receipt.selections.map((selection) => selection.title);
+    setPolicyReceipt(result.receipt.refs.length
+      ? { summary: `Used ${names.join(" + ")} for new Thoughts`, detail: "Existing Thoughts are unchanged." }
+      : { summary: "New Thoughts start with no AI context. This Thought is unchanged." });
+    setContextReceipt(null);
+    setDefaultRefs(new Set(result.default_context.refs));
+  };
+  useEffect(() => {
+    if (contextReceipt) contextRow.current?.focus();
+  }, [contextReceipt, policyReceipt]);
+  const openContextPicker = async () => {
+    if (!thought || contextBusy) return;
+    if (editing && thoughtEditor.current) {
+      try {
+        const latest = await thoughtEditor.current.flush();
+        setStatus({ ownership: "thought", thought: latest });
+      } catch {
+        return;
+      }
+    }
+    setContextPicker(true);
+  };
+  const closeContextPicker = () => {
+    setContextPicker(false);
+    requestAnimationFrame(() => contextRow.current?.focus());
+  };
+  const changeContext = async (action: "detach" | "refresh", attachment: ThoughtAttachment) => {
+    if (!thought || contextBusy) return;
+    setContextBusy(true); setMessage("");
+    let base = thought;
+    if (editing && thoughtEditor.current) {
+      try { base = await thoughtEditor.current.flush(); }
+      catch { setContextBusy(false); return; }
+    }
+    const key = `hs.thought.context.${action}.${base.id}.${attachment.ref}`;
+    const requestId = sessionStorage.getItem(key) || crypto.randomUUID();
+    sessionStorage.setItem(key, requestId);
+    try {
+      const result = action === "detach"
+        ? await detachThoughtContext(base, attachment.ref, requestId)
+        : await refreshThoughtContext(base, attachment.ref, requestId);
+      sessionStorage.removeItem(key);
+      applyContextResult(result);
+      setContextPicker(false);
+    } catch (cause) {
+      const label = attachment.title || "That context";
+      setMessage(cause instanceof ApiError ? cause.message : `${label} could not be ${action === "detach" ? "removed" : "updated"}. This Thought is unchanged. Try again.`);
+    } finally { setContextBusy(false); }
+  };
   const adopt = async () => {
     if (adopting) return;
     setAdopting(true); setMessage("");
@@ -93,7 +212,9 @@ export function NotePullout({ object: o }: PulloutContentProps) {
       const adopted = await adoptThought({ request_id, note_id: o.id,
         expected_source_content_sha256: fresh.source_precondition.content_sha256,
         expected_source_last_modified: fresh.source_precondition.last_modified });
-      sessionStorage.removeItem(key); setStatus({ ownership: "thought", thought: adopted });
+      sessionStorage.removeItem(key); setStatus({ ownership: "thought", thought: adopted.thought });
+      sessionStorage.setItem(`hs.thought.default-context-receipt.${adopted.thought.id}`, JSON.stringify(adopted.default_context_receipt));
+      setDefaultApplicationReceipt(adopted.default_context_receipt);
       await useDesk.getState().refresh(); useDesk.getState().openEditor(o.id);
     } catch (cause) {
       const payload = cause instanceof ApiError && cause.payload && typeof cause.payload === "object"
@@ -143,6 +264,7 @@ export function NotePullout({ object: o }: PulloutContentProps) {
       setStatus({ ownership: "thought", thought: completed.thought });
       setCompletionReceipt(completed.receipt);
       closeEditor();
+      void useDesk.getState().refresh().catch(() => undefined);
     } catch (cause) {
       const payload = cause instanceof ApiError && cause.payload && typeof cause.payload === "object"
         ? cause.payload as { error?: string; context?: { current?: Thought } } : null;
@@ -151,19 +273,19 @@ export function NotePullout({ object: o }: PulloutContentProps) {
       if (payload?.error === "thought_already_completed" || payload?.error === "thought_completed") {
         closeEditor(); setMessage("This thought is already done.");
       } else if (payload?.error === "thought_revision_conflict") {
-        setMessage("This thought changed elsewhere. Your latest version is shown. Review it, then try Good enough again.");
+        setMessage("This thought changed elsewhere. Your latest version is shown. Review it, then try Finish Thought again.");
       } else if (String(cause).includes("thought save conflict")) {
-        setMessage("This thought changed elsewhere. Your latest version is shown. Review it, then try Good enough again.");
+        setMessage("This thought changed elsewhere. Your latest version is shown. Review it, then try Finish Thought again.");
       } else if (String(cause).includes("thought save failed")) {
         // The editor still owns its retained draft and Retry save truth. No
         // completion request was made, so do not invent ambiguity about it.
       } else {
         if (payload?.error === "completion_request_payload_mismatch" || payload?.error === "completion_request_superseded") {
           sessionStorage.removeItem(key);
-          setMessage("That earlier completion request is no longer current. Review this thought, then press Good enough again.");
+          setMessage("That earlier completion request is no longer current. Review this thought, then press Finish Thought again.");
           return;
         }
-        setMessage("We couldn't confirm completion on this hub. Your thought is still here. Retry Good enough.");
+        setMessage("We couldn't confirm completion on this hub. Your thought is still here. Retry Finish Thought.");
       }
     } finally { setFinishing(false); }
   };
@@ -202,6 +324,7 @@ export function NotePullout({ object: o }: PulloutContentProps) {
       const resumed = await resumeThought(thought);
       sessionStorage.removeItem(`hs.thought.complete.${thought.id}`);
       setStatus({ ownership: "thought", thought: resumed }); setCompletionReceipt(null); openEditor(o.id);
+      void useDesk.getState().refresh().catch(() => undefined);
     }
     catch (cause) {
       const payload = cause instanceof ApiError && cause.payload && typeof cause.payload === "object" ? cause.payload as { context?: { current?: Thought } } : null;
@@ -229,11 +352,39 @@ export function NotePullout({ object: o }: PulloutContentProps) {
         </button> : null}
         {original ? <section ref={originalReveal} className="surface-aerogel" aria-label="Original kept" aria-live="polite" tabIndex={-1}><strong>Original kept · {sourceLabel(original.source.kind)}</strong><pre className="thought-original-raw">{original.raw_text}</pre><button type="button" className="desk-chip quiet" onClick={() => setOriginal(null)}>Close original</button></section> : null}
         {message ? <p role="status" className="surface-receipt-line">{message}</p> : null}
+        {thought?.state === "working" ? <div className="thought-context-wrap">
+          <div ref={contextRow} className="thought-context-row" tabIndex={-1} role="region" aria-label="Thought context">
+            <span className="thought-context-label">AI context</span>
+            <div className="thought-context-current">
+              {!attachments.length ? <span className="thought-context-none">None</span> : attachments.map((attachment) => <div key={attachment.ref} className="thought-context-item">
+                <details className="thought-context-chip" data-state={attachment.state}>
+                  <summary>{attachment.title} · {attachment.leaf_count} note{attachment.leaf_count === 1 ? "" : "s"}{(attachment.is_default || defaultRefs.has(attachment.ref)) ? <span className="thought-context-default-marker">Default</span> : null}</summary>
+                  <ContextLeaves attachments={[attachment]} />
+                  <div className="thought-context-chip-actions">
+                    {attachment.state === "stale" ? <button type="button" className="desk-chip quiet" disabled={contextBusy} onClick={() => void changeContext("refresh", attachment)}>Update context</button> : null}
+                    <button type="button" className="desk-chip quiet" disabled={contextBusy} onClick={() => void changeContext("detach", attachment)}>Remove from this Thought</button>
+                  </div>
+                </details>
+                {attachment.state === "stale" ? <p className="thought-context-state">{attachment.title} changed. Update it before asking another question.</p> : null}
+                {attachment.state === "missing" ? <p className="thought-context-state">{attachment.title} is no longer available.</p> : null}
+              </div>)}
+            </div>
+            <button type="button" className="desk-chip quiet thought-context-attach" disabled={contextBusy} onClick={() => void openContextPicker()}>Attach</button>
+          </div>
+          {contextReceipt ? <details className="thought-context-action-receipt">
+            <summary>{contextReceipt.action === "detach" && contextReceipt.default_context_changed === false ? `Removed ${contextReceipt.title} from this Thought; the default for new Thoughts is unchanged.` : `${contextReceipt.action === "attach" ? "Attached" : contextReceipt.action === "detach" ? "Removed" : "Updated"} ${contextReceipt.title}`}</summary>
+            {contextReceipt.leaves?.length ? <ul className="thought-context-leaves">{contextReceipt.leaves.map((leaf) => <li key={leaf.ref}><span>{leaf.title}</span><small>{readableVersion(leaf.version_label)}</small></li>)}</ul> : null}
+          </details> : null}
+          {policyReceipt ? <details className="thought-context-action-receipt"><summary>{policyReceipt.summary}</summary>{policyReceipt.detail ? <p>{policyReceipt.detail}</p> : null}</details> : null}
+          {defaultApplicationReceipt?.status === "applied" ? <details className="thought-context-action-receipt"><summary>Attached by default</summary><p>{defaultApplicationReceipt.attachments.map((item) => item.title).join(" + ")}</p></details> : null}
+          {defaultApplicationReceipt?.status === "not_applied" ? <details className="thought-context-action-receipt" open><summary>Default AI context was not applied</summary><p>{defaultApplicationReceipt.failure?.selections.map((item) => item.title).join(" + ") || "This default AI context"} could not be attached. This Thought remains unchanged with no AI context. Choose another AI context or stop using this set by default. The whole set was skipped.</p></details> : null}
+          {contextPicker ? <ThoughtContextPicker thought={thought} anchor={contextRow.current} onApplied={applyContextResult} onDefaultApplied={applyDefaultResult} onClose={closeContextPicker} /> : null}
+        </div> : null}
         {thought?.continuity && ["reserved", "in_flight", "awaiting_projection"].includes(thought.continuity.state) ? <p role="status" className="surface-receipt-line">Finding one useful question…</p> : null}
-        {review?.kind === "question" ? <section className="surface-aerogel" aria-label="Refinement question"><strong>{review.question}</strong>{review.reason ? <p>{review.reason}</p> : null}<label>Answer<textarea value={answer} onChange={(event) => setAnswer(event.target.value)} /></label></section> : null}
-        {review?.kind === "synthesis" ? <section className="surface-aerogel" aria-label="Refinement suggestion"><strong>{review.title}</strong><Material>{review.body_markdown || ""}</Material></section> : null}
+        {review?.kind === "question" ? <section className="surface-aerogel" aria-label="Refinement question"><strong>{review.question}</strong>{review.reason ? <p>{review.reason}</p> : null}{review.used_context ? <UsedContext receipt={review.used_context} /> : null}<label>Answer<textarea value={answer} onChange={(event) => setAnswer(event.target.value)} /></label></section> : null}
+        {review?.kind === "synthesis" ? <section className="surface-aerogel" aria-label="Refinement suggestion"><strong>{review.title}</strong><Material>{review.body_markdown || ""}</Material>{review.used_context ? <UsedContext receipt={review.used_context} /> : null}</section> : null}
         {more && thought ? <section className="surface-aerogel thought-more-menu" aria-label="More thought actions">
-          {thought.continuity && ["reserved", "in_flight", "awaiting_projection"].includes(thought.continuity.state) ? <button type="button" className="desk-chip quiet" disabled={finishing} onClick={() => void complete()}>Finish instead</button> : <><button type="button" className="desk-chip quiet" onClick={() => void copy(body)}>Copy</button><button type="button" className="desk-chip quiet" onClick={() => openEditor(o.id)}>Edit working note</button>{review ? <button type="button" className="desk-chip quiet" disabled={refining} onClick={() => void act("reject")}>Reject</button> : null}{thought.state === "working" ? <button type="button" className="desk-chip quiet" disabled={finishing} onClick={() => void complete()}>Finish instead</button> : null}</>}
+          {thought.continuity && ["reserved", "in_flight", "awaiting_projection"].includes(thought.continuity.state) ? <button type="button" className="desk-chip quiet" disabled={finishing} onClick={() => void complete()}>Finish Thought</button> : <><button type="button" className="desk-chip quiet" onClick={() => void copy(body)}>Copy</button><button type="button" className="desk-chip quiet" onClick={() => openEditor(o.id)}>Edit working note</button>{review ? <button type="button" className="desk-chip quiet" disabled={refining} onClick={() => void act("reject")}>Reject</button> : null}{thought.state === "working" ? <button type="button" className="desk-chip quiet" disabled={finishing} onClick={() => void complete()}>Finish Thought</button> : null}</>}
           <button type="button" className="desk-chip quiet" onClick={() => setMore(false)}>Close more</button>
         </section> : null}
         {editing && thought ? (
@@ -264,17 +415,17 @@ export function NotePullout({ object: o }: PulloutContentProps) {
       </div>
       <SurfaceFooter receipt={editing ? null : completionReceipt ? <>Done</> : copyReceipt} verbs={editing && thought ? <div className="thought-completion-verbs">
         <button type="button" className="desk-chip quiet thought-completion-secondary thought-editor-cancel" onClick={closeEditor}>Cancel</button>
-        <button type="button" className="desk-chip is-primary thought-completion-primary" disabled={finishing} onClick={() => void complete()}>{finishing ? "Finishing…" : "Good enough"}</button>
+        <button type="button" className="desk-chip is-primary thought-completion-primary" disabled={finishing} onClick={() => void complete()}>{finishing ? "Finishing…" : "Finish Thought"}</button>
       </div> : thought ? <>
         {thought.state === "completed" ? <>
           <div className="thought-completion-verbs"><button type="button" className="desk-chip quiet thought-completion-secondary" onClick={() => void copy(body)}>Copy</button>
           <button type="button" className="desk-chip is-primary thought-completion-primary" disabled={finishing} onClick={() => void resume()}>{finishing ? "Resuming…" : "Resume refining"}</button></div>
-        </> : thought.continuity && ["reserved", "in_flight", "awaiting_projection"].includes(thought.continuity.state) ? <div className="thought-completion-verbs"><button type="button" className="desk-chip is-primary thought-completion-primary" disabled={refining} onClick={() => void stop()}>{refining ? "Stopping…" : "Stop"}</button><button type="button" className="desk-chip quiet thought-more" onClick={() => setMore(true)}>More</button><button type="button" className="desk-chip quiet thought-completion-secondary" disabled={finishing} onClick={() => void complete()}>{finishing ? "Finishing…" : "Finish instead"}</button></div> : review?.kind === "question" ? <div className="thought-completion-verbs"><button type="button" className="desk-chip is-primary thought-completion-primary" disabled={refining || !answer.trim()} onClick={() => void act("answer")}>Answer</button><button type="button" className="desk-chip quiet thought-review-direct" onClick={() => openEditor(o.id)}>Edit working note</button><button type="button" className="desk-chip quiet thought-review-direct" disabled={refining} onClick={() => void act("reject")}>Reject</button><button type="button" className="desk-chip quiet thought-completion-secondary" disabled={finishing} onClick={() => void complete()}>Finish instead</button><button type="button" className="desk-chip quiet thought-more" onClick={() => setMore(true)}>More</button></div> : review?.kind === "synthesis" ? <div className="thought-completion-verbs"><button type="button" className="desk-chip is-primary thought-completion-primary" disabled={refining} onClick={() => void act("accept")}>Accept</button><button type="button" className="desk-chip quiet thought-review-direct" onClick={() => openEditor(o.id)}>Edit working note</button><button type="button" className="desk-chip quiet thought-review-direct" disabled={refining} onClick={() => void act("reject")}>Reject</button><button type="button" className="desk-chip quiet thought-completion-secondary" disabled={finishing} onClick={() => void complete()}>Finish instead</button><button type="button" className="desk-chip quiet thought-more" onClick={() => setMore(true)}>More</button></div> : <>
+        </> : thought.continuity && ["reserved", "in_flight", "awaiting_projection"].includes(thought.continuity.state) ? <div className="thought-completion-verbs"><button type="button" className="desk-chip is-primary thought-completion-primary" disabled={refining} onClick={() => void stop()}>{refining ? "Stopping…" : "Stop"}</button><button type="button" className="desk-chip quiet thought-more" onClick={() => setMore(true)}>More</button><button type="button" className="desk-chip quiet thought-completion-secondary" disabled={finishing} onClick={() => void complete()}>{finishing ? "Finishing…" : "Finish Thought"}</button></div> : review?.kind === "question" ? <div className="thought-completion-verbs"><button type="button" className="desk-chip is-primary thought-completion-primary" disabled={refining || !answer.trim()} onClick={() => void act("answer")}>Answer</button><button type="button" className="desk-chip quiet thought-review-direct" onClick={() => openEditor(o.id)}>Edit working note</button><button type="button" className="desk-chip quiet thought-review-direct" disabled={refining} onClick={() => void act("reject")}>Reject</button><button type="button" className="desk-chip quiet thought-completion-secondary" disabled={finishing} onClick={() => void complete()}>Finish Thought</button><button type="button" className="desk-chip quiet thought-more" onClick={() => setMore(true)}>More</button></div> : review?.kind === "synthesis" ? <div className="thought-completion-verbs">{staleAttachment ? <button type="button" className="desk-chip is-primary thought-completion-primary" disabled={contextBusy} onClick={() => void changeContext(staleAttachment.state === "missing" ? "detach" : "refresh", staleAttachment)}>{staleAttachment.state === "missing" ? "Remove it" : "Update context"}</button> : <button type="button" className="desk-chip is-primary thought-completion-primary" disabled={refining} onClick={() => void act("accept")}>Accept</button>}<button type="button" className="desk-chip quiet thought-review-direct" onClick={() => openEditor(o.id)}>Edit working note</button><button type="button" className="desk-chip quiet thought-review-direct" disabled={refining} onClick={() => void act("reject")}>Reject</button><button type="button" className="desk-chip quiet thought-completion-secondary" disabled={finishing} onClick={() => void complete()}>Finish Thought</button><button type="button" className="desk-chip quiet thought-more" onClick={() => setMore(true)}>More</button></div> : staleAttachment ? <div className="thought-completion-verbs"><button type="button" className="desk-chip is-primary thought-completion-primary" disabled={contextBusy} onClick={() => void changeContext(staleAttachment.state === "missing" ? "detach" : "refresh", staleAttachment)}>{staleAttachment.state === "missing" ? "Remove it" : "Update context"}</button><button type="button" className="desk-chip quiet thought-completion-secondary" onClick={() => openEditor(o.id)}>Edit</button><button type="button" className="desk-chip quiet thought-completion-secondary" disabled={finishing} onClick={() => void complete()}>Finish Thought</button></div> : <>
           <div className="thought-completion-verbs"><button type="button" className="desk-chip quiet thought-completion-secondary" onClick={() => void copy(body)}>Copy</button>
           <button type="button" className="desk-chip quiet thought-completion-secondary" onClick={() => openEditor(o.id)}>Edit</button>
           <button type="button" className="desk-chip quiet thought-more" onClick={() => setMore(true)}>More</button>
-          {modelReady ? <button type="button" className="desk-chip is-primary thought-completion-primary" disabled={refining} onClick={() => void refine()}>{refining ? "Starting…" : "Keep refining"}</button> : null}
-          <button type="button" className={modelReady ? "desk-chip quiet thought-completion-secondary" : "desk-chip is-primary thought-completion-primary"} disabled={finishing} onClick={() => void complete()}>{finishing ? "Finishing…" : modelReady ? "Finish instead" : "Good enough"}</button></div>
+          {modelReady ? <button type="button" className="desk-chip is-primary thought-completion-primary" disabled={refining} onClick={() => void refine()}>{refining ? "Starting…" : "Ask AI"}</button> : null}
+          <button type="button" className={modelReady ? "desk-chip quiet thought-completion-secondary" : "desk-chip is-primary thought-completion-primary"} disabled={finishing} onClick={() => void complete()}>{finishing ? "Finishing…" : "Finish Thought"}</button></div>
         </>}
       </> : ownershipLookup === "error" ? <>
         <button type="button" className="desk-chip is-primary" onClick={() => void loadOwnership()}>Retry checking this note</button>

@@ -3,8 +3,9 @@
 Start with one useful loop: open HoldSpeak, **Dictate one sentence**, edit it,
 then **Copy** or **Keep as Note**. The first completion furnishes the Desk
 automatically with Inbox, Personal, Work, Meetings, Decisions, and Reference;
-a Start here note; and editable prompts in **Everyday context**. Everyday
-context is used only when you explicitly attach it. No extra setup is required
+a Start here note; and editable prompts in **Everyday context**. Its shipped
+default is unused: explicitly attach it for one Thought, or explicitly make an
+attached set the default for future local Thoughts. No extra setup is required
 for this first value.
 
 HoldSpeak is one local copilot with two modes, and this guide is the day-to-day
@@ -40,6 +41,61 @@ Use these guides when you are ready for more than the first sentence:
 | iPad app | Drives both modes from another device over the hub's HTTP API: dictate into the desk, read a meeting back with its artifacts and sources, approve a proposal, browse the archive | [Companions](#companions) |
 | AIPI-Lite companion | Portable ESPHome device for meeting controls, status, and spoken replies to waiting Claude/Codex sessions | [AIPI-Lite Developer Workflow](AIPI_LITE_DEV_WORKFLOW.md), `/companion` |
 | Runtime setup | Configures local MLX, llama.cpp, or OpenAI-compatible endpoints | `/dictation` -> Runtime, `/docs/dictation-runtime` |
+
+## Develop a thought
+
+Keep a rough sentence as a Note, then choose **Develop this thought**. HoldSpeak
+preserves the original bytes and opens a dedicated Thought Workbench. Its Note
+plane includes bold, italic, underline, heading, list, code, link, and quote
+controls while remaining directly editable as Markdown. On a
+desktop, the live Note and focused Interview sit side by side; on a phone they
+are full-width Note and Interview panes. The Note saves locally as you type.
+Choose **Ask AI** for one explicit model turn. When a question
+returns, **Add & ask next** atomically adds your answer to the Note and starts
+exactly one next refinement turn; **Add to Note** adds it without continuing.
+Choose **Finish Thought** to finish immediately, with no confirmation step.
+Opening or editing the Workbench never starts AI by itself.
+If no runnable model is configured, Interview places **Set up AI** directly
+beneath the explanation and opens Settings in **Models**. On a phone, the fixed
+footer first takes you to that Interview action. After a model destination is
+saved, the open Workbench rechecks readiness and restores **Ask AI**
+automatically.
+
+The Interview shows the intended execution boundary before a turn and the
+actual placement/egress receipt afterward. During a turn, editing the Note
+supersedes that frozen question rather than allowing a late result to overwrite
+your work. **Info** lazily reveals the preserved Original; the raw capture is
+not part of the ordinary Workbench projection.
+
+AI context is empty by default. In the Thought body, choose **Attach** beside
+**AI context**. The compact picker puts pinned **Everyday context** first, then up
+to three recent choices and search; **Browse all notes** reveals the full list.
+Choosing a result attaches it immediately. Everyday context is therefore one
+interaction away without being silently sent to a model.
+
+The attached chip shows the human-visible selection and its expanded Notes. The
+hub, not the browser, loads those qualified refs and freezes their exact versions
+for the turn. A result says what was used, for example
+`Used Everyday context · 5 notes`. If a Note or collection changes, HoldSpeak
+does not substitute the new text: it names the stale context and offers
+**Update context** or **Remove it**. Updating, removing, answering, accepting,
+or rejecting does not automatically start another model turn.
+
+The same picker has two complete groups: **On this Thought** and **For new
+Thoughts**. Once the current Thought has context, **Use these by default** makes
+that whole displayed set the local default for Thoughts created or adopted
+later. The shipped default is empty. Changing it is future-only: there is no
+retroactive update, startup backfill, sync, or model call.
+
+A **Default** marker identifies an attached selection that is also in the
+future set. **Remove from this Thought** detaches it only here; the future
+default remains unchanged. **Stop using by default** clears the complete future
+set and leaves this and every earlier Thought unchanged. If any configured
+selection is stale, missing, overlapping, or too large when a Thought is born,
+HoldSpeak applies none of the set. Capture or adoption still succeeds with
+**AI context None**, and a named receipt explains what was not applied.
+Existing default-born Thoughts use the ordinary stale flow: **Update context**
+or remove the selection explicitly.
 
 ## Workflow At A Glance
 

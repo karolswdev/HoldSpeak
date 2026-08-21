@@ -61,6 +61,21 @@ class RefinementThoughtRepository(BaseRepository):
             rows = conn.execute("SELECT * FROM refinement_aggregate_commands WHERE thought_id=? ORDER BY aggregate_revision", (thought_id,)).fetchall()
         return [dict(row) for row in rows]
 
+    def attachments(self, thought_id: str) -> list[dict[str, Any]]:
+        with self._connection() as conn:
+            revisions = conn.execute("SELECT * FROM refinement_attachment_revisions WHERE thought_id=? ORDER BY attachment_revision", (thought_id,)).fetchall()
+            result: list[dict[str, Any]] = []
+            for revision in revisions:
+                item = dict(revision)
+                visible_rows = conn.execute("SELECT * FROM refinement_attachment_visible WHERE thought_id=? AND attachment_revision=? ORDER BY ordinal", (thought_id, revision["attachment_revision"])).fetchall()
+                item["visible"] = []
+                for visible in visible_rows:
+                    child = dict(visible)
+                    child["leaves"] = [dict(row) for row in conn.execute("SELECT * FROM refinement_attachment_leaves WHERE thought_id=? AND attachment_revision=? AND visible_ordinal=? ORDER BY leaf_ordinal", (thought_id, revision["attachment_revision"], visible["ordinal"])).fetchall()]
+                    item["visible"].append(child)
+                result.append(item)
+        return result
+
     @staticmethod
     def next_resume_order(conn: Any) -> int:
         row = conn.execute("SELECT value FROM refinement_resume_sequence WHERE id=1").fetchone()
@@ -98,10 +113,42 @@ class RefinementThoughtRepository(BaseRepository):
 
     @staticmethod
     def aggregate_hash(record: dict[str, Any], *, working_sha256: str, lifecycle_sha256: str | None) -> str:
+        """Historical v1 command hash. Never reinterpret or rewrite it."""
         return _sha(canonical_json({"thought_id": record["id"], "raw_sha256": record["raw_sha256"], "state": record["state"],
                                     "working_revision": int(record["working_revision"]), "lifecycle_revision": int(record["lifecycle_revision"]),
                                     "attachment_revision": int(record["attachment_revision"]), "aggregate_revision": int(record["aggregate_revision"]),
                                     "working_sha256": working_sha256, "lifecycle_sha256": lifecycle_sha256}))
+
+    @staticmethod
+    def empty_attachment_hash(thought_id: str) -> str:
+        return _sha(canonical_json({"schema_version": 1, "thought_id": str(thought_id),
+                                    "attachment_revision": 0, "visible": []}))
+
+    @staticmethod
+    def attachment_leaf_metadata_hash(*, ref: str, title: str,
+                                      source_last_modified: str,
+                                      membership_last_modified: str,
+                                      leaf_content_sha256: str) -> str:
+        return _sha(canonical_json({
+            "leaf_ref": ref,
+            "leaf_title": title,
+            "source_last_modified": source_last_modified,
+            "membership_last_modified": membership_last_modified,
+            "leaf_content_sha256": leaf_content_sha256,
+        }))
+
+    @staticmethod
+    def aggregate_hash_v2(record: dict[str, Any], *, working_sha256: str,
+                          lifecycle_sha256: str | None, attachment_sha256: str) -> str:
+        return _sha(canonical_json({"canonical_version": 2, "thought_id": record["id"],
+                                    "raw_sha256": record["raw_sha256"], "state": record["state"],
+                                    "working_revision": int(record["working_revision"]),
+                                    "lifecycle_revision": int(record["lifecycle_revision"]),
+                                    "attachment_revision": int(record["attachment_revision"]),
+                                    "attachment_sha256": str(attachment_sha256),
+                                    "aggregate_revision": int(record["aggregate_revision"]),
+                                    "working_sha256": working_sha256,
+                                    "lifecycle_sha256": lifecycle_sha256}))
 
     @staticmethod
     def insert_lifecycle(conn: Any, *, thought_id: str, lifecycle_revision: int, aggregate_revision: int,
@@ -117,14 +164,18 @@ class RefinementThoughtRepository(BaseRepository):
     def insert_command(conn: Any, record: dict[str, Any], *, command_kind: str,
                        prior_working_revision: int, prior_lifecycle_revision: int, prior_attachment_revision: int,
                        working_sha256: str, lifecycle_sha256: str | None, accepted_at: str) -> None:
+        attachment_sha256 = str(record.get("attachment_sha256") or RefinementThoughtRepository.empty_attachment_hash(str(record["id"])))
         conn.execute("""INSERT INTO refinement_aggregate_commands
                      (thought_id,aggregate_revision,command_kind,prior_working_revision,next_working_revision,
                       prior_lifecycle_revision,next_lifecycle_revision,prior_attachment_revision,next_attachment_revision,
-                      canonical_sha256,lifecycle_sha256,accepted_at)
-                     VALUES (?,?,?,?,?,?,?,?,?,?,?,?)""",
+                      canonical_version,attachment_sha256,canonical_sha256,lifecycle_sha256,accepted_at)
+                     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
                      (record["id"], record["aggregate_revision"], command_kind, prior_working_revision, record["working_revision"],
                       prior_lifecycle_revision, record["lifecycle_revision"], prior_attachment_revision, record["attachment_revision"],
-                      RefinementThoughtRepository.aggregate_hash(record, working_sha256=working_sha256, lifecycle_sha256=lifecycle_sha256), lifecycle_sha256, accepted_at))
+                      2, attachment_sha256,
+                      RefinementThoughtRepository.aggregate_hash_v2(record, working_sha256=working_sha256,
+                          lifecycle_sha256=lifecycle_sha256, attachment_sha256=attachment_sha256),
+                      lifecycle_sha256, accepted_at))
 
     @staticmethod
     def reconcile_missing_working_notes(conn: Any) -> int:

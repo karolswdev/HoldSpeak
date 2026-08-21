@@ -9,6 +9,7 @@ from typing import Any
 
 from holdspeak.db import get_database
 from holdspeak.mcp.families import people as people_family
+from holdspeak.mcp.families import thought as thought_family
 from holdspeak.principals import Principal
 from holdspeak.config import Config
 from holdspeak.services.cadence_service import CadenceService
@@ -298,6 +299,18 @@ _RESOURCE_TEMPLATES = [
         "mimeType": _JSON_MIME,
     },
     {
+        "uriTemplate": "holdspeak://thoughts/{thought_id}/workbench",
+        "name": "Thought Workbench",
+        "description": "One coherent owner-only Thought Workbench projection.",
+        "mimeType": _JSON_MIME,
+    },
+    {
+        "uriTemplate": "holdspeak://thoughts/{thought_id}/original",
+        "name": "Thought Original",
+        "description": "The immutable original capture for one owner Thought.",
+        "mimeType": _JSON_MIME,
+    },
+    {
         "uriTemplate": "holdspeak://thoughts/{thought_id}",
         "name": "Thought detail",
         "description": "One canonical Thought with its working Note and public continuity.",
@@ -331,6 +344,8 @@ _PIPELINE_RECENT_SERVICE_PATTERN = re.compile(r"^pipeline://events/recent/([^/]+
 _PIPELINE_CORRELATION_PATTERN = re.compile(r"^pipeline://events/correlation/([^/]+)$")
 _PEOPLE_RELATIONSHIP_PATTERN = re.compile(r"^holdspeak://people/relationships/([^/]+)$")
 _THOUGHT_DETAIL_PATTERN = re.compile(r"^holdspeak://thoughts/([^/]+)$")
+_THOUGHT_WORKBENCH_PATTERN = re.compile(r"^holdspeak://thoughts/([^/]+)/workbench$")
+_THOUGHT_ORIGINAL_PATTERN = re.compile(r"^holdspeak://thoughts/([^/]+)/original$")
 _THOUGHT_REVIEW_PATTERN = re.compile(
     r"^holdspeak://thoughts/([^/]+)/reviews/([^/]+)$"
 )
@@ -403,6 +418,17 @@ def read_resource(uri: str, principal: Principal) -> dict[str, list[dict[str, st
         )
         return _contents(uri, _JSON_MIME, value)
 
+    if match := _THOUGHT_WORKBENCH_PATTERN.fullmatch(uri):
+        runtime = thought_family._runtime
+        value = RefinementApplicationService(
+            get_database(), coordinator=runtime.coordinator if runtime else None
+        ).get_workbench(principal, thought_id=match.group(1))
+        return _contents(uri, _JSON_MIME, value)
+    if match := _THOUGHT_ORIGINAL_PATTERN.fullmatch(uri):
+        value = RefinementApplicationService(
+            get_database(), coordinator=None
+        ).get_original(principal, thought_id=match.group(1))
+        return _contents(uri, _JSON_MIME, value)
     if match := _THOUGHT_REVIEW_PATTERN.fullmatch(uri):
         value = RefinementApplicationService(
             get_database(), coordinator=None

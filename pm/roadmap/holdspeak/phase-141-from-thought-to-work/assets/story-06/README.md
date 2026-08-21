@@ -3,7 +3,8 @@
 These frames came from a bare `MeetingWebServer` against a fresh temporary HOME
 and database. The walk used no seed or populate fixture. It typed through the
 ordinary first-value surface, kept the Note, adopted it with **Develop this
-thought**, changed the working body, and pressed **Good enough** inside the
+thought**, changed the working body, and pressed the then-current completion
+label inside the
 450 ms save-debounce window.
 
 The walk asserted the final accepted body before accepting Done. It then stopped

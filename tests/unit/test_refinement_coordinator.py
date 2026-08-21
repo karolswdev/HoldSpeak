@@ -9,6 +9,7 @@ from holdspeak.db import Database
 from holdspeak.principals import Principal, PrincipalKind
 from holdspeak.services.errors import ConflictError, ServiceError
 from holdspeak.services.refinement_coordinator import RefinementCoordinator
+from holdspeak.services.refinement_context_service import RefinementContextService
 from holdspeak.services.refinement_thought_service import (
     INBOX_DIRECTORY_ID,
     RefinementThoughtService,
@@ -65,6 +66,22 @@ class _SuccessfulBlockingAsk(_BlockingAsk):
         return {"output": "late success"}
 
 
+class _PostHookMutationAsk:
+    def __init__(self, db: Database) -> None:
+        self.db = db
+        self.frozen = None
+
+    async def ask(self, _principal, _prompt, **kwargs):
+        self.frozen = kwargs["frozen_grounding"]
+        kwargs["before_physical_dispatch"]("op_post_hook", kwargs["invocation_id"], 1)
+        self.db.notes.upsert(note_id="coordinator-context", title="Coordinator context",
+                             body_markdown="mutated after hook", last_modified="2026-08-19T15:00:00Z")
+        raise ServiceError("scripted_failure", "scripted")
+
+    def cancel(self, _principal, invocation_id: str):
+        return {"invocation_id": invocation_id, "disposition": "cancelled"}
+
+
 @pytest.mark.asyncio
 async def test_same_app_duplicate_start_is_one_task_and_one_model_call(db):
     ask = _BlockingAsk()
@@ -109,6 +126,37 @@ def test_prompt_caps_and_seals_owner_text_from_delimiter_injection():
     assert "\\u003c/working-note-json\\u003e" in prompt
     encoded = prompt.split("<working-note-json>\n", 1)[1].split("\n</working-note-json>", 1)[0]
     assert len(json.loads(encoded)) == 12000
+
+
+@pytest.mark.asyncio
+async def test_provider_receives_pre_hook_frozen_context_bytes_after_source_mutates(db):
+    thought = _thought(db, "context-freeze-capture")
+    db.notes.upsert(note_id="coordinator-context", title="Coordinator context",
+                    body_markdown="frozen provider bytes", last_modified="2026-08-19T14:00:00Z")
+    attached = RefinementContextService(db).attach_context(
+        OWNER, thought["id"], visible_ref="note:coordinator-context", request_id="attach-provider-context",
+        expected_aggregate_revision=thought["aggregate_revision"],
+        expected_working_revision=thought["working_revision"],
+        expected_attachment_revision=thought["attachment_revision"],
+    )["thought"]
+    ask = _PostHookMutationAsk(db)
+    coordinator = RefinementCoordinator(db, ask_factory=lambda: ask)
+    await coordinator.start()
+    await coordinator.begin(
+        OWNER, thought_id=thought["id"], request_id="provider-context-run",
+        expected_aggregate_revision=attached["aggregate_revision"],
+        expected_working_revision=attached["working_revision"],
+        expected_attachment_revision=attached["attachment_revision"],
+    )
+    for _ in range(100):
+        if ask.frozen is not None and not coordinator.active_ids:
+            break
+        await asyncio.sleep(0.01)
+    assert ask.frozen is not None
+    assert ask.frozen.byte_count == len(ask.frozen.material.encode("utf-8"))
+    assert "frozen provider bytes" in ask.frozen.material
+    assert "mutated after hook" not in ask.frozen.material
+    await coordinator.shutdown()
 
 
 @pytest.mark.asyncio

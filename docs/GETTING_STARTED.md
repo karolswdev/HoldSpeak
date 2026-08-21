@@ -75,8 +75,22 @@ context**: About me, Current priorities, How I like help, People & vocabulary,
 and Meeting preferences. They contain questions and examples, not invented facts
 about you.
 
-Everyday context is never sent to AI automatically. Attach it in Ask, or choose
-it as an Agent's Context, only when you want it used.
+Everyday context is never sent to AI automatically. Attach it in Ask, choose it
+as an Agent's Context, or attach it from a developing Thought only when you want
+it used. A new Thought says **AI context None**; its compact Attach picker puts
+Everyday context first so the explicit choice still takes one interaction. To
+reuse the complete attached set on later Thoughts created or adopted on this
+hub, choose **Use these by default** in that picker. This future-only default is
+empty until you set it, never changes existing Thoughts, never syncs, and never
+starts AI. **Remove from this Thought** and **Stop using by default** are
+deliberately separate actions.
+
+Open a developing Thought from **Finish thoughts** to enter its Thought
+Workbench. The Note remains a full editable document; the Interview asks one
+focused question at a time. Use **Add & ask next** for the fast explicit loop,
+**Add to Note** to stop after the current answer, and **Finish Thought** when the
+Note is ready. Each turn names its intended boundary and records where it
+actually ran. No model call happens merely because the Workbench was opened.
 
 ## 5. The Desk, in passing
 

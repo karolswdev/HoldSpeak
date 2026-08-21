@@ -1,10 +1,17 @@
 # Phase 141 — From Thought to Work
 
-**Status:** active (5/9); raw custody, resumable continuity, the owner-facing
-Develop bridge, immediate no-model completion/reopen, and one receipt-gated
-owner-triggered AI question are done. Visible context attachment is next.
+**Status:** active (6/9); raw custody, resumable continuity, the owner-facing
+Develop bridge, immediate no-model completion/reopen, one receipt-gated
+owner-triggered AI question, and visible versioned context are done. Typed local
+outcomes are next. Story 05 includes its default-context extension: the shipped
+policy is empty, and an owner may explicitly reuse the complete attached set on
+future local create/adopt without retroactive mutation, sync, or a model call.
+The owner-facing refinement surface is now the dedicated Thought Workbench:
+the Note remains live beside a focused one-question interview, and the atomic
+**Add & ask next** command enriches the Note while reserving exactly one next
+refinement turn.
 
-**Last updated:** 2026-08-19.
+**Last updated:** 2026-08-20.
 
 ## Owner mandate
 
@@ -28,6 +35,10 @@ is the design beat and risk analysis. Three independent reviews ratified it
 after adversarial amendment. Stories implement that document; they do not
 redesign it in flight.
 
+Story-level ruled designs are indexed with their evidence. For visible context,
+see [`HS-141-05`](./assets/hs-141-05-design.md) and the integrated
+[`HS-141-05A future-default extension`](./assets/hs-141-05a-default-ai-context-design.md).
+
 Settled product decisions:
 
 - **power-user first, YOLO first:** the ordinary fresh-install path is capable
@@ -35,10 +46,10 @@ Settled product decisions:
   YOLO posture with receipts; Neutral/Safe retain their existing decision step.
   Progressive disclosure hides setup and secondary controls, never capability;
 - owner-facing primary verb: **Develop a thought**;
-- the working Note appears immediately in Inbox as **Unfinished** and the Chair
-  offers **Resume unfinished thoughts**;
+- the working Note appears immediately in Inbox as **Unfinished** and Chair
+  exposes it in the visible, bounded **Finish thoughts** lane;
 - one primary action per state, including at 393px;
-- **Good enough** completes the existing working Note in one action;
+- **Finish Thought** completes the existing working Note in one action;
 - Phase 141 proves GitHub issue execution through the existing
   ActuatorProposal/kernel path;
 - Jira and calendar write support are separate follow-ons because neither
@@ -52,8 +63,8 @@ Settled product decisions:
 | HS-141-02 | The resumable thought | done | 141-01 |
 | HS-141-03 | Develop this thought | done | 141-02 |
 | HS-141-04 | One useful question | done | 141-02, 141-03, 141-06 |
-| HS-141-05 | Context you can see | backlog | 141-02, 141-04 |
-| HS-141-06 | Good enough means done | done | 141-02, 141-03 |
+| HS-141-05 | Context you can see | done | 141-02, 141-04 |
+| HS-141-06 | Finish Thought means done | done | 141-02, 141-03 |
 | HS-141-07 | Typed outcomes, not magic | backlog | 141-04, 141-06 |
 | HS-141-08 | One real tool | backlog | 141-07 |
 | HS-141-09 | The thought-to-work walk | backlog | 141-01…08 |
@@ -81,7 +92,7 @@ Settled product decisions:
   retry, conflict, and restart leg.
 - No browser-copied context is authoritative; refs hydrate on the server.
 - No model response changes product state without a persisted owner transition.
-  The owner's **Good enough**, **Create decision**, or configured-tool action is
+  The owner's **Finish Thought**, **Create decision**, or configured-tool action is
   that transition; the flow must not add a second confirmation. Under YOLO an
   eligible configured external proposal continues directly through the existing
   executor, while Neutral/Safe use their existing approval behavior.
@@ -89,7 +100,7 @@ Settled product decisions:
   linked kernel admission for this new flow.
 - A dispatched-but-ambiguous GitHub effect enters named manual reconciliation
   and cannot be automatically reissued.
-- Fresh HOME without a model completes capture → edit → Good enough → reopen.
+- Fresh HOME without a model completes capture → edit → Finish Thought → reopen.
 - At 393px every state shows one primary decision and zero horizontal overflow.
 - The owner sees final both-width screenshots before merge.
 - GitHub Actions is not watched or used as a phase gate.
@@ -106,7 +117,8 @@ review; five rounds surface the rigor/cost choice to the owner.
 
 - Jira create/assign/transition or calendar write;
 - autonomous tool selection or execution;
-- automatic context attachment;
+- context attachment without an explicit per-Thought choice or owner-configured
+  future default;
 - multi-tool planning, background refinement, or agent assignment;
 - a new generic chat thread, planner, tool router, executor, or approval stack;
 - Artifact or generic follow-through authoring without a real typed adapter;
@@ -140,7 +152,8 @@ review; five rounds surface the rigor/cost choice to the owner.
   response rejection, and sync provenance checks close the concurrency seams.
   A genuine bare-hub 1440/393 walk passed with zero overflow or console errors;
   final technical and owner-glass counsel: RATIFY.
-- 2026-08-19 — HS-141-06 done. **Good enough** is the default-YOLO immediate
+- 2026-08-19 — HS-141-06 done. The completion command (now **Finish Thought**)
+  is the default-YOLO immediate
   owner command: it drains every accepted local edit, then atomically records
   one lifecycle transition and one origin-hub retry receipt without a Save or
   confirmation step. Completed Notes remain in place, read-only, with Original
@@ -158,3 +171,35 @@ review; five rounds surface the rigor/cost choice to the owner.
   provider simulation. Technical and cold-owner counsel: RATIFY. The owner
   accepted the loop and deferred normalization of the overlapping completion/
   continuation verbs to HS-141-09's subtraction pass.
+- 2026-08-19 — HS-141-05 done. Context begins empty and never runs a model;
+  one compact Attach interaction puts pinned **Everyday context** first at both
+  widths, with recent/search and Browse progressively disclosed. The browser
+  and MCP send qualified refs and cursors only; the shared application service
+  freezes exact visible containers, versioned leaves, canonical hashes, and an
+  attachment-bound v2 command before inference. Stale or missing sources refuse
+  by human name until **Update context** or **Remove it**; in-flight bytes cannot
+  drift. Eight 1440/393 screenshots and a phrase-gated real-path walk proved
+  picker, attachment detail, `Used Everyday context · 5 notes`, stale repair,
+  restart, MCP parity, and late-result suppression. Final technical and owner-
+  glass counsel: RATIFY.
+- 2026-08-19 — HS-141-05A closed as an extension of story 05; Phase progress
+  remains **6/9**. The existing picker now separates the complete current and
+  future sets. The hub-local owner policy starts empty, applies atomically only
+  to later local create/adopt, and never syncs, backfills, mutates an existing
+  Thought, or invokes a model. Per-Thought removal and stopping the future
+  default have distinct scoped receipts. Invalid birth-time context skips the
+  whole set with independently hash-bound named attribution; HTTP and MCP share
+  the same refs-only service authority. Eight both-width screenshots and the
+  fresh no-dispatch walk passed. Final technical and owner-glass counsel:
+  RATIFY.
+- 2026-08-19 — The owner rejected the accumulated pullout/editor and completion
+  language as insufficiently cohesive. A multi-round Guru Meditation review
+  produced and implemented the dedicated Thought Workbench first slice. It
+  keeps one document writer, one fixed action seat, exact local placement and
+  context receipts, lazy Original disclosure, and the explicit **Ask one
+  question**, **Add to Note**, **Add & ask next**, and **Finish Thought** verbs.
+  The composite answer command atomically appends one clarification and reserves
+  at most one child turn; restart, admission refusal, stale context, and
+  process-cursor races remain named and idempotent. Expanded real-path glass at
+  1440 and 393 passed, including the hydrated 409→bounded-save-retry race and
+  restart without redispatch. Backend, UI, and cold-owner counsel: RATIFY.

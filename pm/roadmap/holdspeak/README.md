@@ -8,17 +8,25 @@
 > from evidence, Terra waves with serialized shipping, walks, honest ledgers —
 > is canon at [`docs/internal/ORCHESTRATION.md`](../../../docs/internal/ORCHESTRATION.md).
 
-**Newest update (2026-08-19): Phase 141 — From Thought to Work — ACTIVE
-(5/9).** Raw custody, bounded resume continuity, the first owner-facing Develop
+**Newest update (2026-08-20): Phase 141 — From Thought to Work — ACTIVE
+(6/9).** Raw custody, bounded resume continuity, the first owner-facing Develop
 bridge, and the no-model completion/reopen path are done. The Chair now starts a local thought directly; every
 ordinary Note—including Phase 140's first kept Note—can become the same
 revisioned working Note without cloning or losing its byte-equal Original.
-Inbox and Chair reopen unfinished work after reload. **Good enough** now drains
+Inbox and Chair reopen unfinished work after reload. **Finish Thought** drains
 the last accepted edit and completes immediately under the default YOLO posture:
 no Save, confirmation, model, or setup. The same Note remains findable and can
-explicitly Resume refining. One explicit owner action now produces one durable,
-receipt-gated AI question with Stop, immediate Answer/Accept/Reject, no hidden
-continuation, and exact HTTP/MCP parity. The next move is visible context.
+explicitly Resume refining. The dedicated Thought Workbench keeps a document-like
+Note beside a focused interview: **Ask AI** starts one durable turn, and explicit
+**Add & ask next** atomically enriches the Note and reserves exactly one more.
+When AI is unavailable, **Set up AI** opens Models directly. Context is explicit and visible:
+new Thoughts begin with none, pinned Everyday context attaches in one compact
+interaction, and only qualified refs cross HTTP/MCP before the server freezes
+exact versioned leaves. The same compact picker can explicitly promote the
+complete current set for future local create/adopt. That hub-local default
+starts empty, never changes existing Thoughts or syncs, and a bad source skips
+the whole set with a named receipt instead of blocking capture or invoking a
+model. The next move is typed local outcomes.
 
 Phase 140 — The First Sentence remains active at 5/6 with only its final
 physical-device legs open. HS-140-01 through HS-140-05 are done.
@@ -43,15 +51,19 @@ that clarifies one question at a time, uses explicit context, and can freeze
 typed/tool-backed proposals before existing policy and receipt machinery acts.
 The audited design, connector truth, sequencing, and P0/P1 risk register are in
 [`proposals/thought-refinement-spine.md`](./proposals/thought-refinement-spine.md);
-Phase 141 is active at 5/9. Its raw-custody/CAS keystone is done: one atomic
+Phase 141 is active at 6/9. Its raw-custody/CAS keystone is done: one atomic
 aggregate preserves the original, owns a revisioned working Note, and closes
 ordinary Note and paired-sync bypasses through a verifiable command ledger. The
 resumable-thought contract, Develop bridge, immediate local completion, and
 one-question refinement turn are done: owner-only bounded
 load/list, mandatory cursors, a durable before-dispatch link for every physical
 Ask attempt, and local capture/adoption/re-entry without a model.
-Next come visible context, typed local outcomes,
-and a real GitHub actuator proof.
+Visible context is also done: empty by default, one-tap Everyday context,
+versioned server-side hydration, named stale repair, and exact HTTP/MCP parity.
+Its integrated default extension keeps Phase 141 at 6/9: an explicit complete
+future set applies only to later local create/adopt; current removal, stopping
+the future default, whole-set fail-open, and hub-local no-sync policy are named.
+Next come typed local outcomes and a real GitHub actuator proof.
 Jira/calendar writes remain truthful follow-ons.
 The owner ordered a complexity cut. The proposed Dashboard Door is
 cancelled: no TODO kanban, calendar aggregation, or new control center. A fresh
@@ -61,7 +73,7 @@ reuses existing capture, editable result, Copy, Keep as Note, retained-audio
 recovery, and content-free first-value receipts. The reveal is furnished with
 six useful drawers and editable, explicitly attachable Everyday context—never
 fake personal facts or a pretend configured AI.
-See the [current phase record](./phase-140-the-first-sentence/current-phase-status.md).
+See the [current phase record](./phase-141-from-thought-to-work/current-phase-status.md).
 
 **Previous update (2026-08-15): Phase 131 — One Admission Path — COMPLETE
 (17/17).** The executable census closes at 100 sites, zero findings, zero blocking
@@ -532,13 +544,13 @@ the ⌘K shelf's z-defect fixed; the owner's 101 sitting remains open in
 parallel. Phase 101 itself stands at 3/4 (canon ratified and built,
 PR #359; sweep 4122/0).
 
-**Current phase:** [**Phase 140 — The First Sentence**](./phase-140-the-first-sentence/current-phase-status.md)
-— **ACTIVE (1/6, 2026-08-18)**. The Dashboard Door is cancelled. A fresh owner
-gets one obvious action on the Chair—dictate one sentence—then edits, copies,
-or keeps it before a furnished normal product is disclosed: six useful drawers
-and editable Everyday context that stays out of AI requests until the owner
-explicitly attaches it. Existing paired-device Desk sync remains unchanged.
-No new subsystem, model, task board, calendar, schema, API, or MCP surface.
+**Current phase:** [**Phase 141 — From Thought to Work**](./phase-141-from-thought-to-work/current-phase-status.md)
+— **ACTIVE (6/9, 2026-08-20)**. Raw custody, resumable Thoughts, Develop,
+Finish Thought, one explicit AI refinement turn, visible/default context, the
+bounded Finish thoughts lane, and the dedicated Thought Workbench are shipped.
+The Workbench uses the same application services through HTTP and MCP, keeps
+model use explicit under the YOLO-first posture, and routes unavailable AI
+straight to Models. Typed local outcomes are next.
 Previous: [**Phase 139 — The Settings Reckoning**](./phase-139-the-settings-reckoning/current-phase-status.md)
 — **COMPLETE (8/8, PR #465 merged 2026-08-18)**. Settings collapsed to seven
 job-named tiles; the Models workbench and inline destination-key custody landed
@@ -884,7 +896,7 @@ canon, canon wins.
 | 138 | Ship an encrypted, local-only People relationship and 1:1 foundation whose explicit manager commitments appear in Follow-through without entering plaintext product stores. | done | [phase-138-the-people-ledger](./phase-138-the-people-ledger/) |
 | 139 | The Settings Reckoning: cut the Settings face to seven job-named tiles, pin core defaults, move object settings home, and fold operator wiring behind RAW. | done | [phase-139-the-settings-reckoning](./phase-139-the-settings-reckoning/) |
 | 140 | The First Sentence: one obvious first-value act on the Chair, a useful editable result, in-place recovery, then a furnished six-drawer reveal with explicitly attachable Everyday context. | in-progress (5/6) | [phase-140-the-first-sentence](./phase-140-the-first-sentence/) |
-| 141 | From Thought to Work: preserve rough speech, develop it through one owner-triggered grounded question at a time, then freeze typed local or GitHub-backed outcomes on the existing authority and receipt spine. | in-progress (5/9) | [phase-141-from-thought-to-work](./phase-141-from-thought-to-work/) |
+| 141 | From Thought to Work: preserve rough speech, develop it through one owner-triggered grounded question at a time, then freeze typed local or GitHub-backed outcomes on the existing authority and receipt spine. | in-progress (6/9) | [phase-141-from-thought-to-work](./phase-141-from-thought-to-work/) |
 
 (Status values: `planning`, `in-progress`, `done`, `paused`, `cancelled`.)
 

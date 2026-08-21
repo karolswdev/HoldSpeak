@@ -37,6 +37,7 @@ class RefinementCoordinator:
     ) -> None:
         self._database = database
         self._thoughts = RefinementThoughtService(database)
+        self._uses_default_ask = ask_factory is None
         self._ask_factory = ask_factory or (lambda: AskService(database))
         self._loop: asyncio.AbstractEventLoop | None = None
         self._tasks: dict[str, asyncio.Task[None]] = {}
@@ -52,6 +53,13 @@ class RefinementCoordinator:
     @property
     def active_ids(self) -> tuple[str, ...]:
         return tuple(self._tasks)
+
+    @property
+    def accepting(self) -> bool:
+        return self._accepting
+
+    def admission_claim(self) -> dict[str, Any]:
+        return dict(self._admission_claim())
 
     async def start(self, *, recover_abandoned: bool = True) -> list[str]:
         """Bind the application loop and optionally reconcile abandoned work.
@@ -88,6 +96,7 @@ class RefinementCoordinator:
         expected_aggregate_revision: int,
         expected_working_revision: int,
         expected_attachment_revision: int,
+        workspace_cursor: dict[str, Any] | None = None,
     ) -> tuple[dict[str, Any], dict[str, Any]]:
         """Reserve durably, then schedule; shared by every owner transport."""
         if not self._accepting:
@@ -96,6 +105,7 @@ class RefinementCoordinator:
                 "Refinement is not accepting work",
                 context={"status": 503},
             )
+        admission_claim = self._admission_claim()
         invocation, dispatch_claim = await asyncio.to_thread(
             self._thoughts.reserve_refinement_with_dispatch_claim,
             principal,
@@ -106,6 +116,9 @@ class RefinementCoordinator:
             expected_attachment_revision=expected_attachment_revision,
             dispatch_host_id=self.host_id,
             dispatch_lease_epoch=self._lease_epoch,
+            workspace_cursor=workspace_cursor,
+            admission_claim=admission_claim,
+            validate_current_admission=self._uses_default_ask,
         )
         if dispatch_claim:
             await self.submit(principal, thought_id=thought_id, invocation=invocation)
@@ -119,6 +132,7 @@ class RefinementCoordinator:
         thought_id: str,
         invocation_id: str,
         expected_aggregate_revision: int,
+        workspace_cursor: dict[str, Any] | None = None,
     ) -> tuple[dict[str, Any], str | None]:
         """Persist suppression before reaching the exact physical invocation."""
         thought, target = await asyncio.to_thread(
@@ -127,6 +141,7 @@ class RefinementCoordinator:
             thought_id,
             invocation_id=invocation_id,
             expected_aggregate_revision=expected_aggregate_revision,
+            workspace_cursor=workspace_cursor,
         )
         disposition = "not_dispatched"
         ask_id = target.get("ask_invocation_id")
@@ -158,6 +173,57 @@ class RefinementCoordinator:
         elif ask_id:
             disposition = "owner_unavailable"
         return thought, disposition
+
+    async def answer_and_continue(
+        self, principal: Principal, *, thought_id: str, review_result_id: str,
+        command_id: str, answer: str, expected_aggregate_revision: int,
+        expected_working_revision: int, expected_attachment_revision: int,
+        workspace_cursor: dict[str, Any],
+    ) -> tuple[dict[str, Any], dict[str, Any]]:
+        """Commit answer + child reservation, then dispatch only that child."""
+        if not self._accepting:
+            raise ServiceError("refinement_continuation_unavailable",
+                               "The next turn is unavailable", context={"status": 503})
+        admission_claim = self._admission_claim()
+        if admission_claim["readiness"] != "ready":
+            raise ServiceError(
+                "refinement_continuation_unavailable",
+                "Couldn't start the next turn. Your answer is still here. Add it to the Note.",
+                context={"status":409,"readiness":admission_claim["readiness"],
+                         "reason":admission_claim["reason"]},
+            )
+        thought, receipt, invocation, created = await asyncio.to_thread(
+            self._thoughts.answer_and_continue_with_dispatch_claim,
+            principal, thought_id, review_result_id, command_id=command_id,
+            answer=answer, expected_aggregate_revision=expected_aggregate_revision,
+            expected_working_revision=expected_working_revision,
+            expected_attachment_revision=expected_attachment_revision,
+            workspace_cursor=workspace_cursor, dispatch_host_id=self.host_id,
+            dispatch_lease_epoch=self._lease_epoch,
+            admission_claim=admission_claim,
+            validate_current_admission=self._uses_default_ask,
+        )
+        if created:
+            try:
+                await self.submit(principal, thought_id=thought_id, invocation=invocation)
+            except Exception:
+                await asyncio.to_thread(
+                    self._thoughts.terminalize_reserved, principal,
+                    str(invocation["id"]), code="scheduler_lost_before_dispatch",
+                )
+                log.exception("answer-and-continue child could not be scheduled")
+                thought = await asyncio.to_thread(self._thoughts.get, principal, thought_id)
+        return thought, receipt
+
+    def _admission_claim(self) -> dict[str, Any]:
+        if not self._uses_default_ask:
+            return {"target_id":"test","target_kind":"this_device","boundary":"same_device",
+                    "engine":"scripted","model":"scripted","readiness":"ready","reason":""}
+        from ..inference_targets import resolve_placement
+        target = resolve_placement(self._database).target
+        return {"target_id":target.id,"target_kind":target.kind,"boundary":target.boundary,
+                "engine":target.engine,"model":target.model,"readiness":target.readiness_state,
+                "reason":target.readiness_reason}
 
     async def submit(
         self,
@@ -250,11 +316,23 @@ class RefinementCoordinator:
             thought = await asyncio.to_thread(self._thoughts.get, principal, thought_id)
             note = thought.get("working_note") or {}
             prompt = self._sealed_prompt(str(note.get("body_markdown") or ""))
+            frozen_grounding = None
+            if int(invocation.get("frozen_attachment_revision") or 0) > 0:
+                from .refinement_context_service import RefinementContextService
+                frozen_grounding = await asyncio.to_thread(
+                    RefinementContextService(self._database).materialize,
+                    thought_id,
+                    int(invocation["frozen_attachment_revision"]),
+                    str(invocation["frozen_attachment_sha256"]),
+                )
             await self._ask_factory().ask(
                 principal,
                 prompt,
                 lens="Refine",
                 invocation_id=ask_id,
+                inference_target_id=str(invocation.get("admission", {}).get("target_id") or "") or None,
+                frozen_admission_claim=invocation.get("admission") or None,
+                frozen_grounding=frozen_grounding,
                 before_physical_dispatch=self._thoughts.before_physical_dispatch(
                     invocation_id
                 ),

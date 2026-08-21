@@ -9,7 +9,8 @@ from dataclasses import dataclass, replace
 from typing import Any, Callable
 
 from ..logging_config import get_logger
-from ..db.refinement_thoughts import RefinementThoughtRepository
+from ..db.refinement_thoughts import RefinementThoughtRepository, canonical_json
+from ..db.relationships import qualified_ref
 from ..principals import Principal
 from ..principals import PrincipalKind
 from .errors import ConflictError, ValidationError
@@ -638,6 +639,7 @@ def _thought_sync_record(db: Any, thought: dict[str, Any]) -> dict[str, Any]:
     revisions = db.refinement_thoughts.revisions(thought["id"])
     lifecycle = db.refinement_thoughts.lifecycle(thought["id"])
     commands = db.refinement_thoughts.commands(thought["id"])
+    attachments = db.refinement_thoughts.attachments(thought["id"])
     deleted = thought["state"] == "tombstoned"
     meta = {"id": thought["id"], "kind": "refinement_thought", "last_modified": _iso(thought["updated_at"]),
             "deleted": deleted, "expected_aggregate_revision": max(0, int(thought["aggregate_revision"]) - 1),
@@ -651,6 +653,7 @@ def _thought_sync_record(db: Any, thought: dict[str, Any]) -> dict[str, Any]:
             "source": {"kind": thought["raw_source_kind"], "ref": thought["raw_source_ref"]},
             "raw_captured_at": thought["raw_captured_at"], "state": thought["state"],
             "created_at": thought["created_at"], "attachment_revision": thought["attachment_revision"],
+            "attachment_sha256": thought.get("attachment_sha256") or RefinementThoughtRepository.empty_attachment_hash(thought["id"]),
             "last_modified": _iso(thought["updated_at"]), "deleted": False,
             "working_revision": thought["working_revision"], "lifecycle_revision": thought["lifecycle_revision"],
             "aggregate_revision": thought["aggregate_revision"],
@@ -658,6 +661,7 @@ def _thought_sync_record(db: Any, thought: dict[str, Any]) -> dict[str, Any]:
             "next_aggregate_revision": thought["aggregate_revision"],
             "working_note": note.to_dict() if note else None,
             "revisions": revisions, "lifecycle": lifecycle, "commands": commands,
+            "attachments": attachments,
         },
     }
 
@@ -776,15 +780,91 @@ def _merge_refinement_thought_ledger_bundles(db: Any, records: list[dict[str, An
 
 
 def _command_identity(item: dict[str, Any]) -> tuple[Any, ...]:
-    return tuple(item.get(k) for k in ("aggregate_revision", "command_kind", "prior_working_revision", "next_working_revision", "prior_lifecycle_revision", "next_lifecycle_revision", "prior_attachment_revision", "next_attachment_revision", "canonical_sha256", "lifecycle_sha256", "accepted_at"))
+    return tuple(item.get(k) for k in ("aggregate_revision", "command_kind", "prior_working_revision", "next_working_revision", "prior_lifecycle_revision", "next_lifecycle_revision", "prior_attachment_revision", "next_attachment_revision", "canonical_version", "attachment_sha256", "canonical_sha256", "lifecycle_sha256", "accepted_at"))
+
+
+def _validate_attachment_history(value: dict[str, Any]) -> tuple[dict[int, str], dict[int, int]]:
+    thought_id = str(value["id"])
+    working_ref = f"note:{value['working_note']['id']}"
+    head = int(value["attachment_revision"])
+    revisions = list(value.get("attachments") or [])
+    if [int(row.get("attachment_revision") or 0) for row in revisions] != list(range(1, head + 1)):
+        raise ValidationError("thought attachment history is incomplete", code="thought_revision_history_invalid")
+    hashes = {0: RefinementThoughtRepository.empty_attachment_hash(thought_id)}
+    aggregate_revisions: dict[int, int] = {}
+    for revision in revisions:
+        number = int(revision["attachment_revision"])
+        aggregate_revisions[number] = int(revision.get("aggregate_revision") or 0)
+        visible = list(revision.get("visible") or [])
+        if len(visible) != int(revision.get("visible_count") or 0) or len(visible) > 8:
+            raise ValidationError("thought attachment visible count is invalid", code="thought_revision_history_invalid")
+        expected_refs = sorted(str(row.get("visible_ref") or "") for row in visible)
+        if [str(row.get("visible_ref") or "") for row in visible] != expected_refs or [int(row.get("ordinal", -1)) for row in visible] != list(range(len(visible))):
+            raise ValidationError("thought attachment visible ordinals are invalid", code="thought_revision_history_invalid")
+        all_leaves: set[str] = set()
+        identity_visible: list[dict[str, Any]] = []
+        for item in visible:
+            ref = str(item.get("visible_ref") or "")
+            try: kind, _ = qualified_ref(ref).split(":", 1)
+            except ValueError as exc: raise ValidationError("thought attachment ref is invalid", code="thought_revision_history_invalid") from exc
+            if kind not in {"note", "knowledge"} or (kind == "knowledge" and ref != "knowledge:hs-seed-everyday-context"):
+                raise ValidationError("thought attachment kind is unsupported", code="thought_revision_history_invalid")
+            if str(item.get("visible_kind") or "") != kind or ref == working_ref:
+                raise ValidationError("thought attachment visible metadata is invalid", code="thought_revision_history_invalid")
+            leaves = list(item.get("leaves") or [])
+            leaf_refs = [str(row.get("leaf_ref") or "") for row in leaves]
+            if leaf_refs != sorted(leaf_refs) or [int(row.get("leaf_ordinal", -1)) for row in leaves] != list(range(len(leaves))):
+                raise ValidationError("thought attachment leaf ordinals are invalid", code="thought_revision_history_invalid")
+            membership = []
+            for leaf in leaves:
+                leaf_ref = str(leaf.get("leaf_ref") or "")
+                leaf_hash = str(leaf.get("leaf_content_sha256") or "")
+                metadata_hash = str(leaf.get("leaf_metadata_sha256") or "")
+                if (not leaf_ref.startswith("note:") or leaf_ref == working_ref
+                        or leaf_ref in all_leaves or len(leaf_hash) != 64
+                        or any(ch not in "0123456789abcdef" for ch in leaf_hash)
+                        or len(metadata_hash) != 64
+                        or any(ch not in "0123456789abcdef" for ch in metadata_hash)):
+                    raise ValidationError("thought attachment leaf overlap is invalid", code="thought_revision_history_invalid")
+                expected_metadata_hash = RefinementThoughtRepository.attachment_leaf_metadata_hash(
+                    ref=leaf_ref,
+                    title=str(leaf.get("leaf_title") or ""),
+                    source_last_modified=str(leaf.get("source_last_modified") or ""),
+                    membership_last_modified=str(leaf.get("membership_last_modified") or ""),
+                    leaf_content_sha256=leaf_hash,
+                )
+                if metadata_hash != expected_metadata_hash:
+                    raise ValidationError("thought attachment leaf metadata hash is invalid", code="thought_aggregate_conflict")
+                all_leaves.add(leaf_ref)
+                membership.append({"leaf_ref": leaf_ref,
+                    "leaf_metadata_sha256": metadata_hash})
+            if (kind == "note" and (len(leaves) != 1 or leaf_refs != [ref])) or (kind == "knowledge" and not leaves):
+                raise ValidationError("thought attachment membership is invalid", code="thought_revision_history_invalid")
+            visible_hash = hashlib.sha256(canonical_json({"visible_ref": ref, "visible_kind": kind,
+                "visible_title": str(item.get("visible_title") or ""),
+                "source_last_modified": str(item.get("source_last_modified") or ""),
+                "membership": membership})).hexdigest()
+            if visible_hash != str(item.get("visible_sha256") or ""):
+                raise ValidationError("thought attachment visible hash is invalid", code="thought_aggregate_conflict")
+            identity_visible.append({"visible_ref": ref, "visible_sha256": visible_hash,
+                "leaves": [{"leaf_ref": x["leaf_ref"], "leaf_metadata_sha256": x["leaf_metadata_sha256"]} for x in membership]})
+        if len(all_leaves) != int(revision.get("leaf_count") or 0) or len(all_leaves) > 16:
+            raise ValidationError("thought attachment leaf count is invalid", code="thought_revision_history_invalid")
+        digest = hashlib.sha256(canonical_json({"schema_version": 1, "thought_id": thought_id,
+            "attachment_revision": number, "visible": identity_visible})).hexdigest()
+        if digest != str(revision.get("attachment_sha256") or ""):
+            raise ValidationError("thought attachment hash is invalid", code="thought_aggregate_conflict")
+        hashes[number] = digest
+    return hashes, aggregate_revisions
 
 
 def _validate_thought_ledger_bundle(value: dict[str, Any], *, raw_utf8: bytes | None = None) -> None:
-    required = ("aggregate_revision", "lifecycle_revision", "working_revision", "attachment_revision", "commands", "lifecycle", "revisions", "working_note")
+    required = ("aggregate_revision", "lifecycle_revision", "working_revision", "attachment_revision", "attachment_sha256", "attachments", "commands", "lifecycle", "revisions", "working_note")
     if any(key not in value for key in required):
         raise ValidationError("thought sync bundle is missing cursors", code="thought_sync_revision_required")
     aggregate, lifecycle, working = int(value["aggregate_revision"]), int(value["lifecycle_revision"]), int(value["working_revision"])
     commands, lifecycles, revisions = list(value["commands"]), list(value["lifecycle"]), list(value["revisions"])
+    attachment_hashes, attachment_aggregate_revisions = _validate_attachment_history(value)
     if [int(x.get("aggregate_revision") or 0) for x in commands] != list(range(1, aggregate + 1)):
         raise ValidationError("thought aggregate command history is incomplete", code="thought_revision_history_invalid")
     if [int(x.get("lifecycle_revision") or 0) for x in lifecycles] != list(range(1, lifecycle + 1)):
@@ -810,12 +890,19 @@ def _validate_thought_ledger_bundle(value: dict[str, Any], *, raw_utf8: bytes | 
         life_hash[revision], life_state[revision], life_entry[revision] = expected, str(entry["state"]), entry
     prior_working = prior_lifecycle = prior_attachment = prior_aggregate = 0
     prior_state: str | None = None
+    saw_v2 = False
     for command in commands:
         aggregate_revision = int(command["aggregate_revision"])
         next_working, next_lifecycle, next_attachment = (int(command["next_working_revision"]), int(command["next_lifecycle_revision"]), int(command["next_attachment_revision"]))
         if aggregate_revision != prior_aggregate + 1 or (int(command["prior_working_revision"]), int(command["prior_lifecycle_revision"]), int(command["prior_attachment_revision"])) != (prior_working, prior_lifecycle, prior_attachment):
             raise ValidationError("thought command cursor continuity is invalid", code="thought_revision_history_invalid")
         kind = str(command.get("command_kind") or "")
+        canonical_version = int(command.get("canonical_version") or 1)
+        if canonical_version not in {1, 2} or (saw_v2 and canonical_version != 2):
+            raise ValidationError("thought command canonical version downgraded", code="thought_revision_history_invalid")
+        if canonical_version == 1 and (prior_attachment != 0 or next_attachment != 0):
+            raise ValidationError("v1 thought commands cannot reference attachments", code="thought_aggregate_conflict")
+        saw_v2 = saw_v2 or canonical_version == 2
         lifecycle_changed = next_lifecycle == prior_lifecycle + 1
         entry = life_entry.get(next_lifecycle) if lifecycle_changed else None
         allowed = False
@@ -837,6 +924,11 @@ def _validate_thought_ledger_bundle(value: dict[str, Any], *, raw_utf8: bytes | 
                 raise ValidationError("thought adoption provenance is invalid", code="thought_adoption_provenance_invalid")
         elif kind == "replace_working":
             allowed = prior_state == "working" and (next_working, next_lifecycle, next_attachment) == (prior_working + 1, prior_lifecycle, prior_attachment) and entry is None
+        elif kind == "replace_attachments":
+            allowed = (canonical_version == 2 and prior_state == "working"
+                and (next_working, next_lifecycle, next_attachment) == (prior_working, prior_lifecycle, prior_attachment + 1)
+                and entry is None
+                and attachment_aggregate_revisions.get(next_attachment) == aggregate_revision)
         elif kind == "complete":
             allowed = prior_state == "working" and (next_working, next_lifecycle, next_attachment) == (prior_working, prior_lifecycle + 1, prior_attachment) and entry is not None and entry.get("prior_state") == "working" and entry.get("state") == "completed" and entry.get("command") == "complete"
         elif kind == "resume":
@@ -850,22 +942,34 @@ def _validate_thought_ledger_bundle(value: dict[str, Any], *, raw_utf8: bytes | 
             raise ValidationError("thought command lifecycle hash is invalid", code="thought_lifecycle_hash_mismatch")
         next_state = life_state[next_lifecycle] if lifecycle_changed else prior_state
         snapshot={"id":str(value["id"]),"raw_sha256":str(value["raw_sha256"]),"state":next_state,"working_revision":next_working,"lifecycle_revision":next_lifecycle,"attachment_revision":next_attachment,"aggregate_revision":aggregate_revision}
-        expected=RefinementThoughtRepository.aggregate_hash(snapshot,working_sha256=work_hash[next_working],lifecycle_sha256=lifecycle_hash)
+        if canonical_version == 1:
+            expected=RefinementThoughtRepository.aggregate_hash(snapshot,working_sha256=work_hash[next_working],lifecycle_sha256=lifecycle_hash)
+            if command.get("attachment_sha256") not in {None, ""}:
+                raise ValidationError("v1 command cannot bind attachment hash", code="thought_aggregate_conflict")
+        else:
+            bound = str(command.get("attachment_sha256") or "")
+            expected_bound = attachment_hashes.get(next_attachment)
+            if not bound or bound != expected_bound:
+                raise ValidationError("v2 command attachment hash is invalid", code="thought_aggregate_conflict")
+            expected=RefinementThoughtRepository.aggregate_hash_v2(snapshot,working_sha256=work_hash[next_working],lifecycle_sha256=lifecycle_hash,attachment_sha256=bound)
         if str(command.get("canonical_sha256") or "") != expected:
             raise ValidationError("thought aggregate command hash is invalid", code="thought_aggregate_conflict")
         prior_working, prior_lifecycle, prior_attachment, prior_aggregate, prior_state = next_working, next_lifecycle, next_attachment, aggregate_revision, str(next_state)
     if (prior_working, prior_lifecycle, prior_attachment, prior_aggregate, prior_state) != (working, lifecycle, int(value["attachment_revision"]), aggregate, str(value["state"])):
         raise ValidationError("thought final aggregate cursor/state is inconsistent", code="thought_revision_history_invalid")
+    if str(value["attachment_sha256"]) != attachment_hashes.get(int(value["attachment_revision"])):
+        raise ValidationError("thought attachment head hash is invalid", code="thought_aggregate_conflict")
 
 
 def _aggregate_fingerprint(db: Any, thought: dict[str, Any]) -> tuple[Any, ...]:
     note = db.notes.get(thought["working_note_id"], include_deleted=True)
-    return (thought["state"],thought["aggregate_revision"],thought["lifecycle_revision"],thought["working_revision"],thought["attachment_revision"],tuple(_command_identity(x) for x in db.refinement_thoughts.commands(thought["id"])),note.title if note else None,note.body_markdown if note else None,tuple(note.tags) if note else ())
+    attachments = db.refinement_thoughts.attachments(thought["id"])
+    return (thought["state"],thought["aggregate_revision"],thought["lifecycle_revision"],thought["working_revision"],thought["attachment_revision"],str(thought.get("attachment_sha256") or ""),canonical_json(attachments),tuple(_command_identity(x) for x in db.refinement_thoughts.commands(thought["id"])),note.title if note else None,note.body_markdown if note else None,tuple(note.tags) if note else ())
 
 
 def _incoming_fingerprint(value: dict[str, Any]) -> tuple[Any, ...]:
     note=value["working_note"]
-    return (value["state"],value["aggregate_revision"],value["lifecycle_revision"],value["working_revision"],value["attachment_revision"],tuple(_command_identity(x) for x in value["commands"]),note.get("title"),note.get("body_markdown"),tuple(note.get("tags") or []))
+    return (value["state"],value["aggregate_revision"],value["lifecycle_revision"],value["working_revision"],value["attachment_revision"],str(value.get("attachment_sha256") or ""),canonical_json(value.get("attachments") or []),tuple(_command_identity(x) for x in value["commands"]),note.get("title"),note.get("body_markdown"),tuple(note.get("tags") or []))
 
 
 def _terminal_fingerprint(value: dict[str, Any]) -> str:

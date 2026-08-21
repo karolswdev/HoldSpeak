@@ -18,6 +18,7 @@ from holdspeak.mcp.server import handle_message
 from holdspeak.principals import Principal, PrincipalKind
 from holdspeak.services.errors import ConflictError
 from holdspeak.services.refinement_coordinator import RefinementCoordinator
+from holdspeak.services.refinement_application_service import RefinementApplicationService
 from holdspeak.services.refinement_thought_service import (
     INBOX_DIRECTORY_ID,
     RefinementThoughtService,
@@ -85,6 +86,31 @@ def test_catalogue_is_closed_and_never_accepts_browser_authoritative_material() 
     assert "answer" in tools["thought.answer_review"]["inputSchema"]["properties"]
     assert "answer" not in tools["thought.accept_review"]["inputSchema"]["properties"]
     assert "answer" not in tools["thought.reject_review"]["inputSchema"]["properties"]
+
+
+def test_mcp_working_save_cursor_conflict_returns_same_fresh_workbench_without_draft(tmp_path, monkeypatch):
+    db = Database(tmp_path / "mcp-save-race.db")
+    db.directories.upsert(directory_id=INBOX_DIRECTORY_ID, name="Inbox")
+    service = RefinementThoughtService(db)
+    thought = service.create(OWNER, request_id="mcp-save-race", raw_text="Original", source={"kind":"typed"})
+    stale = service.get_workbench(OWNER, thought["id"], inference_available=False)["workspace_cursor"]
+    invocation = service.reserve_refinement(
+        OWNER, thought["id"], request_id="mcp-save-race-invocation",
+        expected_aggregate_revision=1, expected_working_revision=1, expected_attachment_revision=0)
+    service.before_physical_dispatch(invocation["id"])(
+        "op-mcp-save-race", invocation["attempts"][0]["ask_invocation_id"], 1)
+    monkeypatch.setattr(thought_family, "_service", lambda: RefinementApplicationService(db, coordinator=None))
+    monkeypatch.setattr(server, "resolve_auth", lambda: SimpleNamespace(principal=OWNER))
+    draft = "PRIVATE MCP DRAFT"
+    is_error, payload = _call("thought.update_working", {
+        "thought_id":thought["id"],"expected_aggregate_revision":1,"expected_working_revision":1,
+        "body_markdown":draft,"workspace_cursor":stale,
+    })
+    assert is_error
+    assert set(payload) == {"error","code","workbench"}
+    assert payload["code"] == "workspace_cursor_conflict"
+    assert payload["workbench"]["workspace_cursor"]["continuity_revision"] > stale["continuity_revision"]
+    assert draft not in json.dumps(payload)
 
 
 def test_all_commands_dispatch_through_the_same_application_boundary(stubbed_family: StubApplication) -> None:

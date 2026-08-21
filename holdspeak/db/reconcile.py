@@ -308,6 +308,13 @@ def _apply_data_backfills(conn: sqlite3.Connection) -> None:
     """
     from .decisions import backfill_decisions
     from .memory import rebuild_memory_index
+    from .refinement_thoughts import RefinementThoughtRepository
+
+    for row in conn.execute("SELECT id,attachment_revision,attachment_sha256 FROM refinement_thoughts WHERE attachment_sha256='' OR attachment_sha256 IS NULL").fetchall():
+        if int(row[1]) != 0:
+            raise RuntimeError(f"refinement thought {row[0]} has a nonzero attachment revision without a manifest")
+        conn.execute("UPDATE refinement_thoughts SET attachment_sha256=? WHERE id=?",
+                     (RefinementThoughtRepository.empty_attachment_hash(str(row[0])), str(row[0])))
 
     decision_backfill = backfill_decisions(conn)
     log.info(

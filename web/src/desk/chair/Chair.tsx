@@ -19,18 +19,24 @@ import "./chair.css";
 export interface ChairProps {
   /** The capture hero slot (story 11 fills this with mic/record). */
   hero?: ReactNode;
+  /** Immediate owner work, kept distinct from the fixed four-lane registry. */
+  activeWork?: ReactNode;
   /** Lane render slots keyed by lane id. The Chair renders them in
    *  the fixed LANE_ORDER; missing lanes render nothing (the CSS
    *  empty gate owns the all-blank presentation). */
   lanes: Partial<Record<LaneId, ReactNode>>;
 }
 
-export function Chair({ hero, lanes }: ChairProps) {
+export function Chair({ hero, activeWork, lanes }: ChairProps) {
   return (
     <div className="chair" data-testid="chair">
       {/* The capture hero placeholder (story 11 fills it). */}
       <div className="chair-hero" data-testid="chair-hero">
         {hero}
+      </div>
+
+      <div className="chair-active-work" data-testid="chair-active-work">
+        {activeWork}
       </div>
 
       {/* Always rendered; visible only in the all-blank state (CSS). */}
