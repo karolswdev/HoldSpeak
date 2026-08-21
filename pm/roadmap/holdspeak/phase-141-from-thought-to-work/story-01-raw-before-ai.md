@@ -1,6 +1,6 @@
 # HS-141-01 — Raw before AI
 
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** Phase 140 landing
 - **Unblocks:** every Phase 141 product story
 
@@ -30,20 +30,20 @@ Do not add model calls, UI, proposals, generic chat, or external execution.
 
 ## Acceptance
 
-- [ ] No refinement can start until the server transaction returns the durable
+- [x] No refinement can start until the server transaction returns the durable
   raw ID/snapshot hash and working Note revision.
-- [ ] Retried/ambiguous creation returns the same aggregate and Note, never a
+- [x] Retried/ambiguous creation returns the same aggregate and Note, never a
   duplicate.
-- [ ] Raw remains byte-equal and has no refinement mutation API.
-- [ ] Two writers on one expected revision yield one success and one named
+- [x] Raw remains byte-equal and has no refinement mutation API.
+- [x] Two writers on one expected revision yield one success and one named
   conflict; no false success.
-- [ ] Generic Note PUT/upsert cannot bypass CAS for a thought-owned working Note.
-- [ ] Paired-device sync cannot bypass ownership/CAS through repository upsert;
+- [x] Generic Note PUT/upsert cannot bypass CAS for a thought-owned working Note.
+- [x] Paired-device sync cannot bypass ownership/CAS through repository upsert;
   stale or revisionless inbound changes refuse without false success.
-- [ ] Unfinished/completed live on the refinement aggregate, not invented Note
+- [x] Unfinished/completed live on the refinement aggregate, not invented Note
   fields; Inbox membership uses the qualified `note:` ref.
-- [ ] Delete/tombstone and restart behavior are explicit and tested.
-- [ ] Design counsel ratifies schema, states, transitions, and concurrency matrix
+- [x] Delete/tombstone and restart behavior are explicit and tested.
+- [x] Design counsel ratifies schema, states, transitions, and concurrency matrix
   before downstream UI work.
 
 ## Tests

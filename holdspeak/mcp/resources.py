@@ -9,6 +9,7 @@ from typing import Any
 
 from holdspeak.db import get_database
 from holdspeak.mcp.families import people as people_family
+from holdspeak.mcp.families import thought as thought_family
 from holdspeak.principals import Principal
 from holdspeak.config import Config
 from holdspeak.services.cadence_service import CadenceService
@@ -22,6 +23,8 @@ from holdspeak.services.monday_brief_service import MondayBriefService
 from holdspeak.services.primitive_service import PrimitiveService
 from holdspeak.services.profile_service import ProfileService
 from holdspeak.services.recipe_service import RecipeService
+from holdspeak.services.refinement_application_service import RefinementApplicationService
+from holdspeak.services.refinement_thought_service import RefinementThoughtService
 from holdspeak.services.workbench_service import WorkbenchService
 
 _JSON_MIME = "application/json"
@@ -220,6 +223,12 @@ _STATIC_RESOURCES = [
         "description": "Active relationship metadata; explicit People MCP read capability required.",
         "mimeType": _JSON_MIME,
     },
+    {
+        "uri": "holdspeak://thoughts/unfinished",
+        "name": "Unfinished thoughts",
+        "description": "Bounded owner Resume projection for unfinished Thoughts.",
+        "mimeType": _JSON_MIME,
+    },
 ]
 
 _RESOURCE_TEMPLATES = [
@@ -289,6 +298,30 @@ _RESOURCE_TEMPLATES = [
         "description": "One relationship with shared-intent records only; leader-private material is excluded.",
         "mimeType": _JSON_MIME,
     },
+    {
+        "uriTemplate": "holdspeak://thoughts/{thought_id}/workbench",
+        "name": "Thought Workbench",
+        "description": "One coherent owner-only Thought Workbench projection.",
+        "mimeType": _JSON_MIME,
+    },
+    {
+        "uriTemplate": "holdspeak://thoughts/{thought_id}/original",
+        "name": "Thought Original",
+        "description": "The immutable original capture for one owner Thought.",
+        "mimeType": _JSON_MIME,
+    },
+    {
+        "uriTemplate": "holdspeak://thoughts/{thought_id}",
+        "name": "Thought detail",
+        "description": "One canonical Thought with its working Note and public continuity.",
+        "mimeType": _JSON_MIME,
+    },
+    {
+        "uriTemplate": "holdspeak://thoughts/{thought_id}/reviews/{review_result_id}",
+        "name": "Thought review",
+        "description": "One validated receipt-gated review card with frozen cursors and egress receipt.",
+        "mimeType": _JSON_MIME,
+    },
 ]
 
 _PRIMITIVE_KIND_ALIASES = {
@@ -310,6 +343,12 @@ _DECISION_RECORD_PATTERN = re.compile(r"^holdspeak://decision-records/([^/]+)$")
 _PIPELINE_RECENT_SERVICE_PATTERN = re.compile(r"^pipeline://events/recent/([^/]+)$")
 _PIPELINE_CORRELATION_PATTERN = re.compile(r"^pipeline://events/correlation/([^/]+)$")
 _PEOPLE_RELATIONSHIP_PATTERN = re.compile(r"^holdspeak://people/relationships/([^/]+)$")
+_THOUGHT_DETAIL_PATTERN = re.compile(r"^holdspeak://thoughts/([^/]+)$")
+_THOUGHT_WORKBENCH_PATTERN = re.compile(r"^holdspeak://thoughts/([^/]+)/workbench$")
+_THOUGHT_ORIGINAL_PATTERN = re.compile(r"^holdspeak://thoughts/([^/]+)/original$")
+_THOUGHT_REVIEW_PATTERN = re.compile(
+    r"^holdspeak://thoughts/([^/]+)/reviews/([^/]+)$"
+)
 
 
 class ResourceError(ValueError):
@@ -373,7 +412,37 @@ def read_resource(uri: str, principal: Principal) -> dict[str, list[dict[str, st
         return _contents(uri, _JSON_MIME, people_family.readiness(principal))
     if uri == "holdspeak://people/relationships":
         return _contents(uri, _JSON_MIME, people_family.list_relationships(principal))
+    if uri == "holdspeak://thoughts/unfinished":
+        value = RefinementThoughtService(get_database()).list_unfinished(
+            principal, limit=50
+        )
+        return _contents(uri, _JSON_MIME, value)
 
+    if match := _THOUGHT_WORKBENCH_PATTERN.fullmatch(uri):
+        runtime = thought_family._runtime
+        value = RefinementApplicationService(
+            get_database(), coordinator=runtime.coordinator if runtime else None
+        ).get_workbench(principal, thought_id=match.group(1))
+        return _contents(uri, _JSON_MIME, value)
+    if match := _THOUGHT_ORIGINAL_PATTERN.fullmatch(uri):
+        value = RefinementApplicationService(
+            get_database(), coordinator=None
+        ).get_original(principal, thought_id=match.group(1))
+        return _contents(uri, _JSON_MIME, value)
+    if match := _THOUGHT_REVIEW_PATTERN.fullmatch(uri):
+        value = RefinementApplicationService(
+            get_database(), coordinator=None
+        ).review(
+            principal,
+            thought_id=match.group(1),
+            review_result_id=match.group(2),
+        )
+        return _contents(uri, _JSON_MIME, value)
+    if match := _THOUGHT_DETAIL_PATTERN.fullmatch(uri):
+        value = RefinementThoughtService(get_database()).get(
+            principal, match.group(1)
+        )
+        return _contents(uri, _JSON_MIME, {"thought": value})
     if match := _PRIMITIVE_DETAIL_PATTERN.fullmatch(uri):
         kind = _PRIMITIVE_KIND_ALIASES.get(match.group(1))
         if kind is None:

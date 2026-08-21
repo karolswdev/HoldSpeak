@@ -1,6 +1,6 @@
 # HS-141-03 — Develop this thought
 
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** 141-02
 - **Unblocks:** 141-04, 141-06, 141-09
 
@@ -22,14 +22,14 @@ behind explicit disclosure.
 
 ## Acceptance
 
-- [ ] One ordinary action reaches capture/edit without Speak's operational
+- [x] One ordinary action reaches capture/edit without Speak's operational
   vocabulary.
-- [ ] Every ordinary Note, including the first kept Note, has one visible
+- [x] Every ordinary Note, including the first kept Note, has one visible
   Develop-this-thought bridge without identity inference.
-- [ ] Original cue reveals the byte-equal raw snapshot in one action.
-- [ ] Inbox and Chair both provide truthful re-entry after reload.
-- [ ] No model/destination/setup is required or implied.
-- [ ] One primary action per state at 1440 and 393; zero horizontal overflow.
+- [x] Original cue reveals the byte-equal raw snapshot in one action.
+- [x] Inbox and Chair both provide truthful re-entry after reload.
+- [x] No model/destination/setup is required or implied.
+- [x] One primary action per state at 1440 and 393; zero horizontal overflow.
 
 ## Tests
 

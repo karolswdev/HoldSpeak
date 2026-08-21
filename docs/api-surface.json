@@ -4264,6 +4264,206 @@
       ]
     },
     {
+      "path": "/api/thoughts",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.primitives.thoughts",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/thoughts",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.primitives.thoughts",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/thoughts/adopt",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.primitives.thoughts",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/thoughts/default-context",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.primitives.thoughts",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/thoughts/default-context",
+      "methods": [
+        "PUT"
+      ],
+      "module": "web.routes.primitives.thoughts",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/thoughts/for-note/{note_id}",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.primitives.thoughts",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/thoughts/{thought_id}",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.primitives.thoughts",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/thoughts/{thought_id}/complete",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.primitives.thoughts",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/thoughts/{thought_id}/context",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.primitives.thoughts",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/thoughts/{thought_id}/context/{action}",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.primitives.thoughts",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/thoughts/{thought_id}/original",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.primitives.thoughts",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/thoughts/{thought_id}/reconcile",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.primitives.thoughts",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/thoughts/{thought_id}/refine",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.primitives.thoughts",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/thoughts/{thought_id}/refinements/{invocation_id}/stop",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.primitives.thoughts",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/thoughts/{thought_id}/resume",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.primitives.thoughts",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/thoughts/{thought_id}/reviews/{review_result_id}",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.primitives.thoughts",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/thoughts/{thought_id}/reviews/{review_result_id}/answer-and-continue",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.primitives.thoughts",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/thoughts/{thought_id}/reviews/{review_result_id}/{action}",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.primitives.thoughts",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/thoughts/{thought_id}/workbench",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.primitives.thoughts",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/thoughts/{thought_id}/working",
+      "methods": [
+        "PATCH"
+      ],
+      "module": "web.routes.primitives.thoughts",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/workbench-templates",
       "methods": [
         "GET"

@@ -9,7 +9,8 @@ import { useCallback, type ReactNode } from "react";
 import { Chair } from "./Chair";
 import { LANE_ORDER, type LaneId } from "./laneContract";
 import { LANE_COMPONENTS } from "./lanes";
-import { CaptureHero } from "./hero";
+import { ThoughtEntry } from "./ThoughtEntry";
+import { FinishThoughtsLane } from "./FinishThoughtsLane";
 import { FirstWords } from "../components/FirstWords";
 import { useDesk } from "../store";
 import { openSurface } from "../shell";
@@ -36,6 +37,9 @@ function buildLanes(
 
 export function ChairHome({ arrivalRequired = false }: { arrivalRequired?: boolean }) {
   const onOpenInWindow = useCallback(chairOpenInWindow, []);
+  const foregroundWork = useDesk(
+    (state) => state.editingId !== null || state.pullouts.length > 0,
+  );
   const lanes = buildLanes(onOpenInWindow);
 
   if (arrivalRequired) {
@@ -51,7 +55,8 @@ export function ChairHome({ arrivalRequired = false }: { arrivalRequired?: boole
 
   return (
     <Chair
-      hero={<CaptureHero onAskAI={() => useDesk.getState().openAsk()} />}
+      hero={foregroundWork ? null : <ThoughtEntry />}
+      activeWork={<FinishThoughtsLane />}
       lanes={lanes}
     />
   );

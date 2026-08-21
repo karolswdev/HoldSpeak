@@ -29,7 +29,7 @@ from . import (  # noqa: F401
     primitives as _m19, projects as _m20, projections as _m21,
     relationships as _m22, steering as _m23, workbenches as _m24,
     automations as _m25, resourceful as _m26,
-    scheduled_recordings as _m27,
+    scheduled_recordings as _m27, refinement_thoughts as _m28,
 )
 
 from .schema import SCHEMA_VERSION, SCHEMA_SQL  # noqa: F401  re-exported
@@ -172,6 +172,10 @@ class Database:
         """
         with self._connection() as conn:
             reconcile_schema(conn, db_path=self.db_path)
+            from .refinement_thoughts import RefinementThoughtRepository
+            RefinementThoughtRepository.reconcile_legacy_ledgers(conn)
+            RefinementThoughtRepository.reconcile_resume_orders(conn)
+            RefinementThoughtRepository.reconcile_missing_working_notes(conn)
 
 
 _db: Optional[Database] = None

@@ -14,7 +14,7 @@ from holdspeak.principals import Principal, PrincipalKind
 
 OWNER = Principal(PrincipalKind.OWNER, "owner")
 from holdspeak.services.ask_service import AskService
-from holdspeak.services.errors import ValidationError
+from holdspeak.services.errors import ServiceError, ValidationError
 
 
 class _FakeIntel:
@@ -76,6 +76,40 @@ def test_silent_hop_never_returns_the_other_destination(rig) -> None:
     # impossible; the call raises instead of returning another destination's id.
     with pytest.raises(ValidationError):
         _ask(rig, inference_target_id="prof_a", model="model-b")
+
+
+def test_frozen_refinement_admission_refuses_same_id_deployment_race(rig) -> None:
+    from holdspeak.inference_targets import resolve_placement
+    target = resolve_placement(rig._db, invocation="prof_a").target
+    claim = {"target_id":target.id,"target_kind":target.kind,"boundary":target.boundary,
+             "engine":target.engine,"model":target.model,"readiness":target.readiness_state,
+             "reason":target.readiness_reason}
+    rig._db.profiles.upsert(profile_id="prof_a", name="Alpha changed", kind="openAICompatible",
+                            base_url="https://changed.example/v1", model="model-b", requires_key=False)
+    with pytest.raises(ServiceError) as error:
+        _ask(rig, inference_target_id="prof_a", frozen_admission_claim=claim)
+    assert error.value.code == "refinement_admission_changed"
+
+
+def test_paired_actual_receipt_and_egress_are_one_exact_fallback_tuple(rig, monkeypatch) -> None:
+    from holdspeak.inference_targets import DeploymentIdentity, InferenceTarget
+    target = InferenceTarget(
+        id="paired_device", name="Paired device", kind="paired_device", boundary="paired_device",
+        owner="you", transport="paired_https", profile_id=None, engine="configured_hub_engine",
+        model="paired-model", context_limit=16384,
+        deployment=DeploymentIdentity(destination_id="paired_device",kind="paired_device",
+                                      engine="configured_hub_engine",model="paired-model",node="",
+                                      boundary="paired_device"),
+    )
+    payload = {"lens":"Refine","selected_model":"paired-model","context_ids":[],
+               "context_titles":[],"grounding":None,"source_text":""}
+    local = rig._ask_projection({"output":"ok","provider":"local"}, payload, target, None)
+    assert local["actual_placement"]["boundary"] == "paired_device"
+    assert local["egress"] == {"scope":"local"}
+    fallback = rig._ask_projection({"output":"ok","provider":"cloud"}, payload, target, None)
+    assert fallback["actual_placement"]["boundary"] == "paired_device_then_external_service"
+    assert fallback["actual_placement"]["fallback_reason"]
+    assert fallback["egress"] == {"scope":"cloud"}
 
 
 def test_list_models_does_not_dedupe_across_destinations(rig) -> None:

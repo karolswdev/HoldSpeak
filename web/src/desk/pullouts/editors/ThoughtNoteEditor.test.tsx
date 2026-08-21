@@ -1,0 +1,170 @@
+import { act, fireEvent, render, screen } from "@testing-library/react";
+import { createRef } from "react";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { ApiError } from "../../../lib/api";
+import { useDesk } from "../../store";
+import { ThoughtNoteEditor, type ThoughtNoteEditorHandle } from "./ThoughtNoteEditor";
+import { saveThoughtWorking } from "../../thoughts";
+
+vi.mock("../../components/DeskEditor", () => ({
+  DeskEditor: ({ value, onChange }: { value: string; onChange: (value: string) => void }) =>
+    <textarea aria-label="Body" value={value} onChange={(event) => onChange(event.target.value)} />,
+}));
+vi.mock("../../surface/gadgets", () => ({
+  StringGadget: ({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void }) =>
+    <label>{label}<input value={value} onChange={(event) => onChange(event.target.value)} /></label>,
+}));
+vi.mock("../../thoughts", () => ({ saveThoughtWorking: vi.fn() }));
+
+const base = {
+  id: "thought-1", source: { kind: "typed" as const }, raw_captured_at: "2026-01-01T00:00:00Z",
+  state: "working" as const, aggregate_revision: 1, lifecycle_revision: 1, working_revision: 1,
+  attachment_revision: 1, filing_status: "missing" as const,
+  working_note: { id: "note-1", title: "Before", body_markdown: "Before body", tags: ["before"] },
+};
+
+afterEach(() => { vi.useRealTimers(); vi.clearAllMocks(); });
+
+function deferred<T>() {
+  let resolve!: (value: T) => void;
+  let reject!: (reason?: unknown) => void;
+  const promise = new Promise<T>((ok, no) => { resolve = ok; reject = no; });
+  return { promise, resolve, reject };
+}
+
+describe("ThoughtNoteEditor", () => {
+  it("serializes B behind successful A and sends B with A's advanced cursors", async () => {
+    vi.useFakeTimers();
+    useDesk.setState({ refresh: vi.fn() });
+    const first = deferred<typeof base>();
+    const afterA = { ...base, aggregate_revision: 2, working_revision: 2,
+      working_note: { ...base.working_note, title: "A", body_markdown: "Before body", tags: ["before"] } };
+    const afterB = { ...afterA, aggregate_revision: 3, working_revision: 3,
+      working_note: { ...afterA.working_note, title: "B" } };
+    vi.mocked(saveThoughtWorking).mockReturnValueOnce(first.promise).mockResolvedValueOnce(afterB);
+    const onThought = vi.fn();
+    render(<ThoughtNoteEditor thought={base} onThought={onThought} />);
+
+    fireEvent.change(screen.getByLabelText("Title"), { target: { value: "A" } });
+    await act(async () => { await vi.advanceTimersByTimeAsync(500); });
+    expect(saveThoughtWorking).toHaveBeenCalledTimes(1);
+    fireEvent.change(screen.getByLabelText("Title"), { target: { value: "B" } });
+    await act(async () => { first.resolve(afterA); await Promise.resolve(); await vi.advanceTimersByTimeAsync(1); });
+
+    expect(saveThoughtWorking).toHaveBeenCalledTimes(2);
+    const calls = (saveThoughtWorking as unknown as { mock: { calls: unknown[][] } }).mock.calls;
+    expect(calls[1][0]).toMatchObject({ aggregate_revision: 2, working_revision: 2 });
+    expect(calls[1][1]).toMatchObject({ title: "B" });
+    expect(screen.getByLabelText("Title")).toHaveValue("B");
+    expect(onThought).toHaveBeenLastCalledWith(afterB);
+  });
+
+  it("fences synchronously and drains accepted A then B before Finish Thought can use cursors", async () => {
+    vi.useFakeTimers();
+    useDesk.setState({ refresh: vi.fn() });
+    const first = deferred<typeof base>();
+    const afterA = { ...base, aggregate_revision: 2, working_revision: 2, working_note: { ...base.working_note, title: "A" } };
+    const afterB = { ...afterA, aggregate_revision: 3, working_revision: 3, working_note: { ...afterA.working_note, title: "B" } };
+    vi.mocked(saveThoughtWorking).mockReturnValueOnce(first.promise).mockResolvedValueOnce(afterB);
+    const editor = createRef<ThoughtNoteEditorHandle>();
+    render(<ThoughtNoteEditor ref={editor} thought={base} onThought={vi.fn()} />);
+    fireEvent.change(screen.getByLabelText("Title"), { target: { value: "A" } });
+    await act(async () => { await vi.advanceTimersByTimeAsync(500); });
+    fireEvent.change(screen.getByLabelText("Title"), { target: { value: "B" } });
+    const flushed = editor.current!.flush();
+    // The synchronous fence rejects edits begun after Finish Thought.
+    fireEvent.change(screen.getByLabelText("Title"), { target: { value: "C" } });
+    await act(async () => { first.resolve(afterA); await Promise.resolve(); });
+    expect(saveThoughtWorking).toHaveBeenCalledTimes(2);
+    await expect(flushed).resolves.toMatchObject({ aggregate_revision: 3, working_revision: 3, working_note: { title: "B" } });
+    const calls = (saveThoughtWorking as unknown as { mock: { calls: unknown[][] } }).mock.calls;
+    expect(calls[1][0]).toMatchObject({ aggregate_revision: 2, working_revision: 2 });
+    expect(calls[1][1]).toMatchObject({ title: "B" });
+  });
+
+  it("keeps a generic save failure in the editor with Retry save and refuses completion flush", async () => {
+    vi.useFakeTimers();
+    useDesk.setState({ refresh: vi.fn() });
+    vi.mocked(saveThoughtWorking).mockRejectedValueOnce(new Error("offline"));
+    const editor = createRef<ThoughtNoteEditorHandle>();
+    render(<ThoughtNoteEditor ref={editor} thought={base} onThought={vi.fn()} />);
+    fireEvent.change(screen.getByLabelText("Title"), { target: { value: "Unsaved" } });
+    await act(async () => { await vi.advanceTimersByTimeAsync(500); });
+    expect(screen.getByRole("status")).toHaveTextContent("Retry save");
+    await expect(editor.current!.flush()).rejects.toThrow("thought save failed");
+    expect(saveThoughtWorking).toHaveBeenCalledTimes(1);
+  });
+
+  it("installs conflict authority while retaining B and never replays it blindly", async () => {
+    vi.useFakeTimers();
+    useDesk.setState({ refresh: vi.fn() });
+    const first = deferred<typeof base>();
+    const current = { ...base, aggregate_revision: 2, working_revision: 2,
+      working_note: { ...base.working_note, title: "Current", body_markdown: "Current body", tags: ["current"] } };
+    vi.mocked(saveThoughtWorking).mockReturnValueOnce(first.promise);
+    const onThought = vi.fn();
+    render(<ThoughtNoteEditor thought={base} onThought={onThought} />);
+
+    fireEvent.change(screen.getByLabelText("Title"), { target: { value: "A" } });
+    await act(async () => { await vi.advanceTimersByTimeAsync(500); });
+    fireEvent.change(screen.getByLabelText("Title"), { target: { value: "B" } });
+    await act(async () => { first.reject(new ApiError(409, "conflict", { context: { current } })); await Promise.resolve(); await vi.runAllTimersAsync(); });
+
+    expect(screen.getByLabelText("Title")).toHaveValue("B");
+    expect(screen.getByLabelText("Body")).toHaveValue("Before body");
+    expect(screen.getByLabelText("Tags")).toHaveValue("before");
+    expect(screen.getByRole("status")).toHaveTextContent("unsaved edits are still here");
+    expect(onThought).toHaveBeenCalledWith(current);
+    expect(saveThoughtWorking).toHaveBeenCalledTimes(1);
+  });
+
+  it("discards a delayed A response after a newer parent authority epoch", async () => {
+    vi.useFakeTimers();
+    useDesk.setState({ refresh: vi.fn() });
+    const first = deferred<typeof base>();
+    const staleA = { ...base, aggregate_revision: 2, working_revision: 2,
+      working_note: { ...base.working_note, title: "A" } };
+    const parentCurrent = { ...base, aggregate_revision: 3, working_revision: 3,
+      working_note: { ...base.working_note, title: "Parent", body_markdown: "Parent body", tags: ["parent"] } };
+    vi.mocked(saveThoughtWorking).mockReturnValueOnce(first.promise);
+    const onThought = vi.fn();
+    const view = render(<ThoughtNoteEditor thought={base} onThought={onThought} />);
+    fireEvent.change(screen.getByLabelText("Title"), { target: { value: "A" } });
+    await act(async () => { await vi.advanceTimersByTimeAsync(500); });
+
+    await act(async () => { view.rerender(<ThoughtNoteEditor thought={parentCurrent} onThought={onThought} />); });
+    await act(async () => { first.resolve(staleA); await Promise.resolve(); await vi.runAllTimersAsync(); });
+
+    expect(screen.getByLabelText("Title")).toHaveValue("A");
+    expect(screen.getByLabelText("Body")).toHaveValue("Before body");
+    expect(screen.getByLabelText("Tags")).toHaveValue("before");
+    expect(screen.getByRole("status")).toHaveTextContent("unsaved edits are still here");
+    expect(onThought).toHaveBeenCalledWith(parentCurrent);
+    expect(saveThoughtWorking).toHaveBeenCalledTimes(1);
+  });
+
+  it("discards an older conflict current after a newer parent authority epoch", async () => {
+    vi.useFakeTimers();
+    useDesk.setState({ refresh: vi.fn() });
+    const first = deferred<typeof base>();
+    const olderConflict = { ...base, aggregate_revision: 2, working_revision: 2,
+      working_note: { ...base.working_note, title: "Older conflict" } };
+    const parentCurrent = { ...base, aggregate_revision: 3, working_revision: 3,
+      working_note: { ...base.working_note, title: "Parent", body_markdown: "Parent body", tags: ["parent"] } };
+    vi.mocked(saveThoughtWorking).mockReturnValueOnce(first.promise);
+    const onThought = vi.fn();
+    const view = render(<ThoughtNoteEditor thought={base} onThought={onThought} />);
+    fireEvent.change(screen.getByLabelText("Title"), { target: { value: "A" } });
+    await act(async () => { await vi.advanceTimersByTimeAsync(500); });
+
+    await act(async () => { view.rerender(<ThoughtNoteEditor thought={parentCurrent} onThought={onThought} />); });
+    await act(async () => { first.reject(new ApiError(409, "conflict", { current: olderConflict })); await Promise.resolve(); await vi.runAllTimersAsync(); });
+
+    expect(screen.getByLabelText("Title")).toHaveValue("A");
+    expect(screen.getByLabelText("Body")).toHaveValue("Before body");
+    expect(screen.getByLabelText("Tags")).toHaveValue("before");
+    expect(screen.getByRole("status")).toHaveTextContent("unsaved edits are still here");
+    expect(onThought).toHaveBeenCalledWith(parentCurrent);
+    expect(saveThoughtWorking).toHaveBeenCalledTimes(1);
+  });
+});

@@ -15,6 +15,7 @@ from holdspeak.kernel.inference_runner import (
     ClosurePersistenceError, InferenceRunner, InvocationRequest, ProviderIndeterminate, SavedDefinition,
     ServiceContract,
 )
+from holdspeak.kernel.provider_signals import ProviderCompatibilityRetry
 from holdspeak.kernel.model import KernelRefused
 from holdspeak.kernel.runtime import _configure
 from holdspeak.principals import Principal, PrincipalKind
@@ -69,6 +70,28 @@ def test_each_terminal_outcome_has_one_immutable_receipt(rig, error, outcome):
     assert broker.receipt(result.operation_id, outcome, result.result_ref, Principal(
         PrincipalKind.NODE, broker.store.operation(result.operation_id)["placement"].removeprefix("node:")
     )) == receipt
+
+
+def test_pre_dispatch_hook_runs_before_every_physical_attempt(rig):
+    db, broker, revision = rig
+    events = []
+    class Retry(Adapter):
+        calls = 0
+        def dispatch(self, engine, payload, cancellation):
+            type(self).calls += 1
+            events.append(("dispatch", type(self).calls))
+            if type(self).calls == 1: raise ProviderCompatibilityRetry("dialect")
+            return "ok"
+    def hook(operation_id, invocation_id, ordinal):
+        events.append(("hook", invocation_id, ordinal, operation_id))
+    def retry_plan(parent_operation_id, parent_invocation_id, child_invocation_id, child_ordinal, reason):
+        events.append(("plan", parent_invocation_id, child_invocation_id, child_ordinal, reason))
+    runner = InferenceRunner(broker, db, engine_factory=lambda _revision, **_kw: object(), principal_provider=lambda: OWNER)
+    result = runner.invoke(InvocationRequest(**{**request(revision).__dict__, "invocation_id": "hook_attempt", "before_physical_dispatch": hook, "before_compatibility_retry": retry_plan}), Retry())
+    assert result.outcome == "succeeded"
+    assert [event[0] for event in events] == ["hook", "dispatch", "plan", "hook", "dispatch"]
+    assert events[0][2] == 1 and events[3][1].endswith("_r2") and events[3][2] == 2
+    assert events[2][2].endswith("_r2") and events[2][3] == 2
 
 
 

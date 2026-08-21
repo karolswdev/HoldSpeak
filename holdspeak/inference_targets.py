@@ -245,9 +245,10 @@ def this_machine_target(
 ) -> InferenceTarget:
     from .intel.providers import configured_local_meeting_model_path
 
-    model_path = configured_local_meeting_model_path()
+    configured_path = configured_local_meeting_model_path()
+    model_path = str(configured_path or "").strip()
     state, reason = _this_machine_readiness()
-    deployment_model = model or Path(model_path).expanduser().stem
+    deployment_model = model or (Path(model_path).expanduser().stem if model_path else "")
     deployment = DeploymentIdentity(
         destination_id=THIS_MACHINE_ID,
         kind="this_device",
@@ -255,7 +256,7 @@ def this_machine_target(
         model=deployment_model,
         node="",
         boundary="same_device",
-        model_path=model_path,
+        model_path=model_path or None,
     )
     return InferenceTarget(
         id=THIS_MACHINE_ID,

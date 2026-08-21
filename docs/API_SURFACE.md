@@ -9,7 +9,7 @@ and the clients that call it (extracted from the real call sites in
 `web/src` and `apple/`). "server only" means no in-repo client calls
 it today.
 
-Routes: 491 (plus static mounts). iOS-consumed: 89. Web-consumed: 381.
+Routes: 511 (plus static mounts). iOS-consumed: 89. Web-consumed: 401.
 
 ## device_audio_ws
 
@@ -636,6 +636,31 @@ Routes: 491 (plus static mounts). iOS-consumed: 89. Web-consumed: 381.
 | POST | `/api/recipes/{recipe_id}/invocations/{invocation_id}/cancel` | server only |
 | POST | `/api/recipes/{recipe_id}/keep` | web |
 | POST | `/api/recipes/{recipe_id}/run` | ios, web |
+
+## web.routes.primitives.thoughts
+
+| Method | Path | Consumers |
+|---|---|---|
+| GET | `/api/thoughts` | web |
+| POST | `/api/thoughts` | web |
+| POST | `/api/thoughts/adopt` | web |
+| GET | `/api/thoughts/default-context` | web |
+| PUT | `/api/thoughts/default-context` | web |
+| GET | `/api/thoughts/for-note/{note_id}` | web |
+| GET | `/api/thoughts/{thought_id}` | web |
+| POST | `/api/thoughts/{thought_id}/complete` | web |
+| GET | `/api/thoughts/{thought_id}/context` | web |
+| POST | `/api/thoughts/{thought_id}/context/{action}` | web |
+| GET | `/api/thoughts/{thought_id}/original` | web |
+| POST | `/api/thoughts/{thought_id}/reconcile` | web |
+| POST | `/api/thoughts/{thought_id}/refine` | web |
+| POST | `/api/thoughts/{thought_id}/refinements/{invocation_id}/stop` | web |
+| POST | `/api/thoughts/{thought_id}/resume` | web |
+| GET | `/api/thoughts/{thought_id}/reviews/{review_result_id}` | web |
+| POST | `/api/thoughts/{thought_id}/reviews/{review_result_id}/answer-and-continue` | web |
+| POST | `/api/thoughts/{thought_id}/reviews/{review_result_id}/{action}` | web |
+| GET | `/api/thoughts/{thought_id}/workbench` | web |
+| PATCH | `/api/thoughts/{thought_id}/working` | web |
 
 ## web.routes.primitives.workbenches
 

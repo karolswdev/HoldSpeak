@@ -1,0 +1,262 @@
+from __future__ import annotations
+
+from fastapi import FastAPI
+from fastapi.testclient import TestClient
+
+import holdspeak.db as hsdb
+from holdspeak.db import Database
+from holdspeak.web.context import WebContext
+from holdspeak.web.routes import build_primitives_router
+from holdspeak.principals import Principal, PrincipalKind
+from holdspeak.services.refinement_thought_service import RefinementThoughtService
+
+
+def test_thought_routes_keep_raw_out_of_normal_read_and_require_cas(tmp_path, monkeypatch):
+    db = Database(tmp_path / "routes.db")
+    db.directories.upsert(directory_id="hs-seed-inbox", name="Inbox")
+    monkeypatch.setattr(hsdb, "get_database", lambda *args, **kwargs: db)
+    app = FastAPI()
+    @app.middleware("http")
+    async def owner(request, call_next):
+        request.state.principal = Principal(PrincipalKind.OWNER, "test-owner")
+        return await call_next(request)
+    app.include_router(build_primitives_router(WebContext(get_state=lambda: {})))
+    client = TestClient(app)
+    created = client.post("/api/thoughts", json={"request_id": "route-1", "raw_text": "private raw", "source": {"kind": "typed"}})
+    assert created.status_code == 201
+    thought = created.json()["thought"]
+    fetched = client.get(f"/api/thoughts/{thought['id']}").json()["thought"]
+    assert "raw_text" not in fetched
+    assert client.get(f"/api/thoughts/{thought['id']}/original").json()["thought"]["raw_text"] == "private raw"
+    refused = client.put(f"/api/notes/{thought['working_note']['id']}", json={"title": "no CAS"})
+    assert refused.status_code == 409 and refused.json()["error"] == "thought_expected_revision_required"
+    edited = client.patch(f"/api/thoughts/{thought['id']}/working", json={"expected_aggregate_revision": 1, "expected_working_revision": 1, "title": "edited"})
+    assert edited.status_code == 200 and edited.json()["thought"]["working_revision"] == 2
+    note = client.put(f"/api/notes/{thought['working_note']['id']}", json={"expected_aggregate_revision": 2, "expected_working_revision": 2, "body_markdown": "via note"})
+    assert note.status_code == 200
+    assert {"state", "aggregate_revision", "lifecycle_revision", "working_revision", "attachment_revision"} <= note.json()["note"].keys()
+    deleted = client.request("DELETE", f"/api/notes/{thought['working_note']['id']}", json={"expected_aggregate_revision": 3, "expected_lifecycle_revision": 1})
+    assert deleted.status_code == 200
+    assert {"state", "aggregate_revision", "lifecycle_revision", "working_revision", "attachment_revision"} <= deleted.json()["note"].keys()
+
+
+def test_thought_routes_deny_absent_and_agent_principals(tmp_path, monkeypatch):
+    db = Database(tmp_path / "auth.db")
+    db.directories.upsert(directory_id="hs-seed-inbox", name="Inbox")
+    monkeypatch.setattr(hsdb, "get_database", lambda *args, **kwargs: db)
+    app = FastAPI()
+    app.include_router(build_primitives_router(WebContext(get_state=lambda: {})))
+    assert TestClient(app).get("/api/thoughts").status_code == 422
+    agent = FastAPI()
+    @agent.middleware("http")
+    async def as_agent(request, call_next):
+        request.state.principal = Principal(PrincipalKind.AGENT, "not-owner")
+        return await call_next(request)
+    agent.include_router(build_primitives_router(WebContext(get_state=lambda: {})))
+    assert TestClient(agent).post("/api/thoughts", json={"request_id": "x", "raw_text": "raw"}).status_code == 422
+
+
+def test_thought_product_reads_deny_node_principal(tmp_path, monkeypatch):
+    db = Database(tmp_path / "node-auth.db")
+    db.directories.upsert(directory_id="hs-seed-inbox", name="Inbox")
+    monkeypatch.setattr(hsdb, "get_database", lambda *args, **kwargs: db)
+    owner = FastAPI()
+    @owner.middleware("http")
+    async def owner_identity(request, call_next):
+        request.state.principal = Principal(PrincipalKind.OWNER, "owner")
+        return await call_next(request)
+    owner.include_router(build_primitives_router(WebContext(get_state=lambda: {})))
+    thought = TestClient(owner).post("/api/thoughts", json={"request_id":"node-read","raw_text":"raw"}).json()["thought"]
+    node = FastAPI()
+    @node.middleware("http")
+    async def node_identity(request, call_next):
+        request.state.principal = Principal(PrincipalKind.NODE, "peer")
+        return await call_next(request)
+    node.include_router(build_primitives_router(WebContext(get_state=lambda: {})))
+    client = TestClient(node)
+    assert client.post("/api/thoughts", json={"request_id": "node-create", "raw_text": "no"}).status_code == 422
+    assert client.post("/api/thoughts/adopt", json={"request_id": "node-adopt", "note_id": thought["working_note"]["id"], "expected_source_content_sha256": "x", "expected_source_last_modified": "x"}).status_code == 422
+    assert client.get(f"/api/thoughts/{thought['id']}").status_code == 422
+    assert client.get("/api/thoughts?limit=1").status_code == 422
+    assert client.post(f"/api/thoughts/{thought['id']}/reconcile", json={"expected_aggregate_revision":1}).status_code == 422
+    # Product commands and generic owned-Note writes are owner-only. A paired
+    # sync principal may install a signed ledger, but never impersonate this UI.
+    assert client.patch(f"/api/thoughts/{thought['id']}/working", json={"expected_aggregate_revision": 1, "expected_working_revision": 1, "body_markdown": "no"}).status_code == 422
+    assert client.post(f"/api/thoughts/{thought['id']}/complete", json={"request_id": "node", "expected_aggregate_revision": 1, "expected_lifecycle_revision": 1}).status_code == 422
+    assert client.post(f"/api/thoughts/{thought['id']}/resume", json={"expected_aggregate_revision": 1, "expected_lifecycle_revision": 1}).status_code == 422
+    assert client.put(f"/api/notes/{thought['working_note']['id']}", json={"expected_aggregate_revision": 1, "expected_working_revision": 1, "body_markdown": "no"}).status_code == 422
+    assert client.request("DELETE", f"/api/notes/{thought['working_note']['id']}", json={"expected_aggregate_revision": 1, "expected_lifecycle_revision": 1}).status_code == 422
+
+
+def test_thought_list_is_paged_private_and_reconcile_requires_cursor(tmp_path, monkeypatch):
+    db = Database(tmp_path / "page.db")
+    db.directories.upsert(directory_id="hs-seed-inbox", name="Inbox")
+    monkeypatch.setattr(hsdb, "get_database", lambda *args, **kwargs: db)
+    app = FastAPI()
+    @app.middleware("http")
+    async def owner(request, call_next):
+        request.state.principal = Principal(PrincipalKind.OWNER, "test-owner")
+        return await call_next(request)
+    app.include_router(build_primitives_router(WebContext(get_state=lambda: {})))
+    client = TestClient(app)
+    thought = client.post("/api/thoughts", json={"request_id": "page-1", "raw_text": "raw", "source": {"kind": "typed"}}).json()["thought"]
+    page = client.get("/api/thoughts?limit=1")
+    assert page.status_code == 200 and len(page.json()["items"]) == 1
+    item = page.json()["items"][0]
+    assert "body_markdown" not in item and "raw_text" not in item and "source" not in item
+    assert client.get("/api/thoughts?limit=51").status_code == 422
+    assert client.post(f"/api/thoughts/{thought['id']}/reconcile", json={}).status_code == 409
+
+
+def test_note_adoption_routes_are_owner_only_and_return_the_same_note(tmp_path, monkeypatch):
+    db = Database(tmp_path / "adopt-routes.db")
+    db.directories.upsert(directory_id="hs-seed-inbox", name="Inbox")
+    db.notes.upsert(note_id="n1", title="Existing", body_markdown="exact", tags=["tag"])
+    monkeypatch.setattr(hsdb, "get_database", lambda *args, **kwargs: db)
+    app = FastAPI()
+    @app.middleware("http")
+    async def owner(request, call_next):
+        request.state.principal = Principal(PrincipalKind.OWNER, "test-owner")
+        return await call_next(request)
+    app.include_router(build_primitives_router(WebContext(get_state=lambda: {})))
+    client = TestClient(app)
+    source = client.get("/api/thoughts/for-note/n1")
+    assert source.status_code == 200 and source.json()["ownership"] == "ordinary"
+    precondition = source.json()["source_precondition"]
+    adopted = client.post("/api/thoughts/adopt", json={"request_id": "adopt-route", "note_id": "n1",
+        "expected_source_content_sha256": precondition["content_sha256"], "expected_source_last_modified": precondition["last_modified"]})
+    assert adopted.status_code == 201
+    thought = adopted.json()["thought"]
+    assert thought["working_note"]["id"] == "n1"
+    assert client.get("/api/thoughts/for-note/n1").json()["ownership"] == "thought"
+    assert client.get(f"/api/thoughts/{thought['id']}/original").json()["thought"]["raw_text"] == "exact"
+
+
+def test_refinement_routes_are_thin_adapters_to_the_injected_coordinator(tmp_path, monkeypatch):
+    db = Database(tmp_path / "coordinated-routes.db")
+    db.directories.upsert(directory_id="hs-seed-inbox", name="Inbox")
+    monkeypatch.setattr(hsdb, "get_database", lambda *args, **kwargs: db)
+    thought = RefinementThoughtService(db).create(
+        Principal(PrincipalKind.OWNER, "test-owner"), request_id="route-refine-capture",
+        raw_text="rough", source={"kind": "typed"},
+    )
+
+    class CoordinatorSpy:
+        def __init__(self):
+            self.begin_calls = []
+            self.stop_calls = []
+
+        async def begin(self, principal, **kwargs):
+            self.begin_calls.append((principal, kwargs))
+            invocation = {
+                "id": "rinv-route", "request_id": kwargs["request_id"],
+                "thought_id": kwargs["thought_id"], "state": "reserved", "attempts": [],
+            }
+            return RefinementThoughtService(db).get(principal, kwargs["thought_id"]), invocation
+
+        async def stop(self, principal, **kwargs):
+            self.stop_calls.append((principal, kwargs))
+            return RefinementThoughtService(db).get(principal, kwargs["thought_id"]), "cancelled"
+
+    coordinator = CoordinatorSpy()
+    app = FastAPI()
+
+    @app.middleware("http")
+    async def owner(request, call_next):
+        request.state.principal = Principal(PrincipalKind.OWNER, "test-owner")
+        return await call_next(request)
+
+    app.include_router(build_primitives_router(WebContext(
+        get_state=lambda: {}, refinement_coordinator=coordinator
+    )))
+    client = TestClient(app)
+    started = client.post(f"/api/thoughts/{thought['id']}/refine", json={
+        "request_id": "route-refine", "expected_aggregate_revision": 1,
+        "expected_working_revision": 1, "expected_attachment_revision": 0,
+    })
+    assert started.status_code == 202
+    assert coordinator.begin_calls[0][1] == {
+        "thought_id": thought["id"], "request_id": "route-refine",
+        "expected_aggregate_revision": 1, "expected_working_revision": 1,
+        "expected_attachment_revision": 0,
+    }
+    stopped = client.post(
+        f"/api/thoughts/{thought['id']}/refinements/rinv-route/stop",
+        json={"expected_aggregate_revision": 1},
+    )
+    assert stopped.status_code == 200
+    assert coordinator.stop_calls[0][1] == {
+        "thought_id": thought["id"], "invocation_id": "rinv-route",
+        "expected_aggregate_revision": 1,
+    }
+    assert client.post(f"/api/thoughts/{thought['id']}/refine", json={
+        "request_id":"bad","expected_aggregate_revision":1,"expected_working_revision":1,
+        "expected_attachment_revision":0,"extra":"no",
+    }).status_code == 422
+    assert client.post(f"/api/thoughts/{thought['id']}/reconcile", json={
+        "expected_aggregate_revision":1,"extra":"no",
+    }).status_code == 422
+    assert client.post(f"/api/thoughts/{thought['id']}/refinements/rinv-route/stop", json={
+        "expected_aggregate_revision":1,"extra":"no",
+    }).status_code == 422
+    assert client.patch(f"/api/thoughts/{thought['id']}/working", json={
+        "expected_aggregate_revision":1,"expected_working_revision":1,"extra":"no",
+    }).status_code == 422
+
+
+def test_refine_without_application_coordinator_refuses_before_reservation(tmp_path, monkeypatch):
+    db = Database(tmp_path / "no-coordinator.db")
+    db.directories.upsert(directory_id="hs-seed-inbox", name="Inbox")
+    monkeypatch.setattr(hsdb, "get_database", lambda *args, **kwargs: db)
+    owner = Principal(PrincipalKind.OWNER, "test-owner")
+    thought = RefinementThoughtService(db).create(
+        owner, request_id="no-coordinator-capture", raw_text="rough", source={"kind": "typed"}
+    )
+    app = FastAPI()
+
+    @app.middleware("http")
+    async def owner_identity(request, call_next):
+        request.state.principal = owner
+        return await call_next(request)
+
+    app.include_router(build_primitives_router(WebContext(get_state=lambda: {})))
+    response = TestClient(app).post(f"/api/thoughts/{thought['id']}/refine", json={
+        "request_id": "must-not-reserve", "expected_aggregate_revision": 1,
+        "expected_working_revision": 1, "expected_attachment_revision": 0,
+    })
+    assert response.status_code == 503
+    with db._connection() as conn:
+        assert conn.execute("SELECT COUNT(*) FROM refinement_invocations").fetchone()[0] == 0
+
+
+def test_working_save_process_cursor_conflict_returns_fresh_workbench_without_draft(tmp_path, monkeypatch):
+    db = Database(tmp_path / "save-race-route.db")
+    db.directories.upsert(directory_id="hs-seed-inbox", name="Inbox")
+    monkeypatch.setattr(hsdb, "get_database", lambda *args, **kwargs: db)
+    owner = Principal(PrincipalKind.OWNER, "test-owner")
+    service = RefinementThoughtService(db)
+    thought = service.create(owner, request_id="save-race-route", raw_text="Original", source={"kind":"typed"})
+    app = FastAPI()
+    @app.middleware("http")
+    async def owner_identity(request, call_next):
+        request.state.principal = owner
+        return await call_next(request)
+    app.include_router(build_primitives_router(WebContext(get_state=lambda: {})))
+    client = TestClient(app)
+    stale = client.get(f"/api/thoughts/{thought['id']}/workbench").json()["workspace_cursor"]
+    invocation = service.reserve_refinement(owner, thought["id"], request_id="save-race-route-invocation",
+                                            expected_aggregate_revision=1, expected_working_revision=1,
+                                            expected_attachment_revision=0)
+    service.before_physical_dispatch(invocation["id"])(
+        "op-save-race-route", invocation["attempts"][0]["ask_invocation_id"], 1)
+    draft = "PRIVATE UNSAVED DRAFT"
+    response = client.patch(f"/api/thoughts/{thought['id']}/working", json={
+        "expected_aggregate_revision":1,"expected_working_revision":1,
+        "body_markdown":draft,"workspace_cursor":stale,
+    })
+    assert response.status_code == 409
+    payload = response.json()
+    assert set(payload) == {"error","workbench"}
+    assert payload["error"] == "workspace_cursor_conflict"
+    assert payload["workbench"]["workspace_cursor"]["continuity_revision"] > stale["continuity_revision"]
+    assert draft not in response.text

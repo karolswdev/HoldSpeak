@@ -15,6 +15,9 @@
     "notes": {
       "$ref": "#/$defs/bucket_note"
     },
+    "refinement_thoughts": {
+      "$ref": "#/$defs/bucket_refinement_thought"
+    },
     "kbs": {
       "$ref": "#/$defs/bucket_kb"
     },
@@ -86,6 +89,7 @@
             "meeting",
             "artifact",
             "note",
+            "refinement_thought",
             "kb",
             "recipe",
             "chain",
@@ -229,6 +233,15 @@
               }
             }
           }
+        ]
+      }
+    },
+    "bucket_refinement_thought": {
+      "type": "array",
+      "items": {
+        "allOf": [
+          {"$ref": "#/$defs/synced"},
+          {"properties": {"meta": {"properties": {"kind": {"const": "refinement_thought"}}}, "value": {"if": {"type": "object"}, "then": {"$ref": "https://holdspeak.dev/contracts/v0/refinement-thought.schema.json"}}}}
         ]
       }
     },

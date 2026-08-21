@@ -1,5 +1,5 @@
 import "./inline-editor.css";
-import { forwardRef, useEffect, useImperativeHandle, useRef } from "react";
+import { forwardRef, useEffect, useImperativeHandle, useLayoutEffect, useRef } from "react";
 import {
   defaultKeymap,
   history,
@@ -7,13 +7,32 @@ import {
   indentWithTab,
 } from "@codemirror/commands";
 import { markdown, markdownKeymap } from "@codemirror/lang-markdown";
-import { EditorState } from "@codemirror/state";
-import { EditorView, keymap, placeholder } from "@codemirror/view";
+import { Annotation, Compartment, EditorState, StateEffect, StateField } from "@codemirror/state";
+import { Decoration, EditorView, keymap, placeholder } from "@codemirror/view";
 import { deskEditorTheme, deskMarkdownHighlighting } from "./deskEditorTheme";
 
 export interface DeskEditorHandle {
   insertAtCursor(text: string): void;
+  revealRange(from: number, to: number, options?: { focus?: boolean }): boolean;
+  clearReveal(): void;
 }
+
+const setReveal = StateEffect.define<{ from: number; to: number } | null>();
+const authoritativeSync = Annotation.define<boolean>();
+const revealField = StateField.define({
+  create: () => Decoration.none,
+  update(value, transaction) {
+    value = value.map(transaction.changes);
+    for (const effect of transaction.effects) {
+      if (!effect.is(setReveal)) continue;
+      value = effect.value
+        ? Decoration.set([Decoration.mark({ class: "cm-thought-answer-reveal" }).range(effect.value.from, effect.value.to)])
+        : Decoration.none;
+    }
+    return value;
+  },
+  provide: (field) => EditorView.decorations.from(field),
+});
 
 interface DeskEditorProps {
   value: string;
@@ -29,19 +48,21 @@ interface DeskEditorProps {
   onAIBarToggle?: () => void;
   /** The formatting rail is on by default; compact embeds may opt out. */
   showToolbar?: boolean;
+  editable?: boolean;
+  lineWrapping?: boolean;
 }
 
-function toggleInlineWrap(view: EditorView, marker: string): boolean {
+function toggleInlineWrap(view: EditorView, marker: string, closingMarker = marker): boolean {
   const { from, to } = view.state.selection.main;
   const doc = view.state.doc;
   const selected = doc.sliceString(from, to);
 
   if (
-    selected.length >= marker.length * 2 &&
+    selected.length >= marker.length + closingMarker.length &&
     selected.startsWith(marker) &&
-    selected.endsWith(marker)
+    selected.endsWith(closingMarker)
   ) {
-    const text = selected.slice(marker.length, -marker.length);
+    const text = selected.slice(marker.length, -closingMarker.length);
     view.dispatch({
       changes: { from, to, insert: text },
       selection: { anchor: from, head: from + text.length },
@@ -49,24 +70,24 @@ function toggleInlineWrap(view: EditorView, marker: string): boolean {
   } else if (
     from >= marker.length &&
     doc.sliceString(from - marker.length, from) === marker &&
-    doc.sliceString(to, to + marker.length) === marker
+    doc.sliceString(to, to + closingMarker.length) === closingMarker
   ) {
     view.dispatch({
       changes: {
         from: from - marker.length,
-        to: to + marker.length,
+        to: to + closingMarker.length,
         insert: selected,
       },
       selection: { anchor: from - marker.length, head: to - marker.length },
     });
   } else if (from === to) {
     view.dispatch({
-      changes: { from, insert: `${marker}${marker}` },
+      changes: { from, insert: `${marker}${closingMarker}` },
       selection: { anchor: from + marker.length },
     });
   } else {
     view.dispatch({
-      changes: { from, to, insert: `${marker}${selected}${marker}` },
+      changes: { from, to, insert: `${marker}${selected}${closingMarker}` },
       selection: { anchor: from + marker.length, head: to + marker.length },
     });
   }
@@ -152,6 +173,8 @@ export const DeskEditor = forwardRef<DeskEditorHandle, DeskEditorProps>(
       onViewChange,
       onAIBarToggle,
       showToolbar = true,
+      editable = true,
+      lineWrapping = false,
     },
     forwardedRef,
   ) {
@@ -161,6 +184,7 @@ export const DeskEditor = forwardRef<DeskEditorHandle, DeskEditorProps>(
     const onEscapeRef = useRef(onEscape);
     const onModEnterRef = useRef(onModEnter);
     const onAIBarToggleRef = useRef(onAIBarToggle);
+    const editableCompartment = useRef(new Compartment());
 
     onChangeRef.current = onChange;
     onEscapeRef.current = onEscape;
@@ -177,6 +201,19 @@ export const DeskEditor = forwardRef<DeskEditorHandle, DeskEditorProps>(
           view.dispatch({ changes: { from, to, insert: text } });
           view.focus();
         },
+        revealRange(from, to, options) {
+          const view = viewRef.current;
+          if (!view || from < 0 || to < from || to > view.state.doc.length) return false;
+          view.dispatch({
+            selection: { anchor: to },
+            effects: [setReveal.of({ from, to }), EditorView.scrollIntoView(from, { y: "center" })],
+          });
+          if (options?.focus !== false) view.focus();
+          return true;
+        },
+        clearReveal() {
+          viewRef.current?.dispatch({ effects: setReveal.of(null) });
+        },
       }),
       [],
     );
@@ -191,6 +228,9 @@ export const DeskEditor = forwardRef<DeskEditorHandle, DeskEditorProps>(
             markdown(),
             deskEditorTheme,
             deskMarkdownHighlighting,
+            revealField,
+            editableCompartment.current.of(EditorView.editable.of(editable)),
+            ...(lineWrapping ? [EditorView.lineWrapping] : []),
             keymap.of([
               {
                 key: "Escape",
@@ -235,7 +275,7 @@ export const DeskEditor = forwardRef<DeskEditorHandle, DeskEditorProps>(
               },
             }),
             EditorView.updateListener.of((update) => {
-              if (update.docChanged)
+              if (update.docChanged && !update.transactions.some((transaction) => transaction.annotation(authoritativeSync)))
                 onChangeRef.current(update.state.doc.toString());
             }),
             ...(ariaLabel
@@ -266,8 +306,13 @@ export const DeskEditor = forwardRef<DeskEditorHandle, DeskEditorProps>(
       view.dispatch({
         changes: { from: 0, to: view.state.doc.length, insert: value },
         selection: { anchor: nextCursor, head: Math.min(value.length, to) },
+        annotations: authoritativeSync.of(true),
       });
     }, [value]);
+
+    useLayoutEffect(() => {
+      viewRef.current?.dispatch({ effects: editableCompartment.current.reconfigure(EditorView.editable.of(editable)) });
+    }, [editable]);
 
     const useView = (format: (view: EditorView) => void) => () => {
       const view = viewRef.current;
@@ -301,6 +346,16 @@ export const DeskEditor = forwardRef<DeskEditorHandle, DeskEditorProps>(
               onClick={useView((view) => toggleInlineWrap(view, "*"))}
             >
               <em>I</em>
+            </button>
+            <button
+              type="button"
+              className="desk-chip quiet"
+              aria-label="Underline"
+              title="Underline"
+              onMouseDown={(event) => event.preventDefault()}
+              onClick={useView((view) => toggleInlineWrap(view, "<u>", "</u>"))}
+            >
+              <u>U</u>
             </button>
             <button
               type="button"

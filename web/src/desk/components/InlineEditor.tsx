@@ -6,9 +6,14 @@ import type { UnitPos } from "../store";
 import { INLINE_EDITOR_CONTENT, EDITOR_LABELS } from "../pullouts/editors";
 import { SurfaceFooter } from "../surface/SurfaceFooter";
 import { DeskWindowFrame } from "./DeskWindow";
+import { qualifiedRef } from "../api";
 
 export function InlineEditor({ o, u }: { o: WorldObject; u: UnitPos }) {
-  const pulloutOpen = useDesk((s) => s.pullouts.some((p) => p.id === o.id));
+  // Pullouts may arrive from older raw-id paths or the canonical qualified
+  // path. They are the same object surface, and it alone owns the editor.
+  const pulloutOpen = useDesk((s) => s.pullouts.some((p) =>
+    p.id === o.id || p.id === qualifiedRef(o.kind, o.id),
+  ));
   const editorOrigin = useDesk((s) => s.editorOrigin);
   const isNew = useDesk((s) => s.newIds.includes(o.id));
   const { closeEditor } = useDesk.getState();

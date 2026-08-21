@@ -41,6 +41,7 @@ from .primitives import (  # noqa: F401
     DirectoryRepository,
     DirectoryMembershipRepository,
 )
+from .refinement_thoughts import RefinementThoughtRepository  # noqa: F401
 from .scheduled_recordings import (  # noqa: F401
     ScheduledRecording,
     ScheduledRecordingRepository,

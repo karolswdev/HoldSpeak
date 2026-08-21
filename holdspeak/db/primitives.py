@@ -99,35 +99,46 @@ class NoteRepository(BaseRepository):
             raise ValueError("note id is required")
         now = _now_iso()
         with self._connection() as conn:
-            existing = conn.execute(
-                "SELECT created_at FROM notes WHERE id = ?", (clean_id,)
-            ).fetchone()
-            created = created_at or (existing["created_at"] if existing else now)
-            conn.execute(
-                """
-                INSERT INTO notes (id, title, body_markdown, tags_json,
-                                   created_at, updated_at, last_modified, deleted)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-                ON CONFLICT(id) DO UPDATE SET
-                    title = excluded.title,
-                    body_markdown = excluded.body_markdown,
-                    tags_json = excluded.tags_json,
-                    updated_at = excluded.updated_at,
-                    last_modified = excluded.last_modified,
-                    deleted = excluded.deleted
-                """,
-                (
-                    clean_id,
-                    str(title or ""),
-                    str(body_markdown or ""),
-                    self._json_dumps(tags or [], fallback="[]"),
-                    created,
-                    now,
-                    last_modified or now,
-                    1 if deleted else 0,
-                ),
+            # Ownership is checked under the same write lock as the mutation:
+            # an ordinary writer may not observe "unowned", wait for thought
+            # adoption, then overwrite the newly owned working Note.
+            conn.execute("BEGIN IMMEDIATE")
+            owned = conn.execute("SELECT 1 FROM refinement_thoughts WHERE working_note_id = ?", (clean_id,)).fetchone()
+            if owned:
+                raise ValueError("thought-owned notes require expected revision")
+            self._upsert_in_transaction(
+                conn, note_id=clean_id, title=title, body_markdown=body_markdown,
+                tags=tags, last_modified=last_modified, deleted=deleted,
+                created_at=created_at, now=now,
             )
         return self.get(clean_id, include_deleted=True)  # type: ignore[return-value]
+
+    def upsert_in_transaction(self, *args: Any, **kwargs: Any) -> None:
+        """Refuse the former generic transaction bypass for owned Notes."""
+        raise ValueError("generic transaction note writes are not authorized")
+
+    def _upsert_in_transaction(
+        self, conn: sqlite3.Connection, *, note_id: str, title: str = "",
+        body_markdown: str = "", tags: Optional[list[str]] = None,
+        last_modified: Optional[str] = None, deleted: bool = False,
+        created_at: Optional[str] = None, now: Optional[str] = None,
+    ) -> None:
+        """Internal write for a caller that owns an enclosing transaction."""
+        now = now or _now_iso()
+        existing = conn.execute("SELECT created_at FROM notes WHERE id = ?", (note_id,)).fetchone()
+        created = created_at or (existing["created_at"] if existing else now)
+        conn.execute(
+            """INSERT INTO notes (id, title, body_markdown, tags_json,
+                                   created_at, updated_at, last_modified, deleted)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+               ON CONFLICT(id) DO UPDATE SET title=excluded.title,
+                 body_markdown=excluded.body_markdown, tags_json=excluded.tags_json,
+                 updated_at=excluded.updated_at, last_modified=excluded.last_modified,
+                 deleted=excluded.deleted""",
+            (note_id, str(title or ""), str(body_markdown or ""),
+             self._json_dumps(tags or [], fallback="[]"), created, now,
+             last_modified or now, 1 if deleted else 0),
+        )
 
     def get(self, note_id: str, *, include_deleted: bool = False) -> Optional[NoteRecord]:
         clean_id = str(note_id or "").strip()
@@ -162,6 +173,10 @@ class NoteRepository(BaseRepository):
             return False
         now = _now_iso()
         with self._connection() as conn:
+            conn.execute("BEGIN IMMEDIATE")
+            owned = conn.execute("SELECT 1 FROM refinement_thoughts WHERE working_note_id = ?", (clean_id,)).fetchone()
+            if owned:
+                raise ValueError("thought-owned notes require expected revision")
             cur = conn.execute(
                 "UPDATE notes SET deleted = 1, last_modified = ?, updated_at = ? WHERE id = ? AND deleted = 0",
                 (now, now, clean_id),

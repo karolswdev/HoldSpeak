@@ -49,6 +49,13 @@
 .desk-next .desk-pullout .desk-pullout-body {
   min-height: 0;
 }
+/* HS-141-03 — custody text is byte-preserving in data, and must remain
+   newline-visible and reachable in the pullout without horizontal clipping. */
+.desk-next .thought-original-raw {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
 /* Materials spike — traffic lights (macos-web values): 12.8px discs
    with darker rings; grey on an unfocused window; glyphs reveal and
    the cluster swells on hover. */
@@ -439,4 +446,332 @@
    right-docked working sheets still displace the ambient card. */
 body:has(.desk-next .desk-pullout:not(.is-card)) .ambient-qlippy {
   right: 452px;
+}
+
+/* HS-141-05 — visible Thought context: one quiet in-body row and a compact
+   pinned/recent picker. It is deliberately not the Ask grounding catalog. */
+.desk-next .thought-context-wrap {
+  position: relative;
+  margin-top: 8px;
+}
+.desk-next .thought-context-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 8px;
+  padding: 7px 8px;
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--surface-2) 70%, transparent);
+}
+.desk-next .thought-context-row:focus {
+  outline: 1px solid var(--accent);
+  outline-offset: 1px;
+}
+.desk-next .thought-context-label,
+.desk-next .thought-context-none,
+.desk-next .thought-context-choice-meta,
+.desk-next .thought-context-empty,
+.desk-next .thought-context-leaves small {
+  color: var(--text-muted);
+  font-size: var(--desk-surface-label-size);
+}
+.desk-next .thought-context-current {
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+.desk-next .thought-context-chip {
+  min-width: 0;
+  max-width: 100%;
+}
+.desk-next .thought-context-item {
+  min-width: 0;
+  max-width: 100%;
+}
+.desk-next .thought-context-chip > summary,
+.desk-next .thought-used-context > summary,
+.desk-next .thought-context-action-receipt > summary {
+  cursor: pointer;
+  overflow-wrap: anywhere;
+}
+.desk-next .thought-context-chip[data-state="stale"] > summary,
+.desk-next .thought-context-chip[data-state="missing"] > summary {
+  color: var(--warn-signal);
+}
+.desk-next .thought-context-state {
+  margin: 7px 0;
+  overflow-wrap: anywhere;
+  color: var(--text-muted);
+  font-size: var(--desk-surface-label-size);
+}
+.desk-next .thought-context-chip-actions {
+  display: flex;
+  gap: 5px;
+  margin-top: 7px;
+}
+.desk-next .thought-context-leaves {
+  display: grid;
+  gap: 4px;
+  margin: 7px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.desk-next .thought-context-leaves li {
+  display: flex;
+  min-width: 0;
+  justify-content: space-between;
+  gap: 10px;
+}
+.desk-next .thought-context-leaves span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.desk-next .thought-context-leaves small { flex: none; }
+.desk-next .thought-context-action-receipt {
+  margin: 6px 8px 0;
+  color: var(--text-muted);
+}
+.desk-next .thought-used-context { margin: 8px 0; }
+.thought-context-overlay {
+  position: fixed;
+  z-index: 10000;
+  inset: 0;
+  pointer-events: none;
+}
+.desk-next section.thought-context-picker {
+  position: fixed;
+  z-index: 80;
+  pointer-events: auto;
+  width: min(420px, 100%);
+  max-height: min(570px, calc(100dvh - var(--desk-work-top) - var(--desk-work-bottom) - 24px));
+  overflow: auto;
+  padding: 14px 16px 16px;
+  border: 1px solid var(--border-strong, var(--border));
+  background: var(--desk-window-fill);
+  box-shadow: var(--desk-window-etch), 0 14px 38px rgb(0 0 0 / .34);
+  display: block;
+}
+.desk-next .thought-context-picker-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 11px;
+  border-bottom: 1px solid var(--border-strong);
+}
+.desk-next .thought-context-picker-head > div {
+  display: grid;
+  gap: 3px;
+}
+.desk-next .thought-context-picker-head strong {
+  font: 650 18px/1.2 var(--font-display);
+}
+.desk-next .thought-context-picker-head small {
+  color: var(--text-faint);
+  font-size: 11px;
+}
+.desk-next .thought-context-close {
+  width: 34px;
+  height: 34px;
+  flex: none;
+  border: 0;
+  background: transparent;
+  color: var(--text-muted);
+  font: 24px/1 var(--font-ui);
+}
+.desk-next .thought-context-close:hover,
+.desk-next .thought-context-close:focus-visible {
+  background: var(--gadget-fill-hover);
+  color: var(--text);
+}
+.desk-next .thought-context-search {
+  min-height: 42px;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 0 11px;
+  border: 1px solid var(--border-strong);
+  background: var(--desk-window-well);
+  color: var(--text-faint);
+  box-shadow: inset 1px 1px rgb(0 0 0 / .28);
+}
+.desk-next .thought-context-search input {
+  width: 100%;
+  height: 40px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.desk-next .thought-context-picker-group h3 {
+  margin: 12px 0 6px;
+  color: var(--text-muted);
+  font-size: var(--desk-surface-label-size);
+  text-transform: uppercase;
+  letter-spacing: .08em;
+}
+.desk-next .thought-context-picker-list {
+  display: grid;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.desk-next .thought-context-choice {
+  width: 100%;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  min-height: 40px;
+  padding: 8px 9px;
+  border-bottom: 1px solid var(--border-subtle);
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+}
+.desk-next .thought-context-choice:hover:not(:disabled),
+.desk-next .thought-context-choice:focus-visible { background: var(--gadget-fill-hover); }
+.desk-next .thought-context-choice:disabled { cursor: default; opacity: .62; }
+.desk-next .thought-context-choice-title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.desk-next .thought-context-choice-meta { text-align: right; }
+.desk-next .thought-context-policy-group {
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+}
+.desk-next .thought-context-policy-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  min-height: 42px;
+  padding: 6px 8px;
+  background: color-mix(in srgb, var(--surface-2) 58%, transparent);
+}
+.desk-next .thought-context-default-marker {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 5px;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: var(--desk-surface-label-size);
+  font-weight: 400;
+}
+.desk-next .thought-context-row-action,
+.desk-next .thought-context-policy-action {
+  min-height: 32px;
+  padding: 0 4px;
+  border: 0;
+  background: transparent;
+  color: var(--accent-hover);
+  font: 600 12px/1 var(--font-ui);
+}
+.desk-next .thought-context-row-action:hover,
+.desk-next .thought-context-row-action:focus-visible,
+.desk-next .thought-context-policy-action:hover,
+.desk-next .thought-context-policy-action:focus-visible {
+  color: var(--text);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.desk-next .thought-context-policy-action { margin-top: 4px; }
+.desk-next .thought-context-error { color: var(--danger-signal); }
+.desk-next .thought-context-browse,
+.desk-next .thought-context-more-results {
+  margin-top: 8px;
+  border-color: transparent;
+  background: transparent;
+  box-shadow: none;
+  color: var(--accent-hover);
+}
+.desk-next .thought-context-browse:hover,
+.desk-next .thought-context-browse:focus-visible,
+.desk-next .thought-context-more-results:hover,
+.desk-next .thought-context-more-results:focus-visible {
+  border-color: var(--border-subtle);
+  background: var(--gadget-fill-hover);
+  color: var(--text);
+}
+
+/* HS-141-06 — a narrow working Note has one unambiguous completion action. */
+.desk-next .thought-completion-verbs {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+}
+.desk-next .thought-more { display: none; }
+@container surface (max-width: 420px) {
+  .desk-next .surface-footer-verbs:has(.thought-completion-verbs) {
+    width: 100%;
+  }
+  .desk-next .thought-completion-verbs {
+    width: 100%;
+  }
+  .desk-next .thought-completion-secondary {
+    display: none;
+  }
+  /* Editing has no safe implicit exit. Keep Cancel visible without making it
+     a second primary action at the narrow working-note surface. */
+  .desk-next .thought-editor-cancel {
+    display: inline-flex;
+  }
+  .desk-next .thought-review-direct {
+    display: none;
+  }
+  .desk-next .thought-completion-primary {
+    flex: 1;
+    width: 100%;
+  }
+}
+
+/* Floating pullout cards are not descendants of the `surface` container on
+   the live desk.  The viewport seam is therefore the authoritative 393px
+   rule for this card form. */
+@media (max-width: 500px) {
+  .desk-next .thought-context-row { grid-template-columns: auto minmax(0, 1fr) auto; }
+  .desk-next .thought-context-current { flex-direction: column; }
+  .desk-next section.thought-context-picker {
+    position: fixed;
+    inset: auto 0 var(--desk-work-bottom);
+    width: 100vw;
+    max-height: 72dvh;
+    border-width: 1px 0 0;
+    padding: 12px 15px max(12px, env(safe-area-inset-bottom));
+  }
+  .desk-next .thought-context-choice {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 2px;
+    min-height: 44px;
+  }
+  .desk-next .thought-context-policy-row {
+    grid-template-columns: minmax(0, 1fr);
+    align-items: start;
+  }
+  .desk-next .thought-context-choice-meta { text-align: left; }
+  .desk-next .thought-context-picker .desk-chip,
+  .desk-next .thought-context-picker input,
+  .desk-next .thought-context-picker .thought-context-close,
+  .desk-next .thought-context-picker .thought-context-policy-action,
+  .desk-next .thought-context-policy-row button {
+    min-height: 44px;
+  }
+  .desk-next .desk-pullout.is-card .thought-completion-secondary,
+  .desk-next .desk-pullout.is-card .thought-review-direct { display: none; }
+  .desk-next .desk-pullout.is-card .thought-editor-cancel { display: inline-flex; }
+  .desk-next .desk-pullout.is-card .thought-more { display: inline-flex; }
+  .desk-next .desk-pullout.is-card .thought-completion-verbs { width: 100%; }
+  .desk-next .desk-pullout.is-card .thought-completion-primary { flex: 1; width: auto; }
 }

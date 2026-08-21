@@ -15,7 +15,7 @@ There are two model roles, configured independently:
 | Role | What it does | Config keys |
 |------|--------------|-------------|
 | **Transcription** (Whisper) | speech → text | `model.name`, `model.backend` |
-| **LLM** | dictation block-classification + KB enrichment, and meeting intel | `dictation.runtime.*`, `meeting.intel_*` |
+| **LLM** | dictation block-classification + KB enrichment, meeting intel, Ask, and explicit Thought refinement | destinations under Settings, Models |
 
 Most setup below is about the **LLM** role. Transcription uses Whisper sizes,
 `tiny` / `base` / `small` and up, via MLX-Whisper or faster-whisper; its model
@@ -117,6 +117,16 @@ receipt. Cancellation suppresses late output, and uncertain execution remains
 `indeterminate`. Destination keys are joined only inside the selected adapter;
 credentials, prompts, completions, and token streams are absent from deployment
 revisions and kernel rows.
+
+Thought refinement follows the same admission path with a stricter context
+boundary. A new Thought has no attached context. The owner explicitly attaches
+a qualified Note or the seeded Everyday-context collection; HTTP and MCP carry
+refs and expected revisions only. Immediately before dispatch, the hub verifies
+the immutable attachment ledger, resolves the exact versioned leaves into a
+bounded canonical JSON block, labels it as untrusted data, and binds its hash to
+the invocation. Changed or deleted sources refuse by human name. Once the
+dispatch hook commits, later edits or detach cannot alter the provider bytes,
+and no attachment/review action silently launches a second model attempt.
 
 No backend is exempt. In-process GGUF/MLX work, endpoint calls, mesh workers,
 and shared Whisper transcription/preload all enter an `InferenceRunner` at their

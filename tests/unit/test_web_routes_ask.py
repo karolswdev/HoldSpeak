@@ -400,9 +400,9 @@ def test_models_route_lists_every_destination_without_deduping(env, monkeypatch)
     resp = client.get("/api/models")
     assert resp.status_code == 200
     rows = resp.json()["models"]
-    assert rows[0] == {"id": "this_machine", "name": "HubModel-9B", "source": "hub", "profile_id": None}
-    assert {"id": pid, "name": "Qwen3.5-9B-Q6_K", "source": "profile", "profile_id": pid} in rows
-    assert {"id": twin, "name": "Qwen3.5-9B-Q6_K", "source": "profile", "profile_id": twin} in rows
+    assert rows[0] == {"id": "this_machine", "name": "HubModel-9B", "source": "hub", "profile_id": None, "ready": True}
+    assert {"id": pid, "name": "Qwen3.5-9B-Q6_K", "source": "profile", "profile_id": pid, "ready": True} in rows
+    assert {"id": twin, "name": "Qwen3.5-9B-Q6_K", "source": "profile", "profile_id": twin, "ready": True} in rows
     assert len(rows) == 3  # hub + two distinct destinations, NOT deduped
 
     refusal = client.post("/api/ask", json={"prompt": "Go", "model": "nope"})

@@ -628,6 +628,8 @@ class MeetingWebServer:
         from .services.people_service import PeopleService, UnavailablePeopleStore
         from .people import production_people_store
         from .services.reaction_service import ReactionService
+        from .services.refinement_coordinator import RefinementCoordinator
+        from .services.refinement_application_service import RefinementApplicationService
 
         from .delivery.node_link import NodeTokenStore as _MeshNodeTokenStore
 
@@ -639,6 +641,11 @@ class MeetingWebServer:
         notify = lambda message_type, data: self.broadcast(message_type, data)
         meeting_intel_service = MeetingIntelService(get_database(), notify=notify, observer=obs)
         meeting_aftercare_service = MeetingAftercareService(get_database(), notify=notify, observer=obs)
+        refinement_coordinator = RefinementCoordinator(get_database(), host_kind="web")
+        refinement_service = RefinementApplicationService(
+            get_database(), coordinator=refinement_coordinator
+        )
+        self.refinement_coordinator = refinement_coordinator
 
         def _update_meeting(*, title: Optional[str], tags: Optional[list[str]]) -> Any:
             """The title/tags fallback, mirrored from web/routes/meetings/live.py.
@@ -738,6 +745,8 @@ class MeetingWebServer:
             memory_service=MemoryService(get_database(), observer=obs),
             mission_control_service=MissionControlService(get_database(), observer=obs),
             reaction_service=ReactionService(get_database(), observer=obs),
+            refinement_coordinator=refinement_coordinator,
+            refinement_service=refinement_service,
             settings_service=SettingsService(
                 get_database(), on_settings_applied=self.on_settings_applied, observer=obs
             ),
@@ -889,6 +898,10 @@ class MeetingWebServer:
             self._coder_frames_task = asyncio.create_task(self._coder_frames_loop())
             self._rails_observer_task = asyncio.create_task(self._rails_observer_loop())
             await asyncio.to_thread(_kernel_service().reap_and_recover_projections)
+            try:
+                await refinement_coordinator.start()
+            except Exception as e:
+                log.error(f"refinement coordinator startup recovery failed: {e}")
             self._kernel_liveness_task = asyncio.create_task(
                 self._kernel_liveness_loop()
             )
@@ -934,6 +947,7 @@ class MeetingWebServer:
 
         @app.on_event("shutdown")
         async def _shutdown() -> None:
+            await refinement_coordinator.shutdown()
             for task in (
                 self._duration_task,
                 self._coder_frames_task,

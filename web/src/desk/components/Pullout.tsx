@@ -12,14 +12,24 @@ import { objGlow, type WorldObject } from "../world";
 import { inferenceEgressLamp } from "../inferenceEgress";
 import { DeskWindowFrame } from "./DeskWindow";
 import { PULLOUT_CONTENT } from "../pullouts";
+import { useEffect, useState, type ReactNode } from "react";
+import { thoughtForNote, type NoteThoughtStatus, type Thought } from "../thoughts";
+import { NotePullout } from "../pullouts/NotePullout";
+import { ThoughtWorkspaceWindow } from "../thought-workspace/ThoughtWorkspaceWindow";
 
-export function Pullout({
+function PulloutFrame({
   o,
   origin,
+  noteStatus,
+  onThoughtOwned,
+  overrideContent,
 }: {
   o: WorldObject;
   /** The client point the open gesture happened at (spatial motion). */
   origin?: { x: number; y: number } | null;
+  noteStatus?: NoteThoughtStatus;
+  onThoughtOwned?: (thought: Thought) => void;
+  overrideContent?: ReactNode;
 }) {
   const profiles = useDesk((s) => s.profiles);
   const { closePullout } = useDesk.getState();
@@ -87,7 +97,33 @@ export function Pullout({
         </>
       }
     >
-      <Content object={o} onClose={() => closePullout(o.id)} />
+      {overrideContent ?? (o.kind === "note"
+        ? <NotePullout object={o} onClose={() => closePullout(o.id)} initialStatus={noteStatus} onThoughtOwned={onThoughtOwned} />
+        : <Content object={o} onClose={() => closePullout(o.id)} />)}
     </DeskWindowFrame>
   );
+}
+
+function NoteWindowRouter({ o, origin }: { o: WorldObject; origin?: { x: number; y: number } | null }) {
+  const [status, setStatus] = useState<NoteThoughtStatus | null>(null);
+  const [failed, setFailed] = useState(false);
+  const close = () => useDesk.getState().closePullout(o.id);
+  const load = () => {
+    setFailed(false);
+    void thoughtForNote(o.id).then(setStatus).catch(() => setFailed(true));
+  };
+  useEffect(() => {
+    let live = true;
+    setStatus(null); setFailed(false);
+    void thoughtForNote(o.id).then((next) => { if (live) setStatus(next); }).catch(() => { if (live) setFailed(true); });
+    return () => { live = false; };
+  }, [o.id]);
+
+  if (status?.ownership === "thought") return <ThoughtWorkspaceWindow object={o} thought={status.thought} origin={origin} onClose={close} />;
+  if (status?.ownership === "ordinary") return <PulloutFrame o={o} origin={origin} noteStatus={status} onThoughtOwned={(thought) => setStatus({ ownership: "thought", thought })} />;
+  return <PulloutFrame o={o} origin={origin} overrideContent={<div className="desk-pullout-body desk-surface-body thought-workspace-opening" aria-busy={!failed}>{failed ? <><p>Could not check this Note on this hub.</p><button type="button" className="btn btn--primary" onClick={load}>Try again</button></> : <span>Opening Note…</span>}</div>} />;
+}
+
+export function Pullout({ o, origin }: { o: WorldObject; origin?: { x: number; y: number } | null }) {
+  return o.kind === "note" ? <NoteWindowRouter o={o} origin={origin} /> : <PulloutFrame o={o} origin={origin} />;
 }

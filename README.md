@@ -15,8 +15,9 @@ HoldSpeak starts with one short loop: launch `holdspeak`, choose **Dictate one
 sentence**, edit the text, then **Copy** it or **Keep as Note**. Your first
 completion furnishes the Desk automatically with Inbox, Personal, Work,
 Meetings, Decisions, and Reference; a Start here note; and editable prompts in
-**Everyday context**. Everyday context is used only when you explicitly attach
-it. No extra setup is required before this first value.
+**Everyday context**. Its shipped default is unused: explicitly attach it for
+one Thought, or explicitly make an attached set the default for future local
+Thoughts. No extra setup is required before this first value.
 
 After that, HoldSpeak can type into another app or keep work on the Desk as
 notes, meetings, decisions, and artifacts. Transcription runs on this machine.
@@ -105,6 +106,36 @@ and the gauge measures the selection against the model's window before you
 run. The question is answered from those records (the hub reads them from
 its own store), the kept card names them, and an unknown reference refuses
 with its id instead of guessing.
+
+**Develop the thought without hiding the context.** Any kept or ordinary Note
+can become one resumable Thought while its original bytes remain preserved.
+It opens as a real Thought Workbench: a full document plane with a compact
+Markdown formatting rail beside a focused AI interview on desktop, and
+Note/Interview panes on a phone. **Ask AI**
+starts one explicit refinement turn. **Add & ask next** atomically adds the
+answer to the Note and authorizes exactly one next turn; **Add to Note** stops
+there. **Finish Thought** is always direct. The Workbench names where each turn
+will run and shows the actual placement receipt when it returns.
+Without a runnable model, **Set up AI** opens the exact Models settings surface;
+the Workbench rechecks readiness after configuration instead of leaving a dead
+AI button.
+
+Context begins empty. The Attach control puts pinned Everyday context first,
+with recent/search and the full Note catalog progressively disclosed. The hub
+resolves qualified refs and freezes exact Note versions; the browser never
+posts copied context. A stale source is named and must be updated or removed
+before another turn. Opening, editing, attaching, or reading Original never
+starts AI by itself.
+
+If you want that same context on future work, open **Attach context** and choose
+**Use these by default** for the complete set attached to this Thought. The
+default is empty until you do. It applies only to Thoughts created or adopted
+later on this hub; it never changes an existing Thought, syncs to another hub,
+or starts a model turn. **Remove from this Thought** changes only the open
+Thought. **Stop using by default** clears the future set without detaching
+anything already attached. If one configured source is unavailable at birth,
+the Thought still opens with no AI context and a receipt names why the whole set
+was skipped.
 
 **Talk to your Agents.** Tap an avatar on the rail and it opens a
 conversation, not a one-shot prompt: turns accumulate, the thread survives a
@@ -421,8 +452,7 @@ are in the [AIPI-Lite Developer Workflow](https://github.com/karolswdev/HoldSpea
 ## MCP sidecar
 
 The MCP sidecar (`holdspeak-mcp`) is the desk's programmable surface over
-stdio. It exposes 82 tools across ten families (desk, ask, settings,
-destination, coder, cadence, sequence, workflow, memory, plugin_job) and 24 resources,
+stdio. It exposes 127 tools across 27 families and 32 resources,
 so any MCP client can read and drive the desk without the web UI.
 
 Claude Code discovers the sidecar automatically: the repo ships a

@@ -141,6 +141,15 @@ describe("Chair lane contract", () => {
     );
     expect(screen.getByTestId("hero-content")).toBeInTheDocument();
   });
+
+  it("renders immediate owner work outside the fixed four-lane registry", () => {
+    const { container } = render(
+      <Chair activeWork={<section>Finish thoughts</section>} lanes={{}} />,
+    );
+    expect(screen.getByTestId("chair-active-work")).toHaveTextContent("Finish thoughts");
+    expect(container.querySelectorAll("[data-lane]")).toHaveLength(0);
+    expect(LANE_ORDER).toEqual(["brief", "follow-through", "meetings", "agents"]);
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -151,7 +160,7 @@ describe("Chair lane contract", () => {
 describe("Chair all-blank invitation", () => {
   it("renders the invitation node always (CSS owns visibility)", () => {
     render(<Chair lanes={{}} />);
-    expect(screen.getByText("Speak. The desk will file it.")).toBeInTheDocument();
+    expect(screen.getByText("Start rough. Keep developing it.")).toBeInTheDocument();
   });
 
   it("keeps the invitation node in the DOM when lanes have content (hidden by CSS)", () => {
@@ -170,17 +179,20 @@ describe("Chair all-blank invitation", () => {
         }}
       />,
     );
-    expect(screen.getByText("Speak. The desk will file it.")).toBeInTheDocument();
+    expect(screen.getByText("Start rough. Keep developing it.")).toBeInTheDocument();
   });
 
   it("chair.css gates the invitation and hero scaling on the :has() empty rule", () => {
     const css = fs.readFileSync(path.resolve(__dirname, "chair.css"), "utf-8");
     expect(css).toContain(".chair-empty-invitation { display: none; }");
     expect(css).toContain(
-      ".chair:not(:has(.chair-lane .surface-section)) .chair-empty-invitation",
+      ".chair:not(:has(.chair-lane .surface-section)):not(:has(.finish-thoughts)) .chair-empty-invitation",
     );
     expect(css).toContain(
-      ".chair:not(:has(.chair-lane .surface-section)) .chair-hero",
+      ".chair:not(:has(.chair-lane .surface-section)):not(:has(.finish-thoughts)) .chair-hero",
+    );
+    expect(css).toContain(
+      ".desk-next .chair:not(:has(.chair-lane .surface-section)):not(:has(.finish-thoughts)) .chair-empty-invitation",
     );
   });
 });
@@ -211,7 +223,7 @@ describe("Chair void polish (HS-135-13)", () => {
   it("chair.css contains the empty-state hero treatment selector", () => {
     // The :has()-based selector that scales the hero when no lane has data.
     // A lane is populated when it contains .surface-section (real data rows).
-    expect(stripped).toMatch(/\.chair:not\(:has\(\.chair-lane \.surface-section\)\)/);
+    expect(stripped).toMatch(/\.chair:not\(:has\(\.chair-lane \.surface-section\)\):not\(:has\(\.finish-thoughts\)\)/);
     // The hero gets flex: 1 in the sparse state.
     expect(stripped).toMatch(/\.chair-hero[\s\S]*?flex:\s*1/);
   });
@@ -239,9 +251,18 @@ describe("Chair void polish (HS-135-13)", () => {
     expect(stripped).toMatch(/\.chair-lane\s*\{[^}]*min-width:\s*0/);
   });
 
-  it("chair.css fills the working area height", () => {
+  it("seats the normal Chair inside the complete working band", () => {
     expect(stripped).toMatch(
       /\.chair\s*\{[^}]*min-height:\s*calc\(100vh\s*-\s*var\(--desk-snap-top\)/,
+    );
+    expect(stripped).toMatch(
+      /\.chair\s*\{[^}]*margin:\s*var\(--desk-work-top\)\s+auto\s+var\(--desk-work-bottom\)/,
+    );
+  });
+
+  it("does not reserve absent chrome around the first-value Chair", () => {
+    expect(stripped).toMatch(
+      /\.chair\.chair-first-value\s*\{[^}]*margin:\s*0\s+auto/,
     );
   });
 

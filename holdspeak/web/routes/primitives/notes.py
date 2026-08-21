@@ -7,13 +7,21 @@ from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 
 from ....logging_config import get_logger
-from ....services.errors import NotFound
+from ....services.errors import ConflictError, NotFound, ValidationError
 from ....services.primitive_service import PrimitiveService
 from ...context import WebContext
 from ...runtime_support import error_500
 from ._shared import _json_body
 
 log = get_logger("web.routes.primitives")
+
+
+def _service_error(exc: Exception) -> JSONResponse:
+    if isinstance(exc, ConflictError):
+        return JSONResponse({"error": exc.code, **exc.context}, status_code=409)
+    if isinstance(exc, ValidationError):
+        return JSONResponse({"error": exc.code, **exc.context}, status_code=422)
+    raise exc
 
 
 def build_notes_router(ctx: WebContext) -> APIRouter:
@@ -47,6 +55,8 @@ def build_notes_router(ctx: WebContext) -> APIRouter:
                 tags=list(body.get("tags") or []),
             )
             return JSONResponse({"note": note}, status_code=201)
+        except (ConflictError, ValidationError) as exc:
+            return _service_error(exc)
         except ValueError as exc:
             return JSONResponse({"error": str(exc)}, status_code=400)
         except Exception as exc:
@@ -73,8 +83,12 @@ def build_notes_router(ctx: WebContext) -> APIRouter:
                 title=body.get("title"),
                 body_markdown=body.get("body_markdown"),
                 tags=body.get("tags"),
+                expected_aggregate_revision=body.get("expected_aggregate_revision"),
+                expected_working_revision=body.get("expected_working_revision"),
             )
             return JSONResponse({"note": note})
+        except (ConflictError, ValidationError) as exc:
+            return _service_error(exc)
         except NotFound:
             return JSONResponse({"error": f"Unknown note: {note_id}"}, status_code=404)
         except Exception as exc:
@@ -83,8 +97,15 @@ def build_notes_router(ctx: WebContext) -> APIRouter:
     @router.delete("/api/notes/{note_id}")
     async def api_delete_note(note_id: str, request: Request) -> Any:
         try:
-            _svc().delete_note(_principal(request), note_id)
-            return JSONResponse({"success": True})
+            body = await _json_body(request)
+            result = _svc().delete_note(
+                _principal(request), note_id,
+                expected_aggregate_revision=body.get("expected_aggregate_revision") if body else None,
+                expected_lifecycle_revision=body.get("expected_lifecycle_revision") if body else None,
+            )
+            return JSONResponse({"success": True, "note": result} if isinstance(result, dict) else {"success": True})
+        except (ConflictError, ValidationError) as exc:
+            return _service_error(exc)
         except NotFound:
             return JSONResponse({"error": f"Unknown note: {note_id}"}, status_code=404)
         except Exception as exc:
