@@ -69,6 +69,30 @@ const ROTATABLE_SECRETS = new Set([
 function clone<T>(value: T): T {
   return JSON.parse(JSON.stringify(value)) as T;
 }
+
+/** Apply one settings transaction even when an older payload lacks a new section. */
+export function mergeSettingsChanges(
+  source: SettingsResponse,
+  changes: Array<[string[], unknown]>,
+): SettingsResponse {
+  const draft = clone(source);
+  for (const [path, next] of changes) {
+    if (!path.length) continue;
+    let cursor = draft as Record<string, unknown>;
+    path.forEach((part, index) => {
+      if (index === path.length - 1) {
+        cursor[part] = next;
+        return;
+      }
+      const child = cursor[part];
+      if (!child || typeof child !== "object" || Array.isArray(child)) {
+        cursor[part] = {};
+      }
+      cursor = cursor[part] as Record<string, unknown>;
+    });
+  }
+  return draft;
+}
 /* HS-101 round 4 — the glass never wears wire keys: curated names
  * for the fields people actually meet, an acronym dictionary for the
  * rest. */
@@ -189,14 +213,7 @@ function SettingsFace({ hero, scope }: CoreProps) {
     }
   };
   const updateMany = (changes: Array<[string[], unknown]>) => {
-    const draft = clone(resource.data);
-    for (const [path, next] of changes) {
-      let cursor = draft;
-      path.forEach((part, index) => {
-        if (index === path.length - 1) cursor[part] = next;
-        else cursor = cursor[part] as Record<string, unknown>;
-      });
-    }
+    const draft = mergeSettingsChanges(resource.data, changes);
     resource.setData(draft);
     setRefusal("");
     clearTimeout(saveTimer.current);
