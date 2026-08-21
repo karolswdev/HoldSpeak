@@ -32,10 +32,12 @@ import { InferenceCapabilityPanel } from "./InferenceCapabilityPanel";
 import {
   getInferenceSetup,
   downloadAndUseLocalPreset,
+  useExistingLocalModel,
   cancelInferenceAcquisition,
   type HostedInferencePreset,
   type InferenceAcquisition,
   type InferenceSetup,
+  type InferenceSetupArtifact,
   type LocalInferencePreset,
 } from "./inferenceSetup";
 
@@ -115,6 +117,7 @@ export function ModelsModule({
   update,
   updateMany,
   commitMany,
+  reconcileSettings,
   onRefuse,
 }: {
   settings: SettingsResponse;
@@ -124,6 +127,8 @@ export function ModelsModule({
   updateMany?(changes: Array<[string[], unknown]>): void;
   /** Immediate coherent settings write for actions that must report durable success. */
   commitMany?(changes: Array<[string[], unknown]>): Promise<boolean>;
+  /** Adopt an authoritative settings change made by another application command. */
+  reconcileSettings?(): Promise<boolean>;
   /** The footer receipt bar; "" clears. */
   onRefuse(refusal: string): void;
 }) {
@@ -199,6 +204,7 @@ export function ModelsModule({
       ].includes(prior);
       if (wasActive && job.state === "ready" && job.activation_state === "in_use") {
         setPresetStatus("Ready · in use for Thoughts.");
+        void reconcileSettings?.();
       } else if (wasActive && job.state === "failed") {
         setPresetStatus(job.error?.message || "Model setup stopped. Try again.");
       } else if (wasActive && job.state === "cancelled") {
@@ -212,7 +218,7 @@ export function ModelsModule({
     if (!active) return;
     const timer = window.setTimeout(() => void reloadInferenceSetup(), 700);
     return () => window.clearTimeout(timer);
-  }, [inferenceSetup, reloadInferenceSetup]);
+  }, [inferenceSetup, reloadInferenceSetup, reconcileSettings]);
 
   const put = async (target: Target) => {
     try {
@@ -448,6 +454,30 @@ export function ModelsModule({
       // A typed HTTP response proves whether the server admitted the command.
       // A transport failure is ambiguous, so retain the exact id for replay.
       if (error instanceof ApiError) delete acquisitionRequestIds.current[preset.id];
+      const detail = readableError(error);
+      setPresetStatus(detail);
+      onRefuse(detail);
+    } finally {
+      setPresetBusy(null);
+    }
+  };
+
+  const useExistingModel = async (artifact: InferenceSetupArtifact) => {
+    if (!inferenceSetup) return;
+    setPresetBusy(artifact.id);
+    setPresetStatus("");
+    const requestId =
+      acquisitionRequestIds.current[artifact.id] || crypto.randomUUID();
+    acquisitionRequestIds.current[artifact.id] = requestId;
+    try {
+      await useExistingLocalModel(inferenceSetup, artifact, requestId);
+      delete acquisitionRequestIds.current[artifact.id];
+      setPresetStatus(`Verifying ${artifact.label}. You can leave Models open or come back later.`);
+      onRefuse("");
+      await reconcileSettings?.();
+      await reloadInferenceSetup();
+    } catch (error) {
+      if (error instanceof ApiError) delete acquisitionRequestIds.current[artifact.id];
       const detail = readableError(error);
       setPresetStatus(detail);
       onRefuse(detail);
@@ -950,6 +980,7 @@ export function ModelsModule({
         onRetry={() => void reloadInferenceSetup()}
         onUseHosted={useOpenRouterPreset}
         onDownloadLocal={downloadLocalPreset}
+        onUseExisting={useExistingModel}
         onCancelAcquisition={cancelLocalAcquisition}
       />
 

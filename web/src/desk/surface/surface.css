@@ -1083,7 +1083,7 @@ button.surface-edit-in-place:hover {
   align-items: center;
   flex-wrap: wrap;
   gap: 4px 8px;
-  margin-top: 3px;
+  margin-top: 2px;
   color: var(--text-muted);
   font-size: var(--desk-surface-detail-size);
 }
@@ -2448,7 +2448,7 @@ button.surface-edit-in-place:hover {
 .models-setup {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 8px;
   min-width: 0;
 }
 .models-capability-opening,
@@ -2478,7 +2478,7 @@ button.surface-edit-in-place:hover {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(260px, 36%);
   gap: 20px;
-  padding: 20px;
+  padding: 16px;
   background:
     linear-gradient(
       135deg,
@@ -2534,7 +2534,14 @@ button.surface-edit-in-place:hover {
 }
 .models-capability-device,
 .models-capability-choices {
-  padding: 16px;
+  padding: 12px;
+}
+.models-capability-device {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 42%);
+  align-items: center;
+  gap: 12px;
+  padding-block: 9px;
 }
 .models-capability-device > header,
 .models-capability-choices > header {
@@ -2543,6 +2550,12 @@ button.surface-edit-in-place:hover {
   justify-content: space-between;
   gap: 20px;
   margin-bottom: 12px;
+}
+.models-capability-device > header {
+  margin-bottom: 0;
+}
+.models-capability-device h3 {
+  font-size: 15px;
 }
 .models-capability-device h3,
 .models-capability-choices h3 {
@@ -2556,6 +2569,25 @@ button.surface-edit-in-place:hover {
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 8px;
 }
+.models-capability-radio {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 14px;
+}
+.models-choice-group {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(145px, 1fr));
+  gap: 7px;
+  min-width: 0;
+}
+.models-choice-group > h4 {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: var(--text-muted);
+  font: 700 10px / 1.2 var(--font-mono);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
 .models-artifact-list article,
 .models-local-catalog article,
 .models-capability-card {
@@ -2566,6 +2598,44 @@ button.surface-edit-in-place:hover {
   padding: 13px;
   border: 1px solid var(--border);
   background: var(--desk-window-well);
+}
+.models-capability-card.models-capability-card-compact {
+  min-height: 60px;
+  gap: 4px;
+  padding: 10px 10px 10px 34px;
+}
+.models-capability-card-compact > strong,
+.models-capability-card-compact > span:not(.models-capability-experience) {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.models-capability-card.models-capability-card-compact > input {
+  top: 12px;
+  left: 11px;
+}
+.models-capability-card.models-capability-card-compact[data-selected] {
+  min-height: 60px;
+  background: color-mix(in srgb, var(--accent) 5%, var(--desk-window-well));
+}
+.models-choice-detail {
+  display: grid;
+  gap: 3px;
+  margin-top: 3px;
+  color: var(--text-muted);
+  font: 400 10px / 1.35 var(--font-sans);
+}
+.models-device-summary {
+  margin: 0;
+  padding: 9px 11px;
+  border-left: 3px solid var(--accent);
+  color: var(--text-muted);
+  background: var(--desk-window-well);
+  font: 400 11px / 1.45 var(--font-sans);
+}
+.models-device-summary strong {
+  color: var(--text);
 }
 .models-artifact-list strong,
 .models-local-catalog strong,
@@ -2625,7 +2695,7 @@ button.surface-edit-in-place:hover {
   align-items: end;
   gap: 12px;
   min-height: 76px;
-  margin-top: 10px;
+  margin-top: 0;
   padding: 12px;
   border: 1px solid var(--border);
   background: var(--surface-2);
@@ -3193,6 +3263,9 @@ button.surface-edit-in-place:hover {
   .models-capability-choices {
     padding: 12px;
   }
+  .models-capability-device {
+    grid-template-columns: minmax(0, 1fr);
+  }
   .models-capability-device > header,
   .models-capability-choices > header {
     align-items: start;
@@ -3201,8 +3274,10 @@ button.surface-edit-in-place:hover {
   }
   .models-artifact-list,
   .models-local-catalog,
-  .models-capability-radio,
   .models-capability-limits {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .models-choice-group {
     grid-template-columns: minmax(0, 1fr);
   }
   .models-capability-card {

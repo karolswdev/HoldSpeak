@@ -2557,6 +2557,16 @@
       ]
     },
     {
+      "path": "/api/inference/acquisitions/use-existing",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.setup",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/inference/acquisitions/{job_id}",
       "methods": [
         "GET"

@@ -323,6 +323,25 @@ function SettingsFace({ hero, scope }: CoreProps) {
     debouncedChangesRef.current = [];
     return save(pending);
   };
+  const reconcileSettings = async () => {
+    const reconcile = async () => {
+      try {
+        await readAuthoritativeBase();
+        repaintPending();
+        return true;
+      } catch (error) {
+        setRefusal(readableError(error));
+        writerFencedRef.current = true;
+        return false;
+      }
+    };
+    const next = saveQueue.current.then(reconcile, reconcile);
+    saveQueue.current = next.then(
+      () => undefined,
+      () => undefined,
+    );
+    return next;
+  };
 
   const changeSecret = async (
     secretId: string,
@@ -903,6 +922,7 @@ function SettingsFace({ hero, scope }: CoreProps) {
             update={update}
             updateMany={updateMany}
             commitMany={commitMany}
+            reconcileSettings={reconcileSettings}
             onRefuse={setRefusal}
           />
         );
