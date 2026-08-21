@@ -21,3 +21,13 @@ uv run pytest -q tests/e2e/test_hs14104_refinement_glass.py --timeout=120
 ```
 
 The test asserts zero page errors and both document/body width at each viewport.
+
+## Model-unavailable recovery
+
+`tests/e2e/test_hs141_models_setup_glass.py` opens the real Settings model page
+from a fresh isolated home at 1440×900 and 393×900. It proves the guided
+**Choose your AI** hierarchy, local-first setup, progressively disclosed AI
+connections, touch geometry, and no-prompt readiness check.
+
+- [Choose your AI — 1440](./hs-141-models-setup-1440.png)
+- [Choose your AI — 393](./hs-141-models-setup-393.png)

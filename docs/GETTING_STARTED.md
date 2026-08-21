@@ -277,8 +277,9 @@ preserving edits, filing, attachments, and deletions. To deliberately restore
 the furnished defaults, use the destructive, confirmed **Settings, Desk →
 Reset to seed** action.
 
-For model-backed work or headless deployment, configure a destination and
-**Runs on** choice in **Settings, Models**. A
+For model-backed work or headless deployment, open **Settings, Models → Choose
+your AI**. Set up **This device**, or add an **AI connection** and choose it for
+the relevant job. A
 `HOLDSPEAK_PROFILE_<ID>_KEY` environment variable remains the headless key
 fallback. See [Models (bring your own)](MODELS.md) and [Inference
 destinations](INFERENCE_TARGETS.md) for those optional contracts.

@@ -203,3 +203,11 @@ review; five rounds surface the rigor/cost choice to the owner.
   process-cursor races remain named and idempotent. Expanded real-path glass at
   1440 and 393 passed, including the hydrated 409→bounded-save-retry race and
   restart without redispatch. Backend, UI, and cold-owner counsel: RATIFY.
+- 2026-08-20 — The owner rejected the model screen's topology-first **Runs on**
+  hierarchy as too complex and too easy to miss from the Workbench's no-model
+  state. The same existing settings authority now presents a guided **Choose
+  your AI** front door: local setup first, per-job choices second, reusable
+  endpoints under **AI connections**, and tuning under **Advanced**. Local
+  discovery and the no-prompt readiness check reuse existing projections; no
+  new model authority was added. Fresh 1440/393 glass passed. This is an
+  HS-141-04 recovery/craft rider, so Phase progress remains **6/9**.

@@ -51,6 +51,21 @@ type ProbeResult = {
   error: string | null;
 };
 
+type RuntimeTestResult = {
+  ok: boolean;
+  status: string;
+  backend: string | null;
+  detail: string;
+};
+
+type RunnableModel = { id: string; name: string; ready?: boolean };
+
+type RuntimeOptions = {
+  platform: { system: string; machine: string; apple_silicon: boolean };
+  mlx: Array<{ label: string; value: string }>;
+  gguf: Array<{ label: string; value: string }>;
+};
+
 const KIND_OPTIONS = [
   { value: "openAICompatible", label: "ENDPOINT" },
   { value: "onDevice", label: "THIS DEVICE" },
@@ -120,7 +135,14 @@ export function ModelsModule({
   const [hubDefault, setHubDefault] = useState<{ engine: string; model: string; available: boolean }>({
     engine: "", model: "", available: false,
   });
+  const [testingRuntime, setTestingRuntime] = useState(false);
+  const [runtimeTest, setRuntimeTest] = useState<RuntimeTestResult | null>(null);
+  const [runtimeOptions, setRuntimeOptions] = useState<RuntimeOptions | null>(null);
+  const [manualLocalSetup, setManualLocalSetup] = useState<boolean | null>(null);
+  const [connectionsOpen, setConnectionsOpen] = useState(false);
   const saveTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+  const localSetupRef = useRef<HTMLDivElement>(null);
+  const connectionsRef = useRef<HTMLDivElement>(null);
 
   const reload = useCallback(async () => {
     try {
@@ -143,6 +165,7 @@ export function ModelsModule({
     void apiFetch<{ engine: string; model: string; available: boolean }>(
       "/api/setup/hub-default-summary",
     ).then(setHubDefault).catch(() => {});
+    void apiFetch<RuntimeOptions>("/api/setup/runtime-options").then(setRuntimeOptions).catch(() => {});
     const timers = saveTimers.current;
     return () => Object.values(timers).forEach(clearTimeout);
   }, [reload]);
@@ -290,6 +313,28 @@ export function ModelsModule({
     }
   };
 
+  const testRuntime = async () => {
+    setTestingRuntime(true);
+    try {
+      const listing = await apiFetch<{ models?: RunnableModel[] }>("/api/models");
+      const local = (listing.models ?? []).find((model) => model.id === "this_machine");
+      const result: RuntimeTestResult = local?.ready
+        ? { ok: true, status: "ready", backend: null, detail: `${local.name} can answer on this device.` }
+        : { ok: false, status: "unavailable", backend: null, detail: "No working model was found. Check the model location, then try again." };
+      setRuntimeTest(result);
+      onRefuse("");
+      const summary = await apiFetch<{ engine: string; model: string; available: boolean }>(
+        "/api/setup/hub-default-summary",
+      );
+      setHubDefault(summary);
+    } catch (error) {
+      const detail = readableError(error);
+      setRuntimeTest({ ok: false, status: "error", backend: null, detail });
+    } finally {
+      setTestingRuntime(false);
+    }
+  };
+
   const probeLabel = (row: Target): { on: boolean; tone: "ok" | "fail"; label: string } | null => {
     const result = probeResults[row.id];
     if (!result) return null;
@@ -328,7 +373,7 @@ export function ModelsModule({
   const pointerRow = (label: string, path: string[], fact?: string) => (
     <GadgetRow key={path.join(".")} label={label} fact={fact}>
       <CycleGadget
-        label={`${label} runs on`}
+        label={`${label} AI`}
         value={String(val(path) ?? "")}
         options={pointerOptions}
         onChange={(next) => update(path, next || null)}
@@ -371,7 +416,7 @@ export function ModelsModule({
         }
       >
         <CycleGadget
-          label="Meetings runs on"
+          label="Meetings AI"
           value={String(val(["meeting", "intel_profile_id"]) ?? "")}
           options={pointerOptions}
           onChange={(next) => update(["meeting", "intel_profile_id"], next || null)}
@@ -637,7 +682,7 @@ export function ModelsModule({
       ref={matrixRef}
       className="models-destination-matrix"
       data-testid="models-destination-matrix"
-      aria-label="Destinations"
+      aria-label="AI connections"
     >
       <div className="models-destination-head" aria-hidden="true">
         <span>NAME</span>
@@ -645,7 +690,7 @@ export function ModelsModule({
         <span>ENDPOINT</span>
         <span>MODEL</span>
         <span>HEALTH</span>
-        <span>ACTIONS</span>
+        <span>MANAGE</span>
       </div>
       {targets.map((row, index) => (
         <div key={row.id}>
@@ -697,99 +742,181 @@ export function ModelsModule({
         </div>
       ))}
       <button type="button" className="gadget-table-add" onClick={() => void add()}>
-        + DESTINATION
+        + ADD AI CONNECTION
       </button>
     </div>
   );
 
+  const readyTargets = targets.filter((target) => target.readiness_state === "ready").length;
+  const attentionTargets = targets.filter((target) => target.readiness_state !== "ready").length;
+  const localSummary = hubDefault.available
+    ? `${hubDefault.model} · ${hubDefault.engine}`
+    : "No working local model yet";
+  const preferredLocalEngine = backend === "mlx" || backend === "llama_cpp"
+    ? backend
+    : runtimeOptions?.platform?.apple_silicon ? "mlx" : "llama_cpp";
+  const discoveredModels = [
+    ...(runtimeOptions?.mlx ?? []).map((model) => ({
+      value: `mlx:${model.value}`,
+      label: `APPLE MLX · ${model.label}`,
+      engine: "mlx" as const,
+      path: model.value,
+    })),
+    ...(runtimeOptions?.gguf ?? []).map((model) => ({
+      value: `llama_cpp:${model.value}`,
+      label: `GGUF · ${model.label}`,
+      engine: "llama_cpp" as const,
+      path: model.value,
+    })),
+  ];
+  const configuredLocalPath = preferredLocalEngine === "mlx"
+    ? String(runtime?.mlx_model ?? "")
+    : String(runtime?.llama_cpp_model_path ?? "");
+  const selectedDiscoveredModel = discoveredModels.find((model) => model.path === configuredLocalPath)?.value ?? "";
+  const showManualLocalPath = !discoveredModels.length
+    || manualLocalSetup === true
+    || (manualLocalSetup === null && Boolean(configuredLocalPath && !selectedDiscoveredModel));
+  const chooseDiscoveredModel = (value: string) => {
+    if (value === "__manual__") {
+      setManualLocalSetup(true);
+      setRuntimeTest(null);
+      return;
+    }
+    const selected = discoveredModels.find((model) => model.value === value);
+    if (!selected) return;
+    setManualLocalSetup(false);
+    setRuntimeTest(null);
+    update(["dictation", "runtime", "backend"], selected.engine);
+    update(
+      ["dictation", "runtime", selected.engine === "mlx" ? "mlx_model" : "llama_cpp_model_path"],
+      selected.path,
+    );
+  };
+
+  const focusLocalSetup = () => {
+    localSetupRef.current?.scrollIntoView({ block: "start", behavior: "smooth" });
+    requestAnimationFrame(() => localSetupRef.current?.querySelector<HTMLElement>(
+      '[aria-label="Model on this device"], [aria-label="Apple MLX model folder"], [aria-label="GGUF model file"]',
+    )?.focus());
+  };
+
+  const openConnections = () => {
+    setConnectionsOpen(true);
+    requestAnimationFrame(() => {
+      connectionsRef.current?.scrollIntoView({ block: "start", behavior: "smooth" });
+      connectionsRef.current?.closest("details")?.querySelector<HTMLElement>("summary")?.focus();
+    });
+  };
+
   return (
-    <>
-      <GadgetGroup label="Destinations">
-        <div
-          ref={destRef}
-          className="models-destinations"
-          data-layout={narrow ? "cards" : "matrix"}
-        >
-          {narrow ? (
-            <div className="dest-cards-narrow">
-              {targets.map((row, index) => destinationCard(row, index))}
-              <button type="button" className="gadget-table-add" onClick={() => void add()}>
-                + DESTINATION
-              </button>
-            </div>
-          ) : (
-            destinationMatrix
-          )}
+    <div className="models-setup">
+      <section className="models-setup-intro" aria-labelledby="models-setup-title">
+        <div>
+          <p className="models-setup-kicker">AI setup</p>
+          <h2 id="models-setup-title">Choose your AI</h2>
+          <p>Start with this device. Choose a different connection for a job only when you need one.</p>
         </div>
-      </GadgetGroup>
-      <div className="models-dashboard">
-        <div className="models-dashboard-panel models-dashboard-runs">
-          <GadgetGroup label="Runs on">
-            {pointerRow("Dictation", ["dictation", "runtime", "profile_id"])}
-            {meetingsBlock}
-            {pointerRow("Rails", ["rails_observer", "profile_id"])}
-          </GadgetGroup>
+        <div className="models-setup-status" data-ready={hubDefault.available || undefined}>
+          <LampGadget
+            on={hubDefault.available}
+            tone={hubDefault.available ? "ok" : "warn"}
+            label={hubDefault.available ? "READY" : "SETUP NEEDED"}
+          />
+          <strong>{localSummary}</strong>
         </div>
-        <div className="models-dashboard-panel models-dashboard-engine">
-          <GadgetGroup label="Hub default engine">
-            <GadgetRow label="Backend">
-              <CycleGadget
-                label="Local backend"
-                value={backend}
-                options={[
-                  { value: "auto", label: "AUTO" },
-                  { value: "mlx", label: "MLX" },
-                  { value: "llama_cpp", label: "LLAMA.CPP" },
-                ]}
-                onChange={(next) => update(["dictation", "runtime", "backend"], next)}
-              />
-            </GadgetRow>
-            <GadgetRow label="MLX model">
-              <StringGadget
-                label="MLX model"
-                value={String(runtime?.mlx_model ?? "")}
-                placeholder="~/Models/mlx/…"
-                onChange={(next) =>
-                  update(["dictation", "runtime", "mlx_model"], next)
-                }
-              />
-            </GadgetRow>
-            <GadgetRow label="llama.cpp model">
-              <StringGadget
-                label="llama.cpp model file"
-                value={String(runtime?.llama_cpp_model_path ?? "")}
-                placeholder="~/Models/gguf/…"
-                onChange={(next) =>
-                  update(["dictation", "runtime", "llama_cpp_model_path"], next)
-                }
-              />
-            </GadgetRow>
-            <GadgetRow label="Warm on start">
-              <CheckGadget
-                label="Warm on start"
-                checked={Boolean(runtime?.warm_on_start)}
-                onChange={(checked) =>
-                  update(["dictation", "runtime", "warm_on_start"], checked)
-                }
-              />
-            </GadgetRow>
-          </GadgetGroup>
+        <div className="models-setup-actions">
+          <Button variant="primary" onClick={focusLocalSetup}>{hubDefault.available ? "REVIEW THIS DEVICE" : "SET UP THIS DEVICE"}</Button>
+          <Button variant="ghost" onClick={openConnections}>USE ANOTHER AI</Button>
         </div>
-        <div className="models-dashboard-panel models-dashboard-rails">
-          <GadgetGroup label="Rails observer">
-            <GadgetRow label="Enabled">
-              <CheckGadget
-                label="Rails observer"
-                checked={Boolean(val(["rails_observer", "enabled"]))}
-                onChange={(checked) => update(["rails_observer", "enabled"], checked)}
-              />
-            </GadgetRow>
-          </GadgetGroup>
-        </div>
+      </section>
+
+      <div ref={localSetupRef} className="models-local-setup">
+        <GadgetGroup label="This device">
+          <p className="models-section-help">Private by default. Pick the model already stored on this Mac; HoldSpeak never downloads one silently.</p>
+          <GadgetRow label="How to run it" fact="Auto is recommended">
+            <CycleGadget
+              label="Local AI engine"
+              value={backend}
+              options={[
+                { value: "auto", label: "AUTO · RECOMMENDED" },
+                { value: "mlx", label: "APPLE MLX" },
+                { value: "llama_cpp", label: "GGUF · LLAMA.CPP" },
+              ]}
+              onChange={(next) => { setRuntimeTest(null); update(["dictation", "runtime", "backend"], next); }}
+            />
+          </GadgetRow>
+          {discoveredModels.length ? <GadgetRow label="Model on this device" fact={`${discoveredModels.length} found`}>
+            <CycleGadget
+              label="Model on this device"
+              value={showManualLocalPath ? "__manual__" : selectedDiscoveredModel}
+              options={[
+                { value: "", label: "CHOOSE A MODEL…", disabled: true },
+                ...discoveredModels.map(({ value, label }) => ({ value, label })),
+                { value: "__manual__", label: "OTHER MODEL LOCATION…" },
+              ]}
+              onChange={chooseDiscoveredModel}
+            />
+          </GadgetRow> : null}
+          {showManualLocalPath ? <GadgetRow
+            label={preferredLocalEngine === "mlx" ? "Apple MLX model" : "GGUF model"}
+            fact={preferredLocalEngine === "mlx" ? "folder" : ".gguf file"}
+          >
+            <StringGadget
+              label={preferredLocalEngine === "mlx" ? "Apple MLX model folder" : "GGUF model file"}
+              value={configuredLocalPath}
+              placeholder={preferredLocalEngine === "mlx" ? "~/Models/mlx/…" : "~/Models/gguf/…"}
+              mic={false}
+              onChange={(next) => {
+                setRuntimeTest(null);
+                update(
+                  ["dictation", "runtime", preferredLocalEngine === "mlx" ? "mlx_model" : "llama_cpp_model_path"],
+                  next,
+                );
+              }}
+            />
+          </GadgetRow> : null}
+          <div className="models-local-check">
+            <Button dense loading={testingRuntime} onClick={() => void testRuntime()}>CHECK THIS AI</Button>
+            {runtimeTest ? <p role="status" data-ok={runtimeTest.ok || undefined}>{runtimeTest.ok ? "Ready" : "Not ready"} · {runtimeTest.detail}</p> : <p>Checks whether Thoughts can use it without sending a prompt.</p>}
+          </div>
+        </GadgetGroup>
       </div>
-      {/* HS-139-04: operator tuning knobs fold behind RAW. */}
-      <FoldGadget title="RAW" token="4">
-        <GadgetGroup label="Hub engine">
+
+      <div className="models-job-routing">
+        <GadgetGroup label="Choose AI for each job">
+          <p className="models-section-help">Most people can leave these on This device. A connection here changes only that job.</p>
+          {pointerRow("Writing & dictation", ["dictation", "runtime", "profile_id"], "Polishes spoken text")}
+            {meetingsBlock}
+        </GadgetGroup>
+      </div>
+
+      <FoldGadget
+        title="AI connections"
+        token={`${targets.length} ${targets.length === 1 ? "connection" : "connections"}${attentionTargets ? ` · ${attentionTargets} needs attention` : readyTargets ? ` · ${readyTargets} ready` : ""}`}
+        open={connectionsOpen}
+        onToggle={setConnectionsOpen}
+        className="models-connections"
+      >
+        <p className="models-section-help">Private endpoints, paired devices, mesh nodes, and external services live here.</p>
+        <div ref={connectionsRef} className="models-connections-anchor">
+          <div ref={destRef} className="models-destinations" data-layout={narrow ? "cards" : "matrix"}>
+            {narrow ? <div className="dest-cards-narrow">
+              {targets.map((row, index) => destinationCard(row, index))}
+              <button type="button" className="gadget-table-add" onClick={() => void add()}>+ ADD AI CONNECTION</button>
+            </div> : destinationMatrix}
+          </div>
+        </div>
+      </FoldGadget>
+
+      <FoldGadget title="Advanced" token="optional" className="models-advanced">
+        <GadgetGroup label="Local performance">
+          <GadgetRow label="Keep model warm">
+            <CheckGadget
+              label="Keep local model warm"
+              checked={Boolean(runtime?.warm_on_start)}
+              onChange={(checked) => update(["dictation", "runtime", "warm_on_start"], checked)}
+            />
+          </GadgetRow>
           <GadgetRow label="Context window" fact="tokens">
             <StepperGadget
               label="Context window"
@@ -811,7 +938,15 @@ export function ModelsModule({
             />
           </GadgetRow>
         </GadgetGroup>
-        <GadgetGroup label="Rails observer">
+        <GadgetGroup label="Background assistance">
+          {pointerRow("Background assistance", ["rails_observer", "profile_id"])}
+          <GadgetRow label="Enabled">
+            <CheckGadget
+              label="Background assistance"
+              checked={Boolean(val(["rails_observer", "enabled"]))}
+              onChange={(checked) => update(["rails_observer", "enabled"], checked)}
+            />
+          </GadgetRow>
           <GadgetRow label="Poll" fact="s">
             <StepperGadget
               label="Observer poll seconds"
@@ -832,6 +967,6 @@ export function ModelsModule({
           </GadgetRow>
         </GadgetGroup>
       </FoldGadget>
-    </>
+    </div>
   );
 }

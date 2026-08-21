@@ -11,10 +11,12 @@ reviewable synthesis without silently turning into an autonomous chat loop.
 
 ## Scope
 
-Adapt the existing Ask/inference authority to one refinement turn. **Keep
-refining** freezes working/context revisions, submits one bounded grounded run,
-persists its invocation/result link, and presents a synthesis/question preview
-with Accept, Edit, or Reject. Only a new owner action starts another turn.
+Adapt the existing Ask/inference authority to one refinement turn. **Ask one
+question** freezes working/context revisions, submits one bounded grounded run,
+persists its invocation/result link, and presents one question or synthesis in
+the Thought Workbench. **Add to Note** stops after the answer; **Add & ask next**
+atomically appends it and reserves at most one next turn. Only an explicit owner
+action starts that turn.
 Use the refinement-owned correlation contract from HS-141-02: the caller-stable
 request ID binds the frozen thought/working/context revisions, Ask invocation,
 kernel operation, and persisted review result. Reload may reveal a result only
@@ -36,3 +38,13 @@ after that exact result is durable and reconciled to the same request.
 
 Focused refinement service/UI tests; accept/reject/conflict/reload/refusal; exact
 one-dispatch and no-auto-chain assertions.
+
+## AI setup recovery rider
+
+When admission has no ready model, the Workbench sends the owner to the same
+guided **Choose your AI** screen used by Settings. The ordinary path begins
+with **This device**, discovers locally stored models through the existing
+runtime-options projection, and checks readiness without sending a prompt.
+Per-job choices follow; reusable endpoints and topology remain available under
+the disclosed **AI connections** section. No new model authority or setup API
+was introduced.
