@@ -581,6 +581,7 @@ class MeetingWebServer:
         from .services.projection_service import ProjectionService
         from .services.settings_service import SettingsService
         from .services.setup_service import SetupService
+        from .services.inference_setup_service import InferenceSetupApplicationService
         from .services.profile_key_service import ProfileKeyService
         from .db import get_database, get_observer
         from .web.routes import (
@@ -732,6 +733,7 @@ class MeetingWebServer:
             sync_service=SyncService(get_database(), observer=obs),
             gate_service=GateService(get_database(), observer=obs),
             setup_service=SetupService(get_database(), observer=obs),
+            inference_setup_service=InferenceSetupApplicationService(get_database()),
             delivery_service=DeliveryService(get_database(), observer=obs),
             # HS-131-16: the relay legs sign and revalidate dispatch offers, so
             # the service needs the hub's pairing custody. A separate

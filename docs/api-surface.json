@@ -2547,6 +2547,16 @@
       ]
     },
     {
+      "path": "/api/inference/setup",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.setup",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/intel/jobs",
       "methods": [
         "GET"

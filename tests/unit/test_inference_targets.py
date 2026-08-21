@@ -18,6 +18,7 @@ from holdspeak.inference_targets import (
 )
 from holdspeak.intel.providers import profile_key_env
 from holdspeak.services.setup_service import SetupService
+from holdspeak.services.inference_setup_service import InferenceSetupApplicationService
 from holdspeak.web.context import WebContext
 from holdspeak.web.routes import build_primitives_router, build_setup_router
 
@@ -129,7 +130,13 @@ def test_hub_default_summary_names_only_an_available_local_model(
     app = FastAPI()
     app.include_router(
         build_setup_router(
-            WebContext(get_state=lambda: {}, setup_service=SetupService(Database(tmp_path / "setup.db")))
+            WebContext(
+                get_state=lambda: {},
+                setup_service=SetupService(Database(tmp_path / "setup.db")),
+                inference_setup_service=InferenceSetupApplicationService(
+                    Database(tmp_path / "setup.db")
+                ),
+            )
         )
     )
     client = TestClient(app)

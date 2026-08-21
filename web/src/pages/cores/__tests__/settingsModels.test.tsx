@@ -2,17 +2,128 @@
 // list and the per-feature RUNS ON pickers. Writes go ONLY to
 // /api/inference-targets; the three pointers write through the Prefs
 // settings updater with the one sentinel (null = hub default).
-import {
-  fireEvent,
-  render,
-  screen,
-  waitFor,
-  within,
-} from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { ModelsModule } from "../settingsModels";
 import surfaceCss from "../../../desk/surface/surface.css?raw";
 import gadgetsCss from "../../../desk/surface/gadgets.css?raw";
+
+const inferenceSetup = {
+  schema_version: 1 as const,
+  observed_at: "2026-08-21T18:00:00Z",
+  preset_catalog: {
+    schema_version: 1 as const,
+    sha256: `sha256:${"c".repeat(64)}`,
+  },
+  hardware: {
+    capability: {
+      system: "Darwin",
+      architecture: "arm64",
+      apple_silicon: true,
+      total_memory_bytes: 17_179_869_184,
+      logical_cpu_count: 10,
+      unified_memory: true,
+      accelerators: ["metal"],
+      sha256: "cap",
+    },
+    observation: {
+      available_memory_bytes: 8_589_934_592,
+      storage_available_bytes: 107_374_182_400,
+      sha256: "obs",
+    },
+    detection: { state: "available" as const, reason: null },
+  },
+  runtimes: [
+    {
+      id: "llama.cpp",
+      revision: "r1",
+      formats: ["gguf"],
+      availability: { state: "available" as const, reason: null },
+      thought_support: { state: "supported" as const, reason: null },
+    },
+  ],
+  current_routes: {
+    authority: "config" as const,
+    thoughts: { target_id: null, inherits_this_device: true },
+    dictation: { target_id: null, backend: "llama_cpp" },
+    meetings: { target_id: null, provider: "local" },
+  },
+  current_thought_deployment: {
+    source: "global" as const,
+    configured_target_id: null,
+    target: {
+      id: "this_machine",
+      name: "This device",
+      kind: "this_device",
+      boundary: "same_device",
+      engine: "llama.cpp",
+      model: "Pocket GGUF",
+      context_limit: 16384,
+    },
+    readiness: { state: "ready" as const, available: true, reason: null },
+    execution_support: {
+      state: "executable" as const,
+      executable: true,
+      reason: null,
+    },
+    execution_revision: null,
+  },
+  artifact_detection: { state: "complete" as const, reason: null },
+  detected_local_artifacts: [
+    {
+      id: "artifact-pocket",
+      label: "Pocket GGUF",
+      format: "gguf" as const,
+      configured_for_thoughts: true,
+      thought_support: { state: "current_v1" as const, reason: null },
+    },
+  ],
+  presets: [
+    {
+      kind: "hosted_profile_preset" as const,
+      id: "deep",
+      experience: "deep" as const,
+      label: "Deep Qwen",
+      provider_adapter: "openai_compatible" as const,
+      model_id: "qwen/deep",
+      boundary: "external_service" as const,
+      secret_requirement: "profile_key" as const,
+      context: { support: "bounded" as const, working_ceiling_tokens: 32768 },
+      applicability: { state: "applicable" as const, reason: null },
+      existing_profile: {
+        target_id: "preset-deep",
+        name: "OpenRouter · Deep Qwen",
+        kind: "openAICompatible" as const,
+        base_url: "https://openrouter.ai/api/v1",
+        model: "qwen/deep",
+        context_limit: 32768,
+        requires_key: true as const,
+      },
+    },
+    {
+      kind: "hosted_profile_preset" as const,
+      id: "balanced",
+      experience: "balanced" as const,
+      label: "Balanced Qwen",
+      provider_adapter: "openai_compatible" as const,
+      model_id: "qwen/balanced",
+      boundary: "external_service" as const,
+      secret_requirement: "profile_key" as const,
+      context: { support: "bounded" as const, working_ceiling_tokens: 16384 },
+      applicability: { state: "applicable" as const, reason: null },
+      existing_profile: {
+        target_id: "preset-balanced",
+        name: "OpenRouter · Balanced Qwen",
+        kind: "openAICompatible" as const,
+        base_url: "https://openrouter.ai/api/v1",
+        model: "qwen/balanced",
+        context_limit: 16384,
+        requires_key: true as const,
+      },
+    },
+  ],
+  limitations: [],
+};
 
 const apiFetch = vi.fn(async (url: string, init?: { method?: string }) => {
   if (url === "/api/inference-targets" && !init?.method) {
@@ -69,6 +180,7 @@ const apiFetch = vi.fn(async (url: string, init?: { method?: string }) => {
       ],
     };
   }
+  if (url === "/api/inference/setup") return { setup: inferenceSetup };
   if (url === "/api/inference-targets/p-43/probe" && init?.method === "POST") {
     return {
       reachable: true,
@@ -295,11 +407,11 @@ describe("Models destination workbench (HS-139 beauty pass)", () => {
     expect(
       screen.getByRole("heading", { name: "Choose your AI" }),
     ).toBeInTheDocument();
-    expect(screen.getAllByText("This device").length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/This device/).length).toBeGreaterThan(0);
     expect(screen.getByText("Choose AI for each job")).toBeInTheDocument();
     expect(screen.queryByText("Runs on")).toBeNull();
     expect(
-      screen.getByRole("heading", { name: "OpenRouter Qwen presets" }),
+      screen.getByRole("heading", { name: "Available to add" }),
     ).toBeInTheDocument();
     const connections = screen.getByText("AI connections").closest("details");
     expect(connections).not.toHaveAttribute("open");
@@ -311,127 +423,143 @@ describe("Models destination workbench (HS-139 beauty pass)", () => {
       container.querySelector(".models-destination-matrix"),
     ).toBeInTheDocument();
     expect(container.querySelector(".dest-card")).toBeNull();
-    expect(container.querySelector(".models-setup-intro")).toBeInTheDocument();
-    expect(container.querySelector(".models-local-setup")).toBeInTheDocument();
+    expect(
+      container.querySelector(".models-capability-intro"),
+    ).toBeInTheDocument();
+    expect(
+      container.querySelector(".models-capability-device"),
+    ).toBeInTheDocument();
     expect(container.querySelector(".models-job-routing")).toBeInTheDocument();
+    expect(apiFetch).not.toHaveBeenCalledWith("/api/setup/hub-default-summary");
+    expect(apiFetch).not.toHaveBeenCalledWith("/api/setup/runtime-options");
   });
 
-  it("tests the selected local AI and reports readiness in place", async () => {
+  it("renders only projected local capability truth without offering a fake action", async () => {
     render(
       <ModelsModule settings={settings} update={vi.fn()} onRefuse={vi.fn()} />,
     );
-    await screen.findByDisplayValue("LAN llama");
-    fireEvent.click(screen.getByRole("button", { name: "CHECK LOCAL AI" }));
+    expect(await screen.findByText("Pocket GGUF")).toBeInTheDocument();
+    expect(screen.getByText("Used by Thoughts now")).toBeInTheDocument();
     expect(
-      await screen.findByText(
-        "Ready · Pocket GGUF can answer Thoughts on this device.",
-      ),
-    ).toBeInTheDocument();
-    expect(apiFetch).toHaveBeenCalledWith("/api/models");
-  });
-
-  it("turns discovered local models into one owner choice", async () => {
-    const update = vi.fn();
-    const updateMany = vi.fn();
-    render(
-      <ModelsModule
-        settings={settings}
-        update={update}
-        updateMany={updateMany}
-        onRefuse={vi.fn()}
-      />,
-    );
-    const chooser = (await screen.findByLabelText(
-      "Model on this device",
-    )) as HTMLSelectElement;
-    expect(
-      Array.from(chooser.options).map((option) => option.textContent),
-    ).toEqual([
-      "CHOOSE A MODEL…",
-      "GGUF · Pocket GGUF",
-      "OTHER MODEL LOCATION…",
-    ]);
-    fireEvent.change(chooser, {
-      target: { value: "/Users/test/Models/gguf/pocket.gguf" },
-    });
-    expect(updateMany).toHaveBeenCalledWith([
-      [
-        ["meeting", "intel_realtime_model"],
-        "/Users/test/Models/gguf/pocket.gguf",
-      ],
-      [["meeting", "intel_provider"], "local"],
-      [["thoughts", "inference_target_id"], null],
-      [["dictation", "runtime", "backend"], "llama_cpp"],
-      [
-        ["dictation", "runtime", "llama_cpp_model_path"],
-        "/Users/test/Models/gguf/pocket.gguf",
-      ],
-    ]);
-    expect(screen.queryByLabelText("GGUF model file")).toBeNull();
-    expect(
-      screen.getByText(/1 Apple MLX model is available for writing/),
-    ).toBeInTheDocument();
-  });
-
-  it("keeps a manual model-location escape hatch after discovery", async () => {
-    render(
-      <ModelsModule settings={settings} update={vi.fn()} onRefuse={vi.fn()} />,
-    );
-    const chooser = await screen.findByLabelText("Model on this device");
-    fireEvent.change(chooser, { target: { value: "__manual__" } });
-    expect(screen.getByLabelText("GGUF model file")).toBeInTheDocument();
-    expect(screen.queryByLabelText("Apple MLX model folder")).toBeNull();
+      screen.queryByRole("button", { name: /download|check local/i }),
+    ).toBeNull();
+    expect(document.body.textContent).not.toContain("/Users/test/Models");
   });
 
   it("creates and selects an executable OpenRouter preset in one owner action", async () => {
     const updateMany = vi.fn();
+    const commitMany = vi.fn(async () => true);
     render(
       <ModelsModule
         settings={settings}
         update={vi.fn()}
         updateMany={updateMany}
+        commitMany={commitMany}
         onRefuse={vi.fn()}
       />,
     );
-    const card = (
-      await screen.findByRole("heading", { name: "Balanced Qwen" })
-    ).closest("article")!;
+    await screen.findByRole("heading", { name: "Available to add" });
+    const balanced = screen.getByRole("radio", { name: /Balanced Qwen/ });
+    await waitFor(() =>
+      expect(screen.getByRole("radio", { name: /Deep Qwen/ })).toBeChecked(),
+    );
+    fireEvent.click(balanced);
+    expect(balanced).toBeChecked();
     fireEvent.change(screen.getByPlaceholderText("sk-or-v1-…"), {
       target: { value: "not-a-real-openrouter-key" },
     });
-    fireEvent.click(within(card).getByRole("button", { name: "ADD & USE" }));
+    fireEvent.click(screen.getByRole("button", { name: "ADD & USE BALANCED" }));
 
     await waitFor(() =>
       expect(apiFetch).toHaveBeenCalledWith("/api/inference-targets", {
         method: "POST",
         json: {
-          id: "preset_openrouter_qwen35_35b_a3b",
+          id: "preset-balanced",
           name: "OpenRouter · Balanced Qwen",
           kind: "openAICompatible",
           base_url: "https://openrouter.ai/api/v1",
-          model: "qwen/qwen3.5-35b-a3b",
-          context_limit: 262144,
+          model: "qwen/balanced",
+          context_limit: 16384,
           requires_key: true,
         },
       }),
     );
     expect(apiFetch).toHaveBeenCalledWith(
-      "/api/inference-targets/preset_openrouter_qwen35_35b_a3b/secret",
+      "/api/inference-targets/preset-balanced/secret",
       { method: "PUT", json: { value: "not-a-real-openrouter-key" } },
     );
-    expect(updateMany).toHaveBeenCalledWith([
-      [["thoughts", "inference_target_id"], "preset_openrouter_qwen35_35b_a3b"],
+    expect(commitMany).toHaveBeenCalledWith([
+      [["thoughts", "inference_target_id"], "preset-balanced"],
     ]);
+    await waitFor(() =>
+      expect(
+        screen.queryByDisplayValue("not-a-real-openrouter-key"),
+      ).toBeNull(),
+    );
   });
 
-  it("keeps custom providers one deliberate action away", async () => {
+  it("keeps the key and projected route unchanged until the settings commit is confirmed", async () => {
+    let confirm!: (saved: boolean) => void;
+    const commitMany = vi.fn(
+      () =>
+        new Promise<boolean>((resolve) => {
+          confirm = resolve;
+        }),
+    );
+    render(
+      <ModelsModule
+        settings={settings}
+        update={vi.fn()}
+        updateMany={vi.fn()}
+        commitMany={commitMany}
+        onRefuse={vi.fn()}
+      />,
+    );
+    await waitFor(() =>
+      expect(screen.getByRole("radio", { name: /Deep Qwen/ })).toBeChecked(),
+    );
+    const key = screen.getByLabelText("OpenRouter key");
+    fireEvent.change(key, { target: { value: "durability-sentinel" } });
+    fireEvent.click(screen.getByRole("button", { name: "ADD & USE DEEP" }));
+    await waitFor(() => expect(commitMany).toHaveBeenCalledTimes(1));
+    expect(key).toHaveValue("durability-sentinel");
+    expect(screen.queryByText("IN USE FOR THOUGHTS")).toBeNull();
+
+    confirm(true);
+    await waitFor(() => expect(key).toHaveValue(""));
+  });
+
+  it("retains the key and reports refusal when the settings commit is rejected", async () => {
+    render(
+      <ModelsModule
+        settings={settings}
+        update={vi.fn()}
+        updateMany={vi.fn()}
+        commitMany={vi.fn(async () => false)}
+        onRefuse={vi.fn()}
+      />,
+    );
+    await waitFor(() =>
+      expect(screen.getByRole("radio", { name: /Deep Qwen/ })).toBeChecked(),
+    );
+    const key = screen.getByLabelText("OpenRouter key");
+    fireEvent.change(key, { target: { value: "cas-refusal-sentinel" } });
+    fireEvent.click(screen.getByRole("button", { name: "ADD & USE DEEP" }));
+    expect(
+      await screen.findByText(
+        "Could not save the Thoughts choice. Your key is still here.",
+      ),
+    ).toBeInTheDocument();
+    expect(key).toHaveValue("cas-refusal-sentinel");
+    expect(screen.queryByText("IN USE FOR THOUGHTS")).toBeNull();
+  });
+
+  it("keeps custom providers progressively disclosed", async () => {
     render(
       <ModelsModule settings={settings} update={vi.fn()} onRefuse={vi.fn()} />,
     );
-    await screen.findByRole("heading", { name: "OpenRouter Qwen presets" });
-    fireEvent.click(
-      screen.getByRole("button", { name: "DEFINE YOUR OWN PROVIDER" }),
-    );
+    await screen.findByRole("heading", { name: "Available to add" });
+    fireEvent.click(screen.getByText("AI connections"));
     expect(
       screen.getByText("AI connections").closest("details"),
     ).toHaveAttribute("open");
