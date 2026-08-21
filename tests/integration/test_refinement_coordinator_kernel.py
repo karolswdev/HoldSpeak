@@ -8,7 +8,6 @@ from fastapi.testclient import TestClient
 from holdspeak.db import Database, reset_database
 from holdspeak.kernel.runtime import _configure
 from holdspeak.principals import Principal, PrincipalKind
-from holdspeak.services.ask_service import AskService
 from holdspeak.services.refinement_coordinator import RefinementCoordinator
 from holdspeak.services.refinement_thought_service import (
     INBOX_DIRECTORY_ID,
@@ -44,9 +43,11 @@ async def test_real_kernel_turn_reaches_review_then_answer_does_not_auto_chain(t
     engine = _ScriptedEngine()
     broker = _configure(db)
     monkeypatch.setattr(broker.inference_runner, "_engine_factory", lambda _revision, **_kw: engine)
-    coordinator = RefinementCoordinator(
-        db, ask_factory=lambda: AskService(db, broker=broker)
-    )
+    monkeypatch.setattr("holdspeak.kernel.runtime._service", lambda: broker)
+    # Keep the coordinator on its real default-admission seam and bind the
+    # production AskService factory to this test's exact broker. The injected
+    # ask_factory seam deliberately carries a scripted test claim.
+    coordinator = RefinementCoordinator(db)
     await coordinator.start()
     service = RefinementThoughtService(db)
     thought = service.create(
