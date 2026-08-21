@@ -65,9 +65,53 @@ The production Vite build and `git diff --check` passed. The build emitted only
 the existing dynamic-import and chunk-size warnings. GitHub Actions was not
 watched or used as a gate.
 
+## Choose-your-AI recovery evidence
+
+The model-unavailable recovery door was simplified after the owner rejected
+the topology-first **Runs on** setup. Settings now opens with the owner task
+**Choose your AI**, leads with **This device**, then offers **Choose AI for each
+job**. Reusable endpoints and placement detail stay available under **AI
+connections**; background assistance and tuning remain under **Advanced**.
+
+The screen reuses existing APIs only. It discovers local model choices through
+`GET /api/setup/runtime-options`, writes the existing settings fields, and uses
+the safe `GET /api/models` readiness projection for **Check this AI**. That
+check sends no prompt and invokes no model.
+
+Fresh isolated-HOME browser evidence at 1440×900 and 393×900 proved the guided
+hierarchy, initially closed connection details, setup and connection focus
+paths, 44px narrow-screen targets, zero horizontal overflow, and zero page or
+console errors:
+
+```text
+npx vitest run src/pages/cores/__tests__/settingsModels.test.tsx --maxWorkers=2
+23 passed
+
+npm run build
+passed (existing dynamic-import and chunk-size warnings only)
+
+uv run pytest -q tests/e2e/test_hs141_models_setup_glass.py
+2 passed in 5.68s
+```
+
+See the final [desktop](./assets/story-04/hs-141-models-setup-1440.png) and
+[narrow](./assets/story-04/hs-141-models-setup-393.png) captures.
+
 ## Honest boundary
 
 The walkthrough provider was a labelled deterministic in-process simulation,
 not a claimed production model. HS-141-04 attaches no context and creates no
 local outcome or external effect. HS-141-05 adds explicit visible context;
 HS-141-07 and HS-141-08 own typed local and real-tool outcomes.
+
+### Captured run — 2026-08-21T02:05:20Z
+
+- **Command:** `uv run pytest -q tests/e2e/test_hs141_models_setup_glass.py`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 5d90f27ee1cd38aacb7f8dd752ac7b830998638a
+
+```text
+..                                                                       [100%]
+2 passed in 5.68s
+```

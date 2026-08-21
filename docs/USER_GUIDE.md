@@ -324,9 +324,10 @@ Use `openai_compatible` when the model is served somewhere else:
 - LiteLLM
 - OpenAI or another hosted compatible API
 
-The one path: author the endpoint once as a destination under **Settings,
-Models**, then pick it as the dictation **Runs on**. Assigning a destination is
-itself the "run it there" instruction, so the dictation backend follows. Set
+The one path: add the endpoint once under **Settings, Models → AI connections**,
+then choose it for **Writing & dictation** under **Choose AI for each job**.
+Assigning a connection is itself the "run it there" instruction, so the
+dictation backend follows. Set
 or replace its key inline in **Settings, Models**; the environment variable
 `HOLDSPEAK_PROFILE_<ID>_KEY` remains a headless fallback.
 
@@ -527,7 +528,9 @@ Local-first behavior:
 Cloud or homelab behavior:
 
 - If you set `meeting.intel_provider` to `cloud` (or `auto`, which can fall back to it), meeting text may be sent to the destination you picked for analysis.
-- The one path: author the endpoint once as a destination under **Settings, Models**, then pick it as the meetings **Runs on**. The `intel_cloud_*` fields are dead (HS-112-01).
+- The one path: add the endpoint once under **Settings, Models → AI connections**,
+  then choose it for **Meetings** under **Choose AI for each job**. The
+  `intel_cloud_*` fields are dead (HS-112-01).
 - Use `holdspeak doctor` from the same shell environment to verify endpoint, model, TLS, DNS, and authentication; its Runs on line names the destination each pipeline resolves to.
 
 The provider switch itself still lives in config (deferred intel is

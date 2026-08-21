@@ -169,8 +169,8 @@ of reach by design.
 - **Every run names its destination.** Transcription and model-backed work can
   run on this device, a paired device, a private endpoint, or an external
   OpenAI-compatible service.
-  Author them once under **Settings, Models** as reusable destinations, then
-  assign one per feature with the Runs on pickers, and one per Agent where you
+  Add them once under **Settings, Models → AI connections**, then choose one
+  for each job under **Choose AI for each job**, and one per Agent where you
   author it. The destination definition syncs across your surfaces while its
   key stays local: set, replace, or remove it inline in **Settings, Models**.
   A destination can name another of your machines: run
@@ -319,8 +319,9 @@ Automatic furnishing is the ordinary first-run path. For repair, `holdspeak
 seed` creates only starter objects HoldSpeak has never seen, preserving your
 edits and deletions. To deliberately restore the default Desk, use the
 destructive, confirmed **Settings, Desk → Reset to seed** action. To add a
-model-backed feature or deploy headlessly, configure its destination and
-**Runs on** choice in **Settings, Models**; a
+model-backed feature or deploy headlessly, open **Settings, Models → Choose
+your AI**. Set up **This device**, or add an **AI connection** and choose it for
+the relevant job; a
 `HOLDSPEAK_PROFILE_<ID>_KEY` environment variable remains the headless key
 fallback. See [Models (bring your own)](https://github.com/karolswdev/HoldSpeak/blob/main/docs/MODELS.md)
 and [Inference destinations](https://github.com/karolswdev/HoldSpeak/blob/main/docs/INFERENCE_TARGETS.md).
@@ -502,7 +503,8 @@ deliberate absences.
 Config lives at `~/.config/holdspeak/config.json`, but you rarely edit it by hand.
 The Settings window on the Desk exposes the hotkey, meeting intel, dictation
 pipeline, and presence options. Endpoint and model identity has exactly one
-editor, **Settings, Models**: the destination list plus the Runs on pickers.
+editor, **Settings, Models**: the guided **Choose your AI** setup, followed by
+per-job choices and progressively disclosed AI connections.
 The old `intel_cloud_*` and `openai_compatible_*` fields no longer configure
 anything. An upgrade reads them once, turns them into destinations named
 `legacy-intel` and `legacy-dictation`, and points the matching feature at

@@ -71,6 +71,19 @@ const apiFetch = vi.fn(async (url: string, init?: { method?: string }) => {
       error: null,
     };
   }
+  if (url === "/api/setup/hub-default-summary") {
+    return { engine: "mlx", model: "Qwen local", available: true };
+  }
+  if (url === "/api/setup/runtime-options") {
+    return {
+      platform: { system: "darwin", machine: "arm64", apple_silicon: true },
+      mlx: [{ label: "Qwen local", value: "/Users/test/Models/mlx/Qwen-local" }],
+      gguf: [{ label: "Pocket GGUF", value: "/Users/test/Models/gguf/pocket.gguf" }],
+    };
+  }
+  if (url === "/api/models") {
+    return { models: [{ id: "this_machine", name: "Qwen local", ready: true }] };
+  }
   // HS-134-02: /api/profiles read routes retired.
   return {};
 });
@@ -104,12 +117,12 @@ describe("ModelsModule (HS-112-01)", () => {
     expect(screen.queryByDisplayValue("This device")).toBeNull();
   });
 
-  it("offers HUB DEFAULT plus every target on all three RUNS ON rows", async () => {
+  it("offers the device default plus every connection for each AI job", async () => {
     render(
       <ModelsModule settings={settings} update={vi.fn()} onRefuse={vi.fn()} />,
     );
     await screen.findByDisplayValue("LAN llama");
-    for (const label of ["Dictation runs on", "Meetings runs on", "Rails runs on"]) {
+    for (const label of ["Writing & dictation AI", "Meetings AI", "Background assistance AI"]) {
       const picker = screen.getByLabelText(label) as HTMLSelectElement;
       const options = Array.from(picker.options).map((o) => o.textContent);
       expect(options.some((o) => o?.startsWith("HUB DEFAULT"))).toBe(true);
@@ -124,11 +137,11 @@ describe("ModelsModule (HS-112-01)", () => {
       <ModelsModule settings={settings} update={update} onRefuse={vi.fn()} />,
     );
     await screen.findByDisplayValue("LAN llama");
-    fireEvent.change(screen.getByLabelText("Meetings runs on"), {
+    fireEvent.change(screen.getByLabelText("Meetings AI"), {
       target: { value: "p-43" },
     });
     expect(update).toHaveBeenCalledWith(["meeting", "intel_profile_id"], "p-43");
-    fireEvent.change(screen.getByLabelText("Dictation runs on"), {
+    fireEvent.change(screen.getByLabelText("Writing & dictation AI"), {
       target: { value: "" },
     });
     // Clearing writes null — the one sentinel, never "".
@@ -222,21 +235,60 @@ describe("ModelsModule (HS-112-01)", () => {
 });
 
 describe("Models destination workbench (HS-139 beauty pass)", () => {
-  it("uses the full-width matrix at desktop widths, with the dashboard hooks", async () => {
+  it("leads with a plain setup path and keeps connection administration disclosed", async () => {
     const { container } = render(
       <ModelsModule settings={settings} update={vi.fn()} onRefuse={vi.fn()} />,
     );
     await screen.findByDisplayValue("LAN llama");
 
-    expect(container.querySelector(".models-destinations")).toHaveAttribute(
-      "data-layout",
-      "matrix",
-    );
+    expect(screen.getByRole("heading", { name: "Choose your AI" })).toBeInTheDocument();
+    expect(screen.getByText("This device")).toBeInTheDocument();
+    expect(screen.getByText("Choose AI for each job")).toBeInTheDocument();
+    expect(screen.queryByText("Runs on")).toBeNull();
+    const connections = screen.getByText("AI connections").closest("details");
+    expect(connections).not.toHaveAttribute("open");
+    expect(container.querySelector(".models-destinations")).toHaveAttribute("data-layout", "matrix");
     expect(container.querySelector(".models-destination-matrix")).toBeInTheDocument();
     expect(container.querySelector(".dest-card")).toBeNull();
-    expect(container.querySelector(".models-dashboard-runs")).toBeInTheDocument();
-    expect(container.querySelector(".models-dashboard-engine")).toBeInTheDocument();
-    expect(container.querySelector(".models-dashboard-rails")).toBeInTheDocument();
+    expect(container.querySelector(".models-setup-intro")).toBeInTheDocument();
+    expect(container.querySelector(".models-local-setup")).toBeInTheDocument();
+    expect(container.querySelector(".models-job-routing")).toBeInTheDocument();
+  });
+
+  it("tests the selected local AI and reports readiness in place", async () => {
+    render(<ModelsModule settings={settings} update={vi.fn()} onRefuse={vi.fn()} />);
+    await screen.findByDisplayValue("LAN llama");
+    fireEvent.click(screen.getByRole("button", { name: "CHECK THIS AI" }));
+    expect(await screen.findByText("Ready · Qwen local can answer on this device.")).toBeInTheDocument();
+    expect(apiFetch).toHaveBeenCalledWith("/api/models");
+  });
+
+  it("turns discovered local models into one owner choice", async () => {
+    const update = vi.fn();
+    render(<ModelsModule settings={settings} update={update} onRefuse={vi.fn()} />);
+    const chooser = await screen.findByLabelText("Model on this device") as HTMLSelectElement;
+    expect(Array.from(chooser.options).map((option) => option.textContent)).toEqual([
+      "CHOOSE A MODEL…",
+      "APPLE MLX · Qwen local",
+      "GGUF · Pocket GGUF",
+      "OTHER MODEL LOCATION…",
+    ]);
+    fireEvent.change(chooser, { target: { value: "mlx:/Users/test/Models/mlx/Qwen-local" } });
+    expect(update).toHaveBeenCalledWith(["dictation", "runtime", "backend"], "mlx");
+    expect(update).toHaveBeenCalledWith(
+      ["dictation", "runtime", "mlx_model"],
+      "/Users/test/Models/mlx/Qwen-local",
+    );
+    expect(screen.queryByLabelText("Apple MLX model folder")).toBeNull();
+    expect(screen.queryByLabelText("GGUF model file")).toBeNull();
+  });
+
+  it("keeps a manual model-location escape hatch after discovery", async () => {
+    render(<ModelsModule settings={settings} update={vi.fn()} onRefuse={vi.fn()} />);
+    const chooser = await screen.findByLabelText("Model on this device");
+    fireEvent.change(chooser, { target: { value: "__manual__" } });
+    expect(screen.getByLabelText("Apple MLX model folder")).toBeInTheDocument();
+    expect(screen.queryByLabelText("GGUF model file")).toBeNull();
   });
 
   it("uses collapsed target summaries below the readable matrix width", async () => {

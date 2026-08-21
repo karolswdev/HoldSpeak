@@ -72,11 +72,12 @@ bridge, vLLM, llama.cpp-server, LM Studio, LiteLLM, or an actual cloud API. The
 endpoint owns model loading; HoldSpeak needs no local weights.
 
 - **Install:** `uv pip install -e '.[dictation-openai]'` (dictation side)
-- **Configure:** author the endpoint once as a destination under **Settings,
-  Models** (the API resource is `/api/inference-targets`; `/api/profiles` is a
-  read-only alias). Give it a name, base URL, model, and context window, then
-  choose where it runs:
-  - **Dictation, meetings, rails:** the **Runs on** pickers in the same module.
+- **Configure:** add the endpoint once under **Settings, Models → AI
+  connections** (the API resource is `/api/inference-targets`; `/api/profiles`
+  is a read-only alias). Give it a name, base URL, model, and context window,
+  then choose it for a job:
+  - **Writing & dictation, meetings, background assistance:** **Choose AI for
+    each job** in the same module.
   - **Agents:** the **Runs on** picker where you author the Agent.
 - **Keys:** set, replace, or remove a destination key inline in **Settings,
   Models**. The hub keeps that value in owner-only local custody and joins it
@@ -162,9 +163,11 @@ A future native client may consume the finished Python/web shape. The key stays
 local and is joined only at dispatch time. See
 [Security & privacy](SECURITY.md#5-secrets-handling).
 
-Destinations also drive the desktop hub's pipelines. **Settings, Models** holds
-a **Runs on** picker for dictation, meetings, and rails, so one destination can
-serve Agents, Meetings, and dictation. `holdspeak doctor` reports
+Destinations also drive the desktop hub's pipelines. **Settings, Models** leads
+with **Choose your AI**, discovers models already stored under `~/Models`, and
+keeps reusable endpoints under **AI connections**. **Choose AI for each job**
+can route writing and dictation, meetings, and background assistance to one of
+those connections. `holdspeak doctor` reports
 which destination each pipeline resolves to and warns when an assigned
 destination is missing or has no key. Set the key inline in **Settings,
 Models**, or use `HOLDSPEAK_PROFILE_<ID>_KEY` for headless fallback.
