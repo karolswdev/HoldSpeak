@@ -132,6 +132,7 @@ export interface LocalInferencePreset {
   runtime_min_revision: string;
   format: "gguf" | "mlx_safetensors";
   boundary: "same_device";
+  activation: "download" | "evaluation_only";
   context: { recommended_tokens: 8192 | 16384 | 32768; ceiling_tokens: number };
   source: {
     repository: string;

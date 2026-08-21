@@ -81,6 +81,7 @@ def _fixture(tmp_path: Path):
     ).hexdigest()
     preset = {
         "kind": "local_artifact_preset",
+        "activation": "download",
         "id": "preset_test_gguf",
         "experience": "quick",
         "label": "Quick test model",
@@ -152,6 +153,20 @@ def test_download_verify_adopt_activate_and_replay(tmp_path: Path):
     assert resolved is not None
     assert resolved.model_path == config.meeting.intel_realtime_model
     assert "model_path" not in resolved.to_dict()
+
+
+def test_evaluation_only_candidate_cannot_enter_download_saga(tmp_path: Path):
+    _db, service, config, preset = _fixture(tmp_path)
+    preset["activation"] = "evaluation_only"
+    with pytest.raises(Exception) as refused:
+        service.download_and_use(OWNER, {
+            "request_id": "hammer-evaluation-only",
+            "preset_id": preset["id"],
+            "catalog_revision": 7,
+            "context_choice": 8192,
+            "expected_route_revision": service.route_revision(config),
+        })
+    assert getattr(refused.value, "code", "") == "inference_preset_evaluation_only"
 
 
 def test_detected_gguf_can_be_verified_selected_and_replayed(tmp_path: Path, monkeypatch):

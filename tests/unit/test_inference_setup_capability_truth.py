@@ -98,10 +98,10 @@ def test_projection_is_closed_redacted_and_preserves_v1_identity(tmp_path: Path)
     assert value["artifact_detection"] == {"state": "complete", "reason": None}
     assert value["preset_catalog"] == {
         "schema_version": 1,
-            "catalog_revision": 3,
+            "catalog_revision": 4,
         "generated_at": "2026-08-21T00:00:00Z",
         "expires_at": "2036-08-01T00:00:00Z",
-            "signing_key_id": "holdspeak_catalog_2026_08",
+            "signing_key_id": "holdspeak_catalog_2026_08_02",
         "sha256": PACKAGED_CATALOG_SHA256,
     }
     assert value["detected_local_artifacts"][0]["label"] == model.name
@@ -206,7 +206,7 @@ def test_catalog_expiry_is_rechecked_on_every_projection(tmp_path: Path):
         db, config_provider=Config, home_provider=lambda: tmp_path,
         clock=lambda: current[0],
     )
-    assert service.get_inference_setup(OWNER)["preset_catalog"]["catalog_revision"] == 3
+    assert service.get_inference_setup(OWNER)["preset_catalog"]["catalog_revision"] == 4
     current[0] = datetime(2037, 1, 1, tzinfo=timezone.utc)
     with pytest.raises(ValueError, match="validity period"):
         service.get_inference_setup(OWNER)
@@ -230,9 +230,13 @@ def test_owner_gate_and_safe_missing_path(tmp_path: Path):
 
 def test_catalog_is_closed_and_filters_unproven_local_entries(tmp_path: Path):
     packaged = packaged_presets()
-    assert len(validate_catalog(packaged)) == 8
+    assert len(validate_catalog(packaged)) == 9
     ids = {row["id"] for row in packaged}
     assert "preset_local_qwen35_08b_gguf_q4km" in ids
+    assert "candidate_local_hammer21_15b_gguf_q4km" in ids
+    hammer = next(row for row in packaged if row["id"] == "candidate_local_hammer21_15b_gguf_q4km")
+    assert hammer["activation"] == "evaluation_only"
+    assert hammer["source"]["license"] == "CC-BY-NC-4.0"
     assert {
         "preset_openrouter_qwen37_flash",
         "preset_openrouter_gemma4_26b",
@@ -245,7 +249,7 @@ def test_catalog_is_closed_and_filters_unproven_local_entries(tmp_path: Path):
         validate_catalog([forged])
 
     local = {
-        "kind": "local_artifact_preset", "id": "local_test", "experience": "quick",
+        "kind": "local_artifact_preset", "id": "local_test", "experience": "quick", "activation": "download",
         "label": "Local test", "summary": "Small local test model.", "runtime_id": "llama_cpp_prompt_v1", "runtime_min_revision": "0.3.34", "format": "gguf",
         "boundary": "same_device", "context": {"recommended_tokens": 8192, "ceiling_tokens": 8192}, "platforms": ["linux_x86_64"],
         "source": {"repository": "example/model", "revision": "a" * 40,
@@ -340,7 +344,7 @@ def test_detected_ids_do_not_depend_on_absolute_home(tmp_path: Path):
 
 def test_local_preset_union_and_mlx_runtime_use_real_dependency(tmp_path: Path, monkeypatch):
     local = {
-        "kind": "local_artifact_preset", "id": "local_test", "experience": "quick",
+        "kind": "local_artifact_preset", "id": "local_test", "experience": "quick", "activation": "download",
         "label": "Local test", "summary": "Small local test model.", "runtime_id": "mlx_text_v1", "runtime_min_revision": "0.1.0", "format": "mlx_safetensors",
         "boundary": "same_device", "context": {"recommended_tokens": 8192, "ceiling_tokens": 8192}, "platforms": ["darwin_arm64"],
         "source": {"repository": "example/model", "revision": "a" * 40,

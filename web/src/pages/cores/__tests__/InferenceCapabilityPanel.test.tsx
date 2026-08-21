@@ -31,7 +31,7 @@ function setup(overrides: Partial<InferenceSetup> = {}): InferenceSetup {
     schema_version: 1,
     observed_at: "2026-08-21T18:00:00Z",
     preset_catalog: {
-      schema_version: 1, catalog_revision: 3,
+      schema_version: 1, catalog_revision: 4,
       generated_at: "2026-08-21T00:00:00Z", expires_at: "2036-08-01T00:00:00Z",
       signing_key_id: "test", sha256: `sha256:${"c".repeat(64)}`,
     },
@@ -232,6 +232,7 @@ describe("InferenceCapabilityPanel", () => {
   it("renders a signed local preset with one explicit download action", async () => {
     const local = {
       kind: "local_artifact_preset" as const,
+      activation: "download" as const,
       id: "local-q",
       experience: "quick" as const,
       label: "Local Q",
@@ -268,6 +269,50 @@ describe("InferenceCapabilityPanel", () => {
     expect(screen.getByText(/runs only on this device/i)).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /download & use quick/i }));
     await waitFor(() => expect(download).toHaveBeenCalledWith(local));
+  });
+
+  it("presents Hammer as an honest evaluation-only tool model", () => {
+    const hammer = {
+      kind: "local_artifact_preset" as const,
+      activation: "evaluation_only" as const,
+      id: "hammer-15b",
+      experience: "quick" as const,
+      label: "Hammer 2.1 · 1.5B",
+      summary: "A small on-device specialist for structured tool calls.",
+      runtime_id: "llama_cpp_prompt_v1",
+      runtime_min_revision: "0.3.34",
+      format: "gguf" as const,
+      boundary: "same_device" as const,
+      context: { recommended_tokens: 8192 as const, ceiling_tokens: 32768 },
+      source: {
+        repository: "mradermacher/Hammer2.1-1.5b-GGUF",
+        revision: "d".repeat(40),
+        manifest_sha256: `sha256:${"b".repeat(64)}`,
+        filename: "Hammer2.1-1.5b.Q4_K_M.gguf",
+        file_sha256: `sha256:${"d".repeat(64)}`,
+        download_bytes: 985_701_504,
+        installed_bytes: 985_701_504,
+        peak_free_bytes: 2_100_000_000,
+        license: "CC-BY-NC-4.0",
+      },
+      platforms: ["darwin_arm64"],
+      applicability: { state: "applicable" as const, reason: null },
+    };
+    const download = vi.fn(async () => undefined);
+    render(
+      <InferenceCapabilityPanel
+        {...defaults}
+        setup={setup({ presets: [hammer] })}
+        onUseHosted={vi.fn(async () => true)}
+        onDownloadLocal={download}
+      />,
+    );
+    expect(screen.getByText("Experimental tool models")).toBeInTheDocument();
+    expect(screen.getAllByText("Hammer 2.1 · 1.5B")).toHaveLength(2);
+    expect(screen.getByText(/CC-BY-NC-4.0/)).toBeInTheDocument();
+    expect(screen.getByText(/not enabled for tool execution/i)).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /download/i })).toBeNull();
+    expect(download).not.toHaveBeenCalled();
   });
 
   it("selects a detected GGUF and offers one real verify-and-use action", async () => {

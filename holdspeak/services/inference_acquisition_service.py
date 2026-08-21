@@ -207,6 +207,12 @@ class InferenceAcquisitionApplicationService:
         preset = next((row for row in catalog["entries"] if row["id"] == body["preset_id"]), None)
         if preset is None or preset["kind"] != "local_artifact_preset":
             raise ServiceError("inference_preset_unknown", "That local model is not in this catalog.", context={"status": 404})
+        if preset.get("activation") != "download":
+            raise ServiceError(
+                "inference_preset_evaluation_only",
+                "This model is presented for evaluation and cannot be installed from the ordinary catalog.",
+                context={"status": 409},
+            )
         if preset["format"] != "gguf" or preset["runtime_id"] != "llama_cpp_prompt_v1":
             raise ServiceError("inference_runtime_unsupported", "This model cannot run in Thoughts yet.", context={"status": 409})
         if body["context_choice"] != preset["context"]["recommended_tokens"]:
