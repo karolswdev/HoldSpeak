@@ -1,7 +1,7 @@
 # MCP sidecar
 
 The MCP sidecar is the desk's programmable surface over stdio. It exposes
-127 tools and 33 resources through the Model Context Protocol, so any MCP
+127 tools and 36 resources through the Model Context Protocol, so any MCP
 client (Claude Code, Cursor, a custom script) can read and drive the desk
 without touching the web UI.
 
@@ -291,7 +291,7 @@ client discovers it at tool-listing time, not at call time.
 
 ## Resources
 
-The sidecar exposes 18 static resources and 14 resource templates. List
+The sidecar exposes 19 static resources and 17 resource templates. List
 results are bounded to the first 100 items per read.
 
 ### Static resources
@@ -303,6 +303,7 @@ results are bounded to the first 100 items per read.
 | `holdspeak://desk/constitution` | The project's constitutional context |
 | `holdspeak://desk/inference-targets` | Available inference destinations |
 | `holdspeak://inference/setup` | Owner-only, read-only capability truth for this hub's inference setup |
+| `holdspeak://inference/capabilities` | Owner-only registered intelligence jobs, result contracts, requirements, boundaries, and retry-policy facts; never profiles, paths, keys, or assignments |
 | `holdspeak://desk/snapshot` | Current desk state (objects, layout) |
 | `holdspeak://workbenches` | Workbench list and summaries |
 | `holdspeak://recipes` | Agent recipe list |
@@ -337,3 +338,4 @@ results are bounded to the first 100 items per read.
 | `holdspeak://thoughts/{thought_id}/workbench` | One coherent owner Workbench projection: Note authority, interview state, actions, context health, and placement truth |
 | `holdspeak://thoughts/{thought_id}/original` | The owner-only raw capture for a Thought; read lazily and never included in the Workbench projection |
 | `holdspeak://inference/acquisitions/{id}` | Owner-only durable download, verification, installation, and activation truth |
+| `holdspeak://inference/capabilities/{capability_id}` | Owner-only exact registered contract for one intelligence capability |

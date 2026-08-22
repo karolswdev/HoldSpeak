@@ -284,7 +284,20 @@ class AskService:
         if grounding is None: return "", None
         if not isinstance(grounding, dict): raise ValidationError("grounding must be an object")
         vals = lambda key: [str(x).strip() for x in grounding.get(key, []) if str(x).strip()] if isinstance(grounding.get(key), list) else []
-        meeting_ids, artifact_ids, refs = vals("meeting_ids"), vals("artifact_ids"), vals("refs"); rails = [x for x in grounding.get("rails", []) if isinstance(x, dict)] if isinstance(grounding.get("rails"), list) else []
+        meeting_ids, artifact_ids, refs = vals("meeting_ids"), vals("artifact_ids"), vals("refs")
+        raw_rails = grounding.get("rails", [])
+        if not isinstance(raw_rails, list):
+            raw_rails = []
+        from ..grounding_rails import RAILS_KINDS
+
+        rails: list[dict[str, str]] = []
+        for raw in raw_rails:
+            if not isinstance(raw, dict) or set(raw) != {"repo", "project", "kind", "id"}:
+                raise ValidationError("each rails grounding reference must have repo, project, kind, and id")
+            rail = {key: str(raw[key]).strip() for key in ("repo", "project", "kind", "id")}
+            if not all(rail.values()) or rail["kind"] not in RAILS_KINDS:
+                raise ValidationError("each rails grounding reference must name a known kind and non-empty values")
+            rails.append(rail)
         expand = str(grounding.get("expand") or "summary").strip() or "summary"
         if expand not in GROUNDING_EXPANDS: raise ValidationError(f"expand {expand!r} is not one of {list(GROUNDING_EXPANDS)}")
         if len(meeting_ids)+len(artifact_ids)+len(refs)+len(rails) > GROUNDING_MAX_REFS: raise ValidationError(f"grounding is capped at {GROUNDING_MAX_REFS}")

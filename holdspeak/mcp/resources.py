@@ -27,6 +27,8 @@ from holdspeak.services.refinement_application_service import RefinementApplicat
 from holdspeak.services.refinement_thought_service import RefinementThoughtService
 from holdspeak.services.workbench_service import WorkbenchService
 from holdspeak.services.inference_setup_service import InferenceSetupApplicationService
+from holdspeak.services.inference_capability_service import InferenceCapabilityApplicationService
+from holdspeak.inference_capabilities import process_inference_capability_registry
 from holdspeak.services.errors import ServiceError
 from holdspeak.principals import PrincipalKind
 
@@ -158,6 +160,12 @@ _STATIC_RESOURCES = [
         "uri": "holdspeak://inference/setup",
         "name": "Inference setup",
         "description": "Owner-only read-only inference capability truth for this hub.",
+        "mimeType": _JSON_MIME,
+    },
+    {
+        "uri": "holdspeak://inference/capabilities",
+        "name": "Inference capabilities",
+        "description": "Owner-only registered intelligence jobs and their exact compatibility requirements.",
         "mimeType": _JSON_MIME,
     },
     {
@@ -337,6 +345,12 @@ _RESOURCE_TEMPLATES = [
         "description": "Owner-only durable download, verification, installation, and activation truth.",
         "mimeType": _JSON_MIME,
     },
+    {
+        "uriTemplate": "holdspeak://inference/capabilities/{capability_id}",
+        "name": "Inference capability detail",
+        "description": "Owner-only exact contract for one registered intelligence capability.",
+        "mimeType": _JSON_MIME,
+    },
 ]
 
 _PRIMITIVE_KIND_ALIASES = {
@@ -367,6 +381,9 @@ _THOUGHT_REVIEW_PATTERN = re.compile(
 _INFERENCE_ACQUISITION_PATTERN = re.compile(
     r"^holdspeak://inference/acquisitions/([^/]+)$"
 )
+_INFERENCE_CAPABILITY_PATTERN = re.compile(
+    r"^holdspeak://inference/capabilities/([^/]+)$"
+)
 
 
 class ResourceError(ValueError):
@@ -377,8 +394,17 @@ def list_resources(principal: Principal | None = None) -> dict[str, list[dict[st
     """Return the static resources and parameterized resource templates."""
     resources = _STATIC_RESOURCES
     if principal is None or principal.kind is not PrincipalKind.OWNER:
-        resources = [row for row in resources if row["uri"] != "holdspeak://inference/setup"]
-        templates = [row for row in _RESOURCE_TEMPLATES if "inference/acquisitions" not in row["uriTemplate"]]
+        resources = [
+            row
+            for row in resources
+            if row["uri"] not in {"holdspeak://inference/setup", "holdspeak://inference/capabilities"}
+        ]
+        templates = [
+            row
+            for row in _RESOURCE_TEMPLATES
+            if "inference/acquisitions" not in row["uriTemplate"]
+            and "inference/capabilities" not in row["uriTemplate"]
+        ]
     else:
         templates = _RESOURCE_TEMPLATES
     return {"resources": resources, "resourceTemplates": templates}
@@ -389,8 +415,14 @@ def _contents(uri: str, mime_type: str, value: Any) -> dict[str, list[dict[str, 
     return {"contents": [{"uri": uri, "mimeType": mime_type, "text": text}]}
 
 
-def read_resource(uri: str, principal: Principal) -> dict[str, list[dict[str, str]]]:
+def read_resource(uri: str, principal: Principal | None) -> dict[str, list[dict[str, str]]]:
     """Read one static or templated resource as MCP resource contents."""
+    if principal is None:
+        raise ServiceError(
+            "mcp_resource_principal_required",
+            "An authenticated principal is required.",
+            context={"status": 401},
+        )
     if uri == "holdspeak://desk/schema":
         return _contents(uri, _JSON_MIME, {"kinds": _PRIMITIVE_SCHEMA})
     if uri == "holdspeak://desk/verbs":
@@ -412,6 +444,28 @@ def read_resource(uri: str, principal: Principal) -> dict[str, list[dict[str, st
             )
         value = InferenceSetupApplicationService(get_database()).get_inference_setup(principal)
         return _contents(uri, _JSON_MIME, {"setup": value})
+    if uri == "holdspeak://inference/capabilities":
+        if principal.kind is not PrincipalKind.OWNER:
+            raise ServiceError(
+                "inference_capability_owner_required",
+                "Owner access is required.",
+                context={"status": 403},
+            )
+        service = InferenceCapabilityApplicationService(process_inference_capability_registry())
+        return _contents(uri, _JSON_MIME, {"capabilities": service.get_capabilities(principal)})
+    if match := _INFERENCE_CAPABILITY_PATTERN.fullmatch(uri):
+        if principal.kind is not PrincipalKind.OWNER:
+            raise ServiceError(
+                "inference_capability_owner_required",
+                "Owner access is required.",
+                context={"status": 403},
+            )
+        service = InferenceCapabilityApplicationService(process_inference_capability_registry())
+        return _contents(
+            uri,
+            _JSON_MIME,
+            {"capability": service.get_capability(principal, match.group(1))},
+        )
     if match := _INFERENCE_ACQUISITION_PATTERN.fullmatch(uri):
         if principal.kind is not PrincipalKind.OWNER:
             raise ServiceError(

@@ -84,6 +84,9 @@ class WebContext:
     inference_setup_service: Optional[Any] = None
     # HS-142-02: durable model acquisition/activation saga.
     inference_acquisition_service: Optional[Any] = None
+    # Phase 143: process-composed, owner-only registry projection.  It owns no
+    # profile/binding/assignment persistence and never resolves a model route.
+    inference_capability_service: Optional[Any] = None
     # HS-123-12: delivery persistence/composition boundary for the delivery
     # route family. Individual delivery collaborators remain injectable seams.
     delivery_service: Optional[Any] = None

@@ -115,9 +115,14 @@ def handle_message(request: dict[str, Any]) -> dict[str, Any] | None:
 
 def serve(stdin: TextIO = sys.stdin, stdout: TextIO = sys.stdout) -> int:
     """Run the stdio server until the client closes its input pipe."""
+    # Compose the immutable semantic registry before the sidecar announces any
+    # capability. A bad census/plugin/schema is a process-start failure, not
+    # a lazy resource-read error after MCP initialization.
+    from holdspeak.inference_capabilities import process_inference_capability_registry
     from .families import thought
     from .refinement_runtime import SidecarRefinementRuntime
 
+    process_inference_capability_registry()
     runtime = SidecarRefinementRuntime()
     runtime.start()
     thought.configure_runtime(runtime)
