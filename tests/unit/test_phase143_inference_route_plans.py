@@ -60,7 +60,7 @@ def _digest(value: object) -> str:
     return "sha256:" + hashlib.sha256(encoded.encode()).hexdigest()
 
 
-def _evidence_service(db: Database, *, entries: list[dict[str, object]], reference: str) -> InferenceRoutePlanService:
+def _evidence_service(db: Database, *, entries: list[dict[str, object]], reference: str, budgets: list[dict[str, object]] | None = None) -> InferenceRoutePlanService:
     capability = process_inference_capability_registry().require("ask.answer")
     policy = f"{capability.operation_contract.name}@{capability.operation_contract.version}:{capability.schema_sha256}"
     with db._connection() as conn:
@@ -75,6 +75,14 @@ def _evidence_service(db: Database, *, entries: list[dict[str, object]], referen
         row = conn.execute("SELECT payload_json FROM test_route_admission_evidence WHERE ref=?", (evidence_ref,)).fetchone()
         return json.loads(str(row["payload_json"]))
 
+    def reconstruct_budgets(_conn: object, evidence_ref: str) -> dict[str, object]:
+        return {
+            "schema": "RouteAttemptBudgetEvidence@1",
+            "evidence_ref": evidence_ref,
+            "material_snapshot_sha256": _digest({"snapshot": reference}),
+            "entries": budgets or [],
+        }
+
     provider = RouteAdmissionEvidenceProvider(
         id="test-parent-evidence",
         revision=1,
@@ -82,6 +90,7 @@ def _evidence_service(db: Database, *, entries: list[dict[str, object]], referen
         operation_policy_revisions=(policy,),
         freeze=freeze,
         reconstruct=reconstruct,
+        reconstruct_attempt_budgets=reconstruct_budgets if budgets is not None else None,
     )
     return InferenceRoutePlanService(db, operation_evidence_providers=(provider,))
 

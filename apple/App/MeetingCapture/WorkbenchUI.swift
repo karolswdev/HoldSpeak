@@ -205,30 +205,31 @@ private enum ModelPref: String, CaseIterable, Identifiable {
 }
 
 /// What a run does when a node's chosen model can't be reached.
-// `FailurePolicy` (retryThenQueue / fallbackOnDevice / skip) is defined once in RuntimeCore
+// The legacy wire values are retained in RuntimeCore, but the client-visible actions are
+// deliberately only hold or carry. Another model requires a newly admitted server route.
 // (`Workbench/WorkflowRunner.swift`) — the node inspector's policy IS the runner's policy. The app
 // only adds the UI facets here, so there is a single source of truth.
 extension FailurePolicy: Identifiable {
     public var id: String { rawValue }
     var label: String {
         switch self {
-        case .retryThenQueue: return "Retry, then queue"
-        case .fallbackOnDevice: return "Fall back on-device"
-        case .skip: return "Skip the step"
+        case .hold: return "Hold this run"
+        case .holdForRoute: return "Hold for a new route"
+        case .carry: return "Carry the input"
         }
     }
     var glyph: String {
         switch self {
-        case .retryThenQueue: return "clock.arrow.circlepath"
-        case .fallbackOnDevice: return "ipad.and.arrow.forward"
-        case .skip: return "arrow.turn.down.right"
+        case .hold: return "pause.circle"
+        case .holdForRoute: return "point.3.connected.trianglepath.dotted"
+        case .carry: return "arrow.turn.down.right"
         }
     }
     var hint: String {
         switch self {
-        case .retryThenQueue: return "Retry a few times, then hold the run in the queue and resume when reachable."
-        case .fallbackOnDevice: return "If the endpoint is down, run this step on the on-device model instead."
-        case .skip: return "Drop this step and carry the input straight through."
+        case .hold: return "Stop here after one attempt. Resume only with a newly admitted attempt."
+        case .holdForRoute: return "Stop here. A separately admitted server run may choose another model."
+        case .carry: return "Make no second call; pass this step's input through unchanged."
         }
     }
 }
@@ -245,7 +246,7 @@ private struct GraphNode: Identifiable {
     var tone: String = "Executive"
     var keyword: String = "risk"
     var modelPref: ModelPref = .auto
-    var onFail: FailurePolicy = .retryThenQueue
+    var onFail: FailurePolicy = .hold
     /// Live run state — set by the runner as it walks the lowered workflow (HSM-14-15).
     var runState: NodeRunState = .idle
     init(_ kind: NodeKind, _ pos: CGPoint) { self.id = UUID(); self.kind = kind; self.pos = pos }
@@ -930,7 +931,7 @@ private struct GraphCanvasView: View {
             let status: NodeRunState
             let job: JobStatus
             switch outcome?.status {
-            case .ok, .fellBack: status = .done; job = .done
+            case .ok, .legacyAlternate: status = .done; job = .done
             case .skipped:       status = .done; job = .done
             case .parked:        status = .parked; job = .blocked
             default:             status = .failed; job = .failed
@@ -941,8 +942,7 @@ private struct GraphCanvasView: View {
                     queue.jobs[qi].status = job
                     queue.jobs[qi].progress = 1
                     queue.jobs[qi].note = outcome?.error
-                    // Settle the label to where the step ACTUALLY ran (a fallback
-                    // means it never left — the badge updates, HSM-15-02 honesty).
+                    // Settle the label to where this single step actually ran.
                     if let ran = outcome?.ranOn {
                         queue.jobs[qi].target = targetLabel(ran, peerName: peerName)
                     }
@@ -1116,7 +1116,7 @@ private struct NodeInspectorSheet: View {
     @State private var tone = "Executive"
     @State private var keyword = "risk"
     @State private var modelPref: ModelPref = .auto
-    @State private var onFail: FailurePolicy = .retryThenQueue
+    @State private var onFail: FailurePolicy = .hold
     private let tones = ["Executive", "Plain", "Friendly", "Technical", "Terse"]
 
     private var node: GraphNode? { model.node(nodeID) }

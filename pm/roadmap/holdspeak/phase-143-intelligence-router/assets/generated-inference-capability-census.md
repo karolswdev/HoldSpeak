@@ -139,8 +139,8 @@ law before an Apple capability can claim parity.
 | `Providers/Inference/StructuredOutput.swift:64` | `apple.structured_output` | Story 143-10 — Agents/workbenches/recipes adoption |
 | `Providers/Desktop/MeshServeWorker.swift:99` | `apple.mesh_serve` | Story 143-10 — Agents/workbenches/recipes adoption |
 | `RuntimeCore/Companion/CoderAnswer.swift:109` | `apple.coder_answer` | Story 143-10 — Agents/workbenches/recipes adoption |
-| `RuntimeCore/Workbench/BlueprintInterpreter.swift:343` | `apple.workbench.blueprint` | Story 143-06 — fallback-controller migration |
-| `RuntimeCore/Workbench/WorkflowRunner.swift:366` | `apple.workbench.workflow` | Story 143-06 — fallback-controller migration |
+| `RuntimeCore/Workbench/BlueprintInterpreter.swift:333` | `apple.workbench.blueprint` | Story 143-06 — one physical call; later routes require controller admission |
+| `RuntimeCore/Workbench/WorkflowRunner.swift:338` | `apple.workbench.workflow` | Story 143-06 — one physical call; later routes require controller admission |
 
 `WorkflowRunner` and `BlueprintInterpreter` currently retry and may use an
 injected fallback provider; those are legacy application-level physical calls,

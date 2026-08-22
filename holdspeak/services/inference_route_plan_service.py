@@ -71,6 +71,7 @@ class RouteAdmissionEvidenceProvider:
     operation_policy_revisions: tuple[str, ...]
     freeze: Callable[[Any, str, str], Mapping[str, Any]]
     reconstruct: Callable[[Any, str], Mapping[str, Any]]
+    reconstruct_attempt_budgets: Callable[[Any, str], Mapping[str, Any]] | None = None
 
 
 def _canonical(value: Any) -> str:
@@ -129,7 +130,7 @@ class InferenceRoutePlanService:
         owned: set[tuple[tuple[str, int, str], str]] = set()
         for provider in operation_evidence_providers:
             _safe_id(provider.id, field="evidence_provider_id")
-            if type(provider.revision) is not int or provider.revision < 1 or not callable(provider.freeze) or not callable(provider.reconstruct):
+            if type(provider.revision) is not int or provider.revision < 1 or not callable(provider.freeze) or not callable(provider.reconstruct) or (provider.reconstruct_attempt_budgets is not None and not callable(provider.reconstruct_attempt_budgets)):
                 raise ValueError("invalid route admission evidence provider")
             claims = {
                 (capability, policy)
@@ -536,10 +537,37 @@ class InferenceRoutePlanService:
                     admission_evidence_sha256=evidence["evidence_sha256"],
                 )
                 operation_hash = _sha256(operation)
+                budget_material = None
+                budget_provider = self._operation_evidence_providers.get(
+                    str(operation["evidence_provider_id"])
+                )
+                if budget_provider is not None and budget_provider.reconstruct_attempt_budgets is not None:
+                    budget_material = self._attempt_budget_material_in_transaction(
+                        ROUTE_PLANNING_AUTHORITY,
+                        conn,
+                        operation={**operation, "sha256": operation_hash},
+                        route=resolved,
+                    )
                 self._insert_route(conn, route_material, resolved["sha256"], revisions, capability_definition=capability.canonical_dict(), retry_policy_definition=self._registry.retry_policy(route_material["retry_policy"]["id"]).canonical_dict())
                 self._insert_operation(
                     conn, operation, operation_hash, frozen_preflight=preflight
                 )
+                if budget_material is not None:
+                    conn.execute(
+                        """INSERT INTO inference_operation_route_attempt_budget_evidence
+                           (operation_plan_id,provider_id,provider_revision,evidence_ref,
+                            material_snapshot_sha256,payload_json,sha256)
+                           VALUES (?,?,?,?,?,?,?)""",
+                        (
+                            operation["id"],
+                            budget_material["provider_id"],
+                            budget_material["provider_revision"],
+                            operation["admission_evidence_ref"],
+                            operation["material_snapshot_sha256"],
+                            _canonical(budget_material),
+                            _sha256(budget_material),
+                        ),
+                    )
                 conn.execute("INSERT INTO inference_operation_route_request_plan_commands VALUES (?,?,?,?,?,?,?)", (command, request_hash, route_material["id"], resolved["sha256"], operation["id"], operation_hash, operation["created_at"]))
                 conn.commit()
             except Exception:
@@ -571,6 +599,136 @@ class InferenceRoutePlanService:
             if row is None:
                 raise NotFound("operation route request plan", plan_id)
             return self._operation_from_row(conn, row)
+
+    def reconstruct_frozen_pair_in_transaction(
+        self,
+        authority: Principal,
+        conn: Any,
+        operation_plan_id: str,
+    ) -> tuple[dict[str, Any], dict[str, Any]]:
+        """Verify one operation/route pair inside its caller-owned transaction."""
+        self._require_planner(authority)
+        operation = self._operation_from_row(
+            conn,
+            conn.execute(
+                "SELECT * FROM inference_operation_route_request_plans WHERE id=?",
+                (_safe_id(operation_plan_id, field="operation_plan_id"),),
+            ).fetchone(),
+        )
+        route = self._route_from_row(
+            conn,
+            conn.execute(
+                "SELECT * FROM inference_route_plans WHERE id=?",
+                (operation["route_plan_id"],),
+            ).fetchone(),
+        )
+        if operation["route_plan_id"] != route["id"]:
+            raise ConflictError(
+                "Stored operation route binding is invalid.",
+                code="inference_operation_route_plan_integrity_invalid",
+            )
+        return operation, route
+
+    def reconstruct_attempt_budgets_in_transaction(
+        self,
+        authority: Principal,
+        conn: Any,
+        *,
+        operation: Mapping[str, Any],
+        route: Mapping[str, Any],
+    ) -> dict[str, Any]:
+        """Reconstruct closed, hash-bound worst-case budgets from the same owner."""
+        material = self._attempt_budget_material_in_transaction(
+            authority, conn, operation=operation, route=route
+        )
+        frozen = conn.execute(
+            "SELECT * FROM inference_operation_route_attempt_budget_evidence WHERE operation_plan_id=?",
+            (operation["id"],),
+        ).fetchone()
+        if frozen is None:
+            raise ServiceError(
+                "inference_attempt_budget_evidence_missing",
+                "This historical operation has no frozen attempt budgets",
+            )
+        try:
+            payload = json.loads(str(frozen["payload_json"]))
+        except (TypeError, ValueError, json.JSONDecodeError) as exc:
+            raise ConflictError("Frozen attempt budget evidence is invalid.", code="inference_attempt_budget_evidence_invalid") from exc
+        if (
+            payload != material
+            or str(frozen["sha256"]) != _sha256(material)
+            or str(frozen["provider_id"]) != material["provider_id"]
+            or int(frozen["provider_revision"]) != material["provider_revision"]
+            or str(frozen["evidence_ref"]) != operation["admission_evidence_ref"]
+            or str(frozen["material_snapshot_sha256"]) != operation["material_snapshot_sha256"]
+        ):
+            raise ConflictError("Frozen attempt budget evidence changed.", code="inference_attempt_budget_evidence_invalid")
+        return {**material, "sha256": _sha256(material)}
+
+    def _attempt_budget_material_in_transaction(
+        self,
+        authority: Principal,
+        conn: Any,
+        *,
+        operation: Mapping[str, Any],
+        route: Mapping[str, Any],
+    ) -> dict[str, Any]:
+        self._require_planner(authority)
+        provider = self._operation_evidence_providers.get(str(operation["evidence_provider_id"]))
+        if (
+            provider is None
+            or provider.revision != int(operation["evidence_provider_revision"])
+            or provider.reconstruct_attempt_budgets is None
+        ):
+            raise ServiceError(
+                "inference_attempt_budget_evidence_missing",
+                "The admitted operation owner did not freeze attempt budgets",
+            )
+        before = conn.total_changes
+        value = provider.reconstruct_attempt_budgets(
+            conn, str(operation["admission_evidence_ref"])
+        )
+        if conn.total_changes != before:
+            raise ConflictError(
+                "Attempt budget reconstruction wrote state.",
+                code="inference_attempt_budget_evidence_invalid",
+            )
+        if not isinstance(value, Mapping) or set(value) != {"schema", "evidence_ref", "material_snapshot_sha256", "entries"} or value["schema"] != "RouteAttemptBudgetEvidence@1":
+            raise ConflictError("Attempt budget evidence has an invalid shape.", code="inference_attempt_budget_evidence_invalid")
+        if value["evidence_ref"] != operation["admission_evidence_ref"] or value["material_snapshot_sha256"] != operation["material_snapshot_sha256"]:
+            raise ConflictError("Attempt budget evidence is not bound to the frozen material.", code="inference_attempt_budget_evidence_invalid")
+        entries = value["entries"]
+        if not isinstance(entries, Sequence) or isinstance(entries, (str, bytes)) or len(entries) != len(operation["entries"]):
+            raise ConflictError("Attempt budget evidence has invalid cardinality.", code="inference_attempt_budget_evidence_invalid")
+        normalized: list[dict[str, Any]] = []
+        fields = {"route_leg_ordinal", "admitted_request_id", "admitted_request_sha256", "context_plan_sha256", "serialized_request_sha256", "input_tokens", "reserved_output_tokens", "total_tokens", "reserved_cost_units", "reserved_tool_calls"}
+        for ordinal, (raw, planned) in enumerate(zip(entries, operation["entries"]), 1):
+            if not isinstance(raw, Mapping) or set(raw) != fields or raw["route_leg_ordinal"] != ordinal:
+                raise ConflictError("Attempt budget evidence entry is invalid.", code="inference_attempt_budget_evidence_invalid")
+            for name in ("input_tokens", "reserved_output_tokens", "total_tokens", "reserved_cost_units", "reserved_tool_calls"):
+                if type(raw[name]) is not int or raw[name] < 0:
+                    raise ConflictError("Attempt budget evidence amount is invalid.", code="inference_attempt_budget_evidence_invalid")
+            if raw["total_tokens"] != raw["input_tokens"] + raw["reserved_output_tokens"]:
+                raise ConflictError("Attempt token budget does not add up.", code="inference_attempt_budget_evidence_invalid")
+            if planned["eligibility"] != "executable" and any(int(raw[name]) for name in ("input_tokens", "reserved_output_tokens", "total_tokens", "reserved_cost_units", "reserved_tool_calls")):
+                raise ConflictError("Unavailable legs must reserve zero budget.", code="inference_attempt_budget_evidence_invalid")
+            for name in ("admitted_request_id", "admitted_request_sha256", "context_plan_sha256", "serialized_request_sha256"):
+                expected = planned[name]
+                if raw[name] != expected:
+                    raise ConflictError("Attempt budget evidence is cross-bound incorrectly.", code="inference_attempt_budget_evidence_invalid")
+            normalized.append(dict(raw))
+        material = {
+            "schema": "RouteAttemptBudgetEvidence@1",
+            "provider_id": provider.id,
+            "provider_revision": provider.revision,
+            "operation_plan_id": operation["id"],
+            "operation_plan_sha256": operation["sha256"],
+            "material_snapshot_sha256": operation["material_snapshot_sha256"],
+            "route_plan_id": route["id"],
+            "route_plan_sha256": route["sha256"],
+            "entries": normalized,
+        }
+        return material
 
     def route_leg_evidence(
         self,

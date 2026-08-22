@@ -255,12 +255,12 @@ final class BlueprintInterpreterTests: XCTestCase {
         if case .runFinished = got.last { } else { XCTFail("stream must finish with runFinished") }
     }
 
-    // MARK: - Failure policy: skip carries input, fallback recovers, retryThenQueue fails (no crash)
+    // MARK: - Failure action: carry or hold after exactly one physical call
 
-    func testModelFailureSkipPolicyCarriesInput() async {
+    func testModelFailureCarryPolicyCarriesInput() async {
         let bp = Blueprint(name: "skip", entry: "e", nodes: [
             BPNode(id: "e", kind: .entry),
-            BPNode(id: "m", kind: .llm(name: "m", prompt: "{input}"), failurePolicy: .skip),
+            BPNode(id: "m", kind: .llm(name: "m", prompt: "{input}"), failurePolicy: .carry),
             BPNode(id: "o", kind: .output),
         ], execEdges: [
             BPExecEdge(from: BPExecPin(node: "e", name: "then"), to: "m"),
@@ -268,7 +268,7 @@ final class BlueprintInterpreterTests: XCTestCase {
         ], dataEdges: [
             BPDataEdge(from: BPDataPin(node: "m", name: "out"), to: BPDataPin(node: "o", name: "in")),
         ])
-        let interp = BlueprintInterpreter(provider: DeadProvider(), policy: noBackoff(1, .skip))
+        let interp = BlueprintInterpreter(provider: DeadProvider(), policy: noBackoff(1, .carry))
         let (events, result) = await collectEvents(interp, bp, "CARRY ME")
         XCTAssertNil(result.failure, "skip must not crash or fail the run")
         XCTAssertEqual(result.status["m"], .skipped)
@@ -276,35 +276,35 @@ final class BlueprintInterpreterTests: XCTestCase {
         XCTAssertEqual(result.finalText, "CARRY ME")   // carried through
     }
 
-    func testModelFailureFallbackPolicyRecovers() async {
+    func testModelFailureHoldForRouteDoesNotCallInjectedFallback() async {
         let dead = DeadProvider()
         let fb = RecordingProvider(transform: { "FB(\($0))" })
         let bp = Blueprint(name: "fb", entry: "e", nodes: [
             BPNode(id: "e", kind: .entry),
-            BPNode(id: "m", kind: .summarize, failurePolicy: .fallbackOnDevice),
+            BPNode(id: "m", kind: .summarize, failurePolicy: .holdForRoute),
         ], execEdges: [
             BPExecEdge(from: BPExecPin(node: "e", name: "then"), to: "m"),
         ])
-        let interp = BlueprintInterpreter(provider: dead, fallback: fb, policy: noBackoff(0, .fallbackOnDevice))
+        let interp = BlueprintInterpreter(provider: dead, fallback: fb, policy: noBackoff(2, .holdForRoute))
         let (_, result) = await collectEvents(interp, bp, "src")
-        XCTAssertNil(result.failure)
-        XCTAssertEqual(result.status["m"], .done)
-        XCTAssertGreaterThan(dead.calls, 0)
-        XCTAssertGreaterThan(fb.calls, 0)
+        XCTAssertNotNil(result.failure)
+        XCTAssertEqual(result.status["m"], .failed)
+        XCTAssertEqual(dead.calls, 1)
+        XCTAssertEqual(fb.calls, 0)
     }
 
-    func testModelFailureRetriesThenFailsWithoutCrash() async {
+    func testModelFailureHoldsAfterOneCallWithoutCrash() async {
         let dead = DeadProvider()
         let bp = Blueprint(name: "q", entry: "e", nodes: [
             BPNode(id: "e", kind: .entry),
-            BPNode(id: "m", kind: .summarize, failurePolicy: .retryThenQueue),
+            BPNode(id: "m", kind: .summarize, failurePolicy: .hold),
         ], execEdges: [
             BPExecEdge(from: BPExecPin(node: "e", name: "then"), to: "m"),
         ])
-        let interp = BlueprintInterpreter(provider: dead, policy: noBackoff(2, .retryThenQueue))
+        let interp = BlueprintInterpreter(provider: dead, policy: noBackoff(2, .hold))
         let (events, result) = await collectEvents(interp, bp, "src")
-        XCTAssertNotNil(result.failure, "exhausted retries surface as a failed run, not a crash")
-        XCTAssertEqual(dead.calls, 3, "1 try + 2 retries")
+        XCTAssertNotNil(result.failure, "a held interpreter step surfaces without a crash")
+        XCTAssertEqual(dead.calls, 1)
         XCTAssertEqual(result.status["m"], .failed)
         if case .runFailed? = events.last { } else { XCTFail("run must end with runFailed") }
     }

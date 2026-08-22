@@ -64,7 +64,13 @@ def test_meeting_intel_opens_the_circuit_then_fails_fast(monkeypatch):
     from holdspeak.intel.engine import MeetingIntel
     from holdspeak.intel.models import MeetingIntelError
 
-    monkeypatch.setattr(_intel_pkg, "OpenAI", lambda **kw: _AlwaysFailsClient(**kw))
+    client_kwargs = {}
+
+    def client_factory(**kwargs):
+        client_kwargs.update(kwargs)
+        return _AlwaysFailsClient(**kwargs)
+
+    monkeypatch.setattr(_intel_pkg, "OpenAI", client_factory)
 
     intel = MeetingIntel(
         provider="cloud",
@@ -74,6 +80,7 @@ def test_meeting_intel_opens_the_circuit_then_fails_fast(monkeypatch):
     )
     intel._active_provider = "cloud"  # bypass resolve_intel_provider's file/key checks
     intel._ensure_openai_client_loaded()
+    assert client_kwargs["max_retries"] == 0
 
     for _ in range(default_health._failure_threshold):
         with pytest.raises(MeetingIntelError):

@@ -72,6 +72,47 @@ def test_each_terminal_outcome_has_one_immutable_receipt(rig, error, outcome):
     )) == receipt
 
 
+def test_node_cannot_forge_cross_bind_or_replay_runner_receipt_evidence(rig):
+    from holdspeak.kernel.runner_receipt_evidence import (
+        RUNNER_RECEIPT_EVIDENCE_REQUIRED,
+        RunnerReceiptEvidence,
+        consume_runner_receipt_evidence,
+    )
+
+    db, broker, revision = rig
+    original_receipt = broker.receipt
+    attacks: list[str] = []
+
+    def guarded_receipt(operation_id, outcome, result_ref, node, **kwargs):
+        evidence = kwargs["runner_evidence"]
+        with pytest.raises(KernelRefused, match=RUNNER_RECEIPT_EVIDENCE_REQUIRED):
+            original_receipt(operation_id, outcome, result_ref, node)
+        with pytest.raises(KernelRefused, match=RUNNER_RECEIPT_EVIDENCE_REQUIRED):
+            RunnerReceiptEvidence(
+                operation_id=operation_id, outcome=outcome, result_ref=result_ref,
+                runner_signal="provider_permanent_no_generation",
+                send_phase="provider_no_generation",
+            )
+        with pytest.raises(KernelRefused, match=RUNNER_RECEIPT_EVIDENCE_REQUIRED):
+            consume_runner_receipt_evidence(
+                evidence, operation_id="op_cross_operation",
+                outcome=outcome, result_ref=result_ref,
+            )
+        receipt = original_receipt(operation_id, outcome, result_ref, node, **kwargs)
+        with pytest.raises(KernelRefused, match=RUNNER_RECEIPT_EVIDENCE_REQUIRED):
+            original_receipt(operation_id, outcome, result_ref, node, **kwargs)
+        attacks.extend(("missing", "lookalike", "cross_operation", "replay"))
+        return receipt
+
+    broker.receipt = guarded_receipt
+    result = InferenceRunner(
+        broker, db, engine_factory=lambda _revision, **_kw: object(),
+        principal_provider=lambda: OWNER,
+    ).invoke(request(revision), Adapter())
+    assert result.outcome == "succeeded"
+    assert attacks == ["missing", "lookalike", "cross_operation", "replay"]
+
+
 def test_pre_dispatch_hook_runs_before_every_physical_attempt(rig):
     db, broker, revision = rig
     events = []
@@ -538,10 +579,10 @@ def test_terminal_receipts_gate_both_invoke_and_cancel_returns(rig):
     db, broker, revision = rig
     started, entered, release, finished = threading.Event(), threading.Event(), threading.Event(), []
     original_receipt = broker.receipt
-    def gated_receipt(operation_id, outcome, result_ref, node):
+    def gated_receipt(operation_id, outcome, result_ref, node, **kwargs):
         if outcome in {"cancelled", "succeeded"}:
             entered.set(); assert release.wait(2)
-        return original_receipt(operation_id, outcome, result_ref, node)
+        return original_receipt(operation_id, outcome, result_ref, node, **kwargs)
     broker.receipt = gated_receipt
     class Waiting(Adapter):
         def dispatch(self, engine, payload, cancellation):
@@ -581,9 +622,9 @@ def test_receipt_failure_after_acknowledgement_never_publishes_late_result(rig):
     db, broker, revision = rig
     entered, release, results, errors = threading.Event(), threading.Event(), [], []
     original_receipt = broker.receipt
-    def failing_receipt(operation_id, outcome, result_ref, node):
+    def failing_receipt(operation_id, outcome, result_ref, node, **kwargs):
         if outcome == "cancelled": raise RuntimeError("receipt disk failure")
-        return original_receipt(operation_id, outcome, result_ref, node)
+        return original_receipt(operation_id, outcome, result_ref, node, **kwargs)
     broker.receipt = failing_receipt
     class Waiting(Adapter):
         def dispatch(self, engine, payload, cancellation):
@@ -686,10 +727,10 @@ def test_timeout_receipt_is_durable_before_waiting_canceller_observes_unknown(ri
     receipt_entered, release_receipt = threading.Event(), threading.Event()
     first, second, invocation = [], [], []
     original_receipt = broker.receipt
-    def gated_receipt(operation_id, outcome, result_ref, node):
+    def gated_receipt(operation_id, outcome, result_ref, node, **kwargs):
         if outcome == "indeterminate":
             receipt_entered.set(); assert release_receipt.wait(2)
-        return original_receipt(operation_id, outcome, result_ref, node)
+        return original_receipt(operation_id, outcome, result_ref, node, **kwargs)
     broker.receipt = gated_receipt
     class Hung(Adapter):
         def dispatch(self, engine, payload, cancellation):
@@ -717,10 +758,10 @@ def test_failure_receipt_is_durable_before_concurrent_cancel_observes_terminal(r
     receipt_entered, release_receipt = threading.Event(), threading.Event()
     invoke_result, cancel_result = [], []
     original_receipt = broker.receipt
-    def gated_receipt(operation_id, outcome, result_ref, node):
+    def gated_receipt(operation_id, outcome, result_ref, node, **kwargs):
         if outcome == "failed":
             receipt_entered.set(); assert release_receipt.wait(2)
-        return original_receipt(operation_id, outcome, result_ref, node)
+        return original_receipt(operation_id, outcome, result_ref, node, **kwargs)
     broker.receipt = gated_receipt
     runner = InferenceRunner(broker, db, engine_factory=lambda _revision, **_kw: object(), principal_provider=lambda: OWNER)
     invoke_thread = threading.Thread(target=lambda: invoke_result.append(runner.invoke(
@@ -749,12 +790,12 @@ def test_failed_closure_retries_before_a_waiter_observes_durable_outcome(rig):
     third_attempt, release_receipt = threading.Event(), threading.Event()
     attempts, invoke_result, cancel_result = [], [], []
     original_receipt = broker.receipt
-    def flaky_receipt(operation_id, outcome, result_ref, node):
+    def flaky_receipt(operation_id, outcome, result_ref, node, **kwargs):
         if outcome == "failed":
             attempts.append(outcome)
             if len(attempts) < 3: raise RuntimeError("transient receipt failure")
             third_attempt.set(); assert release_receipt.wait(2)
-        return original_receipt(operation_id, outcome, result_ref, node)
+        return original_receipt(operation_id, outcome, result_ref, node, **kwargs)
     broker.receipt = flaky_receipt
     runner = InferenceRunner(broker, db, engine_factory=lambda _revision, **_kw: object(), principal_provider=lambda: OWNER)
     invoke_thread = threading.Thread(target=lambda: invoke_result.append(runner.invoke(
@@ -774,12 +815,12 @@ def test_permanently_failed_closure_returns_same_error_to_waiter(rig):
     exhausted = threading.Event()
     attempts, invoke_errors = [], []
     original_receipt = broker.receipt
-    def failing_receipt(operation_id, outcome, result_ref, node):
+    def failing_receipt(operation_id, outcome, result_ref, node, **kwargs):
         if outcome == "failed":
             attempts.append(outcome)
             if len(attempts) == 3: exhausted.set()
             raise RuntimeError("persistent receipt failure")
-        return original_receipt(operation_id, outcome, result_ref, node)
+        return original_receipt(operation_id, outcome, result_ref, node, **kwargs)
     broker.receipt = failing_receipt
     runner = InferenceRunner(broker, db, engine_factory=lambda _revision, **_kw: object(), principal_provider=lambda: OWNER)
     def run():
@@ -797,9 +838,9 @@ def test_closure_failure_during_engine_build_never_dispatches_provider(rig):
     engine_started, release_engine = threading.Event(), threading.Event()
     dispatched, invoke_errors = [], []
     original_receipt = broker.receipt
-    def failing_receipt(operation_id, outcome, result_ref, node):
+    def failing_receipt(operation_id, outcome, result_ref, node, **kwargs):
         if outcome == "cancelled": raise RuntimeError("persistent cancellation receipt failure")
-        return original_receipt(operation_id, outcome, result_ref, node)
+        return original_receipt(operation_id, outcome, result_ref, node, **kwargs)
     broker.receipt = failing_receipt
     def build_engine(value, **_kw):
         engine_started.set(); assert release_engine.wait(2); return object()
@@ -900,12 +941,12 @@ def test_dispatch_ack_receipt_retries_irreversibly_before_cancelled_closure(rig)
     attempts, invoke_result, cancel_result, published = [], [], [], []
     original_receipt = broker.receipt
     outer = [""]
-    def flaky_receipt(operation_id, outcome, result_ref, node):
+    def flaky_receipt(operation_id, outcome, result_ref, node, **kwargs):
         if operation_id != outer[0] and outcome == "succeeded":
             attempts.append(operation_id)
             if len(attempts) < 3: raise RuntimeError("transient cancel receipt failure")
             third_attempt.set()
-        return original_receipt(operation_id, outcome, result_ref, node)
+        return original_receipt(operation_id, outcome, result_ref, node, **kwargs)
     broker.receipt = flaky_receipt
     class Provider(Adapter):
         def dispatch(self, engine, payload, cancellation):
@@ -930,9 +971,9 @@ def test_dispatch_ack_persistent_receipt_failure_stays_irreversible(rig):
     invoke_errors, published = [], []
     original_receipt = broker.receipt
     outer = [""]
-    def failing_receipt(operation_id, outcome, result_ref, node):
+    def failing_receipt(operation_id, outcome, result_ref, node, **kwargs):
         if operation_id != outer[0] and outcome == "succeeded": raise RuntimeError("persistent cancel receipt failure")
-        return original_receipt(operation_id, outcome, result_ref, node)
+        return original_receipt(operation_id, outcome, result_ref, node, **kwargs)
     broker.receipt = failing_receipt
     class Provider(Adapter):
         def dispatch(self, engine, payload, cancellation):
@@ -1047,12 +1088,12 @@ def test_each_cancel_child_disposition_waits_for_its_own_durable_receipt(
     cancel_calls, cancel_result, invocation = [], [], []
     original_receipt = broker.receipt
 
-    def gated_receipt(operation_id, outcome, result_ref, node):
+    def gated_receipt(operation_id, outcome, result_ref, node, **kwargs):
         operation = broker.store.operation(operation_id)
         if operation["name"] == "inference.cancel" and outcome == child_outcome:
             child_receipt_entered.set()
             assert release_child_receipt.wait(RACE_TIMEOUT)
-        return original_receipt(operation_id, outcome, result_ref, node)
+        return original_receipt(operation_id, outcome, result_ref, node, **kwargs)
 
     broker.receipt = gated_receipt
 
@@ -1103,7 +1144,7 @@ def test_cancel_child_receipt_transient_retries_once_adapter_call_and_shared_dis
     attempts, cancel_calls, first, second, invocation = [], [], [], [], []
     original_receipt = broker.receipt
 
-    def flaky_receipt(operation_id, outcome, result_ref, node):
+    def flaky_receipt(operation_id, outcome, result_ref, node, **kwargs):
         operation = broker.store.operation(operation_id)
         if operation["name"] == "inference.cancel" and outcome == child_outcome:
             attempts.append(operation_id)
@@ -1111,7 +1152,7 @@ def test_cancel_child_receipt_transient_retries_once_adapter_call_and_shared_dis
                 raise RuntimeError("transient child receipt failure")
             third_attempt.set()
             assert release_third_attempt.wait(2)
-        return original_receipt(operation_id, outcome, result_ref, node)
+        return original_receipt(operation_id, outcome, result_ref, node, **kwargs)
 
     broker.receipt = flaky_receipt
 
@@ -1162,14 +1203,14 @@ def test_cancel_child_receipt_exhaustion_retains_one_error_for_all_cancellers(
     attempts, cancel_calls, errors, invocation_errors = [], [], [], []
     original_receipt = broker.receipt
 
-    def failing_receipt(operation_id, outcome, result_ref, node):
+    def failing_receipt(operation_id, outcome, result_ref, node, **kwargs):
         operation = broker.store.operation(operation_id)
         if operation["name"] == "inference.cancel" and outcome == child_outcome:
             attempts.append(operation_id)
             if len(attempts) == 3:
                 exhausted.set()
             raise RuntimeError("persistent child receipt failure")
-        return original_receipt(operation_id, outcome, result_ref, node)
+        return original_receipt(operation_id, outcome, result_ref, node, **kwargs)
 
     broker.receipt = failing_receipt
 
@@ -1329,12 +1370,12 @@ def test_dispatch_cancel_child_can_close_before_independently_gated_invocation_r
     child_terminal, cancellation, invocation = threading.Event(), [], []
     original_receipt = broker.receipt
 
-    def gated_receipt(operation_id, outcome, result_ref, node):
+    def gated_receipt(operation_id, outcome, result_ref, node, **kwargs):
         operation = broker.store.operation(operation_id)
         if operation["name"] == "inference.invoke" and outcome == "cancelled":
             invocation_receipt_entered.set()
             assert release_invocation_receipt.wait(2)
-        receipt = original_receipt(operation_id, outcome, result_ref, node)
+        receipt = original_receipt(operation_id, outcome, result_ref, node, **kwargs)
         if operation["name"] == "inference.cancel" and outcome == "succeeded":
             child_terminal.set()
         return receipt

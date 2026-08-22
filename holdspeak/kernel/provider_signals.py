@@ -43,6 +43,30 @@ class ProviderCompatibilityRetry(RuntimeError):
         super().__init__(f"provider compatibility retry: {self.mode}")
 
 
+class ProviderKnownNoGenerationTransient(RuntimeError):
+    """Fixed proof that a provider rejected before generation (for example 429)."""
+
+    code = "provider_rate_limited_before_generation"
+
+
+class ProviderPermanentNoGeneration(RuntimeError):
+    """Typed fixed-status proof that the selected provider/model cannot serve."""
+
+    code = "provider_model_unavailable_before_generation"
+
+
+class ProviderPermissionDenied(RuntimeError):
+    """Typed fixed-status authority refusal; never eligible for fallback."""
+
+    code = "provider_permission_denied"
+
+
+class InferenceInvalidTypedOutput(RuntimeError):
+    """Content-free proof that returned output failed the frozen type contract."""
+
+    code = "inference_invalid_typed_output"
+
+
 #: The typed signals the RUNNER acts on, which therefore must survive every
 #: sanitizing adapter wrapper between the engine and ``InferenceRunner._attempt``.
 #:
@@ -61,6 +85,10 @@ class ProviderCompatibilityRetry(RuntimeError):
 #: each one does, structurally and at runtime.
 CONTROL_SIGNALS: tuple[type[BaseException], ...] = (
     ProviderCompatibilityRetry,
+    ProviderKnownNoGenerationTransient,
+    ProviderPermanentNoGeneration,
+    ProviderPermissionDenied,
+    InferenceInvalidTypedOutput,
     ProviderIndeterminate,
 )
 
@@ -96,8 +124,12 @@ def compatibility_follow_up(request: Any, invocation_id: str) -> Any:
 
 __all__ = [
     "CONTROL_SIGNALS",
+    "InferenceInvalidTypedOutput",
     "ProviderCompatibilityRetry",
     "ProviderIndeterminate",
+    "ProviderKnownNoGenerationTransient",
+    "ProviderPermanentNoGeneration",
+    "ProviderPermissionDenied",
     "compatibility_follow_up",
     "retry_invocation_id",
 ]

@@ -1,11 +1,16 @@
 """The separate executor plane: atomic claim, immutable receipt, reconcile."""
 from __future__ import annotations
 
-from typing import Any, Mapping
+from collections.abc import Mapping
+from typing import Any
 
 from ..principals import PrincipalKind
 from .claim_witness import _install_claim_issuer
 from .model import FINAL_STATES, KernelRefused, valid_ref
+from .runner_receipt_evidence import (
+    RUNNER_RECEIPT_EVIDENCE_REQUIRED,
+    consume_runner_receipt_evidence,
+)
 
 # HS-131-10 round 2: the process's ONE witness issuer, taken here at import and
 # unobtainable afterwards (`_install_claim_issuer` refuses every later call). It
@@ -83,6 +88,7 @@ class ExecutorPlane:
 
     def receipt(
         self, operation_id: str, outcome: str, result_ref: str, principal: Any,
+        *, runner_evidence: Any = None,
     ) -> dict[str, Any]:
         if principal.kind is not PrincipalKind.NODE:
             raise KernelRefused("node_principal_required_to_receipt")
@@ -97,7 +103,18 @@ class ExecutorPlane:
         if existing is not None:
             if existing["outcome"] != outcome or existing["result_ref"] != result_ref:
                 raise KernelRefused("receipt_immutable", operation_id=operation_id)
+            if runner_evidence is not None and operation["name"] == "inference.invoke" and int(operation["version"]) == 1:
+                consume_runner_receipt_evidence(
+                    runner_evidence, operation_id=operation_id,
+                    outcome=outcome, result_ref=result_ref,
+                )
             return existing
+        if (
+            operation["name"] == "inference.invoke"
+            and int(operation["version"]) == 1
+            and runner_evidence is None
+        ):
+            raise KernelRefused(RUNNER_RECEIPT_EVIDENCE_REQUIRED)
         states = {
             "succeeded": "succeeded", "failed": "failed", "cancelled": "cancelled",
             "refused": "refused", "indeterminate": "indeterminate",
@@ -105,7 +122,8 @@ class ExecutorPlane:
         if outcome not in states:
             raise KernelRefused("receipt_outcome_unknown", operation_id=operation_id)
         operation, _ = self.store.transition_and_receipt(
-            operation_id, operation["revision"], states[outcome], outcome, result_ref
+            operation_id, operation["revision"], states[outcome], outcome, result_ref,
+            runner_evidence=runner_evidence,
         )
         return self._terminal(operation, states[outcome], outcome, result_ref)
 

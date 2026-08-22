@@ -49,7 +49,7 @@ Assignments.
 | HSEGHS001HS104-143-03 | Reusable Model Profile Authority | done | [story-03-reusable-model-profile-authority](./story-03-reusable-model-profile-authority.md) | [evidence](./evidence-story-03.md) |
 | HSEGHS001HS104-143-04 | Assignment Store and Resolver | done | [story-04-assignment-store-resolver](./story-04-assignment-store-resolver.md) | [evidence](./evidence-story-04.md) |
 | HSEGHS001HS104-143-05 | Frozen Route Plans | done | [story-05-frozen-route-plans](./story-05-frozen-route-plans.md) | [evidence](./evidence-story-05.md) |
-| HSEGHS001HS104-143-06 | Fallback Controller and Failure Law | backlog | [story-06-fallback-controller-failure-law](./story-06-fallback-controller-failure-law.md) | - |
+| HSEGHS001HS104-143-06 | Fallback Controller and Failure Law | in-progress | [story-06-fallback-controller-failure-law](./story-06-fallback-controller-failure-law.md) | - |
 | HSEGHS001HS104-143-07 | Thoughts Ask and Writing Adoption | backlog | [story-07-thoughts-ask-writing-adoption](./story-07-thoughts-ask-writing-adoption.md) | - |
 | HSEGHS001HS104-143-08 | Meetings Speech and Background Adoption | backlog | [story-08-meetings-speech-background-adoption](./story-08-meetings-speech-background-adoption.md) | - |
 | HSEGHS001HS104-143-09 | Tool Capability Foundation and Safe Routing | backlog | [story-09-tool-turn-routing-safe-fallback](./story-09-tool-turn-routing-safe-fallback.md) | - |
@@ -85,8 +85,11 @@ hub-local assignment authority with whole-chain precedence, bounded ordered
 fallbacks, ABA-safe Use default, exact compatibility, migration markers, and a
 fixed seven-row owner projection. Story 05 now freezes content-free route and
 private request-plan evidence before execution, with deterministic replay and
-independently reconstructable admission evidence. Story 06 adds the durable
-controller before product families migrate in Stories 07–10.
+independently reconstructable admission evidence. Story 06's durable controller,
+failure law, receipt authority, and dormant routed-runtime seam are implemented
+and green. Its remaining acceptance item is one lawful activated local-to-cloud
+traversal, which the first cloud-capable adopter in Stories 07/08/10 must supply;
+the controller does not fabricate a cloud deployment to make that proof pass.
 Stories 11–13 ship parity and the two owner jobs: Model Library and Assignments.
 Story 14 is the cross-product chaos/glass gate.
 

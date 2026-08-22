@@ -134,22 +134,22 @@ final class WorkflowRunnerTests: XCTestCase {
                        ["Summarize", "Keep if · X", "Rewrite · plain"])
     }
 
-    // MARK: retry-then-park
+    // MARK: one call, then hold
 
-    func testRetryThenParkAfterExhaustingRetries() async {
+    func testHoldMakesOneCallEvenWhenLegacyRetryBudgetIsNonzero() async {
         let dead = DeadProvider()
         let runner = WorkflowRunner(provider: dead,
-                                    policy: noBackoffPolicy(maxRetries: 2, policy: .retryThenQueue))
+                                    policy: noBackoffPolicy(maxRetries: 2, policy: .hold))
         let wf = Workflow(name: "p", source: .fullTranscript, steps: [.summarize], output: .note)
 
         let result = await runner.run(wf, sourceText: "SRC")
 
-        XCTAssertEqual(dead.calls, 3, "1 try + 2 retries")
+        XCTAssertEqual(dead.calls, 1, "Apple never turns a compatibility retry budget into egress")
         XCTAssertTrue(result.didPark)
         XCTAssertEqual(result.parked?.resumeFromStep, 0)
         XCTAssertEqual(result.parked?.carriedInput, "SRC")
         XCTAssertEqual(result.steps.first?.status, .parked)
-        XCTAssertEqual(result.steps.first?.attempts, 3)
+        XCTAssertEqual(result.steps.first?.attempts, 1)
     }
 
     func testParkResumesFromCachedStepWithoutRecompute() async {
@@ -169,28 +169,28 @@ final class WorkflowRunnerTests: XCTestCase {
                       "the resumed step consumes the carried/cached input")
     }
 
-    // MARK: fallback to a second provider
+    // MARK: alternate-route requests are held, never executed by the client
 
-    func testFallbackOnDeviceUsesSecondProvider() async {
+    func testHoldForRouteDoesNotCallInjectedLegacyFallback() async {
         let primary = DeadProvider()                                   // unreachable endpoint
         let fallback = RecordingProvider(transform: { _ in "ON_DEVICE_RESULT" })
         let runner = WorkflowRunner(provider: primary, fallback: fallback,
-                                    policy: noBackoffPolicy(maxRetries: 1, policy: .fallbackOnDevice))
+                                    policy: noBackoffPolicy(maxRetries: 1, policy: .holdForRoute))
         let wf = Workflow(name: "fb", source: .fullTranscript, steps: [.summarize], output: .note)
 
         let result = await runner.run(wf, sourceText: "SRC")
 
-        XCTAssertEqual(primary.calls, 2, "1 try + 1 retry on the primary, then it gave up")
-        XCTAssertEqual(fallback.calls, 1, "the fallback ran once and succeeded")
-        XCTAssertTrue(result.didComplete)
-        XCTAssertEqual(result.finalText, "ON_DEVICE_RESULT")
-        XCTAssertEqual(result.steps.first?.status, .fellBack)
+        XCTAssertEqual(primary.calls, 1)
+        XCTAssertEqual(fallback.calls, 0, "only the server route controller may choose another model")
+        XCTAssertTrue(result.didPark)
+        XCTAssertEqual(result.finalText, "SRC")
+        XCTAssertEqual(result.steps.first?.status, .parked)
     }
 
-    func testSkipPolicyCarriesInputThrough() async {
+    func testCarryPolicyCarriesInputThrough() async {
         let dead = DeadProvider()
         let runner = WorkflowRunner(provider: dead,
-                                    policy: noBackoffPolicy(maxRetries: 0, policy: .skip))
+                                    policy: noBackoffPolicy(maxRetries: 0, policy: .carry))
         let wf = Workflow(name: "sk", source: .fullTranscript, steps: [.summarize], output: .note)
 
         let result = await runner.run(wf, sourceText: "CARRY_ME")
@@ -227,7 +227,7 @@ final class WorkflowRunnerTests: XCTestCase {
         let provider = RecordingProvider()
         let mac = DispatchRecorder()
         let runner = WorkflowRunner(provider: provider, dispatch: mac.handler,
-                                    policy: noBackoffPolicy(maxRetries: 0, policy: .retryThenQueue))
+                                    policy: noBackoffPolicy(maxRetries: 0, policy: .hold))
         let wf = Workflow(name: "m", source: .fullTranscript, steps: [.summarize], output: .note)
 
         let result = await runner.run(wf, sourceText: "SRC", targets: [.dispatchToMac])
@@ -241,11 +241,11 @@ final class WorkflowRunnerTests: XCTestCase {
     }
 
     func testNoPairedPeerRidesTheFailurePolicy() async {
-        // No dispatch handler wired (no paired desktop): retryThenQueue parks the run
+        // No dispatch handler wired (no paired desktop): hold parks the run
         // so it can resume when a peer is adopted — never a crash, never a silent skip.
         let provider = RecordingProvider()
         let runner = WorkflowRunner(provider: provider,
-                                    policy: noBackoffPolicy(maxRetries: 2, policy: .retryThenQueue))
+                                    policy: noBackoffPolicy(maxRetries: 2, policy: .hold))
         let wf = Workflow(name: "np", source: .fullTranscript, steps: [.summarize], output: .note)
 
         let result = await runner.run(wf, sourceText: "SRC", targets: [.dispatchToMac])
@@ -257,39 +257,35 @@ final class WorkflowRunnerTests: XCTestCase {
         XCTAssertEqual(result.steps.first?.ranOn, .dispatchToMac)
     }
 
-    func testUnreachableMacFallsBackOnDeviceWithHonestRanOn() async {
-        // The IF-UNREACHABLE grammar: the Mac is down, the node's policy says fall
-        // back on-device — the step succeeds AND the outcome says .onDevice (it
-        // never left after all; the badge updates).
+    func testUnreachableMacIsHeldWithoutCallingInjectedFallback() async {
         let mac = DispatchRecorder(failTimes: 99)
         let fallback = RecordingProvider(transform: { _ in "ON_DEVICE_RESULT" })
         let runner = WorkflowRunner(provider: DeadProvider(), fallback: fallback,
                                     dispatch: mac.handler,
-                                    policy: noBackoffPolicy(maxRetries: 1, policy: .fallbackOnDevice))
+                                    policy: noBackoffPolicy(maxRetries: 1, policy: .holdForRoute))
         let wf = Workflow(name: "fbm", source: .fullTranscript, steps: [.summarize], output: .note)
 
         let result = await runner.run(wf, sourceText: "SRC", targets: [.dispatchToMac])
 
-        XCTAssertEqual(mac.prompts.count, 2, "1 try + 1 retry on the Mac before falling back")
-        XCTAssertEqual(fallback.calls, 1)
-        XCTAssertTrue(result.didComplete)
-        XCTAssertEqual(result.finalText, "ON_DEVICE_RESULT")
-        XCTAssertEqual(result.steps.first?.status, .fellBack)
-        XCTAssertEqual(result.steps.first?.ranOn, .onDevice)
+        XCTAssertEqual(mac.prompts.count, 1)
+        XCTAssertEqual(fallback.calls, 0)
+        XCTAssertTrue(result.didPark)
+        XCTAssertEqual(result.finalText, "SRC")
+        XCTAssertEqual(result.steps.first?.status, .parked)
+        XCTAssertEqual(result.steps.first?.ranOn, .dispatchToMac)
     }
 
-    func testDispatchRetriesUnderTheSameBound() async {
-        // The Mac hiccups once; the SAME bounded retry loop that covers providers
-        // covers the dispatch — the second try lands.
+    func testDispatchFailureMakesOneCallThenHolds() async {
         let mac = DispatchRecorder(failTimes: 1)
         let runner = WorkflowRunner(provider: RecordingProvider(), dispatch: mac.handler,
-                                    policy: noBackoffPolicy(maxRetries: 2, policy: .retryThenQueue))
+                                    policy: noBackoffPolicy(maxRetries: 2, policy: .hold))
         let wf = Workflow(name: "r", source: .fullTranscript, steps: [.summarize], output: .note)
 
         let result = await runner.run(wf, sourceText: "SRC", targets: [.dispatchToMac])
 
-        XCTAssertTrue(result.didComplete)
-        XCTAssertEqual(result.steps.first?.attempts, 2)
+        XCTAssertTrue(result.didPark)
+        XCTAssertEqual(mac.prompts.count, 1)
+        XCTAssertEqual(result.steps.first?.attempts, 1)
         XCTAssertEqual(result.steps.first?.ranOn, .dispatchToMac)
     }
 
@@ -299,7 +295,7 @@ final class WorkflowRunnerTests: XCTestCase {
         let provider = RecordingProvider(transform: { _ in "LOCAL_OUT" })
         let mac = DispatchRecorder()
         let runner = WorkflowRunner(provider: provider, dispatch: mac.handler,
-                                    policy: noBackoffPolicy(maxRetries: 0, policy: .skip))
+                                    policy: noBackoffPolicy(maxRetries: 0, policy: .carry))
         let wf = Workflow(name: "mix", source: .fullTranscript,
                           steps: [.summarize, .rewrite(tone: "executive")], output: .note)
 
