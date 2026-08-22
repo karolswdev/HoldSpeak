@@ -2461,6 +2461,130 @@ CREATE TABLE IF NOT EXISTS inference_assignment_migrations (
     committed_at TEXT NOT NULL
 );
 
+-- HS-143-05: immutable, content-free routing evidence.  Resolution happens
+-- from one SQLite snapshot before these rows are written; execution and
+-- fallback never consult mutable assignment/profile heads again.
+CREATE TABLE IF NOT EXISTS inference_route_plans (
+    id TEXT PRIMARY KEY,
+    sha256 TEXT NOT NULL UNIQUE,
+    capability_id TEXT NOT NULL,
+    capability_revision INTEGER NOT NULL CHECK (capability_revision > 0),
+    capability_schema_sha256 TEXT NOT NULL,
+    assignment_id TEXT NOT NULL,
+    assignment_revision INTEGER NOT NULL CHECK (assignment_revision > 0),
+    assignment_sha256 TEXT NOT NULL,
+    inherited_from TEXT NOT NULL CHECK (inherited_from IN ('invocation','subject','capability','group','global','legacy_override')),
+    retry_policy_id TEXT NOT NULL,
+    retry_policy_revision INTEGER NOT NULL CHECK (retry_policy_revision > 0),
+    operation_policy_revision TEXT NOT NULL,
+    payload_json TEXT NOT NULL,
+    state TEXT NOT NULL DEFAULT 'frozen' CHECK (state='frozen'),
+    deadline_at TEXT NOT NULL,
+    created_at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS inference_route_plan_entries (
+    id TEXT PRIMARY KEY,
+    plan_id TEXT NOT NULL REFERENCES inference_route_plans(id),
+    route_leg_ordinal INTEGER NOT NULL CHECK (route_leg_ordinal BETWEEN 1 AND 4),
+    profile_id TEXT NOT NULL,
+    profile_revision INTEGER NOT NULL CHECK (profile_revision > 0),
+    profile_schema_version INTEGER NOT NULL CHECK (profile_schema_version IN (1,2)),
+    binding_id TEXT NOT NULL,
+    binding_revision INTEGER NOT NULL CHECK (binding_revision > 0),
+    deployment_head_id TEXT NOT NULL,
+    deployment_configuration_revision INTEGER NOT NULL CHECK (deployment_configuration_revision > 0),
+    deployment_revision_id TEXT NOT NULL,
+    capability_manifest_sha256 TEXT NOT NULL,
+    boundary TEXT NOT NULL CHECK (boundary IN ('local','private_network','mesh','cloud')),
+    context_support_json TEXT NOT NULL,
+    UNIQUE (plan_id, route_leg_ordinal)
+);
+CREATE INDEX IF NOT EXISTS idx_inference_route_plan_entries_profile
+    ON inference_route_plan_entries(profile_id, profile_revision);
+CREATE TABLE IF NOT EXISTS inference_route_plan_commands (
+    command_id TEXT PRIMARY KEY,
+    request_sha256 TEXT NOT NULL,
+    plan_id TEXT NOT NULL REFERENCES inference_route_plans(id),
+    plan_sha256 TEXT NOT NULL,
+    created_at TEXT NOT NULL
+);
+CREATE TRIGGER IF NOT EXISTS inference_route_plan_commands_no_update
+BEFORE UPDATE ON inference_route_plan_commands BEGIN
+    SELECT RAISE(ABORT, 'immutable inference route command');
+END;
+CREATE TRIGGER IF NOT EXISTS inference_route_plan_commands_no_delete
+BEFORE DELETE ON inference_route_plan_commands BEGIN
+    SELECT RAISE(ABORT, 'immutable inference route command');
+END;
+CREATE TABLE IF NOT EXISTS inference_route_plan_authority_evidence (
+    plan_id TEXT PRIMARY KEY REFERENCES inference_route_plans(id),
+    capability_definition_json TEXT NOT NULL,
+    capability_definition_sha256 TEXT NOT NULL,
+    retry_policy_definition_json TEXT NOT NULL,
+    retry_policy_definition_sha256 TEXT NOT NULL
+);
+CREATE TRIGGER IF NOT EXISTS inference_route_plan_authority_no_update
+BEFORE UPDATE ON inference_route_plan_authority_evidence BEGIN
+    SELECT RAISE(ABORT, 'immutable inference route authority evidence');
+END;
+CREATE TRIGGER IF NOT EXISTS inference_route_plan_authority_no_delete
+BEFORE DELETE ON inference_route_plan_authority_evidence BEGIN
+    SELECT RAISE(ABORT, 'immutable inference route authority evidence');
+END;
+
+-- Private request planning retains hashes and frozen per-leg eligibility, not
+-- owner material.  Story 06 consumes these rows but owns controller advance.
+CREATE TABLE IF NOT EXISTS inference_operation_route_request_plans (
+    id TEXT PRIMARY KEY,
+    sha256 TEXT NOT NULL UNIQUE,
+    route_plan_id TEXT NOT NULL REFERENCES inference_route_plans(id),
+    operation_id TEXT NOT NULL,
+    evidence_provider_id TEXT NOT NULL,
+    evidence_provider_revision INTEGER NOT NULL CHECK (evidence_provider_revision > 0),
+    planning_reference TEXT NOT NULL,
+    admission_evidence_ref TEXT NOT NULL,
+    admission_evidence_sha256 TEXT NOT NULL,
+    material_snapshot_sha256 TEXT NOT NULL,
+    payload_json TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    deadline_at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS inference_operation_route_request_plan_entries (
+    id TEXT PRIMARY KEY,
+    operation_plan_id TEXT NOT NULL REFERENCES inference_operation_route_request_plans(id),
+    route_leg_ordinal INTEGER NOT NULL CHECK (route_leg_ordinal BETWEEN 1 AND 4),
+    eligibility TEXT NOT NULL CHECK (eligibility IN ('executable','known_preflight_unavailable','known_context_overflow')),
+    reason_code TEXT,
+    admitted_request_id TEXT,
+    admitted_request_sha256 TEXT,
+    context_plan_sha256 TEXT,
+    serialized_request_sha256 TEXT,
+    CHECK (
+      (eligibility='executable' AND reason_code IS NULL AND admitted_request_id IS NOT NULL AND admitted_request_sha256 IS NOT NULL AND context_plan_sha256 IS NOT NULL AND serialized_request_sha256 IS NOT NULL) OR
+      (eligibility<>'executable' AND reason_code IS NOT NULL AND admitted_request_id IS NULL AND admitted_request_sha256 IS NULL AND context_plan_sha256 IS NULL AND serialized_request_sha256 IS NULL)
+    ),
+    UNIQUE (operation_plan_id, route_leg_ordinal)
+);
+CREATE TABLE IF NOT EXISTS inference_operation_route_request_plan_commands (
+    command_id TEXT PRIMARY KEY,
+    request_sha256 TEXT NOT NULL,
+    route_plan_id TEXT NOT NULL REFERENCES inference_route_plans(id),
+    route_plan_sha256 TEXT NOT NULL,
+    operation_plan_id TEXT NOT NULL REFERENCES inference_operation_route_request_plans(id),
+    operation_plan_sha256 TEXT NOT NULL,
+    created_at TEXT NOT NULL
+);
+CREATE TRIGGER IF NOT EXISTS inference_operation_route_commands_no_update
+BEFORE UPDATE ON inference_operation_route_request_plan_commands BEGIN
+    SELECT RAISE(ABORT, 'immutable operation route command');
+END;
+CREATE TRIGGER IF NOT EXISTS inference_operation_route_commands_no_delete
+BEFORE DELETE ON inference_operation_route_request_plan_commands BEGIN
+    SELECT RAISE(ABORT, 'immutable operation route command');
+END;
+CREATE UNIQUE INDEX IF NOT EXISTS idx_inference_operation_route_request_operation
+    ON inference_operation_route_request_plans(operation_id);
+
 CREATE TABLE IF NOT EXISTS inference_runtime_leases (
     lease_id TEXT PRIMARY KEY,
     operation_id TEXT NOT NULL UNIQUE,

@@ -9,7 +9,7 @@ this map names the likely code seams and the gate that prevents authority forks.
 | 02 Registry | new `holdspeak/inference_capabilities.py`; composition in server/runtime/plugin setup | Unknown/duplicate/confusable capability refuses startup; every call site mapped |
 | 03 Profiles | existing `profile_service.py`, `target_profile.py`, `deployment_revisions.py`, setup/acquisition services, schema/migrations | OWNER at service boundary; no new revision registry; no path/secret sync |
 | 04 Assignments | new routing application/service + DB repository/schema; legacy Config/subject adapters | Atomic ordered-chain CAS; no dual authority after family marker |
-| 05 Plans | new immutable route-plan DTO/repository/resolver beside `inference_runner.py` | Zero-write/network resolution; mutation after freeze cannot retarget |
+| 05 Plans | immutable route/request-plan schema plus `inference_route_plan_service.py`; composition-registered admission-evidence seam beside `inference_runner.py` | Zero-write/network resolution; mutation after freeze cannot retarget; executable request evidence refuses until an exact adopter registers its durable owner |
 | 06 Controller | new route controller/ledger; existing parent-run and inference outcome seams | Every physical try is a unique admitted child; forbidden dispositions create zero egress |
 | 07 Thoughts/writing | refinement coordinator/application, Ask service, speech intent/rewrite/punctuate, Workbench UI | Visible next chain frozen with reservation; old pointer no longer read |
 | 08 Meetings/speech/background | `meeting_session/intel_*`, `speech_session/*`, Rails, cadence, decisions, delivery | Preserve history/restart; distinct leg/attempt ordinals; generated fork census zero |
