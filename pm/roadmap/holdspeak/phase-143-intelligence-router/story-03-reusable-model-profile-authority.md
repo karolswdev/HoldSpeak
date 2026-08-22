@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 143
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** 143-01, Phase 142
 - **Unblocks:** 143-04, 143-05, 143-12
 - **Owner:** unassigned
@@ -31,14 +31,14 @@ ProfileRecord and InferenceTarget conflate friendly model identity, mutable endp
 
 ## Acceptance criteria
 
-- [ ] Profiles contain no secret, locator, live readiness, or mutable endpoint discovery.
-- [ ] Bindings are hub-local, revisioned, CAS-protected, and resolve one exact DeploymentRevision.
-- [ ] AGENT/MODEL_TURN cannot discover or mutate profiles via HTTP, MCP, or direct service call.
-- [ ] Legacy v1 executes byte-identically through one adapter binding.
-- [ ] Deleting a referenced profile refuses with exact dependent assignments.
-- [ ] V2 profile revisions and bindings are hub-local; hostile sync cannot
+- [x] Profiles contain no secret, locator, live readiness, or mutable endpoint discovery.
+- [x] Bindings are hub-local, revisioned, CAS-protected, and resolve one exact DeploymentRevision.
+- [x] AGENT/MODEL_TURN cannot discover or mutate profiles via HTTP, MCP, or direct service call.
+- [x] Legacy v1 executes byte-identically through one adapter binding.
+- [x] Deleting a referenced profile refuses with exact dependent assignments.
+- [x] V2 profile revisions and bindings are hub-local; hostile sync cannot
   create either, and v1 historical bytes remain the only compatibility case.
-- [ ] Add/download/connect/use-existing changes zero assignment revisions.
+- [x] Add/download/connect/use-existing changes zero assignment revisions.
 
 ## Test plan
 

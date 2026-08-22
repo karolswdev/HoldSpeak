@@ -60,6 +60,26 @@ SYNC_BUCKETS = frozenset(_BUCKET_KIND)
 SYNC_SCHEMAS = {spec.kind: spec.schema for spec in SYNC_REGISTRY}
 SYNC_MERGER_KINDS = frozenset(spec.kind for spec in SYNC_REGISTRY if spec.mergeable)
 
+# Phase 143 profile/binding authorities are intentionally absent from the sync
+# registry.  They deserve a named refusal when a hostile/old peer attempts to
+# import them, but unrelated future buckets preserve the legacy forward-
+# compatibility behavior of this broad primitive envelope.
+_HUB_LOCAL_FORBIDDEN_BUCKETS = frozenset(
+    {
+        "model_profile_revisions",
+        "model_profile_bindings",
+        "model_profile_binding_heads",
+        "model_profile_tombstones",
+        "model_profile_readiness_observations",
+        "inference_assignments",
+        "inference_route_plans",
+        "inference_model_acquisitions",
+        "inference_readiness_observations",
+        "inference_probes",
+        "inference_invocations",
+    }
+)
+
 
 def qualified_sync_kind(bucket: str, kind: str) -> bool:
     """Whether a record kind is valid for its specific change-set bucket."""
@@ -732,7 +752,8 @@ def _merge_refinement_thought_ledger_bundles(db: Any, records: list[dict[str, An
             if fence:
                 if value["state"] == "tombstoned" and str(fence["terminal_fingerprint"]) == _terminal_fingerprint(value):
                     merged += 1
-                    consumed_notes.add(str(value["working_note"]["id"])); consumed_memberships.add(f"note:{value['working_note']['id']}")
+                    consumed_notes.add(str(value["working_note"]["id"]))
+                    consumed_memberships.add(f"note:{value['working_note']['id']}")
                     continue
                 raise ConflictError("thought sync tombstone is terminal", code="thought_tombstoned")
             if value["state"] == "tombstoned":
@@ -805,8 +826,12 @@ def _validate_attachment_history(value: dict[str, Any]) -> tuple[dict[int, str],
         identity_visible: list[dict[str, Any]] = []
         for item in visible:
             ref = str(item.get("visible_ref") or "")
-            try: kind, _ = qualified_ref(ref).split(":", 1)
-            except ValueError as exc: raise ValidationError("thought attachment ref is invalid", code="thought_revision_history_invalid") from exc
+            try:
+                kind, _ = qualified_ref(ref).split(":", 1)
+            except ValueError as exc:
+                raise ValidationError(
+                    "thought attachment ref is invalid", code="thought_revision_history_invalid"
+                ) from exc
             if kind not in {"note", "knowledge"} or (kind == "knowledge" and ref != "knowledge:hs-seed-everyday-context"):
                 raise ValidationError("thought attachment kind is unsupported", code="thought_revision_history_invalid")
             if str(item.get("visible_kind") or "") != kind or ref == working_ref:
@@ -1152,7 +1177,18 @@ class SyncService:
             raise ValidationError("invalid JSON", code="invalid_json")
         
         known_buckets = set(_BUCKET_KIND)
-        if not isinstance(body, dict) or not (set(body) & known_buckets):
+        if not isinstance(body, dict):
+            raise ValidationError("expected a change_set with at least one of " + ", ".join(sorted(known_buckets)))
+        forbidden_buckets = sorted(set(body) & _HUB_LOCAL_FORBIDDEN_BUCKETS)
+        if forbidden_buckets:
+            # A v2 model profile, binding, readiness observation, assignment,
+            # acquisition, probe, or invocation must never become a silently
+            # ignored remote write.  Those authorities are hub-local.
+            raise ValidationError(
+                "hub-local sync bucket is forbidden: " + ", ".join(forbidden_buckets),
+                code="sync_hub_local_bucket_forbidden",
+            )
+        if not (set(body) & known_buckets):
             raise ValidationError("expected a change_set with at least one of " + ", ".join(sorted(known_buckets)))
         
         # HSM-10-03 — validate the envelope: every record needs a well-formed sync

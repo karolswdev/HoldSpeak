@@ -23,7 +23,6 @@ export interface InferenceSetupHardware {
     reason: string | null;
   };
 }
-
 export interface InferenceSetupRuntime {
   id: string;
   revision: string;
@@ -221,6 +220,7 @@ export interface InferenceAcquisition {
   transport_bytes: number;
   bytes_total: number;
   artifact_id: string | null;
+  /** `not_requested` means the model is available in the local library only. */
   activation_state: "pending" | "in_use" | "failed" | "not_requested";
   error: { code: string; message: string } | null;
   resumable: boolean;

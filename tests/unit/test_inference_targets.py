@@ -5,7 +5,7 @@ from __future__ import annotations
 from types import SimpleNamespace
 
 import pytest
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.testclient import TestClient
 
 import holdspeak.db as hsdb
@@ -17,6 +17,7 @@ from holdspeak.inference_targets import (
     this_machine_target,
 )
 from holdspeak.intel.providers import profile_key_env
+from holdspeak.principals import Principal, PrincipalKind
 from holdspeak.services.setup_service import SetupService
 from holdspeak.services.inference_setup_service import InferenceSetupApplicationService
 from holdspeak.web.context import WebContext
@@ -29,6 +30,12 @@ def rig(tmp_path, monkeypatch):
     db = Database(tmp_path / "targets.db")
     monkeypatch.setattr(hsdb, "get_database", lambda *a, **k: db)
     app = FastAPI()
+
+    @app.middleware("http")
+    async def owner_principal(request: Request, call_next):
+        request.state.principal = Principal(PrincipalKind.OWNER, "target-test-owner")
+        return await call_next(request)
+
     app.include_router(build_primitives_router(WebContext(get_state=lambda: {})))
     yield db, TestClient(app)
     reset_database()

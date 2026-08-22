@@ -3287,6 +3287,74 @@
       ]
     },
     {
+      "path": "/api/model-profiles",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.primitives.model_profiles",
+      "consumers": []
+    },
+    {
+      "path": "/api/model-profiles",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.primitives.model_profiles",
+      "consumers": []
+    },
+    {
+      "path": "/api/model-profiles/{profile_id}",
+      "methods": [
+        "DELETE"
+      ],
+      "module": "web.routes.primitives.model_profiles",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/model-profiles/{profile_id}",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.primitives.model_profiles",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/model-profiles/{profile_id}/binding",
+      "methods": [
+        "DELETE"
+      ],
+      "module": "web.routes.primitives.model_profiles",
+      "consumers": []
+    },
+    {
+      "path": "/api/model-profiles/{profile_id}/binding",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.primitives.model_profiles",
+      "consumers": []
+    },
+    {
+      "path": "/api/model-profiles/{profile_id}/probe",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.primitives.model_profiles",
+      "consumers": []
+    },
+    {
+      "path": "/api/model-profiles/{profile_id}/revisions",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.primitives.model_profiles",
+      "consumers": []
+    },
+    {
       "path": "/api/models",
       "methods": [
         "GET"

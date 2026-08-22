@@ -2308,6 +2308,83 @@ CREATE TABLE IF NOT EXISTS inference_deployments (
     updated_at TEXT NOT NULL
 );
 
+-- Phase 143: reusable model identity is deliberately separate from the
+-- hub-local facts that make it executable.  These records are not sync
+-- primitives: a profile revision never carries a locator, endpoint, secret,
+-- or live readiness fact, while a binding references the existing Phase 142
+-- deployment head and immutable DeploymentRevision by id only.
+CREATE TABLE IF NOT EXISTS model_profile_revisions (
+    profile_id TEXT NOT NULL,
+    revision INTEGER NOT NULL CHECK (revision > 0),
+    sha256 TEXT NOT NULL UNIQUE,
+    label TEXT NOT NULL,
+    provider_family TEXT NOT NULL,
+    runtime_family TEXT NOT NULL,
+    model_or_artifact_identity TEXT NOT NULL,
+    supported_modalities_json TEXT NOT NULL,
+    context_support TEXT NOT NULL CHECK (context_support IN ('exact','bounded','unavailable')),
+    tokenizer_template_requirements_json TEXT NOT NULL,
+    capability_manifest_json TEXT NOT NULL,
+    safe_presentation_json TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    PRIMARY KEY (profile_id, revision)
+);
+
+-- Each mutation writes a new immutable binding revision.  The small head row
+-- is the single CAS authority for the profile's current binding; it does not
+-- recreate a deployment registry or duplicate DeploymentRevision content.
+CREATE TABLE IF NOT EXISTS model_profile_binding_revisions (
+    binding_id TEXT NOT NULL,
+    revision INTEGER NOT NULL CHECK (revision > 0),
+    profile_id TEXT NOT NULL,
+    profile_revision INTEGER NOT NULL,
+    deployment_head_id TEXT NOT NULL,
+    deployment_configuration_revision INTEGER NOT NULL,
+    deployment_revision_id TEXT NOT NULL REFERENCES deployment_revisions(id),
+    secret_slot TEXT NOT NULL DEFAULT '',
+    enabled INTEGER NOT NULL CHECK (enabled IN (0,1)),
+    readiness_observation_id TEXT NOT NULL DEFAULT '',
+    created_at TEXT NOT NULL,
+    PRIMARY KEY (binding_id, revision),
+    FOREIGN KEY (profile_id, profile_revision)
+      REFERENCES model_profile_revisions(profile_id, revision)
+);
+
+CREATE TABLE IF NOT EXISTS model_profile_binding_heads (
+    binding_id TEXT PRIMARY KEY,
+    profile_id TEXT NOT NULL UNIQUE,
+    revision INTEGER NOT NULL,
+    updated_at TEXT NOT NULL,
+    FOREIGN KEY (binding_id, revision)
+      REFERENCES model_profile_binding_revisions(binding_id, revision)
+);
+
+-- Probe observations are server-minted, hub-local, and pinned to the exact
+-- deployment head/configuration/execution revision they observed.  A client
+-- may name an observation while binding, but can never manufacture it.
+CREATE TABLE IF NOT EXISTS model_profile_readiness_observations (
+    observation_id TEXT PRIMARY KEY,
+    deployment_head_id TEXT NOT NULL,
+    deployment_configuration_revision INTEGER NOT NULL,
+    deployment_revision_id TEXT NOT NULL REFERENCES deployment_revisions(id),
+    state TEXT NOT NULL CHECK (state IN ('ready','unavailable')),
+    reason_code TEXT NOT NULL,
+    observed_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_model_profile_readiness_head
+    ON model_profile_readiness_observations(
+        deployment_head_id, deployment_configuration_revision, deployment_revision_id
+    );
+
+-- Deletion is a hub-local tombstone.  Historical revision/binding evidence is
+-- retained for receipts and future frozen-plan inspection; it is never synced.
+CREATE TABLE IF NOT EXISTS model_profile_tombstones (
+    profile_id TEXT PRIMARY KEY,
+    deleted_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_model_profile_binding_profile
+    ON model_profile_binding_revisions(profile_id, profile_revision, revision DESC);
+
 CREATE TABLE IF NOT EXISTS inference_runtime_leases (
     lease_id TEXT PRIMARY KEY,
     operation_id TEXT NOT NULL UNIQUE,

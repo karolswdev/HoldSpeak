@@ -8,7 +8,7 @@ import time
 from typing import Any
 
 from ..db.core import Database
-from ..principals import Principal
+from ..principals import Principal, PrincipalKind
 from holdspeak.services.errors import NotFound, ServiceError, ValidationError
 
 
@@ -18,7 +18,16 @@ class ProfileService:
         self._db = db
         self._observer = observer or NullObserver()
 
+    @staticmethod
+    def _require_owner(principal: Principal | None) -> None:
+        """Profile/target discovery is provider custody, not a generic read."""
+        if principal is None or principal.kind is not PrincipalKind.OWNER:
+            raise ServiceError(
+                "owner_principal_required", "Owner access is required", context={"status": 403}
+            )
+
     def list_profiles(self, principal: Principal) -> dict[str, Any]:
+        self._require_owner(principal)
         from ..intel.mesh_relay import DEFAULT_LIVENESS_WINDOW_SECONDS
 
         profiles = self._db.profiles.list()
@@ -35,12 +44,14 @@ class ProfileService:
         return {"profiles": [profile.to_dict() for profile in profiles], "mesh_liveness": liveness}
 
     def get_profile(self, principal: Principal, profile_id: str) -> dict[str, Any]:
+        self._require_owner(principal)
         profile = self._db.profiles.get(profile_id)
         if profile is None:
             raise NotFound("profile", profile_id)
         return profile.to_dict()
 
     def create_profile(self, principal: Principal, fields: dict[str, Any]) -> dict[str, Any]:
+        self._require_owner(principal)
         self._reject_secret(fields)
         if not str(fields.get("name") or "").strip():
             raise ValidationError("destination name is required")
@@ -53,6 +64,7 @@ class ProfileService:
     def update_profile(
         self, principal: Principal, profile_id: str, patch: dict[str, Any]
     ) -> dict[str, Any]:
+        self._require_owner(principal)
         if profile_id == "this_machine":
             raise ValidationError("This device is a built-in destination")
         self._reject_secret(patch)
@@ -65,6 +77,7 @@ class ProfileService:
         return self._target(profile)
 
     def delete_profile(self, principal: Principal, profile_id: str) -> bool:
+        self._require_owner(principal)
         if profile_id == "this_machine":
             raise ValidationError("This device is a built-in destination")
         if not self._db.profiles.delete(profile_id):
@@ -72,6 +85,7 @@ class ProfileService:
         return True
 
     def list_inference_targets(self, principal: Principal) -> dict[str, Any]:
+        self._require_owner(principal)
         from ..inference_targets import TARGET_CONTRACT_VERSION, list_inference_targets
 
         return {
@@ -82,6 +96,7 @@ class ProfileService:
     def probe_inference_target(
         self, principal: Principal, target_id: str, payload: dict[str, Any] | None = None
     ) -> dict[str, Any]:
+        self._require_owner(principal)
         from ..intel.providers import profile_key_env
         from ..profile_key_store import ProfileKeyStoreError, resolve_profile_key
         from ..setup_runtime import discover_endpoint_models
@@ -112,6 +127,7 @@ class ProfileService:
         return {"reachable": False, "latency_ms": None, "models": [], "error": f"Destination kind '{profile.kind}' cannot be probed"}
 
     def get_inference_target(self, principal: Principal, target_id: str) -> dict[str, Any]:
+        self._require_owner(principal)
         from ..inference_targets import resolve_inference_target
         target = resolve_inference_target(self._db, target_id)
         if target.readiness_state == "unavailable":

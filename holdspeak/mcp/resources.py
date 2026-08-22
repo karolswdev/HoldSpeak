@@ -22,6 +22,7 @@ from holdspeak.services.meeting_service import MeetingService
 from holdspeak.services.monday_brief_service import MondayBriefService
 from holdspeak.services.primitive_service import PrimitiveService
 from holdspeak.services.profile_service import ProfileService
+from holdspeak.services.model_profile_service import ModelProfileService
 from holdspeak.services.recipe_service import RecipeService
 from holdspeak.services.refinement_application_service import RefinementApplicationService
 from holdspeak.services.refinement_thought_service import RefinementThoughtService
@@ -193,6 +194,12 @@ _STATIC_RESOURCES = [
         "mimeType": _JSON_MIME,
     },
     {
+        "uri": "holdspeak://model-profiles",
+        "name": "Model Library",
+        "description": "Owner-only immutable Model Library profiles and hub-local binding summaries.",
+        "mimeType": _JSON_MIME,
+    },
+    {
         "uri": "holdspeak://dictation/journal",
         "name": "Dictation journal",
         "description": "Canonical journal of stored dictation entries.",
@@ -277,6 +284,12 @@ _RESOURCE_TEMPLATES = [
         "uriTemplate": "holdspeak://destinations/{id}",
         "name": "Destination detail",
         "description": "Canonical redacted configuration for one inference destination.",
+        "mimeType": _JSON_MIME,
+    },
+    {
+        "uriTemplate": "holdspeak://model-profiles/{id}",
+        "name": "Model Library profile",
+        "description": "Owner-only immutable detail for one Model Library profile.",
         "mimeType": _JSON_MIME,
     },
     {
@@ -366,6 +379,7 @@ _WORKBENCH_DETAIL_PATTERN = re.compile(r"^holdspeak://workbenches/([^/]+)$")
 _WORKBENCH_RUNS_PATTERN = re.compile(r"^holdspeak://workbenches/([^/]+)/runs$")
 _RECIPE_DETAIL_PATTERN = re.compile(r"^holdspeak://recipes/([^/]+)$")
 _DESTINATION_DETAIL_PATTERN = re.compile(r"^holdspeak://destinations/([^/]+)$")
+_MODEL_PROFILE_DETAIL_PATTERN = re.compile(r"^holdspeak://model-profiles/([^/]+)$")
 _ZONE_MEMBERS_PATTERN = re.compile(r"^holdspeak://zones/([^/]+)/members$")
 _MEETING_DETAIL_PATTERN = re.compile(r"^holdspeak://meetings/([^/]+)$")
 _DECISION_RECORD_PATTERN = re.compile(r"^holdspeak://decision-records/([^/]+)$")
@@ -397,13 +411,18 @@ def list_resources(principal: Principal | None = None) -> dict[str, list[dict[st
         resources = [
             row
             for row in resources
-            if row["uri"] not in {"holdspeak://inference/setup", "holdspeak://inference/capabilities"}
+            if row["uri"] not in {
+                "holdspeak://inference/setup",
+                "holdspeak://inference/capabilities",
+                "holdspeak://model-profiles",
+            }
         ]
         templates = [
             row
             for row in _RESOURCE_TEMPLATES
             if "inference/acquisitions" not in row["uriTemplate"]
             and "inference/capabilities" not in row["uriTemplate"]
+            and "model-profiles" not in row["uriTemplate"]
         ]
     else:
         templates = _RESOURCE_TEMPLATES
@@ -490,6 +509,8 @@ def read_resource(uri: str, principal: Principal | None) -> dict[str, list[dict[
         result = ProfileService(get_database()).list_profiles(principal)
         result["profiles"] = result["profiles"][:100]
         return _contents(uri, _JSON_MIME, result)
+    if uri == "holdspeak://model-profiles":
+        return _contents(uri, _JSON_MIME, ModelProfileService(get_database()).list_profiles(principal))
     if uri == "holdspeak://dictation/journal":
         return _contents(uri, _JSON_MIME, DictationService(get_database()).list_journal(principal, limit=100))
     if uri == "holdspeak://follow-through/board":
@@ -561,6 +582,9 @@ def read_resource(uri: str, principal: Principal | None) -> dict[str, list[dict[
         return _contents(uri, _JSON_MIME, value)
     if match := _DESTINATION_DETAIL_PATTERN.fullmatch(uri):
         value = ProfileService(get_database()).get_profile(principal, match.group(1))
+        return _contents(uri, _JSON_MIME, value)
+    if match := _MODEL_PROFILE_DETAIL_PATTERN.fullmatch(uri):
+        value = ModelProfileService(get_database()).get_profile(principal, match.group(1))
         return _contents(uri, _JSON_MIME, value)
     if match := _ZONE_MEMBERS_PATTERN.fullmatch(uri):
         value = PrimitiveService(get_database()).list_directory_members(principal, match.group(1))

@@ -17,7 +17,6 @@ function bytes(value: number | null): string {
   if (value < 1024 ** 3) return `${Math.max(1, Math.round(value / 1024 ** 2))} MB`;
   return `${Math.round((value / 1024 ** 3) * 10) / 10} GB`;
 }
-
 function context(value: number): string {
   return value >= 1024 && value % 1024 === 0
     ? `${value / 1024}K`
@@ -95,7 +94,7 @@ export function InferenceCapabilityPanel({
   onRetry,
   onUseHosted,
   onDownloadLocal,
-  onUseExisting,
+  onAddExisting,
   onCancelAcquisition,
 }: {
   setup: InferenceSetup | null;
@@ -108,7 +107,7 @@ export function InferenceCapabilityPanel({
   onRetry(): void;
   onUseHosted(preset: HostedInferencePreset, key: string): Promise<boolean>;
   onDownloadLocal?(preset: LocalInferencePreset): Promise<void>;
-  onUseExisting?(artifact: InferenceSetupArtifact): Promise<void>;
+  onAddExisting?(artifact: InferenceSetupArtifact): Promise<void>;
   onCancelAcquisition?(acquisition: InferenceAcquisition): Promise<void>;
 }) {
   const groupName = useId();
@@ -229,6 +228,11 @@ export function InferenceCapabilityPanel({
   const selectedArtifactActivation = selectedArtifact
     ? artifactActivation(selectedArtifact)
     : null;
+  // Acquisition makes a model available in the library.  It does not choose
+  // the model for Thoughts (that is a later capability-assignment decision).
+  const acquisitionAdded =
+    acquisition?.state === "ready" &&
+    acquisition.activation_state === "not_requested";
 
   const selectChoice = (id: string) => {
     setSelectedId(id);
@@ -353,14 +357,16 @@ export function InferenceCapabilityPanel({
                           ? selectedArtifact
                             ? "Installing…"
                             : "Installing…"
-                          : acquisition.state === "ready" && acquisition.activation_state === "in_use"
+                          : acquisitionAdded
+                            ? "Available in Models"
+                            : acquisition.state === "ready" && acquisition.activation_state === "in_use"
                             ? "In use"
                             : acquisition.error?.message || acquisition.state
                     : selectedArtifact
                       ? selectedArtifactActivation?.state === "current"
                         ? "In use"
                         : selectedArtifactActivation?.action === "use_existing"
-                          ? "Verified before use."
+                          ? "Verify before adding."
                           : selectedArtifactActivation?.reason
                     : selectedLocal
                       ? selectedLocal.activation === "evaluation_only"
@@ -391,6 +397,8 @@ export function InferenceCapabilityPanel({
                   <span className="models-capability-action-status">
                     {acquisition.state === "verifying" ? "VERIFYING…" : "INSTALLING…"}
                   </span>
+                ) : acquisitionAdded ? (
+                  <span className="models-capability-action-status">ADDED</span>
                 ) : acquisition?.state === "ready" && acquisition.activation_state === "in_use" ? (
                   <span className="models-capability-action-status">IN USE</span>
                 ) : selectedArtifactActivation?.action === "use_existing" ? (
@@ -398,9 +406,9 @@ export function InferenceCapabilityPanel({
                     variant="primary"
                     disabled={Boolean(busyPresetId)}
                     loading={busyPresetId === selectedArtifact.id}
-                    onClick={() => void onUseExisting?.(selectedArtifact)}
+                    onClick={() => void onAddExisting?.(selectedArtifact)}
                   >
-                    {acquisition?.state === "failed" ? "TRY AGAIN" : "USE MODEL"}
+                    {acquisition?.state === "failed" ? "TRY AGAIN" : "ADD MODEL"}
                   </Button>
                 ) : (
                   <span className="models-capability-action-status">
@@ -431,6 +439,8 @@ export function InferenceCapabilityPanel({
                   <span className="models-capability-action-status">
                     {acquisition.state === "verifying" ? "VERIFYING…" : "INSTALLING…"}
                   </span>
+                ) : acquisitionAdded ? (
+                  <span className="models-capability-action-status">ADDED</span>
                 ) : acquisition?.state === "ready" && acquisition.activation_state === "in_use" ? (
                   <span className="models-capability-action-status">IN USE</span>
                 ) : (
@@ -440,7 +450,7 @@ export function InferenceCapabilityPanel({
                     loading={busyPresetId === selectedLocal.id}
                     onClick={() => void onDownloadLocal?.(selectedLocal)}
                   >
-                    {acquisition?.state === "failed" ? "TRY AGAIN" : "DOWNLOAD & USE"}
+                    {acquisition?.state === "failed" ? "TRY AGAIN" : "DOWNLOAD"}
                   </Button>
                 )
               ) : current ? (
