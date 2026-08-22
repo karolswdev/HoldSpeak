@@ -1,0 +1,249 @@
+"""HS-143-01 — executable census of owner route controls and recovery semantics.
+
+This is intentionally a *static* fence.  Phase 143 has not consolidated these
+authorities yet, so letting a new helper select a model, or letting a browser
+invent a fallback, would make the migration inventory stale before the new
+controller exists.  A new production selector/recovery helper therefore needs a
+literal classification here and a row in the reviewed census artifact.
+"""
+from __future__ import annotations
+
+import ast
+import re
+from pathlib import Path
+
+
+REPO = Path(__file__).resolve().parents[2]
+BACKEND = REPO / "holdspeak"
+WEB = REPO / "web" / "src"
+APPLE = REPO / "apple" / "Sources"
+ARTIFACT = REPO / "pm/roadmap/holdspeak/phase-143-intelligence-router/assets/generated-surface-fallback-census.md"
+
+# A key is deliberately file + private scope, rather than a family-wide glob:
+# each new private decision is a new authority until a reviewer says otherwise.
+# The value is (classification, one Phase 143 owner story).
+BACKEND_PRIVATE_DECISIONS: dict[tuple[str, str], tuple[str, str]] = {
+    ("holdspeak/commands/doctor.py", "_check_runtime_profiles"): ("readiness audit; no route selection", "143-03"),
+    ("holdspeak/db/seed.py", "_adopt_profiles"): ("legacy Config-pointer adoption migration", "143-04"),
+    ("holdspeak/delivery/factory_launch.py", "_valid_profile"): ("agent delivery validation", "143-10"),
+    ("holdspeak/desktop_presence.py", "_select_presence_renderer"): ("non-inference false positive", "143-01"),
+    ("holdspeak/dictation_telemetry.py", "_fallback_category"): ("lexical/degraded telemetry, never model fallback", "143-07"),
+    ("holdspeak/inference_targets.py", "_profile_key_present"): ("profile credential readiness", "143-03"),
+    ("holdspeak/intel/engine.py", "_compatibility_retry"): ("provider dialect attempt; separate admitted physical child", "143-06"),
+    ("holdspeak/intel/engine.py", "_resolved_model_path"): ("immutable local artifact read", "143-03"),
+    ("holdspeak/intel/providers.py", "_lookup_profile_record"): ("legacy profile lookup", "143-03"),
+    ("holdspeak/intel/providers.py", "_apply_runtime_profile"): ("legacy profile-shaped runtime construction", "143-03"),
+    ("holdspeak/intel/providers.py", "_profile_engine"): ("profile engine factory behind admitted context", "143-03"),
+    ("holdspeak/intel_queue.py", "_compute_retry_delay_seconds"): ("deferred scheduling backoff", "143-08"),
+    ("holdspeak/intel_queue.py", "_retry_or_fail_job"): ("deferred scheduling retry; new job, not route fallback", "143-08"),
+    ("holdspeak/kernel/inference_runner.py", "_cancelled_before_retry"): ("same-leg physical-attempt cancellation fence", "143-06"),
+    ("holdspeak/kernel/projection_stager.py", "_retry_stage"): ("projection adoption for dialect child", "143-06"),
+    ("holdspeak/meeting_session/intel_plan.py", "_placement_legs"): ("frozen real route legs", "143-08"),
+    ("holdspeak/plugins/dictation/assembly.py", "_frozen_local_target"): ("frozen dictation target", "143-07"),
+    ("holdspeak/plugins/dictation/builtin/project_rewriter.py", "_selected_activity_context"): ("non-route input selection", "143-01"),
+    ("holdspeak/plugins/dictation/builtin/project_rewriter.py", "_target_directive"): ("deterministic dictation directive", "143-07"),
+    ("holdspeak/plugins/dictation/runtime_mlx.py", "_resolve_generator_factory"): ("dictation runtime factory", "143-07"),
+    ("holdspeak/services/inference_acquisition_service.py", "_route_revision"): ("setup preview revision; not assignment authority", "143-12"),
+    ("holdspeak/services/inference_setup_service.py", "_thought_target"): ("legacy Thoughts selector", "143-07"),
+    ("holdspeak/services/inference_setup_service.py", "_safe_target"): ("setup readiness selector", "143-12"),
+    ("holdspeak/services/meeting_intel_service.py", "_retry"): ("explicit owner recovery request", "143-08"),
+    ("holdspeak/services/profile_key_service.py", "_profile"): ("credential owner lookup", "143-03"),
+    ("holdspeak/services/profile_service.py", "_target_fields"): ("profile transport-neutral mutation", "143-03"),
+    ("holdspeak/services/recipe_service.py", "_target"): ("recipe/workbench precedence", "143-10"),
+    ("holdspeak/services/sequence_workflow_service.py", "_target"): ("workflow legacy placement", "143-10"),
+    ("holdspeak/services/support.py", "_norm_run_target"): ("workflow placement normalization", "143-10"),
+    ("holdspeak/services/workbench_runner.py", "_target"): ("workbench/recipe precedence", "143-10"),
+    ("holdspeak/speaker_intel.py", "_get_fallback_speaker"): ("speaker identity fallback, not inference", "143-01"),
+    ("holdspeak/target_profile.py", "_build_model_target_prompt"): ("model-assisted target prompt", "143-07"),
+    ("holdspeak/target_profile.py", "_profile"): ("legacy target-profile lookup", "143-07"),
+}
+
+# Every production browser module which reads/writes a routing pointer is known.
+# Types and transport projections are included so a new UI cannot hide a selector
+# behind a wire helper or a "display-only" component.
+WEB_ROUTING_SURFACES: dict[str, tuple[str, str]] = {
+    "web/src/desk/api.ts": ("display-transport", "143-11"),
+    "web/src/desk/ask.ts": ("inference-route", "143-07"),
+    "web/src/desk/chat.ts": ("inference-route", "143-07"),
+    "web/src/desk/components/AskPanel.tsx": ("inference-route", "143-07"),
+    "web/src/desk/components/DeliveryBoard.tsx": ("unrelated", "143-01"),
+    "web/src/desk/components/EditorAIBar.tsx": ("inference-route", "143-07"),
+    "web/src/desk/components/PersonaChat.tsx": ("inference-route", "143-10"),
+    "web/src/desk/components/Pullout.tsx": ("display-transport", "143-11"),
+    "web/src/desk/components/RunsOnPicker.tsx": ("inference-route", "143-13"),
+    "web/src/desk/components/WorkbenchTemplatePicker.tsx": ("inference-route", "143-10"),
+    "web/src/desk/components/WorkbenchWindow.tsx": ("inference-route", "143-10"),
+    "web/src/desk/components/workbenchTarget.ts": ("display-transport", "143-10"),
+    "web/src/desk/deliveryFactory.ts": ("unrelated", "143-01"),
+    "web/src/desk/detail-types.ts": ("display-transport", "143-11"),
+    "web/src/desk/infoContract.ts": ("display-transport", "143-10"),
+    "web/src/desk/pullouts/editors/RecipeEditor.tsx": ("inference-route", "143-10"),
+    "web/src/desk/pullouts/shared/CapabilitySection.tsx": ("inference-route", "143-10"),
+    "web/src/desk/store/dataSlice.ts": ("inference-route", "143-07"),
+    "web/src/desk/store/types.ts": ("display-transport", "143-11"),
+    "web/src/lib/primitives.ts": ("display-transport", "143-11"),
+    "web/src/pages/cores/ProjectMemoryCore.tsx": ("inference-route", "143-07"),
+    "web/src/pages/cores/SettingsCore.tsx": ("inference-route", "143-13"),
+    "web/src/pages/cores/WorkbenchesHomeCore.tsx": ("display-transport", "143-10"),
+    "web/src/pages/cores/core-types.ts": ("display-transport", "143-11"),
+    "web/src/pages/cores/dictation/UtteranceWell.tsx": ("inference-route", "143-07"),
+    "web/src/pages/cores/dictation/useSpeakDeck.ts": ("inference-route", "143-07"),
+    "web/src/pages/cores/settingsModels.tsx": ("inference-route", "143-13"),
+}
+
+POINTER_TOKENS = ("inference_target_id", "intel_profile_id", "profile_id", "resolver_profile_id")
+CAMEL_POINTER_TOKENS = ("inferenceTargetId", "intelProfileId", "profileId", "resolverProfileId")
+RUNS_ON_PICKER_SURFACE = re.compile(
+    r"(?:import\s*\{\s*RunsOnPicker\s*\}|export\s+function\s+RunsOnPicker)"
+)
+STORY_RE = re.compile(r"^143-(?:0[1-9]|1[0-4])$")
+
+SWIFT_POLICY_SITES: dict[str, tuple[str, str]] = {
+    "apple/Sources/RuntimeCore/Workbench/BlueprintInterpreter.swift:321:fallbackOnDevice": (
+        "real injected-provider fallback", "143-06",
+    ),
+    "apple/Sources/RuntimeCore/Workbench/BlueprintInterpreter.swift:328:retryThenQueue": (
+        "fake queue label; surfaces hard failure", "143-06",
+    ),
+    "apple/Sources/RuntimeCore/Workbench/BlueprintInterpreter.swift:341:boundedRetry": (
+        "client-owned provider retry loop", "143-06",
+    ),
+    "apple/Sources/RuntimeCore/Workbench/WorkflowRunner.swift:236:fallbackOnDevice": (
+        "real injected-provider fallback", "143-06",
+    ),
+    "apple/Sources/RuntimeCore/Workbench/WorkflowRunner.swift:265:retryThenQueue": (
+        "real client-side parking result", "143-06",
+    ),
+    "apple/Sources/RuntimeCore/Workbench/WorkflowRunner.swift:374:boundedRetry": (
+        "client-owned provider retry loop", "143-06",
+    ),
+}
+
+
+def _private_decisions() -> set[tuple[str, str]]:
+    """Return every current private routing/recovery-shaped backend helper."""
+    found: set[tuple[str, str]] = set()
+    selector_words = ("resolve", "select", "route", "placement", "profile", "target")
+    route_evidence = (*POINTER_TOKENS, "deployment_revision", "resolve_placement", "InferenceRunner", "provider", "model")
+    for path in sorted(BACKEND.rglob("*.py")):
+        source = path.read_text(encoding="utf-8")
+        tree = ast.parse(source, filename=str(path))
+        for node in ast.walk(tree):
+            if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) or not node.name.startswith("_"):
+                continue
+            body = ast.get_source_segment(source, node) or ""
+            name = node.name.lower()
+            is_recovery = "fallback" in name or "retry" in name
+            is_selector = any(word in name for word in selector_words) and any(token in body for token in route_evidence)
+            if is_recovery or is_selector:
+                found.add((path.relative_to(REPO).as_posix(), node.name))
+    return found
+
+
+def _web_routing_surfaces() -> set[str]:
+    """Return exact route consumers, including picker imports and camel selectors."""
+    found: set[str] = set()
+    for path in sorted(WEB.rglob("*")):
+        if path.suffix not in {".ts", ".tsx"} or ".test." in path.name or "/__tests__/" in path.as_posix():
+            continue
+        source = path.read_text(encoding="utf-8")
+        if (
+            any(token in source for token in (*POINTER_TOKENS, *CAMEL_POINTER_TOKENS))
+            or RUNS_ON_PICKER_SURFACE.search(source)
+        ):
+            found.add(path.relative_to(REPO).as_posix())
+    return found
+
+
+def _swift_policy_sites(sources: dict[str, str] | None = None) -> set[str]:
+    """Return every current Swift retry/fallback policy branch and loop."""
+    sources = sources or {
+        path.relative_to(REPO).as_posix(): path.read_text(encoding="utf-8")
+        for path in APPLE.rglob("*.swift")
+    }
+    found: set[str] = set()
+    for relative, source in sorted(sources.items()):
+        for line_no, line in enumerate(source.splitlines(), start=1):
+            marker = ""
+            if "case .fallbackOnDevice:" in line:
+                marker = "fallbackOnDevice"
+            elif "case .retryThenQueue:" in line:
+                marker = "retryThenQueue"
+            elif "policy.maxRetries" in line:
+                marker = "boundedRetry"
+            if marker:
+                found.add(f"{relative}:{line_no}:{marker}")
+    return found
+
+
+def test_private_backend_route_and_recovery_decisions_are_classified() -> None:
+    """A new private selector/retry/fallback helper fails closed until reviewed."""
+    found = _private_decisions()
+    assert found == set(BACKEND_PRIVATE_DECISIONS), (
+        "Unclassified private route/recovery decision(s): "
+        f"{sorted(found - set(BACKEND_PRIVATE_DECISIONS))}; stale classifications: "
+        f"{sorted(set(BACKEND_PRIVATE_DECISIONS) - found)}"
+    )
+    assert all(STORY_RE.fullmatch(owner) for _, owner in BACKEND_PRIVATE_DECISIONS.values())
+
+
+def test_web_route_pointer_controls_are_classified_and_single_owned() -> None:
+    """A new browser routing consumer cannot appear outside the reviewed census."""
+    found = _web_routing_surfaces()
+    assert found == set(WEB_ROUTING_SURFACES), (
+        "Unclassified web route consumer(s): "
+        f"{sorted(found - set(WEB_ROUTING_SURFACES))}; stale classifications: "
+        f"{sorted(set(WEB_ROUTING_SURFACES) - found)}"
+    )
+    assert all(
+        classification in {"inference-route", "display-transport", "unrelated"}
+        and STORY_RE.fullmatch(owner)
+        for classification, owner in WEB_ROUTING_SURFACES.values()
+    )
+
+
+def test_census_artifact_covers_every_guarded_surface_and_recovery_kind() -> None:
+    text = ARTIFACT.read_text(encoding="utf-8")
+    for required in (
+        "true model-route fallback",
+        "scheduling retry",
+        "lexical degradation",
+        "explicit owner retry",
+        "provider dialect attempt",
+        "Python fake workflow label",
+        "Swift dormant/client fallback",
+        "response_format",
+        "silent-audio",
+        "Storage-delivery retry",
+        "fallbackOnDevice",
+        "retryThenQueue",
+        "exactly one Phase 143 story",
+    ):
+        assert required in text
+    for path, _scope in BACKEND_PRIVATE_DECISIONS:
+        assert path in text, f"census artifact omits guarded backend surface {path}"
+    for path in WEB_ROUTING_SURFACES:
+        assert path in text, f"census artifact omits guarded web surface {path}"
+
+
+def test_swift_retry_and_fallback_policy_sites_are_exact_and_fail_closed() -> None:
+    live = _swift_policy_sites()
+    assert live == set(SWIFT_POLICY_SITES), (
+        f"unclassified Swift policy sites={sorted(live - set(SWIFT_POLICY_SITES))}; "
+        f"stale={sorted(set(SWIFT_POLICY_SITES) - live)}"
+    )
+    assert all(STORY_RE.fullmatch(owner) for _, owner in SWIFT_POLICY_SITES.values())
+
+    mutated = _swift_policy_sites({
+        "apple/Sources/RuntimeCore/Workbench/RogueRunner.swift": """
+case .fallbackOnDevice:
+case .retryThenQueue:
+let tries = policy.maxRetries
+""",
+    })
+    assert mutated == {
+        "apple/Sources/RuntimeCore/Workbench/RogueRunner.swift:2:fallbackOnDevice",
+        "apple/Sources/RuntimeCore/Workbench/RogueRunner.swift:3:retryThenQueue",
+        "apple/Sources/RuntimeCore/Workbench/RogueRunner.swift:4:boundedRetry",
+    }
+    assert not mutated <= set(SWIFT_POLICY_SITES)

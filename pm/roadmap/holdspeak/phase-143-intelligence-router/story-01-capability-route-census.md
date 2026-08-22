@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 143
-- **Status:** ready
+- **Status:** done
 - **Depends on:** none
 - **Unblocks:** 143-02 through 143-14
 - **Owner:** unassigned
@@ -27,16 +27,17 @@ HoldSpeak currently resolves intelligence through Config pointers, ProfileRecord
 
 ## Acceptance criteria
 
-- [ ] Every production inference call site has one proposed capability ID and source owner.
-- [ ] Every mutable route pointer and resolver is listed with its migration story.
-- [ ] ProfileService transport-neutral authority bypass and profile sync path exposure are recorded.
-- [ ] One-path census proves current physical leaves and names every exception.
-- [ ] Counsel and owner audits are incorporated into the phase contracts.
+- [x] Every production inference call site has one proposed capability ID and source owner.
+- [x] Every mutable route pointer and resolver is listed with its migration story.
+- [x] ProfileService transport-neutral authority bypass and profile sync path exposure are recorded.
+- [x] One-path census proves current physical leaves and names every exception.
+- [x] Counsel and owner audits are incorporated into the phase contracts.
 
 ## Test plan
 
-- `rg`-based generated inventories checked into a focused unit fixture.
-- `uv run pytest -q tests/unit/test_one_path_census.py`.
+- Exact AST/static inventories checked into three focused unit fixtures with
+  synthetic fail-closed mutation cases.
+- `uv run pytest -q tests/unit/test_phase143_*_census.py tests/unit/test_one_path_census.py tests/unit/test_api_surface.py`.
 - `dw check holdspeak` and `git diff --check`.
 
 ## Implementation notes

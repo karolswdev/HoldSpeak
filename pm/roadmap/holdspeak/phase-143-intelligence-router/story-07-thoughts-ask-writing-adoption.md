@@ -9,17 +9,20 @@
 
 ## Problem
 
-Thought interview, synthesis, Ask, intent, rewrite, and punctuation still depend
+Thought interview, Ask, intent, rewrite, and punctuation still depend
 on separate mutable Config targets. They are the smallest coherent adoption
 that proves profiles, assignments, frozen plans, and fallback end to end.
 
 ## Scope
 
-- **In:** Migrate `thought.interview`, `thought.synthesis`, `ask.answer`,
+- **In:** Migrate `thought.interview` (including its question-or-synthesis
+  result union), `ask.answer`,
   `speech.intent_classify`, `speech.rewrite`, and `speech.punctuate`; freeze the
   server-projected chain with Ask/composite reservation; expose application
   summary/override seams for Story 13; one-way Config migration markers.
-- **Out:** Meeting/transcription migration and executable tool turns.
+- **Out:** Meeting/transcription migration, executable tool turns, and any
+  independently assignable `thought.synthesis` until a genuinely distinct
+  admitted operation and result contract exist.
 
 ## Acceptance criteria
 
