@@ -146,6 +146,7 @@ describe("InferenceCapabilityPanel", () => {
         onUseHosted={onUseHosted}
       />,
     );
+    fireEvent.click(screen.getByRole("tab", { name: /^OpenRouter/i }));
     await waitFor(() =>
       expect(screen.getByRole("radio", { name: /deep choice/i })).toBeChecked(),
     );
@@ -265,7 +266,9 @@ describe("InferenceCapabilityPanel", () => {
         onDownloadLocal={download}
       />,
     );
-    expect(screen.getAllByText("Local Q")).toHaveLength(2);
+    fireEvent.click(screen.getByRole("tab", { name: /^This device/i }));
+    fireEvent.click(screen.getByRole("radio", { name: /Local Q/i }));
+    expect(screen.getByText("Local Q")).toBeInTheDocument();
     expect(screen.getByText(/runs only on this device/i)).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /download & use quick/i }));
     await waitFor(() => expect(download).toHaveBeenCalledWith(local));
@@ -307,8 +310,10 @@ describe("InferenceCapabilityPanel", () => {
         onDownloadLocal={download}
       />,
     );
-    expect(screen.getByText("Experimental tool models")).toBeInTheDocument();
-    expect(screen.getAllByText("Hammer 2.1 · 1.5B")).toHaveLength(2);
+    fireEvent.click(screen.getByRole("tab", { name: /^Tool experiments/i }));
+    fireEvent.click(screen.getByRole("radio", { name: /Hammer 2.1/i }));
+    expect(screen.getByText("Review and use")).toBeInTheDocument();
+    expect(screen.getByText("Hammer 2.1 · 1.5B")).toBeInTheDocument();
     expect(screen.getByText(/CC-BY-NC-4.0/)).toBeInTheDocument();
     expect(screen.getByText(/not enabled for tool execution/i)).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /download/i })).toBeNull();
@@ -342,8 +347,10 @@ describe("InferenceCapabilityPanel", () => {
         onUseExisting={useExisting}
       />,
     );
+    fireEvent.click(screen.getByRole("tab", { name: /^This device/i }));
     expect(screen.getByRole("radio", { name: /Qwen3-4B-Q6_K/ })).toBeChecked();
-    expect(screen.getByRole("heading", { name: "Already on this device" })).toBeInTheDocument();
+    expect(screen.getByText("Choose a model on this device")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("radio", { name: /Qwen3-4B-Q6_K/ }));
     fireEvent.click(screen.getByRole("button", { name: "USE THIS MODEL" }));
     await waitFor(() => expect(useExisting).toHaveBeenCalledWith(artifact));
   });
@@ -357,6 +364,8 @@ describe("InferenceCapabilityPanel", () => {
         onUseHosted={failed}
       />,
     );
+    fireEvent.click(screen.getByRole("tab", { name: /^OpenRouter/i }));
+    fireEvent.click(screen.getByRole("radio", { name: /deep choice/i }));
     const key = screen.getByLabelText("OpenRouter key");
     fireEvent.change(key, { target: { value: "sentinel-secret" } });
     fireEvent.click(screen.getByRole("button", { name: "ADD & USE DEEP" }));
