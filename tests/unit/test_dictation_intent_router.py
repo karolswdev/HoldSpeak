@@ -167,7 +167,7 @@ def test_no_match_response_is_normalized():
     assert result.intent.confidence == 0.0
 
 
-def test_unknown_block_id_triggers_retry_then_no_match(caplog):
+def test_unknown_block_id_is_single_attempt_then_no_match(caplog):
     rt = _FakeRuntime(
         returns=[
             {"matched": True, "block_id": "not_a_real_block", "confidence": 0.9, "extras": {}},
@@ -177,16 +177,14 @@ def test_unknown_block_id_triggers_retry_then_no_match(caplog):
     router = IntentRouter(rt, _blocks())
     result = router.run(_utt(), prior=[])
 
-    assert len(rt.calls) == 2
+    assert len(rt.calls) == 1
     assert result.intent is not None
     assert result.intent.matched is False
     assert result.intent.confidence == 0.0
-    assert any("attempt 1 failed" in w for w in result.warnings)
-    assert any("attempt 2 failed" in w for w in result.warnings)
-    assert any("retries exhausted" in w for w in result.warnings)
+    assert any("classify failed" in w for w in result.warnings)
 
 
-def test_retry_recovers_on_second_attempt():
+def test_transient_failure_does_not_retry_above_controller():
     rt = _FakeRuntime(
         returns=[
             RuntimeError("transient model error"),
@@ -202,11 +200,9 @@ def test_retry_recovers_on_second_attempt():
     result = router.run(_utt(), prior=[])
 
     assert result.intent is not None
-    assert result.intent.matched is True
-    assert result.intent.block_id == "ai_prompt_buildout"
-    assert any("attempt 1 failed" in w for w in result.warnings)
-    # No "retries exhausted" message — we recovered.
-    assert not any("retries exhausted" in w for w in result.warnings)
+    assert result.intent.matched is False
+    assert len(rt.calls) == 1
+    assert any("classify failed" in w for w in result.warnings)
 
 
 def test_runtime_exceptions_never_propagate():
@@ -221,7 +217,7 @@ def test_runtime_exceptions_never_propagate():
     assert result.intent.matched is False
 
 
-def test_invalid_confidence_triggers_retry():
+def test_invalid_confidence_is_single_attempt_failure():
     rt = _FakeRuntime(
         returns=[
             {"matched": True, "block_id": "ai_prompt_buildout", "confidence": 1.5, "extras": {}},
@@ -231,18 +227,18 @@ def test_invalid_confidence_triggers_retry():
     router = IntentRouter(rt, _blocks())
     result = router.run(_utt(), prior=[])
 
-    assert len(rt.calls) == 2
+    assert len(rt.calls) == 1
     assert result.intent is not None
-    assert result.intent.confidence == 0.5
+    assert result.intent.confidence == 0.0
 
 
-def test_non_dict_response_triggers_retry():
+def test_non_dict_response_is_single_attempt_failure():
     rt = _FakeRuntime(returns=["just a string", "still a string"])
     router = IntentRouter(rt, _blocks())
     result = router.run(_utt(), prior=[])
     assert result.intent is not None
     assert result.intent.matched is False
-    assert len(rt.calls) == 2
+    assert len(rt.calls) == 1
 
 
 def test_empty_blockset_short_circuits_without_runtime_call():

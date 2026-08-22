@@ -312,7 +312,7 @@ def test_command_replay_is_exact_and_unrelated_heads_do_not_conflict(
     other = _set(
         service,
         "other",
-        {"kind": "capability", "capability_id": "speech.punctuate"},
+        {"kind": "capability", "capability_id": "speech.rewrite"},
         "one-model",
     )
     assert other["revision"] == 1
@@ -550,7 +550,7 @@ def test_payload_identity_and_command_receipt_tamper_fail_closed(db: Database) -
     second = _set(
         service,
         "integrity-second",
-        {"kind": "capability", "capability_id": "speech.punctuate"},
+        {"kind": "capability", "capability_id": "speech.rewrite"},
         "integrity-model",
     )
     with db._connection() as conn:
@@ -591,7 +591,7 @@ def test_payload_identity_and_command_receipt_tamper_fail_closed(db: Database) -
             {
                 "command_id": "integrity-second",
                 "expected_revision": 0,
-                "scope": {"kind": "capability", "capability_id": "speech.punctuate"},
+                "scope": {"kind": "capability", "capability_id": "speech.rewrite"},
                 "entries": [{"profile_id": "integrity-model", "profile_revision": 1}],
             },
         )
@@ -727,7 +727,7 @@ def test_use_default_preview_and_clear_require_exact_scope_capability(
         service.preview_use_default(
             OWNER,
             scope={"kind": "capability", "capability_id": "ask.answer"},
-            capability_id="speech.punctuate",
+            capability_id="speech.rewrite",
         )
     assert preview.value.code == "inference_assignment_capability_mismatch"
     with pytest.raises(ValidationError) as clear:
@@ -737,10 +737,28 @@ def test_use_default_preview_and_clear_require_exact_scope_capability(
                 "command_id": "scope-clear",
                 "expected_revision": saved["revision"],
                 "scope": {"kind": "capability", "capability_id": "ask.answer"},
-                "capability_id": "speech.punctuate",
+                "capability_id": "speech.rewrite",
             },
         )
     assert clear.value.code == "inference_assignment_capability_mismatch"
+
+
+def test_future_lexical_punctuation_is_not_owner_assignable(db: Database) -> None:
+    _profile(db, "punctuation-model")
+    capability = process_inference_capability_registry().require("speech.punctuate")
+    assert capability.owner_visibility == "future"
+    service = InferenceAssignmentService(db)
+    with pytest.raises(ValidationError) as refused:
+        _set(
+            service,
+            "assign-future-punctuation",
+            {"kind": "capability", "capability_id": "speech.punctuate"},
+            "punctuation-model",
+        )
+    assert refused.value.code == "inference_capability_not_assignable"
+    assert "future" not in {
+        row["id"] for row in service.assignment_summary(OWNER)["rows"]
+    }
 
 
 def test_heterogeneous_global_chain_is_never_filtered_or_substituted(
@@ -795,7 +813,7 @@ def test_legacy_boundary_uses_actual_adapter_and_paired_unknown_fails_closed(
             {
                 "command_id": "legacy-paired",
                 "expected_revision": 0,
-                "scope": {"kind": "capability", "capability_id": "speech.punctuate"},
+                "scope": {"kind": "capability", "capability_id": "speech.rewrite"},
                 "entries": [{"profile_id": "legacy-paired-old"}],
             },
         )

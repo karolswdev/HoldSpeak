@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 143
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** 143-04, 143-05, 143-06
 - **Unblocks:** 143-10, 143-13, 143-14
 - **Owner:** unassigned
@@ -26,11 +26,11 @@ that proves profiles, assignments, frozen plans, and fallback end to end.
 
 ## Acceptance criteria
 
-- [ ] Ask uses the visible next-run chain exactly once and receipts actual model, fallback, and boundary.
-- [ ] Assignment edits never retarget an in-flight turn.
-- [ ] Every leg preserves the same typed operation/result and exact-context law.
-- [ ] No-model, incompatible, and overflow states nominate one lawful repair.
-- [ ] Upgraded owners keep the same effective primary until they edit an assignment.
+- [x] Ask uses the visible next-run chain exactly once and receipts actual model, fallback, and boundary.
+- [x] Assignment edits never retarget an in-flight turn.
+- [x] Every executable leg preserves the same typed operation/result and exact-context law.
+- [x] No-model, incompatible, and overflow states nominate one lawful repair.
+- [x] Upgraded owners with explicit v2 profiles keep the same effective primary until they edit an assignment; implicit `this_machine` receives one deterministic repair instead of an invented profile.
 
 ## Test plan
 
@@ -42,3 +42,8 @@ that proves profiles, assignments, frozen plans, and fallback end to end.
 ## Notes / open questions
 
 Preserve all Phase 141 Workbench cursor, editor, placement, append-effect, and focus laws.
+
+`speech.punctuate` remains an explicitly non-executing registry capability in
+this story because the selected production stage is lexical. It owns no route
+evidence provider and cannot be admitted as model work until a provider-backed
+punctuation stage is actually selected.

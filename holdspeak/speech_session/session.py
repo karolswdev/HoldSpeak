@@ -19,6 +19,7 @@ from ..logging_config import get_logger
 from ..principals import Principal, PrincipalKind
 from .plan import (
     CAPABILITY_NOT_PLANNED,
+    CAPABILITY_INTENT_CLASSIFY,
     CAPABILITY_WHISPER_PRELOAD,
     CAPABILITY_WHISPER_TRANSCRIBE,
     ENTRY_SESSION_REQUIRED,
@@ -279,6 +280,7 @@ class SpeechSession:
     #: (Sol OQ5). Built at admission; never replaced, never read from ambient
     #: state.
     _fence: Any = None
+    _routed_routes: dict[str, dict[str, Any]] = None
 
     def __post_init__(self) -> None:
         # Eager construction is part of admission. Lazy first access let two threads
@@ -291,6 +293,34 @@ class SpeechSession:
                 broker=self.broker,
                 operation_id=str(self.parent.operation_id),
                 deadline_at=float(self.plan.deadline_at),
+            )
+        if self._routed_routes is None:
+            self._routed_routes = {}
+
+    def freeze_assigned_provider_routes(self) -> None:
+        """Freeze assignment routes while this session is still admitting."""
+        with self.broker.database._connection() as conn:
+            active = conn.execute(
+                "SELECT 1 FROM inference_assignment_migrations "
+                "WHERE family='thoughts-writing-route-assignments'"
+            ).fetchone() is not None
+        if not active:
+            return
+        aliases = {
+            CAPABILITY_INTENT_CLASSIFY: "speech.intent_classify",
+            "rewrite": "speech.rewrite",
+        }
+        requested = [
+            {"key": legacy, "capability_id": canonical, "invocation_id": self.plan.session_id}
+            for legacy, canonical in aliases.items() if self.plan.has(legacy)
+        ]
+        if requested:
+            self._routed_routes.update(
+                self.broker.inference_adoption_service.freeze_route_set(
+                    self.principal,
+                    command_id=f"speechroutes-{self.plan.session_id}",
+                    routes=requested,
+                )
             )
 
     @property
@@ -317,6 +347,7 @@ class SpeechSession:
             plan=self.plan,
             parent=self.parent,
             fence=self.fence,
+            routed_routes=dict(self._routed_routes),
         )
 
     def seal(self, deadline_at: float) -> float:
@@ -475,6 +506,10 @@ def admit_speech_session(
         created_at=started,
     )
     broker = _broker()
+    with broker.database._connection() as conn:
+        routed_assignments = conn.execute(
+            "SELECT 1 FROM inference_assignment_migrations WHERE family='thoughts-writing-route-assignments'"
+        ).fetchone() is not None
     try:
         parent = broker.parent_run_controller.start(
             principal,
@@ -484,14 +519,66 @@ def admit_speech_session(
             input_snapshot=plan.summary(),
             deadline_at=deadline,
             child_budget=int(child_budget),
+            _defer_persist=routed_assignments,
         )
     except Exception as exc:
         reason = str(getattr(exc, "reason", "") or SESSION_NOT_ADMITTED)
         raise SpeechSessionRefused(reason) from None
+    frozen_routes: dict[str, dict[str, Any]] = {}
+    if routed_assignments:
+        from ..kernel.parent_run import ParentRun
+        from ..services.inference_route_plan_service import ROUTE_PLANNING_AUTHORITY
+
+        aliases = {CAPABILITY_INTENT_CLASSIFY: "speech.intent_classify", "rewrite": "speech.rewrite"}
+        with broker.database._connection() as conn:
+            conn.execute("BEGIN IMMEDIATE")
+            try:
+                row = broker.parent_run_controller._persist_parent(
+                    conn, operation_id=parent.operation_id, native_id=parent.native_id,
+                    kind=kind, definition_ref=f"speech:{identifier}:{insertion_aim or 'capture'}",
+                    definition_revision=plan.sha256, input_snapshot=plan.summary(),
+                    deadline_at=deadline, child_budget=int(child_budget), now=started,
+                )
+                for ordinal, (legacy, canonical) in enumerate(aliases.items(), 1):
+                    if plan.has(legacy):
+                        frozen_routes[legacy] = broker.inference_adoption_service.plans.freeze_route_plan_in_transaction(
+                            ROUTE_PLANNING_AUTHORITY, conn,
+                            command_id=f"speechroutes-{plan.session_id}-{ordinal}",
+                            capability_id=canonical, invocation_id=plan.session_id,
+                            deadline_at=deadline,
+                        )
+                conn.commit()
+            except Exception:
+                conn.rollback()
+                # The kernel operation was admitted before this cross-service
+                # transaction.  Route refusal must never leave it live without
+                # a parent context; terminalize the exact claimed operation.
+                try:
+                    broker.receipt(
+                        parent.operation_id,
+                        "refused",
+                        "speech-parent:route-admission-failed",
+                        broker.parent_run_controller._node,
+                    )
+                except Exception:
+                    log.exception(
+                        "failed to terminalize orphan speech parent %s",
+                        parent.operation_id,
+                    )
+                raise
+        parent = ParentRun(
+            parent.operation_id, str(row["native_id"]),
+            broker.parent_run_controller._context(row),
+        )
     log.info(
         "speech session admitted: kind=%s parent=%s plan=%s", kind, parent.operation_id, plan.sha256
     )
-    return SpeechSession(broker, principal, plan, parent, kind)
+    session = SpeechSession(broker, principal, plan, parent, kind)
+    if routed_assignments:
+        session._routed_routes.update(frozen_routes)
+    else:
+        session.freeze_assigned_provider_routes()
+    return session
 
 
 def admit_hold_session(

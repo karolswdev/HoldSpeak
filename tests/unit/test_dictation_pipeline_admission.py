@@ -299,8 +299,7 @@ class _BadRequest(Exception):
 _BadRequest.__name__ = "BadRequestError"
 
 
-def test_the_response_format_retry_is_a_separate_child(tmp_path, monkeypatch):
-    """Sol/story: a second real request to a model is a second child."""
+def test_response_format_rejection_does_not_retry_above_controller(tmp_path, monkeypatch):
     from holdspeak.plugins.dictation.grammars import StructuredOutputSchema
     from holdspeak.plugins.dictation.runtime_openai_compatible import (
         OpenAICompatibleRuntime,
@@ -324,24 +323,19 @@ def test_the_response_format_retry_is_a_separate_child(tmp_path, monkeypatch):
     )
     runtime = AdmittedDictationRuntime(backend, session.provider())
 
-    result = runtime.classify(PROMPT_SENTINEL, schema, max_tokens=64, temperature=0.0)
+    with pytest.raises(SpeechProviderFailure):
+        runtime.classify(PROMPT_SENTINEL, schema, max_tokens=64, temperature=0.0)
 
-    assert result["block_id"] == "ai_prompt_buildout"
-    # Two real requests to the endpoint...
-    assert len(completions.calls) == 2
+    assert len(completions.calls) == 1
     assert "response_format" in completions.calls[0]
-    assert "response_format" not in completions.calls[1]
-    # ...and two admitted children with DISTINCT attempt ordinals and receipts.
     children = _invocations(db)
-    assert len(children) == 2
-    assert [request.attempt_ordinal for request in requests] == [1, 2]
+    assert len(children) == 1
+    assert [request.attempt_ordinal for request in requests] == [1]
     assert {row["parent_operation_id"] for row in children} == {session.operation_id}
     assert (_receipt(db, children[0]["operation_id"]) or {}).get("outcome") == "failed"
-    assert (_receipt(db, children[1]["operation_id"]) or {}).get("outcome") == "succeeded"
 
 
-def test_the_routers_second_classify_attempt_is_a_separate_child(tmp_path, monkeypatch):
-    """`intent_router.py` retries once; each attempt is its own child."""
+def test_router_failure_does_not_mint_a_second_child(tmp_path, monkeypatch):
     from holdspeak.plugins.dictation.builtin.intent_router import IntentRouter
     from holdspeak.plugins.dictation.contracts import Utterance
 
@@ -381,13 +375,13 @@ def test_the_routers_second_classify_attempt_is_a_separate_child(tmp_path, monke
         [],
     )
 
-    assert result.intent.matched is True
-    assert len(backend.classify_calls) == 2
+    assert result.intent.matched is False
+    assert len(backend.classify_calls) == 1
     children = _invocations(db)
-    assert len(children) == 2
-    assert [request.attempt_ordinal for request in requests] == [1, 2]
+    assert len(children) == 1
+    assert [request.attempt_ordinal for request in requests] == [1]
     outcomes = [(_receipt(db, row["operation_id"]) or {}).get("outcome") for row in children]
-    assert outcomes == ["failed", "succeeded"]
+    assert outcomes == ["failed"]
 
 
 # ------------------------------------------------------------------- mesh

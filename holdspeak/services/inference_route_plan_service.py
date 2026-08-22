@@ -72,6 +72,10 @@ class RouteAdmissionEvidenceProvider:
     freeze: Callable[[Any, str, str], Mapping[str, Any]]
     reconstruct: Callable[[Any, str], Mapping[str, Any]]
     reconstruct_attempt_budgets: Callable[[Any, str], Mapping[str, Any]] | None = None
+    freeze_resolved: Callable[
+        [Any, str, str, Mapping[str, Any], Sequence[Mapping[str, Any]]],
+        Mapping[str, Any],
+    ] | None = None
 
 
 def _canonical(value: Any) -> str:
@@ -130,7 +134,7 @@ class InferenceRoutePlanService:
         owned: set[tuple[tuple[str, int, str], str]] = set()
         for provider in operation_evidence_providers:
             _safe_id(provider.id, field="evidence_provider_id")
-            if type(provider.revision) is not int or provider.revision < 1 or not callable(provider.freeze) or not callable(provider.reconstruct) or (provider.reconstruct_attempt_budgets is not None and not callable(provider.reconstruct_attempt_budgets)):
+            if type(provider.revision) is not int or provider.revision < 1 or not callable(provider.freeze) or not callable(provider.reconstruct) or (provider.reconstruct_attempt_budgets is not None and not callable(provider.reconstruct_attempt_budgets)) or (provider.freeze_resolved is not None and not callable(provider.freeze_resolved)):
                 raise ValueError("invalid route admission evidence provider")
             claims = {
                 (capability, policy)
@@ -184,6 +188,7 @@ class InferenceRoutePlanService:
         subject_kind: str | None,
         subject_id: str | None,
         plan_id: str | None,
+        deadline_at: float | None = None,
     ) -> tuple[dict[str, Any], list[DeploymentRevision], list[dict[str, Any]]]:
         assignment, inherited_from = self._assignment_snapshot(
             conn,
@@ -202,7 +207,14 @@ class InferenceRoutePlanService:
         if created.tzinfo is None:
             created = created.replace(tzinfo=timezone.utc)
         created_at = _timestamp(created)
-        deadline_at = _timestamp(created + timedelta(milliseconds=retry_policy.deadline_ms))
+        deadline = (
+            datetime.fromtimestamp(float(deadline_at), tz=timezone.utc)
+            if deadline_at is not None
+            else created + timedelta(milliseconds=retry_policy.deadline_ms)
+        )
+        if deadline <= created:
+            raise ValidationError("Route deadline has elapsed.", code="inference_route_plan_invalid")
+        deadline_at_text = _timestamp(deadline)
         identity = plan_id or "irp_" + uuid.uuid4().hex
         material = {
             "schema": ROUTE_PLAN_SCHEMA,
@@ -234,7 +246,7 @@ class InferenceRoutePlanService:
             },
             "operation_policy_revision": operation_policy_revision,
             "created_at": created_at,
-            "deadline_at": deadline_at,
+            "deadline_at": deadline_at_text,
         }
         return {**material, "sha256": _sha256(material)}, private_revisions, preflight
 
@@ -273,58 +285,61 @@ class InferenceRoutePlanService:
     def freeze_route_plan(self, authority: Principal, *, command_id: str, **request: Any) -> dict[str, Any]:
         """Resolve and persist in one transaction; replay never re-resolves heads."""
         self._require_planner(authority)
-        allowed = {"capability_id", "operation_policy_revision", "invocation_id", "subject_kind", "subject_id"}
-        if set(request) - allowed or "capability_id" not in request:
-            raise ValidationError("Route freeze request has an invalid shape.", code="inference_route_plan_invalid")
-        command = _safe_id(command_id, field="command_id")
-        request_hash = _sha256({"command_id": command, **request})
-        expected_plan_id = self._deterministic_id("route", command, request_hash)
         with self._db._connection() as conn:
             conn.execute("BEGIN IMMEDIATE")
             try:
-                replay = conn.execute(
-                    "SELECT * FROM inference_route_plan_commands WHERE command_id=?",
-                    (command,),
-                ).fetchone()
-                if replay is not None:
-                    if str(replay["request_sha256"]) != request_hash:
-                        raise ConflictError("Route command changed.", code="inference_route_plan_command_conflict")
-                    result = self._route_from_row(
-                        conn,
-                        conn.execute("SELECT * FROM inference_route_plans WHERE id=?", (replay["plan_id"],)).fetchone(),
-                    )
-                    if str(replay["plan_sha256"]) != result["sha256"] or result["id"] != expected_plan_id:
-                        raise ConflictError("Stored route command effect is invalid.", code="inference_route_plan_command_integrity_invalid")
-                    conn.commit()
-                    return result
-                self._refuse_route_identity_collision(conn, expected_plan_id)
-                capability = self._registry.require(str(request["capability_id"]))
-                policy_revision = self._operation_policy(
-                    capability, request.get("operation_policy_revision")
-                )
-                resolved, revisions, _preflight = self._resolve_in_conn(
-                    conn,
-                    capability=capability,
-                    operation_policy_revision=policy_revision,
-                    invocation_id=request.get("invocation_id"),
-                    subject_kind=request.get("subject_kind"),
-                    subject_id=request.get("subject_id"),
-                    plan_id=expected_plan_id,
-                )
-                material = {key: value for key, value in resolved.items() if key != "sha256"}
-                self._insert_route(
-                    conn, material, resolved["sha256"], revisions,
-                    capability_definition=capability.canonical_dict(),
-                    retry_policy_definition=self._registry.retry_policy(material["retry_policy"]["id"]).canonical_dict(),
-                )
-                conn.execute(
-                    "INSERT INTO inference_route_plan_commands VALUES (?,?,?,?,?)",
-                    (command, request_hash, material["id"], resolved["sha256"], material["created_at"]),
+                resolved = self.freeze_route_plan_in_transaction(
+                    authority, conn, command_id=command_id, **request
                 )
                 conn.commit()
             except Exception:
                 conn.rollback()
                 raise
+        return resolved
+
+    def freeze_route_plan_in_transaction(
+        self, authority: Principal, conn: Any, *, command_id: str, **request: Any
+    ) -> dict[str, Any]:
+        """Freeze one route inside an adopter-owned composite transaction."""
+        self._require_planner(authority)
+        allowed = {"capability_id", "operation_policy_revision", "invocation_id", "subject_kind", "subject_id", "deadline_at"}
+        if set(request) - allowed or "capability_id" not in request:
+            raise ValidationError("Route freeze request has an invalid shape.", code="inference_route_plan_invalid")
+        command = _safe_id(command_id, field="command_id")
+        request_hash = _sha256({"command_id": command, **request})
+        expected_plan_id = self._deterministic_id("route", command, request_hash)
+        replay = conn.execute(
+            "SELECT * FROM inference_route_plan_commands WHERE command_id=?", (command,)
+        ).fetchone()
+        if replay is not None:
+            if str(replay["request_sha256"]) != request_hash:
+                raise ConflictError("Route command changed.", code="inference_route_plan_command_conflict")
+            result = self._route_from_row(conn, conn.execute(
+                "SELECT * FROM inference_route_plans WHERE id=?", (replay["plan_id"],)
+            ).fetchone())
+            if str(replay["plan_sha256"]) != result["sha256"] or result["id"] != expected_plan_id:
+                raise ConflictError("Stored route command effect is invalid.", code="inference_route_plan_command_integrity_invalid")
+            return result
+        self._refuse_route_identity_collision(conn, expected_plan_id)
+        capability = self._registry.require(str(request["capability_id"]))
+        policy_revision = self._operation_policy(capability, request.get("operation_policy_revision"))
+        resolved, revisions, preflight = self._resolve_in_conn(
+            conn, capability=capability, operation_policy_revision=policy_revision,
+            invocation_id=request.get("invocation_id"), subject_kind=request.get("subject_kind"),
+            subject_id=request.get("subject_id"), plan_id=expected_plan_id,
+            deadline_at=request.get("deadline_at"),
+        )
+        material = {key: value for key, value in resolved.items() if key != "sha256"}
+        self._insert_route(
+            conn, material, resolved["sha256"], revisions,
+            capability_definition=capability.canonical_dict(),
+            retry_policy_definition=self._registry.retry_policy(material["retry_policy"]["id"]).canonical_dict(),
+            frozen_preflight=preflight,
+        )
+        conn.execute(
+            "INSERT INTO inference_route_plan_commands VALUES (?,?,?,?,?)",
+            (command, request_hash, material["id"], resolved["sha256"], material["created_at"]),
+        )
         return resolved
 
     def freeze_legacy_one_leg_plan(
@@ -382,7 +397,7 @@ class InferenceRoutePlanService:
                     operation_policy_revision=operation_policy_revision, plan_id=expected_plan_id,
                 )
                 route_hash = _sha256(material)
-                self._insert_route(conn, material, route_hash, [deployment_revision], capability_definition=capability.canonical_dict(), retry_policy_definition=policy.canonical_dict())
+                self._insert_route(conn, material, route_hash, [deployment_revision], capability_definition=capability.canonical_dict(), retry_policy_definition=policy.canonical_dict(), frozen_preflight=({"route_leg_ordinal": 1, "eligibility": "executable", "reason_code": None},))
                 conn.execute("INSERT INTO inference_route_plan_commands VALUES (?,?,?,?,?)", (command, request_hash, material["id"], route_hash, material["created_at"]))
                 conn.commit()
                 return {**material, "sha256": route_hash}
@@ -469,6 +484,42 @@ class InferenceRoutePlanService:
     ) -> dict[str, Any]:
         """Atomically freeze route evidence and its private admitted request plan."""
         self._require_planner(authority)
+        with self._db._connection() as conn:
+            conn.execute("BEGIN IMMEDIATE")
+            try:
+                result = self._freeze_one_shot_in_transaction(
+                    authority,
+                    conn,
+                    command_id=command_id,
+                    route_request=route_request,
+                    operation_id=operation_id,
+                    planning_reference=planning_reference,
+                    operation_plan_id=operation_plan_id,
+                )
+                conn.commit()
+            except Exception:
+                conn.rollback()
+                raise
+        return result
+
+    def _freeze_one_shot_in_transaction(
+        self,
+        authority: Principal,
+        conn: Any,
+        *,
+        command_id: str,
+        route_request: Mapping[str, Any],
+        operation_id: str,
+        planning_reference: str,
+        operation_plan_id: str | None = None,
+    ) -> dict[str, Any]:
+        """Freeze route + operation evidence in a caller-owned transaction.
+
+        Production composite owners use this seam so their logical reservation,
+        private material, route/operation pair, and controller start commit or
+        roll back together.  It never begins, commits, or rolls back ``conn``.
+        """
+        self._require_planner(authority)
         allowed_route = {"capability_id", "operation_policy_revision", "invocation_id", "subject_kind", "subject_id"}
         if operation_plan_id is not None or not isinstance(route_request, Mapping) or set(route_request) - allowed_route or "capability_id" not in route_request:
             raise ValidationError("One-shot route request has an invalid shape.", code="inference_route_plan_invalid")
@@ -477,106 +528,178 @@ class InferenceRoutePlanService:
         request_hash = _sha256({"command_id": command, "route_request": dict(route_request), "operation_id": operation_id, "planning_reference": reference})
         expected_route_id = self._deterministic_id("operation-route", command, request_hash)
         expected_operation_plan_id = self._deterministic_id("operation-request", command, request_hash)
+        replay = conn.execute("SELECT * FROM inference_operation_route_request_plan_commands WHERE command_id=?", (command,)).fetchone()
+        if replay is not None:
+            if str(replay["request_sha256"]) != request_hash:
+                raise ConflictError("Operation route command changed.", code="inference_operation_route_plan_command_conflict")
+            route = self._route_from_row(conn, conn.execute("SELECT * FROM inference_route_plans WHERE id=?", (replay["route_plan_id"],)).fetchone())
+            operation = self._operation_from_row(conn, conn.execute("SELECT * FROM inference_operation_route_request_plans WHERE id=?", (replay["operation_plan_id"],)).fetchone())
+            if (
+                str(replay["route_plan_sha256"]) != route["sha256"]
+                or str(replay["operation_plan_sha256"]) != operation["sha256"]
+                or operation["route_plan_id"] != route["id"]
+                or route["id"] != expected_route_id
+                or operation["id"] != expected_operation_plan_id
+                or str(operation_id) != operation["operation_id"]
+            ):
+                raise ConflictError("Stored operation route command effect is invalid.", code="inference_operation_route_plan_command_integrity_invalid")
+            return {"route_plan": route, "operation_request_plan": operation}
+        self._refuse_route_identity_collision(conn, expected_route_id)
+        self._refuse_operation_identity_collision(conn, operation_plan_id=expected_operation_plan_id, operation_id=operation_id)
+        capability = self._registry.require(str(route_request["capability_id"]))
+        resolved, revisions, preflight = self._resolve_in_conn(
+            conn, capability=capability,
+            operation_policy_revision=self._operation_policy(capability, route_request.get("operation_policy_revision")),
+            invocation_id=route_request.get("invocation_id"), subject_kind=route_request.get("subject_kind"),
+            subject_id=route_request.get("subject_id"), plan_id=expected_route_id,
+        )
+        route_material = {key: value for key, value in resolved.items() if key != "sha256"}
+        evidence = self._operation_evidence(
+            conn, provider_id=None, planning_reference=reference, operation_id=operation_id,
+            capability=capability, operation_policy_revision=resolved["operation_policy_revision"],
+            freeze=True, resolved_route=resolved, frozen_preflight=preflight,
+        )
+        operation = self._operation_material(
+            route=resolved, operation_id=operation_id,
+            material_snapshot_sha256=evidence["material_snapshot_sha256"], entries=evidence["entries"],
+            operation_plan_id=expected_operation_plan_id, frozen_preflight=preflight,
+            evidence_provider_id=evidence["provider_id"], planning_reference=reference,
+            evidence_provider_revision=evidence["provider_revision"],
+            admission_evidence_ref=evidence["evidence_ref"], admission_evidence_sha256=evidence["evidence_sha256"],
+        )
+        operation_hash = _sha256(operation)
+        budget_provider = self._operation_evidence_providers.get(str(operation["evidence_provider_id"]))
+        budget_material = None
+        if budget_provider is not None and budget_provider.reconstruct_attempt_budgets is not None:
+            budget_material = self._attempt_budget_material_in_transaction(
+                ROUTE_PLANNING_AUTHORITY, conn, operation={**operation, "sha256": operation_hash}, route=resolved,
+            )
+        self._insert_route(conn, route_material, resolved["sha256"], revisions, capability_definition=capability.canonical_dict(), retry_policy_definition=self._registry.retry_policy(route_material["retry_policy"]["id"]).canonical_dict(), frozen_preflight=preflight)
+        self._insert_operation(conn, operation, operation_hash, frozen_preflight=preflight)
+        if budget_material is not None:
+            conn.execute(
+                """INSERT INTO inference_operation_route_attempt_budget_evidence
+                   (operation_plan_id,provider_id,provider_revision,evidence_ref,
+                    material_snapshot_sha256,payload_json,sha256) VALUES (?,?,?,?,?,?,?)""",
+                (operation["id"], budget_material["provider_id"], budget_material["provider_revision"], operation["admission_evidence_ref"], operation["material_snapshot_sha256"], _canonical(budget_material), _sha256(budget_material)),
+            )
+        conn.execute("INSERT INTO inference_operation_route_request_plan_commands VALUES (?,?,?,?,?,?,?)", (command, request_hash, route_material["id"], resolved["sha256"], operation["id"], operation_hash, operation["created_at"]))
+        return {"route_plan": resolved, "operation_request_plan": {**operation, "sha256": operation_hash}}
+
+    def freeze_operation_for_route(
+        self,
+        authority: Principal,
+        *,
+        command_id: str,
+        route_plan_id: str,
+        operation_id: str,
+        planning_reference: str,
+    ) -> dict[str, Any]:
+        """Attach exact operation material to an already-frozen route.
+
+        Speech sessions freeze assignment/deployment truth at logical admission,
+        then use this seam once transcript-derived material exists. No mutable
+        assignment, profile, binding, readiness, or Config selector is reread.
+        """
         with self._db._connection() as conn:
             conn.execute("BEGIN IMMEDIATE")
             try:
-                replay = conn.execute("SELECT * FROM inference_operation_route_request_plan_commands WHERE command_id=?", (command,)).fetchone()
-                if replay is not None:
-                    if str(replay["request_sha256"]) != request_hash:
-                        raise ConflictError("Operation route command changed.", code="inference_operation_route_plan_command_conflict")
-                    route = self._route_from_row(conn, conn.execute("SELECT * FROM inference_route_plans WHERE id=?", (replay["route_plan_id"],)).fetchone())
-                    operation = self._operation_from_row(conn, conn.execute("SELECT * FROM inference_operation_route_request_plans WHERE id=?", (replay["operation_plan_id"],)).fetchone())
-                    if (
-                        str(replay["route_plan_sha256"]) != route["sha256"]
-                        or str(replay["operation_plan_sha256"]) != operation["sha256"]
-                        or operation["route_plan_id"] != route["id"]
-                        or route["id"] != expected_route_id
-                        or operation["id"] != expected_operation_plan_id
-                        or str(operation_id) != operation["operation_id"]
-                    ):
-                        raise ConflictError("Stored operation route command effect is invalid.", code="inference_operation_route_plan_command_integrity_invalid")
-                    conn.commit()
-                    return {"route_plan": route, "operation_request_plan": operation}
-                self._refuse_route_identity_collision(conn, expected_route_id)
-                self._refuse_operation_identity_collision(
-                    conn, operation_plan_id=expected_operation_plan_id, operation_id=operation_id
+                result = self.freeze_operation_for_route_in_transaction(
+                    authority, conn, command_id=command_id,
+                    route_plan_id=route_plan_id, operation_id=operation_id,
+                    planning_reference=planning_reference,
                 )
-                capability = self._registry.require(str(route_request["capability_id"]))
-                resolved, revisions, preflight = self._resolve_in_conn(
-                    conn,
-                    capability=capability,
-                    operation_policy_revision=self._operation_policy(
-                        capability, route_request.get("operation_policy_revision")
-                    ),
-                    invocation_id=route_request.get("invocation_id"),
-                    subject_kind=route_request.get("subject_kind"),
-                    subject_id=route_request.get("subject_id"),
-                    plan_id=expected_route_id,
-                )
-                route_material = {key: value for key, value in resolved.items() if key != "sha256"}
-                evidence = self._operation_evidence(
-                    conn,
-                    provider_id=None,
-                    planning_reference=reference,
-                    operation_id=operation_id,
-                    capability=capability,
-                    operation_policy_revision=resolved["operation_policy_revision"],
-                    freeze=True,
-                )
-                operation = self._operation_material(
-                    route=resolved,
-                    operation_id=operation_id,
-                    material_snapshot_sha256=evidence["material_snapshot_sha256"],
-                    entries=evidence["entries"],
-                    operation_plan_id=expected_operation_plan_id,
-                    frozen_preflight=preflight,
-                    evidence_provider_id=evidence["provider_id"],
-                    planning_reference=reference,
-                    evidence_provider_revision=evidence["provider_revision"],
-                    admission_evidence_ref=evidence["evidence_ref"],
-                    admission_evidence_sha256=evidence["evidence_sha256"],
-                )
-                operation_hash = _sha256(operation)
-                budget_material = None
-                budget_provider = self._operation_evidence_providers.get(
-                    str(operation["evidence_provider_id"])
-                )
-                if budget_provider is not None and budget_provider.reconstruct_attempt_budgets is not None:
-                    budget_material = self._attempt_budget_material_in_transaction(
-                        ROUTE_PLANNING_AUTHORITY,
-                        conn,
-                        operation={**operation, "sha256": operation_hash},
-                        route=resolved,
-                    )
-                self._insert_route(conn, route_material, resolved["sha256"], revisions, capability_definition=capability.canonical_dict(), retry_policy_definition=self._registry.retry_policy(route_material["retry_policy"]["id"]).canonical_dict())
-                self._insert_operation(
-                    conn, operation, operation_hash, frozen_preflight=preflight
-                )
-                if budget_material is not None:
-                    conn.execute(
-                        """INSERT INTO inference_operation_route_attempt_budget_evidence
-                           (operation_plan_id,provider_id,provider_revision,evidence_ref,
-                            material_snapshot_sha256,payload_json,sha256)
-                           VALUES (?,?,?,?,?,?,?)""",
-                        (
-                            operation["id"],
-                            budget_material["provider_id"],
-                            budget_material["provider_revision"],
-                            operation["admission_evidence_ref"],
-                            operation["material_snapshot_sha256"],
-                            _canonical(budget_material),
-                            _sha256(budget_material),
-                        ),
-                    )
-                conn.execute("INSERT INTO inference_operation_route_request_plan_commands VALUES (?,?,?,?,?,?,?)", (command, request_hash, route_material["id"], resolved["sha256"], operation["id"], operation_hash, operation["created_at"]))
                 conn.commit()
             except Exception:
                 conn.rollback()
                 raise
-        return {
-            "route_plan": resolved,
-            "operation_request_plan": {**operation, "sha256": operation_hash},
-        }
+        return result
+
+    def freeze_operation_for_route_in_transaction(
+        self,
+        authority: Principal,
+        conn: Any,
+        *,
+        command_id: str,
+        route_plan_id: str,
+        operation_id: str,
+        planning_reference: str,
+    ) -> dict[str, Any]:
+        self._require_planner(authority)
+        command = _safe_id(command_id, field="command_id")
+        route_id = _safe_id(route_plan_id, field="route_plan_id")
+        operation_key = _safe_id(operation_id, field="operation_id")
+        reference = _safe_id(planning_reference, field="planning_reference")
+        request_hash = _sha256({
+            "command_id": command, "route_plan_id": route_id,
+            "operation_id": operation_key, "planning_reference": reference,
+        })
+        expected_operation_id = self._deterministic_id("operation-request", command, request_hash)
+        replay = conn.execute(
+            "SELECT * FROM inference_operation_route_request_plan_commands WHERE command_id=?",
+            (command,),
+        ).fetchone()
+        if replay is not None:
+            if str(replay["request_sha256"]) != request_hash:
+                raise ConflictError("Operation route command changed.", code="inference_operation_route_plan_command_conflict")
+            route = self._route_from_row(conn, conn.execute("SELECT * FROM inference_route_plans WHERE id=?", (replay["route_plan_id"],)).fetchone())
+            operation = self._operation_from_row(conn, conn.execute("SELECT * FROM inference_operation_route_request_plans WHERE id=?", (replay["operation_plan_id"],)).fetchone())
+            if route["id"] != route_id or operation["id"] != expected_operation_id or operation["operation_id"] != operation_key or operation["route_plan_id"] != route_id or str(replay["route_plan_sha256"]) != route["sha256"] or str(replay["operation_plan_sha256"]) != operation["sha256"]:
+                raise ConflictError("Stored operation route command effect is invalid.", code="inference_operation_route_plan_command_integrity_invalid")
+            return {"route_plan": route, "operation_request_plan": operation}
+        route = self._route_from_row(
+            conn, conn.execute("SELECT * FROM inference_route_plans WHERE id=?", (route_id,)).fetchone()
+        )
+        self._refuse_operation_identity_collision(
+            conn, operation_plan_id=expected_operation_id, operation_id=operation_key
+        )
+        capability = self._registry.require(str(route["capability"]["id"]))
+        if (capability.revision, capability.schema_sha256) != (
+            int(route["capability"]["revision"]), str(route["capability"]["schema_sha256"])
+        ):
+            raise ConflictError("Frozen capability revision is unavailable.", code="inference_route_plan_integrity_invalid")
+        rows = conn.execute(
+            "SELECT * FROM inference_route_plan_preflight_evidence WHERE plan_id=? ORDER BY route_leg_ordinal",
+            (route_id,),
+        ).fetchall()
+        if len(rows) != len(route["entries"]):
+            raise ConflictError("Frozen route preflight evidence is missing.", code="inference_route_plan_integrity_invalid")
+        preflight = [
+            {"route_leg_ordinal": int(row["route_leg_ordinal"]), "eligibility": str(row["eligibility"]), "reason_code": row["reason_code"]}
+            for row in rows
+        ]
+        evidence = self._operation_evidence(
+            conn, provider_id=None, planning_reference=reference,
+            operation_id=operation_key, capability=capability,
+            operation_policy_revision=route["operation_policy_revision"], freeze=True,
+            resolved_route=route, frozen_preflight=preflight,
+        )
+        operation = self._operation_material(
+            route=route, operation_id=operation_key,
+            material_snapshot_sha256=evidence["material_snapshot_sha256"],
+            entries=evidence["entries"], operation_plan_id=expected_operation_id,
+            frozen_preflight=preflight, evidence_provider_id=evidence["provider_id"],
+            planning_reference=reference, evidence_provider_revision=evidence["provider_revision"],
+            admission_evidence_ref=evidence["evidence_ref"], admission_evidence_sha256=evidence["evidence_sha256"],
+        )
+        operation_hash = _sha256(operation)
+        budget_material = self._attempt_budget_material_in_transaction(
+            authority, conn, operation={**operation, "sha256": operation_hash}, route=route
+        )
+        self._insert_operation(conn, operation, operation_hash, frozen_preflight=preflight)
+        conn.execute(
+            """INSERT INTO inference_operation_route_attempt_budget_evidence
+               (operation_plan_id,provider_id,provider_revision,evidence_ref,
+                material_snapshot_sha256,payload_json,sha256) VALUES (?,?,?,?,?,?,?)""",
+            (operation["id"], budget_material["provider_id"], budget_material["provider_revision"],
+             operation["admission_evidence_ref"], operation["material_snapshot_sha256"],
+             _canonical(budget_material), _sha256(budget_material)),
+        )
+        conn.execute(
+            "INSERT INTO inference_operation_route_request_plan_commands VALUES (?,?,?,?,?,?,?)",
+            (command, request_hash, route["id"], route["sha256"], operation["id"], operation_hash, operation["created_at"]),
+        )
+        return {"route_plan": route, "operation_request_plan": {**operation, "sha256": operation_hash}}
 
     def get_route_plan(self, principal: Principal, plan_id: str) -> dict[str, Any]:
         self._require_inspector(principal)
@@ -1018,7 +1141,7 @@ class InferenceRoutePlanService:
             "deadline_at": route["deadline_at"],
         }
 
-    def _operation_evidence(self, conn: Any, *, provider_id: str | None, planning_reference: str, operation_id: str, capability: Any, operation_policy_revision: str, freeze: bool, evidence_ref: str | None = None) -> dict[str, Any]:
+    def _operation_evidence(self, conn: Any, *, provider_id: str | None, planning_reference: str, operation_id: str, capability: Any, operation_policy_revision: str, freeze: bool, evidence_ref: str | None = None, resolved_route: Mapping[str, Any] | None = None, frozen_preflight: Sequence[Mapping[str, Any]] = ()) -> dict[str, Any]:
         exact_capability = (capability.id, capability.revision, capability.schema_sha256)
         candidates = [provider for provider in self._operation_evidence_providers.values() if exact_capability in provider.capabilities and operation_policy_revision in provider.operation_policy_revisions]
         if provider_id is None:
@@ -1036,7 +1159,21 @@ class InferenceRoutePlanService:
         if exact_capability not in provider.capabilities or operation_policy_revision not in provider.operation_policy_revisions:
             raise ServiceError("inference_operation_evidence_provider_incompatible", "The evidence provider cannot attest this operation contract")
         before = conn.total_changes
-        value = provider.freeze(conn, planning_reference, operation_id) if freeze else provider.reconstruct(conn, str(evidence_ref))
+        if freeze and provider.freeze_resolved is not None:
+            if resolved_route is None:
+                raise ConflictError(
+                    "Resolved route evidence is missing.",
+                    code="inference_operation_evidence_invalid",
+                )
+            value = provider.freeze_resolved(
+                conn,
+                planning_reference,
+                operation_id,
+                resolved_route,
+                frozen_preflight,
+            )
+        else:
+            value = provider.freeze(conn, planning_reference, operation_id) if freeze else provider.reconstruct(conn, str(evidence_ref))
         if not freeze and conn.total_changes != before:
             raise ConflictError("Operation evidence provider wrote during reconstruction.", code="inference_operation_evidence_invalid")
         required = {"evidence_ref", "material_snapshot_sha256", "entries"}
@@ -1065,7 +1202,7 @@ class InferenceRoutePlanService:
             raise ValidationError("Preflight reason is invalid.", code="inference_operation_route_plan_invalid")
         return reason
 
-    def _insert_route(self, conn: Any, material: Mapping[str, Any], digest: str, revisions: Sequence[DeploymentRevision], *, capability_definition: Mapping[str, Any], retry_policy_definition: Mapping[str, Any]) -> None:
+    def _insert_route(self, conn: Any, material: Mapping[str, Any], digest: str, revisions: Sequence[DeploymentRevision], *, capability_definition: Mapping[str, Any], retry_policy_definition: Mapping[str, Any], frozen_preflight: Sequence[Mapping[str, Any]] = ()) -> None:
         for revision in revisions:
             conn.execute(
                 """INSERT OR IGNORE INTO deployment_revisions
@@ -1094,6 +1231,17 @@ class InferenceRoutePlanService:
             "INSERT INTO inference_route_plan_authority_evidence VALUES (?,?,?,?,?)",
             (material["id"], _canonical(capability_definition), capability_definition["schema_sha256"], _canonical(retry_policy_definition), retry_policy_definition["sha256"]),
         )
+        values = tuple(frozen_preflight) or tuple(
+            {"route_leg_ordinal": entry["ordinal"], "eligibility": "executable", "reason_code": None}
+            for entry in material["entries"]
+        )
+        for expected, item in enumerate(values, 1):
+            if int(item["route_leg_ordinal"]) != expected:
+                raise ConflictError("Route preflight order is invalid.", code="inference_route_plan_integrity_invalid")
+            conn.execute(
+                "INSERT INTO inference_route_plan_preflight_evidence VALUES (?,?,?,?)",
+                (material["id"], expected, item["eligibility"], item.get("reason_code")),
+            )
 
     @staticmethod
     def _insert_operation(conn: Any, material: Mapping[str, Any], digest: str, *, frozen_preflight: Sequence[Mapping[str, Any]]) -> None:

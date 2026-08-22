@@ -6,6 +6,7 @@ import hashlib
 import hmac
 import json
 import uuid
+from collections.abc import Callable, Mapping
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
@@ -347,6 +348,16 @@ class RefinementThoughtService:
         )
         return invocation
 
+    def get_invocation(self, principal: Principal, invocation_id: str) -> dict[str, Any]:
+        self._require_owner(principal)
+        with self._db._connection() as conn:
+            row = conn.execute(
+                "SELECT * FROM refinement_invocations WHERE id=?", (invocation_id,)
+            ).fetchone()
+            if row is None:
+                raise NotFound("refinement invocation", invocation_id)
+            return self._invocation_dto(conn, dict(row))
+
     def reserve_refinement_with_dispatch_claim(
         self, principal: Principal, thought_id: str, *, request_id: str,
         expected_aggregate_revision: int, expected_working_revision: int,
@@ -355,6 +366,7 @@ class RefinementThoughtService:
         workspace_cursor: dict[str, Any] | None = None,
         admission_claim: dict[str, Any] | None = None,
         validate_current_admission: bool = False,
+        routed_admission: Callable[[Any, str, str], Mapping[str, Any]] | None = None,
     ) -> tuple[dict[str, Any], bool]:
         """Persist identity and atomically grant dispatch only to its creator."""
         self._require_product_owner(principal)
@@ -389,10 +401,21 @@ class RefinementThoughtService:
                     raise ConflictError("refinement execution host lease is not live", code="refinement_host_lease_expired")
             admission_json, admission_sha = self._validated_admission_claim(admission_claim, required=bool(dispatch_host_id))
             if dispatch_host_id and validate_current_admission:
-                self._validate_current_admission_under_write_fence(admission_claim)
+                self._validate_current_admission_under_write_fence(conn, admission_claim)
             attachment_hash = str(record.get("attachment_sha256") or RefinementThoughtRepository.empty_attachment_hash(thought_id))
             conn.execute("INSERT INTO refinement_invocations(id,request_id,request_sha256,thought_id,frozen_aggregate_revision,frozen_working_revision,frozen_attachment_revision,frozen_attachment_sha256,admission_json,admission_sha256,state,dispatch_host_id,dispatch_lease_epoch,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,'reserved',?,?,?,?)", (iid,request_id,digest,thought_id,expected_aggregate_revision,expected_working_revision,expected_attachment_revision,attachment_hash,admission_json,admission_sha,dispatch_host_id,dispatch_lease_epoch,now,now))
             conn.execute("INSERT INTO refinement_invocation_attempts(invocation_id,attempt_ordinal,ask_invocation_id,state,created_at) VALUES(?,1,?,'reserved',?)", (iid,ask,now))
+            if routed_admission is not None:
+                admitted = dict(routed_admission(conn, iid, ask))
+                conn.execute(
+                    "UPDATE refinement_invocations SET route_plan_id=?,operation_plan_id=?,route_execution_id=? WHERE id=?",
+                    (
+                        admitted["route_plan"]["id"],
+                        admitted["operation_request_plan"]["id"],
+                        admitted["execution"]["id"],
+                        iid,
+                    ),
+                )
             self._bump_continuity(conn, thought_id)
             return self._invocation_dto(conn, dict(conn.execute("SELECT * FROM refinement_invocations WHERE id=?", (iid,)).fetchone())), True
 
@@ -421,6 +444,7 @@ class RefinementThoughtService:
         dispatch_lease_epoch: int,
         admission_claim: dict[str, Any],
         validate_current_admission: bool = False,
+        routed_admission: Callable[[Any, str, str, str], Mapping[str, Any]] | None = None,
     ) -> tuple[dict[str, Any], dict[str, Any], dict[str, Any], bool]:
         """Append an answer and reserve its one child in the same transaction."""
         self._require_owner(principal)
@@ -512,7 +536,7 @@ class RefinementThoughtService:
                 raise ConflictError("the next turn is unavailable", code="refinement_continuation_unavailable")
             admission_json, admission_sha = self._validated_admission_claim(admission_claim, required=True)
             if validate_current_admission:
-                self._validate_current_admission_under_write_fence(admission_claim)
+                self._validate_current_admission_under_write_fence(conn, admission_claim)
             note = conn.execute("SELECT * FROM notes WHERE id=?", (record["working_note_id"],)).fetchone()
             if note is None or note["deleted"]: raise ConflictError("working thought was deleted", code="thought_tombstoned")
             prior_body = str(note["body_markdown"]); separator = "\n\n" if prior_body else ""
@@ -549,6 +573,13 @@ class RefinementThoughtService:
                           attachment_hash,admission_json,admission_sha,dispatch_host_id,dispatch_lease_epoch,now,now))
             conn.execute("INSERT INTO refinement_invocation_attempts(invocation_id,attempt_ordinal,ask_invocation_id,state,created_at) VALUES(?,1,?,'reserved',?)",
                          (child_id,ask_id,now))
+            if routed_admission is not None:
+                admitted = dict(routed_admission(conn, child_id, ask_id, body))
+                conn.execute(
+                    "UPDATE refinement_invocations SET route_plan_id=?,operation_plan_id=?,route_execution_id=? WHERE id=?",
+                    (admitted["route_plan"]["id"], admitted["operation_request_plan"]["id"],
+                     admitted["execution"]["id"], child_id),
+                )
             continuity = self._bump_continuity(conn, thought_id)
             post_cursor = {"hub_id":self._workspace_hub_id(conn),"thought_id":thought_id,
                            "aggregate_revision":next_agg,"continuity_revision":continuity}
@@ -600,7 +631,7 @@ class RefinementThoughtService:
         raw = canonical_json(claim)
         return raw.decode("utf-8"), hashlib.sha256(raw).hexdigest()
 
-    def _validate_current_admission_under_write_fence(self, claim: dict[str, Any] | None) -> None:
+    def _validate_current_admission_under_write_fence(self, conn: Any, claim: dict[str, Any] | None) -> None:
         """Re-observe admission while the caller holds SQLite's write fence.
 
         The caller has already entered BEGIN IMMEDIATE, so settings cannot race
@@ -609,6 +640,41 @@ class RefinementThoughtService:
         from ..inference_targets import resolve_thought_placement
         if not isinstance(claim, dict):
             raise ConflictError("the next turn is unavailable", code="refinement_continuation_unavailable")
+        routed = conn.execute(
+            "SELECT 1 FROM inference_assignment_migrations WHERE family='thoughts-writing-route-assignments'"
+        ).fetchone() is not None
+        if routed:
+            from ..inference_capabilities import process_inference_capability_registry
+            from .inference_route_plan_service import InferenceRoutePlanService
+
+            plans = InferenceRoutePlanService(self._db)
+            capability = process_inference_capability_registry().require("thought.interview")
+            route, _revisions, _preflight = plans._resolve_in_conn(
+                conn,
+                capability=capability,
+                operation_policy_revision=plans._operation_policy(capability, None),
+                invocation_id=None,
+                subject_kind=None,
+                subject_id=None,
+                plan_id="refinement-admission-check",
+            )
+            primary = route["entries"][0]
+            current = {
+                "target_id": str(primary["profile_id"]),
+                "target_kind": "assigned_profile",
+                "boundary": str(primary["boundary"]),
+                "engine": "",
+                "model": "",
+                "readiness": "ready",
+                "reason": "",
+            }
+            if current != claim:
+                raise ConflictError(
+                    "Couldn't start the next turn. Your answer is still here. Add it to the Note.",
+                    code="refinement_continuation_unavailable",
+                    context={"readiness":"unavailable","reason":"assignment_changed"},
+                )
+            return
         # This fence is used only for coordinator-owned default selection.
         # Re-run that selector itself: resolving the already-claimed id would
         # miss an A→B default change and make the comparison decorative.
@@ -687,7 +753,12 @@ class RefinementThoughtService:
             self._bump_continuity(conn, str(inv["thought_id"]))
             return self._invocation_dto(conn, dict(conn.execute("SELECT * FROM refinement_invocations WHERE id=?", (invocation_id,)).fetchone()))
 
-    def recover_refinements_on_startup(self) -> list[str]:
+    def recover_refinements_on_startup(
+        self,
+        *,
+        recovery_host_id: str | None = None,
+        recovery_lease_epoch: int | None = None,
+    ) -> list[str]:
         """Reconcile abandoned app tasks without ever dispatching them again.
 
         Kernel recovery/projection reaping runs before this method.  A logical
@@ -722,6 +793,29 @@ class RefinementThoughtService:
                     "WHERE invocation_id=? ORDER BY attempt_ordinal",
                     (invocation_id,),
                 ).fetchall()
+                if inv.get("route_execution_id"):
+                    route_execution = conn.execute(
+                        "SELECT state FROM inference_route_executions WHERE id=?",
+                        (str(inv["route_execution_id"]),),
+                    ).fetchone()
+                    if route_execution is not None and str(route_execution["state"]) in {"active", "stopping"}:
+                        # Exact material/route/controller admission survived;
+                        # atomically transfer its dispatch lease before the
+                        # replacement coordinator resumes this identity.
+                        if recovery_host_id and recovery_lease_epoch:
+                            conn.execute(
+                                """UPDATE refinement_invocations
+                                      SET dispatch_host_id=?,dispatch_lease_epoch=?,updated_at=?
+                                    WHERE id=?""",
+                                (
+                                    recovery_host_id,
+                                    int(recovery_lease_epoch),
+                                    _now(),
+                                    invocation_id,
+                                ),
+                            )
+                        recovered.append(invocation_id)
+                        continue
                 bound = False
                 for attempt in attempts:
                     if attempt["kernel_operation_id"]:
@@ -845,11 +939,6 @@ class RefinementThoughtService:
                     "terminal_code=?,updated_at=?,terminal_at=? WHERE id=?",
                     (code, now, now, invocation_id),
                 )
-                record = self._record(
-                    conn.execute(
-                        "SELECT * FROM refinement_thoughts WHERE id=?", (thought_id,)
-                    ).fetchone()
-                )
                 self._bump_continuity(conn, thought_id)
                 current = self._record(conn.execute("SELECT * FROM refinement_thoughts WHERE id=?", (thought_id,)).fetchone())
                 return self._dto_in_transaction(conn, current)
@@ -890,6 +979,7 @@ class RefinementThoughtService:
             live = bool(host and int(host["lease_epoch"]) == int(inv["dispatch_lease_epoch"] or 0) and str(host["expires_at"]) > lease_now)
             target = {
                 "ask_invocation_id": str(ask["ask_invocation_id"]) if ask else None,
+                "route_execution_id": str(inv["route_execution_id"] or "") or None,
                 "dispatch_host_id": str(inv["dispatch_host_id"] or ""),
                 "dispatch_lease_epoch": int(inv["dispatch_lease_epoch"] or 0),
                 "host_live": live,
@@ -1305,6 +1395,58 @@ class RefinementThoughtService:
                             or str(host["expires_at"]) <= lease_now):
                         raise ValidationError("refinement execution host lease is not live",
                                               code="refinement_host_lease_expired")
+                routed_child = str(ask_invocation_id).startswith("invoke_") and conn.execute(
+                    "SELECT 1 FROM inference_route_attempts WHERE child_invocation_id=? "
+                    "AND physical_attempt_ordinal=? AND child_operation_id=?",
+                    (ask_invocation_id, attempt_ordinal, operation_id),
+                ).fetchone() is not None
+                if routed_child and attempt_ordinal == 1 and attempt is not None:
+                    if attempt["kernel_operation_id"] is None:
+                        conn.execute(
+                            "UPDATE refinement_invocation_attempts SET ask_invocation_id=? "
+                            "WHERE invocation_id=? AND attempt_ordinal=1",
+                            (ask_invocation_id, invocation_id),
+                        )
+                        attempt = conn.execute(
+                            "SELECT * FROM refinement_invocation_attempts WHERE invocation_id=? AND attempt_ordinal=1",
+                            (invocation_id,),
+                        ).fetchone()
+                elif routed_child and attempt is None and attempt_ordinal > 1:
+                    previous = conn.execute(
+                        "SELECT * FROM refinement_invocation_attempts WHERE invocation_id=? "
+                        "AND attempt_ordinal=?",
+                        (invocation_id, attempt_ordinal - 1),
+                    ).fetchone()
+                    prior_receipt = None if previous is None else conn.execute(
+                        "SELECT receipt_id,outcome,result_ref FROM kernel_receipts WHERE operation_id=?",
+                        (previous["kernel_operation_id"],),
+                    ).fetchone()
+                    if prior_receipt is not None and str(previous["state"]) == "in_flight":
+                        conn.execute(
+                            "UPDATE refinement_invocation_attempts SET state=?,receipt_id=?,result_ref=?,terminal_at=? "
+                            "WHERE invocation_id=? AND attempt_ordinal=?",
+                            (str(prior_receipt["outcome"]), prior_receipt["receipt_id"],
+                             prior_receipt["result_ref"], _now(), invocation_id,
+                             attempt_ordinal - 1),
+                        )
+                        previous = conn.execute(
+                            "SELECT * FROM refinement_invocation_attempts WHERE invocation_id=? AND attempt_ordinal=?",
+                            (invocation_id, attempt_ordinal - 1),
+                        ).fetchone()
+                    if previous is None or str(previous["state"]) not in {
+                        "failed", "refused", "cancelled", "indeterminate"
+                    }:
+                        raise ValidationError("routed fallback is not earned", code="refinement_attempt_invalid")
+                    conn.execute(
+                        "INSERT INTO refinement_invocation_attempts"
+                        "(invocation_id,attempt_ordinal,ask_invocation_id,state,created_at) "
+                        "VALUES(?,?,?,'reserved',?)",
+                        (invocation_id, attempt_ordinal, ask_invocation_id, _now()),
+                    )
+                    attempt = conn.execute(
+                        "SELECT * FROM refinement_invocation_attempts WHERE invocation_id=? AND attempt_ordinal=?",
+                        (invocation_id, attempt_ordinal),
+                    ).fetchone()
                 if attempt is None and attempt_ordinal == 2:
                     base = conn.execute("SELECT * FROM refinement_invocation_attempts WHERE invocation_id=? AND attempt_ordinal=1", (invocation_id,)).fetchone()
                     # The runner admits the compatibility child immediately
@@ -1586,7 +1728,7 @@ class RefinementThoughtService:
             admission = json.loads(str(inv.get("admission_json") or "{}"))
         except (TypeError, ValueError):
             admission = {}
-        return {"id":inv["id"],"request_id":inv["request_id"],"thought_id":inv["thought_id"],"frozen_aggregate_revision":inv["frozen_aggregate_revision"],"frozen_working_revision":inv["frozen_working_revision"],"frozen_attachment_revision":inv["frozen_attachment_revision"],"frozen_attachment_sha256":inv["frozen_attachment_sha256"],"admission":admission,"state":inv["state"],"attempts":[{"attempt_ordinal":x["attempt_ordinal"],"ask_invocation_id":x["ask_invocation_id"],"state":x["state"]} for x in attempts]}
+        return {"id":inv["id"],"request_id":inv["request_id"],"thought_id":inv["thought_id"],"frozen_aggregate_revision":inv["frozen_aggregate_revision"],"frozen_working_revision":inv["frozen_working_revision"],"frozen_attachment_revision":inv["frozen_attachment_revision"],"frozen_attachment_sha256":inv["frozen_attachment_sha256"],"admission":admission,"route_plan_id":inv.get("route_plan_id"),"operation_plan_id":inv.get("operation_plan_id"),"route_execution_id":inv.get("route_execution_id"),"state":inv["state"],"attempts":[{"attempt_ordinal":x["attempt_ordinal"],"ask_invocation_id":x["ask_invocation_id"],"state":x["state"]} for x in attempts]}
     def _reconcile_invocation_in_transaction(self, conn: Any, inv: dict[str, Any], thought: dict[str, Any]) -> None:
         # Stop, Good enough, owner edit, Answer/Accept/Reject and an earlier
         # terminal reconciliation are durable suppression fences.  Late kernel
@@ -1596,6 +1738,29 @@ class RefinementThoughtService:
             return
         if (int(thought["aggregate_revision"]),int(thought["working_revision"]),int(thought["attachment_revision"])) != (int(inv["frozen_aggregate_revision"]),int(inv["frozen_working_revision"]),int(inv["frozen_attachment_revision"])):
             conn.execute("UPDATE refinement_invocations SET state='stale',terminal_code='refinement_result_stale',updated_at=?,terminal_at=? WHERE id=?", (_now(),_now(),inv["id"])); return
+        if inv.get("route_execution_id"):
+            routed = conn.execute(
+                """SELECT ra.child_operation_id,ra.outcome,ra.result_ref,
+                          kr.receipt_id,ks.stage_id,ar.projection_stage_id ask_stage
+                     FROM inference_route_executions re
+                     LEFT JOIN inference_route_attempts ra ON ra.id=re.winning_attempt_id
+                     LEFT JOIN kernel_receipts kr ON kr.operation_id=ra.child_operation_id
+                     LEFT JOIN kernel_projection_stages ks ON ks.operation_id=ra.child_operation_id
+                     LEFT JOIN ask_results ar ON ar.operation_id=ra.child_operation_id
+                    WHERE re.id=? AND re.state='terminal' AND re.terminal_outcome='succeeded'""",
+                (str(inv["route_execution_id"]),),
+            ).fetchone()
+            if routed is not None and routed["child_operation_id"] and routed["ask_stage"]:
+                conn.execute(
+                    """UPDATE refinement_invocation_attempts
+                          SET kernel_operation_id=?,projection_stage_id=?,ask_result_stage_id=?,
+                              receipt_id=?,result_ref=?,state='succeeded',terminal_code='',
+                              bound_at=COALESCE(bound_at,?),terminal_at=COALESCE(terminal_at,?)
+                        WHERE invocation_id=? AND attempt_ordinal=1""",
+                    (str(routed["child_operation_id"]), str(routed["stage_id"]),
+                     str(routed["ask_stage"]), str(routed["receipt_id"]),
+                     str(routed["result_ref"]), _now(), _now(), str(inv["id"])),
+                )
         attempts = conn.execute("SELECT * FROM refinement_invocation_attempts WHERE invocation_id=? ORDER BY attempt_ordinal", (inv["id"],)).fetchall()
         # A crash can land after the runner durably plans the one compatibility
         # child but before that child's pre-dispatch hook has created its attempt
@@ -1625,10 +1790,19 @@ class RefinementThoughtService:
                     conn.execute("UPDATE refinement_invocation_attempts SET state='orphaned_before_dispatch_binding',terminal_code='orphaned_before_dispatch_binding',terminal_at=? WHERE invocation_id=? AND attempt_ordinal=?", (_now(),inv["id"],attempt["attempt_ordinal"]))
                     conn.execute("UPDATE refinement_invocations SET state='unknown',terminal_code='orphaned_before_dispatch_binding',updated_at=?,terminal_at=? WHERE id=?", (_now(),_now(),inv["id"])); return
                 continue
-            row = conn.execute("SELECT r.receipt_id,r.outcome,r.result_ref,s.stage_id,s.kind,s.state stage_state,s.invocation_id stage_invocation,s.operation_id stage_operation,s.result_ref stage_result_ref,a.projection_stage_id,a.invocation_id ask_invocation,a.operation_id ask_operation,a.receipt_id ask_receipt,a.payload_json FROM kernel_receipts r LEFT JOIN kernel_projection_stages s ON s.operation_id=r.operation_id LEFT JOIN ask_results a ON a.operation_id=r.operation_id WHERE r.operation_id=?", (op,)).fetchone()
+            row = conn.execute("SELECT r.receipt_id,r.outcome,r.result_ref,s.stage_id,s.kind,s.state stage_state,s.invocation_id stage_invocation,s.operation_id stage_operation,s.result_ref stage_result_ref,a.projection_stage_id,a.invocation_id ask_invocation,a.operation_id ask_operation,a.receipt_id ask_receipt,a.payload_json,ra.id route_attempt_id,ra.child_invocation_id route_child_invocation,ra.execution_id route_execution_id,re.state route_execution_state,re.terminal_outcome route_execution_outcome,re.winning_attempt_id FROM kernel_receipts r LEFT JOIN kernel_projection_stages s ON s.operation_id=r.operation_id LEFT JOIN ask_results a ON a.operation_id=r.operation_id LEFT JOIN inference_route_attempts ra ON ra.child_operation_id=r.operation_id LEFT JOIN inference_route_executions re ON re.id=ra.execution_id WHERE r.operation_id=?", (op,)).fetchone()
             if row is None: continue
             if str(row["outcome"]) == "succeeded": known_success = True
-            if str(row["outcome"]) == "succeeded" and row["projection_stage_id"] and str(row["result_ref"]) and str(row["stage_id"] or "") == str(row["projection_stage_id"]) and str(row["kind"] or "") == "ask-result" and str(row["stage_state"] or "") == "PUBLISHED" and str(row["stage_invocation"] or "") == str(attempt["ask_invocation_id"]) and str(row["ask_invocation"] or "") == str(attempt["ask_invocation_id"]) and str(row["stage_operation"] or "") == op and str(row["ask_operation"] or "") == op and str(row["ask_receipt"] or "") == str(row["receipt_id"]) and str(row["stage_result_ref"] or "") == str(row["result_ref"]):
+            controller_winner = (
+                row["route_attempt_id"] is None
+                or (
+                    str(row["route_execution_state"] or "") == "terminal"
+                    and str(row["route_execution_outcome"] or "") == "succeeded"
+                    and str(row["winning_attempt_id"] or "") == str(row["route_attempt_id"])
+                )
+            )
+            expected_invocation = str(row["route_child_invocation"] or attempt["ask_invocation_id"])
+            if str(row["outcome"]) == "succeeded" and controller_winner and row["projection_stage_id"] and str(row["result_ref"]) and str(row["stage_id"] or "") == str(row["projection_stage_id"]) and str(row["kind"] or "") == "ask-result" and str(row["stage_state"] or "") == "PUBLISHED" and str(row["stage_invocation"] or "") == expected_invocation and str(row["ask_invocation"] or "") == expected_invocation and str(row["stage_operation"] or "") == op and str(row["ask_operation"] or "") == op and str(row["ask_receipt"] or "") == str(row["receipt_id"]) and str(row["stage_result_ref"] or "") == str(row["result_ref"]):
                 winners.append((attempt,row,hashlib.sha256(str(row["payload_json"]).encode()).hexdigest()))
             conn.execute("UPDATE refinement_invocation_attempts SET state=?,receipt_id=?,result_ref=?,terminal_at=? WHERE invocation_id=? AND attempt_ordinal=?", (str(row["outcome"]),row["receipt_id"],row["result_ref"],_now(),inv["id"],attempt["attempt_ordinal"]))
         if len(winners) > 1:

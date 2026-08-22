@@ -186,13 +186,31 @@ class SettingsService:
         return self.get_redacted(principal)
 
     def get_redacted(self, principal: Principal) -> dict[str, Any]:
-        return redacted_settings(Config.load())
+        result = redacted_settings(Config.load())
+        if self._routed_assignments_active():
+            result.get("thoughts", {}).pop("inference_target_id", None)
+            result.get("dictation", {}).get("runtime", {}).pop("profile_id", None)
+        return result
+
+    def _routed_assignments_active(self) -> bool:
+        with self._db._connection() as conn:
+            return conn.execute(
+                "SELECT 1 FROM inference_assignment_migrations WHERE family='thoughts-writing-route-assignments'"
+            ).fetchone() is not None
 
     def update_settings(
         self, principal: Principal, patch: dict[str, Any]
     ) -> dict[str, Any]:
         if not isinstance(patch, dict):
             raise ValidationError("Settings patch must be an object")
+        if self._routed_assignments_active() and (
+            "inference_target_id" in dict(patch.get("thoughts") or {})
+            or "profile_id" in dict(dict(patch.get("dictation") or {}).get("runtime") or {})
+        ):
+            raise ValidationError(
+                "Legacy inference selectors are unavailable after assignment migration.",
+                code="inference_legacy_selector_retired",
+            )
         # HS-130-07: optimistic concurrency. A client that read a revision must
         # echo it; if the on-disk config has moved since, the partial-tree write
         # would silently clobber the concurrent surface's edit, so we reject it

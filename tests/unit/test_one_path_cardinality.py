@@ -60,7 +60,6 @@ from holdspeak.kernel.inference_runner import (
     ProviderIndeterminate,
     ServiceContract,
 )
-from holdspeak.kernel.model import KernelRefused
 from holdspeak.kernel.runtime import _configure
 from holdspeak.principals import Principal, PrincipalKind
 
@@ -563,7 +562,7 @@ def test_cancellation_reaches_the_adapter_before_publish_bare_rig(tmp_path):
 # ``response_format`` compatibility retry is Sol's named natural case.
 
 
-def test_retry_fallback_dictation_response_format_is_two_children_two_receipts_two_physical_attempts(
+def test_dictation_response_format_rejection_is_one_attempt_until_routed(
     tmp_path, monkeypatch
 ):
     """Scenario: retry/fallback. Surface: dictation pipeline.
@@ -578,7 +577,7 @@ def test_retry_fallback_dictation_response_format_is_two_children_two_receipts_t
     from holdspeak.config import Config
     from holdspeak.plugins.dictation.grammars import StructuredOutputSchema
     from holdspeak.plugins.dictation.runtime_openai_compatible import OpenAICompatibleRuntime
-    from holdspeak.speech_session import AdmittedDictationRuntime, admit_hold_session
+    from holdspeak.speech_session import AdmittedDictationRuntime, SpeechProviderFailure, admit_hold_session
 
     db = Database(tmp_path / "dictation-cardinality.db")
     monkeypatch.setattr("holdspeak.db.get_database", lambda: db)
@@ -632,19 +631,19 @@ def test_retry_fallback_dictation_response_format_is_two_children_two_receipts_t
     )
     runtime = AdmittedDictationRuntime(backend, session.provider())
 
-    result = runtime.classify("CARDINALITY_RETRY_PROBE", schema, max_tokens=64, temperature=0.0)
+    with pytest.raises(SpeechProviderFailure):
+        runtime.classify("CARDINALITY_RETRY_PROBE", schema, max_tokens=64, temperature=0.0)
 
-    assert result["block_id"] == "ai_prompt_buildout"
-    assert len(completions.calls) == 2  # two REAL requests to the endpoint
+    assert len(completions.calls) == 1
 
     children = _assert_reconciled(
         db, parent_operation_id=session.operation_id, counts=counts, leaf=leaf,
-        expect_children=2,
+        expect_children=1,
     )
     outcomes = [_receipt(db, row["operation_id"])["outcome"] for row in children]
-    assert outcomes == ["failed", "succeeded"]  # one per attempt, in attempt order
-    assert [row["parent_operation_id"] for row in children] == [session.operation_id, session.operation_id]
-    assert counts == {"engine_factory": 2, "dispatch": 2}
+    assert outcomes == ["failed"]
+    assert [row["parent_operation_id"] for row in children] == [session.operation_id]
+    assert counts == {"engine_factory": 1, "dispatch": 1}
 
 
 # =================================================================== INDETERMINATE

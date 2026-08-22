@@ -192,31 +192,20 @@ def run_admitted_speech_child(
 def run_admitted_speech_capability(
     *, plan: Any, capability: str, attempt_ordinal: int = 1, **kwargs: Any
 ) -> tuple[Any, Any]:
-    """Work one capability's ORDERED frozen entries, one admitted child each.
+    """Run only the frozen primary; routed fallback is controller-owned.
 
-    Only a model FAILURE advances to the next frozen entry; a cancelled,
-    refused, or indeterminate child is terminal — a disposition is not a licence
-    to reach a second model. The next entry runs at ``attempt_ordinal + 1``, so
-    its invocation identity, journal row, and receipt are all distinct.
+    A generic ``failed`` outcome is not authority to contact another model.
+    Story-07 routed adopters use ``InferenceFallbackController``; legacy speech
+    capabilities stay single-leg until their owner is migrated.
     """
     entries = plan.revisions(capability)
-    last: tuple[Any, Any] | None = None
-    for index, revision_id in enumerate(entries):
-        last = run_admitted_speech_child(
-            plan=plan,
-            capability=capability,
-            revision_id=str(revision_id),
-            attempt_ordinal=int(attempt_ordinal) + index,
-            **kwargs,
-        )
-        if last[0].outcome != "failed" or index + 1 >= len(entries):
-            return last
-        log.warning(
-            "speech entry %d/%d failed for %s; attempting the next frozen entry",
-            index + 1, len(entries), capability,
-        )
-    assert last is not None  # a plan capability always has at least one entry
-    return last
+    return run_admitted_speech_child(
+        plan=plan,
+        capability=capability,
+        revision_id=str(entries[0]),
+        attempt_ordinal=int(attempt_ordinal),
+        **kwargs,
+    )
 
 
 __all__ = [
