@@ -178,8 +178,8 @@ PROFILE_ID_CLASSIFICATIONS = {
         "holdspeak/services/sequence_workflow_service.py:129:profile_id", "holdspeak/services/settings_service.py:735:profile_id",
         "holdspeak/services/settings_service.py:807:profile_id", "holdspeak/services/workbench_runner.py:31:profile_id",
         "holdspeak/services/workbench_service.py:172:profile_id", "holdspeak/services/workbench_service.py:470:profile_id",
-        "holdspeak/web_server.py:1138:profile_id", "holdspeak/services/sync_service.py:652:profile_id",
-        "holdspeak/services/sync_service.py:667:profile_id",
+        "holdspeak/web_server.py:1138:profile_id", "holdspeak/services/sync_service.py:658:profile_id",
+        "holdspeak/services/sync_service.py:673:profile_id",
     }},
     **{site: "display" for site in {
         "holdspeak/commands/doctor.py:488:profile_id", "holdspeak/commands/doctor.py:787:profile_id",

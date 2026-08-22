@@ -112,6 +112,18 @@ class InferenceFallbackController:
             if str(replay["execution_id"]) != execution_id or str(replay["effect_sha256"]) != _sha256(effect) or effect != {"execution_id": execution_id}:
                 raise ConflictError("Stored route execution command is invalid.", code="inference_route_execution_command_integrity_invalid")
             return self._execution(conn, execution_id)
+        parent_rows = conn.execute(
+            """SELECT p.state FROM inference_parent_route_bundle_members m
+                   JOIN inference_parent_route_bundles b ON b.id=m.bundle_id
+                   LEFT JOIN kernel_parent_runs p ON p.operation_id=b.parent_operation_id
+                  WHERE m.route_plan_id=?""",
+            (route["id"],),
+        ).fetchall()
+        if parent_rows and any(str(row["state"] or "") != "OPEN" for row in parent_rows):
+            raise ConflictError(
+                "Route execution parent is sealed.",
+                code="inference_route_execution_parent_sealed",
+            )
         collision = conn.execute(
             "SELECT 1 FROM inference_route_executions WHERE id=? OR operation_plan_id=?",
             (execution_id, operation_id),
@@ -975,60 +987,100 @@ class InferenceFallbackController:
 
     def request_stop(self, authority: Principal, *, command_id: str, execution_id: str) -> dict[str, Any]:
         self._require_controller(authority)
-        command = self._safe_id(command_id, "command_id")
-        execution = self._safe_id(execution_id, "execution_id")
-        request_hash = _sha256({"action": "stop", "command_id": command, "execution_id": execution})
         with self._db._connection() as conn:
             conn.execute("BEGIN IMMEDIATE")
             try:
-                replay = self._replay_command(conn, command, "stop", request_hash, execution)
-                if replay is not None:
-                    current = self._execution(conn, execution)
-                    self._verify_stop_effect(conn, replay, execution, command, current)
-                    conn.commit()
-                    return {"schema": "InferenceRouteStopResult@1", "effect": replay, "execution": current}
-                current = self._execution(conn, execution)
-                row = conn.execute("SELECT * FROM inference_route_executions WHERE id=?", (execution,)).fetchone()
-                now_text = self._now_text()
-                prior_state = str(row["state"])
-                if prior_state == "active":
-                    dispatched = conn.execute(
-                        "SELECT 1 FROM inference_route_attempts WHERE execution_id=? AND state='dispatch_intent'",
-                        (execution,),
-                    ).fetchone() is not None
-                    if dispatched:
-                        conn.execute(
-                            "UPDATE inference_route_executions SET stop_requested=1,stop_command_id=?,state='stopping',revision=revision+1 WHERE id=? AND state='active'",
-                            (command, execution),
-                        )
-                        elected = "stopping"
-                    else:
-                        conn.execute(
-                            """UPDATE inference_route_executions
-                               SET stop_requested=1,stop_command_id=?,state='stopped',revision=revision+1,
-                                   terminal_disposition='owner_cancelled',terminal_outcome='cancelled',terminal_at=?
-                               WHERE id=? AND state='active'""",
-                            (command, now_text, execution),
-                        )
-                        elected = "stopped"
-                else:
-                    # A terminal winner or an earlier Stop is immutable truth.
-                    elected = prior_state
-                effect = {
-                    "schema": "InferenceRouteStopEffect@1",
-                    "execution_id": execution,
-                    "observed_state": prior_state,
-                    "observed_revision": int(row["revision"]),
-                    "elected_state": elected,
-                }
-                self._insert_command(conn, command, "stop", request_hash, execution, effect, now_text)
-                if prior_state == "active":
-                    self._insert_transition(conn, execution, action="stop", command_id=command, prior_revision=int(row["revision"]), post_revision=int(row["revision"])+1, prior_state="active", post_state=elected, effect=effect)
-                current = self._execution(conn, execution)
+                result = self.request_stop_in_transaction(
+                    authority,
+                    conn,
+                    command_id=command_id,
+                    execution_id=execution_id,
+                )
                 conn.commit()
-                return {"schema": "InferenceRouteStopResult@1", "effect": effect, "execution": current}
+                return result
             except Exception:
                 conn.rollback(); raise
+
+    def request_stop_in_transaction(
+        self,
+        authority: Principal,
+        conn: Any,
+        *,
+        command_id: str,
+        execution_id: str,
+    ) -> dict[str, Any]:
+        """Fence one execution inside an adopter-owned durable handoff."""
+        self._require_controller(authority)
+        command = self._safe_id(command_id, "command_id")
+        execution = self._safe_id(execution_id, "execution_id")
+        request_hash = _sha256(
+            {"action": "stop", "command_id": command, "execution_id": execution}
+        )
+        replay = self._replay_command(conn, command, "stop", request_hash, execution)
+        if replay is not None:
+            current = self._execution(conn, execution)
+            self._verify_stop_effect(conn, replay, execution, command, current)
+            return {
+                "schema": "InferenceRouteStopResult@1",
+                "effect": replay,
+                "execution": current,
+            }
+        current = self._execution(conn, execution)
+        row = conn.execute(
+            "SELECT * FROM inference_route_executions WHERE id=?", (execution,)
+        ).fetchone()
+        now_text = self._now_text()
+        prior_state = str(row["state"])
+        if prior_state == "active":
+            dispatched = conn.execute(
+                "SELECT 1 FROM inference_route_attempts WHERE execution_id=? AND state='dispatch_intent'",
+                (execution,),
+            ).fetchone() is not None
+            if dispatched:
+                conn.execute(
+                    "UPDATE inference_route_executions SET stop_requested=1,stop_command_id=?,state='stopping',revision=revision+1 WHERE id=? AND state='active'",
+                    (command, execution),
+                )
+                elected = "stopping"
+            else:
+                conn.execute(
+                    """UPDATE inference_route_executions
+                       SET stop_requested=1,stop_command_id=?,state='stopped',revision=revision+1,
+                           terminal_disposition='owner_cancelled',terminal_outcome='cancelled',terminal_at=?
+                       WHERE id=? AND state='active'""",
+                    (command, now_text, execution),
+                )
+                elected = "stopped"
+        else:
+            elected = prior_state
+        effect = {
+            "schema": "InferenceRouteStopEffect@1",
+            "execution_id": execution,
+            "observed_state": prior_state,
+            "observed_revision": int(row["revision"]),
+            "elected_state": elected,
+        }
+        self._insert_command(
+            conn, command, "stop", request_hash, execution, effect, now_text
+        )
+        if prior_state == "active":
+            self._insert_transition(
+                conn,
+                execution,
+                action="stop",
+                command_id=command,
+                prior_revision=int(row["revision"]),
+                post_revision=int(row["revision"]) + 1,
+                prior_state="active",
+                post_state=elected,
+                effect=effect,
+            )
+        current = self._execution(conn, execution)
+        return {
+            "schema": "InferenceRouteStopResult@1",
+            "effect": effect,
+            "execution": current,
+        }
 
     @staticmethod
     def _verify_stop_effect(conn: Any, effect: Any, execution_id: str, command_id: str, current: dict[str, Any]) -> None:

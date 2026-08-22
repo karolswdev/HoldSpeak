@@ -16,6 +16,7 @@ from typing import Any, Callable, Mapping, Sequence
 
 from ..inference_capabilities import (
     InferenceCapabilityRegistry,
+    _validate_result_value,
     process_inference_capability_registry,
 )
 from ..kernel.inference_runner import InvocationRequest, ServiceContract
@@ -109,6 +110,10 @@ class ProductionRouteEvidence:
     ) -> None:
         self._db = db
         self._registry = registry or process_inference_capability_registry()
+        self._plans: InferenceRoutePlanService | None = None
+
+    def bind_route_plan_service(self, plans: InferenceRoutePlanService) -> None:
+        self._plans = plans
 
     def provider(self) -> RouteAdmissionEvidenceProvider:
         definitions = tuple(self._registry.require(value) for value in EXECUTING_CAPABILITIES)
@@ -422,8 +427,7 @@ class ProductionRouteEvidence:
             "entries": entries,
         }
 
-    @staticmethod
-    def _evidence(conn: Any, evidence_ref: str) -> dict[str, Any]:
+    def _evidence(self, conn: Any, evidence_ref: str) -> dict[str, Any]:
         row = conn.execute(
             "SELECT * FROM inference_adoption_route_evidence WHERE evidence_ref=?",
             (evidence_ref,),
@@ -463,7 +467,7 @@ class ProductionRouteEvidence:
             (evidence["planning_reference"],),
         ).fetchone()
         route = conn.execute(
-            "SELECT sha256,capability_id FROM inference_route_plans WHERE id=?",
+            "SELECT id,sha256,capability_id FROM inference_route_plans WHERE id=?",
             (evidence["route_plan_id"],),
         ).fetchone()
         if material is None:
@@ -515,13 +519,29 @@ class ProductionRouteEvidence:
                 "Adoption evidence cannot be reconstructed.",
                 code="inference_adoption_evidence_invalid",
             ) from None
-        capability = process_inference_capability_registry().require(str(material["capability_id"]))
+        if route is None:
+            capability = self._registry.require(str(material["capability_id"]))
+            capability_id = capability.id
+            capability_revision = capability.revision
+            capability_schema_sha256 = capability.schema_sha256
+        elif self._plans is None:
+            raise ConflictError(
+                "Frozen route authority is unavailable.",
+                code="inference_adoption_evidence_invalid",
+            )
+        else:
+            definition = self._plans.frozen_capability_definition_in_transaction(
+                ROUTE_PLANNING_AUTHORITY, conn, route_plan_id=str(route["id"])
+            )
+            capability_id = str(definition["id"])
+            capability_revision = int(definition["revision"])
+            capability_schema_sha256 = str(definition["schema_sha256"])
         material_snapshot = {
             "schema": "AdoptedInferenceMaterial@1",
             "planning_reference": str(material["planning_reference"]),
-            "capability_id": capability.id,
-            "capability_revision": capability.revision,
-            "capability_schema_sha256": capability.schema_sha256,
+            "capability_id": capability_id,
+            "capability_revision": capability_revision,
+            "capability_schema_sha256": capability_schema_sha256,
             "operation_id": str(material["operation_id"]),
             "contract": str(material["contract"]),
             "contract_revision": str(material["contract_revision"]),
@@ -714,6 +734,7 @@ class RoutedInferenceCoordinator:
             registry=self._registry,
             operation_evidence_providers=(self.evidence.provider(),),
         )
+        self.evidence.bind_route_plan_service(self.plans)
         self._broker = broker
         self.controller = InferenceFallbackController(
             db,
@@ -990,6 +1011,25 @@ class RoutedInferenceCoordinator:
                 raise
         return frozen
 
+    def _frozen_capability_definition(self, route_plan_id: str) -> dict[str, Any]:
+        with self._db._connection() as conn:
+            conn.execute("BEGIN")
+            try:
+                definition = self.plans.frozen_capability_definition_in_transaction(
+                    ROUTE_PLANNING_AUTHORITY, conn, route_plan_id=route_plan_id
+                )
+            finally:
+                conn.rollback()
+        return definition
+
+    @staticmethod
+    def _validate_frozen_result(definition: Mapping[str, Any], value: Any) -> None:
+        _validate_result_value(
+            value,
+            definition["output_schema"],
+            field_name=f"result for {definition['id']}",
+        )
+
     def execute(
         self,
         principal: Principal,
@@ -1019,6 +1059,7 @@ class RoutedInferenceCoordinator:
         route = self.plans.get_route_plan(
             ROUTE_PLANNING_AUTHORITY, operation["route_plan_id"]
         )
+        frozen_definition = self._frozen_capability_definition(str(route["id"]))
         if execution["state"] in {"terminal", "stopped"}:
             receipt = self.controller.get_route_execution_receipt(
                 principal, execution_id=execution_id
@@ -1068,7 +1109,7 @@ class RoutedInferenceCoordinator:
 
             def project(value: Any) -> str:
                 try:
-                    self._registry.require(str(route["capability"]["id"])).validate_result(value)
+                    self._validate_frozen_result(frozen_definition, value)
                 except Exception as exc:
                     from ..kernel.provider_signals import InferenceInvalidTypedOutput
                     raise InferenceInvalidTypedOutput() from exc
@@ -1183,7 +1224,8 @@ class RoutedInferenceCoordinator:
                           app.payload_json application_projection_json,
                           ks.projection_json staged_projection_json,
                           ks.projection_sha256 staged_projection_sha256,
-                          ks.result_ref staged_result_ref
+                          ks.result_ref staged_result_ref,
+                          rp.id route_plan_id
                      FROM inference_adoption_attempt_results ar
                      JOIN inference_route_attempts ra ON ra.id=ar.attempt_id
                      JOIN inference_route_executions re ON re.id=ra.execution_id
@@ -1213,7 +1255,9 @@ class RoutedInferenceCoordinator:
         ):
             raise ConflictError("Attempt result changed.", code="inference_adoption_result_integrity_invalid")
         try:
-            self._registry.require(str(row["capability_id"])).validate_result(value)
+            self._validate_frozen_result(
+                self._frozen_capability_definition(str(row["route_plan_id"])), value
+            )
         except Exception as exc:
             raise ConflictError("Attempt result contract changed.", code="inference_adoption_result_integrity_invalid") from exc
         projection: dict[str, Any] | None = None

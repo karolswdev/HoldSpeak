@@ -2495,6 +2495,7 @@ CREATE TABLE IF NOT EXISTS inference_route_plans (
     retry_policy_id TEXT NOT NULL,
     retry_policy_revision INTEGER NOT NULL CHECK (retry_policy_revision > 0),
     operation_policy_revision TEXT NOT NULL,
+    principal_policy_sha256 TEXT,
     payload_json TEXT NOT NULL,
     state TEXT NOT NULL DEFAULT 'frozen' CHECK (state='frozen'),
     deadline_at TEXT NOT NULL,
@@ -2548,6 +2549,19 @@ END;
 CREATE TRIGGER IF NOT EXISTS inference_route_plan_authority_no_delete
 BEFORE DELETE ON inference_route_plan_authority_evidence BEGIN
     SELECT RAISE(ABORT, 'immutable inference route authority evidence');
+END;
+CREATE TABLE IF NOT EXISTS inference_route_plan_principal_evidence (
+    plan_id TEXT PRIMARY KEY REFERENCES inference_route_plans(id),
+    payload_json TEXT NOT NULL,
+    sha256 TEXT NOT NULL
+);
+CREATE TRIGGER IF NOT EXISTS inference_route_plan_principal_evidence_no_update
+BEFORE UPDATE ON inference_route_plan_principal_evidence BEGIN
+    SELECT RAISE(ABORT, 'immutable inference route principal evidence');
+END;
+CREATE TRIGGER IF NOT EXISTS inference_route_plan_principal_evidence_no_delete
+BEFORE DELETE ON inference_route_plan_principal_evidence BEGIN
+    SELECT RAISE(ABORT, 'immutable inference route principal evidence');
 END;
 CREATE TABLE IF NOT EXISTS inference_route_plan_preflight_evidence (
     plan_id TEXT NOT NULL REFERENCES inference_route_plans(id),
@@ -2933,6 +2947,111 @@ CREATE TABLE IF NOT EXISTS kernel_parent_runs (
     updated_at REAL NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_kernel_parent_runs_state ON kernel_parent_runs(state, updated_at);
+
+-- HS-143-08: one parent and its declared inference route set.  The manifest is
+-- content-free and immutable; child operation material is frozen only when a
+-- real window/stage exists.
+CREATE TABLE IF NOT EXISTS inference_parent_route_bundles (
+    id TEXT PRIMARY KEY,
+    command_id TEXT NOT NULL UNIQUE,
+    request_sha256 TEXT NOT NULL,
+    parent_operation_id TEXT NOT NULL UNIQUE REFERENCES kernel_parent_runs(operation_id),
+    parent_deadline_at REAL NOT NULL,
+    parent_child_budget INTEGER NOT NULL CHECK (parent_child_budget > 0),
+    lifecycle_child_budget INTEGER NOT NULL CHECK (lifecycle_child_budget >= 0),
+    feature_principal_sha256 TEXT NOT NULL,
+    payload_json TEXT NOT NULL,
+    sha256 TEXT NOT NULL UNIQUE,
+    created_at REAL NOT NULL
+);
+CREATE TABLE IF NOT EXISTS inference_parent_route_bundle_members (
+    id TEXT PRIMARY KEY,
+    bundle_id TEXT NOT NULL REFERENCES inference_parent_route_bundles(id),
+    ordinal INTEGER NOT NULL CHECK (ordinal > 0),
+    route_key TEXT NOT NULL,
+    capability_id TEXT NOT NULL,
+    route_plan_id TEXT NOT NULL UNIQUE REFERENCES inference_route_plans(id),
+    route_plan_sha256 TEXT NOT NULL,
+    principal_policy_sha256 TEXT NOT NULL,
+    maximum_physical_attempts INTEGER NOT NULL CHECK (maximum_physical_attempts > 0),
+    UNIQUE(bundle_id, ordinal),
+    UNIQUE(bundle_id, route_key),
+    UNIQUE(bundle_id, capability_id)
+);
+CREATE TRIGGER IF NOT EXISTS inference_parent_route_bundles_no_update
+BEFORE UPDATE ON inference_parent_route_bundles BEGIN
+    SELECT RAISE(ABORT, 'immutable inference parent route bundle');
+END;
+CREATE TRIGGER IF NOT EXISTS inference_parent_route_bundles_no_delete
+BEFORE DELETE ON inference_parent_route_bundles BEGIN
+    SELECT RAISE(ABORT, 'immutable inference parent route bundle');
+END;
+CREATE TRIGGER IF NOT EXISTS inference_parent_route_bundle_members_no_update
+BEFORE UPDATE ON inference_parent_route_bundle_members BEGIN
+    SELECT RAISE(ABORT, 'immutable inference parent route bundle member');
+END;
+CREATE TRIGGER IF NOT EXISTS inference_parent_route_bundle_members_no_delete
+BEFORE DELETE ON inference_parent_route_bundle_members BEGIN
+    SELECT RAISE(ABORT, 'immutable inference parent route bundle member');
+END;
+
+-- A durable Stop election can fence every exact active route before Meeting
+-- enqueues displaced work.  Story 08's entrance cutover will attach the queue
+-- effect; this tranche establishes the replay-safe authority and membership.
+CREATE TABLE IF NOT EXISTS inference_parent_stop_handoffs (
+    command_id TEXT PRIMARY KEY,
+    request_sha256 TEXT NOT NULL,
+    bundle_id TEXT NOT NULL REFERENCES inference_parent_route_bundles(id),
+    parent_operation_id TEXT NOT NULL UNIQUE REFERENCES kernel_parent_runs(operation_id),
+    evidence_provider_id TEXT NOT NULL,
+    evidence_provider_revision INTEGER NOT NULL CHECK (evidence_provider_revision > 0),
+    planning_reference TEXT NOT NULL,
+    evidence_ref TEXT NOT NULL,
+    evidence_sha256 TEXT NOT NULL,
+    state TEXT NOT NULL CHECK (state IN ('committed','pending_physical_settlement')),
+    effect_json TEXT NOT NULL,
+    effect_sha256 TEXT NOT NULL,
+    created_at REAL NOT NULL
+);
+CREATE TABLE IF NOT EXISTS inference_parent_stop_handoff_executions (
+    command_id TEXT NOT NULL REFERENCES inference_parent_stop_handoffs(command_id),
+    ordinal INTEGER NOT NULL CHECK (ordinal > 0),
+    execution_id TEXT NOT NULL REFERENCES inference_route_executions(id),
+    stop_command_id TEXT NOT NULL UNIQUE REFERENCES inference_route_execution_commands(command_id),
+    elected_state TEXT NOT NULL CHECK (elected_state IN ('stopping','stopped','terminal')),
+    PRIMARY KEY(command_id, ordinal),
+    UNIQUE(command_id, execution_id)
+);
+CREATE TABLE IF NOT EXISTS inference_parent_stop_handoff_settlements (
+    command_id TEXT PRIMARY KEY REFERENCES inference_parent_stop_handoffs(command_id),
+    effect_json TEXT NOT NULL,
+    effect_sha256 TEXT NOT NULL,
+    created_at REAL NOT NULL
+);
+CREATE TRIGGER IF NOT EXISTS inference_parent_stop_handoffs_no_update
+BEFORE UPDATE ON inference_parent_stop_handoffs BEGIN
+    SELECT RAISE(ABORT, 'immutable inference parent stop handoff');
+END;
+CREATE TRIGGER IF NOT EXISTS inference_parent_stop_handoffs_no_delete
+BEFORE DELETE ON inference_parent_stop_handoffs BEGIN
+    SELECT RAISE(ABORT, 'immutable inference parent stop handoff');
+END;
+CREATE TRIGGER IF NOT EXISTS inference_parent_stop_handoff_executions_no_update
+BEFORE UPDATE ON inference_parent_stop_handoff_executions BEGIN
+    SELECT RAISE(ABORT, 'immutable inference parent stop handoff execution');
+END;
+CREATE TRIGGER IF NOT EXISTS inference_parent_stop_handoff_executions_no_delete
+BEFORE DELETE ON inference_parent_stop_handoff_executions BEGIN
+    SELECT RAISE(ABORT, 'immutable inference parent stop handoff execution');
+END;
+CREATE TRIGGER IF NOT EXISTS inference_parent_stop_handoff_settlements_no_update
+BEFORE UPDATE ON inference_parent_stop_handoff_settlements BEGIN
+    SELECT RAISE(ABORT, 'immutable inference parent stop handoff settlement');
+END;
+CREATE TRIGGER IF NOT EXISTS inference_parent_stop_handoff_settlements_no_delete
+BEFORE DELETE ON inference_parent_stop_handoff_settlements BEGIN
+    SELECT RAISE(ABORT, 'immutable inference parent stop handoff settlement');
+END;
 
 -- Publication-guard triggers (HS-137-01: moved from migrations.py).
 -- A publication callback may terminalize its own parent only by clearing
