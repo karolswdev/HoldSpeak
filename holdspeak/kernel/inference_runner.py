@@ -1,19 +1,43 @@
 """The admitted gateway for one actual inference provider dispatch."""
 from __future__ import annotations
-import hashlib, json, threading, time, uuid
-from collections.abc import Callable, Mapping
+
+import hashlib
+import json
+import threading
+import time
+import uuid
+from collections.abc import Mapping
 from dataclasses import dataclass, field, replace
 from typing import Any, Protocol
+
 from ..deployment_revisions import resolve_deployment_revision
 from ..inference_targets import build_intel_for_revision
 from ..principals import Principal, PrincipalKind
-from .dispatch_context import CONTEXT_MISMATCH, _issue_dispatch_context, bind_dispatch_context, dispatch_context_of, release_dispatch_context, require_dispatch_context
+from .dispatch_context import (
+    CONTEXT_MISMATCH,
+    _issue_dispatch_context,
+    bind_dispatch_context,
+    dispatch_context_of,
+    release_dispatch_context,
+    require_dispatch_context,
+)
 from .inference import executor_identity
 from .inference_cancel_signal import perform_cancel
 from .invocation_sequence import SequenceRegistry
 from .model import KernelRefused, valid_ref
 from .projection_stager import retarget_publisher
-from .provider_signals import ProviderCompatibilityRetry, ProviderIndeterminate, compatibility_follow_up
+from .provider_signals import (
+    InferenceInvalidTypedOutput,
+    ProviderCompatibilityRetry,
+    ProviderIndeterminate,
+    ProviderKnownNoGenerationTransient,
+    ProviderPermanentNoGeneration,
+    ProviderPermissionDenied,
+    compatibility_follow_up,
+)
+from .runner_receipt_evidence import _install_runner_receipt_evidence_issuer
+
+_issue_runner_receipt_evidence = _install_runner_receipt_evidence_issuer()
 
 def _canonical_payload(payload: Any) -> str:
     try: return json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=True, allow_nan=False)
@@ -36,19 +60,19 @@ class ServiceContract:
 DefinitionOrigin = SavedDefinition | ServiceContract
 @dataclass(frozen=True)
 class InvocationRequest:
-    deployment_revision: str; definition_origin: DefinitionOrigin; deadline_at: float; payload: Any; invocation_id: str=""; parent_operation_id: str=""; attempt_ordinal: int=1; before_physical_dispatch: Any=None; before_compatibility_retry: Any=None
+    deployment_revision: str; definition_origin: DefinitionOrigin; deadline_at: float; payload: Any; invocation_id: str=""; parent_operation_id: str=""; attempt_ordinal: int=1; before_physical_dispatch: Any=None; before_compatibility_retry: Any=None; route_attempt_reservation: Mapping[str,Any]|None=None
 @dataclass(frozen=True)
 class InvocationOutcome:
-    operation_id: str; invocation_id: str; outcome: str; result_ref: str; receipt: Mapping[str, Any]; error: str = ""
+    operation_id: str; invocation_id: str; outcome: str; result_ref: str; receipt: Mapping[str, Any]; error: str = ""; runner_signal: str = "none"; send_phase: str = "pre_send"
 @dataclass
 class _Active:
     adapter: ProviderAdapter; operation_id: str; node: Principal; principal: Principal
     cancelled: threading.Event=field(default_factory=threading.Event)
     condition: threading.Condition=field(default_factory=threading.Condition)
-    state: str="RUNNING"; cancel_principal: Principal|None=None; disposition: str=""; cancel_performing: bool=False; closing: bool=False; terminal_outcome: str=""; closure_error: BaseException|None=None
+    state: str="RUNNING"; cancel_principal: Principal|None=None; disposition: str=""; cancel_performing: bool=False; closing: bool=False; terminal_outcome: str=""; closure_error: BaseException|None=None; dispatch_intent: bool=False; routed: bool=False
 class InferenceRunner:
-    def __init__(self, broker, database, *, engine_factory=build_intel_for_revision, principal_provider=None, clock=time.time, cancel_timeout=3.0, receipt_attempts=3):
-        self._broker,self._database,self._engine_factory=broker,database,engine_factory; self._principal_provider=principal_provider or self._runtime_principal; self._clock=clock; self._cancel_timeout=cancel_timeout; self._receipt_attempts=receipt_attempts; self._active={}; self._pending={}; self._pending_cancellations=self._pending; self._active_lock=threading.Lock(); self._sequences=SequenceRegistry()
+    def __init__(self, broker, database, *, engine_factory=build_intel_for_revision, principal_provider=None, clock=time.time, cancel_timeout=3.0, receipt_attempts=3, routed_attempt_runtime=None):
+        self._broker,self._database,self._engine_factory=broker,database,engine_factory; self._principal_provider=principal_provider or self._runtime_principal; self._clock=clock; self._cancel_timeout=cancel_timeout; self._receipt_attempts=receipt_attempts; self._routed_attempt_runtime=routed_attempt_runtime; self._active={}; self._pending={}; self._pending_cancellations=self._pending; self._active_lock=threading.Lock(); self._sequences=SequenceRegistry()
     def cancel(self, invocation_id: str) -> str: return self._request_cancel(invocation_id,self._principal_provider())
     def _cancel_internal(self, invocation_id: str, principal: Principal) -> str: return self._request_cancel(invocation_id,principal)
     def _request_cancel(self, iid, principal):
@@ -97,11 +121,23 @@ class InferenceRunner:
     def _cancel_refused(active,disposition):
         with active.condition: active.disposition=disposition; active.state="RUNNING"; active.condition.notify_all()
         return disposition
-    def _persist_receipt(self,active,operation_id,outcome,result_ref):
+    def _persist_receipt(self,active,operation_id,outcome,result_ref, *, runner_signal="none", send_phase="pre_send"):
         last=None
         for _ in range(self._receipt_attempts):
-            try: return self._broker.receipt(operation_id,outcome,result_ref,active.node)
-            except Exception as exc: last=exc
+            try:
+                operation=self._broker.store.operation(operation_id)
+                if not operation or (operation.get("name"),int(operation.get("version") or 0)) != ("inference.invoke",1):
+                    return self._broker.receipt(operation_id,outcome,result_ref,active.node)
+                evidence=_issue_runner_receipt_evidence(
+                    operation_id=operation_id,outcome=outcome,result_ref=result_ref,
+                    runner_signal=runner_signal,send_phase=send_phase,
+                )
+                return self._broker.receipt(
+                    operation_id,outcome,result_ref,active.node,
+                    runner_evidence=evidence,
+                )
+            except Exception as exc:  # noqa: BLE001 - bounded durable-write retry
+                last=exc
         error=ClosurePersistenceError(f"terminal receipt persistence failed for {outcome}")
         with active.condition:
             active.closing=False; active.state="CLOSURE_FAILED"; active.closure_error=error; active.condition.notify_all()
@@ -124,7 +160,13 @@ class InferenceRunner:
         sequence=self._sequences.open(iid); signal: list[BaseException]=[]
         try:
             outcome=self._attempt(first,adapter,publish=publish,parent_context=parent_context,planned_node=planned_node,signal=signal,sequence=sequence)
+            if first.route_attempt_reservation is not None:
+                self._routed_attempt_runtime.settle(dict(first.route_attempt_reservation), outcome)
             if not signal or outcome.outcome!="failed" or sequence.cancelled: return outcome
+            # Canonical route executions never let Runner mint a dialect child.
+            # The controller must classify this receipt and reserve a distinct
+            # compatibility attempt under the frozen budgets first.
+            if first.route_attempt_reservation is not None: return outcome
             follow=compatibility_follow_up(first,outcome.invocation_id)
             if first.before_compatibility_retry is not None:
                 # The retry plan is durable before the derived child becomes
@@ -163,12 +205,43 @@ class InferenceRunner:
         iid=request.invocation_id or "invoke_"+uuid.uuid4().hex
         if not iid.replace("_","").isalnum(): raise KernelRefused("inference_invocation_id_invalid")
         raw={"request_schema":1,"request_id":"request_"+uuid.uuid4().hex,"idempotency_key":iid,"operation":{"name":"inference.invoke","version":1},"target":{},"parent_operation_id":request.parent_operation_id,"arguments":{"invocation_id":iid,"deployment_revision":request.deployment_revision,"definition_origin":origin.journal_value(),"deadline_at":request.deadline_at,"attempt_ordinal":request.attempt_ordinal}}
+        routed = request.route_attempt_reservation
+        if routed is not None:
+            runtime = self._routed_attempt_runtime
+            if runtime is None: raise KernelRefused("inference_routed_attempt_runtime_missing")
+            if (
+                str(routed.get("child_invocation_id") or "") != iid
+                or str(routed.get("deployment_revision_id") or "") != request.deployment_revision
+                or int(routed.get("physical_attempt_ordinal") or 0) != request.attempt_ordinal
+            ): raise KernelRefused("inference_route_reservation_mismatch")
+            runtime.claim(dict(routed))
         submitted=(self._broker.submit_trusted_child(raw, principal, parent_context, planned_node=planned_node) if parent_context is not None else self._broker.submit(raw,principal))
         if submitted["state"]=="refused": return InvocationOutcome(submitted["operation_id"],iid,"refused","",submitted["receipt"])
-        approved=self._broker.decide(submitted["operation_id"],"approve",submitted["revision"],principal); op=self._broker.store.operation(approved["operation_id"]); node=Principal(PrincipalKind.NODE,executor_identity(self._revision(request.deployment_revision).destination_id))
+        try:
+            approved=self._broker.decide(submitted["operation_id"],"approve",submitted["revision"],principal)
+        except Exception:  # noqa: BLE001 - decision failure is content-free closure input
+            node=Principal(PrincipalKind.NODE,executor_identity(self._revision(request.deployment_revision).destination_id))
+            return self._close_pre_child_failure(
+                submitted["operation_id"],iid,routed,node,
+                expected_state="awaiting_decision",principal=principal,
+                deployment_revision_id=request.deployment_revision,
+            )
+        op=self._broker.store.operation(approved["operation_id"]); node=Principal(PrincipalKind.NODE,executor_identity(self._revision(request.deployment_revision).destination_id))
         claimed=self._broker.claim(node,iid)
-        if not claimed["operations"]: return InvocationOutcome(op["operation_id"],iid,"refused","",claimed.get("refusal") or {})
-        active=_Active(adapter,op["operation_id"],node,principal)
+        if not claimed["operations"]:
+            if claimed.get("refusal"):
+                return InvocationOutcome(
+                    op["operation_id"],iid,"refused","",claimed["refusal"],
+                    runner_signal="kernel_refused",send_phase="pre_send",
+                )
+            return self._close_pre_child_failure(
+                op["operation_id"],iid,routed,node,
+                expected_state="awaiting_execution",principal=principal,
+                deployment_revision_id=request.deployment_revision,
+            )
+        if routed is not None:
+            runtime.bind(dict(routed), op["operation_id"])
+        active=_Active(adapter,op["operation_id"],node,principal,routed=routed is not None)
         with self._active_lock:
             self._active[iid]=active; pending=self._pending.pop(iid,None)
             # Atomic with becoming reachable: a cancellation that landed during the
@@ -218,8 +291,6 @@ class InferenceRunner:
                 # A domain may bind its own durable attempt ledger here.  This is
                 # deliberately after one kernel child exists and before any
                 # provider call; retry attempts traverse the same _attempt path.
-                if request.before_physical_dispatch is not None:
-                    request.before_physical_dispatch(op["operation_id"], iid, request.attempt_ordinal)
                 # Atomic dispatch admission: a durable pre-dispatch cancellation
                 # can no longer race this right after the condition is released.
                 active.state="DISPATCHING"; active.condition.notify_all()
@@ -231,12 +302,18 @@ class InferenceRunner:
             # A deadline is a fact about NOW, so it is read here, at the last
             # instant before the physical act, and refuses by name.
             if self._clock()>=request.deadline_at: raise KernelRefused("inference_deadline_exceeded")
-            result=self._dispatch(adapter,engine,json.loads(material),active,op["operation_id"],principal,context=context)
+            if request.before_physical_dispatch is not None:
+                request.before_physical_dispatch(op["operation_id"], iid, request.attempt_ordinal)
+            def mark_dispatch_intent():
+                if routed is not None:
+                    runtime.mark_dispatch_intent(dict(routed))
+                active.dispatch_intent = True
+            result=self._dispatch(adapter,engine,json.loads(material),active,op["operation_id"],principal,context=context,before_send=mark_dispatch_intent)
             with active.condition:
                 while active.state=="CANCELLING" or active.closing or (active.state=="DISPATCHING" and active.cancel_performing and not active.disposition): active.condition.wait()
-                pending_principal=None; terminal_after_dispatch=False
+                pending_principal=None
                 if active.state=="DISPATCHING" and active.disposition and active.disposition!="completed":
-                    publishing=False; terminal_after_dispatch=True
+                    publishing=False
                 elif active.state=="DISPATCHING":
                     active.state="PUBLISHING"; active.condition.notify_all(); publishing=True
                 elif active.state=="RUNNING": active.state="PUBLISHING"; publishing=True
@@ -246,24 +323,71 @@ class InferenceRunner:
             if not publishing:
                 if pending_principal: self._perform_cancel(iid,active,pending_principal)
                 return self._finish(active,iid,"indeterminate" if active.disposition=="unknown" else "cancelled")
-            result_ref=publish(result) if publish else f"inference-result:{iid}"; outcome="succeeded" if result_ref and valid_ref(result_ref) else "failed"
+            try:
+                result_ref=publish(result) if publish else f"inference-result:{iid}"
+            except Exception as exc:  # noqa: BLE001 - projection effect may be indeterminate
+                return self._finish(
+                    active,iid,"failed",error=str(exc),
+                    runner_signal="effect_indeterminate",send_phase="provider_returned",
+                )
+            outcome="succeeded" if result_ref and valid_ref(result_ref) else "failed"
             with active.condition: active.closing=True
-            receipt=self._persist_receipt(active,active.operation_id,outcome,result_ref if outcome=="succeeded" else "")
+            receipt=self._persist_receipt(
+                active,active.operation_id,outcome,result_ref if outcome=="succeeded" else "",
+                runner_signal="none" if outcome=="succeeded" else "effect_indeterminate",
+                send_phase="provider_returned",
+            )
             with active.condition: active.state="PUBLISHED" if outcome=="succeeded" else "FAILED"; active.closing=False; active.condition.notify_all()
-            return InvocationOutcome(active.operation_id,iid,outcome,result_ref if outcome=="succeeded" else "",receipt)
+            return InvocationOutcome(
+                active.operation_id,iid,outcome,result_ref if outcome=="succeeded" else "",receipt,
+                runner_signal="none" if outcome=="succeeded" else "effect_indeterminate",
+                send_phase="provider_returned",
+            )
         except ProviderIndeterminate:
+            if not active.dispatch_intent:
+                return self._finish(
+                    active,iid,"failed",runner_signal="unclassified_pre_send",
+                    send_phase="pre_send",
+                )
             local_lease_indeterminate=True
-            return self._finish(active,iid,"indeterminate")
+            return self._finish(active,iid,"indeterminate", runner_signal="physical_outcome_unknown", send_phase="dispatch_intent")
         except ProviderCompatibilityRetry as exc:
+            if not active.dispatch_intent:
+                return self._finish(
+                    active,iid,"failed",runner_signal="unclassified_pre_send",
+                    send_phase="pre_send",
+                )
             # One physical attempt happened and failed on dialect; `invoke` admits the follow-up.
             if signal is not None: signal.append(exc)
-            return self._finish(active,iid,"failed", error=str(exc))
+            return self._finish(active,iid,"failed", error=str(exc), runner_signal="compatibility_no_generation", send_phase="provider_no_generation")
+        except ProviderKnownNoGenerationTransient:
+            if not active.dispatch_intent:
+                return self._finish(active,iid,"failed",runner_signal="unclassified_pre_send",send_phase="pre_send")
+            return self._finish(active,iid,"failed", runner_signal="known_no_generation_transient", send_phase="provider_no_generation")
+        except ProviderPermanentNoGeneration:
+            if not active.dispatch_intent:
+                return self._finish(active,iid,"failed",runner_signal="unclassified_pre_send",send_phase="pre_send")
+            return self._finish(active,iid,"failed", runner_signal="provider_permanent_no_generation", send_phase="provider_no_generation")
+        except ProviderPermissionDenied:
+            if not active.dispatch_intent:
+                return self._finish(active,iid,"failed",runner_signal="unclassified_pre_send",send_phase="pre_send")
+            return self._finish(active,iid,"refused", runner_signal="permission_denied", send_phase="provider_no_generation")
+        except InferenceInvalidTypedOutput:
+            if not active.dispatch_intent:
+                return self._finish(active,iid,"failed",runner_signal="unclassified_pre_send",send_phase="pre_send")
+            return self._finish(active,iid,"failed", runner_signal="invalid_typed_output", send_phase="provider_returned")
         except KernelRefused as exc:
             # KernelRefused.reason is a fixed, content-free control class. Carry it
             # to the domain adapter without persisting provider exception text, so
             # a post-claim context/revision refusal stays named at the speech edge.
-            return self._finish(active,iid,"refused",error=str(exc.reason))
-        except Exception as exc: return self._finish(active,iid,"failed", error=str(exc))
+            local_capacity = str(exc.reason) == "inference_local_runtime_busy" and not active.dispatch_intent
+            return self._finish(active,iid,"refused",error=str(exc.reason), runner_signal="local_capacity_unavailable" if local_capacity else "kernel_refused", send_phase="dispatch_intent" if active.dispatch_intent else "pre_send")
+        except Exception as exc:  # noqa: BLE001 - provider errors default unsafe/unknown
+            return self._finish(
+                active, iid, "failed", error=str(exc),
+                runner_signal="dispatch_outcome_unknown" if active.dispatch_intent else "unclassified_pre_send",
+                send_phase="dispatch_intent" if active.dispatch_intent else "pre_send",
+            )
         finally:
             watchdog.cancel()
             release_dispatch_context(bound_engine, context)
@@ -277,16 +401,62 @@ class InferenceRunner:
             if sequence is not None: sequence.leave(iid)
             with self._active_lock:
                 if active.state != "CLOSURE_FAILED": self._active.pop(iid,None)
-    def _dispatch(self,adapter,engine,payload,active,operation_id,principal,*,context):
+    def _close_pre_child_failure(self, operation_id, iid, routed, planned_node, *, expected_state, principal, deployment_revision_id):
+        """CAS-close pre-child failure without downgrading a claim race."""
+        try:
+            closed=self._broker.refuse_unstarted_inference_child(
+                operation_id,expected_state=expected_state,principal=principal,
+                native_id=iid,deployment_revision_id=deployment_revision_id,
+            )
+            return InvocationOutcome(
+                closed["operation_id"],iid,"refused","",closed["receipt"],
+                runner_signal="kernel_refused",send_phase="pre_send",
+            )
+        except KernelRefused:
+            operation=self._broker.store.operation(operation_id)
+            if expected_state=="awaiting_decision" and operation and operation.get("state")=="awaiting_execution":
+                closed=self._broker.refuse_unstarted_inference_child(
+                    operation_id,expected_state="awaiting_execution",principal=principal,
+                    native_id=iid,deployment_revision_id=deployment_revision_id,
+                )
+                return InvocationOutcome(
+                    closed["operation_id"],iid,"refused","",closed["receipt"],
+                    runner_signal="kernel_refused",send_phase="pre_send",
+                )
+            if not operation or operation.get("state")!="claimed":
+                raise
+            if routed is not None:
+                self._routed_attempt_runtime.bind(dict(routed),operation_id)
+                self._routed_attempt_runtime.mark_dispatch_intent(dict(routed))
+            claimant=Principal(
+                PrincipalKind.NODE,str(operation.get("claimed_by") or planned_node.identity),
+            )
+            evidence=_issue_runner_receipt_evidence(
+                operation_id=operation_id,outcome="indeterminate",result_ref="",
+                runner_signal="physical_outcome_unknown",send_phase="dispatch_intent",
+            )
+            receipt=self._broker.receipt(
+                operation_id,"indeterminate","",claimant,runner_evidence=evidence,
+            )
+            return InvocationOutcome(
+                operation_id,iid,"indeterminate","",receipt,
+                runner_signal="physical_outcome_unknown",send_phase="dispatch_intent",
+            )
+    def _dispatch(self,adapter,engine,payload,active,operation_id,principal,*,context,before_send=lambda:None):
         # HS-131-10: the last gate before a physical dispatch. The engine's own
         # context wins when it could carry one (a slotted backend cannot), and it
         # must be THIS claimed child's — another operation/attempt refuses by name.
         require_dispatch_context(dispatch_context_of(engine) or context, operation_id=operation_id, attempt_ordinal=getattr(context,"attempt_ordinal",0))
         destination=str(getattr(adapter,"egress_destination","") or "")
-        if not destination: return adapter.dispatch(engine,payload,active.cancelled)
+        if not destination:
+            before_send()
+            return adapter.dispatch(engine,payload,active.cancelled)
         from .external_egress import run_external_egress
-        return run_external_egress(connector_id=str(getattr(adapter,"connector_id","inference-provider")),destination=destination,data_classes=tuple(getattr(adapter,"egress_data_classes",("instruction",))),payload_material={"payload_hash":""},sender=lambda:adapter.dispatch(engine,payload,active.cancelled),allowed_destinations=(destination,),parent_operation_id=operation_id,principal=principal,broker=self._broker)
-    def _finish(self,active,iid,outcome, *, cancellation_owner=False, error=""):
+        def send():
+            before_send()
+            return adapter.dispatch(engine,payload,active.cancelled)
+        return run_external_egress(connector_id=str(getattr(adapter,"connector_id","inference-provider")),destination=destination,data_classes=tuple(getattr(adapter,"egress_data_classes",("instruction",))),payload_material={"payload_hash":""},sender=send,allowed_destinations=(destination,),parent_operation_id=operation_id,principal=principal,broker=self._broker)
+    def _finish(self,active,iid,outcome, *, cancellation_owner=False, error="", runner_signal="none", send_phase="pre_send"):
         with active.condition:
             # Cancellation owns CANCELLING.  A dispatch-side failure cannot
             # overwrite an acknowledged (or unknown) cancellation while its
@@ -300,15 +470,19 @@ class InferenceRunner:
             if active.state in {"CANCELLED","INDETERMINATE","PUBLISHED","FAILED","REFUSED"}:
                 disposition=self._terminal_disposition(active)
                 outcome={"cancelled":"cancelled","unknown":"indeterminate","completed":"succeeded"}.get(disposition, active.state.lower())
-                receipt=self._persist_receipt(active,active.operation_id,outcome,"")
-                return InvocationOutcome(active.operation_id,iid,outcome,"",receipt)
+                if outcome=="cancelled": runner_signal,send_phase="none","dispatch_intent" if active.dispatch_intent else "pre_send"
+                elif outcome=="indeterminate": runner_signal,send_phase="physical_outcome_unknown","dispatch_intent"
+                receipt=self._persist_receipt(active,active.operation_id,outcome,"",runner_signal=runner_signal,send_phase=send_phase)
+                return InvocationOutcome(active.operation_id,iid,outcome,"",receipt,runner_signal=runner_signal,send_phase=send_phase)
             # Claim closure but do not expose a terminal state until receipt()
             # has committed.  All cancellation callers wait on `closing`.
             active.closing=True
-        receipt=self._persist_receipt(active,active.operation_id,outcome,"")
+        if outcome=="cancelled": runner_signal,send_phase="none","dispatch_intent" if active.dispatch_intent else "pre_send"
+        elif outcome=="indeterminate": runner_signal,send_phase="physical_outcome_unknown","dispatch_intent"
+        receipt=self._persist_receipt(active,active.operation_id,outcome,"",runner_signal=runner_signal,send_phase=send_phase)
         with active.condition:
             active.state=outcome.upper(); active.terminal_outcome=outcome; active.closing=False; active.condition.notify_all()
-        return InvocationOutcome(active.operation_id,iid,outcome,"",receipt,error)
+        return InvocationOutcome(active.operation_id,iid,outcome,"",receipt,error,runner_signal,send_phase)
     @staticmethod
     def _runtime_principal():
         from .runtime import _principal

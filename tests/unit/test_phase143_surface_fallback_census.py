@@ -48,6 +48,7 @@ BACKEND_PRIVATE_DECISIONS: dict[tuple[str, str], tuple[str, str]] = {
     ("holdspeak/services/inference_route_plan_service.py", "_resolve_entries"): ("canonical frozen route-leg resolver", "143-05"),
     ("holdspeak/services/inference_route_plan_service.py", "_route_from_row"): ("canonical route-plan evidence reconstruction", "143-05"),
     ("holdspeak/services/inference_route_plan_service.py", "_validate_route_material"): ("canonical closed route-plan validator", "143-05"),
+    ("holdspeak/services/inference_fallback_controller.py", "_route_execution_receipt"): ("immutable route execution receipt reconstruction", "143-06"),
     ("holdspeak/services/inference_setup_service.py", "_thought_target"): ("legacy Thoughts selector", "143-07"),
     ("holdspeak/services/inference_setup_service.py", "_safe_target"): ("setup readiness selector", "143-12"),
     ("holdspeak/services/meeting_intel_service.py", "_retry"): ("explicit owner recovery request", "143-08"),
@@ -106,26 +107,10 @@ RUNS_ON_PICKER_SURFACE = re.compile(
 )
 STORY_RE = re.compile(r"^143-(?:0[1-9]|1[0-4])$")
 
-SWIFT_POLICY_SITES: dict[str, tuple[str, str]] = {
-    "apple/Sources/RuntimeCore/Workbench/BlueprintInterpreter.swift:321:fallbackOnDevice": (
-        "real injected-provider fallback", "143-06",
-    ),
-    "apple/Sources/RuntimeCore/Workbench/BlueprintInterpreter.swift:328:retryThenQueue": (
-        "fake queue label; surfaces hard failure", "143-06",
-    ),
-    "apple/Sources/RuntimeCore/Workbench/BlueprintInterpreter.swift:341:boundedRetry": (
-        "client-owned provider retry loop", "143-06",
-    ),
-    "apple/Sources/RuntimeCore/Workbench/WorkflowRunner.swift:236:fallbackOnDevice": (
-        "real injected-provider fallback", "143-06",
-    ),
-    "apple/Sources/RuntimeCore/Workbench/WorkflowRunner.swift:265:retryThenQueue": (
-        "real client-side parking result", "143-06",
-    ),
-    "apple/Sources/RuntimeCore/Workbench/WorkflowRunner.swift:374:boundedRetry": (
-        "client-owned provider retry loop", "143-06",
-    ),
-}
+# Story 06 retired every client-owned Swift retry/fallback execution site. The
+# scanner remains as a zero-regression fence: legacy wire strings may survive in
+# enum raw values, but no execution switch or retry-bound read may reappear.
+SWIFT_POLICY_SITES: dict[str, tuple[str, str]] = {}
 
 
 def _private_decisions() -> set[tuple[str, str]]:

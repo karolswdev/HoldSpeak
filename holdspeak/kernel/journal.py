@@ -5,13 +5,17 @@ import hashlib
 import hmac
 import json
 import secrets
+import threading
 import time
 import uuid
-import threading
-from typing import Any, Mapping
+from collections.abc import Mapping
+from typing import Any
 
-from .journal_txn import append_record, json_encode as _json, record_hash as _hash
+from .journal_txn import append_record
+from .journal_txn import json_encode as _json
+from .journal_txn import record_hash as _hash
 from .model import KernelRefused
+from .runner_receipt_evidence import consume_runner_receipt_evidence
 
 # Receipt readers must see the executing scheduler separately from the owner
 # who delegated it; every receipt read path returns this same joined shape.
@@ -84,7 +88,7 @@ class JournalStore:
         allowed = {"operation_id", "event_type", "privacy_class", "stream"}
         unknown = set(filters) - allowed
         if unknown:
-            raise KernelRefused("event_filter_not_allowed", sorted(unknown)[0])
+            raise KernelRefused("event_filter_not_allowed", min(unknown))
         for key, value in filters.items():
             clauses.append(f"{key} = ?")
             values.append(str(value))
@@ -155,6 +159,146 @@ class JournalStore:
                 "SELECT * FROM kernel_operations WHERE operation_id=?", (operation_id,)
             ).fetchone()
         return self._operation(row) if row is not None else None
+
+    def reconstruct_claimed_inference_child(self, operation_id: str) -> dict[str, Any] | None:
+        """Return a claimed inference child only when its signed identity is intact.
+
+        The operation row is scheduler state, not proof.  Approval's signed
+        warrant is the immutable admission fact, so every dispatch-relevant row
+        field is cross-bound to it before a controller may adopt the child.
+        """
+        operation = self.operation(operation_id)
+        if operation is None:
+            return None
+        warrant = operation.get("warrant") or {}
+        placement = str(operation.get("placement") or "")
+        claimant = str(operation.get("claimed_by") or "")
+        if (
+            operation["name"] != "inference.invoke"
+            or int(operation["version"]) != 1
+            or operation["state"] != "claimed"
+            or not claimant
+            or not warrant
+            or bool(operation.get("warrant_revoked"))
+            or not self.valid_warrant(warrant)
+            or float(warrant.get("execution_expires_at") or 0) <= self._clock()
+            or warrant.get("operation_id") != operation["operation_id"]
+            or warrant.get("envelope_sha256") != operation["envelope_sha256"]
+            or warrant.get("target_ref") != operation["target_ref"]
+            or warrant.get("target_binding") != operation["target_ref"]
+            or warrant.get("placement") != operation["placement"]
+            or warrant.get("policy_version") != operation["policy_version"]
+            or warrant.get("native_id") != operation["native_id"]
+            or warrant.get("principal_kind") != operation["principal_kind"]
+            or warrant.get("principal_identity") != operation["principal_identity"]
+            or warrant.get("parent_operation_id") != (operation.get("parent_operation_id") or "")
+            or not str(operation.get("target_ref") or "").startswith("deployment-revision:")
+            or not str(operation.get("native_id") or "")
+            or not placement.startswith("node:")
+            or claimant != placement.removeprefix("node:")
+        ):
+            return None
+        return operation
+
+    def reconstruct_inference_child_receipt(self, operation_id: str) -> dict[str, Any] | None:
+        """Reconstruct a terminal child receipt from signed admission + kernel rows."""
+        operation = self.operation(operation_id)
+        receipt = self.receipt(operation_id)
+        if operation is None or receipt is None:
+            return None
+        with self._connection() as conn:
+            attestation = conn.execute(
+                "SELECT * FROM kernel_inference_receipt_attestations WHERE operation_id=?",
+                (operation_id,),
+            ).fetchone()
+        if attestation is None:
+            return None
+        try:
+            attested_material = json.loads(str(attestation["material_json"]))
+        except (TypeError, ValueError, json.JSONDecodeError):
+            return None
+        warrant = operation.get("warrant") or {}
+        placement = str(operation.get("placement") or "")
+        claimant = str(operation.get("claimed_by") or "")
+        if (
+            operation["name"] != "inference.invoke"
+            or int(operation["version"]) != 1
+            or operation["state"] not in {"succeeded", "failed", "refused", "cancelled", "indeterminate"}
+            or receipt["state"] != operation["state"]
+        ):
+            return None
+        material = {
+            "schema": "KernelInferenceReceiptAttestation@1",
+            "operation_id": str(operation["operation_id"]),
+            "receipt_id": str(receipt["receipt_id"]),
+            "state": str(receipt["state"]),
+            "outcome": str(receipt["outcome"]),
+            "result_ref": str(receipt["result_ref"]),
+            "name": str(operation["name"]),
+            "version": int(operation["version"]),
+            "native_id": str(operation["native_id"]),
+            "envelope_sha256": str(operation["envelope_sha256"]),
+            "target_ref": str(operation["target_ref"]),
+            "placement": str(operation["placement"]),
+            "policy_version": str(operation["policy_version"]),
+            "principal_kind": str(operation["principal_kind"]),
+            "principal_identity": str(operation["principal_identity"]),
+            "parent_operation_id": str(operation.get("parent_operation_id") or ""),
+            "warrant_basis": str(warrant.get("signature") or ""),
+            "runner_signal": str(attested_material.get("runner_signal") or ""),
+            "send_phase": str(attested_material.get("send_phase") or ""),
+        }
+        expected = hmac.new(
+            self._secret().encode(), _json(material).encode(), hashlib.sha256
+        ).hexdigest()
+        if (
+            str(attestation["receipt_id"]) != str(receipt["receipt_id"])
+            or attested_material != material
+            or not hmac.compare_digest(str(attestation["signature"]), expected)
+        ):
+            return None
+        # A refusal can terminalize before approval/claim and therefore has no
+        # warrant.  Its kernel HMAC attestation still proves the full admitted
+        # operation and receipt.  Any provider-reaching child must additionally
+        # satisfy the signed-warrant execution identity below.
+        if warrant:
+            warrant_identity_invalid = bool(
+                not self.valid_warrant(warrant)
+                or warrant.get("operation_id") != operation["operation_id"]
+                or warrant.get("envelope_sha256") != operation["envelope_sha256"]
+                or warrant.get("target_ref") != operation["target_ref"]
+                or warrant.get("target_binding") != operation["target_ref"]
+                or warrant.get("placement") != operation["placement"]
+                or warrant.get("policy_version") != operation["policy_version"]
+                or warrant.get("native_id") != operation["native_id"]
+                or warrant.get("principal_kind") != operation["principal_kind"]
+                or warrant.get("principal_identity") != operation["principal_identity"]
+                or warrant.get("parent_operation_id") != (operation.get("parent_operation_id") or "")
+                or float(receipt["created_at"]) > float(warrant.get("execution_expires_at") or 0)
+            )
+            unclaimed_pre_send_refusal = bool(
+                operation["state"] == "refused"
+                and str(attested_material.get("send_phase")) == "pre_send"
+                and not claimant
+            )
+            if warrant_identity_invalid or (
+                not unclaimed_pre_send_refusal
+                and (
+                    not placement.startswith("node:")
+                    or claimant != placement.removeprefix("node:")
+                )
+            ):
+                return None
+        elif operation["state"] != "refused" or str(attested_material.get("send_phase")) != "pre_send":
+            return None
+        return {
+            "operation": operation,
+            "receipt": receipt,
+            "terminal_attestation": {
+                **material,
+                "signature": str(attestation["signature"]),
+            },
+        }
     def operation_for_ref(self, ref: str) -> dict[str, Any] | None:
         with self._connection() as conn:
             row = conn.execute(
@@ -227,10 +371,11 @@ class JournalStore:
 
     def transition_and_receipt(
         self, operation_id: str, expected_revision: int, state: str, outcome: str,
-        result_ref: str = "",
+        result_ref: str = "", *, runner_evidence: Any = None,
     ) -> tuple[dict[str, Any], dict[str, Any]]:
         """Durably couple a claimed operation's terminal state and receipt."""
         receipt_id = "rcpt_" + uuid.uuid4().hex
+        secret = self._secret()
         with self._connection() as conn:
             existing = conn.execute(_RECEIPT_SQL, (operation_id,)).fetchone()
             if existing is not None:
@@ -252,10 +397,35 @@ class JournalStore:
                 "SELECT * FROM kernel_operations WHERE operation_id=?", (operation_id,)
             ).fetchone()
             receipt = conn.execute(_RECEIPT_SQL, (operation_id,)).fetchone()
+            runner_signal, send_phase = (
+                ("kernel_refused", "pre_send")
+                if str(operation["name"]) == "inference.invoke"
+                and int(operation["version"]) == 1
+                and outcome == "refused"
+                else ("none", "pre_send")
+            )
+            if (
+                str(operation["name"]) == "inference.invoke"
+                and int(operation["version"]) == 1
+                and runner_evidence is not None
+            ):
+                evidence = consume_runner_receipt_evidence(
+                    runner_evidence, operation_id=operation_id,
+                    outcome=outcome, result_ref=result_ref,
+                )
+                runner_signal, send_phase = evidence.runner_signal, evidence.send_phase
+            self._attest_inference_receipt(
+                conn, operation, receipt, secret,
+                runner_signal=runner_signal, send_phase=send_phase,
+            )
         return self._operation(operation), dict(receipt)
 
-    def add_receipt(self, operation_id: str, state: str, outcome: str, result_ref: str = "") -> dict[str, Any]:
+    def add_receipt(
+        self, operation_id: str, state: str, outcome: str, result_ref: str = "",
+        *, runner_evidence: Any = None,
+    ) -> dict[str, Any]:
         receipt_id = "rcpt_" + uuid.uuid4().hex
+        secret = self._secret()
         with self._connection() as conn:
             existing = conn.execute(_RECEIPT_SQL, (operation_id,)).fetchone()
             if existing is not None:
@@ -264,7 +434,64 @@ class JournalStore:
                 "INSERT INTO kernel_receipts(receipt_id,operation_id,state,outcome,result_ref,created_at) VALUES(?,?,?,?,?,?)",
                 (receipt_id, operation_id, state, outcome, result_ref, self._clock()),
             )
+            operation = conn.execute(
+                "SELECT * FROM kernel_operations WHERE operation_id=?", (operation_id,)
+            ).fetchone()
+            receipt = conn.execute(_RECEIPT_SQL, (operation_id,)).fetchone()
+            runner_signal, send_phase = (
+                ("kernel_refused", "pre_send")
+                if str(operation["name"]) == "inference.invoke"
+                and int(operation["version"]) == 1
+                and outcome == "refused"
+                else ("none", "pre_send")
+            )
+            if (
+                str(operation["name"]) == "inference.invoke"
+                and int(operation["version"]) == 1
+                and runner_evidence is not None
+            ):
+                evidence = consume_runner_receipt_evidence(
+                    runner_evidence, operation_id=operation_id,
+                    outcome=outcome, result_ref=result_ref,
+                )
+                runner_signal, send_phase = evidence.runner_signal, evidence.send_phase
+            self._attest_inference_receipt(
+                conn, operation, receipt, secret,
+                runner_signal=runner_signal, send_phase=send_phase,
+            )
         return self.receipt(operation_id) or {}
+
+    @staticmethod
+    def _attest_inference_receipt(conn: Any, operation: Any, receipt: Any, secret: str, *, runner_signal: str, send_phase: str) -> None:
+        if operation is None or receipt is None or str(operation["name"]) != "inference.invoke" or int(operation["version"]) != 1:
+            return
+        warrant = json.loads(str(operation["warrant_json"] or "{}"))
+        material = {
+            "schema": "KernelInferenceReceiptAttestation@1",
+            "operation_id": str(operation["operation_id"]),
+            "receipt_id": str(receipt["receipt_id"]),
+            "state": str(receipt["state"]),
+            "outcome": str(receipt["outcome"]),
+            "result_ref": str(receipt["result_ref"]),
+            "name": str(operation["name"]),
+            "version": int(operation["version"]),
+            "native_id": str(operation["native_id"]),
+            "envelope_sha256": str(operation["envelope_sha256"]),
+            "target_ref": str(operation["target_ref"]),
+            "placement": str(operation["placement"]),
+            "policy_version": str(operation["policy_version"]),
+            "principal_kind": str(operation["principal_kind"]),
+            "principal_identity": str(operation["principal_identity"]),
+            "parent_operation_id": str(operation["parent_operation_id"] or ""),
+            "warrant_basis": str(warrant.get("signature") or ""),
+            "runner_signal": runner_signal,
+            "send_phase": send_phase,
+        }
+        signature = hmac.new(secret.encode(), _json(material).encode(), hashlib.sha256).hexdigest()
+        conn.execute(
+            "INSERT INTO kernel_inference_receipt_attestations VALUES(?,?,?,?,?)",
+            (receipt["receipt_id"], operation["operation_id"], _json(material), signature, receipt["created_at"]),
+        )
     def receipt(self, operation_id: str) -> dict[str, Any] | None:
         with self._connection() as conn:
             row = conn.execute(_RECEIPT_SQL, (operation_id,)).fetchone()

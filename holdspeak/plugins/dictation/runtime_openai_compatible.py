@@ -16,6 +16,8 @@ from typing import Any
 from urllib.parse import urlparse
 
 from holdspeak.intel.endpoint_health import default_health as _endpoint_health
+from holdspeak.intel.parsing import _extract_status_code
+from holdspeak.kernel.provider_signals import ProviderKnownNoGenerationTransient, ProviderPermanentNoGeneration, ProviderPermissionDenied
 from holdspeak.logging_config import get_logger
 from holdspeak.plugins.dictation.grammars import StructuredOutputSchema
 from holdspeak.plugins.dictation.runtime import RuntimeUnavailableError
@@ -74,7 +76,7 @@ class OpenAICompatibleRuntime:
         kwargs: dict[str, Any] = {
             "api_key": api_key or "not-needed",
             "base_url": self.base_url,
-            "timeout": self.timeout_seconds,
+            "timeout": self.timeout_seconds, "max_retries": 0,
         }
         try:
             self._client = factory(**kwargs)
@@ -148,6 +150,12 @@ class OpenAICompatibleRuntime:
             )
         except Exception as exc:
             _endpoint_health.record_failure(endpoint_key)
+            if _extract_status_code(exc) == 429:
+                raise ProviderKnownNoGenerationTransient() from exc
+            if _extract_status_code(exc) in {401, 403}:
+                raise ProviderPermissionDenied() from exc
+            if _extract_status_code(exc) == 404:
+                raise ProviderPermanentNoGeneration() from exc
             if _response_format_unsupported(exc) and response_format:
                 # Named, not swallowed: the admitted layer reads this shape and
                 # runs the no-response_format leg as a SEPARATE child.
@@ -193,6 +201,12 @@ class OpenAICompatibleRuntime:
                 extra_body={"thinking": False},
             )
         except Exception as exc:
+            if _extract_status_code(exc) == 429:
+                raise ProviderKnownNoGenerationTransient() from exc
+            if _extract_status_code(exc) in {401, 403}:
+                raise ProviderPermissionDenied() from exc
+            if _extract_status_code(exc) == 404:
+                raise ProviderPermanentNoGeneration() from exc
             log.error("OpenAI-compatible dictation rewrite failed: %s", exc, exc_info=True)
             raise RuntimeError(f"OpenAI-compatible rewrite failed: {exc}") from exc
         return _extract_message_text(response)

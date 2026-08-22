@@ -47,8 +47,8 @@ input forward.
 | Persisting a completed speech callback | `holdspeak/speech_session/fence.py` | Storage-delivery retry of the exact completed callback, not inference execution or route fallback. | 143-08 |
 | Endpoint-health refusal | `holdspeak/intel/endpoint_health.py`, `holdspeak/meeting_session/live_readiness.py` | Readiness/circuit-breaker refusal before egress. It can expose an already frozen meeting leg, but cannot synthesize a model fallback. | 143-08 |
 | Python workflow `fallbackOnDevice` / `retryThenQueue` | `holdspeak/services/support.py`, `holdspeak/services/sequence_workflow_service.py` | **Python fake workflow label**: the active hub treats `fallbackOnDevice` as pure carry-through and `retryThenQueue` as an ordinary surfaced error. Neither selects another model nor queues work. Story 10 removes/renames these legacy workflow labels while migrating workflow execution to the canonical route/controller. | 143-10 |
-| Swift WorkflowRunner `fallbackOnDevice` / `retryThenQueue` | `apple/Sources/RuntimeCore/Workbench/WorkflowRunner.swift` | **Swift dormant/client fallback**: this separate client runner retries an injected provider, can invoke an injected on-device fallback provider, and can return a parked queue result. It is a real legacy alternate-execution path, not evidence that the Python hub did so. Story 06 must retire or controller-align it under the server failure law. | 143-06 |
-| Swift BlueprintInterpreter `fallbackOnDevice` / `retryThenQueue` | `apple/Sources/RuntimeCore/Workbench/BlueprintInterpreter.swift` | **Swift dormant/client fallback with different queue truth**: it has its own bounded provider retries and real injected on-device fallback, but `retryThenQueue` is only a surfaced hard failure—nothing is parked. Story 06 retires or controller-aligns the physical retry/fallback and removes the false queue label. | 143-06 |
+| Swift WorkflowRunner legacy `fallbackOnDevice` / `retryThenQueue` wire values | `apple/Sources/RuntimeCore/Workbench/WorkflowRunner.swift` | **Swift dormant/client fallback retired in Story 06**: every model-backed step now makes at most one provider or mesh call. Source/UI actions are `hold`, `holdForRoute`, and `carry`; old raw values remain only so saved Blueprints decode unchanged. An injected legacy fallback is never called. | 143-06 |
+| Swift BlueprintInterpreter legacy `fallbackOnDevice` / `retryThenQueue` wire values | `apple/Sources/RuntimeCore/Workbench/BlueprintInterpreter.swift` | **Swift dormant/client fallback retired in Story 06**: a failure either carries the exact input or stops after one call for higher-level routing. The interpreter neither retries nor calls an alternate provider. | 143-06 |
 
 ## Guarded private decisions
 
@@ -63,6 +63,7 @@ story that owns their migration.
 | 143-03 | `holdspeak/commands/doctor.py`, `holdspeak/inference_targets.py`, `holdspeak/intel/engine.py`, `holdspeak/intel/providers.py`, `holdspeak/services/model_profile_service.py`, `holdspeak/services/profile_key_service.py`, `holdspeak/services/profile_service.py` |
 | 143-04 | `holdspeak/services/inference_assignment_service.py` (canonical sparse resolver) |
 | 143-05 | `holdspeak/services/inference_route_plan_service.py` (canonical immutable resolver, persistence, and reconstruction) |
+| 143-06 | `holdspeak/services/inference_fallback_controller.py` (durable route-attempt settlement and exact receipt reconstruction) |
 | 143-06 | `holdspeak/intel/engine.py`, `holdspeak/kernel/inference_runner.py`, `holdspeak/kernel/projection_stager.py` |
 | 143-07 | `holdspeak/dictation_telemetry.py`, `holdspeak/plugins/dictation/assembly.py`, `holdspeak/plugins/dictation/builtin/project_rewriter.py`, `holdspeak/plugins/dictation/runtime_mlx.py`, `holdspeak/services/inference_setup_service.py`, `holdspeak/target_profile.py` |
 | 143-08 | `holdspeak/intel_queue.py`, `holdspeak/meeting_session/intel_plan.py`, `holdspeak/services/meeting_intel_service.py` |
@@ -93,6 +94,7 @@ one story. The guard does not grant runtime authority; it preserves the census
 boundary until the target story implements its one-way migration.
 
 The same test scans every Swift `case .fallbackOnDevice`,
-`case .retryThenQueue`, and `policy.maxRetries` execution site. The six current
-sites are classified above; a synthetic new runner proves another policy branch
-or retry loop fails closed rather than hiding behind a known file.
+`case .retryThenQueue`, and `policy.maxRetries` execution site. The live set is
+now exactly zero; a synthetic rogue runner proves any reintroduced client-owned
+fallback branch or retry loop fails closed. Legacy strings may exist only as
+non-executing wire raw values.

@@ -256,6 +256,26 @@ def test_meeting_intel_cloud_falls_back_to_max_completion_tokens(monkeypatch) ->
         forget_endpoint_dialects()
 
 
+def test_meeting_intel_429_is_typed_no_generation_not_sanitized_text(monkeypatch) -> None:
+    class _RateLimited(RuntimeError):
+        status_code = 429
+
+    class _FakeOpenAI:
+        def __init__(self, **_kwargs):
+            self.chat = SimpleNamespace(
+                completions=SimpleNamespace(create=lambda **_kwargs: (_ for _ in ()).throw(_RateLimited("secret body")))
+            )
+
+    monkeypatch.setattr(intel_module, "OpenAI", _FakeOpenAI)
+    monkeypatch.setenv("OPENAI_API_KEY", "test-key")
+    from holdspeak.kernel.provider_signals import ProviderKnownNoGenerationTransient
+
+    with pytest.raises(ProviderKnownNoGenerationTransient):
+        MeetingIntel(provider="cloud", cloud_model="gpt-5-mini").analyze(
+            "[00:00:00] Me: test", stream=False
+        )
+
+
 def test_meeting_intel_cloud_surfaces_timeout_errors(monkeypatch) -> None:
     class _FakeCompletions:
         def create(self, **kwargs):

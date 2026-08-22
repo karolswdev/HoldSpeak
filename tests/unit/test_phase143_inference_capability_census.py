@@ -64,22 +64,22 @@ holdspeak/inference_targets.py:701|build_intel_for_revision|_engine_for_revision
 holdspeak/inference_targets.py:728|_engine_for_revision|MeetingIntel|call
 holdspeak/inference_targets.py:735|_engine_for_revision|local_pinned_meeting_intel|call
 holdspeak/inference_targets.py:755|_engine_for_revision|build_meeting_intel_for_profile|call
-holdspeak/intel/engine.py:177|MeetingIntel._ensure_openai_client_loaded|OpenAI|call
-holdspeak/intel/engine.py:209|MeetingIntel._ensure_local_model_loaded|Llama|call
-holdspeak/intel/engine.py:228|MeetingIntel._ensure_runtime_loaded|_ensure_local_model_loaded|call
-holdspeak/intel/engine.py:233|MeetingIntel._ensure_runtime_loaded|_ensure_openai_client_loaded|call
-holdspeak/intel/engine.py:238|MeetingIntel._ensure_model_loaded|_ensure_runtime_loaded|call
-holdspeak/intel/engine.py:273|MeetingIntel._chat_completion_text|create_chat_completion|call
-holdspeak/intel/engine.py:311|MeetingIntel._chat_completion_text|_remote_completion|call
-holdspeak/intel/engine.py:311|MeetingIntel._chat_completion_text|chat.completions.create|ref
-holdspeak/intel/engine.py:349|MeetingIntel._chat_completion_stream|create_chat_completion|call
-holdspeak/intel/engine.py:387|MeetingIntel._chat_completion_stream|_remote_completion|call
-holdspeak/intel/engine.py:387|MeetingIntel._chat_completion_stream|chat.completions.create|ref
-holdspeak/intel/engine.py:436|MeetingIntel.run_prompt|_chat_completion_text|call
-holdspeak/intel/engine.py:452|MeetingIntel._analyze_once|_chat_completion_text|call
-holdspeak/intel/engine.py:528|MeetingIntel._analyze_stream|_chat_completion_stream|call
-holdspeak/intel/engine.py:597|MeetingIntel.generate_title|_chat_completion_text|call
-holdspeak/intel/engine.py:672|MeetingIntel.generate_bookmark_label_with_context|_chat_completion_text|call
+holdspeak/intel/engine.py:178|MeetingIntel._ensure_openai_client_loaded|OpenAI|call
+holdspeak/intel/engine.py:210|MeetingIntel._ensure_local_model_loaded|Llama|call
+holdspeak/intel/engine.py:229|MeetingIntel._ensure_runtime_loaded|_ensure_local_model_loaded|call
+holdspeak/intel/engine.py:234|MeetingIntel._ensure_runtime_loaded|_ensure_openai_client_loaded|call
+holdspeak/intel/engine.py:239|MeetingIntel._ensure_model_loaded|_ensure_runtime_loaded|call
+holdspeak/intel/engine.py:274|MeetingIntel._chat_completion_text|create_chat_completion|call
+holdspeak/intel/engine.py:312|MeetingIntel._chat_completion_text|_remote_completion|call
+holdspeak/intel/engine.py:312|MeetingIntel._chat_completion_text|chat.completions.create|ref
+holdspeak/intel/engine.py:356|MeetingIntel._chat_completion_stream|create_chat_completion|call
+holdspeak/intel/engine.py:394|MeetingIntel._chat_completion_stream|_remote_completion|call
+holdspeak/intel/engine.py:394|MeetingIntel._chat_completion_stream|chat.completions.create|ref
+holdspeak/intel/engine.py:449|MeetingIntel.run_prompt|_chat_completion_text|call
+holdspeak/intel/engine.py:465|MeetingIntel._analyze_once|_chat_completion_text|call
+holdspeak/intel/engine.py:541|MeetingIntel._analyze_stream|_chat_completion_stream|call
+holdspeak/intel/engine.py:610|MeetingIntel.generate_title|_chat_completion_text|call
+holdspeak/intel/engine.py:685|MeetingIntel.generate_bookmark_label_with_context|_chat_completion_text|call
 holdspeak/intel/mesh_relay.py:252|MeshRelayIntel._chat_completion_text|run_prompt|call
 holdspeak/intel/providers.py:239|_configured_engine|MeshRelayIntel|call
 holdspeak/intel/providers.py:251|_configured_engine|MeetingIntel|call
@@ -91,10 +91,10 @@ holdspeak/intel/providers.py:823|_profile_engine|MeetingIntel|call
 holdspeak/intel/providers.py:842|_profile_engine|MeetingIntel|call
 holdspeak/intel/providers.py:843|_profile_engine|configured_meeting_intel|call
 holdspeak/intel_queue.py:234|process_next_intel_job|analyze|call
-holdspeak/kernel/executor.py:14|<module>|_install_claim_issuer|call
-holdspeak/kernel/executor.py:79|ExecutorPlane.claim|_issue_claim_witness|call
-holdspeak/kernel/inference_runner.py:50|InferenceRunner.__init__|build_intel_for_revision|ref
-holdspeak/kernel/inference_runner.py:188|InferenceRunner._attempt|_issue_dispatch_context|call
+holdspeak/kernel/executor.py:19|<module>|_install_claim_issuer|call
+holdspeak/kernel/executor.py:84|ExecutorPlane.claim|_issue_claim_witness|call
+holdspeak/kernel/inference_runner.py:74|InferenceRunner.__init__|build_intel_for_revision|ref
+holdspeak/kernel/inference_runner.py:261|InferenceRunner._attempt|_issue_dispatch_context|call
 holdspeak/kernel/prompt_adapter.py:14|CanonicalPromptAdapter.dispatch|run_prompt|call
 holdspeak/main.py:765|_run_meeting_mode|transcribe|call
 holdspeak/main.py:774|_run_meeting_mode|transcribe|call
@@ -122,9 +122,9 @@ holdspeak/plugins/dictation/runtime_llama_cpp.py:134|LlamaCppRuntime.classify|cr
 holdspeak/plugins/dictation/runtime_llama_cpp.py:162|LlamaCppRuntime.rewrite|create_completion|call
 holdspeak/plugins/dictation/runtime_mesh_relay.py:52|MeshRelayRuntime.load|MeshRelayIntel|call
 holdspeak/plugins/dictation/runtime_mesh_relay.py:106|MeshRelayRuntime._run|run_prompt|call
-holdspeak/plugins/dictation/runtime_openai_compatible.py:67|OpenAICompatibleRuntime.load|OpenAI|ref
-holdspeak/plugins/dictation/runtime_openai_compatible.py:141|OpenAICompatibleRuntime.classify|chat.completions.create|call
-holdspeak/plugins/dictation/runtime_openai_compatible.py:188|OpenAICompatibleRuntime.rewrite|chat.completions.create|call
+holdspeak/plugins/dictation/runtime_openai_compatible.py:69|OpenAICompatibleRuntime.load|OpenAI|ref
+holdspeak/plugins/dictation/runtime_openai_compatible.py:143|OpenAICompatibleRuntime.classify|chat.completions.create|call
+holdspeak/plugins/dictation/runtime_openai_compatible.py:196|OpenAICompatibleRuntime.rewrite|chat.completions.create|call
 holdspeak/plugins/intelligence.py:362|PluginDispatch.chat|_chat_completion_text|call
 holdspeak/project_doc_suggestions.py:72|suggest_project_doc_update|rewrite|ref
 holdspeak/project_doc_suggestions.py:73|suggest_project_doc_update|rewrite|ref
@@ -362,10 +362,10 @@ SWIFT_PHYSICAL_LEAVES: dict[str, ProposedRoute] = {
     "apple/Sources/RuntimeCore/Companion/CoderAnswer.swift:109|Swift.complete": ProposedRoute(
         "apple.coder_answer", "apple.runtimecore.companion", "LEGACY BYPASS: Story 143-10 Apple/agent adoption",
     ),
-    "apple/Sources/RuntimeCore/Workbench/BlueprintInterpreter.swift:343|Swift.complete": ProposedRoute(
+    "apple/Sources/RuntimeCore/Workbench/BlueprintInterpreter.swift:333|Swift.complete": ProposedRoute(
         "apple.workbench.blueprint", "apple.runtimecore.workbench", "LEGACY BYPASS: Story 143-06 fallback-controller migration",
     ),
-    "apple/Sources/RuntimeCore/Workbench/WorkflowRunner.swift:366|Swift.complete": ProposedRoute(
+    "apple/Sources/RuntimeCore/Workbench/WorkflowRunner.swift:338|Swift.complete": ProposedRoute(
         "apple.workbench.workflow", "apple.runtimecore.workbench", "LEGACY BYPASS: Story 143-06 fallback-controller migration",
     ),
 }
@@ -389,7 +389,7 @@ holdspeak/plugins/dictation/runtime.py:222|_default_factories._openai_factory|Op
 holdspeak/plugins/dictation/runtime_llama_cpp.py:74|LlamaCppRuntime._resolve_factories|Llama|ref
 holdspeak/plugins/dictation/runtime_mesh_relay.py:52|MeshRelayRuntime.load|MeshRelayIntel|call
 holdspeak/plugins/dictation/runtime_mesh_relay.py:106|MeshRelayRuntime._run|run_prompt|call
-holdspeak/plugins/dictation/runtime_openai_compatible.py:67|OpenAICompatibleRuntime.load|OpenAI|ref
+holdspeak/plugins/dictation/runtime_openai_compatible.py:69|OpenAICompatibleRuntime.load|OpenAI|ref
 holdspeak/speech_session/provider.py:180|ProviderAdmission.target|bound_target|call
 holdspeak/speech_session/provider.py:466|_mesh_bound|MeshRelayRuntime|call
 holdspeak/speech_session/revision_target.py:143|rebind|OpenAICompatibleRuntime|call
@@ -405,22 +405,22 @@ holdspeak/inference_targets.py:735|_engine_for_revision|local_pinned_meeting_int
 holdspeak/inference_targets.py:755|_engine_for_revision|build_meeting_intel_for_profile|call
 """),
     _group(ProposedRoute("internal.inference.dispatch", "intel.engine", "InferenceRunner gateway/context-gated adapter"), """
-holdspeak/intel/engine.py:177|MeetingIntel._ensure_openai_client_loaded|OpenAI|call
-holdspeak/intel/engine.py:209|MeetingIntel._ensure_local_model_loaded|Llama|call
-holdspeak/intel/engine.py:228|MeetingIntel._ensure_runtime_loaded|_ensure_local_model_loaded|call
-holdspeak/intel/engine.py:233|MeetingIntel._ensure_runtime_loaded|_ensure_openai_client_loaded|call
-holdspeak/intel/engine.py:238|MeetingIntel._ensure_model_loaded|_ensure_runtime_loaded|call
-holdspeak/intel/engine.py:273|MeetingIntel._chat_completion_text|create_chat_completion|call
-holdspeak/intel/engine.py:311|MeetingIntel._chat_completion_text|_remote_completion|call
-holdspeak/intel/engine.py:311|MeetingIntel._chat_completion_text|chat.completions.create|ref
-holdspeak/intel/engine.py:349|MeetingIntel._chat_completion_stream|create_chat_completion|call
-holdspeak/intel/engine.py:387|MeetingIntel._chat_completion_stream|_remote_completion|call
-holdspeak/intel/engine.py:387|MeetingIntel._chat_completion_stream|chat.completions.create|ref
-holdspeak/intel/engine.py:436|MeetingIntel.run_prompt|_chat_completion_text|call
-holdspeak/intel/engine.py:452|MeetingIntel._analyze_once|_chat_completion_text|call
-holdspeak/intel/engine.py:528|MeetingIntel._analyze_stream|_chat_completion_stream|call
-holdspeak/intel/engine.py:597|MeetingIntel.generate_title|_chat_completion_text|call
-holdspeak/intel/engine.py:672|MeetingIntel.generate_bookmark_label_with_context|_chat_completion_text|call
+holdspeak/intel/engine.py:178|MeetingIntel._ensure_openai_client_loaded|OpenAI|call
+holdspeak/intel/engine.py:210|MeetingIntel._ensure_local_model_loaded|Llama|call
+holdspeak/intel/engine.py:229|MeetingIntel._ensure_runtime_loaded|_ensure_local_model_loaded|call
+holdspeak/intel/engine.py:234|MeetingIntel._ensure_runtime_loaded|_ensure_openai_client_loaded|call
+holdspeak/intel/engine.py:239|MeetingIntel._ensure_model_loaded|_ensure_runtime_loaded|call
+holdspeak/intel/engine.py:274|MeetingIntel._chat_completion_text|create_chat_completion|call
+holdspeak/intel/engine.py:312|MeetingIntel._chat_completion_text|_remote_completion|call
+holdspeak/intel/engine.py:312|MeetingIntel._chat_completion_text|chat.completions.create|ref
+holdspeak/intel/engine.py:356|MeetingIntel._chat_completion_stream|create_chat_completion|call
+holdspeak/intel/engine.py:394|MeetingIntel._chat_completion_stream|_remote_completion|call
+holdspeak/intel/engine.py:394|MeetingIntel._chat_completion_stream|chat.completions.create|ref
+holdspeak/intel/engine.py:449|MeetingIntel.run_prompt|_chat_completion_text|call
+holdspeak/intel/engine.py:465|MeetingIntel._analyze_once|_chat_completion_text|call
+holdspeak/intel/engine.py:541|MeetingIntel._analyze_stream|_chat_completion_stream|call
+holdspeak/intel/engine.py:610|MeetingIntel.generate_title|_chat_completion_text|call
+holdspeak/intel/engine.py:685|MeetingIntel.generate_bookmark_label_with_context|_chat_completion_text|call
 """),
     _group(ProposedRoute("internal.inference.dispatch", "intel.providers", "InferenceRunner gateway/context-gated adapter"), """
 holdspeak/intel/providers.py:239|_configured_engine|MeshRelayIntel|call
@@ -454,7 +454,7 @@ holdspeak/web/routes/system/voice_stream.py:245|build_voice_stream_router.ws_dic
 holdspeak/plugins/dictation/builtin/intent_router.py:171|IntentRouter.run|classify|call
 holdspeak/plugins/dictation/runtime_counters.py:227|CountingRuntime.classify|classify|call
 holdspeak/plugins/dictation/runtime_llama_cpp.py:134|LlamaCppRuntime.classify|create_completion|call
-holdspeak/plugins/dictation/runtime_openai_compatible.py:141|OpenAICompatibleRuntime.classify|chat.completions.create|call
+holdspeak/plugins/dictation/runtime_openai_compatible.py:143|OpenAICompatibleRuntime.classify|chat.completions.create|call
 holdspeak/speech_session/provider.py:402|_ClassifyLeg.run.call|classify|call
 holdspeak/speech_session/provider.py:515|AdmittedDictationRuntime.classify|classify|call
 """),
@@ -466,7 +466,7 @@ holdspeak/plugins/dictation/runtime_counters.py:271|CountingRuntime.rewrite|rewr
 holdspeak/plugins/dictation/runtime_counters.py:272|CountingRuntime.rewrite|rewrite|ref
 holdspeak/plugins/dictation/runtime_counters.py:277|CountingRuntime.rewrite|rewrite|call
 holdspeak/plugins/dictation/runtime_llama_cpp.py:162|LlamaCppRuntime.rewrite|create_completion|call
-holdspeak/plugins/dictation/runtime_openai_compatible.py:188|OpenAICompatibleRuntime.rewrite|chat.completions.create|call
+holdspeak/plugins/dictation/runtime_openai_compatible.py:196|OpenAICompatibleRuntime.rewrite|chat.completions.create|call
 holdspeak/speech_session/provider.py:306|ProviderAdmission.rewrite.call|rewrite|call
 holdspeak/speech_session/provider.py:522|AdmittedDictationRuntime.rewrite|rewrite|call
 """),
@@ -508,12 +508,12 @@ holdspeak/plugins/intelligence.py:362|PluginDispatch.chat|_chat_completion_text|
 holdspeak/intel/mesh_relay.py:252|MeshRelayIntel._chat_completion_text|run_prompt|call
 """),
     _group(ProposedRoute("internal.inference.dispatch", "kernel.executor", "InferenceRunner gateway/context-gated adapter"), """
-holdspeak/kernel/executor.py:14|<module>|_install_claim_issuer|call
-holdspeak/kernel/executor.py:79|ExecutorPlane.claim|_issue_claim_witness|call
+holdspeak/kernel/executor.py:19|<module>|_install_claim_issuer|call
+holdspeak/kernel/executor.py:84|ExecutorPlane.claim|_issue_claim_witness|call
 """),
     _group(ProposedRoute("internal.inference.dispatch", "kernel.inference_runner", "InferenceRunner gateway/context-gated adapter"), """
-holdspeak/kernel/inference_runner.py:50|InferenceRunner.__init__|build_intel_for_revision|ref
-holdspeak/kernel/inference_runner.py:188|InferenceRunner._attempt|_issue_dispatch_context|call
+holdspeak/kernel/inference_runner.py:74|InferenceRunner.__init__|build_intel_for_revision|ref
+holdspeak/kernel/inference_runner.py:261|InferenceRunner._attempt|_issue_dispatch_context|call
 """),
     _group(ProposedRoute("internal.inference.dispatch", "kernel.prompt_adapter", "InferenceRunner gateway/context-gated adapter"), """
 holdspeak/kernel/prompt_adapter.py:14|CanonicalPromptAdapter.dispatch|run_prompt|call
@@ -618,7 +618,7 @@ def test_phase143_swift_physical_leaves_are_explicit_legacy_bypasses() -> None:
     )
     assert all("LEGACY BYPASS: Story 143-" in route.admission for route in SWIFT_PHYSICAL_LEAVES.values())
     workflow = SWIFT_PHYSICAL_LEAVES[
-        "apple/Sources/RuntimeCore/Workbench/WorkflowRunner.swift:366|Swift.complete"
+        "apple/Sources/RuntimeCore/Workbench/WorkflowRunner.swift:338|Swift.complete"
     ]
     assert workflow.source_owner == "apple.runtimecore.workbench"
 

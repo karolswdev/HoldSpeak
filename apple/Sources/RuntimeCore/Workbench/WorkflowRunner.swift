@@ -6,46 +6,50 @@ import Providers
 /// this makes it real. It walks the linear `Workflow.steps` in order, threads an
 /// intermediate text value, executes the model-backed steps through an **injected**
 /// `ILLMProvider` (so the host tests pass a fake and never load a model), runs the pure
-/// transforms (`keepIf`) with no model, and enforces a per-run **failure policy** when a
-/// provider call throws (retry → park, fall back to a second provider, or skip).
+/// transforms (`keepIf`) with no model, and enforces a per-run **failure action** when a
+/// provider call throws (hold the run for an admitted route decision, or carry the input).
 ///
 /// Pure RuntimeCore: no SwiftUI, no App types, no `RunQueueStore`. The "queue/park"
 /// outcome is a *typed result the caller can enqueue* — the App layer owns the real queue.
 /// The "dispatch to the Mac" mesh target runs through an injected `MeshDispatch` closure
 /// (HSM-15-02: the App wires it to the paired peer's `POST /api/ask`); with no handler
-/// wired (no paired desktop) a `.dispatchToMac` step rides the failure policy exactly
-/// like an unreachable endpoint — retry → queue, fall back on-device, or skip.
+/// wired (no paired desktop) a `.dispatchToMac` step is held without another physical call.
 
 // MARK: - Failure policy
 
-/// What the runner does when a model-backed step's provider call throws (an unreachable
-/// endpoint, a dead on-device model, a transport error). The per-run default; a future
-/// per-node override slots in here unchanged.
+/// What the runner does when the one admitted physical call for a model-backed step fails.
+/// The raw values preserve existing Blueprint documents; they no longer authorize a client
+/// retry or a client-selected alternate provider.
 public enum FailurePolicy: String, Codable, Sendable, CaseIterable {
-    /// Retry up to the configured bound (with backoff), then **park** the run so the
-    /// caller can enqueue it as blocked and resume from this step later.
-    case retryThenQueue
-    /// Retry up to the bound, then swap to the injected **fallback** provider
-    /// (the on-device model — the egress badge updates, it didn't leave after all).
-    case fallbackOnDevice
-    /// Retry up to the bound, then **skip** the step, carrying the resolved input through
-    /// unchanged.
-    case skip
+    /// Hold the run at this step. A durable route controller may later admit a new attempt.
+    case hold = "retryThenQueue"
+    /// Hold specifically for a later route decision. This client does not select that route.
+    case holdForRoute = "fallbackOnDevice"
+    /// Carry the resolved input through unchanged without another physical call.
+    case carry = "skip"
+
+    // Source compatibility for older Apple hosts; serialization remains byte-compatible too.
+    @available(*, deprecated, renamed: "hold")
+    public static var retryThenQueue: Self { .hold }
+    @available(*, deprecated, renamed: "holdForRoute")
+    public static var fallbackOnDevice: Self { .holdForRoute }
+    @available(*, deprecated, renamed: "carry")
+    public static var skip: Self { .carry }
 }
 
-/// Tunables for retry/backoff. **Injectable so tests never sleep**: the default `sleep`
-/// closure is a no-op, and a test can assert the retry count without waiting.
+/// Legacy run-policy shape. `maxRetries` and `backoff` remain source-compatible for existing
+/// hosts, but physical retry authority now belongs to the durable server controller and these
+/// values are deliberately not consumed by either Apple executor.
 public struct RunPolicy: Sendable {
-    /// How many *additional* attempts after the first (0 = try once, never retry).
+    /// Retained compatibility field; Apple model steps always make at most one physical call.
     public var maxRetries: Int
     /// The per-run default policy when a provider call throws.
     public var failurePolicy: FailurePolicy
-    /// Sleep between attempts. `attempt` is 1-based (the retry index). Default: no sleep,
-    /// so host tests are instant. A host can supply real `Task.sleep`-backed backoff.
+    /// Retained compatibility closure; never invoked by the Apple executors.
     public var backoff: @Sendable (_ attempt: Int) async -> Void
 
     public init(maxRetries: Int = 2,
-                failurePolicy: FailurePolicy = .retryThenQueue,
+                failurePolicy: FailurePolicy = .hold,
                 backoff: @escaping @Sendable (_ attempt: Int) async -> Void = { _ in }) {
         self.maxRetries = maxRetries
         self.failurePolicy = failurePolicy
@@ -78,9 +82,9 @@ public typealias MeshDispatch = @Sendable (_ prompt: String) async throws -> Str
 public enum StepStatus: String, Codable, Sendable {
     case ok            // produced output
     case skipped       // failure policy `.skip` (or a step that does nothing)
-    case fellBack      // failure policy `.fallbackOnDevice` — succeeded on the fallback
-    case parked        // failure policy `.retryThenQueue` — exhausted retries, run parked here
-    case failed        // unrecoverable (e.g. dispatch unimplemented, fallback also threw)
+    case legacyAlternate = "fellBack" // decode-only legacy value; never emitted by new runs
+    case parked        // the one physical call failed; the run is held for later routing
+    case failed        // unrecoverable local execution failure
 }
 
 /// The outcome of one step in the walk — what ran, what it produced, how many attempts.
@@ -93,9 +97,8 @@ public struct StepOutcome: Sendable, Equatable {
     public var attempts: Int            // provider attempts made (0 for pure/no-model steps)
     public var error: String?           // the last error description, if any
     /// Where the step's output actually came from (HSM-15-02 egress honesty): the
-    /// resolved target for an `ok`/`skipped`/`parked`/`failed` step, and `.onDevice`
-    /// for `.fellBack` (the fallback provider IS the on-device model). Pure transforms
-    /// report `.onDevice` (nothing ran anywhere else).
+    /// resolved target for an `ok`/`skipped`/`parked`/`failed` step. Pure transforms report
+    /// `.onDevice` (nothing ran anywhere else). `.legacyAlternate` is decode-only.
     public var ranOn: RunTarget
 
     public init(index: Int, label: String, status: StepStatus, input: String,
@@ -156,19 +159,17 @@ public struct WorkflowRunner: Sendable {
 
     /// The provider that model-backed steps call (on-device or endpoint). Injected.
     private let provider: ILLMProvider
-    /// The fallback provider used by `.fallbackOnDevice` (the on-device model). Injected;
-    /// when `nil`, `.fallbackOnDevice` degrades to a failed step.
-    private let fallback: ILLMProvider?
     /// The mesh dispatch for `.dispatchToMac` steps (HSM-15-02). Injected by the App
     /// (the paired peer's ask route); `nil` = no paired desktop, the step rides the
     /// failure policy.
     private let dispatch: MeshDispatch?
     private let policy: RunPolicy
 
-    public init(provider: ILLMProvider, fallback: ILLMProvider? = nil,
+    /// `fallback` is accepted only so existing hosts keep compiling. It is never stored or
+    /// called; selecting another deployment requires a separately admitted server attempt.
+    public init(provider: ILLMProvider, fallback _: ILLMProvider? = nil,
                 dispatch: MeshDispatch? = nil, policy: RunPolicy = RunPolicy()) {
         self.provider = provider
-        self.fallback = fallback
         self.dispatch = dispatch
         self.policy = policy
     }
@@ -224,7 +225,7 @@ public struct WorkflowRunner: Sendable {
 
             case .failure(let lastError, let attempts):
                 switch policy.failurePolicy {
-                case .skip:
+                case .carry:
                     // Carry the input through unchanged.
                     outcomes.append(StepOutcome(index: index, label: step.label, status: .skipped,
                                                 input: resolvedInput, output: resolvedInput,
@@ -233,37 +234,8 @@ public struct WorkflowRunner: Sendable {
                     // `threaded` stays as resolvedInput's source — keep the carried value.
                     threaded = resolvedInput
 
-                case .fallbackOnDevice:
-                    if let fb = fallback {
-                        let fbResult = await attempt(prompt: prompt, on: fb)
-                        switch fbResult {
-                        case .success(let text, let fbAttempts):
-                            threaded = text
-                            // The fallback IS the on-device model — the badge updates,
-                            // it didn't leave after all.
-                            outcomes.append(StepOutcome(index: index, label: step.label, status: .fellBack,
-                                                        input: resolvedInput, output: text,
-                                                        attempts: attempts + fbAttempts,
-                                                        ranOn: .onDevice))
-                        case .failure(let fbError, let fbAttempts):
-                            outcomes.append(StepOutcome(index: index, label: step.label, status: .failed,
-                                                        input: resolvedInput, output: resolvedInput,
-                                                        attempts: attempts + fbAttempts,
-                                                        error: describe(fbError), ranOn: target))
-                            return WorkflowRunResult(workflowID: workflow.id, finalText: resolvedInput,
-                                                     steps: outcomes, failure: describe(fbError))
-                        }
-                    } else {
-                        outcomes.append(StepOutcome(index: index, label: step.label, status: .failed,
-                                                    input: resolvedInput, output: resolvedInput,
-                                                    attempts: attempts, error: "no fallback provider",
-                                                    ranOn: target))
-                        return WorkflowRunResult(workflowID: workflow.id, finalText: resolvedInput,
-                                                 steps: outcomes, failure: "no fallback provider")
-                    }
-
-                case .retryThenQueue:
-                    // Park: the caller enqueues this as a blocked job and resumes from here.
+                case .hold, .holdForRoute:
+                    // Hold: only the durable route controller may admit another physical call.
                     let reason = describe(lastError)
                     outcomes.append(StepOutcome(index: index, label: step.label, status: .parked,
                                                 input: resolvedInput, output: resolvedInput,
@@ -337,7 +309,7 @@ public struct WorkflowRunner: Sendable {
         }
     }
 
-    // MARK: Provider execution + retry
+    // MARK: One physical provider execution
 
     private enum AttemptResult {
         case success(text: String, attempts: Int)
@@ -345,9 +317,9 @@ public struct WorkflowRunner: Sendable {
     }
 
     /// Run a prompt against a target. On-device / endpoint go through the injected
-    /// provider; `.dispatchToMac` goes through the injected mesh dispatch (HSM-15-02),
-    /// under the SAME bounded retry loop — an unreachable Mac reads exactly like an
-    /// unreachable endpoint to the failure policy.
+    /// provider; `.dispatchToMac` goes through the injected mesh dispatch (HSM-15-02).
+    /// Each step makes at most one physical call. A later attempt requires a new durable
+    /// controller reservation outside this client executor.
     private func execute(prompt: String, target: RunTarget) async -> AttemptResult {
         switch target {
         case .onDevice, .endpoint:
@@ -361,30 +333,20 @@ public struct WorkflowRunner: Sendable {
         }
     }
 
-    /// One bounded retry loop against a provider. Backoff is injectable (no sleep in tests).
+    /// One provider call. There is intentionally no retry or alternate-provider branch here.
     private func attempt(prompt: String, on provider: ILLMProvider) async -> AttemptResult {
         await attempt(prompt: prompt, complete: { try await provider.complete(prompt: $0) })
     }
 
-    /// The retry loop itself, over any completion (a provider or the mesh dispatch).
+    /// The single physical call itself, over either a provider or the mesh dispatch.
     private func attempt(prompt: String,
                          complete: @Sendable (String) async throws -> String) async -> AttemptResult {
-        var attempts = 0
-        var lastError: Error = WorkflowRunError.dispatchUnimplemented
-        let totalTries = max(1, policy.maxRetries + 1)
-        for tryIndex in 0..<totalTries {
-            attempts += 1
-            do {
-                let text = try await complete(prompt)
-                return .success(text: text, attempts: attempts)
-            } catch {
-                lastError = error
-                if tryIndex < totalTries - 1 {
-                    await policy.backoff(tryIndex + 1)
-                }
-            }
+        do {
+            let text = try await complete(prompt)
+            return .success(text: text, attempts: 1)
+        } catch {
+            return .failure(error: error, attempts: 1)
         }
-        return .failure(error: lastError, attempts: attempts)
     }
 
     private func describe(_ error: Error) -> String { String(describing: error) }

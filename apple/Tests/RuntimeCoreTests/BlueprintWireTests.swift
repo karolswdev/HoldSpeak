@@ -24,8 +24,8 @@ final class BlueprintWireTests: XCTestCase {
         let nodes = [
             BPNode(id: "e1", kind: .entry),
             BPNode(id: "ask", kind: .llm(name: "LLM call", prompt: "From {input}, list the risks. One per line."),
-                   failurePolicy: .fallbackOnDevice, runsOn: .endpoint),
-            BPNode(id: "dec", kind: .extract(.decisions), failurePolicy: .skip, runsOn: .onDevice),
+                   failurePolicy: .holdForRoute, runsOn: .endpoint),
+            BPNode(id: "dec", kind: .extract(.decisions), failurePolicy: .carry, runsOn: .onDevice),
             BPNode(id: "keep", kind: .keepIf(keyword: "risk")),
             BPNode(id: "out", kind: .output),
         ]
@@ -119,6 +119,13 @@ final class BlueprintWireTests: XCTestCase {
         let branching = String(data: try branchingBlueprint().graphJSONData(), encoding: .utf8)!
         XCTAssertTrue(branching.contains("\"branch\""))
         XCTAssertTrue(branching.contains("\"keyword\" : \"risk\""))
+    }
+
+    func testLegacyFailurePolicyWireValuesDecodeToHonestActions() throws {
+        let decoder = JSONDecoder()
+        XCTAssertEqual(try decoder.decode(FailurePolicy.self, from: Data(#""retryThenQueue""#.utf8)), .hold)
+        XCTAssertEqual(try decoder.decode(FailurePolicy.self, from: Data(#""fallbackOnDevice""#.utf8)), .holdForRoute)
+        XCTAssertEqual(try decoder.decode(FailurePolicy.self, from: Data(#""skip""#.utf8)), .carry)
     }
 
     func testGraphJSONValueRoundTripsIntoWorkflowDefinition() throws {

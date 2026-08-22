@@ -1877,6 +1877,21 @@ CREATE TABLE IF NOT EXISTS kernel_receipts (
     result_ref TEXT NOT NULL DEFAULT '',
     created_at REAL NOT NULL
 );
+CREATE TABLE IF NOT EXISTS kernel_inference_receipt_attestations (
+    receipt_id TEXT PRIMARY KEY REFERENCES kernel_receipts(receipt_id),
+    operation_id TEXT NOT NULL UNIQUE REFERENCES kernel_operations(operation_id),
+    material_json TEXT NOT NULL,
+    signature TEXT NOT NULL,
+    created_at REAL NOT NULL
+);
+CREATE TRIGGER IF NOT EXISTS kernel_inference_receipt_attestations_no_update
+BEFORE UPDATE ON kernel_inference_receipt_attestations BEGIN
+    SELECT RAISE(ABORT, 'immutable kernel inference receipt attestation');
+END;
+CREATE TRIGGER IF NOT EXISTS kernel_inference_receipt_attestations_no_delete
+BEFORE DELETE ON kernel_inference_receipt_attestations BEGIN
+    SELECT RAISE(ABORT, 'immutable kernel inference receipt attestation');
+END;
 CREATE TABLE IF NOT EXISTS kernel_journal (
     hub_sequence INTEGER PRIMARY KEY AUTOINCREMENT,
     stream TEXT NOT NULL,
@@ -2584,6 +2599,206 @@ BEFORE DELETE ON inference_operation_route_request_plan_commands BEGIN
 END;
 CREATE UNIQUE INDEX IF NOT EXISTS idx_inference_operation_route_request_operation
     ON inference_operation_route_request_plans(operation_id);
+CREATE TABLE IF NOT EXISTS inference_operation_route_attempt_budget_evidence (
+    operation_plan_id TEXT PRIMARY KEY REFERENCES inference_operation_route_request_plans(id),
+    provider_id TEXT NOT NULL,
+    provider_revision INTEGER NOT NULL CHECK (provider_revision > 0),
+    evidence_ref TEXT NOT NULL,
+    material_snapshot_sha256 TEXT NOT NULL,
+    payload_json TEXT NOT NULL,
+    sha256 TEXT NOT NULL
+);
+CREATE TRIGGER IF NOT EXISTS inference_operation_route_attempt_budgets_no_update
+BEFORE UPDATE ON inference_operation_route_attempt_budget_evidence BEGIN
+    SELECT RAISE(ABORT, 'immutable operation route attempt budgets');
+END;
+CREATE TRIGGER IF NOT EXISTS inference_operation_route_attempt_budgets_no_delete
+BEFORE DELETE ON inference_operation_route_attempt_budget_evidence BEGIN
+    SELECT RAISE(ABORT, 'immutable operation route attempt budgets');
+END;
+
+-- HS-143-06: one durable fallback-controller state machine above the physical
+-- inference waist.  A row is the terminal-election authority for one frozen
+-- operation request plan; attempts are reservations, not provider retries.
+CREATE TABLE IF NOT EXISTS inference_route_executions (
+    id TEXT PRIMARY KEY,
+    route_plan_id TEXT NOT NULL REFERENCES inference_route_plans(id),
+    route_plan_sha256 TEXT NOT NULL,
+    operation_plan_id TEXT NOT NULL UNIQUE REFERENCES inference_operation_route_request_plans(id),
+    operation_plan_sha256 TEXT NOT NULL,
+    budget_evidence_provider_id TEXT NOT NULL,
+    budget_evidence_provider_revision INTEGER NOT NULL CHECK (budget_evidence_provider_revision > 0),
+    budget_evidence_sha256 TEXT NOT NULL,
+    state TEXT NOT NULL CHECK (state IN ('active','stopping','stopped','terminal')),
+    revision INTEGER NOT NULL CHECK (revision > 0),
+    total_attempt_limit INTEGER NOT NULL CHECK (total_attempt_limit > 0),
+    per_leg_attempt_limit INTEGER NOT NULL CHECK (per_leg_attempt_limit > 0),
+    attempts_reserved INTEGER NOT NULL DEFAULT 0 CHECK (attempts_reserved >= 0),
+    token_budget INTEGER,
+    cost_budget INTEGER,
+    tool_call_budget INTEGER,
+    tokens_reserved INTEGER NOT NULL DEFAULT 0 CHECK (tokens_reserved >= 0),
+    cost_reserved INTEGER NOT NULL DEFAULT 0 CHECK (cost_reserved >= 0),
+    tool_calls_reserved INTEGER NOT NULL DEFAULT 0 CHECK (tool_calls_reserved >= 0),
+    stop_requested INTEGER NOT NULL DEFAULT 0 CHECK (stop_requested IN (0,1)),
+    stop_command_id TEXT UNIQUE,
+    terminal_disposition TEXT CHECK (terminal_disposition IS NULL OR terminal_disposition IN ('preflight_unavailable','known_no_generation_transient','dispatch_outcome_unknown','provider_permanent','invalid_typed_output','invalid_tool_call','context_overflow','local_capacity_unavailable','tool_unavailable_or_stale','permission_denied','policy_refused','owner_cancelled','deadline_exhausted','physical_outcome_unknown','effect_indeterminate','owner_terminal')),
+    terminal_outcome TEXT CHECK (terminal_outcome IS NULL OR terminal_outcome IN ('succeeded','failed','refused','cancelled','indeterminate')),
+    result_ref TEXT,
+    winning_attempt_id TEXT,
+    started_at TEXT NOT NULL,
+    terminal_at TEXT,
+    CHECK (
+      (state='active' AND stop_requested=0 AND stop_command_id IS NULL AND terminal_disposition IS NULL AND terminal_outcome IS NULL AND winning_attempt_id IS NULL AND terminal_at IS NULL) OR
+      (state='stopping' AND stop_requested=1 AND stop_command_id IS NOT NULL AND terminal_disposition IS NULL AND terminal_outcome IS NULL AND winning_attempt_id IS NULL AND terminal_at IS NULL) OR
+      (state='stopped' AND stop_requested=1 AND stop_command_id IS NOT NULL AND terminal_disposition='owner_cancelled' AND terminal_outcome='cancelled' AND winning_attempt_id IS NULL AND terminal_at IS NOT NULL) OR
+      (state='terminal' AND terminal_outcome IS NOT NULL AND terminal_at IS NOT NULL)
+    ),
+    CHECK (
+      terminal_outcome<>'succeeded' OR
+      (winning_attempt_id IS NOT NULL AND result_ref IS NOT NULL AND result_ref<>'')
+    )
+);
+CREATE TRIGGER IF NOT EXISTS inference_route_execution_stop_provenance_immutable
+BEFORE UPDATE ON inference_route_executions
+WHEN OLD.stop_command_id IS NOT NULL AND NEW.stop_command_id IS NOT OLD.stop_command_id
+BEGIN
+    SELECT RAISE(ABORT, 'immutable inference route Stop provenance');
+END;
+CREATE TABLE IF NOT EXISTS inference_route_attempts (
+    id TEXT PRIMARY KEY,
+    execution_id TEXT NOT NULL REFERENCES inference_route_executions(id),
+    route_leg_ordinal INTEGER NOT NULL CHECK (route_leg_ordinal BETWEEN 1 AND 4),
+    physical_attempt_ordinal INTEGER NOT NULL CHECK (physical_attempt_ordinal > 0),
+    leg_attempt_ordinal INTEGER NOT NULL CHECK (leg_attempt_ordinal > 0),
+    purpose TEXT NOT NULL CHECK (purpose IN ('primary','retry','fallback','compatibility')),
+    deployment_revision_id TEXT NOT NULL,
+    boundary TEXT NOT NULL CHECK (boundary IN ('local','private_network','mesh','cloud')),
+    state TEXT NOT NULL CHECK (state IN ('reserved','admitted','dispatch_intent','terminal')),
+    child_invocation_id TEXT NOT NULL UNIQUE,
+    reservation_command_id TEXT NOT NULL UNIQUE,
+    admission_nonce_sha256 TEXT NOT NULL,
+    budget_evidence_provider_id TEXT NOT NULL,
+    budget_evidence_provider_revision INTEGER NOT NULL CHECK (budget_evidence_provider_revision > 0),
+    budget_evidence_sha256 TEXT NOT NULL,
+    child_operation_id TEXT UNIQUE,
+    disposition TEXT CHECK (disposition IS NULL OR disposition IN ('preflight_unavailable','known_no_generation_transient','dispatch_outcome_unknown','provider_permanent','invalid_typed_output','invalid_tool_call','context_overflow','local_capacity_unavailable','tool_unavailable_or_stale','permission_denied','policy_refused','owner_cancelled','deadline_exhausted','physical_outcome_unknown','effect_indeterminate','owner_terminal')),
+    outcome TEXT CHECK (outcome IS NULL OR outcome IN ('succeeded','failed','refused','cancelled','indeterminate')),
+    result_ref TEXT,
+    child_receipt_sha256 TEXT,
+    disposition_evidence_json TEXT,
+    disposition_evidence_sha256 TEXT,
+    classifier_revision TEXT,
+    send_phase TEXT CHECK (send_phase IS NULL OR send_phase IN ('pre_send','dispatch_intent','provider_no_generation','provider_returned')),
+    reserved_token_budget INTEGER NOT NULL DEFAULT 0 CHECK (reserved_token_budget >= 0),
+    reserved_cost_budget INTEGER NOT NULL DEFAULT 0 CHECK (reserved_cost_budget >= 0),
+    reserved_tool_call_budget INTEGER NOT NULL DEFAULT 0 CHECK (reserved_tool_call_budget >= 0),
+    reserved_at TEXT NOT NULL,
+    admitted_at TEXT,
+    dispatch_intent_at TEXT,
+    terminal_at TEXT,
+    CHECK (
+      (state='terminal' AND disposition IS NOT NULL AND outcome IS NOT NULL
+       AND disposition_evidence_sha256 IS NOT NULL AND terminal_at IS NOT NULL
+       AND (
+         child_receipt_sha256 IS NOT NULL OR
+         (disposition='dispatch_outcome_unknown' AND outcome='indeterminate'
+          AND send_phase='dispatch_intent')
+       )) OR
+      (state<>'terminal' AND disposition IS NULL AND outcome IS NULL
+       AND child_receipt_sha256 IS NULL AND disposition_evidence_sha256 IS NULL
+       AND classifier_revision IS NULL AND send_phase IS NULL AND terminal_at IS NULL)
+    ),
+    UNIQUE (execution_id, physical_attempt_ordinal),
+    UNIQUE (execution_id, route_leg_ordinal, leg_attempt_ordinal)
+);
+CREATE INDEX IF NOT EXISTS idx_inference_route_attempts_execution
+    ON inference_route_attempts(execution_id, physical_attempt_ordinal);
+CREATE TRIGGER IF NOT EXISTS inference_route_attempt_authority_immutable
+BEFORE UPDATE ON inference_route_attempts
+WHEN NEW.execution_id IS NOT OLD.execution_id
+  OR NEW.route_leg_ordinal IS NOT OLD.route_leg_ordinal
+  OR NEW.physical_attempt_ordinal IS NOT OLD.physical_attempt_ordinal
+  OR NEW.leg_attempt_ordinal IS NOT OLD.leg_attempt_ordinal
+  OR NEW.purpose IS NOT OLD.purpose
+  OR NEW.deployment_revision_id IS NOT OLD.deployment_revision_id
+  OR NEW.boundary IS NOT OLD.boundary
+  OR NEW.child_invocation_id IS NOT OLD.child_invocation_id
+  OR NEW.reservation_command_id IS NOT OLD.reservation_command_id
+  OR NEW.admission_nonce_sha256 IS NOT OLD.admission_nonce_sha256
+  OR NEW.budget_evidence_provider_id IS NOT OLD.budget_evidence_provider_id
+  OR NEW.budget_evidence_provider_revision IS NOT OLD.budget_evidence_provider_revision
+  OR NEW.budget_evidence_sha256 IS NOT OLD.budget_evidence_sha256
+  OR NEW.reserved_token_budget IS NOT OLD.reserved_token_budget
+  OR NEW.reserved_cost_budget IS NOT OLD.reserved_cost_budget
+  OR NEW.reserved_tool_call_budget IS NOT OLD.reserved_tool_call_budget
+BEGIN
+    SELECT RAISE(ABORT, 'immutable inference route attempt authority');
+END;
+CREATE TRIGGER IF NOT EXISTS inference_route_attempt_terminal_immutable
+BEFORE UPDATE ON inference_route_attempts
+WHEN OLD.state='terminal'
+BEGIN
+    SELECT RAISE(ABORT, 'immutable terminal inference route attempt');
+END;
+CREATE TABLE IF NOT EXISTS inference_route_execution_skips (
+    id TEXT PRIMARY KEY,
+    execution_id TEXT NOT NULL REFERENCES inference_route_executions(id),
+    route_leg_ordinal INTEGER NOT NULL CHECK (route_leg_ordinal BETWEEN 1 AND 4),
+    disposition TEXT NOT NULL CHECK (disposition IN ('preflight_unavailable','context_overflow')),
+    reason_code TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    UNIQUE (execution_id, route_leg_ordinal)
+);
+CREATE TRIGGER IF NOT EXISTS inference_route_execution_skips_no_update
+BEFORE UPDATE ON inference_route_execution_skips BEGIN
+    SELECT RAISE(ABORT, 'immutable inference route execution skip');
+END;
+CREATE TRIGGER IF NOT EXISTS inference_route_execution_skips_no_delete
+BEFORE DELETE ON inference_route_execution_skips BEGIN
+    SELECT RAISE(ABORT, 'immutable inference route execution skip');
+END;
+CREATE TABLE IF NOT EXISTS inference_route_execution_commands (
+    command_id TEXT PRIMARY KEY,
+    action TEXT NOT NULL CHECK (action IN ('start','reserve','claim','bind','dispatch_intent','settle','stop','reconcile')),
+    request_sha256 TEXT NOT NULL,
+    execution_id TEXT NOT NULL REFERENCES inference_route_executions(id),
+    effect_json TEXT NOT NULL,
+    effect_sha256 TEXT NOT NULL,
+    created_at TEXT NOT NULL
+);
+CREATE TRIGGER IF NOT EXISTS inference_route_execution_commands_no_update
+BEFORE UPDATE ON inference_route_execution_commands BEGIN
+    SELECT RAISE(ABORT, 'immutable inference route execution command');
+END;
+CREATE TRIGGER IF NOT EXISTS inference_route_execution_commands_no_delete
+BEFORE DELETE ON inference_route_execution_commands BEGIN
+    SELECT RAISE(ABORT, 'immutable inference route execution command');
+END;
+CREATE TABLE IF NOT EXISTS inference_route_execution_transitions (
+    transition_id TEXT PRIMARY KEY,
+    execution_id TEXT NOT NULL REFERENCES inference_route_executions(id),
+    ordinal INTEGER NOT NULL CHECK (ordinal > 0),
+    action TEXT NOT NULL CHECK (action IN ('start','reserve','stop','settle','reconcile')),
+    command_id TEXT NOT NULL UNIQUE REFERENCES inference_route_execution_commands(command_id),
+    prior_revision INTEGER NOT NULL CHECK (prior_revision >= 0),
+    post_revision INTEGER NOT NULL CHECK (post_revision > 0),
+    prior_state TEXT NOT NULL CHECK (prior_state IN ('none','active','stopping','stopped','terminal')),
+    post_state TEXT NOT NULL CHECK (post_state IN ('active','stopping','stopped','terminal')),
+    effect_sha256 TEXT NOT NULL,
+    previous_sha256 TEXT NOT NULL,
+    sha256 TEXT NOT NULL UNIQUE,
+    UNIQUE (execution_id, ordinal),
+    UNIQUE (execution_id, post_revision)
+);
+CREATE TRIGGER IF NOT EXISTS inference_route_execution_transitions_no_update
+BEFORE UPDATE ON inference_route_execution_transitions BEGIN
+    SELECT RAISE(ABORT, 'immutable inference route execution transition');
+END;
+CREATE TRIGGER IF NOT EXISTS inference_route_execution_transitions_no_delete
+BEFORE DELETE ON inference_route_execution_transitions BEGIN
+    SELECT RAISE(ABORT, 'immutable inference route execution transition');
+END;
 
 CREATE TABLE IF NOT EXISTS inference_runtime_leases (
     lease_id TEXT PRIMARY KEY,

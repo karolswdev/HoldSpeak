@@ -45,6 +45,7 @@ def _profile(
     *,
     claims: tuple[str, ...] = ("language",),
     ready: bool = True,
+    context_ceiling: int = 32768,
 ) -> str:
     profiles = ModelProfileService(db)
     manifest = _manifest(*claims)
@@ -74,7 +75,7 @@ def _profile(
         manifest_sha256="sha256:" + hashlib.sha256(profile_id.encode()).hexdigest(),
         format="gguf",
         architecture="qwen",
-        context_ceiling=32768,
+        context_ceiling=context_ceiling,
         capability_sha256=str(manifest["sha256"]),
     )
     db.deployment_revisions.upsert(deployment)
@@ -110,8 +111,8 @@ def _profile(
                 "1",
                 f"artifact-{profile_id}",
                 profile_id,
-                32768,
-                32768,
+                context_ceiling,
+                context_ceiling,
                 "{}",
                 deployment.capability_sha256,
                 deployment.id,

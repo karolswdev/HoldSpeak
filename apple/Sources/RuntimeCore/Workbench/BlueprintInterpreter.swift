@@ -96,15 +96,15 @@ public enum BlueprintRunError: Error, Equatable {
 public struct BlueprintInterpreter: Sendable {
 
     private let provider: ILLMProvider
-    private let fallback: ILLMProvider?
     private let policy: RunPolicy
     /// Hard global bound on exec steps — guards against an exec cycle the static validator
     /// can't see (a `merge` wired back into an earlier node). Generous; only trips on a true loop.
     private let maxSteps: Int
 
-    public init(provider: ILLMProvider, fallback: ILLMProvider? = nil,
+    /// `fallback` is source compatibility only. The interpreter never stores or calls it.
+    public init(provider: ILLMProvider, fallback _: ILLMProvider? = nil,
                 policy: RunPolicy = RunPolicy(), maxSteps: Int = 10_000) {
-        self.provider = provider; self.fallback = fallback
+        self.provider = provider
         self.policy = policy; self.maxSteps = maxSteps
     }
 
@@ -315,19 +315,12 @@ public struct BlueprintInterpreter: Sendable {
             return .produced(text)
         case .failure(let err):
             switch effective {
-            case .skip:
-                // `.skip` carries the resolved input through unchanged (the step did nothing).
+            case .carry:
+                // Carry the resolved input through unchanged (the step did nothing).
                 return .skipped(carried)
-            case .fallbackOnDevice:
-                guard let fb = fallback else { return .failed("no fallback provider") }
-                let r = await attempt(prompt: prompt, on: fb)
-                switch r {
-                case .success(let text): return .produced(text)
-                case .failure(let e):    return .failed(describeError(e))
-                }
-            case .retryThenQueue:
-                // No queue in the interpreter (the App owns parking); treat as a hard failure
-                // so the policy difference is observable in tests.
+            case .hold, .holdForRoute:
+                // The interpreter has no durable queue. Stop after the one physical call;
+                // a server controller, not this client, may admit another attempt.
                 return .failed(describeError(err))
             }
         }
@@ -335,18 +328,10 @@ public struct BlueprintInterpreter: Sendable {
 
     private enum Attempt { case success(String), failure(Error) }
 
-    /// Bounded retry loop against a provider; injectable backoff (no sleep in tests).
+    /// Exactly one physical provider call. Retry/fallback authority lives above the runner.
     private func attempt(prompt: String, on provider: ILLMProvider) async -> Attempt {
-        var lastError: Error = NSError(domain: "blueprint", code: -1)
-        let totalTries = max(1, policy.maxRetries + 1)
-        for tryIndex in 0..<totalTries {
-            do { return .success(try await provider.complete(prompt: prompt)) }
-            catch {
-                lastError = error
-                if tryIndex < totalTries - 1 { await policy.backoff(tryIndex + 1) }
-            }
-        }
-        return .failure(lastError)
+        do { return .success(try await provider.complete(prompt: prompt)) }
+        catch { return .failure(error) }
     }
 
     // MARK: Prompts & pure transforms (mirrors WorkflowRunner's templates)

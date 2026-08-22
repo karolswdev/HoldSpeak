@@ -15,7 +15,7 @@ from urllib.parse import urlsplit
 import holdspeak.intel as _intel_pkg
 
 from ..kernel.external_egress import run_external_egress
-from ..kernel.provider_signals import ProviderCompatibilityRetry
+from ..kernel.provider_signals import CONTROL_SIGNALS, ProviderCompatibilityRetry, ProviderKnownNoGenerationTransient, ProviderPermanentNoGeneration, ProviderPermissionDenied
 from ..logging_config import get_logger
 from .endpoint_health import default_health as _endpoint_health
 from .models import (
@@ -32,6 +32,7 @@ from .parsing import (
     _coerce_action_items,
     _coerce_str_list,
     _describe_cloud_exception,
+    _extract_status_code,
     _extract_json,
     _extract_openai_message_text,
     _json_only_messages,
@@ -168,7 +169,7 @@ class MeetingIntel:
         if not api_key:
             raise MeetingIntelError(f"Missing API key in ${self.cloud_api_key_env}")
 
-        kwargs: dict[str, object] = {"api_key": api_key}
+        kwargs: dict[str, object] = {"api_key": api_key, "max_retries": 0}
         if self.cloud_base_url:
             kwargs["base_url"] = self.cloud_base_url
         kwargs["timeout"] = self.cloud_timeout_seconds
@@ -313,6 +314,12 @@ class MeetingIntel:
             if _compatibility_retry(endpoint_key, exc):
                 raise _compat_signal(exc) from exc
             _endpoint_health.record_failure(endpoint_key)
+            if _extract_status_code(exc) == 429:
+                raise ProviderKnownNoGenerationTransient() from exc
+            if _extract_status_code(exc) in {401, 403}:
+                raise ProviderPermissionDenied() from exc
+            if _extract_status_code(exc) == 404:
+                raise ProviderPermanentNoGeneration() from exc
             raise MeetingIntelError(
                 _describe_cloud_exception(
                     exc,
@@ -388,6 +395,12 @@ class MeetingIntel:
         except Exception as exc:
             if _compatibility_retry(endpoint_key, exc):
                 raise _compat_signal(exc) from exc
+            if _extract_status_code(exc) == 429:
+                raise ProviderKnownNoGenerationTransient() from exc
+            if _extract_status_code(exc) in {401, 403}:
+                raise ProviderPermissionDenied() from exc
+            if _extract_status_code(exc) == 404:
+                raise ProviderPermanentNoGeneration() from exc
             raise MeetingIntelError(
                 _describe_cloud_exception(
                     exc,
@@ -438,7 +451,7 @@ class MeetingIntel:
                 temperature=self.temperature if temperature is None else temperature,
                 max_tokens=self.max_tokens if max_tokens is None else max_tokens,
             )
-        except (MeetingIntelError, ProviderCompatibilityRetry):
+        except (MeetingIntelError, *CONTROL_SIGNALS):
             # The dialect signal is the runner's to act on: swallowing it here
             # would put a second physical request back under one receipt.
             raise
@@ -454,7 +467,7 @@ class MeetingIntel:
                 temperature=self.temperature,
                 max_tokens=self.max_tokens,
             )
-        except (MeetingIntelError, ProviderCompatibilityRetry):
+        except (MeetingIntelError, *CONTROL_SIGNALS):
             raise
         except Exception as exc:
             log.error(f"Intel inference failed: {exc}", exc_info=True)
@@ -498,7 +511,7 @@ class MeetingIntel:
         if not stream:
             try:
                 return self._analyze_once(transcript)
-            except ProviderCompatibilityRetry:
+            except CONTROL_SIGNALS:
                 raise
             except Exception as exc:
                 log.error(f"Intel analyze failed: {exc}", exc_info=True)
@@ -530,7 +543,7 @@ class MeetingIntel:
             ):
                 raw_parts.append(piece)
                 yield piece
-        except ProviderCompatibilityRetry:
+        except CONTROL_SIGNALS:
             raise
         except Exception as exc:
             log.error(f"Intel streaming failed: {exc}", exc_info=True)
@@ -610,7 +623,7 @@ class MeetingIntel:
             log.info(f"Generated meeting title: {title}")
             return title if title else None
 
-        except ProviderCompatibilityRetry:
+        except CONTROL_SIGNALS:
             raise
         except Exception as exc:
             log.error(f"Title generation failed: {exc}", exc_info=True)
@@ -683,7 +696,7 @@ class MeetingIntel:
             log.info(f"Generated refined bookmark label: {label}")
             return label if label else None
 
-        except ProviderCompatibilityRetry:
+        except CONTROL_SIGNALS:
             raise
         except Exception as exc:
             log.error(f"Refined bookmark label generation failed: {exc}", exc_info=True)

@@ -339,6 +339,7 @@ def test_openai_compatible_runtime_classify_returns_parsed_json():
     assert result["extras"] == {"stage": "buildout"}
     assert fake_client is not None
     assert fake_client.kwargs["base_url"] == "http://127.0.0.1:1234/v1"
+    assert fake_client.kwargs["max_retries"] == 0
     call = fake_client.completions.calls[0]
     assert call["model"] == "qwen-local"
     assert call["response_format"] == {"type": "json_object"}
@@ -437,6 +438,29 @@ def test_openai_compatible_runtime_names_a_rejected_response_format():
     assert result["block_id"] == "ai_prompt_buildout"
     assert len(completions.calls) == 2
     assert "response_format" not in completions.calls[1]
+
+
+def test_openai_compatible_runtime_429_preserves_typed_no_generation_signal():
+    from holdspeak.kernel.provider_signals import ProviderKnownNoGenerationTransient
+    from holdspeak.plugins.dictation.runtime_openai_compatible import OpenAICompatibleRuntime
+
+    class _RateLimited(RuntimeError):
+        status_code = 429
+
+    class _Client:
+        def __init__(self, **_kwargs: Any) -> None:
+            self.chat = type("_Chat", (), {
+                "completions": type("_Completions", (), {
+                    "create": lambda _self, **_kwargs: (_ for _ in ()).throw(_RateLimited("secret body"))
+                })()
+            })()
+
+    rt = OpenAICompatibleRuntime(
+        model="qwen-local", base_url="http://127.0.0.1:1234/v1",
+        api_key_env="", client_factory=_Client,
+    )
+    with pytest.raises(ProviderKnownNoGenerationTransient):
+        rt.classify("classify this", _schema())
 
 
 def test_openai_compatible_runtime_rewrite_returns_message_text():

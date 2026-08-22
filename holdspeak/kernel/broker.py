@@ -142,6 +142,44 @@ class Broker(ExecutorPlane):
 
         return submit(self, raw, principal, context, planned_node=planned_node)
 
+    def reconstruct_claimed_inference_child(self, operation_id: str) -> dict[str, Any] | None:
+        """Composition seam consumed by the routed-attempt controller."""
+        return self.store.reconstruct_claimed_inference_child(operation_id)
+
+    def reconstruct_inference_child_receipt(self, operation_id: str) -> dict[str, Any] | None:
+        """Composition seam for controller settlement and crash adoption."""
+        return self.store.reconstruct_inference_child_receipt(operation_id)
+
+    def refuse_unstarted_inference_child(
+        self, operation_id: str, *, expected_state: str, principal: Any,
+        native_id: str, deployment_revision_id: str,
+    ) -> dict[str, Any]:
+        """CAS-close a canonical inference child proven not to have started.
+
+        This is deliberately a Broker-owned closed operation, not a generic
+        caller-selected disposition.  If a claimant won the race, the revision
+        CAS refuses and the child can never be mislabeled pre-send.
+        """
+        if expected_state not in {"awaiting_decision", "awaiting_execution"}:
+            raise KernelRefused("inference_unstarted_state_invalid", operation_id=operation_id)
+        operation = self.store.operation(operation_id)
+        if (
+            operation is None
+            or (operation["name"], int(operation["version"])) != ("inference.invoke", 1)
+            or str(operation["state"]) != expected_state
+            or str(operation["principal_kind"]) != str(principal.kind.value)
+            or str(operation["principal_identity"]) != str(principal.identity)
+            or str(operation["native_id"]) != str(native_id)
+            or str(operation["target_ref"])
+                != f"deployment-revision:{deployment_revision_id}"
+        ):
+            raise KernelRefused("inference_unstarted_closure_conflict", operation_id=operation_id)
+        operation, receipt = self.store.transition_and_receipt(
+            operation_id, int(operation["revision"]), "refused", "refused", "",
+        )
+        self.store.append("operation.refused", operation_id, head="inference_unstarted")
+        return self._handle(operation, receipt)
+
     def decide(
         self, operation_id: str, decision: str, expected_revision: int,
         principal: Any, *, reason: str = "",
@@ -198,6 +236,13 @@ class Broker(ExecutorPlane):
                 "target_binding": operation["target_ref"],
                 "placement": operation["placement"],
                 "policy_version": operation["policy_version"],
+                # These are part of the signed execution identity.  A claimed
+                # row is mutable scheduler state; it is not authority to change
+                # the admitted child after approval.
+                "native_id": operation["native_id"],
+                "principal_kind": operation["principal_kind"],
+                "principal_identity": operation["principal_identity"],
+                "parent_operation_id": operation.get("parent_operation_id") or "",
                 "issued_at": now,
                 "expires_at": now + claim_ttl,
                 "execution_expires_at": now + execution_ttl,
