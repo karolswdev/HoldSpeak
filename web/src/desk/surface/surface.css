@@ -2906,6 +2906,205 @@ button.surface-edit-in-place:hover {
   color: var(--accent);
   font: 600 9px / 1.2 var(--font-mono);
 }
+
+/* HS-142-06: the model picker is a task surface, not a setup brochure. */
+.models-model-picker {
+  border: 1px solid var(--border);
+  background: var(--desk-window-well);
+  box-shadow: inset 1px 1px 0 var(--etch-light);
+}
+.models-picker-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 50px;
+  padding: 9px 14px;
+  border-bottom: 1px solid var(--border);
+}
+.models-picker-header h2,
+.models-model-picker-main h3 {
+  margin: 0;
+  color: var(--text);
+  font-family: var(--font-sans);
+}
+.models-picker-header h2 { font-size: 19px; }
+.models-model-picker-main h3 { font-size: 15px; }
+.models-picker-header .models-current-route {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  max-width: min(52%, 520px);
+  min-height: 30px;
+  padding: 5px 9px;
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--warning);
+  background: var(--surface-2);
+}
+.models-picker-header .models-current-route[data-available] { border-left-color: var(--success); }
+.models-picker-header .models-current-route > span { flex: 0 0 auto; }
+.models-picker-header .models-current-route > strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11px;
+}
+.models-model-picker-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 330px;
+  min-height: 360px;
+}
+.models-model-picker-main {
+  display: grid;
+  align-content: start;
+  gap: 9px;
+  min-width: 0;
+  padding: 13px 14px 14px;
+}
+.models-model-picker .models-source-choices {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0;
+  border-bottom: 1px solid var(--border);
+}
+.models-model-picker .models-source-choices > button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 38px;
+  padding: 7px 9px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  text-align: center;
+  background: transparent;
+}
+.models-model-picker .models-source-choices > button[aria-selected="true"] {
+  border-bottom-color: var(--accent);
+  box-shadow: none;
+  background: color-mix(in srgb, var(--accent) 5%, transparent);
+}
+.models-model-picker .models-source-choices span {
+  display: grid;
+  place-items: center;
+  min-width: 19px;
+  height: 19px;
+  border: 1px solid var(--border);
+  font-size: 8px;
+}
+.models-picker-facts {
+  margin: 0;
+  color: var(--text-muted);
+  font: 500 9px / 1.3 var(--font-mono);
+}
+.models-model-picker .models-capability-radio {
+  max-height: clamp(260px, 44vh, 520px);
+  gap: 0;
+  padding: 0;
+  border-top: 1px solid var(--border);
+  overflow-y: auto;
+}
+.models-model-picker .models-capability-card.models-capability-card-compact {
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-rows: auto auto;
+  column-gap: 12px;
+  min-height: 62px;
+  padding: 10px 12px 10px 38px;
+  border: 0;
+  border-bottom: 1px solid var(--border);
+  background: transparent;
+}
+.models-model-picker .models-capability-card.models-capability-card-compact[data-selected] {
+  min-height: 62px;
+  box-shadow: inset 3px 0 0 var(--accent);
+  background: color-mix(in srgb, var(--accent) 6%, transparent);
+}
+.models-model-picker .models-capability-card-compact > strong {
+  grid-column: 1;
+  grid-row: 1;
+  overflow-wrap: anywhere;
+  white-space: normal;
+  font-size: 13px;
+}
+.models-model-picker .models-capability-card-compact > span {
+  grid-column: 1;
+  grid-row: 2;
+  overflow-wrap: anywhere;
+  color: var(--text-muted);
+  font: 400 10px / 1.3 var(--font-sans);
+}
+.models-model-picker .models-capability-card-compact > small {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  align-self: center;
+  color: var(--text-muted);
+  white-space: nowrap;
+  font: 600 9px / 1.2 var(--font-mono);
+}
+.models-model-detail {
+  position: relative;
+  min-width: 0;
+  border-left: 1px solid var(--border);
+  background: var(--surface-2);
+}
+.models-model-detail .models-capability-action {
+  position: sticky;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 12px;
+  min-height: 0;
+  margin: 0;
+  padding: 16px;
+  border: 0;
+  background: transparent;
+}
+.models-model-detail .models-capability-action > div {
+  gap: 4px;
+}
+.models-model-detail .models-capability-action > div > span {
+  color: var(--text-muted);
+  font: 600 9px / 1.2 var(--font-mono);
+  text-transform: uppercase;
+}
+.models-model-detail .models-capability-action > div > strong {
+  overflow-wrap: anywhere;
+  color: var(--text);
+  font: 650 17px / 1.25 var(--font-sans);
+}
+.models-selected-summary {
+  color: var(--text-muted);
+  font: 500 10px / 1.45 var(--font-mono);
+}
+.models-model-detail .models-capability-action > button,
+.models-model-detail .models-capability-action > label,
+.models-model-detail .models-capability-action-status {
+  width: 100%;
+  justify-self: stretch;
+}
+.models-model-detail .models-capability-action-status {
+  min-height: 0;
+  color: var(--warning);
+  font: 600 10px / 1.4 var(--font-sans);
+  letter-spacing: 0;
+  text-transform: none;
+}
+details.models-capability-limits {
+  display: block;
+  padding: 0;
+}
+details.models-capability-limits > summary {
+  min-height: 38px;
+  padding: 10px 13px;
+  color: var(--text-muted);
+  cursor: pointer;
+  font: 600 10px / 1.2 var(--font-mono);
+}
+details.models-capability-limits > div {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1px;
+  border-top: 1px solid var(--border);
+}
 .models-setup-intro {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(220px, max-content);
@@ -3396,6 +3595,66 @@ button.surface-edit-in-place:hover {
   }
 }
 @container surface (max-width: 559.9px) {
+  .models-picker-header {
+    min-height: 44px;
+    padding: 7px 10px;
+  }
+  .models-picker-header h2 { font-size: 16px; }
+  .models-picker-header .models-current-route {
+    max-width: 68%;
+    min-height: 28px;
+  }
+  .models-model-picker-body {
+    grid-template-columns: minmax(0, 1fr);
+    min-height: 0;
+  }
+  .models-model-picker-main {
+    padding: 10px;
+  }
+  .models-model-picker .models-source-choices {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .models-model-picker .models-source-choices > button {
+    min-height: 44px;
+    padding-inline: 4px;
+  }
+  .models-model-picker .models-source-choices strong {
+    font-size: 10px;
+  }
+  .models-model-picker .models-capability-radio {
+    max-height: 42vh;
+    overflow-y: auto;
+  }
+  .models-model-picker .models-capability-card.models-capability-card-compact {
+    grid-template-columns: minmax(0, 1fr);
+    min-height: 64px;
+    padding-right: 10px;
+  }
+  .models-model-picker .models-capability-card-compact > small {
+    grid-column: 1;
+    grid-row: 3;
+    margin-top: 3px;
+    white-space: normal;
+  }
+  .models-model-detail {
+    position: sticky;
+    bottom: 0;
+    z-index: 2;
+    border-top: 1px solid var(--border);
+    border-left: 0;
+    box-shadow: 0 -8px 18px color-mix(in srgb, #000 36%, transparent);
+  }
+  .models-model-detail .models-capability-action {
+    position: static;
+    gap: 8px;
+    padding: 11px;
+  }
+  .models-model-detail .models-capability-action > div > strong {
+    font-size: 14px;
+  }
+  details.models-capability-limits > div {
+    grid-template-columns: minmax(0, 1fr);
+  }
   .models-capability-intro {
     grid-template-columns: minmax(0, 1fr);
     padding: 15px 14px;

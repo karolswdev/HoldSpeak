@@ -48,12 +48,13 @@ activation truth server-owned without adding a second inference path.
 | HSEGHS001HS104-142-03 | One Model Chooser | done | [story-03-one-model-chooser](./story-03-one-model-chooser.md) | [evidence-story-03](./evidence-story-03.md) |
 | HSEGHS001HS104-142-04 | Hammer Evaluation Candidate | done | [story-04-hammer-evaluation-candidate](./story-04-hammer-evaluation-candidate.md) | [evidence-story-04](./evidence-story-04.md) |
 | HSEGHS001HS104-142-05 | Model Setup Wizard | done | [story-05-model-setup-wizard](./story-05-model-setup-wizard.md) | [evidence-story-05](./evidence-story-05.md) |
+| HSEGHS001HS104-142-06 | Task-First Model Picker | done | [story-06-task-first-model-picker](./story-06-task-first-model-picker.md) | [evidence-story-06](./evidence-story-06.md) |
 
 ## Where we are
 
-Stories 01–05 have delivered truthful setup, verified local GGUF acquisition,
-an honest evaluation-only Hammer candidate, and a calm three-step chooser that
-never renders the complete model catalog at once.
+Stories 01–06 have delivered truthful setup, verified local GGUF acquisition,
+an honest evaluation-only Hammer candidate, and a compact task-first model
+picker that puts choices and the sole action in the first useful viewport.
 The later MLX, capacity, exact-context, and tool-turn slices remain held behind
 their ruled authority prerequisites.
 

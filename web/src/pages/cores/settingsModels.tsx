@@ -422,7 +422,7 @@ export function ModelsModule({
         );
         return false;
       }
-      setPresetStatus(`${preset.label} selected for Thoughts & notes.`);
+      setPresetStatus("");
       onRefuse("");
       await reload();
       await reloadInferenceSetup();
@@ -987,12 +987,8 @@ export function ModelsModule({
         onCancelAcquisition={cancelLocalAcquisition}
       />
 
-      <div className="models-job-routing">
-        <GadgetGroup label="Choose AI for each job">
-          <p className="models-section-help">
-            Most people can leave these on This device. A connection here
-            changes only that job.
-          </p>
+      <FoldGadget title="Models by job" token="optional" className="models-job-routing">
+        <GadgetGroup>
           {pointerRow(
             "Thoughts & notes",
             ["thoughts", "inference_target_id"],
@@ -1005,7 +1001,7 @@ export function ModelsModule({
           )}
           {meetingsBlock}
         </GadgetGroup>
-      </div>
+      </FoldGadget>
 
       <FoldGadget
         title="AI connections"

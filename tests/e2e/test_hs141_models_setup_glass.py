@@ -91,17 +91,17 @@ def test_models_setup_is_projected_truth_with_one_action_seat(tmp_path: Path, mo
             _api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"})
             page.goto(f"{url}/profiles", wait_until="load")
 
-            heading = page.get_by_role("heading", name="Choose your AI", exact=True)
+            heading = page.locator("#models-capability-title")
             heading.wait_for(timeout=10000)
             setup = page.locator(".models-setup")
             projection = _api(page, "GET", "/api/inference/setup")["setup"]
             assert setup.get_by_text("This device", exact=True).first.is_visible()
-            assert setup.get_by_text("Choose AI for each job", exact=True).is_visible()
+            assert setup.get_by_text("Models by job", exact=True).is_visible()
             assert setup.get_by_text("Runs on", exact=True).count() == 0
-            assert setup.get_by_role("heading", name="Choose an experience", exact=True).is_visible()
-            assert setup.get_by_text(projection["current_thought_deployment"]["target"]["name"], exact=True).first.is_visible()
+            assert setup.get_by_role("heading", name="Choose a model", exact=True).is_visible()
+            assert setup.get_by_text("Not configured", exact=True).is_visible()
             body = setup.inner_text()
-            for forbidden in ["Ready to configure", "Recommended", str(home), "/Users/"]:
+            for forbidden in ["Choose your AI", "Choose an experience", "Where should it run", "Review and use", "Ready to configure", "Recommended", str(home), "/Users/"]:
                 assert forbidden not in body
             surface_body = page.locator(".desk-settings-window .desk-surface-body")
             if width == 393:
@@ -121,8 +121,8 @@ def test_models_setup_is_projected_truth_with_one_action_seat(tmp_path: Path, mo
             choices = [*detected, *catalog]
             setup.get_by_role("tab", name="This device", exact=False).click()
             radios = setup.get_by_role("radiogroup", name="AI choices").get_by_role("radio")
-            # The chooser is a wizard: only the active location's models are
-            # mounted, never the entire catalog wall at once.
+            # The active source owns one compact list; the complete catalog is
+            # never mounted as a wall of cards.
             assert 0 < radios.count() < len(choices)
             if choices:
                 expected_radio = setup.locator(
@@ -131,10 +131,13 @@ def test_models_setup_is_projected_truth_with_one_action_seat(tmp_path: Path, mo
                 assert expected_radio.count() == 1
                 assert expected_radio.is_checked()
                 if radios.count() > 1:
+                    before = expected_radio.get_attribute("value")
                     expected_radio.focus()
                     expected_radio.press("ArrowRight")
-                    setup.get_by_text("Review and use", exact=True).wait_for()
-                    assert setup.locator(".models-capability-radio").count() == 0
+                    assert setup.locator(
+                        '.models-capability-radio input[type="radio"]:checked'
+                    ).get_attribute("value") != before
+                    assert setup.locator(".models-capability-radio").count() == 1
                     assert (
                         _api(page, "GET", "/api/settings")["thoughts"][
                             "inference_target_id"
@@ -145,9 +148,9 @@ def test_models_setup_is_projected_truth_with_one_action_seat(tmp_path: Path, mo
             detection = projection["artifact_detection"]["state"]
             if not projection["detected_local_artifacts"]:
                 if detection == "complete":
-                    assert setup.get_by_text("No local AI detected", exact=True).is_visible()
+                    assert setup.get_by_text("0 detected", exact=False).is_visible()
                 else:
-                    assert setup.get_by_text(f"Local AI inspection {'incomplete' if detection == 'partial' else 'unavailable'}", exact=True).is_visible()
+                    assert setup.get_by_text(f"Scan {detection}", exact=False).is_visible()
 
             primary = setup.locator(".models-capability-action button")
             assert primary.count() <= 1
@@ -160,28 +163,23 @@ def test_models_setup_is_projected_truth_with_one_action_seat(tmp_path: Path, mo
             connections = setup.get_by_text("AI connections", exact=True).locator("xpath=ancestor::details")
             assert connections.get_attribute("open") is None
 
-            setup.get_by_role("button", name="Change model", exact=True).click()
-            setup.get_by_role("button", name="Change location", exact=True).click()
             hammer = next(row for row in catalog if row.get("id") == "candidate_local_hammer21_15b_gguf_q4km")
-            setup.get_by_role("tab", name="Tool experiments", exact=False).click()
-            hammer_label = setup.get_by_text(hammer["label"], exact=True)
+            setup.get_by_role("tab", name="Experimental", exact=False).click()
+            hammer_label = setup.locator(".models-capability-card strong", has_text=hammer["label"])
             assert hammer_label.evaluate(
                 "element => { const style = getComputedStyle(element); return style.whiteSpace !== 'nowrap' && style.textOverflow !== 'ellipsis'; }"
             )
             setup.locator(f'input[type="radio"][value="{hammer["id"]}"]').click()
-            assert setup.get_by_text("Review and use", exact=True).is_visible()
-            assert setup.get_by_text("PRESENTED FOR EVALUATION · NOT ENABLED FOR TOOL EXECUTION", exact=True).is_visible()
+            assert setup.get_by_text("Evaluation only · tool execution isn’t available yet.", exact=True).is_visible()
             assert setup.get_by_text("CC-BY-NC-4.0", exact=False).is_visible()
             assert setup.locator(".models-capability-action button").count() == 0
             page.screenshot(path=f"/tmp/holdspeak-inference-setup-hammer-{width}.png", full_page=False)
 
             assert detected and detected[0]["activation"]["action"] == "use_existing"
-            setup.get_by_role("button", name="Change model", exact=True).click()
-            setup.get_by_role("button", name="Change location", exact=True).click()
             setup.get_by_role("tab", name="This device", exact=False).click()
             setup.locator(f'input[type="radio"][value="{detected[0]["id"]}"]').click()
-            setup.get_by_role("button", name="USE THIS MODEL", exact=True).click()
-            setup.get_by_text("Ready · in use for Thoughts", exact=True).wait_for(timeout=10000)
+            setup.get_by_role("button", name="USE MODEL", exact=True).click()
+            setup.get_by_text("In use", exact=True).wait_for(timeout=10000)
             used = _api(page, "GET", "/api/inference/setup")["setup"]
             acquisition = next(row for row in used["acquisitions"] if row["preset_id"] == detected[0]["id"])
             assert acquisition["state"] == "ready"
@@ -191,26 +189,24 @@ def test_models_setup_is_projected_truth_with_one_action_seat(tmp_path: Path, mo
 
             if hosted:
                 chosen = hosted[-1]
-                setup.get_by_role("button", name="Change model", exact=True).click()
-                setup.get_by_role("button", name="Change location", exact=True).click()
                 setup.get_by_role("tab", name="OpenRouter", exact=False).click()
                 radio = setup.locator(f'input[type="radio"][value="{chosen["id"]}"]')
                 radio.click()
                 key = setup.get_by_label("OpenRouter key")
                 key.fill("glass-only-openrouter-key")
-                action = setup.get_by_role("button", name=f"ADD & USE {chosen['experience'].upper()}", exact=True)
+                action = setup.get_by_role("button", name="CONNECT & USE", exact=True)
                 action.click()
                 page.wait_for_timeout(1200)
                 assert key.count() == 0 or key.input_value() == "", setup.inner_text()
                 config = _api(page, "GET", "/api/settings")
                 assert config["thoughts"]["inference_target_id"] == chosen["existing_profile"]["target_id"]
-                setup.get_by_text("IN USE FOR THOUGHTS", exact=True).wait_for(timeout=10000)
+                setup.get_by_text("IN USE", exact=True).wait_for(timeout=10000)
                 targets = _api(page, "GET", "/api/inference-targets")["targets"]
                 selected = next(row for row in targets if row["id"] == chosen["existing_profile"]["target_id"])
                 assert selected["model"] == chosen["existing_profile"]["model"]
                 assert selected["secret"] == {"required": True, "present": True}
                 assert "glass-only-openrouter-key" not in str(targets)
-                assert setup.get_by_text("IN USE FOR THOUGHTS", exact=True).is_visible()
+                assert setup.get_by_text("IN USE", exact=True).is_visible()
                 assert setup.locator(".models-capability-action button").count() == 0
                 page.screenshot(path=f"/tmp/holdspeak-inference-setup-configured-{width}.png", full_page=False)
 
