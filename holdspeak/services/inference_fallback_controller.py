@@ -324,6 +324,21 @@ class InferenceFallbackController:
                     raise ConflictError("Physical attempt budget is exhausted.", code="inference_route_attempt_budget_exhausted")
                 if row["token_budget"] is not None and int(row["tokens_reserved"]) + tokens > int(row["token_budget"]):
                     raise ConflictError("Token budget is exhausted.", code="inference_route_token_budget_exhausted")
+                aggregate = self._bundle_aggregate_budget_in_transaction(conn, str(route["id"]))
+                if aggregate is not None:
+                    route_ids, allocation = aggregate
+                    placeholders = ",".join("?" for _ in route_ids)
+                    used = conn.execute(
+                        f"SELECT COUNT(*) FROM inference_route_attempts a "
+                        f"JOIN inference_route_executions e ON e.id=a.execution_id "
+                        f"WHERE e.route_plan_id IN ({placeholders})",
+                        tuple(route_ids),
+                    ).fetchone()[0]
+                    if int(used) + 1 > allocation:
+                        raise ConflictError(
+                            "Aggregate physical attempt budget is exhausted.",
+                            code="inference_route_group_budget_exhausted",
+                        )
                 nonce = secrets.token_urlsafe(32)
                 physical = int(row["attempts_reserved"]) + 1
                 attempt_id = f"ira_{hashlib.sha256(f'{execution}:{physical}'.encode()).hexdigest()[:32]}"
@@ -1925,6 +1940,69 @@ class InferenceFallbackController:
             and str(attempt["send_phase"]) == classified_phase
             and (str(receipt.get("result_ref") or "") if receipt["state"] == "succeeded" else "") == str(attempt["result_ref"] or "")
         )
+
+    def _bundle_aggregate_budget_in_transaction(
+        self, conn: Any, route_plan_id: str
+    ) -> tuple[list[str], int] | None:
+        """Return the immutable aggregate group binding this route, if any.
+
+        Group-less historical bundles deliberately return ``None``: their
+        execution-local retry budget remains the complete budget law.
+        """
+        rows = conn.execute(
+            """SELECT b.* FROM inference_parent_route_bundles b
+                 JOIN inference_parent_route_bundle_members m ON m.bundle_id=b.id
+                WHERE m.route_plan_id=?""",
+            (route_plan_id,),
+        ).fetchall()
+        if not rows:
+            return None
+        if len(rows) != 1:
+            raise ConflictError(
+                "Route bundle membership is ambiguous.",
+                code="inference_parent_route_bundle_integrity_invalid",
+            )
+        # Import lazily: the bundle authority imports this controller's public
+        # authority constant, while this execution-only path needs its exact
+        # manifest reconstruction rather than a second validator.
+        from .inference_parent_route_bundle_service import InferenceParentRouteBundleService
+
+        reader = object.__new__(InferenceParentRouteBundleService)
+        reader._plans = self._plans
+        bundle = reader._bundle_from_row(conn, rows[0])
+        groups = bundle.get("budget_groups")
+        if groups is None:
+            return None
+        member = next(
+            (item for item in bundle["members"] if item["route_plan_id"] == route_plan_id),
+            None,
+        )
+        if member is None:
+            raise ConflictError(
+                "Route bundle member is missing.",
+                code="inference_parent_route_bundle_integrity_invalid",
+            )
+        group = next(
+            (item for item in groups if member["key"] in item["member_keys"]),
+            None,
+        )
+        if group is None:
+            raise ConflictError(
+                "Route aggregate budget binding is missing.",
+                code="inference_parent_route_bundle_integrity_invalid",
+            )
+        keys = set(group["member_keys"])
+        route_ids = [
+            str(item["route_plan_id"])
+            for item in bundle["members"]
+            if item["key"] in keys
+        ]
+        if len(route_ids) != len(keys):
+            raise ConflictError(
+                "Route aggregate budget members are missing.",
+                code="inference_parent_route_bundle_integrity_invalid",
+            )
+        return route_ids, int(group["allocation"])
 
     @staticmethod
     def _safe_id(value: Any, field: str) -> str:

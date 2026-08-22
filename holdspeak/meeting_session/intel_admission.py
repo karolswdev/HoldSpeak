@@ -173,6 +173,18 @@ class IntelAdmissionMixin(TranscribeAdmissionMixin):
         )
         return True
 
+    def _record_only(self, issue: Mapping[str, Any]) -> None:
+        """Stamp content-free transcription repair state while raw capture continues."""
+        if self._state is None:
+            return
+        self._transcription_refusal = str(issue.get("reason_code") or SESSION_NOT_ADMITTED)
+        self._state.transcription_status = "record_only"
+        self._state.transcription_status_detail = {
+            "family": str(issue.get("family") or "speech-recognition-route-assignments"),
+            "reason_code": self._transcription_refusal,
+            "repair": str(issue.get("repair") or "repair_meeting_route_assignment"),
+        }
+
     def _refuse_session(self, reason: str, detail: str) -> None:
         """Record the refusal on every face the session has.
 
@@ -181,6 +193,13 @@ class IntelAdmissionMixin(TranscribeAdmissionMixin):
         was refused, and the recording keeps its honest ``disabled`` intel status.
         """
         self._transcription_refusal = reason
+        if self._state is not None:
+            self._state.transcription_status = "record_only"
+            self._state.transcription_status_detail = {
+                "family": "meeting-route-assignments",
+                "reason_code": str(reason),
+                "repair": "repair_meeting_route_assignment",
+            }
         if self.intel_enabled:
             self._intel_refuse(reason, detail)
             return
@@ -202,6 +221,25 @@ class IntelAdmissionMixin(TranscribeAdmissionMixin):
     def intel_session_operation_id(self) -> str:
         parent = self._intel_parent
         return "" if parent is None else str(parent.operation_id)
+
+    def _unwind_started_bundle(self, stage: str) -> None:
+        """Fence a Phase-B bundle after a capture-start failure, if one exists."""
+        bundle = getattr(self, "_route_bundle", None)
+        if bundle is None or self.intel_principal is None or self._state is None:
+            return
+        try:
+            from ..services.inference_parent_route_bundle_service import InferenceParentRouteBundleService
+
+            broker = self._intel_broker()
+            InferenceParentRouteBundleService(
+                broker, broker.inference_adoption_service
+            ).fence_cancel(
+                self.intel_principal,
+                command_id=f"meeting-start-abort:{self._state.id}:{stage}",
+                bundle_id=str(bundle["id"]),
+            )
+        except Exception as exc:
+            log.error("meeting bundle unwind failed at %s: %s", stage, type(exc).__name__)
 
     def _close_intel_session(self, outcome: str = "succeeded") -> None:
         """Close the live parent with its honest terminal outcome, exactly once."""

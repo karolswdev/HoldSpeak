@@ -251,9 +251,10 @@ class MeetingRepository(BaseRepository):
             INSERT INTO meetings (id, started_at, ended_at, title,
                 duration_seconds, intel_status, intel_status_detail,
                 intel_requested_at, intel_completed_at, mic_label, remote_label, web_url,
-                capture_status, capture_failure, capture_checkpoint_at,
+                capture_status, capture_failure, transcription_status,
+                transcription_status_detail_json, capture_checkpoint_at,
                 capture_checkpoint_seconds, provenance, sync_modified_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ON CONFLICT(id) DO UPDATE SET
                 ended_at = excluded.ended_at,
                 title = excluded.title,
@@ -267,6 +268,8 @@ class MeetingRepository(BaseRepository):
                 web_url = excluded.web_url,
                 capture_status = excluded.capture_status,
                 capture_failure = excluded.capture_failure,
+                transcription_status = excluded.transcription_status,
+                transcription_status_detail_json = excluded.transcription_status_detail_json,
                 capture_checkpoint_at = excluded.capture_checkpoint_at,
                 capture_checkpoint_seconds = excluded.capture_checkpoint_seconds,
                 provenance = excluded.provenance,
@@ -287,6 +290,9 @@ class MeetingRepository(BaseRepository):
             state.web_url,
             state.capture_status,
             state.capture_failure,
+            state.transcription_status,
+            json.dumps(state.transcription_status_detail, sort_keys=True, separators=(",", ":"))
+            if state.transcription_status_detail is not None else None,
             state.capture_checkpoint_at.isoformat() if state.capture_checkpoint_at else None,
             state.capture_checkpoint_seconds,
             state.provenance,
@@ -514,6 +520,11 @@ class MeetingRepository(BaseRepository):
             web_url=row['web_url'],
             capture_status=row['capture_status'] or "finalized",
             capture_failure=row['capture_failure'],
+            transcription_status=row["transcription_status"] or "active",
+            transcription_status_detail=(
+                json.loads(row["transcription_status_detail_json"])
+                if row["transcription_status_detail_json"] else None
+            ),
             capture_checkpoint_at=(
                 datetime.fromisoformat(row['capture_checkpoint_at'])
                 if row['capture_checkpoint_at'] else None
@@ -645,6 +656,11 @@ class MeetingRepository(BaseRepository):
                     intel_status_detail=r["intel_status_detail"],
                     capture_status=r["capture_status"] or "finalized",
                     capture_failure=r["capture_failure"],
+                    transcription_status=r["transcription_status"] or "active",
+                    transcription_status_detail=(
+                        json.loads(r["transcription_status_detail_json"])
+                        if r["transcription_status_detail_json"] else None
+                    ),
                     capture_checkpoint_seconds=float(r["capture_checkpoint_seconds"] or 0.0),
                     provenance=r["provenance"] or "desktop",
                 )

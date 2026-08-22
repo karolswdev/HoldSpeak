@@ -401,6 +401,124 @@ class InferenceRoutePlanService:
             **request,
         )
 
+    def freeze_derived_preload_for_transcription_in_transaction(
+        self,
+        authority: Principal,
+        conn: Any,
+        *,
+        command_id: str,
+        feature_principal: Principal,
+        parent_kind: str,
+        transcription_route_plan_id: str,
+    ) -> dict[str, Any]:
+        """Derive internal preload from one frozen transcription deployment.
+
+        This copies already-frozen assignment/deployment facts and therefore never
+        performs a second assignment lookup for ``speech.preload``.  The normal
+        route-row validator still reconstructs the copied transcription selection.
+        """
+        self._require_planner(authority)
+        command = _safe_id(command_id, field="command_id")
+        source_id = _safe_id(transcription_route_plan_id, field="transcription_route_plan_id")
+        source_row = conn.execute(
+            "SELECT * FROM inference_route_plans WHERE id=?", (source_id,)
+        ).fetchone()
+        if source_row is None:
+            raise ValidationError(
+                "Transcription route is missing.", code="inference_route_plan_invalid"
+            )
+        source = self._route_from_row(conn, source_row)
+        if source["capability"]["id"] != "speech.transcribe":
+            raise ValidationError(
+                "Derived preload requires a transcription route.",
+                code="inference_route_plan_invalid",
+            )
+        capability = self._registry.require("speech.preload")
+        policy = self._registry.retry_policy(capability.default_retry_policy_id)
+        principal_policy = self._feature_principal_policy(
+            feature_principal, parent_kind=parent_kind, capability=capability
+        )
+        request_hash = _sha256(
+            {
+                "command_id": command,
+                "transcription_route_plan_id": source["id"],
+                "transcription_route_plan_sha256": source["sha256"],
+                "capability": capability.canonical_dict(),
+                "retry_policy": policy.canonical_dict(),
+                "principal_policy_sha256": _sha256(principal_policy),
+            }
+        )
+        expected_plan_id = self._deterministic_id("derived-preload", command, request_hash)
+        replay = conn.execute(
+            "SELECT * FROM inference_route_plan_commands WHERE command_id=?", (command,)
+        ).fetchone()
+        if replay is not None:
+            if str(replay["request_sha256"]) != request_hash:
+                raise ConflictError(
+                    "Derived preload command changed.",
+                    code="inference_route_plan_command_conflict",
+                )
+            result = self._route_from_row(
+                conn,
+                conn.execute(
+                    "SELECT * FROM inference_route_plans WHERE id=?", (replay["plan_id"],)
+                ).fetchone(),
+            )
+            if str(replay["plan_sha256"]) != result["sha256"] or result["id"] != expected_plan_id:
+                raise ConflictError(
+                    "Stored derived preload effect is invalid.",
+                    code="inference_route_plan_command_integrity_invalid",
+                )
+            return result
+        self._refuse_route_identity_collision(conn, expected_plan_id)
+        material = {
+            **{key: value for key, value in source.items() if key != "sha256"},
+            "id": expected_plan_id,
+            "capability": {
+                "id": capability.id,
+                "revision": capability.revision,
+                "schema_sha256": capability.schema_sha256,
+            },
+            "retry_policy": {
+                "id": policy.id,
+                "revision": policy.revision,
+                "sha256": policy.sha256,
+                "per_entry_attempts": policy.per_entry_attempts,
+                "total_physical_attempts": policy.total_physical_attempts,
+                "deadline_ms": policy.deadline_ms,
+                "token_budget": policy.token_budget,
+                "cost_budget": policy.cost_budget,
+                "tool_call_budget": policy.tool_call_budget,
+                "fallback_dispositions": list(policy.fallback_dispositions),
+                "retryable_dispositions": list(policy.retryable_dispositions),
+            },
+            "operation_policy_revision": self._operation_policy(capability, None),
+        }
+        digest = _sha256(material)
+        revisions = [
+            self._profiles._deployment_from_row(
+                conn.execute(
+                    "SELECT * FROM deployment_revisions WHERE id=?",
+                    (entry["deployment_revision_id"],),
+                ).fetchone()
+            )
+            for entry in material["entries"]
+        ]
+        self._insert_route(
+            conn,
+            material,
+            digest,
+            revisions,
+            capability_definition=capability.canonical_dict(),
+            retry_policy_definition=policy.canonical_dict(),
+            principal_policy_evidence=principal_policy,
+        )
+        conn.execute(
+            "INSERT INTO inference_route_plan_commands VALUES (?,?,?,?,?)",
+            (command, request_hash, material["id"], digest, material["created_at"]),
+        )
+        return {**material, "sha256": digest}
+
     def _freeze_route_plan_in_transaction(
         self,
         authority: Principal,

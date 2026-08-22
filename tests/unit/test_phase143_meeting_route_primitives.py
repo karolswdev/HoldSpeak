@@ -725,6 +725,106 @@ def test_parent_route_bundle_is_atomic_replay_safe_and_budget_exact(tmp_path: Pa
     ).hex
 
 
+def test_aggregate_bundle_budget_debits_once_and_refuses_overallocation(tmp_path: Path) -> None:
+    """A manifest-only group is charged inside controller reservation BEGIN IMMEDIATE."""
+    db = Database(tmp_path / "aggregate-group.db")
+    _profile(
+        db, "ask-profile",
+        claims=("language", "structured_output", _result_claim("thought.interview")),
+    )
+    _assign(db, "ask.answer", "ask-profile", command="aggregate-ask")
+    _assign(db, "thought.interview", "ask-profile", command="aggregate-interview")
+    broker = _configure(db)
+    adoption = broker.inference_adoption_service
+    bundles = InferenceParentRouteBundleService(broker, adoption)
+    started = bundles.start(
+        OWNER,
+        command_id="aggregate-parent",
+        parent_kind="meeting.session",
+        definition_ref="meeting:aggregate:intel",
+        definition_revision="1",
+        input_snapshot={"meeting_id": "aggregate"},
+        deadline_at=time.time() + 300,
+        routes=(
+            {"key": "ask", "capability_id": "ask.answer", "invocation_id": "aggregate"},
+            {"key": "interview", "capability_id": "thought.interview", "invocation_id": "aggregate"},
+        ),
+        budget_groups=(
+            {"id": "meeting-intelligence", "allocation": 1, "member_keys": ["ask", "interview"]},
+        ),
+    )
+    bundle = started["bundle"]
+    assert bundle["parent_child_budget"] == 1
+    assert bundle["budget_groups"] == [
+        {"id": "meeting-intelligence", "allocation": 1, "member_keys": ["ask", "interview"]}
+    ]
+    ask_route = next(item for item in bundle["members"] if item["key"] == "ask")
+    interview_route = next(item for item in bundle["members"] if item["key"] == "interview")
+    ask = adoption.admit_on_frozen_route(
+        OWNER,
+        command_id="aggregate-ask-operation",
+        route_plan_id=ask_route["route_plan_id"],
+        capability_id="ask.answer",
+        operation_id="aggregate-ask-operation",
+        payload={"system_prompt": "Answer.", "user_prompt": "Why?", "temperature": 0.0, "max_tokens": 16},
+        reserved_output_tokens=16,
+    )
+    first = adoption.controller.reserve_next_attempt(
+        INFERENCE_FALLBACK_AUTHORITY,
+        command_id="aggregate-first-reserve",
+        execution_id=ask["execution"]["id"],
+    )
+    assert first["reservation"] is not None
+    with db._connection() as conn:
+        before_replay = conn.execute("SELECT COUNT(*) FROM inference_route_attempts").fetchone()[0]
+    assert adoption.controller.reserve_next_attempt(
+        INFERENCE_FALLBACK_AUTHORITY,
+        command_id="aggregate-first-reserve",
+        execution_id=ask["execution"]["id"],
+    ) == first
+    with db._connection() as conn:
+        assert conn.execute("SELECT COUNT(*) FROM inference_route_attempts").fetchone()[0] == before_replay
+    interview = adoption.admit_on_frozen_route(
+        OWNER,
+        command_id="aggregate-interview-operation",
+        route_plan_id=interview_route["route_plan_id"],
+        capability_id="thought.interview",
+        operation_id="aggregate-interview-operation",
+        payload={"prompt": "private"},
+        reserved_output_tokens=16,
+    )
+    with pytest.raises(ConflictError) as refused:
+        adoption.controller.reserve_next_attempt(
+            INFERENCE_FALLBACK_AUTHORITY,
+            command_id="aggregate-second-reserve",
+            execution_id=interview["execution"]["id"],
+        )
+    assert refused.value.code == "inference_route_group_budget_exhausted"
+
+
+def test_aggregate_bundle_manifest_tamper_refuses_reconstruction(tmp_path: Path) -> None:
+    db, _broker, adoption, bundles, started, _run_displaced, _fresh_bundles = _ask_bundle(
+        tmp_path, name="aggregate-tamper"
+    )
+    # Group-less bundles retain their exact historical arithmetic.  Add a malformed
+    # aggregate manifest only through hostile direct storage and ensure the shared
+    # bundle validator, used by the controller, refuses it.
+    bundle = started["bundle"]
+    with db._connection() as conn:
+        conn.execute("DROP TRIGGER inference_parent_route_bundles_no_update")
+        material = {key: value for key, value in bundle.items() if key != "sha256"}
+        material["budget_groups"] = [
+            {"id": "forged", "allocation": 1, "member_keys": ["missing"]}
+        ]
+        conn.execute(
+            "UPDATE inference_parent_route_bundles SET payload_json=? WHERE id=?",
+            (json.dumps(material, sort_keys=True, separators=(",", ":")), bundle["id"]),
+        )
+    with pytest.raises(ConflictError) as refused:
+        bundles.get(bundle["id"])
+    assert refused.value.code == "inference_parent_route_bundle_integrity_invalid"
+
+
 def test_bundle_rollback_terminalizes_shell_and_leaves_no_partial_route(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:

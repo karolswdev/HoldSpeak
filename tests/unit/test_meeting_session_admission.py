@@ -388,6 +388,54 @@ def test_device_start_without_principal_refuses_intelligence_and_still_records(t
     assert engine.analyzed == []
 
 
+def test_route_refusal_records_durable_record_only_and_starts_raw_audio(tmp_path, monkeypatch):
+    """Phase-B capture refusal is visible on the Meeting, never an audio failure."""
+    db, _broker, session, _engine, _requests = _rig(tmp_path, monkeypatch)
+
+    def refuse(*_args: Any, **_kwargs: Any) -> Any:
+        raise MeetingIntelRefused("no_assignment", "meeting.live_analysis")
+
+    monkeypatch.setattr(
+        "holdspeak.meeting_session.intel_admission.freeze_meeting_intel_plan", refuse
+    )
+    state = session.start()
+
+    assert state.capture_status == "recording"
+    assert session._recorder is not None and session._recorder.started is True
+    assert state.transcription_status == "record_only"
+    assert state.transcription_status_detail == {
+        "family": "meeting-route-assignments",
+        "reason_code": "no_assignment",
+        "repair": "repair_meeting_route_assignment",
+    }
+    durable = db.meetings.get_meeting(state.id)
+    assert durable is not None
+    assert durable.transcription_status == "record_only"
+    assert durable.transcription_status_detail == state.transcription_status_detail
+    assert state.intel_status == "refused"
+
+
+def test_late_transcriber_construction_failure_keeps_raw_capture_record_only(tmp_path, monkeypatch):
+    _db, _broker, session, _engine, _requests = _rig(tmp_path, monkeypatch)
+    session.transcriber = None
+
+    def unavailable() -> Any:
+        raise RuntimeError("model construction failed")
+
+    session._transcriber_factory = unavailable
+    state = session.start()
+
+    assert state.capture_status == "recording"
+    assert session._recorder is not None and session._recorder.started is True
+    assert state.transcription_status == "record_only"
+    assert state.transcription_status_detail == {
+        "family": "speech-recognition-route-assignments",
+        "reason_code": "transcriber_construction_failed",
+        "repair": "repair_audio_model_lifecycle",
+    }
+    assert session._transcribe_thread is None
+
+
 # --------------------------------------------------------------- live windows
 
 

@@ -270,15 +270,20 @@ class AskService:
                         dict(output), payload, None, admitted["route_plan"],
                         route_leg_ordinal=int(reservation["route_leg_ordinal"]),
                     ),
-                    result_sha256="sha256:" + hashlib.sha256(
-                        json.dumps(
-                            output,
-                            sort_keys=True,
-                            separators=(",", ":"),
-                            ensure_ascii=True,
-                            allow_nan=False,
-                        ).encode()
-                    ).hexdigest(),
+                    result_sha256=(
+                        result_sha256 := "sha256:" + hashlib.sha256(
+                            json.dumps(
+                                output,
+                                sort_keys=True,
+                                separators=(",", ":"),
+                                ensure_ascii=True,
+                                allow_nan=False,
+                            ).encode()
+                        ).hexdigest()
+                    ),
+                    receipt_result_ref=(
+                        f"inference-result:{reservation['child_invocation_id']}/{result_sha256}"
+                    ),
                 ).result_ref,
                 before_physical_dispatch=before_physical_dispatch,
             )

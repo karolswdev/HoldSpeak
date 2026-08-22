@@ -1122,10 +1122,12 @@ class RoutedInferenceCoordinator:
                     raise InferenceInvalidTypedOutput() from exc
                 captured["value"] = value
                 result_json, result_sha = _canonical(value), _sha256(value)
+                # Attempt output remains private until the controller has elected
+                # this physical reservation.  The kernel receipt therefore names a
+                # content-free private result reference; feature publication occurs
+                # only after durable settlement below.
                 producer_result_ref = (
-                    publish(value, reservation)
-                    if publish is not None
-                    else f"inference-result:{reservation['child_invocation_id']}/{result_sha}"
+                    f"inference-result:{reservation['child_invocation_id']}/{result_sha}"
                 )
                 with self._db._connection() as conn:
                     conn.execute("BEGIN IMMEDIATE")
@@ -1181,11 +1183,24 @@ class RoutedInferenceCoordinator:
                 principal, execution_id=execution_id
             )
             if receipt["outcome"] == "succeeded":
+                winning = self._winning_reservation(
+                    execution_id, str(receipt.get("winning_attempt_id") or "")
+                )
+                value = self._durable_winner_result(receipt)
+                if value is None:
+                    raise ConflictError(
+                        "Winner result is missing.",
+                        code="inference_adoption_result_integrity_invalid",
+                    )
+                if publish is not None:
+                    # Publication is deliberately post-election.  A UI/materializer
+                    # failure cannot rewrite the already elected physical receipt.
+                    publish(value, winning)
                 return {
                     "outcome": "succeeded",
-                    "result": captured.get("value"),
+                    "result": value,
                     "receipt": receipt,
-                    "winning_reservation": dict(reservation),
+                    "winning_reservation": winning,
                 }
             if receipt["state"] == "terminal":
                 return {"outcome": receipt["outcome"], "result": None, "receipt": receipt}
@@ -1294,7 +1309,11 @@ class RoutedInferenceCoordinator:
             ).fetchone()
         if row is None:
             raise ConflictError("Winning attempt is missing.", code="inference_adoption_result_integrity_invalid")
-        return dict(row)
+        reservation = dict(row)
+        # Reservation effects expose this field as ``attempt_id``; preserve that
+        # stable shape when a terminal receipt is replayed from durable storage.
+        reservation["attempt_id"] = str(row["id"])
+        return reservation
 
     def stop(
         self,

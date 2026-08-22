@@ -120,6 +120,9 @@ class InferenceParentRouteBundleService:
         deadline_at: float,
         routes: Sequence[Mapping[str, Any]],
         lifecycle_child_budget: int = 0,
+        budget_groups: Sequence[Mapping[str, Any]] | None = None,
+        derived_preload: Mapping[str, Any] | None = None,
+        requested_remote_device_ids: Sequence[str] = (),
     ) -> dict[str, Any]:
         if principal.kind not in {PrincipalKind.OWNER, PrincipalKind.SERVICE}:
             raise ValidationError(
@@ -167,6 +170,16 @@ class InferenceParentRouteBundleService:
             seen_keys.add(item["key"])
             seen_capabilities.add(item["capability_id"])
             declarations.append(item)
+        derived = self._derived_preload_declaration(derived_preload, declarations)
+        if derived is not None:
+            declarations.append(derived["declaration"])
+        groups = self._budget_groups(budget_groups, declarations)
+        remote_devices = self._requested_remote_devices(requested_remote_device_ids)
+        if groups and lifecycle_child_budget:
+            raise ValidationError(
+                "Aggregate bundles do not use a separate lifecycle budget.",
+                code="inference_parent_route_bundle_invalid",
+            )
         request = {
             "schema": "InferenceParentRouteBundleRequest@1",
             "command_id": command,
@@ -178,18 +191,24 @@ class InferenceParentRouteBundleService:
             "deadline_at": deadline,
             "lifecycle_child_budget": lifecycle_child_budget,
             "routes": declarations,
+            **({"budget_groups": groups} if groups else {}),
+            **({"derived_preload": derived["request"]} if derived is not None else {}),
+            **({"requested_remote_device_ids": remote_devices} if remote_devices else {}),
         }
         request_hash = _sha256(request)
         resolved_policy_fingerprints: list[dict[str, Any]] = []
         for declaration in declarations:
-            policy = self._plans.resolve_route_plan_for_feature(
-                ROUTE_PLANNING_AUTHORITY,
-                feature_principal=principal,
-                parent_kind=str(parent_kind),
-                capability_id=declaration["capability_id"],
-                invocation_id=declaration["invocation_id"],
-                deadline_at=deadline,
-            )["retry_policy"]
+            if derived is not None and declaration["key"] == derived["declaration"]["key"]:
+                policy = self._plans._registry.retry_policy("retry.internal.lifecycle").canonical_dict()
+            else:
+                policy = self._plans.resolve_route_plan_for_feature(
+                    ROUTE_PLANNING_AUTHORITY,
+                    feature_principal=principal,
+                    parent_kind=str(parent_kind),
+                    capability_id=declaration["capability_id"],
+                    invocation_id=declaration["invocation_id"],
+                    deadline_at=deadline,
+                )["retry_policy"]
             resolved_policy_fingerprints.append(
                 {
                     "id": policy["id"],
@@ -198,9 +217,13 @@ class InferenceParentRouteBundleService:
                     "total_physical_attempts": policy["total_physical_attempts"],
                 }
             )
-        declared_child_budget = lifecycle_child_budget + sum(
-            int(policy["total_physical_attempts"])
-            for policy in resolved_policy_fingerprints
+        declared_child_budget = (
+            sum(int(group["allocation"]) for group in groups)
+            if groups
+            else lifecycle_child_budget + sum(
+                int(policy["total_physical_attempts"])
+                for policy in resolved_policy_fingerprints
+            )
         )
         parent = self._parents.start(
             principal,
@@ -243,18 +266,32 @@ class InferenceParentRouteBundleService:
                         "bundle": bundle,
                     }
                 members: list[dict[str, Any]] = []
-                child_budget = lifecycle_child_budget
+                derived_preloads: list[dict[str, Any]] = []
+                child_budget = 0 if groups else lifecycle_child_budget
+                routes_by_key: dict[str, dict[str, Any]] = {}
                 for ordinal, declaration in enumerate(declarations, 1):
-                    route = self._plans.freeze_route_plan_for_feature_in_transaction(
-                        ROUTE_PLANNING_AUTHORITY,
-                        conn,
-                        command_id=f"{command}-route-{ordinal}",
-                        feature_principal=principal,
-                        parent_kind=str(parent_kind),
-                        capability_id=declaration["capability_id"],
-                        invocation_id=declaration["invocation_id"],
-                        deadline_at=deadline,
-                    )
+                    if derived is not None and declaration["key"] == derived["declaration"]["key"]:
+                        source = routes_by_key[derived["source_key"]]
+                        route = self._plans.freeze_derived_preload_for_transcription_in_transaction(
+                            ROUTE_PLANNING_AUTHORITY,
+                            conn,
+                            command_id=f"{command}-route-{ordinal}",
+                            feature_principal=principal,
+                            parent_kind=str(parent_kind),
+                            transcription_route_plan_id=str(source["id"]),
+                        )
+                    else:
+                        route = self._plans.freeze_route_plan_for_feature_in_transaction(
+                            ROUTE_PLANNING_AUTHORITY,
+                            conn,
+                            command_id=f"{command}-route-{ordinal}",
+                            feature_principal=principal,
+                            parent_kind=str(parent_kind),
+                            capability_id=declaration["capability_id"],
+                            invocation_id=declaration["invocation_id"],
+                            deadline_at=deadline,
+                        )
+                    routes_by_key[declaration["key"]] = route
                     evidence = conn.execute(
                         "SELECT sha256 FROM inference_route_plan_principal_evidence WHERE plan_id=?",
                         (route["id"],),
@@ -276,18 +313,24 @@ class InferenceParentRouteBundleService:
                             code="inference_parent_route_bundle_integrity_invalid",
                         )
                     attempts = int(route["retry_policy"]["total_physical_attempts"])
-                    child_budget += attempts
-                    members.append(
-                        {
-                            "ordinal": ordinal,
-                            "key": declaration["key"],
-                            "capability_id": declaration["capability_id"],
-                            "route_plan_id": route["id"],
-                            "route_plan_sha256": route["sha256"],
-                            "principal_policy_sha256": str(evidence["sha256"]),
-                            "maximum_physical_attempts": attempts,
-                        }
-                    )
+                    if not groups:
+                        child_budget += attempts
+                    member = {
+                        "ordinal": ordinal,
+                        "key": declaration["key"],
+                        "capability_id": declaration["capability_id"],
+                        "route_plan_id": route["id"],
+                        "route_plan_sha256": route["sha256"],
+                        "principal_policy_sha256": str(evidence["sha256"]),
+                        "maximum_physical_attempts": attempts,
+                    }
+                    if derived is not None and declaration["key"] == derived["declaration"]["key"]:
+                        source = routes_by_key[derived["source_key"]]
+                        derived_preloads.append(
+                            self._derived_preload_evidence(conn, derived, source, route)
+                        )
+                    members.append(member)
+                child_budget = declared_child_budget if groups else child_budget
                 if child_budget != declared_child_budget:
                     raise ConflictError(
                         "Parent route budget changed during admission.",
@@ -319,6 +362,9 @@ class InferenceParentRouteBundleService:
                     "lifecycle_child_budget": lifecycle_child_budget,
                     "feature_principal_sha256": request["feature_principal_sha256"],
                     "members": members,
+                    **({"budget_groups": groups} if groups else {}),
+                    **({"requested_remote_device_ids": remote_devices} if remote_devices else {}),
+                    **({"derived_preloads": derived_preloads} if derived_preloads else {}),
                 }
                 digest = _sha256(material)
                 conn.execute(
@@ -379,6 +425,173 @@ class InferenceParentRouteBundleService:
                     pass
             raise
 
+    @staticmethod
+    def _requested_remote_devices(values: Sequence[str]) -> list[str]:
+        if isinstance(values, (str, bytes)):
+            raise ValidationError(
+                "Requested remote devices are invalid.",
+                code="inference_parent_route_bundle_invalid",
+            )
+        normalized = sorted({_safe(value, field="requested_remote_device_id") for value in values})
+        return normalized
+
+    @staticmethod
+    def _derived_preload_declaration(
+        value: Mapping[str, Any] | None, declarations: Sequence[Mapping[str, str]]
+    ) -> dict[str, Any] | None:
+        if value is None:
+            return None
+        if not isinstance(value, Mapping) or set(value) != {
+            "key", "source_key", "candidate_material", "strategy_sequence"
+        }:
+            raise ValidationError(
+                "Derived preload declaration is invalid.",
+                code="inference_parent_route_bundle_invalid",
+            )
+        key = _safe(value["key"], field="route_key")
+        source_key = _safe(value["source_key"], field="derived_preload_source_key")
+        if key == source_key or any(item["key"] == key for item in declarations):
+            raise ValidationError(
+                "Derived preload declaration is invalid.",
+                code="inference_parent_route_bundle_invalid",
+            )
+        source = next((item for item in declarations if item["key"] == source_key), None)
+        if source is None or source["capability_id"] != "speech.transcribe":
+            raise ValidationError(
+                "Derived preload requires the transcription route.",
+                code="inference_parent_route_bundle_invalid",
+            )
+        candidates = value["candidate_material"]
+        strategies = value["strategy_sequence"]
+        if (
+            not isinstance(candidates, list)
+            or not isinstance(strategies, list)
+            or not strategies
+            or any(
+                not isinstance(item, Mapping) or set(item) != {"id", "revision"}
+                for item in candidates
+            )
+            or any(not isinstance(item, str) or not item for item in strategies)
+            or len(strategies) != len(set(strategies))
+        ):
+            raise ValidationError(
+                "Derived preload declaration is invalid.",
+                code="inference_parent_route_bundle_invalid",
+            )
+        candidate_material = [
+            {
+                "id": _safe(item["id"], field="preload_candidate_id"),
+                "revision": _safe(item["revision"], field="preload_candidate_revision"),
+            }
+            for item in candidates
+        ]
+        request = {
+            "key": key,
+            "source_key": source_key,
+            "candidate_material": candidate_material,
+            "strategy_sequence": [_safe(item, field="preload_strategy") for item in strategies],
+        }
+        return {
+            "declaration": {
+                "key": key,
+                "capability_id": "speech.preload",
+                "invocation_id": source["invocation_id"],
+            },
+            "source_key": source_key,
+            "request": request,
+        }
+
+    @staticmethod
+    def _budget_groups(
+        values: Sequence[Mapping[str, Any]] | None,
+        declarations: Sequence[Mapping[str, str]],
+    ) -> list[dict[str, Any]]:
+        if values is None:
+            return []
+        if isinstance(values, (str, bytes)) or not values:
+            raise ValidationError(
+                "Aggregate budget groups are invalid.",
+                code="inference_parent_route_bundle_invalid",
+            )
+        bound: set[str] = set()
+        normalized: list[dict[str, Any]] = []
+        for raw in values:
+            if not isinstance(raw, Mapping) or set(raw) != {"id", "allocation", "member_keys"}:
+                raise ValidationError(
+                    "Aggregate budget groups are invalid.",
+                    code="inference_parent_route_bundle_invalid",
+                )
+            identifier = _safe(raw["id"], field="budget_group_id")
+            allocation = raw["allocation"]
+            keys = raw["member_keys"]
+            if (
+                type(allocation) is not int
+                or allocation < 0
+                or not isinstance(keys, list)
+                or not keys
+                or any(not isinstance(key, str) for key in keys)
+            ):
+                raise ValidationError(
+                    "Aggregate budget groups are invalid.",
+                    code="inference_parent_route_bundle_invalid",
+                )
+            member_keys = sorted(_safe(key, field="route_key") for key in keys)
+            if len(member_keys) != len(set(member_keys)) or bound.intersection(member_keys):
+                raise ValidationError(
+                    "Aggregate budget groups are invalid.",
+                    code="inference_parent_route_bundle_invalid",
+                )
+            bound.update(member_keys)
+            normalized.append(
+                {"id": identifier, "allocation": allocation, "member_keys": member_keys}
+            )
+        expected = {item["key"] for item in declarations}
+        by_key = {item["key"]: item["capability_id"] for item in declarations}
+        if (
+            bound != expected
+            or len({item["id"] for item in normalized}) != len(normalized)
+            or any(
+                item["allocation"] == 0
+                and any(by_key[key] != "speech.preload" for key in item["member_keys"])
+                for item in normalized
+            )
+        ):
+            raise ValidationError(
+                "Aggregate budget groups must bind every route exactly once.",
+                code="inference_parent_route_bundle_invalid",
+            )
+        return sorted(normalized, key=lambda item: item["id"])
+
+    @staticmethod
+    def _derived_preload_evidence(
+        conn: Any, derived: Mapping[str, Any], source: Mapping[str, Any], preload: Mapping[str, Any]
+    ) -> dict[str, Any]:
+        deployment = source["entries"][0]
+        deployment_row = conn.execute(
+            "SELECT engine,model,artifact_id FROM deployment_revisions WHERE id=?",
+            (deployment["deployment_revision_id"],),
+        ).fetchone()
+        if deployment_row is None:
+            raise ConflictError(
+                "Derived preload deployment is missing.",
+                code="inference_parent_route_bundle_integrity_invalid",
+            )
+        return {
+            "schema": "InferenceDerivedPreloadEvidence@1",
+            "preload_route_key": derived["declaration"]["key"],
+            "preload_route_plan_id": preload["id"],
+            "preload_route_plan_sha256": preload["sha256"],
+            "transcription_route_key": derived["source_key"],
+            "transcription_route_plan_id": source["id"],
+            "transcription_route_plan_sha256": source["sha256"],
+            "deployment_revision_id": deployment["deployment_revision_id"],
+            "engine": str(deployment_row["engine"]),
+            "model_artifact": str(deployment_row["artifact_id"] or deployment_row["model"] or ""),
+            "candidate_material": derived["request"]["candidate_material"],
+            "candidate_material_sha256": _sha256(derived["request"]["candidate_material"]),
+            "strategy_sequence": derived["request"]["strategy_sequence"],
+        }
+
     def get(self, bundle_id: str) -> dict[str, Any]:
         with self._db._connection() as conn:
             row = conn.execute(
@@ -391,6 +604,73 @@ class InferenceParentRouteBundleService:
                     code="inference_parent_route_bundle_unknown",
                 )
             return self._bundle_from_row(conn, row)
+
+    def fence_cancel(
+        self,
+        principal: Principal,
+        *,
+        command_id: str,
+        bundle_id: str,
+    ) -> dict[str, Any]:
+        """Fence a live bundle without creating a handoff/adopter effect."""
+        command = _safe(command_id, field="command_id")
+        bundle_identifier = _safe(bundle_id, field="bundle_id")
+        with self._db._connection() as conn:
+            conn.execute("BEGIN IMMEDIATE")
+            try:
+                row = conn.execute(
+                    "SELECT * FROM inference_parent_route_bundles WHERE id=?", (bundle_identifier,)
+                ).fetchone()
+                if row is None:
+                    raise ValidationError(
+                        "Parent route bundle is unknown.",
+                        code="inference_parent_route_bundle_unknown",
+                    )
+                bundle = self._bundle_from_row(conn, row)
+                parent = conn.execute(
+                    """SELECT p.*,o.principal_kind,o.principal_identity
+                         FROM kernel_parent_runs p JOIN kernel_operations o
+                           ON o.operation_id=p.operation_id
+                        WHERE p.operation_id=?""",
+                    (bundle["parent_operation_id"],),
+                ).fetchone()
+                if parent is None or (principal.name, principal.identity) != (
+                    str(parent["principal_kind"]), str(parent["principal_identity"])
+                ):
+                    raise ValidationError(
+                        "Parent Stop authority is required.",
+                        code="inference_parent_stop_handoff_denied",
+                    )
+                stopped: list[dict[str, Any]] = []
+                executions = conn.execute(
+                    """SELECT e.id FROM inference_route_executions e
+                         JOIN inference_parent_route_bundle_members m
+                           ON m.route_plan_id=e.route_plan_id
+                        WHERE m.bundle_id=? AND e.state IN ('active','stopping')
+                        ORDER BY m.ordinal,e.started_at,e.id""",
+                    (bundle_identifier,),
+                ).fetchall()
+                for ordinal, execution in enumerate(executions, 1):
+                    stopped.append(self._controller.request_stop_in_transaction(
+                        INFERENCE_FALLBACK_AUTHORITY,
+                        conn,
+                        command_id=f"{command}-route-{ordinal}",
+                        execution_id=str(execution["id"]),
+                    )["effect"])
+                fence = self._parents.fence_for_handoff_in_transaction(
+                    conn, principal, operation_id=str(parent["operation_id"])
+                )
+                conn.commit()
+                return {
+                    "schema": "InferenceParentBundleFence@1",
+                    "bundle_id": bundle_identifier,
+                    "parent_operation_id": str(parent["operation_id"]),
+                    "parent_fence": dict(fence),
+                    "route_stops": stopped,
+                }
+            except Exception:
+                conn.rollback()
+                raise
 
     def request_stop_handoff(
         self,
@@ -848,6 +1128,75 @@ class InferenceParentRouteBundleService:
                 code="inference_parent_stop_handoff_integrity_invalid",
             ) from exc
 
+    @staticmethod
+    def _validate_derived_preloads(
+        conn: Any, evidence_rows: Any, members: Sequence[Mapping[str, Any]]
+    ) -> None:
+        if not isinstance(evidence_rows, list) or len(evidence_rows) != 1:
+            raise ValueError("derived preload")
+        evidence = evidence_rows[0]
+        fields = {
+            "schema", "preload_route_key", "preload_route_plan_id",
+            "preload_route_plan_sha256", "transcription_route_key",
+            "transcription_route_plan_id", "transcription_route_plan_sha256",
+            "deployment_revision_id", "engine", "model_artifact",
+            "candidate_material", "candidate_material_sha256", "strategy_sequence",
+        }
+        if (
+            not isinstance(evidence, Mapping)
+            or set(evidence) != fields
+            or evidence["schema"] != "InferenceDerivedPreloadEvidence@1"
+            or not isinstance(evidence["candidate_material"], list)
+            or any(
+                not isinstance(item, Mapping)
+                or set(item) != {"id", "revision"}
+                or _safe(item["id"], field="preload_candidate_id") != item["id"]
+                or _safe(item["revision"], field="preload_candidate_revision") != item["revision"]
+                for item in evidence["candidate_material"]
+            )
+            or evidence["candidate_material_sha256"] != _sha256(evidence["candidate_material"])
+            or not isinstance(evidence["strategy_sequence"], list)
+            or not evidence["strategy_sequence"]
+            or any(
+                not isinstance(item, str)
+                or _safe(item, field="preload_strategy") != item
+                for item in evidence["strategy_sequence"]
+            )
+            or len(evidence["strategy_sequence"]) != len(set(evidence["strategy_sequence"]))
+        ):
+            raise ValueError("derived preload")
+        by_key = {str(item["key"]): item for item in members}
+        transcription = by_key.get(str(evidence["transcription_route_key"]))
+        preload = by_key.get(str(evidence["preload_route_key"]))
+        if (
+            transcription is None or preload is None
+            or transcription["capability_id"] != "speech.transcribe"
+            or preload["capability_id"] != "speech.preload"
+            or transcription["route_plan_id"] != evidence["transcription_route_plan_id"]
+            or transcription["route_plan_sha256"] != evidence["transcription_route_plan_sha256"]
+            or preload["route_plan_id"] != evidence["preload_route_plan_id"]
+            or preload["route_plan_sha256"] != evidence["preload_route_plan_sha256"]
+        ):
+            raise ValueError("derived preload bind")
+        row = conn.execute(
+            "SELECT engine,model,artifact_id FROM deployment_revisions WHERE id=?",
+            (evidence["deployment_revision_id"],),
+        ).fetchone()
+        source_route = conn.execute(
+            "SELECT 1 FROM inference_route_plan_entries WHERE plan_id=? AND deployment_revision_id=?",
+            (transcription["route_plan_id"], evidence["deployment_revision_id"]),
+        ).fetchone()
+        preload_route = conn.execute(
+            "SELECT 1 FROM inference_route_plan_entries WHERE plan_id=? AND deployment_revision_id=?",
+            (preload["route_plan_id"], evidence["deployment_revision_id"]),
+        ).fetchone()
+        if (
+            row is None or source_route is None or preload_route is None
+            or str(row["engine"]) != evidence["engine"]
+            or str(row["artifact_id"] or row["model"] or "") != evidence["model_artifact"]
+        ):
+            raise ValueError("derived preload deployment")
+
     def _bundle_from_row(self, conn: Any, row: Any) -> dict[str, Any]:
         try:
             material = json.loads(str(row["payload_json"]))
@@ -863,19 +1212,15 @@ class InferenceParentRouteBundleService:
                     (row["id"],),
                 ).fetchall()
             ]
+            required = {
+                "schema", "id", "parent_operation_id", "parent_kind",
+                "parent_deadline_at", "parent_child_budget", "lifecycle_child_budget",
+                "feature_principal_sha256", "members",
+            }
+            optional = {"budget_groups", "requested_remote_device_ids", "derived_preloads"}
             if (
-                set(material)
-                != {
-                    "schema",
-                    "id",
-                    "parent_operation_id",
-                    "parent_kind",
-                    "parent_deadline_at",
-                    "parent_child_budget",
-                    "lifecycle_child_budget",
-                    "feature_principal_sha256",
-                    "members",
-                }
+                not required.issubset(material)
+                or set(material) - required - optional
                 or material["schema"] != "InferenceParentRouteBundle@1"
                 or material["members"] != members
                 or digest != str(row["sha256"])
@@ -883,15 +1228,28 @@ class InferenceParentRouteBundleService:
                 or material["parent_operation_id"] != str(row["parent_operation_id"])
                 or material["parent_deadline_at"] != float(row["parent_deadline_at"])
                 or material["parent_child_budget"] != int(row["parent_child_budget"])
-                or material["lifecycle_child_budget"]
-                != int(row["lifecycle_child_budget"])
-                or material["feature_principal_sha256"]
-                != str(row["feature_principal_sha256"])
-                or material["parent_child_budget"]
-                != sum(item["maximum_physical_attempts"] for item in members)
-                + material["lifecycle_child_budget"]
+                or material["lifecycle_child_budget"] != int(row["lifecycle_child_budget"])
+                or material["feature_principal_sha256"] != str(row["feature_principal_sha256"])
             ):
                 raise ValueError("bundle")
+            groups = self._budget_groups(material.get("budget_groups"), members) if "budget_groups" in material else []
+            if groups:
+                if (
+                    material["lifecycle_child_budget"] != 0
+                    or material["parent_child_budget"]
+                    != sum(int(group["allocation"]) for group in groups)
+                ):
+                    raise ValueError("aggregate budget")
+            elif material["parent_child_budget"] != (
+                sum(item["maximum_physical_attempts"] for item in members)
+                + material["lifecycle_child_budget"]
+            ):
+                raise ValueError("bundle budget")
+            if "requested_remote_device_ids" in material and (
+                self._requested_remote_devices(material["requested_remote_device_ids"])
+                != material["requested_remote_device_ids"]
+            ):
+                raise ValueError("requested remote devices")
             for member in members:
                 principal_evidence = conn.execute(
                     "SELECT sha256 FROM inference_route_plan_principal_evidence WHERE plan_id=?",
@@ -916,6 +1274,8 @@ class InferenceParentRouteBundleService:
                     > float(material["parent_deadline_at"])
                 ):
                     raise ValueError("member")
+            if "derived_preloads" in material:
+                self._validate_derived_preloads(conn, material["derived_preloads"], members)
             parent = conn.execute(
                 "SELECT kind,deadline_at,child_budget FROM kernel_parent_runs WHERE operation_id=?",
                 (material["parent_operation_id"],),
@@ -936,7 +1296,7 @@ class InferenceParentRouteBundleService:
             ):
                 raise ValueError("parent bundle cross bind")
             return {**material, "sha256": digest}
-        except (KeyError, TypeError, ValueError, json.JSONDecodeError) as exc:
+        except (KeyError, TypeError, ValueError, ValidationError, json.JSONDecodeError) as exc:
             raise ConflictError(
                 "Parent route bundle integrity could not be verified.",
                 code="inference_parent_route_bundle_integrity_invalid",

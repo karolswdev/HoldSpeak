@@ -149,3 +149,41 @@ Slice 1 additionally proves: exact one-way Meeting/speech migration; no schema-o
 Slice 2 additionally proves: mic plus system plus requested-device cardinality; final-pass and headroom arithmetic; aggregate-group exhaustion under concurrent reservations; replay spending zero; no post-freeze source attachment; deterministic interval identity for repeated identical audio; MLX frozen candidate/strategy evidence; faster-whisper construction under lifecycle authority; exact `{text, language}` output; actual-byte SHA; and timeout unknown with no fallback.
 
 Slice 3 proves: every live bundle member fenced; late output discarded; no new reservation after Stop; restart never resumes the fenced live execution; and exactly one legacy deferred row remains queued whenever the pre-cutover aftercare predicate applies. The "creates no deferred work" assertion is deleted.
+
+### Counsel clarification: exact local Whisper migration
+
+The prohibition on choosing a model or inventing a built-in profile does not prohibit converting the owner's historically effective saved Whisper selector into immutable v2 authority.
+
+The `speech-recognition-route-assignments` migration MUST create an exact visible Model Library profile, exact local deployment revision/head, exact binding, and `speech.transcribe` assignment when all of the following hold:
+
+1. the saved model name is nonblank;
+2. the saved backend resolves through a closed, versioned built-in speech-artifact mapping to one exact local runtime and artifact identity;
+3. the resulting deployment boundary is `same_device`, with empty endpoint and secret material;
+4. the saved language is valid and is copied into durable post-marker speech-operation authority;
+5. no remote destination, cloud consent, model acquisition, model load, or network egress is required to establish the records.
+
+The migration derives deterministic profile, deployment, binding, assignment, and observation identities from the migration family, normalized selector material, and source SHA. It writes the profile revision, deployment revision/head, content-free readiness observation, binding revision/head, `speech.transcribe` assignment, and family marker atomically. The readiness observation records only locally knowable truth and MUST NOT claim the artifact ready unless that state was actually observed without loading or downloading it. The created profile is a normal owner-visible Model Library profile with provenance `legacy-model-config`; it is not hidden migration machinery.
+
+This conversion preserves the saved historically effective primary; it does not create an assignment for `speech.preload`. After the family marker, speech execution is independent of the legacy ModelConfig selector.
+
+Blank selectors, `backend=auto`, unknown or dangling built-in names, arbitrary repository/path selectors, and anything remote or cloud continue to return `builtin_profile_required` with repair `choose_audio_model_profile`, with no partial profile, binding, assignment, or marker.
+
+*(Ruled by counsel 2026-08-22 against commit 34c3a9b3, superseding the slice-1a unconditional speech refusal; implementation lands with slice 2.)*
+
+### OWNER SCOPE RULING (2026-08-22): migrations stay minimal
+
+The owner, mid-Phase-B: "don't obsess with migrations... I'm pretty much the
+only user, don't overdo it." This binds all remaining slices and overrides
+any ceremony-expanding reading of the counsel amendments above:
+
+- Migration = read the owner's saved settings once, write the assignment
+  rows (and for speech, one visible profile), one transaction, a couple of
+  tests. Done.
+- No new migration families, issue taxonomies, repair-verb catalogs,
+  deterministic-identity derivation rituals, or readiness-observation
+  ceremony beyond what already shipped in slice 1a.
+- Sol's cheap substantive limits survive: local-only, no download/load at
+  migration, created profile visible in the library, auto/blank/unknown/
+  remote selectors simply don't migrate.
+- record_only capture stays but stays small: one durable state, recording
+  never dies because of model config. No repair UI machinery in this phase.

@@ -37,6 +37,8 @@ CREATE TABLE IF NOT EXISTS meetings (
     web_url TEXT,
     capture_status TEXT NOT NULL DEFAULT 'finalized',
     capture_failure TEXT,
+    transcription_status TEXT NOT NULL DEFAULT 'active',
+    transcription_status_detail_json TEXT,
     capture_checkpoint_at TEXT,
     capture_checkpoint_seconds REAL NOT NULL DEFAULT 0,
     provenance TEXT NOT NULL DEFAULT 'desktop',

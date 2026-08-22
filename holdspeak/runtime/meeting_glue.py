@@ -214,8 +214,20 @@ class MeetingGlueMixin:
                     raise _UnknownDeviceError(device_id)
                 device_pairs.append((descriptor, source))
 
-        if self.transcriber is None or getattr(self.transcriber, "model_name", None) != self.config.model.name:
+        # Do not construct a model-loading backend before MeetingSession.start()
+        # has made the Meeting and audio journal durable.  An already-held
+        # transcriber is merely reused; a replacement is built by the session only
+        # after recorder start, where failure degrades to record-only capture.
+        preloaded_transcriber = (
+            self.transcriber
+            if self.transcriber is not None
+            and getattr(self.transcriber, "model_name", None) == self.config.model.name
+            else None
+        )
+
+        def construct_transcriber():
             self.transcriber = self._ensure_transcriber_loaded()
+            return self.transcriber
 
         # HS-32-03: claim the shared audio floor before opening any recorder, so
         # a hotkey/device voice-typing session can't already hold the mic (and so
@@ -250,7 +262,11 @@ class MeetingGlueMixin:
 
         try:
             session = MeetingSession(
-                transcriber=self.transcriber,
+                transcriber=preloaded_transcriber,
+                transcriber_factory=construct_transcriber,
+                requested_remote_device_ids=tuple(
+                    str(getattr(descriptor, "id", "")) for descriptor, _source in device_pairs
+                ),
                 mic_label=self.config.meeting.mic_label,
                 remote_label=self.config.meeting.remote_label,
                 mic_device=self.config.meeting.mic_device,

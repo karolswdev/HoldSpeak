@@ -91,6 +91,7 @@ class ProjectionStager:
         projection: Mapping[str, Any],
         *,
         result_sha256: str | None = None,
+        receipt_result_ref: str | None = None,
     ) -> ProjectionStage:
         material = _canonical(dict(projection))
         digest = "sha256:" + hashlib.sha256(material.encode()).hexdigest()
@@ -102,19 +103,41 @@ class ProjectionStager:
             ).fetchone()
             if operation is None:
                 raise KernelRefused("projection_invocation_unknown")
+            if result_sha256 is not None and not re.fullmatch(
+                r"sha256:[0-9a-f]{64}", result_sha256
+            ):
+                raise KernelRefused("projection_result_digest_invalid")
+            if receipt_result_ref is not None:
+                expected_ref = f"inference-result:{invocation_id}/{result_sha256}"
+                receipt = conn.execute(
+                    "SELECT outcome,result_ref FROM kernel_receipts WHERE operation_id=?",
+                    (str(operation["operation_id"]),),
+                ).fetchone()
+                if (
+                    result_sha256 is None
+                    or receipt_result_ref != expected_ref
+                    or receipt is None
+                    or str(receipt["outcome"]) != "succeeded"
+                    or str(receipt["result_ref"]) != receipt_result_ref
+                ):
+                    raise KernelRefused("projection_receipt_result_ref_mismatch")
             existing = conn.execute(
                 "SELECT * FROM kernel_projection_stages WHERE invocation_id=? AND kind=?",
                 (invocation_id, kind),
             ).fetchone()
             if existing is not None:
-                if str(existing["projection_sha256"]) != digest:
+                if (
+                    str(existing["projection_sha256"]) != digest
+                    or (
+                        receipt_result_ref is not None
+                        and str(existing["result_ref"]) != receipt_result_ref
+                    )
+                ):
                     raise KernelRefused("projection_stage_payload_conflict")
                 return self._row(existing)
             stage_id = "pstg_" + uuid.uuid4().hex
-            result_ref = f"projection-stage:{stage_id}"
-            if result_sha256 is not None:
-                if not re.fullmatch(r"sha256:[0-9a-f]{64}", result_sha256):
-                    raise KernelRefused("projection_result_digest_invalid")
+            result_ref = receipt_result_ref or f"projection-stage:{stage_id}"
+            if result_sha256 is not None and receipt_result_ref is None:
                 result_ref += f"/{result_sha256}"
             conn.execute(
                 """INSERT INTO kernel_projection_stages(
