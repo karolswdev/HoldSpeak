@@ -405,14 +405,11 @@ describe("Models destination workbench (HS-139 beauty pass)", () => {
     await screen.findByDisplayValue("LAN llama");
 
     expect(
-      screen.getByRole("heading", { name: "Choose your AI" }),
+      screen.getByRole("heading", { name: "Choose a model" }),
     ).toBeInTheDocument();
     expect(screen.getAllByText(/This device/).length).toBeGreaterThan(0);
-    expect(screen.getByText("Choose AI for each job")).toBeInTheDocument();
+    expect(screen.getByText("Models by job")).toBeInTheDocument();
     expect(screen.queryByText("Runs on")).toBeNull();
-    expect(
-      screen.getByRole("heading", { name: "Choose an experience" }),
-    ).toBeInTheDocument();
     const connections = screen.getByText("AI connections").closest("details");
     expect(connections).not.toHaveAttribute("open");
     expect(container.querySelector(".models-destinations")).toHaveAttribute(
@@ -423,12 +420,8 @@ describe("Models destination workbench (HS-139 beauty pass)", () => {
       container.querySelector(".models-destination-matrix"),
     ).toBeInTheDocument();
     expect(container.querySelector(".dest-card")).toBeNull();
-    expect(
-      container.querySelector(".models-capability-intro"),
-    ).toBeInTheDocument();
-    expect(
-      container.querySelector(".models-capability-device"),
-    ).toBeInTheDocument();
+    expect(container.querySelector(".models-model-picker")).toBeInTheDocument();
+    expect(container.querySelector(".models-capability-intro")).toBeNull();
     expect(container.querySelector(".models-job-routing")).toBeInTheDocument();
     expect(apiFetch).not.toHaveBeenCalledWith("/api/setup/hub-default-summary");
     expect(apiFetch).not.toHaveBeenCalledWith("/api/setup/runtime-options");
@@ -438,7 +431,7 @@ describe("Models destination workbench (HS-139 beauty pass)", () => {
     render(
       <ModelsModule settings={settings} update={vi.fn()} onRefuse={vi.fn()} />,
     );
-    expect(await screen.findByText("Pocket GGUF")).toBeInTheDocument();
+    expect((await screen.findAllByText("Pocket GGUF")).length).toBeGreaterThan(0);
     expect(screen.getByText("Used by Thoughts now")).toBeInTheDocument();
     expect(
       screen.queryByRole("button", { name: /download|check local/i }),
@@ -458,17 +451,15 @@ describe("Models destination workbench (HS-139 beauty pass)", () => {
         onRefuse={vi.fn()}
       />,
     );
-    await screen.findByRole("heading", { name: "Choose an experience" });
+    await screen.findByRole("heading", { name: "Choose a model" });
+    fireEvent.click(screen.getByRole("tab", { name: /^OpenRouter/i }));
     const balanced = screen.getByRole("radio", { name: /Balanced Qwen/ });
-    await waitFor(() =>
-      expect(screen.getByRole("radio", { name: /Pocket GGUF/ })).toBeChecked(),
-    );
     fireEvent.click(balanced);
     expect(balanced).toBeChecked();
     fireEvent.change(screen.getByPlaceholderText("sk-or-v1-…"), {
       target: { value: "not-a-real-openrouter-key" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "ADD & USE BALANCED" }));
+    fireEvent.click(screen.getByRole("button", { name: "CONNECT & USE" }));
 
     await waitFor(() =>
       expect(apiFetch).toHaveBeenCalledWith("/api/inference-targets", {
@@ -515,10 +506,11 @@ describe("Models destination workbench (HS-139 beauty pass)", () => {
         onRefuse={vi.fn()}
       />,
     );
+    fireEvent.click(await screen.findByRole("tab", { name: /^OpenRouter/i }));
     fireEvent.click(await screen.findByRole("radio", { name: /Deep Qwen/ }));
     const key = screen.getByLabelText("OpenRouter key");
     fireEvent.change(key, { target: { value: "durability-sentinel" } });
-    fireEvent.click(screen.getByRole("button", { name: "ADD & USE DEEP" }));
+    fireEvent.click(screen.getByRole("button", { name: "CONNECT & USE" }));
     await waitFor(() => expect(commitMany).toHaveBeenCalledTimes(1));
     expect(key).toHaveValue("durability-sentinel");
     expect(screen.queryByText("IN USE FOR THOUGHTS")).toBeNull();
@@ -537,10 +529,11 @@ describe("Models destination workbench (HS-139 beauty pass)", () => {
         onRefuse={vi.fn()}
       />,
     );
+    fireEvent.click(await screen.findByRole("tab", { name: /^OpenRouter/i }));
     fireEvent.click(await screen.findByRole("radio", { name: /Deep Qwen/ }));
     const key = screen.getByLabelText("OpenRouter key");
     fireEvent.change(key, { target: { value: "cas-refusal-sentinel" } });
-    fireEvent.click(screen.getByRole("button", { name: "ADD & USE DEEP" }));
+    fireEvent.click(screen.getByRole("button", { name: "CONNECT & USE" }));
     expect(
       await screen.findByText(
         "Could not save the Thoughts choice. Your key is still here.",
@@ -554,7 +547,7 @@ describe("Models destination workbench (HS-139 beauty pass)", () => {
     render(
       <ModelsModule settings={settings} update={vi.fn()} onRefuse={vi.fn()} />,
     );
-    await screen.findByRole("heading", { name: "Choose an experience" });
+    await screen.findByRole("heading", { name: "Choose a model" });
     fireEvent.click(screen.getByText("AI connections"));
     expect(
       screen.getByText("AI connections").closest("details"),

@@ -24,6 +24,27 @@ function context(value: number): string {
     : `${value.toLocaleString()} tokens`;
 }
 
+function modelLabel(choice: InferencePreset | InferenceSetupArtifact): string {
+  return choice.label
+    .replace(/^OpenRouter · /, "")
+    .replace(/^Quick local Qwen$/, "Quick Qwen")
+    .replace(/^Tiny local Qwen$/, "Tiny Qwen");
+}
+
+function modelSummary(preset: InferencePreset): string {
+  const summaries: Record<string, string> = {
+    preset_local_qwen35_4b_gguf_q4km: "Fast everyday model.",
+    preset_local_qwen35_08b_gguf_q4km: "Lightweight intent and routing.",
+    preset_openrouter_qwen3_8b: "Fast everyday model.",
+    preset_openrouter_qwen35_35b_a3b: "General reasoning.",
+    preset_openrouter_qwen38_27b: "Harder reasoning and synthesis.",
+    preset_openrouter_qwen37_flash: "Fast, economical everyday model.",
+    preset_openrouter_gemma4_26b: "Writing and synthesis.",
+    preset_openrouter_qwen3_coder_next: "Technical planning and code.",
+  };
+  return summaries[preset.id] || preset.summary;
+}
+
 function hardwareLine(setup: InferenceSetup): string {
   const { capability, detection } = setup.hardware;
   if (detection.state === "unavailable") return "Hardware details unavailable";
@@ -93,7 +114,6 @@ export function InferenceCapabilityPanel({
   const groupName = useId();
   const [selectedId, setSelectedId] = useState("");
   const [choiceMode, setChoiceMode] = useState<ChoiceMode>("device");
-  const [wizardStep, setWizardStep] = useState<1 | 2 | 3>(1);
   const [key, setKey] = useState("");
 
   useEffect(() => {
@@ -134,15 +154,15 @@ export function InferenceCapabilityPanel({
   if (loading && !setup) {
     return (
       <section className="models-capability-opening" aria-busy="true">
-        <span>Reading this hub…</span>
+        <span>Loading models…</span>
       </section>
     );
   }
   if (error || !setup) {
     return (
       <section className="models-capability-opening" role="alert">
-        <strong>Could not read this hub’s AI setup.</strong>
-        <p>{error || "The setup projection is unavailable."}</p>
+        <strong>Models couldn’t load.</strong>
+        <p>{error || "Try again."}</p>
         <Button variant="primary" onClick={onRetry}>
           TRY AGAIN
         </Button>
@@ -155,6 +175,14 @@ export function InferenceCapabilityPanel({
     deployment.execution_revision?.schema_version === 2
       ? deployment.execution_revision.model
       : deployment.target.model;
+  const routePreset = setup.presets.find(
+    (preset) =>
+      preset.kind === "hosted_profile_preset" &&
+      preset.existing_profile.target_id === setup.current_routes.thoughts.target_id,
+  );
+  const routeArtifact = setup.detected_local_artifacts.find(
+    (artifact) => artifact.configured_for_thoughts,
+  );
   const selected: InferencePreset | null =
     setup.presets.find((preset) => preset.id === selectedId) || null;
   const selectedArtifact =
@@ -198,6 +226,9 @@ export function InferenceCapabilityPanel({
     : selectedArtifact
       ? (setup.acquisitions ?? []).find((row) => row.preset_id === selectedArtifact.id) || null
       : null;
+  const selectedArtifactActivation = selectedArtifact
+    ? artifactActivation(selectedArtifact)
+    : null;
 
   const selectChoice = (id: string) => {
     setSelectedId(id);
@@ -211,234 +242,136 @@ export function InferenceCapabilityPanel({
         : mode === "experimental"
           ? evaluationLocalPresets
           : deviceChoices;
-    if (!choices.length) return;
     setChoiceMode(mode);
-    selectChoice(choices.some((choice) => choice.id === selectedId) ? selectedId : choices[0].id);
-    setWizardStep(2);
-  };
-
-  const reviewChoice = (id: string) => {
-    selectChoice(id);
-    setWizardStep(3);
+    selectChoice(
+      choices.length
+        ? choices.some((choice) => choice.id === selectedId)
+          ? selectedId
+          : choices[0].id
+        : "",
+    );
   };
 
   return (
     <>
       <section
-        className="models-capability-intro"
+        className="models-model-picker"
         aria-labelledby="models-capability-title"
       >
-        <div>
-          <p className="models-setup-kicker">AI setup</p>
-          <h2 id="models-capability-title">Choose your AI</h2>
-          <p>
-            Choose a private local model or a configured connection. A local
-            download starts only when you explicitly ask.
-          </p>
-          <p className="models-device-inline">
-            <strong>{hardwareLine(setup)}</strong>
-            {setup.detected_local_artifacts.length
-              ? ` · ${setup.detected_local_artifacts.length} local model${setup.detected_local_artifacts.length === 1 ? "" : "s"} found`
-              : ""}
-          </p>
-          {!setup.detected_local_artifacts.length ? (
-            <span className="models-device-inline-status">
-              {setup.artifact_detection.state === "complete"
-                ? "No local AI detected"
-                : `Local AI inspection ${setup.artifact_detection.state === "partial" ? "incomplete" : "unavailable"}`}
-            </span>
-          ) : null}
-        </div>
-        <div
-          className="models-current-route"
-          data-available={deployment.execution_support.executable || undefined}
-        >
-          <span>Thoughts &amp; notes</span>
-          <strong>
-            {deployment.target.name}
-            {routeModel ? ` · ${routeModel}` : ""}
-          </strong>
-          <small>
-            {deployment.execution_support.executable
-              ? "Available for Thoughts"
-              : deployment.execution_support.reason ||
-                "Not available for Thoughts"}
-          </small>
-        </div>
-      </section>
-
-      <section
-        className="models-capability-choices"
-        aria-labelledby="models-choices-title"
-      >
-        <header>
-          <p className="models-setup-kicker">Thoughts &amp; notes</p>
-          <h3 id="models-choices-title">Choose an experience</h3>
-          <p>
-            These choices come from this hub’s verified catalog. Selecting one
-            changes nothing.
-          </p>
+        <header className="models-picker-header">
+          <h2 id="models-capability-title">Choose a model</h2>
+          <div
+            className="models-current-route"
+            data-available={deployment.execution_support.executable || undefined}
+            title={deployment.execution_support.reason || undefined}
+          >
+            <span>Thoughts</span>
+            <strong>
+              {deployment.execution_support.executable
+                ? routePreset
+                  ? modelLabel(routePreset)
+                  : routeArtifact
+                    ? modelLabel(routeArtifact)
+                    : routeModel || deployment.target.name
+                : "Not configured"}
+            </strong>
+          </div>
         </header>
-        <ol className="models-wizard-progress" aria-label={`Setup step ${wizardStep} of 3`}>
-          {["Location", "Model", "Review"].map((label, index) => (
-            <li key={label} data-current={wizardStep === index + 1 || undefined} data-done={wizardStep > index + 1 || undefined}>
-              <span>{index + 1}</span>{label}
-            </li>
-          ))}
-        </ol>
-        {wizardStep === 1 ? <div className="models-wizard-step">
-          <div className="models-wizard-heading">
-            <span>1</span>
-            <div>
-              <strong>Where should it run?</strong>
-              <small>Show one kind of AI at a time.</small>
-            </div>
-          </div>
-          <div className="models-source-choices" role="tablist" aria-label="AI location">
-            <button
-              type="button"
-              role="tab"
-              aria-selected={choiceMode === "device"}
-              disabled={!deviceChoices.length}
-              onClick={() => chooseMode("device")}
-            >
-              <strong>This device</strong>
-              <span>{deviceChoices.length} available or suggested</span>
-            </button>
-            <button
-              type="button"
-              role="tab"
-              aria-selected={choiceMode === "hosted"}
-              disabled={!hostedPresets.length}
-              onClick={() => chooseMode("hosted")}
-            >
-              <strong>OpenRouter</strong>
-              <span>{hostedPresets.length} curated choices</span>
-            </button>
-            <button
-              type="button"
-              role="tab"
-              aria-selected={choiceMode === "experimental"}
-              disabled={!evaluationLocalPresets.length}
-              onClick={() => chooseMode("experimental")}
-            >
-              <strong>Tool experiments</strong>
-              <span>{evaluationLocalPresets.length} evaluation candidate</span>
-            </button>
-          </div>
-        </div> : null}
 
-        {wizardStep === 2 ? <div className="models-wizard-step">
-          <div className="models-wizard-heading">
-            <span>2</span>
-            <div>
-              <strong>
-                {choiceMode === "hosted"
-                  ? "Choose an OpenRouter model"
-                  : choiceMode === "experimental"
-                    ? "Experimental tool models"
-                    : "Choose a model on this device"}
-              </strong>
-              <small>Selection is harmless. Nothing runs or downloads yet.</small>
+        <div className="models-model-picker-body">
+          <div className="models-model-picker-main">
+            <div className="models-source-choices" role="tablist" aria-label="Model source">
+              <button type="button" role="tab" aria-selected={choiceMode === "device"} onClick={() => chooseMode("device")}>
+                <strong>This device</strong><span>{deviceChoices.length}</span>
+              </button>
+              <button type="button" role="tab" aria-selected={choiceMode === "hosted"} disabled={!hostedPresets.length} onClick={() => chooseMode("hosted")}>
+                <strong>OpenRouter</strong><span>{hostedPresets.length}</span>
+              </button>
+              <button type="button" role="tab" aria-selected={choiceMode === "experimental"} disabled={!evaluationLocalPresets.length} onClick={() => chooseMode("experimental")}>
+                <strong>Experimental</strong><span>{evaluationLocalPresets.length}</span>
+              </button>
             </div>
-            <button type="button" className="models-wizard-back" onClick={() => setWizardStep(1)}>
-              Change location
-            </button>
+
+            {choiceMode === "device" ? (
+              <p className="models-picker-facts">
+                {hardwareLine(setup)} · {setup.detected_local_artifacts.length} detected · {downloadableLocalPresets.length} to download
+                {setup.artifact_detection.state === "complete"
+                  ? ""
+                  : ` · Scan ${setup.artifact_detection.state}`}
+              </p>
+            ) : null}
+
+            {visibleChoices.length ? (
+              <div className="models-capability-radio" role="radiogroup" aria-label="AI choices">
+                {visibleChoices.map((choice) => {
+                  const artifact = "thought_support" in choice ? (choice as InferenceSetupArtifact) : null;
+                  const preset = artifact ? null : (choice as InferencePreset);
+                  const selectedCard = choice.id === selectedId;
+                  const meta = artifact
+                    ? `${artifact.format.toUpperCase()} · ${bytes(artifact.size_bytes)}`
+                    : preset?.kind === "hosted_profile_preset"
+                      ? `${preset.experience} · ${context(preset.context.working_ceiling_tokens)}`
+                      : preset?.activation === "evaluation_only"
+                        ? `${bytes(preset.source.download_bytes)} · ${context(preset.context.recommended_tokens)}`
+                        : `${preset?.experience} · ${bytes(preset?.source.download_bytes ?? 0)} · ${context(preset?.context.recommended_tokens ?? 8192)}`;
+                  const descriptor = artifact
+                    ? supportLabel(artifact.thought_support.state)
+                    : preset?.kind === "local_artifact_preset" && preset.activation === "evaluation_only"
+                      ? "Tool calling"
+                    : preset ? modelSummary(preset) : "Configured connection";
+                  return (
+                    <label key={choice.id} className="models-capability-card models-capability-card-compact" data-selected={selectedCard || undefined}>
+                      <input type="radio" name={groupName} value={choice.id} checked={selectedCard} onChange={() => selectChoice(choice.id)} />
+                      <strong>{modelLabel(choice)}</strong>
+                      <span>{descriptor}</span>
+                      <small>{meta}</small>
+                    </label>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="models-capability-empty"><strong>No models here</strong></div>
+            )}
           </div>
-          {visibleChoices.length ? (
-            <div
-              className="models-capability-radio"
-              role="radiogroup"
-              aria-label="AI choices"
-            >
-              {visibleChoices.map((choice) => {
-                const artifact = "thought_support" in choice
-                  ? (choice as InferenceSetupArtifact)
-                  : null;
-                const preset = artifact ? null : (choice as InferencePreset);
-                const selectedCard = choice.id === selectedId;
-                const eyebrow = artifact
-                  ? `${artifact.format.toUpperCase()} · ${supportLabel(artifact.thought_support.state)}`
-                  : preset?.kind === "hosted_profile_preset"
-                    ? `${preset.experience} · Cloud`
-                    : preset?.activation === "evaluation_only"
-                      ? "Experimental · Tool calling"
-                      : `${preset?.experience} · Download`;
-                const detail = artifact
-                  ? `${bytes(artifact.size_bytes)} · ${artifact.activation.reason}`
-                  : preset?.summary || `${preset?.label} through OpenRouter.`;
-                return (
-                  <label
-                    key={choice.id}
-                    className="models-capability-card models-capability-card-compact"
-                    data-selected={selectedCard || undefined}
-                    onClick={() => reviewChoice(choice.id)}
-                  >
-                    <input
-                      type="radio"
-                      name={groupName}
-                      value={choice.id}
-                      checked={selectedCard}
-                      onChange={() => reviewChoice(choice.id)}
-                    />
-                    <span className="models-capability-experience">{eyebrow}</span>
-                    <strong>{choice.label}</strong>
-                    <span>{detail}</span>
-                  </label>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="models-capability-empty">
-              <strong>No choices are available here</strong>
-              <p>Choose another location or refresh Models after configuring a runtime.</p>
-            </div>
-          )}
-        </div> : null}
-        {wizardStep === 3 ? <>
-        <div className="models-wizard-heading models-wizard-review-heading">
-          <span>3</span>
-          <div>
-            <strong>Review and use</strong>
-              <small>The only action for the selected model appears below.</small>
-            </div>
-            <button type="button" className="models-wizard-back" onClick={() => setWizardStep(2)}>
-              Change model
-            </button>
-        </div>
-        <div className="models-capability-action" aria-live="polite">
-          {selected || selectedArtifact ? (
-            <>
-              <div>
-                <strong>{selected?.label || selectedArtifact?.label}</strong>
-                <span>
+
+          <aside className="models-model-detail" aria-live="polite">
+            <div className="models-capability-action">
+              {selected || selectedArtifact ? (
+                <>
+                  <div>
+                    <strong>{selected ? modelLabel(selected) : selectedArtifact ? modelLabel(selectedArtifact) : ""}</strong>
+                  </div>
+                  <span className="models-selected-summary">
                   {acquisition
                     ? acquisition.state === "downloading"
                       ? `Downloading ${bytes(acquisition.transport_bytes)} of ${bytes(acquisition.bytes_total)}`
                       : acquisition.state === "verifying"
                         ? selectedArtifact
-                          ? "Verifying this model’s complete contents…"
+                          ? "Verifying…"
                           : "Verifying the published checksum…"
                         : acquisition.state === "installing"
                           ? selectedArtifact
-                            ? "Making this the local AI for Thoughts…"
-                            : "Installing verified model bytes…"
+                            ? "Installing…"
+                            : "Installing…"
                           : acquisition.state === "ready" && acquisition.activation_state === "in_use"
-                            ? "Ready · in use for Thoughts"
+                            ? "In use"
                             : acquisition.error?.message || acquisition.state
                     : selectedArtifact
-                      ? artifactActivation(selectedArtifact).reason
+                      ? selectedArtifactActivation?.state === "current"
+                        ? "In use"
+                        : selectedArtifactActivation?.action === "use_existing"
+                          ? "Verified before use."
+                          : selectedArtifactActivation?.reason
                     : selectedLocal
                       ? selectedLocal.activation === "evaluation_only"
-                        ? `${bytes(selectedLocal.source.download_bytes)} · ${selectedLocal.source.license} · evaluation candidate for HoldSpeak’s future tool-turn runtime`
-                        : `${context(selectedLocal.context.recommended_tokens)} context · ${bytes(selectedLocal.source.download_bytes)} download · runs only on this device`
+                        ? `${bytes(selectedLocal.source.download_bytes)} · ${context(selectedLocal.context.recommended_tokens)} · ${selectedLocal.source.license}`
+                        : `Local · ${context(selectedLocal.context.recommended_tokens)} · ${bytes(selectedLocal.source.download_bytes)} download`
                     : current
-                    ? "Currently used for Thoughts & notes"
+                    ? "In use"
                     : existing?.key_present
-                      ? `Already configured · ${context(selectedHosted?.context.working_ceiling_tokens || 8192)} working context`
-                      : `Requires an OpenRouter key · ${context(selectedHosted?.context.working_ceiling_tokens || 8192)} working context`}
+                      ? `OpenRouter · ${context(selectedHosted?.context.working_ceiling_tokens || 8192)}`
+                      : `OpenRouter key required · ${context(selectedHosted?.context.working_ceiling_tokens || 8192)}`}
                 </span>
-              </div>
               {selectedHosted && !current && !targetsLoading && !existing?.key_present ? (
                 <label>
                   <span>OpenRouter key</span>
@@ -453,33 +386,33 @@ export function InferenceCapabilityPanel({
               ) : null}
               {selectedArtifact ? (
                 acquisition && ["requested", "resolving_source"].includes(acquisition.state) ? (
-                  <span className="models-capability-action-status">PREPARING VERIFICATION…</span>
+                  <span className="models-capability-action-status">PREPARING…</span>
                 ) : acquisition && ["verifying", "installing"].includes(acquisition.state) ? (
                   <span className="models-capability-action-status">
-                    {acquisition.state === "verifying" ? "VERIFYING…" : "MAKING IT AVAILABLE…"}
+                    {acquisition.state === "verifying" ? "VERIFYING…" : "INSTALLING…"}
                   </span>
                 ) : acquisition?.state === "ready" && acquisition.activation_state === "in_use" ? (
-                  <span className="models-capability-action-status">IN USE FOR THOUGHTS</span>
-                ) : artifactActivation(selectedArtifact).action === "use_existing" ? (
+                  <span className="models-capability-action-status">IN USE</span>
+                ) : selectedArtifactActivation?.action === "use_existing" ? (
                   <Button
                     variant="primary"
                     disabled={Boolean(busyPresetId)}
                     loading={busyPresetId === selectedArtifact.id}
                     onClick={() => void onUseExisting?.(selectedArtifact)}
                   >
-                    {acquisition?.state === "failed" ? "TRY AGAIN" : "USE THIS MODEL"}
+                    {acquisition?.state === "failed" ? "TRY AGAIN" : "USE MODEL"}
                   </Button>
                 ) : (
                   <span className="models-capability-action-status">
                     {selectedArtifact.configured_for_thoughts
-                      ? "IN USE FOR THOUGHTS"
-                      : artifactActivation(selectedArtifact).reason.toUpperCase()}
+                      ? "IN USE"
+                      : selectedArtifactActivation?.reason.toUpperCase()}
                   </span>
                 )
               ) : selectedLocal ? (
                 selectedLocal.activation === "evaluation_only" ? (
                   <span className="models-capability-action-status">
-                    PRESENTED FOR EVALUATION · NOT ENABLED FOR TOOL EXECUTION
+                    Evaluation only · tool execution isn’t available yet.
                   </span>
                 ) : acquisition && ["requested", "resolving_source", "downloading"].includes(acquisition.state) ? (
                   <>
@@ -499,7 +432,7 @@ export function InferenceCapabilityPanel({
                     {acquisition.state === "verifying" ? "VERIFYING…" : "INSTALLING…"}
                   </span>
                 ) : acquisition?.state === "ready" && acquisition.activation_state === "in_use" ? (
-                  <span className="models-capability-action-status">IN USE FOR THOUGHTS</span>
+                  <span className="models-capability-action-status">IN USE</span>
                 ) : (
                   <Button
                     variant="primary"
@@ -507,16 +440,16 @@ export function InferenceCapabilityPanel({
                     loading={busyPresetId === selectedLocal.id}
                     onClick={() => void onDownloadLocal?.(selectedLocal)}
                   >
-                    {acquisition?.state === "failed" ? "TRY AGAIN" : `DOWNLOAD & USE ${selectedLocal.experience.toUpperCase()}`}
+                    {acquisition?.state === "failed" ? "TRY AGAIN" : "DOWNLOAD & USE"}
                   </Button>
                 )
               ) : current ? (
                 <span className="models-capability-action-status">
-                  IN USE FOR THOUGHTS
+                  IN USE
                 </span>
               ) : targetsLoading ? (
                 <span className="models-capability-action-status">
-                  READING SAVED CONNECTION…
+                  LOADING CONNECTION…
                 </span>
               ) : canUse ? (
                 <Button
@@ -528,12 +461,12 @@ export function InferenceCapabilityPanel({
                   }}
                 >
                   {existing?.key_present
-                    ? `USE ${selectedHosted?.experience.toUpperCase()}`
-                    : `ADD & USE ${selectedHosted?.experience.toUpperCase()}`}
+                    ? "USE MODEL"
+                    : "CONNECT & USE"}
                 </Button>
               ) : (
                 <span className="models-capability-action-status">
-                  ENTER A KEY TO CONTINUE
+                  ENTER AN OPENROUTER KEY
                 </span>
               )}
             </>
@@ -542,8 +475,9 @@ export function InferenceCapabilityPanel({
               NO MODEL SELECTED
             </span>
           )}
+            </div>
+          </aside>
         </div>
-        </> : null}
         {status ? (
           <p className="models-preset-status" role="status">
             {status}
@@ -552,18 +486,18 @@ export function InferenceCapabilityPanel({
       </section>
 
       {setup.limitations.length ? (
-        <section
-          className="models-capability-limits"
-          aria-label="AI setup limitations"
-        >
-          {setup.limitations.map((limitation) => (
-            <article key={limitation.code}>
-              <strong>{limitation.title}</strong>
-              <p>{limitation.detail}</p>
-              <small>{limitation.repair.label}</small>
-            </article>
-          ))}
-        </section>
+        <details className="models-capability-limits">
+          <summary>{setup.limitations.length} setup {setup.limitations.length === 1 ? "issue" : "issues"}</summary>
+          <div>
+            {setup.limitations.map((limitation) => (
+              <article key={limitation.code}>
+                <strong>{limitation.title}</strong>
+                <p>{limitation.detail}</p>
+                <small>{limitation.repair.label}</small>
+              </article>
+            ))}
+          </div>
+        </details>
       ) : null}
     </>
   );

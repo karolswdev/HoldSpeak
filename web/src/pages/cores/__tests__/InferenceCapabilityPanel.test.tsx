@@ -191,10 +191,8 @@ describe("InferenceCapabilityPanel", () => {
         onUseHosted={onUseHosted}
       />,
     );
-    expect(
-      screen.getByText("Local AI inspection unavailable"),
-    ).toBeInTheDocument();
-    expect(screen.queryByText("No local AI detected")).toBeNull();
+    fireEvent.click(screen.getByRole("tab", { name: /^This device/i }));
+    expect(screen.getByText(/0 detected · 0 to download · Scan unavailable/)).toBeInTheDocument();
 
     rerender(
       <InferenceCapabilityPanel
@@ -205,7 +203,8 @@ describe("InferenceCapabilityPanel", () => {
         onUseHosted={onUseHosted}
       />,
     );
-    expect(screen.getByText("No local AI detected")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("tab", { name: /^This device/i }));
+    expect(screen.getByText(/0 detected · 0 to download$/)).toBeInTheDocument();
   });
 
   it("uses executable support, never configured-path readiness, for Thought availability", () => {
@@ -226,7 +225,7 @@ describe("InferenceCapabilityPanel", () => {
         onUseHosted={vi.fn(async () => true)}
       />,
     );
-    expect(screen.getByText("llama.cpp is not available.")).toBeInTheDocument();
+    expect(screen.getByTitle("llama.cpp is not available.")).toBeInTheDocument();
     expect(screen.queryByText("Available for Thoughts")).toBeNull();
   });
 
@@ -268,9 +267,9 @@ describe("InferenceCapabilityPanel", () => {
     );
     fireEvent.click(screen.getByRole("tab", { name: /^This device/i }));
     fireEvent.click(screen.getByRole("radio", { name: /Local Q/i }));
-    expect(screen.getByText("Local Q")).toBeInTheDocument();
-    expect(screen.getByText(/runs only on this device/i)).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: /download & use quick/i }));
+    expect(screen.getAllByText("Local Q")).toHaveLength(2);
+    expect(screen.getByText(/Local · 8K/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /download & use/i }));
     await waitFor(() => expect(download).toHaveBeenCalledWith(local));
   });
 
@@ -310,12 +309,11 @@ describe("InferenceCapabilityPanel", () => {
         onDownloadLocal={download}
       />,
     );
-    fireEvent.click(screen.getByRole("tab", { name: /^Tool experiments/i }));
+    fireEvent.click(screen.getByRole("tab", { name: /^Experimental/i }));
     fireEvent.click(screen.getByRole("radio", { name: /Hammer 2.1/i }));
-    expect(screen.getByText("Review and use")).toBeInTheDocument();
-    expect(screen.getByText("Hammer 2.1 · 1.5B")).toBeInTheDocument();
+    expect(screen.getAllByText("Hammer 2.1 · 1.5B")).toHaveLength(2);
     expect(screen.getByText(/CC-BY-NC-4.0/)).toBeInTheDocument();
-    expect(screen.getByText(/not enabled for tool execution/i)).toBeInTheDocument();
+    expect(screen.getByText(/tool execution isn’t available yet/i)).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /download/i })).toBeNull();
     expect(download).not.toHaveBeenCalled();
   });
@@ -349,9 +347,8 @@ describe("InferenceCapabilityPanel", () => {
     );
     fireEvent.click(screen.getByRole("tab", { name: /^This device/i }));
     expect(screen.getByRole("radio", { name: /Qwen3-4B-Q6_K/ })).toBeChecked();
-    expect(screen.getByText("Choose a model on this device")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("radio", { name: /Qwen3-4B-Q6_K/ }));
-    fireEvent.click(screen.getByRole("button", { name: "USE THIS MODEL" }));
+    fireEvent.click(screen.getByRole("button", { name: "USE MODEL" }));
     await waitFor(() => expect(useExisting).toHaveBeenCalledWith(artifact));
   });
 
@@ -368,7 +365,7 @@ describe("InferenceCapabilityPanel", () => {
     fireEvent.click(screen.getByRole("radio", { name: /deep choice/i }));
     const key = screen.getByLabelText("OpenRouter key");
     fireEvent.change(key, { target: { value: "sentinel-secret" } });
-    fireEvent.click(screen.getByRole("button", { name: "ADD & USE DEEP" }));
+    fireEvent.click(screen.getByRole("button", { name: "CONNECT & USE" }));
     await waitFor(() => expect(failed).toHaveBeenCalled());
     expect(key).toHaveValue("sentinel-secret");
 
@@ -380,7 +377,7 @@ describe("InferenceCapabilityPanel", () => {
         onUseHosted={succeeded}
       />,
     );
-    fireEvent.click(screen.getByRole("button", { name: "ADD & USE DEEP" }));
+    fireEvent.click(screen.getByRole("button", { name: "CONNECT & USE" }));
     await waitFor(() => expect(key).toHaveValue(""));
   });
 });
