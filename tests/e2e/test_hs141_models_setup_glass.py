@@ -178,12 +178,14 @@ def test_models_setup_is_projected_truth_with_one_action_seat(tmp_path: Path, mo
             assert detected and detected[0]["activation"]["action"] == "use_existing"
             setup.get_by_role("tab", name="This device", exact=False).click()
             setup.locator(f'input[type="radio"][value="{detected[0]["id"]}"]').click()
-            setup.get_by_role("button", name="USE MODEL", exact=True).click()
-            setup.get_by_text("In use", exact=True).wait_for(timeout=10000)
+            prior_thought_target = projection["current_routes"]["thoughts"]["target_id"]
+            setup.get_by_role("button", name="ADD MODEL", exact=True).click()
+            setup.get_by_text("ADDED", exact=True).wait_for(timeout=10000)
             used = _api(page, "GET", "/api/inference/setup")["setup"]
             acquisition = next(row for row in used["acquisitions"] if row["preset_id"] == detected[0]["id"])
             assert acquisition["state"] == "ready"
-            assert acquisition["activation_state"] == "in_use"
+            assert acquisition["activation_state"] == "not_requested"
+            assert used["current_routes"]["thoughts"]["target_id"] == prior_thought_target
             assert str(home) not in str(used)
             assert setup.locator(".models-capability-action button").count() == 0
 

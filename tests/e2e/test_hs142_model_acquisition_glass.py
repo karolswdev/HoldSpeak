@@ -1,4 +1,4 @@
-"""HS-142-02 real HTTP-byte acquisition glass at both ruled widths."""
+"""HS-142-02 real HTTP-byte model-library acquisition glass at both widths."""
 from __future__ import annotations
 
 import hashlib
@@ -49,6 +49,7 @@ def _catalog(body: bytes) -> tuple[str, bytes]:
         "id": "preset_glass_local",
         "experience": "quick",
         "label": "Quick local glass AI",
+        "summary": "Fast local model for the acquisition glass.",
         "runtime_id": "llama_cpp_prompt_v1",
         "runtime_min_revision": "0.3.34",
         "format": "gguf",
@@ -90,7 +91,7 @@ def _catalog(body: bytes) -> tuple[str, bytes]:
 @pytest.mark.e2e
 @pytest.mark.requires_meeting
 @pytest.mark.parametrize("width", [1440, 393])
-def test_download_verify_activate_and_project_v2(
+def test_download_verify_add_to_library_without_assigning(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: int,
 ) -> None:
     from playwright.sync_api import sync_playwright
@@ -173,22 +174,36 @@ def test_download_verify_activate_and_project_v2(
             page.goto(f"{url}/profiles", wait_until="load")
 
             surface = page.locator(".models-setup")
-            surface.get_by_role("heading", name="Choose your AI", exact=True).wait_for()
+            surface.get_by_role("heading", name="Choose a model", exact=True).wait_for()
+            before = _api(page, "GET", "/api/inference/setup")["setup"]
             radio = surface.get_by_role("radio", name=re.compile("Quick local glass AI"))
             radio.check()
-            action = surface.get_by_role("button", name="DOWNLOAD & USE QUICK", exact=True)
+            action = surface.get_by_role("button", name="DOWNLOAD", exact=True)
             assert surface.locator(".models-capability-action button").count() == 1
             action.click()
             surface.get_by_text(re.compile(
                 "Downloading Quick local glass AI|Verifying the published checksum|Installing verified model bytes"
             )).first.wait_for(timeout=10_000)
-            surface.get_by_text("IN USE FOR THOUGHTS", exact=True).wait_for(timeout=20_000)
+            surface.get_by_text("ADDED", exact=True).wait_for(timeout=20_000)
 
             setup = _api(page, "GET", "/api/inference/setup")["setup"]
-            revision = setup["current_thought_deployment"]["execution_revision"]
-            assert revision["schema_version"] == 2
-            assert revision["artifact_id"].startswith("artifact_")
-            assert revision["context_ceiling"] == 8192
+            acquisition = next(
+                row for row in setup["acquisitions"]
+                if row["preset_id"] == "preset_glass_local"
+            )
+            assert acquisition["state"] == "ready"
+            assert acquisition["activation_state"] == "not_requested"
+            assert setup["current_routes"]["thoughts"] == before["current_routes"]["thoughts"]
+            installed = next(
+                row for row in setup["installed_model_artifacts"]
+                if row["id"] == acquisition["artifact_id"]
+            )
+            assert installed["state"] == "verified"
+            assert installed["source_repository"] == "holdspeak/glass-model"
+            assert installed["id"].startswith("artifact_")
+            assert setup["current_thought_deployment"]["execution_revision"] == (
+                before["current_thought_deployment"]["execution_revision"]
+            )
             assert "model_path" not in json.dumps(setup)
             assert str(home) not in json.dumps(setup)
             assert page.evaluate("document.documentElement.scrollWidth <= innerWidth")
