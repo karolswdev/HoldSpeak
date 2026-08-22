@@ -161,8 +161,10 @@ def _build(database: Any, *, clock: Any = None) -> Broker:
     # family marker or records no authority change and returns a deterministic
     # repair issue; request paths never invoke it opportunistically.
     from ..config import Config
-    broker.inference_adoption_migration = broker.inference_adoption_service.migrate_legacy_config(
-        Principal(PrincipalKind.OWNER, "inference-adoption-startup"), Config.load()
+    broker.inference_adoption_migration = (
+        broker.inference_adoption_service.migrate_startup_legacy_assignments(
+            Principal(PrincipalKind.OWNER, "inference-adoption-startup"), Config.load
+        )
     )
     broker.parent_run_controller.reconcile_abandoned()
     broker.inference_adoption_recovery = broker.inference_adoption_service.recover_route_executions()

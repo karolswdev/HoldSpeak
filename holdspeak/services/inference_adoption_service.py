@@ -48,6 +48,13 @@ EVIDENCE_PROVIDER_ID = "phase143-production-adopters"
 EVIDENCE_PROVIDER_REVISION = 1
 TOKEN_ACCOUNTING_REVISION = "utf8-byte-upper-bound@1"
 MIGRATION_FAMILY = "thoughts-writing-route-assignments"
+MEETING_MIGRATION_FAMILY = "meeting-route-assignments"
+SPEECH_RECOGNITION_MIGRATION_FAMILY = "speech-recognition-route-assignments"
+MEETING_ASSIGNMENT_CAPABILITIES = (
+    "meeting.live_analysis",
+    "meeting.bookmark_label",
+    "meeting.auto_title",
+)
 
 
 def _canonical(value: Any) -> str:
@@ -1461,6 +1468,141 @@ class RoutedInferenceCoordinator:
             },
         )
 
+    def migrate_meeting_route_assignments(
+        self, principal: Principal, config: Any
+    ) -> dict[str, Any]:
+        """Copy the one saved Meeting profile pointer or return a repair issue.
+
+        The legacy Meeting configuration has one persisted profile pointer, not a
+        model artifact or endpoint.  A blank pointer therefore cannot lawfully be
+        expanded into a local default or an auto/cloud chain.
+        """
+        assignments = InferenceAssignmentService(self._db, registry=self._registry)
+        existing = assignments.migration_marker(
+            principal, family=MEETING_MIGRATION_FAMILY
+        )
+        if existing is not None:
+            return {**existing, "status": "migrated", "legacy_config_read": False}
+        meeting = getattr(config, "meeting", None)
+        profile_id = str(getattr(meeting, "intel_profile_id", "") or "").strip()
+        provider = str(getattr(meeting, "intel_provider", "") or "").strip()
+        source = {"intel_profile_id": profile_id, "intel_provider": provider}
+        source_sha256 = _sha256(source)
+        if not profile_id:
+            return self._migration_issue(
+                MEETING_MIGRATION_FAMILY,
+                "builtin_profile_required",
+                "choose_meeting_model_profile",
+                source_sha256,
+            )
+        with self._db._connection() as conn:
+            row = conn.execute(
+                "SELECT MAX(revision) AS revision FROM model_profile_revisions WHERE profile_id=?",
+                (profile_id,),
+            ).fetchone()
+        revision = int(row["revision"] or 0) if row is not None else 0
+        if revision < 1:
+            return self._migration_issue(
+                MEETING_MIGRATION_FAMILY,
+                "legacy_profile_requires_upgrade",
+                "upgrade_model_profile",
+                source_sha256,
+            )
+        try:
+            marker = assignments.migrate_capability_assignments_atomically(
+                principal,
+                family=MEETING_MIGRATION_FAMILY,
+                source_sha256=source_sha256,
+                capability_entries={
+                    capability_id: {
+                        "profile_id": profile_id,
+                        "profile_revision": revision,
+                    }
+                    for capability_id in MEETING_ASSIGNMENT_CAPABILITIES
+                },
+            )
+        except ValidationError as exc:
+            if exc.code != "inference_assignment_incompatible":
+                raise
+            return self._migration_issue(
+                MEETING_MIGRATION_FAMILY,
+                "legacy_profile_incompatible",
+                "choose_compatible_meeting_model_profile",
+                source_sha256,
+            )
+        return {**marker, "status": "migrated", "legacy_config_read": True}
+
+    def migrate_speech_recognition_route_assignments(
+        self, principal: Principal, config: Any
+    ) -> dict[str, Any]:
+        """Refuse model-name guessing until speech has an exact saved profile."""
+        assignments = InferenceAssignmentService(self._db, registry=self._registry)
+        existing = assignments.migration_marker(
+            principal, family=SPEECH_RECOGNITION_MIGRATION_FAMILY
+        )
+        if existing is not None:
+            return {**existing, "status": "migrated", "legacy_config_read": False}
+        model = getattr(config, "model", None)
+        source_sha256 = _sha256(
+            {
+                "model_name": str(getattr(model, "name", "") or ""),
+                "backend": str(getattr(model, "backend", "") or ""),
+                "language": str(getattr(model, "language", "") or ""),
+            }
+        )
+        # ModelConfig stores a mutable Whisper selector, not a reusable profile
+        # identity or boundary-consent record.  `speech.preload` is internal and
+        # is intentionally absent from this family.
+        return self._migration_issue(
+            SPEECH_RECOGNITION_MIGRATION_FAMILY,
+            "builtin_profile_required",
+            "choose_audio_model_profile",
+            source_sha256,
+        )
+
+    @staticmethod
+    def _migration_issue(
+        family: str, reason_code: str, repair: str, source_sha256: str
+    ) -> dict[str, Any]:
+        return {
+            "schema": "InferenceAssignmentMigrationIssue@1",
+            "family": family,
+            "status": "needs_attention",
+            "reason_code": reason_code,
+            "repair": repair,
+            "source_sha256": source_sha256,
+        }
+
+    def migrate_startup_legacy_assignments(
+        self, principal: Principal, config_loader: Callable[[], Any]
+    ) -> dict[str, dict[str, Any]]:
+        """Run each startup-owned family once without reading Config after markers."""
+        assignments = InferenceAssignmentService(self._db, registry=self._registry)
+        markers = {
+            family: assignments.migration_marker(principal, family=family)
+            for family in (
+                MIGRATION_FAMILY,
+                MEETING_MIGRATION_FAMILY,
+                SPEECH_RECOGNITION_MIGRATION_FAMILY,
+            )
+        }
+        if all(markers.values()):
+            return {
+                family: {**marker, "status": "migrated", "legacy_config_read": False}
+                for family, marker in markers.items()
+                if marker is not None
+            }
+        config = config_loader()
+        return {
+            MIGRATION_FAMILY: self.migrate_legacy_config(principal, config),
+            MEETING_MIGRATION_FAMILY: self.migrate_meeting_route_assignments(
+                principal, config
+            ),
+            SPEECH_RECOGNITION_MIGRATION_FAMILY: self.migrate_speech_recognition_route_assignments(
+                principal, config
+            ),
+        }
+
     def migrate_legacy_config(
         self, principal: Principal, config: Any
     ) -> dict[str, Any]:
@@ -1536,6 +1678,8 @@ ProductionInferenceAdoptionService = RoutedInferenceCoordinator
 
 __all__ = [
     "ADOPTED_CAPABILITIES",
+    "MEETING_MIGRATION_FAMILY",
+    "SPEECH_RECOGNITION_MIGRATION_FAMILY",
     "ProductionInferenceAdoptionService",
     "ProductionRouteEvidence",
     "RoutedInferenceCoordinator",

@@ -826,7 +826,11 @@ def test_auto_placement_with_an_unreachable_cloud_leg_keeps_one_entry_and_pins_l
     assert built.provider == "local"
     assert built._active_provider is None
     assert built.model_path == frozen.model_path != "/mutated-after-freeze.gguf"
-    assert built_with == [{"provider": "local", "model_path": frozen.model_path}]
+    assert built_with == [{
+        "provider": "local",
+        "model_path": frozen.model_path,
+        "n_ctx": frozen.context_ceiling or 4096,
+    }]
 
 
 def test_a_failed_local_entry_admits_a_second_child_naming_the_cloud_revision(tmp_path, monkeypatch):
