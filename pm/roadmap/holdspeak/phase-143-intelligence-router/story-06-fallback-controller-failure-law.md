@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 143
-- **Status:** in-progress
+- **Status:** done
 - **Depends on:** 143-05
 - **Unblocks:** 143-07 through 143-10, 143-14
 - **Owner:** unassigned
@@ -47,10 +47,11 @@ Fallback must be a durable server decision, not a provider retry, browser loop, 
   exceptions are census-pinned; Stories 07/08/10 remove them by capability and
   Story 13 removes the final exception.
 - [x] Known eligible failure advances exactly once; all forbidden dispositions create zero later egress.
-- [ ] Local-to-cloud advance requires frozen saved disclosure and appears in
+- [x] Local-to-cloud advance requires frozen saved disclosure and appears in
   receipt. The controller's frozen-boundary integrity law is proven here; a
-  lawful activated local-to-cloud traversal fixture is deferred to the first
-  cloud-capable adopter in Stories 07/08/10.
+  lawful activated local-to-cloud traversal and the corresponding unsaved
+  zero-egress fixture are proven by Story 07's first production adopter. See
+  [Story 06 evidence](./evidence-story-06.md).
 - [x] Crash after failed receipt resumes once; unknown completion becomes indeterminate.
 - [x] RouteExecutionReceipt explains considered/attempted legs, dispositions, actual model/boundary, and terminal truth.
 - [x] In activated routed mode, Runner obtains a controller-backed durable

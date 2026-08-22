@@ -49,7 +49,7 @@ Assignments.
 | HSEGHS001HS104-143-03 | Reusable Model Profile Authority | done | [story-03-reusable-model-profile-authority](./story-03-reusable-model-profile-authority.md) | [evidence](./evidence-story-03.md) |
 | HSEGHS001HS104-143-04 | Assignment Store and Resolver | done | [story-04-assignment-store-resolver](./story-04-assignment-store-resolver.md) | [evidence](./evidence-story-04.md) |
 | HSEGHS001HS104-143-05 | Frozen Route Plans | done | [story-05-frozen-route-plans](./story-05-frozen-route-plans.md) | [evidence](./evidence-story-05.md) |
-| HSEGHS001HS104-143-06 | Fallback Controller and Failure Law | in-progress | [story-06-fallback-controller-failure-law](./story-06-fallback-controller-failure-law.md) | - |
+| HSEGHS001HS104-143-06 | Fallback Controller and Failure Law | done | [story-06-fallback-controller-failure-law](./story-06-fallback-controller-failure-law.md) | [evidence](./evidence-story-06.md) |
 | HSEGHS001HS104-143-07 | Thoughts Ask and Writing Adoption | done | [story-07-thoughts-ask-writing-adoption](./story-07-thoughts-ask-writing-adoption.md) | [evidence](./evidence-story-07.md) |
 | HSEGHS001HS104-143-08 | Meetings Speech and Background Adoption | backlog | [story-08-meetings-speech-background-adoption](./story-08-meetings-speech-background-adoption.md) | - |
 | HSEGHS001HS104-143-09 | Tool Capability Foundation and Safe Routing | backlog | [story-09-tool-turn-routing-safe-fallback](./story-09-tool-turn-routing-safe-fallback.md) | - |
@@ -69,7 +69,7 @@ transport-neutral profile authority, scattered Config/subject pointers,
 late-routing `inference.run`, raw-SQL Workbench resolution, fake workflow
 fallback labels, and path-bearing profile sync.
 
-Stories 01 through 05 and Story 07 are done. Three generated, mutation-tested ledgers now fail closed on a
+Stories 01 through 07 are done. Three generated, mutation-tested ledgers now fail closed on a
 new execution door, semantic helper caller, mutable resolver/pointer, browser
 selector, or Swift physical/fallback path. The baseline records 99 Python
 model-shaped sites, 14 Python physical leaves with zero bypasses, and seven
