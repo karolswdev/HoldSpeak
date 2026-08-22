@@ -1,7 +1,21 @@
 # Phase 143 repository census — routing before consolidation
 
 **Captured:** 2026-08-21 from merged `main` after Phase 142 Story 06.
-**Purpose:** charter evidence; implementation stories must refresh anchors.
+**Purpose:** orientation and index; the generated fixtures below are the
+build-breaking authority.
+
+## Executable baselines
+
+| Ledger | Generated artifact | Build guard |
+|---|---|---|
+| Physical/model-shaped and direct Runner entrances → proposed capability/source owner | [generated-inference-capability-census.md](./generated-inference-capability-census.md) | `tests/unit/test_phase143_inference_capability_census.py` |
+| Mutable pointers, resolvers, profile/sync authority, and migration owner | [generated-routing-authority-census.md](./generated-routing-authority-census.md) | `tests/unit/test_phase143_routing_authority_census.py` |
+| Owner routing surfaces and retry/fallback semantic families | [generated-surface-fallback-census.md](./generated-surface-fallback-census.md) | `tests/unit/test_phase143_surface_fallback_census.py` |
+
+Each fixture is exact and fail-closed. A new site must receive one capability,
+classification, source owner, and migration story in the same reviewed change.
+These ledgers name unsafe existing seams as blockers; appearing in a census is
+not permission or an allowlist.
 
 ## Existing authorities and proved patterns
 
@@ -10,7 +24,7 @@
 | Mutable destination | `ProfileRecord` plus built-in `this_machine`; `InferenceTarget` resolves readiness/placement | `holdspeak/inference_targets.py` | preserve profile identity; remove post-freeze mutable reads |
 | Immutable execution | content-addressed `DeploymentRevision` v1/v2 consumed by `InferenceRunner` | `holdspeak/deployment_revisions.py`, `holdspeak/kernel/inference_runner.py` | sole executable revision registry remains |
 | Local artifacts/deployments | Phase 142 artifact ledger and mutable `inference_deployments` heads | `holdspeak/services/inference_acquisition_service.py`, `holdspeak/services/inference_setup_service.py` | profiles point to deployment heads; do not duplicate artifact/runtime truth |
-| Thoughts pointer | `Config.thoughts.inference_target_id` | `holdspeak/config/integrations.py`, `holdspeak/inference_targets.py` | migrate to `thought.interview`/`thought.synthesis` assignments |
+| Thoughts pointer | `Config.thoughts.inference_target_id` | `holdspeak/config/integrations.py`, `holdspeak/inference_targets.py` | migrate today's single `thought.interview` operation; its result is a question-or-synthesis union |
 | Dictation pointer | `Config.dictation.runtime.profile_id` plus runtime knobs | `holdspeak/config/model.py`, `holdspeak/intel/providers.py` | split intent/rewrite/punctuation capabilities; keep runtime policy typed |
 | Meeting pointer | `Config.meeting.intel_profile_id` plus local/auto/cloud legacy placement | `holdspeak/config/meeting.py`, `holdspeak/intel/providers.py` | migrate meeting capability family, not one blunt pointer |
 | Background pointer | `Config.rails_observer.profile_id`; Cadence uses bounded service inference | `holdspeak/config/integrations.py`, `holdspeak/services/cadence_service.py`, `holdspeak/web_server.py` | explicit background capability assignments |
@@ -19,7 +33,7 @@
 | Speech capabilities | transcribe/preload/intent/rewrite/punctuate are already stable constants | `holdspeak/speech_session/plan.py` | seed canonical registry; keep speech vs text requirements distinct |
 | Meeting capabilities | live analysis, bookmark, title, deferred analysis, plugins, Whisper | `holdspeak/meeting_session/intel_plan.py` | seed canonical registry and adapters |
 | Tool authority | future `ToolTurnController`/private lease ruled; owner MCP sidecar forbidden | `proposals/inference-catalog-and-context-policy.md` | required prerequisite for executable tool-aware fallback |
-| Admission waist | every physical model call is `inference.invoke@1` through `InferenceRunner` | Phase 131 census and `tests/unit/test_one_path_census.py` | expand census; controller remains above runner |
+| Admission waist | every Python/backend physical model call is `inference.invoke@1` through `InferenceRunner`; seven Apple/Swift leaves remain named legacy bypasses | Phase 131 census and `tests/unit/test_one_path_census.py`; generated Phase 143 Swift leaf census | migrate the Apple exceptions in Stories 06/10; controller remains above runner |
 
 ## Fragmentation visible today
 
@@ -53,17 +67,20 @@ fallback controls independently.
 
 ## Initial owner-facing capability groups
 
-Default Assignments glass is intentionally stable at five summary rows:
+Default Assignments glass is intentionally stable at seven assignment rows:
 
 * Default for AI work
 * Thoughts & notes
 * Writing & dictation
+* Speech recognition
 * Meetings
 * Agents & tools
+* Background
 
-Background tasks and every leaf capability exist in the searchable override
-disclosure. Issues and explicit overrides rise into default glass. Capability
-count may grow without permanent-screen growth.
+Every owner-visible leaf capability exists in the searchable override
+disclosure; internal lifecycle work such as speech preload does not. Issues and
+explicit overrides rise inside that disclosure. Capability count may grow
+without permanent-screen growth.
 
 ## Audit commands for Story 01
 

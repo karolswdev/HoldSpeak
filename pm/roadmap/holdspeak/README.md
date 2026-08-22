@@ -8,7 +8,8 @@
 > from evidence, Terra waves with serialized shipping, walks, honest ledgers —
 > is canon at [`docs/internal/ORCHESTRATION.md`](../../../docs/internal/ORCHESTRATION.md).
 
-**Newest update (2026-08-21): Phase 143 — The Intelligence Router — PLANNING.**
+**Newest update (2026-08-21): Phase 143 — The Intelligence Router — ACTIVE
+(1/14).**
 The full execution charter is ready: one server-owned capability registry,
 reusable immutable model profiles with hub-local bindings, sparse ordered
 Assignments, frozen per-run route plans, and durable disposition-driven
@@ -18,7 +19,10 @@ agents, Workbenches, Recipes, and future tool turns. Owner settings separate
 **Model Library** (what is available) from **Assignments** (which models do
 which jobs), so adding a model never silently changes a job. The default UI
 stays bounded as capabilities grow; ordered fallbacks are edited in one atomic
-sheet and local-to-cloud expansion is explicit. Fourteen recipe-like stories,
+sheet and local-to-cloud expansion is explicit. Story 01 is done: three exact
+generated ledgers now fail closed on new Python or Swift execution doors,
+semantic AI callers, mutable routing authorities, browser selectors, and
+retry/fallback branches. Fourteen recipe-like stories,
 the repository census, architecture contract, owner experience, migration law,
 kill criteria, and chaos/glass matrix are in the
 [Phase 143 record](./phase-143-intelligence-router/current-phase-status.md).
@@ -916,7 +920,7 @@ canon, canon wins.
 | 140 | The First Sentence: one obvious first-value act on the Chair, a useful editable result, in-place recovery, then a furnished six-drawer reveal with explicitly attachable Everyday context. | in-progress (5/6) | [phase-140-the-first-sentence](./phase-140-the-first-sentence/) |
 | 141 | From Thought to Work: preserve rough speech, develop it through one owner-triggered grounded question at a time, then freeze typed local or GitHub-backed outcomes on the existing authority and receipt spine. | in-progress (6/9) | [phase-141-from-thought-to-work](./phase-141-from-thought-to-work/) |
 | 142 | Make AI capability, runtime, artifact, route, and readiness truth server-owned before adding acquisition or new execution paths. | active | [phase-142-inference-instrument](./phase-142-inference-instrument/) |
-| 143 | Route every AI workload through one server-owned capability assignment to reusable model profiles, with ordered qualified fallbacks, frozen execution truth, and the Model Library + Assignments owner system. | planning | [phase-143-intelligence-router](./phase-143-intelligence-router/) |
+| 143 | Route every AI workload through one server-owned capability assignment to reusable model profiles, with ordered qualified fallbacks, frozen execution truth, and the Model Library + Assignments owner system. | in-progress (0/14) | [phase-143-intelligence-router](./phase-143-intelligence-router/) |
 
 (Status values: `planning`, `in-progress`, `done`, `paused`, `cancelled`.)
 

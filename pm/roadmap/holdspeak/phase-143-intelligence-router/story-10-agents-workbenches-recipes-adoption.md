@@ -16,7 +16,9 @@ and reference-resolution code currently reconstruct placement independently.
 
 - **In:** Migrate non-tool Agent, Workbench, Recipe, sequence/workflow, and
   reference-resolution callers; retire mutable `inference.run` late routing and
-  fake workflow fallback labels. Tool-bearing steps are owned by Story 09.
+  fake workflow fallback labels; bring the remaining censused Apple provider,
+  companion, and mesh physical leaves behind the server route-plan and
+  `InferenceRunner` waist. Tool-bearing steps are owned by Story 09.
 - **Out:** Feature-owned route editors and unrelated workflow branching changes.
 
 ## Acceptance criteria
@@ -26,6 +28,9 @@ and reference-resolution code currently reconstruct placement independently.
 - [ ] Subject changes affect next run only and never mutate group/global policy.
 - [ ] `inference.run` cannot physically dispatch through mutable late resolution.
 - [ ] Generated census finds no remaining placement-resolution fork.
+- [ ] The Apple physical-leaf census has no remaining unadmitted provider leaf;
+  Swift workflow retry/fallback law is first retired or controller-aligned by
+  Story 06.
 
 ## Test plan
 

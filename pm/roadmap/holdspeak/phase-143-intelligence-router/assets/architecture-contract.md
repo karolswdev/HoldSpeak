@@ -78,7 +78,7 @@ exact definition revision and schema hash.
 
 | Group | Capability IDs | Existing seam |
 |---|---|---|
-| Thoughts & notes | `thought.interview`, `thought.synthesis`, `ask.answer` | refinement coordinator, Ask service |
+| Thoughts & notes | `thought.interview` (question-or-synthesis result union), `ask.answer` | refinement coordinator, Ask service; an independently assignable synthesis requires a future distinct admitted operation |
 | Writing & dictation | `speech.intent_classify`, `speech.rewrite`, `speech.punctuate` | `speech_session.plan` |
 | Speech recognition | `speech.transcribe`; internal `speech.preload` | Whisper session plans; `speech.preload` is lifecycle work with `owner_visibility=internal`, never an assignable row |
 | Meetings | `meeting.live_analysis`, `meeting.bookmark_label`, `meeting.auto_title`, `meeting.deferred_analysis`, `meeting.plugin.<id>` | `MeetingIntelPlan` |

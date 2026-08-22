@@ -1,0 +1,97 @@
+# Phase 143 generated surface and fallback census
+
+**Captured:** 2026-08-21.  This is the executable companion to
+`repository-census.md`: `tests/unit/test_phase143_surface_fallback_census.py`
+fails when a new private selector, recovery helper, or browser routing-pointer
+surface lacks a reviewed classification.
+
+## Classification rule
+
+Each surface/family below has **exactly one Phase 143 story** as its migration
+owner.  “Fallback” is reserved for an advance to a different frozen model-route
+leg.  It does not mean an owner pressing a button, queue rescheduling, lexical
+output preservation, a provider dialect change, or a workflow label that carries
+input forward.
+
+## Owner routing controls
+
+| Surface/family | Current controls and source anchors | Current authority | One migration story |
+|---|---|---|---|
+| Profile library and credential identity | `holdspeak/services/profile_service.py`, `holdspeak/services/profile_key_service.py`, `holdspeak/intel/providers.py`, `holdspeak/inference_targets.py` | `ProfileRecord`, key slot, legacy profile factory | 143-03 |
+| Setup/library acquisition previews | `holdspeak/services/inference_acquisition_service.py`, `holdspeak/services/inference_setup_service.py`, `web/src/pages/cores/InferenceCapabilityPanel.tsx` | setup catalog and selected artifact preview; not a saved assignment | 143-12 |
+| Thoughts and Ask destination | `holdspeak/config/integrations.py`, `holdspeak/services/ask_service.py`, `holdspeak/services/inference_setup_service.py`, `web/src/desk/ask.ts`, `web/src/desk/chat.ts`, `web/src/desk/store/dataSlice.ts` | `Config.thoughts.inference_target_id` and request override | 143-07 |
+| Dictation/rewrite/punctuation destination | `holdspeak/config/model.py`, `holdspeak/speech_session/plan.py`, `holdspeak/plugins/dictation/assembly.py`, `holdspeak/target_profile.py`, `web/src/pages/cores/dictation/useSpeakDeck.ts` | `dictation.runtime.profile_id` and typed runtime policy | 143-07 |
+| Meetings destination and frozen plan | `holdspeak/config/meeting.py`, `holdspeak/meeting_session/intel_plan.py`, `holdspeak/intel/engine.py` | `intel_profile_id` plus legacy local/auto/cloud placement; `MeetingIntelPlan` freezes legs | 143-08 |
+| Deferred meeting/background jobs | `holdspeak/intel_queue.py`, `holdspeak/services/meeting_intel_service.py`, `holdspeak/services/settings_service.py` | queue schedule/recovery controls | 143-08 |
+| Workbench, Recipe, Agent and workflow placement | `holdspeak/deployment_revisions.py`, `holdspeak/services/{recipe_service,sequence_workflow_service,support,workbench_runner,workbench_service}.py`, `web/src/desk/components/{WorkbenchWindow,WorkbenchTemplatePicker,workbenchTarget}.tsx`, `web/src/desk/pullouts/editors/RecipeEditor.tsx`, `web/src/desk/infoContract.ts`, `web/src/pages/cores/WorkbenchesHomeCore.tsx` | workbench → recipe → default precedence and per-run request fields | 143-10 |
+| HTTP/MCP/browser pointer transport and types | `holdspeak/mcp/`, `holdspeak/web/routes/`, `web/src/desk/{api,detail-types,store/types}.ts`, `web/src/pages/cores/core-types.ts` | transport/projection only; must not resolve a route | 143-11 |
+| Assignment editor shell | `web/src/pages/cores/{SettingsCore,settingsModels}.tsx` | duplicated owner-facing Settings controls pending one editor | 143-13 |
+| Generic route/failure law and physical attempts | `holdspeak/kernel/{inference_runner,projection_stager}.py`, `holdspeak/intel/engine.py` | runner physical attempt and provider compatibility seam | 143-06 |
+| Baseline false positives/non-inference selectors | `holdspeak/desktop_presence.py`, `holdspeak/speaker_intel.py`, `holdspeak/plugins/dictation/builtin/project_rewriter.py` | renderer, speaker, and input selection—not model routing | 143-01 |
+
+## Recovery mechanism census
+
+| Mechanism | Anchors | Classification and truth | One migration story |
+|---|---|---|---|
+| Ordered `MeetingIntelPlan` legs | `holdspeak/meeting_session/intel_plan.py:_placement_legs` | **true model-route fallback**: a frozen local→cloud (or other) second deployment revision. It is not dynamically resolved after admission. | 143-08 |
+| Generic same-leg/next-leg control | `holdspeak/kernel/inference_runner.py:_cancelled_before_retry`, `holdspeak/kernel/projection_stager.py:_retry_stage` | Controller-owned physical-attempt and receipt semantics. The future controller decides bounded retry versus a later frozen leg; no provider/engine loop may do so. | 143-06 |
+| `max_tokens` dialect learning | `holdspeak/intel/engine.py:_compatibility_retry`, `holdspeak/kernel/provider_signals.py` | **provider dialect attempt**: a typed compatibility signal creates a distinct admitted child. It is neither a second model nor model-route fallback. | 143-06 |
+| Dictation `response_format` dialect learning | `holdspeak/speech_session/provider.py`, `holdspeak/plugins/dictation/runtime_openai_compatible.py` | **provider dialect attempt**: retrying without `response_format` is a separately admitted classify child. It is not a model change. | 143-07 |
+| Deferred meeting job backoff | `holdspeak/intel_queue.py:_compute_retry_delay_seconds`, `holdspeak/intel_queue.py:_retry_or_fail_job` | **scheduling retry**: a later queued job/parent, not another same-turn provider attempt or a model-route fallback. | 143-08 |
+| Meeting recovery button | `holdspeak/services/meeting_intel_service.py:_retry`, `web/src/meetings/MeetingIntelRecovery.tsx` | **explicit owner retry**: an owner asks to recover retained meeting work. It cannot silently advance a model chain. | 143-08 |
+| Thoughts/Ask “Try again” | `holdspeak/services/refinement_coordinator.py`, `holdspeak/services/ask_service.py`, `web/src/desk/thought-workspace/ThoughtWorkspaceWindow.tsx` | **explicit owner retry**: a new visible invocation/turn; preserve the old terminal receipt. | 143-07 |
+| Dictation lexical recovery | `holdspeak/dictation_telemetry.py:_fallback_category`, `holdspeak/plugins/dictation/`, `holdspeak/web/routes/dictation/` | **lexical degradation**: deterministic retained words/rules when classifier or runtime fails. Never call it a profile/model fallback. | 143-07 |
+| Dictation runner publication backstop | `holdspeak/dictation_runner.py` | **lexical degradation**: the original words are published through the admitted session fence after pipeline failure. This protects words; it does not try another model. | 143-07 |
+| Runtime `auto` backend choice | `holdspeak/plugins/dictation/runtime.py`, `holdspeak/speech_session/plan.py` | Preflight runtime selection (for example, `auto` chooses `llama_cpp` when MLX is unavailable), not retry and not a route-leg fallback. The frozen plan records the resulting target. | 143-07 |
+| Whisper preload / silent-audio load | `holdspeak/transcribe.py`, `holdspeak/meeting_session/transcribe_admission.py`, `holdspeak/speech_session/transcription.py` | Separate admitted transcription/load child. The silent-audio dispatch warms a fixed Whisper artifact; it never selects another model or retries an unknown provider send. | 143-08 |
+| Persisting a completed speech callback | `holdspeak/speech_session/fence.py` | Storage-delivery retry of the exact completed callback, not inference execution or route fallback. | 143-08 |
+| Endpoint-health refusal | `holdspeak/intel/endpoint_health.py`, `holdspeak/meeting_session/live_readiness.py` | Readiness/circuit-breaker refusal before egress. It can expose an already frozen meeting leg, but cannot synthesize a model fallback. | 143-08 |
+| Python workflow `fallbackOnDevice` / `retryThenQueue` | `holdspeak/services/support.py`, `holdspeak/services/sequence_workflow_service.py` | **Python fake workflow label**: the active hub treats `fallbackOnDevice` as pure carry-through and `retryThenQueue` as an ordinary surfaced error. Neither selects another model nor queues work. Story 10 removes/renames these legacy workflow labels while migrating workflow execution to the canonical route/controller. | 143-10 |
+| Swift WorkflowRunner `fallbackOnDevice` / `retryThenQueue` | `apple/Sources/RuntimeCore/Workbench/WorkflowRunner.swift` | **Swift dormant/client fallback**: this separate client runner retries an injected provider, can invoke an injected on-device fallback provider, and can return a parked queue result. It is a real legacy alternate-execution path, not evidence that the Python hub did so. Story 06 must retire or controller-align it under the server failure law. | 143-06 |
+| Swift BlueprintInterpreter `fallbackOnDevice` / `retryThenQueue` | `apple/Sources/RuntimeCore/Workbench/BlueprintInterpreter.swift` | **Swift dormant/client fallback with different queue truth**: it has its own bounded provider retries and real injected on-device fallback, but `retryThenQueue` is only a surfaced hard failure—nothing is parked. Story 06 retires or controller-aligns the physical retry/fallback and removes the false queue label. | 143-06 |
+
+## Guarded private decisions
+
+The test AST-walks all backend private functions whose names indicate fallback or
+retry, plus route/profile/target/placement selectors with route evidence.  Every
+current match is deliberately classified here; sources are grouped by the one
+story that owns their migration.
+
+| Story | Guarded backend anchors |
+|---|---|
+| 143-01 | `holdspeak/desktop_presence.py`, `holdspeak/plugins/dictation/builtin/project_rewriter.py`, `holdspeak/speaker_intel.py` |
+| 143-03 | `holdspeak/commands/doctor.py`, `holdspeak/inference_targets.py`, `holdspeak/intel/engine.py`, `holdspeak/intel/providers.py`, `holdspeak/services/profile_key_service.py`, `holdspeak/services/profile_service.py` |
+| 143-04 | `holdspeak/db/seed.py` (`_adopt_profiles` mutates legacy Config assignments; it is not ProfileRecord authority) |
+| 143-06 | `holdspeak/intel/engine.py`, `holdspeak/kernel/inference_runner.py`, `holdspeak/kernel/projection_stager.py` |
+| 143-07 | `holdspeak/dictation_telemetry.py`, `holdspeak/plugins/dictation/assembly.py`, `holdspeak/plugins/dictation/builtin/project_rewriter.py`, `holdspeak/plugins/dictation/runtime_mlx.py`, `holdspeak/services/inference_setup_service.py`, `holdspeak/target_profile.py` |
+| 143-08 | `holdspeak/intel_queue.py`, `holdspeak/meeting_session/intel_plan.py`, `holdspeak/services/meeting_intel_service.py` |
+| 143-10 | `holdspeak/delivery/factory_launch.py`, `holdspeak/services/recipe_service.py`, `holdspeak/services/sequence_workflow_service.py`, `holdspeak/services/support.py`, `holdspeak/services/workbench_runner.py` |
+| 143-12 | `holdspeak/services/inference_acquisition_service.py`, `holdspeak/services/inference_setup_service.py` |
+
+## Guarded web routing consumers
+
+`tests/unit/test_phase143_surface_fallback_census.py` inventories every
+production `web/src` TypeScript module containing a snake-case pointer,
+camel-case selector (`inferenceTargetId`, `intelProfileId`, `profileId`, or
+`resolverProfileId`), or an import/definition of `RunsOnPicker`.  A surface is
+classified as `inference-route`, `display-transport`, or `unrelated`; only the
+first category may participate in a future assignment migration.
+
+| Classification | Surfaces | One migration story |
+|---|---|---|
+| inference-route | `web/src/desk/ask.ts`, `web/src/desk/chat.ts`, `web/src/desk/components/AskPanel.tsx`, `web/src/desk/components/EditorAIBar.tsx`, `web/src/desk/store/dataSlice.ts`, `web/src/pages/cores/ProjectMemoryCore.tsx`, `web/src/pages/cores/dictation/UtteranceWell.tsx`, `web/src/pages/cores/dictation/useSpeakDeck.ts` | 143-07 |
+| inference-route | `web/src/desk/components/PersonaChat.tsx`, `web/src/desk/components/WorkbenchTemplatePicker.tsx`, `web/src/desk/components/WorkbenchWindow.tsx`, `web/src/desk/pullouts/editors/RecipeEditor.tsx`, `web/src/desk/pullouts/shared/CapabilitySection.tsx` | 143-10 |
+| inference-route | `web/src/desk/components/RunsOnPicker.tsx`, `web/src/pages/cores/SettingsCore.tsx`, `web/src/pages/cores/settingsModels.tsx` | 143-13 |
+| display-transport | `web/src/desk/api.ts`, `web/src/desk/components/Pullout.tsx`, `web/src/desk/detail-types.ts`, `web/src/desk/store/types.ts`, `web/src/lib/primitives.ts`, `web/src/pages/cores/core-types.ts` | 143-11 |
+| display-transport | `web/src/desk/components/workbenchTarget.ts`, `web/src/desk/infoContract.ts`, `web/src/pages/cores/WorkbenchesHomeCore.tsx` | 143-10 |
+| unrelated | `web/src/desk/components/DeliveryBoard.tsx`, `web/src/desk/deliveryFactory.ts` | 143-01 |
+
+Adding another production routing consumer—or a private selector/recovery
+helper—fails the focused test until it is classified above and assigned exactly
+one story. The guard does not grant runtime authority; it preserves the census
+boundary until the target story implements its one-way migration.
+
+The same test scans every Swift `case .fallbackOnDevice`,
+`case .retryThenQueue`, and `policy.maxRetries` execution site. The six current
+sites are classified above; a synthetic new runner proves another policy branch
+or retry loop fails closed rather than hiding behind a known file.

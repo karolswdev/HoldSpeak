@@ -22,6 +22,9 @@ Fallback must be a durable server decision, not a provider retry, browser loop, 
 - Reserve each leg/attempt transactionally with Stop, deadline, and budget fencing.
 - Adopt existing receipts after crash; never reconstruct from current settings.
 - Retire or rename fake workflow fallbackOnDevice/retryThenQueue semantics.
+- Retire the Swift `WorkflowRunner`/`BlueprintInterpreter` client-owned
+  retry/fallback loops or route every one of their physical attempts through
+  the same durable server controller and `InferenceRunner` child law.
 
 ### Out
 
