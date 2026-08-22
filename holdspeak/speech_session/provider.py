@@ -1,8 +1,7 @@
 """Admitted dictation provider dispatches: classify, rewrite, punctuate (HS-131-09).
 
 Every ACTUAL dictation-pipeline model call — the intent router's classify
-attempts, the OpenAI-compatible ``response_format`` compatibility retry, the
-project rewriter's passes, the model-assisted target detection, and a configured
+attempt, the project rewriter's passes, the model-assisted target detection, and a configured
 provider-backed punctuation stage — runs as ONE trusted ``inference.invoke@1``
 child of the live speech session, against ONE exact frozen deployment revision
 from the session plan.
@@ -25,8 +24,10 @@ journal row carries the contract, the revision, and the payload hash.
 
 from __future__ import annotations
 
+import json
 import threading
 from dataclasses import dataclass, field
+from types import SimpleNamespace
 from typing import Any, Callable, Mapping, Optional
 
 from ..logging_config import get_logger
@@ -95,6 +96,8 @@ class ProviderAdmission:
     #: path pays the identity comparison (and any construction) once per revision
     #: per session, never once per call.
     _targets: dict[str, Any] = field(default_factory=dict)
+    routed_routes: dict[str, dict[str, Any]] = field(default_factory=dict)
+    _active_routed_revision_id: str = ""
 
     # ------------------------------------------------------------------ plan
 
@@ -140,6 +143,19 @@ class ProviderAdmission:
 
     def dispatch_through(self, runtime: Any, engine: Any, capability: str) -> Any:
         """The object THIS admitted child dispatches through, given its engine."""
+        if self._active_routed_revision_id:
+            from ..deployment_revisions import resolve_deployment_revision
+            from ..kernel.dispatch_context import dispatch_context_of
+            from .revision_target import bound_target
+
+            revision = resolve_deployment_revision(
+                self.broker.database, self._active_routed_revision_id
+            )
+            if revision is None:
+                raise SpeechSessionRefused("deployment_revision_unknown", capability)
+            if str(getattr(revision, "engine", "")) in {"mesh", "node_runtime", "mesh_relay"}:
+                return _dispatch_target(runtime, engine)
+            return bound_target(runtime, revision, context=dispatch_context_of(engine))
         if str(getattr(runtime, "backend", "")) == "mesh_relay":
             return _dispatch_target(runtime, engine)
         return self.target(runtime, engine, capability)
@@ -213,6 +229,48 @@ class ProviderAdmission:
                 # the generic fallback and telling the owner the wrong refusal.
                 raise SpeechSessionRefused(reason, capability)
         attempt = self._next_ordinal()
+        routed = self.routed_routes.get(capability)
+        if routed is not None:
+            canonical = {
+                CAPABILITY_INTENT_CLASSIFY: "speech.intent_classify",
+                CAPABILITY_REWRITE: "speech.rewrite",
+                CAPABILITY_PUNCTUATE: "speech.punctuate",
+            }[capability]
+            logical = f"speech_{self.parent.operation_id}_{attempt}"
+            admitted = self.broker.inference_adoption_service.admit_on_frozen_route(
+                self.principal,
+                command_id=f"speechop-{self.parent.operation_id}-{attempt}",
+                route_plan_id=str(routed["id"]),
+                capability_id=canonical,
+                operation_id=logical,
+                payload=dict(material),
+                reserved_output_tokens=int(material.get("max_tokens") or 256),
+            )
+            result = self.broker.inference_adoption_service.execute(
+                self.principal,
+                execution_id=admitted["execution"]["id"],
+                adapter=_RoutedSpeechAdapter(self, canonical, call),
+                parent_context=self.parent.context,
+            )
+            state = str(result["outcome"])
+            self.children.append((capability, contract, state))
+            if state == "succeeded":
+                value = result["result"]
+                if canonical in {"speech.rewrite", "speech.punctuate"}:
+                    value = dict(value or {}).get("output", "")
+                elif canonical == "speech.intent_classify":
+                    value = dict(value or {})
+                    value["extras"] = json.loads(str(value.pop("extras_json")))
+                return SimpleNamespace(
+                    outcome=state,
+                    receipt=result["receipt"],
+                    operation_id=logical,
+                ), value
+            if state == "refused":
+                raise SpeechSessionRefused(
+                    str(result["receipt"].get("terminal_disposition") or state), capability
+                )
+            raise SpeechProviderFailure(contract, reason=state)
         outcome, result = run_admitted_speech_child(
             broker=self.broker,
             principal=self.principal,
@@ -255,31 +313,30 @@ class ProviderAdmission:
         max_tokens: int,
         temperature: float,
     ) -> dict[str, Any]:
-        """ONE admitted classify attempt, plus its compatibility retry as a SECOND child.
-
-        The OpenAI-compatible ``response_format`` retry used to hide inside one
-        provider method. It is a second real request to a model, so it is a second
-        child with its own ordinal and receipt; only that specific
-        unsupported-parameter failure advances to it.
-        """
+        """Run one admitted classify attempt; the controller owns any advance."""
         material = {
             "prompt_sha256": text_sha(prompt),
             "prompt_chars": len(str(prompt)),
-            "schema_sha256": text_sha(getattr(schema, "block_ids", "")),
+            "prompt_material": str(prompt),
+            "block_ids": list(getattr(schema, "block_ids", ())),
+            "extras_per_block": {
+                str(key): list(value)
+                for key, value in dict(getattr(schema, "extras_per_block", {}) or {}).items()
+            },
+            "schema_sha256": text_sha({
+                "block_ids": list(getattr(schema, "block_ids", ())),
+                "extras_per_block": dict(getattr(schema, "extras_per_block", {}) or {}),
+            }),
             "max_tokens": int(max_tokens),
             "temperature": float(temperature),
             "backend": str(getattr(runtime, "backend", "") or ""),
         }
-        first = _ClassifyLeg(self, runtime, prompt, schema, max_tokens, temperature)
-        try:
-            return first.run(material, response_format=True)
-        except SpeechProviderFailure as failure:
-            if not first.retryable:
-                raise
-            log.info("dictation classify retrying without response_format as a new child")
-            return first.run(
-                {**material, "compatibility_retry": True}, response_format=False
-            )
+        # HS-143-07: dialect retries are not application-owned. A future
+        # response-format variant must be a separately frozen controller leg;
+        # until then this capability performs exactly one admitted request.
+        return _ClassifyLeg(
+            self, runtime, prompt, schema, max_tokens, temperature
+        ).run(material, response_format=True)
 
     def rewrite(
         self, runtime: Any, prompt: str, *, max_tokens: int, temperature: float
@@ -294,7 +351,11 @@ class ProviderAdmission:
             "prompt_material": str(prompt),
         }
 
-        prepared = self.prepared(runtime, CAPABILITY_REWRITE)
+        prepared = (
+            None
+            if CAPABILITY_REWRITE in self.routed_routes
+            else self.prepared(runtime, CAPABILITY_REWRITE)
+        )
 
         def call(engine: Any, payload: Mapping[str, Any], cancellation: threading.Event) -> str:
             target = (
@@ -375,14 +436,12 @@ class _ClassifyLeg:
         self._schema = schema
         self._max_tokens = int(max_tokens)
         self._temperature = float(temperature)
-        #: True only when the failure was the endpoint rejecting
-        #: ``response_format`` — the one compatibility fallback that earns a
-        #: second child.
-        self.retryable = False
-
     def run(self, material: Mapping[str, Any], *, response_format: bool) -> dict[str, Any]:
-        self.retryable = False
-        prepared = self._admission.prepared(self._runtime, CAPABILITY_INTENT_CLASSIFY)
+        prepared = (
+            None
+            if CAPABILITY_INTENT_CLASSIFY in self._admission.routed_routes
+            else self._admission.prepared(self._runtime, CAPABILITY_INTENT_CLASSIFY)
+        )
 
         def call(engine: Any, payload: Mapping[str, Any], cancellation: threading.Event) -> Any:
             target = (
@@ -398,12 +457,7 @@ class _ClassifyLeg:
             }
             if _accepts_response_format(target):
                 kwargs["response_format"] = bool(response_format)
-            try:
-                return target.classify(self._prompt, self._schema, **kwargs)
-            except Exception as exc:
-                if response_format and _response_format_unsupported(exc):
-                    self.retryable = True
-                raise
+            return target.classify(self._prompt, self._schema, **kwargs)
 
         _outcome, result = self._admission.child(
             capability=CAPABILITY_INTENT_CLASSIFY,
@@ -413,6 +467,73 @@ class _ClassifyLeg:
             seed=(material["prompt_sha256"], bool(response_format)),
         )
         return dict(result or {})
+
+
+class _RoutedSpeechAdapter:
+    """Execute and validate one speech stage on the controller-selected leg."""
+
+    connector_id = "inference-provider"
+
+    def __init__(self, admission: ProviderAdmission, capability: str, call: Any) -> None:
+        self._admission, self._capability, self._call = admission, capability, call
+
+    def dispatch(self, engine: Any, payload: dict[str, Any], cancellation: Any) -> Any:
+        from ..inference_capabilities import InferenceCapabilityRegistryError, process_inference_capability_registry
+        from ..kernel.dispatch_context import dispatch_context_of
+        from ..kernel.provider_signals import InferenceInvalidTypedOutput
+
+        dispatch_context_of(engine)  # proves Runner built the selected revision
+        try:
+            if self._capability == "speech.intent_classify":
+                allowed = [str(value) for value in payload["block_ids"]]
+                raw_text = engine.run_prompt(
+                    system_prompt=(
+                        "Return JSON only with matched:boolean, block_id:string|null, "
+                        "confidence:number, extras:object. block_id must be one of: "
+                        + ", ".join(allowed)
+                    ),
+                    user_prompt=str(payload["prompt_material"]),
+                    max_tokens=int(payload["max_tokens"]),
+                    temperature=float(payload["temperature"]),
+                )
+                raw = json.loads(str(raw_text))
+                if bool(raw.get("matched")) and str(raw.get("block_id") or "") not in allowed:
+                    raise ValueError("invalid block")
+            else:
+                raw = engine.run_prompt(
+                    system_prompt="Rewrite the supplied dictated text. Return only the rewritten text.",
+                    user_prompt=str(payload["prompt_material"]),
+                    max_tokens=int(payload["max_tokens"]),
+                    temperature=float(payload.get("temperature") or 0.0),
+                )
+        except (AttributeError, KeyError, TypeError, ValueError, json.JSONDecodeError):
+            raise InferenceInvalidTypedOutput() from None
+        result = raw
+        if self._capability == "speech.intent_classify" and isinstance(raw, Mapping):
+            result = {
+                "matched": bool(raw.get("matched")),
+                "block_id": raw.get("block_id") if isinstance(raw.get("block_id"), str) else None,
+                "confidence": float(raw.get("confidence") or 0.0),
+                "extras_json": json.dumps(
+                    raw.get("extras") if isinstance(raw.get("extras"), Mapping) else {},
+                    sort_keys=True,
+                    separators=(",", ":"),
+                ),
+            }
+        if self._capability in {"speech.rewrite", "speech.punctuate"}:
+            result = {
+                "output": str(raw),
+                "provider": str(getattr(engine, "active_provider", "") or ""),
+                "model": str(getattr(engine, "active_model", "") or ""),
+            }
+        try:
+            process_inference_capability_registry().require(self._capability).validate_result(result)
+        except InferenceCapabilityRegistryError:
+            raise InferenceInvalidTypedOutput() from None
+        return result
+
+    def cancel(self) -> str:
+        return "not_supported"
 
 
 def _accepts_response_format(target: Any) -> bool:
@@ -430,17 +551,6 @@ def _accepts_response_format(target: Any) -> bool:
             return False
         inner = nested
     return False
-
-
-def _response_format_unsupported(exc: BaseException) -> bool:
-    from ..plugins.dictation.runtime_openai_compatible import (
-        _response_format_unsupported as detector,
-    )
-
-    try:
-        return bool(detector(exc))  # type: ignore[arg-type]
-    except Exception:
-        return False
 
 
 def _dispatch_target(runtime: Any, engine: Any) -> Any:

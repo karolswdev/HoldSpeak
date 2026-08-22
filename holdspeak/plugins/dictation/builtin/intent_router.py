@@ -166,28 +166,21 @@ class IntentRouter:
 
         warnings: list[str] = []
         intent: IntentTag | None = None
-        for attempt in (1, 2):
-            try:
-                raw = self._runtime.classify(
-                    prompt,
-                    schema,
-                    max_tokens=self._max_tokens,
-                    temperature=self._temperature,
-                )
-                intent = _coerce_intent(raw, valid_ids)
-                break
-            except Exception as exc:
-                warnings.append(
-                    f"classify attempt {attempt} failed: "
-                    f"{type(exc).__name__}: {exc}"
-                )
-                log.warning(
-                    "intent-router classify attempt %d failed: %s", attempt, exc
-                )
+        try:
+            raw = self._runtime.classify(
+                prompt,
+                schema,
+                max_tokens=self._max_tokens,
+                temperature=self._temperature,
+            )
+            intent = _coerce_intent(raw, valid_ids)
+        except Exception as exc:
+            warnings.append(f"classify failed: {type(exc).__name__}: {exc}")
+            log.warning("intent-router classify failed: %s", exc)
 
         if intent is None:
             intent = _no_match()
-            warnings.append("classify retries exhausted; returning no-match")
+            warnings.append("classify failed; returning no-match")
 
         # HS-39-02: nudge toward a recent user correction for a similar
         # utterance. Only reinforces or redirects to a *known* block; a no-op

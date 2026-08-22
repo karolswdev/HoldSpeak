@@ -68,99 +68,83 @@ class InferenceFallbackController:
         operation_plan_id: str,
     ) -> dict[str, Any]:
         """Create/adopt one execution head bound to frozen Story-05 evidence."""
-        self._require_controller(authority)
-        command = self._safe_id(command_id, "command_id")
-        operation_id = self._safe_id(operation_plan_id, "operation_plan_id")
-        request_hash = _sha256(
-            {"action": "start", "command_id": command, "operation_plan_id": operation_id}
-        )
-        execution_id = "ire_" + hashlib.sha256(request_hash.encode()).hexdigest()[:32]
         with self._db._connection() as conn:
             conn.execute("BEGIN IMMEDIATE")
             try:
-                replay = conn.execute(
-                    "SELECT * FROM inference_route_execution_commands WHERE command_id=?",
-                    (command,),
-                ).fetchone()
-                if replay is not None and str(replay["request_sha256"]) != request_hash:
-                    raise ConflictError(
-                        "Route execution command changed.",
-                        code="inference_route_execution_command_conflict",
-                    )
-                operation, route = self._plans.reconstruct_frozen_pair_in_transaction(
-                    ROUTE_PLANNING_AUTHORITY, conn, operation_id
-                )
-                policy = route["retry_policy"]
-                budgets = self._plans.reconstruct_attempt_budgets_in_transaction(
-                    ROUTE_PLANNING_AUTHORITY, conn, operation=operation, route=route
-                )
-                if replay is not None:
-                    effect = json.loads(str(replay["effect_json"]))
-                    if (
-                        str(replay["execution_id"]) != execution_id
-                        or str(replay["effect_sha256"]) != _sha256(effect)
-                        or effect != {"execution_id": execution_id}
-                    ):
-                        raise ConflictError(
-                            "Stored route execution command is invalid.",
-                            code="inference_route_execution_command_integrity_invalid",
-                    )
-                    conn.commit()
-                    return self._execution(conn, execution_id)
-                collision = conn.execute(
-                    "SELECT 1 FROM inference_route_executions WHERE id=? OR operation_plan_id=?",
-                    (execution_id, operation_id),
-                ).fetchone()
-                if collision is not None:
-                    raise ConflictError(
-                        "Route execution identity is already in use.",
-                        code="inference_route_execution_identity_conflict",
-                    )
-                now = self._clock()
-                if now.tzinfo is None:
-                    now = now.replace(tzinfo=timezone.utc)
-                created_at = _timestamp(now)
-                conn.execute(
-                    """INSERT INTO inference_route_executions
-                       (id,route_plan_id,route_plan_sha256,operation_plan_id,
-                        operation_plan_sha256,budget_evidence_provider_id,
-                        budget_evidence_provider_revision,budget_evidence_sha256,
-                        state,revision,total_attempt_limit,
-                        per_leg_attempt_limit,token_budget,cost_budget,tool_call_budget,
-                        started_at)
-                       VALUES (?,?,?,?,?,?,?,?,'active',1,?,?,?,?,?,?)""",
-                    (
-                        execution_id,
-                        route["id"],
-                        route["sha256"],
-                        operation["id"],
-                        operation["sha256"],
-                        budgets["provider_id"],
-                        budgets["provider_revision"],
-                        budgets["sha256"],
-                        int(policy["total_physical_attempts"]),
-                        int(policy["per_entry_attempts"]),
-                        policy["token_budget"],
-                        policy["cost_budget"],
-                        policy["tool_call_budget"],
-                        created_at,
-                    ),
-                )
-                effect = {"execution_id": execution_id}
-                conn.execute(
-                    "INSERT INTO inference_route_execution_commands VALUES (?,?,?,?,?,?,?)",
-                    (command, "start", request_hash, execution_id, _canonical(effect), _sha256(effect), created_at),
-                )
-                self._insert_transition(
-                    conn, execution_id, action="start", command_id=command,
-                    prior_revision=0, post_revision=1,
-                    prior_state="none", post_state="active", effect=effect,
+                result = self.start_execution_in_transaction(
+                    authority, conn, command_id=command_id,
+                    operation_plan_id=operation_plan_id,
                 )
                 conn.commit()
             except Exception:
                 conn.rollback()
                 raise
-        return self._execution(None, execution_id)
+        return result
+
+    def start_execution_in_transaction(
+        self,
+        authority: Principal,
+        conn: Any,
+        *,
+        command_id: str,
+        operation_plan_id: str,
+    ) -> dict[str, Any]:
+        """Create/adopt an execution inside a caller-owned transaction."""
+        self._require_controller(authority)
+        command = self._safe_id(command_id, "command_id")
+        operation_id = self._safe_id(operation_plan_id, "operation_plan_id")
+        request_hash = _sha256({"action": "start", "command_id": command, "operation_plan_id": operation_id})
+        execution_id = "ire_" + hashlib.sha256(request_hash.encode()).hexdigest()[:32]
+        replay = conn.execute(
+            "SELECT * FROM inference_route_execution_commands WHERE command_id=?", (command,)
+        ).fetchone()
+        if replay is not None and str(replay["request_sha256"]) != request_hash:
+            raise ConflictError("Route execution command changed.", code="inference_route_execution_command_conflict")
+        operation, route = self._plans.reconstruct_frozen_pair_in_transaction(
+            ROUTE_PLANNING_AUTHORITY, conn, operation_id
+        )
+        policy = route["retry_policy"]
+        budgets = self._plans.reconstruct_attempt_budgets_in_transaction(
+            ROUTE_PLANNING_AUTHORITY, conn, operation=operation, route=route
+        )
+        if replay is not None:
+            effect = json.loads(str(replay["effect_json"]))
+            if str(replay["execution_id"]) != execution_id or str(replay["effect_sha256"]) != _sha256(effect) or effect != {"execution_id": execution_id}:
+                raise ConflictError("Stored route execution command is invalid.", code="inference_route_execution_command_integrity_invalid")
+            return self._execution(conn, execution_id)
+        collision = conn.execute(
+            "SELECT 1 FROM inference_route_executions WHERE id=? OR operation_plan_id=?",
+            (execution_id, operation_id),
+        ).fetchone()
+        if collision is not None:
+            raise ConflictError("Route execution identity is already in use.", code="inference_route_execution_identity_conflict")
+        now = self._clock()
+        if now.tzinfo is None:
+            now = now.replace(tzinfo=timezone.utc)
+        created_at = _timestamp(now)
+        conn.execute(
+            """INSERT INTO inference_route_executions
+               (id,route_plan_id,route_plan_sha256,operation_plan_id,
+                operation_plan_sha256,budget_evidence_provider_id,
+                budget_evidence_provider_revision,budget_evidence_sha256,
+                state,revision,total_attempt_limit,per_leg_attempt_limit,
+                token_budget,cost_budget,tool_call_budget,started_at)
+               VALUES (?,?,?,?,?,?,?,?,'active',1,?,?,?,?,?,?)""",
+            (execution_id, route["id"], route["sha256"], operation["id"], operation["sha256"],
+             budgets["provider_id"], budgets["provider_revision"], budgets["sha256"],
+             int(policy["total_physical_attempts"]), int(policy["per_entry_attempts"]),
+             policy["token_budget"], policy["cost_budget"], policy["tool_call_budget"], created_at),
+        )
+        effect = {"execution_id": execution_id}
+        conn.execute(
+            "INSERT INTO inference_route_execution_commands VALUES (?,?,?,?,?,?,?)",
+            (command, "start", request_hash, execution_id, _canonical(effect), _sha256(effect), created_at),
+        )
+        self._insert_transition(
+            conn, execution_id, action="start", command_id=command,
+            prior_revision=0, post_revision=1, prior_state="none", post_state="active", effect=effect,
+        )
+        return self._execution(conn, execution_id)
 
     def get_route_execution_receipt(
         self, authority: Principal, *, execution_id: str

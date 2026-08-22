@@ -249,65 +249,10 @@ def test_closed_result_schema_refuses_open_or_drifting_nested_object_contracts(
 
 def test_registered_schemas_validate_real_ask_and_meeting_plugin_outputs() -> None:
     registry = _registry()
-    ask_result = {
-        "output": "The answer.",
-        "lens": "Ask",
-        "provider": "local",
-        "profile_id": None,
-        "inference_target": {
-            "version": 1,
-            "id": "this_machine",
-            "profile_id": None,
-            "name": "This device",
-            "kind": "on_device",
-            "boundary": "local",
-            "owner": "owner",
-            "transport": "local",
-            "data_scope": {"sent": ["instruction"], "returned": ["generated_output"]},
-            "engine": "llama_cpp",
-            "model": "Qwen",
-            "context_limit": 8192,
-            "readiness": {"state": "ready", "available": True, "reason": ""},
-            "secret": {"required": False, "present": False},
-            "endpoint": "",
-            "node": "",
-        },
-        "actual_placement": {
-            "target_id": "this_machine",
-            "target_name": "This device",
-            "target_kind": "on_device",
-            "boundary": "local",
-            "owner": "owner",
-            "transport": "local",
-            "data_classes": ["instruction", "generated_output"],
-            "engine": "llama_cpp",
-            "model": "Qwen",
-            "fallback_reason": None,
-        },
-        "egress": {"scope": "local"},
-        "model": "Qwen",
-        "context_ids": [],
-        "context_titles": [],
-        "grounding_claims": [],
-    }
+    ask_result = {"output": "The answer."}
     registry.require("ask.answer").validate_result(ask_result)
-    rails_grounded = {
-        **ask_result,
-        "grounding": {
-            "meeting_ids": [],
-            "artifact_ids": [],
-            "expand": "summary",
-            "titles": ["HS-88-01 Rails"],
-            "source_refs": [],
-            "selection": "explicit",
-            "matched_count": 0,
-            "overflow_count": 0,
-            "rails": [
-                {"repo": "hs", "project": "hs", "kind": "story", "id": "HS-88-01"}
-            ],
-        },
-    }
-    registry.require("ask.answer").validate_result(rails_grounded)
+    # Grounding is application projection metadata, not provider output.  The
+    # capability contract deliberately rejects it at the Runner boundary.
     with pytest.raises(InferenceCapabilityRegistryError, match="unregistered fields"):
         registry.require("ask.answer").validate_result({**ask_result, "invented": True})
 

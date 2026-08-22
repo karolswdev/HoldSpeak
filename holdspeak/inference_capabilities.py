@@ -142,6 +142,13 @@ def _validate_schema_node(schema: Any, *, field_name: str, root: bool = False) -
     """Validate every nested node; object-valued rows can never be open blobs."""
     if not isinstance(schema, Mapping):
         raise InferenceCapabilityRegistryError(f"{field_name} must be an object")
+    if set(schema) == {"oneOf"}:
+        branches = schema["oneOf"]
+        if not isinstance(branches, (list, tuple)) or len(branches) < 2:
+            raise InferenceCapabilityRegistryError(f"{field_name}.oneOf needs at least two branches")
+        for index, branch in enumerate(branches):
+            _validate_schema_node(branch, field_name=f"{field_name}.oneOf[{index}]", root=True)
+        return
     kind = str(schema.get("type") or "")
     if kind not in {"string", "number", "integer", "boolean", "array", "object"}:
         raise InferenceCapabilityRegistryError(f"{field_name} has unsupported type")
@@ -724,6 +731,19 @@ class InferenceCapabilityRegistry:
 
 def _validate_result_value(value: Any, schema: Mapping[str, Any], *, field_name: str) -> None:
     """Validate a JSON value against the same closed subset used for registry schemas."""
+    if "oneOf" in schema:
+        matches = 0
+        for branch in schema["oneOf"]:
+            try:
+                _validate_result_value(value, branch, field_name=field_name)
+                matches += 1
+            except InferenceCapabilityRegistryError:
+                pass
+        if matches != 1:
+            raise InferenceCapabilityRegistryError(
+                f"{field_name} must match exactly one frozen union branch"
+            )
+        return
     kind = str(schema["type"])
     if value is None:
         if schema.get("nullable") is True:
@@ -782,64 +802,6 @@ def _result_schema(operation: str, kind: str, contract: str) -> dict[str, Any]:
         required=("name", "arguments_json"),
     )
     string_list = {"type": "array", "items": scalar}
-    target_readiness = _closed_object_schema(
-        properties={"state": scalar, "available": {"type": "boolean"}, "reason": scalar},
-        required=("state", "available", "reason"),
-    )
-    target_secret = _closed_object_schema(
-        properties={"required": {"type": "boolean"}, "present": {"type": "boolean"}},
-        required=("required", "present"),
-    )
-    target_data_scope = _closed_object_schema(
-        properties={"sent": string_list, "returned": string_list}, required=("sent", "returned")
-    )
-    inference_target = _closed_object_schema(
-        properties={
-            "version": {"type": "integer"}, "id": scalar, "profile_id": {"type": "string", "nullable": True},
-            "name": scalar, "kind": scalar, "boundary": scalar, "owner": scalar, "transport": scalar,
-            "data_scope": target_data_scope, "engine": scalar, "model": scalar, "context_limit": {"type": "integer"},
-            "readiness": target_readiness, "secret": target_secret, "endpoint": scalar, "node": scalar,
-        },
-        required=("version", "id", "profile_id", "name", "kind", "boundary", "owner", "transport", "data_scope", "engine", "model", "context_limit", "readiness", "secret", "endpoint", "node"),
-    )
-    actual_placement = _closed_object_schema(
-        properties={
-            "target_id": scalar, "target_name": scalar, "target_kind": scalar, "boundary": scalar,
-            "owner": scalar, "transport": scalar, "data_classes": string_list, "engine": scalar,
-            "model": scalar, "fallback_reason": {"type": "string", "nullable": True},
-        },
-        required=("target_id", "target_name", "target_kind", "boundary", "owner", "transport", "data_classes", "engine", "model", "fallback_reason"),
-    )
-    egress = _closed_object_schema(
-        properties={"scope": scalar, "host": scalar}, required=("scope",)
-    )
-    claim = _closed_object_schema(
-        properties={"text": scalar, "score": {"type": "number"}, "label": scalar, "flagged": {"type": "boolean"}},
-        required=("text", "score", "label", "flagged"),
-    )
-    rails_ref = _closed_object_schema(
-        properties={
-            "repo": scalar,
-            "project": scalar,
-            "kind": {"type": "string", "enum": ["phase", "story", "evidence", "roadmap"]},
-            "id": scalar,
-        },
-        required=("repo", "project", "kind", "id"),
-    )
-    grounding = _closed_object_schema(
-        properties={
-            "meeting_ids": string_list, "artifact_ids": string_list, "expand": scalar,
-            "titles": string_list, "source_refs": string_list, "selection": scalar,
-            "matched_count": {"type": "integer"}, "overflow_count": {"type": "integer"},
-            "refs": string_list,
-            "rails": {"type": "array", "items": rails_ref},
-        },
-        required=("meeting_ids", "artifact_ids", "expand", "titles", "source_refs", "selection", "matched_count", "overflow_count"),
-    )
-    placement = _closed_object_schema(
-        properties={"effective_target_id": scalar, "source": scalar},
-        required=("effective_target_id", "source"),
-    )
     plugin_base = {
         "summary": scalar,
         "confidence_hint": {"type": "number"},
@@ -907,26 +869,38 @@ def _result_schema(operation: str, kind: str, contract: str) -> dict[str, Any]:
         raise PluginCapabilityError(f"installed meeting plugin {plugin_id!r} has no closed result schema")
     schemas: dict[str, dict[str, Any]] = {
         "ask_answer": _closed_object_schema(
-            properties={
-                "output": scalar, "lens": scalar, "provider": scalar,
-                "profile_id": {"type": "string", "nullable": True}, "inference_target": inference_target,
-                "actual_placement": actual_placement, "egress": egress, "model": scalar,
-                "context_ids": string_list, "context_titles": string_list,
-                "grounding_claims": {"type": "array", "items": claim},
-                "grounding": grounding, "placement": placement,
-            },
-            required=("output", "lens", "provider", "profile_id", "inference_target", "actual_placement", "egress", "model", "context_ids", "context_titles"),
+            properties={"output": scalar},
+            required=("output",),
         ),
-        "question_or_synthesis": _closed_object_schema(
-            properties={
-                "branch": {"type": "string", "enum": ["next_question", "synthesis"]},
-                "question": {"type": "string", "nullable": True},
-                "synthesis": {"type": "string", "nullable": True},
-            },
-            required=("branch", "question", "synthesis"),
-        ),
+        "question_or_synthesis": {
+            "oneOf": [
+                _closed_object_schema(
+                    properties={
+                        "kind": {"type": "string", "const": "question"},
+                        "question": scalar,
+                        "reason": scalar,
+                    },
+                    required=("kind", "question", "reason"),
+                ),
+                _closed_object_schema(
+                    properties={
+                        "kind": {"type": "string", "const": "synthesis"},
+                        "title": scalar,
+                        "body_markdown": scalar,
+                        "tags": string_list,
+                    },
+                    required=("kind", "title", "body_markdown", "tags"),
+                ),
+            ]
+        },
         "dictation_intent": _closed_object_schema(
-            properties={"intent": scalar, "confidence": {"type": "number"}}, required=("intent", "confidence")
+            properties={
+                "matched": {"type": "boolean"},
+                "block_id": {"type": "string", "nullable": True},
+                "confidence": {"type": "number"},
+                "extras_json": scalar,
+            },
+            required=("matched", "block_id", "confidence", "extras_json"),
         ),
         "dictation_target": _closed_object_schema(
             properties={"target": scalar, "confidence": {"type": "number"}}, required=("target", "confidence")
@@ -1002,10 +976,11 @@ def _capability(
     fallback_dispositions: Sequence[str] = ("known_no_generation_transient", "provider_permanent"),
     visibility: str = "owner",
     source_module: str,
+    revision: int = 1,
 ) -> InferenceCapabilityDefinition:
     return InferenceCapabilityDefinition(
         id=identifier,
-        revision=1,
+        revision=revision,
         label=label,
         group_id=group_id,
         group_label=group_label,
@@ -1054,11 +1029,13 @@ def builtin_capability_definitions() -> tuple[InferenceCapabilityDefinition, ...
     text_fallback = ("known_no_generation_transient", "provider_permanent", "invalid_typed_output", "context_overflow", "local_capacity_unavailable")
     structured_fallback = ("known_no_generation_transient", "provider_permanent", "invalid_typed_output", "context_overflow", "local_capacity_unavailable")
     return (
-        _capability("thought.interview", "Thought development", *thought, "Develop a Thought through its question-or-synthesis result contract.", operation="thought.interview", output_kind="question_or_synthesis", result_contract="holdspeak.refinement.question_or_synthesis@1", structured_output=True, minimum_context_tokens=8192, fallback_dispositions=structured_fallback, source_module="holdspeak.services.refinement_coordinator"),
-        _capability("ask.answer", "Ask answer", *thought, "Answer a direct desk question with its admitted context.", operation="ask.answer", output_kind="ask_answer", minimum_context_tokens=4096, fallback_dispositions=text_fallback, source_module="holdspeak.services.ask_service"),
-        _capability("speech.intent_classify", "Dictation intent", *writing, "Classify a dictated utterance before the writing pipeline continues.", operation="speech.intent.classify", input_modalities=("text",), output_kind="dictation_intent", structured_output=True, minimum_context_tokens=1024, policy="retry.structured.standard", fallback_dispositions=("known_no_generation_transient", "provider_permanent", "invalid_typed_output"), source_module="holdspeak.speech_session"),
+        _capability("thought.interview", "Thought development", *thought, "Develop a Thought through its question-or-synthesis result contract.", operation="thought.interview", output_kind="question_or_synthesis", result_contract="holdspeak.refinement.question_or_synthesis@1", structured_output=True, minimum_context_tokens=8192, fallback_dispositions=structured_fallback, source_module="holdspeak.services.refinement_coordinator", revision=2),
+        _capability("ask.answer", "Ask answer", *thought, "Answer a direct desk question with its admitted context.", operation="ask.answer", output_kind="ask_answer", minimum_context_tokens=4096, fallback_dispositions=text_fallback, source_module="holdspeak.services.ask_service", revision=2),
+        _capability("speech.intent_classify", "Dictation intent", *writing, "Classify a dictated utterance before the writing pipeline continues.", operation="speech.intent.classify", input_modalities=("text",), output_kind="dictation_intent", structured_output=True, minimum_context_tokens=1024, policy="retry.structured.standard", fallback_dispositions=("known_no_generation_transient", "provider_permanent", "invalid_typed_output"), source_module="holdspeak.speech_session", revision=2),
         _capability("speech.rewrite", "Dictation rewrite", *writing, "Rewrite dictated words under the selected writing policy.", operation="speech.rewrite", output_kind="rewritten_text", minimum_context_tokens=2048, fallback_dispositions=text_fallback, source_module="holdspeak.speech_session"),
-        _capability("speech.punctuate", "Dictation punctuation", *writing, "Restore punctuation for a dictated text result.", operation="speech.punctuate", output_kind="punctuated_text", minimum_context_tokens=1024, fallback_dispositions=text_fallback, source_module="holdspeak.speech_session"),
+        # Lexical punctuation remains a dormant future seam until a selected
+        # provider-backed stage exists.  It must not appear assignable/ready.
+        _capability("speech.punctuate", "Dictation punctuation", *future, "Future provider-backed punctuation stage.", operation="speech.punctuate", output_kind="punctuated_text", minimum_context_tokens=1024, fallback_dispositions=text_fallback, visibility="future", source_module="holdspeak.speech_session"),
         _capability("speech.target_classify", "Dictation target", *writing, "Classify a bounded target profile for the active writing request.", operation="speech.target.classify", output_kind="dictation_target", structured_output=True, minimum_context_tokens=1024, policy="retry.structured.standard", fallback_dispositions=("known_no_generation_transient", "provider_permanent", "invalid_typed_output"), source_module="holdspeak.target_profile"),
         _capability("speech.transcribe", "Speech transcription", *speech, "Transcribe admitted audio into text.", operation="speech.transcribe", input_modalities=("audio",), output_kind="transcript", audio=True, minimum_context_tokens=1, policy="retry.audio.transcription", boundaries=("local", "mesh", "private_network"), fallback_dispositions=("known_no_generation_transient", "provider_permanent", "local_capacity_unavailable"), source_module="holdspeak.speech_session.transcription"),
         _capability("speech.preload", "Speech preload", *internal, "Warm a fixed speech artifact before an admitted transcription child.", operation="speech.preload", input_modalities=("audio",), output_kind="lifecycle", audio=True, minimum_context_tokens=1, policy="retry.internal.lifecycle", boundaries=("local", "mesh", "private_network"), fallback_dispositions=("known_no_generation_transient",), visibility="internal", source_module="holdspeak.speech_session.transcription"),

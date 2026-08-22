@@ -18,6 +18,22 @@ def materialize(conn: Any, stage: Any, permit: Any) -> dict[str, Any]:
     ).fetchone()
     if receipt is None:
         raise KernelRefused("projection_receipt_missing")
+    routed = conn.execute(
+        """SELECT a.id AS attempt_id,e.state,e.terminal_outcome,e.winning_attempt_id
+             FROM inference_route_attempts a
+             JOIN inference_route_executions e ON e.id=a.execution_id
+            WHERE a.child_operation_id=?""",
+        (stage.operation_id,),
+    ).fetchone()
+    if routed is not None and (
+        str(routed["state"]) != "terminal"
+        or str(routed["terminal_outcome"]) != "succeeded"
+        or str(routed["winning_attempt_id"]) != str(routed["attempt_id"])
+    ):
+        # A succeeded physical child is only a candidate.  Generic startup
+        # recovery must never publish it before the controller settles the
+        # logical route or when another attempt won.
+        raise KernelRefused("projection_route_winner_missing")
     payload = dict(stage.projection)
     payload.update({
         "invocation_id": stage.invocation_id,

@@ -8,8 +8,8 @@
 > from evidence, Terra waves with serialized shipping, walks, honest ledgers —
 > is canon at [`docs/internal/ORCHESTRATION.md`](../../../docs/internal/ORCHESTRATION.md).
 
-**Newest update (2026-08-21): Phase 143 — The Intelligence Router — ACTIVE
-(1/14).**
+**Newest update (2026-08-22): Phase 143 — The Intelligence Router — ACTIVE
+(6/14 complete; Story 06 closeout tracked separately).**
 The full execution charter is ready: one server-owned capability registry,
 reusable immutable model profiles with hub-local bindings, sparse ordered
 Assignments, frozen per-run route plans, and durable disposition-driven
@@ -22,7 +22,12 @@ stays bounded as capabilities grow; ordered fallbacks are edited in one atomic
 sheet and local-to-cloud expansion is explicit. Story 01 is done: three exact
 generated ledgers now fail closed on new Python or Swift execution doors,
 semantic AI callers, mutable routing authorities, browser selectors, and
-retry/fallback branches. Fourteen recipe-like stories,
+retry/fallback branches. Stories 02 through 05 add the sealed capability
+registry, reusable profile authority, assignments, and frozen route plans.
+Story 06's durable controller substrate is merged, and Story 07 now proves the
+first production adoption: Ask, Thought interview, intent classification, and
+rewrite use atomic frozen evidence and controller-owned fallback, including a
+saved local-to-cloud boundary proof. Fourteen recipe-like stories,
 the repository census, architecture contract, owner experience, migration law,
 kill criteria, and chaos/glass matrix are in the
 [Phase 143 record](./phase-143-intelligence-router/current-phase-status.md).

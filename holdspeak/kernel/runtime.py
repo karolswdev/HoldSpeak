@@ -7,7 +7,7 @@ from contextvars import ContextVar
 from typing import Any, Mapping, Sequence
 
 from ..privileged_effects.desktop_executor import DesktopEffectExecutor
-from ..principals import UNAUTHENTICATED
+from ..principals import Principal, PrincipalKind, UNAUTHENTICATED
 from .actuator import ActuatorCodec
 from .broker import Broker
 from .desktop_type_text import DesktopTypeTextCodec
@@ -150,7 +150,22 @@ def _build(database: Any, *, clock: Any = None) -> Broker:
     register_meeting_plugin_projection(broker.projection_stager)
     register_sequence_workflow_projection(broker.projection_stager)
     register_workbench_projection(broker.projection_stager)
+    # Compose the routed controller before candidate recovery so every staged
+    # inference result is interpreted against its logical route winner.
+    from ..services.inference_adoption_service import RoutedInferenceCoordinator
+
+    broker.inference_adoption_service = RoutedInferenceCoordinator(
+        database, broker=broker, registry=broker.inference_capability_registry
+    )
+    # The one-way adapter is startup-owned.  It either installs the exact
+    # family marker or records no authority change and returns a deterministic
+    # repair issue; request paths never invoke it opportunistically.
+    from ..config import Config
+    broker.inference_adoption_migration = broker.inference_adoption_service.migrate_legacy_config(
+        Principal(PrincipalKind.OWNER, "inference-adoption-startup"), Config.load()
+    )
     broker.parent_run_controller.reconcile_abandoned()
+    broker.inference_adoption_recovery = broker.inference_adoption_service.recover_route_executions()
     broker.projection_stager.recover()
     # One inference runner per configured broker: the runner's in-process
     # invocation registry is what makes cancellation reachable, so every
@@ -161,6 +176,14 @@ def _build(database: Any, *, clock: Any = None) -> Broker:
     broker.inference_runner = InferenceRunner(
         broker, database, principal_provider=_principal.get,
         **({"clock": clock} if clock else {}),
+    )
+    # HS-143-07: the first production adopters are process composition, not a
+    # request-supplied controller.  One evidence owner, route planner, fallback
+    # controller, and routed runtime are installed beside the singleton Runner.
+    from ..services.inference_fallback_controller import RoutedAttemptRuntime
+
+    broker.inference_runner._routed_attempt_runtime = RoutedAttemptRuntime(
+        broker.inference_adoption_service.controller
     )
     launch_service.bind_kernel(broker)
     return broker

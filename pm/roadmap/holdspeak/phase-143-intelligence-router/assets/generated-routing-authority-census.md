@@ -5,6 +5,12 @@ merged `main`. This is the checked-in review fixture for HSEGHS001HS104-143-01;
 it records today's authority, not the intended Phase 143 design. Test coverage:
 `tests/unit/test_phase143_routing_authority_census.py`.
 
+**Story 143-07 delta (2026-08-22):** post-marker Ask/Thought execution no
+longer reads request-time selectors or Config. Speech's routed adapter resolves
+only the controller-reserved immutable `DeploymentRevision` named by the issued
+dispatch context (`speech_session/provider.py`); that lookup is execution
+evidence, not mutable placement authority.
+
 ## Classification vocabulary
 
 | Classification | Meaning |

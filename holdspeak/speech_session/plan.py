@@ -506,6 +506,17 @@ class DictationSessionPlanResolver:
 
         model_terms = _model_terms(getattr(config_snapshot, "model", None))
         pipeline_terms = _pipeline_terms(config_snapshot)
+        routed_assignments = False
+        if hasattr(registry_snapshot, "_connection"):
+            with registry_snapshot._connection() as conn:
+                routed_assignments = conn.execute(
+                    "SELECT 1 FROM inference_assignment_migrations WHERE family='thoughts-writing-route-assignments'"
+                ).fetchone() is not None
+        if routed_assignments:
+            # Retained Config bytes are migration history, not assignment
+            # authority and not part of the post-cutover plan identity.
+            pipeline_terms = dict(pipeline_terms)
+            pipeline_terms["runtime_profile_id"] = None
 
         declared = list(dict.fromkeys(str(name) for name in capabilities if str(name).strip()))
         # ``plan_defaults=False`` (HS-131-15) is how a SYNTHETIC-TEXT entry says
@@ -516,6 +527,8 @@ class DictationSessionPlanResolver:
         if not declared and plan_defaults:
             declared = [CAPABILITY_WHISPER_TRANSCRIBE, CAPABILITY_WHISPER_PRELOAD]
             declared.extend(_pipeline_capabilities(pipeline_terms))
+        if routed_assignments:
+            declared = [name for name in declared if name != CAPABILITY_PUNCTUATE]
 
         frozen: dict[str, tuple[str, ...]] = {}
         unresolved: list[str] = []
@@ -537,6 +550,11 @@ class DictationSessionPlanResolver:
             if name in (CAPABILITY_WHISPER_TRANSCRIBE, CAPABILITY_WHISPER_PRELOAD):
                 assert whisper is not None
                 frozen[name] = (whisper.id,)
+                continue
+            if routed_assignments and name in {
+                CAPABILITY_INTENT_CLASSIFY, CAPABILITY_REWRITE, CAPABILITY_PUNCTUATE
+            }:
+                frozen[name] = (f"routed:{name}",)
                 continue
             if provider_legs is None:
                 provider_legs = self._provider_legs(registry_snapshot, pipeline_terms)

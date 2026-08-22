@@ -50,7 +50,7 @@ Assignments.
 | HSEGHS001HS104-143-04 | Assignment Store and Resolver | done | [story-04-assignment-store-resolver](./story-04-assignment-store-resolver.md) | [evidence](./evidence-story-04.md) |
 | HSEGHS001HS104-143-05 | Frozen Route Plans | done | [story-05-frozen-route-plans](./story-05-frozen-route-plans.md) | [evidence](./evidence-story-05.md) |
 | HSEGHS001HS104-143-06 | Fallback Controller and Failure Law | in-progress | [story-06-fallback-controller-failure-law](./story-06-fallback-controller-failure-law.md) | - |
-| HSEGHS001HS104-143-07 | Thoughts Ask and Writing Adoption | backlog | [story-07-thoughts-ask-writing-adoption](./story-07-thoughts-ask-writing-adoption.md) | - |
+| HSEGHS001HS104-143-07 | Thoughts Ask and Writing Adoption | done | [story-07-thoughts-ask-writing-adoption](./story-07-thoughts-ask-writing-adoption.md) | [evidence](./evidence-story-07.md) |
 | HSEGHS001HS104-143-08 | Meetings Speech and Background Adoption | backlog | [story-08-meetings-speech-background-adoption](./story-08-meetings-speech-background-adoption.md) | - |
 | HSEGHS001HS104-143-09 | Tool Capability Foundation and Safe Routing | backlog | [story-09-tool-turn-routing-safe-fallback](./story-09-tool-turn-routing-safe-fallback.md) | - |
 | HSEGHS001HS104-143-10 | Agents Workbenches and Recipes Adoption | backlog | [story-10-agents-workbenches-recipes-adoption](./story-10-agents-workbenches-recipes-adoption.md) | - |
@@ -69,7 +69,7 @@ transport-neutral profile authority, scattered Config/subject pointers,
 late-routing `inference.run`, raw-SQL Workbench resolution, fake workflow
 fallback labels, and path-bearing profile sync.
 
-Stories 01 through 05 are done. Three generated, mutation-tested ledgers now fail closed on a
+Stories 01 through 05 and Story 07 are done. Three generated, mutation-tested ledgers now fail closed on a
 new execution door, semantic helper caller, mutable resolver/pointer, browser
 selector, or Swift physical/fallback path. The baseline records 99 Python
 model-shaped sites, 14 Python physical leaves with zero bypasses, and seven
@@ -87,9 +87,13 @@ fixed seven-row owner projection. Story 05 now freezes content-free route and
 private request-plan evidence before execution, with deterministic replay and
 independently reconstructable admission evidence. Story 06's durable controller,
 failure law, receipt authority, and dormant routed-runtime seam are implemented
-and green. Its remaining acceptance item is one lawful activated local-to-cloud
-traversal, which the first cloud-capable adopter in Stories 07/08/10 must supply;
-the controller does not fabricate a cloud deployment to make that proof pass.
+and green. Story 07 now supplies the first lawful saved local-to-cloud adopter
+proof; Story 06's separate closeout remains an atomic tracking update rather
+than being folded into this story's commit.
+Story 07 routes Ask, Thought interview, speech intent, and rewrite through the
+sealed coordinator with atomic frozen evidence, controller-owned fallback,
+restart recovery, Stop fencing, and one-way legacy cutover. Lexical punctuation
+is explicitly future/non-assignable until a model-backed stage exists.
 Stories 11–13 ship parity and the two owner jobs: Model Library and Assignments.
 Story 14 is the cross-product chaos/glass gate.
 

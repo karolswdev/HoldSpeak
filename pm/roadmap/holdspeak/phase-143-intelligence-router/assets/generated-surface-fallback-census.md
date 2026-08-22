@@ -5,6 +5,10 @@
 fails when a new private selector, recovery helper, or browser routing-pointer
 surface lacks a reviewed classification.
 
+Story 143-07 adds `holdspeak/services/ask_service.py` as the controller-winner
+application-projection owner; `_routed_projection` decorates an already elected
+physical result and never selects or advances a route.
+
 ## Classification rule
 
 Each surface/family below has **exactly one Phase 143 story** as its migration

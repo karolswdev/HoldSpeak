@@ -274,7 +274,26 @@ class ParentRunController:
     def reconcile_abandoned(self) -> int:
         now, closed = self._clock(), 0
         with self._database._connection() as conn:
+            placeholders = ",".join("?" for _ in self._operation_names.values())
+            orphaned = conn.execute(
+                f"""SELECT o.operation_id FROM kernel_operations o
+                       LEFT JOIN kernel_parent_runs p ON p.operation_id=o.operation_id
+                      WHERE o.state='claimed' AND p.operation_id IS NULL
+                        AND o.name IN ({placeholders})""",
+                tuple(self._operation_names.values()),
+            ).fetchall()
             rows = conn.execute("SELECT p.*,o.principal_kind,o.principal_identity FROM kernel_parent_runs p JOIN kernel_operations o ON o.operation_id=p.operation_id WHERE p.state IN ('OPEN','CANCELLING') AND (p.lease_heartbeat_at IS NULL OR p.lease_heartbeat_at < ?)", (now-self._lease_seconds,)).fetchall()
+        for orphan in orphaned:
+            try:
+                self._broker.receipt(
+                    str(orphan["operation_id"]),
+                    "indeterminate",
+                    "parent-recovery:missing-context",
+                    self._node,
+                )
+                closed += 1
+            except KernelRefused:
+                pass
         for row in rows:
             child = str(row["active_child_invocation_id"] or "")
             if child:

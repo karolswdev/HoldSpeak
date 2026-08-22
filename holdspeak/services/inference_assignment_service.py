@@ -825,6 +825,145 @@ class InferenceAssignmentService:
             "committed_at": str(row["committed_at"]),
         }
 
+    def migrate_capability_assignments_atomically(
+        self,
+        principal: Principal,
+        *,
+        family: str,
+        source_sha256: str,
+        capability_entries: Mapping[str, Mapping[str, Any]],
+    ) -> dict[str, Any]:
+        """Install missing capability defaults and the cutover marker together.
+
+        Any already-effective compatible owner assignment wins, including a
+        group or global assignment.  A crash can therefore expose neither a
+        partial migrated family nor assignments lacking their family marker.
+        """
+        self._require_owner(principal)
+        clean_family = _safe_id(family, field="family")
+        if not re.fullmatch(r"sha256:[0-9a-f]{64}", str(source_sha256)):
+            raise ValidationError(
+                "Migration source hash is invalid", code="inference_assignment_invalid"
+            )
+        if not capability_entries:
+            raise ValidationError(
+                "Migration assignments are empty", code="inference_assignment_invalid"
+            )
+        with self._db._connection() as conn:
+            conn.execute("BEGIN IMMEDIATE")
+            try:
+                existing = conn.execute(
+                    "SELECT * FROM inference_assignment_migrations WHERE family=?",
+                    (clean_family,),
+                ).fetchone()
+                if existing is not None:
+                    stored = json.loads(str(existing["result_json"]))
+                    if str(existing["result_sha256"]) != _sha256(stored):
+                        raise ConflictError(
+                            "Stored migration marker integrity could not be verified.",
+                            code="inference_assignment_migration_integrity_invalid",
+                        )
+                    conn.commit()
+                    return {**stored, "committed_at": str(existing["committed_at"])}
+
+                proofs: dict[str, dict[str, Any]] = {}
+                for capability_id, raw_entry in sorted(capability_entries.items()):
+                    capability = self._require_assignable(capability_id)
+                    resolved = self._resolve(conn, capability)
+                    if resolved["status"] == "assigned":
+                        projection = resolved["assignment"]
+                        assignment_key = self._scope(projection["scope"])["assignment_key"]
+                    elif resolved["status"] == "no_compatible_assignment":
+                        raise ValidationError(
+                            "Existing owner assignment is incompatible with migration.",
+                            code="inference_assignment_incompatible",
+                            context={"capability_id": capability_id},
+                        )
+                    else:
+                        scope = self._scope(
+                            {"kind": "capability", "capability_id": capability_id}
+                        )
+                        entries = self._validate_entries(conn, [raw_entry], scope)
+                        issues = self._compatibility_issues(conn, entries, (capability,))
+                        blockers = self._save_blockers(scope, entries, (capability,), issues)
+                        if blockers:
+                            raise ValidationError(
+                                "Migration model is incompatible.",
+                                code="inference_assignment_incompatible",
+                                context={"issues": blockers},
+                            )
+                        assignment_id = "ia_" + uuid.uuid4().hex
+                        created_at = _now()
+                        material = {
+                            "schema": ASSIGNMENT_SCHEMA,
+                            "id": assignment_id,
+                            "scope": self._public_scope(scope),
+                            "entries": entries,
+                            "retry_policy_id": None,
+                            "revision": 1,
+                            "created_at": created_at,
+                        }
+                        digest = _sha256(material)
+                        conn.execute(
+                            """INSERT INTO inference_assignment_revisions
+                               (assignment_id,revision,assignment_key,scope_kind,scope_id,
+                                subject_kind,selector_kind,capability_id,group_id,retry_policy_id,
+                                payload_json,sha256,created_at)
+                               VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                            (
+                                assignment_id, 1, scope["assignment_key"], "global", "", "",
+                                "capability", capability_id, "", None,
+                                _canonical(material), digest, created_at,
+                            ),
+                        )
+                        conn.execute(
+                            "INSERT INTO inference_assignment_heads VALUES (?,?,?,?,?)",
+                            (scope["assignment_key"], assignment_id, 1, 0, created_at),
+                        )
+                        for entry in entries:
+                            conn.execute(
+                                "INSERT INTO inference_assignments VALUES (?,?,?,?,?,?,?)",
+                                (
+                                    f"{assignment_id}:1:{entry['ordinal']}", assignment_id, 1,
+                                    entry["profile_id"], entry["profile_revision"],
+                                    entry["profile_schema_version"], entry["ordinal"],
+                                ),
+                            )
+                        row = self._head(conn, scope["assignment_key"])
+                        if row is None:  # pragma: no cover - transaction invariant
+                            raise ConflictError(
+                                "Migration assignment was not stored.",
+                                code="inference_assignment_migration_incomplete",
+                            )
+                        projection = self._row_projection(conn, row, capability=capability)
+                        assignment_key = scope["assignment_key"]
+                    proofs[assignment_key] = {
+                        "assignment_key": assignment_key,
+                        "assignment_id": projection["id"],
+                        "revision": projection["revision"],
+                        "sha256": projection["sha256"],
+                    }
+                result = {
+                    "schema": "InferenceAssignmentMigrationMarker@1",
+                    "family": clean_family,
+                    "marker_revision": 1,
+                    "source_sha256": str(source_sha256),
+                    "assignments": sorted(proofs.values(), key=lambda item: item["assignment_key"]),
+                }
+                committed_at = _now()
+                conn.execute(
+                    "INSERT INTO inference_assignment_migrations VALUES (?,?,?,?,?,?)",
+                    (
+                        clean_family, 1, source_sha256, _canonical(result),
+                        _sha256(result), committed_at,
+                    ),
+                )
+                conn.commit()
+                return {**result, "committed_at": committed_at}
+            except Exception:
+                conn.rollback()
+                raise
+
     def commit_migration_marker(
         self, principal: Principal, body: Mapping[str, Any]
     ) -> dict[str, Any]:

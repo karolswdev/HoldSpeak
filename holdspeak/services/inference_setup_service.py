@@ -11,7 +11,7 @@ import re
 import shutil
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Callable, Iterable
+from typing import Any, Callable
 
 from ..config import Config
 from ..deployment_revisions import DeploymentRevision
@@ -592,12 +592,18 @@ class InferenceSetupApplicationService:
             limitations.append({"code": "current_thought_deployment_unavailable", "title": "Current AI is unavailable", "detail": _safe_reason(target), "repair": {"action": "open_models", "label": "Choose AI"}})
         if any(row["format"] == "mlx_safetensors" for row in artifacts):
             limitations.append({"code": "mlx_thought_execution_unsupported", "title": "MLX is not available for Thoughts yet", "detail": "Detected MLX models remain available to existing writing and dictation paths only.", "repair": {"action": "none", "label": "No action available"}})
-        return {
-            "schema_version": SCHEMA_VERSION,
-            "observed_at": now.astimezone(timezone.utc).isoformat().replace("+00:00", "Z"),
-            "hardware": hardware,
-            "runtimes": runtimes,
-            "current_routes": {
+        with self._db._connection() as conn:
+            routed = conn.execute(
+                "SELECT 1 FROM inference_assignment_migrations WHERE family='thoughts-writing-route-assignments'"
+            ).fetchone() is not None
+        current_routes = (
+            {
+                "authority": "inference_assignments",
+                "thoughts": {"capability_id": "thought.interview"},
+                "dictation": {"capability_ids": ["speech.intent_classify", "speech.rewrite"]},
+                "meetings": {"target_id": config.meeting.intel_profile_id, "provider": config.meeting.intel_provider},
+            }
+            if routed else {
                 "authority": "config",
                 "thoughts": {
                     "target_id": config.thoughts.inference_target_id,
@@ -606,7 +612,14 @@ class InferenceSetupApplicationService:
                 },
                 "dictation": {"target_id": config.dictation.runtime.profile_id, "backend": config.dictation.runtime.backend},
                 "meetings": {"target_id": config.meeting.intel_profile_id, "provider": config.meeting.intel_provider},
-            },
+            }
+        )
+        return {
+            "schema_version": SCHEMA_VERSION,
+            "observed_at": now.astimezone(timezone.utc).isoformat().replace("+00:00", "Z"),
+            "hardware": hardware,
+            "runtimes": runtimes,
+            "current_routes": current_routes,
             "current_thought_deployment": {
                 "source": source,
                 "configured_target_id": configured_target_id,

@@ -8,7 +8,7 @@ independently of the Database container.
 # missing tables and columns by comparing the live database against this
 # SCHEMA_SQL shape directly, so you do NOT need to bump this to have a shape
 # change take effect. Just edit SCHEMA_SQL; the reconcile applies it on open.
-SCHEMA_VERSION = 63  # informational; owner's real DB is stamped 63
+SCHEMA_VERSION = 64  # informational; owner's real DB is stamped 64
 
 # SQL Schema
 SCHEMA_SQL = """
@@ -1965,6 +1965,9 @@ CREATE TABLE IF NOT EXISTS refinement_invocations (
     frozen_attachment_sha256 TEXT NOT NULL DEFAULT '',
     admission_json TEXT NOT NULL DEFAULT '{}',
     admission_sha256 TEXT NOT NULL DEFAULT '',
+    route_plan_id TEXT,
+    operation_plan_id TEXT,
+    route_execution_id TEXT,
     review_result_id TEXT UNIQUE,
     state TEXT NOT NULL CHECK (state IN (
         'reserved','in_flight','awaiting_projection','review_ready',
@@ -2546,6 +2549,21 @@ CREATE TRIGGER IF NOT EXISTS inference_route_plan_authority_no_delete
 BEFORE DELETE ON inference_route_plan_authority_evidence BEGIN
     SELECT RAISE(ABORT, 'immutable inference route authority evidence');
 END;
+CREATE TABLE IF NOT EXISTS inference_route_plan_preflight_evidence (
+    plan_id TEXT NOT NULL REFERENCES inference_route_plans(id),
+    route_leg_ordinal INTEGER NOT NULL CHECK (route_leg_ordinal BETWEEN 1 AND 4),
+    eligibility TEXT NOT NULL CHECK (eligibility IN ('executable','known_preflight_unavailable')),
+    reason_code TEXT,
+    PRIMARY KEY (plan_id, route_leg_ordinal)
+);
+CREATE TRIGGER IF NOT EXISTS inference_route_plan_preflight_no_update
+BEFORE UPDATE ON inference_route_plan_preflight_evidence BEGIN
+    SELECT RAISE(ABORT, 'immutable inference route preflight evidence');
+END;
+CREATE TRIGGER IF NOT EXISTS inference_route_plan_preflight_no_delete
+BEFORE DELETE ON inference_route_plan_preflight_evidence BEGIN
+    SELECT RAISE(ABORT, 'immutable inference route preflight evidence');
+END;
 
 -- Private request planning retains hashes and frozen per-leg eligibility, not
 -- owner material.  Story 06 consumes these rows but owns controller advance.
@@ -2615,6 +2633,83 @@ END;
 CREATE TRIGGER IF NOT EXISTS inference_operation_route_attempt_budgets_no_delete
 BEFORE DELETE ON inference_operation_route_attempt_budget_evidence BEGIN
     SELECT RAISE(ABORT, 'immutable operation route attempt budgets');
+END;
+
+-- HS-143-07: application-owned private material and exact per-leg request
+-- serialization. These rows are local-only and immutable: route planning may
+-- reconstruct their hashes, but sync and public route receipts never expose
+-- prompt/context bytes.
+CREATE TABLE IF NOT EXISTS inference_adoption_material_snapshots (
+    planning_reference TEXT PRIMARY KEY,
+    capability_id TEXT NOT NULL,
+    operation_id TEXT NOT NULL UNIQUE,
+    contract TEXT NOT NULL,
+    contract_revision TEXT NOT NULL,
+    payload_json TEXT NOT NULL,
+    payload_sha256 TEXT NOT NULL,
+    material_snapshot_sha256 TEXT NOT NULL UNIQUE,
+    reserved_output_tokens INTEGER NOT NULL CHECK (reserved_output_tokens >= 0),
+    reserved_tool_calls INTEGER NOT NULL CHECK (reserved_tool_calls >= 0),
+    created_at TEXT NOT NULL
+);
+CREATE TRIGGER IF NOT EXISTS inference_adoption_material_no_update
+BEFORE UPDATE ON inference_adoption_material_snapshots BEGIN
+    SELECT RAISE(ABORT, 'immutable inference adoption material');
+END;
+CREATE TRIGGER IF NOT EXISTS inference_adoption_material_no_delete
+BEFORE DELETE ON inference_adoption_material_snapshots BEGIN
+    SELECT RAISE(ABORT, 'immutable inference adoption material');
+END;
+CREATE TABLE IF NOT EXISTS inference_adoption_route_evidence (
+    evidence_ref TEXT PRIMARY KEY,
+    planning_reference TEXT NOT NULL UNIQUE
+        REFERENCES inference_adoption_material_snapshots(planning_reference),
+    operation_id TEXT NOT NULL UNIQUE,
+    capability_id TEXT NOT NULL,
+    material_snapshot_sha256 TEXT NOT NULL,
+    evidence_json TEXT NOT NULL,
+    evidence_sha256 TEXT NOT NULL UNIQUE,
+    created_at TEXT NOT NULL
+);
+CREATE TRIGGER IF NOT EXISTS inference_adoption_route_evidence_no_update
+BEFORE UPDATE ON inference_adoption_route_evidence BEGIN
+    SELECT RAISE(ABORT, 'immutable inference adoption route evidence');
+END;
+CREATE TRIGGER IF NOT EXISTS inference_adoption_route_evidence_no_delete
+BEFORE DELETE ON inference_adoption_route_evidence BEGIN
+    SELECT RAISE(ABORT, 'immutable inference adoption route evidence');
+END;
+CREATE TABLE IF NOT EXISTS inference_adoption_composites (
+    composite_id TEXT PRIMARY KEY,
+    command_id TEXT NOT NULL UNIQUE,
+    request_sha256 TEXT NOT NULL,
+    operation_plan_ids_json TEXT NOT NULL,
+    result_sha256 TEXT NOT NULL UNIQUE,
+    created_at TEXT NOT NULL
+);
+CREATE TRIGGER IF NOT EXISTS inference_adoption_composites_no_update
+BEFORE UPDATE ON inference_adoption_composites BEGIN
+    SELECT RAISE(ABORT, 'immutable inference adoption composite');
+END;
+CREATE TRIGGER IF NOT EXISTS inference_adoption_composites_no_delete
+BEFORE DELETE ON inference_adoption_composites BEGIN
+    SELECT RAISE(ABORT, 'immutable inference adoption composite');
+END;
+CREATE TABLE IF NOT EXISTS inference_adoption_attempt_results (
+    attempt_id TEXT PRIMARY KEY,
+    child_invocation_id TEXT NOT NULL UNIQUE,
+    producer_result_ref TEXT NOT NULL UNIQUE,
+    result_json TEXT NOT NULL,
+    result_sha256 TEXT NOT NULL,
+    created_at TEXT NOT NULL
+);
+CREATE TRIGGER IF NOT EXISTS inference_adoption_attempt_results_no_update
+BEFORE UPDATE ON inference_adoption_attempt_results BEGIN
+    SELECT RAISE(ABORT, 'immutable inference adoption attempt result');
+END;
+CREATE TRIGGER IF NOT EXISTS inference_adoption_attempt_results_no_delete
+BEFORE DELETE ON inference_adoption_attempt_results BEGIN
+    SELECT RAISE(ABORT, 'immutable inference adoption attempt result');
 END;
 
 -- HS-143-06: one durable fallback-controller state machine above the physical

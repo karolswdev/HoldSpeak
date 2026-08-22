@@ -49,6 +49,7 @@ BACKEND_PRIVATE_DECISIONS: dict[tuple[str, str], tuple[str, str]] = {
     ("holdspeak/services/inference_route_plan_service.py", "_route_from_row"): ("canonical route-plan evidence reconstruction", "143-05"),
     ("holdspeak/services/inference_route_plan_service.py", "_validate_route_material"): ("canonical closed route-plan validator", "143-05"),
     ("holdspeak/services/inference_fallback_controller.py", "_route_execution_receipt"): ("immutable route execution receipt reconstruction", "143-06"),
+    ("holdspeak/services/ask_service.py", "_routed_projection"): ("controller-winner application projection", "143-07"),
     ("holdspeak/services/inference_setup_service.py", "_thought_target"): ("legacy Thoughts selector", "143-07"),
     ("holdspeak/services/inference_setup_service.py", "_safe_target"): ("setup readiness selector", "143-12"),
     ("holdspeak/services/meeting_intel_service.py", "_retry"): ("explicit owner recovery request", "143-08"),

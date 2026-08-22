@@ -84,7 +84,14 @@ class ProjectionStager:
             raise TypeError("projection encoder must be callable")
         return StagePublisher(self, invocation_id, kind, encoder)
 
-    def stage(self, invocation_id: str, kind: str, projection: Mapping[str, Any]) -> ProjectionStage:
+    def stage(
+        self,
+        invocation_id: str,
+        kind: str,
+        projection: Mapping[str, Any],
+        *,
+        result_sha256: str | None = None,
+    ) -> ProjectionStage:
         material = _canonical(dict(projection))
         digest = "sha256:" + hashlib.sha256(material.encode()).hexdigest()
         now = self._clock()
@@ -104,13 +111,18 @@ class ProjectionStager:
                     raise KernelRefused("projection_stage_payload_conflict")
                 return self._row(existing)
             stage_id = "pstg_" + uuid.uuid4().hex
+            result_ref = f"projection-stage:{stage_id}"
+            if result_sha256 is not None:
+                if not re.fullmatch(r"sha256:[0-9a-f]{64}", result_sha256):
+                    raise KernelRefused("projection_result_digest_invalid")
+                result_ref += f"/{result_sha256}"
             conn.execute(
                 """INSERT INTO kernel_projection_stages(
                     stage_id,invocation_id,operation_id,kind,projection_json,projection_sha256,
                     result_ref,state,created_at,updated_at
                 ) VALUES(?,?,?,?,?,?,?,?,?,?)""",
                 (stage_id, invocation_id, operation["operation_id"], kind, material, digest,
-                 f"projection-stage:{stage_id}", "STAGED", now, now),
+                 result_ref, "STAGED", now, now),
             )
             row = conn.execute("SELECT * FROM kernel_projection_stages WHERE stage_id=?", (stage_id,)).fetchone()
         return self._row(row)
@@ -256,7 +268,7 @@ class ProjectionStager:
     def recover(self) -> Mapping[str, Any]:
         """Reap first, then reconcile durable stages without inventing truth."""
         reaped = self._broker.reap_expired()
-        finalized = discarded = 0
+        finalized = discarded = deferred = 0
         faults: list[dict[str, str]] = []
         with self._database._connection() as conn:
             rows = conn.execute("SELECT * FROM kernel_projection_stages WHERE state IN ('STAGED','FINALIZING')").fetchall()
@@ -265,8 +277,17 @@ class ProjectionStager:
             receipt = self._broker.store.receipt(stage.operation_id)
             if receipt is not None:
                 if str(receipt["outcome"]) == "succeeded":
-                    if self.finalize(stage.invocation_id) is not None:
-                        finalized += 1
+                    try:
+                        if self.finalize(stage.invocation_id) is not None:
+                            finalized += 1
+                    except KernelRefused as exc:
+                        if exc.reason != "projection_route_winner_missing":
+                            raise
+                        # A routed physical success is merely a candidate until
+                        # the controller durably elects it.  Keep the stage for
+                        # route recovery instead of either publishing it or
+                        # making process startup fail.
+                        deferred += 1
                 else:
                     self.finalize(stage.invocation_id)
                     discarded += 1
@@ -276,7 +297,8 @@ class ProjectionStager:
                 fault = {"code": "terminal_operation_without_receipt", "operation_id": stage.operation_id, "stage_id": stage.stage_id}
                 faults.append(fault)
         self._health_faults = faults
-        return {"reaped": reaped, "finalized": finalized, "discarded": discarded, "healthy": not faults, "faults": faults}
+        return {"reaped": reaped, "finalized": finalized, "discarded": discarded,
+                "deferred": deferred, "healthy": not faults, "faults": faults}
 
     @property
     def health_faults(self) -> tuple[Mapping[str, str], ...]:

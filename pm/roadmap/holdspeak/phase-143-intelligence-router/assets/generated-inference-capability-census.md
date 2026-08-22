@@ -15,7 +15,7 @@ capability and source-owner classification.
 
 ## Current result
 
-99 Python production model-shaped sites are registered. There are 14 direct
+100 Python production model-shaped sites are registered. There are 14 direct
 Python provider/model leaves and **zero Python legacy bypasses**. The Phase 131
 findings ledger is empty. `InferenceRunner` remains the Python physical
 admission waist; all Python direct leaves are context-gated adapters or
@@ -25,7 +25,7 @@ inventoried legacy physical leaves below; it does not yet use the Python runner.
 | Proposed capability | Sites | Current source owner |
 |---|---:|---|
 | `agent.tool_turn` | 1 | `plugins.intelligence` |
-| `internal.inference.dispatch` | 37 | runner, target factories, MeetingIntel provider adapters |
+| `internal.inference.dispatch` | 38 | runner, target factories, MeetingIntel provider adapters |
 | `internal.speech.runtime_assembly` | 15 | speech-session/dictation runtime assembly |
 | `meeting.auto_title` | 2 | `meeting_session` |
 | `meeting.bookmark_label` | 2 | `meeting_session` |
@@ -76,7 +76,7 @@ Phase 131 `allowlist` site and that its recorded admission is `InferenceRunner`.
 
 ## Product entrances into the runner
 
-The physical-site inventory above is not enough on its own: these are the 12
+The physical-site inventory above is not enough on its own: these are the 13
 production callers of `InferenceRunner.invoke`, including first-class bound
 method references passed to `asyncio.to_thread`. The checked-in fixture fails
 on any new `.invoke` expression, so a new service cannot inherit an existing
@@ -87,7 +87,8 @@ source owner's review by merely using the runner.
 | `kernel/mesh_local_runner.py:232` | dynamic: frozen mesh dispatch-offer capability | `kernel.mesh_local_runner` |
 | `meeting_session/intel_child.py:193` | dynamic: frozen `MeetingIntelPlan` capability | `meeting_session.intel_child` |
 | `rails_observer.py:268` | `background.rails_summary` | `rails_observer` |
-| `services/ask_service.py:63` | `internal.semantic_dispatch`; exact capability supplied by the semantic caller | `services.ask_service` |
+| `services/ask_service.py:120` | `internal.semantic_dispatch`; exact capability supplied by the semantic caller | `services.ask_service` |
+| `services/inference_adoption_service.py:1129` | dynamic: frozen `InferenceRoutePlan` capability | `services.inference_adoption_service` |
 | `services/cadence_service.py:284` | `background.cadence_draft` | `services.cadence_service` |
 | `services/decision_lifecycle_service.py:81` | `decision.promotion_draft` | `services.decision_lifecycle_service` |
 | `services/recipe_service.py:52` | `internal.semantic_dispatch`; exact capability supplied by the semantic caller | `services.recipe_service` |
@@ -97,7 +98,7 @@ source owner's review by merely using the runner.
 | `speech_session/child.py:181` | dynamic: frozen `SpeechSessionPlan` capability | `speech_session.child` |
 | `web/routes/delivery_prs.py:252` | `delivery.pr_review_draft` | `web.routes.delivery_prs` |
 
-The three dynamic rows are deliberately provenance descriptors, not fake
+The four dynamic rows are deliberately provenance descriptors, not fake
 registry IDs: their current plan or signed offer chooses a typed capability at
 admission. Story 02 must carry that exact capability into its registry/route
 plan rather than collapsing the family into one broad assignment.
@@ -106,7 +107,7 @@ plan rather than collapsing the family into one broad assignment.
 
 `AskService._invoke`, `RecipeService._invoke`, and
 `SequenceWorkflowService._invoke` are shared helpers, not capabilities. The
-semantic caller census is therefore separate from the 12 runner entrances and
+semantic caller census is therefore separate from the 13 runner entrances and
 walks every production Python module (including direct constructors, service
 factories, local aliases, and Refinement's injected Ask factory) before Story 02
 routes it. A synthetic new Ask/Recipe caller is a fail-closed test mutation.

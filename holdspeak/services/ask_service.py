@@ -3,6 +3,8 @@ from __future__ import annotations
 from holdspeak.services.observer import NullObserver, PipelineObserver, observe_service
 
 import asyncio
+import hashlib
+import json
 import time
 import uuid
 from collections.abc import Callable
@@ -11,7 +13,7 @@ from typing import Any
 
 from ..db.core import Database
 from ..deployment_revisions import capture_deployment_revision
-from ..kernel.inference_runner import InferenceRunner, InvocationRequest, ServiceContract
+from ..kernel.inference_runner import InvocationRequest, ServiceContract
 from ..kernel.model import KernelRefused
 from ..kernel.prompt_adapter import CanonicalPromptAdapter
 from ..principals import Principal
@@ -28,6 +30,61 @@ _ASK_SYSTEM_PROMPT = "You are the desk's AI core. Follow the instruction using t
 ASK_SERVICE_CONTRACT = "holdspeak.ask"
 ASK_SERVICE_SCHEMA_VERSION = "1"
 ASK_PAYLOAD_SCHEMA_VERSION = 1
+
+
+class _QuestionOrSynthesisAdapter:
+    """Validate the actual refinement union before Runner elects a winner."""
+
+    connector_id = "inference-provider"
+
+    def __init__(self, inner: Any) -> None:
+        self._inner = inner
+
+    def dispatch(self, engine: Any, payload: dict[str, Any], cancellation: Any) -> dict[str, Any]:
+        from ..inference_capabilities import (
+            InferenceCapabilityRegistryError,
+            process_inference_capability_registry,
+        )
+        from ..kernel.provider_signals import InferenceInvalidTypedOutput
+
+        result = self._inner.dispatch(engine, payload, cancellation)
+        try:
+            value = json.loads(str(result["output"]))
+            process_inference_capability_registry().require(
+                "thought.interview"
+            ).validate_result(value)
+        except (KeyError, TypeError, ValueError, json.JSONDecodeError, InferenceCapabilityRegistryError):
+            raise InferenceInvalidTypedOutput() from None
+        # Runner/controller receipts carry the physical routing truth.  The
+        # operation result is only the registry-declared semantic union.
+        return dict(value)
+
+    def cancel(self) -> str:
+        return self._inner.cancel()
+
+
+class _AskAnswerAdapter:
+    """Closed-validate the v2 Ask operation result before election."""
+
+    connector_id = "inference-provider"
+
+    def __init__(self, inner: Any) -> None:
+        self._inner = inner
+
+    def dispatch(self, engine: Any, payload: dict[str, Any], cancellation: Any) -> dict[str, Any]:
+        from ..inference_capabilities import InferenceCapabilityRegistryError, process_inference_capability_registry
+        from ..kernel.provider_signals import InferenceInvalidTypedOutput
+
+        result = self._inner.dispatch(engine, payload, cancellation)
+        semantic = {"output": str(result.get("output") or "")}
+        try:
+            process_inference_capability_registry().require("ask.answer").validate_result(semantic)
+        except (TypeError, ValueError, InferenceCapabilityRegistryError):
+            raise InferenceInvalidTypedOutput() from None
+        return semantic
+
+    def cancel(self) -> str:
+        return self._inner.cancel()
 
 
 @observe_service
@@ -117,7 +174,7 @@ class AskService:
         return {"refs": refs, "titles": titles, "chars": sum(len(block) for block in blocks),
                 "blocks": [{"ref": ref, "title": title, "chars": len(block)} for ref, title, block in zip(refs, titles, blocks)]}
 
-    async def ask(self, principal: Principal, question: str, grounding: Any = None, *, lens: str = "Ask", context: list[dict[str, Any]] | None = None, model: str | None = None, inference_target_id: str | None = None, profile_id: str | None = None, max_tokens: Any = None, temperature: Any = None, invocation_id: str | None = None, before_physical_dispatch: Any = None, before_compatibility_retry: Any = None, frozen_grounding: FrozenGroundingSnapshot | None = None, frozen_admission_claim: dict[str, Any] | None = None) -> dict[str, Any]:
+    async def ask(self, principal: Principal, question: str, grounding: Any = None, *, lens: str = "Ask", context: list[dict[str, Any]] | None = None, model: str | None = None, inference_target_id: str | None = None, profile_id: str | None = None, max_tokens: Any = None, temperature: Any = None, invocation_id: str | None = None, before_physical_dispatch: Any = None, before_compatibility_retry: Any = None, frozen_grounding: FrozenGroundingSnapshot | None = None, frozen_admission_claim: dict[str, Any] | None = None, operation_capability: str = "ask.answer", routed_execution_id: str | None = None) -> dict[str, Any]:
         prompt = str(question or "").strip()
         if not prompt: raise ValidationError("prompt is required")
         lens = str(lens or "Ask").strip() or "Ask"
@@ -143,6 +200,105 @@ class AskService:
         if frozen_grounding is not None:
             frozen_grounding.validate()
         user_prompt = prompt + ("\n\nMaterial:\n" + material if material else "") + ("\n\nGrounding:\n" + envelope if envelope else "")
+        invocation_id = str(invocation_id or ("ask_" + uuid.uuid4().hex)).strip()
+        if not invocation_id or not invocation_id.replace("_", "").isalnum():
+            raise ValidationError("invocation id is invalid", code="ask_invocation_id_invalid")
+        capability_id = str(operation_capability or "")
+        if capability_id not in {"ask.answer", "thought.interview"}:
+            raise ValidationError("Ask operation capability is invalid", code="ask_capability_invalid")
+        if self._routed_assignments_active():
+            if model is not None or inference_target_id is not None or profile_id is not None:
+                raise ValidationError(
+                    "Legacy model selectors are unavailable after assignment migration.",
+                    code="inference_legacy_selector_retired",
+                )
+            payload = {
+                "schema_version": 2,
+                "system_prompt": _ASK_SYSTEM_PROMPT + frozen_system_instruction,
+                "user_prompt": user_prompt,
+                "lens": lens,
+                "context_ids": context_ids,
+                "context_titles": context_titles,
+                "grounding": grounding_echo,
+                "source_text": material + ("\n\n" + envelope if envelope else ""),
+                "temperature": float(temperature) if temperature is not None else None,
+                "max_tokens": int(max_tokens) if max_tokens is not None else None,
+            }
+            self._emit("running", kind="ask", ref="ask", name=lens)
+            adapter: Any = CanonicalPromptAdapter()
+            if capability_id == "thought.interview":
+                adapter = _QuestionOrSynthesisAdapter(adapter)
+            else:
+                adapter = _AskAnswerAdapter(adapter)
+            if routed_execution_id:
+                coordinator = self._broker.inference_adoption_service
+                from .inference_route_plan_service import ROUTE_PLANNING_AUTHORITY
+                execution = coordinator.controller._execution(None, routed_execution_id)
+                operation = coordinator.plans.get_operation_request_plan(
+                    ROUTE_PLANNING_AUTHORITY, execution["operation_plan_id"]
+                )
+                route = coordinator.plans.get_route_plan(ROUTE_PLANNING_AUTHORITY, operation["route_plan_id"])
+                serialized = coordinator.evidence.serialized_request(
+                    operation["admission_evidence_ref"], 1
+                )
+                if serialized["payload"] != payload or operation["operation_id"] != invocation_id:
+                    raise ServiceError(
+                        "inference_adoption_material_mismatch",
+                        "Reserved Thought material differs from dispatch material",
+                    )
+                admitted = {"execution": execution, "operation_request_plan": operation, "route_plan": route}
+            else:
+                admitted = await asyncio.to_thread(
+                    self._broker.inference_adoption_service.admit,
+                    principal,
+                    command_id=f"admit-{invocation_id}",
+                    capability_id=capability_id,
+                    operation_id=invocation_id,
+                    payload=payload,
+                    invocation_id=invocation_id,
+                    reserved_output_tokens=int(max_tokens) if max_tokens is not None else 512,
+                )
+            routed = await asyncio.to_thread(
+                self._broker.inference_adoption_service.execute,
+                principal,
+                execution_id=admitted["execution"]["id"],
+                adapter=adapter,
+                publish=lambda output, reservation: self._broker.projection_stager.stage(
+                    str(reservation["child_invocation_id"]),
+                    "ask-result",
+                    self._routed_projection(
+                        dict(output), payload, None, admitted["route_plan"],
+                        route_leg_ordinal=int(reservation["route_leg_ordinal"]),
+                    ),
+                    result_sha256="sha256:" + hashlib.sha256(
+                        json.dumps(
+                            output,
+                            sort_keys=True,
+                            separators=(",", ":"),
+                            ensure_ascii=True,
+                            allow_nan=False,
+                        ).encode()
+                    ).hexdigest(),
+                ).result_ref,
+                before_physical_dispatch=before_physical_dispatch,
+            )
+            if routed["outcome"] != "succeeded" or not isinstance(routed["result"], dict):
+                raise ServiceError(
+                    "inference_route_failed", "No assigned model completed this request",
+                    context={"receipt": routed["receipt"], "status": 409},
+                )
+            winner = str(routed["winning_reservation"]["child_invocation_id"])
+            result = self._broker.projection_stager.finalize(winner)
+            if result is None:
+                raise ServiceError(
+                    "projection_not_published",
+                    "Ask result is awaiting receipt reconciliation",
+                    context={"invocation_id": winner, "status": 409},
+                )
+            result = dict(result)
+            result["route_execution_receipt"] = routed["receipt"]
+            self._emit("ready", kind="ask", ref="ask", name=lens)
+            return result
         from ..inference_targets import resolve_placement, target_refusal
         placement = resolve_placement(self._db, invocation=(inference_target_id or profile_id) or None)
         target, requested = placement.target, placement.effective_target_id
@@ -179,9 +335,6 @@ class AskService:
         revision = capture_deployment_revision(self._db, target)
         source_text = material + ("\n\n" + envelope if envelope else "")
         payload: dict[str, Any] = {"schema_version": ASK_PAYLOAD_SCHEMA_VERSION, "system_prompt": _ASK_SYSTEM_PROMPT + frozen_system_instruction, "user_prompt": user_prompt, "lens": lens, "context_ids": context_ids, "context_titles": context_titles, "grounding": grounding_echo, "source_text": source_text, "temperature": float(temperature) if temperature is not None else None, "max_tokens": int(max_tokens) if max_tokens is not None else None, "deployment_revision": revision.id, "selected_model": advertised}
-        invocation_id = str(invocation_id or ("ask_" + uuid.uuid4().hex)).strip()
-        if not invocation_id or not invocation_id.replace("_", "").isalnum():
-            raise ValidationError("invocation id is invalid", code="ask_invocation_id_invalid")
         self._emit("running", kind="ask", ref="ask", name=lens)
         try:
             outcome = await asyncio.to_thread(
@@ -201,6 +354,57 @@ class AskService:
             raise ServiceError("projection_not_published", "Ask result is awaiting receipt reconciliation", context={"invocation_id": invocation_id, "operation_id": outcome.operation_id, "receipt": dict(outcome.receipt), "result_ref": outcome.result_ref, "status": 409})
         self._emit("ready", kind="ask", ref="ask", name=lens)
         return dict(result)
+
+    def _routed_assignments_active(self) -> bool:
+        with self._db._connection() as conn:
+            return conn.execute(
+                "SELECT 1 FROM inference_assignment_migrations WHERE family='thoughts-writing-route-assignments'"
+            ).fetchone() is not None
+
+    def _routed_projection(
+        self, output: dict[str, Any], payload: dict[str, Any], receipt: dict[str, Any] | None,
+        route: dict[str, Any], *, route_leg_ordinal: int | None = None,
+    ) -> dict[str, Any]:
+        winner = int(route_leg_ordinal or receipt["attempts"][-1]["route_leg_ordinal"])
+        leg = route["entries"][winner - 1]
+        boundary = str(
+            (receipt or {}).get("winning_boundary") or leg["boundary"]
+        )
+        with self._db._connection() as conn:
+            deployment = conn.execute(
+                "SELECT engine,model FROM deployment_revisions WHERE id=?",
+                (str(leg["deployment_revision_id"]),),
+            ).fetchone()
+        if deployment is None:
+            raise ServiceError("inference_route_deployment_missing", "Frozen deployment is missing")
+        engine, model = str(deployment["engine"]), str(deployment["model"])
+        semantic_output = (
+            json.dumps(output, sort_keys=True, separators=(",", ":"), ensure_ascii=True)
+            if "kind" in output else str(output["output"])
+        )
+        result = {
+            "output": semantic_output,
+            "lens": str(payload["lens"]),
+            "provider": engine,
+            "model": model,
+            "profile_id": str(leg["profile_id"]),
+            "actual_placement": {
+                "target_id": str(leg["profile_id"]), "target_name": str(leg["profile_id"]),
+                "target_kind": "assigned_profile", "boundary": boundary,
+                "owner": "hub", "transport": boundary,
+                "data_classes": ["prompt", "grounding"],
+                "engine": engine,
+                "model": model, "fallback_reason": None,
+            },
+            "egress": {"scope": boundary},
+            "context_ids": list(payload["context_ids"]),
+            "context_titles": list(payload["context_titles"]),
+        }
+        if receipt is not None:
+            result["route_execution_receipt"] = receipt
+        if payload.get("grounding") is not None:
+            result["grounding"] = payload["grounding"]
+        return result
 
     def _ask_projection(self, output: Any, payload: dict[str, Any], target: Any, profile_id: str | None, placement_block: dict[str, Any] | None = None) -> dict[str, Any]:
         dispatched = dict(output) if isinstance(output, dict) else {"output": str(output)}
@@ -231,6 +435,16 @@ class AskService:
     _outcome_error = staticmethod(map_inference_outcome)
 
     def cancel(self, principal: Principal, invocation_id: str) -> dict[str, str]:
+        if self._routed_assignments_active():
+            stopped = self._broker.inference_adoption_service.stop_operation(
+                principal,
+                command_id=f"stop-{invocation_id}",
+                operation_id=invocation_id,
+            )
+            return {
+                "invocation_id": invocation_id,
+                "disposition": str(stopped["child_signal"]),
+            }
         from ..kernel.runtime import _as_principal
         with _as_principal(principal):
             return {"invocation_id": invocation_id, "disposition": self._runner.cancel(invocation_id)}
