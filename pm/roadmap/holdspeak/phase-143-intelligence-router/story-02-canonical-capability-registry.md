@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 143
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** 143-01
 - **Unblocks:** 143-04, 143-05, 143-07 through 143-10, 143-13
 - **Owner:** unassigned
@@ -30,12 +30,12 @@ Capability strings are scattered across speech, meetings, Ask, Workbench, agents
 
 ## Acceptance criteria
 
-- [ ] Registry canonical bytes and schema hashes are stable across restart and registration order.
-- [ ] Every production inference call site references one registered definition revision.
-- [ ] Plugin capabilities require a bounded plugin definition revision.
-- [ ] Unknown capability requests refuse before profile/runner access.
-- [ ] Owner projection contains labels and requirements but no secrets or implementation paths.
-- [ ] Retry-policy definitions are canonical/hash-bound and every capability
+- [x] Registry canonical bytes and schema hashes are stable across restart and registration order.
+- [x] Every production inference call site references one registered definition revision.
+- [x] Plugin capabilities require a bounded plugin definition revision.
+- [x] Unknown capability requests refuse before profile/runner access.
+- [x] Owner projection contains labels and requirements but no secrets or implementation paths.
+- [x] Retry-policy definitions are canonical/hash-bound and every capability
   default/allowed reference resolves without cycles or unknown IDs.
 
 ## Test plan

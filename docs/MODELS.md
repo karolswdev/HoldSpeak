@@ -174,6 +174,15 @@ artifacts, and a signed packaged preset catalog. It performs no download,
 network request, model load, probe, benchmark, or configuration write, and it
 never returns a local model path, endpoint, or secret.
 
+The owner-only capability inventory is exposed through
+`GET /api/inference/capabilities` and the matching MCP resource
+`holdspeak://inference/capabilities`; either transport can then read one exact
+definition through its `{capability_id}` detail path. It describes the registered HoldSpeak
+jobs, result-contract hashes, required modalities/tools/context, permitted
+boundaries, and frozen retry policy facts. It contains no model selection,
+profile binding, endpoint, local path, credential, or assignment state; those
+arrive through the later profile and assignment services.
+
 The first delivery offers server-owned OpenRouter entries for quick, balanced,
 and deep Qwen experiences. Selection is inert; one fixed action seat performs
 the existing destination creation, owner-only key storage, and confirmed

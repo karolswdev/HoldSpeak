@@ -2587,6 +2587,24 @@
       ]
     },
     {
+      "path": "/api/inference/capabilities",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.setup",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/inference/capabilities/{capability_id}",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.setup",
+      "consumers": []
+    },
+    {
       "path": "/api/inference/setup",
       "methods": [
         "GET"

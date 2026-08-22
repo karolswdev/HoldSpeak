@@ -583,6 +583,7 @@ class MeetingWebServer:
         from .services.setup_service import SetupService
         from .services.inference_setup_service import InferenceSetupApplicationService
         from .services.inference_acquisition_service import InferenceAcquisitionApplicationService
+        from .services.inference_capability_service import InferenceCapabilityApplicationService
         from .services.profile_key_service import ProfileKeyService
         from .db import get_database, get_observer
         from .web.routes import (
@@ -703,6 +704,14 @@ class MeetingWebServer:
         inference_acquisition_service = InferenceAcquisitionApplicationService(
             get_database(), setup_service=inference_setup_service
         )
+        # The same frozen broker registry backs web and MCP.  Construction is
+        # deliberately eager: invalid capability composition must prevent the
+        # process from serving rather than become a lazy route-time surprise.
+        from .kernel.runtime import _configure
+
+        inference_capability_service = InferenceCapabilityApplicationService(
+            _configure(get_database()).inference_capability_registry
+        )
         web_ctx = WebContext(
             get_state=self.get_state,
             meeting_service=meeting_service,
@@ -740,6 +749,7 @@ class MeetingWebServer:
             setup_service=SetupService(get_database(), observer=obs),
             inference_setup_service=inference_setup_service,
             inference_acquisition_service=inference_acquisition_service,
+            inference_capability_service=inference_capability_service,
             delivery_service=DeliveryService(get_database(), observer=obs),
             # HS-131-16: the relay legs sign and revalidate dispatch offers, so
             # the service needs the hub's pairing custody. A separate

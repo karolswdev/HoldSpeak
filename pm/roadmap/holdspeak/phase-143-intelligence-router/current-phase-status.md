@@ -45,7 +45,7 @@ Assignments.
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
 | HSEGHS001HS104-143-01 | Capability and Route Census | done | [story-01-capability-route-census](./story-01-capability-route-census.md) | [evidence](./evidence-story-01.md) |
-| HSEGHS001HS104-143-02 | Canonical Capability Registry | backlog | [story-02-canonical-capability-registry](./story-02-canonical-capability-registry.md) | - |
+| HSEGHS001HS104-143-02 | Canonical Capability Registry | done | [story-02-canonical-capability-registry](./story-02-canonical-capability-registry.md) | [evidence](./evidence-story-02.md) |
 | HSEGHS001HS104-143-03 | Reusable Model Profile Authority | backlog | [story-03-reusable-model-profile-authority](./story-03-reusable-model-profile-authority.md) | - |
 | HSEGHS001HS104-143-04 | Assignment Store and Resolver | backlog | [story-04-assignment-store-resolver](./story-04-assignment-store-resolver.md) | - |
 | HSEGHS001HS104-143-05 | Frozen Route Plans | backlog | [story-05-frozen-route-plans](./story-05-frozen-route-plans.md) | - |
@@ -69,13 +69,14 @@ transport-neutral profile authority, scattered Config/subject pointers,
 late-routing `inference.run`, raw-SQL Workbench resolution, fake workflow
 fallback labels, and path-bearing profile sync.
 
-Story 01 is done. Three generated, mutation-tested ledgers now fail closed on a
+Stories 01 and 02 are done. Three generated, mutation-tested ledgers now fail closed on a
 new execution door, semantic helper caller, mutable resolver/pointer, browser
 selector, or Swift physical/fallback path. The baseline records 99 Python
 model-shaped sites, 14 Python physical leaves with zero bypasses, and seven
-named Apple legacy leaves owned by Stories 06/10. Stories 02 and 03 can now
-establish the canonical capability/retry registry and reusable profile/binding
-authority in parallel. Stories 04–06 then add assignments, frozen plans, and
+named Apple legacy leaves owned by Stories 06/10. Story 02 now supplies the
+sealed, process-composed capability and retry-policy authority for all censused
+jobs, including revision-bound meeting plugins and exact runtime result schemas.
+Story 03 establishes reusable profile/binding authority. Stories 04–06 then add assignments, frozen plans, and
 the durable controller before product families migrate in Stories 07–10.
 Stories 11–13 ship parity and the two owner jobs: Model Library and Assignments.
 Story 14 is the cross-product chaos/glass gate.

@@ -115,6 +115,17 @@ def _build(database: Any, *, clock: Any = None) -> Broker:
         OperationSpec(wake_session.name, wake_session.version, wake_session, "agent.submit", "propose"),
     )
     broker = Broker(store, specs, **({"clock": clock} if clock else {}))
+    # Phase 143's capability/retry law is pure composition truth.  Building it
+    # here makes malformed, duplicate, confusable, or schema-drifted definitions
+    # a startup failure before a profile, deployment, or physical runner exists.
+    # The registry is deliberately not a second gateway or execution registry.
+    from ..inference_capabilities import process_inference_capability_registry
+    from ..services.inference_capability_service import InferenceCapabilityApplicationService
+
+    broker.inference_capability_registry = process_inference_capability_registry()
+    broker.inference_capability_service = InferenceCapabilityApplicationService(
+        broker.inference_capability_registry
+    )
     # Services must never pair a runner database with a broker codec built for
     # another database singleton; invoke admission validates revisions there.
     broker.database = database

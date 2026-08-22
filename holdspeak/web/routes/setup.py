@@ -42,6 +42,7 @@ def build_setup_router(ctx: WebContext) -> APIRouter:
     if inference_setup is None:
         raise RuntimeError("InferenceSetupApplicationService must be supplied at application composition")
     inference_acquisition = ctx.inference_acquisition_service
+    inference_capabilities = ctx.inference_capability_service
     router = APIRouter()
 
     @router.get("/api/setup/status")
@@ -136,6 +137,28 @@ def build_setup_router(ctx: WebContext) -> APIRouter:
             return _error(exc)
         except Exception as exc:
             return error_500(exc, log, "Failed to read inference setup")
+
+    @router.get("/api/inference/capabilities")
+    async def api_inference_capabilities(request: Request) -> Any:
+        try:
+            if inference_capabilities is None:
+                raise RuntimeError("InferenceCapabilityApplicationService must be supplied at application composition")
+            return {"capabilities": inference_capabilities.get_capabilities(request.state.principal)}
+        except ServiceError as exc:
+            return _inference_error(exc)
+        except Exception as exc:
+            return error_500(exc, log, "Failed to read inference capabilities")
+
+    @router.get("/api/inference/capabilities/{capability_id}")
+    async def api_inference_capability(capability_id: str, request: Request) -> Any:
+        try:
+            if inference_capabilities is None:
+                raise RuntimeError("InferenceCapabilityApplicationService must be supplied at application composition")
+            return {"capability": inference_capabilities.get_capability(request.state.principal, capability_id)}
+        except ServiceError as exc:
+            return _inference_error(exc)
+        except Exception as exc:
+            return error_500(exc, log, "Failed to read inference capability")
 
     @router.post("/api/inference/acquisitions/download-and-use")
     async def api_inference_download_and_use(request: Request) -> Any:
