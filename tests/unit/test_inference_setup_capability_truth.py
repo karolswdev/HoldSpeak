@@ -372,7 +372,18 @@ def test_local_preset_union_and_mlx_runtime_use_real_dependency(tmp_path: Path, 
 
 
 def test_http_and_mcp_share_exact_envelope_and_agent_cannot_discover(tmp_path: Path, monkeypatch):
+    import holdspeak.services.inference_setup_service as setup_service_module
+
     db, service = _service(tmp_path)
+    # HTTP and MCP are compared as transports, not as two hardware sampling
+    # instants.  Disk availability can change between the sequential reads, so
+    # hold the server observation fixed while proving exact DTO parity.
+    hardware = setup_service_module.inspect_hardware(home=tmp_path, now=NOW)
+    monkeypatch.setattr(
+        setup_service_module,
+        "inspect_hardware",
+        lambda *, home, now: hardware,
+    )
     app = FastAPI()
 
     @app.middleware("http")

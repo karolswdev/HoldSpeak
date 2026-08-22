@@ -62,6 +62,10 @@ def test_models_setup_is_projected_truth_with_one_action_seat(tmp_path: Path, mo
         if distribution == "llama-cpp-python"
         else original_package_revision(distribution, fallback),
     )
+    # The glass exercises the supported local-model picker independent of the
+    # CI image's optional llama.cpp wheel.  Version and importability are both
+    # parts of the server's runtime proof, so freeze both facts together.
+    monkeypatch.setattr(setup_module, "_package_available", lambda module: module == "llama_cpp")
     original_runtime_version = acquisition_module.importlib.metadata.version
     monkeypatch.setattr(
         acquisition_module.importlib.metadata,
