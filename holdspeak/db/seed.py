@@ -27,7 +27,7 @@ from typing import TYPE_CHECKING, Any
 
 import yaml
 
-from ..config import CONFIG_FILE, Config
+from ..config import CONFIG_FILE  # noqa: F401 - compatibility seam for callers/tests
 
 if TYPE_CHECKING:  # pragma: no cover
     from .core import Database
@@ -119,7 +119,6 @@ def apply_seed(
     manifest = load_manifest(name)
     report = SeedReport(manifest=name)
 
-    first_profile_id: str | None = None
     for item in manifest.get("profiles") or []:
         if not isinstance(item, dict) or not str(item.get("id") or "").strip():
             raise SeedError(
@@ -141,11 +140,9 @@ def apply_seed(
             requires_key=bool(item.get("requires_key", False)),
         )
         report.profiles_seeded += 1
-        if first_profile_id is None:
-            first_profile_id = profile_id
-
-    if adopt and first_profile_id:
-        report.profiles_adopted = _adopt_profiles(first_profile_id)
+    # ``adopt`` is retained as a compatibility argument, but model
+    # availability and assignment are now deliberately separate.  An explicit
+    # starter-bundle assignment command is the only lawful multi-group setup.
 
     for item in manifest.get("workbenches") or []:
         if not isinstance(item, dict) or not str(item.get("id") or "").strip():
@@ -258,21 +255,6 @@ def _seed_ref_is_live(db: "Database", ref: str) -> bool:
     }
     repository = repositories.get(kind)
     return bool(item_id and repository and repository.get(item_id) is not None)
-
-
-def _adopt_profiles(profile_id: str) -> dict[str, str]:
-    """Adopt a seeded profile only where the owner has no selection yet."""
-    config = Config.load(CONFIG_FILE)
-    adopted: dict[str, str] = {}
-    if config.dictation.runtime.profile_id is None:
-        config.dictation.runtime.profile_id = profile_id
-        adopted["dictation.runtime.profile_id"] = profile_id
-    if config.meeting.intel_profile_id is None:
-        config.meeting.intel_profile_id = profile_id
-        adopted["meeting.intel_profile_id"] = profile_id
-    if adopted:
-        config.save(CONFIG_FILE)
-    return adopted
 
 
 def _apply_item(

@@ -2385,6 +2385,82 @@ CREATE TABLE IF NOT EXISTS model_profile_tombstones (
 CREATE INDEX IF NOT EXISTS idx_model_profile_binding_profile
     ON model_profile_binding_revisions(profile_id, profile_revision, revision DESC);
 
+-- HS-143-04: sparse, hub-local capability assignment authority.  Revisions
+-- are immutable; one narrow head row is the only mutable pointer.  Entries
+-- are normalized so profile deletion can name exact dependent assignments
+-- without searching JSON blobs.
+CREATE TABLE IF NOT EXISTS inference_assignment_revisions (
+    assignment_id TEXT NOT NULL,
+    revision INTEGER NOT NULL,
+    assignment_key TEXT NOT NULL,
+    scope_kind TEXT NOT NULL CHECK (scope_kind IN ('invocation','subject','global')),
+    scope_id TEXT NOT NULL DEFAULT '',
+    subject_kind TEXT NOT NULL DEFAULT '',
+    selector_kind TEXT NOT NULL CHECK (selector_kind IN ('capability','group','global')),
+    capability_id TEXT NOT NULL DEFAULT '',
+    group_id TEXT NOT NULL DEFAULT '',
+    retry_policy_id TEXT,
+    payload_json TEXT NOT NULL,
+    sha256 TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    CHECK (
+      (scope_kind='global' AND scope_id='' AND subject_kind='') OR
+      (scope_kind='invocation' AND scope_id<>'' AND subject_kind='') OR
+      (scope_kind='subject' AND scope_id<>'' AND subject_kind IN ('thought','workbench','agent','recipe','project'))
+    ),
+    CHECK (
+      (selector_kind='global' AND capability_id='' AND group_id='') OR
+      (selector_kind='capability' AND capability_id<>'' AND group_id='') OR
+      (selector_kind='group' AND capability_id='' AND group_id<>'')
+    ),
+    CHECK (
+      (scope_kind IN ('invocation','subject') AND selector_kind='capability') OR
+      (scope_kind='global' AND selector_kind IN ('global','group','capability'))
+    ),
+    PRIMARY KEY (assignment_id, revision),
+    UNIQUE (assignment_key, revision)
+);
+CREATE TABLE IF NOT EXISTS inference_assignment_heads (
+    assignment_key TEXT PRIMARY KEY,
+    assignment_id TEXT NOT NULL,
+    revision INTEGER NOT NULL,
+    cleared INTEGER NOT NULL DEFAULT 0 CHECK (cleared IN (0,1)),
+    updated_at TEXT NOT NULL,
+    FOREIGN KEY (assignment_id, revision)
+      REFERENCES inference_assignment_revisions(assignment_id, revision)
+);
+CREATE TABLE IF NOT EXISTS inference_assignments (
+    id TEXT PRIMARY KEY,
+    assignment_id TEXT NOT NULL,
+    assignment_revision INTEGER NOT NULL,
+    profile_id TEXT NOT NULL,
+    profile_revision INTEGER NOT NULL,
+    profile_schema_version INTEGER NOT NULL DEFAULT 2 CHECK (profile_schema_version IN (1,2)),
+    ordinal INTEGER NOT NULL CHECK (ordinal BETWEEN 1 AND 4),
+    UNIQUE (assignment_id, assignment_revision, ordinal),
+    FOREIGN KEY (assignment_id, assignment_revision)
+      REFERENCES inference_assignment_revisions(assignment_id, revision)
+);
+CREATE INDEX IF NOT EXISTS idx_inference_assignments_profile
+    ON inference_assignments(profile_id, profile_revision);
+CREATE TABLE IF NOT EXISTS inference_assignment_commands (
+    command_id TEXT PRIMARY KEY,
+    request_sha256 TEXT NOT NULL,
+    response_json TEXT NOT NULL,
+    response_sha256 TEXT NOT NULL,
+    resolution_context_json TEXT NOT NULL,
+    resolution_context_sha256 TEXT NOT NULL,
+    created_at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS inference_assignment_migrations (
+    family TEXT PRIMARY KEY,
+    marker_revision INTEGER NOT NULL,
+    source_sha256 TEXT NOT NULL,
+    result_json TEXT NOT NULL,
+    result_sha256 TEXT NOT NULL,
+    committed_at TEXT NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS inference_runtime_leases (
     lease_id TEXT PRIMARY KEY,
     operation_id TEXT NOT NULL UNIQUE,

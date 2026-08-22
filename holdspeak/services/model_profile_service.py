@@ -1387,6 +1387,20 @@ class ModelProfileService:
         ]
 
     def _assignment_dependencies(self, conn: Any, profile_id: str) -> list[dict[str, str]]:
+        present = conn.execute(
+            "SELECT 1 FROM sqlite_master WHERE type='table' AND name='inference_assignments'"
+        ).fetchone()
+        if present is None:
+            return []
+        columns = {str(row["name"]) for row in conn.execute("PRAGMA table_info(inference_assignments)")}
+        if "assignment_id" in columns:
+            return [
+                {"kind": "assignment", "id": str(row["assignment_id"])}
+                for row in conn.execute(
+                    "SELECT DISTINCT assignment_id FROM inference_assignments WHERE profile_id=? ORDER BY assignment_id",
+                    (profile_id,),
+                ).fetchall()
+            ]
         return self._registered_store_dependencies(
             conn, profile_id, table="inference_assignments", kind="assignment"
         )

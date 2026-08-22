@@ -297,10 +297,10 @@ SEMANTIC_HELPER_CALLERS: dict[str, ProposedRoute] = {
     "holdspeak/web/routes/primitives/ask.py:49|build_ask_router.api_ask|ask": ProposedRoute(
         "ask.answer", "web.routes.primitives.ask", "AskService semantic caller",
     ),
-    "holdspeak/mcp/tools.py:533|dispatch|run": ProposedRoute(
+    "holdspeak/mcp/tools.py:651|dispatch|run": ProposedRoute(
         "recipe.run", "mcp.tools", "RecipeService semantic caller",
     ),
-    "holdspeak/mcp/tools.py:537|dispatch|chat": ProposedRoute(
+    "holdspeak/mcp/tools.py:655|dispatch|chat": ProposedRoute(
         "recipe.chat", "mcp.tools", "RecipeService semantic caller",
     ),
     "holdspeak/web/routes/primitives/recipes.py:100|build_recipes_router.api_run_recipe|run": ProposedRoute(

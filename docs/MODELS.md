@@ -243,6 +243,28 @@ prompt travels only between the hub and the paired executing node.
 Manage Runs on destinations in **Settings, Models** or on the Web compatibility
 route `/profiles`; assign an Agent in the Agent editor.
 
+## Assignment authority
+
+Phase 143 separates availability from use. Adding, downloading, detecting, or
+connecting a model changes no assignment. The hub-local
+`InferenceAssignment@1` authority stores sparse, ordered chains of at most four
+immutable model-profile revisions. Resolution uses the first whole chain at
+invocation, subject, exact capability, capability group, then global scope; it
+never concatenates or silently filters inherited entries.
+
+`Use default` is a revision-checked clear that preserves a monotonic generation
+and previews the exact effective named chain first. Structural compatibility is
+server-owned. Readiness and runtime capacity remain operation-time observations
+and cannot prevent saving an otherwise compatible chain. Assignments, command
+receipts, migration markers, readiness, bindings, and provider material are
+hub-local and never sync.
+
+Starter setup is also explicit: the server previews only the selected groups,
+their independent ordered chains, boundaries, retry-policy intersections, and
+current assignment generations. Apply is one hash-bound transaction over that
+preview. A stale generation, registry change, or incompatible selected group
+changes nothing; unselected groups are never filled implicitly.
+
 ## Current suggestions (a moving target)
 
 These are reasonable defaults at the time of writing, **not** mandates. Newer

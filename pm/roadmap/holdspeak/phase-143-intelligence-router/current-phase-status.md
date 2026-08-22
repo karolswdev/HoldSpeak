@@ -47,7 +47,7 @@ Assignments.
 | HSEGHS001HS104-143-01 | Capability and Route Census | done | [story-01-capability-route-census](./story-01-capability-route-census.md) | [evidence](./evidence-story-01.md) |
 | HSEGHS001HS104-143-02 | Canonical Capability Registry | done | [story-02-canonical-capability-registry](./story-02-canonical-capability-registry.md) | [evidence](./evidence-story-02.md) |
 | HSEGHS001HS104-143-03 | Reusable Model Profile Authority | done | [story-03-reusable-model-profile-authority](./story-03-reusable-model-profile-authority.md) | [evidence](./evidence-story-03.md) |
-| HSEGHS001HS104-143-04 | Assignment Store and Resolver | backlog | [story-04-assignment-store-resolver](./story-04-assignment-store-resolver.md) | - |
+| HSEGHS001HS104-143-04 | Assignment Store and Resolver | done | [story-04-assignment-store-resolver](./story-04-assignment-store-resolver.md) | [evidence](./evidence-story-04.md) |
 | HSEGHS001HS104-143-05 | Frozen Route Plans | backlog | [story-05-frozen-route-plans](./story-05-frozen-route-plans.md) | - |
 | HSEGHS001HS104-143-06 | Fallback Controller and Failure Law | backlog | [story-06-fallback-controller-failure-law](./story-06-fallback-controller-failure-law.md) | - |
 | HSEGHS001HS104-143-07 | Thoughts Ask and Writing Adoption | backlog | [story-07-thoughts-ask-writing-adoption](./story-07-thoughts-ask-writing-adoption.md) | - |
@@ -80,7 +80,10 @@ Story 03 now establishes reusable profile/binding authority with immutable
 content verification, hub-local CAS bindings, restart-visible readiness,
 fail-closed dependency ownership, and a read-only v1 execution adapter.
 Adding a local model now truthfully ends at `Added` in the Model Library and
-does not rewrite a Thoughts assignment. Stories 04–06 then add assignments, frozen plans, and
+does not rewrite a Thoughts assignment. Story 04 now supplies one sparse,
+hub-local assignment authority with whole-chain precedence, bounded ordered
+fallbacks, ABA-safe Use default, exact compatibility, migration markers, and a
+fixed seven-row owner projection. Stories 05–06 then add frozen plans and
 the durable controller before product families migrate in Stories 07–10.
 Stories 11–13 ship parity and the two owner jobs: Model Library and Assignments.
 Story 14 is the cross-product chaos/glass gate.

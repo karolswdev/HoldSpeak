@@ -502,10 +502,22 @@ def test_deletion_names_exact_assignment_dependency_and_keeps_revision_history(d
     service = ModelProfileService(db)
     service.create_profile(OWNER, _profile_body())
     with db._connection() as conn:
-        conn.execute("CREATE TABLE inference_assignments (id TEXT PRIMARY KEY, profile_id TEXT NOT NULL)")
         conn.execute(
-            "INSERT INTO inference_assignments(id,profile_id) VALUES (?,?)",
-            ("assignment-thoughts", "balanced-qwen"),
+            """INSERT INTO inference_assignment_revisions
+               (assignment_id,revision,assignment_key,scope_kind,scope_id,subject_kind,
+                selector_kind,capability_id,group_id,retry_policy_id,payload_json,sha256,created_at)
+               VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+            (
+                "assignment-thoughts", 1, "capability:thought.interview", "global", "", "",
+                "capability", "thought.interview", "", None, "{}", "sha256:fixture",
+                "2026-08-21T00:00:00Z",
+            ),
+        )
+        conn.execute(
+            """INSERT INTO inference_assignments
+               (id,assignment_id,assignment_revision,profile_id,profile_revision,profile_schema_version,ordinal)
+               VALUES (?,?,?,?,?,?,?)""",
+            ("assignment-thoughts", "assignment-thoughts", 1, "balanced-qwen", 1, 2, 1),
         )
     with pytest.raises(ConflictError) as refusal:
         service.delete_profile(OWNER, "balanced-qwen", expected_revision=1)

@@ -42,7 +42,6 @@ MUTABLE_FAMILY_OWNERS = {
     "Decision and delivery request placement override": "143-08",
     "Rails observer background pointer": "143-08",
     "Cadence background global resolver": "143-08",
-    "Legacy seed profile adoption assignment side effect": "143-04",
     "V1 profile and workbench sync payload": "143-11",
     "Settings Thoughts and writing legacy pointer writers": "143-07",
     "Settings meeting and background legacy pointer writers": "143-08",
@@ -146,8 +145,6 @@ ROUTING_POINTER_ATTRIBUTES = {
     "holdspeak/config/meeting.py:144:intel_profile_id",
     "holdspeak/db/models/__init__.py:1095:resolver_profile_id",
     "holdspeak/db/models/workbench.py:139:resolver_profile_id",
-    "holdspeak/db/seed.py:270:intel_profile_id",
-    "holdspeak/db/seed.py:271:intel_profile_id",
     "holdspeak/services/inference_setup_service.py:603:inference_target_id",
     "holdspeak/services/inference_setup_service.py:604:inference_target_id",
     "holdspeak/services/inference_setup_service.py:608:intel_profile_id",
@@ -171,7 +168,6 @@ PROFILE_ID_CLASSIFICATIONS = {
         "holdspeak/config/core.py:138:profile_id", "holdspeak/config/core.py:169:profile_id",
         "holdspeak/config/integrations.py:101:profile_id", "holdspeak/config/model.py:80:profile_id",
         "holdspeak/db/models/__init__.py:1094:profile_id", "holdspeak/db/models/workbench.py:138:profile_id",
-        "holdspeak/db/seed.py:267:profile_id", "holdspeak/db/seed.py:268:profile_id",
         "holdspeak/meeting_session/intel_plan.py:193:profile_id", "holdspeak/plugins/dictation/assembly.py:318:profile_id",
         "holdspeak/services/recipe_service.py:131:profile_id", "holdspeak/services/recipe_service.py:141:profile_id",
         "holdspeak/services/recipe_service.py:146:profile_id", "holdspeak/services/recipe_service.py:174:profile_id",
@@ -179,8 +175,8 @@ PROFILE_ID_CLASSIFICATIONS = {
         "holdspeak/services/sequence_workflow_service.py:129:profile_id", "holdspeak/services/settings_service.py:717:profile_id",
         "holdspeak/services/settings_service.py:789:profile_id", "holdspeak/services/workbench_runner.py:31:profile_id",
         "holdspeak/services/workbench_service.py:172:profile_id", "holdspeak/services/workbench_service.py:470:profile_id",
-        "holdspeak/web_server.py:1138:profile_id", "holdspeak/services/sync_service.py:630:profile_id",
-        "holdspeak/services/sync_service.py:645:profile_id",
+        "holdspeak/web_server.py:1138:profile_id", "holdspeak/services/sync_service.py:634:profile_id",
+        "holdspeak/services/sync_service.py:649:profile_id",
     }},
     **{site: "display" for site in {
         "holdspeak/commands/doctor.py:488:profile_id", "holdspeak/commands/doctor.py:787:profile_id",
@@ -195,6 +191,7 @@ PROFILE_ID_CLASSIFICATIONS = {
     }},
     **{site: "immutable evidence" for site in {
         "holdspeak/services/model_profile_service.py:1191:profile_id",
+        "holdspeak/services/inference_assignment_service.py:1383:profile_id",
     }},
     **{site: "credential/provider identity" for site in {
         "holdspeak/intel/providers.py:687:profile_id", "holdspeak/intel/providers.py:694:profile_id",
@@ -287,7 +284,6 @@ def test_census_anchors_current_routing_resolvers_and_legacy_assignment_writers(
         "holdspeak/services/cadence_service.py:_drafted_next_action": "holdspeak/services/cadence_service.py",
         "holdspeak/services/settings_service.py:SettingsService.update_settings": "holdspeak/services/settings_service.py",
         "holdspeak/services/inference_acquisition_service.py:_activate": "holdspeak/services/inference_acquisition_service.py",
-        "holdspeak/db/seed.py:_adopt_profiles": "holdspeak/db/seed.py",
     }
     for anchor, path in required_anchors.items():
         assert anchor in census
@@ -302,11 +298,11 @@ def test_ast_census_is_exact_for_every_routing_resolver_reference_and_pointer() 
     assert pointers == ROUTING_POINTER_ATTRIBUTES
     assert profile_ids == set(PROFILE_ID_CLASSIFICATIONS)
     assert set(PROFILE_ID_CLASSIFICATIONS.values()) <= CLASSES
-    assert len(PROFILE_ID_CLASSIFICATIONS) == 44
-    assert sum(value == "mutable assignment pointer" for value in PROFILE_ID_CLASSIFICATIONS.values()) == 25
+    assert len(PROFILE_ID_CLASSIFICATIONS) == 43
+    assert sum(value == "mutable assignment pointer" for value in PROFILE_ID_CLASSIFICATIONS.values()) == 23
     assert sum(value == "display" for value in PROFILE_ID_CLASSIFICATIONS.values()) == 13
     assert sum(value == "credential/provider identity" for value in PROFILE_ID_CLASSIFICATIONS.values()) == 5
-    assert sum(value == "immutable evidence" for value in PROFILE_ID_CLASSIFICATIONS.values()) == 1
+    assert sum(value == "immutable evidence" for value in PROFILE_ID_CLASSIFICATIONS.values()) == 2
 
 
 def test_ast_census_rejects_a_new_public_resolver_or_late_pointer_read(tmp_path: Path) -> None:
@@ -367,4 +363,6 @@ def test_legacy_assignment_writers_are_delete_work_and_acquisition_is_availabili
     assert "config.thoughts.inference_target_id = None" not in acquisition
     assert "config.meeting.intel_realtime_model =" not in acquisition
     assert '"availability": "model_library"' in acquisition
-    assert "config.meeting.intel_profile_id = profile_id" in _text("holdspeak/db/seed.py")
+    seed = _text("holdspeak/db/seed.py")
+    assert "config.meeting.intel_profile_id = profile_id" not in seed
+    assert "config.dictation.runtime.profile_id = profile_id" not in seed
