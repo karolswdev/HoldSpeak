@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { InferenceCapabilityPanel } from "../InferenceCapabilityPanel";
-import type { InferenceSetup } from "../inferenceSetup";
+import type { InferenceAcquisition, InferenceSetup } from "../inferenceSetup";
 
 const hosted = (id: string, experience: "quick" | "balanced" | "deep") => ({
   kind: "hosted_profile_preset" as const,
@@ -25,7 +25,6 @@ const hosted = (id: string, experience: "quick" | "balanced" | "deep") => ({
     requires_key: true as const,
   },
 });
-
 function setup(overrides: Partial<InferenceSetup> = {}): InferenceSetup {
   return {
     schema_version: 1,
@@ -123,6 +122,25 @@ function setup(overrides: Partial<InferenceSetup> = {}): InferenceSetup {
       },
     ],
     ...overrides,
+  };
+}
+
+function addedAcquisition(presetId: string): InferenceAcquisition {
+  return {
+    id: `acquisition-${presetId}`,
+    preset_id: presetId,
+    state: "ready",
+    verified_bytes: 42,
+    transport_bytes: 42,
+    bytes_total: 42,
+    artifact_id: `artifact-${presetId}`,
+    activation_state: "not_requested",
+    error: null,
+    resumable: false,
+    can_cancel: false,
+    revision: 1,
+    created_at: "2026-08-21T18:00:00Z",
+    updated_at: "2026-08-21T18:00:00Z",
   };
 }
 
@@ -269,8 +287,54 @@ describe("InferenceCapabilityPanel", () => {
     fireEvent.click(screen.getByRole("radio", { name: /Local Q/i }));
     expect(screen.getAllByText("Local Q")).toHaveLength(2);
     expect(screen.getByText(/Local · 8K/)).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: /download & use/i }));
+    fireEvent.click(screen.getByRole("button", { name: "DOWNLOAD" }));
     await waitFor(() => expect(download).toHaveBeenCalledWith(local));
+  });
+
+  it("shows a downloaded local model as added without silently assigning it", () => {
+    const local = {
+      kind: "local_artifact_preset" as const,
+      activation: "download" as const,
+      id: "local-added",
+      experience: "quick" as const,
+      label: "Added local Q",
+      summary: "Fast everyday model.",
+      runtime_id: "llama.cpp",
+      runtime_min_revision: "0.3.34",
+      format: "gguf" as const,
+      boundary: "same_device" as const,
+      context: { recommended_tokens: 8192 as const, ceiling_tokens: 8192 },
+      source: {
+        repository: "org/repo",
+        revision: "a".repeat(40),
+        manifest_sha256: `sha256:${"b".repeat(64)}`,
+        filename: "added.gguf",
+        file_sha256: `sha256:${"d".repeat(64)}`,
+        download_bytes: 42,
+        installed_bytes: 42,
+        peak_free_bytes: 84,
+        license: "Apache-2.0",
+      },
+      platforms: ["linux-x86_64"],
+      applicability: { state: "applicable" as const, reason: null },
+    };
+    const download = vi.fn(async () => undefined);
+    render(
+      <InferenceCapabilityPanel
+        {...defaults}
+        setup={setup({
+          presets: [local],
+          acquisitions: [addedAcquisition(local.id)],
+        })}
+        onUseHosted={vi.fn(async () => true)}
+        onDownloadLocal={download}
+      />,
+    );
+    fireEvent.click(screen.getByRole("tab", { name: /^This device/i }));
+    expect(screen.getByText("Available in Models")).toBeInTheDocument();
+    expect(screen.getByText("ADDED")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "DOWNLOAD" })).toBeNull();
+    expect(download).not.toHaveBeenCalled();
   });
 
   it("presents Hammer as an honest evaluation-only tool model", () => {
@@ -318,8 +382,8 @@ describe("InferenceCapabilityPanel", () => {
     expect(download).not.toHaveBeenCalled();
   });
 
-  it("selects a detected GGUF and offers one real verify-and-use action", async () => {
-    const useExisting = vi.fn(async () => undefined);
+  it("selects a detected GGUF and offers one explicit add action", async () => {
+    const addExisting = vi.fn(async () => undefined);
     const artifact = {
       id: "detected-local-qwen",
       label: "Qwen3-4B-Q6_K.gguf",
@@ -342,14 +406,52 @@ describe("InferenceCapabilityPanel", () => {
         {...defaults}
         setup={setup({ detected_local_artifacts: [artifact], presets: [] })}
         onUseHosted={vi.fn(async () => true)}
-        onUseExisting={useExisting}
+        onAddExisting={addExisting}
       />,
     );
     fireEvent.click(screen.getByRole("tab", { name: /^This device/i }));
     expect(screen.getByRole("radio", { name: /Qwen3-4B-Q6_K/ })).toBeChecked();
     fireEvent.click(screen.getByRole("radio", { name: /Qwen3-4B-Q6_K/ }));
-    fireEvent.click(screen.getByRole("button", { name: "USE MODEL" }));
-    await waitFor(() => expect(useExisting).toHaveBeenCalledWith(artifact));
+    fireEvent.click(screen.getByRole("button", { name: "ADD MODEL" }));
+    await waitFor(() => expect(addExisting).toHaveBeenCalledWith(artifact));
+  });
+
+  it("shows a verified detected model as added instead of offering a second add", () => {
+    const addExisting = vi.fn(async () => undefined);
+    const artifact = {
+      id: "detected-added-qwen",
+      label: "Qwen3-4B-Q6_K.gguf",
+      format: "gguf" as const,
+      size_bytes: 2_400_000_000,
+      configured_for_thoughts: false,
+      thought_support: {
+        state: "candidate" as const,
+        reason: "Detected locally and ready to verify for Thoughts.",
+      },
+      activation: {
+        state: "available" as const,
+        action: "use_existing" as const,
+        context_tokens: 8192 as const,
+        reason: "HoldSpeak will verify this file before adding it.",
+      },
+    };
+    render(
+      <InferenceCapabilityPanel
+        {...defaults}
+        setup={setup({
+          detected_local_artifacts: [artifact],
+          presets: [],
+          acquisitions: [addedAcquisition(artifact.id)],
+        })}
+        onUseHosted={vi.fn(async () => true)}
+        onAddExisting={addExisting}
+      />,
+    );
+    fireEvent.click(screen.getByRole("tab", { name: /^This device/i }));
+    expect(screen.getByText("Available in Models")).toBeInTheDocument();
+    expect(screen.getByText("ADDED")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "ADD MODEL" })).toBeNull();
+    expect(addExisting).not.toHaveBeenCalled();
   });
 
   it("clears a secret only after confirmed success and retains it on failure", async () => {

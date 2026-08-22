@@ -18,6 +18,7 @@ from holdspeak.services.meeting_service import MeetingService
 from holdspeak.services.monday_brief_service import MondayBriefService
 from holdspeak.services.primitive_service import PrimitiveService
 from holdspeak.services.profile_service import ProfileService
+from holdspeak.services.model_profile_service import ModelProfileService
 from holdspeak.services.recipe_service import RecipeService
 from holdspeak.services.scheduled_recording_service import ScheduledRecordingService
 from holdspeak.services.workbench_service import WorkbenchService
@@ -29,6 +30,95 @@ _KIND_ALIASES["kbs"] = "kb"
 
 class ToolError(ValueError):
     """An expected tool failure which maps to an MCP ``isError`` result."""
+
+
+# Model Profile requests are intentionally recursively closed.  The service
+# validates the same contract; these schemas keep MCP clients from believing an
+# arbitrary endpoint, secret, path, or future assignment pointer is accepted.
+_MODEL_PROFILE_TOKENIZER_SCHEMA: dict[str, Any] = {
+    "type": "object",
+    "properties": {
+        "tokenizer_id": {"type": "string"},
+        "chat_template": {"type": "string"},
+        "tool_call_template": {"type": "string"},
+        "requires_bos_token": {"type": "boolean"},
+        "requires_eos_token": {"type": "boolean"},
+    },
+    "additionalProperties": False,
+}
+_MODEL_PROFILE_MANIFEST_SCHEMA: dict[str, Any] = {
+    "type": "object",
+    "properties": {
+        "revision": {"type": ["string", "integer"]},
+        "sha256": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+        "claims": {"type": "array", "items": {"type": "string"}, "maxItems": 128},
+    },
+    "required": ["revision", "sha256", "claims"],
+    "additionalProperties": False,
+}
+_MODEL_PROFILE_PRESENTATION_SCHEMA: dict[str, Any] = {
+    "type": "object",
+    "properties": {"summary": {"type": "string"}, "badge": {"type": "string"}},
+    "required": ["summary"],
+    "additionalProperties": False,
+}
+_MODEL_PROFILE_REQUEST_SCHEMA: dict[str, Any] = {
+    "type": "object",
+    "properties": {
+        "profile_id": {"type": "string", "pattern": "^[a-z][a-z0-9_-]{0,95}$"},
+        "expected_revision": {"type": "integer", "minimum": 0},
+        "label": {"type": "string"},
+        "provider_family": {"type": "string"},
+        "runtime_family": {"type": "string"},
+        "model_or_artifact_identity": {"type": "string"},
+        "supported_modalities": {"type": "array", "items": {"type": "string"}, "minItems": 1, "maxItems": 16},
+        "context_support": {"type": "string", "enum": ["exact", "bounded", "unavailable"]},
+        "tokenizer_template_requirements": _MODEL_PROFILE_TOKENIZER_SCHEMA,
+        "capability_manifest": _MODEL_PROFILE_MANIFEST_SCHEMA,
+        "safe_presentation": _MODEL_PROFILE_PRESENTATION_SCHEMA,
+    },
+    "required": [
+        "profile_id", "expected_revision", "label", "provider_family", "runtime_family",
+        "model_or_artifact_identity", "supported_modalities", "context_support",
+        "tokenizer_template_requirements", "capability_manifest", "safe_presentation",
+    ],
+    "additionalProperties": False,
+}
+_MODEL_PROFILE_BINDING_SCHEMA: dict[str, Any] = {
+    "type": "object",
+    "properties": {
+        "binding_id": {"type": "string"},
+        "profile_id": {"type": "string", "pattern": "^[a-z][a-z0-9_-]{0,95}$"},
+        "profile_revision": {"type": "integer", "minimum": 1},
+        "deployment_head_id": {"type": "string"},
+        "expected_binding_revision": {"type": "integer", "minimum": 0},
+        "expected_deployment_configuration_revision": {"type": "integer", "minimum": 1},
+        "expected_deployment_revision_id": {"type": "string"},
+        "enabled": {"type": "boolean"},
+        "readiness_observation_id": {"type": "string"},
+    },
+    "required": [
+        "binding_id", "profile_id", "profile_revision", "deployment_head_id",
+        "expected_binding_revision", "expected_deployment_configuration_revision",
+        "expected_deployment_revision_id", "enabled", "readiness_observation_id",
+    ],
+    "additionalProperties": False,
+}
+_MODEL_PROFILE_PROBE_SCHEMA: dict[str, Any] = {
+    "type": "object",
+    "properties": {
+        "profile_id": {"type": "string", "pattern": "^[a-z][a-z0-9_-]{0,95}$"},
+        "profile_revision": {"type": "integer", "minimum": 1},
+        "deployment_head_id": {"type": "string"},
+        "expected_deployment_configuration_revision": {"type": "integer", "minimum": 1},
+        "expected_deployment_revision_id": {"type": "string"},
+    },
+    "required": [
+        "profile_id", "profile_revision", "deployment_head_id",
+        "expected_deployment_configuration_revision", "expected_deployment_revision_id",
+    ],
+    "additionalProperties": False,
+}
 
 
 TOOLS: list[dict[str, Any]] = [
@@ -257,6 +347,33 @@ TOOLS.extend([
         {"profile_id": {"type": "string", "description": "Inference destination identifier."}},
         ["profile_id"],
     ),
+    _mcp_tool("model_profile.list", "List the owner-only Model Library, including read-only v1 compatibility rows.", {}),
+    _mcp_tool(
+        "model_profile.get", "Get one immutable Model Library profile revision.",
+        {"profile_id": {"type": "string"}, "revision": {"type": "integer", "minimum": 1}}, ["profile_id"],
+    ),
+    _mcp_tool(
+        "model_profile.create", "Create an immutable Model Library profile revision from a closed profile body.",
+        {"profile": _MODEL_PROFILE_REQUEST_SCHEMA}, ["profile"],
+    ),
+    _mcp_tool(
+        "model_profile.bind", "CAS-bind one profile revision to one existing deployment head.",
+        {"binding": _MODEL_PROFILE_BINDING_SCHEMA}, ["binding"],
+    ),
+    _mcp_tool(
+        "model_profile.probe", "Server-observe readiness for one exact current deployment head.",
+        {"probe": _MODEL_PROFILE_PROBE_SCHEMA}, ["probe"],
+    ),
+    _mcp_tool(
+        "model_profile.unbind", "Remove one current profile binding with its exact binding revision.",
+        {"profile_id": {"type": "string"}, "expected_binding_revision": {"type": "integer", "minimum": 1}},
+        ["profile_id", "expected_binding_revision"],
+    ),
+    _mcp_tool(
+        "model_profile.delete", "Tombstone an unreferenced profile with its exact current revision.",
+        {"profile_id": {"type": "string"}, "expected_revision": {"type": "integer", "minimum": 1}},
+        ["profile_id", "expected_revision"],
+    ),
     _mcp_tool(
         "dictation.list",
         "Read the retained dictation journal, optionally paged and filtered by source.",
@@ -481,6 +598,7 @@ def dispatch(name: str, arguments: dict[str, Any] | None, principal: Principal) 
     meetings = MeetingService(db, observer=obs)
     recipes = RecipeService(db, observer=obs)
     profiles = ProfileService(db, observer=obs)
+    model_profiles = ModelProfileService(db)
     dictation = DictationService(db, observer=obs)
     events = EventQueryService(db)
     follow_through = FollowThroughService(db, observer=obs)
@@ -582,6 +700,29 @@ def dispatch(name: str, arguments: dict[str, Any] | None, principal: Principal) 
         profile_id = str(args.get("profile_id") or "")
         profiles.delete_profile(principal, profile_id)
         return {"deleted": True, "id": profile_id}
+    if name == "model_profile.list":
+        return model_profiles.list_profiles(principal)
+    if name == "model_profile.get":
+        revision = args.get("revision")
+        return model_profiles.get_profile(
+            principal, str(args.get("profile_id") or ""),
+            revision=int(revision) if revision is not None else None,
+        )
+    if name == "model_profile.create":
+        return model_profiles.create_profile(principal, _data(args.get("profile")))
+    if name == "model_profile.bind":
+        return model_profiles.bind_profile(principal, _data(args.get("binding")))
+    if name == "model_profile.probe":
+        return model_profiles.probe_profile(principal, _data(args.get("probe")))
+    if name == "model_profile.unbind":
+        return model_profiles.unbind_profile(
+            principal, str(args.get("profile_id") or ""),
+            expected_binding_revision=int(args.get("expected_binding_revision")),
+        )
+    if name == "model_profile.delete":
+        return model_profiles.delete_profile(
+            principal, str(args.get("profile_id") or ""), expected_revision=int(args.get("expected_revision"))
+        )
     if name == "dictation.list":
         allowed = ("limit", "cursor", "source")
         return dictation.list_journal(principal, **{key: args[key] for key in allowed if key in args})

@@ -69,6 +69,8 @@ def build_profiles_router(ctx: WebContext) -> APIRouter:
     async def api_list_inference_targets(request: Request) -> Any:
         try:
             return JSONResponse(_svc().list_inference_targets(_principal(request)))
+        except ServiceError as exc:
+            return JSONResponse({"error": exc.detail, "code": exc.code}, status_code=int(exc.context.get("status") or 400))
         except Exception as exc:
             return error_500(exc, log, "Failed to list inference targets")
 
@@ -79,6 +81,8 @@ def build_profiles_router(ctx: WebContext) -> APIRouter:
             return JSONResponse(_svc().probe_inference_target(_principal(request), target_id))
         except NotFound:
             return JSONResponse({"error": f"Unknown destination: {target_id}"}, status_code=404)
+        except ServiceError as exc:
+            return JSONResponse({"error": exc.detail, "code": exc.code}, status_code=int(exc.context.get("status") or 400))
         except Exception as exc:
             return error_500(exc, log, "Failed to probe inference target")
 
@@ -92,6 +96,8 @@ def build_profiles_router(ctx: WebContext) -> APIRouter:
         try:
             target = _svc().create_profile(_principal(request), body)
             return JSONResponse({"inference_target": target}, status_code=201)
+        except ServiceError as exc:
+            return JSONResponse({"error": exc.detail, "code": exc.code}, status_code=int(exc.context.get("status") or 400))
         except ValidationError as exc:
             return JSONResponse({"error": str(exc)}, status_code=400)
         except ValueError as exc:
@@ -120,6 +126,8 @@ def build_profiles_router(ctx: WebContext) -> APIRouter:
         try:
             target = _svc().update_profile(_principal(request), target_id, body)
             return JSONResponse({"inference_target": target})
+        except ServiceError as exc:
+            return JSONResponse({"error": exc.detail, "code": exc.code}, status_code=int(exc.context.get("status") or 400))
         except ValidationError as exc:
             return JSONResponse({"error": str(exc)}, status_code=400)
         except NotFound:
@@ -167,6 +175,8 @@ def build_profiles_router(ctx: WebContext) -> APIRouter:
         try:
             _svc().delete_profile(_principal(request), target_id)
             return JSONResponse({"success": True})
+        except ServiceError as exc:
+            return JSONResponse({"error": exc.detail, "code": exc.code}, status_code=int(exc.context.get("status") or 400))
         except ValidationError as exc:
             return JSONResponse({"error": str(exc)}, status_code=400)
         except NotFound:

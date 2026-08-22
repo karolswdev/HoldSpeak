@@ -13,12 +13,13 @@ from datetime import datetime, timedelta
 from types import SimpleNamespace
 
 import pytest
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.testclient import TestClient
 
 import holdspeak.db as hsdb
 from holdspeak.commands import doctor
 from holdspeak.db import Database, reset_database
+from holdspeak.principals import Principal, PrincipalKind
 from holdspeak.web.context import WebContext
 from holdspeak.web.routes import build_primitives_router
 
@@ -34,6 +35,12 @@ def env(tmp_path, monkeypatch):
         "holdspeak.inference_targets._this_machine_readiness", lambda: ("ready", "")
     )
     app = FastAPI()
+
+    @app.middleware("http")
+    async def owner_principal(request: Request, call_next):
+        request.state.principal = Principal(PrincipalKind.OWNER, "mesh-test-owner")
+        return await call_next(request)
+
     app.include_router(build_primitives_router(WebContext(get_state=lambda: {})))
     yield db, TestClient(app)
     reset_database()

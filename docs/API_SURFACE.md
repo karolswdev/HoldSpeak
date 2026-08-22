@@ -9,7 +9,7 @@ and the clients that call it (extracted from the real call sites in
 `web/src` and `apple/`). "server only" means no in-repo client calls
 it today.
 
-Routes: 518 (plus static mounts). iOS-consumed: 89. Web-consumed: 407.
+Routes: 526 (plus static mounts). iOS-consumed: 89. Web-consumed: 409.
 
 ## device_audio_ws
 
@@ -596,6 +596,19 @@ Routes: 518 (plus static mounts). iOS-consumed: 89. Web-consumed: 407.
 | GET | `/api/kbs/{kb_id}/members` | server only |
 | DELETE | `/api/kbs/{kb_id}/members/{resource_ref:path}` | web |
 | PUT | `/api/kbs/{kb_id}/members/{resource_ref:path}` | web |
+
+## web.routes.primitives.model_profiles
+
+| Method | Path | Consumers |
+|---|---|---|
+| GET | `/api/model-profiles` | server only |
+| POST | `/api/model-profiles` | server only |
+| DELETE | `/api/model-profiles/{profile_id}` | web |
+| GET | `/api/model-profiles/{profile_id}` | web |
+| DELETE | `/api/model-profiles/{profile_id}/binding` | server only |
+| POST | `/api/model-profiles/{profile_id}/binding` | server only |
+| POST | `/api/model-profiles/{profile_id}/probe` | server only |
+| POST | `/api/model-profiles/{profile_id}/revisions` | server only |
 
 ## web.routes.primitives.notes
 

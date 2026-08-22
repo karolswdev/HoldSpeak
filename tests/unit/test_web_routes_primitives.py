@@ -8,11 +8,12 @@ intel engine stubbed so no model is loaded.
 from __future__ import annotations
 
 import pytest
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.testclient import TestClient
 
 import holdspeak.db as hsdb
 from holdspeak.db import Database, reset_database
+from holdspeak.principals import Principal, PrincipalKind
 from holdspeak.web.context import WebContext
 from holdspeak.web.routes import build_primitives_router
 
@@ -27,6 +28,12 @@ def client(tmp_path, monkeypatch) -> TestClient:
         lambda: ("ready", ""),
     )
     app = FastAPI()
+
+    @app.middleware("http")
+    async def owner_principal(request: Request, call_next):
+        request.state.principal = Principal(PrincipalKind.OWNER, "primitive-test-owner")
+        return await call_next(request)
+
     app.include_router(build_primitives_router(WebContext(get_state=lambda: {})))
     yield TestClient(app)
     reset_database()

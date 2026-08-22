@@ -1,7 +1,7 @@
 # MCP sidecar
 
 The MCP sidecar is the desk's programmable surface over stdio. It exposes
-127 tools and 36 resources through the Model Context Protocol, so any MCP
+137 tools and 38 resources through the Model Context Protocol, so any MCP
 client (Claude Code, Cursor, a custom script) can read and drive the desk
 without touching the web UI.
 
@@ -56,7 +56,7 @@ default.
 
 ## Tool families
 
-The 127 tools are organized into domain families. Each tool follows the
+The 137 tools are organized into domain families. Each tool follows the
 `domain.verb` naming convention. Tool descriptions are the per-tool
 reference; this page covers the families and the cross-cutting rules.
 
@@ -85,10 +85,10 @@ answer as a desk artifact (not model-invoking).
 
 Owner-only durable local-model setup. `inference.download_and_use` records one
 stable command, resolves a signed catalogue source, downloads bounded bytes,
-verifies the published digest, adopts the content-addressed artifact, and then
-attempts the narrow Thoughts-route activation. `inference.use_existing_model`
+verifies the published digest, and adopts the content-addressed artifact into
+the Model Library. `inference.use_existing_model`
 freshly resolves a projected local GGUF, verifies its complete contents, adopts
-it without exposing its locator, and activates it through the same ledger.
+it without exposing its locator, and records the same availability ledger.
 `inference.cancel_model_acquisition` cancels only before verification begins.
 All three use the same application service,
 receipts, and refusal codes as HTTP; model/agent principals receive no authority
@@ -166,6 +166,18 @@ destinations with current mesh-node liveness. `destination.get`,
 `destination.create`, `destination.update`, and `destination.delete`
 manage individual destinations. Secrets cannot be read or written
 through these tools.
+
+### model profile (7 tools)
+
+Owner-only Model Library authority. `model_profile.list` and
+`model_profile.get` project immutable, locator-free model profile revisions;
+historical v1 rows are exposed through a read-only compatibility adapter.
+`model_profile.create` writes the next profile revision under a narrow CAS.
+`model_profile.probe` mints server-observed readiness for one exact deployment
+head, while `model_profile.bind` records a CAS-protected, hub-local binding to
+that exact immutable deployment revision. `model_profile.unbind` removes only
+the binding head; `model_profile.delete` tombstones only an unreferenced
+profile. These tools neither assign a capability nor select a running model.
 
 ### coder (3 tools)
 
@@ -308,6 +320,7 @@ results are bounded to the first 100 items per read.
 | `holdspeak://workbenches` | Workbench list and summaries |
 | `holdspeak://recipes` | Agent recipe list |
 | `holdspeak://destinations` | Redacted inference destination list |
+| `holdspeak://model-profiles` | Owner-only immutable Model Library profiles and binding summaries |
 | `holdspeak://dictation/journal` | Stored dictation entries |
 | `holdspeak://follow-through/board` | Follow-through execution lanes |
 | `holdspeak://briefs/latest` | Latest Monday Brief (or null) |
@@ -327,6 +340,7 @@ results are bounded to the first 100 items per read.
 | `holdspeak://workbenches/{id}/runs` | Run history for one workbench |
 | `holdspeak://recipes/{id}` | One agent recipe |
 | `holdspeak://destinations/{id}` | One inference destination (redacted) |
+| `holdspeak://model-profiles/{id}` | One immutable Model Library profile (owner-only) |
 | `holdspeak://zones/{id}/members` | Members of one desk zone |
 | `holdspeak://meetings/{id}` | One archived meeting |
 | `holdspeak://decision-records/{id}` | One decision record with evidence and revision trail |

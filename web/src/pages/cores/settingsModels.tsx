@@ -90,7 +90,6 @@ function readinessLabel(state: string): string {
       return state.replace(/[_-]+/g, " ").toUpperCase();
   }
 }
-
 function fromWire(row: Record<string, unknown>): Target {
   const readiness = (row.readiness ?? {}) as Record<string, unknown>;
   const secret = (row.secret ?? {}) as Record<string, unknown>;
@@ -202,13 +201,15 @@ export function ModelsModule({
       const wasActive = prior && [
         "requested", "resolving_source", "downloading", "verifying", "installing",
       ].includes(prior);
-      if (wasActive && job.state === "ready" && job.activation_state === "in_use") {
+      if (wasActive && job.state === "ready" && job.activation_state === "not_requested") {
+        setPresetStatus("Added to Models. Choose a capability when you’re ready.");
+      } else if (wasActive && job.state === "ready" && job.activation_state === "in_use") {
         setPresetStatus("Ready · in use for Thoughts.");
         void reconcileSettings?.();
       } else if (wasActive && job.state === "failed") {
         setPresetStatus(job.error?.message || "Model setup stopped. Try again.");
       } else if (wasActive && job.state === "cancelled") {
-        setPresetStatus("Download cancelled. No model was activated.");
+        setPresetStatus("Download cancelled. No model was added.");
       }
       acquisitionStates.current[job.id] = job.state;
     }
@@ -462,7 +463,7 @@ export function ModelsModule({
     }
   };
 
-  const useExistingModel = async (artifact: InferenceSetupArtifact) => {
+  const addExistingModel = async (artifact: InferenceSetupArtifact) => {
     if (!inferenceSetup) return;
     setPresetBusy(artifact.id);
     setPresetStatus("");
@@ -475,10 +476,6 @@ export function ModelsModule({
       setPresetStatus(`Verifying ${artifact.label}. You can leave Models open or come back later.`);
       onRefuse("");
       await reloadInferenceSetup();
-      // The acquisition command owns route activation. Reconcile Settings only
-      // after its fresh setup projection is available, so a subsequent hosted
-      // choice cannot save against the pre-activation Config revision.
-      await reconcileSettings?.();
     } catch (error) {
       if (error instanceof ApiError) delete acquisitionRequestIds.current[artifact.id];
       const detail = readableError(error);
@@ -496,7 +493,7 @@ export function ModelsModule({
     try {
       await cancelInferenceAcquisition(job, requestId);
       delete cancelRequestIds.current[job.id];
-      setPresetStatus("Download cancelled. No model was activated.");
+      setPresetStatus("Download cancelled. No model was added.");
       await reloadInferenceSetup();
     } catch (error) {
       if (error instanceof ApiError) delete cancelRequestIds.current[job.id];
@@ -983,7 +980,7 @@ export function ModelsModule({
         onRetry={() => void reloadInferenceSetup()}
         onUseHosted={useOpenRouterPreset}
         onDownloadLocal={downloadLocalPreset}
-        onUseExisting={useExistingModel}
+        onAddExisting={addExistingModel}
         onCancelAcquisition={cancelLocalAcquisition}
       />
 

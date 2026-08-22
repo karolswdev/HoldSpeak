@@ -13,7 +13,7 @@ from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.testclient import TestClient
 
 import holdspeak.db as hsdb
@@ -33,6 +33,7 @@ from holdspeak.intel.providers import (
     effective_intel_cloud,
     profile_key_env,
 )
+from holdspeak.principals import Principal, PrincipalKind
 
 REPO = Path(__file__).resolve().parents[2]
 
@@ -267,6 +268,12 @@ def client(db, monkeypatch) -> TestClient:
 
     monkeypatch.setattr(hsdb, "get_database", lambda *a, **k: db)
     app = FastAPI()
+
+    @app.middleware("http")
+    async def owner_principal(request: Request, call_next):
+        request.state.principal = Principal(PrincipalKind.OWNER, "one-dial-test-owner")
+        return await call_next(request)
+
     app.include_router(build_profiles_router(WebContext(get_state=lambda: {})))
     return TestClient(app)
 

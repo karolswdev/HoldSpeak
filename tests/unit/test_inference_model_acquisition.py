@@ -12,8 +12,7 @@ from fastapi.testclient import TestClient
 
 from holdspeak.config import Config
 from holdspeak.db.core import Database
-from holdspeak.deployment_revisions import capture_deployment_revision, resolve_deployment_revision
-from holdspeak.inference_targets import this_machine_target_from_model_path
+from holdspeak.deployment_revisions import resolve_deployment_revision
 from holdspeak.kernel.local_runtime_lease import (
     acquire_local_runtime_lease,
     release_local_runtime_lease,
@@ -125,6 +124,8 @@ def _fixture(tmp_path: Path):
 
 def test_download_verify_adopt_activate_and_replay(tmp_path: Path):
     db, service, config, preset = _fixture(tmp_path)
+    original_local_model = config.meeting.intel_realtime_model
+    original_thought_target = config.thoughts.inference_target_id
     body = {
         "request_id": "request-one",
         "preset_id": preset["id"],
@@ -138,20 +139,27 @@ def test_download_verify_adopt_activate_and_replay(tmp_path: Path):
     complete = service.get_acquisition(OWNER, first["acquisition"]["id"])["acquisition"]
 
     assert complete["state"] == "ready"
-    assert complete["activation_state"] == "in_use"
+    assert complete["activation_state"] == "not_requested"
     assert complete["verified_bytes"] == preset["source"]["download_bytes"]
-    assert Path(config.meeting.intel_realtime_model).read_bytes().startswith(b"GGUF")
+    assert config.meeting.intel_realtime_model == original_local_model
+    assert config.thoughts.inference_target_id == original_thought_target
     replay = service.download_and_use(OWNER, body)
     assert replay["acquisition"]["id"] == complete["id"]
     assert replay["acquisition"]["state"] == "ready"
 
-    target = this_machine_target_from_model_path(config.meeting.intel_realtime_model)
-    revision = capture_deployment_revision(db, target)
+    with db._connection() as conn:
+        head = conn.execute(
+            "SELECT execution_revision_id FROM inference_deployments WHERE artifact_id=?",
+            (complete["artifact_id"],),
+        ).fetchone()
+    assert head is not None
+    revision = db.deployment_revisions.get(head["execution_revision_id"])
+    assert revision is not None
     assert revision.schema_version == 2
     assert revision.artifact_id == complete["artifact_id"]
     resolved = resolve_deployment_revision(db, revision.id)
     assert resolved is not None
-    assert resolved.model_path == config.meeting.intel_realtime_model
+    assert resolved.model_path is not None
     assert "model_path" not in resolved.to_dict()
 
 
@@ -174,6 +182,7 @@ def test_detected_gguf_can_be_verified_selected_and_replayed(tmp_path: Path, mon
     model.parent.mkdir(parents=True)
     model.write_bytes(b"GGUF" + b"existing-model-bytes")
     config = Config()
+    original_local_model = config.meeting.intel_realtime_model
     db = Database(tmp_path / "holdspeak.db")
     setup = InferenceSetupApplicationService(
         db, config_provider=lambda: config, home_provider=lambda: tmp_path,
@@ -207,9 +216,9 @@ def test_detected_gguf_can_be_verified_selected_and_replayed(tmp_path: Path, mon
     complete = service.get_acquisition(OWNER, started["id"])["acquisition"]
 
     assert complete["state"] == "ready"
-    assert complete["activation_state"] == "in_use"
+    assert complete["activation_state"] == "not_requested"
     assert complete["verified_bytes"] == model.stat().st_size
-    assert config.meeting.intel_realtime_model == str(model)
+    assert config.meeting.intel_realtime_model == original_local_model
     assert service.use_existing(OWNER, body)["acquisition"]["id"] == complete["id"]
     monkeypatch.setattr(inference_mcp, "_service", lambda: service)
     assert inference_mcp.dispatch("inference.use_existing_model", body, OWNER)["acquisition"]["id"] == complete["id"]
@@ -244,7 +253,7 @@ def test_detected_gguf_can_be_verified_selected_and_replayed(tmp_path: Path, mon
     assert getattr(changed.value, "code", "") == "request_payload_mismatch"
 
 
-def test_changed_request_refuses_and_route_conflict_keeps_verified_artifact(tmp_path: Path):
+def test_changed_request_refuses_and_route_change_still_leaves_available_model_unassigned(tmp_path: Path):
     _db, service, config, preset = _fixture(tmp_path)
     body = {
         "request_id": "request-two",
@@ -262,7 +271,7 @@ def test_changed_request_refuses_and_route_conflict_keeps_verified_artifact(tmp_
     service._run(result["acquisition"]["id"])
     current = service.get_acquisition(OWNER, result["acquisition"]["id"])["acquisition"]
     assert current["state"] == "ready"
-    assert current["activation_state"] == "failed"
+    assert current["activation_state"] == "not_requested"
     assert current["artifact_id"]
 
 
@@ -447,7 +456,7 @@ def test_one_active_claim_and_range_resume_converge_on_one_artifact(tmp_path: Pa
 
     assert observed_range == [f"bytes={len(body) // 2}-"]
     assert complete["state"] == "ready"
-    assert complete["activation_state"] == "in_use"
+    assert complete["activation_state"] == "not_requested"
     with db._connection() as conn:
         assert conn.execute(
             "SELECT count(*) FROM inference_model_artifacts"

@@ -1,8 +1,10 @@
-"""Durable GGUF acquisition and activation (HS-142-02).
+"""Durable GGUF acquisition and library availability (HS-142-02 / HS-143-03).
 
 The owner command is one saga: intent is durable before network, bytes are
-verified before adoption, and activation is a later narrow route mutation.
-Filesystem and SQLite work are deliberately ordered rather than called atomic.
+verified before adoption, and the resulting deployment head makes the model
+available to the Model Library.  It never selects a Thoughts target or any
+other assignment.  Filesystem and SQLite work are deliberately ordered rather
+than called atomic.
 """
 from __future__ import annotations
 
@@ -12,9 +14,7 @@ import json
 import os
 import shutil
 import threading
-import uuid
 from concurrent.futures import ThreadPoolExecutor
-from dataclasses import asdict
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable
@@ -26,7 +26,6 @@ from ..deployment_revisions import DeploymentRevision
 from ..inference_setup_catalog import packaged_catalog
 from ..principals import Principal, PrincipalKind
 from .errors import ServiceError
-from .settings_service import settings_revision
 
 
 _CHUNK_BYTES = 1024 * 1024
@@ -50,10 +49,11 @@ def _sha(value: Any) -> str:
 
 
 def _route_revision(config: Config) -> str:
-    return _sha({
-        "thoughts_target_id": config.thoughts.inference_target_id,
-        "local_model": config.meeting.intel_realtime_model,
-    })
+    # Kept as a request-shape compatibility token while old clients send the
+    # Phase-142 field.  Availability no longer observes or writes assignment
+    # state, so no Config/profile pointer may influence this value.
+    del config
+    return _sha({"availability_authority": "model_library_v1"})
 
 
 def _safe_error(code: str) -> tuple[str, str]:
@@ -69,10 +69,6 @@ def _safe_error(code: str) -> tuple[str, str]:
         "model_download_disk": (
             "There is not enough free space to download and install this model safely.",
             "Choose a smaller model or free some space.",
-        ),
-        "model_activation_conflict": (
-            "The model is downloaded and verified, but Thoughts changed AI while it downloaded.",
-            "Choose Use for Thoughts when you are ready.",
         ),
         "model_existing_invalid": (
             "That local model changed or could not be verified.",
@@ -168,7 +164,7 @@ class InferenceAcquisitionApplicationService:
         if not isinstance(body, dict) or set(body) != allowed:
             raise ServiceError(
                 "inference_acquisition_request_invalid",
-                "Download & use has an invalid request shape.", context={"status": 400},
+                "Download model has an invalid request shape.", context={"status": 400},
             )
         request_id = str(body["request_id"] or "").strip()
         if not request_id or len(request_id) > 128:
@@ -180,7 +176,7 @@ class InferenceAcquisitionApplicationService:
             or type(body["context_choice"]) is not int
             or not isinstance(body["expected_route_revision"], str)
         ):
-            raise ServiceError("inference_acquisition_request_invalid", "Download & use has invalid field types.", context={"status": 400})
+            raise ServiceError("inference_acquisition_request_invalid", "Download model has invalid field types.", context={"status": 400})
         expected_route = body["expected_route_revision"]
         payload = {
             "request_id": request_id,
@@ -214,12 +210,9 @@ class InferenceAcquisitionApplicationService:
                 context={"status": 409},
             )
         if preset["format"] != "gguf" or preset["runtime_id"] != "llama_cpp_prompt_v1":
-            raise ServiceError("inference_runtime_unsupported", "This model cannot run in Thoughts yet.", context={"status": 409})
+            raise ServiceError("inference_runtime_unsupported", "This model has no supported local runtime.", context={"status": 409})
         if body["context_choice"] != preset["context"]["recommended_tokens"]:
             raise ServiceError("inference_context_choice_invalid", "That context size is not qualified for this preset.", context={"status": 409})
-        current_config = self._config_provider()
-        if expected_route != _route_revision(current_config):
-            raise ServiceError("inference_route_stale", "Thoughts changed AI. Check the current route and try again.", context={"status": 409})
         source = dict(preset["source"])
         signed_manifest = {
             "files": [{
@@ -353,12 +346,6 @@ class InferenceAcquisitionApplicationService:
                 "setup": self._setup.get_inference_setup(principal),
             }
         config = self._config_provider()
-        if expected_route != _route_revision(config):
-            raise ServiceError(
-                "inference_route_stale",
-                "Thoughts changed AI. Check the current route and try again.",
-                context={"status": 409},
-            )
         from .inference_setup_service import (
             _this_machine_from_config,
             resolve_detected_local_artifact,
@@ -788,12 +775,6 @@ class InferenceAcquisitionApplicationService:
         return digest.hexdigest()
 
     def _activate(self, job_id: str, artifact_id: str, final_file: Path, plan: dict[str, Any]) -> None:
-        config = self._config_provider()
-        with self._db._connection() as conn:
-            row = conn.execute("SELECT expected_route_revision FROM inference_model_acquisitions WHERE job_id=?", (job_id,)).fetchone()
-        if row is None or _route_revision(config) != str(row["expected_route_revision"]):
-            self._transition(job_id, "ready", artifact_id=artifact_id, activation_state="failed", error_code="model_activation_conflict", error_message=_safe_error("model_activation_conflict")[0])
-            return
         try:
             runtime_revision = importlib.metadata.version("llama-cpp-python")
         except importlib.metadata.PackageNotFoundError:
@@ -828,20 +809,17 @@ class InferenceAcquisitionApplicationService:
             context_ceiling=int(plan["context_ceiling"]),
             capability_sha256=capability_sha,
         )
-        config.meeting.intel_realtime_model = str(final_file)
-        config.thoughts.inference_target_id = None
-        self._config_saver(config)
         now = _now()
         deployment_id = "deployment_" + artifact_id.removeprefix("artifact_")[:24]
         receipt = {
             "kind": (
-                "use_existing_model"
+                "add_existing_model"
                 if plan.get("kind") == "existing_local_file"
-                else "download_and_use"
+                else "download_model"
             ),
             "artifact_id": artifact_id,
             "deployment_id": deployment_id, "deployment_revision_id": revision.id,
-            "route": "thoughts", "activated_at": now,
+            "availability": "model_library", "activated_at": now,
         }
         with self._db._connection() as conn:
             conn.execute("BEGIN IMMEDIATE")
@@ -867,7 +845,7 @@ class InferenceAcquisitionApplicationService:
             )
             conn.execute(
                 """UPDATE inference_model_acquisitions
-                      SET state='ready', artifact_id=?, activation_state='in_use',
+                      SET state='ready', artifact_id=?, activation_state='not_requested',
                           receipt_json=?, error_code=NULL,error_message=NULL,
                           revision=revision+1,updated_at=? WHERE job_id=?""",
                 (artifact_id, _canonical(receipt), now, job_id),
