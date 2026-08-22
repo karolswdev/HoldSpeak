@@ -62,6 +62,7 @@ story that owns their migration.
 | 143-01 | `holdspeak/desktop_presence.py`, `holdspeak/plugins/dictation/builtin/project_rewriter.py`, `holdspeak/speaker_intel.py` |
 | 143-03 | `holdspeak/commands/doctor.py`, `holdspeak/inference_targets.py`, `holdspeak/intel/engine.py`, `holdspeak/intel/providers.py`, `holdspeak/services/model_profile_service.py`, `holdspeak/services/profile_key_service.py`, `holdspeak/services/profile_service.py` |
 | 143-04 | `holdspeak/services/inference_assignment_service.py` (canonical sparse resolver) |
+| 143-05 | `holdspeak/services/inference_route_plan_service.py` (canonical immutable resolver, persistence, and reconstruction) |
 | 143-06 | `holdspeak/intel/engine.py`, `holdspeak/kernel/inference_runner.py`, `holdspeak/kernel/projection_stager.py` |
 | 143-07 | `holdspeak/dictation_telemetry.py`, `holdspeak/plugins/dictation/assembly.py`, `holdspeak/plugins/dictation/builtin/project_rewriter.py`, `holdspeak/plugins/dictation/runtime_mlx.py`, `holdspeak/services/inference_setup_service.py`, `holdspeak/target_profile.py` |
 | 143-08 | `holdspeak/intel_queue.py`, `holdspeak/meeting_session/intel_plan.py`, `holdspeak/services/meeting_intel_service.py` |

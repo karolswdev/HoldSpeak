@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 143
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** 143-02, 143-03, 143-04
 - **Unblocks:** 143-06 through 143-10
 - **Owner:** unassigned
@@ -31,12 +31,12 @@ A mutable assignment cannot authorize execution. Every parent must freeze exact 
 
 ## Acceptance criteria
 
-- [ ] Profile/assignment/capability/route changes after freeze affect only the next parent.
-- [ ] Different tokenizer/template legs never reread, truncate, summarize, or mutate material.
-- [ ] Legacy target overrides become explicit one-leg plans before admission.
-- [ ] Route resolution performs no network, scan, probe, model load, or write and meets 10 ms p95 target.
-- [ ] Every physical child binds plan hash, leg ordinal, attempt ordinal, and exact DeploymentRevision.
-- [ ] Operation plans retain every leg's frozen eligibility; only executable
+- [x] Profile/assignment/capability/route changes after freeze affect only the next parent.
+- [x] Different tokenizer/template legs never reread, truncate, summarize, or mutate material.
+- [x] Legacy target overrides become explicit one-leg plans before admission.
+- [x] Route resolution performs no network, scan, probe, model load, or write and meets 10 ms p95 target.
+- [x] Every physical child binds plan hash, leg ordinal, attempt ordinal, and exact DeploymentRevision.
+- [x] Operation plans retain every leg's frozen eligibility; only executable
   legs carry admitted-request/context/serialized-request hashes.
 
 ## Test plan

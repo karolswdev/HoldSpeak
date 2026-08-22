@@ -281,6 +281,16 @@ exact route plan ID, operation request-plan ID, leg ordinal, deployment
 revision, and physical-attempt ordinal. Durable private references suffice for
 restart without exposing owner material through the route projection.
 
+Executable operation evidence comes only from a composition-registered
+`RouteAdmissionEvidenceProvider` bound to the exact capability revision/schema
+and operation-policy revision. The router selects that provider; a caller
+cannot name or inject one. Its freeze method derives and durably records the
+private admitted/context/serialization hashes inside the route transaction,
+and its read-only reconstruction method verifies the same source after restart.
+Until an adopter story registers that exact owner, executable and
+context-overflow operation planning refuses; caller-asserted hashes never
+become admission evidence.
+
 Changing a profile, assignment, capability definition, policy, or model while
 a run is active affects the next parent only. It never retargets an admitted
 child. Replay adopts the same receipt; it does not resolve current settings.
