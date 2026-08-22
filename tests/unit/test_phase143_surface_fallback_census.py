@@ -24,7 +24,6 @@ ARTIFACT = REPO / "pm/roadmap/holdspeak/phase-143-intelligence-router/assets/gen
 # The value is (classification, one Phase 143 owner story).
 BACKEND_PRIVATE_DECISIONS: dict[tuple[str, str], tuple[str, str]] = {
     ("holdspeak/commands/doctor.py", "_check_runtime_profiles"): ("readiness audit; no route selection", "143-03"),
-    ("holdspeak/db/seed.py", "_adopt_profiles"): ("legacy Config-pointer adoption migration", "143-04"),
     ("holdspeak/delivery/factory_launch.py", "_valid_profile"): ("agent delivery validation", "143-10"),
     ("holdspeak/desktop_presence.py", "_select_presence_renderer"): ("non-inference false positive", "143-01"),
     ("holdspeak/dictation_telemetry.py", "_fallback_category"): ("lexical/degraded telemetry, never model fallback", "143-07"),
@@ -44,10 +43,15 @@ BACKEND_PRIVATE_DECISIONS: dict[tuple[str, str], tuple[str, str]] = {
     ("holdspeak/plugins/dictation/builtin/project_rewriter.py", "_target_directive"): ("deterministic dictation directive", "143-07"),
     ("holdspeak/plugins/dictation/runtime_mlx.py", "_resolve_generator_factory"): ("dictation runtime factory", "143-07"),
     ("holdspeak/services/inference_acquisition_service.py", "_route_revision"): ("setup preview revision; not assignment authority", "143-12"),
+    ("holdspeak/services/inference_assignment_service.py", "_resolve"): ("canonical sparse assignment resolver", "143-04"),
     ("holdspeak/services/inference_setup_service.py", "_thought_target"): ("legacy Thoughts selector", "143-07"),
     ("holdspeak/services/inference_setup_service.py", "_safe_target"): ("setup readiness selector", "143-12"),
     ("holdspeak/services/meeting_intel_service.py", "_retry"): ("explicit owner recovery request", "143-08"),
     ("holdspeak/services/profile_key_service.py", "_profile"): ("credential owner lookup", "143-03"),
+    ("holdspeak/services/model_profile_service.py", "_profile_id"): ("canonical Profile identity parser", "143-03"),
+    ("holdspeak/services/model_profile_service.py", "_profile_payload"): ("canonical Profile payload builder", "143-03"),
+    ("holdspeak/services/model_profile_service.py", "_profile_projection"): ("canonical Profile owner projection", "143-03"),
+    ("holdspeak/services/model_profile_service.py", "_route_plan_dependencies"): ("exact Profile assignment dependency lookup", "143-03"),
     ("holdspeak/services/profile_service.py", "_target_fields"): ("profile transport-neutral mutation", "143-03"),
     ("holdspeak/services/recipe_service.py", "_target"): ("recipe/workbench precedence", "143-10"),
     ("holdspeak/services/sequence_workflow_service.py", "_target"): ("workflow legacy placement", "143-10"),

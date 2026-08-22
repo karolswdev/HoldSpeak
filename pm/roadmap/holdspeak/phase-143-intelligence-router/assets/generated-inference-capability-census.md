@@ -115,8 +115,8 @@ routes it. A synthetic new Ask/Recipe caller is a fail-closed test mutation.
 |---|---|---|
 | `mcp/families/ask.py:146`, `web/routes/primitives/ask.py:49` | `ask.answer` | Ask transports |
 | `services/refinement_coordinator.py:328` | `thought.interview` (question-or-synthesis result branch) | refinement coordinator |
-| `mcp/tools.py:533`, `web/routes/primitives/recipes.py:100` | `recipe.run` | Recipe transports |
-| `mcp/tools.py:537`, `web/routes/primitives/recipes.py:115` | `recipe.chat` | Recipe transports |
+| `mcp/tools.py:651`, `web/routes/primitives/recipes.py:100` | `recipe.run` | Recipe transports |
+| `mcp/tools.py:655`, `web/routes/primitives/recipes.py:115` | `recipe.chat` | Recipe transports |
 | `services/sequence_workflow_service.py:133` | `sequence.step` | Sequence service |
 | `services/sequence_workflow_service.py:186` | `workflow.node` | Workflow service |
 

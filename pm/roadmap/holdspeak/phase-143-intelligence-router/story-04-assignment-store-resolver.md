@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 143
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** 143-02, 143-03
 - **Unblocks:** 143-05, 143-07 through 143-10, 143-11, 143-13
 - **Owner:** unassigned
@@ -31,19 +31,19 @@ There is no canonical ordered profile-chain authority. Existing Config, subject,
 
 ## Acceptance criteria
 
-- [ ] Chains are nonempty, unique, bounded to four, cycle-free, compatible, and recursively closed.
-- [ ] Use default deletes only the sparse override and names the effective chain.
-- [ ] Unrelated assignment edits do not conflict; same assignment races have one winner.
-- [ ] Adding/downloading/connecting a profile leaves all assignments byte-identical.
-- [ ] No consumer dual-reads Config after its migration marker commits.
-- [ ] Fresh no-model and dangling upgrade states project one named repair and
+- [x] Chains are nonempty, unique, bounded to four, cycle-free, compatible, and recursively closed.
+- [x] Use default deletes only the sparse override and names the effective chain.
+- [x] Unrelated assignment edits do not conflict; same assignment races have one winner.
+- [x] Adding/downloading/connecting a profile leaves all assignments byte-identical.
+- [x] No consumer dual-reads Config after its migration marker commits.
+- [x] Fresh no-model and dangling upgrade states project one named repair and
   never auto-assign a newly added model.
-- [ ] An explicit starter bundle preview/apply is the only multi-group setup.
-- [ ] Group/global chains use each capability's default retry policy unless one
+- [x] An explicit starter bundle preview/apply is the only multi-group setup.
+- [x] Group/global chains use each capability's default retry policy unless one
   override is server-proven permitted by every member; differing policy sets,
   registry growth, and incompatible inherited entries become named issues.
-- [ ] Use-default preview shows the exact capability-specific result before clear.
-- [ ] Saving during local runtime lease saturation succeeds when structural
+- [x] Use-default preview shows the exact capability-specific result before clear.
+- [x] Saving during local runtime lease saturation succeeds when structural
   compatibility holds; later execution observes capacity at preflight.
 
 ## Test plan
