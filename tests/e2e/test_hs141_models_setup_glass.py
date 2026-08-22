@@ -119,23 +119,22 @@ def test_models_setup_is_projected_truth_with_one_action_seat(tmp_path: Path, mo
             catalog = projection["presets"]
             detected = projection["detected_local_artifacts"]
             choices = [*detected, *catalog]
+            setup.get_by_role("tab", name="This device", exact=False).click()
             radios = setup.get_by_role("radiogroup", name="AI choices").get_by_role("radio")
-            assert radios.count() == len(choices)
+            # The chooser is a wizard: only the active location's models are
+            # mounted, never the entire catalog wall at once.
+            assert 0 < radios.count() < len(choices)
             if choices:
-                expected = next(
-                    (row for row in hosted if row["existing_profile"]["target_id"] == projection["current_routes"]["thoughts"]["target_id"]),
-                    choices[0],
+                expected_radio = setup.locator(
+                    '.models-capability-radio input[type="radio"]:checked'
                 )
-                expected_radio = setup.locator(f'input[type="radio"][value="{expected["id"]}"]')
+                assert expected_radio.count() == 1
                 assert expected_radio.is_checked()
-                if len(choices) > 1:
-                    expected_index = choices.index(expected)
-                    next_row = choices[(expected_index + 1) % len(choices)]
+                if radios.count() > 1:
                     expected_radio.focus()
                     expected_radio.press("ArrowRight")
-                    assert setup.locator(
-                        f'input[type="radio"][value="{next_row["id"]}"]'
-                    ).is_checked()
+                    setup.get_by_text("Review and use", exact=True).wait_for()
+                    assert setup.locator(".models-capability-radio").count() == 0
                     assert (
                         _api(page, "GET", "/api/settings")["thoughts"][
                             "inference_target_id"
@@ -155,22 +154,31 @@ def test_models_setup_is_projected_truth_with_one_action_seat(tmp_path: Path, mo
             if width == 1440:
                 seat_box = setup.locator(".models-capability-action").bounding_box()
                 body_box = surface_body.bounding_box()
-                selected_box = setup.locator(".models-capability-card[data-selected]").bounding_box()
-                assert seat_box and body_box and selected_box
-                assert selected_box["y"] >= body_box["y"]
+                assert seat_box and body_box
+                assert seat_box["y"] >= body_box["y"]
                 assert seat_box["y"] + seat_box["height"] <= body_box["y"] + body_box["height"]
             connections = setup.get_by_text("AI connections", exact=True).locator("xpath=ancestor::details")
             assert connections.get_attribute("open") is None
 
+            setup.get_by_role("button", name="Change model", exact=True).click()
+            setup.get_by_role("button", name="Change location", exact=True).click()
             hammer = next(row for row in catalog if row.get("id") == "candidate_local_hammer21_15b_gguf_q4km")
+            setup.get_by_role("tab", name="Tool experiments", exact=False).click()
+            hammer_label = setup.get_by_text(hammer["label"], exact=True)
+            assert hammer_label.evaluate(
+                "element => { const style = getComputedStyle(element); return style.whiteSpace !== 'nowrap' && style.textOverflow !== 'ellipsis'; }"
+            )
             setup.locator(f'input[type="radio"][value="{hammer["id"]}"]').click()
-            assert setup.get_by_text("Experimental tool models", exact=True).is_visible()
+            assert setup.get_by_text("Review and use", exact=True).is_visible()
             assert setup.get_by_text("PRESENTED FOR EVALUATION · NOT ENABLED FOR TOOL EXECUTION", exact=True).is_visible()
             assert setup.get_by_text("CC-BY-NC-4.0", exact=False).is_visible()
             assert setup.locator(".models-capability-action button").count() == 0
             page.screenshot(path=f"/tmp/holdspeak-inference-setup-hammer-{width}.png", full_page=False)
 
             assert detected and detected[0]["activation"]["action"] == "use_existing"
+            setup.get_by_role("button", name="Change model", exact=True).click()
+            setup.get_by_role("button", name="Change location", exact=True).click()
+            setup.get_by_role("tab", name="This device", exact=False).click()
             setup.locator(f'input[type="radio"][value="{detected[0]["id"]}"]').click()
             setup.get_by_role("button", name="USE THIS MODEL", exact=True).click()
             setup.get_by_text("Ready · in use for Thoughts", exact=True).wait_for(timeout=10000)
@@ -183,6 +191,9 @@ def test_models_setup_is_projected_truth_with_one_action_seat(tmp_path: Path, mo
 
             if hosted:
                 chosen = hosted[-1]
+                setup.get_by_role("button", name="Change model", exact=True).click()
+                setup.get_by_role("button", name="Change location", exact=True).click()
+                setup.get_by_role("tab", name="OpenRouter", exact=False).click()
                 radio = setup.locator(f'input[type="radio"][value="{chosen["id"]}"]')
                 radio.click()
                 key = setup.get_by_label("OpenRouter key")
