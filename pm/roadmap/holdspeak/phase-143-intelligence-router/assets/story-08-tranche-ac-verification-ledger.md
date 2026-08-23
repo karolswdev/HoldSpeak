@@ -135,3 +135,23 @@ Python code read") — no dissent. Round-2 evidence beyond the reruns:
 
 **Tranche A–C is cold-ratified.** Counsel's sitting paragraph preserved in
 the audit transcript and quoted in the orchestrator's close report.
+
+
+## Phase B checkpoint — RATIFIED (Sol, three rounds, 2026-08-22)
+
+Round 1 (7 probes): DO-NOT-RATIFY — 3 blockers (Stop crash windows losing
+aftercare; swallowed fence failure; frozen deployment not controlling the
+physical transcriber) + 5 further findings. Hardening round F1–F8
+(`13645888`, incl. 28 zombie legacy_ tests ported-or-deleted).
+Round 2 (6 fresh probes): F3–F8 closed; two remaining claim-race blockers
+(fence-pending row claimable with parent OPEN; recovery upsert resetting a
+running claim) + factory-less 'active' seam. Surgical round (`9dc8dde1`) —
+claim selectors require route_fence_pending=0; upsert guards running rows;
+one caller-sweep catch (transcript-refresh owner release); factory-less ⇒
+record_only/transcriber_unavailable.
+Round 3: RATIFY. Sol judged its own probe deltas (3 lawful pre-fix-assertion
+reversals), ran the four successor tests, added a scheduled-selector
+interleaving probe (one claim, only after fence durable + marker cleared),
+independently reran the chartered matrix (313/313), and accepted the
+implementer's OPEN-parent normal-path argument point by point. Tuesday
+judgment: "I would use this on a tired Tuesday now."
