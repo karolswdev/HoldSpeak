@@ -484,13 +484,29 @@ class ProjectionRepository(BaseRepository):
     def _jobs(self, conn: Any, meetings: dict[str, str]) -> list[DeskProjection]:
         result = []
         for table, source_kind in (("intel_jobs", "intel_job"), ("plugin_run_jobs", "plugin_job")):
-            for row in conn.execute(f"SELECT * FROM {table}").fetchall():
+            query = f"SELECT * FROM {table}"
+            if table == "intel_jobs":
+                # Queue history is durable; the Desk sees only the Meeting's
+                # newest active/claimable job, never a stale shadow.
+                query = """SELECT j.* FROM intel_jobs j WHERE j.status IN
+                    ('reserved','queued','claimed','running','failed')
+                    AND j.job_id=(SELECT current.job_id FROM intel_jobs current
+                        WHERE current.meeting_id=j.meeting_id
+                        AND current.status IN ('reserved','queued','claimed','running','failed')
+                        ORDER BY CASE current.status WHEN 'running' THEN 0
+                            WHEN 'claimed' THEN 1 WHEN 'queued' THEN 2
+                            WHEN 'reserved' THEN 3 ELSE 4 END,
+                            current.requested_at DESC LIMIT 1)"""
+            for row in conn.execute(query).fetchall():
                 state = str(row["status"])
                 if state not in {"queued", "running", "failed"}:
                     continue
                 mid = str(row["meeting_id"])
                 failed = state == "failed"
-                source_id = mid if table == "intel_jobs" else str(row["id"])
+                source_id = (
+                    str(row["job_id"]) if table == "intel_jobs" and "job_id" in row.keys()
+                    else (mid if table == "intel_jobs" else str(row["id"]))
+                )
                 label = "Meeting intelligence" if table == "intel_jobs" else str(row["plugin_id"])
                 result.append(DeskProjection(
                     id=f"{source_kind}:{source_id}:{state}", projection_kind="attention",

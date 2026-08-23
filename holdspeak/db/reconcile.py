@@ -34,6 +34,171 @@ def _is_fts_shadow(table_name: str, fts_parents: set[str]) -> bool:
     return False
 
 
+def _intel_job_id(meeting_id: str, transcript_hash: str, requested_at: str) -> str:
+    """Return the stable migration ID for one legacy Meeting-keyed job."""
+    import hashlib
+
+    material = "legacy-intel-job-v1\x1f".join((meeting_id, transcript_hash, requested_at))
+    return "ij_" + hashlib.sha256(material.encode("utf-8")).hexdigest()
+
+
+def _intel_descriptor_sha256(
+    meeting_id: str, transcript_hash: str, displaced_work: str,
+) -> str:
+    """Hash the content-free immutable descriptor stored on a queue row."""
+    import hashlib
+    import json
+
+    try:
+        parsed = json.loads(displaced_work or "[]")
+    except (TypeError, ValueError):
+        parsed = []
+    material = json.dumps(
+        {
+            "schema": "MeetingDeferredIntelWorkDescriptor@1",
+            "meeting_id": meeting_id,
+            "transcript_hash": transcript_hash,
+            "displaced_work": parsed if isinstance(parsed, list) else [],
+        },
+        sort_keys=True,
+        separators=(",", ":"),
+    )
+    return "sha256:" + hashlib.sha256(material.encode("utf-8")).hexdigest()
+
+
+def _rebuild_legacy_intel_queue_tables(conn: sqlite3.Connection) -> bool:
+    """Atomically replace the pre-C Meeting-keyed queue shape when required.
+
+    SQLite cannot alter a primary key.  Renaming both coupled tables, copying
+    bytes into the new shape, and dropping only the renamed temporary tables
+    keeps the old schema and rows intact if any statement raises before commit.
+    """
+    job_columns = {
+        str(row[1]) for row in conn.execute("PRAGMA table_info('intel_jobs')")
+    }
+    if not job_columns or "job_id" in job_columns:
+        return False
+    attempt_exists = conn.execute(
+        "SELECT 1 FROM sqlite_master WHERE type='table' AND name='intel_job_attempts'"
+    ).fetchone()
+    nested = conn.in_transaction
+    if nested:
+        conn.execute("SAVEPOINT phase143_intel_queue_rebuild")
+    else:
+        conn.execute("BEGIN IMMEDIATE")
+    try:
+        conn.execute("ALTER TABLE intel_jobs RENAME TO intel_jobs__legacy_phase143")
+        if attempt_exists is not None:
+            conn.execute(
+                "ALTER TABLE intel_job_attempts RENAME TO intel_job_attempts__legacy_phase143"
+            )
+        conn.execute(
+            """CREATE TABLE intel_jobs (
+                job_id TEXT PRIMARY KEY,
+                meeting_id TEXT NOT NULL REFERENCES meetings(id) ON DELETE CASCADE,
+                origin_job_id TEXT REFERENCES intel_jobs(job_id),
+                work_descriptor_sha256 TEXT NOT NULL,
+                transcript_hash TEXT NOT NULL,
+                displaced_work TEXT NOT NULL DEFAULT '[]',
+                status TEXT NOT NULL DEFAULT 'queued',
+                lifecycle_posture TEXT NOT NULL DEFAULT 'queued',
+                claim_id TEXT,
+                parent_operation_id TEXT,
+                bundle_id TEXT,
+                bundle_sha256 TEXT,
+                requested_at TEXT NOT NULL DEFAULT (datetime('now')),
+                updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+                attempts INTEGER NOT NULL DEFAULT 0,
+                last_error TEXT
+            )"""
+        )
+        conn.execute(
+            """CREATE TABLE intel_job_attempts (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                meeting_id TEXT NOT NULL REFERENCES meetings(id) ON DELETE CASCADE,
+                job_id TEXT REFERENCES intel_jobs(job_id),
+                origin_job_id TEXT REFERENCES intel_jobs(job_id),
+                claim_id TEXT,
+                parent_operation_id TEXT,
+                bundle_id TEXT,
+                event_kind TEXT NOT NULL DEFAULT 'attempt',
+                attempt INTEGER NOT NULL,
+                outcome TEXT NOT NULL,
+                error TEXT,
+                retry_at TEXT,
+                created_at TEXT NOT NULL DEFAULT (datetime('now'))
+            )"""
+        )
+        jobs = conn.execute(
+            "SELECT meeting_id,status,transcript_hash,requested_at,updated_at,"
+            "attempts,last_error,displaced_work FROM intel_jobs__legacy_phase143"
+        ).fetchall()
+        legacy_job_ids: dict[str, str] = {}
+        for row in jobs:
+            meeting_id = str(row["meeting_id"])
+            transcript_hash = str(row["transcript_hash"])
+            requested_at = str(row["requested_at"])
+            job_id = _intel_job_id(meeting_id, transcript_hash, requested_at)
+            legacy_job_ids[meeting_id] = job_id
+            displaced_work = str(row["displaced_work"] or "[]")
+            status = str(row["status"])
+            conn.execute(
+                """INSERT INTO intel_jobs (
+                    job_id,meeting_id,work_descriptor_sha256,transcript_hash,
+                    displaced_work,status,lifecycle_posture,requested_at,updated_at,
+                    attempts,last_error
+                ) VALUES (?,?,?,?,?,?,?,?,?,?,?)""",
+                (
+                    job_id,
+                    meeting_id,
+                    _intel_descriptor_sha256(meeting_id, transcript_hash, displaced_work),
+                    transcript_hash,
+                    displaced_work,
+                    status,
+                    status,
+                    requested_at,
+                    str(row["updated_at"]),
+                    int(row["attempts"]),
+                    row["last_error"],
+                ),
+            )
+        if attempt_exists is not None:
+            for row in conn.execute(
+                "SELECT id,meeting_id,attempt,outcome,error,retry_at,created_at "
+                "FROM intel_job_attempts__legacy_phase143"
+            ):
+                conn.execute(
+                    """INSERT INTO intel_job_attempts (
+                        id,meeting_id,job_id,event_kind,attempt,outcome,error,retry_at,created_at
+                    ) VALUES (?,?,?,?,?,?,?,?,?)""",
+                    (
+                        int(row["id"]),
+                        str(row["meeting_id"]),
+                        legacy_job_ids.get(str(row["meeting_id"])),
+                        "legacy_attempt",
+                        int(row["attempt"]),
+                        str(row["outcome"]),
+                        row["error"],
+                        row["retry_at"],
+                        str(row["created_at"]),
+                    ),
+                )
+            conn.execute("DROP TABLE intel_job_attempts__legacy_phase143")
+        conn.execute("DROP TABLE intel_jobs__legacy_phase143")
+        if nested:
+            conn.execute("RELEASE SAVEPOINT phase143_intel_queue_rebuild")
+        else:
+            conn.execute("COMMIT")
+    except Exception:
+        if nested:
+            conn.execute("ROLLBACK TO SAVEPOINT phase143_intel_queue_rebuild")
+            conn.execute("RELEASE SAVEPOINT phase143_intel_queue_rebuild")
+        else:
+            conn.execute("ROLLBACK")
+        raise
+    return True
+
+
 def reconcile_schema(
     conn: sqlite3.Connection,
     *,
@@ -73,6 +238,10 @@ def reconcile_schema(
         )
     }
 
+    # The Phase-C queue primary-key change cannot be expressed as ALTER TABLE.
+    # Rebuild before SCHEMA_SQL creates its job-keyed indexes and triggers.
+    intel_queue_rebuilt = _rebuild_legacy_intel_queue_tables(conn)
+
     # ── 2. Create any missing tables / indexes / triggers ──────────────
     conn.executescript(SCHEMA_SQL)
 
@@ -83,7 +252,7 @@ def reconcile_schema(
         )
     }
     tables_created = post_tables - pre_tables
-    shape_changed = bool(tables_created)
+    shape_changed = bool(tables_created) or intel_queue_rebuilt
     if tables_created:
         log.info("Reconcile: created tables %s", sorted(tables_created))
 

@@ -39,7 +39,7 @@ def build_runtime_queue_frame(db) -> dict:
     jobs = []
     for job in db.intel.list_intel_jobs(limit=20):
         jobs.append({
-            "id": f"intelq:{job.meeting_id}",
+            "id": f"intelq:{getattr(job, 'job_id', None) or job.meeting_id}",
             "meeting_id": job.meeting_id,
             "label": getattr(job, "meeting_title", "") or job.meeting_id,
             "status": job.status,
@@ -99,19 +99,22 @@ def _retry_or_fail_job(
         max_seconds=max_delay_seconds,
     )
     retry_at = datetime.now() + timedelta(seconds=delay)
-    db.intel.retry_intel_job(
-        job.meeting_id,
-        error,
-        retry_at=retry_at,
-        attempt=int(job.attempts),
-        max_attempts=int(max_attempts),
-    )
+    # The ledger event belongs to the old running owner.  Persist it before
+    # creating the linked retry job, so compatibility callers that address a
+    # Meeting still resolve the correct historical row.
     db.intel.record_intel_job_attempt(
         job.meeting_id,
         attempt=int(job.attempts),
         outcome="scheduled_retry",
         error=error,
         retry_at=retry_at,
+    )
+    db.intel.retry_intel_job(
+        job.meeting_id,
+        error,
+        retry_at=retry_at,
+        attempt=int(job.attempts),
+        max_attempts=int(max_attempts),
     )
     log.warning(
         "Deferred intel failed for meeting %s (attempt %s/%s): retrying in %ss",

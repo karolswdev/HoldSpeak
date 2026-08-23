@@ -67,6 +67,16 @@ class IntelJob:
     # `holdspeak.meeting_session.intel_plan.DISPLACED_*`). Empty for an ordinary
     # deferred job, which runs base analysis and routed plugins only.
     displaced_work: tuple[str, ...] = ()
+    # Phase C durable binding references.  Existing DTO consumers retain the
+    # Meeting-facing fields above; these are identifiers/hashes only.
+    job_id: Optional[str] = None
+    origin_job_id: Optional[str] = None
+    work_descriptor_sha256: Optional[str] = None
+    claim_id: Optional[str] = None
+    parent_operation_id: Optional[str] = None
+    bundle_id: Optional[str] = None
+    bundle_sha256: Optional[str] = None
+    lifecycle_posture: Optional[str] = None
 
 
 @dataclass
@@ -92,6 +102,8 @@ class IntelJobAttempt:
     error: Optional[str]
     retry_at: Optional[datetime]
     created_at: datetime
+    job_id: Optional[str] = None
+    event_kind: Optional[str] = None
 
 
 @dataclass

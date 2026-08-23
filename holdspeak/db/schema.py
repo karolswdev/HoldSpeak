@@ -127,25 +127,39 @@ CREATE TABLE IF NOT EXISTS intel_snapshots (
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
--- Deferred intel jobs for meetings that need later processing.
--- `displaced_work` (HS-131-08) is the STRUCTURED list of work stop() displaced
--- onto this job (a JSON array of slugs); empty for an ordinary deferred job,
--- which runs base analysis and routed plugins only.
+-- Deferred intel jobs for meetings that need later processing.  One Meeting may
+-- retain historical jobs while a fresh immutable descriptor is queued.  Queue
+-- state carries references and hashes only; never transcript bytes.
 CREATE TABLE IF NOT EXISTS intel_jobs (
-    meeting_id TEXT PRIMARY KEY REFERENCES meetings(id) ON DELETE CASCADE,
-    status TEXT NOT NULL DEFAULT 'queued',
+    job_id TEXT PRIMARY KEY,
+    meeting_id TEXT NOT NULL REFERENCES meetings(id) ON DELETE CASCADE,
+    origin_job_id TEXT REFERENCES intel_jobs(job_id),
+    work_descriptor_sha256 TEXT NOT NULL,
     transcript_hash TEXT NOT NULL,
+    displaced_work TEXT NOT NULL DEFAULT '[]',
+    status TEXT NOT NULL DEFAULT 'queued',
+    lifecycle_posture TEXT NOT NULL DEFAULT 'queued',
+    claim_id TEXT,
+    parent_operation_id TEXT,
+    bundle_id TEXT,
+    bundle_sha256 TEXT,
     requested_at TEXT NOT NULL DEFAULT (datetime('now')),
     updated_at TEXT NOT NULL DEFAULT (datetime('now')),
     attempts INTEGER NOT NULL DEFAULT 0,
-    last_error TEXT,
-    displaced_work TEXT NOT NULL DEFAULT '[]'
+    last_error TEXT
 );
 
--- Deferred-intel attempt history (retry and terminal outcomes)
+-- Append-only deferred-intel ledger.  meeting_id keeps pre-C rows readable;
+-- job_id keys every new event to the immutable job that caused it.
 CREATE TABLE IF NOT EXISTS intel_job_attempts (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     meeting_id TEXT NOT NULL REFERENCES meetings(id) ON DELETE CASCADE,
+    job_id TEXT REFERENCES intel_jobs(job_id),
+    origin_job_id TEXT REFERENCES intel_jobs(job_id),
+    claim_id TEXT,
+    parent_operation_id TEXT,
+    bundle_id TEXT,
+    event_kind TEXT NOT NULL DEFAULT 'attempt',
     attempt INTEGER NOT NULL,
     outcome TEXT NOT NULL, -- scheduled_retry | terminal_failure | success
     error TEXT,
@@ -216,7 +230,24 @@ CREATE INDEX IF NOT EXISTS idx_decision_commitments_status ON decision_commitmen
 CREATE INDEX IF NOT EXISTS idx_topics_meeting ON topics(meeting_id);
 CREATE INDEX IF NOT EXISTS idx_meetings_date ON meetings(started_at);
 CREATE INDEX IF NOT EXISTS idx_intel_jobs_status ON intel_jobs(status, requested_at);
+CREATE INDEX IF NOT EXISTS idx_intel_jobs_meeting_current ON intel_jobs(meeting_id, status, requested_at DESC);
 CREATE INDEX IF NOT EXISTS idx_intel_job_attempts_meeting ON intel_job_attempts(meeting_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_intel_job_attempts_job ON intel_job_attempts(job_id, created_at DESC);
+-- A work descriptor can have one execution owner. Terminal history may coexist.
+CREATE UNIQUE INDEX IF NOT EXISTS uq_intel_jobs_active_descriptor
+ON intel_jobs(meeting_id, work_descriptor_sha256)
+WHERE status IN ('reserved', 'queued', 'claimed', 'running');
+CREATE UNIQUE INDEX IF NOT EXISTS uq_intel_job_claim
+ON intel_jobs(claim_id) WHERE claim_id IS NOT NULL;
+CREATE TRIGGER IF NOT EXISTS intel_jobs_immutable_descriptor
+BEFORE UPDATE OF job_id, meeting_id, transcript_hash, displaced_work, work_descriptor_sha256 ON intel_jobs
+WHEN OLD.work_descriptor_sha256 != ''
+BEGIN SELECT RAISE(ABORT, 'intel job descriptor is immutable'); END;
+CREATE TRIGGER IF NOT EXISTS intel_job_attempts_append_only_update
+BEFORE UPDATE ON intel_job_attempts
+BEGIN SELECT RAISE(ABORT, 'intel job attempts are append-only'); END;
+-- Meeting deletion remains the existing foreign-key retention boundary; queue
+-- code never deletes individual ledger events.
 CREATE INDEX IF NOT EXISTS idx_segments_speaker_id ON segments(speaker_id);
 CREATE INDEX IF NOT EXISTS idx_speakers_name ON speakers(name);
 
