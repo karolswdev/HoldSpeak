@@ -43,6 +43,8 @@ class MeetingSummary:
     intel_status_detail: Optional[str] = None
     capture_status: str = "finalized"
     capture_failure: Optional[str] = None
+    transcription_status: str = "active"
+    transcription_status_detail: Optional[dict[str, str]] = None
     capture_checkpoint_seconds: float = 0.0
     provenance: str = "desktop"
 

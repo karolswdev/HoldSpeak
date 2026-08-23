@@ -264,6 +264,8 @@ class MeetingGlueMixin:
             session = MeetingSession(
                 transcriber=preloaded_transcriber,
                 transcriber_factory=construct_transcriber,
+                transcription_backend=str(self.config.model.backend or ""),
+                transcription_model_name=str(self.config.model.name or ""),
                 requested_remote_device_ids=tuple(
                     str(getattr(descriptor, "id", "")) for descriptor, _source in device_pairs
                 ),

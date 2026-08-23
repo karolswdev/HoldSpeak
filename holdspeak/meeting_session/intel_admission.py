@@ -39,7 +39,6 @@ from .intel_plan import (
     SESSION_CAPABILITIES,
     SESSION_CLOSED,
     SESSION_NOT_ADMITTED,
-    freeze_meeting_intel_plan,
 )
 from .transcribe_admission import (
     TRANSCRIPTION_INTERVAL_SECONDS,
@@ -172,10 +171,54 @@ class IntelAdmissionMixin(TranscribeAdmissionMixin):
         )
         source_count = 2 + len(requested)  # mic + system + frozen requested remotes
         transcription_budget = 2 * source_count * (interval_count + 1) + 2
-        # Slice 1 declares (and freezes) the derived member; transcription itself
-        # remains on its legacy execution path until slice 2, so it has no Phase-B
-        # lifecycle reservation to spend yet.
-        preload_budget = 0
+        # Resolve `auto` exactly as Transcriber does: importability only, never
+        # model construction, a load, or a network call at route admission.
+        resolved_backend = self._transcription_backend
+        if resolved_backend == "auto":
+            try:
+                from ..transcribe import _resolve_backend
+
+                resolved_backend = _resolve_backend("auto")
+            except Exception:
+                resolved_backend = ""
+        self._resolved_transcription_backend = resolved_backend
+        model_name = self._transcription_model_name or "base"
+        deferred_faster_whisper = (
+            self.transcriber is None
+            and self._transcriber_factory is not None
+            and resolved_backend == "faster-whisper"
+        )
+        deferred_or_unloaded_mlx = (
+            resolved_backend == "mlx"
+            and (
+                (self.transcriber is None and self._transcriber_factory is not None)
+                or (self.transcriber is not None and not bool(getattr(self.transcriber, "loaded", False)))
+            )
+        )
+        if deferred_or_unloaded_mlx:
+            from ..transcribe import _model_repo_candidates
+
+            candidates = [
+                {"id": candidate, "revision": "mlx-candidate-v1"}
+                for candidate in _model_repo_candidates(model_name)
+            ]
+            strategies = ["model-holder", "silent-audio"]
+        elif deferred_faster_whisper:
+            candidates = [{
+                "id": f"builtin-whisper-faster-whisper-{model_name}",
+                "revision": "legacy-model-config-v1",
+            }]
+            strategies = ["constructor"]
+        else:
+            candidates = []
+            strategies = ["constructor"]
+        preload_budget = 1 if (deferred_faster_whisper or deferred_or_unloaded_mlx) else 0
+        preload_declaration = {
+            "key": "preload",
+            "source_key": "transcription",
+            "candidate_material": candidates,
+            "strategy_sequence": strategies,
+        }
         budget_groups = (
             {
                 "id": "meeting-intelligence",
@@ -224,12 +267,7 @@ class IntelAdmissionMixin(TranscribeAdmissionMixin):
                     {"key": "transcription", "capability_id": "speech.transcribe", "invocation_id": self._state.id},
                 ),
                 budget_groups=budget_groups,
-                derived_preload={
-                    "key": "preload",
-                    "source_key": "transcription",
-                    "candidate_material": [],
-                    "strategy_sequence": ["model-holder", "silent-audio"],
-                },
+                derived_preload=preload_declaration,
                 requested_remote_device_ids=requested,
             )
         except Exception as exc:
@@ -242,29 +280,9 @@ class IntelAdmissionMixin(TranscribeAdmissionMixin):
             return False
         self._intel_parent = started["parent"]
         self._route_bundle = started["bundle"]
-        # Slice 1 deliberately leaves audio execution on its historical reader.
-        # This plan is not a second live-intelligence authority: it exposes only
-        # the v1 transcription/preload records to `TranscriptionAdmission` until
-        # slice 2 moves intervals onto the frozen bundle member.
-        try:
-            from ..db import get_database
-
-            self._intel_plan = freeze_meeting_intel_plan(
-                get_database(),
-                meeting_id=self._state.id,
-                capabilities=TRANSCRIPTION_CAPABILITIES,
-                deadline_at=deadline,
-                child_budget=transcription_budget,
-                provenance=str(self._state.provenance or "desktop"),
-                created_at=time.time(),
-            )
-        except Exception as exc:
-            self._record_only({
-                "family": "speech-recognition-route-assignments",
-                "reason_code": str(getattr(exc, "code", "") or TRANSCRIPTION_NOT_ADMITTED),
-                "repair": "repair_audio_model_lifecycle",
-            })
-            log.error("legacy transcription plan refused after bundle admission: %s", type(exc).__name__)
+        # A fresh bundle-backed Meeting never reconstructs a legacy speech plan.
+        # The bundle's transcription member is the only execution authority;
+        # `SpeechSessionPlan` remains readable solely for pre-cutover history.
         log.info(
             "meeting intelligence bundle admitted: parent=%s bundle=%s",
             self._intel_parent.operation_id,

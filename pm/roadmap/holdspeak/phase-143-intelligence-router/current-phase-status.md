@@ -112,11 +112,16 @@ analysis/bookmark/title execute as routed controller-owned children on an
 atomic five-member bundle with aggregate budget groups, deterministic
 identities, election-gated cards, honest retry/fallback ordinals,
 `record_only` degradation (raw capture never depends on model authority),
-and recorder-failure unwind. Slice 2 (routed transcription, exact-local
-Whisper migration incl. deterministic `auto` resolution, readiness
-bootstrap, minimal MLX warmup) is implemented and held at the commit gate
-pending day-one end-to-end proof; slice 3 (Stop = fence + preserve legacy
-deferred aftercare) follows. Verification ledger:
+and recorder-failure unwind. Slice 2 is COMPLETE: Meeting transcription
+(mic + system + devices + final pass) runs as routed controller-owned
+children with actual-byte audio hashes, exact `{text, language}` results,
+and timeout = unknown/terminal/no-second-model; the exact-local Whisper
+migration (incl. deterministic `auto` resolution) creates a visible
+library profile + assignment with day-one same-Meeting readiness bootstrap
+proven end-to-end on a fresh DB; MLX warmup is one bounded preload child
+with frozen candidate evidence (P=1, ceremony trimmed per the owner scope
+ruling); load failure degrades to `record_only` with capture alive.
+Slice 3 (Stop = fence + preserve legacy deferred aftercare) remains. Verification ledger:
 [tranche A–C ledger](./assets/story-08-tranche-ac-verification-ledger.md);
 counsel record:
 [counsel round 1](./assets/story-08-displaced-work-counsel-round1.md);

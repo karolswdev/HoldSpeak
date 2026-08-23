@@ -15,10 +15,11 @@ verification ledger live in `assets/story-08-*`). Phase B slice 1 is complete:
 live Meeting analysis, bookmark labels, and auto-title execute as routed
 controller-owned children on the atomic five-member session bundle
 (aggregate budget groups, deterministic identities, election-gated cards,
-`record_only` degradation, recorder-failure unwind). Slice 2 (routed
-transcription + exact-local Whisper migration + readiness bootstrap +
-minimal MLX warmup) is implemented, held at the commit gate for day-one
-end-to-end proof. Remaining for this story: slice 3 (live Stop = bundle
+`record_only` degradation, recorder-failure unwind). Slice 2 is
+complete: routed transcription with day-one same-Meeting bootstrap proven
+(auto + explicit backends, fresh DB, migration -> preload -> readiness ->
+routed transcript), timeout = unknown, MLX warmup as one bounded preload
+child. Remaining for this story: slice 3 (live Stop = bundle
 fence + preserved legacy deferred aftercare), then Phases C–F of the
 handover sequence (deferred queue + plugins, speech lifecycle, background
 adopters, migration cleanup). Design canon for the Meeting/speech legs:

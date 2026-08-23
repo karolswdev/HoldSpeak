@@ -62,10 +62,10 @@ adapter exception to carry into the migration.
 | `plugins/dictation/runtime_mesh_relay.py:106` | relay `run_prompt` | `internal.speech.runtime_assembly` |
 | `plugins/dictation/runtime_openai_compatible.py:141` | classify `chat.completions.create` | `speech.intent_classify` |
 | `plugins/dictation/runtime_openai_compatible.py:188` | rewrite `chat.completions.create` | `speech.rewrite` |
-| `transcribe.py:241` | MLX model preload `get_model` | `speech.preload` |
-| `transcribe.py:251` | silent-audio MLX warmup `transcribe` | `speech.transcribe` |
-| `transcribe.py:296` | MLX Whisper `transcribe` | `speech.transcribe` |
-| `transcribe.py:378` | faster-whisper `transcribe` | `speech.transcribe` |
+| `transcribe.py:278` | MLX model preload `get_model` | `speech.preload` |
+| `transcribe.py:288` | silent-audio MLX warmup `transcribe` | `speech.transcribe` |
+| `transcribe.py:333` | MLX Whisper `transcribe` | `speech.transcribe` |
+| `transcribe.py:415` | faster-whisper `transcribe` | `speech.transcribe` |
 
 The first four rows are reached through a runner-built `MeetingIntel` and its
 canonical adapter. Dictation rows are reached through the admitted dictation
@@ -88,7 +88,7 @@ source owner's review by merely using the runner.
 | `meeting_session/intel_child.py:193` | dynamic: frozen `MeetingIntelPlan` capability | `meeting_session.intel_child` |
 | `rails_observer.py:268` | `background.rails_summary` | `rails_observer` |
 | `services/ask_service.py:120` | `internal.semantic_dispatch`; exact capability supplied by the semantic caller | `services.ask_service` |
-| `services/inference_adoption_service.py:1187` | dynamic: frozen `InferenceRoutePlan` capability | `services.inference_adoption_service` |
+| `services/inference_adoption_service.py:1199` | dynamic: frozen `InferenceRoutePlan` capability | `services.inference_adoption_service` |
 | `services/cadence_service.py:284` | `background.cadence_draft` | `services.cadence_service` |
 | `services/decision_lifecycle_service.py:81` | `decision.promotion_draft` | `services.decision_lifecycle_service` |
 | `services/recipe_service.py:52` | `internal.semantic_dispatch`; exact capability supplied by the semantic caller | `services.recipe_service` |

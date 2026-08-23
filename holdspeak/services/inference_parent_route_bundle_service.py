@@ -43,6 +43,20 @@ def _safe(value: Any, *, field: str) -> str:
     return clean
 
 
+def _safe_preload_candidate(value: Any) -> str:
+    """Accept a registry-safe ID or a namespaced model repository, never a path."""
+    clean = str(value or "").strip()
+    if "/" not in clean:
+        return _safe(clean, field="preload_candidate_id")
+    parts = clean.split("/")
+    if len(parts) != 2 or any(_safe(part, field="preload_candidate_id") != part for part in parts):
+        raise ValidationError(
+            "preload_candidate_id is invalid",
+            code="inference_parent_route_bundle_invalid",
+        )
+    return clean
+
+
 def _principal_material(principal: Principal) -> dict[str, Any]:
     return {
         "kind": principal.name,
@@ -480,7 +494,7 @@ class InferenceParentRouteBundleService:
             )
         candidate_material = [
             {
-                "id": _safe(item["id"], field="preload_candidate_id"),
+                "id": _safe_preload_candidate(item["id"]),
                 "revision": _safe(item["revision"], field="preload_candidate_revision"),
             }
             for item in candidates
@@ -1150,7 +1164,7 @@ class InferenceParentRouteBundleService:
             or any(
                 not isinstance(item, Mapping)
                 or set(item) != {"id", "revision"}
-                or _safe(item["id"], field="preload_candidate_id") != item["id"]
+                or _safe_preload_candidate(item["id"]) != item["id"]
                 or _safe(item["revision"], field="preload_candidate_revision") != item["revision"]
                 for item in evidence["candidate_material"]
             )

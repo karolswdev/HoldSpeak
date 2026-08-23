@@ -1304,10 +1304,24 @@ class InferenceRoutePlanService:
                 "context_support": self._context_support(context),
             })
             revisions.append(deployment)
+            # A migrated built-in Whisper runtime has no verified artifact file
+            # to observe before it is first loaded. For its two speech
+            # operations only, an enabled unavailable binding is capacity that
+            # the derived preload observes at operation time; no other
+            # unavailable profile gains executable status.
+            unloaded_local_speech = (
+                int(value.get("profile_schema_version", 2)) == 2
+                and readiness == "unavailable"
+                and deployment.kind == "this_device"
+                and deployment.boundary == "same_device"
+                and deployment.engine in {"mlx", "faster-whisper"}
+                and getattr(capability, "id", "") in {"speech.transcribe", "speech.preload"}
+            )
+            executable = enabled and (readiness in {"ready", "unknown"} or unloaded_local_speech)
             preflight.append({
                 "route_leg_ordinal": expected,
-                "eligibility": "executable" if enabled and readiness in {"ready", "unknown"} else "known_preflight_unavailable",
-                "reason_code": None if enabled and readiness in {"ready", "unknown"} else ("binding_disabled" if not enabled else "binding_not_ready"),
+                "eligibility": "executable" if executable else "known_preflight_unavailable",
+                "reason_code": None if executable else ("binding_disabled" if not enabled else "binding_not_ready"),
             })
         return entries, revisions, preflight
 

@@ -6,56 +6,28 @@ out of MeetingSession; `self` is the session.
 
 from __future__ import annotations
 
-import threading
-import time
-import uuid
 from datetime import datetime
-from pathlib import Path
-from typing import Any, Callable, Optional, TYPE_CHECKING
-import json
+from typing import Optional
 
 import numpy as np
 
-from ..meeting_recorder import MeetingRecorder, concatenate_chunks, AudioChunk
-from ..transcribe import Transcriber
 from ..logging_config import get_logger
-
-if TYPE_CHECKING:
-    from ..audio import AudioSource
-    from ..device_audio import DeviceDescriptor
-
-# Optional imports for intel (the same guarded pattern as session.py).
-try:
-    from ..intel import (
-        IntelResult,
-        ActionItem,
-        get_intel_runtime_status,
-        resolve_intel_provider,
-    )
-except ImportError:
-    IntelResult = None  # type: ignore
-    ActionItem = None  # type: ignore
-    get_intel_runtime_status = None  # type: ignore
-    resolve_intel_provider = None  # type: ignore
-
-try:
-    from ..speaker_intel import SpeakerDiarizer
-except ImportError:
-    SpeakerDiarizer = None  # type: ignore
-
-from .models import (
-    Bookmark,
-    IntelSnapshot,
-    MeetingSaveResult,
-    MeetingState,
-    TranscriptSegment,
-)
+from ..meeting_recorder import AudioChunk, concatenate_chunks
+from .models import TranscriptSegment
 
 log = get_logger("meeting_session")
 
 
 class TranscribeLoopMixin:
-    def _transcribe_audio(self, audio: "np.ndarray") -> Optional[str]:
+    def _transcribe_audio(
+        self,
+        audio: "np.ndarray",
+        *,
+        source_id: str = "mic",
+        interval_start: float = 0.0,
+        interval_end: float = 0.0,
+        final_pass: bool = False,
+    ) -> Optional[str]:
         """The one transcription seam for every stream (mic/system/device).
 
         HS-93-06: the ``meeting.transcribe`` fault point trips here, so a
@@ -70,7 +42,17 @@ class TranscribeLoopMixin:
         from ..faults import trip as _fault_trip
 
         _fault_trip("meeting.transcribe")
-        admission = self._transcription_admission()
+        try:
+            admission = self._transcription_admission(
+                source_id=source_id,
+                interval_start=interval_start,
+                interval_end=interval_end,
+                final_pass=final_pass,
+            )
+        except TypeError:
+            # Narrow compatibility for historical in-process seams that supplied
+            # the pre-cutover zero-argument admission handle.
+            admission = self._transcription_admission()
         if admission is None:
             log.warning(
                 "meeting transcription interval dropped: %s",
@@ -153,7 +135,13 @@ class TranscribeLoopMixin:
                 end_time = mic_chunks[-1].end_time
 
                 try:
-                    text = self._transcribe_audio(mic_audio)
+                    text = self._transcribe_audio(
+                        mic_audio,
+                        source_id="mic",
+                        interval_start=start_time,
+                        interval_end=end_time,
+                        final_pass=final,
+                    )
                     if text and text.strip():
                         # Optionally diarize mic audio (for on-site meetings)
                         speaker_id: Optional[str] = None
@@ -195,7 +183,13 @@ class TranscribeLoopMixin:
                 end_time = system_chunks[-1].end_time
 
                 try:
-                    text = self._transcribe_audio(system_audio)
+                    text = self._transcribe_audio(
+                        system_audio,
+                        source_id="system",
+                        interval_start=start_time,
+                        interval_end=end_time,
+                        final_pass=final,
+                    )
                     if text and text.strip():
                         # Identify speaker via diarization
                         speaker_id: Optional[str] = None
@@ -248,7 +242,13 @@ class TranscribeLoopMixin:
             start_time = chunks[0].timestamp
             end_time = chunks[-1].end_time
             try:
-                text = self._transcribe_audio(audio)
+                text = self._transcribe_audio(
+                    audio,
+                    source_id=f"device:{device_id}",
+                    interval_start=start_time,
+                    interval_end=end_time,
+                    final_pass=final,
+                )
             except Exception as e:
                 log.error(f"Device {device_id!r} transcription error: {e}")
                 continue

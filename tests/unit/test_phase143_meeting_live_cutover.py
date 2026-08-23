@@ -6,6 +6,9 @@ from types import SimpleNamespace
 from pathlib import Path
 from typing import Any
 
+import numpy as np
+import pytest
+
 from holdspeak.db import Database
 from holdspeak.intel import ActionItem, IntelResult
 from holdspeak.meeting_session.models import Bookmark, TranscriptSegment
@@ -16,7 +19,7 @@ from holdspeak.services.inference_adoption_service import (
     RoutedInferenceCoordinator,
 )
 from holdspeak.services.inference_assignment_service import InferenceAssignmentService
-from tests.unit.test_phase143_inference_assignments import _profile, _result_claim
+from tests.unit.test_phase143_inference_assignments import _profile, _result_claim, _set
 
 
 OWNER = Principal(PrincipalKind.OWNER, "meeting-migration-owner")
@@ -30,6 +33,28 @@ def _meeting_config(profile_id: str, *, provider: str = "local") -> SimpleNamesp
         ),
         model=SimpleNamespace(name="base", backend="auto", language="auto"),
     )
+
+
+def _assign_meeting_routes_without_speech(db: Database) -> None:
+    capabilities = (
+        "meeting.live_analysis",
+        "meeting.bookmark_label",
+        "meeting.auto_title",
+    )
+    _profile(
+        db,
+        "meeting-profile",
+        claims=("language", "structured_output", *(_result_claim(item) for item in capabilities)),
+        modalities=("language", "audio"),
+    )
+    assignments = InferenceAssignmentService(db)
+    for ordinal, capability in enumerate(capabilities, 1):
+        _set(
+            assignments,
+            f"day-one-meeting-assignment-{ordinal}",
+            {"kind": "capability", "capability_id": capability},
+            "meeting-profile",
+        )
 
 
 def test_meeting_assignment_migration_copies_exact_saved_profile_and_replays(
@@ -102,9 +127,9 @@ def test_speech_recognition_without_a_saved_profile_refuses_without_preload_assi
     db = Database(tmp_path / "speech-migration-refusal.db")
     service = RoutedInferenceCoordinator(db)
 
-    issue = service.migrate_speech_recognition_route_assignments(
-        OWNER, _meeting_config("saved-meeting-profile")
-    )
+    config = _meeting_config("saved-meeting-profile")
+    config.model = SimpleNamespace(name="not-a-builtin-whisper-model", backend="auto", language="auto")
+    issue = service.migrate_speech_recognition_route_assignments(OWNER, config)
 
     assert issue["schema"] == "InferenceAssignmentMigrationIssue@1"
     assert issue["family"] == SPEECH_RECOGNITION_MIGRATION_FAMILY
@@ -116,6 +141,442 @@ def test_speech_recognition_without_a_saved_profile_refuses_without_preload_assi
             "SELECT COUNT(*) FROM inference_assignment_migrations WHERE family=?",
             (SPEECH_RECOGNITION_MIGRATION_FAMILY,),
         ).fetchone()[0] == 0
+
+
+def test_builtin_local_whisper_migration_creates_one_visible_bound_profile_and_replays(
+    tmp_path: Path,
+) -> None:
+    db = Database(tmp_path / "speech-migration-happy.db")
+    service = RoutedInferenceCoordinator(db)
+    config = _meeting_config("saved-meeting-profile")
+    config.model = SimpleNamespace(name="base", backend="mlx", language="en")
+
+    migrated = service.migrate_speech_recognition_route_assignments(OWNER, config)
+
+    assert migrated["family"] == SPEECH_RECOGNITION_MIGRATION_FAMILY
+    assert migrated["status"] == "migrated"
+    assignments = InferenceAssignmentService(db)
+    assignment = assignments.get_assignment(
+        OWNER, {"kind": "capability", "capability_id": "speech.transcribe"}
+    )
+    profile_id = assignment["entries"][0]["profile_id"]
+    profile = service.plans._profiles.get_profile(OWNER, profile_id)
+    assert profile["safe_presentation"]["badge"] == "legacy-model-config"
+    assert profile["model_or_artifact_identity"].startswith("artifact-speech-migrated-")
+    assert "speech_language:en" in profile["capability_manifest"]["claims"]
+    assert assignments.migration_marker(
+        OWNER, family=SPEECH_RECOGNITION_MIGRATION_FAMILY
+    ) is not None
+    assert not [
+        item for item in assignments.list_assignments(OWNER)["assignments"]
+        if item["scope"].get("capability_id") == "speech.preload"
+    ]
+    assert service.migrate_speech_recognition_route_assignments(OWNER, object())["legacy_config_read"] is False
+
+
+@pytest.mark.parametrize("saved_backend", ["auto", "mlx"])
+def test_migrated_local_whisper_bootstraps_ready_and_transcribes_first_meeting(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, saved_backend: str
+) -> None:
+    """A never-loaded migrated model warms and serves its very first Meeting."""
+    from holdspeak.kernel.runtime import _configure
+    from holdspeak.meeting_session import MeetingSession
+    from holdspeak.speech_session.transcription import audio_sha256
+    from tests.unit.test_meeting_session_admission import FakeJournal, FakeRecorder
+
+    db = Database(tmp_path / f"day-one-{saved_backend}.db")
+    _assign_meeting_routes_without_speech(db)
+    broker = _configure(db)
+    monkeypatch.setattr("holdspeak.db.get_database", lambda: db)
+    monkeypatch.setattr("holdspeak.meeting_session.session.MeetingRecorder", FakeRecorder)
+    monkeypatch.setattr("holdspeak.meeting_capture_journal.MeetingCaptureJournal", FakeJournal)
+    # The auto decision is runtime's importability-only decision; no backend
+    # constructor or model load happens while the migration runs.
+    monkeypatch.setattr("holdspeak.transcribe._resolve_backend", lambda _value: "mlx")
+    config = _meeting_config("saved-meeting-profile")
+    config.model = SimpleNamespace(name="base", backend=saved_backend, language="auto")
+    migrated = broker.inference_adoption_service.migrate_speech_recognition_route_assignments(
+        OWNER, config
+    )
+    assert migrated["status"] == "migrated"
+    speech_assignment = InferenceAssignmentService(db).get_assignment(
+        OWNER, {"kind": "capability", "capability_id": "speech.transcribe"}
+    )
+    assert speech_assignment["entries"][0]["profile_id"].startswith("speech-migrated-")
+    class _UnloadedMlx:
+        backend = "mlx"
+        model_name = "base"
+
+        def __init__(self) -> None:
+            self.loaded = False
+            self.warm_calls = 0
+            self.preload_outcome = ""
+
+        def warm(self, admission: Any) -> None:
+            self.warm_calls += 1
+            outcome, _ = admission.preload_sequence(
+                material={
+                    "engine": "mlx",
+                    "model": "base",
+                    "language": "auto",
+                    "candidate_ids": ["mlx-community/whisper-base-mlx", "mlx-community/whisper-base"],
+                    "strategy_sequence": ["model-holder", "silent-audio"],
+                },
+                run=lambda: "model-holder",
+            )
+            self.preload_outcome = outcome.outcome
+            if outcome.outcome == "succeeded":
+                self.loaded = True
+
+        def transcribe(self, audio: np.ndarray, *, admission: Any) -> str:
+            canonical = np.ascontiguousarray(audio, dtype=np.float32)
+            outcome, text = admission.transcribe_child(
+                material={
+                    "audio_sha256": audio_sha256(canonical),
+                    "sample_count": int(canonical.size),
+                    "sample_rate": 16000,
+                    "backend": "mlx",
+                    "model": "base",
+                    "language": "auto",
+                },
+                run=lambda: "day one exact",
+                seed="ignored-by-interval-identity",
+            )
+            assert outcome.outcome == "succeeded"
+            return str(text)
+
+    transcriber = _UnloadedMlx()
+    session = MeetingSession(
+        transcriber,  # type: ignore[arg-type]
+        principal=OWNER,
+        intel_enabled=True,
+        transcription_backend=saved_backend,
+        transcription_model_name="base",
+    )
+    state = session.start()
+    assert state.transcription_status == "active"
+    assert transcriber.preload_outcome == "succeeded"
+    assert transcriber.loaded is True and transcriber.warm_calls == 1
+    assert session._route_bundle is not None and session._route_bundle.get("derived_preloads")
+    assert session._transcribe_audio(
+        np.ones(16000, dtype=np.float32), source_id="mic", interval_start=0.0, interval_end=1.0
+    ) == "day one exact"
+    with db._connection() as conn:
+        readiness = conn.execute(
+            """SELECT o.state,o.reason_code
+                 FROM model_profile_binding_heads h
+                 JOIN model_profile_binding_revisions b
+                   ON b.binding_id=h.binding_id AND b.revision=h.revision
+                 JOIN model_profile_readiness_observations o
+                   ON o.observation_id=b.readiness_observation_id
+                WHERE b.profile_id LIKE 'speech-migrated-%'"""
+        ).fetchone()
+        preload_count = conn.execute(
+            """SELECT COUNT(*) FROM inference_route_executions e
+                 JOIN inference_route_plans p ON p.id=e.route_plan_id
+                WHERE p.capability_id='speech.preload' AND e.terminal_outcome='succeeded'"""
+        ).fetchone()[0]
+    assert tuple(readiness) == ("ready", "loaded_under_speech_preload")
+    assert preload_count == 1
+
+
+def test_mlx_candidate_walk_runs_inside_one_meeting_preload_sequence(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """MLX keeps its physical candidate walk while Meeting receipts it once."""
+    from holdspeak.transcribe import _MlxTranscriber
+
+    impl = object.__new__(_MlxTranscriber)
+    impl._path_or_hf_repo = None
+    impl._candidates = ("mlx-community/whisper-base-mlx", "mlx-community/whisper-base")
+    impl.model_name = "base"
+    impl.language = None
+    physical: list[tuple[str, str]] = []
+
+    def holder(repo: str) -> str:
+        physical.append(("model-holder", repo))
+        if repo.endswith("-mlx"):
+            raise RuntimeError("first candidate unavailable")
+        return "model-holder"
+
+    monkeypatch.setattr(impl, "_model_holder_get", holder)
+    def silent(repo: str) -> str:
+        physical.append(("silent-audio", repo))
+        if repo.endswith("-mlx"):
+            raise RuntimeError("first candidate fallback unavailable")
+        return "silent-audio"
+
+    monkeypatch.setattr(impl, "_silent_audio_load", silent)
+
+    class _Admission:
+        single_preload_sequence = True
+
+        def __init__(self) -> None:
+            self.calls: list[dict[str, Any]] = []
+
+        def preload_sequence(self, *, material: dict[str, Any], run: Any) -> tuple[Any, Any]:
+            self.calls.append(material)
+            return SimpleNamespace(outcome="succeeded"), run()
+
+    admission = _Admission()
+    impl.ensure_loaded(admission)
+
+    assert len(admission.calls) == 1
+    assert admission.calls[0]["candidate_ids"] == list(impl._candidates)
+    assert physical == [
+        ("model-holder", "mlx-community/whisper-base-mlx"),
+        ("silent-audio", "mlx-community/whisper-base-mlx"),
+        ("model-holder", "mlx-community/whisper-base"),
+    ]
+    assert impl.loaded is True
+
+
+def test_migrated_mlx_preload_failure_keeps_raw_capture_durably_record_only(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from holdspeak.kernel.runtime import _configure
+    from holdspeak.meeting_session import MeetingSession
+    from tests.unit.test_meeting_session_admission import FakeJournal, FakeRecorder
+
+    db = Database(tmp_path / "day-one-preload-failure.db")
+    _assign_meeting_routes_without_speech(db)
+    broker = _configure(db)
+    monkeypatch.setattr("holdspeak.db.get_database", lambda: db)
+    monkeypatch.setattr("holdspeak.meeting_session.session.MeetingRecorder", FakeRecorder)
+    monkeypatch.setattr("holdspeak.meeting_capture_journal.MeetingCaptureJournal", FakeJournal)
+    config = _meeting_config("saved-meeting-profile")
+    config.model = SimpleNamespace(name="base", backend="mlx", language="auto")
+    assert broker.inference_adoption_service.migrate_speech_recognition_route_assignments(
+        OWNER, config
+    )["status"] == "migrated"
+
+    class _BrokenMlx:
+        backend = "mlx"
+        model_name = "base"
+        loaded = False
+
+        @staticmethod
+        def warm(admission: Any) -> None:
+            outcome, _ = admission.preload_sequence(
+                material={
+                    "engine": "mlx", "model": "base", "language": "auto",
+                    "candidate_ids": ["mlx-community/whisper-base-mlx", "mlx-community/whisper-base"],
+                    "strategy_sequence": ["model-holder", "silent-audio"],
+                },
+                run=lambda: (_ for _ in ()).throw(RuntimeError("load failed")),
+            )
+            raise RuntimeError(outcome.outcome)
+
+        @staticmethod
+        def transcribe(*_args: Any, **_kwargs: Any) -> str:
+            raise AssertionError("record-only Meeting must not transcribe")
+
+    session = MeetingSession(
+        _BrokenMlx(),  # type: ignore[arg-type]
+        principal=OWNER,
+        intel_enabled=True,
+        transcription_backend="mlx",
+        transcription_model_name="base",
+    )
+    state = session.start()
+    assert state.capture_status == "recording"
+    assert state.transcription_status == "record_only"
+    assert state.transcription_status_detail == {
+        "family": "speech-recognition-route-assignments",
+        "reason_code": "transcriber_preload_failed",
+        "repair": "repair_audio_model_lifecycle",
+    }
+    assert session._recorder is not None and session._recorder.started
+    durable = db.meetings.get_meeting(state.id)
+    assert durable is not None and durable.transcription_status == "record_only"
+
+
+def test_meeting_transcription_routes_actual_canonical_bytes_and_exact_result(
+    tmp_path: Path, monkeypatch
+) -> None:
+    from holdspeak.speech_session.transcription import audio_sha256
+    from holdspeak.transcribe import Transcriber
+    from tests.unit.test_meeting_session_admission import _bundle_session
+
+    db, broker, session = _bundle_session(
+        tmp_path, monkeypatch, requested=("remote-a",)
+    )
+    broker.inference_runner._engine_factory = lambda _revision, **_kwargs: object()
+    session.start()
+
+    class _Impl:
+        device = "cpu"
+        compute_type = "int8"
+        loaded = True
+
+        def __init__(self) -> None:
+            self.calls = 0
+
+        @staticmethod
+        def ensure_loaded(_admission: Any) -> None:
+            return None
+
+        def transcribe(self, _audio: Any) -> str:
+            self.calls += 1
+            return "Exact routed transcript"
+
+    transcriber = Transcriber.__new__(Transcriber)
+    transcriber.backend = "fake"
+    transcriber.language = None
+    transcriber.timeout_seconds = 0.0
+    impl = _Impl()
+    transcriber._impl = impl
+    transcriber.model_name = "base"
+    transcriber.device = "cpu"
+    transcriber.compute_type = "int8"
+    audio = np.asfortranarray(np.arange(16_000, dtype=np.float32))
+    expected_sha = audio_sha256(np.ascontiguousarray(audio, dtype=np.float32))
+
+    result = transcriber.transcribe(
+        audio,
+        admission=session._transcription_admission(
+            source_id="mic", interval_start=10.0, interval_end=11.0, final_pass=False
+        ),
+    )
+
+    assert result == "Exact routed transcript"
+    # Same source/window/final tuple adopts the elected execution; source and
+    # final-pass changes remain distinct recurring operations on the same bytes.
+    assert transcriber.transcribe(
+        audio,
+        admission=session._transcription_admission(
+            source_id="mic", interval_start=10.0, interval_end=11.0, final_pass=False
+        ),
+    ) == result
+    for source_id, final_pass in (("system", False), ("device:remote-a", False), ("mic", True)):
+        assert transcriber.transcribe(
+            audio,
+            admission=session._transcription_admission(
+                source_id=source_id,
+                interval_start=10.0 if not final_pass else 11.0,
+                interval_end=11.0 if not final_pass else 12.0,
+                final_pass=final_pass,
+            ),
+        ) == result
+    assert impl.calls == 4
+    with db._connection() as conn:
+        material = conn.execute(
+            "SELECT payload_json FROM inference_adoption_material_snapshots"
+        ).fetchone()[0]
+        executions = conn.execute(
+            "SELECT terminal_outcome FROM inference_route_executions"
+        ).fetchall()
+    assert expected_sha in material
+    assert "Exact routed transcript" not in material
+    assert [row["terminal_outcome"] for row in executions] == ["succeeded"] * 4
+
+
+def test_deferred_faster_whisper_constructor_is_one_derived_preload_child(
+    tmp_path: Path, monkeypatch
+) -> None:
+    from tests.unit.test_meeting_session_admission import _bundle_session
+
+    db, broker, session = _bundle_session(tmp_path, monkeypatch)
+    broker.inference_runner._engine_factory = lambda _revision, **_kwargs: object()
+    constructed: list[object] = []
+
+    class _Transcriber:
+        model_name = "base"
+        backend = "faster-whisper"
+
+        @staticmethod
+        def transcribe(*_args: Any, **_kwargs: Any) -> str:
+            return ""
+
+    session.transcriber = None
+    session._transcriber_factory = lambda: constructed.append(_Transcriber()) or constructed[-1]
+    session._transcription_backend = "faster-whisper"
+    session._transcription_model_name = "base"
+
+    session.start()
+
+    assert len(constructed) == 1
+    assert next(
+        group for group in session._route_bundle["budget_groups"]
+        if group["id"] == "meeting-preload"
+    )["allocation"] == 1
+    with db._connection() as conn:
+        preload = conn.execute(
+            """SELECT e.terminal_outcome FROM inference_route_executions e
+                 JOIN inference_operation_route_request_plans o ON o.id=e.operation_plan_id
+                 JOIN inference_route_plans r ON r.id=o.route_plan_id
+                WHERE r.capability_id='speech.preload'"""
+        ).fetchall()
+    assert [row["terminal_outcome"] for row in preload] == ["succeeded"]
+
+
+def test_meeting_transcription_refuses_a_device_absent_from_the_frozen_set(
+    tmp_path: Path, monkeypatch
+) -> None:
+    from tests.unit.test_meeting_session_admission import _bundle_session
+
+    _db, _broker, session = _bundle_session(tmp_path, monkeypatch)
+    session.start()
+    admission = session._transcription_admission(
+        source_id="device:not-frozen", interval_start=0.0, interval_end=1.0
+    )
+    with pytest.raises(RuntimeError, match="meeting_transcription_source_not_frozen"):
+        admission.transcribe_child(
+            material={"audio_sha256": "sha256:" + "0" * 64},
+            run=lambda: "must not run",
+            seed="ignored",
+        )
+    assert session._transcription_refusal == "meeting_transcription_source_not_frozen"
+
+
+def test_meeting_transcription_timeout_is_unknown_and_never_starts_a_second_model(
+    tmp_path: Path, monkeypatch
+) -> None:
+    import time
+
+    from holdspeak.transcribe import Transcriber, TranscriberTimeoutError
+    from tests.unit.test_meeting_session_admission import _bundle_session
+
+    db, broker, session = _bundle_session(tmp_path, monkeypatch)
+    broker.inference_runner._engine_factory = lambda _revision, **_kwargs: object()
+    session.start()
+
+    class _SlowImpl:
+        device = "cpu"
+        compute_type = "int8"
+        loaded = True
+
+        @staticmethod
+        def ensure_loaded(_admission: Any) -> None:
+            return None
+
+        @staticmethod
+        def transcribe(_audio: Any) -> str:
+            time.sleep(0.2)
+            return "late"
+
+    transcriber = Transcriber.__new__(Transcriber)
+    transcriber.backend = "fake"
+    transcriber.language = None
+    transcriber.timeout_seconds = 0.01
+    transcriber._impl = _SlowImpl()
+    transcriber.model_name = "base"
+    transcriber.device = "cpu"
+    transcriber.compute_type = "int8"
+    with pytest.raises(TranscriberTimeoutError):
+        transcriber.transcribe(
+            np.ones(16_000, dtype=np.float32),
+            admission=session._transcription_admission(
+                source_id="mic", interval_start=0.0, interval_end=1.0
+            ),
+        )
+    with db._connection() as conn:
+        attempts = conn.execute("SELECT COUNT(*) FROM inference_route_attempts").fetchone()[0]
+        outcome = conn.execute(
+            "SELECT terminal_outcome FROM inference_route_executions"
+        ).fetchone()[0]
+    assert attempts == 1
+    assert outcome == "indeterminate"
 
 
 class _LiveEngine:

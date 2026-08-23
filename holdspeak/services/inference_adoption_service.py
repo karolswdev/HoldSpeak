@@ -11,9 +11,11 @@ from __future__ import annotations
 
 import hashlib
 import json
+import uuid
 from datetime import datetime, timezone
 from typing import Any, Callable, Mapping, Sequence
 
+from ..deployment_revisions import DeploymentRevision
 from ..inference_capabilities import (
     InferenceCapabilityRegistry,
     _validate_result_value,
@@ -23,6 +25,7 @@ from ..kernel.inference_runner import InvocationRequest, ServiceContract
 from ..principals import Principal, PrincipalKind
 from .errors import ConflictError, ServiceError, ValidationError
 from .inference_assignment_service import InferenceAssignmentService
+from .model_profile_service import ModelProfileService
 from .inference_fallback_controller import (
     INFERENCE_FALLBACK_AUTHORITY,
     InferenceFallbackController,
@@ -63,6 +66,15 @@ MEETING_ASSIGNMENT_CAPABILITIES = (
     "meeting.bookmark_label",
     "meeting.auto_title",
 )
+
+# The legacy selector has no general repository/path authority.  This closed
+# map is the complete set of historically shipped local Whisper selectors that
+# can become v2 Model Library authority without guessing or egress.
+_LOCAL_WHISPER_ARTIFACTS = {
+    (backend, model): f"builtin-whisper-{backend}-{model}"
+    for backend in ("mlx", "faster-whisper")
+    for model in ("tiny", "base", "small", "medium", "large")
+}
 
 
 def _canonical(value: Any) -> str:
@@ -1562,7 +1574,15 @@ class RoutedInferenceCoordinator:
     def migrate_speech_recognition_route_assignments(
         self, principal: Principal, config: Any
     ) -> dict[str, Any]:
-        """Refuse model-name guessing until speech has an exact saved profile."""
+        """Convert one exact, built-in local Whisper selector or refuse it.
+
+        This is intentionally a tiny closed migration: it resolves ``auto`` by
+        the runtime's importability-only rule, never loads/downloads a model, and
+        refuses repositories, paths, and every remote-shaped selector. The profile,
+        unavailable local deployment,
+        binding, assignment, and family marker share the assignment service's one
+        transaction.
+        """
         assignments = InferenceAssignmentService(self._db, registry=self._registry)
         existing = assignments.migration_marker(
             principal, family=SPEECH_RECOGNITION_MIGRATION_FAMILY
@@ -1570,22 +1590,282 @@ class RoutedInferenceCoordinator:
         if existing is not None:
             return {**existing, "status": "migrated", "legacy_config_read": False}
         model = getattr(config, "model", None)
+        name = str(getattr(model, "name", "") or "").strip().lower()
+        saved_backend = str(getattr(model, "backend", "") or "").strip().lower()
+        language = str(getattr(model, "language", "") or "").strip().lower()
+        backend = saved_backend
+        if backend == "auto":
+            # Design note §Orchestrator amendment (2026-08-22): `auto` is the
+            # owner's historically effective primary. Reuse Transcriber's
+            # importability-only resolution; it loads no model and touches no network.
+            try:
+                from ..transcribe import _resolve_backend
+
+                backend = _resolve_backend("auto")
+            except Exception:
+                backend = ""
         source_sha256 = _sha256(
             {
-                "model_name": str(getattr(model, "name", "") or ""),
-                "backend": str(getattr(model, "backend", "") or ""),
-                "language": str(getattr(model, "language", "") or ""),
+                "model_name": name,
+                "backend": saved_backend,
+                "resolved_backend": backend,
+                "language": language,
             }
         )
-        # ModelConfig stores a mutable Whisper selector, not a reusable profile
-        # identity or boundary-consent record.  `speech.preload` is internal and
-        # is intentionally absent from this family.
-        return self._migration_issue(
-            SPEECH_RECOGNITION_MIGRATION_FAMILY,
-            "builtin_profile_required",
-            "choose_audio_model_profile",
-            source_sha256,
+        artifact_identity = _LOCAL_WHISPER_ARTIFACTS.get((backend, name))
+        if not name or artifact_identity is None:
+            return self._migration_issue(
+                SPEECH_RECOGNITION_MIGRATION_FAMILY,
+                "builtin_profile_required",
+                "choose_audio_model_profile",
+                source_sha256,
+            )
+        # The existing language vocabulary treats ``auto`` as the one valid
+        # unpinned value.  It is authority about the owned local operation, not
+        # an endpoint, secret, or any cloud consent.
+        if language and not (language == "auto" or language.isalpha() and len(language) <= 12):
+            return self._migration_issue(
+                SPEECH_RECOGNITION_MIGRATION_FAMILY,
+                "builtin_profile_required",
+                "choose_audio_model_profile",
+                source_sha256,
+            )
+        profile_id = "speech-migrated-" + source_sha256.removeprefix("sha256:")[:24]
+        artifact_id = "artifact-" + profile_id
+        deployment_id = "deployment-" + profile_id
+        binding_id = "binding-" + profile_id
+        manifest_evidence = {
+            "revision": "legacy-whisper-v1",
+            "claims": [
+                "audio",
+                "speech_language:" + (language or "auto"),
+                "result_schema:" + self._registry.require("speech.transcribe").output_schema_sha256,
+            ],
+        }
+        manifest = {**manifest_evidence, "sha256": _sha256(manifest_evidence)}
+        profile_payload = ModelProfileService(self._db)._profile_payload({
+            "profile_id": profile_id,
+            "expected_revision": 0,
+            "label": f"Whisper {backend} {name}",
+            "provider_family": "local",
+            "runtime_family": backend,
+            "model_or_artifact_identity": artifact_id,
+            "supported_modalities": ["audio"],
+            "context_support": "bounded",
+            "tokenizer_template_requirements": {},
+            "capability_manifest": manifest,
+            "safe_presentation": {
+                "summary": "Migrated local Whisper selection",
+                "badge": "legacy-model-config",
+            },
+        })
+        capability_sha = str(manifest["sha256"])
+        artifact_manifest = {"schema": "LegacyWhisperArtifact@1", "identity": artifact_identity}
+        artifact_manifest_sha = _sha256(artifact_manifest)
+        revision = DeploymentRevision.from_artifact(
+            destination_id="local_whisper",
+            engine=backend,
+            model=artifact_identity,
+            runtime_id=backend,
+            runtime_revision="legacy-model-config-v1",
+            artifact_id=artifact_id,
+            manifest_sha256=artifact_manifest_sha,
+            format="mlx_safetensors",
+            architecture="whisper",
+            # Speech emits no prompt tokens, but its frozen lifecycle and
+            # transcription children reserve bounded controller output capacity.
+            context_ceiling=1024,
+            capability_sha256=capability_sha,
         )
+
+        def prelude(conn: Any) -> None:
+            now = _now()
+            profile_material = {
+                "schema_version": 2,
+                "profile_id": profile_id,
+                "revision": 1,
+                **{key: value for key, value in profile_payload.items() if key != "expected_revision"},
+            }
+            conn.execute(
+                """INSERT INTO model_profile_revisions
+                   (profile_id,revision,sha256,label,provider_family,runtime_family,
+                    model_or_artifact_identity,supported_modalities_json,context_support,
+                    tokenizer_template_requirements_json,capability_manifest_json,
+                    safe_presentation_json,created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                (
+                    profile_id, 1, _sha256(profile_material), profile_payload["label"],
+                    profile_payload["provider_family"], profile_payload["runtime_family"], artifact_id,
+                    _canonical(profile_payload["supported_modalities"]), profile_payload["context_support"],
+                    _canonical(profile_payload["tokenizer_template_requirements"]),
+                    _canonical(manifest), _canonical(profile_payload["safe_presentation"]), now,
+                ),
+            )
+            conn.execute(
+                """INSERT INTO inference_model_artifacts
+                   (artifact_id,format,source_kind,source_repository,source_revision,
+                    manifest_json,manifest_sha256,installed_bytes,state,local_locator,created_at,verified_at)
+                   VALUES (?,?,?,?,?,?,?,?,?,?,?,?)""",
+                (
+                    artifact_id, "mlx_safetensors", "legacy-model-config", artifact_identity,
+                    "legacy-model-config-v1", _canonical(artifact_manifest), artifact_manifest_sha,
+                    1, "removed", "", now, now,
+                ),
+            )
+            conn.execute(
+                """INSERT INTO deployment_revisions
+                   (id,schema_version,destination_id,kind,engine,model,node,boundary,
+                    endpoint,model_path,secret_slot,runtime_id,runtime_revision,artifact_id,
+                    manifest_sha256,format,architecture,context_ceiling,capability_sha256)
+                   VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                (
+                    revision.id, revision.schema_version, revision.destination_id, revision.kind,
+                    revision.engine, revision.model, revision.node, revision.boundary,
+                    revision.endpoint, None, revision.secret_slot, revision.runtime_id,
+                    revision.runtime_revision, revision.artifact_id, revision.manifest_sha256,
+                    revision.format, revision.architecture, revision.context_ceiling,
+                    revision.capability_sha256,
+                ),
+            )
+            conn.execute(
+                """INSERT INTO inference_deployments
+                   (deployment_id,destination_id,runtime_id,runtime_revision,artifact_id,
+                    model_identity,context_ceiling,recommended_context,capability_json,
+                    capability_sha256,execution_revision_id,configuration_revision,active,
+                    created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                (
+                    deployment_id, "local_whisper", backend, revision.runtime_revision, artifact_id,
+                    artifact_identity, 1024, 1024, _canonical(manifest), capability_sha, revision.id,
+                    1, 0, now, now,
+                ),
+            )
+            observation_id = "ready-" + profile_id
+            conn.execute(
+                """INSERT INTO model_profile_readiness_observations
+                   (observation_id,deployment_head_id,deployment_configuration_revision,
+                    deployment_revision_id,state,reason_code,observed_at)
+                   VALUES (?,?,?,?,?,?,?)""",
+                (observation_id, deployment_id, 1, revision.id, "unavailable", "artifact_unobserved", now),
+            )
+            conn.execute(
+                """INSERT INTO model_profile_binding_revisions
+                   (binding_id,revision,profile_id,profile_revision,deployment_head_id,
+                    deployment_configuration_revision,deployment_revision_id,secret_slot,
+                    enabled,readiness_observation_id,created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)""",
+                (binding_id, 1, profile_id, 1, deployment_id, 1, revision.id, "", 1, observation_id, now),
+            )
+            conn.execute(
+                "INSERT INTO model_profile_binding_heads(binding_id,profile_id,revision,updated_at) VALUES (?,?,?,?)",
+                (binding_id, profile_id, 1, now),
+            )
+
+        try:
+            marker = assignments.migrate_capability_assignments_atomically(
+                principal,
+                family=SPEECH_RECOGNITION_MIGRATION_FAMILY,
+                source_sha256=source_sha256,
+                capability_entries={
+                    "speech.transcribe": {"profile_id": profile_id, "profile_revision": 1}
+                },
+                _prelude=prelude,
+            )
+        except ValidationError as exc:
+            if exc.code != "inference_assignment_incompatible":
+                raise
+            return self._migration_issue(
+                SPEECH_RECOGNITION_MIGRATION_FAMILY,
+                "builtin_profile_required",
+                "choose_audio_model_profile",
+                source_sha256,
+            )
+        return {**marker, "status": "migrated", "legacy_config_read": True}
+
+    def record_local_speech_readiness_after_load(
+        self, principal: Principal, *, deployment_revision_id: str
+    ) -> dict[str, Any]:
+        """Record the first successful same-device speech load without probing.
+
+        The lifecycle child already performed the only truthful observation: it
+        returned successfully after loading the exact frozen deployment. This
+        advances the binding head so later route freezes see the durable fact;
+        the current frozen Meeting route remains independent of that mutation.
+        """
+        if principal.kind is not PrincipalKind.OWNER:
+            raise ValidationError(
+                "Owner authority is required.", code="inference_adoption_owner_required"
+            )
+        revision_id = _safe(deployment_revision_id, field="deployment_revision_id")
+        with self._db._connection() as conn:
+            conn.execute("BEGIN IMMEDIATE")
+            try:
+                row = conn.execute(
+                    """SELECT b.*,h.profile_id AS head_profile_id,h.revision AS head_revision
+                         FROM model_profile_binding_heads h
+                         JOIN model_profile_binding_revisions b
+                           ON b.binding_id=h.binding_id AND b.revision=h.revision
+                        WHERE b.deployment_revision_id=?
+                        ORDER BY h.updated_at DESC LIMIT 1""",
+                    (revision_id,),
+                ).fetchone()
+                if row is None:
+                    raise ValidationError(
+                        "Speech deployment binding is missing.",
+                        code="inference_route_binding_unavailable",
+                    )
+                current_observation = conn.execute(
+                    "SELECT state FROM model_profile_readiness_observations WHERE observation_id=?",
+                    (str(row["readiness_observation_id"] or ""),),
+                ).fetchone()
+                if current_observation is not None and str(current_observation["state"]) == "ready":
+                    conn.commit()
+                    return {"state": "ready", "replayed": True}
+                now = _now()
+                observation_id = "ready_" + uuid.uuid4().hex
+                conn.execute(
+                    """INSERT INTO model_profile_readiness_observations
+                       (observation_id,deployment_head_id,deployment_configuration_revision,
+                        deployment_revision_id,state,reason_code,observed_at)
+                       VALUES (?,?,?,?,?,?,?)""",
+                    (
+                        observation_id,
+                        str(row["deployment_head_id"]),
+                        int(row["deployment_configuration_revision"]),
+                        revision_id,
+                        "ready",
+                        "loaded_under_speech_preload",
+                        now,
+                    ),
+                )
+                next_revision = int(row["head_revision"]) + 1
+                conn.execute(
+                    """INSERT INTO model_profile_binding_revisions
+                       (binding_id,revision,profile_id,profile_revision,deployment_head_id,
+                        deployment_configuration_revision,deployment_revision_id,secret_slot,
+                        enabled,readiness_observation_id,created_at)
+                       VALUES (?,?,?,?,?,?,?,?,?,?,?)""",
+                    (
+                        str(row["binding_id"]),
+                        next_revision,
+                        str(row["profile_id"]),
+                        int(row["profile_revision"]),
+                        str(row["deployment_head_id"]),
+                        int(row["deployment_configuration_revision"]),
+                        revision_id,
+                        str(row["secret_slot"] or ""),
+                        int(row["enabled"]),
+                        observation_id,
+                        now,
+                    ),
+                )
+                conn.execute(
+                    """UPDATE model_profile_binding_heads
+                          SET revision=?,updated_at=? WHERE binding_id=?""",
+                    (next_revision, now, str(row["binding_id"])),
+                )
+                conn.commit()
+            except Exception:
+                conn.rollback()
+                raise
+        return {"state": "ready", "observation_id": observation_id, "replayed": False}
 
     @staticmethod
     def _migration_issue(

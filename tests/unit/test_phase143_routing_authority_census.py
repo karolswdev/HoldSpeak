@@ -62,17 +62,17 @@ ROUTING_RESOLVER_NAMES = frozenset({
 ROUTING_RESOLVER_DEFINITIONS = {
     "holdspeak/deployment_revisions.py:202:resolve_workbench_deployment_revision",
     "holdspeak/deployment_revisions.py:224:resolve_deployment_revision",
-    "holdspeak/inference_targets.py:551:resolve_placement",
-    "holdspeak/inference_targets.py:497:resolve_inference_target",
-    "holdspeak/inference_targets.py:591:resolve_thought_placement",
+    "holdspeak/inference_targets.py:550:resolve_placement",
+    "holdspeak/inference_targets.py:496:resolve_inference_target",
+    "holdspeak/inference_targets.py:590:resolve_thought_placement",
     "holdspeak/intel/providers.py:666:resolve_meeting_placement",
 }
 
 ROUTING_RESOLVER_REFERENCES = {
     "holdspeak/deployment_revisions.py:205:import:resolve_inference_target",
     "holdspeak/deployment_revisions.py:214:ref:resolve_inference_target",
-    "holdspeak/inference_targets.py:602:ref:resolve_placement",
-    "holdspeak/inference_targets.py:585:ref:resolve_inference_target",
+    "holdspeak/inference_targets.py:601:ref:resolve_placement",
+    "holdspeak/inference_targets.py:584:ref:resolve_inference_target",
     "holdspeak/kernel/inference.py:9:import:resolve_inference_target",
     "holdspeak/kernel/inference.py:103:ref:resolve_inference_target",
     "holdspeak/services/inference_setup_service.py:23:import:resolve_inference_target",
@@ -145,7 +145,7 @@ ROUTING_POINTER_ATTRIBUTES = {
     "holdspeak/config/integrations.py:23:inference_target_id",
     "holdspeak/config/meeting.py:143:intel_profile_id",
     "holdspeak/config/meeting.py:144:intel_profile_id",
-    "holdspeak/db/models/__init__.py:1095:resolver_profile_id",
+    "holdspeak/db/models/__init__.py:1097:resolver_profile_id",
     "holdspeak/db/models/workbench.py:139:resolver_profile_id",
     "holdspeak/services/inference_setup_service.py:604:intel_profile_id",
     "holdspeak/services/inference_setup_service.py:609:inference_target_id",
@@ -169,8 +169,7 @@ ROUTING_POINTER_ATTRIBUTES = {
 PROFILE_ID_CLASSIFICATIONS = {
     **{site: "mutable assignment pointer" for site in {
         "holdspeak/config/core.py:138:profile_id", "holdspeak/config/core.py:169:profile_id",
-        "holdspeak/config/integrations.py:101:profile_id", "holdspeak/config/model.py:80:profile_id",
-        "holdspeak/db/models/__init__.py:1094:profile_id", "holdspeak/db/models/workbench.py:138:profile_id",
+        "holdspeak/config/integrations.py:101:profile_id", "holdspeak/config/model.py:80:profile_id", "holdspeak/db/models/workbench.py:138:profile_id",
         "holdspeak/meeting_session/intel_plan.py:193:profile_id", "holdspeak/plugins/dictation/assembly.py:318:profile_id",
         "holdspeak/services/recipe_service.py:131:profile_id", "holdspeak/services/recipe_service.py:141:profile_id",
         "holdspeak/services/recipe_service.py:146:profile_id", "holdspeak/services/recipe_service.py:174:profile_id",
@@ -180,12 +179,13 @@ PROFILE_ID_CLASSIFICATIONS = {
         "holdspeak/services/workbench_service.py:172:profile_id", "holdspeak/services/workbench_service.py:470:profile_id",
         "holdspeak/web_server.py:1138:profile_id", "holdspeak/services/sync_service.py:658:profile_id",
         "holdspeak/services/sync_service.py:673:profile_id",
+        "holdspeak/db/models/__init__.py:1096:profile_id",
     }},
     **{site: "display" for site in {
         "holdspeak/commands/doctor.py:488:profile_id", "holdspeak/commands/doctor.py:787:profile_id",
         "holdspeak/commands/doctor.py:795:profile_id", "holdspeak/commands/doctor.py:809:profile_id",
         "holdspeak/commands/doctor.py:934:profile_id",
-        "holdspeak/db/models/__init__.py:656:profile_id", "holdspeak/inference_targets.py:162:profile_id",
+        "holdspeak/db/models/__init__.py:658:profile_id", "holdspeak/inference_targets.py:161:profile_id",
         "holdspeak/services/ask_service.py:318:profile_id",
         "holdspeak/services/inference_setup_service.py:613:profile_id", "holdspeak/services/settings_service.py:99:profile_id",
         "holdspeak/setup_status.py:151:profile_id",
@@ -194,7 +194,7 @@ PROFILE_ID_CLASSIFICATIONS = {
     }},
     **{site: "immutable evidence" for site in {
         "holdspeak/services/model_profile_service.py:1191:profile_id",
-        "holdspeak/services/inference_assignment_service.py:1522:profile_id",
+        "holdspeak/services/inference_assignment_service.py:1525:profile_id",
     }},
     **{site: "credential/provider identity" for site in {
         "holdspeak/intel/providers.py:687:profile_id", "holdspeak/intel/providers.py:694:profile_id",

@@ -195,17 +195,32 @@ class _MlxTranscriber:
         return self._path_or_hf_repo is not None
 
     def ensure_loaded(self, admission: Any) -> None:
-        """Load the weights through admitted SIBLING preload children.
+        """Load the weights through admitted sibling preload work.
 
-        Sol Amendment 7: each explicit ``ModelHolder.get_model`` attempt and each
-        silent-audio fallback dispatch is its OWN
-        ``holdspeak.whisper-preload@1`` child with a terminal receipt, completed
-        before the ordinary transcription child. No lock is taken here (the
-        caller's transcription lock is already held), so a preload can never
-        deadlock against the invocation it precedes.
+        Historic speech sessions receipt each physical candidate attempt. A
+        bundle-backed Meeting deliberately collapses that private candidate walk
+        into one frozen, P=1 lifecycle child; its candidates and strategies were
+        already frozen at Meeting admission.
         """
         if self._path_or_hf_repo is not None:
             return
+        if bool(getattr(admission, "single_preload_sequence", False)):
+            outcome, _ = admission.preload_sequence(
+                material={
+                    "engine": "mlx",
+                    "model": self.model_name,
+                    "language": self.language or "auto",
+                    "candidate_ids": list(self._candidates),
+                    "strategy_sequence": ["model-holder", "silent-audio"],
+                },
+                run=self._load_candidate_sequence,
+            )
+            if outcome.outcome == "succeeded":
+                return
+            raise TranscriberError(
+                f"Failed to load Whisper model '{self.model_name}' via mlx-whisper "
+                f"(preload {outcome.outcome})."
+            )
         attempt, last = 0, ""
         for repo in self._candidates:
             material = {
@@ -228,6 +243,28 @@ class _MlxTranscriber:
                     return
                 last = f"{stage}:{outcome.outcome}"
                 log.warning(f"MLX preload {stage} for {repo} ended {outcome.outcome}")
+        raise TranscriberError(
+            f"Failed to load Whisper model '{self.model_name}' via mlx-whisper "
+            f"(last preload {last or 'not attempted'})."
+        )
+
+    def _load_candidate_sequence(self) -> str:
+        """Execute the frozen MLX candidate/strategy walk inside one child."""
+        last = ""
+        for repo in self._candidates:
+            for stage, run in (
+                ("model-holder", lambda repo=repo: self._model_holder_get(repo)),
+                ("silent-audio", lambda repo=repo: self._silent_audio_load(repo)),
+            ):
+                try:
+                    run()
+                except Exception as exc:  # candidate failure tries the next frozen leg
+                    last = f"{stage}:{type(exc).__name__}"
+                    log.warning("MLX preload %s for %s failed: %s", stage, repo, type(exc).__name__)
+                    continue
+                self._path_or_hf_repo = repo
+                log.info("MLX model loaded from %s via %s", repo, stage)
+                return stage
         raise TranscriberError(
             f"Failed to load Whisper model '{self.model_name}' via mlx-whisper "
             f"(last preload {last or 'not attempted'})."
