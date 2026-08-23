@@ -9,7 +9,7 @@
 // guard reads); `RuntimeFrameType` is here so a subscription can be typed
 // against the vocabulary instead of `string`.
 //
-// Article XI.5: `intel_token` is display material only — never journaled.
+// Phase 143 C1 publishes only elected, complete meeting intelligence results.
 
 export const RUNTIME_FRAME_TYPES = [
   "actuator_proposed",
@@ -23,7 +23,6 @@ export const RUNTIME_FRAME_TYPES = [
   "duration",
   "intel_complete",
   "intel_status",
-  "intel_token",
   "intent_controls_updated",
   "learning_event",
   "meeting_started",

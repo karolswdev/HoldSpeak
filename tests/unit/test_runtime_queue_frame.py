@@ -37,16 +37,17 @@ def test_frame_carries_jobs_and_summary(db) -> None:
     db.meetings.save_meeting(
         MeetingState(id="m2", started_at=datetime.now(), title="Retro")
     )
-    db.intel.enqueue_intel_job("m1", transcript_hash="h1")
+    planning_job = db.intel.enqueue_intel_job("m1", transcript_hash="h1")
     db.intel.enqueue_intel_job("m2", transcript_hash="h2")
 
     frame = build_runtime_queue_frame(db)
     assert frame["queued"] == 2 and frame["running"] == 0 and frame["failed"] == 0
+    # C1 frames identify immutable queue descriptors, not mutable meeting keys.
     ids = {j["id"] for j in frame["jobs"]}
-    assert ids == {"intelq:m1", "intelq:m2"}
+    assert ids == {f"intelq:{job.job_id}" for job in (db.intel.get_intel_job("m1"), db.intel.get_intel_job("m2"))}
     by_id = {j["id"]: j for j in frame["jobs"]}
-    assert by_id["intelq:m1"]["label"] == "Planning"
-    assert by_id["intelq:m1"]["status"] == "queued"
+    assert by_id[f"intelq:{planning_job}"]["label"] == "Planning"
+    assert by_id[f"intelq:{planning_job}"]["status"] == "queued"
 
 
 def test_empty_queue_is_an_honest_empty_frame(db) -> None:
@@ -65,7 +66,7 @@ def test_intel_process_route_broadcasts_the_frame(db, monkeypatch) -> None:
     db.meetings.save_meeting(
         MeetingState(id="m1", started_at=datetime.now(), title="Planning")
     )
-    db.intel.enqueue_intel_job("m1", transcript_hash="h1")
+    job_id = db.intel.enqueue_intel_job("m1", transcript_hash="h1")
 
     server = MeetingWebServer(WebRuntimeCallbacks(
         on_bookmark=lambda *a, **k: None, on_stop=lambda *a, **k: None,
@@ -85,4 +86,4 @@ def test_intel_process_route_broadcasts_the_frame(db, monkeypatch) -> None:
     queue_frames = [d for (t, d) in frames if t == "runtime_queue"]
     assert len(queue_frames) == 1
     assert queue_frames[0]["queued"] == 1
-    assert queue_frames[0]["jobs"][0]["id"] == "intelq:m1"
+    assert queue_frames[0]["jobs"][0]["id"] == f"intelq:{job_id}"

@@ -33,8 +33,12 @@ _CHILD_SOURCE = textwrap.dedent(
     from pathlib import Path
 
     from holdspeak.db import get_database
+    from tests.unit.test_meeting_session_admission import _assign_bundle_routes
 
-    get_database(Path(os.environ["HS_KILL_DB"]))
+    database = get_database(Path(os.environ["HS_KILL_DB"]))
+    # The captured child is a real routed Meeting: provide its explicit frozen
+    # bundle assignments rather than using the retired implicit local path.
+    _assign_bundle_routes(database)
 
     import numpy as np
 

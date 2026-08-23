@@ -40,11 +40,16 @@ def test_recipe_run_and_root_chat_use_exact_saved_revision_and_stages(rig):
     assert any(f"recipe:r1" in e["refs"] for e in admitted)
     assert str(recipe.last_modified)
 def test_recipe_profile_revision_is_committed_before_runner_claim(rig, monkeypatch):
-    db,broker=rig; db.profiles.upsert(profile_id="profile",name="Profile",kind="openAICompatible",base_url="http://profile",model="model")
+    db,broker=rig
+    with db._connection() as conn:
+        before_revisions=conn.execute("SELECT COUNT(*) FROM deployment_revisions").fetchone()[0]
+    db.profiles.upsert(profile_id="profile",name="Profile",kind="openAICompatible",base_url="http://profile",model="model")
     monkeypatch.setattr("holdspeak.intel.providers.build_meeting_intel_for_profile",lambda **_:Engine())
     result=asyncio.run(RecipeService(db,broker=broker).run(OWNER,"r1",input="profile",inference_target_id="profile"))
     with db._connection() as conn:
-        assert conn.execute("SELECT COUNT(*) FROM deployment_revisions").fetchone()[0]==1
+        # Phase 143 startup may already have minted the local speech revision;
+        # this profile invocation still persists exactly one new frozen revision.
+        assert conn.execute("SELECT COUNT(*) FROM deployment_revisions").fetchone()[0]==before_revisions+1
         assert conn.execute("SELECT outcome FROM kernel_receipts WHERE operation_id=?",(result["operation_id"],)).fetchone()[0]=="succeeded"
 
 

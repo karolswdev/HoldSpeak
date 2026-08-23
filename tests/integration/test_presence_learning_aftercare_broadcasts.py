@@ -242,18 +242,9 @@ def test_meeting_save_is_quiet_for_an_unfinished_meeting(db, tmp_path):
 class _FakeIntelResult:
     error = None
     topics: list = []
-    action_items = [
-        {
-            "id": "a1",
-            "task": "Ship the fix",
-            "owner": "Me",
-            "due": None,
-            "status": "pending",
-            "review_state": "pending",
-            "source_timestamp": None,
-            "created_at": datetime(2026, 6, 10, 10, 30, 0).isoformat(),
-        }
-    ]
+    # C1 admits semantic provider output only. Repository-owned receipt fields
+    # (`id`, status, timestamps) are materialized after the winning route child.
+    action_items = [{"task": "Ship the fix", "owner": "Me", "due": None}]
     summary = "A meeting."
 
 
@@ -267,6 +258,13 @@ class _FakeIntel:
 
 
 def _queued_meeting(db, meeting_id):
+    # New queued work is C1-bound before the worker receives it. Pin the
+    # deferred assignment family in this legacy observer fixture.
+    from holdspeak.kernel.runtime import _configure
+    from tests.unit.test_meeting_deferred_admission import _assign_deferred_queue_routes
+
+    _assign_deferred_queue_routes(db)
+    _configure(db)
     state = MeetingState(
         id=meeting_id,
         started_at=datetime(2026, 6, 10, 10, 0, 0),

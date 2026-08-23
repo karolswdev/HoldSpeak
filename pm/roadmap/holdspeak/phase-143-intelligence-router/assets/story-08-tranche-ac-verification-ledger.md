@@ -164,3 +164,39 @@ judgment: "I would use this on a tired Tuesday now."
   the in-flight attempt (no state corruption, no publication). Ruled a recorded
   limitation per the owner minimal-ceremony bar (code-review finding 8,
   2026-08-22).
+
+## Full-suite stabilization sweep (2026-08-23, owed at the C1 checkpoint)
+
+CI-style full suite (isolated HOME, `pytest -n auto`, Python 3.13.11 pinned —
+a fresh `uv sync` grabs 3.14 and its run was discarded) on the quiet tree:
+
+- Pre-sweep: 148 failed. Main baseline at `89d232f3`, same environment:
+  **72 failed** — the previously ledgered inherited local-env set (was 71 at
+  tranche time). Diff: 70 shared, **78 branch-new**, 2 fixed by the branch.
+- All 78 classified a/b/c and repaired (three worker rounds). Class (b) real
+  regressions fixed: (1) no-reservation replay read a controller receipt with
+  the narrow SERVICE principal (`inference_adoption_service.py`, now
+  fallback-authority like every other controller read); (2) the C1 bound
+  executor bypassed the `intel.model_unavailable` fault seam and collapsed the
+  named fault out of retry evidence (`intel_queue.py`); (3) two meeting
+  modules over the 600-line density budget → routed-child and bound-deferred
+  code extracted to `meeting_session/intel_routed_children.py` and
+  `meeting_session/deferred_bound.py`.
+- Pollution leak found and killed: `test_phase143_inference_assignments._profile`
+  probed the host's optional `llama_cpp` and blanket-updated **every**
+  readiness-observation row, poisoning unrelated profiles into
+  `known_preflight_unavailable` (29 tests got 409s). Readiness now pinned by
+  the profile's own observation id, with a scoped leak-proof test.
+- Class (a) posture updates: old rigs asserting pre-cutover law (implicit
+  local-transcriber admission, Config-derived speech targets, mutable
+  `intelq:<meeting_id>` queue ids, streamed `intel_token` frames — retirement
+  completed across Python and web registries, whole-table revision counts
+  invalidated by the lawful startup speech migration).
+- Final quiet-tree sweep: **6392 passed, 71 failed, zero branch-new** — every
+  failure name reproduces on main (70 stable + one inherited deadline test
+  that is a load flake, serial-green twice on the branch).
+- For the C1 checkpoint: the inherited bucket-census failure
+  (`test_every_model_execution_site_is_in_exactly_one_bucket`) lists six
+  unregistered sites; three are branch-era C1 `intel_queue` calls (already
+  classified in the Phase-143 fixture). Registering them is a checkpoint
+  decision, not a hand-patch.

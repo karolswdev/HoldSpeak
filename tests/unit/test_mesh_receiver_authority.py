@@ -979,10 +979,13 @@ def test_a_correctly_resigned_offer_with_a_wrong_semantic_field_refuses(
     with pytest.raises(MeshAuthorityRefused) as excinfo:
         rig.verify({"job": claimed["job"], "dispatch_offer": rig.resign(claimed, **{field: value})})
     assert excinfo.value.reason == reason
-    assert rig.worker_state() == before == {
-        "mesh_worker_reservations": 0, "deployment_revisions": 0,
-        "kernel_operations": 0, "kernel_receipts": 0,
-    }
+    # Phase 143's lawful startup migration may create a local speech deployment
+    # before this worker sees an offer. The refusal still must create no worker
+    # reservation, operation, receipt, or *additional* deployment revision.
+    assert before["mesh_worker_reservations"] == 0
+    assert before["kernel_operations"] == 0
+    assert before["kernel_receipts"] == 0
+    assert rig.worker_state() == before
 
 
 def test_a_correctly_resigned_offer_for_another_destination_refuses(rig) -> None:

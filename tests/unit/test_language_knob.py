@@ -179,9 +179,9 @@ def test_all_construction_sites_thread_the_language() -> None:
 
     repo = Path(__file__).resolve().parents[2]
     sites = {
-        # HS-63-04: the runtime's Transcriber construction moved with its
-        # method (_ensure_transcriber_loaded) into the transcriber_state mixin.
-        "holdspeak/runtime/transcriber_state.py": 'language=getattr(self.config.model, "language", "auto")',
+        # The Phase-B frozen transcriber path first resolves Config into
+        # ``selected_language`` so a meeting cannot retarget it after admission.
+        "holdspeak/runtime/transcriber_state.py": "language=selected_language",
         "holdspeak/main.py": 'language=getattr(config.model, "language", "auto")',
         "holdspeak/web/routes/meeting_import.py": 'language=getattr(config.model, "language", "auto")',
         "holdspeak/commands/import_recording.py": 'language=getattr(config.model, "language", "auto")',

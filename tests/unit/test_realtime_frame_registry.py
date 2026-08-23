@@ -126,13 +126,15 @@ def test_the_five_workbench_frames_are_emitted(emitters: dict[str, list[str]]) -
         assert name in emitters, f"{name} is subscribed but never broadcast"
 
 
-def test_intel_token_is_never_journaled() -> None:
-    """Article XI.5: the token stream is display material only."""
+def test_intel_token_is_retired_from_the_live_contract() -> None:
+    """C1 publishes only an elected complete semantic meeting result."""
     root = repo_root()
-    for rel in ("holdspeak/meeting_session/intel_admission.py",):
-        text = (root / rel).read_text(encoding="utf-8")
-        assert "Token broadcasts stay ephemeral and are never journaled." in text
+    routed_children = (
+        root / "holdspeak/meeting_session/intel_routed_children.py"
+    ).read_text(encoding="utf-8")
     live = (root / "web/src/pages/cores/LiveCore.tsx").read_text(encoding="utf-8")
-    # The stream lands in component state and dies with the surface. If a
-    # token ever reaches an apiFetch, this file is the place it would happen.
-    assert "intel_token" in live
+    mirror = (root / "web/src/runtime/frames.ts").read_text(encoding="utf-8")
+    assert "intel_token" not in routed_children
+    assert "intel_token" not in live
+    assert "intel_token" not in RUNTIME_FRAME_TYPES
+    assert "intel_token" not in mirror

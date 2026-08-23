@@ -45,6 +45,15 @@ work, not a generic owner-facing model task. A parent caller supplies the
 eventual typed capability at admission; Story 02 replaces these proposal IDs
 with registry definitions where a persisted capability is required.
 
+### HS-143-08 current closure anchors
+
+The reviewed literal fixture records the current AST anchors for the extracted
+meeting closures: live analysis, bookmark labels, and auto-title now live in
+`meeting_session/intel_routed_children.py` under `IntelRoutedChildMixin`;
+legacy deferred closures remain in `meeting_session/deferred_admission.py`.
+The extraction changes no capability/source-owner classification or site count;
+it preserves the one reviewed row per execution-shaped expression.
+
 ## Direct physical leaves
 
 Every row below is admitted by `InferenceRunner`; there is no bypass/legacy

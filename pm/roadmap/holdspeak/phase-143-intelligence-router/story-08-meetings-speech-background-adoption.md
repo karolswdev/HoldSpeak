@@ -35,6 +35,15 @@ adopters, migration cleanup). Design canon for the Meeting/speech legs:
 `assets/story-08-phase-b-cutover-design.md` (counsel amendments and the
 owner's minimal-migration scope ruling are binding).
 
+2026-08-23 — the owed full-suite sweep ran and the branch was
+stabilized against it: 78 branch-new failures classified a/b/c and
+repaired (three real regressions fixed, one suite-wide readiness
+pollution leak killed, `intel_token` retirement completed); final
+quiet-tree sweep 6392 passed / 71 failed with zero branch-new — every
+remaining failure reproduces on main (inherited set, recorded with the
+main-baseline diff in the verification ledger's sweep section). The C1
+counsel checkpoint is next.
+
 ## Problem
 
 MeetingIntelPlan and SpeechPlan are the proven ordered-revision pattern but

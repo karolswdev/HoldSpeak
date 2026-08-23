@@ -244,6 +244,11 @@ def _process_bound_intel_job(
         if meeting is None or not meeting.segments:
             db.intel.fail_intel_job(job.meeting_id, "Meeting has no transcript to analyze.")
             return True
+        # Preserve the deterministic fault-plane seam on the C1 bound executor:
+        # this occurs before any semantic payload reaches a provider child.
+        from .faults import trip as _fault_trip
+
+        _fault_trip("intel.model_unavailable")
         bound = BoundDeferredIntelJob.reconstruct(db, job, broker=broker)
         # Fence two: this happens immediately before constructing the only payload
         # carrying transcript bytes. A mismatch supersedes rather than retargeting.
@@ -324,8 +329,13 @@ def _process_bound_intel_job(
         outcome = "refused"
         return True
     except Exception as exc:
+        # FaultInjected carries the named deterministic point; retain it in the
+        # durable retry evidence instead of reducing it to its exception class.
+        from .faults import FaultInjected
+
+        reason = str(exc) if isinstance(exc, FaultInjected) else type(exc).__name__
         _retry_or_fail_job(
-            db, job, f"Deferred intel failed: {type(exc).__name__}",
+            db, job, f"Deferred intel failed: {reason}",
             max_attempts=retry_max_attempts, base_delay_seconds=retry_base_seconds,
             max_delay_seconds=retry_max_seconds,
         )

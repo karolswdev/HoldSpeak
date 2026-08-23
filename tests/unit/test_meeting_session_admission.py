@@ -423,11 +423,24 @@ def _assign_bundle_routes(db: Database) -> None:
     )
     assignments = InferenceAssignmentService(db)
     for ordinal, capability in enumerate(_BUNDLE_CAPABILITIES, 1):
+        scope = {"kind": "capability", "capability_id": capability}
+        try:
+            expected = int(assignments.get_assignment(OWNER, scope)["revision"])
+        except Exception as exc:
+            # A fresh DB has no sparse assignment; startup migration may already
+            # have supplied speech.transcribe, which this fixture intentionally
+            # replaces with its coherent fake bundle.
+            from holdspeak.services.errors import NotFound
+
+            if not isinstance(exc, NotFound):
+                raise
+            expected = 0
         _set(
             assignments,
             f"meeting-bundle-assignment-{ordinal}",
-            {"kind": "capability", "capability_id": capability},
+            scope,
             "meeting-profile",
+            expected=expected,
         )
 
 

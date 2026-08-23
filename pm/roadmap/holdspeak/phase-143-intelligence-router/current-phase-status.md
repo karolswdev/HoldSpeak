@@ -162,10 +162,22 @@ publication) plus a completion guard, stored-id crash recovery with zero
 duplicate egress, retry lineage and completion ledger events, a
 typed-refusal terminal proof, and the legacy executor preserved for
 pre-C1 claims. Phase D (speech lifecycle) is design-ruled with six
-binding counsel amendments and queued behind Phase C. Next: the C1
-counsel checkpoint (with the owed full-suite sweep), then C2 (plugins)
-and C3 (the Stop-handoff provider — the ratified primitive's first real
-adopter). Verification ledger:
+binding counsel amendments and queued behind Phase C. The owed
+full-suite sweep ran 2026-08-23: 148 failures triaged against a fresh
+main baseline (72, the known inherited local-env set) into 70 inherited
+and 78 branch-new; all 78 were classified a/b/c and repaired — three
+real regressions fixed (SERVICE-principal receipt read on the
+no-reservation replay path, the C1 executor bypassing the
+`intel.model_unavailable` fault seam, two meeting modules over the
+density budget → extracted routed-child/bound-deferred modules), one
+suite-wide pollution leak killed (a fixture blanket-updating every
+readiness observation), and the streamed `intel_token` contract's
+retirement completed across Python and web. Final quiet-tree sweep:
+6392 passed, 71 failed, zero branch-new — every failure reproduces on
+main (full record in the verification ledger's sweep section). Next:
+the C1 counsel checkpoint, then C2 (plugins) and C3 (the Stop-handoff
+provider — the ratified primitive's first real adopter).
+Verification ledger:
 [tranche A–C ledger](./assets/story-08-tranche-ac-verification-ledger.md);
 counsel record:
 [counsel round 1](./assets/story-08-displaced-work-counsel-round1.md);

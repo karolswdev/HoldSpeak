@@ -1175,6 +1175,9 @@ class TestDeferredIntelQueue:
         db.meetings.save_meeting(sample_meeting)
         db.intel.enqueue_intel_job(sample_meeting.id, transcript_hash=sample_meeting.transcript_hash())
 
+        # C1 retry creates a linked successor only after the current immutable
+        # descriptor is claimed/owned.
+        assert db.intel.claim_next_intel_job() is not None
         future = datetime.now() + timedelta(minutes=5)
         db.intel.retry_intel_job(
             sample_meeting.id,

@@ -221,31 +221,29 @@ def test_dangling_pointer_degrades_to_hub_default_with_reason() -> None:
     assert eff.reason and "gone" in eff.reason
 
 
-# ── intel_queue reads the resolver, not threaded params ────────────────
+# ── C1 queue work never re-resolves mutable endpoint state ───────────────
 
 
-def test_intel_queue_resolves_endpoint_through_the_resolver(monkeypatch) -> None:
+def test_intel_queue_resolves_endpoint_through_the_resolver(tmp_path, monkeypatch) -> None:
     import holdspeak.intel_queue as iq
+    from holdspeak.kernel.runtime import _configure
 
-    cfg = Config()
-    cfg.meeting.intel_profile_id = "p-43"
-    monkeypatch.setattr(Config, "load", classmethod(lambda cls, path=None: cfg))
+    db = Database(tmp_path / "queue.db")
+    broker = _configure(db)
+    monkeypatch.setattr("holdspeak.kernel.runtime._service", lambda: broker)
+    monkeypatch.setattr(iq, "get_database", lambda: db)
+    # A bound descriptor carries only stored parent/bundle IDs. Even the empty
+    # queue path must not regain a Config/resolver preflight entrance.
     monkeypatch.setattr(
-        "holdspeak.intel.providers._lookup_profile_record",
-        lambda pid: _profile(id=pid),
+        Config, "load", classmethod(lambda *_args, **_kwargs: pytest.fail("C1 queue read Config"))
+    )
+    seen: dict = {}
+    monkeypatch.setattr(
+        iq, "get_intel_runtime_status", lambda *args, **kwargs: seen.update(kwargs)
     )
 
-    seen: dict = {}
-
-    def fake_status(*args, **kwargs):
-        seen.update(kwargs)
-        return False, "paused for the test"
-
-    monkeypatch.setattr(iq, "get_intel_runtime_status", fake_status)
     assert iq.process_next_intel_job(provider="cloud") is False
-    assert seen["cloud_base_url"] == "http://192.168.1.43:8080/v1"
-    assert seen["cloud_model"] == "Qwen3.5-9B-Q6_K"
-    assert seen["cloud_api_key_env"] == profile_key_env("p-43")
+    assert seen == {}
 
 
 def test_intel_queue_signatures_carry_no_endpoint_triple() -> None:

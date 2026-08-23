@@ -138,10 +138,9 @@ class MeetingGlueMixin:
         The session no longer reaches into a web server; it emits, and the
         runtime forwards to its broadcast channel. ``segment`` /
         ``intel_complete`` / ``intel_status`` already flow via the dedicated
-        ``on_segment`` / ``on_intel`` handlers, so only ``intel_token`` and
-        ``meeting_updated`` — previously delivered solely to the now-removed
-        embedded per-meeting server, and dead in the flagship runtime — are
-        forwarded here.
+        ``on_segment`` / ``on_intel`` handlers, so ``meeting_updated`` —
+        previously delivered solely to the now-removed embedded per-meeting
+        server, and dead in the flagship runtime — is forwarded here.
         """
         if message_type in self._BROADCAST_VIA_DEDICATED_HANDLER:
             return
@@ -154,16 +153,6 @@ class MeetingGlueMixin:
             log.debug(f"Failed to forward meeting broadcast {message_type!r}: {exc}")
 
     def _map_meeting_broadcast_activity(self, message_type: str, data: object) -> None:
-        if message_type == "intel_token":
-            self._set_runtime_activity(
-                "processing",
-                source="meeting",
-                label="Intel streaming",
-                detail="Meeting intelligence is streaming.",
-                last_event="meeting_intel_streaming",
-                last_error="",
-            )
-            return
         if message_type == "actuator_proposed":
             label = "Action proposed"
             detail = "An actuator proposed an external action."

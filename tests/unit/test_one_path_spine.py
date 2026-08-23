@@ -520,11 +520,15 @@ def _drive_voice(tmp_path, monkeypatch) -> SurfaceRun:
 
 
 def _drive_meeting_live(tmp_path, monkeypatch) -> SurfaceRun:
-    from tests.unit.test_meeting_session_admission import OWNER as MEETING_OWNER
-    from tests.unit.test_meeting_session_admission import _rig as _meeting_live_rig
+    from tests.unit.test_meeting_session_admission import (
+        OWNER as MEETING_OWNER,
+        _assign_bundle_routes,
+        _rig as _meeting_live_rig,
+    )
     from holdspeak.meeting_session.models import TranscriptSegment
 
     db, _broker, session, _engine, _requests = _meeting_live_rig(tmp_path, monkeypatch)
+    _assign_bundle_routes(db)
     session.start()
     session._state.segments.append(
         TranscriptSegment(text="spine window", speaker="Me", start_time=0.0, end_time=5.0)

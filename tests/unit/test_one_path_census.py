@@ -470,9 +470,9 @@ ADAPTER_ALLOWLIST: dict[tuple[str, str], str] = {
     ("holdspeak/speech_session/provider.py", "_ClassifyLeg.run.call"): "L: the dispatch closure of ONE admitted classify attempt",
     ("holdspeak/speech_session/provider.py", "ProviderAdmission.rewrite.call"): "L: the dispatch closure of ONE admitted rewrite child",
     ("holdspeak/speech_session/provider.py", "ProviderAdmission.punctuate.call"): "L: the dispatch closure of ONE admitted punctuate child",
-    ("holdspeak/meeting_session/intel_admission.py", "IntelAdmissionMixin._admitted_live_window.call"): "L: the dispatch closure of ONE admitted live-analysis child",
-    ("holdspeak/meeting_session/intel_admission.py", "IntelAdmissionMixin._admitted_bookmark_label.call"): "L: the dispatch closure of ONE admitted bookmark-label child",
-    ("holdspeak/meeting_session/intel_admission.py", "IntelAdmissionMixin._admitted_auto_title.call"): "L: the dispatch closure of ONE admitted auto-title child",
+    ("holdspeak/meeting_session/intel_routed_children.py", "IntelRoutedChildMixin._admitted_live_window.call"): "L: the dispatch closure of ONE admitted live-analysis child",
+    ("holdspeak/meeting_session/intel_routed_children.py", "IntelRoutedChildMixin._admitted_bookmark_label.call"): "L: the dispatch closure of ONE admitted bookmark-label child",
+    ("holdspeak/meeting_session/intel_routed_children.py", "IntelRoutedChildMixin._admitted_auto_title.call"): "L: the dispatch closure of ONE admitted auto-title child",
     ("holdspeak/meeting_session/deferred_admission.py", "DeferredIntelJob.analyze.call"): "L: the dispatch closure of ONE admitted deferred-analysis child",
     ("holdspeak/meeting_session/deferred_admission.py", "DeferredIntelJob.bookmark_label.call"): "L: the dispatch closure of ONE admitted deferred bookmark-label child",
     ("holdspeak/meeting_session/deferred_admission.py", "DeferredIntelJob.auto_title.call"): "L: the dispatch closure of ONE admitted deferred auto-title child",
@@ -975,9 +975,9 @@ def test_the_findings_ledger_is_the_complete_blocking_package() -> None:
         if path.startswith("holdspeak/meeting_session/")
     }
     assert set(meeting_entries) == {
-        ("holdspeak/meeting_session/intel_admission.py", "IntelAdmissionMixin._admitted_live_window.call"),
-        ("holdspeak/meeting_session/intel_admission.py", "IntelAdmissionMixin._admitted_bookmark_label.call"),
-        ("holdspeak/meeting_session/intel_admission.py", "IntelAdmissionMixin._admitted_auto_title.call"),
+        ("holdspeak/meeting_session/intel_routed_children.py", "IntelRoutedChildMixin._admitted_live_window.call"),
+        ("holdspeak/meeting_session/intel_routed_children.py", "IntelRoutedChildMixin._admitted_bookmark_label.call"),
+        ("holdspeak/meeting_session/intel_routed_children.py", "IntelRoutedChildMixin._admitted_auto_title.call"),
         ("holdspeak/meeting_session/deferred_admission.py", "DeferredIntelJob.analyze.call"),
         ("holdspeak/meeting_session/deferred_admission.py", "DeferredIntelJob.bookmark_label.call"),
         ("holdspeak/meeting_session/deferred_admission.py", "DeferredIntelJob.auto_title.call"),

@@ -1074,11 +1074,8 @@ def test_meeting_broadcasts_map_to_runtime_activity(monkeypatch: pytest.MonkeyPa
         {"target": "github", "title": "File follow-up issue"},
     )
 
-    runtime._on_meeting_broadcast("intel_token", "hello")
-
-    activity = runtime._get_runtime_status()["activity"]
-    assert activity["state"] == "processing"
-    assert activity["label"] == "Intel streaming"
+    # Phase 143 C1 retires provider-token broadcasts. The live runtime activity
+    # contract remains the semantic meeting events that still have a frame.
 
 
 def test_runtime_activity_forwards_to_desktop_presence(monkeypatch: pytest.MonkeyPatch) -> None:

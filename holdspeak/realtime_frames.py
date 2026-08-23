@@ -6,9 +6,8 @@ consumes, is named exactly once — here. The registry is not decoration:
 sets from the two trees and refuses any frame type that is only half wired
 (emitted to nobody, or listened for by nobody).
 
-Article XI.5 binds ``intel_token``: a token stream is display material only.
-It is broadcast so a live surface can show intelligence arriving; it is never
-journaled, never persisted, never replayed.
+Phase 143 C1 retires provider-token frames: only an elected, complete
+semantic meeting result is published to the live surface.
 
 ## The recognized idioms
 
@@ -50,7 +49,6 @@ RUNTIME_FRAME_TYPES: tuple[str, ...] = (
     "duration",                 # the live meeting clock
     "intel_complete",           # a meeting intelligence window landed
     "intel_status",             # any run's running/ready/error state
-    "intel_token",              # Article XI.5: display only, never journaled
     "intent_controls_updated",  # the intent routing dial moved
     "learning_event",           # the pipeline learned something
     "meeting_started",          # a meeting began

@@ -629,6 +629,11 @@ def test_meeting_transcription_children_join_the_existing_meeting_session(
         )
 
     db = Database(tmp_path / "meeting.db")
+    # A Phase-B meeting parent freezes its live+speech route bundle before an
+    # interval can become an admitted transcription child.
+    from tests.unit.test_meeting_session_admission import _assign_bundle_routes
+
+    _assign_bundle_routes(db)
     monkeypatch.setattr("holdspeak.db.get_database", lambda: db)
     _configure(db)
     # HS-131-17 removed the session's provider preflight entirely; this session
@@ -650,8 +655,12 @@ def test_meeting_transcription_children_join_the_existing_meeting_session(
 
     parents = _parents(db, "meeting.session")
     assert len(parents) == 1
-    # Sol Amendment 6, exactly: 4096 + ceil(12h / 10s) + 2.
-    assert int(parents[0]["child_budget"]) == _budget() == 8418
+    # Phase B reserves the complete frozen live bundle: intelligence (4096),
+    # speech preload (1), and its routed transcription allocation (17,286).
+    # Keep the legacy helper's 8,418 calculation visible as historical-reader
+    # coverage, but the new parent must carry the aggregate bundle budget.
+    assert _budget() == 8418
+    assert int(parents[0]["child_budget"]) == 21_383
 
     text = session._transcribe_audio(np.full(16000, AUDIO_SENTINEL, dtype=np.float32))
     assert text == TEXT_SENTINEL
@@ -659,7 +668,9 @@ def test_meeting_transcription_children_join_the_existing_meeting_session(
     children = _operations(db, name="inference.invoke")
     assert len(children) == 1
     assert children[0]["parent_operation_id"] == parents[0]["operation_id"]
-    assert children[0]["target_ref"] == f"deployment-revision:{_whisper_revision(db, Config())}"
+    # The child names the bundle's profile-backed immutable deployment (`dep2`),
+    # not the mutable Config-derived startup speech revision (`dep`).
+    assert str(children[0]["target_ref"]).startswith("deployment-revision:dep2_")
     # No dictation.session was invented for a meeting interval.
     assert _parents(db, "dictation.session") == []
 

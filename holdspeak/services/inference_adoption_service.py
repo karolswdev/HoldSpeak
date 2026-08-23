@@ -1169,7 +1169,7 @@ class RoutedInferenceCoordinator:
             reservation = effect["reservation"]
             if reservation is None:
                 receipt = self.controller.get_route_execution_receipt(
-                    principal, execution_id=execution_id
+                    receipt_authority, execution_id=execution_id
                 )
                 replay = {
                     "outcome": receipt["outcome"],
