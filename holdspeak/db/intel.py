@@ -209,6 +209,31 @@ class IntelRepository(BaseRepository):
         )
         return job_id
 
+    def get_bound_claimed_intel_job(self) -> Optional[IntelJob]:
+        """Recover one committed C1 bound owner without granting a new claim."""
+        with self._connection() as conn:
+            row = conn.execute(
+                """SELECT * FROM intel_jobs WHERE status IN ('claimed','running')
+                   AND parent_operation_id IS NOT NULL AND bundle_id IS NOT NULL
+                   AND bundle_sha256 IS NOT NULL AND claim_id IS NOT NULL
+                   ORDER BY requested_at ASC LIMIT 1"""
+            ).fetchone()
+        return self._job_from_row(row) if row is not None else None
+
+    def get_legacy_claimed_intel_job(self) -> Optional[IntelJob]:
+        """Return an in-flight pre-C1 owner for compatibility recovery only.
+
+        New descriptors are never selected here: a C1 bound claim always writes
+        both parent and bundle references in the same ownership transaction.
+        """
+        with self._connection() as conn:
+            row = conn.execute(
+                """SELECT * FROM intel_jobs WHERE status IN ('claimed','running')
+                   AND (parent_operation_id IS NULL OR bundle_id IS NULL)
+                   ORDER BY requested_at ASC LIMIT 1"""
+            ).fetchone()
+        return self._job_from_row(row) if row is not None else None
+
     def claim_next_intel_job(self, *, include_scheduled: bool = False) -> Optional[IntelJob]:
         """Claim the next queued intelligence job for processing."""
         now_iso = datetime.now().isoformat()
@@ -490,6 +515,142 @@ class IntelRepository(BaseRepository):
             bound_row = conn.execute("SELECT * FROM intel_jobs WHERE job_id=?", (job_id,)).fetchone()
             return self._job_from_row(bound_row) if bound_row is not None else None
 
+    @staticmethod
+    def supersede_bound_intel_job_in_transaction(
+        conn: Any,
+        *,
+        job_id: str,
+        reason: str,
+        event_kind: str,
+    ) -> str | None:
+        """Fence one bound owner and queue a linked immutable successor.
+
+        The caller already owns the publication/claim transaction.  A historical
+        result remains durable evidence, but an old descriptor is never retargeted
+        and is never made runnable again.
+        """
+        old = conn.execute("SELECT * FROM intel_jobs WHERE job_id=?", (job_id,)).fetchone()
+        if old is None:
+            return None
+        status = str(old["status"])
+        if status == "superseded":
+            successor = conn.execute(
+                "SELECT job_id FROM intel_jobs WHERE origin_job_id=? ORDER BY requested_at DESC LIMIT 1",
+                (job_id,),
+            ).fetchone()
+            return str(successor["job_id"]) if successor is not None else None
+        if status not in {"queued", "claimed", "running"}:
+            return None
+        meeting_id = str(old["meeting_id"])
+        durable_hash = _durable_transcript_hash(conn, meeting_id)
+        if durable_hash == str(old["transcript_hash"]):
+            return None
+        now = datetime.now().isoformat()
+        if conn.execute(
+            """UPDATE intel_jobs SET status='superseded',lifecycle_posture='superseded',
+               updated_at=?,last_error=? WHERE job_id=? AND status IN ('queued','claimed','running')""",
+            (now, reason, job_id),
+        ).rowcount != 1:
+            return None
+        work = str(old["displaced_work"])
+        descriptor = _work_descriptor_sha256(meeting_id, durable_hash, work)
+        fresh_id = _job_id(meeting_id, durable_hash, descriptor, now, job_id)
+        conn.execute(
+            """INSERT INTO intel_jobs (
+                job_id,meeting_id,origin_job_id,work_descriptor_sha256,
+                transcript_hash,displaced_work,status,lifecycle_posture,
+                requested_at,updated_at,attempts,last_error
+            ) VALUES (?,?,?,?,?,?,'queued','queued',?,?,0,?)""",
+            (fresh_id, meeting_id, job_id, descriptor, durable_hash, work, now, now, reason),
+        )
+        conn.execute(
+            """INSERT INTO intel_job_attempts (
+                meeting_id,job_id,origin_job_id,claim_id,parent_operation_id,bundle_id,
+                event_kind,attempt,outcome,error,retry_at,created_at
+            ) VALUES (?,?,?,?,?,?,? ,?,'superseded',?,NULL,?)""",
+            (
+                meeting_id, job_id, str(old["origin_job_id"] or "") or None,
+                str(old["claim_id"] or "") or None,
+                str(old["parent_operation_id"] or "") or None,
+                str(old["bundle_id"] or "") or None, event_kind,
+                int(old["attempts"]), reason, now,
+            ),
+        )
+        conn.execute(
+            """INSERT INTO intel_job_attempts (
+                meeting_id,job_id,origin_job_id,event_kind,attempt,outcome,error,retry_at,created_at
+            ) VALUES (?,?,?,'supersession_link',0,'queued',?,NULL,?)""",
+            (meeting_id, fresh_id, job_id, reason, now),
+        )
+        conn.execute(
+            """UPDATE meetings SET intel_status='queued',intel_status_detail=?,
+               intel_completed_at=NULL,sync_modified_at=?,updated_at=datetime('now') WHERE id=?""",
+            (reason, now, meeting_id),
+        )
+        return fresh_id
+
+    def supersede_bound_intel_job(
+        self, job_id: str, *, reason: str, event_kind: str
+    ) -> str | None:
+        """Run a staging fence for one bound job in its own transaction."""
+        with self._connection() as conn:
+            conn.execute("BEGIN IMMEDIATE")
+            try:
+                fresh = self.supersede_bound_intel_job_in_transaction(
+                    conn, job_id=job_id, reason=reason, event_kind=event_kind,
+                )
+                conn.commit()
+                return fresh
+            except Exception:
+                conn.rollback()
+                raise
+
+    def complete_bound_intel_job(self, job_id: str) -> bool:
+        """Terminalize exactly the bound owner and append completion truth."""
+        now = datetime.now().isoformat()
+        with self._connection() as conn:
+            conn.execute("BEGIN IMMEDIATE")
+            row = conn.execute("SELECT * FROM intel_jobs WHERE job_id=?", (job_id,)).fetchone()
+            if row is None:
+                conn.rollback()
+                return False
+            if _durable_transcript_hash(conn, str(row["meeting_id"])) != str(row["transcript_hash"]):
+                self.supersede_bound_intel_job_in_transaction(
+                    conn,
+                    job_id=job_id,
+                    reason="Transcript changed before bound completion publication.",
+                    event_kind="completion_fence_superseded",
+                )
+                conn.commit()
+                return False
+            changed = conn.execute(
+                """UPDATE intel_jobs SET status='succeeded',lifecycle_posture='terminal',updated_at=?
+                   WHERE job_id=? AND status IN ('claimed','running')""",
+                (now, job_id),
+            ).rowcount
+            if changed:
+                conn.execute(
+                    """UPDATE meetings SET intel_status='ready',intel_status_detail='Meeting intelligence ready.',
+                       intel_completed_at=?,sync_modified_at=?,updated_at=datetime('now') WHERE id=?""",
+                    (now, now, str(row["meeting_id"])),
+                )
+                conn.execute(
+                    """INSERT INTO intel_job_attempts (
+                        meeting_id,job_id,origin_job_id,claim_id,parent_operation_id,bundle_id,
+                        event_kind,attempt,outcome,error,retry_at,created_at
+                    ) VALUES (?,?,?,?,?,?, 'completion',?,'succeeded',NULL,NULL,?)""",
+                    (
+                        str(row["meeting_id"]), job_id,
+                        str(row["origin_job_id"] or "") or None,
+                        str(row["claim_id"] or "") or None,
+                        str(row["parent_operation_id"] or "") or None,
+                        str(row["bundle_id"] or "") or None,
+                        int(row["attempts"]), now,
+                    ),
+                )
+            conn.commit()
+            return bool(changed)
+
     def requeue_claimed_intel_job(
         self,
         meeting_id: str,
@@ -592,6 +753,17 @@ class IntelRepository(BaseRepository):
                 (job_id, meeting_id, str(old["job_id"]),
                  str(old["work_descriptor_sha256"]), str(old["transcript_hash"]),
                  str(old["displaced_work"]), retry_at_iso, now, int(attempt), error),
+            )
+            conn.execute(
+                """INSERT INTO intel_job_attempts (
+                    meeting_id,job_id,origin_job_id,claim_id,parent_operation_id,bundle_id,
+                    event_kind,attempt,outcome,error,retry_at,created_at
+                ) VALUES (?,?,?,?,?,?, 'retry_linkage',?,'queued',?,?,?)""",
+                (meeting_id, job_id, str(old["job_id"]),
+                 str(old["claim_id"] or "") or None,
+                 str(old["parent_operation_id"] or "") or None,
+                 str(old["bundle_id"] or "") or None,
+                 int(attempt), error, retry_at_iso, now),
             )
             conn.execute(
                 """UPDATE meetings SET intel_status='queued',intel_status_detail=?,

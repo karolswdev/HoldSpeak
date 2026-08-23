@@ -349,6 +349,7 @@ def _queued_meeting(
     title: str = "Deferred meeting",
     bookmarks: tuple[float, ...] = (),
     displaced_work: tuple[str, ...] = (),
+    legacy_claimed: bool = True,
 ) -> MeetingState:
     state = MeetingState(
         id=meeting_id,
@@ -366,6 +367,11 @@ def _queued_meeting(
         reason="stop handoff",
         displaced_work=displaced_work,
     )
+    # This fixture can model a process loss after the historical Meeting-keyed
+    # claim. C1c keeps that owner on its legacy executor; only a C1b bound claim
+    # is eligible for the new stored-ID worker.
+    if legacy_claimed:
+        assert db.intel.claim_next_intel_job() is not None
     return state
 
 
@@ -420,6 +426,107 @@ def test_a_closed_live_session_is_never_revived(tmp_path, monkeypatch):
 
 
 # --------------------------------------------- the admitted deferred queue job
+
+
+def test_bound_claim_executes_stored_service_member_and_completes_ledger(tmp_path, monkeypatch):
+    """C1c never calls the legacy admission path for a C1b-bound claim."""
+    db, _broker, _engine, _host, requests = _queue_rig(tmp_path, monkeypatch)
+    state = _queued_meeting(db, "m-bound-worker", legacy_claimed=False)
+    from holdspeak.meeting_session.deferred_admission import DeferredIntelJob
+    from holdspeak.intel_queue import process_next_intel_job
+
+    monkeypatch.setattr(
+        DeferredIntelJob,
+        "admit",
+        classmethod(lambda *_args, **_kwargs: (_ for _ in ()).throw(AssertionError("legacy admit"))),
+    )
+    assert process_next_intel_job() is True
+    job = db.intel.get_intel_job(state.id)
+    assert job is None
+    saved = db.meetings.get_meeting(state.id)
+    assert saved is not None and saved.intel is not None
+    with db._connection() as conn:
+        event = conn.execute(
+            "SELECT outcome FROM intel_job_attempts WHERE meeting_id=? AND event_kind='completion'",
+            (state.id,),
+        ).fetchone()
+        bound = conn.execute(
+            "SELECT parent_operation_id,bundle_id FROM intel_jobs WHERE meeting_id=?",
+            (state.id,),
+        ).fetchone()
+    assert event is not None and event["outcome"] == "succeeded"
+    assert bound is not None and bound["parent_operation_id"] and bound["bundle_id"]
+    assert requests
+
+
+def test_bound_claim_commit_recovers_exact_owner_without_second_egress(tmp_path, monkeypatch):
+    """Startup recovery adopts the committed C1b IDs instead of re-resolving."""
+    db, broker, _engine, _host, requests = _queue_rig(tmp_path, monkeypatch)
+    state = _queued_meeting(db, "m-bound-recovery", legacy_claimed=False)
+    from holdspeak.intel_queue import process_next_intel_job
+    from holdspeak.services.meeting_deferred_queue_binding import MeetingDeferredQueueBinder
+
+    claimed = db.intel.claim_next_intel_job_bound(MeetingDeferredQueueBinder(broker))
+    assert claimed is not None and claimed.parent_operation_id and claimed.bundle_id
+    assert process_next_intel_job() is True
+    assert process_next_intel_job() is False
+    with db._connection() as conn:
+        claims = conn.execute("SELECT COUNT(*) FROM intel_job_attempts WHERE job_id=? AND event_kind='claim'", (claimed.job_id,)).fetchone()[0]
+    assert claims == 1
+    assert len(requests) == 1
+    assert db.meetings.get_meeting(state.id).intel is not None
+
+
+def test_bound_publication_fence_supersedes_stale_result(tmp_path, monkeypatch):
+    """A stale elected analysis remains evidence but cannot overwrite Meeting state."""
+    db, broker, _engine, _host, _requests = _queue_rig(tmp_path, monkeypatch)
+    state = _queued_meeting(db, "m-bound-publication", legacy_claimed=False)
+    from holdspeak.intel_queue import process_next_intel_job
+
+    real_finalize = broker.projection_stager.finalize
+    changed = False
+
+    def mutate_before_finalize(invocation_id: str):
+        nonlocal changed
+        if not changed:
+            changed = True
+            with db._connection() as conn:
+                conn.execute("UPDATE segments SET text='changed before publication' WHERE meeting_id=?", (state.id,))
+        return real_finalize(invocation_id)
+
+    monkeypatch.setattr(broker.projection_stager, "finalize", mutate_before_finalize)
+    assert process_next_intel_job() is True
+    assert db.meetings.get_meeting(state.id).intel is None
+    with db._connection() as conn:
+        old = conn.execute("SELECT status FROM intel_jobs WHERE meeting_id=? ORDER BY requested_at LIMIT 1", (state.id,)).fetchone()
+        fresh = conn.execute("SELECT status FROM intel_jobs WHERE meeting_id=? ORDER BY requested_at DESC LIMIT 1", (state.id,)).fetchone()
+        event = conn.execute("SELECT outcome FROM intel_job_attempts WHERE meeting_id=? AND event_kind='publication_fence_superseded'", (state.id,)).fetchone()
+    assert old is not None and old["status"] == "superseded"
+    assert fresh is not None and fresh["status"] == "queued"
+    assert event is not None and event["outcome"] == "superseded"
+
+
+def test_bound_deferred_kernel_refusal_is_terminal_with_one_attempt(tmp_path, monkeypatch):
+    """FX4 applies to the deferred-shaped SERVICE route as well."""
+    db, _broker, engine, _host, requests = _queue_rig(tmp_path, monkeypatch)
+    state = _queued_meeting(db, "m-bound-refusal", legacy_claimed=False)
+    from holdspeak.intel_queue import process_next_intel_job
+    from holdspeak.kernel.model import KernelRefused
+
+    def refuse(*_args, **_kwargs):
+        raise KernelRefused("deferred_refused")
+
+    monkeypatch.setattr(engine, "analyze", refuse)
+    assert process_next_intel_job() is True
+    job = db.intel.get_intel_job(state.id)
+    assert job is not None and job.status == "failed" and job.attempts == 1
+    with db._connection() as conn:
+        events = conn.execute(
+            "SELECT outcome FROM intel_job_attempts WHERE meeting_id=? AND outcome='refused'",
+            (state.id,),
+        ).fetchall()
+    assert len(events) == 1
+    assert len(requests) == 1
 
 
 def test_claim_admits_one_job_parent_with_base_and_plugin_children(tmp_path, monkeypatch):
@@ -540,6 +647,8 @@ def test_each_queue_retry_admits_a_new_job_parent(tmp_path, monkeypatch):
     assert first[0]["state"] == "FAILED"
     job = db.intel.get_intel_job(state.id)
     assert job is not None and job.status == "queued" and job.attempts == 1
+    # Continue the historical crash-recovery specimen through its legacy owner.
+    assert db.intel.claim_next_intel_job(include_scheduled=True) is not None
 
     engine.error = None
     assert process_next_intel_job(include_scheduled=True) is True

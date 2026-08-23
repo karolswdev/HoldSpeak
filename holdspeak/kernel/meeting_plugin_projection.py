@@ -18,6 +18,7 @@ rows inside the permitted transaction, and nowhere else.
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import time
 from typing import Any
@@ -184,16 +185,93 @@ def _write_bookmark_label(conn: Any, projection: dict[str, Any]) -> dict[str, An
     return {**projection, "labels_written": int(cursor.rowcount or 0)}
 
 
+def _bound_transcript_fence(conn: Any, projection: dict[str, Any]) -> dict[str, Any] | None:
+    """Fence a bound queue result inside its projection-publication epoch."""
+    job_id = str(projection.get("job_id") or "").strip()
+    expected_hash = str(projection.get("transcript_hash") or "").strip()
+    if not job_id or not expected_hash:
+        raise KernelRefused("meeting_bound_projection_incomplete")
+    from ..db.intel import IntelRepository, _durable_transcript_hash
+
+    row = conn.execute("SELECT meeting_id,transcript_hash,status FROM intel_jobs WHERE job_id=?", (job_id,)).fetchone()
+    if row is None:
+        raise KernelRefused("meeting_bound_job_missing")
+    meeting_id = str(row["meeting_id"])
+    if meeting_id != str(projection.get("meeting_id") or ""):
+        raise KernelRefused("meeting_bound_projection_mismatch")
+    durable_hash = _durable_transcript_hash(conn, meeting_id)
+    if durable_hash == expected_hash and str(row["transcript_hash"]) == expected_hash:
+        return None
+    fresh = IntelRepository.supersede_bound_intel_job_in_transaction(
+        conn,
+        job_id=job_id,
+        reason="Transcript changed before bound projection publication.",
+        event_kind="publication_fence_superseded",
+    )
+    return {**projection, "publication": "superseded", "fresh_job_id": fresh}
+
+
+def _write_bound_analysis(conn: Any, projection: dict[str, Any]) -> dict[str, Any]:
+    """Publish the analysis only after the third durable transcript fence."""
+    fenced = _bound_transcript_fence(conn, projection)
+    if fenced is not None:
+        return fenced
+    meeting_id = str(projection["meeting_id"])
+    summary = str(projection.get("summary") or "")
+    topics = list(projection.get("topics") or [])
+    action_items = list(projection.get("action_items") or [])
+    timestamp_row = conn.execute("SELECT duration_seconds FROM meetings WHERE id=?", (meeting_id,)).fetchone()
+    timestamp = float(timestamp_row["duration_seconds"] or 0.0) if timestamp_row is not None else 0.0
+    conn.execute(
+        "INSERT INTO intel_snapshots (meeting_id,timestamp,summary) VALUES (?,?,?)",
+        (meeting_id, timestamp, summary),
+    )
+    conn.execute("DELETE FROM topics WHERE meeting_id=?", (meeting_id,))
+    for topic in topics:
+        conn.execute(
+            "INSERT INTO topics (meeting_id,topic,extracted_at) VALUES (?,?,?)",
+            (meeting_id, str(topic), timestamp),
+        )
+    # The closed semantic result omits persistence IDs. Derive one from the
+    # immutable job descriptor and ordinal, so replay writes the same action item
+    # without putting transcript/prompt material in queue evidence.
+    for ordinal, item in enumerate(action_items, 1):
+        if not isinstance(item, dict):
+            continue
+        item_id = str(item.get("id") or "").strip() or "action_" + hashlib.sha256(
+            f"{projection['job_id']}:{ordinal}".encode()
+        ).hexdigest()[:24]
+        conn.execute(
+            """INSERT INTO action_items (id,meeting_id,task,owner,due,status,review_state,created_at)
+               VALUES (?,?,?,?,?,'pending','pending',?)
+               ON CONFLICT(id) DO UPDATE SET task=excluded.task,owner=excluded.owner,due=excluded.due""",
+            (item_id, meeting_id, str(item.get("task") or ""), item.get("owner"),
+             item.get("due"), time.strftime("%Y-%m-%dT%H:%M:%S")),
+        )
+    now = time.strftime("%Y-%m-%dT%H:%M:%S")
+    conn.execute(
+        """UPDATE meetings SET intel_status='running',
+           intel_status_detail='Meeting saved. Summary, topics, and action items saved. Routed intelligence running.',
+           intel_completed_at=NULL,sync_modified_at=?,updated_at=datetime('now') WHERE id=?""",
+        (now, meeting_id),
+    )
+    return {**projection, "snapshot_written": 1}
+
+
 def materialize(conn: Any, stage: Any, permit: Any) -> dict[str, Any]:
     """Write the earned plugin run, then re-synthesize the meeting's artifacts."""
     if not isinstance(permit, _PublicationPermit):
         raise KernelRefused("projection_publication_permit_invalid")
     permit.use(conn)
     projection = dict(stage.projection)
-    if stage.kind == "meeting-deferred-auto-title":
-        return _write_title(conn, projection)
-    if stage.kind == "meeting-deferred-bookmark-label":
-        return _write_bookmark_label(conn, projection)
+    if stage.kind == "meeting-bound-deferred-analysis":
+        return _write_bound_analysis(conn, projection)
+    if stage.kind in {"meeting-deferred-auto-title", "meeting-bound-deferred-auto-title"}:
+        fenced = _bound_transcript_fence(conn, projection) if stage.kind.startswith("meeting-bound-") else None
+        return fenced if fenced is not None else _write_title(conn, projection)
+    if stage.kind in {"meeting-deferred-bookmark-label", "meeting-bound-deferred-bookmark-label"}:
+        fenced = _bound_transcript_fence(conn, projection) if stage.kind.startswith("meeting-bound-") else None
+        return fenced if fenced is not None else _write_bookmark_label(conn, projection)
     if stage.kind != "meeting-plugin-result":
         return projection
     from ..plugins.synthesis import synthesize_meeting_artifacts
@@ -214,9 +292,12 @@ def register(stager: Any) -> None:
     # plugin run, no artifact, no title, no bookmark label.
     for kind in (
         "meeting-deferred-analysis",
+        "meeting-bound-deferred-analysis",
         "meeting-plugin-result",
         "meeting-deferred-bookmark-label",
+        "meeting-bound-deferred-bookmark-label",
         "meeting-deferred-auto-title",
+        "meeting-bound-deferred-auto-title",
     ):
         try:
             stager.register(kind, materialize, discard_on_parent_cancel=True)

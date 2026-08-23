@@ -90,7 +90,10 @@ holdspeak/intel/providers.py:819|_profile_engine|configured_meeting_intel|call
 holdspeak/intel/providers.py:823|_profile_engine|MeetingIntel|call
 holdspeak/intel/providers.py:842|_profile_engine|MeetingIntel|call
 holdspeak/intel/providers.py:843|_profile_engine|configured_meeting_intel|call
-holdspeak/intel_queue.py:240|process_next_intel_job|analyze|call
+holdspeak/intel_queue.py:477|process_next_intel_job|analyze|call
+holdspeak/intel_queue.py:180|_run_bound_displaced_work|generate_bookmark_label_with_context|call
+holdspeak/intel_queue.py:209|_run_bound_displaced_work|generate_title|call
+holdspeak/intel_queue.py:268|_process_bound_intel_job|analyze|call
 holdspeak/kernel/executor.py:19|<module>|_install_claim_issuer|call
 holdspeak/kernel/executor.py:84|ExecutorPlane.claim|_issue_claim_witness|call
 holdspeak/kernel/inference_runner.py:74|InferenceRunner.__init__|build_intel_for_revision|ref
@@ -99,9 +102,9 @@ holdspeak/kernel/prompt_adapter.py:14|CanonicalPromptAdapter.dispatch|run_prompt
 holdspeak/main.py:765|_run_meeting_mode|transcribe|call
 holdspeak/main.py:774|_run_meeting_mode|transcribe|call
 holdspeak/meeting_import.py:313|_transcribe_import_windows|transcribe|call
-holdspeak/meeting_session/deferred_admission.py:229|DeferredIntelJob.analyze.call|analyze|call
-holdspeak/meeting_session/deferred_admission.py:268|DeferredIntelJob.bookmark_label.call|generate_bookmark_label_with_context|call
-holdspeak/meeting_session/deferred_admission.py:308|DeferredIntelJob.auto_title.call|generate_title|call
+holdspeak/meeting_session/deferred_admission.py:382|DeferredIntelJob.analyze.call|analyze|call
+holdspeak/meeting_session/deferred_admission.py:421|DeferredIntelJob.bookmark_label.call|generate_bookmark_label_with_context|call
+holdspeak/meeting_session/deferred_admission.py:461|DeferredIntelJob.auto_title.call|generate_title|call
 holdspeak/meeting_session/intel_admission.py:731|IntelAdmissionMixin._admitted_live_window.call|analyze|call
 holdspeak/meeting_session/intel_admission.py:776|IntelAdmissionMixin._admitted_bookmark_label.call|generate_bookmark_label_with_context|call
 holdspeak/meeting_session/intel_admission.py:806|IntelAdmissionMixin._admitted_auto_title.call|generate_title|call
@@ -179,7 +182,7 @@ PRODUCT_RUNNER_ENTRANCES: dict[str, ProposedRoute] = {
     "holdspeak/services/ask_service.py:120|AskService._invoke|call": ProposedRoute(
         "internal.semantic_dispatch", "services.ask_service", "InferenceRunner service child; capability supplied by semantic caller",
     ),
-    "holdspeak/services/inference_adoption_service.py:1220|RoutedInferenceCoordinator.execute|call": ProposedRoute(
+    "holdspeak/services/inference_adoption_service.py:1255|RoutedInferenceCoordinator.execute|call": ProposedRoute(
         "dynamic:frozen InferenceRoutePlan capability", "services.inference_adoption_service", "InferenceRunner controller-owned routed child",
     ),
     "holdspeak/services/cadence_service.py:284|CadenceService._draft_child|ref": ProposedRoute(
@@ -480,15 +483,18 @@ holdspeak/speech_session/provider.py:504|_RoutedSpeechAdapter.dispatch|run_promp
 holdspeak/speech_session/provider.py:635|AdmittedDictationRuntime.rewrite|rewrite|call
 """),
     _group(ProposedRoute("meeting.deferred_analysis", "meeting_session", "InferenceRunner admitted child"), """
-holdspeak/intel_queue.py:240|process_next_intel_job|analyze|call
-holdspeak/meeting_session/deferred_admission.py:229|DeferredIntelJob.analyze.call|analyze|call
+holdspeak/intel_queue.py:268|_process_bound_intel_job|analyze|call
+holdspeak/intel_queue.py:477|process_next_intel_job|analyze|call
+holdspeak/meeting_session/deferred_admission.py:382|DeferredIntelJob.analyze.call|analyze|call
 """),
     _group(ProposedRoute("meeting.bookmark_label", "meeting_session", "InferenceRunner admitted child"), """
-holdspeak/meeting_session/deferred_admission.py:268|DeferredIntelJob.bookmark_label.call|generate_bookmark_label_with_context|call
+holdspeak/intel_queue.py:180|_run_bound_displaced_work|generate_bookmark_label_with_context|call
+holdspeak/meeting_session/deferred_admission.py:421|DeferredIntelJob.bookmark_label.call|generate_bookmark_label_with_context|call
 holdspeak/meeting_session/intel_admission.py:776|IntelAdmissionMixin._admitted_bookmark_label.call|generate_bookmark_label_with_context|call
 """),
     _group(ProposedRoute("meeting.auto_title", "meeting_session", "InferenceRunner admitted child"), """
-holdspeak/meeting_session/deferred_admission.py:308|DeferredIntelJob.auto_title.call|generate_title|call
+holdspeak/intel_queue.py:209|_run_bound_displaced_work|generate_title|call
+holdspeak/meeting_session/deferred_admission.py:461|DeferredIntelJob.auto_title.call|generate_title|call
 holdspeak/meeting_session/intel_admission.py:806|IntelAdmissionMixin._admitted_auto_title.call|generate_title|call
 """),
     _group(ProposedRoute("meeting.live_analysis", "meeting_session", "InferenceRunner admitted child"), """
@@ -556,7 +562,7 @@ def test_phase143_call_site_fixture_is_complete_and_fail_closed() -> None:
         f"unregistered={sorted(live - EXPECTED_CALL_SITES)}\n"
         f"stale={sorted(EXPECTED_CALL_SITES - live)}"
     )
-    assert len(live) == 102
+    assert len(live) == 105
 
 
 def test_phase143_every_product_runner_entrance_has_one_owner() -> None:

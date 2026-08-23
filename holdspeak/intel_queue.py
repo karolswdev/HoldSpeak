@@ -133,6 +133,209 @@ def _compute_failure_rate_percent(*, total_jobs: int, failed_jobs: int) -> float
     return (failed / total) * 100.0
 
 
+def _bound_claim(db, *, include_scheduled: bool):
+    """Claim through the C1b binder without a runtime/Config preflight."""
+    from .kernel.runtime import _service
+    from .services.meeting_deferred_queue_binding import MeetingDeferredQueueBinder
+
+    broker = _service()
+    job = db.intel.claim_next_intel_job_bound(
+        MeetingDeferredQueueBinder(broker), include_scheduled=include_scheduled
+    )
+    return job, broker
+
+
+def _bound_projection_base(job, meeting) -> dict:
+    """Content-free identity carried by every bound publication stage."""
+    return {
+        "job_id": str(job.job_id),
+        "meeting_id": str(job.meeting_id),
+        "transcript_hash": str(job.transcript_hash),
+        "work_descriptor_sha256": str(job.work_descriptor_sha256 or ""),
+    }
+
+
+def _run_bound_displaced_work(db, meeting, bound, job, summary: str) -> str:
+    """Execute only stored label/title members after bound analysis publishes."""
+    from .meeting_session.intel_plan import DISPLACED_AUTO_TITLE, DISPLACED_BOOKMARK_LABELS
+
+    displaced = tuple(job.displaced_work or ())
+    if DISPLACED_BOOKMARK_LABELS in displaced:
+        for bookmark in getattr(meeting, "bookmarks", None) or []:
+            local_context = meeting.get_context_around(bookmark.timestamp, window=10.0)
+            if not local_context:
+                continue
+            projection, routed = bound.execute(
+                capability="meeting.bookmark_label",
+                operation_suffix=f"bookmark:{float(bookmark.timestamp)}",
+                material={
+                    "context_sha256": _hash_private(local_context),
+                    "summary_sha256": _hash_private(summary),
+                    "bookmark_timestamp": float(bookmark.timestamp),
+                    "template_revision": "1",
+                    "context_material": local_context,
+                    "summary_material": summary,
+                },
+                call=lambda engine, payload, cancellation: (
+                    None if cancellation.is_set() else engine.generate_bookmark_label_with_context(
+                        local_context=payload["context_material"],
+                        meeting_summary=payload["summary_material"],
+                    )
+                ),
+                projection_kind="meeting-bound-deferred-bookmark-label",
+                projection=lambda result: {
+                    **_bound_projection_base(job, meeting),
+                    "bookmark_timestamp": float(bookmark.timestamp),
+                    "label": str(result["label"]),
+                },
+            )
+            if str(routed.get("outcome")) == "refused":
+                return "displaced bookmark labels refused"
+            if projection is None:
+                return "displaced bookmark labels did not publish"
+            if projection.get("publication") == "superseded":
+                return "transcript superseded before bookmark-label publication"
+    if DISPLACED_AUTO_TITLE in displaced and not str(getattr(meeting, "title", "") or "").strip():
+        transcript = "\n".join(str(segment) for segment in meeting.segments)
+        projection, routed = bound.execute(
+            capability="meeting.auto_title",
+            operation_suffix="auto-title",
+            material={
+                "transcript_sha256": _hash_private(transcript),
+                "template_revision": "1",
+                "transcript_material": transcript,
+            },
+            call=lambda engine, payload, cancellation: (
+                None if cancellation.is_set() else engine.generate_title(payload["transcript_material"])
+            ),
+            projection_kind="meeting-bound-deferred-auto-title",
+            projection=lambda result: {
+                **_bound_projection_base(job, meeting), "title": str(result["title"]),
+            },
+        )
+        if str(routed.get("outcome")) == "refused":
+            return "the displaced auto title was refused"
+        if projection is None:
+            return "the displaced auto title did not publish"
+        if projection.get("publication") == "superseded":
+            return "transcript superseded before auto-title publication"
+    return ""
+
+
+def _hash_private(value: object) -> str:
+    """Name private material in queue evidence without retaining its bytes."""
+    from .meeting_session.intel_child import sha
+
+    return sha(value)
+
+
+def _process_bound_intel_job(
+    db, job, broker, *, on_meeting_ready, retry_base_seconds: int,
+    retry_max_seconds: int, retry_max_attempts: int,
+) -> bool:
+    """Execute a C1b-bound claim through stored parent/bundle/member IDs only."""
+    from .meeting_session.deferred_admission import BoundDeferredIntelJob
+    from .kernel.model import KernelRefused
+
+    outcome = "failed"
+    bound = None
+    try:
+        meeting = db.meetings.get_meeting(job.meeting_id)
+        if meeting is None or not meeting.segments:
+            db.intel.fail_intel_job(job.meeting_id, "Meeting has no transcript to analyze.")
+            return True
+        bound = BoundDeferredIntelJob.reconstruct(db, job, broker=broker)
+        # Fence two: this happens immediately before constructing the only payload
+        # carrying transcript bytes. A mismatch supersedes rather than retargeting.
+        fresh = db.intel.supersede_bound_intel_job(
+            str(job.job_id),
+            reason="Transcript changed before bound material staging.",
+            event_kind="staging_fence_superseded",
+        )
+        if fresh is not None:
+            outcome = "cancelled"
+            return True
+        transcript = "\n".join(str(segment) for segment in meeting.segments)
+        projection, routed = bound.execute(
+            capability="meeting.deferred_analysis",
+            operation_suffix="analysis",
+            material={
+                "transcript_sha256": _hash_private(transcript),
+                "template_revision": "1",
+                "transcript_material": transcript,
+            },
+            call=lambda engine, payload, cancellation: (
+                None if cancellation.is_set() else engine.analyze(payload["transcript_material"], stream=False)
+            ),
+            projection_kind="meeting-bound-deferred-analysis",
+            projection=lambda result: {
+                **_bound_projection_base(job, meeting),
+                "summary": str(result["summary"]),
+                "topics": list(result["topics"]),
+                "action_items": list(result["action_items"]),
+            },
+        )
+        if str(routed.get("outcome")) == "refused":
+            db.intel.record_intel_job_attempt(
+                job.meeting_id, attempt=int(job.attempts), outcome="refused",
+                error="Deferred provider refused bound execution.", retry_at=None,
+            )
+            db.intel.fail_intel_job(job.meeting_id, "Deferred provider refused bound execution.")
+            outcome = "refused"
+            return True
+        if projection is None:
+            _retry_or_fail_job(
+                db, job, "Deferred intel failed: bound analysis did not publish",
+                max_attempts=retry_max_attempts, base_delay_seconds=retry_base_seconds,
+                max_delay_seconds=retry_max_seconds,
+            )
+            return True
+        if projection.get("publication") == "superseded":
+            outcome = "cancelled"
+            return True
+        detail = _run_bound_displaced_work(db, meeting, bound, job, str(projection.get("summary") or ""))
+        if detail:
+            if detail.startswith("transcript superseded"):
+                outcome = "cancelled"
+                return True
+            _retry_or_fail_job(
+                db, job, f"Deferred intel failed: {detail}", max_attempts=retry_max_attempts,
+                base_delay_seconds=retry_base_seconds, max_delay_seconds=retry_max_seconds,
+            )
+            return True
+        if not db.intel.complete_bound_intel_job(str(job.job_id)):
+            outcome = "cancelled"
+            return True
+        outcome = "succeeded"
+        if on_meeting_ready is not None:
+            try:
+                on_meeting_ready(job.meeting_id)
+            except Exception as exc:
+                log.debug("on_meeting_ready observer failed: %s", type(exc).__name__)
+        return True
+    except KernelRefused as exc:
+        # The provider's typed refusal is terminal, not a fallback/retry signal.
+        log.warning("Bound deferred kernel refusal for meeting %s: %s", job.meeting_id, exc.reason)
+        db.intel.record_intel_job_attempt(
+            job.meeting_id, attempt=int(job.attempts), outcome="refused",
+            error="Deferred provider refused bound execution.", retry_at=None,
+        )
+        db.intel.fail_intel_job(job.meeting_id, "Deferred provider refused bound execution.")
+        outcome = "refused"
+        return True
+    except Exception as exc:
+        _retry_or_fail_job(
+            db, job, f"Deferred intel failed: {type(exc).__name__}",
+            max_attempts=retry_max_attempts, base_delay_seconds=retry_base_seconds,
+            max_delay_seconds=retry_max_seconds,
+        )
+        log.error("Bound deferred intel failed for meeting %s: %s: %s", job.meeting_id, type(exc).__name__, getattr(exc, "code", str(exc)))
+        return True
+    finally:
+        if bound is not None:
+            bound.close(outcome)
+
+
 def process_next_intel_job(
     model_path: Optional[str] = None,
     *,
@@ -148,6 +351,43 @@ def process_next_intel_job(
     The cloud leg is not threaded in as bare params (HS-112-01): it resolves
     here, through the one resolver, from the assigned InferenceTarget.
     """
+    # C1 bound work has no mutable runtime preflight: route election and the
+    # SERVICE shell were committed with its claim, and execution must load those
+    # stored IDs rather than Config, a resolver, or a fresh plan.
+    db = get_database()
+    # A post-commit crash resumes the exact stored C1 owner. This is recovery,
+    # not another claim: reconstruction reads the parent/bundle/member IDs only.
+    recovered_bound = db.intel.get_bound_claimed_intel_job()
+    if recovered_bound is not None:
+        from .kernel.runtime import _service
+
+        return _process_bound_intel_job(
+            db, recovered_bound, _service(), on_meeting_ready=on_meeting_ready,
+            retry_base_seconds=retry_base_seconds, retry_max_seconds=retry_max_seconds,
+            retry_max_attempts=retry_max_attempts,
+        )
+    # A process can die after a pre-C1 legacy claim. Resume only that already
+    # running owner; queued work never falls through to this legacy executor.
+    legacy_job = db.intel.get_legacy_claimed_intel_job()
+    if legacy_job is None:
+        try:
+            bound_job, broker = _bound_claim(db, include_scheduled=include_scheduled)
+        except Exception as exc:
+            # A binder refusal owns a durable queue ledger event and leaves the job
+            # queued. Never downgrade that new descriptor into the legacy executor.
+            log.warning("Bound deferred intel claim refused: %s", type(exc).__name__)
+            return True
+        if bound_job is not None:
+            return _process_bound_intel_job(
+                db, bound_job, broker, on_meeting_ready=on_meeting_ready,
+                retry_base_seconds=retry_base_seconds, retry_max_seconds=retry_max_seconds,
+                retry_max_attempts=retry_max_attempts,
+            )
+        return False
+
+    # Only rows that were already claimed through the historical Meeting-keyed
+    # shape reach this branch. They retain the legacy frozen-plan executor until
+    # Phase F removes historical queue compatibility.
     from .config import Config
     from .config.meeting import effective_routing_profile
     from .intel.providers import effective_intel_cloud
@@ -169,10 +409,7 @@ def process_next_intel_job(
         log.debug(f"Deferred intel queue paused: {runtime_reason}")
         return False
 
-    db = get_database()
-    job = db.intel.claim_next_intel_job(include_scheduled=include_scheduled)
-    if job is None:
-        return False
+    job = legacy_job
 
     meeting = db.meetings.get_meeting(job.meeting_id)
     if meeting is None:

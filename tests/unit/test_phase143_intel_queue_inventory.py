@@ -71,7 +71,9 @@ def test_inventory_repository_claim_enqueue_retry_release_and_ledger_are_job_key
     source = _source("holdspeak/db/intel.py")
     for symbol in (
         "enqueue_intel_job", "claim_next_intel_job", "claim_next_intel_job_bound", "requeue_claimed_intel_job",
-        "retry_intel_job", "complete_intel_job", "fail_intel_job",
+        "retry_intel_job", "complete_intel_job", "complete_bound_intel_job", "fail_intel_job",
+        "get_bound_claimed_intel_job", "get_legacy_claimed_intel_job",
+        "supersede_bound_intel_job", "supersede_bound_intel_job_in_transaction",
         "mark_intel_job_partial", "request_intel_retry", "skip_remaining_intel",
         "record_intel_job_attempt", "get_intel_job", "list_intel_jobs",
         "get_intel_queue_summary", "list_intel_job_attempts",
@@ -288,6 +290,46 @@ def test_bound_claim_transcript_fence_supersedes_and_links_fresh_job(tmp_path) -
         assert rows[0]["status"] == "superseded"
         assert rows[0]["parent_operation_id"] is None and rows[0]["bundle_id"] is None
         assert rows[1]["status"] == "queued" and rows[1]["origin_job_id"]
+
+
+def test_staging_fence_supersedes_exact_bound_owner_and_links_fresh_job(tmp_path) -> None:
+    """A post-claim transcript change cannot retarget stored bound authority."""
+    db, meeting = _bound_claim_db(tmp_path, "staging-fence.db")
+    claimed = db.intel.claim_next_intel_job_bound(_binding)
+    assert claimed is not None and claimed.status == "claimed"
+    with db._connection() as conn:
+        conn.execute("UPDATE segments SET text='changed after claim' WHERE meeting_id=?", (meeting.id,))
+    fresh = db.intel.supersede_bound_intel_job(
+        str(claimed.job_id),
+        reason="Transcript changed before bound material staging.",
+        event_kind="staging_fence_superseded",
+    )
+    assert fresh is not None and fresh != claimed.job_id
+    with db._connection() as conn:
+        old = conn.execute("SELECT status,parent_operation_id,bundle_id FROM intel_jobs WHERE job_id=?", (claimed.job_id,)).fetchone()
+        new = conn.execute("SELECT status,origin_job_id FROM intel_jobs WHERE job_id=?", (fresh,)).fetchone()
+        event = conn.execute("SELECT outcome FROM intel_job_attempts WHERE job_id=? AND event_kind='staging_fence_superseded'", (claimed.job_id,)).fetchone()
+    assert old is not None and old["status"] == "superseded"
+    assert old["parent_operation_id"] == claimed.parent_operation_id and old["bundle_id"] == claimed.bundle_id
+    assert new is not None and new["status"] == "queued" and new["origin_job_id"] == claimed.job_id
+    assert event is not None and event["outcome"] == "superseded"
+
+
+def test_retry_terminalizes_old_owner_and_records_linked_fresh_job(tmp_path) -> None:
+    """Queue retry is a new owner decision, never controller retry-in-place."""
+    from holdspeak.intel_queue import _retry_or_fail_job
+
+    db, meeting = _bound_claim_db(tmp_path, "retry-linkage.db")
+    claimed = db.intel.claim_next_intel_job()
+    assert claimed is not None and claimed.status == "running"
+    _retry_or_fail_job(db, claimed, "test failure", max_attempts=6, base_delay_seconds=1)
+    with db._connection() as conn:
+        old = conn.execute("SELECT status FROM intel_jobs WHERE job_id=?", (claimed.job_id,)).fetchone()
+        new = conn.execute("SELECT job_id,origin_job_id,status FROM intel_jobs WHERE origin_job_id=?", (claimed.job_id,)).fetchone()
+        link = conn.execute("SELECT outcome FROM intel_job_attempts WHERE job_id=? AND event_kind='retry_linkage'", (new["job_id"],)).fetchone()
+    assert old is not None and old["status"] == "failed"
+    assert new is not None and new["origin_job_id"] == claimed.job_id and new["status"] == "queued"
+    assert link is not None and link["outcome"] == "queued"
 
 
 def test_real_service_binder_cross_binds_one_claim_parent_and_bundle(tmp_path) -> None:

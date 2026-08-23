@@ -47,6 +47,7 @@ ADOPTED_CAPABILITIES = (
     # Meeting bundle.  `speech.preload` is internally derived, but it still
     # needs exact reconstructed operation and attempt-budget evidence.
     "meeting.live_analysis",
+    "meeting.deferred_analysis",
     "meeting.bookmark_label",
     "meeting.auto_title",
     "speech.transcribe",
@@ -962,21 +963,51 @@ class RoutedInferenceCoordinator:
         operation_id: str,
         payload: Mapping[str, Any],
         reserved_output_tokens: int,
+        parent_operation_id: str | None = None,
     ) -> dict[str, Any]:
-        """Atomically attach late operation material to a session-frozen route."""
-        if principal.kind is not PrincipalKind.OWNER:
-            raise ValidationError(
-                "Owner authority is required.", code="inference_adoption_owner_required"
-            )
+        """Atomically attach late operation material to a session-frozen route.
+
+        OWNER callers retain the historical adoption surface.  A SERVICE caller is
+        admitted only for the exact route member of its already-persisted parent
+        bundle; it cannot borrow general OWNER route authority or invent a parent.
+        """
         capability = self._registry.require(capability_id)
         command = _safe(command_id, field="command_id")
         operation = _safe(operation_id, field="operation_id")
+        route_id = _safe(route_plan_id, field="route_plan_id")
+        bound_parent = _safe(parent_operation_id, field="parent_operation_id") if parent_operation_id else ""
+        if principal.kind is not PrincipalKind.OWNER and (
+            principal.kind is not PrincipalKind.SERVICE or not bound_parent
+        ):
+            raise ValidationError(
+                "Frozen-route admission requires owner or bound service authority.",
+                code="inference_adoption_owner_required",
+            )
         reference = "iam_" + hashlib.sha256(
             f"{command}:{operation}:{_sha256(dict(payload))}".encode()
         ).hexdigest()[:32]
         with self._db._connection() as conn:
             conn.execute("BEGIN IMMEDIATE")
             try:
+                if principal.kind is PrincipalKind.SERVICE:
+                    member = conn.execute(
+                        """SELECT 1
+                           FROM inference_parent_route_bundle_members m
+                           JOIN inference_parent_route_bundles b ON b.id=m.bundle_id
+                           JOIN kernel_parent_runs p ON p.operation_id=b.parent_operation_id
+                           JOIN kernel_operations o ON o.operation_id=p.operation_id
+                          WHERE m.route_plan_id=? AND m.capability_id=?
+                            AND b.parent_operation_id=?
+                            AND p.kind='meeting.deferred-intel-job'
+                            AND p.state='OPEN'
+                            AND o.principal_kind=? AND o.principal_identity=?""",
+                        (route_id, capability.id, bound_parent, principal.name, principal.identity),
+                    ).fetchone()
+                    if member is None:
+                        raise ValidationError(
+                            "Service route membership is required.",
+                            code="inference_adoption_service_membership_required",
+                        )
                 self.evidence.stage(
                     planning_reference=reference,
                     capability_id=capability.id,
@@ -991,7 +1022,7 @@ class RoutedInferenceCoordinator:
                     ROUTE_PLANNING_AUTHORITY,
                     conn,
                     command_id=command,
-                    route_plan_id=_safe(route_plan_id, field="route_plan_id"),
+                    route_plan_id=route_id,
                     operation_id=operation,
                     planning_reference=reference,
                 )
@@ -1097,6 +1128,10 @@ class RoutedInferenceCoordinator:
                 "The process-owned routed runtime is not composed",
             )
         execution = self.controller._execution(None, execution_id)
+        # Execution receipt reconstruction is controller-owned read authority.
+        # A bound SERVICE parent may execute only its member (validated above),
+        # but must not be asked to impersonate OWNER merely to inspect settlement.
+        receipt_authority = INFERENCE_FALLBACK_AUTHORITY
         operation = self.plans.get_operation_request_plan(
             ROUTE_PLANNING_AUTHORITY, execution["operation_plan_id"]
         )
@@ -1106,7 +1141,7 @@ class RoutedInferenceCoordinator:
         frozen_definition = self._frozen_capability_definition(str(route["id"]))
         if execution["state"] in {"terminal", "stopped"}:
             receipt = self.controller.get_route_execution_receipt(
-                principal, execution_id=execution_id
+                receipt_authority, execution_id=execution_id
             )
             replay: dict[str, Any] = {
                 "outcome": receipt["outcome"],
@@ -1221,7 +1256,7 @@ class RoutedInferenceCoordinator:
                     request, adapter, publish=project, parent_context=parent_context
                 )
             receipt = self.controller.get_route_execution_receipt(
-                principal, execution_id=execution_id
+                receipt_authority, execution_id=execution_id
             )
             if receipt["outcome"] == "succeeded":
                 winning = self._winning_reservation(
